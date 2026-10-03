@@ -1,5 +1,6 @@
 import jsonata from 'jsonata';
 import { ExpressionError } from './errors.js';
+import { unsafeRegexReason } from './regex-safety.js';
 
 type Compiled = ReturnType<typeof jsonata>;
 
@@ -24,6 +25,29 @@ function describeError(error: unknown): string {
   return String(error);
 }
 
+/**
+ * The first regex literal in a parsed expression that fails the static safety check. JSONata has
+ * no way to build a regex from a string, so literals are the only regexes an expression can run;
+ * a native regex never returns to the evaluator's hooks, so the time budget cannot stop it
+ * (ADV-007).
+ */
+function unsafeRegexIn(
+  node: unknown,
+  seen = new Set<object>(),
+): { source: string; reason: string } | undefined {
+  if (typeof node !== 'object' || node === null || seen.has(node)) return undefined;
+  seen.add(node);
+  if (node instanceof RegExp) {
+    const reason = unsafeRegexReason(node.source, node.flags);
+    return reason ? { source: node.source, reason } : undefined;
+  }
+  for (const value of Object.values(node)) {
+    const found = unsafeRegexIn(value, seen);
+    if (found) return found;
+  }
+  return undefined;
+}
+
 function compile(expression: string): Compiled {
   const hit = cache.get(expression);
   if (hit) return hit;
@@ -34,6 +58,13 @@ function compile(expression: string): Compiled {
     throw new ExpressionError(`expression failed to compile: ${describeError(error)}`, {
       expression,
     });
+  }
+  const unsafe = unsafeRegexIn(compiled.ast());
+  if (unsafe) {
+    throw new ExpressionError(
+      `expression uses the regular expression /${unsafe.source}/, which can run without bound: ${unsafe.reason}`,
+      { expression },
+    );
   }
   if (cache.size >= CACHE_LIMIT) {
     const first = cache.keys().next().value;

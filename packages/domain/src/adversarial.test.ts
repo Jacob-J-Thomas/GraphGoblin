@@ -1,4 +1,6 @@
-// Reproduction imports: spawn from node:child_process; fileURLToPath/pathToFileURL from node:url; createRequire from node:module.
+import { spawn } from 'node:child_process';
+import { createRequire } from 'node:module';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { describe, expect, it, vi } from 'vitest';
 import { MutationOperationSchema } from '@graphgoblin/contracts';
 import { sampleThread } from '@graphgoblin/contracts/testing';
@@ -6,7 +8,7 @@ import { applyPatch } from './patch.js';
 import { getAtPointer } from './pointer.js';
 import { applyMutations, planMutation, MUTABLE_REGIONS } from './mutations.js';
 import { renderTemplate } from './template.js';
-import { evaluateExpression } from './expression.js';
+import { checkExpression, evaluateExpression } from './expression.js';
 
 const ctx = { nodeId: 'attack', newId: () => 'test', now: () => '2026-10-03T00:00:00.000Z' };
 const op = (input: unknown) => MutationOperationSchema.parse(input);
@@ -80,27 +82,78 @@ describe('adversarial domain invariants', () => {
     }
   });
 
-  it.todo('ADV-007: JSONata native regex is bounded by its expression timeout');
-  // Executed reproduction; restore this test after fixing the finding.
-  // it('ADV-007: JSONata native regex is bounded by its expression timeout', async () => {
-  //   // Run an untrusted regex in a disposable process: the Vitest worker must remain responsive.
-  //   const module = new URL('./expression.ts', import.meta.url).href;
-  //   const expression = '$match("' + 'a'.repeat(32) + '!", /^(a+)+$/)';
-  //   const compiler = pathToFileURL(createRequire(import.meta.url).resolve('typescript')).href;
-  //   const code = `import ts from ${JSON.stringify(compiler)};
-  //     import { readFileSync } from 'node:fs'; import { registerHooks } from 'node:module';
-  //     registerHooks({ resolve(s,c,n) { return n(s.startsWith('.') && s.endsWith('.js') ? s.slice(0,-3)+'.ts' : s,c); },
-  //       load(u,c,n) { return u.endsWith('.ts') ? {format:'module', shortCircuit:true, source:ts.transpile(readFileSync(new URL(u),'utf8'), {module:ts.ModuleKind.ESNext})} : n(u,c); } });
-  //     const { evaluateExpression } = await import(${JSON.stringify(module)});
-  //     try { await evaluateExpression(${JSON.stringify(expression)}, {}, {timeoutMs: 10}); process.exit(2); } catch { process.exit(0); }`;
-  //   const result = await new Promise<string>((resolve, reject) => {
-  //     const child = spawn(process.execPath, ['--input-type=module', '-e', code], { cwd: fileURLToPath(new URL('..', import.meta.url)), windowsHide: true, stdio: ['ignore', 'ignore', 'pipe'] });
-  //     const timer = setTimeout(() => { child.kill(); resolve('watchdog'); }, 2500);
-  //     let stderr = ''; child.stderr?.on('data', chunk => { stderr += String(chunk); }); child.on('error', reject);
-  //     child.on('exit', code => { clearTimeout(timer); resolve(`exit:${code}:${stderr}`); });
-  //   });
-  //   expect(result).toBe('exit:0:');
-  // }, 5000);
+  it('ADV-007: JSONata native regex is bounded by its expression timeout', async () => {
+    // Run the untrusted regex in a disposable process: if the check regressed, the match would
+    // never return and only a separate watchdog could stop it.
+    const module = new URL('./expression.ts', import.meta.url).href;
+    const expression = '$match("' + 'a'.repeat(32) + '!", /^(a+)+$/)';
+    const compiler = pathToFileURL(createRequire(import.meta.url).resolve('typescript')).href;
+    const code = `import ts from ${JSON.stringify(compiler)};
+      import { readFileSync } from 'node:fs'; import { registerHooks } from 'node:module';
+      registerHooks({ resolve(s,c,n) { return n(s.startsWith('.') && s.endsWith('.js') ? s.slice(0,-3)+'.ts' : s,c); },
+        load(u,c,n) { return u.endsWith('.ts') ? {format:'module', shortCircuit:true, source:ts.transpile(readFileSync(new URL(u),'utf8'), {module:ts.ModuleKind.ESNext})} : n(u,c); } });
+      const { evaluateExpression } = await import(${JSON.stringify(module)});
+      try { await evaluateExpression(${JSON.stringify(expression)}, {}, {timeoutMs: 10}); process.exit(2); }
+      catch (error) { process.stderr.write(String(error.message)); process.exit(0); }`;
+    const result = await new Promise<string>((resolve, reject) => {
+      const child = spawn(process.execPath, ['--input-type=module', '-e', code], {
+        cwd: fileURLToPath(new URL('..', import.meta.url)),
+        windowsHide: true,
+        stdio: ['ignore', 'ignore', 'pipe'],
+      });
+      const timer = setTimeout(() => {
+        child.kill();
+        resolve('watchdog');
+      }, 10_000);
+      let stderr = '';
+      child.stderr?.on('data', (chunk) => {
+        stderr += String(chunk);
+      });
+      child.on('error', reject);
+      child.on('exit', (code) => {
+        clearTimeout(timer);
+        resolve(`exit:${code}:${stderr}`);
+      });
+    });
+    expect(result).toMatch(/^exit:0:.*can run without bound/);
+  }, 15_000);
+
+  it.each([
+    '$match("' + 'a'.repeat(32) + '!", /^(a+)+$/)',
+    '$replace("x", /(\\w*\\s?)*$/, "")',
+    '$contains("x", /(a|aa)+b/)',
+    '$split("x", /(.)\\1/)',
+    '{"r": $match("x", /((ab)*c){2,}/)}',
+  ])('ADV-007: rejects the pathological pattern in %s before it runs', async (expression) => {
+    expect(checkExpression(expression)).toMatch(/can run without bound/);
+    await expect(evaluateExpression(expression, {})).rejects.toThrow(/can run without bound/);
+  });
+
+  it('ADV-007: ordinary regex patterns still evaluate', async () => {
+    expect(await evaluateExpression('$match("ab-12-cd", /\\d+/).match', {})).toBe('12');
+    expect(await evaluateExpression('$replace("a.b.c", /\\./, "/")', {})).toBe('a/b/c');
+    expect(await evaluateExpression('$split("a, b,c", /,\\s*/)', {})).toEqual(['a', 'b', 'c']);
+    expect(await evaluateExpression('$contains("Foo@Bar.com", /^\\w+@\\w+\\.com$/i)', {})).toBe(
+      true,
+    );
+    expect(await evaluateExpression('$contains("foobarfoo", /^(foo|bar)+$/)', {})).toBe(true);
+    expect(await evaluateExpression('$contains("2026-10-03", /^\\d{4}-\\d{2}-\\d{2}$/)', {})).toBe(
+      true,
+    );
+  });
+
+  it('ADV-007: redact and replace patterns get the same check', async () => {
+    const thread = { ...sampleThread(), messages: [], vars: { value: 'aaaa!' } };
+    await expect(
+      applyMutations(thread, [op({ op: 'redact', target: 'vars', patterns: ['^(a+)+$'] })], ctx),
+    ).rejects.toThrow(/can run without bound/);
+    const ok = await applyMutations(
+      thread,
+      [op({ op: 'redact', target: 'vars', patterns: ['a+'], replacement: 'X' })],
+      ctx,
+    );
+    expect(ok.thread.vars['value']).toBe('X!');
+  });
 
   it.each(['truncate', 'redact', 'replace'])(
     '11: %s on an empty thread preserves input',

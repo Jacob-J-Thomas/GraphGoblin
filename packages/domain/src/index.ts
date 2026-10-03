@@ -17,3 +17,4 @@ export * from './exit.js';
 export * from './state-machine.js';
 export * from './loop-io.js';
 export * from './replay.js';
+export * from './regex-safety.js';
