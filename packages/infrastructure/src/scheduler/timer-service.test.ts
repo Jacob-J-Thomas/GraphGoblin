@@ -102,9 +102,13 @@ describe('TimerService', () => {
 
     // A listener that dies mid-delivery (a crash) leaves the timer for the next process.
     const crashed = new TimerService(store, clock);
-    crashed.onFire(() => new Promise<void>(() => undefined));
+    let delivering = false;
+    crashed.onFire(() => {
+      delivering = true;
+      return new Promise<void>(() => undefined);
+    });
     void crashed.poll();
-    await new Promise((r) => setTimeout(r, 0));
+    await vi.waitFor(() => expect(delivering).toBe(true), { timeout: 5000 });
     expect(await store.list('r1')).toHaveLength(1);
 
     // The next process delivers it; the listener re-arms the same key, which is kept.
