@@ -211,8 +211,23 @@ export class SqliteRunRepository implements RunRepository {
     return row?.threadSnapshot ?? undefined;
   }
 
-  async saveThread(runId: string, thread: ContextThread): Promise<void> {
-    await this.db.update(runs).set({ threadSnapshot: thread }).where(eq(runs.id, runId));
+  async saveThread(runId: string, thread: ContextThread, seq?: number): Promise<void> {
+    await this.db
+      .update(runs)
+      .set({ threadSnapshot: thread, threadSnapshotSeq: seq ?? null })
+      .where(eq(runs.id, runId));
+  }
+
+  async getThreadCheckpoint(
+    runId: string,
+  ): Promise<{ thread: ContextThread; seq: number } | undefined> {
+    const row = await this.db.query.runs.findFirst({
+      where: eq(runs.id, runId),
+      columns: { threadSnapshot: true, threadSnapshotSeq: true },
+    });
+    return row?.threadSnapshot && row.threadSnapshotSeq !== null
+      ? { thread: row.threadSnapshot, seq: row.threadSnapshotSeq }
+      : undefined;
   }
 
   /**
@@ -240,6 +255,9 @@ export class SqliteRunRepository implements RunRepository {
 
   /** Test and maintenance helper: drop the snapshot so the thread is rebuilt from the log. */
   async clearThreadSnapshot(runId: string): Promise<void> {
-    await this.db.update(runs).set({ threadSnapshot: null }).where(eq(runs.id, runId));
+    await this.db
+      .update(runs)
+      .set({ threadSnapshot: null, threadSnapshotSeq: null })
+      .where(eq(runs.id, runId));
   }
 }

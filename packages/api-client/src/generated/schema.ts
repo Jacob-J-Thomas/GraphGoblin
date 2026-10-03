@@ -2916,6 +2916,9 @@ export interface components {
             signalName?: string | undefined;
             childRunId?: string | undefined;
             beat?: number | undefined;
+            /** Format: date-time */
+            timeoutAt?: string | undefined;
+            startedSeq?: number | undefined;
         };
         RunRecordInput: {
             id: string;
@@ -4386,6 +4389,9 @@ export interface components {
             signalName?: string | undefined;
             childRunId?: string | undefined;
             beat?: number | undefined;
+            /** Format: date-time */
+            timeoutAt?: string | undefined;
+            startedSeq?: number | undefined;
         };
         RunRecord: {
             id: string;

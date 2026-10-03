@@ -154,7 +154,7 @@ describe('adversarial engine invariants', () => {
   });
 
   it.each([true, false])(
-    'ADV-016: a loop-back whose cursor write was lost resumes at its target (iteration recorded=%s)',
+    'ADV-016: a loop-back whose cursor write was lost resumes at its target (append returned=%s)',
     async (recorded) => {
       const e = await createTestEngine();
       const def = singleNodeLoop(
@@ -173,12 +173,16 @@ describe('adversarial engine invariants', () => {
       const update = e.ports.runs.update.bind(e.ports.runs);
       const append = e.ports.events.append.bind(e.ports.events);
       const hang = () => new Promise<never>(() => undefined);
-      // Crash after the exit's loop-back node.finished: either before iteration.incremented is
-      // appended, or after it but before the run record moves.
-      const appendSpy = vi.spyOn(e.ports.events, 'append').mockImplementation((id, drafts) => {
-        if (!recorded && drafts.some((d) => d.type === 'iteration.incremented')) return hang();
-        return append(id, drafts);
-      });
+      // The loop-back's node.finished and iteration.incremented are one append. Crash right after
+      // it is stored (before the executor learns its seq), or after the run record's update was
+      // issued but never applied.
+      const appendSpy = vi
+        .spyOn(e.ports.events, 'append')
+        .mockImplementation(async (id, drafts) => {
+          const stored = await append(id, drafts);
+          if (!recorded && drafts.some((d) => d.type === 'iteration.incremented')) return hang();
+          return stored;
+        });
       const updateSpy = vi.spyOn(e.ports.runs, 'update').mockImplementation((id, changes) => {
         if (recorded && changes.iteration === 2) return hang();
         return update(id, changes);
@@ -273,18 +277,19 @@ describe('adversarial engine invariants', () => {
     e.ports.structured = new FakeStructured(() => 42);
     const snapshots: unknown[] = [];
     const replayed: unknown[] = [];
-    const append = e.ports.events.append.bind(e.ports.events);
-    vi.spyOn(e.ports.events, 'append').mockImplementation(async (id, drafts) => {
-      const events = await append(id, drafts);
-      if (drafts.some((d) => d.type === 'node.finished')) {
-        snapshots.push(await e.manager.getThread(id));
-        replayed.push(replayThread((await e.ports.runs.getInitialThread(id))!, e.events(id)));
+    // Every checkpoint equals a replay of the log up to the seq it names.
+    const save = e.ports.runs.saveThread.bind(e.ports.runs);
+    vi.spyOn(e.ports.runs, 'saveThread').mockImplementation(async (id, thread, seq) => {
+      if (seq !== undefined) {
+        snapshots.push(thread);
+        replayed.push(replayThread((await e.ports.runs.getInitialThread(id))!, e.events(id), seq));
       }
-      return events;
+      return save(id, thread, seq);
     });
     const r = await e.runToIdle(v.loopId);
     expect(r.status).toBe('succeeded');
     expect(e.events(r.id).map((x) => x.seq)).toEqual(e.events(r.id).map((_, i) => i + 1));
+    expect(snapshots.length).toBeGreaterThan(1);
     expect(snapshots).toEqual(replayed);
   });
 

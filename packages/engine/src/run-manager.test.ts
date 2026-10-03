@@ -259,7 +259,7 @@ describe('run control', () => {
     expect(engine.ports.harness.started).toHaveLength(1);
   });
 
-  it('pauses a waiting run; on resume the wait node parks again', async () => {
+  it('pauses a waiting run; on resume it waits again with its deadline, and a missed timer fires', async () => {
     const engine = await createTestEngine();
     const version = engine.publish(
       singleNodeLoop('w', {
@@ -273,13 +273,18 @@ describe('run control', () => {
     expect(run.status).toBe('waiting');
     expect(engine.ports.timers.scheduled).toHaveLength(1);
     await engine.manager.pause(run.id);
-    await engine.ports.timers.fire(run.id, 'timer'); // ignored while paused
+    engine.ports.clock.advance(61_000);
+    // The timer fires while paused: ignored, and consumed.
+    expect(await engine.ports.timers.fireDue(engine.ports.clock.now())).toBe(1);
     await engine.manager.waitForIdle();
     expect((await engine.ports.runs.get(run.id))?.status).toBe('paused');
-    await engine.manager.resume(run.id);
-    const reparked = await engine.settle(run.id);
-    expect(reparked.status).toBe('waiting');
-    expect(engine.eventTypes(run.id).filter((t) => t === 'run.waiting')).toHaveLength(2);
+    // Resume goes back to waiting on the same wait (no new run.waiting) and re-arms its timer.
+    const resumed = await engine.manager.resume(run.id);
+    expect(resumed).toMatchObject({ status: 'waiting', waiting: { until: run.waiting?.until } });
+    expect(engine.eventTypes(run.id).filter((t) => t === 'run.waiting')).toHaveLength(1);
+    expect(engine.ports.timers.scheduled).toHaveLength(1);
+    expect(await engine.ports.timers.fireDue(engine.ports.clock.now())).toBe(1);
+    expect((await engine.settle(run.id)).status).toBe('succeeded');
   });
 
   it('reports unknown runs', async () => {

@@ -1,0 +1,1 @@
+ALTER TABLE `runs` ADD `thread_snapshot_seq` integer;

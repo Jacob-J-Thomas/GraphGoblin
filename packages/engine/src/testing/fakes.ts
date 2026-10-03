@@ -53,6 +53,7 @@ import type {
   WorkspacePort,
   YesNoRequest,
 } from '../ports.js';
+import { AppendConflictError } from '../errors.js';
 
 const ULID_ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 
@@ -120,8 +121,15 @@ export class InMemoryEventStore implements EventStorePort {
   private readonly listeners = new Map<string, Set<(event: RunEvent) => void>>();
   constructor(private readonly clock: ClockPort) {}
 
-  append(runId: string, drafts: readonly EventDraft[]): Promise<RunEvent[]> {
+  append(
+    runId: string,
+    drafts: readonly EventDraft[],
+    options: { expectedLastSeq?: number } = {},
+  ): Promise<RunEvent[]> {
     const log = this.logs.get(runId) ?? [];
+    if (options.expectedLastSeq !== undefined && options.expectedLastSeq !== log.length) {
+      return Promise.reject(new AppendConflictError(runId, options.expectedLastSeq, log.length));
+    }
     const stored: RunEvent[] = [];
     for (const draft of drafts) {
       const event = {
@@ -163,6 +171,7 @@ export class InMemoryRunRepository implements RunRepository {
   readonly runs = new Map<string, RunRecord>();
   private readonly initial = new Map<string, ContextThread>();
   private readonly threads = new Map<string, ContextThread>();
+  private readonly checkpoints = new Map<string, number>();
 
   create(run: RunRecord, initialThread: ContextThread): Promise<void> {
     this.runs.set(run.id, run);
@@ -221,13 +230,21 @@ export class InMemoryRunRepository implements RunRepository {
   getThread(runId: string): Promise<ContextThread | undefined> {
     return Promise.resolve(this.threads.get(runId));
   }
-  saveThread(runId: string, thread: ContextThread): Promise<void> {
+  saveThread(runId: string, thread: ContextThread, seq?: number): Promise<void> {
     this.threads.set(runId, thread);
+    if (seq === undefined) this.checkpoints.delete(runId);
+    else this.checkpoints.set(runId, seq);
     return Promise.resolve();
+  }
+  getThreadCheckpoint(runId: string): Promise<{ thread: ContextThread; seq: number } | undefined> {
+    const thread = this.threads.get(runId);
+    const seq = this.checkpoints.get(runId);
+    return Promise.resolve(thread && seq !== undefined ? { thread, seq } : undefined);
   }
   /** Test helper: drop the thread snapshot to force replay. */
   dropThreadSnapshot(runId: string): void {
     this.threads.delete(runId);
+    this.checkpoints.delete(runId);
   }
 }
 

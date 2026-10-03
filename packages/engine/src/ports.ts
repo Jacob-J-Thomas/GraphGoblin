@@ -43,8 +43,16 @@ export interface Logger {
 }
 
 export interface EventStorePort {
-  /** Append in order, assigning strictly increasing `seq` per run. Returns the stored events. */
-  append(runId: string, drafts: readonly EventDraft[]): Promise<RunEvent[]>;
+  /**
+   * Append in order, atomically, assigning strictly increasing `seq` per run. Returns the stored
+   * events. With `expectedLastSeq`, the append happens only if the run's last `seq` is exactly
+   * that (0 for an empty log); otherwise nothing is written and `AppendConflictError` is thrown.
+   */
+  append(
+    runId: string,
+    drafts: readonly EventDraft[],
+    options?: { expectedLastSeq?: number },
+  ): Promise<RunEvent[]>;
   read(runId: string, afterSeq?: number): Promise<RunEvent[]>;
   subscribe(runId: string, listener: (event: RunEvent) => void): () => void;
 }
@@ -80,7 +88,13 @@ export interface RunRepository {
   listChildren(parentRunId: string): Promise<RunRecord[]>;
   getInitialThread(runId: string): Promise<ContextThread | undefined>;
   getThread(runId: string): Promise<ContextThread | undefined>;
-  saveThread(runId: string, thread: ContextThread): Promise<void>;
+  /**
+   * Save the thread snapshot. `seq` is the last event it reflects: the thread equals the initial
+   * thread with every event up to `seq` replayed. Without `seq` it is a plain snapshot for reads.
+   */
+  saveThread(runId: string, thread: ContextThread, seq?: number): Promise<void>;
+  /** The snapshot with the `seq` it reflects, when it was saved with one. */
+  getThreadCheckpoint(runId: string): Promise<{ thread: ContextThread; seq: number } | undefined>;
 }
 
 export interface LoopRepository {

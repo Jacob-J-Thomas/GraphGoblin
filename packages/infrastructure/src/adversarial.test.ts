@@ -12,6 +12,7 @@ import { SqliteScheduleStore } from './sqlite/triggers.js';
 import { SqliteTimerStore } from './sqlite/timers.js';
 import { CronScheduler, type CronFire } from './scheduler/cron-scheduler.js';
 import { TimerService } from './scheduler/timer-service.js';
+import { MemoryTimerStore } from './scheduler/memory-timer-store.js';
 import { ProcessScripts } from './process/scripts.js';
 
 let db: DatabaseHandle;
@@ -145,13 +146,14 @@ describe('adversarial infrastructure invariants (forks pool)', () => {
       });
       await manager.waitForIdle();
       manager.stop();
-      expect((await store.list(r.id)).map((t) => t.key)).toEqual([key]);
+      const seq = (await e.ports.runs.get(r.id))!.waiting!.startedSeq;
+      expect((await store.list(r.id)).map((t) => t.key)).toEqual([`${key}@${seq}`]);
       // The row is gone but the run still waits: a fire consumed before its wake was recorded.
-      await store.remove(r.id, key);
+      await store.remove(r.id);
       e.ports.clock.advance(2000);
       const recovered = new RunManager({ ...e.ports, timers: timer }, e.settings);
       await recovered.start();
-      expect((await store.list(r.id)).map((t) => t.key)).toEqual([key]);
+      expect((await store.list(r.id)).map((t) => t.key)).toEqual([`${key}@${seq}`]);
       await timer.poll();
       await recovered.waitForIdle();
       recovered.stop();
@@ -190,7 +192,9 @@ describe('adversarial infrastructure invariants (forks pool)', () => {
     await vi.waitFor(() => expect(spy).toHaveBeenCalled());
     manager.stop();
     spy.mockRestore();
-    expect((await store.list(r.id)).map((t) => t.key)).toEqual(['timer']);
+    expect((await store.list(r.id)).map((t) => t.key)).toEqual([
+      `timer@${(await e.ports.runs.get(r.id))!.waiting!.startedSeq}`,
+    ]);
     const second = new TimerService(store, e.ports.clock);
     const recovered = new RunManager({ ...e.ports, timers: second }, e.settings);
     await recovered.start();
@@ -270,4 +274,118 @@ describe('adversarial infrastructure invariants (forks pool)', () => {
       await rm(dir, { recursive: true, force: true });
     }
   }, 30_000);
+});
+
+describe('timer delivery (review of WP-G)', () => {
+  const waitLoop = (name: string, config: unknown) =>
+    singleNodeLoop(name, { id: 'wait', kind: 'wait', label: 'Wait', config });
+
+  it('a throwing timer listener leaves the timer for another delivery', async () => {
+    const store = new MemoryTimerStore();
+    const timer = new TimerService(store, new FakeClock());
+    const listener = vi.fn().mockRejectedValue(new Error('transient store error'));
+    timer.onFire(listener);
+    await timer.schedule('r', 'timer', new Date(0));
+    await timer.poll();
+    await timer.poll();
+    expect(listener).toHaveBeenCalledTimes(2);
+    expect(await store.list('r')).toHaveLength(1);
+  });
+
+  it('a failed manager wake does not consume the timer', async () => {
+    const e = await createTestEngine();
+    e.manager.stop();
+    const store = new MemoryTimerStore();
+    const timer = new TimerService(store, e.ports.clock);
+    const manager = new RunManager({ ...e.ports, timers: timer }, e.settings);
+    await manager.start();
+    const v = e.publish(waitLoop('wake-failure', { mode: 'duration', seconds: 1 }));
+    const r = await manager.startRun({ ownerId: 'local', loopId: v.loopId, source: 'manual.api' });
+    await manager.waitForIdle();
+    const transition = e.ports.runs.transition.bind(e.ports.runs);
+    const spy = vi
+      .spyOn(e.ports.runs, 'transition')
+      .mockImplementation((id, from, changes) =>
+        changes.status === 'running'
+          ? Promise.reject(new Error('transient'))
+          : transition(id, from, changes),
+      );
+    e.ports.clock.advance(2000);
+    await timer.poll();
+    spy.mockRestore();
+    // The wake is durable already; the next poll finds the run woken and acknowledges.
+    await timer.poll();
+    await manager.waitForIdle();
+    manager.stop();
+    expect((await manager.getRun(r.id))?.status).toBe('succeeded');
+  });
+
+  it('a duration with a timeout re-arms both lost deadlines (SQLite)', async () => {
+    const e = await createTestEngine();
+    e.manager.stop();
+    const store = new SqliteTimerStore(db.db);
+    const timer = new TimerService(store, e.ports.clock);
+    const ports = { ...e.ports, timers: timer };
+    const manager = new RunManager(ports, e.settings);
+    await manager.start();
+    const v = e.publish(
+      waitLoop('two-deadlines', {
+        mode: 'duration',
+        seconds: 3600,
+        timeoutSeconds: 1,
+        onTimeout: 'fail-run',
+      }),
+    );
+    const r = await manager.startRun({ ownerId: 'local', loopId: v.loopId, source: 'manual.api' });
+    await manager.waitForIdle();
+    manager.stop();
+    const seq = (await e.ports.runs.get(r.id))!.waiting!.startedSeq;
+    expect((await store.list(r.id)).map((t) => t.key).sort()).toEqual([
+      `timeout@${seq}`,
+      `timer@${seq}`,
+    ]);
+    await store.remove(r.id);
+    e.ports.clock.advance(2000);
+    const recovered = new RunManager(ports, e.settings);
+    await recovered.start();
+    expect(await store.list(r.id)).toHaveLength(2);
+    await timer.poll();
+    await recovered.waitForIdle();
+    recovered.stop();
+    expect((await recovered.getRun(r.id))?.failure?.code).toBe('WAIT_TIMEOUT');
+  });
+
+  it('an obsolete timeout in the same poll batch does not wake a later input wait', async () => {
+    const e = await createTestEngine();
+    e.manager.stop();
+    const store = new MemoryTimerStore();
+    const timer = new TimerService(store, e.ports.clock);
+    const manager = new RunManager({ ...e.ports, timers: timer }, e.settings);
+    await manager.start();
+    const def = waitLoop('stale-timeout', { mode: 'duration', seconds: 1, timeoutSeconds: 2 });
+    def.nodes.push({
+      id: 'input',
+      kind: 'wait',
+      label: 'Input',
+      config: { mode: 'input', prompt: '?' },
+    });
+    def.edges[1]!.to.node = 'input';
+    def.edges.push({ id: 'end', from: { node: 'input', port: 'out' }, to: { node: 'done' } });
+    const r = await manager.startRun({
+      ownerId: 'local',
+      loopId: e.publish(def).loopId,
+      source: 'manual.api',
+    });
+    await manager.waitForIdle();
+    // Between the two fires of one poll, the run reaches the input wait.
+    timer.onFire(() => manager.waitForIdle());
+    e.ports.clock.advance(3000);
+    await timer.poll();
+    await manager.waitForIdle();
+    manager.stop();
+    expect(await manager.getRun(r.id)).toMatchObject({
+      status: 'waiting',
+      waiting: { nodeId: 'input', kind: 'input' },
+    });
+  });
 });

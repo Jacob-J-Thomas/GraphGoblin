@@ -13,10 +13,11 @@ export interface TimerServiceOptions {
 
 /**
  * Fires persisted timers, at least once. A timer is removed from the store only after every
- * listener has run (whether or not it threw), so a crash mid-fire leaves it in place and it fires
- * again after a restart; the run manager's wake is a compare-and-set, so a repeat is harmless.
- * The removal is conditional on the fired time, so a listener that re-armed the same key keeps
- * its new timer.
+ * listener has handled it without throwing: a listener that throws (a transient store error) or
+ * a crash mid-fire leaves it in place, and it fires again on the next poll or after a restart.
+ * Listeners must be idempotent; the run manager's wake is a compare-and-set on the wait it was
+ * armed for. The removal is conditional on the fired time, so a listener that re-armed the same
+ * key keeps its new timer.
  */
 export class TimerService implements TimerPort {
   private listeners: Listener[] = [];
@@ -72,21 +73,23 @@ export class TimerService implements TimerPort {
     try {
       const due = await this.store.listDue(this.clock.now(), this.batchSize);
       for (const timer of due) {
+        let delivered = true;
         for (const listener of this.listeners) {
           try {
             await listener(timer.runId, timer.key);
           } catch (error) {
+            delivered = false;
             this.logger?.error(
               {
                 runId: timer.runId,
                 key: timer.key,
                 error: error instanceof Error ? error.message : String(error),
               },
-              'timer listener failed',
+              'timer listener failed; the timer stays and fires again on the next poll',
             );
           }
         }
-        await this.store.acknowledge(timer.runId, timer.key, timer.at);
+        if (delivered) await this.store.acknowledge(timer.runId, timer.key, timer.at);
       }
       return due.length;
     } catch (error) {

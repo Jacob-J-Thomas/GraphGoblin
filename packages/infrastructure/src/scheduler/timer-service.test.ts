@@ -25,7 +25,7 @@ describe('MemoryTimerStore', () => {
 });
 
 describe('TimerService', () => {
-  it('fires due timers once, removes them after the listeners, and keeps going when a listener fails', async () => {
+  it('keeps a timer whose listener failed and delivers it again on the next poll', async () => {
     const store = new MemoryTimerStore();
     const clock = new FakeClock();
     const logger = new CapturingLogger();
@@ -43,9 +43,13 @@ describe('TimerService', () => {
     clock.advance(1000);
     expect(await service.poll()).toBe(1);
     expect(fired).toEqual(['r1:timer']);
-    expect(logger.lines.some((l) => l.msg === 'timer listener failed')).toBe(true);
-    expect(await store.list('r1')).toEqual([]);
+    expect(logger.lines.some((l) => l.msg.startsWith('timer listener failed'))).toBe(true);
+    // Not acknowledged: the next poll delivers it again, and once every listener succeeds it goes.
+    expect(await store.list('r1')).toHaveLength(1);
     off();
+    expect(await service.poll()).toBe(1);
+    expect(fired).toEqual(['r1:timer', 'r1:timer']);
+    expect(await store.list('r1')).toEqual([]);
     await service.cancel('r2');
     clock.advance(10_000);
     expect(await service.poll()).toBe(0);

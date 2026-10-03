@@ -566,6 +566,31 @@ describe('adversarial API invariants', () => {
         (await t.app.inject({ method: 'POST', url: '/loops', payload: { definition } })).statusCode,
       ).toBe(400);
   });
+  it('ADV-004 review: a loop an active run can still start as a subloop cannot be deleted', async () => {
+    const t = await app();
+    const child = await t.publishLoop({ ...minimalLoop(), name: 'pinned-child' });
+    const def = minimalLoop();
+    def.name = 'waiting-parent';
+    def.nodes.push(
+      { id: 'wait', kind: 'wait', label: 'Wait', config: { mode: 'input', prompt: '?' } },
+      { id: 'sub', kind: 'subloop', label: 'Sub', config: { loopRef: { loopId: child } } },
+    );
+    def.edges = [
+      { id: 'a', from: { node: 'start', port: 'out' }, to: { node: 'wait' } },
+      { id: 'b', from: { node: 'wait', port: 'out' }, to: { node: 'sub' } },
+      { id: 'c', from: { node: 'sub', port: 'out' }, to: { node: 'done' } },
+    ];
+    const parent = await t.publishLoop(def);
+    const run = await start(t, parent);
+    const refused = await t.app.inject({ method: 'DELETE', url: `/loops/${child}` });
+    expect(refused.statusCode).toBe(409);
+    expect(refused.json()).toMatchObject({ code: 'LOOP_IN_USE' });
+    await t.container.manager.provideInput(run.id, null);
+    await t.idle();
+    expect((await t.container.manager.getRun(run.id))?.status).toBe('succeeded');
+    expect((await t.app.inject({ method: 'DELETE', url: `/loops/${child}` })).statusCode).toBe(204);
+  });
+
   it('ADV-009: every id route validates ULIDs before repository lookup', async () => {
     const t = await app();
     let checked = 0;

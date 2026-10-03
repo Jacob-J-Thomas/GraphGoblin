@@ -314,7 +314,7 @@ describe('runs', () => {
     expect(
       (await t.app.inject({ method: 'POST', url: `/runs/${run.id}/resume` })).json<RunRecord>()
         .status,
-    ).toBe('running');
+    ).toBe('waiting'); // paused while waiting: resume goes back to waiting (docs/05)
     await t.idle();
     const provided = await t.app.inject({
       method: 'POST',

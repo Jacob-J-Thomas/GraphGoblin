@@ -110,7 +110,11 @@ describe('SqliteRunRepository', () => {
     const next = { ...thread, vars: { changed: true } };
     await repo.saveThread(run.id, next);
     expect((await repo.getThread(run.id))?.vars).toEqual({ changed: true });
+    expect(await repo.getThreadCheckpoint(run.id)).toBeUndefined();
+    await repo.saveThread(run.id, next, 7);
+    expect(await repo.getThreadCheckpoint(run.id)).toEqual({ thread: next, seq: 7 });
     await repo.clearThreadSnapshot(run.id);
+    expect(await repo.getThreadCheckpoint(run.id)).toBeUndefined();
     expect(await repo.getThread(run.id)).toBeUndefined();
     expect(await repo.getInitialThread(run.id)).toEqual(thread);
     await expect(repo.update('missing', {})).rejects.toThrow(/not found/);
@@ -241,6 +245,27 @@ describe('SqliteEventStore', () => {
     unsubscribe();
     await store.append(run.id, [{ type: 'run.cancelled' }]);
     expect(seen).toHaveLength(4);
+  });
+
+  it('appends conditionally on the last seq, atomically', async () => {
+    const runs = new SqliteRunRepository(handle.db);
+    const store = new SqliteEventStore(handle.db, clock);
+    const run = runRecord();
+    await runs.create(run, sampleThread());
+    await store.append(run.id, [{ type: 'run.queued' }], { expectedLastSeq: 0 });
+    const results = await Promise.allSettled([
+      store.append(run.id, [{ type: 'run.woken', nodeId: 'w', reason: 'input' }], {
+        expectedLastSeq: 1,
+      }),
+      store.append(run.id, [{ type: 'run.woken', nodeId: 'w', reason: 'input' }], {
+        expectedLastSeq: 1,
+      }),
+    ]);
+    expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
+    expect(results.find((r) => r.status === 'rejected')).toMatchObject({
+      reason: { name: 'AppendConflictError', expectedLastSeq: 1, actualLastSeq: 2 },
+    });
+    expect((await store.read(run.id)).map((e) => e.type)).toEqual(['run.queued', 'run.woken']);
   });
 });
 

@@ -70,7 +70,10 @@ describe('wait node', () => {
     const version = engine.publish(waitLoop('sleep', { mode: 'duration', seconds: 30 }));
     const run = await engine.runToIdle(version.loopId);
     expect(run.waiting?.kind).toBe('timer');
-    expect(engine.ports.timers.scheduled[0]).toMatchObject({ runId: run.id, key: 'timer' });
+    expect(engine.ports.timers.scheduled[0]).toMatchObject({
+      runId: run.id,
+      key: `timer@${run.waiting?.startedSeq}`,
+    });
     expect(engine.ports.timers.scheduled[0]?.at.toISOString()).toBe('2026-10-02T12:00:30.000Z');
     engine.ports.clock.advance(30_000);
     expect(await engine.ports.timers.fireDue(engine.ports.clock.now())).toBe(1);
