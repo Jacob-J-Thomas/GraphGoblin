@@ -58,9 +58,13 @@ With `GG_REQUIRE_API_KEY=true` on a fresh install nothing could create the first
 ### Consequences
 
 - Anyone who can run the command as the server's user with its environment can mint a key. That is the same trust boundary as reading the database or the master key file, so it adds no new exposure.
-- The command can run while the server is running (SQLite in WAL mode with a busy timeout).
+- The command originally could run while the server was running (SQLite in WAL mode with a busy timeout); the amendment below supersedes this.
 
 ### Alternatives considered
 
 - Minting a key in the preflight or install script automatically: preflight must not change state, and an install script that prints a secret on every run is easy to leak into logs.
 - A bootstrap token in an environment variable: one more secret to manage and rotate.
+
+### Amendment 2026-10-03
+
+Key creation now takes the same data-directory lock as the API and runs only while the API is stopped, releasing the lock before the server restarts. The [release sign-off on `0441b26`](../qa/2026-10-03-release-signoff.md#re-verification-on-0441b26) verified this refusal before any database work: exclusive ownership guards SQLite migrations and writes as well as run recovery. This changes the earlier concurrency consequence while preserving the local administrative trust boundary in [ADR-0016](ADR-0016-api-key-scope-delegation.md); HTTP scope delegation remains restricted as recorded there. In a container, stop the API and use `docker compose run --rm graphgoblin node apps/api/dist/main.js --create-api-key <name>` against its data volume, then restart it.

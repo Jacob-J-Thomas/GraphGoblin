@@ -33,15 +33,37 @@ describe('data-directory ownership', () => {
     await expect(access(path)).rejects.toMatchObject({ code: 'ENOENT' });
   });
 
-  it('refuses a live PID without replacing its lock', async () => {
+  it.each([false, true])(
+    'refuses its own PID while held in-process (path alias: %s)',
+    async (alias) => {
+      const lock = await acquireDataDirLock(dataDir);
+      const original = await readFile(path, 'utf8');
+      await expect(acquireDataDirLock(alias ? `${dataDir}/.` : dataDir)).rejects.toThrow(
+        `another GraphGoblin process holds ${path}`,
+      );
+      expect(await readFile(path, 'utf8')).toBe(original);
+      await expect(access(`${path}.reclaim`)).rejects.toMatchObject({ code: 'ENOENT' });
+      await lock.release();
+    },
+  );
+
+  it('reclaims its own PID from a previous process without an in-process hold', async () => {
+    const original = JSON.stringify({ pid: process.pid, token: 'previous-process' });
+    await writeFile(path, original);
     const lock = await acquireDataDirLock(dataDir);
-    const original = await readFile(path, 'utf8');
-    await expect(acquireDataDirLock(dataDir)).rejects.toThrow(
-      `another GraphGoblin process holds ${path}`,
-    );
+    expect(JSON.parse(await readFile(path, 'utf8'))).toMatchObject({ pid: process.pid });
+    expect(await readFile(path, 'utf8')).not.toBe(original);
+    await lock.release();
+    await expect(access(path)).rejects.toMatchObject({ code: 'ENOENT' });
+  });
+
+  it('refuses another live PID without replacing its lock', async () => {
+    const original = JSON.stringify({ pid: process.pid + 1 });
+    await writeFile(path, original);
+    vi.spyOn(process, 'kill').mockReturnValue(true);
+    await expect(acquireDataDirLock(dataDir)).rejects.toThrow(`holds ${path}`);
     expect(await readFile(path, 'utf8')).toBe(original);
     await expect(access(`${path}.reclaim`)).rejects.toMatchObject({ code: 'ENOENT' });
-    await lock.release();
   });
 
   it('replaces a stale lock from a process that exited', async () => {
@@ -56,7 +78,7 @@ describe('data-directory ownership', () => {
   it.each(['EPERM', 'EACCES', 'UNKNOWN'])(
     'refuses when PID probing fails with %s',
     async (code) => {
-      const original = JSON.stringify({ pid: process.pid });
+      const original = JSON.stringify({ pid: process.pid + 1 });
       await writeFile(path, original);
       vi.spyOn(process, 'kill').mockImplementation(() => {
         throw Object.assign(new Error('cannot probe'), { code });
@@ -88,9 +110,11 @@ describe('data-directory ownership', () => {
 
   it('leaves a lock with a different ownership token intact on release', async () => {
     const lock = await acquireDataDirLock(dataDir);
-    await writeFile(path, 'replacement ownership');
+    const record = JSON.parse(await readFile(path, 'utf8')) as Record<string, unknown>;
+    const replacement = JSON.stringify({ ...record, token: randomUUID() });
+    await writeFile(path, replacement);
     await lock.release();
-    expect(await readFile(path, 'utf8')).toBe('replacement ownership');
+    expect(await readFile(path, 'utf8')).toBe(replacement);
   });
 
   it('accepts a missing file during release', async () => {
@@ -99,13 +123,19 @@ describe('data-directory ownership', () => {
     await lock.release();
   });
 
-  it.each(['fresh', 'stale'])(
+  it.each(['fresh', 'stale', 'own-pid', 'stale-reclaim'])(
     'admits only one simultaneous contender for a %s lock',
     async (kind) => {
       if (kind === 'stale') {
         const child = spawnSync(process.execPath, ['-e', '']);
         expect(child.status).toBe(0);
         await writeFile(path, JSON.stringify({ pid: child.pid }));
+      }
+      if (kind === 'own-pid' || kind === 'stale-reclaim') {
+        await writeFile(path, JSON.stringify({ pid: process.pid }));
+      }
+      if (kind === 'stale-reclaim') {
+        await writeFile(`${path}.reclaim`, JSON.stringify({ pid: process.pid }));
       }
       const results = await Promise.allSettled(
         Array.from({ length: 8 }, () => acquireDataDirLock(dataDir)),
@@ -117,6 +147,33 @@ describe('data-directory ownership', () => {
       }
     },
   );
+
+  it.each([
+    ['own PID', false],
+    ['own PID', true],
+    ['dead PID', false],
+    ['dead PID', true],
+  ] as const)('reclaims a sidecar with %s (main lock exists: %s)', async (owner, mainExists) => {
+    const child = spawnSync(process.execPath, ['-e', '']);
+    expect(child.status).toBe(0);
+    const pid = owner === 'own PID' ? process.pid : child.pid;
+    if (mainExists) await writeFile(path, JSON.stringify({ pid }));
+    await writeFile(`${path}.reclaim`, JSON.stringify({ pid, token: 'interrupted-reclamation' }));
+    const lock = await acquireDataDirLock(dataDir);
+    expect(JSON.parse(await readFile(path, 'utf8'))).toMatchObject({ pid: process.pid });
+    await expect(access(`${path}.reclaim`)).rejects.toMatchObject({ code: 'ENOENT' });
+    await lock.release();
+  });
+
+  it('refuses a reclamation guard owned by another live PID', async () => {
+    const original = JSON.stringify({ pid: process.pid + 1 });
+    await writeFile(path, JSON.stringify({ pid: process.pid }));
+    await writeFile(`${path}.reclaim`, original);
+    vi.spyOn(process, 'kill').mockReturnValue(true);
+    await expect(acquireDataDirLock(dataDir)).rejects.toThrow(`holds ${path}.reclaim`);
+    expect(await readFile(`${path}.reclaim`, 'utf8')).toBe(original);
+    expect(JSON.parse(await readFile(path, 'utf8'))).toMatchObject({ pid: process.pid });
+  });
 
   it('refuses an existing reclamation guard without deleting either file', async () => {
     await writeFile(path, JSON.stringify({ pid: process.pid }));

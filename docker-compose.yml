@@ -8,14 +8,19 @@ services:
     build: .
     image: graphgoblin:local
     restart: unless-stopped
+    init: true
+    # Allow active Codex turns to settle and release the volume lock before Docker sends SIGKILL.
+    stop_grace_period: 90s
     ports:
       # Published on the host's loopback only. Widen it only together with GG_REQUIRE_API_KEY.
       - '127.0.0.1:4747:4747'
     environment:
       GG_DEFAULT_MODEL: gpt-6-luna
       GG_DEFAULT_EFFORT: low
-      # Require API keys for every non-public route; create the first key with
-      #   docker compose exec graphgoblin node apps/api/dist/main.js --create-api-key owner
+      # Require API keys for every non-public route; stop the API, create the first key, restart:
+      #   docker compose stop graphgoblin
+      #   docker compose run --rm graphgoblin node apps/api/dist/main.js --create-api-key <name>
+      #   docker compose up -d graphgoblin
       # GG_REQUIRE_API_KEY: 'true'
       # Codex with an API key instead of the mounted login:
       # OPENAI_API_KEY: sk-...
