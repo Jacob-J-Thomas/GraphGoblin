@@ -154,7 +154,6 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
       },
     },
     async (request, reply) => {
-      if (!requireScope(request, reply, 'loops:write')) return reply;
       const created = await loops.create(request.auth.ownerId, request.body.definition);
       reply.status(201);
       return {
@@ -181,7 +180,6 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
       },
     },
     async (request, reply) => {
-      if (!requireScope(request, reply, 'loops:write')) return reply;
       const imported = importLoop(request.body);
       const created = await loops.create(request.auth.ownerId, imported.definition);
       reply.status(201);
@@ -277,7 +275,6 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
       },
     },
     async (request, reply) => {
-      if (!requireScope(request, reply, 'loops:write')) return reply;
       const loop = await ownedLoop(request, request.params.id);
       if (!loop.draftVersionId)
         return problem(reply, 409, 'NO_DRAFT', 'the loop has no draft to publish');
@@ -376,7 +373,6 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
       },
     },
     async (request, reply) => {
-      if (!requireScope(request, reply, 'loops:write')) return reply;
       await ownedLoop(request, request.params.id);
       const active = await runs.list({
         loopId: request.params.id,
