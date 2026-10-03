@@ -1,4 +1,7 @@
-# Build context for the container image: sources, manifests, and the lockfile only.
+# Build context for the container image. The Dockerfile copies only the manifests, the lockfile,
+# tooling/, packages/, and apps/; these rules keep build output, local data, secrets, and scratch
+# files out of the context and the layer cache even inside those directories.
+# tooling/scripts/dockerignore.test.mjs checks them against sample paths.
 **/node_modules
 **/dist
 **/coverage
@@ -8,12 +11,19 @@
 **/*.tsbuildinfo
 **/*.log
 .git
-.claude
 .github
-data
-*.db
-*.db-wal
-*.db-shm
-.env
-.env.*
+.claude/
 docs
+
+# Local data, keys, and scratch: never part of an image.
+data
+**/data/
+.tmp/
+**/.tmp/
+**/master.key
+**/*.db
+**/*.db-wal
+**/*.db-shm
+**/*.sqlite*
+.env*
+**/.env*

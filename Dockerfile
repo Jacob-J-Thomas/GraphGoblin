@@ -14,7 +14,12 @@ FROM ${NODE_IMAGE} AS build
 # The pnpm major pinned by package.json "packageManager".
 RUN npm install --global pnpm@12.8.1 && pnpm --version
 WORKDIR /src
-COPY . .
+# Only what the build reads; .dockerignore also drops build output, local data, and secrets
+# inside these paths (checked by tooling/scripts/dockerignore.test.mjs).
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc turbo.json tsconfig.base.json tsconfig.json ./
+COPY tooling ./tooling
+COPY packages ./packages
+COPY apps ./apps
 RUN pnpm install --frozen-lockfile
 # Only the API, its workspace dependencies, and the web app.
 RUN pnpm exec turbo run build --filter=@graphgoblin/api... --filter=@graphgoblin/web
