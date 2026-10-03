@@ -106,7 +106,7 @@ export GG_DATA_DIR="$HOME/graphgoblin-data" GG_DEFAULT_MODEL=gpt-6-luna GG_DEFAU
 pnpm start
 ```
 
-Run one API process per data directory. The API takes `<data-directory>/graphgoblin.lock` before opening the database, applying migrations, or recovering runs. If its PID is still alive, a second start exits 1 with `another GraphGoblin process holds <path>`, even on a different port. A dead PID's lock is replaced automatically; a malformed lock or an owner whose death cannot be verified is refused. Stop the API before `--create-api-key`, which takes the same lock to write the database. Read-only `--preflight` can run alongside a server. If you override `GG_DB_URL`, processes using that same database must also use the same `GG_DATA_DIR`.
+Run one API process per data directory. The API takes `<data-directory>/graphgoblin.lock` before opening the database, applying migrations, or recovering runs. If its PID is still alive, a second start exits 1 with `another GraphGoblin process holds <path>`, even on a different port. A dead PID's lock, or one naming this process's own PID without an in-process hold, is replaced automatically; a malformed lock or an owner whose death cannot be verified is refused. Stop the API before `--create-api-key`, which takes the same lock to write the database. Read-only `--preflight` can run alongside a server. If you override `GG_DB_URL`, processes using that same database must also use the same `GG_DATA_DIR`.
 
 `pnpm --filter @graphgoblin/api start` is equivalent. The start scripts run the built entry point. Its source and runtime paths are:
 

@@ -38,7 +38,7 @@ The compose file keeps data in a volume, publishes the port on the host's loopba
 
 1. Open **Loops**, create a loop, then **Publish** and **Run** the starter graph.
 2. Follow [Build a loop](docs/guide/02-build-a-loop.md) to add a Codex inference node.
-3. To require API keys, set `GG_REQUIRE_API_KEY=true` and create the first key with `node apps/api/dist/main.js --create-api-key <name>` (in the container: `docker compose exec graphgoblin node apps/api/dist/main.js --create-api-key <name>`).
+3. To require API keys, set `GG_REQUIRE_API_KEY=true`, stop the API, and create the first key with `node apps/api/dist/main.js --create-api-key <name>`, then restart. In the container, run `docker compose stop graphgoblin`, then `docker compose run --rm graphgoblin node apps/api/dist/main.js --create-api-key <name>`, then `docker compose up -d graphgoblin`.
 
 See [Install and make a first run](docs/guide/01-install-and-first-run.md) for every option and setting.
 
