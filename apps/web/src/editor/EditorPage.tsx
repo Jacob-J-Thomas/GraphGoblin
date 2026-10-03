@@ -97,6 +97,7 @@ function useLoadEditor(loopId: string) {
   const restoreSetAside = async () => {
     if (!setAside) return;
     const restoredCopy = setAside;
+    const startedIn = useEditorStore.getState().generation;
     setSetAside(undefined);
     // Mirror the restored copy as this device's unsynced draft before its backup goes, so
     // leaving at any point afterwards still finds it on the next load.
@@ -106,8 +107,13 @@ function useLoadEditor(loopId: string) {
       savedAt: new Date().toISOString(),
       synced: false,
     });
-    useEditorStore.getState().load(loopId, restoredCopy.definition, { dirty: true });
-    setRestored(true);
+    // Load it only into the editor that asked: after navigating away (the store was reset or
+    // now holds another loop) the durable copy above is restored on the next visit instead.
+    const now = useEditorStore.getState();
+    if (now.loopId === loopId && now.generation === startedIn) {
+      now.load(loopId, restoredCopy.definition, { dirty: true });
+      setRestored(true);
+    }
     await clearSetAsideDraft(loopId);
   };
   const discardSetAside = () => {
