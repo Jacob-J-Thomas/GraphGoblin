@@ -322,6 +322,45 @@ test('with GG_REQUIRE_API_KEY the shell loads, asks for a key, and uses it', asy
   await context.close();
 });
 
+test('with GG_REQUIRE_API_KEY, editor and inspector deep links go live once the key is entered', async ({
+  browser,
+  playwright,
+}) => {
+  const extra = (await (
+    await fetch(`${process.env['GG_E2E_CONTROL_URL'] ?? ''}/apps`, {
+      method: 'POST',
+      body: JSON.stringify({ requireApiKey: true }),
+    })
+  ).json()) as { url: string; token: string };
+  const api = await playwright.request.newContext({
+    baseURL: extra.url,
+    extraHTTPHeaders: { authorization: `Bearer ${extra.token}` },
+  });
+  const loopId = await publishLoop(api, approvalLoop('qa key deep links'));
+  const run = await api.post(`/loops/${loopId}/runs`, { data: {} });
+  const runId = ((await run.json()) as { run: { id: string } }).run.id;
+  await api.dispose();
+
+  for (const [path, live] of [
+    [`/app/loops/${loopId}/edit`, 'heading'],
+    [`/app/runs/${runId}`, 'timeline'],
+  ] as const) {
+    const context = await browser.newContext({ baseURL: extra.url, serviceWorkers: 'block' });
+    const page = await context.newPage();
+    await page.goto(path);
+    await expect(page.getByText('API key required')).toBeVisible();
+    await page.getByRole('textbox', { name: 'API key' }).fill(extra.token);
+    await page.getByRole('button', { name: 'Use key' }).click();
+    if (live === 'heading') {
+      await expect(page.getByRole('heading', { name: 'qa key deep links' })).toBeVisible();
+    } else {
+      await expect(page.getByText('Input requested')).toBeVisible();
+      await expect(page.getByText(/events, live/)).toBeVisible();
+    }
+    await context.close();
+  }
+});
+
 test('main screens fit 1024x768 without horizontal scrolling, and deep links load cold', async ({
   browser,
   request,
