@@ -1,0 +1,358 @@
+/**
+ * Regression specs for the WP-D2 adversarial QA pass (docs/qa/2026-10-03-wp-d2.md). They drive
+ * the built app against the in-process API; `control()` scripts the fake harness through the E2E
+ * server's control port.
+ */
+import type { APIRequestContext, Page } from '@playwright/test';
+import { approvalLoop, expect, publishLoop, test } from './fixtures.js';
+
+async function control(request: APIRequestContext, path: string, body: unknown = {}) {
+  const base = process.env['GG_E2E_CONTROL_URL'];
+  if (!base) throw new Error('GG_E2E_CONTROL_URL is not set; the global setup did not run');
+  const res = await request.post(`${base}${path}`, { data: body });
+  expect(res.ok()).toBe(true);
+  return (await res.json()) as Record<string, unknown>;
+}
+
+const start = { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } };
+const done = { id: 'done', kind: 'exit', label: 'Done', config: {} };
+function chain(name: string, middle: Record<string, unknown> & { id: string }) {
+  return {
+    schemaVersion: 1,
+    name,
+    nodes: [start, middle, done],
+    edges: [
+      { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: middle.id } },
+      { id: 'e2', from: { node: middle.id, port: 'out' }, to: { node: 'done' } },
+    ],
+  };
+}
+const ask = (prompt: string) => ({
+  id: 'ask',
+  kind: 'inference',
+  label: 'Ask',
+  config: { prompt: { template: prompt } },
+});
+
+async function startRun(request: APIRequestContext, loopId: string): Promise<string> {
+  const res = await request.post(`/loops/${loopId}/runs`, { data: {} });
+  expect(res.status()).toBe(202);
+  return ((await res.json()) as { run: { id: string } }).run.id;
+}
+
+async function timelineSeqs(page: Page): Promise<number[]> {
+  return page
+    .getByRole('list', { name: 'Timeline' })
+    .getByRole('button')
+    .evaluateAll((buttons) =>
+      buttons.map((b) => Number(/#(\d+)/.exec(b.textContent ?? '')?.[1] ?? NaN)),
+    );
+}
+
+test('a subloop child run opens in the inspector and replays from its seeded thread', async ({
+  page,
+  request,
+}) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  const childId = await publishLoop(request, chain('qa child', ask('child turn')));
+  const parentId = await publishLoop(request, {
+    ...chain('qa parent', {
+      id: 'sub',
+      kind: 'subloop',
+      label: 'Sub',
+      config: { loopRef: { loopId: childId } },
+    }),
+  });
+  const parentRun = await startRun(request, parentId);
+  await expect
+    .poll(async () => {
+      const res = await request.get(`/runs?parent=${parentRun}`);
+      return ((await res.json()) as { items: unknown[] }).items.length;
+    })
+    .toBe(1);
+  const children = (await (await request.get(`/runs?parent=${parentRun}`)).json()) as {
+    items: { id: string }[];
+  };
+  await page.goto(`/app/runs/${children.items[0]!.id}`);
+  await expect(page.getByText(/events, complete/)).toBeVisible();
+  await expect(page.getByLabel('Messages')).toContainText('OK');
+  // The first event: the seeded thread, before any node ran.
+  await page.getByRole('list', { name: 'Timeline' }).getByRole('button').first().click();
+  await expect(page.getByText('Thread at event 1')).toBeVisible();
+  await expect(page.getByText('This screen failed to render')).toHaveCount(0);
+  await expect(page.getByText(/cannot be reconstructed/)).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
+
+test('streams 1,200 harness items into the inspector without gaps, duplicates, or a refetch per event', async ({
+  page,
+  request,
+}) => {
+  await control(request, '/harness/script', {
+    turns: [{ matchPrompt: 'MANY ITEMS', items: 1200, delayMs: 1500 }],
+  });
+  const loopId = await publishLoop(request, chain('qa many', ask('MANY ITEMS')));
+  let runGets = 0;
+  page.on('request', (r) => {
+    if (/\/runs\/[0-9A-Z]{26}$/.test(new URL(r.url()).pathname)) runGets += 1;
+  });
+  const runId = await startRun(request, loopId);
+  const started = Date.now();
+  await page.goto(`/app/runs/${runId}`);
+  await expect(page.getByText(/Timeline \(1211 events, complete\)/)).toBeVisible({
+    timeout: 30_000,
+  });
+  const live = Date.now() - started;
+  const seqs = await timelineSeqs(page);
+  expect(seqs).toEqual(Array.from({ length: 1211 }, (_, i) => i + 1));
+  expect(runGets).toBeLessThan(50);
+
+  // Opening the finished run fresh, then selecting an event deep in the log.
+  await page.evaluate(() => sessionStorage.clear());
+  const fresh = Date.now();
+  await page.reload();
+  await expect(page.getByText(/Timeline \(1211 events, complete\)/)).toBeVisible();
+  const freshMs = Date.now() - fresh;
+  const click = Date.now();
+  await page.getByRole('list', { name: 'Timeline' }).getByRole('button').nth(600).click();
+  await expect(page.getByText('Thread at event 601')).toBeVisible();
+  const clickMs = Date.now() - click;
+  console.log(
+    `1,211-event run: live to complete ${live} ms (1,500 ms scripted turn), fresh open ${freshMs} ms, select event ${clickMs} ms, ${runGets} run fetches`,
+  );
+  expect(freshMs).toBeLessThan(5_000);
+  expect(clickMs).toBeLessThan(2_000);
+});
+
+test('failure reasons are typed and visible: harness failure and decider unavailable', async ({
+  page,
+  request,
+}) => {
+  await control(request, '/harness/script', {
+    turns: [{ matchPrompt: 'FAIL THIS', error: { code: 'TURN_FAILED', message: 'scripted' } }],
+  });
+  const failing = await publishLoop(request, chain('qa failing', ask('FAIL THIS')));
+  await page.goto(`/app/runs/${await startRun(request, failing)}`);
+  await expect(page.getByText('Failed: HARNESS_TURN_FAILED')).toBeVisible();
+
+  await control(request, '/deciders', { jev: false, codex: false });
+  try {
+    const decide = {
+      schemaVersion: 1,
+      name: 'qa decider',
+      nodes: [
+        start,
+        {
+          id: 'pick',
+          kind: 'decision',
+          label: 'Pick',
+          config: {
+            routes: [
+              { label: 'a', description: 'A' },
+              { label: 'b', description: 'B' },
+            ],
+            question: 'which?',
+            strategy: ['jev'],
+          },
+        },
+        done,
+      ],
+      edges: [
+        { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'pick' } },
+        { id: 'e2', from: { node: 'pick', port: 'a' }, to: { node: 'done' } },
+        { id: 'e3', from: { node: 'pick', port: 'b' }, to: { node: 'done' } },
+      ],
+    };
+    const loopId = await publishLoop(request, decide);
+    await page.goto(`/app/runs/${await startRun(request, loopId)}`);
+    await expect(page.getByText('Failed: DECISION_NO_ROUTE')).toBeVisible();
+  } finally {
+    await control(request, '/deciders', { jev: true, codex: true });
+  }
+});
+
+test('the editor blocks publishing on template syntax errors and unparsed JSON, and the API agrees', async ({
+  page,
+  request,
+}) => {
+  const loopId = await publishLoop(request, approvalLoop('qa syntax'));
+  await page.goto(`/app/loops/${loopId}/edit`);
+  await page.getByTestId('node-approve').click();
+  const prompt = page.locator('[data-field="prompt"] .cm-content');
+  await prompt.click();
+  await page.keyboard.press('Control+A');
+  await page.keyboard.type('Approve {% if x %}');
+  const validation = page.getByRole('region', { name: 'Validation' });
+  await expect(validation).toContainText('TEMPLATE_INVALID');
+  await page.getByRole('button', { name: 'Publish' }).click();
+  await expect(page.getByText('Publish failed')).toBeVisible();
+  await expect(page.getByText(/TEMPLATE_INVALID|template at node/).first()).toBeVisible();
+
+  await prompt.click();
+  await page.keyboard.press('Control+A');
+  await page.keyboard.type('Approve?');
+  await expect(validation).toContainText('Ready to publish');
+
+  // Input schema text that is not JSON blocks publishing until fixed.
+  const schema = page.locator('[data-field="inputSchema"] .cm-content');
+  await schema.click();
+  await page.keyboard.type('{"type": ');
+  await expect(validation).toContainText('FIELD_UNPARSED');
+  await page.getByRole('button', { name: 'Publish' }).click();
+  await expect(page.getByText(/does not parse; fix them first/)).toBeVisible();
+  // Delete with focus on the Publish button must not delete the selected node.
+  await page.keyboard.press('Delete');
+  await expect(page.getByTestId('node-approve')).toBeVisible();
+  await schema.click();
+  await page.keyboard.press('Control+A');
+  await page.keyboard.press('Delete');
+  await expect(validation).toContainText('Ready to publish');
+  await page.getByRole('button', { name: 'Publish' }).click();
+  await expect(page.getByText(/Published version 2\.|Nothing to publish/)).toBeVisible();
+});
+
+test('keyboard only: add a node, connect it, and publish', async ({ page }) => {
+  await page.goto('/app/loops');
+  await page.getByLabel('New loop name').fill('qa keyboard');
+  await page.getByLabel('New loop name').press('Enter');
+  await expect(page.getByRole('heading', { name: 'qa keyboard' })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Add Wait node' }).focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByTestId('node-wait')).toBeInViewport();
+  // Rewire start -> wait -> done with the Connect forms.
+  // Canvas nodes are focusable; Enter selects the focused node.
+  await page.locator('.react-flow__node[data-id="start"]').focus();
+  await page.keyboard.press('Enter');
+  await page.getByRole('button', { name: 'Remove edge e1' }).focus();
+  await page.keyboard.press('Enter');
+  const startForm = page.getByRole('form', { name: 'Connect start' });
+  await startForm.getByLabel('To').selectOption('wait');
+  await startForm.getByRole('button', { name: 'Connect' }).focus();
+  await page.keyboard.press('Enter');
+  await page.locator('.react-flow__node[data-id="wait"]').focus();
+  await page.keyboard.press('Enter');
+  const waitForm = page.getByRole('form', { name: 'Connect wait' });
+  await waitForm.getByLabel('To').selectOption('done');
+  await waitForm.getByRole('button', { name: 'Connect' }).focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByText('✓ Ready to publish')).toBeVisible();
+  await page.getByRole('button', { name: 'Publish' }).focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByText('Published version 1.')).toBeVisible();
+});
+
+test('an edit made right before leaving the editor is kept', async ({ page, request }) => {
+  const loopId = await publishLoop(request, approvalLoop('qa leave'));
+  await page.goto(`/app/loops/${loopId}/edit`);
+  await page.getByRole('button', { name: 'Loop settings' }).click();
+  await page.getByLabel('Description').fill('typed just before leaving');
+  // Leave inside the 600 ms autosave window.
+  await page.getByRole('link', { name: 'Runs' }).click();
+  await expect(page.getByRole('heading', { name: 'Runs' })).toBeVisible();
+  await page.goto(`/app/loops/${loopId}/edit`);
+  await page.getByRole('button', { name: 'Loop settings' }).click();
+  await expect(page.getByLabel('Description')).toHaveValue('typed just before leaving');
+  await expect
+    .poll(async () => {
+      const res = await request.get(`/loops/${loopId}`);
+      return ((await res.json()) as { draft?: { definition: { description?: string } } }).draft
+        ?.definition.description;
+    })
+    .toBe('typed just before leaving');
+});
+
+test('Settings defaults reach the next run without a restart', async ({ page, request }) => {
+  const loopId = await publishLoop(request, chain('qa defaults', ask('defaults check')));
+  await page.goto('/app/settings');
+  await page.getByLabel('Default effort').selectOption('high');
+  await expect
+    .poll(
+      async () =>
+        ((await (await request.get('/settings')).json()) as Record<string, unknown>)[
+          'defaultEffort'
+        ],
+    )
+    .toBe('high');
+  await startRun(request, loopId);
+  await expect
+    .poll(async () => {
+      const { started } = (await control(request, '/harness/requests')) as {
+        started: { effort?: string }[];
+      };
+      return started.at(-1)?.effort;
+    })
+    .toBe('high');
+  await page.getByLabel('Default effort').selectOption('');
+  await expect
+    .poll(
+      async () =>
+        ((await (await request.get('/settings')).json()) as Record<string, unknown>)[
+          'defaultEffort'
+        ],
+    )
+    .toBeUndefined();
+});
+
+test('with GG_REQUIRE_API_KEY the shell loads, asks for a key, and uses it', async ({
+  browser,
+}) => {
+  const extra = (await (
+    await fetch(`${process.env['GG_E2E_CONTROL_URL'] ?? ''}/apps`, {
+      method: 'POST',
+      body: JSON.stringify({ requireApiKey: true }),
+    })
+  ).json()) as { url: string; token: string };
+  const context = await browser.newContext({ baseURL: extra.url, serviceWorkers: 'block' });
+  const page = await context.newPage();
+  await page.goto('/app/loops');
+  await expect(page.getByText('API key required')).toBeVisible();
+  await page.getByRole('textbox', { name: 'API key' }).fill('gg_not_a_key');
+  await page.getByRole('button', { name: 'Use key' }).click();
+  await expect(page.getByText(/refused the key stored in this browser/)).toBeVisible();
+  await page.getByRole('textbox', { name: 'API key' }).fill(extra.token);
+  await page.getByRole('button', { name: 'Use key' }).click();
+  await expect(page.getByText('API key required')).toHaveCount(0);
+  await expect(page.getByText('No loops yet.')).toBeVisible();
+  await page.getByRole('link', { name: 'Settings' }).click();
+  await page.getByRole('button', { name: 'Forget key' }).click();
+  await page.reload();
+  await expect(page.getByText('API key required')).toBeVisible();
+  await context.close();
+});
+
+test('main screens fit 1024x768 without horizontal scrolling, and deep links load cold', async ({
+  browser,
+  request,
+}) => {
+  const loopId = await publishLoop(request, approvalLoop('qa viewport'));
+  const runId = await startRun(request, loopId);
+  const context = await browser.newContext({
+    baseURL: process.env['GG_E2E_BASE_URL'] ?? '',
+    viewport: { width: 1024, height: 768 },
+  });
+  const page = await context.newPage();
+  for (const path of [
+    '/app/loops',
+    `/app/loops/${loopId}/edit`,
+    '/app/runs',
+    `/app/runs/${runId}`,
+    '/app/events',
+    '/app/settings',
+  ]) {
+    await page.goto(path);
+    await expect(page.locator('header').first()).toBeVisible();
+    await page.waitForTimeout(500);
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth > window.innerWidth,
+    );
+    expect(overflow, path).toBe(false);
+  }
+  await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible();
+  expect((await page.request.get('/app/assets/missing-123.js')).status()).toBe(404);
+  const root = await page.request.get('/', { maxRedirects: 0 });
+  expect(root.status()).toBe(302);
+  expect(root.headers()['location']).toBe('/app/');
+  await context.close();
+});
