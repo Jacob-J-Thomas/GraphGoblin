@@ -14,6 +14,8 @@ GraphGoblin is a pnpm + Turborepo monorepo in TypeScript. Read `docs/README.md` 
 
 Layer rules are enforced by `pnpm check:layers` (declared workspace dependencies) and `pnpm check:deps` (dependency-cruiser). Reach other packages only through their `@graphgoblin/*` entry points.
 
+dependency-cruiser 18 refuses Node 23. Where the default Node is 23, run `check:deps` with the nvm Node 22 binary without switching versions: `& "$env:APPDATA\nvm\v22.14.0\node.exe" node_modules/dependency-cruiser/bin/dependency-cruiser.mjs packages apps --config .dependency-cruiser.cjs` (PowerShell; from Git Bash use `"$APPDATA/nvm/v22.14.0/node.exe"`).
+
 ## Rules
 
 - Every package must keep unit-test coverage above 90% of lines and branches. `pnpm test:coverage` fails otherwise. Do not lower thresholds or add exclusions beyond generated code.

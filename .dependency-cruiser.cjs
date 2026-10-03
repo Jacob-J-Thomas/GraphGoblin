@@ -14,7 +14,13 @@ module.exports = {
       comment:
         'Packages reference each other only through their public @graphgoblin/* entry points, never through relative paths that reach into another package.',
       from: { path: '^(packages|apps)/([^/]+)/' },
-      to: { path: '^(packages|apps)/([^/]+)/', pathNot: '^(packages|apps)/$2/' },
+      // `local` limits the rule to relative-path imports. `@graphgoblin/*` imports also resolve
+      // into other packages' `src/` through the `development` export condition; they are allowed.
+      to: {
+        dependencyTypes: ['local'],
+        path: '^(packages|apps)/([^/]+)/',
+        pathNot: '^(packages|apps)/$2/',
+      },
     },
     {
       name: 'no-orphans',
