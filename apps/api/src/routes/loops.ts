@@ -170,12 +170,19 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
       if (!loop.draftVersionId)
         return problem(reply, 409, 'NO_DRAFT', 'the loop has no draft to publish');
       const draft = await loops.getVersion(loop.draftVersionId);
-      const issues = draft ? validateLoop(draft.definition) : [];
+      const issues = draft
+        ? [
+            ...validateLoop(draft.definition),
+            ...container.triggers.checkDefinition(draft.definition),
+          ]
+        : [];
       if (issues.some((i) => i.severity === 'error')) {
         return problem(reply, 422, 'LOOP_INVALID', 'the draft has structural errors', issues);
       }
       const version = await loops.publish(loop.id);
       if (!version) return problem(reply, 409, 'NO_DRAFT', 'the loop has no draft to publish');
+      // Schedules and webhook endpoints follow the published version (ADR-0008).
+      await container.triggers.armVersion(loop, version);
       return { version };
     },
   );
@@ -259,6 +266,7 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
       });
       if (active.length > 0)
         return problem(reply, 409, 'LOOP_IN_USE', 'the loop has active runs; cancel them first');
+      await container.triggers.disarmLoop(request.params.id);
       await loops.delete(request.params.id);
       return reply.status(204).send(null);
     },

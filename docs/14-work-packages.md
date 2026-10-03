@@ -46,7 +46,9 @@ Read: 04 (inference, decision), 05, 06, `research/codex-sdk.md`, `research/jev.m
 
 Accept: adapter tests green from fixtures without network; one live smoke run succeeds on the development machine; coverage above thresholds.
 
-## WP-C - Triggers (M6)
+## WP-C - Triggers (M6) - DELIVERED 2026-10-02
+
+Delivered: cron schedules with missed-fire policies, signed webhooks, persisted event triggers with a self-trigger guard, and poll triggers, as described in 08 and the M6 notes in 12.
 
 Read: 03, 04 (trigger), 08, 11, ADR-0014. Depends on: M3. Deliver:
 

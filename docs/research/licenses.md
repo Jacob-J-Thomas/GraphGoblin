@@ -21,7 +21,7 @@ MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, 0BSD, Unlicense, CC0-1.0.
 | ajv, ajv-formats                                     | MIT        | JSON Schema validation in `domain`                                   |
 | @fastify/swagger-ui                                  | MIT        | Dev-facing API docs at `/docs`                                       |
 | pino-pretty, tsx, @types/node                        | MIT        | Dev only                                                             |
-| croner                                               | MIT        |                                                                      |
+| croner                                               | MIT        | Adopted in M6 (10.x): cron slots in `infrastructure/src/scheduler`   |
 | pino                                                 | MIT        |                                                                      |
 | OpenTelemetry JS                                     | Apache-2.0 |                                                                      |
 | LiquidJS                                             | MIT        |                                                                      |

@@ -199,6 +199,29 @@ export class SqliteRunRepository implements RunRepository {
     await this.db.update(runs).set({ threadSnapshot: thread }).where(eq(runs.id, runId));
   }
 
+  /**
+   * Whether a trigger node of a loop has already started a run with this dedupe key. Reads the
+   * trigger envelope stored in each run's initial thread, so it survives restarts.
+   */
+  async hasTriggerDedupe(
+    loopId: string,
+    triggerNodeId: string,
+    dedupeKey: string,
+  ): Promise<boolean> {
+    const [row] = await this.db
+      .select({ id: runs.id })
+      .from(runs)
+      .where(
+        and(
+          eq(runs.loopId, loopId),
+          sql`json_extract(${runs.initialThread}, '$.invocation.trigger.nodeId') = ${triggerNodeId}`,
+          sql`json_extract(${runs.initialThread}, '$.invocation.trigger.dedupeKey') = ${dedupeKey}`,
+        ),
+      )
+      .limit(1);
+    return row !== undefined;
+  }
+
   /** Test and maintenance helper: drop the snapshot so the thread is rebuilt from the log. */
   async clearThreadSnapshot(runId: string): Promise<void> {
     await this.db.update(runs).set({ threadSnapshot: null }).where(eq(runs.id, runId));

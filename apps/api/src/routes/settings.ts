@@ -27,17 +27,9 @@ const ModelEntrySchema = z.object({
   defaultEffort: EffortSchema,
   enabled: z.boolean(),
 });
-const InboundEventSchema = z.object({
-  id: z.string(),
-  ownerId: z.string(),
-  type: z.string(),
-  payload: JsonValueSchema,
-  dedupeKey: z.string().optional(),
-  receivedAt: z.string(),
-});
 
 export function registerSettingsRoutes(app: ApiInstance, container: Container): void {
-  const { repos, bus, ports } = container;
+  const { repos } = container;
 
   // Settings -----------------------------------------------------------------
   app.get(
@@ -238,46 +230,5 @@ export function registerSettingsRoutes(app: ApiInstance, container: Container): 
       if (!deleted) return problem(reply, 404, 'MODEL_NOT_FOUND', 'model not in catalog');
       return reply.status(204).send(null);
     },
-  );
-
-  // Inbound events -----------------------------------------------------------
-  app.post(
-    '/events',
-    {
-      schema: {
-        tags: ['events'],
-        body: z.object({
-          type: z.string().min(1).max(128),
-          payload: JsonValueSchema.default(null),
-          dedupeKey: z.string().max(512).optional(),
-        }),
-        response: { 202: InboundEventSchema },
-      },
-    },
-    async (request, reply) => {
-      if (!requireScope(request, reply, 'events:write')) return reply;
-      const event = {
-        id: ports.ids.next(),
-        ownerId: request.auth.ownerId,
-        type: request.body.type,
-        payload: request.body.payload,
-        ...(request.body.dedupeKey ? { dedupeKey: request.body.dedupeKey } : {}),
-        receivedAt: ports.clock.now().toISOString(),
-      };
-      await bus.publish(event);
-      reply.status(202);
-      return event;
-    },
-  );
-
-  app.get(
-    '/events',
-    {
-      schema: {
-        tags: ['events'],
-        response: { 200: z.object({ items: z.array(InboundEventSchema) }) },
-      },
-    },
-    (request) => ({ items: bus.list(request.auth.ownerId) }),
   );
 }

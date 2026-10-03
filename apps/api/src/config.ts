@@ -20,6 +20,7 @@ const EnvSchema = z.object({
   GG_DEFAULT_MODEL: z.string().default('gpt-6-luna'),
   GG_DEFAULT_EFFORT: EffortSchema.default('low'),
   GG_TIMER_POLL_MS: z.coerce.number().int().min(50).max(60_000).default(1000),
+  GG_HOOK_RATE_LIMIT: z.coerce.number().int().min(1).max(100_000).default(60),
   GG_SWAGGER_UI: bool.default(true),
   GG_PUBLIC_URL: z.string().optional(),
 });
@@ -36,6 +37,8 @@ export interface ApiConfig {
   defaultModel: string;
   defaultEffort: z.infer<typeof EffortSchema>;
   timerPollMs: number;
+  /** Webhook deliveries accepted per endpoint per minute. */
+  hookRateLimitPerMinute: number;
   swaggerUi: boolean;
   publicUrl?: string;
 }
@@ -61,6 +64,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ApiConfig {
     defaultModel: e.GG_DEFAULT_MODEL,
     defaultEffort: e.GG_DEFAULT_EFFORT,
     timerPollMs: e.GG_TIMER_POLL_MS,
+    hookRateLimitPerMinute: e.GG_HOOK_RATE_LIMIT,
     swaggerUi: e.GG_SWAGGER_UI,
     ...(e.GG_PUBLIC_URL ? { publicUrl: e.GG_PUBLIC_URL } : {}),
   };
