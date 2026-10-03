@@ -40,11 +40,11 @@ function documented<T extends z.ZodType>(schema: T, body: unknown, primitive: st
 it.skipIf(process.env.LIVE !== '1')(
   'verifies Choice and Noul against the TypeSafe API',
   { timeout: 60_000, retry: 0 },
-  async () => {
-    const key = process.env.JEV_API_KEY?.trim();
+  async ({ skip }) => {
+    const key = (process.env.GG_JEV_API_KEY ?? process.env.JEV_API_KEY)?.trim();
     if (!key) {
-      throw new Error(
-        'JEV_API_KEY must be set in this terminal to run the LIVE=1 Jev verification',
+      return skip(
+        'Looked for GG_JEV_API_KEY and JEV_API_KEY; set one in this terminal for LIVE=1 Jev verification',
       );
     }
 

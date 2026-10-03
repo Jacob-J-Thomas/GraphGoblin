@@ -102,6 +102,11 @@ $dataHint = if ([string]::IsNullOrWhiteSpace($env:GG_DATA_DIR)) { '' } else {
 }
 
 Write-Host ''
+foreach ($name in @('GG_JEV_API_KEY', 'JEV_API_KEY')) {
+  $presence = if ([string]::IsNullOrEmpty([Environment]::GetEnvironmentVariable($name))) { 'absent or empty' } else { 'present' }
+  Write-Host "Jev environment: ${name} ${presence}"
+}
+Write-Host ''
 Write-Host 'Start GraphGoblin from the repository root with either of:'
 Write-Host ('    ' + $dataHint + 'pnpm.cmd start')
 Write-Host ('    ' + $dataHint + 'node apps/api/dist/main.js')

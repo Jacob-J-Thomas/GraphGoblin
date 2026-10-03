@@ -121,23 +121,24 @@ To run that entry directly, keep the same environment and use the repository roo
 node apps/api/dist/main.js
 ```
 
-| Variable                 | Default and use                                                                                                                                                         |
-| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GG_HOST`                | `127.0.0.1`. Change it only when you intend to accept remote connections; the API logs a warning when it listens beyond localhost without API keys.                     |
-| `GG_PORT`                | `4747`. Choose another free port if needed.                                                                                                                             |
-| `GG_DATA_DIR`            | `~/.graphgoblin` (`/data` in the container image). A relative value is resolved from the process working directory.                                                     |
-| `GG_DB_URL`              | `file:<data-directory>/graphgoblin.db`. Override it only to keep the database elsewhere.                                                                                |
-| `GG_WEB_DIST`            | Unset: the checkout's `apps/web/dist` when it has been built. Point it at another built web directory, or set it empty to serve no UI.                                  |
-| `GG_REQUIRE_API_KEY`     | `false`. Set `true` to require a key on every non-public route; the web app then asks for one. See [the first key](06-settings-and-secrets.md#create-api-keys).         |
-| `GG_MASTER_KEY`          | Unset. Base64 of 32 bytes; otherwise the key lives in `<data-directory>/master.key`. See [Preserve the master key](06-settings-and-secrets.md#preserve-the-master-key). |
-| `GG_DEFAULT_MODEL`       | `gpt-6-luna`. Use a model available to your Codex account.                                                                                                              |
-| `GG_DEFAULT_EFFORT`      | `low`. Node and loop settings can override it.                                                                                                                          |
-| `GG_CODEX_BINARY`        | Unset, so the SDK uses its bundled Codex binary. Set an absolute native executable path to override it.                                                                 |
-| `GG_MAX_CONCURRENT_RUNS` | `4`, range 1 to 64. Runs executing at once; parked runs do not count.                                                                                                   |
-| `GG_TIMER_POLL_MS`       | `1000`. How often timers, cron schedules, and poll triggers are checked.                                                                                                |
-| `GG_HOOK_RATE_LIMIT`     | `60`. Webhook deliveries accepted per endpoint per minute.                                                                                                              |
-| `GG_LOG_LEVEL`           | `info`. One of `fatal`, `error`, `warn`, `info`, `debug`, `trace`, or `silent`.                                                                                         |
-| `GG_SWAGGER_UI`          | `true`. Serves interactive API documentation at `/docs`; the OpenAPI document is always at `/openapi.json`.                                                             |
+| Variable                 | Default and use                                                                                                                                                                                                           |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GG_HOST`                | `127.0.0.1`. Change it only when you intend to accept remote connections; the API logs a warning when it listens beyond localhost without API keys.                                                                       |
+| `GG_PORT`                | `4747`. Choose another free port if needed.                                                                                                                                                                               |
+| `GG_DATA_DIR`            | `~/.graphgoblin` (`/data` in the container image). A relative value is resolved from the process working directory.                                                                                                       |
+| `GG_DB_URL`              | `file:<data-directory>/graphgoblin.db`. Override it only to keep the database elsewhere.                                                                                                                                  |
+| `GG_WEB_DIST`            | Unset: the checkout's `apps/web/dist` when it has been built. Point it at another built web directory, or set it empty to serve no UI.                                                                                    |
+| `GG_REQUIRE_API_KEY`     | `false`. Set `true` to require a key on every non-public route; the web app then asks for one. See [the first key](06-settings-and-secrets.md#create-api-keys).                                                           |
+| `GG_MASTER_KEY`          | Unset. Base64 of 32 bytes; otherwise the key lives in `<data-directory>/master.key`. See [Preserve the master key](06-settings-and-secrets.md#preserve-the-master-key).                                                   |
+| `GG_DEFAULT_MODEL`       | `gpt-6-luna`. Use a model available to your Codex account.                                                                                                                                                                |
+| `GG_DEFAULT_EFFORT`      | `low`. Node and loop settings can override it.                                                                                                                                                                            |
+| `GG_CODEX_BINARY`        | Unset, so the SDK uses its bundled Codex binary. Set an absolute native executable path to override it.                                                                                                                   |
+| `GG_MAX_CONCURRENT_RUNS` | `4`, range 1 to 64. Runs executing at once; parked runs do not count.                                                                                                                                                     |
+| `GG_TIMER_POLL_MS`       | `1000`. How often timers, cron schedules, and poll triggers are checked.                                                                                                                                                  |
+| `GG_HOOK_RATE_LIMIT`     | `60`. Webhook deliveries accepted per endpoint per minute.                                                                                                                                                                |
+| `GG_LOG_LEVEL`           | `info`. One of `fatal`, `error`, `warn`, `info`, `debug`, `trace`, or `silent`.                                                                                                                                           |
+| `GG_SWAGGER_UI`          | `true`. Serves interactive API documentation at `/docs`; the OpenAPI document is always at `/openapi.json`.                                                                                                               |
+| `GG_JEV_API_KEY`         | Unset. Seeds the encrypted `jev-api-key` secret at startup only when absent; the secret store wins. Falls back to `JEV_API_KEY` only when unset, not when empty. See [secrets](06-settings-and-secrets.md#store-secrets). |
 
 Boolean variables accept `true`, `false`, `1`, `0`, `yes`, or `no`. An invalid value stops startup with an `invalid configuration` message.
 

@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { CodexHarness } from '@graphgoblin/adapter-codex';
 import { JevDecider } from '@graphgoblin/adapter-jev';
+import { CapturingLogger } from '@graphgoblin/engine/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildApp } from './app.js';
 import { loadConfig } from './config.js';
@@ -100,6 +101,116 @@ describe('default adapters', () => {
 });
 
 describe('Jev key at boot', () => {
+  it('seeds an encrypted local-owner secret once, keeps it across restarts, and never logs the value', async () => {
+    const key = 'test-environment-seed-key';
+    const logger = new CapturingLogger();
+    const first = await createContainer(config({ GG_JEV_API_KEY: key }), {
+      startTimers: false,
+      logger,
+    });
+    try {
+      await first.start();
+      await first.start();
+      expect(await first.repos.secretsFor(LOCAL_OWNER).resolve(JEV_SECRET)).toBe(key);
+      expect(await first.repos.secretsFor('other-owner').resolve(JEV_SECRET)).toBeUndefined();
+      expect(jevOf(first).available()).toBe(true);
+      const rows = await first.handle.db.query.secrets.findMany();
+      expect(rows).toHaveLength(1);
+      expect(rows[0]?.ciphertext).not.toContain(key);
+      expect(logger.lines.filter((line) => line.level === 'info')).toEqual([
+        { level: 'info', obj: {}, msg: 'seeded jev-api-key from GG_JEV_API_KEY' },
+      ]);
+      expect(JSON.stringify(logger.lines)).not.toContain(key);
+    } finally {
+      await first.stop();
+    }
+
+    logger.lines.length = 0;
+    const second = await createContainer(config(), { startTimers: false, logger });
+    try {
+      await second.start();
+      expect(await second.repos.secretsFor(LOCAL_OWNER).resolve(JEV_SECRET)).toBe(key);
+      expect(jevOf(second).available()).toBe(true);
+      expect(logger.lines).toEqual([]);
+    } finally {
+      await second.stop();
+    }
+  });
+
+  it.each(['stored-key', ''])(
+    'preserves an existing secret, including an empty value (%j)',
+    async (stored) => {
+      const first = await createContainer(config(), { startTimers: false });
+      let before;
+      try {
+        await first.start();
+        await first.repos.secretsFor(LOCAL_OWNER).set(JEV_SECRET, stored);
+        before = await first.handle.db.query.secrets.findMany();
+      } finally {
+        await first.stop();
+      }
+
+      const envKey = 'test-ignored-environment-key';
+      const logger = new CapturingLogger();
+      const second = await createContainer(config({ GG_JEV_API_KEY: envKey }), {
+        startTimers: false,
+        logger,
+      });
+      try {
+        await second.start();
+        expect(await second.repos.secretsFor(LOCAL_OWNER).resolve(JEV_SECRET)).toBe(stored);
+        expect(await second.handle.db.query.secrets.findMany()).toEqual(before);
+        expect(logger.lines).toEqual([]);
+        expect(JSON.stringify(logger.lines)).not.toContain(envKey);
+      } finally {
+        await second.stop();
+      }
+    },
+  );
+
+  it.each([
+    {},
+    { GG_JEV_API_KEY: '' },
+    { JEV_API_KEY: '' },
+    { GG_JEV_API_KEY: '', JEV_API_KEY: 'test-unused-fallback-key' },
+  ])('does nothing without a non-empty environment seed (%j)', async (env) => {
+    const logger = new CapturingLogger();
+    const container = await createContainer(config(env), { startTimers: false, logger });
+    try {
+      await container.start();
+      expect(await container.repos.secretsFor(LOCAL_OWNER).list()).toEqual([]);
+      expect(jevOf(container).available()).toBe(false);
+      expect(logger.lines).toEqual([]);
+    } finally {
+      await container.stop();
+    }
+  });
+
+  it('seeds from JEV_API_KEY when GG_JEV_API_KEY is unset, even if another owner has a key', async () => {
+    const key = 'test-fallback-environment-key';
+    const logger = new CapturingLogger();
+    const container = await createContainer(config({ JEV_API_KEY: key }), {
+      startTimers: false,
+      logger,
+    });
+    try {
+      await container.handle.migrate();
+      await container.repos.secretsFor('other-owner').set(JEV_SECRET, 'other-owner-key');
+      await container.start();
+      expect(await container.repos.secretsFor(LOCAL_OWNER).resolve(JEV_SECRET)).toBe(key);
+      expect(await container.repos.secretsFor('other-owner').resolve(JEV_SECRET)).toBe(
+        'other-owner-key',
+      );
+      expect(jevOf(container).available()).toBe(true);
+      expect(logger.lines.filter((line) => line.level === 'info')).toEqual([
+        { level: 'info', obj: {}, msg: 'seeded jev-api-key from GG_JEV_API_KEY' },
+      ]);
+      expect(JSON.stringify(logger.lines)).not.toContain(key);
+    } finally {
+      await container.stop();
+    }
+  });
+
   it('picks up a key stored before the process started', async () => {
     const first = await createContainer(config(), { startTimers: false });
     await first.start();
