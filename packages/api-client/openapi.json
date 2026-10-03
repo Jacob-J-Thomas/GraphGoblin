@@ -11894,6 +11894,9 @@
                     },
                     "draft": {
                       "$ref": "#/components/schemas/LoopVersionRecord"
+                    },
+                    "draftToken": {
+                      "type": "string"
                     }
                   },
                   "required": [
@@ -11934,6 +11937,7 @@
         "tags": [
           "loops"
         ],
+        "description": "Send `If-Match` with the `draftToken` (or `ETag`) of the copy the edit is based on; a stale token answers 409 `DRAFT_CONFLICT` with the server’s `draftToken`. Without `If-Match` the save is unconditional (last write wins).",
         "requestBody": {
           "required": true,
           "content": {
@@ -11960,6 +11964,14 @@
             "in": "path",
             "name": "id",
             "required": true
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "header",
+            "name": "if-match",
+            "required": false
           }
         ],
         "responses": {
@@ -11972,6 +11984,9 @@
                   "properties": {
                     "draft": {
                       "$ref": "#/components/schemas/LoopVersionRecord"
+                    },
+                    "draftToken": {
+                      "type": "string"
                     },
                     "issues": {
                       "type": "array",
@@ -12009,6 +12024,7 @@
                   },
                   "required": [
                     "draft",
+                    "draftToken",
                     "issues"
                   ],
                   "additionalProperties": false

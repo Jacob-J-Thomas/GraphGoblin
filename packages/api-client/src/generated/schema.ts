@@ -334,6 +334,7 @@ export interface paths {
                             loop: components["schemas"]["LoopRecord"];
                             current?: components["schemas"]["LoopVersionRecord"] | undefined;
                             draft?: components["schemas"]["LoopVersionRecord"] | undefined;
+                            draftToken?: string | undefined;
                         };
                     };
                 };
@@ -375,11 +376,16 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        /** Save the draft definition (validated, may be unpublishable) */
+        /**
+         * Save the draft definition (validated, may be unpublishable)
+         * @description Send `If-Match` with the `draftToken` (or `ETag`) of the copy the edit is based on; a stale token answers 409 `DRAFT_CONFLICT` with the server’s `draftToken`. Without `If-Match` the save is unconditional (last write wins).
+         */
         put: {
             parameters: {
                 query?: never;
-                header?: never;
+                header?: {
+                    "if-match"?: string;
+                };
                 path: {
                     id: string;
                 };
@@ -401,6 +407,7 @@ export interface paths {
                     content: {
                         "application/json": {
                             draft: components["schemas"]["LoopVersionRecord"];
+                            draftToken: string;
                             issues: {
                                 code: string;
                                 /** @enum {string} */

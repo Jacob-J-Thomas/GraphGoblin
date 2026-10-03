@@ -12,7 +12,8 @@ import {
 
 type EdgeInput = z.input<typeof EdgeSchema>;
 
-export type SaveState = 'idle' | 'pending' | 'saving' | 'saved' | 'invalid' | 'offline' | 'error';
+export type SaveState =
+  'idle' | 'pending' | 'saving' | 'saved' | 'invalid' | 'offline' | 'error' | 'conflict';
 
 export interface EditorState {
   loopId: string | undefined;
@@ -33,8 +34,19 @@ export interface EditorState {
   fieldErrors: Record<string, Record<string, FieldError>>;
   /** Bumped by every load and reset; an autosave that started under another value is stale. */
   generation: number;
+  /** The server draft token the edits are based on; autosave sends it as `If-Match`. */
+  baseToken: string | undefined;
+  /**
+   * Set when a save was refused because the server draft changed since `baseToken` (409
+   * `DRAFT_CONFLICT`). Autosave stops until the user reloads the server draft or overwrites it.
+   */
+  conflict: { serverToken: string | undefined } | undefined;
 
-  load: (loopId: string, definition: LoopDefinitionInput, options?: { dirty?: boolean }) => void;
+  load: (
+    loopId: string,
+    definition: LoopDefinitionInput,
+    options?: { dirty?: boolean; baseToken?: string | undefined },
+  ) => void;
   reset: () => void;
   select: (nodeId: string | undefined) => void;
   addNode: (kind: NodeKind, position: { x: number; y: number }) => string;
@@ -48,6 +60,8 @@ export interface EditorState {
   updateSettings: (settings: unknown) => void;
   updateVariables: (variables: unknown) => void;
   setSaveState: (state: SaveState, message?: string, revision?: number) => void;
+  setBaseToken: (token: string | undefined) => void;
+  setConflict: (conflict: { serverToken: string | undefined } | undefined) => void;
   setFieldError: (scope: string, path: string, error: FieldError | undefined) => void;
   clearFieldErrors: (scope: string) => void;
 }
@@ -75,6 +89,8 @@ const INITIAL = {
   connectionError: undefined,
   fieldErrors: {},
   generation: 0,
+  baseToken: undefined,
+  conflict: undefined,
 };
 
 export const useEditorStore = create<EditorState>((set, get) => {
@@ -95,6 +111,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
         definition,
         revision: options.dirty ? 1 : 0,
         saveState: options.dirty ? 'pending' : 'saved',
+        baseToken: options.baseToken,
         generation: (generations += 1),
       }),
 
@@ -253,6 +270,10 @@ export const useEditorStore = create<EditorState>((set, get) => {
         saveMessage: message,
         savedRevision: revision ?? s.savedRevision,
       })),
+
+    setBaseToken: (baseToken) => set({ baseToken }),
+
+    setConflict: (conflict) => set({ conflict }),
 
     setFieldError: (scope, path, error) =>
       set((s) => {

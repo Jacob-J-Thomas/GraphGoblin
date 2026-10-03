@@ -83,8 +83,19 @@ describe('against the in-process API (local trusted mode)', () => {
     expect((await loops.list(client)).map((l) => l.id)).toContain(loopId);
 
     const renamed = { ...minimalLoop(), name: 'renamed' };
-    const saved = await loops.saveDraft(client, loopId, renamed);
+    const token = (await loops.get(client, loopId)).draftToken as string;
+    const saved = await loops.saveDraft(client, loopId, renamed, { ifMatch: token });
     expect(saved.draft.definition.name).toBe('renamed');
+    expect(saved.draftToken).not.toBe(token);
+    // A second save from the same stale copy is a conflict carrying the server's token.
+    const conflict = await loops
+      .saveDraft(client, loopId, { ...renamed, name: 'stale' }, { ifMatch: token })
+      .catch((error: unknown) => error);
+    expect(conflict).toMatchObject({
+      status: 409,
+      code: 'DRAFT_CONFLICT',
+      problem: { draftToken: saved.draftToken },
+    });
     expect(await loops.validate(client, loopId, renamed)).toEqual({
       issues: [],
       publishable: true,

@@ -11,6 +11,8 @@ export interface LocalDraft {
   savedAt: string;
   /** True once the server accepted this exact definition. */
   synced: boolean;
+  /** The server draft token this copy is based on, sent as `If-Match` when it is saved. */
+  baseToken?: string;
 }
 
 let store: UseStore | undefined;

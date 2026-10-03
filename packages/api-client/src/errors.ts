@@ -6,6 +6,8 @@ export interface ProblemDetails {
   code: string;
   detail?: string;
   errors?: unknown;
+  /** Extension members, such as `draftToken` on a 409 `DRAFT_CONFLICT`. */
+  [extension: string]: unknown;
 }
 
 /** `status` used for failures where no HTTP response arrived (DNS, refused connection, reset). */

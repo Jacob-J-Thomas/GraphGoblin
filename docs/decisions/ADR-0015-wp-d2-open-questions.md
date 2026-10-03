@@ -22,3 +22,24 @@ The existing `maxIterations` loop setting stays the only loop limit and now also
 
 - `NODE_VISIT_LIMIT` above `maxIterations` times the node count (the WP-D2 proposal): a second, derived limit that is harder to explain and still lets one node run far more often than the setting says.
 - A separate `maxNodeVisits` setting: one more knob for a rare case.
+
+## 2. Draft edit conflicts: `If-Match` on draft saves (question 17, D26)
+
+### Context
+
+Two tabs or devices editing one draft overwrote each other silently: `PUT /loops/{id}/draft` was last-write-wins.
+
+### Decision
+
+The draft gets a version token, `draftToken`: a hash (`stableHash`) of the definition a save would replace, the draft or else the published version. No column or migration is needed, and publishing does not change the token because it keeps the content. `GET /loops/{id}` and `PUT /loops/{id}/draft` return it in the body and as `ETag`. `PUT` with `If-Match` saves only when the token still matches and otherwise answers 409 `DRAFT_CONFLICT` with the server's token; conditional saves of a loop are serialized in the process. Without `If-Match` the save stays unconditional. The editor always sends it and, on a conflict, asks the user to reload the server draft or overwrite it.
+
+### Consequences
+
+- Two saves of identical content have the same token, so a save that would change nothing never conflicts. This is intended: the question a conflict answers is whether the server copy differs from the one the edit started from.
+- API clients that do not send `If-Match` keep the old behaviour; the MCP server and scripts are unchanged.
+
+### Alternatives considered
+
+- A revision counter column on `loop_versions`: exact, but needs a migration and does not survive publish without extra rules.
+- `loop.updatedAt` as the token: it changes on renames and publishes that do not change the draft, and millisecond timestamps can collide.
+- Requiring `If-Match` (428 without it): would break existing API and MCP clients for a single-user product.
