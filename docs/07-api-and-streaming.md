@@ -71,33 +71,58 @@ Other channels, webhook, file, event, and log, are delivered by the engine after
 
 ## MCP server (Decided)
 
-`apps/mcp` is a thin client over the REST API using the generated client. It runs as stdio for a local Codex session and as Streamable HTTP for remote clients, authenticating to the API with an API key.
+`apps/mcp` (`@graphgoblin/mcp`) is a thin client over the REST API through `@graphgoblin/api-client`, built on `@modelcontextprotocol/sdk` 1.31. It identifies itself with `client: 'mcp'`, so runs it starts record the `manual.mcp` invocation source.
 
-Tools:
+- **Configuration**: `GG_API_URL` or `--api-url` (default `http://127.0.0.1:4747`); `GG_API_KEY` or `--api-key`, sent as a bearer key and optional in local trusted mode.
+- **Transports**: stdio by default (the `graphgoblin-mcp` binary, `node apps/mcp/dist/main.js`); Streamable HTTP with `--http [--port <n>] [--host <addr>]` (or `GG_MCP_PORT`, `GG_MCP_HOST`; default `127.0.0.1:4748`) at `POST /mcp`. HTTP is stateless: each POST gets its own server and transport, `GET` and `DELETE` answer 405, and when bound to a loopback address a request whose `Host` is not a loopback name is refused with 403.
 
-| Tool                                     | Behaviour                                                                                        |
-| ---------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `list_loops`, `describe_loop`            | Discovery, including trigger input schemas                                                       |
-| `start_run`                              | Starts a manual trigger; returns run id immediately                                              |
-| `wait_for_run`                           | Long-polls up to a timeout and returns the result or a cursor; agents call again to keep waiting |
-| `get_run`, `get_run_thread`, `list_runs` | Inspection                                                                                       |
-| `cancel_run`, `pause_run`, `resume_run`  | Control                                                                                          |
-| `provide_input`, `send_signal`           | Wake waiting runs                                                                                |
-| `read_run_events`                        | Page through the log                                                                             |
+Tools (each with a Zod input schema; descriptions tell the agent when to call it and what to do next):
 
-Resources: `graphgoblin://runs/{id}/events` and `graphgoblin://runs/{id}/thread`.
+| Tool                                    | Input                                                       | Behaviour                                                                                                                                                                                                   |
+| --------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `list_loops`                            | `query?`                                                    | Loops with `id`, `name`, `description`, `published`, `hasDraft`; `query` filters names and descriptions                                                                                                     |
+| `describe_loop`                         | `loopId` (id or exact name)                                 | The published version (or the draft, with a note): triggers with subtype, `inputSchema`, and `startableFromMcp`; input waits with prompt and schema; exits with `default`, `returnMapping`, channel kinds   |
+| `start_run`                             | `loopId`, `input?`, `triggerNodeId?`, `allowDraft?`         | Starts a manual trigger and returns `runId` immediately; `allowDraft` runs the draft of an unpublished loop                                                                                                 |
+| `wait_for_run`                          | `runId`, `timeoutSeconds?` (default 60, max 600)            | Returns `{ finished: true, run }` at a terminal status, or `{ finished: false, status, cursor, waiting?, next }`; returns early when the run waits for input or is paused; `cursor` is the last event `seq` |
+| `get_run`                               | `runId`                                                     | Run snapshot                                                                                                                                                                                                |
+| `get_run_thread`                        | `runId`                                                     | Context thread                                                                                                                                                                                              |
+| `list_runs`                             | `loopId?`, `status[]?`, `parentRunId?`, `before?`, `limit?` | Compact runs, newest first; `nextBefore` (a `createdAt`) pages                                                                                                                                              |
+| `read_run_events`                       | `runId`, `after?`, `limit?` (default 100)                   | `{ items, nextAfter, hasMore }`                                                                                                                                                                             |
+| `cancel_run`, `pause_run`, `resume_run` | `runId`                                                     | Control; return the compact run                                                                                                                                                                             |
+| `provide_input`                         | `runId`, `input`                                            | Answers a wait node in input mode                                                                                                                                                                           |
+| `send_signal`                           | `runId`, `name`, `payload?`                                 | `{ woke, run }`                                                                                                                                                                                             |
 
-Tool descriptions are written for agents: when to call, what to pass, what to do with a cursor.
+`wait_for_run` polls `GET /runs/{id}` once a second rather than calling the client's `waitForRun`, so it can return early, and it sends MCP progress notifications between polls when the caller supplies a progress token. MCP clients have their own tool timeouts (the plugin sets Codex's `tool_timeout_sec` to 660); agents keep calling it until `finished` is true.
+
+Resources: the templates `graphgoblin://runs/{id}/events` (the whole log as JSON, up to 10,000 events, with `truncated` and `nextAfter`) and `graphgoblin://runs/{id}/thread`; listing them returns the 20 most recent runs.
+
+Errors: an API problem becomes a tool result with `isError: true` and the text `GraphGoblin API error <code> (HTTP <status>): <detail>`, followed by the validation `errors` when present; an unreachable gateway is `NETWORK_ERROR (HTTP 0)`. Errors raised by the MCP layer start with their code, for example `LOOP_NOT_FOUND: ...` or `AMBIGUOUS_LOOP_NAME: ...`. Resource reads reject with the API error message, which also starts with the code.
 
 ## Codex plugin (Decided)
 
-`apps/plugin-codex` packages the MCP server registration and a few skills so a Codex user can drive loops from inside a session:
+`apps/plugin-codex` packages the MCP server registration and three skills so a Codex user can drive loops from inside a session:
 
-- `run-loop`: start a named loop with input and wait for the result, using the MCP tools.
-- `design-loop`: draft a loop definition from a description, validate it through the API, and save it as a draft.
-- `inspect-run`: summarise a run's event log for the user.
+- `run-loop`: find a loop, build input from `describe_loop`, `start_run`, then `wait_for_run` until finished, answering input requests with `provide_input`, and report the result.
+- `design-loop`: draft a definition from a description using a summary of the nine node kinds, validate it through `POST /loops`, `PUT /loops/{id}/draft`, or `POST /loops/{id}/validate` and read `issues`, and save it as a draft; never publish unless asked.
+- `inspect-run`: summarise a run's event log and thread.
 
-The owner also wants a slash-command style invocation from inside a harness. In Codex that is a skill the user invokes by name; the skill's instructions call the MCP tools. The exact packaging follows the pinned Codex plugin format and is verified in M7.
+The user invokes a skill by name (`$run-loop`), which is the slash-command style the owner asked for. The layout, verified against Codex CLI 0.160.0 and the plugins installed on the development machine:
+
+```
+apps/plugin-codex/plugin/graphgoblin/   the plugin root
+  .codex-plugin/plugin.json              name, version, description, author, "skills": "./skills/",
+                                         "mcpServers": "./.mcp.json", interface { displayName, ... }
+  .mcp.json                              { "mcpServers": { "graphgoblin": { "command": "node",
+                                           "args": ["${GRAPHGOBLIN_MCP_ENTRY}"],
+                                           "env_vars": ["GG_API_URL", "GG_API_KEY"], timeouts } } }
+  skills/<name>/SKILL.md                 frontmatter name and description, then instructions
+apps/plugin-codex/dist/marketplace/      assembled by pnpm build
+  .agents/plugins/marketplace.json       { "name": "graphgoblin-local", "plugins": [{ "name": "graphgoblin",
+                                           "source": { "source": "local", "path": "./plugins/graphgoblin" } }] }
+  plugins/graphgoblin/                   the plugin with the absolute apps/mcp/dist/main.js path filled in
+```
+
+Codex installs a plugin by copying it into `~/.codex/plugins/cache/<marketplace>/<plugin>/<version>`, so the source `.mcp.json` carries the placeholder `${GRAPHGOBLIN_MCP_ENTRY}` and the build writes the absolute path. Install with `codex plugin marketplace add <repo>/apps/plugin-codex/dist/marketplace` and `codex plugin add graphgoblin@graphgoblin-local`; `codex mcp list` then shows the server. `env_vars` passes `GG_API_URL` and `GG_API_KEY` through from the environment Codex runs in. See `apps/plugin-codex/README.md`.
 
 ## Client (Decided)
 

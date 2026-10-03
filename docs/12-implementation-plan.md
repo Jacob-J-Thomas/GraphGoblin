@@ -152,6 +152,8 @@ Tasks:
 
 Acceptance: the scenario above recorded as an E2E test with the fake harness and verified live once.
 
+M7 notes: `apps/mcp` uses `@modelcontextprotocol/sdk` 1.31 (1.32 was inside pnpm's minimum release age on the day) over `@graphgoblin/api-client` and sends `x-graphgoblin-client: mcp`, so MCP-started runs record `manual.mcp`. `wait_for_run` polls `GET /runs/{id}` itself instead of `waitForRun` because it returns early when the run needs the caller (waiting for input, or paused) and sends MCP progress notifications between polls. Streamable HTTP runs stateless (a server and transport per POST) and refuses non-loopback `Host` headers when bound to loopback. The E2E suite (`apps/mcp/src/mcp.test.ts`) drives every tool, including input, signals, pause, resume, and cancel, through the SDK's in-memory transport against the in-process API with the fake harness. The plugin layout was verified against Codex CLI 0.160.0 (see 07 and `research/codex-sdk.md`); because Codex copies installed plugins into its cache, `apps/plugin-codex` assembles a local marketplace with the absolute MCP server path at build time. The live check (`LIVE=1`, `apps/plugin-codex/src/live.test.ts`) ran one `codex exec --json` session with `gpt-6-luna` at `low` effort that called `list_loops`, `start_run`, and `wait_for_run` and reported the run as succeeded; the input path is covered by the E2E suite rather than live. `GET /runs?before=` takes a creation timestamp, so `list_runs` pages with `nextBefore` (a `createdAt`); runs created in the same millisecond can be skipped across a page boundary.
+
 ## M8 - Hardening and 1.0 (M)
 
 Goal: a release someone else can install.
