@@ -322,7 +322,7 @@ const ZERO_USAGE: Usage = {
 export class FakeHarness implements HarnessPort {
   readonly id: HarnessId = 'codex';
   readonly started: HarnessStartRequest[] = [];
-  readonly resumed: { sessionId: string; request: HarnessTurnRequest }[] = [];
+  readonly resumed: { sessionId: string; request: HarnessStartRequest }[] = [];
   readonly cancelled: string[] = [];
   preflightResult: HarnessPreflight = {
     ok: true,
@@ -350,9 +350,9 @@ export class FakeHarness implements HarnessPort {
     return this.session(sessionId, 'fresh', request.turn, signal);
   }
 
-  resume(sessionId: string, request: HarnessTurnRequest, signal: AbortSignal): HarnessSession {
+  resume(sessionId: string, request: HarnessStartRequest, signal: AbortSignal): HarnessSession {
     this.resumed.push({ sessionId, request });
-    return this.session(sessionId, 'resumed', request, signal);
+    return this.session(sessionId, 'resumed', request.turn, signal);
   }
 
   private pick(request: HarnessTurnRequest): ScriptedTurn {

@@ -214,34 +214,45 @@ describe('CodexHarness.start', () => {
 });
 
 describe('CodexHarness.resume', () => {
-  it('announces the known session id at once and reuses the start settings', async () => {
+  it('announces the known session id at once and passes the node settings to resumeThread', async () => {
     const codex = ReplayCodex.fromFixtures('message', 'message');
     const harness = new CodexHarness({ clientFactory: codex.factory });
-    const first = harness.start(
-      request({ model: 'gpt-6-astra', effort: 'high', workingDirectory: '/proj' }),
-      new AbortController().signal,
-    );
+    const settings = {
+      model: 'gpt-6-astra',
+      effort: 'high',
+      workingDirectory: '/proj',
+      options: { sandbox: 'read-only', approval: 'on-request', networkAccess: true, webSearch: true },
+    } as const;
+    const first = harness.start(request(settings), new AbortController().signal);
     const id = await first.sessionId;
     await first.result;
 
-    const resumed = harness.resume(id, { prompt: 'again' }, new AbortController().signal);
+    const resumed = harness.resume(
+      id,
+      request({ ...settings, turn: { prompt: 'again' } }),
+      new AbortController().signal,
+    );
     await expect(resumed.sessionId).resolves.toBe(id);
     const events = await drain(resumed);
     // The fixture's own thread.started repeats the id; it is not announced twice.
     expect(events[0]).toEqual({ type: 'session', sessionId: id, mode: 'resumed' });
     expect(events.filter((e) => e.type === 'session')).toHaveLength(1);
-    expect(codex.runs[1]).toMatchObject({
-      kind: 'resume',
-      threadId: id,
-      threadOptions: {
-        model: 'gpt-6-astra',
-        modelReasoningEffort: 'high',
-        workingDirectory: '/proj',
-      },
+    expect(codex.runs[1]).toMatchObject({ kind: 'resume', threadId: id, input: 'again' });
+    // resumeThread receives exactly the options startThread received.
+    expect(codex.runs[1]?.threadOptions).toEqual(codex.runs[0]?.threadOptions);
+    expect(codex.runs[1]?.threadOptions).toEqual({
+      model: 'gpt-6-astra',
+      modelReasoningEffort: 'high',
+      sandboxMode: 'read-only',
+      approvalPolicy: 'on-request',
+      networkAccessEnabled: true,
+      webSearchMode: 'live',
+      skipGitRepoCheck: true,
+      workingDirectory: '/proj',
     });
   });
 
-  it('falls back to the configured resume options for a session it did not start', async () => {
+  it('uses the request settings for a session this process did not start', async () => {
     const codex = new ReplayCodex(
       {
         events: [
@@ -255,14 +266,22 @@ describe('CodexHarness.resume', () => {
       clientFactory: codex.factory,
       model: 'gpt-6-sol',
       effort: 'medium',
-      resumeOptions: { sandbox: 'read-only' },
     });
-    const session = harness.resume('abc', { prompt: 'go' }, new AbortController().signal);
+    const session = harness.resume(
+      'abc',
+      {
+        workingDirectory: '/w',
+        options: { sandbox: 'read-only', approval: 'never' },
+        turn: { prompt: 'go' },
+      },
+      new AbortController().signal,
+    );
     const sessions = (await drain(session)).filter((e) => e.type === 'session');
     expect(sessions).toEqual([
       { type: 'session', sessionId: 'abc', mode: 'resumed' },
       { type: 'session', sessionId: 'other', mode: 'resumed' },
     ]);
+    // Model and effort fall back to the harness defaults when the request names none.
     expect(codex.runs[0]?.threadOptions).toEqual({
       model: 'gpt-6-sol',
       modelReasoningEffort: 'medium',
@@ -271,26 +290,8 @@ describe('CodexHarness.resume', () => {
       networkAccessEnabled: false,
       webSearchMode: 'disabled',
       skipGitRepoCheck: true,
+      workingDirectory: '/w',
     });
-    // `other` is now remembered with the fallback settings.
-    await harness.resume('other', { prompt: 'x' }, new AbortController().signal).result;
-    expect(codex.runs[1]?.threadOptions?.sandboxMode).toBe('read-only');
-  });
-
-  it('forgets the oldest remembered sessions beyond its bound', async () => {
-    const scripts = Array.from({ length: 1001 }, (_, i) => ({
-      events: [
-        { type: 'thread.started', thread_id: `t${i}` },
-        { type: 'turn.completed', usage: {} },
-      ],
-    }));
-    const codex = new ReplayCodex(...scripts, { events: [] });
-    const harness = new CodexHarness({ clientFactory: codex.factory });
-    for (let i = 0; i < 1001; i += 1) {
-      await harness.start(request({ model: 'remembered' }), new AbortController().signal).result;
-    }
-    harness.resume('t0', { prompt: 'x' }, new AbortController().signal).result.catch(() => {});
-    expect(codex.runs.at(-1)?.threadOptions?.model).toBe('gpt-6-luna');
   });
 });
 
@@ -452,5 +453,18 @@ describe('createCodexAdapters', () => {
     expect(adapters.decider.id).toBe('codex');
     expect(adapters.decider.available()).toBe(true);
     expect(createCodexAdapters().structured).toBeDefined();
+  });
+
+  it('is lazy: nothing is spawned until a session starts', async () => {
+    const codex = ReplayCodex.fromFixtures('message');
+    const factory = vi.fn(codex.factory);
+    const cliRunner = vi.fn<CliRunner>();
+    const adapters = createCodexAdapters({ clientFactory: factory, cliRunner });
+    expect(adapters.decider.available()).toBe(true);
+    expect(factory).not.toHaveBeenCalled();
+    expect(cliRunner).not.toHaveBeenCalled();
+    await adapters.harness.start(request(), new AbortController().signal).result;
+    expect(factory).toHaveBeenCalledOnce();
+    expect(cliRunner).not.toHaveBeenCalled();
   });
 });

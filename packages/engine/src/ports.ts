@@ -160,7 +160,12 @@ export interface HarnessPort {
   readonly id: HarnessId;
   preflight(): Promise<HarnessPreflight>;
   start(request: HarnessStartRequest, signal: AbortSignal): HarnessSession;
-  resume(sessionId: string, request: HarnessTurnRequest, signal: AbortSignal): HarnessSession;
+  /**
+   * Continue an existing session. The request carries the node's full session settings (model,
+   * effort, harness options, working directory), the same as `start`, so a resumed turn never
+   * falls back to harness or machine defaults.
+   */
+  resume(sessionId: string, request: HarnessStartRequest, signal: AbortSignal): HarnessSession;
 }
 
 // ---------------------------------------------------------------------------

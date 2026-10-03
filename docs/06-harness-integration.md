@@ -12,7 +12,7 @@ interface HarnessPort {
     problems: string[];
   }>;
   start(req: HarnessStartRequest, signal: AbortSignal): HarnessSession;
-  resume(sessionId: string, req: HarnessTurnRequest, signal: AbortSignal): HarnessSession;
+  resume(sessionId: string, req: HarnessStartRequest, signal: AbortSignal): HarnessSession;
 }
 
 type HarnessStartRequest = {
@@ -89,7 +89,7 @@ Every behaviour-affecting setting is passed as a per-thread option on every sess
 | `output.schema` with `native: true`            | `outputSchema` on the turn; the final message is parsed as JSON into `structured`, and the engine validates it                                                                                                           |
 | cancellation                                   | abort the SDK call's signal; see "Cancellation" below                                                                                                                                                                    |
 
-`HarnessPort.resume` receives only the turn, not the start settings. The adapter remembers the settings of each session it started (bounded, in memory) and repeats them on resume. For a session started by an earlier process, it uses its `model`, `effort`, and `resumeOptions` defaults (contract defaults: `workspace-write`, `never`, no network, no web search) and no `--cd`. A later engine change should pass the node's settings on resume.
+`HarnessPort.resume` receives the same `HarnessStartRequest` as `start`: the node's model, effort, harness options, capabilities, and working directory, plus the turn. The engine sends it for `resume-previous` and `resume-named` turns, schema-repair turns, and crash-recovery continuations, so `resumeThread(id, options)` gets exactly the thread options `startThread` would, including after a restart. The adapter keeps no per-session memory.
 
 ### Event normalisation (Decided)
 

@@ -8,6 +8,7 @@ import type {
   HarnessResult,
   HarnessSession,
   HarnessSessionRecord,
+  HarnessStartRequest,
   HarnessTurnRequest,
 } from '../ports.js';
 import {
@@ -189,6 +190,14 @@ export const inferenceHandler: NodeHandler<'inference'> = {
       prompt,
       ...(schema?.native ? { outputSchema: schema.jsonSchema } : {}),
     };
+    const sessionRequest = (next: HarnessTurnRequest): HarnessStartRequest => ({
+      workingDirectory,
+      model,
+      effort,
+      options: config.harnessOptions,
+      ...(config.capabilities ? { capabilities: config.capabilities } : {}),
+      turn: next,
+    });
     const timeout = withTimeout(
       ctx.signal,
       config.timeoutSeconds,
@@ -199,18 +208,8 @@ export const inferenceHandler: NodeHandler<'inference'> = {
     let usage: Usage = ZERO_USAGE;
     try {
       const session = resumeId
-        ? harness.resume(resumeId, turn, timeout.signal)
-        : harness.start(
-            {
-              workingDirectory,
-              model,
-              effort,
-              options: config.harnessOptions,
-              ...(config.capabilities ? { capabilities: config.capabilities } : {}),
-              turn,
-            },
-            timeout.signal,
-          );
+        ? harness.resume(resumeId, sessionRequest(turn), timeout.signal)
+        : harness.start(sessionRequest(turn), timeout.signal);
       try {
         result = await consume(ctx, session, row);
       } catch (error) {
@@ -246,7 +245,7 @@ export const inferenceHandler: NodeHandler<'inference'> = {
           });
           const repairSession = harness.resume(
             sessionId,
-            { prompt: repairPrompt, outputSchema: schema.jsonSchema },
+            sessionRequest({ prompt: repairPrompt, outputSchema: schema.jsonSchema }),
             timeout.signal,
           );
           const repairResult = await consume(ctx, repairSession, row);

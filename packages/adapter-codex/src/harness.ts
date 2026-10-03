@@ -1,4 +1,4 @@
-import type { Effort, HarnessOptions } from '@graphgoblin/contracts';
+import type { Effort } from '@graphgoblin/contracts';
 import {
   describeError,
   type HarnessEvent,
@@ -46,12 +46,6 @@ export interface CodexHarnessOptions {
   model?: string;
   /** Effort when a request names none. Default `low`. */
   effort?: Effort;
-  /**
-   * Harness options for resuming a session this process did not start (after a restart), when the
-   * original start settings are no longer in memory. Default: the contract defaults
-   * (`workspace-write`, approval `never`, no network, no web search).
-   */
-  resumeOptions?: Partial<HarnessOptions>;
   /** Environment for the CLI. Default: inherit this process's environment. */
   env?: Record<string, string>;
   /** Timeout for each preflight CLI call. Default 15 s. */
@@ -66,9 +60,6 @@ export interface CodexHarnessOptions {
 
 const DEFAULT_MODEL = 'gpt-6-luna';
 const DEFAULT_EFFORT: Effort = 'low';
-const DEFAULT_OPTIONS: HarnessOptions = { sandbox: 'workspace-write', approval: 'never' };
-/** Start settings remembered per session id, so `resume` can repeat them. Bounded. */
-const MAX_REMEMBERED_SESSIONS = 1000;
 
 function abortError(): Error {
   return new DOMException('The Codex turn was aborted', 'AbortError');
@@ -88,15 +79,12 @@ export class CodexHarness implements HarnessPort {
   readonly id = 'codex' as const;
   private readonly model: string;
   private readonly effort: Effort;
-  private readonly resumeOptions: HarnessOptions;
   private readonly clientFactory: CodexClientFactory;
   private readonly cliRunner: CliRunner;
-  private readonly remembered = new Map<string, ResolvedSettings>();
 
   constructor(private readonly options: CodexHarnessOptions = {}) {
     this.model = options.model ?? DEFAULT_MODEL;
     this.effort = options.effort ?? DEFAULT_EFFORT;
-    this.resumeOptions = { ...DEFAULT_OPTIONS, ...options.resumeOptions };
     this.clientFactory = options.clientFactory ?? ((o) => new Codex(o));
     this.cliRunner = options.cliRunner ?? runCli;
   }
@@ -113,6 +101,15 @@ export class CodexHarness implements HarnessPort {
   }
 
   start(request: HarnessStartRequest, signal: AbortSignal): HarnessSession {
+    return this.run(this.resolve(request), request.turn, signal, undefined);
+  }
+
+  /** Resumed turns carry the node's full settings, so `resumeThread` gets the same options as `startThread`. */
+  resume(sessionId: string, request: HarnessStartRequest, signal: AbortSignal): HarnessSession {
+    return this.run(this.resolve(request), request.turn, signal, sessionId);
+  }
+
+  private resolve(request: HarnessStartRequest): ResolvedSettings {
     const settings: ResolvedSettings = {
       model: request.model ?? this.model,
       effort: request.effort ?? this.effort,
@@ -127,25 +124,7 @@ export class CodexHarness implements HarnessPort {
         'codex: capability slugs ignored; no capability profile resolver is configured',
       );
     }
-    return this.run(settings, request.turn, signal, undefined);
-  }
-
-  resume(sessionId: string, request: HarnessTurnRequest, signal: AbortSignal): HarnessSession {
-    const settings = this.remembered.get(sessionId) ?? {
-      model: this.model,
-      effort: this.effort,
-      options: this.resumeOptions,
-    };
-    return this.run(settings, request, signal, sessionId);
-  }
-
-  private remember(sessionId: string, settings: ResolvedSettings): void {
-    this.remembered.delete(sessionId);
-    this.remembered.set(sessionId, settings);
-    if (this.remembered.size > MAX_REMEMBERED_SESSIONS) {
-      const oldest = this.remembered.keys().next().value;
-      if (oldest !== undefined) this.remembered.delete(oldest);
-    }
+    return settings;
   }
 
   private run(
@@ -183,7 +162,6 @@ export class CodexHarness implements HarnessPort {
     const announce = (id: string): void => {
       if (announced === id) return;
       announced = id;
-      this.remember(id, settings);
       resolveId(id);
       queue.push({ type: 'session', sessionId: id, mode: resumeId ? 'resumed' : 'fresh' });
     };
