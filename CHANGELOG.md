@@ -2,7 +2,7 @@
 
 All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); the user guide is [docs/guide/](docs/guide/README.md).
 
-## 1.0.0 - unreleased
+## 1.0.0 - 2026-10-03
 
 The first release: design, run, and observe agent loops on your own machine, with Codex as the harness.
 

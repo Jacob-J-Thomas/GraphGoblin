@@ -2,7 +2,7 @@
 
 Design, run, and observe agent loops. A progressive web application plus a gateway backend for AI engineers who want to compose agent-harness sessions, scripts, decisions, and waits into repeatable processes.
 
-Status: 1.0 release candidate. What changed is in [CHANGELOG.md](CHANGELOG.md); the [user guide](docs/guide/README.md) explains how to use it.
+Status: 1.0.0 released 2026-10-03. What changed is in [CHANGELOG.md](CHANGELOG.md); the [user guide](docs/guide/README.md) explains how to use it.
 
 ## Quick start
 
