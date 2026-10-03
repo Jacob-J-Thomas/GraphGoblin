@@ -1,4 +1,4 @@
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { describe, expect, it, vi } from 'vitest';
@@ -154,6 +154,60 @@ describe('adversarial domain invariants', () => {
     );
     expect(ok.thread.vars['value']).toBe('X!');
   });
+
+  // Review of WP-G: ambiguity inside a nested, unquantified group, and runtime compilation.
+  it.each(['redact', 'replace'] as const)(
+    'ADV-007 review: %s rejects ambiguity nested inside a repeated group',
+    async (kind) => {
+      const mutation =
+        kind === 'redact'
+          ? { op: kind, target: 'vars', patterns: ['^(?:(?:a|aa))+$'] }
+          : { op: kind, target: 'vars', pattern: '^(?:(?:a|aa))+$', replacement: 'X' };
+      await expect(
+        applyMutations({ ...sampleThread(), vars: { text: 'aaaa!' } }, [op(mutation)], ctx),
+      ).rejects.toThrow(/can run without bound/);
+    },
+  );
+
+  it('ADV-007 review: $eval compiles its string through the same check', async () => {
+    const expression = `$eval($join([${JSON.stringify('$match("aaaa!", /^(a')}, ${JSON.stringify('+)+$/)')}]))`;
+    expect(checkExpression(expression)).toBeNull();
+    await expect(evaluateExpression(expression, {})).rejects.toThrow(/can run without bound/);
+    // Safe strings still evaluate, against the focus when one is given.
+    expect(await evaluateExpression('$eval("a + 1")', { a: 1 })).toBe(2);
+    expect(await evaluateExpression('$eval("x * 2", {"x": 5})', {})).toBe(10);
+    expect(await evaluateExpression('$eval(missing)', {})).toBeUndefined();
+    // A string cannot become a regex any other way: $match rejects a string pattern.
+    await expect(
+      evaluateExpression('($p := $join(["^(a", "+)+$"]); $match("aaaa!", $p))', {}),
+    ).rejects.toThrow(/Argument 2/);
+  });
+
+  it.each([
+    ['nested-alternative', `$match("${'a'.repeat(42)}!", /^(?:(?:a|aa))+$/)`],
+    ['runtime-eval', `$eval(${JSON.stringify(`$match("${'a'.repeat(32)}!", /^(a+)+$/)`)})`],
+  ])(
+    'ADV-007 review: %s is rejected in an isolated process',
+    (_kind, expression) => {
+      const module = new URL('./expression.ts', import.meta.url).href;
+      const compiler = pathToFileURL(createRequire(import.meta.url).resolve('typescript')).href;
+      const code = `import ts from ${JSON.stringify(compiler)};
+      import { readFileSync } from 'node:fs'; import { registerHooks } from 'node:module';
+      registerHooks({ resolve(s,c,n) { return n(s.startsWith('.') && s.endsWith('.js') ? s.slice(0,-3)+'.ts' : s,c); },
+        load(u,c,n) { return u.endsWith('.ts') ? {format:'module', shortCircuit:true, source:ts.transpile(readFileSync(new URL(u),'utf8'), {module:ts.ModuleKind.ESNext})} : n(u,c); } });
+      const { evaluateExpression } = await import(${JSON.stringify(module)});
+      try { await evaluateExpression(${JSON.stringify(expression)}, {}, { timeoutMs: 10 }); process.stdout.write('accepted'); }
+      catch (e) { process.stdout.write('rejected:' + e.message); }`;
+      const result = spawnSync(process.execPath, ['--input-type=module', '-e', code], {
+        cwd: fileURLToPath(new URL('..', import.meta.url)),
+        timeout: 10_000,
+        windowsHide: true,
+        encoding: 'utf8',
+      });
+      expect(result.stdout).toMatch(/^rejected:.*can run without bound/);
+    },
+    15_000,
+  );
 
   it.each(['truncate', 'redact', 'replace'])(
     '11: %s on an empty thread preserves input',

@@ -13,8 +13,19 @@ export function replayThread(
   uptoSeq?: number,
 ): ContextThread {
   let thread = initial;
+  // The last node event seen: a `node.finished` repeating it (no `node.started` in between) is a
+  // duplicate record of the same completion and is not applied twice.
+  let lastNode: { type: string; nodeId: string } | undefined;
   for (const event of events) {
     if (uptoSeq !== undefined && event.seq > uptoSeq) break;
+    if (event.type === 'node.started' || event.type === 'node.finished') {
+      const duplicate =
+        event.type === 'node.finished' &&
+        lastNode?.type === 'node.finished' &&
+        lastNode.nodeId === event.nodeId;
+      lastNode = { type: event.type, nodeId: event.nodeId };
+      if (duplicate) continue;
+    }
     if (event.type === 'node.started') {
       const visits = thread.counters.nodeVisits;
       thread = {

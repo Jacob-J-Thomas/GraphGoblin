@@ -8,8 +8,11 @@
  *
  * - a back-reference (`\1`, `\k<name>`), which makes matching NP-hard in general;
  * - a repeated group that itself contains a repetition (`(a+)+`, `(\w*\s?)*`, `((ab)*c){2,}`);
- * - a repeated group with alternatives that can start with the same character (`(a|aa)*`,
- *   `(\d|1)+`), where the engine can split the same input in exponentially many ways.
+ * - a repeated group whose body can split the same text in more than one way: alternatives that
+ *   can start with the same character (`(a|aa)*`, `(\d|1)+`), an optional part that can match
+ *   the same text as what follows it (`(?:a?a?)+`, `(?:a?a)+`), or a body that can match the
+ *   empty string. Groups nested inside the body without their own repetition are looked through
+ *   (`(?:(?:a|aa))+`).
  *
  * The check is deliberately syntactic and errs on the side of rejecting. It does not bound
  * polynomial backtracking (`.*.*.*x` on a very large string); see docs/05 and docs/11 for that
@@ -182,26 +185,100 @@ function containsRepetition(alternatives: Item[][]): boolean {
   );
 }
 
-/** The character an alternative must start with, or undefined when it could start with many. */
-function firstChar(items: Item[], ignoreCase: boolean): string | undefined {
-  for (const item of items) {
-    if (item.atom.kind === 'assertion') continue;
-    if (item.atom.kind !== 'char' || (item.quantifier && item.quantifier.min === 0))
-      return undefined;
-    return ignoreCase ? item.atom.char.toLowerCase() : item.atom.char;
-  }
-  return undefined;
+/** Stands for "any character" in a first-character set: a class, `.`, or an escape class. */
+const ANY = '\u0000any';
+
+/** The characters a piece can start with, and whether it can match the empty string. */
+interface First {
+  chars: Set<string>;
+  nullable: boolean;
 }
 
-function overlappingAlternatives(alternatives: Item[][], ignoreCase: boolean): boolean {
-  if (alternatives.length < 2) return false;
-  const seen = new Set<string>();
-  for (const items of alternatives) {
-    const first = firstChar(items, ignoreCase);
-    if (first === undefined || seen.has(first)) return true;
-    seen.add(first);
+function atomFirst(atom: Atom, ignoreCase: boolean): First {
+  switch (atom.kind) {
+    case 'assertion':
+      return { chars: new Set(), nullable: true };
+    case 'any':
+      return { chars: new Set([ANY]), nullable: false };
+    case 'char':
+      return {
+        chars: new Set([ignoreCase ? atom.char.toLowerCase() : atom.char]),
+        nullable: false,
+      };
+    case 'group':
+      return alternativesFirst(atom.alternatives, ignoreCase);
   }
+}
+
+function itemFirst(item: Item, ignoreCase: boolean): First {
+  const first = atomFirst(item.atom, ignoreCase);
+  return { chars: first.chars, nullable: first.nullable || item.quantifier?.min === 0 };
+}
+
+function sequenceFirst(items: Item[], ignoreCase: boolean, from = 0): First {
+  const chars = new Set<string>();
+  for (let i = from; i < items.length; i += 1) {
+    const first = itemFirst(items[i] as Item, ignoreCase);
+    for (const c of first.chars) chars.add(c);
+    if (!first.nullable) return { chars, nullable: false };
+  }
+  return { chars, nullable: true };
+}
+
+function alternativesFirst(alternatives: Item[][], ignoreCase: boolean): First {
+  const chars = new Set<string>();
+  let nullable = false;
+  for (const items of alternatives) {
+    const first = sequenceFirst(items, ignoreCase);
+    for (const c of first.chars) chars.add(c);
+    nullable ||= first.nullable;
+  }
+  return { chars, nullable };
+}
+
+function overlaps(a: Set<string>, b: Set<string>): boolean {
+  if (a.size === 0 || b.size === 0) return false;
+  if (a.has(ANY) || b.has(ANY)) return true;
+  for (const c of a) if (b.has(c)) return true;
   return false;
+}
+
+/**
+ * Whether the body of a repeated group can split the same text in more than one way, looking
+ * through groups that are not themselves repeated. `follow` is what can start right after the
+ * part being checked (inside a repetition, that includes the body's own start).
+ */
+function ambiguity(
+  alternatives: Item[][],
+  follow: Set<string>,
+  ignoreCase: boolean,
+): string | undefined {
+  if (alternatives.length > 1) {
+    const seen = new Set<string>();
+    for (const items of alternatives) {
+      const first = sequenceFirst(items, ignoreCase);
+      if (first.nullable || overlaps(first.chars, seen)) {
+        return 'a repeated group has alternatives that can match the same text';
+      }
+      for (const c of first.chars) seen.add(c);
+    }
+  }
+  for (const items of alternatives) {
+    for (let i = 0; i < items.length; i += 1) {
+      const item = items[i] as Item;
+      const rest = sequenceFirst(items, ignoreCase, i + 1);
+      const next = rest.nullable ? new Set([...rest.chars, ...follow]) : rest.chars;
+      const first = itemFirst(item, ignoreCase);
+      if (first.nullable && overlaps(first.chars, next)) {
+        return 'a repeated group has an optional part that can match the same text as what follows it';
+      }
+      if (item.atom.kind === 'group') {
+        const nested = ambiguity(item.atom.alternatives, next, ignoreCase);
+        if (nested) return nested;
+      }
+    }
+  }
+  return undefined;
 }
 
 function check(alternatives: Item[][], ignoreCase: boolean): void {
@@ -212,9 +289,10 @@ function check(alternatives: Item[][], ignoreCase: boolean): void {
         if (containsRepetition(atom.alternatives)) {
           throw new UnsafeRegex('a repeated group contains another repetition');
         }
-        if (overlappingAlternatives(atom.alternatives, ignoreCase)) {
-          throw new UnsafeRegex('a repeated group has alternatives that can match the same text');
-        }
+        const body = alternativesFirst(atom.alternatives, ignoreCase);
+        if (body.nullable) throw new UnsafeRegex('a repeated group can match the empty string');
+        const reason = ambiguity(atom.alternatives, body.chars, ignoreCase);
+        if (reason) throw new UnsafeRegex(reason);
       }
       check(atom.alternatives, ignoreCase);
     }

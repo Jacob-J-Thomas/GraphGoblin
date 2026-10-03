@@ -45,6 +45,18 @@ describe('replayThread', () => {
     expect(thread.counters.nodeVisits).toEqual({ start: 1, prep: 2, approve: 1 });
   });
 
+  it('applies a repeated record of the same completion once', () => {
+    const add = ev(4, 'node.finished', {
+      nodeId: 'prep',
+      patch: [{ op: 'add', path: '/messages/-', value: sampleThread().messages[0]! }],
+      route: 'out',
+      durationMs: 1,
+    });
+    const twice = [...events.slice(0, 3), add, { ...add, seq: 5 }];
+    const base = sampleThread();
+    expect(replayThread(base, twice).messages).toHaveLength(base.messages.length + 1);
+  });
+
   it('stops at a sequence number', () => {
     const thread = replayThread(sampleThread(), events, 4);
     expect(thread.vars['x']).toBe(1);

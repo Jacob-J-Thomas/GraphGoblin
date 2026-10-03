@@ -48,8 +48,9 @@ function unsafeRegexIn(
   return undefined;
 }
 
-function compile(expression: string): Compiled {
-  const hit = cache.get(expression);
+/** Compile and check an expression. `cached: false` gives a private instance (for `$eval`). */
+function compile(expression: string, cached = true): Compiled {
+  const hit = cached ? cache.get(expression) : undefined;
   if (hit) return hit;
   let compiled: Compiled;
   try {
@@ -66,12 +67,46 @@ function compile(expression: string): Compiled {
       { expression },
     );
   }
+  if (!cached) return compiled;
   if (cache.size >= CACHE_LIMIT) {
     const first = cache.keys().next().value;
     if (first !== undefined) cache.delete(first);
   }
   cache.set(expression, compiled);
   return compiled;
+}
+
+/**
+ * JSONata's `$eval` compiles a string at run time, which would bypass the regex check above. It
+ * is replaced by this binding, which compiles the string through the same checks and evaluates it
+ * with the same budgets and bindings. Without a focus argument it evaluates against the caller's
+ * context (JSONata passes it as `this` to a bound function), as JSONata's own `$eval` does.
+ */
+function checkedEval(options: ExpressionOptions) {
+  return async function (this: unknown, source: unknown, focus?: unknown): Promise<unknown> {
+    if (source === undefined) return undefined;
+    const expression = String(source);
+    return run(compile(expression, false), expression, focus === undefined ? this : focus, options);
+  };
+}
+
+async function run(
+  expr: Compiled,
+  expression: string,
+  input: unknown,
+  options: ExpressionOptions,
+): Promise<unknown> {
+  timebox(expr, options.timeoutMs ?? 2000, options.maxDepth ?? 200);
+  try {
+    const result: unknown = await expr.evaluate(input, {
+      ...options.bindings,
+      eval: checkedEval(options),
+    });
+    return result;
+  } catch (error) {
+    if (error instanceof ExpressionError) throw error;
+    throw new ExpressionError(`expression failed: ${describeError(error)}`, { expression });
+  }
 }
 
 /**
@@ -112,15 +147,7 @@ export async function evaluateExpression(
   input: unknown,
   options: ExpressionOptions = {},
 ): Promise<unknown> {
-  const expr = compile(expression);
-  timebox(expr, options.timeoutMs ?? 2000, options.maxDepth ?? 200);
-  try {
-    const result: unknown = await expr.evaluate(input, options.bindings ?? {});
-    return result;
-  } catch (error) {
-    if (error instanceof ExpressionError) throw error;
-    throw new ExpressionError(`expression failed: ${describeError(error)}`, { expression });
-  }
+  return run(compile(expression), expression, input, options);
 }
 
 /** Evaluate and coerce to boolean using JSONata truthiness. */
