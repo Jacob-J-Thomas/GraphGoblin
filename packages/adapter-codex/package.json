@@ -1,0 +1,39 @@
+{
+  "name": "@graphgoblin/adapter-codex",
+  "version": "0.1.0",
+  "description": "Codex harness, structured completions, and decider over @openai/codex-sdk.",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b tsconfig.build.json",
+    "typecheck": "tsc -b tsconfig.build.json",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "record": "node scripts/record.mjs"
+  },
+  "dependencies": {
+    "@graphgoblin/contracts": "workspace:*",
+    "@graphgoblin/domain": "workspace:*",
+    "@graphgoblin/engine": "workspace:*",
+    "@openai/codex-sdk": "0.160.0"
+  },
+  "devDependencies": {
+    "@graphgoblin/tooling": "workspace:*",
+    "@types/node": "^22.20.5",
+    "@vitest/coverage-v8": "^5.0.3",
+    "eslint": "^10.11.0",
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.3"
+  }
+}

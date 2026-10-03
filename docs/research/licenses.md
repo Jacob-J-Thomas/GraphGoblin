@@ -27,7 +27,8 @@ MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, 0BSD, Unlicense, CC0-1.0.
 | LiquidJS                                             | MIT        |                                                                      |
 | JSONata                                              | MIT        |                                                                      |
 | @modelcontextprotocol/sdk                            | MIT        |                                                                      |
-| @openai/codex-sdk                                    | Apache-2.0 | Spawns the user-installed Codex CLI, also Apache-2.0                 |
+| @openai/codex-sdk                                    | Apache-2.0 | Pinned 0.160.0 in `adapter-codex`; spawns the Codex CLI              |
+| @openai/codex (+ platform package)                   | Apache-2.0 | 0.160.0, a dependency of the SDK; bundles the native CLI (~430 MB)   |
 | @typesafe-ai/sdk                                     | Verify     | Fall back to raw HTTP if not permissive                              |
 | @napi-rs/keyring                                     | MIT        | Verify on adoption                                                   |
 | React, React DOM                                     | MIT        |                                                                      |
