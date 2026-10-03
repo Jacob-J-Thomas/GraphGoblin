@@ -335,6 +335,11 @@ describe('thread, run, and events', () => {
     const events = [
       { ...base, type: 'run.queued' },
       { ...base, type: 'run.queued', replayOf: { runId: FIXTURE_IDS.run, nodeId: 'n' } },
+      {
+        ...base,
+        type: 'run.queued',
+        subloopVersions: { [FIXTURE_IDS.childLoop]: FIXTURE_IDS.version },
+      },
       { ...base, type: 'run.started', attempt: 1 },
       { ...base, type: 'node.started', nodeId: 'n', kind: 'mutate', attempt: 1, configHash: 'abc' },
       { ...base, type: 'node.finished', nodeId: 'n', patch: [], route: 'out', durationMs: 3 },

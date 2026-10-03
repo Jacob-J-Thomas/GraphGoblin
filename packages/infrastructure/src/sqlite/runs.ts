@@ -1,6 +1,6 @@
 import type { ContextThread, RunRecord, RunStatus } from '@graphgoblin/contracts';
 import type { RunRecordChanges, RunRepository } from '@graphgoblin/engine';
-import { and, desc, eq, inArray, lt, sql, type SQL } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNull, lt, sql, type SQL } from 'drizzle-orm';
 import type { Database } from './db.js';
 import { runs } from './schema.js';
 
@@ -141,6 +141,22 @@ export class SqliteRunRepository implements RunRepository {
     });
     if (!exists) throw new Error(`run ${runId} not found`);
     return undefined;
+  }
+
+  async claimCancel(
+    runId: string,
+    from: readonly RunStatus[],
+    at: string,
+  ): Promise<RunRecord | undefined> {
+    const updated = await this.db
+      .update(runs)
+      .set({ cancelRequestedAt: at })
+      .where(
+        and(eq(runs.id, runId), isNull(runs.cancelRequestedAt), inArray(runs.status, [...from])),
+      )
+      .returning();
+    const row = updated[0];
+    return row ? toRecord(row) : undefined;
   }
 
   async listByStatus(statuses: readonly RunStatus[]): Promise<RunRecord[]> {

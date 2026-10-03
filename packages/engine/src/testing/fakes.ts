@@ -188,6 +188,17 @@ export class InMemoryRunRepository implements RunRepository {
     if (!from.includes(current.status)) return Promise.resolve(undefined);
     return Promise.resolve(this.apply(current, changes));
   }
+  claimCancel(
+    runId: string,
+    from: readonly RunStatus[],
+    at: string,
+  ): Promise<RunRecord | undefined> {
+    const current = this.runs.get(runId);
+    if (!current) return Promise.reject(new Error(`run ${runId} not found`));
+    if (current.cancelRequestedAt || !from.includes(current.status))
+      return Promise.resolve(undefined);
+    return Promise.resolve(this.apply(current, { cancelRequestedAt: at }));
+  }
   private apply(current: RunRecord, changes: RunRecordChanges): RunRecord {
     const next: Record<string, unknown> = { ...current };
     for (const [key, value] of Object.entries(changes)) {
@@ -530,8 +541,11 @@ export class FakeWorkspace implements WorkspacePort {
 export class FakeTimers implements TimerPort {
   readonly scheduled: { runId: string; key: string; at: Date }[] = [];
   private listeners: ((runId: string, key: string) => void | Promise<void>)[] = [];
+  /** An upsert, like the real store: one timer per run and key. */
   schedule(runId: string, key: string, at: Date): Promise<void> {
-    this.scheduled.push({ runId, key, at });
+    const existing = this.scheduled.find((t) => t.runId === runId && t.key === key);
+    if (existing) existing.at = at;
+    else this.scheduled.push({ runId, key, at });
     return Promise.resolve();
   }
   cancel(runId: string, key?: string): Promise<void> {

@@ -12,8 +12,11 @@ export interface TimerServiceOptions {
 }
 
 /**
- * Fires persisted timers. A timer is removed from the store before its listeners run, so a crash
- * mid-fire loses at most that one wake, and the run manager's own recovery covers the rest.
+ * Fires persisted timers, at least once. A timer is removed from the store only after every
+ * listener has run (whether or not it threw), so a crash mid-fire leaves it in place and it fires
+ * again after a restart; the run manager's wake is a compare-and-set, so a repeat is harmless.
+ * The removal is conditional on the fired time, so a listener that re-armed the same key keeps
+ * its new timer.
  */
 export class TimerService implements TimerPort {
   private listeners: Listener[] = [];
@@ -63,12 +66,12 @@ export class TimerService implements TimerPort {
 
   /** Fire every due timer once. Safe to call directly; concurrent polls are skipped. */
   async poll(): Promise<number> {
-    if (this.polling) return 0;
+    // Without a listener nobody can deliver a wake, so leave the timers for one that can.
+    if (this.polling || this.listeners.length === 0) return 0;
     this.polling = true;
     try {
       const due = await this.store.listDue(this.clock.now(), this.batchSize);
       for (const timer of due) {
-        await this.store.remove(timer.runId, timer.key);
         for (const listener of this.listeners) {
           try {
             await listener(timer.runId, timer.key);
@@ -83,6 +86,7 @@ export class TimerService implements TimerPort {
             );
           }
         }
+        await this.store.acknowledge(timer.runId, timer.key, timer.at);
       }
       return due.length;
     } catch (error) {

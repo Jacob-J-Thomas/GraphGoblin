@@ -125,24 +125,118 @@ describe('adversarial engine invariants', () => {
     recovered.stop();
   });
 
-  it.todo('ADV-016: recovery does not execute a node whose completion is already durable');
-  // Executed reproduction; restore after fixing the durable cursor boundary.
-  // it('ADV-016: recovery does not execute a node whose completion is already durable', async () => {
-  //   const e = await createTestEngine();
-  //   const v = e.publish(inferLoop());
-  //   const update = e.ports.runs.update.bind(e.ports.runs);
-  //   const spy = vi.spyOn(e.ports.runs, 'update').mockImplementation((id, changes) => {
-  //     if (changes.currentNodeId === 'done') return new Promise(() => undefined);
-  //     return update(id, changes);
-  //   });
-  //   const r = await e.start(v.loopId);
-  //   await vi.waitFor(() => expect(e.events(r.id).some(x => x.type === 'node.finished' && x.nodeId === 'infer')).toBe(true));
-  //   e.manager.stop(); spy.mockRestore();
-  //   const recovered = new RunManager(e.ports, e.settings);
-  //   await recovered.start(); await recovered.waitForIdle(); recovered.stop();
-  //   expect(e.ports.harness.started).toHaveLength(1);
-  //   expect(e.events(r.id).filter(x => x.type === 'node.finished' && x.nodeId === 'infer')).toHaveLength(1);
-  // });
+  it('ADV-016: recovery does not execute a node whose completion is already durable', async () => {
+    const e = await createTestEngine();
+    const v = e.publish(inferLoop());
+    const update = e.ports.runs.update.bind(e.ports.runs);
+    // Crash after node.finished is durable and before the cursor moves to the exit.
+    const spy = vi.spyOn(e.ports.runs, 'update').mockImplementation((id, changes) => {
+      if (changes.currentNodeId === 'done') return new Promise(() => undefined);
+      return update(id, changes);
+    });
+    const r = await e.start(v.loopId);
+    await vi.waitFor(() =>
+      expect(e.events(r.id).some((x) => x.type === 'node.finished' && x.nodeId === 'infer')).toBe(
+        true,
+      ),
+    );
+    e.manager.stop();
+    spy.mockRestore();
+    const recovered = new RunManager(e.ports, e.settings);
+    await recovered.start();
+    await recovered.waitForIdle();
+    recovered.stop();
+    expect((await recovered.getRun(r.id))?.status).toBe('succeeded');
+    expect(e.ports.harness.started).toHaveLength(1);
+    expect(
+      e.events(r.id).filter((x) => x.type === 'node.finished' && x.nodeId === 'infer'),
+    ).toHaveLength(1);
+  });
+
+  it.each([true, false])(
+    'ADV-016: a loop-back whose cursor write was lost resumes at its target (iteration recorded=%s)',
+    async (recorded) => {
+      const e = await createTestEngine();
+      const def = singleNodeLoop(
+        'loop-crash',
+        {
+          id: 'mut',
+          kind: 'mutate',
+          label: 'Mut',
+          config: { operations: [{ op: 'delete', path: '/vars/absent' }] },
+        },
+        { default: 'loop-back', loopBack: { targetNodeId: 'mut' } },
+      );
+      def.settings = { maxIterations: 2 };
+      def.edges.push({ id: 'back', from: { node: 'done', port: 'loopBack' }, to: { node: 'mut' } });
+      const v = e.publish(def);
+      const update = e.ports.runs.update.bind(e.ports.runs);
+      const append = e.ports.events.append.bind(e.ports.events);
+      const hang = () => new Promise<never>(() => undefined);
+      // Crash after the exit's loop-back node.finished: either before iteration.incremented is
+      // appended, or after it but before the run record moves.
+      const appendSpy = vi.spyOn(e.ports.events, 'append').mockImplementation((id, drafts) => {
+        if (!recorded && drafts.some((d) => d.type === 'iteration.incremented')) return hang();
+        return append(id, drafts);
+      });
+      const updateSpy = vi.spyOn(e.ports.runs, 'update').mockImplementation((id, changes) => {
+        if (recorded && changes.iteration === 2) return hang();
+        return update(id, changes);
+      });
+      const r = await e.start(v.loopId);
+      await vi.waitFor(() =>
+        expect(
+          e.events(r.id).some((x) => x.type === 'node.finished' && x.route === 'loopBack'),
+        ).toBe(true),
+      );
+      if (recorded)
+        await vi.waitFor(() => expect(e.eventTypes(r.id)).toContain('iteration.incremented'));
+      e.manager.stop();
+      appendSpy.mockRestore();
+      updateSpy.mockRestore();
+      const recovered = new RunManager(e.ports, e.settings);
+      await recovered.start();
+      await recovered.waitForIdle();
+      recovered.stop();
+      const done = await recovered.getRun(r.id);
+      expect(done).toMatchObject({ status: 'exhausted', iteration: 2 });
+      expect(e.eventTypes(r.id).filter((t) => t === 'iteration.incremented')).toHaveLength(1);
+      expect(
+        e.events(r.id).filter((x) => x.type === 'node.finished' && x.nodeId === 'done'),
+      ).toHaveLength(2);
+      expect(
+        e.events(r.id).filter((x) => x.type === 'node.started' && x.nodeId === 'mut'),
+      ).toHaveLength(2);
+    },
+  );
+
+  it('ADV-016: an exit whose run.finished was lost is evaluated again and finishes once', async () => {
+    const e = await createTestEngine();
+    const v = e.publish(inputLoop());
+    const transition = e.ports.runs.transition.bind(e.ports.runs);
+    const spy = vi.spyOn(e.ports.runs, 'transition').mockImplementation((id, from, changes) => {
+      if (changes.status === 'succeeded') return new Promise(() => undefined);
+      return transition(id, from, changes);
+    });
+    const r = await e.runToIdle(v.loopId);
+    await e.manager.provideInput(r.id, 'go');
+    await vi.waitFor(() =>
+      expect(e.events(r.id).some((x) => x.type === 'node.finished' && x.nodeId === 'done')).toBe(
+        true,
+      ),
+    );
+    e.manager.stop();
+    spy.mockRestore();
+    const recovered = new RunManager(e.ports, e.settings);
+    await recovered.start();
+    await recovered.waitForIdle();
+    recovered.stop();
+    expect((await recovered.getRun(r.id))?.status).toBe('succeeded');
+    expect(e.eventTypes(r.id).filter((t) => t === 'run.finished')).toHaveLength(1);
+    expect(
+      e.events(r.id).filter((x) => x.type === 'node.finished' && x.nodeId === 'wait'),
+    ).toHaveLength(1);
+  });
 
   it('ADV-003: snapshots equal event replay at every mutation boundary', async () => {
     const e = await createTestEngine();
@@ -263,21 +357,67 @@ describe('adversarial engine invariants', () => {
     },
   );
 
-  it.todo('ADV-004: latest subloop version is pinned at parent start');
-  // Executed reproduction; restore this test after fixing the finding.
-  // it('ADV-004: latest subloop version is pinned at parent start', async () => {
-  //   const e = await createTestEngine({ maxConcurrentRuns: 1 });
-  //   const child = e.publish(minimalLoop());
-  //   const parent = subLoop('parent', child.loopId);
-  //   parent.nodes.push({ id: 'wait', kind: 'wait', label: 'Wait', config: { mode: 'input', prompt: '?' } });
-  //   parent.edges[0] = { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'wait' } };
-  //   parent.edges.push({ id: 'w', from: { node: 'wait', port: 'out' }, to: { node: 'child' } });
-  //   const r = await e.runToIdle(e.publish(parent).loopId);
-  //   e.publish(minimalLoop(), { loopId: child.loopId, version: 2 });
-  //   await e.manager.provideInput(r.id, null);
-  //   await e.settle(r.id);
-  //   expect((await e.ports.runs.listChildren(r.id))[0]?.versionId).toBe(child.id);
-  // });
+  /** start -> wait for input -> subloop `child` (latest of `childLoopId`) -> done. */
+  function waitThenChild(name: string, childLoopId: string): LoopDefinitionInput {
+    const parent = subLoop(name, childLoopId);
+    parent.nodes.push({
+      id: 'wait',
+      kind: 'wait',
+      label: 'Wait',
+      config: { mode: 'input', prompt: '?' },
+    });
+    parent.edges[0] = { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'wait' } };
+    parent.edges.push({ id: 'w', from: { node: 'wait', port: 'out' }, to: { node: 'child' } });
+    return parent;
+  }
+
+  it('ADV-004: latest subloop version is pinned at parent start', async () => {
+    const e = await createTestEngine({ maxConcurrentRuns: 1 });
+    const child = e.publish(minimalLoop());
+    const r = await e.runToIdle(e.publish(waitThenChild('parent', child.loopId)).loopId);
+    e.publish(minimalLoop(), { loopId: child.loopId, version: 2 });
+    await e.manager.provideInput(r.id, null);
+    expect((await e.settle(r.id)).status).toBe('succeeded');
+    expect((await e.ports.runs.listChildren(r.id))[0]?.versionId).toBe(child.id);
+    // A run created after the publish picks up the new version.
+    const later = await e.runToIdle(e.loopId('parent'));
+    await e.manager.provideInput(later.id, null);
+    await e.settle(later.id);
+    expect((await e.ports.runs.listChildren(later.id))[0]?.versionId).not.toBe(child.id);
+  });
+
+  it('ADV-004: pins reach grandchildren, replay forks, and recovery', async () => {
+    const e = await createTestEngine({ maxConcurrentRuns: 2 });
+    const leaf = e.publish(minimalLoop());
+    const middle = e.publish(subLoop('middle', leaf.loopId));
+    const root = await e.runToIdle(e.publish(waitThenChild('root', middle.loopId)).loopId);
+    expect(e.events(root.id)[0]).toMatchObject({
+      type: 'run.queued',
+      subloopVersions: { [leaf.loopId]: leaf.id, [middle.loopId]: middle.id },
+    });
+    // Newer versions of both loops are published while the root waits.
+    e.publish(minimalLoop(), { loopId: leaf.loopId, version: 2 });
+    e.publish(subLoop('middle', leaf.loopId), { loopId: middle.loopId, version: 2 });
+    // The process restarts before the input arrives.
+    e.manager.stop();
+    const recovered = new RunManager(e.ports, e.settings);
+    await recovered.start();
+    await recovered.provideInput(root.id, null);
+    await recovered.waitForIdle();
+    expect((await recovered.getRun(root.id))?.status).toBe('succeeded');
+    const [mid] = await e.ports.runs.listChildren(root.id);
+    expect(mid?.versionId).toBe(middle.id);
+    expect((await e.ports.runs.listChildren(mid!.id))[0]?.versionId).toBe(leaf.id);
+    // A replay fork at the subloop node reuses the source's pins.
+    const fork = await recovered.replay({ runId: root.id, nodeId: 'child' });
+    await recovered.waitForIdle();
+    recovered.stop();
+    expect((await recovered.getRun(fork.id))?.status).toBe('succeeded');
+    expect(e.events(fork.id)[0]).toMatchObject({
+      subloopVersions: { [leaf.loopId]: leaf.id, [middle.loopId]: middle.id },
+    });
+    expect((await e.ports.runs.listChildren(fork.id))[0]?.versionId).toBe(middle.id);
+  });
 
   it.each(['log', 'file', 'webhook', 'event'] as const)(
     '5: failing %s delivery retains outcome and records failure',
@@ -338,14 +478,16 @@ describe('adversarial engine invariants', () => {
     expect(e.ports.harness.cancelled).toHaveLength(1);
   });
 
-  it.todo('ADV-012: concurrent cancellation records the intent once');
-  // Executed reproduction; restore this test after fixing the finding.
-  // it('ADV-012: concurrent cancellation records the intent once', async () => {
-  //   const e = await createTestEngine();
-  //   const r = await e.runToIdle(e.publish(inputLoop()).loopId);
-  //   await Promise.all([e.manager.cancel(r.id), e.manager.cancel(r.id)]);
-  //   expect(e.eventTypes(r.id).filter(t => t === 'run.cancel_requested')).toHaveLength(1);
-  // });
+  it('ADV-012: concurrent cancellation records the intent once', async () => {
+    const e = await createTestEngine();
+    const r = await e.runToIdle(e.publish(inputLoop()).loopId);
+    const [first, second] = await Promise.all([e.manager.cancel(r.id), e.manager.cancel(r.id)]);
+    expect(e.eventTypes(r.id).filter((t) => t === 'run.cancel_requested')).toHaveLength(1);
+    expect(e.eventTypes(r.id).filter((t) => t === 'run.cancelled')).toHaveLength(1);
+    expect(second.cancelRequestedAt).toBe(first.cancelRequestedAt);
+    // Once cancelled, a further cancel is an invalid-state request, as before.
+    await expect(e.manager.cancel(r.id)).rejects.toMatchObject({ code: 'INVALID_STATE' });
+  });
 
   it('ADV-013: a non-resumable failure cannot leave its terminal status', async () => {
     const e = await createTestEngine();
@@ -371,23 +513,88 @@ describe('adversarial engine invariants', () => {
     expect(r.failure?.code).toBe('EXPRESSION_ERROR');
   });
 
-  it.todo('ADV-015: a child finishing just before its parent parks cannot orphan the parent');
-  // Executed reproduction; restore this test after fixing the finding.
-  // it('ADV-015: a child finishing just before its parent parks cannot orphan the parent', async () => {
-  //   const e = await createTestEngine({ maxConcurrentRuns: 2 });
-  //   const child = e.publish(minimalLoop());
-  //   const parent = e.publish(subLoop('fast-child', child.loopId));
-  //   const transition = e.ports.runs.transition.bind(e.ports.runs);
-  //   vi.spyOn(e.ports.runs, 'transition').mockImplementation(async (id, expected, changes) => {
-  //     if (changes.status === 'waiting' && changes.waiting?.kind === 'child') {
-  //       const childId = changes.waiting.childRunId!;
-  //       await vi.waitFor(async () => expect((await e.manager.getRun(childId))?.status).toBe('succeeded'));
-  //     }
-  //     return transition(id, expected, changes);
-  //   });
-  //   const r = await e.runToIdle(parent.loopId);
-  //   expect(r.status).toBe('succeeded');
-  // });
+  it('ADV-012: a cancel that loses to the run finishing reports the terminal state', async () => {
+    const e = await createTestEngine();
+    const r = await e.runToIdle(e.publish(inputLoop()).loopId);
+    const claim = e.ports.runs.claimCancel.bind(e.ports.runs);
+    vi.spyOn(e.ports.runs, 'claimCancel').mockImplementation(async (id, from, at) => {
+      await e.ports.runs.update(id, { status: 'succeeded' });
+      return claim(id, from, at);
+    });
+    await expect(e.manager.cancel(r.id)).rejects.toMatchObject({ code: 'INVALID_STATE' });
+    expect(e.eventTypes(r.id)).not.toContain('run.cancel_requested');
+  });
+
+  /** A child that has finished with `status` (succeeded, failed, or cancelled) before its parent parks. */
+  function childLoop(status: 'succeeded' | 'failed' | 'cancelled'): LoopDefinitionInput {
+    if (status === 'succeeded') return minimalLoop();
+    if (status === 'failed') {
+      return singleNodeLoop('failing-child', {
+        id: 'boom',
+        kind: 'mutate',
+        label: 'Boom',
+        config: {
+          operations: [
+            {
+              op: 'set',
+              path: '/vars/x',
+              value: { kind: 'expression', jsonata: '$error("boom")' },
+            },
+          ],
+        },
+      });
+    }
+    return inputLoop();
+  }
+
+  it.each(['succeeded', 'failed', 'cancelled'] as const)(
+    'ADV-015: a child that %s before its parent parks wakes the parent',
+    async (status) => {
+      const e = await createTestEngine({ maxConcurrentRuns: 2 });
+      const child = e.publish(childLoop(status));
+      const parent = e.publish(subLoop('fast-child', child.loopId));
+      const transition = e.ports.runs.transition.bind(e.ports.runs);
+      const spy = vi
+        .spyOn(e.ports.runs, 'transition')
+        .mockImplementation(async (id, expected, changes) => {
+          if (changes.status === 'waiting' && changes.waiting?.kind === 'child') {
+            const childId = changes.waiting.childRunId!;
+            if (status === 'cancelled') {
+              await vi.waitFor(async () =>
+                expect((await e.manager.getRun(childId))?.status).toBe('waiting'),
+              );
+              await e.manager.cancel(childId);
+            }
+            await vi.waitFor(async () =>
+              expect((await e.manager.getRun(childId))?.status).toBe(status),
+            );
+          }
+          return transition(id, expected, changes);
+        });
+      const r = await e.runToIdle(parent.loopId);
+      spy.mockRestore();
+      expect(r.status).toBe('succeeded');
+      expect((await e.manager.getThread(r.id))?.lastOutput?.value).toMatchObject({ status });
+      expect(e.eventTypes(r.id).filter((t) => t === 'run.woken')).toHaveLength(1);
+    },
+  );
+
+  it('ADV-015: recovery wakes a parent whose child finished while the process was down', async () => {
+    const e = await createTestEngine({ maxConcurrentRuns: 2 });
+    const child = e.publish(inputLoop());
+    const parent = e.publish(subLoop('parent-restart', child.loopId));
+    const r = await e.runToIdle(parent.loopId);
+    expect(r.status).toBe('waiting');
+    const [kid] = await e.ports.runs.listChildren(r.id);
+    // The child finishes but its parent is never told (the process died first).
+    e.manager.stop();
+    await e.ports.runs.update(kid!.id, { status: 'succeeded', outcome: 'success' });
+    const recovered = new RunManager(e.ports, e.settings);
+    await recovered.start();
+    await recovered.waitForIdle();
+    recovered.stop();
+    expect((await recovered.getRun(r.id))?.status).toBe('succeeded');
+  });
 
   function decisionLoop(): LoopDefinitionInput {
     const def = singleNodeLoop('decision', {

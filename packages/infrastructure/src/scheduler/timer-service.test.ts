@@ -25,7 +25,7 @@ describe('MemoryTimerStore', () => {
 });
 
 describe('TimerService', () => {
-  it('fires due timers once, removes them first, and keeps going when a listener fails', async () => {
+  it('fires due timers once, removes them after the listeners, and keeps going when a listener fails', async () => {
     const store = new MemoryTimerStore();
     const clock = new FakeClock();
     const logger = new CapturingLogger();
@@ -73,6 +73,7 @@ describe('TimerService', () => {
       clock,
       { logger },
     );
+    broken.onFire(() => undefined);
     expect(await broken.poll()).toBe(0);
     expect(logger.lines.at(-1)?.msg).toBe('timer poll failed');
     const silent = new TimerService(
@@ -82,7 +83,34 @@ describe('TimerService', () => {
       } as unknown as MemoryTimerStore,
       clock,
     );
+    silent.onFire(() => undefined);
     expect(await silent.poll()).toBe(0);
+  });
+
+  it('delivers at least once: a timer stays until its listeners return, and a re-arm survives', async () => {
+    const store = new MemoryTimerStore();
+    const clock = new FakeClock();
+    // No listener: nothing can deliver, so nothing is consumed.
+    const idle = new TimerService(store, clock);
+    await idle.schedule('r1', 'heartbeat', new Date(0));
+    expect(await idle.poll()).toBe(0);
+    expect(await store.list('r1')).toHaveLength(1);
+
+    // A listener that dies mid-delivery (a crash) leaves the timer for the next process.
+    const crashed = new TimerService(store, clock);
+    crashed.onFire(() => new Promise<void>(() => undefined));
+    void crashed.poll();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(await store.list('r1')).toHaveLength(1);
+
+    // The next process delivers it; the listener re-arms the same key, which is kept.
+    const next = new TimerService(store, clock);
+    const later = new Date(60_000);
+    next.onFire((runId, key) => next.schedule(runId, key, later));
+    expect(await next.poll()).toBe(1);
+    expect(await store.list('r1')).toEqual([{ runId: 'r1', key: 'heartbeat', at: later }]);
+    await store.acknowledge('r1', 'heartbeat', later);
+    expect(await store.list('r1')).toEqual([]);
   });
 
   it('polls on an interval between start and stop', async () => {

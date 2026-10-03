@@ -136,6 +136,23 @@ describe('SqliteRunRepository', () => {
     );
   });
 
+  it('claims a cancel request once, and only on an expected status', async () => {
+    const repo = new SqliteRunRepository(handle.db);
+    const run = runRecord();
+    await repo.create(run, sampleThread());
+    const at = '2026-10-02T12:00:01.000Z';
+    expect(await repo.claimCancel(run.id, ['running'], at)).toBeUndefined();
+    const claims = await Promise.all([
+      repo.claimCancel(run.id, ['queued'], at),
+      repo.claimCancel(run.id, ['queued'], '2026-10-02T12:00:02.000Z'),
+    ]);
+    expect(claims.filter(Boolean)).toHaveLength(1);
+    expect((await repo.get(run.id))?.cancelRequestedAt).toBe(
+      claims.find(Boolean)?.cancelRequestedAt,
+    );
+    expect(await repo.claimCancel('missing', ['queued'], at)).toBeUndefined();
+  });
+
   it('lists by status, children, and filters', async () => {
     const repo = new SqliteRunRepository(handle.db);
     const parent = runRecord({ id: 'p', status: 'waiting', createdAt: '2026-10-02T10:00:00.000Z' });
@@ -338,6 +355,12 @@ describe('SqliteTimerStore', () => {
       'timer',
     ]);
     expect(await store.listDue(new Date('2026-10-02T12:00:00.000Z'))).toEqual([]);
+    // Acknowledging a fire removes the timer only while it still has the fired time.
+    await store.acknowledge(run, 'timeout', new Date('2026-10-02T12:00:19.000Z'));
+    expect((await store.list(run)).map((t) => t.key)).toEqual(['timer', 'timeout']);
+    await store.acknowledge(run, 'timer', new Date('2026-10-02T12:00:05.000Z'));
+    expect((await store.list(run)).map((t) => t.key)).toEqual(['timeout']);
+    await store.upsert(run, 'timer', new Date('2026-10-02T12:00:05.000Z'));
     await store.remove(run, 'timer');
     expect((await store.list(run)).map((t) => t.key)).toEqual(['timeout']);
     await store.remove(run);

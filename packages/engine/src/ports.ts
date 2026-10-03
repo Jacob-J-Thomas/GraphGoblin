@@ -66,6 +66,16 @@ export interface RunRepository {
     from: readonly RunStatus[],
     changes: RunRecordChanges,
   ): Promise<RunRecord | undefined>;
+  /**
+   * Record a cancel request once: set `cancelRequestedAt` only when it is unset and the status is
+   * one of `from`, atomically. Returns the updated record, or undefined when another request got
+   * there first or the status did not match, so concurrent cancels append one audit event.
+   */
+  claimCancel(
+    runId: string,
+    from: readonly RunStatus[],
+    at: string,
+  ): Promise<RunRecord | undefined>;
   listByStatus(statuses: readonly RunStatus[]): Promise<RunRecord[]>;
   listChildren(parentRunId: string): Promise<RunRecord[]>;
   getInitialThread(runId: string): Promise<ContextThread | undefined>;
@@ -251,9 +261,14 @@ export interface WorkspacePort {
 }
 
 export interface TimerPort {
+  /** Arm or re-arm the run's timer named `key`: one timer per run and key (an upsert). */
   schedule(runId: string, key: string, at: Date): Promise<void>;
   cancel(runId: string, key?: string): Promise<void>;
-  /** Listeners may return a promise; implementations should await it before considering the fire handled. */
+  /**
+   * Listeners may return a promise. Implementations await it and remove the fired timer only
+   * afterwards, so delivery is at-least-once: a fire interrupted by a crash fires again after a
+   * restart. Listeners must therefore be idempotent.
+   */
   onFire(listener: (runId: string, key: string) => void | Promise<void>): () => void;
 }
 

@@ -1,19 +1,18 @@
-// Reproduction also needs vi, createTestEngine and singleNodeLoop from their existing test entry points.
-// Reproduction import: import { spawn, type ChildProcess } from 'node:child_process';
-// Reproduction import: import { mkdtemp, readFile, rm } from 'node:fs/promises';
-// Reproduction import: import { join } from 'node:path';
-// Reproduction import: import { tmpdir } from 'node:os';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { FakeClock, FakeIds } from '@graphgoblin/engine/testing';
-// Reproduction import: import { RunManager } from '@graphgoblin/engine';
+import { spawn, type ChildProcess, type SpawnOptions } from 'node:child_process';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { FakeClock, FakeIds, createTestEngine, singleNodeLoop } from '@graphgoblin/engine/testing';
+import { RunManager } from '@graphgoblin/engine';
 import { openMemoryDatabase, type DatabaseHandle } from './sqlite/db.js';
 import { SqliteEventStore } from './sqlite/events.js';
 import { SqliteSecrets, encryptSecret, decryptSecret } from './sqlite/secrets.js';
 import { SqliteScheduleStore } from './sqlite/triggers.js';
-// Reproduction import: import { SqliteTimerStore } from './sqlite/timers.js';
+import { SqliteTimerStore } from './sqlite/timers.js';
 import { CronScheduler, type CronFire } from './scheduler/cron-scheduler.js';
-// Reproduction import: import { TimerService } from './scheduler/timer-service.js';
-// Reproduction import: import { ProcessScripts, killTree } from './process/scripts.js';
+import { TimerService } from './scheduler/timer-service.js';
+import { ProcessScripts } from './process/scripts.js';
 
 let db: DatabaseHandle;
 beforeEach(async () => {
@@ -120,23 +119,87 @@ describe('adversarial infrastructure invariants (forks pool)', () => {
     expect(fires).toHaveLength(2);
     expect(fires[0]?.scheduledFor).toBe(fires[1]?.scheduledFor);
   });
-  it.todo('ADV-011: a timer removed before a crash is restored from the waiting run');
-  // Executed reproduction; restore this test after fixing the finding.
-  // it('ADV-011: a timer removed before a crash is restored from the waiting run', async () => {
-  //   const e = await createTestEngine(); e.manager.stop();
-  //   const store = new SqliteTimerStore(db.db);
-  //   const timer = new TimerService(store, e.ports.clock);
-  //   const manager = new RunManager({ ...e.ports, timers: timer }, e.settings);
-  //   await manager.start();
-  //   const v = e.publish(singleNodeLoop('timer-crash', { id: 'wait', kind: 'wait', label: 'Wait', config: { mode: 'duration', seconds: 1 } }));
-  //   const r = await manager.startRun({ ownerId: 'local', loopId: v.loopId, source: 'manual.api' });
-  //   await manager.waitForIdle(); manager.stop();
-  //   // TimerService deletes before invoking the manager; crash in this durable-write gap.
-  //   e.ports.clock.advance(2000); await timer.poll();
-  //   const recovered = new RunManager({ ...e.ports, timers: timer }, e.settings);
-  //   await recovered.start(); await timer.poll(); await recovered.waitForIdle(); recovered.stop();
-  //   expect((await recovered.getRun(r.id))?.status).toBe('succeeded');
-  // });
+  it.each([
+    ['duration', { mode: 'duration', seconds: 1 }, 'timer'],
+    [
+      'input timeout',
+      { mode: 'input', prompt: '?', timeoutSeconds: 1, onTimeout: 'continue' },
+      'timeout',
+    ],
+  ] as const)(
+    'ADV-011: a %s timer lost before a crash is re-armed from the waiting run',
+    async (_name, config, key) => {
+      const e = await createTestEngine();
+      e.manager.stop();
+      const store = new SqliteTimerStore(db.db);
+      const timer = new TimerService(store, e.ports.clock);
+      const manager = new RunManager({ ...e.ports, timers: timer }, e.settings);
+      await manager.start();
+      const v = e.publish(
+        singleNodeLoop(`timer-crash-${key}`, { id: 'wait', kind: 'wait', label: 'Wait', config }),
+      );
+      const r = await manager.startRun({
+        ownerId: 'local',
+        loopId: v.loopId,
+        source: 'manual.api',
+      });
+      await manager.waitForIdle();
+      manager.stop();
+      expect((await store.list(r.id)).map((t) => t.key)).toEqual([key]);
+      // The row is gone but the run still waits: a fire consumed before its wake was recorded.
+      await store.remove(r.id, key);
+      e.ports.clock.advance(2000);
+      const recovered = new RunManager({ ...e.ports, timers: timer }, e.settings);
+      await recovered.start();
+      expect((await store.list(r.id)).map((t) => t.key)).toEqual([key]);
+      await timer.poll();
+      await recovered.waitForIdle();
+      recovered.stop();
+      expect((await recovered.getRun(r.id))?.status).toBe('succeeded');
+      expect(await store.list(r.id)).toEqual([]);
+    },
+  );
+  it('ADV-011: a fire interrupted mid-delivery is delivered again after a restart', async () => {
+    const e = await createTestEngine();
+    e.manager.stop();
+    const store = new SqliteTimerStore(db.db);
+    const first = new TimerService(store, e.ports.clock);
+    const manager = new RunManager({ ...e.ports, timers: first }, e.settings);
+    await manager.start();
+    const v = e.publish(
+      singleNodeLoop('timer-gap', {
+        id: 'wait',
+        kind: 'wait',
+        label: 'Wait',
+        config: { mode: 'duration', seconds: 1 },
+      }),
+    );
+    const r = await manager.startRun({ ownerId: 'local', loopId: v.loopId, source: 'manual.api' });
+    await manager.waitForIdle();
+    // The process dies inside the wake: before the waiting-to-running write lands.
+    const transition = e.ports.runs.transition.bind(e.ports.runs);
+    const spy = vi
+      .spyOn(e.ports.runs, 'transition')
+      .mockImplementation((id, from, changes) =>
+        changes.status === 'running' && from.includes('waiting')
+          ? new Promise(() => undefined)
+          : transition(id, from, changes),
+      );
+    e.ports.clock.advance(2000);
+    void first.poll();
+    await vi.waitFor(() => expect(spy).toHaveBeenCalled());
+    manager.stop();
+    spy.mockRestore();
+    expect((await store.list(r.id)).map((t) => t.key)).toEqual(['timer']);
+    const second = new TimerService(store, e.ports.clock);
+    const recovered = new RunManager({ ...e.ports, timers: second }, e.settings);
+    await recovered.start();
+    expect(await second.poll()).toBe(1);
+    await recovered.waitForIdle();
+    recovered.stop();
+    expect((await recovered.getRun(r.id))?.status).toBe('succeeded');
+    expect(e.events(r.id).filter((x) => x.type === 'run.woken')).toHaveLength(1);
+  });
   it('18: concurrent set of one secret preserves one authenticated ciphertext', async () => {
     const key = Buffer.alloc(32, 4);
     const secrets = new SqliteSecrets(db.db, new FakeClock(), key, 'local');
@@ -151,26 +214,60 @@ describe('adversarial infrastructure invariants (forks pool)', () => {
     expect(() => encryptSecret(Buffer.alloc(31), 'value')).toThrow(/32/);
     expect(() => decryptSecret(Buffer.alloc(32, 5), ciphertext as string)).toThrow();
   });
-  it.todo('QA-LIMIT-001: real Windows process-tree cancellation requires taskkill permission');
-  // Executed reproduction; restore this test after fixing the finding.
-  // it('6: ProcessScripts abort kills a real child and grandchild on Windows', async () => {
-  //   const dir = await mkdtemp(join(tmpdir(), 'gg-process-tree-'));
-  //   const pidFile = join(dir, 'grandchild.pid');
-  //   let parent: ChildProcess | undefined; let grandchildPid: number | undefined;
-  //   const controller = new AbortController();
-  //   const scripts = new ProcessScripts({ spawnImpl: (command, args, options) => { const child = spawn(command, args, options); if (command === process.execPath) parent = child; return child; } });
-  //   const grandchild = `require('node:fs').writeFileSync(${JSON.stringify(pidFile)}, String(process.pid)); setInterval(() => {}, 1000);`;
-  //   const child = `require('node:child_process').spawn(process.execPath, ['-e', ${JSON.stringify(grandchild)}], {windowsHide:true, stdio:'inherit'}); setInterval(() => {}, 1000);`;
-  //   const running = scripts.run({ command: process.execPath, args: ['-e', child], cwd: dir, env: {}, signal: controller.signal, timeoutMs: 10000 });
-  //   try {
-  //     await vi.waitFor(async () => { grandchildPid = Number(await readFile(pidFile, 'utf8')); expect(grandchildPid).toBeGreaterThan(0); }, { timeout: 5000 });
-  //     controller.abort(); await running;
-  //     await vi.waitFor(() => { expect(() => process.kill(parent!.pid!, 0)).toThrow(); expect(() => process.kill(grandchildPid!, 0)).toThrow(); }, { timeout: 3000 });
-  //   } finally {
-  //     controller.abort(); if (parent) killTree(parent);
-  //     if (grandchildPid) { try { process.kill(grandchildPid); } catch { /* already dead */ } }
-  //     await running;
-  //     await rm(dir, { recursive: true, force: true });
-  //   }
-  // }, 15000);
+  it('6/QA-LIMIT-001: ProcessScripts abort kills a real child and its grandchild', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'gg-process-tree-'));
+    const pidFile = join(dir, 'grandchild.pid');
+    let parent: ChildProcess | undefined;
+    let grandchildPid: number | undefined;
+    const controller = new AbortController();
+    const spawnAndRecord = ((command: string, args: readonly string[], options: SpawnOptions) => {
+      const child = spawn(command, args, options);
+      if (command === process.execPath) parent = child;
+      return child;
+    }) as typeof spawn;
+    const scripts = new ProcessScripts({ spawnImpl: spawnAndRecord });
+    // The grandchild is a sleeper the script starts; it must die with the script's process tree.
+    const grandchild = `require('node:fs').writeFileSync(${JSON.stringify(pidFile)}, String(process.pid)); setInterval(() => {}, 1000);`;
+    const child = `require('node:child_process').spawn(process.execPath, ['-e', ${JSON.stringify(grandchild)}], { windowsHide: true, stdio: 'inherit' }); setInterval(() => {}, 1000);`;
+    const alive = (pid: number): boolean => {
+      try {
+        process.kill(pid, 0);
+        return true;
+      } catch {
+        return false;
+      }
+    };
+    const running = scripts.run({
+      command: process.execPath,
+      args: ['-e', child],
+      cwd: dir,
+      env: {},
+      signal: controller.signal,
+      timeoutMs: 20_000,
+    });
+    try {
+      await vi.waitFor(
+        async () => {
+          grandchildPid = Number(await readFile(pidFile, 'utf8'));
+          expect(grandchildPid).toBeGreaterThan(0);
+        },
+        { timeout: 10_000 },
+      );
+      expect(alive(grandchildPid!)).toBe(true);
+      controller.abort();
+      expect((await running).timedOut).toBe(false);
+      await vi.waitFor(
+        () => {
+          expect(alive(parent!.pid!)).toBe(false);
+          expect(alive(grandchildPid!)).toBe(false);
+        },
+        { timeout: 5_000 },
+      );
+    } finally {
+      controller.abort();
+      if (grandchildPid && alive(grandchildPid)) process.kill(grandchildPid);
+      await running;
+      await rm(dir, { recursive: true, force: true });
+    }
+  }, 30_000);
 });

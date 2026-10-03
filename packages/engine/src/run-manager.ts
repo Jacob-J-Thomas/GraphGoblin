@@ -13,6 +13,7 @@ import type {
   RunRecord,
   RunStatus,
   TriggerKind,
+  WaitSpec,
 } from '@graphgoblin/contracts';
 import { ContextThreadSchema } from '@graphgoblin/contracts';
 import {
@@ -79,6 +80,8 @@ export interface StartRunInput {
   seed?: InitialThreadInput['seed'];
   /** Allow running a draft version (test runs). */
   allowDraft?: boolean;
+  /** Subloop versions already pinned by the parent run; a child inherits them. */
+  subloopVersions?: Record<string, string>;
 }
 
 export interface ReplayRunInput {
@@ -97,6 +100,7 @@ export interface Actor {
 }
 
 const SYSTEM_ACTOR: Actor = { kind: 'system', id: 'engine' };
+const ACTIVE_STATUSES: readonly RunStatus[] = ['queued', 'running', 'waiting', 'paused'];
 
 function triggerKindOf(node: Extract<Node, { kind: 'trigger' }>): TriggerKind {
   return node.config.subtype;
@@ -133,10 +137,32 @@ export function attemptFor(events: readonly RunEvent[], nodeId: string): number 
   return started + 1;
 }
 
+/** The subloop versions a run pinned when it was created (its `run.queued` event). */
+export function pinnedSubloops(events: readonly RunEvent[]): Record<string, string> {
+  const queued = events.find((e) => e.type === 'run.queued');
+  return queued?.type === 'run.queued' ? { ...(queued.subloopVersions ?? {}) } : {};
+}
+
+type NodeFinishedEvent = Extract<RunEvent, { type: 'node.finished' }>;
+
+/** The last `node.finished` when it is the log's last node event (no node started after it). */
+function lastFinishedNode(
+  events: readonly RunEvent[],
+): { event: NodeFinishedEvent; index: number } | undefined {
+  for (let i = events.length - 1; i >= 0; i -= 1) {
+    const event = events[i] as RunEvent;
+    if (event.type === 'node.started') return undefined;
+    if (event.type === 'node.finished') return { event, index: i };
+  }
+  return undefined;
+}
+
 export class RunManager {
   private readonly queue: string[] = [];
   private readonly active = new Map<string, AbortController>();
   private readonly recovering = new Set<string>();
+  /** Runs enqueued while their executor was still active: queued again once it returns. */
+  private readonly requeue = new Set<string>();
   private readonly directories = new Map<string, string>();
   private idleWaiters: (() => void)[] = [];
   private unsubscribeTimers: (() => void) | undefined;
@@ -227,8 +253,15 @@ export class RunManager {
       createdAt: now,
       lastEventSeq: 0,
     };
+    const subloopVersions = await this.pinSubloops(def, input.subloopVersions ?? {});
     await this.ports.runs.create(run, thread);
-    await this.ports.events.append(runId, [{ type: 'run.queued', initialThread: thread }]);
+    await this.ports.events.append(runId, [
+      {
+        type: 'run.queued',
+        initialThread: thread,
+        ...(Object.keys(subloopVersions).length > 0 ? { subloopVersions } : {}),
+      },
+    ]);
     this.enqueue(runId);
     return run;
   }
@@ -238,8 +271,17 @@ export class RunManager {
     if (isTerminal(run.status)) {
       throw new EngineRequestError('INVALID_STATE', `run ${runId} is already ${run.status}`);
     }
-    if (run.cancelRequestedAt) return run;
-    await this.ports.runs.update(runId, { cancelRequestedAt: this.now() });
+    // Compare-and-set on the request itself: only the first of concurrent cancels records it.
+    const claimed = await this.ports.runs.claimCancel(runId, ACTIVE_STATUSES, this.now());
+    if (!claimed) {
+      // Already requested (by a concurrent call, which may have finished it by now): the same
+      // outcome, without a second audit event. Otherwise the run became terminal meanwhile.
+      const current = await this.mustGet(runId);
+      if (!current.cancelRequestedAt) {
+        throw new EngineRequestError('INVALID_STATE', `run ${runId} is already ${current.status}`);
+      }
+      return current;
+    }
     await this.ports.events.append(runId, [{ type: 'run.cancel_requested', actor }]);
     const controller = this.active.get(runId);
     if (controller) {
@@ -400,8 +442,16 @@ export class RunManager {
       createdAt: this.now(),
       lastEventSeq: 0,
     };
+    // The fork keeps the source's subloop pins: a replay re-runs the source's graph, not a newer one.
+    const subloopVersions = pinnedSubloops(events);
     await this.ports.runs.create(run, thread);
-    await this.ports.events.append(runId, [{ type: 'run.queued', replayOf }]);
+    await this.ports.events.append(runId, [
+      {
+        type: 'run.queued',
+        replayOf,
+        ...(Object.keys(subloopVersions).length > 0 ? { subloopVersions } : {}),
+      },
+    ]);
     this.enqueue(runId);
     return run;
   }
@@ -428,7 +478,13 @@ export class RunManager {
   // ---------------------------------------------------------------------------
 
   private enqueue(runId: string): void {
-    if (this.queue.includes(runId) || this.active.has(runId)) return;
+    if (this.active.has(runId)) {
+      // A wake or resume that lands while the executor is still returning (a child finishing as
+      // its parent parks): run again once it has, or the run would sit in `running` unexecuted.
+      this.requeue.add(runId);
+      return;
+    }
+    if (this.queue.includes(runId)) return;
     this.queue.push(runId);
     this.tick();
   }
@@ -436,6 +492,7 @@ export class RunManager {
   private dequeue(runId: string): void {
     const index = this.queue.indexOf(runId);
     if (index >= 0) this.queue.splice(index, 1);
+    this.requeue.delete(runId);
   }
 
   private tick(): void {
@@ -465,6 +522,7 @@ export class RunManager {
         })
         .finally(() => {
           this.active.delete(runId);
+          if (this.requeue.delete(runId) && !this.queue.includes(runId)) this.queue.push(runId);
           this.tick();
           this.notifyIdle();
         });
@@ -490,20 +548,43 @@ export class RunManager {
       if (run.status === 'queued' || run.status === 'running') {
         if (run.status === 'running') this.recovering.add(run.id);
         this.enqueue(run.id);
+      } else if (run.waiting) {
+        // Waiting runs are woken by timers, inputs, signals, or finishing children. Re-arm the
+        // wait's timer from its spec in case a fire was lost (an upsert, so an armed timer stays
+        // as it is), and deliver a child outcome that finished while this process was down.
+        await this.rearmTimer(run.id, run.waiting);
+        await this.reconcileChild(run);
       }
-      // waiting runs are woken by persisted timers, inputs, signals, or finishing children.
     }
+  }
+
+  /** The timer key a wait spec's `until` belongs to: its own timer, or its timeout. */
+  private async rearmTimer(runId: string, wait: WaitSpec): Promise<void> {
+    if (!wait.until) return;
+    const key = wait.kind === 'timer' || wait.kind === 'heartbeat' ? wait.kind : 'timeout';
+    await this.ports.timers.schedule(runId, key, new Date(wait.until));
+  }
+
+  /** Wake a parent parked on a child that is already terminal. Idempotent. */
+  private async reconcileChild(parent: RunRecord): Promise<void> {
+    const childRunId = parent.waiting?.kind === 'child' ? parent.waiting.childRunId : undefined;
+    if (!childRunId) return;
+    const child = await this.ports.runs.get(childRunId);
+    if (child && isTerminal(child.status))
+      await this.notifyParent(child, child.status, child.outcome);
   }
 
   private async onTimer(runId: string, key: string): Promise<void> {
     const run = await this.ports.runs.get(runId);
     if (!run || run.status !== 'waiting' || !run.waiting) return;
     const { kind } = run.waiting;
+    // Delivery is at-least-once, so a stale fire must not wake a different wait: a timer key
+    // wakes only the wait kind that armed it.
     if (key === 'timeout') {
       await this.wake(runId, { reason: 'timeout', key });
       return;
     }
-    if (kind === 'timer' || kind === 'heartbeat') await this.wake(runId, { reason: 'timer', key });
+    if (key === kind) await this.wake(runId, { reason: 'timer', key });
   }
 
   private async wake(runId: string, wake: WakeInfo): Promise<RunRecord> {
@@ -590,6 +671,14 @@ export class RunManager {
       }
     }
 
+    // The log is the source of truth for the cursor: a crash between a durable `node.finished` and
+    // the cursor write must not run the finished node again.
+    const caughtUp = await this.catchUpCursor(run, def, events, append);
+    if (caughtUp) {
+      run = caughtUp.run;
+      thread = { ...thread, run: { ...thread.run, iteration: run.iteration } };
+    }
+
     let nodeId = run.currentNodeId ?? thread.invocation.trigger.nodeId;
     let wake = pendingWake;
     let previousWait = run.waiting;
@@ -610,7 +699,7 @@ export class RunManager {
           ownerDefaults.effort ??
           this.settings.defaultEffort,
       }),
-      startChild: (request) => this.startChild(run, request),
+      startChild: (request) => this.startChild(run, request, pinnedSubloops(events)),
       childOutcome: (childRunId) => this.childOutcome(childRunId),
       events: () => Promise.resolve(events),
       depth: () => this.depthOf(run),
@@ -710,6 +799,9 @@ export class RunManager {
         });
         // Paused while the node was parking: keep the pause, remember the wait so resume re-parks.
         if (!parked) await this.ports.runs.update(runId, { waiting: result.wait });
+        // A child that finished before this park found its parent still running and could not
+        // wake it; now that the wait is recorded, deliver its outcome here.
+        else await this.reconcileChild(parked);
         return;
       }
 
@@ -930,15 +1022,29 @@ export class RunManager {
       parent.waiting.childRunId !== run.id
     )
       return;
-    await this.wake(parent.id, {
-      reason: 'child',
-      payload: { childRunId: run.id, status, outcome: outcome ?? null },
-    });
+    try {
+      await this.wake(parent.id, {
+        reason: 'child',
+        payload: { childRunId: run.id, status, outcome: outcome ?? null },
+      });
+    } catch (error) {
+      // The child's own completion and the parent's post-park check can race. The wake is a
+      // compare-and-set, so the loser finds the parent already running and has nothing to do.
+      if (!(error instanceof EngineRequestError && error.code === 'INVALID_STATE')) throw error;
+    }
   }
 
-  private async startChild(parent: RunRecord, request: ChildStartRequest): Promise<string> {
-    const version =
-      request.version === 'latest'
+  private async startChild(
+    parent: RunRecord,
+    request: ChildStartRequest,
+    pins: Record<string, string>,
+  ): Promise<string> {
+    // `latest` resolves to the version pinned when the parent run was created (docs/03). A run
+    // whose log predates pinning resolves it now, as before.
+    const pinned = request.version === 'latest' ? pins[request.loopId] : undefined;
+    const version = pinned
+      ? await this.ports.loops.getVersion(pinned)
+      : request.version === 'latest'
         ? await this.ports.loops.getLatestPublished(request.loopId)
         : await this.ports.loops.getPublished(request.loopId, request.version);
     if (!version) {
@@ -957,8 +1063,90 @@ export class RunManager {
       payload: request.triggerPayload,
       parentRunId: parent.id,
       seed: request.seed,
+      subloopVersions: pins,
     });
     return child.id;
+  }
+
+  /**
+   * Pin every `latest` subloop reference reachable from `def` (through referenced loops, at any
+   * depth) to the version published now, on top of the pins a parent passed down. Numbered
+   * references are immutable and need no pin, but are walked for their own references. A
+   * reference that does not resolve is left unpinned and fails when the child would start.
+   */
+  private async pinSubloops(
+    def: LoopDefinition,
+    inherited: Record<string, string>,
+  ): Promise<Record<string, string>> {
+    const pins: Record<string, string> = { ...inherited };
+    const walked = new Set<string>();
+    const pending: LoopDefinition[] = [def];
+    for (let current = pending.pop(); current; current = pending.pop()) {
+      for (const node of nodesOfKind(current, 'subloop')) {
+        const { loopId, version } = node.config.loopRef;
+        const pin = pins[loopId];
+        let target: LoopVersionRecord | undefined;
+        if (version !== 'latest') target = await this.ports.loops.getPublished(loopId, version);
+        else if (pin) target = await this.ports.loops.getVersion(pin);
+        else {
+          target = await this.ports.loops.getLatestPublished(loopId);
+          if (target) pins[loopId] = target.id;
+        }
+        if (target && !walked.has(target.id)) {
+          walked.add(target.id);
+          pending.push(target.definition);
+        }
+      }
+    }
+    return pins;
+  }
+
+  /**
+   * Bring the run's cursor up to the log. When the log's last node event is the `node.finished`
+   * of the node the cursor still points at, that node completed but the process died before the
+   * cursor moved: advance along the edge it took (or its loop-back, recording the iteration if
+   * that was lost too) instead of executing it again. An exit that finished without a route is
+   * evaluated again; its patch is empty. Returns the updated run, or undefined when the cursor
+   * already agrees with the log.
+   */
+  private async catchUpCursor(
+    run: RunRecord,
+    def: LoopDefinition,
+    events: readonly RunEvent[],
+    append: (draft: EventDraft) => Promise<void>,
+  ): Promise<{ run: RunRecord } | undefined> {
+    const last = lastFinishedNode(events);
+    const route = last?.event.route;
+    if (!last || !route || last.event.nodeId !== run.currentNodeId) return undefined;
+    const { event, index } = last;
+    if (route === 'loopBack') {
+      const node = nodeById(def, event.nodeId);
+      const targetNodeId = node?.kind === 'exit' ? node.config.loopBack?.targetNodeId : undefined;
+      if (!targetNodeId) return undefined;
+      const recorded = events
+        .slice(index + 1)
+        .find(
+          (e): e is Extract<RunEvent, { type: 'iteration.incremented' }> =>
+            e.type === 'iteration.incremented',
+        );
+      const to = recorded?.to ?? run.iteration + 1;
+      if (!recorded) {
+        await append({ type: 'iteration.incremented', from: run.iteration, to, targetNodeId });
+      }
+      const updated = await this.ports.runs.update(run.id, {
+        iteration: to,
+        currentNodeId: targetNodeId,
+        waiting: undefined,
+      });
+      return { run: updated };
+    }
+    const edge = outgoingEdge(def, event.nodeId, route);
+    if (!edge) return undefined;
+    const updated = await this.ports.runs.update(run.id, {
+      currentNodeId: edge.to.node,
+      waiting: undefined,
+    });
+    return { run: updated };
   }
 
   private async childOutcome(childRunId: string): Promise<ChildOutcome> {
@@ -1000,12 +1188,12 @@ export class RunManager {
     return dir;
   }
 
+  /**
+   * The executor always starts from the log, never the snapshot: a crash (or a failure) can leave
+   * the snapshot behind the last `node.started` or `node.finished`, and the log is the source of
+   * truth (docs/05). The snapshot only serves reads.
+   */
   private async loadThread(run: RunRecord, events: readonly RunEvent[]): Promise<ContextThread> {
-    // A crash may leave a snapshot older than node.started or node.finished.
-    const snapshot = this.recovering.has(run.id)
-      ? undefined
-      : await this.ports.runs.getThread(run.id);
-    if (snapshot) return snapshot;
     const initial = await this.ports.runs.getInitialThread(run.id);
     if (!initial) throw new Error(`run ${run.id} has no initial thread`);
     return replayThread(initial, events);
