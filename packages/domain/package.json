@@ -1,0 +1,37 @@
+{
+  "name": "@graphgoblin/domain",
+  "version": "0.1.0",
+  "description": "Pure domain logic: graph validation, context-thread operations, exit criteria, run state machine. No I/O.",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b tsconfig.build.json",
+    "typecheck": "tsc -b tsconfig.build.json",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@graphgoblin/contracts": "workspace:*",
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
+    "jsonata": "^2.2.2",
+    "liquidjs": "^10.30.0"
+  },
+  "devDependencies": {
+    "@graphgoblin/tooling": "workspace:*",
+    "@vitest/coverage-v8": "^5.0.3",
+    "eslint": "^10.11.0",
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.3"
+  }
+}
