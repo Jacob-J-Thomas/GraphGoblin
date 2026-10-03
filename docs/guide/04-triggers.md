@@ -45,15 +45,15 @@ This starts a run daily at 02:00 in the selected timezone. UTC is the default; t
 
 Choose how to recover missed slots after an outage:
 
-| Policy     | Recovery                                                                  |
-| ---------- | ------------------------------------------------------------------------- |
-| `skip`     | Default; move to the next future slot.                                    |
-| `run-once` | Start one catch-up run for the last slot in the bounded missed-slot scan. |
-| `run-each` | Start catch-up runs for the first 100 missed slots, oldest first.         |
+| Policy     | Recovery                                                                    |
+| ---------- | --------------------------------------------------------------------------- |
+| `skip`     | Default; move to the next future slot.                                      |
+| `run-once` | Start one catch-up run for the latest missed slot at or before the restart. |
+| `run-each` | Start catch-up runs for the oldest 100 missed slots, oldest first.          |
 
-The scan considers at most 101 missed slots. With `run-each`, later slots beyond the first 100 are dropped with a warning. Trigger payloads contain `scheduledFor` and `catchUp`. The schedule advances before firing, so a crash at that boundary can lose that firing. `GG_TIMER_POLL_MS` controls schedule polling and timer checks, default 1000 milliseconds.
+Trigger payloads contain `scheduledFor` and `catchUp`. The schedule advances before firing, so a crash at that boundary can lose that firing. `GG_TIMER_POLL_MS` controls schedule polling and timer checks, default 1000 milliseconds.
 
-After a long outage `run-once` starts one catch-up run for the latest missed slot at or before the restart, however many slots were missed. `run-each` starts at most 100 catch-up runs per schedule, oldest first; older slots beyond that are dropped with a warning in the log.
+After a long outage `run-once` still starts exactly one catch-up run, for the latest missed slot at or before the restart, however many slots were missed. `run-each` starts at most 100 catch-up runs per schedule: it keeps the oldest 100 missed slots, runs them oldest first, drops every later missed slot with a warning in the log, and moves the schedule to its next future slot.
 
 ## Receive a signed webhook
 
