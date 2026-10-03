@@ -190,6 +190,30 @@ describe('validate, draft saves, and publish agree', () => {
   });
 });
 
+describe('export and import', () => {
+  it('round-trips: export, import, export again gives the same loop', async () => {
+    const original = await t.publishLoop({
+      ...minimalLoop(),
+      name: 'round trip',
+      description: 'Ünïcödé 🚀',
+    });
+    const first = await t.app.inject({ method: 'GET', url: `/loops/${original}/export` });
+    const imported = await t.app.inject({
+      method: 'POST',
+      url: '/loops/import',
+      payload: first.json(),
+    });
+    expect(imported.statusCode).toBe(201);
+    const copy = imported.json<{ loop: { id: string } }>().loop.id;
+    const second = await t.app.inject({
+      method: 'GET',
+      url: `/loops/${copy}/export?draft=true`,
+    });
+    const strip = (doc: Record<string, unknown>) => ({ ...doc, exportedAt: undefined });
+    expect(strip(second.json())).toEqual(strip(first.json()));
+  });
+});
+
 describe('run.queued carries the initial thread', () => {
   it('records the seeded thread of a subloop child on its first event', async () => {
     const childId = await t.publishLoop(minimalLoop());
