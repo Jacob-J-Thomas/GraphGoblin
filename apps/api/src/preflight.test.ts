@@ -1,6 +1,7 @@
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { FakeHarness } from '@graphgoblin/engine/testing';
 import { DEFAULT_MODEL_CATALOG } from '@graphgoblin/infrastructure/sqlite';
@@ -9,7 +10,7 @@ import { JEV_SECRET, LOCAL_OWNER, createContainer } from './container.js';
 import {
   checkDataDir,
   checkNode,
-  databaseFile,
+  assertCreatable,
   formatPreflight,
   readMasterKey,
   runPreflight,
@@ -102,14 +103,32 @@ describe('individual checks', () => {
     });
   });
 
-  it('finds the file behind a libsql URL', () => {
-    expect(databaseFile('file:C:/data/graphgoblin.db')).toBe('C:/data/graphgoblin.db');
-    expect(databaseFile('file:/srv/gg.db?mode=rwc')).toBe('/srv/gg.db');
-    expect(databaseFile(':memory:')).toBeUndefined();
-    expect(databaseFile('file::memory:')).toBeUndefined();
-    expect(databaseFile('file:x?mode=memory')).toBeUndefined();
-    expect(databaseFile('file:')).toBeUndefined();
-    expect(databaseFile('libsql://example.turso.io')).toBeUndefined();
+  it('probes writability with a new file and never touches existing ones', async () => {
+    const existing = join(dir, '.preflight-taken');
+    await writeFile(existing, 'keep me');
+    const names = ['.preflight-taken', '.preflight-fresh'];
+    const check = await checkDataDir(dir, () => names.shift() ?? 'unexpected');
+    expect(check.status).toBe('ok');
+    expect(await readFile(existing, 'utf8')).toBe('keep me');
+    expect((await readdir(dir)).sort()).toEqual(['.preflight-taken']);
+    // Five taken names in a row is reported, not looped on.
+    const stuck = await checkDataDir(dir, () => '.preflight-taken');
+    expect(stuck).toMatchObject({ status: 'fail', message: /not writable/ });
+    expect(await readFile(existing, 'utf8')).toBe('keep me');
+  });
+
+  it('lets concurrent preflights probe the same directory', async () => {
+    const checks = await Promise.all(Array.from({ length: 8 }, () => checkDataDir(dir)));
+    expect(checks.every((c) => c.status === 'ok')).toBe(true);
+    expect(await readdir(dir)).toEqual([]);
+  });
+
+  it('accepts a missing database file only when start can create it', async () => {
+    await expect(assertCreatable(join(dir, 'a', 'b', 'gg.db'))).resolves.toBeUndefined();
+    const file = join(dir, 'file');
+    await writeFile(file, 'x');
+    await expect(assertCreatable(join(file, 'sub', 'gg.db'))).rejects.toThrow(/not a directory/);
+    await expect(assertCreatable(join(dir, 'gg.db'), () => '.')).rejects.toThrow(/not writable/);
   });
 });
 
@@ -264,6 +283,60 @@ describe('graphgoblin-api --preflight', () => {
     await rm(join(dir, 'master.key'));
     const keyless = await cli(env);
     expect(keyless.out).toMatch(/WARN\s+Jev\s+no API key/);
+  });
+
+  it('warns about a database under directories start will create, and start creates them', async () => {
+    const dbPath = join(dir, 'elsewhere', 'deeper', 'gg.db');
+    const env = { GG_DATA_DIR: join(dir, 'data'), GG_DB_URL: pathToFileURL(dbPath).href };
+    const before = await cli(env);
+    expect(before.code).toBe(0);
+    expect(before.out).toMatch(/WARN\s+Database\s+the database does not exist yet/);
+    await expect(stat(join(dir, 'elsewhere'))).rejects.toMatchObject({ code: 'ENOENT' });
+
+    const container = await createContainer(loadConfig(env), {
+      harnesses: { codex: new FakeHarness() },
+      deciders: [],
+      startTimers: false,
+    });
+    await container.start();
+    await container.stop();
+    expect((await stat(dbPath)).isFile()).toBe(true);
+    const after = await cli(env);
+    expect(after.out).toMatch(/ok\s+Database\s+reachable and migrated/);
+  });
+
+  it('fails when the database cannot be created, read, or opened', async () => {
+    await writeFile(join(dir, 'blocker'), 'x');
+    const blocked = await cli({
+      GG_DATA_DIR: dir,
+      GG_DB_URL: pathToFileURL(join(dir, 'blocker', 'sub', 'gg.db')).href,
+    });
+    expect(blocked.code).toBe(1);
+    expect(blocked.out).toMatch(/FAIL\s+Database\s+not reachable: .*not a directory/);
+    const unreadable = await cli({ GG_DATA_DIR: dir, GG_DB_URL: 'file:bad%00name.db' });
+    expect(unreadable.out).toMatch(/FAIL\s+Database\s+not reachable/);
+    const remote = await cli({ GG_DATA_DIR: dir, GG_DB_URL: 'file://remote-host/gg.db' });
+    expect(remote.code).toBe(1);
+    expect(remote.out).toMatch(/FAIL\s+Database\s+not reachable: .*host/i);
+  });
+
+  it('opens an existing database named by a percent-encoded file URL', async () => {
+    const dbPath = join(dir, 'with space', 'gg db.sqlite');
+    const env = { GG_DATA_DIR: dir, GG_DB_URL: pathToFileURL(dbPath).href };
+    expect(env.GG_DB_URL).toContain('%20');
+    const container = await createContainer(loadConfig(env), {
+      harnesses: { codex: new FakeHarness() },
+      deciders: [],
+      startTimers: false,
+    });
+    await container.start();
+    await container.repos.secretsFor(LOCAL_OWNER).set(JEV_SECRET, 'k');
+    await container.stop();
+    const report = await cli(env);
+    expect(report.code).toBe(0);
+    expect(report.out).toMatch(/ok\s+Database\s+reachable and migrated/);
+    expect(report.out).toMatch(/ok\s+Jev\s+API key set/);
+    expect(report.out).toMatch(/ok\s+Default model\s+.*is in the model catalog/);
   });
 
   it('reports an in-memory database as unmigrated and bad configuration as a failure', async () => {

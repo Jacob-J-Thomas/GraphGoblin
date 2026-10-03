@@ -1,5 +1,6 @@
-import { readFile, rm, stat, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { randomUUID } from 'node:crypto';
+import { open, readFile, stat, unlink } from 'node:fs/promises';
+import { dirname, join } from 'node:path';
 import { createCodexAdapters } from '@graphgoblin/adapter-codex';
 import type { HarnessId } from '@graphgoblin/contracts';
 import type { HarnessPort } from '@graphgoblin/engine';
@@ -7,6 +8,7 @@ import {
   DEFAULT_MODEL_CATALOG,
   SqliteModelCatalog,
   SqliteSecrets,
+  databaseFilePath,
   openDatabase,
   type ModelCatalogEntry,
 } from '@graphgoblin/infrastructure/sqlite';
@@ -75,7 +77,38 @@ export function checkNode(version: string): PreflightCheck {
       );
 }
 
-export async function checkDataDir(dir: string): Promise<PreflightCheck> {
+/** A fresh probe file name; random, so concurrent preflights never share one. */
+export type ProbeName = () => string;
+const defaultProbeName: ProbeName = () => `.preflight-${randomUUID()}`;
+
+/**
+ * Prove `dir` is writable by creating a new file in it exclusively (`wx`: never truncates an
+ * existing file and never follows a symlink at that path) and removing only that file. A name
+ * that already exists is skipped for the next one. Throws when the directory is not writable.
+ */
+export async function probeWritable(
+  dir: string,
+  name: ProbeName = defaultProbeName,
+): Promise<void> {
+  for (let attempt = 0; ; attempt += 1) {
+    const path = join(dir, name());
+    let handle;
+    try {
+      handle = await open(path, 'wx');
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'EEXIST' && attempt < 4) continue;
+      throw error;
+    }
+    await handle.close();
+    await unlink(path);
+    return;
+  }
+}
+
+export async function checkDataDir(
+  dir: string,
+  probeName: ProbeName = defaultProbeName,
+): Promise<PreflightCheck> {
   const fail = (text: string): PreflightCheck => check('data-dir', 'Data directory', 'fail', text);
   let isDirectory: boolean;
   try {
@@ -92,10 +125,8 @@ export async function checkDataDir(dir: string): Promise<PreflightCheck> {
     return fail(`cannot read ${dir}: ${message(error)}`);
   }
   if (!isDirectory) return fail(`${dir} exists but is not a directory`);
-  const probe = join(dir, `.preflight-${String(process.pid)}`);
   try {
-    await writeFile(probe, '');
-    await rm(probe, { force: true });
+    await probeWritable(dir, probeName);
   } catch (error) {
     return fail(`${dir} is not writable: ${message(error)}`);
   }
@@ -273,19 +304,62 @@ export function containerPreflightSources(container: Container): PreflightSource
   };
 }
 
-/** The file behind a `file:` libsql URL, or undefined for in-memory and remote databases. */
-export function databaseFile(url: string): string | undefined {
-  if (!url.startsWith('file:') || url.includes('mode=memory')) return undefined;
-  const path = url.slice('file:'.length).split('?')[0] ?? '';
-  return path === '' || path === ':memory:' ? undefined : path;
+function isMissing(error: unknown): boolean {
+  return (error as NodeJS.ErrnoException).code === 'ENOENT';
 }
 
-async function exists(path: string): Promise<boolean> {
+/**
+ * Whether the server's start can create `file`: it creates the missing directories above it, so
+ * the nearest existing ancestor must be a writable directory. Throws with the reason otherwise.
+ */
+export async function assertCreatable(file: string, probeName?: ProbeName): Promise<void> {
+  let dir = dirname(file);
+  for (;;) {
+    let isDirectory: boolean;
+    try {
+      isDirectory = (await stat(dir)).isDirectory();
+    } catch (error) {
+      if (!isMissing(error) || dirname(dir) === dir) throw error;
+      dir = dirname(dir);
+      continue;
+    }
+    if (!isDirectory) throw new Error(`${file} cannot be created: ${dir} is not a directory`);
+    try {
+      await probeWritable(dir, probeName);
+    } catch (error) {
+      throw new Error(`${file} cannot be created: ${dir} is not writable (${message(error)})`, {
+        cause: error,
+      });
+    }
+    return;
+  }
+}
+
+/** What the CLI can learn about the database before the server has started. */
+type DatabaseState =
+  | { kind: 'missing' }
+  | { kind: 'broken'; error: unknown }
+  | { kind: 'open'; handle: ReturnType<typeof openDatabase> };
+
+async function inspectDatabase(url: string): Promise<DatabaseState> {
+  const file = databaseFilePath(url);
+  if (file !== undefined) {
+    try {
+      await stat(file);
+    } catch (error) {
+      if (!isMissing(error)) return { kind: 'broken', error };
+      try {
+        await assertCreatable(file);
+        return { kind: 'missing' };
+      } catch (reason) {
+        return { kind: 'broken', error: reason };
+      }
+    }
+  }
   try {
-    await stat(path);
-    return true;
-  } catch {
-    return false;
+    return { kind: 'open', handle: openDatabase({ url }) };
+  } catch (error) {
+    return { kind: 'broken', error };
   }
 }
 
@@ -297,15 +371,14 @@ export interface ConfigPreflightOptions {
 
 /**
  * Facts from the configuration alone, for the CLI before the server has started. Opens the
- * database only when its file exists, so a first run creates nothing.
+ * database only when its file exists, so a first run creates nothing; a missing file is a
+ * warning only when the server's start could create it.
  */
 export async function configPreflightSources(
   config: ApiConfig,
   options: ConfigPreflightOptions = {},
 ): Promise<PreflightSources & { close(): void }> {
-  const file = databaseFile(config.dbUrl);
-  const handle =
-    file !== undefined && !(await exists(file)) ? undefined : openDatabase({ url: config.dbUrl });
+  const database = await inspectDatabase(config.dbUrl);
   const { key } = await readMasterKey(config);
   const harnesses = options.harnesses ?? {
     codex: createCodexAdapters({
@@ -319,15 +392,21 @@ export async function configPreflightSources(
     harnesses,
     ...(options.nodeVersion ? { nodeVersion: options.nodeVersion } : {}),
   };
-  if (!handle) {
+  if (database.kind !== 'open') {
+    const { kind } = database;
+    const failure = kind === 'broken' ? database.error : undefined;
     return {
       ...base,
-      pendingMigrations: () => Promise.resolve('missing' as const),
+      pendingMigrations: () =>
+        kind === 'missing'
+          ? Promise.resolve('missing' as const)
+          : Promise.reject(failure instanceof Error ? failure : new Error(String(failure))),
       jevKey: () => Promise.resolve(undefined),
       catalog: () => Promise.resolve(DEFAULT_MODEL_CATALOG),
       close: () => undefined,
     };
   }
+  const { handle } = database;
   return {
     ...base,
     pendingMigrations: () => handle.pendingMigrations(),
