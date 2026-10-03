@@ -334,6 +334,7 @@ describe('thread, run, and events', () => {
     const base = { runId: FIXTURE_IDS.run, seq: 1, ts: FIXTURE_TS };
     const events = [
       { ...base, type: 'run.queued' },
+      { ...base, type: 'run.queued', replayOf: { runId: FIXTURE_IDS.run, nodeId: 'n' } },
       { ...base, type: 'run.started', attempt: 1 },
       { ...base, type: 'node.started', nodeId: 'n', kind: 'mutate', attempt: 1, configHash: 'abc' },
       { ...base, type: 'node.finished', nodeId: 'n', patch: [], route: 'out', durationMs: 3 },
@@ -359,5 +360,12 @@ describe('thread, run, and events', () => {
       expect(RunEventSchema.safeParse(ev).success, ev.type).toBe(true);
     }
     expect(RunEventSchema.safeParse({ ...base, type: 'run.exploded' }).success).toBe(false);
+    expect(
+      RunEventSchema.safeParse({
+        ...base,
+        type: 'run.queued',
+        replayOf: { runId: 'x', nodeId: 'n' },
+      }).success,
+    ).toBe(false);
   });
 });

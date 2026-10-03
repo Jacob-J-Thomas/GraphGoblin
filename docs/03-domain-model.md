@@ -136,10 +136,11 @@ type Invocation = {
     dedupeKey?: string;
   };
   returnDefaults?: ReturnChannel[]; // caller-supplied preferences; the exit node may override
+  replayOf?: { runId: string; nodeId: string }; // set only on a replay fork (05)
 };
 ```
 
-The invocation is immutable for the life of the run and is embedded in the thread so templates and mappings can read it.
+The invocation is immutable for the life of the run and is embedded in the thread so templates and mappings can read it. A run forked by replay-at-node carries `replayOf`, naming the source run and the node it was forked at; its `run.queued` event carries the same object.
 
 ## Run (Decided)
 

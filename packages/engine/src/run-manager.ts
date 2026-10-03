@@ -52,7 +52,8 @@ export class EngineRequestError extends Error {
       | 'TRIGGER_NOT_FOUND'
       | 'RUN_NOT_FOUND'
       | 'INVALID_STATE'
-      | 'INVALID_INPUT',
+      | 'INVALID_INPUT'
+      | 'REPLAY_NODE_NOT_REACHED',
     message: string,
     readonly details?: unknown,
   ) {
@@ -78,6 +79,16 @@ export interface StartRunInput {
   seed?: InitialThreadInput['seed'];
   /** Allow running a draft version (test runs). */
   allowDraft?: boolean;
+}
+
+export interface ReplayRunInput {
+  /** The run to fork. It may be in any status. */
+  runId: string;
+  /** The node to start the fork at. The source run must have started it at least once. */
+  nodeId: string;
+  /** Who asked for the replay; replaces the source's source and caller when given. */
+  source?: InvocationSource;
+  caller?: Caller;
 }
 
 export interface Actor {
@@ -323,6 +334,77 @@ export class RunManager {
       if (!passes) return { run, woke: false };
     }
     return { run: await this.wake(runId, { reason: 'signal', payload }), woke: true };
+  }
+
+  /**
+   * Replay-at-node: fork a new run on the source's loop version and trigger envelope whose thread
+   * is the source thread as it was just before `nodeId` first started, and which starts executing
+   * at `nodeId`. The fork has its own id and event log; the source is untouched, and its child
+   * runs are not copied (a subloop node in the fork starts a new child).
+   */
+  async replay(input: ReplayRunInput): Promise<RunRecord> {
+    const source = await this.mustGet(input.runId);
+    const events = await this.ports.events.read(source.id);
+    const firstStart = events.find(
+      (e): e is Extract<RunEvent, { type: 'node.started' }> =>
+        e.type === 'node.started' && e.nodeId === input.nodeId,
+    );
+    if (!firstStart) {
+      throw new EngineRequestError(
+        'REPLAY_NODE_NOT_REACHED',
+        `run ${source.id} never started node ${input.nodeId}`,
+      );
+    }
+    const version = await this.ports.loops.getVersion(source.versionId);
+    if (!version || !nodeById(version.definition, input.nodeId)) {
+      throw new EngineRequestError(
+        'INVALID_STATE',
+        `node ${input.nodeId} is not in loop version ${source.versionId}`,
+      );
+    }
+    const initial = await this.ports.runs.getInitialThread(source.id);
+    if (!initial) {
+      throw new EngineRequestError('INVALID_STATE', `run ${source.id} has no initial thread`);
+    }
+    const before = replayThread(initial, events, firstStart.seq - 1);
+    const runId = this.ports.ids.next();
+    const invocationId = this.ports.ids.next();
+    const replayOf = { runId: source.id, nodeId: input.nodeId };
+    // The fork keeps the trigger envelope (the input) but not the original caller's extra return
+    // channels: those belong to whoever started the source run.
+    const { returnDefaults: _dropped, ...invocation } = initial.invocation;
+    const thread: ContextThread = {
+      ...before,
+      run: {
+        id: runId,
+        loopId: source.loopId,
+        versionId: source.versionId,
+        iteration: before.run.iteration,
+      },
+      invocation: {
+        ...invocation,
+        id: invocationId,
+        ...(input.source ? { source: input.source } : {}),
+        ...(input.caller ? { caller: input.caller } : {}),
+        replayOf,
+      },
+    };
+    const run: RunRecord = {
+      id: runId,
+      ownerId: source.ownerId,
+      loopId: source.loopId,
+      versionId: source.versionId,
+      invocationId,
+      status: 'queued',
+      currentNodeId: input.nodeId,
+      iteration: before.run.iteration,
+      createdAt: this.now(),
+      lastEventSeq: 0,
+    };
+    await this.ports.runs.create(run, thread);
+    await this.ports.events.append(runId, [{ type: 'run.queued', replayOf }]);
+    this.enqueue(runId);
+    return run;
   }
 
   // ---------------------------------------------------------------------------

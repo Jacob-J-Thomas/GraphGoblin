@@ -27,6 +27,7 @@ const TOOLS = [
   'resume_run',
   'provide_input',
   'send_signal',
+  'replay_run',
 ];
 
 const inputLoop: LoopDefinitionInput = {
@@ -274,6 +275,17 @@ describe('MCP server against the in-process API', () => {
     expect(answered.id).toBe(runId);
     const finished = body(await call('wait_for_run', { runId, timeoutSeconds: 5 }));
     expect(finished.run).toMatchObject({ status: 'succeeded', result: { value: true } });
+
+    const fork = body(await call('replay_run', { runId, nodeId: 'ask' }));
+    expect(fork).toMatchObject({ currentNodeId: 'ask', replayOf: { runId, nodeId: 'ask' } });
+    expect(fork.id).not.toBe(runId);
+    expect(fork.next).toMatch(/wait_for_run/);
+    const forkWaiting = body(await call('wait_for_run', { runId: fork.id, timeoutSeconds: 30 }));
+    expect(forkWaiting).toMatchObject({ finished: false, status: 'waiting' });
+    const thread = body(await call('get_run_thread', { runId: fork.id }));
+    expect(thread.invocation).toMatchObject({ source: 'manual.mcp', replayOf: { runId } });
+    const notReached = await call('replay_run', { runId, nodeId: 'nowhere' });
+    expect(text(notReached)).toMatch(/^GraphGoblin API error REPLAY_NODE_NOT_REACHED \(HTTP 409\)/);
 
     const again = await call('provide_input', { runId, input: false });
     expect(again.isError).toBe(true);

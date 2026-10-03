@@ -3925,6 +3925,24 @@
               "type": {
                 "type": "string",
                 "const": "run.queued"
+              },
+              "replayOf": {
+                "type": "object",
+                "properties": {
+                  "runId": {
+                    "type": "string",
+                    "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                  },
+                  "nodeId": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
+                  }
+                },
+                "required": [
+                  "runId",
+                  "nodeId"
+                ],
+                "additionalProperties": false
               }
             },
             "required": [
@@ -5394,6 +5412,24 @@
                 "items": {
                   "$ref": "#/components/schemas/ReturnChannelInput"
                 }
+              },
+              "replayOf": {
+                "type": "object",
+                "properties": {
+                  "runId": {
+                    "type": "string",
+                    "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                  },
+                  "nodeId": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
+                  }
+                },
+                "required": [
+                  "runId",
+                  "nodeId"
+                ],
+                "additionalProperties": false
               }
             },
             "required": [
@@ -9674,6 +9710,24 @@
               "type": {
                 "type": "string",
                 "const": "run.queued"
+              },
+              "replayOf": {
+                "type": "object",
+                "properties": {
+                  "runId": {
+                    "type": "string",
+                    "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                  },
+                  "nodeId": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
+                  }
+                },
+                "required": [
+                  "runId",
+                  "nodeId"
+                ],
+                "additionalProperties": false
               }
             },
             "required": [
@@ -11150,6 +11204,24 @@
                 "items": {
                   "$ref": "#/components/schemas/ReturnChannel"
                 }
+              },
+              "replayOf": {
+                "type": "object",
+                "properties": {
+                  "runId": {
+                    "type": "string",
+                    "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                  },
+                  "nodeId": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
+                  }
+                },
+                "required": [
+                  "runId",
+                  "nodeId"
+                ],
+                "additionalProperties": false
               }
             },
             "required": [
@@ -12575,6 +12647,64 @@
                   "required": [
                     "run",
                     "woke"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/runs/{id}/replay": {
+      "post": {
+        "summary": "Fork a new run at a node, with the thread as it was just before that node",
+        "tags": [
+          "runs"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "nodeId": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "nodeId"
+                ]
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "run": {
+                      "$ref": "#/components/schemas/RunRecord"
+                    }
+                  },
+                  "required": [
+                    "run"
                   ],
                   "additionalProperties": false
                 }

@@ -985,6 +985,52 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/runs/{id}/replay": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Fork a new run at a node, with the thread as it was just before that node */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        nodeId: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                202: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            run: components["schemas"]["RunRecord"];
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/runs/{id}/sessions": {
         parameters: {
             query?: never;
@@ -2818,6 +2864,10 @@ export interface components {
             ts: string;
             /** @constant */
             type: "run.queued";
+            replayOf?: {
+                runId: string;
+                nodeId: string;
+            } | undefined;
         } | {
             runId: string;
             seq: number;
@@ -3153,6 +3203,10 @@ export interface components {
                     dedupeKey?: string | undefined;
                 };
                 returnDefaults?: components["schemas"]["ReturnChannelInput"][] | undefined;
+                replayOf?: {
+                    runId: string;
+                    nodeId: string;
+                } | undefined;
             };
             messages: {
                 id: string;
@@ -4276,6 +4330,10 @@ export interface components {
             ts: string;
             /** @constant */
             type: "run.queued";
+            replayOf?: {
+                runId: string;
+                nodeId: string;
+            } | undefined;
         } | {
             runId: string;
             seq: number;
@@ -4611,6 +4669,10 @@ export interface components {
                     dedupeKey?: string | undefined;
                 };
                 returnDefaults?: components["schemas"]["ReturnChannel"][] | undefined;
+                replayOf?: {
+                    runId: string;
+                    nodeId: string;
+                } | undefined;
             };
             messages: {
                 id: string;

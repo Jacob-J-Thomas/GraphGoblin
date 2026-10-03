@@ -42,6 +42,7 @@ const ENGINE_STATUS: Record<EngineRequestError['code'], number> = {
   VERSION_NOT_PUBLISHED: 409,
   INVALID_STATE: 409,
   INVALID_INPUT: 400,
+  REPLAY_NODE_NOT_REACHED: 409,
 };
 
 export function registerErrorHandler(app: FastifyInstance): void {

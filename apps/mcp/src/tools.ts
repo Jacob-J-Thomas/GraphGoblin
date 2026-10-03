@@ -372,6 +372,32 @@ export function registerTools(
   }
 
   server.registerTool(
+    'replay_run',
+    {
+      title: 'Replay a run from a node',
+      description:
+        'Debug a run by re-running it from one node: starts a new run (a fork) on the same loop version with the same input, whose context thread is the original run as it was just before that node first started. The original run is not changed. nodeId must be a node the original run reached (see read_run_events for node.started events). Returns the new run; call wait_for_run with its id to follow it.',
+      inputSchema: {
+        runId,
+        nodeId: z
+          .string()
+          .min(1)
+          .describe('The node to start the fork at, for example a nodeId from read_run_events.'),
+      },
+      annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
+    },
+    ({ runId: id, nodeId }) =>
+      guard(async () => {
+        const fork = await runs.replay(client, id, nodeId);
+        return {
+          ...summarizeRun(fork),
+          replayOf: { runId: id, nodeId },
+          next: 'Call wait_for_run with this run id to follow the fork.',
+        };
+      }),
+  );
+
+  server.registerTool(
     'provide_input',
     {
       title: 'Provide input to a waiting run',

@@ -222,6 +222,33 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
     },
   );
 
+  app.post(
+    '/runs/:id/replay',
+    {
+      schema: {
+        tags: ['runs'],
+        summary: 'Fork a new run at a node, with the thread as it was just before that node',
+        params: IdParams,
+        body: z.object({
+          nodeId: z.string().min(1).describe('A node the source run has started at least once'),
+        }),
+        response: { 202: z.object({ run: RunRecordSchema }) },
+      },
+    },
+    async (request, reply) => {
+      if (!requireScope(request, reply, 'runs:write')) return reply;
+      await ownedRun(request, request.params.id);
+      const run = await manager.replay({
+        runId: request.params.id,
+        nodeId: request.body.nodeId,
+        source: sourceFor(request),
+        caller: { kind: request.auth.actor.kind, id: request.auth.actor.id },
+      });
+      reply.status(202);
+      return { run };
+    },
+  );
+
   app.get(
     '/runs/:id/sessions',
     {
