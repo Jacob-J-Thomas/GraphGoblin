@@ -1,6 +1,7 @@
 import { pino } from 'pino';
 import { buildApp } from './app.js';
-import { loadConfig } from './config.js';
+import { bundledWebDist, loadConfig } from './config.js';
+import { runCreateApiKeyCli } from './create-api-key.js';
 import { createContainer } from './container.js';
 import { runPreflightCli } from './preflight.js';
 
@@ -9,7 +10,7 @@ export async function main(): Promise<{
   app: Awaited<ReturnType<typeof buildApp>>;
   container: Awaited<ReturnType<typeof createContainer>>;
 }> {
-  const config = loadConfig();
+  const config = loadConfig(process.env, { webDistFallback: bundledWebDist() });
   const logger = pino({ level: config.logLevel });
   const container = await createContainer(config, { logger });
   await container.start();
@@ -48,10 +49,13 @@ export async function main(): Promise<{
 
 const invokedDirectly = process.argv[1] !== undefined && /main\.(js|ts)$/.test(process.argv[1]);
 if (invokedDirectly) {
-  // `--preflight` prints the first-run checks and exits without starting the server (docs/11).
+  // `--preflight` prints the first-run checks and `--create-api-key` mints a key; both exit
+  // without starting the server (docs/11).
   const run = process.argv.includes('--preflight')
     ? runPreflightCli().then((code) => process.exit(code))
-    : main();
+    : process.argv.includes('--create-api-key')
+      ? runCreateApiKeyCli().then((code) => process.exit(code))
+      : main();
   run.catch((error: unknown) => {
     console.error(error);
     process.exit(1);

@@ -43,3 +43,23 @@ The draft gets a version token, `draftToken`: a hash (`stableHash`) of the defin
 - A revision counter column on `loop_versions`: exact, but needs a migration and does not survive publish without extra rules.
 - `loop.updatedAt` as the token: it changes on renames and publishes that do not change the draft, and millisecond timestamps can collide.
 - Requiring `If-Match` (428 without it): would break existing API and MCP clients for a single-user product.
+
+## 3. The first API key: `--create-api-key` (question 18, D27)
+
+### Context
+
+With `GG_REQUIRE_API_KEY=true` on a fresh install nothing could create the first key, because `POST /api-keys` itself needs one.
+
+### Decision
+
+`graphgoblin-api --create-api-key <name> [--scopes a,b]` creates a key for the local owner directly in the configured database (creating the data directory and applying migrations as a server start would), prints the token once on standard output, and exits without starting the HTTP server. Nothing is logged and only the hash is stored. The install scripts mention it.
+
+### Consequences
+
+- Anyone who can run the command as the server's user with its environment can mint a key. That is the same trust boundary as reading the database or the master key file, so it adds no new exposure.
+- The command can run while the server is running (SQLite in WAL mode with a busy timeout).
+
+### Alternatives considered
+
+- Minting a key in the preflight or install script automatically: preflight must not change state, and an install script that prints a secret on every run is easy to leak into logs.
+- A bootstrap token in an environment variable: one more secret to manage and rotate.

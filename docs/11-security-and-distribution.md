@@ -11,7 +11,7 @@
 
 - Codex: GraphGoblin relies on the machine's `codex login` state. It never stores, reads, or proxies Codex credentials. Subscription login is the expected mode for 1.0.
 - Jev: an API key stored in the secret store, referenced by name.
-- GraphGoblin API keys: generated for other applications and the MCP server, hashed at rest, shown once.
+- GraphGoblin API keys: generated for other applications and the MCP server, hashed at rest, shown once. The first key in required-key mode comes from `node apps/api/dist/main.js --create-api-key <name> [--scopes a,b]` (see "First API key" below).
 - Post-1.0 hosted: users bring their own harness API keys per the harness vendor's terms; subscription logins cannot be offered inside a hosted product.
 
 ## Secret store (Decided)
@@ -58,6 +58,10 @@
 
 - **HTTP**: `GET /system/preflight` returns `{ ok, checks: [{ id, label, status, message }] }` for the running installation; `ok` is false when any check failed. It is not a public route: it needs a key whenever keys are required, like every other non-public route. `GET /harness/preflight` remains for the harness check alone.
 - **CLI**: `node apps/api/dist/main.js --preflight` (or `pnpm --filter @graphgoblin/api preflight` after `pnpm build`) reads the same environment as the server, prints the checks as a table, and exits 0 when no check failed and 1 otherwise, without starting the server. It opens the database only when its file exists, and never creates the data directory, the key, or the database, so it is safe before the first start. `GG_DB_URL` is parsed the way libsql parses it (percent-decoded, relative, `file:///C:/...`), and the server's start creates the database file's directory as well as the data directory. The writability probe opens a new randomly named file with `wx`, so it never truncates an existing file, never follows a symlink, and removes only the file it created.
+
+## First API key (Decided, WP-F2, ADR-0015)
+
+With `GG_REQUIRE_API_KEY=true`, `POST /api-keys` needs a key, so the first one cannot come from the API. `graphgoblin-api --create-api-key <name> [--scopes a,b]` (`node apps/api/dist/main.js ...`) reads the same environment as the server, creates the data directory and database if needed and applies migrations (as a start would), inserts a key for the local owner, prints the token once to standard output, and exits without starting the HTTP server. Nothing is logged; only the SHA-256 hash is stored. Scopes default to `*`. The install scripts print the command, and it works in the container through `docker compose exec`.
 
 ## Multi-tenant checklist for later (recorded)
 

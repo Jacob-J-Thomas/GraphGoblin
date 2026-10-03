@@ -1,4 +1,7 @@
-import { resolve } from 'node:path';
+import { existsSync } from 'node:fs';
+import { homedir } from 'node:os';
+import { join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { EffortSchema } from '@graphgoblin/contracts';
 import { z } from 'zod';
 
@@ -9,7 +12,7 @@ const bool = z
 const EnvSchema = z.object({
   GG_HOST: z.string().default('127.0.0.1'),
   GG_PORT: z.coerce.number().int().min(0).max(65535).default(4747),
-  GG_DATA_DIR: z.string().default('./data'),
+  GG_DATA_DIR: z.string().optional(),
   GG_DB_URL: z.string().optional(),
   GG_REQUIRE_API_KEY: bool.default(false),
   GG_MASTER_KEY: z.string().optional(),
@@ -24,7 +27,10 @@ const EnvSchema = z.object({
   GG_SWAGGER_UI: bool.default(true),
   GG_PUBLIC_URL: z.string().optional(),
   GG_CODEX_BINARY: z.string().optional(),
-  /** Directory of the built web app (apps/web/dist). When set and present, it is served at /app/. */
+  /**
+   * Directory of the built web app (apps/web/dist), served at /app/. Unset: the checkout's
+   * `apps/web/dist` when it has been built (see `bundledWebDist`). Empty: no web app.
+   */
   GG_WEB_DIST: z.string().optional(),
 });
 
@@ -50,15 +56,39 @@ export interface ApiConfig {
   webDist?: string;
 }
 
+/** The default data directory: `~/.graphgoblin`. */
+export function defaultDataDir(): string {
+  return join(homedir(), '.graphgoblin');
+}
+
+/**
+ * The web app built next to this package in a checkout (`apps/web/dist`, found relative to this
+ * module in both `src` and `dist`), when its `index.html` exists. `main` uses it as the default
+ * for `GG_WEB_DIST`, so `pnpm start` serves the UI with no configuration.
+ */
+export function bundledWebDist(exists: (path: string) => boolean = existsSync): string | undefined {
+  const dir = fileURLToPath(new URL('../../web/dist', import.meta.url));
+  return exists(join(dir, 'index.html')) ? dir : undefined;
+}
+
+export interface LoadConfigOptions {
+  /** The web app directory to serve when `GG_WEB_DIST` is unset. */
+  webDistFallback?: string | undefined;
+}
+
 /** Parse configuration from an environment map. Throws with a readable message on bad values. */
-export function loadConfig(env: NodeJS.ProcessEnv = process.env): ApiConfig {
+export function loadConfig(
+  env: NodeJS.ProcessEnv = process.env,
+  options: LoadConfigOptions = {},
+): ApiConfig {
   const parsed = EnvSchema.safeParse(env);
   if (!parsed.success) {
     const issues = parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ');
     throw new Error(`invalid configuration: ${issues}`);
   }
   const e = parsed.data;
-  const dataDir = resolve(e.GG_DATA_DIR);
+  const dataDir = resolve(e.GG_DATA_DIR || defaultDataDir());
+  const webDist = e.GG_WEB_DIST ?? options.webDistFallback;
   return {
     host: e.GG_HOST,
     port: e.GG_PORT,
@@ -75,6 +105,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ApiConfig {
     swaggerUi: e.GG_SWAGGER_UI,
     ...(e.GG_PUBLIC_URL ? { publicUrl: e.GG_PUBLIC_URL } : {}),
     ...(e.GG_CODEX_BINARY ? { codexBinary: e.GG_CODEX_BINARY } : {}),
-    ...(e.GG_WEB_DIST ? { webDist: resolve(e.GG_WEB_DIST) } : {}),
+    ...(webDist ? { webDist: resolve(webDist) } : {}),
   };
 }
