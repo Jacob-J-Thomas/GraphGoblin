@@ -57,11 +57,9 @@ export function parseCreateApiKeyArgs(argv: readonly string[]): CreateApiKeyArgs
   if (label === undefined) return 'a key name is required';
   if (label.length > 120) return 'the key name is longer than 120 characters';
   if (rawScopes === undefined) return { label, scopes: ['*'] };
-  const scopes = rawScopes
-    .split(',')
-    .map((scope) => scope.trim())
-    .filter((scope) => scope !== '');
-  if (scopes.length === 0) return SCOPES_HINT;
+  const scopes = rawScopes.split(',').map((scope) => scope.trim());
+  // An empty entry (a leading, trailing, or doubled comma) is a typo, never silently dropped.
+  if (scopes.some((scope) => scope === '')) return SCOPES_HINT;
   const bad = scopes.find((scope) => !SCOPE.test(scope));
   if (bad !== undefined) return `"${bad}" is not a scope name`;
   return { label, scopes };

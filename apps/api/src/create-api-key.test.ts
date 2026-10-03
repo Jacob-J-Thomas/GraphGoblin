@@ -77,6 +77,28 @@ describe('parseCreateApiKeyArgs', () => {
     expect(parseCreateApiKeyArgs(['--create-api-key', '--scopes', 'a'])).toMatch(/required/);
   });
 
+  it('refuses empty scope entries from leading, trailing, or doubled commas', async () => {
+    const dir = await tempDir();
+    for (const scopes of ['runs:read,', ',runs:read', 'runs:read,,loops:read', ' , ']) {
+      expect(parseCreateApiKeyArgs(['--create-api-key', 'x', '--scopes', scopes])).toMatch(/comma/);
+      expect(parseCreateApiKeyArgs(['--create-api-key', 'x', `--scopes=${scopes}`])).toMatch(
+        /comma/,
+      );
+      const io = capture();
+      const dataDir = join(dir, 'never-created');
+      expect(
+        await runCreateApiKeyCli({
+          argv: ['--create-api-key', 'x', '--scopes', scopes],
+          env: { GG_DATA_DIR: dataDir },
+          ...io,
+        }),
+      ).toBe(2);
+      expect(io.out).toEqual([]);
+      expect(io.err.join('')).toContain(CREATE_API_KEY_USAGE);
+      await expect(access(dataDir)).rejects.toThrow();
+    }
+  });
+
   it('exits 2 for a typo before touching storage', async () => {
     const dir = await tempDir();
     const io = capture();
