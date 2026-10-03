@@ -103,6 +103,8 @@ Tasks:
 
 Acceptance: a loop that triggers manually, asks Codex to change a file in a working directory, validates a structured result, decides with Jev, loops back once, and returns a payload through the `file` channel; runs on the owner's Windows machine; coverage above threshold.
 
+M4 wiring notes (WP-I): `apps/api` composes the real adapters when no override is given: harness `codex`, the Codex structured port, and deciders `[jev, codex]` (see "Composition" in 06). `GG_CODEX_BINARY` optionally points at a `codex` executable. Jev reads `jev-api-key` from the local owner's secrets after migrations run at `start()`, and `PUT`/`DELETE /secrets/jev-api-key` refresh it through `Container.onSecretChanged`, so a new key needs no restart. `HarnessPort.resume` now takes the full `HarnessStartRequest`, so resumed, repair, and crash-recovery turns keep the node's model, effort, sandbox, and working directory. The SSE stream ends right after the replay when the run is already terminal (07). A `LIVE=1` smoke in `apps/api/src/live.test.ts` runs trigger, inference (`gpt-6-luna`, `low`, read-only), and exit through the API and the real Codex CLI; it passed on 2026-10-03. The Jev live check is still open: no key was available on the development machine.
+
 ## M5 - Web editor and PWA (L)
 
 Goal: the product is usable without curl.
@@ -123,7 +125,7 @@ Acceptance: the M4 acceptance loop can be built and run entirely in the UI; the 
 
 ## M6 - Triggers (M)
 
-M6 notes (WP-C): tasks 1 to 4 shipped; task 5, the events screen, belongs to the web work. New tables `schedules`, `webhook_endpoints`, and `inbound_events` (migration `0001_triggers`); `CronScheduler` over croner in `infrastructure/src/scheduler`; a `TriggerService` and `PollTriggers` in `apps/api/src/triggers`; routes `POST /hooks/{token}`, `GET /loops/{id}/triggers`, and a persisted `GET /events`. Decisions made on the way, all recorded in 08: webhook tokens are kept across versions of the same trigger node so publishing does not break senders; without a `dedupeKey` expression a webhook's dedupe key is its signature; `run-each` catch-up is capped at 100 runs per schedule; an exit event never re-enters a loop already in its run chain and chains stop at 8 runs; poll triggers are armed in memory and record `source: 'cron'` because `InvocationSource` has no poll value (a contracts change for a later milestone). Drizzle's JSON column mode writes a JSON `null` as SQL NULL, so `inbound_events.payload` is plain text serialised by the repository.
+M6 notes (WP-C): tasks 1 to 4 shipped; task 5, the events screen, belongs to the web work. New tables `schedules`, `webhook_endpoints`, and `inbound_events` (migration `0001_triggers`); `CronScheduler` over croner in `infrastructure/src/scheduler`; a `TriggerService` and `PollTriggers` in `apps/api/src/triggers`; routes `POST /hooks/{token}`, `GET /loops/{id}/triggers`, and a persisted `GET /events`. Decisions made on the way, all recorded in 08: webhook tokens are kept across versions of the same trigger node so publishing does not break senders; without a `dedupeKey` expression a webhook's dedupe key is its signature; `run-each` catch-up is capped at 100 runs per schedule; an exit event never re-enters a loop already in its run chain and chains stop at 8 runs; poll triggers are armed in memory and record `source: 'poll'` (added to `InvocationSource` in WP-I). Drizzle's JSON column mode writes a JSON `null` as SQL NULL, so `inbound_events.payload` is plain text serialised by the repository.
 
 Goal: loops start without a human.
 

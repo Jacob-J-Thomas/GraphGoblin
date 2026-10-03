@@ -161,8 +161,7 @@ export class PollTriggers {
         versionId: target.versionId,
         triggerNodeId: target.triggerNodeId,
         triggerKind: 'poll',
-        // The invocation sources predate poll triggers; a poll is timer-driven like cron.
-        source: 'cron',
+        source: 'poll',
         caller: { kind: 'system', id: `poll:${target.loopId}/${target.triggerNodeId}` },
         payload: probe,
         ...(dedupeKey ? { dedupeKey } : {}),

@@ -309,7 +309,12 @@ describe('failure and recovery', () => {
       id: 'infer',
       kind: 'inference',
       label: 'I',
-      config: { prompt: { template: 'go' } },
+      config: {
+        prompt: { template: 'go' },
+        model: 'gpt-6-luna',
+        effort: 'high',
+        harnessOptions: { sandbox: 'read-only', approval: 'never', webSearch: true },
+      },
     });
     ports.loops.publish(versionId, loopId, 1, LoopDefinitionSchema.parse(def));
     const thread = createInitialThread({
@@ -366,6 +371,13 @@ describe('failure and recovery', () => {
     expect(run?.status).toBe('succeeded');
     expect(ports.harness.resumed).toHaveLength(1);
     expect(ports.harness.resumed[0]?.sessionId).toBe('left-behind');
+    // Crash recovery resumes with the node's own session settings, not harness defaults.
+    expect(ports.harness.resumed[0]?.request).toMatchObject({
+      model: 'gpt-6-luna',
+      effort: 'high',
+      options: { sandbox: 'read-only', approval: 'never', webSearch: true },
+    });
+    expect(ports.harness.resumed[0]?.request.workingDirectory).toEqual(expect.any(String));
     const starts = ports.events.all(runId).filter((e) => e.type === 'run.started');
     expect(starts.map((e) => (e.type === 'run.started' ? e.attempt : 0))).toEqual([1, 2]);
     const final = await manager.getThread(runId);

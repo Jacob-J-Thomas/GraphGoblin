@@ -1,4 +1,6 @@
 import { mkdir } from 'node:fs/promises';
+import { createCodexAdapters } from '@graphgoblin/adapter-codex';
+import { createJevDecider } from '@graphgoblin/adapter-jev';
 import { FsArtifactStore, FsWorkspace } from '@graphgoblin/infrastructure/fs';
 import {
   HttpProbes,
@@ -35,6 +37,7 @@ import {
   type IdPort,
   type Logger,
   type ScriptPort,
+  type SecretsPort,
   type StructuredPort,
 } from '@graphgoblin/engine';
 import type { ApiConfig } from './config.js';
@@ -47,6 +50,12 @@ import { TriggerService } from './triggers/trigger-service.js';
 /** The single owner of a 1.0 installation. Every table carries it so multi-tenancy is a data change, not a schema change. */
 export const LOCAL_OWNER = 'local';
 
+/** The secret the Jev decider reads its API key from. */
+export const JEV_SECRET = 'jev-api-key';
+
+/** Notified after a secret is set or deleted, so adapters that cache a secret can re-read it. */
+export type SecretChangeHook = (ownerId: string, name: string) => Promise<void>;
+
 export interface ContainerOverrides {
   clock?: ClockPort;
   ids?: IdPort;
@@ -57,6 +66,8 @@ export interface ContainerOverrides {
   masterKey?: Buffer;
   probes?: HttpProbePort;
   scripts?: ScriptPort;
+  /** Extra secret-change hooks, run after the container's own. */
+  secretHooks?: SecretChangeHook[];
   /** Skip starting the timer, cron, and poll-trigger pollers (tests drive `timers.poll()`, `cron.recover()`, `cron.poll()`, and `polls.poll()` directly). */
   startTimers?: boolean;
 }
@@ -86,6 +97,8 @@ export interface Container {
     inbound: SqliteInboundEvents;
     secretsFor(ownerId: string): SqliteSecrets;
   };
+  /** Tell adapters a secret changed. The settings routes call this after a set or delete. */
+  onSecretChanged(ownerId: string, name: string): Promise<void>;
   /** Migrate, seed, recover runs, re-arm triggers, and start timers and cron. */
   start(): Promise<void>;
   stop(): Promise<void>;
@@ -136,6 +149,31 @@ export async function createContainer(
   const inbound = new SqliteInboundEvents(db);
   const cron = new CronScheduler(schedules, clock, { pollIntervalMs: config.timerPollMs, logger });
 
+  // Real adapters back whatever the caller did not override. Building them is cheap and has no
+  // side effects: the Codex CLI is only spawned when a session starts, and Jev only calls out when
+  // a decision runs.
+  const codex = createCodexAdapters({
+    logger,
+    model: config.defaultModel,
+    effort: config.defaultEffort,
+    ...(config.codexBinary ? { codexBinary: config.codexBinary } : {}),
+  });
+  // Jev resolves its key as soon as it is built, before `start()` has migrated the database; until
+  // then it sees no secret, and `start()` refreshes it once the tables exist.
+  let migrated = false;
+  const ownerSecrets = secretsFor(LOCAL_OWNER);
+  const jevSecrets: SecretsPort = {
+    resolve: (name) => (migrated ? ownerSecrets.resolve(name) : Promise.resolve(undefined)),
+  };
+  const jev = createJevDecider({ secrets: jevSecrets, logger, secretName: JEV_SECRET });
+  const secretHooks: SecretChangeHook[] = [
+    async (ownerId, name) => {
+      if (ownerId === LOCAL_OWNER && name === JEV_SECRET) await jev.refresh();
+    },
+    ...(overrides.secretHooks ?? []),
+  ];
+  const structured = overrides.structured ?? codex.structured;
+
   const ports: EnginePorts = {
     clock,
     ids,
@@ -144,9 +182,10 @@ export async function createContainer(
     runs,
     loops,
     sessions,
-    harnesses: overrides.harnesses ?? {},
-    deciders: overrides.deciders ?? [],
-    ...(overrides.structured ? { structured: overrides.structured } : {}),
+    harnesses: overrides.harnesses ?? { codex: codex.harness },
+    // Decision nodes pick a strategy by id; Jev first, the Codex decider as the fallback.
+    deciders: overrides.deciders ?? [jev, codex.decider],
+    structured,
     scripts: overrides.scripts ?? new ProcessScripts(),
     workspace: new FsWorkspace(config.dataDir),
     timers,
@@ -164,7 +203,7 @@ export async function createContainer(
       logger,
     }),
     artifacts: new FsArtifactStore(config.dataDir),
-    secrets: secretsFor(LOCAL_OWNER),
+    secrets: ownerSecrets,
   };
   const settings: EngineSettings = {
     defaultModel: config.defaultModel,
@@ -225,8 +264,14 @@ export async function createContainer(
       inbound,
       secretsFor,
     },
+    async onSecretChanged(ownerId, name) {
+      for (const hook of secretHooks) await hook(ownerId, name);
+    },
     async start() {
       await handle.migrate();
+      migrated = true;
+      await jev.init();
+      await jev.refresh();
       await catalog.seed();
       await manager.start();
       triggers.start();

@@ -99,7 +99,11 @@ export function registerSettingsRoutes(app: ApiInstance, container: Container): 
     },
     async (request, reply) => {
       if (!requireScope(request, reply, 'secrets:write')) return reply;
-      return repos.secretsFor(request.auth.ownerId).set(request.params.name, request.body.value);
+      const summary = await repos
+        .secretsFor(request.auth.ownerId)
+        .set(request.params.name, request.body.value);
+      await container.onSecretChanged(request.auth.ownerId, request.params.name);
+      return summary;
     },
   );
 
@@ -117,6 +121,7 @@ export function registerSettingsRoutes(app: ApiInstance, container: Container): 
       const deleted = await repos.secretsFor(request.auth.ownerId).delete(request.params.name);
       if (!deleted)
         return problem(reply, 404, 'SECRET_NOT_FOUND', `secret ${request.params.name} not found`);
+      await container.onSecretChanged(request.auth.ownerId, request.params.name);
       return reply.status(204).send(null);
     },
   );

@@ -123,6 +123,17 @@ describe('inference node', () => {
     expect(engine.ports.harness.started[0]?.turn.outputSchema).toEqual(schema);
     expect(engine.ports.harness.resumed).toHaveLength(1);
     expect(engine.ports.harness.resumed[0]?.sessionId).toBe('fake-session-1');
+    // The repair turn carries the node's full session settings, not just the prompt.
+    const started = engine.ports.harness.started[0];
+    const resumed = engine.ports.harness.resumed[0]?.request;
+    expect(resumed?.turn.outputSchema).toEqual(schema);
+    expect(resumed?.turn.prompt).toContain('Validation errors');
+    expect(resumed).toMatchObject({
+      workingDirectory: started?.workingDirectory,
+      model: started?.model,
+      effort: started?.effort,
+      options: started?.options,
+    });
     const thread = await engine.manager.getThread(run.id);
     expect(thread?.lastOutput?.value).toEqual({ ok: true });
     expect(thread?.counters.usage.outputTokens).toBe(5);

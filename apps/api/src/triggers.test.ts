@@ -782,6 +782,7 @@ describe('poll triggers', () => {
     const [run] = await container.polls.poll();
     expect(run?.loopId).toBe(id);
     const thread = await container.repos.runs.getInitialThread(run!.id);
+    expect(thread?.invocation.source).toBe('poll');
     expect(thread?.invocation.trigger).toMatchObject({
       kind: 'poll',
       dedupeKey: '1',

@@ -5318,6 +5318,7 @@
                   "cron",
                   "webhook",
                   "event",
+                  "poll",
                   "subloop"
                 ]
               },
@@ -11073,6 +11074,7 @@
                   "cron",
                   "webhook",
                   "event",
+                  "poll",
                   "subloop"
                 ]
               },
@@ -13395,8 +13397,20 @@
                     "dedupeKey": {
                       "type": "string"
                     },
+                    "source": {
+                      "type": "string"
+                    },
                     "receivedAt": {
                       "type": "string"
+                    },
+                    "runIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "duplicate": {
+                      "type": "boolean"
                     }
                   },
                   "required": [
@@ -13404,7 +13418,10 @@
                     "ownerId",
                     "type",
                     "payload",
-                    "receivedAt"
+                    "source",
+                    "receivedAt",
+                    "runIds",
+                    "duplicate"
                   ],
                   "additionalProperties": false
                 }
@@ -13416,6 +13433,35 @@
       "get": {
         "tags": [
           "events"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 128
+            },
+            "in": "query",
+            "name": "type",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "before",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false
+          }
         ],
         "responses": {
           "200": {
@@ -13445,8 +13491,17 @@
                           "dedupeKey": {
                             "type": "string"
                           },
+                          "source": {
+                            "type": "string"
+                          },
                           "receivedAt": {
                             "type": "string"
+                          },
+                          "runIds": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
                           }
                         },
                         "required": [
@@ -13454,7 +13509,9 @@
                           "ownerId",
                           "type",
                           "payload",
-                          "receivedAt"
+                          "source",
+                          "receivedAt",
+                          "runIds"
                         ],
                         "additionalProperties": false
                       }
@@ -13462,6 +13519,286 @@
                   },
                   "required": [
                     "items"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/loops/{id}/triggers": {
+      "get": {
+        "tags": [
+          "triggers"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "schedules": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "ownerId": {
+                            "type": "string"
+                          },
+                          "loopId": {
+                            "type": "string"
+                          },
+                          "versionId": {
+                            "type": "string"
+                          },
+                          "triggerNodeId": {
+                            "type": "string"
+                          },
+                          "expression": {
+                            "type": "string"
+                          },
+                          "timezone": {
+                            "type": "string"
+                          },
+                          "missedFirePolicy": {
+                            "type": "string",
+                            "enum": [
+                              "skip",
+                              "run-once",
+                              "run-each"
+                            ]
+                          },
+                          "enabled": {
+                            "type": "boolean"
+                          },
+                          "nextFireAt": {
+                            "type": "string"
+                          },
+                          "lastFiredAt": {
+                            "type": "string"
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "ownerId",
+                          "loopId",
+                          "versionId",
+                          "triggerNodeId",
+                          "expression",
+                          "timezone",
+                          "missedFirePolicy",
+                          "enabled",
+                          "createdAt"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "webhooks": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "ownerId": {
+                            "type": "string"
+                          },
+                          "loopId": {
+                            "type": "string"
+                          },
+                          "versionId": {
+                            "type": "string"
+                          },
+                          "triggerNodeId": {
+                            "type": "string"
+                          },
+                          "path": {
+                            "type": "string"
+                          },
+                          "secretRef": {
+                            "type": "string"
+                          },
+                          "signatureHeader": {
+                            "type": "string"
+                          },
+                          "replayWindowSeconds": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "enabled": {
+                            "type": "boolean"
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "ownerId",
+                          "loopId",
+                          "versionId",
+                          "triggerNodeId",
+                          "path",
+                          "secretRef",
+                          "signatureHeader",
+                          "replayWindowSeconds",
+                          "enabled",
+                          "createdAt"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "polls": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "ownerId": {
+                            "type": "string"
+                          },
+                          "loopId": {
+                            "type": "string"
+                          },
+                          "versionId": {
+                            "type": "string"
+                          },
+                          "triggerNodeId": {
+                            "type": "string"
+                          },
+                          "intervalSeconds": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "nextPollAt": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "ownerId",
+                          "loopId",
+                          "versionId",
+                          "triggerNodeId",
+                          "intervalSeconds",
+                          "nextPollAt"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "schedules",
+                    "webhooks",
+                    "polls"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/hooks/{token}": {
+      "post": {
+        "tags": [
+          "triggers"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "in": "path",
+            "name": "token",
+            "required": true
+          }
+        ],
+        "security": [],
+        "responses": {
+          "202": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "event": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "ownerId": {
+                          "type": "string"
+                        },
+                        "type": {
+                          "type": "string"
+                        },
+                        "payload": {
+                          "$ref": "#/components/schemas/JsonValue"
+                        },
+                        "dedupeKey": {
+                          "type": "string"
+                        },
+                        "source": {
+                          "type": "string"
+                        },
+                        "receivedAt": {
+                          "type": "string"
+                        },
+                        "runIds": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "ownerId",
+                        "type",
+                        "payload",
+                        "source",
+                        "receivedAt",
+                        "runIds"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "runId": {
+                      "type": "string"
+                    },
+                    "filtered": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "event",
+                    "filtered"
                   ],
                   "additionalProperties": false
                 }
@@ -13501,6 +13838,10 @@
     {
       "name": "events",
       "description": "The inbound event bus"
+    },
+    {
+      "name": "triggers",
+      "description": "Schedules, webhook endpoints, and the public /hooks receiver"
     },
     {
       "name": "system",

@@ -74,7 +74,11 @@ describe.skipIf(!live)('Codex live smoke', () => {
 
     const second = harness.resume(
       sessionId,
-      { prompt: 'What word did I ask you to remember? Reply with the word only.' },
+      {
+        workingDirectory: dir,
+        options,
+        turn: { prompt: 'What word did I ask you to remember? Reply with the word only.' },
+      },
       new AbortController().signal,
     );
     const secondEvents = await drain(second);
