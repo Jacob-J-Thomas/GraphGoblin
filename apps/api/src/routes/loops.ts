@@ -3,9 +3,16 @@ import {
   LoopExportSchema,
   LoopRecordSchema,
   LoopVersionRecordSchema,
+  type LoopDefinition,
   type LoopRecord,
 } from '@graphgoblin/contracts';
-import { exportLoop, importLoop, isPublishable, validateLoop } from '@graphgoblin/domain';
+import {
+  exportLoop,
+  importLoop,
+  nodesOfKind,
+  validateLoop,
+  type ValidationIssue,
+} from '@graphgoblin/domain';
 import { EngineRequestError } from '@graphgoblin/engine';
 import type { FastifyRequest } from 'fastify';
 import { z } from 'zod';
@@ -43,6 +50,61 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
     return loop;
   }
 
+  /** A published subloop reference must resolve for this owner (docs/03); a self-reference may. */
+  async function subloopIssues(
+    ownerId: string,
+    def: LoopDefinition,
+    selfId?: string,
+  ): Promise<ValidationIssue[]> {
+    const issues: ValidationIssue[] = [];
+    for (const node of nodesOfKind(def, 'subloop')) {
+      const { loopId, version } = node.config.loopRef;
+      if (loopId === selfId) continue;
+      const target = await loops.getLoop(loopId);
+      if (!target || target.ownerId !== ownerId) {
+        issues.push({
+          code: 'SUBLOOP_NOT_FOUND',
+          severity: 'error',
+          message: `subloop "${node.id}" references loop ${loopId}, which does not exist`,
+          nodeId: node.id,
+        });
+        continue;
+      }
+      const published =
+        version === 'latest'
+          ? await loops.getLatestPublished(loopId)
+          : await loops.getPublished(loopId, version);
+      if (!published) {
+        issues.push({
+          code: 'SUBLOOP_NOT_PUBLISHED',
+          severity: 'error',
+          message: `subloop "${node.id}" references "${target.name}", which has no published ${
+            version === 'latest' ? 'version' : `version ${version}`
+          }`,
+          nodeId: node.id,
+        });
+      }
+    }
+    return issues;
+  }
+
+  /**
+   * Every check publishing applies: the shared domain rules, trigger checks such as cron syntax,
+   * and subloop references. Validate, draft saves, create, and import report the same list, so
+   * the editor and `POST /loops/{id}/validate` never disagree with publish.
+   */
+  async function publishIssues(
+    ownerId: string,
+    def: LoopDefinition,
+    selfId?: string,
+  ): Promise<ValidationIssue[]> {
+    return [
+      ...validateLoop(def),
+      ...container.triggers.checkDefinition(def),
+      ...(await subloopIssues(ownerId, def, selfId)),
+    ];
+  }
+
   app.get(
     '/loops',
     {
@@ -75,7 +137,10 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
       if (!requireScope(request, reply, 'loops:write')) return reply;
       const created = await loops.create(request.auth.ownerId, request.body.definition);
       reply.status(201);
-      return { ...created, issues: validateLoop(request.body.definition) };
+      return {
+        ...created,
+        issues: await publishIssues(request.auth.ownerId, request.body.definition, created.loop.id),
+      };
     },
   );
 
@@ -99,7 +164,12 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
       const imported = importLoop(request.body);
       const created = await loops.create(request.auth.ownerId, imported.definition);
       reply.status(201);
-      return { ...created, issues: imported.issues };
+      const references = await subloopIssues(
+        request.auth.ownerId,
+        imported.definition,
+        created.loop.id,
+      );
+      return { ...created, issues: [...imported.issues, ...references] };
     },
   );
 
@@ -132,7 +202,14 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
       if (!requireScope(request, reply, 'loops:write')) return reply;
       await ownedLoop(request, request.params.id);
       const draft = await loops.saveDraft(request.params.id, request.body.definition);
-      return { draft, issues: validateLoop(request.body.definition) };
+      return {
+        draft,
+        issues: await publishIssues(
+          request.auth.ownerId,
+          request.body.definition,
+          request.params.id,
+        ),
+      };
     },
   );
 
@@ -148,10 +225,12 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
     },
     async (request) => {
       await ownedLoop(request, request.params.id);
-      return {
-        issues: validateLoop(request.body.definition),
-        publishable: isPublishable(request.body.definition),
-      };
+      const issues = await publishIssues(
+        request.auth.ownerId,
+        request.body.definition,
+        request.params.id,
+      );
+      return { issues, publishable: !issues.some((i) => i.severity === 'error') };
     },
   );
 
@@ -171,10 +250,7 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
         return problem(reply, 409, 'NO_DRAFT', 'the loop has no draft to publish');
       const draft = await loops.getVersion(loop.draftVersionId);
       const issues = draft
-        ? [
-            ...validateLoop(draft.definition),
-            ...container.triggers.checkDefinition(draft.definition),
-          ]
+        ? await publishIssues(request.auth.ownerId, draft.definition, loop.id)
         : [];
       if (issues.some((i) => i.severity === 'error')) {
         return problem(reply, 422, 'LOOP_INVALID', 'the draft has structural errors', issues);

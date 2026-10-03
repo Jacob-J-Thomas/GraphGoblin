@@ -16,11 +16,17 @@ declare module 'fastify' {
   }
 }
 
-/** Routes that never require credentials: health, docs, and the signed webhook receivers (docs/08). */
-const PUBLIC_PREFIXES = ['/healthz', '/version', '/openapi.json', '/docs', '/hooks/'];
+/**
+ * Routes that never require credentials: health, docs, the signed webhook receivers (docs/08), and
+ * the static web app under `/app/` with its `/` and `/app` redirects. The app shell holds no data;
+ * every API call it makes is still authenticated.
+ */
+const PUBLIC_PREFIXES = ['/healthz', '/version', '/openapi.json', '/docs', '/hooks/', '/app/'];
+const PUBLIC_EXACT = new Set(['/', '/app']);
 
 function isPublic(url: string): boolean {
   const path = url.split('?')[0] ?? url;
+  if (PUBLIC_EXACT.has(path)) return true;
   return PUBLIC_PREFIXES.some(
     (prefix) =>
       path === prefix ||

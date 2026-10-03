@@ -44,6 +44,24 @@ const ENGINE_STATUS: Record<EngineRequestError['code'], number> = {
   INVALID_INPUT: 400,
 };
 
+/**
+ * Stable codes for the request errors Fastify raises itself, so clients never see framework
+ * internals such as `FST_ERR_CTP_INVALID_JSON_BODY` in a problem's `code` or `type`.
+ */
+const FASTIFY_CODES: Record<string, string> = {
+  FST_ERR_CTP_INVALID_JSON_BODY: 'MALFORMED_BODY',
+  FST_ERR_CTP_EMPTY_JSON_BODY: 'MALFORMED_BODY',
+  FST_ERR_CTP_INVALID_CONTENT_LENGTH: 'MALFORMED_BODY',
+  FST_ERR_CTP_BODY_TOO_LARGE: 'BODY_TOO_LARGE',
+  FST_ERR_CTP_INVALID_MEDIA_TYPE: 'UNSUPPORTED_MEDIA_TYPE',
+  FST_ERR_CTP_INVALID_TYPE: 'UNSUPPORTED_MEDIA_TYPE',
+};
+
+function stableCode(code: string | undefined): string {
+  if (!code) return 'BAD_REQUEST';
+  return FASTIFY_CODES[code] ?? (code.startsWith('FST_') ? 'BAD_REQUEST' : code);
+}
+
 export function registerErrorHandler(app: FastifyInstance): void {
   app.setNotFoundHandler((request, reply) =>
     problem(reply, 404, 'NOT_FOUND', `${request.method} ${request.url} does not exist`),
@@ -87,7 +105,7 @@ export function registerErrorHandler(app: FastifyInstance): void {
         return problem(
           reply,
           fastifyError.statusCode,
-          fastifyError.code ?? 'BAD_REQUEST',
+          stableCode(fastifyError.code),
           error.message,
         );
       }

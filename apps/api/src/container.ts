@@ -25,7 +25,7 @@ import {
   openDatabase,
   type DatabaseHandle,
 } from '@graphgoblin/infrastructure/sqlite';
-import type { HarnessId } from '@graphgoblin/contracts';
+import { EffortSchema, type Effort, type HarnessId } from '@graphgoblin/contracts';
 import {
   RunManager,
   type ClockPort,
@@ -102,6 +102,19 @@ export interface Container {
   /** Migrate, seed, recover runs, re-arm triggers, and start timers and cron. */
   start(): Promise<void>;
   stop(): Promise<void>;
+}
+
+/** The owner settings `defaultModel` and `defaultEffort`; empty or invalid values are ignored. */
+export async function readOwnerDefaults(
+  settings: Pick<SqliteSettings, 'get'>,
+  ownerId: string,
+): Promise<{ model?: string; effort?: Effort }> {
+  const model = await settings.get(ownerId, 'defaultModel');
+  const effort = EffortSchema.safeParse(await settings.get(ownerId, 'defaultEffort'));
+  return {
+    ...(typeof model === 'string' && model.trim() ? { model: model.trim() } : {}),
+    ...(effort.success ? { effort: effort.data } : {}),
+  };
 }
 
 const silentLogger: Logger = {
@@ -210,6 +223,8 @@ export async function createContainer(
     defaultEffort: config.defaultEffort,
     maxConcurrentRuns: config.maxConcurrentRuns,
     structuredTimeoutMs: 120_000,
+    // Settings → Defaults, read at run start; GG_DEFAULT_MODEL and GG_DEFAULT_EFFORT are the fallback.
+    ownerDefaults: (ownerId) => readOwnerDefaults(settingsRepo, ownerId),
   };
   const manager = new RunManager(ports, settings);
   const polls = new PollTriggers({

@@ -28,6 +28,12 @@ const ModelEntrySchema = z.object({
   enabled: z.boolean(),
 });
 
+/** Settings the engine reads (the run defaults); other keys are stored as given. */
+const KnownSettingsSchema = z.looseObject({
+  defaultModel: z.string().trim().min(1).max(256).optional(),
+  defaultEffort: EffortSchema.optional(),
+});
+
 export function registerSettingsRoutes(app: ApiInstance, container: Container): void {
   const { repos } = container;
 
@@ -49,6 +55,16 @@ export function registerSettingsRoutes(app: ApiInstance, container: Container): 
     },
     async (request, reply) => {
       if (!requireScope(request, reply, 'settings:write')) return reply;
+      const known = KnownSettingsSchema.safeParse(request.body);
+      if (!known.success) {
+        return problem(
+          reply,
+          400,
+          'VALIDATION_FAILED',
+          'a known setting has an invalid value',
+          known.error.issues.map((i) => ({ path: `/${i.path.join('/')}`, message: i.message })),
+        );
+      }
       for (const [key, value] of Object.entries(request.body))
         await repos.settings.set(request.auth.ownerId, key, value);
       return repos.settings.getAll(request.auth.ownerId);

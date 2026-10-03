@@ -94,6 +94,37 @@ describe('static web app hosting', () => {
   });
 });
 
+describe('static web app with GG_REQUIRE_API_KEY=true', () => {
+  let t: TestApp;
+  beforeAll(async () => {
+    t = await createTestApp({ env: { GG_WEB_DIST: dist }, requireApiKey: true });
+  });
+  afterAll(async () => {
+    await t.close();
+  });
+
+  it('serves the shell, assets, and redirects without a key', async () => {
+    for (const url of ['/app/', '/app/runs/01ABC', '/app/sw.js', '/app/assets/index-abc123.js']) {
+      const res = await t.app.inject({ method: 'GET', url });
+      expect(res.statusCode, url).toBe(200);
+    }
+    for (const url of ['/', '/app']) {
+      const res = await t.app.inject({ method: 'GET', url });
+      expect(res.statusCode, url).toBe(302);
+    }
+    expect((await t.app.inject({ method: 'GET', url: '/app/missing.js' })).statusCode).toBe(404);
+  });
+
+  it('keeps every API route guarded, including paths that try to escape /app/', async () => {
+    expect((await t.app.inject({ method: 'GET', url: '/loops' })).statusCode).toBe(401);
+    expect((await t.app.inject({ method: 'GET', url: '/settings' })).statusCode).toBe(401);
+    for (const url of ['/app/../loops', '/app/%2e%2e/loops', '/app/..%2floops']) {
+      const res = await t.app.inject({ method: 'GET', url });
+      expect(res.body, url).not.toContain('"items"');
+    }
+  });
+});
+
 describe('static hosting disabled', () => {
   it('does nothing without GG_WEB_DIST or when the directory has no build', async () => {
     for (const env of [{}, { GG_WEB_DIST: join(dist, 'does-not-exist') }]) {
