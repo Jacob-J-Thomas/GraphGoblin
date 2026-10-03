@@ -14,7 +14,7 @@ import type {
   Usage,
   WorkingDirectorySpec,
 } from '@graphgoblin/contracts';
-import type { PredicateAnswer } from '@graphgoblin/domain';
+import { isTerminal, type PredicateAnswer } from '@graphgoblin/domain';
 import type {
   ArtifactStorePort,
   ChoiceRequest,
@@ -53,6 +53,7 @@ import type {
   WorkspacePort,
   YesNoRequest,
 } from '../ports.js';
+import { AppendConflictError } from '../errors.js';
 
 const ULID_ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 
@@ -120,8 +121,15 @@ export class InMemoryEventStore implements EventStorePort {
   private readonly listeners = new Map<string, Set<(event: RunEvent) => void>>();
   constructor(private readonly clock: ClockPort) {}
 
-  append(runId: string, drafts: readonly EventDraft[]): Promise<RunEvent[]> {
+  append(
+    runId: string,
+    drafts: readonly EventDraft[],
+    options: { expectedLastSeq?: number } = {},
+  ): Promise<RunEvent[]> {
     const log = this.logs.get(runId) ?? [];
+    if (options.expectedLastSeq !== undefined && options.expectedLastSeq !== log.length) {
+      return Promise.reject(new AppendConflictError(runId, options.expectedLastSeq, log.length));
+    }
     const stored: RunEvent[] = [];
     for (const draft of drafts) {
       const event = {
@@ -140,8 +148,9 @@ export class InMemoryEventStore implements EventStorePort {
     return Promise.resolve(stored);
   }
 
-  read(runId: string, afterSeq = 0): Promise<RunEvent[]> {
-    return Promise.resolve((this.logs.get(runId) ?? []).filter((e) => e.seq > afterSeq));
+  read(runId: string, afterSeq = 0, limit?: number): Promise<RunEvent[]> {
+    const events = (this.logs.get(runId) ?? []).filter((e) => e.seq > afterSeq);
+    return Promise.resolve(limit === undefined ? events : events.slice(0, limit));
   }
 
   subscribe(runId: string, listener: (event: RunEvent) => void): () => void {
@@ -163,6 +172,8 @@ export class InMemoryRunRepository implements RunRepository {
   readonly runs = new Map<string, RunRecord>();
   private readonly initial = new Map<string, ContextThread>();
   private readonly threads = new Map<string, ContextThread>();
+  private readonly checkpoints = new Map<string, number>();
+  private readonly finalized = new Set<string>();
 
   create(run: RunRecord, initialThread: ContextThread): Promise<void> {
     this.runs.set(run.id, run);
@@ -188,6 +199,17 @@ export class InMemoryRunRepository implements RunRepository {
     if (!from.includes(current.status)) return Promise.resolve(undefined);
     return Promise.resolve(this.apply(current, changes));
   }
+  claimCancel(
+    runId: string,
+    from: readonly RunStatus[],
+    at: string,
+  ): Promise<RunRecord | undefined> {
+    const current = this.runs.get(runId);
+    if (!current) return Promise.reject(new Error(`run ${runId} not found`));
+    if (current.cancelRequestedAt || !from.includes(current.status))
+      return Promise.resolve(undefined);
+    return Promise.resolve(this.apply(current, { cancelRequestedAt: at }));
+  }
   private apply(current: RunRecord, changes: RunRecordChanges): RunRecord {
     const next: Record<string, unknown> = { ...current };
     for (const [key, value] of Object.entries(changes)) {
@@ -201,6 +223,19 @@ export class InMemoryRunRepository implements RunRepository {
   listByStatus(statuses: readonly RunStatus[]): Promise<RunRecord[]> {
     return Promise.resolve([...this.runs.values()].filter((r) => statuses.includes(r.status)));
   }
+  markFinalized(runId: string): Promise<void> {
+    this.finalized.add(runId);
+    return Promise.resolve();
+  }
+  clearFinalized(runId: string): Promise<void> {
+    this.finalized.delete(runId);
+    return Promise.resolve();
+  }
+  listUnfinalized(): Promise<RunRecord[]> {
+    return Promise.resolve(
+      [...this.runs.values()].filter((r) => isTerminal(r.status) && !this.finalized.has(r.id)),
+    );
+  }
   listChildren(parentRunId: string): Promise<RunRecord[]> {
     return Promise.resolve([...this.runs.values()].filter((r) => r.parentRunId === parentRunId));
   }
@@ -210,13 +245,21 @@ export class InMemoryRunRepository implements RunRepository {
   getThread(runId: string): Promise<ContextThread | undefined> {
     return Promise.resolve(this.threads.get(runId));
   }
-  saveThread(runId: string, thread: ContextThread): Promise<void> {
+  saveThread(runId: string, thread: ContextThread, seq?: number): Promise<void> {
     this.threads.set(runId, thread);
+    if (seq === undefined) this.checkpoints.delete(runId);
+    else this.checkpoints.set(runId, seq);
     return Promise.resolve();
+  }
+  getThreadCheckpoint(runId: string): Promise<{ thread: ContextThread; seq: number } | undefined> {
+    const thread = this.threads.get(runId);
+    const seq = this.checkpoints.get(runId);
+    return Promise.resolve(thread && seq !== undefined ? { thread, seq } : undefined);
   }
   /** Test helper: drop the thread snapshot to force replay. */
   dropThreadSnapshot(runId: string): void {
     this.threads.delete(runId);
+    this.checkpoints.delete(runId);
   }
 }
 
@@ -530,8 +573,11 @@ export class FakeWorkspace implements WorkspacePort {
 export class FakeTimers implements TimerPort {
   readonly scheduled: { runId: string; key: string; at: Date }[] = [];
   private listeners: ((runId: string, key: string) => void | Promise<void>)[] = [];
+  /** An upsert, like the real store: one timer per run and key. */
   schedule(runId: string, key: string, at: Date): Promise<void> {
-    this.scheduled.push({ runId, key, at });
+    const existing = this.scheduled.find((t) => t.runId === runId && t.key === key);
+    if (existing) existing.at = at;
+    else this.scheduled.push({ runId, key, at });
     return Promise.resolve();
   }
   cancel(runId: string, key?: string): Promise<void> {
@@ -558,9 +604,14 @@ export class FakeTimers implements TimerPort {
   }
   /** Test helper: fire a specific timer regardless of time and wait for the listeners. */
   async fire(runId: string, key: string): Promise<void> {
-    const index = this.scheduled.findIndex((t) => t.runId === runId && t.key === key);
+    // A bare name (`timer`) fires the run's scheduled timer of that name, whatever wait identity
+    // its key carries (`timer@42`); a key that matches nothing is delivered as given.
+    const index = this.scheduled.findIndex(
+      (t) => t.runId === runId && (t.key === key || t.key.startsWith(`${key}@`)),
+    );
+    const fired = index >= 0 ? (this.scheduled[index] as { key: string }).key : key;
     if (index >= 0) this.scheduled.splice(index, 1);
-    for (const listener of this.listeners) await listener(runId, key);
+    for (const listener of this.listeners) await listener(runId, fired);
   }
 }
 

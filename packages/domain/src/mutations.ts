@@ -14,6 +14,7 @@ import { evaluateExpression, evaluatePredicate } from './expression.js';
 import { validateJson } from './json-schema.js';
 import { applyPatch } from './patch.js';
 import { getAtPointer, pointerStartsWith } from './pointer.js';
+import { unsafeRegexReason } from './regex-safety.js';
 import { renderTemplate } from './template.js';
 import { estimateMessageTokens, threadView } from './thread-view.js';
 
@@ -140,13 +141,18 @@ function walkStrings(value: unknown, fn: (s: string) => string): unknown {
 }
 
 function compileRegex(pattern: string, flags: string): RegExp {
+  let re: RegExp;
   try {
-    return new RegExp(pattern, flags.includes('g') ? flags : `${flags}g`);
+    re = new RegExp(pattern, flags.includes('g') ? flags : `${flags}g`);
   } catch (error) {
     throw new MutationError(
       `invalid pattern "${pattern}": ${error instanceof Error ? error.message : String(error)}`,
     );
   }
+  // The same static check as JSONata regex literals: a native match cannot be interrupted.
+  const unsafe = unsafeRegexReason(re.source, re.flags);
+  if (unsafe) throw new MutationError(`pattern "${pattern}" can run without bound: ${unsafe}`);
+  return re;
 }
 
 /** Plan a single operation as a patch against the given thread, without applying it. */

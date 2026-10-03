@@ -102,7 +102,7 @@ Select an event in **Timeline** to reconstruct the thread at that sequence. Sele
 
 When **Input requested** appears, answer the prompt using the generated form and click **Submit input**. Signal waits show **Send signal**. Timers, heartbeats, and child waits show the reason and any wake time.
 
-Use **Pause** to request a hold; an executing node can finish before the next node is held. **Resume** appears for paused runs. **Cancel run** persists a cancellation request and stops work cooperatively; wait for cancelled status and remember that cancellation does not undo filesystem or external side effects.
+Use **Pause** to request a hold; an executing node can finish before the next node is held. **Resume** appears for paused runs. A run paused while it was waiting (for input, a signal, a timer, or a child run) goes back to that same wait with its deadlines intact; a timer that came due meanwhile fires right after the resume. **Cancel run** persists a cancellation request and stops work cooperatively; wait for cancelled status and remember that cancellation does not undo filesystem or external side effects.
 
 The current UI hides controls on terminal runs. After fixing an external cause of a resumable failure, use `resume_run` through MCP or this API request. In Bash:
 

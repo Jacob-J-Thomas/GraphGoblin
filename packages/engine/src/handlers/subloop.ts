@@ -1,13 +1,20 @@
-import type { ContextThread, JsonValue, Message, PatchOperation } from '@graphgoblin/contracts';
+import type {
+  ContextThread,
+  JsonValue,
+  Message,
+  PatchOperation,
+  RunEvent,
+} from '@graphgoblin/contracts';
 import { JsonPatchSchema } from '@graphgoblin/contracts';
 import {
   MUTABLE_REGIONS,
   evaluateExpression,
+  isTerminal,
   pointerStartsWith,
   threadView,
 } from '@graphgoblin/domain';
 import { RunFailureError } from '../errors.js';
-import type { ChildOutcome, NodeContext, NodeHandler } from '../handler.js';
+import type { ChildOutcome, NodeContext, NodeHandler, NodeResult } from '../handler.js';
 import {
   addUsage,
   makeMessage,
@@ -97,8 +104,8 @@ async function outputMapping(
     }
     for (const op of checked.data) {
       if (
-        !pointerStartsWith(op.path, '/counters') &&
-        !MUTABLE_REGIONS.some((r) => pointerStartsWith(op.path, r))
+        !MUTABLE_REGIONS.some((r) => pointerStartsWith(op.path, r)) ||
+        (op.op === 'move' && !MUTABLE_REGIONS.some((r) => pointerStartsWith(op.from, r)))
       ) {
         throw new RunFailureError(
           'EXPRESSION_ERROR',
@@ -166,6 +173,21 @@ export const subloopHandler: NodeHandler<'subloop'> = {
   kind: 'subloop',
   async execute(ctx) {
     const { config } = ctx;
+    // A visit that already started its child (the process died before the park was recorded, or
+    // the node runs again without a wake) re-parks on that child, or maps its outcome if it has
+    // finished, instead of starting a second one (docs/05, crash recovery).
+    const existing = ctx.wake ? undefined : await childOfThisVisit(ctx);
+    if (existing) {
+      const child = await ctx.services.childOutcome(existing);
+      if (!isTerminal(child.status)) {
+        return {
+          kind: 'park',
+          patch: [],
+          wait: { nodeId: ctx.node.id, kind: 'child', childRunId: existing },
+        };
+      }
+      return finishWithChild(ctx, child);
+    }
     if (!ctx.wake) {
       const depth = await ctx.services.depth();
       const limit = config.depthLimitOverride ?? ctx.definition.settings.subloopDepthLimit;
@@ -198,15 +220,32 @@ export const subloopHandler: NodeHandler<'subloop'> = {
         nodeId: ctx.node.id,
       });
     }
-    const child = await ctx.services.childOutcome(childRunId);
-    await ctx.services.record({
-      type: 'child_run.finished',
-      nodeId: ctx.node.id,
-      childRunId,
-      status: child.status,
-      ...(child.outcome ? { outcome: child.outcome } : {}),
-    });
-    const patch = await outputMapping(ctx, child);
-    return { kind: 'done', patch, route: 'out' };
+    return finishWithChild(ctx, await ctx.services.childOutcome(childRunId));
   },
 };
+
+async function finishWithChild(
+  ctx: NodeContext<'subloop'>,
+  child: ChildOutcome,
+): Promise<NodeResult> {
+  await ctx.services.record({
+    type: 'child_run.finished',
+    nodeId: ctx.node.id,
+    childRunId: child.runId,
+    status: child.status,
+    ...(child.outcome ? { outcome: child.outcome } : {}),
+  });
+  const patch = await outputMapping(ctx, child);
+  return { kind: 'done', patch, route: 'out' };
+}
+
+/** The child this node started during its current, unfinished visit, from the run's log. */
+async function childOfThisVisit(ctx: NodeContext<'subloop'>): Promise<string | undefined> {
+  const events = await ctx.services.events();
+  for (let i = events.length - 1; i >= 0; i -= 1) {
+    const event = events[i] as RunEvent;
+    if (event.type === 'node.finished' && event.nodeId === ctx.node.id) return undefined;
+    if (event.type === 'child_run.started' && event.nodeId === ctx.node.id) return event.childRunId;
+  }
+  return undefined;
+}

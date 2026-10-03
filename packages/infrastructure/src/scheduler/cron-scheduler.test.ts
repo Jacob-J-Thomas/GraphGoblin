@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CapturingLogger, FakeClock, FakeIds } from '@graphgoblin/engine/testing';
 import { openMemoryDatabase, type DatabaseHandle } from '../sqlite/db.js';
 import { SqliteScheduleStore, type ScheduleDraft } from '../sqlite/triggers.js';
@@ -154,9 +154,14 @@ describe('CronScheduler.poll', () => {
     const scheduler = new CronScheduler(store, clock);
     let release!: () => void;
     const gate = new Promise<void>((resolve) => (release = resolve));
-    scheduler.onFire(() => gate);
+    let entered = false;
+    scheduler.onFire(() => {
+      entered = true;
+      return gate;
+    });
     const first = scheduler.poll();
-    await new Promise((r) => setTimeout(r, 20));
+    // Wait until the first poll is inside its listener, however long that takes under load.
+    await vi.waitFor(() => expect(entered).toBe(true), { timeout: 5000 });
     expect(await scheduler.poll()).toBe(0);
     expect(await scheduler.recover()).toBe(0);
     release();
@@ -172,7 +177,8 @@ describe('CronScheduler.poll', () => {
     await scheduler.start();
     await scheduler.start();
     clock.set('2026-03-01T01:00:00.000Z');
-    await new Promise((r) => setTimeout(r, 80));
+    // Wait for the interval to fire the due slot (a generous bound) rather than a fixed sleep.
+    await vi.waitFor(() => expect(fires).toHaveLength(1), { timeout: 5000 });
     scheduler.stop();
     scheduler.stop();
     expect(fires).toHaveLength(1);

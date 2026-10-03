@@ -1,5 +1,6 @@
 import { EventEmitter } from 'node:events';
 import type { RunEvent } from '@graphgoblin/contracts';
+import { AppendConflictError } from '@graphgoblin/engine';
 import type { ClockPort, EventDraft, EventStorePort } from '@graphgoblin/engine';
 import { and, asc, eq, gt, sql } from 'drizzle-orm';
 import type { Database } from './db.js';
@@ -33,7 +34,11 @@ export class SqliteEventStore implements EventStorePort {
     this.emitter.setMaxListeners(0);
   }
 
-  async append(runId: string, drafts: readonly EventDraft[]): Promise<RunEvent[]> {
+  async append(
+    runId: string,
+    drafts: readonly EventDraft[],
+    options: { expectedLastSeq?: number } = {},
+  ): Promise<RunEvent[]> {
     if (drafts.length === 0) return [];
     const ts = this.clock.now().toISOString();
     const stored = await this.db.transaction(async (tx) => {
@@ -42,6 +47,9 @@ export class SqliteEventStore implements EventStorePort {
         .from(runEvents)
         .where(eq(runEvents.runId, runId));
       let seq = Number(current?.max ?? 0);
+      if (options.expectedLastSeq !== undefined && options.expectedLastSeq !== seq) {
+        throw new AppendConflictError(runId, options.expectedLastSeq, seq);
+      }
       const events: RunEvent[] = [];
       const rows: (typeof runEvents.$inferInsert)[] = [];
       for (const draft of drafts) {

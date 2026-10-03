@@ -378,7 +378,7 @@ describe('run manager edge cases', () => {
     ).toBe(true);
   });
 
-  it('logs timer wake failures instead of crashing', async () => {
+  it('logs a failed timer wake and reports it to the timer port, which keeps the timer', async () => {
     const engine = await createTestEngine();
     const version = engine.publish(
       singleNodeLoop('w', {
@@ -390,7 +390,7 @@ describe('run manager edge cases', () => {
     );
     const run = await engine.runToIdle(version.loopId);
     vi.spyOn(engine.ports.runs, 'get').mockRejectedValueOnce(new Error('db down'));
-    await engine.ports.timers.fire(run.id, 'timer');
+    await expect(engine.ports.timers.fire(run.id, 'timer')).rejects.toThrow('db down');
     expect(engine.ports.logger.lines.some((l) => l.msg === 'timer wake failed')).toBe(true);
   });
 
@@ -630,7 +630,12 @@ describe('handler edge cases', () => {
     );
     const run = await engine.runToIdle(version.loopId);
     expect(run.waiting?.until).toBe('2026-10-02T12:00:05.000Z');
-    expect(engine.ports.timers.scheduled.map((t) => t.key).sort()).toEqual(['timeout', 'timer']);
+    expect(run.waiting?.timeoutAt).toBe('2026-10-02T12:01:00.000Z');
+    const seq = run.waiting?.startedSeq;
+    expect(engine.ports.timers.scheduled.map((t) => t.key).sort()).toEqual([
+      `timeout@${seq}`,
+      `timer@${seq}`,
+    ]);
   });
 
   it('inference: notes for tool calls, parsed final text for schemas, and errors without an error event', async () => {

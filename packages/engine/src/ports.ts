@@ -43,9 +43,18 @@ export interface Logger {
 }
 
 export interface EventStorePort {
-  /** Append in order, assigning strictly increasing `seq` per run. Returns the stored events. */
-  append(runId: string, drafts: readonly EventDraft[]): Promise<RunEvent[]>;
-  read(runId: string, afterSeq?: number): Promise<RunEvent[]>;
+  /**
+   * Append in order, atomically, assigning strictly increasing `seq` per run. Returns the stored
+   * events. With `expectedLastSeq`, the append happens only if the run's last `seq` is exactly
+   * that (0 for an empty log); otherwise nothing is written and `AppendConflictError` is thrown.
+   */
+  append(
+    runId: string,
+    drafts: readonly EventDraft[],
+    options?: { expectedLastSeq?: number },
+  ): Promise<RunEvent[]>;
+  /** Events after `afterSeq` (default 0), oldest first, at most `limit` of them when given. */
+  read(runId: string, afterSeq?: number, limit?: number): Promise<RunEvent[]>;
   subscribe(runId: string, listener: (event: RunEvent) => void): () => void;
 }
 
@@ -66,11 +75,36 @@ export interface RunRepository {
     from: readonly RunStatus[],
     changes: RunRecordChanges,
   ): Promise<RunRecord | undefined>;
+  /**
+   * Record a cancel request once: set `cancelRequestedAt` only when it is unset and the status is
+   * one of `from`, atomically. Returns the updated record, or undefined when another request got
+   * there first or the status did not match, so concurrent cancels append one audit event.
+   */
+  claimCancel(
+    runId: string,
+    from: readonly RunStatus[],
+    at: string,
+  ): Promise<RunRecord | undefined>;
   listByStatus(statuses: readonly RunStatus[]): Promise<RunRecord[]>;
+  /**
+   * Record that everything after the run's terminal status is done: timers dropped, children
+   * cancelled, returns delivered, parent woken. Until then the run is listed by `listUnfinalized`.
+   */
+  markFinalized(runId: string): Promise<void>;
+  /** Forget a finalization: the run is leaving its terminal status (a resume of a failure). */
+  clearFinalized(runId: string): Promise<void>;
+  /** Terminal runs whose finalization was never recorded (the process died part-way). */
+  listUnfinalized(): Promise<RunRecord[]>;
   listChildren(parentRunId: string): Promise<RunRecord[]>;
   getInitialThread(runId: string): Promise<ContextThread | undefined>;
   getThread(runId: string): Promise<ContextThread | undefined>;
-  saveThread(runId: string, thread: ContextThread): Promise<void>;
+  /**
+   * Save the thread snapshot. `seq` is the last event it reflects: the thread equals the initial
+   * thread with every event up to `seq` replayed. Without `seq` it is a plain snapshot for reads.
+   */
+  saveThread(runId: string, thread: ContextThread, seq?: number): Promise<void>;
+  /** The snapshot with the `seq` it reflects, when it was saved with one. */
+  getThreadCheckpoint(runId: string): Promise<{ thread: ContextThread; seq: number } | undefined>;
 }
 
 export interface LoopRepository {
@@ -251,9 +285,14 @@ export interface WorkspacePort {
 }
 
 export interface TimerPort {
+  /** Arm or re-arm the run's timer named `key`: one timer per run and key (an upsert). */
   schedule(runId: string, key: string, at: Date): Promise<void>;
   cancel(runId: string, key?: string): Promise<void>;
-  /** Listeners may return a promise; implementations should await it before considering the fire handled. */
+  /**
+   * Listeners may return a promise. Implementations await it and remove the fired timer only
+   * afterwards, so delivery is at-least-once: a fire interrupted by a crash fires again after a
+   * restart. Listeners must therefore be idempotent.
+   */
   onFire(listener: (runId: string, key: string) => void | Promise<void>): () => void;
 }
 

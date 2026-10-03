@@ -65,6 +65,13 @@ export const decisionHandler: NodeHandler<'decision'> = {
         tried.push(`${strategy} chose unknown route "${result.label}"`);
         continue;
       }
+      if (
+        result.confidence !== undefined &&
+        (!Number.isFinite(result.confidence) || result.confidence < 0 || result.confidence > 1)
+      ) {
+        tried.push(`${strategy} returned invalid confidence`);
+        continue;
+      }
       const minConfidence = strategy === 'jev' ? config.jev?.minConfidence : undefined;
       if (
         minConfidence !== undefined &&

@@ -67,6 +67,10 @@ export const runs = sqliteTable(
     lastEventSeq: integer('last_event_seq').notNull().default(0),
     initialThread: text('initial_thread', { mode: 'json' }).$type<ContextThread>().notNull(),
     threadSnapshot: text('thread_snapshot', { mode: 'json' }).$type<ContextThread>(),
+    /** The last event seq the snapshot reflects, when it is a verified checkpoint. */
+    threadSnapshotSeq: integer('thread_snapshot_seq'),
+    /** Set when everything after the terminal status (timers, children, returns, parent) is done. */
+    finalizedAt: text('finalized_at'),
   },
   (t) => [
     index('runs_owner_status_idx').on(t.ownerId, t.status),

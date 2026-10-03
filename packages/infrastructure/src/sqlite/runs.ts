@@ -1,6 +1,7 @@
+import { TERMINAL_RUN_STATUSES } from '@graphgoblin/contracts';
 import type { ContextThread, RunRecord, RunStatus } from '@graphgoblin/contracts';
 import type { RunRecordChanges, RunRepository } from '@graphgoblin/engine';
-import { and, desc, eq, inArray, lt, sql, type SQL } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNull, lt, sql, type SQL } from 'drizzle-orm';
 import type { Database } from './db.js';
 import { runs } from './schema.js';
 
@@ -143,6 +144,42 @@ export class SqliteRunRepository implements RunRepository {
     return undefined;
   }
 
+  async claimCancel(
+    runId: string,
+    from: readonly RunStatus[],
+    at: string,
+  ): Promise<RunRecord | undefined> {
+    const updated = await this.db
+      .update(runs)
+      .set({ cancelRequestedAt: at })
+      .where(
+        and(eq(runs.id, runId), isNull(runs.cancelRequestedAt), inArray(runs.status, [...from])),
+      )
+      .returning();
+    const row = updated[0];
+    return row ? toRecord(row) : undefined;
+  }
+
+  async markFinalized(runId: string): Promise<void> {
+    await this.db
+      .update(runs)
+      .set({ finalizedAt: new Date().toISOString() })
+      .where(eq(runs.id, runId));
+  }
+
+  async clearFinalized(runId: string): Promise<void> {
+    await this.db.update(runs).set({ finalizedAt: null }).where(eq(runs.id, runId));
+  }
+
+  async listUnfinalized(): Promise<RunRecord[]> {
+    const rows = await this.db
+      .select()
+      .from(runs)
+      .where(and(isNull(runs.finalizedAt), inArray(runs.status, [...TERMINAL_RUN_STATUSES])))
+      .orderBy(runs.createdAt);
+    return rows.map(toRecord);
+  }
+
   async listByStatus(statuses: readonly RunStatus[]): Promise<RunRecord[]> {
     if (statuses.length === 0) return [];
     const rows = await this.db
@@ -195,8 +232,23 @@ export class SqliteRunRepository implements RunRepository {
     return row?.threadSnapshot ?? undefined;
   }
 
-  async saveThread(runId: string, thread: ContextThread): Promise<void> {
-    await this.db.update(runs).set({ threadSnapshot: thread }).where(eq(runs.id, runId));
+  async saveThread(runId: string, thread: ContextThread, seq?: number): Promise<void> {
+    await this.db
+      .update(runs)
+      .set({ threadSnapshot: thread, threadSnapshotSeq: seq ?? null })
+      .where(eq(runs.id, runId));
+  }
+
+  async getThreadCheckpoint(
+    runId: string,
+  ): Promise<{ thread: ContextThread; seq: number } | undefined> {
+    const row = await this.db.query.runs.findFirst({
+      where: eq(runs.id, runId),
+      columns: { threadSnapshot: true, threadSnapshotSeq: true },
+    });
+    return row?.threadSnapshot && row.threadSnapshotSeq !== null
+      ? { thread: row.threadSnapshot, seq: row.threadSnapshotSeq }
+      : undefined;
   }
 
   /**
@@ -224,6 +276,9 @@ export class SqliteRunRepository implements RunRepository {
 
   /** Test and maintenance helper: drop the snapshot so the thread is rebuilt from the log. */
   async clearThreadSnapshot(runId: string): Promise<void> {
-    await this.db.update(runs).set({ threadSnapshot: null }).where(eq(runs.id, runId));
+    await this.db
+      .update(runs)
+      .set({ threadSnapshot: null, threadSnapshotSeq: null })
+      .where(eq(runs.id, runId));
   }
 }

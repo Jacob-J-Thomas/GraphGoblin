@@ -149,7 +149,10 @@ describe('loops', () => {
     expect(
       (await t.app.inject(`/loops/${loop.id}/versions/${versions.items[0]!.id}`)).statusCode,
     ).toBe(200);
-    expect((await t.app.inject(`/loops/${loop.id}/versions/nope`)).statusCode).toBe(404);
+    expect((await t.app.inject(`/loops/${loop.id}/versions/nope`)).statusCode).toBe(400);
+    expect((await t.app.inject(`/loops/${loop.id}/versions/${fakeUlid('nope')}`)).statusCode).toBe(
+      404,
+    );
 
     const exported = await t.app.inject(`/loops/${loop.id}/export`);
     expect(exported.statusCode).toBe(200);
@@ -311,7 +314,7 @@ describe('runs', () => {
     expect(
       (await t.app.inject({ method: 'POST', url: `/runs/${run.id}/resume` })).json<RunRecord>()
         .status,
-    ).toBe('running');
+    ).toBe('waiting'); // paused while waiting: resume goes back to waiting (docs/05)
     await t.idle();
     const provided = await t.app.inject({
       method: 'POST',

@@ -1,9 +1,8 @@
-import { JsonValueSchema } from '@graphgoblin/contracts';
+import { JsonValueSchema, UlidSchema } from '@graphgoblin/contracts';
 import { EngineRequestError } from '@graphgoblin/engine';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import type { Container } from '../container.js';
-import { requireScope } from '../plugins/auth.js';
 import { problem } from '../plugins/errors.js';
 import { WEBHOOK_BODY_LIMIT } from '../triggers/trigger-service.js';
 import type { ApiInstance } from '../types.js';
@@ -121,7 +120,6 @@ export function registerTriggerRoutes(app: ApiInstance, container: Container): v
       },
     },
     async (request, reply) => {
-      if (!requireScope(request, reply, 'events:write')) return reply;
       const result = await triggers.ingestEvent({
         ownerId: request.auth.ownerId,
         type: request.body.type,
@@ -163,7 +161,7 @@ export function registerTriggerRoutes(app: ApiInstance, container: Container): v
       schema: {
         tags: ['triggers'],
         summary: 'Schedules, webhook endpoints, and armed poll triggers of a loop',
-        params: z.object({ id: z.string() }),
+        params: z.object({ id: UlidSchema }),
         response: {
           200: z.object({
             schedules: z.array(ScheduleSchema),

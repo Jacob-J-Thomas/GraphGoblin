@@ -267,7 +267,7 @@ describe('run control', () => {
     expect(engine.ports.harness.started).toHaveLength(1);
   });
 
-  it('pauses a waiting run; on resume the wait node parks again', async () => {
+  it('pauses a waiting run; on resume it waits again with its deadline, and a missed timer fires', async () => {
     const engine = await createTestEngine();
     const version = engine.publish(
       singleNodeLoop('w', {
@@ -281,13 +281,18 @@ describe('run control', () => {
     expect(run.status).toBe('waiting');
     expect(engine.ports.timers.scheduled).toHaveLength(1);
     await engine.manager.pause(run.id);
-    await engine.ports.timers.fire(run.id, 'timer'); // ignored while paused
+    engine.ports.clock.advance(61_000);
+    // The timer fires while paused: ignored, and consumed.
+    expect(await engine.ports.timers.fireDue(engine.ports.clock.now())).toBe(1);
     await engine.manager.waitForIdle();
     expect((await engine.ports.runs.get(run.id))?.status).toBe('paused');
-    await engine.manager.resume(run.id);
-    const reparked = await engine.settle(run.id);
-    expect(reparked.status).toBe('waiting');
-    expect(engine.eventTypes(run.id).filter((t) => t === 'run.waiting')).toHaveLength(2);
+    // Resume goes back to waiting on the same wait (no new run.waiting) and re-arms its timer.
+    const resumed = await engine.manager.resume(run.id);
+    expect(resumed).toMatchObject({ status: 'waiting', waiting: { until: run.waiting?.until } });
+    expect(engine.eventTypes(run.id).filter((t) => t === 'run.waiting')).toHaveLength(1);
+    expect(engine.ports.timers.scheduled).toHaveLength(1);
+    expect(await engine.ports.timers.fireDue(engine.ports.clock.now())).toBe(1);
+    expect((await engine.settle(run.id)).status).toBe('succeeded');
   });
 
   it('reports unknown runs', async () => {
@@ -707,5 +712,41 @@ describe('the per-node visit cap (maxIterations)', () => {
     expect(countEntries(events, 'w')).toBe(1);
     expect(countEntries(events, 'other')).toBe(1);
     expect(countEntries(events, 'missing')).toBe(0);
+  });
+});
+
+describe('the visit cap and re-entries of one visit', () => {
+  it('does not count wakes, pause and resume, or timer fires as visits', async () => {
+    const engine = await createTestEngine();
+    const input = singleNodeLoop('cap-input', {
+      id: 'wait',
+      kind: 'wait',
+      label: 'W',
+      config: { mode: 'input', prompt: 'ok?' },
+    });
+    input.settings = { maxIterations: 1 };
+    const inputRun = await engine.runToIdle(engine.publish(input).loopId);
+    expect(inputRun.status).toBe('waiting');
+    await engine.manager.pause(inputRun.id);
+    await engine.manager.resume(inputRun.id);
+    await engine.manager.provideInput(inputRun.id, { ok: true });
+    expect((await engine.settle(inputRun.id)).status).toBe('succeeded');
+
+    const timer = singleNodeLoop('cap-timer', {
+      id: 'wait',
+      kind: 'wait',
+      label: 'W',
+      config: { mode: 'duration', seconds: 60 },
+    });
+    timer.settings = { maxIterations: 1 };
+    const timerRun = await engine.runToIdle(engine.publish(timer).loopId);
+    expect(timerRun.status).toBe('waiting');
+    engine.ports.clock.advance(61_000);
+    await engine.ports.timers.fireDue(engine.ports.clock.now());
+    const done = await engine.settle(timerRun.id);
+    expect(done.status).toBe('succeeded');
+    const events = await engine.ports.events.read(timerRun.id);
+    expect(events.filter((e) => e.type === 'node.started' && e.nodeId === 'wait').length).toBe(2);
+    expect(countEntries(events, 'wait')).toBe(1);
   });
 });

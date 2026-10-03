@@ -1,5 +1,6 @@
 import jsonata from 'jsonata';
 import { ExpressionError } from './errors.js';
+import { unsafeRegexReason } from './regex-safety.js';
 
 type Compiled = ReturnType<typeof jsonata>;
 
@@ -24,8 +25,32 @@ function describeError(error: unknown): string {
   return String(error);
 }
 
-function compile(expression: string): Compiled {
-  const hit = cache.get(expression);
+/**
+ * The first regex literal in a parsed expression that fails the static safety check. JSONata has
+ * no way to build a regex from a string, so literals are the only regexes an expression can run;
+ * a native regex never returns to the evaluator's hooks, so the time budget cannot stop it
+ * (ADV-007).
+ */
+function unsafeRegexIn(
+  node: unknown,
+  seen = new Set<object>(),
+): { source: string; reason: string } | undefined {
+  if (typeof node !== 'object' || node === null || seen.has(node)) return undefined;
+  seen.add(node);
+  if (node instanceof RegExp) {
+    const reason = unsafeRegexReason(node.source, node.flags);
+    return reason ? { source: node.source, reason } : undefined;
+  }
+  for (const value of Object.values(node)) {
+    const found = unsafeRegexIn(value, seen);
+    if (found) return found;
+  }
+  return undefined;
+}
+
+/** Compile and check an expression. `cached: false` gives a private instance (for `$eval`). */
+function compile(expression: string, cached = true): Compiled {
+  const hit = cached ? cache.get(expression) : undefined;
   if (hit) return hit;
   let compiled: Compiled;
   try {
@@ -35,12 +60,99 @@ function compile(expression: string): Compiled {
       expression,
     });
   }
+  const unsafe = unsafeRegexIn(compiled.ast());
+  if (unsafe) {
+    throw new ExpressionError(
+      `expression uses the regular expression /${unsafe.source}/, which can run without bound: ${unsafe.reason}`,
+      { expression },
+    );
+  }
+  if (!cached) return compiled;
   if (cache.size >= CACHE_LIMIT) {
     const first = cache.keys().next().value;
     if (first !== undefined) cache.delete(first);
   }
   cache.set(expression, compiled);
   return compiled;
+}
+
+/** A JSONata native function value, as `$eval` evaluates to. */
+interface JsonataFunction {
+  _jsonata_function: true;
+  implementation: (this: unknown, ...args: unknown[]) => unknown;
+  signature?: unknown;
+}
+
+let builtinEval: Promise<JsonataFunction> | undefined;
+
+/**
+ * JSONata's `$eval` compiles a string at run time, which would bypass the regex check above. It
+ * is shadowed by this binding: the string is first compiled through the same checks (an unsafe
+ * regex or a syntax error throws), then handed to JSONata's own `$eval` implementation. That runs
+ * in the caller's environment, so lexical variables and functions stay visible and the nested
+ * evaluation shares the caller's depth and deadline budget (the hooks live in that environment).
+ */
+const CHECKED_EVAL: JsonataFunction = {
+  _jsonata_function: true,
+  async implementation(this: unknown, source: unknown, focus?: unknown): Promise<unknown> {
+    if (typeof source === 'string') compile(source, false);
+    builtinEval ??= jsonata('$eval').evaluate({}) as Promise<JsonataFunction>;
+    const builtin = await builtinEval;
+    try {
+      return await builtin.implementation.apply(this, [source, focus]);
+    } catch (error) {
+      // JSONata's $eval wraps a failure in a new error that embeds the inner message; nested
+      // evals would grow it exponentially. Normalise at every boundary: keep the innermost
+      // cause, and bound the message.
+      throw normaliseEvalError(error);
+    }
+  },
+};
+
+/** Longest error message an expression failure carries. */
+const MAX_ERROR_MESSAGE = 1000;
+
+function bounded(message: string): string {
+  return message.length > MAX_ERROR_MESSAGE
+    ? `${message.slice(0, MAX_ERROR_MESSAGE)}… (${message.length - MAX_ERROR_MESSAGE} more characters)`
+    : message;
+}
+
+/** The single, bounded error a failed nested `$eval` reports: its innermost cause. */
+function normaliseEvalError(error: unknown): ExpressionError {
+  let cause = error;
+  while (
+    !(cause instanceof ExpressionError) &&
+    typeof cause === 'object' &&
+    cause !== null &&
+    'error' in cause &&
+    cause.error !== undefined
+  ) {
+    cause = cause.error;
+  }
+  if (cause instanceof ExpressionError) return cause;
+  return new ExpressionError(`$eval failed: ${bounded(describeError(cause))}`);
+}
+
+async function run(
+  expr: Compiled,
+  expression: string,
+  input: unknown,
+  options: ExpressionOptions,
+): Promise<unknown> {
+  timebox(expr, options.timeoutMs ?? 2000, options.maxDepth ?? 200);
+  try {
+    const result: unknown = await expr.evaluate(input, {
+      ...options.bindings,
+      eval: CHECKED_EVAL,
+    });
+    return result;
+  } catch (error) {
+    if (error instanceof ExpressionError) throw error;
+    throw new ExpressionError(`expression failed: ${bounded(describeError(error))}`, {
+      expression,
+    });
+  }
 }
 
 /**
@@ -81,15 +193,7 @@ export async function evaluateExpression(
   input: unknown,
   options: ExpressionOptions = {},
 ): Promise<unknown> {
-  const expr = compile(expression);
-  timebox(expr, options.timeoutMs ?? 2000, options.maxDepth ?? 200);
-  try {
-    const result: unknown = await expr.evaluate(input, options.bindings ?? {});
-    return result;
-  } catch (error) {
-    if (error instanceof ExpressionError) throw error;
-    throw new ExpressionError(`expression failed: ${describeError(error)}`, { expression });
-  }
+  return run(compile(expression), expression, input, options);
 }
 
 /** Evaluate and coerce to boolean using JSONata truthiness. */

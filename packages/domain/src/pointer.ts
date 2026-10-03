@@ -117,7 +117,12 @@ function updateTokens(
     const exists = Object.prototype.hasOwnProperty.call(copy, token);
     if (isLeaf) {
       if (mode === 'add') {
-        copy[token] = value;
+        Object.defineProperty(copy, token, {
+          value,
+          enumerable: true,
+          configurable: true,
+          writable: true,
+        });
       } else if (!exists) {
         throw new PatchError(`path "${pointer}" does not exist`);
       } else if (mode === 'replace') {

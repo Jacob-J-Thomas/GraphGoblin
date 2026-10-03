@@ -2923,6 +2923,9 @@ export interface components {
             signalName?: string | undefined;
             childRunId?: string | undefined;
             beat?: number | undefined;
+            /** Format: date-time */
+            timeoutAt?: string | undefined;
+            startedSeq?: number | undefined;
         };
         RunRecordInput: {
             id: string;
@@ -2963,6 +2966,9 @@ export interface components {
                 nodeId: string;
             } | undefined;
             initialThread?: components["schemas"]["ContextThreadInput"] | undefined;
+            subloopVersions?: {
+                [key: string]: string;
+            } | undefined;
         } | {
             runId: string;
             seq: number;
@@ -4390,6 +4396,9 @@ export interface components {
             signalName?: string | undefined;
             childRunId?: string | undefined;
             beat?: number | undefined;
+            /** Format: date-time */
+            timeoutAt?: string | undefined;
+            startedSeq?: number | undefined;
         };
         RunRecord: {
             id: string;
@@ -4430,6 +4439,9 @@ export interface components {
                 nodeId: string;
             } | undefined;
             initialThread?: components["schemas"]["ContextThread"] | undefined;
+            subloopVersions?: {
+                [key: string]: string;
+            } | undefined;
         } | {
             runId: string;
             seq: number;

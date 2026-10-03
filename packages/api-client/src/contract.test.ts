@@ -8,7 +8,7 @@ import type {
   LoopDefinitionInput as ContractLoopDefinition,
   RunEvent,
 } from '@graphgoblin/contracts';
-import { minimalLoop } from '@graphgoblin/contracts/testing';
+import { fakeUlid, minimalLoop } from '@graphgoblin/contracts/testing';
 import { createTestApp, type TestApp } from '@graphgoblin/api/testing';
 import {
   apiKeys,
@@ -127,7 +127,7 @@ describe('against the in-process API (local trusted mode)', () => {
   });
 
   it('turns problem details into GraphGoblinApiError, including validation errors', async () => {
-    const error = await runs.get(client, 'missing').catch((e: unknown) => e);
+    const error = await runs.get(client, fakeUlid('missing')).catch((e: unknown) => e);
     expect(error).toBeInstanceOf(GraphGoblinApiError);
     expect(error).toMatchObject({ status: 404, code: 'RUN_NOT_FOUND' });
     expect((error as GraphGoblinApiError).problem?.type).toMatch(/run-not-found$/);
@@ -183,7 +183,7 @@ describe('against the in-process API (local trusted mode)', () => {
     const second = await runs.start(client, loop.id);
     await until(async () => (await runs.get(client, second.id)).status === 'waiting');
     expect((await runs.pause(client, second.id)).status).toBe('paused');
-    expect((await runs.resume(client, second.id)).status).toBe('running');
+    expect((await runs.resume(client, second.id)).status).toBe('waiting'); // paused while parked: back to waiting (docs/05)
     await until(async () => (await runs.get(client, second.id)).status === 'waiting');
     await runs.cancel(client, second.id);
     expect((await waitForRun(client, second.id, { timeoutMs: 5000, pollMs: 10 })).run.status).toBe(
@@ -227,7 +227,7 @@ describe('against the in-process API (local trusted mode)', () => {
     let attempts = 0;
     const subscription = subscribeRunEvents({
       client,
-      runId: 'missing',
+      runId: fakeUlid('missing'),
       onEvent: () => undefined,
       onError: () => {
         attempts += 1;

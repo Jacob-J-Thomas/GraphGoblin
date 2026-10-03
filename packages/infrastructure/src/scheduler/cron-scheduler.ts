@@ -157,7 +157,11 @@ export class CronScheduler {
       schedule.missedFirePolicy === 'skip'
         ? []
         : schedule.missedFirePolicy === 'run-once'
-          ? slots.slice(-1)
+          ? truncated
+            ? new Cron(schedule.expression, { timezone: schedule.timezone, paused: true })
+                .previousRuns(1, new Date(now.getTime() + 1000))
+                .map((slot) => slot.toISOString())
+            : slots.slice(-1)
           : slots.slice(0, this.maxCatchUp);
     if (schedule.missedFirePolicy === 'run-each' && truncated) {
       this.logger?.warn(

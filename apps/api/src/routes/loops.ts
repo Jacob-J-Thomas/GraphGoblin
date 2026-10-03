@@ -3,6 +3,7 @@ import {
   LoopExportSchema,
   LoopRecordSchema,
   LoopVersionRecordSchema,
+  UlidSchema,
   type LoopDefinition,
   type LoopRecord,
 } from '@graphgoblin/contracts';
@@ -18,7 +19,6 @@ import { EngineRequestError } from '@graphgoblin/engine';
 import type { FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import type { Container } from '../container.js';
-import { requireScope } from '../plugins/auth.js';
 import { problem } from '../plugins/errors.js';
 import type { ApiInstance } from '../types.js';
 
@@ -64,7 +64,7 @@ export function ifMatchHolds(header: string, token: string | undefined): boolean
 }
 
 const DefinitionBody = z.object({ definition: LoopDefinitionSchema });
-const IdParams = z.object({ id: z.string() });
+const IdParams = z.object({ id: UlidSchema });
 const ACTIVE_STATUSES = ['queued', 'running', 'waiting', 'paused'] as const;
 
 /** One chain of draft saves and publishes per loop, so a check and its write never interleave. */
@@ -194,7 +194,6 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
       },
     },
     async (request, reply) => {
-      if (!requireScope(request, reply, 'loops:write')) return reply;
       const created = await loops.create(request.auth.ownerId, request.body.definition);
       reply.status(201);
       return {
@@ -221,7 +220,6 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
       },
     },
     async (request, reply) => {
-      if (!requireScope(request, reply, 'loops:write')) return reply;
       const imported = importLoop(request.body);
       const created = await loops.create(request.auth.ownerId, imported.definition);
       reply.status(201);
@@ -284,7 +282,6 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
       },
     },
     async (request, reply) => {
-      if (!requireScope(request, reply, 'loops:write')) return reply;
       const loopId = request.params.id;
       const ifMatch = request.headers['if-match'];
       const saved = await serializeDraftSave(loopId, async () => {
@@ -357,7 +354,6 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
       },
     },
     async (request, reply) => {
-      if (!requireScope(request, reply, 'loops:write')) return reply;
       // Queued with the loop's draft saves, so a save never lands between the checks and the
       // freeze (the storage also refuses to modify a row that is no longer a draft).
       const outcome = await serializeDraftSave(request.params.id, async () => {
@@ -412,7 +408,7 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
       schema: {
         tags: ['loops'],
         summary: 'One version with its definition',
-        params: z.object({ id: z.string(), versionId: z.string() }),
+        params: z.object({ id: UlidSchema, versionId: UlidSchema }),
         response: { 200: LoopVersionRecordSchema },
       },
     },
@@ -470,7 +466,6 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
       },
     },
     async (request, reply) => {
-      if (!requireScope(request, reply, 'loops:write')) return reply;
       await ownedLoop(request, request.params.id);
       const active = await runs.list({
         loopId: request.params.id,
@@ -479,8 +474,19 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
       });
       if (active.length > 0)
         return problem(reply, 409, 'LOOP_IN_USE', 'the loop has active runs; cancel them first');
-      await container.triggers.disarmLoop(request.params.id);
-      await loops.delete(request.params.id);
+      // An active run of another loop may still start this one as a subloop (pinned at its start).
+      // The check and the deletion are one critical section with run creation in the engine.
+      const deleted = await container.manager.deleteLoopUnlessInUse(request.params.id, async () => {
+        await container.triggers.disarmLoop(request.params.id);
+        await loops.delete(request.params.id);
+      });
+      if (!deleted)
+        return problem(
+          reply,
+          409,
+          'LOOP_IN_USE',
+          'an active run can still start this loop as a subloop; cancel it first',
+        );
       return reply.status(204).send(null);
     },
   );

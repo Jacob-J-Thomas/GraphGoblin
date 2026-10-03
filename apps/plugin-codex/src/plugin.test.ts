@@ -2,7 +2,7 @@ import { mkdtemp, readFile, rm, writeFile, mkdir, cp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { LoopDefinitionSchema } from '@graphgoblin/contracts';
 import {
   assemblePlugin,
@@ -37,14 +37,6 @@ const MCP_TOOLS = [
   'provide_input',
   'send_signal',
 ];
-
-let scratch: string;
-beforeAll(async () => {
-  scratch = await mkdtemp(join(tmpdir(), 'gg-plugin-'));
-});
-afterAll(async () => {
-  await rm(scratch, { recursive: true, force: true });
-});
 
 describe('plugin source', () => {
   it('has a valid manifest, MCP config, and the three skills', async () => {
@@ -116,65 +108,92 @@ describe('frontmatter', () => {
 });
 
 describe('assemble', () => {
-  it('builds an installable marketplace with the absolute MCP entry', async () => {
-    const outDir = join(scratch, 'marketplace');
-    const mcpEntry = join(scratch, 'mcp', 'main.js');
-    const assembled = await assemblePlugin({ pluginDir, outDir, mcpEntry });
-    expect(assembled.marketplaceDir).toBe(resolve(outDir));
-
-    const marketplace = MarketplaceSchema.parse(
-      JSON.parse(await readFile(join(outDir, '.agents', 'plugins', 'marketplace.json'), 'utf8')),
-    );
-    expect(marketplace.name).toBe(MARKETPLACE_NAME);
-    expect(marketplace.plugins[0]?.source).toEqual({
-      source: 'local',
-      path: './plugins/graphgoblin',
-    });
-
-    const installed = await loadPlugin(join(outDir, 'plugins', 'graphgoblin'));
-    expect(installed.mcp.mcpServers['graphgoblin']?.args).toEqual([resolve(mcpEntry)]);
-    expect(installed.skills).toHaveLength(3);
-    const written = McpConfigSchema.parse(
-      JSON.parse(await readFile(join(outDir, 'plugins', 'graphgoblin', '.mcp.json'), 'utf8')),
-    );
-    expect(written).toEqual(assembled.mcp);
-
-    // Assembling again replaces the previous output.
-    await writeFile(join(outDir, 'stale.txt'), 'x');
-    await assemblePlugin({ pluginDir, outDir, mcpEntry });
-    await expect(readFile(join(outDir, 'stale.txt'), 'utf8')).rejects.toThrow();
+  // Directory copies can exceed Vitest's 5 s default when all packages run in parallel.
+  const fileIoTimeout = 20_000;
+  let scratch: string;
+  beforeEach(async () => {
+    scratch = await mkdtemp(join(tmpdir(), 'gg-plugin-'));
+  });
+  afterEach(async () => {
+    await rm(scratch, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
   });
 
-  it('rejects a skill whose folder and name disagree', async () => {
-    const copy = join(scratch, 'broken');
-    await cp(pluginDir, copy, { recursive: true });
-    await mkdir(join(copy, 'skills', 'renamed'));
-    await writeFile(
-      join(copy, 'skills', 'renamed', 'SKILL.md'),
-      '---\nname: other-name\ndescription: A skill whose folder does not match.\n---\n',
-    );
-    await writeFile(join(copy, 'skills', 'README.txt'), 'not a skill');
-    await expect(loadPlugin(copy)).rejects.toThrow(/declares name "other-name"/);
-  });
+  it(
+    'builds an installable marketplace with the absolute MCP entry',
+    async () => {
+      const testDir = scratch;
+      const outDir = join(testDir, 'marketplace');
+      const mcpEntry = join(testDir, 'mcp', 'main.js');
+      await mkdir(join(testDir, 'mcp'));
+      await writeFile(mcpEntry, '');
+      const assembled = await assemblePlugin({ pluginDir, outDir, mcpEntry });
+      expect(assembled.marketplaceDir).toBe(resolve(outDir));
 
-  it('runs from the CLI entry with defaults and overrides', async () => {
-    const lines: string[] = [];
-    const fakePackage = join(scratch, 'pkg', 'plugin-codex');
-    await cp(pluginDir, join(fakePackage, 'plugin', 'graphgoblin'), { recursive: true });
-    expect(await run([], fakePackage, (line) => lines.push(line))).toBe(0);
-    expect(lines[0]).toMatch(/does not exist yet/);
-    expect(lines[1]).toContain(`codex plugin add graphgoblin@${MARKETPLACE_NAME}`);
+      const marketplace = MarketplaceSchema.parse(
+        JSON.parse(await readFile(join(outDir, '.agents', 'plugins', 'marketplace.json'), 'utf8')),
+      );
+      expect(marketplace.name).toBe(MARKETPLACE_NAME);
+      expect(marketplace.plugins[0]?.source).toEqual({
+        source: 'local',
+        path: './plugins/graphgoblin',
+      });
 
-    const entry = join(scratch, 'entry.js');
-    await writeFile(entry, '');
-    const out = join(scratch, 'cli-out');
-    lines.length = 0;
-    expect(await run(['--out', out, '--mcp-entry', entry], fakePackage, (l) => lines.push(l))).toBe(
-      0,
-    );
-    expect(lines).toHaveLength(1);
-    expect(lines[0]).toContain(resolve(out));
-  });
+      const installed = await loadPlugin(join(outDir, 'plugins', 'graphgoblin'));
+      expect(installed.mcp.mcpServers['graphgoblin']?.args).toEqual([resolve(mcpEntry)]);
+      expect(installed.skills).toHaveLength(3);
+      const written = McpConfigSchema.parse(
+        JSON.parse(await readFile(join(outDir, 'plugins', 'graphgoblin', '.mcp.json'), 'utf8')),
+      );
+      expect(written).toEqual(assembled.mcp);
+
+      // Assembling again replaces the previous output.
+      await writeFile(join(outDir, 'stale.txt'), 'x');
+      await assemblePlugin({ pluginDir, outDir, mcpEntry });
+      await expect(readFile(join(outDir, 'stale.txt'), 'utf8')).rejects.toThrow();
+    },
+    fileIoTimeout,
+  );
+
+  it(
+    'rejects a skill whose folder and name disagree',
+    async () => {
+      const testDir = scratch;
+      const copy = join(testDir, 'broken');
+      await cp(pluginDir, copy, { recursive: true });
+      await mkdir(join(copy, 'skills', 'renamed'));
+      await writeFile(
+        join(copy, 'skills', 'renamed', 'SKILL.md'),
+        '---\nname: other-name\ndescription: A skill whose folder does not match.\n---\n',
+      );
+      await writeFile(join(copy, 'skills', 'README.txt'), 'not a skill');
+      await expect(loadPlugin(copy)).rejects.toThrow(/declares name "other-name"/);
+    },
+    fileIoTimeout,
+  );
+
+  it(
+    'runs from the CLI entry with defaults and overrides',
+    async () => {
+      const testDir = scratch;
+      const lines: string[] = [];
+      const fakePackage = join(testDir, 'pkg', 'plugin-codex');
+      await cp(pluginDir, join(fakePackage, 'plugin', 'graphgoblin'), { recursive: true });
+      expect(await run([], fakePackage, (line) => lines.push(line))).toBe(0);
+      expect(lines[0]).toMatch(/does not exist yet/);
+      expect(lines[1]).toContain(`codex plugin add graphgoblin@${MARKETPLACE_NAME}`);
+
+      const entry = join(testDir, 'entry.js');
+      await writeFile(entry, '');
+      const out = join(testDir, 'cli-out');
+      lines.length = 0;
+      expect(
+        await run(['--out', out, '--mcp-entry', entry], fakePackage, (l) => lines.push(l)),
+      ).toBe(0);
+      expect(lines).toHaveLength(1);
+      expect(lines[0]).toContain(resolve(out));
+    },
+    fileIoTimeout,
+  );
 
   it('recognises its own entry point', () => {
     const cli = pathToFileURL(join(packageDir, 'src', 'cli.ts')).href;

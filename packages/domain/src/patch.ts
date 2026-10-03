@@ -26,9 +26,9 @@ export function jsonEquals(a: unknown, b: unknown): boolean {
 export function cloneJson<T>(value: T): T {
   if (value === null || typeof value !== 'object') return value;
   if (Array.isArray(value)) return (value as unknown[]).map((v) => cloneJson(v)) as unknown as T;
-  const out: Record<string, unknown> = {};
-  for (const [k, v] of Object.entries(value as Record<string, unknown>)) out[k] = cloneJson(v);
-  return out as T;
+  return Object.fromEntries(
+    Object.entries(value as Record<string, unknown>).map(([k, v]) => [k, cloneJson(v)]),
+  ) as T;
 }
 
 function applyOne(doc: unknown, op: PatchOperation): unknown {

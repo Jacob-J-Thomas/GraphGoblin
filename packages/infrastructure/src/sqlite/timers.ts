@@ -24,6 +24,12 @@ export class SqliteTimerStore {
       );
   }
 
+  async acknowledge(runId: string, key: string, at: Date): Promise<void> {
+    await this.db
+      .delete(timers)
+      .where(and(eq(timers.runId, runId), eq(timers.key, key), eq(timers.at, at.toISOString())));
+  }
+
   async listDue(now: Date, limit = 100): Promise<{ runId: string; key: string; at: Date }[]> {
     const rows = await this.db
       .select()

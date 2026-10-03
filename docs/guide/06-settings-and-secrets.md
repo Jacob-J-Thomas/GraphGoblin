@@ -114,17 +114,20 @@ The response's `token` is returned once; SQLite stores its hash. Omitting `scope
 Authorization: Bearer <saved-token>
 ```
 
-| Implemented write scope | Operations                                                     |
-| ----------------------- | -------------------------------------------------------------- |
-| `loops:write`           | Create, import, save, publish, and delete loops.               |
-| `runs:write`            | Start, cancel, pause, resume, provide input, and send signals. |
-| `settings:write`        | Change settings and the model catalog.                         |
-| `secrets:write`         | Set and delete secrets.                                        |
-| `api-keys:write`        | Create and revoke keys.                                        |
-| `events:write`          | Submit inbound events.                                         |
-| `*`                     | All checked operations; UI-created keys use this scope.        |
+Every private route needs a scope, reads included: `<resource>:read` for `GET` requests and `<resource>:write` for everything else. A write scope includes the read scope of the same resource, so a `runs:write` key can follow the runs it starts.
 
-> Coming in 1.0: Read-scope enforcement described by the API design. Today authenticated keys can read owner data regardless of their write scopes; the current read routes do not perform separate scope checks.
+| Scope                             | Operations                                                                                                      |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `loops:read`, `loops:write`       | Read and validate loops; create, import, save, publish, and delete them.                                        |
+| `runs:read`, `runs:write`         | Read runs, threads, and events; start (`POST /loops/{id}/runs`), cancel, pause, resume, replay, input, signals. |
+| `settings:read`, `settings:write` | Read and change settings and the model catalog.                                                                 |
+| `secrets:read`, `secrets:write`   | List secret names; set and delete secrets.                                                                      |
+| `api-keys:read`, `api-keys:write` | List keys; create and revoke them. `api-keys:write` can mint any scope, so treat it as administrative.          |
+| `events:read`, `events:write`     | List inbound events; submit them.                                                                               |
+| `system:read`                     | The preflight reports (`/system/preflight`, `/harness/preflight`).                                              |
+| `*`                               | Everything; UI-created keys use this scope.                                                                     |
+
+A key without the needed scope gets 403 `FORBIDDEN`. See [API, streaming, and MCP](../07-api-and-streaming.md) for the exact rules.
 
 Set the requirement in the API terminal and restart:
 

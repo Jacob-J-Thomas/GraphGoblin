@@ -53,7 +53,7 @@ Choose how to recover missed slots after an outage:
 
 The scan considers at most 101 missed slots. With `run-each`, later slots beyond the first 100 are dropped with a warning. Trigger payloads contain `scheduledFor` and `catchUp`. The schedule advances before firing, so a crash at that boundary can lose that firing. `GG_TIMER_POLL_MS` controls schedule polling and timer checks, default 1000 milliseconds.
 
-> Coming in 1.0: Latest-missed-slot catch-up after long outages. The trigger plan describes `run-once` using the latest missed slot; the current bounded scan can instead select an earlier slot when more than 101 were missed. Plan for one catch-up run, without assuming it represents the newest slot.
+After a long outage `run-once` starts one catch-up run for the latest missed slot at or before the restart, however many slots were missed. `run-each` starts at most 100 catch-up runs per schedule, oldest first; older slots beyond that are dropped with a warning in the log.
 
 ## Receive a signed webhook
 
