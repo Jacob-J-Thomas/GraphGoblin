@@ -1,5 +1,5 @@
 import { createServer, type IncomingMessage, type Server } from 'node:http';
-import type { AddressInfo } from 'node:net';
+import type { AddressInfo, Socket } from 'node:net';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { CapturingLogger, FakeClock } from '@graphgoblin/engine/testing';
 import {
@@ -22,6 +22,7 @@ interface Captured {
 let server: Server;
 let base: string;
 const captured: Captured[] = [];
+const sockets = new Set<Socket>();
 
 beforeEach(async () => {
   captured.length = 0;
@@ -37,10 +38,8 @@ beforeEach(async () => {
         res.writeHead(200, { 'content-type': 'application/json' });
         res.end('{not json');
       } else if (req.url === '/slow') {
-        setTimeout(() => {
-          res.writeHead(200);
-          res.end('late');
-        }, 500);
+        // Only the client abort or teardown may close this unanswered request.
+        return;
       } else if (req.url === '/fail') {
         res.writeHead(503);
         res.end('nope');
@@ -50,12 +49,19 @@ beforeEach(async () => {
       }
     });
   });
+  server.on('connection', (socket) => {
+    sockets.add(socket);
+    socket.on('close', () => sockets.delete(socket));
+  });
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
   base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
 });
 
 afterEach(async () => {
-  await new Promise<void>((resolve) => server.close(() => resolve()));
+  await new Promise<void>((resolve) => {
+    server.close(() => resolve());
+    for (const socket of sockets) socket.destroy();
+  });
 });
 
 describe('HttpProbes', () => {
@@ -68,7 +74,7 @@ describe('HttpProbes', () => {
         url: `${base}/json`,
         headers: { 'x-a': '1' },
         body: 'payload',
-        timeoutMs: 2000,
+        timeoutMs: 20_000,
       },
       signal,
     );
@@ -78,7 +84,7 @@ describe('HttpProbes', () => {
     expect(captured[0]?.headers['x-a']).toBe('1');
 
     const text = await probes.fetch(
-      { method: 'GET', url: `${base}/text`, body: 'ignored', timeoutMs: 2000 },
+      { method: 'GET', url: `${base}/text`, body: 'ignored', timeoutMs: 20_000 },
       signal,
     );
     expect(text.body).toBe('ok');
@@ -86,31 +92,32 @@ describe('HttpProbes', () => {
     expect(captured[1]?.body).toBe('');
 
     const head = await probes.fetch(
-      { method: 'HEAD', url: `${base}/text`, timeoutMs: 2000 },
+      { method: 'HEAD', url: `${base}/text`, timeoutMs: 20_000 },
       signal,
     );
     expect(head.body).toBe('');
 
     const bad = await probes.fetch(
-      { method: 'GET', url: `${base}/bad-json`, timeoutMs: 2000 },
+      { method: 'GET', url: `${base}/bad-json`, timeoutMs: 20_000 },
       signal,
     );
     expect(bad.json).toBeUndefined();
   });
 
-  it('times out and honours the caller signal', async () => {
+  it('times out and honours the caller signal', { timeout: 20_000 }, async () => {
     const probes = new HttpProbes();
     await expect(
       probes.fetch(
         { method: 'GET', url: `${base}/slow`, timeoutMs: 100 },
         new AbortController().signal,
       ),
-    ).rejects.toThrow();
+    ).rejects.toMatchObject({ name: 'TimeoutError' });
     const controller = new AbortController();
     controller.abort();
     await expect(
-      probes.fetch({ method: 'GET', url: `${base}/text`, timeoutMs: 1000 }, controller.signal),
-    ).rejects.toThrow();
+      probes.fetch({ method: 'GET', url: `${base}/text`, timeoutMs: 20_000 }, controller.signal),
+    ).rejects.toMatchObject({ name: 'AbortError' });
+    expect(captured.map((request) => request.url)).not.toContain('/text');
   });
 });
 
@@ -130,7 +137,7 @@ describe('signatures', () => {
 describe('HttpWebhookDelivery', () => {
   it('posts signed JSON and throws on non-2xx responses', async () => {
     const clock = new FakeClock();
-    const delivery = new HttpWebhookDelivery(clock, { timeoutMs: 2000 });
+    const delivery = new HttpWebhookDelivery(clock, { timeoutMs: 20_000 });
     await delivery.webhook(`${base}/hook`, { result: 1 }, 'hs');
     const call = captured[0]!;
     expect(call.method).toBe('POST');
