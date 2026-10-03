@@ -14,7 +14,13 @@ const PreflightSchema = z.object({
 export function registerSystemRoutes(app: ApiInstance, container: Container): void {
   app.get(
     '/healthz',
-    { schema: { tags: ['system'], response: { 200: z.object({ status: z.literal('ok') }) } } },
+    {
+      schema: {
+        tags: ['system'],
+        summary: 'Liveness check',
+        response: { 200: z.object({ status: z.literal('ok') }) },
+      },
+    },
     () => ({ status: 'ok' as const }),
   );
 
@@ -23,6 +29,7 @@ export function registerSystemRoutes(app: ApiInstance, container: Container): vo
     {
       schema: {
         tags: ['system'],
+        summary: 'API name and version',
         response: { 200: z.object({ name: z.string(), version: z.string() }) },
       },
     },
@@ -47,6 +54,7 @@ export function registerSystemRoutes(app: ApiInstance, container: Container): vo
     {
       schema: {
         tags: ['system'],
+        summary: 'Is each configured harness installed and authenticated?',
         response: { 200: z.object({ items: z.array(PreflightSchema) }) },
       },
     },

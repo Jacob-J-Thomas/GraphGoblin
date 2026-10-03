@@ -33,5 +33,6 @@ pnpm install
 pnpm build
 pnpm test:coverage
 pnpm lint
-pnpm check          # typecheck, lint, layers, deps, coverage, licences
+pnpm docs:generate  # regenerate docs/reference after a node schema or route change
+pnpm check          # typecheck, lint, layers, deps, coverage, licences, generated docs
 ```

@@ -17,6 +17,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Liveness check */
         get: {
             parameters: {
                 query?: never;
@@ -55,6 +56,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** API name and version */
         get: {
             parameters: {
                 query?: never;
@@ -138,6 +140,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Is each configured harness installed and authenticated? */
         get: {
             parameters: {
                 query?: never;
@@ -181,6 +184,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List loops */
         get: {
             parameters: {
                 query?: never;
@@ -204,6 +208,7 @@ export interface paths {
             };
         };
         put?: never;
+        /** Create a loop with an initial draft version */
         post: {
             parameters: {
                 query?: never;
@@ -256,6 +261,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Create or update a loop from exported JSON */
         post: {
             parameters: {
                 query?: never;
@@ -306,6 +312,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** A loop with its current published version and draft */
         get: {
             parameters: {
                 query?: never;
@@ -334,6 +341,7 @@ export interface paths {
         };
         put?: never;
         post?: never;
+        /** Delete a loop that has no active runs */
         delete: {
             parameters: {
                 query?: never;
@@ -367,6 +375,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
+        /** Save the draft definition (validated, may be unpublishable) */
         put: {
             parameters: {
                 query?: never;
@@ -421,6 +430,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Validate a definition without saving it */
         post: {
             parameters: {
                 query?: never;
@@ -474,6 +484,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Validate the draft and freeze it as a new version */
         post: {
             parameters: {
                 query?: never;
@@ -511,6 +522,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Version history */
         get: {
             parameters: {
                 query?: never;
@@ -550,6 +562,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** One version with its definition */
         get: {
             parameters: {
                 query?: never;
@@ -588,6 +601,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** The definition as JSON for committing to a repository */
         get: {
             parameters: {
                 query?: {
@@ -629,6 +643,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Start a run from a manual trigger */
         post: {
             parameters: {
                 query?: never;
@@ -676,6 +691,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List runs, newest first, filtered by loop, status, or parent */
         get: {
             parameters: {
                 query?: {
@@ -719,6 +735,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Run snapshot: status, current node, iteration, waiting spec, result, failure */
         get: {
             parameters: {
                 query?: never;
@@ -756,6 +773,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** The current context thread */
         get: {
             parameters: {
                 query?: never;
@@ -793,6 +811,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** A page of events; with Accept: text/event-stream, a live SSE tail */
         get: {
             parameters: {
                 query?: {
@@ -838,6 +857,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Cancel a run */
         post: {
             parameters: {
                 query?: never;
@@ -875,6 +895,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Pause a run */
         post: {
             parameters: {
                 query?: never;
@@ -912,6 +933,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Resume a run */
         post: {
             parameters: {
                 query?: never;
@@ -949,6 +971,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Answer a wait node in input mode */
         post: {
             parameters: {
                 query?: never;
@@ -992,6 +1015,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Deliver a named signal */
         post: {
             parameters: {
                 query?: never;
@@ -1083,6 +1107,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Harness sessions the run started or resumed */
         get: {
             parameters: {
                 query?: never;
@@ -1133,6 +1158,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Download an artifact from the run's thread */
         get: {
             parameters: {
                 query?: never;
@@ -1169,6 +1195,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Owner settings */
         get: {
             parameters: {
                 query?: never;
@@ -1191,6 +1218,7 @@ export interface paths {
                 };
             };
         };
+        /** Update owner settings */
         put: {
             parameters: {
                 query?: never;
@@ -1236,6 +1264,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
+        /** Reset one setting to its default */
         delete: {
             parameters: {
                 query?: never;
@@ -1268,6 +1297,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List secret names (values are never returned) */
         get: {
             parameters: {
                 query?: never;
@@ -1310,6 +1340,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
+        /** Create or replace a secret */
         put: {
             parameters: {
                 query?: never;
@@ -1343,6 +1374,7 @@ export interface paths {
             };
         };
         post?: never;
+        /** Delete a secret */
         delete: {
             parameters: {
                 query?: never;
@@ -1375,6 +1407,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** List API keys */
         get: {
             parameters: {
                 query?: never;
@@ -1406,6 +1439,7 @@ export interface paths {
             };
         };
         put?: never;
+        /** Create an API key; the token is shown once */
         post: {
             parameters: {
                 query?: never;
@@ -1465,6 +1499,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
+        /** Revoke an API key */
         delete: {
             parameters: {
                 query?: never;
@@ -1497,6 +1532,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** The model catalog */
         get: {
             parameters: {
                 query?: never;
@@ -1543,6 +1579,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
+        /** Add or update a catalog entry */
         put: {
             parameters: {
                 query?: never;
@@ -1586,6 +1623,7 @@ export interface paths {
             };
         };
         post?: never;
+        /** Remove a catalog entry */
         delete: {
             parameters: {
                 query?: never;
@@ -1619,6 +1657,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Stored inbound events, newest first */
         get: {
             parameters: {
                 query?: {
@@ -1655,6 +1694,7 @@ export interface paths {
             };
         };
         put?: never;
+        /** Publish an inbound event; fires matching event triggers */
         post: {
             parameters: {
                 query?: never;
@@ -1706,6 +1746,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** Schedules, webhook endpoints, and armed poll triggers of a loop */
         get: {
             parameters: {
                 query?: never;
@@ -1782,6 +1823,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Signed webhook receiver (public; HMAC, timestamp window, dedupe, rate limit) */
         post: {
             parameters: {
                 query?: never;

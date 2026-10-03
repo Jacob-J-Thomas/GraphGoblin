@@ -48,6 +48,7 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
     {
       schema: {
         tags: ['loops'],
+        summary: 'List loops',
         response: { 200: z.object({ items: z.array(LoopRecordSchema) }) },
       },
     },
@@ -61,6 +62,7 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
     {
       schema: {
         tags: ['loops'],
+        summary: 'Create a loop with an initial draft version',
         body: DefinitionBody,
         response: {
           201: z.object({
@@ -84,6 +86,7 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
     {
       schema: {
         tags: ['loops'],
+        summary: 'Create or update a loop from exported JSON',
         body: z.record(z.string(), z.unknown()),
         response: {
           201: z.object({
@@ -105,7 +108,14 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
 
   app.get(
     '/loops/:id',
-    { schema: { tags: ['loops'], params: IdParams, response: { 200: LoopDetailSchema } } },
+    {
+      schema: {
+        tags: ['loops'],
+        summary: 'A loop with its current published version and draft',
+        params: IdParams,
+        response: { 200: LoopDetailSchema },
+      },
+    },
     async (request) => {
       const loop = await ownedLoop(request, request.params.id);
       const current = loop.currentVersionId
@@ -121,6 +131,7 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
     {
       schema: {
         tags: ['loops'],
+        summary: 'Save the draft definition (validated, may be unpublishable)',
         params: IdParams,
         body: DefinitionBody,
         response: {
@@ -141,6 +152,7 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
     {
       schema: {
         tags: ['loops'],
+        summary: 'Validate a definition without saving it',
         params: IdParams,
         body: DefinitionBody,
         response: { 200: z.object({ issues: z.array(IssueSchema), publishable: z.boolean() }) },
@@ -160,6 +172,7 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
     {
       schema: {
         tags: ['loops'],
+        summary: 'Validate the draft and freeze it as a new version',
         params: IdParams,
         response: { 200: z.object({ version: LoopVersionRecordSchema }) },
       },
@@ -192,6 +205,7 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
     {
       schema: {
         tags: ['loops'],
+        summary: 'Version history',
         params: IdParams,
         response: { 200: z.object({ items: z.array(LoopVersionRecordSchema) }) },
       },
@@ -207,6 +221,7 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
     {
       schema: {
         tags: ['loops'],
+        summary: 'One version with its definition',
         params: z.object({ id: z.string(), versionId: z.string() }),
         response: { 200: LoopVersionRecordSchema },
       },
@@ -230,6 +245,7 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
     {
       schema: {
         tags: ['loops'],
+        summary: 'The definition as JSON for committing to a repository',
         params: IdParams,
         querystring: z.object({ draft: z.enum(['true', 'false']).optional() }),
         response: { 200: LoopExportSchema },
@@ -255,7 +271,14 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
 
   app.delete(
     '/loops/:id',
-    { schema: { tags: ['loops'], params: IdParams, response: { 204: z.null() } } },
+    {
+      schema: {
+        tags: ['loops'],
+        summary: 'Delete a loop that has no active runs',
+        params: IdParams,
+        response: { 204: z.null() },
+      },
+    },
     async (request, reply) => {
       if (!requireScope(request, reply, 'loops:write')) return reply;
       await ownedLoop(request, request.params.id);

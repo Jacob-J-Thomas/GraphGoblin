@@ -34,7 +34,13 @@ export function registerSettingsRoutes(app: ApiInstance, container: Container): 
   // Settings -----------------------------------------------------------------
   app.get(
     '/settings',
-    { schema: { tags: ['settings'], response: { 200: z.record(z.string(), JsonValueSchema) } } },
+    {
+      schema: {
+        tags: ['settings'],
+        summary: 'Owner settings',
+        response: { 200: z.record(z.string(), JsonValueSchema) },
+      },
+    },
     (request) => repos.settings.getAll(request.auth.ownerId),
   );
 
@@ -43,6 +49,7 @@ export function registerSettingsRoutes(app: ApiInstance, container: Container): 
     {
       schema: {
         tags: ['settings'],
+        summary: 'Update owner settings',
         body: z.record(z.string(), JsonValueSchema),
         response: { 200: z.record(z.string(), JsonValueSchema) },
       },
@@ -60,6 +67,7 @@ export function registerSettingsRoutes(app: ApiInstance, container: Container): 
     {
       schema: {
         tags: ['settings'],
+        summary: 'Reset one setting to its default',
         params: z.object({ key: z.string() }),
         response: { 204: z.null() },
       },
@@ -79,6 +87,7 @@ export function registerSettingsRoutes(app: ApiInstance, container: Container): 
     {
       schema: {
         tags: ['secrets'],
+        summary: 'List secret names (values are never returned)',
         response: { 200: z.object({ items: z.array(SecretSummarySchema) }) },
       },
     },
@@ -92,6 +101,7 @@ export function registerSettingsRoutes(app: ApiInstance, container: Container): 
     {
       schema: {
         tags: ['secrets'],
+        summary: 'Create or replace a secret',
         params: z.object({ name: z.string().regex(/^[A-Za-z][A-Za-z0-9_.-]{0,127}$/) }),
         body: z.object({ value: z.string().min(1).max(65_536) }),
         response: { 200: SecretSummarySchema },
@@ -112,6 +122,7 @@ export function registerSettingsRoutes(app: ApiInstance, container: Container): 
     {
       schema: {
         tags: ['secrets'],
+        summary: 'Delete a secret',
         params: z.object({ name: z.string() }),
         response: { 204: z.null() },
       },
@@ -130,7 +141,11 @@ export function registerSettingsRoutes(app: ApiInstance, container: Container): 
   app.get(
     '/api-keys',
     {
-      schema: { tags: ['api-keys'], response: { 200: z.object({ items: z.array(ApiKeySchema) }) } },
+      schema: {
+        tags: ['api-keys'],
+        summary: 'List API keys',
+        response: { 200: z.object({ items: z.array(ApiKeySchema) }) },
+      },
     },
     async (request) => ({
       items: await repos.apiKeys.list(request.auth.ownerId),
@@ -142,6 +157,7 @@ export function registerSettingsRoutes(app: ApiInstance, container: Container): 
     {
       schema: {
         tags: ['api-keys'],
+        summary: 'Create an API key; the token is shown once',
         body: z.object({
           label: z.string().min(1).max(120),
           scopes: z.array(z.string()).default(['*']),
@@ -166,6 +182,7 @@ export function registerSettingsRoutes(app: ApiInstance, container: Container): 
     {
       schema: {
         tags: ['api-keys'],
+        summary: 'Revoke an API key',
         params: z.object({ id: z.string() }),
         response: { 204: z.null() },
       },
@@ -185,6 +202,7 @@ export function registerSettingsRoutes(app: ApiInstance, container: Container): 
     {
       schema: {
         tags: ['settings'],
+        summary: 'The model catalog',
         response: { 200: z.object({ items: z.array(ModelEntrySchema) }) },
       },
     },
@@ -196,6 +214,7 @@ export function registerSettingsRoutes(app: ApiInstance, container: Container): 
     {
       schema: {
         tags: ['settings'],
+        summary: 'Add or update a catalog entry',
         params: z.object({ harness: z.string(), model: z.string() }),
         body: z.object({
           displayName: z.string().min(1),
@@ -225,6 +244,7 @@ export function registerSettingsRoutes(app: ApiInstance, container: Container): 
     {
       schema: {
         tags: ['settings'],
+        summary: 'Remove a catalog entry',
         params: z.object({ harness: z.string(), model: z.string() }),
         response: { 204: z.null() },
       },

@@ -55,6 +55,7 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
     {
       schema: {
         tags: ['runs'],
+        summary: 'Start a run from a manual trigger',
         params: IdParams,
         body: z
           .object({
@@ -95,6 +96,7 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
     {
       schema: {
         tags: ['runs'],
+        summary: 'List runs, newest first, filtered by loop, status, or parent',
         querystring: z.object({
           loopId: z.string().optional(),
           status: z.string().optional(),
@@ -128,13 +130,27 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
 
   app.get(
     '/runs/:id',
-    { schema: { tags: ['runs'], params: IdParams, response: { 200: RunRecordSchema } } },
+    {
+      schema: {
+        tags: ['runs'],
+        summary: 'Run snapshot: status, current node, iteration, waiting spec, result, failure',
+        params: IdParams,
+        response: { 200: RunRecordSchema },
+      },
+    },
     (request) => ownedRun(request, request.params.id),
   );
 
   app.get(
     '/runs/:id/thread',
-    { schema: { tags: ['runs'], params: IdParams, response: { 200: ContextThreadSchema } } },
+    {
+      schema: {
+        tags: ['runs'],
+        summary: 'The current context thread',
+        params: IdParams,
+        response: { 200: ContextThreadSchema },
+      },
+    },
     async (request, reply) => {
       await ownedRun(request, request.params.id);
       const thread = await manager.getThread(request.params.id);
@@ -148,6 +164,7 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
     {
       schema: {
         tags: ['runs'],
+        summary: 'A page of events; with Accept: text/event-stream, a live SSE tail',
         params: IdParams,
         querystring: z.object({
           after: z.coerce.number().int().min(0).optional(),
@@ -179,7 +196,14 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
   for (const action of ['cancel', 'pause', 'resume'] as const) {
     app.post(
       `/runs/:id/${action}`,
-      { schema: { tags: ['runs'], params: IdParams, response: { 200: RunRecordSchema } } },
+      {
+        schema: {
+          tags: ['runs'],
+          summary: `${action === 'cancel' ? 'Cancel' : action === 'pause' ? 'Pause' : 'Resume'} a run`,
+          params: IdParams,
+          response: { 200: RunRecordSchema },
+        },
+      },
       async (request, reply) => {
         if (!requireScope(request, reply, 'runs:write')) return reply;
         await ownedRun(request, request.params.id);
@@ -193,6 +217,7 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
     {
       schema: {
         tags: ['runs'],
+        summary: 'Answer a wait node in input mode',
         params: IdParams,
         body: z.object({ input: JsonValueSchema }),
         response: { 200: RunRecordSchema },
@@ -210,6 +235,7 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
     {
       schema: {
         tags: ['runs'],
+        summary: 'Deliver a named signal',
         params: z.object({ id: z.string(), name: z.string() }),
         body: z.object({ payload: JsonValueSchema.optional() }).default({}),
         response: { 200: z.object({ run: RunRecordSchema, woke: z.boolean() }) },
@@ -254,6 +280,7 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
     {
       schema: {
         tags: ['runs'],
+        summary: 'Harness sessions the run started or resumed',
         params: IdParams,
         response: { 200: z.object({ items: z.array(SessionSchema) }) },
       },
@@ -266,7 +293,13 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
 
   app.get(
     '/runs/:id/artifacts/:artifactId',
-    { schema: { tags: ['runs'], params: z.object({ id: z.string(), artifactId: z.string() }) } },
+    {
+      schema: {
+        tags: ['runs'],
+        summary: "Download an artifact from the run's thread",
+        params: z.object({ id: z.string(), artifactId: z.string() }),
+      },
+    },
     async (request, reply) => {
       await ownedRun(request, request.params.id);
       const thread = await manager.getThread(request.params.id);

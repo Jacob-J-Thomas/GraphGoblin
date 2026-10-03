@@ -74,6 +74,7 @@ export function registerTriggerRoutes(app: ApiInstance, container: Container): v
         bodyLimit: WEBHOOK_BODY_LIMIT,
         schema: {
           tags: ['triggers'],
+          summary: 'Signed webhook receiver (public; HMAC, timestamp window, dedupe, rate limit)',
           security: [],
           params: z.object({ token: z.string().min(1).max(256) }),
           response: {
@@ -110,6 +111,7 @@ export function registerTriggerRoutes(app: ApiInstance, container: Container): v
     {
       schema: {
         tags: ['events'],
+        summary: 'Publish an inbound event; fires matching event triggers',
         body: z.object({
           type: z.string().min(1).max(128),
           payload: JsonValueSchema.default(null),
@@ -137,6 +139,7 @@ export function registerTriggerRoutes(app: ApiInstance, container: Container): v
     {
       schema: {
         tags: ['events'],
+        summary: 'Stored inbound events, newest first',
         querystring: z.object({
           type: z.string().max(128).optional(),
           before: z.string().optional(),
@@ -159,6 +162,7 @@ export function registerTriggerRoutes(app: ApiInstance, container: Container): v
     {
       schema: {
         tags: ['triggers'],
+        summary: 'Schedules, webhook endpoints, and armed poll triggers of a loop',
         params: z.object({ id: z.string() }),
         response: {
           200: z.object({
