@@ -2,7 +2,7 @@
 
 ## Edit the starter graph
 
-1. Open **Loops**, enter **New loop name**, and click **Create**. Open **Edit** for an existing loop.
+1. Open **Loops**, enter a name in **New loop name**, and click **Create**. The editor opens on the starter graph. Click **Edit** to open an existing loop.
 2. Drag a node from the left palette onto the canvas, or click its palette button to add it.
 3. Select the node. In **Node**, set its ID, label, and config. IDs start with a letter and contain letters, digits, underscores, or hyphens; keep them unique.
 4. Remove the starter edge before inserting your own path. Use **Connections** in the property panel to remove an edge, or select it and press **Delete** or **Backspace**.
@@ -22,7 +22,7 @@ Edits autosave after a short debounce and are mirrored in IndexedDB. A schema-in
 
 > Coming in 1.0: Surface-aware start and input controls. Today `exposeTo` is recorded and described to MCP callers, but the web launcher and engine commands do not enforce it. Use API authentication for access control.
 
-**Decision (`decision`).** Define at least two `routes`, each with a unique `label` and `description`; route labels cannot be `in`. Set a Liquid `question` and ordered `strategy` list using `jev`, `codex`, or `expression`. An expression strategy needs `expression.jsonata` returning a route label. Limit context with `context.messages`, `context.vars`, and `context.includeLastOutput`; declare selected variables in loop settings. Set `jev.minConfidence` or `codex.model` and `codex.effort` when needed. Unavailable strategies and unsuitable answers fall through to the next strategy; an exception can fail the run. Connect every route.
+**Decision (`decision`).** Define at least two `routes`, each with a unique `label` and `description`; route labels cannot be `in`. Set a Liquid `question` and ordered `strategy` list using `jev`, `codex`, or `expression`. An expression strategy needs `expression.jsonata` returning a route label. Limit context with `context.messages`, `context.vars`, and `context.includeLastOutput`; declare selected variables in loop settings. Set `jev.minConfidence` or `codex.model` and `codex.effort` when needed. An unavailable decider, an unknown label, or a Jev answer below `minConfidence` falls through to the next strategy. When every strategy falls through, the run fails with `DECISION_NO_ROUTE`; an error raised by a decider fails the run at once. The chosen route is recorded as the node's output. Connect every route.
 
 **Inference (`inference`).** Set `prompt.template` for a Codex turn. Choose `model`, `effort`, and `session.policy`: `fresh`, `resume-previous`, or `resume-named` with a `key`. Set `harnessOptions.sandbox` to `read-only`, `workspace-write` (default), or `danger-full-access`; `approval` defaults to `never`, while network and web search are off unless enabled. Use `input` transformations, `contextFiles`, and `output.transforms` to shape context. Set `output.schema.jsonSchema` for structured output and configure its `repair` policy. `output.captureTranscript` defaults to `artifact`, `output.toMessages` to `final`; `timeoutSeconds` is optional. The output goes to `lastOutput.value` and the node follows `out`.
 
@@ -46,16 +46,16 @@ Connect exactly one edge per output port. Multiple inputs may converge on a node
 
 For a loop-back, connect the exit handle to a working node, such as inference or mutation. The canvas sets `loopBack.targetNodeId` for you; it cannot target a trigger or another exit. Only this exit transition increments the iteration. A cycle through other nodes does not consume the iteration limit.
 
-Read **Validation** after every change. Fix errors before publishing: missing trigger or exit, missing connections, duplicate IDs, invalid targets or ports, unreachable nodes, and inconsistent loop-backs. Clicking an issue selects its node. Warnings do not block publishing. Cron parsing is also checked on the server when you publish.
+Read **Validation** after every change. Fix errors before publishing: missing trigger or exit, unconnected or doubly connected ports, duplicate IDs, invalid targets or ports, unreachable nodes, a trigger with no path to an exit, undeclared variables, and inconsistent loop-backs. Clicking an issue selects its node. Warnings, such as an exit criterion above the loop's iteration ceiling, do not block publishing. The server repeats these checks when you publish, adds cron expression and timezone checks, and rejects errors with HTTP 422 `LOOP_INVALID`.
 
 ## Set workspace and limits
 
-| Setting | Configure it |
-| --- | --- |
-| `maxIterations` | Default 10, range 1 to 10,000. It limits exit loop-backs, not node visits or Codex turns. |
-| `workingDirectory` | `temp` (default), `fixed` with `path`, or `template` with a Liquid `template`. The filesystem adapter creates the resolved directory if needed. |
-| `subloopDepthLimit` | Default 8, range 1 to 64. A subloop node can replace it with `depthLimitOverride`. |
-| `defaults` | Set the Codex `harness`, optional `model`, and optional `effort`. Node values override loop defaults, which override API-process defaults. |
+| Setting             | Configure it                                                                                                                                    |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `maxIterations`     | Default 10, range 1 to 10,000. It limits exit loop-backs, not node visits or Codex turns.                                                       |
+| `workingDirectory`  | `temp` (default), `fixed` with `path`, or `template` with a Liquid `template`. The filesystem adapter creates the resolved directory if needed. |
+| `subloopDepthLimit` | Default 8, range 1 to 64. A subloop node can replace it with `depthLimitOverride`.                                                              |
+| `defaults`          | Set the Codex `harness`, optional `model`, and optional `effort`. Node values override loop defaults, which override API-process defaults.      |
 
 For a repository workspace, use an absolute path. For a temporary workspace, use:
 
@@ -85,7 +85,7 @@ Use **Export** on the Loops page to download JSON. It exports the published defi
 GET /loops/{id}/export?draft=true
 ```
 
-Use the Loops page's file picker to import an export envelope or a bare definition. Import always creates a new loop with a draft, even if the name matches an existing loop. To update an existing loop, save its draft through the editor or API:
+Use the Loops page's file picker, or `POST /loops/import`, to import an export envelope or a bare definition. Import always creates a new loop with a draft, even if the name matches an existing loop. To update an existing loop, save its draft through the editor or API:
 
 ```http
 PUT /loops/{id}/draft
@@ -103,7 +103,11 @@ The body wraps your definition:
       { "id": "done", "kind": "exit", "label": "Done", "config": {} }
     ],
     "edges": [
-      { "id": "e1", "from": { "node": "start", "port": "out" }, "to": { "node": "done", "port": "in" } }
+      {
+        "id": "e1",
+        "from": { "node": "start", "port": "out" },
+        "to": { "node": "done", "port": "in" }
+      }
     ]
   }
 }
@@ -172,8 +176,16 @@ Save this bare definition as a JSON file and import it. It follows the contracts
     }
   ],
   "edges": [
-    { "id": "e1", "from": { "node": "start", "port": "out" }, "to": { "node": "summarise", "port": "in" } },
-    { "id": "e2", "from": { "node": "summarise", "port": "out" }, "to": { "node": "done", "port": "in" } }
+    {
+      "id": "e1",
+      "from": { "node": "start", "port": "out" },
+      "to": { "node": "summarise", "port": "in" }
+    },
+    {
+      "id": "e2",
+      "from": { "node": "summarise", "port": "out" },
+      "to": { "node": "done", "port": "in" }
+    }
   ]
 }
 ```

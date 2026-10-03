@@ -8,11 +8,11 @@ A decider uses Jev or Codex to choose a route, or a decision node evaluates a JS
 
 ## Use the mental model
 
-| Concept | Use it for |
-| --- | --- |
-| Loop | Define a graph, its entry triggers, workspace, limits, and return value. |
-| Run | Execute one version; inspect its status, event log, and shared context thread. |
-| Harness | Let Codex perform work in the run's working directory. |
+| Concept | Use it for                                                                            |
+| ------- | ------------------------------------------------------------------------------------- |
+| Loop    | Define a graph, its entry triggers, workspace, limits, and return value.              |
+| Run     | Execute one version; inspect its status, event log, and shared context thread.        |
+| Harness | Let Codex perform work in the run's working directory.                                |
 | Decider | Ask Jev or Codex to pick a labelled route; use expressions for deterministic choices. |
 
 The context thread holds messages, variables, artifacts, per-node outputs, and usage counters. Templates use Liquid; mappings and predicates use JSONata. Only an exit node's explicit loop-back increments the run's iteration.

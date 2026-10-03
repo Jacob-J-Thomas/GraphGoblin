@@ -15,7 +15,13 @@ LOOP_ID='<loop-id>'
 curl -sS "http://127.0.0.1:4747/loops/$LOOP_ID/triggers"
 ```
 
-The response contains `schedules`, `webhooks`, and `polls`. Older schedule and endpoint rows remain with `enabled` false; select the enabled rows.
+```powershell
+$loopId = '<loop-id>'
+$triggers = Invoke-RestMethod "http://127.0.0.1:4747/loops/$loopId/triggers"
+$triggers.webhooks | Where-Object enabled | Select-Object triggerNodeId, path
+```
+
+The response contains `schedules`, `webhooks`, and `polls`. Older schedule and endpoint rows remain with `enabled` false; select the enabled rows. Deleting a loop disarms all of its triggers; the API refuses to delete a loop with active runs (409 `LOOP_IN_USE`).
 
 ## Start manually
 
@@ -39,11 +45,11 @@ This starts a run daily at 02:00 in the selected timezone. UTC is the default; t
 
 Choose how to recover missed slots after an outage:
 
-| Policy | Recovery |
-| --- | --- |
-| `skip` | Default; move to the next future slot. |
+| Policy     | Recovery                                                                  |
+| ---------- | ------------------------------------------------------------------------- |
+| `skip`     | Default; move to the next future slot.                                    |
 | `run-once` | Start one catch-up run for the last slot in the bounded missed-slot scan. |
-| `run-each` | Start catch-up runs for the first 100 missed slots, oldest first. |
+| `run-each` | Start catch-up runs for the first 100 missed slots, oldest first.         |
 
 The scan considers at most 101 missed slots. With `run-each`, later slots beyond the first 100 are dropped with a warning. Trigger payloads contain `scheduledFor` and `catchUp`. The schedule advances before firing, so a crash at that boundary can lose that firing. `GG_TIMER_POLL_MS` controls schedule polling and timer checks, default 1000 milliseconds.
 
@@ -75,7 +81,9 @@ POST /hooks/{token}
 
 The token stays stable across versions for the same trigger node ID. Replace or rename that node and publish to obtain a new token. The signing secret is resolved by name on each delivery.
 
-In Bash, install curl and OpenSSL, then replace the token and secret placeholders. This signs the exact UTF-8 bytes of the timestamp, a dot, and the body:
+The signature is HMAC-SHA256, keyed with the secret, over the exact UTF-8 bytes of the timestamp, a dot, and the body. It goes in the header named by `signature.header` (default `x-graphgoblin-signature`). The timestamp always goes in `x-graphgoblin-timestamp`.
+
+In Bash, install curl and OpenSSL, then replace the token and secret placeholders:
 
 ```bash
 TOKEN='<token-from-the-enabled-webhook-path>'
@@ -91,11 +99,33 @@ curl -sS -X POST "http://127.0.0.1:4747/hooks/$TOKEN" \
   --data-binary "$BODY"
 ```
 
+In PowerShell, this version signs a Unix-seconds timestamp and sends the same bytes it signed:
+
+```powershell
+$token = '<token-from-the-enabled-webhook-path>'
+$secret = '<value-stored-as-incoming-hook>'
+$body = '{"action":"opened","deliveryId":"demo-1"}'
+$timestamp = [string][DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
+$hmac = New-Object System.Security.Cryptography.HMACSHA256 (,[Text.Encoding]::UTF8.GetBytes($secret))
+$hash = $hmac.ComputeHash([Text.Encoding]::UTF8.GetBytes("$timestamp.$body"))
+$signature = 'sha256=' + (($hash | ForEach-Object { $_.ToString('x2') }) -join '')
+Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:4747/hooks/$token" `
+  -ContentType 'application/json' `
+  -Headers @{ 'x-graphgoblin-timestamp' = $timestamp; 'x-graphgoblin-signature' = $signature } `
+  -Body ([Text.Encoding]::UTF8.GetBytes($body))
+```
+
+For a quick check of your signing code, the secret `s3cret-value`, the timestamp `1791013464`, and the body above produce:
+
+```text
+sha256=1ed6e75a09e5efba80f692ea02ee05a85fb177ec7ed73cfe378758e7f8757c96
+```
+
 Keep whitespace and newlines identical between signing and sending. Send the timestamp as ISO 8601 or Unix seconds. The server rejects timestamps more than `replayWindowSeconds` away from its clock in either direction; the default is 300 seconds. Send the digest as lowercase hex with the `sha256=` prefix.
 
-`dedupeKey` and `filter` are JSONata over the parsed body, with lower-case request headers available through `$headers`. The example rejects repeated delivery IDs within the replay window. Without a dedupe expression, the signature identifies the delivery, so a byte-for-byte replay is rejected. Accepted requests return HTTP 202 with an event and `runId`; filtered requests return 202 with `filtered` true and no run. Duplicate deliveries return 409 `REPLAYED`.
+`dedupeKey` and `filter` are JSONata over the parsed body, with lower-case request headers available through `$headers`. The example rejects repeated delivery IDs within the replay window. Without a dedupe expression, the signature identifies the delivery, so a byte-for-byte replay is rejected. Accepted requests return HTTP 202 with an event and `runId`; filtered requests return 202 with `filtered` true and no run. The run's trigger payload is the parsed body, so templates read it as `trigger.payload`. Duplicate deliveries return 409 `REPLAYED`. A body that is not JSON returns 400 `BODY_INVALID`, and a filter or dedupe expression that fails returns 422 `EXPRESSION_FAILED`.
 
-Bodies are limited to 1 MiB. The in-memory rate limit defaults to 60 deliveries per endpoint per minute, controlled by `GG_HOOK_RATE_LIMIT`; it resets on restart and is checked before the signature. See [Troubleshooting](07-troubleshooting.md) for timestamp and signature failures.
+Bodies are limited to 1 MiB; larger bodies return 413. The in-memory rate limit defaults to 60 deliveries per endpoint per minute, controlled by `GG_HOOK_RATE_LIMIT`; it resets on restart and is checked before the signature. See [Troubleshooting](07-troubleshooting.md) for timestamp and signature failures.
 
 ## Receive events and connect loops
 
@@ -127,6 +157,11 @@ event.json
 ```bash
 curl -sS -X POST 'http://127.0.0.1:4747/events' \
   -H 'Content-Type: application/json' --data-binary @event.json
+```
+
+```powershell
+Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:4747/events' `
+  -ContentType 'application/json' -InFile event.json
 ```
 
 Matching published triggers start runs. The response includes `runIds` and `duplicate`. A repeated event type plus request dedupe key returns the earlier event without starting more runs; this dedupe persists without a replay-window expiry. A node's own dedupe expression separately suppresses keys already used by that trigger.

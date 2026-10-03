@@ -9,11 +9,27 @@ $env:GG_API_URL = 'http://127.0.0.1:4747'
 node apps/mcp/dist/main.js
 ```
 
-An MCP client normally launches that command and exchanges protocol messages over stdin/stdout. Diagnostics go to stderr. In API-key mode, set `GG_API_KEY` in the MCP client's environment to your saved token; it becomes a bearer header on gateway requests. It is optional in local trusted mode. CLI flags override environment settings:
+```bash
+GG_API_URL=http://127.0.0.1:4747 node apps/mcp/dist/main.js
+```
+
+An MCP client normally launches that command and exchanges protocol messages over stdin/stdout. Diagnostics go to stderr. `GG_API_URL` defaults to `http://127.0.0.1:4747`. In API-key mode, set `GG_API_KEY` in the MCP client's environment to your saved token; it becomes a bearer header on gateway requests. It is optional in local trusted mode. The `--api-url` and `--api-key` flags override the environment, and `--help` lists every flag:
 
 ```powershell
 node apps/mcp/dist/main.js --api-url http://127.0.0.1:4747
 ```
+
+To register the server with Codex without the plugin, run this from the repository root:
+
+```bash
+codex mcp add graphgoblin --env GG_API_URL=http://127.0.0.1:4747 -- node "$PWD/apps/mcp/dist/main.js"
+```
+
+```powershell
+codex mcp add graphgoblin --env GG_API_URL=http://127.0.0.1:4747 '--' node "$PWD/apps/mcp/dist/main.js"
+```
+
+PowerShell drops a bare `--` when `codex` resolves to the npm `codex.ps1` shim, so quote it as shown.
 
 For Streamable HTTP, start a separate local MCP listener:
 
@@ -31,21 +47,21 @@ HTTP accepts POST only and is stateless, with a fresh transport per request; GET
 
 ## Choose a tool
 
-| Tool | Use it to |
-| --- | --- |
-| `list_loops` | Find loops by optional name/description query and see their publish state. |
-| `describe_loop` | Inspect triggers, input schemas, input waits, and exit mappings before a start. |
-| `start_run` | Start a manual trigger and return its run ID immediately. |
-| `wait_for_run` | Wait for completion, or return early for input or a pause. |
-| `get_run` | Read status, current node, waiting spec, result, and failure. |
-| `get_run_thread` | Read current messages, variables, outputs, artifacts, and usage. |
-| `list_runs` | Find recent runs by loop, status, or parent; page with `nextBefore`. |
-| `read_run_events` | Read an event page after a sequence cursor and continue with `nextAfter`. |
-| `cancel_run` | Request cancellation and then check that the run stops. |
-| `pause_run` | Hold execution at a node boundary. |
-| `resume_run` | Continue a paused run or retry a failed run through the same API action. |
-| `provide_input` | Supply schema-valid input to an input wait. |
-| `send_signal` | Send a named signal with an optional payload; inspect `woke`. |
+| Tool              | Use it to                                                                       |
+| ----------------- | ------------------------------------------------------------------------------- |
+| `list_loops`      | Find loops by optional name/description query and see their publish state.      |
+| `describe_loop`   | Inspect triggers, input schemas, input waits, and exit mappings before a start. |
+| `start_run`       | Start a manual trigger and return its run ID immediately.                       |
+| `wait_for_run`    | Wait for completion, or return early for input or a pause.                      |
+| `get_run`         | Read status, current node, waiting spec, result, and failure.                   |
+| `get_run_thread`  | Read current messages, variables, outputs, artifacts, and usage.                |
+| `list_runs`       | Find recent runs by loop, status, or parent; page with `nextBefore`.            |
+| `read_run_events` | Read an event page after a sequence cursor and continue with `nextAfter`.       |
+| `cancel_run`      | Request cancellation and then check that the run stops.                         |
+| `pause_run`       | Hold execution at a node boundary.                                              |
+| `resume_run`      | Continue a paused run or retry a failed run through the same API action.        |
+| `provide_input`   | Supply schema-valid input to an input wait.                                     |
+| `send_signal`     | Send a named signal with an optional payload; inspect `woke`.                   |
 
 `describe_loop` and `start_run` accept a loop ID or an exact, case-insensitive name. Use IDs when names are duplicated. `start_run` accepts `input`, optional `triggerNodeId`, and `allowDraft` for an unpublished loop.
 
@@ -87,13 +103,20 @@ codex plugin add graphgoblin@graphgoblin-local
 
 Set `GG_API_URL` and, when required, `GG_API_KEY` before starting Codex. The plugin passes those variables to MCP. Its MCP tool timeout is 660 seconds to accommodate the longest wait call.
 
+To remove the plugin and its marketplace:
+
+```powershell
+codex plugin remove graphgoblin@graphgoblin-local
+codex plugin marketplace remove graphgoblin-local
+```
+
 ## Invoke a skill
 
-| Skill | Use it when |
-| --- | --- |
-| [run-loop](../../apps/plugin-codex/plugin/graphgoblin/skills/run-loop/SKILL.md) | Start a named loop, build input from its schema, answer requested input, wait, and report its result. |
+| Skill                                                                                 | Use it when                                                                                                     |
+| ------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| [run-loop](../../apps/plugin-codex/plugin/graphgoblin/skills/run-loop/SKILL.md)       | Start a named loop, build input from its schema, answer requested input, wait, and report its result.           |
 | [design-loop](../../apps/plugin-codex/plugin/graphgoblin/skills/design-loop/SKILL.md) | Draft or change a definition, validate through REST, and save a draft. It publishes only when explicitly asked. |
-| [inspect-run](../../apps/plugin-codex/plugin/graphgoblin/skills/inspect-run/SKILL.md) | Explain a run from its snapshot, events, and thread. It changes the run only when asked. |
+| [inspect-run](../../apps/plugin-codex/plugin/graphgoblin/skills/inspect-run/SKILL.md) | Explain a run from its snapshot, events, and thread. It changes the run only when asked.                        |
 
 Use this prompt after importing and publishing the [example loop](02-build-a-loop.md#import-a-complete-first-loop):
 
@@ -103,6 +126,6 @@ Describe the loop first, start it, and keep calling wait_for_run until it finish
 If it asks for input, show me the prompt. Report the returned summary and run ID.
 ```
 
-The run and inspection skills use MCP. The design skill uses REST for editing because the tool list covers run operations rather than graph editing. See [API, streaming, and MCP](../07-api-and-streaming.md) for implementation context.
+The run and inspection skills use MCP. The design skill uses REST for editing because the tool list covers run operations rather than graph editing. See [API, streaming, and MCP](../07-api-and-streaming.md) for design context.
 
 Continue with [Settings and secrets](06-settings-and-secrets.md).
