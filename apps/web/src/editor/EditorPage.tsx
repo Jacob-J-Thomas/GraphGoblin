@@ -8,8 +8,8 @@ import { useApi } from '../api/context.js';
 import { keys, useLoop } from '../api/queries.js';
 import { ErrorState } from '../components/status.js';
 import { Alert, Badge, Button } from '../components/ui.js';
-import { loadLocalDraft } from '../drafts/local-drafts.js';
-import { errorMessage, isOfflineError, problemIssues } from '../lib/utils.js';
+import { loadLocalDraft, type LocalDraft } from '../drafts/local-drafts.js';
+import { errorMessage, formatDateTime, isOfflineError, problemIssues } from '../lib/utils.js';
 import { Canvas } from './Canvas.js';
 import { LoopSettingsPanel } from './LoopSettingsPanel.js';
 import {
@@ -44,6 +44,7 @@ const SAVE_LABEL: Record<SaveState, string> = {
 function useLoadEditor(loopId: string) {
   const query = useLoop(loopId);
   const [restored, setRestored] = useState(false);
+  const [setAside, setSetAside] = useState<LocalDraft | undefined>();
   const [ready, setReady] = useState(false);
   const settled = query.isSuccess || query.isError;
   const dataRef = useRef(query.data);
@@ -57,11 +58,17 @@ function useLoadEditor(loopId: string) {
     void loadLocalDraft(loopId).then((local) => {
       if (cancelled) return;
       const server = dataRef.current?.draft?.definition ?? dataRef.current?.current?.definition;
-      if (local && !local.synced) {
+      const serverUpdatedAt = dataRef.current?.loop.updatedAt;
+      // The server changed after this device's unsynced copy was written (another tab or
+      // device saved since): keep the newer server copy and offer the local one instead.
+      const serverIsNewer =
+        local && !local.synced && server && serverUpdatedAt && serverUpdatedAt > local.savedAt;
+      if (local && !local.synced && !serverIsNewer) {
         useEditorStore.getState().load(loopId, local.definition, { dirty: true });
         setRestored(true);
         setReady(true);
       } else if (server) {
+        if (serverIsNewer) setSetAside(local);
         useEditorStore.getState().load(loopId, server);
         setReady(true);
       } else if (local) {
@@ -75,14 +82,20 @@ function useLoadEditor(loopId: string) {
   }, [loopId, settled]);
 
   useEffect(() => () => useEditorStore.getState().reset(), [loopId]);
-  return { query, restored, ready };
+  const restoreSetAside = () => {
+    if (!setAside) return;
+    useEditorStore.getState().load(loopId, setAside.definition, { dirty: true });
+    setSetAside(undefined);
+    setRestored(true);
+  };
+  return { query, restored, ready, setAside, restoreSetAside };
 }
 
 export function EditorPage() {
   const { loopId = '' } = useParams();
   const client = useApi();
   const queryClient = useQueryClient();
-  const { query, restored, ready } = useLoadEditor(loopId);
+  const { query, restored, ready, setAside, restoreSetAside } = useLoadEditor(loopId);
   const definition = useEditorStore((s) => s.definition);
   const saveState = useEditorStore((s) => s.saveState);
   const saveMessage = useEditorStore((s) => s.saveMessage);
@@ -196,6 +209,15 @@ export function EditorPage() {
         </div>
       </header>
       {restored ? <Alert tone="info">Restored unsaved changes from this device.</Alert> : null}
+      {setAside ? (
+        <Alert tone="warn" title="The server has a newer draft">
+          This device has unsaved changes from {formatDateTime(setAside.savedAt)}, older than the
+          draft saved on the server since, which is shown.{' '}
+          <Button size="sm" variant="outline" onClick={restoreSetAside}>
+            Use this device&apos;s copy instead
+          </Button>
+        </Alert>
+      ) : null}
       {saveMessage &&
       (saveState === 'offline' || saveState === 'error' || saveState === 'invalid') ? (
         <Alert tone="warn">{saveMessage}</Alert>

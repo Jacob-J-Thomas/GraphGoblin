@@ -128,6 +128,13 @@ describe('SettingsPage', () => {
     const api = seeded();
     renderApp('/settings', api);
     expect(await screen.findByText('jev-api-key')).toBeInTheDocument();
+    // A name the API would refuse is flagged before sending.
+    await user.type(screen.getByLabelText('Name'), 'bad name');
+    expect(screen.getByLabelText('Name')).toHaveAttribute('aria-invalid', 'true');
+    await user.type(screen.getByLabelText('Value'), 'x');
+    expect(screen.getByRole('button', { name: 'Set secret' })).toBeDisabled();
+    await user.clear(screen.getByLabelText('Value'));
+    await user.clear(screen.getByLabelText('Name'));
     await user.type(screen.getByLabelText('Name'), 'github-token');
     const value = screen.getByLabelText('Value');
     expect(value).toHaveAttribute('type', 'password');

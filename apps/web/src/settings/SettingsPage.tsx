@@ -290,6 +290,9 @@ function DefaultsSection() {
   );
 }
 
+/** The API's rule for secret names (PUT /secrets/{name}). */
+const SECRET_NAME = /^[A-Za-z][A-Za-z0-9_.-]{0,127}$/;
+
 function SecretsSection() {
   const client = useApi();
   const invalidate = useInvalidate();
@@ -308,6 +311,7 @@ function SecretsSection() {
     mutationFn: (secretName: string) => secrets.remove(client, secretName),
     onSuccess: () => invalidate(keys.secrets),
   });
+  const nameInvalid = name !== '' && !SECRET_NAME.test(name);
   return (
     <Card title="Secrets">
       <p className="mb-2 text-xs text-slate-500">
@@ -323,7 +327,19 @@ function SecretsSection() {
       >
         <div>
           <Label htmlFor="secret-name">Name</Label>
-          <Input id="secret-name" value={name} onChange={(e) => setName(e.target.value)} />
+          <Input
+            id="secret-name"
+            value={name}
+            aria-invalid={nameInvalid}
+            aria-describedby="secret-name-hint"
+            onChange={(e) => setName(e.target.value)}
+          />
+          <p
+            id="secret-name-hint"
+            className={nameInvalid ? 'text-xs text-orange-800' : 'text-xs text-slate-500'}
+          >
+            A letter, then letters, digits, _ . or - (up to 128).
+          </p>
         </div>
         <div>
           <Label htmlFor="secret-value">Value</Label>
@@ -335,7 +351,7 @@ function SecretsSection() {
             onChange={(e) => setValue(e.target.value)}
           />
         </div>
-        <Button type="submit" size="sm" disabled={!name || !value || set.isPending}>
+        <Button type="submit" size="sm" disabled={!name || nameInvalid || !value || set.isPending}>
           Set secret
         </Button>
       </form>

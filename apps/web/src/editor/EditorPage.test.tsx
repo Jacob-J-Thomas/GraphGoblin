@@ -101,6 +101,25 @@ describe('EditorPage', () => {
     expect(useEditorStore.getState().selectedNodeId).toBe('subloop');
   });
 
+  it('keeps a newer server draft over an older unsynced local copy, and can switch', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const loop = api.addLoop(newLoopDefinition('server copy'));
+    await saveLocalDraft({
+      loopId: loop.id,
+      definition: newLoopDefinition('older local copy'),
+      savedAt: '2026-10-01T00:00:00.000Z',
+      synced: false,
+    });
+    renderApp(`/loops/${loop.id}/edit`, api);
+    expect(await screen.findByRole('heading', { name: 'server copy' })).toBeInTheDocument();
+    expect(screen.getByText('The server has a newer draft')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: "Use this device's copy instead" }));
+    expect(await screen.findByRole('heading', { name: 'older local copy' })).toBeInTheDocument();
+    expect(screen.queryByText('The server has a newer draft')).toBeNull();
+    expect(screen.getByText('Restored unsaved changes from this device.')).toBeInTheDocument();
+  });
+
   it('restores an unsynced local draft and reports offline saves', async () => {
     const api = new FakeApi();
     const loop = api.addLoop(newLoopDefinition('server copy'));
