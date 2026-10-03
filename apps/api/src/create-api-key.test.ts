@@ -1,4 +1,4 @@
-import { mkdtemp, rm } from 'node:fs/promises';
+import { access, mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -58,6 +58,37 @@ describe('parseCreateApiKeyArgs', () => {
     expect(parseCreateApiKeyArgs(['--create-api-key', 'x'.repeat(121)])).toMatch(/120/);
     expect(parseCreateApiKeyArgs(['--create-api-key', 'x', '--scopes'])).toMatch(/comma/);
     expect(parseCreateApiKeyArgs(['--create-api-key', 'x', '--scopes=,'])).toMatch(/comma/);
+  });
+
+  it('refuses typos, strays, repeats, and missing values instead of granting *', () => {
+    const key = ['--create-api-key', 'typo'];
+    expect(parseCreateApiKeyArgs([...key, '--scope', 'runs:read'])).toBe('unknown option --scope');
+    expect(parseCreateApiKeyArgs([...key, '-s', 'runs:read'])).toMatch(/unknown option -s/);
+    expect(parseCreateApiKeyArgs([...key, 'runs:read'])).toBe('unexpected argument "runs:read"');
+    expect(parseCreateApiKeyArgs([...key, '--scopes', '--wrong'])).toMatch(/comma/);
+    expect(parseCreateApiKeyArgs([...key, '--scopes=--wrong'])).toMatch(/comma/);
+    expect(parseCreateApiKeyArgs([...key, '--scopes', 'a', '--scopes', 'b'])).toMatch(
+      /more than once/,
+    );
+    expect(parseCreateApiKeyArgs([...key, '--create-api-key', 'again'])).toMatch(/more than once/);
+    expect(parseCreateApiKeyArgs([...key, '--scopes', 'runs:write,bad scope'])).toMatch(
+      /not a scope name/,
+    );
+    expect(parseCreateApiKeyArgs(['--create-api-key', '--scopes', 'a'])).toMatch(/required/);
+  });
+
+  it('exits 2 for a typo before touching storage', async () => {
+    const dir = await tempDir();
+    const io = capture();
+    const code = await runCreateApiKeyCli({
+      argv: ['--create-api-key', 'typo', '--scope', 'runs:read'],
+      env: { GG_DATA_DIR: join(dir, 'never-created') },
+      ...io,
+    });
+    expect(code).toBe(2);
+    expect(io.out).toEqual([]);
+    expect(io.err.join('')).toContain(CREATE_API_KEY_USAGE);
+    await expect(access(join(dir, 'never-created'))).rejects.toThrow();
   });
 });
 

@@ -20,26 +20,51 @@ export interface CreateApiKeyArgs {
 export const CREATE_API_KEY_USAGE =
   'usage: graphgoblin-api --create-api-key <name> [--scopes scope1,scope2]  (default scopes: *)';
 
-/** Parse the arguments after `--create-api-key`. Returns an error message when they are unusable. */
+const SCOPE = /^[A-Za-z0-9*][A-Za-z0-9:*_.-]*$/;
+const SCOPES_HINT = '--scopes needs a comma-separated list, for example loops:write,runs:write';
+
+/**
+ * Parse the command line strictly: exactly `--create-api-key <name>` and at most one `--scopes`
+ * (`--scopes a,b` or `--scopes=a,b`). Anything else (an unknown or repeated option, a stray
+ * argument, a missing value) is an error, so a typo can never fall back to a wildcard key.
+ * Returns an error message when the arguments are unusable.
+ */
 export function parseCreateApiKeyArgs(argv: readonly string[]): CreateApiKeyArgs | string {
-  const at = argv.indexOf('--create-api-key');
-  const label = at >= 0 ? argv[at + 1] : undefined;
-  if (label === undefined || label.startsWith('--') || label.trim() === '') {
-    return 'a key name is required';
+  let label: string | undefined;
+  let rawScopes: string | undefined;
+  const isValue = (value: string | undefined): value is string =>
+    value !== undefined && !value.startsWith('-');
+  for (let i = 0; i < argv.length; i += 1) {
+    const arg = argv[i] as string;
+    if (arg === '--create-api-key') {
+      if (label !== undefined) return '--create-api-key is given more than once';
+      const value = argv[i + 1];
+      if (!isValue(value) || value.trim() === '') return 'a key name is required';
+      label = value.trim();
+      i += 1;
+    } else if (arg === '--scopes' || arg.startsWith('--scopes=')) {
+      if (rawScopes !== undefined) return '--scopes is given more than once';
+      const value = arg === '--scopes' ? argv[i + 1] : arg.slice('--scopes='.length);
+      if (!isValue(value)) return SCOPES_HINT;
+      rawScopes = value;
+      if (arg === '--scopes') i += 1;
+    } else if (arg.startsWith('-')) {
+      return `unknown option ${arg}`;
+    } else {
+      return `unexpected argument "${arg}"`;
+    }
   }
+  if (label === undefined) return 'a key name is required';
   if (label.length > 120) return 'the key name is longer than 120 characters';
-  let scopes = ['*'];
-  const flag = argv.findIndex((arg) => arg === '--scopes' || arg.startsWith('--scopes='));
-  if (flag >= 0) {
-    const raw = argv[flag]?.includes('=') ? argv[flag].slice('--scopes='.length) : argv[flag + 1];
-    scopes = (raw ?? '')
-      .split(',')
-      .map((s) => s.trim())
-      .filter((s) => s !== '');
-    if (scopes.length === 0)
-      return '--scopes needs a comma-separated list, for example loops:write,runs:write';
-  }
-  return { label: label.trim(), scopes };
+  if (rawScopes === undefined) return { label, scopes: ['*'] };
+  const scopes = rawScopes
+    .split(',')
+    .map((scope) => scope.trim())
+    .filter((scope) => scope !== '');
+  if (scopes.length === 0) return SCOPES_HINT;
+  const bad = scopes.find((scope) => !SCOPE.test(scope));
+  if (bad !== undefined) return `"${bad}" is not a scope name`;
+  return { label, scopes };
 }
 
 export interface CreateApiKeyCliOptions {
