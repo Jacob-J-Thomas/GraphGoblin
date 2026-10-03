@@ -49,11 +49,11 @@ Choose how to recover missed slots after an outage:
 | ---------- | --------------------------------------------------------------------------- |
 | `skip`     | Default; move to the next future slot.                                      |
 | `run-once` | Start one catch-up run for the latest missed slot at or before the restart. |
-| `run-each` | Start catch-up runs for the oldest 100 missed slots, oldest first.          |
+| `run-each` | Start catch-up runs for the latest 100 missed slots, oldest first.          |
 
 Trigger payloads contain `scheduledFor` and `catchUp`. The schedule advances before firing, so a crash at that boundary can lose that firing. `GG_TIMER_POLL_MS` controls schedule polling and timer checks, default 1000 milliseconds.
 
-After a long outage `run-once` still starts exactly one catch-up run, for the latest missed slot at or before the restart, however many slots were missed. `run-each` starts at most 100 catch-up runs per schedule: it keeps the oldest 100 missed slots, runs them oldest first, drops every later missed slot with a warning in the log, and moves the schedule to its next future slot.
+After a long outage `run-once` still starts exactly one catch-up run, for the latest missed slot at or before the restart, however many slots were missed. `run-each` starts at most 100 catch-up runs per schedule: it keeps the latest 100 missed slots, runs them oldest first, drops the older missed slots with a warning in the log naming the number dropped and the first retained slot, and moves the schedule to its next future slot.
 
 ## Receive a signed webhook
 

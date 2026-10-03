@@ -202,16 +202,20 @@ describe('CronScheduler.recover (missed-fire policies)', () => {
     return { scheduler, fires, count, row };
   }
 
-  it('skip moves to the next future slot without firing', async () => {
-    const { fires, count, row } = await outage('skip');
-    expect(count).toBe(0);
-    expect(fires).toEqual([]);
-    expect(row?.nextFireAt).toBe('2026-03-01T05:00:00.000Z');
-    expect(row?.lastFiredAt).toBeUndefined();
-  });
+  it.each([undefined, 2])(
+    'skip moves to the next future slot without firing (cap %s)',
+    async (cap) => {
+      const { fires, count, row } = await outage('skip', cap);
+      expect(count).toBe(0);
+      expect(fires).toEqual([]);
+      expect(row?.nextFireAt).toBe('2026-03-01T05:00:00.000Z');
+      expect(row?.lastFiredAt).toBeUndefined();
+      expect(logger.lines).toEqual([]);
+    },
+  );
 
-  it('run-once fires one catch-up run for the latest missed slot', async () => {
-    const { fires, count, row } = await outage('run-once');
+  it.each([undefined, 2])('run-once fires the latest missed slot (cap %s)', async (cap) => {
+    const { fires, count, row } = await outage('run-once', cap);
     expect(count).toBe(1);
     expect(fires.map((f) => [f.scheduledFor, f.catchUp])).toEqual([
       ['2026-03-01T04:00:00.000Z', true],
@@ -220,29 +224,102 @@ describe('CronScheduler.recover (missed-fire policies)', () => {
       lastFiredAt: '2026-03-01T04:00:00.000Z',
       nextFireAt: '2026-03-01T05:00:00.000Z',
     });
+    expect(logger.lines).toEqual([]);
   });
 
-  it('run-each fires once per missed slot', async () => {
-    const { fires, scheduler } = await outage('run-each');
+  it.each([undefined, 4])(
+    'run-each fires every slot up to the cap without a warning (cap %s)',
+    async (cap) => {
+      const { fires, count, scheduler } = await outage('run-each', cap);
+      expect(count).toBe(4);
+      expect(fires.map((f) => f.scheduledFor)).toEqual([
+        '2026-03-01T01:00:00.000Z',
+        '2026-03-01T02:00:00.000Z',
+        '2026-03-01T03:00:00.000Z',
+        '2026-03-01T04:00:00.000Z',
+      ]);
+      expect(logger.lines).toEqual([]);
+      // Nothing is due again until 05:00.
+      expect(await scheduler.poll()).toBe(0);
+    },
+  );
+
+  it('run-each with a zero cap drops all missed slots without firing', async () => {
+    const { fires, count, row } = await outage('run-each', 0);
+    expect(count).toBe(0);
+    expect(fires).toEqual([]);
+    expect(row?.lastFiredAt).toBeUndefined();
+    expect(row?.nextFireAt).toBe('2026-03-01T05:00:00.000Z');
+    expect(logger.lines).toEqual([
+      {
+        level: 'warn',
+        obj: { scheduleId: row?.id, cap: 0, dropped: 4, firstRetainedSlot: undefined },
+        msg: 'cron catch-up capped; older missed slots dropped: 4; first retained slot: none',
+      },
+    ]);
+  });
+
+  it('run-each retains the latest slots at the cap and warns', async () => {
+    const { fires, count, row } = await outage('run-each', 2);
+    expect(count).toBe(2);
     expect(fires.map((f) => f.scheduledFor)).toEqual([
-      '2026-03-01T01:00:00.000Z',
-      '2026-03-01T02:00:00.000Z',
       '2026-03-01T03:00:00.000Z',
       '2026-03-01T04:00:00.000Z',
     ]);
-    // Nothing is due again until 05:00.
-    expect(await scheduler.poll()).toBe(0);
+    expect(row).toMatchObject({
+      lastFiredAt: '2026-03-01T04:00:00.000Z',
+      nextFireAt: '2026-03-01T05:00:00.000Z',
+    });
+    expect(logger.lines).toEqual([
+      {
+        level: 'warn',
+        obj: {
+          scheduleId: row?.id,
+          cap: 2,
+          dropped: 2,
+          firstRetainedSlot: '2026-03-01T03:00:00.000Z',
+        },
+        msg: 'cron catch-up capped; older missed slots dropped: 2; first retained slot: 2026-03-01T03:00:00.000Z',
+      },
+    ]);
   });
 
-  it('run-each stops at the cap and warns', async () => {
-    const { fires, row } = await outage('run-each', 2);
-    expect(fires.map((f) => f.scheduledFor)).toEqual([
-      '2026-03-01T01:00:00.000Z',
-      '2026-03-01T02:00:00.000Z',
-    ]);
-    expect(row?.nextFireAt).toBe('2026-03-01T05:00:00.000Z');
-    expect(logger.lines.some((l) => l.msg.startsWith('cron catch-up capped'))).toBe(true);
+  it('run-each drops the 50 oldest of 150 missed slots and fires the latest 100 oldest first', async () => {
     expect(RUN_EACH_CAP).toBe(100);
+    await store.replaceForVersion('loop', 'v1', [
+      draft({
+        expression: '* * * * *',
+        missedFirePolicy: 'run-each',
+        nextFireAt: '2026-03-01T00:00:00.000Z',
+      }),
+    ]);
+    // Include the slot exactly at recovery: 00:00 through 02:29 is 150 missed slots.
+    clock.set('2026-03-01T02:29:00.000Z');
+    const scheduler = new CronScheduler(store, clock, { logger });
+    const fires = collect(scheduler);
+    expect(await scheduler.recover()).toBe(100);
+    const firstRetainedSlot = '2026-03-01T00:50:00.000Z';
+    expect(fires.map((f) => [f.scheduledFor, f.catchUp])).toEqual(
+      Array.from({ length: 100 }, (_, i) => [
+        new Date(Date.parse(firstRetainedSlot) + i * 60_000).toISOString(),
+        true,
+      ]),
+    );
+    const [row] = await store.listEnabled();
+    expect(row).toMatchObject({
+      lastFiredAt: '2026-03-01T02:29:00.000Z',
+      nextFireAt: '2026-03-01T02:30:00.000Z',
+    });
+    expect(logger.lines).toEqual([
+      {
+        level: 'warn',
+        obj: { scheduleId: row?.id, cap: 100, dropped: 50, firstRetainedSlot },
+        msg: 'cron catch-up capped; older missed slots dropped: 50; first retained slot: 2026-03-01T00:50:00.000Z',
+      },
+    ]);
+    expect(await scheduler.recover()).toBe(0);
+    expect(await scheduler.poll()).toBe(0);
+    expect(fires).toHaveLength(100);
   });
 
   it('arms schedules without a next slot and leaves future ones alone', async () => {
