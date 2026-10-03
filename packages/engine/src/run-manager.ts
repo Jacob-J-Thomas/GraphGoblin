@@ -532,10 +532,13 @@ export class RunManager {
       // so a graph cycle (a decision routing back to itself) would otherwise starve timers, API
       // requests, and the very cancel request that could stop it.
       await new Promise<void>((resolve) => setTimeout(resolve, 0));
-      if (controller.signal.aborted || (await this.mustGet(runId)).cancelRequestedAt) {
+      // Re-read after the yield: a pause or cancel may have landed while this run was parked.
+      const current = await this.mustGet(runId);
+      if (controller.signal.aborted || current.cancelRequestedAt) {
         await this.finalizeCancel(runId);
         return;
       }
+      if (current.status === 'paused') return;
       const node = nodeById(def, nodeId);
       if (!node) {
         await this.failRun(runId, {
