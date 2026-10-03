@@ -31,7 +31,7 @@
 - The script node executes arbitrary user programs by design. In 1.0 they run as the GraphGoblin process user on the user's own machine. This is acceptable for a single-user tool and is stated plainly in the UI.
 - Codex sessions run under Codex's own sandbox with the mode set on the node. The default is `workspace-write`. `danger-full-access` is allowed but highlighted in the editor.
 - Post-1.0 multi-tenant hosting requires per-run isolation, which is why the runner abstraction exists: a remote runner can be a container.
-- Expressions and templates run in-process. JSONata evaluation has a cooperative time and depth budget (05), and Liquid has no filesystem access. Neither can interrupt a native regular-expression match, so regexes are checked statically before they run: JSONata regex literals and the patterns of the `redact` and `replace` mutations are rejected when they contain a back-reference, a repeated group that contains another repetition, or a repeated group whose alternatives can start with the same character (`packages/domain/src/regex-safety.ts`, ADV-007). The check is conservative and syntactic. Residual risk: polynomial backtracking (several adjacent unbounded wildcards such as `.*.*.*x` against a very large string) and memory exhaustion are not bounded in-process, and Liquid has no CPU or output-size ceiling. For a single-user local tool the author of the expression is the owner; a hosted product needs evaluation in a worker or child process with an external deadline and bounded input and output, behind an evaluation port so the domain stays pure.
+- Expressions and templates run in-process. JSONata evaluation has a cooperative time and depth budget (05), and Liquid has no filesystem access. Neither can interrupt a native regular-expression match, so regexes are checked statically before they run: JSONata regex literals and the patterns of the `redact` and `replace` mutations are rejected when they contain a back-reference, a repeated group that contains another repetition, or a repeated group whose body can match the empty string or split the same text two ways, looking through nested groups (`packages/domain/src/regex-safety.ts`, ADV-007). JSONata cannot turn a string into a regex except through `$eval`, which compiles a string at run time; it is replaced by a binding that compiles through the same check. The check is conservative and syntactic: it can reject a harmless pattern (rewrite it, for example without an optional part that overlaps what follows), and it is a heuristic, not a proof that every accepted pattern is linear. Residual risk: polynomial backtracking (several adjacent unbounded wildcards such as `.*.*.*x` against a very large string) and memory exhaustion are not bounded in-process, and Liquid has no CPU or output-size ceiling. For a single-user local tool the author of the expression is the owner; a hosted product needs evaluation in a worker or child process with an external deadline and bounded input and output, behind an evaluation port so the domain stays pure.
 
 ## Retention (Decided)
 
@@ -40,6 +40,7 @@
 ## Distribution (Decided)
 
 - The product ships as a container image and as a plain Node application installed with pnpm. Both serve the PWA from the API process.
+- Run exactly one API process per data directory. Runs, timers, and schedules are executed by that process's run manager and scheduler, with no lease between processes; two processes over one database would execute the same run twice (05, "One run manager per store").
 - Preflight on first run checks Node version, Codex CLI presence and login, the data directory, and the master key source. See "First-run preflight" below.
 - Updates to the PWA are delivered through the service worker prompt. Updates to the backend are a new image or a `pnpm install` plus restart; migrations run at boot.
 
@@ -62,4 +63,4 @@
 
 ## Multi-tenant checklist for later (recorded)
 
-Owner scoping enforced in every repository method, auth provider with OIDC, per-user secret keys, remote runners with isolation, Postgres, scheduler lease, rate limits per owner, audit log of control actions.
+Owner scoping enforced in every repository method, auth provider with OIDC, per-user secret keys, remote runners with isolation, Postgres, scheduler lease and run-execution lease (1.0 supports one API process, with one run manager and one scheduler, per data directory: a second process over the same database would execute queued and recovered runs twice and fire schedules twice), rate limits per owner, audit log of control actions.

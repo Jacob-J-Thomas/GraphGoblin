@@ -184,6 +184,7 @@ M8 notes (WP-G, adversarial design review fixes, 2026-10-03): a design review by
 - **Expressions**: regex literals in JSONata and the `redact`/`replace` patterns pass a static check against catastrophic backtracking before they run (`packages/domain/src/regex-safety.ts`); the residual risk is in 11.
 - **API**: every private route, reads included, requires `<resource>:read` or `<resource>:write` (write implies read), checked before the body is parsed; resource ids in paths must be ULIDs (400 otherwise). See "Authentication" in 07.
 - **Windows**: a real child-and-grandchild cancellation test passes on Windows 11 (`taskkill /T /F`).
+- **Second review round**: a cross-vendor review requested changes (nine findings). The engine now writes the log before the status and completes transitions from the log at recovery: wakes are conditional appends checked against a wait identity (`startedSeq`, carried by timer keys), terminal events precede terminal status, a run paused while parked resumes to waiting, timers are acknowledged only on successful delivery and re-armed with both deadlines, thread snapshots are verified checkpoints (migration `0002`), and a loop an active run can still start cannot be deleted. The regex check now sees through nested groups and covers `$eval`. 1.0 runs one API process per data directory (no execution lease). Details in the review report and the WP-G notes in 05.
 
 M8 notes (WP-F1, backend and tooling, 2026-10-03):
 
