@@ -332,6 +332,10 @@ export async function createContainer(
           try {
             await handle.migrate();
             migrated = true;
+            if (config.jevApiKey && (await ownerSecrets.resolve(JEV_SECRET)) === undefined) {
+              await ownerSecrets.set(JEV_SECRET, config.jevApiKey);
+              logger.info({}, 'seeded jev-api-key from GG_JEV_API_KEY');
+            }
             await jev.init();
             await jev.refresh();
             await catalog.seed();

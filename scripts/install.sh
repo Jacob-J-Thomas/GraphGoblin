@@ -74,6 +74,13 @@ if [ -n "${GG_DATA_DIR:-}" ]; then
   prefix="GG_DATA_DIR='${data_dir}' "
 fi
 
+printf '\n'
+for name in GG_JEV_API_KEY JEV_API_KEY; do
+  presence='absent or empty'
+  if [ -n "${!name:-}" ]; then presence='present'; fi
+  printf 'Jev environment: %s %s\n' "${name}" "${presence}"
+done
+
 cat <<EOF
 
 Start GraphGoblin from the repository root with either of:

@@ -26,6 +26,7 @@ describe('loadConfig', () => {
     expect(config.defaultModel).toBe('gpt-6-luna');
     expect(config.masterKey).toBeUndefined();
     expect(config.publicUrl).toBeUndefined();
+    expect(config.jevApiKey).toBeUndefined();
   });
 
   it('parses overrides and rejects bad values', () => {
@@ -47,6 +48,20 @@ describe('loadConfig', () => {
     });
     expect(() => loadConfig({ GG_PORT: 'nope' })).toThrow(/invalid configuration/);
     expect(() => loadConfig({ GG_DEFAULT_EFFORT: 'turbo' })).toThrow(/GG_DEFAULT_EFFORT/);
+  });
+
+  it.each([
+    { env: { GG_JEV_API_KEY: 'test-primary-key' }, expected: 'test-primary-key' },
+    { env: { JEV_API_KEY: 'test-fallback-key' }, expected: 'test-fallback-key' },
+    {
+      env: { GG_JEV_API_KEY: 'test-primary-key', JEV_API_KEY: 'test-fallback-key' },
+      expected: 'test-primary-key',
+    },
+    { env: { GG_JEV_API_KEY: '' }, expected: undefined },
+    { env: { JEV_API_KEY: '' }, expected: undefined },
+    { env: { GG_JEV_API_KEY: '', JEV_API_KEY: 'test-fallback-key' }, expected: undefined },
+  ])('resolves the Jev environment seed ($env)', ({ env, expected }) => {
+    expect(loadConfig(env).jevApiKey).toBe(expected);
   });
 });
 

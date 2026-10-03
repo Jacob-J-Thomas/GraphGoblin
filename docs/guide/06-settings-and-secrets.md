@@ -35,7 +35,13 @@ The owner defaults in **Settings → Default model** and **Default effort** (`PU
 
 In **Secrets**, enter a name and value, then click **Set secret**, or send `PUT /secrets/{name}` with a body of `{ "value": "..." }`. Names start with a letter and contain up to 128 letters, digits, `_`, `.`, or `-`. Values are write-only: listing returns names and timestamps, and setting a secret returns metadata rather than the value. Loop configs carry references; the server resolves them during execution. Do not paste secret values into prompts, expressions, or ordinary config fields.
 
-Store your Jev API key with this exact name:
+To configure Jev without pasting a key into Settings, set the machine environment variable `GG_JEV_API_KEY` once and start the API in a process that inherits it. An existing `JEV_API_KEY` works unchanged when `GG_JEV_API_KEY` is unset. After migration and before Jev initializes, startup seeds the local owner's encrypted secret only when it is absent. The secret store wins over both variables: restarting with a different environment value never overwrites an existing secret. An explicitly empty `GG_JEV_API_KEY` disables seeding, including the fallback. No plaintext file or secret value is logged; the startup message only says `seeded jev-api-key from GG_JEV_API_KEY`.
+
+Once seeded, the key stays available across restarts even if the environment variable is removed. To rotate it, use **Set secret** or `PUT /secrets/{name}`. Deleting it refreshes Jev immediately; a later API start seeds it again if the variable is still set. A read-only preflight before first startup may warn that the Jev secret is missing; it does not seed secrets.
+
+For Docker Compose, uncomment the `GG_JEV_API_KEY` line in `docker-compose.yml` to forward the host environment variable, including the `JEV_API_KEY` fallback, into the API container. The key value stays in the environment rather than the compose file.
+
+You can also store your Jev API key manually with this exact name:
 
 ```text
 jev-api-key

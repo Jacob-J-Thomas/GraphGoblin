@@ -32,6 +32,7 @@ const EnvSchema = z.object({
    * `apps/web/dist` when it has been built (see `bundledWebDist`). Empty: no web app.
    */
   GG_WEB_DIST: z.string().optional(),
+  GG_JEV_API_KEY: z.string().optional(),
 });
 
 export interface ApiConfig {
@@ -54,6 +55,8 @@ export interface ApiConfig {
   codexBinary?: string;
   /** Absolute path of the built web app to serve under /app/, if configured. */
   webDist?: string;
+  /** Seeds the local owner's Jev secret at startup only when it is absent. */
+  jevApiKey?: string;
 }
 
 /** The default data directory: `~/.graphgoblin`. */
@@ -89,6 +92,7 @@ export function loadConfig(
   const e = parsed.data;
   const dataDir = resolve(e.GG_DATA_DIR || defaultDataDir());
   const webDist = e.GG_WEB_DIST ?? options.webDistFallback;
+  const jevApiKey = e.GG_JEV_API_KEY ?? env.JEV_API_KEY;
   return {
     host: e.GG_HOST,
     port: e.GG_PORT,
@@ -106,5 +110,6 @@ export function loadConfig(
     ...(e.GG_PUBLIC_URL ? { publicUrl: e.GG_PUBLIC_URL } : {}),
     ...(e.GG_CODEX_BINARY ? { codexBinary: e.GG_CODEX_BINARY } : {}),
     ...(webDist ? { webDist: resolve(webDist) } : {}),
+    ...(jevApiKey ? { jevApiKey } : {}),
   };
 }
