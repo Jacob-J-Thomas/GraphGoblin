@@ -57,7 +57,7 @@ Secret reads never send plaintext back to the browser or API client. Server-side
 
 ## Create API keys
 
-Create a key while local trusted mode is enabled, copy the token immediately, and keep an administrative key before switching authentication on. **Create key** in the UI grants the wildcard scope. Use REST to request narrower write scopes:
+Create a key while local trusted mode is enabled, copy the token immediately, and keep an administrative key before switching authentication on. **Create key** in the UI requests the wildcard scope, so use local trusted mode or a key holding `*` for that action. Use REST to request narrower scopes:
 
 ```http
 POST /api-keys
@@ -87,7 +87,7 @@ $created = Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:4747/api-keys' 
 $created.token
 ```
 
-The response's `token` is returned once; SQLite stores its hash. Omitting `scopes` grants `*`. Authenticate with:
+The response's `token` is returned once; SQLite stores its hash. Local trusted mode and callers whose key holds `*` may grant any scopes; omitting `scopes` grants `*` only for them. A scoped caller needs `api-keys:write` to create a key and must list `scopes` explicitly, or the API returns `400 VALIDATION_FAILED`. It may grant only scopes it holds itself, including read scopes implied by its write scopes (`loops:write` covers `loops:read`), and may never grant `*`. An unheld scope or `*` returns `403 SCOPE_NOT_DELEGABLE`, with the offending scopes in `detail` and `errors.scopes`; no key is created. An explicit empty list creates a key with no access. Authenticate with:
 
 ```http
 Authorization: Bearer <saved-token>
@@ -99,11 +99,11 @@ Authorization: Bearer <saved-token>
 | `runs:write`            | Start, cancel, pause, resume, provide input, and send signals. |
 | `settings:write`        | Change settings and the model catalog.                         |
 | `secrets:write`         | Set and delete secrets.                                        |
-| `api-keys:write`        | Create and revoke keys.                                        |
+| `api-keys:write`        | Create keys within the caller's scopes and revoke keys.        |
 | `events:write`          | Submit inbound events.                                         |
 | `*`                     | All checked operations; UI-created keys use this scope.        |
 
-> Coming in 1.0: Read-scope enforcement described by the API design. Today authenticated keys can read owner data regardless of their write scopes; the current read routes do not perform separate scope checks.
+Every private route requires the matching resource's read or write scope. A write scope also grants read access for that resource; a key carrying only a read scope cannot grant the corresponding write scope.
 
 Set the requirement in the API terminal and restart:
 
@@ -115,7 +115,7 @@ $env:GG_REQUIRE_API_KEY = 'true'
 export GG_REQUIRE_API_KEY=true
 ```
 
-A missing, malformed, or revoked key returns 401; an insufficient write scope returns 403. A wrong key is rejected even in trusted mode. Public health, version, OpenAPI, API-doc, and signed webhook routes remain exempt. Keep the API on localhost and use [MCP's key configuration](05-mcp-and-codex-plugin.md#start-the-mcp-server) for agent clients.
+A missing, malformed, or revoked key returns 401; a key lacking the route's scope returns 403 `FORBIDDEN`. A wrong key is rejected even in trusted mode, and presenting a scoped key in trusted mode still limits it to its own scopes. Public health, version, OpenAPI, API-doc, and signed webhook routes remain exempt. Keep the API on localhost and use [MCP's key configuration](05-mcp-and-codex-plugin.md#start-the-mcp-server) for agent clients.
 
 Revoke an unused key in Settings while using trusted mode, or through authenticated REST:
 

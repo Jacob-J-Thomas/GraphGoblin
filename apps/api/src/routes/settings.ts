@@ -1,6 +1,7 @@
 import { EffortSchema, JsonValueSchema, UlidSchema } from '@graphgoblin/contracts';
 import { z } from 'zod';
 import type { Container } from '../container.js';
+import { hasScope } from '../plugins/auth.js';
 import { problem } from '../plugins/errors.js';
 import type { ApiInstance } from '../types.js';
 
@@ -169,18 +170,45 @@ export function registerSettingsRoutes(app: ApiInstance, container: Container): 
       schema: {
         tags: ['api-keys'],
         summary: 'Create an API key; the token is shown once',
+        description:
+          'Requires api-keys:write. Scoped callers must list scopes explicitly (400 VALIDATION_FAILED) ' +
+          'and may grant only scopes they hold; write implies read. Wildcard or unheld scopes return ' +
+          '403 SCOPE_NOT_DELEGABLE with offending scopes in errors.scopes. Local trusted mode and ' +
+          'wildcard callers may grant any scopes; only they may omit scopes to default to ["*"].',
         body: z.object({
           label: z.string().min(1).max(120),
-          scopes: z.array(z.string()).default(['*']),
+          scopes: z.array(z.string()).optional(),
         }),
         response: { 201: z.object({ key: ApiKeySchema, token: z.string() }) },
       },
     },
     async (request, reply) => {
+      const scopes = request.body.scopes;
+      if (!hasScope(request.auth.scopes, '*')) {
+        if (scopes === undefined) {
+          return problem(
+            reply,
+            400,
+            'VALIDATION_FAILED',
+            'scoped API keys must list scopes explicitly when creating a key',
+            [{ path: '/scopes', message: 'scopes is required for scoped API-key callers' }],
+          );
+        }
+        const offendingScopes = scopes.filter((scope) => !hasScope(request.auth.scopes, scope));
+        if (offendingScopes.length > 0) {
+          return problem(
+            reply,
+            403,
+            'SCOPE_NOT_DELEGABLE',
+            `this key cannot grant the following scopes: ${offendingScopes.join(', ')}`,
+            { scopes: offendingScopes },
+          );
+        }
+      }
       const { record, token } = await repos.apiKeys.create(
         request.auth.ownerId,
         request.body.label,
-        request.body.scopes,
+        scopes ?? ['*'],
       );
       reply.status(201);
       return { key: record, token };

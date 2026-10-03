@@ -1439,7 +1439,10 @@ export interface paths {
             };
         };
         put?: never;
-        /** Create an API key; the token is shown once */
+        /**
+         * Create an API key; the token is shown once
+         * @description Requires api-keys:write. Scoped callers must list scopes explicitly (400 VALIDATION_FAILED) and may grant only scopes they hold; write implies read. Wildcard or unheld scopes return 403 SCOPE_NOT_DELEGABLE with offending scopes in errors.scopes. Local trusted mode and wildcard callers may grant any scopes; only they may omit scopes to default to ["*"].
+         */
         post: {
             parameters: {
                 query?: never;
@@ -1451,11 +1454,6 @@ export interface paths {
                 content: {
                     "application/json": {
                         label: string;
-                        /**
-                         * @default [
-                         *       "*"
-                         *     ]
-                         */
                         scopes?: string[] | undefined;
                     };
                 };
