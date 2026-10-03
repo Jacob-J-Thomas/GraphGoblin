@@ -170,13 +170,11 @@ To emit from another loop, add an `event` return channel to its exit. Exit-gener
 
 The self-trigger guard skips any loop already in the emitting run's chain, including parent subloops and earlier event callers. The chain stops at eight runs. The event remains recorded and skipped triggers produce warnings. An API-submitted event starts a fresh chain.
 
-Open **Events** for stored types, dedupe keys, and payloads. Fetch the API listing to inspect `source` and `runIds`:
+Open **Events** for each stored event's received time, type, source, dedupe key, payload, and **Started runs**, which links to every run the event started (or says none). The API listing returns the same `source` and `runIds`:
 
 ```http
 GET /events?type=issue-ready&limit=100
 ```
-
-> Coming in 1.0: Triggered-run links on the Events screen. Today the screen shows received time, type, dedupe key, and payload; use the API's `runIds` to find the runs.
 
 ## Poll without inbound access
 

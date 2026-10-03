@@ -14,19 +14,21 @@ The editor lives at this browser route:
 /app/loops/<loop-id>/edit
 ```
 
-Edits autosave after a short debounce and are mirrored in IndexedDB. A schema-invalid draft stays on the device with **Saved on this device only**; fix it before relying on the server copy. Offline saves retry on reconnect. An unsynced local draft takes precedence on reload.
+Edits autosave after a short debounce and are mirrored in IndexedDB. A schema-invalid draft stays on the device with **Saved on this device only**; fix it before relying on the server copy. Offline saves retry on reconnect. An unsynced local draft takes precedence on reload, unless the server saved a newer draft since; then the server copy is shown and the device copy is offered with **Use this device's copy instead**.
+
+Every save tells the server which copy the edit started from. If another tab, device, or API client saved the draft in between, nothing is overwritten: **The draft changed on the server** appears, autosave stops, and you choose **Reload server draft** (take theirs, dropping this editor's unsaved changes) or **Overwrite with this copy** (keep yours). Until you choose, edits stay on this device and **Publish** refuses. API clients get the same protection by sending `If-Match` with the `draftToken` from `GET /loops/{id}` (see [API, streaming, and MCP](../07-api-and-streaming.md#draft-conflicts-decided-wp-f2-adr-0015)).
 
 ## Choose nodes
 
 **Trigger (`trigger`).** Choose `subtype`: `manual`, `cron`, `webhook`, `event`, or `poll`. For manual starts, set `inputSchema` to validate input and `exposeTo` to declare intended `ui`, `api`, and `mcp` surfaces. The trigger records its payload as an output and follows `out`. Configure automatic sources in [Triggers](04-triggers.md).
 
-> Coming in 1.0: Surface-aware start and input controls. Today `exposeTo` is recorded and described to MCP callers, but the web launcher and engine commands do not enforce it. Use API authentication for access control.
+> After 1.0: Surface-aware start and input controls. Today `exposeTo` is recorded and described to MCP callers, but the web launcher and engine commands do not enforce it. Use API authentication for access control.
 
 **Decision (`decision`).** Define at least two `routes`, each with a unique `label` and `description`; route labels cannot be `in`. Set a Liquid `question` and ordered `strategy` list using `jev`, `codex`, or `expression`. An expression strategy needs `expression.jsonata` returning a route label. Limit context with `context.messages`, `context.vars`, and `context.includeLastOutput`; declare selected variables in loop settings. Set `jev.minConfidence` or `codex.model` and `codex.effort` when needed. An unavailable decider, an unknown label, or a Jev answer below `minConfidence` falls through to the next strategy. When every strategy falls through, the run fails with `DECISION_NO_ROUTE`; an error raised by a decider fails the run at once. The chosen route is recorded as the node's output. Connect every route.
 
 **Inference (`inference`).** Set `prompt.template` for a Codex turn. Choose `model`, `effort`, and `session.policy`: `fresh`, `resume-previous`, or `resume-named` with a `key`. Set `harnessOptions.sandbox` to `read-only`, `workspace-write` (default), or `danger-full-access`; `approval` defaults to `never`, while network and web search are off unless enabled. Use `input` transformations, `contextFiles`, and `output.transforms` to shape context. Set `output.schema.jsonSchema` for structured output and configure its `repair` policy. `output.captureTranscript` defaults to `artifact`, `output.toMessages` to `final`; `timeoutSeconds` is optional. The output goes to `lastOutput.value` and the node follows `out`.
 
-> Coming in 1.0: Resolution of inference `capabilities.mcpServers`, `capabilities.plugins`, and `capabilities.skills` profiles. The current Codex adapter ignores these names; use explicit `harnessOptions.configOverrides` for Codex configuration today.
+> After 1.0: Resolution of inference `capabilities.mcpServers`, `capabilities.plugins`, and `capabilities.skills` profiles. The current Codex adapter ignores these names; use explicit `harnessOptions.configOverrides` for Codex configuration today.
 
 **Script (`script`).** Set an executable `command`, templated `args`, `cwd` (default `workspace`), and optional `env` and `timeoutSeconds`. Commands execute as the API's operating-system user, without a shell wrapper; invoke a shell explicitly if your program needs one. `stdin` accepts `thread`, `last-output`, or `none`; `stdout` accepts `last-output`, `patch` (RFC 6902), or `ignore`. In `env`, use the secret-reference syntax in [Settings and secrets](06-settings-and-secrets.md#store-secrets). Map expected nonzero codes through `exitCodeRoutes`; an unmapped nonzero code fails the run. Connect `out` and every additional route. Make scripts safe to execute again after interruption.
 
