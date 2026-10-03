@@ -125,7 +125,7 @@ Questions to settle together, tracked in 13:
 ```ts
 type Invocation = {
   id: string;
-  source: 'manual.ui' | 'manual.api' | 'manual.mcp' | 'cron' | 'webhook' | 'event' | 'subloop';
+  source: 'manual.ui' | 'manual.api' | 'manual.mcp' | 'cron' | 'webhook' | 'event' | 'poll' | 'subloop';
   caller?: { kind: 'user' | 'api-key' | 'mcp-client' | 'run'; id: string; label?: string };
   trigger: {
     nodeId: string;

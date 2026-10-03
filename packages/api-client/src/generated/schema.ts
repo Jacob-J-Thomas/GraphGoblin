@@ -1530,7 +1530,11 @@ export interface paths {
         };
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    type?: string;
+                    before?: string;
+                    limit?: number;
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;
@@ -1550,7 +1554,9 @@ export interface paths {
                                 type: string;
                                 payload: components["schemas"]["JsonValue"];
                                 dedupeKey?: string | undefined;
+                                source: string;
                                 receivedAt: string;
+                                runIds: string[];
                             }[];
                         };
                     };
@@ -1587,7 +1593,134 @@ export interface paths {
                             type: string;
                             payload: components["schemas"]["JsonValue"];
                             dedupeKey?: string | undefined;
+                            source: string;
                             receivedAt: string;
+                            runIds: string[];
+                            duplicate: boolean;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/loops/{id}/triggers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            schedules: {
+                                id: string;
+                                ownerId: string;
+                                loopId: string;
+                                versionId: string;
+                                triggerNodeId: string;
+                                expression: string;
+                                timezone: string;
+                                /** @enum {string} */
+                                missedFirePolicy: "skip" | "run-once" | "run-each";
+                                enabled: boolean;
+                                nextFireAt?: string | undefined;
+                                lastFiredAt?: string | undefined;
+                                createdAt: string;
+                            }[];
+                            webhooks: {
+                                id: string;
+                                ownerId: string;
+                                loopId: string;
+                                versionId: string;
+                                triggerNodeId: string;
+                                path: string;
+                                secretRef: string;
+                                signatureHeader: string;
+                                replayWindowSeconds: number;
+                                enabled: boolean;
+                                createdAt: string;
+                            }[];
+                            polls: {
+                                ownerId: string;
+                                loopId: string;
+                                versionId: string;
+                                triggerNodeId: string;
+                                intervalSeconds: number;
+                                nextPollAt: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/hooks/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    token: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                202: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            event: {
+                                id: string;
+                                ownerId: string;
+                                type: string;
+                                payload: components["schemas"]["JsonValue"];
+                                dedupeKey?: string | undefined;
+                                source: string;
+                                receivedAt: string;
+                                runIds: string[];
+                            };
+                            runId?: string | undefined;
+                            filtered: boolean;
                         };
                     };
                 };
@@ -3003,7 +3136,7 @@ export interface components {
             invocation: {
                 id: string;
                 /** @enum {string} */
-                source: "manual.ui" | "manual.api" | "manual.mcp" | "cron" | "webhook" | "event" | "subloop";
+                source: "manual.ui" | "manual.api" | "manual.mcp" | "cron" | "webhook" | "event" | "poll" | "subloop";
                 caller?: {
                     /** @enum {string} */
                     kind: "user" | "api-key" | "mcp-client" | "run" | "system";
@@ -4461,7 +4594,7 @@ export interface components {
             invocation: {
                 id: string;
                 /** @enum {string} */
-                source: "manual.ui" | "manual.api" | "manual.mcp" | "cron" | "webhook" | "event" | "subloop";
+                source: "manual.ui" | "manual.api" | "manual.mcp" | "cron" | "webhook" | "event" | "poll" | "subloop";
                 caller?: {
                     /** @enum {string} */
                     kind: "user" | "api-key" | "mcp-client" | "run" | "system";

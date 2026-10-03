@@ -91,6 +91,8 @@ Every behaviour-affecting setting is passed as a per-thread option on every sess
 
 `HarnessPort.resume` receives the same `HarnessStartRequest` as `start`: the node's model, effort, harness options, capabilities, and working directory, plus the turn. The engine sends it for `resume-previous` and `resume-named` turns, schema-repair turns, and crash-recovery continuations, so `resumeThread(id, options)` gets exactly the thread options `startThread` would, including after a restart. The adapter keeps no per-session memory.
 
+Composition: `apps/api` builds `createCodexAdapters({ logger, model: GG_DEFAULT_MODEL, effort: GG_DEFAULT_EFFORT, codexBinary: GG_CODEX_BINARY })` and registers harness `codex`, the structured port, and the deciders `[jev, codex]` (Jev first, Codex as the fallback; decision nodes select by id and skip an unavailable one). `GG_CODEX_BINARY` is optional: a path to a `codex` executable or `.js` launcher; unset, the SDK's bundled CLI is used. Building the adapters spawns nothing; the CLI starts only with a session or a preflight.
+
 ### Event normalisation (Decided)
 
 | Codex event                                                       | `HarnessEvent`                                                                                                                                                                                                                                                                                          |

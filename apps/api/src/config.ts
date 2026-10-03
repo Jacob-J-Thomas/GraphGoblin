@@ -23,6 +23,7 @@ const EnvSchema = z.object({
   GG_HOOK_RATE_LIMIT: z.coerce.number().int().min(1).max(100_000).default(60),
   GG_SWAGGER_UI: bool.default(true),
   GG_PUBLIC_URL: z.string().optional(),
+  GG_CODEX_BINARY: z.string().optional(),
 });
 
 export interface ApiConfig {
@@ -41,6 +42,8 @@ export interface ApiConfig {
   hookRateLimitPerMinute: number;
   swaggerUi: boolean;
   publicUrl?: string;
+  /** Path to a `codex` executable. Default: the CLI bundled with `@openai/codex-sdk`. */
+  codexBinary?: string;
 }
 
 /** Parse configuration from an environment map. Throws with a readable message on bad values. */
@@ -67,5 +70,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ApiConfig {
     hookRateLimitPerMinute: e.GG_HOOK_RATE_LIMIT,
     swaggerUi: e.GG_SWAGGER_UI,
     ...(e.GG_PUBLIC_URL ? { publicUrl: e.GG_PUBLIC_URL } : {}),
+    ...(e.GG_CODEX_BINARY ? { codexBinary: e.GG_CODEX_BINARY } : {}),
   };
 }

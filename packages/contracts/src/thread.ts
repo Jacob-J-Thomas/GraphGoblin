@@ -15,6 +15,7 @@ export const InvocationSourceSchema = z.enum([
   'cron',
   'webhook',
   'event',
+  'poll',
   'subloop',
 ]);
 export type InvocationSource = z.infer<typeof InvocationSourceSchema>;
