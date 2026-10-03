@@ -2,6 +2,7 @@ import { createClient, type Client, type Transaction } from '@libsql/client';
 import { drizzle, type LibSQLDatabase } from 'drizzle-orm/libsql';
 import { migrate } from 'drizzle-orm/libsql/migrator';
 import { readMigrationFiles } from 'drizzle-orm/migrator';
+import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { schema, type Schema } from './schema.js';
 
@@ -75,22 +76,25 @@ export const YIELD_INTERVAL_MS = 10;
  *
  * libsql's local client does its work in native code and settles its promises without returning
  * to the event loop, so a burst of statements (an executor appending a thousand events back to
- * back) would starve sockets, timers, and SSE flushes until it ended. Before taking the lock, the
- * client therefore yields with `setImmediate` once `YIELD_INTERVAL_MS` have passed since the last
- * yield (docs/10, "Performance baseline").
+ * back) would starve sockets, timers, and SSE flushes until it ended. Once it holds the lock, the
+ * client therefore yields with `setImmediate` when `YIELD_INTERVAL_MS` have passed since the last
+ * yield (docs/10, "Performance baseline"). The lock is taken first, synchronously at submission, so
+ * the yield can never let a later statement overtake one already queued.
  */
-export function serializeClient(inner: Client): Client {
+export function serializeClient(inner: Client, options: { yieldIntervalMs?: number } = {}): Client {
   const mutex = new Mutex();
+  const interval = options.yieldIntervalMs ?? YIELD_INTERVAL_MS;
   let lastYield = performance.now();
   const breathe = async (): Promise<void> => {
-    if (performance.now() - lastYield < YIELD_INTERVAL_MS) return;
+    if (performance.now() - lastYield < interval) return;
     await new Promise<void>((resolve) => setImmediate(resolve));
     lastYield = performance.now();
   };
-  const run = async (fn: () => Promise<unknown>): Promise<unknown> => {
-    await breathe();
-    return mutex.run(fn);
-  };
+  const run = (fn: () => Promise<unknown>): Promise<unknown> =>
+    mutex.run(async () => {
+      await breathe();
+      return fn();
+    });
   const wrapTransaction = (tx: Transaction, release: () => void): Transaction => {
     const finish = (name: 'commit' | 'rollback' | 'close') => async () => {
       try {
@@ -116,9 +120,9 @@ export function serializeClient(inner: Client): Client {
     migrate: (...args: unknown[]) =>
       run(() => (inner.migrate as AnyFn)(...args) as Promise<unknown>),
     transaction: async (...args: unknown[]) => {
-      await breathe();
       const release = await mutex.acquire();
       try {
+        await breathe();
         const tx = (await (inner.transaction as AnyFn)(...args)) as Transaction;
         return wrapTransaction(tx, release);
       } catch (error) {
@@ -135,6 +139,37 @@ export function serializeClient(inner: Client): Client {
       return typeof value === 'function' ? (value as AnyFn).bind(target) : value;
     },
   });
+}
+
+// The URI grammar libsql uses (RFC 3986, but allowing relative `file:` paths).
+const LIBSQL_URI =
+  /^(?<scheme>[A-Za-z][A-Za-z.+-]*):(\/\/(?<authority>[^/?#]*))?(?<path>[^?#]*)(\?[^#]*)?(#.*)?$/su;
+
+/**
+ * The file a libsql URL opens, resolved against the working directory, or undefined for in-memory
+ * and remote databases. Mirrors libsql: percent-decoded path, `file:relative`, `file:/abs`,
+ * `file:///abs`, `file://localhost/abs`, and on Windows `file:///C:/...` (leading slash dropped).
+ */
+export function databaseFilePath(
+  url: string,
+  platform: string = process.platform,
+): string | undefined {
+  if (url === ':memory:') return undefined;
+  const groups = LIBSQL_URI.exec(url)?.groups;
+  if (!groups || groups['scheme']?.toLowerCase() !== 'file') return undefined;
+  const authority = groups['authority'];
+  if (authority !== undefined && authority !== '' && authority.toLowerCase() !== 'localhost') {
+    return undefined;
+  }
+  let path: string;
+  try {
+    path = decodeURIComponent(groups['path'] ?? '');
+  } catch {
+    return undefined;
+  }
+  if (path === '' || path === ':memory:') return undefined;
+  if (platform === 'win32' && /^\/[A-Za-z]:/.test(path)) path = path.slice(1);
+  return resolve(path);
 }
 
 export function openDatabase(options: DatabaseOptions): DatabaseHandle {
