@@ -27,6 +27,8 @@ dependency-cruiser 18 refuses Node 23. Where the default Node is 23, run `check:
 
 ## Commands
 
+On Windows PowerShell, call `pnpm.cmd` (the default execution policy blocks `pnpm.ps1`); Git Bash and cmd can use `pnpm` directly.
+
 ```
 pnpm install
 pnpm build
