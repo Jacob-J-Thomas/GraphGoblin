@@ -172,6 +172,74 @@ describe('validate, draft saves, and publish agree', () => {
     expect(saved.json<{ issues: unknown[] }>().issues).toEqual([]);
   });
 
+  it('accepts a self-reference only when it resolves', async () => {
+    const self = await createLoop(chain('self pinned', subloop('01ARZ3NDEKTSV4RRFFQ69G5FAV')));
+    const id = self.loop.id;
+    const validate = async (ref: ReturnType<typeof subloop>) => {
+      const res = await t.app.inject({
+        method: 'POST',
+        url: `/loops/${id}/validate`,
+        payload: { definition: chain('self pinned', ref) },
+      });
+      return res.json<{ issues: { code: string }[]; publishable: boolean }>();
+    };
+    // Version 1 is the number this draft publishes as; 999 never exists.
+    expect((await validate(subloop(id, 1))).publishable).toBe(true);
+    const pinned = await validate(subloop(id, 999));
+    expect(pinned.publishable).toBe(false);
+    expect(pinned.issues.map((i) => i.code)).toContain('SUBLOOP_NOT_PUBLISHED');
+    await t.app.inject({
+      method: 'PUT',
+      url: `/loops/${id}/draft`,
+      payload: { definition: chain('self pinned', subloop(id, 999)) },
+    });
+    expect((await t.app.inject({ method: 'POST', url: `/loops/${id}/publish` })).statusCode).toBe(
+      422,
+    );
+    // After version 1 is published, a new draft is version 2; 1 resolves as published, 3 does not.
+    await t.app.inject({
+      method: 'PUT',
+      url: `/loops/${id}/draft`,
+      payload: { definition: chain('self pinned', subloop(id, 1)) },
+    });
+    expect((await t.app.inject({ method: 'POST', url: `/loops/${id}/publish` })).statusCode).toBe(
+      200,
+    );
+    expect((await validate(subloop(id, 1))).publishable).toBe(true);
+    expect((await validate(subloop(id, 2))).publishable).toBe(true);
+    expect((await validate(subloop(id, 3))).publishable).toBe(false);
+  });
+
+  it('import reports the same issues as create, including trigger checks', async () => {
+    const definition: LoopDefinitionInput = {
+      ...minimalLoop(),
+      name: 'imported cron',
+      nodes: [
+        {
+          id: 'start',
+          kind: 'trigger',
+          label: 'S',
+          config: { subtype: 'cron', expression: 'not cron' },
+        },
+        done,
+      ],
+    };
+    const created = await createLoop(definition);
+    const imported = await t.app.inject({
+      method: 'POST',
+      url: '/loops/import',
+      payload: {
+        format: 'graphgoblin-loop',
+        formatVersion: 1,
+        exportedAt: '2026-10-03T00:00:00.000Z',
+        loop: definition,
+      },
+    });
+    const codes = imported.json<{ issues: { code: string }[] }>().issues.map((i) => i.code);
+    expect(codes).toContain('CRON_INVALID');
+    expect(codes).toEqual(created.issues.map((i) => i.code));
+  });
+
   it('reports a missing subloop on import', async () => {
     const res = await t.app.inject({
       method: 'POST',

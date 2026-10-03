@@ -50,16 +50,33 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
     return loop;
   }
 
-  /** A published subloop reference must resolve for this owner (docs/03); a self-reference may. */
+  /** The version number the loop's draft has, or would get: what publishing creates. */
+  async function draftVersionNumber(loopId: string): Promise<number> {
+    const versions = await loops.listVersions(loopId);
+    const draft = versions.find((v) => v.status === 'draft');
+    return draft?.version ?? Math.max(0, ...versions.map((v) => v.version)) + 1;
+  }
+
+  /**
+   * A subloop reference must resolve to a published version of a loop of this owner (docs/03).
+   * A loop may reference itself, through `latest` or the number its draft publishes as.
+   */
   async function subloopIssues(
     ownerId: string,
     def: LoopDefinition,
     selfId?: string,
   ): Promise<ValidationIssue[]> {
     const issues: ValidationIssue[] = [];
+    let selfVersion: number | undefined;
     for (const node of nodesOfKind(def, 'subloop')) {
       const { loopId, version } = node.config.loopRef;
-      if (loopId === selfId) continue;
+      if (loopId === selfId) {
+        // A self-reference resolves to the version being published: `latest`, or the number the
+        // draft will publish as. Any other number must be a version that is already published.
+        if (version === 'latest') continue;
+        selfVersion ??= await draftVersionNumber(loopId);
+        if (version === selfVersion) continue;
+      }
       const target = await loops.getLoop(loopId);
       if (!target || target.ownerId !== ownerId) {
         issues.push({
@@ -164,12 +181,14 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
       const imported = importLoop(request.body);
       const created = await loops.create(request.auth.ownerId, imported.definition);
       reply.status(201);
-      const references = await subloopIssues(
+      // The same list as create, validate, draft saves, and publish (importLoop's own issues are
+      // the validateLoop part of it).
+      const issues = await publishIssues(
         request.auth.ownerId,
         imported.definition,
         created.loop.id,
       );
-      return { ...created, issues: [...imported.issues, ...references] };
+      return { ...created, issues };
     },
   );
 
