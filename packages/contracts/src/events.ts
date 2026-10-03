@@ -40,6 +40,12 @@ export const RunEventSchema = z.discriminatedUnion('type', [
     replayOf: ReplayOriginSchema.optional(),
     /** The thread the run starts from, including a subloop seed, so replay needs no other source. */
     initialThread: ContextThreadSchema.optional(),
+    /**
+     * The published version each `latest` subloop reference resolved to when the run was created,
+     * by loop id, covering every loop reachable through subloop references. Every child the run
+     * starts uses these, so a version published mid-run never reaches it (docs/03).
+     */
+    subloopVersions: z.record(UlidSchema, UlidSchema).optional(),
   }),
   z.strictObject({ ...Base, type: z.literal('run.started'), attempt: z.number().int().positive() }),
   z.strictObject({

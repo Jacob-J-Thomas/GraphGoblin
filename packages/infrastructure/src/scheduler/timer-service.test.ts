@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { CapturingLogger, FakeClock } from '@graphgoblin/engine/testing';
 import { MemoryTimerStore } from './memory-timer-store.js';
 import { TimerService } from './timer-service.js';
@@ -25,7 +25,7 @@ describe('MemoryTimerStore', () => {
 });
 
 describe('TimerService', () => {
-  it('fires due timers once, removes them first, and keeps going when a listener fails', async () => {
+  it('keeps a timer whose listener failed and delivers it again on the next poll', async () => {
     const store = new MemoryTimerStore();
     const clock = new FakeClock();
     const logger = new CapturingLogger();
@@ -43,9 +43,13 @@ describe('TimerService', () => {
     clock.advance(1000);
     expect(await service.poll()).toBe(1);
     expect(fired).toEqual(['r1:timer']);
-    expect(logger.lines.some((l) => l.msg === 'timer listener failed')).toBe(true);
-    expect(await store.list('r1')).toEqual([]);
+    expect(logger.lines.some((l) => l.msg.startsWith('timer listener failed'))).toBe(true);
+    // Not acknowledged: the next poll delivers it again, and once every listener succeeds it goes.
+    expect(await store.list('r1')).toHaveLength(1);
     off();
+    expect(await service.poll()).toBe(1);
+    expect(fired).toEqual(['r1:timer', 'r1:timer']);
+    expect(await store.list('r1')).toEqual([]);
     await service.cancel('r2');
     clock.advance(10_000);
     expect(await service.poll()).toBe(0);
@@ -73,6 +77,7 @@ describe('TimerService', () => {
       clock,
       { logger },
     );
+    broken.onFire(() => undefined);
     expect(await broken.poll()).toBe(0);
     expect(logger.lines.at(-1)?.msg).toBe('timer poll failed');
     const silent = new TimerService(
@@ -82,7 +87,38 @@ describe('TimerService', () => {
       } as unknown as MemoryTimerStore,
       clock,
     );
+    silent.onFire(() => undefined);
     expect(await silent.poll()).toBe(0);
+  });
+
+  it('delivers at least once: a timer stays until its listeners return, and a re-arm survives', async () => {
+    const store = new MemoryTimerStore();
+    const clock = new FakeClock();
+    // No listener: nothing can deliver, so nothing is consumed.
+    const idle = new TimerService(store, clock);
+    await idle.schedule('r1', 'heartbeat', new Date(0));
+    expect(await idle.poll()).toBe(0);
+    expect(await store.list('r1')).toHaveLength(1);
+
+    // A listener that dies mid-delivery (a crash) leaves the timer for the next process.
+    const crashed = new TimerService(store, clock);
+    let delivering = false;
+    crashed.onFire(() => {
+      delivering = true;
+      return new Promise<void>(() => undefined);
+    });
+    void crashed.poll();
+    await vi.waitFor(() => expect(delivering).toBe(true), { timeout: 5000 });
+    expect(await store.list('r1')).toHaveLength(1);
+
+    // The next process delivers it; the listener re-arms the same key, which is kept.
+    const next = new TimerService(store, clock);
+    const later = new Date(60_000);
+    next.onFire((runId, key) => next.schedule(runId, key, later));
+    expect(await next.poll()).toBe(1);
+    expect(await store.list('r1')).toEqual([{ runId: 'r1', key: 'heartbeat', at: later }]);
+    await store.acknowledge('r1', 'heartbeat', later);
+    expect(await store.list('r1')).toEqual([]);
   });
 
   it('polls on an interval between start and stop', async () => {
@@ -96,7 +132,8 @@ describe('TimerService', () => {
     await service.schedule('r1', 'k', new Date(0));
     service.start();
     service.start();
-    await new Promise((r) => setTimeout(r, 60));
+    // Wait for the interval to fire rather than a fixed sleep, which is flaky under load.
+    await vi.waitFor(async () => expect(await store.list('r1')).toEqual([]), { timeout: 5000 });
     service.stop();
     service.stop();
     expect(fired).toEqual(['r1']);

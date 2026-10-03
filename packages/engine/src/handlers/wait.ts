@@ -51,7 +51,12 @@ export const waitHandler: NodeHandler<'wait'> = {
       if (config.timeoutSeconds !== undefined) {
         const deadline = new Date(now + config.timeoutSeconds * 1000);
         await ctx.ports.timers.schedule(ctx.run.id, 'timeout', deadline);
-        if (!wait.until) wait = { ...wait, until: deadline.toISOString() };
+        // Both deadlines are kept in the spec, so recovery can re-arm both (docs/05).
+        wait = {
+          ...wait,
+          timeoutAt: deadline.toISOString(),
+          ...(wait.until ? {} : { until: deadline.toISOString() }),
+        };
       }
       return { kind: 'park', patch: [], wait };
     }

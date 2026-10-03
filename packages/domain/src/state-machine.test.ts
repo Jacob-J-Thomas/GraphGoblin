@@ -29,6 +29,7 @@ describe('transitionRun', () => {
     expect(transitionRun('waiting', { type: 'pause' })).toBe('paused');
     expect(transitionRun('paused', { type: 'resume' })).toBe('running');
     expect(transitionRun('failed', { type: 'resume' })).toBe('running');
+    expect(transitionRun('paused', { type: 'resume', parked: true })).toBe('waiting');
     expect(transitionRun('queued', { type: 'cancel' })).toBe('cancelled');
     expect(transitionRun('waiting', { type: 'cancel' })).toBe('cancelled');
     expect(transitionRun('running', { type: 'fail' })).toBe('failed');

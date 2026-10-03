@@ -5,6 +5,7 @@ import {
   RunEventSchema,
   RunRecordSchema,
   RunStatusSchema,
+  UlidSchema,
   type InvocationSource,
   type RunRecord,
 } from '@graphgoblin/contracts';
@@ -13,12 +14,11 @@ import { EngineRequestError } from '@graphgoblin/engine';
 import type { FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import type { Container } from '../container.js';
-import { requireScope } from '../plugins/auth.js';
 import { problem } from '../plugins/errors.js';
 import { streamRunEvents } from '../sse.js';
 import type { ApiInstance } from '../types.js';
 
-const IdParams = z.object({ id: z.string() });
+const IdParams = z.object({ id: UlidSchema });
 
 const SessionSchema = z.object({
   runId: z.string(),
@@ -70,7 +70,6 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
       },
     },
     async (request, reply) => {
-      if (!requireScope(request, reply, 'runs:write')) return reply;
       const loop = await repos.loops.getLoop(request.params.id);
       if (!loop || loop.ownerId !== request.auth.ownerId)
         throw new EngineRequestError('LOOP_NOT_FOUND', `loop ${request.params.id} not found`);
@@ -204,8 +203,7 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
           response: { 200: RunRecordSchema },
         },
       },
-      async (request, reply) => {
-        if (!requireScope(request, reply, 'runs:write')) return reply;
+      async (request) => {
         await ownedRun(request, request.params.id);
         return manager[action](request.params.id, request.auth.actor);
       },
@@ -223,8 +221,7 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
         response: { 200: RunRecordSchema },
       },
     },
-    async (request, reply) => {
-      if (!requireScope(request, reply, 'runs:write')) return reply;
+    async (request) => {
       await ownedRun(request, request.params.id);
       return manager.provideInput(request.params.id, request.body.input, request.auth.actor);
     },
@@ -236,13 +233,12 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
       schema: {
         tags: ['runs'],
         summary: 'Deliver a named signal',
-        params: z.object({ id: z.string(), name: z.string() }),
+        params: z.object({ id: UlidSchema, name: z.string() }),
         body: z.object({ payload: JsonValueSchema.optional() }).default({}),
         response: { 200: z.object({ run: RunRecordSchema, woke: z.boolean() }) },
       },
     },
-    async (request, reply) => {
-      if (!requireScope(request, reply, 'runs:write')) return reply;
+    async (request) => {
       await ownedRun(request, request.params.id);
       return manager.signal(request.params.id, request.params.name, request.body.payload ?? null);
     },
@@ -262,7 +258,6 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
       },
     },
     async (request, reply) => {
-      if (!requireScope(request, reply, 'runs:write')) return reply;
       await ownedRun(request, request.params.id);
       const run = await manager.replay({
         runId: request.params.id,
@@ -297,7 +292,7 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
       schema: {
         tags: ['runs'],
         summary: "Download an artifact from the run's thread",
-        params: z.object({ id: z.string(), artifactId: z.string() }),
+        params: z.object({ id: UlidSchema, artifactId: z.string() }),
       },
     },
     async (request, reply) => {

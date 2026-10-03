@@ -20,6 +20,7 @@ Rules that apply to every package:
 | 2    | WP-I integration and follow-ups (delivered)                 | alongside WP-D       | WP-A, WP-B, WP-C merged  |
 | 3    | WP-F1 backend and tooling hardening (delivered)             | alongside WP-D       | WP-B through WP-E merged |
 | 3    | WP-D2 adversarial QA pass and fixes (delivered)             | alongside WP-F1      | WP-D merged              |
+| 3    | WP-G adversarial design review fixes (delivered)            | alongside WP-F2      | WP-F1 and WP-D2 merged   |
 | 3    | WP-F2 packaging, user guide, adversarial QA, tag 1.0        | no                   | WP-D and WP-F1 merged    |
 
 ## WP-0 - M3 stabilisation
@@ -96,6 +97,12 @@ Delivered: `apps/api` composes the real Codex harness, structured port, and deci
 Read: 04, 07, 09, 10. Depends on: WP-D merged. Deliver: an adversarial QA pass over the built app and the API with every defect recorded and fixed or explicitly left open, the WP-D1 gaps closed (API-key mode, owner defaults in the engine, child-run replay), and an optional `LIVE=1` check through the UI.
 
 Delivered: the report is `qa/2026-10-03-wp-d2.md`; regressions are `apps/web/e2e/qa.spec.ts` and `apps/api/src/qa.test.ts`; the E2E server gained a control port for scripting the fakes; the `LIVE=1` UI spec passed against Codex (`gpt-6-luna`, `low`, read-only). Open items are in the report and as questions 16 to 18 in 13.
+
+## WP-G - Adversarial design review fixes - DELIVERED 2026-10-03
+
+Read: 03, 05, 07, 08, 11, 13, the decisions, and the review report `qa/2026-10-03-adversarial-design-review.md` (Codex, branch `codex-adversarial-design`). Depends on: WP-F1 and WP-D2 merged. Deliver: the review's eight small fixes and four attack-test files ported onto main and reviewed; its eight open findings (ADV-004, 007, 008, 009, 011, 012, 015, 016) and QA-LIMIT-001 closed with tests that fail before the fix; docs in sync.
+
+Delivered: subloop version pinning at parent creation (`run.queued.subloopVersions`); at-least-once timers with recovery re-arming; idempotent cancel (`RunRepository.claimCancel`); child-before-park and recovery reconciliation; log-derived cursor and thread at every executor start; a static regex safety check for JSONata literals and mutation patterns; read scopes on every API route with a route-to-scope table test; ULID path validation with the API client regenerated; a real Windows process-tree cancellation test. A second, cross-vendor review round (nine findings) led to log-first transitions with recovery from the log, wait identities on timers, resume-to-waiting, verified thread checkpoints, delete protection for pinned loops, and a stronger regex check; third and fourth rounds added recorded finalization (per terminal outcome, with durable resume intent), legacy timer re-keying, loop deletion serialized with run creation and replay, an environment-preserving `$eval` with bounded errors, and checkpointed replay state; the report records each finding's status and commit. See the WP-G notes in 05 and the M8 notes in 12.
 
 ## WP-F - Hardening and 1.0 (M8)
 

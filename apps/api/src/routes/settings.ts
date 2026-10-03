@@ -1,7 +1,6 @@
-import { EffortSchema, JsonValueSchema } from '@graphgoblin/contracts';
+import { EffortSchema, JsonValueSchema, UlidSchema } from '@graphgoblin/contracts';
 import { z } from 'zod';
 import type { Container } from '../container.js';
-import { requireScope } from '../plugins/auth.js';
 import { problem } from '../plugins/errors.js';
 import type { ApiInstance } from '../types.js';
 
@@ -61,7 +60,6 @@ export function registerSettingsRoutes(app: ApiInstance, container: Container): 
       },
     },
     async (request, reply) => {
-      if (!requireScope(request, reply, 'settings:write')) return reply;
       const known = KnownSettingsSchema.safeParse(request.body);
       if (!known.success) {
         return problem(
@@ -89,7 +87,6 @@ export function registerSettingsRoutes(app: ApiInstance, container: Container): 
       },
     },
     async (request, reply) => {
-      if (!requireScope(request, reply, 'settings:write')) return reply;
       const deleted = await repos.settings.delete(request.auth.ownerId, request.params.key);
       if (!deleted)
         return problem(reply, 404, 'SETTING_NOT_FOUND', `setting ${request.params.key} not found`);
@@ -123,8 +120,7 @@ export function registerSettingsRoutes(app: ApiInstance, container: Container): 
         response: { 200: SecretSummarySchema },
       },
     },
-    async (request, reply) => {
-      if (!requireScope(request, reply, 'secrets:write')) return reply;
+    async (request) => {
       const summary = await repos
         .secretsFor(request.auth.ownerId)
         .set(request.params.name, request.body.value);
@@ -144,7 +140,6 @@ export function registerSettingsRoutes(app: ApiInstance, container: Container): 
       },
     },
     async (request, reply) => {
-      if (!requireScope(request, reply, 'secrets:write')) return reply;
       const deleted = await repos.secretsFor(request.auth.ownerId).delete(request.params.name);
       if (!deleted)
         return problem(reply, 404, 'SECRET_NOT_FOUND', `secret ${request.params.name} not found`);
@@ -182,7 +177,6 @@ export function registerSettingsRoutes(app: ApiInstance, container: Container): 
       },
     },
     async (request, reply) => {
-      if (!requireScope(request, reply, 'api-keys:write')) return reply;
       const { record, token } = await repos.apiKeys.create(
         request.auth.ownerId,
         request.body.label,
@@ -199,12 +193,11 @@ export function registerSettingsRoutes(app: ApiInstance, container: Container): 
       schema: {
         tags: ['api-keys'],
         summary: 'Revoke an API key',
-        params: z.object({ id: z.string() }),
+        params: z.object({ id: UlidSchema }),
         response: { 204: z.null() },
       },
     },
     async (request, reply) => {
-      if (!requireScope(request, reply, 'api-keys:write')) return reply;
       const revoked = await repos.apiKeys.revoke(request.auth.ownerId, request.params.id);
       if (!revoked)
         return problem(reply, 404, 'API_KEY_NOT_FOUND', `api key ${request.params.id} not found`);
@@ -242,7 +235,6 @@ export function registerSettingsRoutes(app: ApiInstance, container: Container): 
       },
     },
     async (request, reply) => {
-      if (!requireScope(request, reply, 'settings:write')) return reply;
       if (!request.body.efforts.includes(request.body.defaultEffort))
         return problem(reply, 400, 'INVALID_INPUT', 'defaultEffort must be one of efforts');
       const entry = {
@@ -266,7 +258,6 @@ export function registerSettingsRoutes(app: ApiInstance, container: Container): 
       },
     },
     async (request, reply) => {
-      if (!requireScope(request, reply, 'settings:write')) return reply;
       const deleted = await repos.catalog.delete(request.params.harness, request.params.model);
       if (!deleted) return problem(reply, 404, 'MODEL_NOT_FOUND', 'model not in catalog');
       return reply.status(204).send(null);

@@ -74,6 +74,13 @@ export const WaitSpecSchema = z.strictObject({
   signalName: SlugSchema.optional(),
   childRunId: UlidSchema.optional(),
   beat: z.number().int().nonnegative().optional(),
+  /** When a wait with a timeout times out; `until` is its own deadline (a timer or next beat). */
+  timeoutAt: TimestampSchema.optional(),
+  /**
+   * The `seq` of the `node.started` that parked: the wait's identity. Its timers are keyed with
+   * it, so a timer armed by an earlier wait can never wake a later one.
+   */
+  startedSeq: z.number().int().positive().optional(),
 });
 export type WaitSpec = z.infer<typeof WaitSpecSchema>;
 

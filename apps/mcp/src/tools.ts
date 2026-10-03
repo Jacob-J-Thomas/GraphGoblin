@@ -5,6 +5,7 @@
 import { GraphGoblinApiError, loops, runs, type GraphGoblinClient } from '@graphgoblin/api-client';
 import {
   TERMINAL_RUN_STATUSES,
+  UlidSchema,
   type LoopRecord,
   type LoopVersionRecord,
   type RunRecord,
@@ -56,10 +57,13 @@ function sleep(ms: number, signal: AbortSignal): Promise<void> {
 
 /** Find a loop by id, or by exact name when no loop has that id. */
 export async function resolveLoop(client: GraphGoblinClient, ref: string) {
-  try {
-    return await loops.get(client, ref);
-  } catch (error) {
-    if (!(error instanceof GraphGoblinApiError) || error.code !== 'LOOP_NOT_FOUND') throw error;
+  // Loop ids are ULIDs (the API rejects anything else with a 400), so other refs are names.
+  if (UlidSchema.safeParse(ref).success) {
+    try {
+      return await loops.get(client, ref);
+    } catch (error) {
+      if (!(error instanceof GraphGoblinApiError) || error.code !== 'LOOP_NOT_FOUND') throw error;
+    }
   }
   const wanted = ref.trim().toLowerCase();
   const matches = (await loops.list(client)).filter((l) => l.name.toLowerCase() === wanted);
@@ -353,7 +357,7 @@ export function registerTools(
     [
       'resume_run',
       'Resume a run',
-      'Resume a paused run from where it stopped. Then call wait_for_run to follow it to the end.',
+      'Resume a paused run from where it stopped: a run paused while waiting (for input, a signal, a timer, or a child run) goes back to waiting, anything else continues running. Then call wait_for_run to follow it.',
       runs.resume,
       false,
     ],

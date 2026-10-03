@@ -59,3 +59,18 @@ export function describeError(error: unknown): string {
   }
   return String(error);
 }
+
+/**
+ * A conditional append found the run's log longer than the caller expected: something else
+ * appended first. The caller re-reads the log and decides again.
+ */
+export class AppendConflictError extends Error {
+  constructor(
+    readonly runId: string,
+    readonly expectedLastSeq: number,
+    readonly actualLastSeq: number,
+  ) {
+    super(`run ${runId} log is at ${actualLastSeq}, not ${expectedLastSeq}`);
+    this.name = 'AppendConflictError';
+  }
+}

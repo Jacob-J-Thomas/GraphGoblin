@@ -3,6 +3,7 @@ import {
   LoopExportSchema,
   LoopRecordSchema,
   LoopVersionRecordSchema,
+  UlidSchema,
   type LoopDefinition,
   type LoopRecord,
 } from '@graphgoblin/contracts';
@@ -36,7 +37,7 @@ const LoopDetailSchema = z.object({
 });
 
 const DefinitionBody = z.object({ definition: LoopDefinitionSchema });
-const IdParams = z.object({ id: z.string() });
+const IdParams = z.object({ id: UlidSchema });
 const ACTIVE_STATUSES = ['queued', 'running', 'waiting', 'paused'] as const;
 
 export function registerLoopRoutes(app: ApiInstance, container: Container): void {
@@ -153,7 +154,6 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
       },
     },
     async (request, reply) => {
-      if (!requireScope(request, reply, 'loops:write')) return reply;
       const created = await loops.create(request.auth.ownerId, request.body.definition);
       reply.status(201);
       return {
@@ -180,7 +180,6 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
       },
     },
     async (request, reply) => {
-      if (!requireScope(request, reply, 'loops:write')) return reply;
       const imported = importLoop(request.body);
       const created = await loops.create(request.auth.ownerId, imported.definition);
       reply.status(201);
@@ -276,7 +275,6 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
       },
     },
     async (request, reply) => {
-      if (!requireScope(request, reply, 'loops:write')) return reply;
       const loop = await ownedLoop(request, request.params.id);
       if (!loop.draftVersionId)
         return problem(reply, 409, 'NO_DRAFT', 'the loop has no draft to publish');
@@ -317,7 +315,7 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
       schema: {
         tags: ['loops'],
         summary: 'One version with its definition',
-        params: z.object({ id: z.string(), versionId: z.string() }),
+        params: z.object({ id: UlidSchema, versionId: UlidSchema }),
         response: { 200: LoopVersionRecordSchema },
       },
     },
@@ -375,7 +373,6 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
       },
     },
     async (request, reply) => {
-      if (!requireScope(request, reply, 'loops:write')) return reply;
       await ownedLoop(request, request.params.id);
       const active = await runs.list({
         loopId: request.params.id,
@@ -384,8 +381,19 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
       });
       if (active.length > 0)
         return problem(reply, 409, 'LOOP_IN_USE', 'the loop has active runs; cancel them first');
-      await container.triggers.disarmLoop(request.params.id);
-      await loops.delete(request.params.id);
+      // An active run of another loop may still start this one as a subloop (pinned at its start).
+      // The check and the deletion are one critical section with run creation in the engine.
+      const deleted = await container.manager.deleteLoopUnlessInUse(request.params.id, async () => {
+        await container.triggers.disarmLoop(request.params.id);
+        await loops.delete(request.params.id);
+      });
+      if (!deleted)
+        return problem(
+          reply,
+          409,
+          'LOOP_IN_USE',
+          'an active run can still start this loop as a subloop; cancel it first',
+        );
       return reply.status(204).send(null);
     },
   );

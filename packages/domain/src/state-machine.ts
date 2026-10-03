@@ -7,7 +7,8 @@ export type RunAction =
   | { type: 'park' }
   | { type: 'wake' }
   | { type: 'pause' }
-  | { type: 'resume' }
+  /** `parked`: the run was paused while parked in a wait, so resume returns it to waiting (docs/05). */
+  | { type: 'resume'; parked?: boolean }
   | { type: 'cancel' }
   | { type: 'fail' }
   | { type: 'finish'; outcome: Outcome }
@@ -44,6 +45,7 @@ export function transitionRun(status: RunStatus, action: RunAction): RunStatus {
     case 'pause':
       return status === 'running' || status === 'waiting' ? 'paused' : fail();
     case 'resume':
+      if (status === 'paused' && action.parked) return 'waiting';
       return status === 'paused' || status === 'failed' ? 'running' : fail();
     case 'cancel':
       return status === 'queued' || isActive(status) ? 'cancelled' : fail();
