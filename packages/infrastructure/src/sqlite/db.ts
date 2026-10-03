@@ -63,15 +63,34 @@ export class Mutex {
 
 type AnyFn = (...args: unknown[]) => unknown;
 
+/** The longest stretch of back-to-back database work before the client yields to the event loop. */
+export const YIELD_INTERVAL_MS = 10;
+
 /**
  * Serialise every statement and transaction through one mutex. SQLite has one writer at a time
  * anyway, libsql's in-memory client has exactly one connection, and GraphGoblin 1.0 is a single
  * process, so this is both correct and cheap. A transaction holds the lock until it commits,
  * rolls back, or closes. Inside a transaction callback, always use the transaction handle, never
  * the outer client, or the callback deadlocks on its own lock.
+ *
+ * libsql's local client does its work in native code and settles its promises without returning
+ * to the event loop, so a burst of statements (an executor appending a thousand events back to
+ * back) would starve sockets, timers, and SSE flushes until it ended. Before taking the lock, the
+ * client therefore yields with `setImmediate` once `YIELD_INTERVAL_MS` have passed since the last
+ * yield (docs/10, "Performance baseline").
  */
 export function serializeClient(inner: Client): Client {
   const mutex = new Mutex();
+  let lastYield = performance.now();
+  const breathe = async (): Promise<void> => {
+    if (performance.now() - lastYield < YIELD_INTERVAL_MS) return;
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    lastYield = performance.now();
+  };
+  const run = async (fn: () => Promise<unknown>): Promise<unknown> => {
+    await breathe();
+    return mutex.run(fn);
+  };
   const wrapTransaction = (tx: Transaction, release: () => void): Transaction => {
     const finish = (name: 'commit' | 'rollback' | 'close') => async () => {
       try {
@@ -90,14 +109,14 @@ export function serializeClient(inner: Client): Client {
   };
   const overrides: Partial<Record<keyof Client, AnyFn>> = {
     execute: (...args: unknown[]) =>
-      mutex.run(() => (inner.execute as AnyFn)(...args) as Promise<unknown>),
-    batch: (...args: unknown[]) =>
-      mutex.run(() => (inner.batch as AnyFn)(...args) as Promise<unknown>),
+      run(() => (inner.execute as AnyFn)(...args) as Promise<unknown>),
+    batch: (...args: unknown[]) => run(() => (inner.batch as AnyFn)(...args) as Promise<unknown>),
     executeMultiple: (...args: unknown[]) =>
-      mutex.run(() => (inner.executeMultiple as AnyFn)(...args) as Promise<unknown>),
+      run(() => (inner.executeMultiple as AnyFn)(...args) as Promise<unknown>),
     migrate: (...args: unknown[]) =>
-      mutex.run(() => (inner.migrate as AnyFn)(...args) as Promise<unknown>),
+      run(() => (inner.migrate as AnyFn)(...args) as Promise<unknown>),
     transaction: async (...args: unknown[]) => {
+      await breathe();
       const release = await mutex.acquire();
       try {
         const tx = (await (inner.transaction as AnyFn)(...args)) as Transaction;

@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { Mutex, openDatabase, type DatabaseHandle } from './db.js';
+import { Mutex, YIELD_INTERVAL_MS, openDatabase, type DatabaseHandle } from './db.js';
 
 const handles: DatabaseHandle[] = [];
 const dirs: string[] = [];
@@ -104,6 +104,27 @@ describe('serialised client', () => {
     handle.close();
     await expect(handle.client.transaction('write')).rejects.toThrow();
     await expect(handle.client.execute('select 1')).rejects.toThrow();
+  });
+});
+
+describe('event loop fairness', () => {
+  it('yields to the event loop before a statement once the interval has passed', async () => {
+    const handle = openDatabase({ url: ':memory:' });
+    handles.push(handle);
+    await new Promise((r) => setTimeout(r, YIELD_INTERVAL_MS + 5));
+    let ticked = false;
+    setImmediate(() => {
+      ticked = true;
+    });
+    await handle.client.execute('select 1');
+    expect(ticked).toBe(true);
+    // Straight after a yield, statements run without one.
+    ticked = false;
+    setImmediate(() => {
+      ticked = true;
+    });
+    await handle.client.execute('select 1');
+    expect(ticked).toBe(false);
   });
 });
 
