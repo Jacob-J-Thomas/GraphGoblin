@@ -8,35 +8,39 @@ MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, 0BSD, Unlicense, CC0-1.0.
 
 ## Planned dependencies
 
-| Dependency                                           | Licence    | Notes                                                |
-| ---------------------------------------------------- | ---------- | ---------------------------------------------------- |
-| Node.js                                              | MIT        | Runtime                                              |
-| TypeScript                                           | Apache-2.0 |                                                      |
-| pnpm, Turborepo                                      | MIT        |                                                      |
-| Fastify, @fastify/swagger, fastify-type-provider-zod | MIT        |                                                      |
-| Zod                                                  | MIT        |                                                      |
-| Drizzle ORM, drizzle-kit                             | Apache-2.0 |                                                      |
-| better-sqlite3                                       | MIT        | Native module with prebuilt binaries for Windows     |
-| croner                                               | MIT        |                                                      |
-| pino                                                 | MIT        |                                                      |
-| OpenTelemetry JS                                     | Apache-2.0 |                                                      |
-| LiquidJS                                             | MIT        |                                                      |
-| JSONata                                              | MIT        |                                                      |
-| @modelcontextprotocol/sdk                            | MIT        |                                                      |
-| @openai/codex-sdk                                    | Apache-2.0 | Spawns the user-installed Codex CLI, also Apache-2.0 |
-| @typesafe-ai/sdk                                     | Verify     | Fall back to raw HTTP if not permissive              |
-| @napi-rs/keyring                                     | MIT        | Verify on adoption                                   |
-| React, React DOM                                     | MIT        |                                                      |
-| Vite, vite-plugin-pwa, Workbox                       | MIT        |                                                      |
-| @xyflow/react                                        | MIT        | The paid Pro tier is examples and support only       |
-| Zustand, TanStack Query                              | MIT        |                                                      |
-| Tailwind CSS, shadcn/ui, Radix UI                    | MIT        |                                                      |
-| CodeMirror 6                                         | MIT        |                                                      |
-| react-hook-form                                      | MIT        |                                                      |
-| Vitest, Testing Library, MSW                         | MIT        |                                                      |
-| Playwright                                           | Apache-2.0 |                                                      |
-| dependency-cruiser                                   | MIT        |                                                      |
-| openapi-typescript, openapi-fetch                    | MIT        |                                                      |
+| Dependency                                           | Licence    | Notes                                                                |
+| ---------------------------------------------------- | ---------- | -------------------------------------------------------------------- |
+| Node.js                                              | MIT        | Runtime                                                              |
+| TypeScript                                           | Apache-2.0 |                                                                      |
+| pnpm, Turborepo                                      | MIT        |                                                                      |
+| Fastify, @fastify/swagger, fastify-type-provider-zod | MIT        |                                                                      |
+| Zod                                                  | MIT        |                                                                      |
+| Drizzle ORM, drizzle-kit                             | Apache-2.0 |                                                                      |
+| @libsql/client, libsql                               | MIT        | N-API binary, prebuilt for all Node versions; see `sqlite-libsql.md` |
+| drizzle-kit                                          | Apache-2.0 | Dev only: migration generation                                       |
+| ajv, ajv-formats                                     | MIT        | JSON Schema validation in `domain`                                   |
+| @fastify/swagger-ui                                  | MIT        | Dev-facing API docs at `/docs`                                       |
+| pino-pretty, tsx, @types/node                        | MIT        | Dev only                                                             |
+| croner                                               | MIT        |                                                                      |
+| pino                                                 | MIT        |                                                                      |
+| OpenTelemetry JS                                     | Apache-2.0 |                                                                      |
+| LiquidJS                                             | MIT        |                                                                      |
+| JSONata                                              | MIT        |                                                                      |
+| @modelcontextprotocol/sdk                            | MIT        |                                                                      |
+| @openai/codex-sdk                                    | Apache-2.0 | Spawns the user-installed Codex CLI, also Apache-2.0                 |
+| @typesafe-ai/sdk                                     | Verify     | Fall back to raw HTTP if not permissive                              |
+| @napi-rs/keyring                                     | MIT        | Verify on adoption                                                   |
+| React, React DOM                                     | MIT        |                                                                      |
+| Vite, vite-plugin-pwa, Workbox                       | MIT        |                                                                      |
+| @xyflow/react                                        | MIT        | The paid Pro tier is examples and support only                       |
+| Zustand, TanStack Query                              | MIT        |                                                                      |
+| Tailwind CSS, shadcn/ui, Radix UI                    | MIT        |                                                                      |
+| CodeMirror 6                                         | MIT        |                                                                      |
+| react-hook-form                                      | MIT        |                                                                      |
+| Vitest, Testing Library, MSW                         | MIT        |                                                                      |
+| Playwright                                           | Apache-2.0 |                                                                      |
+| dependency-cruiser                                   | MIT        |                                                                      |
+| openapi-typescript, openapi-fetch                    | MIT        |                                                                      |
 
 ## Recorded alternatives and their licences
 

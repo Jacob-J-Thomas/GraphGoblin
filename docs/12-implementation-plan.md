@@ -64,6 +64,8 @@ Acceptance: scenario tests for every node kind; a loop-back loop that exhausts; 
 
 ## M3 - Persistence and API (M)
 
+M3 notes: the intermittent 0xC0000005 crash in the `apps/api` suite comes from libsql's native addon, which on Windows can crash or hang the process when it is loaded only inside a worker thread and that thread exits, as Vitest's `threads` and `vmThreads` pools do. `apps/api` and `adapter-sqlite` therefore pin Vitest to `pool: 'forks'`, where the crash never reproduced; production loads libsql on the main thread and is unaffected. Fixing the suite also surfaced a real bug: revoking an already revoked API key returned 204 instead of 404, so `SqliteApiKeys.revoke` now matches only active keys. Details are in `research/sqlite-libsql.md`.
+
 Goal: the engine runs behind a real API with SQLite, usable from curl before any UI exists.
 
 Packages: `adapter-sqlite`, `adapter-scheduler` (timers only), `adapter-fs`, `apps/api`.

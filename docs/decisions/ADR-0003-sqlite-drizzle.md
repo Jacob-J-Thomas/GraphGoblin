@@ -8,7 +8,7 @@ Runs, events, timers, schedules, and inbound events are high-volume, append-only
 
 ## Decision
 
-SQLite in WAL mode through better-sqlite3, accessed through Drizzle ORM with checked-in migrations, behind repository interfaces. Loop definitions export and import as JSON. Postgres becomes the hosted database through an `adapter-postgres` package, with both dialects in the CI matrix from the moment that adapter exists.
+SQLite in WAL mode through `@libsql/client` (chosen over better-sqlite3 at implementation time: its N-API binary ships prebuilt for every Node version, whereas better-sqlite3 needs a per-ABI build that was unavailable for the development machine's Node 23), accessed through Drizzle ORM with checked-in migrations, behind repository interfaces. All client access is serialised through one in-process mutex; libsql's in-memory client has a single connection and the native binding must only be loaded on the main thread (see `docs/research/sqlite-libsql.md`). Loop definitions export and import as JSON. Postgres becomes the hosted database through an `adapter-postgres` package, with both dialects in the CI matrix from the moment that adapter exists.
 
 ## Consequences
 

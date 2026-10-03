@@ -1,0 +1,21 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "tsBuildInfoFile": "dist/.tsbuildinfo",
+    "types": ["node"]
+  },
+  "include": ["src"],
+  "exclude": ["src/**/*.test.ts", "src/**/__fixtures__/**"],
+  "references": [
+    { "path": "../../packages/contracts/tsconfig.build.json" },
+    { "path": "../../packages/domain/tsconfig.build.json" },
+    { "path": "../../packages/engine/tsconfig.build.json" },
+    { "path": "../../packages/adapter-sqlite/tsconfig.build.json" },
+    { "path": "../../packages/adapter-fs/tsconfig.build.json" },
+    { "path": "../../packages/adapter-process/tsconfig.build.json" },
+    { "path": "../../packages/adapter-http/tsconfig.build.json" },
+    { "path": "../../packages/adapter-scheduler/tsconfig.build.json" }
+  ]
+}

@@ -2,33 +2,33 @@
 
 ## Stack (Decided)
 
-| Layer                | Choice                                                                                                                | Notes                                                       |
-| -------------------- | --------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| Language and runtime | TypeScript on Node 22 LTS, everywhere                                                                                 | Shared schemas end to end. Codex has a TypeScript SDK only. |
-| Monorepo             | pnpm workspaces, Turborepo, TS project references                                                                     | One repo, many packages.                                    |
-| Layer enforcement    | dependency-cruiser rules, package `exports` maps, declared package dependencies                                       | The .NET class-library model. Violations fail CI.           |
-| HTTP                 | Fastify 5, Zod type provider, OpenAPI 3.1 generation                                                                  | Plain, fast, testable.                                      |
-| API contract         | Zod schemas in `packages/contracts` generate the OpenAPI document and the typed client                                | One definition, three consumers.                            |
-| Run state            | REST commands, SSE event stream with sequence cursors, snapshot endpoint, outbound webhooks                           | See 07.                                                     |
-| Workflow runtime     | Own event-sourced executor behind a `WorkflowRuntime` port                                                            | LangGraph.js is the recorded alternative. See ADR-0002.     |
-| Persistence          | SQLite in WAL mode via better-sqlite3, Drizzle ORM, checked-in migrations                                             | Postgres is the hosted path.                                |
-| Scheduling           | croner, schedules persisted in the DB and re-armed at boot                                                            | Also drives wait and heartbeat timers.                      |
-| Harness              | `@openai/codex-sdk` in `packages/adapter-codex`                                                                       | Only harness in 1.0. See 06.                                |
-| Decisions            | Jev via `@typesafe-ai/sdk`; Codex structured decision; JSONata expressions                                            | See 04.                                                     |
-| Templating           | LiquidJS                                                                                                              | Safe templates for prompts and mappings. No code execution. |
-| Expressions          | JSONata                                                                                                               | Routing predicates, mappings, redaction selectors.          |
-| Frontend             | React 19, Vite, `@xyflow/react`, Zustand, TanStack Query, Tailwind, shadcn/ui, CodeMirror 6, react-hook-form with Zod | See 09.                                                     |
-| PWA                  | vite-plugin-pwa with Workbox, `registerType: 'prompt'`                                                                | User confirms updates.                                      |
-| MCP                  | `@modelcontextprotocol/sdk`, stdio and Streamable HTTP, implemented over the generated API client                     | See 07.                                                     |
-| Testing              | Vitest with v8 coverage thresholds, Testing Library, Playwright, MSW, recorded Codex fixtures                         | See 10.                                                     |
-| CI                   | GitHub Actions, Renovate                                                                                              | See 10.                                                     |
-| Logging and tracing  | pino; OpenTelemetry with a run as a trace and a node as a span                                                        | Exporters are optional.                                     |
-| Secrets              | AES-256-GCM envelope encryption in `node:crypto`; master key from env or OS keyring                                   | See 11.                                                     |
-| IDs and time         | ULIDs; UTC ISO-8601 strings                                                                                           | Sortable ids make event logs and run lists cheap.           |
+| Layer                | Choice                                                                                                                 | Notes                                                         |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| Language and runtime | TypeScript on Node 22 LTS, everywhere                                                                                  | Shared schemas end to end. Codex has a TypeScript SDK only.   |
+| Monorepo             | pnpm workspaces, Turborepo, TS project references                                                                      | One repo, many packages.                                      |
+| Layer enforcement    | dependency-cruiser rules, package `exports` maps, declared package dependencies                                        | The .NET class-library model. Violations fail CI.             |
+| HTTP                 | Fastify 5, Zod type provider, OpenAPI 3.1 generation                                                                   | Plain, fast, testable.                                        |
+| API contract         | Zod schemas in `packages/contracts` generate the OpenAPI document and the typed client                                 | One definition, three consumers.                              |
+| Run state            | REST commands, SSE event stream with sequence cursors, snapshot endpoint, outbound webhooks                            | See 07.                                                       |
+| Workflow runtime     | Own event-sourced executor behind a `WorkflowRuntime` port                                                             | LangGraph.js is the recorded alternative. See ADR-0002.       |
+| Persistence          | SQLite in WAL mode via `@libsql/client` (N-API binary, works across Node versions), Drizzle ORM, checked-in migrations | Postgres is the hosted path. See `research/sqlite-libsql.md`. |
+| Scheduling           | croner, schedules persisted in the DB and re-armed at boot                                                             | Also drives wait and heartbeat timers.                        |
+| Harness              | `@openai/codex-sdk` in `packages/adapter-codex`                                                                        | Only harness in 1.0. See 06.                                  |
+| Decisions            | Jev via `@typesafe-ai/sdk`; Codex structured decision; JSONata expressions                                             | See 04.                                                       |
+| Templating           | LiquidJS                                                                                                               | Safe templates for prompts and mappings. No code execution.   |
+| Expressions          | JSONata                                                                                                                | Routing predicates, mappings, redaction selectors.            |
+| Frontend             | React 19, Vite, `@xyflow/react`, Zustand, TanStack Query, Tailwind, shadcn/ui, CodeMirror 6, react-hook-form with Zod  | See 09.                                                       |
+| PWA                  | vite-plugin-pwa with Workbox, `registerType: 'prompt'`                                                                 | User confirms updates.                                        |
+| MCP                  | `@modelcontextprotocol/sdk`, stdio and Streamable HTTP, implemented over the generated API client                      | See 07.                                                       |
+| Testing              | Vitest with v8 coverage thresholds, Testing Library, Playwright, MSW, recorded Codex fixtures                          | See 10.                                                       |
+| CI                   | GitHub Actions, Renovate                                                                                               | See 10.                                                       |
+| Logging and tracing  | pino; OpenTelemetry with a run as a trace and a node as a span                                                         | Exporters are optional.                                       |
+| Secrets              | AES-256-GCM envelope encryption in `node:crypto`; master key from env or OS keyring                                    | See 11.                                                       |
+| IDs and time         | ULIDs; UTC ISO-8601 strings                                                                                            | Sortable ids make event logs and run lists cheap.             |
 
 ## Layering (Decided)
 
-The repo is split into packages the way a .NET solution is split into class-library projects. A package may only import packages its manifest declares, dependency-cruiser enforces direction, and each package exposes a deliberate public surface through its `exports` map.
+The repo is split into packages the way a .NET solution is split into class-library projects. A package may only import packages its manifest declares, dependency-cruiser enforces direction, and each package exposes a deliberate public surface through its `exports` map. Dev dependencies are exempt from the layer rules so a lower layer can test itself against a higher one; production, peer, and optional dependencies are what the rules constrain.
 
 | Package     | .NET analogue           | Allowed dependencies                                         |
 | ----------- | ----------------------- | ------------------------------------------------------------ |

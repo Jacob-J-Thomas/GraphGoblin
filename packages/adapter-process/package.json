@@ -1,0 +1,36 @@
+{
+  "name": "@graphgoblin/adapter-process",
+  "version": "0.1.0",
+  "description": "Script execution over child processes with timeouts and process-tree termination.",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b tsconfig.build.json",
+    "typecheck": "tsc -b tsconfig.build.json",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@graphgoblin/contracts": "workspace:*",
+    "@graphgoblin/domain": "workspace:*",
+    "@graphgoblin/engine": "workspace:*"
+  },
+  "devDependencies": {
+    "@graphgoblin/tooling": "workspace:*",
+    "@types/node": "^22.20.5",
+    "@vitest/coverage-v8": "^5.0.3",
+    "eslint": "^10.11.0",
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.3"
+  }
+}
