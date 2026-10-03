@@ -61,20 +61,22 @@ Create a key in **Settings → API keys** (**Create key** grants the wildcard sc
 
 ### The first key, from the command line
 
-With `GG_REQUIRE_API_KEY=true` from the start, `POST /api-keys` already needs a key. Create the first one from the command line instead; it writes straight to the database for the local owner, prints the token once, and does not start the server. Run it from the repository root with the same environment as the server (at least the same `GG_DATA_DIR`), after `pnpm build`:
+With `GG_REQUIRE_API_KEY=true` from the start, `POST /api-keys` already needs a key. Create the first one from the command line instead; it writes straight to the database for the local owner, prints the token once, and does not start the server. Stop any API using the data directory first: the command takes the same exclusive lock as the server and exits 1 if another process holds it. Run it from the repository root with the same environment as the server (at least the same `GG_DATA_DIR`), after `pnpm build`:
 
 ```powershell
 node apps/api/dist/main.js --create-api-key owner
 node apps/api/dist/main.js --create-api-key ci --scopes loops:write,runs:write
 ```
 
-In the container image, run it inside the container so it uses the mounted data volume:
+In the container image, stop the API, create the key in a one-off container using the same mounted data volume, then restart:
 
 ```bash
-docker compose exec graphgoblin node apps/api/dist/main.js --create-api-key owner
+docker compose stop graphgoblin
+docker compose run --rm graphgoblin node apps/api/dist/main.js --create-api-key owner
+docker compose up -d graphgoblin
 ```
 
-Without `--scopes` the key gets `*`. The token is printed to standard output only, never logged, and only its hash is stored; it works with or without the server running, and the server picks it up immediately. Paste it into the web app when it asks for a key, or send it as a bearer token.
+Without `--scopes` the key gets `*`. The token is printed to standard output only, never logged, and only its hash is stored. Restart the server after the command exits and releases its lock. Paste the key into the web app when it asks for one, or send it as a bearer token.
 
 ### More keys over REST
 

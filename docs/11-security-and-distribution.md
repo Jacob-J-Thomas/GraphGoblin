@@ -16,7 +16,7 @@
 
 ## Secret store (Decided)
 
-- Values are encrypted with AES-256-GCM. Each row has its own data key, wrapped by a master key. The master key comes from an environment variable or the OS keyring through `@napi-rs/keyring`, chosen at first run.
+- Values are encrypted directly with the 32-byte master key using AES-256-GCM, with a fresh random IV and authentication tag for each value. The master key comes from `GG_MASTER_KEY` (base64) or `<dataDir>/master.key`, generated on first start with owner-only permissions. There are no per-secret data keys or envelope wrapping, and no `@napi-rs/keyring` dependency in 1.0. An OS-keyring master-key source and per-secret envelope keys are post-1.0 work (12, "Product gaps known at 1.0").
 - Secrets are referenced from configs by name, for example `secret:jev-api-key`, and resolved only inside the process at execution time. They never appear in events, logs, exports, or API responses.
 - The `redact` mutation operation exists partly so that values that reach the thread from scripts or harness output can be masked before they go anywhere else.
 
@@ -35,12 +35,12 @@
 
 ## Retention (Decided)
 
-1.0 keeps all runs, events, and artifacts, matching the harness defaults, which keep sessions on disk indefinitely. A manual purge action per run and per loop exists in settings. Retention policies and scheduled purges are post-1.0.
+1.0 keeps all runs, events, and artifacts, matching the harness defaults, which keep sessions on disk indefinitely. Settings has no purge action. Retention policies, scheduled purges, and the manual run and loop purge controls are post-1.0 work (12, "Residual risks and post-1.0 backlog").
 
 ## Distribution (Decided)
 
 - The product ships as a container image and as a plain Node application installed with pnpm. Both serve the PWA from the API process.
-- Run exactly one API process per data directory. Runs, timers, and schedules are executed by that process's run manager and scheduler, with no lease between processes; two processes over one database would execute the same run twice (05, "One run manager per store").
+- Run exactly one API process per data directory. Before opening SQLite or running migrations, recovery, timers, or scheduling, the API exclusively creates `<dataDir>/graphgoblin.lock` with its PID and start time. A live owner causes `another GraphGoblin process holds <path>` and exit code 1, even on a different port. A lock is replaced only when its PID is confirmed dead; malformed locks and uncheckable PIDs are refused. Clean shutdown, SIGINT, and SIGTERM release ownership after active runs settle and SQLite closes. `--create-api-key` takes the same lock because it writes to SQLite; stop the server first. Read-only `--preflight` can run alongside the server. If `GG_DB_URL` points elsewhere, every process using that database must still use the same `GG_DATA_DIR`. There is no execution or scheduler lease between processes (05, "One run manager per store").
 - Preflight on first run checks Node version, Codex CLI presence and login, the data directory, and the master key source. See "First-run preflight" below.
 - Updates to the PWA are delivered through the service worker prompt. Updates to the backend are a new image or a `pnpm install` plus restart; migrations run at boot.
 
@@ -57,7 +57,7 @@
 - The image is for a single user on a trusted network. `GG_HOST=0.0.0.0` is needed inside the container, so the API logs its beyond-localhost warning unless `GG_REQUIRE_API_KEY=true`; publishing the port beyond the host's loopback without keys exposes every route, including script execution.
 - Codex's own sandbox (`workspace-write` and `read-only`) relies on Linux kernel features that a default container may not grant; inference nodes inside the container were not exercised live in WP-F2.
 - Size (2026-10-03, linux/amd64): 1.04 GB unpacked as Docker Desktop reports it, 259 MB compressed. The Codex binary package (`@openai/codex@0.160.0-linux-x64`) is 427 MB of it, the rest of `node_modules` about 70 MB, and the web app 8 MB.
-- Smoke test (Docker Desktop 29.1.5): the container starts and reports healthy, `/healthz` answers 200, `/app/` serves the UI shell and `/` redirects to it, `node apps/api/dist/main.js --preflight` inside the container passes every check with the host's Codex login mounted read-only (without it only the harness check fails, as expected), and `--create-api-key` works through `docker exec`.
+- Smoke test before the data-directory lock (Docker Desktop 29.1.5): the container starts and reports healthy, `/healthz` answers 200, `/app/` serves the UI shell and `/` redirects to it, `node apps/api/dist/main.js --preflight` inside the container passes every check with the host's Codex login mounted read-only (without it only the harness check fails, as expected), and `--create-api-key` worked through `docker exec`. With the lock, stop the API and use `docker compose run --rm graphgoblin node apps/api/dist/main.js --create-api-key <name>` before restarting it.
 
 ## First-run preflight (Decided by implementation, 2026-10-03)
 
@@ -78,7 +78,7 @@
 
 ## First API key (Decided, WP-F2, ADR-0015)
 
-With `GG_REQUIRE_API_KEY=true`, `POST /api-keys` needs a key, so the first one cannot come from the API. `graphgoblin-api --create-api-key <name> [--scopes a,b]` (`node apps/api/dist/main.js ...`) reads the same environment as the server, creates the data directory and database if needed and applies migrations (as a start would), inserts a key for the local owner, prints the token once to standard output, and exits without starting the HTTP server. Nothing is logged; only the SHA-256 hash is stored. Scopes default to `*` only when `--scopes` is absent: an unknown or repeated option, a stray argument, a missing value, or a malformed scope exits 2 with the usage before anything is written. The install scripts print the command, and it works in the container through `docker compose exec`.
+With `GG_REQUIRE_API_KEY=true`, `POST /api-keys` needs a key, so the first one cannot come from the API. Stop any API using the data directory first. `graphgoblin-api --create-api-key <name> [--scopes a,b]` (`node apps/api/dist/main.js ...`) reads the same environment as the server, takes its data-directory lock, creates the database if needed and applies migrations (as a start would), inserts a key for the local owner, prints the token once to standard output, releases the lock, and exits without starting the HTTP server. A held lock exits 1 before any database work. Nothing is logged; only the SHA-256 hash is stored. Scopes default to `*` only when `--scopes` is absent: an unknown or repeated option, a stray argument, a missing value, or a malformed scope exits 2 with the usage before anything is written. The install scripts print the command; in the container use `docker compose run --rm` with the API stopped, as shown in the guide.
 
 ## Multi-tenant checklist for later (recorded)
 

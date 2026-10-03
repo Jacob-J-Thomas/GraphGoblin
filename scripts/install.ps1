@@ -103,7 +103,7 @@ $dataHint = if ([string]::IsNullOrWhiteSpace($env:GG_DATA_DIR)) { '' } else {
 
 Write-Host ''
 Write-Host 'Start GraphGoblin from the repository root with either of:'
-Write-Host ('    ' + $dataHint + 'pnpm start')
+Write-Host ('    ' + $dataHint + 'pnpm.cmd start')
 Write-Host ('    ' + $dataHint + 'node apps/api/dist/main.js')
 Write-Host "Then open http://${hostName}:${port}/app/"
 Write-Host ''

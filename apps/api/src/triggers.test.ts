@@ -718,7 +718,8 @@ describe('poll triggers', () => {
     const clock = new FakeClock();
     const logger = new CapturingLogger();
     const config = loadConfig({
-      GG_DATA_DIR: t.dataDir,
+      // This is a second, independent in-memory store, so it needs its own directory owner.
+      GG_DATA_DIR: join(t.dataDir, 'poll-store'),
       GG_DB_URL: ':memory:',
       GG_MASTER_KEY: Buffer.alloc(32, 9).toString('base64'),
     });

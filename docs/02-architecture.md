@@ -23,7 +23,7 @@
 | Testing              | Vitest with v8 coverage thresholds, Testing Library, Playwright, MSW, recorded Codex fixtures                          | See 10.                                                                                    |
 | CI                   | GitHub Actions, Renovate                                                                                               | See 10.                                                                                    |
 | Logging and tracing  | pino; OpenTelemetry with a run as a trace and a node as a span                                                         | Exporters are optional.                                                                    |
-| Secrets              | AES-256-GCM envelope encryption in `node:crypto`; master key from env or OS keyring                                    | See 11.                                                                                    |
+| Secrets              | AES-256-GCM directly with the master key in `node:crypto`; key from `GG_MASTER_KEY` or `<dataDir>/master.key`          | OS-keyring source and per-secret envelope keys are post-1.0 (11, 12).                      |
 | IDs and time         | ULIDs; UTC ISO-8601 strings                                                                                            | Sortable ids make event logs and run lists cheap.                                          |
 
 ## Layering (Decided)

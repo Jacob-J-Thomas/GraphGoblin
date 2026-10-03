@@ -43,6 +43,7 @@ import {
   type StructuredPort,
 } from '@graphgoblin/engine';
 import type { ApiConfig } from './config.js';
+import { acquireDataDirLock } from './data-dir-lock.js';
 import { InboundEventBus } from './event-bus.js';
 import { UlidIds } from './ids.js';
 import { loadMasterKey } from './master-key.js';
@@ -101,7 +102,7 @@ export interface Container {
   };
   /** Tell adapters a secret changed. The settings routes call this after a set or delete. */
   onSecretChanged(ownerId: string, name: string): Promise<void>;
-  /** Migrate, seed, recover runs, re-arm triggers, and start timers and cron. */
+  /** Migrate, seed, recover runs, re-arm triggers, and start timers and cron under the data-directory lock. */
   start(): Promise<void>;
   stop(): Promise<void>;
 }
@@ -130,186 +131,233 @@ export async function createContainer(
   config: ApiConfig,
   overrides: ContainerOverrides = {},
 ): Promise<Container> {
-  const logger = overrides.logger ?? silentLogger;
-  const clock = overrides.clock ?? { now: () => new Date() };
-  const ids = overrides.ids ?? new UlidIds(clock);
-  if (!config.dbUrl.startsWith(':memory:') && !config.dbUrl.includes('mode=memory')) {
-    await mkdir(config.dataDir, { recursive: true });
-  }
-  // GG_DB_URL may point outside the data directory; create the database file's directory too.
-  const dbFile = databaseFilePath(config.dbUrl);
-  if (dbFile) await mkdir(dirname(dbFile), { recursive: true });
-  const masterKey =
-    overrides.masterKey ??
-    (await loadMasterKey({
-      dataDir: config.dataDir,
-      ...(config.masterKey ? { masterKey: config.masterKey } : {}),
-    }));
-  const handle = openDatabase({ url: config.dbUrl });
-  const { db } = handle;
+  // Own the directory before even opening SQLite or generating the master key. Direct container
+  // callers get the same protection as main(); ownership lasts until stop() finishes.
+  const lock = await acquireDataDirLock(config.dataDir);
+  let opened: DatabaseHandle | undefined;
+  try {
+    const logger = overrides.logger ?? silentLogger;
+    const clock = overrides.clock ?? { now: () => new Date() };
+    const ids = overrides.ids ?? new UlidIds(clock);
+    if (!config.dbUrl.startsWith(':memory:') && !config.dbUrl.includes('mode=memory')) {
+      await mkdir(config.dataDir, { recursive: true });
+    }
+    // GG_DB_URL may point outside the data directory; create the database file's directory too.
+    const dbFile = databaseFilePath(config.dbUrl);
+    if (dbFile) await mkdir(dirname(dbFile), { recursive: true });
+    const masterKey =
+      overrides.masterKey ??
+      (await loadMasterKey({
+        dataDir: config.dataDir,
+        ...(config.masterKey ? { masterKey: config.masterKey } : {}),
+      }));
+    const handle = openDatabase({ url: config.dbUrl });
+    opened = handle;
+    const { db } = handle;
 
-  const runs = new SqliteRunRepository(db);
-  const loops = new SqliteLoopRepository(db, clock, ids);
-  const sessions = new SqliteSessionRepository(db);
-  const events = new SqliteEventStore(db, clock);
-  const settingsRepo = new SqliteSettings(db, clock);
-  const apiKeys = new SqliteApiKeys(db, clock, ids);
-  const catalog = new SqliteModelCatalog(db);
-  const secretsFor = (ownerId: string): SqliteSecrets =>
-    new SqliteSecrets(db, clock, masterKey, ownerId);
-  const timers = new TimerService(new SqliteTimerStore(db), clock, {
-    pollIntervalMs: config.timerPollMs,
-    logger,
-  });
-  const bus = new InboundEventBus();
-  const schedules = new SqliteScheduleStore(db, clock, ids);
-  const endpoints = new SqliteWebhookEndpoints(db, clock, ids);
-  const inbound = new SqliteInboundEvents(db);
-  const cron = new CronScheduler(schedules, clock, { pollIntervalMs: config.timerPollMs, logger });
-
-  // Real adapters back whatever the caller did not override. Building them is cheap and has no
-  // side effects: the Codex CLI is only spawned when a session starts, and Jev only calls out when
-  // a decision runs.
-  const codex = createCodexAdapters({
-    logger,
-    model: config.defaultModel,
-    effort: config.defaultEffort,
-    ...(config.codexBinary ? { codexBinary: config.codexBinary } : {}),
-  });
-  // Jev resolves its key as soon as it is built, before `start()` has migrated the database; until
-  // then it sees no secret, and `start()` refreshes it once the tables exist.
-  let migrated = false;
-  const ownerSecrets = secretsFor(LOCAL_OWNER);
-  const jevSecrets: SecretsPort = {
-    resolve: (name) => (migrated ? ownerSecrets.resolve(name) : Promise.resolve(undefined)),
-  };
-  const jev = createJevDecider({ secrets: jevSecrets, logger, secretName: JEV_SECRET });
-  const secretHooks: SecretChangeHook[] = [
-    async (ownerId, name) => {
-      if (ownerId === LOCAL_OWNER && name === JEV_SECRET) await jev.refresh();
-    },
-    ...(overrides.secretHooks ?? []),
-  ];
-  const structured = overrides.structured ?? codex.structured;
-
-  const ports: EnginePorts = {
-    clock,
-    ids,
-    logger,
-    events,
-    runs,
-    loops,
-    sessions,
-    harnesses: overrides.harnesses ?? { codex: codex.harness },
-    // Decision nodes pick a strategy by id; Jev first, the Codex decider as the fallback.
-    deciders: overrides.deciders ?? [jev, codex.decider],
-    structured,
-    scripts: overrides.scripts ?? new ProcessScripts(),
-    workspace: new FsWorkspace(config.dataDir),
-    timers,
-    probes: overrides.probes ?? new HttpProbes(),
-    delivery: createReturnDelivery({
-      webhooks: new HttpWebhookDelivery(clock),
-      publishEvent: (eventType, payload) =>
-        bus.publish({
-          id: ids.next(),
-          ownerId: LOCAL_OWNER,
-          type: eventType,
-          payload,
-          receivedAt: clock.now().toISOString(),
-        }),
+    const runs = new SqliteRunRepository(db);
+    const loops = new SqliteLoopRepository(db, clock, ids);
+    const sessions = new SqliteSessionRepository(db);
+    const events = new SqliteEventStore(db, clock);
+    const settingsRepo = new SqliteSettings(db, clock);
+    const apiKeys = new SqliteApiKeys(db, clock, ids);
+    const catalog = new SqliteModelCatalog(db);
+    const secretsFor = (ownerId: string): SqliteSecrets =>
+      new SqliteSecrets(db, clock, masterKey, ownerId);
+    const timers = new TimerService(new SqliteTimerStore(db), clock, {
+      pollIntervalMs: config.timerPollMs,
       logger,
-    }),
-    artifacts: new FsArtifactStore(config.dataDir),
-    secrets: ownerSecrets,
-  };
-  const settings: EngineSettings = {
-    defaultModel: config.defaultModel,
-    defaultEffort: config.defaultEffort,
-    maxConcurrentRuns: config.maxConcurrentRuns,
-    structuredTimeoutMs: 120_000,
-    // Settings → Defaults, read at run start; GG_DEFAULT_MODEL and GG_DEFAULT_EFFORT are the fallback.
-    ownerDefaults: (ownerId) => readOwnerDefaults(settingsRepo, ownerId),
-  };
-  const manager = new RunManager(ports, settings);
-  const polls = new PollTriggers({
-    probes: ports.probes,
-    scripts: ports.scripts,
-    manager,
-    hasDedupe: (loopId, nodeId, key) => runs.hasTriggerDedupe(loopId, nodeId, key),
-    clock,
-    logger,
-    scriptCwd: config.dataDir,
-    tickMs: config.timerPollMs,
-  });
-  const triggers = new TriggerService({
-    loops,
-    runs,
-    schedules,
-    endpoints,
-    inbound,
-    manager,
-    cron,
-    bus,
-    secretsFor,
-    clock,
-    ids,
-    logger,
-    webhookRateLimit: config.hookRateLimitPerMinute,
-    polls,
-  });
+    });
+    const bus = new InboundEventBus();
+    const schedules = new SqliteScheduleStore(db, clock, ids);
+    const endpoints = new SqliteWebhookEndpoints(db, clock, ids);
+    const inbound = new SqliteInboundEvents(db);
+    const cron = new CronScheduler(schedules, clock, {
+      pollIntervalMs: config.timerPollMs,
+      logger,
+    });
 
-  return {
-    config,
-    handle,
-    ports,
-    settings,
-    manager,
-    timers,
-    cron,
-    triggers,
-    polls,
-    bus,
-    masterKey,
-    repos: {
+    // Real adapters back whatever the caller did not override. Building them is cheap and has no
+    // side effects: the Codex CLI is only spawned when a session starts, and Jev only calls out when
+    // a decision runs.
+    const codex = createCodexAdapters({
+      logger,
+      model: config.defaultModel,
+      effort: config.defaultEffort,
+      ...(config.codexBinary ? { codexBinary: config.codexBinary } : {}),
+    });
+    // Jev resolves its key as soon as it is built, before `start()` has migrated the database; until
+    // then it sees no secret, and `start()` refreshes it once the tables exist.
+    let migrated = false;
+    const ownerSecrets = secretsFor(LOCAL_OWNER);
+    const jevSecrets: SecretsPort = {
+      resolve: (name) => (migrated ? ownerSecrets.resolve(name) : Promise.resolve(undefined)),
+    };
+    const jev = createJevDecider({ secrets: jevSecrets, logger, secretName: JEV_SECRET });
+    const secretHooks: SecretChangeHook[] = [
+      async (ownerId, name) => {
+        if (ownerId === LOCAL_OWNER && name === JEV_SECRET) await jev.refresh();
+      },
+      ...(overrides.secretHooks ?? []),
+    ];
+    const structured = overrides.structured ?? codex.structured;
+
+    const ports: EnginePorts = {
+      clock,
+      ids,
+      logger,
+      events,
       runs,
       loops,
       sessions,
-      events,
-      settings: settingsRepo,
-      apiKeys,
-      catalog,
+      harnesses: overrides.harnesses ?? { codex: codex.harness },
+      // Decision nodes pick a strategy by id; Jev first, the Codex decider as the fallback.
+      deciders: overrides.deciders ?? [jev, codex.decider],
+      structured,
+      scripts: overrides.scripts ?? new ProcessScripts(),
+      workspace: new FsWorkspace(config.dataDir),
+      timers,
+      probes: overrides.probes ?? new HttpProbes(),
+      delivery: createReturnDelivery({
+        webhooks: new HttpWebhookDelivery(clock),
+        publishEvent: (eventType, payload) =>
+          bus.publish({
+            id: ids.next(),
+            ownerId: LOCAL_OWNER,
+            type: eventType,
+            payload,
+            receivedAt: clock.now().toISOString(),
+          }),
+        logger,
+      }),
+      artifacts: new FsArtifactStore(config.dataDir),
+      secrets: ownerSecrets,
+    };
+    const settings: EngineSettings = {
+      defaultModel: config.defaultModel,
+      defaultEffort: config.defaultEffort,
+      maxConcurrentRuns: config.maxConcurrentRuns,
+      structuredTimeoutMs: 120_000,
+      // Settings → Defaults, read at run start; GG_DEFAULT_MODEL and GG_DEFAULT_EFFORT are the fallback.
+      ownerDefaults: (ownerId) => readOwnerDefaults(settingsRepo, ownerId),
+    };
+    const manager = new RunManager(ports, settings);
+    const polls = new PollTriggers({
+      probes: ports.probes,
+      scripts: ports.scripts,
+      manager,
+      hasDedupe: (loopId, nodeId, key) => runs.hasTriggerDedupe(loopId, nodeId, key),
+      clock,
+      logger,
+      scriptCwd: config.dataDir,
+      tickMs: config.timerPollMs,
+    });
+    const triggers = new TriggerService({
+      loops,
+      runs,
       schedules,
       endpoints,
       inbound,
+      manager,
+      cron,
+      bus,
       secretsFor,
-    },
-    async onSecretChanged(ownerId, name) {
-      for (const hook of secretHooks) await hook(ownerId, name);
-    },
-    async start() {
-      await handle.migrate();
-      migrated = true;
-      await jev.init();
-      await jev.refresh();
-      await catalog.seed();
-      await manager.start();
-      triggers.start();
-      await triggers.armAll();
-      if (overrides.startTimers !== false) {
-        timers.start();
-        await cron.start();
-        polls.start();
-      }
-    },
-    async stop() {
-      cron.stop();
-      polls.stop();
-      triggers.stop();
-      timers.stop();
-      manager.stop();
-      await manager.waitForIdle();
-      handle.close();
-    },
-  };
+      clock,
+      ids,
+      logger,
+      webhookRateLimit: config.hookRateLimitPerMinute,
+      polls,
+    });
+
+    let starting: Promise<void> | undefined;
+    let stopping: Promise<void> | undefined;
+    let disposing: Promise<void> | undefined;
+    const dispose = (): Promise<void> => {
+      disposing ??= (async () => {
+        cron.stop();
+        polls.stop();
+        triggers.stop();
+        timers.stop();
+        manager.stop();
+        await manager.waitForIdle();
+        try {
+          handle.close();
+        } finally {
+          await lock.release();
+        }
+      })();
+      return disposing;
+    };
+    const stop = (): Promise<void> => {
+      stopping ??= (async () => {
+        // Direct callers may stop during migration or recovery. Keep ownership until startup
+        // finishes, then shut down; otherwise a new owner could recover while this one starts.
+        await starting?.catch(() => undefined);
+        await dispose();
+      })();
+      return stopping;
+    };
+
+    return {
+      config,
+      handle,
+      ports,
+      settings,
+      manager,
+      timers,
+      cron,
+      triggers,
+      polls,
+      bus,
+      masterKey,
+      repos: {
+        runs,
+        loops,
+        sessions,
+        events,
+        settings: settingsRepo,
+        apiKeys,
+        catalog,
+        schedules,
+        endpoints,
+        inbound,
+        secretsFor,
+      },
+      async onSecretChanged(ownerId, name) {
+        for (const hook of secretHooks) await hook(ownerId, name);
+      },
+      start() {
+        if (stopping) return Promise.reject(new Error('container has been stopped'));
+        starting ??= (async () => {
+          try {
+            await handle.migrate();
+            migrated = true;
+            await jev.init();
+            await jev.refresh();
+            await catalog.seed();
+            await manager.start();
+            triggers.start();
+            await triggers.armAll();
+            if (overrides.startTimers !== false) {
+              timers.start();
+              await cron.start();
+              polls.start();
+            }
+          } catch (error) {
+            await dispose();
+            throw error;
+          }
+        })();
+        return starting;
+      },
+      stop,
+    };
+  } catch (error) {
+    try {
+      opened?.close();
+    } finally {
+      await lock.release();
+    }
+    throw error;
+  }
 }

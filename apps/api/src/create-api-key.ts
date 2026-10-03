@@ -3,6 +3,7 @@ import { dirname } from 'node:path';
 import { SqliteApiKeys, databaseFilePath, openDatabase } from '@graphgoblin/infrastructure/sqlite';
 import { loadConfig, type ApiConfig } from './config.js';
 import { LOCAL_OWNER } from './container.js';
+import { acquireDataDirLock } from './data-dir-lock.js';
 import { UlidIds } from './ids.js';
 
 /**
@@ -79,20 +80,25 @@ export async function createApiKey(
   config: ApiConfig,
   args: CreateApiKeyArgs,
 ): Promise<{ id: string; token: string; scopes: string[] }> {
-  if (!config.dbUrl.startsWith(':memory:') && !config.dbUrl.includes('mode=memory')) {
-    await mkdir(config.dataDir, { recursive: true });
-  }
-  const dbFile = databaseFilePath(config.dbUrl);
-  if (dbFile) await mkdir(dirname(dbFile), { recursive: true });
-  const handle = openDatabase({ url: config.dbUrl });
+  const lock = await acquireDataDirLock(config.dataDir);
   try {
-    await handle.migrate();
-    const clock = { now: () => new Date() };
-    const keys = new SqliteApiKeys(handle.db, clock, new UlidIds(clock));
-    const { record, token } = await keys.create(LOCAL_OWNER, args.label, args.scopes);
-    return { id: record.id, token, scopes: record.scopes };
+    if (!config.dbUrl.startsWith(':memory:') && !config.dbUrl.includes('mode=memory')) {
+      await mkdir(config.dataDir, { recursive: true });
+    }
+    const dbFile = databaseFilePath(config.dbUrl);
+    if (dbFile) await mkdir(dirname(dbFile), { recursive: true });
+    const handle = openDatabase({ url: config.dbUrl });
+    try {
+      await handle.migrate();
+      const clock = { now: () => new Date() };
+      const keys = new SqliteApiKeys(handle.db, clock, new UlidIds(clock));
+      const { record, token } = await keys.create(LOCAL_OWNER, args.label, args.scopes);
+      return { id: record.id, token, scopes: record.scopes };
+    } finally {
+      handle.close();
+    }
   } finally {
-    handle.close();
+    await lock.release();
   }
 }
 

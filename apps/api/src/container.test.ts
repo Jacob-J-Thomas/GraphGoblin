@@ -1,4 +1,4 @@
-import { mkdtemp, rm } from 'node:fs/promises';
+import { access, mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { CodexHarness } from '@graphgoblin/adapter-codex';
@@ -116,5 +116,77 @@ describe('Jev key at boot', () => {
     } finally {
       await second.stop();
     }
+  });
+});
+
+describe('container directory ownership', () => {
+  it('refuses a second container before opening or recovering the store, and releases on stop', async () => {
+    const first = await createContainer(config(), { startTimers: false });
+    await first.start();
+    const lockPath = join(dataDir, 'graphgoblin.lock');
+    const lock = await readFile(lockPath, 'utf8');
+    try {
+      await expect(createContainer(config({ GG_PORT: '4749' }))).rejects.toThrow(
+        `another GraphGoblin process holds ${lockPath}`,
+      );
+      expect(await readFile(lockPath, 'utf8')).toBe(lock);
+    } finally {
+      await first.stop();
+      await first.stop();
+    }
+    await expect(access(lockPath)).rejects.toMatchObject({ code: 'ENOENT' });
+    const next = await createContainer(config(), { startTimers: false });
+    await next.start();
+    const recovery = vi.spyOn(first.manager, 'start');
+    await expect(first.start()).rejects.toThrow('container has been stopped');
+    expect(recovery).not.toHaveBeenCalled();
+    await next.stop();
+  });
+
+  it('releases ownership if container construction fails', async () => {
+    await expect(createContainer(config({ GG_MASTER_KEY: 'invalid' }))).rejects.toThrow(
+      'GG_MASTER_KEY must decode to exactly 32 bytes',
+    );
+    await expect(access(join(dataDir, 'graphgoblin.lock'))).rejects.toMatchObject({
+      code: 'ENOENT',
+    });
+  });
+
+  it('releases ownership when startup fails before recovery', async () => {
+    const container = await createContainer(config());
+    vi.spyOn(container.handle, 'migrate').mockRejectedValueOnce(new Error('migration failed'));
+    const recover = vi.spyOn(container.manager, 'start');
+    await expect(container.start()).rejects.toThrow('migration failed');
+    expect(recover).not.toHaveBeenCalled();
+    await expect(access(join(dataDir, 'graphgoblin.lock'))).rejects.toMatchObject({
+      code: 'ENOENT',
+    });
+    await container.stop();
+  });
+
+  it('serializes repeated starts and keeps the lock when stopped during migration', async () => {
+    const container = await createContainer(config(), { startTimers: false });
+    const migrate = container.handle.migrate;
+    let resume!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      resume = resolve;
+    });
+    const migration = vi.spyOn(container.handle, 'migrate').mockImplementationOnce(async () => {
+      await gate;
+      await migrate();
+    });
+    const starting = container.start();
+    const repeated = container.start();
+    const stopping = container.stop();
+    try {
+      await expect(createContainer(config())).rejects.toThrow('another GraphGoblin process holds');
+      expect(migration).toHaveBeenCalledTimes(1);
+    } finally {
+      resume();
+      await Promise.all([starting, repeated, stopping]);
+    }
+    await expect(access(join(dataDir, 'graphgoblin.lock'))).rejects.toMatchObject({
+      code: 'ENOENT',
+    });
   });
 });
