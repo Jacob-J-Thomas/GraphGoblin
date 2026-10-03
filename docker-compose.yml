@@ -1,0 +1,29 @@
+# GraphGoblin for one user on a trusted network. See docs/guide/01-install-and-first-run.md.
+#
+#   docker compose up -d --build
+#   open http://127.0.0.1:4747/app/
+name: graphgoblin
+services:
+  graphgoblin:
+    build: .
+    image: graphgoblin:local
+    restart: unless-stopped
+    ports:
+      # Published on the host's loopback only. Widen it only together with GG_REQUIRE_API_KEY.
+      - '127.0.0.1:4747:4747'
+    environment:
+      GG_DEFAULT_MODEL: gpt-6-luna
+      GG_DEFAULT_EFFORT: low
+      # Require API keys for every non-public route; create the first key with
+      #   docker compose exec graphgoblin node apps/api/dist/main.js --create-api-key owner
+      # GG_REQUIRE_API_KEY: 'true'
+      # Codex with an API key instead of the mounted login:
+      # OPENAI_API_KEY: sk-...
+    volumes:
+      - graphgoblin-data:/data
+      # The host's Codex login (run `codex login` on the host first). Read-write: Codex refreshes
+      # its tokens. On Windows use %USERPROFILE%/.codex.
+      - ${HOME:-${USERPROFILE}}/.codex:/home/node/.codex
+
+volumes:
+  graphgoblin-data:

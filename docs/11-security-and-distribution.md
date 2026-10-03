@@ -42,6 +42,21 @@
 - Preflight on first run checks Node version, Codex CLI presence and login, the data directory, and the master key source. See "First-run preflight" below.
 - Updates to the PWA are delivered through the service worker prompt. Updates to the backend are a new image or a `pnpm install` plus restart; migrations run at boot.
 
+### Install from a checkout (Decided by implementation, WP-F2)
+
+`scripts/install.ps1` (Windows PowerShell 5.1 or PowerShell 7) and `scripts/install.sh` (bash, including Git Bash on Windows) check Node 22 or newer and pnpm, print `codex login status` (a warning, not a failure, when Codex is missing or logged out), run `pnpm install --frozen-lockfile` and `pnpm build`, create the data directory (`GG_DATA_DIR`, default `~/.graphgoblin`), run `node apps/api/dist/main.js --preflight` against it, and print the start command, the UI URL, and the `--create-api-key` command. They are idempotent, need no elevation, and exit non-zero when a prerequisite is missing, a step fails, or a preflight check fails.
+
+`pnpm start` at the root runs the built API. When `GG_WEB_DIST` is unset the API serves the checkout's `apps/web/dist` if it has been built; an empty `GG_WEB_DIST` turns the UI off. The data directory defaults to `~/.graphgoblin` rather than a directory relative to the working directory, so `pnpm start` and `pnpm --filter @graphgoblin/api start` share one database.
+
+### Container image (Decided by implementation, WP-F2)
+
+- `Dockerfile` (multi-stage on `node:22-bookworm-slim`): the build stage installs pnpm 12.8.1, runs `pnpm install --frozen-lockfile`, builds the API with its workspace dependencies and the web app, and runs `pnpm --filter @graphgoblin/api deploy --prod --legacy` for a self-contained API with production dependencies only. The runtime stage holds that API under `/app/apps/api`, the web app under `/app/apps/web/dist`, and a `codex` wrapper on `PATH` for the Linux Codex binary that `@openai/codex-sdk` pulls in (`codex --version` runs during the build). It runs as the non-root `node` user (uid 1000) with `GG_HOST=0.0.0.0`, `GG_DATA_DIR=/data` (a `VOLUME`), `GG_WEB_DIST=/app/apps/web/dist`, a `HEALTHCHECK` on `/healthz`, and `CMD ["node", "apps/api/dist/main.js"]`.
+- `docker-compose.yml` publishes port 4747 on the host's loopback only, keeps `/data` in a named volume, mounts the host's Codex login (`~/.codex` to `/home/node/.codex`, read-write because Codex refreshes its tokens), and leaves `GG_REQUIRE_API_KEY` and `OPENAI_API_KEY` commented. Codex credentials are never part of the image: mount the login or pass an API key at run time. On a Linux host the mounted directory must be readable and writable by uid 1000.
+- The image is for a single user on a trusted network. `GG_HOST=0.0.0.0` is needed inside the container, so the API logs its beyond-localhost warning unless `GG_REQUIRE_API_KEY=true`; publishing the port beyond the host's loopback without keys exposes every route, including script execution.
+- Codex's own sandbox (`workspace-write` and `read-only`) relies on Linux kernel features that a default container may not grant; inference nodes inside the container were not exercised live in WP-F2.
+- Size (2026-10-03, linux/amd64): 1.04 GB unpacked as Docker Desktop reports it, 259 MB compressed. The Codex binary package (`@openai/codex@0.160.0-linux-x64`) is 427 MB of it, the rest of `node_modules` about 70 MB, and the web app 8 MB.
+- Smoke test (Docker Desktop 29.1.5): the container starts and reports healthy, `/healthz` answers 200, `/app/` serves the UI shell and `/` redirects to it, `node apps/api/dist/main.js --preflight` inside the container passes every check with the host's Codex login mounted read-only (without it only the harness check fails, as expected), and `--create-api-key` works through `docker exec`.
+
 ## First-run preflight (Decided by implementation, 2026-10-03)
 
 `apps/api/src/preflight.ts` runs a fixed list of checks and reports each as `ok`, `warn` (works, but something is missing or is set up on first start), or `fail` (runs will not work until it is fixed). Nothing in it changes state or starts a Codex session.
