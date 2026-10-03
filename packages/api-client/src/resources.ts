@@ -193,4 +193,6 @@ export const system = {
   /** Is each configured harness installed and authenticated? */
   preflight: async (client: GraphGoblinClient) =>
     unwrap(await client.GET('/harness/preflight')).items,
+  /** First-run checks for the whole installation: `{ ok, checks: [{ id, label, status, message }] }`. */
+  installation: async (client: GraphGoblinClient) => unwrap(await client.GET('/system/preflight')),
 };

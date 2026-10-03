@@ -39,8 +39,25 @@
 ## Distribution (Decided)
 
 - The product ships as a container image and as a plain Node application installed with pnpm. Both serve the PWA from the API process.
-- Preflight on first run checks Node version, Codex CLI presence and login, the data directory, and the master key source.
+- Preflight on first run checks Node version, Codex CLI presence and login, the data directory, and the master key source. See "First-run preflight" below.
 - Updates to the PWA are delivered through the service worker prompt. Updates to the backend are a new image or a `pnpm install` plus restart; migrations run at boot.
+
+## First-run preflight (Decided by implementation, 2026-10-03)
+
+`apps/api/src/preflight.ts` runs a fixed list of checks and reports each as `ok`, `warn` (works, but something is missing or is set up on first start), or `fail` (runs will not work until it is fixed). Nothing in it changes state or starts a Codex session.
+
+| Check          | ok                                                                                                    | warn                                                                                                     | fail                                                                                 |
+| -------------- | ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Node.js        | major version 22 or newer                                                                             |                                                                                                          | older than 22                                                                        |
+| Data directory | exists and a probe file can be written                                                                | does not exist yet (created on first start)                                                              | not a directory, unreadable, or not writable                                         |
+| Master key     | `GG_MASTER_KEY` or `<dataDir>/master.key` decodes to 32 bytes                                         | no key yet (generated on first start; back it up)                                                        | present but not a base64 32-byte key, or unreadable                                  |
+| Database       | reachable, no pending migrations                                                                      | file does not exist yet, or migrations pending (applied at start)                                        | cannot be opened or queried                                                          |
+| Harness `<id>` | `HarnessPort.preflight()` ok (Codex: `codex --version` and `codex login status`, two short CLI calls) |                                                                                                          | not installed, not logged in, or the check threw; also when no harness is registered |
+| Jev            | `jev-api-key` secret set                                                                              | no key (Jev is optional; decisions fall back to Codex), or not checkable before the database is migrated |                                                                                      |
+| Default model  | `GG_DEFAULT_MODEL` is an enabled catalog entry                                                        | in the catalog but disabled                                                                              | not in the catalog (the default catalog before first start)                          |
+
+- **HTTP**: `GET /system/preflight` returns `{ ok, checks: [{ id, label, status, message }] }` for the running installation; `ok` is false when any check failed. It is not a public route: it needs a key whenever keys are required, like every other non-public route. `GET /harness/preflight` remains for the harness check alone.
+- **CLI**: `node apps/api/dist/main.js --preflight` (or `pnpm --filter @graphgoblin/api preflight` after `pnpm build`) reads the same environment as the server, prints the checks as a table, and exits 0 when no check failed and 1 otherwise, without starting the server. It opens the database only when its file exists, and never creates the data directory, the key, or the database, so it is safe before the first start.
 
 ## Multi-tenant checklist for later (recorded)
 

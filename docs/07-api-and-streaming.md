@@ -39,6 +39,7 @@ Triggers and events
 Settings and catalog
   CRUD   /secrets  /api-keys  /model-catalog  /settings   (schedules follow publish; read them at /loops/{id}/triggers)
   GET    /harness/preflight             Codex installed and authenticated?
+  GET    /system/preflight              first-run checks: Node, data dir, master key, database, harnesses, Jev, default model (11)
   GET    /openapi.json   GET /healthz   GET /version
 ```
 

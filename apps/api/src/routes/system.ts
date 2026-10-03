@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { Container } from '../container.js';
+import { PreflightReportSchema, containerPreflightSources, runPreflight } from '../preflight.js';
 import { API_VERSION, type ApiInstance } from '../types.js';
 
 const PreflightSchema = z.object({
@@ -26,6 +27,19 @@ export function registerSystemRoutes(app: ApiInstance, container: Container): vo
       },
     },
     () => ({ name: 'graphgoblin-api', version: API_VERSION }),
+  );
+
+  app.get(
+    '/system/preflight',
+    {
+      schema: {
+        tags: ['system'],
+        summary:
+          'First-run preflight: Node, data directory, master key, database, harnesses, Jev, default model',
+        response: { 200: PreflightReportSchema },
+      },
+    },
+    () => runPreflight(containerPreflightSources(container)),
   );
 
   app.get(

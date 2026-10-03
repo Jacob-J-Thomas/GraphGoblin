@@ -106,3 +106,22 @@ describe('serialised client', () => {
     await expect(handle.client.execute('select 1')).rejects.toThrow();
   });
 });
+
+describe('pendingMigrations', () => {
+  it('counts shipped migrations until they are applied, by the last recorded one', async () => {
+    const handle = openDatabase({ url: ':memory:' });
+    handles.push(handle);
+    const shipped = await handle.pendingMigrations();
+    expect(shipped).toBeGreaterThanOrEqual(2);
+    await handle.client.execute(
+      'create table __drizzle_migrations (id integer primary key, hash text not null, created_at numeric)',
+    );
+    expect(await handle.pendingMigrations()).toBe(shipped);
+    await handle.client.execute(
+      "insert into __drizzle_migrations (hash, created_at) values ('x', 1)",
+    );
+    expect(await handle.pendingMigrations()).toBe(shipped);
+    await handle.migrate();
+    expect(await handle.pendingMigrations()).toBe(0);
+  });
+});

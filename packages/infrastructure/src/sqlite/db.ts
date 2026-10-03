@@ -1,6 +1,7 @@
 import { createClient, type Client, type Transaction } from '@libsql/client';
 import { drizzle, type LibSQLDatabase } from 'drizzle-orm/libsql';
 import { migrate } from 'drizzle-orm/libsql/migrator';
+import { readMigrationFiles } from 'drizzle-orm/migrator';
 import { fileURLToPath } from 'node:url';
 import { schema, type Schema } from './schema.js';
 
@@ -11,6 +12,11 @@ export interface DatabaseHandle {
   db: Database;
   /** Apply pending migrations from the package's `drizzle/` folder. Idempotent. */
   migrate(): Promise<void>;
+  /**
+   * How many shipped migrations `migrate()` would apply now, by the same rule Drizzle uses (a
+   * migration is pending when it is newer than the last one recorded). Read-only; 0 when current.
+   */
+  pendingMigrations(): Promise<number>;
   close(): void;
 }
 
@@ -115,13 +121,28 @@ export function serializeClient(inner: Client): Client {
 export function openDatabase(options: DatabaseOptions): DatabaseHandle {
   const client = serializeClient(createClient({ url: options.url }));
   const db = drizzle(client, { schema });
+  const migrationsFolder = options.migrationsFolder ?? DEFAULT_MIGRATIONS;
   return {
     client,
     db,
     async migrate() {
       await client.execute('PRAGMA journal_mode = WAL').catch(() => undefined);
       await client.execute('PRAGMA busy_timeout = 5000').catch(() => undefined);
-      await migrate(db, { migrationsFolder: options.migrationsFolder ?? DEFAULT_MIGRATIONS });
+      await migrate(db, { migrationsFolder });
+    },
+    async pendingMigrations() {
+      const shipped = readMigrationFiles({ migrationsFolder });
+      const table = await client.execute(
+        "SELECT name FROM sqlite_master WHERE type = 'table' AND name = '__drizzle_migrations'",
+      );
+      if (table.rows.length === 0) return shipped.length;
+      const last = await client.execute(
+        'SELECT created_at FROM __drizzle_migrations ORDER BY created_at DESC LIMIT 1',
+      );
+      const row = last.rows[0];
+      if (!row) return shipped.length;
+      const lastMillis = Number(row[0]);
+      return shipped.filter((m) => lastMillis < m.folderMillis).length;
     },
     close() {
       client.close();

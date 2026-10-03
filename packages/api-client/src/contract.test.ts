@@ -72,6 +72,8 @@ describe('against the in-process API (local trusted mode)', () => {
     expect((await system.version(client)).name).toBe('graphgoblin-api');
     const preflight = await system.preflight(client);
     expect(preflight[0]?.harness).toBe('codex');
+    const installation = await system.installation(client);
+    expect(installation.checks.find((c) => c.id === 'database')?.status).toBe('ok');
   });
 
   it('manages a loop through its whole lifecycle', async () => {
