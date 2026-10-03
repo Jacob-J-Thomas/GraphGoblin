@@ -1,6 +1,6 @@
 # Research - Jev by TypeSafe
 
-Captured 2026-10-02 from public write-ups and listings; the SDK sections were verified in M4 (WP-B) against `@typesafe-ai/sdk` 0.6.0 (`dist/index.d.mts` and `dist/index.mjs`). Live verification is pending an owner-run test: request and response shapes below come from the SDK's types and source, not from a captured response.
+Captured 2026-10-02 from public write-ups and listings; the SDK sections were verified in M4 (WP-B) against `@typesafe-ai/sdk` 0.6.0 (`dist/index.d.mts` and `dist/index.mjs`). Live verification on 2026-10-03 confirmed the response shapes against the real API; captured bodies and product evidence are recorded below.
 
 ## What it is
 
@@ -82,8 +82,83 @@ A `noul` answer is `{ "type": "noul", "noul": 0.9 }`, where `noul` is the probab
 - Exit criteria predicates with strategy `jev` use Noul: `holds = noul >= 0.5`, `confidence` is the probability of the answer given.
 - The API key lives in the GraphGoblin secret store under `jev-api-key` and is the only API-key service in 1.0.
 
-## Open items
+## Verified live (2026-10-03)
 
-- Capture a real response and confirm the shapes above, in particular whether `confidence` equals the chosen label's probability. Verification remains pending as of 2026-10-03; no live call was made by the worker.
+Verified against the real TypeSafe API with the pinned SDK 0.6.0, default model alias `jev-latest`, and SDK/test retries disabled. Choice, five-label classification (also Choice), and Noul passed through `createJevDecider`; Score called `TypeSafeClient.systemOne` directly because the adapter does not implement Score. All four returned model **`jev-1.13.0`**.
 
-**Live verification:** the owner runs `LIVE=1 pnpm --filter @graphgoblin/adapter-jev test -- src/live.test.ts` in a terminal where `JEV_API_KEY` is set (PowerShell: `$env:LIVE='1'; pnpm.cmd --filter @graphgoblin/adapter-jev test -- src/live.test.ts`). The test costs a fraction of a cent: it makes one Choice request and one Noul request through the adapter, with retries disabled. It checks the raw response fields and adapter mappings, and reports each model id and token usage with `console.warn`, plus the Choice confidence and chosen label's probability without assuming they are equal. Paste back these safe observations to finish the verification; the key and request headers are never printed.
+| Case           | Input tokens | Output tokens | Observed result                     |     Confidence | Chosen probability |
+| -------------- | -----------: | ------------: | ----------------------------------- | -------------: | -----------------: |
+| Choice         |          361 |            38 | `ship`                              |              1 |                  1 |
+| Classification |          404 |            53 | `billing`                           |              1 |                  1 |
+| Noul           |          309 |            20 | `noul: 0.96`, adapter `holds: true` | 0.96 (adapter) |               0.96 |
+| Score          |          336 |            17 | `score: 3` (`critical`)             |              1 |     1 at level `3` |
+
+The captured response bodies were:
+
+```json
+{
+  "model": "jev-1.13.0",
+  "answers": {
+    "answer": {
+      "type": "choice",
+      "choice": "ship",
+      "confidence": 1,
+      "probabilities": { "ship": 1, "drop": 0, "fix": 0 }
+    }
+  },
+  "usage": { "input_tokens": 361, "output_tokens": 38 }
+}
+```
+
+```json
+{
+  "model": "jev-1.13.0",
+  "answers": {
+    "answer": {
+      "type": "choice",
+      "choice": "billing",
+      "confidence": 1,
+      "probabilities": {
+        "other": 0,
+        "account": 0,
+        "billing": 1,
+        "bug": 0,
+        "feature request": 0
+      }
+    }
+  },
+  "usage": { "input_tokens": 404, "output_tokens": 53 }
+}
+```
+
+```json
+{
+  "model": "jev-1.13.0",
+  "answers": { "answer": { "type": "noul", "noul": 0.96 } },
+  "usage": { "input_tokens": 309, "output_tokens": 20 }
+}
+```
+
+```json
+{
+  "model": "jev-1.13.0",
+  "answers": {
+    "severity": {
+      "type": "score",
+      "score": 3,
+      "confidence": 1,
+      "legend": { "0": "low", "1": "medium", "2": "high", "3": "critical" },
+      "probabilities": { "0": 0, "1": 0, "2": 0, "3": 1 }
+    }
+  },
+  "usage": { "input_tokens": 336, "output_tokens": 17 }
+}
+```
+
+Choice used the ready README typo context and chose `ship`. Classification used a duplicate card charge and refund request; all five categorical labels, including the label containing a space, appeared in probabilities and the adapter preserved the other four as alternatives. Noul's response has no separate confidence field: the adapter returned `holds = noul >= 0.5` and the probability of that boolean. Score's ordered levels are zero-based numeric-string keys in both `legend` and `probabilities`; its numeric score equalled the probability-weighted index, and the full production outage scored `critical`.
+
+Reported Choice confidence equalled the chosen probability in both sampled Choice calls. This verifies these observations, not a universal equality guarantee; the adapter continues to preserve reported confidence with its existing fallback. All returned fields matched the SDK-derived schemas, and no runtime adapter change or validation relaxation was needed. The earlier example's zero output tokens were not representative: every real request reported nonzero output usage, even though output pricing had been described as free. Counts here belong to these exact requests, and `jev-latest` can resolve to a different model later.
+
+**Repeat the checks:** set `LIVE=1` and `JEV_API_KEY` (or `GG_JEV_API_KEY`) in the process environment. `pnpm.cmd --filter @graphgoblin/adapter-jev test -- src/live.test.ts` runs the package tests; to expose all safe observations and target only the live file, use `pnpm.cmd --filter @graphgoblin/adapter-jev exec vitest run src/live.test.ts --silent=false --reporter=verbose`. There are four requests across three tests, each with retries disabled. The tests validate probability bounds and complete label coverage and print redacted response JSON; credentials and request headers are never printed. Without `LIVE=1`, these cases stay skipped.
+
+**Product verification:** after `pnpm.cmd build`, a background `node apps/api/dist/main.js` used a fresh temporary `GG_DATA_DIR` and `GG_PORT=4799`. First startup seeded the encrypted `jev-api-key` from `JEV_API_KEY`; `GET /system/preflight` reported the Jev check `ok` (key present; preflight itself does not contact TypeSafe). Through the REST API, a manual trigger, Jev-only decision with `billing`, `bug`, and `account` routes, and one labelled-return exit per route were created and published. A duplicate-charge payload produced run `01M41VB1WVF129RCT0A90C90GM`, status `succeeded`, and a `decision.made` event with strategy `jev`, route `billing`, confidence `1`, and both alternative probabilities `0`; the exit returned `billing`. The API was stopped and its temporary data directory deleted. Package typecheck and lint passed; coverage was 98.64% statements, 98% branches, and 100% functions and lines.
