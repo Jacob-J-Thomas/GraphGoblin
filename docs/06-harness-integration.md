@@ -167,6 +167,10 @@ Adapter tests replay recorded JSONL event streams captured from real sessions, s
 
 ## Codex as a decider and a repair engine (Decided)
 
+A decider's supplied confidence must be finite and in `[0, 1]`. An invalid
+confidence rejects that strategy's result and tries the next configured strategy;
+if none succeeds, the run fails with `DECISION_NO_ROUTE`.
+
 Decision nodes with strategy `codex`, the `coerce` operation's repair, and inferencing-node repair all use short Codex threads with an output schema. This keeps every model call in 1.0 on the subscription. These threads run with a read-only sandbox and no file changes. Implemented by `CodexStructured` and `CodexDecider` in `packages/adapter-codex`.
 
 ## Jev decider (Decided, M4)

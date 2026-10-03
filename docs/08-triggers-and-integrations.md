@@ -38,6 +38,10 @@ The `TriggerService` in `apps/api/src/triggers/` owns everything between an exte
 - A firing starts a run with `source: 'cron'`, `triggerKind: 'cron'`, payload `{ scheduledFor, catchUp }`, and dedupe key `cron:<scheduleId>:<scheduledFor>`.
 - Overlapping fires start parallel runs, per the concurrency decision.
 
+The `run-each` catch-up cap does not change `run-once` semantics. Even after an
+outage longer than 100 slots, `run-once` uses the latest missed slot at or before
+the recovery clock.
+
 ## Webhook (Decided, shipped in M6)
 
 - Each webhook trigger node gets an endpoint token: 32 random bytes, base64url, in the path `/hooks/<token>`. The token stays the same across published versions for the same trigger node id, so publishing does not break a sender's configuration; to rotate it, rename or replace the node. The signing secret is the owner's secret named by the node's `signature.secretRef`, resolved from the secret store on every delivery.

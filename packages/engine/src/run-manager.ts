@@ -266,7 +266,9 @@ export class RunManager {
 
   async resume(runId: string, actor: Actor = SYSTEM_ACTOR): Promise<RunRecord> {
     const run = await this.mustGet(runId);
-    const updated = await this.ports.runs.transition(runId, ['paused', 'failed'], {
+    const expected: RunStatus[] =
+      run.status === 'failed' && run.failure?.resumable ? ['failed'] : ['paused'];
+    const updated = await this.ports.runs.transition(runId, expected, {
       status: 'running',
       pausedAt: undefined,
       failure: undefined,
@@ -299,9 +301,6 @@ export class RunManager {
         );
       }
     }
-    await this.ports.events.append(runId, [
-      { type: 'input.received', nodeId: run.waiting.nodeId, payload },
-    ]);
     void actor;
     return this.wake(runId, { reason: 'input', payload });
   }
@@ -516,6 +515,15 @@ export class RunManager {
       throw new EngineRequestError('INVALID_STATE', `run ${runId} is not waiting`);
     }
     await this.ports.events.append(runId, [
+      ...(wake.reason === 'input'
+        ? [
+            {
+              type: 'input.received' as const,
+              nodeId: run.waiting.nodeId,
+              payload: wake.payload ?? null,
+            },
+          ]
+        : []),
       {
         type: 'run.woken',
         nodeId: run.waiting.nodeId,
@@ -552,6 +560,8 @@ export class RunManager {
     // Owner defaults are read at every (re)start, so a change in settings applies to the next run.
     const ownerDefaults = (await this.settings.ownerDefaults?.(run.ownerId)) ?? {};
     const events: RunEvent[] = await this.ports.events.read(runId);
+    // Recovery's run.started must not hide an unconsumed, durable wake.
+    const pendingWake = findPendingWake(events);
     let thread = await this.loadThread(run, events);
     const append = async (draft: EventDraft): Promise<void> => {
       events.push(...(await this.ports.events.append(runId, [draft])));
@@ -581,7 +591,7 @@ export class RunManager {
     }
 
     let nodeId = run.currentNodeId ?? thread.invocation.trigger.nodeId;
-    let wake = findPendingWake(events);
+    let wake = pendingWake;
     let previousWait = run.waiting;
 
     const services: HandlerServices = {
@@ -991,7 +1001,10 @@ export class RunManager {
   }
 
   private async loadThread(run: RunRecord, events: readonly RunEvent[]): Promise<ContextThread> {
-    const snapshot = await this.ports.runs.getThread(run.id);
+    // A crash may leave a snapshot older than node.started or node.finished.
+    const snapshot = this.recovering.has(run.id)
+      ? undefined
+      : await this.ports.runs.getThread(run.id);
     if (snapshot) return snapshot;
     const initial = await this.ports.runs.getInitialThread(run.id);
     if (!initial) throw new Error(`run ${run.id} has no initial thread`);

@@ -97,8 +97,8 @@ async function outputMapping(
     }
     for (const op of checked.data) {
       if (
-        !pointerStartsWith(op.path, '/counters') &&
-        !MUTABLE_REGIONS.some((r) => pointerStartsWith(op.path, r))
+        !MUTABLE_REGIONS.some((r) => pointerStartsWith(op.path, r)) ||
+        (op.op === 'move' && !MUTABLE_REGIONS.some((r) => pointerStartsWith(op.from, r)))
       ) {
         throw new RunFailureError(
           'EXPRESSION_ERROR',

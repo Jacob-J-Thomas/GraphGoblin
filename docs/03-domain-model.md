@@ -143,6 +143,11 @@ type Invocation = {
 
 The invocation is immutable for the life of the run and is embedded in the thread so templates and mappings can read it. A run forked by replay-at-node carries `replayOf`, naming the source run and the node it was forked at; its `run.queued` event carries the same object.
 
+JSON Patch treats property names such as `__proto__` as ordinary own JSON keys,
+including inside copied values. Custom subloop output patches obey the mutable
+regions too: they cannot write engine-owned counters or move a value out of an
+engine-owned region. Usage roll-up remains an engine operation.
+
 ## Run (Decided)
 
 | Field                                                  | Notes                                                                                     |
