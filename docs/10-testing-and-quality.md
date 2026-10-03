@@ -35,15 +35,16 @@ This process complements, and never replaces, the coverage gate.
 ## CI gates (Decided, in order)
 
 1. Install with a frozen lockfile.
-2. Typecheck every package.
+2. Typecheck every package, test files included.
 3. Lint.
 4. dependency-cruiser: layer rules and no circular imports.
 5. Unit tests with coverage thresholds.
 6. Licence allowlist check over the full dependency tree.
-7. Dependency audit for known vulnerabilities, failing on high and critical.
-8. Build every package and app.
-9. Playwright E2E on the built app.
-10. Build the container image on the default branch.
+7. Generated reference docs are current (`pnpm check:docs`).
+8. Dependency audit for known vulnerabilities, failing on high and critical.
+9. Build every package and app.
+10. Playwright E2E on the built app.
+11. Build the container image on the default branch.
 
 Nightly: live smoke suite, and the test matrix against both SQLite and Postgres once `adapter-postgres` exists.
 

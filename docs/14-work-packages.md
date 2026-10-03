@@ -18,7 +18,8 @@ Rules that apply to every package:
 | 1    | WP-A api-client, WP-B Codex and Jev adapters, WP-C triggers | yes, three worktrees | M3 committed             |
 | 2    | WP-D web editor and PWA, WP-E MCP server and Codex plugin   | yes, two worktrees   | WP-A merged              |
 | 2    | WP-I integration and follow-ups (delivered)                 | alongside WP-D       | WP-A, WP-B, WP-C merged  |
-| 3    | WP-F hardening, packaging, adversarial QA                   | partly               | WP-B through WP-E merged |
+| 3    | WP-F1 backend and tooling hardening (delivered)             | alongside WP-D       | WP-B through WP-E merged |
+| 3    | WP-F2 packaging, user guide, adversarial QA, tag 1.0        | no                   | WP-D and WP-F1 merged    |
 
 ## WP-0 - M3 stabilisation
 
@@ -89,4 +90,16 @@ Delivered: `apps/api` composes the real Codex harness, structured port, and deci
 
 ## WP-F - Hardening and 1.0 (M8)
 
+Split into WP-F1 (delivered) and WP-F2 below.
+
 Read: 11, 12. Depends on: everything above. Deliver: container image and install script; first-run preflight; replay-at-node; full adversarial QA pass; performance check (1,000 events streamed without UI lag, 10 parallel runs); user guide, node reference generated from schemas, API reference from OpenAPI; tag 1.0.
+
+## WP-F1 - Backend and tooling hardening - DELIVERED 2026-10-03
+
+Read: 05, 07, 10, 11, 12. Depends on: WP-I. Deliver: replay-at-node in the engine, API, client, and MCP; first-run preflight over HTTP and the command line; typecheck of test files in every package; a `PERF=1` backend performance baseline; node and API references generated from the schemas and the OpenAPI document with a staleness gate.
+
+Delivered: `RunManager.replay` with `POST /runs/{id}/replay`, `runs.replay`, and the MCP tool `replay_run` (provenance `invocation.replayOf` and `run.queued.replayOf`, 409 `REPLAY_NODE_NOT_REACHED`); `apps/api/src/preflight.ts` behind `GET /system/preflight` and `--preflight`, with `DatabaseHandle.pendingMigrations()`; `typecheck` runs `tsc -p tsconfig.json` too; `apps/api/src/perf.test.ts` and the numbers in 10, plus a fix for event-loop starvation in the serialised database client; `pnpm docs:generate` and `pnpm check:docs` over `docs/reference/`. See the M8 notes in 12.
+
+## WP-F2 - Packaging, guide, QA, and 1.0
+
+Read: 11, 12. Depends on: WP-D and WP-F1. Deliver: container image and install script (data directory and master key setup, preflight on first start); user guide; full adversarial QA pass across the product; the UI half of the performance check (1,000 events in the run inspector without lag); tag 1.0.
