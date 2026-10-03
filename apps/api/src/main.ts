@@ -2,6 +2,7 @@ import { pino } from 'pino';
 import { buildApp } from './app.js';
 import { loadConfig } from './config.js';
 import { createContainer } from './container.js';
+import { runPreflightCli } from './preflight.js';
 
 /** Process entry point: configure, migrate, recover runs, listen, and shut down cleanly. */
 export async function main(): Promise<{
@@ -47,7 +48,11 @@ export async function main(): Promise<{
 
 const invokedDirectly = process.argv[1] !== undefined && /main\.(js|ts)$/.test(process.argv[1]);
 if (invokedDirectly) {
-  main().catch((error: unknown) => {
+  // `--preflight` prints the first-run checks and exits without starting the server (docs/11).
+  const run = process.argv.includes('--preflight')
+    ? runPreflightCli().then((code) => process.exit(code))
+    : main();
+  run.catch((error: unknown) => {
     console.error(error);
     process.exit(1);
   });

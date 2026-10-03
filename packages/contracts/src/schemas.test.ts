@@ -225,7 +225,8 @@ describe('node config schemas', () => {
   });
 
   it('trigger subtypes parse with defaults', () => {
-    expect(TriggerConfigSchema.parse({ subtype: 'manual' }).exposeTo).toEqual(['ui', 'api', 'mcp']);
+    const manual = TriggerConfigSchema.parse({ subtype: 'manual' });
+    expect(manual.subtype === 'manual' && manual.exposeTo).toEqual(['ui', 'api', 'mcp']);
     const cron = TriggerConfigSchema.parse({ subtype: 'cron', expression: '* * * * *' });
     expect(cron.subtype === 'cron' && cron.missedFirePolicy).toBe('skip');
     const hook = TriggerConfigSchema.parse({
@@ -333,6 +334,7 @@ describe('thread, run, and events', () => {
     const base = { runId: FIXTURE_IDS.run, seq: 1, ts: FIXTURE_TS };
     const events = [
       { ...base, type: 'run.queued' },
+      { ...base, type: 'run.queued', replayOf: { runId: FIXTURE_IDS.run, nodeId: 'n' } },
       { ...base, type: 'run.started', attempt: 1 },
       { ...base, type: 'node.started', nodeId: 'n', kind: 'mutate', attempt: 1, configHash: 'abc' },
       { ...base, type: 'node.finished', nodeId: 'n', patch: [], route: 'out', durationMs: 3 },
@@ -358,5 +360,12 @@ describe('thread, run, and events', () => {
       expect(RunEventSchema.safeParse(ev).success, ev.type).toBe(true);
     }
     expect(RunEventSchema.safeParse({ ...base, type: 'run.exploded' }).success).toBe(false);
+    expect(
+      RunEventSchema.safeParse({
+        ...base,
+        type: 'run.queued',
+        replayOf: { runId: 'x', nodeId: 'n' },
+      }).success,
+    ).toBe(false);
   });
 });

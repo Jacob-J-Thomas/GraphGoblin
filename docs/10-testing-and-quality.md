@@ -35,15 +35,16 @@ This process complements, and never replaces, the coverage gate.
 ## CI gates (Decided, in order)
 
 1. Install with a frozen lockfile.
-2. Typecheck every package.
+2. Typecheck every package, test files included.
 3. Lint.
 4. dependency-cruiser: layer rules and no circular imports.
 5. Unit tests with coverage thresholds.
 6. Licence allowlist check over the full dependency tree.
-7. Dependency audit for known vulnerabilities, failing on high and critical.
-8. Build every package and app.
-9. Playwright E2E on the built app.
-10. Build the container image on the default branch.
+7. Generated reference docs are current (`pnpm check:docs`).
+8. Dependency audit for known vulnerabilities, failing on high and critical.
+9. Build every package and app.
+10. Playwright E2E on the built app.
+11. Build the container image on the default branch.
 
 Nightly: live smoke suite, and the test matrix against both SQLite and Postgres once `adapter-postgres` exists.
 
@@ -58,3 +59,22 @@ Nightly: live smoke suite, and the test matrix against both SQLite and Postgres 
 - OpenAPI document regenerated if a route changed, and the generated client rebuilt.
 - Docs updated: the relevant numbered doc, and an ADR if a decision changed.
 - No new dependency without a licence check and a line in `research/licenses.md`.
+
+## Performance baseline (Decided by measurement, 2026-10-03)
+
+`apps/api/src/perf.test.ts` boots the API in-process over the in-memory database with the fake harness, whose scripted turn streams 1,000 items, so one run of `trigger -> inference -> exit` appends 1,011 events (one `node.progress` per item). It is skipped unless `PERF=1`:
+
+```
+PERF=1 pnpm --filter @graphgoblin/api test -- src/perf.test.ts           # bash
+$env:PERF='1'; pnpm --filter @graphgoblin/api test -- src/perf.test.ts   # PowerShell
+```
+
+It prints a `PERF { ... }` JSON summary. Baseline on the development machine (Windows 11 Pro, AMD Ryzen 5 3600 6-core / 12 threads, 64 GiB, Node 23.10.0):
+
+| Measurement                                                          | Result                                                                                     |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| 10 runs in parallel (`GG_MAX_CONCURRENT_RUNS=10`), 1,011 events each | all 10 succeeded; wall 6.7 s; each run 6.5 to 6.7 s; about 1,500 events/s appended overall |
+| SSE replay of a finished run's 1,011 events over a socket            | first event 91 ms, all events and stream end 103 ms                                        |
+| SSE live tail of a run started as the client connects                | first event 20 ms, all 1,011 events and stream end 747 ms (the run's own duration)         |
+
+Finding fixed while measuring: libsql's local client does its work in native code and settles its promises without returning to the event loop, so a run appending events back to back starved every socket and timer. Before the fix the live tail's first event arrived after 755 ms, at the end of the run, and a 5 ms interval timer fired 3 times in an 800 ms run. The serialised database client (`packages/infrastructure/src/sqlite/db.ts`) now yields with `setImmediate` before a statement whenever 10 ms have passed since its last yield; throughput is unchanged. Appends cost about 0.7 ms each (one transaction per event: max `seq`, insert, update `last_event_seq`), which is far above what a real harness streams; batching appends is the lever if that ever matters.

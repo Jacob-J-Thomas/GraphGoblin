@@ -1,8 +1,17 @@
-import { mkdtempSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-import { afterEach, describe, expect, it } from 'vitest';
-import { Mutex, openDatabase, type DatabaseHandle } from './db.js';
+import { join, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import type { Client, Transaction } from '@libsql/client';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import {
+  Mutex,
+  YIELD_INTERVAL_MS,
+  databaseFilePath,
+  openDatabase,
+  serializeClient,
+  type DatabaseHandle,
+} from './db.js';
 
 const handles: DatabaseHandle[] = [];
 const dirs: string[] = [];
@@ -104,5 +113,143 @@ describe('serialised client', () => {
     handle.close();
     await expect(handle.client.transaction('write')).rejects.toThrow();
     await expect(handle.client.execute('select 1')).rejects.toThrow();
+  });
+});
+
+describe('event loop fairness', () => {
+  it('yields to the event loop before a statement once the interval has passed', async () => {
+    const handle = openDatabase({ url: ':memory:' });
+    handles.push(handle);
+    await new Promise((r) => setTimeout(r, YIELD_INTERVAL_MS + 5));
+    let ticked = false;
+    setImmediate(() => {
+      ticked = true;
+    });
+    await handle.client.execute('select 1');
+    expect(ticked).toBe(true);
+    // Straight after a yield, statements run without one.
+    ticked = false;
+    setImmediate(() => {
+      ticked = true;
+    });
+    await handle.client.execute('select 1');
+    expect(ticked).toBe(false);
+  });
+});
+
+describe('serialised client ordering with yields', () => {
+  /** A fake client whose statements resolve without touching the event loop, like libsql's. */
+  function recordingClient(order: string[]): Client {
+    const tx = {
+      execute: (sql: string) => {
+        order.push(sql);
+        return Promise.resolve({});
+      },
+      commit: () => Promise.resolve(),
+      rollback: () => Promise.resolve(),
+      close: () => undefined,
+    } as unknown as Transaction;
+    return {
+      execute: (sql: string) => {
+        order.push(sql);
+        return Promise.resolve({});
+      },
+      transaction: () => Promise.resolve(tx),
+    } as unknown as Client;
+  }
+
+  it('never lets a statement submitted after a yield overtake one already queued', async () => {
+    // The clock stands still after the first yield, so C, submitted once A is done, is not due
+    // a yield while B, queued earlier, is still waiting for its own.
+    let now = 0;
+    vi.spyOn(performance, 'now').mockImplementation(() => now);
+    const order: string[] = [];
+    const client = serializeClient(recordingClient(order));
+    now = YIELD_INTERVAL_MS * 10;
+    const a = client.execute('A');
+    const b = client.execute('B');
+    await a;
+    const c = client.execute('C');
+    await Promise.all([b, c]);
+    expect(order).toEqual(['A', 'B', 'C']);
+  });
+
+  it('keeps submission order when every statement yields', async () => {
+    const order: string[] = [];
+    const client = serializeClient(recordingClient(order), { yieldIntervalMs: 0 });
+    const a = client.execute('A');
+    const b = client.execute('B');
+    await a;
+    const c = client.execute('C');
+    await Promise.all([b, c]);
+    expect(order).toEqual(['A', 'B', 'C']);
+  });
+
+  it('keeps a transaction in its queue position when it yields', async () => {
+    const order: string[] = [];
+    const client = serializeClient(recordingClient(order), { yieldIntervalMs: 0 });
+    const a = client.execute('A');
+    const txPromise = client.transaction('write');
+    await a;
+    const c = client.execute('C');
+    const tx = await txPromise;
+    await tx.execute('T');
+    await tx.commit();
+    await c;
+    expect(order).toEqual(['A', 'T', 'C']);
+  });
+});
+
+describe('databaseFilePath', () => {
+  it('resolves the file a libsql URL opens, like libsql does', () => {
+    expect(databaseFilePath(':memory:')).toBeUndefined();
+    expect(databaseFilePath('file::memory:')).toBeUndefined();
+    expect(databaseFilePath('file:')).toBeUndefined();
+    expect(databaseFilePath('libsql://db.example.io')).toBeUndefined();
+    expect(databaseFilePath('file://remote-host/x.db')).toBeUndefined();
+    expect(databaseFilePath('file:bad%E0%A4%A.db')).toBeUndefined();
+    expect(databaseFilePath('not a url')).toBeUndefined();
+    expect(databaseFilePath('file:data/gg.db')).toBe(resolve('data/gg.db'));
+    expect(databaseFilePath('file:/srv/a%20b.db?tls=0', 'linux')).toBe(resolve('/srv/a b.db'));
+    expect(databaseFilePath('file:///srv/x.db', 'linux')).toBe(resolve('/srv/x.db'));
+    expect(databaseFilePath('file://localhost/srv/x.db', 'linux')).toBe(resolve('/srv/x.db'));
+    expect(databaseFilePath('file://local%68ost/C:/x.db', 'win32')).toBe(resolve('C:/x.db'));
+    expect(databaseFilePath('file://LOCAL%48OST/srv/x.db', 'linux')).toBe(resolve('/srv/x.db'));
+    expect(databaseFilePath('file://remote%2Dhost/srv/x.db')).toBeUndefined();
+    expect(databaseFilePath('file://local%E0%A4%A/srv/x.db')).toBeUndefined();
+    expect(databaseFilePath('file:///C:/data/x%20y.db', 'win32')).toBe(resolve('C:/data/x y.db'));
+    expect(databaseFilePath('file:C:/data/x.db', 'win32')).toBe(resolve('C:/data/x.db'));
+  });
+
+  it('names the file libsql actually creates for an encoded URL', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'gg-db url '));
+    dirs.push(dir);
+    const url = pathToFileURL(join(dir, 'space db.sqlite')).href;
+    expect(url).toContain('%20');
+    const handle = openDatabase({ url });
+    handles.push(handle);
+    await handle.migrate();
+    const path = databaseFilePath(url);
+    expect(path).toBe(join(dir, 'space db.sqlite'));
+    expect(existsSync(path!)).toBe(true);
+  });
+});
+
+describe('pendingMigrations', () => {
+  it('counts shipped migrations until they are applied, by the last recorded one', async () => {
+    const handle = openDatabase({ url: ':memory:' });
+    handles.push(handle);
+    const shipped = await handle.pendingMigrations();
+    expect(shipped).toBeGreaterThanOrEqual(2);
+    await handle.client.execute(
+      'create table __drizzle_migrations (id integer primary key, hash text not null, created_at numeric)',
+    );
+    expect(await handle.pendingMigrations()).toBe(shipped);
+    await handle.client.execute(
+      "insert into __drizzle_migrations (hash, created_at) values ('x', 1)",
+    );
+    expect(await handle.pendingMigrations()).toBe(shipped);
+    await handle.migrate();
+    expect(await handle.pendingMigrations()).toBe(0);
   });
 });

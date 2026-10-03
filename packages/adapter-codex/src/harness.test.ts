@@ -23,6 +23,17 @@ function logger() {
   return { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };
 }
 
+/** A complete Codex SDK usage object with every counter but `input_tokens` at zero. */
+function codexUsage(inputTokens: number) {
+  return {
+    input_tokens: inputTokens,
+    cached_input_tokens: 0,
+    cache_write_input_tokens: 0,
+    output_tokens: 0,
+    reasoning_output_tokens: 0,
+  };
+}
+
 describe('CodexHarness.start', () => {
   it('replays a message turn: session first, items, usage, turn-complete, result', async () => {
     const codex = ReplayCodex.fromFixtures('message');
@@ -262,10 +273,10 @@ describe('CodexHarness.resume', () => {
       {
         events: [
           { type: 'thread.started', thread_id: 'other' },
-          { type: 'turn.completed', usage: { input_tokens: 1 } },
+          { type: 'turn.completed', usage: codexUsage(1) },
         ],
       },
-      { events: [{ type: 'turn.completed', usage: {} }] },
+      { events: [{ type: 'turn.completed', usage: codexUsage(0) }] },
     );
     const harness = new CodexHarness({
       clientFactory: codex.factory,

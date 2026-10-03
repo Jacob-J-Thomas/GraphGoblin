@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { Container } from '../container.js';
+import { PreflightReportSchema, containerPreflightSources, runPreflight } from '../preflight.js';
 import { API_VERSION, type ApiInstance } from '../types.js';
 
 const PreflightSchema = z.object({
@@ -13,7 +14,13 @@ const PreflightSchema = z.object({
 export function registerSystemRoutes(app: ApiInstance, container: Container): void {
   app.get(
     '/healthz',
-    { schema: { tags: ['system'], response: { 200: z.object({ status: z.literal('ok') }) } } },
+    {
+      schema: {
+        tags: ['system'],
+        summary: 'Liveness check',
+        response: { 200: z.object({ status: z.literal('ok') }) },
+      },
+    },
     () => ({ status: 'ok' as const }),
   );
 
@@ -22,6 +29,7 @@ export function registerSystemRoutes(app: ApiInstance, container: Container): vo
     {
       schema: {
         tags: ['system'],
+        summary: 'API name and version',
         response: { 200: z.object({ name: z.string(), version: z.string() }) },
       },
     },
@@ -29,10 +37,24 @@ export function registerSystemRoutes(app: ApiInstance, container: Container): vo
   );
 
   app.get(
+    '/system/preflight',
+    {
+      schema: {
+        tags: ['system'],
+        summary:
+          'First-run preflight: Node, data directory, master key, database, harnesses, Jev, default model',
+        response: { 200: PreflightReportSchema },
+      },
+    },
+    () => runPreflight(containerPreflightSources(container)),
+  );
+
+  app.get(
     '/harness/preflight',
     {
       schema: {
         tags: ['system'],
+        summary: 'Is each configured harness installed and authenticated?',
         response: { 200: z.object({ items: z.array(PreflightSchema) }) },
       },
     },

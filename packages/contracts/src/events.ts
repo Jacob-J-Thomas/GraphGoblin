@@ -10,7 +10,7 @@ import {
 import { OutcomeSchema } from './nodes.js';
 import { JsonPatchSchema } from './patch.js';
 import { RunFailureSchema, RunStatusSchema, WaitSpecSchema } from './run.js';
-import { ReturnChannelSchema, UsageSchema } from './thread.js';
+import { ReplayOriginSchema, ReturnChannelSchema, UsageSchema } from './thread.js';
 
 const Base = {
   runId: UlidSchema,
@@ -28,7 +28,12 @@ const Actor = z.strictObject({
  * Large payloads live in artifacts and are referenced here.
  */
 export const RunEventSchema = z.discriminatedUnion('type', [
-  z.strictObject({ ...Base, type: z.literal('run.queued') }),
+  z.strictObject({
+    ...Base,
+    type: z.literal('run.queued'),
+    /** Present when the run is a replay fork; mirrors `invocation.replayOf` on its thread. */
+    replayOf: ReplayOriginSchema.optional(),
+  }),
   z.strictObject({ ...Base, type: z.literal('run.started'), attempt: z.number().int().positive() }),
   z.strictObject({
     ...Base,

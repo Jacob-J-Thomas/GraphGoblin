@@ -123,6 +123,9 @@ export const runs = {
     ),
   sessions: async (client: GraphGoblinClient, runId: string) =>
     unwrap(await client.GET('/runs/{id}/sessions', id(runId))).items,
+  /** Fork a new run at `nodeId` with the thread from just before that node. Returns the queued fork. */
+  replay: async (client: GraphGoblinClient, runId: string, nodeId: string) =>
+    unwrap(await client.POST('/runs/{id}/replay', { ...id(runId), body: { nodeId } })).run,
 };
 
 export const settings = {
@@ -190,4 +193,6 @@ export const system = {
   /** Is each configured harness installed and authenticated? */
   preflight: async (client: GraphGoblinClient) =>
     unwrap(await client.GET('/harness/preflight')).items,
+  /** First-run checks for the whole installation: `{ ok, checks: [{ id, label, status, message }] }`. */
+  installation: async (client: GraphGoblinClient) => unwrap(await client.GET('/system/preflight')),
 };

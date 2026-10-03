@@ -1,4 +1,5 @@
 import { mkdir } from 'node:fs/promises';
+import { dirname } from 'node:path';
 import { createCodexAdapters } from '@graphgoblin/adapter-codex';
 import { createJevDecider } from '@graphgoblin/adapter-jev';
 import { FsArtifactStore, FsWorkspace } from '@graphgoblin/infrastructure/fs';
@@ -22,6 +23,7 @@ import {
   SqliteInboundEvents,
   SqliteScheduleStore,
   SqliteWebhookEndpoints,
+  databaseFilePath,
   openDatabase,
   type DatabaseHandle,
 } from '@graphgoblin/infrastructure/sqlite';
@@ -121,6 +123,9 @@ export async function createContainer(
   if (!config.dbUrl.startsWith(':memory:') && !config.dbUrl.includes('mode=memory')) {
     await mkdir(config.dataDir, { recursive: true });
   }
+  // GG_DB_URL may point outside the data directory; create the database file's directory too.
+  const dbFile = databaseFilePath(config.dbUrl);
+  if (dbFile) await mkdir(dirname(dbFile), { recursive: true });
   const masterKey =
     overrides.masterKey ??
     (await loadMasterKey({

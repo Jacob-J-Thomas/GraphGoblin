@@ -109,7 +109,7 @@ describe('transports', () => {
       const client = new Client({ name: 'http-test', version: '1' });
       await client.connect(new StreamableHTTPClientTransport(new URL(url)) as Transport);
       const { tools } = await client.listTools();
-      expect(tools).toHaveLength(13);
+      expect(tools).toHaveLength(14);
       const result = await client.callTool({ name: 'start_run', arguments: { loopId } });
       const { runId } = JSON.parse((result.content as { text: string }[])[0]!.text);
       const waited = await client.callTool({ name: 'wait_for_run', arguments: { runId } });

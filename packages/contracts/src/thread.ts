@@ -58,12 +58,24 @@ export const ReturnChannelSchema = z.discriminatedUnion('kind', [
 ]);
 export type ReturnChannel = z.infer<typeof ReturnChannelSchema>;
 
+/**
+ * Provenance of a run forked by `POST /runs/{id}/replay`: the source run and the node the fork
+ * started at. See "Replay and debugging" in docs/05-execution-engine.md.
+ */
+export const ReplayOriginSchema = z.strictObject({
+  runId: UlidSchema,
+  nodeId: SlugSchema,
+});
+export type ReplayOrigin = z.infer<typeof ReplayOriginSchema>;
+
 export const InvocationSchema = z.strictObject({
   id: UlidSchema,
   source: InvocationSourceSchema,
   caller: CallerSchema.optional(),
   trigger: TriggerEnvelopeSchema,
   returnDefaults: z.array(ReturnChannelSchema).optional(),
+  /** Set only on a run forked from another run by replay-at-node. */
+  replayOf: ReplayOriginSchema.optional(),
 });
 export type Invocation = z.infer<typeof InvocationSchema>;
 

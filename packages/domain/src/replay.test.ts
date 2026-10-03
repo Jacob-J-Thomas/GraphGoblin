@@ -42,11 +42,13 @@ describe('replayThread', () => {
     const thread = replayThread(sampleThread(), events);
     expect(thread.vars['x']).toBe(2);
     expect(thread.run.iteration).toBe(2);
+    expect(thread.counters.nodeVisits).toEqual({ start: 1, prep: 2, approve: 1 });
   });
 
   it('stops at a sequence number', () => {
-    const thread = replayThread(sampleThread(), events, 5);
+    const thread = replayThread(sampleThread(), events, 4);
     expect(thread.vars['x']).toBe(1);
+    expect(thread.counters.nodeVisits).toEqual({ start: 1, prep: 1 });
     expect(thread.run.iteration).toBe(1);
   });
 });

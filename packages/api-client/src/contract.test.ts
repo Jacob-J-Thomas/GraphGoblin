@@ -72,6 +72,8 @@ describe('against the in-process API (local trusted mode)', () => {
     expect((await system.version(client)).name).toBe('graphgoblin-api');
     const preflight = await system.preflight(client);
     expect(preflight[0]?.harness).toBe('codex');
+    const installation = await system.installation(client);
+    expect(installation.checks.find((c) => c.id === 'database')?.status).toBe('ok');
   });
 
   it('manages a loop through its whole lifecycle', async () => {
@@ -159,6 +161,13 @@ describe('against the in-process API (local trusted mode)', () => {
     expect((await waitForRun(client, first.id, { timeoutMs: 5000, pollMs: 10 })).run.status).toBe(
       'succeeded',
     );
+    const fork = await runs.replay(client, first.id, 'start');
+    expect(fork.id).not.toBe(first.id);
+    await until(async () => (await runs.get(client, fork.id)).status === 'waiting');
+    expect((await runs.thread(client, fork.id)).invocation.replayOf).toEqual({
+      runId: first.id,
+      nodeId: 'start',
+    });
 
     const second = await runs.start(client, loop.id);
     await until(async () => (await runs.get(client, second.id)).status === 'waiting');
