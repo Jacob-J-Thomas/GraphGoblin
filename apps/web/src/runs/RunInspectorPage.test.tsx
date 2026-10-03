@@ -146,6 +146,8 @@ describe('RunInspectorPage', () => {
     renderApp(`/runs/${run.id}`, api);
     await screen.findByText(/Timeline \(6 events/);
     await waitFor(() => expect(api.callsTo('GET', `/runs/${run.id}/events`)).toHaveLength(1));
+    // The resumed stream is open with nothing new to send: it reads live, not connecting.
+    expect(await screen.findByText(/Timeline \(6 events, live\)/)).toBeInTheDocument();
     expect(api.callsTo('GET', `/runs/${run.id}/events`)[0]!.search.get('after')).toBe('6');
     act(() =>
       api.pushEvent(

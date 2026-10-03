@@ -59,6 +59,10 @@ export function useRunEvents(
       client,
       runId,
       after: known?.lastSeq ?? 0,
+      // Open is live, even when a stream resumed at the cursor has nothing new to send yet.
+      onOpen: () => {
+        if (active) setStatus('live');
+      },
       onEvent: (event) => {
         buffer.push(event);
         timer ??= setTimeout(flush, EVENT_BATCH_MS);
