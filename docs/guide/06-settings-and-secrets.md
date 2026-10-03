@@ -108,7 +108,7 @@ $created = Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:4747/api-keys' 
 $created.token
 ```
 
-The response's `token` is returned once; SQLite stores its hash. Omitting `scopes` grants `*`. Authenticate with:
+The response's `token` is returned once; SQLite stores its hash. Local trusted mode and callers whose key holds `*` may grant any scopes; omitting `scopes` grants `*` only for them. A scoped caller needs `api-keys:write` to create a key and must list `scopes` explicitly, or the API returns `400 VALIDATION_FAILED`. It may grant only scopes it holds itself, including read scopes implied by its write scopes (`loops:write` covers `loops:read`), and may never grant `*`. An unheld scope or `*` returns `403 SCOPE_NOT_DELEGABLE`, with the offending scopes in `detail` and `errors.scopes`; no key is created. An explicit empty list creates a key with no access. Authenticate with:
 
 ```http
 Authorization: Bearer <saved-token>
@@ -116,18 +116,20 @@ Authorization: Bearer <saved-token>
 
 Every private route needs a scope, reads included: `<resource>:read` for `GET` requests and `<resource>:write` for everything else. A write scope includes the read scope of the same resource, so a `runs:write` key can follow the runs it starts.
 
-| Scope                             | Operations                                                                                                      |
-| --------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `loops:read`, `loops:write`       | Read and validate loops; create, import, save, publish, and delete them.                                        |
-| `runs:read`, `runs:write`         | Read runs, threads, and events; start (`POST /loops/{id}/runs`), cancel, pause, resume, replay, input, signals. |
-| `settings:read`, `settings:write` | Read and change settings and the model catalog.                                                                 |
-| `secrets:read`, `secrets:write`   | List secret names; set and delete secrets.                                                                      |
-| `api-keys:read`, `api-keys:write` | List keys; create and revoke them. `api-keys:write` can mint any scope, so treat it as administrative.          |
-| `events:read`, `events:write`     | List inbound events; submit them.                                                                               |
-| `system:read`                     | The preflight reports (`/system/preflight`, `/harness/preflight`).                                              |
-| `*`                               | Everything; UI-created keys use this scope.                                                                     |
+| Scope                             | Operations                                                                                                                                                                                              |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `loops:read`, `loops:write`       | Read and validate loops; create, import, save, publish, and delete them.                                                                                                                                |
+| `runs:read`, `runs:write`         | Read runs, threads, and events; start (`POST /loops/{id}/runs`), cancel, pause, resume, replay, input, signals.                                                                                         |
+| `settings:read`, `settings:write` | Read and change settings and the model catalog.                                                                                                                                                         |
+| `secrets:read`, `secrets:write`   | List secret names; set and delete secrets.                                                                                                                                                              |
+| `api-keys:read`, `api-keys:write` | List keys; create and revoke them. A scoped key may create keys only with scopes it holds itself (write implies read) and must list them explicitly; only `*` keys or local trusted mode can grant `*`. |
+| `events:read`, `events:write`     | List inbound events; submit them.                                                                                                                                                                       |
+| `system:read`                     | The preflight reports (`/system/preflight`, `/harness/preflight`).                                                                                                                                      |
+| `*`                               | Everything; UI-created keys use this scope.                                                                                                                                                             |
 
 A key without the needed scope gets 403 `FORBIDDEN`. See [API, streaming, and MCP](../07-api-and-streaming.md) for the exact rules.
+
+A key carrying only a read scope cannot grant the corresponding write scope; a disallowed grant returns 403 `SCOPE_NOT_DELEGABLE`, and a scoped caller that omits `scopes` gets 400 `VALIDATION_FAILED` ([ADR-0016](../decisions/ADR-0016-api-key-scope-delegation.md)).
 
 Set the requirement in the API terminal and restart:
 
@@ -139,7 +141,7 @@ $env:GG_REQUIRE_API_KEY = 'true'
 export GG_REQUIRE_API_KEY=true
 ```
 
-A missing, malformed, or revoked key returns 401; an insufficient write scope returns 403. A wrong key is rejected even in trusted mode. Public health, version, OpenAPI, API-doc, and signed webhook routes remain exempt. Keep the API on localhost and use [MCP's key configuration](05-mcp-and-codex-plugin.md#start-the-mcp-server) for agent clients.
+A missing, malformed, or revoked key returns 401; a key lacking the route's scope returns 403 `FORBIDDEN`. A wrong key is rejected even in trusted mode, and presenting a scoped key in trusted mode still limits it to its own scopes. Public health, version, OpenAPI, API-doc, and signed webhook routes remain exempt. Keep the API on localhost and use [MCP's key configuration](05-mcp-and-codex-plugin.md#start-the-mcp-server) for agent clients.
 
 Revoke an unused key in **Settings → API keys**, or through REST:
 

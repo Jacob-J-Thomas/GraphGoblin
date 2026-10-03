@@ -13300,6 +13300,7 @@
         "tags": [
           "api-keys"
         ],
+        "description": "Requires api-keys:write. Scoped callers must list scopes explicitly (400 VALIDATION_FAILED) and may grant only scopes they hold; write implies read. Wildcard or unheld scopes return 403 SCOPE_NOT_DELEGABLE with offending scopes in errors.scopes. Local trusted mode and wildcard callers may grant any scopes; only they may omit scopes to default to [\"*\"].",
         "requestBody": {
           "required": true,
           "content": {
@@ -13313,9 +13314,6 @@
                     "maxLength": 120
                   },
                   "scopes": {
-                    "default": [
-                      "*"
-                    ],
                     "type": "array",
                     "items": {
                       "type": "string"

@@ -19,3 +19,4 @@ One file per decision. Status is Accepted unless stated. Supersede by adding a n
 | [0013](ADR-0013-context-thread-shape.md)                 | Context thread shape (Draft, implemented to unblock M1, to be confirmed)                       |
 | [0014](ADR-0014-packages-at-real-boundaries.md)          | Packages only at real boundaries; one infrastructure package; source resolution in development |
 | [0015](ADR-0015-wp-d2-open-questions.md)                 | Visit cap under `maxIterations`, draft conflicts with `If-Match`, and the first API key        |
+| [0016](ADR-0016-api-key-scope-delegation.md)             | API keys may delegate only their own scopes                                                    |
