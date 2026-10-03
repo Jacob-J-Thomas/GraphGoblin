@@ -8,7 +8,13 @@ import {
   kitchenSinkLoop,
   minimalLoop,
 } from '@graphgoblin/contracts/testing';
-import { EngineRequestError, RunManager, attemptFor, findPendingWake } from './run-manager.js';
+import {
+  EngineRequestError,
+  RunManager,
+  attemptFor,
+  countEntries,
+  findPendingWake,
+} from './run-manager.js';
 import { createTestEngine, singleNodeLoop } from './testing/scenario.js';
 import { createFakePorts, DEFAULT_TEST_SETTINGS } from './testing/fakes.js';
 import { createInitialThread } from './thread.js';
@@ -123,6 +129,8 @@ describe('run control', () => {
       { id: 'e2', from: { node: 'pick', port: 'again' }, to: { node: 'pick' } },
       { id: 'e3', from: { node: 'pick', port: 'stop' }, to: { node: 'done' } },
     );
+    // A high ceiling keeps the visit cap out of the way: this test is about yielding.
+    loop.settings = { maxIterations: 10_000 };
     const version = engine.publish(loop);
     const run = await engine.start(version.loopId);
     // A timer firing at all proves the executor yields; before the fix this await never returned.
@@ -633,3 +641,71 @@ function kitchenSinkLoopWithoutHeavyNodes(): LoopDefinitionInput {
     ],
   } as LoopDefinitionInput;
 }
+
+describe('the per-node visit cap (maxIterations)', () => {
+  function selfRoutingLoop(maxIterations: number, jsonata: string): LoopDefinitionInput {
+    const loop = singleNodeLoop('self-routing', {
+      id: 'pick',
+      kind: 'decision',
+      label: 'Pick',
+      config: {
+        routes: [
+          { label: 'again', description: 'loop' },
+          { label: 'stop', description: 'finish' },
+        ],
+        question: 'again?',
+        strategy: ['expression'],
+        expression: { jsonata },
+      },
+    });
+    loop.edges.push(
+      { id: 'e2', from: { node: 'pick', port: 'again' }, to: { node: 'pick' } },
+      { id: 'e3', from: { node: 'pick', port: 'stop' }, to: { node: 'done' } },
+    );
+    loop.settings = { maxIterations };
+    return loop;
+  }
+
+  it('fails a self-routing decision with MAX_ITERATIONS naming the node', async () => {
+    const engine = await createTestEngine();
+    const version = engine.publish(selfRoutingLoop(3, '"again"'));
+    const run = await engine.runToIdle(version.loopId);
+    expect(run.status).toBe('failed');
+    expect(run.failure).toMatchObject({
+      code: 'MAX_ITERATIONS',
+      nodeId: 'pick',
+      resumable: false,
+      details: { maxIterations: 3 },
+    });
+    expect(run.failure?.message).toContain('"pick"');
+    expect(run.failure?.message).toContain('maxIterations of 3');
+    const events = await engine.ports.events.read(run.id);
+    expect(countEntries(events, 'pick')).toBe(3);
+    expect(events.filter((e) => e.type === 'decision.made')).toHaveLength(3);
+  });
+
+  it('lets a long but finite cycle finish when every node stays within the cap', async () => {
+    const engine = await createTestEngine();
+    // Routes "again" while fewer than 49 decisions were made: 50 visits of "pick" against a cap of 50.
+    const version = engine.publish(
+      selfRoutingLoop(50, 'counters.nodeVisits.pick < 50 ? "again" : "stop"'),
+    );
+    const run = await engine.runToIdle(version.loopId);
+    expect(run.status).toBe('succeeded');
+    const thread = await engine.manager.getThread(run.id);
+    expect(thread?.counters.nodeVisits['pick']).toBe(50);
+  });
+
+  it('counts fresh entries only, not wakes or retries of the same visit', () => {
+    const base = { runId: FIXTURE_IDS.run, ts: FIXTURE_TS, kind: 'wait' as const, configHash: 'h' };
+    const events = [
+      { ...base, seq: 1, type: 'node.started', nodeId: 'w', attempt: 1 },
+      { ...base, seq: 2, type: 'node.started', nodeId: 'w', attempt: 2 },
+      { ...base, seq: 3, type: 'node.started', nodeId: 'other', attempt: 1 },
+      { ...base, seq: 4, type: 'run.started', attempt: 1 },
+    ] as unknown as RunEvent[];
+    expect(countEntries(events, 'w')).toBe(1);
+    expect(countEntries(events, 'other')).toBe(1);
+    expect(countEntries(events, 'missing')).toBe(0);
+  });
+});

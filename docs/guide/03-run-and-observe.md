@@ -221,6 +221,7 @@ Read `code`, `message`, `nodeId`, `resumable`, and any `details`. After fixing a
 | `EXPRESSION_ERROR`          | Correct JSONata, its input assumptions, or the patch produced by a mapping.                                                                                                |
 | `WAIT_TIMEOUT`              | Arrange the required input or signal sooner, or revise timeout behaviour in a new version.                                                                                 |
 | `HEARTBEAT_EXHAUSTED`       | Check the probe and condition; revise beat/deadline limits or exhaustion behaviour if needed.                                                                              |
+| `MAX_ITERATIONS`            | A node was about to start more often than the loop's `maxIterations`, usually a decision routing back into a cycle without an exit. Fix the routing or raise the limit.    |
 | `RETURN_DELIVERY_FAILED`    | Check the destination and signing secret. Current delivery failures use `return.failed` events, rather than this reserved run-failure code; arrange redelivery explicitly. |
 | `INTERNAL_ERROR`            | Preserve the run ID, log, and failure details; investigate or report the defect before retrying side effects.                                                              |
 

@@ -77,6 +77,7 @@ Pause, cancel, and failure intents are persisted first and acted on second, so a
 - The run's `iteration` starts at 1. Only an exit node's loop-back increments it.
 - `counters.nodeVisits` increments every time a node starts, which lets decision nodes and exit criteria reason about repeats of a specific node.
 - `settings.maxIterations` on the loop is a hard ceiling. When it is reached, the exit node's loop-back is ignored and the run finishes `exhausted`, even if no criterion said so.
+- `settings.maxIterations` also caps visits per node (ADR-0015). A visit is a fresh entry into a node, a `node.started` with `attempt` 1; re-executions of the same visit after a wake, a recovery, or a resume have a higher attempt and do not count. When any node would start for the (`maxIterations` + 1)th time, the run fails with `MAX_ITERATIONS` (`resumable: false`, `nodeId` and the message name the node, `details.maxIterations`) before `node.started` is recorded. Nodes inside an exit loop-back are entered once per iteration, so the iteration ceiling (`exhausted`) is always reached first for them; the cap bounds cycles that never pass through an exit, such as a decision routing back to itself.
 - Harness-level turn limits are not a GraphGoblin concept. The loop's iteration limit is the only loop limit.
 
 ## Subloops as child runs (Decided)
@@ -155,7 +156,7 @@ Because every node input is reconstructible, the API offers "re-run this node wi
 ## Implementation notes from WP-D2 (Decided by implementation, 2026-10-03)
 
 - **Model and effort resolve node, then loop defaults, then owner settings, then configuration.** `EngineSettings.ownerDefaults(ownerId)` is read every time a run starts or resumes; the API reads the owner settings `defaultModel` and `defaultEffort` there, so a change in Settings applies to the next run without a restart. `GG_DEFAULT_MODEL` and `GG_DEFAULT_EFFORT` remain the last fallback.
-- **The executor yields to the event loop between nodes** (one `setTimeout(0)` per node). With fast ports every await settles as a microtask, and a graph cycle (a decision routing back to itself) used to starve timers, API requests, and the cancel request that could stop it. Such a cycle is still unbounded: it runs until cancelled, because `maxIterations` counts only exit loop-backs (open question in 13).
+- **The executor yields to the event loop between nodes** (one `setTimeout(0)` per node). With fast ports every await settles as a microtask, and a graph cycle (a decision routing back to itself) used to starve timers, API requests, and the cancel request that could stop it. Such a cycle is now bounded by the per-node visit cap under `maxIterations` (see "Iterations and loop-back"; WP-F2).
 
 ## Why no error ports (Decided, see ADR-0006)
 

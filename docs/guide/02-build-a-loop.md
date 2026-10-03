@@ -52,7 +52,7 @@ Read **Validation** after every change. Fix errors before publishing: missing tr
 
 | Setting             | Configure it                                                                                                                                    |
 | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| `maxIterations`     | Default 10, range 1 to 10,000. It limits exit loop-backs, not node visits or Codex turns.                                                       |
+| `maxIterations`     | Default 10, range 1 to 10,000. It limits exit loop-backs (the run ends `exhausted`) and fresh visits per node (the run fails `MAX_ITERATIONS`). |
 | `workingDirectory`  | `temp` (default), `fixed` with `path`, or `template` with a Liquid `template`. The filesystem adapter creates the resolved directory if needed. |
 | `subloopDepthLimit` | Default 8, range 1 to 64. A subloop node can replace it with `depthLimitOverride`.                                                              |
 | `defaults`          | Set the Codex `harness`, optional `model`, and optional `effort`. Node values override loop defaults, which override API-process defaults.      |

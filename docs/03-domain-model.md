@@ -32,7 +32,7 @@ type LoopDefinition = {
   settings: {
     workingDirectory: WorkingDirectorySpec; // see 04 and 06
     defaults: { harness: 'codex'; model?: string; effort?: Effort };
-    maxIterations: number; // hard ceiling, exit nodes may set lower
+    maxIterations: number; // hard ceiling on loop-backs and on fresh visits per node; exit nodes may set lower
     subloopDepthLimit: number; // default 8
   };
   variables: Record<string, JsonSchema>; // declared vars with schemas; the editor uses these
