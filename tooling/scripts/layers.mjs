@@ -65,13 +65,14 @@ export function evaluateLayers(policy, packages) {
 }
 
 /**
- * Collect all dependency names from a package manifest.
+ * Collect the dependency names that count for layer rules: production, peer, and optional.
+ * Dev dependencies are exempt so a lower layer can test itself against a higher one (for example
+ * the API client's contract tests boot the real API). Production coupling is what the rules protect.
  * @param {{ name?: string; dependencies?: Record<string, string>; devDependencies?: Record<string, string>; peerDependencies?: Record<string, string>; optionalDependencies?: Record<string, string> }} manifest
  */
 export function collectDependencies(manifest) {
   return {
     ...(manifest.dependencies ?? {}),
-    ...(manifest.devDependencies ?? {}),
     ...(manifest.peerDependencies ?? {}),
     ...(manifest.optionalDependencies ?? {}),
   };

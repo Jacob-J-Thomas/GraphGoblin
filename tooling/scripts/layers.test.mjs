@@ -67,7 +67,7 @@ test('unknown package and wrong scope are reported', () => {
   assert.match(violations[1].message, /must start with/);
 });
 
-test('collectDependencies merges every dependency field', () => {
+test('collectDependencies merges production, peer, and optional fields but not dev', () => {
   assert.deepEqual(
     collectDependencies({
       dependencies: { a: '1' },
@@ -75,7 +75,7 @@ test('collectDependencies merges every dependency field', () => {
       peerDependencies: { c: '3' },
       optionalDependencies: { d: '4' },
     }),
-    { a: '1', b: '2', c: '3', d: '4' },
+    { a: '1', c: '3', d: '4' },
   );
   assert.deepEqual(collectDependencies({}), {});
 });

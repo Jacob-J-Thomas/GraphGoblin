@@ -1,0 +1,81 @@
+# 14 - Work packages and delivery waves
+
+From M3 onward the work is delivered by delegated implementation agents coordinated by an orchestrator: the orchestrator writes a brief per package, agents implement in isolated worktrees, the orchestrator reviews, merges, runs every gate, and commits. This document is the standing map of those packages. Each package lists the docs an agent must read, what it depends on, what it must deliver, and how it is accepted.
+
+Rules that apply to every package:
+
+- Read `AGENTS.md`, `docs/README.md`, and the docs named in the package before writing code.
+- Every package or app keeps unit-test coverage above 90% of lines and branches; `pnpm test:coverage` is the gate. Thresholds are never lowered.
+- No new dependency without checking `tooling/license-allowlist.json` and adding a line to `docs/research/licenses.md`.
+- Behaviour changes update the relevant numbered doc. Decisions become ADRs.
+- Agents do not commit to `main` and never add attribution lines. They report branch, files, test results, and open questions.
+
+## Waves
+
+| Wave | Packages                                                    | Runs in parallel?    | Precondition             |
+| ---- | ----------------------------------------------------------- | -------------------- | ------------------------ |
+| 0    | WP-0 M3 stabilisation                                       | no                   | now                      |
+| 1    | WP-A api-client, WP-B Codex and Jev adapters, WP-C triggers | yes, three worktrees | M3 committed             |
+| 2    | WP-D web editor and PWA, WP-E MCP server and Codex plugin   | yes, two worktrees   | WP-A merged              |
+| 3    | WP-F hardening, packaging, adversarial QA                   | partly               | WP-B through WP-E merged |
+
+## WP-0 - M3 stabilisation
+
+Read: 07, 10. Depends on: nothing. Deliver: `apps/api` test suite green three runs in a row, coverage above thresholds, lint and format clean, root cause of the libsql worker crash written into 12. Accept: `pnpm check` green for `apps/api` and `packages/adapter-sqlite`.
+
+## WP-A - API client package
+
+Read: 02, 07. Depends on: M3. Deliver `packages/api-client` (`@graphgoblin/api-client`, layer `client`, production dependency on `contracts` only):
+
+- Types generated from the API's OpenAPI document with `openapi-typescript`; the API emits the document with `pnpm --filter @graphgoblin/api openapi -- <path>` after building. Wire a Turborepo task so the client's build depends on the API's emit task.
+- A thin `openapi-fetch` client factory `createGraphGoblinClient({ baseUrl, apiKey?, fetch? })`.
+- An SSE helper that works in Node and browsers using `fetch` streaming: `subscribeRunEvents(client, runId, { after, onEvent, signal })` with automatic resume from the last sequence number and a parsed `RunEvent` per callback.
+- Tests against mocked HTTP (MSW or undici's MockAgent) for the client, and a contract test that boots the real API in-process through `@graphgoblin/api`'s `createTestApp` helper as a dev dependency.
+
+Accept: generated types match the live document (a test regenerates and diffs); coverage above thresholds; `pnpm check:layers` green (dev dependencies are exempt from layer rules).
+
+## WP-B - Codex and Jev adapters (M4)
+
+Read: 04 (inference, decision), 05, 06, `research/codex-sdk.md`, `research/jev.md`. Depends on: M2 (engine ports). Deliver:
+
+- `packages/adapter-codex`: `HarnessPort` over `@openai/codex-sdk` pinned exactly. `preflight` runs the CLI to check install and login. `start` and `resume` map to `startThread`/`resumeThread` and `runStreamed`; model, effort, sandbox, approval, network, and web search are set explicitly on every session through `config` keys so the machine's `config.toml` defaults never leak (see the research doc for the owner's defaults). Normalise events to `HarnessEvent`; a configuration-warning `error` item is not a failure, `turn.failed` is. Record session ids as soon as `thread.started` arrives. Cancel aborts the SDK call and kills the CLI process tree (Windows `taskkill /T /F`).
+- `StructuredPort` over a read-only Codex thread with an output schema, and a `DeciderPort` (`id: 'codex'`) built on it for choices and yes/no questions.
+- `packages/adapter-jev`: `DeciderPort` (`id: 'jev'`) over `@typesafe-ai/sdk` or raw HTTP if the SDK's licence is not permissive; `available()` is true only when an API key is resolvable from the secret `jev-api-key`.
+- Fixtures: record real JSONL event streams with a small script (`pnpm --filter @graphgoblin/adapter-codex record -- "<prompt>"`) using model `gpt-6-luna` at `low` effort, store them under `fixtures/`, and drive adapter unit tests from them. A `LIVE=1` smoke test runs one real turn; it is skipped otherwise.
+- Update `docs/06-harness-integration.md` and `docs/research/codex-sdk.md` with every verified option name.
+
+Accept: adapter tests green from fixtures without network; one live smoke run succeeds on the development machine; coverage above thresholds.
+
+## WP-C - Triggers (M6)
+
+Read: 03, 04 (trigger), 08, 11. Depends on: M3. Deliver:
+
+- `packages/adapter-scheduler`: cron schedules over `croner` with timezone support; schedules persisted (new `schedules` table in `adapter-sqlite` with a migration); re-arm at boot; missed-fire policies `skip`, `run-once`, `run-each`.
+- `adapter-sqlite`: `schedules`, `webhook_endpoints`, `inbound_events` tables and repositories.
+- `apps/api`: on publish, regenerate schedules and webhook endpoints for the version's trigger nodes; `POST /hooks/{endpointToken}` with HMAC-SHA256 verification, timestamp window, dedupe, size limit, and rate limit; `POST /events` now fires `event` trigger nodes through the bus with filters and dedupe; `poll` trigger as a stretch over the heartbeat probe model; an events listing backed by `inbound_events`.
+- A `TriggerService` in `apps/api` (or a new `packages/triggers` if it stays pure) that turns a firing into `RunManager.startRun` with the right `source` and `triggerKind`.
+
+Accept: a cron loop fires on schedule and after a simulated outage per policy; a webhook with a bad signature is rejected and a good one starts a run; one loop triggers another through the bus; coverage above thresholds.
+
+## WP-D - Web editor and PWA (M5)
+
+Read: 04, 09, 10. Depends on: WP-A merged. Deliver `apps/web` (React 19, Vite, `@xyflow/react`, Zustand, TanStack Query, Tailwind, shadcn/ui, CodeMirror 6, react-hook-form, vite-plugin-pwa):
+
+- Screens from 09: loops, editor, runs, run inspector, settings, events.
+- Property panels generated from the node config schemas in `contracts`; live validation using `domain`.
+- Run inspector over the SSE helper from `api-client`.
+- PWA with `registerType: 'prompt'` and the confirm-to-update toast; app shell precache only; drafts mirrored to IndexedDB.
+- Served by the API process from `apps/web/dist` (add static hosting to `apps/api` behind a config flag).
+- Component tests with Testing Library and MSW; Playwright E2E for draw, publish, run, watch, input, cancel.
+
+Accept: the kitchen-sink loop can be built and run from the UI; update toast appears on a new build and updates only after confirmation; coverage above thresholds; an adversarial QA pass (Playwright MCP and computer use) finds no open defects.
+
+## WP-E - MCP server and Codex plugin (M7)
+
+Read: 07, `research/codex-sdk.md` (plugins). Depends on: WP-A merged. Deliver `apps/mcp` over `@modelcontextprotocol/sdk` using the API client: tools `list_loops`, `describe_loop`, `start_run`, `wait_for_run`, `get_run`, `get_run_thread`, `list_runs`, `cancel_run`, `pause_run`, `resume_run`, `provide_input`, `send_signal`, `read_run_events`; resources for a run's events and thread; stdio and Streamable HTTP transports; API-key auth to the gateway. Deliver `apps/plugin-codex`: plugin manifest registering the MCP server plus skills `run-loop`, `design-loop`, `inspect-run`, following the pinned Codex plugin layout.
+
+Accept: an E2E test drives the MCP server against the in-process API with the fake harness; one live check from a Codex session starts a loop and reads its result; coverage above thresholds.
+
+## WP-F - Hardening and 1.0 (M8)
+
+Read: 11, 12. Depends on: everything above. Deliver: container image and install script; first-run preflight; replay-at-node; full adversarial QA pass; performance check (1,000 events streamed without UI lag, 10 parallel runs); user guide, node reference generated from schemas, API reference from OpenAPI; tag 1.0.

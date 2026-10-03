@@ -23,6 +23,7 @@ GraphGoblin is built for AI engineers. AI-driven development lifecycle (AIDLC) p
 | 11  | [Security and distribution](11-security-and-distribution.md) | Licensing, credentials, secrets, inbound exposure, retention                     |
 | 12  | [Implementation plan](12-implementation-plan.md)             | Milestones M0 to M8 with tasks and acceptance criteria                           |
 | 13  | [Open questions](13-open-questions.md)                       | Items that still need a decision, and which milestone they block                 |
+| 14  | [Work packages](14-work-packages.md)                         | Delegated work packages, delivery waves, and acceptance criteria from M3 onward  |
 | -   | [decisions/](decisions/)                                     | Architecture decision records                                                    |
 | -   | [research/](research/)                                       | Preserved research on Codex, Claude Code, Jev, licences, and runtimes            |
 
