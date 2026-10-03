@@ -11,8 +11,15 @@ import {
   type LoopDefinition,
 } from '@graphgoblin/contracts';
 import { checkExpression } from './expression.js';
-import type { ValidationIssue } from './graph.js';
 import { checkTemplate } from './template.js';
+
+/** Same shape as `ValidationIssue` in graph.ts, declared here so graph.ts can import this module. */
+interface SyntaxIssue {
+  code: 'TEMPLATE_INVALID' | 'EXPRESSION_INVALID';
+  severity: 'error';
+  message: string;
+  nodeId?: string;
+}
 
 /** The slice of a Zod 4 schema this walker reads. */
 interface SchemaLike {
@@ -74,8 +81,8 @@ export function findAuthoredSources(schema: unknown, value: unknown): Found[] {
  * One error per template that does not parse and per expression that does not compile. Runs would
  * otherwise fail on them only when the node executes.
  */
-export function syntaxIssues(def: LoopDefinition): ValidationIssue[] {
-  const issues: ValidationIssue[] = [];
+export function syntaxIssues(def: LoopDefinition): SyntaxIssue[] {
+  const issues: SyntaxIssue[] = [];
   const report = (item: Found, nodeId?: string) => {
     const problem =
       item.kind === 'template' ? checkTemplate(item.source) : checkExpression(item.source);
