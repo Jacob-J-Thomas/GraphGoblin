@@ -10,6 +10,7 @@ GraphGoblin is built for AI engineers. AI-driven development lifecycle (AIDLC) p
 
 | #   | Document                                                     | What it covers                                                                   |
 | --- | ------------------------------------------------------------ | -------------------------------------------------------------------------------- |
+| -   | [User guide](guide/README.md)                                 | Install locally, build loops, run and observe, configure triggers and integrations |
 | 01  | [Vision and scope](01-vision-and-scope.md)                   | Purpose, target users, mental model, principles, 1.0 scope, post-1.0 roadmap     |
 | 02  | [Architecture](02-architecture.md)                           | Stack, layering, package layout, ports, process topology, cross-cutting concerns |
 | 03  | [Domain model](03-domain-model.md)                           | Loops, versions, nodes, runs, events, invocations, the context thread            |
