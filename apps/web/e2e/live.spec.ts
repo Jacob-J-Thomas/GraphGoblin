@@ -60,7 +60,8 @@ test('LIVE: build, publish, and run an inference loop against Codex from the UI'
   await expect(page.locator('[data-status="succeeded"]').first()).toBeVisible();
   const messages = page.getByRole('list', { name: 'Messages' });
   await expect(messages.getByText('assistant')).toBeVisible();
-  await expect(messages).toContainText(/\bOK\b/);
+  // The message body is the assistant's whole reply.
+  await expect(messages.locator('li p').last()).toHaveText(/^\s*OK\.?\s*$/);
   await page.getByText(/Node progress/).click();
   await expect(page.getByText('harness.session').first()).toBeVisible();
   await context.close();
