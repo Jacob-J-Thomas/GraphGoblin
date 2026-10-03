@@ -110,6 +110,85 @@ describe('draft version tokens (If-Match)', () => {
     expect(results.map((r) => r.statusCode).sort()).toEqual([200, 409]);
   });
 
+  it('accepts two editors saving the identical change from the same token', async () => {
+    const { id, token } = await createLoop();
+    const results = await Promise.all([save(id, 'same', token), save(id, 'same', token)]);
+    expect(results.map((r) => r.statusCode)).toEqual([200, 200]);
+    const [a, b] = results.map((r) => r.json<{ draftToken: string; draft: { id: string } }>());
+    expect(a!.draftToken).toBe(b!.draftToken);
+    expect(a!.draft.id).toBe(b!.draft.id);
+    // A different change from the same stale token still conflicts.
+    expect((await save(id, 'other', token)).statusCode).toBe(409);
+  });
+
+  it('keeps a publish from landing inside a draft save, so a published version never changes', async () => {
+    const { id } = await createLoop();
+    const repo = t.container.repos.loops;
+    const saveDraft = repo.saveDraft.bind(repo);
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => (release = resolve));
+    let entered!: () => void;
+    const inSave = new Promise<void>((resolve) => (entered = resolve));
+    repo.saveDraft = async (loopId, definition) => {
+      entered();
+      await gate;
+      return saveDraft(loopId, definition);
+    };
+    const saving = save(id, 'late edit');
+    await inSave;
+    const publishing = t.app.inject({ method: 'POST', url: `/loops/${id}/publish` });
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    release();
+    const [saved, published] = await Promise.all([saving, publishing]);
+    repo.saveDraft = saveDraft;
+    expect(saved.statusCode).toBe(200);
+    expect(published.statusCode).toBe(200);
+    const draft = saved.json<{ draft: { id: string; status: string } }>().draft;
+    const version = published.json<{
+      version: { id: string; status: string; definition: { name: string } };
+    }>().version;
+    expect(draft.status).toBe('draft');
+    // The publish waited for the save and froze exactly what it saved.
+    expect(version).toMatchObject({ id: draft.id, status: 'published' });
+    expect(version.definition.name).toBe('late edit');
+    const detail = (await t.app.inject(`/loops/${id}`)).json<{
+      loop: { currentVersionId?: string; draftVersionId?: string };
+    }>();
+    expect(detail.loop.currentVersionId).toBe(draft.id);
+    expect(detail.loop.draftVersionId).toBeUndefined();
+    // A later save starts a new draft and leaves the published version alone.
+    const next = (await save(id, 'after')).json<{ draft: { id: string } }>().draft;
+    expect(next.id).not.toBe(draft.id);
+    const frozen = (await t.app.inject(`/loops/${id}/versions`)).json<{
+      items: { id: string; definition: { name: string } }[];
+    }>();
+    expect(frozen.items.find((v) => v.id === draft.id)?.definition.name).toBe('late edit');
+  });
+
+  it('answers 422 for an invalid draft and 409 when there is nothing to publish', async () => {
+    const { id } = await createLoop();
+    const broken = { ...minimalLoop(), edges: [] };
+    expect(
+      (
+        await t.app.inject({
+          method: 'PUT',
+          url: `/loops/${id}/draft`,
+          payload: { definition: broken },
+        })
+      ).statusCode,
+    ).toBe(200);
+    expect(
+      (await t.app.inject({ method: 'POST', url: `/loops/${id}/publish` })).json(),
+    ).toMatchObject({ code: 'LOOP_INVALID' });
+    await save(id, 'fixed');
+    expect((await t.app.inject({ method: 'POST', url: `/loops/${id}/publish` })).statusCode).toBe(
+      200,
+    );
+    expect(
+      (await t.app.inject({ method: 'POST', url: `/loops/${id}/publish` })).json(),
+    ).toMatchObject({ code: 'NO_DRAFT' });
+  });
+
   it('refuses a conditional save of another owner’s or a missing loop with 404', async () => {
     const missing = await save('01JZ0000000000000000000000', 'x', '"abc"');
     expect(missing.statusCode).toBe(404);

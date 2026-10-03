@@ -35,7 +35,8 @@ The draft gets a version token, `draftToken`: a hash (`stableHash`) of the defin
 
 ### Consequences
 
-- Two saves of identical content have the same token, so a save that would change nothing never conflicts. This is intended: the question a conflict answers is whether the server copy differs from the one the edit started from.
+- Equal content gives an equal token. A conditional save whose definition already equals the server draft is accepted as a no-op (200 with the unchanged draft and its token) even when its `If-Match` is stale, so two editors making the identical change from the same base both succeed. Any other stale save conflicts.
+- Publishing goes through the same per-loop queue as draft saves, and storage only updates a version row while it is still a draft and flips it to published in the same transaction as the loop pointers. A save that read the loop before a publish therefore creates a new draft instead of modifying the published version (ADR-0008).
 - API clients that do not send `If-Match` keep the old behaviour; the MCP server and scripts are unchanged.
 
 ### Alternatives considered
