@@ -34,6 +34,8 @@ Read: 02, 07. Depends on: M3. Deliver `packages/api-client` (`@graphgoblin/api-c
 
 Accept: generated types match the live document (a test regenerates and diffs); coverage above thresholds; `pnpm check:layers` green (dev dependencies are exempt from layer rules).
 
+Delivered: `packages/api-client` ships the typed client, resource wrappers, `subscribeRunEvents`, and `waitForRun`, with `openapi.json` and `src/generated/schema.ts` committed and a drift test (instead of a Turborepo emit task) that fails when the API's document changes; see "Client" in 07.
+
 ## WP-B - Codex and Jev adapters (M4)
 
 Read: 04 (inference, decision), 05, 06, `research/codex-sdk.md`, `research/jev.md`, ADR-0014. Depends on: M2 (engine ports). Both adapters stay separate `adapter-*` packages because each wraps an optional external service with its own dependency and licence (ADR-0014); they do not go into `packages/infrastructure`. Deliver:
