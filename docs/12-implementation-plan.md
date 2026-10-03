@@ -103,6 +103,8 @@ Tasks:
 
 Acceptance: a loop that triggers manually, asks Codex to change a file in a working directory, validates a structured result, decides with Jev, loops back once, and returns a payload through the `file` channel; runs on the owner's Windows machine; coverage above threshold.
 
+M4 wiring notes (WP-I): `apps/api` composes the real adapters when no override is given: harness `codex`, the Codex structured port, and deciders `[jev, codex]` (see "Composition" in 06). `GG_CODEX_BINARY` optionally points at a `codex` executable. Jev reads `jev-api-key` from the local owner's secrets after migrations run at `start()`, and `PUT`/`DELETE /secrets/jev-api-key` refresh it through `Container.onSecretChanged`, so a new key needs no restart. `HarnessPort.resume` now takes the full `HarnessStartRequest`, so resumed, repair, and crash-recovery turns keep the node's model, effort, sandbox, and working directory. The SSE stream ends right after the replay when the run is already terminal (07). A `LIVE=1` smoke in `apps/api/src/live.test.ts` runs trigger, inference (`gpt-6-luna`, `low`, read-only), and exit through the API and the real Codex CLI; it passed on 2026-10-03. The Jev live check is still open: no key was available on the development machine.
+
 ## M5 - Web editor and PWA (L)
 
 Goal: the product is usable without curl.

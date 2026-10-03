@@ -84,4 +84,4 @@ A `noul` answer is `{ "type": "noul", "noul": 0.9 }`, where `noul` is the probab
 
 ## Open items
 
-- Capture a real response once a key is available and confirm the shapes above, in particular whether `confidence` always equals the chosen label's probability.
+- Capture a real response once a key is available and confirm the shapes above, in particular whether `confidence` always equals the chosen label's probability. Still open after WP-I (2026-10-03): no `JEV_API_KEY` was set on the development machine, so no live call was made.

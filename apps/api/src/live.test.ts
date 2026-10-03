@@ -1,7 +1,12 @@
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import type { ContextThread, LoopDefinitionInput, RunEvent, RunRecord } from '@graphgoblin/contracts';
+import type {
+  ContextThread,
+  LoopDefinitionInput,
+  RunEvent,
+  RunRecord,
+} from '@graphgoblin/contracts';
 import { describe, expect, it } from 'vitest';
 import { buildApp } from './app.js';
 import { loadConfig } from './config.js';
@@ -61,9 +66,9 @@ describe.skipIf(!live)('API live smoke with the real Codex adapter', () => {
       const created = await app.inject({ method: 'POST', url: '/loops', payload: { definition } });
       expect(created.statusCode).toBe(201);
       const loopId = created.json<{ loop: { id: string } }>().loop.id;
-      expect((await app.inject({ method: 'POST', url: `/loops/${loopId}/publish` })).statusCode).toBe(
-        200,
-      );
+      expect(
+        (await app.inject({ method: 'POST', url: `/loops/${loopId}/publish` })).statusCode,
+      ).toBe(200);
       const started = await app.inject({
         method: 'POST',
         url: `/loops/${loopId}/runs`,

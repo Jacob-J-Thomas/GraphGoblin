@@ -49,7 +49,8 @@ All list endpoints are paginated with cursors. All ids are ULIDs.
 - Endpoint: `GET /runs/{id}/events` with `Accept: text/event-stream`. The query parameter `after` or the `Last-Event-ID` header sets the starting sequence.
 - Each SSE message has `id: <seq>`, `event: <run event type>`, and `data: <JSON event>`.
 - A `: heartbeat` comment is sent every 15 seconds so proxies and browsers keep the connection open.
-- The stream closes after `run.finished`, `run.failed`, or `run.cancelled` is delivered.
+- The stream closes after `run.finished`, `run.failed`, or `run.cancelled` is delivered, whether that event is replayed or arrives live.
+- If the run is already terminal when the client subscribes and the cursor is at or past its terminal event, the response ends right after the replay (a `: connected` comment and no events), so a reconnect after the end never idles. A run whose status is terminal but whose terminal event is not yet in the log (the status changes just before the event is appended) gets up to 2 seconds for the event to arrive before the stream ends.
 - Reconnecting with the last seen `seq` replays everything missed, because the stream is a tail of the persisted log.
 - `GET /events/stream` (Draft) offers a multiplexed stream of run status changes across all runs for dashboards.
 

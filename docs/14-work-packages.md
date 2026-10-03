@@ -17,6 +17,7 @@ Rules that apply to every package:
 | 0    | WP-0 M3 stabilisation                                       | no                   | now                      |
 | 1    | WP-A api-client, WP-B Codex and Jev adapters, WP-C triggers | yes, three worktrees | M3 committed             |
 | 2    | WP-D web editor and PWA, WP-E MCP server and Codex plugin   | yes, two worktrees   | WP-A merged              |
+| 2    | WP-I integration and follow-ups (delivered)                 | alongside WP-D       | WP-A, WP-B, WP-C merged  |
 | 3    | WP-F hardening, packaging, adversarial QA                   | partly               | WP-B through WP-E merged |
 
 ## WP-0 - M3 stabilisation
@@ -81,6 +82,10 @@ Read: 07, `research/codex-sdk.md` (plugins). Depends on: WP-A merged. Deliver `a
 Accept: an E2E test drives the MCP server against the in-process API with the fake harness; one live check from a Codex session starts a loop and reads its result; coverage above thresholds.
 
 Delivered: `apps/mcp` serves the thirteen tools and two run resources over stdio and Streamable HTTP, and `apps/plugin-codex` assembles an installable Codex marketplace with the MCP server and the `run-loop`, `design-loop`, and `inspect-run` skills, verified live with Codex CLI 0.160.0; see "MCP server" and "Codex plugin" in 07.
+
+## WP-I - Integration and follow-ups - DELIVERED 2026-10-03
+
+Delivered: `apps/api` composes the real Codex harness, structured port, and deciders `[jev, codex]`, with `GG_CODEX_BINARY` and a secret-change hook that refreshes Jev when `jev-api-key` is set or deleted; poll triggers record the new `poll` invocation source; the API client is regenerated; `HarnessPort.resume` takes the full `HarnessStartRequest` so resumed turns keep the node's settings; the SSE stream ends at once for a run that is already terminal; the dependency-cruiser cross-package rule only flags relative imports. A `LIVE=1` API smoke through the real Codex CLI passed. The Jev live check stays open until a key is available. See the M4 wiring notes in 12.
 
 ## WP-F - Hardening and 1.0 (M8)
 

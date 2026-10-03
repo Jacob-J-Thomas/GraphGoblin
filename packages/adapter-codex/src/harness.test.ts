@@ -221,7 +221,12 @@ describe('CodexHarness.resume', () => {
       model: 'gpt-6-astra',
       effort: 'high',
       workingDirectory: '/proj',
-      options: { sandbox: 'read-only', approval: 'on-request', networkAccess: true, webSearch: true },
+      options: {
+        sandbox: 'read-only',
+        approval: 'on-request',
+        networkAccess: true,
+        webSearch: true,
+      },
     } as const;
     const first = harness.start(request(settings), new AbortController().signal);
     const id = await first.sessionId;
