@@ -2,12 +2,14 @@ import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 import Fastify, { type FastifyBaseLogger, type FastifyServerOptions } from 'fastify';
 import {
-  jsonSchemaTransform,
+  createJsonSchemaTransform,
+  createJsonSchemaTransformObject,
   serializerCompiler,
   validatorCompiler,
   type ZodTypeProvider,
 } from 'fastify-type-provider-zod';
 import type { Container } from './container.js';
+import { openApiRegistry } from './openapi-registry.js';
 import { registerAuth } from './plugins/auth.js';
 import { registerErrorHandler } from './plugins/errors.js';
 import { registerLoopRoutes } from './routes/loops.js';
@@ -60,7 +62,8 @@ export async function buildApp(
         { name: 'system', description: 'Health, version, harness preflight' },
       ],
     },
-    transform: jsonSchemaTransform,
+    transform: createJsonSchemaTransform({ schemaRegistry: openApiRegistry }),
+    transformObject: createJsonSchemaTransformObject({ schemaRegistry: openApiRegistry }),
   });
   if (container.config.swaggerUi) {
     await app.register(swaggerUi, { routePrefix: '/docs' });

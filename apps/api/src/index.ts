@@ -15,3 +15,4 @@ export * from './types.js';
 export { streamRunEvents } from './sse.js';
 export { problem } from './plugins/errors.js';
 export type { AuthContext } from './plugins/auth.js';
+export { emitOpenApi } from './emit-openapi.js';
