@@ -48,7 +48,20 @@ describe('replayThread', () => {
   it('applies a repeated record of the same completion once', () => {
     const add = ev(4, 'node.finished', {
       nodeId: 'prep',
-      patch: [{ op: 'add', path: '/messages/-', value: sampleThread().messages[0]! }],
+      patch: [
+        {
+          op: 'add',
+          path: '/messages/-',
+          value: {
+            id: 'm',
+            role: 'user',
+            content: 'once',
+            nodeId: 'prep',
+            ts: FIXTURE_TS,
+            tags: [],
+          },
+        },
+      ],
       route: 'out',
       durationMs: 1,
     });

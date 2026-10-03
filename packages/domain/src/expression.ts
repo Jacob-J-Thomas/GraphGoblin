@@ -85,7 +85,8 @@ function compile(expression: string, cached = true): Compiled {
 function checkedEval(options: ExpressionOptions) {
   return async function (this: unknown, source: unknown, focus?: unknown): Promise<unknown> {
     if (source === undefined) return undefined;
-    const expression = String(source);
+    if (typeof source !== 'string') throw new ExpressionError('$eval takes a string expression');
+    const expression = source;
     return run(compile(expression, false), expression, focus === undefined ? this : focus, options);
   };
 }

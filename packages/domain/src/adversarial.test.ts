@@ -177,6 +177,7 @@ describe('adversarial domain invariants', () => {
     expect(await evaluateExpression('$eval("a + 1")', { a: 1 })).toBe(2);
     expect(await evaluateExpression('$eval("x * 2", {"x": 5})', {})).toBe(10);
     expect(await evaluateExpression('$eval(missing)', {})).toBeUndefined();
+    await expect(evaluateExpression('$eval(42)', {})).rejects.toThrow(/takes a string/);
     // A string cannot become a regex any other way: $match rejects a string pattern.
     await expect(
       evaluateExpression('($p := $join(["^(a", "+)+$"]); $match("aaaa!", $p))', {}),

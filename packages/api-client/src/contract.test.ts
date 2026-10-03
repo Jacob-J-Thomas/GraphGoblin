@@ -172,7 +172,7 @@ describe('against the in-process API (local trusted mode)', () => {
     const second = await runs.start(client, loop.id);
     await until(async () => (await runs.get(client, second.id)).status === 'waiting');
     expect((await runs.pause(client, second.id)).status).toBe('paused');
-    expect((await runs.resume(client, second.id)).status).toBe('running');
+    expect((await runs.resume(client, second.id)).status).toBe('waiting'); // paused while parked: back to waiting (docs/05)
     await until(async () => (await runs.get(client, second.id)).status === 'waiting');
     await runs.cancel(client, second.id);
     expect((await waitForRun(client, second.id, { timeoutMs: 5000, pollMs: 10 })).run.status).toBe(
