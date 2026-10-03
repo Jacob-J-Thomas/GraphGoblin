@@ -289,6 +289,43 @@ importers:
         specifier: ^5.0.3
         version: 5.0.3(@types/node@22.20.5)(@vitest/coverage-v8@5.0.3)(vite@8.3.2(@types/node@22.20.5)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1))
 
+  packages/adapter-jev:
+    dependencies:
+      '@graphgoblin/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@graphgoblin/domain':
+        specifier: workspace:*
+        version: link:../domain
+      '@graphgoblin/engine':
+        specifier: workspace:*
+        version: link:../engine
+      '@typesafe-ai/sdk':
+        specifier: 0.6.0
+        version: 0.6.0
+      zod:
+        specifier: ^4.6.5
+        version: 4.6.5
+    devDependencies:
+      '@graphgoblin/tooling':
+        specifier: workspace:*
+        version: link:../../tooling
+      '@types/node':
+        specifier: ^22.20.5
+        version: 22.20.5
+      '@vitest/coverage-v8':
+        specifier: ^5.0.3
+        version: 5.0.3(vitest@5.0.3)
+      eslint:
+        specifier: ^10.11.0
+        version: 10.11.0(supports-color@7.2.0)
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: ^5.0.3
+        version: 5.0.3(@types/node@22.20.5)(@vitest/coverage-v8@5.0.3)(vite@8.3.2(@types/node@22.20.5)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1))
+
   packages/contracts:
     dependencies:
       zod:
@@ -1278,6 +1315,10 @@ packages:
 
   '@types/ws@8.18.2':
     resolution: {integrity: sha512-67MQl+fpWKVTT1NYdnmo3U4sc/xPo/zQBncVnI74qmQa0z/b+1g6iYqNmGCPbxO+zz2aklb08a0oHfegiVd0/w==}
+
+  '@typesafe-ai/sdk@0.6.0':
+    resolution: {integrity: sha512-IddX+Q0XM+VagOUZFeP7wZjaO4SHMdvnh2zEBdrZZnXedWI3BNK1lKhMx3ayrkFWvVLbVcUHJy6AVZlY+e6Jaw==}
+    engines: {node: '>=20'}
 
   '@typescript-eslint/eslint-plugin@8.71.0':
     resolution: {integrity: sha512-pqcS9c1HxZTHt7End4nXqd0s5lJrrFzrgCkKFJrsbUnaL6M3+6oBFZaslg6Gjsl3argl2DDRFROnXARaZ2e4Nw==}
@@ -3048,6 +3089,8 @@ snapshots:
   '@types/ws@8.18.2':
     dependencies:
       '@types/node': 22.20.5
+
+  '@typesafe-ai/sdk@0.6.0': {}
 
   '@typescript-eslint/eslint-plugin@8.71.0(@typescript-eslint/parser@8.71.0(eslint@10.11.0(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3))(eslint@10.11.0(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3)':
     dependencies:

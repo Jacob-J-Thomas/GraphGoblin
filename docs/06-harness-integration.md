@@ -55,33 +55,79 @@ Adapters translate native events into this model. The engine never sees SDK type
 
 Verified on 2026-10-02 against the `openai/codex` repository and docs. Full notes in `research/codex-sdk.md`.
 
-- `@openai/codex-sdk` is Apache-2.0 and requires Node 18 or newer. It spawns the `codex` CLI, which the user installs separately, and exchanges JSONL events with it.
-- Threads persist under `~/.codex/sessions` and can be resumed with `resumeThread(id)`.
-- `run` and `runStreamed` accept an `outputSchema` for structured output.
-- `runStreamed` yields events including `item.completed` and `turn.completed` with usage; the final result carries `finalResponse`, `items`, and `usage`.
-- The client accepts `env`, `baseUrl`, `config` (flattened to dotted config keys), and `configOverrides` (raw TOML lines). Thread options include `workingDirectory` and `skipGitRepoCheck`.
-- Reasoning effort values are `minimal`, `low`, `medium`, `high`, `xhigh`, set through `model_reasoning_effort`.
+- `@openai/codex-sdk` is Apache-2.0 and requires Node 18 or newer. It is pinned exactly at 0.160.0. It depends on `@openai/codex` at the same version, which ships the native CLI, and by default runs that bundled binary (the adapter's `codexBinary` option overrides it). It exchanges JSONL events with the CLI over stdio.
+- Threads persist under `~/.codex/sessions` and can be resumed with `resumeThread(id, options)`.
+- `run` and `runStreamed` accept an `outputSchema` for structured output and an AbortSignal.
+- `runStreamed` yields `thread.started`, `turn.started`, `item.started|updated|completed`, `turn.completed` (usage), `turn.failed`, and `error` events.
+- The client accepts `codexPathOverride`, `env`, `baseUrl`, `apiKey`, `config` (flattened to dotted `--config` keys), and `configOverrides` (raw `key=value` strings). Thread options are `model`, `modelReasoningEffort`, `sandboxMode`, `approvalPolicy`, `networkAccessEnabled`, `webSearchMode`, `webSearchEnabled`, `workingDirectory`, `skipGitRepoCheck`, `additionalDirectories`, and `threadSource`.
+- Reasoning effort values used are `minimal`, `low`, `medium`, `high`, `xhigh` (`model_reasoning_effort`).
 - Codex has a native Windows sandbox since March 2026, and plugins bundling skills, MCP servers, and connectors since CLI 0.117.0.
 
-Items marked "verify" in the research doc must be checked against the pinned SDK version during M4.
+All of this was verified against the pinned version in M4; `research/codex-sdk.md` lists every option with the CLI argument it becomes.
 
 ### Authentication (Decided)
 
 GraphGoblin uses the machine's existing Codex login, which may be a ChatGPT subscription. It never stores or proxies Codex credentials. The adapter's `preflight` runs the CLI to confirm it is installed and authenticated, and the settings page shows the result. If an API key is desired later, it is passed through `env`, never persisted by GraphGoblin.
 
-### Mapping inference config to the SDK (Draft)
+### Mapping inference config to the SDK (Decided, verified in M4)
 
-| Inference config                                                   | SDK mechanism                                                                                                                                                                                                            |
-| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `model`, `effort`                                                  | `config: { model, model_reasoning_effort }` on the client, or per-thread options where the pinned SDK exposes them                                                                                                       |
-| `harnessOptions.sandbox`, `approval`, `networkAccess`, `webSearch` | `config` keys `sandbox_mode`, `approval_policy`, and the corresponding feature flags; verify names against the pinned version                                                                                            |
-| `harnessOptions.configOverrides`                                   | `configOverrides` TOML lines, passed through verbatim                                                                                                                                                                    |
-| `capabilities.mcpServers`, `plugins`, `skills`                     | Resolved from the capability profile into `config` entries under `mcp_servers.*` and plugin references; skills are directories the CLI discovers                                                                         |
-| `workingDirectory`                                                 | `startThread({ workingDirectory, skipGitRepoCheck: true })`                                                                                                                                                              |
-| `session.policy`                                                   | `fresh` starts a thread; `resume-previous` resumes the session id recorded by the previous inferencing node in this run; `resume-named` resumes the session id stored under `(loopId, key)` or `(workingDirectory, key)` |
-| `prompt.template`                                                  | Rendered with Liquid, passed as the turn prompt                                                                                                                                                                          |
-| `output.schema` with `native: true`                                | `outputSchema` on the turn                                                                                                                                                                                               |
-| cancellation                                                       | abort the SDK call and kill the process tree                                                                                                                                                                             |
+Every behaviour-affecting setting is passed as a per-thread option on every session, so the machine's `config.toml` defaults (on the owner's machine: model `gpt-6.1-sol`, effort `xhigh`, sandbox `danger-full-access`, approval `never`) never leak into a loop. Thread options become CLI arguments that come after any `config` overrides, so they also win over `configOverrides`.
+
+| Inference config                               | SDK mechanism (`@openai/codex-sdk` 0.160.0)                                                                                                                                                                              |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `model`                                        | thread option `model` (`--model`); default from the engine's model resolution, else the adapter's `model` option (`gpt-6-luna`)                                                                                          |
+| `effort`                                       | thread option `modelReasoningEffort` (`model_reasoning_effort`); `minimal`, `low`, `medium`, `high`, `xhigh` pass through, `max` maps to `xhigh`                                                                         |
+| `harnessOptions.sandbox`                       | thread option `sandboxMode` (`--sandbox`): `read-only`, `workspace-write`, `danger-full-access`                                                                                                                          |
+| `harnessOptions.approval`                      | thread option `approvalPolicy` (`approval_policy`): `never` or `on-request`                                                                                                                                              |
+| `harnessOptions.networkAccess`                 | thread option `networkAccessEnabled` (`sandbox_workspace_write.network_access`), always set, default `false`                                                                                                             |
+| `harnessOptions.webSearch`                     | thread option `webSearchMode` (`web_search`): `live` when true, otherwise `disabled`                                                                                                                                     |
+| `harnessOptions.configOverrides`               | client `config` (dotted `--config` keys); values that cannot be TOML (null, non-finite numbers, functions) are dropped                                                                                                   |
+| `capabilities.mcpServers`, `plugins`, `skills` | Not yet resolved: the port receives slugs only and there is no capability profile store. The adapter logs and ignores them; use `configOverrides` (for example `mcp_servers.<name>.*`) until profiles land               |
+| `workingDirectory`                             | thread options `workingDirectory` (`--cd`) and `skipGitRepoCheck: true`                                                                                                                                                  |
+| `session.policy`                               | `fresh` starts a thread; `resume-previous` resumes the session id recorded by the previous inferencing node in this run; `resume-named` resumes the session id stored under `(loopId, key)` or `(workingDirectory, key)` |
+| `prompt.template`                              | Rendered with Liquid, passed as the turn prompt                                                                                                                                                                          |
+| `output.schema` with `native: true`            | `outputSchema` on the turn; the final message is parsed as JSON into `structured`, and the engine validates it                                                                                                           |
+| cancellation                                   | abort the SDK call's signal; see "Cancellation" below                                                                                                                                                                    |
+
+`HarnessPort.resume` receives only the turn, not the start settings. The adapter remembers the settings of each session it started (bounded, in memory) and repeats them on resume. For a session started by an earlier process, it uses its `model`, `effort`, and `resumeOptions` defaults (contract defaults: `workspace-write`, `never`, no network, no web search) and no `--cd`. A later engine change should pass the node's settings on resume.
+
+### Event normalisation (Decided)
+
+| Codex event                                                       | `HarnessEvent`                                                                                                                                                                                                                                                                                          |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `thread.started`                                                  | `session` with `mode: 'fresh'`, as soon as it arrives. On resume the known id is announced before the CLI starts.                                                                                                                                                                                       |
+| `item.completed`                                                  | `item`; `agent_message` → `message`, `reasoning`, `command_execution` → `command`, `file_change` → `file-change`, `mcp_tool_call` → `tool-call`, `web_search` → `search`, `error`, anything else → `other`, each with a one-line summary and the raw item (command output capped at 16 KiB) as `detail` |
+| `item.started`, `item.updated`                                    | not emitted                                                                                                                                                                                                                                                                                             |
+| `turn.completed`                                                  | `usage` (`input_tokens`, `cached_input_tokens`, `output_tokens`, `reasoning_output_tokens`), then `turn-complete`                                                                                                                                                                                       |
+| `turn.failed`, thrown SDK error, stream ending without completion | `error { code, message, retriable }`, and `result` rejects with the same `code`                                                                                                                                                                                                                         |
+
+An `error` item, such as a configuration deprecation warning, is an ordinary item and never fails a turn. A top-level `error` event only counts if the turn then fails. Codes: `HARNESS_QUOTA_EXHAUSTED` (HTTP 429, usage limit, quota; retriable only for plain rate limits), `HARNESS_NOT_AUTHENTICATED` (401, 403, not logged in), `HARNESS_NOT_INSTALLED` (binary not found), and `HARNESS_TURN_FAILED` (everything else; retriable for 5xx and stream disconnects). The engine's `classifyHarnessError` maps the first two by substring.
+
+### Cancellation (Decided, verified on Windows)
+
+`cancel()` and the caller's AbortSignal both abort the signal passed to `runStreamed`. The SDK hands it to `child_process.spawn`, which kills the CLI. The SDK keeps the child process private, so the adapter cannot reach its pid for a `taskkill /T /F`. It does not need to on Windows: a live test (`LIVE=1`) starts a `workspace-write` session running `Start-Sleep -Seconds 120`, confirms the sleeping process exists, cancels, and confirms nothing with the marker survives, because Codex runs commands inside a job object that ends with the CLI. The same was observed with `danger-full-access`. `result` rejects with an `AbortError`; `cancel()` waits up to `cancelGraceMs` (5 s) for the turn to settle. POSIX behaviour is unverified on the development machine.
+
+### Codex structured completions and decider
+
+`CodexStructured` (`StructuredPort`) starts one fresh thread per call with the schema, sandbox `read-only`, approval `never`, no network, no web search, in the request's working directory or an empty temporary directory it removes afterwards. It returns the parsed JSON (or the raw text if the reply is not JSON) for the engine to validate. `CodexDecider` (`DeciderPort`, `id: 'codex'`) asks `{ route: enum of labels, confidence, reasoning }` for choices and `{ holds, confidence, reasoning }` for yes/no questions; schemas follow OpenAI's strict structured-output rules, so confidence bounds are enforced by clamping, not in the schema. It is always `available()`; harness health is reported by `preflight`.
+
+### Wiring
+
+```ts
+import { createCodexAdapters } from '@graphgoblin/adapter-codex';
+import { createJevDecider } from '@graphgoblin/adapter-jev';
+
+const codex = createCodexAdapters({
+  logger,
+  model: settings.defaultModel,
+  effort: settings.defaultEffort,
+});
+const jev = createJevDecider({ secrets, logger }); // resolves `jev-api-key` in the background
+await jev.init();
+// ports: harnesses: { codex: codex.harness }, structured: codex.structured, deciders: [jev, codex.decider]
+```
+
+Call `jev.refresh()` after the `jev-api-key` secret changes.
 
 ### Context injection (Decided)
 
@@ -111,15 +157,24 @@ A `model_catalog` table seeded at first boot with the Codex models and the five 
 
 ### Windows notes
 
-The product owner develops on Windows 11. Codex's native Windows sandbox applies. Process-tree termination must use a tree-kill approach because POSIX signals are not available. Paths are normalised with `node:path` and never built by string concatenation.
+The product owner develops on Windows 11. Codex's native Windows sandbox applies. POSIX signals are not available, so process trees are killed with `taskkill /T /F` where GraphGoblin owns the process (scripts); for Codex sessions the CLI's own job object ends the tree on abort (see "Cancellation"). `preflight` spawns with `windowsHide: true`; the SDK spawns sessions without it, which only matters if the gateway runs without a console. Paths are normalised with `node:path` and never built by string concatenation.
 
 ### Fixtures (Decided)
 
-Adapter tests replay recorded JSONL event streams captured from real sessions, stored under `packages/adapter-codex/fixtures`. A nightly CI job behind an environment flag runs a small live smoke suite to detect SDK drift. The SDK version is pinned exactly and bumped deliberately.
+Adapter tests replay recorded JSONL event streams captured from real sessions, stored under `packages/adapter-codex/fixtures`, through a fake SDK client (`src/__fixtures__/replay.ts`), so they need no CLI or network. Record a new one with `pnpm --filter @graphgoblin/adapter-codex record -- <name> "<prompt>" [--schema file] [--sandbox workspace-write] [--seed file=text]`; it uses `gpt-6-luna` at `low`, `--ephemeral`, a fresh temporary directory, and scrubs home and temporary paths. Current fixtures: `message`, `command-and-file-change`, `structured`, `failed-invalid-model`. `LIVE=1 pnpm --filter @graphgoblin/adapter-codex test -- src/live.test.ts` runs the live smoke suite (preflight, start plus resume, cancellation on Windows, one decision); a nightly CI job behind the same flag detects SDK drift. The SDK version is pinned exactly and bumped deliberately.
 
 ## Codex as a decider and a repair engine (Decided)
 
-Decision nodes with strategy `codex`, the `coerce` operation's repair, and inferencing-node repair all use short Codex threads with an output schema. This keeps every model call in 1.0 on the subscription. These threads run with a read-only sandbox and no file changes.
+Decision nodes with strategy `codex`, the `coerce` operation's repair, and inferencing-node repair all use short Codex threads with an output schema. This keeps every model call in 1.0 on the subscription. These threads run with a read-only sandbox and no file changes. Implemented by `CodexStructured` and `CodexDecider` in `packages/adapter-codex`.
+
+## Jev decider (Decided, M4)
+
+`packages/adapter-jev` implements `DeciderPort` (`id: 'jev'`) over `@typesafe-ai/sdk` 0.6.0 (MIT, no dependencies). Both primitives call `POST https://api.typesafe.ai/v1/systemone` with a bearer key from the secret `jev-api-key`:
+
+- `choose` sends the decision context as `state` and one `choice` question whose criteria map each route label to its description. It returns the chosen label, the reported confidence (or the label's probability), and every other label with its probability as `alternatives`, highest first. The engine compares the confidence with `jev.minConfidence` and falls through to the next strategy below it.
+- `judge` sends one `noul` (yes/no) question; `holds` is `noul >= 0.5` and `confidence` is the probability of the answer given.
+
+`available()` is synchronous: the decider resolves the key in the background at construction and caches a client; `init()` awaits that, and `refresh()` re-reads the secret. Without a key it is unavailable and the engine skips it. Failures carry codes: `DECIDER_UNAVAILABLE`, `DECIDER_NOT_AUTHENTICATED` (401, 403), `DECIDER_RATE_LIMITED` (429), `DECIDER_HTTP_ERROR`, `DECIDER_UNREACHABLE`, and `DECIDER_INVALID_RESPONSE` (the response is validated with Zod). The SDK retries 408, 429, and 5xx twice by default with a 10 s per-attempt timeout; aborts surface as `AbortError`. The base URL and model are explicit options (`baseUrl`, default `https://api.typesafe.ai`; `model`, default `jev-latest`), never read from `TYPESAFE_*` environment variables.
 
 ## Post-1.0 adapters (recorded)
 
