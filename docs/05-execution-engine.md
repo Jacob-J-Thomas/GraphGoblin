@@ -88,6 +88,10 @@ an exit with a failure outcome is not a resumable node failure.
 
 A subloop node creates a child run with the mapped input thread and parks the parent with wait kind `child`. The child is a normal run: it has its own event log, pins its own version, can itself contain subloops up to the depth limit, and is visible in the run list with a parent link. When it finishes, the parent is woken with the child's outcome and return payload, and the subloop handler applies the output mapping. Cancelling a parent cancels its children. Cancelling a child alone wakes the parent with outcome `cancelled`.
 
+**Which version a child runs (Decided, WP-G).** A `latest` reference resolves when the parent run is _created_, not when the subloop node runs. `startRun` walks every subloop reference reachable from the run's version, through the referenced loops' own subloop nodes at any depth, pins each `latest` loop to the version published at that moment, and records the map (loop id to version id) on the run's `run.queued` event as `subloopVersions`. Numbered references are immutable and need no pin, but are walked for their own references. Every child the run starts uses its pin, so a version published while the parent waits never reaches it. A child inherits its parent's pins and records them on its own `run.queued`, so a whole tree of runs sees one snapshot; a replay fork copies its source's pins; recovery reads them from the log like everything else. A reference that does not resolve at creation is left unpinned and fails with `SUBLOOP_NOT_FOUND` when the child would start, as before; a run whose log predates pinning resolves `latest` when the child starts.
+
+**A child that finishes before its parent parks (Decided, WP-G).** The parent records its `waiting/child` state after the subloop handler has started the child, so a fast child can finish while the parent is still `running`; its notification then finds no waiting parent. After the parent's park transition the run manager therefore checks the child, and wakes the parent at once if the child is already terminal; recovery does the same for every parent waiting on a child. Both paths and the child's own notification go through the waiting-to-running compare-and-set, so exactly one wins. A wake that lands while the parent's executor is still returning is queued until it has returned rather than dropped.
+
 ## Parallel runs (Decided)
 
 Every trigger firing starts a new run. Runs of the same loop execute concurrently with no coordination. The run manager caps overall concurrency with a worker pool sized by setting, default 4, with parked runs not counting against it. A per-loop concurrency policy is post-1.0 and will be a loop setting.
@@ -96,12 +100,14 @@ Every trigger firing starts a new run. Runs of the same loop execute concurrentl
 
 Cancellation is cooperative and persisted. The API writes `cancelRequestedAt`, appends `run.cancel_requested`, and signals the in-process abort controller. Handlers observe the abort signal: the harness adapter cancels the session and kills the subprocess tree, the script port kills the process tree, waits and heartbeats drop their timers. Once the handler returns or throws with an abort, the engine appends `run.cancelled`. Children are cancelled first. A restarted process scans for runs with a cancel request and no `run.cancelled` event and completes the cancellation.
 
+The request itself is a compare-and-set (`RunRepository.claimCancel`): `cancelRequestedAt` is written only when it is unset and the run is active. Of concurrent cancels, one records `run.cancel_requested`; the others return the run as it is without appending anything. A cancel that loses to the run finishing is an `INVALID_STATE` error, as a cancel of a terminal run always was.
+
 ## Crash recovery (Decided)
 
 At boot the run manager loads every run in `running` or `waiting` status:
 
-- `waiting`: re-register the timer, signal, or child subscription. Nothing else.
-- `running`: the last `node.started` without a matching `node.finished` identifies the interrupted node. Recovery depends on its kind.
+- `waiting`: re-arm the wait's timer from its wait spec (`until`: key `timer` or `heartbeat` for those waits, `timeout` for an input or signal wait with a timeout; an upsert, so an armed timer is unchanged), and wake a parent whose child is already terminal. Signals and inputs need nothing.
+- `running`: the executor starts from the log. The thread is always replayed from the initial thread (never the snapshot, which can lag a crash), and the cursor is checked against the log: when the log's last node event is the `node.finished` of the node the run record still points at, that node completed and only the cursor write was lost, so the cursor advances along the route it recorded (an exit's loop-back goes to its target, appending the `iteration.incremented` if that was lost too) without running the node again. An exit node that finished without a route (the run was finishing) is evaluated again; its patch is empty and `run.finished` is still written once. Otherwise the last `node.started` without a matching `node.finished` identifies the interrupted node. Recovery depends on its kind.
   - Inferencing: the `harness_sessions` row was written before the subprocess started, so the handler resumes that session and asks it to continue. If the session was never started, it starts fresh.
   - Script: re-executed. Scripts are documented as at-least-once.
   - Decision, mutation, exit: re-executed. They are deterministic given the thread, except Jev and Codex-backed decisions, which are simply asked again.
@@ -162,6 +168,17 @@ Because every node input is reconstructible, the API offers "re-run this node wi
 
 - **Model and effort resolve node, then loop defaults, then owner settings, then configuration.** `EngineSettings.ownerDefaults(ownerId)` is read every time a run starts or resumes; the API reads the owner settings `defaultModel` and `defaultEffort` there, so a change in Settings applies to the next run without a restart. `GG_DEFAULT_MODEL` and `GG_DEFAULT_EFFORT` remain the last fallback.
 - **The executor yields to the event loop between nodes** (one `setTimeout(0)` per node). With fast ports every await settles as a microtask, and a graph cycle (a decision routing back to itself) used to starve timers, API requests, and the cancel request that could stop it. Such a cycle is still unbounded: it runs until cancelled, because `maxIterations` counts only exit loop-backs (open question in 13).
+
+## Implementation notes from WP-G (Decided by implementation, 2026-10-03)
+
+The adversarial design review (`docs/qa/2026-10-03-adversarial-design-review.md`) found eight open defects; WP-G closed them. The rules they settle are in the sections above; in short:
+
+- **Subloop versions are pinned at parent creation** (ADV-004), transitively, and recorded on `run.queued` as `subloopVersions`.
+- **Timers are delivered at least once** (ADV-011). `TimerService` removes a timer only after every listener has run, and only while the row still has the fired time (a listener that re-armed the key keeps its new timer); a service with no listener consumes nothing. Recovery re-arms each waiting run's timer from its wait spec. Because a fire can repeat, the run manager's timer listener is idempotent: the wake is a compare-and-set, and a `timer` or `heartbeat` key only wakes a wait of that kind, so a stale fire cannot wake a later, different wait.
+- **Cancel requests are claimed once** (ADV-012).
+- **A fast child cannot orphan its parent** (ADV-015).
+- **The log is the source of truth for the cursor and the thread at every executor start** (ADV-016). The status write and the event append are still separate writes; the recovery rules above make each crash gap between them safe instead of making them one transaction.
+- **Expression regexes are checked statically** (ADV-007). The JSONata time budget is cooperative: it is checked at evaluator entry and exit, which a native regex match never returns to. So every regex literal in an expression, and every `redact` and `replace` mutation pattern, is rejected before it runs when it contains a back-reference, a repeated group containing another repetition, or a repeated group whose alternatives can start with the same character (an expression then fails to compile, which loop validation reports as `EXPRESSION_INVALID`; a mutation pattern fails its node when it runs). Ordinary patterns (`^\w+@\w+\.com$`, `\d{4}-\d{2}`, `(foo|bar)+`) are unaffected. Polynomial backtracking and memory are not bounded in-process; see 11.
 
 ## Why no error ports (Decided, see ADR-0006)
 

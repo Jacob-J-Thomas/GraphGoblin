@@ -11,7 +11,7 @@
 
 - Codex: GraphGoblin relies on the machine's `codex login` state. It never stores, reads, or proxies Codex credentials. Subscription login is the expected mode for 1.0.
 - Jev: an API key stored in the secret store, referenced by name.
-- GraphGoblin API keys: generated for other applications and the MCP server, hashed at rest, shown once.
+- GraphGoblin API keys: generated for other applications and the MCP server, hashed at rest, shown once. Every private route, reads included, requires the key's scope for that resource (07), so a key minted for one job, such as `runs:write` for the MCP server, cannot list loops, settings, secrets, or other keys. A key with `api-keys:write` can mint keys with any scope, including `*`, so treat that scope as administrative.
 - Post-1.0 hosted: users bring their own harness API keys per the harness vendor's terms; subscription logins cannot be offered inside a hosted product.
 
 ## Secret store (Decided)
@@ -31,6 +31,7 @@
 - The script node executes arbitrary user programs by design. In 1.0 they run as the GraphGoblin process user on the user's own machine. This is acceptable for a single-user tool and is stated plainly in the UI.
 - Codex sessions run under Codex's own sandbox with the mode set on the node. The default is `workspace-write`. `danger-full-access` is allowed but highlighted in the editor.
 - Post-1.0 multi-tenant hosting requires per-run isolation, which is why the runner abstraction exists: a remote runner can be a container.
+- Expressions and templates run in-process. JSONata evaluation has a cooperative time and depth budget (05), and Liquid has no filesystem access. Neither can interrupt a native regular-expression match, so regexes are checked statically before they run: JSONata regex literals and the patterns of the `redact` and `replace` mutations are rejected when they contain a back-reference, a repeated group that contains another repetition, or a repeated group whose alternatives can start with the same character (`packages/domain/src/regex-safety.ts`, ADV-007). The check is conservative and syntactic. Residual risk: polynomial backtracking (several adjacent unbounded wildcards such as `.*.*.*x` against a very large string) and memory exhaustion are not bounded in-process, and Liquid has no CPU or output-size ceiling. For a single-user local tool the author of the expression is the owner; a hosted product needs evaluation in a worker or child process with an external deadline and bounded input and output, behind an evaluation port so the domain stays pure.
 
 ## Retention (Decided)
 

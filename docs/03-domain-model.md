@@ -75,6 +75,7 @@ Validation rules enforced by `domain` before a version can be published:
 - A run pins the version it started with and finishes on it, even if a newer version is published meanwhile.
 - New runs always use the latest published version.
 - A subloop reference resolves to the referenced loop's latest published version at the moment the parent run starts, and the child run pins that version. A reference may instead pin an explicit version number.
+  - "Starts" means the parent run is created: the resolution covers every loop reachable through subloop references, at any depth, and is recorded on the parent's `run.queued` event as `subloopVersions` (loop id to version id). Children inherit the map, replay forks copy it, and recovery reads it from the log, so a version published while the parent waits never reaches the parent's tree (05, ADV-004).
 
 ## Context thread (Draft - to be co-designed)
 
@@ -191,7 +192,7 @@ Each event has `runId`, `seq`, `ts`, `type`, optional `nodeId`, and a typed `pay
 | `schedules`         | One per cron trigger node per published version: loop, version, and trigger node ids, expression, timezone, missed-fire policy, enabled, `next_fire_at`, `last_fired_at`. Rows of earlier versions are disabled, not deleted.                |
 | `webhook_endpoints` | One per webhook trigger node per published version: loop, version, and trigger node ids, path token (kept across versions for the same node), `secret_ref` naming the signing secret in `secrets`, signature header, replay window, enabled. |
 | `inbound_events`    | Every event from `POST /events`, exit-node `event` channels, and webhook deliveries: type, JSON payload, dedupe key, source (`api`, `run:<runId>`, `webhook:<endpointId>`), received time, and the ids of the runs it started.               |
-| `timers`            | Persisted wake-ups for wait and heartbeat nodes.                                                                                                                                                                                             |
+| `timers`            | Persisted wake-ups for wait and heartbeat nodes. Delivered at least once: a row is removed only after the wake is recorded, and recovery re-arms it from the waiting run's wait spec (05).                                                   |
 | `secrets`           | Name, ciphertext, key id, owner.                                                                                                                                                                                                             |
 | `model_catalog`     | Harness, model id, display name, allowed efforts, default effort, enabled.                                                                                                                                                                   |
 | `api_keys`          | Hashed keys with labels and scopes.                                                                                                                                                                                                          |

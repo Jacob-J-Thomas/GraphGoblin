@@ -177,6 +177,14 @@ Tasks:
 
 Acceptance: a clean machine install following the guide reaches a running loop in under thirty minutes; all gates green; open-questions list empty of 1.0 blockers.
 
+M8 notes (WP-G, adversarial design review fixes, 2026-10-03): a design review by a second model (Codex) attacked nineteen documented invariants with 84 tests; the report is `qa/2026-10-03-adversarial-design-review.md`. Its eight small fixes were ported onto main and reviewed, and its eight open findings and the unverified Windows process-tree check are closed, each with a test that failed first:
+
+- **Engine**: subloop `latest` references are pinned when the parent run is created and recorded on `run.queued` (`subloopVersions`); the executor starts from the log (thread replayed from the initial thread, cursor advanced past a node whose `node.finished` is durable); a parent whose child finished before it parked is woken after the park and at recovery; cancel requests are a compare-and-set (`RunRepository.claimCancel`). See the WP-G notes in 05.
+- **Timers** are delivered at least once: `TimerService` removes a timer only after its listeners ran (and only while it still has the fired time), and recovery re-arms each waiting run's timer from its wait spec.
+- **Expressions**: regex literals in JSONata and the `redact`/`replace` patterns pass a static check against catastrophic backtracking before they run (`packages/domain/src/regex-safety.ts`); the residual risk is in 11.
+- **API**: every private route, reads included, requires `<resource>:read` or `<resource>:write` (write implies read), checked before the body is parsed; resource ids in paths must be ULIDs (400 otherwise). See "Authentication" in 07.
+- **Windows**: a real child-and-grandchild cancellation test passes on Windows 11 (`taskkill /T /F`).
+
 M8 notes (WP-F1, backend and tooling, 2026-10-03):
 
 - **Replay-at-node** (task 2) is done: `POST /runs/{id}/replay` with `{ nodeId }`, `runs.replay` in the client, and the MCP tool `replay_run` fork a new run at a node the source reached, with the thread replayed to just before that node first started. Provenance is `invocation.replayOf` and `run.queued.replayOf`. Rules and limits (no session or working-directory carry-over, children not copied) are in 05.
