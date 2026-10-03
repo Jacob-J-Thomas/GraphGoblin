@@ -167,6 +167,10 @@ export class SqliteRunRepository implements RunRepository {
       .where(eq(runs.id, runId));
   }
 
+  async clearFinalized(runId: string): Promise<void> {
+    await this.db.update(runs).set({ finalizedAt: null }).where(eq(runs.id, runId));
+  }
+
   async listUnfinalized(): Promise<RunRecord[]> {
     const rows = await this.db
       .select()

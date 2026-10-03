@@ -446,3 +446,111 @@ it('domain status prediction and replay summary match resume of a parked run', a
   expect(summarizeRun(e.events(r.id)).status).toBe(resumed.status);
   expect(transitionRun('paused', { type: 'resume', parked: true })).toBe(resumed.status);
 });
+
+// Fourth round: finalization per terminal generation, failed child cleanup, durable resume intent.
+
+it('a resumed failed run is finalized again after a crash on its next terminal status', async () => {
+  const e = await createTestEngine();
+  e.ports.harness.script([{ error: { code: 'transient', message: 'retry me' } }]);
+  const def = singleNodeLoop(
+    'resumed-finalization',
+    { id: 'infer', kind: 'inference', label: 'I', config: { prompt: { template: 'go' } } },
+    { return: { mapping: '7', channels: [{ kind: 'log' }] } },
+  );
+  const r = await e.runToIdle(e.publish(def).loopId);
+  expect(r.failure?.resumable).toBe(true);
+  expect(await e.ports.runs.listUnfinalized()).toHaveLength(0);
+  const transition = e.ports.runs.transition.bind(e.ports.runs);
+  let blocked = false;
+  const spy = vi.spyOn(e.ports.runs, 'transition').mockImplementation(async (id, from, changes) => {
+    const out = await transition(id, from, changes);
+    if (changes.status === 'succeeded') {
+      blocked = true;
+      return hang();
+    }
+    return out;
+  });
+  await e.manager.resume(r.id);
+  await vi.waitFor(() => expect(blocked).toBe(true));
+  e.manager.stop();
+  spy.mockRestore();
+  expect((await e.ports.runs.listUnfinalized()).map((x) => x.id)).toEqual([r.id]);
+  await recover(e);
+  expect((await e.ports.runs.get(r.id))?.status).toBe('succeeded');
+  expect(e.ports.delivery.logged).toHaveLength(1);
+  expect(await e.ports.runs.listUnfinalized()).toHaveLength(0);
+});
+
+it('a child cancellation error leaves the parent finalization pending for the next recovery', async () => {
+  const e = await createTestEngine({ maxConcurrentRuns: 2 });
+  const kid = e.publish(input('kid'));
+  const r = await e.runToIdle(
+    e.publish(
+      singleNodeLoop('parent', {
+        id: 'sub',
+        kind: 'subloop',
+        label: 'S',
+        config: { loopRef: { loopId: kid.loopId } },
+      }),
+    ).loopId,
+  );
+  const child = (await e.ports.runs.listChildren(r.id))[0]!;
+  const claim = e.ports.runs.claimCancel.bind(e.ports.runs);
+  const spy = vi
+    .spyOn(e.ports.runs, 'claimCancel')
+    .mockImplementation((id, from, at) =>
+      id === child.id
+        ? Promise.reject(new Error('transient child database failure'))
+        : claim(id, from, at),
+    );
+  await e.manager.cancel(r.id);
+  e.manager.stop();
+  spy.mockRestore();
+  expect((await e.ports.runs.get(child.id))?.status).toBe('waiting');
+  expect((await e.ports.runs.listUnfinalized()).map((x) => x.id)).toEqual([r.id]);
+  await recover(e);
+  expect((await e.ports.runs.get(child.id))?.status).toBe('cancelled');
+  expect(await e.ports.runs.listUnfinalized()).toHaveLength(0);
+});
+
+it.each(['durable', 'not durable'] as const)(
+  'a resume of a failed run whose run.resumed is %s when the process dies',
+  async (durable) => {
+    const e = await createTestEngine();
+    e.ports.harness.script([{ error: { code: 'temporary', message: 'retry' } }]);
+    const v = e.publish(
+      singleNodeLoop('resume-audit', {
+        id: 'infer',
+        kind: 'inference',
+        label: 'I',
+        config: { prompt: { template: 'go' } },
+      }),
+    );
+    const r = await e.runToIdle(v.loopId);
+    expect(r.status).toBe('failed');
+    const append = e.ports.events.append.bind(e.ports.events);
+    let blocked = false;
+    const spy = vi
+      .spyOn(e.ports.events, 'append')
+      .mockImplementation(async (id, drafts, options) => {
+        if (drafts.some((x) => x.type === 'run.resumed')) {
+          if (durable === 'durable') await append(id, drafts, options);
+          blocked = true;
+          return hang();
+        }
+        return append(id, drafts, options);
+      });
+    void e.manager.resume(r.id);
+    await vi.waitFor(() => expect(blocked).toBe(true));
+    // The intent is written before the status: the status has not moved yet.
+    expect((await e.ports.runs.get(r.id))?.status).toBe('failed');
+    e.manager.stop();
+    spy.mockRestore();
+    await recover(e);
+    // A durable resume is completed; one that never reached the log never happened.
+    expect((await e.ports.runs.get(r.id))?.status).toBe(
+      durable === 'durable' ? 'succeeded' : 'failed',
+    );
+    expect(await e.ports.runs.listUnfinalized()).toHaveLength(0);
+  },
+);

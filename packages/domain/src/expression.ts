@@ -98,9 +98,41 @@ const CHECKED_EVAL: JsonataFunction = {
     if (typeof source === 'string') compile(source, false);
     builtinEval ??= jsonata('$eval').evaluate({}) as Promise<JsonataFunction>;
     const builtin = await builtinEval;
-    return builtin.implementation.apply(this, [source, focus]);
+    try {
+      return await builtin.implementation.apply(this, [source, focus]);
+    } catch (error) {
+      // JSONata's $eval wraps a failure in a new error that embeds the inner message; nested
+      // evals would grow it exponentially. Normalise at every boundary: keep the innermost
+      // cause, and bound the message.
+      throw normaliseEvalError(error);
+    }
   },
 };
+
+/** Longest error message an expression failure carries. */
+const MAX_ERROR_MESSAGE = 1000;
+
+function bounded(message: string): string {
+  return message.length > MAX_ERROR_MESSAGE
+    ? `${message.slice(0, MAX_ERROR_MESSAGE)}… (${message.length - MAX_ERROR_MESSAGE} more characters)`
+    : message;
+}
+
+/** The single, bounded error a failed nested `$eval` reports: its innermost cause. */
+function normaliseEvalError(error: unknown): ExpressionError {
+  let cause = error;
+  while (
+    !(cause instanceof ExpressionError) &&
+    typeof cause === 'object' &&
+    cause !== null &&
+    'error' in cause &&
+    cause.error !== undefined
+  ) {
+    cause = cause.error;
+  }
+  if (cause instanceof ExpressionError) return cause;
+  return new ExpressionError(`$eval failed: ${bounded(describeError(cause))}`);
+}
 
 async function run(
   expr: Compiled,
@@ -117,7 +149,9 @@ async function run(
     return result;
   } catch (error) {
     if (error instanceof ExpressionError) throw error;
-    throw new ExpressionError(`expression failed: ${describeError(error)}`, { expression });
+    throw new ExpressionError(`expression failed: ${bounded(describeError(error))}`, {
+      expression,
+    });
   }
 }
 

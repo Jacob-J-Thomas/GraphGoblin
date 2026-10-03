@@ -7,6 +7,7 @@ import { FakeClock, FakeIds, createTestEngine, singleNodeLoop } from '@graphgobl
 import { RunManager } from '@graphgoblin/engine';
 import { openMemoryDatabase, type DatabaseHandle } from './sqlite/db.js';
 import { SqliteEventStore } from './sqlite/events.js';
+import { SqliteRunRepository } from './sqlite/runs.js';
 import { SqliteSecrets, encryptSecret, decryptSecret } from './sqlite/secrets.js';
 import { SqliteScheduleStore } from './sqlite/triggers.js';
 import { SqliteTimerStore } from './sqlite/timers.js';
@@ -387,5 +388,52 @@ describe('timer delivery (review of WP-G)', () => {
       status: 'waiting',
       waiting: { nodeId: 'input', kind: 'input' },
     });
+  });
+});
+
+describe('finalization on SQLite (review of WP-G, fourth round)', () => {
+  it('a resumed failed run is finalized again after a crash on its next terminal status', async () => {
+    const e = await createTestEngine();
+    e.manager.stop();
+    const runs = new SqliteRunRepository(db.db);
+    const events = new SqliteEventStore(db.db, e.ports.clock);
+    const ports = { ...e.ports, runs, events };
+    const manager = new RunManager(ports, e.settings);
+    await manager.start();
+    e.ports.harness.script([{ error: { code: 'transient', message: 'retry me' } }]);
+    const def = singleNodeLoop(
+      'resumed-finalization',
+      { id: 'infer', kind: 'inference', label: 'I', config: { prompt: { template: 'go' } } },
+      { return: { mapping: '7', channels: [{ kind: 'log' }] } },
+    );
+    const r = await manager.startRun({
+      ownerId: 'local',
+      loopId: e.publish(def).loopId,
+      source: 'manual.api',
+    });
+    await manager.waitForIdle();
+    expect((await runs.get(r.id))?.failure?.resumable).toBe(true);
+    expect(await runs.listUnfinalized()).toHaveLength(0);
+    const transition = runs.transition.bind(runs);
+    let blocked = false;
+    const spy = vi.spyOn(runs, 'transition').mockImplementation(async (id, from, changes) => {
+      const out = await transition(id, from, changes);
+      if (changes.status === 'succeeded') {
+        blocked = true;
+        return new Promise<never>(() => undefined);
+      }
+      return out;
+    });
+    await manager.resume(r.id);
+    await vi.waitFor(() => expect(blocked).toBe(true));
+    manager.stop();
+    spy.mockRestore();
+    const second = new RunManager(ports, e.settings);
+    await second.start();
+    await second.waitForIdle();
+    second.stop();
+    expect((await runs.get(r.id))?.status).toBe('succeeded');
+    expect(e.ports.delivery.logged).toHaveLength(1);
+    expect(await runs.listUnfinalized()).toHaveLength(0);
   });
 });

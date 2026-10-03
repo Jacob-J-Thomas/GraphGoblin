@@ -75,9 +75,13 @@ Pause, cancel, and failure intents are persisted first and acted on second, so a
 **The log is written first, the status second (Decided, WP-G review).** The event store and the
 run record are separate writes. Wakes and terminal transitions, the ones a crash could lose or
 duplicate, write their event first and their status second, and recovery completes a transition
-whose event is durable but whose status write was lost. Operator commands that only change the
-status (start, pause, resume) write the status first and record their event after it; losing that
-event in a crash loses only the audit record. Three mechanisms make this safe:
+whose event is durable but whose status write was lost. Operator commands between non-terminal
+statuses (start, pause, resume of a paused run) write the status first and record their event
+after it; losing that event in a crash loses only the audit record. Resuming a failed run leaves a
+terminal status, so it is event-first like the rest: it clears the run's finalization marker,
+appends `run.resumed`, then moves the status, and recovery completes a resume whose
+`run.resumed` is durable (a resume that never reached the log never happened). Three mechanisms
+make this safe:
 
 - **Wakes are a conditional append.** `EventStorePort.append` accepts `expectedLastSeq` and
   refuses (`AppendConflictError`) when the log has moved. A wake (input, signal, timer, child)
@@ -103,7 +107,10 @@ event in a crash loses only the audit record. Three mechanisms make this safe:
   finalizes every terminal run not marked finalized (`listUnfinalized`), so a crash right after
   the status write loses no return and leaves no child running. A channel interrupted
   mid-delivery is delivered again: returns are at least once. Migration `0002` marks runs that
-  were already terminal as finalized.
+  were already terminal as finalized. Finalization belongs to one terminal outcome: resuming a
+  failed run clears the marker, so its next terminal outcome is finalized again. A child that
+  cannot be cancelled (and is not terminal by then) leaves the parent unmarked, so the next
+  recovery tries again.
 
 Resume accepts paused runs or failures explicitly marked resumable; an exit with a failure
 outcome is not a resumable node failure. A run paused while parked (or while parking) resumes
@@ -121,7 +128,7 @@ keeps its child. Its timers are re-armed and a child that finished meanwhile is 
 
 A subloop node creates a child run with the mapped input thread and parks the parent with wait kind `child`. The child is a normal run: it has its own event log, pins its own version, can itself contain subloops up to the depth limit, and is visible in the run list with a parent link. When it finishes, the parent is woken with the child's outcome and return payload, and the subloop handler applies the output mapping. Cancelling a parent cancels its children. Cancelling a child alone wakes the parent with outcome `cancelled`.
 
-**Which version a child runs (Decided, WP-G).** A `latest` reference resolves when the parent run is _created_, not when the subloop node runs. `startRun` walks every subloop reference reachable from the run's version, through the referenced loops' own subloop nodes at any depth, pins each `latest` loop to the version published at that moment, and records the map (loop id to version id) on the run's `run.queued` event as `subloopVersions`. Numbered references are immutable and need no pin, but are walked for their own references. Every child the run starts uses its pin, so a version published while the parent waits never reaches it. A child inherits its parent's pins and records them on its own `run.queued`, so a whole tree of runs sees one snapshot; a replay fork copies its source's pins; recovery reads them from the log like everything else. A reference that does not resolve at creation is left unpinned and fails with `SUBLOOP_NOT_FOUND` when the child would start, as before; a run whose log predates pinning resolves `latest` when the child starts. A pinned version that is gone or no longer published fails the subloop with `SUBLOOP_NOT_FOUND`; it never falls back to latest. Deleting a loop is refused (409 `LOOP_IN_USE`) while any active run (queued, running, waiting, or paused) can still start it: a run of that loop, or one whose pins or subloop references reach it (`RunManager.loopInUse`). The check and the deletion run in one critical section with the subloop pinning in `startRun` (`RunManager.deleteLoopUnlessInUse`), so a parent created concurrently either pins the loop first (the deletion then refuses) or is created after it (and fails at that subloop like any reference to a deleted loop). The check reads only the first event (`run.queued`, with the pins) of each active run, plus the versions its pins reach.
+**Which version a child runs (Decided, WP-G).** A `latest` reference resolves when the parent run is _created_, not when the subloop node runs. `startRun` walks every subloop reference reachable from the run's version, through the referenced loops' own subloop nodes at any depth, pins each `latest` loop to the version published at that moment, and records the map (loop id to version id) on the run's `run.queued` event as `subloopVersions`. Numbered references are immutable and need no pin, but are walked for their own references. Every child the run starts uses its pin, so a version published while the parent waits never reaches it. A child inherits its parent's pins and records them on its own `run.queued`, so a whole tree of runs sees one snapshot; a replay fork copies its source's pins; recovery reads them from the log like everything else. A reference that does not resolve at creation is left unpinned and fails with `SUBLOOP_NOT_FOUND` when the child would start, as before; a run whose log predates pinning resolves `latest` when the child starts. A pinned version that is gone or no longer published fails the subloop with `SUBLOOP_NOT_FOUND`; it never falls back to latest. Deleting a loop is refused (409 `LOOP_IN_USE`) while any active run (queued, running, waiting, or paused) can still start it: a run of that loop, or one whose pins or subloop references reach it (`RunManager.loopInUse`). The check and the deletion run in one critical section with the subloop pinning in `startRun` (`RunManager.deleteLoopUnlessInUse`), together with replay-fork admission and a re-check that a new run's own version still exists, so a parent or fork created concurrently either pins the loop first (the deletion then refuses) or is created after it (and fails at that subloop like any reference to a deleted loop). A run or fork whose own version was deleted meanwhile is refused with `LOOP_NOT_FOUND`. The check reads only the first event (`run.queued`, with the pins) of each active run, plus the versions its pins reach.
 
 **A child that finishes before its parent parks (Decided, WP-G).** The parent records its `waiting/child` state after the subloop handler has started the child, so a fast child can finish while the parent is still `running`; its notification then finds no waiting parent. After the parent's park transition the run manager therefore checks the child, and wakes the parent at once if the child is already terminal; recovery does the same for every parent waiting on a child. Both paths and the child's own notification go through the waiting-to-running compare-and-set, so exactly one wins. A wake that lands while the parent's executor is still returning is queued until it has returned rather than dropped.
 

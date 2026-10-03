@@ -227,6 +227,10 @@ export class InMemoryRunRepository implements RunRepository {
     this.finalized.add(runId);
     return Promise.resolve();
   }
+  clearFinalized(runId: string): Promise<void> {
+    this.finalized.delete(runId);
+    return Promise.resolve();
+  }
   listUnfinalized(): Promise<RunRecord[]> {
     return Promise.resolve(
       [...this.runs.values()].filter((r) => isTerminal(r.status) && !this.finalized.has(r.id)),

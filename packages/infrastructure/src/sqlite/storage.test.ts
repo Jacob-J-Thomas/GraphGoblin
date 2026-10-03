@@ -153,6 +153,9 @@ describe('SqliteRunRepository', () => {
     expect((await repo.listUnfinalized()).map((r) => r.id)).toEqual([run.id]);
     await repo.markFinalized(run.id);
     expect(await repo.listUnfinalized()).toEqual([]);
+    // A resume clears it, so the next terminal outcome is finalized again.
+    await repo.clearFinalized(run.id);
+    expect((await repo.listUnfinalized()).map((r) => r.id)).toEqual([run.id]);
   });
 
   it('migration 0002 marks runs that were already terminal as finalized', async () => {

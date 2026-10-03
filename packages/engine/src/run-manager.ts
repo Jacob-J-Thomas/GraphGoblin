@@ -193,6 +193,16 @@ function exitResult(
   };
 }
 
+/** Whether the log's last lifecycle event after a failure is a resume (a resume in progress). */
+function pendingResume(events: readonly RunEvent[]): boolean {
+  for (let i = events.length - 1; i >= 0; i -= 1) {
+    const type = (events[i] as RunEvent).type;
+    if (type === 'run.resumed') return true;
+    if (type === 'run.failed' || type === 'run.finished' || type === 'run.cancelled') return false;
+  }
+  return false;
+}
+
 export function terminalEvent(events: readonly RunEvent[]): TerminalEvent | undefined {
   for (let i = events.length - 1; i >= 0; i -= 1) {
     const event = events[i] as RunEvent;
@@ -356,6 +366,8 @@ export class RunManager {
     // (`deleteLoopUnlessInUse`): a loop is either deleted before the run pins it (the run then
     // fails at that subloop) or pinned before the deletion checks, which then refuses.
     await this.withPinLock(async () => {
+      // The run's own version was resolved before the lock: a deletion may have won meanwhile.
+      await this.assertVersionPresent(version.id, input.loopId);
       const subloopVersions = await this.pinSubloops(def, input.subloopVersions ?? {});
       await this.ports.runs.create(run, thread);
       await this.ports.events.append(runId, [
@@ -454,8 +466,19 @@ export class RunManager {
         return this.mustGet(runId);
       }
     }
-    const expected: RunStatus[] =
-      run.status === 'failed' && run.failure?.resumable ? ['failed'] : ['paused'];
+    if (run.status === 'failed' && run.failure?.resumable) {
+      // Leaving a terminal status: the intent is written first, like every terminal transition.
+      // The finalization marker of the failure is cleared so the run's next terminal outcome is
+      // finalized again; recovery completes a resume whose `run.resumed` is durable.
+      await this.ports.runs.clearFinalized(runId);
+      await this.ports.events.append(runId, [{ type: 'run.resumed', actor }]);
+      const resumed = await this.completeResume(runId);
+      if (!resumed) {
+        throw new EngineRequestError('INVALID_STATE', `cannot resume a run that is ${run.status}`);
+      }
+      return resumed;
+    }
+    const expected: RunStatus[] = ['paused'];
     const updated = await this.ports.runs.transition(runId, expected, {
       status: 'running',
       pausedAt: undefined,
@@ -467,6 +490,18 @@ export class RunManager {
     }
     await this.ports.events.append(runId, [{ type: 'run.resumed', actor }]);
     this.enqueue(runId);
+    return updated;
+  }
+
+  /** Move a failed run whose resume is durable back to running and queue it. */
+  private async completeResume(runId: string): Promise<RunRecord | undefined> {
+    const updated = await this.ports.runs.transition(runId, ['failed'], {
+      status: 'running',
+      pausedAt: undefined,
+      failure: undefined,
+      finishedAt: undefined,
+    });
+    if (updated) this.enqueue(runId);
     return updated;
   }
 
@@ -590,16 +625,29 @@ export class RunManager {
     };
     // The fork keeps the source's subloop pins: a replay re-runs the source's graph, not a newer one.
     const subloopVersions = pinnedSubloops(events);
-    await this.ports.runs.create(run, thread);
-    await this.ports.events.append(runId, [
-      {
-        type: 'run.queued',
-        replayOf,
-        ...(Object.keys(subloopVersions).length > 0 ? { subloopVersions } : {}),
-      },
-    ]);
+    // Admitted in the same critical section as run creation and loop deletion: a fork either
+    // registers (and pins) before a deletion checks, which then refuses, or after it, when the
+    // version it would run must still exist.
+    await this.withPinLock(async () => {
+      await this.assertVersionPresent(source.versionId, source.loopId);
+      await this.ports.runs.create(run, thread);
+      await this.ports.events.append(runId, [
+        {
+          type: 'run.queued',
+          replayOf,
+          ...(Object.keys(subloopVersions).length > 0 ? { subloopVersions } : {}),
+        },
+      ]);
+    });
     this.enqueue(runId);
     return run;
+  }
+
+  /** Inside the pin lock: the version a new run will execute still exists. */
+  private async assertVersionPresent(versionId: string, loopId: string): Promise<void> {
+    if (!(await this.ports.loops.getVersion(versionId))) {
+      throw new EngineRequestError('LOOP_NOT_FOUND', `loop ${loopId} was deleted`);
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -710,6 +758,11 @@ export class RunManager {
   private async recover(): Promise<void> {
     // Terminal runs whose finalization (timers, children, returns, parent) never completed.
     for (const run of await this.ports.runs.listUnfinalized()) {
+      // A failed run whose `run.resumed` is durable but whose status write was lost: resume it.
+      if (run.status === 'failed' && pendingResume(await this.ports.events.read(run.id))) {
+        await this.completeResume(run.id);
+        continue;
+      }
       await this.finalizeTerminal(run.id).catch((error: unknown) => {
         this.ports.logger.error({ runId: run.id, error: describeError(error) }, 'finalize failed');
       });
@@ -1231,11 +1284,24 @@ export class RunManager {
     const run = await this.mustGet(runId);
     if (!isTerminal(run.status)) return;
     await this.ports.timers.cancel(runId);
+    let complete = true;
     if (run.status === 'cancelled') {
       // Children are cancelled after the parent is terminal, so their completion does not wake it.
+      // A child that could not be cancelled (and is not terminal by now) keeps the parent's
+      // finalization pending, so the next recovery tries again.
       for (const child of await this.ports.runs.listChildren(runId)) {
-        if (!isTerminal(child.status))
-          await this.cancel(child.id, { kind: 'run', id: runId }).catch(() => undefined);
+        if (isTerminal(child.status)) continue;
+        try {
+          await this.cancel(child.id, { kind: 'run', id: runId });
+        } catch (error) {
+          const now = await this.ports.runs.get(child.id);
+          if (now && isTerminal(now.status)) continue;
+          complete = false;
+          this.ports.logger.error(
+            { runId, childRunId: child.id, error: describeError(error) },
+            'child cancellation failed; finalization stays pending',
+          );
+        }
       }
     }
     const events = await this.ports.events.read(runId);
@@ -1248,7 +1314,7 @@ export class RunManager {
       }
     }
     await this.notifyParent(run, run.status, run.outcome);
-    await this.ports.runs.markFinalized(runId);
+    if (complete) await this.ports.runs.markFinalized(runId);
   }
 
   private async deliverReturns(

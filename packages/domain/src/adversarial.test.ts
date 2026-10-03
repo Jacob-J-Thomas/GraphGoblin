@@ -186,6 +186,55 @@ describe('adversarial domain invariants', () => {
     ).rejects.toThrow(/max depth/);
   });
 
+  it('ADV-007 review: a nested $eval failure keeps one bounded cause', async () => {
+    let input: unknown = { expr: '$error("small failure")' };
+    for (let i = 0; i < 30; i += 1) input = { expr: '$eval(expr,next)', next: input };
+    const error = await evaluateExpression('$eval(expr,next)', input, { timeoutMs: 2000 }).catch(
+      (e: unknown) => e as Error,
+    );
+    expect(error).toBeInstanceOf(Error);
+    expect((error as Error).message).toBe('$eval failed: small failure');
+    // A huge inner message is cut at the boundary.
+    const long = await evaluateExpression(`$eval('$error("${'x'.repeat(5000)}")')`, {}).catch(
+      (e: unknown) => e as Error,
+    );
+    expect((long as Error).message.length).toBeLessThan(1100);
+    expect((long as Error).message).toMatch(/more characters\)$/);
+  });
+
+  it.each([10, 20, 30])(
+    'ADV-007 review: %i nested failing $evals stay small in a 128 MB process',
+    (depth) => {
+      const module = new URL('./expression.ts', import.meta.url).href;
+      const compiler = pathToFileURL(createRequire(import.meta.url).resolve('typescript')).href;
+      const code = `import ts from ${JSON.stringify(compiler)};
+        import { readFileSync } from 'node:fs'; import { registerHooks } from 'node:module';
+        registerHooks({ resolve(s,c,n) { return n(s.startsWith('.') && s.endsWith('.js') ? s.slice(0,-3)+'.ts' : s,c); },
+          load(u,c,n) { return u.endsWith('.ts') ? {format:'module', shortCircuit:true, source:ts.transpile(readFileSync(new URL(u),'utf8'), {module:ts.ModuleKind.ESNext})} : n(u,c); } });
+        const { evaluateExpression } = await import(${JSON.stringify(module)});
+        let input = { expr: '$error("small failure")' };
+        for (let i = 0; i < ${depth}; i++) input = { expr: '$eval(expr,next)', next: input };
+        const start = performance.now();
+        try { await evaluateExpression('$eval(expr,next)', input, { timeoutMs: 40, maxDepth: 200 }); process.stdout.write('accepted'); }
+        catch (e) { process.stdout.write(JSON.stringify({ length: e.message.length, ms: performance.now() - start })); }`;
+      const result = spawnSync(
+        process.execPath,
+        ['--max-old-space-size=128', '--input-type=module', '-e', code],
+        {
+          cwd: fileURLToPath(new URL('..', import.meta.url)),
+          timeout: 10_000,
+          windowsHide: true,
+          encoding: 'utf8',
+        },
+      );
+      expect(result.status).toBe(0);
+      const outcome = JSON.parse(result.stdout) as { length: number; ms: number };
+      expect(outcome.length).toBeLessThan(1100);
+      expect(outcome.ms).toBeLessThan(500);
+    },
+    15_000,
+  );
+
   it('ADV-007 review: nested $eval keeps the caller deadline', async () => {
     let input: unknown = { expr: '42' };
     for (let i = 0; i < 60; i += 1) input = { expr: '($nap();$eval(expr,next))', next: input };
@@ -209,7 +258,7 @@ describe('adversarial domain invariants', () => {
     expect(await evaluateExpression('$eval("a + 1")', { a: 1 })).toBe(2);
     expect(await evaluateExpression('$eval("x * 2", {"x": 5})', {})).toBe(10);
     expect(await evaluateExpression('$eval(missing)', {})).toBeUndefined();
-    await expect(evaluateExpression('$eval(42)', {})).rejects.toThrow(/expression failed/);
+    await expect(evaluateExpression('$eval(42)', {})).rejects.toThrow('$eval failed');
     // A string cannot become a regex any other way: $match rejects a string pattern.
     await expect(
       evaluateExpression('($p := $join(["^(a", "+)+$"]); $match("aaaa!", $p))', {}),

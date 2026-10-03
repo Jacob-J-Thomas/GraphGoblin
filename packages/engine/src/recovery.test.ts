@@ -1113,3 +1113,90 @@ describe('pins and timers (review probes)', () => {
     expect((await e.ports.runs.listChildren(r.id))[0]?.versionId).toBe(newer.id);
   });
 });
+
+describe('deletion against replay and root resolution (fourth round)', () => {
+  function parentOf(name: string, childLoopId: string) {
+    const def = inputLoop(name);
+    def.nodes.push({
+      id: 'sub',
+      kind: 'subloop',
+      label: 'Sub',
+      config: { loopRef: { loopId: childLoopId } },
+    });
+    def.edges[1]!.to.node = 'sub';
+    def.edges.push({ id: 's', from: { node: 'sub', port: 'out' }, to: { node: 'done' } });
+    return def;
+  }
+
+  it('a replay fork requested during a deletion registers only after it', async () => {
+    const e = await createTestEngine({ maxConcurrentRuns: 2 });
+    const child = e.publish(minimalLoop());
+    const parent = e.publish(parentOf('replay-race', child.loopId));
+    const source = await e.runToIdle(parent.loopId);
+    await e.manager.provideInput(source.id, null);
+    expect((await e.settle(source.id)).status).toBe('succeeded');
+    let fork: Promise<{ id: string }> | undefined;
+    let registeredDuring = true;
+    const deleted = await e.manager.deleteLoopUnlessInUse(child.loopId, async () => {
+      fork = e.manager.replay({ runId: source.id, nodeId: 'wait' });
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      registeredDuring =
+        (await e.ports.runs.listByStatus(['queued', 'running', 'waiting'])).length > 0;
+      e.ports.loops.versions.delete(child.id);
+    });
+    expect(deleted).toBe(true);
+    expect(registeredDuring).toBe(false);
+    const forked = await fork!;
+    await e.settle(forked.id);
+    await e.manager.provideInput(forked.id, null);
+    // Deletion won: the fork's pinned child is gone, so its subloop fails, as for any reference
+    // to a deleted loop.
+    expect((await e.settle(forked.id)).failure?.code).toBe('SUBLOOP_NOT_FOUND');
+  });
+
+  it('a replay fork registered first makes the deletion refuse', async () => {
+    const e = await createTestEngine({ maxConcurrentRuns: 2 });
+    const child = e.publish(minimalLoop());
+    const parent = e.publish(parentOf('replay-first', child.loopId));
+    const source = await e.runToIdle(parent.loopId);
+    await e.manager.provideInput(source.id, null);
+    await e.settle(source.id);
+    const forked = await e.manager.replay({ runId: source.id, nodeId: 'wait' });
+    expect((await e.settle(forked.id)).status).toBe('waiting');
+    const remove = vi.fn(() => Promise.resolve());
+    expect(await e.manager.deleteLoopUnlessInUse(child.loopId, remove)).toBe(false);
+    expect(remove).not.toHaveBeenCalled();
+  });
+
+  it('a run whose own version is deleted between resolution and registration is refused', async () => {
+    const e = await createTestEngine();
+    e.manager.stop();
+    const target = e.publish(minimalLoop());
+    let entered!: () => void;
+    const enteredP = new Promise<void>((resolve) => (entered = resolve));
+    let unblock!: () => void;
+    const unblockP = new Promise<void>((resolve) => (unblock = resolve));
+    const latest = e.ports.loops.getLatestPublished.bind(e.ports.loops);
+    let once = true;
+    vi.spyOn(e.ports.loops, 'getLatestPublished').mockImplementation(async (id) => {
+      const out = await latest(id);
+      if (id === target.loopId && once) {
+        once = false;
+        entered();
+        await unblockP;
+      }
+      return out;
+    });
+    const start = e.start(target.loopId);
+    await enteredP;
+    expect(
+      await e.manager.deleteLoopUnlessInUse(target.loopId, () => {
+        e.ports.loops.versions.delete(target.id);
+        return Promise.resolve();
+      }),
+    ).toBe(true);
+    unblock();
+    await expect(start).rejects.toMatchObject({ code: 'LOOP_NOT_FOUND' });
+    expect(await e.ports.runs.listByStatus(['queued'])).toHaveLength(0);
+  });
+});

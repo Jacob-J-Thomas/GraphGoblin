@@ -91,6 +91,8 @@ export interface RunRepository {
    * cancelled, returns delivered, parent woken. Until then the run is listed by `listUnfinalized`.
    */
   markFinalized(runId: string): Promise<void>;
+  /** Forget a finalization: the run is leaving its terminal status (a resume of a failure). */
+  clearFinalized(runId: string): Promise<void>;
   /** Terminal runs whose finalization was never recorded (the process died part-way). */
   listUnfinalized(): Promise<RunRecord[]>;
   listChildren(parentRunId: string): Promise<RunRecord[]>;
