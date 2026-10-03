@@ -147,7 +147,7 @@ The request itself is a compare-and-set (`RunRepository.claimCancel`): `cancelRe
 
 ## Crash recovery (Decided)
 
-**One run manager per store.** There is no execution lease: two run managers over the same database would both pick up a queued or recovered run and execute it twice (the review demonstrated a doubled inference). 1.0 runs one API process with one run manager per data directory; a lease belongs with the post-1.0 hosted work (11).
+**One run manager per store.** There is no execution lease: two run managers over the same database would both pick up a queued or recovered run and execute it twice (the review demonstrated a doubled inference). 1.0 enforces one API process with one run manager per data directory using `<dataDir>/graphgoblin.lock`, exclusively acquired before opening SQLite, migrations, or recovery. A live PID refuses startup with `another GraphGoblin process holds <path>` and exit code 1, regardless of port; only a confirmed dead PID permits stale-lock replacement. The container holds the lock until `stop()` has stopped scheduling, waited for active runs, and closed SQLite; main also stops it on startup failure, clean HTTP close, SIGINT, or SIGTERM. `--create-api-key` uses the same lock, while read-only `--preflight` may run alongside the server. Processes sharing an overridden `GG_DB_URL` must use the same data directory. Execution and scheduler leases belong with the post-1.0 hosted work (11).
 
 At boot the run manager loads every run in `queued`, `running`, `waiting`, or `paused` status:
 

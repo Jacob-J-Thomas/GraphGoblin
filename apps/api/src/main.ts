@@ -12,39 +12,71 @@ export async function main(): Promise<{
 }> {
   const config = loadConfig(process.env, { webDistFallback: bundledWebDist() });
   const logger = pino({ level: config.logLevel });
-  const container = await createContainer(config, { logger });
-  await container.start();
-  const app = await buildApp(container, { logger });
+  let container: Awaited<ReturnType<typeof createContainer>> | undefined;
+  let app: Awaited<ReturnType<typeof buildApp>> | undefined;
+  const stop = async (): Promise<void> => {
+    try {
+      await app?.close();
+    } finally {
+      await container?.stop();
+    }
+  };
+  const removeSignals = (): void => {
+    process.off('SIGINT', onSigint);
+    process.off('SIGTERM', onSigterm);
+  };
 
   let shuttingDown = false;
   const shutdown = async (signal: string): Promise<void> => {
     if (shuttingDown) return;
     shuttingDown = true;
     logger.info({ signal }, 'shutting down');
-    await app.close();
-    await container.stop();
+    // A signal during startup must not release ownership while recovery is still running.
+    await startup.catch(() => undefined);
+    removeSignals();
+    await stop();
     process.exit(0);
   };
-  process.on('SIGINT', () => void shutdown('SIGINT'));
-  process.on('SIGTERM', () => void shutdown('SIGTERM'));
+  const onSigint = (): void => void shutdown('SIGINT');
+  const onSigterm = (): void => void shutdown('SIGTERM');
+  process.on('SIGINT', onSigint);
+  process.on('SIGTERM', onSigterm);
 
-  await app.listen({ host: config.host, port: config.port });
-  logger.info(
-    {
-      host: config.host,
-      port: config.port,
-      dataDir: config.dataDir,
-      requireApiKey: config.requireApiKey,
-    },
-    'GraphGoblin API listening',
-  );
-  if (config.host !== '127.0.0.1' && config.host !== 'localhost' && !config.requireApiKey) {
-    logger.warn(
-      { host: config.host },
-      'API is reachable beyond localhost without API keys; set GG_REQUIRE_API_KEY=true',
+  const startup = (async () => {
+    const owner = await createContainer(config, { logger });
+    container = owner;
+    await owner.start();
+    const server = await buildApp(owner, { logger });
+    app = server;
+    server.addHook('onClose', async () => {
+      removeSignals();
+      await owner.stop();
+    });
+    await server.listen({ host: config.host, port: config.port });
+    logger.info(
+      {
+        host: config.host,
+        port: config.port,
+        dataDir: config.dataDir,
+        requireApiKey: config.requireApiKey,
+      },
+      'GraphGoblin API listening',
     );
+    if (config.host !== '127.0.0.1' && config.host !== 'localhost' && !config.requireApiKey) {
+      logger.warn(
+        { host: config.host },
+        'API is reachable beyond localhost without API keys; set GG_REQUIRE_API_KEY=true',
+      );
+    }
+    return { app: server, container: owner };
+  })();
+  try {
+    return await startup;
+  } catch (error) {
+    removeSignals();
+    await stop();
+    throw error;
   }
-  return { app, container };
 }
 
 const invokedDirectly = process.argv[1] !== undefined && /main\.(js|ts)$/.test(process.argv[1]);

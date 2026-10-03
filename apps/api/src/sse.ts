@@ -9,9 +9,9 @@ export interface SseOptions {
   /** Whether the run is already in a terminal status. Checked once, after the replay. */
   isTerminal?: () => Promise<boolean>;
   /**
-   * How long to wait for the terminal event of a run whose status is already terminal but whose
-   * log has no terminal event yet (the status changes just before the event is appended).
-   * Default 2 s.
+   * Defensive timeout when a terminal status has no visible terminal event after re-reading the
+   * log (for example an incomplete legacy log). Allows late subscription delivery, then closes
+   * instead of idling forever. Current engine writes the event before status. Default 2 s.
    */
   terminalGraceMs?: number;
 }
@@ -76,9 +76,9 @@ export async function streamRunEvents(
   for (const event of buffered.sort((a, b) => a.seq - b.seq)) write(event);
 
   if (closed || !options.isTerminal || !(await options.isTerminal())) return;
-  // Terminal, and the replay held no terminal event: either the client is already past it, or the
-  // status changed a moment before the event was appended and it will arrive through the
-  // subscription. Only the log can tell which.
+  // Terminal, and the replay held no terminal event: check whether the cursor already consumed
+  // it or a second read can supply it. Event-before-status ordering means a healthy current log
+  // already contains it; the grace below bounds idling for incomplete or inconsistent logs.
   const log = await store.read(runId);
   if (closed) return;
   if (log.some((event) => event.seq <= last && TERMINAL_EVENTS.has(event.type))) {

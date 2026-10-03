@@ -54,11 +54,13 @@ The image holds the API, the web app, and the Codex CLI, for one user on a trust
 docker compose up -d --build
 ```
 
-The compose file publishes port 4747 on the host's loopback only, keeps the data directory in the `graphgoblin-data` volume (`/data` in the container), and mounts your Codex login (`~/.codex`) into the container, so run `codex login` on the host first. To use an OpenAI API key instead, set `OPENAI_API_KEY` in the compose file's `environment`. Check readiness and create keys inside the container:
+The compose file publishes port 4747 on the host's loopback only, keeps the data directory in the `graphgoblin-data` volume (`/data` in the container), and mounts your Codex login (`~/.codex`) into the container, so run `codex login` on the host first. To use an OpenAI API key instead, set `OPENAI_API_KEY` in the compose file's `environment`. Check readiness while the server runs; stop it before creating a key with a one-off container using the same volume, then restart:
 
 ```bash
 docker compose exec graphgoblin node apps/api/dist/main.js --preflight
-docker compose exec graphgoblin node apps/api/dist/main.js --create-api-key owner
+docker compose stop graphgoblin
+docker compose run --rm graphgoblin node apps/api/dist/main.js --create-api-key owner
+docker compose up -d graphgoblin
 ```
 
 Without Compose:
@@ -103,6 +105,8 @@ In Bash:
 export GG_DATA_DIR="$HOME/graphgoblin-data" GG_DEFAULT_MODEL=gpt-6-luna GG_DEFAULT_EFFORT=low
 pnpm start
 ```
+
+Run one API process per data directory. The API takes `<data-directory>/graphgoblin.lock` before opening the database, applying migrations, or recovering runs. If its PID is still alive, a second start exits 1 with `another GraphGoblin process holds <path>`, even on a different port. A dead PID's lock is replaced automatically; a malformed lock or an owner whose death cannot be verified is refused. Stop the API before `--create-api-key`, which takes the same lock to write the database. Read-only `--preflight` can run alongside a server. If you override `GG_DB_URL`, processes using that same database must also use the same `GG_DATA_DIR`.
 
 `pnpm --filter @graphgoblin/api start` is equivalent. The start scripts run the built entry point. Its source and runtime paths are:
 
@@ -189,6 +193,7 @@ Under the configured data directory, the API creates these files and directories
   graphgoblin.db
   graphgoblin.db-wal    (may exist while SQLite uses WAL)
   graphgoblin.db-shm    (may exist)
+  graphgoblin.lock      (PID and start time; held while the API owns the directory)
   master.key
   artifacts/<kind>/<content-hash>
   workspaces/<run-id>/
@@ -198,7 +203,7 @@ SQLite holds definitions, versions, runs, events, settings, encrypted secrets, A
 
 ## Stop and restart safely
 
-Before maintenance, let queued and running work finish, or pause or cancel it and wait for executing nodes to settle. Press **Ctrl+C** in the API terminal. The process closes HTTP, stops scheduling new work, waits for executing runs to settle, and closes SQLite. Shutdown can wait on outstanding work, so let the process exit before starting another API against the same database.
+Before maintenance, let queued and running work finish, or pause or cancel it and wait for executing nodes to settle. Press **Ctrl+C** in the API terminal. The process closes HTTP, stops scheduling new work, waits for executing runs to settle, closes SQLite, and releases its lock. SIGTERM follows the same shutdown path. Shutdown can wait on outstanding work, so let the process exit before starting another API or creating a key against the same data directory. After an abrupt exit, the next start replaces the lock only if its recorded PID is dead.
 
 Restart with the same environment and start command. Boot applies pending migrations, recovers active runs, restores timers, and re-arms published triggers. Paused runs stay paused. A node that was executing when the process stopped runs again, so make scripts idempotent and inspect their side effects before resuming. For longer stops, choose an appropriate [cron missed-fire policy](04-triggers.md#schedule-with-cron).
 

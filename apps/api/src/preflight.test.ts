@@ -63,6 +63,26 @@ function sources(overrides: Partial<PreflightSources> = {}): PreflightSources {
   };
 }
 
+it('allows read-only CLI preflight alongside a container without changing its lock', async () => {
+  const env = { GG_DATA_DIR: dir, GG_MASTER_KEY: KEY };
+  const container = await createContainer(loadConfig(env), { startTimers: false });
+  await container.start();
+  const lockPath = join(dir, 'graphgoblin.lock');
+  const original = await readFile(lockPath, 'utf8');
+  try {
+    expect(
+      await runPreflightCli({
+        env,
+        harnesses: { codex: new FakeHarness() },
+        write: () => undefined,
+      }),
+    ).toBe(0);
+    expect(await readFile(lockPath, 'utf8')).toBe(original);
+  } finally {
+    await container.stop();
+  }
+});
+
 describe('individual checks', () => {
   it('requires Node 22 or newer', () => {
     expect(checkNode('23.10.0').status).toBe('ok');

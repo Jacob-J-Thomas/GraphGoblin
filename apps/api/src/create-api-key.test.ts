@@ -1,4 +1,4 @@
-import { access, mkdtemp, rm } from 'node:fs/promises';
+import { access, mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -130,6 +130,9 @@ describe('graphgoblin-api --create-api-key', () => {
       ...io,
     });
     expect(code).toBe(0);
+    await expect(access(join(dataDir, 'graphgoblin.lock'))).rejects.toMatchObject({
+      code: 'ENOENT',
+    });
     expect(io.err).toEqual([]);
     const printed = io.out.join('');
     const token = /\b(gg_[A-Za-z0-9_-]+)/.exec(printed)?.[1];
@@ -190,6 +193,28 @@ describe('graphgoblin-api --create-api-key', () => {
     }
   });
 
+  it('refuses to write while a server holds the directory, then succeeds after stop', async () => {
+    const dataDir = await tempDir();
+    const t = await createTestApp({ env: { GG_DATA_DIR: dataDir } });
+    const lockPath = join(dataDir, 'graphgoblin.lock');
+    const original = await readFile(lockPath, 'utf8');
+    const io = capture();
+    const options = { argv: ['--create-api-key', 'owner'], env: { GG_DATA_DIR: dataDir }, ...io };
+    try {
+      expect(await runCreateApiKeyCli(options)).toBe(1);
+      expect(io.err.join('')).toContain(`another GraphGoblin process holds ${lockPath}`);
+      expect(io.out).toEqual([]);
+      expect(await readFile(lockPath, 'utf8')).toBe(original);
+      await expect(access(join(dataDir, 'graphgoblin.db'))).rejects.toMatchObject({
+        code: 'ENOENT',
+      });
+    } finally {
+      await t.close();
+    }
+    expect(await runCreateApiKeyCli(options)).toBe(0);
+    await expect(access(lockPath)).rejects.toMatchObject({ code: 'ENOENT' });
+  });
+
   it('prints usage for bad arguments and the reason for bad configuration or storage', async () => {
     const bad = capture();
     expect(await runCreateApiKeyCli({ argv: ['--create-api-key'], env: {}, ...bad })).toBe(2);
@@ -210,7 +235,7 @@ describe('graphgoblin-api --create-api-key', () => {
     expect(
       await runCreateApiKeyCli({
         argv: ['--create-api-key', 'x'],
-        env: { GG_DB_URL: 'libsql://unreachable.invalid' },
+        env: { GG_DATA_DIR: await tempDir(), GG_DB_URL: 'libsql://unreachable.invalid' },
         ...storage,
       }),
     ).toBe(1);
@@ -224,7 +249,9 @@ describe('graphgoblin-api --create-api-key', () => {
     const argv = process.argv;
     process.argv = ['node', 'main.js', '--create-api-key', 'mem'];
     const env = process.env['GG_DB_URL'];
+    const dataEnv = process.env['GG_DATA_DIR'];
     process.env['GG_DB_URL'] = ':memory:';
+    process.env['GG_DATA_DIR'] = await tempDir();
     try {
       expect(await runCreateApiKeyCli()).toBe(0);
       expect(String(stdout.mock.calls[0]?.[0])).toMatch(/gg_/);
@@ -235,6 +262,8 @@ describe('graphgoblin-api --create-api-key', () => {
       process.argv = argv;
       if (env === undefined) delete process.env['GG_DB_URL'];
       else process.env['GG_DB_URL'] = env;
+      if (dataEnv === undefined) delete process.env['GG_DATA_DIR'];
+      else process.env['GG_DATA_DIR'] = dataEnv;
     }
   });
 });
