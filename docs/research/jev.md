@@ -1,6 +1,6 @@
 # Research - Jev by TypeSafe
 
-Captured 2026-10-02 from public write-ups and listings; the SDK sections were verified in M4 (WP-B) against `@typesafe-ai/sdk` 0.6.0 (`dist/index.d.mts` and `dist/index.mjs`). There is no Jev API key on the development machine, so no live call has been made: request and response shapes below come from the SDK's types and source, not from a captured response.
+Captured 2026-10-02 from public write-ups and listings; the SDK sections were verified in M4 (WP-B) against `@typesafe-ai/sdk` 0.6.0 (`dist/index.d.mts` and `dist/index.mjs`). Live verification is pending an owner-run test: request and response shapes below come from the SDK's types and source, not from a captured response.
 
 ## What it is
 
@@ -84,4 +84,6 @@ A `noul` answer is `{ "type": "noul", "noul": 0.9 }`, where `noul` is the probab
 
 ## Open items
 
-- Capture a real response once a key is available and confirm the shapes above, in particular whether `confidence` always equals the chosen label's probability. Still open after WP-I (2026-10-03): no `JEV_API_KEY` was set on the development machine, so no live call was made.
+- Capture a real response and confirm the shapes above, in particular whether `confidence` equals the chosen label's probability. Verification remains pending as of 2026-10-03; no live call was made by the worker.
+
+**Live verification:** the owner runs `LIVE=1 pnpm --filter @graphgoblin/adapter-jev test -- src/live.test.ts` in a terminal where `JEV_API_KEY` is set (PowerShell: `$env:LIVE='1'; pnpm.cmd --filter @graphgoblin/adapter-jev test -- src/live.test.ts`). The test costs a fraction of a cent: it makes one Choice request and one Noul request through the adapter, with retries disabled. It checks the raw response fields and adapter mappings, and reports each model id and token usage with `console.warn`, plus the Choice confidence and chosen label's probability without assuming they are equal. Paste back these safe observations to finish the verification; the key and request headers are never printed.
