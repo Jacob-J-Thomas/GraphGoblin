@@ -1,8 +1,12 @@
 import { mkdir } from 'node:fs/promises';
-import { FsArtifactStore, FsWorkspace } from '@graphgoblin/adapter-fs';
-import { HttpProbes, HttpWebhookDelivery, createReturnDelivery } from '@graphgoblin/adapter-http';
-import { ProcessScripts } from '@graphgoblin/adapter-process';
-import { TimerService } from '@graphgoblin/adapter-scheduler';
+import { FsArtifactStore, FsWorkspace } from '@graphgoblin/infrastructure/fs';
+import {
+  HttpProbes,
+  HttpWebhookDelivery,
+  createReturnDelivery,
+} from '@graphgoblin/infrastructure/http';
+import { ProcessScripts } from '@graphgoblin/infrastructure/process';
+import { TimerService } from '@graphgoblin/infrastructure/scheduler';
 import {
   SqliteApiKeys,
   SqliteEventStore,
@@ -15,7 +19,7 @@ import {
   SqliteTimerStore,
   openDatabase,
   type DatabaseHandle,
-} from '@graphgoblin/adapter-sqlite';
+} from '@graphgoblin/infrastructure/sqlite';
 import type { HarnessId } from '@graphgoblin/contracts';
 import {
   RunManager,

@@ -7,7 +7,7 @@ Status: pre-1.0, under active construction. Start with [docs/README.md](docs/REA
 ## Repository layout
 
 ```
-packages/   class-library style layers: contracts -> domain -> engine -> adapters
+packages/   layers: contracts -> domain -> engine -> infrastructure, plus optional adapter-* packages
 apps/       hosts: api, mcp, web, plugin-codex
 tooling/    shared configs and repository gate scripts
 docs/       design, ADRs, research

@@ -2,7 +2,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { LoopNotFoundError } from '@graphgoblin/adapter-sqlite';
+import { LoopNotFoundError } from '@graphgoblin/infrastructure/sqlite';
 import type { LoopDefinitionInput, RunEvent, RunRecord } from '@graphgoblin/contracts';
 import { minimalLoop } from '@graphgoblin/contracts/testing';
 import type { EventStorePort } from '@graphgoblin/engine';

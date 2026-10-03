@@ -7,10 +7,17 @@ import { defineConfig, mergeConfig } from 'vitest/config';
  * more than 90% of lines and branches in every package. They are not tunable per
  * package; raise them repo-wide or add an exclusion for generated code only.
  *
+ * Workspace packages declare a `development` export condition that points at their TypeScript
+ * source. Resolving it here means tests never need another package's `dist/`: a change in a lower
+ * package is visible to a higher package's tests without a rebuild. See ADR-0014.
+ *
  * @param {import('vitest/config').UserConfig} [overrides]
  */
 export function createVitestConfig(overrides = {}) {
   const base = defineConfig({
+    resolve: {
+      conditions: ['development'],
+    },
     test: {
       include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
       environment: 'node',

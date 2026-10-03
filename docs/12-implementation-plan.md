@@ -64,11 +64,11 @@ Acceptance: scenario tests for every node kind; a loop-back loop that exhausts; 
 
 ## M3 - Persistence and API (M)
 
-M3 notes: the intermittent 0xC0000005 crash in the `apps/api` suite comes from libsql's native addon, which on Windows can crash or hang the process when it is loaded only inside a worker thread and that thread exits, as Vitest's `threads` and `vmThreads` pools do. `apps/api` and `adapter-sqlite` therefore pin Vitest to `pool: 'forks'`, where the crash never reproduced; production loads libsql on the main thread and is unaffected. Fixing the suite also surfaced a real bug: revoking an already revoked API key returned 204 instead of 404, so `SqliteApiKeys.revoke` now matches only active keys. Details are in `research/sqlite-libsql.md`.
+M3 notes: the intermittent 0xC0000005 crash in the `apps/api` suite comes from libsql's native addon, which on Windows can crash or hang the process when it is loaded only inside a worker thread and that thread exits, as Vitest's `threads` and `vmThreads` pools do. `apps/api` and `adapter-sqlite` (now `infrastructure`) therefore pin Vitest to `pool: 'forks'`, where the crash never reproduced; production loads libsql on the main thread and is unaffected. Fixing the suite also surfaced a real bug: revoking an already revoked API key returned 204 instead of 404, so `SqliteApiKeys.revoke` now matches only active keys. Details are in `research/sqlite-libsql.md`.
 
 Goal: the engine runs behind a real API with SQLite, usable from curl before any UI exists.
 
-Packages: `adapter-sqlite`, `adapter-scheduler` (timers only), `adapter-fs`, `apps/api`.
+Packages: `infrastructure` (`src/sqlite`, `src/scheduler` for timers only, `src/fs`, `src/process`, `src/http`), `apps/api`. Built as five `adapter-*` packages and merged by ADR-0014.
 
 Tasks:
 
@@ -86,7 +86,7 @@ Acceptance: a curl script creates, publishes, runs, and streams a loop; SSE reco
 
 Goal: real inferencing and decisions.
 
-Packages: `adapter-codex`, `adapter-jev`, `adapter-http`.
+Packages: `adapter-codex`, `adapter-jev`, `infrastructure/src/http`.
 
 Tasks:
 
@@ -125,7 +125,7 @@ Acceptance: the M4 acceptance loop can be built and run entirely in the UI; the 
 
 Goal: loops start without a human.
 
-Packages: `adapter-scheduler`, `apps/api`, `adapter-http`.
+Packages: `infrastructure` (`src/scheduler`, `src/sqlite`, `src/http`), `apps/api`.
 
 Tasks:
 

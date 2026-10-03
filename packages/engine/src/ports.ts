@@ -252,15 +252,6 @@ export interface TimerPort {
   onFire(listener: (runId: string, key: string) => void | Promise<void>): () => void;
 }
 
-/** Persisted timers. A secondary port shared by the scheduler adapter (which fires) and the storage adapter (which keeps). */
-export interface TimerStorePort {
-  upsert(runId: string, key: string, at: Date): Promise<void>;
-  remove(runId: string, key?: string): Promise<void>;
-  /** Timers due at or before `now`, oldest first. */
-  listDue(now: Date, limit?: number): Promise<{ runId: string; key: string; at: Date }[]>;
-  list(runId: string): Promise<{ runId: string; key: string; at: Date }[]>;
-}
-
 export interface ProbeRequest {
   method: 'GET' | 'POST' | 'HEAD';
   url: string;

@@ -1,4 +1,5 @@
-import type { ClockPort, Logger, TimerPort, TimerStorePort } from '@graphgoblin/engine';
+import type { ClockPort, Logger, TimerPort } from '@graphgoblin/engine';
+import type { TimerStore } from './timer-store.js';
 
 type Listener = (runId: string, key: string) => void | Promise<void>;
 
@@ -23,7 +24,7 @@ export class TimerService implements TimerPort {
   private readonly logger: Logger | undefined;
 
   constructor(
-    private readonly store: TimerStorePort,
+    private readonly store: TimerStore,
     private readonly clock: ClockPort,
     options: TimerServiceOptions = {},
   ) {

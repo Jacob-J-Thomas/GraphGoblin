@@ -1,5 +1,5 @@
 import type { FastifyError, FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import { LoopNotFoundError } from '@graphgoblin/adapter-sqlite';
+import { LoopNotFoundError } from '@graphgoblin/infrastructure/sqlite';
 import { DomainError } from '@graphgoblin/domain';
 import { EngineRequestError } from '@graphgoblin/engine';
 import {

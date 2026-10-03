@@ -40,7 +40,7 @@ module.exports = {
     tsConfig: { fileName: 'tsconfig.json' },
     enhancedResolveOptions: {
       exportsFields: ['exports'],
-      conditionNames: ['import', 'require', 'node', 'default', 'types'],
+      conditionNames: ['development', 'import', 'require', 'node', 'default', 'types'],
       mainFields: ['module', 'main', 'types', 'typings'],
     },
     reporterOptions: {

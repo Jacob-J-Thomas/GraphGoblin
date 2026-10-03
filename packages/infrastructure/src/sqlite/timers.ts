@@ -1,9 +1,9 @@
-import type { TimerStorePort } from '@graphgoblin/engine';
 import { and, asc, eq, lte } from 'drizzle-orm';
 import type { Database } from './db.js';
 import { timers } from './schema.js';
 
-export class SqliteTimerStore implements TimerStorePort {
+/** Timers in the `timers` table. Satisfies the scheduler's `TimerStore` structurally. */
+export class SqliteTimerStore {
   constructor(private readonly db: Database) {}
 
   async upsert(runId: string, key: string, at: Date): Promise<void> {

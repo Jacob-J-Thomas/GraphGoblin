@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { RunEvent } from '@graphgoblin/contracts';
+import type { LoopDefinitionInput, RunEvent } from '@graphgoblin/contracts';
 import { LoopDefinitionSchema } from '@graphgoblin/contracts';
 import {
   FIXTURE_IDS,
@@ -542,7 +542,7 @@ async function waitFor(predicate: () => boolean, timeoutMs = 2000): Promise<void
 }
 
 /** The kitchen-sink fixture minus nodes that need external input, so a run completes on its own. */
-function kitchenSinkLoopWithoutHeavyNodes() {
+function kitchenSinkLoopWithoutHeavyNodes(): LoopDefinitionInput {
   const loop = kitchenSinkLoop();
   return {
     ...loop,
@@ -553,5 +553,5 @@ function kitchenSinkLoopWithoutHeavyNodes() {
       { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'prep' } },
       { id: 'e3', from: { node: 'prep', port: 'out' }, to: { node: 'done' } },
     ],
-  };
+  } as LoopDefinitionInput;
 }

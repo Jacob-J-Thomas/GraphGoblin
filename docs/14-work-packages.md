@@ -21,7 +21,7 @@ Rules that apply to every package:
 
 ## WP-0 - M3 stabilisation
 
-Read: 07, 10. Depends on: nothing. Deliver: `apps/api` test suite green three runs in a row, coverage above thresholds, lint and format clean, root cause of the libsql worker crash written into 12. Accept: `pnpm check` green for `apps/api` and `packages/adapter-sqlite`.
+Read: 07, 10. Depends on: nothing. Deliver: `apps/api` test suite green three runs in a row, coverage above thresholds, lint and format clean, root cause of the libsql worker crash written into 12. Accept: `pnpm check` green for `apps/api` and `packages/infrastructure` (at the time, `packages/adapter-sqlite`).
 
 ## WP-A - API client package
 
@@ -36,7 +36,7 @@ Accept: generated types match the live document (a test regenerates and diffs); 
 
 ## WP-B - Codex and Jev adapters (M4)
 
-Read: 04 (inference, decision), 05, 06, `research/codex-sdk.md`, `research/jev.md`. Depends on: M2 (engine ports). Deliver:
+Read: 04 (inference, decision), 05, 06, `research/codex-sdk.md`, `research/jev.md`, ADR-0014. Depends on: M2 (engine ports). Both adapters stay separate `adapter-*` packages because each wraps an optional external service with its own dependency and licence (ADR-0014); they do not go into `packages/infrastructure`. Deliver:
 
 - `packages/adapter-codex`: `HarnessPort` over `@openai/codex-sdk` pinned exactly. `preflight` runs the CLI to check install and login. `start` and `resume` map to `startThread`/`resumeThread` and `runStreamed`; model, effort, sandbox, approval, network, and web search are set explicitly on every session through `config` keys so the machine's `config.toml` defaults never leak (see the research doc for the owner's defaults). Normalise events to `HarnessEvent`; a configuration-warning `error` item is not a failure, `turn.failed` is. Record session ids as soon as `thread.started` arrives. Cancel aborts the SDK call and kills the CLI process tree (Windows `taskkill /T /F`).
 - `StructuredPort` over a read-only Codex thread with an output schema, and a `DeciderPort` (`id: 'codex'`) built on it for choices and yes/no questions.
@@ -48,10 +48,10 @@ Accept: adapter tests green from fixtures without network; one live smoke run su
 
 ## WP-C - Triggers (M6)
 
-Read: 03, 04 (trigger), 08, 11. Depends on: M3. Deliver:
+Read: 03, 04 (trigger), 08, 11, ADR-0014. Depends on: M3. Deliver:
 
-- `packages/adapter-scheduler`: cron schedules over `croner` with timezone support; schedules persisted (new `schedules` table in `adapter-sqlite` with a migration); re-arm at boot; missed-fire policies `skip`, `run-once`, `run-each`.
-- `adapter-sqlite`: `schedules`, `webhook_endpoints`, `inbound_events` tables and repositories.
+- `packages/infrastructure/src/scheduler`: cron schedules over `croner` with timezone support; schedules persisted (new `schedules` table in `src/sqlite` with a migration in `packages/infrastructure/drizzle`); re-arm at boot; missed-fire policies `skip`, `run-once`, `run-each`. The scheduler may import the sqlite folder directly or define its own store interface, as `TimerStore` does.
+- `packages/infrastructure/src/sqlite`: `schedules`, `webhook_endpoints`, `inbound_events` tables and repositories.
 - `apps/api`: on publish, regenerate schedules and webhook endpoints for the version's trigger nodes; `POST /hooks/{endpointToken}` with HMAC-SHA256 verification, timestamp window, dedupe, size limit, and rate limit; `POST /events` now fires `event` trigger nodes through the bus with filters and dedupe; `poll` trigger as a stretch over the heartbeat probe model; an events listing backed by `inbound_events`.
 - A `TriggerService` in `apps/api` (or a new `packages/triggers` if it stays pure) that turns a firing into `RunManager.startRun` with the right `source` and `triggerKind`.
 

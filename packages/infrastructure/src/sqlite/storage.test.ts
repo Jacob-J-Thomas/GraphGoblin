@@ -24,6 +24,7 @@ import {
   SqliteSettings,
   hashApiKey,
 } from './settings.js';
+import type { TimerStore } from '../scheduler/timer-store.js';
 import { SqliteTimerStore } from './timers.js';
 
 let handle: DatabaseHandle;
@@ -326,7 +327,8 @@ describe('SqliteSessionRepository', () => {
 
 describe('SqliteTimerStore', () => {
   it('stores, lists, and removes timers', async () => {
-    const store = new SqliteTimerStore(handle.db);
+    // Typed as the scheduler's interface: a compile-time check that the structural match holds.
+    const store: TimerStore = new SqliteTimerStore(handle.db);
     const run = fakeUlid('run:t');
     await store.upsert(run, 'timer', new Date('2026-10-02T12:00:10.000Z'));
     await store.upsert(run, 'timeout', new Date('2026-10-02T12:00:20.000Z'));

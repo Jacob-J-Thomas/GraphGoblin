@@ -1,7 +1,7 @@
-import type { TimerStorePort } from '@graphgoblin/engine';
+import type { TimerStore } from './timer-store.js';
 
 /** In-memory timer store for tests and for the API's in-memory mode. */
-export class MemoryTimerStore implements TimerStorePort {
+export class MemoryTimerStore implements TimerStore {
   private readonly rows = new Map<string, { runId: string; key: string; at: Date }>();
 
   upsert(runId: string, key: string, at: Date): Promise<void> {

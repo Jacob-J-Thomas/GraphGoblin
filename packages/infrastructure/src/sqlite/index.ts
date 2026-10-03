@@ -1,5 +1,5 @@
 /**
- * @graphgoblin/adapter-sqlite
+ * @graphgoblin/infrastructure/sqlite
  *
  * SQLite persistence through Drizzle over libsql. Implements the engine's storage ports and the
  * extra operations the API needs. See docs/03-domain-model.md for the tables.

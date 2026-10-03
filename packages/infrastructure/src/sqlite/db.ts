@@ -21,7 +21,7 @@ export interface DatabaseOptions {
   migrationsFolder?: string;
 }
 
-const DEFAULT_MIGRATIONS = fileURLToPath(new URL('../drizzle', import.meta.url));
+const DEFAULT_MIGRATIONS = fileURLToPath(new URL('../../drizzle', import.meta.url));
 
 /** A minimal async mutex. */
 export class Mutex {

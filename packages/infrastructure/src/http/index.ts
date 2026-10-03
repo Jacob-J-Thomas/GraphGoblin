@@ -1,5 +1,5 @@
 /**
- * @graphgoblin/adapter-http
+ * @graphgoblin/infrastructure/http
  *
  * Outbound HTTP: probes for heartbeat and poll nodes, and signed webhook delivery for return channels.
  */

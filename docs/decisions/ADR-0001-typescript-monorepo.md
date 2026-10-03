@@ -1,6 +1,6 @@
 # ADR-0001 - TypeScript monorepo for backend, frontend, and MCP server
 
-Date: 2026-10-02. Status: Accepted.
+Date: 2026-10-02. Status: Accepted. The one-package-per-layer mechanism is refined by [ADR-0014](ADR-0014-packages-at-real-boundaries.md): packages only at real boundaries, folders for layers inside a package.
 
 ## Context
 

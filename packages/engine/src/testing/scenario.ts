@@ -3,6 +3,7 @@ import type {
   LoopDefinition,
   LoopDefinitionInput,
   LoopVersionRecord,
+  NodeKind,
   RunEvent,
   RunRecord,
 } from '@graphgoblin/contracts';
@@ -97,11 +98,20 @@ export async function createTestEngine(
 }
 
 /** A loop with one node between trigger and exit. */
+/** Loose node shape for tests: configs are validated by the schemas when the loop is published. */
+export interface TestNode {
+  id: string;
+  kind: NodeKind;
+  label: string;
+  config: unknown;
+}
+
 export function singleNodeLoop(
   name: string,
-  node: LoopDefinitionInput['nodes'][number],
+  testNode: TestNode,
   exitConfig: Record<string, unknown> = {},
 ): LoopDefinitionInput {
+  const node = testNode as unknown as LoopDefinitionInput['nodes'][number];
   const extraEdges =
     node.kind === 'decision'
       ? []

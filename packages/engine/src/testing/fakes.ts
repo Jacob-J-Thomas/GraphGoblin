@@ -459,11 +459,11 @@ export class FakeDecider implements DeciderPort {
   available(): boolean {
     return this.isAvailable;
   }
-  choose(request: ChoiceRequest): Promise<ChoiceResult> {
+  choose(request: ChoiceRequest, _signal?: AbortSignal): Promise<ChoiceResult> {
     this.choices.push(request);
     return Promise.resolve(this.chooser(request));
   }
-  judge(request: YesNoRequest): Promise<PredicateAnswer> {
+  judge(request: YesNoRequest, _signal?: AbortSignal): Promise<PredicateAnswer> {
     this.judgements.push(request);
     return Promise.resolve(this.judge_(request));
   }
@@ -475,7 +475,10 @@ export class FakeStructured implements StructuredPort {
   respondWith(responder: (prompt: string, schema: unknown) => unknown): void {
     this.responder = responder;
   }
-  complete(request: { prompt: string; schema: unknown }): Promise<{ value: unknown }> {
+  complete(
+    request: { prompt: string; schema: unknown },
+    _signal?: AbortSignal,
+  ): Promise<{ value: unknown }> {
     this.requests.push({ prompt: request.prompt, schema: request.schema });
     return Promise.resolve({ value: this.responder(request.prompt, request.schema) });
   }
@@ -573,7 +576,7 @@ export class FakeProbes implements HttpProbePort {
   respondWith(responder: (request: ProbeRequest) => ProbeResponse): void {
     this.responder = responder;
   }
-  fetch(request: ProbeRequest): Promise<ProbeResponse> {
+  fetch(request: ProbeRequest, _signal?: AbortSignal): Promise<ProbeResponse> {
     this.requests.push(request);
     return Promise.resolve(this.responder(request));
   }

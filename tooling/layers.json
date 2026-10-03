@@ -3,12 +3,25 @@
   "scope": "@graphgoblin/",
   "ignore": ["@graphgoblin/tooling"],
   "layers": [
-    { "name": "contracts", "match": "^@graphgoblin/contracts$", "allow": [] },
-    { "name": "domain", "match": "^@graphgoblin/domain$", "allow": ["@graphgoblin/contracts"] },
+    {
+      "name": "contracts",
+      "match": "^@graphgoblin/contracts$",
+      "allow": []
+    },
+    {
+      "name": "domain",
+      "match": "^@graphgoblin/domain$",
+      "allow": ["@graphgoblin/contracts"]
+    },
     {
       "name": "engine",
       "match": "^@graphgoblin/engine$",
       "allow": ["@graphgoblin/contracts", "@graphgoblin/domain"]
+    },
+    {
+      "name": "infrastructure",
+      "match": "^@graphgoblin/infrastructure$",
+      "allow": ["@graphgoblin/contracts", "@graphgoblin/domain", "@graphgoblin/engine"]
     },
     {
       "name": "adapter",
@@ -20,6 +33,10 @@
       "match": "^@graphgoblin/api-client$",
       "allow": ["@graphgoblin/contracts"]
     },
-    { "name": "app", "match": "^@graphgoblin/(api|mcp|web|plugin-codex|runner)$", "allow": "*" }
+    {
+      "name": "app",
+      "match": "^@graphgoblin/(api|mcp|web|plugin-codex|runner)$",
+      "allow": "*"
+    }
   ]
 }

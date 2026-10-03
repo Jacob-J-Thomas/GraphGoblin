@@ -20,7 +20,7 @@ function decisionLoop(name: string, config: Record<string, unknown>): LoopDefini
           question: 'Is {{ trigger.payload.value }} good?',
           ...config,
         },
-      },
+      } as LoopDefinitionInput['nodes'][number],
       {
         id: 'mark-good',
         kind: 'mutate',

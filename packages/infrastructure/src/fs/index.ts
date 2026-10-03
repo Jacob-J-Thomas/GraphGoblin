@@ -1,5 +1,5 @@
 /**
- * @graphgoblin/adapter-fs
+ * @graphgoblin/infrastructure/fs
  *
  * Filesystem implementations of the workspace and artifact ports.
  */
