@@ -108,12 +108,13 @@ export function PropertyPanel({
   loopId: string;
 }) {
   const selectedId = useEditorStore((s) => s.selectedNodeId);
+  const fieldErrors = useEditorStore((s) => s.fieldErrors);
   const [epoch, setEpoch] = useState(0);
   const node = definition.nodes.find((n) => n.id === selectedId);
   if (!node) {
     return <p className="text-sm text-slate-500">Select a node to edit its properties.</p>;
   }
-  const { updateNode, removeNode, removeEdge, setFieldErrors } = useEditorStore.getState();
+  const { updateNode, removeNode, removeEdge, setFieldError } = useEditorStore.getState();
   const outgoing = definition.edges.filter((e) => e.from.node === node.id);
   const nodeIssues = issues.filter((i) => i.nodeId === node.id);
   return (
@@ -148,7 +149,8 @@ export function PropertyPanel({
         value={node.config}
         label={`${node.id} config`}
         onChange={(config) => updateNode(node.id, { config })}
-        onParseErrors={(errors) => setFieldErrors(`node:${node.id}`, errors)}
+        parseErrors={fieldErrors[`node:${node.id}`]}
+        onParseError={(path, error) => setFieldError(`node:${node.id}`, path, error)}
       />
       {nodeIssues.length > 0 ? (
         <ul className="mt-2 list-disc pl-4 text-xs text-orange-900" aria-label="Node issues">

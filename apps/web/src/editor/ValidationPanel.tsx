@@ -32,6 +32,19 @@ export function ValidationPanel({ issues }: { issues: EditorIssue[] }) {
                   {issue.nodeId ? <code>{issue.nodeId}</code> : null}
                   {issue.path ? <code>.{issue.path}</code> : null} {issue.message}
                 </button>
+                {issue.discard ? (
+                  <button
+                    type="button"
+                    className="ml-1 text-xs text-sky-800 underline"
+                    aria-label={`Discard unparsed text at ${issue.discard.path}`}
+                    onClick={() => {
+                      const { scope, path } = issue.discard!;
+                      useEditorStore.getState().setFieldError(scope, path, undefined);
+                    }}
+                  >
+                    Discard text
+                  </button>
+                ) : null}
               </li>
             ))}
           </ul>

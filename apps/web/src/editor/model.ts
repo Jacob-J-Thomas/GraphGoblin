@@ -160,7 +160,11 @@ export function connectionProblem(
   return null;
 }
 
-export type EditorIssue = ValidationIssue & { path?: string };
+export type EditorIssue = ValidationIssue & {
+  path?: string;
+  /** For FIELD_UNPARSED: where the unparsed text is kept, so the panel can discard it. */
+  discard?: { scope: string; path: string };
+};
 
 /** Schema issues first (they block saving), then the structural rules from `domain`. */
 export function validateDraft(def: LoopDefinitionInput): {
@@ -194,10 +198,10 @@ export function issueKey(issue: EditorIssue): string {
 
 /** Field text that does not parse, as blocking issues (scope `node:<id>` points at the node). */
 export function fieldErrorIssues(
-  fieldErrors: Record<string, Record<string, string>>,
+  fieldErrors: Record<string, Record<string, { message: string }>>,
 ): EditorIssue[] {
   return Object.entries(fieldErrors).flatMap(([scope, errors]) =>
-    Object.entries(errors).map(([path, message]): EditorIssue => {
+    Object.entries(errors).map(([path, { message }]): EditorIssue => {
       const nodeId = scope.startsWith('node:') ? scope.slice('node:'.length) : undefined;
       return {
         code: 'FIELD_UNPARSED',
@@ -205,6 +209,7 @@ export function fieldErrorIssues(
         message,
         path: nodeId ? `config.${path}` : `${scope}.${path}`,
         ...(nodeId ? { nodeId } : {}),
+        discard: { scope, path },
       };
     }),
   );

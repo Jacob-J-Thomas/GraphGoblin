@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Button, Card, Input, Label } from '../components/ui.js';
-import { useApiKeyStore } from './api-key.js';
+import { syncApiKeyAcrossTabs, useApiKeyStore } from './api-key.js';
 
 /**
  * Shown when the API answers 401: the server requires an API key (`GG_REQUIRE_API_KEY=true`) and
@@ -13,13 +13,22 @@ export function ApiKeyPanel() {
   const save = useApiKeyStore((s) => s.save);
   const queryClient = useQueryClient();
   const [value, setValue] = useState('');
+  useEffect(() => syncApiKeyAcrossTabs(), []);
+  const previousKeyRef = useRef(stored);
+  useEffect(() => {
+    if (previousKeyRef.current === stored) return;
+    previousKeyRef.current = stored;
+    // A new key: fetch everything again with it. A forgotten key: drop what was loaded with it,
+    // so nothing keeps showing data this browser is no longer allowed to read.
+    if (stored) void queryClient.invalidateQueries();
+    else void queryClient.resetQueries();
+  }, [stored, queryClient]);
   if (!rejected) return null;
   const submit = (event: FormEvent) => {
     event.preventDefault();
     if (!value.trim()) return;
     save(value);
     setValue('');
-    void queryClient.invalidateQueries();
   };
   return (
     <div className="p-4 pb-0">

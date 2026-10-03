@@ -1,6 +1,7 @@
 import { subscribeRunEvents, TERMINAL_RUN_EVENT_TYPES } from '@graphgoblin/api-client';
 import type { RunEvent } from '@graphgoblin/contracts';
 import { useEffect, useState } from 'react';
+import { useApiKeyStore } from '../api/api-key.js';
 import { useApi } from '../api/context.js';
 import { errorMessage } from '../lib/utils.js';
 import { useRunEventLog, useRunEventStore, type RunEventLog } from './event-store.js';
@@ -25,6 +26,9 @@ export function useRunEvents(
 ): RunEventLog & { status: StreamStatus; error?: string } {
   const client = useApi();
   const log = useRunEventLog(runId);
+  // A new or forgotten API key restarts the stream: one ended by a 401 recovers, and one opened
+  // with a key that was just forgotten (here or in another tab) closes.
+  const apiKey = useApiKeyStore((s) => s.key);
   const [status, setStatus] = useState<StreamStatus>('connecting');
   const [error, setError] = useState<string | undefined>();
 
@@ -50,6 +54,7 @@ export function useRunEvents(
       onEvents?.();
     };
     setStatus('connecting');
+    setError(undefined);
     const subscription = subscribeRunEvents({
       client,
       runId,
@@ -78,7 +83,7 @@ export function useRunEvents(
     };
     // `onEvents` is a notification hook; re-subscribing when it changes identity would churn the stream.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [client, runId]);
+  }, [client, runId, apiKey]);
 
   return { ...log, status, ...(error ? { error } : {}) };
 }

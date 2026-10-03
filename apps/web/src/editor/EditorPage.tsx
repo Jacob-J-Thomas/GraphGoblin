@@ -8,7 +8,13 @@ import { useApi } from '../api/context.js';
 import { keys, useLoop } from '../api/queries.js';
 import { ErrorState } from '../components/status.js';
 import { Alert, Badge, Button } from '../components/ui.js';
-import { loadLocalDraft, type LocalDraft } from '../drafts/local-drafts.js';
+import {
+  clearSetAsideDraft,
+  loadLocalDraft,
+  loadSetAsideDraft,
+  saveSetAsideDraft,
+  type LocalDraft,
+} from '../drafts/local-drafts.js';
 import { errorMessage, formatDateTime, isOfflineError, problemIssues } from '../lib/utils.js';
 import { Canvas } from './Canvas.js';
 import { LoopSettingsPanel } from './LoopSettingsPanel.js';
@@ -46,40 +52,45 @@ function useLoadEditor(loopId: string) {
   const [restored, setRestored] = useState(false);
   const [setAside, setSetAside] = useState<LocalDraft | undefined>();
   const [ready, setReady] = useState(false);
-  const settled = query.isSuccess || query.isError;
   const dataRef = useRef(query.data);
   dataRef.current = query.data;
 
   useEffect(() => {
-    // Load once per loop; later refetches (after publish, on focus) must not discard edits, so the
-    // effect depends on `settled`, which stays true across refetches, not on the data itself.
-    if (!settled) return;
+    // Load once per loop; later refetches (after publish, on focus) must not discard edits. A
+    // failed fetch with no local copy (offline, or a 401 before an API key is entered) leaves the
+    // editor unloaded, and the first successful fetch after it loads it.
+    if (ready || !(query.isSuccess || query.isError)) return;
     let cancelled = false;
-    void loadLocalDraft(loopId).then((local) => {
-      if (cancelled) return;
-      const server = dataRef.current?.draft?.definition ?? dataRef.current?.current?.definition;
-      const serverUpdatedAt = dataRef.current?.loop.updatedAt;
-      // The server changed after this device's unsynced copy was written (another tab or
-      // device saved since): keep the newer server copy and offer the local one instead.
-      const serverIsNewer =
-        local && !local.synced && server && serverUpdatedAt && serverUpdatedAt > local.savedAt;
-      if (local && !local.synced && !serverIsNewer) {
-        useEditorStore.getState().load(loopId, local.definition, { dirty: true });
-        setRestored(true);
+    void Promise.all([loadLocalDraft(loopId), loadSetAsideDraft(loopId)]).then(
+      async ([local, earlierSetAside]) => {
+        if (cancelled) return;
+        const server = dataRef.current?.draft?.definition ?? dataRef.current?.current?.definition;
+        const serverUpdatedAt = dataRef.current?.loop.updatedAt;
+        // The server changed after this device's unsynced copy was written (another tab or
+        // device saved since): keep the newer server copy and set the local one aside, under its
+        // own key so later edits of the server copy cannot overwrite it.
+        const serverIsNewer =
+          local && !local.synced && server && serverUpdatedAt && serverUpdatedAt > local.savedAt;
+        if (local && !local.synced && !serverIsNewer) {
+          useEditorStore.getState().load(loopId, local.definition, { dirty: true });
+          setRestored(true);
+        } else if (server) {
+          if (serverIsNewer) await saveSetAsideDraft(local);
+          if (cancelled) return;
+          useEditorStore.getState().load(loopId, server);
+        } else if (local) {
+          useEditorStore.getState().load(loopId, local.definition);
+        } else {
+          return;
+        }
+        setSetAside(serverIsNewer ? local : earlierSetAside);
         setReady(true);
-      } else if (server) {
-        if (serverIsNewer) setSetAside(local);
-        useEditorStore.getState().load(loopId, server);
-        setReady(true);
-      } else if (local) {
-        useEditorStore.getState().load(loopId, local.definition);
-        setReady(true);
-      }
-    });
+      },
+    );
     return () => {
       cancelled = true;
     };
-  }, [loopId, settled]);
+  }, [loopId, ready, query.isSuccess, query.isError]);
 
   useEffect(() => () => useEditorStore.getState().reset(), [loopId]);
   const restoreSetAside = () => {
@@ -87,15 +98,21 @@ function useLoadEditor(loopId: string) {
     useEditorStore.getState().load(loopId, setAside.definition, { dirty: true });
     setSetAside(undefined);
     setRestored(true);
+    void clearSetAsideDraft(loopId);
   };
-  return { query, restored, ready, setAside, restoreSetAside };
+  const discardSetAside = () => {
+    setSetAside(undefined);
+    void clearSetAsideDraft(loopId);
+  };
+  return { query, restored, ready, setAside, restoreSetAside, discardSetAside };
 }
 
 export function EditorPage() {
   const { loopId = '' } = useParams();
   const client = useApi();
   const queryClient = useQueryClient();
-  const { query, restored, ready, setAside, restoreSetAside } = useLoadEditor(loopId);
+  const { query, restored, ready, setAside, restoreSetAside, discardSetAside } =
+    useLoadEditor(loopId);
   const definition = useEditorStore((s) => s.definition);
   const saveState = useEditorStore((s) => s.saveState);
   const saveMessage = useEditorStore((s) => s.saveMessage);
@@ -215,6 +232,9 @@ export function EditorPage() {
           draft saved on the server since, which is shown.{' '}
           <Button size="sm" variant="outline" onClick={restoreSetAside}>
             Use this device&apos;s copy instead
+          </Button>{' '}
+          <Button size="sm" variant="ghost" onClick={discardSetAside}>
+            Discard it
           </Button>
         </Alert>
       ) : null}

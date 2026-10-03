@@ -25,8 +25,14 @@ export interface EditorState {
   saveMessage: string | undefined;
   /** Why the last attempted connection was refused. */
   connectionError: string | undefined;
-  /** Field text that does not parse, per form scope ("node:<id>", "settings", "variables"), by path. */
-  fieldErrors: Record<string, Record<string, string>>;
+  /**
+   * Field text that does not parse, per form scope ("node:<id>", "settings", "variables"), by
+   * path. It stays here, with the raw text, until the field parses or the user discards it, so
+   * leaving the field never drops the publish blocker or the text.
+   */
+  fieldErrors: Record<string, Record<string, FieldError>>;
+  /** Bumped by every load and reset; an autosave that started under another value is stale. */
+  generation: number;
 
   load: (loopId: string, definition: LoopDefinitionInput, options?: { dirty?: boolean }) => void;
   reset: () => void;
@@ -42,8 +48,17 @@ export interface EditorState {
   updateSettings: (settings: unknown) => void;
   updateVariables: (variables: unknown) => void;
   setSaveState: (state: SaveState, message?: string, revision?: number) => void;
-  setFieldErrors: (scope: string, errors: Record<string, string>) => void;
+  setFieldError: (scope: string, path: string, error: FieldError | undefined) => void;
+  clearFieldErrors: (scope: string) => void;
 }
+
+export interface FieldError {
+  message: string;
+  /** The text as typed. */
+  text: string;
+}
+
+let generations = 0;
 
 function config(node: NodeInput): Record<string, unknown> {
   return typeof node.config === 'object' && node.config !== null ? node.config : {};
@@ -59,6 +74,7 @@ const INITIAL = {
   saveMessage: undefined,
   connectionError: undefined,
   fieldErrors: {},
+  generation: 0,
 };
 
 export const useEditorStore = create<EditorState>((set, get) => {
@@ -79,9 +95,10 @@ export const useEditorStore = create<EditorState>((set, get) => {
         definition,
         revision: options.dirty ? 1 : 0,
         saveState: options.dirty ? 'pending' : 'saved',
+        generation: (generations += 1),
       }),
 
-    reset: () => set(INITIAL),
+    reset: () => set({ ...INITIAL, generation: (generations += 1) }),
 
     select: (nodeId) => set({ selectedNodeId: nodeId }),
 
@@ -139,6 +156,11 @@ export const useEditorStore = create<EditorState>((set, get) => {
         })),
       }));
       if (get().selectedNodeId === nodeId) set({ selectedNodeId: nextId });
+      // Unparsed field text follows the node to its new id.
+      set((s) => {
+        const { [`node:${nodeId}`]: moved, ...rest } = s.fieldErrors;
+        return { fieldErrors: moved ? { ...rest, [`node:${nextId}`]: moved } : rest };
+      });
     },
 
     moveNode: (nodeId, position) =>
@@ -161,7 +183,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
         edges: d.edges.filter((e) => e.from.node !== nodeId && e.to.node !== nodeId),
       }));
       if (get().selectedNodeId === nodeId) set({ selectedNodeId: undefined });
-      get().setFieldErrors(`node:${nodeId}`, {});
+      get().clearFieldErrors(`node:${nodeId}`);
     },
 
     connect: (connection) => {
@@ -232,12 +254,20 @@ export const useEditorStore = create<EditorState>((set, get) => {
         savedRevision: revision ?? s.savedRevision,
       })),
 
-    setFieldErrors: (scope, errors) =>
+    setFieldError: (scope, path, error) =>
       set((s) => {
-        const { [scope]: _previous, ...rest } = s.fieldErrors;
+        const { [path]: _previous, ...others } = s.fieldErrors[scope] ?? {};
+        const scoped = error ? { ...others, [path]: error } : others;
+        const { [scope]: _scope, ...rest } = s.fieldErrors;
         return {
-          fieldErrors: Object.keys(errors).length > 0 ? { ...rest, [scope]: errors } : rest,
+          fieldErrors: Object.keys(scoped).length > 0 ? { ...rest, [scope]: scoped } : rest,
         };
+      }),
+
+    clearFieldErrors: (scope) =>
+      set((s) => {
+        const { [scope]: _removed, ...rest } = s.fieldErrors;
+        return { fieldErrors: rest };
       }),
   };
 });

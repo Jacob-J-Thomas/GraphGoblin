@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { FormProvider, useForm, type FieldValues, type Resolver } from 'react-hook-form';
 import { Label, Select } from '../components/ui.js';
 import { Field, joinPath } from './fields.js';
@@ -11,7 +11,7 @@ import {
   shapeOf,
   type Schema,
 } from './introspect.js';
-import { ParseErrorContext, type ParseErrorReporter } from './parse-errors.js';
+import { ParseErrorContext, type ParseError, type ParseErrorChannel } from './parse-errors.js';
 import { stripUnset } from './unset.js';
 
 export interface SchemaFormProps {
@@ -22,8 +22,10 @@ export interface SchemaFormProps {
   onChange: (value: unknown) => void;
   /** Accessible name for the form. */
   label: string;
-  /** Fields whose text does not parse (JSON), by path; called whenever that set changes. */
-  onParseErrors?: (errors: Record<string, string>) => void;
+  /** Stored text that did not parse (JSON), by field path; fields show it again when remounted. */
+  parseErrors?: Record<string, ParseError> | undefined;
+  /** Called when a field's text stops or starts parsing (`undefined` clears the path). */
+  onParseError?: (path: string, error: ParseError | undefined) => void;
 }
 
 interface Issue {
@@ -49,7 +51,14 @@ function asValues(value: unknown): FieldValues {
  * reported upward as-is so the caller (the editor store) never loses input; schema issues are shown
  * inline per field and as a summary. Remount with a `key` to load a different value.
  */
-export function SchemaForm({ schema, value, onChange, label, onParseErrors }: SchemaFormProps) {
+export function SchemaForm({
+  schema,
+  value,
+  onChange,
+  label,
+  parseErrors,
+  onParseError,
+}: SchemaFormProps) {
   const shape = shapeOf(schema);
   const id = useId();
   const resolver = useMemo<Resolver<FieldValues>>(() => {
@@ -58,16 +67,21 @@ export function SchemaForm({ schema, value, onChange, label, onParseErrors }: Sc
   }, [schema]);
   const form = useForm<FieldValues>({ resolver, defaultValues: asValues(value), mode: 'onChange' });
   const [issues, setIssues] = useState<Issue[]>(() => issuesOf(schema, value));
-  const parseErrorsRef = useRef<Record<string, string>>({});
-  const onParseErrorsRef = useRef(onParseErrors);
-  onParseErrorsRef.current = onParseErrors;
-  const reportParseError = useCallback<ParseErrorReporter>((path, error) => {
-    const current = parseErrorsRef.current;
-    if (current[path] === error) return;
-    const { [path]: _previous, ...rest } = current;
-    parseErrorsRef.current = error === undefined ? rest : { ...rest, [path]: error };
-    onParseErrorsRef.current?.(parseErrorsRef.current);
-  }, []);
+  const parseErrorsRef = useRef(parseErrors);
+  parseErrorsRef.current = parseErrors;
+  const onParseErrorRef = useRef(onParseError);
+  onParseErrorRef.current = onParseError;
+  const parseErrorChannel = useMemo<ParseErrorChannel>(
+    () => ({
+      get: (path) => parseErrorsRef.current?.[path],
+      report: (path, error) => {
+        const current = parseErrorsRef.current?.[path];
+        if (current?.message === error?.message && current?.text === error?.text) return;
+        onParseErrorRef.current?.(path, error);
+      },
+    }),
+    [],
+  );
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
 
@@ -96,7 +110,7 @@ export function SchemaForm({ schema, value, onChange, label, onParseErrors }: Sc
   };
 
   return (
-    <ParseErrorContext value={reportParseError}>
+    <ParseErrorContext value={parseErrorChannel}>
       <FormProvider {...form}>
         <form aria-label={label} noValidate onSubmit={(e) => e.preventDefault()}>
           {shape.kind === 'union' ? (

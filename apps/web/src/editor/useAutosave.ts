@@ -1,17 +1,42 @@
 import { loops, type GraphGoblinClient } from '@graphgoblin/api-client';
 import type { LoopDefinitionInput } from '@graphgoblin/contracts';
 import { useCallback, useEffect, useRef } from 'react';
-import { saveLocalDraft } from '../drafts/local-drafts.js';
+import { loadLocalDraft, saveLocalDraft } from '../drafts/local-drafts.js';
 import { errorMessage, isOfflineError } from '../lib/utils.js';
 import { validateDraft } from './model.js';
 import { useEditorStore } from './store.js';
 
 export const AUTOSAVE_DELAY_MS = 600;
 
+/** One chain of draft saves per loop: requests for a loop never overlap or complete out of order. */
+const queues = new Map<string, Promise<unknown>>();
+
+/** Run `job` after every save already queued for `loopId`. */
+export function serializeSave<T>(loopId: string, job: () => Promise<T>): Promise<T> {
+  const next = (queues.get(loopId) ?? Promise.resolve()).then(job, job);
+  queues.set(
+    loopId,
+    next.catch(() => undefined),
+  );
+  return next;
+}
+
 /**
- * Debounced autosave. Every edit is mirrored to IndexedDB first, so nothing is lost offline; a
- * schema-valid draft is then saved with `PUT /loops/{id}/draft`. Returns `flush`, which saves now
- * and resolves to whether the server holds the current revision.
+ * Mark the device copy as synced, unless a newer edit has been mirrored over it since this save
+ * started: that copy must keep winning on the next load.
+ */
+async function markSynced(loopId: string, definition: LoopDefinitionInput): Promise<void> {
+  const local = await loadLocalDraft(loopId);
+  if (local && JSON.stringify(local.definition) !== JSON.stringify(definition)) return;
+  await saveLocalDraft({ loopId, definition, savedAt: new Date().toISOString(), synced: true });
+}
+
+/**
+ * Debounced autosave. Every edit is mirrored to IndexedDB at once, so nothing is lost offline or
+ * when leaving the editor; a schema-valid draft is then saved with `PUT /loops/{id}/draft`. Saves
+ * for a loop are serialized (including the one sent when the editor unmounts), and a save only
+ * updates the editor if the same loop is still loaded in the same editor generation. Returns
+ * `flush`, which saves now and resolves to whether the server holds the current revision.
  */
 export function useAutosave(
   client: GraphGoblinClient,
@@ -26,50 +51,48 @@ export function useAutosave(
   const save = useCallback(async (): Promise<boolean> => {
     clearTimeout(timer.current);
     timer.current = undefined;
-    const {
-      loopId,
-      definition,
-      revision: rev,
-      savedRevision,
-      setSaveState,
-    } = useEditorStore.getState();
-    if (!loopId || !definition) return false;
-    if (rev === savedRevision) return true;
-    await saveLocalDraft({ loopId, definition, savedAt: new Date().toISOString(), synced: false });
-    if (!validateDraft(definition).schemaValid) {
-      setSaveState(
-        'invalid',
-        'Fix the schema errors to save to the server. Changes are kept on this device.',
-      );
-      return false;
-    }
-    setSaveState('saving');
-    try {
-      await loops.saveDraft(client, loopId, definition);
-      if (useEditorStore.getState().revision === rev) {
-        setSaveState('saved', undefined, rev);
-        await saveLocalDraft({
-          loopId,
-          definition,
-          savedAt: new Date().toISOString(),
-          synced: true,
-        });
-        return true;
+    const { loopId, generation } = useEditorStore.getState();
+    if (!loopId) return false;
+    return serializeSave(loopId, async () => {
+      for (;;) {
+        const state = useEditorStore.getState();
+        if (state.loopId !== loopId || state.generation !== generation || !state.definition)
+          return false;
+        const { definition, revision: rev, savedRevision, setSaveState } = state;
+        if (rev === savedRevision) return true;
+        if (!validateDraft(definition).schemaValid) {
+          setSaveState(
+            'invalid',
+            'Fix the schema errors to save to the server. Changes are kept on this device.',
+          );
+          return false;
+        }
+        setSaveState('saving');
+        try {
+          await loops.saveDraft(client, loopId, definition);
+        } catch (error) {
+          const now = useEditorStore.getState();
+          if (now.loopId !== loopId || now.generation !== generation) return false;
+          if (isOfflineError(error)) {
+            setSaveState(
+              'offline',
+              'Offline: the draft is kept on this device and saved when the API is back.',
+            );
+          } else {
+            setSaveState('error', errorMessage(error));
+          }
+          return false;
+        }
+        const now = useEditorStore.getState();
+        if (now.loopId !== loopId || now.generation !== generation) return false;
+        if (now.revision === rev) {
+          setSaveState('saved', undefined, rev);
+          await markSynced(loopId, definition);
+          return true;
+        }
+        // Edited while the request was in flight: the server holds an older revision; go again.
       }
-      // Edited while the request was in flight: the server holds an older revision, so save again
-      // before telling a caller such as Publish that the draft is on the server.
-      return await save();
-    } catch (error) {
-      if (isOfflineError(error)) {
-        setSaveState(
-          'offline',
-          'Offline: the draft is kept on this device and saved when the API is back.',
-        );
-      } else {
-        setSaveState('error', errorMessage(error));
-      }
-      return false;
-    }
+    });
   }, [client]);
 
   useEffect(() => {
@@ -85,23 +108,17 @@ export function useAutosave(
 
   useEffect(
     () => () => {
-      // Leaving the editor with an unsaved edit: send it now, best effort. The local copy above
-      // already holds it, and wins on the next load if this request does not arrive.
+      // Leaving the editor with an unsaved edit: send it now, behind any save in flight, best
+      // effort. The local copy above already holds it and wins on the next load if this fails.
       const last = pending.current;
       if (!last || timer.current === undefined) return;
       clearTimeout(timer.current);
       timer.current = undefined;
       if (!validateDraft(last.definition).schemaValid) return;
-      loops.saveDraft(client, last.loopId, last.definition).then(
-        () =>
-          saveLocalDraft({
-            loopId: last.loopId,
-            definition: last.definition,
-            savedAt: new Date().toISOString(),
-            synced: true,
-          }),
-        () => undefined,
-      );
+      void serializeSave(last.loopId, async () => {
+        await loops.saveDraft(client, last.loopId, last.definition);
+        await markSynced(last.loopId, last.definition);
+      }).catch(() => undefined);
     },
     [client],
   );

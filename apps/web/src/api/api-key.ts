@@ -40,6 +40,20 @@ export const useApiKeyStore = create<ApiKeyState>((set) => ({
   markRejected: () => set({ rejected: true }),
 }));
 
+/**
+ * Other tabs share `localStorage` but not this store: follow their changes, so "Forget key" in one
+ * tab signs every tab out (its event streams restart without the key) and a key entered in one
+ * tab is used by all.
+ */
+export function syncApiKeyAcrossTabs(): () => void {
+  const onStorage = (event: StorageEvent) => {
+    if (event.key !== API_KEY_STORAGE && event.key !== null) return;
+    useApiKeyStore.setState({ key: read(), rejected: false });
+  };
+  window.addEventListener('storage', onStorage);
+  return () => window.removeEventListener('storage', onStorage);
+}
+
 /** Wrap a fetch so it sends the stored key and reports a 401 to the key store. */
 export function withApiKey(fetch: (request: Request) => Promise<Response>) {
   return async (request: Request): Promise<Response> => {

@@ -1,13 +1,19 @@
 import { kitchenSinkLoop, minimalLoop } from '@graphgoblin/contracts/testing';
-import { fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { FakeApi, problem } from '../__fixtures__/fake-api.js';
 import { renderApp } from '../__fixtures__/render.js';
-import { loadLocalDraft, saveLocalDraft } from '../drafts/local-drafts.js';
+import {
+  loadLocalDraft,
+  loadSetAsideDraft,
+  saveLocalDraft,
+  saveSetAsideDraft,
+} from '../drafts/local-drafts.js';
+import { useApiKeyStore } from '../api/api-key.js';
 import { KIND_MIME } from './model.js';
 import { newLoopDefinition } from './model.js';
-import { setCode } from '../__fixtures__/codemirror.js';
+import { getCode, setCode } from '../__fixtures__/codemirror.js';
 import { useEditorStore } from './store.js';
 
 const SAVE_WAIT = { timeout: 4000 };
@@ -232,12 +238,34 @@ describe('EditorPage', () => {
     expect(await screen.findByText(/does not parse; fix them first/)).toBeInTheDocument();
     expect(api.callsTo('POST', `/loops/${loop.id}/publish`)).toHaveLength(0);
 
-    // Fixing the text clears the issue; leaving the node also clears it.
+    // Fixing the text clears the issue.
     setCode('Input schema', '{"type": "object"}');
     await waitFor(() => expect(screen.queryByText(/FIELD_UNPARSED/)).toBeNull());
-    setCode('Input schema', '{');
+
+    // Leaving the node keeps the blocker and the text; coming back shows the text again.
+    setCode('Input schema', '{"broken": ');
     expect(await screen.findByText(/FIELD_UNPARSED/)).toBeInTheDocument();
     useEditorStore.getState().select(undefined);
+    await screen.findByText('Select a node to edit its properties.');
+    expect(screen.getByText(/FIELD_UNPARSED/)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Publish' }));
+    expect(await screen.findByText(/does not parse; fix them first/)).toBeInTheDocument();
+    useEditorStore.getState().select('start');
+    await screen.findByRole('form', { name: 'start config' });
+    expect(getCode('Input schema')).toBe('{"broken": ');
+
+    // Discarding in the field restores the last valid value and clears the blocker.
+    await user.click(screen.getByRole('button', { name: 'Discard text' }));
+    await waitFor(() => expect(screen.queryByText(/FIELD_UNPARSED/)).toBeNull());
+    expect(getCode('Input schema')).toContain('"object"');
+
+    // Discarding from the validation panel works when the field is gone.
+    setCode('Input schema', '[');
+    expect(await screen.findByText(/FIELD_UNPARSED/)).toBeInTheDocument();
+    useEditorStore.getState().select(undefined);
+    await user.click(
+      await screen.findByRole('button', { name: 'Discard unparsed text at inputSchema' }),
+    );
     await waitFor(() => expect(screen.queryByText(/FIELD_UNPARSED/)).toBeNull());
   });
 
@@ -274,6 +302,94 @@ describe('EditorPage', () => {
       ).toEqual([{ kind: 'caller' }]),
     );
     expect(screen.queryByText(/expected object, received undefined/)).toBeNull();
+  });
+
+  it('never lets an older save land after a newer one', async () => {
+    const api = new FakeApi();
+    const loop = api.addLoop(newLoopDefinition('order'));
+    let inFlight = 0;
+    let maxInFlight = 0;
+    let calls = 0;
+    const landed: (string | undefined)[] = [];
+    api.override('PUT /loops/:id/draft', async (call) => {
+      calls += 1;
+      inFlight += 1;
+      maxInFlight = Math.max(maxInFlight, inFlight);
+      // The first request is slow: unserialized, the second would complete before it.
+      await new Promise((resolve) => setTimeout(resolve, calls === 1 ? 900 : 20));
+      inFlight -= 1;
+      const definition = (call.body as { definition: { description?: string } }).definition;
+      landed.push(definition.description);
+      return new Response(JSON.stringify({ draft: {}, issues: [] }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+    });
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'order' });
+    act(() => useEditorStore.getState().updateMeta({ description: 'first' }));
+    await waitFor(() => expect(calls).toBe(1), SAVE_WAIT);
+    act(() => useEditorStore.getState().updateMeta({ description: 'second' }));
+    await waitFor(
+      () => expect(screen.getByTestId('save-state')).toHaveTextContent('All changes saved'),
+      SAVE_WAIT,
+    );
+    expect(maxInFlight).toBe(1);
+    expect(landed.at(-1)).toBe('second');
+    const local = await loadLocalDraft(loop.id);
+    expect(local).toMatchObject({ synced: true, definition: { description: 'second' } });
+  });
+
+  it('keeps a set-aside device copy across edits and reloads until restored or discarded', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const loop = api.addLoop(newLoopDefinition('server copy'));
+    await saveLocalDraft({
+      loopId: loop.id,
+      definition: newLoopDefinition('older local copy'),
+      savedAt: '2026-10-01T00:00:00.000Z',
+      synced: false,
+    });
+    const first = renderApp(`/loops/${loop.id}/edit`, api);
+    expect(await screen.findByText('The server has a newer draft')).toBeInTheDocument();
+    // Editing the server copy overwrites the live mirror, not the set-aside copy.
+    act(() => useEditorStore.getState().updateMeta({ description: 'edited server copy' }));
+    await waitFor(async () =>
+      expect((await loadLocalDraft(loop.id))?.definition.description).toBe('edited server copy'),
+    );
+    first.unmount();
+
+    const second = renderApp(`/loops/${loop.id}/edit`, api);
+    expect(await screen.findByText('The server has a newer draft')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: "Use this device's copy instead" }));
+    expect(await screen.findByRole('heading', { name: 'older local copy' })).toBeInTheDocument();
+    second.unmount();
+
+    // Restored: it is no longer offered. Discard works the same way.
+    await saveSetAsideDraft({
+      loopId: loop.id,
+      definition: newLoopDefinition('another copy'),
+      savedAt: '2026-10-01T00:00:00.000Z',
+      synced: false,
+    });
+    renderApp(`/loops/${loop.id}/edit`, api);
+    expect(await screen.findByText('The server has a newer draft')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Discard it' }));
+    expect(screen.queryByText('The server has a newer draft')).toBeNull();
+    await waitFor(async () => expect(await loadSetAsideDraft(loop.id)).toBeUndefined());
+  });
+
+  it('loads the editor once an API key is entered after a 401', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    api.requiredKey = 'gg_good';
+    const loop = api.addLoop(newLoopDefinition('guarded'));
+    renderApp(`/loops/${loop.id}/edit`, api);
+    expect(await screen.findByText('API key required')).toBeInTheDocument();
+    await user.type(screen.getByLabelText('API key', { selector: 'input' }), 'gg_good');
+    await user.click(screen.getByRole('button', { name: 'Use key' }));
+    expect(await screen.findByRole('heading', { name: 'guarded' })).toBeInTheDocument();
+    useApiKeyStore.setState({ key: undefined, rejected: false });
   });
 
   it('keeps an edit made just before leaving the editor', async () => {

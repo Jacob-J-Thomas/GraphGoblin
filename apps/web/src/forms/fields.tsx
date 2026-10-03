@@ -18,7 +18,7 @@ import {
   type FieldShape,
   type Schema,
 } from './introspect.js';
-import { useReportParseError } from './parse-errors.js';
+import { useParseErrors } from './parse-errors.js';
 import { isUnset, UNSET } from './unset.js';
 
 /**
@@ -520,9 +520,15 @@ function JsonText({
   onChange: (value: unknown) => void;
   id?: string;
 }) {
-  const [text, setText] = useState(() => prettyJson(value));
-  const [error, setError] = useState<string | undefined>();
-  useReportParseError(path, error ? `invalid JSON: ${error}` : undefined);
+  const parseErrors = useParseErrors();
+  // Unparsed text from an earlier visit to this field wins over the last valid value.
+  const [stored] = useState(() => parseErrors.get(path));
+  const [text, setText] = useState(() => stored?.text ?? prettyJson(value));
+  const [error, setError] = useState<string | undefined>(stored?.message);
+  const fail = (next: string, message: string | undefined) => {
+    setError(message);
+    parseErrors.report(path, message === undefined ? undefined : { message, text: next });
+  };
   return (
     <div className="flex-1">
       <CodeEditor
@@ -533,18 +539,34 @@ function JsonText({
         onChange={(next) => {
           setText(next);
           if (next.trim() === '') {
-            setError(undefined);
+            fail(next, undefined);
             onChange(undefined);
             return;
           }
           const parsed = parseJson(next);
           if (parsed.ok) {
-            setError(undefined);
+            fail(next, undefined);
             onChange(parsed.value);
-          } else setError(parsed.error);
+          } else fail(next, `invalid JSON: ${parsed.error}`);
         }}
       />
-      {error ? <p className="text-xs text-orange-800">Invalid JSON: {error}</p> : null}
+      {error ? (
+        <p className="text-xs text-orange-800">
+          {error.replace(/^invalid JSON/, 'Invalid JSON')}{' '}
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              // Back to the last valid value; the typed text is dropped.
+              const restored = prettyJson(value);
+              setText(restored);
+              fail(restored, undefined);
+            }}
+          >
+            Discard text
+          </Button>
+        </p>
+      ) : null}
     </div>
   );
 }
