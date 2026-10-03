@@ -336,6 +336,92 @@ describe('SSE framing', () => {
   });
 });
 
+describe('SSE terminal runs', () => {
+  function event(seq: number, type: RunEvent['type'] = 'run.waiting'): RunEvent {
+    return {
+      runId: 'r1',
+      seq,
+      type,
+      at: '2026-10-02T00:00:00.000Z',
+      payload: {},
+    } as unknown as RunEvent;
+  }
+
+  function fakeStore(log: RunEvent[]) {
+    const state: { listener?: (e: RunEvent) => void } = {};
+    const store = {
+      subscribe: (_runId: string, l: (e: RunEvent) => void) => {
+        state.listener = l;
+        return () => {
+          state.listener = undefined;
+        };
+      },
+      read: (_runId: string, after = 0) => Promise.resolve(log.filter((e) => e.seq > after)),
+    } as unknown as EventStorePort;
+    return { store, state };
+  }
+
+  async function probe(
+    store: EventStorePort,
+    after: number,
+    options: Parameters<typeof streamRunEvents>[5],
+  ) {
+    const app = await buildApp(t.container, { logger: false });
+    app.get('/probe/sse', (request, reply) =>
+      streamRunEvents(request, reply, store, 'r1', after, options),
+    );
+    return app;
+  }
+
+  it('waits out the grace when the status is terminal but the log has no terminal event', async () => {
+    const { store } = fakeStore([event(1), event(2)]);
+    const app = await probe(store, 2, {
+      isTerminal: () => Promise.resolve(true),
+      terminalGraceMs: 30,
+    });
+    try {
+      const response = await app.inject('/probe/sse');
+      expect(response.body).not.toContain('id: ');
+    } finally {
+      await app.close();
+    }
+  });
+
+  it('ends on the terminal event that arrives during the grace', async () => {
+    const { store, state } = fakeStore([event(1)]);
+    const app = await probe(store, 0, {
+      isTerminal: () => Promise.resolve(true),
+      terminalGraceMs: 60_000,
+    });
+    try {
+      const pending = app.inject('/probe/sse');
+      await vi.waitFor(() => expect(state.listener).toBeDefined());
+      await new Promise((r) => setTimeout(r, 30));
+      state.listener!(event(2, 'run.failed'));
+      const response = await pending;
+      const ids = [...response.body.matchAll(/^id: (\d+)$/gm)].map((m) => Number(m[1]));
+      expect(ids).toEqual([1, 2]);
+    } finally {
+      await app.close();
+    }
+  });
+
+  it('keeps tailing a run that is not terminal', async () => {
+    const { store, state } = fakeStore([event(1)]);
+    const isTerminal = vi.fn(() => Promise.resolve(false));
+    const app = await probe(store, 0, { isTerminal });
+    try {
+      const pending = app.inject('/probe/sse');
+      await vi.waitFor(() => expect(isTerminal).toHaveBeenCalled());
+      state.listener!(event(2, 'run.cancelled'));
+      const ids = [...(await pending).body.matchAll(/^id: (\d+)$/gm)].map((m) => Number(m[1]));
+      expect(ids).toEqual([1, 2]);
+    } finally {
+      await app.close();
+    }
+  });
+});
+
 describe('test helper', () => {
   it('surfaces create and publish failures', async () => {
     await expect(t.publishLoop({ nope: true } as unknown as LoopDefinitionInput)).rejects.toThrow(

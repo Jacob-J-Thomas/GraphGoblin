@@ -8,6 +8,7 @@ import {
   type InvocationSource,
   type RunRecord,
 } from '@graphgoblin/contracts';
+import { isTerminal } from '@graphgoblin/domain';
 import { EngineRequestError } from '@graphgoblin/engine';
 import type { FastifyRequest } from 'fastify';
 import { z } from 'zod';
@@ -162,7 +163,12 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
       const lastEventId = Number(request.headers['last-event-id'] ?? NaN);
       const after = request.query.after ?? (Number.isFinite(lastEventId) ? lastEventId : 0);
       if ((request.headers.accept ?? '').includes('text/event-stream')) {
-        await streamRunEvents(request, reply, repos.events, request.params.id, after);
+        await streamRunEvents(request, reply, repos.events, request.params.id, after, {
+          isTerminal: async () => {
+            const run = await repos.runs.get(request.params.id);
+            return run !== undefined && isTerminal(run.status);
+          },
+        });
         return reply;
       }
       const items = await repos.events.read(request.params.id, after, request.query.limit ?? 500);

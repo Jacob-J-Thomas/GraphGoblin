@@ -6,12 +6,22 @@ const TERMINAL_EVENTS = new Set<RunEvent['type']>(['run.finished', 'run.failed',
 
 export interface SseOptions {
   heartbeatMs?: number;
+  /** Whether the run is already in a terminal status. Checked once, after the replay. */
+  isTerminal?: () => Promise<boolean>;
+  /**
+   * How long to wait for the terminal event of a run whose status is already terminal but whose
+   * log has no terminal event yet (the status changes just before the event is appended).
+   * Default 2 s.
+   */
+  terminalGraceMs?: number;
 }
 
 /**
  * Stream a run's event log as Server-Sent Events (docs/07). Replays from `after`, then tails live
  * events, closes after a terminal event, and sends a comment heartbeat so proxies keep the
- * connection open. `id:` carries the sequence number so `Last-Event-ID` resumes losslessly.
+ * connection open. `id:` carries the sequence number so `Last-Event-ID` resumes losslessly. When
+ * the run is already terminal and the client already has its terminal event, the stream ends right
+ * after the replay instead of idling.
  */
 export async function streamRunEvents(
   request: FastifyRequest,
@@ -43,10 +53,12 @@ export async function streamRunEvents(
     if (!closed) res.write(': heartbeat\n\n');
   }, options.heartbeatMs ?? 15_000);
   let unsubscribe: () => void = () => undefined;
+  let grace: ReturnType<typeof setTimeout> | undefined;
   const end = (): void => {
     if (closed) return;
     closed = true;
     clearInterval(heartbeat);
+    clearTimeout(grace);
     unsubscribe();
     res.end();
   };
@@ -62,4 +74,17 @@ export async function streamRunEvents(
   for (const event of await store.read(runId, after)) write(event);
   replaying = false;
   for (const event of buffered.sort((a, b) => a.seq - b.seq)) write(event);
+
+  if (closed || !options.isTerminal || !(await options.isTerminal())) return;
+  // Terminal, and the replay held no terminal event: either the client is already past it, or the
+  // status changed a moment before the event was appended and it will arrive through the
+  // subscription. Only the log can tell which.
+  const log = await store.read(runId);
+  if (closed) return;
+  if (log.some((event) => event.seq <= last && TERMINAL_EVENTS.has(event.type))) {
+    end();
+    return;
+  }
+  for (const event of log) write(event);
+  if (!closed) grace = setTimeout(end, options.terminalGraceMs ?? 2_000);
 }

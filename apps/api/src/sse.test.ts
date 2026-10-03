@@ -129,6 +129,82 @@ describe('SSE event stream', () => {
     expect(fromQuery.map((f) => Number(f.id))).toEqual([total]);
   });
 
+  describe('closing when the run is terminal', () => {
+    async function finishedRun(): Promise<{ runId: string; total: number }> {
+      const id = await t.publishLoop(waitLoop);
+      const { run } = (
+        await t.app.inject({ method: 'POST', url: `/loops/${id}/runs`, payload: {} })
+      ).json<{ run: RunRecord }>();
+      await t.idle();
+      await t.container.manager.provideInput(run.id, 1);
+      await t.idle();
+      const all = (await t.app.inject(`/runs/${run.id}/events`)).json<{
+        items: { seq: number; type: string }[];
+      }>();
+      expect(all.items.at(-1)?.type).toBe('run.finished');
+      return { runId: run.id, total: all.items.length };
+    }
+
+    async function timed(promise: Promise<string>): Promise<{ text: string; ms: number }> {
+      const started = Date.now();
+      const text = await promise;
+      return { text, ms: Date.now() - started };
+    }
+
+    it('ends at once when the run is terminal and nothing follows the cursor', async () => {
+      const { runId, total } = await finishedRun();
+      const response = await fetch(`${base}/runs/${runId}/events`, {
+        headers: { accept: 'text/event-stream', 'last-event-id': String(total) },
+      });
+      const { text, ms } = await timed(readAll(response));
+      const frames = parseFrames(text);
+      expect(frames).toEqual([{ comment: 'connected' }]);
+      // Well under the 2 s grace and the 15 s heartbeat: the stream did not idle.
+      expect(ms).toBeLessThan(1_000);
+    });
+
+    it('replays the events after Last-Event-ID and ends when the run is already terminal', async () => {
+      const { runId, total } = await finishedRun();
+      const response = await fetch(`${base}/runs/${runId}/events`, {
+        headers: { accept: 'text/event-stream', 'last-event-id': String(total - 3) },
+      });
+      const { text, ms } = await timed(readAll(response));
+      const events = parseFrames(text).filter((f) => f.event);
+      expect(events.map((f) => Number(f.id))).toEqual([total - 2, total - 1, total]);
+      expect(events.at(-1)?.event).toBe('run.finished');
+      expect(ms).toBeLessThan(1_000);
+    });
+
+    it('ends promptly after the terminal event when the run finishes mid-stream', async () => {
+      const id = await t.publishLoop(waitLoop);
+      const { run } = (
+        await t.app.inject({ method: 'POST', url: `/loops/${id}/runs`, payload: {} })
+      ).json<{ run: RunRecord }>();
+      await t.idle();
+      const response = await fetch(`${base}/runs/${run.id}/events`, {
+        headers: { accept: 'text/event-stream' },
+      });
+      const reader = response.body!.getReader();
+      const decoder = new TextDecoder();
+      let text = '';
+      // Read until the replay has reached the parked run's waiting event.
+      while (!text.includes('event: run.waiting')) {
+        const { value } = await reader.read();
+        text += decoder.decode(value, { stream: true });
+      }
+      await t.container.manager.provideInput(run.id, 1);
+      const started = Date.now();
+      for (;;) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        text += decoder.decode(value, { stream: true });
+      }
+      expect(Date.now() - started).toBeLessThan(1_000);
+      const events = parseFrames(text).filter((f) => f.event);
+      expect(events.at(-1)?.event).toBe('run.finished');
+    });
+  });
+
   it('stops writing when the client disconnects', async () => {
     const id = await t.publishLoop(waitLoop);
     const { run } = (
