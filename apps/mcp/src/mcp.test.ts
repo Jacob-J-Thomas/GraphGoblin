@@ -315,7 +315,7 @@ describe('MCP server against the in-process API', () => {
     const paused = body(await call('wait_for_run', { runId: second, timeoutSeconds: 30 }));
     expect(paused).toMatchObject({ finished: false, status: 'paused' });
     expect(paused.next).toMatch(/resume_run/);
-    expect(body(await call('resume_run', { runId: second })).status).toBe('running');
+    expect(body(await call('resume_run', { runId: second })).status).toBe('waiting'); // paused while parked: back to its wait
     await until(async () => (await status(second)) === 'waiting');
     await call('cancel_run', { runId: second });
     expect(body(await call('wait_for_run', { runId: second })).run.status).toBe('cancelled');

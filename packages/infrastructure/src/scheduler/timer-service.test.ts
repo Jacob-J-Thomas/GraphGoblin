@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { CapturingLogger, FakeClock } from '@graphgoblin/engine/testing';
 import { MemoryTimerStore } from './memory-timer-store.js';
 import { TimerService } from './timer-service.js';
@@ -128,7 +128,8 @@ describe('TimerService', () => {
     await service.schedule('r1', 'k', new Date(0));
     service.start();
     service.start();
-    await new Promise((r) => setTimeout(r, 60));
+    // Wait for the interval to fire rather than a fixed sleep, which is flaky under load.
+    await vi.waitFor(async () => expect(await store.list('r1')).toEqual([]), { timeout: 5000 });
     service.stop();
     service.stop();
     expect(fired).toEqual(['r1']);

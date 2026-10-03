@@ -357,7 +357,7 @@ export function registerTools(
     [
       'resume_run',
       'Resume a run',
-      'Resume a paused run from where it stopped. Then call wait_for_run to follow it to the end.',
+      'Resume a paused run from where it stopped: a run paused while waiting (for input, a signal, a timer, or a child run) goes back to waiting, anything else continues running. Then call wait_for_run to follow it.',
       runs.resume,
       false,
     ],
