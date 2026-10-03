@@ -58,6 +58,7 @@ All list endpoints are paginated with cursors. All ids are ULIDs.
 
 - **Local trusted mode**: the API binds to `127.0.0.1` and the browser app on the same machine needs no credentials. A warning is logged if the bind address is changed without API keys enabled.
 - **API keys**: other applications and the MCP server authenticate with a bearer key. Keys are shown once, stored hashed, and carry scopes (`loops:read`, `runs:write`, and so on).
+- **Required keys** (`GG_REQUIRE_API_KEY=true`): every API route needs a key. The static web app (`/app/` and its `/` and `/app` redirects) stays public because the shell holds no data; on the first 401 the app asks for a key, keeps it in the browser's `localStorage`, and sends it on every request and event stream. Settings can forget it.
 - **Post-1.0**: an `AuthProvider` interface in `apps/api` with OIDC as the first hosted implementation. Every handler already receives an `ownerId` from the auth layer; in 1.0 it is always `local`.
 
 ## Return delivery (Decided)
@@ -140,4 +141,10 @@ Codex installs a plugin by copying it into `~/.codex/plugins/cache/<marketplace>
 
 ## Error responses (Decided)
 
-Problem Details, RFC 9457, with a stable `code` field drawn from `contracts`. Validation errors include the Zod issue path.
+Problem Details, RFC 9457, with a stable `code` field drawn from `contracts`. Validation errors include the Zod issue path. Request errors Fastify raises itself use stable codes too: `MALFORMED_BODY` (invalid or empty JSON, 400), `BODY_TOO_LARGE` (over the 8 MB limit, 413), `UNSUPPORTED_MEDIA_TYPE` (415); other framework errors are `BAD_REQUEST`, so no `FST_ERR_*` code reaches a client.
+
+## Validation agreement (Decided, WP-D2)
+
+`POST /loops`, `POST /loops/import`, `PUT /loops/{id}/draft`, `POST /loops/{id}/validate`, and `POST /loops/{id}/publish` report the same issue list: the `domain` rules (`validateLoop`, which includes Liquid and JSONata syntax checks), trigger checks such as cron syntax, and subloop references, which must name a loop of the same owner with a published version (`SUBLOOP_NOT_FOUND`, `SUBLOOP_NOT_PUBLISHED`; a loop may reference itself). `publishable` from validate is true exactly when publish would accept the draft. The editor runs the `domain` rules locally and adds the API-only issues from validate.
+
+`PUT /settings` checks the keys the engine reads: `defaultModel` must be a non-empty string and `defaultEffort` an effort level. Other keys are stored as given. `DELETE /settings/{key}` returns a key to the server default.
