@@ -624,3 +624,59 @@ it.each(['next success', 'durable resume'] as const)(
     expect(await e.ports.runs.listUnfinalized()).toHaveLength(0);
   },
 );
+
+// Sixth round: resume eligibility is re-checked inside the per-run lock.
+it.each(['same failure', 'newer non-resumable failure'] as const)(
+  'of two concurrent resumes of one failure, only one acts (%s)',
+  async (scenario) => {
+    const e = await createTestEngine();
+    e.ports.harness.script([{ error: { code: 'transient', message: 'retry me' } }]);
+    const exitFailure = scenario === 'newer non-resumable failure';
+    const def = singleNodeLoop(
+      'concurrent-resume',
+      { id: 'infer', kind: 'inference', label: 'I', config: { prompt: { template: 'go' } } },
+      {
+        ...(exitFailure
+          ? {
+              criteria: [
+                { when: 'predicate', strategy: 'expression', jsonata: 'true', outcome: 'failure' },
+              ],
+            }
+          : {}),
+        return: { mapping: '7', channels: [{ kind: 'log' }] },
+      },
+    );
+    const r = await e.runToIdle(e.publish(def).loopId);
+    expect(r.failure?.resumable).toBe(true);
+    // Hold the first resume inside the lock until the second has read the same failed record.
+    let entered!: () => void;
+    const enteredP = new Promise<void>((resolve) => (entered = resolve));
+    let gate!: () => void;
+    const gateP = new Promise<void>((resolve) => (gate = resolve));
+    const clear = e.ports.runs.clearFinalized.bind(e.ports.runs);
+    let first = true;
+    vi.spyOn(e.ports.runs, 'clearFinalized').mockImplementation(async (id) => {
+      if (first) {
+        first = false;
+        entered();
+        await gateP;
+      }
+      return clear(id);
+    });
+    const a = e.manager.resume(r.id);
+    await enteredP;
+    const b = e.manager.resume(r.id);
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    gate();
+    const outcomes = await Promise.allSettled([a, b]);
+    await e.manager.waitForIdle();
+    expect(outcomes.filter((x) => x.status === 'fulfilled')).toHaveLength(1);
+    expect(outcomes.find((x) => x.status === 'rejected')).toMatchObject({
+      reason: { code: 'INVALID_STATE' },
+    });
+    // The rejected resume wrote nothing; the run ran its retry once.
+    expect(e.eventTypes(r.id).filter((t) => t === 'run.resumed')).toHaveLength(1);
+    expect(e.eventTypes(r.id).filter((t) => t === 'run.finished')).toHaveLength(1);
+    expect((await e.ports.runs.get(r.id))?.status).toBe(exitFailure ? 'failed' : 'succeeded');
+  },
+);

@@ -513,4 +513,71 @@ describe('finalization on SQLite (review of WP-G, fourth round)', () => {
       expect(await runs.listUnfinalized()).toHaveLength(0);
     },
   );
+
+  it.each(['same failure', 'newer non-resumable failure'] as const)(
+    'of two concurrent resumes of one failure, only one acts (%s)',
+    async (scenario) => {
+      const e = await createTestEngine();
+      e.manager.stop();
+      const runs = new SqliteRunRepository(db.db);
+      const events = new SqliteEventStore(db.db, e.ports.clock);
+      const manager = new RunManager({ ...e.ports, runs, events }, e.settings);
+      await manager.start();
+      e.ports.harness.script([{ error: { code: 'transient', message: 'retry me' } }]);
+      const exitFailure = scenario === 'newer non-resumable failure';
+      const def = singleNodeLoop(
+        'concurrent-resume',
+        { id: 'infer', kind: 'inference', label: 'I', config: { prompt: { template: 'go' } } },
+        {
+          ...(exitFailure
+            ? {
+                criteria: [
+                  {
+                    when: 'predicate',
+                    strategy: 'expression',
+                    jsonata: 'true',
+                    outcome: 'failure',
+                  },
+                ],
+              }
+            : {}),
+          return: { mapping: '7', channels: [{ kind: 'log' }] },
+        },
+      );
+      const r = await manager.startRun({
+        ownerId: 'local',
+        loopId: e.publish(def).loopId,
+        source: 'manual.api',
+      });
+      await manager.waitForIdle();
+      expect((await runs.get(r.id))?.failure?.resumable).toBe(true);
+      let entered!: () => void;
+      const enteredP = new Promise<void>((resolve) => (entered = resolve));
+      let gate!: () => void;
+      const gateP = new Promise<void>((resolve) => (gate = resolve));
+      const clear = runs.clearFinalized.bind(runs);
+      let first = true;
+      vi.spyOn(runs, 'clearFinalized').mockImplementation(async (id) => {
+        if (first) {
+          first = false;
+          entered();
+          await gateP;
+        }
+        return clear(id);
+      });
+      const a = manager.resume(r.id);
+      await enteredP;
+      const b = manager.resume(r.id);
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      gate();
+      const outcomes = await Promise.allSettled([a, b]);
+      await manager.waitForIdle();
+      manager.stop();
+      expect(outcomes.filter((x) => x.status === 'fulfilled')).toHaveLength(1);
+      const log = await events.read(r.id);
+      expect(log.filter((x) => x.type === 'run.resumed')).toHaveLength(1);
+      expect(log.filter((x) => x.type === 'run.finished')).toHaveLength(1);
+      expect((await runs.get(r.id))?.status).toBe(exitFailure ? 'failed' : 'succeeded');
+    },
+  );
 });

@@ -489,7 +489,20 @@ export class RunManager {
       // The finalization marker of the failure is cleared so the run's next terminal outcome is
       // finalized again; recovery completes a resume whose `run.resumed` is durable. It waits for
       // any finalizer of the failure still in flight, which would otherwise set the marker again.
+      // The failure this command saw: its terminal event. Inside the lock the run must still be
+      // in that same resumable failure, or the command lost to another one (a concurrent resume,
+      // and possibly a newer outcome) and is rejected before it writes anything.
+      const observed = terminalEvent(await this.ports.events.read(runId))?.seq;
       const resumed = await this.withRunLock(runId, async () => {
+        const current = await this.mustGet(runId);
+        const terminal = terminalEvent(await this.ports.events.read(runId));
+        if (
+          current.status !== 'failed' ||
+          !current.failure?.resumable ||
+          terminal?.seq !== observed
+        ) {
+          return undefined;
+        }
         await this.ports.runs.clearFinalized(runId);
         await this.ports.events.append(runId, [{ type: 'run.resumed', actor }]);
         return this.completeResume(runId);
