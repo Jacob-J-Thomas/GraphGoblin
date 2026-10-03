@@ -17,7 +17,7 @@ type Variant = 'default' | 'secondary' | 'outline' | 'destructive' | 'ghost';
 type Size = 'sm' | 'md';
 
 const VARIANTS: Record<Variant, string> = {
-  default: 'bg-emerald-600 text-white hover:bg-emerald-700',
+  default: 'bg-emerald-700 text-white hover:bg-emerald-800',
   secondary: 'bg-slate-200 text-slate-900 hover:bg-slate-300',
   outline: 'border border-slate-300 bg-white text-slate-900 hover:bg-slate-50',
   destructive: 'bg-red-700 text-white hover:bg-red-800',

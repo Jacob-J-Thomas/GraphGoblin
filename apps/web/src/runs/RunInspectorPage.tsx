@@ -293,7 +293,7 @@ export function RunInspectorPage() {
                   className={`w-full rounded px-1 text-left hover:bg-slate-100 ${event.seq === seq ? 'bg-emerald-50' : ''}`}
                   onClick={() => setSelectedSeq(event.seq)}
                 >
-                  <span className="text-slate-400">#{event.seq}</span> <code>{event.type}</code>{' '}
+                  <span className="text-slate-500">#{event.seq}</span> <code>{event.type}</code>{' '}
                   {describeEvent(event)}
                 </button>
               </li>
