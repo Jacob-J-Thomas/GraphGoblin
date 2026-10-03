@@ -30,6 +30,7 @@ The first release: design, run, and observe agent loops on your own machine, wit
 - Codex through `@openai/codex-sdk` 0.160.0 using the machine's `codex login`: session policies, sandbox and approval settings, structured output with a repair policy, transcripts as artifacts, and cancellation.
 - Decisions by JSONata expression, Jev (with a confidence threshold), or Codex, as an ordered fallback list.
 - Scripts run as the API's user without a shell wrapper, with exit-code routes, patch output, and Windows process-tree kill.
+- The Jev API key can be seeded from the environment: when no `jev-api-key` secret exists, the API stores `GG_JEV_API_KEY` (or `JEV_API_KEY`) in the encrypted secret store at first start; a stored secret always wins and the value is never logged.
 
 ### Triggers
 
