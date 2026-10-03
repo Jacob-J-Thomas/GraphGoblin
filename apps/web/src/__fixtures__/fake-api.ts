@@ -99,6 +99,8 @@ export class FakeApi {
     payload: unknown;
     receivedAt: string;
     dedupeKey?: string;
+    source: string;
+    runIds: string[];
   }[] = [];
   preflight = [
     { harness: 'codex', ok: true, version: '1.0', authenticated: true, problems: [] as string[] },
