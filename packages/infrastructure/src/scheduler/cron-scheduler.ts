@@ -4,7 +4,7 @@ import type { ScheduleRecord, ScheduleStore } from './schedule-store.js';
 
 /**
  * Upper bound on catch-up fires for one `run-each` schedule at boot. A minutely schedule that was
- * down for a day would otherwise start 1,440 runs at once; past the cap the remaining missed slots
+ * down for a day would otherwise start 1,440 runs at once; past the cap the older missed slots
  * are dropped with a warning and the schedule moves to its next future slot.
  */
 export const RUN_EACH_CAP = 100;
@@ -99,8 +99,8 @@ export class CronScheduler {
   /**
    * Boot-time catch-up. Every enabled schedule whose stored next slot is already past was missed
    * while the process was down: `skip` moves to the next future slot, `run-once` fires once for
-   * the latest missed slot, `run-each` fires once per missed slot up to `maxCatchUp`. A schedule
-   * without a next slot gets one. Returns the number of fires.
+   * the latest missed slot, `run-each` fires for the latest `maxCatchUp` missed slots, oldest first.
+   * A schedule without a next slot gets one. Returns the number of fires.
    */
   async recover(): Promise<number> {
     if (this.busy) return 0;
@@ -151,8 +151,8 @@ export class CronScheduler {
       return 0;
     }
     if (new Date(schedule.nextFireAt).getTime() > now.getTime()) return 0;
-    const slots = this.missedSlots(schedule, schedule.nextFireAt, now);
-    const truncated = slots.length > this.maxCatchUp;
+    const { slots, missedCount } = this.missedSlots(schedule, schedule.nextFireAt, now);
+    const truncated = missedCount > this.maxCatchUp;
     const fires =
       schedule.missedFirePolicy === 'skip'
         ? []
@@ -162,11 +162,13 @@ export class CronScheduler {
                 .previousRuns(1, new Date(now.getTime() + 1000))
                 .map((slot) => slot.toISOString())
             : slots.slice(-1)
-          : slots.slice(0, this.maxCatchUp);
+          : slots.slice(Math.max(0, slots.length - this.maxCatchUp));
     if (schedule.missedFirePolicy === 'run-each' && truncated) {
+      const dropped = missedCount - fires.length;
+      const firstRetainedSlot = fires[0];
       this.logger?.warn(
-        { scheduleId: schedule.id, cap: this.maxCatchUp },
-        'cron catch-up capped; older missed slots dropped',
+        { scheduleId: schedule.id, cap: this.maxCatchUp, dropped, firstRetainedSlot },
+        `cron catch-up capped; older missed slots dropped: ${dropped}; first retained slot: ${firstRetainedSlot ?? 'none'}`,
       );
     }
     await this.store.markFired(schedule.id, {
@@ -177,17 +179,27 @@ export class CronScheduler {
     return fires.length;
   }
 
-  /** Missed slots from `first` up to `now`, at most `maxCatchUp + 1` of them. */
-  private missedSlots(schedule: ScheduleRecord, first: string, now: Date): string[] {
+  /**
+   * Keep at most `maxCatchUp + 1` recent slots, oldest first. Count every missed slot for
+   * `run-each`; other policies need only enough slots to detect truncation.
+   */
+  private missedSlots(
+    schedule: ScheduleRecord,
+    first: string,
+    now: Date,
+  ): { slots: string[]; missedCount: number } {
     const slots = [first];
+    let missedCount = 1;
     let cursor = new Date(first);
-    while (slots.length <= this.maxCatchUp) {
+    while (schedule.missedFirePolicy === 'run-each' || missedCount <= this.maxCatchUp) {
       const next = this.safeNext(schedule, cursor);
       if (!next || next.getTime() > now.getTime()) break;
       slots.push(next.toISOString());
+      missedCount += 1;
+      if (slots.length > this.maxCatchUp + 1) slots.shift();
       cursor = next;
     }
-    return slots;
+    return { slots, missedCount };
   }
 
   private next(schedule: ScheduleRecord, after: Date): string | undefined {
