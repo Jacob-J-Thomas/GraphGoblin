@@ -157,16 +157,16 @@ export function databaseFilePath(
   if (url === ':memory:') return undefined;
   const groups = LIBSQL_URI.exec(url)?.groups;
   if (!groups || groups['scheme']?.toLowerCase() !== 'file') return undefined;
-  const authority = groups['authority'];
-  if (authority !== undefined && authority !== '' && authority.toLowerCase() !== 'localhost') {
-    return undefined;
-  }
+  let authority: string;
   let path: string;
   try {
+    // libsql percent-decodes the host before comparing it, so `local%68ost` is localhost.
+    authority = decodeURIComponent(groups['authority'] ?? '');
     path = decodeURIComponent(groups['path'] ?? '');
   } catch {
     return undefined;
   }
+  if (authority !== '' && authority.toLowerCase() !== 'localhost') return undefined;
   if (path === '' || path === ':memory:') return undefined;
   if (platform === 'win32' && /^\/[A-Za-z]:/.test(path)) path = path.slice(1);
   return resolve(path);

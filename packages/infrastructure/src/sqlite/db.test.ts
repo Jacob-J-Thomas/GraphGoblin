@@ -213,6 +213,10 @@ describe('databaseFilePath', () => {
     expect(databaseFilePath('file:/srv/a%20b.db?tls=0', 'linux')).toBe(resolve('/srv/a b.db'));
     expect(databaseFilePath('file:///srv/x.db', 'linux')).toBe(resolve('/srv/x.db'));
     expect(databaseFilePath('file://localhost/srv/x.db', 'linux')).toBe(resolve('/srv/x.db'));
+    expect(databaseFilePath('file://local%68ost/C:/x.db', 'win32')).toBe(resolve('C:/x.db'));
+    expect(databaseFilePath('file://LOCAL%48OST/srv/x.db', 'linux')).toBe(resolve('/srv/x.db'));
+    expect(databaseFilePath('file://remote%2Dhost/srv/x.db')).toBeUndefined();
+    expect(databaseFilePath('file://local%E0%A4%A/srv/x.db')).toBeUndefined();
     expect(databaseFilePath('file:///C:/data/x%20y.db', 'win32')).toBe(resolve('C:/data/x y.db'));
     expect(databaseFilePath('file:C:/data/x.db', 'win32')).toBe(resolve('C:/data/x.db'));
   });
