@@ -255,3 +255,16 @@ Residual risks:
 - [ ] Context thread co-design session scheduled; questions in 13 answered.
 - [ ] Heartbeat node interpretation confirmed or corrected.
 - [ ] Codex CLI and Jev account available on the development machine for M4 verification.
+
+## Release sign-off
+
+2026-10-03, on `main` at `21fa22d` (report: `qa/2026-10-03-release-signoff.md`). Verdict: **ship with the following fixes first.** Every gate passes with caches bypassed (typecheck, lint, layers, dependency rules, coverage above 90% on all four metrics in all eleven packages, licences, generated docs, build, format, tooling tests, Playwright E2E on Edge); the install script, the preflight, and one live Codex run (`gpt-6-luna`, `low`, read-only, answer `OK`, succeeded in 9.1 s) passed through the API with a fresh data directory. Before the tag: (1) enforce one API process per data directory with an exclusive lock taken before `container.start()`, because a second start against the same data directory recovers and re-executes the first process's in-flight runs even when it then fails to bind the port (reproduced), and say so in the user guide; (2) correct docs/11 and docs/02, which claim per-secret data keys, an OS-keyring master key, and a manual purge action that do not exist. Residual risks for 1.0:
+
+- One API process per data directory, with no execution or scheduler lease (a refused start once the lock lands).
+- Returns are at least once: a crash between delivering a channel and recording it re-delivers, so an `event` channel can start downstream runs twice and a `webhook` channel can post twice.
+- A crash between creating a subloop child and recording `child_run.started` can orphan that child and start a second.
+- Expression regexes are checked by a syntactic heuristic; polynomial backtracking, memory, and Liquid CPU and output size are not bounded in-process.
+- Codex's sandbox inside the container image is not verified live; the image is about 1 GB.
+- The Jev live check is open.
+- `run.queued.initialThread` has no size cap beyond the request body limits.
+- The product gaps and the cosmetic defects D29 and D30 listed above.
