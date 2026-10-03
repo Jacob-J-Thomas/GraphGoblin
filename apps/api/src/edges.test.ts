@@ -348,7 +348,7 @@ describe('SSE terminal runs', () => {
   }
 
   function fakeStore(log: RunEvent[]) {
-    const state: { listener?: (e: RunEvent) => void } = {};
+    const state: { listener: ((e: RunEvent) => void) | undefined } = { listener: undefined };
     const store = {
       subscribe: (_runId: string, l: (e: RunEvent) => void) => {
         state.listener = l;
