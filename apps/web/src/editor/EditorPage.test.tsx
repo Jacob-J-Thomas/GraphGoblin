@@ -1,0 +1,288 @@
+import { kitchenSinkLoop, minimalLoop } from '@graphgoblin/contracts/testing';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { describe, expect, it } from 'vitest';
+import { FakeApi, problem } from '../__fixtures__/fake-api.js';
+import { renderApp } from '../__fixtures__/render.js';
+import { loadLocalDraft, saveLocalDraft } from '../drafts/local-drafts.js';
+import { KIND_MIME } from './model.js';
+import { newLoopDefinition } from './model.js';
+import { useEditorStore } from './store.js';
+
+const SAVE_WAIT = { timeout: 4000 };
+
+describe('EditorPage', () => {
+  it('loads a draft, adds nodes from the palette, edits properties, and autosaves', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const loop = api.addLoop(newLoopDefinition('my loop'));
+    renderApp(`/loops/${loop.id}/edit`, api);
+
+    expect(await screen.findByRole('heading', { name: 'my loop' })).toBeInTheDocument();
+    expect(screen.getByText('draft only')).toBeInTheDocument();
+    expect(screen.getByText('✓ Ready to publish')).toBeInTheDocument();
+    expect(screen.getByTestId('node-start')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Add Wait node' }));
+    expect(screen.getByTestId('node-wait')).toBeInTheDocument();
+    // The new node is selected, so its generated form shows; its port is unconnected.
+    expect(screen.getByRole('form', { name: 'wait config' })).toBeInTheDocument();
+    expect(screen.getAllByText(/PORT_UNCONNECTED|NODE_UNREACHABLE/).length).toBeGreaterThan(0);
+
+    await user.clear(screen.getByLabelText('Label'));
+    await user.type(screen.getByLabelText('Label'), 'Approval');
+    expect(within(screen.getByTestId('node-wait')).getByText('Approval')).toBeInTheDocument();
+
+    await waitFor(
+      () => expect(api.callsTo('PUT', `/loops/${loop.id}/draft`).length).toBeGreaterThan(0),
+      SAVE_WAIT,
+    );
+    await waitFor(
+      () => expect(screen.getByTestId('save-state')).toHaveTextContent('All changes saved'),
+      SAVE_WAIT,
+    );
+    const saved = api.callsTo('PUT', `/loops/${loop.id}/draft`).at(-1)!.body as {
+      definition: { nodes: { label: string }[] };
+    };
+    expect(saved.definition.nodes.map((n) => n.label)).toContain('Approval');
+    expect((await loadLocalDraft(loop.id))?.synced).toBe(true);
+  });
+
+  it('adds a node dropped from the palette and refuses bad connections', async () => {
+    const api = new FakeApi();
+    const loop = api.addLoop(newLoopDefinition('drop'));
+    renderApp(`/loops/${loop.id}/edit`, api);
+    const canvas = await screen.findByTestId('canvas');
+    const data = new Map<string, string>([[KIND_MIME, 'script']]);
+    const dataTransfer = {
+      getData: (k: string) => data.get(k) ?? '',
+      setData: () => undefined,
+      dropEffect: 'none',
+    };
+    fireEvent.dragOver(canvas, { dataTransfer });
+    fireEvent.drop(canvas, { dataTransfer, clientX: 100, clientY: 100 });
+    expect(screen.getByTestId('node-script')).toBeInTheDocument();
+    fireEvent.drop(canvas, { dataTransfer: { getData: () => 'nonsense' } });
+    expect(useEditorStore.getState().definition!.nodes).toHaveLength(3);
+
+    // A palette drag start carries the kind.
+    const set: Record<string, string> = {};
+    fireEvent.dragStart(screen.getByRole('button', { name: 'Add Exit node' }), {
+      dataTransfer: { setData: (k: string, v: string) => (set[k] = v), effectAllowed: '' },
+    });
+    expect(set[KIND_MIME]).toBe('exit');
+
+    useEditorStore
+      .getState()
+      .connect({ source: 'done', sourceHandle: 'loopBack', target: 'start' });
+    expect(
+      await screen.findByText(/Connection refused: triggers have no input/),
+    ).toBeInTheDocument();
+  });
+
+  it('keeps schema-invalid drafts on the device and explains why', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const loop = api.addLoop(newLoopDefinition('invalid'));
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await user.click(await screen.findByRole('button', { name: 'Add Subloop node' }));
+    await waitFor(
+      () => expect(screen.getByTestId('save-state')).toHaveTextContent('Saved on this device only'),
+      SAVE_WAIT,
+    );
+    expect(screen.getByText(/Fix the schema errors/)).toBeInTheDocument();
+    expect(api.callsTo('PUT', `/loops/${loop.id}/draft`)).toHaveLength(0);
+    const local = await loadLocalDraft(loop.id);
+    expect(local?.synced).toBe(false);
+    expect(local?.definition.nodes.map((n) => n.id)).toContain('subloop');
+    // Clicking a schema issue selects its node.
+    await user.click(screen.getAllByRole('button', { name: /SCHEMA subloop/ })[0]!);
+    expect(useEditorStore.getState().selectedNodeId).toBe('subloop');
+  });
+
+  it('restores an unsynced local draft and reports offline saves', async () => {
+    const api = new FakeApi();
+    const loop = api.addLoop(newLoopDefinition('server copy'));
+    const local = newLoopDefinition('local copy');
+    await saveLocalDraft({ loopId: loop.id, definition: local, savedAt: 'now', synced: false });
+    api.override('PUT /loops/:id/draft', () => {
+      throw new TypeError('Failed to fetch');
+    });
+    renderApp(`/loops/${loop.id}/edit`, api);
+    expect(await screen.findByRole('heading', { name: 'local copy' })).toBeInTheDocument();
+    expect(screen.getByText('Restored unsaved changes from this device.')).toBeInTheDocument();
+    await waitFor(
+      () =>
+        expect(screen.getByTestId('save-state')).toHaveTextContent('Offline: saved on this device'),
+      SAVE_WAIT,
+    );
+
+    // Back online: the retry saves.
+    api.override('PUT /loops/:id/draft', () => problem(500, 'INTERNAL_ERROR', 'disk full'));
+    window.dispatchEvent(new Event('online'));
+    await waitFor(
+      () => expect(screen.getByTestId('save-state')).toHaveTextContent('Save failed'),
+      SAVE_WAIT,
+    );
+    expect(screen.getByText(/disk full/)).toBeInTheDocument();
+  });
+
+  it('opens offline from the local draft, and shows offline or missing states without one', async () => {
+    const api = new FakeApi();
+    const loop = api.addLoop(newLoopDefinition('cached'));
+    await saveLocalDraft({
+      loopId: loop.id,
+      definition: newLoopDefinition('cached'),
+      savedAt: 'now',
+      synced: true,
+    });
+    api.offline = true;
+    const first = renderApp(`/loops/${loop.id}/edit`, api);
+    expect(await screen.findByRole('heading', { name: 'cached' })).toBeInTheDocument();
+    first.unmount();
+
+    renderApp('/loops/01UNKNOWN0000000000000000/edit', api);
+    expect(await screen.findByText('Offline')).toBeInTheDocument();
+  });
+
+  it('shows a missing loop as an error', async () => {
+    renderApp('/loops/01MISSING0000000000000000/edit');
+    expect(await screen.findByText(/Could not load loop/)).toBeInTheDocument();
+  });
+
+  it('publishes, surfaces 422 issues, and starts a run from the run panel', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const loop = api.addLoop(minimalLoop());
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'minimal' });
+    expect(screen.getByRole('button', { name: 'Run' })).toBeDisabled();
+
+    // Structural error: the server refuses with 422 and the issues are listed.
+    await user.click(screen.getByRole('button', { name: 'Add Mutate node' }));
+    await user.click(screen.getByRole('button', { name: 'Publish' }));
+    expect(await screen.findByText('Publish failed')).toBeInTheDocument();
+    expect(screen.getAllByText(/mutate/).length).toBeGreaterThan(0);
+
+    await user.click(screen.getByRole('button', { name: 'Delete node' }));
+    await user.click(screen.getByRole('button', { name: 'Publish' }));
+    expect(await screen.findByText('Published version 1.')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Run' })).toBeEnabled());
+
+    await user.click(screen.getByRole('button', { name: 'Run' }));
+    await user.click(screen.getByRole('button', { name: 'Start run' }));
+    await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent(/^\/runs\//));
+  });
+
+  it('refuses to publish a draft that cannot be saved', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const loop = api.addLoop(minimalLoop());
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await user.click(await screen.findByRole('button', { name: 'Add Subloop node' }));
+    await user.click(screen.getByRole('button', { name: 'Publish' }));
+    expect(await screen.findByText(/could not be saved/)).toBeInTheDocument();
+  });
+
+  it('edits loop settings, variables, node ids, and edges', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const loop = api.addLoop(kitchenSinkLoop());
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'kitchen-sink' });
+
+    await user.click(screen.getByRole('button', { name: 'Loop settings' }));
+    const name = screen.getByLabelText('Name');
+    await user.clear(name);
+    await user.type(name, 'sink');
+    expect(screen.getByRole('heading', { name: 'sink' })).toBeInTheDocument();
+    await user.type(screen.getByLabelText('Description'), 'x');
+    await user.clear(screen.getByLabelText('Max iterations'));
+    await user.type(screen.getByLabelText('Max iterations'), '4');
+    expect(useEditorStore.getState().definition!.settings).toMatchObject({ maxIterations: 4 });
+    await user.click(screen.getByRole('button', { name: 'Add entry' }));
+    expect(Object.keys(useEditorStore.getState().definition!.variables!)).toContain('key2');
+
+    await user.click(screen.getByRole('tab', { name: 'Node' }));
+    useEditorStore.getState().select('check');
+    await screen.findByRole('form', { name: 'check config' });
+    const idInput = screen.getByLabelText('Node id');
+    await user.clear(idInput);
+    await user.type(idInput, '9bad{Enter}');
+    expect(screen.getByText(/Use a letter first/)).toBeInTheDocument();
+    await user.clear(idInput);
+    await user.type(idInput, 'infer{Enter}');
+    expect(screen.getByText(/"infer" is already used/)).toBeInTheDocument();
+    await user.clear(idInput);
+    await user.type(idInput, 'verify');
+    fireEvent.blur(idInput);
+    expect(useEditorStore.getState().selectedNodeId).toBe('verify');
+    fireEvent.blur(screen.getByLabelText('Node id'));
+
+    await user.click(screen.getByRole('button', { name: /Remove edge e5b/ }));
+    expect(useEditorStore.getState().definition!.edges.some((e) => e.id === 'e5b')).toBe(false);
+
+    useEditorStore.getState().removeEdge('e2');
+    useEditorStore.getState().select('nightly');
+    expect(await screen.findByText('No outgoing edges.')).toBeInTheDocument();
+    useEditorStore.getState().select(undefined);
+    expect(await screen.findByText('Select a node to edit its properties.')).toBeInTheDocument();
+  });
+
+  it('picks a published subloop and shows its signature', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const child = api.addLoop(
+      {
+        ...minimalLoop(),
+        name: 'child',
+        nodes: [
+          {
+            id: 'start',
+            kind: 'trigger',
+            label: 'Start',
+            config: { subtype: 'manual', inputSchema: { type: 'object' } },
+          },
+          {
+            id: 'done',
+            kind: 'exit',
+            label: 'Done',
+            config: { return: { mapping: 'vars', channels: [{ kind: 'caller' }] } },
+          },
+        ],
+      },
+      { published: true },
+    );
+    api.addLoop({ ...minimalLoop(), name: 'unpublished' });
+    const loop = api.addLoop(newLoopDefinition('parent'));
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await user.click(await screen.findByRole('button', { name: 'Add Subloop node' }));
+    await user.type(await screen.findByLabelText('Find a published loop'), 'chi');
+    const pick = screen.getByLabelText('Subloop');
+    expect(within(pick).queryByText('unpublished')).not.toBeInTheDocument();
+    await user.selectOptions(pick, child.id);
+    const signature = await screen.findByLabelText('Subloop signature');
+    expect(signature).toHaveTextContent('"type": "object"');
+    expect(signature).toHaveTextContent('done: vars');
+    const node = useEditorStore.getState().definition!.nodes.find((n) => n.id === 'subloop')!;
+    expect(node.config).toMatchObject({ loopRef: { loopId: child.id } });
+  });
+
+  it('shows when the picked subloop has no published version', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const draftOnly = api.addLoop({ ...minimalLoop(), name: 'draft-only' });
+    const loop = api.addLoop({
+      ...newLoopDefinition('p'),
+      nodes: [
+        ...newLoopDefinition('p').nodes,
+        { id: 'sub', kind: 'subloop', label: 'Sub', config: { loopRef: { loopId: draftOnly.id } } },
+      ],
+    });
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'p' });
+    useEditorStore.getState().select('sub');
+    expect(await screen.findByText('This loop has no published version.')).toBeInTheDocument();
+    await user.selectOptions(screen.getByLabelText('Subloop'), '');
+  });
+});

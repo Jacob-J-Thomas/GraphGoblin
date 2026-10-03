@@ -12,6 +12,7 @@ import type { Container } from './container.js';
 import { openApiRegistry } from './openapi-registry.js';
 import { registerAuth } from './plugins/auth.js';
 import { registerErrorHandler } from './plugins/errors.js';
+import { registerStatic } from './plugins/static.js';
 import { registerLoopRoutes } from './routes/loops.js';
 import { registerRunRoutes } from './routes/runs.js';
 import { registerSettingsRoutes } from './routes/settings.js';
@@ -82,6 +83,7 @@ export async function buildApp(
   registerRunRoutes(app, container);
   registerSettingsRoutes(app, container);
   registerTriggerRoutes(app, container);
+  await registerStatic(app, container.config.webDist);
 
   return app;
 }

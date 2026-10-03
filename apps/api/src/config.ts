@@ -24,6 +24,8 @@ const EnvSchema = z.object({
   GG_SWAGGER_UI: bool.default(true),
   GG_PUBLIC_URL: z.string().optional(),
   GG_CODEX_BINARY: z.string().optional(),
+  /** Directory of the built web app (apps/web/dist). When set and present, it is served at /app/. */
+  GG_WEB_DIST: z.string().optional(),
 });
 
 export interface ApiConfig {
@@ -44,6 +46,8 @@ export interface ApiConfig {
   publicUrl?: string;
   /** Path to a `codex` executable. Default: the CLI bundled with `@openai/codex-sdk`. */
   codexBinary?: string;
+  /** Absolute path of the built web app to serve under /app/, if configured. */
+  webDist?: string;
 }
 
 /** Parse configuration from an environment map. Throws with a readable message on bad values. */
@@ -71,5 +75,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ApiConfig {
     swaggerUi: e.GG_SWAGGER_UI,
     ...(e.GG_PUBLIC_URL ? { publicUrl: e.GG_PUBLIC_URL } : {}),
     ...(e.GG_CODEX_BINARY ? { codexBinary: e.GG_CODEX_BINARY } : {}),
+    ...(e.GG_WEB_DIST ? { webDist: resolve(e.GG_WEB_DIST) } : {}),
   };
 }

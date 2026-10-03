@@ -75,6 +75,8 @@ Read: 04, 09, 10. Depends on: WP-A merged. Deliver `apps/web` (React 19, Vite, `
 
 Accept: the kitchen-sink loop can be built and run from the UI; update toast appears on a new build and updates only after confirmation; coverage above thresholds; an adversarial QA pass (Playwright MCP and computer use) finds no open defects.
 
+Delivered (first pass): `apps/web` ships all six screens, schema-driven property panels, live validation, the SSE run inspector, and the prompt-update PWA, served by the API under `/app/` via `GG_WEB_DIST`, with Playwright E2E for draw, publish, run, watch, input, cancel, and the update toast; the adversarial QA pass is still open (see 09 and the M5 notes in 12).
+
 ## WP-E - MCP server and Codex plugin (M7)
 
 Read: 07, `research/codex-sdk.md` (plugins). Depends on: WP-A merged. Deliver `apps/mcp` over `@modelcontextprotocol/sdk` using the API client: tools `list_loops`, `describe_loop`, `start_run`, `wait_for_run`, `get_run`, `get_run_thread`, `list_runs`, `cancel_run`, `pause_run`, `resume_run`, `provide_input`, `send_signal`, `read_run_events`; resources for a run's events and thread; stdio and Streamable HTTP transports; API-key auth to the gateway. Deliver `apps/plugin-codex`: plugin manifest registering the MCP server plus skills `run-loop`, `design-loop`, `inspect-run`, following the pinned Codex plugin layout.
