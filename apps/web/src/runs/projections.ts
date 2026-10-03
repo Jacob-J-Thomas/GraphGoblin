@@ -6,11 +6,16 @@ import type { ContextThread, JsonPatch, RunEvent } from '@graphgoblin/contracts'
 import { getAtPointer, replayThread } from '@graphgoblin/domain';
 
 /**
- * The thread as the run started: the immutable `run` and `invocation` from the current thread,
- * with every collection empty. Child runs seeded by a subloop mapping start with that seed, which
- * the event log does not record, so their reconstruction starts empty too.
+ * The thread as the run started. The engine records it on the first event (`run.queued`),
+ * including a subloop child's seed; logs written before that field existed fall back to the
+ * immutable `run` and `invocation` from the current thread with every collection empty.
  */
-export function initialThreadFrom(current: ContextThread): ContextThread {
+export function initialThreadFrom(
+  current: ContextThread,
+  events: readonly RunEvent[] = [],
+): ContextThread {
+  const first = events[0];
+  if (first?.type === 'run.queued' && first.initialThread) return first.initialThread;
   return {
     schemaVersion: 1,
     run: { ...current.run, iteration: 1 },
@@ -43,6 +48,22 @@ export function threadAt(
       nodeVisits[event.nodeId] = (nodeVisits[event.nodeId] ?? 0) + 1;
   }
   return { ...thread, counters: { ...thread.counters, nodeVisits } };
+}
+
+/**
+ * `threadAt` that reports a replay failure (for example a log whose patches do not apply to the
+ * recorded start) instead of throwing, so one bad event never takes the inspector down.
+ */
+export function tryThreadAt(
+  initial: ContextThread,
+  events: readonly RunEvent[],
+  seq: number,
+): { ok: true; thread: ContextThread } | { ok: false; error: string } {
+  try {
+    return { ok: true, thread: threadAt(initial, events, seq) };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : String(error) };
+  }
 }
 
 export interface PatchLine {

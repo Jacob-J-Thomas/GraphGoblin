@@ -18,6 +18,7 @@ import {
   type FieldShape,
   type Schema,
 } from './introspect.js';
+import { useReportParseError } from './parse-errors.js';
 import { isUnset, UNSET } from './unset.js';
 
 /**
@@ -338,6 +339,25 @@ function ArrayField({
     );
   }
 
+  if (!Array.isArray(field.value) && Array.isArray(defaultValue) && defaultValue.length > 0) {
+    // Item fields bind to paths inside the value; drawing them over a default the value does not
+    // hold yet would make them validate `undefined`. Show the default and copy it on request.
+    return (
+      <fieldset className="mb-2 rounded border border-slate-200 p-2" data-field={name}>
+        <legend className="px-1 text-xs font-semibold text-slate-700">{label}</legend>
+        <p className="mb-1 text-xs text-slate-600">
+          Default: <code>{JSON.stringify(defaultValue)}</code>
+        </p>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => field.onChange(structuredClone(defaultValue))}
+        >
+          Customize {label.toLowerCase()}
+        </Button>
+      </fieldset>
+    );
+  }
   const canAdd = shape.max === undefined || items.length < shape.max;
   return (
     <fieldset className="mb-2 rounded border border-slate-200 p-2" data-field={name}>
@@ -420,6 +440,7 @@ function RecordField({
             />
           ) : (
             <JsonText
+              path={joinPath(name, key)}
               label={`${label} value ${index + 1}`}
               value={value}
               onChange={(v) => setValue(index, v)}
@@ -487,11 +508,13 @@ function UnionField({
 }
 
 function JsonText({
+  path,
   label,
   value,
   onChange,
   id,
 }: {
+  path: string;
   label: string;
   value: unknown;
   onChange: (value: unknown) => void;
@@ -499,6 +522,7 @@ function JsonText({
 }) {
   const [text, setText] = useState(() => prettyJson(value));
   const [error, setError] = useState<string | undefined>();
+  useReportParseError(path, error ? `invalid JSON: ${error}` : undefined);
   return (
     <div className="flex-1">
       <CodeEditor
@@ -530,7 +554,7 @@ function JsonField({ name, label }: FieldProps) {
   const id = useId();
   return (
     <Row label={`${label} (JSON)`} htmlFor={id} name={name}>
-      <JsonText label={label} id={id} value={field.value} onChange={field.onChange} />
+      <JsonText path={name} label={label} id={id} value={field.value} onChange={field.onChange} />
     </Row>
   );
 }

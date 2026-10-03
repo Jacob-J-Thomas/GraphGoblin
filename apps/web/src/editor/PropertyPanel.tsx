@@ -1,8 +1,13 @@
-import { NodeConfigSchemas, SlugSchema, type LoopDefinitionInput } from '@graphgoblin/contracts';
+import {
+  NodeConfigSchemas,
+  SlugSchema,
+  type LoopDefinitionInput,
+  type NodeInput,
+} from '@graphgoblin/contracts';
 import { useState } from 'react';
-import { Button, Input, Label } from '../components/ui.js';
+import { Button, Input, Label, Select } from '../components/ui.js';
 import { SchemaForm } from '../forms/SchemaForm.js';
-import { KIND_INFO, type EditorIssue } from './model.js';
+import { canvasPorts, KIND_INFO, type EditorIssue } from './model.js';
 import { SubloopPicker } from './SubloopPicker.js';
 import { useEditorStore } from './store.js';
 
@@ -39,6 +44,54 @@ function NodeIdField({ nodeId, definition }: { nodeId: string; definition: LoopD
   );
 }
 
+/**
+ * The keyboard path for drawing an edge: pick one of this node's free output ports and a target.
+ * Applies the same rules as dragging on the canvas.
+ */
+function ConnectForm({ node, definition }: { node: NodeInput; definition: LoopDefinitionInput }) {
+  const used = new Set(
+    definition.edges.filter((e) => e.from.node === node.id).map((e) => e.from.port),
+  );
+  const ports = canvasPorts(node).filter((p) => !used.has(p));
+  const targets = definition.nodes.filter((n) => n.kind !== 'trigger');
+  const [port, setPort] = useState(ports[0] ?? '');
+  const [target, setTarget] = useState(targets.find((n) => n.id !== node.id)?.id ?? '');
+  const chosenPort = ports.includes(port) ? port : (ports[0] ?? '');
+  if (ports.length === 0 || targets.length === 0) return null;
+  return (
+    <form
+      aria-label={`Connect ${node.id}`}
+      className="mt-2 flex items-end gap-1"
+      onSubmit={(e) => {
+        e.preventDefault();
+        useEditorStore.getState().connect({ source: node.id, sourceHandle: chosenPort, target });
+      }}
+    >
+      <div>
+        <Label htmlFor="connect-port">Output</Label>
+        <Select id="connect-port" value={chosenPort} onChange={(e) => setPort(e.target.value)}>
+          {ports.map((p) => (
+            <option key={p}>{p}</option>
+          ))}
+        </Select>
+      </div>
+      <div className="flex-1">
+        <Label htmlFor="connect-target">To</Label>
+        <Select id="connect-target" value={target} onChange={(e) => setTarget(e.target.value)}>
+          {targets.map((n) => (
+            <option key={n.id} value={n.id}>
+              {n.label} ({n.id})
+            </option>
+          ))}
+        </Select>
+      </div>
+      <Button type="submit" size="sm" variant="outline" disabled={!target}>
+        Connect
+      </Button>
+    </form>
+  );
+}
+
 /** Properties of the selected node: id, label, the generated config form, and its connections. */
 function subloopId(config: unknown): string {
   const ref = (config as { loopRef?: { loopId?: unknown } } | undefined)?.loopRef;
@@ -60,7 +113,7 @@ export function PropertyPanel({
   if (!node) {
     return <p className="text-sm text-slate-500">Select a node to edit its properties.</p>;
   }
-  const { updateNode, removeNode, removeEdge } = useEditorStore.getState();
+  const { updateNode, removeNode, removeEdge, setFieldErrors } = useEditorStore.getState();
   const outgoing = definition.edges.filter((e) => e.from.node === node.id);
   const nodeIssues = issues.filter((i) => i.nodeId === node.id);
   return (
@@ -95,6 +148,7 @@ export function PropertyPanel({
         value={node.config}
         label={`${node.id} config`}
         onChange={(config) => updateNode(node.id, { config })}
+        onParseErrors={(errors) => setFieldErrors(`node:${node.id}`, errors)}
       />
       {nodeIssues.length > 0 ? (
         <ul className="mt-2 list-disc pl-4 text-xs text-orange-900" aria-label="Node issues">
@@ -122,6 +176,7 @@ export function PropertyPanel({
           </li>
         ))}
       </ul>
+      <ConnectForm key={`${node.id}:${outgoing.length}`} node={node} definition={definition} />
       <Button className="mt-3" size="sm" variant="destructive" onClick={() => removeNode(node.id)}>
         Delete node
       </Button>

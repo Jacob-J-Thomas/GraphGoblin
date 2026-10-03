@@ -117,8 +117,10 @@ describe('SettingsPage', () => {
     await user.selectOptions(screen.getByLabelText('Default effort'), 'high');
     await waitFor(() => expect(api.settingsValues).toMatchObject({ defaultEffort: 'high' }));
     await waitFor(() => expect(screen.getByLabelText('Default effort')).toHaveValue('high'));
+    // "(server default)" removes the setting instead of storing an empty model.
     await user.selectOptions(model, '');
-    await waitFor(() => expect(api.settingsValues).toMatchObject({ defaultModel: '' }));
+    await waitFor(() => expect(api.settingsValues).not.toHaveProperty('defaultModel'));
+    await waitFor(() => expect(model).toHaveValue(''));
   });
 
   it('sets and deletes secrets without ever showing values', async () => {

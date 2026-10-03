@@ -1,6 +1,6 @@
-import { loops } from '@graphgoblin/api-client';
+import { GraphGoblinApiError, loops } from '@graphgoblin/api-client';
 import type { LoopDefinitionInput } from '@graphgoblin/contracts';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ReactFlowProvider } from '@xyflow/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router';
@@ -12,7 +12,13 @@ import { loadLocalDraft } from '../drafts/local-drafts.js';
 import { errorMessage, isOfflineError, problemIssues } from '../lib/utils.js';
 import { Canvas } from './Canvas.js';
 import { LoopSettingsPanel } from './LoopSettingsPanel.js';
-import { validateDraft } from './model.js';
+import {
+  fieldErrorIssues,
+  issueKey,
+  mergeIssues,
+  validateDraft,
+  type EditorIssue,
+} from './model.js';
 import { Palette } from './Palette.js';
 import { PropertyPanel } from './PropertyPanel.js';
 import { RunLauncher } from './RunLauncher.js';
@@ -84,22 +90,62 @@ export function EditorPage() {
   const [tab, setTab] = useState<'node' | 'loop' | 'run'>('node');
   const [settingsEpoch, setSettingsEpoch] = useState(0);
   const flush = useAutosave(client);
-  const validation = useMemo(
+  const savedRevision = useEditorStore((s) => s.savedRevision);
+  const fieldErrors = useEditorStore((s) => s.fieldErrors);
+  const local = useMemo(
     () => (definition ? validateDraft(definition) : { issues: [], schemaValid: false }),
     [definition],
+  );
+  // The API's own checks (cron syntax, subloop references) for the revision the server holds.
+  const serverCheck = useQuery({
+    queryKey: ['loops', loopId, 'validate', savedRevision],
+    enabled: Boolean(definition) && local.schemaValid,
+    staleTime: Infinity,
+    retry: false,
+    queryFn: async () => {
+      const checked = definition as LoopDefinitionInput;
+      const result = await loops.validate(client, loopId, checked);
+      const known = new Set(validateDraft(checked).issues.map(issueKey));
+      return result.issues
+        .map(({ nodeId, edgeId, ...rest }): EditorIssue => ({
+          ...rest,
+          ...(nodeId ? { nodeId } : {}),
+          ...(edgeId ? { edgeId } : {}),
+        }))
+        .filter((issue) => !known.has(issueKey(issue)));
+    },
+  });
+  const validation = useMemo(
+    () => ({
+      issues: mergeIssues(local, serverCheck.data, fieldErrorIssues(fieldErrors)),
+    }),
+    [local, serverCheck.data, fieldErrors],
   );
 
   const publish = useMutation({
     mutationFn: async () => {
+      if (Object.keys(useEditorStore.getState().fieldErrors).length > 0)
+        throw new Error('Some fields hold text that does not parse; fix them first.');
       const saved = await flush();
       if (!saved) throw new Error('The draft could not be saved; fix the issues below first.');
-      return loops.publish(client, loopId);
+      try {
+        return { version: await loops.publish(client, loopId) };
+      } catch (error) {
+        // Nothing changed since the last publish: say so instead of reporting a failure.
+        if (error instanceof GraphGoblinApiError && error.code === 'NO_DRAFT')
+          return { version: undefined };
+        throw error;
+      }
     },
     onSuccess: () => {
+      setPublishedRevision(useEditorStore.getState().revision);
       void queryClient.invalidateQueries({ queryKey: keys.loop(loopId) });
       void queryClient.invalidateQueries({ queryKey: keys.loops });
     },
   });
+  const revision = useEditorStore((s) => s.revision);
+  // The outcome stays visible only until the next edit; after that it describes an older draft.
+  const [publishedRevision, setPublishedRevision] = useState<number | undefined>();
 
   if (!ready) {
     if (query.isError && !isOfflineError(query.error))
@@ -154,8 +200,12 @@ export function EditorPage() {
       (saveState === 'offline' || saveState === 'error' || saveState === 'invalid') ? (
         <Alert tone="warn">{saveMessage}</Alert>
       ) : null}
-      {publish.isSuccess ? (
-        <Alert tone="good">Published version {publish.data.version}.</Alert>
+      {publish.isSuccess && publishedRevision === revision ? (
+        <Alert tone="good">
+          {publish.data.version
+            ? `Published version ${publish.data.version.version}.`
+            : 'Nothing to publish: there are no changes since the published version.'}
+        </Alert>
       ) : null}
       {publish.isError ? (
         <Alert title="Publish failed">
@@ -168,45 +218,45 @@ export function EditorPage() {
         </Alert>
       ) : null}
       {connectionError ? <Alert tone="warn">Connection refused: {connectionError}</Alert> : null}
-      <div className="flex min-h-0 flex-1">
-        <aside className="w-36 shrink-0 border-r border-slate-200 bg-slate-50 p-2">
-          <Palette />
-        </aside>
-        <main className="min-w-0 flex-1">
-          <ReactFlowProvider>
+      <ReactFlowProvider>
+        <div className="flex min-h-0 flex-1">
+          <aside className="w-36 shrink-0 border-r border-slate-200 bg-slate-50 p-2">
+            <Palette />
+          </aside>
+          <main className="min-w-0 flex-1">
             <Canvas definition={def} issues={validation.issues} />
-          </ReactFlowProvider>
-        </main>
-        <aside className="w-96 shrink-0 overflow-auto border-l border-slate-200 bg-white p-3">
-          <div className="mb-2 flex gap-1" role="tablist" aria-label="Panels">
-            {(['node', 'loop', 'run'] as const).map((t) => (
-              <Button
-                key={t}
-                size="sm"
-                role="tab"
-                aria-selected={tab === t}
-                variant={tab === t ? 'secondary' : 'ghost'}
-                onClick={() => setTab(t)}
-              >
-                {t === 'node' ? 'Node' : t === 'loop' ? 'Loop' : 'Run'}
-              </Button>
-            ))}
-          </div>
-          {tab === 'node' ? (
-            <PropertyPanel definition={def} issues={validation.issues} loopId={loopId} />
-          ) : null}
-          {tab === 'loop' ? <LoopSettingsPanel definition={def} epoch={settingsEpoch} /> : null}
-          {tab === 'run' ? (
-            published ? (
-              <RunLauncher loopId={loopId} published={published} />
-            ) : (
-              <p className="text-sm text-slate-500">Publish the loop to run it.</p>
-            )
-          ) : null}
-          <hr className="my-3" />
-          <ValidationPanel issues={validation.issues} />
-        </aside>
-      </div>
+          </main>
+          <aside className="w-96 shrink-0 overflow-auto border-l border-slate-200 bg-white p-3">
+            <div className="mb-2 flex gap-1" role="tablist" aria-label="Panels">
+              {(['node', 'loop', 'run'] as const).map((t) => (
+                <Button
+                  key={t}
+                  size="sm"
+                  role="tab"
+                  aria-selected={tab === t}
+                  variant={tab === t ? 'secondary' : 'ghost'}
+                  onClick={() => setTab(t)}
+                >
+                  {t === 'node' ? 'Node' : t === 'loop' ? 'Loop' : 'Run'}
+                </Button>
+              ))}
+            </div>
+            {tab === 'node' ? (
+              <PropertyPanel definition={def} issues={validation.issues} loopId={loopId} />
+            ) : null}
+            {tab === 'loop' ? <LoopSettingsPanel definition={def} epoch={settingsEpoch} /> : null}
+            {tab === 'run' ? (
+              published ? (
+                <RunLauncher loopId={loopId} published={published} />
+              ) : (
+                <p className="text-sm text-slate-500">Publish the loop to run it.</p>
+              )
+            ) : null}
+            <hr className="my-3" />
+            <ValidationPanel issues={validation.issues} />
+          </aside>
+        </div>
+      </ReactFlowProvider>
     </div>
   );
 }

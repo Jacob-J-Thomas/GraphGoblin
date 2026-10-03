@@ -106,6 +106,15 @@ export class FakeApi {
   calls: RecordedCall[] = [];
   /** When true every request fails like a dropped network. */
   offline = false;
+  /** When set, every request without `Bearer <requiredKey>` is a 401, as with GG_REQUIRE_API_KEY. */
+  requiredKey: string | undefined;
+  /** Issues only the real API finds (cron syntax, subloop references), for validate and publish. */
+  serverOnlyIssues: {
+    code: string;
+    severity: 'error' | 'warning';
+    message: string;
+    nodeId?: string;
+  }[] = [];
   private overrides = new Map<string, Handler>();
   private streams = new Map<string, Set<ReadableStreamDefaultController<Uint8Array>>>();
 
@@ -194,6 +203,8 @@ export class FakeApi {
       headers: request.headers,
     };
     this.calls.push(call);
+    if (this.requiredKey && request.headers.get('authorization') !== `Bearer ${this.requiredKey}`)
+      return problem(401, 'UNAUTHORIZED', 'an API key is required');
     for (const [route, handler] of this.overrides) {
       const params = match(route, call);
       if (params) return handler(call, params);
@@ -288,11 +299,23 @@ export class FakeApi {
       },
     ],
     [
+      'POST /loops/:id/validate',
+      (call) => {
+        const parsed = LoopDefinitionSchema.safeParse(
+          (call.body as { definition?: unknown }).definition,
+        );
+        if (!parsed.success)
+          return problem(400, 'VALIDATION_FAILED', 'the request did not match the schema');
+        const issues = [...validateLoop(parsed.data), ...this.serverOnlyIssues];
+        return json({ issues, publishable: !issues.some((i) => i.severity === 'error') });
+      },
+    ],
+    [
       'POST /loops/:id/publish',
       (_call, [loopId]) => {
         const entry = this.loops.get(loopId!);
         if (!entry?.draft) return problem(409, 'NO_DRAFT', 'the loop has no draft to publish');
-        const issues = validateLoop(entry.draft.definition);
+        const issues = [...validateLoop(entry.draft.definition), ...this.serverOnlyIssues];
         if (issues.some((i) => i.severity === 'error')) {
           return problem(422, 'LOOP_INVALID', 'the draft has structural errors', issues);
         }
@@ -400,6 +423,15 @@ export class FakeApi {
       (call) => {
         Object.assign(this.settingsValues, call.body);
         return json(this.settingsValues);
+      },
+    ],
+    [
+      'DELETE /settings/:key',
+      (_call, [key]) => {
+        if (!(key! in this.settingsValues))
+          return problem(404, 'SETTING_NOT_FOUND', `setting ${key} not found`);
+        delete this.settingsValues[key!];
+        return new Response(null, { status: 204 });
       },
     ],
     ['GET /model-catalog', () => json({ items: this.catalog })],

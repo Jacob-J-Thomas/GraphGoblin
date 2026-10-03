@@ -10,9 +10,27 @@ export interface RunEventLog {
 
 export interface RunEventStoreState {
   runs: Record<string, RunEventLog>;
-  append: (runId: string, event: RunEvent) => void;
+  /** Append events in order; any at or below the cursor are dropped as duplicates. */
+  append: (runId: string, ...events: RunEvent[]) => void;
   clear: (runId: string) => void;
 }
+
+/**
+ * Session storage that never throws on write. Very long logs can exceed the browser's quota; the
+ * in-memory log stays complete and the stored copy is dropped, so a reload replays the run from
+ * its first event instead of resuming (still without gaps or duplicates).
+ */
+export const quotaSafeSessionStorage = {
+  getItem: (name: string) => sessionStorage.getItem(name),
+  setItem: (name: string, value: string) => {
+    try {
+      sessionStorage.setItem(name, value);
+    } catch {
+      sessionStorage.removeItem(name);
+    }
+  },
+  removeItem: (name: string) => sessionStorage.removeItem(name),
+};
 
 /** Keep at most this many runs' logs in session storage. */
 const MAX_RUNS = 20;
@@ -25,13 +43,20 @@ export const useRunEventStore = create<RunEventStoreState>()(
   persist(
     (set) => ({
       runs: {},
-      append: (runId, event) =>
+      append: (runId, ...incoming) =>
         set((state) => {
           const log = state.runs[runId] ?? { events: [], lastSeq: 0 };
-          if (event.seq <= log.lastSeq) return state;
+          const fresh: RunEvent[] = [];
+          let lastSeq = log.lastSeq;
+          for (const event of incoming) {
+            if (event.seq <= lastSeq) continue;
+            fresh.push(event);
+            lastSeq = event.seq;
+          }
+          if (fresh.length === 0) return state;
           const runs = {
             ...state.runs,
-            [runId]: { events: [...log.events, event], lastSeq: event.seq },
+            [runId]: { events: [...log.events, ...fresh], lastSeq },
           };
           const ids = Object.keys(runs);
           if (ids.length > MAX_RUNS) delete runs[ids[0] as string];
@@ -45,7 +70,7 @@ export const useRunEventStore = create<RunEventStoreState>()(
     }),
     {
       name: 'graphgoblin-run-events',
-      storage: createJSONStorage(() => sessionStorage),
+      storage: createJSONStorage(() => quotaSafeSessionStorage),
       partialize: (state) => ({ runs: state.runs }),
     },
   ),

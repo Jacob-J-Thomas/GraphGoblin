@@ -1,15 +1,22 @@
+import { useReactFlow } from '@xyflow/react';
 import { KIND_INFO, KIND_MIME, NODE_KINDS } from './model.js';
 import { useEditorStore } from './store.js';
 
 /**
  * The nine node kinds. Drag one onto the canvas, or press it (keyboard friendly) to add it below
- * the existing nodes.
+ * the existing nodes; the canvas then pans to the new node so it is never added out of sight.
  */
 export function Palette() {
+  const flow = useReactFlow();
   const add = (kind: (typeof NODE_KINDS)[number]) => {
     const def = useEditorStore.getState().definition;
     const lowest = Math.max(0, ...(def?.nodes ?? []).map((n) => n.ui?.y ?? 0));
-    useEditorStore.getState().addNode(kind, { x: 40, y: lowest + 140 });
+    const position = { x: 40, y: lowest + 140 };
+    useEditorStore.getState().addNode(kind, position);
+    void flow.setCenter(position.x + 90, position.y + 40, {
+      zoom: flow.getZoom(),
+      duration: 200,
+    });
   };
   return (
     <nav aria-label="Node palette" className="flex flex-col gap-1">

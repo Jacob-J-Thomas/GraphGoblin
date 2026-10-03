@@ -1,4 +1,6 @@
-import { NavLink, Navigate, Outlet, Route, Routes, useParams } from 'react-router';
+import { NavLink, Navigate, Outlet, Route, Routes, useLocation, useParams } from 'react-router';
+import { ApiKeyPanel } from '../api/ApiKeyPanel.js';
+import { ErrorBoundary } from '../components/ErrorBoundary.js';
 import { Alert } from '../components/ui.js';
 import { EditorPage } from '../editor/EditorPage.js';
 import { EventsPage } from '../events/EventsPage.js';
@@ -19,6 +21,7 @@ const NAV = [
 
 function Layout() {
   const online = useOnline();
+  const location = useLocation();
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900">
       <header className="flex h-12 items-center gap-4 bg-slate-900 px-4 text-white">
@@ -43,7 +46,10 @@ function Layout() {
           reconnect.
         </Alert>
       )}
-      <Outlet />
+      <ApiKeyPanel />
+      <ErrorBoundary key={location.pathname}>
+        <Outlet />
+      </ErrorBoundary>
       <UpdateToast />
     </div>
   );

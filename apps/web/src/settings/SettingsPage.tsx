@@ -2,6 +2,7 @@ import { apiKeys, modelCatalog, secrets, settings } from '@graphgoblin/api-clien
 import { EffortSchema, type Effort } from '@graphgoblin/contracts';
 import { useMutation, useQueryClient, type QueryKey } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
+import { useApiKeyStore } from '../api/api-key.js';
 import { useApi } from '../api/context.js';
 import {
   keys,
@@ -235,8 +236,15 @@ function DefaultsSection() {
   const invalidate = useInvalidate();
   const settingsQuery = useSettings();
   const catalogQuery = useModelCatalog();
+  // "(server default)" removes the setting, so the server's configured default applies again.
   const save = useMutation({
-    mutationFn: (values: Record<string, string>) => settings.update(client, values),
+    mutationFn: async ([key, value]: [string, string]) => {
+      if (value === '') {
+        if (settingsQuery.data?.[key] !== undefined) await settings.remove(client, key);
+        return;
+      }
+      await settings.update(client, { [key]: value });
+    },
     onSuccess: () => invalidate(keys.settings),
   });
   return (
@@ -249,7 +257,7 @@ function DefaultsSection() {
               <Select
                 id="default-model"
                 value={typeof values['defaultModel'] === 'string' ? values['defaultModel'] : ''}
-                onChange={(e) => save.mutate({ defaultModel: e.target.value })}
+                onChange={(e) => save.mutate(['defaultModel', e.target.value])}
               >
                 <option value="">(server default)</option>
                 {(catalogQuery.data ?? [])
@@ -266,7 +274,7 @@ function DefaultsSection() {
               <Select
                 id="default-effort"
                 value={typeof values['defaultEffort'] === 'string' ? values['defaultEffort'] : ''}
-                onChange={(e) => save.mutate({ defaultEffort: e.target.value })}
+                onChange={(e) => save.mutate(['defaultEffort', e.target.value])}
               >
                 <option value="">(server default)</option>
                 {EFFORTS.map((e) => (
@@ -436,6 +444,28 @@ function ApiKeysSection() {
   );
 }
 
+/** The key this browser sends (GG_REQUIRE_API_KEY mode). The value itself is never shown. */
+function BrowserKeySection() {
+  const stored = useApiKeyStore((s) => s.key);
+  const forget = useApiKeyStore((s) => s.forget);
+  return (
+    <Card title="This browser's API key">
+      {stored ? (
+        <div className="flex items-center justify-between gap-2 text-sm">
+          <span>A key is stored in this browser and sent with every request.</span>
+          <Button size="sm" variant="outline" onClick={forget}>
+            Forget key
+          </Button>
+        </div>
+      ) : (
+        <p className="text-sm text-slate-600">
+          No key is stored. The app asks for one if the server requires it.
+        </p>
+      )}
+    </Card>
+  );
+}
+
 function PreflightSection() {
   const query = usePreflight();
   return (
@@ -473,6 +503,7 @@ export function SettingsPage() {
       <DefaultsSection />
       <SecretsSection />
       <ApiKeysSection />
+      <BrowserKeySection />
       <PreflightSection />
       <Card title="Install">
         <p className="text-sm text-slate-600">

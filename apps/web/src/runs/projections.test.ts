@@ -1,14 +1,15 @@
 import type { RunEvent } from '@graphgoblin/contracts';
 import { sampleThread } from '@graphgoblin/contracts/testing';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { event } from '../__fixtures__/fake-api.js';
-import { useRunEventStore } from './event-store.js';
+import { quotaSafeSessionStorage, useRunEventStore } from './event-store.js';
 import {
   describeEvent,
   initialThreadFrom,
   nodeActivity,
   patchDiff,
   threadAt,
+  tryThreadAt,
 } from './projections.js';
 
 const R = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
@@ -110,5 +111,47 @@ describe('run projections', () => {
     clear('bulk20');
     expect(useRunEventStore.getState().runs['bulk20']).toBeUndefined();
     expect(sessionStorage.getItem('graphgoblin-run-events')).toContain('bulk19');
+  });
+});
+
+describe('initial thread and replay failures', () => {
+  it('starts from the thread recorded on run.queued, seed included', () => {
+    const seeded = sampleThread();
+    const events = [event(R, 1, 'run.queued', { initialThread: seeded }), ...ALL.slice(1)];
+    expect(initialThreadFrom(sampleThread({ messages: [] }), events)).toBe(seeded);
+    // Without the field (older logs) it falls back to empty collections.
+    expect(initialThreadFrom(seeded, ALL).messages).toEqual([]);
+  });
+
+  it('reports a patch that does not apply instead of throwing', () => {
+    const current = sampleThread();
+    const bad = [
+      event(R, 1, 'run.queued', {}),
+      event(R, 2, 'node.finished', {
+        nodeId: 'a',
+        patch: [{ op: 'replace', path: '/outputs/missing', value: 1 }],
+        durationMs: 1,
+      }),
+    ];
+    const result = tryThreadAt(initialThreadFrom(current, bad), bad, 2);
+    expect(result.ok).toBe(false);
+    expect(tryThreadAt(initialThreadFrom(current, bad), bad, 1).ok).toBe(true);
+  });
+
+  it('appends batches in order and drops a full session storage copy instead of throwing', () => {
+    const { append } = useRunEventStore.getState();
+    append('batch', ALL[0]!, ALL[1]!, ALL[1]!, ALL[2]!);
+    expect(useRunEventStore.getState().runs['batch']?.events.map((e) => e.seq)).toEqual([1, 2, 3]);
+    append('batch', ALL[0]!);
+    expect(useRunEventStore.getState().runs['batch']?.lastSeq).toBe(3);
+
+    const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('full', 'QuotaExceededError');
+    });
+    const removeItem = vi.spyOn(Storage.prototype, 'removeItem');
+    expect(() => quotaSafeSessionStorage.setItem('k', 'v')).not.toThrow();
+    expect(removeItem).toHaveBeenCalledWith('k');
+    setItem.mockRestore();
+    removeItem.mockRestore();
   });
 });

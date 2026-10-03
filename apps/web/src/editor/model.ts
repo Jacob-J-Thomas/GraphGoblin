@@ -187,6 +187,45 @@ export function validateDraft(def: LoopDefinitionInput): {
   return { issues: validateLoop(parsed.data), schemaValid: true };
 }
 
+/** Identity of an issue for de-duplication. */
+export function issueKey(issue: EditorIssue): string {
+  return `${issue.code}|${issue.nodeId ?? ''}|${issue.message}`;
+}
+
+/** Field text that does not parse, as blocking issues (scope `node:<id>` points at the node). */
+export function fieldErrorIssues(
+  fieldErrors: Record<string, Record<string, string>>,
+): EditorIssue[] {
+  return Object.entries(fieldErrors).flatMap(([scope, errors]) =>
+    Object.entries(errors).map(([path, message]): EditorIssue => {
+      const nodeId = scope.startsWith('node:') ? scope.slice('node:'.length) : undefined;
+      return {
+        code: 'FIELD_UNPARSED',
+        severity: 'error',
+        message,
+        path: nodeId ? `config.${path}` : `${scope}.${path}`,
+        ...(nodeId ? { nodeId } : {}),
+      };
+    }),
+  );
+}
+
+/**
+ * Local issues plus the server's (from `POST /loops/{id}/validate`), which add the checks only the
+ * API can run, such as cron syntax and subloop references. Issues already found locally are not
+ * repeated; server issues are ignored while the draft does not parse, because they describe an
+ * older revision.
+ */
+export function mergeIssues(
+  local: { issues: EditorIssue[]; schemaValid: boolean },
+  server: readonly EditorIssue[] | undefined,
+  fields: readonly EditorIssue[] = [],
+): EditorIssue[] {
+  const seen = new Set(local.issues.map(issueKey));
+  const extra = local.schemaValid ? (server ?? []).filter((i) => !seen.has(issueKey(i))) : [];
+  return [...fields, ...local.issues, ...extra];
+}
+
 /** A new loop: a manual trigger wired to an exit. */
 export function newLoopDefinition(name: string): LoopDefinitionInput {
   return {

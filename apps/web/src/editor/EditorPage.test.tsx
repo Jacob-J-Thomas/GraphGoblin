@@ -7,6 +7,7 @@ import { renderApp } from '../__fixtures__/render.js';
 import { loadLocalDraft, saveLocalDraft } from '../drafts/local-drafts.js';
 import { KIND_MIME } from './model.js';
 import { newLoopDefinition } from './model.js';
+import { setCode } from '../__fixtures__/codemirror.js';
 import { useEditorStore } from './store.js';
 
 const SAVE_WAIT = { timeout: 4000 };
@@ -172,6 +173,102 @@ describe('EditorPage', () => {
     await user.click(screen.getByRole('button', { name: 'Run' }));
     await user.click(screen.getByRole('button', { name: 'Start run' }));
     await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent(/^\/runs\//));
+  });
+
+  it('says there is nothing to publish when the loop has no changes, and hides it after an edit', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const loop = api.addLoop(minimalLoop(), { published: true });
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'minimal' });
+    await user.click(screen.getByRole('button', { name: 'Publish' }));
+    expect(await screen.findByText(/Nothing to publish/)).toBeInTheDocument();
+    expect(screen.queryByText('Publish failed')).toBeNull();
+    useEditorStore.getState().updateMeta({ description: 'changed' });
+    await waitFor(() => expect(screen.queryByText(/Nothing to publish/)).toBeNull());
+  });
+
+  it('lists the issues only the API finds and blocks publishing on JSON that does not parse', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    api.serverOnlyIssues = [
+      {
+        code: 'CRON_INVALID',
+        severity: 'error',
+        message: 'cron trigger "start": bad',
+        nodeId: 'start',
+      },
+    ];
+    const loop = api.addLoop(minimalLoop());
+    renderApp(`/loops/${loop.id}/edit`, api);
+    expect(await screen.findByText(/cron trigger "start": bad/)).toBeInTheDocument();
+    api.serverOnlyIssues = [];
+
+    // The trigger's input schema editor holds text that is not JSON.
+    useEditorStore.getState().select('start');
+    await screen.findByRole('form', { name: 'start config' });
+    setCode('Input schema', '{"type": ');
+    expect(await screen.findByText(/FIELD_UNPARSED/)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Publish' }));
+    expect(await screen.findByText(/does not parse; fix them first/)).toBeInTheDocument();
+    expect(api.callsTo('POST', `/loops/${loop.id}/publish`)).toHaveLength(0);
+
+    // Fixing the text clears the issue; leaving the node also clears it.
+    setCode('Input schema', '{"type": "object"}');
+    await waitFor(() => expect(screen.queryByText(/FIELD_UNPARSED/)).toBeNull());
+    setCode('Input schema', '{');
+    expect(await screen.findByText(/FIELD_UNPARSED/)).toBeInTheDocument();
+    useEditorStore.getState().select(undefined);
+    await waitFor(() => expect(screen.queryByText(/FIELD_UNPARSED/)).toBeNull());
+  });
+
+  it('connects nodes from the keyboard and customizes a default list', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const loop = api.addLoop(newLoopDefinition('keys'));
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'keys' });
+    await user.click(screen.getByRole('button', { name: 'Add Wait node' }));
+    const form = screen.getByRole('form', { name: 'Connect wait' });
+    await user.selectOptions(within(form).getByLabelText('To'), 'done');
+    await user.click(within(form).getByRole('button', { name: 'Connect' }));
+    expect(useEditorStore.getState().definition?.edges).toContainEqual(
+      expect.objectContaining({
+        from: { node: 'wait', port: 'out' },
+        to: { node: 'done', port: 'in' },
+      }),
+    );
+    // Its only port is now used, so the form is gone.
+    expect(screen.queryByRole('form', { name: 'Connect wait' })).toBeNull();
+
+    // A new exit's default return channels are shown as a default until customized.
+    await user.click(screen.getByRole('button', { name: 'Add Exit node' }));
+    expect(await screen.findByText('[{"kind":"caller"}]')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Customize channels' }));
+    await waitFor(() =>
+      expect(
+        (
+          useEditorStore.getState().definition?.nodes.find((n) => n.id === 'exit')?.config as {
+            return?: { channels?: unknown };
+          }
+        ).return?.channels,
+      ).toEqual([{ kind: 'caller' }]),
+    );
+    expect(screen.queryByText(/expected object, received undefined/)).toBeNull();
+  });
+
+  it('keeps an edit made just before leaving the editor', async () => {
+    const api = new FakeApi();
+    const loop = api.addLoop(newLoopDefinition('leave'));
+    const view = renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'leave' });
+    useEditorStore.getState().updateMeta({ description: 'typed then left' });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    view.unmount();
+    await waitFor(async () =>
+      expect((await loadLocalDraft(loop.id))?.definition.description).toBe('typed then left'),
+    );
+    await waitFor(() => expect(api.callsTo('PUT', `/loops/${loop.id}/draft`)).toHaveLength(1));
   });
 
   it('refuses to publish a draft that cannot be saved', async () => {

@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { FormProvider, useForm, type FieldValues, type Resolver } from 'react-hook-form';
 import { Label, Select } from '../components/ui.js';
 import { Field, joinPath } from './fields.js';
@@ -11,6 +11,7 @@ import {
   shapeOf,
   type Schema,
 } from './introspect.js';
+import { ParseErrorContext, type ParseErrorReporter } from './parse-errors.js';
 import { stripUnset } from './unset.js';
 
 export interface SchemaFormProps {
@@ -21,6 +22,8 @@ export interface SchemaFormProps {
   onChange: (value: unknown) => void;
   /** Accessible name for the form. */
   label: string;
+  /** Fields whose text does not parse (JSON), by path; called whenever that set changes. */
+  onParseErrors?: (errors: Record<string, string>) => void;
 }
 
 interface Issue {
@@ -46,7 +49,7 @@ function asValues(value: unknown): FieldValues {
  * reported upward as-is so the caller (the editor store) never loses input; schema issues are shown
  * inline per field and as a summary. Remount with a `key` to load a different value.
  */
-export function SchemaForm({ schema, value, onChange, label }: SchemaFormProps) {
+export function SchemaForm({ schema, value, onChange, label, onParseErrors }: SchemaFormProps) {
   const shape = shapeOf(schema);
   const id = useId();
   const resolver = useMemo<Resolver<FieldValues>>(() => {
@@ -55,6 +58,16 @@ export function SchemaForm({ schema, value, onChange, label }: SchemaFormProps) 
   }, [schema]);
   const form = useForm<FieldValues>({ resolver, defaultValues: asValues(value), mode: 'onChange' });
   const [issues, setIssues] = useState<Issue[]>(() => issuesOf(schema, value));
+  const parseErrorsRef = useRef<Record<string, string>>({});
+  const onParseErrorsRef = useRef(onParseErrors);
+  onParseErrorsRef.current = onParseErrors;
+  const reportParseError = useCallback<ParseErrorReporter>((path, error) => {
+    const current = parseErrorsRef.current;
+    if (current[path] === error) return;
+    const { [path]: _previous, ...rest } = current;
+    parseErrorsRef.current = error === undefined ? rest : { ...rest, [path]: error };
+    onParseErrorsRef.current?.(parseErrorsRef.current);
+  }, []);
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
 
@@ -83,52 +96,54 @@ export function SchemaForm({ schema, value, onChange, label }: SchemaFormProps) 
   };
 
   return (
-    <FormProvider {...form}>
-      <form aria-label={label} noValidate onSubmit={(e) => e.preventDefault()}>
-        {shape.kind === 'union' ? (
-          <div className="mb-2">
-            <Label htmlFor={id}>{humanize(shape.discriminator ?? 'kind')}</Label>
-            <Select
-              id={id}
-              value={String(unionIndex)}
-              onChange={(e) => switchVariant(Number(e.target.value))}
+    <ParseErrorContext value={reportParseError}>
+      <FormProvider {...form}>
+        <form aria-label={label} noValidate onSubmit={(e) => e.preventDefault()}>
+          {shape.kind === 'union' ? (
+            <div className="mb-2">
+              <Label htmlFor={id}>{humanize(shape.discriminator ?? 'kind')}</Label>
+              <Select
+                id={id}
+                value={String(unionIndex)}
+                onChange={(e) => switchVariant(Number(e.target.value))}
+              >
+                {shape.options.map((option, index) => (
+                  <option key={index} value={index}>
+                    {optionLabel(option, shape.discriminator)}
+                  </option>
+                ))}
+              </Select>
+            </div>
+          ) : null}
+          {variant.kind === 'object'
+            ? Object.entries(variant.shape)
+                .filter(([key]) => shape.kind !== 'union' || key !== shape.discriminator)
+                .map(([key, child]) => (
+                  <Field
+                    key={`${unionIndex}:${key}`}
+                    schema={child}
+                    name={joinPath('', key)}
+                    label={humanize(key)}
+                  />
+                ))
+            : null}
+          {issues.length > 0 ? (
+            <div
+              className="mt-2 rounded border border-orange-300 bg-orange-50 p-2 text-xs"
+              aria-label="Config issues"
             >
-              {shape.options.map((option, index) => (
-                <option key={index} value={index}>
-                  {optionLabel(option, shape.discriminator)}
-                </option>
-              ))}
-            </Select>
-          </div>
-        ) : null}
-        {variant.kind === 'object'
-          ? Object.entries(variant.shape)
-              .filter(([key]) => shape.kind !== 'union' || key !== shape.discriminator)
-              .map(([key, child]) => (
-                <Field
-                  key={`${unionIndex}:${key}`}
-                  schema={child}
-                  name={joinPath('', key)}
-                  label={humanize(key)}
-                />
-              ))
-          : null}
-        {issues.length > 0 ? (
-          <div
-            className="mt-2 rounded border border-orange-300 bg-orange-50 p-2 text-xs"
-            aria-label="Config issues"
-          >
-            <p className="font-semibold text-orange-900">Config issues</p>
-            <ul className="list-disc pl-4">
-              {issues.map((issue, index) => (
-                <li key={index}>
-                  {issue.path ? <code>{issue.path}</code> : 'config'}: {issue.message}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
-      </form>
-    </FormProvider>
+              <p className="font-semibold text-orange-900">Config issues</p>
+              <ul className="list-disc pl-4">
+                {issues.map((issue, index) => (
+                  <li key={index}>
+                    {issue.path ? <code>{issue.path}</code> : 'config'}: {issue.message}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+        </form>
+      </FormProvider>
+    </ParseErrorContext>
   );
 }

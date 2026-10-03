@@ -25,6 +25,8 @@ export interface EditorState {
   saveMessage: string | undefined;
   /** Why the last attempted connection was refused. */
   connectionError: string | undefined;
+  /** Field text that does not parse, per form scope ("node:<id>", "settings", "variables"), by path. */
+  fieldErrors: Record<string, Record<string, string>>;
 
   load: (loopId: string, definition: LoopDefinitionInput, options?: { dirty?: boolean }) => void;
   reset: () => void;
@@ -40,6 +42,7 @@ export interface EditorState {
   updateSettings: (settings: unknown) => void;
   updateVariables: (variables: unknown) => void;
   setSaveState: (state: SaveState, message?: string, revision?: number) => void;
+  setFieldErrors: (scope: string, errors: Record<string, string>) => void;
 }
 
 function config(node: NodeInput): Record<string, unknown> {
@@ -55,6 +58,7 @@ const INITIAL = {
   saveState: 'idle' as SaveState,
   saveMessage: undefined,
   connectionError: undefined,
+  fieldErrors: {},
 };
 
 export const useEditorStore = create<EditorState>((set, get) => {
@@ -157,6 +161,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
         edges: d.edges.filter((e) => e.from.node !== nodeId && e.to.node !== nodeId),
       }));
       if (get().selectedNodeId === nodeId) set({ selectedNodeId: undefined });
+      get().setFieldErrors(`node:${nodeId}`, {});
     },
 
     connect: (connection) => {
@@ -226,5 +231,13 @@ export const useEditorStore = create<EditorState>((set, get) => {
         saveMessage: message,
         savedRevision: revision ?? s.savedRevision,
       })),
+
+    setFieldErrors: (scope, errors) =>
+      set((s) => {
+        const { [scope]: _previous, ...rest } = s.fieldErrors;
+        return {
+          fieldErrors: Object.keys(errors).length > 0 ? { ...rest, [scope]: errors } : rest,
+        };
+      }),
   };
 });
