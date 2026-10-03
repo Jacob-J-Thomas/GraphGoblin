@@ -121,6 +121,8 @@ Tasks:
 
 Acceptance: the M4 acceptance loop can be built and run entirely in the UI; the update toast appears on a new build and updates only after confirmation; coverage above threshold in `apps/web`; QA defects closed.
 
+M5 notes (first pass, WP-D): `apps/web` ships tasks 1 to 6; task 7 (adversarial QA) is next. The app is served by the API under `/app/` (`GG_WEB_DIST`), so client routes never collide with API paths. Unit tests run in jsdom against the real api-client over an in-memory fake API (`src/__fixtures__/fake-api.ts`) rather than MSW. Playwright E2E (`pnpm --filter @graphgoblin/web test:e2e`, after `pnpm build`) starts `createTestApp` with the fake harness on an ephemeral port; on Windows it drives the installed Microsoft Edge (`channel: 'msedge'`, override with `GG_E2E_BROWSER_CHANNEL`) because the development machine has too little disk for Playwright's Chromium download. Known gaps: with `GG_REQUIRE_API_KEY=true` the auth hook also guards `/app/*` and the UI has no API-key entry, so the web app targets local trusted mode only; the default model and effort in Settings are stored as owner settings (`defaultModel`, `defaultEffort`) that the engine does not read yet (it uses `GG_DEFAULT_MODEL` and `GG_DEFAULT_EFFORT`); the inspector's thread reconstruction starts child runs from an empty thread because the subloop seed is not in the event log.
+
 ## M6 - Triggers (M)
 
 Goal: loops start without a human.

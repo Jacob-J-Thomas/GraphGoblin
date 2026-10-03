@@ -2,6 +2,14 @@
 module.exports = {
   forbidden: [
     {
+      name: 'web-is-browser-only',
+      severity: 'error',
+      comment:
+        'The web app runs in the browser: it may use contracts, domain, and api-client, never the engine or Node infrastructure (docs/09).',
+      from: { path: '^apps/web/src/' },
+      to: { path: '^packages/(engine|infrastructure)/' },
+    },
+    {
       name: 'no-circular',
       severity: 'error',
       comment: 'Circular imports make packages impossible to reason about and to build in order.',
@@ -29,7 +37,10 @@ module.exports = {
       name: 'not-to-dev-dep',
       severity: 'error',
       comment: 'Production code may not import packages that are only declared as devDependencies.',
-      from: { path: '^(packages|apps)/[^/]+/src/', pathNot: '\\.test\\.ts$|/test/' },
+      from: {
+        path: '^(packages|apps)/[^/]+/src/',
+        pathNot: '\\.test\\.tsx?$|/test/|/__fixtures__/',
+      },
       to: { dependencyTypes: ['npm-dev'], dependencyTypesNot: ['type-only'] },
     },
   ],

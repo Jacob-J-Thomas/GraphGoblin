@@ -22,6 +22,8 @@ const EnvSchema = z.object({
   GG_TIMER_POLL_MS: z.coerce.number().int().min(50).max(60_000).default(1000),
   GG_SWAGGER_UI: bool.default(true),
   GG_PUBLIC_URL: z.string().optional(),
+  /** Directory of the built web app (apps/web/dist). When set and present, it is served at /app/. */
+  GG_WEB_DIST: z.string().optional(),
 });
 
 export interface ApiConfig {
@@ -38,6 +40,8 @@ export interface ApiConfig {
   timerPollMs: number;
   swaggerUi: boolean;
   publicUrl?: string;
+  /** Absolute path of the built web app to serve under /app/, if configured. */
+  webDist?: string;
 }
 
 /** Parse configuration from an environment map. Throws with a readable message on bad values. */
@@ -63,5 +67,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ApiConfig {
     timerPollMs: e.GG_TIMER_POLL_MS,
     swaggerUi: e.GG_SWAGGER_UI,
     ...(e.GG_PUBLIC_URL ? { publicUrl: e.GG_PUBLIC_URL } : {}),
+    ...(e.GG_WEB_DIST ? { webDist: resolve(e.GG_WEB_DIST) } : {}),
   };
 }

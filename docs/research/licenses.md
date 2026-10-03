@@ -8,40 +8,61 @@ MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, 0BSD, Unlicense, CC0-1.0.
 
 ## Planned dependencies
 
-| Dependency                                           | Licence    | Notes                                                                       |
-| ---------------------------------------------------- | ---------- | --------------------------------------------------------------------------- |
-| Node.js                                              | MIT        | Runtime                                                                     |
-| TypeScript                                           | Apache-2.0 |                                                                             |
-| pnpm, Turborepo                                      | MIT        |                                                                             |
-| Fastify, @fastify/swagger, fastify-type-provider-zod | MIT        |                                                                             |
-| Zod                                                  | MIT        |                                                                             |
-| Drizzle ORM, drizzle-kit                             | Apache-2.0 |                                                                             |
-| @libsql/client, libsql                               | MIT        | N-API binary, prebuilt for all Node versions; see `sqlite-libsql.md`        |
-| drizzle-kit                                          | Apache-2.0 | Dev only: migration generation                                              |
-| ajv, ajv-formats                                     | MIT        | JSON Schema validation in `domain`                                          |
-| @fastify/swagger-ui                                  | MIT        | Dev-facing API docs at `/docs`                                              |
-| pino-pretty, tsx, @types/node                        | MIT        | Dev only                                                                    |
-| croner                                               | MIT        |                                                                             |
-| pino                                                 | MIT        |                                                                             |
-| OpenTelemetry JS                                     | Apache-2.0 |                                                                             |
-| LiquidJS                                             | MIT        |                                                                             |
-| JSONata                                              | MIT        |                                                                             |
-| @modelcontextprotocol/sdk                            | MIT        |                                                                             |
-| @openai/codex-sdk                                    | Apache-2.0 | Spawns the user-installed Codex CLI, also Apache-2.0                        |
-| @typesafe-ai/sdk                                     | Verify     | Fall back to raw HTTP if not permissive                                     |
-| @napi-rs/keyring                                     | MIT        | Verify on adoption                                                          |
-| React, React DOM                                     | MIT        |                                                                             |
-| Vite, vite-plugin-pwa, Workbox                       | MIT        |                                                                             |
-| @xyflow/react                                        | MIT        | The paid Pro tier is examples and support only                              |
-| Zustand, TanStack Query                              | MIT        |                                                                             |
-| Tailwind CSS, shadcn/ui, Radix UI                    | MIT        |                                                                             |
-| CodeMirror 6                                         | MIT        |                                                                             |
-| react-hook-form                                      | MIT        |                                                                             |
-| Vitest, Testing Library, MSW                         | MIT        |                                                                             |
-| Playwright                                           | Apache-2.0 |                                                                             |
-| dependency-cruiser                                   | MIT        |                                                                             |
-| openapi-fetch                                        | MIT        | Runtime dependency of `@graphgoblin/api-client`; one MIT helper dep         |
-| openapi-typescript                                   | MIT        | Dev only: generates `api-client` types; pulls `@redocly/openapi-core` (MIT) |
+| Dependency                                                           | Licence    | Notes                                                                                                                  |
+| -------------------------------------------------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Node.js                                                              | MIT        | Runtime                                                                                                                |
+| TypeScript                                                           | Apache-2.0 |                                                                                                                        |
+| pnpm, Turborepo                                                      | MIT        |                                                                                                                        |
+| Fastify, @fastify/swagger, fastify-type-provider-zod                 | MIT        |                                                                                                                        |
+| Zod                                                                  | MIT        |                                                                                                                        |
+| Drizzle ORM, drizzle-kit                                             | Apache-2.0 |                                                                                                                        |
+| @libsql/client, libsql                                               | MIT        | N-API binary, prebuilt for all Node versions; see `sqlite-libsql.md`                                                   |
+| drizzle-kit                                                          | Apache-2.0 | Dev only: migration generation                                                                                         |
+| ajv, ajv-formats                                                     | MIT        | JSON Schema validation in `domain`                                                                                     |
+| @fastify/swagger-ui                                                  | MIT        | Dev-facing API docs at `/docs`                                                                                         |
+| pino-pretty, tsx, @types/node                                        | MIT        | Dev only                                                                                                               |
+| croner                                                               | MIT        |                                                                                                                        |
+| pino                                                                 | MIT        |                                                                                                                        |
+| OpenTelemetry JS                                                     | Apache-2.0 |                                                                                                                        |
+| LiquidJS                                                             | MIT        |                                                                                                                        |
+| JSONata                                                              | MIT        |                                                                                                                        |
+| @modelcontextprotocol/sdk                                            | MIT        |                                                                                                                        |
+| @openai/codex-sdk                                                    | Apache-2.0 | Spawns the user-installed Codex CLI, also Apache-2.0                                                                   |
+| @typesafe-ai/sdk                                                     | Verify     | Fall back to raw HTTP if not permissive                                                                                |
+| @napi-rs/keyring                                                     | MIT        | Verify on adoption                                                                                                     |
+| React, React DOM                                                     | MIT        |                                                                                                                        |
+| Vite, vite-plugin-pwa, Workbox                                       | MIT        |                                                                                                                        |
+| @xyflow/react                                                        | MIT        | The paid Pro tier is examples and support only                                                                         |
+| Zustand, TanStack Query                                              | MIT        |                                                                                                                        |
+| Tailwind CSS, shadcn/ui, Radix UI                                    | MIT        |                                                                                                                        |
+| CodeMirror 6                                                         | MIT        |                                                                                                                        |
+| react-hook-form                                                      | MIT        |                                                                                                                        |
+| Vitest, Testing Library, MSW                                         | MIT        |                                                                                                                        |
+| Playwright                                                           | Apache-2.0 |                                                                                                                        |
+| dependency-cruiser                                                   | MIT        |                                                                                                                        |
+| openapi-fetch                                                        | MIT        | Runtime dependency of `@graphgoblin/api-client`; one MIT helper dep                                                    |
+| openapi-typescript                                                   | MIT        | Dev only: generates `api-client` types; pulls `@redocly/openapi-core` (MIT)                                            |
+| @fastify/static                                                      | MIT        | `apps/api`: serves the built web app under `/app/` when `GG_WEB_DIST` is set                                           |
+| react, react-dom                                                     | MIT        | `apps/web` runtime                                                                                                     |
+| react-router                                                         | MIT        | `apps/web` client-side routing (basename `/app`)                                                                       |
+| @xyflow/react                                                        | MIT        | `apps/web` canvas                                                                                                      |
+| zustand                                                              | MIT        | `apps/web` editor, run-event, and PWA stores                                                                           |
+| @tanstack/react-query                                                | MIT        | `apps/web` server state                                                                                                |
+| react-hook-form, @hookform/resolvers                                 | MIT        | `apps/web` schema-driven forms with the Zod resolver                                                                   |
+| codemirror, @codemirror/{view,state,language,lang-json,legacy-modes} | MIT        | `apps/web` template, expression, and JSON editors                                                                      |
+| workbox-window                                                       | MIT        | `apps/web` service worker registration and prompt update flow                                                          |
+| idb-keyval                                                           | Apache-2.0 | `apps/web` IndexedDB mirror of unsaved drafts                                                                          |
+| clsx                                                                 | MIT        | `apps/web` class names                                                                                                 |
+| vite, @vitejs/plugin-react                                           | MIT        | Dev only: `apps/web` build                                                                                             |
+| vite-plugin-pwa, workbox-build                                       | MIT        | Dev only: manifest and generated service worker                                                                        |
+| tailwindcss, @tailwindcss/vite                                       | MIT        | Dev only. Build-time transitive `lightningcss` is MPL-2.0 (already present through Vite); it never ships in the bundle |
+| jsdom                                                                | MIT        | Dev only: `apps/web` unit tests                                                                                        |
+| @testing-library/react, dom, user-event, jest-dom                    | MIT        | Dev only: `apps/web` component tests                                                                                   |
+| fake-indexeddb                                                       | Apache-2.0 | Dev only: IndexedDB in jsdom                                                                                           |
+| @playwright/test                                                     | Apache-2.0 | Dev only: `apps/web` E2E (`test:e2e`)                                                                                  |
+| @types/react, @types/react-dom                                       | MIT        | Dev only                                                                                                               |
+| eslint-plugin-react-hooks                                            | MIT        | Dev only: hooks lint rules (root)                                                                                      |
+| @eslint-react/eslint-plugin                                          | MIT        | Dev only: JSX and DOM lint rules (root); supports ESLint 10 where `eslint-plugin-react` does not                       |
 
 ## Recorded alternatives and their licences
 
