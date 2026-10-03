@@ -292,8 +292,14 @@ export interface SecretsPort {
 }
 
 export interface EngineSettings {
+  /** Last-resort model and effort, below node, loop, and owner defaults. */
   defaultModel: string;
   defaultEffort: Effort;
+  /**
+   * The owner's default model and effort (Settings), read when a run starts or resumes. Either may
+   * be absent; the configured defaults above then apply.
+   */
+  ownerDefaults?: (ownerId: string) => Promise<{ model?: string; effort?: Effort }>;
   maxConcurrentRuns: number;
   /** Max wall-clock for a single structured completion used in decisions and repair. */
   structuredTimeoutMs: number;

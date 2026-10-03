@@ -102,6 +102,32 @@ describe('inference node', () => {
     });
   });
 
+  it('falls back to the owner defaults read at run start, then to the configured defaults', async () => {
+    let owner: { model?: string; effort?: 'high' } = { model: 'owner-model', effort: 'high' };
+    const asked: string[] = [];
+    const engine = await createTestEngine({
+      ownerDefaults: (ownerId) => {
+        asked.push(ownerId);
+        return Promise.resolve(owner);
+      },
+    });
+    const version = engine.publish(inferenceLoop('inf', {}));
+    await engine.runToIdle(version.loopId);
+    expect(engine.ports.harness.started[0]).toMatchObject({ model: 'owner-model', effort: 'high' });
+    expect(asked).toEqual(['local']);
+
+    // A change applies to the next run; a missing value falls through to the configuration.
+    owner = { effort: 'high' };
+    await engine.runToIdle(version.loopId);
+    expect(engine.ports.harness.started[1]).toMatchObject({ model: 'gpt-6-luna', effort: 'high' });
+
+    // Loop defaults still win over the owner's.
+    const loop = inferenceLoop('inf-loop', {});
+    loop.settings = { defaults: { model: 'loop-model' } };
+    await engine.runToIdle(engine.publish(loop).loopId);
+    expect(engine.ports.harness.started[2]).toMatchObject({ model: 'loop-model', effort: 'high' });
+  });
+
   it('validates native structured output and repairs on the same session', async () => {
     const engine = await createTestEngine();
     engine.ports.harness.script([

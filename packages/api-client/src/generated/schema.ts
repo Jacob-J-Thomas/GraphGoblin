@@ -2818,6 +2818,7 @@ export interface components {
             ts: string;
             /** @constant */
             type: "run.queued";
+            initialThread?: components["schemas"]["ContextThreadInput"] | undefined;
         } | {
             runId: string;
             seq: number;
@@ -4276,6 +4277,7 @@ export interface components {
             ts: string;
             /** @constant */
             type: "run.queued";
+            initialThread?: components["schemas"]["ContextThread"] | undefined;
         } | {
             runId: string;
             seq: number;

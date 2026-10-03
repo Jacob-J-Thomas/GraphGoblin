@@ -103,6 +103,37 @@ describe('a minimal run', () => {
 });
 
 describe('run control', () => {
+  it('keeps timers running during a fast graph cycle, so the cycle can be cancelled', async () => {
+    const engine = await createTestEngine();
+    const loop = singleNodeLoop('cycle', {
+      id: 'pick',
+      kind: 'decision',
+      label: 'Pick',
+      config: {
+        routes: [
+          { label: 'again', description: 'loop' },
+          { label: 'stop', description: 'finish' },
+        ],
+        question: 'again?',
+        strategy: ['expression'],
+        expression: { jsonata: '"again"' },
+      },
+    });
+    loop.edges.push(
+      { id: 'e2', from: { node: 'pick', port: 'again' }, to: { node: 'pick' } },
+      { id: 'e3', from: { node: 'pick', port: 'stop' }, to: { node: 'done' } },
+    );
+    const version = engine.publish(loop);
+    const run = await engine.start(version.loopId);
+    // A timer firing at all proves the executor yields; before the fix this await never returned.
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    expect(engine.eventTypes(run.id).filter((t) => t === 'decision.made').length).toBeGreaterThan(
+      1,
+    );
+    await engine.manager.cancel(run.id);
+    expect((await engine.settle(run.id)).status).toBe('cancelled');
+  });
+
   it('cancels a queued run before it starts', async () => {
     const engine = await createTestEngine({ maxConcurrentRuns: 1 });
     const version = engine.publish(
