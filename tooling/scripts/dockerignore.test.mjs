@@ -38,6 +38,8 @@ test('the build context leaves out local data, keys, scratch files, and secrets'
     'apps/web/playwright-report/index.html',
     'docs/README.md',
     'pnpm-debug.log',
+    'apps/api/graphgoblin.db-journal',
+    'packages/infrastructure/graphgoblin.db.backup',
   ]) {
     assert.equal(isExcluded(rules, path), true, `${path} should be excluded`);
   }
