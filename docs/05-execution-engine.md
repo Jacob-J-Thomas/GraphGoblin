@@ -108,7 +108,9 @@ make this safe:
   the status write loses no return and leaves no child running. A channel interrupted
   mid-delivery is delivered again: returns are at least once. Migration `0002` marks runs that
   were already terminal as finalized. Finalization belongs to one terminal outcome: resuming a
-  failed run clears the marker, so its next terminal outcome is finalized again. A child that
+  failed run clears the marker, so its next terminal outcome is finalized again; the resume waits
+  for any finalizer of the failure still in flight (they share a per-run lock), so that finalizer
+  cannot set the marker again after it was cleared. A child that
   cannot be cancelled (and is not terminal by then) leaves the parent unmarked, so the next
   recovery tries again.
 

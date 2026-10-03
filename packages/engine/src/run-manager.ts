@@ -270,6 +270,8 @@ export class RunManager {
   private readonly requeue = new Set<string>();
   /** Serializes subloop pinning in `startRun` with loop deletion. */
   private pinLock: Promise<unknown> = Promise.resolve();
+  /** Per-run serialization of finalization and failed-run resume (`withRunLock`). */
+  private readonly runLocks = new Map<string, Promise<unknown>>();
   private readonly directories = new Map<string, string>();
   private idleWaiters: (() => void)[] = [];
   private unsubscribeTimers: (() => void) | undefined;
@@ -402,6 +404,22 @@ export class RunManager {
     return result;
   }
 
+  /**
+   * Serializes the finalization of a run's terminal outcome with a resume of that run: a resume
+   * waits for an in-flight finalizer, so the finalizer of an earlier outcome can never set the
+   * marker the resume clears for the next one.
+   */
+  private withRunLock<T>(runId: string, work: () => Promise<T>): Promise<T> {
+    const previous = this.runLocks.get(runId) ?? Promise.resolve();
+    const result = previous.then(work);
+    const tail = result.catch(() => undefined);
+    this.runLocks.set(runId, tail);
+    void tail.then(() => {
+      if (this.runLocks.get(runId) === tail) this.runLocks.delete(runId);
+    });
+    return result;
+  }
+
   async cancel(runId: string, actor: Actor = SYSTEM_ACTOR): Promise<RunRecord> {
     const run = await this.mustGet(runId);
     if (isTerminal(run.status)) {
@@ -469,10 +487,13 @@ export class RunManager {
     if (run.status === 'failed' && run.failure?.resumable) {
       // Leaving a terminal status: the intent is written first, like every terminal transition.
       // The finalization marker of the failure is cleared so the run's next terminal outcome is
-      // finalized again; recovery completes a resume whose `run.resumed` is durable.
-      await this.ports.runs.clearFinalized(runId);
-      await this.ports.events.append(runId, [{ type: 'run.resumed', actor }]);
-      const resumed = await this.completeResume(runId);
+      // finalized again; recovery completes a resume whose `run.resumed` is durable. It waits for
+      // any finalizer of the failure still in flight, which would otherwise set the marker again.
+      const resumed = await this.withRunLock(runId, async () => {
+        await this.ports.runs.clearFinalized(runId);
+        await this.ports.events.append(runId, [{ type: 'run.resumed', actor }]);
+        return this.completeResume(runId);
+      });
       if (!resumed) {
         throw new EngineRequestError('INVALID_STATE', `cannot resume a run that is ${run.status}`);
       }
@@ -1276,7 +1297,15 @@ export class RunManager {
    * nothing. Returns are delivered per channel, skipping channels whose delivery is already
    * recorded; a channel interrupted mid-delivery is delivered again (at least once).
    */
-  private async finalizeTerminal(
+  private finalizeTerminal(
+    runId: string,
+    knownDef?: LoopDefinition,
+    knownThread?: ContextThread,
+  ): Promise<void> {
+    return this.withRunLock(runId, () => this.finalizeTerminalLocked(runId, knownDef, knownThread));
+  }
+
+  private async finalizeTerminalLocked(
     runId: string,
     knownDef?: LoopDefinition,
     knownThread?: ContextThread,

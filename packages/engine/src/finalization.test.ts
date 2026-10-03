@@ -554,3 +554,73 @@ it.each(['durable', 'not durable'] as const)(
     expect(await e.ports.runs.listUnfinalized()).toHaveLength(0);
   },
 );
+
+// Fifth round: the finalizer of an earlier outcome cannot overwrite the marker a resume cleared.
+it.each(['next success', 'durable resume'] as const)(
+  'an older finalizer in flight cannot hide the %s',
+  async (crashPoint) => {
+    const e = await createTestEngine();
+    e.ports.harness.script([{ error: { code: 'transient', message: 'retry me' } }]);
+    const def = singleNodeLoop(
+      'stale-finalizer',
+      { id: 'infer', kind: 'inference', label: 'I', config: { prompt: { template: 'go' } } },
+      { return: { mapping: '7', channels: [{ kind: 'log' }] } },
+    );
+    // Hold the failure's finalizer just before it writes its marker.
+    let entered!: () => void;
+    const enteredP = new Promise<void>((resolve) => (entered = resolve));
+    let release!: () => void;
+    const releaseP = new Promise<void>((resolve) => (release = resolve));
+    const mark = e.ports.runs.markFinalized.bind(e.ports.runs);
+    let first = true;
+    const markSpy = vi.spyOn(e.ports.runs, 'markFinalized').mockImplementation(async (id) => {
+      if (first) {
+        first = false;
+        entered();
+        await releaseP;
+      }
+      return mark(id);
+    });
+    const r = await e.start(e.publish(def).loopId);
+    await enteredP;
+    expect((await e.ports.runs.get(r.id))?.status).toBe('failed');
+    let blocked = false;
+    const transition = e.ports.runs.transition.bind(e.ports.runs);
+    const append = e.ports.events.append.bind(e.ports.events);
+    const statusSpy = vi
+      .spyOn(e.ports.runs, 'transition')
+      .mockImplementation(async (id, from, changes) => {
+        const out = await transition(id, from, changes);
+        if (crashPoint === 'next success' && changes.status === 'succeeded') {
+          blocked = true;
+          return hang();
+        }
+        return out;
+      });
+    const appendSpy = vi
+      .spyOn(e.ports.events, 'append')
+      .mockImplementation(async (id, drafts, options) => {
+        const out = await append(id, drafts, options);
+        if (crashPoint === 'durable resume' && drafts.some((d) => d.type === 'run.resumed')) {
+          blocked = true;
+          return hang();
+        }
+        return out;
+      });
+    // The resume is requested while the old finalizer is in flight; it waits for it.
+    const resumed = e.manager.resume(r.id);
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(e.eventTypes(r.id)).not.toContain('run.resumed');
+    release();
+    if (crashPoint === 'next success') await resumed;
+    await vi.waitFor(() => expect(blocked).toBe(true));
+    e.manager.stop();
+    markSpy.mockRestore();
+    statusSpy.mockRestore();
+    appendSpy.mockRestore();
+    await recover(e);
+    expect((await e.ports.runs.get(r.id))?.status).toBe('succeeded');
+    expect(e.ports.delivery.logged).toHaveLength(1);
+    expect(await e.ports.runs.listUnfinalized()).toHaveLength(0);
+  },
+);

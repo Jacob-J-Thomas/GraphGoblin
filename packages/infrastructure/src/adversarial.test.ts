@@ -436,4 +436,81 @@ describe('finalization on SQLite (review of WP-G, fourth round)', () => {
     expect(e.ports.delivery.logged).toHaveLength(1);
     expect(await runs.listUnfinalized()).toHaveLength(0);
   });
+
+  it.each(['next success', 'durable resume'] as const)(
+    'an older finalizer in flight cannot hide the %s',
+    async (crashPoint) => {
+      const e = await createTestEngine();
+      e.manager.stop();
+      const runs = new SqliteRunRepository(db.db);
+      const events = new SqliteEventStore(db.db, e.ports.clock);
+      const ports = { ...e.ports, runs, events };
+      const manager = new RunManager(ports, e.settings);
+      await manager.start();
+      e.ports.harness.script([{ error: { code: 'transient', message: 'retry me' } }]);
+      const def = singleNodeLoop(
+        'stale-finalizer',
+        { id: 'infer', kind: 'inference', label: 'I', config: { prompt: { template: 'go' } } },
+        { return: { mapping: '7', channels: [{ kind: 'log' }] } },
+      );
+      let entered!: () => void;
+      const enteredP = new Promise<void>((resolve) => (entered = resolve));
+      let release!: () => void;
+      const releaseP = new Promise<void>((resolve) => (release = resolve));
+      const mark = runs.markFinalized.bind(runs);
+      let first = true;
+      const markSpy = vi.spyOn(runs, 'markFinalized').mockImplementation(async (id) => {
+        if (first) {
+          first = false;
+          entered();
+          await releaseP;
+        }
+        return mark(id);
+      });
+      const r = await manager.startRun({
+        ownerId: 'local',
+        loopId: e.publish(def).loopId,
+        source: 'manual.api',
+      });
+      await enteredP;
+      let blocked = false;
+      const transition = runs.transition.bind(runs);
+      const append = events.append.bind(events);
+      const statusSpy = vi
+        .spyOn(runs, 'transition')
+        .mockImplementation(async (id, from, changes) => {
+          const out = await transition(id, from, changes);
+          if (crashPoint === 'next success' && changes.status === 'succeeded') {
+            blocked = true;
+            return new Promise<never>(() => undefined);
+          }
+          return out;
+        });
+      const appendSpy = vi
+        .spyOn(events, 'append')
+        .mockImplementation(async (id, drafts, options) => {
+          const out = await append(id, drafts, options);
+          if (crashPoint === 'durable resume' && drafts.some((d) => d.type === 'run.resumed')) {
+            blocked = true;
+            return new Promise<never>(() => undefined);
+          }
+          return out;
+        });
+      const resumed = manager.resume(r.id);
+      release();
+      if (crashPoint === 'next success') await resumed;
+      await vi.waitFor(() => expect(blocked).toBe(true));
+      manager.stop();
+      markSpy.mockRestore();
+      statusSpy.mockRestore();
+      appendSpy.mockRestore();
+      const second = new RunManager(ports, e.settings);
+      await second.start();
+      await second.waitForIdle();
+      second.stop();
+      expect((await runs.get(r.id))?.status).toBe('succeeded');
+      expect(e.ports.delivery.logged).toHaveLength(1);
+      expect(await runs.listUnfinalized()).toHaveLength(0);
+    },
+  );
 });
