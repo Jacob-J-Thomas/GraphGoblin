@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { RunEvent } from '@graphgoblin/contracts';
 import { FIXTURE_IDS, FIXTURE_TS, sampleThread } from '@graphgoblin/contracts/testing';
-import { replayThread, summarizeRun } from './replay.js';
+import { replayStateAt, replayThread, summarizeRun } from './replay.js';
 
 function ev<T extends RunEvent['type']>(
   seq: number,
@@ -70,6 +70,46 @@ describe('replayThread', () => {
     expect(replayThread(base, twice).messages).toHaveLength(base.messages.length + 1);
   });
 
+  it('applies a delayed duplicate completion once, and carries the open visit across a checkpoint', () => {
+    const base = sampleThread();
+    const finished = (seq: number) =>
+      ev(seq, 'node.finished', {
+        nodeId: 'prep',
+        patch: [{ op: 'add', path: '/messages/-', value: base.messages[0]! as never }],
+        route: 'out',
+        durationMs: 1,
+      });
+    const log = [
+      ev(1, 'node.started', { nodeId: 'prep', kind: 'mutate', attempt: 1, configHash: 'h' }),
+      finished(2),
+      ev(3, 'node.started', { nodeId: 'next', kind: 'mutate', attempt: 1, configHash: 'h' }),
+      finished(4), // a delayed duplicate of seq 2: no open visit of prep
+    ];
+    expect(replayThread(base, log).messages).toHaveLength(base.messages.length + 1);
+    // A checkpoint after seq 1 (prep open) and one after seq 2 (nothing open).
+    expect(replayStateAt(log, 1)).toEqual({ openNodeId: 'prep', strict: true });
+    expect(replayStateAt(log, 2)).toEqual({ openNodeId: undefined, strict: true });
+    expect(replayStateAt(log.slice(1), 2)).toEqual({ openNodeId: undefined, strict: false });
+    const atTwo = replayThread(base, log, 2);
+    const suffix = log.filter((e) => e.seq > 2);
+    expect(replayThread(atTwo, suffix, undefined, replayStateAt(log, 2))).toEqual(
+      replayThread(base, log),
+    );
+    const atOne = replayThread(base, log, 1);
+    expect(
+      replayThread(
+        atOne,
+        log.filter((e) => e.seq > 1),
+        undefined,
+        replayStateAt(log, 1),
+      ),
+    ).toEqual(replayThread(base, log));
+    // A log without node.started (a hand-built fixture) applies every completion.
+    expect(replayThread(base, [finished(2), finished(4)]).messages).toHaveLength(
+      base.messages.length + 2,
+    );
+  });
+
   it('stops at a sequence number', () => {
     const thread = replayThread(sampleThread(), events, 4);
     expect(thread.vars['x']).toBe(1);
@@ -79,6 +119,22 @@ describe('replayThread', () => {
 });
 
 describe('summarizeRun', () => {
+  it('resumes a run paused while parked to waiting, and any other paused run to running', () => {
+    const parked = events.slice(0, 6); // ends with run.waiting
+    const actor = { kind: 'user' as const, id: 'u' };
+    expect(
+      summarizeRun([...parked, ev(7, 'run.paused', { actor }), ev(8, 'run.resumed', { actor })])
+        .status,
+    ).toBe('waiting');
+    expect(
+      summarizeRun([
+        ...events.slice(0, 3),
+        ev(4, 'run.paused', { actor }),
+        ev(5, 'run.resumed', { actor }),
+      ]).status,
+    ).toBe('running');
+  });
+
   it('derives status, position, and visits', () => {
     expect(summarizeRun(events)).toEqual({
       status: 'succeeded',

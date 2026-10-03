@@ -1,3 +1,7 @@
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { RunEvent, RunRecord } from '@graphgoblin/contracts';
 import { LoopDefinitionSchema } from '@graphgoblin/contracts';
@@ -11,7 +15,7 @@ import {
 } from '@graphgoblin/contracts/testing';
 import { createInitialThread } from '@graphgoblin/engine';
 import { FakeClock, FakeIds } from '@graphgoblin/engine/testing';
-import { openMemoryDatabase, type DatabaseHandle } from './db.js';
+import { openDatabase, openMemoryDatabase, type DatabaseHandle } from './db.js';
 import { SqliteEventStore } from './events.js';
 import { LoopNotFoundError, SqliteLoopRepository } from './loops.js';
 import { SqliteRunRepository } from './runs.js';
@@ -138,6 +142,70 @@ describe('SqliteRunRepository', () => {
     await expect(repo.transition('missing', ['queued'], { status: 'running' })).rejects.toThrow(
       /not found/,
     );
+  });
+
+  it('lists terminal runs until their finalization is recorded', async () => {
+    const repo = new SqliteRunRepository(handle.db);
+    const run = runRecord();
+    await repo.create(run, sampleThread());
+    expect(await repo.listUnfinalized()).toEqual([]);
+    await repo.update(run.id, { status: 'succeeded' });
+    expect((await repo.listUnfinalized()).map((r) => r.id)).toEqual([run.id]);
+    await repo.markFinalized(run.id);
+    expect(await repo.listUnfinalized()).toEqual([]);
+  });
+
+  it('migration 0002 marks runs that were already terminal as finalized', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'gg-0002-'));
+    const migrations = join(dir, 'migrations');
+    mkdirSync(join(migrations, 'meta'), { recursive: true });
+    const source = fileURLToPath(new URL('../../drizzle/', import.meta.url));
+    const journal = JSON.parse(readFileSync(join(source, 'meta', '_journal.json'), 'utf8')) as {
+      entries: { idx: number; tag: string }[];
+    };
+    journal.entries = journal.entries.filter((e) => e.idx < 2);
+    writeFileSync(join(migrations, 'meta', '_journal.json'), JSON.stringify(journal));
+    for (const e of journal.entries)
+      copyFileSync(join(source, `${e.tag}.sql`), join(migrations, `${e.tag}.sql`));
+    const url = `file:${join(dir, 'old.db').replace(/\\/g, '/')}`;
+    const old = openDatabase({ url, migrationsFolder: migrations });
+    await old.migrate();
+    const thread = JSON.stringify(sampleThread());
+    for (const [id, status] of [
+      [fakeUlid('old-done'), 'succeeded'],
+      [fakeUlid('old-wait'), 'waiting'],
+    ] as const) {
+      await old.client.execute({
+        sql: 'INSERT INTO runs (id, owner_id, loop_id, version_id, invocation_id, status, iteration, created_at, last_event_seq, initial_thread) VALUES (?, ?, ?, ?, ?, ?, 1, ?, 0, ?)',
+        args: [
+          id,
+          'local',
+          fakeUlid('loop'),
+          fakeUlid('v'),
+          fakeUlid(`i-${id}`),
+          status,
+          '2026-10-01T00:00:00.000Z',
+          thread,
+        ],
+      });
+    }
+    old.close();
+    const current = openDatabase({ url });
+    try {
+      expect(await current.pendingMigrations()).toBe(1);
+      await current.migrate();
+      const repo = new SqliteRunRepository(current.db);
+      expect(await repo.listUnfinalized()).toEqual([]);
+      await repo.update(fakeUlid('old-wait'), { status: 'failed' });
+      expect((await repo.listUnfinalized()).map((r) => r.id)).toEqual([fakeUlid('old-wait')]);
+    } finally {
+      current.close();
+      try {
+        rmSync(dir, { recursive: true, force: true });
+      } catch {
+        // Windows can hold the database file briefly after close; the temp dir is left behind.
+      }
+    }
   });
 
   it('claims a cancel request once, and only on an expected status', async () => {

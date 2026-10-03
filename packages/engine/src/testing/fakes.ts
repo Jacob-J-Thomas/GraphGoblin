@@ -14,7 +14,7 @@ import type {
   Usage,
   WorkingDirectorySpec,
 } from '@graphgoblin/contracts';
-import type { PredicateAnswer } from '@graphgoblin/domain';
+import { isTerminal, type PredicateAnswer } from '@graphgoblin/domain';
 import type {
   ArtifactStorePort,
   ChoiceRequest,
@@ -148,8 +148,9 @@ export class InMemoryEventStore implements EventStorePort {
     return Promise.resolve(stored);
   }
 
-  read(runId: string, afterSeq = 0): Promise<RunEvent[]> {
-    return Promise.resolve((this.logs.get(runId) ?? []).filter((e) => e.seq > afterSeq));
+  read(runId: string, afterSeq = 0, limit?: number): Promise<RunEvent[]> {
+    const events = (this.logs.get(runId) ?? []).filter((e) => e.seq > afterSeq);
+    return Promise.resolve(limit === undefined ? events : events.slice(0, limit));
   }
 
   subscribe(runId: string, listener: (event: RunEvent) => void): () => void {
@@ -172,6 +173,7 @@ export class InMemoryRunRepository implements RunRepository {
   private readonly initial = new Map<string, ContextThread>();
   private readonly threads = new Map<string, ContextThread>();
   private readonly checkpoints = new Map<string, number>();
+  private readonly finalized = new Set<string>();
 
   create(run: RunRecord, initialThread: ContextThread): Promise<void> {
     this.runs.set(run.id, run);
@@ -220,6 +222,15 @@ export class InMemoryRunRepository implements RunRepository {
   }
   listByStatus(statuses: readonly RunStatus[]): Promise<RunRecord[]> {
     return Promise.resolve([...this.runs.values()].filter((r) => statuses.includes(r.status)));
+  }
+  markFinalized(runId: string): Promise<void> {
+    this.finalized.add(runId);
+    return Promise.resolve();
+  }
+  listUnfinalized(): Promise<RunRecord[]> {
+    return Promise.resolve(
+      [...this.runs.values()].filter((r) => isTerminal(r.status) && !this.finalized.has(r.id)),
+    );
   }
   listChildren(parentRunId: string): Promise<RunRecord[]> {
     return Promise.resolve([...this.runs.values()].filter((r) => r.parentRunId === parentRunId));
@@ -589,9 +600,14 @@ export class FakeTimers implements TimerPort {
   }
   /** Test helper: fire a specific timer regardless of time and wait for the listeners. */
   async fire(runId: string, key: string): Promise<void> {
-    const index = this.scheduled.findIndex((t) => t.runId === runId && t.key === key);
+    // A bare name (`timer`) fires the run's scheduled timer of that name, whatever wait identity
+    // its key carries (`timer@42`); a key that matches nothing is delivered as given.
+    const index = this.scheduled.findIndex(
+      (t) => t.runId === runId && (t.key === key || t.key.startsWith(`${key}@`)),
+    );
+    const fired = index >= 0 ? (this.scheduled[index] as { key: string }).key : key;
     if (index >= 0) this.scheduled.splice(index, 1);
-    for (const listener of this.listeners) await listener(runId, key);
+    for (const listener of this.listeners) await listener(runId, fired);
   }
 }
 

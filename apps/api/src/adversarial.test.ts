@@ -566,6 +566,44 @@ describe('adversarial API invariants', () => {
         (await t.app.inject({ method: 'POST', url: '/loops', payload: { definition } })).statusCode,
       ).toBe(400);
   });
+  it('ADV-004 review: a parent started during a DELETE never pins the deleted loop', async () => {
+    const t = await app();
+    const child = await t.publishLoop({ ...minimalLoop(), name: 'racing-child' });
+    const def = minimalLoop();
+    def.name = 'racing-parent';
+    def.nodes.push(
+      { id: 'wait', kind: 'wait', label: 'Wait', config: { mode: 'input', prompt: '?' } },
+      { id: 'sub', kind: 'subloop', label: 'Sub', config: { loopRef: { loopId: child } } },
+    );
+    def.edges = [
+      { id: 'a', from: { node: 'start', port: 'out' }, to: { node: 'wait' } },
+      { id: 'b', from: { node: 'wait', port: 'out' }, to: { node: 'sub' } },
+      { id: 'c', from: { node: 'sub', port: 'out' }, to: { node: 'done' } },
+    ];
+    const parent = await t.publishLoop(def);
+    const disarm = t.container.triggers.disarmLoop.bind(t.container.triggers);
+    let started: Promise<{ statusCode: number; json: <T>() => T }> | undefined;
+    // The parent's start request arrives between the in-use check and the deletion.
+    vi.spyOn(t.container.triggers, 'disarmLoop').mockImplementationOnce(async (id) => {
+      started = t.app.inject({ method: 'POST', url: `/loops/${parent}/runs`, payload: {} });
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      return disarm(id);
+    });
+    const deleted = await t.app.inject({ method: 'DELETE', url: `/loops/${child}` });
+    expect(deleted.statusCode).toBe(204);
+    const response = await started!;
+    expect(response.statusCode).toBe(202);
+    const runId = response.json<{ run: RunRecord }>().run.id;
+    const [queued] = await t.container.repos.events.read(runId, 0, 1);
+    expect(queued).not.toHaveProperty('subloopVersions');
+    await t.idle();
+    await t.container.manager.provideInput(runId, null);
+    await t.idle();
+    // It started after the deletion: nothing was pinned, and the subloop fails as for any
+    // reference to a deleted loop, instead of a pinned version vanishing underneath it.
+    expect((await t.container.manager.getRun(runId))?.failure?.code).toBe('SUBLOOP_NOT_FOUND');
+  });
+
   it('ADV-004 review: a loop an active run can still start as a subloop cannot be deleted', async () => {
     const t = await app();
     const child = await t.publishLoop({ ...minimalLoop(), name: 'pinned-child' });

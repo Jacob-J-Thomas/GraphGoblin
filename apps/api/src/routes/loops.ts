@@ -382,15 +382,18 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
       if (active.length > 0)
         return problem(reply, 409, 'LOOP_IN_USE', 'the loop has active runs; cancel them first');
       // An active run of another loop may still start this one as a subloop (pinned at its start).
-      if (await container.manager.loopInUse(request.params.id))
+      // The check and the deletion are one critical section with run creation in the engine.
+      const deleted = await container.manager.deleteLoopUnlessInUse(request.params.id, async () => {
+        await container.triggers.disarmLoop(request.params.id);
+        await loops.delete(request.params.id);
+      });
+      if (!deleted)
         return problem(
           reply,
           409,
           'LOOP_IN_USE',
           'an active run can still start this loop as a subloop; cancel it first',
         );
-      await container.triggers.disarmLoop(request.params.id);
-      await loops.delete(request.params.id);
       return reply.status(204).send(null);
     },
   );

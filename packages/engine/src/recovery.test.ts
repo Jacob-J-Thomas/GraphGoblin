@@ -618,32 +618,81 @@ describe('thread checkpoints (review finding 9)', () => {
     },
   );
 
+  it('a duplicate completion straddling the checkpoint matches a full replay (review probe)', async () => {
+    const e = await createTestEngine();
+    const def = inputLoop('straddle');
+    def.nodes.push({
+      id: 'mutate',
+      kind: 'mutate',
+      label: 'M',
+      config: {
+        operations: [
+          { op: 'inject', position: 'end', messages: [{ role: 'user', content: 'once' }] },
+        ],
+      },
+    });
+    def.edges[0]!.to.node = 'mutate';
+    def.edges.push({ id: 'mw', from: { node: 'mutate', port: 'out' }, to: { node: 'wait' } });
+    const save = e.ports.runs.saveThread.bind(e.ports.runs);
+    let blocked = false;
+    let runId = '';
+    // Crash right after the checkpoint for the mutate completion is written.
+    const spy = vi.spyOn(e.ports.runs, 'saveThread').mockImplementation(async (id, thread, seq) => {
+      await save(id, thread, seq);
+      if (thread.messages.length === 1 && !blocked) {
+        runId = id;
+        blocked = true;
+        return hang();
+      }
+    });
+    await e.start(e.publish(def).loopId);
+    await vi.waitFor(() => expect(blocked).toBe(true));
+    e.manager.stop();
+    spy.mockRestore();
+    // The same completion is recorded a second time, after the checkpoint.
+    const completion = e.events(runId).findLast((x) => x.type === 'node.finished')!;
+    await e.ports.events.append(runId, [completion]);
+    await recover(e);
+    const full = replayThread((await e.ports.runs.getInitialThread(runId))!, e.events(runId));
+    expect(full.messages).toHaveLength(1);
+    expect(await e.ports.runs.getThread(runId)).toEqual(full);
+  });
+
   it('a long log resumes from its checkpoint (10,000 completions)', async () => {
     const e = await createTestEngine();
     const r = await waitingRun(e);
-    const drafts = Array.from({ length: 10_000 }, (_, i) => ({
-      type: 'node.finished' as const,
-      nodeId: `historic-${i}`,
-      route: 'out',
-      durationMs: 0,
-      patch: [
-        {
-          op: 'add' as const,
-          path: '/messages/-',
-          value: {
-            id: String(i),
-            role: 'user',
-            content: 'x'.repeat(128),
-            nodeId: `historic-${i}`,
-            ts: e.ports.clock.now().toISOString(),
-            tags: [],
+    const drafts = Array.from({ length: 10_000 }, (_, i) => [
+      {
+        type: 'node.started' as const,
+        nodeId: 'historic',
+        kind: 'mutate' as const,
+        attempt: 1,
+        configHash: 'h',
+      },
+      {
+        type: 'node.finished' as const,
+        nodeId: 'historic',
+        route: 'out',
+        durationMs: 0,
+        patch: [
+          {
+            op: 'add' as const,
+            path: '/messages/-',
+            value: {
+              id: String(i),
+              role: 'user',
+              content: 'x'.repeat(128),
+              nodeId: 'historic',
+              ts: e.ports.clock.now().toISOString(),
+              tags: [],
+            },
           },
-        },
-      ],
-    }));
+        ],
+      },
+    ]);
     // History before the park: the run then parks again on the same wait.
     const stored = await e.ports.events.append(r.id, [
-      ...drafts,
+      ...drafts.flat(),
       { type: 'run.waiting', nodeId: 'wait', wait: r.waiting! },
     ]);
     const thread = replayThread((await e.ports.runs.getInitialThread(r.id))!, e.events(r.id));
@@ -749,11 +798,73 @@ describe('wake and timer edges', () => {
     const r = await e.runToIdle(e.publish(inputLoop('legacy-spec')).loopId);
     e.manager.stop();
     const until = '2026-10-02T12:05:00.000Z';
+    const startedSeq = r.waiting!.startedSeq!;
     await e.ports.runs.update(r.id, { waiting: { nodeId: 'wait', kind: 'input', until } });
+    // Strip the identity from the logged wait too, as a log from before identities would be.
+    for (const event of e.events(r.id))
+      if (event.type === 'run.waiting') delete event.wait.startedSeq;
+    await e.ports.timers.schedule(r.id, 'timeout', new Date(until));
     await recover(e);
+    // The identity is derived from the log, the record updated, and the bare key replaced.
+    expect((await e.ports.runs.get(r.id))?.waiting?.startedSeq).toBe(startedSeq);
     expect(e.ports.timers.scheduled).toEqual([
-      { runId: r.id, key: 'timeout', at: new Date(until) },
+      { runId: r.id, key: `timeout@${startedSeq}`, at: new Date(until) },
     ]);
+  });
+
+  it('a bare timeout from before an upgrade cannot wake a later wait (review probe)', async () => {
+    const e = await createTestEngine();
+    e.manager.stop();
+    const def = singleNodeLoop('legacy-timer', {
+      id: 'sleep',
+      kind: 'wait',
+      label: 'S',
+      config: { mode: 'duration', seconds: 1, timeoutSeconds: 2 },
+    });
+    def.nodes.push({
+      id: 'input',
+      kind: 'wait',
+      label: 'I',
+      config: { mode: 'input', prompt: '?' },
+    });
+    def.edges[1]!.to.node = 'input';
+    def.edges.push({ id: 'end', from: { node: 'input', port: 'out' }, to: { node: 'done' } });
+    let manager = new RunManager(e.ports, e.settings);
+    await manager.start();
+    const r = await manager.startRun({
+      loopId: e.publish(def).loopId,
+      ownerId: 'local',
+      source: 'manual.api',
+    });
+    await manager.waitForIdle();
+    manager.stop();
+    // Make the parked duration wait look pre-upgrade: no identity, no timeoutAt, bare keys.
+    const wait = { ...(await manager.getRun(r.id))!.waiting! };
+    delete wait.startedSeq;
+    delete wait.timeoutAt;
+    await e.ports.runs.update(r.id, { waiting: wait });
+    for (const event of e.events(r.id)) {
+      if (event.type === 'run.waiting') {
+        delete event.wait.startedSeq;
+        delete event.wait.timeoutAt;
+      }
+    }
+    await e.ports.timers.cancel(r.id);
+    await e.ports.timers.schedule(r.id, 'timer', new Date('2026-10-02T12:00:01Z'));
+    await e.ports.timers.schedule(r.id, 'timeout', new Date('2026-10-02T12:00:02Z'));
+    manager = new RunManager(e.ports, e.settings);
+    await manager.start();
+    e.ports.clock.advance(3000);
+    // The re-keyed timer fires; then the old bare timeout, delivered late, must do nothing.
+    await e.ports.timers.fireDue(e.ports.clock.now());
+    await manager.waitForIdle();
+    await e.ports.timers.fire(r.id, 'timeout');
+    await manager.waitForIdle();
+    manager.stop();
+    expect(await manager.getRun(r.id)).toMatchObject({
+      status: 'waiting',
+      waiting: { nodeId: 'input', kind: 'input' },
+    });
   });
 
   it('a recovered durable wake whose status write lost to a pause waits for resume', async () => {
@@ -772,6 +883,50 @@ describe('wake and timer edges', () => {
     await recover(e);
     spy.mockRestore();
     expect((await e.ports.runs.get(r.id))?.status).toBe('waiting');
+  });
+
+  it('deletes a loop atomically with run creation (review probe)', async () => {
+    const e = await createTestEngine({ maxConcurrentRuns: 2 });
+    const child = e.publish(minimalLoop());
+    const parentDef = inputLoop('delete-race-parent');
+    parentDef.nodes.push({
+      id: 'sub',
+      kind: 'subloop',
+      label: 'Sub',
+      config: { loopRef: { loopId: child.loopId } },
+    });
+    parentDef.edges[1]!.to.node = 'sub';
+    parentDef.edges.push({ id: 's', from: { node: 'sub', port: 'out' }, to: { node: 'done' } });
+    const parent = e.publish(parentDef);
+    // A parent started while the deletion is in progress waits for it, then finds no version
+    // to pin: it never pins a version the deletion removes underneath it.
+    let started: Promise<unknown> | undefined;
+    const deleted = await e.manager.deleteLoopUnlessInUse(child.loopId, async () => {
+      started = e.start(parent.loopId);
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      e.ports.loops.versions.delete(child.id);
+    });
+    expect(deleted).toBe(true);
+    const run = (await started) as { id: string };
+    expect(e.events(run.id)[0]).not.toHaveProperty('subloopVersions');
+    await e.settle(run.id);
+    await e.manager.provideInput(run.id, null);
+    expect((await e.settle(run.id)).failure?.code).toBe('SUBLOOP_NOT_FOUND');
+    // The other order: a parent pinned first makes the deletion refuse, and remove never runs.
+    const other = e.publish(minimalLoop(), { loopId: e.loopId('kept-child') });
+    const keeper = inputLoop('keeper-parent');
+    keeper.nodes.push({
+      id: 'sub',
+      kind: 'subloop',
+      label: 'Sub',
+      config: { loopRef: { loopId: other.loopId } },
+    });
+    keeper.edges[1]!.to.node = 'sub';
+    keeper.edges.push({ id: 's', from: { node: 'sub', port: 'out' }, to: { node: 'done' } });
+    await e.runToIdle(e.publish(keeper).loopId);
+    const remove = vi.fn(() => Promise.resolve());
+    expect(await e.manager.deleteLoopUnlessInUse(other.loopId, remove)).toBe(false);
+    expect(remove).not.toHaveBeenCalled();
   });
 
   it('knows which loops active runs can still reach', async () => {

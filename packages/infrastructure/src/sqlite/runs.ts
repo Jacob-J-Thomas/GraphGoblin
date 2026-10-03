@@ -1,3 +1,4 @@
+import { TERMINAL_RUN_STATUSES } from '@graphgoblin/contracts';
 import type { ContextThread, RunRecord, RunStatus } from '@graphgoblin/contracts';
 import type { RunRecordChanges, RunRepository } from '@graphgoblin/engine';
 import { and, desc, eq, inArray, isNull, lt, sql, type SQL } from 'drizzle-orm';
@@ -157,6 +158,22 @@ export class SqliteRunRepository implements RunRepository {
       .returning();
     const row = updated[0];
     return row ? toRecord(row) : undefined;
+  }
+
+  async markFinalized(runId: string): Promise<void> {
+    await this.db
+      .update(runs)
+      .set({ finalizedAt: new Date().toISOString() })
+      .where(eq(runs.id, runId));
+  }
+
+  async listUnfinalized(): Promise<RunRecord[]> {
+    const rows = await this.db
+      .select()
+      .from(runs)
+      .where(and(isNull(runs.finalizedAt), inArray(runs.status, [...TERMINAL_RUN_STATUSES])))
+      .orderBy(runs.createdAt);
+    return rows.map(toRecord);
   }
 
   async listByStatus(statuses: readonly RunStatus[]): Promise<RunRecord[]> {

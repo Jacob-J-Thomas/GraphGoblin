@@ -76,20 +76,31 @@ function compile(expression: string, cached = true): Compiled {
   return compiled;
 }
 
+/** A JSONata native function value, as `$eval` evaluates to. */
+interface JsonataFunction {
+  _jsonata_function: true;
+  implementation: (this: unknown, ...args: unknown[]) => unknown;
+  signature?: unknown;
+}
+
+let builtinEval: Promise<JsonataFunction> | undefined;
+
 /**
  * JSONata's `$eval` compiles a string at run time, which would bypass the regex check above. It
- * is replaced by this binding, which compiles the string through the same checks and evaluates it
- * with the same budgets and bindings. Without a focus argument it evaluates against the caller's
- * context (JSONata passes it as `this` to a bound function), as JSONata's own `$eval` does.
+ * is shadowed by this binding: the string is first compiled through the same checks (an unsafe
+ * regex or a syntax error throws), then handed to JSONata's own `$eval` implementation. That runs
+ * in the caller's environment, so lexical variables and functions stay visible and the nested
+ * evaluation shares the caller's depth and deadline budget (the hooks live in that environment).
  */
-function checkedEval(options: ExpressionOptions) {
-  return async function (this: unknown, source: unknown, focus?: unknown): Promise<unknown> {
-    if (source === undefined) return undefined;
-    if (typeof source !== 'string') throw new ExpressionError('$eval takes a string expression');
-    const expression = source;
-    return run(compile(expression, false), expression, focus === undefined ? this : focus, options);
-  };
-}
+const CHECKED_EVAL: JsonataFunction = {
+  _jsonata_function: true,
+  async implementation(this: unknown, source: unknown, focus?: unknown): Promise<unknown> {
+    if (typeof source === 'string') compile(source, false);
+    builtinEval ??= jsonata('$eval').evaluate({}) as Promise<JsonataFunction>;
+    const builtin = await builtinEval;
+    return builtin.implementation.apply(this, [source, focus]);
+  },
+};
 
 async function run(
   expr: Compiled,
@@ -101,7 +112,7 @@ async function run(
   try {
     const result: unknown = await expr.evaluate(input, {
       ...options.bindings,
-      eval: checkedEval(options),
+      eval: CHECKED_EVAL,
     });
     return result;
   } catch (error) {

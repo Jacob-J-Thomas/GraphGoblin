@@ -53,7 +53,8 @@ export interface EventStorePort {
     drafts: readonly EventDraft[],
     options?: { expectedLastSeq?: number },
   ): Promise<RunEvent[]>;
-  read(runId: string, afterSeq?: number): Promise<RunEvent[]>;
+  /** Events after `afterSeq` (default 0), oldest first, at most `limit` of them when given. */
+  read(runId: string, afterSeq?: number, limit?: number): Promise<RunEvent[]>;
   subscribe(runId: string, listener: (event: RunEvent) => void): () => void;
 }
 
@@ -85,6 +86,13 @@ export interface RunRepository {
     at: string,
   ): Promise<RunRecord | undefined>;
   listByStatus(statuses: readonly RunStatus[]): Promise<RunRecord[]>;
+  /**
+   * Record that everything after the run's terminal status is done: timers dropped, children
+   * cancelled, returns delivered, parent woken. Until then the run is listed by `listUnfinalized`.
+   */
+  markFinalized(runId: string): Promise<void>;
+  /** Terminal runs whose finalization was never recorded (the process died part-way). */
+  listUnfinalized(): Promise<RunRecord[]>;
   listChildren(parentRunId: string): Promise<RunRecord[]>;
   getInitialThread(runId: string): Promise<ContextThread | undefined>;
   getThread(runId: string): Promise<ContextThread | undefined>;

@@ -169,6 +169,38 @@ describe('adversarial domain invariants', () => {
     },
   );
 
+  // Third review round: the checked $eval must behave like JSONata's own.
+  it.each([
+    ['($x:=42;$eval("$x"))', 42],
+    ['($f:=function($x){$x+1};$eval("$f(2)"))', 3],
+    ['($x:=2;$eval("$x + a", {"a":3}))', 5],
+  ])('ADV-007 review: $eval keeps the lexical context in %s', async (source, expected) => {
+    expect(await evaluateExpression(source, { a: 1 })).toBe(expected);
+  });
+
+  it('ADV-007 review: nested $eval counts toward the caller depth budget', async () => {
+    let input: unknown = { expr: '42' };
+    for (let i = 0; i < 120; i += 1) input = { expr: '$eval(expr,next)', next: input };
+    await expect(
+      evaluateExpression('$eval(expr,next)', input, { maxDepth: 20, timeoutMs: 10_000 }),
+    ).rejects.toThrow(/max depth/);
+  });
+
+  it('ADV-007 review: nested $eval keeps the caller deadline', async () => {
+    let input: unknown = { expr: '42' };
+    for (let i = 0; i < 60; i += 1) input = { expr: '($nap();$eval(expr,next))', next: input };
+    const started = performance.now();
+    await expect(
+      evaluateExpression('$eval(expr,next)', input, {
+        maxDepth: 1000,
+        timeoutMs: 40,
+        bindings: { nap: () => new Promise((resolve) => setTimeout(() => resolve(null), 5)) },
+      }),
+    ).rejects.toThrow(/exceeded/);
+    // Without a shared deadline each nested call restarts its own 40 ms (about 940 ms in total).
+    expect(performance.now() - started).toBeLessThan(400);
+  });
+
   it('ADV-007 review: $eval compiles its string through the same check', async () => {
     const expression = `$eval($join([${JSON.stringify('$match("aaaa!", /^(a')}, ${JSON.stringify('+)+$/)')}]))`;
     expect(checkExpression(expression)).toBeNull();
@@ -177,7 +209,7 @@ describe('adversarial domain invariants', () => {
     expect(await evaluateExpression('$eval("a + 1")', { a: 1 })).toBe(2);
     expect(await evaluateExpression('$eval("x * 2", {"x": 5})', {})).toBe(10);
     expect(await evaluateExpression('$eval(missing)', {})).toBeUndefined();
-    await expect(evaluateExpression('$eval(42)', {})).rejects.toThrow(/takes a string/);
+    await expect(evaluateExpression('$eval(42)', {})).rejects.toThrow(/expression failed/);
     // A string cannot become a regex any other way: $match rejects a string pattern.
     await expect(
       evaluateExpression('($p := $join(["^(a", "+)+$"]); $match("aaaa!", $p))', {}),
