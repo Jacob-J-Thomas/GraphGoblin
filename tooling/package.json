@@ -1,0 +1,21 @@
+{
+  "name": "@graphgoblin/tooling",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared configuration and repository gate scripts.",
+  "exports": {
+    "./vitest": {
+      "types": "./vitest.shared.d.mts",
+      "import": "./vitest.shared.mjs"
+    },
+    "./layers.json": "./layers.json"
+  },
+  "scripts": {
+    "test": "node --test scripts/*.test.mjs",
+    "test:coverage": "node --test scripts/*.test.mjs"
+  },
+  "devDependencies": {
+    "vitest": "^5.0.3"
+  }
+}

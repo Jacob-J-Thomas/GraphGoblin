@@ -1,0 +1,25 @@
+{
+  "$comment": "Allowed workspace dependencies per layer. Mirrors the layer table in docs/02-architecture.md. Enforced by tooling/scripts/check-layers.mjs.",
+  "scope": "@graphgoblin/",
+  "ignore": ["@graphgoblin/tooling"],
+  "layers": [
+    { "name": "contracts", "match": "^@graphgoblin/contracts$", "allow": [] },
+    { "name": "domain", "match": "^@graphgoblin/domain$", "allow": ["@graphgoblin/contracts"] },
+    {
+      "name": "engine",
+      "match": "^@graphgoblin/engine$",
+      "allow": ["@graphgoblin/contracts", "@graphgoblin/domain"]
+    },
+    {
+      "name": "adapter",
+      "match": "^@graphgoblin/adapter-[a-z0-9-]+$",
+      "allow": ["@graphgoblin/contracts", "@graphgoblin/domain", "@graphgoblin/engine"]
+    },
+    {
+      "name": "client",
+      "match": "^@graphgoblin/api-client$",
+      "allow": ["@graphgoblin/contracts"]
+    },
+    { "name": "app", "match": "^@graphgoblin/(api|mcp|web|plugin-codex|runner)$", "allow": "*" }
+  ]
+}

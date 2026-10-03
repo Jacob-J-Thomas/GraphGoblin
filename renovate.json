@@ -1,0 +1,15 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", ":semanticCommits", "group:allNonMajor"],
+  "rangeStrategy": "bump",
+  "schedule": ["before 6am on monday"],
+  "packageRules": [
+    {
+      "description": "Harness and decision SDKs are pinned exactly and bumped deliberately after fixture review.",
+      "matchPackageNames": ["@openai/codex-sdk", "@typesafe-ai/sdk"],
+      "rangeStrategy": "pin",
+      "groupName": "harness-sdks",
+      "automerge": false
+    }
+  ]
+}
