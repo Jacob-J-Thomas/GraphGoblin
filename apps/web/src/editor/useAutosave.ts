@@ -1,7 +1,7 @@
 import { GraphGoblinApiError, loops, type GraphGoblinClient } from '@graphgoblin/api-client';
 import type { LoopDefinitionInput } from '@graphgoblin/contracts';
 import { useCallback, useEffect, useRef } from 'react';
-import { loadLocalDraft, saveLocalDraft } from '../drafts/local-drafts.js';
+import { recordServerSave, saveLocalDraft } from '../drafts/local-drafts.js';
 import { errorMessage, isOfflineError } from '../lib/utils.js';
 import { validateDraft } from './model.js';
 import { useEditorStore } from './store.js';
@@ -28,23 +28,17 @@ export function serializeSave<T>(loopId: string, job: () => Promise<T>): Promise
 }
 
 /**
- * Mark the device copy as synced, unless a newer edit has been mirrored over it since this save
- * started: that copy must keep winning on the next load.
+ * After the server accepted a save: advance the loop's token, whether or not the editor that sent
+ * it is still open, and record it on the device copy (`recordServerSave`). A newer edit mirrored
+ * since the save started stays unsynced and keeps winning on the next load, now based on `token`.
  */
-async function markSynced(
+async function recordSaved(
   loopId: string,
   definition: LoopDefinitionInput,
-  baseToken: string,
+  token: string,
 ): Promise<void> {
-  const local = await loadLocalDraft(loopId);
-  if (local && JSON.stringify(local.definition) !== JSON.stringify(definition)) return;
-  await saveLocalDraft({
-    loopId,
-    definition,
-    savedAt: new Date().toISOString(),
-    synced: true,
-    baseToken,
-  });
+  latestTokens.set(loopId, token);
+  await recordServerSave(loopId, definition, token);
 }
 
 /** The server's token from a 409 `DRAFT_CONFLICT`, or false when `error` is something else. */
@@ -131,13 +125,16 @@ export function useAutosave(
           }
           return false;
         }
-        const now = useEditorStore.getState();
-        if (now.loopId !== loopId || now.generation !== generation) return false;
-        latestTokens.set(loopId, saved.draftToken);
-        now.setBaseToken(saved.draftToken);
-        if (now.revision === rev) {
+        const isCurrent = () => {
+          const now = useEditorStore.getState();
+          return now.loopId === loopId && now.generation === generation;
+        };
+        // Before the device write, so an edit mirrored from here on carries the new token.
+        if (isCurrent()) useEditorStore.getState().setBaseToken(saved.draftToken);
+        await recordSaved(loopId, definition, saved.draftToken);
+        if (!isCurrent()) return false;
+        if (useEditorStore.getState().revision === rev) {
           setSaveState('saved', undefined, rev);
-          await markSynced(loopId, definition, saved.draftToken);
           return true;
         }
         // Edited while the request was in flight: the server holds an older revision; go again.
@@ -178,8 +175,7 @@ export function useAutosave(
         const saved = await loops.saveDraft(client, last.loopId, last.definition, {
           ...(token ? { ifMatch: token } : {}),
         });
-        latestTokens.set(last.loopId, saved.draftToken);
-        await markSynced(last.loopId, last.definition, saved.draftToken);
+        await recordSaved(last.loopId, last.definition, saved.draftToken);
       }).catch(() => undefined);
     },
     [client],

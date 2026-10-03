@@ -233,12 +233,17 @@ export class FakeApi {
       const params = match(route, call);
       if (params) return handler(call, params);
     }
+    return this.builtIn(call);
+  };
+
+  /** Answer `call` with the built-in routes, ignoring overrides (for overrides that delegate). */
+  builtIn(call: RecordedCall): Response | Promise<Response> {
     for (const [route, handler] of this.routes) {
       const params = match(route, call);
       if (params) return handler(call, params);
     }
     return problem(404, 'NOT_FOUND', `${call.method} ${call.path}`);
-  };
+  }
 
   private stream(runId: string, after: number): Response {
     const events = (this.events.get(runId) ?? []).filter((e) => e.seq > after);

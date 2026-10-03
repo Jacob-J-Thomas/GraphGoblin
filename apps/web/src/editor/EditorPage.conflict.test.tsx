@@ -1,5 +1,5 @@
 import { GraphGoblinApiError } from '@graphgoblin/api-client';
-import { act, screen, waitFor } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { FakeApi, problem } from '../__fixtures__/fake-api.js';
@@ -161,3 +161,115 @@ describe('draft conflicts (If-Match)', () => {
 function fetchLoop(api: FakeApi, loopId: string): Promise<Response> {
   return api.fetch(new Request(`http://localhost/loops/${loopId}`));
 }
+
+describe('draft tokens across editors and saves', () => {
+  it('does not load a delayed server draft for loop A into the editor of loop B', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const a = api.addLoop(newLoopDefinition('mine'));
+    const b = api.addLoop(newLoopDefinition('loop b'));
+    await openConflict(api, a.id);
+
+    let release!: () => void;
+    let holding = false;
+    const gate = new Promise<void>((resolve) => (release = resolve));
+    api.override('GET /loops/:id', async (call, [id]) => {
+      if (holding && id === a.id) await gate;
+      return api.builtIn(call);
+    });
+    holding = true;
+    await user.click(screen.getByRole('button', { name: 'Reload server draft' }));
+    await user.click(
+      within(screen.getByRole('navigation', { name: 'Main' })).getByRole('link', { name: 'Loops' }),
+    );
+    await user.click(await screen.findByRole('link', { name: 'loop b' }));
+    expect(await screen.findByRole('heading', { name: 'loop b' })).toBeInTheDocument();
+    act(() => useEditorStore.getState().updateMeta({ description: 'work on b' }));
+
+    release();
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    const state = useEditorStore.getState();
+    expect(state.loopId).toBe(b.id);
+    expect(state.definition).toMatchObject({ name: 'loop b', description: 'work on b' });
+    expect(screen.getByRole('heading', { name: 'loop b' })).toBeInTheDocument();
+    // A's unsynced device copy was not replaced either: the user never saw the reload land.
+    expect(await loadLocalDraft(a.id)).toMatchObject({ synced: false });
+  });
+
+  it('bases the save sent on leaving on the save still in flight, so it does not conflict', async () => {
+    const api = new FakeApi();
+    const loop = api.addLoop(newLoopDefinition('mine'));
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => (release = resolve));
+    let puts = 0;
+    api.override('PUT /loops/:id/draft', async (call) => {
+      puts += 1;
+      if (puts === 1) await gate;
+      return api.builtIn(call);
+    });
+    const view = renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'mine' });
+    act(() => useEditorStore.getState().updateMeta({ description: 'first' }));
+    await waitFor(() => expect(puts).toBe(1), SAVE_WAIT);
+    act(() => useEditorStore.getState().updateMeta({ description: 'second' }));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    view.unmount();
+    release();
+
+    await waitFor(() => expect(puts).toBe(2), SAVE_WAIT);
+    await waitFor(async () =>
+      expect(await loadLocalDraft(loop.id)).toMatchObject({
+        synced: true,
+        definition: { description: 'second' },
+        baseToken: api.draftToken(loop.id),
+      }),
+    );
+    const detail = (await (
+      await api.fetch(new Request(`http://localhost/loops/${loop.id}`))
+    ).json()) as { draft: { definition: { description?: string } } };
+    expect(detail.draft.definition.description).toBe('second');
+  });
+
+  it('moves a newer unsynced device copy onto the token of the save it follows', async () => {
+    const api = new FakeApi();
+    const loop = api.addLoop(newLoopDefinition('mine'));
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => (release = resolve));
+    let puts = 0;
+    api.override('PUT /loops/:id/draft', async (call) => {
+      puts += 1;
+      if (puts === 1) await gate;
+      return api.builtIn(call);
+    });
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'mine' });
+    act(() => useEditorStore.getState().updateMeta({ description: 'first' }));
+    await waitFor(() => expect(puts).toBe(1), SAVE_WAIT);
+    act(() => useEditorStore.getState().updateMeta({ description: 'second' }));
+    await waitFor(async () =>
+      expect((await loadLocalDraft(loop.id))?.definition.description).toBe('second'),
+    );
+    // The first save is accepted; the follow-up save finds the network gone.
+    api.offline = true;
+    release();
+    await waitFor(
+      () => expect(screen.getByTestId('save-state')).toHaveTextContent('Offline'),
+      SAVE_WAIT,
+    );
+    const accepted = api.draftToken(loop.id);
+    expect(await loadLocalDraft(loop.id)).toMatchObject({
+      synced: false,
+      definition: { description: 'second' },
+      baseToken: accepted,
+    });
+    expect(useEditorStore.getState().baseToken).toBe(accepted);
+
+    // Back online, the retry saves without a conflict.
+    api.offline = false;
+    window.dispatchEvent(new Event('online'));
+    await waitFor(
+      () => expect(screen.getByTestId('save-state')).toHaveTextContent('All changes saved'),
+      SAVE_WAIT,
+    );
+  });
+});
