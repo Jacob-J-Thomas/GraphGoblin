@@ -124,6 +124,7 @@ Optional `timeoutSeconds` exists on inferencing and script nodes and on wait and
 ## Event log and projections (Decided)
 
 - Events are appended with a monotonically increasing `seq` per run, in one transaction with any state change they imply.
+- The first event, `run.queued`, carries the run's initial thread as `initialThread`: the `run` and `invocation` blocks plus, for a subloop child, the seed the parent mapped in. Replaying `node.finished` patches over it reproduces the thread at any event without any other source (the run inspector does exactly this). Logs written before the field existed lack it; readers then start from the thread's `run` and `invocation` with empty collections. Size: the initial thread is the trigger payload (bounded by the request body limits, 8 MB for the API and 1 MB for webhooks) plus, for a child, the seed the subloop mapping selected from the parent thread; it is written once per run, next to the `runs` row's own copy, and has no separate cap in 1.0. Offloading it to the artifact store above a threshold (with a reference on the event) is the follow-up if large seeds appear in practice.
 - The thread projection replays `node.finished` patches and wake payloads. It is cached per run in memory and rebuilt on demand.
 - The SSE stream (07) is a tail of the same log, which is why reconnecting clients can resume from a sequence number without loss.
 - Large payloads such as transcripts, full probe responses, and return payloads above a size threshold are stored as artifacts on disk, keyed by content hash, and referenced from events.
@@ -150,6 +151,11 @@ Because every node input is reconstructible, the API offers "re-run this node wi
 - **Heartbeat outputs** are `{ beat, probe, satisfied: true }` when the condition holds and `{ beat, probe, exhausted: true }` when it runs out and is configured to continue.
 - **Inference recovery resumes the recorded session** with a continuation prompt when a node is re-executed with `attempt > 1` and a session id is on file.
 - **Return channels merge** the exit node's list with any `returnDefaults` the caller supplied on the invocation, de-duplicated.
+
+## Implementation notes from WP-D2 (Decided by implementation, 2026-10-03)
+
+- **Model and effort resolve node, then loop defaults, then owner settings, then configuration.** `EngineSettings.ownerDefaults(ownerId)` is read every time a run starts or resumes; the API reads the owner settings `defaultModel` and `defaultEffort` there, so a change in Settings applies to the next run without a restart. `GG_DEFAULT_MODEL` and `GG_DEFAULT_EFFORT` remain the last fallback.
+- **The executor yields to the event loop between nodes** (one `setTimeout(0)` per node). With fast ports every await settles as a microtask, and a graph cycle (a decision routing back to itself) used to starve timers, API requests, and the cancel request that could stop it. Such a cycle is still unbounded: it runs until cancelled, because `maxIterations` counts only exit loop-backs (open question in 13).
 
 ## Why no error ports (Decided, see ADR-0006)
 

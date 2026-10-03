@@ -117,8 +117,10 @@ describe('SettingsPage', () => {
     await user.selectOptions(screen.getByLabelText('Default effort'), 'high');
     await waitFor(() => expect(api.settingsValues).toMatchObject({ defaultEffort: 'high' }));
     await waitFor(() => expect(screen.getByLabelText('Default effort')).toHaveValue('high'));
+    // "(server default)" removes the setting instead of storing an empty model.
     await user.selectOptions(model, '');
-    await waitFor(() => expect(api.settingsValues).toMatchObject({ defaultModel: '' }));
+    await waitFor(() => expect(api.settingsValues).not.toHaveProperty('defaultModel'));
+    await waitFor(() => expect(model).toHaveValue(''));
   });
 
   it('sets and deletes secrets without ever showing values', async () => {
@@ -126,6 +128,13 @@ describe('SettingsPage', () => {
     const api = seeded();
     renderApp('/settings', api);
     expect(await screen.findByText('jev-api-key')).toBeInTheDocument();
+    // A name the API would refuse is flagged before sending.
+    await user.type(screen.getByLabelText('Name'), 'bad name');
+    expect(screen.getByLabelText('Name')).toHaveAttribute('aria-invalid', 'true');
+    await user.type(screen.getByLabelText('Value'), 'x');
+    expect(screen.getByRole('button', { name: 'Set secret' })).toBeDisabled();
+    await user.clear(screen.getByLabelText('Value'));
+    await user.clear(screen.getByLabelText('Name'));
     await user.type(screen.getByLabelText('Name'), 'github-token');
     const value = screen.getByLabelText('Value');
     expect(value).toHaveAttribute('type', 'password');

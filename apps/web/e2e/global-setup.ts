@@ -28,6 +28,8 @@ export default async function globalSetup(): Promise<() => Promise<void>> {
     child.stdout.setEncoding('utf8');
     child.stdout.on('data', (chunk: string) => {
       buffer += chunk;
+      const control = /GG_E2E_CONTROL (\S+)/.exec(buffer);
+      if (control?.[1]) process.env['GG_E2E_CONTROL_URL'] = control[1];
       const match = /GG_E2E_READY (\S+)/.exec(buffer);
       if (match?.[1]) {
         clearTimeout(timer);

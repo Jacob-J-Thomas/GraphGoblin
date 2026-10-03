@@ -18,7 +18,8 @@ export function LoopSettingsPanel({
   definition: LoopDefinitionInput;
   epoch: number;
 }) {
-  const { updateMeta, updateSettings, updateVariables } = useEditorStore.getState();
+  const { updateMeta, updateSettings, updateVariables, setFieldError } = useEditorStore.getState();
+  const fieldErrors = useEditorStore((s) => s.fieldErrors);
   return (
     <section aria-label="Loop settings">
       <div className="mb-2">
@@ -45,6 +46,8 @@ export function LoopSettingsPanel({
         value={definition.settings ?? {}}
         label="Loop settings form"
         onChange={updateSettings}
+        parseErrors={fieldErrors['settings']}
+        onParseError={(path, error) => setFieldError('settings', path, error)}
       />
       <h3 className="mt-3 mb-1 text-xs font-semibold text-slate-600 uppercase">Variables</h3>
       <p className="mb-1 text-xs text-slate-500">Each variable maps a name to a JSON Schema.</p>
@@ -54,6 +57,8 @@ export function LoopSettingsPanel({
         value={{ variables: definition.variables ?? {} }}
         label="Variables form"
         onChange={(value) => updateVariables((value as { variables?: unknown }).variables ?? {})}
+        parseErrors={fieldErrors['variables']}
+        onParseError={(path, error) => setFieldError('variables', path, error)}
       />
     </section>
   );

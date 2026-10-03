@@ -11,6 +11,7 @@ import {
   shapeOf,
   type Schema,
 } from './introspect.js';
+import { ParseErrorContext, type ParseError, type ParseErrorChannel } from './parse-errors.js';
 import { stripUnset } from './unset.js';
 
 export interface SchemaFormProps {
@@ -21,6 +22,10 @@ export interface SchemaFormProps {
   onChange: (value: unknown) => void;
   /** Accessible name for the form. */
   label: string;
+  /** Stored text that did not parse (JSON), by field path; fields show it again when remounted. */
+  parseErrors?: Record<string, ParseError> | undefined;
+  /** Called when a field's text stops or starts parsing (`undefined` clears the path). */
+  onParseError?: (path: string, error: ParseError | undefined) => void;
 }
 
 interface Issue {
@@ -46,7 +51,14 @@ function asValues(value: unknown): FieldValues {
  * reported upward as-is so the caller (the editor store) never loses input; schema issues are shown
  * inline per field and as a summary. Remount with a `key` to load a different value.
  */
-export function SchemaForm({ schema, value, onChange, label }: SchemaFormProps) {
+export function SchemaForm({
+  schema,
+  value,
+  onChange,
+  label,
+  parseErrors,
+  onParseError,
+}: SchemaFormProps) {
   const shape = shapeOf(schema);
   const id = useId();
   const resolver = useMemo<Resolver<FieldValues>>(() => {
@@ -55,6 +67,25 @@ export function SchemaForm({ schema, value, onChange, label }: SchemaFormProps) 
   }, [schema]);
   const form = useForm<FieldValues>({ resolver, defaultValues: asValues(value), mode: 'onChange' });
   const [issues, setIssues] = useState<Issue[]>(() => issuesOf(schema, value));
+  const parseErrorsRef = useRef(parseErrors);
+  parseErrorsRef.current = parseErrors;
+  const onParseErrorRef = useRef(onParseError);
+  onParseErrorRef.current = onParseError;
+  const tracked = onParseError !== undefined;
+  const parseErrorChannel = useMemo<ParseErrorChannel>(
+    () => ({
+      get: (path) => parseErrorsRef.current?.[path],
+      report: (path, error) => {
+        const current = parseErrorsRef.current?.[path];
+        if (current?.message === error?.message && current?.text === error?.text) return;
+        onParseErrorRef.current?.(path, error);
+      },
+      tracked,
+      errors: parseErrors,
+    }),
+    // `errors` is the stored state fields compare against to notice an external discard.
+    [parseErrors, tracked],
+  );
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
 
@@ -83,52 +114,54 @@ export function SchemaForm({ schema, value, onChange, label }: SchemaFormProps) 
   };
 
   return (
-    <FormProvider {...form}>
-      <form aria-label={label} noValidate onSubmit={(e) => e.preventDefault()}>
-        {shape.kind === 'union' ? (
-          <div className="mb-2">
-            <Label htmlFor={id}>{humanize(shape.discriminator ?? 'kind')}</Label>
-            <Select
-              id={id}
-              value={String(unionIndex)}
-              onChange={(e) => switchVariant(Number(e.target.value))}
+    <ParseErrorContext value={parseErrorChannel}>
+      <FormProvider {...form}>
+        <form aria-label={label} noValidate onSubmit={(e) => e.preventDefault()}>
+          {shape.kind === 'union' ? (
+            <div className="mb-2">
+              <Label htmlFor={id}>{humanize(shape.discriminator ?? 'kind')}</Label>
+              <Select
+                id={id}
+                value={String(unionIndex)}
+                onChange={(e) => switchVariant(Number(e.target.value))}
+              >
+                {shape.options.map((option, index) => (
+                  <option key={index} value={index}>
+                    {optionLabel(option, shape.discriminator)}
+                  </option>
+                ))}
+              </Select>
+            </div>
+          ) : null}
+          {variant.kind === 'object'
+            ? Object.entries(variant.shape)
+                .filter(([key]) => shape.kind !== 'union' || key !== shape.discriminator)
+                .map(([key, child]) => (
+                  <Field
+                    key={`${unionIndex}:${key}`}
+                    schema={child}
+                    name={joinPath('', key)}
+                    label={humanize(key)}
+                  />
+                ))
+            : null}
+          {issues.length > 0 ? (
+            <div
+              className="mt-2 rounded border border-orange-300 bg-orange-50 p-2 text-xs"
+              aria-label="Config issues"
             >
-              {shape.options.map((option, index) => (
-                <option key={index} value={index}>
-                  {optionLabel(option, shape.discriminator)}
-                </option>
-              ))}
-            </Select>
-          </div>
-        ) : null}
-        {variant.kind === 'object'
-          ? Object.entries(variant.shape)
-              .filter(([key]) => shape.kind !== 'union' || key !== shape.discriminator)
-              .map(([key, child]) => (
-                <Field
-                  key={`${unionIndex}:${key}`}
-                  schema={child}
-                  name={joinPath('', key)}
-                  label={humanize(key)}
-                />
-              ))
-          : null}
-        {issues.length > 0 ? (
-          <div
-            className="mt-2 rounded border border-orange-300 bg-orange-50 p-2 text-xs"
-            aria-label="Config issues"
-          >
-            <p className="font-semibold text-orange-900">Config issues</p>
-            <ul className="list-disc pl-4">
-              {issues.map((issue, index) => (
-                <li key={index}>
-                  {issue.path ? <code>{issue.path}</code> : 'config'}: {issue.message}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
-      </form>
-    </FormProvider>
+              <p className="font-semibold text-orange-900">Config issues</p>
+              <ul className="list-disc pl-4">
+                {issues.map((issue, index) => (
+                  <li key={index}>
+                    {issue.path ? <code>{issue.path}</code> : 'config'}: {issue.message}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+        </form>
+      </FormProvider>
+    </ParseErrorContext>
   );
 }

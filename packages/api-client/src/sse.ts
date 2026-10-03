@@ -97,6 +97,11 @@ export interface SubscribeRunEventsOptions {
    * 1-based attempt number), or a frame that failed `RunEventSchema` validation (attempt 0).
    */
   onError?: (error: unknown, attempt: number) => void;
+  /**
+   * Called each time a connection is accepted (2xx), before any event on it: a stream resumed at
+   * a cursor with nothing new to send is open even though no event arrives.
+   */
+  onOpen?: () => void;
   /** Stops the subscription; `done` then resolves. */
   signal?: AbortSignal;
   backoff?: BackoffOptions;
@@ -152,7 +157,7 @@ class Fatal extends Error {
  * connection delivers an event), and drops any replayed event whose `seq` it has already seen.
  */
 export function subscribeRunEvents(options: SubscribeRunEventsOptions): RunEventSubscription {
-  const { client, runId, onEvent, onError } = options;
+  const { client, runId, onEvent, onError, onOpen } = options;
   const initialMs = options.backoff?.initialMs ?? 500;
   const maxMs = options.backoff?.maxMs ?? 30_000;
   const factor = options.backoff?.factor ?? 2;
@@ -188,6 +193,7 @@ export function subscribeRunEvents(options: SubscribeRunEventsOptions): RunEvent
       throw retryable(response.status) ? error : new Fatal(error);
     }
     if (!response.body) throw new Fatal(new Error('the event stream response has no body'));
+    onOpen?.();
 
     const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
     const parser = new SseParser();

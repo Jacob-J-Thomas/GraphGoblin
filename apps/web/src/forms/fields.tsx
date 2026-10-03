@@ -18,6 +18,7 @@ import {
   type FieldShape,
   type Schema,
 } from './introspect.js';
+import { useParseErrors } from './parse-errors.js';
 import { isUnset, UNSET } from './unset.js';
 
 /**
@@ -338,6 +339,25 @@ function ArrayField({
     );
   }
 
+  if (!Array.isArray(field.value) && Array.isArray(defaultValue) && defaultValue.length > 0) {
+    // Item fields bind to paths inside the value; drawing them over a default the value does not
+    // hold yet would make them validate `undefined`. Show the default and copy it on request.
+    return (
+      <fieldset className="mb-2 rounded border border-slate-200 p-2" data-field={name}>
+        <legend className="px-1 text-xs font-semibold text-slate-700">{label}</legend>
+        <p className="mb-1 text-xs text-slate-600">
+          Default: <code>{JSON.stringify(defaultValue)}</code>
+        </p>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => field.onChange(structuredClone(defaultValue))}
+        >
+          Customize {label.toLowerCase()}
+        </Button>
+      </fieldset>
+    );
+  }
   const canAdd = shape.max === undefined || items.length < shape.max;
   return (
     <fieldset className="mb-2 rounded border border-slate-200 p-2" data-field={name}>
@@ -420,6 +440,7 @@ function RecordField({
             />
           ) : (
             <JsonText
+              path={joinPath(name, key)}
               label={`${label} value ${index + 1}`}
               value={value}
               onChange={(v) => setValue(index, v)}
@@ -487,18 +508,34 @@ function UnionField({
 }
 
 function JsonText({
+  path,
   label,
   value,
   onChange,
   id,
 }: {
+  path: string;
   label: string;
   value: unknown;
   onChange: (value: unknown) => void;
   id?: string;
 }) {
-  const [text, setText] = useState(() => prettyJson(value));
-  const [error, setError] = useState<string | undefined>();
+  const parseErrors = useParseErrors();
+  // Unparsed text from an earlier visit to this field wins over the last valid value.
+  const [stored] = useState(() => parseErrors.get(path));
+  const [text, setText] = useState(() => stored?.text ?? prettyJson(value));
+  const [error, setError] = useState<string | undefined>(stored?.message);
+  // Discarded from outside (the validation panel): show the last valid value again.
+  if (parseErrors.tracked && error !== undefined && parseErrors.errors?.[path] === undefined) {
+    setText(prettyJson(value));
+    setError(undefined);
+  }
+  const fail = (next: string, message: string | undefined) => {
+    // Store first: a render that sees the local error must also see the stored entry, or it would
+    // read as discarded.
+    parseErrors.report(path, message === undefined ? undefined : { message, text: next });
+    setError(message);
+  };
   return (
     <div className="flex-1">
       <CodeEditor
@@ -509,18 +546,34 @@ function JsonText({
         onChange={(next) => {
           setText(next);
           if (next.trim() === '') {
-            setError(undefined);
+            fail(next, undefined);
             onChange(undefined);
             return;
           }
           const parsed = parseJson(next);
           if (parsed.ok) {
-            setError(undefined);
+            fail(next, undefined);
             onChange(parsed.value);
-          } else setError(parsed.error);
+          } else fail(next, `invalid JSON: ${parsed.error}`);
         }}
       />
-      {error ? <p className="text-xs text-orange-800">Invalid JSON: {error}</p> : null}
+      {error ? (
+        <p className="text-xs text-orange-800">
+          {error.replace(/^invalid JSON/, 'Invalid JSON')}{' '}
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              // Back to the last valid value; the typed text is dropped.
+              const restored = prettyJson(value);
+              setText(restored);
+              fail(restored, undefined);
+            }}
+          >
+            Discard text
+          </Button>
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -530,7 +583,7 @@ function JsonField({ name, label }: FieldProps) {
   const id = useId();
   return (
     <Row label={`${label} (JSON)`} htmlFor={id} name={name}>
-      <JsonText label={label} id={id} value={field.value} onChange={field.onChange} />
+      <JsonText path={name} label={label} id={id} value={field.value} onChange={field.onChange} />
     </Row>
   );
 }

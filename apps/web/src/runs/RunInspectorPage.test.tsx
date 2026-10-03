@@ -98,6 +98,42 @@ describe('RunInspectorPage', () => {
     expect(screen.getAllByText(/outputTokens/).length).toBeGreaterThan(0);
   });
 
+  it('replays a child run from its seeded first event and reports logs that do not replay', async () => {
+    const api = new FakeApi();
+    const seeded = api.addRun({ parentRunId: '01ARZ3NDEKTSV4RRFFQ69G5FAZ' });
+    const seed = { ...api.threads.get(seeded.id)!, vars: { fromParent: 'yes' } };
+    api.pushEvent(seeded.id, event(seeded.id, 1, 'run.queued', { initialThread: seed }));
+    api.pushEvent(
+      seeded.id,
+      event(seeded.id, 2, 'node.finished', {
+        nodeId: 'prep',
+        durationMs: 1,
+        patch: [{ op: 'replace', path: '/vars/fromParent', value: 'patched' }],
+      }),
+    );
+    const view = renderApp(`/runs/${seeded.id}`, api);
+    await waitFor(() =>
+      expect(screen.getByLabelText('Variables')).toHaveTextContent('"fromParent": "patched"'),
+    );
+    view.unmount();
+
+    // A log whose patch cannot apply to its start shows an explanation, not a blank page.
+    const broken = api.addRun();
+    api.pushEvent(broken.id, event(broken.id, 1, 'run.queued', {}));
+    api.pushEvent(
+      broken.id,
+      event(broken.id, 2, 'node.finished', {
+        nodeId: 'prep',
+        durationMs: 1,
+        patch: [{ op: 'replace', path: '/outputs/start', value: 1 }],
+      }),
+    );
+    renderApp(`/runs/${broken.id}`, api);
+    expect(
+      await screen.findByText('The thread cannot be reconstructed at event 2'),
+    ).toBeInTheDocument();
+  });
+
   it('resumes the stream after the stored cursor on reload', async () => {
     const api = new FakeApi();
     const run = seedRun(api);
@@ -110,6 +146,8 @@ describe('RunInspectorPage', () => {
     renderApp(`/runs/${run.id}`, api);
     await screen.findByText(/Timeline \(6 events/);
     await waitFor(() => expect(api.callsTo('GET', `/runs/${run.id}/events`)).toHaveLength(1));
+    // The resumed stream is open with nothing new to send: it reads live, not connecting.
+    expect(await screen.findByText(/Timeline \(6 events, live\)/)).toBeInTheDocument();
     expect(api.callsTo('GET', `/runs/${run.id}/events`)[0]!.search.get('after')).toBe('6');
     act(() =>
       api.pushEvent(

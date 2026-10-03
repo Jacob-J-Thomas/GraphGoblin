@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { LoopDefinitionInput } from '@graphgoblin/contracts';
 import { FIXTURE_IDS } from '@graphgoblin/contracts/testing';
 import { createTestEngine, singleNodeLoop } from '../testing/scenario.js';
+import { replayThread } from '@graphgoblin/domain';
 
 function waitLoop(name: string, config: Record<string, unknown>): LoopDefinitionInput {
   return singleNodeLoop(
@@ -354,6 +355,16 @@ describe('subloop node', () => {
     const childThread = await engine.manager.getThread(children[0]!.id);
     expect(childThread?.run.parentRunId).toBe(run.id);
     expect(childThread?.invocation.source).toBe('subloop');
+    // The first event carries the seeded thread, so the child's log replays without other input.
+    const [queued] = engine.events(children[0]!.id);
+    expect(queued?.type).toBe('run.queued');
+    const seeded = queued?.type === 'run.queued' ? queued.initialThread : undefined;
+    expect(seeded?.run.parentRunId).toBe(run.id);
+    expect(seeded?.vars['shared']).toBe('from-parent');
+    const replayed = replayThread(seeded!, engine.events(children[0]!.id));
+    expect(replayed.messages).toEqual(childThread?.messages);
+    expect(replayed.vars).toEqual(childThread?.vars);
+    expect(replayed.outputs).toEqual(childThread?.outputs);
   });
 
   it('projects input, injects messages, builds a trigger payload, and merges output', async () => {

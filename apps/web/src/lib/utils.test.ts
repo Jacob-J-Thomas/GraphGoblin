@@ -34,6 +34,16 @@ describe('utils', () => {
     expect(errorMessage(new GraphGoblinApiError({ status: 409, code: 'NO_DRAFT' }))).toBe(
       'NO_DRAFT',
     );
+    expect(
+      errorMessage(
+        new GraphGoblinApiError({
+          status: 400,
+          code: 'VALIDATION_FAILED',
+          detail: 'the request did not match the schema',
+          errors: [{ path: '/value', message: 'Too small' }],
+        }),
+      ),
+    ).toBe('the request did not match the schema (VALIDATION_FAILED): /value: Too small');
     expect(errorMessage(new Error('plain'))).toBe('plain');
     expect(errorMessage('text')).toBe('text');
   });

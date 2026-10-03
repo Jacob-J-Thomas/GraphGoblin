@@ -1,4 +1,5 @@
 import type { Edge, LoopDefinition, Node, NodeKind } from '@graphgoblin/contracts';
+import { syntaxIssues } from './syntax.js';
 
 export interface ValidationIssue {
   code: string;
@@ -264,6 +265,7 @@ export function validateLoop(def: LoopDefinition): ValidationIssue[] {
     }
   }
 
+  issues.push(...syntaxIssues(def));
   return issues;
 }
 

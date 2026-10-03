@@ -29,7 +29,10 @@ export function isOfflineError(error: unknown): boolean {
 export function errorMessage(error: unknown): string {
   if (error instanceof GraphGoblinApiError) {
     if (error.status === NETWORK_ERROR_STATUS) return 'The GraphGoblin API cannot be reached.';
-    return error.detail ? `${error.detail} (${error.code})` : error.code;
+    const base = error.detail ? `${error.detail} (${error.code})` : error.code;
+    // A schema refusal alone does not say which field was wrong; name the first one.
+    const first = error.code === 'VALIDATION_FAILED' ? problemIssues(error)[0] : undefined;
+    return first ? `${base}: ${first}` : base;
   }
   if (error instanceof Error) return error.message;
   return String(error);

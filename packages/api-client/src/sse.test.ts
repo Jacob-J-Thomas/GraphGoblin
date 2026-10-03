@@ -140,6 +140,30 @@ describe('subscribeRunEvents', () => {
     expect(delays).toEqual([500]);
   });
 
+  it('reports each accepted connection through onOpen, before and without any event', async () => {
+    const { fetch } = scripted([
+      new Response('{"code":"BUSY"}', { status: 503 }),
+      stream([': connected\n\n']),
+      stream([frame(event(7, 'run.cancelled'))]),
+    ]);
+    const { sleep } = recordingSleep();
+    const log: string[] = [];
+    const client = createGraphGoblinClient({ baseUrl: 'http://api', fetch });
+    const subscription = subscribeRunEvents({
+      client,
+      runId,
+      after: 6,
+      onOpen: () => log.push('open'),
+      onEvent: (e) => {
+        log.push(`event ${e.seq}`);
+      },
+      sleep,
+    });
+    await subscription.done;
+    // The refused attempt does not count; the quiet connection does.
+    expect(log).toEqual(['open', 'open', 'event 7']);
+  });
+
   it('reports invalid frames, advances past their id, and keeps going', async () => {
     const { fetch, urls } = scripted([
       stream(['id: 1\ndata: {not json\n\n', 'data: {"type":"nope"}\n\n']),

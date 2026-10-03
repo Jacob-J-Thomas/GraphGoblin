@@ -228,7 +228,7 @@ export class RunManager {
       lastEventSeq: 0,
     };
     await this.ports.runs.create(run, thread);
-    await this.ports.events.append(runId, [{ type: 'run.queued' }]);
+    await this.ports.events.append(runId, [{ type: 'run.queued', initialThread: thread }]);
     this.enqueue(runId);
     return run;
   }
@@ -549,6 +549,8 @@ export class RunManager {
       return;
     }
     const def = version.definition;
+    // Owner defaults are read at every (re)start, so a change in settings applies to the next run.
+    const ownerDefaults = (await this.settings.ownerDefaults?.(run.ownerId)) ?? {};
     const events: RunEvent[] = await this.ports.events.read(runId);
     let thread = await this.loadThread(run, events);
     const append = async (draft: EventDraft): Promise<void> => {
@@ -590,8 +592,13 @@ export class RunManager {
         }),
       record: append,
       resolveModel: (model, effort) => ({
-        model: model ?? def.settings.defaults.model ?? this.settings.defaultModel,
-        effort: effort ?? def.settings.defaults.effort ?? this.settings.defaultEffort,
+        model:
+          model ?? def.settings.defaults.model ?? ownerDefaults.model ?? this.settings.defaultModel,
+        effort:
+          effort ??
+          def.settings.defaults.effort ??
+          ownerDefaults.effort ??
+          this.settings.defaultEffort,
       }),
       startChild: (request) => this.startChild(run, request),
       childOutcome: (childRunId) => this.childOutcome(childRunId),
@@ -603,10 +610,17 @@ export class RunManager {
     };
 
     for (;;) {
-      if (controller.signal.aborted || (await this.mustGet(runId)).cancelRequestedAt) {
+      // Yield to the event loop between nodes. With fast ports every await settles as a microtask,
+      // so a graph cycle (a decision routing back to itself) would otherwise starve timers, API
+      // requests, and the very cancel request that could stop it.
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+      // Re-read after the yield: a pause or cancel may have landed while this run was parked.
+      const current = await this.mustGet(runId);
+      if (controller.signal.aborted || current.cancelRequestedAt) {
         await this.finalizeCancel(runId);
         return;
       }
+      if (current.status === 'paused') return;
       const node = nodeById(def, nodeId);
       if (!node) {
         await this.failRun(runId, {

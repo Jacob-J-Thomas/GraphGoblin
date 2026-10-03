@@ -30,4 +30,25 @@ export async function loadLocalDraft(loopId: string): Promise<LocalDraft | undef
 
 export async function clearLocalDraft(loopId: string): Promise<void> {
   await del(loopId, draftStore());
+  await del(setAsideKey(loopId), draftStore());
+}
+
+/**
+ * A device copy set aside because the server had a newer draft. Kept under its own key, apart
+ * from the live mirror that later edits overwrite, until the user restores or discards it.
+ */
+function setAsideKey(loopId: string): string {
+  return `${loopId}:set-aside`;
+}
+
+export async function saveSetAsideDraft(draft: LocalDraft): Promise<void> {
+  await set(setAsideKey(draft.loopId), draft, draftStore());
+}
+
+export async function loadSetAsideDraft(loopId: string): Promise<LocalDraft | undefined> {
+  return get<LocalDraft>(setAsideKey(loopId), draftStore());
+}
+
+export async function clearSetAsideDraft(loopId: string): Promise<void> {
+  await del(setAsideKey(loopId), draftStore());
 }

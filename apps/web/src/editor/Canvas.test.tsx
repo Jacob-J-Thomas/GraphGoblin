@@ -1,5 +1,5 @@
 import { kitchenSinkLoop } from '@graphgoblin/contracts/testing';
-import { act, render } from '@testing-library/react';
+import { act, fireEvent, render } from '@testing-library/react';
 import type { ReactFlowProps } from '@xyflow/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Canvas } from './Canvas.js';
@@ -136,6 +136,29 @@ describe('Canvas handlers', () => {
     expect(store().definition!.nodes.some((n) => n.id === 'poll')).toBe(false);
     act(() => flow().onPaneClick!({} as never));
     expect(store().selectedNodeId).toBeUndefined();
+  });
+
+  it('deletes the selection with Delete or Backspace only while focus is on the canvas', () => {
+    const view = renderCanvas();
+    const canvas = view.getByTestId('canvas');
+    act(() => store().select('prep'));
+    // Keys typed into a field inside the canvas, and other keys, change nothing.
+    const input = document.createElement('input');
+    canvas.appendChild(input);
+    fireEvent.keyDown(input, { key: 'Delete' });
+    fireEvent.keyDown(canvas, { key: 'a' });
+    expect(store().definition!.nodes.some((n) => n.id === 'prep')).toBe(true);
+    fireEvent.keyDown(canvas, { key: 'Delete' });
+    expect(store().definition!.nodes.some((n) => n.id === 'prep')).toBe(false);
+    // Nothing selected: nothing happens.
+    const count = store().definition!.nodes.length;
+    fireEvent.keyDown(canvas, { key: 'Backspace' });
+    expect(store().definition!.nodes).toHaveLength(count);
+    // A selected edge goes first.
+    act(() => flow().onEdgesChange!([{ type: 'select', id: 'e1', selected: true }]));
+    fireEvent.keyDown(canvas, { key: 'Backspace' });
+    expect(store().definition!.edges.some((e) => e.id === 'e1')).toBe(false);
+    expect(flow().deleteKeyCode).toBeNull();
   });
 
   it('applies edge changes and removals', () => {

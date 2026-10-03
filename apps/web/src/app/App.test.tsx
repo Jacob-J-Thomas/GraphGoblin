@@ -17,14 +17,37 @@ describe('App shell', () => {
         payload: { ok: true },
         receivedAt: TS,
         dedupeKey: 'b1',
+        source: 'webhook:ep1',
+        runIds: ['01ARZ3NDEKTSV4RRFFQ69G5FAV'],
       },
-      { id: 'e2', ownerId: 'local', type: 'ping', payload: null, receivedAt: TS },
+      {
+        id: 'e2',
+        ownerId: 'local',
+        type: 'ping',
+        payload: null,
+        receivedAt: TS,
+        source: 'run:01ARZ3NDEKTSV4RRFFQ69G5FAW',
+        runIds: [],
+      },
+      {
+        id: 'e3',
+        ownerId: 'local',
+        type: 'pong',
+        payload: 1,
+        receivedAt: TS,
+        source: 'api',
+        runIds: [],
+      },
     ];
     renderApp('/', api);
     expect(await screen.findByRole('heading', { name: 'Loops' })).toBeInTheDocument();
     await user.click(screen.getByRole('link', { name: 'Events' }));
     expect(await screen.findByText('build.done')).toBeInTheDocument();
     expect(screen.getByText('b1')).toBeInTheDocument();
+    expect(screen.getByText('webhook delivery')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '01ARZ3NDEKTSV4RRFFQ69G5FAV' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'run 9G5FAW' })).toBeInTheDocument();
+    expect(screen.getByText('api')).toBeInTheDocument();
     await user.click(screen.getByRole('link', { name: 'Runs' }));
     expect(await screen.findByRole('heading', { name: 'Runs' })).toBeInTheDocument();
     await user.click(screen.getByRole('link', { name: 'Settings' }));

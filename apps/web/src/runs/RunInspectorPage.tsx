@@ -15,7 +15,7 @@ import {
   initialThreadFrom,
   nodeActivity,
   patchDiff,
-  threadAt,
+  tryThreadAt,
 } from './projections.js';
 import { useRunEvents, type StreamStatus } from './useRunEvents.js';
 
@@ -114,13 +114,20 @@ function ThreadViewer({
   events: RunEvent[];
   seq: number;
 }) {
-  const initial = useMemo(() => initialThreadFrom(current), [current]);
-  const thread = useMemo(() => threadAt(initial, events, seq), [initial, events, seq]);
+  const initial = useMemo(() => initialThreadFrom(current, events), [current, events]);
+  const replayed = useMemo(() => tryThreadAt(initial, events, seq), [initial, events, seq]);
   const selected = events.find((e) => e.seq === seq);
   const diff = useMemo(() => {
-    if (selected?.type !== 'node.finished') return undefined;
-    return patchDiff(threadAt(initial, events, seq - 1), thread, selected.patch);
-  }, [selected, initial, events, seq, thread]);
+    if (selected?.type !== 'node.finished' || !replayed.ok) return undefined;
+    const before = tryThreadAt(initial, events, seq - 1);
+    return before.ok ? patchDiff(before.thread, replayed.thread, selected.patch) : undefined;
+  }, [selected, initial, events, seq, replayed]);
+  if (!replayed.ok) {
+    return (
+      <Alert title={`The thread cannot be reconstructed at event ${seq}`}>{replayed.error}</Alert>
+    );
+  }
+  const thread = replayed.thread;
   return (
     <div className="space-y-3">
       {diff ? (
@@ -286,7 +293,7 @@ export function RunInspectorPage() {
                   className={`w-full rounded px-1 text-left hover:bg-slate-100 ${event.seq === seq ? 'bg-emerald-50' : ''}`}
                   onClick={() => setSelectedSeq(event.seq)}
                 >
-                  <span className="text-slate-400">#{event.seq}</span> <code>{event.type}</code>{' '}
+                  <span className="text-slate-500">#{event.seq}</span> <code>{event.type}</code>{' '}
                   {describeEvent(event)}
                 </button>
               </li>

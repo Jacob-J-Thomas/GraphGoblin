@@ -2955,6 +2955,7 @@ export interface components {
                 runId: string;
                 nodeId: string;
             } | undefined;
+            initialThread?: components["schemas"]["ContextThreadInput"] | undefined;
         } | {
             runId: string;
             seq: number;
@@ -4421,6 +4422,7 @@ export interface components {
                 runId: string;
                 nodeId: string;
             } | undefined;
+            initialThread?: components["schemas"]["ContextThread"] | undefined;
         } | {
             runId: string;
             seq: number;

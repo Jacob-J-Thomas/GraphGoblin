@@ -10,7 +10,12 @@ import {
 import { OutcomeSchema } from './nodes.js';
 import { JsonPatchSchema } from './patch.js';
 import { RunFailureSchema, RunStatusSchema, WaitSpecSchema } from './run.js';
-import { ReplayOriginSchema, ReturnChannelSchema, UsageSchema } from './thread.js';
+import {
+  ContextThreadSchema,
+  ReplayOriginSchema,
+  ReturnChannelSchema,
+  UsageSchema,
+} from './thread.js';
 
 const Base = {
   runId: UlidSchema,
@@ -33,6 +38,8 @@ export const RunEventSchema = z.discriminatedUnion('type', [
     type: z.literal('run.queued'),
     /** Present when the run is a replay fork; mirrors `invocation.replayOf` on its thread. */
     replayOf: ReplayOriginSchema.optional(),
+    /** The thread the run starts from, including a subloop seed, so replay needs no other source. */
+    initialThread: ContextThreadSchema.optional(),
   }),
   z.strictObject({ ...Base, type: z.literal('run.started'), attempt: z.number().int().positive() }),
   z.strictObject({

@@ -19,6 +19,7 @@ Rules that apply to every package:
 | 2    | WP-D web editor and PWA, WP-E MCP server and Codex plugin   | yes, two worktrees   | WP-A merged              |
 | 2    | WP-I integration and follow-ups (delivered)                 | alongside WP-D       | WP-A, WP-B, WP-C merged  |
 | 3    | WP-F1 backend and tooling hardening (delivered)             | alongside WP-D       | WP-B through WP-E merged |
+| 3    | WP-D2 adversarial QA pass and fixes (delivered)             | alongside WP-F1      | WP-D merged              |
 | 3    | WP-F2 packaging, user guide, adversarial QA, tag 1.0        | no                   | WP-D and WP-F1 merged    |
 
 ## WP-0 - M3 stabilisation
@@ -89,6 +90,12 @@ Delivered: `apps/mcp` serves the thirteen tools and two run resources over stdio
 ## WP-I - Integration and follow-ups - DELIVERED 2026-10-03
 
 Delivered: `apps/api` composes the real Codex harness, structured port, and deciders `[jev, codex]`, with `GG_CODEX_BINARY` and a secret-change hook that refreshes Jev when `jev-api-key` is set or deleted; poll triggers record the new `poll` invocation source; the API client is regenerated; `HarnessPort.resume` takes the full `HarnessStartRequest` so resumed turns keep the node's settings; the SSE stream ends at once for a run that is already terminal; the dependency-cruiser cross-package rule only flags relative imports. A `LIVE=1` API smoke through the real Codex CLI passed. The Jev live check stays open until a key is available. See the M4 wiring notes in 12.
+
+## WP-D2 - Adversarial QA pass and fixes - DELIVERED 2026-10-03
+
+Read: 04, 07, 09, 10. Depends on: WP-D merged. Deliver: an adversarial QA pass over the built app and the API with every defect recorded and fixed or explicitly left open, the WP-D1 gaps closed (API-key mode, owner defaults in the engine, child-run replay), and an optional `LIVE=1` check through the UI.
+
+Delivered: the report is `qa/2026-10-03-wp-d2.md`; regressions are `apps/web/e2e/qa.spec.ts` and `apps/api/src/qa.test.ts`; the E2E server gained a control port for scripting the fakes; the `LIVE=1` UI spec passed against Codex (`gpt-6-luna`, `low`, read-only). Open items are in the report and as questions 16 to 18 in 13.
 
 ## WP-F - Hardening and 1.0 (M8)
 
