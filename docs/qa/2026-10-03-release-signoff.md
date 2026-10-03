@@ -2,10 +2,42 @@
 
 Final review of `main` at `21fa22d` before the 1.0 tag. Every gate was run again with Turborepo caches bypassed, the install path was followed end to end with a fresh data directory and one live Codex run, both QA reports and the plan's residual-risk list were checked against the code, and sixteen documentation claims were checked against the code. Machine: Windows 11 Pro, Node 23.10.0 (dependency-cruiser on Node 22.14.0), pnpm 12.8.1, Codex CLI 0.160.0, Microsoft Edge for Playwright.
 
-**Verdict: ship with the following fixes first.** Two items block the tag; both are small. Everything else is either verified or an honestly recorded residual risk.
+**Final verdict (re-verified on `0441b26`): ship with the following fixes first.** Both blockers from the first pass are fixed and verified (see "Re-verification on `0441b26`" below). The fix for the first one introduced a new blocker in the container image:
+
+1. **The data-directory lock never recovers in the container after an unclean exit.** The image runs `node` as PID 1 (`CMD ["node", "apps/api/dist/main.js"]`, no init). After any exit that skips the release (SIGKILL when `docker stop`'s default 10-second grace runs out while a run is still settling, OOM, `docker kill`, a host or Docker Desktop crash), `graphgoblin.lock` on the volume holds `"pid":1`. The restarted container's own process is PID 1 again, so `process.kill(1, 0)` succeeds and the API refuses to start. `restart: unless-stopped` then crash-loops until someone deletes the file from the volume by hand. Reproduced below. Fix: treat a lock whose PID equals the current process's PID as stale unless this process holds it (track held paths in-process), and give the compose service a `stop_grace_period` that covers a settling run.
+2. **The container's first-key instructions in the README now fail.** `README.md` (Quick start, step 3) and the comment in `docker-compose.yml` still say `docker compose exec graphgoblin ... --create-api-key`. With the lock, that exits 1 because the running API holds it. Guide 01, guide 06, and docs/11 correctly say `docker compose run --rm` with the API stopped. ADR-0015 still says the command "can run while the server is running"; that decision changed and needs recording.
+
+The first pass (on `21fa22d`) found these two blockers, both now fixed:
 
 1. **Guard the one-process-per-data-directory rule.** A second API process started against the same data directory recovers and re-executes the first process's in-flight runs, even when it then fails to bind the port. Reproduced below. Fix: take an exclusive lock in the data directory before `container.start()` (or, at the least, bind the port before recovery), and state the rule in the user guide.
 2. **Correct two false security and retention claims in docs/11 (and the matching row in docs/02).** They describe per-secret data keys, an OS-keyring master-key source, and a manual purge action, none of which exists.
+
+## Re-verification on `0441b26`
+
+The fixes landed as `1359067` (merged in `0441b26`): `apps/api/src/data-dir-lock.ts`, called first in `createContainer` and in `--create-api-key`, plus the documentation corrections. After `pnpm.cmd build` with a fresh `GG_DATA_DIR` under `%TEMP%`. The full gate suite was not rerun in this round; the coordinator reports it green on `0441b26`.
+
+| Check                                                                                                                                          | Result                                                                                                                                                                                                                                           |
+| ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Process A running a 15-second script node; process B, same data directory, same port                                                           | B exits 1 after 1.4 s with `another GraphGoblin process holds <dataDir>\graphgoblin.lock`. The run's log had 5 events before B and still 5 after it; it finished with attempt 1 only (10 events, `succeeded`), and the marker file has one line. |
+| The same with B on `GG_PORT=4748`                                                                                                              | B exits 1 after 1.3 s with the same message; no event written.                                                                                                                                                                                   |
+| `--create-api-key` while A runs                                                                                                                | Exits 1 with `could not create the API key: another GraphGoblin process holds ...`, as docs/11 and guide 01 now say.                                                                                                                             |
+| `--preflight` while A runs                                                                                                                     | Exit 0; takes no lock.                                                                                                                                                                                                                           |
+| A killed with `Stop-Process` (no handler runs), then a new start                                                                               | The lock still named A's dead PID; the new process reclaimed it, wrote its own PID, and started.                                                                                                                                                 |
+| SIGINT and SIGTERM release (`main()` imported and the signal emitted on the process, since Windows cannot deliver either to Node from outside) | Both handlers stopped the API, exited 0, and left no `graphgoblin.lock` or `.reclaim` file.                                                                                                                                                      |
+| docs/11 "Secret store" and "Retention", docs/02 secrets row                                                                                    | Now correct: values encrypted directly with the master key (`master-key.ts` writes it with mode `0o600`), no per-secret keys, no keyring, no purge action, all marked post-1.0.                                                                  |
+| First-pass follow-ups                                                                                                                          | Applied: the WP-D2 summary table (0 major, 2 open), the ADR-0016 link text and the `api-keys:write` revocation sentence in 07, `pnpm.cmd start` in `install.ps1`, and the SSE grace rationale in 07 and `sse.ts`.                                |
+
+### Stale lock in the container (new blocking item 1)
+
+The lock treats any live PID as the owner, including the process's own PID. On the host a restarted API almost never gets its predecessor's PID; in the image it always does. Reproduced with Docker Desktop 29.1.5. The existing `graphgoblin:local` image ran the new `data-dir-lock.js` with a named volume on `/data`:
+
+```
+container 1: pid 1, acquired                 -> docker kill (SIGKILL)
+volume:      {"pid":1,"startedAt":"2026-10-03T18:52:11.014Z",...}
+container 2: pid 1, refused: another GraphGoblin process holds /data/graphgoblin.lock (exit 1)
+```
+
+The same refusal happens on the host when a lock names the current PID (`acquireDataDirLock` on a directory whose lock holds `process.pid`: refused). Guide 07's troubleshooting row tells the user to remove a malformed lock or a leftover `.reclaim` by hand, but not a well-formed lock naming PID 1 in a container. The shutdown handler waits for active runs to settle before it releases the lock. `docker stop` sends SIGKILL after 10 seconds, so stopping or restarting the container during a Codex turn is enough to trigger the refusal. An interrupted reclamation that leaves `graphgoblin.lock.reclaim` behind also blocks every start until it is removed by hand. That case is documented and its window is two adjacent file operations, so it is not blocking.
 
 ## Gates
 
@@ -131,11 +163,11 @@ Sixteen claims checked against the code; thirteen hold, two are false, one is st
 
 ## Residual-risk assessment
 
-With the two fixes above, 1.0 meets the owner's bar: permissive licences only and Codex external (allowlist green); 90% lines and branches per package, enforced (table above); the API, MCP server, and Codex plugin over one contract; failures end runs with a typed reason (seen in the WP-D2 checks and this review's script failure, `SCRIPT_EXIT_CODE`, `resumable: true`); adversarial QA by both vendors with every finding closed or recorded.
+With the two remaining container fixes at the top of this report, 1.0 meets the owner's bar: permissive licences only and Codex external (allowlist green); 90% lines and branches per package, enforced (table above); the API, MCP server, and Codex plugin over one contract; failures end runs with a typed reason (seen in the WP-D2 checks and this review's script failure, `SCRIPT_EXIT_CODE`, `resumable: true`); adversarial QA by both vendors with every finding closed or recorded.
 
 Residual risks for 1.0, in order of weight:
 
-1. One API process per data directory, with no execution or scheduler lease (major until the lock lands, then low: it becomes a refused start).
+1. One API process per data directory, with no execution or scheduler lease. The lock is enforced on `0441b26`, so a second process becomes a refused start. The lock is per data directory, so two data directories sharing one `GG_DB_URL` are still unguarded (documented). A lock whose PID is reused by an unrelated process refuses until it is removed by hand (documented; low on the host, certain in the container until the fix above).
 2. Returns are at least once: a crash between delivering a channel and recording it re-delivers; for `event` channels that can start downstream runs twice, for `webhook` channels it posts twice (low).
 3. A crash between creating a subloop child and recording `child_run.started` can orphan that child and start a second (low).
 4. Expression safety is a syntactic regex heuristic: polynomial backtracking, memory, and Liquid CPU and output size are not bounded in-process (low for one local owner; a hosted product needs out-of-process evaluation).
@@ -144,4 +176,4 @@ Residual risks for 1.0, in order of weight:
 7. `run.queued.initialThread` has no size cap (bounded by request limits).
 8. Product gaps and cosmetic defects as listed in the plan (replay button, scheduler status, webhook endpoints on Events, editor modes, shortcuts and undo, `exposeTo`, `capabilities`, `list_runs` paging, D29, D30).
 
-Non-blocking documentation follow-ups: the WP-D2 summary table's open counts; the "ADR-0015" link text for ADR-0016 in 07; the SSE grace rationale in 07 and `sse.ts`; `scripts/install.ps1` printing `pnpm start` rather than `pnpm.cmd start` in its PowerShell hint; a sentence in 07 that `api-keys:write` can revoke every key; and adding items 2 to 4 above to the plan's residual-risk list (done in the sign-off paragraph there).
+Non-blocking documentation follow-ups from the first pass are all applied on `0441b26` (the WP-D2 summary table, the ADR-0016 link text and revocation sentence in 07, the SSE grace rationale, the `pnpm.cmd start` hint); items 2 to 4 above are in the plan's residual-risk list through the sign-off paragraph there. Still open besides the two blockers: ADR-0015's "can run while the server is running" consequence, superseded by the lock without a new ADR.
