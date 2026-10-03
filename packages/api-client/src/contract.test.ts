@@ -8,7 +8,7 @@ import type {
   LoopDefinitionInput as ContractLoopDefinition,
   RunEvent,
 } from '@graphgoblin/contracts';
-import { minimalLoop } from '@graphgoblin/contracts/testing';
+import { fakeUlid, minimalLoop } from '@graphgoblin/contracts/testing';
 import { createTestApp, type TestApp } from '@graphgoblin/api/testing';
 import {
   apiKeys,
@@ -116,7 +116,7 @@ describe('against the in-process API (local trusted mode)', () => {
   });
 
   it('turns problem details into GraphGoblinApiError, including validation errors', async () => {
-    const error = await runs.get(client, 'missing').catch((e: unknown) => e);
+    const error = await runs.get(client, fakeUlid('missing')).catch((e: unknown) => e);
     expect(error).toBeInstanceOf(GraphGoblinApiError);
     expect(error).toMatchObject({ status: 404, code: 'RUN_NOT_FOUND' });
     expect((error as GraphGoblinApiError).problem?.type).toMatch(/run-not-found$/);
@@ -216,7 +216,7 @@ describe('against the in-process API (local trusted mode)', () => {
     let attempts = 0;
     const subscription = subscribeRunEvents({
       client,
-      runId: 'missing',
+      runId: fakeUlid('missing'),
       onEvent: () => undefined,
       onError: () => {
         attempts += 1;

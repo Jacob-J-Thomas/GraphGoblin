@@ -94,15 +94,136 @@ describe('adversarial API invariants', () => {
     expect((await t.app.inject('/docs/anything')).statusCode).toBe(404);
   });
 
-  it.todo('ADV-008: a credential without read scope cannot enumerate private resources');
-  // Executed reproduction; restore this test after fixing the finding.
-  // it('ADV-008: a credential without read scope cannot enumerate private resources', async () => {
-  //   const t = await app({ requireApiKey: true });
-  //   const key = await t.container.repos.apiKeys.create('local', 'write only', ['runs:write']);
-  //   for (const url of ['/loops', '/runs', '/settings', '/secrets', '/api-keys', '/model-catalog', '/events', '/harness/preflight']) {
-  //     expect((await t.app.inject({ url, headers: { authorization: `Bearer ${key.token}` } })).statusCode, url).toBe(403);
-  //   }
-  // });
+  it('ADV-008: a credential without read scope cannot enumerate private resources', async () => {
+    const t = await app({ requireApiKey: true });
+    const key = await t.container.repos.apiKeys.create('local', 'write only', ['runs:write']);
+    for (const url of [
+      '/loops',
+      '/settings',
+      '/secrets',
+      '/api-keys',
+      '/model-catalog',
+      '/events',
+      '/harness/preflight',
+      '/system/preflight',
+    ]) {
+      expect(
+        (await t.app.inject({ url, headers: { authorization: `Bearer ${key.token}` } })).statusCode,
+        url,
+      ).toBe(403);
+    }
+    // runs:write implies runs:read.
+    expect(
+      (await t.app.inject({ url: '/runs', headers: { authorization: `Bearer ${key.token}` } }))
+        .statusCode,
+    ).toBe(200);
+  });
+
+  /**
+   * The documented scope of every advertised private route (docs/07). A new route must be added
+   * here, so its scope is a decision rather than an accident.
+   */
+  const ROUTE_SCOPES: Record<string, string> = {
+    'GET /loops': 'loops:read',
+    'POST /loops': 'loops:write',
+    'POST /loops/import': 'loops:write',
+    'GET /loops/{id}': 'loops:read',
+    'DELETE /loops/{id}': 'loops:write',
+    'PUT /loops/{id}/draft': 'loops:write',
+    'POST /loops/{id}/validate': 'loops:read',
+    'POST /loops/{id}/publish': 'loops:write',
+    'GET /loops/{id}/versions': 'loops:read',
+    'GET /loops/{id}/versions/{versionId}': 'loops:read',
+    'GET /loops/{id}/export': 'loops:read',
+    'GET /loops/{id}/triggers': 'loops:read',
+    'POST /loops/{id}/runs': 'runs:write',
+    'GET /runs': 'runs:read',
+    'GET /runs/{id}': 'runs:read',
+    'GET /runs/{id}/thread': 'runs:read',
+    'GET /runs/{id}/events': 'runs:read',
+    'GET /runs/{id}/sessions': 'runs:read',
+    'GET /runs/{id}/artifacts/{artifactId}': 'runs:read',
+    'POST /runs/{id}/cancel': 'runs:write',
+    'POST /runs/{id}/pause': 'runs:write',
+    'POST /runs/{id}/resume': 'runs:write',
+    'POST /runs/{id}/input': 'runs:write',
+    'POST /runs/{id}/signals/{name}': 'runs:write',
+    'POST /runs/{id}/replay': 'runs:write',
+    'GET /settings': 'settings:read',
+    'PUT /settings': 'settings:write',
+    'DELETE /settings/{key}': 'settings:write',
+    'GET /model-catalog': 'settings:read',
+    'PUT /model-catalog/{harness}/{model}': 'settings:write',
+    'DELETE /model-catalog/{harness}/{model}': 'settings:write',
+    'GET /secrets': 'secrets:read',
+    'PUT /secrets/{name}': 'secrets:write',
+    'DELETE /secrets/{name}': 'secrets:write',
+    'GET /api-keys': 'api-keys:read',
+    'POST /api-keys': 'api-keys:write',
+    'DELETE /api-keys/{id}': 'api-keys:write',
+    'GET /events': 'events:read',
+    'POST /events': 'events:write',
+    'GET /system/preflight': 'system:read',
+    'GET /harness/preflight': 'system:read',
+  };
+
+  it('ADV-008: every advertised route against every scope', async () => {
+    const t = await app({ requireApiKey: true });
+    const scopes = [...new Set(Object.values(ROUTE_SCOPES))];
+    const resources = [...new Set(scopes.map((s) => s.split(':')[0]!))];
+    const tokens = new Map<string, string>();
+    for (const scope of [...scopes, '*']) {
+      tokens.set(scope, (await t.container.repos.apiKeys.create('local', scope, [scope])).token);
+    }
+    const advertised: string[] = [];
+    for (const [path, operations] of Object.entries(t.app.swagger().paths!)) {
+      if (['/healthz', '/version'].includes(path) || path.startsWith('/hooks/')) continue;
+      for (const method of Object.keys(operations)) {
+        if (['get', 'post', 'put', 'delete', 'patch'].includes(method))
+          advertised.push(`${method.toUpperCase()} ${path}`);
+      }
+    }
+    expect(advertised.sort()).toEqual(Object.keys(ROUTE_SCOPES).sort());
+    for (const route of advertised) {
+      const required = ROUTE_SCOPES[route]!;
+      const [method, path] = route.split(' ') as ['GET', string];
+      // An unknown id gets past authorization (404, 400, 409, or success) without touching data.
+      const url = path.replace(/\{([^}]+)\}/g, (_, name: string) =>
+        ['id', 'versionId'].includes(name) ? fakeUlid('scope-table') : 'scope-table',
+      );
+      for (const scope of [...scopes, '*']) {
+        const [resource, action] = scope.split(':');
+        const allowed =
+          scope === '*' ||
+          scope === required ||
+          (required === `${resource}:read` && action === 'write');
+        const response = await t.app.inject({
+          method,
+          url,
+          headers: { authorization: `Bearer ${tokens.get(scope)}`, accept: 'application/json' },
+        });
+        if (allowed) expect(response.statusCode, `${route} with ${scope}`).not.toBe(403);
+        else expect(response.statusCode, `${route} with ${scope}`).toBe(403);
+      }
+    }
+    expect(resources).toEqual([
+      'loops',
+      'runs',
+      'settings',
+      'secrets',
+      'api-keys',
+      'events',
+      'system',
+    ]);
+    await t.idle();
+  });
+
+  it('ADV-008: local trusted mode keeps full access without a key', async () => {
+    const t = await app();
+    for (const url of ['/loops', '/runs', '/settings', '/secrets', '/api-keys', '/events']) {
+      expect((await t.app.inject(url)).statusCode, url).toBe(200);
+    }
+  });
 
   it('12: every mutating route rejects a valid key with no write scopes', async () => {
     const t = await app({ requireApiKey: true });
@@ -445,19 +566,27 @@ describe('adversarial API invariants', () => {
         (await t.app.inject({ method: 'POST', url: '/loops', payload: { definition } })).statusCode,
       ).toBe(400);
   });
-  it.todo('ADV-009: every id route validates ULIDs before repository lookup');
-  // Executed reproduction; restore this test after fixing the finding.
-  // it('ADV-009: every id route validates ULIDs before repository lookup', async () => {
-  //   const t = await app();
-  //   for (const [path, methods] of Object.entries(t.app.swagger().paths!)) {
-  //     if (!path.includes('{id}')) continue;
-  //     for (const method of Object.keys(methods!)) {
-  //       if (!['get', 'post', 'put', 'delete'].includes(method)) continue;
-  //       const response = await t.app.inject({ method: method.toUpperCase() as 'GET', url: path.replace('{id}', 'not-a-ulid').replace(/\{[^}]+\}/g, 'x') });
-  //       expect(response.statusCode, `${method} ${path}`).toBe(400);
-  //     }
-  //   }
-  // });
+  it('ADV-009: every id route validates ULIDs before repository lookup', async () => {
+    const t = await app();
+    let checked = 0;
+    for (const [path, methods] of Object.entries(t.app.swagger().paths!)) {
+      if (!path.includes('{id}')) continue;
+      for (const method of Object.keys(methods)) {
+        if (!['get', 'post', 'put', 'delete'].includes(method)) continue;
+        const response = await t.app.inject({
+          method: method.toUpperCase() as 'GET',
+          url: path.replace('{id}', 'not-a-ulid').replace(/\{[^}]+\}/g, 'x'),
+        });
+        expect(response.statusCode, `${method} ${path}`).toBe(400);
+        expect(response.json(), `${method} ${path}`).toMatchObject({ code: 'VALIDATION_FAILED' });
+        checked++;
+      }
+    }
+    expect(checked).toBeGreaterThan(20);
+    // A version id is a ULID too.
+    const id = await t.publishLoop(minimalLoop());
+    expect((await t.app.inject(`/loops/${id}/versions/not-a-ulid`)).statusCode).toBe(400);
+  });
 
   it.each(['missing-terminal', 'usage-only', 'expired-resume'])(
     '8: Codex adapter boundary %s',

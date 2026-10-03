@@ -5,6 +5,7 @@ import {
   RunEventSchema,
   RunRecordSchema,
   RunStatusSchema,
+  UlidSchema,
   type InvocationSource,
   type RunRecord,
 } from '@graphgoblin/contracts';
@@ -18,7 +19,7 @@ import { problem } from '../plugins/errors.js';
 import { streamRunEvents } from '../sse.js';
 import type { ApiInstance } from '../types.js';
 
-const IdParams = z.object({ id: z.string() });
+const IdParams = z.object({ id: UlidSchema });
 
 const SessionSchema = z.object({
   runId: z.string(),
@@ -236,7 +237,7 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
       schema: {
         tags: ['runs'],
         summary: 'Deliver a named signal',
-        params: z.object({ id: z.string(), name: z.string() }),
+        params: z.object({ id: UlidSchema, name: z.string() }),
         body: z.object({ payload: JsonValueSchema.optional() }).default({}),
         response: { 200: z.object({ run: RunRecordSchema, woke: z.boolean() }) },
       },
@@ -297,7 +298,7 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
       schema: {
         tags: ['runs'],
         summary: "Download an artifact from the run's thread",
-        params: z.object({ id: z.string(), artifactId: z.string() }),
+        params: z.object({ id: UlidSchema, artifactId: z.string() }),
       },
     },
     async (request, reply) => {

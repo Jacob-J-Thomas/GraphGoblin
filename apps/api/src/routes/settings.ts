@@ -1,4 +1,4 @@
-import { EffortSchema, JsonValueSchema } from '@graphgoblin/contracts';
+import { EffortSchema, JsonValueSchema, UlidSchema } from '@graphgoblin/contracts';
 import { z } from 'zod';
 import type { Container } from '../container.js';
 import { requireScope } from '../plugins/auth.js';
@@ -199,7 +199,7 @@ export function registerSettingsRoutes(app: ApiInstance, container: Container): 
       schema: {
         tags: ['api-keys'],
         summary: 'Revoke an API key',
-        params: z.object({ id: z.string() }),
+        params: z.object({ id: UlidSchema }),
         response: { 204: z.null() },
       },
     },

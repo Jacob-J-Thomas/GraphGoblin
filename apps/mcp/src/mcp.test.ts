@@ -8,10 +8,13 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import type { LoopDefinitionInput } from '@graphgoblin/contracts';
-import { minimalLoop } from '@graphgoblin/contracts/testing';
+import { fakeUlid, minimalLoop } from '@graphgoblin/contracts/testing';
 import { createTestApp, type TestApp } from '@graphgoblin/api/testing';
 import { createGraphGoblinClient } from '@graphgoblin/api-client';
 import { createMcpServer, readAllEvents } from './index.js';
+
+/** A well-formed run id that no run has. */
+const MISSING_RUN = fakeUlid('missing');
 
 const TOOLS = [
   'list_loops',
@@ -198,6 +201,9 @@ describe('MCP server against the in-process API', () => {
     const missing = await call('describe_loop', { loopId: 'no-such-loop' });
     expect(missing.isError).toBe(true);
     expect(text(missing)).toMatch(/^LOOP_NOT_FOUND: .*list_loops/);
+    // A well-formed id that matches no loop falls back to a name lookup too.
+    const missingId = await call('describe_loop', { loopId: fakeUlid('no-such-loop') });
+    expect(text(missingId)).toMatch(/^LOOP_NOT_FOUND: .*list_loops/);
 
     await t.publishLoop({ ...minimalLoop(), name: 'twin' });
     await t.publishLoop({ ...minimalLoop(), name: 'Twin' });
@@ -344,16 +350,19 @@ describe('MCP server against the in-process API', () => {
       'resume_run',
       'wait_for_run',
     ]) {
-      const result = await call(name, { runId: 'missing' });
+      const result = await call(name, { runId: MISSING_RUN });
       expect(result.isError, name).toBe(true);
       expect(text(result)).toBe(
-        'GraphGoblin API error RUN_NOT_FOUND (HTTP 404): run missing not found',
+        `GraphGoblin API error RUN_NOT_FOUND (HTTP 404): run ${MISSING_RUN} not found`,
       );
     }
-    const signal = await call('send_signal', { runId: 'missing', name: 'go' });
+    const signal = await call('send_signal', { runId: MISSING_RUN, name: 'go' });
     expect(text(signal)).toContain('RUN_NOT_FOUND');
-    const input = await call('provide_input', { runId: 'missing', input: 1 });
+    const input = await call('provide_input', { runId: MISSING_RUN, input: 1 });
     expect(text(input)).toContain('RUN_NOT_FOUND');
+    // A malformed id is a typed request error, not a lookup.
+    const malformed = await call('get_run', { runId: 'not-a-ulid' });
+    expect(text(malformed)).toMatch(/^GraphGoblin API error VALIDATION_FAILED \(HTTP 400\)/);
 
     const invalid = await call('list_runs', { limit: 0 });
     expect(invalid.isError).toBe(true);
@@ -386,9 +395,9 @@ describe('MCP server against the in-process API', () => {
     expect(thread.contents[0]?.mimeType).toBe('application/json');
     expect(JSON.parse((thread.contents[0] as { text: string }).text).run.id).toBe(runId);
 
-    await expect(client.readResource({ uri: 'graphgoblin://runs/missing/thread' })).rejects.toThrow(
-      /RUN_NOT_FOUND/,
-    );
+    await expect(
+      client.readResource({ uri: `graphgoblin://runs/${MISSING_RUN}/thread` }),
+    ).rejects.toThrow(/RUN_NOT_FOUND/);
 
     const api = createGraphGoblinClient({ baseUrl });
     const paged = await readAllEvents(api, runId, 2, 3);

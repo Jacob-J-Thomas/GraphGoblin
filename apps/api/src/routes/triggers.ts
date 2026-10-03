@@ -1,4 +1,4 @@
-import { JsonValueSchema } from '@graphgoblin/contracts';
+import { JsonValueSchema, UlidSchema } from '@graphgoblin/contracts';
 import { EngineRequestError } from '@graphgoblin/engine';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
@@ -163,7 +163,7 @@ export function registerTriggerRoutes(app: ApiInstance, container: Container): v
       schema: {
         tags: ['triggers'],
         summary: 'Schedules, webhook endpoints, and armed poll triggers of a loop',
-        params: z.object({ id: z.string() }),
+        params: z.object({ id: UlidSchema }),
         response: {
           200: z.object({
             schedules: z.array(ScheduleSchema),

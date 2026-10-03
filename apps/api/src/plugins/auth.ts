@@ -36,9 +36,48 @@ function isPublic(url: string): boolean {
 }
 
 /**
+ * Routes whose scope is not `<first path segment>:<read|write>` by method. Keys are
+ * `METHOD route-pattern`, as Fastify registers the route.
+ */
+const SCOPE_OVERRIDES: Record<string, string> = {
+  // Starting a run is a run command, even though it is addressed through its loop.
+  'POST /loops/:id/runs': 'runs:write',
+  // Validation reads the loop and saves nothing.
+  'POST /loops/:id/validate': 'loops:read',
+};
+
+/** Path segments that share another resource's scope. */
+const SCOPE_RESOURCE_ALIASES: Record<string, string> = {
+  'model-catalog': 'settings',
+  harness: 'system',
+};
+
+/**
+ * The scope a private route needs (docs/07): an explicit override, otherwise the route's first
+ * path segment (through the aliases) with `read` for GET and HEAD and `write` for everything
+ * else. Undefined for a request that matched no route, which then gets its 404.
+ */
+export function requiredScope(method: string, routeUrl: string | undefined): string | undefined {
+  if (!routeUrl) return undefined;
+  const override = SCOPE_OVERRIDES[`${method} ${routeUrl}`];
+  if (override) return override;
+  const segment = routeUrl.split('/')[1] ?? '';
+  const resource = SCOPE_RESOURCE_ALIASES[segment] ?? segment;
+  return `${resource}:${method === 'GET' || method === 'HEAD' ? 'read' : 'write'}`;
+}
+
+/** `*` grants everything; `<resource>:write` implies `<resource>:read`. */
+export function hasScope(scopes: AuthContext['scopes'], scope: string): boolean {
+  if (scopes === '*' || scopes.includes('*') || scopes.includes(scope)) return true;
+  return scope.endsWith(':read') && scopes.includes(`${scope.slice(0, -':read'.length)}:write`);
+}
+
+/**
  * Local trusted mode plus API keys (docs/07). Without a key and with `requireApiKey` off, the
  * request acts as the local owner. A presented key must resolve, or the request is rejected even
- * in local mode so a wrong key never silently falls back to local access.
+ * in local mode so a wrong key never silently falls back to local access. A key must also hold
+ * the route's scope (`requiredScope`); that is checked here, before the body is parsed or any
+ * data is read, so every route, read or write, is covered by one policy.
  */
 export function registerAuth(app: FastifyInstance, container: Container): void {
   app.decorateRequest('auth', null as unknown as AuthContext);
@@ -60,6 +99,10 @@ export function registerAuth(app: FastifyInstance, container: Container): void {
         actor: { kind: 'api-key', id: record.id },
         scopes: record.scopes,
       };
+      const scope = requiredScope(request.method, request.routeOptions.url);
+      if (scope && !hasScope(record.scopes, scope)) {
+        return problem(reply, 403, 'FORBIDDEN', `this key lacks the "${scope}" scope`);
+      }
       return;
     }
     if (container.config.requireApiKey) {
@@ -69,14 +112,13 @@ export function registerAuth(app: FastifyInstance, container: Container): void {
   });
 }
 
-/** Scope check for routes that need one. `*` (local mode) passes everything. */
+/**
+ * Scope check inside a handler. The `onRequest` hook already enforces `requiredScope` for every
+ * route; the handlers' own calls remain as a second, explicit check on writes. `*` (local mode)
+ * passes everything.
+ */
 export function requireScope(request: FastifyRequest, reply: FastifyReply, scope: string): boolean {
-  if (
-    request.auth.scopes === '*' ||
-    request.auth.scopes.includes(scope) ||
-    request.auth.scopes.includes('*')
-  )
-    return true;
+  if (hasScope(request.auth.scopes, scope)) return true;
   void problem(reply, 403, 'FORBIDDEN', `this key lacks the "${scope}" scope`);
   return false;
 }

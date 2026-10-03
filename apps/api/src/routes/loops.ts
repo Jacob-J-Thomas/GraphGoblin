@@ -3,6 +3,7 @@ import {
   LoopExportSchema,
   LoopRecordSchema,
   LoopVersionRecordSchema,
+  UlidSchema,
   type LoopDefinition,
   type LoopRecord,
 } from '@graphgoblin/contracts';
@@ -36,7 +37,7 @@ const LoopDetailSchema = z.object({
 });
 
 const DefinitionBody = z.object({ definition: LoopDefinitionSchema });
-const IdParams = z.object({ id: z.string() });
+const IdParams = z.object({ id: UlidSchema });
 const ACTIVE_STATUSES = ['queued', 'running', 'waiting', 'paused'] as const;
 
 export function registerLoopRoutes(app: ApiInstance, container: Container): void {
@@ -317,7 +318,7 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
       schema: {
         tags: ['loops'],
         summary: 'One version with its definition',
-        params: z.object({ id: z.string(), versionId: z.string() }),
+        params: z.object({ id: UlidSchema, versionId: UlidSchema }),
         response: { 200: LoopVersionRecordSchema },
       },
     },
