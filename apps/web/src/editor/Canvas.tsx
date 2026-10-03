@@ -11,7 +11,7 @@ import {
   type NodeChange,
   type XYPosition,
 } from '@xyflow/react';
-import { useMemo, useState, type DragEvent } from 'react';
+import { useMemo, useState, type DragEvent, type KeyboardEvent } from 'react';
 import {
   canvasPorts,
   connectionProblem,
@@ -134,10 +134,29 @@ export function Canvas({
     addNode(kind, screenToFlowPosition({ x: event.clientX, y: event.clientY }));
   };
 
+  // Delete or Backspace removes the selected edge or node only while focus is on the canvas.
+  // xyflow's own handler listens on the whole document, so the keys deleted the selected node
+  // with focus on a toolbar button too, with no undo.
+  const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== 'Delete' && event.key !== 'Backspace') return;
+    const target = event.target as HTMLElement;
+    if (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return;
+    if (selectedEdge) {
+      removeEdge(selectedEdge);
+      setSelectedEdge(undefined);
+    } else if (selected) {
+      removeNode(selected);
+    } else {
+      return;
+    }
+    event.preventDefault();
+  };
+
   return (
     <div
       className="h-full w-full"
       data-testid="canvas"
+      onKeyDown={onKeyDown}
       onDragOver={(event) => {
         event.preventDefault();
         event.dataTransfer.dropEffect = 'move';
@@ -155,7 +174,7 @@ export function Canvas({
         onNodeDragStop={(_, node) => endDrag(node.id, node.position)}
         onPaneClick={() => select(undefined)}
         fitView
-        deleteKeyCode={['Delete', 'Backspace']}
+        deleteKeyCode={null}
       >
         <Background />
         <Controls />
