@@ -80,6 +80,8 @@ Read: 07, `research/codex-sdk.md` (plugins). Depends on: WP-A merged. Deliver `a
 
 Accept: an E2E test drives the MCP server against the in-process API with the fake harness; one live check from a Codex session starts a loop and reads its result; coverage above thresholds.
 
+Delivered: `apps/mcp` serves the thirteen tools and two run resources over stdio and Streamable HTTP, and `apps/plugin-codex` assembles an installable Codex marketplace with the MCP server and the `run-loop`, `design-loop`, and `inspect-run` skills, verified live with Codex CLI 0.160.0; see "MCP server" and "Codex plugin" in 07.
+
 ## WP-F - Hardening and 1.0 (M8)
 
 Read: 11, 12. Depends on: everything above. Deliver: container image and install script; first-run preflight; replay-at-node; full adversarial QA pass; performance check (1,000 events streamed without UI lag, 10 parallel runs); user guide, node reference generated from schemas, API reference from OpenAPI; tag 1.0.

@@ -1,0 +1,25 @@
+{
+  "name": "graphgoblin",
+  "version": "0.1.0",
+  "description": "Run, design, and inspect GraphGoblin agent loops from a Codex session.",
+  "author": {
+    "name": "GraphGoblin"
+  },
+  "license": "MIT",
+  "keywords": ["graphgoblin", "agent loops", "workflows", "mcp"],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "GraphGoblin",
+    "shortDescription": "Run and design GraphGoblin agent loops",
+    "longDescription": "Registers the GraphGoblin MCP server (loop discovery, runs, waiting, input, signals, event logs, and threads) and ships three skills: $run-loop starts a loop and reports its result, $design-loop drafts and validates a loop definition, and $inspect-run summarises what a run did.",
+    "developerName": "GraphGoblin",
+    "category": "Developer Tools",
+    "capabilities": ["Read", "Write"],
+    "defaultPrompt": [
+      "Use $run-loop to run the nightly-triage loop.",
+      "Use $design-loop to draft a loop that reviews a pull request until the tests pass.",
+      "Use $inspect-run to explain what the last run did."
+    ]
+  }
+}
