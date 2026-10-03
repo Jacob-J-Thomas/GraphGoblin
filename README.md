@@ -14,7 +14,7 @@ From a clone of this repository, in PowerShell:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/install.ps1
-pnpm start
+pnpm.cmd start
 ```
 
 Or in bash (Linux, macOS, or Git Bash on Windows):

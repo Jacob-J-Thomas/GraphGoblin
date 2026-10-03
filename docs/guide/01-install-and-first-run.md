@@ -7,13 +7,13 @@ Install Git, Node 22 or newer, pnpm, and the Codex CLI. The repository pins pnpm
 ```powershell
 git --version
 node --version
-pnpm --version
+pnpm.cmd --version
 codex --version
 codex login
 codex login status
 ```
 
-If PowerShell's execution policy blocks `pnpm.ps1` (or `codex.ps1`), call `pnpm.cmd` (or `codex.cmd`) instead, everywhere this guide shows `pnpm` or `codex` in a PowerShell block.
+PowerShell blocks in this guide call `pnpm.cmd`, because Windows PowerShell's default execution policy blocks the `pnpm.ps1` shim. If it blocks `codex.ps1` too, call `codex.cmd`. Bash blocks use `pnpm` and `codex`.
 
 Run the API as the same operating-system user who logged into Codex. GraphGoblin uses that login and stores no Codex credentials.
 
@@ -43,7 +43,7 @@ The data directory is `~/.graphgoblin` unless `GG_DATA_DIR` is set when you run 
 Then start the API from the repository root and open the address it printed:
 
 ```powershell
-pnpm start
+pnpm.cmd start
 ```
 
 ## Run the container image
@@ -75,8 +75,8 @@ Inside the container the API listens on `0.0.0.0`, so it warns that it is reacha
 The script's steps, by hand:
 
 ```powershell
-pnpm install --frozen-lockfile
-pnpm build
+pnpm.cmd install --frozen-lockfile
+pnpm.cmd build
 node apps/api/dist/main.js --preflight
 ```
 
@@ -85,7 +85,7 @@ node apps/api/dist/main.js --preflight
 From the repository root:
 
 ```powershell
-pnpm start
+pnpm.cmd start
 ```
 
 With no configuration the API listens on `127.0.0.1:4747`, keeps its data in `~/.graphgoblin`, and serves the web app this checkout built (`apps/web/dist`). Set variables from the table below to change that. For example, in PowerShell:
@@ -94,7 +94,7 @@ With no configuration the API listens on `127.0.0.1:4747`, keeps its data in `~/
 $env:GG_DATA_DIR = 'D:\graphgoblin-data'
 $env:GG_DEFAULT_MODEL = 'gpt-6-luna'
 $env:GG_DEFAULT_EFFORT = 'low'
-pnpm start
+pnpm.cmd start
 ```
 
 In Bash:

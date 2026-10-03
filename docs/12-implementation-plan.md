@@ -192,7 +192,7 @@ M8 notes (WP-F2, packaging and the last product fixes, 2026-10-03):
 - **First API key** (D27, question 18): `graphgoblin-api --create-api-key <name> [--scopes a,b]` prints a new key once without starting the server.
 - **Draft conflicts** (D26, question 17): `If-Match` with the draft's `draftToken` on `PUT /loops/{id}/draft`, 409 `DRAFT_CONFLICT`, and a reload-or-overwrite choice in the editor.
 - **Visit cap** (D28, question 16): `maxIterations` also caps fresh visits per node; a cycle outside an exit loop-back fails with `MAX_ITERATIONS`.
-- **User guide**: the "Coming in 1.0" callouts are replaced by documentation; what remains is marked "After 1.0".
+- **User guide**: the "Coming in 1.0" callouts are replaced by documentation; what remains is marked "After 1.0". Two callouts are left on purpose for WP-G, which resolves them: cron latest-slot catch-up (guide 04) and read-scope enforcement (guide 06). The orchestrator replaces them with documentation after merging WP-G.
 - Decisions for questions 16 to 18 are ADR-0015. The release notes are `CHANGELOG.md`. The 1.0 tag follows the final sign-off.
 
 Acceptance status: the install path is the script plus `pnpm start`, or `docker compose up`; the UI half of the performance check passed in WP-D2 (a 1,211-event run opens in about 0.5 s); the open-questions list has no 1.0 blockers. The adversarial passes are WP-D2 and the design review; their open findings are below.

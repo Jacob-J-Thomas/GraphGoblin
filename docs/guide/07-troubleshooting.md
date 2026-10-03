@@ -59,7 +59,7 @@ Change a conflicting port before restarting:
 
 ```powershell
 $env:GG_PORT = '4749'
-pnpm --filter @graphgoblin/api start
+pnpm.cmd --filter @graphgoblin/api start
 ```
 
 ```bash
