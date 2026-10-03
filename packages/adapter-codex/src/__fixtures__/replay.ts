@@ -98,7 +98,7 @@ export class ReplayCodex {
     return {
       runStreamed: (input, turnOptions) => {
         run.input = input;
-        run.turnOptions = turnOptions;
+        if (turnOptions) run.turnOptions = turnOptions;
         if (script.throwOnStart) return Promise.reject(script.throwOnStart);
         const signal = turnOptions?.signal;
         async function* generate(): AsyncGenerator<ThreadEvent | { type: string }> {

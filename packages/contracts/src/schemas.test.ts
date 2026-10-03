@@ -225,7 +225,8 @@ describe('node config schemas', () => {
   });
 
   it('trigger subtypes parse with defaults', () => {
-    expect(TriggerConfigSchema.parse({ subtype: 'manual' }).exposeTo).toEqual(['ui', 'api', 'mcp']);
+    const manual = TriggerConfigSchema.parse({ subtype: 'manual' });
+    expect(manual.subtype === 'manual' && manual.exposeTo).toEqual(['ui', 'api', 'mcp']);
     const cron = TriggerConfigSchema.parse({ subtype: 'cron', expression: '* * * * *' });
     expect(cron.subtype === 'cron' && cron.missedFirePolicy).toBe('skip');
     const hook = TriggerConfigSchema.parse({
