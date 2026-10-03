@@ -1,0 +1,117 @@
+import type { JsonValue } from '@graphgoblin/contracts';
+import { evaluateExpression, threadView } from '@graphgoblin/domain';
+import { RunFailureError } from '../errors.js';
+import type { NodeContext, NodeHandler } from '../handler.js';
+import type { ChoiceResult } from '../ports.js';
+import { outputPatch, selectMessages, toJson } from './common.js';
+
+async function decisionContext(ctx: NodeContext<'decision'>): Promise<JsonValue> {
+  const view = threadView(ctx.thread) as unknown as Record<string, unknown>;
+  const { context } = ctx.config;
+  const messages = await selectMessages(ctx.thread.messages, context.messages, view);
+  const vars: Record<string, JsonValue> = {};
+  for (const name of context.vars ?? Object.keys(ctx.thread.vars)) {
+    if (name in ctx.thread.vars) vars[name] = ctx.thread.vars[name] as JsonValue;
+  }
+  return toJson({
+    trigger: ctx.thread.invocation.trigger.payload,
+    messages: messages.map((m) => ({ role: m.role, content: m.content })),
+    vars,
+    ...(context.includeLastOutput && ctx.thread.lastOutput
+      ? { lastOutput: ctx.thread.lastOutput.value }
+      : {}),
+  });
+}
+
+export const decisionHandler: NodeHandler<'decision'> = {
+  kind: 'decision',
+  async execute(ctx) {
+    const { config } = ctx;
+    const labels = new Set(config.routes.map((r) => r.label));
+    const question = await ctx.services.render(config.question);
+    const context = await decisionContext(ctx);
+    const tried: string[] = [];
+
+    for (const strategy of config.strategy) {
+      if (strategy === 'expression') {
+        const value = await evaluateExpression(
+          config.expression?.jsonata ?? '',
+          threadView(ctx.thread),
+        );
+        const label = typeof value === 'string' ? value : String(value);
+        if (labels.has(label)) return decide(ctx, strategy, { label });
+        tried.push(`expression returned "${label}"`);
+        continue;
+      }
+      const decider = ctx.ports.deciders.find((d) => d.id === strategy && d.available());
+      if (!decider) {
+        tried.push(`${strategy} unavailable`);
+        continue;
+      }
+      const resolved =
+        strategy === 'codex'
+          ? ctx.services.resolveModel(config.codex?.model, config.codex?.effort)
+          : undefined;
+      const result = await decider.choose(
+        {
+          question,
+          options: config.routes.map((r) => ({ label: r.label, description: r.description })),
+          context,
+          ...(resolved ? { model: resolved.model, effort: resolved.effort } : {}),
+        },
+        ctx.signal,
+      );
+      if (!labels.has(result.label)) {
+        tried.push(`${strategy} chose unknown route "${result.label}"`);
+        continue;
+      }
+      const minConfidence = strategy === 'jev' ? config.jev?.minConfidence : undefined;
+      if (
+        minConfidence !== undefined &&
+        result.confidence !== undefined &&
+        result.confidence < minConfidence
+      ) {
+        tried.push(`${strategy} confidence ${result.confidence} below ${minConfidence}`);
+        continue;
+      }
+      return decide(ctx, strategy, result);
+    }
+
+    throw new RunFailureError(
+      'DECISION_NO_ROUTE',
+      `no strategy produced a route: ${tried.join('; ')}`,
+      {
+        nodeId: ctx.node.id,
+        details: { tried },
+      },
+    );
+  },
+};
+
+async function decide(
+  ctx: NodeContext<'decision'>,
+  strategy: 'jev' | 'codex' | 'expression',
+  result: ChoiceResult,
+) {
+  await ctx.services.record({
+    type: 'decision.made',
+    nodeId: ctx.node.id,
+    strategy,
+    route: result.label,
+    ...(result.confidence !== undefined ? { confidence: result.confidence } : {}),
+    ...(ctx.config.recordAlternatives && result.alternatives
+      ? {
+          alternatives: result.alternatives.map((a) => ({
+            route: a.label,
+            ...(a.confidence !== undefined ? { confidence: a.confidence } : {}),
+          })),
+        }
+      : {}),
+  });
+  const value = toJson({ route: result.label, strategy, confidence: result.confidence ?? null });
+  return {
+    kind: 'done' as const,
+    patch: outputPatch(ctx.thread, ctx.node.id, value, ctx.services.now()),
+    route: result.label,
+  };
+}

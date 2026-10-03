@@ -1,0 +1,557 @@
+import { describe, expect, it } from 'vitest';
+import type { RunEvent } from '@graphgoblin/contracts';
+import { LoopDefinitionSchema } from '@graphgoblin/contracts';
+import {
+  FIXTURE_IDS,
+  FIXTURE_TS,
+  fakeUlid,
+  kitchenSinkLoop,
+  minimalLoop,
+} from '@graphgoblin/contracts/testing';
+import { EngineRequestError, RunManager, attemptFor, findPendingWake } from './run-manager.js';
+import { createTestEngine, singleNodeLoop } from './testing/scenario.js';
+import { createFakePorts, DEFAULT_TEST_SETTINGS } from './testing/fakes.js';
+import { createInitialThread } from './thread.js';
+
+describe('a minimal run', () => {
+  it('runs trigger to exit and records the expected events', async () => {
+    const engine = await createTestEngine();
+    const version = engine.publish(minimalLoop());
+    const run = await engine.runToIdle(version.loopId, { hello: 'world' });
+
+    expect(run.status).toBe('succeeded');
+    expect(run.outcome).toBe('success');
+    expect(run.currentNodeId).toBeUndefined();
+    expect(run.finishedAt).toBeDefined();
+    expect(engine.eventTypes(run.id)).toEqual([
+      'run.queued',
+      'run.started',
+      'node.started',
+      'node.finished',
+      'node.started',
+      'node.finished',
+      'run.finished',
+    ]);
+    const thread = await engine.manager.getThread(run.id);
+    expect(thread?.outputs['start']?.value).toEqual({ hello: 'world' });
+    expect(thread?.lastOutput?.value).toEqual({ hello: 'world' });
+    expect(thread?.counters.nodeVisits).toEqual({ start: 1, done: 1 });
+    expect(thread?.invocation.trigger.payload).toEqual({ hello: 'world' });
+  });
+
+  it('defaults a null payload, picks the manual trigger, and validates trigger input', async () => {
+    const engine = await createTestEngine();
+    const loop = minimalLoop();
+    loop.nodes[0] = {
+      id: 'start',
+      kind: 'trigger',
+      label: 'Start',
+      config: { subtype: 'manual', inputSchema: { type: 'object', required: ['topic'] } },
+    };
+    const version = engine.publish(loop);
+    await expect(engine.start(version.loopId)).rejects.toMatchObject({ code: 'INVALID_INPUT' });
+    const run = await engine.runToIdle(version.loopId, { topic: 'x' });
+    expect(run.status).toBe('succeeded');
+  });
+
+  it('rejects unknown loops, drafts, and unknown triggers', async () => {
+    const engine = await createTestEngine();
+    await expect(engine.start(FIXTURE_IDS.loop)).rejects.toMatchObject({ code: 'LOOP_NOT_FOUND' });
+    const draft = engine.publish(minimalLoop(), {
+      status: 'draft',
+      loopId: engine.loopId('draft'),
+    });
+    await expect(engine.start(draft.loopId)).rejects.toMatchObject({ code: 'LOOP_NOT_FOUND' });
+    await expect(engine.start(draft.loopId, null, { versionId: draft.id })).rejects.toMatchObject({
+      code: 'VERSION_NOT_PUBLISHED',
+    });
+    const allowed = await engine.runToIdle(draft.loopId, null, {
+      versionId: draft.id,
+      allowDraft: true,
+    });
+    expect(allowed.status).toBe('succeeded');
+    const published = engine.publish(minimalLoop());
+    await expect(
+      engine.start(published.loopId, null, { triggerNodeId: 'nope' }),
+    ).rejects.toMatchObject({ code: 'TRIGGER_NOT_FOUND' });
+    await expect(
+      engine.start(published.loopId, null, { versionId: draft.id }),
+    ).rejects.toMatchObject({ code: 'LOOP_NOT_FOUND' });
+  });
+
+  it('uses the first trigger when there is no manual one and the explicit one when named', async () => {
+    const engine = await createTestEngine();
+    const loop = minimalLoop();
+    loop.nodes[0] = {
+      id: 'start',
+      kind: 'trigger',
+      label: 'Cron',
+      config: { subtype: 'cron', expression: '* * * * *' },
+    };
+    const version = engine.publish(loop);
+    const run = await engine.runToIdle(version.loopId, null, { source: 'cron' });
+    expect(run.status).toBe('succeeded');
+    const thread = await engine.manager.getThread(run.id);
+    expect(thread?.invocation.trigger.kind).toBe('cron');
+    const explicit = await engine.runToIdle(version.loopId, null, {
+      triggerNodeId: 'start',
+      triggerKind: 'webhook',
+    });
+    const explicitThread = await engine.manager.getThread(explicit.id);
+    expect(explicitThread?.invocation.trigger.kind).toBe('webhook');
+  });
+});
+
+describe('run control', () => {
+  it('cancels a queued run before it starts', async () => {
+    const engine = await createTestEngine({ maxConcurrentRuns: 1 });
+    const version = engine.publish(
+      singleNodeLoop('slow', {
+        id: 'wait',
+        kind: 'wait',
+        label: 'W',
+        config: { mode: 'signal', name: 'go' },
+      }),
+    );
+    const first = await engine.start(version.loopId);
+    const second = await engine.start(version.loopId);
+    await engine.manager.cancel(second.id, { kind: 'user', id: 'u' });
+    const cancelled = await engine.ports.runs.get(second.id);
+    expect(cancelled?.status).toBe('cancelled');
+    expect(engine.eventTypes(second.id)).toEqual([
+      'run.queued',
+      'run.cancel_requested',
+      'run.cancelled',
+    ]);
+    await engine.manager.waitForIdle();
+    expect((await engine.ports.runs.get(first.id))?.status).toBe('waiting');
+    await expect(engine.manager.cancel(second.id)).rejects.toMatchObject({ code: 'INVALID_STATE' });
+  });
+
+  it('cancels a waiting run and is idempotent on repeated requests', async () => {
+    const engine = await createTestEngine();
+    const version = engine.publish(
+      singleNodeLoop('w', {
+        id: 'wait',
+        kind: 'wait',
+        label: 'W',
+        config: { mode: 'input', prompt: 'ok?' },
+      }),
+    );
+    const run = await engine.runToIdle(version.loopId);
+    expect(run.status).toBe('waiting');
+    const once = await engine.manager.cancel(run.id);
+    expect(once.status).toBe('cancelled');
+    expect(engine.eventTypes(run.id)).toContain('run.cancelled');
+  });
+
+  it('pauses a queued run and resumes it later', async () => {
+    const engine = await createTestEngine();
+    const version = engine.publish(kitchenSinkLoopWithoutHeavyNodes());
+    const run = await engine.start(version.loopId);
+    const paused = await engine.manager.pause(run.id, { kind: 'user', id: 'u' });
+    expect(paused.status).toBe('paused');
+    await engine.manager.waitForIdle();
+    expect((await engine.ports.runs.get(run.id))?.status).toBe('paused');
+    await expect(engine.manager.pause(run.id)).rejects.toMatchObject({ code: 'INVALID_STATE' });
+    await engine.manager.resume(run.id, { kind: 'user', id: 'u' });
+    const done = await engine.settle(run.id);
+    expect(done.status).toBe('succeeded');
+    expect(engine.eventTypes(run.id)).toEqual(
+      expect.arrayContaining(['run.paused', 'run.resumed', 'run.started']),
+    );
+    await expect(engine.manager.resume(run.id)).rejects.toMatchObject({ code: 'INVALID_STATE' });
+  });
+
+  it('pauses a running run after the current node and resumes from the next one', async () => {
+    const engine = await createTestEngine();
+    engine.ports.harness.script([{ finalText: 'slow', delayMs: 150 }]);
+    const version = engine.publish(
+      singleNodeLoop('slow', {
+        id: 'infer',
+        kind: 'inference',
+        label: 'I',
+        config: { prompt: { template: 'go' } },
+      }),
+    );
+    const run = await engine.start(version.loopId);
+    await waitFor(() => engine.eventTypes(run.id).includes('harness.session'));
+    await engine.manager.pause(run.id, { kind: 'user', id: 'u' });
+    await engine.manager.waitForIdle();
+    const afterPause = await engine.ports.runs.get(run.id);
+    expect(afterPause?.status).toBe('paused');
+    expect(afterPause?.currentNodeId).toBe('done');
+    expect(
+      engine
+        .events(run.id)
+        .filter((e) => e.type === 'node.finished')
+        .map((e) => (e.type === 'node.finished' ? e.nodeId : '')),
+    ).toEqual(['start', 'infer']);
+    await engine.manager.resume(run.id, { kind: 'user', id: 'u' });
+    const done = await engine.settle(run.id);
+    expect(done.status).toBe('succeeded');
+    expect(engine.ports.harness.started).toHaveLength(1);
+  });
+
+  it('pauses a waiting run; on resume the wait node parks again', async () => {
+    const engine = await createTestEngine();
+    const version = engine.publish(
+      singleNodeLoop('w', {
+        id: 'wait',
+        kind: 'wait',
+        label: 'W',
+        config: { mode: 'duration', seconds: 60 },
+      }),
+    );
+    const run = await engine.runToIdle(version.loopId);
+    expect(run.status).toBe('waiting');
+    expect(engine.ports.timers.scheduled).toHaveLength(1);
+    await engine.manager.pause(run.id);
+    await engine.ports.timers.fire(run.id, 'timer'); // ignored while paused
+    await engine.manager.waitForIdle();
+    expect((await engine.ports.runs.get(run.id))?.status).toBe('paused');
+    await engine.manager.resume(run.id);
+    const reparked = await engine.settle(run.id);
+    expect(reparked.status).toBe('waiting');
+    expect(engine.eventTypes(run.id).filter((t) => t === 'run.waiting')).toHaveLength(2);
+  });
+
+  it('reports unknown runs', async () => {
+    const engine = await createTestEngine();
+    await expect(engine.manager.cancel(FIXTURE_IDS.run)).rejects.toBeInstanceOf(EngineRequestError);
+    await expect(engine.manager.provideInput(FIXTURE_IDS.run, 1)).rejects.toMatchObject({
+      code: 'RUN_NOT_FOUND',
+    });
+    expect(await engine.manager.getRun(FIXTURE_IDS.run)).toBeUndefined();
+    expect(await engine.manager.getThread(FIXTURE_IDS.run)).toBeUndefined();
+  });
+
+  it('limits concurrency to the configured number of workers', async () => {
+    const engine = await createTestEngine({ maxConcurrentRuns: 1 });
+    engine.ports.harness.script([
+      { finalText: 'one', delayMs: 30 },
+      { finalText: 'two', delayMs: 30 },
+    ]);
+    const version = engine.publish(
+      singleNodeLoop('inf', {
+        id: 'infer',
+        kind: 'inference',
+        label: 'I',
+        config: { prompt: { template: 'go' } },
+      }),
+    );
+    const a = await engine.start(version.loopId);
+    const b = await engine.start(version.loopId);
+    await engine.manager.waitForIdle();
+    const finishedA = engine.events(a.id).find((e) => e.type === 'run.finished') as RunEvent;
+    const startedB = engine.events(b.id).find((e) => e.type === 'run.started') as RunEvent;
+    expect(finishedA).toBeDefined();
+    expect(startedB).toBeDefined();
+    expect((await engine.ports.runs.get(b.id))?.status).toBe('succeeded');
+  });
+});
+
+describe('failure and recovery', () => {
+  it('fails on a missing edge as an internal error and can be inspected', async () => {
+    const engine = await createTestEngine();
+    const loop = minimalLoop();
+    loop.edges = [];
+    const version = engine.publish(loop);
+    const run = await engine.runToIdle(version.loopId);
+    expect(run.status).toBe('failed');
+    expect(run.failure?.code).toBe('INTERNAL_ERROR');
+    expect(run.failure?.message).toMatch(/no edge/);
+  });
+
+  it('resumes a failed run from the failed node', async () => {
+    const engine = await createTestEngine();
+    engine.ports.scripts.respondWith(() => ({
+      exitCode: 1,
+      stdout: '',
+      stderr: 'boom',
+      timedOut: false,
+    }));
+    const version = engine.publish(
+      singleNodeLoop('s', { id: 'script', kind: 'script', label: 'S', config: { command: 'x' } }),
+    );
+    const run = await engine.runToIdle(version.loopId);
+    expect(run.status).toBe('failed');
+    expect(run.failure).toMatchObject({
+      code: 'SCRIPT_EXIT_CODE',
+      nodeId: 'script',
+      resumable: true,
+    });
+    engine.ports.scripts.respondWith(() => ({
+      exitCode: 0,
+      stdout: '"fixed"',
+      stderr: '',
+      timedOut: false,
+    }));
+    await engine.manager.resume(run.id);
+    const resumed = await engine.settle(run.id);
+    expect(resumed.status).toBe('succeeded');
+    expect(resumed.failure).toBeUndefined();
+    const starts = engine
+      .events(run.id)
+      .filter((e) => e.type === 'node.started' && e.nodeId === 'script');
+    expect(starts.map((e) => (e.type === 'node.started' ? e.attempt : 0))).toEqual([1, 2]);
+    const thread = await engine.manager.getThread(run.id);
+    expect(thread?.lastOutput?.value).toBe('fixed');
+  });
+
+  it('recovers runs left running by a previous process and resumes harness sessions', async () => {
+    const ports = createFakePorts();
+    const loopId = fakeUlid('recover-loop');
+    const versionId = fakeUlid('recover-version');
+    const runId = fakeUlid('recover-run');
+    const invocationId = fakeUlid('recover-invocation');
+    const def = singleNodeLoop('inf', {
+      id: 'infer',
+      kind: 'inference',
+      label: 'I',
+      config: { prompt: { template: 'go' } },
+    });
+    ports.loops.publish(versionId, loopId, 1, LoopDefinitionSchema.parse(def));
+    const thread = createInitialThread({
+      runId,
+      loopId,
+      versionId,
+      invocation: {
+        id: invocationId,
+        source: 'manual.api',
+        trigger: { nodeId: 'start', kind: 'manual', payload: null, receivedAt: FIXTURE_TS },
+      },
+    });
+    await ports.runs.create(
+      {
+        id: runId,
+        ownerId: 'local',
+        loopId,
+        versionId,
+        invocationId,
+        status: 'running',
+        currentNodeId: 'infer',
+        iteration: 1,
+        createdAt: FIXTURE_TS,
+        startedAt: FIXTURE_TS,
+        lastEventSeq: 0,
+      },
+      thread,
+    );
+    await ports.events.append(runId, [
+      { type: 'run.queued' },
+      { type: 'run.started', attempt: 1 },
+      { type: 'node.started', nodeId: 'start', kind: 'trigger', attempt: 1, configHash: 'h' },
+      { type: 'node.finished', nodeId: 'start', patch: [], route: 'out', durationMs: 1 },
+      { type: 'node.started', nodeId: 'infer', kind: 'inference', attempt: 1, configHash: 'h' },
+    ]);
+    await ports.sessions.upsert({
+      runId,
+      nodeId: 'infer',
+      attempt: 1,
+      harness: 'codex',
+      sessionId: 'left-behind',
+      status: 'active',
+      updatedAt: FIXTURE_TS,
+    });
+    ports.harness.script([
+      { match: (r) => r.prompt.includes('interrupted'), finalText: 'resumed fine' },
+    ]);
+
+    const manager = new RunManager(ports, DEFAULT_TEST_SETTINGS);
+    await manager.start();
+    await manager.waitForIdle();
+
+    const run = await ports.runs.get(runId);
+    expect(run?.status).toBe('succeeded');
+    expect(ports.harness.resumed).toHaveLength(1);
+    expect(ports.harness.resumed[0]?.sessionId).toBe('left-behind');
+    const starts = ports.events.all(runId).filter((e) => e.type === 'run.started');
+    expect(starts.map((e) => (e.type === 'run.started' ? e.attempt : 0))).toEqual([1, 2]);
+    const final = await manager.getThread(runId);
+    expect(final?.messages.at(-1)?.content).toBe('resumed fine');
+    manager.stop();
+  });
+
+  it('completes pending cancellations at recovery and re-queues queued runs', async () => {
+    const ports = createFakePorts();
+    const version = ports.loops.publish(
+      fakeUlid('rq-version'),
+      fakeUlid('rq-loop'),
+      1,
+      LoopDefinitionSchema.parse(minimalLoop()),
+    );
+    const invocationId = fakeUlid('rq-invocation');
+    const queuedId = fakeUlid('rq-run-1');
+    const cancelledId = fakeUlid('rq-run-2');
+    const base = {
+      ownerId: 'local',
+      loopId: version.loopId,
+      versionId: version.id,
+      invocationId,
+      iteration: 1,
+      createdAt: FIXTURE_TS,
+      lastEventSeq: 0,
+    } as const;
+    const invocation = {
+      id: invocationId,
+      source: 'manual.api' as const,
+      trigger: { nodeId: 'start', kind: 'manual' as const, payload: null, receivedAt: FIXTURE_TS },
+    };
+    await ports.runs.create(
+      { ...base, id: queuedId, status: 'queued' },
+      createInitialThread({
+        runId: queuedId,
+        loopId: version.loopId,
+        versionId: version.id,
+        invocation,
+      }),
+    );
+    await ports.runs.create(
+      {
+        ...base,
+        id: cancelledId,
+        status: 'waiting',
+        cancelRequestedAt: FIXTURE_TS,
+        waiting: { nodeId: 'x', kind: 'input' },
+      },
+      createInitialThread({
+        runId: cancelledId,
+        loopId: version.loopId,
+        versionId: version.id,
+        invocation,
+      }),
+    );
+    const manager = new RunManager(ports, DEFAULT_TEST_SETTINGS);
+    await manager.start();
+    await manager.waitForIdle();
+    expect((await ports.runs.get(queuedId))?.status).toBe('succeeded');
+    expect((await ports.runs.get(cancelledId))?.status).toBe('cancelled');
+    manager.stop();
+  });
+
+  it('replays the thread from the log when the snapshot is missing', async () => {
+    const engine = await createTestEngine();
+    const version = engine.publish(minimalLoop());
+    const run = await engine.runToIdle(version.loopId, { a: 1 });
+    engine.ports.runs.dropThreadSnapshot(run.id);
+    const thread = await engine.manager.getThread(run.id);
+    expect(thread?.outputs['done']).toBeUndefined();
+    expect(thread?.outputs['start']?.value).toEqual({ a: 1 });
+  });
+
+  it('fails cleanly when the loop version disappears', async () => {
+    const engine = await createTestEngine();
+    const version = engine.publish(minimalLoop());
+    engine.manager.stop();
+    const run = await engine.start(version.loopId);
+    engine.ports.loops.versions.delete(version.id);
+    await engine.manager.start();
+    const done = await engine.settle(run.id);
+    expect(done.status).toBe('failed');
+    expect(done.failure?.message).toMatch(/not found/);
+  });
+});
+
+describe('event helpers', () => {
+  const base = { runId: FIXTURE_IDS.run, ts: FIXTURE_TS };
+  it('finds a pending wake only between waiting and the next finish', () => {
+    const events: RunEvent[] = [
+      { ...base, seq: 1, type: 'run.started', attempt: 1 },
+      {
+        ...base,
+        seq: 2,
+        type: 'node.started',
+        nodeId: 'w',
+        kind: 'wait',
+        attempt: 1,
+        configHash: 'h',
+      },
+      { ...base, seq: 3, type: 'run.waiting', nodeId: 'w', wait: { nodeId: 'w', kind: 'input' } },
+    ];
+    expect(findPendingWake(events)).toBeUndefined();
+    events.push({
+      ...base,
+      seq: 4,
+      type: 'run.woken',
+      nodeId: 'w',
+      reason: 'input',
+      payload: { ok: true },
+    });
+    expect(findPendingWake(events)).toEqual({ reason: 'input', payload: { ok: true } });
+    events.push({
+      ...base,
+      seq: 5,
+      type: 'node.started',
+      nodeId: 'w',
+      kind: 'wait',
+      attempt: 2,
+      configHash: 'h',
+    });
+    expect(findPendingWake(events)).toEqual({ reason: 'input', payload: { ok: true } });
+    events.push({ ...base, seq: 6, type: 'node.finished', nodeId: 'w', patch: [], durationMs: 1 });
+    expect(findPendingWake(events)).toBeUndefined();
+    expect(
+      findPendingWake([{ ...base, seq: 1, type: 'run.woken', nodeId: 'w', reason: 'timer' }]),
+    ).toEqual({ reason: 'timer' });
+    expect(findPendingWake([{ ...base, seq: 1, type: 'run.queued' }])).toBeUndefined();
+  });
+
+  it('counts attempts since the last finish of the node', () => {
+    const events: RunEvent[] = [
+      {
+        ...base,
+        seq: 1,
+        type: 'node.started',
+        nodeId: 'a',
+        kind: 'mutate',
+        attempt: 1,
+        configHash: 'h',
+      },
+      { ...base, seq: 2, type: 'node.finished', nodeId: 'a', patch: [], durationMs: 1 },
+      {
+        ...base,
+        seq: 3,
+        type: 'node.started',
+        nodeId: 'a',
+        kind: 'mutate',
+        attempt: 1,
+        configHash: 'h',
+      },
+      {
+        ...base,
+        seq: 4,
+        type: 'node.started',
+        nodeId: 'a',
+        kind: 'mutate',
+        attempt: 2,
+        configHash: 'h',
+      },
+    ];
+    expect(attemptFor(events, 'a')).toBe(3);
+    expect(attemptFor(events, 'b')).toBe(1);
+  });
+});
+
+async function waitFor(predicate: () => boolean, timeoutMs = 2000): Promise<void> {
+  const start = Date.now();
+  while (!predicate()) {
+    if (Date.now() - start > timeoutMs) throw new Error('condition not met in time');
+    await new Promise((r) => setTimeout(r, 5));
+  }
+}
+
+/** The kitchen-sink fixture minus nodes that need external input, so a run completes on its own. */
+function kitchenSinkLoopWithoutHeavyNodes() {
+  const loop = kitchenSinkLoop();
+  return {
+    ...loop,
+    nodes: loop.nodes
+      .filter((n) => ['start', 'prep', 'done'].includes(n.id))
+      .map((n) => (n.id === 'done' ? { ...n, config: {} } : n)),
+    edges: [
+      { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'prep' } },
+      { id: 'e3', from: { node: 'prep', port: 'out' }, to: { node: 'done' } },
+    ],
+  };
+}
