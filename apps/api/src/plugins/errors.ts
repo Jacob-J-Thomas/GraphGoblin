@@ -15,6 +15,7 @@ export interface ProblemDetails {
   detail?: string;
   code: string;
   errors?: unknown;
+  [extension: string]: unknown;
 }
 
 export function problem(
@@ -23,8 +24,11 @@ export function problem(
   code: string,
   detail?: string,
   errors?: unknown,
+  /** RFC 9457 extension members, such as the server's `draftToken` on a draft conflict. */
+  extensions: Record<string, unknown> = {},
 ): FastifyReply {
   const body: ProblemDetails = {
+    ...extensions,
     type: `https://graphgoblin.dev/problems/${code.toLowerCase().replace(/_/g, '-')}`,
     title: code.replace(/_/g, ' ').toLowerCase(),
     status,

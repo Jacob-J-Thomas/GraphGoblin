@@ -97,7 +97,7 @@ apps/mcp/dist/main.js
 The build embeds the absolute MCP entry path because Codex copies plugins into its cache. Keep the checkout at that location. If you move it or change plugin contents, reassemble from the built code and reinstall the cached plugin:
 
 ```powershell
-pnpm --filter @graphgoblin/plugin-codex assemble
+pnpm.cmd --filter @graphgoblin/plugin-codex assemble
 codex plugin add graphgoblin@graphgoblin-local
 ```
 

@@ -7,55 +7,104 @@ Install Git, Node 22 or newer, pnpm, and the Codex CLI. The repository pins pnpm
 ```powershell
 git --version
 node --version
-pnpm --version
+pnpm.cmd --version
 codex --version
 codex login
 codex login status
 ```
 
-If PowerShell's execution policy blocks `pnpm.ps1` (or `codex.ps1`), call `pnpm.cmd` (or `codex.cmd`) instead, everywhere this guide shows `pnpm` or `codex` in a PowerShell block.
+PowerShell blocks in this guide call `pnpm.cmd`, because Windows PowerShell's default execution policy blocks the `pnpm.ps1` shim. If it blocks `codex.ps1` too, call `codex.cmd`. Bash blocks use `pnpm` and `codex`.
 
 Run the API as the same operating-system user who logged into Codex. GraphGoblin uses that login and stores no Codex credentials.
 
-> Coming in 1.0: An install script and container image. Use the source installation below today; no release image or installer is provided by this checkout.
-
-## Clone and build
-
-Replace the repository URL placeholder with the clone URL from your repository host:
+There are three ways to install: the install script (recommended), the container image, or the manual steps the script performs. All of them start from a clone. Replace the repository URL placeholder with the clone URL from your repository host:
 
 ```powershell
 git clone <repository-url> GraphGoblin
 Set-Location GraphGoblin
-pnpm install
-pnpm build
+```
+
+## Install with the script
+
+The install script checks Node 22 or newer and pnpm, prints `codex login status`, runs `pnpm install --frozen-lockfile` and `pnpm build`, creates the data directory, runs the [first-run preflight](#check-readiness-and-run-the-starter-graph), and prints the start command and the UI address. It needs no administrator rights and is safe to run again; it exits non-zero when a prerequisite is missing, a step fails, or a preflight check fails. In PowerShell:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/install.ps1
+```
+
+In Bash (Linux, macOS, or Git Bash on Windows):
+
+```bash
+bash scripts/install.sh
+```
+
+The data directory is `~/.graphgoblin` unless `GG_DATA_DIR` is set when you run the script (and when you start the API). A missing or logged-out Codex CLI is reported as a warning by the script and as a failed harness check by the preflight; run `codex login` and run the script again.
+
+Then start the API from the repository root and open the address it printed:
+
+```powershell
+pnpm.cmd start
+```
+
+## Run the container image
+
+The image holds the API, the web app, and the Codex CLI, for one user on a trusted network. Build and start it with Docker Compose from the repository root:
+
+```bash
+docker compose up -d --build
+```
+
+The compose file publishes port 4747 on the host's loopback only, keeps the data directory in the `graphgoblin-data` volume (`/data` in the container), and mounts your Codex login (`~/.codex`) into the container, so run `codex login` on the host first. To use an OpenAI API key instead, set `OPENAI_API_KEY` in the compose file's `environment`. Check readiness and create keys inside the container:
+
+```bash
+docker compose exec graphgoblin node apps/api/dist/main.js --preflight
+docker compose exec graphgoblin node apps/api/dist/main.js --create-api-key owner
+```
+
+Without Compose:
+
+```bash
+docker build -t graphgoblin .
+docker run -d --name graphgoblin -p 127.0.0.1:4747:4747 -v graphgoblin-data:/data -v "$HOME/.codex:/home/node/.codex" graphgoblin
+```
+
+Inside the container the API listens on `0.0.0.0`, so it warns that it is reachable beyond localhost without API keys. Keep the port on the host's loopback, or set `GG_REQUIRE_API_KEY=true` before publishing it more widely. On a Linux host the mounted `.codex` directory must be readable and writable by uid 1000, the container's `node` user. See [Security and distribution](../11-security-and-distribution.md#container-image-decided-by-implementation-wp-f2) for the image's layout and size.
+
+## Install manually
+
+The script's steps, by hand:
+
+```powershell
+pnpm.cmd install --frozen-lockfile
+pnpm.cmd build
+node apps/api/dist/main.js --preflight
 ```
 
 ## Start the API and web app
 
-From the repository root, set absolute directories and keep the service on localhost. In PowerShell:
+From the repository root:
 
 ```powershell
-$repoRoot = (Get-Location).Path
-$env:GG_HOST = '127.0.0.1'
-$env:GG_PORT = '4747'
-$env:GG_DATA_DIR = Join-Path $repoRoot 'data'
-$env:GG_WEB_DIST = Join-Path $repoRoot 'apps/web/dist'
-$env:GG_REQUIRE_API_KEY = 'false'
+pnpm.cmd start
+```
+
+With no configuration the API listens on `127.0.0.1:4747`, keeps its data in `~/.graphgoblin`, and serves the web app this checkout built (`apps/web/dist`). Set variables from the table below to change that. For example, in PowerShell:
+
+```powershell
+$env:GG_DATA_DIR = 'D:\graphgoblin-data'
 $env:GG_DEFAULT_MODEL = 'gpt-6-luna'
 $env:GG_DEFAULT_EFFORT = 'low'
-pnpm --filter @graphgoblin/api start
+pnpm.cmd start
 ```
 
 In Bash:
 
 ```bash
-export GG_HOST=127.0.0.1 GG_PORT=4747
-export GG_DATA_DIR="$PWD/data" GG_WEB_DIST="$PWD/apps/web/dist"
-export GG_REQUIRE_API_KEY=false GG_DEFAULT_MODEL=gpt-6-luna GG_DEFAULT_EFFORT=low
-pnpm --filter @graphgoblin/api start
+export GG_DATA_DIR="$HOME/graphgoblin-data" GG_DEFAULT_MODEL=gpt-6-luna GG_DEFAULT_EFFORT=low
+pnpm start
 ```
 
-The start script runs the built entry point. Its source and runtime paths are:
+`pnpm --filter @graphgoblin/api start` is equivalent. The start scripts run the built entry point. Its source and runtime paths are:
 
 ```text
 apps/api/src/main.ts
@@ -72,10 +121,10 @@ node apps/api/dist/main.js
 | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `GG_HOST`                | `127.0.0.1`. Change it only when you intend to accept remote connections; the API logs a warning when it listens beyond localhost without API keys.                     |
 | `GG_PORT`                | `4747`. Choose another free port if needed.                                                                                                                             |
-| `GG_DATA_DIR`            | `./data`, resolved from the process working directory. Use an absolute value for repeatable restarts.                                                                   |
+| `GG_DATA_DIR`            | `~/.graphgoblin` (`/data` in the container image). A relative value is resolved from the process working directory.                                                     |
 | `GG_DB_URL`              | `file:<data-directory>/graphgoblin.db`. Override it only to keep the database elsewhere.                                                                                |
-| `GG_WEB_DIST`            | Unset. Point it at the built web directory to serve the UI.                                                                                                             |
-| `GG_REQUIRE_API_KEY`     | `false`. Set `true` for credentialed API access after [creating a key](06-settings-and-secrets.md#create-api-keys). The current web app requires local trusted mode.    |
+| `GG_WEB_DIST`            | Unset: the checkout's `apps/web/dist` when it has been built. Point it at another built web directory, or set it empty to serve no UI.                                  |
+| `GG_REQUIRE_API_KEY`     | `false`. Set `true` to require a key on every non-public route; the web app then asks for one. See [the first key](06-settings-and-secrets.md#create-api-keys).         |
 | `GG_MASTER_KEY`          | Unset. Base64 of 32 bytes; otherwise the key lives in `<data-directory>/master.key`. See [Preserve the master key](06-settings-and-secrets.md#preserve-the-master-key). |
 | `GG_DEFAULT_MODEL`       | `gpt-6-luna`. Use a model available to your Codex account.                                                                                                              |
 | `GG_DEFAULT_EFFORT`      | `low`. Node and loop settings can override it.                                                                                                                          |
@@ -91,11 +140,11 @@ Boolean variables accept `true`, `false`, `1`, `0`, `yes`, or `no`. An invalid v
 The default data directory and built web directory are:
 
 ```text
-./data
+~/.graphgoblin
 apps/web/dist
 ```
 
-With the filtered start command, a relative data directory is relative to the API package (`apps/api`). The explicit directory above avoids creating different databases when you switch start commands.
+Earlier development builds defaulted to `./data` under the working directory. If you kept data there, set `GG_DATA_DIR` to that directory, or stop the API and move its contents to `~/.graphgoblin`.
 
 Open the UI. The server root redirects here:
 
@@ -109,23 +158,23 @@ If this returns 404, check the web-directory setting and confirm that the built 
 apps/web/dist/index.html
 ```
 
+With `GG_REQUIRE_API_KEY=true` the shell still loads and asks for an API key on the first 401; paste a key [created on the command line](06-settings-and-secrets.md#the-first-key-from-the-command-line). The key is kept in this browser until you choose **Forget key** in Settings.
+
 ## Check readiness and run the starter graph
 
-Open **Settings**, then read **Harness preflight**. It checks whether the configured Codex CLI runs and reports a logged-in state. You can also request it from a second terminal:
+The first-run preflight checks Node, the data directory, the master key, the database and pending migrations, the Codex harness (installed and logged in), the optional Jev key, and the default model. Each check is `ok`, `WARN` (works, or is set up on first start), or `FAIL` (runs will not work until it is fixed). It changes nothing and is safe before the first start. From the repository root, with the same environment as the server:
 
 ```powershell
-Invoke-RestMethod 'http://127.0.0.1:4747/harness/preflight'
+node apps/api/dist/main.js --preflight
 ```
+
+It prints a table and exits 1 when any check failed. Before the first start the master key and database are warnings, because the start creates them. While the API runs, the same report is available over HTTP (it needs a key when keys are required):
 
 ```bash
-curl -sS http://127.0.0.1:4747/harness/preflight
+curl -sS http://127.0.0.1:4747/system/preflight
 ```
 
-> Coming in 1.0: A general first-run preflight for Node, data-directory access, and master-key setup. The current preflight checks the harness only; the planned general endpoint is unavailable:
->
-> ```http
-> GET /system/preflight
-> ```
+**Settings → Harness preflight** in the UI, and `GET /harness/preflight`, show the Codex check alone.
 
 1. Open **Loops**, enter a name in **New loop name**, and click **Create**. The editor opens on a starter graph that connects a manual trigger to an exit.
 2. Click **Publish**, then **Run**, and click **Start run**. The inspector opens and should show a succeeded run.
@@ -136,7 +185,7 @@ curl -sS http://127.0.0.1:4747/harness/preflight
 Under the configured data directory, the API creates these files and directories:
 
 ```text
-data/
+~/.graphgoblin/
   graphgoblin.db
   graphgoblin.db-wal    (may exist while SQLite uses WAL)
   graphgoblin.db-shm    (may exist)

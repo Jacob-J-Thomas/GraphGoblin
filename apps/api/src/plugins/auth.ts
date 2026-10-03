@@ -111,14 +111,3 @@ export function registerAuth(app: FastifyInstance, container: Container): void {
     request.auth = { ownerId: LOCAL_OWNER, actor: { kind: 'user', id: LOCAL_OWNER }, scopes: '*' };
   });
 }
-
-/**
- * Scope check inside a handler. The `onRequest` hook already enforces `requiredScope` for every
- * route, so handlers no longer call this; the one remaining call (the draft PUT) can go too. `*`
- * (local mode) passes everything.
- */
-export function requireScope(request: FastifyRequest, reply: FastifyReply, scope: string): boolean {
-  if (hasScope(request.auth.scopes, scope)) return true;
-  void problem(reply, 403, 'FORBIDDEN', `this key lacks the "${scope}" scope`);
-  return false;
-}

@@ -45,15 +45,15 @@ This starts a run daily at 02:00 in the selected timezone. UTC is the default; t
 
 Choose how to recover missed slots after an outage:
 
-| Policy     | Recovery                                                                  |
-| ---------- | ------------------------------------------------------------------------- |
-| `skip`     | Default; move to the next future slot.                                    |
-| `run-once` | Start one catch-up run for the last slot in the bounded missed-slot scan. |
-| `run-each` | Start catch-up runs for the first 100 missed slots, oldest first.         |
+| Policy     | Recovery                                                                    |
+| ---------- | --------------------------------------------------------------------------- |
+| `skip`     | Default; move to the next future slot.                                      |
+| `run-once` | Start one catch-up run for the latest missed slot at or before the restart. |
+| `run-each` | Start catch-up runs for the oldest 100 missed slots, oldest first.          |
 
-The scan considers at most 101 missed slots. With `run-each`, later slots beyond the first 100 are dropped with a warning. Trigger payloads contain `scheduledFor` and `catchUp`. The schedule advances before firing, so a crash at that boundary can lose that firing. `GG_TIMER_POLL_MS` controls schedule polling and timer checks, default 1000 milliseconds.
+Trigger payloads contain `scheduledFor` and `catchUp`. The schedule advances before firing, so a crash at that boundary can lose that firing. `GG_TIMER_POLL_MS` controls schedule polling and timer checks, default 1000 milliseconds.
 
-> Coming in 1.0: Latest-missed-slot catch-up after long outages. The trigger plan describes `run-once` using the latest missed slot; the current bounded scan can instead select an earlier slot when more than 101 were missed. Plan for one catch-up run, without assuming it represents the newest slot.
+After a long outage `run-once` still starts exactly one catch-up run, for the latest missed slot at or before the restart, however many slots were missed. `run-each` starts at most 100 catch-up runs per schedule: it keeps the oldest 100 missed slots, runs them oldest first, drops every later missed slot with a warning in the log, and moves the schedule to its next future slot.
 
 ## Receive a signed webhook
 
@@ -170,13 +170,11 @@ To emit from another loop, add an `event` return channel to its exit. Exit-gener
 
 The self-trigger guard skips any loop already in the emitting run's chain, including parent subloops and earlier event callers. The chain stops at eight runs. The event remains recorded and skipped triggers produce warnings. An API-submitted event starts a fresh chain.
 
-Open **Events** for stored types, dedupe keys, and payloads. Fetch the API listing to inspect `source` and `runIds`:
+Open **Events** for each stored event's received time, type, source, dedupe key, payload, and **Started runs**, which links to every run the event started (or says none). The API listing returns the same `source` and `runIds`:
 
 ```http
 GET /events?type=issue-ready&limit=100
 ```
-
-> Coming in 1.0: Triggered-run links on the Events screen. Today the screen shows received time, type, dedupe key, and payload; use the API's `runIds` to find the runs.
 
 ## Poll without inbound access
 

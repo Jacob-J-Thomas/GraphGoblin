@@ -11,6 +11,7 @@ import {
   exportLoop,
   importLoop,
   nodesOfKind,
+  stableHash,
   validateLoop,
   type ValidationIssue,
 } from '@graphgoblin/domain';
@@ -18,7 +19,6 @@ import { EngineRequestError } from '@graphgoblin/engine';
 import type { FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import type { Container } from '../container.js';
-import { requireScope } from '../plugins/auth.js';
 import { problem } from '../plugins/errors.js';
 import type { ApiInstance } from '../types.js';
 
@@ -30,15 +30,55 @@ export const IssueSchema = z.object({
   edgeId: z.string().optional(),
 });
 
+const DraftTokenSchema = z.string().meta({
+  description:
+    'Version token of the definition the next draft save replaces: the draft, or the published version when there is no draft. Send it back in `If-Match` on `PUT /loops/{id}/draft`; it is also the `ETag` header.',
+});
+
 const LoopDetailSchema = z.object({
   loop: LoopRecordSchema,
   current: LoopVersionRecordSchema.optional(),
   draft: LoopVersionRecordSchema.optional(),
+  draftToken: DraftTokenSchema.optional(),
 });
+
+/**
+ * The draft version token (docs/07): a hash of the definition a draft save would replace. Equal
+ * content gives an equal token, so publishing (which keeps the content) does not invalidate it.
+ */
+export function draftTokenOf(definition: LoopDefinition | undefined): string | undefined {
+  return definition ? stableHash(definition) : undefined;
+}
+
+/** Whether an `If-Match` header value matches `token` (`*`, a list, weak or quoted forms). */
+export function ifMatchHolds(header: string, token: string | undefined): boolean {
+  return header
+    .split(',')
+    .map((part) =>
+      part
+        .trim()
+        .replace(/^W\//, '')
+        .replace(/^"(.*)"$/, '$1'),
+    )
+    .some((tag) => (tag === '*' ? token !== undefined : tag === token));
+}
 
 const DefinitionBody = z.object({ definition: LoopDefinitionSchema });
 const IdParams = z.object({ id: UlidSchema });
 const ACTIVE_STATUSES = ['queued', 'running', 'waiting', 'paused'] as const;
+
+/** One chain of draft saves and publishes per loop, so a check and its write never interleave. */
+const draftSaves = new Map<string, Promise<unknown>>();
+
+function serializeDraftSave<T>(loopId: string, job: () => Promise<T>): Promise<T> {
+  const next = (draftSaves.get(loopId) ?? Promise.resolve()).then(job, job);
+  const settled = next.catch(() => undefined);
+  draftSaves.set(loopId, settled);
+  void settled.then(() => {
+    if (draftSaves.get(loopId) === settled) draftSaves.delete(loopId);
+  });
+  return next;
+}
 
 export function registerLoopRoutes(app: ApiInstance, container: Container): void {
   const { loops, runs } = container.repos;
@@ -204,13 +244,20 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
         response: { 200: LoopDetailSchema },
       },
     },
-    async (request) => {
+    async (request, reply) => {
       const loop = await ownedLoop(request, request.params.id);
       const current = loop.currentVersionId
         ? await loops.getVersion(loop.currentVersionId)
         : undefined;
       const draft = loop.draftVersionId ? await loops.getVersion(loop.draftVersionId) : undefined;
-      return { loop, ...(current ? { current } : {}), ...(draft ? { draft } : {}) };
+      const draftToken = draftTokenOf((draft ?? current)?.definition);
+      if (draftToken) void reply.header('etag', `"${draftToken}"`);
+      return {
+        loop,
+        ...(current ? { current } : {}),
+        ...(draft ? { draft } : {}),
+        ...(draftToken ? { draftToken } : {}),
+      };
     },
   );
 
@@ -220,24 +267,56 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
       schema: {
         tags: ['loops'],
         summary: 'Save the draft definition (validated, may be unpublishable)',
+        description:
+          'Send `If-Match` with the `draftToken` (or `ETag`) of the copy the edit is based on; a stale token answers 409 `DRAFT_CONFLICT` with the server’s `draftToken`. Without `If-Match` the save is unconditional (last write wins).',
         params: IdParams,
+        headers: z.object({ 'if-match': z.string().optional() }),
         body: DefinitionBody,
         response: {
-          200: z.object({ draft: LoopVersionRecordSchema, issues: z.array(IssueSchema) }),
+          200: z.object({
+            draft: LoopVersionRecordSchema,
+            draftToken: DraftTokenSchema,
+            issues: z.array(IssueSchema),
+          }),
         },
       },
     },
     async (request, reply) => {
-      if (!requireScope(request, reply, 'loops:write')) return reply;
-      await ownedLoop(request, request.params.id);
-      const draft = await loops.saveDraft(request.params.id, request.body.definition);
+      const loopId = request.params.id;
+      const ifMatch = request.headers['if-match'];
+      const saved = await serializeDraftSave(loopId, async () => {
+        const loop = await ownedLoop(request, loopId);
+        if (ifMatch !== undefined) {
+          const baseId = loop.draftVersionId ?? loop.currentVersionId;
+          const base = baseId ? await loops.getVersion(baseId) : undefined;
+          const serverToken = draftTokenOf(base?.definition);
+          if (!ifMatchHolds(ifMatch, serverToken)) {
+            // A stale copy that saves exactly what the server draft already holds (two editors
+            // making the same change) is not a conflict: answer with the draft, unchanged.
+            if (base?.status === 'draft' && draftTokenOf(request.body.definition) === serverToken) {
+              return { draft: base };
+            }
+            return { conflict: serverToken };
+          }
+        }
+        return { draft: await loops.saveDraft(loopId, request.body.definition) };
+      });
+      if (!saved.draft) {
+        return problem(
+          reply,
+          409,
+          'DRAFT_CONFLICT',
+          'the draft changed on the server since this copy was loaded; reload it or overwrite it with the server draftToken',
+          undefined,
+          saved.conflict ? { draftToken: saved.conflict } : {},
+        );
+      }
+      const draftToken = draftTokenOf(saved.draft.definition) as string;
+      void reply.header('etag', `"${draftToken}"`);
       return {
-        draft,
-        issues: await publishIssues(
-          request.auth.ownerId,
-          request.body.definition,
-          request.params.id,
-        ),
+        draft: saved.draft,
+        draftToken,
+        issues: await publishIssues(request.auth.ownerId, request.body.definition, loopId),
       };
     },
   );
@@ -275,21 +354,35 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
       },
     },
     async (request, reply) => {
-      const loop = await ownedLoop(request, request.params.id);
-      if (!loop.draftVersionId)
-        return problem(reply, 409, 'NO_DRAFT', 'the loop has no draft to publish');
-      const draft = await loops.getVersion(loop.draftVersionId);
-      const issues = draft
-        ? await publishIssues(request.auth.ownerId, draft.definition, loop.id)
-        : [];
-      if (issues.some((i) => i.severity === 'error')) {
-        return problem(reply, 422, 'LOOP_INVALID', 'the draft has structural errors', issues);
+      // Queued with the loop's draft saves, so a save never lands between the checks and the
+      // freeze (the storage also refuses to modify a row that is no longer a draft).
+      const outcome = await serializeDraftSave(request.params.id, async () => {
+        const loop = await ownedLoop(request, request.params.id);
+        if (!loop.draftVersionId) return { kind: 'no-draft' as const };
+        const draft = await loops.getVersion(loop.draftVersionId);
+        const issues = draft
+          ? await publishIssues(request.auth.ownerId, draft.definition, loop.id)
+          : [];
+        if (issues.some((i) => i.severity === 'error')) return { kind: 'invalid' as const, issues };
+        const version = await loops.publish(loop.id);
+        if (!version) return { kind: 'no-draft' as const };
+        // Schedules and webhook endpoints follow the published version (ADR-0008).
+        await container.triggers.armVersion(loop, version);
+        return { kind: 'published' as const, version };
+      });
+      if (outcome.kind === 'invalid') {
+        return problem(
+          reply,
+          422,
+          'LOOP_INVALID',
+          'the draft has structural errors',
+          outcome.issues,
+        );
       }
-      const version = await loops.publish(loop.id);
-      if (!version) return problem(reply, 409, 'NO_DRAFT', 'the loop has no draft to publish');
-      // Schedules and webhook endpoints follow the published version (ADR-0008).
-      await container.triggers.armVersion(loop, version);
-      return { version };
+      if (outcome.kind === 'no-draft') {
+        return problem(reply, 409, 'NO_DRAFT', 'the loop has no draft to publish');
+      }
+      return { version: outcome.version };
     },
   );
 

@@ -1,5 +1,5 @@
 import type { LoopDefinitionInput } from '@graphgoblin/contracts';
-import { createStore, del, get, set, type UseStore } from 'idb-keyval';
+import { createStore, del, get, set, update, type UseStore } from 'idb-keyval';
 
 /**
  * Unsaved editor drafts mirrored to IndexedDB, so a reload or an offline spell never loses work.
@@ -11,6 +11,8 @@ export interface LocalDraft {
   savedAt: string;
   /** True once the server accepted this exact definition. */
   synced: boolean;
+  /** The server draft token this copy is based on, sent as `If-Match` when it is saved. */
+  baseToken?: string;
 }
 
 let store: UseStore | undefined;
@@ -26,6 +28,35 @@ export async function saveLocalDraft(draft: LocalDraft): Promise<void> {
 
 export async function loadLocalDraft(loopId: string): Promise<LocalDraft | undefined> {
   return get<LocalDraft>(loopId, draftStore());
+}
+
+/**
+ * Record that the server accepted `definition` with `token`, in one IndexedDB transaction so a
+ * concurrent mirror write is never lost. A device copy of that exact definition becomes synced. A
+ * newer device copy (edited since the save started) keeps its definition and stays unsynced, but
+ * is now based on `token`: its next save must not conflict with the write it descends from.
+ */
+export async function recordServerSave(
+  loopId: string,
+  definition: LoopDefinitionInput,
+  token: string,
+): Promise<void> {
+  await update<LocalDraft>(
+    loopId,
+    (local) => {
+      if (local && JSON.stringify(local.definition) !== JSON.stringify(definition)) {
+        return { ...local, baseToken: token };
+      }
+      return {
+        loopId,
+        definition,
+        savedAt: new Date().toISOString(),
+        synced: true,
+        baseToken: token,
+      };
+    },
+    draftStore(),
+  );
 }
 
 export async function clearLocalDraft(loopId: string): Promise<void> {

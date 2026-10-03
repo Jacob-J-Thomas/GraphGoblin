@@ -13,7 +13,7 @@ Loops
   GET    /loops                         list
   POST   /loops                         create with an initial draft version
   GET    /loops/{id}                    loop with current published version and draft
-  PUT    /loops/{id}/draft              save draft definition (validated, may be unpublishable)
+  PUT    /loops/{id}/draft              save draft definition (validated, may be unpublishable; If-Match)
   POST   /loops/{id}/publish            validate and freeze draft as a new version
   GET    /loops/{id}/versions           version history
   GET    /loops/{id}/export             definition as JSON for committing to a repo
@@ -150,5 +150,11 @@ Problem Details, RFC 9457, with a stable `code` field drawn from `contracts`. Va
 ## Validation agreement (Decided, WP-D2)
 
 `POST /loops`, `POST /loops/import`, `PUT /loops/{id}/draft`, `POST /loops/{id}/validate`, and `POST /loops/{id}/publish` report the same issue list: the `domain` rules (`validateLoop`, which includes Liquid and JSONata syntax checks), trigger checks such as cron syntax, and subloop references, which must name a loop of the same owner with a published version (`SUBLOOP_NOT_FOUND`, `SUBLOOP_NOT_PUBLISHED`; a loop may reference itself). `publishable` from validate is true exactly when publish would accept the draft. The editor runs the `domain` rules locally and adds the API-only issues from validate.
+
+## Draft conflicts (Decided, WP-F2, ADR-0015)
+
+A draft has a version token, `draftToken`: a hash of the definition the next draft save replaces, which is the draft, or the published version when there is no draft. Equal content gives an equal token, so publishing (which keeps the content) does not change it. `GET /loops/{id}` returns it in the body and as the `ETag` header; `PUT /loops/{id}/draft` returns the new one the same way.
+
+`PUT /loops/{id}/draft` with `If-Match: "<draftToken>"` saves only when the server copy still has that token; otherwise it answers 409 `DRAFT_CONFLICT` with the server's current token as the problem's `draftToken` extension member, and saves nothing. `*`, weak tags (`W/"…"`), and lists are accepted. Draft saves and publishes of one loop are serialized in the API process, so of two different saves with the same token exactly one wins; a stale save whose definition already equals the server draft is a no-op 200 rather than a conflict. Storage also refuses to modify a version row that is no longer a draft: a save racing a publish creates a new draft, and a published version never changes. A save without `If-Match` stays unconditional (last write wins), for scripts and the MCP `design-loop` flow. In the client, `loops.saveDraft(client, loopId, definition, { ifMatch })` sends the header and a conflict surfaces as `GraphGoblinApiError` with `code: 'DRAFT_CONFLICT'` and `problem.draftToken`.
 
 `PUT /settings` checks the keys the engine reads: `defaultModel` must be a non-empty string and `defaultEffort` an effort level. Other keys are stored as given. `DELETE /settings/{key}` returns a key to the server default.

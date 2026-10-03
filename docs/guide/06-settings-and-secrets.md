@@ -8,7 +8,7 @@ Open **Settings** from the navigation bar:
 /app/settings
 ```
 
-Manage **Model catalog**, **Defaults**, **Secrets**, and **API keys** here, and check **Harness preflight**. The **Install** card explains the browser's PWA installation action. Keep the current UI in localhost trusted mode; it has no API-key entry flow, and enabling `GG_REQUIRE_API_KEY` also guards the UI's pages and assets.
+Manage **Model catalog**, **Defaults**, **Secrets**, and **API keys** here, and check **Harness preflight**. The **Install** card explains the browser's PWA installation action. With `GG_REQUIRE_API_KEY=true` the app shell still loads, asks for a key on the first 401, and keeps it in this browser; **This browser's API key** shows it and **Forget key** removes it (other open tabs follow).
 
 ## Choose a model and effort
 
@@ -16,7 +16,7 @@ Use **Add model** or **Edit** to record a Codex model ID, display name, allowed 
 
 The canonical effort values are `minimal`, `low`, `medium`, `high`, `xhigh`, and `max`; the Codex adapter maps `max` to `xhigh`. Model support still depends on Codex. The enabled catalog entries populate the Settings default-model selector, but the engine does not currently enforce catalog membership or effort lists.
 
-For execution today, set `model` and `effort` on the inference node or in loop `defaults`, or set the API's environment before startup:
+Set `model` and `effort` on the inference node or in loop `defaults`, set owner defaults in **Defaults** (below), or set the API's environment before startup:
 
 ```powershell
 $env:GG_DEFAULT_MODEL = 'gpt-6-luna'
@@ -27,9 +27,9 @@ $env:GG_DEFAULT_EFFORT = 'low'
 export GG_DEFAULT_MODEL=gpt-6-luna GG_DEFAULT_EFFORT=low
 ```
 
-Restart the API after changing process defaults. Resolution is node value, then loop default, then API-process default; Codex settings on your machine do not override these explicit execution options.
+Restart the API after changing process defaults. Resolution is node value, then loop default, then the owner default from Settings, then the API-process default; Codex settings on your machine do not override these explicit execution options.
 
-> Coming in 1.0: Owner defaults wired into execution. The Settings page saves `defaultModel` and `defaultEffort`, but the engine currently uses the process defaults shown above when node and loop values are absent.
+The owner defaults in **Settings → Default model** and **Default effort** (`PUT /settings` with `defaultModel` and `defaultEffort`) need no restart: they are read each time a run starts or resumes, so a change applies to the next run. Choose **(server default)** to remove one and fall back to the process default. `defaultEffort` must be an effort level the API knows; anything else is refused with 400.
 
 ## Store secrets
 
@@ -57,7 +57,28 @@ Secret reads never send plaintext back to the browser or API client. Server-side
 
 ## Create API keys
 
-Create a key while local trusted mode is enabled, copy the token immediately, and keep an administrative key before switching authentication on. **Create key** in the UI grants the wildcard scope. Use REST to request narrower write scopes:
+Create a key in **Settings → API keys** (**Create key** grants the wildcard scope) or over REST, and copy the token immediately: it is shown once. Keep an administrative key before switching authentication on, or create the first one from the command line as below.
+
+### The first key, from the command line
+
+With `GG_REQUIRE_API_KEY=true` from the start, `POST /api-keys` already needs a key. Create the first one from the command line instead; it writes straight to the database for the local owner, prints the token once, and does not start the server. Run it from the repository root with the same environment as the server (at least the same `GG_DATA_DIR`), after `pnpm build`:
+
+```powershell
+node apps/api/dist/main.js --create-api-key owner
+node apps/api/dist/main.js --create-api-key ci --scopes loops:write,runs:write
+```
+
+In the container image, run it inside the container so it uses the mounted data volume:
+
+```bash
+docker compose exec graphgoblin node apps/api/dist/main.js --create-api-key owner
+```
+
+Without `--scopes` the key gets `*`. The token is printed to standard output only, never logged, and only its hash is stored; it works with or without the server running, and the server picks it up immediately. Paste it into the web app when it asks for a key, or send it as a bearer token.
+
+### More keys over REST
+
+Use REST to request narrower write scopes:
 
 ```http
 POST /api-keys
@@ -93,17 +114,20 @@ The response's `token` is returned once; SQLite stores its hash. Omitting `scope
 Authorization: Bearer <saved-token>
 ```
 
-| Implemented write scope | Operations                                                     |
-| ----------------------- | -------------------------------------------------------------- |
-| `loops:write`           | Create, import, save, publish, and delete loops.               |
-| `runs:write`            | Start, cancel, pause, resume, provide input, and send signals. |
-| `settings:write`        | Change settings and the model catalog.                         |
-| `secrets:write`         | Set and delete secrets.                                        |
-| `api-keys:write`        | Create and revoke keys.                                        |
-| `events:write`          | Submit inbound events.                                         |
-| `*`                     | All checked operations; UI-created keys use this scope.        |
+Every private route needs a scope, reads included: `<resource>:read` for `GET` requests and `<resource>:write` for everything else. A write scope includes the read scope of the same resource, so a `runs:write` key can follow the runs it starts.
 
-> Coming in 1.0: Read-scope enforcement described by the API design. Today authenticated keys can read owner data regardless of their write scopes; the current read routes do not perform separate scope checks.
+| Scope                             | Operations                                                                                                      |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `loops:read`, `loops:write`       | Read and validate loops; create, import, save, publish, and delete them.                                        |
+| `runs:read`, `runs:write`         | Read runs, threads, and events; start (`POST /loops/{id}/runs`), cancel, pause, resume, replay, input, signals. |
+| `settings:read`, `settings:write` | Read and change settings and the model catalog.                                                                 |
+| `secrets:read`, `secrets:write`   | List secret names; set and delete secrets.                                                                      |
+| `api-keys:read`, `api-keys:write` | List keys; create and revoke them. `api-keys:write` can mint any scope, so treat it as administrative.          |
+| `events:read`, `events:write`     | List inbound events; submit them.                                                                               |
+| `system:read`                     | The preflight reports (`/system/preflight`, `/harness/preflight`).                                              |
+| `*`                               | Everything; UI-created keys use this scope.                                                                     |
+
+A key without the needed scope gets 403 `FORBIDDEN`. See [API, streaming, and MCP](../07-api-and-streaming.md) for the exact rules.
 
 Set the requirement in the API terminal and restart:
 
@@ -117,7 +141,7 @@ export GG_REQUIRE_API_KEY=true
 
 A missing, malformed, or revoked key returns 401; an insufficient write scope returns 403. A wrong key is rejected even in trusted mode. Public health, version, OpenAPI, API-doc, and signed webhook routes remain exempt. Keep the API on localhost and use [MCP's key configuration](05-mcp-and-codex-plugin.md#start-the-mcp-server) for agent clients.
 
-Revoke an unused key in Settings while using trusted mode, or through authenticated REST:
+Revoke an unused key in **Settings → API keys**, or through REST:
 
 ```http
 DELETE /api-keys/{id}
@@ -133,7 +157,7 @@ By default the API generates a random 32-byte master key and stores its base64 f
 
 Alternatively, supply `GG_MASTER_KEY` containing base64 that decodes to exactly 32 bytes. Keep that same value across restarts and restores. Secrets are encrypted directly with AES-256-GCM using this master key and a fresh nonce per value. Replacing the key does not re-encrypt existing rows; it makes them unreadable. Protect the key file and backup with operating-system permissions.
 
-> Coming in 1.0: The planned OS-keyring source and per-secret envelope key wrapping. The current implementation reads a file or environment master key and encrypts secret values directly with it.
+> After 1.0: The planned OS-keyring source and per-secret envelope key wrapping. The current implementation reads a file or environment master key and encrypts secret values directly with it.
 
 ## Back up and restore
 
@@ -141,24 +165,24 @@ Alternatively, supply `GG_MASTER_KEY` containing base64 that decodes to exactly 
 2. Copy the entire data directory, including the database, any WAL/SHM files, master key, artifacts, and temporary workspaces. Store the backup securely because it contains both encrypted secrets and their decryption key.
 3. Preserve any custom `GG_DB_URL` database location separately. Save environment configuration and an environment-supplied master key securely. Back up fixed workspaces, return files outside the data directory, and Codex session storage separately if you need them for continuation.
 
-For the repository-root layout used in [Installation](01-install-and-first-run.md), copy to a new destination in PowerShell:
+For the default data directory used in [Installation](01-install-and-first-run.md), copy to a new destination in PowerShell:
 
 ```powershell
-$backupSource = Join-Path (Get-Location).Path 'data'
-$backupDestination = Join-Path (Get-Location).Path ('backup-' + (Get-Date -Format 'yyyyMMdd-HHmmss'))
+$backupSource = Join-Path $HOME '.graphgoblin'
+$backupDestination = Join-Path $HOME ('graphgoblin-backup-' + (Get-Date -Format 'yyyyMMdd-HHmmss'))
 Copy-Item -LiteralPath $backupSource -Destination $backupDestination -Recurse
 ```
 
 In Bash:
 
 ```bash
-cp -R data "backup-$(date +%Y%m%d-%H%M%S)"
+cp -R "$HOME/.graphgoblin" "$HOME/graphgoblin-backup-$(date +%Y%m%d-%H%M%S)"
 ```
 
 Restore into an empty destination with the API stopped; do not overlay a different live database or master key. Copy the saved data, point `GG_DATA_DIR` at that restored directory, restore `GG_DB_URL` if overridden and `GG_MASTER_KEY` if supplied, and start the API. Preserve the same workspace locations for runs that reference them. Boot migrates and recovers runs and re-arms triggers, so review schedules and missed-fire policies before restoring onto a connected machine.
 
 Loop exports are useful for version control but omit runs, secret values, and artifacts; they do not replace a data backup.
 
-> Coming in 1.0: Manual run and loop history purge controls described in the retention plan. They are absent from Settings today; deleting a loop is not a supported substitute for history maintenance.
+> After 1.0: Manual run and loop history purge controls described in the retention plan. They are absent from Settings today; deleting a loop is not a supported substitute for history maintenance.
 
 Read [Security and distribution](../11-security-and-distribution.md) for design context. Continue with [Troubleshooting](07-troubleshooting.md).

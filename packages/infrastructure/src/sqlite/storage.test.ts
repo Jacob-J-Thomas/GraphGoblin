@@ -340,6 +340,56 @@ describe('SqliteEventStore', () => {
   });
 });
 
+describe('SqliteLoopRepository draft and publish interleaving', () => {
+  it('never modifies a version that was published after a draft save read the loop', async () => {
+    const repo = new SqliteLoopRepository(handle.db, clock, ids);
+    const definition = LoopDefinitionSchema.parse(minimalLoop());
+    const { loop, draft } = await repo.create('local', definition);
+    // The save reads the loop (draft still current), pauses; a publish lands; the save resumes.
+    const getLoop = repo.getLoop.bind(repo);
+    let release!: () => void;
+    const paused = new Promise<void>((resolve) => (release = resolve));
+    let lookedUp!: () => void;
+    const lookupDone = new Promise<void>((resolve) => (lookedUp = resolve));
+    repo.getLoop = async (id) => {
+      const snapshot = await getLoop(id);
+      repo.getLoop = getLoop;
+      lookedUp();
+      await paused;
+      return snapshot;
+    };
+    const saving = repo.saveDraft(loop.id, { ...definition, description: 'late edit' });
+    await lookupDone;
+    const published = await repo.publish(loop.id);
+    expect(published?.id).toBe(draft.id);
+    release();
+    const saved = await saving;
+
+    expect(saved.id).not.toBe(draft.id);
+    expect(saved.status).toBe('draft');
+    expect(saved.version).toBe(2);
+    expect(saved.definition.description).toBe('late edit');
+    const frozen = await repo.getVersion(draft.id);
+    expect(frozen?.status).toBe('published');
+    expect(frozen?.definition.description).toBeUndefined();
+    const after = await repo.getLoop(loop.id);
+    expect(after?.currentVersionId).toBe(draft.id);
+    expect(after?.draftVersionId).toBe(saved.id);
+  });
+
+  it('publishes a draft once even when two publishes read the same draft', async () => {
+    const repo = new SqliteLoopRepository(handle.db, clock, ids);
+    const { loop, draft } = await repo.create('local', LoopDefinitionSchema.parse(minimalLoop()));
+    const getLoop = repo.getLoop.bind(repo);
+    const stale = await getLoop(loop.id);
+    expect(await repo.publish(loop.id)).toMatchObject({ id: draft.id });
+    repo.getLoop = () => Promise.resolve(stale);
+    expect(await repo.publish(loop.id)).toBeUndefined();
+    repo.getLoop = getLoop;
+    expect((await repo.getLoop(loop.id))?.currentVersionId).toBe(draft.id);
+  });
+});
+
 describe('SqliteLoopRepository', () => {
   it('creates loops with drafts, publishes, and resolves versions', async () => {
     const repo = new SqliteLoopRepository(handle.db, clock, ids);

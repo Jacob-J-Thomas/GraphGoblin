@@ -51,6 +51,7 @@ export const RunErrorCodeSchema = z.enum([
   'WAIT_TIMEOUT',
   'HEARTBEAT_EXHAUSTED',
   'RETURN_DELIVERY_FAILED',
+  'MAX_ITERATIONS',
   'INTERNAL_ERROR',
 ]);
 export type RunErrorCode = z.infer<typeof RunErrorCodeSchema>;

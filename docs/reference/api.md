@@ -15,7 +15,7 @@ Loop definitions, drafts, versions.
 | POST   | `/loops/import`                    | Create or update a loop from exported JSON                  | -                                                                   | `object`         | 201       |
 | GET    | `/loops/{id}`                      | A loop with its current published version and draft         | `id`: string (path, required)                                       | -                | 200       |
 | DELETE | `/loops/{id}`                      | Delete a loop that has no active runs                       | `id`: string (path, required)                                       | -                | 204       |
-| PUT    | `/loops/{id}/draft`                | Save the draft definition (validated, may be unpublishable) | `id`: string (path, required)                                       | `{ definition }` | 200       |
+| PUT    | `/loops/{id}/draft`                | Save the draft definition (validated, may be unpublishable) | `id`: string (path, required), `if-match`: string (header)          | `{ definition }` | 200       |
 | POST   | `/loops/{id}/validate`             | Validate a definition without saving it                     | `id`: string (path, required)                                       | `{ definition }` | 200       |
 | POST   | `/loops/{id}/publish`              | Validate the draft and freeze it as a new version           | `id`: string (path, required)                                       | -                | 200       |
 | GET    | `/loops/{id}/versions`             | Version history                                             | `id`: string (path, required)                                       | -                | 200       |

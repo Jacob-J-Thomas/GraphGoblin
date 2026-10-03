@@ -122,17 +122,29 @@ Pausing, resuming, or answering a run in the wrong status returns 409 `INVALID_S
 
 Editing the loop does not change a failed run's pinned config. For a config or graph fix, publish a corrected version and start a new run. For a run ended by an exit with a failure outcome, inspect its result and start again as appropriate. Follow resumed failed runs through API snapshots and event pages or MCP; the current inspector retains its original terminal event and does not restart its live subscription.
 
-> Coming in 1.0: Complete historical thread reconstruction for child runs. The current inspector starts history from empty collections, omitting the inherited seed. Fetch the server's current child thread when inherited values matter:
->
-> ```http
-> GET /runs/{id}/thread
-> ```
+Child runs reconstruct like any other run: their first event, `run.queued`, carries the thread the parent seeded (`initialThread`), so the inspector shows inherited messages and values at every event. Runs recorded before that field existed start from empty collections; `GET /runs/{id}/thread` always returns the server's current thread.
 
-> Coming in 1.0: Replay at a selected node, creating a new run with its earlier input. Neither the inspector action nor this planned route exists yet:
->
-> ```http
-> POST /runs/{id}/replay
-> ```
+## Replay from a node
+
+To debug a node, fork a new run at it with the same input it had: the new run starts from the thread as it was just before that node first started, on the same pinned version, and nothing before the node runs again. The source run is never changed and may be in any status. In Bash:
+
+```bash
+RUN_ID='<run-id>'
+curl -sS -X POST "http://127.0.0.1:4747/runs/$RUN_ID/replay" \
+  -H 'Content-Type: application/json' -d '{"nodeId":"ask"}'
+```
+
+In PowerShell:
+
+```powershell
+$runId = '<run-id>'
+Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:4747/runs/$runId/replay" `
+  -ContentType 'application/json' -Body '{"nodeId":"ask"}'
+```
+
+The response is 202 with the new `run`; open it at `/app/runs/<new-run-id>`. Its invocation and first event record `replayOf` (source run and node). MCP callers use the `replay_run` tool with `runId` and `nodeId`, then `wait_for_run`. A node the source never reached answers 409 `REPLAY_NODE_NOT_REACHED`. The fork does not carry the source's Codex session or working directory, and a subloop node in the fork starts a new child run. See [Execution engine](../05-execution-engine.md#replay-and-debugging-decided-by-implementation-2026-10-03) for the exact rules.
+
+> After 1.0: A replay button in the run inspector. Use the API or MCP until then.
 
 ## Stream events and reconnect
 
@@ -221,6 +233,7 @@ Read `code`, `message`, `nodeId`, `resumable`, and any `details`. After fixing a
 | `EXPRESSION_ERROR`          | Correct JSONata, its input assumptions, or the patch produced by a mapping.                                                                                                |
 | `WAIT_TIMEOUT`              | Arrange the required input or signal sooner, or revise timeout behaviour in a new version.                                                                                 |
 | `HEARTBEAT_EXHAUSTED`       | Check the probe and condition; revise beat/deadline limits or exhaustion behaviour if needed.                                                                              |
+| `MAX_ITERATIONS`            | A node was about to start more often than the loop's `maxIterations`, usually a decision routing back into a cycle without an exit. Fix the routing or raise the limit.    |
 | `RETURN_DELIVERY_FAILED`    | Check the destination and signing secret. Current delivery failures use `return.failed` events, rather than this reserved run-failure code; arrange redelivery explicitly. |
 | `INTERNAL_ERROR`            | Preserve the run ID, log, and failure details; investigate or report the defect before retrying side effects.                                                              |
 

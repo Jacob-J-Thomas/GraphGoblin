@@ -27,4 +27,4 @@ The context thread holds messages, variables, artifacts, per-node outputs, and u
 6. [Manage settings and secrets](06-settings-and-secrets.md)
 7. [Troubleshoot](07-troubleshooting.md)
 
-This guide describes the current implementation. Callouts mark planned 1.0 features that are unavailable. For design context, read [Vision and scope](../01-vision-and-scope.md), [Architecture](../02-architecture.md), and the [Implementation plan](../12-implementation-plan.md).
+This guide describes the current implementation. Callouts starting "After 1.0" mark planned features that this release does not have. For design context, read [Vision and scope](../01-vision-and-scope.md), [Architecture](../02-architecture.md), and the [Implementation plan](../12-implementation-plan.md).

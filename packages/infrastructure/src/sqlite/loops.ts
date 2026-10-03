@@ -141,20 +141,28 @@ export class SqliteLoopRepository implements LoopRepository {
     return rows.map(toVersion);
   }
 
-  /** Save the draft definition, creating a new draft version when the loop has none. */
+  /**
+   * Save the draft definition, creating a new draft version when the loop has none. The update of
+   * an existing draft row only applies while that row is still a draft: if a publish froze it after
+   * the loop was read, a new draft version is created instead, so a published version is never
+   * modified (ADR-0008).
+   */
   async saveDraft(loopId: string, definition: LoopDefinition): Promise<LoopVersionRecord> {
     const loop = await this.getLoop(loopId);
     if (!loop) throw new LoopNotFoundError(loopId);
     const now = this.clock.now().toISOString();
     const existingDraftId = loop.draftVersionId;
-    const draftId = existingDraftId ?? this.ids.next();
+    let draftId = existingDraftId ?? this.ids.next();
     await this.db.transaction(async (tx) => {
-      if (existingDraftId) {
-        await tx
-          .update(loopVersions)
-          .set({ definition })
-          .where(eq(loopVersions.id, existingDraftId));
-      } else {
+      const updated = existingDraftId
+        ? await tx
+            .update(loopVersions)
+            .set({ definition })
+            .where(and(eq(loopVersions.id, existingDraftId), eq(loopVersions.status, 'draft')))
+            .returning({ id: loopVersions.id })
+        : [];
+      if (updated.length === 0) {
+        if (existingDraftId) draftId = this.ids.next();
         const [latest] = await tx
           .select({ version: loopVersions.version })
           .from(loopVersions)
@@ -192,17 +200,21 @@ export class SqliteLoopRepository implements LoopRepository {
     if (!loop.draftVersionId) return undefined;
     const now = this.clock.now().toISOString();
     const draftId = loop.draftVersionId;
-    await this.db.transaction(async (tx) => {
-      await tx
+    // The status flip and the loop pointers change together, and only while the row is a draft.
+    const published = await this.db.transaction(async (tx) => {
+      const flipped = await tx
         .update(loopVersions)
         .set({ status: 'published', publishedAt: now })
-        .where(eq(loopVersions.id, draftId));
+        .where(and(eq(loopVersions.id, draftId), eq(loopVersions.status, 'draft')))
+        .returning({ id: loopVersions.id });
+      if (flipped.length === 0) return false;
       await tx
         .update(loops)
         .set({ currentVersionId: draftId, draftVersionId: null, updatedAt: now })
-        .where(eq(loops.id, loopId));
+        .where(and(eq(loops.id, loopId), eq(loops.draftVersionId, draftId)));
+      return true;
     });
-    return this.getVersion(draftId);
+    return published ? this.getVersion(draftId) : undefined;
   }
 
   async delete(loopId: string): Promise<boolean> {

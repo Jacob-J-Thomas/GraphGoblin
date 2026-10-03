@@ -228,6 +228,17 @@ export function attemptFor(events: readonly RunEvent[], nodeId: string): number 
   return started + 1;
 }
 
+/** Fresh entries into a node so far: its `node.started` events with attempt 1. */
+export function countEntries(events: readonly RunEvent[], nodeId: string): number {
+  let entries = 0;
+  for (const event of events) {
+    if (event.type === 'node.started' && event.nodeId === nodeId && event.attempt === 1) {
+      entries += 1;
+    }
+  }
+  return entries;
+}
+
 /** The subloop versions a run pinned when it was created (its `run.queued` event). */
 export function pinnedSubloops(events: readonly RunEvent[]): Record<string, string> {
   const queued = events.find((e) => e.type === 'run.queued');
@@ -1076,6 +1087,19 @@ export class RunManager {
         return;
       }
       const attempt = attemptFor(events, nodeId);
+      // Visit cap (docs/05): a fresh entry (attempt 1; wakes, retries, and resumes re-enter with a
+      // higher attempt) beyond `maxIterations` fails the run, which bounds graph cycles that never
+      // pass through an exit loop-back.
+      if (attempt === 1 && countEntries(events, nodeId) >= def.settings.maxIterations) {
+        await this.failRun(runId, {
+          code: 'MAX_ITERATIONS',
+          message: `node "${nodeId}" would start for visit ${def.settings.maxIterations + 1}, above the loop's maxIterations of ${def.settings.maxIterations}`,
+          nodeId,
+          resumable: false,
+          details: { maxIterations: def.settings.maxIterations },
+        });
+        return;
+      }
       // The seq of this node.started identifies the visit, and any wait it parks in.
       const startedSeq = await appendAll([
         {

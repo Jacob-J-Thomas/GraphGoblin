@@ -49,8 +49,26 @@ export const loops = {
     unwrap(await client.POST('/loops', { body: { definition } })),
   get: async (client: GraphGoblinClient, loopId: string) =>
     unwrap(await client.GET('/loops/{id}', id(loopId))),
-  saveDraft: async (client: GraphGoblinClient, loopId: string, definition: LoopDefinitionBody) =>
-    unwrap(await client.PUT('/loops/{id}/draft', { ...id(loopId), body: { definition } })),
+  /**
+   * Save the draft. With `ifMatch` (a `draftToken` from `get` or an earlier save) a stale copy is
+   * refused with `DRAFT_CONFLICT` (409) instead of overwriting a newer server draft; the error's
+   * `problem.draftToken` is the server's current token.
+   */
+  saveDraft: async (
+    client: GraphGoblinClient,
+    loopId: string,
+    definition: LoopDefinitionBody,
+    options: { ifMatch?: string } = {},
+  ) =>
+    unwrap(
+      await client.PUT('/loops/{id}/draft', {
+        params: {
+          path: { id: loopId },
+          ...(options.ifMatch ? { header: { 'if-match': `"${options.ifMatch}"` } } : {}),
+        },
+        body: { definition },
+      }),
+    ),
   validate: async (client: GraphGoblinClient, loopId: string, definition: LoopDefinitionBody) =>
     unwrap(await client.POST('/loops/{id}/validate', { ...id(loopId), body: { definition } })),
   publish: async (client: GraphGoblinClient, loopId: string) =>

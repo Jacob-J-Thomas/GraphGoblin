@@ -21,7 +21,7 @@ Rules that apply to every package:
 | 3    | WP-F1 backend and tooling hardening (delivered)             | alongside WP-D       | WP-B through WP-E merged |
 | 3    | WP-D2 adversarial QA pass and fixes (delivered)             | alongside WP-F1      | WP-D merged              |
 | 3    | WP-G adversarial design review fixes (delivered)            | alongside WP-F2      | WP-F1 and WP-D2 merged   |
-| 3    | WP-F2 packaging, user guide, adversarial QA, tag 1.0        | no                   | WP-D and WP-F1 merged    |
+| 3    | WP-F2 packaging and the last product fixes (delivered)      | alongside WP-G       | WP-D2 and WP-F1 merged   |
 
 ## WP-0 - M3 stabilisation
 
@@ -116,6 +116,8 @@ Read: 05, 07, 10, 11, 12. Depends on: WP-I. Deliver: replay-at-node in the engin
 
 Delivered: `RunManager.replay` with `POST /runs/{id}/replay`, `runs.replay`, and the MCP tool `replay_run` (provenance `invocation.replayOf` and `run.queued.replayOf`, 409 `REPLAY_NODE_NOT_REACHED`); `apps/api/src/preflight.ts` behind `GET /system/preflight` and `--preflight`, with `DatabaseHandle.pendingMigrations()`; `typecheck` runs `tsc -p tsconfig.json` too; `apps/api/src/perf.test.ts` and the numbers in 10, plus a fix for event-loop starvation in the serialised database client; `pnpm docs:generate` and `pnpm check:docs` over `docs/reference/`. See the M8 notes in 12.
 
-## WP-F2 - Packaging, guide, QA, and 1.0
+## WP-F2 - Packaging, guide, and the last product fixes - DELIVERED 2026-10-03
 
 Read: 11, 12. Depends on: WP-D and WP-F1. Deliver: container image and install script (data directory and master key setup, preflight on first start); user guide; full adversarial QA pass across the product; the UI half of the performance check (1,000 events in the run inspector without lag); tag 1.0.
+
+Delivered: `Dockerfile`, `.dockerignore`, and `docker-compose.yml` (built and smoke-tested with Docker Desktop; size and results in 11); `scripts/install.ps1` and `scripts/install.sh` and a root `pnpm start`, with `GG_DATA_DIR` defaulting to `~/.graphgoblin` and the checkout's web build served by default; `--create-api-key` for the first key (D27); `If-Match` and `DRAFT_CONFLICT` on draft saves with a reload-or-overwrite choice in the editor (D26); the per-node visit cap under `maxIterations` with `MAX_ITERATIONS` (D28); ADR-0015 for questions 16 to 18; the user guide's "Coming in 1.0" callouts resolved; `CHANGELOG.md`; M8 marked done in 12 with the residual risks and post-1.0 backlog. The cron latest-slot fix moved to WP-G. Regressions: `apps/api/src/drafts.test.ts`, `apps/api/src/create-api-key.test.ts`, `apps/web/src/editor/EditorPage.conflict.test.tsx`, `apps/web/e2e/drafts.spec.ts`, and the visit-cap tests in `packages/engine/src/run-manager.test.ts`.

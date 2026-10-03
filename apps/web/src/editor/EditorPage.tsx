@@ -41,6 +41,7 @@ const SAVE_LABEL: Record<SaveState, string> = {
   invalid: 'Saved on this device only',
   offline: 'Offline: saved on this device',
   error: 'Save failed',
+  conflict: 'Draft changed elsewhere',
 };
 
 /**
@@ -66,6 +67,7 @@ function useLoadEditor(loopId: string) {
       async ([local, earlierSetAside]) => {
         if (cancelled) return;
         const server = dataRef.current?.draft?.definition ?? dataRef.current?.current?.definition;
+        const serverToken = dataRef.current?.draftToken;
         const serverUpdatedAt = dataRef.current?.loop.updatedAt;
         // The server changed after this device's unsynced copy was written (another tab or
         // device saved since): keep the newer server copy and set the local one aside, under its
@@ -73,14 +75,20 @@ function useLoadEditor(loopId: string) {
         const serverIsNewer =
           local && !local.synced && server && serverUpdatedAt && serverUpdatedAt > local.savedAt;
         if (local && !local.synced && !serverIsNewer) {
-          useEditorStore.getState().load(loopId, local.definition, { dirty: true });
+          // Saved later with the token it was based on: a server draft changed since then is
+          // reported as a conflict rather than overwritten. Copies from before tokens existed
+          // fall back to the server's current token.
+          useEditorStore.getState().load(loopId, local.definition, {
+            dirty: true,
+            baseToken: local.baseToken ?? serverToken,
+          });
           setRestored(true);
         } else if (server) {
           if (serverIsNewer) await saveSetAsideDraft(local);
           if (cancelled) return;
-          useEditorStore.getState().load(loopId, server);
+          useEditorStore.getState().load(loopId, server, { baseToken: serverToken });
         } else if (local) {
-          useEditorStore.getState().load(loopId, local.definition);
+          useEditorStore.getState().load(loopId, local.definition, { baseToken: local.baseToken });
         } else {
           return;
         }
@@ -111,7 +119,9 @@ function useLoadEditor(loopId: string) {
     // now holds another loop) the durable copy above is restored on the next visit instead.
     const now = useEditorStore.getState();
     if (now.loopId === loopId && now.generation === startedIn) {
-      now.load(loopId, restoredCopy.definition, { dirty: true });
+      // Choosing this copy over the newer server draft is an explicit overwrite: base it on the
+      // server draft shown now.
+      now.load(loopId, restoredCopy.definition, { dirty: true, baseToken: now.baseToken });
       setRestored(true);
     }
     await clearSetAsideDraft(loopId);
@@ -121,6 +131,74 @@ function useLoadEditor(loopId: string) {
     void clearSetAsideDraft(loopId);
   };
   return { query, restored, ready, setAside, restoreSetAside, discardSetAside };
+}
+
+/**
+ * The two ways out of a draft conflict (409 `DRAFT_CONFLICT`): load the server draft, dropping
+ * this editor's unsaved changes, or save this copy over it. Neither happens without a click.
+ */
+function useResolveConflict(loopId: string, flush: () => Promise<boolean>) {
+  const client = useApi();
+  const queryClient = useQueryClient();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | undefined>();
+  const run = async (job: () => Promise<void>) => {
+    setBusy(true);
+    setError(undefined);
+    try {
+      await job();
+    } catch (failure) {
+      setError(errorMessage(failure));
+    } finally {
+      setBusy(false);
+    }
+  };
+  /**
+   * The editor that asked: the same loop in the same load generation. Every step after an await
+   * re-checks it, so a slow answer for loop A never lands in the editor of loop B (or in a newer
+   * load of A).
+   */
+  const askedBy = () => {
+    const { loopId: current, generation } = useEditorStore.getState();
+    return () => {
+      const now = useEditorStore.getState();
+      return current === loopId && now.loopId === loopId && now.generation === generation;
+    };
+  };
+  const reload = () =>
+    run(async () => {
+      const stillAsking = askedBy();
+      const detail = await loops.get(client, loopId);
+      if (!stillAsking()) return;
+      const definition = detail.draft?.definition ?? detail.current?.definition;
+      if (!definition) throw new Error('The server has no draft or published version to load.');
+      queryClient.setQueryData(keys.loop(loopId), detail);
+      await saveLocalDraft({
+        loopId,
+        definition,
+        savedAt: new Date().toISOString(),
+        synced: true,
+        ...(detail.draftToken ? { baseToken: detail.draftToken } : {}),
+      });
+      if (!stillAsking()) return;
+      useEditorStore.getState().load(loopId, definition, { baseToken: detail.draftToken });
+    });
+  const overwrite = () =>
+    run(async () => {
+      const stillAsking = askedBy();
+      if (!stillAsking() || !useEditorStore.getState().conflict) return;
+      let serverToken = useEditorStore.getState().conflict?.serverToken;
+      if (!serverToken) {
+        serverToken = (await loops.get(client, loopId)).draftToken;
+        if (!stillAsking()) return;
+      }
+      const state = useEditorStore.getState();
+      state.setBaseToken(serverToken);
+      state.setConflict(undefined);
+      state.setSaveState('pending');
+      await flush();
+    });
+  return { busy, error, reload, overwrite };
 }
 
 export function EditorPage() {
@@ -136,6 +214,8 @@ export function EditorPage() {
   const [tab, setTab] = useState<'node' | 'loop' | 'run'>('node');
   const [settingsEpoch, setSettingsEpoch] = useState(0);
   const flush = useAutosave(client);
+  const conflict = useEditorStore((s) => s.conflict);
+  const resolve = useResolveConflict(loopId, flush);
   const savedRevision = useEditorStore((s) => s.savedRevision);
   const fieldErrors = useEditorStore((s) => s.fieldErrors);
   const local = useMemo(
@@ -173,6 +253,8 @@ export function EditorPage() {
       if (Object.keys(useEditorStore.getState().fieldErrors).length > 0)
         throw new Error('Some fields hold text that does not parse; fix them first.');
       const saved = await flush();
+      if (!saved && useEditorStore.getState().conflict)
+        throw new Error('The draft changed on the server; reload it or overwrite it first.');
       if (!saved) throw new Error('The draft could not be saved; fix the issues below first.');
       try {
         return { version: await loops.publish(client, loopId) };
@@ -252,6 +334,29 @@ export function EditorPage() {
           <Button size="sm" variant="ghost" onClick={discardSetAside}>
             Discard it
           </Button>
+        </Alert>
+      ) : null}
+      {conflict ? (
+        <Alert tone="warn" title="The draft changed on the server">
+          Another tab or device saved this loop&apos;s draft after this editor loaded it. Your
+          changes are kept on this device and nothing was overwritten.{' '}
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={resolve.busy}
+            onClick={() => void resolve.reload()}
+          >
+            Reload server draft
+          </Button>{' '}
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={resolve.busy}
+            onClick={() => void resolve.overwrite()}
+          >
+            Overwrite with this copy
+          </Button>
+          {resolve.error ? <span className="block">{resolve.error}</span> : null}
         </Alert>
       ) : null}
       {saveMessage &&

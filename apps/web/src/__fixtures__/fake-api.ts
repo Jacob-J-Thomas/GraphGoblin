@@ -13,7 +13,7 @@ import type {
 } from '@graphgoblin/contracts';
 import { LoopDefinitionSchema } from '@graphgoblin/contracts';
 import { fakeUlid, sampleThread } from '@graphgoblin/contracts/testing';
-import { validateLoop } from '@graphgoblin/domain';
+import { stableHash, validateLoop } from '@graphgoblin/domain';
 
 export const TS = '2026-10-02T12:00:00.000Z';
 
@@ -156,6 +156,28 @@ export class FakeApi {
     return loop;
   }
 
+  /** The draft token the real API derives: a hash of the draft, or else the published definition. */
+  draftToken(loopId: string): string | undefined {
+    const entry = this.loops.get(loopId);
+    const base = entry?.draft ?? entry?.current;
+    return base ? stableHash(base.definition) : undefined;
+  }
+
+  /** Save a draft as another tab or device would, without If-Match. */
+  saveDraftElsewhere(loopId: string, definition: LoopDefinitionInput): void {
+    const entry = this.loops.get(loopId)!;
+    const parsed = LoopDefinitionSchema.parse(definition);
+    entry.draft = {
+      id: entry.draft?.id ?? id('version'),
+      loopId,
+      version: (entry.current?.version ?? 0) + 1,
+      status: 'draft',
+      definition: parsed,
+      createdAt: TS,
+    };
+    entry.loop = { ...entry.loop, draftVersionId: entry.draft.id, name: parsed.name };
+  }
+
   addRun(overrides: Partial<RunRecord> = {}, thread?: ContextThread): RunRecord {
     const run = runRecord(overrides);
     this.runs.set(run.id, run);
@@ -211,12 +233,17 @@ export class FakeApi {
       const params = match(route, call);
       if (params) return handler(call, params);
     }
+    return this.builtIn(call);
+  };
+
+  /** Answer `call` with the built-in routes, ignoring overrides (for overrides that delegate). */
+  builtIn(call: RecordedCall): Response | Promise<Response> {
     for (const [route, handler] of this.routes) {
       const params = match(route, call);
       if (params) return handler(call, params);
     }
     return problem(404, 'NOT_FOUND', `${call.method} ${call.path}`);
-  };
+  }
 
   private stream(runId: string, after: number): Response {
     const events = (this.events.get(runId) ?? []).filter((e) => e.seq > after);
@@ -274,7 +301,10 @@ export class FakeApi {
       'GET /loops/:id',
       (_call, [loopId]) => {
         const entry = this.loops.get(loopId!);
-        return entry ? json(entry) : problem(404, 'LOOP_NOT_FOUND', 'loop not found');
+        const draftToken = this.draftToken(loopId!);
+        return entry
+          ? json({ ...entry, ...(draftToken ? { draftToken } : {}) })
+          : problem(404, 'LOOP_NOT_FOUND', 'loop not found');
       },
     ],
     [
@@ -287,6 +317,19 @@ export class FakeApi {
         );
         if (!parsed.success)
           return problem(400, 'VALIDATION_FAILED', 'the request did not match the schema');
+        const ifMatch = call.headers.get('if-match');
+        const serverToken = this.draftToken(loopId!);
+        if (ifMatch !== null && ifMatch.replace(/^"(.*)"$/, '$1') !== serverToken) {
+          return new Response(
+            JSON.stringify({
+              status: 409,
+              code: 'DRAFT_CONFLICT',
+              detail: 'the draft changed on the server',
+              draftToken: serverToken,
+            }),
+            { status: 409, headers: { 'content-type': 'application/problem+json' } },
+          );
+        }
         const draft: LoopVersionRecord = {
           id: entry.draft?.id ?? id('version'),
           loopId: loopId!,
@@ -297,7 +340,11 @@ export class FakeApi {
         };
         entry.draft = draft;
         entry.loop = { ...entry.loop, draftVersionId: draft.id, name: parsed.data.name };
-        return json({ draft, issues: validateLoop(parsed.data) });
+        return json({
+          draft,
+          draftToken: stableHash(parsed.data),
+          issues: validateLoop(parsed.data),
+        });
       },
     ],
     [
