@@ -16,7 +16,7 @@ declare module 'fastify' {
   }
 }
 
-/** Routes that never require credentials: health, docs, and (from M6) signed webhook receivers. */
+/** Routes that never require credentials: health, docs, and the signed webhook receivers (docs/08). */
 const PUBLIC_PREFIXES = ['/healthz', '/version', '/openapi.json', '/docs', '/hooks/'];
 
 function isPublic(url: string): boolean {

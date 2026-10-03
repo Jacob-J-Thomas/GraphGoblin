@@ -170,6 +170,74 @@ export const modelCatalog = sqliteTable(
   (t) => [primaryKey({ columns: [t.harness, t.model] })],
 );
 
+export const schedules = sqliteTable(
+  'schedules',
+  {
+    id: text('id').primaryKey(),
+    ownerId: text('owner_id').notNull(),
+    loopId: text('loop_id').notNull(),
+    versionId: text('version_id').notNull(),
+    triggerNodeId: text('trigger_node_id').notNull(),
+    expression: text('expression').notNull(),
+    timezone: text('timezone').notNull(),
+    missedFirePolicy: text('missed_fire_policy', {
+      enum: ['skip', 'run-once', 'run-each'],
+    }).notNull(),
+    enabled: integer('enabled', { mode: 'boolean' }).notNull(),
+    nextFireAt: text('next_fire_at'),
+    lastFiredAt: text('last_fired_at'),
+    createdAt: text('created_at').notNull(),
+  },
+  (t) => [
+    index('schedules_due_idx').on(t.enabled, t.nextFireAt),
+    index('schedules_loop_idx').on(t.loopId, t.versionId),
+  ],
+);
+
+export const webhookEndpoints = sqliteTable(
+  'webhook_endpoints',
+  {
+    id: text('id').primaryKey(),
+    ownerId: text('owner_id').notNull(),
+    loopId: text('loop_id').notNull(),
+    versionId: text('version_id').notNull(),
+    triggerNodeId: text('trigger_node_id').notNull(),
+    /** Random 32-byte URL-safe value; the public path is `/hooks/<token>`. Kept across versions. */
+    token: text('token').notNull(),
+    /** Secret name in the owner's secret store; the value is resolved at verification time. */
+    secretRef: text('secret_ref').notNull(),
+    signatureHeader: text('signature_header').notNull(),
+    replayWindowSeconds: integer('replay_window_seconds').notNull(),
+    enabled: integer('enabled', { mode: 'boolean' }).notNull(),
+    createdAt: text('created_at').notNull(),
+  },
+  (t) => [
+    index('webhook_endpoints_token_idx').on(t.token),
+    index('webhook_endpoints_loop_idx').on(t.loopId, t.versionId),
+  ],
+);
+
+export const inboundEvents = sqliteTable(
+  'inbound_events',
+  {
+    id: text('id').primaryKey(),
+    ownerId: text('owner_id').notNull(),
+    type: text('type').notNull(),
+    /** JSON text, written by hand: drizzle's json mode stores a JSON `null` as SQL NULL. */
+    payload: text('payload').notNull(),
+    dedupeKey: text('dedupe_key'),
+    /** `api`, `run:<runId>`, or `webhook:<endpointId>`. */
+    source: text('source').notNull(),
+    receivedAt: text('received_at').notNull(),
+    runIds: text('run_ids', { mode: 'json' }).$type<string[]>().notNull(),
+  },
+  (t) => [
+    index('inbound_events_owner_idx').on(t.ownerId, t.receivedAt),
+    index('inbound_events_type_dedupe_idx').on(t.ownerId, t.type, t.dedupeKey),
+    index('inbound_events_source_dedupe_idx').on(t.ownerId, t.source, t.dedupeKey),
+  ],
+);
+
 export const schema = {
   loops,
   loopVersions,
@@ -181,5 +249,8 @@ export const schema = {
   apiKeys,
   settings,
   modelCatalog,
+  schedules,
+  webhookEndpoints,
+  inboundEvents,
 };
 export type Schema = typeof schema;

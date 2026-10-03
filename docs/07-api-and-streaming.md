@@ -31,11 +31,13 @@ Runs
   POST   /runs/{id}/replay              fork a new run at a given node with the same input (Draft)
 
 Triggers and events
-  POST   /hooks/{endpointToken}         signed webhook receiver
-  POST   /events                        inbound event bus; body: { type, payload, dedupeKey? }
+  POST   /hooks/{endpointToken}         signed webhook receiver (public; HMAC, timestamp window, replay, 1 MB, rate limit; see 08)
+  GET    /loops/{id}/triggers           schedules, webhook endpoints (path only, never the secret), armed poll triggers
+  POST   /events                        inbound event bus; body: { type, payload, dedupeKey? }; fires event triggers, returns runIds and duplicate
+  GET    /events?type=&before=&limit=   stored inbound events (API, exit channels, webhooks), newest first
 
 Settings and catalog
-  CRUD   /schedules  /secrets  /api-keys  /model-catalog  /settings
+  CRUD   /secrets  /api-keys  /model-catalog  /settings   (schedules follow publish; read them at /loops/{id}/triggers)
   GET    /harness/preflight             Codex installed and authenticated?
   GET    /openapi.json   GET /healthz   GET /version
 ```

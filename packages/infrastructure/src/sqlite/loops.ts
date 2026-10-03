@@ -1,6 +1,6 @@
 import type { LoopDefinition, LoopRecord, LoopVersionRecord } from '@graphgoblin/contracts';
 import type { ClockPort, IdPort, LoopRepository } from '@graphgoblin/engine';
-import { and, desc, eq } from 'drizzle-orm';
+import { and, asc, desc, eq, isNotNull } from 'drizzle-orm';
 import type { Database } from './db.js';
 import { loopVersions, loops } from './schema.js';
 
@@ -119,6 +119,16 @@ export class SqliteLoopRepository implements LoopRepository {
       .from(loops)
       .where(eq(loops.ownerId, ownerId))
       .orderBy(desc(loops.updatedAt));
+    return rows.map(toLoop);
+  }
+
+  /** Every loop with a published version, across owners; used to re-arm triggers at boot. */
+  async listPublished(): Promise<LoopRecord[]> {
+    const rows = await this.db
+      .select()
+      .from(loops)
+      .where(isNotNull(loops.currentVersionId))
+      .orderBy(asc(loops.createdAt));
     return rows.map(toLoop);
   }
 

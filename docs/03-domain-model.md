@@ -177,16 +177,16 @@ Each event has `runId`, `seq`, `ts`, `type`, optional `nodeId`, and a typed `pay
 
 ## Other entities (Decided)
 
-| Entity              | Purpose                                                                                                             |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `harness_sessions`  | `(runId, nodeId, attempt)` to harness session id, status, model, effort. Written before the subprocess starts.      |
-| `schedules`         | Cron expression, timezone, enabled, next fire, missed-fire policy; one per cron trigger node per published version. |
-| `webhook_endpoints` | Path token, secret hash, signature scheme, replay window, loop and trigger node ids.                                |
-| `inbound_events`    | Raw inbound events with dedupe keys; what fired which run.                                                          |
-| `timers`            | Persisted wake-ups for wait and heartbeat nodes.                                                                    |
-| `secrets`           | Name, ciphertext, key id, owner.                                                                                    |
-| `model_catalog`     | Harness, model id, display name, allowed efforts, default effort, enabled.                                          |
-| `api_keys`          | Hashed keys with labels and scopes.                                                                                 |
-| `settings`          | Owner-level defaults.                                                                                               |
+| Entity              | Purpose                                                                                                                                                                                                                                      |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `harness_sessions`  | `(runId, nodeId, attempt)` to harness session id, status, model, effort. Written before the subprocess starts.                                                                                                                               |
+| `schedules`         | One per cron trigger node per published version: loop, version, and trigger node ids, expression, timezone, missed-fire policy, enabled, `next_fire_at`, `last_fired_at`. Rows of earlier versions are disabled, not deleted.                |
+| `webhook_endpoints` | One per webhook trigger node per published version: loop, version, and trigger node ids, path token (kept across versions for the same node), `secret_ref` naming the signing secret in `secrets`, signature header, replay window, enabled. |
+| `inbound_events`    | Every event from `POST /events`, exit-node `event` channels, and webhook deliveries: type, JSON payload, dedupe key, source (`api`, `run:<runId>`, `webhook:<endpointId>`), received time, and the ids of the runs it started.               |
+| `timers`            | Persisted wake-ups for wait and heartbeat nodes.                                                                                                                                                                                             |
+| `secrets`           | Name, ciphertext, key id, owner.                                                                                                                                                                                                             |
+| `model_catalog`     | Harness, model id, display name, allowed efforts, default effort, enabled.                                                                                                                                                                   |
+| `api_keys`          | Hashed keys with labels and scopes.                                                                                                                                                                                                          |
+| `settings`          | Owner-level defaults.                                                                                                                                                                                                                        |
 
 Every table carries `ownerId`. 1.0 has one owner, `local`.

@@ -16,6 +16,7 @@ import { registerLoopRoutes } from './routes/loops.js';
 import { registerRunRoutes } from './routes/runs.js';
 import { registerSettingsRoutes } from './routes/settings.js';
 import { registerSystemRoutes } from './routes/system.js';
+import { registerTriggerRoutes } from './routes/triggers.js';
 import { API_VERSION, type ApiInstance } from './types.js';
 
 export interface BuildAppOptions {
@@ -59,6 +60,10 @@ export async function buildApp(
         { name: 'secrets', description: 'Named secrets (values are never returned)' },
         { name: 'api-keys', description: 'Keys for other applications and the MCP server' },
         { name: 'events', description: 'The inbound event bus' },
+        {
+          name: 'triggers',
+          description: 'Schedules, webhook endpoints, and the public /hooks receiver',
+        },
         { name: 'system', description: 'Health, version, harness preflight' },
       ],
     },
@@ -76,6 +81,7 @@ export async function buildApp(
   registerLoopRoutes(app, container);
   registerRunRoutes(app, container);
   registerSettingsRoutes(app, container);
+  registerTriggerRoutes(app, container);
 
   return app;
 }

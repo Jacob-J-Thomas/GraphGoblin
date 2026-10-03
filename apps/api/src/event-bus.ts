@@ -12,9 +12,10 @@ export interface InboundEvent {
 export type InboundEventListener = (event: InboundEvent) => void | Promise<void>;
 
 /**
- * The gateway's inbound event bus. Exit nodes publish onto it through the `event` return channel,
- * `POST /events` publishes onto it, and (from M6) event trigger nodes subscribe to it.
- * In-process in 1.0; the recent buffer lets the API show what arrived.
+ * The gateway's in-process event bus. Exit nodes publish onto it through the `event` return
+ * channel; the trigger service subscribes, stores each event in `inbound_events`, and fires event
+ * triggers. `POST /events` calls the trigger service directly so it can return the started runs.
+ * The recent buffer is a debugging aid; `GET /events` reads the table.
  */
 export class InboundEventBus {
   private listeners: InboundEventListener[] = [];
