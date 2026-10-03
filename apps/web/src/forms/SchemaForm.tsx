@@ -71,6 +71,7 @@ export function SchemaForm({
   parseErrorsRef.current = parseErrors;
   const onParseErrorRef = useRef(onParseError);
   onParseErrorRef.current = onParseError;
+  const tracked = onParseError !== undefined;
   const parseErrorChannel = useMemo<ParseErrorChannel>(
     () => ({
       get: (path) => parseErrorsRef.current?.[path],
@@ -79,8 +80,11 @@ export function SchemaForm({
         if (current?.message === error?.message && current?.text === error?.text) return;
         onParseErrorRef.current?.(path, error);
       },
+      tracked,
+      errors: parseErrors,
     }),
-    [],
+    // `errors` is the stored state fields compare against to notice an external discard.
+    [parseErrors, tracked],
   );
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;

@@ -16,9 +16,18 @@ export interface ParseErrorChannel {
   get: (path: string) => ParseError | undefined;
   /** Record (or, with `undefined`, clear) the unparsed text for a path. */
   report: (path: string, error: ParseError | undefined) => void;
+  /** True when a store keeps the reports; only then can an entry be discarded from outside. */
+  tracked: boolean;
+  /** The stored entries now, so a mounted field notices one discarded elsewhere. */
+  errors: Record<string, ParseError> | undefined;
 }
 
-const NONE: ParseErrorChannel = { get: () => undefined, report: () => undefined };
+const NONE: ParseErrorChannel = {
+  get: () => undefined,
+  report: () => undefined,
+  tracked: false,
+  errors: undefined,
+};
 
 export const ParseErrorContext = createContext<ParseErrorChannel>(NONE);
 

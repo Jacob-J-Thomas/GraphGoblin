@@ -12,6 +12,7 @@ import {
   clearSetAsideDraft,
   loadLocalDraft,
   loadSetAsideDraft,
+  saveLocalDraft,
   saveSetAsideDraft,
   type LocalDraft,
 } from '../drafts/local-drafts.js';
@@ -93,12 +94,21 @@ function useLoadEditor(loopId: string) {
   }, [loopId, ready, query.isSuccess, query.isError]);
 
   useEffect(() => () => useEditorStore.getState().reset(), [loopId]);
-  const restoreSetAside = () => {
+  const restoreSetAside = async () => {
     if (!setAside) return;
-    useEditorStore.getState().load(loopId, setAside.definition, { dirty: true });
+    const restoredCopy = setAside;
     setSetAside(undefined);
+    // Mirror the restored copy as this device's unsynced draft before its backup goes, so
+    // leaving at any point afterwards still finds it on the next load.
+    await saveLocalDraft({
+      loopId,
+      definition: restoredCopy.definition,
+      savedAt: new Date().toISOString(),
+      synced: false,
+    });
+    useEditorStore.getState().load(loopId, restoredCopy.definition, { dirty: true });
     setRestored(true);
-    void clearSetAsideDraft(loopId);
+    await clearSetAsideDraft(loopId);
   };
   const discardSetAside = () => {
     setSetAside(undefined);
@@ -230,7 +240,7 @@ export function EditorPage() {
         <Alert tone="warn" title="The server has a newer draft">
           This device has unsaved changes from {formatDateTime(setAside.savedAt)}, older than the
           draft saved on the server since, which is shown.{' '}
-          <Button size="sm" variant="outline" onClick={restoreSetAside}>
+          <Button size="sm" variant="outline" onClick={() => void restoreSetAside()}>
             Use this device&apos;s copy instead
           </Button>{' '}
           <Button size="sm" variant="ghost" onClick={discardSetAside}>

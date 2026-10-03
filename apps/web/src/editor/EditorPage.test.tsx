@@ -259,6 +259,14 @@ describe('EditorPage', () => {
     await waitFor(() => expect(screen.queryByText(/FIELD_UNPARSED/)).toBeNull());
     expect(getCode('Input schema')).toContain('"object"');
 
+    // Discarding from the validation panel with the field mounted resets the field too.
+    setCode('Input schema', '{"mounted": ');
+    expect(await screen.findByText(/FIELD_UNPARSED/)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Discard unparsed text at inputSchema' }));
+    await waitFor(() => expect(screen.queryByText(/FIELD_UNPARSED/)).toBeNull());
+    expect(getCode('Input schema')).toContain('"object"');
+    expect(screen.queryByText(/Invalid JSON/)).toBeNull();
+
     // Discarding from the validation panel works when the field is gone.
     setCode('Input schema', '[');
     expect(await screen.findByText(/FIELD_UNPARSED/)).toBeInTheDocument();
@@ -377,6 +385,40 @@ describe('EditorPage', () => {
     await user.click(screen.getByRole('button', { name: 'Discard it' }));
     expect(screen.queryByText('The server has a newer draft')).toBeNull();
     await waitFor(async () => expect(await loadSetAsideDraft(loop.id)).toBeUndefined());
+  });
+
+  it('keeps a restored device copy when leaving while an earlier save is in flight', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const loop = api.addLoop(newLoopDefinition('server copy'));
+    await saveLocalDraft({
+      loopId: loop.id,
+      definition: newLoopDefinition('older local copy'),
+      savedAt: '2026-10-01T00:00:00.000Z',
+      synced: false,
+    });
+    let release: () => void = () => undefined;
+    let puts = 0;
+    api.override('PUT /loops/:id/draft', async () => {
+      puts += 1;
+      // The first save hangs until released; later ones fail, as on a dropped connection.
+      if (puts === 1) await new Promise<void>((resolve) => (release = resolve));
+      return problem(500, 'INTERNAL_ERROR', 'unavailable');
+    });
+    const view = renderApp(`/loops/${loop.id}/edit`, api);
+    expect(await screen.findByText('The server has a newer draft')).toBeInTheDocument();
+    act(() => useEditorStore.getState().updateMeta({ description: 'one edit' }));
+    await waitFor(() => expect(puts).toBe(1), SAVE_WAIT);
+    await user.click(screen.getByRole('button', { name: "Use this device's copy instead" }));
+    expect(await screen.findByRole('heading', { name: 'older local copy' })).toBeInTheDocument();
+    view.unmount();
+    release();
+    await waitFor(async () => expect(await loadSetAsideDraft(loop.id)).toBeUndefined());
+
+    // Reopening finds the restored copy, not the server's.
+    renderApp(`/loops/${loop.id}/edit`, api);
+    expect(await screen.findByRole('heading', { name: 'older local copy' })).toBeInTheDocument();
+    expect(screen.getByText('Restored unsaved changes from this device.')).toBeInTheDocument();
   });
 
   it('loads the editor once an API key is entered after a 401', async () => {

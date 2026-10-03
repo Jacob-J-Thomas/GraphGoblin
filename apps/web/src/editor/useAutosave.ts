@@ -44,9 +44,13 @@ export function useAutosave(
 ): () => Promise<boolean> {
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const pending = useRef<
-    { loopId: string; definition: LoopDefinitionInput; revision: number } | undefined
+    | { loopId: string; definition: LoopDefinitionInput; revision: number; generation: number }
+    | undefined
   >(undefined);
   const revision = useEditorStore((s) => s.revision);
+  // A load (for example restoring a set-aside copy) starts a new generation and may leave the
+  // revision number unchanged, so the mirror below watches both.
+  const loadGeneration = useEditorStore((s) => s.generation);
 
   const save = useCallback(async (): Promise<boolean> => {
     clearTimeout(timer.current);
@@ -100,11 +104,11 @@ export function useAutosave(
     if (revision === savedRevision || !loopId || !definition) return;
     // Mirror the edit to this device at once: navigating away or closing the tab inside the
     // debounce window must not lose it. The server save stays debounced.
-    pending.current = { loopId, definition, revision };
+    pending.current = { loopId, definition, revision, generation: loadGeneration };
     void saveLocalDraft({ loopId, definition, savedAt: new Date().toISOString(), synced: false });
     clearTimeout(timer.current);
     timer.current = setTimeout(() => void save(), delayMs);
-  }, [revision, save, delayMs]);
+  }, [revision, loadGeneration, save, delayMs]);
 
   useEffect(
     () => () => {

@@ -525,9 +525,16 @@ function JsonText({
   const [stored] = useState(() => parseErrors.get(path));
   const [text, setText] = useState(() => stored?.text ?? prettyJson(value));
   const [error, setError] = useState<string | undefined>(stored?.message);
+  // Discarded from outside (the validation panel): show the last valid value again.
+  if (parseErrors.tracked && error !== undefined && parseErrors.errors?.[path] === undefined) {
+    setText(prettyJson(value));
+    setError(undefined);
+  }
   const fail = (next: string, message: string | undefined) => {
-    setError(message);
+    // Store first: a render that sees the local error must also see the stored entry, or it would
+    // read as discarded.
     parseErrors.report(path, message === undefined ? undefined : { message, text: next });
+    setError(message);
   };
   return (
     <div className="flex-1">
