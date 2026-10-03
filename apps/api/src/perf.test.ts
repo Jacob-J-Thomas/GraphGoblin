@@ -131,8 +131,7 @@ describe.skipIf(!perf)('performance baseline', () => {
         sseReplay: replay,
         sseLive: live,
       };
-      process.stdout.write(`PERF ${JSON.stringify(summary, null, 2)}
-`);
+      process.stdout.write(`PERF ${JSON.stringify(summary, null, 2)}\n`);
     } finally {
       await t.close();
     }
