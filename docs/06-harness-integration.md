@@ -155,7 +155,7 @@ Usage reported by the harness is written to `harness.usage` events and rolled in
 
 ### Model catalog (Decided)
 
-A `model_catalog` table seeded at first boot with the Codex models and the five effort levels, editable in settings. Node and loop `model` and `effort` fields are validated against it. Adding a harness later adds rows, not code paths.
+A `model_catalog` table seeded at first boot with the Codex models and all six canonical effort levels (the Codex adapter maps `max` to `xhigh`), editable in settings. Migration `0003` adds `max` to 1.0.0 seeded Codex rows whose efforts are still exactly the original five, compared as a set. Node and loop `model` and `effort` fields are validated against it. Adding a harness later adds rows, not code paths.
 
 ### Windows notes
 

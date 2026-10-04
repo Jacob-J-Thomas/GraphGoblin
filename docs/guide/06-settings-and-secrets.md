@@ -14,7 +14,7 @@ Manage **Model catalog**, **Defaults**, **Secrets**, and **API keys** here, and 
 
 Use **Add model** or **Edit** to record a Codex model ID, display name, allowed efforts, default effort, and enabled state. Choose a default effort that belongs to the entry's allowed efforts. Catalog entries are seeded locally; they do not prove your account has access to a model. Use the ID your Codex account accepts.
 
-The canonical effort values are `minimal`, `low`, `medium`, `high`, `xhigh`, and `max`; the Codex adapter maps `max` to `xhigh`. Model support still depends on Codex. The enabled catalog entries populate the Settings default-model selector, but the engine does not currently enforce catalog membership or effort lists.
+The seeded Codex entries list all six canonical efforts: `minimal`, `low`, `medium`, `high`, `xhigh`, and `max`; the Codex adapter maps `max` to `xhigh`. An installation created by 1.0.0 gains `max` on its seeded Codex entries at the next start through a database migration when their efforts still match the original five as a set; edited effort sets are preserved, as are display names, default efforts, and enabled states. Until that start, `--preflight` reports one pending migration. Model support still depends on Codex. The enabled catalog entries populate the Settings default-model selector, but the engine does not currently enforce catalog membership or effort lists.
 
 Set `model` and `effort` on the inference node or in loop `defaults`, set owner defaults in **Defaults** (below), or set the API's environment before startup:
 
@@ -149,7 +149,7 @@ $env:GG_REQUIRE_API_KEY = 'true'
 export GG_REQUIRE_API_KEY=true
 ```
 
-A missing, malformed, or revoked key returns 401; a key lacking the route's scope returns 403 `FORBIDDEN`. A wrong key is rejected even in trusted mode, and presenting a scoped key in trusted mode still limits it to its own scopes. Public health, version, OpenAPI, API-doc, and signed webhook routes remain exempt. Keep the API on localhost and use [MCP's key configuration](05-mcp-and-codex-plugin.md#start-the-mcp-server) for agent clients.
+A missing, malformed, or revoked key returns 401 on private routes; a key lacking the route's scope returns 403 `FORBIDDEN`. A wrong key is rejected even in trusted mode, and presenting a scoped key in trusted mode still limits it to its own scopes. Public routes remain exempt; see the [full list](../07-api-and-streaming.md#public-routes-decided-by-implementation-2026-10-03). Keep the API on localhost and use [MCP's key configuration](05-mcp-and-codex-plugin.md#start-the-mcp-server) for agent clients.
 
 Revoke an unused key in **Settings → API keys**, or through REST:
 

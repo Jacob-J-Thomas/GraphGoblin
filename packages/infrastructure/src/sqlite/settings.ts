@@ -154,7 +154,7 @@ export interface ModelCatalogEntry {
   enabled: boolean;
 }
 
-const CODEX_EFFORTS: Effort[] = ['minimal', 'low', 'medium', 'high', 'xhigh'];
+const CODEX_EFFORTS: Effort[] = ['minimal', 'low', 'medium', 'high', 'xhigh', 'max'];
 
 /** Models seen on the development machine on 2026-10-02 (docs/research/codex-sdk.md). Editable in settings. */
 export const DEFAULT_MODEL_CATALOG: ModelCatalogEntry[] = [

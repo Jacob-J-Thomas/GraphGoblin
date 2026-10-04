@@ -45,7 +45,7 @@ the recovery clock.
 ## Webhook (Decided, shipped in M6)
 
 - Each webhook trigger node gets an endpoint token: 32 random bytes, base64url, in the path `/hooks/<token>`. The token stays the same across published versions for the same trigger node id, so publishing does not break a sender's configuration; to rotate it, rename or replace the node. The signing secret is the owner's secret named by the node's `signature.secretRef`, resolved from the secret store on every delivery.
-- `/hooks/` is the only intentionally unauthenticated prefix; the signature is the credential.
+- `/hooks/` needs no API key because the HMAC signature is the credential. See [Public routes](07-api-and-streaming.md#public-routes-decided-by-implementation-2026-10-03) for the full list.
 - Checks, in order, with the response for each failure:
 
   | Check                                                                                                                                                   | Failure                                              |

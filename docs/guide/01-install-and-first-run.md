@@ -128,7 +128,7 @@ node apps/api/dist/main.js
 | `GG_DATA_DIR`            | `~/.graphgoblin` (`/data` in the container image). A relative value is resolved from the process working directory.                                                                                                       |
 | `GG_DB_URL`              | `file:<data-directory>/graphgoblin.db`. Override it only to keep the database elsewhere.                                                                                                                                  |
 | `GG_WEB_DIST`            | Unset: the checkout's `apps/web/dist` when it has been built. Point it at another built web directory, or set it empty to serve no UI.                                                                                    |
-| `GG_REQUIRE_API_KEY`     | `false`. Set `true` to require a key on every non-public route; the web app then asks for one. See [the first key](06-settings-and-secrets.md#create-api-keys).                                                           |
+| `GG_REQUIRE_API_KEY`     | `false`. Set `true` to require a key on [every non-public route][public-routes]; the web app then asks for one. See [the first key](06-settings-and-secrets.md#create-api-keys).                                          |
 | `GG_MASTER_KEY`          | Unset. Base64 of 32 bytes; otherwise the key lives in `<data-directory>/master.key`. See [Preserve the master key](06-settings-and-secrets.md#preserve-the-master-key).                                                   |
 | `GG_DEFAULT_MODEL`       | `gpt-6-luna`. Use a model available to your Codex account.                                                                                                                                                                |
 | `GG_DEFAULT_EFFORT`      | `low`. Node and loop settings can override it.                                                                                                                                                                            |
@@ -163,7 +163,7 @@ If this returns 404, check the web-directory setting and confirm that the built 
 apps/web/dist/index.html
 ```
 
-With `GG_REQUIRE_API_KEY=true` the shell still loads and asks for an API key on the first 401; paste a key [created on the command line](06-settings-and-secrets.md#the-first-key-from-the-command-line). The key is kept in this browser until you choose **Forget key** in Settings.
+With `GG_REQUIRE_API_KEY=true` the [public shell][public-routes] still loads and asks for an API key on the first 401; paste a key [created on the command line](06-settings-and-secrets.md#the-first-key-from-the-command-line). The key is kept in this browser until you choose **Forget key** in Settings.
 
 ## Check readiness and run the starter graph
 
@@ -173,7 +173,7 @@ The first-run preflight checks Node, the data directory, the master key, the dat
 node apps/api/dist/main.js --preflight
 ```
 
-It prints a table and exits 1 when any check failed. Before the first start the master key and database are warnings, because the start creates them. While the API runs, the same report is available over HTTP (it needs a key when keys are required):
+It prints a table and exits 1 when any check failed. Before the first start the master key and database are warnings, because the start creates them. While the API runs, the same report is available over HTTP (`GET /system/preflight` needs a key when keys are required; see [Public routes][public-routes]):
 
 ```bash
 curl -sS http://127.0.0.1:4747/system/preflight
@@ -209,3 +209,5 @@ Before maintenance, let queued and running work finish, or pause or cancel it an
 Restart with the same environment and start command. Boot applies pending migrations, recovers active runs, restores timers, and re-arms published triggers. Paused runs stay paused. A node that was executing when the process stopped runs again, so make scripts idempotent and inspect their side effects before resuming. For longer stops, choose an appropriate [cron missed-fire policy](04-triggers.md#schedule-with-cron).
 
 Read [Security and distribution](../11-security-and-distribution.md) for the intended deployment posture. Continue with [Build a loop](02-build-a-loop.md).
+
+[public-routes]: ../07-api-and-streaming.md#public-routes-decided-by-implementation-2026-10-03

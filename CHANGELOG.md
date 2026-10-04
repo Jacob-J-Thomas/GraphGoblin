@@ -2,6 +2,12 @@
 
 All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); the user guide is [docs/guide/](docs/guide/README.md).
 
+## Unreleased
+
+### Fixed
+
+- Seeded Codex model catalog entries now list `max`, matching the editor. A database migration adds it to existing seeded entries whose efforts still match the original five as a set, preserving edited effort sets, display names, default efforts, and enabled states. The Codex adapter still maps `max` to `xhigh`.
+
 ## 1.0.0 - 2026-10-03
 
 The first release: design, run, and observe agent loops on your own machine, with Codex as the harness.
