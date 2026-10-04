@@ -2,9 +2,13 @@ import type { ListRunsQuery } from '@graphgoblin/api-client';
 import { RunStatusSchema } from '@graphgoblin/contracts';
 import { Link, useSearchParams } from 'react-router';
 import { useLoops, useRuns } from '../api/queries.js';
+import { Page, PageHeader } from '../components/layout/index.js';
 import { QueryState, RunStatusBadge } from '../components/status.js';
-import { Button, Card, Label, Select, Table, Td, Th } from '../components/ui/index.js';
+import { Button, Card, FieldGroup, Label, Select, Table, Td, Th } from '../components/ui/index.js';
 import { formatDateTime } from '../lib/utils.js';
+
+const ID_LINK = 'font-mono text-sm font-medium text-link underline-offset-[3px] hover:underline';
+const LINK = 'text-link underline-offset-[3px] hover:underline';
 
 /** Runs across loops, filtered by loop, status, and parent run. Filters live in the URL. */
 export function RunsPage() {
@@ -29,11 +33,11 @@ export function RunsPage() {
   };
 
   return (
-    <div className="space-y-3 p-4">
-      <h1 className="text-lg font-semibold">Runs</h1>
+    <Page>
+      <PageHeader title="Runs" />
       <Card>
-        <div className="flex flex-wrap items-end gap-3">
-          <div>
+        <div className="flex flex-wrap items-end gap-4">
+          <FieldGroup className="w-[220px] max-sm:w-full">
             <Label htmlFor="filter-loop">Loop</Label>
             <Select
               id="filter-loop"
@@ -47,8 +51,8 @@ export function RunsPage() {
                 </option>
               ))}
             </Select>
-          </div>
-          <div>
+          </FieldGroup>
+          <FieldGroup className="w-[220px] max-sm:w-full">
             <Label htmlFor="filter-status">Status</Label>
             <Select
               id="filter-status"
@@ -62,8 +66,8 @@ export function RunsPage() {
                 </option>
               ))}
             </Select>
-          </div>
-          <div>
+          </FieldGroup>
+          <FieldGroup className="w-[220px] max-sm:w-full">
             <Label htmlFor="filter-parent">Parent</Label>
             <Select
               id="filter-parent"
@@ -76,7 +80,7 @@ export function RunsPage() {
                 <option value={parent}>Children of {parent.slice(-6)}</option>
               ) : null}
             </Select>
-          </div>
+          </FieldGroup>
           {loopId || status || parent ? (
             <Button variant="ghost" onClick={() => setParams(new URLSearchParams())}>
               Clear filters
@@ -87,62 +91,57 @@ export function RunsPage() {
       <QueryState query={runsQuery} what="Runs">
         {(items) =>
           items.length === 0 ? (
-            <p className="text-sm text-slate-500">No runs match.</p>
+            <p className="text-sm text-muted">No runs match.</p>
           ) : (
-            <Table>
-              <thead>
-                <tr>
-                  <Th>Run</Th>
-                  <Th>Loop</Th>
-                  <Th>Status</Th>
-                  <Th>Started</Th>
-                  <Th>Parent</Th>
-                  <Th>Children</Th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((run) => (
-                  <tr key={run.id}>
-                    <Td>
-                      <Link
-                        className="font-mono text-sky-800 hover:underline"
-                        to={`/runs/${run.id}`}
-                      >
-                        {run.id}
-                      </Link>
-                    </Td>
-                    <Td>{names.get(run.loopId) ?? run.loopId}</Td>
-                    <Td>
-                      <RunStatusBadge status={run.status} />
-                    </Td>
-                    <Td>{formatDateTime(run.startedAt ?? run.createdAt)}</Td>
-                    <Td>
-                      {run.parentRunId ? (
-                        <Link
-                          className="font-mono text-xs text-sky-800 hover:underline"
-                          to={`/runs/${run.parentRunId}`}
-                        >
-                          {run.parentRunId.slice(-6)}
-                        </Link>
-                      ) : (
-                        '-'
-                      )}
-                    </Td>
-                    <Td>
-                      <Link
-                        className="text-xs text-sky-800 hover:underline"
-                        to={`/runs?parent=${run.id}`}
-                      >
-                        children
-                      </Link>
-                    </Td>
+            <Card flush>
+              <Table>
+                <thead>
+                  <tr>
+                    <Th>Run</Th>
+                    <Th>Loop</Th>
+                    <Th>Status</Th>
+                    <Th>Started</Th>
+                    <Th>Parent</Th>
+                    <Th>Children</Th>
                   </tr>
-                ))}
-              </tbody>
-            </Table>
+                </thead>
+                <tbody>
+                  {items.map((run) => (
+                    <tr key={run.id}>
+                      <Td>
+                        <Link className={ID_LINK} to={`/runs/${run.id}`}>
+                          {run.id}
+                        </Link>
+                      </Td>
+                      <Td>{names.get(run.loopId) ?? run.loopId}</Td>
+                      <Td>
+                        <RunStatusBadge status={run.status} />
+                      </Td>
+                      <Td className="text-sm whitespace-nowrap text-muted">
+                        {formatDateTime(run.startedAt ?? run.createdAt)}
+                      </Td>
+                      <Td>
+                        {run.parentRunId ? (
+                          <Link className={ID_LINK} to={`/runs/${run.parentRunId}`}>
+                            {run.parentRunId.slice(-6)}
+                          </Link>
+                        ) : (
+                          <span className="text-subtle">-</span>
+                        )}
+                      </Td>
+                      <Td>
+                        <Link className={LINK} to={`/runs?parent=${run.id}`}>
+                          children
+                        </Link>
+                      </Td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            </Card>
           )
         }
       </QueryState>
-    </div>
+    </Page>
   );
 }
