@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { StrictMode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   anchorInView,
@@ -712,5 +713,81 @@ describe('Popover: what holds it open (#15 review)', () => {
     expect(isOpen()).toBe(true);
     expect(trigger().nextElementSibling).toBe(popover());
     expect(popover().closest('dialog')).not.toBeNull();
+  });
+});
+
+describe('Popover: re-check fixes (#15 review)', () => {
+  const button = (name: string) => screen.getByRole('button', { name });
+
+  it('without the popover API, Tab out of the last row keeps a hovered popover open until the pointer leaves', () => {
+    vi.useFakeTimers();
+    render(<Harness />);
+    fireEvent.pointerEnter(trigger(), { pointerType: 'mouse' });
+    act(() => {
+      vi.advanceTimersByTime(OPEN_DELAY);
+    });
+    expect(isOpen()).toBe(true);
+    act(() => button('Second Info').focus());
+    // Tab from the last row: focus goes on to what follows the trigger; the pointer still holds it.
+    fireEvent.keyDown(button('Second Info'), { key: 'Tab' });
+    expect(button('After Info')).toHaveFocus();
+    expect(isOpen()).toBe(true);
+    fireEvent.pointerLeave(trigger(), { pointerType: 'mouse' });
+    act(() => {
+      vi.advanceTimersByTime(CLOSE_DELAY);
+    });
+    expect(isOpen()).toBe(false);
+    // Pinned, the same Tab closes it: focus moved on.
+    fireEvent.click(trigger());
+    act(() => button('Second Info').focus());
+    fireEvent.keyDown(button('Second Info'), { key: 'Tab' });
+    expect(button('After Info')).toHaveFocus();
+    expect(isOpen()).toBe(false);
+  });
+
+  it('without the popover API, Shift+Tab from the control after the trigger reaches the last row, as inline', async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+    // The pointer rests on the trigger, so the popover stays open while focus walks past it.
+    await user.hover(trigger());
+    await vi.waitFor(() => expect(isOpen()).toBe(true));
+    act(() => button('Before Info').focus());
+    await user.tab();
+    expect(trigger()).toHaveFocus();
+    await user.tab();
+    expect(button('First Info')).toHaveFocus();
+    await user.tab();
+    expect(button('Second Info')).toHaveFocus();
+    await user.tab();
+    expect(button('After Info')).toHaveFocus();
+    expect(isOpen()).toBe(true);
+    // And back: the last row, the first row, the trigger, the control before it.
+    await user.tab({ shift: true });
+    expect(button('Second Info')).toHaveFocus();
+    await user.tab({ shift: true });
+    expect(button('First Info')).toHaveFocus();
+    await user.tab({ shift: true });
+    expect(trigger()).toHaveFocus();
+    await user.tab({ shift: true });
+    expect(button('Before Info')).toHaveFocus();
+  });
+
+  it('removes its press listeners when it unmounts during a press, under Strict Mode', () => {
+    const added = vi.spyOn(document, 'addEventListener');
+    const removed = vi.spyOn(document, 'removeEventListener');
+    const view = render(
+      <StrictMode>
+        <Harness />
+      </StrictMode>,
+    );
+    fireEvent.pointerDown(trigger());
+    const pressListeners = added.mock.calls.filter(
+      ([type]) => type === 'pointerup' || type === 'pointercancel',
+    );
+    expect(pressListeners).toHaveLength(2);
+    view.unmount();
+    for (const [type, listener] of pressListeners) {
+      expect(removed).toHaveBeenCalledWith(type, listener, true);
+    }
   });
 });

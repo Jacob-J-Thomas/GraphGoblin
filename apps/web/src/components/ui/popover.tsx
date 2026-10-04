@@ -168,8 +168,9 @@ function viewportSize(): { width: number; height: number } {
  *   is a fixed-position element portalled to `document.body` while open (out of any transformed
  *   ancestor, such as a zoomed canvas node), with the same keyboard order kept by hand: Tab from the
  *   trigger moves into the first control, Shift+Tab from the first control returns to the trigger,
- *   and Tab past the last control closes it and carries on after the trigger. Inside a modal
- *   dialog, which makes the rest of the page inert, it stays in place instead.
+ *   Tab past the last control moves on to what follows the trigger (focus leaving then decides as
+ *   ever: a pinned popover closes, a hovered one stays), and Shift+Tab from there returns to the
+ *   last control. Inside a modal dialog, which makes the rest of the page inert, it stays in place.
  * - **Placement** from the trigger's box: below or above (never over the trigger), shifted to stay
  *   inside the viewport, and scrolling when taller than the room there; again on resize, on a scroll
  *   around it, and after every render.
@@ -333,7 +334,46 @@ export function Popover({ label, trigger, children, className }: PopoverProps) {
     };
   }, [open, close, place]);
 
-  useEffect(() => () => clearTimeout(timerRef.current), []);
+  // Portalled away from the trigger, Shift+Tab from the control after the trigger reaches the last
+  // row, as it does when the popover sits right after the trigger.
+  useEffect(() => {
+    if (!portalled) return;
+    const onKeyDown = (event: globalThis.KeyboardEvent) => {
+      if (event.key !== 'Tab' || !event.shiftKey || event.defaultPrevented) return;
+      const anchor = triggerRef.current;
+      const popover = popoverRef.current;
+      if (!anchor || !popover || document.activeElement !== nextTabbable(anchor, popover)) return;
+      const last = [...popover.querySelectorAll<HTMLElement>(ITEMS)].at(-1);
+      if (!last) return;
+      event.preventDefault();
+      last.focus();
+    };
+    document.addEventListener('keydown', onKeyDown, true);
+    return () => document.removeEventListener('keydown', onKeyDown, true);
+  }, [portalled]);
+
+  /**
+   * The end of a pointer press, with or without a click: keyboard focus opens it again. One stable
+   * listener per popover, so unmounting during a press can remove it.
+   */
+  const [endPress] = useState(() => {
+    const end = () => {
+      pressRef.current = false;
+      document.removeEventListener('pointerup', end, true);
+      document.removeEventListener('pointercancel', end, true);
+    };
+    return end;
+  });
+
+  // Unmounting: no timer may fire, and no press listener may outlive the popover.
+  useEffect(
+    () => () => {
+      clearTimeout(timerRef.current);
+      document.removeEventListener('pointerup', endPress, true);
+      document.removeEventListener('pointercancel', endPress, true);
+    },
+    [endPress],
+  );
 
   const onPointerEnter = (part: 'trigger' | 'popover') => (event: PointerEvent<HTMLElement>) => {
     // Touch has no hover: a tap is a click.
@@ -352,13 +392,6 @@ export function Popover({ label, trigger, children, className }: PopoverProps) {
   };
 
   const items = () => [...(popoverRef.current?.querySelectorAll<HTMLElement>(ITEMS) ?? [])];
-
-  /** The end of a pointer press, with or without a click: keyboard focus opens it again. */
-  const endPress = () => {
-    pressRef.current = false;
-    document.removeEventListener('pointerup', endPress, true);
-    document.removeEventListener('pointercancel', endPress, true);
-  };
 
   const triggerProps: PopoverTriggerProps = {
     ref: triggerRef,
@@ -407,12 +440,12 @@ export function Popover({ label, trigger, children, className }: PopoverProps) {
         event.preventDefault();
         focusTriggerQuietly();
       } else if (!event.shiftKey && index === list.length - 1) {
-        // Past the last control: close, and carry on to what follows the trigger.
+        // Past the last control: on to what follows the trigger. Focus leaving then decides as it
+        // always does (onFocusOut): a pinned popover closes, a hovered one stays.
         event.preventDefault();
         const after = triggerRef.current
           ? nextTabbable(triggerRef.current, popoverRef.current)
           : undefined;
-        close();
         if (after) after.focus();
         else focusTriggerQuietly();
       }
