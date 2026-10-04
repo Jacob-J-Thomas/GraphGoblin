@@ -109,6 +109,7 @@ describe('AppShell', () => {
     );
     expect(screen.getByText('screen')).toBeInTheDocument();
     expect(screen.getByRole('banner')).toHaveTextContent('GraphGoblin');
+    expect(screen.getByRole('banner')).toHaveClass('hairline-accent', 'relative');
     expect(screen.queryByText('You are offline')).not.toBeInTheDocument();
     rerender(
       <MemoryRouter>

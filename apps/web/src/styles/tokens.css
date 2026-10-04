@@ -209,10 +209,14 @@
   --accent-highlight: var(--magenta-600);
   --accent-highlight-subtle: var(--magenta-50);
   --accent-glow: var(--violet-500);
+  /* The hairline along the bottom of the header: purple into magenta, fading out to the right.
+     The same in both themes, because the header (--surface-inverse) is dark in both. */
+  --accent-hairline-start: var(--violet-400);
+  --accent-hairline-end: var(--magenta-400);
   --accent-hairline: linear-gradient(
     90deg,
-    var(--violet-400),
-    var(--magenta-400) 38%,
+    var(--accent-hairline-start),
+    var(--accent-hairline-end) 38%,
     transparent 82%
   );
 

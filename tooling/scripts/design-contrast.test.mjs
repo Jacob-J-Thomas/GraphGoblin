@@ -74,13 +74,22 @@ test('pair data validates all groups and preserves the sample with focus on ever
   validatePairs(pairs);
   assert.equal(pairs.text.length, 96);
   assert.equal(pairs.nonText.length, 96);
-  assert.equal(pairs.decorative.length, 14);
-  // The shipped tokens keep every value of the approved sample in both themes.
+  assert.equal(pairs.decorative.length, 16);
+  // The shipped tokens keep every value of the approved sample in both themes. Values are compared
+  // with their var() references expanded, so a shipped token may route a sample value through a
+  // new alias (the header hairline's stops) without changing what it resolves to.
   const approved = readThemes(sample);
   const actual = readThemes(shipped);
+  const expand = (tokens, value) =>
+    value.replace(/var\(\s*(--[\w-]+)\s*\)/g, (_, name) => expand(tokens, tokens[name] ?? ''));
   for (const theme of ['dark', 'light']) {
     for (const [name, value] of Object.entries(approved[theme])) {
-      assert.equal(actual[theme][name], value, `${theme} ${name}`);
+      assert.ok(actual[theme][name] !== undefined, `${theme} ${name} is missing`);
+      assert.equal(
+        expand(actual[theme], actual[theme][name]),
+        expand(approved[theme], value),
+        `${theme} ${name}`,
+      );
     }
   }
   for (const name of Object.keys(readThemes(shipped).light).filter((name) =>
