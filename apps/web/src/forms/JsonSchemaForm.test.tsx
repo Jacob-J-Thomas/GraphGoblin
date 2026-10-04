@@ -94,6 +94,37 @@ describe('JsonSchemaForm', () => {
     expect(submit).toHaveBeenLastCalledWith({ priority: 1, strict: false, mode: 1 });
   });
 
+  it('checks an empty input against the schema as the API will (as null)', async () => {
+    const user = userEvent.setup();
+    const submit = vi.fn();
+    const { unmount } = render(
+      <JsonSchemaForm
+        schema={{ type: 'string', minLength: 1 }}
+        submitLabel="Send"
+        onSubmit={submit}
+      />,
+    );
+    await user.click(screen.getByRole('button', { name: 'Send' }));
+    expect(screen.getByRole('alert')).toHaveTextContent('/ must be string');
+    expect(submit).not.toHaveBeenCalled();
+    await user.type(screen.getByLabelText('Input (JSON)'), '""');
+    await user.click(screen.getByRole('button', { name: 'Send' }));
+    expect(screen.getByRole('alert')).toHaveTextContent('must NOT have fewer than 1 characters');
+    await user.clear(screen.getByLabelText('Input (JSON)'));
+    await user.type(screen.getByLabelText('Input (JSON)'), '"ok"');
+    await user.click(screen.getByRole('button', { name: 'Send' }));
+    expect(submit).toHaveBeenLastCalledWith('ok');
+    unmount();
+
+    // A schema that takes null accepts the empty input, which is sent as no input at all.
+    render(
+      <JsonSchemaForm schema={{ type: ['string', 'null'] }} submitLabel="Send" onSubmit={submit} />,
+    );
+    await user.click(screen.getByRole('button', { name: 'Send' }));
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(submit).toHaveBeenLastCalledWith(undefined);
+  });
+
   it('falls back to a JSON editor for non-object schemas or none', async () => {
     const user = userEvent.setup();
     const submit = vi.fn();
@@ -101,7 +132,8 @@ describe('JsonSchemaForm', () => {
       <JsonSchemaForm schema={{ type: 'number' }} submitLabel="Send" onSubmit={submit} />,
     );
     await user.click(screen.getByRole('button', { name: 'Send' }));
-    expect(submit).toHaveBeenLastCalledWith(undefined);
+    expect(screen.getByRole('alert')).toHaveTextContent('/ must be number');
+    expect(submit).not.toHaveBeenCalled();
     await user.type(screen.getByLabelText('Input (JSON)'), '"x"');
     await user.click(screen.getByRole('button', { name: 'Send' }));
     expect(screen.getByRole('alert')).toHaveTextContent('/ must be number');

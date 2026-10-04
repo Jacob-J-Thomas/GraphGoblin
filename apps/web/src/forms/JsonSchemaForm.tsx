@@ -53,8 +53,9 @@ function objectProperties(
  * A form for a JSON Schema: the wait node's `inputSchema` or a manual trigger's input. Object
  * schemas get one field per property (strings, numbers, booleans, enums; anything else as JSON);
  * any other schema, or none, gets a single JSON editor. An enum choice is sent as the value it
- * stands for (a number stays a number). Values are checked with `domain`'s validator before
- * `onSubmit`.
+ * stands for (a number stays a number). The value is checked with `domain`'s validator before
+ * `onSubmit`, as the API will check it: an empty JSON editor as `null`, which is what the API
+ * validates when no input is sent.
  */
 export function JsonSchemaForm({
   schema,
@@ -100,8 +101,9 @@ export function JsonSchemaForm({
     event.preventDefault();
     const collected = collect();
     if (!collected.ok) return setErrors(collected.errors);
-    if (schema && collected.value !== undefined) {
-      const result = validateJson(schema, collected.value);
+    if (schema) {
+      // No input at all reaches the API's check as null.
+      const result = validateJson(schema, collected.value ?? null);
       if (!result.ok) return setErrors(result.errors);
     }
     setErrors([]);
