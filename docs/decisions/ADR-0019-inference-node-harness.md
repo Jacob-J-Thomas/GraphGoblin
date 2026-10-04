@@ -26,8 +26,9 @@ once at startup. Old stored inference nodes already carry explicit harnesses fro
 parser, so no node changes are necessary. Version identity, numbering, timestamps, run pins,
 replay, and recovery remain intact. There is no read-time normalization or compatibility layer.
 
-Device drafts that no longer parse against the canonical schema are discarded on load,
-including set-aside copies. Older exported files and API clients must remove the field, as
+An IndexedDB version upgrade retires the old device draft store once, including set-aside
+copies. New in-progress drafts survive reloads even with schema errors; loading does not
+validate or discard them. Older exported files and API clients must remove the field, as
 described in the CHANGELOG upgrade notes.
 
 ## Consequences

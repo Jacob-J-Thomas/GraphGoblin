@@ -19,7 +19,7 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   jq 'del(.settings.defaults.harness, .loop.settings.defaults.harness)' old-loop.json > loop.json
   ```
 
-- Unsynced device drafts saved before this change are discarded on load when they no longer satisfy the canonical schema, including set-aside copies. The server copy remains available.
+- Device drafts saved before this change are discarded by a one-off IndexedDB store upgrade, including set-aside copies. The server copy remains available. New in-progress drafts persist across reloads, including drafts with schema errors.
 
 ### Fixed
 

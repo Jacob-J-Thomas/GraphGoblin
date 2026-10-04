@@ -2,7 +2,6 @@ import { kitchenSinkLoop, minimalLoop } from '@graphgoblin/contracts/testing';
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { StrictMode } from 'react';
-import { createStore, get } from 'idb-keyval';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { nextTask } from '../__fixtures__/dialog.js';
 import { FakeApi, problem } from '../__fixtures__/fake-api.js';
@@ -13,7 +12,6 @@ import {
   loadSetAsideDraft,
   saveLocalDraft,
   saveSetAsideDraft,
-  type LocalDraft,
 } from '../drafts/local-drafts.js';
 import { useApiKeyStore } from '../api/api-key.js';
 import { LOOP_PANEL_STORAGE_KEY } from './LoopPanel.js';
@@ -194,7 +192,7 @@ describe('EditorPage', () => {
     const user = userEvent.setup();
     const api = new FakeApi();
     const loop = api.addLoop(newLoopDefinition('invalid'));
-    renderApp(`/loops/${loop.id}/edit`, api);
+    const view = renderApp(`/loops/${loop.id}/edit`, api);
     await user.click(await screen.findByRole('button', { name: 'Add Subloop node' }));
     await waitFor(
       () => expect(screen.getByTestId('save-state')).toHaveTextContent('Saved on this device only'),
@@ -202,15 +200,28 @@ describe('EditorPage', () => {
     );
     expect(screen.getByText(/Fix the schema errors/)).toBeInTheDocument();
     expect(api.callsTo('PUT', `/loops/${loop.id}/draft`)).toHaveLength(0);
-    const local = await get<LocalDraft>(loop.id, createStore('graphgoblin', 'drafts'));
+    const local = await loadLocalDraft(loop.id);
     expect(local?.synced).toBe(false);
     expect(local?.definition.nodes.map((n) => n.id)).toContain('subloop');
-    expect(await loadLocalDraft(loop.id)).toBeUndefined();
     // Clicking a schema issue opens its node.
     act(() => useEditorStore.getState().select(undefined));
     await user.click(screen.getAllByRole('button', { name: /SCHEMA subloop/ })[0]!);
     expect(useEditorStore.getState().selectedNodeId).toBe('subloop');
     expect(screen.getByRole('dialog', { name: 'Edit subloop subloop' })).toBeInTheDocument();
+
+    view.unmount();
+    renderApp(`/loops/${loop.id}/edit`, api);
+    expect(
+      await screen.findByText('Restored unsaved changes from this device.'),
+    ).toBeInTheDocument();
+    await waitFor(
+      () => expect(screen.getByTestId('save-state')).toHaveTextContent('Saved on this device only'),
+      SAVE_WAIT,
+    );
+    expect((await loadLocalDraft(loop.id))?.definition.nodes.map((node) => node.id)).toContain(
+      'subloop',
+    );
+    expect(api.callsTo('PUT', `/loops/${loop.id}/draft`)).toHaveLength(0);
   });
 
   it('keeps a newer server draft over an older unsynced local copy, and can switch', async () => {
