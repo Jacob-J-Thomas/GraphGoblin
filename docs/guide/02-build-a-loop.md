@@ -77,6 +77,8 @@ For a repository workspace, use an absolute path. For a temporary workspace, use
 
 Declare variable names and JSON Schemas in **Variables**; initialise their values with a mutation or mapping.
 
+Empty optional expressions count as absent and show no preview. Whitespace counts as supplied.
+
 ## Publish, import, and export
 
 Click **Publish** to save the draft and freeze a numbered version. Runs pin a version; later edits and publications do not change runs already started. Publishing also arms automatic triggers for the new version. The editor shows the current published version; the API exposes version history:
@@ -91,6 +93,8 @@ Use **Export** on the Loops page to download JSON. It exports the published defi
 ```http
 GET /loops/{id}/export?draft=true
 ```
+
+Each Loops row groups **Edit**, **Export**, and **Delete** as buttons; Edit opens the editor. Export shows **Exporting…** while pending, keeps keyboard focus, and accepts one request at a time. Delete opens a confirmation naming the loop: the loop, all its versions and its triggers are removed, and loops using it as a subloop can no longer start it. This cannot be undone. Choose **Keep** or press Escape to cancel while idle, or **Confirm delete** to remove it. A 409 `LOOP_IN_USE` keeps the API's reason visible in the confirmation until you dismiss it or retry. Confirmation and Keep are disabled while the request is pending; repeated Escape presses cannot dismiss it.
 
 Use the Loops page's file picker, or `POST /loops/import`, to import an export envelope or a bare definition. Import always creates a new loop with a draft, even if the name matches an existing loop. To update an existing loop, save its draft through the editor or API:
 

@@ -10,6 +10,10 @@ Open **Settings** from the navigation bar:
 
 Choose the colour theme under **Appearance** (below), and manage **Model catalog**, **Defaults**, **Secrets**, and **API keys** here, and check **Harness preflight**. The **Install** card explains the browser's PWA installation action. With `GG_REQUIRE_API_KEY=true` the app shell still loads, asks for a key on the first 401, and keeps it in this browser; **This browser's API key** shows it and **Forget key** removes it (other open tabs follow).
 
+## Confirm destructive actions
+
+Deleting a model, deleting a secret, or revoking a key opens the same named confirmation used on Loops. **Keep** receives focus; Keep or Escape cancels without changing anything. **Confirm delete** or **Confirm revoke** starts the request, disables both buttons until it finishes, and announces progress. Escape cannot dismiss a pending request, even with repeated presses. API errors (including 404 when an item was already removed) stay visible until you dismiss or retry. Dismissing a 404 refreshes the list to remove the stale row. Focus returns to the action, or its section heading if the row disappears. These actions cannot be undone; deleting a seeded model removes it now but it returns at the next server start. A deleted `jev-api-key` secret also returns at the next start if `GG_JEV_API_KEY` is still set (or its `JEV_API_KEY` fallback applies).
+
 ## Choose the theme
 
 **Appearance → Theme** switches between **Dark** (the default) and **Light**. The change applies at once, without a reload, and this browser remembers it: the app opens in your theme on the next visit, with no flash of the other one, and other open tabs switch too. Use Tab to reach the control and the arrow keys to change it. The choice is per browser, kept in `localStorage` (`graphgoblin-theme`); a private window or blocked site data opens in Dark. A **System** option that follows the operating system will come with the installer.
@@ -62,6 +66,8 @@ For a script environment variable, use this reference syntax:
 ```
 
 A missing secret fails the run with `SECRET_MISSING`; set it and resume. A missing webhook signing secret makes the endpoint answer 503 `HOOK_NOT_READY`, and a missing return-channel secret sends the delivery unsigned.
+
+The secret's deletion confirmation spells out those effects for webhook triggers, webhook return channels, and script `env` values written as `secret:<name>`. Deleting `jev-api-key` also warns that Jev decisions turn off until the key is set again, and that startup re-seeds it if `GG_JEV_API_KEY` is set.
 
 Secret reads never send plaintext back to the browser or API client. Server-side resolution supplies the Jev key to Jev and script values to the invoked process, so values can leave the process for their intended consumer. Scripts and external tools can print secrets into their output; avoid that and redact sensitive thread content before forwarding it. The secret store does not automatically scrub arbitrary output or earlier event-log entries.
 
@@ -160,6 +166,8 @@ Revoke an unused key in **Settings → API keys**, or through REST:
 ```http
 DELETE /api-keys/{id}
 ```
+
+**Revoke** names the key and warns that clients using it receive 401 immediately. Successful revocation closes the confirmation when the server confirms the request; refreshing the key list runs separately. If this browser stores a key, the confirmation also warns that revoking that key loses browser access and shows the API key panel; focus moves to its input without waiting for a failed list refresh's retry, so you can enter another valid key there to continue. The API does not expose which listed key this browser uses, so this warning appears on every revocation while a key is stored.
 
 ## Preserve the master key
 

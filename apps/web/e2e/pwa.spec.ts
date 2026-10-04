@@ -1,4 +1,4 @@
-import { expect, test } from './fixtures.js';
+import { approvalLoop, expect, publishLoop, test } from './fixtures.js';
 
 test('registers the service worker and asks before applying an update', async ({ page }) => {
   await page.goto('/app/');
@@ -29,4 +29,46 @@ test('registers the service worker and asks before applying an update', async ({
   await toast.getByRole('button', { name: 'Update' }).click();
   await expect(toast).toBeHidden();
   expect(await page.evaluate(() => window.graphgoblinPwa?.appliedUpdates)).toBe(1);
+});
+
+test('cold offline Loops reload recovers on reconnect without navigating', async ({
+  page,
+  context,
+  request,
+}) => {
+  const name = `cold offline reconnect ${test.info().repeatEachIndex}-${test.info().retry}`;
+  await publishLoop(request, approvalLoop(name));
+  await page.goto('/app/loops');
+  const row = page.getByRole('row').filter({ has: page.getByRole('link', { name, exact: true }) });
+  await expect(row).toBeVisible();
+  await page.evaluate(async () => {
+    await navigator.serviceWorker.ready;
+  });
+  // The worker deliberately does not claim existing clients; the next navigation uses it.
+  await page.reload();
+  await expect
+    .poll(() => page.evaluate(() => navigator.serviceWorker.controller !== null))
+    .toBe(true);
+
+  await context.setOffline(true);
+  try {
+    await page.reload();
+    const offline = page.getByText(/Loops needs the GraphGoblin API/);
+    await expect(offline).toBeVisible();
+    await expect(page.getByText('You are offline', { exact: true })).toBeVisible();
+    await expect(row).toBeHidden();
+
+    const recovered = page.waitForResponse(
+      (response) => new URL(response.url()).pathname === '/loops' && response.status() === 200,
+      { timeout: 5_000 },
+    );
+    await context.setOffline(false);
+    await recovered;
+    await expect(row).toBeVisible({ timeout: 5_000 });
+    await expect(offline).toBeHidden();
+    await expect(page.getByText('You are offline', { exact: true })).toBeHidden();
+    await expect(page).toHaveURL(/\/app\/loops$/);
+  } finally {
+    await context.setOffline(false);
+  }
 });

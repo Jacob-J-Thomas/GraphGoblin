@@ -18,7 +18,15 @@ import {
 } from '../introspect.js';
 import { BooleanField, EnumField, LiteralField } from './choice.js';
 import { JsonField, JsonText } from './json.js';
-import { FIELDSET, FieldError, joinPath, LEGEND, useField, type FieldProps } from './shared.js';
+import {
+  FIELDSET,
+  FieldError,
+  joinPath,
+  LEGEND,
+  useCollectionField,
+  useField,
+  type FieldProps,
+} from './shared.js';
 import { NumberField, StringField } from './text.js';
 
 /** Dispatch on the schema's shape. */
@@ -108,18 +116,17 @@ function ArrayField({
   label,
   shape,
 }: FieldProps & { shape: Extract<FieldShape, { kind: 'array' }> }) {
-  const field = useField(name);
+  const field = useCollectionField(name);
   const { defaultValue } = unwrap(schema);
-  const items: unknown[] = Array.isArray(field.value)
-    ? (field.value as unknown[])
-    : Array.isArray(defaultValue)
-      ? (defaultValue as unknown[])
-      : [];
+  const itemsOf = (value: unknown): unknown[] =>
+    Array.isArray(value) ? value : Array.isArray(defaultValue) ? defaultValue : [];
+  const items = itemsOf(field.value);
   const element = shapeOf(shape.element);
 
   if (element.kind === 'enum') {
     const toggle = (option: string, on: boolean) => {
-      const next = on ? [...items, option] : items.filter((v) => v !== option);
+      const current = itemsOf(field.read());
+      const next = on ? [...current, option] : current.filter((v) => v !== option);
       field.onChange(next);
     };
     return (
@@ -181,7 +188,7 @@ function ArrayField({
               size="sm"
               variant="ghost"
               aria-label={`Remove ${label.toLowerCase()} ${index + 1}`}
-              onClick={() => field.onChange(items.filter((__, i) => i !== index))}
+              onClick={() => field.onChange(itemsOf(field.read()).filter((__, i) => i !== index))}
             >
               Remove
             </Button>
@@ -193,7 +200,7 @@ function ArrayField({
           size="sm"
           variant="outline"
           disabled={!canAdd}
-          onClick={() => field.onChange([...items, initialValue(shape.element)])}
+          onClick={() => field.onChange([...itemsOf(field.read()), initialValue(shape.element)])}
         >
           Add {label.toLowerCase()}
         </Button>
@@ -209,25 +216,27 @@ function RecordField({
   label,
   shape,
 }: FieldProps & { shape: Extract<FieldShape, { kind: 'record' }> }) {
-  const field = useField(name);
+  const field = useCollectionField(name);
   const { optional } = unwrap(schema);
-  const record =
-    typeof field.value === 'object' && field.value !== null
-      ? (field.value as Record<string, unknown>)
-      : {};
+  const recordOf = (value: unknown): Record<string, unknown> =>
+    typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : {};
+  const record = recordOf(field.value);
   const entries = Object.entries(record);
+  const currentEntries = () => Object.entries(recordOf(field.read()));
   const valueShape = shapeOf(shape.value);
   const commit = (next: [string, unknown][]) =>
     field.onChange(next.length === 0 && optional ? undefined : Object.fromEntries(next));
   const rename = (index: number, key: string) =>
-    commit(entries.map((entry, i) => (i === index ? [key, entry[1]] : entry)));
+    commit(currentEntries().map((entry, i) => (i === index ? [key, entry[1]] : entry)));
   const setValue = (index: number, value: unknown) =>
-    commit(entries.map((entry, i) => (i === index ? [entry[0], value] : entry)));
+    commit(currentEntries().map((entry, i) => (i === index ? [entry[0], value] : entry)));
   const add = () => {
-    let n = entries.length + 1;
-    while (`key${n}` in record) n += 1;
+    const current = recordOf(field.read());
+    const currentRows = Object.entries(current);
+    let n = currentRows.length + 1;
+    while (`key${n}` in current) n += 1;
     commit([
-      ...entries,
+      ...currentRows,
       [`key${n}`, valueShape.kind === 'string' ? '' : initialValue(shape.value)],
     ]);
   };
@@ -235,36 +244,39 @@ function RecordField({
     <fieldset className={FIELDSET} data-field={name}>
       <legend className={LEGEND}>{label}</legend>
       {entries.map(([key, value], index) => (
-        <div key={index} className="flex items-start gap-2">
+        <div key={index} className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
           <Input
             aria-label={`${label} key ${index + 1}`}
-            className="w-1/3 font-mono text-sm"
+            className="font-mono text-sm"
             value={key}
             onChange={(e) => rename(index, e.target.value)}
           />
-          {valueShape.kind === 'string' ? (
-            <Input
-              aria-label={`${label} value ${index + 1}`}
-              className="font-mono text-sm"
-              value={typeof value === 'string' ? value : ''}
-              onChange={(e) => setValue(index, e.target.value)}
-            />
-          ) : (
-            <JsonText
-              path={joinPath(name, key)}
-              label={`${label} value ${index + 1}`}
-              value={value}
-              onChange={(v) => setValue(index, v)}
-            />
-          )}
           <Button
             size="icon"
             variant="ghost"
+            className="col-start-2 row-start-1"
             aria-label={`Remove ${label.toLowerCase()} ${key}`}
-            onClick={() => commit(entries.filter((_, i) => i !== index))}
+            onClick={() => commit(currentEntries().filter((_, i) => i !== index))}
           >
             <Icon name="close" />
           </Button>
+          <div className="col-span-2 col-start-1 row-start-2 min-w-0">
+            {valueShape.kind === 'string' ? (
+              <Input
+                aria-label={`${label} value ${index + 1}`}
+                className="font-mono text-sm"
+                value={typeof value === 'string' ? value : ''}
+                onChange={(e) => setValue(index, e.target.value)}
+              />
+            ) : (
+              <JsonText
+                path={joinPath(name, key)}
+                label={`${label} value ${index + 1}`}
+                value={value}
+                onChange={(v) => setValue(index, v)}
+              />
+            )}
+          </div>
         </div>
       ))}
       <div>

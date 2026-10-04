@@ -33,7 +33,14 @@ export function StringField({
           </span>
         }
       >
-        <CodeField kind={shape.format} value={value} onChange={set} label={label} id={id} />
+        <CodeField
+          kind={shape.format}
+          value={value}
+          onChange={set}
+          label={label}
+          id={id}
+          optional={optional}
+        />
       </Row>
     );
   }

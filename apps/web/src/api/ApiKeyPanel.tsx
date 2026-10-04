@@ -13,7 +13,33 @@ export function ApiKeyPanel() {
   const save = useApiKeyStore((s) => s.save);
   const queryClient = useQueryClient();
   const [value, setValue] = useState('');
+  const panelRef = useRef<HTMLDivElement>(null);
   useEffect(() => syncApiKeyAcrossTabs(), []);
+  useEffect(() => {
+    if (!rejected) return;
+    let frame = 0;
+    // A rejected-key panel can arrive while a revoke dialog still owns the modal top layer.
+    const observer = new MutationObserver(() => requestFocus());
+    const requestFocus = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        if (document.querySelector('dialog[open]')) return;
+        panelRef.current?.querySelector('input')?.focus();
+        observer.disconnect();
+      });
+    };
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['open'],
+    });
+    requestFocus();
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
+  }, [rejected]);
   const previousKeyRef = useRef(stored);
   useEffect(() => {
     if (previousKeyRef.current === stored) return;
@@ -31,7 +57,7 @@ export function ApiKeyPanel() {
     setValue('');
   };
   return (
-    <div className="mx-auto w-full max-w-[1240px] px-page pt-page">
+    <div ref={panelRef} className="mx-auto w-full max-w-[1240px] px-page pt-page">
       <Card title="API key required">
         <p className="mb-4 text-sm text-muted">
           {stored

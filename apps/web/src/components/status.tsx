@@ -56,6 +56,7 @@ export function QueryState<T>({
   what: string;
   children: (data: T) => ReactNode;
 }) {
+  if (query.isPending && query.fetchStatus === 'paused') return <OfflineState what={what} />;
   if (query.isPending) return <p className="text-sm text-muted">Loading {what.toLowerCase()}…</p>;
   if (query.isError) return <ErrorState error={query.error} what={what} />;
   return <>{children(query.data)}</>;

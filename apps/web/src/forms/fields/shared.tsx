@@ -28,6 +28,19 @@ export function useField(name: string) {
   };
 }
 
+/** Read the live collection only when an action needs it, without a second subscription. */
+export function useCollectionField(name: string) {
+  const field = useField(name);
+  const { getValues } = useFormContext();
+  return {
+    ...field,
+    read: () => {
+      const value: unknown = getValues(name);
+      return isUnset(value) ? undefined : value;
+    },
+  };
+}
+
 export function joinPath(base: string, key: string | number): string {
   return base === '' ? String(key) : `${base}.${key}`;
 }

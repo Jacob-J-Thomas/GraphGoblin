@@ -1,8 +1,9 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { FakeApi, problem, TS } from '../__fixtures__/fake-api.js';
 import { renderApp } from '../__fixtures__/render.js';
+import { useApiKeyStore } from '../api/api-key.js';
 
 function seeded(): FakeApi {
   const api = new FakeApi();
@@ -44,6 +45,130 @@ function seeded(): FakeApi {
 }
 
 describe('SettingsPage', () => {
+  it.each(['success', '401'] as const)(
+    'finishes revocation before a held list refresh, then restores focus after %s',
+    async (outcome) => {
+      const api = seeded();
+      if (outcome === '401') useApiKeyStore.getState().save('gg_fixture');
+      renderApp('/settings', api);
+      const user = userEvent.setup();
+      const trigger = await screen.findByRole('button', { name: 'Revoke mcp' });
+      let finish!: () => void;
+      const held = new Promise<void>((resolve) => {
+        finish = resolve;
+      });
+      let arrived!: () => void;
+      const started = new Promise<void>((resolve) => {
+        arrived = resolve;
+      });
+      api.override('GET /api-keys', async () => {
+        arrived();
+        await held;
+        return outcome === '401'
+          ? problem(401, 'UNAUTHORIZED')
+          : new Response(JSON.stringify({ items: api.apiKeyList }), {
+              headers: { 'content-type': 'application/json' },
+            });
+      });
+      try {
+        await user.click(trigger);
+        await user.click(screen.getByRole('button', { name: 'Confirm revoke mcp' }));
+        await started;
+        await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
+        await waitFor(() => expect(trigger).toHaveFocus());
+        await act(() => Promise.resolve(finish()));
+        if (outcome === '401') {
+          await waitFor(() => expect(screen.getByLabelText('API key')).toHaveFocus());
+        } else {
+          await waitFor(() =>
+            expect(screen.queryByRole('button', { name: 'Revoke mcp' })).not.toBeInTheDocument(),
+          );
+          await waitFor(() =>
+            expect(screen.getByRole('heading', { name: 'API keys' })).toHaveFocus(),
+          );
+        }
+      } finally {
+        await act(() => Promise.resolve(finish()));
+        act(() => useApiKeyStore.getState().forget());
+      }
+    },
+  );
+
+  it.each([
+    [
+      'Delete gpt-6-luna',
+      'Confirm delete gpt-6-luna',
+      'DELETE /model-catalog/:harness/:model',
+      'catalog',
+      '/model-catalog',
+      'Model catalog',
+    ],
+    [
+      'Delete secret jev-api-key',
+      'Confirm delete jev-api-key',
+      'DELETE /secrets/:name',
+      'secretList',
+      '/secrets',
+      'Secrets',
+    ],
+    [
+      'Revoke mcp',
+      'Confirm revoke mcp',
+      'DELETE /api-keys/:id',
+      'apiKeyList',
+      '/api-keys',
+      'API keys',
+    ],
+  ] as const)(
+    'review: refreshes the vanished %s after a 404 is dismissed',
+    async (label, confirmation, route, list, listRoute, heading) => {
+      const api = seeded();
+      let finish!: () => void;
+      const refreshed = new Promise<void>((resolve) => {
+        finish = resolve;
+      });
+      api.override(route, () => {
+        api[list] = [];
+        api.override(`GET ${listRoute}`, async () => {
+          await refreshed;
+          return new Response(JSON.stringify({ items: api[list] }), {
+            headers: { 'content-type': 'application/json' },
+          });
+        });
+        return problem(404, 'NOT_FOUND', 'Already removed.');
+      });
+      renderApp('/settings', api);
+      const user = userEvent.setup();
+      await user.click(await screen.findByRole('button', { name: label }));
+      await user.click(screen.getByRole('button', { name: confirmation }));
+      expect(await screen.findByRole('alert')).toHaveTextContent('Already removed.');
+      await user.click(screen.getByRole('button', { name: 'Keep' }));
+      await waitFor(() => expect(screen.getByRole('button', { name: label })).toHaveFocus());
+      await act(() => Promise.resolve(finish()));
+      await waitFor(() =>
+        expect(screen.queryByRole('button', { name: label })).not.toBeInTheDocument(),
+      );
+      await waitFor(() => expect(screen.getByRole('heading', { name: heading })).toHaveFocus());
+    },
+  );
+
+  it('review: shows no browser-key warning when no key is stored', async () => {
+    useApiKeyStore.getState().forget();
+    renderApp('/settings', seeded());
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: 'Revoke mcp' }));
+    expect(screen.getByRole('alertdialog')).not.toHaveTextContent('This browser sends an API key');
+    expect(screen.getByRole('alertdialog')).not.toHaveTextContent('show the API key panel');
+  });
+
+  it('review: describes startup re-seeding in the Jev deletion confirmation', async () => {
+    renderApp('/settings', seeded());
+    await userEvent
+      .setup()
+      .click(await screen.findByRole('button', { name: 'Delete secret jev-api-key' }));
+    expect(screen.getByRole('alertdialog')).toHaveTextContent('GG_JEV_API_KEY');
+    expect(screen.getByRole('alertdialog')).toHaveTextContent('next server start');
+  });
   it('edits, toggles, adds, and deletes models in the catalog', async () => {
     const user = userEvent.setup();
     const api = seeded();
@@ -87,6 +212,7 @@ describe('SettingsPage', () => {
     );
 
     await user.click(screen.getByRole('button', { name: 'Delete gpt-6-sol' }));
+    await user.click(screen.getByRole('button', { name: 'Confirm delete gpt-6-sol' }));
     await waitFor(() =>
       expect(screen.queryByText('Sol', { selector: 'span' })).not.toBeInTheDocument(),
     );
@@ -144,6 +270,7 @@ describe('SettingsPage', () => {
     expect(screen.queryByText('s3cret')).not.toBeInTheDocument();
     expect(api.callsTo('PUT', '/secrets/github-token')[0]!.body).toEqual({ value: 's3cret' });
     await user.click(screen.getByRole('button', { name: 'Delete secret jev-api-key' }));
+    await user.click(screen.getByRole('button', { name: 'Confirm delete jev-api-key' }));
     await waitFor(() => expect(screen.queryByText('jev-api-key')).not.toBeInTheDocument());
   });
 
@@ -156,6 +283,7 @@ describe('SettingsPage', () => {
     await user.click(screen.getByRole('button', { name: 'Create key' }));
     expect(await screen.findByTestId('new-api-key')).toHaveTextContent('gg_secret_token_123');
     await user.click(screen.getByRole('button', { name: 'Revoke mcp' }));
+    await user.click(screen.getByRole('button', { name: 'Confirm revoke mcp' }));
     await waitFor(() =>
       expect(screen.queryByRole('button', { name: 'Revoke mcp' })).not.toBeInTheDocument(),
     );
@@ -167,5 +295,94 @@ describe('SettingsPage', () => {
     expect(screen.getByText('not ready')).toBeInTheDocument();
     expect(screen.getByText('not logged in')).toBeInTheDocument();
     expect(screen.getByText(/Install app/)).toBeInTheDocument();
+  });
+
+  it.each([
+    [
+      'Delete gpt-6-luna',
+      'Confirm delete gpt-6-luna',
+      '/model-catalog/codex/gpt-6-luna',
+      'DELETE /model-catalog/:harness/:model',
+      'seeded model',
+    ],
+    [
+      'Delete secret jev-api-key',
+      'Confirm delete jev-api-key',
+      '/secrets/jev-api-key',
+      'DELETE /secrets/:name',
+      'turns Jev decisions off',
+    ],
+    ['Revoke mcp', 'Confirm revoke mcp', '/api-keys/k1', 'DELETE /api-keys/:id', '401 immediately'],
+  ])(
+    'confirms %s, cancels without a request, and surfaces a second-delete error',
+    async (label, confirmLabel, path, route, consequence) => {
+      const api = seeded();
+      api.override(route, () => problem(404, 'NOT_FOUND', 'The item was already removed.'));
+      renderApp('/settings', api);
+      const user = userEvent.setup();
+      const trigger = await screen.findByRole('button', { name: label });
+      await user.click(trigger);
+      const dialog = screen.getByRole('alertdialog');
+      expect(dialog).toHaveTextContent(consequence);
+      expect(dialog).toHaveTextContent('cannot be undone');
+      if (label.includes('secret')) {
+        expect(dialog).toHaveTextContent('503 HOOK_NOT_READY');
+        expect(dialog).toHaveTextContent('unsigned deliveries');
+        expect(dialog).toHaveTextContent('secret:jev-api-key');
+        expect(dialog).toHaveTextContent('SECRET_MISSING');
+      }
+      await user.click(screen.getByRole('button', { name: 'Keep' }));
+      await waitFor(() => expect(trigger).toHaveFocus());
+      expect(api.callsTo('DELETE', path)).toHaveLength(0);
+      await user.click(trigger);
+      await user.click(screen.getByRole('button', { name: confirmLabel }));
+      expect(await screen.findByRole('alert')).toHaveTextContent(
+        'The item was already removed. (NOT_FOUND)',
+      );
+      expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+    },
+  );
+
+  it('locks a secret deletion until the API finishes and returns focus to Secrets', async () => {
+    const api = seeded();
+    let finish!: () => void;
+    api.override(
+      'DELETE /secrets/:name',
+      () =>
+        new Promise<Response>((resolve) => {
+          finish = () => {
+            api.secretList = [];
+            resolve(new Response(null, { status: 204 }));
+          };
+        }),
+    );
+    renderApp('/settings', api);
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: 'Delete secret jev-api-key' }));
+    const confirm = screen.getByRole('button', { name: 'Confirm delete jev-api-key' });
+    await user.click(confirm);
+    expect(confirm).toHaveTextContent('Deleting…');
+    expect(confirm).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Keep' })).toBeDisabled();
+    fireEvent.click(confirm);
+    expect(api.callsTo('DELETE', '/secrets/jev-api-key')).toHaveLength(1);
+    await act(() => Promise.resolve(finish()));
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Secrets' })).toHaveFocus());
+  });
+
+  it('warns about losing this browser access when revoking a key while one is stored', async () => {
+    useApiKeyStore.getState().save('gg_browser_key');
+    try {
+      renderApp('/settings', seeded());
+      const user = userEvent.setup();
+      await user.click(await screen.findByRole('button', { name: 'Revoke mcp' }));
+      expect(screen.getByRole('alertdialog')).toHaveTextContent(
+        'this browser will lose access and show the API key panel',
+      );
+      await user.click(screen.getByRole('button', { name: 'Keep' }));
+    } finally {
+      useApiKeyStore.getState().forget();
+    }
   });
 });

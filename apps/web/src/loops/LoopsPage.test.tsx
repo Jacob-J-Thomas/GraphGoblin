@@ -1,5 +1,5 @@
 import { kitchenSinkLoop, minimalLoop } from '@graphgoblin/contracts/testing';
-import { fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { FakeApi, problem, TS } from '../__fixtures__/fake-api.js';
@@ -129,7 +129,14 @@ describe('LoopsPage', () => {
     api.addLoop({ ...minimalLoop(), name: 'busy' });
     renderApp('/loops', api);
     await user.click(await screen.findByRole('button', { name: 'Delete doomed' }));
+    expect(screen.getByRole('alertdialog')).toHaveTextContent('all its versions and its triggers');
+    expect(screen.getByRole('alertdialog')).toHaveTextContent('subloop');
+    expect(screen.getByRole('button', { name: 'Keep' })).toHaveFocus();
     await user.click(screen.getByRole('button', { name: 'Keep' }));
+    expect(api.callsTo('DELETE', '/loops')).toHaveLength(0);
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Delete doomed' })).toHaveFocus(),
+    );
     await user.click(screen.getByRole('button', { name: 'Delete doomed' }));
     await user.click(screen.getByRole('button', { name: 'Confirm delete doomed' }));
     await waitFor(() =>
@@ -142,6 +149,41 @@ describe('LoopsPage', () => {
     await user.click(screen.getByRole('button', { name: 'Delete busy' }));
     await user.click(screen.getByRole('button', { name: 'Confirm delete busy' }));
     expect(await screen.findByText(/the loop has active runs/)).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent('LOOP_IN_USE');
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Confirm delete busy' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('the loop has active runs');
+    await user.click(screen.getByRole('button', { name: 'Keep' }));
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('shows export progress and ignores repeated clicks until the request finishes', async () => {
+    const api = new FakeApi();
+    api.addLoop({ ...minimalLoop(), name: 'slow' });
+    let finish!: (response: Response) => void;
+    api.override(
+      'GET /loops/:id/export',
+      () =>
+        new Promise<Response>((resolve) => {
+          finish = resolve;
+        }),
+    );
+    renderApp('/loops', api);
+    const button = await screen.findByRole('button', { name: 'Export slow' });
+    const edit = screen.getByRole('link', { name: 'Edit slow' });
+    expect(edit).toHaveClass('h-8', 'border-strong', 'cursor-pointer');
+    const user = userEvent.setup();
+    await user.click(button);
+    expect(button).toHaveAttribute('aria-disabled', 'true');
+    expect(button).toHaveFocus();
+    expect(button).toHaveTextContent('Exporting…');
+    expect(screen.getByText('Exporting slow…')).toHaveAttribute('role', 'status');
+    fireEvent.click(button);
+    expect(api.callsTo('GET', /\/export$/)).toHaveLength(1);
+    await act(() => Promise.resolve(finish(problem(404, 'VERSION_NOT_FOUND', 'no version'))));
+    expect(await screen.findByRole('alert')).toHaveTextContent('no version');
+    expect(button).toHaveAttribute('aria-disabled', 'false');
+    expect(button).toHaveFocus();
   });
 
   it('shows a clear offline state', async () => {
