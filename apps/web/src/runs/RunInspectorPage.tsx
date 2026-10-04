@@ -39,8 +39,10 @@ export function RunInspectorPage() {
       <QueryState query={runQuery} what="Run">
         {(run) => (
           <>
-            <div className="grid gap-3">
-              <header className="flex flex-wrap items-center gap-x-4 gap-y-3">
+            {/* DOM order is title, meta links, then controls (the keyboard order before the
+                cutover); the grid only places the controls at the top right. */}
+            <header className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-3 max-sm:grid-cols-1">
+              <div className="col-start-1 row-start-1 flex flex-wrap items-center gap-x-4 gap-y-3">
                 <h1 className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-xl font-semibold tracking-[-0.01em]">
                   Run{' '}
                   <span className="font-mono text-md font-medium tracking-normal text-muted">
@@ -48,11 +50,8 @@ export function RunInspectorPage() {
                   </span>
                 </h1>
                 <RunStatusBadge status={run.status} />
-                <div className="ml-auto">
-                  <RunControls run={run} />
-                </div>
-              </header>
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted">
+              </div>
+              <div className="col-start-1 row-start-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted">
                 <span>iteration {run.iteration}</span>
                 {run.currentNodeId ? <span>at {run.currentNodeId}</span> : null}
                 <Link to={`/loops/${run.loopId}/edit`} className={META_LINK}>
@@ -67,7 +66,10 @@ export function RunInspectorPage() {
                   child runs
                 </Link>
               </div>
-            </div>
+              <div className="col-start-2 row-start-1 justify-self-end max-sm:col-start-1 max-sm:row-start-3 max-sm:justify-self-start">
+                <RunControls run={run} />
+              </div>
+            </header>
             {run.failure ? (
               <Alert title={`Failed: ${run.failure.code}`}>
                 {run.failure.message}

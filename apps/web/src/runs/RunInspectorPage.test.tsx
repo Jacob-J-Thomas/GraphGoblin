@@ -238,6 +238,24 @@ describe('RunInspectorPage', () => {
     expect(await screen.findByText(/nope/)).toBeInTheDocument();
   });
 
+  it('keeps the keyboard order: loop, parent run, child runs, then the run controls', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const parent = api.addRun({ status: 'running' });
+    const child = seedRun(api, { status: 'running', parentRunId: parent.id });
+    renderApp(`/runs/${child.id}`, api);
+    const loop = await screen.findByRole('link', { name: 'loop' });
+    loop.focus();
+    await user.tab();
+    expect(screen.getByRole('link', { name: 'parent run' })).toHaveFocus();
+    await user.tab();
+    expect(screen.getByRole('link', { name: 'child runs' })).toHaveFocus();
+    await user.tab();
+    expect(screen.getByRole('button', { name: 'Pause' })).toHaveFocus();
+    await user.tab();
+    expect(screen.getByRole('button', { name: 'Cancel run' })).toHaveFocus();
+  });
+
   it('shows failures, results, parent links, and stream errors', async () => {
     const api = new FakeApi();
     const parent = api.addRun({ status: 'succeeded' });
