@@ -6,6 +6,7 @@ import { isOfflineError } from './utils.js';
 const INITIAL_DELAY = 2_000;
 const MAX_DELAY = 30_000;
 const PROBE_TIMEOUT = 5_000;
+const RECONNECT_GRACE = 5_000;
 
 export const useReachability = create(() => ({ apiReachable: true, reconnecting: false }));
 let outageOpen = false;
@@ -44,6 +45,9 @@ export function startReachability(queryClient: QueryClient, client: GraphGoblinC
   let refetching = false;
   let delay = INITIAL_DELAY;
   let timer: ReturnType<typeof setTimeout> | undefined;
+  let resetTimer: ReturnType<typeof setTimeout> | undefined;
+  let reconnectTimer: ReturnType<typeof setTimeout> | undefined;
+  let reconnectCycle = 0;
   let inFlight: AbortController | undefined;
 
   const offlineQueries = () =>
@@ -119,12 +123,15 @@ export function startReachability(queryClient: QueryClient, client: GraphGoblinC
       if (failures.get(query) !== query.state.error) markApiUnreachable();
       failures.set(query, query.state.error);
     }
-    if (useReachability.getState().reconnecting && fetching().length === 0)
-      useReachability.setState({ reconnecting: false });
     schedule();
   };
   const resetWithoutDemand = () => {
-    if (offlineQueries().length === 0 && fetching().length === 0) reachable(true, false); // No demand: remove the claim, without inventing a recovery.
+    // Route changes remove the old observer before attaching the next one in the same tick.
+    resetTimer ??= setTimeout(() => {
+      resetTimer = undefined;
+      if (!stopped && offlineQueries().length === 0 && fetching().length === 0)
+        reachable(true, false); // No demand: remove the claim, without inventing a recovery.
+    }, 0);
   };
   const unsubscribe = cache.subscribe((event) => {
     if (
@@ -148,10 +155,23 @@ export function startReachability(queryClient: QueryClient, client: GraphGoblinC
       resetWithoutDemand();
     sync();
   });
+  const endReconnect = (cycle: number) => {
+    if (stopped || cycle !== reconnectCycle) return;
+    clearTimeout(reconnectTimer);
+    reconnectTimer = undefined;
+    useReachability.setState({ reconnecting: false });
+  };
   const reconnect = () => {
+    const cycle = ++reconnectCycle;
+    clearTimeout(reconnectTimer);
     useReachability.setState({ reconnecting: true });
     // The pending refetch cycle suppresses an API banner between browser reconnect and its result.
-    void refetch().then(sync);
+    reconnectTimer = setTimeout(() => endReconnect(cycle), RECONNECT_GRACE);
+    const finished = () => {
+      endReconnect(cycle);
+      sync();
+    };
+    void refetch().then(finished, finished);
     sync();
   };
   window.addEventListener('online', reconnect);
@@ -167,6 +187,8 @@ export function startReachability(queryClient: QueryClient, client: GraphGoblinC
     window.removeEventListener('offline', sync);
     document.removeEventListener('visibilitychange', sync);
     clearTimer();
+    clearTimeout(resetTimer);
+    clearTimeout(reconnectTimer);
     inFlight?.abort();
     reachable(true, false);
     useReachability.setState({ reconnecting: false });

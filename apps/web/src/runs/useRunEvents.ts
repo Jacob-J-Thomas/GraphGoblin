@@ -64,14 +64,15 @@ export function useRunEvents(
     };
     let subscription: RunEventSubscription | undefined;
     let connection = 0;
-    let inBackoff = false;
+    let inTransportBackoff = false;
     let reportedOutage = false;
+    let lastSeq = known?.lastSeq ?? 0;
     const connect = () => {
       const currentConnection = ++connection;
       const current = () => active && connection === currentConnection;
       flush(); // Commit the old connection's buffer before taking its resume cursor.
       subscription?.close();
-      inBackoff = false;
+      inTransportBackoff = false;
       setStatus('connecting');
       setError(undefined);
       subscription = subscribeRunEvents({
@@ -80,19 +81,20 @@ export function useRunEvents(
         after: useRunEventStore.getState().runs[runId]?.lastSeq ?? 0,
         onOpen: () => {
           if (!current()) return;
-          inBackoff = false;
-          reportedOutage = false;
+          inTransportBackoff = false;
           markApiReachable();
           setStatus('live');
         },
         onError: (err, attempt) => {
           if (!current() || attempt === 0) return; // Invalid frames are not connection drops.
-          inBackoff = true;
-          if (err instanceof GraphGoblinApiError && err.status > 0) return;
+          inTransportBackoff =
+            err instanceof TypeError || (err instanceof GraphGoblinApiError && err.status === 0);
+          // Clean EOF and HTTP errors keep the SSE helper's existing backoff.
+          if (!inTransportBackoff) return;
+          setStatus('connecting');
           if (reportedOutage) return;
           reportedOutage = true;
           markApiUnreachable();
-          setStatus('connecting');
           // A loaded inspector otherwise has no failed query to drive the shared probe.
           // Try its active run read once per stream outage; a stuck stream must not churn reads.
           void queryClient.refetchQueries(
@@ -102,6 +104,10 @@ export function useRunEvents(
         },
         onEvent: (event) => {
           if (!current()) return;
+          if (event.seq > lastSeq) {
+            lastSeq = event.seq;
+            reportedOutage = false;
+          }
           buffer.push(event);
           timer ??= setTimeout(flush, EVENT_BATCH_MS);
         },
@@ -121,7 +127,7 @@ export function useRunEvents(
       );
     };
     const unsubscribe = subscribeApiRecovery(() => {
-      if (active && inBackoff) connect();
+      if (active && inTransportBackoff) connect();
     });
     connect();
     return () => {

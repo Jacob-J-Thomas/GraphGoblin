@@ -140,6 +140,67 @@ describe('registerPwa', () => {
     expect(wb.registration.update).toHaveBeenCalledTimes(4);
   });
 
+  it('defers repeated throttled focuses into one check at the 60-second boundary', async () => {
+    vi.useFakeTimers();
+    const wb = fakeWorkbox();
+    const hook = registerPwa({ createWorkbox: () => wb as never, serviceWorkerSupported: true });
+    await vi.advanceTimersByTimeAsync(0);
+    window.dispatchEvent(new Event('focus'));
+    await vi.advanceTimersByTimeAsync(1_000);
+    for (let i = 0; i < 10; i++) window.dispatchEvent(new Event('focus'));
+    await vi.advanceTimersByTimeAsync(58_999);
+    expect(wb.registration.update).toHaveBeenCalledTimes(2);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(wb.registration.update).toHaveBeenCalledTimes(3);
+    window.dispatchEvent(new Event('focus'));
+    hook.dispose();
+    await vi.advanceTimersByTimeAsync(3_600_000);
+    expect(wb.registration.update).toHaveBeenCalledTimes(3);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('cancels a deferred focus check when a visibility check runs', async () => {
+    vi.useFakeTimers();
+    const wb = fakeWorkbox();
+    registerPwa({ createWorkbox: () => wb as never, serviceWorkerSupported: true });
+    await vi.advanceTimersByTimeAsync(0);
+    window.dispatchEvent(new Event('focus'));
+    await vi.advanceTimersByTimeAsync(1_000);
+    window.dispatchEvent(new Event('focus'));
+    expect(vi.getTimerCount()).toBe(2); // Hourly interval and one deferred focus.
+    document.dispatchEvent(new Event('visibilitychange'));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(vi.getTimerCount()).toBe(1);
+    await vi.advanceTimersByTimeAsync(59_000);
+    expect(wb.registration.update).toHaveBeenCalledTimes(3);
+  });
+
+  it.each(['hidden', 'offline', 'API unreachable'])(
+    'does not run a deferred check while %s and checks once visibility permits it',
+    async (blocked) => {
+      vi.useFakeTimers();
+      const visibility = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible');
+      const online = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(true);
+      const wb = fakeWorkbox();
+      registerPwa({ createWorkbox: () => wb as never, serviceWorkerSupported: true });
+      await vi.advanceTimersByTimeAsync(0);
+      window.dispatchEvent(new Event('focus'));
+      await vi.advanceTimersByTimeAsync(1_000);
+      window.dispatchEvent(new Event('focus'));
+      if (blocked === 'hidden') visibility.mockReturnValue('hidden');
+      if (blocked === 'offline') online.mockReturnValue(false);
+      if (blocked === 'API unreachable') useReachability.setState({ apiReachable: false });
+      await vi.advanceTimersByTimeAsync(59_000);
+      expect(wb.registration.update).toHaveBeenCalledTimes(2);
+      visibility.mockReturnValue('visible');
+      online.mockReturnValue(true);
+      useReachability.setState({ apiReachable: true });
+      document.dispatchEvent(new Event('visibilitychange'));
+      await vi.advanceTimersByTimeAsync(0);
+      expect(wb.registration.update).toHaveBeenCalledTimes(3);
+    },
+  );
+
   it('checks on registration, focus, visibility and hourly; clears everything on dispose', async () => {
     vi.useFakeTimers();
     const wb = fakeWorkbox();

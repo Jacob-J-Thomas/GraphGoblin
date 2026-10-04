@@ -18,7 +18,7 @@ import { buildApp, createContainer, loadConfig } from '@graphgoblin/api';
 import { createTestApp, type TestApp } from '@graphgoblin/api/testing';
 import type { ScriptedTurn } from '@graphgoblin/engine/testing';
 import { ModelCatalogEntrySchema } from '@graphgoblin/contracts';
-import { originalWorker as cleanWorker } from './worker.js';
+import { originalWorker as cleanWorker } from '../src/e2e-support/worker.js';
 
 const dist = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'dist');
 if (!existsSync(join(dist, 'index.html'))) {

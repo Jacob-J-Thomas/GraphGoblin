@@ -84,6 +84,11 @@ export function registerPwa(options: RegisterPwaOptions = {}): PwaTestHook {
   let checking = false;
   let warned = false;
   let lastFocusCheck = Number.NEGATIVE_INFINITY;
+  let focusTimer: ReturnType<typeof setTimeout> | undefined;
+  const clearFocusTimer = () => {
+    clearTimeout(focusTimer);
+    focusTimer = undefined;
+  };
   const workerListeners = new Map<ServiceWorker, () => void>();
   const promptWaiting = () => {
     if (registration?.active && registration.waiting) prompt(registration.waiting);
@@ -115,7 +120,15 @@ export function registerPwa(options: RegisterPwaOptions = {}): PwaTestHook {
       !useReachability.getState().apiReachable
     )
       return;
-    if (fromFocus && Date.now() - lastFocusCheck < 60_000) return;
+    const remaining = lastFocusCheck + 60_000 - Date.now();
+    if (fromFocus && remaining > 0) {
+      focusTimer ??= setTimeout(() => {
+        focusTimer = undefined;
+        void check(true);
+      }, remaining);
+      return;
+    }
+    clearFocusTimer();
     if (fromFocus) lastFocusCheck = Date.now();
     checking = true;
     try {
@@ -147,6 +160,7 @@ export function registerPwa(options: RegisterPwaOptions = {}): PwaTestHook {
   window.addEventListener('pageshow', trigger);
   cleanup = () => {
     clearInterval(interval);
+    clearFocusTimer();
     unsubscribe();
     registration?.removeEventListener('updatefound', watchInstalling);
     for (const [worker, listener] of workerListeners)

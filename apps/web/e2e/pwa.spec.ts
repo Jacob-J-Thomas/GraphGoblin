@@ -146,6 +146,48 @@ test('an offline editor draft saves after the API listener returns without navig
   }
 });
 
+test('clean event-stream closes retain backoff without refetch or worker-update churn', async ({
+  page,
+  request,
+}) => {
+  const loopId = await publishLoop(request, approvalLoop('Clean stream backoff'));
+  const response = await request.post(`/loops/${loopId}/runs`, {
+    data: { triggerNodeId: 'start', input: {} },
+  });
+  expect(response.ok()).toBe(true);
+  const { run } = (await response.json()) as { run: { id: string } };
+  await page.addInitScript(() => {
+    const stats = (window.pwaChecks = { calls: 0, found: 0, pending: 0, activity: Date.now() });
+    const update = ServiceWorkerRegistration.prototype.update;
+    ServiceWorkerRegistration.prototype.update = function () {
+      stats.calls++;
+      return update.call(this);
+    };
+  });
+  let streams = 0;
+  let reads = 0;
+  page.on('request', (request) => {
+    if (new URL(request.url()).pathname === `/runs/${run.id}`) reads++;
+  });
+  await page.route(`**/runs/${run.id}/events**`, async (route) => {
+    streams++;
+    await route.fulfill({ status: 200, contentType: 'text/event-stream', body: '' });
+  });
+  await page.goto(`/app/runs/${run.id}`);
+  await expect(page.getByRole('heading', { name: /^Timeline/ })).toBeVisible();
+  const baselineStreams = streams;
+  const baselineReads = reads;
+  const baselineUpdates = await page.evaluate(() => window.pwaChecks.calls);
+  await page.waitForTimeout(4_000);
+  expect(streams).toBeGreaterThanOrEqual(2);
+  expect(streams - baselineStreams).toBeLessThanOrEqual(4);
+  expect(reads - baselineReads).toBeLessThanOrEqual(1);
+  expect((await page.evaluate(() => window.pwaChecks.calls)) - baselineUpdates).toBeLessThanOrEqual(
+    1,
+  );
+  await expect(page.getByText('Cannot reach the GraphGoblin API', { exact: true })).toBeHidden();
+});
+
 test('an open window detects a changed worker on focus, prompts, and updates only on confirmation', async ({
   page,
   request,
@@ -233,11 +275,10 @@ test('an open window detects a changed worker on focus, prompts, and updates onl
     await expect(toast).toBeHidden();
     expect(navigation).toHaveLength(0);
 
-    // Workbox's private 60 s external-update boundary is not configurable. Keep this window open
-    // past it, also allowing the app's focus throttle to expire, then detect a different build.
-    await page.waitForTimeout(61_000);
+    // Workbox also classifies the second updatefound as external and drops its listener.
+    // Visibility checks exercise that path immediately, without waiting for the time heuristic.
     await control(request, '/worker/build');
-    await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+    await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
     await expect(toast).toBeVisible({ timeout: 20_000 });
     expect(await page.evaluate(() => window.pwaChecks.calls)).toBe(baseline.calls + 2);
     expect(await page.evaluate(() => window.pwaChecks.found)).toBe(baseline.found + 2);

@@ -96,9 +96,50 @@ describe('API reachability', () => {
     expect(view.fetch).not.toHaveBeenCalled();
   });
 
+  it('keeps the unreachable claim when navigation swaps failed observers in one tick', async () => {
+    const view = await setup();
+    const next = new QueryObserver(view.queryClient, {
+      queryKey: ['runs'],
+      queryFn: () => Promise.reject(networkError()),
+      retryOnMount: false,
+    });
+    await next.refetch();
+    const states: boolean[] = [];
+    cleanups.push(useReachability.subscribe((state) => states.push(state.apiReachable)));
+    view.unsubscribe();
+    cleanups.push(next.subscribe(() => undefined));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(useReachability.getState().apiReachable).toBe(false);
+    expect(states).not.toContain(true);
+  });
+
+  it('retains the claim while a replacement page read is pending and then fails', async () => {
+    const view = await setup();
+    let fail!: () => void;
+    const next = new QueryObserver(view.queryClient, {
+      queryKey: ['runs'],
+      queryFn: () =>
+        new Promise<never>((_resolve, reject) => {
+          fail = () => reject(networkError());
+        }),
+    });
+    const states: boolean[] = [];
+    cleanups.push(useReachability.subscribe((state) => states.push(state.apiReachable)));
+    view.unsubscribe();
+    cleanups.push(next.subscribe(() => undefined));
+    await vi.advanceTimersByTimeAsync(800);
+    expect(next.getCurrentResult().fetchStatus).toBe('fetching');
+    expect(useReachability.getState().apiReachable).toBe(false);
+    fail();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(useReachability.getState().apiReachable).toBe(false);
+    expect(states).not.toContain(true);
+  });
+
   it('does not reopen an outage from an inactive query cached error', async () => {
     const view = await setup();
     view.unsubscribe();
+    await vi.advanceTimersByTimeAsync(0);
     view.queryClient.setQueryData(['good'], 'ok');
     const observer = new QueryObserver(view.queryClient, {
       queryKey: ['loops'],
@@ -147,6 +188,7 @@ describe('API reachability', () => {
     const recovered = vi.fn();
     cleanups.push(subscribeApiRecovery(recovered));
     view.queryClient.setQueryData(['loops'], 'optimistic');
+    await vi.advanceTimersByTimeAsync(0);
     expect(useReachability.getState().apiReachable).toBe(true); // No demand, no claim.
     expect(recovered).not.toHaveBeenCalled();
     await vi.advanceTimersByTimeAsync(60_000);
@@ -261,6 +303,7 @@ describe('API reachability', () => {
     );
     await vi.advanceTimersByTimeAsync(2_000);
     view.unsubscribe();
+    await vi.advanceTimersByTimeAsync(0);
     expect(useReachability.getState().apiReachable).toBe(true);
     finish('back');
     await vi.advanceTimersByTimeAsync(0);
