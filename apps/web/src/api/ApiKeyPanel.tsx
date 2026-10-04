@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { Button, Card, FieldGroup, Input, Label } from '../components/ui/index.js';
+import { Button, Card, FieldGroup, Input, Label, RequiredNote } from '../components/ui/index.js';
 import { syncApiKeyAcrossTabs, useApiKeyStore } from './api-key.js';
 
 /**
@@ -69,12 +69,16 @@ export function ApiKeyPanel() {
           aria-label="Enter API key"
           onSubmit={submit}
         >
+          <RequiredNote className="basis-full" />
           <FieldGroup className="min-w-[240px] flex-1">
-            <Label htmlFor="api-key-input">API key</Label>
+            <Label htmlFor="api-key-input" required>
+              API key
+            </Label>
             <Input
               id="api-key-input"
               type="password"
               autoComplete="off"
+              aria-required
               value={value}
               onChange={(e) => setValue(e.target.value)}
               placeholder="gg_…"

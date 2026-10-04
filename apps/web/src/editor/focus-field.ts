@@ -11,13 +11,14 @@
 
 /**
  * What can take focus inside a field, in order of preference: the controls that hold the value
- * (inputs, selects, text areas, CodeMirror editors), then anything else (an "Add" button, say).
- * Within each group the first in document order wins.
+ * (inputs, selects, text areas, switches, CodeMirror editors), then anything else (an "Add"
+ * button, say). Within each group the first in document order wins.
  */
 const VALUE_CONTROLS = [
   'input:not([disabled]):not([type="hidden"])',
   'select:not([disabled])',
   'textarea:not([disabled])',
+  'button[role="switch"]:not([disabled])',
   '[contenteditable="true"]',
 ].join(',');
 const OTHER_CONTROLS = [
@@ -26,12 +27,22 @@ const OTHER_CONTROLS = [
   '[tabindex]:not([tabindex="-1"])',
 ].join(',');
 
+/**
+ * A radio of a segmented control stands for its group: focus goes to the chosen radio, as Tab
+ * would, so the arrow keys move on from the current choice.
+ */
+function chosenRadio(radio: HTMLInputElement): HTMLElement {
+  const group = radio.closest('[role="radiogroup"]');
+  return group?.querySelector<HTMLInputElement>('input[type="radio"]:checked') ?? radio;
+}
+
 /** The control to focus inside `field`: the first value control, else the first other one. */
 function firstFocusable(field: Element): HTMLElement | undefined {
   for (const selector of [VALUE_CONTROLS, OTHER_CONTROLS]) {
     const found = [...field.querySelectorAll<HTMLElement>(selector)].find(
       (el) => !el.closest('[hidden], [inert]'),
     );
+    if (found instanceof HTMLInputElement && found.type === 'radio') return chosenRadio(found);
     if (found) return found;
   }
   return undefined;

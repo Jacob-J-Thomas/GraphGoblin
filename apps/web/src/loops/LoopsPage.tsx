@@ -16,9 +16,11 @@ import {
   ConfirmAction,
   buttonStyles,
   FieldGroup,
+  FilePicker,
   HelpText,
   Input,
   Label,
+  RequiredNote,
   Table,
   Td,
   Th,
@@ -26,14 +28,6 @@ import {
 import { clearLocalDraft } from '../drafts/local-drafts.js';
 import { newLoopDefinition } from '../editor/model.js';
 import { downloadJson, errorMessage, fileSlug, formatDateTime, parseJson } from '../lib/utils.js';
-
-/** The native file picker, its button drawn like an outline button. */
-const FILE_INPUT = [
-  'max-w-full cursor-pointer text-sm text-muted',
-  'file:mr-3 file:h-8 file:cursor-pointer file:rounded-md file:border file:border-strong',
-  'file:bg-surface-raised file:px-[11px] file:text-sm file:font-semibold file:text-default',
-  'file:shadow-ledge hover:file:bg-surface-hover',
-].join(' ');
 
 function PublishState({ loop }: { loop: LoopRecord }) {
   if (!loop.currentVersionId) return <Badge>draft only</Badge>;
@@ -73,11 +67,17 @@ function CreateLoop() {
       className="flex flex-wrap items-end gap-2 max-sm:w-full"
       aria-label="Create loop"
     >
+      <RequiredNote className="basis-full" />
       <FieldGroup className="w-[300px] max-sm:flex-1">
-        <Label htmlFor="new-loop-name">New loop name</Label>
+        <Label htmlFor="new-loop-name" required>
+          New loop name
+        </Label>
         <Input
           id="new-loop-name"
           value={name}
+          aria-required
+          aria-invalid={create.isError || undefined}
+          aria-describedby={create.isError ? 'new-loop-error' : undefined}
           onChange={(e) => setName(e.target.value)}
           placeholder="nightly-triage"
         />
@@ -86,7 +86,7 @@ function CreateLoop() {
         Create
       </Button>
       {create.isError ? (
-        <HelpText tone="bad" className="basis-full">
+        <HelpText id="new-loop-error" role="alert" tone="bad" className="basis-full">
           {errorMessage(create.error)}
         </HelpText>
       ) : null}
@@ -126,11 +126,9 @@ function ImportLoop() {
   return (
     <FieldGroup>
       <Label htmlFor="import-loop">Import an exported loop (JSON)</Label>
-      <input
+      <FilePicker
         id="import-loop"
-        type="file"
         accept="application/json,.json"
-        className={FILE_INPUT}
         onChange={(e) => void onFile(e)}
       />
       {message ? (

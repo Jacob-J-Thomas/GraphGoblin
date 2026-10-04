@@ -13,6 +13,7 @@ import {
   HelpText,
   Input,
   Label,
+  RequiredNote,
   type DialogCloseReason,
 } from '../components/ui/index.js';
 import { SchemaForm } from '../forms/SchemaForm.js';
@@ -171,14 +172,18 @@ export function NodeEditorDialog({
     >
       <section ref={bodyRef} aria-label="Node properties" className="grid gap-field">
         {notice}
+        <RequiredNote />
         {/* Issue paths `id` and `label` name these fields (focus-field.ts). */}
         <div data-field-scope="node" className="grid grid-cols-2 gap-3 max-sm:grid-cols-1">
           <FieldGroup data-field="id">
-            <Label htmlFor="node-id">Node id</Label>
+            <Label htmlFor="node-id" required>
+              Node id
+            </Label>
             <Input
               id="node-id"
               className="font-mono text-sm"
               value={id.value}
+              aria-required
               aria-invalid={id.error ? true : undefined}
               aria-describedby={id.error ? 'node-id-error' : undefined}
               onChange={(e) => setIdState({ ...id, value: e.target.value })}
@@ -194,9 +199,12 @@ export function NodeEditorDialog({
             ) : null}
           </FieldGroup>
           <FieldGroup data-field="label">
-            <Label htmlFor="node-label">Label</Label>
+            <Label htmlFor="node-label" required>
+              Label
+            </Label>
             <Input
               id="node-label"
+              aria-required
               value={node.label}
               onChange={(e) => updateNode(node.id, { label: e.target.value })}
             />

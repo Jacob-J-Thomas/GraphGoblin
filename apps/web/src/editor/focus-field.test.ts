@@ -71,6 +71,30 @@ describe('focusField', () => {
     expect(named(root, `value of ${keys[0]}`)).toHaveFocus();
   });
 
+  it('focuses a switch, and the chosen segment of a segmented control (else its first)', () => {
+    const root = document.createElement('section');
+    root.innerHTML = `
+      <div data-field="enabled"><label>Enabled</label><button type="button" role="switch" aria-checked="true" aria-label="Enabled switch"></button></div>
+      <div data-field="stdin"><fieldset role="radiogroup">
+        <label><input type="radio" name="s" aria-label="thread" /></label>
+        <label><input type="radio" name="s" aria-label="none" checked /></label>
+      </fieldset></div>
+      <div data-field="mode"><fieldset role="radiogroup">
+        <label><input type="radio" name="m" aria-label="fast" /></label>
+        <label><input type="radio" name="m" aria-label="slow" /></label>
+      </fieldset></div>
+      <div data-field="lone"><input type="radio" aria-label="lone" /></div>`;
+    document.body.append(root);
+    expect(focusField(root, 'enabled')).toBe(true);
+    expect(named(root, 'Enabled switch')).toHaveFocus();
+    expect(focusField(root, 'stdin')).toBe(true);
+    expect(named(root, 'none')).toHaveFocus();
+    expect(focusField(root, 'mode')).toBe(true);
+    expect(named(root, 'fast')).toHaveFocus();
+    expect(focusField(root, 'lone')).toBe(true);
+    expect(named(root, 'lone')).toHaveFocus();
+  });
+
   it('falls back to the parent paths, preferring a value control over a button', () => {
     const root = editorBody();
     const config = root.querySelector('[data-field-scope="config"]')!;

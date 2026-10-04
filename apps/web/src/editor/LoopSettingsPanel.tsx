@@ -4,7 +4,14 @@ import {
   type LoopDefinitionInput,
 } from '@graphgoblin/contracts';
 import { z } from 'zod';
-import { FieldGroup, HelpText, Input, Label, Textarea } from '../components/ui/index.js';
+import {
+  FieldGroup,
+  HelpText,
+  Input,
+  Label,
+  RequiredNote,
+  Textarea,
+} from '../components/ui/index.js';
 import { SchemaForm } from '../forms/SchemaForm.js';
 import { useEditorStore } from './store.js';
 
@@ -19,10 +26,14 @@ export function LoopSettingsPanel({ definition }: { definition: LoopDefinitionIn
   const fieldErrors = useEditorStore((s) => s.fieldErrors);
   return (
     <section aria-label="Loop settings" className="grid gap-field">
+      <RequiredNote />
       <FieldGroup>
-        <Label htmlFor="loop-name">Name</Label>
+        <Label htmlFor="loop-name" required>
+          Name
+        </Label>
         <Input
           id="loop-name"
+          aria-required
           value={definition.name}
           onChange={(e) => updateMeta({ name: e.target.value })}
         />

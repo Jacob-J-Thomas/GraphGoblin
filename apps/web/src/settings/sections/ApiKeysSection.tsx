@@ -14,6 +14,7 @@ import {
   FieldGroup,
   Input,
   Label,
+  RequiredNote,
 } from '../../components/ui/index.js';
 import { LIST_ROW, MutationError, useInvalidate } from '../shared.js';
 
@@ -43,9 +44,17 @@ export function ApiKeysSection() {
             create.mutate();
           }}
         >
+          <RequiredNote className="basis-full" />
           <FieldGroup className="w-[260px]">
-            <Label htmlFor="key-label">Label</Label>
-            <Input id="key-label" value={label} onChange={(e) => setLabel(e.target.value)} />
+            <Label htmlFor="key-label" required>
+              Label
+            </Label>
+            <Input
+              id="key-label"
+              aria-required
+              value={label}
+              onChange={(e) => setLabel(e.target.value)}
+            />
           </FieldGroup>
           <Button type="submit" disabled={!label || create.isPending}>
             Create key
