@@ -25,7 +25,7 @@ The response contains `schedules`, `webhooks`, and `polls`. Older schedule and e
 
 ## Start manually
 
-Choose `subtype` of `manual`, optionally set `inputSchema`, and declare `exposeTo`. Use **Run** in the editor, the API start request, or MCP's `start_run` as shown in [Run and observe](03-run-and-observe.md). Treat exposure declarations as advisory in this build; see the [editor limitation](02-build-a-loop.md#choose-nodes).
+Choose `subtype` of `manual`, optionally set `inputSchema`, and declare `exposeTo`. Start it from **Runs → New run** (the editor's **Open in Runs** link goes there), the API start request, or MCP's `start_run` as shown in [Run and observe](03-run-and-observe.md). Treat exposure declarations as advisory in this build; see the [editor limitation](02-build-a-loop.md#choose-nodes).
 
 ## Schedule with cron
 

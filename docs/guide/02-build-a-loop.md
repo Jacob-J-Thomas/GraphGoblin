@@ -3,10 +3,15 @@
 ## Edit the starter graph
 
 1. Open **Loops**, enter a name in **New loop name**, and click **Create**. The editor opens on the starter graph. Click **Edit** to open an existing loop.
-2. Drag a node from the left palette onto the canvas, or click its palette button to add it.
-3. Select the node. In **Node**, set its ID, label, and config. IDs start with a letter and contain letters, digits, underscores, or hyphens; keep them unique.
-4. Remove the starter edge before inserting your own path. Use **Connections** in the property panel to remove an edge, or select it and press **Delete** or **Backspace**.
-5. Drag from a labelled output handle to the next node's input handle. Select **Loop settings** to set the workspace, defaults, limits, and declared variables.
+2. Drag a node from the left palette onto the canvas, or click its palette button to add it. The new node is selected.
+3. Click a node to edit it, or move to it with **Tab** and press **Enter**. Its editor opens in a dialog named **Edit _kind_ _id_**: set its ID, label, and config. IDs start with a letter and contain letters, digits, underscores, or hyphens; keep them unique. Dragging a node moves it without opening the dialog.
+4. Remove the starter edge before inserting your own path. Use **Connections** in the node's dialog to remove an edge, or select the edge on the canvas and press **Delete** or **Backspace**.
+5. Drag from a labelled output handle to the next node's input handle, or use the dialog's **Connect** form, which is the keyboard path: pick one of the node's free outputs and a target. **Delete node** in the dialog removes the node and its edges.
+6. Use the **Loop** panel on the right for the loop's name, description, workspace, defaults, limits, and declared variables.
+
+Edits in the dialog save as you type, so closing it never discards anything: use **Done**, the close button, **Esc**, or a click outside it, and focus returns to the node. An ID you are still typing applies when the dialog closes; an ID that cannot apply keeps the dialog open once with the reason, and closing again keeps the old ID. **Delete** and **Backspace** inside the dialog only edit text. While the dialog is open the rest of the editor waits, so close it to reach **Publish** or the palette. Below 768 px wide the dialog is a sheet along the bottom of the window.
+
+**Loop settings** in the toolbar shows or hides the loop panel, as does the panel's own button. The browser remembers the choice; until you choose, the panel starts expanded on windows at least 1280 px wide and collapsed below. Collapsed, it keeps a narrow rail with the error and warning counts.
 
 The editor lives at this browser route:
 
@@ -16,7 +21,7 @@ The editor lives at this browser route:
 
 Edits autosave after a short debounce and are mirrored in IndexedDB. A schema-invalid draft stays on the device with **Saved on this device only**; fix it before relying on the server copy. Offline saves retry on reconnect. An unsynced local draft takes precedence on reload, unless the server saved a newer draft since; then the server copy is shown and the device copy is offered with **Use this device's copy instead**.
 
-Every save tells the server which copy the edit started from. If another tab, device, or API client saved the draft in between, nothing is overwritten: **The draft changed on the server** appears, autosave stops, and you choose **Reload server draft** (take theirs, dropping this editor's unsaved changes) or **Overwrite with this copy** (keep yours). Until you choose, edits stay on this device and **Publish** refuses. API clients get the same protection by sending `If-Match` with the `draftToken` from `GET /loops/{id}` (see [API, streaming, and MCP](../07-api-and-streaming.md#draft-conflicts-decided-wp-f2-adr-0015)).
+Every save tells the server which copy the edit started from. If another tab, device, or API client saved the draft in between, nothing is overwritten: **The draft changed on the server** appears (inside the node dialog too, when one is open), autosave stops, and you choose **Reload server draft** (take theirs, dropping this editor's unsaved changes and closing the dialog) or **Overwrite with this copy** (keep yours). Until you choose, edits stay on this device and **Publish** refuses. API clients get the same protection by sending `If-Match` with the `draftToken` from `GET /loops/{id}` (see [API, streaming, and MCP](../07-api-and-streaming.md#draft-conflicts-decided-wp-f2-adr-0015)).
 
 ## Choose nodes
 
@@ -48,7 +53,7 @@ Connect exactly one edge per output port. Multiple inputs may converge on a node
 
 For a loop-back, connect the exit handle to a working node, such as inference or mutation. The canvas sets `loopBack.targetNodeId` for you; it cannot target a trigger or another exit. Only this exit transition increments the iteration. A cycle through other nodes does not consume the iteration limit.
 
-Read **Validation** after every change. Fix errors before publishing: missing trigger or exit, unconnected or doubly connected ports, duplicate IDs, invalid targets or ports, unreachable nodes, a trigger with no path to an exit, undeclared variables, and inconsistent loop-backs. Clicking an issue selects its node. Warnings, such as an exit criterion above the loop's iteration ceiling, do not block publishing. The server repeats these checks when you publish, adds cron expression and timezone checks, and rejects errors with HTTP 422 `LOOP_INVALID`.
+Read **Validation**, at the bottom of the loop panel, after every change. Fix errors before publishing: missing trigger or exit, unconnected or doubly connected ports, duplicate IDs, invalid targets or ports, unreachable nodes, a trigger with no path to an exit, undeclared variables, and inconsistent loop-backs. Clicking an issue opens its node's dialog. Each node with issues also shows their count on its card. Warnings, such as an exit criterion above the loop's iteration ceiling, do not block publishing. The server repeats these checks when you publish, adds cron expression and timezone checks, and rejects errors with HTTP 422 `LOOP_INVALID`.
 
 ## Set workspace and limits
 
@@ -117,7 +122,7 @@ The body wraps your definition:
 
 ## Import a complete first loop
 
-Save this bare definition as a JSON file and import it. It follows the contracts' minimal trigger-to-exit fixture with an inference node inserted, and uses the fields and defaults of `LoopDefinitionSchema`. Publish it, select **Run**, and supply a topic. Replace the model if your Codex account uses another ID.
+Save this bare definition as a JSON file and import it. It follows the contracts' minimal trigger-to-exit fixture with an inference node inserted, and uses the fields and defaults of `LoopDefinitionSchema`. Publish it, select **Open in Runs**, and supply a topic. Replace the model if your Codex account uses another ID.
 
 ```json
 {
