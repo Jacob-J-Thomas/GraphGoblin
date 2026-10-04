@@ -10,7 +10,7 @@
  * changes it, and the storage event keeps other tabs in step. The theme-color meta tag follows it,
  * using the per-theme colours the build reads from tokens.css (data-dark and data-light).
  */
-import { useSyncExternalStore } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
 
 export type Theme = 'dark' | 'light';
 
@@ -90,6 +90,14 @@ export function syncThemeAcrossTabs(target: Window = window): () => void {
   };
   target.addEventListener('storage', onStorage);
   return () => target.removeEventListener('storage', onStorage);
+}
+
+/**
+ * Follow other tabs while the calling component is mounted (the app root does this), so mounting
+ * the app again never leaves a second listener behind.
+ */
+export function useThemeAcrossTabs(): void {
+  useEffect(() => syncThemeAcrossTabs(), []);
 }
 
 /** The current theme and the setter, for components. */
