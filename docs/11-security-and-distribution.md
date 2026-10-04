@@ -23,7 +23,7 @@
 ## Inbound exposure (Decided)
 
 - The API binds to localhost by default. Changing the bind address without API keys enabled logs a prominent warning.
-- Webhook endpoints need no API key; they are protected by HMAC signatures, replay windows, size limits, and rate limits (see 08). They are not the only public routes: see [Public routes](07-api-and-streaming.md#public-routes-decided-by-implementation-2026-10-03) for the full list.
+- Webhook endpoints need no API key; they are protected by HMAC signatures, replay windows, size limits, and rate limits (see 08). The other public routes are listed in [Public routes](07-api-and-streaming.md#public-routes-decided-by-implementation-2026-10-03).
 - Development tunnels are limited to the hooks prefix and must authenticate at the tunnel. Polling triggers are the recommended no-inbound alternative.
 
 ## Execution posture (Decided)
