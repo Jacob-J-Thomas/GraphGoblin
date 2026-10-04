@@ -14,8 +14,8 @@ export function OfflineBanner({ apiUnreachable = false }: { apiUnreachable?: boo
         {apiUnreachable ? 'Cannot reach the GraphGoblin API' : 'You are offline'}
       </strong>
       <span>
-        The app keeps working with what it has; saving, running, and live updates resume when you
-        reconnect.
+        The app keeps working with what it has; saving, running, and live updates resume{' '}
+        {apiUnreachable ? 'when the API is reachable again.' : 'when you reconnect.'}
       </span>
     </div>
   );

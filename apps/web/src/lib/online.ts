@@ -18,6 +18,6 @@ export function useOnline(): boolean {
 /** Banner reason; browser connectivity remains independent of API reachability. */
 export function useConnectionStatus(): 'online' | 'offline' | 'api-unreachable' {
   const online = useOnline();
-  const apiReachable = useReachability((state) => state.apiReachable);
+  const apiReachable = useReachability((state) => state.apiReachable || state.reconnecting);
   return !online ? 'offline' : apiReachable ? 'online' : 'api-unreachable';
 }

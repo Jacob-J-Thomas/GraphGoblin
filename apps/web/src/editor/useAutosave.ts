@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef } from 'react';
 import { keys } from '../api/queries.js';
 import { recordServerSave, saveLocalDraft } from '../drafts/local-drafts.js';
-import { subscribeApiRecovery, useReachability } from '../lib/reachability.js';
+import { markApiUnreachable, subscribeApiRecovery } from '../lib/reachability.js';
 import { errorMessage, isOfflineError } from '../lib/utils.js';
 import { validateDraft } from './model.js';
 import { useEditorStore } from './store.js';
@@ -135,7 +135,7 @@ export function useAutosave(
                 recoveryRead.current.revision !== rev)
             ) {
               recoveryRead.current = { generation, revision: rev };
-              useReachability.setState({ apiReachable: false });
+              markApiUnreachable();
               void queryClient.refetchQueries(
                 { queryKey, exact: true, type: 'active' },
                 { cancelRefetch: false },

@@ -7,7 +7,9 @@ const INITIAL_DELAY = 2_000;
 const MAX_DELAY = 30_000;
 const PROBE_TIMEOUT = 5_000;
 
-export const useReachability = create(() => ({ apiReachable: true }));
+export const useReachability = create(() => ({ apiReachable: true, reconnecting: false }));
+let outageOpen = false;
+const recoveryGuards = new Set<() => boolean>();
 const recoveryListeners = new Set<() => void>();
 
 /** A confirmed response after an outage, available to recovery listeners and PWA update checks. */
@@ -16,23 +18,40 @@ export function subscribeApiRecovery(listener: () => void): () => void {
   return () => recoveryListeners.delete(listener);
 }
 
-function reachable(value: boolean): void {
-  const previous = useReachability.getState().apiReachable;
-  useReachability.setState({ apiReachable: value });
-  if (value && !previous) for (const listener of recoveryListeners) listener();
+function reachable(value: boolean, confirmed = true): void {
+  const notify = value && outageOpen && confirmed;
+  outageOpen = !value;
+  if (useReachability.getState().apiReachable !== value)
+    useReachability.setState({ apiReachable: value });
+  if (notify) for (const listener of recoveryListeners) listener();
+}
+
+/** A transport failure from an active query, draft save, or run stream. */
+export function markApiUnreachable(): void {
+  reachable(false);
+}
+
+/** A real API response; recovery waits for all active connectivity failures to clear. */
+export function markApiReachable(): void {
+  if ([...recoveryGuards].every((allowed) => allowed())) reachable(true);
 }
 
 /** Probe only while active queries hold transport failures. HTTP errors never create demand. */
 export function startReachability(queryClient: QueryClient, client: GraphGoblinClient): () => void {
   const cache = queryClient.getQueryCache();
-  const failures = new Map<Query, unknown>();
+  const failures = new WeakMap<Query, unknown>();
   let stopped = false;
+  let refetching = false;
   let delay = INITIAL_DELAY;
   let timer: ReturnType<typeof setTimeout> | undefined;
   let inFlight: AbortController | undefined;
 
   const offlineQueries = () =>
     cache.findAll({ type: 'active', predicate: (query) => isOfflineError(query.state.error) });
+  const fetching = () =>
+    cache.findAll({ type: 'active', predicate: (query) => query.state.fetchStatus !== 'idle' });
+  const canRecover = () => !refetching && offlineQueries().length === 0;
+  recoveryGuards.add(canRecover);
   const allowed = () => !stopped && document.visibilityState === 'visible' && navigator.onLine;
   const clearTimer = () => {
     clearTimeout(timer);
@@ -45,6 +64,7 @@ export function startReachability(queryClient: QueryClient, client: GraphGoblinC
     );
 
   const schedule = () => {
+    if (refetching && allowed()) return;
     if (!allowed() || offlineQueries().length === 0) {
       clearTimer();
       inFlight?.abort();
@@ -66,9 +86,19 @@ export function startReachability(queryClient: QueryClient, client: GraphGoblinC
         }),
       );
       if (!controller.signal.aborted && allowed() && response.ok) {
-        delay = INITIAL_DELAY;
-        reachable(true);
-        await refetch();
+        refetching = true;
+        try {
+          await refetch();
+        } finally {
+          refetching = false;
+        }
+        if (stopped) return;
+        if (offlineQueries().length === 0) {
+          delay = INITIAL_DELAY;
+          markApiReachable();
+        } else {
+          delay = Math.min(delay * 2, MAX_DELAY);
+        }
       } else {
         delay = Math.min(delay * 2, MAX_DELAY);
       }
@@ -81,15 +111,20 @@ export function startReachability(queryClient: QueryClient, client: GraphGoblinC
     }
   };
   const sync = () => {
+    if (stopped) return;
     const queries = offlineQueries();
-    const active = new Set(queries);
-    for (const query of failures.keys()) if (!active.has(query)) failures.delete(query);
+
     for (const query of queries) {
       // A refetch retains the old error while running; it is not a new outage.
-      if (failures.get(query) !== query.state.error) reachable(false);
+      if (failures.get(query) !== query.state.error) markApiUnreachable();
       failures.set(query, query.state.error);
     }
+    if (useReachability.getState().reconnecting && fetching().length === 0)
+      useReachability.setState({ reconnecting: false });
     schedule();
+  };
+  const resetWithoutDemand = () => {
+    if (offlineQueries().length === 0 && fetching().length === 0) reachable(true, false); // No demand: remove the claim, without inventing a recovery.
   };
   const unsubscribe = cache.subscribe((event) => {
     if (
@@ -100,26 +135,40 @@ export function startReachability(queryClient: QueryClient, client: GraphGoblinC
           event.query.state.error instanceof GraphGoblinApiError &&
           event.query.state.error.status > 0))
     ) {
-      reachable(true);
+      markApiReachable();
     }
+    // Observer notifications precede the success event. Do not silently close the outage there.
+    if (
+      ((event.type === 'removed' ||
+        event.type === 'observerRemoved' ||
+        event.type === 'observerOptionsUpdated') &&
+        !event.query.isActive()) ||
+      (event.type === 'updated' && event.action.type === 'success' && event.action.manual)
+    )
+      resetWithoutDemand();
     sync();
   });
   const reconnect = () => {
-    void refetch(); // Also covers a cold offline load with no Query online-manager transition.
+    useReachability.setState({ reconnecting: true });
+    // The pending refetch cycle suppresses an API banner between browser reconnect and its result.
+    void refetch().then(sync);
     sync();
   };
   window.addEventListener('online', reconnect);
   window.addEventListener('offline', sync);
   document.addEventListener('visibilitychange', sync);
+  resetWithoutDemand();
   sync();
   return () => {
     stopped = true;
+    recoveryGuards.delete(canRecover);
     unsubscribe();
     window.removeEventListener('online', reconnect);
     window.removeEventListener('offline', sync);
     document.removeEventListener('visibilitychange', sync);
     clearTimer();
     inFlight?.abort();
-    useReachability.setState({ apiReachable: true });
+    reachable(true, false);
+    useReachability.setState({ reconnecting: false });
   };
 }

@@ -10,10 +10,12 @@ type Listener = (event: { isUpdate?: boolean }) => void;
 
 function fakeWorkbox() {
   const listeners = new Map<string, Listener[]>();
-  const registration = {
+  const registration = Object.assign(new EventTarget(), {
+    active: {} as ServiceWorker | null,
     waiting: null as ServiceWorker | null,
+    installing: null as ServiceWorker | null,
     update: vi.fn((): Promise<void> => Promise.resolve()),
-  };
+  });
   return {
     registration,
     listeners,
@@ -40,6 +42,30 @@ afterEach(() => {
 });
 
 describe('registerPwa', () => {
+  it.each(['registration', 'native installation'])(
+    'does not prompt for the first worker during %s',
+    async (phase) => {
+      const wb = fakeWorkbox();
+      wb.registration.active = null;
+      const target = Object.assign(new EventTarget(), { state: 'installing' });
+      const worker = target as unknown as ServiceWorker;
+      if (phase === 'registration') wb.registration.waiting = worker;
+      registerPwa({ createWorkbox: () => wb as never, serviceWorkerSupported: true });
+      await Promise.resolve();
+      if (phase === 'native installation') {
+        wb.registration.installing = worker;
+        wb.registration.dispatchEvent(new Event('updatefound'));
+        target.state = 'installed';
+        wb.registration.waiting = worker;
+        target.dispatchEvent(new Event('statechange'));
+      }
+      expect(usePwaStore.getState().needRefresh).toBe(false);
+      window.dispatchEvent(new Event('focus'));
+      expect(usePwaStore.getState().needRefresh).toBe(false);
+      expect(wb.messageSkipWaiting).not.toHaveBeenCalled();
+    },
+  );
+
   it('prompts immediately for a worker already waiting at registration without activating it', async () => {
     const wb = fakeWorkbox();
     wb.registration.waiting = {} as ServiceWorker;
@@ -52,6 +78,66 @@ describe('registerPwa', () => {
     await Promise.resolve();
     expect(usePwaStore.getState().needRefresh).toBe(false);
     expect(wb.messageSkipWaiting).not.toHaveBeenCalled();
+  });
+
+  it('prompts for each native updatefound worker after Later without Workbox events', async () => {
+    const wb = fakeWorkbox();
+    const hook = registerPwa({ createWorkbox: () => wb as never, serviceWorkerSupported: true });
+    await Promise.resolve();
+    for (let build = 0; build < 2; build++) {
+      const target = Object.assign(new EventTarget(), {
+        state: 'installing',
+      });
+      const worker = target as unknown as ServiceWorker;
+      wb.registration.installing = worker;
+      wb.registration.dispatchEvent(new Event('updatefound'));
+      target.state = 'installed';
+      wb.registration.waiting = worker;
+      target.dispatchEvent(new Event('statechange'));
+      expect(usePwaStore.getState().needRefresh).toBe(true);
+      usePwaStore.getState().dismiss();
+      target.dispatchEvent(new Event('statechange'));
+      window.dispatchEvent(new Event('focus'));
+      expect(usePwaStore.getState().needRefresh).toBe(false);
+    }
+    expect(wb.messageSkipWaiting).not.toHaveBeenCalled();
+    const pending = Object.assign(new EventTarget(), { state: 'installing' });
+    const removed = vi.spyOn(pending, 'removeEventListener');
+    wb.registration.installing = pending as unknown as ServiceWorker;
+    wb.registration.dispatchEvent(new Event('updatefound'));
+    hook.dispose();
+    expect(removed).toHaveBeenCalledWith('statechange', expect.any(Function));
+    wb.registration.waiting = {} as ServiceWorker;
+    wb.registration.dispatchEvent(new Event('updatefound'));
+    expect(usePwaStore.getState().needRefresh).toBe(false);
+  });
+
+  it('finds an unannounced waiting worker on every trigger', async () => {
+    const wb = fakeWorkbox();
+    registerPwa({ createWorkbox: () => wb as never, serviceWorkerSupported: true });
+    await Promise.resolve();
+    wb.registration.waiting = {} as ServiceWorker;
+    window.dispatchEvent(new Event('focus'));
+    expect(usePwaStore.getState().needRefresh).toBe(true);
+  });
+
+  it('throttles focus checks to one per 60 seconds without throttling visibility', async () => {
+    vi.useFakeTimers();
+    const wb = fakeWorkbox();
+    registerPwa({ createWorkbox: () => wb as never, serviceWorkerSupported: true });
+    await vi.advanceTimersByTimeAsync(0);
+    window.dispatchEvent(new Event('focus'));
+    await vi.advanceTimersByTimeAsync(0);
+    window.dispatchEvent(new Event('focus'));
+    await vi.advanceTimersByTimeAsync(59_999);
+    window.dispatchEvent(new Event('focus'));
+    expect(wb.registration.update).toHaveBeenCalledTimes(2);
+    document.dispatchEvent(new Event('visibilitychange'));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(wb.registration.update).toHaveBeenCalledTimes(3);
+    await vi.advanceTimersByTimeAsync(1);
+    window.dispatchEvent(new Event('focus'));
+    expect(wb.registration.update).toHaveBeenCalledTimes(4);
   });
 
   it('checks on registration, focus, visibility and hourly; clears everything on dispose', async () => {
@@ -148,14 +234,14 @@ describe('registerPwa', () => {
     wb.registration.update.mockRejectedValue(new Error('offline'));
     registerPwa({ createWorkbox: () => wb as never, serviceWorkerSupported: true });
     await vi.advanceTimersByTimeAsync(0);
-    window.dispatchEvent(new Event('focus'));
+    document.dispatchEvent(new Event('visibilitychange'));
     await vi.advanceTimersByTimeAsync(0);
     expect(warn).toHaveBeenCalledTimes(1);
     wb.registration.update.mockResolvedValue(undefined);
-    window.dispatchEvent(new Event('focus'));
+    document.dispatchEvent(new Event('visibilitychange'));
     await vi.advanceTimersByTimeAsync(0);
     wb.registration.update.mockRejectedValue(new Error('unregistered'));
-    window.dispatchEvent(new Event('focus'));
+    document.dispatchEvent(new Event('visibilitychange'));
     await vi.advanceTimersByTimeAsync(0);
     expect(warn).toHaveBeenCalledTimes(2);
     window.dispatchEvent(new Event('pagehide'));

@@ -54,6 +54,7 @@ function reconnect() {
 afterEach(() => {
   cleanup();
   onlineManager.setOnline(true);
+  vi.useRealTimers();
   vi.restoreAllMocks();
 });
 
@@ -102,6 +103,7 @@ describe('query reconnect', () => {
   it.each(reads)(
     'recovers $name when the API returns with the browser still online',
     async ({ useRead }) => {
+      vi.useFakeTimers();
       const api = new FakeApi();
       const loop = api.addLoop(minimalLoop());
       const run = api.addRun({ loopId: loop.id, status: 'succeeded' });
@@ -109,10 +111,16 @@ describe('query reconnect', () => {
       api.offline = true;
       const view = mountQuery(api, () => useRead(loop.id, run.id));
       try {
-        await waitFor(() => expect(view.result.current.isError).toBe(true));
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(20);
+        });
+        expect(view.result.current.isError).toBe(true);
         expect(view.fetch).toHaveBeenCalledTimes(2);
         api.offline = false;
-        await waitFor(() => expect(view.result.current.isSuccess).toBe(true), { timeout: 4_000 });
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(2_000);
+        });
+        expect(view.result.current.isSuccess).toBe(true);
         expect(view.result.current.data).toBeDefined();
         expect(view.fetch.mock.calls.some(([request]) => request.url.endsWith('/healthz'))).toBe(
           true,

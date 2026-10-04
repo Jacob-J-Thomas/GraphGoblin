@@ -17,6 +17,7 @@ import { fileURLToPath } from 'node:url';
 import { buildApp, createContainer, loadConfig } from '@graphgoblin/api';
 import { createTestApp, type TestApp } from '@graphgoblin/api/testing';
 import type { ScriptedTurn } from '@graphgoblin/engine/testing';
+import { originalWorker as cleanWorker } from './worker.js';
 
 const dist = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'dist');
 if (!existsSync(join(dist, 'index.html'))) {
@@ -38,7 +39,7 @@ async function startApp(env: Record<string, string> = {}, requireApiKey = false)
 const main = await startApp();
 const mainPort = Number(new URL(main.url).port);
 const workerPath = join(dist, 'sw.js');
-const originalWorker = await readFile(workerPath, 'utf8');
+const originalWorker = cleanWorker(await readFile(workerPath, 'utf8'));
 let workerBuild = 0;
 
 /** Drop real HTTP connections, then reuse the same listener and in-memory API state. */

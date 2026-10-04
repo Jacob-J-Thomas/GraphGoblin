@@ -1,6 +1,14 @@
-import { subscribeRunEvents, TERMINAL_RUN_EVENT_TYPES } from '@graphgoblin/api-client';
+import {
+  GraphGoblinApiError,
+  subscribeRunEvents,
+  TERMINAL_RUN_EVENT_TYPES,
+  type RunEventSubscription,
+} from '@graphgoblin/api-client';
 import type { RunEvent } from '@graphgoblin/contracts';
 import { useEffect, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { keys } from '../api/queries.js';
+import { markApiReachable, markApiUnreachable, subscribeApiRecovery } from '../lib/reachability.js';
 import { useApiKeyStore } from '../api/api-key.js';
 import { useApi } from '../api/context.js';
 import { errorMessage } from '../lib/utils.js';
@@ -25,6 +33,7 @@ export function useRunEvents(
   onEvents?: () => void,
 ): RunEventLog & { status: StreamStatus; error?: string } {
   const client = useApi();
+  const queryClient = useQueryClient();
   const log = useRunEventLog(runId);
   // A new or forgotten API key restarts the stream: one ended by a 401 recovers, and one opened
   // with a key that was just forgotten (here or in another tab) closes.
@@ -53,41 +62,77 @@ export function useRunEvents(
       setStatus('live');
       onEvents?.();
     };
-    setStatus('connecting');
-    setError(undefined);
-    const subscription = subscribeRunEvents({
-      client,
-      runId,
-      after: known?.lastSeq ?? 0,
-      // Open is live, even when a stream resumed at the cursor has nothing new to send yet.
-      onOpen: () => {
-        if (active) setStatus('live');
-      },
-      onEvent: (event) => {
-        buffer.push(event);
-        timer ??= setTimeout(flush, EVENT_BATCH_MS);
-      },
+    let subscription: RunEventSubscription | undefined;
+    let connection = 0;
+    let inBackoff = false;
+    let reportedOutage = false;
+    const connect = () => {
+      const currentConnection = ++connection;
+      const current = () => active && connection === currentConnection;
+      flush(); // Commit the old connection's buffer before taking its resume cursor.
+      subscription?.close();
+      inBackoff = false;
+      setStatus('connecting');
+      setError(undefined);
+      subscription = subscribeRunEvents({
+        client,
+        runId,
+        after: useRunEventStore.getState().runs[runId]?.lastSeq ?? 0,
+        onOpen: () => {
+          if (!current()) return;
+          inBackoff = false;
+          reportedOutage = false;
+          markApiReachable();
+          setStatus('live');
+        },
+        onError: (err, attempt) => {
+          if (!current() || attempt === 0) return; // Invalid frames are not connection drops.
+          inBackoff = true;
+          if (err instanceof GraphGoblinApiError && err.status > 0) return;
+          if (reportedOutage) return;
+          reportedOutage = true;
+          markApiUnreachable();
+          setStatus('connecting');
+          // A loaded inspector otherwise has no failed query to drive the shared probe.
+          // Try its active run read once per stream outage; a stuck stream must not churn reads.
+          void queryClient.refetchQueries(
+            { queryKey: keys.run(runId), exact: true, type: 'active' },
+            { cancelRefetch: false },
+          );
+        },
+        onEvent: (event) => {
+          if (!current()) return;
+          buffer.push(event);
+          timer ??= setTimeout(flush, EVENT_BATCH_MS);
+        },
+      });
+      subscription.done.then(
+        () => {
+          if (!current()) return;
+          flush();
+          setStatus('finished');
+        },
+        (err: unknown) => {
+          if (!current()) return;
+          flush();
+          setError(errorMessage(err));
+          setStatus('error');
+        },
+      );
+    };
+    const unsubscribe = subscribeApiRecovery(() => {
+      if (active && inBackoff) connect();
     });
-    subscription.done.then(
-      () => {
-        flush();
-        if (active) setStatus('finished');
-      },
-      (err: unknown) => {
-        flush();
-        if (!active) return;
-        setError(errorMessage(err));
-        setStatus('error');
-      },
-    );
+    connect();
     return () => {
-      flush();
       active = false;
-      subscription.close();
+      unsubscribe();
+      flush();
+      subscription?.close();
     };
     // `onEvents` is a notification hook; re-subscribing when it changes identity would churn the stream.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [client, runId, apiKey]);
+  }, [client, queryClient, runId, apiKey]);
 
   return { ...log, status, ...(error ? { error } : {}) };
 }

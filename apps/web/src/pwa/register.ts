@@ -66,10 +66,10 @@ export function registerPwa(options: RegisterPwaOptions = {}): PwaTestHook {
     options.createWorkbox ??
     ((swUrl: string, swScope: string) => new Workbox(swUrl, { scope: swScope }));
   const wb = create(url, scope);
-  let promptedWorker: ServiceWorker | undefined;
+  const promptedWorkers = new WeakSet<ServiceWorker>();
   const prompt = (worker?: ServiceWorker) => {
-    if (disposed || (worker && worker === promptedWorker)) return;
-    promptedWorker = worker;
+    if (disposed || (worker && promptedWorkers.has(worker))) return;
+    if (worker) promptedWorkers.add(worker);
     store.promptUpdate(() => {
       applied += 1;
       wb.addEventListener('controlling', () => reload());
@@ -83,7 +83,29 @@ export function registerPwa(options: RegisterPwaOptions = {}): PwaTestHook {
   let registration: ServiceWorkerRegistration | undefined;
   let checking = false;
   let warned = false;
-  const check = async () => {
+  let lastFocusCheck = Number.NEGATIVE_INFINITY;
+  const workerListeners = new Map<ServiceWorker, () => void>();
+  const promptWaiting = () => {
+    if (registration?.active && registration.waiting) prompt(registration.waiting);
+  };
+  const watchInstalling = () => {
+    const worker = registration?.installing;
+    if (!worker || workerListeners.has(worker)) return;
+    const changed = () => {
+      // The first install briefly waits too, before activating without an older worker to replace.
+      if (worker.state === 'installed' && registration?.active && registration.waiting === worker)
+        prompt(worker);
+      if (worker.state === 'installed' || worker.state === 'redundant') {
+        worker.removeEventListener('statechange', changed);
+        workerListeners.delete(worker);
+      }
+    };
+    workerListeners.set(worker, changed);
+    worker.addEventListener('statechange', changed);
+    changed();
+  };
+  const check = async (fromFocus = false) => {
+    if (!disposed) promptWaiting();
     if (
       disposed ||
       !registration ||
@@ -93,9 +115,15 @@ export function registerPwa(options: RegisterPwaOptions = {}): PwaTestHook {
       !useReachability.getState().apiReachable
     )
       return;
+    if (fromFocus && Date.now() - lastFocusCheck < 60_000) return;
+    if (fromFocus) lastFocusCheck = Date.now();
     checking = true;
     try {
       await registration.update();
+      if (!disposed) {
+        watchInstalling();
+        promptWaiting();
+      }
       warned = false;
     } catch (error) {
       if (!warned) console.warn('service worker update check failed', error);
@@ -105,13 +133,14 @@ export function registerPwa(options: RegisterPwaOptions = {}): PwaTestHook {
     }
   };
   const trigger = () => void check();
+  const focus = () => void check(true);
   const pageHide = (event: PageTransitionEvent) => {
     // A cached page may be restored with the same JS state; keep its lifecycle intact.
     if (!event.persisted) hook.dispose();
   };
   const unsubscribe = subscribeApiRecovery(trigger);
   const interval = setInterval(trigger, 60 * 60 * 1_000);
-  window.addEventListener('focus', trigger);
+  window.addEventListener('focus', focus);
   window.addEventListener('online', trigger);
   document.addEventListener('visibilitychange', trigger);
   window.addEventListener('pagehide', pageHide);
@@ -119,7 +148,11 @@ export function registerPwa(options: RegisterPwaOptions = {}): PwaTestHook {
   cleanup = () => {
     clearInterval(interval);
     unsubscribe();
-    window.removeEventListener('focus', trigger);
+    registration?.removeEventListener('updatefound', watchInstalling);
+    for (const [worker, listener] of workerListeners)
+      worker.removeEventListener('statechange', listener);
+    workerListeners.clear();
+    window.removeEventListener('focus', focus);
     window.removeEventListener('online', trigger);
     document.removeEventListener('visibilitychange', trigger);
     window.removeEventListener('pagehide', pageHide);
@@ -129,7 +162,9 @@ export function registerPwa(options: RegisterPwaOptions = {}): PwaTestHook {
     (result) => {
       if (disposed) return;
       registration = result;
-      if (registration?.waiting) prompt(registration.waiting);
+      // Workbox drops its own listener for later external updates. Own the whole registration.
+      registration?.addEventListener('updatefound', watchInstalling);
+      watchInstalling();
       trigger();
     },
     (error: unknown) => console.warn('service worker registration failed', error),

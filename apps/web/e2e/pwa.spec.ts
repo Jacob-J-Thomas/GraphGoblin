@@ -1,5 +1,11 @@
 import { approvalLoop, control, expect, publishLoop, showLoopPanel, test } from './fixtures.js';
 
+declare global {
+  interface Window {
+    pwaChecks: { calls: number; found: number; pending: number; activity: number };
+  }
+}
+
 for (const [index, screen] of ['Loops', 'Runs', 'Events', 'Settings', 'run inspector'].entries()) {
   test(`${screen} recovers after the API listener restarts with the browser online`, async ({
     page,
@@ -58,6 +64,44 @@ for (const [index, screen] of ['Loops', 'Runs', 'Events', 'Settings', 'run inspe
   });
 }
 
+test('a loaded run inspector reports a stream outage and resumes without navigation', async ({
+  page,
+  request,
+}) => {
+  const loopId = await publishLoop(request, approvalLoop('Loaded stream recovery'));
+  const response = await request.post(`/loops/${loopId}/runs`, {
+    data: { triggerNodeId: 'start', input: {} },
+  });
+  expect(response.ok()).toBe(true);
+  const { run } = (await response.json()) as { run: { id: string } };
+  await page.goto(`/app/runs/${run.id}`);
+  const live = page.getByRole('heading', { name: /Timeline .* live\)/ });
+  await expect(live).toBeVisible();
+  await page.waitForTimeout(1_000); // The initial event batch's reads settle before the socket drops.
+  const navigation: string[] = [];
+  page.on('framenavigated', (frame) => {
+    if (frame === page.mainFrame()) navigation.push(frame.url());
+  });
+  await control(request, '/api/listener', { listening: false });
+  try {
+    const banner = page.getByText('Cannot reach the GraphGoblin API', { exact: true });
+    await expect(banner).toBeVisible();
+    expect(await page.evaluate(() => navigator.onLine)).toBe(true);
+    const resumed = page.waitForResponse(
+      (response) =>
+        new URL(response.url()).pathname === `/runs/${run.id}/events` && response.status() === 200,
+      { timeout: 6_000 },
+    );
+    await control(request, '/api/listener', { listening: true });
+    await resumed;
+    await expect(live).toBeVisible({ timeout: 6_000 });
+    await expect(banner).toBeHidden();
+    expect(navigation).toHaveLength(0);
+  } finally {
+    await control(request, '/api/listener', { listening: true });
+  }
+});
+
 test('an offline editor draft saves after the API listener returns without navigation', async ({
   page,
   request,
@@ -106,6 +150,36 @@ test('an open window detects a changed worker on focus, prompts, and updates onl
   page,
   request,
 }) => {
+  test.setTimeout(100_000);
+  await page.addInitScript(() => {
+    const stats = (window.pwaChecks = { calls: 0, found: 0, pending: 0, activity: Date.now() });
+    const watched = new WeakSet<ServiceWorkerRegistration>();
+    const watch = (registration: ServiceWorkerRegistration) => {
+      if (!watched.has(registration)) {
+        watched.add(registration);
+        registration.addEventListener('updatefound', () => {
+          stats.found++;
+          stats.activity = Date.now();
+        });
+      }
+      return registration;
+    };
+    const register = ServiceWorkerContainer.prototype.register;
+    ServiceWorkerContainer.prototype.register = function (...args) {
+      return register.apply(this, args).then(watch);
+    };
+    const update = ServiceWorkerRegistration.prototype.update;
+    ServiceWorkerRegistration.prototype.update = function () {
+      watch(this);
+      stats.calls++;
+      stats.pending++;
+      stats.activity = Date.now();
+      return update.call(this).finally(() => {
+        stats.pending--;
+        stats.activity = Date.now();
+      });
+    };
+  });
   await page.goto('/app/loops');
   await page.evaluate(async () => {
     await navigator.serviceWorker.ready;
@@ -115,6 +189,20 @@ test('an open window detects a changed worker on focus, prompts, and updates onl
     .poll(() => page.evaluate(() => navigator.serviceWorker.controller !== null))
     .toBe(true);
   await expect(page.getByRole('heading', { name: 'Loops', exact: true })).toBeVisible();
+  // Finish the navigation check before publishing; only the subsequent app check may detect it.
+  await expect
+    .poll(() =>
+      page.evaluate(async () => {
+        const registration = await navigator.serviceWorker.getRegistration('/app/');
+        return (
+          !registration?.installing &&
+          window.pwaChecks.pending === 0 &&
+          Date.now() - window.pwaChecks.activity >= 2_000
+        );
+      }),
+    )
+    .toBe(true);
+  const baseline = await page.evaluate(() => ({ ...window.pwaChecks }));
   const initialWorker = await page.evaluate(() => navigator.serviceWorker.controller?.scriptURL);
   const navigation = [] as string[];
   page.on('framenavigated', (frame) => {
@@ -122,10 +210,15 @@ test('an open window detects a changed worker on focus, prompts, and updates onl
   });
   try {
     await control(request, '/worker/build');
+    await page.waitForTimeout(1_000);
+    expect(await page.evaluate(() => window.pwaChecks.found)).toBe(baseline.found);
+    expect(await page.evaluate(() => window.pwaChecks.calls)).toBe(baseline.calls);
     // Drive the window event the app listens to; there is no navigation or registration.update in the test.
     await page.evaluate(() => window.dispatchEvent(new Event('focus')));
     const toast = page.getByRole('status').filter({ hasText: 'A new version is available' });
     await expect(toast).toBeVisible({ timeout: 20_000 });
+    expect(await page.evaluate(() => window.pwaChecks.calls)).toBe(baseline.calls + 1);
+    expect(await page.evaluate(() => window.pwaChecks.found)).toBe(baseline.found + 1);
     expect(navigation).toHaveLength(0);
     expect(await page.evaluate(() => navigator.serviceWorker.controller?.scriptURL)).toBe(
       initialWorker,
@@ -138,6 +231,27 @@ test('an open window detects a changed worker on focus, prompts, and updates onl
     ).toBe(true);
     await toast.getByRole('button', { name: 'Later' }).click();
     await expect(toast).toBeHidden();
+    expect(navigation).toHaveLength(0);
+
+    // Workbox's private 60 s external-update boundary is not configurable. Keep this window open
+    // past it, also allowing the app's focus throttle to expire, then detect a different build.
+    await page.waitForTimeout(61_000);
+    await control(request, '/worker/build');
+    await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+    await expect(toast).toBeVisible({ timeout: 20_000 });
+    expect(await page.evaluate(() => window.pwaChecks.calls)).toBe(baseline.calls + 2);
+    expect(await page.evaluate(() => window.pwaChecks.found)).toBe(baseline.found + 2);
+    expect(navigation).toHaveLength(0);
+    expect(await page.evaluate(() => window.graphgoblinPwa?.appliedUpdates)).toBe(0);
+
+    await toast.getByRole('button', { name: 'Later' }).click();
+    // The previous external update makes Workbox detach its own updatefound listener.
+    // Visibility is an independent check trigger, so another build does not wait on focus throttling.
+    await control(request, '/worker/build');
+    await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+    await expect(toast).toBeVisible({ timeout: 20_000 });
+    expect(await page.evaluate(() => window.pwaChecks.calls)).toBe(baseline.calls + 3);
+    expect(await page.evaluate(() => window.pwaChecks.found)).toBe(baseline.found + 3);
     expect(navigation).toHaveLength(0);
 
     // Fresh registration sees the existing waiting worker immediately, without a second interaction.
