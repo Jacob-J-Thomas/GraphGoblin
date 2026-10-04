@@ -27,29 +27,37 @@ export const NODE_KINDS: readonly NodeKind[] = [
   'exit',
 ];
 
-export const KIND_INFO: Record<NodeKind, { label: string; description: string; color: string }> = {
-  trigger: { label: 'Trigger', description: 'Starts a run', color: 'border-emerald-500' },
-  decision: {
-    label: 'Decision',
-    description: 'Chooses a labelled route',
-    color: 'border-violet-500',
-  },
-  inference: {
-    label: 'Inference',
-    description: 'Hands work to a harness',
-    color: 'border-sky-500',
-  },
-  script: { label: 'Script', description: 'Runs a program', color: 'border-slate-500' },
-  mutate: { label: 'Mutate', description: 'Changes the context thread', color: 'border-amber-500' },
-  subloop: { label: 'Subloop', description: 'Runs another loop', color: 'border-indigo-500' },
-  wait: {
-    label: 'Wait',
-    description: 'Parks until input, time, or a signal',
-    color: 'border-orange-500',
-  },
-  heartbeat: { label: 'Heartbeat', description: 'Polls on an interval', color: 'border-pink-500' },
-  exit: { label: 'Exit', description: 'Finishes or loops back', color: 'border-red-600' },
-};
+/** The design token that colours a node kind (`--kind-trigger` and `--kind-trigger-subtle`). */
+export type KindToken = `kind-${NodeKind}`;
+
+/**
+ * Each kind's name, palette description, and colour token. The colour is a token name, never a
+ * palette class: editor/KindChip.tsx turns it into the `--k` variables the kind utilities read.
+ */
+export const KIND_INFO: Record<NodeKind, { label: string; description: string; color: KindToken }> =
+  {
+    trigger: { label: 'Trigger', description: 'Starts a run', color: 'kind-trigger' },
+    decision: {
+      label: 'Decision',
+      description: 'Chooses a labelled route',
+      color: 'kind-decision',
+    },
+    inference: {
+      label: 'Inference',
+      description: 'Hands work to a harness',
+      color: 'kind-inference',
+    },
+    script: { label: 'Script', description: 'Runs a program', color: 'kind-script' },
+    mutate: { label: 'Mutate', description: 'Changes the context thread', color: 'kind-mutate' },
+    subloop: { label: 'Subloop', description: 'Runs another loop', color: 'kind-subloop' },
+    wait: {
+      label: 'Wait',
+      description: 'Parks until input, time, or a signal',
+      color: 'kind-wait',
+    },
+    heartbeat: { label: 'Heartbeat', description: 'Polls on an interval', color: 'kind-heartbeat' },
+    exit: { label: 'Exit', description: 'Finishes or loops back', color: 'kind-exit' },
+  };
 
 /** A small, mostly valid starting config for each kind. */
 export function defaultConfig(kind: NodeKind): Record<string, unknown> {

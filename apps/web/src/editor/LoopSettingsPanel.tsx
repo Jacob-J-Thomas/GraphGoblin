@@ -4,7 +4,7 @@ import {
   type LoopDefinitionInput,
 } from '@graphgoblin/contracts';
 import { z } from 'zod';
-import { Input, Label, Textarea } from '../components/ui/index.js';
+import { FieldGroup, HelpText, Input, Label, Textarea } from '../components/ui/index.js';
 import { SchemaForm } from '../forms/SchemaForm.js';
 import { useEditorStore } from './store.js';
 
@@ -21,16 +21,16 @@ export function LoopSettingsPanel({
   const { updateMeta, updateSettings, updateVariables, setFieldError } = useEditorStore.getState();
   const fieldErrors = useEditorStore((s) => s.fieldErrors);
   return (
-    <section aria-label="Loop settings">
-      <div className="mb-2">
+    <section aria-label="Loop settings" className="grid gap-field">
+      <FieldGroup>
         <Label htmlFor="loop-name">Name</Label>
         <Input
           id="loop-name"
           value={definition.name}
           onChange={(e) => updateMeta({ name: e.target.value })}
         />
-      </div>
-      <div className="mb-2">
+      </FieldGroup>
+      <FieldGroup>
         <Label htmlFor="loop-description">Description</Label>
         <Textarea
           id="loop-description"
@@ -38,8 +38,8 @@ export function LoopSettingsPanel({
           value={definition.description ?? ''}
           onChange={(e) => updateMeta({ description: e.target.value })}
         />
-      </div>
-      <h3 className="mt-3 mb-1 text-xs font-semibold text-slate-600 uppercase">Settings</h3>
+      </FieldGroup>
+      <h3 className="mt-2 text-xs font-semibold tracking-wide text-muted uppercase">Settings</h3>
       <SchemaForm
         key={`settings:${epoch}`}
         schema={LoopSettingsSchema}
@@ -49,8 +49,10 @@ export function LoopSettingsPanel({
         parseErrors={fieldErrors['settings']}
         onParseError={(path, error) => setFieldError('settings', path, error)}
       />
-      <h3 className="mt-3 mb-1 text-xs font-semibold text-slate-600 uppercase">Variables</h3>
-      <p className="mb-1 text-xs text-slate-500">Each variable maps a name to a JSON Schema.</p>
+      <div className="mt-2 grid gap-1">
+        <h3 className="text-xs font-semibold tracking-wide text-muted uppercase">Variables</h3>
+        <HelpText>Each variable maps a name to a JSON Schema.</HelpText>
+      </div>
       <SchemaForm
         key={`variables:${epoch}`}
         schema={VariablesFormSchema}
