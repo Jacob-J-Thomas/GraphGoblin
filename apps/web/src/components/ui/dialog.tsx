@@ -81,7 +81,9 @@ export interface DialogProps {
  * in the top layer, makes the rest of the page inert, and closes it on Esc. Here Esc, a backdrop
  * click, and the close button only ask (`onClose`), so the owner controls `open`. It is named by
  * its title, takes focus on its heading when it opens (so a key that opened it never activates a
- * control inside), keeps Tab and Shift+Tab inside it, and returns focus when it closes or unmounts.
+ * control inside), ignores the rest of a double-click that opened it (so the second click neither
+ * closes it nor presses a control), keeps Tab and Shift+Tab inside it, and returns focus when it
+ * closes or unmounts.
  * Below 768 px it is a full-width sheet along the bottom edge.
  */
 export function Dialog({
@@ -112,12 +114,22 @@ export function Dialog({
   const ownClosesRef = useRef(0);
   /** Whether the current press started on the backdrop (a drag out of a field must not close). */
   const pressedBackdropRef = useRef(false);
+  /**
+   * True from opening until the first press that starts a new click sequence. While it holds, a
+   * press that continues a sequence begun before the dialog opened (the second click of the
+   * double-click whose first click opened it) is swallowed with its click, so it can neither close
+   * the dialog from the backdrop nor press a control that happened to open under the pointer.
+   */
+  const continuingRef = useRef(false);
+  /** Set while a swallowed press is waiting for its click. */
+  const swallowRef = useRef(false);
 
   useEffect(() => {
     const dialog = ref.current;
     if (!open || !dialog) return;
     const opener = document.activeElement;
     if (!dialog.open) dialog.showModal();
+    continuingRef.current = true;
     headingRef.current?.focus();
     return () => {
       if (dialog.open) {
@@ -147,6 +159,25 @@ export function Dialog({
     if (latestRef.current.open) latestRef.current.onClose('dismissed');
   };
 
+  const onMouseDownCapture = (event: MouseEvent<HTMLDialogElement>) => {
+    // `detail` counts the clicks in a sequence (2 for the second click of a double-click).
+    if (continuingRef.current && event.detail >= 2) {
+      swallowRef.current = true;
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+    continuingRef.current = false;
+    swallowRef.current = false;
+  };
+
+  const onClickCapture = (event: MouseEvent<HTMLDialogElement>) => {
+    if (!swallowRef.current) return;
+    swallowRef.current = false;
+    event.preventDefault();
+    event.stopPropagation();
+  };
+
   const onKeyDown = (event: KeyboardEvent<HTMLDialogElement>) => {
     if (event.key !== 'Tab' || event.defaultPrevented) return;
     const items = tabbables(event.currentTarget);
@@ -172,6 +203,8 @@ export function Dialog({
       onCancel={onCancel}
       onClose={onNativeClose}
       onKeyDown={onKeyDown}
+      onMouseDownCapture={onMouseDownCapture}
+      onClickCapture={onClickCapture}
       onMouseDown={(event) => {
         pressedBackdropRef.current = onBackdrop(event.currentTarget, event);
       }}

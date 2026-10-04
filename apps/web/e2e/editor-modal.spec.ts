@@ -83,6 +83,39 @@ test('a click opens the node editor; a drag moves the node and opens nothing', a
   expect(await publishFocusable()).toBe(true);
 });
 
+test('PR48-QA-02: a double-click on a node leaves one editor open; a later backdrop click closes it', async ({
+  page,
+  request,
+}) => {
+  const loopId = await createLoop(request, approvalLoop('qa modal double click'));
+  await page.goto(`/app/loops/${loopId}/edit`);
+  // The start node sits left of where the dialog opens, so the second click lands on the backdrop.
+  const node = card(page, 'start');
+  await node.dblclick({ position: { x: 60, y: 12 } });
+  const dialog = page.getByRole('dialog', { name: 'Edit trigger start' });
+  await expect(dialog).toBeVisible();
+  await page.waitForTimeout(600);
+  await expect(page.getByRole('dialog')).toHaveCount(1);
+  await expect(dialog.getByRole('heading', { name: 'Edit trigger start' })).toBeFocused();
+  // It is open and editable.
+  await dialog.getByLabel('Label').fill('Begin');
+  await expect(node.getByText('Begin', { exact: true })).toBeVisible();
+  await expect(page.getByTestId('save-state')).toHaveText('All changes saved');
+
+  // A deliberate click on the backdrop afterwards still closes it.
+  await page.mouse.click(20, 400);
+  await expect(dialog).toHaveCount(0);
+  await expect(node).toBeFocused();
+
+  // A double-click whose second click lands inside the dialog presses nothing there either.
+  await card(page, 'approve').dblclick({ position: { x: 60, y: 12 } });
+  const approve = page.getByRole('dialog', { name: 'Edit wait approve' });
+  await expect(approve).toBeVisible();
+  await page.waitForTimeout(600);
+  await expect(page.getByRole('dialog')).toHaveCount(1);
+  await expect(approve.getByRole('heading', { name: 'Edit wait approve' })).toBeFocused();
+});
+
 test('keyboard: Enter opens, Tab stays inside, Delete edits text only, Esc closes back to the node', async ({
   page,
   request,

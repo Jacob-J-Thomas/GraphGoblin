@@ -191,6 +191,36 @@ describe('Dialog', () => {
     expect(dialog().open).toBe(false);
   });
 
+  it('ignores the rest of the double-click that opened it, and only that', async () => {
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+    render(<Owner onClose={onClose} />);
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    // The second click of the double-click lands on the backdrop: it does not close the dialog.
+    fireEvent.mouseDown(dialog(), { detail: 2, clientX: 5, clientY: 5 });
+    fireEvent.click(dialog(), { detail: 2, clientX: 5, clientY: 5 });
+    // Nor does a further click of the same sequence press a control that opened under it.
+    const done = screen.getByRole('button', { name: 'Done' });
+    fireEvent.mouseDown(done, { detail: 3 });
+    fireEvent.click(done, { detail: 3 });
+    expect(onClose).not.toHaveBeenCalled();
+    expect(dialog().open).toBe(true);
+
+    // A new click sequence on the backdrop closes it as usual.
+    fireEvent.mouseDown(dialog(), { detail: 1, clientX: 5, clientY: 5 });
+    fireEvent.click(dialog(), { detail: 1, clientX: 5, clientY: 5 });
+    expect(onClose).toHaveBeenCalledWith('backdrop');
+    expect(dialog().open).toBe(false);
+
+    // After a first press inside, a deliberate double-click there is a double-click as usual.
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    fireEvent.mouseDown(screen.getByLabelText('Label'), { detail: 1 });
+    fireEvent.click(screen.getByLabelText('Label'), { detail: 1 });
+    fireEvent.mouseDown(screen.getByRole('button', { name: 'Done' }), { detail: 2 });
+    fireEvent.click(screen.getByRole('button', { name: 'Done' }), { detail: 2 });
+    expect(dialog().open).toBe(false);
+  });
+
   it('ignores the backdrop when closing there could lose input', async () => {
     const user = userEvent.setup();
     const onClose = vi.fn();
