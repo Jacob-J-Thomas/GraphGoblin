@@ -14,16 +14,19 @@ import {
   type NodeMouseHandler,
   type XYPosition,
 } from '@xyflow/react';
-import { useMemo, useState, type DragEvent, type KeyboardEvent } from 'react';
+import { useMemo, useRef, useState, type DragEvent, type KeyboardEvent } from 'react';
+import { closePopovers } from '../components/ui/index.js';
 import {
   canvasPorts,
   connectionProblem,
+  issuesByNode,
   KIND_INFO,
   KIND_MIME,
   NODE_KINDS,
+  sameIssues,
   type EditorIssue,
 } from './model.js';
-import { NodeCard, type FlowNode } from './NodeCard.js';
+import { NodeCard, type FlowNode, type NodeCardData } from './NodeCard.js';
 import { useEditorStore } from './store.js';
 
 const nodeTypes = { gg: NodeCard };
@@ -48,22 +51,40 @@ const ARIA_LABELS: Partial<AriaLabelConfig> = {
     'Press Enter to edit the node, or Space to select it. With a node selected, use the arrow keys to move it and Delete to remove it.',
 };
 
-/**
- * Where focus goes when the node editor closes: the node's card on the canvas, or the canvas itself
- * when the node is gone (deleted).
- */
-export function canvasFocusTarget(nodeId: string | undefined): HTMLElement | null {
-  const card = nodeId
-    ? document.querySelector<HTMLElement>(`.react-flow__node[data-id="${nodeId}"]`)
-    : null;
-  return card ?? document.querySelector<HTMLElement>('[data-editor-canvas]');
-}
+export { canvasFocusTarget } from './canvas-focus.js';
 
 type Size = { width: number; height: number };
 
+const NO_ISSUES: readonly EditorIssue[] = [];
+
+/**
+ * Each node's card data: the node, its ports, and its issues. A node whose definition and issues
+ * did not change keeps its previous data object, so its memoised card does not re-render when
+ * another node is edited (validation runs on every edit and yields new issue objects).
+ */
+export function buildCardData(
+  def: LoopDefinitionInput,
+  issues: readonly EditorIssue[],
+  previous: ReadonlyMap<string, NodeCardData>,
+): Map<string, NodeCardData> {
+  const byNode = issuesByNode(issues);
+  const next = new Map<string, NodeCardData>();
+  for (const node of def.nodes) {
+    const list = byNode.get(node.id) ?? NO_ISSUES;
+    const before = previous.get(node.id);
+    next.set(
+      node.id,
+      before && before.node === node && sameIssues(before.issues, list)
+        ? before
+        : { node, ports: canvasPorts(node), issues: list },
+    );
+  }
+  return next;
+}
+
 function buildNodes(
   def: LoopDefinitionInput,
-  issues: EditorIssue[],
+  data: ReadonlyMap<string, NodeCardData>,
   selected: string | undefined,
   measured: Record<string, Size>,
   dragging: Record<string, XYPosition>,
@@ -77,11 +98,7 @@ function buildNodes(
       selected: node.id === selected,
       ariaLabel: `${KIND_INFO[node.kind].label} ${node.label} (${node.id})`,
       ...(size ? { measured: size } : {}),
-      data: {
-        node,
-        ports: canvasPorts(node),
-        issueCount: issues.filter((i) => i.nodeId === node.id).length,
-      },
+      data: data.get(node.id)!,
     };
   });
 }
@@ -117,7 +134,7 @@ export function Canvas({
   issues,
 }: {
   definition: LoopDefinitionInput;
-  issues: EditorIssue[];
+  issues: readonly EditorIssue[];
 }) {
   const selected = useEditorStore((s) => s.selectedNodeId);
   const { select, openNode, moveNode, removeNode, connect, removeEdge, addNode } =
@@ -126,10 +143,20 @@ export function Canvas({
   const [measured, setMeasured] = useState<Record<string, Size>>({});
   const [dragging, setDragging] = useState<Record<string, XYPosition>>({});
   const [selectedEdge, setSelectedEdge] = useState<string | undefined>();
+  const cardDataRef = useRef<ReadonlyMap<string, NodeCardData>>(new Map());
+  const rootRef = useRef<HTMLDivElement>(null);
+  // A node's issue popover is placed from its badge: a pan, a zoom, or a drag closes it. Popovers
+  // elsewhere (the toolbar's) stay, since nothing they hang from moved.
+  const closeCanvasPopovers = () => closePopovers(rootRef.current);
 
+  const cardData = useMemo(() => {
+    const next = buildCardData(definition, issues, cardDataRef.current);
+    cardDataRef.current = next;
+    return next;
+  }, [definition, issues]);
   const nodes = useMemo(
-    () => buildNodes(definition, issues, selected, measured, dragging),
-    [definition, issues, selected, measured, dragging],
+    () => buildNodes(definition, cardData, selected, measured, dragging),
+    [definition, cardData, selected, measured, dragging],
   );
   const edges = useMemo(() => buildEdges(definition, selectedEdge), [definition, selectedEdge]);
 
@@ -191,10 +218,11 @@ export function Canvas({
   // Backspace removes the selected edge or node only while focus is on the canvas: xyflow's own
   // handler listens on the whole document, so the keys deleted the selected node with focus on a
   // toolbar button too, with no undo. The node editor dialog renders outside the canvas, and keys
-  // from any dialog are ignored here as well.
+  // from any dialog are ignored here as well, as are keys from a node's issue badge and its popover
+  // (`nokey`, which xyflow ignores too).
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     const target = event.target as HTMLElement;
-    if (target.closest('dialog')) return;
+    if (target.closest('dialog, .nokey')) return;
     if (event.key === 'Enter' && target.classList.contains('react-flow__node')) {
       const id = target.dataset['id'];
       if (id) {
@@ -218,6 +246,7 @@ export function Canvas({
 
   return (
     <div
+      ref={rootRef}
       className="h-full w-full focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus"
       data-testid="canvas"
       data-editor-canvas=""
@@ -239,6 +268,8 @@ export function Canvas({
         onConnect={onConnect}
         isValidConnection={isValidConnection}
         onNodeDragStop={(_, node) => endDrag(node.id, node.position)}
+        onMove={closeCanvasPopovers}
+        onNodeDragStart={closeCanvasPopovers}
         onNodeClick={onNodeClick}
         nodeClickDistance={CLICK_DISTANCE}
         nodeDragThreshold={CLICK_DISTANCE}
