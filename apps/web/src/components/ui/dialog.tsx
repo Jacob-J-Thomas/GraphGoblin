@@ -60,6 +60,8 @@ export interface DialogProps {
   description?: ReactNode;
   /** Shown before the title, for example a node kind's chip. */
   icon?: ReactNode;
+  /** Shown after the title, before the close button: controls about the whole dialog. */
+  actions?: ReactNode;
   /** Actions pinned under the scrolling body. */
   footer?: ReactNode;
   children: ReactNode;
@@ -92,6 +94,7 @@ export function Dialog({
   title,
   description,
   icon,
+  actions,
   footer,
   children,
   closeLabel = 'Close',
@@ -241,6 +244,7 @@ export function Dialog({
             </p>
           ) : null}
         </div>
+        {actions ? <div className="flex shrink-0 items-center gap-2 pt-1">{actions}</div> : null}
         <Button
           size="icon"
           variant="ghost"

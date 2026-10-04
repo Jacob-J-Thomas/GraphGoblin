@@ -5,13 +5,20 @@ import { describe, expect, it } from 'vitest';
 import {
   canvasPorts,
   connectionProblem,
+  countsLabel,
   defaultConfig,
+  groupIssues,
+  issueCounts,
+  issuesByNode,
+  issuesLabel,
   NODE_KINDS,
   newLoopDefinition,
   nextEdgeId,
   nextNodeId,
   portsOf,
+  sameIssues,
   validateDraft,
+  type EditorIssue,
 } from './model.js';
 
 describe('editor model', () => {
@@ -118,5 +125,80 @@ describe('editor model', () => {
     expect(invalid.issues.find((i) => i.nodeId === 'd')?.path).toBe('config.routes');
     expect(invalid.issues.find((i) => i.edgeId === 'bad id!')?.path).toBe('id');
     expect(invalid.issues.find((i) => i.path === 'name')).toBeDefined();
+  });
+});
+
+describe('issue display helpers', () => {
+  const error = (nodeId?: string, message = 'broken'): EditorIssue => ({
+    code: 'X',
+    severity: 'error',
+    message,
+    ...(nodeId ? { nodeId } : {}),
+  });
+  const warning = (nodeId?: string): EditorIssue => ({
+    code: 'W',
+    severity: 'warning',
+    message: 'careful',
+    ...(nodeId ? { nodeId } : {}),
+  });
+
+  it('counts errors and warnings and says so in words', () => {
+    expect(issueCounts([])).toEqual({ errors: 0, warnings: 0 });
+    expect(issueCounts([error(), warning(), error()])).toEqual({ errors: 2, warnings: 1 });
+    expect(countsLabel([error(), warning(), error()])).toBe('2 errors, 1 warning');
+    expect(countsLabel([error()])).toBe('1 error');
+    expect(countsLabel([warning(), warning()])).toBe('2 warnings');
+    expect(countsLabel([])).toBe('');
+    expect(issuesLabel(1)).toBe('1 issue');
+    expect(issuesLabel(3)).toBe('3 issues');
+  });
+
+  it('groups issues by node, keeping list order', () => {
+    const a = error('start', 'first');
+    const b = warning('done');
+    const c = error('start', 'second');
+    const byNode = issuesByNode([a, error(), b, c]);
+    expect([...byNode.keys()]).toEqual(['start', 'done']);
+    expect(byNode.get('start')).toEqual([a, c]);
+  });
+
+  it('places every issue once: per node of the definition, or with the loop', () => {
+    const def = newLoopDefinition('g');
+    const loop = error();
+    const edge: EditorIssue = { ...warning(), edgeId: 'e1' };
+    const orphan = error('renamed');
+    const issues = [error('done'), loop, warning('start'), edge, orphan, error('start')];
+    const { general, nodes } = groupIssues(issues, def);
+    expect(general).toEqual([loop, edge, orphan]);
+    // In the definition's order (start before done), whatever the list order.
+    expect(nodes.map((n) => [n.nodeId, n.issues.length])).toEqual([
+      ['start', 2],
+      ['done', 1],
+    ]);
+    expect(general.length + nodes.reduce((sum, n) => sum + n.issues.length, 0)).toBe(issues.length);
+    // A duplicated id is one group.
+    const twice = { ...def, nodes: [...def.nodes, def.nodes[0]!] };
+    expect(groupIssues([error('start')], twice).nodes).toHaveLength(1);
+  });
+
+  it('compares issue lists by what they say', () => {
+    const issue: EditorIssue = {
+      ...error('start'),
+      path: 'config.x',
+      discard: { scope: 'node:start', path: 'x' },
+    };
+    expect(sameIssues([issue], [{ ...issue }])).toBe(true);
+    expect(sameIssues([], [])).toBe(true);
+    expect(sameIssues([issue], [])).toBe(false);
+    expect(sameIssues([issue], [{ ...issue, message: 'other' }])).toBe(false);
+    expect(sameIssues([issue], [{ ...issue, severity: 'warning' }])).toBe(false);
+    expect(sameIssues([issue], [{ ...issue, edgeId: 'e1' }])).toBe(false);
+    expect(sameIssues([issue], [{ ...issue, path: 'config.y' }])).toBe(false);
+    expect(sameIssues([issue], [{ ...issue, discard: { scope: 'node:other', path: 'x' } }])).toBe(
+      false,
+    );
+    expect(sameIssues([issue], [{ ...issue, discard: { scope: 'node:start', path: 'y' } }])).toBe(
+      false,
+    );
   });
 });
