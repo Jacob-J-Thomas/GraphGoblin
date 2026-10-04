@@ -42,6 +42,15 @@ export function approvalLoop(name: string) {
   };
 }
 
+/** Drive the E2E server's control port, for example to script the fake harness. */
+export async function control(request: APIRequestContext, path: string, body: unknown = {}) {
+  const base = process.env['GG_E2E_CONTROL_URL'];
+  if (!base) throw new Error('GG_E2E_CONTROL_URL is not set; the global setup did not run');
+  const res = await request.post(`${base}${path}`, { data: body });
+  expect(res.ok()).toBe(true);
+  return (await res.json()) as Record<string, unknown>;
+}
+
 /** Create and publish a loop through the API; returns its id. */
 export async function publishLoop(
   request: APIRequestContext,

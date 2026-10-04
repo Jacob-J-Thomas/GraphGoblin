@@ -4,15 +4,7 @@
  * server's control port.
  */
 import type { APIRequestContext, Page } from '@playwright/test';
-import { approvalLoop, expect, publishLoop, test } from './fixtures.js';
-
-async function control(request: APIRequestContext, path: string, body: unknown = {}) {
-  const base = process.env['GG_E2E_CONTROL_URL'];
-  if (!base) throw new Error('GG_E2E_CONTROL_URL is not set; the global setup did not run');
-  const res = await request.post(`${base}${path}`, { data: body });
-  expect(res.ok()).toBe(true);
-  return (await res.json()) as Record<string, unknown>;
-}
+import { approvalLoop, control, expect, publishLoop, test } from './fixtures.js';
 
 const start = { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } };
 const done = { id: 'done', kind: 'exit', label: 'Done', config: {} };

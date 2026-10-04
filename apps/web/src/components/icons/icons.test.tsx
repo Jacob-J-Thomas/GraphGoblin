@@ -72,14 +72,17 @@ describe('RunStatusBadge', () => {
         ))}
       </>,
     );
+    // The word sits in the badge's text span, beside the icon.
+    const badge = (status: string) => screen.getByText(status).parentElement;
     for (const status of RunStatusSchema.options) {
-      const badge = screen.getByText(status);
-      expect(badge).toHaveAttribute('data-status', status);
-      expect(badge.querySelector('svg')).not.toBeNull();
+      expect(badge(status)).toHaveAttribute('data-status', status);
+      expect(badge(status)?.querySelector('svg')).not.toBeNull();
     }
-    expect(screen.getByText('running')).toHaveClass('glow-running', 'bg-status-info-bg');
-    expect(screen.getByText('succeeded')).toHaveClass('bg-status-good-bg');
-    expect(screen.getByText('failed')).toHaveClass('bg-status-bad-bg');
-    expect(screen.getByText('failed')).not.toHaveClass('glow-running');
+    expect(badge('running')).toHaveClass('glow-running', 'bg-status-info-bg');
+    expect(badge('running')?.querySelector('svg')).toHaveClass('animate-pulse-soft');
+    expect(badge('succeeded')).toHaveClass('bg-status-good-bg');
+    expect(badge('failed')).toHaveClass('bg-status-bad-bg');
+    expect(badge('failed')).not.toHaveClass('glow-running');
+    expect(badge('failed')?.querySelector('svg')).not.toHaveClass('animate-pulse-soft');
   });
 });

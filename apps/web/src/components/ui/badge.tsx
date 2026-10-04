@@ -1,5 +1,6 @@
 import type { HTMLAttributes } from 'react';
 import { variants } from '../../lib/variants.js';
+import { ellipsize } from './ellipsis.js';
 
 export type Tone = 'neutral' | 'good' | 'bad' | 'warn' | 'info';
 
@@ -18,7 +19,9 @@ const TONE_CLASSES: Record<Tone, string> = {
 
 const badgeClasses = variants({
   // The transparent border becomes visible in forced-colours mode, where backgrounds are dropped.
-  base: 'inline-flex items-center rounded-full border border-transparent font-semibold leading-none whitespace-nowrap',
+  // A badge never grows wider than its container, nor widens a grid column; overlong text ends in
+  // an ellipsis (ellipsize). It does not shrink in a flex row, as before.
+  base: 'inline-flex max-w-full min-w-0 shrink-0 items-center rounded-full border border-transparent font-semibold leading-none whitespace-nowrap',
   variants: {
     tone: TONE_CLASSES,
     size: {
@@ -33,7 +36,12 @@ export function Badge({
   tone,
   size,
   className,
+  children,
   ...props
 }: HTMLAttributes<HTMLSpanElement> & { tone?: Tone; size?: 'sm' | 'md' }) {
-  return <span className={badgeClasses({ tone, size, className })} {...props} />;
+  return (
+    <span className={badgeClasses({ tone, size, className })} {...props}>
+      {ellipsize(children)}
+    </span>
+  );
 }

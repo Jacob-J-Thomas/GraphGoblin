@@ -8,7 +8,11 @@ Open **Settings** from the navigation bar:
 /app/settings
 ```
 
-Manage **Model catalog**, **Defaults**, **Secrets**, and **API keys** here, and check **Harness preflight**. The **Install** card explains the browser's PWA installation action. With `GG_REQUIRE_API_KEY=true` the app shell still loads, asks for a key on the first 401, and keeps it in this browser; **This browser's API key** shows it and **Forget key** removes it (other open tabs follow).
+Choose the colour theme under **Appearance** (below), and manage **Model catalog**, **Defaults**, **Secrets**, and **API keys** here, and check **Harness preflight**. The **Install** card explains the browser's PWA installation action. With `GG_REQUIRE_API_KEY=true` the app shell still loads, asks for a key on the first 401, and keeps it in this browser; **This browser's API key** shows it and **Forget key** removes it (other open tabs follow).
+
+## Choose the theme
+
+**Appearance → Theme** switches between **Dark** (the default) and **Light**. The change applies at once, without a reload, and this browser remembers it: the app opens in your theme on the next visit, with no flash of the other one, and other open tabs switch too. Use Tab to reach the control and the arrow keys to change it. The choice is per browser, kept in `localStorage` (`graphgoblin-theme`); a private window or blocked site data opens in Dark. A **System** option that follows the operating system will come with the installer.
 
 ## Choose a model and effort
 

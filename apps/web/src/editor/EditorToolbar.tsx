@@ -45,7 +45,13 @@ export function EditorToolbar({
         Loops
       </Link>
       <span className="text-subtle">/</span>
-      <h1 className="text-lg font-semibold tracking-[-0.01em]">{name}</h1>
+      {/* A long name (up to 120 characters) ends in an ellipsis on its own line; hover shows it. */}
+      <h1
+        className="max-w-full min-w-0 truncate text-lg font-semibold tracking-[-0.01em]"
+        title={name}
+      >
+        {name}
+      </h1>
       {published ? <Badge tone="good">published v{version}</Badge> : <Badge>draft only</Badge>}
       <span
         className="inline-flex items-center gap-1.5 text-sm text-muted"

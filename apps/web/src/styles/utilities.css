@@ -5,6 +5,26 @@
  * Forced-colours mode drops box shadows, so none of these may carry meaning on its own.
  */
 
+/* The header's hairline: a 2 px purple-to-magenta line along its bottom edge (decorative). In
+   forced-colours mode it gives way to a plain bottom border, so the header keeps its boundary. */
+@utility hairline-accent {
+  &::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    height: 2px;
+    background-image: var(--accent-hairline);
+    pointer-events: none;
+  }
+  @media (forced-colors: active) {
+    border-bottom: 1px solid CanvasText;
+    &::after {
+      display: none;
+    }
+  }
+}
+
 /* The running status badge: a soft purple glow. */
 @utility glow-running {
   box-shadow: 0 0 14px -3px color-mix(in oklab, var(--accent-glow) 75%, transparent);
@@ -40,9 +60,13 @@
     var(--shadow-2);
 }
 
-/* A slow opacity pulse; --duration-pulse drops to 0 ms under prefers-reduced-motion. */
+/* A slow, decorative opacity pulse. Under prefers-reduced-motion it does not run at all, so the
+   element stays at full opacity (index.css also stops every other animation). */
 @utility animate-pulse-soft {
   animation: gg-pulse var(--duration-pulse) var(--ease-standard) infinite;
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
 }
 
 @keyframes gg-pulse {

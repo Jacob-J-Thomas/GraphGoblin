@@ -41,11 +41,16 @@
   }
 }
 
+/*
+ * Reduced motion: no keyframe animation runs at all (the status pulse, xyflow's edge dashes, the
+ * editor cursor's blink), so nothing is left part-way through a frame, and transitions collapse to
+ * an instant change. The motion tokens drop to 0 ms as well (styles/tokens.css).
+ */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
-    animation-duration: 0.01ms !important;
+    animation: none !important;
     transition-duration: 0.01ms !important;
   }
 }

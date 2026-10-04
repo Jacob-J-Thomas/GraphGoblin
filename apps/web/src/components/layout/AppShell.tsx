@@ -20,8 +20,8 @@ export function OfflineBanner() {
 }
 
 /**
- * The application frame: the dark header with the goblin mark and the main navigation, the
- * offline banner, then the screen. #11 mounts the theme control on the header's right.
+ * The application frame: the dark header with the goblin mark, the main navigation, and the
+ * purple-to-magenta hairline along its bottom edge, the offline banner, then the screen. #11 mounts the theme control on the header's right.
  */
 export function AppShell({
   nav,
@@ -34,7 +34,7 @@ export function AppShell({
 }) {
   return (
     <div className="flex min-h-screen flex-col bg-surface-app text-default">
-      <header className="relative z-20 flex h-14 shrink-0 items-center gap-8 bg-surface-inverse px-6 text-inverse max-sm:gap-2 max-sm:px-4">
+      <header className="hairline-accent relative z-20 flex h-14 shrink-0 items-center gap-8 bg-surface-inverse px-6 text-inverse max-sm:gap-2 max-sm:px-4">
         <Logo />
         <MainNav items={nav} />
       </header>

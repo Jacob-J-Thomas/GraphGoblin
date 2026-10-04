@@ -7,12 +7,12 @@
  *
  * Run `pnpm build` first. The script starts apps/web/e2e/server.ts (the in-memory API with the
  * fake harness, serving apps/web/dist), seeds loops, runs, and inbound events through the API, and
- * photographs every screen at 1024x768 and 1440x900. `after` takes each shot twice: with the
- * static `data-theme="dark"` default and with the attribute flipped to `light`. Playwright comes
- * from apps/web's devDependencies; on Windows the installed Edge is used, as in the E2E config
- * (set GG_E2E_BROWSER_CHANNEL to override). Pass a third argument to write elsewhere (for example
- * a scratch folder for extra checks), and set GG_CAPTURE_ONLY to a comma-separated list of screen
- * names to take only those.
+ * photographs every screen at 1024x768 and 1440x900. `after` takes each shot twice, choosing
+ * Dark and then Light the way Settings → Appearance does (the stored theme, shown by the boot
+ * script). Playwright comes from apps/web's devDependencies; on Windows the installed Edge is
+ * used, as in the E2E config (set GG_E2E_BROWSER_CHANNEL to override). Pass a third argument to
+ * write elsewhere (for example a scratch folder for extra checks), and set GG_CAPTURE_ONLY to a
+ * comma-separated list of screen names to take only those.
  */
 import { spawn } from 'node:child_process';
 import { mkdirSync } from 'node:fs';
@@ -287,6 +287,14 @@ function screens({ base, apiKeyBase, nightly, waitingRun }) {
     { name: 'inspector', url: `${base}/app/runs/${waitingRun}`, ready: 'Input requested' },
     { name: 'events', url: `${base}/app/events`, ready: 'issue.opened' },
     { name: 'settings', url: `${base}/app/settings`, ready: 'GPT-6 Astra' },
+    {
+      // The theme control is new with the cutover, so `before` has nothing to photograph here.
+      name: 'settings-appearance',
+      url: `${base}/app/settings`,
+      ready: 'GPT-6 Astra',
+      focus: 'input[name="theme"]:checked',
+      afterOnly: true,
+    },
     { name: 'api-key', url: `${apiKeyBase}/app/loops`, ready: 'API key required' },
     { name: 'not-found', url: `${base}/app/nowhere`, ready: 'Page not found.' },
     { name: 'offline', url: `${base}/app/loops`, ready: 'nightly-triage', offline: true },
@@ -300,11 +308,18 @@ async function shoot(browser, screen, size, theme, dir) {
     reducedMotion: 'reduce',
     serviceWorkers: 'block',
   });
+  if (theme) {
+    // Choose the theme the way Settings does: the boot script in index.html shows it on load.
+    await context.addInitScript((t) => {
+      try {
+        window.localStorage.setItem('graphgoblin-theme', t);
+      } catch {
+        // A page without storage keeps the default.
+      }
+    }, theme);
+  }
   const page = await context.newPage();
   await page.goto(screen.url);
-  if (theme) {
-    await page.evaluate((t) => document.documentElement.setAttribute('data-theme', t), theme);
-  }
   await page.getByText(screen.ready).first().waitFor();
   await page.evaluate(() => document.fonts.ready);
   if (screen.select) {
@@ -319,6 +334,12 @@ async function shoot(browser, screen, size, theme, dir) {
       .fill(screen.search.text);
     await page.keyboard.press('Enter');
     await page.locator(`[data-field="${screen.search.field}"] .cm-search`).scrollIntoViewIfNeeded();
+  }
+  if (screen.focus) {
+    // Keyboard focus on a control (Tab then Shift+Tab, so the focus ring shows).
+    await page.locator(screen.focus).focus();
+    await page.keyboard.press('Tab');
+    await page.keyboard.press('Shift+Tab');
   }
   if (screen.offline) {
     await context.setOffline(true);
@@ -341,7 +362,7 @@ async function main() {
     const browser = await chromium.launch(channel ? { channel } : {});
     const only = process.env['GG_CAPTURE_ONLY']?.split(',');
     const list = screens({ base, apiKeyBase: extra.url, ...seeded }).filter(
-      (screen) => !only || only.includes(screen.name),
+      (screen) => (!only || only.includes(screen.name)) && (mode !== 'before' || !screen.afterOnly),
     );
     for (const { theme, dir } of THEMES) {
       mkdirSync(dir, { recursive: true });
