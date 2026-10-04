@@ -72,6 +72,8 @@ For a repository workspace, use an absolute path. For a temporary workspace, use
 
 Declare variable names and JSON Schemas in **Variables**; initialise their values with a mutation or mapping.
 
+Record entries show the key above its full-width value editor, including in the narrow loop panel. Adding or removing array entries keeps edits to the remaining items. Empty optional Liquid and JSONata fields are treated as absent and show no preview; supplied expressions still show preview errors if malformed. Required fields keep their validation and preview behavior.
+
 ## Publish, import, and export
 
 Click **Publish** to save the draft and freeze a numbered version. Runs pin a version; later edits and publications do not change runs already started. Publishing also arms automatic triggers for the new version. The editor shows the current published version; the API exposes version history:

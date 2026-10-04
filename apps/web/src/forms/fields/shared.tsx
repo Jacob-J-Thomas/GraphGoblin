@@ -3,7 +3,7 @@
  * the label row, and the inline error.
  */
 import type { ReactNode } from 'react';
-import { get, useController, useFormContext } from 'react-hook-form';
+import { get, useController, useFormContext, useWatch } from 'react-hook-form';
 import { FieldGroup, HelpText, Label } from '../../components/ui/index.js';
 import type { Schema } from '../introspect.js';
 import { isUnset, UNSET } from '../unset.js';
@@ -21,8 +21,11 @@ export interface FieldProps {
  */
 export function useField(name: string) {
   const { field } = useController({ name });
+  // useController watches only this exact path. Structural fields must also observe child edits
+  // so Add/Remove use the current list or object rather than the last parent-level change.
+  const value: unknown = useWatch({ name });
   return {
-    value: isUnset(field.value) ? undefined : (field.value as unknown),
+    value: isUnset(value) ? undefined : value,
     onChange: (value: unknown) => field.onChange(value === undefined ? UNSET : value),
     onBlur: field.onBlur,
   };

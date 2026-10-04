@@ -235,31 +235,34 @@ function RecordField({
     <fieldset className={FIELDSET} data-field={name}>
       <legend className={LEGEND}>{label}</legend>
       {entries.map(([key, value], index) => (
-        <div key={index} className="flex items-start gap-2">
+        <div key={index} className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
           <Input
             aria-label={`${label} key ${index + 1}`}
-            className="w-1/3 font-mono text-sm"
+            className="font-mono text-sm"
             value={key}
             onChange={(e) => rename(index, e.target.value)}
           />
-          {valueShape.kind === 'string' ? (
-            <Input
-              aria-label={`${label} value ${index + 1}`}
-              className="font-mono text-sm"
-              value={typeof value === 'string' ? value : ''}
-              onChange={(e) => setValue(index, e.target.value)}
-            />
-          ) : (
-            <JsonText
-              path={joinPath(name, key)}
-              label={`${label} value ${index + 1}`}
-              value={value}
-              onChange={(v) => setValue(index, v)}
-            />
-          )}
+          <div className="col-span-2 col-start-1 row-start-2 min-w-0">
+            {valueShape.kind === 'string' ? (
+              <Input
+                aria-label={`${label} value ${index + 1}`}
+                className="font-mono text-sm"
+                value={typeof value === 'string' ? value : ''}
+                onChange={(e) => setValue(index, e.target.value)}
+              />
+            ) : (
+              <JsonText
+                path={joinPath(name, key)}
+                label={`${label} value ${index + 1}`}
+                value={value}
+                onChange={(v) => setValue(index, v)}
+              />
+            )}
+          </div>
           <Button
             size="icon"
             variant="ghost"
+            className="col-start-2 row-start-1"
             aria-label={`Remove ${label.toLowerCase()} ${key}`}
             onClick={() => commit(entries.filter((_, i) => i !== index))}
           >

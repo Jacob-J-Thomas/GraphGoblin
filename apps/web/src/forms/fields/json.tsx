@@ -24,6 +24,19 @@ export function JsonText({
   const [stored] = useState(() => parseErrors.get(path));
   const [text, setText] = useState(() => stored?.text ?? prettyJson(value));
   const [error, setError] = useState<string | undefined>(stored?.message);
+  const formatted = prettyJson(value);
+  const [lastValue, setLastValue] = useState(formatted);
+  // Removing an earlier indexed row can give this editor a different value. Follow that value
+  // while parsed; unparsed text still wins until the user fixes or discards it. Compare JSON,
+  // since form subscriptions clone objects even when their contents have not changed.
+  if (formatted !== lastValue) {
+    setLastValue(formatted);
+    if (error === undefined) {
+      // A value echoed after an accepted edit must keep the user's JSON spacing.
+      const parsed = parseJson(text);
+      if (!parsed.ok || prettyJson(parsed.value) !== formatted) setText(formatted);
+    }
+  }
   // Discarded from outside (the validation panel): show the last valid value again.
   if (parseErrors.tracked && error !== undefined && parseErrors.errors?.[path] === undefined) {
     setText(prettyJson(value));
