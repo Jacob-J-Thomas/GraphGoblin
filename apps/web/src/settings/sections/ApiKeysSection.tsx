@@ -1,16 +1,26 @@
 import { apiKeys } from '@graphgoblin/api-client';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useApiKeyStore } from '../../api/api-key.js';
 import { useApi } from '../../api/context.js';
 import { keys, useApiKeys } from '../../api/queries.js';
 import { QueryState } from '../../components/status.js';
-import { Alert, Badge, Button, Card, FieldGroup, Input, Label } from '../../components/ui/index.js';
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  ConfirmAction,
+  FieldGroup,
+  Input,
+  Label,
+} from '../../components/ui/index.js';
 import { LIST_ROW, MutationError, useInvalidate } from '../shared.js';
 
 /** API keys for scripts and other clients: create one (the token is shown once), revoke it. */
 export function ApiKeysSection() {
   const client = useApi();
+  const queryClient = useQueryClient();
   const invalidate = useInvalidate();
   const query = useApiKeys();
   const [label, setLabel] = useState('');
@@ -21,10 +31,7 @@ export function ApiKeysSection() {
       invalidate(keys.apiKeys);
     },
   });
-  const revoke = useMutation({
-    mutationFn: (id: string) => apiKeys.revoke(client, id),
-    onSuccess: () => invalidate(keys.apiKeys),
-  });
+  const stored = useApiKeyStore((s) => s.key);
   return (
     <Card title="API keys">
       <div className="grid gap-4">
@@ -51,7 +58,7 @@ export function ApiKeysSection() {
             </code>
           </Alert>
         ) : null}
-        <MutationError error={create.error ?? revoke.error} />
+        <MutationError error={create.error} />
         <QueryState query={query} what="API keys">
           {(items) => (
             <ul className="text-sm">
@@ -62,14 +69,27 @@ export function ApiKeysSection() {
                     {k.revokedAt ? <Badge>revoked</Badge> : null}
                   </span>
                   {k.revokedAt ? null : (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => revoke.mutate(k.id)}
-                      aria-label={`Revoke ${k.label}`}
-                    >
-                      Revoke
-                    </Button>
+                    <ConfirmAction
+                      action="revoke"
+                      name={k.label}
+                      accessibleName={`Revoke ${k.label}`}
+                      consequences={
+                        <>
+                          <p>Clients using this API key will get 401 immediately.</p>
+                          {stored ? (
+                            <p>
+                              This browser sends an API key. If you revoke that key, this browser
+                              will lose access and show the API key panel, where you must enter
+                              another valid key.
+                            </p>
+                          ) : null}
+                        </>
+                      }
+                      onConfirm={async () => {
+                        await apiKeys.revoke(client, k.id);
+                        await queryClient.invalidateQueries({ queryKey: keys.apiKeys });
+                      }}
+                    />
                   )}
                 </li>
               ))}

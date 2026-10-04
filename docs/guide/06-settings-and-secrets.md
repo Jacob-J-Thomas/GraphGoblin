@@ -37,6 +37,8 @@ The owner defaults in **Settings → Default model** and **Default effort** (`PU
 
 ## Store secrets
 
+Deleting a model, deleting a secret, or revoking a key opens the same named confirmation used on Loops. **Keep** receives focus; Keep or Escape cancels without changing anything. **Confirm delete** or **Confirm revoke** starts the request, disables both buttons until it finishes, and announces progress. API errors (including 404 when an item was already removed) stay visible until you dismiss or retry. Focus returns to the action, or its section heading if the row disappears. These actions cannot be undone; deleting a seeded model removes it now but it returns at the next server start.
+
 In **Secrets**, enter a name and value, then click **Set secret**, or send `PUT /secrets/{name}` with a body of `{ "value": "..." }`. Names start with a letter and contain up to 128 letters, digits, `_`, `.`, or `-`. Values are write-only: listing returns names and timestamps, and setting a secret returns metadata rather than the value. Loop configs carry references; the server resolves them during execution. Do not paste secret values into prompts, expressions, or ordinary config fields.
 
 To configure Jev without pasting a key into Settings, set the machine environment variable `GG_JEV_API_KEY` once and start the API in a process that inherits it. An existing `JEV_API_KEY` works unchanged when `GG_JEV_API_KEY` is unset. After migration and before Jev initializes, startup seeds the local owner's encrypted secret only when it is absent. The secret store wins over both variables: restarting with a different environment value never overwrites an existing secret. An explicitly empty `GG_JEV_API_KEY` disables seeding, including the fallback. No plaintext file or secret value is logged; the startup message only says `seeded jev-api-key from GG_JEV_API_KEY`.
@@ -62,6 +64,8 @@ For a script environment variable, use this reference syntax:
 ```
 
 A missing secret fails the run with `SECRET_MISSING`; set it and resume. A missing webhook signing secret makes the endpoint answer 503 `HOOK_NOT_READY`, and a missing return-channel secret sends the delivery unsigned.
+
+The secret's deletion confirmation spells out those effects for webhook triggers, webhook return channels, and script `env` values written as `secret:<name>`. Deleting `jev-api-key` also warns that Jev decisions turn off until the key is set again.
 
 Secret reads never send plaintext back to the browser or API client. Server-side resolution supplies the Jev key to Jev and script values to the invoked process, so values can leave the process for their intended consumer. Scripts and external tools can print secrets into their output; avoid that and redact sensitive thread content before forwarding it. The secret store does not automatically scrub arbitrary output or earlier event-log entries.
 
@@ -160,6 +164,8 @@ Revoke an unused key in **Settings → API keys**, or through REST:
 ```http
 DELETE /api-keys/{id}
 ```
+
+**Revoke** names the key and warns that clients using it receive 401 immediately. If this browser stores a key, the confirmation also warns that revoking that key loses browser access and shows the API key panel; enter another valid key there to continue. The API does not expose which listed key this browser uses, so this warning appears on every revocation while a key is stored.
 
 ## Preserve the master key
 

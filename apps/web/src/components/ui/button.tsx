@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes } from 'react';
+import type { ComponentProps } from 'react';
 import { variants } from '../../lib/variants.js';
 import { ellipsize } from './ellipsis.js';
 
@@ -9,7 +9,7 @@ import { ellipsize } from './ellipsis.js';
  * never grows wider than its container, nor widens a grid column; an overlong label ends in an
  * ellipsis (ellipsize).
  */
-const buttonClasses = variants({
+export const buttonStyles = variants({
   base: [
     'relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border',
     'font-semibold leading-none cursor-pointer select-none no-underline',
@@ -28,6 +28,8 @@ const buttonClasses = variants({
         'border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px',
       destructive:
         'border-danger-hover bg-danger text-on-danger shadow-ledge-danger hover:bg-danger-hover active:translate-y-px',
+      'destructive-soft':
+        'border-danger-on-subtle bg-danger-subtle text-danger-on-subtle shadow-ledge-danger hover:bg-danger hover:text-on-danger active:bg-danger-hover active:text-on-danger active:translate-y-px',
       ghost:
         'border-transparent bg-transparent text-default hover:bg-surface-hover active:translate-y-px',
     },
@@ -40,7 +42,8 @@ const buttonClasses = variants({
   defaults: { variant: 'default', size: 'md' },
 });
 
-type ButtonVariant = 'default' | 'secondary' | 'outline' | 'destructive' | 'ghost';
+type ButtonVariant =
+  'default' | 'secondary' | 'outline' | 'destructive' | 'destructive-soft' | 'ghost';
 type ButtonSize = 'sm' | 'md' | 'icon';
 
 export function Button({
@@ -50,12 +53,12 @@ export function Button({
   type = 'button',
   children,
   ...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & {
+}: ComponentProps<'button'> & {
   variant?: ButtonVariant;
   size?: ButtonSize;
 }) {
   return (
-    <button type={type} className={buttonClasses({ variant, size, className })} {...props}>
+    <button type={type} className={buttonStyles({ variant, size, className })} {...props}>
       {ellipsize(children)}
     </button>
   );

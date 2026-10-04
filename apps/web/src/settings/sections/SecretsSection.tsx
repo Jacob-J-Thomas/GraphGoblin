@@ -1,10 +1,18 @@
 import { secrets } from '@graphgoblin/api-client';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useApi } from '../../api/context.js';
 import { keys, useSecrets } from '../../api/queries.js';
 import { QueryState } from '../../components/status.js';
-import { Button, Card, FieldGroup, HelpText, Input, Label } from '../../components/ui/index.js';
+import {
+  Button,
+  Card,
+  ConfirmAction,
+  FieldGroup,
+  HelpText,
+  Input,
+  Label,
+} from '../../components/ui/index.js';
 import { formatDateTime } from '../../lib/utils.js';
 import { LIST_ROW, MutationError, useInvalidate } from '../shared.js';
 
@@ -14,6 +22,7 @@ const SECRET_NAME = /^[A-Za-z][A-Za-z0-9_.-]{0,127}$/;
 /** Write-only secrets: set a value under a name, list the names, delete them. */
 export function SecretsSection() {
   const client = useApi();
+  const queryClient = useQueryClient();
   const invalidate = useInvalidate();
   const query = useSecrets();
   const [name, setName] = useState('');
@@ -25,10 +34,6 @@ export function SecretsSection() {
       setName('');
       invalidate(keys.secrets);
     },
-  });
-  const remove = useMutation({
-    mutationFn: (secretName: string) => secrets.remove(client, secretName),
-    onSuccess: () => invalidate(keys.secrets),
   });
   const nameInvalid = name !== '' && !SECRET_NAME.test(name);
   return (
@@ -75,7 +80,7 @@ export function SecretsSection() {
             Set secret
           </Button>
         </form>
-        <MutationError error={set.error ?? remove.error} />
+        <MutationError error={set.error} />
         <QueryState query={query} what="Secrets">
           {(items) => (
             <ul className="text-sm">
@@ -87,14 +92,32 @@ export function SecretsSection() {
                       updated {formatDateTime(s.updatedAt)}
                     </span>
                   </span>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => remove.mutate(s.name)}
-                    aria-label={`Delete secret ${s.name}`}
-                  >
-                    Delete
-                  </Button>
+                  <ConfirmAction
+                    name={s.name}
+                    accessibleName={`Delete secret ${s.name}`}
+                    consequences={
+                      <>
+                        <p>
+                          Webhook triggers using this secret will answer 503 HOOK_NOT_READY. Webhook
+                          return channels will lose their signing secret and send unsigned
+                          deliveries.
+                        </p>
+                        <p>
+                          Script env values written as <code>secret:{s.name}</code> will fail with
+                          SECRET_MISSING.
+                        </p>
+                        {s.name === 'jev-api-key' ? (
+                          <p>
+                            Removing jev-api-key turns Jev decisions off until the key is set again.
+                          </p>
+                        ) : null}
+                      </>
+                    }
+                    onConfirm={async () => {
+                      await secrets.remove(client, s.name);
+                      await queryClient.invalidateQueries({ queryKey: keys.secrets });
+                    }}
+                  />
                 </li>
               ))}
             </ul>

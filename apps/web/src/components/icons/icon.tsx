@@ -99,6 +99,7 @@ const GLYPHS = {
   ),
   send: <path d="M21 3 10.5 13.5M21 3l-6.5 18-4-7.5L3 9.5Z" />,
   export: <path d="M12 4v11M7 10.5l5 5 5-5M5 20h14" />,
+  edit: <path d="m15 4 5 5M4 20l5-1L21 7a2 2 0 0 0-5-5L4 14Z" />,
   upload: <path d="M12 20V9M7 13.5l5-5 5 5M5 4h14" />,
   trash: <path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" />,
   loop: (
