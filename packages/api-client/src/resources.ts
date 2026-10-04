@@ -6,7 +6,7 @@
 import type { GraphGoblinClient, paths } from './client.js';
 import { unwrap } from './errors.js';
 
-type Method = 'get' | 'put' | 'post' | 'delete';
+type Method = 'get' | 'put' | 'patch' | 'post' | 'delete';
 
 /** The JSON request body of an operation. */
 export type RequestBody<P extends keyof paths, M extends Method> = paths[P][M] extends {
@@ -69,8 +69,18 @@ export const loops = {
         body: { definition },
       }),
     ),
-  validate: async (client: GraphGoblinClient, loopId: string, definition: LoopDefinitionBody) =>
-    unwrap(await client.POST('/loops/{id}/validate', { ...id(loopId), body: { definition } })),
+  validate: async (client: GraphGoblinClient, loopId: string, definition: LoopDefinitionBody) => {
+    const result = unwrap(
+      await client.POST('/loops/{id}/validate', { ...id(loopId), body: { definition } }),
+    );
+    // JSON omits undefined fields. Preserve that guarantee for exact optional consumer types.
+    return {
+      ...result,
+      issues: result.issues.map(({ path, ...issue }) =>
+        path === undefined ? issue : { ...issue, path },
+      ),
+    };
+  },
   publish: async (client: GraphGoblinClient, loopId: string) =>
     unwrap(await client.POST('/loops/{id}/publish', id(loopId))).version,
   versions: async (client: GraphGoblinClient, loopId: string) =>
@@ -177,6 +187,13 @@ export const apiKeys = {
 
 export const modelCatalog = {
   list: async (client: GraphGoblinClient) => unwrap(await client.GET('/model-catalog')).items,
+  setEnabled: async (client: GraphGoblinClient, harness: string, model: string, enabled: boolean) =>
+    unwrap(
+      await client.PATCH('/model-catalog/{harness}/{model}', {
+        params: { path: { harness, model } },
+        body: { enabled },
+      }),
+    ),
   upsert: async (
     client: GraphGoblinClient,
     harness: string,

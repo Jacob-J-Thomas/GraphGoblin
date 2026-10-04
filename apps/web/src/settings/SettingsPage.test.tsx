@@ -5,11 +5,12 @@ import { FakeApi, problem, TS } from '../__fixtures__/fake-api.js';
 import { renderApp } from '../__fixtures__/render.js';
 import { useApiKeyStore } from '../api/api-key.js';
 
-function seeded(): FakeApi {
+function seeded(source: 'harness' | 'litellm' = 'harness'): FakeApi {
   const api = new FakeApi();
   api.catalog = [
     {
       harness: 'codex',
+      source,
       model: 'gpt-6-luna',
       displayName: 'Luna',
       efforts: ['low', 'high'],
@@ -18,6 +19,7 @@ function seeded(): FakeApi {
     },
     {
       harness: 'codex',
+      source,
       model: 'gpt-6-sol',
       displayName: 'Sol',
       efforts: ['medium'],
@@ -169,15 +171,15 @@ describe('SettingsPage', () => {
     expect(screen.getByRole('alertdialog')).toHaveTextContent('GG_JEV_API_KEY');
     expect(screen.getByRole('alertdialog')).toHaveTextContent('next server start');
   });
-  it('edits, toggles, adds, and deletes models in the catalog', async () => {
+  it('edits and deletes LiteLLM rows and toggles through PATCH', async () => {
     const user = userEvent.setup();
-    const api = seeded();
+    const api = seeded('litellm');
     renderApp('/settings', api);
     expect(await screen.findByText('Luna', { selector: 'span' })).toBeInTheDocument();
 
     await user.click(screen.getByLabelText('Enable gpt-6-sol'));
     await waitFor(() =>
-      expect(api.callsTo('PUT', '/model-catalog/codex/gpt-6-sol')[0]!.body).toMatchObject({
+      expect(api.callsTo('PATCH', '/model-catalog/codex/gpt-6-sol')[0]!.body).toMatchObject({
         enabled: true,
       }),
     );
@@ -203,7 +205,15 @@ describe('SettingsPage', () => {
     const add = screen.getByRole('form', { name: 'Add model' });
     await user.type(within(add).getByLabelText('Model id'), 'gpt-7');
     await user.click(within(add).getByRole('button', { name: 'Save model' }));
-    expect(await screen.findByText('gpt-7', { selector: 'span' })).toBeInTheDocument();
+    expect(
+      await screen.findByText(
+        /LiteLLM is not configured; adding local models is not available yet/,
+      ),
+    ).toBeInTheDocument();
+    expect(api.callsTo('PUT', '/model-catalog/codex/gpt-7')[0]?.body).toMatchObject({
+      source: 'litellm',
+    });
+    await user.click(within(add).getByRole('button', { name: 'Cancel' }));
     await user.click(screen.getByRole('button', { name: 'Add model' }));
     await user.click(
       within(screen.getByRole('form', { name: 'Add model' })).getByRole('button', {
@@ -212,9 +222,21 @@ describe('SettingsPage', () => {
     );
 
     await user.click(screen.getByRole('button', { name: 'Delete gpt-6-sol' }));
+    expect(screen.getByRole('alertdialog')).toHaveTextContent(
+      'Harness models cannot be deleted. Removing a LiteLLM model leaves its loops referencing it.',
+    );
     await user.click(screen.getByRole('button', { name: 'Confirm delete gpt-6-sol' }));
     await waitFor(() =>
       expect(screen.queryByText('Sol', { selector: 'span' })).not.toBeInTheDocument(),
+    );
+  });
+
+  it('explains catalog removal without promising harness models will return', async () => {
+    const user = userEvent.setup();
+    renderApp('/settings', seeded('litellm'));
+    await user.click(await screen.findByRole('button', { name: 'Delete gpt-6-sol' }));
+    expect(screen.getByRole('alertdialog')).toHaveTextContent(
+      'Harness models cannot be deleted. Removing a LiteLLM model leaves its loops referencing it.',
     );
   });
 
@@ -224,12 +246,44 @@ describe('SettingsPage', () => {
     api.override('PUT /model-catalog/:harness/:model', () =>
       problem(400, 'INVALID_INPUT', 'defaultEffort must be one of efforts'),
     );
+    api.override('PATCH /model-catalog/:harness/:model', () =>
+      problem(404, 'MODEL_NOT_FOUND', 'model not in catalog'),
+    );
     renderApp('/settings', api);
     await user.click(await screen.findByRole('button', { name: 'Edit gpt-6-luna' }));
     await user.click(screen.getByRole('button', { name: 'Save model' }));
     expect(await screen.findByText(/defaultEffort must be one of efforts/)).toBeInTheDocument();
     await user.click(screen.getByLabelText('Enable gpt-6-luna'));
-    expect((await screen.findAllByText(/defaultEffort must be one of efforts/)).length).toBe(2);
+    expect(await screen.findByText(/model not in catalog/)).toBeInTheDocument();
+  });
+
+  it('toggles harness models with PATCH and surfaces managed edit/delete errors', async () => {
+    const user = userEvent.setup();
+    const api = seeded();
+    const before = { ...api.catalog[0]! };
+    renderApp('/settings', api);
+    const enabled = await screen.findByLabelText('Enable gpt-6-luna');
+    await user.click(enabled);
+    await waitFor(() => expect(enabled).not.toBeChecked());
+    expect(api.callsTo('PATCH', '/model-catalog/codex/gpt-6-luna')[0]?.body).toEqual({
+      enabled: false,
+    });
+    expect(api.catalog[0]).toEqual({ ...before, enabled: false });
+    await user.click(enabled);
+    await waitFor(() => expect(enabled).toBeChecked());
+    expect(api.catalog[0]).toEqual(before);
+    await user.click(screen.getByRole('button', { name: 'Edit gpt-6-luna' }));
+    await user.click(screen.getByRole('button', { name: 'Save model' }));
+    expect(
+      await screen.findByText(/Harness models can only be enabled or disabled/),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+    await user.click(screen.getByRole('button', { name: 'Delete gpt-6-luna' }));
+    await user.click(screen.getByRole('button', { name: 'Confirm delete gpt-6-luna' }));
+    expect(await screen.findByRole('alertdialog')).toHaveTextContent(
+      'Harness models can only be enabled or disabled',
+    );
+    expect(api.catalog[0]).toEqual(before);
   });
 
   it('saves default model and effort', async () => {
@@ -303,7 +357,7 @@ describe('SettingsPage', () => {
       'Confirm delete gpt-6-luna',
       '/model-catalog/codex/gpt-6-luna',
       'DELETE /model-catalog/:harness/:model',
-      'seeded model',
+      'Removing a LiteLLM model leaves its loops referencing it',
     ],
     [
       'Delete secret jev-api-key',
