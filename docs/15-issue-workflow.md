@@ -11,6 +11,13 @@ GitHub issues are the shared work queue for this repository's development pipeli
 
 `needs-plan-approval` may be combined with `human-in-the-loop`. `aidlc-ready` never combines with `human-in-the-loop`. A non-epic issue with both plan approval and human product review proceeds with `plan-approved` and `human-in-the-loop` after approval.
 
+## Parking markers
+
+Two labels take an issue out of the queue; neither is a gate, and an issue carrying one has no gate label until a human unparks it.
+
+- `backlog`: parked until further notice. Agents do not plan or implement it.
+- `needs-refinement`: the problem itself still needs human-driven refinement in a working session with the owner before any plan or implementation.
+
 ## QA scope
 
 - `qa:touched-systems`: enumerate every system the change touches, test each with positive and negative cases, and record pass/fail results with evidence in both the PR and issue.
@@ -41,6 +48,6 @@ Epics carry `type:epic` and area labels only; pipelines ignore them. Each child 
 
 ## Development pipeline
 
-An issue is picked up according to its gate label. The implementer named by its `impl:` label works in an isolated branch. The reviewer named by its `review:` label reviews the diff and comes from the opposite model family. A QA agent tests according to the `qa:` label and records results in the PR and the issue. `human-in-the-loop` issues get a human review of the running product before merge. `needs-plan-approval` issues get a human-approved plan before implementation.
+An issue is picked up according to its gate label. The implementer named by its `impl:` label works in an isolated branch. The reviewer named by its `review:` label reviews the diff and comes from the opposite model family. A QA agent tests according to the `qa:` label and records results in the PR and the issue. `human-in-the-loop` issues get a human review of the running product before merge. `needs-plan-approval` issues get a human-approved plan before implementation. When the owner requires a human QA sign-off before an issue closes (recorded as a comment on the issue), its pull requests reference it as "Part of" rather than "Closes", the pipeline never closes it, and the human who verified the running product closes it with a comment saying what was checked.
 
 The label names and this process are specific to this repository and are not used by the product's template loops, which users run against their own repositories with their own configurable trigger label and role models (tracked in [the AIDLC template loops epic on GitHub](https://github.com/Jacob-J-Thomas/GraphGoblin/issues?q=is%3Aissue%20label%3Atype%3Aepic%20label%3Aarea%3Atemplates)).
