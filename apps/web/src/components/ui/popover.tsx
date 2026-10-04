@@ -167,6 +167,8 @@ export function Popover({ label, trigger, children, className }: PopoverProps) {
     const popover = popoverRef.current;
     const anchor = triggerRef.current;
     if (!popover || !anchor) return;
+    // Measured at its natural height; the scroll position survives the measurement.
+    const { scrollTop } = popover;
     popover.style.maxHeight = '';
     const placement = placePopover(
       anchor.getBoundingClientRect(),
@@ -179,6 +181,7 @@ export function Popover({ label, trigger, children, className }: PopoverProps) {
     popover.style.top = `${placement.top}px`;
     popover.style.left = `${placement.left}px`;
     popover.style.maxHeight = `${placement.maxHeight}px`;
+    popover.scrollTop = scrollTop;
     popover.dataset['side'] = placement.side;
   }, []);
 
@@ -219,16 +222,21 @@ export function Popover({ label, trigger, children, className }: PopoverProps) {
       event.stopPropagation();
       close({ returnFocus: Boolean(wrapperRef.current?.contains(document.activeElement)) });
     };
+    // Something around it scrolled (not its own list): follow the trigger.
+    const onScroll = (event: Event) => {
+      if (event.target instanceof Node && popoverRef.current?.contains(event.target)) return;
+      place();
+    };
     document.addEventListener('pointerdown', onPointerDown, true);
     document.addEventListener('keydown', onKeyDown, true);
     window.addEventListener('resize', place);
-    window.addEventListener('scroll', place, true);
+    window.addEventListener('scroll', onScroll, true);
     openPopovers.set(close, () => triggerRef.current);
     return () => {
       document.removeEventListener('pointerdown', onPointerDown, true);
       document.removeEventListener('keydown', onKeyDown, true);
       window.removeEventListener('resize', place);
-      window.removeEventListener('scroll', place, true);
+      window.removeEventListener('scroll', onScroll, true);
       openPopovers.delete(close);
     };
   }, [open, close, place]);

@@ -413,6 +413,16 @@ describe('Popover', () => {
     });
     expect(popover().style).toMatchObject({ top: '70px', left: '100px' });
     expect(popover().dataset['side']).toBe('below');
+    // Its own list scrolling leaves it be; a scroll around it places it again.
+    anchor.mockReturnValue(rect({ top: 300, left: 100, width: 24, height: 24 }));
+    act(() => {
+      popover().dispatchEvent(new Event('scroll'));
+    });
+    expect(popover().style.top).toBe('70px');
+    act(() => {
+      document.body.dispatchEvent(new Event('scroll'));
+    });
+    expect(popover().style.top).toBe('330px');
   });
 
   it('uses the native popover API where the browser has it, and leaves the top layer on close', () => {
