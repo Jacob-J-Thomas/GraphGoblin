@@ -1,9 +1,12 @@
 import { kitchenSinkLoop, minimalLoop } from '@graphgoblin/contracts/testing';
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { StrictMode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { nextTask } from '../__fixtures__/dialog.js';
 import { FakeApi, problem } from '../__fixtures__/fake-api.js';
-import { renderApp } from '../__fixtures__/render.js';
+import { renderApp, renderWith } from '../__fixtures__/render.js';
+import { App } from '../app/App.js';
 import {
   loadLocalDraft,
   loadSetAsideDraft,
@@ -457,6 +460,28 @@ describe('EditorPage', () => {
     expect(within(dialog).getByLabelText('Node id')).toHaveValue('nightly');
   });
 
+  it('keeps a node editor open under Strict Mode, as the dev server renders the app', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const loop = api.addLoop(newLoopDefinition('strict'));
+    renderWith(
+      <StrictMode>
+        <App />
+      </StrictMode>,
+      `/loops/${loop.id}/edit`,
+      api,
+    );
+    await screen.findByRole('heading', { name: 'strict' });
+    fireEvent.click(screen.getByTestId('node-done'));
+    expect(await screen.findByRole('dialog', { name: 'Edit exit done' })).toBeInTheDocument();
+    // The replayed effect's close event arrives as a task after the dialog reopened.
+    await act(nextTask);
+    expect(useEditorStore.getState().nodeDialogOpen).toBe(true);
+    expect(screen.getByRole('dialog', { name: 'Edit exit done' })).toHaveAttribute('open');
+    await user.keyboard('{Escape}');
+    expect(useEditorStore.getState().nodeDialogOpen).toBe(false);
+  });
+
   it('says in the dialog why a connection was refused', async () => {
     const user = userEvent.setup();
     const api = new FakeApi();
@@ -753,8 +778,12 @@ describe('EditorPage', () => {
     const third = within(await screen.findByRole('dialog')).getByLabelText('Node id');
     await user.clear(third);
     await user.type(third, 'infer');
-    act(() => screen.getByRole<HTMLDialogElement>('dialog').close());
-    expect(screen.queryByRole('dialog')).toBeNull();
+    await act(async () => {
+      screen.getByRole<HTMLDialogElement>('dialog').close();
+      await nextTask();
+    });
+    expect(useEditorStore.getState().nodeDialogOpen).toBe(false);
+    expect(screen.queryByRole('dialog', { hidden: true })).toBeNull();
     expect(useEditorStore.getState().definition!.nodes.some((n) => n.id === 'verify')).toBe(true);
   });
 

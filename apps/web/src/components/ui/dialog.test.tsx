@@ -1,7 +1,8 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { useState } from 'react';
+import { StrictMode, useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
+import { dialogClose, nextTask } from '../../__fixtures__/dialog.js';
 import { Button, Dialog, Input, type DialogCloseReason } from './index.js';
 
 /** An owner that opens the dialog from a button and closes it unless told to refuse. */
@@ -90,9 +91,81 @@ describe('Dialog', () => {
       dialog().dispatchEvent(new Event('cancel', { cancelable: false }));
     });
     expect(onClose).not.toHaveBeenCalled();
-    act(() => dialog().close());
+    // Browsers deliver the close event as a queued task, after close() returns.
+    await act(async () => {
+      dialog().close();
+      await nextTask();
+    });
     expect(onClose).toHaveBeenCalledWith('dismissed');
     expect(dialog().open).toBe(false);
+
+    // Delivered at once (some engines, the sync stand-in), the same.
+    dialogClose.delivery = 'sync';
+    onClose.mockClear();
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    act(() => dialog().close());
+    expect(onClose).toHaveBeenCalledWith('dismissed');
+  });
+
+  it('stays open under Strict Mode, whose replayed effect closes and reopens it (close is a task)', async () => {
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+    // Mounted open, as the node editor is: Strict Mode replays the mount effect at once.
+    function MountedOpen() {
+      const [shown, setShown] = useState(false);
+      return (
+        <>
+          <Button onClick={() => setShown(true)}>Open</Button>
+          {shown ? (
+            <Dialog
+              open
+              onClose={(reason) => {
+                onClose(reason);
+                setShown(false);
+              }}
+              title="Edit trigger start"
+            >
+              <Input aria-label="Label" />
+            </Dialog>
+          ) : null}
+        </>
+      );
+    }
+    render(
+      <StrictMode>
+        <MountedOpen />
+      </StrictMode>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    // The close event from the replayed effect's cleanup arrives after the dialog reopened.
+    await act(nextTask);
+    expect(onClose).not.toHaveBeenCalled();
+    expect(dialog().open).toBe(true);
+    expect(screen.getByRole('heading', { name: 'Edit trigger start' })).toHaveFocus();
+    // It still closes when asked, and a later dismissal by the browser is still reported.
+    await user.keyboard('{Escape}');
+    expect(onClose).toHaveBeenCalledWith('escape');
+    expect(screen.queryByRole('dialog', { hidden: true })).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    await act(nextTask);
+    await act(async () => {
+      dialog().close();
+      await nextTask();
+    });
+    expect(onClose).toHaveBeenLastCalledWith('dismissed');
+    expect(screen.queryByRole('dialog', { hidden: true })).toBeNull();
+  });
+
+  it('ignores a close event that arrives while the dialog is open again', async () => {
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+    render(<Owner onClose={onClose} />);
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    act(() => {
+      dialog().dispatchEvent(new Event('close'));
+    });
+    expect(onClose).not.toHaveBeenCalled();
+    expect(dialog().open).toBe(true);
   });
 
   it('closes on a click on the backdrop only when the press started there too', async () => {

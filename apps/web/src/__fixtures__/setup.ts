@@ -2,6 +2,7 @@ import '@testing-library/jest-dom/vitest';
 import 'fake-indexeddb/auto';
 import { cleanup, configure } from '@testing-library/react';
 import { afterEach } from 'vitest';
+import { dialogClose } from './dialog.js';
 
 // Whole-app renders under a busy parallel run can take longer than the 1 s default.
 configure({ asyncUtilTimeout: 5000 });
@@ -31,9 +32,10 @@ Range.prototype.getBoundingClientRect ??= zeroRect;
 Element.prototype.scrollIntoView ??= function scrollIntoView() {};
 
 // jsdom has HTMLDialogElement but not showModal or close. A minimal stand-in: showModal sets the
-// open attribute, close removes it and fires `close`, and Esc fires a cancelable `cancel` at the
-// open dialog, closing it unless a handler prevents that, as the browser does. There is no top
-// layer or inertness; tests of those run in the browser (e2e).
+// open attribute, close removes it and fires `close` as a queued task, as browsers do (or at once,
+// see __fixtures__/dialog.ts), and Esc fires a cancelable `cancel` at the open dialog, closing it
+// unless a handler prevents that. There is no top layer or inertness; tests of those run in the
+// browser (e2e).
 const dialogPrototype: Pick<HTMLDialogElement, 'showModal' | 'close'> = HTMLDialogElement.prototype;
 if (!Object.hasOwn(HTMLDialogElement.prototype, 'showModal')) {
   dialogPrototype.showModal = function showModal(this: HTMLDialogElement) {
@@ -43,7 +45,8 @@ if (!Object.hasOwn(HTMLDialogElement.prototype, 'showModal')) {
     if (!this.hasAttribute('open')) return;
     this.removeAttribute('open');
     if (value !== undefined) this.returnValue = value;
-    this.dispatchEvent(new Event('close'));
+    if (dialogClose.delivery === 'sync') this.dispatchEvent(new Event('close'));
+    else setTimeout(() => this.dispatchEvent(new Event('close')), 0);
   };
   document.addEventListener('keydown', (event) => {
     if (event.key !== 'Escape' || event.defaultPrevented) return;
@@ -61,6 +64,7 @@ globalThis.DOMMatrixReadOnly ??= DOMMatrixStub as unknown as typeof DOMMatrixRea
 
 afterEach(() => {
   cleanup();
+  dialogClose.delivery = 'task';
   sessionStorage.clear();
   localStorage.clear();
 });

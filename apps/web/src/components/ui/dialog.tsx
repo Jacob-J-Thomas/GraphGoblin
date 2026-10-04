@@ -103,8 +103,13 @@ export function Dialog({
   const descriptionId = useId();
   const latestRef = useRef({ onClose, returnFocus, open });
   latestRef.current = { onClose, returnFocus, open };
-  /** Set while this component closes the dialog itself, so its close event is not a dismissal. */
-  const closingRef = useRef(false);
+  /**
+   * Closes this component made itself whose `close` event has not arrived yet. Browsers deliver
+   * `close` as a queued task, after the code that closed the dialog has finished (Strict Mode
+   * closes and reopens it while mounting), so those events are matched here and ignored rather
+   * than taken for a dismissal by the browser.
+   */
+  const ownClosesRef = useRef(0);
   /** Whether the current press started on the backdrop (a drag out of a field must not close). */
   const pressedBackdropRef = useRef(false);
 
@@ -115,9 +120,10 @@ export function Dialog({
     if (!dialog.open) dialog.showModal();
     headingRef.current?.focus();
     return () => {
-      closingRef.current = true;
-      if (dialog.open) dialog.close();
-      closingRef.current = false;
+      if (dialog.open) {
+        ownClosesRef.current += 1;
+        dialog.close();
+      }
       const preferred = latestRef.current.returnFocus?.();
       const target = preferred?.isConnected ? preferred : opener;
       if (target instanceof HTMLElement && target.isConnected) target.focus();
@@ -131,8 +137,14 @@ export function Dialog({
     latestRef.current.onClose('escape');
   };
 
-  const onNativeClose = () => {
-    if (!closingRef.current && latestRef.current.open) latestRef.current.onClose('dismissed');
+  const onNativeClose = (event: SyntheticEvent<HTMLDialogElement>) => {
+    if (ownClosesRef.current > 0) {
+      ownClosesRef.current -= 1;
+      return;
+    }
+    // Reopened since that close was queued: it no longer describes the dialog.
+    if (event.currentTarget.open) return;
+    if (latestRef.current.open) latestRef.current.onClose('dismissed');
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLDialogElement>) => {
