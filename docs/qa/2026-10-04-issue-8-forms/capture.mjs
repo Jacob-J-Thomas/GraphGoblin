@@ -133,7 +133,7 @@ function gallery(childLoopId) {
           args: ['test', '--filter', '{{ vars.package }}'],
           env: { CI: 'true', NODE_OPTIONS: '--max-old-space-size=4096' },
           stdin: 'none',
-          exitCodeRoutes: { '1': 'failed' },
+          exitCodeRoutes: { 1: 'failed' },
           timeoutSeconds: 600,
         },
         0,
