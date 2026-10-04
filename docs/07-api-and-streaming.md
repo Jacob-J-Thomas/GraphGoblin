@@ -40,7 +40,7 @@ Settings and catalog
   CRUD   /secrets  /api-keys  /model-catalog  /settings   (schedules follow publish; read them at /loops/{id}/triggers)
   GET    /harness/preflight             Codex installed and authenticated?
   GET    /system/preflight              first-run checks: Node, data dir, master key, database, harnesses, Jev, default model (11)
-  GET    /openapi.json   GET /healthz   GET /version
+  GET    /openapi.json   GET /healthz   GET /version (public)
 ```
 
 All list endpoints are paginated with cursors. All ids are ULIDs.
@@ -62,8 +62,20 @@ All list endpoints are paginated with cursors. All ids are ULIDs.
 - **Scopes (Decided by implementation, WP-G, 2026-10-03)**: every private route, read or write, needs a scope, checked in the same `onRequest` hook that authenticates the key, before the body is parsed or any data is read (`requiredScope` in `apps/api/src/plugins/auth.ts`). The scope is `<resource>:read` for `GET` and `HEAD` and `<resource>:write` for everything else, where the resource is the route's first path segment: `loops`, `runs`, `settings`, `secrets`, `api-keys`, `events`, and `system`. `/model-catalog` shares `settings`, and `/harness/preflight` shares `system` with `/system/preflight`. Two routes are overridden: `POST /loops/{id}/runs` needs `runs:write`, and `POST /loops/{id}/validate`, which saves nothing, needs `loops:read`. A write scope implies the read scope of the same resource, so a `runs:write` key can follow the runs it starts. `*` grants everything, and local trusted mode (no key presented, keys not required) acts with `*`. A key without the scope gets `403 FORBIDDEN`, even when the request would also fail validation. A request that matches no route gets its `404` regardless of scopes. The adversarial API suite holds a table of every advertised route and its scope; adding a route means adding it there.
 - **API-key delegation**: `POST /api-keys` requires `api-keys:write`. Local trusted mode and callers holding `*` may grant any scopes; omitting `scopes` defaults to `["*"]` only for them. A scoped caller must list `scopes` explicitly or gets `400 VALIDATION_FAILED` with a message explaining that requirement. It may grant only scopes it holds, including reads implied by its write scopes, and may never grant `*`. A request containing unheld scopes or `*` gets `403 SCOPE_NOT_DELEGABLE`, listing all offending scopes in `detail` and `errors.scopes`, without creating a key. An `api-keys:write` key can still list and revoke every key for the local owner, including `*` keys. See [ADR-0016](decisions/ADR-0016-api-key-scope-delegation.md).
 - **Path ids**: resource ids in paths (loop, version, run, API key) must be ULIDs. A malformed id is a `400 VALIDATION_FAILED`, not a lookup that ends in `404`. Node names, signal names, secret names, model names, setting keys, artifact ids, and webhook tokens keep their own formats.
-- **Required keys** (`GG_REQUIRE_API_KEY=true`): every API route needs a key. The static web app (`/app/` and its `/` and `/app` redirects) stays public because the shell holds no data; on the first 401 the app asks for a key, keeps it in the browser's `localStorage`, and sends it on every request and event stream. Settings can forget it.
+- **Required keys** (`GG_REQUIRE_API_KEY=true`): every route outside the [public route list](#public-routes-decided-by-implementation-2026-10-03) needs a key. The static web app stays public because the shell holds no data; on the first 401 the app asks for a key, keeps it in the browser's `localStorage`, and sends it on every request and event stream. Settings can forget it.
 - **Post-1.0**: an `AuthProvider` interface in `apps/api` with OIDC as the first hosted implementation. Every handler already receives an `ownerId` from the auth layer; in 1.0 it is always `local`.
+
+### Public routes (Decided by implementation, 2026-10-03)
+
+The authentication hook treats these six prefixes (`PUBLIC_PREFIXES` in `apps/api/src/plugins/auth.ts`) as public: `/healthz`, `/version`, `/openapi.json`, `/docs`, `/hooks/`, and `/app/`. Each prefix matches the prefix itself, its trailing-slash form, and every path beneath it, so `/hooks/<token>`, `/docs/static/...`, and `/app/assets/...` are public. The two exact public paths (`PUBLIC_EXACT`) are `/` and `/app`.
+
+Public paths bypass API-key authentication. If no route handles a public path, the response is `404`, never `401`.
+
+The `/docs` prefix is on the public list, but Swagger UI is registered there only when `GG_SWAGGER_UI=true` (the default). With `GG_SWAGGER_UI=false`, the UI is not registered, so `/docs` returns `404` without asking for a key.
+
+`/hooks/<token>` needs no API key because the HMAC signature is the credential; see [Webhook](08-triggers-and-integrations.md#webhook-decided-shipped-in-m6). `/app/`, `/`, and `/app` stay public because the web shell holds no data and every API call it makes is still authenticated.
+
+Everything outside these public prefixes and exact paths is private. With `GG_REQUIRE_API_KEY=true`, it needs a bearer API key; when keys are not required, it runs in local trusted mode as described above.
 
 ## Return delivery (Decided)
 

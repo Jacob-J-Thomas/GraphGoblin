@@ -149,7 +149,7 @@ $env:GG_REQUIRE_API_KEY = 'true'
 export GG_REQUIRE_API_KEY=true
 ```
 
-A missing, malformed, or revoked key returns 401; a key lacking the route's scope returns 403 `FORBIDDEN`. A wrong key is rejected even in trusted mode, and presenting a scoped key in trusted mode still limits it to its own scopes. Public health, version, OpenAPI, API-doc, and signed webhook routes remain exempt. Keep the API on localhost and use [MCP's key configuration](05-mcp-and-codex-plugin.md#start-the-mcp-server) for agent clients.
+A missing, malformed, or revoked key returns 401 on private routes; a key lacking the route's scope returns 403 `FORBIDDEN`. A wrong key is rejected even in trusted mode, and presenting a scoped key in trusted mode still limits it to its own scopes. Public routes remain exempt; see the [full list](../07-api-and-streaming.md#public-routes-decided-by-implementation-2026-10-03). Keep the API on localhost and use [MCP's key configuration](05-mcp-and-codex-plugin.md#start-the-mcp-server) for agent clients.
 
 Revoke an unused key in **Settings → API keys**, or through REST:
 

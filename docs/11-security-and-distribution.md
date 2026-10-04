@@ -23,7 +23,7 @@
 ## Inbound exposure (Decided)
 
 - The API binds to localhost by default. Changing the bind address without API keys enabled logs a prominent warning.
-- Webhook endpoints are the only intentionally unauthenticated routes and are protected by HMAC signatures, replay windows, size limits, and rate limits. See 08.
+- Webhook endpoints are protected by HMAC signatures, replay windows, size limits, and rate limits. See [Public routes](07-api-and-streaming.md#public-routes-decided-by-implementation-2026-10-03) for the full list.
 - Development tunnels are limited to the hooks prefix and must authenticate at the tunnel. Polling triggers are the recommended no-inbound alternative.
 
 ## Execution posture (Decided)
@@ -75,7 +75,7 @@ The lock lives on the data volume at `/data/graphgoblin.lock` and can survive an
 | Jev            | `jev-api-key` secret set                                                                              | no key (Jev is optional; decisions fall back to Codex), or not checkable before the database is migrated                                             |                                                                                      |
 | Default model  | `GG_DEFAULT_MODEL` is an enabled catalog entry                                                        | in the catalog but disabled                                                                                                                          | not in the catalog (the default catalog before first start)                          |
 
-- **HTTP**: `GET /system/preflight` returns `{ ok, checks: [{ id, label, status, message }] }` for the running installation; `ok` is false when any check failed. It is not a public route: it needs a key whenever keys are required, like every other non-public route. `GET /harness/preflight` remains for the harness check alone.
+- **HTTP**: `GET /system/preflight` returns `{ ok, checks: [{ id, label, status, message }] }` for the running installation; `ok` is false when any check failed. It is not a public route: it needs a key whenever keys are required, like every other [non-public route](07-api-and-streaming.md#public-routes-decided-by-implementation-2026-10-03). `GET /harness/preflight` remains for the harness check alone.
 - **CLI**: `node apps/api/dist/main.js --preflight` (or `pnpm --filter @graphgoblin/api preflight` after `pnpm build`) reads the same environment as the server, prints the checks as a table, and exits 0 when no check failed and 1 otherwise, without starting the server. It opens the database only when its file exists, and never creates the data directory, the key, or the database, so it is safe before the first start. `GG_DB_URL` is parsed the way libsql parses it (percent-decoded, relative, `file:///C:/...`), and the server's start creates the database file's directory as well as the data directory. The writability probe opens a new randomly named file with `wx`, so it never truncates an existing file, never follows a symlink, and removes only the file it created.
 
 ## First API key (Decided, WP-F2, ADR-0015)
