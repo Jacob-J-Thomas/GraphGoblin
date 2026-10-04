@@ -1,0 +1,180 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import {
+  readThemes,
+  resolveToken,
+  luminance,
+  contrastRatio,
+  validatePairs,
+  contrastReport,
+} from './contrast.mjs';
+
+const here = dirname(fileURLToPath(import.meta.url));
+const samplePath = resolve(here, '../../docs/design/visual-direction/tokens.css');
+const sample = readFileSync(samplePath, 'utf8');
+const pairs = JSON.parse(readFileSync(join(here, 'design-contrast.pairs.json'), 'utf8'));
+
+test('theme parsing resolves root defaults and independent explicit overrides', () => {
+  const themes = readThemes(`/* ignored */ @import 'fonts.css';
+    :root { --base: #fff; --fg: #000; --bg: var(--base); }
+    [data-theme="light"] { --fg: #111 }
+    :root[data-theme='dark'], [data-theme='dark'] { --base: #000; --fg: #fff; }
+    @media (max-width: 1px) { :root { --base: #abc; } }
+    html[data-theme=dark] { --extra: var(--fg); }
+    .unrelated { --fg: #f00; }
+    /* trailing comment */`);
+  assert.equal(resolveToken(themes.light, '--bg'), '#fff');
+  assert.equal(resolveToken(themes.light, '--fg'), '#111');
+  assert.equal(resolveToken(themes.dark, '--bg'), '#000');
+  assert.equal(resolveToken(themes.dark, '--fg'), '#fff');
+  assert.equal(resolveToken(themes.dark, '--extra'), '#fff');
+  assert.equal(themes.light['--extra'], undefined);
+  assert.deepEqual(readThemes('/* empty */'), { dark: {}, light: {} });
+  assert.throws(() => readThemes(':root { --fg: #fff;'), /Unclosed CSS rule/);
+});
+
+test('alias resolution catches missing and circular tokens, and supports fallbacks', () => {
+  const tokens = { '--a': 'var( --b )', '--b': '#fff', '--fallback': 'var(--absent, var(--b))' };
+  assert.equal(resolveToken(tokens, '--a'), '#fff');
+  assert.equal(resolveToken(tokens, '--fallback'), '#fff');
+  assert.equal(resolveToken({ '--a': 'var(--missing, #abc)' }, '--a'), '#abc');
+  assert.throws(() => resolveToken(tokens, '--missing'), /Unknown token/);
+  assert.throws(() => resolveToken({ '--a': 'var(--missing)' }, '--a'), /Unknown token/);
+  assert.throws(
+    () => resolveToken({ '--a': 'var(--b)', '--b': 'var(--a)' }, '--a'),
+    /Circular token/,
+  );
+});
+
+test('WCAG reference results, symmetry and both channel transfer branches', () => {
+  assert.equal(luminance('#000'), 0);
+  assert.equal(luminance('#ffffff'), 1);
+  assert.equal(luminance('#ABC'), luminance('#aabbcc'));
+  assert.equal(contrastRatio('#000', '#fff'), 21);
+  assert.equal(contrastRatio('#fff', '#000'), 21);
+  assert.equal(contrastRatio('#123456', '#123456'), 1);
+  assert.ok(Math.abs(contrastRatio('#767676', '#ffffff') - 4.542224959605253) < 1e-10);
+  assert.ok(contrastRatio('#777777', '#ffffff') < 4.5);
+  assert.ok(luminance('#010a0b') > 0);
+  for (const colour of ['#ffff', '#12345678', 'rgba(0,0,0,.5)', 'red']) {
+    assert.throws(() => luminance(colour), /opaque/);
+  }
+});
+
+test('pair data validates all groups and preserves the sample with focus on every surface', () => {
+  validatePairs(pairs);
+  assert.equal(pairs.text.length, 84);
+  assert.equal(pairs.nonText.length, 94);
+  assert.equal(pairs.decorative.length, 14);
+  for (const name of Object.keys(readThemes(sample).light).filter((name) =>
+    name.startsWith('--surface-'),
+  )) {
+    assert.ok(
+      pairs.nonText.some(([fg, bg]) => fg === '--focus-ring' && bg === name),
+      name,
+    );
+  }
+  for (const invalid of [
+    null,
+    'bad',
+    {},
+    { ...pairs, text: [] },
+    { ...pairs, text: 'bad' },
+    { ...pairs, text: ['bad'] },
+    { ...pairs, text: [['--a', '--b']] },
+    { ...pairs, text: [['--a', '--b', '']] },
+    { ...pairs, text: [['--a', '--b', 1]] },
+    { ...pairs, text: [['a', '--b', 'label']] },
+    { ...pairs, text: [['--a', 'b', 'label']] },
+  ]) {
+    assert.throws(() => validatePairs(invalid), /Contrast pairs|Invalid text pair/);
+  }
+});
+
+test('report measures both themes, enforcing unrounded ratios and listing decorative pairs', () => {
+  const result = contrastReport(sample, pairs);
+  assert.equal(result.failures.length, 0);
+  assert.match(
+    result.markdown,
+    /84 text pairs \(0 below 4.5:1\), 94 non-text pairs \(0 below 3:1\)/,
+  );
+  assert.match(result.markdown, /## Dark theme/);
+  assert.match(result.markdown, /## Light theme/);
+  assert.match(result.markdown, /decorative/);
+  const bad = contrastReport(
+    ':root { --fg: #777777; --bg: #fff; --edge: #fff; }',
+    {
+      text: [['--fg', '--bg', 'A | B\nC']],
+      nonText: [['--edge', '--bg', 'Boundary']],
+      decorative: [['--bg', '--bg', 'Decoration']],
+    },
+    'fixture.css',
+  );
+  assert.equal(bad.failures.length, 4);
+  assert.match(bad.markdown, /\*\*FAIL\*\*/);
+  assert.match(bad.markdown, /A \\\| B C/);
+  assert.match(bad.markdown, /from `fixture.css`/);
+  assert.throws(() => contrastReport(':root {}', pairs), /Unknown token/);
+  assert.throws(
+    () => contrastReport(`${sample}\n:root { --surface-new: #fff; }`, pairs),
+    /Missing non-text focus-ring pair for --surface-new/,
+  );
+});
+
+test('CLI writes a formatted temporary table, checks freshness and reports missing inputs', () => {
+  // Keep temp directories: the implementation brief forbids directory deletion.
+  const temporary = mkdtempSync(join(tmpdir(), 'graphgoblin-contrast-'));
+  const output = join(temporary, 'nested/table.md');
+  const run = (args, env = {}) =>
+    spawnSync(process.execPath, [join(here, 'design-contrast.mjs'), ...args], {
+      encoding: 'utf8',
+      env: { ...process.env, GG_DESIGN_TOKENS: samplePath, ...env },
+    });
+  const write = run(['--output', output]);
+  assert.equal(write.status, 0, write.stderr);
+  assert.match(write.stderr, /0 failing enforced pair/);
+  const check = run(['--tokens', samplePath, '--output', output, '--check']);
+  assert.equal(check.status, 0, check.stderr);
+  const table = readFileSync(output, 'utf8');
+  writeFileSync(output, table.replace(/\n/g, '\r\n'));
+  assert.equal(run(['--check', '--output', output]).status, 0);
+  writeFileSync(output, 'stale');
+  const stale = run(['--check', '--output', output]);
+  assert.equal(stale.status, 1);
+  assert.match(stale.stderr, /table stale/);
+  const absent = run(['--check', '--output', join(temporary, 'absent.md')]);
+  assert.equal(absent.status, 1);
+  assert.match(absent.stderr, /missing or stale/);
+  // The repository output is checked without writing a sample table there.
+  const repositoryCheck = run(['--check']);
+  assert.equal(repositoryCheck.status, 1);
+  assert.match(repositoryCheck.stderr, /0 failing enforced pair/);
+  const directoryOutput = join(temporary, 'directory.md');
+  mkdirSync(directoryOutput);
+  const unreadable = run(['--check', '--output', directoryOutput]);
+  assert.equal(unreadable.status, 2);
+  assert.match(unreadable.stderr, /Design contrast failed/);
+  const missing = run(['--check'], { GG_DESIGN_TOKENS: join(temporary, 'absent.css') });
+  assert.equal(missing.status, 2);
+  assert.match(missing.stderr, /Cannot read design tokens.*supply --tokens/);
+  const invalid = run(['--bad']);
+  assert.equal(invalid.status, 2);
+  assert.match(invalid.stderr, /Usage:/);
+  assert.equal(run(['--tokens']).status, 2);
+  const badTokens = join(temporary, 'bad.css');
+  writeFileSync(badTokens, sample.replace(/--text-default:\s*[^;]+;/g, '--text-default: #ffffff;'));
+  const failingWrite = run(['--tokens', badTokens, '--output', output]);
+  assert.equal(failingWrite.status, 1);
+  assert.match(failingWrite.stderr, /FAIL light --text-default/);
+  const failingCheck = run(['--tokens', badTokens, '--output', output, '--check']);
+  assert.equal(failingCheck.status, 1);
+  assert.doesNotMatch(failingCheck.stderr, /table stale/);
+  const unparseable = join(temporary, 'empty.css');
+  writeFileSync(unparseable, ':root {}');
+  assert.equal(run(['--tokens', unparseable, '--output', output]).status, 2);
+});
