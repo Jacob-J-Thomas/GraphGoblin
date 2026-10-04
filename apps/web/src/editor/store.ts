@@ -123,6 +123,8 @@ export interface EditorState {
    */
   undo: () => void;
   redo: () => void;
+  /** End the open step, so the next change starts a new one even with the same key (a new drag). */
+  closeStep: () => void;
 }
 
 export interface FieldError {
@@ -389,9 +391,9 @@ export const useEditorStore = create<EditorState>((set, get) => {
       );
       // Its unparsed field text goes with it (part of the same step, so undo brings it back).
       set((s) => {
-        const { [`node:${nodeId}`]: _removed, ...fieldErrors } = s.fieldErrors;
+        const { [`node:${nodeId}`]: removed, ...fieldErrors } = s.fieldErrors;
         return {
-          fieldErrors,
+          ...(removed ? { fieldErrors } : {}),
           ...(s.selectedNodeId === nodeId
             ? { selectedNodeId: undefined, nodeDialogOpen: false }
             : {}),
@@ -508,5 +510,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
     undo: () => travelTo('undo'),
 
     redo: () => travelTo('redo'),
+
+    closeStep: () => set({ openStep: undefined }),
   };
 });

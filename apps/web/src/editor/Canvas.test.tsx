@@ -206,21 +206,29 @@ describe('Canvas handlers', () => {
     expect(store().selectedNodeId).toBeUndefined();
   });
 
-  it('records a drag as one undo step, though the drag stop reports its position twice', () => {
+  it('records each drag as one undo step, though its stop reports the position twice', () => {
     renderCanvas();
-    const end = { x: 120, y: 140 };
-    act(() =>
-      flow().onNodesChange!([{ type: 'position', id: 'prep', position: end, dragging: true }]),
-    );
-    expect(store().past).toHaveLength(0);
-    act(() =>
-      flow().onNodesChange!([{ type: 'position', id: 'prep', position: end, dragging: false }]),
-    );
-    const prep = flow().nodes!.find((n) => n.id === 'prep')!;
-    act(() => flow().onNodeDragStop!({} as never, { ...prep, position: end }, []));
+    const prepUi = () => store().definition!.nodes.find((n) => n.id === 'prep')!.ui;
+    const drag = (end: { x: number; y: number }) => {
+      const prep = flow().nodes!.find((n) => n.id === 'prep')!;
+      act(() => flow().onNodeDragStart!({} as never, prep, []));
+      act(() =>
+        flow().onNodesChange!([{ type: 'position', id: 'prep', position: end, dragging: true }]),
+      );
+      act(() =>
+        flow().onNodesChange!([{ type: 'position', id: 'prep', position: end, dragging: false }]),
+      );
+      act(() => flow().onNodeDragStop!({} as never, { ...prep, position: end }, []));
+    };
+    drag({ x: 120, y: 140 });
     expect(store().past.map((step) => step.label)).toEqual(['move prep']);
+    // A second drag right after the first is a step of its own.
+    drag({ x: 200, y: 140 });
+    expect(store().past.map((step) => step.label)).toEqual(['move prep', 'move prep']);
     act(() => store().undo());
-    expect(store().definition!.nodes.find((n) => n.id === 'prep')!.ui).toBeUndefined();
+    expect(prepUi()).toEqual({ x: 120, y: 140 });
+    act(() => store().undo());
+    expect(prepUi()).toBeUndefined();
   });
 
   it('deletes the selection with Delete or Backspace only while focus is on the canvas', () => {
