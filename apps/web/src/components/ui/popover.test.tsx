@@ -581,6 +581,49 @@ describe('Popover: what holds it open (#15 review)', () => {
     expect(isOpen()).toBe(false);
   });
 
+  it('the focus a click leaves on the trigger does not hold a hover-opened popover open', () => {
+    vi.useFakeTimers();
+    render(<Harness />);
+    const press = () => {
+      fireEvent.pointerDown(trigger());
+      act(() => trigger().focus());
+      fireEvent.pointerUp(trigger());
+      fireEvent.click(trigger());
+    };
+    // A click pins it, a second click closes it; Chrome leaves focus on the clicked button.
+    press();
+    expect(isOpen()).toBe(true);
+    press();
+    expect(isOpen()).toBe(false);
+    expect(trigger()).toHaveFocus();
+    // Hovered again, it closes once the pointer leaves: that focus came from a press.
+    fireEvent.pointerEnter(trigger(), { pointerType: 'mouse' });
+    act(() => {
+      vi.advanceTimersByTime(OPEN_DELAY);
+    });
+    expect(isOpen()).toBe(true);
+    fireEvent.pointerLeave(trigger(), { pointerType: 'mouse' });
+    act(() => {
+      vi.advanceTimersByTime(CLOSE_DELAY);
+    });
+    expect(isOpen()).toBe(false);
+    // Focus the keyboard gives back after Esc does hold it.
+    fireEvent.pointerEnter(trigger(), { pointerType: 'mouse' });
+    act(() => {
+      vi.advanceTimersByTime(OPEN_DELAY);
+    });
+    fireEvent.keyDown(trigger(), { key: 'Escape' });
+    expect(isOpen()).toBe(false);
+    act(() => button('After Info').focus());
+    act(() => trigger().focus());
+    expect(isOpen()).toBe(true);
+    fireEvent.pointerLeave(trigger(), { pointerType: 'mouse' });
+    act(() => {
+      vi.advanceTimersByTime(CLOSE_DELAY * 5);
+    });
+    expect(isOpen()).toBe(true);
+  });
+
   it('a press that never became a click does not stop the next keyboard focus opening it', () => {
     render(<Harness />);
     // A touch that turned into a scroll: cancelled.

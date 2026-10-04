@@ -193,8 +193,10 @@ export function Popover({ label, trigger, children, className }: PopoverProps) {
   const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   /** Where the pointer is: over the trigger, over the popover (mouse and pen only). */
   const hoverRef = useRef({ trigger: false, popover: false });
-  /** Whether focus is on the trigger or inside the popover. */
+  /** Whether focus is on the trigger (not from a pointer press) or inside the popover. */
   const focusWithinRef = useRef(false);
+  /** Whether the trigger's focus came from a pointer press on it. */
+  const pointerFocusRef = useRef(false);
   /** A pointer press on the trigger is under way: the focus it brings opens nothing. */
   const pressRef = useRef(false);
   /** Set while this component moves focus to the trigger itself, which opens nothing either. */
@@ -231,8 +233,10 @@ export function Popover({ label, trigger, children, className }: PopoverProps) {
       triggerRef.current?.focus();
       quietRef.current = false;
     }
-    // Its controls unmount without a focusout: focus stays within only if it is on the trigger.
-    focusWithinRef.current = document.activeElement === triggerRef.current;
+    // Its controls unmount without a focusout: focus stays within only if it is on the trigger,
+    // and only if a pointer press did not put it there.
+    focusWithinRef.current =
+      document.activeElement === triggerRef.current && !pointerFocusRef.current;
   }, []);
 
   const show = (pin: boolean) => {
@@ -425,8 +429,12 @@ export function Popover({ label, trigger, children, className }: PopoverProps) {
     else next.focus();
   };
 
-  const onFocusIn = () => {
-    focusWithinRef.current = true;
+  const onFocusIn = (event: FocusEvent<HTMLDivElement>) => {
+    // The focus a press on the trigger brings (Chrome focuses a clicked button) does not hold a
+    // popover open: the pointer does that. Keyboard focus, and focus inside the popover, do.
+    const pressed = pressRef.current && (event.target as Node) === triggerRef.current;
+    pointerFocusRef.current = pressed;
+    focusWithinRef.current = !pressed;
   };
 
   const onFocusOut = (event: FocusEvent<HTMLDivElement>) => {
