@@ -26,6 +26,7 @@ import { useEditorStore } from './store.js';
 import { useAutosave } from './useAutosave.js';
 import { useLoadEditor } from './useLoadEditor.js';
 import { useResolveConflict } from './useResolveConflict.js';
+import { useUndoShortcuts } from './useUndoShortcuts.js';
 import { ValidationIndicator } from './ValidationIndicator.js';
 
 /**
@@ -53,6 +54,7 @@ export function EditorPage() {
     loopPanelDefault,
   );
   const flush = useAutosave(client);
+  useUndoShortcuts();
   const conflict = useEditorStore((s) => s.conflict);
   const resolve = useResolveConflict(loopId, flush);
   const savedRevision = useEditorStore((s) => s.savedRevision);

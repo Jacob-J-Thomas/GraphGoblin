@@ -178,6 +178,59 @@ describe('draft conflicts (If-Match)', () => {
     );
   });
 
+  it('saves an undo or redo like any edit: If-Match, the device copy, and the conflict stop', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const loop = api.addLoop(newLoopDefinition('mine'));
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'mine' });
+    const puts = () => api.callsTo('PUT', `/loops/${loop.id}/draft`);
+    const saved = () =>
+      waitFor(
+        () => expect(screen.getByTestId('save-state')).toHaveTextContent('All changes saved'),
+        SAVE_WAIT,
+      );
+    act(() => useEditorStore.getState().updateMeta({ description: 'one' }));
+    await saved();
+    act(() => useEditorStore.getState().updateMeta({ name: 'renamed' }));
+    await saved();
+    const token = api.draftToken(loop.id);
+
+    // Undo: the restored definition goes to the device and to the server, based on the last save.
+    await user.keyboard('{Control>}z{/Control}');
+    expect(useEditorStore.getState().definition!.name).toBe('mine');
+    await waitFor(async () =>
+      expect((await loadLocalDraft(loop.id))?.definition.name).toBe('mine'),
+    );
+    await saved();
+    expect(puts()).toHaveLength(3);
+    expect(puts()[2]!.headers.get('if-match')).toBe(`"${token}"`);
+    expect(puts()[2]!.body).toMatchObject({ definition: { name: 'mine', description: 'one' } });
+    expect(await loadLocalDraft(loop.id)).toMatchObject({
+      synced: true,
+      definition: { name: 'mine' },
+    });
+
+    // Another tab saves; the next undo is refused like any edit, and autosave stops.
+    api.saveDraftElsewhere(loop.id, { ...newLoopDefinition('mine'), description: 'theirs' });
+    await user.keyboard('{Control>}z{/Control}');
+    expect(useEditorStore.getState().definition).not.toHaveProperty('description');
+    expect(await screen.findByText(TITLE, undefined, SAVE_WAIT)).toBeInTheDocument();
+    const refused = puts().length;
+    await user.keyboard('{Control>}y{/Control}');
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    expect(puts()).toHaveLength(refused);
+    expect((await loadLocalDraft(loop.id))?.definition.description).toBe('one');
+
+    // Reloading the server draft starts the history afresh: Ctrl+Z has nothing to undo.
+    await user.click(screen.getByRole('button', { name: 'Reload server draft' }));
+    await waitFor(() => expect(useEditorStore.getState().definition?.description).toBe('theirs'));
+    expect(screen.getByRole('button', { name: 'Undo' })).toHaveAttribute('aria-disabled', 'true');
+    act(() => (document.activeElement as HTMLElement | null)?.blur());
+    await user.keyboard('{Control>}z{/Control}');
+    expect(useEditorStore.getState().definition?.description).toBe('theirs');
+  });
+
   it('recognises only DRAFT_CONFLICT problems', () => {
     expect(draftConflict(new Error('x'))).toBe(false);
     expect(draftConflict(new GraphGoblinApiError({ status: 409, code: 'NO_DRAFT' }))).toBe(false);

@@ -6,6 +6,7 @@ import { cn } from '../lib/utils.js';
 import { newRunPath } from '../runs/new/paths.js';
 import { LOOP_PANEL_ID } from './LoopPanel.js';
 import type { SaveState } from './store.js';
+import { UndoRedo } from './UndoRedo.js';
 
 const SAVE_LABEL: Record<SaveState, string> = {
   idle: '',
@@ -118,6 +119,7 @@ export function EditorToolbar({
         {SAVE_LABEL[saveState]}
       </span>
       <div className="ml-auto flex items-center gap-2">
+        <UndoRedo />
         <Button
           variant="outline"
           aria-expanded={loopPanelExpanded}

@@ -66,6 +66,8 @@ function focusIssue(root: HTMLElement | null, path: string | undefined): void {
 interface IdDraft {
   /** The node id this draft was typed for; a draft for another id is stale. */
   for: string;
+  /** The store's `historyEpoch` it was typed in; an undo or redo since makes it stale too. */
+  epoch: number;
   value: string;
   error?: string | undefined;
   warned?: string | undefined;
@@ -96,11 +98,20 @@ export function NodeEditorDialog({
 }) {
   const fieldErrors = useEditorStore((s) => s.fieldErrors);
   const nodeFocus = useEditorStore((s) => s.nodeFocus);
+  // Bumped by undo and redo: the config form remounts with the restored values.
+  const historyEpoch = useEditorStore((s) => s.historyEpoch);
   const bodyRef = useRef<HTMLElement>(null);
   const [epoch, setEpoch] = useState(0);
-  const [idState, setIdState] = useState<IdDraft>({ for: node.id, value: node.id });
+  const [idState, setIdState] = useState<IdDraft>({
+    for: node.id,
+    epoch: historyEpoch,
+    value: node.id,
+  });
   // After a rename the node has its new id, which the draft already holds.
-  const id: IdDraft = idState.for === node.id ? idState : { for: node.id, value: node.id };
+  const id: IdDraft =
+    idState.for === node.id && idState.epoch === historyEpoch
+      ? idState
+      : { for: node.id, epoch: historyEpoch, value: node.id };
   const { updateNode, removeNode, renameNode, closeNodeDialog, setFieldError } =
     useEditorStore.getState();
   const info = KIND_INFO[node.kind];
@@ -218,7 +229,7 @@ export function NodeEditorDialog({
             `config.<path>` name its fields (focus-field.ts). */}
         <div data-field-scope="config" className="grid min-w-0">
           <SchemaForm
-            key={`${node.kind}:${epoch}`}
+            key={`${node.kind}:${epoch}:${historyEpoch}`}
             schema={NodeConfigSchemas[node.kind]}
             value={node.config}
             label={`${node.id} config`}

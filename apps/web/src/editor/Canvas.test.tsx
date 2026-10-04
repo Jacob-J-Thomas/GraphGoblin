@@ -64,10 +64,10 @@ describe('Canvas handlers', () => {
     expect(data('infer').issues).toEqual([other]);
     // An edit to one node gives only that node new data.
     const check = data('check');
-    act(() => store().updateNode('prep', { label: 'Prepare' }));
+    act(() => store().updateNode('prep', { label: 'Prepare it' }));
     view.rerender(<Canvas definition={store().definition!} issues={[{ ...ISSUE }, other]} />);
     expect(data('prep')).not.toBe(prep);
-    expect(data('prep').node.label).toBe('Prepare');
+    expect(data('prep').node.label).toBe('Prepare it');
     expect(data('check')).toBe(check);
 
     // The cache itself: the previous object when node and issues match, a new one otherwise.

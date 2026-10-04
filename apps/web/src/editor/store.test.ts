@@ -1,5 +1,6 @@
 import { kitchenSinkLoop } from '@graphgoblin/contracts/testing';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { COALESCE_MS, HISTORY_LIMIT, historyClock } from './history.js';
 import { newLoopDefinition } from './model.js';
 import { useEditorStore } from './store.js';
 
@@ -26,8 +27,18 @@ describe('editor store', () => {
     expect(store().definition).toMatchObject({ name: 'b', description: 'about' });
     store().updateMeta({ description: '' });
     expect(store().definition).not.toHaveProperty('description');
+    expect(store().revision).toBe(3);
+    // An edit that changes nothing is not an edit: no revision, no save, no undo step.
+    const steps = store().past.length;
     store().updateMeta({});
-    expect(store().revision).toBe(4);
+    store().updateMeta({ name: 'b' });
+    store().updateNode('start', { label: 'Start' });
+    store().moveNode('start', store().definition!.nodes[0]!.ui!);
+    store().moveNode('missing', { x: 1, y: 1 });
+    store().removeEdge('missing');
+    store().removeNode('missing');
+    store().setFieldError('settings', 'x', undefined);
+    expect(store()).toMatchObject({ revision: 3, past: { length: steps } });
   });
 
   it('opens and closes the node editor without touching the selection', () => {
@@ -160,5 +171,283 @@ describe('editor store', () => {
     expect(store()).toMatchObject({ saveState: 'saved', savedRevision: 7 });
     store().setSaveState('error', 'boom');
     expect(store()).toMatchObject({ saveState: 'error', saveMessage: 'boom', savedRevision: 7 });
+  });
+});
+
+describe('undo and redo', () => {
+  let clock = 0;
+  beforeEach(() => {
+    store().reset();
+    clock = 0;
+    vi.spyOn(historyClock, 'now').mockImplementation(() => clock);
+  });
+  afterEach(() => vi.restoreAllMocks());
+
+  /** Let the merge window pass, so the next change is a step of its own. */
+  const pause = () => {
+    clock += COALESCE_MS;
+  };
+  const snapshot = () => ({ definition: store().definition, fieldErrors: store().fieldErrors });
+  const node = (id: string) => store().definition!.nodes.find((n) => n.id === id);
+  const unparsed = { message: 'invalid JSON', text: '{' };
+
+  it('has nothing to undo or redo on a fresh load', () => {
+    store().undo();
+    store().load('L1', newLoopDefinition('a'));
+    const before = store().definition;
+    store().undo();
+    store().redo();
+    expect(store()).toMatchObject({ definition: before, revision: 0, historyEpoch: 0 });
+    expect(store().past).toEqual([]);
+    expect(store().future).toEqual([]);
+  });
+
+  it.each<[string, () => void, (() => void)?]>([
+    ['add mutate', () => store().addNode('mutate', { x: 1, y: 2 })],
+    ['move start', () => store().moveNode('start', { x: 5, y: 6 })],
+    [
+      'connect mutate to done',
+      () => store().connect({ source: 'mutate', sourceHandle: 'out', target: 'done' }),
+      () => store().addNode('mutate', { x: 0, y: 0 }),
+    ],
+    [
+      'connect done loopBack to mutate',
+      () => store().connect({ source: 'done', sourceHandle: 'loopBack', target: 'mutate' }),
+      () => store().addNode('mutate', { x: 0, y: 0 }),
+    ],
+    ['remove edge start to done', () => store().removeEdge('e1')],
+    ['delete done', () => store().removeNode('done')],
+    ['rename done to finish', () => store().renameNode('done', 'finish')],
+    ['edit label of start', () => store().updateNode('start', { label: 'Begin' })],
+    [
+      'edit config of start',
+      () => store().updateNode('start', { config: { subtype: 'manual', exposeTo: ['ui'] } }),
+    ],
+    ['edit start', () => store().updateNode('start', { label: 'B', config: { subtype: 'cron' } })],
+    ['edit loop name', () => store().updateMeta({ name: 'b' })],
+    ['edit loop description', () => store().updateMeta({ description: 'about' })],
+    ['edit loop name and description', () => store().updateMeta({ name: 'b', description: 'c' })],
+    ['edit loop settings', () => store().updateSettings({ maxIterations: 5 })],
+    ['edit variables', () => store().updateVariables({ n: { type: 'number' } })],
+    ['edit config of start', () => store().setFieldError('node:start', 'inputSchema', unparsed)],
+    ['edit loop settings', () => store().setFieldError('settings', 'defaults', unparsed)],
+    ['edit variables', () => store().setFieldError('variables', 'variables.n', unparsed)],
+    ['edit custom', () => store().setFieldError('custom', 'path', unparsed)],
+  ])('undoes and redoes "%s" exactly', (label, change, setup) => {
+    store().load('L1', newLoopDefinition('a'));
+    setup?.();
+    pause();
+    const before = snapshot();
+    change();
+    const after = snapshot();
+    expect(after).not.toEqual(before);
+    expect(store().past.at(-1)!.label).toBe(label);
+    store().undo();
+    expect(snapshot().definition).toBe(before.definition);
+    expect(snapshot().fieldErrors).toBe(before.fieldErrors);
+    expect(store().future.at(-1)!.label).toBe(label);
+    store().redo();
+    expect(snapshot().definition).toBe(after.definition);
+    expect(snapshot().fieldErrors).toBe(after.fieldErrors);
+    expect(store().past.at(-1)!.label).toBe(label);
+    expect(store().future).toEqual([]);
+  });
+
+  it('makes undo and redo edits that autosave, and remounts the forms', () => {
+    store().load('L1', newLoopDefinition('a'));
+    store().updateMeta({ name: 'b' });
+    store().setSaveState('saved', undefined, store().revision);
+    store().undo();
+    expect(store()).toMatchObject({ revision: 2, saveState: 'pending', historyEpoch: 1 });
+    expect(store().definition!.name).toBe('a');
+    store().redo();
+    expect(store()).toMatchObject({ revision: 3, saveState: 'pending', historyEpoch: 2 });
+    // A step that only changed unparsed text has nothing for autosave to send.
+    pause();
+    store().setFieldError('settings', 'defaults', unparsed);
+    store().setSaveState('saved', undefined, store().revision);
+    store().undo();
+    expect(store()).toMatchObject({ revision: 3, saveState: 'saved', historyEpoch: 3 });
+    expect(store().fieldErrors).toEqual({});
+  });
+
+  it('clears redo on a new edit after an undo', () => {
+    store().load('L1', newLoopDefinition('a'));
+    store().addNode('mutate', { x: 0, y: 0 });
+    pause();
+    store().addNode('wait', { x: 0, y: 0 });
+    store().undo();
+    expect(store().future).toHaveLength(1);
+    store().updateMeta({ name: 'b' });
+    expect(store().future).toEqual([]);
+    store().redo();
+    expect(node('wait')).toBeUndefined();
+    expect(store().past.map((entry) => entry.label)).toEqual(['add mutate', 'edit loop name']);
+  });
+
+  it('merges typing in one field, and a drag or nudges of one node, into one step', () => {
+    store().load('L1', newLoopDefinition('a'));
+    for (const label of ['h', 'he', 'hel', 'hell', 'hello']) {
+      store().updateNode('start', { label });
+      clock += 200;
+    }
+    expect(store().past).toHaveLength(1);
+    store().undo();
+    expect(node('start')!.label).toBe('Start');
+    store().redo();
+    expect(node('start')!.label).toBe('hello');
+
+    // After an undo or redo the next change starts a step of its own, even in the same field.
+    store().updateNode('start', { label: 'hello!' });
+    expect(store().past).toHaveLength(2);
+
+    // A drag ends with the same position twice (xyflow's change and its drag stop): one step.
+    pause();
+    store().moveNode('done', { x: 400, y: 90 });
+    store().moveNode('done', { x: 400, y: 90 });
+    // Arrow-key nudges in quick succession: one step.
+    pause();
+    store().moveNode('start', { x: 5, y: 80 });
+    clock += 100;
+    store().moveNode('start', { x: 10, y: 80 });
+    expect(store().past.map((entry) => entry.label)).toEqual([
+      'edit label of start',
+      'edit label of start',
+      'move done',
+      'move start',
+    ]);
+    store().undo();
+    expect(node('start')!.ui).toEqual({ x: 0, y: 80 });
+    store().undo();
+    expect(node('done')!.ui).toEqual({ x: 320, y: 80 });
+
+    // Typing a value and deleting it again leaves no step behind.
+    pause();
+    const steps = store().past.length;
+    store().updateMeta({ description: 'x' });
+    store().updateMeta({ description: '' });
+    expect(store().past).toHaveLength(steps);
+  });
+
+  it('merges a form’s unparsed text with its edits, and brings it back on undo', () => {
+    store().load('L1', newLoopDefinition('a'));
+    const schema = { type: 'object' };
+    // Typed JSON that does not parse, then does: the config field's one step.
+    store().setFieldError('node:start', 'inputSchema', { message: 'invalid JSON', text: '{"t' });
+    store().setFieldError('node:start', 'inputSchema', undefined);
+    store().updateNode('start', { config: { subtype: 'manual', inputSchema: schema } });
+    expect(store().past).toHaveLength(1);
+    store().undo();
+    expect(node('start')!.config).toEqual({ subtype: 'manual' });
+    expect(store().fieldErrors).toEqual({});
+
+    // Text left unparsed is a step of its own: undo drops it, redo brings it back.
+    store().redo();
+    pause();
+    store().setFieldError('node:start', 'inputSchema', unparsed);
+    store().undo();
+    expect(store().fieldErrors).toEqual({});
+    expect(node('start')!.config).toEqual({ subtype: 'manual', inputSchema: schema });
+    store().redo();
+    expect(store().fieldErrors).toEqual({ 'node:start': { inputSchema: unparsed } });
+  });
+
+  it('restores a deleted node with its edges, unparsed text, and an exit’s loop-back target', () => {
+    store().load('L1', newLoopDefinition('a'));
+    store().addNode('mutate', { x: 0, y: 0 });
+    store().connect({ source: 'mutate', sourceHandle: 'out', target: 'done' });
+    store().connect({ source: 'done', sourceHandle: 'loopBack', target: 'mutate' });
+    store().setFieldError('node:mutate', 'operations', unparsed);
+    store().openNode('mutate');
+    pause();
+    const before = snapshot();
+    store().removeNode('mutate');
+    expect(store()).toMatchObject({ selectedNodeId: undefined, nodeDialogOpen: false });
+    expect(node('done')!.config).toEqual({});
+    expect(store().fieldErrors).toEqual({});
+    store().undo();
+    expect(snapshot()).toEqual(before);
+    expect(node('done')!.config).toEqual({ loopBack: { targetNodeId: 'mutate' } });
+    const touching = store().definition!.edges.filter((e) =>
+      [e.from.node, e.to.node].includes('mutate'),
+    );
+    expect(touching).toHaveLength(2);
+    expect(store().fieldErrors['node:mutate']).toEqual({ operations: unparsed });
+  });
+
+  it('keeps a renamed node selected and its editor open across undo and redo', () => {
+    store().load('L1', newLoopDefinition('a'));
+    store().addNode('mutate', { x: 0, y: 0 });
+    store().connect({ source: 'done', sourceHandle: 'loopBack', target: 'mutate' });
+    store().setFieldError('node:mutate', 'operations', unparsed);
+    store().openNode('mutate');
+    const session = store().nodeDialogSession;
+    pause();
+    store().renameNode('mutate', 'prep');
+    expect(store().selectedNodeId).toBe('prep');
+    store().undo();
+    expect(store()).toMatchObject({
+      selectedNodeId: 'mutate',
+      nodeDialogOpen: true,
+      nodeDialogSession: session,
+    });
+    expect(node('done')!.config).toEqual({ loopBack: { targetNodeId: 'mutate' } });
+    expect(store().definition!.edges.at(-1)!.to.node).toBe('mutate');
+    expect(store().fieldErrors).toEqual({ 'node:mutate': { operations: unparsed } });
+    store().redo();
+    expect(store()).toMatchObject({ selectedNodeId: 'prep', nodeDialogOpen: true });
+    expect(store().fieldErrors).toEqual({ 'node:prep': { operations: unparsed } });
+    // With another node selected, undo and redo leave the selection alone.
+    store().select('start');
+    store().undo();
+    expect(store().selectedNodeId).toBe('start');
+    store().redo();
+    expect(store().selectedNodeId).toBe('start');
+  });
+
+  it('deselects a node that an undo removes, and closes its editor for good', () => {
+    store().load('L1', newLoopDefinition('a'));
+    store().addNode('mutate', { x: 0, y: 0 });
+    store().openNode('mutate', { field: 'config.operations' });
+    store().undo();
+    expect(store()).toMatchObject({
+      selectedNodeId: undefined,
+      nodeDialogOpen: false,
+      nodeFocus: undefined,
+    });
+    store().redo();
+    expect(node('mutate')).toBeDefined();
+    expect(store()).toMatchObject({ selectedNodeId: undefined, nodeDialogOpen: false });
+  });
+
+  it('keeps the last 100 steps: 101 edits and 101 undos leave the first edit in place', () => {
+    store().load('L1', newLoopDefinition('a'));
+    for (let i = 1; i <= HISTORY_LIMIT + 1; i += 1) {
+      store().updateMeta({ name: `name ${i}` });
+      pause();
+    }
+    expect(store().past).toHaveLength(HISTORY_LIMIT);
+    for (let i = 0; i <= HISTORY_LIMIT; i += 1) store().undo();
+    expect(store().definition!.name).toBe('name 1');
+    expect(store().future).toHaveLength(HISTORY_LIMIT);
+  });
+
+  it('starts afresh on a load or a reset', () => {
+    store().load('L1', newLoopDefinition('a'));
+    store().updateMeta({ name: 'b' });
+    pause();
+    store().updateMeta({ description: 'c' });
+    store().undo();
+    expect(store()).toMatchObject({ past: { length: 1 }, future: { length: 1 } });
+    store().load('L1', newLoopDefinition('server'));
+    expect(store()).toMatchObject({ past: [], future: [], openStep: undefined, historyEpoch: 0 });
+    store().undo();
+    expect(store().definition!.name).toBe('server');
+    store().updateMeta({ name: 'x' });
+    store().reset();
+    expect(store()).toMatchObject({ past: [], future: [], definition: undefined });
+    // Unparsed text reported before a loop is loaded is not a step.
+    store().setFieldError('settings', 'x', unparsed);
+    expect(store().past).toEqual([]);
   });
 });
