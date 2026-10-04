@@ -683,7 +683,11 @@ describe('migration 0003 model catalog max effort', () => {
       await check(current);
     } finally {
       current.close();
-      // Leave the temporary fixture directories in place for this worktree's delivery review.
+      try {
+        rmSync(dir, { recursive: true, force: true });
+      } catch {
+        // Windows can hold the database file briefly after close; the temp dir is left behind.
+      }
     }
   }
 
