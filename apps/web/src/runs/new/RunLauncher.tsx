@@ -43,7 +43,7 @@ function StartForm({ loopId, version }: { loopId: string; version: LoopVersionRe
   const inputSchema = trigger?.config.subtype === 'manual' ? trigger.config.inputSchema : undefined;
   return (
     <>
-      <FieldGroup className="max-w-[420px]">
+      <FieldGroup className="max-w-[440px]">
         <Label htmlFor="run-trigger">Trigger</Label>
         <Select id="run-trigger" value={triggerId} onChange={(e) => setTriggerId(e.target.value)}>
           {triggers.map((t) => (
@@ -94,7 +94,7 @@ export function RunLauncher({
         if (!version) return <Alert tone="warn">This loop has no published version yet.</Alert>;
         return (
           <section aria-label="Start a run" className="grid gap-field">
-            <FieldGroup className="max-w-[420px]">
+            <FieldGroup className="max-w-[440px]">
               <Label htmlFor="run-version">Version</Label>
               <Select
                 id="run-version"

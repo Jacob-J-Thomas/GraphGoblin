@@ -64,7 +64,7 @@ export function NewRunPage() {
             const current = loop?.currentVersionId;
             return (
               <div className="grid gap-section">
-                <FieldGroup className="max-w-[420px]">
+                <FieldGroup className="max-w-[440px]">
                   <Label htmlFor="new-run-loop">Loop</Label>
                   <Select
                     id="new-run-loop"
