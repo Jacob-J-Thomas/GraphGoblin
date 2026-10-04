@@ -8,28 +8,28 @@ GraphGoblin is built for AI engineers. AI-driven development lifecycle (AIDLC) p
 
 ## Reading order
 
-| #   | Document                                                     | What it covers                                                                     |
-| --- | ------------------------------------------------------------ | ---------------------------------------------------------------------------------- |
-| -   | [User guide](guide/README.md)                                | Install locally, build loops, run and observe, configure triggers and integrations |
-| 01  | [Vision and scope](01-vision-and-scope.md)                   | Purpose, target users, mental model, principles, 1.0 scope, post-1.0 roadmap       |
-| 02  | [Architecture](02-architecture.md)                           | Stack, layering, package layout, ports, process topology, cross-cutting concerns   |
-| 03  | [Domain model](03-domain-model.md)                           | Loops, versions, nodes, runs, events, invocations, the context thread              |
-| 04  | [Node catalog](04-node-catalog.md)                           | Every node type: purpose, configuration, ports, engine behaviour                   |
-| 05  | [Execution engine](05-execution-engine.md)                   | Executor semantics, event sourcing, run lifecycle, resiliency model                |
-| 06  | [Harness integration](06-harness-integration.md)             | The harness port, the Codex adapter for 1.0, post-1.0 adapters                     |
-| 07  | [API, streaming, and MCP](07-api-and-streaming.md)           | REST surface, SSE, OpenAPI, auth, MCP server, Codex plugin                         |
-| 08  | [Triggers and integrations](08-triggers-and-integrations.md) | Manual, cron, webhook, inbound event, polling; security of inbound paths           |
-| 09  | [Frontend and PWA](09-frontend-and-pwa.md)                   | Editor, run inspector, settings, service-worker update flow                        |
-| 10  | [Testing and quality](10-testing-and-quality.md)             | Coverage policy, fixtures, adversarial QA agents, CI gates                         |
-| 11  | [Security and distribution](11-security-and-distribution.md) | Licensing, credentials, secrets, inbound exposure, retention                       |
-| 12  | [Implementation plan](12-implementation-plan.md)             | Milestones M0 to M8 with tasks and acceptance criteria                             |
-| 13  | [Open questions](13-open-questions.md)                       | Items that still need a decision, and which milestone they block                   |
-| 14  | [Work packages](14-work-packages.md)                         | Delegated work packages, delivery waves, and acceptance criteria from M3 onward    |
-| 15  | [Issue workflow](15-issue-workflow.md)                       | Issue gates, QA scope, model routing, milestones, and the planned AIDLC lifecycle  |
-| -   | [reference/nodes.md](reference/nodes.md)                     | Node config reference, generated from the schemas (`pnpm docs:generate`)           |
-| -   | [reference/api.md](reference/api.md)                         | REST API reference, generated from the OpenAPI document                            |
-| -   | [decisions/](decisions/)                                     | Architecture decision records                                                      |
-| -   | [research/](research/)                                       | Preserved research on Codex, Claude Code, Jev, licences, and runtimes              |
+| #   | Document                                                     | What it covers                                                                               |
+| --- | ------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| -   | [User guide](guide/README.md)                                | Install locally, build loops, run and observe, configure triggers and integrations           |
+| 01  | [Vision and scope](01-vision-and-scope.md)                   | Purpose, target users, mental model, principles, 1.0 scope, post-1.0 roadmap                 |
+| 02  | [Architecture](02-architecture.md)                           | Stack, layering, package layout, ports, process topology, cross-cutting concerns             |
+| 03  | [Domain model](03-domain-model.md)                           | Loops, versions, nodes, runs, events, invocations, the context thread                        |
+| 04  | [Node catalog](04-node-catalog.md)                           | Every node type: purpose, configuration, ports, engine behaviour                             |
+| 05  | [Execution engine](05-execution-engine.md)                   | Executor semantics, event sourcing, run lifecycle, resiliency model                          |
+| 06  | [Harness integration](06-harness-integration.md)             | The harness port, the Codex adapter for 1.0, post-1.0 adapters                               |
+| 07  | [API, streaming, and MCP](07-api-and-streaming.md)           | REST surface, SSE, OpenAPI, auth, MCP server, Codex plugin                                   |
+| 08  | [Triggers and integrations](08-triggers-and-integrations.md) | Manual, cron, webhook, inbound event, polling; security of inbound paths                     |
+| 09  | [Frontend and PWA](09-frontend-and-pwa.md)                   | Editor, run inspector, settings, service-worker update flow                                  |
+| 10  | [Testing and quality](10-testing-and-quality.md)             | Coverage policy, fixtures, adversarial QA agents, CI gates                                   |
+| 11  | [Security and distribution](11-security-and-distribution.md) | Licensing, credentials, secrets, inbound exposure, retention                                 |
+| 12  | [Implementation plan](12-implementation-plan.md)             | Milestones M0 to M8 with tasks and acceptance criteria                                       |
+| 13  | [Open questions](13-open-questions.md)                       | Items that still need a decision, and which milestone they block                             |
+| 14  | [Work packages](14-work-packages.md)                         | Delegated work packages, delivery waves, and acceptance criteria from M3 onward              |
+| 15  | [Issue workflow](15-issue-workflow.md)                       | Issue gates, QA scope, model routing, milestones, and this repository's development pipeline |
+| -   | [reference/nodes.md](reference/nodes.md)                     | Node config reference, generated from the schemas (`pnpm docs:generate`)                     |
+| -   | [reference/api.md](reference/api.md)                         | REST API reference, generated from the OpenAPI document                                      |
+| -   | [decisions/](decisions/)                                     | Architecture decision records                                                                |
+| -   | [research/](research/)                                       | Preserved research on Codex, Claude Code, Jev, licences, and runtimes                        |
 
 ## Status legend
 
