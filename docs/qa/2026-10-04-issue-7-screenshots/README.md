@@ -52,5 +52,5 @@ The sample is `docs/design/visual-direction/sample.html`. The cutover matches it
 ## Checks beyond the screenshots
 
 - **Forced colours** (`forced-colors: active`, both themes): focus rings stay visible (2 px outline in the system colour), buttons, fields, cards, and badges keep their boundaries, the selected canvas node keeps its 2 px outline, and the current timeline row keeps an outline.
-- **Reduced motion:** `--duration-*` resolve to 0 s; animations and transitions collapse to the global 0.01 ms rule (the running and live pulses stop).
+- **Reduced motion:** `--duration-*` resolve to 0 s, transitions collapse to the global 0.01 ms rule, and no keyframe animation runs (`animation: none`; `document.getAnimations()` is empty), so the running and live pulses hold at full opacity. The first pass only shortened animations to 0.01 ms, which left the pulse running and its glyph faded (I7-QA-03 in `docs/qa/2026-10-04-issue-7-qa.md`); `apps/web/e2e/issue-7-qa.spec.ts` covers it.
 - **200% zoom** (a 1440x900 window at 200%, a 720x450 CSS viewport): no horizontal page scroll on Loops, Runs, Run inspector, Events, Settings, or the editor. Wide tables scroll sideways inside their cards. The editor's canvas is narrow at that size (#41).

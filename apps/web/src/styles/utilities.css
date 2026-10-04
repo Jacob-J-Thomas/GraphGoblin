@@ -60,9 +60,13 @@
     var(--shadow-2);
 }
 
-/* A slow opacity pulse; --duration-pulse drops to 0 ms under prefers-reduced-motion. */
+/* A slow, decorative opacity pulse. Under prefers-reduced-motion it does not run at all, so the
+   element stays at full opacity (index.css also stops every other animation). */
 @utility animate-pulse-soft {
   animation: gg-pulse var(--duration-pulse) var(--ease-standard) infinite;
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
 }
 
 @keyframes gg-pulse {
