@@ -45,6 +45,55 @@ function seeded(): FakeApi {
 }
 
 describe('SettingsPage', () => {
+  it.each(['success', '401'] as const)(
+    'finishes revocation before a held list refresh, then restores focus after %s',
+    async (outcome) => {
+      const api = seeded();
+      if (outcome === '401') useApiKeyStore.getState().save('gg_fixture');
+      renderApp('/settings', api);
+      const user = userEvent.setup();
+      const trigger = await screen.findByRole('button', { name: 'Revoke mcp' });
+      let finish!: () => void;
+      const held = new Promise<void>((resolve) => {
+        finish = resolve;
+      });
+      let arrived!: () => void;
+      const started = new Promise<void>((resolve) => {
+        arrived = resolve;
+      });
+      api.override('GET /api-keys', async () => {
+        arrived();
+        await held;
+        return outcome === '401'
+          ? problem(401, 'UNAUTHORIZED')
+          : new Response(JSON.stringify({ items: api.apiKeyList }), {
+              headers: { 'content-type': 'application/json' },
+            });
+      });
+      try {
+        await user.click(trigger);
+        await user.click(screen.getByRole('button', { name: 'Confirm revoke mcp' }));
+        await started;
+        await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
+        await waitFor(() => expect(trigger).toHaveFocus());
+        await act(() => Promise.resolve(finish()));
+        if (outcome === '401') {
+          await waitFor(() => expect(screen.getByLabelText('API key')).toHaveFocus());
+        } else {
+          await waitFor(() =>
+            expect(screen.queryByRole('button', { name: 'Revoke mcp' })).not.toBeInTheDocument(),
+          );
+          await waitFor(() =>
+            expect(screen.getByRole('heading', { name: 'API keys' })).toHaveFocus(),
+          );
+        }
+      } finally {
+        await act(() => Promise.resolve(finish()));
+        act(() => useApiKeyStore.getState().forget());
+      }
+    },
+  );
+
   it.each([
     [
       'Delete gpt-6-luna',

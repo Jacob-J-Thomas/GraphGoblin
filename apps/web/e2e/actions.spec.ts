@@ -115,68 +115,197 @@ test('revoking this browser key warns and brings up the API key panel', async ({
 });
 
 for (const confirmWith of ['mouse', 'keyboard'] as const) {
-  test(`review: repeated Escape keeps a pending ${confirmWith} confirmation modal`, async ({
-    page,
-    request,
-  }) => {
-    const name = `escape-${confirmWith}`;
-    const id = await publishLoop(request, approvalLoop(name));
-    let release!: () => void;
-    const held = new Promise<void>((resolve) => {
-      release = resolve;
-    });
-    let arrived!: () => void;
-    const started = new Promise<void>((resolve) => {
-      arrived = resolve;
-    });
-    await page.route(`**/loops/${id}`, async (route) => {
-      if (route.request().method() !== 'DELETE') {
-        await route.continue();
-        return;
-      }
+  for (const outcome of ['409', 'success'] as const) {
+    for (const escapeCount of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 20]) {
+      test(`busy Escape: ${confirmWith}, ${outcome}, ${escapeCount} presses`, async ({
+        page,
+        request,
+      }) => {
+        const name = `escape-${confirmWith}-${outcome}-${escapeCount}`;
+        const id = await publishLoop(request, approvalLoop(name));
+        let release!: () => void;
+        const held = new Promise<void>((resolve) => {
+          release = resolve;
+        });
+        let arrived!: () => void;
+        const started = new Promise<void>((resolve) => {
+          arrived = resolve;
+        });
+        await page.route(`**/loops/${id}`, async (route) => {
+          if (route.request().method() !== 'DELETE') {
+            await route.continue();
+            return;
+          }
+          arrived();
+          await held;
+          if (outcome === 'success') {
+            await route.continue();
+            return;
+          }
+          await route.fulfill({
+            status: 409,
+            contentType: 'application/problem+json',
+            body: JSON.stringify({
+              type: 'about:blank',
+              title: 'LOOP_IN_USE',
+              status: 409,
+              code: 'LOOP_IN_USE',
+              detail: 'The loop has active runs; finish them first.',
+            }),
+          });
+        });
+        try {
+          await page.goto('/app/loops');
+          const trigger = page.getByRole('button', { name: `Delete ${name}`, exact: true });
+          await trigger.click();
+          const confirmation = page.getByRole('button', { name: `Confirm delete ${name}` });
+          if (confirmWith === 'mouse') await confirmation.click();
+          else {
+            await confirmation.focus();
+            await page.keyboard.press('Enter');
+          }
+          await started;
+          const modal = page.locator('dialog:modal');
+          await modal.evaluate((element) => {
+            const root = document.documentElement;
+            root.dataset['busyCloses'] = '0';
+            root.dataset['busyFocusChanges'] = '0';
+            element.addEventListener('close', () => {
+              root.dataset['busyCloses'] = String(Number(root.dataset['busyCloses']) + 1);
+            });
+            document.addEventListener('focusin', () => {
+              root.dataset['busyFocusChanges'] = String(
+                Number(root.dataset['busyFocusChanges']) + 1,
+              );
+            });
+          });
+          for (let i = 0; i < escapeCount; i++) await page.keyboard.press('Escape');
+          await expect(modal).toHaveCount(1);
+          await expect(modal).toHaveAttribute('aria-busy', 'true');
+          expect(
+            await page.evaluate(() => ({
+              closes: Number(document.documentElement.dataset['busyCloses']),
+              focusChanges: Number(document.documentElement.dataset['busyFocusChanges']),
+            })),
+          ).toEqual({ closes: 0, focusChanges: 0 });
+          await expect(modal).toBeFocused();
+          release();
+          if (outcome === 'success') {
+            await expect(trigger).toHaveCount(0);
+            await expect(modal).toHaveCount(0);
+            await expect(page.getByRole('heading', { name: 'Loops', exact: true })).toBeFocused();
+            expect((await request.get(`/loops/${id}`)).status()).toBe(404);
+          } else {
+            await expect(modal.getByRole('alert')).toContainText(
+              'The loop has active runs; finish them first.',
+            );
+            await modal.getByRole('button', { name: 'Keep' }).click();
+            await expect(modal).toHaveCount(0);
+            await trigger.click();
+            await expect(page.locator('dialog:modal')).toHaveCount(1);
+            await page.keyboard.press('Escape');
+            await expect(modal).toHaveCount(0);
+            await expect(trigger).toBeFocused();
+          }
+        } finally {
+          release();
+        }
+      });
+    }
+  }
+}
+
+test('revocation closes before a held key-list refresh removes the action later', async ({
+  page,
+  request,
+}) => {
+  const response = await request.post('/api-keys', {
+    data: { label: 'late-refresh', scopes: ['*'] },
+  });
+  expect(response.status()).toBe(201);
+  await page.goto('/app/settings');
+  const trigger = page.getByRole('button', { name: 'Revoke late-refresh', exact: true });
+  await trigger.click();
+  let release!: () => void;
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  let arrived!: () => void;
+  const started = new Promise<void>((resolve) => {
+    arrived = resolve;
+  });
+  await page.route('**/api-keys', async (route) => {
+    if (route.request().method() === 'GET') {
       arrived();
       await held;
-      await route.fulfill({
-        status: 409,
-        contentType: 'application/problem+json',
-        body: JSON.stringify({
-          type: 'about:blank',
-          title: 'LOOP_IN_USE',
-          status: 409,
-          code: 'LOOP_IN_USE',
-          detail: 'The loop has active runs; finish them first.',
-        }),
-      });
-    });
-    try {
-      await page.goto('/app/loops');
-      const trigger = page.getByRole('button', { name: `Delete ${name}`, exact: true });
-      await trigger.click();
-      const confirmation = page.getByRole('button', { name: `Confirm delete ${name}` });
-      if (confirmWith === 'mouse') await confirmation.click();
-      else {
-        await confirmation.focus();
-        await page.keyboard.press('Enter');
-      }
-      await started;
-      for (let i = 0; i < 6; i++) await page.keyboard.press('Escape');
-      const modal = page.locator('dialog:modal');
-      await expect(modal).toHaveCount(1);
-      await expect(modal).toHaveAttribute('aria-busy', 'true');
-      release();
-      await expect(modal.getByRole('alert')).toContainText(
-        'The loop has active runs; finish them first.',
-      );
-      await modal.getByRole('button', { name: 'Keep' }).click();
-      await expect(modal).toHaveCount(0);
-      await trigger.click();
-      await expect(page.locator('dialog:modal')).toHaveCount(1);
-      await page.getByRole('button', { name: 'Keep' }).click();
-    } finally {
-      release();
     }
+    await route.continue();
   });
-}
+  try {
+    await page.getByRole('button', { name: 'Confirm revoke late-refresh' }).click();
+    await started;
+    await expect(page.getByRole('alertdialog')).toHaveCount(0, { timeout: 1000 });
+    await expect(trigger).toBeFocused();
+    release();
+    await expect(trigger).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: 'API keys', exact: true })).toBeFocused();
+  } finally {
+    release();
+  }
+});
+
+test('own-key revocation closes before the held 401 refetch and focuses the key panel without waiting for retry', async ({
+  page,
+  request,
+}) => {
+  const instance = await control(request, '/apps', { requireApiKey: true });
+  const url = String(instance['url']);
+  await page.goto(`${url}/app/settings`);
+  await page.getByLabel('API key', { exact: true }).fill(String(instance['token']));
+  await page.getByRole('button', { name: 'Use key' }).click();
+  await page.getByRole('button', { name: 'Revoke e2e', exact: true }).click();
+  let release!: () => void;
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  let arrived!: () => void;
+  const started = new Promise<void>((resolve) => {
+    arrived = resolve;
+  });
+  let retried!: () => void;
+  const retryStarted = new Promise<void>((resolve) => {
+    retried = resolve;
+  });
+  let requests = 0;
+  await page.route(`${url}/api-keys`, async (route) => {
+    requests++;
+    arrived();
+    if (requests === 2) retried();
+    await held;
+    await route.continue();
+  });
+  try {
+    await page.getByRole('button', { name: 'Confirm revoke e2e' }).click();
+    await started;
+    await expect(page.getByRole('alertdialog')).toHaveCount(0, { timeout: 1000 });
+    release();
+    await expect(page.getByRole('heading', { name: 'API key required' })).toBeVisible();
+    await expect(page.getByLabel('API key', { exact: true })).toBeFocused({ timeout: 500 });
+    await retryStarted;
+    await expect(
+      page.getByRole('alert').filter({ hasText: 'Could not load api keys' }),
+    ).toBeVisible();
+    await page.evaluate(
+      () =>
+        new Promise<void>((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+        ),
+    );
+    await expect(page.getByLabel('API key', { exact: true })).toBeFocused();
+  } finally {
+    release();
+  }
+});
 
 test('review: keyboard export keeps focus and announces progress', async ({ page, request }) => {
   const id = await publishLoop(request, approvalLoop('focus-export'));

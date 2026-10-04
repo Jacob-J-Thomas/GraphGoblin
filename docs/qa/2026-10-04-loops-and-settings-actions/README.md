@@ -4,6 +4,8 @@ The change gives Loops one bordered, icon-labelled Edit / Export / Delete group 
 
 The PR #50 review follow-up fixes native repeated-Escape dismissal, Export focus, stale 404 rows, API-key input focus, and confirmation accessibility. See [review fixes and current verification](review-fixes.md) for each reproduction, regression test, gate result, and remaining review limits. The verification below records the initial implementation.
 
+The second re-check prevents busy Escape focus changes, separates successful revocation from its list refresh, and ignores stale native close events after reopening. See [second re-check verification and merge notes](review-recheck.md) for the current gate results and the PR #48 dialog stand-in overlap.
+
 ## Files changed
 
 - Primitives: `apps/web/src/components/ui/button.tsx`, `confirm-action.tsx`, `index.ts`, and `components/icons/icon.tsx`; `buttonStyles` supports links and the soft destructive variant. Button props accept React 19 refs.

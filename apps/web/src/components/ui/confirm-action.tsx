@@ -28,6 +28,7 @@ export function ConfirmAction({
   accessibleName,
   consequences,
   onConfirm,
+  onConfirmed,
   onDismiss,
   returnFocusTo,
 }: {
@@ -36,6 +37,8 @@ export function ConfirmAction({
   accessibleName?: string;
   consequences: ReactNode;
   onConfirm: () => Promise<unknown>;
+  /** Optional list refresh; never extends the destructive request's pending state. */
+  onConfirmed?: () => Promise<unknown>;
   /** Called after dismissal, retaining the original failure for list refresh decisions. */
   onDismiss?: (error: unknown) => void | Promise<unknown>;
   /** Element id to focus after removal; defaults to the owning section's labelled heading. */
@@ -56,14 +59,17 @@ export function ConfirmAction({
   const verb = action === 'delete' ? 'Delete' : 'Revoke';
   const icon = action === 'delete' ? 'trash' : 'cancelled';
 
+  const restoreAfter = (refreshed: void | Promise<unknown>) => {
+    const restoreFocus = restoreFocusRef.current;
+    // A list refresh can remove the opener after the dialog has already returned focus to it.
+    const afterRefresh = () => requestAnimationFrame(restoreFocus);
+    void Promise.resolve(refreshed).then(afterRefresh, afterRefresh);
+  };
+
   const dismiss = () => {
     setOpen(false);
     setError(undefined);
-    const refreshed = onDismiss?.(failureRef.current);
-    const restoreFocus = restoreFocusRef.current;
-    // A 404 refresh can remove the opener after the dialog has already returned focus to it.
-    const afterRefresh = () => requestAnimationFrame(restoreFocus);
-    void Promise.resolve(refreshed).then(afterRefresh, afterRefresh);
+    restoreAfter(onDismiss?.(failureRef.current));
     failureRef.current = undefined;
   };
 
@@ -119,6 +125,7 @@ export function ConfirmAction({
     try {
       await onConfirm();
       setOpen(false);
+      if (onConfirmed) restoreAfter(onConfirmed());
     } catch (failure) {
       failureRef.current = failure;
       setError(errorMessage(failure));
@@ -153,6 +160,10 @@ export function ConfirmAction({
         aria-busy={pending}
         tabIndex={-1}
         onKeyDown={(event) => {
+          if (event.key === 'Escape' && busyRef.current) {
+            event.preventDefault();
+            return;
+          }
           if (event.key !== 'Tab') return;
           if (busyRef.current) {
             event.preventDefault();
@@ -174,8 +185,10 @@ export function ConfirmAction({
             return;
           }
           const modal = event.currentTarget;
+          // A queued close can arrive after the same dialog has already reopened.
+          if (modal.open) return;
           if (busyRef.current && modal.isConnected) {
-            if (!modal.open) modal.showModal();
+            modal.showModal();
             modal.focus();
           } else dismiss();
         }}

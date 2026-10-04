@@ -89,10 +89,8 @@ export function ApiKeysSection() {
                           ) : null}
                         </>
                       }
-                      onConfirm={async () => {
-                        await apiKeys.revoke(client, k.id);
-                        await queryClient.invalidateQueries({ queryKey: keys.apiKeys });
-                      }}
+                      onConfirm={() => apiKeys.revoke(client, k.id)}
+                      onConfirmed={() => queryClient.invalidateQueries({ queryKey: keys.apiKeys })}
                     />
                   )}
                 </li>

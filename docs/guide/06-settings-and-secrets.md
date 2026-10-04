@@ -167,7 +167,7 @@ Revoke an unused key in **Settings → API keys**, or through REST:
 DELETE /api-keys/{id}
 ```
 
-**Revoke** names the key and warns that clients using it receive 401 immediately. If this browser stores a key, the confirmation also warns that revoking that key loses browser access and shows the API key panel; focus moves to its input so you can enter another valid key there to continue. The API does not expose which listed key this browser uses, so this warning appears on every revocation while a key is stored.
+**Revoke** names the key and warns that clients using it receive 401 immediately. Successful revocation closes the confirmation when the server confirms the request; refreshing the key list runs separately. If this browser stores a key, the confirmation also warns that revoking that key loses browser access and shows the API key panel; focus moves to its input without waiting for a failed list refresh's retry, so you can enter another valid key there to continue. The API does not expose which listed key this browser uses, so this warning appears on every revocation while a key is stored.
 
 ## Preserve the master key
 

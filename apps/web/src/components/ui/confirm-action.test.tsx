@@ -5,6 +5,65 @@ import { describe, expect, it, vi } from 'vitest';
 import { ConfirmAction } from './confirm-action.js';
 
 describe('ConfirmAction', () => {
+  it('prevents busy Escape at keydown before the browser can close or restore background focus', async () => {
+    let finish!: () => void;
+    render(
+      <ConfirmAction
+        name="keydown"
+        consequences="Gone."
+        onConfirm={() =>
+          new Promise<void>((resolve) => {
+            finish = resolve;
+          })
+        }
+      />,
+    );
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Delete keydown' }));
+    await user.click(screen.getByRole('button', { name: 'Confirm delete keydown' }));
+    const modal = screen.getByRole('alertdialog');
+    try {
+      const escape = new KeyboardEvent('keydown', {
+        key: 'Escape',
+        bubbles: true,
+        cancelable: true,
+      });
+      fireEvent(modal, escape);
+      expect(escape.defaultPrevented).toBe(true);
+      expect(modal).toHaveFocus();
+    } finally {
+      await act(() => Promise.resolve(finish()));
+    }
+  });
+
+  it('ignores a queued stale native close after an idle confirmation has reopened', async () => {
+    render(<ConfirmAction name="stale" consequences="Gone." onConfirm={() => Promise.resolve()} />);
+    const user = userEvent.setup();
+    const trigger = screen.getByRole('button', { name: 'Delete stale' });
+    await user.click(trigger);
+    const modal = screen.getByRole<HTMLDialogElement>('alertdialog');
+    modal.open = false;
+    fireEvent(modal, new Event('close'));
+    await waitFor(() => expect(trigger).toHaveFocus());
+    await user.click(trigger);
+    await act(
+      () =>
+        new Promise<void>((resolve) =>
+          setTimeout(() => {
+            fireEvent(modal, new Event('close'));
+            resolve();
+          }, 0),
+        ),
+    );
+    expect(screen.getByRole('alertdialog')).toBe(modal);
+    expect(screen.getByRole('button', { name: 'Keep' })).toHaveFocus();
+    const escape = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+    fireEvent(modal, escape);
+    expect(escape.defaultPrevented).toBe(false);
+    fireEvent(modal, new Event('cancel', { cancelable: true }));
+    await waitFor(() => expect(trigger).toHaveFocus());
+  });
+
   it('review: reopens a queued native close while busy', async () => {
     let finish!: () => void;
     const show = vi.spyOn(HTMLDialogElement.prototype, 'showModal');
