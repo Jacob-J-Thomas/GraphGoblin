@@ -127,32 +127,42 @@ test('undo and redo from the toolbar and the keys, saved like any edit', async (
   await expect(redo).toHaveAttribute('aria-disabled', 'true');
 });
 
-test('a pointer drag undoes and redoes in one step', async ({ page, request }) => {
+test('each pointer drag undoes and redoes in one step', async ({ page, request }) => {
   const loopId = await createLoop(request, approvalLoop('qa undo drag'));
   await page.goto(`/app/loops/${loopId}/edit`);
   const node = card(page, 'approve');
   await expect(node).toBeVisible();
-  const before = (await node.boundingBox())!;
+  const at = async () => {
+    const box = (await node.boundingBox())!;
+    return { x: Math.round(box.x), y: Math.round(box.y) };
+  };
+  const before = await at();
   await page.mouse.move(before.x + 60, before.y + 12);
   await page.mouse.down();
   await page.mouse.move(before.x + 100, before.y + 50, { steps: 6 });
   await page.mouse.move(before.x + 160, before.y + 110, { steps: 6 });
   await page.mouse.up();
-  const after = (await node.boundingBox())!;
-  expect(after.x - before.x).toBeGreaterThan(50);
+  const first = await at();
+  expect(first.x - before.x).toBeGreaterThan(50);
   await expect(undoButton(page)).toHaveAccessibleName('Undo move approve');
+  // A second drag of the same node straight after: a step of its own.
+  await page.mouse.move(first.x + 60, first.y + 12);
+  await page.mouse.down();
+  await page.mouse.move(first.x + 120, first.y + 12, { steps: 6 });
+  await page.mouse.up();
+  const second = await at();
+  expect(second.x - first.x).toBeGreaterThan(30);
 
   await page.keyboard.press('Control+z');
-  await expect
-    .poll(async () => Math.round((await node.boundingBox())!.x))
-    .toBe(Math.round(before.x));
-  expect(Math.round((await node.boundingBox())!.y)).toBe(Math.round(before.y));
-  // The whole drag was one step.
+  await expect.poll(at).toEqual(first);
+  await page.keyboard.press('Control+z');
+  await expect.poll(at).toEqual(before);
+  // Each drag was one step.
   await expect(undoButton(page)).toHaveAccessibleName('Undo');
   await page.keyboard.press('Control+Shift+z');
-  await expect
-    .poll(async () => Math.round((await node.boundingBox())!.x))
-    .toBe(Math.round(after.x));
+  await expect.poll(at).toEqual(first);
+  await page.keyboard.press('Control+Shift+z');
+  await expect.poll(at).toEqual(second);
 });
 
 test('inside a text field or CodeMirror the keys undo only that field’s text', async ({
