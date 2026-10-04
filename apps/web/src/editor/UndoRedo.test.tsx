@@ -46,6 +46,11 @@ describe('UndoRedo', () => {
     expect(store().definition!.nodes[0]!.ui).toEqual({ x: 40, y: 80 });
     expect(undo).toHaveAccessibleName('Undo move start');
     expect(redo).toHaveAttribute('aria-disabled', 'true');
+
+    // The name is the button's text, not a label: looking up a field by label never finds it.
+    act(() => store().updateMeta({ description: 'about' }));
+    expect(undo).toHaveAccessibleName('Undo edit loop description');
+    expect(screen.queryAllByLabelText(/description/i)).toEqual([]);
   });
 
   it('shows the Apple shortcuts on Apple platforms', () => {

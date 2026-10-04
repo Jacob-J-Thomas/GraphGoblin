@@ -6,7 +6,9 @@ import { historyShortcuts, isApplePlatform, type HistoryDirection } from './useU
 /**
  * One of the toolbar's history buttons, named by what it will change ("Undo move start"). With
  * nothing to undo or redo it is `aria-disabled` rather than disabled, so it keeps its place in
- * the Tab order and its name ("Undo") still says what it is.
+ * the Tab order and its name ("Undo") still says what it is. The name is visually hidden text
+ * rather than `aria-label`, so it is never taken for the label of a field it mentions (a lookup
+ * by label such as "Description" finds the field, not "Undo edit loop description").
  */
 function HistoryButton({
   direction,
@@ -24,7 +26,6 @@ function HistoryButton({
     <Button
       size="icon"
       variant="ghost"
-      aria-label={name}
       title={name}
       aria-keyshortcuts={shortcut}
       aria-disabled={step === undefined ? true : undefined}
@@ -33,6 +34,7 @@ function HistoryButton({
       }}
     >
       <Icon name={direction} />
+      <span className="sr-only">{name}</span>
     </Button>
   );
 }
