@@ -139,8 +139,8 @@ test('colour literal tokenizer handles all required functions and hex lengths', 
     assert.equal(colourLiterals(`${name}(calc(1 + 2) 0 0)`)[0].text, `${name}(calc(1 + 2) 0 0)`);
   }
   assert.deepEqual(
-    colourLiterals('#abc #abcdef #12345678').map((v) => v.text),
-    ['#abc', '#abcdef', '#12345678'],
+    colourLiterals('#abc #abcd #abcdef #12345678 #ABCD').map((v) => v.text),
+    ['#abc', '#abcd', '#abcdef', '#12345678', '#ABCD'],
   );
   assert.deepEqual(
     colourLiterals('WHITE rebeccapurple').map((v) => v.text),
@@ -148,7 +148,7 @@ test('colour literal tokenizer handles all required functions and hex lengths', 
   );
   assert.deepEqual(
     colourLiterals(
-      'var(--red) currentColor transparent current url(#abc) "white" #abcd #abcdefghi',
+      'var(--red) currentColor transparent current url(#abcd) "#abcd" "white" #ab #abcde #abcdefg #abcdefghi',
     ),
     [],
   );
@@ -183,6 +183,43 @@ test('JS style properties, JSX attributes, inline CSS and tagged CSS report exac
     ),
     [],
   );
+});
+
+test('four-digit hex (#rgba) is a colour in CSS, JSX styles, SVG attributes, and arbitrary utilities', () => {
+  assert.deepEqual(
+    scan(
+      '.x {\n  color: #abcd;\n  border: 1px solid #ABCD;\n}\n#abcd { padding: 1px; }',
+      'apps/web/src/page.css',
+    ).map((v) => [v.line, v.text]),
+    [
+      [2, '#abcd'],
+      [3, '#ABCD'],
+    ],
+  );
+  assert.deepEqual(
+    scan(
+      "const a = <div style={{ color: '#1234', backgroundColor: 'var(--surface-app)' }} />;\nconst b = <circle fill=\"#abcd\" stroke='#0f0a' />;\nconst c = <div className=\"bg-[#abcd] hover:border-[color:#1234] text-[length:12px]\" />;",
+    ).map((v) => [v.line, v.text]),
+    [
+      [1, '#1234'],
+      [2, '#abcd'],
+      [2, '#0f0a'],
+      [3, 'bg-[#abcd]'],
+      [3, 'hover:border-[color:#1234]'],
+    ],
+  );
+  assert.equal(isRawColourClass('bg-[#abcd]'), true);
+  assert.equal(isRawColourClass('bg-[#abcde]'), false);
+  // Non-colour hex data stays legal: ids, anchors, and hashes outside colour contexts.
+  assert.deepEqual(
+    scan(
+      "const id = '#abcd'; const anchor = <a href=\"#abcd\">top</a>; const hash = { commit: '#0f0a' }; const ids = ['#1234'];",
+    ),
+    [],
+  );
+  const path = 'apps/web/vite.config.ts';
+  const declaration = "const THEME_COLOR = '#abcd';";
+  assert.deepEqual(scan(declaration, path, [{ file: path, name: 'THEME_COLOR', declaration }]), []);
 });
 
 test('HTML theme metadata is checked regardless of attribute order', () => {

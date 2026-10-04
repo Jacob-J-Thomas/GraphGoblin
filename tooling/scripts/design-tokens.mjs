@@ -74,7 +74,8 @@ export function colourLiterals(value) {
   const atoms = /#[\da-f]+\b|--[\w-]+|[a-z][\w-]*/gi;
   for (const match of visible.matchAll(atoms)) {
     const text = match[0];
-    if (/^#(?:[\da-f]{3}|[\da-f]{6}|[\da-f]{8})$/i.test(text)) {
+    // CSS hex colours: #rgb, #rgba, #rrggbb, and #rrggbbaa.
+    if (/^#(?:[\da-f]{3}|[\da-f]{4}|[\da-f]{6}|[\da-f]{8})$/i.test(text)) {
       found.push({ index: match.index, text });
     } else if (FUNCTIONS.has(text.toLowerCase()) && visible[match.index + text.length] === '(') {
       let end = match.index + text.length;
@@ -156,7 +157,7 @@ export function scanDesignTokens(source, file, exceptions = []) {
         !exception.declaration ||
         (file.endsWith('.ts')
           ? !new RegExp(
-              `^(?:export\\s+)?const\\s+${exception.name}\\s*=\\s*(['"])#(?:[\\da-f]{3}|[\\da-f]{6}|[\\da-f]{8})\\1;?$`,
+              `^(?:export\\s+)?const\\s+${exception.name}\\s*=\\s*(['"])#(?:[\\da-f]{3}|[\\da-f]{4}|[\\da-f]{6}|[\\da-f]{8})\\1;?$`,
               'i',
             ).test(exception.declaration)
           : !/^<meta\b[^>]*\bname=['"]theme-color['"][^>]*>$/i.test(exception.declaration)),
