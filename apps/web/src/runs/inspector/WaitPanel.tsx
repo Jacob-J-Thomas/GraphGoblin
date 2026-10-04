@@ -48,6 +48,15 @@ export function WaitPanel({ run }: { run: RunSnapshot }) {
           <p className="text-lg font-semibold whitespace-pre-wrap">{waiting.prompt}</p>
         ) : null}
         <JsonSchemaForm
+          // One form per wait: the next wait (even at the same node) starts empty, while a refetch
+          // of the same wait keeps what was typed. `startedSeq` is the wait's identity.
+          key={JSON.stringify([
+            waiting.nodeId,
+            waiting.kind,
+            waiting.startedSeq ?? null,
+            waiting.signalName ?? null,
+            waiting.inputSchema ?? null,
+          ])}
           schema={waiting.kind === 'input' ? waiting.inputSchema : undefined}
           submitLabel={waiting.kind === 'input' ? 'Submit input' : 'Send signal'}
           busy={respond.isPending}

@@ -94,6 +94,45 @@ describe('JsonSchemaForm', () => {
     expect(submit).toHaveBeenLastCalledWith({ priority: 1, strict: false, mode: 1 });
   });
 
+  it('keeps an enum choice by value when the schema changes under a mounted form', async () => {
+    const user = userEvent.setup();
+    const submit = vi.fn();
+    const form = (options: string[]) => (
+      <JsonSchemaForm
+        schema={{ type: 'object', properties: { decision: { enum: options } } }}
+        submitLabel="Go"
+        onSubmit={submit}
+      />
+    );
+    const { rerender } = render(form(['deny', 'approve']));
+    await user.selectOptions(screen.getByLabelText('decision'), 'deny');
+
+    // Reordered: still deny.
+    rerender(form(['approve', 'deny']));
+    expect(screen.getByLabelText('decision')).toHaveDisplayValue('deny');
+    await user.click(screen.getByRole('button', { name: 'Go' }));
+    expect(submit).toHaveBeenLastCalledWith({ decision: 'deny' });
+
+    // No longer offered: shown as not chosen, said so, and never silently left out.
+    submit.mockClear();
+    rerender(form(['approve']));
+    const decision = screen.getByLabelText('decision');
+    expect(decision).toHaveDisplayValue('(choose)');
+    expect(decision).toHaveAccessibleDescription(/no longer offered/);
+    await user.click(screen.getByRole('button', { name: 'Go' }));
+    expect(screen.getByRole('alert')).toHaveTextContent('decision: "deny" is no longer offered');
+    expect(submit).not.toHaveBeenCalled();
+
+    // Choosing again (or choosing nothing) clears it.
+    await user.selectOptions(decision, 'approve');
+    expect(decision).not.toHaveAccessibleDescription(/no longer offered/);
+    await user.click(screen.getByRole('button', { name: 'Go' }));
+    expect(submit).toHaveBeenLastCalledWith({ decision: 'approve' });
+    await user.selectOptions(decision, '(choose)');
+    await user.click(screen.getByRole('button', { name: 'Go' }));
+    expect(submit).toHaveBeenLastCalledWith({});
+  });
+
   it('checks an empty input against the schema as the API will (as null)', async () => {
     const user = userEvent.setup();
     const submit = vi.fn();
