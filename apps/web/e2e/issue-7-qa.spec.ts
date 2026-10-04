@@ -113,3 +113,49 @@ test('I7-QA-01: the longest valid loop name stays inside the editor toolbar and 
     }
   }
 });
+
+test('I7-QA-02: overlong text stays inside Alert, Badge, and Button', async ({ page, request }) => {
+  const word = 'W'.repeat(350);
+  await control(request, '/harness/script', {
+    turns: [{ matchPrompt: 'LONG FAILURE', error: { code: 'TURN_FAILED', message: word } }],
+  });
+  const loopId = await publishLoop(request, slowLoop('qa long text', 'LONG FAILURE'));
+  const res = await request.post(`/loops/${loopId}/runs`, { data: {} });
+  const runId = ((await res.json()) as { run: { id: string } }).run.id;
+
+  // Alert: a real failure whose message is one 350-character word.
+  await page.goto(`/app/runs/${runId}`);
+  const alert = page.getByRole('alert').filter({ hasText: 'Failed: HARNESS_TURN_FAILED' });
+  await expect(alert).toContainText(word);
+  expect(await alert.evaluate((a) => a.scrollWidth <= a.clientWidth)).toBe(true);
+  expect(await pageOverflows(page)).toBe(false);
+
+  // Badge and Button: the editor's own, copied into the side panel with overlong labels.
+  await page.goto(`/app/loops/${loopId}/edit`);
+  const panel = page.getByRole('region', { name: 'Validation' });
+  await expect(panel).toBeVisible();
+  const fits = await panel.evaluate((region) => {
+    const copy = (selector: string, text: string) =>
+      [...document.querySelectorAll(selector)]
+        .find((el) => el.textContent === text)!
+        .cloneNode(true) as HTMLElement;
+    const badge = copy('span.rounded-full', 'published v1');
+    const button = copy('button', 'Loop settings');
+    badge.lastElementChild!.textContent = 'long badge '.repeat(45);
+    button.lastElementChild!.textContent = 'long action '.repeat(45);
+    region.append(badge, button);
+    const edge = region.getBoundingClientRect().right;
+    return [badge, button].map((el) => {
+      const label = el.lastElementChild!;
+      return {
+        inside: el.getBoundingClientRect().right <= edge + 0.5,
+        cutShort: label.scrollWidth > label.clientWidth,
+        ellipsis: getComputedStyle(label).textOverflow,
+      };
+    });
+  });
+  for (const element of fits) {
+    expect(element).toEqual({ inside: true, cutShort: true, ellipsis: 'ellipsis' });
+  }
+  expect(await pageOverflows(page)).toBe(false);
+});

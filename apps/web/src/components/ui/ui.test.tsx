@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
+import { Icon } from '../icons/index.js';
+import { ellipsize } from './ellipsis.js';
 import {
   Alert,
   Badge,
@@ -53,6 +55,21 @@ describe('Button', () => {
     expect(destructive).toHaveAttribute('type', 'submit');
     expect(screen.getByRole('button', { name: 'Close' })).toHaveClass('bg-transparent', 'size-8');
     expect(screen.getByRole('button', { name: 'Disabled' })).toBeDisabled();
+  });
+
+  it('stays within its container: an overlong label ends in an ellipsis, named in full', () => {
+    const long = 'long action '.repeat(45).trim();
+    render(
+      <Button>
+        <Icon name="send" /> {long}
+      </Button>,
+    );
+    const button = screen.getByRole('button', { name: long });
+    expect(button).toHaveClass('max-w-full', 'whitespace-nowrap');
+    const label = screen.getByText(long);
+    expect(label).toHaveClass('min-w-0', 'overflow-x-clip', 'text-ellipsis');
+    expect(label.parentElement).toBe(button);
+    expect(button.firstElementChild?.tagName.toLowerCase()).toBe('svg');
   });
 });
 
@@ -148,11 +165,50 @@ describe('Badge', () => {
         </Badge>
       </>,
     );
-    expect(screen.getByText('neutral')).toHaveClass('bg-status-neutral-bg', 'h-6');
-    expect(screen.getByText('good')).toHaveClass('bg-status-good-bg', 'text-status-good-fg');
-    expect(screen.getByText('bad')).toHaveClass('bg-status-bad-bg', 'h-5');
-    expect(screen.getByText('warn')).toHaveClass('bg-status-warn-bg');
-    expect(screen.getByText('info')).toHaveClass('bg-status-info-bg', 'extra');
+    const badge = (text: string) => screen.getByText(text).parentElement;
+    expect(badge('neutral')).toHaveClass('bg-status-neutral-bg', 'h-6');
+    expect(badge('good')).toHaveClass('bg-status-good-bg', 'text-status-good-fg');
+    expect(badge('bad')).toHaveClass('bg-status-bad-bg', 'h-5');
+    expect(badge('warn')).toHaveClass('bg-status-warn-bg');
+    expect(badge('info')).toHaveClass('bg-status-info-bg', 'extra');
+  });
+
+  it('stays within its container: overlong text ends in an ellipsis beside a full-size icon', () => {
+    const long = 'long badge '.repeat(45).trim();
+    render(
+      <>
+        <Badge tone="warn">{long}</Badge>
+        <Badge tone="bad" size="sm" title="Validation issues">
+          <Icon name="failed" />
+          {3} issue{'s'}
+        </Badge>
+      </>,
+    );
+    const text = screen.getByText(long);
+    expect(text).toHaveClass('min-w-0', 'overflow-x-clip', 'text-ellipsis');
+    expect(text.parentElement).toHaveClass('max-w-full', 'whitespace-nowrap', 'inline-flex');
+    // Text runs join into one span; the icon stays outside it, so it never shrinks.
+    const issues = screen.getByText('3 issues');
+    expect(issues.parentElement?.children).toHaveLength(2);
+    expect(issues.parentElement?.firstElementChild?.tagName.toLowerCase()).toBe('svg');
+  });
+});
+
+describe('ellipsize', () => {
+  it('wraps each run of text in one shrinkable span and passes elements through', () => {
+    const { container } = render(
+      <p>
+        {ellipsize(['a', 1, <b key="b">bold</b>, ' ', <i key="i">italic</i>, 'tail', null, false])}
+      </p>,
+    );
+    const p = container.firstElementChild as HTMLElement;
+    expect([...p.children].map((c) => `${c.tagName.toLowerCase()}:${c.textContent}`)).toEqual([
+      'span:a1',
+      'b:bold',
+      'i:italic',
+      'span:tail',
+    ]);
+    expect(ellipsize(undefined)).toEqual([]);
   });
 });
 
@@ -179,6 +235,14 @@ describe('Alert', () => {
     expect(statuses[2]?.querySelector('svg[data-icon="info"]')).not.toBeNull();
     expect(statuses[3]).toHaveClass('bg-status-neutral-bg', 'extra');
     expect(screen.getByText('The draft changed on the server')).toHaveClass('text-status-warn-fg');
+  });
+
+  it('breaks an overlong word instead of spilling out of its box', () => {
+    const word = 'W'.repeat(350);
+    render(<Alert title={word}>{word}</Alert>);
+    const alert = screen.getByRole('alert');
+    expect(alert).toHaveClass('wrap-anywhere', 'min-w-0', 'grid-cols-[auto_minmax(0,1fr)]');
+    expect(alert.lastElementChild).toHaveClass('min-w-0');
   });
 });
 

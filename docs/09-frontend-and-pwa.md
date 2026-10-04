@@ -71,7 +71,7 @@ The look comes from design tokens, implemented to the visual direction the owner
 
 ### Component structure
 
-- `components/ui/`: one primitive per file (`button`, `field` with `Input`, `Select`, `Textarea`, `Checkbox`, `Label`, `FieldGroup`, and `HelpText`, `card`, `badge`, `alert`, `table`) behind `index.ts`. Variants use `lib/variants.ts`, a typed helper over `clsx`.
+- `components/ui/`: one primitive per file (`button`, `field` with `Input`, `Select`, `Textarea`, `Checkbox`, `Label`, `FieldGroup`, and `HelpText`, `card`, `badge`, `alert`, `table`) behind `index.ts`. Variants use `lib/variants.ts`, a typed helper over `clsx`. Long text never spills out of a primitive: a badge or button stays within its container (`max-w-full`, and it does not widen a grid column) and ends an overlong label in an ellipsis, keeping the full text as its accessible name (`ellipsis.tsx`), and an alert breaks a word too long for its line.
 - `components/icons/`: the SVG stroke glyphs (`Icon`), `KindIcon`, `StatusIcon`, and the goblin `Logo` (mark and wordmark, or the wordmark alone). Icons are decorative; the text or label beside them carries the name.
 - `components/layout/`: `AppShell` (header, offline banner), `MainNav` (green underline, optional attention dot, a Menu button below 640 px), `Page`, and `PageHeader`.
 - `components/status.tsx` (`RunStatusBadge`, `QueryState`) and `components/ErrorBoundary.tsx`.

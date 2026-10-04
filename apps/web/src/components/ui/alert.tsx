@@ -33,7 +33,8 @@ const ALERT_TONES: Record<Tone, { box: string; accent: string; icon: IconName }>
 
 /**
  * A tinted message with a tone edge and icon. `bad` is announced as an alert; the other tones are
- * polite status messages.
+ * polite status messages. A word too long for the line (a path, an id, a URL) breaks rather than
+ * spilling out of the box.
  */
 export function Alert({
   tone = 'bad',
@@ -52,7 +53,7 @@ export function Alert({
       role={tone === 'bad' ? 'alert' : 'status'}
       className={cn(
         'grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-0.5 rounded-md border-l-4 px-4 py-3',
-        'text-sm leading-snug text-default',
+        'min-w-0 text-sm leading-snug text-default wrap-anywhere',
         style.box,
         className,
       )}
