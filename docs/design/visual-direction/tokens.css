@@ -58,9 +58,8 @@
   --brown-800: #4b361f;
   --brown-900: #352718;
   --brown-950: #221911;
-  --brown-975: #150f0a;
 
-  /* Grey: warm, with a brown undertone. 0 is white; 850 to 990 are the dark surfaces. */
+  /* Grey: slightly warm. 0 is white; 850 to 990 are the dark surfaces. */
   --grey-0: #ffffff;
   --grey-25: #fbfaf8;
   --grey-50: #f6f5f2;
@@ -191,7 +190,7 @@
   /* Surface */
   --surface-app: var(--grey-50);
   --surface-raised: var(--grey-0);
-  --surface-sunken: var(--grey-50);
+  --surface-sunken: var(--grey-0);
   --surface-overlay: var(--grey-0);
   --surface-hover: var(--grey-100);
   --surface-control: var(--grey-50);
@@ -320,18 +319,18 @@
 }
 
 /* ------------------------------------------------------------------------------------------ */
-/* Semantic tier, dark values: a designed palette, not an inversion. Warm near-blacks with a  */
-/* brown undertone; depth comes from surface steps and elevation, not from heavier borders.   */
+/* Semantic tier, dark values: a designed palette, not an inversion. Neutral, slightly warm   */
+/* near-blacks; depth comes from surface steps and elevation, not from heavier borders.       */
 /* ------------------------------------------------------------------------------------------ */
 
 :root[data-theme='dark'],
 [data-theme='dark'] {
   color-scheme: dark;
 
-  /* Surface: sunken (wells, code, fields) < app < raised (cards) < overlay (sheets, toasts). */
+  /* Surface: fields and code < app < sunken wells < raised cards < overlay (sheets, toasts). */
   --surface-app: var(--grey-975);
   --surface-raised: var(--grey-925);
-  --surface-sunken: var(--brown-975);
+  --surface-sunken: var(--grey-950);
   --surface-overlay: var(--grey-900);
   --surface-hover: var(--grey-800);
   --surface-control: var(--grey-850);
@@ -426,7 +425,7 @@
 
   /* Canvas */
   --canvas-bg: var(--grey-975);
-  --canvas-grid: var(--brown-900);
+  --canvas-grid: var(--grey-800);
   --canvas-edge: var(--grey-500);
   --canvas-edge-selected: var(--green-400);
   --canvas-edge-loop: var(--brown-400);

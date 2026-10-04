@@ -1,6 +1,6 @@
 # Visual direction sample (#7)
 
-Status: second round, after the owner's feedback on the first sample ("really really solid"). Dark is now the lead theme and light is the alternate. This is the design checkpoint that comes before the token cutover in #7; it changes no app code.
+Status: third round, with the owner's final decisions folded in. Dark is the lead theme and light is the alternate. This is the design checkpoint that comes before the token cutover in #7; it changes no app code.
 
 ## Open it
 
@@ -10,11 +10,11 @@ Status: second round, after the owner's feedback on the first sample ("really re
 
 ## Rationale
 
-Dark leads. The surfaces are warm near-blacks with a brown undertone, stepped by elevation: wells and fields (`--surface-sunken`, `--surface-field`) sit below the page, cards rise one step, and sheets, menus, and toasts rise another. Edges are quiet (`--border-default` is a single step above the card), so depth comes from the surface steps and from black shadows with a faint top rim; only control boundaries keep a 3:1 border. The palette is designed for dark rather than inverted: status tints become deep 950 fills with light 200 text, node kinds become bright chips with ink icons over deep tinted bands, and syntax colours move to the 300 steps.
+Dark leads. The surfaces are neutral, slightly warm near-blacks with no brown in them, stepped by elevation: fields and code editors (`--surface-field`) sit lowest, then the page, then wells such as table headers and the palette rail (`--surface-sunken`), then cards, then sheets, menus, and toasts. Edges are quiet (`--border-default` is a single step above the card), so depth comes from the surface steps and from black shadows with a faint top rim; only control boundaries keep a 3:1 border. The palette is designed for dark rather than inverted: status tints become deep 950 fills with light 200 text, node kinds become bright chips with ink icons over deep tinted bands, and syntax colours move to the 300 steps.
 
 Goblin green is the same bright lime in both themes. It carries ink text (8.63:1) and a deeper green edge. It means "go" or "on": the primary button, the current page's underline, a switch or checkbox that is on, the focus ring in dark.
 
-Purple and magenta now mark moments, sparingly but on purpose: the header's purple-to-magenta hairline, the glow beneath the current page's underline, the waiting-run dot on Runs, the running pulse, an attention button for Run, notification edges and icons, the publish-success moment, the selected node's ring and glow, and the mascot's eyes. They are never a surface, a status, or the main action.
+Purple and magenta are kept for the most special accents only (owner decision): the waiting-run dot on Runs, notifications, the running glow, the selected node, the heartbeat kind, the "New" badge, and the mascot's eyes. Navigation, buttons, and the header stay green and neutral. Magenta is never a surface, a status, or the main action.
 
 Meaning stays where it was. Run status keeps blue for success and orange for failure, always with an icon; amber is waiting and paused, violet is running. Node kinds no longer borrow meaning colours: subloop is teal and exit is ink (bone in dark), so orange and red mean failure and danger only.
 
@@ -36,7 +36,7 @@ Primitive scales (only the semantic tier references these). Teal and slate are n
 | `teal`    | #edfbf8 | #d0f4ee | #a3e9de | #6cd6c9 | #3bbdb0 | #1ea196 | #15827a | #146862 | #14534f | #134542 | #0a2624 |
 | `slate`   | #f3f5f8 | #e4e9f0 | #cbd4e0 | #a8b6c8 | #8496ad | #66798f | #526377 | #424f60 | #333d4a | #263039 | #161c22 |
 
-Extra steps: `grey-0` #ffffff and `grey-25` #fbfaf8 (light surfaces); `grey-850` #2b2723, `grey-925` #1f1c18, `grey-975` #15120f, and `grey-990` #0e0c0a (dark surfaces); `brown-975` #150f0a (the dark wells). `red-600` moved from #c42d27 to #cf342d so the destructive fill keeps 3:1 against the dark sheet.
+Extra steps: `grey-0` #ffffff and `grey-25` #fbfaf8 (light surfaces); `grey-850` #2b2723, `grey-925` #1f1c18, `grey-975` #15120f, and `grey-990` #0e0c0a (dark surfaces). `red-600` moved from #c42d27 to #cf342d so the destructive fill keeps 3:1 against the dark sheet.
 
 Semantic tokens in both themes (tokens marked \* are additions to the plan's table, see Proposals):
 
@@ -44,7 +44,7 @@ Semantic tokens in both themes (tokens marked \* are additions to the plan's tab
 | ----------------------------- | ------------------------- | ------------------------- |
 | `--surface-app`               | `--grey-975` #15120f      | `--grey-50` #f6f5f2       |
 | `--surface-raised`            | `--grey-925` #1f1c18      | `--grey-0` #ffffff        |
-| `--surface-sunken`            | `--brown-975` #150f0a     | `--grey-50` #f6f5f2       |
+| `--surface-sunken`            | `--grey-950` #1a1815      | `--grey-0` #ffffff        |
 | `--surface-overlay`           | `--grey-900` #26231f      | `--grey-0` #ffffff        |
 | `--surface-hover`\*           | `--grey-800` #33302b      | `--grey-100` #edebe6      |
 | `--surface-control`\*         | `--grey-850` #2b2723      | `--grey-50` #f6f5f2       |
@@ -122,7 +122,7 @@ Semantic tokens in both themes (tokens marked \* are additions to the plan's tab
 | `--code-comment`              | `--grey-400` #a8a298      | `--grey-600` #6a645a      |
 | `--code-operator`             | `--brown-300` #cdb089     | `--brown-600` #7d5932     |
 | `--canvas-bg`                 | `--grey-975` #15120f      | `--grey-25` #fbfaf8       |
-| `--canvas-grid`               | `--brown-900` #352718     | `--brown-200` #e2cfb4     |
+| `--canvas-grid`               | `--grey-800` #33302b      | `--brown-200` #e2cfb4     |
 | `--canvas-edge`               | `--grey-500` #847d72      | `--grey-500` #847d72      |
 | `--canvas-edge-selected`      | `--green-400` #84c743     | `--green-700` #3f701a     |
 | `--canvas-edge-loop`\*        | `--brown-400` #b48e5e     | `--brown-500` #9a7142     |
@@ -139,26 +139,27 @@ The other scales live in `tokens.css` and do not change by theme: `--font-sans`,
 
 ## Where purple and magenta appear
 
-Every placement, in both themes (all proposals):
+Only these places, in both themes (owner decision: the most special accents only):
 
-1. **Header hairline**: a 2 px purple-to-magenta line that fades out along the bottom edge of the header (`--accent-hairline`).
-2. **Navigation**: a faint magenta glow under the current page's green underline, a magenta underline on hover, and a magenta dot on Runs while a run waits for input.
-3. **Buttons**: the attention button (magenta edge, text, and soft glow) for Run in the editor and "Run it" after a publish; a magenta sheen around the lime primary on hover. Neither is ever the default button or a fill.
-4. **Notifications**: a magenta edge on toasts, the dot on "A new version is available", and the sparkle icon and purple-to-magenta crown on the "Published version 4." moment.
-5. **Running and live**: the running badge's soft purple glow and pulse, and the purple "live" pill with a pulsing dot on the timeline.
-6. **Canvas**: the selected node's magenta ring and deep purple glow.
-7. **Kinds and badges**: the heartbeat kind, and the "New" badge on the component sheet.
-8. **Mascot**: the magenta glint in the goblin's eyes.
+1. **Waiting for input**: the magenta dot on Runs in the navigation (and in the narrow menu) while a run waits for input.
+2. **Notifications**: the magenta edge on toasts, the dot on "A new version is available", and the "Published version 4." moment with its sparkle icon, purple-to-magenta crown, and magenta "Run it" action. The magenta-edged button exists only inside notifications.
+3. **Running**: the running badge's soft purple glow and pulse.
+4. **Canvas**: the selected node's magenta ring and its purple glow.
+5. **Heartbeat**: the heartbeat kind's colour.
+6. **"New"**: the "New" badge (component sheet).
+7. **Mascot**: the magenta glint in the goblin's eyes.
 
-Brown appears in the dark theme's wells (`--surface-sunken`), the mutate kind, the canvas dot grid, the dashed loop-back edge, Liquid and JSONata operators, and the light theme's warm shadow tint. Warm dark grey is the dark theme itself, the header in both themes, the exit kind in light, and the ink on every lime surface.
+Removed in this round: the Run button's magenta edge (Run is an outline button again), the magenta sheen on the primary's hover, the magenta hover underline in the navigation, and the magenta part of the current-page glow. The header hairline is also gone: a purple line on every screen is not special, and the header reads cleaner without it.
+
+Brown is now a palette accent only: the mutate kind, the dashed loop-back edge, Liquid and JSONata operators, the light theme's canvas dots, and the light theme's warm shadow tint. No dark surface uses it.
 
 ## Mascot (placeholder for #10)
 
 A goblin-node head drawn for this sample as inline SVG: the favicon's node with sharp ears, port dots for cheeks, slanted brows, slit eyes with a magenta glint, and teeth. Three faces, each shown on the component sheet at 160 px on a dark and a light surface and at 32, 24, and 16 px:
 
-- **Smirk** (default, in the header): narrowed eyes under angry brows, a crooked smirk with one fang.
-- **Scowl**: brows pulled down hard, slit eyes, a snarl of teeth.
-- **Sly side-eye**: one brow raised, half-lidded eyes glancing aside, a lopsided grin.
+- **Smirk** (the chosen default, in the header): narrowed eyes under angry brows, a crooked smirk with one fang.
+- **Scowl** (alternate): brows pulled down hard, slit eyes, a snarl of teeth.
+- **Sly side-eye** (alternate): one brow raised, half-lidded eyes glancing aside, a lopsided grin.
 
 The sheet also shows the header lockups: mark and wordmark (the default), the wordmark alone, and both on a light surface, where "Goblin" switches to the deeper green.
 
@@ -166,10 +167,11 @@ The sheet also shows the header lockups: mark and wordmark (the default), the wo
 
 - **Default theme (decided by owner)**: dark is the default. The theme control offers System, Light, and Dark with Dark preselected; System follows the operating system only when chosen, and dark stays the answer when the system gives no preference. #11 currently says the app follows the system setting; it needs updating to match.
 - **Primary action (decided by owner)**: lime with dark ink text. Re-evaluated in dark (component sheet, "Primary in the dark theme: options weighed"): a deeper lime loses the punch and looks muddy on near-black, and lime on an ink ledge reads as a cartoon outline whose ledge disappears into the dark surfaces. Lime with ink text and a deeper green ledge (the chosen treatment) stays vivid and keeps a visible lower edge, so I recommend keeping it.
-- **Active navigation (decided by owner)**: a 3 px green underline with a faint magenta glow, not the pill.
-- **Purple and magenta (decided by owner)**: more of it, sparingly but pointedly; every placement is listed above.
+- **Active navigation (decided by owner)**: a 3 px green underline directly under the label text (5 px below it), with a faint green glow; the same underline marks the current page in the 390 px menu. No pill, no magenta.
+- **Purple and magenta (decided by owner)**: the most special accents only; every placement is listed above. Run is an outline button again.
+- **Mascot (decided by owner)**: the smirk is the default; the scowl and sly side-eye stay on the component sheet as alternates.
 - **Node kinds (decided by owner)**: no meaning colours. Subloop is teal (was the failure orange) and exit is ink in light and bone in dark (was the destructive red); script moved from warm grey to slate so it stays distinct from the ink exit. All nine stay distinct, keep their icons, and pass in both themes.
-- **Sunken surface (decided by owner)**: neutral grey in light (`--grey-50`). In dark I tried the earthy brown and kept it: `--brown-975` reads as a warm well under the table headers, palette rail, segmented tracks, and code previews, a step apart from the neutral fields and code editors, without the beige cast the cream had in light.
+- **Sunken surface (decided by owner)**: white in light (`--grey-0`), separated by borders and elevation: table headers keep their bottom rule, the palette rail its right edge, segmented tracks their 3:1 border, code previews their border, and language tags gained a thin edge. In dark, neutral `--grey-950`, one step above the page and one below cards, and well apart from the fields (`--grey-990`). The brown well and `brown-975` are gone; the dark canvas dots are grey too.
 - **Logo (decided by owner)**: the mascot mark plus wordmark stays in the header; the wordmark-alone variant is on the component sheet.
 - **Status icons (decided by the orchestrator)**: SVG status icons, with the hourglass for waiting.
 - **Narrow widths (decided by the orchestrator, assumed pattern for #41)**: 768 px is the floor for editing; phones get every screen except editing, with a view-only canvas. The sample's 390 px views show the list and navigation patterns only.
@@ -177,18 +179,16 @@ The sheet also shows the header lockups: mark and wordmark (the default), the wo
 
 ## Open decisions for the owner
 
-1. Which mascot face is the default: smirk (shown in the header), scowl, or sly side-eye.
-2. The attention button for Run: keep it magenta next to the lime Publish, or keep Run outlined and save magenta for the post-publish "Run it" moment only.
-3. The earthy brown wells in dark, or neutral grey there too.
+None. Every decision from the earlier rounds is recorded above.
 
 ## Proposals
 
 Everything below is my addition, flagged for the owner; none of it is decided unless listed above.
 
-- **Proposal: added semantic tokens** (marked \* above), including `--surface-control` and `--surface-field` (secondary buttons and inputs need their own fills once dark wells are darker than cards), `--kind-on` (icon colour on kind chips: white in light, ink in dark), `--accent-glow`, `--accent-hairline`, and the `--mascot-*` tokens; plus `--focus-ring-width`, `--font-code`, `--radius-xl`, and `--duration-pulse`. Type sizes are named `--font-size-*` rather than `--text-*`, because Tailwind v4's `@theme` uses `--text-*` for font sizes.
+- **Proposal: added semantic tokens** (marked \* above), including `--surface-control` and `--surface-field` (secondary buttons and inputs need their own fills once dark wells are darker than cards), `--kind-on` (icon colour on kind chips: white in light, ink in dark), `--accent-glow`, `--accent-hairline` (now only the crown of the publish-success toast), and the `--mascot-*` tokens; plus `--focus-ring-width`, `--font-code`, `--radius-xl`, and `--duration-pulse`. Type sizes are named `--font-size-*` rather than `--text-*`, because Tailwind v4's `@theme` uses `--text-*` for font sizes.
 - **Proposal: theme scoping**: the semantic tier is declared on `:root, [data-theme='light']` and `[data-theme='dark']`, so any element can show the other theme (the mascot stages on the component sheet use this).
 - **Proposal: teal and slate scales** for the subloop and script kinds, and the kind icons (trigger bolt, decision diamond, inference sparkle, script prompt, mutate pencil, subloop nested squares, wait hourglass, heartbeat pulse, exit flag), all original SVG.
-- **Proposal: every purple and magenta placement listed above.**
+- **Proposal: every purple and magenta placement listed above**, within the owner's "most special accents only" rule.
 - **Proposal: row actions for #6**: Edit, Export, and Delete as one group of bordered small buttons with icons; Delete uses a soft destructive style and Confirm delete the solid one.
 - **Proposal: canvas styling**: orthogonal edges with rounded corners, port labels as pills, the dashed brown loop-back edge with a loop icon, a tinted header band and kind chip on every node card, and restyled zoom controls.
 - **Proposal: editor details**: kind descriptions in the palette, an always-visible validation pill in the toolbar, node id and label side by side, compact route rows, and a language tag on code fields.
@@ -215,5 +215,5 @@ Geist and Geist Mono 1.7.2, SIL Open Font License 1.1, copyright Vercel in colla
 - Screenshots are from Edge (Chromium) only, taken with reduced motion so the pulses are still; Firefox and Safari were not checked.
 - Forced-colours mode and 200% zoom were not checked on the sample; they stay on the cutover's QA plan.
 - Stacked tables use `display: block` on table elements, which some screen readers treat as losing table semantics; the cutover should keep the semantics explicitly.
-- The contrast table covers solid token pairs in both themes. Glows, the header hairline gradient, shadows, and disabled controls are not measured: the first three are decorative, and WCAG exempts disabled controls.
+- The contrast table covers solid token pairs in both themes. Glows, the gradient crown on the publish-success toast, shadows, and disabled controls are not measured: the first three are decorative, and WCAG exempts disabled controls.
 - System mode was exercised only through the control; the screenshots show explicit Dark and Light.

@@ -134,18 +134,6 @@
         background: var(--surface-inverse);
         color: var(--text-inverse);
       }
-      /* Proposal: a purple-to-magenta hairline along the header's bottom edge. */
-      .appbar::after,
-      .doc-bar::after {
-        content: '';
-        position: absolute;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        height: 2px;
-        background: var(--accent-hairline);
-        pointer-events: none;
-      }
       .brand {
         display: inline-flex;
         align-items: center;
@@ -251,8 +239,9 @@
         height: 15px;
       }
 
-      /* Main navigation: a confident green underline for the current page with a faint magenta
-         glow (owner decision), a magenta hover underline, and a magenta notification dot. */
+      /* Main navigation: the current page gets a confident green underline directly under its
+         label, with a faint green glow (owner decision); a magenta dot marks a run waiting for
+         input. */
       .mainnav {
         display: flex;
         align-self: stretch;
@@ -270,27 +259,22 @@
         font-weight: var(--font-weight-medium);
         transition: color var(--duration-fast) var(--ease-standard);
       }
-      .mainnav a::after {
+      .nav-label {
+        position: relative;
+      }
+      .nav-label::after {
         content: '';
         position: absolute;
-        z-index: 1;
-        left: 10px;
-        right: 10px;
-        bottom: 0;
+        left: 0;
+        right: 0;
+        bottom: -5px;
         height: 3px;
-        border-radius: 3px 3px 0 0;
-        transition:
-          background-color var(--duration-fast) var(--ease-standard),
-          box-shadow var(--duration-fast) var(--ease-standard);
+        border-radius: var(--radius-full);
+        transition: background-color var(--duration-fast) var(--ease-standard);
       }
       .mainnav a:hover,
       .mainnav a.is-hover {
         color: var(--text-inverse);
-      }
-      .mainnav a:hover::after,
-      .mainnav a.is-hover::after {
-        background: var(--accent-highlight);
-        opacity: 0.7;
       }
       .mainnav a:focus-visible {
         outline-offset: -6px;
@@ -300,12 +284,9 @@
         color: var(--text-inverse);
         font-weight: var(--font-weight-semibold);
       }
-      .mainnav a[aria-current='page']::after {
+      .mainnav a[aria-current='page'] .nav-label::after {
         background: var(--accent);
-        opacity: 1;
-        box-shadow:
-          0 -1px 10px 0 color-mix(in oklab, var(--accent-highlight) 55%, transparent),
-          0 0 2px color-mix(in oklab, var(--accent) 80%, transparent);
+        box-shadow: 0 0 8px 0 color-mix(in oklab, var(--accent) 45%, transparent);
       }
       .nav-dot {
         position: absolute;
@@ -461,13 +442,9 @@
         border-color: var(--accent-strong);
         box-shadow: 0 2px 0 var(--accent-strong);
       }
-      /* Proposal: hover adds a magenta sheen around the lime; the fill and text stay the same. */
       .btn-primary:hover,
       .btn-primary.is-hover {
         background: var(--accent-hover);
-        box-shadow:
-          0 2px 0 var(--accent-strong),
-          0 0 18px -2px color-mix(in oklab, var(--accent-highlight) 60%, transparent);
       }
       .btn-primary:active:not(:disabled) {
         background: var(--accent-active);
@@ -483,8 +460,8 @@
           0 0 0 1px var(--accent-strong),
           0 3px 0 1px var(--text-on-accent);
       }
-      /* Proposal: an attention action (Run, "view it" after a publish): magenta edge and text with
-         a soft glow. Never the default button, never a fill. */
+      /* Proposal: the notification action (for example "Run it" in the publish-success toast):
+         magenta edge and text with a soft glow. Only inside notifications; never a fill. */
       .btn-attention {
         background: var(--surface-raised);
         color: var(--accent-highlight);
@@ -625,6 +602,7 @@
         padding: 1px 6px;
         border-radius: var(--radius-sm);
         background: var(--surface-sunken);
+        box-shadow: inset 0 0 0 1px var(--border-default);
       }
 
       /* Alerts and banners ------------------------------------------------------------------ */
@@ -2457,15 +2435,6 @@
           border-radius: var(--radius-md);
           font-size: var(--font-size-lg);
         }
-        .mainnav a::after {
-          left: 0;
-          right: auto;
-          top: 10px;
-          bottom: 10px;
-          width: 3px;
-          height: auto;
-          border-radius: 0 3px 3px 0;
-        }
         .mainnav a[aria-current='page'] {
           background: var(--surface-inverse-raised);
         }
@@ -2728,10 +2697,10 @@
       <p class="eyebrow">GraphGoblin · issue #7 · visual direction</p>
       <h1 class="page-title">Visual-direction sample</h1>
       <p class="muted">
-        A static prototype of the proposed themes, dark first: goblin green on warm near-blacks with
-        brown undertones, purple and magenta for highlight moments, set in Geist. Every colour comes
-        from <code>tokens.css</code>; the header's System, Light, and Dark control switches the
-        theme. Open one view with its hash, or scroll to see them all.
+        A static prototype of the proposed themes, dark first: goblin green on neutral, slightly
+        warm near-blacks, with purple and magenta kept for the most special moments, set in Geist.
+        Every colour comes from <code>tokens.css</code>; the header's System, Light, and Dark
+        control switches the theme. Open one view with its hash, or scroll to see them all.
       </p>
       <ul>
         <li><a href="#loops">Loops list</a> (1440 and 390 px)</li>
@@ -2765,13 +2734,13 @@
           Menu
         </button>
         <nav class="mainnav" id="nav-loops" aria-label="Main">
-          <a href="#loops" aria-current="page">Loops</a>
+          <a href="#loops" aria-current="page"><span class="nav-label">Loops</span></a>
           <a href="#nav"
-            >Runs<span class="nav-dot" aria-hidden="true"></span
+            ><span class="nav-label">Runs</span><span class="nav-dot" aria-hidden="true"></span
             ><span class="visually-hidden">, 1 waiting for input</span></a
           >
-          <a href="#nav">Events</a>
-          <a href="#nav">Settings</a>
+          <a href="#nav"><span class="nav-label">Events</span></a>
+          <a href="#nav"><span class="nav-label">Settings</span></a>
         </nav>
         <div class="theme-switch" role="radiogroup" aria-label="Theme">
           <label title="System"
@@ -3066,13 +3035,13 @@
           Menu
         </button>
         <nav class="mainnav" id="nav-editor" aria-label="Main">
-          <a href="#loops" aria-current="page">Loops</a>
+          <a href="#loops" aria-current="page"><span class="nav-label">Loops</span></a>
           <a href="#nav"
-            >Runs<span class="nav-dot" aria-hidden="true"></span
+            ><span class="nav-label">Runs</span><span class="nav-dot" aria-hidden="true"></span
             ><span class="visually-hidden">, 1 waiting for input</span></a
           >
-          <a href="#nav">Events</a>
-          <a href="#nav">Settings</a>
+          <a href="#nav"><span class="nav-label">Events</span></a>
+          <a href="#nav"><span class="nav-label">Settings</span></a>
         </nav>
         <div class="theme-switch" role="radiogroup" aria-label="Theme">
           <label title="System"
@@ -3118,7 +3087,7 @@
             <button class="btn btn-outline" type="button">
               <svg class="icon" aria-hidden="true"><use href="#i-sliders" /></svg>Loop settings
             </button>
-            <button class="btn btn-attention" type="button">
+            <button class="btn btn-outline" type="button">
               <svg class="icon" aria-hidden="true"><use href="#i-running" /></svg>Run
             </button>
             <button
@@ -3747,13 +3716,13 @@ Nothing to change</textarea>
           Menu
         </button>
         <nav class="mainnav" id="nav-nav" aria-label="Main">
-          <a href="#loops">Loops</a>
+          <a href="#loops"><span class="nav-label">Loops</span></a>
           <a href="#nav" aria-current="page"
-            >Runs<span class="nav-dot" aria-hidden="true"></span
+            ><span class="nav-label">Runs</span><span class="nav-dot" aria-hidden="true"></span
             ><span class="visually-hidden">, 1 waiting for input</span></a
           >
-          <a href="#nav">Events</a>
-          <a href="#nav">Settings</a>
+          <a href="#nav"><span class="nav-label">Events</span></a>
+          <a href="#nav"><span class="nav-label">Settings</span></a>
         </nav>
         <div class="theme-switch" role="radiogroup" aria-label="Theme">
           <label title="System"
@@ -3938,13 +3907,13 @@ Nothing to change</textarea>
           Menu
         </button>
         <nav class="mainnav" id="nav-inspector" aria-label="Main">
-          <a href="#loops">Loops</a>
+          <a href="#loops"><span class="nav-label">Loops</span></a>
           <a href="#nav" aria-current="page"
-            >Runs<span class="nav-dot" aria-hidden="true"></span
+            ><span class="nav-label">Runs</span><span class="nav-dot" aria-hidden="true"></span
             ><span class="visually-hidden">, 1 waiting for input</span></a
           >
-          <a href="#nav">Events</a>
-          <a href="#nav">Settings</a>
+          <a href="#nav"><span class="nav-label">Events</span></a>
+          <a href="#nav"><span class="nav-label">Settings</span></a>
         </nav>
         <div class="theme-switch" role="radiogroup" aria-label="Theme">
           <label title="System"
@@ -4392,8 +4361,9 @@ Nothing to change</textarea>
           <h2 class="doc-h2">Mascot and wordmark (placeholder for #10)</h2>
           <p class="doc-note">
             A goblin-node head, drawn for this sample: the node from the favicon, with sharp ears,
-            ports for cheeks, and a mischievous face. Three faces to choose from, each at 160 px on
-            a dark and a light surface, then at header and favicon sizes (32, 24, and 16 px).
+            ports for cheeks, and a mischievous face. The smirk is the chosen default (owner
+            decision); the scowl and the sly side-eye are kept as alternates. Each is shown at 160
+            px on a dark and a light surface, then at header and favicon sizes (32, 24, and 16 px).
           </p>
           <div class="mascot-grid">
             <figure class="card mascot-card">
@@ -4417,7 +4387,7 @@ Nothing to change</textarea>
               </div>
               <figcaption class="stack" style="gap: var(--space-2)">
                 <div class="label-row">
-                  <strong>Smirk</strong><span class="badge tone-good">default</span>
+                  <strong>Smirk</strong><span class="badge tone-good">default (chosen)</span>
                 </div>
                 <span class="help"
                   >Default in the header. Narrowed eyes under angry brows, a magenta glint, a
@@ -4464,7 +4434,7 @@ Nothing to change</textarea>
               </div>
               <figcaption class="stack" style="gap: var(--space-2)">
                 <div class="label-row">
-                  <strong>Scowl</strong><span class="badge tone-neutral">option</span>
+                  <strong>Scowl</strong><span class="badge tone-neutral">alternate</span>
                 </div>
                 <span class="help"
                   >Brows pulled down hard, slit eyes, a snarl of teeth. The most dangerous of the
@@ -4511,7 +4481,7 @@ Nothing to change</textarea>
               </div>
               <figcaption class="stack" style="gap: var(--space-2)">
                 <div class="label-row">
-                  <strong>Sly side-eye</strong><span class="badge tone-neutral">option</span>
+                  <strong>Sly side-eye</strong><span class="badge tone-neutral">alternate</span>
                 </div>
                 <span class="help"
                   >One brow raised, half-lidded eyes glancing aside, a lopsided grin. Mischief over
@@ -4575,9 +4545,8 @@ Nothing to change</textarea>
           <h2 class="doc-h2">Palette</h2>
           <p class="doc-note">
             The primitive tier. Components never use these directly; the semantic tokens of each
-            theme pick from them. Grey is warm with a brown undertone, and its 850 to 990 steps are
-            the dark theme's surfaces. Teal and slate are node-kind hues that carry no status
-            meaning.
+            theme pick from them. Grey is slightly warm, and its 850 to 990 steps are the dark
+            theme's surfaces. Teal and slate are node-kind hues that carry no status meaning.
           </p>
           <div class="card card-body stack" style="gap: 10px">
             <div class="scale-steps">
@@ -4730,8 +4699,8 @@ Nothing to change</textarea>
             </div>
             <div class="scale-steps">
               <span></span><span>grey 850</span><span>900</span><span>925</span><span>950</span
-              ><span>975</span><span>990</span><span>brown 975</span><span></span><span></span
-              ><span></span><span></span>
+              ><span>975</span><span>990</span><span></span><span></span><span></span><span></span
+              ><span></span>
             </div>
             <div class="scale">
               <span>dark</span><span class="sw" style="background: var(--grey-850)"></span
@@ -4739,8 +4708,7 @@ Nothing to change</textarea>
               ><span class="sw" style="background: var(--grey-925)"></span
               ><span class="sw" style="background: var(--grey-950)"></span
               ><span class="sw" style="background: var(--grey-975)"></span
-              ><span class="sw" style="background: var(--grey-990)"></span
-              ><span class="sw" style="background: var(--brown-975)"></span><span></span
+              ><span class="sw" style="background: var(--grey-990)"></span><span></span><span></span
               ><span></span><span></span><span></span>
             </div>
           </div>
@@ -4828,9 +4796,6 @@ Nothing to change</textarea>
               <button class="btn btn-danger-soft" type="button">
                 <svg class="icon"><use href="#i-trash" /></svg>Delete (proposal)
               </button>
-              <button class="btn btn-attention" type="button">
-                <svg class="icon"><use href="#i-running" /></svg>Run (attention)
-              </button>
               <button class="btn btn-ghost" type="button">Ghost</button>
             </div>
             <div class="cluster">
@@ -4879,16 +4844,6 @@ Nothing to change</textarea>
               <button class="btn btn-primary opt-ink" type="button">
                 <svg class="icon"><use href="#i-send" /></svg>Publish</button
               ><span class="help">Lime on an ink ledge</span>
-            </div>
-            <div class="primary-option">
-              <button class="btn btn-primary is-hover" type="button">
-                <svg class="icon"><use href="#i-send" /></svg>Publish</button
-              ><span class="help">Hover: magenta sheen</span>
-            </div>
-            <div class="primary-option">
-              <button class="btn btn-attention is-hover" type="button">
-                <svg class="icon"><use href="#i-running" /></svg>Run</button
-              ><span class="help">Attention, hover</span>
             </div>
           </div>
         </section>
@@ -5031,20 +4986,22 @@ Nothing to change</textarea>
         <section class="doc-section">
           <h2 class="doc-h2">Navigation, notifications, and highlight moments</h2>
           <p class="doc-note">
-            Purple and magenta mark moments, never surfaces or the main action: the header hairline,
-            the hover and current-page underline glow, the waiting-run dot, the running pulse, the
-            attention button, notification edges and icons, the selected node, and the mascot's
-            eyes.
+            Purple and magenta are kept for the most special accents only: the dot on Runs when a
+            run waits for input, notification edges, dots, and icons (with the "Run it" action after
+            a publish), the running badge's glow, the selected node's ring, the heartbeat kind, the
+            "New" badge, and the mascot's eyes. Navigation, buttons, and the header stay green and
+            neutral.
           </p>
           <div class="nav-demo">
             <header class="appbar">
               <nav class="mainnav" aria-label="Navigation states">
-                <a href="#loops">Loops</a>
+                <a href="#loops"><span class="nav-label">Loops</span></a>
                 <a href="#nav" aria-current="page"
-                  >Runs<span class="nav-dot" aria-hidden="true"></span
+                  ><span class="nav-label">Runs</span
+                  ><span class="nav-dot" aria-hidden="true"></span
                 ></a>
-                <a href="#nav" class="is-hover">Events</a>
-                <a href="#nav" class="is-focus">Settings</a>
+                <a href="#nav" class="is-hover"><span class="nav-label">Events</span></a>
+                <a href="#nav" class="is-focus"><span class="nav-label">Settings</span></a>
               </nav>
             </header>
             <div
