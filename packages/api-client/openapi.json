@@ -11799,6 +11799,9 @@
                           },
                           "edgeId": {
                             "type": "string"
+                          },
+                          "path": {
+                            "type": "string"
                           }
                         },
                         "required": [
@@ -11879,6 +11882,9 @@
                             "type": "string"
                           },
                           "edgeId": {
+                            "type": "string"
+                          },
+                          "path": {
                             "type": "string"
                           }
                         },
@@ -12056,6 +12062,9 @@
                           },
                           "edgeId": {
                             "type": "string"
+                          },
+                          "path": {
+                            "type": "string"
                           }
                         },
                         "required": [
@@ -12146,6 +12155,9 @@
                           },
                           "edgeId": {
                             "type": "string"
+                          },
+                          "path": {
+                            "type": "string"
                           }
                         },
                         "required": [
@@ -12199,10 +12211,47 @@
                   "properties": {
                     "version": {
                       "$ref": "#/components/schemas/LoopVersionRecord"
+                    },
+                    "issues": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "type": "string"
+                          },
+                          "severity": {
+                            "type": "string",
+                            "enum": [
+                              "error",
+                              "warning"
+                            ]
+                          },
+                          "message": {
+                            "type": "string"
+                          },
+                          "nodeId": {
+                            "type": "string"
+                          },
+                          "edgeId": {
+                            "type": "string"
+                          },
+                          "path": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "code",
+                          "severity",
+                          "message"
+                        ],
+                        "additionalProperties": false
+                      }
                     }
                   },
                   "required": [
-                    "version"
+                    "version",
+                    "issues"
                   ],
                   "additionalProperties": false
                 }
@@ -13437,6 +13486,13 @@
                           "model": {
                             "type": "string"
                           },
+                          "source": {
+                            "type": "string",
+                            "enum": [
+                              "harness",
+                              "litellm"
+                            ]
+                          },
                           "displayName": {
                             "type": "string"
                           },
@@ -13472,6 +13528,7 @@
                         "required": [
                           "harness",
                           "model",
+                          "source",
                           "displayName",
                           "efforts",
                           "defaultEffort",
@@ -13494,10 +13551,11 @@
     },
     "/model-catalog/{harness}/{model}": {
       "put": {
-        "summary": "Add or update a catalog entry",
+        "summary": "Edit a LiteLLM catalog entry",
         "tags": [
           "settings"
         ],
+        "description": "Harness entries return 409 MODEL_MANAGED_BY_HARNESS. New LiteLLM entries return 409 LITELLM_NOT_CONFIGURED until a provider is configured. Existing source is immutable.",
         "requestBody": {
           "required": true,
           "content": {
@@ -13538,6 +13596,13 @@
                   "enabled": {
                     "default": true,
                     "type": "boolean"
+                  },
+                  "source": {
+                    "type": "string",
+                    "enum": [
+                      "harness",
+                      "litellm"
+                    ]
                   }
                 },
                 "required": [
@@ -13581,6 +13646,13 @@
                     "model": {
                       "type": "string"
                     },
+                    "source": {
+                      "type": "string",
+                      "enum": [
+                        "harness",
+                        "litellm"
+                      ]
+                    },
                     "displayName": {
                       "type": "string"
                     },
@@ -13616,6 +13688,119 @@
                   "required": [
                     "harness",
                     "model",
+                    "source",
+                    "displayName",
+                    "efforts",
+                    "defaultEffort",
+                    "enabled"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Enable or disable a catalog entry",
+        "tags": [
+          "settings"
+        ],
+        "description": "Requires settings:write. Updates only enabled for either source; 404 MODEL_NOT_FOUND when absent.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "harness",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "model",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "harness": {
+                      "type": "string"
+                    },
+                    "model": {
+                      "type": "string"
+                    },
+                    "source": {
+                      "type": "string",
+                      "enum": [
+                        "harness",
+                        "litellm"
+                      ]
+                    },
+                    "displayName": {
+                      "type": "string"
+                    },
+                    "efforts": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "minimal",
+                          "low",
+                          "medium",
+                          "high",
+                          "xhigh",
+                          "max"
+                        ]
+                      }
+                    },
+                    "defaultEffort": {
+                      "type": "string",
+                      "enum": [
+                        "minimal",
+                        "low",
+                        "medium",
+                        "high",
+                        "xhigh",
+                        "max"
+                      ]
+                    },
+                    "enabled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "harness",
+                    "model",
+                    "source",
                     "displayName",
                     "efforts",
                     "defaultEffort",
@@ -13629,10 +13814,11 @@
         }
       },
       "delete": {
-        "summary": "Remove a catalog entry",
+        "summary": "Remove a LiteLLM catalog entry",
         "tags": [
           "settings"
         ],
+        "description": "Harness entries return 409 MODEL_MANAGED_BY_HARNESS; absent entries return 404 MODEL_NOT_FOUND.",
         "parameters": [
           {
             "schema": {

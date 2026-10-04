@@ -83,6 +83,7 @@ export class FakeApi {
   catalog: {
     harness: string;
     model: string;
+    source: 'harness' | 'litellm';
     displayName: string;
     efforts: string[];
     defaultEffort: string;
@@ -526,21 +527,59 @@ export class FakeApi {
     ],
     ['GET /model-catalog', () => json({ items: this.catalog })],
     [
+      'PATCH /model-catalog/:harness/:model',
+      (call, [harness, model]) => {
+        const entry = this.catalog.find((m) => m.harness === harness && m.model === model);
+        if (!entry) return problem(404, 'MODEL_NOT_FOUND', 'model not in catalog');
+        const body = call.body as { enabled?: unknown };
+        if (typeof body.enabled !== 'boolean' || Object.keys(body).length !== 1)
+          return problem(400, 'VALIDATION_FAILED');
+        entry.enabled = body.enabled;
+        return json(entry);
+      },
+    ],
+    [
       'PUT /model-catalog/:harness/:model',
       (call, [harness, model]) => {
+        const existing = this.catalog.find((m) => m.harness === harness && m.model === model);
+        const source = existing?.source ?? (call.body as { source?: string }).source ?? 'harness';
+        if (source === 'harness')
+          return problem(
+            409,
+            'MODEL_MANAGED_BY_HARNESS',
+            'this model is managed by its harness; use PATCH to enable or disable it',
+          );
+        if (!existing)
+          return problem(
+            409,
+            'LITELLM_NOT_CONFIGURED',
+            'LiteLLM is not configured; adding local models is not available yet',
+          );
         const entry = {
           harness: harness!,
           model: model!,
           ...(call.body as object),
+          source,
         } as FakeApi['catalog'][number];
-        this.catalog = [...this.catalog.filter((m) => m.model !== model), entry];
+        this.catalog = [
+          ...this.catalog.filter((m) => !(m.model === model && m.harness === harness)),
+          entry,
+        ];
         return json(entry);
       },
     ],
     [
       'DELETE /model-catalog/:harness/:model',
-      (_call, [, model]) => {
-        this.catalog = this.catalog.filter((m) => m.model !== model);
+      (_call, [harness, model]) => {
+        const entry = this.catalog.find((m) => m.harness === harness && m.model === model);
+        if (!entry) return problem(404, 'MODEL_NOT_FOUND', 'model not in catalog');
+        if (entry.source === 'harness')
+          return problem(
+            409,
+            'MODEL_MANAGED_BY_HARNESS',
+            'this model is managed by its harness; use PATCH to enable or disable it',
+          );
+        this.catalog = this.catalog.filter((m) => !(m.model === model && m.harness === harness));
         return new Response(null, { status: 204 });
       },
     ],

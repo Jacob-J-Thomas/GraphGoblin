@@ -8,6 +8,7 @@ export const EFFORTS = EffortSchema.options;
 export type CatalogEntry = {
   harness: string;
   model: string;
+  source: 'harness' | 'litellm';
   displayName: string;
   efforts: Effort[];
   defaultEffort: Effort;

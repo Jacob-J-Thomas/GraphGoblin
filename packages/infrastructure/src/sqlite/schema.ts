@@ -166,6 +166,9 @@ export const modelCatalog = sqliteTable(
   {
     harness: text('harness').notNull(),
     model: text('model').notNull(),
+    source: text('source', { enum: ['harness', 'litellm'] })
+      .notNull()
+      .default('harness'),
     displayName: text('display_name').notNull(),
     efforts: text('efforts', { mode: 'json' }).$type<Effort[]>().notNull(),
     defaultEffort: text('default_effort').$type<Effort>().notNull(),

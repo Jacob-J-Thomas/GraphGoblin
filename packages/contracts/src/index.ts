@@ -7,6 +7,7 @@
 export const CONTRACTS_SCHEMA_VERSION = 1 as const;
 
 export * from './common.js';
+export * from './catalog.js';
 export * from './patch.js';
 export * from './thread.js';
 export * from './mutations.js';

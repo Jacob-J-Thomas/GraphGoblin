@@ -37,7 +37,11 @@ Triggers and events
   GET    /events?type=&before=&limit=   stored inbound events (API, exit channels, webhooks), newest first
 
 Settings and catalog
-  CRUD   /secrets  /api-keys  /model-catalog  /settings   (schedules follow publish; read them at /loops/{id}/triggers)
+  CRUD   /secrets  /api-keys  /settings   (schedules follow publish; read them at /loops/{id}/triggers)
+  GET    /model-catalog                 catalog entries, including source and enabled (settings:read)
+  PATCH  /model-catalog/{harness}/{model}  { enabled: boolean }, 200 entry (settings:write)
+  PUT    /model-catalog/{harness}/{model}  edit existing LiteLLM metadata (settings:write)
+  DELETE /model-catalog/{harness}/{model}  remove a LiteLLM entry, 204 (settings:write)
   GET    /harness/preflight             Codex installed and authenticated?
   GET    /system/preflight              first-run checks: Node, data dir, master key, database, harnesses, Jev, default model (11)
   GET    /openapi.json   GET /healthz   GET /version   (all public; Swagger UI at /docs when enabled)
@@ -160,9 +164,25 @@ Codex installs a plugin by copying it into `~/.codex/plugins/cache/<marketplace>
 
 Problem Details, RFC 9457, with a stable `code` field drawn from `contracts`. Validation errors include the Zod issue path. Request errors Fastify raises itself use stable codes too: `MALFORMED_BODY` (invalid or empty JSON, 400), `BODY_TOO_LARGE` (over the 8 MB limit, 413), `UNSUPPORTED_MEDIA_TYPE` (415); other framework errors are `BAD_REQUEST`, so no `FST_ERR_*` code reaches a client.
 
+### Model catalog (Decided, ADR-0018)
+
+Entries include `source: 'harness' | 'litellm'`. GET requires `settings:read`; all mutations require `settings:write`. PATCH accepts only `{ enabled: boolean }` and returns the full entry with 200; repeated toggles are safe. Use `modelCatalog.setEnabled(client, harness, model, enabled)` in the client. Existing `upsert` and `remove` helpers remain for LiteLLM rows; no client helper was removed.
+
+PUT retains displayName, efforts, defaultEffort, and optional enabled (default true), adding optional source. Existing source governs ownership and cannot be changed. An omitted source on creation means harness, so old scripts creating harness models are now refused. Requesting `source: 'litellm'` on a new entry is also refused until LiteLLM configuration ships. Existing LiteLLM entries may be edited without specifying source. Scripts that previously PUT a complete harness entry to toggle enabled must use PATCH instead. MCP tools and Codex plugin skills do not call these catalog routes.
+
+| Code                       | HTTP | Meaning                                                                                                              |
+| -------------------------- | ---- | -------------------------------------------------------------------------------------------------------------------- |
+| `MODEL_MANAGED_BY_HARNESS` | 409  | PUT creating/editing a harness entry, or DELETE of a harness entry; use PATCH. This includes hand-added legacy rows. |
+| `LITELLM_NOT_CONFIGURED`   | 409  | PUT creating a LiteLLM entry while the provider is unavailable.                                                      |
+| `MODEL_NOT_FOUND`          | 404  | PATCH or DELETE of a missing entry.                                                                                  |
+| `INVALID_INPUT`            | 400  | LiteLLM PUT changes source or defaultEffort is absent from efforts.                                                  |
+| `VALIDATION_FAILED`        | 400  | Invalid body, including a missing/non-boolean enabled or extra PATCH fields.                                         |
+
 ## Validation agreement (Decided, WP-D2)
 
 `POST /loops`, `POST /loops/import`, `PUT /loops/{id}/draft`, `POST /loops/{id}/validate`, and `POST /loops/{id}/publish` report the same issue list: the `domain` rules (`validateLoop`, which includes Liquid and JSONata syntax checks), trigger checks such as cron syntax, and subloop references, which must name a loop of the same owner with a published version (`SUBLOOP_NOT_FOUND`, `SUBLOOP_NOT_PUBLISHED`; a loop may reference itself). `publishable` from validate is true exactly when publish would accept the draft. The editor runs the `domain` rules locally and adds the API-only issues from validate.
+
+The API reads the catalog once per issue collection, next to subloop checks, and adds warning-severity `MODEL_DISABLED` or `MODEL_NOT_IN_CATALOG` for explicit inference `config.model` (the node's harness), decision `config.codex.model` (Codex), and `settings.defaults.model` (the default harness). Issue paths are `nodes.<index>.config.model`, `nodes.<index>.config.codex.model`, and `settings.defaults.model`; node warnings also include nodeId. Unspecified models add no catalog warning. Publishing succeeds when only warnings exist and returns `{ version, issues }`; warnings do not enforce the catalog at runtime. The shared contracts issue schema supports optional paths, and the editor already shows warnings and their node identity.
 
 ## Draft conflicts (Decided, WP-F2, ADR-0015)
 

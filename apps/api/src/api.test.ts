@@ -491,6 +491,15 @@ describe('settings, secrets, api keys, catalog, events', () => {
     expect(
       catalog.items.find((m) => m.harness === 'codex' && m.model === 'gpt-6-luna')?.efforts,
     ).toEqual(['minimal', 'low', 'medium', 'high', 'xhigh', 'max']);
+    await t.container.repos.catalog.upsert({
+      harness: 'codex',
+      model: 'gpt-7-test',
+      source: 'litellm',
+      displayName: 'Test',
+      efforts: ['low'],
+      defaultEffort: 'low',
+      enabled: true,
+    });
     const upsert = await t.app.inject({
       method: 'PUT',
       url: '/model-catalog/codex/gpt-7-test',

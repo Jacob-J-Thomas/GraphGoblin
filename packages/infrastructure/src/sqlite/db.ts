@@ -1,6 +1,5 @@
 import { createClient, type Client, type Transaction } from '@libsql/client';
 import { drizzle, type LibSQLDatabase } from 'drizzle-orm/libsql';
-import { migrate } from 'drizzle-orm/libsql/migrator';
 import { readMigrationFiles } from 'drizzle-orm/migrator';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -182,7 +181,34 @@ export function openDatabase(options: DatabaseOptions): DatabaseHandle {
     async migrate() {
       await client.execute('PRAGMA journal_mode = WAL').catch(() => undefined);
       await client.execute('PRAGMA busy_timeout = 5000').catch(() => undefined);
-      await migrate(db, { migrationsFolder });
+      // SQLite has no ADD COLUMN IF NOT EXISTS. Keep Drizzle's timestamp ledger and atomic
+      // migration batch, but skip this additive statement if an installation already has it.
+      const shipped = readMigrationFiles({ migrationsFolder });
+      await client.execute(
+        'CREATE TABLE IF NOT EXISTS __drizzle_migrations (id SERIAL PRIMARY KEY, hash text NOT NULL, created_at numeric)',
+      );
+      const last = await client.execute(
+        'SELECT created_at FROM __drizzle_migrations ORDER BY created_at DESC LIMIT 1',
+      );
+      const columns = await client.execute('PRAGMA table_info(model_catalog)');
+      const hasSource = columns.rows.some((row) => row['name'] === 'source');
+      const statements = shipped
+        .filter((m) => !last.rows[0] || Number(last.rows[0][0]) < m.folderMillis)
+        .flatMap((migration) => [
+          ...migration.sql.filter(
+            (stmt) =>
+              !(
+                hasSource &&
+                stmt.trim() ===
+                  "ALTER TABLE model_catalog ADD COLUMN source TEXT NOT NULL DEFAULT 'harness';"
+              ),
+          ),
+          {
+            sql: 'INSERT INTO __drizzle_migrations (hash, created_at) VALUES (?, ?)',
+            args: [migration.hash, migration.folderMillis],
+          },
+        ]);
+      await client.migrate(statements);
     },
     async pendingMigrations() {
       const shipped = readMigrationFiles({ migrationsFolder });

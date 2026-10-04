@@ -119,12 +119,7 @@ export function ModelCatalogSection() {
   const [editing, setEditing] = useState<string | undefined>();
   const toggle = useMutation({
     mutationFn: (entry: CatalogEntry) =>
-      modelCatalog.upsert(client, entry.harness, entry.model, {
-        displayName: entry.displayName,
-        efforts: entry.efforts,
-        defaultEffort: entry.defaultEffort,
-        enabled: !entry.enabled,
-      }),
+      modelCatalog.setEnabled(client, entry.harness, entry.model, !entry.enabled),
     onSuccess: () => invalidate(keys.catalog),
   });
   return (

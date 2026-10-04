@@ -1,4 +1,5 @@
 import { approvalLoop, control, expect, publishLoop, test } from './fixtures.js';
+import { ModelCatalogEntrySchema } from '@graphgoblin/contracts';
 
 test('Loops keeps on cancel, contains keyboard focus, exports, and deletes on confirmation', async ({
   page,
@@ -64,18 +65,19 @@ test('Settings confirms model removal and reports an API second-delete error', a
   page,
   request,
 }) => {
-  await request.put('/model-catalog/codex/actions-model', {
-    data: {
-      displayName: 'Actions model',
-      efforts: ['low'],
-      defaultEffort: 'low',
-      enabled: true,
-    },
+  await control(request, '/catalog/seed', {
+    harness: 'codex',
+    model: 'actions-model',
+    source: 'litellm',
+    displayName: 'Actions model',
+    efforts: ['low'],
+    defaultEffort: 'low',
+    enabled: true,
   });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/app/settings');
   await page.getByRole('button', { name: 'Delete actions-model', exact: true }).click();
-  await expect(page.getByRole('alertdialog')).toContainText('returns at the next server start');
+  await expect(page.getByRole('alertdialog')).toContainText('removed from the catalog');
   expect(
     await page.getByRole('alertdialog').evaluate((element) => ({
       fits: element.scrollWidth <= element.clientWidth,
@@ -92,6 +94,44 @@ test('Settings confirms model removal and reports an API second-delete error', a
     0,
   );
   await expect(page.getByRole('heading', { name: 'Model catalog', exact: true })).toBeFocused();
+});
+
+test('Settings toggles harness entries using PATCH and reports managed edit/delete errors', async ({
+  page,
+  request,
+}) => {
+  await request.patch('/model-catalog/codex/gpt-6-luna', { data: { enabled: true } });
+  const before = ModelCatalogEntrySchema.array()
+    .parse(((await (await request.get('/model-catalog')).json()) as { items: unknown }).items)
+    .find((entry) => entry.model === 'gpt-6-luna');
+  await page.goto('/app/settings');
+  const checkbox = page.getByLabel('Enable gpt-6-luna', { exact: true });
+  await expect(checkbox).toBeChecked();
+  const patch = page.waitForResponse(
+    (response) =>
+      response.request().method() === 'PATCH' &&
+      response.url().endsWith('/model-catalog/codex/gpt-6-luna'),
+  );
+  await checkbox.click();
+  expect((await patch).status()).toBe(200);
+  await expect(checkbox).not.toBeChecked();
+  const disabled = ModelCatalogEntrySchema.array()
+    .parse(((await (await request.get('/model-catalog')).json()) as { items: unknown }).items)
+    .find((entry) => entry.model === 'gpt-6-luna');
+  expect(disabled).toEqual({ ...before, enabled: false });
+  await checkbox.click();
+  await expect(checkbox).toBeChecked();
+  await page.getByRole('button', { name: 'Edit gpt-6-luna', exact: true }).click();
+  await page.getByRole('button', { name: 'Save model', exact: true }).click();
+  await expect(page.getByRole('form', { name: 'Edit gpt-6-luna' })).toContainText(
+    'managed by its harness',
+  );
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await page.getByRole('button', { name: 'Delete gpt-6-luna', exact: true }).click();
+  await page.getByRole('button', { name: 'Confirm delete gpt-6-luna', exact: true }).click();
+  await expect(page.getByRole('alertdialog')).toContainText('MODEL_MANAGED_BY_HARNESS');
+  await page.getByRole('button', { name: 'Keep', exact: true }).click();
+  expect((await request.get('/model-catalog')).status()).toBe(200);
 });
 
 test('revoking this browser key warns and brings up the API key panel', async ({
