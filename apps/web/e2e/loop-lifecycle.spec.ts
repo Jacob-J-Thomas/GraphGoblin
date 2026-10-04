@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { approvalLoop, expect, publishLoop, test } from './fixtures.js';
+import { approvalLoop, closeNode, expect, openNode, publishLoop, test } from './fixtures.js';
 
 function handle(page: Page, nodeId: string, handleId: string) {
   return page.locator(`.react-flow__handle[data-nodeid="${nodeId}"][data-handleid="${handleId}"]`);
@@ -17,8 +17,10 @@ test('draw a loop in the editor, publish it, run it, watch events, and provide i
   // Add a wait node from the palette and rewire start -> wait -> done on the canvas.
   await page.getByRole('button', { name: 'Add Wait node' }).click();
   await expect(page.getByTestId('node-wait')).toBeVisible();
-  await page.getByTestId('node-start').click();
-  await page.getByRole('button', { name: 'Remove edge e1' }).click();
+  const start = await openNode(page, 'start');
+  await expect(start).toHaveAccessibleName('Edit trigger start');
+  await start.getByRole('button', { name: 'Remove edge e1' }).click();
+  await closeNode(page);
   await page.locator('.react-flow__controls-fitview').click();
 
   await handle(page, 'start', 'out').dragTo(handle(page, 'wait', 'in'));
@@ -32,7 +34,10 @@ test('draw a loop in the editor, publish it, run it, watch events, and provide i
   await page.getByRole('button', { name: 'Publish' }).click();
   await expect(page.getByText('Published version 1.')).toBeVisible();
 
-  await page.getByRole('button', { name: 'Run' }).click();
+  // Runs start from Runs: the toolbar's Open in Runs opens the New run flow for this loop.
+  await page.getByRole('link', { name: 'Open in Runs' }).first().click();
+  await expect(page).toHaveURL(/\/app\/runs\/new\?loop=[0-9A-Z]{26}$/);
+  await expect(page.getByLabel('Loop')).toHaveValue(/^[0-9A-Z]{26}$/);
   await page.getByRole('button', { name: 'Start run' }).click();
   await expect(page).toHaveURL(/\/app\/runs\/[0-9A-Z]{26}$/);
 
@@ -56,8 +61,7 @@ test('draw a loop in the editor, publish it, run it, watch events, and provide i
 
 test('cancel a waiting run from the inspector', async ({ page, request }) => {
   const loopId = await publishLoop(request, approvalLoop('e2e cancel'));
-  await page.goto(`/app/loops/${loopId}/edit`);
-  await page.getByRole('button', { name: 'Run' }).click();
+  await page.goto(`/app/runs/new?loop=${loopId}`);
   await page.getByRole('button', { name: 'Start run' }).click();
   await expect(page.getByText('Input requested')).toBeVisible();
 

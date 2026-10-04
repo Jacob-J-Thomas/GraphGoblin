@@ -4,7 +4,7 @@
  * editor asks before reloading or overwriting.
  */
 import type { APIRequestContext, Page } from '@playwright/test';
-import { approvalLoop, expect, test } from './fixtures.js';
+import { approvalLoop, expect, showLoopPanel, test } from './fixtures.js';
 
 async function serverDescription(request: APIRequestContext, loopId: string) {
   const res = await request.get(`/loops/${loopId}`);
@@ -16,7 +16,7 @@ async function serverDescription(request: APIRequestContext, loopId: string) {
 }
 
 async function describeLoop(page: Page, text: string): Promise<void> {
-  await page.getByRole('button', { name: 'Loop settings' }).click();
+  await showLoopPanel(page);
   await page.getByLabel('Description').fill(text);
 }
 
@@ -51,7 +51,7 @@ test('two tabs editing one draft: the stale tab is asked to reload or overwrite'
   // Reload: tab B shows tab A's draft.
   await b.getByRole('button', { name: 'Reload server draft' }).click();
   await expect(b.getByText('The draft changed on the server')).toBeHidden();
-  await b.getByRole('button', { name: 'Loop settings' }).click();
+  await showLoopPanel(b);
   await expect(b.getByLabel('Description')).toHaveValue('from tab A');
 
   // Tab A saves again; tab B edits again, conflicts, and overwrites this time.

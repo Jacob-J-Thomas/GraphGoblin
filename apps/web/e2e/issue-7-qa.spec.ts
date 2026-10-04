@@ -120,9 +120,10 @@ test('I7-QA-01: the longest valid loop name stays inside the editor toolbar and 
     // Cut short with an ellipsis, inside the page, with every action still on screen.
     expect(await heading.evaluate((h) => h.scrollWidth > h.clientWidth)).toBe(true);
     expect(await pageOverflows(page), `editor at ${viewport.width}`).toBe(false);
-    for (const action of ['Loop settings', 'Run', 'Publish']) {
+    for (const action of ['Loop settings', 'Publish']) {
       await expect(page.getByRole('button', { name: action, exact: true })).toBeInViewport();
     }
+    await expect(page.getByRole('link', { name: 'Open in Runs', exact: true })).toBeInViewport();
     for (const path of ['/app/loops', '/app/runs']) {
       await page.goto(path);
       await expect(page.locator('td', { hasText: name }).first()).toBeVisible();

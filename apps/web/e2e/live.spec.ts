@@ -3,7 +3,7 @@
  * with LIVE=1 (`LIVE=1 pnpm --filter @graphgoblin/web test:e2e -- e2e/live.spec.ts`); otherwise
  * it is skipped. Model gpt-6-luna, effort low, read-only sandbox, a temporary working directory.
  */
-import { expect, test } from './fixtures.js';
+import { closeNode, expect, openNode, test } from './fixtures.js';
 
 test.skip(process.env['LIVE'] !== '1', 'live Codex check: set LIVE=1');
 
@@ -27,6 +27,7 @@ test('LIVE: build, publish, and run an inference loop against Codex from the UI'
   await expect(page.getByRole('heading', { name: 'live ok' })).toBeVisible();
 
   await page.getByRole('button', { name: 'Add Inference node' }).click();
+  await openNode(page, 'inference');
   const props = page.getByRole('region', { name: 'Node properties' });
   const prompt = props.locator('[data-field="prompt.template"] .cm-content');
   await prompt.click();
@@ -35,22 +36,26 @@ test('LIVE: build, publish, and run an inference loop against Codex from the UI'
   await props.getByLabel('Model', { exact: true }).fill('gpt-6-luna');
   await props.getByLabel('Effort', { exact: true }).selectOption('low');
   await props.getByLabel('Sandbox', { exact: true }).selectOption('read-only');
+  await closeNode(page);
 
-  // Rewire start -> inference -> done.
-  await page.getByTestId('node-start').click();
+  // Rewire start -> inference -> done in the node editors.
+  await openNode(page, 'start');
   await page.getByRole('button', { name: 'Remove edge e1' }).click();
   const fromStart = page.getByRole('form', { name: 'Connect start' });
   await fromStart.getByLabel('To').selectOption('inference');
   await fromStart.getByRole('button', { name: 'Connect' }).click();
-  await page.getByTestId('node-inference').click();
+  await closeNode(page);
+  await openNode(page, 'inference');
   const fromInference = page.getByRole('form', { name: 'Connect inference' });
   await fromInference.getByLabel('To').selectOption('done');
   await fromInference.getByRole('button', { name: 'Connect' }).click();
+  await closeNode(page);
   await expect(page.getByText('Ready to publish')).toBeVisible();
 
   await page.getByRole('button', { name: 'Publish' }).click();
   await expect(page.getByText('Published version 1.')).toBeVisible();
-  await page.getByRole('button', { name: 'Run' }).click();
+  // Runs start from Runs: Open in Runs leads to the New run flow with this loop chosen.
+  await page.getByRole('link', { name: 'Open in Runs' }).first().click();
   await page.getByRole('button', { name: 'Start run' }).click();
   await expect(page).toHaveURL(/\/app\/runs\/[0-9A-Z]{26}$/);
 

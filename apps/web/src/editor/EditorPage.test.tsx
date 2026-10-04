@@ -460,6 +460,50 @@ describe('EditorPage', () => {
     expect(within(form).getByRole('alert')).toHaveTextContent('Connection refused: unknown node');
   });
 
+  it('connects a chosen port, and keeps an exit’s loop-back config in step with its edge', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const loop = api.addLoop(kitchenSinkLoop());
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'kitchen-sink' });
+
+    // A script with two free ports: pick the second.
+    act(() => useEditorStore.getState().openNode('check'));
+    let dialog = await screen.findByRole('dialog', { name: 'Edit script check' });
+    await user.click(within(dialog).getByRole('button', { name: 'Remove edge e5' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Remove edge e5b' }));
+    const form = within(dialog).getByRole('form', { name: 'Connect check' });
+    await user.selectOptions(within(form).getByLabelText('Output'), 'retry');
+    await user.selectOptions(within(form).getByLabelText('To'), 'decide');
+    await user.click(within(form).getByRole('button', { name: 'Connect' }));
+    expect(useEditorStore.getState().definition!.edges).toContainEqual(
+      expect.objectContaining({
+        from: { node: 'check', port: 'retry' },
+        to: { node: 'decide', port: 'in' },
+      }),
+    );
+    await user.click(within(dialog).getByRole('button', { name: 'Done' }));
+
+    // The exit's loop-back: removing the edge clears the field, connecting sets it again.
+    act(() => useEditorStore.getState().openNode('done'));
+    dialog = await screen.findByRole('dialog', { name: 'Edit exit done' });
+    expect(within(dialog).getByLabelText('Target node id')).toHaveValue('prep');
+    await user.click(within(dialog).getByRole('button', { name: 'Remove edge e11' }));
+    expect(within(dialog).queryByLabelText('Target node id')).toBeNull();
+    const loopBack = within(dialog).getByRole('form', { name: 'Connect done' });
+    await user.selectOptions(within(loopBack).getByLabelText('To'), 'infer');
+    await user.click(within(loopBack).getByRole('button', { name: 'Connect' }));
+    expect(within(dialog).getByLabelText('Target node id')).toHaveValue('infer');
+    // An edit elsewhere in the form keeps it.
+    await user.clear(within(dialog).getByLabelText('Label'));
+    await user.type(within(dialog).getByLabelText('Label'), 'Finish');
+    expect(
+      useEditorStore.getState().definition!.nodes.find((n) => n.id === 'done')!.config,
+    ).toMatchObject({
+      loopBack: { targetNodeId: 'infer' },
+    });
+  });
+
   it('never lets an older save land after a newer one', async () => {
     const api = new FakeApi();
     const loop = api.addLoop(newLoopDefinition('order'));

@@ -147,6 +147,34 @@ describe('New run', () => {
     expect([...api.runs.values()].filter((r) => r.status === 'queued')).toHaveLength(2);
   });
 
+  it('starts from the manual trigger chosen, with that trigger’s input form', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const twoStarts = withInput('two starts');
+    twoStarts.nodes.push({
+      id: 'quick',
+      kind: 'trigger',
+      label: 'Quick',
+      config: { subtype: 'manual' },
+    });
+    twoStarts.edges.push({
+      id: 'e3',
+      from: { node: 'quick', port: 'out' },
+      to: { node: 'done', port: 'in' },
+    });
+    const loop = api.addLoop(twoStarts, { published: true });
+    renderApp(newRunPath(loop.id), api);
+    const launcher = await screen.findByRole('region', { name: 'Start a run' });
+    expect(within(launcher).getByLabelText('repo')).toBeInTheDocument();
+    await user.selectOptions(within(launcher).getByLabelText('Trigger'), 'quick');
+    // No input schema: a free JSON input instead of the repo field.
+    expect(within(launcher).queryByLabelText('repo')).toBeNull();
+    await user.type(within(launcher).getByLabelText('Input (JSON)'), '{{"n": 1}');
+    await user.click(within(launcher).getByRole('button', { name: 'Start run' }));
+    await waitFor(() => expect(runStarts(api)).toHaveLength(1));
+    expect(runStarts(api)[0]!.body).toMatchObject({ triggerNodeId: 'quick', input: { n: 1 } });
+  });
+
   it('shows why a run could not start', async () => {
     const user = userEvent.setup();
     const api = new FakeApi();
