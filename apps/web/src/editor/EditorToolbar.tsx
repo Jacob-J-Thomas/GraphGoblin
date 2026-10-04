@@ -75,6 +75,7 @@ export function EditorToolbar({
   loopPanelExpanded,
   onLoopSettings,
   onPublish,
+  saveStatusRef,
 }: {
   loopId: string;
   name: string;
@@ -89,6 +90,7 @@ export function EditorToolbar({
   loopPanelExpanded: boolean;
   onLoopSettings: () => void;
   onPublish: () => void;
+  saveStatusRef: (element: HTMLSpanElement | null) => void;
 }) {
   return (
     <header className="relative z-[3] flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-default bg-surface-raised px-4 py-2.5">
@@ -105,12 +107,22 @@ export function EditorToolbar({
       </h1>
       {published ? <Badge tone="good">published v{version}</Badge> : <Badge>draft only</Badge>}
       <span
-        className="inline-flex items-center gap-1.5 text-sm text-muted"
+        ref={saveStatusRef}
+        className="inline-flex items-center gap-1.5 rounded-sm text-sm text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
         data-testid="save-state"
         title={saveMessage}
       >
         {saveState === 'saved' ? (
           <Icon name="check-circle" className="size-[15px] text-status-good-fg" />
+        ) : null}
+        {saveState === 'invalid' || saveState === 'offline' || saveState === 'error' ? (
+          <Icon
+            name={saveState === 'error' ? 'failed' : 'alert'}
+            className={cn(
+              'size-[15px]',
+              saveState === 'error' ? 'text-status-bad-fg' : 'text-status-warn-fg',
+            )}
+          />
         ) : null}
         {SAVE_LABEL[saveState]}
       </span>

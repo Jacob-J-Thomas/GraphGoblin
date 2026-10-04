@@ -252,11 +252,27 @@ describe('Alert', () => {
     expect(screen.getByText('The draft changed on the server')).toHaveClass('text-status-warn-fg');
   });
 
+  it('renders a keyboard operable ghost dismissal button with a visible focus ring', async () => {
+    const user = userEvent.setup();
+    const onDismiss = vi.fn();
+    render(<Alert onDismiss={onDismiss}>Restored.</Alert>);
+
+    const dismiss = screen.getByRole('button', { name: 'Dismiss notice' });
+    expect(dismiss).toHaveClass('bg-transparent', 'size-8', 'focus-visible:outline-2');
+    expect(dismiss.querySelector('svg[data-icon="close"]')).not.toBeNull();
+    expect(dismiss).toHaveClass('col-start-3', 'row-span-2');
+    expect(screen.getByText('Restored.')).toHaveClass('col-start-2');
+    await user.tab();
+    expect(dismiss).toHaveFocus();
+    await user.keyboard('{Enter}');
+    expect(onDismiss).toHaveBeenCalledOnce();
+  });
+
   it('breaks an overlong word instead of spilling out of its box', () => {
     const word = 'W'.repeat(350);
     render(<Alert title={word}>{word}</Alert>);
     const alert = screen.getByRole('alert');
-    expect(alert).toHaveClass('wrap-anywhere', 'min-w-0', 'grid-cols-[auto_minmax(0,1fr)]');
+    expect(alert).toHaveClass('wrap-anywhere', 'min-w-0', 'grid-cols-[auto_minmax(0,1fr)_auto]');
     expect(alert.lastElementChild).toHaveClass('min-w-0');
   });
 });

@@ -2,7 +2,7 @@ import { GraphGoblinApiError, loops } from '@graphgoblin/api-client';
 import type { LoopDefinitionInput } from '@graphgoblin/contracts';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ReactFlowProvider } from '@xyflow/react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router';
 import { useApi } from '../api/context.js';
 import { keys } from '../api/queries.js';
@@ -27,6 +27,21 @@ import { useAutosave } from './useAutosave.js';
 import { useLoadEditor } from './useLoadEditor.js';
 import { useResolveConflict } from './useResolveConflict.js';
 
+function focusTemporarily(element: HTMLElement | null): void {
+  if (!element) return;
+  const previousTabIndex = element.getAttribute('tabindex');
+  element.tabIndex = -1;
+  element.addEventListener(
+    'blur',
+    () => {
+      if (previousTabIndex === null) element.removeAttribute('tabindex');
+      else element.setAttribute('tabindex', previousTabIndex);
+    },
+    { once: true },
+  );
+  element.focus();
+}
+
 /**
  * The loop editor: the toolbar, notices about the draft (restored, set aside, conflicting,
  * unsaved, published), the palette, the canvas, the collapsible loop panel (loop settings and the
@@ -42,6 +57,7 @@ export function EditorPage() {
   const definition = useEditorStore((s) => s.definition);
   const saveState = useEditorStore((s) => s.saveState);
   const saveMessage = useEditorStore((s) => s.saveMessage);
+  const generation = useEditorStore((s) => s.generation);
   const connectionError = useEditorStore((s) => s.connectionError);
   const selectedNodeId = useEditorStore((s) => s.selectedNodeId);
   const nodeDialogOpen = useEditorStore((s) => s.nodeDialogOpen);
@@ -111,6 +127,29 @@ export function EditorPage() {
   const revision = useEditorStore((s) => s.revision);
   // The outcome stays visible only until the next edit; after that it describes an older draft.
   const [publishedRevision, setPublishedRevision] = useState<number | undefined>();
+  const [dismissedRestoreGeneration, setDismissedRestoreGeneration] = useState<number>();
+  const [dismissedSaveNotice, setDismissedSaveNotice] = useState<
+    { generation: number; state: typeof saveState; message: string } | undefined
+  >();
+  const [dismissalAnnouncement, setDismissalAnnouncement] = useState(0);
+  const noticeContainerRef = useRef<HTMLDivElement>(null);
+  const saveStatusRef = useRef<HTMLSpanElement>(null);
+
+  // A dismissal applies to one uninterrupted state/message episode. Store transitions clear it,
+  // so the same save message becomes visible again after recovering and later failing anew.
+  useEffect(
+    () =>
+      useEditorStore.subscribe((state, previous) => {
+        if (
+          state.generation !== previous.generation ||
+          state.saveState !== previous.saveState ||
+          state.saveMessage !== previous.saveMessage
+        ) {
+          setDismissedSaveNotice(undefined);
+        }
+      }),
+    [],
+  );
 
   if (!ready) {
     if (query.isError && !isOfflineError(query.error))
@@ -122,10 +161,35 @@ export function EditorPage() {
   const published = query.data?.current?.definition;
   const errors = validation.issues.filter((i) => i.severity === 'error').length;
   const editing = nodeDialogOpen ? def.nodes.find((n) => n.id === selectedNodeId) : undefined;
+  const saveNoticeIsActive =
+    Boolean(saveMessage) &&
+    (saveState === 'offline' || saveState === 'error' || saveState === 'invalid');
+  const showRestoredNotice = restored && dismissedRestoreGeneration !== generation;
+  const showSaveNotice =
+    saveNoticeIsActive &&
+    (dismissedSaveNotice?.generation !== generation ||
+      dismissedSaveNotice.state !== saveState ||
+      dismissedSaveNotice.message !== saveMessage);
+  const announceDismissalAndRestoreFocus = () => {
+    setDismissalAnnouncement((count) => count + 1);
+    window.requestAnimationFrame(() => {
+      const nextDismissButton =
+        noticeContainerRef.current?.querySelector<HTMLButtonElement>('[data-alert-dismiss]');
+      if (nextDismissButton) nextDismissButton.focus();
+      else focusTemporarily(saveStatusRef.current);
+    });
+  };
 
   const notices = [
-    restored ? (
-      <Alert key="restored" tone="info">
+    showRestoredNotice ? (
+      <Alert
+        key="restored"
+        tone="info"
+        onDismiss={() => {
+          setDismissedRestoreGeneration(generation);
+          announceDismissalAndRestoreFocus();
+        }}
+      >
         Restored unsaved changes from this device.
       </Alert>
     ) : null,
@@ -144,8 +208,15 @@ export function EditorPage() {
       </Alert>
     ) : null,
     conflict ? <ConflictNotice key="conflict" resolve={resolve} /> : null,
-    saveMessage && (saveState === 'offline' || saveState === 'error' || saveState === 'invalid') ? (
-      <Alert key="save" tone="warn">
+    showSaveNotice ? (
+      <Alert
+        key="save"
+        tone="warn"
+        onDismiss={() => {
+          setDismissedSaveNotice({ generation, state: saveState, message: saveMessage ?? '' });
+          announceDismissalAndRestoreFocus();
+        }}
+      >
         {saveMessage}
       </Alert>
     ) : null,
@@ -191,12 +262,23 @@ export function EditorPage() {
         loopPanelExpanded={panelExpanded}
         onLoopSettings={() => setPanelExpanded(!panelExpanded)}
         onPublish={() => publish.mutate()}
+        saveStatusRef={(element) => {
+          saveStatusRef.current = element;
+        }}
       />
       {notices.length > 0 ? (
-        <div className="grid shrink-0 gap-2 border-b border-default bg-surface-raised px-4 py-3">
+        <div
+          ref={noticeContainerRef}
+          className="grid shrink-0 gap-2 border-b border-default bg-surface-raised px-4 py-3"
+        >
           {notices}
         </div>
       ) : null}
+      <span aria-live="polite" aria-atomic="true" className="sr-only">
+        <span key={dismissalAnnouncement}>
+          {dismissalAnnouncement > 0 ? 'Notice dismissed' : ''}
+        </span>
+      </span>
       <ReactFlowProvider>
         <div className="flex min-h-0 flex-1">
           <aside className="w-[200px] shrink-0 overflow-auto border-r border-default bg-surface-sunken px-3 py-4">

@@ -200,6 +200,32 @@ describe('EditorPage', () => {
     expect(screen.getByRole('dialog', { name: 'Edit subloop subloop' })).toBeInTheDocument();
   });
 
+  it('shows a dismissed save notice again after the draft returns to the same invalid state', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const loop = api.addLoop(newLoopDefinition('dismiss save notice'));
+    renderApp(`/loops/${loop.id}/edit`, api);
+    const addSubloop = await screen.findByRole('button', { name: 'Add Subloop node' });
+
+    await user.click(addSubloop);
+    expect(await screen.findByText(/Fix the schema errors/)).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByTestId('save-state')).toHaveTextContent('Saved on this device only'),
+    );
+    await user.click(screen.getByRole('button', { name: 'Dismiss notice' }));
+    expect(screen.queryByText(/Fix the schema errors/)).toBeNull();
+    expect(screen.getByTestId('save-state').querySelector('svg[data-icon="alert"]')).not.toBeNull();
+    await waitFor(() => expect(screen.getByTestId('save-state')).toHaveFocus());
+
+    act(() => useEditorStore.getState().removeNode('subloop'));
+    await waitFor(
+      () => expect(screen.getByTestId('save-state')).toHaveTextContent('All changes saved'),
+      SAVE_WAIT,
+    );
+    await user.click(addSubloop);
+    expect(await screen.findByText(/Fix the schema errors/)).toBeInTheDocument();
+  });
+
   it('keeps a newer server draft over an older unsynced local copy, and can switch', async () => {
     const user = userEvent.setup();
     const api = new FakeApi();
