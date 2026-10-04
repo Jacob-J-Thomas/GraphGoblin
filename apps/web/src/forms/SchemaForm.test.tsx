@@ -45,6 +45,24 @@ function last(spy: ReturnType<typeof vi.fn>): Record<string, unknown> {
 }
 
 describe('SchemaForm', () => {
+  it.each([
+    [z.object({ entries: z.record(z.string(), z.string()) }), { entries: { first: 'text' } }],
+    [z.object({ entries: VariableDeclarationsSchema }), { entries: { first: { type: 'string' } } }],
+  ] as const)(
+    'tabs through record key, Remove, then value in visual order',
+    async (schema, initial) => {
+      const user = userEvent.setup();
+      render(<Harness schema={schema} initial={initial} spy={vi.fn()} />);
+      screen.getByLabelText('Entries key 1').focus();
+      await user.tab();
+      expect(screen.getByRole('button', { name: 'Remove entries first' })).toHaveFocus();
+      await user.tab();
+      expect(screen.getByLabelText('Entries value 1')).toHaveFocus();
+      await user.tab({ shift: true });
+      expect(screen.getByRole('button', { name: 'Remove entries first' })).toHaveFocus();
+    },
+  );
+
   it('keeps edited script args when adding and removing without remounting', async () => {
     const user = userEvent.setup();
     const spy = vi.fn();

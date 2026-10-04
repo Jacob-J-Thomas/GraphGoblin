@@ -107,8 +107,12 @@ for (const theme of ['dark', 'light']) {
     await expect
       .poll(async () => (await draft(request, id)).draft.definition.variables)
       .toEqual({ value: { type: 'string' } });
-    // Tab from the key reaches the value editor; editing there also saves.
+    // Follow the visual order: key and Remove on the first row, then the value below.
     await page.getByLabel('Variables key 1').focus();
+    await page.keyboard.press('Tab');
+    await expect(
+      page.getByRole('button', { name: 'Remove variables value', exact: true }),
+    ).toBeFocused();
     await page.keyboard.press('Tab');
     await expect(value).toBeFocused();
     await page.keyboard.press('ControlOrMeta+A');

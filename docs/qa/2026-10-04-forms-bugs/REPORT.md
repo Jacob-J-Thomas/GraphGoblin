@@ -1,5 +1,7 @@
 # Issue #51 development and verification report
 
+This records the initial implementation. The [PR #52 review follow-up](REVIEW.md) replaces the broader subscription with collection reads inside actions and updates the keyboard order; it contains the current gate results.
+
 ## Root causes and changes
 
 1. **Array data loss.** `useController` subscribes to its exact field path. An array parent therefore retained its earlier snapshot after children changed, and Add/Remove replaced the current array with that snapshot. `useField` now reads through a non-exact `useWatch` subscription while keeping controller registration, change handling, and the unset sentinel. The removal audit also found that `JsonText` kept its initial text when indexed JSON rows received a different value; parsed editors now follow changed values, preserve accepted JSON spacing, and retain unparsed text until fixed or discarded.

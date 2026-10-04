@@ -72,7 +72,7 @@ For a repository workspace, use an absolute path. For a temporary workspace, use
 
 Declare variable names and JSON Schemas in **Variables**; initialise their values with a mutation or mapping.
 
-Record entries show the key above its full-width value editor, including in the narrow loop panel. Adding or removing array entries keeps edits to the remaining items. Empty optional Liquid and JSONata fields are treated as absent and show no preview; supplied expressions still show preview errors if malformed. Required fields keep their validation and preview behavior.
+Empty optional expressions count as absent and show no preview. Whitespace counts as supplied.
 
 ## Publish, import, and export
 
