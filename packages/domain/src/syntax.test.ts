@@ -23,6 +23,34 @@ function loop(nodes: LoopDefinitionInput['nodes'], settings?: LoopDefinitionInpu
 }
 
 describe('syntax checks', () => {
+  it.each([' ', '\t\n', '\u00a0'])(
+    'rejects blank authored sources before execution (%j), without changing contracts parsing',
+    (source) => {
+      const def = loop([
+        {
+          id: 'beat',
+          kind: 'heartbeat',
+          label: 'Beat',
+          config: { intervalSeconds: 5, until: source },
+        },
+        { id: 'ask', kind: 'inference', label: 'Ask', config: { prompt: { template: source } } },
+      ]);
+      expect(syntaxIssues(def)).toEqual([
+        expect.objectContaining({
+          code: 'EXPRESSION_INVALID',
+          nodeId: 'beat',
+          message: expect.stringContaining('required'),
+        }),
+        expect.objectContaining({
+          code: 'TEMPLATE_INVALID',
+          nodeId: 'ask',
+          message: expect.stringContaining('required'),
+        }),
+      ]);
+      expect(validateLoop(def).filter((issue) => issue.code.endsWith('_INVALID'))).toHaveLength(2);
+    },
+  );
+
   it('finds no problems in the kitchen-sink loop', () => {
     const def = LoopDefinitionSchema.parse(kitchenSinkLoop());
     expect(syntaxIssues(def)).toEqual([]);

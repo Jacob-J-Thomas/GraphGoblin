@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { HelpText } from '../components/ui/index.js';
 import { CodeEditor, type CodeLanguage } from './CodeEditor.js';
 import { renderPreview, type PreviewKind, type PreviewResult } from './preview.js';
 
@@ -48,9 +49,9 @@ export function CodeField({
   optional?: boolean;
 }) {
   const language: CodeLanguage = kind === 'template' ? 'liquid' : 'jsonata';
-  // An exactly empty optional string is stored as unset by StringField. Whitespace remains a
-  // supplied expression and must still compile (or report its error).
-  const showPreview = !optional || value !== '';
+  // Blank optional source is unset by StringField; nonblank source keeps its original spacing.
+  const blank = value.trim() === '';
+  const showPreview = !optional || !blank;
   return (
     <div>
       <CodeEditor
@@ -61,6 +62,11 @@ export function CodeField({
         id={id}
         attached={showPreview}
       />
+      {!optional && blank ? (
+        <HelpText tone="bad" role="alert">
+          Required
+        </HelpText>
+      ) : null}
       {showPreview ? <Preview kind={kind} source={value} /> : null}
     </div>
   );

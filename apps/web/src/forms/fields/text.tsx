@@ -20,7 +20,10 @@ export function StringField({
   const id = useId();
   const { optional, defaultValue } = unwrap(schema);
   const value = typeof field.value === 'string' ? field.value : '';
-  const set = (next: string) => field.onChange(next === '' && optional ? undefined : next);
+  const set = (next: string) => {
+    const blank = shape.format === 'text' ? next === '' : next.trim() === '';
+    field.onChange(blank ? (optional ? undefined : '') : next);
+  };
   if (shape.format !== 'text') {
     return (
       <Row

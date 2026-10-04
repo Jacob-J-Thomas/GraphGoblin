@@ -34,3 +34,28 @@ export const ParseErrorContext = createContext<ParseErrorChannel>(NONE);
 export function useParseErrors(): ParseErrorChannel {
   return use(ParseErrorContext);
 }
+
+/** Move or drop whole row subtrees. Snapshot first so shifting adjacent indices cannot overwrite
+ * another row's error; use the report channel so the editor's blocking issues move too. */
+export function repathParseErrors(
+  channel: ParseErrorChannel,
+  changes: { from: string; to?: string; exact?: boolean }[],
+): void {
+  const moved = Object.entries(channel.errors ?? {}).flatMap(([path, error]) => {
+    const change = changes.find(
+      ({ from, exact }) => path === from || (!exact && path.startsWith(`${from}.`)),
+    );
+    if (!change) return [];
+    return [
+      {
+        path,
+        error,
+        next: change.to === undefined ? undefined : change.to + path.slice(change.from.length),
+      },
+    ];
+  });
+  for (const { path } of moved) channel.report(path, undefined);
+  for (const { next, error } of moved) {
+    if (next !== undefined) channel.report(next, error);
+  }
+}

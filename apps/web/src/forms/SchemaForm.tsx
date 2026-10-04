@@ -78,6 +78,9 @@ export function SchemaForm({
       report: (path, error) => {
         const current = parseErrorsRef.current?.[path];
         if (current?.message === error?.message && current?.text === error?.text) return;
+        // Collection actions can clear and then reuse a path before React renders again.
+        const { [path]: _previous, ...rest } = parseErrorsRef.current ?? {};
+        parseErrorsRef.current = error ? { ...rest, [path]: error } : rest;
         onParseErrorRef.current?.(path, error);
       },
       tracked,

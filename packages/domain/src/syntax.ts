@@ -85,7 +85,11 @@ export function syntaxIssues(def: LoopDefinition): SyntaxIssue[] {
   const issues: SyntaxIssue[] = [];
   const report = (item: Found, nodeId?: string) => {
     const problem =
-      item.kind === 'template' ? checkTemplate(item.source) : checkExpression(item.source);
+      item.source.trim() === ''
+        ? `${item.kind} is required; omit optional blank source`
+        : item.kind === 'template'
+          ? checkTemplate(item.source)
+          : checkExpression(item.source);
     if (problem === null) return;
     const where = nodeId ? `node "${nodeId}"` : 'loop settings';
     issues.push({

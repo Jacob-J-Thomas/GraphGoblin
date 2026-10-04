@@ -3,9 +3,10 @@
  * for their children, so they live in one module with it: the field families they draw on are
  * imported, never the other way round.
  */
-import { useId } from 'react';
+import { useId, useRef, useState } from 'react';
 import { Icon } from '../../components/icons/index.js';
-import { Button, Checkbox, Input, Label, Select } from '../../components/ui/index.js';
+import { Button, Checkbox, HelpText, Input, Label, Select } from '../../components/ui/index.js';
+import { repathParseErrors, useParseErrors } from '../parse-errors.js';
 import {
   humanize,
   initialValue,
@@ -17,6 +18,7 @@ import {
   type Schema,
 } from '../introspect.js';
 import { BooleanField, EnumField, LiteralField } from './choice.js';
+import { useCollectionFocus } from './collection.js';
 import { JsonField, JsonText } from './json.js';
 import {
   FIELDSET,
@@ -122,6 +124,30 @@ function ArrayField({
     Array.isArray(value) ? value : Array.isArray(defaultValue) ? defaultValue : [];
   const items = itemsOf(field.value);
   const element = shapeOf(shape.element);
+  const parseErrors = useParseErrors();
+  const focus = useCollectionFocus();
+  const [rowIds, setRowIds] = useState(() => items.map((_, i) => i));
+  const nextIdRef = useRef(items.length);
+  const remove = (index: number) => {
+    const current = itemsOf(field.read());
+    repathParseErrors(
+      parseErrors,
+      current.slice(index).map((_, offset) => ({
+        from: joinPath(name, index + offset),
+        ...(offset === 0 ? {} : { to: joinPath(name, index + offset - 1) }),
+      })),
+    );
+    setRowIds((ids) => ids.filter((_, i) => i !== index));
+    field.onChange(current.filter((_, i) => i !== index));
+    focus.announce(`Removed ${label.toLowerCase()} ${index + 1}`);
+  };
+  const add = () => {
+    const current = itemsOf(field.read());
+    const id = nextIdRef.current++;
+    setRowIds((ids) => [...ids, id]);
+    field.onChange([...current, initialValue(shape.element)]);
+    focus.announce(`Added ${label.toLowerCase()} ${current.length + 1}`, current.length);
+  };
 
   if (element.kind === 'enum') {
     const toggle = (option: string, on: boolean) => {
@@ -174,10 +200,14 @@ function ArrayField({
   }
   const canAdd = shape.max === undefined || items.length < shape.max;
   return (
-    <fieldset className={FIELDSET} data-field={name}>
+    <fieldset ref={focus.ref} tabIndex={-1} className={FIELDSET} data-field={name}>
       <legend className={LEGEND}>{label}</legend>
       {items.map((_, index) => (
-        <div key={index} className="grid gap-2 border-l-2 border-default pl-3">
+        <div
+          key={rowIds[index]}
+          data-collection-row={index}
+          className="grid gap-2 border-l-2 border-default pl-3"
+        >
           <Field
             schema={shape.element}
             name={joinPath(name, index)}
@@ -188,7 +218,7 @@ function ArrayField({
               size="sm"
               variant="ghost"
               aria-label={`Remove ${label.toLowerCase()} ${index + 1}`}
-              onClick={() => field.onChange(itemsOf(field.read()).filter((__, i) => i !== index))}
+              onClick={() => remove(index)}
             >
               Remove
             </Button>
@@ -196,16 +226,12 @@ function ArrayField({
         </div>
       ))}
       <div>
-        <Button
-          size="sm"
-          variant="outline"
-          disabled={!canAdd}
-          onClick={() => field.onChange([...itemsOf(field.read()), initialValue(shape.element)])}
-        >
+        <Button ref={focus.addRef} size="sm" variant="outline" disabled={!canAdd} onClick={add}>
           Add {label.toLowerCase()}
         </Button>
       </div>
       <FieldError name={name} />
+      {focus.status}
     </fieldset>
   );
 }
@@ -224,10 +250,28 @@ function RecordField({
   const entries = Object.entries(record);
   const currentEntries = () => Object.entries(recordOf(field.read()));
   const valueShape = shapeOf(shape.value);
+  const parseErrors = useParseErrors();
+  const focus = useCollectionFocus();
+  const [rowIds, setRowIds] = useState(() => new Map(entries.map(([key], i) => [key, i])));
+  const nextIdRef = useRef(entries.length);
   const commit = (next: [string, unknown][]) =>
     field.onChange(next.length === 0 && optional ? undefined : Object.fromEntries(next));
-  const rename = (index: number, key: string) =>
-    commit(currentEntries().map((entry, i) => (i === index ? [key, entry[1]] : entry)));
+  const rename = (oldKey: string, key: string): boolean => {
+    const current = currentEntries();
+    if (current.some(([existing]) => existing === key && existing !== oldKey)) return false;
+    repathParseErrors(parseErrors, [
+      { from: joinPath(name, oldKey), to: joinPath(name, key), exact: true },
+    ]);
+    setRowIds((ids) => {
+      const next = new Map(ids);
+      const id = next.get(oldKey)!;
+      next.delete(oldKey);
+      next.set(key, id);
+      return next;
+    });
+    commit(current.map((entry) => (entry[0] === oldKey ? [key, entry[1]] : entry)));
+    return true;
+  };
   const setValue = (index: number, value: unknown) =>
     commit(currentEntries().map((entry, i) => (i === index ? [entry[0], value] : entry)));
   const add = () => {
@@ -235,28 +279,42 @@ function RecordField({
     const currentRows = Object.entries(current);
     let n = currentRows.length + 1;
     while (`key${n}` in current) n += 1;
-    commit([
-      ...currentRows,
-      [`key${n}`, valueShape.kind === 'string' ? '' : initialValue(shape.value)],
-    ]);
+    const key = `key${n}`;
+    const id = nextIdRef.current++;
+    setRowIds((ids) => new Map(ids).set(key, id));
+    commit([...currentRows, [key, valueShape.kind === 'string' ? '' : initialValue(shape.value)]]);
+    focus.announce(`Added ${label.toLowerCase()} ${key}`, currentRows.length);
+  };
+  const remove = (key: string) => {
+    repathParseErrors(parseErrors, [{ from: joinPath(name, key), exact: true }]);
+    setRowIds((ids) => {
+      const next = new Map(ids);
+      next.delete(key);
+      return next;
+    });
+    commit(currentEntries().filter(([existing]) => existing !== key));
+    focus.announce(`Removed ${label.toLowerCase()} ${key}`);
   };
   return (
-    <fieldset className={FIELDSET} data-field={name}>
+    <fieldset ref={focus.ref} tabIndex={-1} className={FIELDSET} data-field={name}>
       <legend className={LEGEND}>{label}</legend>
       {entries.map(([key, value], index) => (
-        <div key={index} className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
-          <Input
-            aria-label={`${label} key ${index + 1}`}
-            className="font-mono text-sm"
+        <div
+          key={rowIds.get(key)}
+          data-collection-row={index}
+          className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-2"
+        >
+          <RecordKey
+            label={`${label} key ${index + 1}`}
             value={key}
-            onChange={(e) => rename(index, e.target.value)}
+            rename={(next) => rename(key, next)}
           />
           <Button
             size="icon"
             variant="ghost"
             className="col-start-2 row-start-1"
             aria-label={`Remove ${label.toLowerCase()} ${key}`}
-            onClick={() => commit(currentEntries().filter((_, i) => i !== index))}
+            onClick={() => remove(key)}
           >
             <Icon name="close" />
           </Button>
@@ -280,12 +338,49 @@ function RecordField({
         </div>
       ))}
       <div>
-        <Button size="sm" variant="outline" onClick={add}>
+        <Button ref={focus.addRef} size="sm" variant="outline" onClick={add}>
           Add entry
         </Button>
       </div>
       <FieldError name={name} />
+      {focus.status}
     </fieldset>
+  );
+}
+
+/** A rejected rename keeps its draft text while the record keeps both committed values. */
+function RecordKey({
+  label,
+  value,
+  rename,
+}: {
+  label: string;
+  value: string;
+  rename: (next: string) => boolean;
+}) {
+  const id = useId();
+  const [text, setText] = useState(value);
+  const [error, setError] = useState<string>();
+  return (
+    <div className="min-w-0">
+      <Input
+        aria-label={label}
+        className="font-mono text-sm"
+        value={text}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? id : undefined}
+        onChange={(event) => {
+          const next = event.target.value;
+          setText(next);
+          setError(rename(next) ? undefined : `Key "${next}" already exists. Choose a unique key.`);
+        }}
+      />
+      {error ? (
+        <HelpText id={id} tone="bad" role="alert">
+          {error}
+        </HelpText>
+      ) : null}
+    </div>
   );
 }
 
