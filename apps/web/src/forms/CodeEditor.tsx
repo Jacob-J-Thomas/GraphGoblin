@@ -7,6 +7,7 @@ import { EditorView, placeholder as placeholderExt } from '@codemirror/view';
 import { basicSetup } from 'codemirror';
 import { useEffect, useRef } from 'react';
 import { cn } from '../lib/utils.js';
+import { codeTheme } from '../styles/code-theme.js';
 
 export type CodeLanguage = 'liquid' | 'jsonata' | 'json';
 
@@ -58,6 +59,7 @@ export function CodeEditor({
       doc: value,
       extensions: [
         basicSetup,
+        codeTheme,
         languageFor(language),
         EditorView.lineWrapping,
         EditorView.contentAttributes.of({
@@ -65,7 +67,8 @@ export function CodeEditor({
           ...(id ? { id } : {}),
           'data-language': language,
         }),
-        EditorView.theme({ '.cm-content': { minHeight: `${minLines * 1.4}em` } }),
+        // At least `minLines` lines of 20 px (the theme's line height) plus the 6 px padding.
+        EditorView.theme({ '.cm-content': { minHeight: `${minLines * 20 + 12}px` } }),
         ...(placeholder ? [placeholderExt(placeholder)] : []),
         EditorView.updateListener.of((update) => {
           if (update.docChanged) onChangeRef.current(update.state.doc.toString());

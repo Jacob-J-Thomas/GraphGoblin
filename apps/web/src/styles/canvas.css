@@ -1,0 +1,106 @@
+/*
+ * The editor canvas (@xyflow/react) in the design tokens. xyflow reads these --xy-* variables in
+ * its own stylesheet (imported before this one in main.tsx); the rest are small overrides for
+ * handles, edge labels, the loop-back edge, controls, and keyboard focus. Node cards are styled in
+ * editor/NodeCard.tsx.
+ */
+
+.react-flow {
+  --xy-background-color: var(--canvas-bg);
+  --xy-background-pattern-color: var(--canvas-grid);
+  --xy-edge-stroke: var(--canvas-edge);
+  --xy-edge-stroke-selected: var(--canvas-edge-selected);
+  --xy-edge-stroke-width: 1.75;
+  --xy-connectionline-stroke: var(--canvas-edge-selected);
+  --xy-connectionline-stroke-width: 2;
+  --xy-handle-background-color: var(--canvas-handle);
+  --xy-handle-border-color: var(--surface-raised);
+  --xy-edge-label-background-color: var(--surface-raised);
+  --xy-edge-label-color: var(--text-muted);
+  --xy-controls-button-background-color: var(--surface-raised);
+  --xy-controls-button-background-color-hover: var(--surface-hover);
+  --xy-controls-button-color: var(--text-default);
+  --xy-controls-button-color-hover: var(--text-default);
+  --xy-controls-button-border-color: var(--border-default);
+  --xy-controls-box-shadow: var(--shadow-2);
+  --xy-selection-background-color: color-mix(in oklab, var(--accent) 12%, transparent);
+  --xy-selection-border: 1px dashed var(--accent-strong);
+  --xy-attribution-background-color: color-mix(in oklab, var(--canvas-bg) 75%, transparent);
+}
+
+/* Handles: 12 px dots in the handle colour, ringed with the card surface. */
+.react-flow__handle {
+  width: 12px;
+  height: 12px;
+  border-width: 2px;
+}
+
+.react-flow__handle.connectingto,
+.react-flow__handle.valid {
+  background-color: var(--canvas-edge-selected);
+}
+
+/* Edge labels (decision routes, script exit codes, loopBack) as pills. */
+.react-flow__edge-textbg {
+  stroke: var(--border-default);
+  stroke-width: 1;
+}
+
+.react-flow__edge .react-flow__edge-text {
+  fill: var(--text-muted);
+  font-family: var(--font-code);
+  font-size: 11px;
+  font-weight: var(--font-weight-medium);
+}
+
+/* The exit's loop-back edge: brown and dashed (it keeps xyflow's dash animation). */
+.react-flow__edge.gg-edge-loop .react-flow__edge-path {
+  stroke: var(--canvas-edge-loop);
+  stroke-width: 2;
+}
+
+.react-flow__edge.gg-edge-loop.selected .react-flow__edge-path {
+  stroke: var(--canvas-edge-selected);
+}
+
+.react-flow__edge.gg-edge-loop .react-flow__edge-textbg {
+  stroke: var(--canvas-edge-loop);
+}
+
+.react-flow__edge.gg-edge-loop .react-flow__edge-text {
+  fill: var(--text-default);
+}
+
+/* Zoom, fit, and lock controls: one bordered stack on the raised surface. */
+.react-flow__controls {
+  overflow: hidden;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+}
+
+.react-flow__controls-button {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+}
+
+.react-flow__controls-button svg {
+  max-width: 13px;
+  max-height: 13px;
+}
+
+/* xyflow removes the outline from focused nodes; keyboard focus gets the token focus ring. */
+.react-flow .react-flow__node.selectable:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: var(--focus-offset);
+  border-radius: var(--radius-lg);
+}
+
+.react-flow .react-flow__controls-button:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: calc(-1 * var(--focus-ring-width));
+}
+
+.react-flow__attribution a {
+  color: var(--text-subtle);
+}

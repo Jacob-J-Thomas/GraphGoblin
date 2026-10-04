@@ -50,16 +50,25 @@ function buildNodes(
   });
 }
 
+/**
+ * Edges as orthogonal steps with rounded corners (xyflow's built-in smoothstep path; the routing
+ * itself is xyflow's, see #18), labels as pills, and the exit's loop-back animated and dashed in
+ * the loop colour (styles/canvas.css).
+ */
 function buildEdges(def: LoopDefinitionInput, selected: string | undefined): Edge[] {
   return def.edges.map((edge) => ({
     id: edge.id,
+    type: 'smoothstep',
+    pathOptions: { borderRadius: 10 },
     source: edge.from.node,
     sourceHandle: edge.from.port,
     target: edge.to.node,
     targetHandle: 'in',
     selected: edge.id === selected,
-    ...(edge.from.port !== 'out' ? { label: edge.from.port } : {}),
-    ...(edge.from.port === 'loopBack' ? { animated: true } : {}),
+    ...(edge.from.port !== 'out'
+      ? { label: edge.from.port, labelBgPadding: [8, 3], labelBgBorderRadius: 9 }
+      : {}),
+    ...(edge.from.port === 'loopBack' ? { animated: true, className: 'gg-edge-loop' } : {}),
   }));
 }
 
@@ -176,7 +185,7 @@ export function Canvas({
         fitView
         deleteKeyCode={null}
       >
-        <Background />
+        <Background gap={22} size={1.3} />
         <Controls />
       </ReactFlow>
     </div>
