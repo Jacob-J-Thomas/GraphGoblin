@@ -1,9 +1,12 @@
 /*
- * GraphGoblin design tokens: visual-direction sample for #7 (light theme only).
+ * GraphGoblin design tokens: visual-direction sample for #7. Dark is the lead theme; light is the
+ * alternate.
  *
  * Two tiers. The primitive tier (palette scales) is referenced only by the semantic tier below it;
- * components use semantic tokens only. A dark theme (#11) is a value swap: it redefines the
- * semantic tier under :root[data-theme='dark'] and leaves component styles untouched.
+ * components use semantic tokens only. A theme is a value swap: the semantic tier is declared once
+ * for light (:root, [data-theme='light']) and once for dark ([data-theme='dark']); component styles
+ * never change. The theme attribute may sit on <html> or on any element, so one subtree can show
+ * the other theme.
  *
  * Font: Geist and Geist Mono, SIL Open Font License 1.1 (fonts/OFL.txt), from the `geist` npm
  * package 1.7.2 (dist/fonts/geist-sans/Geist-Variable.woff2, dist/fonts/geist-mono/GeistMono-Variable.woff2).
@@ -41,9 +44,9 @@
   --green-700: #3f701a;
   --green-800: #315717;
   --green-900: #264414;
-  --green-950: #142808;
+  --green-950: #16260c;
 
-  /* Brown: warm surfaces, the canvas grid, the loop-back edge, the mutate kind, the mascot. */
+  /* Brown: warm surfaces, the canvas grid, the loop-back edge, the mutate kind. */
   --brown-50: #f8f3ec;
   --brown-100: #f0e5d6;
   --brown-200: #e2cfb4;
@@ -54,8 +57,10 @@
   --brown-700: #634627;
   --brown-800: #4b361f;
   --brown-900: #352718;
+  --brown-950: #221911;
+  --brown-975: #150f0a;
 
-  /* Grey: slightly warm so it sits with the brown. 0 is the raised-surface white. */
+  /* Grey: warm, with a brown undertone. 0 is white; 850 to 990 are the dark surfaces. */
   --grey-0: #ffffff;
   --grey-25: #fbfaf8;
   --grey-50: #f6f5f2;
@@ -67,10 +72,14 @@
   --grey-600: #6a645a;
   --grey-700: #524c44;
   --grey-800: #33302b;
+  --grey-850: #2b2723;
   --grey-900: #26231f;
+  --grey-925: #1f1c18;
   --grey-950: #1a1815;
+  --grey-975: #15120f;
+  --grey-990: #0e0c0a;
 
-  /* Magenta: rare highlight moments only (heartbeat kind, canvas selection, new items). */
+  /* Magenta: highlight moments only, never a surface or a primary action. */
   --magenta-50: #fdf0fa;
   --magenta-100: #fadcf2;
   --magenta-200: #f5b5e4;
@@ -81,8 +90,10 @@
   --magenta-700: #8c186c;
   --magenta-800: #6d1555;
   --magenta-900: #4f1140;
+  --magenta-950: #2c0b22;
 
-  /* Status hues. Blue means success and orange means failure (colour-blind safe, with glyphs). */
+  /* Status hues. Blue means success and orange means failure (colour-blind safe, with glyphs).
+     Violet doubles as the deep purple of the highlight moments. */
   --blue-50: #eff5ff;
   --blue-100: #dce8fe;
   --blue-200: #bdd4fc;
@@ -93,6 +104,7 @@
   --blue-700: #22489e;
   --blue-800: #1e3b7e;
   --blue-900: #1b3163;
+  --blue-950: #13213f;
 
   --orange-50: #fff4ec;
   --orange-100: #ffe4d0;
@@ -104,6 +116,7 @@
   --orange-700: #9c3b0d;
   --orange-800: #7c3110;
   --orange-900: #632a10;
+  --orange-950: #351707;
 
   --amber-50: #fff9e8;
   --amber-100: #fef0c3;
@@ -115,6 +128,7 @@
   --amber-700: #8e5e08;
   --amber-800: #74490d;
   --amber-900: #5f3c10;
+  --amber-950: #2e2108;
 
   --violet-50: #f5f2ff;
   --violet-100: #eae4fe;
@@ -126,6 +140,7 @@
   --violet-700: #5833b0;
   --violet-800: #482b8e;
   --violet-900: #3b2672;
+  --violet-950: #211640;
 
   --red-50: #fef2f2;
   --red-100: #fde1e0;
@@ -133,25 +148,54 @@
   --red-300: #f69b97;
   --red-400: #ee6a64;
   --red-500: #de4039;
-  --red-600: #c42d27;
+  --red-600: #cf342d;
   --red-700: #a2241f;
   --red-800: #841f1c;
   --red-900: #6c1d1b;
+  --red-950: #2e0e0c;
+
+  /* Teal and slate: node-kind hues that carry no status meaning (subloop, script). */
+  --teal-50: #edfbf8;
+  --teal-100: #d0f4ee;
+  --teal-200: #a3e9de;
+  --teal-300: #6cd6c9;
+  --teal-400: #3bbdb0;
+  --teal-500: #1ea196;
+  --teal-600: #15827a;
+  --teal-700: #146862;
+  --teal-800: #14534f;
+  --teal-900: #134542;
+  --teal-950: #0a2624;
+
+  --slate-50: #f3f5f8;
+  --slate-100: #e4e9f0;
+  --slate-200: #cbd4e0;
+  --slate-300: #a8b6c8;
+  --slate-400: #8496ad;
+  --slate-500: #66798f;
+  --slate-600: #526377;
+  --slate-700: #424f60;
+  --slate-800: #333d4a;
+  --slate-900: #263039;
+  --slate-950: #161c22;
 }
 
 /* ------------------------------------------------------------------------------------------ */
-/* Semantic tier: the only names components use. Light values.                                */
+/* Semantic tier, light values: the only names components use.                                */
 /* ------------------------------------------------------------------------------------------ */
 
-:root {
+:root,
+[data-theme='light'] {
   color-scheme: light;
 
   /* Surface */
   --surface-app: var(--grey-50);
   --surface-raised: var(--grey-0);
-  --surface-sunken: var(--brown-50);
+  --surface-sunken: var(--grey-50);
   --surface-overlay: var(--grey-0);
   --surface-hover: var(--grey-100);
+  --surface-control: var(--grey-50);
+  --surface-field: var(--grey-0);
   --surface-inverse: var(--grey-950);
   --surface-inverse-raised: var(--grey-800);
 
@@ -180,12 +224,19 @@
   --accent-strong: var(--green-700);
   --accent-highlight: var(--magenta-600);
   --accent-highlight-subtle: var(--magenta-50);
+  --accent-glow: var(--violet-500);
+  --accent-hairline: linear-gradient(
+    90deg,
+    var(--violet-400),
+    var(--magenta-400) 38%,
+    transparent 82%
+  );
 
   /* Danger */
   --danger: var(--red-600);
   --danger-hover: var(--red-700);
   --danger-subtle: var(--red-50);
-  --danger-on-subtle: var(--red-800);
+  --danger-on-subtle: var(--red-700);
 
   /* Status: tinted background, foreground text and glyph, and an accent border (3:1). */
   --status-neutral-bg: var(--grey-100);
@@ -204,27 +255,28 @@
   --status-info-fg: var(--violet-800);
   --status-info-border: var(--violet-600);
 
-  /* Node kind: a strong colour (chip, icon, stripe) and a subtle fill. */
+  /* Node kind: a strong colour (chip, icon, stripe), a subtle fill, and the icon colour on it. */
+  --kind-on: var(--grey-0);
   --kind-trigger: var(--green-600);
   --kind-trigger-subtle: var(--green-50);
   --kind-decision: var(--blue-600);
   --kind-decision-subtle: var(--blue-50);
   --kind-inference: var(--violet-600);
   --kind-inference-subtle: var(--violet-50);
-  --kind-script: var(--grey-700);
-  --kind-script-subtle: var(--grey-100);
+  --kind-script: var(--slate-600);
+  --kind-script-subtle: var(--slate-50);
   --kind-mutate: var(--brown-600);
   --kind-mutate-subtle: var(--brown-50);
-  --kind-subloop: var(--orange-600);
-  --kind-subloop-subtle: var(--orange-50);
+  --kind-subloop: var(--teal-600);
+  --kind-subloop-subtle: var(--teal-50);
   --kind-wait: var(--amber-600);
   --kind-wait-subtle: var(--amber-50);
   --kind-heartbeat: var(--magenta-600);
   --kind-heartbeat-subtle: var(--magenta-50);
-  --kind-exit: var(--red-600);
-  --kind-exit-subtle: var(--red-50);
+  --kind-exit: var(--grey-900);
+  --kind-exit-subtle: var(--grey-100);
 
-  /* Focus: one ring colour that holds 3:1 on every surface, light or inverse. */
+  /* Focus: one ring colour per theme that holds 3:1 on every surface of that theme. */
   --focus-ring: var(--green-600);
   --focus-ring-width: 2px;
   --focus-offset: 2px;
@@ -249,6 +301,14 @@
   --canvas-handle: var(--grey-700);
   --canvas-node-selected: var(--magenta-500);
 
+  /* Mascot (placeholder until #10): the same in both themes. */
+  --mascot-skin: var(--green-400);
+  --mascot-shade: var(--green-600);
+  --mascot-ink: var(--grey-990);
+  --mascot-glint: var(--magenta-400);
+  --mascot-tooth: var(--grey-25);
+  --mascot-port: var(--grey-100);
+
   /* Elevation: shadows tinted with a warm surface-aware colour (an RGB triple). */
   --shadow-color: 52 40 24;
   --shadow-0: none;
@@ -259,13 +319,133 @@
     0 16px 40px -8px rgb(var(--shadow-color) / 0.22), 0 4px 12px rgb(var(--shadow-color) / 0.08);
 }
 
-/* Reserved for #11: dark values for every semantic token above, and nothing else. */
-:root[data-theme='dark'] {
+/* ------------------------------------------------------------------------------------------ */
+/* Semantic tier, dark values: a designed palette, not an inversion. Warm near-blacks with a  */
+/* brown undertone; depth comes from surface steps and elevation, not from heavier borders.   */
+/* ------------------------------------------------------------------------------------------ */
+
+:root[data-theme='dark'],
+[data-theme='dark'] {
   color-scheme: dark;
+
+  /* Surface: sunken (wells, code, fields) < app < raised (cards) < overlay (sheets, toasts). */
+  --surface-app: var(--grey-975);
+  --surface-raised: var(--grey-925);
+  --surface-sunken: var(--brown-975);
+  --surface-overlay: var(--grey-900);
+  --surface-hover: var(--grey-800);
+  --surface-control: var(--grey-850);
+  --surface-field: var(--grey-990);
+  --surface-inverse: var(--grey-990);
+  --surface-inverse-raised: var(--grey-850);
+
+  /* Text */
+  --text-default: var(--grey-100);
+  --text-muted: var(--grey-300);
+  --text-subtle: var(--grey-400);
+  --text-inverse: var(--grey-100);
+  --text-inverse-muted: var(--grey-300);
+  --text-link: var(--green-300);
+  --text-on-accent: var(--grey-950);
+  --text-on-danger: var(--grey-0);
+
+  /* Border: quiet edges; control boundaries keep 3:1. */
+  --border-default: var(--grey-850);
+  --border-strong: var(--grey-500);
+  --border-subtle: var(--grey-900);
+  --border-inverse: var(--grey-850);
+
+  /* Accent: the same goblin lime, with a deeper edge. */
+  --accent: var(--green-400);
+  --accent-hover: var(--green-300);
+  --accent-active: var(--green-500);
+  --accent-subtle: var(--green-950);
+  --accent-on-subtle: var(--green-200);
+  --accent-strong: var(--green-600);
+  --accent-highlight: var(--magenta-400);
+  --accent-highlight-subtle: var(--magenta-950);
+  --accent-glow: var(--violet-400);
+
+  /* Danger */
+  --danger: var(--red-600);
+  --danger-hover: var(--red-700);
+  --danger-subtle: var(--red-950);
+  --danger-on-subtle: var(--red-300);
+
+  /* Status */
+  --status-neutral-bg: var(--grey-850);
+  --status-neutral-fg: var(--grey-200);
+  --status-neutral-border: var(--grey-500);
+  --status-good-bg: var(--blue-950);
+  --status-good-fg: var(--blue-200);
+  --status-good-border: var(--blue-400);
+  --status-bad-bg: var(--orange-950);
+  --status-bad-fg: var(--orange-200);
+  --status-bad-border: var(--orange-400);
+  --status-warn-bg: var(--amber-950);
+  --status-warn-fg: var(--amber-200);
+  --status-warn-border: var(--amber-500);
+  --status-info-bg: var(--violet-950);
+  --status-info-fg: var(--violet-200);
+  --status-info-border: var(--violet-400);
+
+  /* Node kind: bright chips with an ink icon, over deep tinted bands. */
+  --kind-on: var(--grey-950);
+  --kind-trigger: var(--green-400);
+  --kind-trigger-subtle: var(--green-950);
+  --kind-decision: var(--blue-400);
+  --kind-decision-subtle: var(--blue-950);
+  --kind-inference: var(--violet-400);
+  --kind-inference-subtle: var(--violet-950);
+  --kind-script: var(--slate-300);
+  --kind-script-subtle: var(--slate-950);
+  --kind-mutate: var(--brown-400);
+  --kind-mutate-subtle: var(--brown-950);
+  --kind-subloop: var(--teal-400);
+  --kind-subloop-subtle: var(--teal-950);
+  --kind-wait: var(--amber-400);
+  --kind-wait-subtle: var(--amber-950);
+  --kind-heartbeat: var(--magenta-400);
+  --kind-heartbeat-subtle: var(--magenta-950);
+  --kind-exit: var(--grey-200);
+  --kind-exit-subtle: var(--grey-850);
+
+  /* Focus */
+  --focus-ring: var(--green-400);
+
+  /* Code */
+  --code-bg: var(--grey-990);
+  --code-active-line: var(--green-950);
+  --code-fg: var(--grey-100);
+  --code-gutter: var(--grey-400);
+  --code-keyword: var(--violet-300);
+  --code-string: var(--green-300);
+  --code-number: var(--blue-300);
+  --code-comment: var(--grey-400);
+  --code-operator: var(--brown-300);
+
+  /* Canvas */
+  --canvas-bg: var(--grey-975);
+  --canvas-grid: var(--brown-900);
+  --canvas-edge: var(--grey-500);
+  --canvas-edge-selected: var(--green-400);
+  --canvas-edge-loop: var(--brown-400);
+  --canvas-handle: var(--grey-300);
+  --canvas-node-selected: var(--magenta-400);
+
+  /* Elevation: black shadows carry the depth; a faint top rim lifts raised surfaces. */
+  --shadow-color: 0 0 0;
+  --shadow-1: inset 0 1px 0 rgb(255 255 255 / 0.04), 0 1px 2px rgb(var(--shadow-color) / 0.45);
+  --shadow-2:
+    inset 0 1px 0 rgb(255 255 255 / 0.05), 0 8px 20px -6px rgb(var(--shadow-color) / 0.7),
+    0 2px 6px rgb(var(--shadow-color) / 0.4);
+  --shadow-3:
+    inset 0 1px 0 rgb(255 255 255 / 0.06), 0 24px 56px -12px rgb(var(--shadow-color) / 0.8),
+    0 8px 20px rgb(var(--shadow-color) / 0.5);
 }
 
 /* ------------------------------------------------------------------------------------------ */
-/* Type, space, radius, motion                                                                */
+/* Type, space, radius, motion (theme independent)                                            */
 /* ------------------------------------------------------------------------------------------ */
 
 :root {
@@ -323,6 +503,7 @@
   --duration-fast: 120ms;
   --duration-base: 180ms;
   --duration-slow: 280ms;
+  --duration-pulse: 1600ms;
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --ease-emphasised: cubic-bezier(0.34, 1.4, 0.64, 1);
 }
@@ -339,5 +520,6 @@
     --duration-fast: 0ms;
     --duration-base: 0ms;
     --duration-slow: 0ms;
+    --duration-pulse: 0ms;
   }
 }

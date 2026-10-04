@@ -1,15 +1,15 @@
 #!/usr/bin/env node
 /**
- * Contrast table for the visual-direction sample (#7).
+ * Contrast table for the visual-direction sample (#7), dark and light themes.
  *
  *   node docs/design/visual-direction/contrast.mjs          # writes contrast.md, exits 1 on a failure
- *   node docs/design/visual-direction/contrast.mjs --check  # compares with the committed contrast.md
+ *   node docs/design/visual-direction/contrast.mjs --check  # also fails when contrast.md is stale
  *
- * Reads the light semantic tokens from tokens.css (resolving var() to the primitive scale), then
- * checks every foreground and background pair the sample uses with the WCAG 2.x relative-luminance
- * formula. Text needs 4.5:1 and required non-text (control boundaries, focus rings, state
- * indicators, meaningful graphics) needs 3:1 (WCAG 1.4.3 and 1.4.11). Decorative pairs (card edges,
- * dividers, the canvas grid) are listed for information and not enforced.
+ * Reads the semantic tokens of both themes from tokens.css (resolving var() to the primitive
+ * scale), then checks every foreground and background pair the sample uses with the WCAG 2.x
+ * relative-luminance formula. Text needs 4.5:1 and required non-text (control boundaries, focus
+ * rings, state indicators, meaningful graphics) needs 3:1 (WCAG 1.4.3 and 1.4.11). Decorative
+ * pairs (card edges, dividers, the canvas grid, glows) are listed for information and not enforced.
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve as resolvePath } from 'node:path';
@@ -19,16 +19,15 @@ const here = dirname(fileURLToPath(import.meta.url));
 const TOKENS = join(here, 'tokens.css');
 const OUTPUT = join(here, 'contrast.md');
 
-/** Custom properties declared in top-level `:root { }` blocks (not inside @media or themes). */
-export function readTokens(css) {
+/** Top-level rule blocks (outside @media) as { selectors, body }. */
+function blocks(css) {
   const source = css.replace(/\/\*[\s\S]*?\*\//g, '');
-  const tokens = {};
-  let depth = 0;
+  const found = [];
   let index = 0;
   while (index < source.length) {
     const open = source.indexOf('{', index);
     if (open < 0) break;
-    const selector = source.slice(index, open).trim().split(/[;}]/).pop().trim();
+    const prelude = source.slice(index, open).trim().split(/[;}]/).pop().trim();
     let close = open + 1;
     let nested = 1;
     while (nested > 0 && close < source.length) {
@@ -36,15 +35,39 @@ export function readTokens(css) {
       if (source[close] === '}') nested -= 1;
       close += 1;
     }
-    if (depth === 0 && selector === ':root') {
-      const body = source.slice(open + 1, close - 1);
-      for (const match of body.matchAll(/(--[\w-]+)\s*:\s*([^;]+);/g)) {
-        tokens[match[1]] = match[2].trim();
-      }
+    if (!prelude.startsWith('@')) {
+      found.push({
+        selectors: prelude.split(',').map((s) => s.trim().replace(/"/g, "'")),
+        body: source.slice(open + 1, close - 1),
+      });
     }
     index = close;
   }
-  return tokens;
+  return found;
+}
+
+function declarations(body, into) {
+  for (const match of body.matchAll(/(--[\w-]+)\s*:\s*([^;]+);/g)) {
+    into[match[1]] = match[2].trim().replace(/\s+/g, ' ');
+  }
+}
+
+/** The tokens of each theme: light is `:root` plus `[data-theme='light']`; dark adds its block. */
+export function readThemes(css) {
+  const all = blocks(css);
+  const light = {};
+  for (const block of all) {
+    if (block.selectors.some((s) => s === ':root' || s === "[data-theme='light']")) {
+      declarations(block.body, light);
+    }
+  }
+  const dark = { ...light };
+  for (const block of all) {
+    if (block.selectors.some((s) => s.includes("[data-theme='dark']"))) {
+      declarations(block.body, dark);
+    }
+  }
+  return { dark, light };
 }
 
 export function resolve(tokens, name, seen = new Set()) {
@@ -75,7 +98,7 @@ export function ratio(a, b) {
 }
 
 // ---------------------------------------------------------------------------------------------
-// The pairs the sample uses: [foreground, background, where].
+// The pairs the sample uses: [foreground, background, where]. The same list runs in both themes.
 // ---------------------------------------------------------------------------------------------
 
 const KINDS = [
@@ -90,12 +113,7 @@ const KINDS = [
   'exit',
 ];
 const TONES = ['neutral', 'good', 'bad', 'warn', 'info'];
-const LIGHT_SURFACES = [
-  '--surface-app',
-  '--surface-raised',
-  '--surface-sunken',
-  '--surface-overlay',
-];
+const SURFACES = ['--surface-app', '--surface-raised', '--surface-sunken', '--surface-overlay'];
 const CODE_TOKENS = [
   '--code-fg',
   '--code-gutter',
@@ -107,27 +125,30 @@ const CODE_TOKENS = [
 ];
 
 const TEXT = [
-  ...LIGHT_SURFACES.flatMap((s) => [
+  ...SURFACES.flatMap((s) => [
     ['--text-default', s, 'Body text, headings, table cells, form values'],
     ['--text-muted', s, 'Labels, descriptions, secondary meta'],
     ['--text-subtle', s, 'Placeholders, timestamps, sequence numbers'],
   ]),
   ['--text-default', '--surface-hover', 'Hovered row, ghost button, palette item'],
   ['--text-muted', '--surface-hover', 'Meta text in a hovered row'],
+  ['--text-default', '--surface-control', 'Secondary buttons'],
+  ['--text-default', '--surface-field', 'Input, select, and textarea values'],
+  ['--text-subtle', '--surface-field', 'Placeholders'],
   ['--text-link', '--surface-app', 'Links on the page background'],
   ['--text-link', '--surface-raised', 'Links in cards and tables'],
   ['--text-link', '--surface-sunken', 'Links in sunken panels'],
-  ['--text-default', '--surface-sunken', 'Secondary buttons, code previews'],
   ['--text-default', '--accent-subtle', 'Selected timeline row'],
   ['--text-muted', '--accent-subtle', 'Event description in a selected row'],
   ['--text-subtle', '--accent-subtle', 'Sequence number in a selected row'],
-  ['--accent-on-subtle', '--accent-subtle', 'Selected segment, checked toggle chip, "live" pill'],
+  ['--accent-on-subtle', '--accent-subtle', 'Selected segment, checked toggle chip'],
   ['--text-on-accent', '--accent', 'Primary button, active nav item'],
   ['--text-on-accent', '--accent-hover', 'Primary button, hover'],
   ['--text-on-accent', '--accent-active', 'Primary button, pressed'],
   ['--text-on-danger', '--danger', 'Destructive button'],
   ['--text-on-danger', '--danger-hover', 'Destructive button, hover'],
-  ['--danger', '--surface-raised', 'Soft destructive button label'],
+  ['--danger-on-subtle', '--surface-raised', 'Soft destructive button label'],
+  ['--danger-on-subtle', '--surface-overlay', 'Soft destructive button label in the sheet'],
   ['--danger-on-subtle', '--danger-subtle', 'Soft destructive button, hover'],
   ['--accent-highlight', '--accent-highlight-subtle', '"New" highlight badge'],
   ['--accent-highlight', '--surface-raised', 'Highlight text on cards'],
@@ -139,7 +160,7 @@ const TEXT = [
   ['--status-warn-fg', '--surface-raised', 'Validation warning line'],
   ['--status-good-fg', '--surface-raised', '"All changes saved" check, "Ready to publish"'],
   ['--text-inverse', '--surface-inverse', 'Header wordmark and active text'],
-  ['--text-inverse-muted', '--surface-inverse', 'Header nav items'],
+  ['--text-inverse-muted', '--surface-inverse', 'Header nav items, theme button'],
   ['--text-inverse', '--surface-inverse-raised', 'Narrow menu, hovered nav item'],
   ['--text-inverse-muted', '--surface-inverse-raised', 'Narrow menu, secondary text'],
   ['--accent', '--surface-inverse', 'Wordmark accent ("Goblin")'],
@@ -152,7 +173,7 @@ const TEXT = [
 ];
 
 const FOCUS_SURFACES = [
-  ...LIGHT_SURFACES,
+  ...SURFACES,
   '--surface-inverse',
   '--surface-inverse-raised',
   '--accent-subtle',
@@ -167,13 +188,15 @@ const NON_TEXT = [
   ['--border-strong', '--surface-raised', 'Input, select, textarea, checkbox, outline button'],
   ['--border-strong', '--surface-app', 'Controls on the page background'],
   ['--border-strong', '--surface-sunken', 'Segmented control track, controls in sunken panels'],
-  ['--border-strong', '--surface-overlay', 'Controls in the bottom sheet'],
+  ['--border-strong', '--surface-overlay', 'Controls in the bottom sheet, sheet grip'],
+  ['--border-strong', '--surface-field', 'Field border against the field fill'],
   [
     '--accent-strong',
     '--surface-raised',
     'Primary button edge, switch-on and checkbox edge, tab underline, focused input border',
   ],
   ['--accent-strong', '--surface-app', 'Primary button edge on the page background'],
+  ['--accent-strong', '--surface-overlay', 'Tab underline in the bottom sheet'],
   ['--accent-strong', '--surface-sunken', 'Selected segment outline on its track'],
   ['--accent-strong', '--accent-subtle', 'Selected timeline row bar'],
   ['--text-on-accent', '--accent', 'Switch thumb (on) and checkbox tick'],
@@ -181,6 +204,7 @@ const NON_TEXT = [
   ['--accent', '--surface-inverse', 'Active nav pill against the header'],
   ['--accent', '--surface-inverse-raised', 'Active item bar in the narrow menu'],
   ['--danger', '--surface-raised', 'Soft destructive button edge, destructive button fill'],
+  ['--danger', '--surface-overlay', 'Soft destructive button edge in the sheet'],
   ['--status-bad-border', '--surface-raised', 'Invalid input border'],
   ...TONES.flatMap((t) => [
     [`--status-${t}-border`, '--surface-raised', `${t} alert accent bar in a card`],
@@ -190,36 +214,42 @@ const NON_TEXT = [
   ...KINDS.flatMap((k) => [
     [`--kind-${k}`, '--surface-raised', `${k} chip on a node card or palette item`],
     [`--kind-${k}`, '--surface-sunken', `${k} chip on the palette rail`],
-    ['--text-inverse', `--kind-${k}`, `${k} icon inside its chip`],
+    [`--kind-${k}`, `--kind-${k}-subtle`, `${k} chip on its node band`],
+    ['--kind-on', `--kind-${k}`, `${k} icon inside its chip`],
   ]),
+  ['--kind-decision', '--accent-subtle', 'Kind chip in the selected timeline row'],
   ['--canvas-edge', '--canvas-bg', 'Edge'],
   ['--canvas-edge-selected', '--canvas-bg', 'Selected edge'],
   ['--canvas-edge-loop', '--canvas-bg', 'Loop-back edge (dashed)'],
   ['--canvas-edge-loop', '--surface-raised', 'Loop-back label border and icon'],
-  ['--kind-decision', '--accent-subtle', 'Kind chip in the selected timeline row'],
   ['--canvas-node-selected', '--canvas-bg', 'Selected node ring'],
   ['--canvas-handle', '--surface-raised', 'Port handle on the card edge'],
   ['--canvas-handle', '--canvas-bg', 'Port handle against the canvas'],
 ];
 
 const DECORATIVE = [
-  [
-    '--border-default',
-    '--surface-raised',
-    'Card and table edges (not needed to identify anything)',
-  ],
+  ['--border-default', '--surface-raised', 'Card and table edges (identify nothing on their own)'],
   ['--border-default', '--surface-app', 'Card edges on the page'],
   ['--border-subtle', '--surface-raised', 'Row dividers'],
   ['--canvas-grid', '--canvas-bg', 'Canvas dot grid'],
-  ['--surface-raised', '--surface-app', 'Cards on the page (also carry a border and shadow)'],
-  ['--surface-sunken', '--surface-raised', 'Sunken panels inside cards'],
-  ['--border-inverse', '--surface-inverse', 'Menu button outline (its icon and label identify it)'],
-  ['--accent-highlight', '--surface-raised', 'Update toast dot (the text says it)'],
+  ['--surface-raised', '--surface-app', 'Cards on the page (also carry an edge and a shadow)'],
+  ['--surface-sunken', '--surface-raised', 'Sunken wells inside cards'],
+  ['--surface-overlay', '--surface-app', 'Sheets and toasts (also carry a shadow)'],
+  [
+    '--border-inverse',
+    '--surface-inverse',
+    'Header button outlines (icons and labels identify them)',
+  ],
+  ['--accent-highlight', '--surface-overlay', 'Toast dot and publish sparkle (the text says it)'],
+  ['--accent-glow', '--canvas-bg', 'Glow around the selected node (the ring carries it)'],
+  ['--status-info-border', '--status-info-bg', 'Running and live pulse (the label says it)'],
   [
     '--kind-trigger-subtle',
     '--surface-raised',
     'Node card header band (the chip carries the kind)',
   ],
+  ['--mascot-skin', '--surface-inverse', 'Mascot against the header (a logo)'],
+  ['--mascot-glint', '--mascot-ink', 'Mascot eye glint'],
 ];
 
 function rows(pairs, tokens, minimum) {
@@ -243,35 +273,48 @@ function table(list, minimum) {
   return [head, ...body].join('\n');
 }
 
-export function report(css) {
-  const tokens = readTokens(css);
+function lowest(list) {
+  const min = list.reduce((a, b) => (b.r < a.r ? b : a));
+  return `${min.r.toFixed(2)}:1 (\`${min.fg}\` on \`${min.bg}\`)`;
+}
+
+function theme(name, tokens) {
   const text = rows(TEXT, tokens, 4.5);
   const nonText = rows(NON_TEXT, tokens, 3);
   const decorative = rows(DECORATIVE, tokens);
-  const failures = [...text, ...nonText].filter((r) => !r.pass);
-  const markdown = `# Contrast: visual-direction sample (light theme)
+  const failures = [...text, ...nonText].filter((r) => !r.pass).map((r) => ({ ...r, theme: name }));
+  const summary = `- ${name}: ${text.length} text pairs (${text.filter((r) => !r.pass).length} below 4.5:1), ${nonText.length} non-text pairs (${nonText.filter((r) => !r.pass).length} below 3:1). Lowest text ${lowest(text)}; lowest non-text ${lowest(nonText)}.`;
+  const section = `## ${name[0].toUpperCase()}${name.slice(1)} theme
 
-Generated by \`node docs/design/visual-direction/contrast.mjs\` from \`tokens.css\`; do not edit by hand. Ratios use the WCAG 2.x relative-luminance formula.
-
-- Text pairs: ${text.length} checked, minimum 4.5:1 (WCAG 1.4.3), ${text.filter((r) => !r.pass).length} below.
-- Non-text pairs: ${nonText.length} checked, minimum 3:1 (WCAG 1.4.11: control boundaries, focus rings, state indicators, meaningful graphics), ${nonText.filter((r) => !r.pass).length} below.
-- Decorative pairs: ${decorative.length} listed for information; they identify nothing on their own, so 1.4.11 does not apply.
-
-Lowest text ratio: ${Math.min(...text.map((r) => r.r)).toFixed(2)}:1. Lowest non-text ratio: ${Math.min(...nonText.map((r) => r.r)).toFixed(2)}:1.
-
-## Text (4.5:1)
+### Text (4.5:1)
 
 ${table(text, 4.5)}
 
-## Non-text (3:1)
+### Non-text (3:1)
 
 ${table(nonText, 3)}
 
-## Decorative (not enforced)
+### Decorative (not enforced)
 
 ${table(decorative)}
 `;
-  return { markdown, failures };
+  return { failures, summary, section };
+}
+
+export function report(css) {
+  const themes = readThemes(css);
+  const dark = theme('dark', themes.dark);
+  const light = theme('light', themes.light);
+  const markdown = `# Contrast: visual-direction sample
+
+Generated by \`node docs/design/visual-direction/contrast.mjs\` from \`tokens.css\`; do not edit by hand. Ratios use the WCAG 2.x relative-luminance formula. Every pair runs in both themes. Text needs 4.5:1 (WCAG 1.4.3); non-text needs 3:1 (WCAG 1.4.11: control boundaries, focus rings, state indicators, meaningful graphics). Decorative pairs identify nothing on their own and are listed for information only.
+
+${dark.summary}
+${light.summary}
+
+${dark.section}
+${light.section}`;
+  return { markdown, failures: [...dark.failures, ...light.failures] };
 }
 
 /** Format with the repository's Prettier config so `format:check` agrees with the output. */
@@ -296,7 +339,9 @@ if (process.argv[1] && resolvePath(process.argv[1]) === fileURLToPath(import.met
   } else {
     writeFileSync(OUTPUT, markdown, 'utf8');
   }
-  for (const f of failures) console.error(`FAIL ${f.fg} on ${f.bg}: ${f.r.toFixed(2)}:1`);
+  for (const f of failures) {
+    console.error(`FAIL ${f.theme} ${f.fg} on ${f.bg}: ${f.r.toFixed(2)}:1`);
+  }
   console.error(`${failures.length} failing pair(s)`);
   process.exit(failures.length > 0 ? 1 : 0);
 }

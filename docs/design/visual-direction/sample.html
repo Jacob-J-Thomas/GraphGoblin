@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#1a1815" />
+    <meta name="theme-color" content="#0e0c0a" />
     <title>GraphGoblin visual direction</title>
     <link rel="preload" href="fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin />
     <link
@@ -134,6 +134,18 @@
         background: var(--surface-inverse);
         color: var(--text-inverse);
       }
+      /* Proposal: a purple-to-magenta hairline along the header's bottom edge. */
+      .appbar::after,
+      .doc-bar::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 2px;
+        background: var(--accent-hairline);
+        pointer-events: none;
+      }
       .brand {
         display: inline-flex;
         align-items: center;
@@ -154,48 +166,158 @@
         height: 30px;
         flex: none;
       }
-      .bm-body {
-        fill: var(--accent);
+      /* Mascot parts (inside the sprite's symbols) */
+      .m-skin {
+        fill: var(--mascot-skin);
       }
-      .bm-eye {
-        fill: var(--surface-inverse);
+      .m-line {
+        stroke: var(--mascot-ink);
+        stroke-width: 0.9;
+        stroke-linejoin: round;
       }
-      .bm-port {
-        fill: var(--text-inverse);
+      .m-shade {
+        fill: var(--mascot-shade);
       }
-      .bm-mouth {
+      .m-ink {
+        fill: var(--mascot-ink);
+      }
+      .m-port {
+        fill: var(--mascot-port);
+      }
+      .m-brow,
+      .m-mouth {
         fill: none;
-        stroke: var(--surface-inverse);
-        stroke-width: 1.6;
+        stroke: var(--mascot-ink);
         stroke-linecap: round;
+        stroke-linejoin: round;
       }
-      .mainnav {
-        display: flex;
-        align-items: center;
-        gap: var(--space-1);
+      .m-brow {
+        stroke-width: 2.1;
       }
-      .mainnav a {
+      .m-mouth {
+        stroke-width: 1.5;
+      }
+      .m-glint {
+        fill: var(--mascot-glint);
+      }
+      .m-tooth {
+        fill: var(--mascot-tooth);
+        stroke: var(--mascot-ink);
+        stroke-width: 0.45;
+        stroke-linejoin: round;
+      }
+
+      /* Theme control: System, Light, Dark; Dark is preselected (sample of #11's control). */
+      .theme-switch {
         display: inline-flex;
-        align-items: center;
-        gap: var(--space-2);
-        height: 34px;
-        padding: 0 14px;
+        flex: none;
+        margin-left: auto;
+        padding: 3px;
+        gap: 2px;
+        border: 1px solid var(--border-inverse);
+        border-radius: var(--radius-full);
+      }
+      .theme-switch label {
+        position: relative;
+        display: inline-grid;
+        place-items: center;
+        width: 30px;
+        height: 28px;
         border-radius: var(--radius-full);
         color: var(--text-inverse-muted);
-        text-decoration: none;
-        font-weight: var(--font-weight-medium);
-        transition:
-          background-color var(--duration-fast) var(--ease-standard),
-          color var(--duration-fast) var(--ease-standard);
+        cursor: pointer;
       }
-      .mainnav a:hover {
+      .theme-switch label:hover {
         background: var(--surface-inverse-raised);
         color: var(--text-inverse);
       }
+      .theme-switch input {
+        position: absolute;
+        opacity: 0;
+        width: 1px;
+        height: 1px;
+        margin: 0;
+      }
+      .theme-switch label:has(input:checked) {
+        background: var(--surface-inverse-raised);
+        color: var(--accent);
+      }
+      .theme-switch label:has(input:focus-visible) {
+        outline: var(--focus-ring-width) solid var(--focus-ring);
+        outline-offset: 1px;
+      }
+      .theme-switch .icon {
+        width: 15px;
+        height: 15px;
+      }
+
+      /* Main navigation: a confident green underline for the current page with a faint magenta
+         glow (owner decision), a magenta hover underline, and a magenta notification dot. */
+      .mainnav {
+        display: flex;
+        align-self: stretch;
+        align-items: stretch;
+        gap: var(--space-1);
+      }
+      .mainnav a {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-2);
+        padding: 0 14px;
+        color: var(--text-inverse-muted);
+        text-decoration: none;
+        font-weight: var(--font-weight-medium);
+        transition: color var(--duration-fast) var(--ease-standard);
+      }
+      .mainnav a::after {
+        content: '';
+        position: absolute;
+        z-index: 1;
+        left: 10px;
+        right: 10px;
+        bottom: 0;
+        height: 3px;
+        border-radius: 3px 3px 0 0;
+        transition:
+          background-color var(--duration-fast) var(--ease-standard),
+          box-shadow var(--duration-fast) var(--ease-standard);
+      }
+      .mainnav a:hover,
+      .mainnav a.is-hover {
+        color: var(--text-inverse);
+      }
+      .mainnav a:hover::after,
+      .mainnav a.is-hover::after {
+        background: var(--accent-highlight);
+        opacity: 0.7;
+      }
+      .mainnav a:focus-visible {
+        outline-offset: -6px;
+        border-radius: var(--radius-md);
+      }
       .mainnav a[aria-current='page'] {
-        background: var(--accent);
-        color: var(--text-on-accent);
+        color: var(--text-inverse);
         font-weight: var(--font-weight-semibold);
+      }
+      .mainnav a[aria-current='page']::after {
+        background: var(--accent);
+        opacity: 1;
+        box-shadow:
+          0 -1px 10px 0 color-mix(in oklab, var(--accent-highlight) 55%, transparent),
+          0 0 2px color-mix(in oklab, var(--accent) 80%, transparent);
+      }
+      .nav-dot {
+        position: absolute;
+        top: 15px;
+        right: 5px;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--accent-highlight);
+        box-shadow:
+          0 0 0 2px var(--surface-inverse),
+          0 0 10px 1px color-mix(in oklab, var(--accent-highlight) 70%, transparent);
       }
       .menu-toggle {
         display: none;
@@ -339,15 +461,44 @@
         border-color: var(--accent-strong);
         box-shadow: 0 2px 0 var(--accent-strong);
       }
-      .btn-primary:hover {
+      /* Proposal: hover adds a magenta sheen around the lime; the fill and text stay the same. */
+      .btn-primary:hover,
+      .btn-primary.is-hover {
         background: var(--accent-hover);
+        box-shadow:
+          0 2px 0 var(--accent-strong),
+          0 0 18px -2px color-mix(in oklab, var(--accent-highlight) 60%, transparent);
       }
       .btn-primary:active:not(:disabled) {
         background: var(--accent-active);
         transform: translateY(2px);
       }
+      /* Options weighed for the dark theme (component sheet only). */
+      .btn-primary.opt-deep {
+        background: var(--accent-active);
+      }
+      .btn-primary.opt-ink {
+        border-color: var(--text-on-accent);
+        box-shadow:
+          0 0 0 1px var(--accent-strong),
+          0 3px 0 1px var(--text-on-accent);
+      }
+      /* Proposal: an attention action (Run, "view it" after a publish): magenta edge and text with
+         a soft glow. Never the default button, never a fill. */
+      .btn-attention {
+        background: var(--surface-raised);
+        color: var(--accent-highlight);
+        border-color: var(--accent-highlight);
+        box-shadow:
+          0 1px 0 var(--accent-highlight),
+          0 0 16px -4px color-mix(in oklab, var(--accent-highlight) 70%, transparent);
+      }
+      .btn-attention:hover,
+      .btn-attention.is-hover {
+        background: var(--accent-highlight-subtle);
+      }
       .btn-secondary {
-        background: var(--surface-sunken);
+        background: var(--surface-control);
         border-color: var(--border-strong);
         box-shadow: 0 1px 0 var(--border-strong);
       }
@@ -360,7 +511,7 @@
         box-shadow: 0 1px 0 var(--border-strong);
       }
       .btn-outline:hover {
-        background: var(--surface-sunken);
+        background: var(--surface-hover);
       }
       .btn-destructive {
         background: var(--danger);
@@ -374,7 +525,7 @@
       /* Proposal: a soft destructive style for row-level Delete; solid destructive confirms. */
       .btn-danger-soft {
         background: var(--surface-raised);
-        color: var(--danger);
+        color: var(--danger-on-subtle);
         border-color: var(--danger);
         box-shadow: 0 1px 0 var(--danger);
       }
@@ -391,11 +542,8 @@
         cursor: not-allowed;
         box-shadow: none;
       }
-      .btn.is-hover.btn-primary {
-        background: var(--accent-hover);
-      }
       .btn.is-hover.btn-outline {
-        background: var(--surface-sunken);
+        background: var(--surface-hover);
       }
 
       /* Badges ------------------------------------------------------------------------------ */
@@ -528,6 +676,7 @@
         align-items: center;
         gap: var(--space-3);
         padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4);
+        overflow: hidden;
         background: var(--surface-overlay);
         border: 1px solid var(--border-default);
         border-radius: var(--radius-lg);
@@ -535,12 +684,67 @@
         font-size: var(--font-size-sm);
         font-weight: var(--font-weight-medium);
       }
+      /* Proposal: notifications carry a magenta accent edge, dot, or icon. */
+      .toast::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: var(--accent-highlight);
+        box-shadow: 0 0 12px 1px color-mix(in oklab, var(--accent-highlight) 60%, transparent);
+      }
       .toast-dot {
+        flex: none;
         width: 8px;
         height: 8px;
         border-radius: 50%;
         background: var(--accent-highlight);
         box-shadow: 0 0 0 4px var(--accent-highlight-subtle);
+      }
+      .toast-static {
+        position: relative;
+        right: auto;
+        bottom: auto;
+        z-index: auto;
+      }
+      .toast-icon {
+        flex: none;
+        display: grid;
+        place-items: center;
+        width: 32px;
+        height: 32px;
+        border-radius: var(--radius-md);
+        background: var(--accent-highlight-subtle);
+        color: var(--accent-highlight);
+      }
+      .toast-icon .icon {
+        width: 17px;
+        height: 17px;
+        filter: drop-shadow(0 0 4px color-mix(in oklab, var(--accent-highlight) 70%, transparent));
+      }
+      .toast-body {
+        display: grid;
+        gap: 1px;
+        margin-right: var(--space-2);
+      }
+      .toast-body span {
+        color: var(--text-muted);
+        font-weight: var(--font-weight-regular);
+      }
+      /* Proposal: the publish-success moment: a purple-to-magenta hairline crowns the toast. */
+      .toast-moment::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 0;
+        height: 2px;
+        background: var(--accent-hairline);
+      }
+      .toast-moment::before {
+        display: none;
       }
 
       /* Form controls ----------------------------------------------------------------------- */
@@ -588,7 +792,7 @@
         padding: 0 var(--space-3);
         border: 1px solid var(--border-strong);
         border-radius: var(--radius-md);
-        background: var(--surface-raised);
+        background: var(--surface-field);
         color: var(--text-default);
         font: inherit;
         font-size: var(--font-size-md);
@@ -1111,7 +1315,7 @@
         height: 28px;
         border-radius: var(--radius-md);
         background: var(--k);
-        color: var(--text-inverse);
+        color: var(--kind-on);
       }
       .kchip .icon {
         width: 16px;
@@ -1422,11 +1626,13 @@
         left: -7px;
         top: calc(50% - 6px);
       }
+      /* Proposal: the selected node wears a magenta ring with a deep purple glow. */
       .node.is-selected {
         border-color: var(--canvas-node-selected);
         box-shadow:
           0 0 0 2px var(--canvas-node-selected),
-          0 0 0 7px var(--accent-highlight-subtle),
+          0 0 0 6px color-mix(in oklab, var(--canvas-node-selected) 18%, transparent),
+          0 0 36px 4px color-mix(in oklab, var(--accent-glow) 42%, transparent),
           var(--shadow-2);
       }
       .flow-controls {
@@ -1662,15 +1868,16 @@
         gap: var(--space-section);
         align-items: start;
       }
+      /* Proposal: the live stream and running runs pulse in purple. */
       .live {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
+        gap: 7px;
         font-size: var(--font-size-xs);
         font-weight: var(--font-weight-semibold);
-        color: var(--accent-on-subtle);
-        background: var(--accent-subtle);
-        padding: 3px 9px 3px 8px;
+        color: var(--status-info-fg);
+        background: var(--status-info-bg);
+        padding: 3px 10px 3px 9px;
         border-radius: var(--radius-full);
       }
       .live::before {
@@ -1678,8 +1885,20 @@
         width: 7px;
         height: 7px;
         border-radius: 50%;
-        background: var(--accent-strong);
-        box-shadow: 0 0 0 3px var(--accent);
+        background: var(--status-info-border);
+        box-shadow: 0 0 0 3px color-mix(in oklab, var(--status-info-border) 30%, transparent);
+        animation: pulse var(--duration-pulse) var(--ease-standard) infinite;
+      }
+      .badge[data-status='running'] {
+        box-shadow: 0 0 14px -3px color-mix(in oklab, var(--accent-glow) 75%, transparent);
+      }
+      .badge[data-status='running'] .icon {
+        animation: pulse var(--duration-pulse) var(--ease-standard) infinite;
+      }
+      @keyframes pulse {
+        50% {
+          opacity: 0.45;
+        }
       }
       .timeline {
         list-style: none;
@@ -1853,6 +2072,7 @@
 
       /* Component sheet ---------------------------------------------------------------------- */
       .doc-bar {
+        position: relative;
         display: flex;
         align-items: center;
         gap: var(--space-4);
@@ -1972,6 +2192,108 @@
         position: relative;
       }
 
+      /* Mascot and wordmark specimens */
+      .mascot-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+        gap: var(--space-4);
+      }
+      .mascot-card {
+        margin: 0;
+        padding: var(--space-4);
+        display: grid;
+        gap: var(--space-4);
+      }
+      .mascot-stages {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--space-2);
+      }
+      .mascot-stage {
+        display: grid;
+        place-items: center;
+        padding: var(--space-4) 0;
+        border-radius: var(--radius-md);
+        background: var(--surface-raised);
+        box-shadow: inset 0 0 0 1px var(--border-default);
+      }
+      .mascot-stage[data-theme='light'] {
+        background: var(--surface-app);
+      }
+      .mascot-sizes {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-2);
+      }
+      .mascot-strip {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-4);
+        padding: var(--space-2) var(--space-4);
+        border-radius: var(--radius-md);
+        background: var(--surface-app);
+        box-shadow: inset 0 0 0 1px var(--border-default);
+      }
+      .on-header {
+        background: var(--surface-inverse);
+        color: var(--text-inverse);
+      }
+      .lockups {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: var(--space-4);
+      }
+      .lockup {
+        display: grid;
+        gap: var(--space-3);
+        justify-items: start;
+        padding: var(--space-5);
+        border-radius: var(--radius-lg);
+        box-shadow: inset 0 0 0 1px var(--border-default);
+      }
+      .lockup.on-header .help {
+        color: var(--text-inverse-muted);
+      }
+      .lockup.on-surface {
+        background: var(--surface-raised);
+      }
+      .on-surface .brand {
+        color: var(--text-default);
+      }
+      .on-surface .brand b {
+        color: var(--accent-strong);
+      }
+      .primary-options {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        gap: var(--space-4) var(--space-8);
+        padding: var(--space-5);
+        border-radius: var(--radius-lg);
+        background: var(--surface-raised);
+        box-shadow: var(--shadow-1);
+      }
+      .primary-options .eyebrow {
+        flex-basis: 100%;
+      }
+      .primary-option {
+        display: grid;
+        gap: var(--space-2);
+        justify-items: start;
+      }
+      .nav-demo {
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        box-shadow: inset 0 0 0 1px var(--border-default);
+      }
+      .nav-demo .appbar {
+        padding-left: var(--space-3);
+      }
+      .nav-demo .mainnav a.is-focus {
+        outline-offset: -6px;
+        border-radius: var(--radius-md);
+      }
+
       /* Tablet: palette rail, bottom sheet, single-column inspector (proposal for #41) ------- */
       @media (max-width: 1024px) {
         .editor-main {
@@ -2079,13 +2401,20 @@
       /* Phone: menu, stacked rows, one-column forms (proposal for #41) -------------------------- */
       @media (max-width: 640px) {
         .appbar {
+          gap: var(--space-2);
           padding: 0 var(--space-4);
-          justify-content: space-between;
+        }
+        .theme-switch {
+          margin-left: 0;
+        }
+        .theme-switch label {
+          width: 28px;
         }
         .menu-toggle {
           display: inline-flex;
           align-items: center;
           gap: var(--space-2);
+          margin-left: auto;
           height: 40px;
           padding: 0 12px;
           border: 1px solid var(--border-inverse);
@@ -2110,6 +2439,7 @@
           top: 56px;
           left: 0;
           right: 0;
+          z-index: 2;
           flex-direction: column;
           align-items: stretch;
           gap: 2px;
@@ -2123,14 +2453,25 @@
         }
         .mainnav a {
           height: 48px;
-          padding: 0 var(--space-4);
+          padding: 0 var(--space-4) 0 var(--space-5);
           border-radius: var(--radius-md);
           font-size: var(--font-size-lg);
         }
+        .mainnav a::after {
+          left: 0;
+          right: auto;
+          top: 10px;
+          bottom: 10px;
+          width: 3px;
+          height: auto;
+          border-radius: 0 3px 3px 0;
+        }
         .mainnav a[aria-current='page'] {
           background: var(--surface-inverse-raised);
-          color: var(--text-inverse);
-          box-shadow: inset 4px 0 0 var(--accent);
+        }
+        .nav-dot {
+          position: static;
+          margin-left: auto;
         }
         .banner {
           padding: var(--space-2) var(--space-4);
@@ -2323,6 +2664,63 @@
         />
       </symbol>
       <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5" /></symbol>
+      <symbol id="i-moon" viewBox="0 0 24 24">
+        <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z" />
+      </symbol>
+      <symbol id="i-monitor" viewBox="0 0 24 24">
+        <rect x="3" y="4" width="18" height="12.5" rx="2" />
+        <path d="M8.5 20.5h7M12 16.5v4" />
+      </symbol>
+      <symbol id="i-sun" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="4" />
+        <path
+          d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"
+        />
+      </symbol>
+
+      <!-- Mascot (placeholder for #10): a goblin-node head, three faces. Drawn for this sample. -->
+      <symbol id="mascot-head" viewBox="0 0 32 32">
+        <path class="m-skin m-line" d="M10.4 11.1 .3 3 6 17.4Z" />
+        <path class="m-skin m-line" d="M21.6 11.1 31.7 3 26 17.4Z" />
+        <path class="m-shade" d="M8.7 11.9 2.6 6.2l3.5 9.2Z" />
+        <path class="m-shade" d="M23.3 11.9 29.4 6.2l-3.5 9.2Z" />
+        <rect class="m-skin m-line" x="5" y="8.8" width="22" height="17.4" rx="6.2" />
+        <circle class="m-port m-line" cx="5" cy="20.2" r="2.2" />
+        <circle class="m-port m-line" cx="27" cy="20.2" r="2.2" />
+      </symbol>
+      <symbol id="mascot-smirk" viewBox="0 0 32 32">
+        <use href="#mascot-head" />
+        <path class="m-brow" d="M9.1 12.3 14.5 15M22.9 12.3 17.5 15" />
+        <path class="m-ink" d="M9.8 17.4q2.5-1.9 5-.1-2.5 1.5-5 .1Z" />
+        <path class="m-ink" d="M22.2 17.4q-2.5-1.9-5-.1 2.5 1.5 5 .1Z" />
+        <circle class="m-glint" cx="13.3" cy="17.2" r=".7" />
+        <circle class="m-glint" cx="18.7" cy="17.2" r=".7" />
+        <path class="m-mouth" d="M11.4 21.1q3.8 1.7 7.3.5 1.6-.6 2.6-2.1" />
+        <path class="m-tooth" d="M16.6 21.9l1.9-.5-.6 2.3Z" />
+      </symbol>
+      <symbol id="mascot-scowl" viewBox="0 0 32 32">
+        <use href="#mascot-head" />
+        <path class="m-brow" d="M8.9 11.8 14.8 15.4M23.1 11.8 17.2 15.4" />
+        <path class="m-ink" d="M10.1 17.7q2.4-1.3 4.7-.1-2.4 1-4.7.1Z" />
+        <path class="m-ink" d="M21.9 17.7q-2.4-1.3-4.7-.1 2.4 1 4.7.1Z" />
+        <circle class="m-glint" cx="13.4" cy="17.5" r=".7" />
+        <circle class="m-glint" cx="18.6" cy="17.5" r=".7" />
+        <path class="m-ink" d="M11 20.5q5-1.4 10 0l-.9 2.4q-4.1 1.1-8.2 0Z" />
+        <path
+          class="m-tooth"
+          d="M11.6 20.6l1 1.5 1-1.7 1.1 1.5 1.3-1.7 1.3 1.7 1.1-1.5 1 1.7 1-1.5q-4.4-1.2-8.8 0Z"
+        />
+      </symbol>
+      <symbol id="mascot-sly" viewBox="0 0 32 32">
+        <use href="#mascot-head" />
+        <path class="m-brow" d="M9.4 13.4q2.4-2.2 5.2-.6M22.7 12.5 17.6 14.9" />
+        <path class="m-ink" d="M10 16.8h4.8q-.9 2.1-3 1.8-1.5-.2-1.8-1.8Z" />
+        <path class="m-ink" d="M17.4 16.8h4.8q-.9 2.1-3 1.8-1.5-.2-1.8-1.8Z" />
+        <circle class="m-glint" cx="14" cy="17.5" r=".7" />
+        <circle class="m-glint" cx="21.4" cy="17.5" r=".7" />
+        <path class="m-mouth" d="M13 21.7q4.6.5 8-2.4" />
+        <path class="m-tooth" d="M18.6 21.5l1.6-.8-.1 2.2Z" />
+      </symbol>
     </svg>
 
     <!-- Index: shown without a hash. -->
@@ -2330,9 +2728,10 @@
       <p class="eyebrow">GraphGoblin · issue #7 · visual direction</p>
       <h1 class="page-title">Visual-direction sample</h1>
       <p class="muted">
-        A static prototype of the proposed light theme: goblin green with brown, warm dark grey, and
-        rare magenta, set in Geist. Every colour comes from <code>tokens.css</code>. Open one view
-        with its hash, or scroll to see them all.
+        A static prototype of the proposed themes, dark first: goblin green on warm near-blacks with
+        brown undertones, purple and magenta for highlight moments, set in Geist. Every colour comes
+        from <code>tokens.css</code>; the header's System, Light, and Dark control switches the
+        theme. Open one view with its hash, or scroll to see them all.
       </p>
       <ul>
         <li><a href="#loops">Loops list</a> (1440 and 390 px)</li>
@@ -2350,13 +2749,7 @@
       <header class="appbar">
         <a class="brand" href="#loops" aria-label="GraphGoblin">
           <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
-            <path class="bm-body" d="M9.4 11 .6 7.2l5 8.8Zm13.2 0 8.8-3.8-5 8.8Z" />
-            <rect class="bm-body" x="5" y="8.5" width="22" height="17" rx="6" />
-            <circle class="bm-eye" cx="12.3" cy="15.6" r="2" />
-            <circle class="bm-eye" cx="19.7" cy="15.6" r="2" />
-            <path class="bm-mouth" d="M13 20.6q3 1.9 6 0" />
-            <circle class="bm-port" cx="5" cy="19" r="2.4" />
-            <circle class="bm-port" cx="27" cy="19" r="2.4" />
+            <use href="#mascot-smirk" />
           </svg>
           <span>Graph<b>Goblin</b></span>
         </a>
@@ -2373,10 +2766,32 @@
         </button>
         <nav class="mainnav" id="nav-loops" aria-label="Main">
           <a href="#loops" aria-current="page">Loops</a>
-          <a href="#nav">Runs</a>
+          <a href="#nav"
+            >Runs<span class="nav-dot" aria-hidden="true"></span
+            ><span class="visually-hidden">, 1 waiting for input</span></a
+          >
           <a href="#nav">Events</a>
           <a href="#nav">Settings</a>
         </nav>
+        <div class="theme-switch" role="radiogroup" aria-label="Theme">
+          <label title="System"
+            ><input type="radio" name="theme-1" value="system" data-theme-choice /><svg
+              class="icon"
+            >
+              <use href="#i-monitor" /></svg
+            ><span class="visually-hidden">System</span></label
+          ><label title="Light"
+            ><input type="radio" name="theme-1" value="light" data-theme-choice /><svg class="icon">
+              <use href="#i-sun" /></svg
+            ><span class="visually-hidden">Light</span></label
+          ><label title="Dark"
+            ><input type="radio" name="theme-1" value="dark" data-theme-choice checked /><svg
+              class="icon"
+            >
+              <use href="#i-moon" /></svg
+            ><span class="visually-hidden">Dark</span></label
+          >
+        </div>
       </header>
 
       <div class="page">
@@ -2537,7 +2952,7 @@
                 </td>
                 <td class="wide"><span class="badge tone-good">published</span></td>
                 <td data-label="Last run">
-                  <a class="badge tone-info" href="#inspector"
+                  <a class="badge tone-info" data-status="running" href="#inspector"
                     ><svg class="icon"><use href="#i-running" /></svg>running</a
                   >
                 </td>
@@ -2635,13 +3050,7 @@
       <header class="appbar">
         <a class="brand" href="#loops" aria-label="GraphGoblin">
           <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
-            <path class="bm-body" d="M9.4 11 .6 7.2l5 8.8Zm13.2 0 8.8-3.8-5 8.8Z" />
-            <rect class="bm-body" x="5" y="8.5" width="22" height="17" rx="6" />
-            <circle class="bm-eye" cx="12.3" cy="15.6" r="2" />
-            <circle class="bm-eye" cx="19.7" cy="15.6" r="2" />
-            <path class="bm-mouth" d="M13 20.6q3 1.9 6 0" />
-            <circle class="bm-port" cx="5" cy="19" r="2.4" />
-            <circle class="bm-port" cx="27" cy="19" r="2.4" />
+            <use href="#mascot-smirk" />
           </svg>
           <span>Graph<b>Goblin</b></span>
         </a>
@@ -2658,10 +3067,32 @@
         </button>
         <nav class="mainnav" id="nav-editor" aria-label="Main">
           <a href="#loops" aria-current="page">Loops</a>
-          <a href="#nav">Runs</a>
+          <a href="#nav"
+            >Runs<span class="nav-dot" aria-hidden="true"></span
+            ><span class="visually-hidden">, 1 waiting for input</span></a
+          >
           <a href="#nav">Events</a>
           <a href="#nav">Settings</a>
         </nav>
+        <div class="theme-switch" role="radiogroup" aria-label="Theme">
+          <label title="System"
+            ><input type="radio" name="theme-2" value="system" data-theme-choice /><svg
+              class="icon"
+            >
+              <use href="#i-monitor" /></svg
+            ><span class="visually-hidden">System</span></label
+          ><label title="Light"
+            ><input type="radio" name="theme-2" value="light" data-theme-choice /><svg class="icon">
+              <use href="#i-sun" /></svg
+            ><span class="visually-hidden">Light</span></label
+          ><label title="Dark"
+            ><input type="radio" name="theme-2" value="dark" data-theme-choice checked /><svg
+              class="icon"
+            >
+              <use href="#i-moon" /></svg
+            ><span class="visually-hidden">Dark</span></label
+          >
+        </div>
       </header>
 
       <div class="editor">
@@ -2687,7 +3118,7 @@
             <button class="btn btn-outline" type="button">
               <svg class="icon" aria-hidden="true"><use href="#i-sliders" /></svg>Loop settings
             </button>
-            <button class="btn btn-outline" type="button">
+            <button class="btn btn-attention" type="button">
               <svg class="icon" aria-hidden="true"><use href="#i-running" /></svg>Run
             </button>
             <button
@@ -3300,13 +3731,7 @@ Nothing to change</textarea>
       <header class="appbar">
         <a class="brand" href="#loops" aria-label="GraphGoblin">
           <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
-            <path class="bm-body" d="M9.4 11 .6 7.2l5 8.8Zm13.2 0 8.8-3.8-5 8.8Z" />
-            <rect class="bm-body" x="5" y="8.5" width="22" height="17" rx="6" />
-            <circle class="bm-eye" cx="12.3" cy="15.6" r="2" />
-            <circle class="bm-eye" cx="19.7" cy="15.6" r="2" />
-            <path class="bm-mouth" d="M13 20.6q3 1.9 6 0" />
-            <circle class="bm-port" cx="5" cy="19" r="2.4" />
-            <circle class="bm-port" cx="27" cy="19" r="2.4" />
+            <use href="#mascot-smirk" />
           </svg>
           <span>Graph<b>Goblin</b></span>
         </a>
@@ -3323,10 +3748,32 @@ Nothing to change</textarea>
         </button>
         <nav class="mainnav" id="nav-nav" aria-label="Main">
           <a href="#loops">Loops</a>
-          <a href="#nav" aria-current="page">Runs</a>
+          <a href="#nav" aria-current="page"
+            >Runs<span class="nav-dot" aria-hidden="true"></span
+            ><span class="visually-hidden">, 1 waiting for input</span></a
+          >
           <a href="#nav">Events</a>
           <a href="#nav">Settings</a>
         </nav>
+        <div class="theme-switch" role="radiogroup" aria-label="Theme">
+          <label title="System"
+            ><input type="radio" name="theme-3" value="system" data-theme-choice /><svg
+              class="icon"
+            >
+              <use href="#i-monitor" /></svg
+            ><span class="visually-hidden">System</span></label
+          ><label title="Light"
+            ><input type="radio" name="theme-3" value="light" data-theme-choice /><svg class="icon">
+              <use href="#i-sun" /></svg
+            ><span class="visually-hidden">Light</span></label
+          ><label title="Dark"
+            ><input type="radio" name="theme-3" value="dark" data-theme-choice checked /><svg
+              class="icon"
+            >
+              <use href="#i-moon" /></svg
+            ><span class="visually-hidden">Dark</span></label
+          >
+        </div>
       </header>
       <div class="banner" role="status">
         <svg class="icon" aria-hidden="true"><use href="#i-offline" /></svg>
@@ -3433,7 +3880,7 @@ Nothing to change</textarea>
                 </td>
                 <td data-label="Loop">weekly-summary</td>
                 <td data-label="Status">
-                  <span class="badge tone-info"
+                  <span class="badge tone-info" data-status="running"
                     ><svg class="icon"><use href="#i-running" /></svg>running</span
                   >
                 </td>
@@ -3475,13 +3922,7 @@ Nothing to change</textarea>
       <header class="appbar">
         <a class="brand" href="#loops" aria-label="GraphGoblin">
           <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
-            <path class="bm-body" d="M9.4 11 .6 7.2l5 8.8Zm13.2 0 8.8-3.8-5 8.8Z" />
-            <rect class="bm-body" x="5" y="8.5" width="22" height="17" rx="6" />
-            <circle class="bm-eye" cx="12.3" cy="15.6" r="2" />
-            <circle class="bm-eye" cx="19.7" cy="15.6" r="2" />
-            <path class="bm-mouth" d="M13 20.6q3 1.9 6 0" />
-            <circle class="bm-port" cx="5" cy="19" r="2.4" />
-            <circle class="bm-port" cx="27" cy="19" r="2.4" />
+            <use href="#mascot-smirk" />
           </svg>
           <span>Graph<b>Goblin</b></span>
         </a>
@@ -3498,10 +3939,32 @@ Nothing to change</textarea>
         </button>
         <nav class="mainnav" id="nav-inspector" aria-label="Main">
           <a href="#loops">Loops</a>
-          <a href="#nav" aria-current="page">Runs</a>
+          <a href="#nav" aria-current="page"
+            >Runs<span class="nav-dot" aria-hidden="true"></span
+            ><span class="visually-hidden">, 1 waiting for input</span></a
+          >
           <a href="#nav">Events</a>
           <a href="#nav">Settings</a>
         </nav>
+        <div class="theme-switch" role="radiogroup" aria-label="Theme">
+          <label title="System"
+            ><input type="radio" name="theme-4" value="system" data-theme-choice /><svg
+              class="icon"
+            >
+              <use href="#i-monitor" /></svg
+            ><span class="visually-hidden">System</span></label
+          ><label title="Light"
+            ><input type="radio" name="theme-4" value="light" data-theme-choice /><svg class="icon">
+              <use href="#i-sun" /></svg
+            ><span class="visually-hidden">Light</span></label
+          ><label title="Dark"
+            ><input type="radio" name="theme-4" value="dark" data-theme-choice checked /><svg
+              class="icon"
+            >
+              <use href="#i-moon" /></svg
+            ><span class="visually-hidden">Dark</span></label
+          >
+        </div>
       </header>
 
       <div class="page page-wide">
@@ -3897,26 +4360,224 @@ Nothing to change</textarea>
       <header class="doc-bar">
         <a class="brand" href="#loops" aria-label="GraphGoblin">
           <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
-            <path class="bm-body" d="M9.4 11 .6 7.2l5 8.8Zm13.2 0 8.8-3.8-5 8.8Z" />
-            <rect class="bm-body" x="5" y="8.5" width="22" height="17" rx="6" />
-            <circle class="bm-eye" cx="12.3" cy="15.6" r="2" />
-            <circle class="bm-eye" cx="19.7" cy="15.6" r="2" />
-            <path class="bm-mouth" d="M13 20.6q3 1.9 6 0" />
-            <circle class="bm-port" cx="5" cy="19" r="2.4" />
-            <circle class="bm-port" cx="27" cy="19" r="2.4" />
+            <use href="#mascot-smirk" />
           </svg>
           <span>Graph<b>Goblin</b></span>
         </a>
-        <span class="muted">Component sheet · light theme · issue #7</span>
+        <span class="muted">Component sheet · issue #7</span>
+        <div class="theme-switch" role="radiogroup" aria-label="Theme">
+          <label title="System"
+            ><input type="radio" name="theme-5" value="system" data-theme-choice /><svg
+              class="icon"
+            >
+              <use href="#i-monitor" /></svg
+            ><span class="visually-hidden">System</span></label
+          ><label title="Light"
+            ><input type="radio" name="theme-5" value="light" data-theme-choice /><svg class="icon">
+              <use href="#i-sun" /></svg
+            ><span class="visually-hidden">Light</span></label
+          ><label title="Dark"
+            ><input type="radio" name="theme-5" value="dark" data-theme-choice checked /><svg
+              class="icon"
+            >
+              <use href="#i-moon" /></svg
+            ><span class="visually-hidden">Dark</span></label
+          >
+        </div>
       </header>
 
       <div class="page" style="max-width: 1320px">
+        <!-- Mascot and wordmark ------------------------------------------------------------- -->
+        <section class="doc-section">
+          <h2 class="doc-h2">Mascot and wordmark (placeholder for #10)</h2>
+          <p class="doc-note">
+            A goblin-node head, drawn for this sample: the node from the favicon, with sharp ears,
+            ports for cheeks, and a mischievous face. Three faces to choose from, each at 160 px on
+            a dark and a light surface, then at header and favicon sizes (32, 24, and 16 px).
+          </p>
+          <div class="mascot-grid">
+            <figure class="card mascot-card">
+              <div class="mascot-stages">
+                <div class="mascot-stage" data-theme="dark">
+                  <svg
+                    viewBox="0 0 32 32"
+                    width="160"
+                    height="160"
+                    role="img"
+                    aria-label="Goblin mascot, smirk"
+                  >
+                    <use href="#mascot-smirk" />
+                  </svg>
+                </div>
+                <div class="mascot-stage" data-theme="light">
+                  <svg viewBox="0 0 32 32" width="160" height="160" aria-hidden="true">
+                    <use href="#mascot-smirk" />
+                  </svg>
+                </div>
+              </div>
+              <figcaption class="stack" style="gap: var(--space-2)">
+                <div class="label-row">
+                  <strong>Smirk</strong><span class="badge tone-good">default</span>
+                </div>
+                <span class="help"
+                  >Default in the header. Narrowed eyes under angry brows, a magenta glint, a
+                  crooked smirk with one fang.</span
+                >
+                <div class="mascot-sizes">
+                  <span class="mascot-strip on-header"
+                    ><svg viewBox="0 0 32 32" width="32" height="32" aria-hidden="true">
+                      <use href="#mascot-smirk" /></svg
+                    ><svg viewBox="0 0 32 32" width="24" height="24" aria-hidden="true">
+                      <use href="#mascot-smirk" /></svg
+                    ><svg viewBox="0 0 32 32" width="16" height="16" aria-hidden="true">
+                      <use href="#mascot-smirk" /></svg
+                  ></span>
+                  <span class="mascot-strip" data-theme="light"
+                    ><svg viewBox="0 0 32 32" width="32" height="32" aria-hidden="true">
+                      <use href="#mascot-smirk" /></svg
+                    ><svg viewBox="0 0 32 32" width="24" height="24" aria-hidden="true">
+                      <use href="#mascot-smirk" /></svg
+                    ><svg viewBox="0 0 32 32" width="16" height="16" aria-hidden="true">
+                      <use href="#mascot-smirk" /></svg
+                  ></span>
+                </div>
+              </figcaption>
+            </figure>
+            <figure class="card mascot-card">
+              <div class="mascot-stages">
+                <div class="mascot-stage" data-theme="dark">
+                  <svg
+                    viewBox="0 0 32 32"
+                    width="160"
+                    height="160"
+                    role="img"
+                    aria-label="Goblin mascot, scowl"
+                  >
+                    <use href="#mascot-scowl" />
+                  </svg>
+                </div>
+                <div class="mascot-stage" data-theme="light">
+                  <svg viewBox="0 0 32 32" width="160" height="160" aria-hidden="true">
+                    <use href="#mascot-scowl" />
+                  </svg>
+                </div>
+              </div>
+              <figcaption class="stack" style="gap: var(--space-2)">
+                <div class="label-row">
+                  <strong>Scowl</strong><span class="badge tone-neutral">option</span>
+                </div>
+                <span class="help"
+                  >Brows pulled down hard, slit eyes, a snarl of teeth. The most dangerous of the
+                  three.</span
+                >
+                <div class="mascot-sizes">
+                  <span class="mascot-strip on-header"
+                    ><svg viewBox="0 0 32 32" width="32" height="32" aria-hidden="true">
+                      <use href="#mascot-scowl" /></svg
+                    ><svg viewBox="0 0 32 32" width="24" height="24" aria-hidden="true">
+                      <use href="#mascot-scowl" /></svg
+                    ><svg viewBox="0 0 32 32" width="16" height="16" aria-hidden="true">
+                      <use href="#mascot-scowl" /></svg
+                  ></span>
+                  <span class="mascot-strip" data-theme="light"
+                    ><svg viewBox="0 0 32 32" width="32" height="32" aria-hidden="true">
+                      <use href="#mascot-scowl" /></svg
+                    ><svg viewBox="0 0 32 32" width="24" height="24" aria-hidden="true">
+                      <use href="#mascot-scowl" /></svg
+                    ><svg viewBox="0 0 32 32" width="16" height="16" aria-hidden="true">
+                      <use href="#mascot-scowl" /></svg
+                  ></span>
+                </div>
+              </figcaption>
+            </figure>
+            <figure class="card mascot-card">
+              <div class="mascot-stages">
+                <div class="mascot-stage" data-theme="dark">
+                  <svg
+                    viewBox="0 0 32 32"
+                    width="160"
+                    height="160"
+                    role="img"
+                    aria-label="Goblin mascot, sly side-eye"
+                  >
+                    <use href="#mascot-sly" />
+                  </svg>
+                </div>
+                <div class="mascot-stage" data-theme="light">
+                  <svg viewBox="0 0 32 32" width="160" height="160" aria-hidden="true">
+                    <use href="#mascot-sly" />
+                  </svg>
+                </div>
+              </div>
+              <figcaption class="stack" style="gap: var(--space-2)">
+                <div class="label-row">
+                  <strong>Sly side-eye</strong><span class="badge tone-neutral">option</span>
+                </div>
+                <span class="help"
+                  >One brow raised, half-lidded eyes glancing aside, a lopsided grin. Mischief over
+                  menace.</span
+                >
+                <div class="mascot-sizes">
+                  <span class="mascot-strip on-header"
+                    ><svg viewBox="0 0 32 32" width="32" height="32" aria-hidden="true">
+                      <use href="#mascot-sly" /></svg
+                    ><svg viewBox="0 0 32 32" width="24" height="24" aria-hidden="true">
+                      <use href="#mascot-sly" /></svg
+                    ><svg viewBox="0 0 32 32" width="16" height="16" aria-hidden="true">
+                      <use href="#mascot-sly" /></svg
+                  ></span>
+                  <span class="mascot-strip" data-theme="light"
+                    ><svg viewBox="0 0 32 32" width="32" height="32" aria-hidden="true">
+                      <use href="#mascot-sly" /></svg
+                    ><svg viewBox="0 0 32 32" width="24" height="24" aria-hidden="true">
+                      <use href="#mascot-sly" /></svg
+                    ><svg viewBox="0 0 32 32" width="16" height="16" aria-hidden="true">
+                      <use href="#mascot-sly" /></svg
+                  ></span>
+                </div>
+              </figcaption>
+            </figure>
+          </div>
+          <div class="lockups">
+            <div class="lockup on-header">
+              <span class="brand"
+                ><svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+                  <use href="#mascot-smirk" /></svg
+                ><span>Graph<b>Goblin</b></span></span
+              >
+              <span class="help">Mark and wordmark (header default)</span>
+            </div>
+            <div class="lockup on-header">
+              <span class="brand"
+                ><span>Graph<b>Goblin</b></span></span
+              >
+              <span class="help">Wordmark alone</span>
+            </div>
+            <div class="lockup on-surface" data-theme="light">
+              <span class="brand"
+                ><svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+                  <use href="#mascot-smirk" /></svg
+                ><span>Graph<b>Goblin</b></span></span
+              >
+              <span class="help">On a light surface</span>
+            </div>
+            <div class="lockup on-surface" data-theme="light">
+              <span class="brand"
+                ><span>Graph<b>Goblin</b></span></span
+              >
+              <span class="help">Wordmark alone, light surface</span>
+            </div>
+          </div>
+        </section>
+
         <!-- Palette ------------------------------------------------------------------------ -->
         <section class="doc-section">
           <h2 class="doc-h2">Palette</h2>
           <p class="doc-note">
-            The primitive tier. Components never use these directly; the semantic tokens below pick
-            from them. Grey is warmed towards the brown; magenta is reserved for rare highlights.
+            The primitive tier. Components never use these directly; the semantic tokens of each
+            theme pick from them. Grey is warm with a brown undertone, and its 850 to 990 steps are
+            the dark theme's surfaces. Teal and slate are node-kind hues that carry no status
+            meaning.
           </p>
           <div class="card card-body stack" style="gap: 10px">
             <div class="scale-steps">
@@ -3947,7 +4608,8 @@ Nothing to change</textarea>
               ><span class="sw" style="background: var(--brown-600)"></span
               ><span class="sw" style="background: var(--brown-700)"></span
               ><span class="sw" style="background: var(--brown-800)"></span
-              ><span class="sw" style="background: var(--brown-900)"></span><span></span>
+              ><span class="sw" style="background: var(--brown-900)"></span
+              ><span class="sw" style="background: var(--brown-950)"></span>
             </div>
             <div class="scale">
               <span>grey</span><span class="sw" style="background: var(--grey-50)"></span
@@ -3972,43 +4634,8 @@ Nothing to change</textarea>
               ><span class="sw" style="background: var(--magenta-600)"></span
               ><span class="sw" style="background: var(--magenta-700)"></span
               ><span class="sw" style="background: var(--magenta-800)"></span
-              ><span class="sw" style="background: var(--magenta-900)"></span><span></span>
-            </div>
-            <div class="scale">
-              <span>blue</span><span class="sw" style="background: var(--blue-50)"></span
-              ><span class="sw" style="background: var(--blue-100)"></span
-              ><span class="sw" style="background: var(--blue-200)"></span
-              ><span class="sw" style="background: var(--blue-300)"></span
-              ><span class="sw" style="background: var(--blue-400)"></span
-              ><span class="sw" style="background: var(--blue-500)"></span
-              ><span class="sw" style="background: var(--blue-600)"></span
-              ><span class="sw" style="background: var(--blue-700)"></span
-              ><span class="sw" style="background: var(--blue-800)"></span
-              ><span class="sw" style="background: var(--blue-900)"></span><span></span>
-            </div>
-            <div class="scale">
-              <span>orange</span><span class="sw" style="background: var(--orange-50)"></span
-              ><span class="sw" style="background: var(--orange-100)"></span
-              ><span class="sw" style="background: var(--orange-200)"></span
-              ><span class="sw" style="background: var(--orange-300)"></span
-              ><span class="sw" style="background: var(--orange-400)"></span
-              ><span class="sw" style="background: var(--orange-500)"></span
-              ><span class="sw" style="background: var(--orange-600)"></span
-              ><span class="sw" style="background: var(--orange-700)"></span
-              ><span class="sw" style="background: var(--orange-800)"></span
-              ><span class="sw" style="background: var(--orange-900)"></span><span></span>
-            </div>
-            <div class="scale">
-              <span>amber</span><span class="sw" style="background: var(--amber-50)"></span
-              ><span class="sw" style="background: var(--amber-100)"></span
-              ><span class="sw" style="background: var(--amber-200)"></span
-              ><span class="sw" style="background: var(--amber-300)"></span
-              ><span class="sw" style="background: var(--amber-400)"></span
-              ><span class="sw" style="background: var(--amber-500)"></span
-              ><span class="sw" style="background: var(--amber-600)"></span
-              ><span class="sw" style="background: var(--amber-700)"></span
-              ><span class="sw" style="background: var(--amber-800)"></span
-              ><span class="sw" style="background: var(--amber-900)"></span><span></span>
+              ><span class="sw" style="background: var(--magenta-900)"></span
+              ><span class="sw" style="background: var(--magenta-950)"></span>
             </div>
             <div class="scale">
               <span>violet</span><span class="sw" style="background: var(--violet-50)"></span
@@ -4020,7 +4647,47 @@ Nothing to change</textarea>
               ><span class="sw" style="background: var(--violet-600)"></span
               ><span class="sw" style="background: var(--violet-700)"></span
               ><span class="sw" style="background: var(--violet-800)"></span
-              ><span class="sw" style="background: var(--violet-900)"></span><span></span>
+              ><span class="sw" style="background: var(--violet-900)"></span
+              ><span class="sw" style="background: var(--violet-950)"></span>
+            </div>
+            <div class="scale">
+              <span>blue</span><span class="sw" style="background: var(--blue-50)"></span
+              ><span class="sw" style="background: var(--blue-100)"></span
+              ><span class="sw" style="background: var(--blue-200)"></span
+              ><span class="sw" style="background: var(--blue-300)"></span
+              ><span class="sw" style="background: var(--blue-400)"></span
+              ><span class="sw" style="background: var(--blue-500)"></span
+              ><span class="sw" style="background: var(--blue-600)"></span
+              ><span class="sw" style="background: var(--blue-700)"></span
+              ><span class="sw" style="background: var(--blue-800)"></span
+              ><span class="sw" style="background: var(--blue-900)"></span
+              ><span class="sw" style="background: var(--blue-950)"></span>
+            </div>
+            <div class="scale">
+              <span>orange</span><span class="sw" style="background: var(--orange-50)"></span
+              ><span class="sw" style="background: var(--orange-100)"></span
+              ><span class="sw" style="background: var(--orange-200)"></span
+              ><span class="sw" style="background: var(--orange-300)"></span
+              ><span class="sw" style="background: var(--orange-400)"></span
+              ><span class="sw" style="background: var(--orange-500)"></span
+              ><span class="sw" style="background: var(--orange-600)"></span
+              ><span class="sw" style="background: var(--orange-700)"></span
+              ><span class="sw" style="background: var(--orange-800)"></span
+              ><span class="sw" style="background: var(--orange-900)"></span
+              ><span class="sw" style="background: var(--orange-950)"></span>
+            </div>
+            <div class="scale">
+              <span>amber</span><span class="sw" style="background: var(--amber-50)"></span
+              ><span class="sw" style="background: var(--amber-100)"></span
+              ><span class="sw" style="background: var(--amber-200)"></span
+              ><span class="sw" style="background: var(--amber-300)"></span
+              ><span class="sw" style="background: var(--amber-400)"></span
+              ><span class="sw" style="background: var(--amber-500)"></span
+              ><span class="sw" style="background: var(--amber-600)"></span
+              ><span class="sw" style="background: var(--amber-700)"></span
+              ><span class="sw" style="background: var(--amber-800)"></span
+              ><span class="sw" style="background: var(--amber-900)"></span
+              ><span class="sw" style="background: var(--amber-950)"></span>
             </div>
             <div class="scale">
               <span>red</span><span class="sw" style="background: var(--red-50)"></span
@@ -4032,7 +4699,49 @@ Nothing to change</textarea>
               ><span class="sw" style="background: var(--red-600)"></span
               ><span class="sw" style="background: var(--red-700)"></span
               ><span class="sw" style="background: var(--red-800)"></span
-              ><span class="sw" style="background: var(--red-900)"></span><span></span>
+              ><span class="sw" style="background: var(--red-900)"></span
+              ><span class="sw" style="background: var(--red-950)"></span>
+            </div>
+            <div class="scale">
+              <span>teal</span><span class="sw" style="background: var(--teal-50)"></span
+              ><span class="sw" style="background: var(--teal-100)"></span
+              ><span class="sw" style="background: var(--teal-200)"></span
+              ><span class="sw" style="background: var(--teal-300)"></span
+              ><span class="sw" style="background: var(--teal-400)"></span
+              ><span class="sw" style="background: var(--teal-500)"></span
+              ><span class="sw" style="background: var(--teal-600)"></span
+              ><span class="sw" style="background: var(--teal-700)"></span
+              ><span class="sw" style="background: var(--teal-800)"></span
+              ><span class="sw" style="background: var(--teal-900)"></span
+              ><span class="sw" style="background: var(--teal-950)"></span>
+            </div>
+            <div class="scale">
+              <span>slate</span><span class="sw" style="background: var(--slate-50)"></span
+              ><span class="sw" style="background: var(--slate-100)"></span
+              ><span class="sw" style="background: var(--slate-200)"></span
+              ><span class="sw" style="background: var(--slate-300)"></span
+              ><span class="sw" style="background: var(--slate-400)"></span
+              ><span class="sw" style="background: var(--slate-500)"></span
+              ><span class="sw" style="background: var(--slate-600)"></span
+              ><span class="sw" style="background: var(--slate-700)"></span
+              ><span class="sw" style="background: var(--slate-800)"></span
+              ><span class="sw" style="background: var(--slate-900)"></span
+              ><span class="sw" style="background: var(--slate-950)"></span>
+            </div>
+            <div class="scale-steps">
+              <span></span><span>grey 850</span><span>900</span><span>925</span><span>950</span
+              ><span>975</span><span>990</span><span>brown 975</span><span></span><span></span
+              ><span></span><span></span>
+            </div>
+            <div class="scale">
+              <span>dark</span><span class="sw" style="background: var(--grey-850)"></span
+              ><span class="sw" style="background: var(--grey-900)"></span
+              ><span class="sw" style="background: var(--grey-925)"></span
+              ><span class="sw" style="background: var(--grey-950)"></span
+              ><span class="sw" style="background: var(--grey-975)"></span
+              ><span class="sw" style="background: var(--grey-990)"></span
+              ><span class="sw" style="background: var(--brown-975)"></span><span></span
+              ><span></span><span></span><span></span>
             </div>
           </div>
         </section>
@@ -4119,6 +4828,9 @@ Nothing to change</textarea>
               <button class="btn btn-danger-soft" type="button">
                 <svg class="icon"><use href="#i-trash" /></svg>Delete (proposal)
               </button>
+              <button class="btn btn-attention" type="button">
+                <svg class="icon"><use href="#i-running" /></svg>Run (attention)
+              </button>
               <button class="btn btn-ghost" type="button">Ghost</button>
             </div>
             <div class="cluster">
@@ -4151,6 +4863,34 @@ Nothing to change</textarea>
               <button class="btn btn-danger-soft is-focus" type="button">Focus</button>
             </div>
           </div>
+          <div class="primary-options" data-theme="dark">
+            <span class="eyebrow">Primary in the dark theme: options weighed</span>
+            <div class="primary-option">
+              <button class="btn btn-primary" type="button">
+                <svg class="icon"><use href="#i-send" /></svg>Publish</button
+              ><span class="help">Lime, ink text, green ledge (chosen)</span>
+            </div>
+            <div class="primary-option">
+              <button class="btn btn-primary opt-deep" type="button">
+                <svg class="icon"><use href="#i-send" /></svg>Publish</button
+              ><span class="help">Deeper lime</span>
+            </div>
+            <div class="primary-option">
+              <button class="btn btn-primary opt-ink" type="button">
+                <svg class="icon"><use href="#i-send" /></svg>Publish</button
+              ><span class="help">Lime on an ink ledge</span>
+            </div>
+            <div class="primary-option">
+              <button class="btn btn-primary is-hover" type="button">
+                <svg class="icon"><use href="#i-send" /></svg>Publish</button
+              ><span class="help">Hover: magenta sheen</span>
+            </div>
+            <div class="primary-option">
+              <button class="btn btn-attention is-hover" type="button">
+                <svg class="icon"><use href="#i-running" /></svg>Run</button
+              ><span class="help">Attention, hover</span>
+            </div>
+          </div>
         </section>
 
         <!-- Badges and alerts ---------------------------------------------------------------- -->
@@ -4177,7 +4917,7 @@ Nothing to change</textarea>
                 <span class="badge tone-neutral"
                   ><svg class="icon"><use href="#i-queued" /></svg>queued</span
                 >
-                <span class="badge tone-info"
+                <span class="badge tone-info" data-status="running"
                   ><svg class="icon"><use href="#i-running" /></svg>running</span
                 >
                 <span class="badge tone-warn"
@@ -4282,6 +5022,97 @@ Nothing to change</textarea>
                 <svg class="icon" aria-hidden="true"><use href="#i-info" /></svg
                 ><span class="alert-title">Nothing to publish</span
                 ><span>There are no changes since the published version.</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Navigation, notifications, highlight moments ------------------------------------- -->
+        <section class="doc-section">
+          <h2 class="doc-h2">Navigation, notifications, and highlight moments</h2>
+          <p class="doc-note">
+            Purple and magenta mark moments, never surfaces or the main action: the header hairline,
+            the hover and current-page underline glow, the waiting-run dot, the running pulse, the
+            attention button, notification edges and icons, the selected node, and the mascot's
+            eyes.
+          </p>
+          <div class="nav-demo">
+            <header class="appbar">
+              <nav class="mainnav" aria-label="Navigation states">
+                <a href="#loops">Loops</a>
+                <a href="#nav" aria-current="page"
+                  >Runs<span class="nav-dot" aria-hidden="true"></span
+                ></a>
+                <a href="#nav" class="is-hover">Events</a>
+                <a href="#nav" class="is-focus">Settings</a>
+              </nav>
+            </header>
+            <div
+              class="cluster help"
+              style="gap: var(--space-6); padding: var(--space-2) var(--space-1)"
+            >
+              <span>Loops: rest</span><span>Runs: current page, a run waiting for input</span
+              ><span>Events: hover</span><span>Settings: keyboard focus</span>
+            </div>
+          </div>
+          <div class="doc-grid" style="grid-template-columns: minmax(0, 1fr) minmax(0, 1fr)">
+            <div class="card card-body doc-tile">
+              <span class="eyebrow">Notifications</span>
+              <div class="toast toast-static" role="status">
+                <span class="toast-dot" aria-hidden="true"></span>
+                <span>A new version is available</span>
+                <button class="btn btn-primary btn-sm" type="button">Update</button>
+                <button class="btn btn-ghost btn-sm" type="button">Later</button>
+              </div>
+              <div class="toast toast-static toast-moment" role="status">
+                <span class="toast-icon" aria-hidden="true"
+                  ><svg class="icon"><use href="#i-sparkle" /></svg
+                ></span>
+                <span class="toast-body"
+                  ><strong>Published version 4.</strong
+                  ><span>Runs started from now use it.</span></span
+                >
+                <button class="btn btn-attention btn-sm" type="button">
+                  <svg class="icon"><use href="#i-running" /></svg>Run it
+                </button>
+              </div>
+            </div>
+            <div class="card card-body doc-tile">
+              <span class="eyebrow">Live and running</span>
+              <div class="cluster">
+                <span class="live">live</span>
+                <span class="badge tone-info" data-status="running"
+                  ><svg class="icon"><use href="#i-running" /></svg>running</span
+                >
+                <span class="kbadge k-heartbeat"
+                  ><span class="kchip kchip-sm"
+                    ><svg class="icon"><use href="#i-heartbeat" /></svg></span
+                  >Heartbeat</span
+                >
+                <span class="badge badge-new"
+                  ><svg class="icon" aria-hidden="true"><use href="#i-sparkle" /></svg>New</span
+                >
+              </div>
+              <span class="eyebrow">Selected node</span>
+              <div
+                class="mini-canvas"
+                style="grid-template-columns: 184px; padding: var(--space-8)"
+              >
+                <div class="node k-inference is-selected">
+                  <span class="handle handle-in"></span>
+                  <div class="node-head">
+                    <span class="kchip kchip-sm"
+                      ><svg class="icon"><use href="#i-inference" /></svg></span
+                    ><span class="node-kind">Inference</span>
+                  </div>
+                  <div class="node-body">
+                    <div class="node-label">Triage issues</div>
+                    <div class="node-id">triage</div>
+                    <div class="node-ports">
+                      <div class="port">out<span class="handle"></span></div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -4686,8 +5517,9 @@ Labels incoming issues by area and type</textarea
         <section class="doc-section">
           <h2 class="doc-h2">Focus ring on every surface</h2>
           <p class="doc-note">
-            One ring colour (<code>--focus-ring</code>, 2 px, offset 2 px) holds 3:1 on every
-            surface below, including the dark header; see contrast.md.
+            One ring colour per theme (<code>--focus-ring</code>, 2 px, offset 2 px): lime in dark,
+            deeper green in light. Each holds 3:1 on every surface below in its theme, including the
+            header; see contrast.md.
           </p>
           <div
             class="doc-grid"
@@ -4831,7 +5663,24 @@ Labels incoming issues by area and type</textarea
     </section>
 
     <script>
-      // The only script: the narrow-width menu toggle and the bottom-sheet toggle.
+      // The only script: the theme control, the narrow-width menu toggle, and the bottom sheet.
+      // Dark is the default; System follows the operating system while it is chosen.
+      const system = window.matchMedia('(prefers-color-scheme: dark)');
+      let choice = 'dark';
+      const applyTheme = () => {
+        const theme = choice === 'system' ? (system.matches ? 'dark' : 'light') : choice;
+        document.documentElement.dataset.theme = theme;
+        for (const input of document.querySelectorAll('[data-theme-choice]')) {
+          input.checked = input.value === choice;
+        }
+      };
+      for (const input of document.querySelectorAll('[data-theme-choice]')) {
+        input.addEventListener('change', () => {
+          choice = input.value;
+          applyTheme();
+        });
+      }
+      system.addEventListener('change', applyTheme);
       for (const button of document.querySelectorAll('[data-menu-toggle]')) {
         button.addEventListener('click', () => {
           const open = button.closest('.appbar').toggleAttribute('data-open');

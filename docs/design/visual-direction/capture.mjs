@@ -50,19 +50,36 @@ const SAMPLE_SHOTS = [
   { name: 'components-1440', view: 'components', width: 1440, height: 900 },
 ];
 
+/** Dark is the lead theme (top level); the light set goes to screenshots/light/. */
+const THEMES = [
+  { theme: 'dark', dir: out },
+  { theme: 'light', dir: join(out, 'light') },
+];
+
 async function captureSample() {
   const url = pathToFileURL(join(here, 'sample.html')).href;
   const b = await browser();
-  for (const shot of SAMPLE_SHOTS) {
-    const page = await b.newPage({ viewport: { width: shot.width, height: shot.height } });
-    await page.goto(`${url}#${shot.view}`);
-    await page.evaluate(() => document.fonts.ready);
-    if (shot.menu) await page.locator(`#${shot.view} [data-menu-toggle]`).click();
-    if (shot.sheet === false) await page.locator(`#${shot.view} [data-sheet-toggle]`).click();
-    await page.waitForTimeout(400);
-    await page.screenshot({ path: join(out, `${shot.name}.png`), fullPage: true });
-    console.log(`sample ${shot.name}`);
-    await page.close();
+  for (const { theme, dir } of THEMES) {
+    mkdirSync(dir, { recursive: true });
+    for (const shot of SAMPLE_SHOTS) {
+      const page = await b.newPage({
+        viewport: { width: shot.width, height: shot.height },
+        reducedMotion: 'reduce',
+      });
+      await page.goto(`${url}#${shot.view}`);
+      await page.evaluate((choice) => {
+        const input = document.querySelector(`[data-theme-choice][value="${choice}"]`);
+        input.checked = true;
+        input.dispatchEvent(new Event('change'));
+      }, theme);
+      await page.evaluate(() => document.fonts.ready);
+      if (shot.menu) await page.locator(`#${shot.view} [data-menu-toggle]`).click();
+      if (shot.sheet === false) await page.locator(`#${shot.view} [data-sheet-toggle]`).click();
+      await page.waitForTimeout(400);
+      await page.screenshot({ path: join(dir, `${shot.name}.png`), fullPage: true });
+      console.log(`sample ${theme} ${shot.name}`);
+      await page.close();
+    }
   }
   await b.close();
 }
