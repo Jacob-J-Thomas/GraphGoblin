@@ -9,5 +9,16 @@ export { ConfirmAction } from './confirm-action.js';
 export { Card } from './card.js';
 export { Dialog, type DialogCloseReason, type DialogProps } from './dialog.js';
 export { Checkbox, FieldGroup, HelpText, Input, Label, Select, Textarea } from './field.js';
+export {
+  CLOSE_DELAY,
+  closePopovers,
+  OPEN_DELAY,
+  Popover,
+  placePopover,
+  type Placement,
+  type PopoverControls,
+  type PopoverProps,
+  type PopoverTriggerProps,
+} from './popover.js';
 export { SidePanel, readPanelState, useSidePanelState, writePanelState } from './side-panel.js';
 export { Table, Td, Th } from './table.js';
