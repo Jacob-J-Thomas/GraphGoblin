@@ -3,7 +3,7 @@
  * for their children, so they live in one module with it: the field families they draw on are
  * imported, never the other way round.
  */
-import { useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { Icon } from '../../components/icons/index.js';
 import { Button, Checkbox, HelpText, Input, Label, Select } from '../../components/ui/index.js';
 import { repathParseErrors, useParseErrors } from '../parse-errors.js';
@@ -389,6 +389,11 @@ function RecordKey({
   const error = otherKeys.includes(text)
     ? `Key "${text}" already exists. Choose a unique key.`
     : undefined;
+  const announcedErrorRef = useRef(false);
+  useEffect(() => {
+    if (error && !announcedErrorRef.current) announce(`Key "${text}" already exists`);
+    announcedErrorRef.current = error !== undefined;
+  }, [error, text, announce]);
   return (
     <div className="min-w-0">
       <Input
@@ -405,7 +410,7 @@ function RecordKey({
         onBlur={() => {
           if (error) {
             setText(value);
-            announce(`Reverted key to "${value}"`);
+            announce(`Reverted key to "${value}": "${text}" already exists`);
           } else if (text !== value) {
             rename(text);
           }

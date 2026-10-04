@@ -120,6 +120,46 @@ it('rechecks a refused key when its conflicting row is removed', async () => {
   expect(screen.queryByText(/already exists/)).not.toBeInTheDocument();
 });
 
+it('announces each collision transition once and includes the reason when reverting the key', () => {
+  render(
+    <StrictMode>
+      <SchemaForm
+        schema={NodeConfigSchemas.script}
+        value={{ command: 'node', env: { A: 'one', AA: 'two', C: 'three' } }}
+        onChange={vi.fn()}
+        label="form"
+      />
+    </StrictMode>,
+  );
+  const key = screen.getByLabelText('Env key 3');
+  const status = within(screen.getByRole('group', { name: 'Env' })).getByRole('status');
+  key.focus();
+  fireEvent.change(key, { target: { value: 'A' } });
+  expect(status).toHaveTextContent('Key "A" already exists');
+  const firstAnnouncement = status.firstElementChild;
+  expect(key).toHaveFocus();
+  expect(key).toHaveAccessibleDescription('Key "A" already exists. Choose a unique key.');
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  // Another keystroke changes the colliding key, but the input remains in error.
+  fireEvent.change(key, { target: { value: 'AA' } });
+  expect(key).toHaveAttribute('aria-invalid', 'true');
+  expect(status).toHaveTextContent('Key "A" already exists');
+  expect(status.firstElementChild).toBe(firstAnnouncement);
+  fireEvent.change(key, { target: { value: 'C' } });
+  expect(key).not.toHaveAttribute('aria-invalid', 'true');
+  fireEvent.change(key, { target: { value: 'A' } });
+  expect(status).toHaveTextContent('Key "A" already exists');
+  expect(status.firstElementChild).not.toBe(firstAnnouncement);
+  expect(key).toHaveFocus();
+  fireEvent.blur(key);
+  expect(key).toHaveValue('C');
+  expect(status).toHaveTextContent('Reverted key to "C": "A" already exists');
+  expect(key).not.toHaveAttribute('aria-describedby');
+  expect(screen.getByLabelText('Env value 1')).toHaveValue('one');
+  expect(screen.getByLabelText('Env value 2')).toHaveValue('two');
+  expect(screen.getByLabelText('Env value 3')).toHaveValue('three');
+});
+
 it('reverts a still-refused key on blur and announces it without duplicating the error announcement', () => {
   const spy = vi.fn();
   render(
@@ -133,12 +173,15 @@ it('reverts a still-refused key on blur and announces it without duplicating the
   const key = screen.getByLabelText('Env key 2');
   fireEvent.change(key, { target: { value: 'A' } });
   expect(key).toHaveAccessibleDescription('Key "A" already exists. Choose a unique key.');
-  expect(screen.getByText(/already exists/)).not.toHaveAttribute('role', 'alert');
+  expect(screen.getByText('Key "A" already exists. Choose a unique key.')).not.toHaveAttribute(
+    'role',
+    'alert',
+  );
   fireEvent.blur(key);
   expect(key).toHaveValue('C');
   expect(key).not.toHaveAttribute('aria-invalid', 'true');
   expect(within(screen.getByRole('group', { name: 'Env' })).getByRole('status')).toHaveTextContent(
-    'Reverted key to "C"',
+    'Reverted key to "C": "A" already exists',
   );
   expect(spy).not.toHaveBeenCalled();
 });
