@@ -161,52 +161,54 @@ function LoopActions({ loop }: { loop: LoopRecord }) {
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: keys.loops }),
   });
   return (
-    <div className="flex flex-wrap items-center justify-end gap-1">
-      <Link
-        to={`/loops/${loop.id}/edit`}
-        className="rounded-md px-2.5 py-1.5 text-sm font-semibold text-link hover:bg-surface-hover"
-      >
-        Edit
-      </Link>
-      <Button
-        size="sm"
-        variant="ghost"
-        onClick={() => exportLoop.mutate()}
-        aria-label={`Export ${loop.name}`}
-      >
-        Export
-      </Button>
-      {confirming ? (
-        <>
-          <Button
-            size="sm"
-            variant="destructive"
-            onClick={() => remove.mutate()}
-            aria-label={`Confirm delete ${loop.name}`}
-          >
-            Confirm delete
-          </Button>
-          <Button size="sm" variant="ghost" onClick={() => setConfirming(false)}>
-            Keep
-          </Button>
-        </>
-      ) : (
+    <div className="flex flex-col items-end gap-1">
+      <div className="flex items-center justify-end gap-1 whitespace-nowrap">
+        <Link
+          to={`/loops/${loop.id}/edit`}
+          className="rounded-md px-2.5 py-1.5 text-sm font-semibold text-link hover:bg-surface-hover"
+        >
+          Edit
+        </Link>
         <Button
           size="sm"
           variant="ghost"
-          onClick={() => setConfirming(true)}
-          aria-label={`Delete ${loop.name}`}
+          onClick={() => exportLoop.mutate()}
+          aria-label={`Export ${loop.name}`}
         >
-          Delete
+          Export
         </Button>
-      )}
+        {confirming ? (
+          <>
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={() => remove.mutate()}
+              aria-label={`Confirm delete ${loop.name}`}
+            >
+              Confirm delete
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setConfirming(false)}>
+              Keep
+            </Button>
+          </>
+        ) : (
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setConfirming(true)}
+            aria-label={`Delete ${loop.name}`}
+          >
+            Delete
+          </Button>
+        )}
+      </div>
       {exportLoop.isError ? (
-        <HelpText tone="bad" className="basis-full text-right">
+        <HelpText tone="bad" className="text-right">
           {errorMessage(exportLoop.error)}
         </HelpText>
       ) : null}
       {remove.isError ? (
-        <HelpText tone="bad" className="basis-full text-right">
+        <HelpText tone="bad" className="text-right">
           {errorMessage(remove.error)}
         </HelpText>
       ) : null}
