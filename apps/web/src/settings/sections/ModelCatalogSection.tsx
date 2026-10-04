@@ -35,6 +35,7 @@ function ModelForm({ initial, onDone }: { initial?: CatalogEntry; onDone: () => 
         efforts,
         defaultEffort,
         enabled: initial?.enabled ?? true,
+        ...(!initial ? { source: 'litellm' as const } : {}),
       }),
     onSuccess: () => {
       invalidate(keys.catalog);
@@ -119,12 +120,7 @@ export function ModelCatalogSection() {
   const [editing, setEditing] = useState<string | undefined>();
   const toggle = useMutation({
     mutationFn: (entry: CatalogEntry) =>
-      modelCatalog.upsert(client, entry.harness, entry.model, {
-        displayName: entry.displayName,
-        efforts: entry.efforts,
-        defaultEffort: entry.defaultEffort,
-        enabled: !entry.enabled,
-      }),
+      modelCatalog.setEnabled(client, entry.harness, entry.model, !entry.enabled),
     onSuccess: () => invalidate(keys.catalog),
   });
   return (
@@ -198,9 +194,9 @@ export function ModelCatalogSection() {
                         }}
                         consequences={
                           <p>
-                            The model “{entry.displayName}” ({entry.harness}/{entry.model}) will be
-                            removed from the catalog. If it is a seeded model, it returns at the
-                            next server start.
+                            Model: “{entry.displayName}” ({entry.harness}/{entry.model}). Harness
+                            models cannot be deleted. Removing a LiteLLM model leaves its loops
+                            referencing it.
                           </p>
                         }
                         onConfirm={async () => {

@@ -155,7 +155,11 @@ Usage reported by the harness is written to `harness.usage` events and rolled in
 
 ### Model catalog (Decided)
 
-A `model_catalog` table seeded at first boot with the Codex models and all six canonical effort levels (the Codex adapter maps `max` to `xhigh`), editable in settings. Migration `0003` adds `max` to 1.0.0 seeded Codex rows whose efforts are still exactly the original five, compared as a set. Node and loop `model` and `effort` fields are validated against it. Adding a harness later adds rows, not code paths.
+The `model_catalog` table carries `source: 'harness' | 'litellm'` and `enabled`. Harness entries are enable/disable only, using PATCH; their metadata cannot be edited or deleted through the API. Startup inserts missing seeds as harness entries and refreshes seeded display names, efforts, and default efforts from `DEFAULT_MODEL_CATALOG`, preserving enabled. It lists all six canonical efforts; Codex maps `max` to `xhigh`.
+
+Migration `0004` adds source with a harness default, preserving every legacy row. User-edited seeded rows become harness-owned and their metadata re-syncs on the next startup, while enabled stays as chosen. Hand-added legacy rows also become harness-owned: they keep their values and can be toggled, but are frozen for PUT/DELETE. Existing LiteLLM rows can be edited/deleted and are never refreshed by the harness seed. Creating LiteLLM entries returns `LITELLM_NOT_CONFIGURED` until the provider work ships; no new key convention is defined.
+
+The catalog is advisory. API validate and publish report `MODEL_DISABLED` or `MODEL_NOT_IN_CATALOG` warnings for explicit inference models, decision Codex models when the strategy includes Codex, and loop-default models under their harness. Node warnings use node-relative field paths alongside nodeId. These warnings never block publication, and runtime execution does not enforce membership or efforts. Preflight still checks the default model by model id without filtering harness. See [ADR-0018](decisions/ADR-0018-model-catalog-source.md) for migration/rollback and ownership alternatives.
 
 ### Windows notes
 

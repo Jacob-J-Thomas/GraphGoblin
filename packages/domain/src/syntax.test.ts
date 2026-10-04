@@ -23,6 +23,82 @@ function loop(nodes: LoopDefinitionInput['nodes'], settings?: LoopDefinitionInpu
 }
 
 describe('syntax checks', () => {
+  it.each(['', ' '])('allows empty and whitespace required templates (%j)', (source) => {
+    const def = loop([
+      {
+        id: 'run',
+        kind: 'script',
+        label: 'Run',
+        config: { command: 'cut', args: ['-d', source, '-f1'] },
+      },
+      { id: 'ask', kind: 'inference', label: 'Ask', config: { prompt: { template: source } } },
+      {
+        id: 'beat',
+        kind: 'heartbeat',
+        label: 'Beat',
+        config: {
+          intervalSeconds: 5,
+          maxBeats: 1,
+          probe: { kind: 'http', url: 'https://example.com', headers: { Empty: source } },
+        },
+      },
+      {
+        id: 'note',
+        kind: 'mutate',
+        label: 'Note',
+        config: {
+          operations: [
+            { op: 'set', path: '/vars/value', value: { kind: 'template', template: source } },
+            { op: 'append-message', role: 'note', content: source },
+          ],
+        },
+      },
+    ]);
+    expect(syntaxIssues(def)).toEqual([]);
+    expect(validateLoop(def).filter((issue) => issue.code === 'TEMPLATE_INVALID')).toEqual([]);
+  });
+
+  it('rejects a whitespace required expression with an expression-specific message', () => {
+    const def = loop([
+      {
+        id: 'note',
+        kind: 'mutate',
+        label: 'Note',
+        config: {
+          operations: [
+            { op: 'set', path: '/vars/value', value: { kind: 'expression', jsonata: ' ' } },
+          ],
+        },
+      },
+    ]);
+    expect(syntaxIssues(def)[0]?.message).toContain(
+      'expression is required; a blank expression is not valid',
+    );
+  });
+
+  it.each([' ', '\t\n', '\u00a0'])(
+    'rejects blank expressions before execution (%j), without changing contracts parsing',
+    (source) => {
+      const def = loop([
+        {
+          id: 'beat',
+          kind: 'heartbeat',
+          label: 'Beat',
+          config: { intervalSeconds: 5, until: source },
+        },
+        { id: 'ask', kind: 'inference', label: 'Ask', config: { prompt: { template: source } } },
+      ]);
+      expect(syntaxIssues(def)).toEqual([
+        expect.objectContaining({
+          code: 'EXPRESSION_INVALID',
+          nodeId: 'beat',
+          message: expect.stringContaining('required'),
+        }),
+      ]);
+      expect(validateLoop(def).filter((issue) => issue.code.endsWith('_INVALID'))).toHaveLength(1);
+    },
+  );
+
   it('finds no problems in the kitchen-sink loop', () => {
     const def = LoopDefinitionSchema.parse(kitchenSinkLoop());
     expect(syntaxIssues(def)).toEqual([]);

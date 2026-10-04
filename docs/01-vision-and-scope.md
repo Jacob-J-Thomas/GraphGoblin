@@ -31,6 +31,7 @@ Loops must not rely only on side effects. A loop that produces something declare
 5. **Composition over sprawl.** A small set of expressive nodes with rich configuration beats many narrow nodes.
 6. **Observable by default.** Every run is an append-only event log that doubles as persistence, live stream, audit trail, and replay.
 7. **Single-user first, multi-tenant ready.** Every table has an owner. Every external boundary sits behind an interface. Nothing assumes one process forever.
+8. **Clean design over backward compatibility, until release.** The product has no production users yet (owner decision, 2026-10-04). Contracts, storage, and APIs change to their clean shape without compatibility layers, deprecated input paths, or tolerant parsing of old data; a one-off migration rewrites stored data when it must change, and the CHANGELOG upgrade notes say what else to update. This stance is revisited when the product ships.
 
 ## 1.0 scope (Decided)
 

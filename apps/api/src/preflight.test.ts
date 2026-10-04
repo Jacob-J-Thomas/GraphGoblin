@@ -233,6 +233,9 @@ describe('runPreflight', () => {
     const unknown = await runPreflight(sources({ config: config({ defaultModel: 'gpt-nope' }) }));
     expect(unknown.ok).toBe(false);
     expect(byId(unknown, 'default-model')?.message).toMatch(/gpt-nope/);
+    expect(byId(unknown, 'default-model')?.message).toContain(
+      'pick a listed harness model and enable it in Settings',
+    );
     const disabled = await runPreflight(
       sources({
         catalog: () =>

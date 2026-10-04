@@ -79,7 +79,9 @@ For a repository workspace, use an absolute path. For a temporary workspace, use
 
 Declare variable names and JSON Schemas in **Variables**; initialise their values with a mutation or mapping.
 
-Empty optional expressions count as absent and show no preview. Whitespace counts as supplied.
+Empty or whitespace-only optional JSONata expressions count as absent and show no preview. Required blank expressions show the schema's error, with **Required** as a fallback, and omit the preview; the editor retains the typed whitespace. Liquid templates preserve their text exactly, including whitespace and required empty strings (for example, an empty script argument or a single-space delimiter). Only exactly empty optional template input means absent in the form. Imports and API clients that supply blank expressions receive a validation error before publishing; omit optional expressions instead. Supplied empty and whitespace-only templates remain valid.
+
+**Add** moves focus to the new collection item's first control; **Remove** returns focus to that collection's Add button. Each action is announced. Removing a row drops its unparsed JSON and validation issue, while surviving text follows its own row. Renaming a record key keeps unparsed text and moves its issue to the new key. A key that already exists shows an inline error and keeps your typed key for correction, while both saved values remain intact.
 
 ## Publish, import, and export
 

@@ -4,9 +4,14 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+### Changed
+
+- Model catalog entries now expose source. Harness models, including all migrated legacy rows, can only be enabled/disabled through PATCH; PUT/DELETE return `MODEL_MANAGED_BY_HARNESS`. Existing LiteLLM rows remain editable/deletable, while new LiteLLM entries return `LITELLM_NOT_CONFIGURED` pending provider support.
+- Startup refreshes seeded harness names, efforts, and default efforts while preserving enabled. Hand-added legacy metadata remains intact. Validate/publish return advisory disabled/missing-model warnings with field paths, and successful publish now includes issues.
+
 ### Fixed
 
-- Seeded Codex model catalog entries now list `max`, matching the editor. A database migration adds it to existing seeded entries whose efforts still match the original five as a set, preserving edited effort sets, display names, default efforts, and enabled states. The Codex adapter still maps `max` to `xhigh`.
+- Seeded Codex model catalog entries now list `max`, matching the editor. The max-effort migration preserves existing edits; startup then refreshes seeded harness metadata as described above, keeping enabled choices. The Codex adapter still maps `max` to `xhigh`.
 
 ## 1.0.0 - 2026-10-03
 

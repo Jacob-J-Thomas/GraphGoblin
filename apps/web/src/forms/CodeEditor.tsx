@@ -2,7 +2,7 @@ import { json } from '@codemirror/lang-json';
 import { StreamLanguage } from '@codemirror/language';
 import { javascript } from '@codemirror/legacy-modes/mode/javascript';
 import { jinja2 } from '@codemirror/legacy-modes/mode/jinja2';
-import { EditorState, type Extension } from '@codemirror/state';
+import { Compartment, EditorState, type Extension } from '@codemirror/state';
 import { EditorView, placeholder as placeholderExt } from '@codemirror/view';
 import { basicSetup } from 'codemirror';
 import { useEffect, useRef } from 'react';
@@ -51,6 +51,7 @@ export function CodeEditor({
 }: CodeEditorProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
+  const attributesRef = useRef(new Compartment());
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
 
@@ -62,11 +63,13 @@ export function CodeEditor({
         codeTheme,
         languageFor(language),
         EditorView.lineWrapping,
-        EditorView.contentAttributes.of({
-          'aria-label': label,
-          ...(id ? { id } : {}),
-          'data-language': language,
-        }),
+        attributesRef.current.of(
+          EditorView.contentAttributes.of({
+            'aria-label': label,
+            ...(id ? { id } : {}),
+            'data-language': language,
+          }),
+        ),
         // At least `minLines` lines of 20 px (the theme's line height) plus the 6 px padding.
         EditorView.theme({ '.cm-content': { minHeight: `${minLines * 20 + 12}px` } }),
         ...(placeholder ? [placeholderExt(placeholder)] : []),
@@ -84,6 +87,19 @@ export function CodeEditor({
     // The editor is created once per language; value changes are synced below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [language]);
+
+  // A stable collection row can move to a different path/label without recreating its editor.
+  useEffect(() => {
+    viewRef.current?.dispatch({
+      effects: attributesRef.current.reconfigure(
+        EditorView.contentAttributes.of({
+          'aria-label': label,
+          ...(id ? { id } : {}),
+          'data-language': language,
+        }),
+      ),
+    });
+  }, [id, label, language]);
 
   useEffect(() => {
     const editor = viewRef.current as EditorView;

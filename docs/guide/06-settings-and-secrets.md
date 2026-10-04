@@ -12,7 +12,7 @@ Choose the colour theme under **Appearance** (below), and manage **Model catalog
 
 ## Confirm destructive actions
 
-Deleting a model, deleting a secret, or revoking a key opens the same named confirmation used on Loops. **Keep** receives focus; Keep or Escape cancels without changing anything. **Confirm delete** or **Confirm revoke** starts the request, disables both buttons until it finishes, and announces progress. Escape cannot dismiss a pending request, even with repeated presses. API errors (including 404 when an item was already removed) stay visible until you dismiss or retry. Dismissing a 404 refreshes the list to remove the stale row. Focus returns to the action, or its section heading if the row disappears. These actions cannot be undone; deleting a seeded model removes it now but it returns at the next server start. A deleted `jev-api-key` secret also returns at the next start if `GG_JEV_API_KEY` is still set (or its `JEV_API_KEY` fallback applies).
+Deleting a model, deleting a secret, or revoking a key opens the same named confirmation used on Loops. **Keep** receives focus; Keep or Escape cancels without changing anything. **Confirm delete** or **Confirm revoke** starts the request, disables both buttons until it finishes, and announces progress. Escape cannot dismiss a pending request, even with repeated presses. API errors (including 404 when an item was already removed) stay visible until you dismiss or retry. Dismissing a 404 refreshes the list to remove the stale row. Focus returns to the action, or its section heading if the row disappears. These actions cannot be undone. Model deletion applies only to LiteLLM entries; harness entries refuse edit/delete and remain available to enable or disable. A deleted `jev-api-key` secret also returns at the next start if `GG_JEV_API_KEY` is still set (or its `JEV_API_KEY` fallback applies).
 
 ## Choose the theme
 
@@ -20,9 +20,25 @@ Deleting a model, deleting a secret, or revoking a key opens the same named conf
 
 ## Choose a model and effort
 
-Use **Add model** or **Edit** to record a Codex model ID, display name, allowed efforts, default effort, and enabled state. Choose a default effort that belongs to the entry's allowed efforts. Catalog entries are seeded locally; they do not prove your account has access to a model. Use the ID your Codex account accepts.
+Use the **Enable** checkbox to enable or disable any model. Catalog entries include `source` (`harness` or `litellm`); they do not prove your account has access. **Add model**, **Edit**, and **Delete** remain visible until the Settings redesign. Harness Edit/Delete report "Harness models can only be enabled or disabled" (`MODEL_MANAGED_BY_HARNESS`, 409). Add/Edit/Delete are reserved for local models through LiteLLM; **Add model** currently reports "LiteLLM is not configured; adding local models is not available yet" (`LITELLM_NOT_CONFIGURED`, 409). Existing LiteLLM entries can be edited/deleted. Removing one leaves its loops referencing that model.
 
-The seeded Codex entries list all six canonical efforts: `minimal`, `low`, `medium`, `high`, `xhigh`, and `max`; the Codex adapter maps `max` to `xhigh`. An installation created by 1.0.0 gains `max` on its seeded Codex entries at the next start through a database migration when their efforts still match the original five as a set; edited effort sets are preserved, as are display names, default efforts, and enabled states. Until that start, `--preflight` reports one pending migration. Model support still depends on Codex. The enabled catalog entries populate the Settings default-model selector, but the engine does not currently enforce catalog membership or effort lists.
+On upgrade, every old row becomes `harness`, including hand-added rows. Hand-added rows keep their values but cannot be edited/deleted; disable them if unwanted. User-edited seeded names, efforts, and default efforts re-sync from the shipped catalog at startup, while enabled is preserved. The seeded Codex entries list `minimal`, `low`, `medium`, `high`, `xhigh`, and `max`; Codex maps `max` to `xhigh`. The enabled entries populate the Settings default-model selector. The engine does not enforce catalog membership or effort lists.
+
+Scripts that PUT an entry to toggle it must switch to PATCH. For example (replace the base URL with your gateway):
+
+```bash
+curl -X PATCH "$GG_API_URL/model-catalog/codex/gpt-6-luna" \
+  -H 'Content-Type: application/json' -d '{"enabled":false}'
+```
+
+```powershell
+Invoke-RestMethod -Method Patch -Uri "$env:GG_API_URL/model-catalog/codex/gpt-6-luna" `
+  -ContentType 'application/json' -Body '{"enabled":false}'
+```
+
+With API keys enabled, include a bearer key with `settings:write`; listing needs `settings:read`. PATCH returns the full entry (200) or `MODEL_NOT_FOUND` (404). PUT/DELETE against harness rows, including old hand-added ones, return `MODEL_MANAGED_BY_HARNESS`; PUT requesting a new `source: "litellm"` returns `LITELLM_NOT_CONFIGURED`. LiteLLM PUT retains the existing source, preserves enabled when omitted, and requires default effort to belong to efforts.
+
+Validation and publication warn with `MODEL_DISABLED` or `MODEL_NOT_IN_CATALOG` when an explicit inference model, a decision's Codex model (only when its strategy includes Codex), or loop `settings.defaults.model` is disabled or absent for its harness. Node warnings identify the node and relative field path (`config.model` or `config.codex.model`); defaults identify `settings.defaults.model`. Warnings do not block publishing or execution. Back up before upgrade; [ADR-0018](../decisions/ADR-0018-model-catalog-source.md) documents running the previous release without SQL rollback and explains why rollback does not recover edited seed metadata.
 
 Set `model` and `effort` on the inference node or in loop `defaults`, set owner defaults in **Defaults** (below), or set the API's environment before startup:
 
