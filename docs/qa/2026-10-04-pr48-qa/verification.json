@@ -1,0 +1,2376 @@
+{
+  "commit": "b9f9635f89159b5f471b5fefb2a4ff1dc49b5e94",
+  "branch": "codex-pr48-qa",
+  "browser": "Microsoft Edge 154.0.4258.53",
+  "server": {
+    "url": "http://127.0.0.1:61696",
+    "dataDirs": [
+      "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-api-NZH7tg",
+      "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-api-LfpIXS",
+      "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-api-gXPfZq",
+      "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-api-l4iTc6",
+      "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-api-Rk3g7t",
+      "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-api-smaYkG",
+      "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-api-4fkUma"
+    ]
+  },
+  "devServer": "http://127.0.0.1:61264",
+  "counts": {
+    "pass": 269,
+    "fail": 8,
+    "not run": 5
+  },
+  "screenshots": {
+    "count": 40,
+    "pass": 32,
+    "bytes": 5342401
+  },
+  "defects": [
+    {
+      "id": "PR48-QA-01",
+      "severity": "Major",
+      "title": "Adding a script argument restores earlier argument text and autosaves the loss",
+      "scenario": "Editing script argument then adding retains newest text",
+      "steps": "Seed a script with args=[\"--version\"]. Open its editor. Replace Args 1 with {{ vars.value }} and wait for All changes saved. Without closing the editor, click Add args and enter second in Args 2.",
+      "expected": "Args 1 stays {{ vars.value }}; autosave stores [\"{{ vars.value }}\",\"second\"].",
+      "actual": "Args 1 changes back to --version. The API draft now holds [\"--version\",\"second\"]. The lost text had already reached the server before Add args. Closing/reloading between editing and adding avoids the reproduction because it changes the form’s initial value.",
+      "scope": "The array field implementation is unchanged relative to local main. This is a current full-regression defect, not established as introduced by #48."
+    },
+    {
+      "id": "PR48-QA-02",
+      "severity": "Minor",
+      "title": "Double-click on a node outside the eventual dialog bounds dismisses its editor immediately",
+      "scenario": "Double click opens one editor",
+      "steps": "Open a nine-node editor at 1440×900. Double-click a node header near the canvas’s left or right edge (for example wait, or start in a fresh grid).",
+      "expected": "The repeated activation leaves one editor open and editable.",
+      "actual": "The first click opens the dialog. The second click lands on its backdrop and closes it. After the double-click there are zero dialogs. A single click works.",
+      "scope": "Reproduced in both themes. The specification defines single-click and drag behavior; this finding records a usability failure of repeated pointer activation."
+    },
+    {
+      "id": "PR48-QA-03",
+      "severity": "Minor",
+      "title": "Loop-variable JSON editor collapses to a sliver and cannot receive an ordinary pointer click",
+      "scenario": "Variable JSON record editor is reachable by pointer",
+      "steps": "Expand Loop. In Variables, click Add entry and rename the key to qaValue. Scroll the panel to its bottom and click the JSON value editor.",
+      "expected": "A readable JSON value editor remains inside the row and accepts pointer focus.",
+      "actual": "The editor is compressed beside the full-width key input. CodeMirror content measures 31.5 px wide; its centre hits the sibling row instead of the editor, and an ordinary click times out. The visible wrapper is a thin strip. The newly added value remains null and validation blocks saving until a value is entered. Tab/focus plus keyboard entry works; the resulting variable schema saves and reloads.",
+      "scope": "Record-field implementation is unchanged relative to local main. No attribution to the modal/panel change is claimed."
+    },
+    {
+      "id": "PR48-QA-04",
+      "severity": "Cosmetic",
+      "title": "Empty optional heartbeat Until shows a compile-error preview (known D30)",
+      "scenario": "Blank optional heartbeat expression has no error preview",
+      "steps": "Open a heartbeat whose Max beats is 3 and whose optional Until field is empty.",
+      "expected": "The optional empty expression has no failure preview.",
+      "actual": "The preview says expression failed to compile: Unexpected end of expression. The heartbeat configuration is valid because Max beats is present.",
+      "scope": "Known D30 from docs/qa/2026-10-03-wp-d2.md; not a newly attributed regression."
+    }
+  ],
+  "catalogue": [
+    {
+      "system": "Node dialog",
+      "scenario": "Click opens trigger",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Native :modal dialog, correct accessible name, heading receives focus.",
+      "screenshot": "001-dark-click-opens-trigger.png"
+    },
+    {
+      "system": "Node dialog",
+      "scenario": "Click opens decision",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Native :modal dialog, correct accessible name, heading receives focus.",
+      "screenshot": "002-dark-click-opens-decision.png"
+    },
+    {
+      "system": "Node dialog",
+      "scenario": "Click opens inference",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Native :modal dialog, correct accessible name, heading receives focus.",
+      "screenshot": "003-dark-click-opens-inference.png"
+    },
+    {
+      "system": "Node dialog",
+      "scenario": "Click opens script",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Native :modal dialog, correct accessible name, heading receives focus.",
+      "screenshot": "004-dark-click-opens-script.png"
+    },
+    {
+      "system": "Node dialog",
+      "scenario": "Click opens mutate",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Native :modal dialog, correct accessible name, heading receives focus.",
+      "screenshot": "005-dark-click-opens-mutate.png"
+    },
+    {
+      "system": "Node dialog",
+      "scenario": "Click opens subloop",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Native :modal dialog, correct accessible name, heading receives focus.",
+      "screenshot": "006-dark-click-opens-subloop.png"
+    },
+    {
+      "system": "Node dialog",
+      "scenario": "Click opens wait",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Native :modal dialog, correct accessible name, heading receives focus.",
+      "screenshot": "007-dark-click-opens-wait.png"
+    },
+    {
+      "system": "Node dialog",
+      "scenario": "Click opens heartbeat",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Native :modal dialog, correct accessible name, heading receives focus.",
+      "screenshot": "008-dark-click-opens-heartbeat.png"
+    },
+    {
+      "system": "Node dialog",
+      "scenario": "Click opens exit",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Native :modal dialog, correct accessible name, heading receives focus.",
+      "screenshot": "009-dark-click-opens-exit.png"
+    },
+    {
+      "system": "Node dialog",
+      "scenario": "Drag moves node without opening",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Moved 44 by 48 CSS px."
+    },
+    {
+      "system": "Node dialog",
+      "scenario": "Tiny jitter click still opens",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "2 px horizontal and 1 px vertical jitter opens."
+    },
+    {
+      "system": "Node dialog",
+      "scenario": "Space selects without opening",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "\"Verified with browser assertions.\""
+    },
+    {
+      "system": "Node dialog",
+      "scenario": "Enter opens and Escape returns focus",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "\"Verified with browser assertions.\""
+    },
+    {
+      "system": "Node dialog",
+      "scenario": "Right click does not open",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "\"Verified with browser assertions.\""
+    },
+    {
+      "system": "Node dialog",
+      "scenario": "Double click opens one editor",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "fail",
+      "evidence": "PR48-QA-02: The first click opens the dialog. The second click lands on its backdrop and closes it. After the double-click there are zero dialogs. A single click works.",
+      "screenshot": "016-dark-double-click-opens-one-editor.png",
+      "defect": "PR48-QA-02"
+    },
+    {
+      "system": "Node dialog",
+      "scenario": "Port clicks connect and never open",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Click-to-connect from start out to ask in saved an edge."
+    },
+    {
+      "system": "Node dialog",
+      "scenario": "Backdrop dismisses and returns focus",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "\"Verified with browser assertions.\""
+    },
+    {
+      "system": "Accessibility",
+      "scenario": "Tab and Shift Tab wrap and page is inert",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "35 forward tabs, wrap in both directions, Publish behind modal cannot take focus."
+    },
+    {
+      "system": "Node editing",
+      "scenario": "trigger label saves and reloads",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "UI label change verified in API draft and after full page reload."
+    },
+    {
+      "system": "Node editing",
+      "scenario": "decision label saves and reloads",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "UI label change verified in API draft and after full page reload."
+    },
+    {
+      "system": "Node editing",
+      "scenario": "inference label saves and reloads",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "UI label change verified in API draft and after full page reload."
+    },
+    {
+      "system": "Node editing",
+      "scenario": "script label saves and reloads",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "UI label change verified in API draft and after full page reload."
+    },
+    {
+      "system": "Node editing",
+      "scenario": "mutate label saves and reloads",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "UI label change verified in API draft and after full page reload."
+    },
+    {
+      "system": "Node editing",
+      "scenario": "subloop label saves and reloads",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "UI label change verified in API draft and after full page reload."
+    },
+    {
+      "system": "Node editing",
+      "scenario": "wait label saves and reloads",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "UI label change verified in API draft and after full page reload."
+    },
+    {
+      "system": "Node editing",
+      "scenario": "heartbeat label saves and reloads",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "UI label change verified in API draft and after full page reload."
+    },
+    {
+      "system": "Node editing",
+      "scenario": "exit label saves and reloads",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "UI label change verified in API draft and after full page reload."
+    },
+    {
+      "system": "Node editing",
+      "scenario": "Rename updates edges and loop back reference",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "ID commits on Enter; incoming edge and exit loopBack.targetNodeId updated; return focus finds renamed node."
+    },
+    {
+      "system": "Node editing",
+      "scenario": "ID invalid characters refused with recoverable close",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "First close reports reason; second closes retaining original ID."
+    },
+    {
+      "system": "Node editing",
+      "scenario": "ID collision refused with recoverable close",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "First close reports reason; second closes retaining original ID."
+    },
+    {
+      "system": "Node editing",
+      "scenario": "ID empty refused with recoverable close",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "First close reports reason; second closes retaining original ID."
+    },
+    {
+      "system": "Node editing",
+      "scenario": "CodeMirror search Escape and Tab scope",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Ctrl+F opens CM search; first Esc closes search, ordinary Esc closes dialog; Tab leaves editor."
+    },
+    {
+      "system": "Node editing",
+      "scenario": "Delete and Backspace scoped inside text and dialog D19",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Inputs and CodeMirror edit text; button presses leave node intact."
+    },
+    {
+      "system": "Node editing",
+      "scenario": "Toolbar Delete and Backspace do not delete selected node D19",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "\"Verified with browser assertions.\""
+    },
+    {
+      "system": "Node editing",
+      "scenario": "Delete node closes removes edges and focuses canvas",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Node, incoming/outgoing edges and loopBack references cleared."
+    },
+    {
+      "system": "Node dialog",
+      "scenario": "Touch emulation tap opens",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "\"Verified with browser assertions.\""
+    },
+    {
+      "system": "Node dialog",
+      "scenario": "Click opens trigger",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Native :modal dialog, correct accessible name, heading receives focus.",
+      "screenshot": "039-light-click-opens-trigger.png"
+    },
+    {
+      "system": "Node dialog",
+      "scenario": "Click opens decision",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Native :modal dialog, correct accessible name, heading receives focus.",
+      "screenshot": "040-light-click-opens-decision.png"
+    },
+    {
+      "system": "Node dialog",
+      "scenario": "Click opens inference",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Native :modal dialog, correct accessible name, heading receives focus.",
+      "screenshot": "041-light-click-opens-inference.png"
+    },
+    {
+      "system": "Node dialog",
+      "scenario": "Click opens script",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Native :modal dialog, correct accessible name, heading receives focus.",
+      "screenshot": "042-light-click-opens-script.png"
+    },
+    {
+      "system": "Node dialog",
+      "scenario": "Click opens mutate",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Native :modal dialog, correct accessible name, heading receives focus.",
+      "screenshot": "043-light-click-opens-mutate.png"
+    },
+    {
+      "system": "Node dialog",
+      "scenario": "Click opens subloop",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Native :modal dialog, correct accessible name, heading receives focus.",
+      "screenshot": "044-light-click-opens-subloop.png"
+    },
+    {
+      "system": "Node dialog",
+      "scenario": "Click opens wait",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Native :modal dialog, correct accessible name, heading receives focus.",
+      "screenshot": "045-light-click-opens-wait.png"
+    },
+    {
+      "system": "Node dialog",
+      "scenario": "Click opens heartbeat",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Native :modal dialog, correct accessible name, heading receives focus.",
+      "screenshot": "046-light-click-opens-heartbeat.png"
+    },
+    {
+      "system": "Node dialog",
+      "scenario": "Click opens exit",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Native :modal dialog, correct accessible name, heading receives focus.",
+      "screenshot": "047-light-click-opens-exit.png"
+    },
+    {
+      "system": "Node dialog",
+      "scenario": "Drag moves node without opening",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Moved 44 by 48 CSS px."
+    },
+    {
+      "system": "Node dialog",
+      "scenario": "Tiny jitter click still opens",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "2 px horizontal and 1 px vertical jitter opens."
+    },
+    {
+      "system": "Node dialog",
+      "scenario": "Space selects without opening",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "\"Verified with browser assertions.\""
+    },
+    {
+      "system": "Node dialog",
+      "scenario": "Enter opens and Escape returns focus",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "\"Verified with browser assertions.\""
+    },
+    {
+      "system": "Node dialog",
+      "scenario": "Right click does not open",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "\"Verified with browser assertions.\""
+    },
+    {
+      "system": "Node dialog",
+      "scenario": "Double click opens one editor",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "fail",
+      "evidence": "PR48-QA-02: The first click opens the dialog. The second click lands on its backdrop and closes it. After the double-click there are zero dialogs. A single click works.",
+      "screenshot": "054-light-double-click-opens-one-editor.png",
+      "defect": "PR48-QA-02"
+    },
+    {
+      "system": "Node dialog",
+      "scenario": "Port clicks connect and never open",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Click-to-connect from start out to ask in saved an edge."
+    },
+    {
+      "system": "Node dialog",
+      "scenario": "Backdrop dismisses and returns focus",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "\"Verified with browser assertions.\""
+    },
+    {
+      "system": "Accessibility",
+      "scenario": "Tab and Shift Tab wrap and page is inert",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "35 forward tabs, wrap in both directions, Publish behind modal cannot take focus."
+    },
+    {
+      "system": "Node editing",
+      "scenario": "trigger label saves and reloads",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "UI label change verified in API draft and after full page reload."
+    },
+    {
+      "system": "Node editing",
+      "scenario": "decision label saves and reloads",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "UI label change verified in API draft and after full page reload."
+    },
+    {
+      "system": "Node editing",
+      "scenario": "inference label saves and reloads",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "UI label change verified in API draft and after full page reload."
+    },
+    {
+      "system": "Node editing",
+      "scenario": "script label saves and reloads",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "UI label change verified in API draft and after full page reload."
+    },
+    {
+      "system": "Node editing",
+      "scenario": "mutate label saves and reloads",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "UI label change verified in API draft and after full page reload."
+    },
+    {
+      "system": "Node editing",
+      "scenario": "subloop label saves and reloads",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "UI label change verified in API draft and after full page reload."
+    },
+    {
+      "system": "Node editing",
+      "scenario": "wait label saves and reloads",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "UI label change verified in API draft and after full page reload."
+    },
+    {
+      "system": "Node editing",
+      "scenario": "heartbeat label saves and reloads",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "UI label change verified in API draft and after full page reload."
+    },
+    {
+      "system": "Node editing",
+      "scenario": "exit label saves and reloads",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "UI label change verified in API draft and after full page reload."
+    },
+    {
+      "system": "Node editing",
+      "scenario": "Rename updates edges and loop back reference",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "ID commits on Enter; incoming edge and exit loopBack.targetNodeId updated; return focus finds renamed node."
+    },
+    {
+      "system": "Node editing",
+      "scenario": "ID invalid characters refused with recoverable close",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "First close reports reason; second closes retaining original ID."
+    },
+    {
+      "system": "Node editing",
+      "scenario": "ID collision refused with recoverable close",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "First close reports reason; second closes retaining original ID."
+    },
+    {
+      "system": "Node editing",
+      "scenario": "ID empty refused with recoverable close",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "First close reports reason; second closes retaining original ID."
+    },
+    {
+      "system": "Node editing",
+      "scenario": "CodeMirror search Escape and Tab scope",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Ctrl+F opens CM search; first Esc closes search, ordinary Esc closes dialog; Tab leaves editor."
+    },
+    {
+      "system": "Node editing",
+      "scenario": "Delete and Backspace scoped inside text and dialog D19",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Inputs and CodeMirror edit text; button presses leave node intact."
+    },
+    {
+      "system": "Node editing",
+      "scenario": "Toolbar Delete and Backspace do not delete selected node D19",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "\"Verified with browser assertions.\""
+    },
+    {
+      "system": "Node editing",
+      "scenario": "Delete node closes removes edges and focuses canvas",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Node, incoming/outgoing edges and loopBack references cleared."
+    },
+    {
+      "system": "Node dialog",
+      "scenario": "Touch emulation tap opens",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "\"Verified with browser assertions.\""
+    },
+    {
+      "system": "Node config",
+      "scenario": "Trigger JSON schema and exposure checkbox group",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Config family edited in real dialog, API draft checked, and reloaded successfully."
+    },
+    {
+      "system": "Node config",
+      "scenario": "Decision Liquid JSONata optional object number and booleans",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Config family edited in real dialog, API draft checked, and reloaded successfully."
+    },
+    {
+      "system": "Node config",
+      "scenario": "Decision routes array add edit and remove",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Config family edited in real dialog, API draft checked, and reloaded successfully."
+    },
+    {
+      "system": "Node config",
+      "scenario": "Inference nested session effort tri state and structured output",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Config family edited in real dialog, API draft checked, and reloaded successfully."
+    },
+    {
+      "system": "Node config",
+      "scenario": "Script text Liquid record enum and integer",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Config family edited in real dialog, API draft checked, and reloaded successfully."
+    },
+    {
+      "system": "Node config",
+      "scenario": "Adding script argument preserves edited existing argument",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "\"Verified with browser assertions.\""
+    },
+    {
+      "system": "Node config",
+      "scenario": "Mutate JSON literal and discriminator variant",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Config family edited in real dialog, API draft checked, and reloaded successfully."
+    },
+    {
+      "system": "Node config",
+      "scenario": "Subloop picker search union version input and output",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Config family edited in real dialog, API draft checked, and reloaded successfully."
+    },
+    {
+      "system": "Node config",
+      "scenario": "Wait union duration signal until and input variants",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Config family edited in real dialog, API draft checked, and reloaded successfully."
+    },
+    {
+      "system": "Node config",
+      "scenario": "Heartbeat probe union Liquid JSONata record and bounds",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Config family edited in real dialog, API draft checked, and reloaded successfully."
+    },
+    {
+      "system": "Node config",
+      "scenario": "Exit criterion array union mapping and return channels",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Config family edited in real dialog, API draft checked, and reloaded successfully."
+    },
+    {
+      "system": "Node config",
+      "scenario": "choose invalid Min confidence remains device only",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Invalid value gets form issues and never replaces server draft."
+    },
+    {
+      "system": "Node config",
+      "scenario": "ask invalid Timeout seconds remains device only",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Invalid value gets form issues and never replaces server draft."
+    },
+    {
+      "system": "Node config",
+      "scenario": "exec invalid Command remains device only",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Invalid value gets form issues and never replaces server draft."
+    },
+    {
+      "system": "Node config",
+      "scenario": "wait invalid Timeout seconds remains device only",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Invalid value gets form issues and never replaces server draft."
+    },
+    {
+      "system": "Node config",
+      "scenario": "beat invalid Interval seconds remains device only",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Invalid value gets form issues and never replaces server draft."
+    },
+    {
+      "system": "Node config",
+      "scenario": "child invalid Depth limit override remains device only",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Invalid value gets form issues and never replaces server draft."
+    },
+    {
+      "system": "Node config",
+      "scenario": "Trigger JSON schema and exposure checkbox group",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Config family edited in real dialog, API draft checked, and reloaded successfully."
+    },
+    {
+      "system": "Node config",
+      "scenario": "Decision Liquid JSONata optional object number and booleans",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Config family edited in real dialog, API draft checked, and reloaded successfully."
+    },
+    {
+      "system": "Node config",
+      "scenario": "Decision routes array add edit and remove",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Config family edited in real dialog, API draft checked, and reloaded successfully."
+    },
+    {
+      "system": "Node config",
+      "scenario": "Inference nested session effort tri state and structured output",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Config family edited in real dialog, API draft checked, and reloaded successfully."
+    },
+    {
+      "system": "Node config",
+      "scenario": "Script text Liquid record enum and integer",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Config family edited in real dialog, API draft checked, and reloaded successfully."
+    },
+    {
+      "system": "Node config",
+      "scenario": "Adding script argument preserves edited existing argument",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "\"Verified with browser assertions.\""
+    },
+    {
+      "system": "Node config",
+      "scenario": "Mutate JSON literal and discriminator variant",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Config family edited in real dialog, API draft checked, and reloaded successfully."
+    },
+    {
+      "system": "Node config",
+      "scenario": "Subloop picker search union version input and output",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Config family edited in real dialog, API draft checked, and reloaded successfully."
+    },
+    {
+      "system": "Node config",
+      "scenario": "Wait union duration signal until and input variants",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Config family edited in real dialog, API draft checked, and reloaded successfully."
+    },
+    {
+      "system": "Node config",
+      "scenario": "Heartbeat probe union Liquid JSONata record and bounds",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Config family edited in real dialog, API draft checked, and reloaded successfully."
+    },
+    {
+      "system": "Node config",
+      "scenario": "Exit criterion array union mapping and return channels",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Config family edited in real dialog, API draft checked, and reloaded successfully."
+    },
+    {
+      "system": "Node config",
+      "scenario": "choose invalid Min confidence remains device only",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Invalid value gets form issues and never replaces server draft."
+    },
+    {
+      "system": "Node config",
+      "scenario": "ask invalid Timeout seconds remains device only",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Invalid value gets form issues and never replaces server draft."
+    },
+    {
+      "system": "Node config",
+      "scenario": "exec invalid Command remains device only",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Invalid value gets form issues and never replaces server draft."
+    },
+    {
+      "system": "Node config",
+      "scenario": "wait invalid Timeout seconds remains device only",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Invalid value gets form issues and never replaces server draft."
+    },
+    {
+      "system": "Node config",
+      "scenario": "beat invalid Interval seconds remains device only",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Invalid value gets form issues and never replaces server draft."
+    },
+    {
+      "system": "Node config",
+      "scenario": "child invalid Depth limit override remains device only",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Invalid value gets form issues and never replaces server draft."
+    },
+    {
+      "system": "Loop panel",
+      "scenario": "Fresh 1100px default",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Collapsed without stored choice."
+    },
+    {
+      "system": "Loop panel",
+      "scenario": "Fresh 1280px default",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Expanded without stored choice."
+    },
+    {
+      "system": "Loop panel",
+      "scenario": "Fresh 1440px default",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Expanded without stored choice."
+    },
+    {
+      "system": "Loop panel",
+      "scenario": "Toggle collapsed rail ready check and persistence",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "44 px rail shows ready state; collapsed state survives reload.",
+      "screenshot": "110-dark-toggle-collapsed-rail-ready-check-and-persistence.png"
+    },
+    {
+      "system": "Loop panel",
+      "scenario": "Keyboard expansion focus and expanded persistence",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "\"Verified with browser assertions.\"",
+      "screenshot": "111-dark-keyboard-expansion-focus-and-expanded-persistence.png"
+    },
+    {
+      "system": "Loop panel",
+      "scenario": "Collapsed error warning counts match validation list",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "19 errors and 1 warnings agree between list and collapsed rail."
+    },
+    {
+      "system": "Loop panel",
+      "scenario": "Validation item opens its node dialog",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "\"Verified with browser assertions.\""
+    },
+    {
+      "system": "Loop panel",
+      "scenario": "Fresh 1100px default",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Collapsed without stored choice."
+    },
+    {
+      "system": "Loop panel",
+      "scenario": "Fresh 1280px default",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Expanded without stored choice."
+    },
+    {
+      "system": "Loop panel",
+      "scenario": "Fresh 1440px default",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Expanded without stored choice."
+    },
+    {
+      "system": "Loop panel",
+      "scenario": "Toggle collapsed rail ready check and persistence",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "44 px rail shows ready state; collapsed state survives reload.",
+      "screenshot": "119-light-toggle-collapsed-rail-ready-check-and-persistence.png"
+    },
+    {
+      "system": "Loop panel",
+      "scenario": "Keyboard expansion focus and expanded persistence",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "\"Verified with browser assertions.\"",
+      "screenshot": "120-light-keyboard-expansion-focus-and-expanded-persistence.png"
+    },
+    {
+      "system": "Loop panel",
+      "scenario": "Collapsed error warning counts match validation list",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "19 errors and 1 warnings agree between list and collapsed rail."
+    },
+    {
+      "system": "Loop panel",
+      "scenario": "Validation item opens its node dialog",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "\"Verified with browser assertions.\""
+    },
+    {
+      "system": "Drafts",
+      "scenario": "600ms debounce while node dialog open and IndexedDB mirror",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Draft PUT sent 632 ms after edit; IndexedDB mirror is synced with edited label."
+    },
+    {
+      "system": "Drafts",
+      "scenario": "Leaving flushes a change inside debounce",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Navigation immediately after edit saved server draft."
+    },
+    {
+      "system": "Drafts",
+      "scenario": "Publish refuses unparsed JSON held by closed dialog",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Publish refused locally with parse message; no published version created."
+    },
+    {
+      "system": "Drafts",
+      "scenario": "Conflict inside dialog Reload server draft",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "409 protected server copy; action reachable within modal. Known outer/inner conflict notice is rendered inside the modal as well.",
+      "screenshot": "128-dark-conflict-inside-dialog-reload-server-draft.png"
+    },
+    {
+      "system": "Drafts",
+      "scenario": "Conflict inside dialog Overwrite with this copy",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "409 protected server copy; action reachable within modal. Known outer/inner conflict notice is rendered inside the modal as well."
+    },
+    {
+      "system": "Drafts",
+      "scenario": "Offline edit survives reload restore notice and syncs later",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Precached shell restores unsynced IndexedDB copy; online event saves server draft."
+    },
+    {
+      "system": "Drafts",
+      "scenario": "600ms debounce while node dialog open and IndexedDB mirror",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Draft PUT sent 624 ms after edit; IndexedDB mirror is synced with edited label."
+    },
+    {
+      "system": "Drafts",
+      "scenario": "Leaving flushes a change inside debounce",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Navigation immediately after edit saved server draft."
+    },
+    {
+      "system": "Drafts",
+      "scenario": "Publish refuses unparsed JSON held by closed dialog",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Publish refused locally with parse message; no published version created."
+    },
+    {
+      "system": "Drafts",
+      "scenario": "Conflict inside dialog Reload server draft",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "409 protected server copy; action reachable within modal. Known outer/inner conflict notice is rendered inside the modal as well."
+    },
+    {
+      "system": "Drafts",
+      "scenario": "Conflict inside dialog Overwrite with this copy",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "409 protected server copy; action reachable within modal. Known outer/inner conflict notice is rendered inside the modal as well."
+    },
+    {
+      "system": "Drafts",
+      "scenario": "Offline edit survives reload restore notice and syncs later",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Precached shell restores unsynced IndexedDB copy; online event saves server draft."
+    },
+    {
+      "system": "Runs only from Runs",
+      "scenario": "Editor DOM and keyboard contain no run launcher",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "No Run tab, run form or Start run control in DOM or first 20 keyboard stops."
+    },
+    {
+      "system": "Runs only from Runs",
+      "scenario": "Unpublished Open in Runs disabled reason and Tab exits",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Disabled activation stays in editor; explanation is accessible; Tab proceeds."
+    },
+    {
+      "system": "New run",
+      "scenario": "Selector includes only published loops current version defaults",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Published selector excludes unpublished draft; v2 current selected by default."
+    },
+    {
+      "system": "New run",
+      "scenario": "Blank required fields refused without POST",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Required-field errors appear; 0 start requests.",
+      "screenshot": "141-dark-blank-required-fields-refused-without-post.png"
+    },
+    {
+      "system": "New run",
+      "scenario": "Invalid string and object JSON refused",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Malformed object JSON and minLength violation block launch."
+    },
+    {
+      "system": "New run",
+      "scenario": "Valid numeric enum boolean object input and old version body",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "POST verified versionId=01M3Y7RKG06YQQ2E83NMZX4H3C, triggerNodeId=start, numeric 1 (distinct from string 1), false, object. Navigated to waiting inspector."
+    },
+    {
+      "system": "New run",
+      "scenario": "Parallel run start updates Runs list",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Second run starts while first waits; numeric/string enum distinction retained; filtered list has two rows."
+    },
+    {
+      "system": "New run",
+      "scenario": "Deep link reload selection and browser Back",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Loop choice encoded in URL survives reload; Back returns to filtered Runs."
+    },
+    {
+      "system": "New run",
+      "scenario": "Unknown loop id and unpublished deep link explain refusal",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Unknown and unpublished links show explanation with no launcher; actual unpublished API response is 404 LOOP_NOT_FOUND."
+    },
+    {
+      "system": "New run",
+      "scenario": "API refusal mapped after selected loop disappears",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Real 404 from deleted published loop displays typed cause under launcher."
+    },
+    {
+      "system": "Runs only from Runs",
+      "scenario": "Editor DOM and keyboard contain no run launcher",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "No Run tab, run form or Start run control in DOM or first 20 keyboard stops."
+    },
+    {
+      "system": "Runs only from Runs",
+      "scenario": "Unpublished Open in Runs disabled reason and Tab exits",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Disabled activation stays in editor; explanation is accessible; Tab proceeds."
+    },
+    {
+      "system": "New run",
+      "scenario": "Selector includes only published loops current version defaults",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Published selector excludes unpublished draft; v2 current selected by default.",
+      "screenshot": "151-light-selector-includes-only-published-loops-current-version-defaults.png"
+    },
+    {
+      "system": "New run",
+      "scenario": "Blank required fields refused without POST",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Required-field errors appear; 0 start requests."
+    },
+    {
+      "system": "New run",
+      "scenario": "Invalid string and object JSON refused",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Malformed object JSON and minLength violation block launch."
+    },
+    {
+      "system": "New run",
+      "scenario": "Valid numeric enum boolean object input and old version body",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "POST verified versionId=01M3Y7RKG0GWBZEE1QH2MM4GKA, triggerNodeId=start, numeric 1 (distinct from string 1), false, object. Navigated to waiting inspector.",
+      "screenshot": "154-light-valid-numeric-enum-boolean-object-input-and-old-version-body.png"
+    },
+    {
+      "system": "New run",
+      "scenario": "Parallel run start updates Runs list",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Second run starts while first waits; numeric/string enum distinction retained; filtered list has two rows."
+    },
+    {
+      "system": "New run",
+      "scenario": "Deep link reload selection and browser Back",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Loop choice encoded in URL survives reload; Back returns to filtered Runs."
+    },
+    {
+      "system": "New run",
+      "scenario": "Unknown loop id and unpublished deep link explain refusal",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Unknown and unpublished links show explanation with no launcher; actual unpublished API response is 404 LOOP_NOT_FOUND."
+    },
+    {
+      "system": "New run",
+      "scenario": "API refusal mapped after selected loop disappears",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Real 404 from deleted published loop displays typed cause under launcher."
+    },
+    {
+      "system": "Loops",
+      "scenario": "Create opens starter editor",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "\"Verified with browser assertions.\""
+    },
+    {
+      "system": "Loops",
+      "scenario": "Blank create disabled and invalid import explained",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "\"Verified with browser assertions.\""
+    },
+    {
+      "system": "Loops",
+      "scenario": "Delete requires confirmation and Keep preserves loop",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "\"Verified with browser assertions.\""
+    },
+    {
+      "system": "Loops",
+      "scenario": "Confirmed delete removes the isolated test loop",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "\"Verified with browser assertions.\""
+    },
+    {
+      "system": "Run inspector",
+      "scenario": "Live waiting input pause resume and submit",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "\"Verified with browser assertions.\"",
+      "screenshot": "208-dark-live-waiting-input-pause-resume-and-submit.png"
+    },
+    {
+      "system": "Run inspector",
+      "scenario": "Finished input and cancel refused by API",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Terminal input=409 INVALID_STATE; cancel=409 INVALID_STATE."
+    },
+    {
+      "system": "Run inspector",
+      "scenario": "Blank required wait input refused then cancel works",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Required input blocks submission; cancellation ends wait and removes lifecycle controls."
+    },
+    {
+      "system": "Runs list",
+      "scenario": "Finished and cancelled rows and filtering",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Loop and status filters show matching real run states."
+    },
+    {
+      "system": "Events",
+      "scenario": "Inbound event source payload and dedupe display",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "\"Verified with browser assertions.\""
+    },
+    {
+      "system": "Events",
+      "scenario": "Malformed event is refused",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "400 VALIDATION_FAILED; no malformed event added."
+    },
+    {
+      "system": "Settings",
+      "scenario": "Appearance theme control persists and keyboard radios work",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Immediate theme and localStorage change; arrow-key choice; reload at stored original theme. Independent suite verifies no-flash persistence."
+    },
+    {
+      "system": "Settings",
+      "scenario": "Blank model id cannot save",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "\"Verified with browser assertions.\""
+    },
+    {
+      "system": "Settings",
+      "scenario": "Write only secrets create update delete",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Values cleared on save, absent from rendered text; overwrite and delete work."
+    },
+    {
+      "system": "Settings",
+      "scenario": "Invalid secret name and blank value cannot submit",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "\"Verified with browser assertions.\""
+    },
+    {
+      "system": "Settings",
+      "scenario": "API key shown once reload hides it and revoke",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "One-time token never printed or photographed; row becomes revoked."
+    },
+    {
+      "system": "Settings",
+      "scenario": "Blank API key label cannot submit",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "\"Verified with browser assertions.\""
+    },
+    {
+      "system": "Navigation",
+      "scenario": "Not found remains navigable",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "\"Verified with browser assertions.\""
+    },
+    {
+      "system": "PWA",
+      "scenario": "Offline banner appears and clears on reconnect",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "\"Verified with browser assertions.\""
+    },
+    {
+      "system": "PWA",
+      "scenario": "Update toast prompts without automatic reload",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "\"Verified with browser assertions.\""
+    },
+    {
+      "system": "API key mode",
+      "scenario": "Required key panel invalid key valid key and forget",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Second ephemeral GG_REQUIRE_API_KEY instance; invalid rejected, valid accepted, Forget removes browser credential."
+    },
+    {
+      "system": "Loops",
+      "scenario": "Create opens starter editor",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "\"Verified with browser assertions.\""
+    },
+    {
+      "system": "Loops",
+      "scenario": "Blank create disabled and invalid import explained",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "\"Verified with browser assertions.\""
+    },
+    {
+      "system": "Loops",
+      "scenario": "Delete requires confirmation and Keep preserves loop",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "\"Verified with browser assertions.\""
+    },
+    {
+      "system": "Loops",
+      "scenario": "Confirmed delete removes the isolated test loop",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "\"Verified with browser assertions.\""
+    },
+    {
+      "system": "Run inspector",
+      "scenario": "Live waiting input pause resume and submit",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "\"Verified with browser assertions.\""
+    },
+    {
+      "system": "Run inspector",
+      "scenario": "Finished input and cancel refused by API",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Terminal input=409 INVALID_STATE; cancel=409 INVALID_STATE."
+    },
+    {
+      "system": "Run inspector",
+      "scenario": "Blank required wait input refused then cancel works",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Required input blocks submission; cancellation ends wait and removes lifecycle controls."
+    },
+    {
+      "system": "Runs list",
+      "scenario": "Finished and cancelled rows and filtering",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Loop and status filters show matching real run states."
+    },
+    {
+      "system": "Events",
+      "scenario": "Inbound event source payload and dedupe display",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "\"Verified with browser assertions.\"",
+      "screenshot": "234-light-inbound-event-source-payload-and-dedupe-display.png"
+    },
+    {
+      "system": "Events",
+      "scenario": "Malformed event is refused",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "400 VALIDATION_FAILED; no malformed event added."
+    },
+    {
+      "system": "Settings",
+      "scenario": "Appearance theme control persists and keyboard radios work",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Immediate theme and localStorage change; arrow-key choice; reload at stored original theme. Independent suite verifies no-flash persistence."
+    },
+    {
+      "system": "Settings",
+      "scenario": "Blank model id cannot save",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "\"Verified with browser assertions.\""
+    },
+    {
+      "system": "Settings",
+      "scenario": "Write only secrets create update delete",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Values cleared on save, absent from rendered text; overwrite and delete work."
+    },
+    {
+      "system": "Settings",
+      "scenario": "Invalid secret name and blank value cannot submit",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "\"Verified with browser assertions.\""
+    },
+    {
+      "system": "Settings",
+      "scenario": "API key shown once reload hides it and revoke",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "One-time token never printed or photographed; row becomes revoked."
+    },
+    {
+      "system": "Settings",
+      "scenario": "Blank API key label cannot submit",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "\"Verified with browser assertions.\""
+    },
+    {
+      "system": "Navigation",
+      "scenario": "Not found remains navigable",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "\"Verified with browser assertions.\""
+    },
+    {
+      "system": "PWA",
+      "scenario": "Offline banner appears and clears on reconnect",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "\"Verified with browser assertions.\""
+    },
+    {
+      "system": "PWA",
+      "scenario": "Update toast prompts without automatic reload",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "\"Verified with browser assertions.\""
+    },
+    {
+      "system": "API key mode",
+      "scenario": "Required key panel invalid key valid key and forget",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Second ephemeral GG_REQUIRE_API_KEY instance; invalid rejected, valid accepted, Forget removes browser credential."
+    },
+    {
+      "system": "Accessibility",
+      "scenario": "Keyboard only edit node and loop panel",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Only Tab, Enter, Escape, Ctrl+A and typed text used to traverse and edit node/loop."
+    },
+    {
+      "system": "Accessibility",
+      "scenario": "Forced colours retain dialog boundaries focus and panel edges",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "{\"dialog\":{\"border\":\"1px\",\"style\":\"solid\",\"color\":\"rgb(0, 0, 0)\",\"focus\":\"2px\",\"focusStyle\":\"solid\",\"focusColor\":\"rgb(55, 0, 110)\"},\"panel\":{\"left\":\"1px\",\"style\":\"solid\"}}",
+      "screenshot": "248-dark-forced-colours-retain-dialog-boundaries-focus-and-panel-edges.png"
+    },
+    {
+      "system": "Accessibility",
+      "scenario": "Reduced motion removes animations and transitions",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Dialog descendant animation-name is none under prefers-reduced-motion: reduce; pulse regression also covered by Edge suite."
+    },
+    {
+      "system": "Responsive",
+      "scenario": "390px dialog layout and known editor overflow measurement",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Editor scrollWidth=390, viewport=390; overflow=0 px (known #41, not a new defect). Dialog x=0, width=390, bottom=844.",
+      "screenshot": "250-dark-390px-dialog-layout-and-known-editor-overflow-measurement.png"
+    },
+    {
+      "system": "Responsive",
+      "scenario": "768px dialog layout and known editor overflow measurement",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Editor scrollWidth=768, viewport=768; overflow=0 px (known #41, not a new defect). Dialog x=64, width=640, bottom=782."
+    },
+    {
+      "system": "Responsive",
+      "scenario": "200 percent zoom equivalent Runs has no page horizontal scroll",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "1440x900 at 200% equivalent: 720x450 CSS px; scrollWidth=720."
+    },
+    {
+      "system": "Responsive",
+      "scenario": "200 percent zoom equivalent New run has no page horizontal scroll",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "1440x900 at 200% equivalent: 720x450 CSS px; scrollWidth=720."
+    },
+    {
+      "system": "Responsive",
+      "scenario": "200 percent zoom editor shell measured",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Editor shell scrollWidth=720 at 720px; known constrained editor layout recorded separately."
+    },
+    {
+      "system": "Robustness",
+      "scenario": "Maximum valid loop name and node labels fit toolbar and dialog",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "120-character name and labels retained; no horizontal page overflow at 1440px."
+    },
+    {
+      "system": "Console",
+      "scenario": "Loops healthy load has no errors or warnings",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "0 browser console errors, warnings and pageerrors on isolated healthy page load."
+    },
+    {
+      "system": "Console",
+      "scenario": "Editor healthy load has no errors or warnings",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "0 browser console errors, warnings and pageerrors on isolated healthy page load."
+    },
+    {
+      "system": "Console",
+      "scenario": "Runs healthy load has no errors or warnings",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "0 browser console errors, warnings and pageerrors on isolated healthy page load."
+    },
+    {
+      "system": "Console",
+      "scenario": "New run healthy load has no errors or warnings",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "0 browser console errors, warnings and pageerrors on isolated healthy page load."
+    },
+    {
+      "system": "Console",
+      "scenario": "Inspector healthy load has no errors or warnings",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "0 browser console errors, warnings and pageerrors on isolated healthy page load."
+    },
+    {
+      "system": "Console",
+      "scenario": "Events healthy load has no errors or warnings",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "0 browser console errors, warnings and pageerrors on isolated healthy page load."
+    },
+    {
+      "system": "Console",
+      "scenario": "Settings healthy load has no errors or warnings",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "0 browser console errors, warnings and pageerrors on isolated healthy page load."
+    },
+    {
+      "system": "Console",
+      "scenario": "Not found healthy load has no errors or warnings",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "0 browser console errors, warnings and pageerrors on isolated healthy page load."
+    },
+    {
+      "system": "Strict Mode",
+      "scenario": "Vite dev dialog remains modal across effect replay and edit",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Real Vite development bundle with React StrictMode: three open/edit/Escape cycles survived native effect replay."
+    },
+    {
+      "system": "Accessibility",
+      "scenario": "Keyboard only edit node and loop panel",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Only Tab, Enter, Escape, Ctrl+A and typed text used to traverse and edit node/loop."
+    },
+    {
+      "system": "Accessibility",
+      "scenario": "Forced colours retain dialog boundaries focus and panel edges",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "{\"dialog\":{\"border\":\"1px\",\"style\":\"solid\",\"color\":\"rgb(0, 0, 0)\",\"focus\":\"2px\",\"focusStyle\":\"solid\",\"focusColor\":\"rgb(55, 0, 110)\"},\"panel\":{\"left\":\"1px\",\"style\":\"solid\"}}"
+    },
+    {
+      "system": "Accessibility",
+      "scenario": "Reduced motion removes animations and transitions",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Dialog descendant animation-name is none under prefers-reduced-motion: reduce; pulse regression also covered by Edge suite."
+    },
+    {
+      "system": "Responsive",
+      "scenario": "390px dialog layout and known editor overflow measurement",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Editor scrollWidth=390, viewport=390; overflow=0 px (known #41, not a new defect). Dialog x=0, width=390, bottom=844."
+    },
+    {
+      "system": "Responsive",
+      "scenario": "768px dialog layout and known editor overflow measurement",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Editor scrollWidth=768, viewport=768; overflow=0 px (known #41, not a new defect). Dialog x=64, width=640, bottom=782."
+    },
+    {
+      "system": "Responsive",
+      "scenario": "200 percent zoom equivalent Runs has no page horizontal scroll",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "1440x900 at 200% equivalent: 720x450 CSS px; scrollWidth=720."
+    },
+    {
+      "system": "Responsive",
+      "scenario": "200 percent zoom equivalent New run has no page horizontal scroll",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "1440x900 at 200% equivalent: 720x450 CSS px; scrollWidth=720."
+    },
+    {
+      "system": "Responsive",
+      "scenario": "200 percent zoom editor shell measured",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Editor shell scrollWidth=720 at 720px; known constrained editor layout recorded separately."
+    },
+    {
+      "system": "Robustness",
+      "scenario": "Maximum valid loop name and node labels fit toolbar and dialog",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "120-character name and labels retained; no horizontal page overflow at 1440px."
+    },
+    {
+      "system": "Console",
+      "scenario": "Loops healthy load has no errors or warnings",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "0 browser console errors, warnings and pageerrors on isolated healthy page load."
+    },
+    {
+      "system": "Console",
+      "scenario": "Editor healthy load has no errors or warnings",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "0 browser console errors, warnings and pageerrors on isolated healthy page load."
+    },
+    {
+      "system": "Console",
+      "scenario": "Runs healthy load has no errors or warnings",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "0 browser console errors, warnings and pageerrors on isolated healthy page load."
+    },
+    {
+      "system": "Console",
+      "scenario": "New run healthy load has no errors or warnings",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "0 browser console errors, warnings and pageerrors on isolated healthy page load."
+    },
+    {
+      "system": "Console",
+      "scenario": "Inspector healthy load has no errors or warnings",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "0 browser console errors, warnings and pageerrors on isolated healthy page load."
+    },
+    {
+      "system": "Console",
+      "scenario": "Events healthy load has no errors or warnings",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "0 browser console errors, warnings and pageerrors on isolated healthy page load."
+    },
+    {
+      "system": "Console",
+      "scenario": "Settings healthy load has no errors or warnings",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "0 browser console errors, warnings and pageerrors on isolated healthy page load."
+    },
+    {
+      "system": "Console",
+      "scenario": "Not found healthy load has no errors or warnings",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "0 browser console errors, warnings and pageerrors on isolated healthy page load."
+    },
+    {
+      "system": "Strict Mode",
+      "scenario": "Vite dev dialog remains modal across effect replay and edit",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Real Vite development bundle with React StrictMode: three open/edit/Escape cycles survived native effect replay.",
+      "screenshot": "284-light-vite-dev-dialog-remains-modal-across-effect-replay-and-edit.png"
+    },
+    {
+      "system": "Node dialog",
+      "scenario": "Four repeated Escape presses keep state coherent",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Five Escape presses: closes on second invalid-ID dismissal, returns focus then; later Esc deselects canvas and focuses body normally; next opening works."
+    },
+    {
+      "system": "Accessibility",
+      "scenario": "Dialog screen reader tree roles and description",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Named native dialog with labelled regions and controls; no separate description; 2 empty CodeMirror announcers (one per editor), no duplicate application messages."
+    },
+    {
+      "system": "Node config",
+      "scenario": "Editing script argument then adding retains newest text",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "fail",
+      "evidence": "PR48-QA-01: Args 1 changes back to --version. The API draft now holds [\"--version\",\"second\"]. The lost text had already reached the server before Add args. Closing/reloading between editing and adding avoids the reproduction because it changes the form’s initial value.",
+      "screenshot": "271-dark-editing-script-argument-then-adding-retains-newest-text.png",
+      "defect": "PR48-QA-01"
+    },
+    {
+      "system": "Connections",
+      "scenario": "Valid Connect and remove persist; duplicate port unavailable",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Connect start out→wait saved; used port no longer offered; Remove clears edge."
+    },
+    {
+      "system": "Connections",
+      "scenario": "Missing targets and triggers absent from To options",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Targets come from existing non-trigger nodes; missing target cannot be selected through ordinary UI."
+    },
+    {
+      "system": "Connections",
+      "scenario": "Ordinary self loop allowed and removable",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Non-trigger, non-exit self-edge is permitted by documented connection rules; remove works."
+    },
+    {
+      "system": "Node config",
+      "scenario": "Trigger malformed JSON retained as unparsed text",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Invalid field shows error and preserves previous server value."
+    },
+    {
+      "system": "Node config",
+      "scenario": "Mutate invalid JSON pointer refused",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Invalid field shows error and preserves previous server value."
+    },
+    {
+      "system": "Node config",
+      "scenario": "Exit nonpositive criterion refused",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Invalid field shows error and preserves previous server value."
+    },
+    {
+      "system": "Node config",
+      "scenario": "Blank optional heartbeat expression has no error preview",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "fail",
+      "evidence": "PR48-QA-04: The preview says expression failed to compile: Unexpected end of expression. The heartbeat configuration is valid because Max beats is present.",
+      "screenshot": "279-dark-blank-optional-heartbeat-expression-has-no-error-preview.png",
+      "defect": "PR48-QA-04"
+    },
+    {
+      "system": "Loops",
+      "scenario": "Export downloads JSON and import creates another draft",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Actual export envelope loop field parsed; import success status and new row verified."
+    },
+    {
+      "system": "Settings",
+      "scenario": "Models add edit disable enable and delete",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Model create/update and two asynchronous toggles verified after server responses; delete removes row."
+    },
+    {
+      "system": "Loop panel",
+      "scenario": "Storage unavailable still toggles",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Throwing localStorage accessor does not prevent default or toggles; 0 page errors."
+    },
+    {
+      "system": "Node dialog",
+      "scenario": "Four repeated Escape presses keep state coherent",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Five Escape presses: closes on second invalid-ID dismissal, returns focus then; later Esc deselects canvas and focuses body normally; next opening works."
+    },
+    {
+      "system": "Accessibility",
+      "scenario": "Dialog screen reader tree roles and description",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Named native dialog with labelled regions and controls; no separate description; 2 empty CodeMirror announcers (one per editor), no duplicate application messages."
+    },
+    {
+      "system": "Node config",
+      "scenario": "Editing script argument then adding retains newest text",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "fail",
+      "evidence": "PR48-QA-01: Args 1 changes back to --version. The API draft now holds [\"--version\",\"second\"]. The lost text had already reached the server before Add args. Closing/reloading between editing and adding avoids the reproduction because it changes the form’s initial value.",
+      "screenshot": "287-light-editing-script-argument-then-adding-retains-newest-text.png",
+      "defect": "PR48-QA-01"
+    },
+    {
+      "system": "Connections",
+      "scenario": "Valid Connect and remove persist; duplicate port unavailable",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Connect start out→wait saved; used port no longer offered; Remove clears edge."
+    },
+    {
+      "system": "Connections",
+      "scenario": "Missing targets and triggers absent from To options",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Targets come from existing non-trigger nodes; missing target cannot be selected through ordinary UI."
+    },
+    {
+      "system": "Connections",
+      "scenario": "Ordinary self loop allowed and removable",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Non-trigger, non-exit self-edge is permitted by documented connection rules; remove works."
+    },
+    {
+      "system": "Node config",
+      "scenario": "Trigger malformed JSON retained as unparsed text",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Invalid field shows error and preserves previous server value."
+    },
+    {
+      "system": "Node config",
+      "scenario": "Mutate invalid JSON pointer refused",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Invalid field shows error and preserves previous server value."
+    },
+    {
+      "system": "Node config",
+      "scenario": "Exit nonpositive criterion refused",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Invalid field shows error and preserves previous server value."
+    },
+    {
+      "system": "Node config",
+      "scenario": "Blank optional heartbeat expression has no error preview",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "fail",
+      "evidence": "PR48-QA-04: The preview says expression failed to compile: Unexpected end of expression. The heartbeat configuration is valid because Max beats is present.",
+      "screenshot": "295-light-blank-optional-heartbeat-expression-has-no-error-preview.png",
+      "defect": "PR48-QA-04"
+    },
+    {
+      "system": "Loops",
+      "scenario": "Export downloads JSON and import creates another draft",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Actual export envelope loop field parsed; import success status and new row verified."
+    },
+    {
+      "system": "Settings",
+      "scenario": "Models add edit disable enable and delete",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Model create/update and two asynchronous toggles verified after server responses; delete removes row."
+    },
+    {
+      "system": "Loop panel",
+      "scenario": "Storage unavailable still toggles",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Throwing localStorage accessor does not prevent default or toggles; 0 page errors."
+    },
+    {
+      "system": "Connections",
+      "scenario": "Exit invalid target flagged; valid loop back refresh and remove",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Exit self-target draft is allowed but flagged LOOPBACK_TARGET_INVALID; valid target updates form, later edit preserves it, removal and default repair clear stale config."
+    },
+    {
+      "system": "Loop panel",
+      "scenario": "Variable JSON record editor is reachable by pointer",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "fail",
+      "evidence": "PR48-QA-03: The editor is compressed beside the full-width key input. CodeMirror content measures 31.5 px wide; its centre hits the sibling row instead of the editor, and an ordinary click times out. The visible wrapper is a thin strip. The newly added value remains null and validation blocks saving until a value is entered. Tab/focus plus keyboard entry works; the resulting variable schema saves and reloads.",
+      "screenshot": "296-dark-variable-json-record-editor-is-reachable-by-pointer.png",
+      "defect": "PR48-QA-03"
+    },
+    {
+      "system": "Loop panel",
+      "scenario": "Name description settings variables autosave and reload",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Name, description, limits and variable schema save and reload. Variable value entered using keyboard workaround for PR48-QA-03."
+    },
+    {
+      "system": "Runs only from Runs",
+      "scenario": "Publish prompt and toolbar link go to selected New run",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Publish succeeds; both toolbar and post-publish prompt deep-link to selected New run.",
+      "screenshot": "298-dark-publish-prompt-and-toolbar-link-go-to-selected-new-run.png"
+    },
+    {
+      "system": "Connections",
+      "scenario": "Exit invalid target flagged; valid loop back refresh and remove",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Exit self-target draft is allowed but flagged LOOPBACK_TARGET_INVALID; valid target updates form, later edit preserves it, removal and default repair clear stale config."
+    },
+    {
+      "system": "Loop panel",
+      "scenario": "Variable JSON record editor is reachable by pointer",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "fail",
+      "evidence": "PR48-QA-03: The editor is compressed beside the full-width key input. CodeMirror content measures 31.5 px wide; its centre hits the sibling row instead of the editor, and an ordinary click times out. The visible wrapper is a thin strip. The newly added value remains null and validation blocks saving until a value is entered. Tab/focus plus keyboard entry works; the resulting variable schema saves and reloads.",
+      "screenshot": "300-light-variable-json-record-editor-is-reachable-by-pointer.png",
+      "defect": "PR48-QA-03"
+    },
+    {
+      "system": "Loop panel",
+      "scenario": "Name description settings variables autosave and reload",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Name, description, limits and variable schema save and reload. Variable value entered using keyboard workaround for PR48-QA-03."
+    },
+    {
+      "system": "Runs only from Runs",
+      "scenario": "Publish prompt and toolbar link go to selected New run",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Publish succeeds; both toolbar and post-publish prompt deep-link to selected New run."
+    },
+    {
+      "system": "Responsive",
+      "scenario": "390px expanded loop panel known issue 41 measurement",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Known #41 measurement, not counted as defect: {\"viewport\":390,\"scrollWidth\":580,\"panel\":380,\"canvas\":0}; horizontal overflow=190px."
+    },
+    {
+      "system": "Responsive",
+      "scenario": "390px expanded loop panel known issue 41 measurement",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Known #41 measurement, not counted as defect: {\"viewport\":390,\"scrollWidth\":580,\"panel\":380,\"canvas\":0}; horizontal overflow=190px."
+    },
+    {
+      "system": "Accessibility",
+      "scenario": "D18 keyboard-only trigger wait exit build and publish",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Existing e2e/qa.spec.ts:239 passed in full Edge suite. Real Tab/Enter/arrow keys connect start → wait → done and publish."
+    },
+    {
+      "system": "Run inspector",
+      "scenario": "1200 streamed harness items complete without gaps or duplicates",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Existing e2e/qa.spec.ts:89: 1211 events. Live completion 1834 ms (1500 ms scripted turn), fresh inspector 580 ms, event selection 281 ms, 7 run fetches."
+    },
+    {
+      "system": "Theme boot",
+      "scenario": "Theme before body parse and no flash across reload",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "pass",
+      "evidence": "Existing e2e/theme.spec.ts passed: captures theme when body is parsed, checks it never changes afterward, applies Light immediately, reloads, clears storage and tests throwing storage."
+    },
+    {
+      "system": "Accessibility",
+      "scenario": "Actual screen-reader spoken output",
+      "polarity": "positive",
+      "theme": "dark",
+      "result": "not run",
+      "evidence": "ARIA snapshots and accessible names/roles were checked. A running screen reader and spoken announcements were not exercised."
+    },
+    {
+      "system": "Responsive",
+      "scenario": "Native browser 200 percent zoom control",
+      "polarity": "negative",
+      "theme": "dark",
+      "result": "not run",
+      "evidence": "Not operated in the headless run. Runs and New run were checked at the equivalent 720×450 CSS-pixel viewport; native zoom behavior is not claimed."
+    },
+    {
+      "system": "Accessibility",
+      "scenario": "D18 keyboard-only trigger wait exit build and publish",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Same existing spec passed in Edge with light storageState: 1 test, 4.2 s; no pointer actions in the build."
+    },
+    {
+      "system": "Run inspector",
+      "scenario": "1200 streamed harness items complete without gaps or duplicates",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Same existing spec under light: 1211 events. Live completion 1835 ms (1500 ms scripted turn), fresh inspector 546 ms, event selection 322 ms, 7 run fetches."
+    },
+    {
+      "system": "Theme boot",
+      "scenario": "Theme before body parse and no flash across reload",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "pass",
+      "evidence": "Existing e2e/theme.spec.ts passed: captures theme when body is parsed, checks it never changes afterward, applies Light immediately, reloads, clears storage and tests throwing storage."
+    },
+    {
+      "system": "Accessibility",
+      "scenario": "Actual screen-reader spoken output",
+      "polarity": "positive",
+      "theme": "light",
+      "result": "not run",
+      "evidence": "ARIA snapshots and accessible names/roles were checked. A running screen reader and spoken announcements were not exercised."
+    },
+    {
+      "system": "Responsive",
+      "scenario": "Native browser 200 percent zoom control",
+      "polarity": "negative",
+      "theme": "light",
+      "result": "not run",
+      "evidence": "Not operated in the headless run. Runs and New run were checked at the equivalent 720×450 CSS-pixel viewport; native zoom behavior is not claimed."
+    },
+    {
+      "system": "Repository checks",
+      "scenario": "pnpm.cmd build",
+      "polarity": "positive",
+      "theme": "N/A",
+      "result": "pass",
+      "evidence": "Exit 0; 11 successful tasks, all 11 cache hits. Built dist served by real API static plugin."
+    },
+    {
+      "system": "Repository checks",
+      "scenario": "pnpm.cmd check:tokens",
+      "polarity": "positive",
+      "theme": "N/A",
+      "result": "pass",
+      "evidence": "Exit 0; Design tokens OK, 94 files checked."
+    },
+    {
+      "system": "Repository checks",
+      "scenario": "pnpm.cmd check:contrast",
+      "polarity": "positive",
+      "theme": "N/A",
+      "result": "pass",
+      "evidence": "Exit 0; 0 failing enforced token pairs."
+    },
+    {
+      "system": "Repository checks",
+      "scenario": "pnpm.cmd check:layers",
+      "polarity": "positive",
+      "theme": "N/A",
+      "result": "pass",
+      "evidence": "Exit 0; Layer rules OK."
+    },
+    {
+      "system": "Repository checks",
+      "scenario": "pnpm.cmd format:check",
+      "polarity": "positive",
+      "theme": "N/A",
+      "result": "pass",
+      "evidence": "Exit 0; all matched files use Prettier code style. Final report was formatted separately and repository check repeated."
+    },
+    {
+      "system": "Repository checks",
+      "scenario": "Web unit tests with coverage",
+      "polarity": "positive",
+      "theme": "N/A",
+      "result": "pass",
+      "evidence": "Exit 0; 34 files, 213 tests passed. Statements 98.67% (2160/2189), branches 94.97% (1587/1671), functions 98.68% (752/762), lines 99.47% (1881/1891). Duration 59.43 s."
+    },
+    {
+      "system": "Repository checks",
+      "scenario": "Existing Edge E2E suite",
+      "polarity": "positive",
+      "theme": "N/A",
+      "result": "pass",
+      "evidence": "Exit 0; 27 passed, 1 conditional LIVE test skipped, 56.4 s, 1 worker, 0 unexpected/flaky tests. Supplemental existing light D18 and 1200-item specs each passed (2 additional executions)."
+    },
+    {
+      "system": "Run integration",
+      "scenario": "Conditional real external harness LIVE spec",
+      "polarity": "positive",
+      "theme": "N/A",
+      "result": "not run",
+      "evidence": "The existing LIVE=1 spec was skipped by its condition. This QA used the project’s fake harness/deciders and did not exercise paid/external providers."
+    }
+  ]
+}
