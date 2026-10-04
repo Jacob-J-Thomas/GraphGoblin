@@ -1,10 +1,10 @@
 # 15 - Issue workflow
 
-GitHub issues are the shared work queue for people and the AIDLC pipeline. Every non-epic issue carries at least one gate label. A triager sets the type, area, gate, QA, and routing labels from the issue and its dependencies.
+GitHub issues are the shared work queue for this repository's development pipeline. Every non-epic issue carries at least one gate label. A triager sets the type, area, gate, QA, and routing labels from the issue and its dependencies.
 
 ## Gates
 
-- `aidlc-ready`: an AIDLC pipeline may implement, review, QA, and merge without a human. Use for bug fixes, maintainability, chores, and backend-only work.
+- `aidlc-ready`: the issue may enter this repository's agent-led development pipeline without a human review of the running product. Use for bug fixes, maintainability, chores, and backend-only work.
 - `human-in-the-loop`: an agent implements; a human reviews the running product before merge. Use for UI work and work whose effectiveness must be judged in the product.
 - `needs-plan-approval`: for architecture changes and cutovers. An agent posts a written plan as an issue comment. A human approves by replacing this label with `plan-approved` and adding `aidlc-ready`, unless the issue also has `human-in-the-loop`.
 - `plan-approved`: set by a human only, after reviewing the written plan.
@@ -39,6 +39,8 @@ Milestones are `v1.1` for editor usability and polish and catalogue fixes, `v1.2
 
 Epics carry `type:epic` and area labels only; pipelines ignore them. Each child issue starts its body with `Part of #<epic-number>`, and the epic lists its child issues.
 
-## Planned AIDLC lifecycle
+## Development pipeline
 
-The intended template loops will process `aidlc-ready` issues as follows: the implementation loop picks up the issue and opens a PR with a structured body; the review loop runs at most three review-and-fix cycles; after merge, the QA loop saves proof, reopens the issue on failure, and has an adversarial reviewer check the QA assessment. These template loops are tracked as issues in milestone `v1.2`.
+An issue is picked up according to its gate label. The implementer named by its `impl:` label works in an isolated branch. The reviewer named by its `review:` label reviews the diff and comes from the opposite model family. A QA agent tests according to the `qa:` label and records results in the PR and the issue. `human-in-the-loop` issues get a human review of the running product before merge. `needs-plan-approval` issues get a human-approved plan before implementation.
+
+The label names and this process are specific to this repository and are not used by the product's template loops, which users run against their own repositories with their own configurable trigger label and role models (tracked in [the AIDLC template loops epic on GitHub](https://github.com/Jacob-J-Thomas/GraphGoblin/issues?q=is%3Aissue%20label%3Atype%3Aepic%20label%3Aarea%3Atemplates)).
