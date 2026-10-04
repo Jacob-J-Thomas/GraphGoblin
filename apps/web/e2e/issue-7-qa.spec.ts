@@ -150,7 +150,7 @@ test('I7-QA-02: overlong text stays inside Alert, Badge, and Button', async ({ p
 
   // Badge and Button: the editor's own, copied into the side panel with overlong labels.
   await page.goto(`/app/loops/${loopId}/edit`);
-  const panel = page.getByRole('region', { name: 'Validation' });
+  const panel = page.getByRole('complementary', { name: 'Loop' }).locator('.overflow-auto').first();
   await expect(panel).toBeVisible();
   const fits = await panel.evaluate((region) => {
     const copy = (selector: string, text: string) =>
