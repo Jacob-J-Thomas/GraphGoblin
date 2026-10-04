@@ -27,6 +27,7 @@ import {
   SqliteModelCatalog,
   SqliteSettings,
   hashApiKey,
+  type ModelCatalogEntry,
 } from './settings.js';
 import type { TimerStore } from '../scheduler/timer-store.js';
 import { SqliteTimerStore } from './timers.js';
@@ -195,7 +196,7 @@ describe('SqliteRunRepository', () => {
     old.close();
     const current = openDatabase({ url });
     try {
-      expect(await current.pendingMigrations()).toBe(1);
+      expect(await current.pendingMigrations()).toBe(2);
       await current.migrate();
       const repo = new SqliteRunRepository(current.db);
       expect(await repo.listUnfinalized()).toEqual([]);
@@ -597,9 +598,13 @@ describe('settings, api keys, model catalog', () => {
     const catalog = new SqliteModelCatalog(handle.db);
     expect(await catalog.seed()).toBe(DEFAULT_MODEL_CATALOG.length);
     expect(await catalog.seed()).toBe(0);
-    expect((await catalog.list()).map((m) => m.model)).toContain('gpt-6-luna');
+    const entries = await catalog.list();
+    expect(entries.map((m) => m.model)).toContain('gpt-6-luna');
+    for (const entry of entries.filter((m) => m.harness === 'codex')) {
+      expect(entry.efforts).toEqual(['minimal', 'low', 'medium', 'high', 'xhigh', 'max']);
+    }
     expect(await catalog.isAllowed('codex', 'gpt-6-luna', 'low')).toBe(true);
-    expect(await catalog.isAllowed('codex', 'gpt-6-luna', 'max')).toBe(false);
+    expect(await catalog.isAllowed('codex', 'gpt-6-luna', 'max')).toBe(true);
     expect(await catalog.isAllowed('codex', 'gpt-6-luna')).toBe(true);
     expect(await catalog.isAllowed('codex', 'nope')).toBe(false);
     await catalog.upsert({
@@ -608,11 +613,262 @@ describe('settings, api keys, model catalog', () => {
       displayName: 'Luna',
       efforts: ['low'],
       defaultEffort: 'low',
-      enabled: false,
+      enabled: true,
     });
+    expect(await catalog.isAllowed('codex', 'gpt-6-luna', 'max')).toBe(false);
+    await catalog.upsert({ ...entries.find((m) => m.model === 'gpt-6-luna')!, enabled: false });
     expect(await catalog.isAllowed('codex', 'gpt-6-luna', 'low')).toBe(false);
     expect(await catalog.delete('codex', 'gpt-6-luna')).toBe(true);
     expect(await catalog.delete('codex', 'gpt-6-luna')).toBe(false);
+  });
+});
+
+describe('migration 0003 model catalog max effort', () => {
+  const oldEfforts = '["minimal","low","medium","high","xhigh"]';
+  type LegacyEntry = Omit<ModelCatalogEntry, 'efforts'> & { efforts: string };
+
+  function legacyEntry(overrides: Partial<LegacyEntry> = {}): LegacyEntry {
+    return {
+      harness: 'codex',
+      model: 'gpt-6-luna',
+      displayName: 'GPT-6 Luna',
+      efforts: oldEfforts,
+      defaultEffort: 'low',
+      enabled: true,
+      ...overrides,
+    };
+  }
+
+  async function withUpgrade(
+    rows: LegacyEntry[],
+    check: (current: DatabaseHandle) => Promise<void>,
+  ): Promise<void> {
+    const dir = mkdtempSync(join(tmpdir(), 'gg-0003-'));
+    const migrations = join(dir, 'migrations');
+    mkdirSync(join(migrations, 'meta'), { recursive: true });
+    const source = fileURLToPath(new URL('../../drizzle/', import.meta.url));
+    const journal = JSON.parse(readFileSync(join(source, 'meta', '_journal.json'), 'utf8')) as {
+      entries: { idx: number; tag: string }[];
+    };
+    journal.entries = journal.entries.filter((e) => e.idx < 3);
+    writeFileSync(join(migrations, 'meta', '_journal.json'), JSON.stringify(journal));
+    for (const entry of journal.entries) {
+      copyFileSync(join(source, `${entry.tag}.sql`), join(migrations, `${entry.tag}.sql`));
+    }
+    const url = `file:${join(dir, 'old.db').replace(/\\/g, '/')}`;
+    const old = openDatabase({ url, migrationsFolder: migrations });
+    try {
+      await old.migrate();
+      for (const row of rows) {
+        await old.client.execute({
+          sql: 'INSERT INTO model_catalog (harness, model, display_name, efforts, default_effort, enabled) VALUES (?, ?, ?, ?, ?, ?)',
+          args: [
+            row.harness,
+            row.model,
+            row.displayName,
+            row.efforts,
+            row.defaultEffort,
+            Number(row.enabled),
+          ],
+        });
+      }
+    } finally {
+      old.close();
+    }
+    const current = openDatabase({ url });
+    try {
+      expect(await current.pendingMigrations()).toBe(1);
+      await current.migrate();
+      expect(await current.pendingMigrations()).toBe(0);
+      await check(current);
+    } finally {
+      current.close();
+      try {
+        rmSync(dir, { recursive: true, force: true });
+      } catch {
+        // Windows can hold the database file briefly after close; the temp dir is left behind.
+      }
+    }
+  }
+
+  async function expectRows(current: DatabaseHandle, rows: LegacyEntry[]): Promise<void> {
+    const entries = await new SqliteModelCatalog(current.db).list();
+    expect(entries).toHaveLength(rows.length);
+    expect(entries).toEqual(
+      expect.arrayContaining(
+        rows.map((row) => ({ ...row, efforts: JSON.parse(row.efforts) as unknown })),
+      ),
+    );
+    // Check the actual JSON text too: excluded rows must be unchanged byte for byte.
+    const stored = await current.client.execute('SELECT * FROM model_catalog');
+    expect(stored.rows).toHaveLength(rows.length);
+    expect(stored.rows).toEqual(
+      expect.arrayContaining(
+        rows.map((row) => ({
+          harness: row.harness,
+          model: row.model,
+          display_name: row.displayName,
+          efforts: row.efforts,
+          default_effort: row.defaultEffort,
+          enabled: Number(row.enabled),
+        })),
+      ),
+    );
+  }
+
+  async function expectUpgrade(row: LegacyEntry): Promise<void> {
+    await withUpgrade([row], (current) =>
+      expectRows(current, [
+        { ...row, efforts: JSON.stringify([...(JSON.parse(row.efforts) as string[]), 'max']) },
+      ]),
+    );
+  }
+
+  it('appends max to an unedited seeded row without changing its other columns', async () => {
+    await expectUpgrade(legacyEntry());
+  });
+
+  it('upgrades every model id seeded in 1.0.0', async () => {
+    // The migration freezes the ids 1.0.0 shipped; models added later are seeded with max already.
+    const seededIn100 = [
+      'gpt-6-luna',
+      'gpt-6.1-sol',
+      'gpt-6-sol',
+      'gpt-6-astra',
+      'gpt-5.6-luna',
+      'gpt-5.6-sol',
+      'gpt-5.6-terra',
+      'gpt-5.5',
+    ];
+    expect(DEFAULT_MODEL_CATALOG.map((e) => e.model)).toEqual(expect.arrayContaining(seededIn100));
+    const rows = seededIn100.map((model) => legacyEntry({ model, displayName: model }));
+    await withUpgrade(rows, (current) =>
+      expectRows(
+        current,
+        rows.map((row) => ({ ...row, efforts: '["minimal","low","medium","high","xhigh","max"]' })),
+      ),
+    );
+  });
+
+  it('preserves an edited display name while adding max', async () => {
+    await expectUpgrade(legacyEntry({ displayName: 'My Luna' }));
+  });
+
+  it('preserves an edited default effort while adding max', async () => {
+    await expectUpgrade(legacyEntry({ defaultEffort: 'high' }));
+  });
+
+  it('preserves a disabled row while adding max', async () => {
+    await expectUpgrade(legacyEntry({ enabled: false }));
+  });
+
+  it('compares efforts as a set and preserves their stored order', async () => {
+    await expectUpgrade(legacyEntry({ efforts: '["xhigh","high","medium","low","minimal"]' }));
+  });
+
+  it('ignores duplicate old values when comparing efforts as a set', async () => {
+    await expectUpgrade(
+      legacyEntry({ efforts: '["minimal","low","medium","high","xhigh","low"]' }),
+    );
+  });
+
+  it('leaves a strict subset unchanged byte for byte', async () => {
+    const rows = [legacyEntry({ efforts: '[ "low", "medium" ]' })];
+    await withUpgrade(rows, (current) => expectRows(current, rows));
+  });
+
+  it('leaves a strict superset with another extra value unchanged byte for byte', async () => {
+    const rows = [
+      legacyEntry({ efforts: '[ "minimal", "low", "medium", "high", "xhigh", "ultra" ]' }),
+    ];
+    await withUpgrade(rows, (current) => expectRows(current, rows));
+  });
+
+  it('leaves a strict superset already containing max unchanged byte for byte', async () => {
+    const rows = [
+      legacyEntry({ efforts: '[ "minimal", "low", "medium", "high", "xhigh", "max" ]' }),
+    ];
+    await withUpgrade(rows, (current) => expectRows(current, rows));
+  });
+
+  it('leaves a shorter list already containing max unchanged byte for byte', async () => {
+    const rows = [legacyEntry({ efforts: '[ "low", "max" ]', defaultEffort: 'max' })];
+    await withUpgrade(rows, (current) => expectRows(current, rows));
+  });
+
+  it('leaves a user-added model with the old efforts unchanged', async () => {
+    const rows = [legacyEntry({ model: 'my-model', displayName: 'My model' })];
+    await withUpgrade(rows, (current) => expectRows(current, rows));
+  });
+
+  it('leaves a non-Codex harness with the old efforts unchanged', async () => {
+    const rows = [legacyEntry({ harness: 'claude-code', displayName: 'Claude Luna' })];
+    await withUpgrade(rows, (current) => expectRows(current, rows));
+  });
+
+  it('leaves an array with an extra null unchanged', async () => {
+    const rows = [legacyEntry({ efforts: '["minimal","low","medium","high","xhigh",null]' })];
+    await withUpgrade(rows, (current) => expectRows(current, rows));
+  });
+
+  it('leaves a JSON object with the old values unchanged', async () => {
+    const rows = [
+      legacyEntry({ efforts: '{"a":"minimal","b":"low","c":"medium","d":"high","e":"xhigh"}' }),
+    ];
+    await withUpgrade(rows, (current) => expectRows(current, rows));
+  });
+
+  it('leaves malformed JSON unchanged without aborting the upgrade', async () => {
+    const row = legacyEntry({ efforts: 'not JSON' });
+    await withUpgrade([row], async (current) => {
+      const stored = await current.client.execute('SELECT * FROM model_catalog');
+      expect(stored.rows).toEqual([
+        {
+          harness: row.harness,
+          model: row.model,
+          display_name: row.displayName,
+          efforts: row.efforts,
+          default_effort: row.defaultEffort,
+          enabled: Number(row.enabled),
+        },
+      ]);
+    });
+  });
+
+  it('is idempotent when the shipped SQL statement is executed again', async () => {
+    const rows = [legacyEntry({ displayName: 'My Luna', defaultEffort: 'high', enabled: false })];
+    await withUpgrade(rows, async (current) => {
+      await expectRows(current, [
+        { ...rows[0]!, efforts: '["minimal","low","medium","high","xhigh","max"]' },
+      ]);
+      const catalog = new SqliteModelCatalog(current.db);
+      const before = await catalog.list();
+      const storedBefore = await current.client.execute('SELECT * FROM model_catalog');
+      const sql = readFileSync(
+        new URL('../../drizzle/0003_model_catalog_max_effort.sql', import.meta.url),
+        'utf8',
+      );
+      expect((await current.client.execute(sql)).rowsAffected).toBe(0);
+      expect(await catalog.list()).toEqual(before);
+      expect((await current.client.execute('SELECT * FROM model_catalog')).rows).toEqual(
+        storedBefore.rows,
+      );
+      expect(await current.pendingMigrations()).toBe(0);
+    });
+  });
+
+  it('does not reapply the upgrade or seeding after a user restores the old efforts', async () => {
+    const row = legacyEntry();
+    await withUpgrade([row], async (current) => {
+      const catalog = new SqliteModelCatalog(current.db);
+      await catalog.upsert({ ...row, efforts: ['minimal', 'low', 'medium', 'high', 'xhigh'] });
+      await current.migrate();
+      await catalog.seed();
+      expect((await catalog.list()).find((entry) => entry.model === row.model)).toEqual({
+        ...row,
+        efforts: ['minimal', 'low', 'medium', 'high', 'xhigh'],
+      });
+    });
   });
 });
 

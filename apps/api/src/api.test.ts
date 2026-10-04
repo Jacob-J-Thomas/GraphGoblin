@@ -482,21 +482,34 @@ describe('settings, secrets, api keys, catalog, events', () => {
       404,
     );
 
-    const catalog = (await t.app.inject('/model-catalog')).json<{ items: { model: string }[] }>();
+    const response = await t.app.inject('/model-catalog');
+    expect(response.statusCode).toBe(200);
+    const catalog = response.json<{
+      items: { harness: string; model: string; efforts: string[] }[];
+    }>();
     expect(catalog.items.map((m) => m.model)).toContain('gpt-6-luna');
+    expect(
+      catalog.items.find((m) => m.harness === 'codex' && m.model === 'gpt-6-luna')?.efforts,
+    ).toEqual(['minimal', 'low', 'medium', 'high', 'xhigh', 'max']);
     const upsert = await t.app.inject({
       method: 'PUT',
       url: '/model-catalog/codex/gpt-7-test',
-      payload: { displayName: 'Test', efforts: ['low', 'high'], defaultEffort: 'low' },
+      payload: { displayName: 'Test', efforts: ['low', 'high', 'max'], defaultEffort: 'max' },
     });
     expect(upsert.statusCode).toBe(200);
-    expect(upsert.json()).toMatchObject({ model: 'gpt-7-test', enabled: true });
+    expect(upsert.json()).toMatchObject({
+      model: 'gpt-7-test',
+      efforts: ['low', 'high', 'max'],
+      defaultEffort: 'max',
+      enabled: true,
+    });
     const inconsistent = await t.app.inject({
       method: 'PUT',
       url: '/model-catalog/codex/gpt-7-test',
       payload: { displayName: 'Test', efforts: ['low'], defaultEffort: 'max' },
     });
     expect(inconsistent.statusCode).toBe(400);
+    expect(inconsistent.json()).toMatchObject({ code: 'INVALID_INPUT' });
     expect(
       (await t.app.inject({ method: 'DELETE', url: '/model-catalog/codex/gpt-7-test' })).statusCode,
     ).toBe(204);
