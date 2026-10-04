@@ -3,8 +3,10 @@
 Date: 2026-10-04. The real app, built with `pnpm build` and served by `apps/web/e2e/server.ts` (the in-memory API with the fake harness), with seeded loops, runs, inbound events, a disabled catalog model, and a secret. Edge (Chromium), reduced motion so pulses are still, viewport screenshots.
 
 - `before/`: the app at `430c647`, before the cutover (light only; there was no theme).
-- `after-dark/`: after the cutover in the default theme (`data-theme="dark"`, set statically in `index.html` until #11).
-- `after-light/`: the same screens with the attribute flipped to `light`.
+- `after-dark/`: after the cutover in Dark, the default theme.
+- `after-light/`: the same screens with Light chosen the way Settings → Appearance does: the stored theme (`graphgoblin-theme` in localStorage), which the boot script in `index.html` shows before first paint.
+
+The `after` sets were refreshed after the header hairline and the theme control were added (every header now carries the hairline) and after the I7-QA fixes; Light was reviewed screen by screen in Edge and showed no defects to fix.
 
 Regenerate with `node docs/qa/2026-10-04-issue-7-screenshots/capture.mjs before|after` after `pnpm build` (`before` needs a build of the earlier commit).
 
@@ -12,34 +14,34 @@ Regenerate with `node docs/qa/2026-10-04-issue-7-screenshots/capture.mjs before|
 
 Each screen is captured at 1024x768 (`-1024`) and 1440x900 (`-1440`).
 
-| File               | Screen                                                                                          |
-| ------------------ | ----------------------------------------------------------------------------------------------- |
-| `loops`            | Loops list with create, import, and six loops in every publish state and last-run status        |
-| `editor-trigger`   | Editor, `nightly-triage` (one node of each kind and a loop-back), the trigger node selected     |
-| `editor-decision`  | The same loop, the decision node selected (routes, Liquid question, JSONata expression)         |
-| `editor-inference` | The inference node selected (harness, model, effort, session, Liquid template)                  |
-| `editor-script`    | The script node selected (command, args, cwd, env, stdin)                                       |
-| `editor-mutate`    | The mutate node selected (operations with a Liquid content field)                               |
-| `editor-subloop`   | The subloop node selected (subloop picker with the child's trigger input and return)            |
-| `editor-wait`      | The wait node selected (mode, prompt, input schema, expose-to checkboxes)                       |
-| `editor-heartbeat` | The heartbeat node selected (interval, probe, JSONata `until`, deadline)                        |
-| `editor-exit`      | The exit node selected (criteria, default, loop back, return mapping)                           |
-| `editor-search`    | The inference node's template with CodeMirror's search panel open (Ctrl+F) and a match selected |
-| `runs`             | Runs list with filters and four runs (waiting, succeeded, cancelled, failed)                    |
-| `inspector`        | Run inspector on a waiting run: input form, timeline (live), thread at the last event           |
-| `events`           | Events list with two inbound events and their payloads                                          |
-| `settings`         | Settings, top of the page (model catalog with a disabled model, defaults)                       |
-| `api-key`          | A second API instance with `GG_REQUIRE_API_KEY=true`: the "API key required" panel              |
-| `not-found`        | An unknown route                                                                                |
-| `offline`          | Loops with the browser offline: the offline banner                                              |
-| `update-toast`     | Loops with a new build waiting (`graphgoblinPwa.simulateUpdate()`): the update toast            |
+| File                  | Screen                                                                                          |
+| --------------------- | ----------------------------------------------------------------------------------------------- |
+| `loops`               | Loops list with create, import, and six loops in every publish state and last-run status        |
+| `editor-trigger`      | Editor, `nightly-triage` (one node of each kind and a loop-back), the trigger node selected     |
+| `editor-decision`     | The same loop, the decision node selected (routes, Liquid question, JSONata expression)         |
+| `editor-inference`    | The inference node selected (harness, model, effort, session, Liquid template)                  |
+| `editor-script`       | The script node selected (command, args, cwd, env, stdin)                                       |
+| `editor-mutate`       | The mutate node selected (operations with a Liquid content field)                               |
+| `editor-subloop`      | The subloop node selected (subloop picker with the child's trigger input and return)            |
+| `editor-wait`         | The wait node selected (mode, prompt, input schema, expose-to checkboxes)                       |
+| `editor-heartbeat`    | The heartbeat node selected (interval, probe, JSONata `until`, deadline)                        |
+| `editor-exit`         | The exit node selected (criteria, default, loop back, return mapping)                           |
+| `editor-search`       | The inference node's template with CodeMirror's search panel open (Ctrl+F) and a match selected |
+| `runs`                | Runs list with filters and four runs (waiting, succeeded, cancelled, failed)                    |
+| `inspector`           | Run inspector on a waiting run: input form, timeline (live), thread at the last event           |
+| `events`              | Events list with two inbound events and their payloads                                          |
+| `settings`            | Settings, top of the page (Appearance, model catalog with a disabled model)                     |
+| `settings-appearance` | Settings → Appearance with the keyboard on the theme control: the chosen theme focused          |
+| `api-key`             | A second API instance with `GG_REQUIRE_API_KEY=true`: the "API key required" panel              |
+| `not-found`           | An unknown route                                                                                |
+| `offline`             | Loops with the browser offline: the offline banner                                              |
+| `update-toast`        | Loops with a new build waiting (`graphgoblinPwa.simulateUpdate()`): the update toast            |
 
 ## Differences from the approved sample
 
 The sample is `docs/design/visual-direction/sample.html`. The cutover matches its tokens, type, surfaces, buttons, fields, badges, alerts, cards, tables, header and navigation, node cards, palette, property panel, validation panel, inspector, toast, and offline banner in both themes. Where the app differs:
 
-- **Theme control.** The header has no System, Light, and Dark control: that is #11. Dark is set statically.
-- **Waiting-for-input dot.** `MainNav` draws the magenta dot (with screen-reader text) when an item has `attention`, but nothing feeds it yet, so no screenshot shows it. A cheap data source (for example a waiting-for-input count from the runs the app already polls) is a follow-up.
+- **Theme control.** Settings → Appearance offers Dark (the default) and Light, remembered per browser and shown before first paint; the header has no theme control and there is no System option yet (#11).- **Waiting-for-input dot.** `MainNav` draws the magenta dot (with screen-reader text) when an item has `attention`, but nothing feeds it yet, so no screenshot shows it. A cheap data source (for example a waiting-for-input count from the runs the app already polls) is a follow-up.
 - **Loops row actions.** Edit stays a link and Export and Delete stay ghost buttons in the new tokens; the bordered action group with icons and the soft destructive Delete are #6.
 - **Form controls.** Booleans are native checkboxes in the accent colour, optional booleans and enums are selects, and the file picker is the native input with its button drawn like an outline button. The switch, segmented controls, toggle chips, compact route rows, and the one-row wait form are #8.
 - **Editor at narrow widths.** No palette rail or bottom sheet at 1024 px and below; the palette (200 px) and side panel (380 px) keep their widths, so at 1024 px the canvas is narrower than before. Narrow layouts are #41.
@@ -51,6 +53,7 @@ The sample is `docs/design/visual-direction/sample.html`. The cutover matches it
 
 ## Checks beyond the screenshots
 
-- **Forced colours** (`forced-colors: active`, both themes): focus rings stay visible (2 px outline in the system colour), buttons, fields, cards, and badges keep their boundaries, the selected canvas node keeps its 2 px outline, and the current timeline row keeps an outline.
+- **Forced colours** (`forced-colors: active`, both themes): focus rings stay visible (2 px outline in the system colour), buttons, fields, cards, and badges keep their boundaries, the selected canvas node keeps its 2 px outline, the current timeline row keeps an outline, the chosen theme in Settings → Appearance keeps an outline, and the header's 2 px violet-to-magenta hairline gives way to a 1 px border.
 - **Reduced motion:** `--duration-*` resolve to 0 s, transitions collapse to the global 0.01 ms rule, and no keyframe animation runs (`animation: none`; `document.getAnimations()` is empty), so the running and live pulses hold at full opacity. The first pass only shortened animations to 0.01 ms, which left the pulse running and its glyph faded (I7-QA-03 in `docs/qa/2026-10-04-issue-7-qa.md`); `apps/web/e2e/issue-7-qa.spec.ts` covers it.
 - **200% zoom** (a 1440x900 window at 200%, a 720x450 CSS viewport): no horizontal page scroll on Loops, Runs, Run inspector, Events, Settings, or the editor. Wide tables scroll sideways inside their cards. The editor's canvas is narrow at that size (#41).
+- **Long text:** a 120-character loop name ends in an ellipsis in the editor toolbar (full name on hover and as the heading's accessible name), and a 350-character word in an alert, or an overlong badge or button label, stays inside its card (I7-QA-01 and I7-QA-02; `apps/web/e2e/issue-7-qa.spec.ts`). In the Loops table such a name widens the table, which scrolls inside its card.
