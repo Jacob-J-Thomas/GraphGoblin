@@ -1,5 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
-import { Alert, Button } from './ui.js';
+import { Alert, Button } from './ui/index.js';
 
 interface State {
   error: Error | undefined;

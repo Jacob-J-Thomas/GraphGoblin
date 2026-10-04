@@ -5,7 +5,7 @@ import {
   type NodeInput,
 } from '@graphgoblin/contracts';
 import { useState } from 'react';
-import { Button, Input, Label, Select } from '../components/ui.js';
+import { Button, Input, Label, Select } from '../components/ui/index.js';
 import { SchemaForm } from '../forms/SchemaForm.js';
 import { canvasPorts, KIND_INFO, type EditorIssue } from './model.js';
 import { SubloopPicker } from './SubloopPicker.js';

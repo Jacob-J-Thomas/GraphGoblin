@@ -7,7 +7,7 @@ import { Link, useParams } from 'react-router';
 import { useApi } from '../api/context.js';
 import { keys, useLoop } from '../api/queries.js';
 import { ErrorState } from '../components/status.js';
-import { Alert, Badge, Button } from '../components/ui.js';
+import { Alert, Badge, Button } from '../components/ui/index.js';
 import {
   clearSetAsideDraft,
   loadLocalDraft,

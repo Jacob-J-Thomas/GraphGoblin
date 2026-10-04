@@ -7,7 +7,7 @@ import { Link, useParams } from 'react-router';
 import { useApi } from '../api/context.js';
 import { keys, useRun, useRunThread } from '../api/queries.js';
 import { QueryState, RunStatusBadge } from '../components/status.js';
-import { Alert, Badge, Button, Card } from '../components/ui.js';
+import { Alert, Badge, Button, Card } from '../components/ui/index.js';
 import { JsonSchemaForm } from '../forms/JsonSchemaForm.js';
 import { errorMessage, formatDateTime, prettyJson } from '../lib/utils.js';
 import {

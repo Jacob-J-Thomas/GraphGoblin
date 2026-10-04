@@ -4,7 +4,7 @@
  */
 import { useId, useState, type ReactNode } from 'react';
 import { get, useController, useFormContext } from 'react-hook-form';
-import { Button, Input, Label, Select, Textarea } from '../components/ui.js';
+import { Button, Input, Label, Select, Textarea } from '../components/ui/index.js';
 import { parseJson, prettyJson } from '../lib/utils.js';
 import { CodeEditor } from './CodeEditor.js';
 import { CodeField } from './CodeField.js';

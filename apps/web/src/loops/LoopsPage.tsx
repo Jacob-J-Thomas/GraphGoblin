@@ -6,7 +6,7 @@ import { Link, useNavigate } from 'react-router';
 import { useApi } from '../api/context.js';
 import { keys, useLoops, useRuns } from '../api/queries.js';
 import { QueryState, RunStatusBadge } from '../components/status.js';
-import { Alert, Badge, Button, Card, Input, Label, Table, Td, Th } from '../components/ui.js';
+import { Alert, Badge, Button, Card, Input, Label, Table, Td, Th } from '../components/ui/index.js';
 import { clearLocalDraft } from '../drafts/local-drafts.js';
 import { newLoopDefinition } from '../editor/model.js';
 import { downloadJson, errorMessage, fileSlug, formatDateTime, parseJson } from '../lib/utils.js';

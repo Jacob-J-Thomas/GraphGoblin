@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { FormProvider, useForm, type FieldValues, type Resolver } from 'react-hook-form';
-import { Label, Select } from '../components/ui.js';
+import { Label, Select } from '../components/ui/index.js';
 import { Field, joinPath } from './fields.js';
 import {
   humanize,

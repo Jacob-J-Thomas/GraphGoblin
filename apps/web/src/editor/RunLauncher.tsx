@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useApi } from '../api/context.js';
-import { Alert, Label, Select } from '../components/ui.js';
+import { Alert, Label, Select } from '../components/ui/index.js';
 import { JsonSchemaForm } from '../forms/JsonSchemaForm.js';
 import { errorMessage } from '../lib/utils.js';
 

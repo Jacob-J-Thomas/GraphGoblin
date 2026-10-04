@@ -24,7 +24,7 @@ import {
   Table,
   Td,
   Th,
-} from '../components/ui.js';
+} from '../components/ui/index.js';
 import { errorMessage, formatDateTime } from '../lib/utils.js';
 
 const EFFORTS = EffortSchema.options;

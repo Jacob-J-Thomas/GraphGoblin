@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { Button, Card, Input, Label } from '../components/ui.js';
+import { Button, Card, Input, Label } from '../components/ui/index.js';
 import { syncApiKeyAcrossTabs, useApiKeyStore } from './api-key.js';
 
 /**

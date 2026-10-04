@@ -1,29 +1,31 @@
 import type { RunStatus } from '@graphgoblin/contracts';
 import type { UseQueryResult } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
-import { errorMessage, isOfflineError } from '../lib/utils.js';
-import { Alert, Badge } from './ui.js';
+import { cn, errorMessage, isOfflineError } from '../lib/utils.js';
+import { StatusIcon } from './icons/index.js';
+import { Alert, Badge, type Tone } from './ui/index.js';
 
-/** Colour-blind-safe tones (blue for success, orange for failure) plus a text glyph. */
-const RUN_STATUS: Record<
-  RunStatus,
-  { tone: 'neutral' | 'good' | 'bad' | 'warn' | 'info'; glyph: string }
-> = {
-  queued: { tone: 'neutral', glyph: '…' },
-  running: { tone: 'info', glyph: '▶' },
-  waiting: { tone: 'warn', glyph: '⏸' },
-  paused: { tone: 'warn', glyph: '‖' },
-  succeeded: { tone: 'good', glyph: '✓' },
-  failed: { tone: 'bad', glyph: '✗' },
-  cancelled: { tone: 'neutral', glyph: '⊘' },
-  exhausted: { tone: 'bad', glyph: '↻' },
+/** Colour-blind-safe tones (blue for success, orange for failure), always with an icon. */
+const RUN_STATUS_TONE: Record<RunStatus, Tone> = {
+  queued: 'neutral',
+  running: 'info',
+  waiting: 'warn',
+  paused: 'warn',
+  succeeded: 'good',
+  failed: 'bad',
+  cancelled: 'neutral',
+  exhausted: 'bad',
 };
 
 export function RunStatusBadge({ status }: { status: RunStatus }) {
-  const { tone, glyph } = RUN_STATUS[status];
+  const running = status === 'running';
   return (
-    <Badge tone={tone} data-status={status}>
-      <span aria-hidden="true">{glyph}</span>
+    <Badge
+      tone={RUN_STATUS_TONE[status]}
+      data-status={status}
+      className={cn(running && 'glow-running')}
+    >
+      <StatusIcon status={status} className={cn(running && 'animate-pulse-soft')} />
       {status}
     </Badge>
   );
@@ -54,8 +56,7 @@ export function QueryState<T>({
   what: string;
   children: (data: T) => ReactNode;
 }) {
-  if (query.isPending)
-    return <p className="text-sm text-slate-500">Loading {what.toLowerCase()}…</p>;
+  if (query.isPending) return <p className="text-sm text-muted">Loading {what.toLowerCase()}…</p>;
   if (query.isError) return <ErrorState error={query.error} what={what} />;
   return <>{children(query.data)}</>;
 }

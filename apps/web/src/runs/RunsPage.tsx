@@ -3,7 +3,7 @@ import { RunStatusSchema } from '@graphgoblin/contracts';
 import { Link, useSearchParams } from 'react-router';
 import { useLoops, useRuns } from '../api/queries.js';
 import { QueryState, RunStatusBadge } from '../components/status.js';
-import { Button, Card, Label, Select, Table, Td, Th } from '../components/ui.js';
+import { Button, Card, Label, Select, Table, Td, Th } from '../components/ui/index.js';
 import { formatDateTime } from '../lib/utils.js';
 
 /** Runs across loops, filtered by loop, status, and parent run. Filters live in the URL. */

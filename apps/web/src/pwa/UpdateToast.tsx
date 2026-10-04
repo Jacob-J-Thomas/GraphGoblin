@@ -1,4 +1,4 @@
-import { Button } from '../components/ui.js';
+import { Button } from '../components/ui/index.js';
 import { usePwaStore } from './store.js';
 
 /** Shown when a new build is waiting. The update happens only after the user confirms. */

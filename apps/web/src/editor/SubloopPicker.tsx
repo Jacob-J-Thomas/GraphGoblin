@@ -2,7 +2,7 @@ import type { LoopDefinition } from '@graphgoblin/contracts';
 import { useState } from 'react';
 import { useLoop, useLoops } from '../api/queries.js';
 import { QueryState } from '../components/status.js';
-import { Input, Label, Select } from '../components/ui.js';
+import { Input, Label, Select } from '../components/ui/index.js';
 import { prettyJson } from '../lib/utils.js';
 
 /** What a published loop takes and returns, for choosing it as a subloop. */

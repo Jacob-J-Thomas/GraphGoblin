@@ -1,7 +1,7 @@
 import type { JsonSchema } from '@graphgoblin/contracts';
 import { validateJson } from '@graphgoblin/domain';
 import { useId, useState, type FormEvent } from 'react';
-import { Button, Input, Label, Select, Textarea } from '../components/ui.js';
+import { Button, Input, Label, Select, Textarea } from '../components/ui/index.js';
 import { parseJson } from '../lib/utils.js';
 
 interface PropertySchema {

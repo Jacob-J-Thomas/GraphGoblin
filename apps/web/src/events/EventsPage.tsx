@@ -1,7 +1,7 @@
 import { Link } from 'react-router';
 import { useInboundEvents } from '../api/queries.js';
 import { QueryState } from '../components/status.js';
-import { Table, Td, Th } from '../components/ui.js';
+import { Table, Td, Th } from '../components/ui/index.js';
 import { formatDateTime, prettyJson } from '../lib/utils.js';
 
 /** `api`, `run:<runId>`, or `webhook:<endpointId>` as a readable origin. */

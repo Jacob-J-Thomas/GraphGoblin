@@ -4,7 +4,7 @@ import {
   type LoopDefinitionInput,
 } from '@graphgoblin/contracts';
 import { z } from 'zod';
-import { Input, Label, Textarea } from '../components/ui.js';
+import { Input, Label, Textarea } from '../components/ui/index.js';
 import { SchemaForm } from '../forms/SchemaForm.js';
 import { useEditorStore } from './store.js';
 

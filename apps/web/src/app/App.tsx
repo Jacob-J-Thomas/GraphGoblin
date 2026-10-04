@@ -1,7 +1,7 @@
 import { NavLink, Navigate, Outlet, Route, Routes, useLocation, useParams } from 'react-router';
 import { ApiKeyPanel } from '../api/ApiKeyPanel.js';
 import { ErrorBoundary } from '../components/ErrorBoundary.js';
-import { Alert } from '../components/ui.js';
+import { Alert } from '../components/ui/index.js';
 import { EditorPage } from '../editor/EditorPage.js';
 import { EventsPage } from '../events/EventsPage.js';
 import { useOnline } from '../lib/online.js';
