@@ -8,7 +8,7 @@ export type Tone = 'neutral' | 'good' | 'bad' | 'warn' | 'info';
  * attention, violet running or information. Anything that carries meaning pairs a tone with an
  * icon or a word, never colour alone.
  */
-export const TONE_CLASSES: Record<Tone, string> = {
+const TONE_CLASSES: Record<Tone, string> = {
   neutral: 'bg-status-neutral-bg text-status-neutral-fg',
   good: 'bg-status-good-bg text-status-good-fg',
   bad: 'bg-status-bad-bg text-status-bad-fg',
@@ -16,7 +16,7 @@ export const TONE_CLASSES: Record<Tone, string> = {
   info: 'bg-status-info-bg text-status-info-fg',
 };
 
-export const badgeClasses = variants({
+const badgeClasses = variants({
   // The transparent border becomes visible in forced-colours mode, where backgrounds are dropped.
   base: 'inline-flex items-center rounded-full border border-transparent font-semibold leading-none whitespace-nowrap',
   variants: {

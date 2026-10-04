@@ -6,7 +6,7 @@ import { variants } from '../../lib/variants.js';
  * pressable ledge; secondary and outline sit on a 3:1 border with a one-pixel ledge; destructive is
  * solid red; ghost has no chrome until hover. Pressing nudges the button onto its ledge.
  */
-export const buttonClasses = variants({
+const buttonClasses = variants({
   base: [
     'relative inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-md border',
     'font-semibold leading-none cursor-pointer select-none no-underline',
@@ -37,8 +37,8 @@ export const buttonClasses = variants({
   defaults: { variant: 'default', size: 'md' },
 });
 
-export type ButtonVariant = 'default' | 'secondary' | 'outline' | 'destructive' | 'ghost';
-export type ButtonSize = 'sm' | 'md' | 'icon';
+type ButtonVariant = 'default' | 'secondary' | 'outline' | 'destructive' | 'ghost';
+type ButtonSize = 'sm' | 'md' | 'icon';
 
 export function Button({
   variant,
