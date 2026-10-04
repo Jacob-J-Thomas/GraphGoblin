@@ -5,11 +5,32 @@ import { useState, type ChangeEvent, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { useApi } from '../api/context.js';
 import { keys, useLoops, useRuns } from '../api/queries.js';
+import { Page, PageHeader } from '../components/layout/index.js';
 import { QueryState, RunStatusBadge } from '../components/status.js';
-import { Alert, Badge, Button, Card, Input, Label, Table, Td, Th } from '../components/ui.js';
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  FieldGroup,
+  HelpText,
+  Input,
+  Label,
+  Table,
+  Td,
+  Th,
+} from '../components/ui/index.js';
 import { clearLocalDraft } from '../drafts/local-drafts.js';
 import { newLoopDefinition } from '../editor/model.js';
 import { downloadJson, errorMessage, fileSlug, formatDateTime, parseJson } from '../lib/utils.js';
+
+/** The native file picker, its button drawn like an outline button. */
+const FILE_INPUT = [
+  'max-w-full cursor-pointer text-sm text-muted',
+  'file:mr-3 file:h-8 file:cursor-pointer file:rounded-md file:border file:border-strong',
+  'file:bg-surface-raised file:px-[11px] file:text-sm file:font-semibold file:text-default',
+  'file:shadow-ledge hover:file:bg-surface-hover',
+].join(' ');
 
 function PublishState({ loop }: { loop: LoopRecord }) {
   if (!loop.currentVersionId) return <Badge>draft only</Badge>;
@@ -44,8 +65,12 @@ function CreateLoop() {
     if (name.trim()) create.mutate(name.trim());
   };
   return (
-    <form onSubmit={submit} className="flex items-end gap-2" aria-label="Create loop">
-      <div>
+    <form
+      onSubmit={submit}
+      className="flex flex-wrap items-end gap-2 max-sm:w-full"
+      aria-label="Create loop"
+    >
+      <FieldGroup className="w-[300px] max-sm:flex-1">
         <Label htmlFor="new-loop-name">New loop name</Label>
         <Input
           id="new-loop-name"
@@ -53,12 +78,14 @@ function CreateLoop() {
           onChange={(e) => setName(e.target.value)}
           placeholder="nightly-triage"
         />
-      </div>
+      </FieldGroup>
       <Button type="submit" disabled={!name.trim() || create.isPending}>
         Create
       </Button>
       {create.isError ? (
-        <span className="text-xs text-orange-800">{errorMessage(create.error)}</span>
+        <HelpText tone="bad" className="basis-full">
+          {errorMessage(create.error)}
+        </HelpText>
       ) : null}
     </form>
   );
@@ -94,13 +121,13 @@ function ImportLoop() {
     importLoop.mutate(parsed.value as Record<string, unknown>);
   };
   return (
-    <div>
+    <FieldGroup>
       <Label htmlFor="import-loop">Import an exported loop (JSON)</Label>
       <input
         id="import-loop"
         type="file"
         accept="application/json,.json"
-        className="text-sm"
+        className={FILE_INPUT}
         onChange={(e) => void onFile(e)}
       />
       {message ? (
@@ -114,7 +141,7 @@ function ImportLoop() {
           ) : null}
         </Alert>
       ) : null}
-    </div>
+    </FieldGroup>
   );
 }
 
@@ -134,50 +161,56 @@ function LoopActions({ loop }: { loop: LoopRecord }) {
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: keys.loops }),
   });
   return (
-    <div className="flex flex-wrap items-center gap-1">
-      <Link
-        to={`/loops/${loop.id}/edit`}
-        className="rounded px-2 py-1 text-sm text-sky-800 hover:bg-slate-100"
-      >
-        Edit
-      </Link>
-      <Button
-        size="sm"
-        variant="ghost"
-        onClick={() => exportLoop.mutate()}
-        aria-label={`Export ${loop.name}`}
-      >
-        Export
-      </Button>
-      {confirming ? (
-        <>
-          <Button
-            size="sm"
-            variant="destructive"
-            onClick={() => remove.mutate()}
-            aria-label={`Confirm delete ${loop.name}`}
-          >
-            Confirm delete
-          </Button>
-          <Button size="sm" variant="ghost" onClick={() => setConfirming(false)}>
-            Keep
-          </Button>
-        </>
-      ) : (
+    <div className="flex flex-col items-end gap-1">
+      <div className="flex items-center justify-end gap-1 whitespace-nowrap">
+        <Link
+          to={`/loops/${loop.id}/edit`}
+          className="rounded-md px-2.5 py-1.5 text-sm font-semibold text-link hover:bg-surface-hover"
+        >
+          Edit
+        </Link>
         <Button
           size="sm"
           variant="ghost"
-          onClick={() => setConfirming(true)}
-          aria-label={`Delete ${loop.name}`}
+          onClick={() => exportLoop.mutate()}
+          aria-label={`Export ${loop.name}`}
         >
-          Delete
+          Export
         </Button>
-      )}
+        {confirming ? (
+          <>
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={() => remove.mutate()}
+              aria-label={`Confirm delete ${loop.name}`}
+            >
+              Confirm delete
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setConfirming(false)}>
+              Keep
+            </Button>
+          </>
+        ) : (
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setConfirming(true)}
+            aria-label={`Delete ${loop.name}`}
+          >
+            Delete
+          </Button>
+        )}
+      </div>
       {exportLoop.isError ? (
-        <span className="text-xs text-orange-800">{errorMessage(exportLoop.error)}</span>
+        <HelpText tone="bad" className="text-right">
+          {errorMessage(exportLoop.error)}
+        </HelpText>
       ) : null}
       {remove.isError ? (
-        <span className="text-xs text-orange-800">{errorMessage(remove.error)}</span>
+        <HelpText tone="bad" className="text-right">
+          {errorMessage(remove.error)}
+        </HelpText>
       ) : null}
     </div>
   );
@@ -188,10 +221,10 @@ export function LoopsPage() {
   const runsQuery = useRuns({ limit: 500 }, 5000);
   const latest = latestRuns(runsQuery.data ?? []);
   return (
-    <div className="space-y-3 p-4">
-      <h1 className="text-lg font-semibold">Loops</h1>
+    <Page>
+      <PageHeader title="Loops" />
       <Card>
-        <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-5">
           <CreateLoop />
           <ImportLoop />
         </div>
@@ -199,60 +232,64 @@ export function LoopsPage() {
       <QueryState query={loopsQuery} what="Loops">
         {(items) =>
           items.length === 0 ? (
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-muted">
               No loops yet. Create one above or import an export.
             </p>
           ) : (
-            <Table>
-              <thead>
-                <tr>
-                  <Th>Name</Th>
-                  <Th>State</Th>
-                  <Th>Last run</Th>
-                  <Th>Updated</Th>
-                  <Th>Actions</Th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((loop) => {
-                  const run = latest.get(loop.id);
-                  return (
-                    <tr key={loop.id}>
-                      <Td>
-                        <Link
-                          to={`/loops/${loop.id}/edit`}
-                          className="font-medium text-slate-900 hover:underline"
-                        >
-                          {loop.name}
-                        </Link>
-                        {loop.description ? (
-                          <p className="text-xs text-slate-500">{loop.description}</p>
-                        ) : null}
-                      </Td>
-                      <Td>
-                        <PublishState loop={loop} />
-                      </Td>
-                      <Td>
-                        {run ? (
-                          <Link to={`/runs/${run.id}`}>
-                            <RunStatusBadge status={run.status} />
+            <Card flush>
+              <Table>
+                <thead>
+                  <tr>
+                    <Th>Name</Th>
+                    <Th>State</Th>
+                    <Th>Last run</Th>
+                    <Th>Updated</Th>
+                    <Th className="w-px text-right">Actions</Th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((loop) => {
+                    const run = latest.get(loop.id);
+                    return (
+                      <tr key={loop.id}>
+                        <Td>
+                          <Link
+                            to={`/loops/${loop.id}/edit`}
+                            className="text-[15px] font-semibold text-default no-underline hover:underline"
+                          >
+                            {loop.name}
                           </Link>
-                        ) : (
-                          <span className="text-xs text-slate-500">never run</span>
-                        )}
-                      </Td>
-                      <Td className="text-xs">{formatDateTime(loop.updatedAt)}</Td>
-                      <Td>
-                        <LoopActions loop={loop} />
-                      </Td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </Table>
+                          {loop.description ? (
+                            <p className="mt-0.5 text-sm text-muted">{loop.description}</p>
+                          ) : null}
+                        </Td>
+                        <Td>
+                          <PublishState loop={loop} />
+                        </Td>
+                        <Td>
+                          {run ? (
+                            <Link to={`/runs/${run.id}`}>
+                              <RunStatusBadge status={run.status} />
+                            </Link>
+                          ) : (
+                            <span className="text-sm text-muted">never run</span>
+                          )}
+                        </Td>
+                        <Td className="text-sm whitespace-nowrap text-muted">
+                          {formatDateTime(loop.updatedAt)}
+                        </Td>
+                        <Td>
+                          <LoopActions loop={loop} />
+                        </Td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </Table>
+            </Card>
           )
         }
       </QueryState>
-    </div>
+    </Page>
   );
 }

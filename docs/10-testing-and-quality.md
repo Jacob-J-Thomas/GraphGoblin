@@ -44,15 +44,21 @@ The first pass (WP-D2, 2026-10-03) drove the built app with Playwright on Micros
 2. Typecheck every package, test files included.
 3. Lint.
 4. dependency-cruiser: layer rules and no circular imports.
-5. Unit tests with coverage thresholds.
-6. Licence allowlist check over the full dependency tree.
-7. Generated reference docs are current (`pnpm check:docs`).
-8. Dependency audit for known vulnerabilities, failing on high and critical.
-9. Build every package and app.
-10. Playwright E2E on the built app.
-11. Build the container image on the default branch.
+5. Design token guard: no palette classes or colour literals in web components (`pnpm check:tokens`).
+6. Unit tests with coverage thresholds.
+7. Licence allowlist check over the full dependency tree.
+8. Generated reference docs are current (`pnpm check:docs`).
+9. Design token contrast table is current and every enforced pair passes (`pnpm check:contrast`).
+10. Dependency audit for known vulnerabilities, failing on high and critical.
+11. Build every package and app.
+12. Playwright E2E on the built app.
+13. Build the container image on the default branch.
 
 Nightly: live smoke suite, and the test matrix against both SQLite and Postgres once `adapter-postgres` exists.
+
+`pnpm check` also runs `check:tokens` after `check:layers` and `check:contrast` at the end. The token guard checks web source (`.ts`, `.tsx`, `.css`), `index.html`, and `vite.config.ts` for Tailwind palette colour utilities and colour literals in CSS declarations, style/colour properties, and arbitrary colour utilities. CSS named colours are checked only in these colour-setting contexts; prose, identifiers, URLs, and non-colour hex data are permitted. `transparent`, `current`, `currentColor`, and token references are permitted. This static check does not evaluate computed JavaScript values. Tests and `__fixtures__` are skipped. `src/styles/` is the only directory allowlist; there are no inline suppressions. The explicit `CONFIG_EXCEPTIONS` list in the script starts empty and may contain one named, exact palette declaration per config file (a theme-colour meta tag in HTML or a named constant in Vite), never a whole-file or whole-value exemption.
+
+`pnpm docs:contrast` generates `docs/qa/design-contrast.md` from `apps/web/src/styles/tokens.css` and `tooling/scripts/design-contrast.pairs.json`; `check:contrast` rejects a missing/stale table or an enforced pair below 4.5:1 for text or 3:1 for non-text, in either theme. Focus-ring pairs cover every declared surface; decorative pairs are reported without enforcement. The approved palette uses opaque sRGB hex values; unsupported colours fail clearly. Use `--tokens <css>` or `GG_DESIGN_TOKENS` to override the input and `--output <md>` for a temporary test table. Node's built-in runner discovers the tooling unit and CLI fixture tests through the existing `tooling` test commands.
 
 ## Fixture and SDK drift management (Decided)
 

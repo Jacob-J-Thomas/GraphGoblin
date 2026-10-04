@@ -1,7 +1,16 @@
 import type { JsonSchema } from '@graphgoblin/contracts';
 import { validateJson } from '@graphgoblin/domain';
 import { useId, useState, type FormEvent } from 'react';
-import { Button, Input, Label, Select, Textarea } from '../components/ui.js';
+import {
+  Button,
+  Checkbox,
+  FieldGroup,
+  HelpText,
+  Input,
+  Label,
+  Select,
+  Textarea,
+} from '../components/ui/index.js';
 import { parseJson } from '../lib/utils.js';
 
 interface PropertySchema {
@@ -87,7 +96,7 @@ export function JsonSchemaForm({
   };
 
   return (
-    <form onSubmit={submit} noValidate aria-label={submitLabel}>
+    <form onSubmit={submit} noValidate aria-label={submitLabel} className="grid gap-field">
       {properties ? (
         Object.entries(properties).map(([key, prop]) => {
           const fieldId = `${id}-${key}`;
@@ -95,19 +104,20 @@ export function JsonSchemaForm({
           const label = prop.title ?? key;
           if (type === 'boolean') {
             return (
-              <div key={key} className="mb-2 flex items-center gap-2">
-                <input
+              <div key={key} className="flex items-center gap-2">
+                <Checkbox
                   id={fieldId}
-                  type="checkbox"
                   checked={values[key] === true}
                   onChange={(e) => setValues({ ...values, [key]: e.target.checked })}
                 />
-                <Label htmlFor={fieldId}>{label}</Label>
+                <Label htmlFor={fieldId} className="cursor-pointer">
+                  {label}
+                </Label>
               </div>
             );
           }
           return (
-            <div key={key} className="mb-2">
+            <FieldGroup key={key} className="max-w-[440px]">
               <Label htmlFor={fieldId}>{label}</Label>
               {type === 'enum' ? (
                 <Select
@@ -136,14 +146,12 @@ export function JsonSchemaForm({
                   onChange={(e) => setValues({ ...values, [key]: e.target.value })}
                 />
               )}
-              {prop.description ? (
-                <p className="text-xs text-slate-500">{prop.description}</p>
-              ) : null}
-            </div>
+              {prop.description ? <HelpText>{prop.description}</HelpText> : null}
+            </FieldGroup>
           );
         })
       ) : (
-        <div className="mb-2">
+        <FieldGroup className="max-w-[440px]">
           <Label htmlFor={`${id}-json`}>Input (JSON)</Label>
           <Textarea
             id={`${id}-json`}
@@ -151,18 +159,20 @@ export function JsonSchemaForm({
             placeholder="{}"
             onChange={(e) => setRaw(e.target.value)}
           />
-        </div>
+        </FieldGroup>
       )}
       {errors.length > 0 ? (
-        <ul role="alert" className="mb-2 list-disc pl-4 text-xs text-orange-800">
+        <ul role="alert" className="list-disc pl-4 text-xs font-medium text-status-bad-fg">
           {errors.map((e, i) => (
             <li key={i}>{e}</li>
           ))}
         </ul>
       ) : null}
-      <Button type="submit" disabled={busy}>
-        {submitLabel}
-      </Button>
+      <div>
+        <Button type="submit" disabled={busy}>
+          {submitLabel}
+        </Button>
+      </div>
     </form>
   );
 }

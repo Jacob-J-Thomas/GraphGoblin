@@ -1,0 +1,181 @@
+/*
+ * Tailwind v4 theme: maps Tailwind's utility namespaces onto the semantic tokens in tokens.css, so
+ * components write `bg-surface-raised`, `text-muted`, `border-default`, `ring-focus`, and so on.
+ *
+ * `inline reference`: every utility references the token itself (`var(--surface-raised)`) and
+ * Tailwind declares no variables of its own, so tokens.css stays the only place a value lives and a
+ * theme swap (data-theme) needs no rebuild. The namespaces:
+ *
+ *   --color-*         background, fill, stroke, ring, outline, and text: surfaces, accent, danger,
+ *                     status tones, node kinds, the focus ring, code, canvas, and mascot colours
+ *   --text-color-*    text only: text-default, text-muted, text-subtle, text-link, ...
+ *   --border-color-*  borders and dividers only: border-default, border-strong, ...
+ *   --text-*          font sizes (the tokens are --font-size-*, because Tailwind owns --text-*)
+ */
+
+@theme inline reference {
+  /* Close Tailwind's default scales: only the token-mapped names below exist, so a raw palette
+     class (bg-slate-100), a default radius or shadow, or a default type size produces no CSS. */
+  --color-*: initial;
+  --text-*: initial;
+  --font-weight-*: initial;
+  --radius-*: initial;
+  --shadow-*: initial;
+  --ease-*: initial;
+
+  /* Surfaces */
+  --color-surface-app: var(--surface-app);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-surface-overlay: var(--surface-overlay);
+  --color-surface-hover: var(--surface-hover);
+  --color-surface-control: var(--surface-control);
+  --color-surface-field: var(--surface-field);
+  --color-surface-inverse: var(--surface-inverse);
+  --color-surface-inverse-raised: var(--surface-inverse-raised);
+
+  /* Accent: goblin green, plus the reserved highlight (magenta) and glow (purple). */
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-active: var(--accent-active);
+  --color-accent-subtle: var(--accent-subtle);
+  --color-accent-on-subtle: var(--accent-on-subtle);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-highlight: var(--accent-highlight);
+  --color-accent-highlight-subtle: var(--accent-highlight-subtle);
+  --color-accent-glow: var(--accent-glow);
+
+  /* Danger */
+  --color-danger: var(--danger);
+  --color-danger-hover: var(--danger-hover);
+  --color-danger-subtle: var(--danger-subtle);
+  --color-danger-on-subtle: var(--danger-on-subtle);
+
+  /* Status tones */
+  --color-status-neutral-bg: var(--status-neutral-bg);
+  --color-status-neutral-fg: var(--status-neutral-fg);
+  --color-status-neutral-border: var(--status-neutral-border);
+  --color-status-good-bg: var(--status-good-bg);
+  --color-status-good-fg: var(--status-good-fg);
+  --color-status-good-border: var(--status-good-border);
+  --color-status-bad-bg: var(--status-bad-bg);
+  --color-status-bad-fg: var(--status-bad-fg);
+  --color-status-bad-border: var(--status-bad-border);
+  --color-status-warn-bg: var(--status-warn-bg);
+  --color-status-warn-fg: var(--status-warn-fg);
+  --color-status-warn-border: var(--status-warn-border);
+  --color-status-info-bg: var(--status-info-bg);
+  --color-status-info-fg: var(--status-info-fg);
+  --color-status-info-border: var(--status-info-border);
+
+  /* Node kinds */
+  --color-kind-on: var(--kind-on);
+  --color-kind-trigger: var(--kind-trigger);
+  --color-kind-trigger-subtle: var(--kind-trigger-subtle);
+  --color-kind-decision: var(--kind-decision);
+  --color-kind-decision-subtle: var(--kind-decision-subtle);
+  --color-kind-inference: var(--kind-inference);
+  --color-kind-inference-subtle: var(--kind-inference-subtle);
+  --color-kind-script: var(--kind-script);
+  --color-kind-script-subtle: var(--kind-script-subtle);
+  --color-kind-mutate: var(--kind-mutate);
+  --color-kind-mutate-subtle: var(--kind-mutate-subtle);
+  --color-kind-subloop: var(--kind-subloop);
+  --color-kind-subloop-subtle: var(--kind-subloop-subtle);
+  --color-kind-wait: var(--kind-wait);
+  --color-kind-wait-subtle: var(--kind-wait-subtle);
+  --color-kind-heartbeat: var(--kind-heartbeat);
+  --color-kind-heartbeat-subtle: var(--kind-heartbeat-subtle);
+  --color-kind-exit: var(--kind-exit);
+  --color-kind-exit-subtle: var(--kind-exit-subtle);
+
+  /* The kind colours of the nearest element that sets --k and --k-subtle (editor/KindChip.tsx):
+     bg-kind, bg-kind-subtle, border-kind, text-kind. */
+  --color-kind: var(--k);
+  --color-kind-subtle: var(--k-subtle);
+
+  /* Focus ring (ring-focus, outline-focus) */
+  --color-focus: var(--focus-ring);
+
+  /* Code and canvas surfaces used outside their own stylesheets */
+  --color-code-bg: var(--code-bg);
+  --color-code-fg: var(--code-fg);
+  --color-canvas-bg: var(--canvas-bg);
+  --color-canvas-edge-loop: var(--canvas-edge-loop);
+  --color-canvas-node-selected: var(--canvas-node-selected);
+
+  /* Mascot (Logo) */
+  --color-mascot-skin: var(--mascot-skin);
+  --color-mascot-shade: var(--mascot-shade);
+  --color-mascot-ink: var(--mascot-ink);
+  --color-mascot-glint: var(--mascot-glint);
+  --color-mascot-tooth: var(--mascot-tooth);
+  --color-mascot-port: var(--mascot-port);
+
+  /* Text colours */
+  --text-color-default: var(--text-default);
+  --text-color-muted: var(--text-muted);
+  --text-color-subtle: var(--text-subtle);
+  --text-color-inverse: var(--text-inverse);
+  --text-color-inverse-muted: var(--text-inverse-muted);
+  --text-color-link: var(--text-link);
+  --text-color-on-accent: var(--text-on-accent);
+  --text-color-on-danger: var(--text-on-danger);
+
+  /* Border colours */
+  --border-color-default: var(--border-default);
+  --border-color-strong: var(--border-strong);
+  --border-color-subtle: var(--border-subtle);
+  --border-color-inverse: var(--border-inverse);
+  --border-color-field-hover: var(--text-muted);
+
+  /* Type */
+  --font-sans: var(--font-ui);
+  --font-mono: var(--font-code);
+  --text-2xs: var(--font-size-2xs);
+  --text-xs: var(--font-size-xs);
+  --text-sm: var(--font-size-sm);
+  --text-md: var(--font-size-md);
+  --text-lg: var(--font-size-lg);
+  --text-xl: var(--font-size-xl);
+  --text-2xl: var(--font-size-2xl);
+  --font-weight-regular: var(--font-weight-regular);
+  --font-weight-medium: var(--font-weight-medium);
+  --font-weight-semibold: var(--font-weight-semibold);
+  --font-weight-bold: var(--font-weight-bold);
+  --leading-tight: var(--line-height-tight);
+  --leading-snug: var(--line-height-snug);
+  --leading-normal: var(--line-height-normal);
+  --tracking-tight: var(--letter-spacing-tight);
+  --tracking-wide: var(--letter-spacing-wide);
+
+  /* Space: Tailwind's 4px scale is the token scale; the named gaps get their own utilities. */
+  --spacing-field: var(--space-field);
+  --spacing-stack: var(--space-stack);
+  --spacing-section: var(--space-section);
+  --spacing-page: var(--space-page);
+
+  /* Radius, elevation, motion */
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --radius-full: var(--radius-full);
+  --shadow-1: var(--shadow-1);
+  --shadow-2: var(--shadow-2);
+  --shadow-3: var(--shadow-3);
+  /* Pressable ledges under buttons */
+  --shadow-ledge: 0 1px 0 var(--border-strong);
+  --shadow-ledge-accent: 0 2px 0 var(--accent-strong);
+  --shadow-ledge-danger: 0 1px 0 var(--danger-hover);
+  /* The bar beside the current row of a list (the run timeline) */
+  --shadow-current-row: inset 3px 0 0 var(--accent-strong);
+  --ease-standard: var(--ease-standard);
+  --ease-emphasised: var(--ease-emphasised);
+}
+
+/* Transitions default to the motion tokens, which drop to 0 ms under prefers-reduced-motion. */
+@theme inline {
+  --default-transition-duration: var(--duration-fast);
+  --default-transition-timing-function: var(--ease-standard);
+}

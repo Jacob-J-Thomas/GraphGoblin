@@ -237,7 +237,7 @@ test('keyboard only: add a node, connect it, and publish', async ({ page }) => {
   await waitForm.getByLabel('To').selectOption('done');
   await waitForm.getByRole('button', { name: 'Connect' }).focus();
   await page.keyboard.press('Enter');
-  await expect(page.getByText('✓ Ready to publish')).toBeVisible();
+  await expect(page.getByText('Ready to publish')).toBeVisible();
   await page.getByRole('button', { name: 'Publish' }).focus();
   await page.keyboard.press('Enter');
   await expect(page.getByText('Published version 1.')).toBeVisible();

@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { FormProvider, useForm, type FieldValues, type Resolver } from 'react-hook-form';
-import { Label, Select } from '../components/ui.js';
+import { FieldGroup, Label, Select } from '../components/ui/index.js';
 import { Field, joinPath } from './fields.js';
 import {
   humanize,
@@ -116,9 +116,14 @@ export function SchemaForm({
   return (
     <ParseErrorContext value={parseErrorChannel}>
       <FormProvider {...form}>
-        <form aria-label={label} noValidate onSubmit={(e) => e.preventDefault()}>
+        <form
+          aria-label={label}
+          noValidate
+          onSubmit={(e) => e.preventDefault()}
+          className="grid gap-field"
+        >
           {shape.kind === 'union' ? (
-            <div className="mb-2">
+            <FieldGroup>
               <Label htmlFor={id}>{humanize(shape.discriminator ?? 'kind')}</Label>
               <Select
                 id={id}
@@ -131,7 +136,7 @@ export function SchemaForm({
                   </option>
                 ))}
               </Select>
-            </div>
+            </FieldGroup>
           ) : null}
           {variant.kind === 'object'
             ? Object.entries(variant.shape)
@@ -147,10 +152,10 @@ export function SchemaForm({
             : null}
           {issues.length > 0 ? (
             <div
-              className="mt-2 rounded border border-orange-300 bg-orange-50 p-2 text-xs"
+              className="grid gap-1 rounded-md border-l-4 border-status-bad-border bg-status-bad-bg px-3 py-2 text-xs leading-snug"
               aria-label="Config issues"
             >
-              <p className="font-semibold text-orange-900">Config issues</p>
+              <p className="font-semibold text-status-bad-fg">Config issues</p>
               <ul className="list-disc pl-4">
                 {issues.map((issue, index) => (
                   <li key={index}>

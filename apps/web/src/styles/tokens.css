@@ -1,0 +1,518 @@
+/*
+ * GraphGoblin design tokens (#7, ADR-0017). Copied from the approved visual direction
+ * (docs/design/visual-direction/tokens.css); the font faces moved to fonts.css. Dark is the
+ * default theme; light is the alternate.
+ *
+ * Two tiers. The primitive tier (palette scales) is referenced only by the semantic tier below it;
+ * components use semantic tokens only, through the Tailwind utilities in theme.css or the styles in
+ * this folder. A theme is a value swap: the semantic tier is declared once for light
+ * (:root, [data-theme='light']) and once for dark ([data-theme='dark']); component styles never
+ * change. index.html sets data-theme="dark" on <html> until #11 adds the theme control; the
+ * attribute may also sit on any element, so one subtree can show the other theme.
+ *
+ * This folder (apps/web/src/styles) is the only place in the app where colour literals may appear.
+ */
+
+/* ------------------------------------------------------------------------------------------ */
+/* Primitive tier: palette scales. Never referenced by components.                            */
+/* ------------------------------------------------------------------------------------------ */
+
+:root {
+  /* Goblin green: the accent. */
+  --green-50: #f1f9e9;
+  --green-100: #e0f2cc;
+  --green-200: #c3e69e;
+  --green-300: #a2d76b;
+  --green-400: #84c743;
+  --green-500: #6aaf2a;
+  --green-600: #528e1e;
+  --green-700: #3f701a;
+  --green-800: #315717;
+  --green-900: #264414;
+  --green-950: #16260c;
+
+  /* Brown: warm surfaces, the canvas grid, the loop-back edge, the mutate kind. */
+  --brown-50: #f8f3ec;
+  --brown-100: #f0e5d6;
+  --brown-200: #e2cfb4;
+  --brown-300: #cdb089;
+  --brown-400: #b48e5e;
+  --brown-500: #9a7142;
+  --brown-600: #7d5932;
+  --brown-700: #634627;
+  --brown-800: #4b361f;
+  --brown-900: #352718;
+  --brown-950: #221911;
+
+  /* Grey: slightly warm. 0 is white; 850 to 990 are the dark surfaces. */
+  --grey-0: #ffffff;
+  --grey-25: #fbfaf8;
+  --grey-50: #f6f5f2;
+  --grey-100: #edebe6;
+  --grey-200: #e0ddd6;
+  --grey-300: #cbc6bd;
+  --grey-400: #a8a298;
+  --grey-500: #847d72;
+  --grey-600: #6a645a;
+  --grey-700: #524c44;
+  --grey-800: #33302b;
+  --grey-850: #2b2723;
+  --grey-900: #26231f;
+  --grey-925: #1f1c18;
+  --grey-950: #1a1815;
+  --grey-975: #15120f;
+  --grey-990: #0e0c0a;
+
+  /* Magenta: highlight moments only, never a surface or a primary action. */
+  --magenta-50: #fdf0fa;
+  --magenta-100: #fadcf2;
+  --magenta-200: #f5b5e4;
+  --magenta-300: #ee85d0;
+  --magenta-400: #e254ba;
+  --magenta-500: #cc2e9f;
+  --magenta-600: #ad1e85;
+  --magenta-700: #8c186c;
+  --magenta-800: #6d1555;
+  --magenta-900: #4f1140;
+  --magenta-950: #2c0b22;
+
+  /* Status hues. Blue means success and orange means failure (colour-blind safe, with glyphs).
+     Violet doubles as the deep purple of the highlight moments. */
+  --blue-50: #eff5ff;
+  --blue-100: #dce8fe;
+  --blue-200: #bdd4fc;
+  --blue-300: #8fb6f8;
+  --blue-400: #5e92f0;
+  --blue-500: #3b73e0;
+  --blue-600: #2a5bc4;
+  --blue-700: #22489e;
+  --blue-800: #1e3b7e;
+  --blue-900: #1b3163;
+  --blue-950: #13213f;
+
+  --orange-50: #fff4ec;
+  --orange-100: #ffe4d0;
+  --orange-200: #fec7a0;
+  --orange-300: #fba068;
+  --orange-400: #f57b36;
+  --orange-500: #e35f14;
+  --orange-600: #c24a0c;
+  --orange-700: #9c3b0d;
+  --orange-800: #7c3110;
+  --orange-900: #632a10;
+  --orange-950: #351707;
+
+  --amber-50: #fff9e8;
+  --amber-100: #fef0c3;
+  --amber-200: #fde08a;
+  --amber-300: #fbcb4e;
+  --amber-400: #f5b420;
+  --amber-500: #dc9908;
+  --amber-600: #b57a04;
+  --amber-700: #8e5e08;
+  --amber-800: #74490d;
+  --amber-900: #5f3c10;
+  --amber-950: #2e2108;
+
+  --violet-50: #f5f2ff;
+  --violet-100: #eae4fe;
+  --violet-200: #d6cbfd;
+  --violet-300: #b8a5fa;
+  --violet-400: #9a7df4;
+  --violet-500: #7f5ae8;
+  --violet-600: #6a42d2;
+  --violet-700: #5833b0;
+  --violet-800: #482b8e;
+  --violet-900: #3b2672;
+  --violet-950: #211640;
+
+  --red-50: #fef2f2;
+  --red-100: #fde1e0;
+  --red-200: #fbc5c3;
+  --red-300: #f69b97;
+  --red-400: #ee6a64;
+  --red-500: #de4039;
+  --red-600: #cf342d;
+  --red-700: #a2241f;
+  --red-800: #841f1c;
+  --red-900: #6c1d1b;
+  --red-950: #2e0e0c;
+
+  /* Teal and slate: node-kind hues that carry no status meaning (subloop, script). */
+  --teal-50: #edfbf8;
+  --teal-100: #d0f4ee;
+  --teal-200: #a3e9de;
+  --teal-300: #6cd6c9;
+  --teal-400: #3bbdb0;
+  --teal-500: #1ea196;
+  --teal-600: #15827a;
+  --teal-700: #146862;
+  --teal-800: #14534f;
+  --teal-900: #134542;
+  --teal-950: #0a2624;
+
+  --slate-50: #f3f5f8;
+  --slate-100: #e4e9f0;
+  --slate-200: #cbd4e0;
+  --slate-300: #a8b6c8;
+  --slate-400: #8496ad;
+  --slate-500: #66798f;
+  --slate-600: #526377;
+  --slate-700: #424f60;
+  --slate-800: #333d4a;
+  --slate-900: #263039;
+  --slate-950: #161c22;
+}
+
+/* ------------------------------------------------------------------------------------------ */
+/* Semantic tier, light values: the only names components use.                                */
+/* ------------------------------------------------------------------------------------------ */
+
+:root,
+[data-theme='light'] {
+  color-scheme: light;
+
+  /* Surface */
+  --surface-app: var(--grey-50);
+  --surface-raised: var(--grey-0);
+  --surface-sunken: var(--grey-0);
+  --surface-overlay: var(--grey-0);
+  --surface-hover: var(--grey-100);
+  --surface-control: var(--grey-50);
+  --surface-field: var(--grey-0);
+  --surface-inverse: var(--grey-950);
+  --surface-inverse-raised: var(--grey-800);
+
+  /* Text */
+  --text-default: var(--grey-900);
+  --text-muted: var(--grey-700);
+  --text-subtle: var(--grey-600);
+  --text-inverse: var(--grey-0);
+  --text-inverse-muted: var(--grey-300);
+  --text-link: var(--green-700);
+  --text-on-accent: var(--grey-950);
+  --text-on-danger: var(--grey-0);
+
+  /* Border */
+  --border-default: var(--grey-200);
+  --border-strong: var(--grey-500);
+  --border-subtle: var(--grey-100);
+  --border-inverse: var(--grey-800);
+
+  /* Accent */
+  --accent: var(--green-400);
+  --accent-hover: var(--green-300);
+  --accent-active: var(--green-500);
+  --accent-subtle: var(--green-100);
+  --accent-on-subtle: var(--green-800);
+  --accent-strong: var(--green-700);
+  --accent-highlight: var(--magenta-600);
+  --accent-highlight-subtle: var(--magenta-50);
+  --accent-glow: var(--violet-500);
+  --accent-hairline: linear-gradient(
+    90deg,
+    var(--violet-400),
+    var(--magenta-400) 38%,
+    transparent 82%
+  );
+
+  /* Danger */
+  --danger: var(--red-600);
+  --danger-hover: var(--red-700);
+  --danger-subtle: var(--red-50);
+  --danger-on-subtle: var(--red-700);
+
+  /* Status: tinted background, foreground text and glyph, and an accent border (3:1). */
+  --status-neutral-bg: var(--grey-100);
+  --status-neutral-fg: var(--grey-800);
+  --status-neutral-border: var(--grey-500);
+  --status-good-bg: var(--blue-100);
+  --status-good-fg: var(--blue-800);
+  --status-good-border: var(--blue-600);
+  --status-bad-bg: var(--orange-100);
+  --status-bad-fg: var(--orange-800);
+  --status-bad-border: var(--orange-600);
+  --status-warn-bg: var(--amber-100);
+  --status-warn-fg: var(--amber-800);
+  --status-warn-border: var(--amber-600);
+  --status-info-bg: var(--violet-100);
+  --status-info-fg: var(--violet-800);
+  --status-info-border: var(--violet-600);
+
+  /* Node kind: a strong colour (chip, icon, stripe), a subtle fill, and the icon colour on it. */
+  --kind-on: var(--grey-0);
+  --kind-trigger: var(--green-600);
+  --kind-trigger-subtle: var(--green-50);
+  --kind-decision: var(--blue-600);
+  --kind-decision-subtle: var(--blue-50);
+  --kind-inference: var(--violet-600);
+  --kind-inference-subtle: var(--violet-50);
+  --kind-script: var(--slate-600);
+  --kind-script-subtle: var(--slate-50);
+  --kind-mutate: var(--brown-600);
+  --kind-mutate-subtle: var(--brown-50);
+  --kind-subloop: var(--teal-600);
+  --kind-subloop-subtle: var(--teal-50);
+  --kind-wait: var(--amber-600);
+  --kind-wait-subtle: var(--amber-50);
+  --kind-heartbeat: var(--magenta-600);
+  --kind-heartbeat-subtle: var(--magenta-50);
+  --kind-exit: var(--grey-900);
+  --kind-exit-subtle: var(--grey-100);
+
+  /* Focus: one ring colour per theme that holds 3:1 on every surface of that theme. */
+  --focus-ring: var(--green-600);
+  --focus-ring-width: 2px;
+  --focus-offset: 2px;
+
+  /* Code (CodeMirror theme hooks) */
+  --code-bg: var(--grey-25);
+  --code-active-line: var(--green-50);
+  --code-fg: var(--grey-900);
+  --code-gutter: var(--grey-600);
+  --code-keyword: var(--violet-700);
+  --code-string: var(--green-700);
+  --code-number: var(--blue-700);
+  --code-comment: var(--grey-600);
+  --code-operator: var(--brown-600);
+  /* Search matches (Ctrl+F): every match, and the selected one. */
+  --code-match: var(--amber-100);
+  --code-match-border: var(--amber-600);
+  --code-match-selected: var(--green-100);
+  --code-match-selected-border: var(--green-700);
+
+  /* Canvas (xyflow theme hooks) */
+  --canvas-bg: var(--grey-25);
+  --canvas-grid: var(--brown-200);
+  --canvas-edge: var(--grey-500);
+  --canvas-edge-selected: var(--green-700);
+  --canvas-edge-loop: var(--brown-500);
+  --canvas-handle: var(--grey-700);
+  --canvas-node-selected: var(--magenta-500);
+
+  /* Mascot (placeholder until #10): the same in both themes. */
+  --mascot-skin: var(--green-400);
+  --mascot-shade: var(--green-600);
+  --mascot-ink: var(--grey-990);
+  --mascot-glint: var(--magenta-400);
+  --mascot-tooth: var(--grey-25);
+  --mascot-port: var(--grey-100);
+
+  /* Elevation: shadows tinted with a warm surface-aware colour (an RGB triple). */
+  --shadow-color: 52 40 24;
+  --shadow-0: none;
+  --shadow-1: 0 1px 2px rgb(var(--shadow-color) / 0.08), 0 1px 1px rgb(var(--shadow-color) / 0.04);
+  --shadow-2:
+    0 4px 12px -2px rgb(var(--shadow-color) / 0.12), 0 2px 4px rgb(var(--shadow-color) / 0.06);
+  --shadow-3:
+    0 16px 40px -8px rgb(var(--shadow-color) / 0.22), 0 4px 12px rgb(var(--shadow-color) / 0.08);
+}
+
+/* ------------------------------------------------------------------------------------------ */
+/* Semantic tier, dark values: a designed palette, not an inversion. Neutral, slightly warm   */
+/* near-blacks; depth comes from surface steps and elevation, not from heavier borders.       */
+/* ------------------------------------------------------------------------------------------ */
+
+:root[data-theme='dark'],
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  /* Surface: fields and code < app < sunken wells < raised cards < overlay (sheets, toasts). */
+  --surface-app: var(--grey-975);
+  --surface-raised: var(--grey-925);
+  --surface-sunken: var(--grey-950);
+  --surface-overlay: var(--grey-900);
+  --surface-hover: var(--grey-800);
+  --surface-control: var(--grey-850);
+  --surface-field: var(--grey-990);
+  --surface-inverse: var(--grey-990);
+  --surface-inverse-raised: var(--grey-850);
+
+  /* Text */
+  --text-default: var(--grey-100);
+  --text-muted: var(--grey-300);
+  --text-subtle: var(--grey-400);
+  --text-inverse: var(--grey-100);
+  --text-inverse-muted: var(--grey-300);
+  --text-link: var(--green-300);
+  --text-on-accent: var(--grey-950);
+  --text-on-danger: var(--grey-0);
+
+  /* Border: quiet edges; control boundaries keep 3:1. */
+  --border-default: var(--grey-850);
+  --border-strong: var(--grey-500);
+  --border-subtle: var(--grey-900);
+  --border-inverse: var(--grey-850);
+
+  /* Accent: the same goblin lime, with a deeper edge. */
+  --accent: var(--green-400);
+  --accent-hover: var(--green-300);
+  --accent-active: var(--green-500);
+  --accent-subtle: var(--green-950);
+  --accent-on-subtle: var(--green-200);
+  --accent-strong: var(--green-600);
+  --accent-highlight: var(--magenta-400);
+  --accent-highlight-subtle: var(--magenta-950);
+  --accent-glow: var(--violet-400);
+
+  /* Danger */
+  --danger: var(--red-600);
+  --danger-hover: var(--red-700);
+  --danger-subtle: var(--red-950);
+  --danger-on-subtle: var(--red-300);
+
+  /* Status */
+  --status-neutral-bg: var(--grey-850);
+  --status-neutral-fg: var(--grey-200);
+  --status-neutral-border: var(--grey-500);
+  --status-good-bg: var(--blue-950);
+  --status-good-fg: var(--blue-200);
+  --status-good-border: var(--blue-400);
+  --status-bad-bg: var(--orange-950);
+  --status-bad-fg: var(--orange-200);
+  --status-bad-border: var(--orange-400);
+  --status-warn-bg: var(--amber-950);
+  --status-warn-fg: var(--amber-200);
+  --status-warn-border: var(--amber-500);
+  --status-info-bg: var(--violet-950);
+  --status-info-fg: var(--violet-200);
+  --status-info-border: var(--violet-400);
+
+  /* Node kind: bright chips with an ink icon, over deep tinted bands. */
+  --kind-on: var(--grey-950);
+  --kind-trigger: var(--green-400);
+  --kind-trigger-subtle: var(--green-950);
+  --kind-decision: var(--blue-400);
+  --kind-decision-subtle: var(--blue-950);
+  --kind-inference: var(--violet-400);
+  --kind-inference-subtle: var(--violet-950);
+  --kind-script: var(--slate-300);
+  --kind-script-subtle: var(--slate-950);
+  --kind-mutate: var(--brown-400);
+  --kind-mutate-subtle: var(--brown-950);
+  --kind-subloop: var(--teal-400);
+  --kind-subloop-subtle: var(--teal-950);
+  --kind-wait: var(--amber-400);
+  --kind-wait-subtle: var(--amber-950);
+  --kind-heartbeat: var(--magenta-400);
+  --kind-heartbeat-subtle: var(--magenta-950);
+  --kind-exit: var(--grey-200);
+  --kind-exit-subtle: var(--grey-850);
+
+  /* Focus */
+  --focus-ring: var(--green-400);
+
+  /* Code */
+  --code-bg: var(--grey-990);
+  --code-active-line: var(--green-950);
+  --code-fg: var(--grey-100);
+  --code-gutter: var(--grey-400);
+  --code-keyword: var(--violet-300);
+  --code-string: var(--green-300);
+  --code-number: var(--blue-300);
+  --code-comment: var(--grey-400);
+  --code-operator: var(--brown-300);
+  --code-match: var(--amber-950);
+  --code-match-border: var(--amber-500);
+  --code-match-selected: var(--green-950);
+  --code-match-selected-border: var(--green-400);
+
+  /* Canvas */
+  --canvas-bg: var(--grey-975);
+  --canvas-grid: var(--grey-800);
+  --canvas-edge: var(--grey-500);
+  --canvas-edge-selected: var(--green-400);
+  --canvas-edge-loop: var(--brown-400);
+  --canvas-handle: var(--grey-300);
+  --canvas-node-selected: var(--magenta-400);
+
+  /* Elevation: black shadows carry the depth; a faint top rim lifts raised surfaces. */
+  --shadow-color: 0 0 0;
+  --shadow-1: inset 0 1px 0 rgb(255 255 255 / 0.04), 0 1px 2px rgb(var(--shadow-color) / 0.45);
+  --shadow-2:
+    inset 0 1px 0 rgb(255 255 255 / 0.05), 0 8px 20px -6px rgb(var(--shadow-color) / 0.7),
+    0 2px 6px rgb(var(--shadow-color) / 0.4);
+  --shadow-3:
+    inset 0 1px 0 rgb(255 255 255 / 0.06), 0 24px 56px -12px rgb(var(--shadow-color) / 0.8),
+    0 8px 20px rgb(var(--shadow-color) / 0.5);
+}
+
+/* ------------------------------------------------------------------------------------------ */
+/* Type, space, radius, motion (theme independent)                                            */
+/* ------------------------------------------------------------------------------------------ */
+
+:root {
+  /* Families. --font-ui is the indirection #40 switches; components use --font-ui and --font-code. */
+  --font-sans: 'Geist', ui-sans-serif, system-ui, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  --font-ui: var(--font-sans);
+  --font-code: var(--font-mono);
+
+  /* Sizes (Tailwind's @theme maps these to its --text-* size namespace at the cutover). */
+  --font-size-2xs: 0.625rem; /* 10px */
+  --font-size-xs: 0.75rem; /* 12px */
+  --font-size-sm: 0.8125rem; /* 13px */
+  --font-size-md: 0.875rem; /* 14px: body */
+  --font-size-lg: 1rem; /* 16px */
+  --font-size-xl: 1.25rem; /* 20px */
+  --font-size-2xl: 1.75rem; /* 28px: page titles */
+
+  --line-height-tight: 1.2;
+  --line-height-snug: 1.35;
+  --line-height-normal: 1.5;
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --letter-spacing-tight: -0.02em;
+  --letter-spacing-wide: 0.06em;
+
+  /* Space: a 4px base, plus named gaps. */
+  --space-0: 0;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-field: var(--space-4);
+  --space-stack: var(--space-3);
+  --space-section: var(--space-6);
+  --space-page: var(--space-8);
+
+  /* Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* Motion */
+  --duration-fast: 120ms;
+  --duration-base: 180ms;
+  --duration-slow: 280ms;
+  --duration-pulse: 1600ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-emphasised: cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+@media (max-width: 640px) {
+  :root {
+    --space-page: var(--space-4);
+    --font-size-2xl: 1.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0ms;
+    --duration-base: 0ms;
+    --duration-slow: 0ms;
+    --duration-pulse: 0ms;
+  }
+}

@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useApi } from '../api/context.js';
-import { Alert, Label, Select } from '../components/ui.js';
+import { Alert, FieldGroup, Label, Select } from '../components/ui/index.js';
 import { JsonSchemaForm } from '../forms/JsonSchemaForm.js';
 import { errorMessage } from '../lib/utils.js';
 
@@ -35,16 +35,18 @@ export function RunLauncher({ loopId, published }: { loopId: string; published: 
   const trigger = triggers.find((t) => t.id === triggerId);
   const inputSchema = trigger?.config.subtype === 'manual' ? trigger.config.inputSchema : undefined;
   return (
-    <section aria-label="Start a run" className="rounded border border-slate-200 p-2">
-      <Label htmlFor="run-trigger">Trigger</Label>
-      <Select id="run-trigger" value={triggerId} onChange={(e) => setTriggerId(e.target.value)}>
-        {triggers.map((t) => (
-          <option key={t.id} value={t.id}>
-            {t.label} ({t.id})
-          </option>
-        ))}
-      </Select>
-      <div className="mt-2">
+    <section aria-label="Start a run" className="grid gap-field">
+      <FieldGroup>
+        <Label htmlFor="run-trigger">Trigger</Label>
+        <Select id="run-trigger" value={triggerId} onChange={(e) => setTriggerId(e.target.value)}>
+          {triggers.map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.label} ({t.id})
+            </option>
+          ))}
+        </Select>
+      </FieldGroup>
+      <div>
         <JsonSchemaForm
           key={triggerId}
           schema={inputSchema}

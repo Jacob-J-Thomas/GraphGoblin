@@ -27,7 +27,7 @@ describe('EditorPage', () => {
 
     expect(await screen.findByRole('heading', { name: 'my loop' })).toBeInTheDocument();
     expect(screen.getByText('draft only')).toBeInTheDocument();
-    expect(screen.getByText('✓ Ready to publish')).toBeInTheDocument();
+    expect(screen.getByText('Ready to publish')).toBeInTheDocument();
     expect(screen.getByTestId('node-start')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Add Wait node' }));

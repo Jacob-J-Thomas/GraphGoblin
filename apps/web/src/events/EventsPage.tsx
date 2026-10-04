@@ -1,15 +1,18 @@
 import { Link } from 'react-router';
 import { useInboundEvents } from '../api/queries.js';
+import { Page, PageHeader } from '../components/layout/index.js';
 import { QueryState } from '../components/status.js';
-import { Table, Td, Th } from '../components/ui.js';
+import { Card, Table, Td, Th } from '../components/ui/index.js';
 import { formatDateTime, prettyJson } from '../lib/utils.js';
+
+const LINK = 'text-link underline-offset-[3px] hover:underline';
 
 /** `api`, `run:<runId>`, or `webhook:<endpointId>` as a readable origin. */
 function Source({ source }: { source: string }) {
   if (source.startsWith('run:')) {
     const runId = source.slice('run:'.length);
     return (
-      <Link to={`/runs/${runId}`} className="text-sky-800 hover:underline">
+      <Link to={`/runs/${runId}`} className={LINK}>
         run {runId.slice(-6)}
       </Link>
     );
@@ -25,62 +28,66 @@ function Source({ source }: { source: string }) {
 export function EventsPage() {
   const query = useInboundEvents();
   return (
-    <div className="space-y-3 p-4">
-      <h1 className="text-lg font-semibold">Events</h1>
+    <Page>
+      <PageHeader title="Events" />
       <QueryState query={query} what="Events">
         {(items) =>
           items.length === 0 ? (
-            <p className="text-sm text-slate-500">No inbound events yet.</p>
+            <p className="text-sm text-muted">No inbound events yet.</p>
           ) : (
-            <Table>
-              <thead>
-                <tr>
-                  <Th>Received</Th>
-                  <Th>Type</Th>
-                  <Th>Source</Th>
-                  <Th>Dedupe key</Th>
-                  <Th>Started runs</Th>
-                  <Th>Payload</Th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((event) => (
-                  <tr key={event.id}>
-                    <Td className="text-xs">{formatDateTime(event.receivedAt)}</Td>
-                    <Td>
-                      <code>{event.type}</code>
-                    </Td>
-                    <Td className="text-xs">
-                      <Source source={event.source} />
-                    </Td>
-                    <Td className="text-xs">{event.dedupeKey ?? '-'}</Td>
-                    <Td className="text-xs">
-                      {event.runIds.length === 0 ? (
-                        <span className="text-slate-500">none</span>
-                      ) : (
-                        <ul>
-                          {event.runIds.map((runId) => (
-                            <li key={runId}>
-                              <Link to={`/runs/${runId}`} className="text-sky-800 hover:underline">
-                                {runId}
-                              </Link>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </Td>
-                    <Td>
-                      <pre className="max-w-md overflow-auto text-xs">
-                        {prettyJson(event.payload)}
-                      </pre>
-                    </Td>
+            <Card flush>
+              <Table>
+                <thead>
+                  <tr>
+                    <Th>Received</Th>
+                    <Th>Type</Th>
+                    <Th>Source</Th>
+                    <Th>Dedupe key</Th>
+                    <Th>Started runs</Th>
+                    <Th>Payload</Th>
                   </tr>
-                ))}
-              </tbody>
-            </Table>
+                </thead>
+                <tbody>
+                  {items.map((event) => (
+                    <tr key={event.id}>
+                      <Td className="text-sm whitespace-nowrap text-muted">
+                        {formatDateTime(event.receivedAt)}
+                      </Td>
+                      <Td>
+                        <code>{event.type}</code>
+                      </Td>
+                      <Td className="text-sm">
+                        <Source source={event.source} />
+                      </Td>
+                      <Td className="text-sm">{event.dedupeKey ?? '-'}</Td>
+                      <Td className="text-sm">
+                        {event.runIds.length === 0 ? (
+                          <span className="text-muted">none</span>
+                        ) : (
+                          <ul>
+                            {event.runIds.map((runId) => (
+                              <li key={runId}>
+                                <Link to={`/runs/${runId}`} className={`${LINK} font-mono`}>
+                                  {runId}
+                                </Link>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </Td>
+                      <Td>
+                        <pre className="max-w-md overflow-auto rounded-md border border-default bg-code-bg px-2 py-1 text-xs text-code-fg">
+                          {prettyJson(event.payload)}
+                        </pre>
+                      </Td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            </Card>
           )
         }
       </QueryState>
-    </div>
+    </Page>
   );
 }

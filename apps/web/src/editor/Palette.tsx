@@ -1,4 +1,5 @@
 import { useReactFlow } from '@xyflow/react';
+import { KindChip, kindStyle } from './KindChip.js';
 import { KIND_INFO, KIND_MIME, NODE_KINDS } from './model.js';
 import { useEditorStore } from './store.js';
 
@@ -19,8 +20,10 @@ export function Palette() {
     });
   };
   return (
-    <nav aria-label="Node palette" className="flex flex-col gap-1">
-      <h2 className="text-xs font-semibold text-slate-600 uppercase">Palette</h2>
+    <nav aria-label="Node palette" className="flex flex-col gap-1.5">
+      <h2 className="px-1 pb-1 text-xs font-semibold tracking-wide text-muted uppercase">
+        Palette
+      </h2>
       {NODE_KINDS.map((kind) => (
         <button
           key={kind}
@@ -28,14 +31,17 @@ export function Palette() {
           draggable
           aria-label={`Add ${KIND_INFO[kind].label} node`}
           title={KIND_INFO[kind].description}
-          className="cursor-grab rounded border border-slate-300 bg-white px-2 py-1 text-left text-sm hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-emerald-600"
+          style={kindStyle(kind)}
+          className="grid w-full cursor-grab grid-cols-[auto_minmax(0,1fr)] items-center gap-x-2.5 rounded-md border border-default bg-surface-raised py-[7px] pr-2.5 pl-[7px] text-left text-default shadow-1 transition-[translate,box-shadow,background-color,border-color] hover:-translate-y-px hover:border-kind hover:bg-kind-subtle hover:shadow-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
           onDragStart={(event) => {
             event.dataTransfer.setData(KIND_MIME, kind);
             event.dataTransfer.effectAllowed = 'move';
           }}
           onClick={() => add(kind)}
         >
-          {KIND_INFO[kind].label}
+          <KindChip kind={kind} className="row-span-2" />
+          <span className="text-sm leading-tight font-semibold">{KIND_INFO[kind].label}</span>
+          <span className="text-xs leading-[1.3] text-muted">{KIND_INFO[kind].description}</span>
         </button>
       ))}
     </nav>

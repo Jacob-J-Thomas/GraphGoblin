@@ -1,3 +1,5 @@
+import { Icon } from '../components/icons/index.js';
+import { cn } from '../lib/utils.js';
 import type { EditorIssue } from './model.js';
 import { useEditorStore } from './store.js';
 
@@ -6,49 +8,61 @@ export function ValidationPanel({ issues }: { issues: EditorIssue[] }) {
   const errors = issues.filter((i) => i.severity === 'error').length;
   const warnings = issues.length - errors;
   return (
-    <section aria-label="Validation" className="text-sm">
-      <h2 className="mb-1 text-xs font-semibold text-slate-600 uppercase">Validation</h2>
-      {issues.length === 0 ? (
-        <p className="text-sky-800">✓ Ready to publish</p>
-      ) : (
-        <>
-          <p className="mb-1 text-xs text-slate-600">
+    <section
+      aria-label="Validation"
+      className="grid gap-2 border-t border-default bg-surface-raised px-5 pt-4 pb-5 text-sm"
+    >
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="text-xs font-semibold tracking-wide text-muted uppercase">Validation</h2>
+        {issues.length > 0 ? (
+          <p className="text-xs text-muted">
             {errors} error{errors === 1 ? '' : 's'}, {warnings} warning{warnings === 1 ? '' : 's'}
           </p>
-          <ul className="max-h-48 space-y-1 overflow-auto">
-            {issues.map((issue, index) => (
-              <li key={index}>
+        ) : null}
+      </div>
+      {issues.length === 0 ? (
+        <p className="inline-flex items-center gap-1.5 font-medium text-status-good-fg">
+          <Icon name="check-circle" />
+          Ready to publish
+        </p>
+      ) : (
+        <ul className="grid max-h-48 gap-1.5 overflow-auto">
+          {issues.map((issue, index) => (
+            <li key={index}>
+              <button
+                type="button"
+                className="block w-full cursor-pointer rounded-md border border-default bg-surface-raised px-3 py-2 text-left text-xs leading-normal hover:bg-surface-hover disabled:cursor-default disabled:hover:bg-surface-raised"
+                disabled={!issue.nodeId}
+                onClick={() => useEditorStore.getState().select(issue.nodeId)}
+              >
+                <span
+                  className={cn(
+                    'inline-flex items-center gap-1 font-semibold [&_svg]:size-3 [&_svg]:stroke-[2.8]',
+                    issue.severity === 'error' ? 'text-status-bad-fg' : 'text-status-warn-fg',
+                  )}
+                >
+                  <Icon name={issue.severity === 'error' ? 'failed' : 'alert'} />
+                  {issue.code}
+                </span>{' '}
+                {issue.nodeId ? <code>{issue.nodeId}</code> : null}
+                {issue.path ? <code>.{issue.path}</code> : null} {issue.message}
+              </button>
+              {issue.discard ? (
                 <button
                   type="button"
-                  className="w-full rounded px-1 text-left text-xs hover:bg-slate-100"
-                  disabled={!issue.nodeId}
-                  onClick={() => useEditorStore.getState().select(issue.nodeId)}
+                  className="mt-1 cursor-pointer text-xs text-link underline underline-offset-2"
+                  aria-label={`Discard unparsed text at ${issue.discard.path}`}
+                  onClick={() => {
+                    const { scope, path } = issue.discard!;
+                    useEditorStore.getState().setFieldError(scope, path, undefined);
+                  }}
                 >
-                  <span
-                    className={issue.severity === 'error' ? 'text-orange-800' : 'text-amber-700'}
-                  >
-                    {issue.severity === 'error' ? '✗' : '!'} {issue.code}
-                  </span>{' '}
-                  {issue.nodeId ? <code>{issue.nodeId}</code> : null}
-                  {issue.path ? <code>.{issue.path}</code> : null} {issue.message}
+                  Discard text
                 </button>
-                {issue.discard ? (
-                  <button
-                    type="button"
-                    className="ml-1 text-xs text-sky-800 underline"
-                    aria-label={`Discard unparsed text at ${issue.discard.path}`}
-                    onClick={() => {
-                      const { scope, path } = issue.discard!;
-                      useEditorStore.getState().setFieldError(scope, path, undefined);
-                    }}
-                  >
-                    Discard text
-                  </button>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        </>
+              ) : null}
+            </li>
+          ))}
+        </ul>
       )}
     </section>
   );

@@ -1,4 +1,45 @@
 @import 'tailwindcss';
+@import './styles/fonts.css';
+@import './styles/tokens.css';
+@import './styles/theme.css';
+@import './styles/utilities.css';
+@import './styles/canvas.css';
+
+/* Base element styles: every colour, family, and size comes from a token. */
+@layer base {
+  html {
+    background-color: var(--surface-app);
+    scrollbar-color: var(--border-strong) transparent;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+  body {
+    font-family: var(--font-ui);
+    font-size: var(--font-size-md);
+    line-height: var(--line-height-normal);
+    color: var(--text-default);
+    background-color: var(--surface-app);
+    -webkit-font-smoothing: antialiased;
+    font-variant-numeric: tabular-nums;
+  }
+  code,
+  kbd,
+  samp,
+  pre {
+    font-family: var(--font-code);
+  }
+  code {
+    font-size: 0.92em;
+  }
+  ::selection {
+    background-color: var(--accent-subtle);
+    color: var(--accent-on-subtle);
+  }
+  :focus-visible {
+    outline: var(--focus-ring-width) solid var(--focus-ring);
+    outline-offset: var(--focus-offset);
+  }
+}
 
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -7,9 +48,4 @@
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
-}
-
-.react-flow__handle {
-  width: 10px;
-  height: 10px;
 }

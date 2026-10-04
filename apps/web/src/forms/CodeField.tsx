@@ -15,14 +15,17 @@ export function Preview({ kind, source }: { kind: PreviewKind; source: string })
     };
   }, [kind, source]);
   return (
-    <div className="mt-1 rounded bg-slate-50 p-1 text-xs" data-testid="preview">
-      <span className="font-semibold text-slate-600">Preview (sample thread): </span>
+    <div
+      className="rounded-b-md border border-t-0 border-strong bg-surface-sunken px-3 py-1.5 text-xs leading-snug"
+      data-testid="preview"
+    >
+      <span className="font-semibold whitespace-nowrap text-muted">Preview (sample thread): </span>
       {result === undefined ? (
-        <span className="text-slate-500">rendering…</span>
+        <span className="text-subtle">rendering…</span>
       ) : result.ok ? (
-        <pre className="inline whitespace-pre-wrap text-slate-800">{result.output}</pre>
+        <pre className="inline whitespace-pre-wrap text-default">{result.output}</pre>
       ) : (
-        <span className="text-orange-800">{result.error}</span>
+        <span className="font-medium text-status-bad-fg">{result.error}</span>
       )}
     </div>
   );
@@ -45,7 +48,14 @@ export function CodeField({
   const language: CodeLanguage = kind === 'template' ? 'liquid' : 'jsonata';
   return (
     <div>
-      <CodeEditor value={value} onChange={onChange} language={language} label={label} id={id} />
+      <CodeEditor
+        value={value}
+        onChange={onChange}
+        language={language}
+        label={label}
+        id={id}
+        attached
+      />
       <Preview kind={kind} source={value} />
     </div>
   );

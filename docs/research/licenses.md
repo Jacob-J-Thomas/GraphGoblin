@@ -54,7 +54,7 @@ MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, 0BSD, Unlicense, CC0-1.0.
 | prettier                                                                                                               | MIT        | Repository formatting; dev-only                                                                                                                  |
 | drizzle-kit                                                                                                            | Apache-2.0 | `packages/infrastructure` migration generation; dev-only                                                                                         |
 | openapi-typescript                                                                                                     | MIT        | `packages/api-client` type generation; dev-only and pulls `@redocly/openapi-core` (MIT)                                                          |
-| Geist, Geist Mono (fonts)                                                                                              | OFL-1.1    | Font files, not npm: `geist` 1.7.2 woff2 in `docs/design/visual-direction/fonts/` with `OFL.txt` (#7 sample); npm allowlist unchanged            |
+| Geist, Geist Mono (fonts)                                                                                              | OFL-1.1    | Font files, not npm: `geist` 1.7.2 woff2 with `OFL.txt` in `apps/web/public/fonts/` (#7) and the design sample; npm allowlist unchanged          |
 
 ## Recorded alternatives and their licences
 

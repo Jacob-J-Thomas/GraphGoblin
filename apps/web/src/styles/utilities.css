@@ -1,0 +1,52 @@
+/*
+ * Effects that combine tokens in ways one Tailwind utility cannot: the glows and the pulse of the
+ * reserved highlight moments (docs/design/visual-direction/README.md, "Where purple and magenta
+ * appear"). Each is a Tailwind utility, so variants such as `data-[status=running]:` apply.
+ * Forced-colours mode drops box shadows, so none of these may carry meaning on its own.
+ */
+
+/* The running status badge: a soft purple glow. */
+@utility glow-running {
+  box-shadow: 0 0 14px -3px color-mix(in oklab, var(--accent-glow) 75%, transparent);
+}
+
+/* The current page's underline in the main navigation. */
+@utility glow-accent {
+  box-shadow: 0 0 8px 0 color-mix(in oklab, var(--accent) 45%, transparent);
+}
+
+/* Notification dots and edges (the waiting-for-input dot, the update toast). */
+@utility glow-highlight {
+  box-shadow:
+    0 0 0 2px var(--surface-inverse),
+    0 0 10px 1px color-mix(in oklab, var(--accent-highlight) 70%, transparent);
+}
+
+@utility glow-highlight-edge {
+  box-shadow: 0 0 12px 1px color-mix(in oklab, var(--accent-highlight) 60%, transparent);
+}
+
+/* The live stream dot in the run inspector. */
+@utility glow-live {
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--status-info-border) 30%, transparent);
+}
+
+/* The selected canvas node: a halo and a deep purple glow over its own elevation. The 2 px ring
+   itself is an outline (outline-canvas-node-selected), which forced-colours mode keeps. */
+@utility glow-node-selected {
+  box-shadow:
+    0 0 0 6px color-mix(in oklab, var(--canvas-node-selected) 18%, transparent),
+    0 0 36px 4px color-mix(in oklab, var(--accent-glow) 42%, transparent),
+    var(--shadow-2);
+}
+
+/* A slow opacity pulse; --duration-pulse drops to 0 ms under prefers-reduced-motion. */
+@utility animate-pulse-soft {
+  animation: gg-pulse var(--duration-pulse) var(--ease-standard) infinite;
+}
+
+@keyframes gg-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}

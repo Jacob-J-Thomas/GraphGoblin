@@ -1,7 +1,9 @@
+import { readFileSync } from 'node:fs';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
+import { appChromeColors } from './src/styles/palette.js';
 
 /**
  * The app is served by the API process under `/app/` (GG_WEB_DIST), so its routes never collide
@@ -24,11 +26,31 @@ const API_PREFIXES = [
   '/openapi.json',
 ];
 
+/**
+ * The colours that cannot be CSS variables (the `theme-color` meta tag and the web manifest) are
+ * read from the design tokens at build time, so they follow the palette: the dark theme's header
+ * (`--surface-inverse`) and page (`--surface-app`), dark being the default theme (#7, #11).
+ */
+const CHROME = appChromeColors(
+  readFileSync(new URL('./src/styles/tokens.css', import.meta.url), 'utf8'),
+);
+
+/** Adds `<meta name="theme-color">` with the palette's header colour to index.html. */
+function themeColorMeta(): Plugin {
+  return {
+    name: 'graphgoblin-theme-color',
+    transformIndexHtml: () => [
+      { tag: 'meta', attrs: { name: 'theme-color', content: CHROME.themeColor }, injectTo: 'head' },
+    ],
+  };
+}
+
 export default defineConfig({
   base: APP_BASE,
   plugins: [
     react(),
     tailwindcss(),
+    themeColorMeta(),
     VitePWA({
       registerType: 'prompt',
       // The app registers the worker itself through workbox-window (src/pwa/register.ts) so the
@@ -46,8 +68,8 @@ export default defineConfig({
         start_url: APP_BASE,
         scope: APP_BASE,
         display: 'standalone',
-        background_color: '#0f172a',
-        theme_color: '#0f172a',
+        background_color: CHROME.backgroundColor,
+        theme_color: CHROME.themeColor,
         icons: [
           { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png' },
@@ -62,7 +84,8 @@ export default defineConfig({
       workbox: {
         // Precache the app shell only. API responses are never cached: there is no runtime
         // caching, and navigations outside /app/ are never answered from the cache.
-        globPatterns: ['**/*.{js,css,html,svg,png,webmanifest}'],
+        // The fonts are part of the shell, so the offline app keeps its typeface.
+        globPatterns: ['**/*.{js,css,html,svg,png,webmanifest,woff2}'],
         navigateFallback: `${APP_BASE}index.html`,
         navigateFallbackAllowlist: [/^\/app\//],
         runtimeCaching: [],

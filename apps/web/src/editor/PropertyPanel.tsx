@@ -5,8 +5,10 @@ import {
   type NodeInput,
 } from '@graphgoblin/contracts';
 import { useState } from 'react';
-import { Button, Input, Label, Select } from '../components/ui.js';
+import { Icon } from '../components/icons/index.js';
+import { Button, FieldGroup, HelpText, Input, Label, Select } from '../components/ui/index.js';
 import { SchemaForm } from '../forms/SchemaForm.js';
+import { KindChip } from './KindChip.js';
 import { canvasPorts, KIND_INFO, type EditorIssue } from './model.js';
 import { SubloopPicker } from './SubloopPicker.js';
 import { useEditorStore } from './store.js';
@@ -23,11 +25,11 @@ function NodeIdField({ nodeId, definition }: { nodeId: string; definition: LoopD
     useEditorStore.getState().renameNode(nodeId, draft);
   };
   return (
-    <div className="mb-2">
+    <FieldGroup>
       <Label htmlFor="node-id">Node id</Label>
       <Input
         id="node-id"
-        className="font-mono"
+        className="font-mono text-sm"
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
         onBlur={commit}
@@ -36,11 +38,11 @@ function NodeIdField({ nodeId, definition }: { nodeId: string; definition: LoopD
         }}
       />
       {error ? (
-        <p role="alert" className="text-xs text-orange-800">
+        <HelpText role="alert" tone="bad">
           {error}
-        </p>
+        </HelpText>
       ) : null}
-    </div>
+    </FieldGroup>
   );
 }
 
@@ -61,21 +63,21 @@ function ConnectForm({ node, definition }: { node: NodeInput; definition: LoopDe
   return (
     <form
       aria-label={`Connect ${node.id}`}
-      className="mt-2 flex items-end gap-1"
+      className="flex items-end gap-2"
       onSubmit={(e) => {
         e.preventDefault();
         useEditorStore.getState().connect({ source: node.id, sourceHandle: chosenPort, target });
       }}
     >
-      <div>
+      <FieldGroup>
         <Label htmlFor="connect-port">Output</Label>
         <Select id="connect-port" value={chosenPort} onChange={(e) => setPort(e.target.value)}>
           {ports.map((p) => (
             <option key={p}>{p}</option>
           ))}
         </Select>
-      </div>
-      <div className="flex-1">
+      </FieldGroup>
+      <FieldGroup className="flex-1">
         <Label htmlFor="connect-target">To</Label>
         <Select id="connect-target" value={target} onChange={(e) => setTarget(e.target.value)}>
           {targets.map((n) => (
@@ -84,8 +86,8 @@ function ConnectForm({ node, definition }: { node: NodeInput; definition: LoopDe
             </option>
           ))}
         </Select>
-      </div>
-      <Button type="submit" size="sm" variant="outline" disabled={!target}>
+      </FieldGroup>
+      <Button type="submit" variant="outline" disabled={!target}>
         Connect
       </Button>
     </form>
@@ -112,24 +114,30 @@ export function PropertyPanel({
   const [epoch, setEpoch] = useState(0);
   const node = definition.nodes.find((n) => n.id === selectedId);
   if (!node) {
-    return <p className="text-sm text-slate-500">Select a node to edit its properties.</p>;
+    return <p className="text-sm text-muted">Select a node to edit its properties.</p>;
   }
   const { updateNode, removeNode, removeEdge, setFieldError } = useEditorStore.getState();
   const outgoing = definition.edges.filter((e) => e.from.node === node.id);
   const nodeIssues = issues.filter((i) => i.nodeId === node.id);
   return (
-    <section aria-label="Node properties">
-      <h2 className="mb-2 text-sm font-semibold">
-        {KIND_INFO[node.kind].label} <span className="font-mono text-slate-500">{node.id}</span>
-      </h2>
-      <NodeIdField key={node.id} nodeId={node.id} definition={definition} />
-      <div className="mb-2">
-        <Label htmlFor="node-label">Label</Label>
-        <Input
-          id="node-label"
-          value={node.label}
-          onChange={(e) => updateNode(node.id, { label: e.target.value })}
-        />
+    <section aria-label="Node properties" className="grid gap-field">
+      <div className="flex items-center gap-3">
+        <KindChip kind={node.kind} />
+        <h2 className="text-lg leading-tight font-semibold">
+          {KIND_INFO[node.kind].label}{' '}
+          <span className="block font-mono text-sm font-regular text-muted">{node.id}</span>
+        </h2>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <NodeIdField key={node.id} nodeId={node.id} definition={definition} />
+        <FieldGroup>
+          <Label htmlFor="node-label">Label</Label>
+          <Input
+            id="node-label"
+            value={node.label}
+            onChange={(e) => updateNode(node.id, { label: e.target.value })}
+          />
+        </FieldGroup>
       </div>
       {node.kind === 'subloop' ? (
         <SubloopPicker
@@ -153,35 +161,49 @@ export function PropertyPanel({
         onParseError={(path, error) => setFieldError(`node:${node.id}`, path, error)}
       />
       {nodeIssues.length > 0 ? (
-        <ul className="mt-2 list-disc pl-4 text-xs text-orange-900" aria-label="Node issues">
+        <ul
+          className="list-disc pl-4 text-xs leading-snug text-status-bad-fg"
+          aria-label="Node issues"
+        >
           {nodeIssues.map((issue, index) => (
             <li key={index}>{issue.message}</li>
           ))}
         </ul>
       ) : null}
-      <h3 className="mt-3 text-xs font-semibold text-slate-600">Connections</h3>
-      {outgoing.length === 0 ? <p className="text-xs text-slate-500">No outgoing edges.</p> : null}
-      <ul className="text-xs">
-        {outgoing.map((edge) => (
-          <li key={edge.id} className="flex items-center justify-between gap-2">
-            <span>
-              <code>{edge.from.port}</code> → <code>{edge.to.node}</code>
-            </span>
-            <Button
-              size="sm"
-              variant="ghost"
-              aria-label={`Remove edge ${edge.id}`}
-              onClick={() => removeEdge(edge.id)}
-            >
-              ✕
-            </Button>
-          </li>
-        ))}
-      </ul>
-      <ConnectForm key={`${node.id}:${outgoing.length}`} node={node} definition={definition} />
-      <Button className="mt-3" size="sm" variant="destructive" onClick={() => removeNode(node.id)}>
-        Delete node
-      </Button>
+      <div className="grid gap-2">
+        <h3 className="text-sm font-semibold">Connections</h3>
+        {outgoing.length === 0 ? (
+          <p className="text-xs text-muted">No outgoing edges.</p>
+        ) : (
+          <ul className="grid gap-1">
+            {outgoing.map((edge) => (
+              <li
+                key={edge.id}
+                className="flex items-center justify-between gap-2 rounded-md border border-default py-1 pr-1 pl-3 text-sm"
+              >
+                <span>
+                  <code>{edge.from.port}</code> → <code>{edge.to.node}</code>
+                </span>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  aria-label={`Remove edge ${edge.id}`}
+                  onClick={() => removeEdge(edge.id)}
+                >
+                  <Icon name="close" />
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
+        <ConnectForm key={`${node.id}:${outgoing.length}`} node={node} definition={definition} />
+      </div>
+      <div>
+        <Button size="sm" variant="destructive" onClick={() => removeNode(node.id)}>
+          <Icon name="trash" />
+          Delete node
+        </Button>
+      </div>
     </section>
   );
 }
