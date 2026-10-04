@@ -30,6 +30,30 @@ Range.prototype.getClientRects ??= emptyRects;
 Range.prototype.getBoundingClientRect ??= zeroRect;
 Element.prototype.scrollIntoView ??= function scrollIntoView() {};
 
+// jsdom has HTMLDialogElement but not showModal or close. A minimal stand-in: showModal sets the
+// open attribute, close removes it and fires `close`, and Esc fires a cancelable `cancel` at the
+// open dialog, closing it unless a handler prevents that, as the browser does. There is no top
+// layer or inertness; tests of those run in the browser (e2e).
+const dialogPrototype: Pick<HTMLDialogElement, 'showModal' | 'close'> =
+  HTMLDialogElement.prototype;
+if (!Object.hasOwn(HTMLDialogElement.prototype, 'showModal')) {
+  dialogPrototype.showModal = function showModal(this: HTMLDialogElement) {
+    this.setAttribute('open', '');
+  };
+  dialogPrototype.close = function close(this: HTMLDialogElement, value?: string) {
+    if (!this.hasAttribute('open')) return;
+    this.removeAttribute('open');
+    if (value !== undefined) this.returnValue = value;
+    this.dispatchEvent(new Event('close'));
+  };
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape' || event.defaultPrevented) return;
+    const dialog = [...document.querySelectorAll('dialog[open]')].at(-1);
+    if (!(dialog instanceof HTMLDialogElement)) return;
+    if (dialog.dispatchEvent(new Event('cancel', { cancelable: true }))) dialog.close();
+  });
+}
+
 class DOMMatrixStub {
   m22 = 1;
   constructor(_init?: string) {}

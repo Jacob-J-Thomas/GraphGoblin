@@ -7,6 +7,7 @@ import {
   Alert,
   Badge,
   Button,
+  buttonStyles,
   Card,
   Checkbox,
   FieldGroup,
@@ -55,6 +56,20 @@ describe('Button', () => {
     expect(destructive).toHaveAttribute('type', 'submit');
     expect(screen.getByRole('button', { name: 'Close' })).toHaveClass('bg-transparent', 'size-8');
     expect(screen.getByRole('button', { name: 'Disabled' })).toBeDisabled();
+  });
+
+  it('lends its look to a link that sits among buttons', () => {
+    render(
+      <a href="/runs/new" className={buttonStyles({ variant: 'outline', className: 'ml-2' })}>
+        New run
+      </a>,
+    );
+    expect(screen.getByRole('link', { name: 'New run' })).toHaveClass(
+      'bg-surface-raised',
+      'h-9',
+      'ml-2',
+    );
+    expect(buttonStyles()).toContain('bg-accent');
   });
 
   it('stays within its container: an overlong label ends in an ellipsis, named in full', () => {

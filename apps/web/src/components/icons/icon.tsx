@@ -101,6 +101,15 @@ const GLYPHS = {
   export: <path d="M12 4v11M7 10.5l5 5 5-5M5 20h14" />,
   upload: <path d="M12 20V9M7 13.5l5-5 5 5M5 4h14" />,
   trash: <path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" />,
+  // A window with a side panel on the right: show or hide a side panel.
+  panel: (
+    <>
+      <rect x="3.5" y="4.5" width="17" height="15" rx="2.5" />
+      <path d="M14.5 4.5v15" />
+    </>
+  ),
+  // An arrow leaving to another screen: links that open somewhere else in the app.
+  'arrow-right': <path d="M5 12h14M13 6l6 6-6 6" />,
   loop: (
     <path d="M4 12a8 8 0 0 1 13.7-5.7L20 8.5M20 3.5v5h-5M20 12a8 8 0 0 1-13.7 5.7L4 15.5M4 20.5v-5h5" />
   ),

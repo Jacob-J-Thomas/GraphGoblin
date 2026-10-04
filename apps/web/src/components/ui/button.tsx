@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes } from 'react';
+import type { ButtonHTMLAttributes, Ref } from 'react';
 import { variants } from '../../lib/variants.js';
 import { ellipsize } from './ellipsis.js';
 
@@ -43,6 +43,16 @@ const buttonClasses = variants({
 type ButtonVariant = 'default' | 'secondary' | 'outline' | 'destructive' | 'ghost';
 type ButtonSize = 'sm' | 'md' | 'icon';
 
+/**
+ * The button look for an element that is not a button: a link that navigates (react-router's
+ * `Link`) but sits among buttons. Its text should fit; it is not ellipsized.
+ */
+export function buttonStyles(
+  options: { variant?: ButtonVariant; size?: ButtonSize; className?: string } = {},
+): string {
+  return buttonClasses(options);
+}
+
 export function Button({
   variant,
   size,
@@ -53,6 +63,7 @@ export function Button({
 }: ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: ButtonVariant;
   size?: ButtonSize;
+  ref?: Ref<HTMLButtonElement>;
 }) {
   return (
     <button type={type} className={buttonClasses({ variant, size, className })} {...props}>
