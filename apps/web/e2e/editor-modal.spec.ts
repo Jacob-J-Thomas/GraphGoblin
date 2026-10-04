@@ -212,10 +212,13 @@ test('the loop panel collapses and expands from Loop settings and is remembered'
   const loopId = await createLoop(request, approvalLoop('qa loop panel'));
   await page.goto(`/app/loops/${loopId}/edit`);
   const toggle = page.getByRole('button', { name: 'Loop settings' });
-  // 1440 px wide: expanded, with the settings and the validation list.
+  // 1440 px wide: expanded, with the loop's settings; validation sits beside Publish (#15).
   await expect(toggle).toHaveAttribute('aria-expanded', 'true');
   await expect(page.getByLabel('Name', { exact: true })).toHaveValue('qa loop panel');
-  await expect(page.getByRole('region', { name: 'Validation' })).toContainText('Ready to publish');
+  const panel = page.getByRole('complementary', { name: 'Loop' });
+  await expect(panel.getByRole('region', { name: 'Validation' })).toHaveCount(0);
+  await expect(panel.getByText('Ready to publish')).toHaveCount(0);
+  await expect(page.getByText('Ready to publish')).toBeVisible();
 
   await toggle.click();
   await expect(toggle).toHaveAttribute('aria-expanded', 'false');

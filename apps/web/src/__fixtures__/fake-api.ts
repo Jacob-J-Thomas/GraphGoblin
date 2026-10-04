@@ -4,6 +4,7 @@
  * stream run events over SSE with events pushed while the stream is open.
  */
 import type {
+  ApiKeyListItem,
   ContextThread,
   LoopDefinitionInput,
   LoopRecord,
@@ -90,14 +91,7 @@ export class FakeApi {
     enabled: boolean;
   }[] = [];
   secretList: { name: string; createdAt: string; updatedAt: string }[] = [];
-  apiKeyList: {
-    id: string;
-    ownerId: string;
-    label: string;
-    scopes: string[];
-    createdAt: string;
-    revokedAt?: string;
-  }[] = [];
+  apiKeyList: ApiKeyListItem[] = [];
   settingsValues: Record<string, unknown> = {};
   inbound: {
     id: string;
@@ -613,7 +607,7 @@ export class FakeApi {
           scopes: ['*'],
           createdAt: TS,
         };
-        this.apiKeyList.push(key);
+        this.apiKeyList.push({ ...key, current: false });
         return json({ key, token: 'gg_secret_token_123' }, 201);
       },
     ],

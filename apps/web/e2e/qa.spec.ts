@@ -185,10 +185,21 @@ test('the editor blocks publishing on template syntax errors and unparsed JSON, 
   await prompt.click();
   await page.keyboard.press('Control+A');
   await page.keyboard.type('Approve {% if x %}');
-  const validation = page.getByRole('region', { name: 'Validation' });
-  await expect(validation).toContainText('TEMPLATE_INVALID');
+  // The node editor's badge, beside its title, counts the node's issues; its popover names them.
+  const editor = page.getByRole('dialog', { name: 'Edit wait approve' });
+  const issues = editor.getByRole('button', { name: /issues? on approve$/ });
+  await expect(issues).toHaveAccessibleName('1 issue on approve');
+  await issues.click();
+  await expect(page.getByRole('dialog', { name: 'Issues on approve' })).toContainText(
+    'TEMPLATE_INVALID',
+  );
+  // Esc closes the popover, not the editor.
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog', { name: 'Issues on approve' })).toBeHidden();
+  await expect(editor).toBeVisible();
   // The page behind the node editor is inert: close it to reach Publish.
   await closeNode(page);
+  await expect(page.getByRole('button', { name: '1 error' })).toBeVisible();
   await page.getByRole('button', { name: 'Publish' }).click();
   await expect(page.getByText('Publish failed')).toBeVisible();
   await expect(page.getByText(/TEMPLATE_INVALID|template at node/).first()).toBeVisible();
@@ -197,13 +208,18 @@ test('the editor blocks publishing on template syntax errors and unparsed JSON, 
   await prompt.click();
   await page.keyboard.press('Control+A');
   await page.keyboard.type('Approve?');
-  await expect(validation).toContainText('Ready to publish');
+  await expect(issues).toHaveCount(0);
 
   // Input schema text that is not JSON blocks publishing until fixed, after the editor closes.
   const schema = page.locator('[data-field="inputSchema"] .cm-content');
   await schema.click();
   await page.keyboard.type('{"type": ');
-  await expect(validation).toContainText('FIELD_UNPARSED');
+  await expect(issues).toHaveAccessibleName('1 issue on approve');
+  await issues.click();
+  await expect(page.getByRole('dialog', { name: 'Issues on approve' })).toContainText(
+    'FIELD_UNPARSED',
+  );
+  await page.keyboard.press('Escape');
   await closeNode(page);
   await page.getByRole('button', { name: 'Publish' }).click();
   await expect(page.getByText(/does not parse; fix them first/)).toBeVisible();
@@ -214,10 +230,11 @@ test('the editor blocks publishing on template syntax errors and unparsed JSON, 
   await schema.click();
   await page.keyboard.press('Control+A');
   await page.keyboard.press('Delete');
-  await expect(validation).toContainText('Ready to publish');
+  await expect(issues).toHaveCount(0);
   // Delete and Backspace inside the editor edit the field, never the graph.
   await expect(page.getByTestId('node-approve')).toBeVisible();
   await closeNode(page);
+  await expect(page.getByText('Ready to publish')).toBeVisible();
   await page.getByRole('button', { name: 'Publish' }).click();
   await expect(page.getByText(/Published version 2\.|Nothing to publish/)).toBeVisible();
 });

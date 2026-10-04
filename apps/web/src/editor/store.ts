@@ -29,6 +29,12 @@ export interface EditorState {
    * that node even when it was already open on another one.
    */
   nodeDialogSession: number;
+  /**
+   * Where the node editor puts focus when it opens (or at once, when it is already open on the
+   * node): the field at an issue's path. The dialog consumes it once and clears it; without one,
+   * focus lands on the dialog's heading.
+   */
+  nodeFocus: NodeFocusTarget | undefined;
   /** Bumped on every edit; autosave compares it with `savedRevision`. */
   revision: number;
   savedRevision: number;
@@ -59,10 +65,15 @@ export interface EditorState {
   ) => void;
   reset: () => void;
   select: (nodeId: string | undefined) => void;
-  /** Select a node and open its editor dialog. */
-  openNode: (nodeId: string) => void;
+  /**
+   * Select a node and open its editor dialog; with `field`, the dialog focuses the field at that
+   * path (an issue's path, such as `config.prompt`) instead of its heading.
+   */
+  openNode: (nodeId: string, focus?: { field?: string | undefined }) => void;
   /** Close the node editor dialog; the node stays selected. */
   closeNodeDialog: () => void;
+  /** Forget the pending focus target once the dialog has used it. */
+  clearNodeFocus: () => void;
   addNode: (kind: NodeKind, position: { x: number; y: number }) => string;
   updateNode: (nodeId: string, changes: { label?: string; config?: unknown }) => void;
   renameNode: (nodeId: string, nextId: string) => void;
@@ -86,6 +97,12 @@ export interface FieldError {
   text: string;
 }
 
+/** A pending focus request for the node editor: the node, and the issue path to focus there. */
+export interface NodeFocusTarget {
+  nodeId: string;
+  field: string;
+}
+
 let generations = 0;
 
 function config(node: NodeInput): Record<string, unknown> {
@@ -98,6 +115,7 @@ const INITIAL = {
   selectedNodeId: undefined,
   nodeDialogOpen: false,
   nodeDialogSession: 0,
+  nodeFocus: undefined,
   revision: 0,
   savedRevision: 0,
   saveState: 'idle' as SaveState,
@@ -135,7 +153,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
 
     select: (nodeId) => set({ selectedNodeId: nodeId }),
 
-    openNode: (nodeId) => {
+    openNode: (nodeId, focus) => {
       if (!get().definition?.nodes.some((n) => n.id === nodeId)) return;
       set((s) => ({
         selectedNodeId: nodeId,
@@ -144,10 +162,13 @@ export const useEditorStore = create<EditorState>((set, get) => {
           s.nodeDialogOpen && s.selectedNodeId === nodeId
             ? s.nodeDialogSession
             : s.nodeDialogSession + 1,
+        nodeFocus: focus?.field ? { nodeId, field: focus.field } : undefined,
       }));
     },
 
-    closeNodeDialog: () => set({ nodeDialogOpen: false }),
+    closeNodeDialog: () => set({ nodeDialogOpen: false, nodeFocus: undefined }),
+
+    clearNodeFocus: () => set({ nodeFocus: undefined }),
 
     addNode: (kind, position) => {
       const def = get().definition;
