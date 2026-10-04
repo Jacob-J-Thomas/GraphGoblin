@@ -3,7 +3,8 @@ import { cn } from '../../lib/utils.js';
 
 /**
  * A raised panel: an optional head (title and actions over a hairline) and a padded body.
- * `flush` drops the body padding for content that brings its own, such as a table.
+ * `flush` drops the body padding for content that brings its own, such as a table, and lets
+ * that content scroll sideways when it is wider than the card (narrow windows, 200% zoom).
  */
 export function Card({
   title,
@@ -36,7 +37,7 @@ export function Card({
           {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
         </header>
       ) : null}
-      <div className={flush ? undefined : 'p-5'}>{children}</div>
+      <div className={flush ? 'overflow-x-auto' : 'p-5'}>{children}</div>
     </section>
   );
 }

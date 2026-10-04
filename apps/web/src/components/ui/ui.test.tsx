@@ -111,6 +111,7 @@ describe('Card', () => {
     expect(screen.getByText('actions')).toBeInTheDocument();
     expect(container.firstElementChild).toHaveClass('overflow-hidden', 'mine');
     expect(screen.getByText('table').parentElement).not.toHaveClass('p-5');
+    expect(screen.getByText('table').parentElement).toHaveClass('overflow-x-auto');
   });
 
   it('renders only the body when there is no head', () => {
