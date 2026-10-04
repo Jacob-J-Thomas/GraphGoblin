@@ -1,6 +1,7 @@
 import {
   ContextThreadSchema,
   JsonValueSchema,
+  LoopDefinitionCompatibilitySchema,
   LoopDefinitionSchema,
   LoopExportSchema,
   LoopRecordSchema,
@@ -30,6 +31,7 @@ export const openApiRegistry = z.registry<{ id: string }>();
 const COMPONENTS: ReadonlyArray<[z.ZodType, string]> = [
   [JsonValueSchema, 'JsonValue'],
   [LoopDefinitionSchema, 'LoopDefinition'],
+  [LoopDefinitionCompatibilitySchema, 'LoopDefinitionCompatibility'],
   [LoopExportSchema, 'LoopExport'],
   [LoopRecordSchema, 'LoopRecord'],
   [LoopVersionRecordSchema, 'LoopVersionRecord'],

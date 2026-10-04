@@ -1,4 +1,5 @@
 import type { EdgeSchema, LoopDefinitionInput, NodeInput, NodeKind } from '@graphgoblin/contracts';
+import { LoopDefinitionCompatibilitySchema } from '@graphgoblin/contracts';
 import type { z } from 'zod';
 import { create } from 'zustand';
 import {
@@ -120,16 +121,19 @@ export const useEditorStore = create<EditorState>((set, get) => {
   return {
     ...INITIAL,
 
-    load: (loopId, definition, options = {}) =>
+    load: (loopId, definition, options = {}) => {
+      const parsed = LoopDefinitionCompatibilitySchema.safeParse(definition);
+      const legacy = definition.settings?.defaults && 'harness' in definition.settings.defaults;
       set({
         ...INITIAL,
         loopId,
-        definition,
+        definition: legacy && parsed.success ? parsed.data : definition,
         revision: options.dirty ? 1 : 0,
         saveState: options.dirty ? 'pending' : 'saved',
         baseToken: options.baseToken,
         generation: (generations += 1),
-      }),
+      });
+    },
 
     reset: () => set({ ...INITIAL, generation: (generations += 1) }),
 

@@ -1,5 +1,10 @@
 # 06 - Harness integration
 
+Each inference node selects its harness through `config.harness`, defaulting to `codex`.
+Loop settings supply model and effort only. Deprecated loop harness input is resolved onto
+inference nodes before execution; decision strategies and structured repair still use their
+own Codex ports. See [ADR-0019](decisions/ADR-0019-inference-node-harness.md).
+
 ## The harness port (Decided)
 
 ```ts
@@ -159,7 +164,7 @@ The `model_catalog` table carries `source: 'harness' | 'litellm'` and `enabled`.
 
 Migration `0004` adds source with a harness default, preserving every legacy row. User-edited seeded rows become harness-owned and their metadata re-syncs on the next startup, while enabled stays as chosen. Hand-added legacy rows also become harness-owned: they keep their values and can be toggled, but are frozen for PUT/DELETE. Existing LiteLLM rows can be edited/deleted and are never refreshed by the harness seed. Creating LiteLLM entries returns `LITELLM_NOT_CONFIGURED` until the provider work ships; no new key convention is defined.
 
-The catalog is advisory. API validate and publish report `MODEL_DISABLED` or `MODEL_NOT_IN_CATALOG` warnings for explicit inference models, decision Codex models when the strategy includes Codex, and loop-default models under their harness. Node warnings use node-relative field paths alongside nodeId. These warnings never block publication, and runtime execution does not enforce membership or efforts. Preflight still checks the default model by model id without filtering harness. See [ADR-0018](decisions/ADR-0018-model-catalog-source.md) for migration/rollback and ownership alternatives.
+The catalog is advisory. API validate and publish report `MODEL_DISABLED` or `MODEL_NOT_IN_CATALOG` warnings for explicit inference models, decision Codex models when the strategy includes Codex, and loop-default models under the inference default harness (`codex`). Node warnings use node-relative field paths alongside nodeId. These warnings never block publication, and runtime execution does not enforce membership or efforts. Preflight still checks the default model by model id without filtering harness. See [ADR-0018](decisions/ADR-0018-model-catalog-source.md) for migration/rollback and ownership alternatives.
 
 ### Windows notes
 

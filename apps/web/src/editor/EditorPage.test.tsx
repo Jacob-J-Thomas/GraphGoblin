@@ -1,4 +1,4 @@
-import { kitchenSinkLoop, minimalLoop } from '@graphgoblin/contracts/testing';
+import { kitchenSinkLoop, legacyHarnessLoop, minimalLoop } from '@graphgoblin/contracts/testing';
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { StrictMode } from 'react';
@@ -25,6 +25,34 @@ describe('EditorPage', () => {
   // jsdom's window is 1024 px wide, where the loop panel starts collapsed; most tests read the
   // validation list in it, so they start with it expanded (the setup clears storage after each).
   beforeEach(() => localStorage.setItem(LOOP_PANEL_STORAGE_KEY, 'expanded'));
+
+  it('restores a legacy device draft canonically; Harness belongs to the inference dialog', async () => {
+    const api = new FakeApi();
+    const loop = api.addLoop(minimalLoop());
+    await saveLocalDraft({
+      loopId: loop.id,
+      definition: legacyHarnessLoop(),
+      savedAt: '2099-01-01T00:00:00.000Z',
+      synced: false,
+    });
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'minimal' });
+    expect(screen.queryByLabelText('Harness')).not.toBeInTheDocument();
+    expect(useEditorStore.getState().definition?.settings?.defaults).not.toHaveProperty('harness');
+    act(() => useEditorStore.getState().openNode('infer'));
+    const dialog = screen.getByRole('dialog');
+    expect(within(dialog).getByLabelText('Harness')).toHaveValue('codex');
+    expect(useEditorStore.getState().definition?.nodes[1]).toMatchObject({
+      config: { harness: 'codex' },
+    });
+    await waitFor(
+      () => expect(api.callsTo('PUT', `/loops/${loop.id}/draft`).length).toBeGreaterThan(0),
+      SAVE_WAIT,
+    );
+    expect(api.callsTo('PUT', `/loops/${loop.id}/draft`)[0]?.body).toMatchObject({
+      definition: { settings: { defaults: {} } },
+    });
+  });
 
   it('collapses and expands the loop panel from the toolbar and remembers it', async () => {
     const user = userEvent.setup();

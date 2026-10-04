@@ -70,7 +70,7 @@ describe('loop definition', () => {
     const loop = LoopDefinitionSchema.parse(minimalLoop());
     expect(loop.settings.maxIterations).toBe(10);
     expect(loop.settings.workingDirectory).toEqual({ kind: 'temp' });
-    expect(loop.settings.defaults.harness).toBe('codex');
+    expect(loop.settings.defaults).not.toHaveProperty('harness');
     const exit = loop.nodes.find((n) => n.kind === 'exit');
     expect(exit?.kind === 'exit' && exit.config.return.channels).toEqual([{ kind: 'caller' }]);
     expect(loop.edges[0]?.to.port).toBe('in');

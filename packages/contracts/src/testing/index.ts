@@ -108,6 +108,35 @@ export function minimalLoop(): LoopDefinitionInput {
   };
 }
 
+/** Genuine legacy input: no canonical parser has filled the inference harness. */
+export function legacyHarnessLoop(): LoopDefinitionInput & {
+  settings: { defaults: { harness: 'codex' } };
+} {
+  return {
+    ...minimalLoop(),
+    settings: { defaults: { harness: 'codex' as const } },
+    nodes: [
+      {
+        id: 'start',
+        kind: 'trigger' as const,
+        label: 'Start',
+        config: { subtype: 'manual' as const },
+      },
+      {
+        id: 'infer',
+        kind: 'inference' as const,
+        label: 'Infer',
+        config: { prompt: { template: 'Hello' } },
+      },
+      { id: 'done', kind: 'exit' as const, label: 'Done', config: {} },
+    ],
+    edges: [
+      { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'infer' } },
+      { id: 'e2', from: { node: 'infer', port: 'out' }, to: { node: 'done' } },
+    ],
+  };
+}
+
 /** A loop using every node kind once, with a decision and an exit loop-back. */
 export function kitchenSinkLoop(): LoopDefinitionInput {
   return {
@@ -116,7 +145,7 @@ export function kitchenSinkLoop(): LoopDefinitionInput {
     description: 'Every node kind, for tests.',
     settings: {
       workingDirectory: { kind: 'fixed', path: '/tmp/work' },
-      defaults: { harness: 'codex', model: 'gpt-6-luna', effort: 'low' },
+      defaults: { model: 'gpt-6-luna', effort: 'low' },
       maxIterations: 3,
     },
     variables: { topic: { type: 'string' } },

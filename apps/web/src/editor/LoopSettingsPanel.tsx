@@ -10,6 +10,16 @@ import { useEditorStore } from './store.js';
 
 const VariablesFormSchema = z.object({ variables: VariableDeclarationsSchema });
 
+/** Project only settings fields owned by this form; unfinished device drafts stay in the store. */
+function formSettings(settings: LoopDefinitionInput['settings']) {
+  if (!settings) return {};
+  const { defaults, ...rest } = settings;
+  return {
+    ...rest,
+    ...(defaults ? { defaults: { model: defaults.model, effort: defaults.effort } } : {}),
+  };
+}
+
 /**
  * Loop name, description, settings, and declared variables (name to JSON Schema). The forms keep
  * their own state: remount this (a `key`) when the definition is replaced, as a load does.
@@ -39,7 +49,7 @@ export function LoopSettingsPanel({ definition }: { definition: LoopDefinitionIn
       <h3 className="mt-2 text-xs font-semibold tracking-wide text-muted uppercase">Settings</h3>
       <SchemaForm
         schema={LoopSettingsSchema}
-        value={definition.settings ?? {}}
+        value={formSettings(definition.settings)}
         label="Loop settings form"
         onChange={updateSettings}
         parseErrors={fieldErrors['settings']}

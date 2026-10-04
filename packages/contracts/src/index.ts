@@ -14,5 +14,9 @@ export * from './thread.js';
 export * from './mutations.js';
 export * from './nodes.js';
 export * from './loop.js';
+export {
+  LoopDefinitionCompatibilitySchema,
+  LoopExportCompatibilitySchema,
+} from './loop-compatibility.js';
 export * from './run.js';
 export * from './events.js';

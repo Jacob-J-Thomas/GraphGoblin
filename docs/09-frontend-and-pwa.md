@@ -125,6 +125,13 @@ The adversarial QA report is `docs/qa/2026-10-03-wp-d2.md`. Behaviour that chang
 
 ## Node editor, loop panel, and New run (Decided, #13 and #46)
 
+Harness selection is in the inference node dialog (`config.harness`, default Codex). The loop
+panel's canonical settings schema offers model and effort defaults without a Harness control.
+Legacy IndexedDB drafts are validated through the shared compatibility parser when loaded;
+valid drafts are normalised, while unfinished invalid drafts keep their edits and validation
+errors. The settings form projects only canonical defaults. UI file import delegates to the API;
+component tests use the same domain importer and accept old bare definitions and export envelopes.
+
 The owner's decisions of 2026-10-04: a node is edited in a modal dialog, the right panel keeps only the loop's own configuration and collapses, and runs start only from the Runs page. Screenshots: `docs/qa/2026-10-04-editor-modal-and-runs/`.
 
 - **Opening a node.** A click on a node without a drag, or Enter on a focused node, opens its editor in a modal dialog named "Edit <kind> <id>" (`editor/NodeEditorDialog.tsx` on the `Dialog` primitive: the native `<dialog>` opened with `showModal()`). A press that moves more than 3 px is a drag (xyflow's `nodeClickDistance` and `nodeDragThreshold`): the node moves and nothing opens. A click on a port handle starts or ends a connection instead, and Space still only selects. Adding a node from the palette selects it without opening it. Clicking a validation issue opens its node.

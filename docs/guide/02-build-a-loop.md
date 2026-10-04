@@ -25,6 +25,11 @@ Every save tells the server which copy the edit started from. If another tab, de
 
 ## Choose nodes
 
+Choose **Harness** in each inference node's dialog. It defaults to **Codex** when omitted.
+Loop settings offer model and effort defaults. Old imports and device drafts with
+`settings.defaults.harness` remain supported: it fills only omitted inference-node harnesses,
+and new exports contain the resolved node values without the legacy loop field.
+
 **Trigger (`trigger`).** Choose `subtype`: `manual`, `cron`, `webhook`, `event`, or `poll`. For manual starts, set `inputSchema` to validate input and `exposeTo` to declare intended `ui`, `api`, and `mcp` surfaces. The trigger records its payload as an output and follows `out`. Configure automatic sources in [Triggers](04-triggers.md).
 
 > After 1.0: Surface-aware start and input controls. Today `exposeTo` is recorded and described to MCP callers, but the web launcher and engine commands do not enforce it. Use API authentication for access control.
@@ -57,19 +62,19 @@ Read **Validation**, at the bottom of the loop panel, after every change. Fix er
 
 ## Set workspace and limits
 
-| Setting             | Configure it                                                                                                                                    |
-| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| `maxIterations`     | Default 10, range 1 to 10,000. It limits exit loop-backs (the run ends `exhausted`) and fresh visits per node (the run fails `MAX_ITERATIONS`). |
-| `workingDirectory`  | `temp` (default), `fixed` with `path`, or `template` with a Liquid `template`. The filesystem adapter creates the resolved directory if needed. |
-| `subloopDepthLimit` | Default 8, range 1 to 64. A subloop node can replace it with `depthLimitOverride`.                                                              |
-| `defaults`          | Set the Codex `harness`, optional `model`, and optional `effort`. Node values override loop defaults, which override API-process defaults.      |
+| Setting             | Configure it                                                                                                                                                    |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `maxIterations`     | Default 10, range 1 to 10,000. It limits exit loop-backs (the run ends `exhausted`) and fresh visits per node (the run fails `MAX_ITERATIONS`).                 |
+| `workingDirectory`  | `temp` (default), `fixed` with `path`, or `template` with a Liquid `template`. The filesystem adapter creates the resolved directory if needed.                 |
+| `subloopDepthLimit` | Default 8, range 1 to 64. A subloop node can replace it with `depthLimitOverride`.                                                                              |
+| `defaults`          | Set optional `model` and `effort`. Node values override loop defaults, which override owner and API-process defaults. Harness is chosen on each inference node. |
 
 For a repository workspace, use an absolute path. For a temporary workspace, use:
 
 ```json
 {
   "workingDirectory": { "kind": "temp" },
-  "defaults": { "harness": "codex", "model": "gpt-6-luna", "effort": "low" },
+  "defaults": { "model": "gpt-6-luna", "effort": "low" },
   "maxIterations": 3,
   "subloopDepthLimit": 8
 }
@@ -135,7 +140,7 @@ Save this bare definition as a JSON file and import it. It follows the contracts
   "description": "Ask Codex for a short explanation of a topic.",
   "settings": {
     "workingDirectory": { "kind": "temp" },
-    "defaults": { "harness": "codex", "model": "gpt-6-luna", "effort": "low" },
+    "defaults": { "model": "gpt-6-luna", "effort": "low" },
     "maxIterations": 3,
     "subloopDepthLimit": 8
   },

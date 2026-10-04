@@ -31,7 +31,7 @@ type LoopDefinition = {
   description?: string;
   settings: {
     workingDirectory: WorkingDirectorySpec; // see 04 and 06
-    defaults: { harness: 'codex'; model?: string; effort?: Effort };
+    defaults: { model?: string; effort?: Effort };
     maxIterations: number; // hard ceiling on loop-backs and on fresh visits per node; exit nodes may set lower
     subloopDepthLimit: number; // default 8
   };
@@ -68,6 +68,14 @@ Validation rules enforced by `domain` before a version can be published:
 - Node configs validate against their kind's schema. Referenced variables exist. Referenced subloops exist and are published (checked by the API, which can see other loops; a loop may reference itself).
 - Every Liquid template parses and every JSONata expression compiles, in node configs and loop settings (`TEMPLATE_INVALID`, `EXPRESSION_INVALID`).
 - No edge targets a trigger node's input.
+
+Harness selection belongs to inference nodes (`config.harness`, default `codex`). Loop defaults
+provide only model and effort. The contracts compatibility input parser accepts deprecated
+`settings.defaults.harness`, validates it before removal, and inherits it only onto inference
+nodes whose harness was omitted. Explicit node harnesses win. Canonical definitions and all
+new exports omit the legacy field; schema and export format versions remain 1. Stored versions
+are normalised on read without rewriting their JSON, ids, numbers, or publication timestamps.
+See [ADR-0019](decisions/ADR-0019-inference-node-harness.md).
 
 ## Versioning (Decided)
 

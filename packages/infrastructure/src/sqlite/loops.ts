@@ -1,4 +1,5 @@
 import type { LoopDefinition, LoopRecord, LoopVersionRecord } from '@graphgoblin/contracts';
+import { LoopDefinitionCompatibilitySchema } from '@graphgoblin/contracts';
 import type { ClockPort, IdPort, LoopRepository } from '@graphgoblin/engine';
 import { and, asc, desc, eq, isNotNull } from 'drizzle-orm';
 import type { Database } from './db.js';
@@ -26,7 +27,7 @@ function toVersion(row: VersionRow): LoopVersionRecord {
     loopId: row.loopId,
     version: row.version,
     status: row.status,
-    definition: row.definition,
+    definition: LoopDefinitionCompatibilitySchema.parse(row.definition),
     createdAt: row.createdAt,
     ...(row.publishedAt ? { publishedAt: row.publishedAt } : {}),
   };

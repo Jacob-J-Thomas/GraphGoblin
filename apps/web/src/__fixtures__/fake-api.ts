@@ -11,9 +11,15 @@ import type {
   RunEvent,
   RunRecord,
 } from '@graphgoblin/contracts';
-import { LoopDefinitionSchema } from '@graphgoblin/contracts';
+import { LoopDefinitionCompatibilitySchema } from '@graphgoblin/contracts';
 import { fakeUlid, sampleThread } from '@graphgoblin/contracts/testing';
-import { stableHash, validateLoop } from '@graphgoblin/domain';
+import {
+  exportLoop,
+  importLoop,
+  LoopImportError,
+  stableHash,
+  validateLoop,
+} from '@graphgoblin/domain';
 
 export const TS = '2026-10-02T12:00:00.000Z';
 
@@ -137,7 +143,7 @@ export class FakeApi {
     options: { published?: boolean; draft?: boolean } = {},
   ): LoopRecord {
     const loopId = id('loop');
-    const parsed = LoopDefinitionSchema.parse(definition);
+    const parsed = LoopDefinitionCompatibilitySchema.parse(definition);
     const version = (status: 'draft' | 'published', n: number): LoopVersionRecord => ({
       id: id('version'),
       loopId,
@@ -176,7 +182,7 @@ export class FakeApi {
       loopId,
       version: (entry.current?.version ?? 0) + 1,
       status: 'published',
-      definition: LoopDefinitionSchema.parse(definition),
+      definition: LoopDefinitionCompatibilitySchema.parse(definition),
       createdAt: TS,
       publishedAt: TS,
     };
@@ -196,7 +202,7 @@ export class FakeApi {
   /** Save a draft as another tab or device would, without If-Match. */
   saveDraftElsewhere(loopId: string, definition: LoopDefinitionInput): void {
     const entry = this.loops.get(loopId)!;
-    const parsed = LoopDefinitionSchema.parse(definition);
+    const parsed = LoopDefinitionCompatibilitySchema.parse(definition);
     entry.draft = {
       id: entry.draft?.id ?? id('version'),
       loopId,
@@ -308,7 +314,11 @@ export class FakeApi {
         const loop = this.addLoop(def);
         const entry = this.loops.get(loop.id)!;
         return json(
-          { loop, draft: entry.draft, issues: validateLoop(LoopDefinitionSchema.parse(def)) },
+          {
+            loop,
+            draft: entry.draft,
+            issues: validateLoop(LoopDefinitionCompatibilitySchema.parse(def)),
+          },
           201,
         );
       },
@@ -316,15 +326,17 @@ export class FakeApi {
     [
       'POST /loops/import',
       (call) => {
-        const body = call.body as { loop?: LoopDefinitionInput };
-        if (!body.loop)
-          return problem(
-            400,
-            'LOOP_IMPORT_ERROR',
-            'document is neither a loop export nor a loop definition',
+        try {
+          const imported = importLoop(call.body);
+          const loop = this.addLoop(imported.definition);
+          return json(
+            { loop, draft: this.loops.get(loop.id)!.draft, issues: imported.issues },
+            201,
           );
-        const loop = this.addLoop(body.loop);
-        return json({ loop, draft: this.loops.get(loop.id)!.draft, issues: [] }, 201);
+        } catch (error) {
+          if (!(error instanceof LoopImportError)) throw error;
+          return problem(400, error.code, error.message, error.details);
+        }
       },
     ],
     [
@@ -342,7 +354,7 @@ export class FakeApi {
       (call, [loopId]) => {
         const entry = this.loops.get(loopId!);
         if (!entry) return problem(404, 'LOOP_NOT_FOUND');
-        const parsed = LoopDefinitionSchema.safeParse(
+        const parsed = LoopDefinitionCompatibilitySchema.safeParse(
           (call.body as { definition: unknown }).definition,
         );
         if (!parsed.success)
@@ -380,7 +392,7 @@ export class FakeApi {
     [
       'POST /loops/:id/validate',
       (call) => {
-        const parsed = LoopDefinitionSchema.safeParse(
+        const parsed = LoopDefinitionCompatibilitySchema.safeParse(
           (call.body as { definition?: unknown }).definition,
         );
         if (!parsed.success)
@@ -421,12 +433,7 @@ export class FakeApi {
         const entry = this.loops.get(loopId!);
         const version = call.search.get('draft') === 'true' ? entry?.draft : entry?.current;
         if (!version) return problem(404, 'VERSION_NOT_FOUND', 'the loop has no published version');
-        return json({
-          format: 'graphgoblin-loop',
-          formatVersion: 1,
-          exportedAt: TS,
-          loop: version.definition,
-        });
+        return json(exportLoop(version.definition, TS));
       },
     ],
     [

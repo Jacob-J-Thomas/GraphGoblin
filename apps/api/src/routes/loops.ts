@@ -1,5 +1,5 @@
 import {
-  LoopDefinitionSchema,
+  LoopDefinitionCompatibilitySchema,
   LoopExportSchema,
   LoopRecordSchema,
   LoopVersionRecordSchema,
@@ -59,7 +59,7 @@ export function ifMatchHolds(header: string, token: string | undefined): boolean
     .some((tag) => (tag === '*' ? token !== undefined : tag === token));
 }
 
-const DefinitionBody = z.object({ definition: LoopDefinitionSchema });
+const DefinitionBody = z.object({ definition: LoopDefinitionCompatibilitySchema });
 const IdParams = z.object({ id: UlidSchema });
 const ACTIVE_STATUSES = ['queued', 'running', 'waiting', 'paused'] as const;
 
@@ -165,7 +165,7 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
         ...(nodeId ? { nodeId } : {}),
       });
     }
-    check(def.settings.defaults.harness, def.settings.defaults.model, 'settings.defaults.model');
+    check('codex', def.settings.defaults.model, 'settings.defaults.model');
     def.nodes.forEach((node) => {
       if (node.kind === 'inference')
         check(node.config.harness, node.config.model, 'config.model', node.id);

@@ -4,7 +4,7 @@
  * it with the same `contracts` schemas and `domain` rules the API runs on publish.
  */
 import {
-  LoopDefinitionSchema,
+  LoopDefinitionCompatibilitySchema,
   NodeSchema,
   type LoopDefinitionInput,
   type NodeInput,
@@ -179,7 +179,7 @@ export function validateDraft(def: LoopDefinitionInput): {
   issues: EditorIssue[];
   schemaValid: boolean;
 } {
-  const parsed = LoopDefinitionSchema.safeParse(def);
+  const parsed = LoopDefinitionCompatibilitySchema.safeParse(def);
   if (!parsed.success) {
     const issues = parsed.error.issues.map((issue): EditorIssue => {
       const [first, index, ...rest] = issue.path;
