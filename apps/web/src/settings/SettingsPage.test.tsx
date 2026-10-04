@@ -160,7 +160,9 @@ describe('SettingsPage', () => {
     renderApp('/settings', seeded());
     const user = userEvent.setup();
     await user.click(await screen.findByRole('button', { name: 'Revoke mcp' }));
-    expect(screen.getByRole('alertdialog')).not.toHaveTextContent('This browser sends an API key');
+    expect(screen.getByRole('alertdialog')).not.toHaveTextContent(
+      'This browser still sends a stored API key. If this is that key, revoking it signs this browser out and shows the API key panel; Forget key in Settings also clears it.',
+    );
     expect(screen.getByRole('alertdialog')).not.toHaveTextContent('show the API key panel');
   });
 

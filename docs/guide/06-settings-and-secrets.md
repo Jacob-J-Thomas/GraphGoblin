@@ -14,7 +14,7 @@ Choose the colour theme under **Appearance** (below), and manage **Model catalog
 
 Deleting a model, deleting a secret, or revoking a key opens the same named confirmation used on Loops. **Keep** receives focus; Keep or Escape cancels without changing anything. **Confirm delete** or **Confirm revoke** starts the request, disables both buttons until it finishes, and announces progress. Escape cannot dismiss a pending request, even with repeated presses. API errors (including 404 when an item was already removed) stay visible until you dismiss or retry. Dismissing a 404 refreshes the list to remove the stale row. Focus returns to the action, or its section heading if the row disappears. These actions cannot be undone. Model deletion applies only to LiteLLM entries; harness entries refuse edit/delete and remain available to enable or disable. A deleted `jev-api-key` secret also returns at the next start if `GG_JEV_API_KEY` is still set (or its `JEV_API_KEY` fallback applies).
 
-Only the API key marked **This browser** adds the browser sign-out warning. Other active keys still warn that their clients receive 401 immediately. In trusted mode no key is marked and no browser sign-out warning appears.
+Only the API key marked **This browser** adds the browser sign-out warning. Other active keys still warn that their clients receive 401 immediately. In trusted mode no key is marked; if this browser stores a key, every active row instead explains that revoking it may sign this browser out and that **Forget key** in Settings clears it.
 
 ## Choose the theme
 
@@ -93,7 +93,7 @@ Secret reads never send plaintext back to the browser or API client. Server-side
 
 Create a key in **Settings → API keys** (**Create key** grants the wildcard scope) or over REST, and copy the token immediately: it is shown once. Keep an administrative key before switching authentication on, or create the first one from the command line as below.
 
-When keys are required, **This browser** marks the key that authenticated the latest key-list request. The marker refreshes when you enter, forget, or change the stored key, including changes from another tab. The API returns a required `current` boolean on list items, without revealing tokens or hashes; key creation still returns only metadata and the one-time token. In trusted mode no row is marked, even if a valid key is stored.
+When keys are required, **This browser** marks the key that authenticated the latest key-list request. The marker refreshes when you enter, forget, or change the stored key, including changes from another tab. The API returns a required `current` boolean on list items, without revealing tokens or hashes; key creation still returns only metadata and the one-time token. In trusted mode no row is marked, even if a valid key is stored. A stored key is still sent in trusted mode, revoking it shows the API key panel, and **Forget key** in Settings recovers access without it.
 
 ### The first key, from the command line
 
@@ -187,7 +187,7 @@ Revoke an unused key in **Settings → API keys**, or through REST:
 DELETE /api-keys/{id}
 ```
 
-**Revoke** names the key and warns that clients using it receive 401 immediately. Successful revocation closes the confirmation when the server confirms the request; refreshing the key list runs separately. Only the row marked **This browser** adds: "Revoking this key will sign this browser out and show the API key panel. Enter another valid key to continue." After that revocation, the rejected refresh shows the API key panel and focus moves to its input without waiting for the retry. Revoking another key leaves this browser signed in.
+**Revoke** names the key and warns that clients using it receive 401 immediately. Successful revocation closes the confirmation when the server confirms the request; refreshing the key list runs separately. Only the row marked **This browser** adds: "Revoking this key will sign this browser out and show the API key panel. Enter another valid key to continue." After that revocation, the rejected refresh shows the API key panel and focus moves to its input without waiting for the retry. Revoking another key leaves this browser signed in. If a key is stored but no row is marked, every active row instead explains that it may be this browser's stored key and that **Forget key** in Settings clears it.
 
 ## Preserve the master key
 

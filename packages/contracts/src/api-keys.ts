@@ -14,11 +14,7 @@ export type ApiKey = z.infer<typeof ApiKeySchema>;
 
 /** A request snapshot, never part of the stored record or key-creation response. */
 export const ApiKeyListItemSchema = ApiKeySchema.extend({
-  current: z
-    .boolean()
-    .describe(
-      'True only for the key that authenticated this list request when API keys are required; false in trusted mode.',
-    ),
+  current: z.boolean(),
 });
 export type ApiKeyListItem = z.infer<typeof ApiKeyListItemSchema>;
 

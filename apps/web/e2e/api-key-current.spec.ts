@@ -4,6 +4,9 @@ import { control, expect, test } from './fixtures.js';
 const warning =
   'Revoking this key will sign this browser out and show the API key panel. Enter another valid key to continue.';
 
+const storedWarning =
+  'This browser still sends a stored API key. If this is that key, revoking it signs this browser out and shows the API key panel; Forget key in Settings also clears it.';
+
 for (const theme of ['dark', 'light'] as const) {
   test(`current key: two browsers revoke the other key then their own with keyboard in ${theme}`, async ({
     browser,
@@ -51,6 +54,9 @@ for (const theme of ['dark', 'light'] as const) {
       await expect(pageA.getByText('This browser', { exact: true })).toHaveCount(1);
       await expect(rowA.getByText('This browser', { exact: true })).toBeVisible();
       await expect(rowB.getByText('This browser', { exact: true })).toHaveCount(0);
+      await expect(
+        pageA.getByRole('button', { name: 'Revoke e2e', exact: true }),
+      ).toHaveAccessibleDescription('This browser');
       await expect(
         pageB
           .getByRole('listitem')
@@ -127,7 +133,7 @@ for (const theme of ['dark', 'light'] as const) {
   });
 
   for (const bearer of [false, true]) {
-    test(`trusted mode has no current-key marker or browser warning in ${theme}, bearer=${bearer}`, async ({
+    test(`trusted mode has no current-key marker and describes stored-key risk in ${theme}, bearer=${bearer}`, async ({
       page,
       request,
     }) => {
@@ -145,6 +151,8 @@ for (const theme of ['dark', 'light'] as const) {
       await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
       await expect(page.getByText('This browser', { exact: true })).toHaveCount(0);
       await expect(page.getByRole('alertdialog')).not.toContainText(warning);
+      if (bearer) await expect(page.getByRole('alertdialog')).toContainText(storedWarning);
+      else await expect(page.getByRole('alertdialog')).not.toContainText(storedWarning);
       await expect(page.getByRole('alertdialog')).toContainText('401 immediately');
       await page.keyboard.press('Escape');
       await expect(page.getByRole('button', { name: 'Revoke e2e', exact: true })).toBeFocused();
