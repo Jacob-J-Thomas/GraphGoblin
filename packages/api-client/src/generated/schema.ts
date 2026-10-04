@@ -1601,7 +1601,7 @@ export interface paths {
         get?: never;
         /**
          * Edit a LiteLLM catalog entry
-         * @description Harness entries return 409 MODEL_MANAGED_BY_HARNESS. New LiteLLM entries return 409 LITELLM_NOT_CONFIGURED until a provider is configured. Existing source is immutable.
+         * @description Harness entries return 409 MODEL_MANAGED_BY_HARNESS. New LiteLLM entries return 409 LITELLM_NOT_CONFIGURED until a provider is configured. Existing source is immutable; omitting enabled preserves its current value.
          */
         put: {
             parameters: {
@@ -1620,7 +1620,6 @@ export interface paths {
                         efforts: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max")[];
                         /** @enum {string} */
                         defaultEffort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
-                        /** @default true */
                         enabled?: boolean | undefined;
                         /** @enum {string} */
                         source?: ("harness" | "litellm") | undefined;

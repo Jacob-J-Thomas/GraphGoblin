@@ -243,10 +243,7 @@ async function seed(base, control) {
   });
   await call(base, '/events', 'POST', { type: 'build.finished', payload: { ok: true } });
 
-  await call(base, '/model-catalog/codex/gpt-6-astra', 'PUT', {
-    displayName: 'GPT-6 Astra',
-    efforts: ['medium', 'high', 'xhigh'],
-    defaultEffort: 'high',
+  await call(base, '/model-catalog/codex/gpt-6-astra', 'PATCH', {
     enabled: false,
   });
   await call(base, '/secrets/GITHUB_TOKEN', 'PUT', { value: 'not-a-real-token' });

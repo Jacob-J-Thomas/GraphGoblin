@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { LoopIssueSchema, ModelCatalogEntrySchema } from './index.js';
+import { ModelCatalogEntrySchema } from './index.js';
 
 describe('catalog contracts', () => {
   it.each(['harness', 'litellm'])('accepts %s source and preserves enabled', (source) => {
@@ -26,23 +26,5 @@ describe('catalog contracts', () => {
     };
     expect(ModelCatalogEntrySchema.safeParse(entry).success).toBe(false);
     expect(ModelCatalogEntrySchema.safeParse({ ...entry, source: 'user' }).success).toBe(false);
-  });
-  it('preserves warning severity, node identity, and field path', () => {
-    const warning = {
-      code: 'MODEL_DISABLED',
-      severity: 'warning',
-      message: 'disabled',
-      nodeId: 'infer',
-      path: 'nodes.1.config.model',
-    };
-    expect(LoopIssueSchema.parse(warning)).toEqual(warning);
-    expect(
-      LoopIssueSchema.parse({
-        code: 'MODEL_NOT_IN_CATALOG',
-        severity: 'warning',
-        message: 'missing',
-        path: 'settings.defaults.model',
-      }).nodeId,
-    ).toBeUndefined();
   });
 });

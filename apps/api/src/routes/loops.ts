@@ -166,11 +166,11 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
       });
     }
     check(def.settings.defaults.harness, def.settings.defaults.model, 'settings.defaults.model');
-    def.nodes.forEach((node, index) => {
+    def.nodes.forEach((node) => {
       if (node.kind === 'inference')
-        check(node.config.harness, node.config.model, `nodes.${index}.config.model`, node.id);
-      if (node.kind === 'decision')
-        check('codex', node.config.codex?.model, `nodes.${index}.config.codex.model`, node.id);
+        check(node.config.harness, node.config.model, 'config.model', node.id);
+      if (node.kind === 'decision' && node.config.strategy.includes('codex'))
+        check('codex', node.config.codex?.model, 'config.codex.model', node.id);
     });
     return issues;
   }

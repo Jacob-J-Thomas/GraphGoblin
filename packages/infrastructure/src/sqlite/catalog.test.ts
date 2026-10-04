@@ -7,19 +7,24 @@ import { describe, expect, it } from 'vitest';
 import { openDatabase, openMemoryDatabase, type DatabaseHandle } from './db.js';
 import { DEFAULT_MODEL_CATALOG, SqliteModelCatalog } from './settings.js';
 
-async function upgrade(check: (db: DatabaseHandle) => Promise<void>, alreadySource = false) {
-  const dir = mkdtempSync(join(tmpdir(), 'gg-catalog-'));
+function previousMigrations(dir: string, count: number): string {
   const folder = join(dir, 'migrations');
   mkdirSync(join(folder, 'meta'), { recursive: true });
   const source = fileURLToPath(new URL('../../drizzle/', import.meta.url));
   const journal = JSON.parse(readFileSync(join(source, 'meta/_journal.json'), 'utf8')) as {
     entries: { idx: number; tag: string }[];
   };
-  // 1.0.0 database: checkpoint migration is present, max-effort/source migrations are absent.
-  journal.entries = journal.entries.filter((entry) => entry.idx < 3);
+  journal.entries = journal.entries.filter((entry) => entry.idx < count);
   writeFileSync(join(folder, 'meta/_journal.json'), JSON.stringify(journal));
   for (const entry of journal.entries)
     copyFileSync(join(source, `${entry.tag}.sql`), join(folder, `${entry.tag}.sql`));
+  return folder;
+}
+
+async function upgrade(check: (db: DatabaseHandle) => Promise<void>) {
+  const dir = mkdtempSync(join(tmpdir(), 'gg-catalog-'));
+  // 1.0.0 database: checkpoint migration is present, max-effort/source migrations are absent.
+  const folder = previousMigrations(dir, 3);
   const url = `file:${join(dir, 'legacy.db').replace(/\\/g, '/')}`;
   const old = openDatabase({ url, migrationsFolder: folder });
   try {
@@ -33,14 +38,6 @@ async function upgrade(check: (db: DatabaseHandle) => Promise<void>, alreadySour
         sql: 'INSERT INTO model_catalog (harness, model, display_name, efforts, default_effort, enabled) VALUES (?, ?, ?, ?, ?, ?)',
         args: ['codex', model, displayName, efforts, defaultEffort, enabled],
       });
-    }
-    if (alreadySource) {
-      await old.client.execute(
-        "ALTER TABLE model_catalog ADD COLUMN source TEXT NOT NULL DEFAULT 'harness'",
-      );
-      await old.client.execute(
-        "UPDATE model_catalog SET source = 'litellm' WHERE model = 'hand-added'",
-      );
     }
   } finally {
     old.close();
@@ -119,12 +116,64 @@ describe('model catalog source migration and repository', () => {
     });
   });
 
-  it('records a pending migration when source already exists without overwriting it', async () => {
-    await upgrade(async (handle) => {
-      expect((await new SqliteModelCatalog(handle.db).findOne('codex', 'hand-added'))?.source).toBe(
-        'litellm',
+  it('runs the previous release without SQL rollback and retains provenance on re-upgrade', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'gg-catalog-rollback-'));
+    const folder = previousMigrations(dir, 4);
+    const url = `file:${join(dir, 'rollback.db').replace(/\\/g, '/')}`;
+    let handle = openDatabase({ url });
+    try {
+      await handle.migrate();
+      const catalog = new SqliteModelCatalog(handle.db);
+      await catalog.seed();
+      await catalog.setEnabled('codex', 'gpt-6-luna', false);
+      await catalog.upsert({
+        harness: 'local',
+        model: 'local-model',
+        source: 'litellm',
+        displayName: 'Local',
+        efforts: ['low'],
+        defaultEffort: 'low',
+        enabled: false,
+      });
+      const rows = (await handle.client.execute('SELECT * FROM model_catalog')).rows;
+      const ledger = (await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows;
+      handle.close();
+      handle = openDatabase({ url, migrationsFolder: folder });
+      expect(await handle.pendingMigrations()).toBe(0);
+      await handle.migrate();
+      expect((await handle.client.execute('SELECT * FROM model_catalog')).rows).toEqual(rows);
+      expect((await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows).toEqual(
+        ledger,
       );
-    }, true);
+      await handle.client.execute({
+        sql: 'INSERT INTO model_catalog (harness, model, display_name, efforts, default_effort, enabled) VALUES (?, ?, ?, ?, ?, ?)',
+        args: ['codex', 'old-insert', 'Old insert', '["low"]', 'low', 0],
+      });
+      const after = (await handle.client.execute('SELECT * FROM model_catalog')).rows;
+      handle.close();
+      handle = openDatabase({ url });
+      expect(await handle.pendingMigrations()).toBe(0);
+      await handle.migrate();
+      expect((await handle.client.execute('SELECT * FROM model_catalog')).rows).toEqual(after);
+      expect((await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows).toEqual(
+        ledger,
+      );
+      const upgraded = new SqliteModelCatalog(handle.db);
+      expect(await upgraded.findOne('local', 'local-model')).toMatchObject({
+        source: 'litellm',
+        enabled: false,
+      });
+      expect(await upgraded.findOne('codex', 'old-insert')).toMatchObject({
+        source: 'harness',
+        enabled: false,
+      });
+      expect(await upgraded.findOne('codex', 'gpt-6-luna')).toMatchObject({ enabled: false });
+    } finally {
+      handle.close();
+      await rm(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 }).catch(
+        () => undefined,
+      );
+    }
   });
 
   it('never refreshes a LiteLLM row that shares a seed key and toggles either source', async () => {

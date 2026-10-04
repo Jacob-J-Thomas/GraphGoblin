@@ -13,14 +13,3 @@ export const ModelCatalogEntrySchema = z.object({
   enabled: z.boolean(),
 });
 export type ModelCatalogEntry = z.infer<typeof ModelCatalogEntrySchema>;
-
-/** API validation issues include optional field paths for warnings and errors. */
-export const LoopIssueSchema = z.object({
-  code: z.string(),
-  severity: z.enum(['error', 'warning']),
-  message: z.string(),
-  nodeId: z.string().optional(),
-  edgeId: z.string().optional(),
-  path: z.string().optional(),
-});
-export type LoopIssue = z.infer<typeof LoopIssueSchema>;

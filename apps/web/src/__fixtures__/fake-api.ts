@@ -547,7 +547,9 @@ export class FakeApi {
           return problem(
             409,
             'MODEL_MANAGED_BY_HARNESS',
-            'this model is managed by its harness; use PATCH to enable or disable it',
+            existing
+              ? 'Harness models can only be enabled or disabled'
+              : 'Models for this harness come from the harness and cannot be added',
           );
         if (!existing)
           return problem(
@@ -560,6 +562,7 @@ export class FakeApi {
           model: model!,
           ...(call.body as object),
           source,
+          enabled: (call.body as { enabled?: boolean }).enabled ?? existing.enabled,
         } as FakeApi['catalog'][number];
         this.catalog = [
           ...this.catalog.filter((m) => !(m.model === model && m.harness === harness)),
@@ -577,7 +580,7 @@ export class FakeApi {
           return problem(
             409,
             'MODEL_MANAGED_BY_HARNESS',
-            'this model is managed by its harness; use PATCH to enable or disable it',
+            'Harness models can only be enabled or disabled',
           );
         this.catalog = this.catalog.filter((m) => !(m.model === model && m.harness === harness));
         return new Response(null, { status: 204 });

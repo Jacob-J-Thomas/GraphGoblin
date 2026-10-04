@@ -65,7 +65,7 @@ test('Settings confirms model removal and reports an API second-delete error', a
   page,
   request,
 }) => {
-  await control(request, '/catalog/seed', {
+  await control(request, '/catalog/upsert', {
     harness: 'codex',
     model: 'actions-model',
     source: 'litellm',
@@ -77,7 +77,9 @@ test('Settings confirms model removal and reports an API second-delete error', a
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/app/settings');
   await page.getByRole('button', { name: 'Delete actions-model', exact: true }).click();
-  await expect(page.getByRole('alertdialog')).toContainText('removed from the catalog');
+  await expect(page.getByRole('alertdialog')).toContainText(
+    'Harness models cannot be deleted. Removing a LiteLLM model leaves its loops referencing it.',
+  );
   expect(
     await page.getByRole('alertdialog').evaluate((element) => ({
       fits: element.scrollWidth <= element.clientWidth,
@@ -124,13 +126,32 @@ test('Settings toggles harness entries using PATCH and reports managed edit/dele
   await page.getByRole('button', { name: 'Edit gpt-6-luna', exact: true }).click();
   await page.getByRole('button', { name: 'Save model', exact: true }).click();
   await expect(page.getByRole('form', { name: 'Edit gpt-6-luna' })).toContainText(
-    'managed by its harness',
+    'Harness models can only be enabled or disabled',
   );
   await page.getByRole('button', { name: 'Cancel', exact: true }).click();
   await page.getByRole('button', { name: 'Delete gpt-6-luna', exact: true }).click();
   await page.getByRole('button', { name: 'Confirm delete gpt-6-luna', exact: true }).click();
   await expect(page.getByRole('alertdialog')).toContainText('MODEL_MANAGED_BY_HARNESS');
+  await expect(page.getByRole('alertdialog')).toContainText(
+    'Harness models can only be enabled or disabled',
+  );
   await page.getByRole('button', { name: 'Keep', exact: true }).click();
+  await page.getByRole('button', { name: 'Add model', exact: true }).click();
+  const add = page.getByRole('form', { name: 'Add model' });
+  await add.getByLabel('Model id', { exact: true }).fill('my-local-model');
+  const added = page.waitForResponse(
+    (response) =>
+      response.request().method() === 'PUT' &&
+      response.url().endsWith('/model-catalog/codex/my-local-model'),
+  );
+  await add.getByRole('button', { name: 'Save model', exact: true }).click();
+  const refused = await added;
+  expect(refused.request().postDataJSON()).toMatchObject({ source: 'litellm' });
+  expect(refused.status()).toBe(409);
+  await expect(add).toContainText('LITELLM_NOT_CONFIGURED');
+  await expect(add).toContainText(
+    'LiteLLM is not configured; adding local models is not available yet',
+  );
   expect((await request.get('/model-catalog')).status()).toBe(200);
 });
 

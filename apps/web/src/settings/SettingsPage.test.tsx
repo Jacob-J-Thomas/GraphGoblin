@@ -205,7 +205,14 @@ describe('SettingsPage', () => {
     const add = screen.getByRole('form', { name: 'Add model' });
     await user.type(within(add).getByLabelText('Model id'), 'gpt-7');
     await user.click(within(add).getByRole('button', { name: 'Save model' }));
-    expect(await screen.findByText(/managed by its harness/)).toBeInTheDocument();
+    expect(
+      await screen.findByText(
+        /LiteLLM is not configured; adding local models is not available yet/,
+      ),
+    ).toBeInTheDocument();
+    expect(api.callsTo('PUT', '/model-catalog/codex/gpt-7')[0]?.body).toMatchObject({
+      source: 'litellm',
+    });
     await user.click(within(add).getByRole('button', { name: 'Cancel' }));
     await user.click(screen.getByRole('button', { name: 'Add model' }));
     await user.click(
@@ -215,9 +222,21 @@ describe('SettingsPage', () => {
     );
 
     await user.click(screen.getByRole('button', { name: 'Delete gpt-6-sol' }));
+    expect(screen.getByRole('alertdialog')).toHaveTextContent(
+      'Harness models cannot be deleted. Removing a LiteLLM model leaves its loops referencing it.',
+    );
     await user.click(screen.getByRole('button', { name: 'Confirm delete gpt-6-sol' }));
     await waitFor(() =>
       expect(screen.queryByText('Sol', { selector: 'span' })).not.toBeInTheDocument(),
+    );
+  });
+
+  it('explains catalog removal without promising harness models will return', async () => {
+    const user = userEvent.setup();
+    renderApp('/settings', seeded('litellm'));
+    await user.click(await screen.findByRole('button', { name: 'Delete gpt-6-sol' }));
+    expect(screen.getByRole('alertdialog')).toHaveTextContent(
+      'Harness models cannot be deleted. Removing a LiteLLM model leaves its loops referencing it.',
     );
   });
 
@@ -228,14 +247,14 @@ describe('SettingsPage', () => {
       problem(400, 'INVALID_INPUT', 'defaultEffort must be one of efforts'),
     );
     api.override('PATCH /model-catalog/:harness/:model', () =>
-      problem(400, 'INVALID_INPUT', 'defaultEffort must be one of efforts'),
+      problem(404, 'MODEL_NOT_FOUND', 'model not in catalog'),
     );
     renderApp('/settings', api);
     await user.click(await screen.findByRole('button', { name: 'Edit gpt-6-luna' }));
     await user.click(screen.getByRole('button', { name: 'Save model' }));
     expect(await screen.findByText(/defaultEffort must be one of efforts/)).toBeInTheDocument();
     await user.click(screen.getByLabelText('Enable gpt-6-luna'));
-    expect((await screen.findAllByText(/defaultEffort must be one of efforts/)).length).toBe(2);
+    expect(await screen.findByText(/model not in catalog/)).toBeInTheDocument();
   });
 
   it('toggles harness models with PATCH and surfaces managed edit/delete errors', async () => {
@@ -255,11 +274,15 @@ describe('SettingsPage', () => {
     expect(api.catalog[0]).toEqual(before);
     await user.click(screen.getByRole('button', { name: 'Edit gpt-6-luna' }));
     await user.click(screen.getByRole('button', { name: 'Save model' }));
-    expect(await screen.findByText(/managed by its harness/)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/Harness models can only be enabled or disabled/),
+    ).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Cancel' }));
     await user.click(screen.getByRole('button', { name: 'Delete gpt-6-luna' }));
     await user.click(screen.getByRole('button', { name: 'Confirm delete gpt-6-luna' }));
-    expect(await screen.findByRole('alertdialog')).toHaveTextContent('managed by its harness');
+    expect(await screen.findByRole('alertdialog')).toHaveTextContent(
+      'Harness models can only be enabled or disabled',
+    );
     expect(api.catalog[0]).toEqual(before);
   });
 
@@ -334,7 +357,7 @@ describe('SettingsPage', () => {
       'Confirm delete gpt-6-luna',
       '/model-catalog/codex/gpt-6-luna',
       'DELETE /model-catalog/:harness/:model',
-      'seeded model',
+      'Removing a LiteLLM model leaves its loops referencing it',
     ],
     [
       'Delete secret jev-api-key',

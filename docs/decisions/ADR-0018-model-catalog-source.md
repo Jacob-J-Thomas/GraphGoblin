@@ -14,7 +14,7 @@ Startup inserts new seeds as harness entries and refreshes display name, efforts
 
 `PATCH /model-catalog/{harness}/{model}` changes only enabled for either source. Harness PUT/DELETE return 409 `MODEL_MANAGED_BY_HARNESS`. Existing LiteLLM rows can be edited/deleted; source is immutable. New LiteLLM PUT returns 409 `LITELLM_NOT_CONFIGURED` until the provider work defines configuration and keys. No provider key convention is introduced here.
 
-Catalog membership remains advisory: API validation returns `MODEL_DISABLED` or `MODEL_NOT_IN_CATALOG` warnings for explicit inference, decision Codex, and loop-default models. Warnings include paths and node ids when applicable and never block publish or runtime execution.
+Catalog membership remains advisory: API validation returns `MODEL_DISABLED` or `MODEL_NOT_IN_CATALOG` warnings for explicit inference, decision Codex (when the strategy includes Codex), and loop-default models. Warnings include node-relative paths with node ids when applicable and never block publish or runtime execution.
 
 ## Consequences
 
@@ -22,6 +22,8 @@ Old PUT toggle callers must switch to PATCH; API-client upsert/remove remain for
 
 ### Migration and rollback
 
-The migration preserves rows and all old columns. SQLite lacks `ADD COLUMN IF NOT EXISTS`, so the database migrator checks `PRAGMA table_info(model_catalog)` and skips only the exact column-addition statement if source already exists, while recording its original hash/timestamp in the Drizzle ledger. Pending SQL and ledger writes use libsql's atomic migration batch, preserving Drizzle's timestamp ordering. Fresh startup and repeated migrations are supported.
+The additive migration preserves rows and all old columns. Drizzle's standard migrator applies it once and records it in the migration ledger. Fresh startup and repeated migrations are supported.
 
-For rollback, stop the API and make a full data backup first. Run `ALTER TABLE model_catalog DROP COLUMN source;` and `DELETE FROM __drizzle_migrations WHERE created_at = 1791136800000;`, then use the previous release. This removes provenance but keeps all model rows and their other fields. A subsequent upgrade reclassifies them as harness. Dropping the column does not undo startup's seed metadata refresh: restore the pre-upgrade backup to recover user-edited seed metadata or LiteLLM provenance. Never run this against a live server.
+For rollback, stop the API, make a full data backup, and run the previous release. No SQL rollback is required: the previous release ignores the additive column and its migrator is a no-op on the upgraded database. Old-style inserts receive the `harness` default. Re-upgrading is also a no-op, retaining LiteLLM provenance and enabled choices.
+
+Physically dropping the column is optional. If required, pair `ALTER TABLE model_catalog DROP COLUMN source;` with `DELETE FROM __drizzle_migrations WHERE created_at = 1791136800000;` while the API is stopped. This removes provenance but keeps other model fields; a subsequent upgrade reclassifies every row as harness. Neither rollback method undoes startup's seed metadata refresh: restore the pre-upgrade backup to recover user-edited seed metadata. Never run rollback SQL against a live server.

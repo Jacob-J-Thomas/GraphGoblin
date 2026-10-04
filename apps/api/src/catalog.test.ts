@@ -26,7 +26,13 @@ describe('catalog ownership and toggle routes', () => {
     ]) {
       const response = await t.app.inject(request);
       expect(response.statusCode).toBe(409);
-      expect(response.json()).toMatchObject({ code: 'MODEL_MANAGED_BY_HARNESS' });
+      expect(response.json()).toMatchObject({
+        code: 'MODEL_MANAGED_BY_HARNESS',
+        detail:
+          request.url === url
+            ? 'Harness models can only be enabled or disabled'
+            : 'Models for this harness come from the harness and cannot be added',
+      });
     }
     expect((await t.app.inject('/model-catalog')).json().items).toEqual(before);
     const missing = await t.app.inject({
@@ -37,7 +43,7 @@ describe('catalog ownership and toggle routes', () => {
     expect(missing.statusCode).toBe(409);
     expect(missing.json()).toMatchObject({
       code: 'LITELLM_NOT_CONFIGURED',
-      detail: expect.stringContaining('LiteLLM is not configured'),
+      detail: 'LiteLLM is not configured; adding local models is not available yet',
     });
   });
 
@@ -88,7 +94,7 @@ describe('catalog ownership and toggle routes', () => {
     },
   );
 
-  it('edits/deletes LiteLLM rows, defaults enabled, and cannot change their source', async () => {
+  it('edits/deletes LiteLLM rows, preserves enabled when omitted, and cannot change source', async () => {
     await t.container.repos.catalog.upsert({
       harness: 'local-key',
       model: 'local-model',
@@ -101,7 +107,18 @@ describe('catalog ownership and toggle routes', () => {
     const path = '/model-catalog/local-key/local-model';
     const changed = await t.app.inject({ method: 'PUT', url: path, payload: body });
     expect(changed.statusCode).toBe(200);
-    expect(changed.json()).toMatchObject({ ...body, source: 'litellm', enabled: true });
+    expect(changed.json()).toMatchObject({ ...body, source: 'litellm', enabled: false });
+    for (const enabled of [true, false]) {
+      expect(
+        (await t.app.inject({ method: 'PUT', url: path, payload: { ...body, enabled } })).json(),
+      ).toMatchObject({ ...body, source: 'litellm', enabled });
+      expect(
+        (await t.app.inject({ method: 'PUT', url: path, payload: body })).json(),
+      ).toMatchObject({
+        ...body,
+        enabled,
+      });
+    }
     expect(
       (
         await t.app.inject({ method: 'PUT', url: path, payload: { ...body, source: 'harness' } })
@@ -225,6 +242,38 @@ function modelLoop(
 }
 
 describe('advisory model validation', () => {
+  it('ignores stale Codex models when the decision uses only an expression', async () => {
+    const original = modelLoop('decision', 'stale-model');
+    const definition: LoopDefinitionInput = {
+      ...original,
+      nodes: original.nodes.map((node) =>
+        node.kind === 'decision'
+          ? {
+              ...node,
+              config: {
+                ...node.config,
+                strategy: ['expression'],
+                expression: { jsonata: '"a"' },
+              },
+            }
+          : node,
+      ),
+    };
+    const created = await t.app.inject({ method: 'POST', url: '/loops', payload: { definition } });
+    expect(created.statusCode).toBe(201);
+    const id = created.json<{ loop: { id: string } }>().loop.id;
+    const validated = await t.app.inject({
+      method: 'POST',
+      url: `/loops/${id}/validate`,
+      payload: { definition },
+    });
+    expect(validated.statusCode).toBe(200);
+    expect(validated.json<{ issues: LoopIssue[] }>().issues).toEqual([]);
+    const published = await t.app.inject({ method: 'POST', url: `/loops/${id}/publish` });
+    expect(published.statusCode).toBe(200);
+    expect(published.json<{ issues: LoopIssue[] }>().issues).toEqual([]);
+  });
+
   it.each(['inference', 'decision', 'default'] as const)(
     'validate and publish report disabled/missing/present %s models without blocking',
     async (place) => {
@@ -268,7 +317,7 @@ describe('advisory model validation', () => {
               path:
                 place === 'default'
                   ? 'settings.defaults.model'
-                  : `nodes.1.config.${place === 'decision' ? 'codex.model' : 'model'}`,
+                  : `config.${place === 'decision' ? 'codex.model' : 'model'}`,
             }),
           ]);
           expect(warnings[0]?.nodeId).toBe(place === 'default' ? undefined : 'model-node');

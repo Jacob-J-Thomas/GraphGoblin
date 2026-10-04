@@ -252,13 +252,13 @@ export function registerSettingsRoutes(app: ApiInstance, container: Container): 
         tags: ['settings'],
         summary: 'Edit a LiteLLM catalog entry',
         description:
-          'Harness entries return 409 MODEL_MANAGED_BY_HARNESS. New LiteLLM entries return 409 LITELLM_NOT_CONFIGURED until a provider is configured. Existing source is immutable.',
+          'Harness entries return 409 MODEL_MANAGED_BY_HARNESS. New LiteLLM entries return 409 LITELLM_NOT_CONFIGURED until a provider is configured. Existing source is immutable; omitting enabled preserves its current value.',
         params: z.object({ harness: z.string(), model: z.string() }),
         body: z.object({
           displayName: z.string().min(1),
           efforts: z.array(EffortSchema).min(1),
           defaultEffort: EffortSchema,
-          enabled: z.boolean().default(true),
+          enabled: z.boolean().optional(),
           source: ModelCatalogSourceSchema.optional(),
         }),
         response: { 200: ModelEntrySchema },
@@ -272,7 +272,9 @@ export function registerSettingsRoutes(app: ApiInstance, container: Container): 
           reply,
           409,
           'MODEL_MANAGED_BY_HARNESS',
-          'this model is managed by its harness; use PATCH to enable or disable it',
+          existing
+            ? 'Harness models can only be enabled or disabled'
+            : 'Models for this harness come from the harness and cannot be added',
         );
       if (!existing)
         return problem(
@@ -290,6 +292,7 @@ export function registerSettingsRoutes(app: ApiInstance, container: Container): 
         model: request.params.model,
         ...request.body,
         source,
+        enabled: request.body.enabled ?? existing.enabled,
       };
       await repos.catalog.upsert(entry);
       return entry;
@@ -339,7 +342,7 @@ export function registerSettingsRoutes(app: ApiInstance, container: Container): 
           reply,
           409,
           'MODEL_MANAGED_BY_HARNESS',
-          'this model is managed by its harness; use PATCH to enable or disable it',
+          'Harness models can only be enabled or disabled',
         );
       const deleted = await repos.catalog.delete(request.params.harness, request.params.model);
       if (!deleted) return problem(reply, 404, 'MODEL_NOT_FOUND', 'model not in catalog');

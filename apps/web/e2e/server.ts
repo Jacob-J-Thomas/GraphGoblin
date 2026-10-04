@@ -92,7 +92,7 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
       target.structured.respondWith(() => (queue.length > 1 ? queue.shift() : queue[0]));
       return { ok: true };
     }
-    case '/catalog/seed':
+    case '/catalog/upsert':
       await target.container.repos.catalog.upsert(ModelCatalogEntrySchema.parse(body));
       return { ok: true };
     case '/timers/poll':
