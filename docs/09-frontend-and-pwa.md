@@ -64,7 +64,7 @@ The look comes from design tokens, implemented to the visual direction the owner
 
 ### Component structure
 
-- `components/ui/`: one primitive per file (`button`, `field` with `Input`, `Select`, `Textarea`, `Label`, `FieldGroup`, and `HelpText`, `card`, `badge`, `alert`, `table`) behind `index.ts`. Variants use `lib/variants.ts`, a typed helper over `clsx`.
+- `components/ui/`: one primitive per file (`button`, `field` with `Input`, `Select`, `Textarea`, `Checkbox`, `Label`, `FieldGroup`, and `HelpText`, `card`, `badge`, `alert`, `table`) behind `index.ts`. Variants use `lib/variants.ts`, a typed helper over `clsx`.
 - `components/icons/`: the SVG stroke glyphs (`Icon`), `KindIcon`, `StatusIcon`, and the goblin `Logo` (mark and wordmark, or the wordmark alone). Icons are decorative; the text or label beside them carries the name.
 - `components/layout/`: `AppShell` (header, offline banner), `MainNav` (green underline, optional attention dot, a Menu button below 640 px), `Page`, and `PageHeader`.
 - `components/status.tsx` (`RunStatusBadge`, `QueryState`) and `components/ErrorBoundary.tsx`.
