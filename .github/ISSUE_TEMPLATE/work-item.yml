@@ -1,0 +1,80 @@
+name: Work item
+description: Propose a feature, improvement, architecture change, or chore.
+body:
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: What is the current situation or problem?
+    validations:
+      required: true
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: What outcome should this work achieve?
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance criteria
+      description: List observable conditions that show the work is complete.
+      placeholder: '- [ ] ...'
+    validations:
+      required: true
+  - type: dropdown
+    id: gate
+    attributes:
+      label: Gate
+      description: Select the applicable gate labels. The triager sets labels. aidlc-ready cannot be combined with human-in-the-loop; plan-approved is human-only after plan review.
+      multiple: true
+      options:
+        - aidlc-ready
+        - human-in-the-loop
+        - needs-plan-approval
+        - plan-approved
+    validations:
+      required: true
+  - type: dropdown
+    id: implementer
+    attributes:
+      label: Suggested implementer
+      description: The triager sets the impl label after routing.
+      options:
+        - gpt-6-luna
+        - gpt-6.1-sol
+        - claude-opus-5.5
+        - gpt-6-astra
+    validations:
+      required: true
+  - type: dropdown
+    id: reviewer
+    attributes:
+      label: Suggested reviewer
+      description: Choose a model from the other vendor family; the triager sets the review label.
+      options:
+        - claude-opus-5.5
+        - gpt-6.1-sol
+        - gpt-6-astra
+    validations:
+      required: true
+  - type: dropdown
+    id: qa-scope
+    attributes:
+      label: QA scope
+      description: Select the required QA scope. Full regression also covers every touched system.
+      options:
+        - none
+        - qa:touched-systems
+        - qa:full-regression
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: List blocking issues or prerequisites, or enter "None".
+      placeholder: 'Part of #123; blocked by #124, or None'
+    validations:
+      required: true
