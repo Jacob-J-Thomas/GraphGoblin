@@ -1,6 +1,7 @@
 import { act, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { useApi } from '../api/context.js';
+import { THEME_STORAGE_KEY } from '../lib/theme.js';
 import { bootstrap, createQueryClient } from './bootstrap.js';
 
 const registerPwa = vi.hoisted(() => vi.fn());
@@ -23,6 +24,22 @@ describe('bootstrap', () => {
     container.remove();
     fetchSpy.mockRestore();
     window.history.pushState({}, '', '/');
+  });
+
+  it('applies the stored theme if the boot script did not, and follows other tabs', () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('offline'));
+    document.documentElement.dataset['theme'] = 'dark';
+    localStorage.setItem(THEME_STORAGE_KEY, 'light');
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const root = bootstrap(container, { registerServiceWorker: false });
+    expect(document.documentElement.dataset['theme']).toBe('light');
+    localStorage.setItem(THEME_STORAGE_KEY, 'dark');
+    window.dispatchEvent(new StorageEvent('storage', { key: THEME_STORAGE_KEY }));
+    expect(document.documentElement.dataset['theme']).toBe('dark');
+    act(() => root.unmount());
+    container.remove();
+    fetchSpy.mockRestore();
   });
 
   it('configures queries with one retry', () => {

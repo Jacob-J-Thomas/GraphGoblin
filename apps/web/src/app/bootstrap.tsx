@@ -4,6 +4,7 @@ import { StrictMode, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { BrowserRouter } from 'react-router';
 import { ApiProvider, createAppClient } from '../api/context.js';
+import { applyTheme, currentTheme, readStoredTheme, syncThemeAcrossTabs } from '../lib/theme.js';
 import { registerPwa } from '../pwa/register.js';
 import { App } from './App.js';
 
@@ -39,9 +40,16 @@ export interface BootstrapOptions {
   registerServiceWorker?: boolean;
 }
 
-/** Mount the app into `container` and register the service worker. */
+/**
+ * Mount the app into `container`, follow theme changes made in other tabs, and register the
+ * service worker. index.html's boot script has already shown the stored theme; if it could not run
+ * (a future Content-Security-Policy, say), the stored theme is applied here instead, late but right.
+ */
 export function bootstrap(container: HTMLElement, options: BootstrapOptions = {}): Root {
   const client = createAppClient(options.baseUrl ?? window.location.origin);
+  const stored = readStoredTheme();
+  if (stored !== currentTheme()) applyTheme(stored);
+  syncThemeAcrossTabs();
   const root = createRoot(container);
   root.render(
     <StrictMode>

@@ -3,6 +3,7 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig, type Plugin } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
+import { themeBootScript } from './src/lib/theme.js';
 import { appChromeColors } from './src/styles/palette.js';
 
 /**
@@ -28,20 +29,35 @@ const API_PREFIXES = [
 
 /**
  * The colours that cannot be CSS variables (the `theme-color` meta tag and the web manifest) are
- * read from the design tokens at build time, so they follow the palette: the dark theme's header
- * (`--surface-inverse`) and page (`--surface-app`), dark being the default theme (#7, #11).
+ * read from the design tokens at build time, so they follow the palette: each theme's header
+ * (`--surface-inverse`) and page (`--surface-app`). The manifest uses the dark default (#7, #11).
  */
-const CHROME = appChromeColors(
-  readFileSync(new URL('./src/styles/tokens.css', import.meta.url), 'utf8'),
-);
+const TOKENS = readFileSync(new URL('./src/styles/tokens.css', import.meta.url), 'utf8');
+const CHROME = { dark: appChromeColors(TOKENS, 'dark'), light: appChromeColors(TOKENS, 'light') };
 
-/** Adds `<meta name="theme-color">` with the palette's header colour to index.html. */
-function themeColorMeta(): Plugin {
+/**
+ * Adds to index.html's <head>, right after the charset and ahead of the stylesheet: the
+ * `theme-color` meta tag with the default (dark) header colour and both themes' colours as data-dark
+ * and data-light, then the inline boot script that shows the stored theme before first paint
+ * (src/lib/theme.ts).
+ */
+function themeHead(): Plugin {
+  const charset = '<meta charset="UTF-8" />';
+  const meta =
+    `<meta name="theme-color" content="${CHROME.dark.themeColor}" ` +
+    `data-dark="${CHROME.dark.themeColor}" data-light="${CHROME.light.themeColor}" />`;
   return {
-    name: 'graphgoblin-theme-color',
-    transformIndexHtml: () => [
-      { tag: 'meta', attrs: { name: 'theme-color', content: CHROME.themeColor }, injectTo: 'head' },
-    ],
+    name: 'graphgoblin-theme-head',
+    transformIndexHtml: (html) => {
+      if (!html.includes(charset))
+        throw new Error(`index.html needs ${charset} for the theme head`);
+      return html.replace(
+        charset,
+        `${charset}
+    ${meta}
+    <script>${themeBootScript()}</script>`,
+      );
+    },
   };
 }
 
@@ -50,7 +66,7 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
-    themeColorMeta(),
+    themeHead(),
     VitePWA({
       registerType: 'prompt',
       // The app registers the worker itself through workbox-window (src/pwa/register.ts) so the
@@ -68,8 +84,8 @@ export default defineConfig({
         start_url: APP_BASE,
         scope: APP_BASE,
         display: 'standalone',
-        background_color: CHROME.backgroundColor,
-        theme_color: CHROME.themeColor,
+        background_color: CHROME.dark.backgroundColor,
+        theme_color: CHROME.dark.themeColor,
         icons: [
           { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png' },
