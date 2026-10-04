@@ -15,8 +15,12 @@ import {
 } from './contrast.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
+// The approved sample, and the shipped tokens the pairs are enforced against: the sample's values
+// plus what integration added (for example the code search-match tokens).
 const samplePath = resolve(here, '../../docs/design/visual-direction/tokens.css');
 const sample = readFileSync(samplePath, 'utf8');
+const shippedPath = resolve(here, '../../apps/web/src/styles/tokens.css');
+const shipped = readFileSync(shippedPath, 'utf8');
 const pairs = JSON.parse(readFileSync(join(here, 'design-contrast.pairs.json'), 'utf8'));
 
 test('theme parsing resolves root defaults and independent explicit overrides', () => {
@@ -68,10 +72,18 @@ test('WCAG reference results, symmetry and both channel transfer branches', () =
 
 test('pair data validates all groups and preserves the sample with focus on every surface', () => {
   validatePairs(pairs);
-  assert.equal(pairs.text.length, 84);
-  assert.equal(pairs.nonText.length, 94);
+  assert.equal(pairs.text.length, 96);
+  assert.equal(pairs.nonText.length, 96);
   assert.equal(pairs.decorative.length, 14);
-  for (const name of Object.keys(readThemes(sample).light).filter((name) =>
+  // The shipped tokens keep every value of the approved sample in both themes.
+  const approved = readThemes(sample);
+  const actual = readThemes(shipped);
+  for (const theme of ['dark', 'light']) {
+    for (const [name, value] of Object.entries(approved[theme])) {
+      assert.equal(actual[theme][name], value, `${theme} ${name}`);
+    }
+  }
+  for (const name of Object.keys(readThemes(shipped).light).filter((name) =>
     name.startsWith('--surface-'),
   )) {
     assert.ok(
@@ -97,11 +109,11 @@ test('pair data validates all groups and preserves the sample with focus on ever
 });
 
 test('report measures both themes, enforcing unrounded ratios and listing decorative pairs', () => {
-  const result = contrastReport(sample, pairs);
+  const result = contrastReport(shipped, pairs);
   assert.equal(result.failures.length, 0);
   assert.match(
     result.markdown,
-    /84 text pairs \(0 below 4.5:1\), 94 non-text pairs \(0 below 3:1\)/,
+    /96 text pairs \(0 below 4.5:1\), 96 non-text pairs \(0 below 3:1\)/,
   );
   assert.match(result.markdown, /## Dark theme/);
   assert.match(result.markdown, /## Light theme/);
@@ -121,7 +133,7 @@ test('report measures both themes, enforcing unrounded ratios and listing decora
   assert.match(bad.markdown, /from `fixture.css`/);
   assert.throws(() => contrastReport(':root {}', pairs), /Unknown token/);
   assert.throws(
-    () => contrastReport(`${sample}\n:root { --surface-new: #fff; }`, pairs),
+    () => contrastReport(`${shipped}\n:root { --surface-new: #fff; }`, pairs),
     /Missing non-text focus-ring pair for --surface-new/,
   );
 });
@@ -133,12 +145,12 @@ test('CLI writes a formatted temporary table, checks freshness and reports missi
   const run = (args, env = {}) =>
     spawnSync(process.execPath, [join(here, 'design-contrast.mjs'), ...args], {
       encoding: 'utf8',
-      env: { ...process.env, GG_DESIGN_TOKENS: samplePath, ...env },
+      env: { ...process.env, GG_DESIGN_TOKENS: shippedPath, ...env },
     });
   const write = run(['--output', output]);
   assert.equal(write.status, 0, write.stderr);
   assert.match(write.stderr, /0 failing enforced pair/);
-  const check = run(['--tokens', samplePath, '--output', output, '--check']);
+  const check = run(['--tokens', shippedPath, '--output', output, '--check']);
   assert.equal(check.status, 0, check.stderr);
   const table = readFileSync(output, 'utf8');
   writeFileSync(output, table.replace(/\n/g, '\r\n'));
@@ -150,9 +162,9 @@ test('CLI writes a formatted temporary table, checks freshness and reports missi
   const absent = run(['--check', '--output', join(temporary, 'absent.md')]);
   assert.equal(absent.status, 1);
   assert.match(absent.stderr, /missing or stale/);
-  // The repository output is checked without writing a sample table there.
+  // The committed table is checked read-only against the shipped tokens.
   const repositoryCheck = run(['--check']);
-  assert.equal(repositoryCheck.status, 1);
+  assert.equal(repositoryCheck.status, 0, repositoryCheck.stderr);
   assert.match(repositoryCheck.stderr, /0 failing enforced pair/);
   const directoryOutput = join(temporary, 'directory.md');
   mkdirSync(directoryOutput);
@@ -167,7 +179,10 @@ test('CLI writes a formatted temporary table, checks freshness and reports missi
   assert.match(invalid.stderr, /Usage:/);
   assert.equal(run(['--tokens']).status, 2);
   const badTokens = join(temporary, 'bad.css');
-  writeFileSync(badTokens, sample.replace(/--text-default:\s*[^;]+;/g, '--text-default: #ffffff;'));
+  writeFileSync(
+    badTokens,
+    shipped.replace(/--text-default:\s*[^;]+;/g, '--text-default: #ffffff;'),
+  );
   const failingWrite = run(['--tokens', badTokens, '--output', output]);
   assert.equal(failingWrite.status, 1);
   assert.match(failingWrite.stderr, /FAIL light --text-default/);
