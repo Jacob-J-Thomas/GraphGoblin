@@ -10,17 +10,16 @@ import { Icon } from '../icons/index.js';
 
 /**
  * The frame every text-entry control shares (inputs, selects, text areas, and the code editors in
- * forms/CodeEditor.tsx): a 3:1 border on the field surface, 8 px corners, a lighter edge on hover,
- * and the 2 px focus ring outside a green edge. `aria-invalid` turns the edge to the bad tone.
+ * forms/CodeEditor.tsx): a 3:1 border with 8 px corners and a lighter edge on hover. Each control
+ * adds its surface, its focus ring (2 px, outside a green edge), and the bad-tone edge when invalid.
  */
-export const FIELD_FRAME = [
-  'rounded-md border border-strong bg-surface-field transition-[border-color,box-shadow]',
-  'hover:border-field-hover aria-invalid:border-status-bad-border',
-];
+export const FIELD_FRAME =
+  'rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover';
 
 /** Shared by inputs, selects, and textareas: the frame, the type, and the focus and disabled states. */
 const FIELD = [
   FIELD_FRAME,
+  'bg-surface-field aria-invalid:border-status-bad-border',
   'w-full min-w-0 px-3 text-md text-default placeholder:text-subtle',
   'focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2',
   'focus-visible:outline-focus',

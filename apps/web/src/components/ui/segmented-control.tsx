@@ -25,11 +25,11 @@ export type SegmentedControlProps<T extends string> = Unset<T> & {
   value: T | undefined;
   /** The radios' shared `name`; one is generated when absent. */
   name?: string;
-  required?: boolean;
+  required?: boolean | undefined;
   disabled?: boolean;
   /** Ids of help and error text that describe the group. */
   describedBy?: string | undefined;
-  invalid?: boolean;
+  invalid?: boolean | undefined;
   className?: string;
 };
 

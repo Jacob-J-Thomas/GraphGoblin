@@ -3,11 +3,22 @@
  * for their children, so they live in one module with it: the field families they draw on are
  * imported, never the other way round.
  */
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState, type ComponentProps } from 'react';
 import { Icon } from '../../components/icons/index.js';
-import { Button, Checkbox, HelpText, Input, Label, Select } from '../../components/ui/index.js';
+import {
+  Button,
+  Checkbox,
+  Fieldset,
+  FieldGroup,
+  HelpText,
+  Input,
+  Label,
+  Legend,
+  Select,
+} from '../../components/ui/index.js';
 import { repathParseErrors, useParseErrors } from '../parse-errors.js';
 import {
+  descriptionOf,
   humanize,
   initialValue,
   matchOption,
@@ -17,16 +28,17 @@ import {
   type FieldShape,
   type Schema,
 } from '../introspect.js';
-import { BooleanField, EnumField, LiteralField } from './choice.js';
+import { BooleanField, EnumField, LiteralField, NOT_SET } from './choice.js';
 import { useCollectionFocus } from './collection.js';
 import { JsonField, JsonText } from './json.js';
 import {
-  FIELDSET,
   FieldError,
+  FieldHelp,
+  fieldMeta,
   joinPath,
-  LEGEND,
   useCollectionField,
   useField,
+  useFieldControl,
   type FieldProps,
 } from './shared.js';
 import { NumberField, StringField } from './text.js';
@@ -91,15 +103,15 @@ function ObjectField({
   if (optional && !hasDefault && absent) {
     return (
       <div data-field={name}>
-        <Button size="sm" variant="outline" onClick={() => field.onChange(initialValue(base))}>
+        <AddButton onClick={() => field.onChange(initialValue(base))}>
           Add {label.toLowerCase()}
-        </Button>
+        </AddButton>
       </div>
     );
   }
   return (
-    <fieldset className={FIELDSET} data-field={name}>
-      <legend className={LEGEND}>{label}</legend>
+    <Fieldset data-field={name}>
+      <Legend>{label}</Legend>
       {optional && !hasDefault ? (
         <div>
           <Button
@@ -110,15 +122,42 @@ function ObjectField({
               field.onChange(undefined);
             }}
           >
+            <Icon name="close" />
             Remove {label.toLowerCase()}
           </Button>
         </div>
       ) : null}
       <ObjectBody shape={shape} name={name} />
       <FieldError name={name} />
-    </fieldset>
+    </Fieldset>
   );
 }
+
+/** Adds an item, an entry, or an optional group: a secondary button with a plus. */
+function AddButton({ children, ...props }: ComponentProps<typeof Button>) {
+  return (
+    <Button size="sm" variant="secondary" {...props}>
+      <Icon name="plus" />
+      {children}
+    </Button>
+  );
+}
+
+/**
+ * Removes one row of a collection: an icon button named for the row ("Remove args 2"), beside the
+ * row's controls, so Tab reaches it after them, as it reads.
+ */
+function RemoveButton(props: { 'aria-label': string; onClick: () => void }) {
+  return (
+    <Button size="icon" variant="ghost" {...props}>
+      <Icon name="close" />
+    </Button>
+  );
+}
+
+/** One row of a collection, on a left rail: the row's fields, then its Remove button. */
+const COLLECTION_ROW =
+  'grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-x-2 gap-y-1.5 border-l-2 border-default pl-3';
 
 function ArrayField({
   schema,
@@ -176,24 +215,14 @@ function ArrayField({
       field.onChange(next);
     };
     return (
-      <fieldset className="grid gap-2" data-field={name}>
-        <legend className="mb-2 text-sm font-medium">{label}</legend>
-        <div className="flex flex-wrap gap-x-4 gap-y-2">
-          {element.options.map((option) => (
-            <label
-              key={option}
-              className="flex cursor-pointer items-center gap-2 font-mono text-sm font-medium"
-            >
-              <Checkbox
-                checked={items.includes(option)}
-                onChange={(e) => toggle(option, e.target.checked)}
-              />
-              {option}
-            </label>
-          ))}
-        </div>
-        <FieldError name={name} />
-      </fieldset>
+      <EnumSetField
+        name={name}
+        label={label}
+        help={descriptionOf(schema)}
+        options={element.options}
+        chosen={items}
+        toggle={toggle}
+      />
     );
   }
 
@@ -201,57 +230,104 @@ function ArrayField({
     // Item fields bind to paths inside the value; drawing them over a default the value does not
     // hold yet would make them validate `undefined`. Show the default and copy it on request.
     return (
-      <fieldset className={FIELDSET} data-field={name}>
-        <legend className={LEGEND}>{label}</legend>
+      <Fieldset data-field={name}>
+        <Legend>{label}</Legend>
         <p className="text-xs text-muted">
           Default: <code className="text-default">{JSON.stringify(defaultValue)}</code>
         </p>
         <div>
           <Button
             size="sm"
-            variant="outline"
+            variant="secondary"
             onClick={() => field.onChange(structuredClone(defaultValue))}
           >
+            <Icon name="edit" />
             Customize {label.toLowerCase()}
           </Button>
         </div>
-      </fieldset>
+      </Fieldset>
     );
   }
   const canAdd = shape.max === undefined || items.length < shape.max;
+  // A row holding a group of fields keeps Remove at its foot, after them; a row holding one
+  // control keeps Remove beside that control (below the row's label).
+  const compound = ['object', 'array', 'record', 'union'].includes(element.kind);
   return (
-    <fieldset ref={focus.ref} tabIndex={-1} className={FIELDSET} data-field={name}>
-      <legend className={LEGEND}>{label}</legend>
+    <Fieldset ref={focus.ref} tabIndex={-1} data-field={name}>
+      <Legend>{label}</Legend>
       {items.map((_, index) => (
-        <div
-          key={rowIds[index]}
-          data-collection-row={index}
-          className="grid gap-2 border-l-2 border-default pl-3"
-        >
+        <div key={rowIds[index]} data-collection-row={index} className={COLLECTION_ROW}>
           <Field
             schema={shape.element}
             name={joinPath(name, index)}
             label={`${label} ${index + 1}`}
           />
-          <div>
-            <Button
-              size="sm"
-              variant="ghost"
+          <div className={compound ? 'self-end' : 'mt-6'}>
+            <RemoveButton
               aria-label={`Remove ${label.toLowerCase()} ${index + 1}`}
               onClick={() => remove(index)}
-            >
-              Remove
-            </Button>
+            />
           </div>
         </div>
       ))}
       <div>
-        <Button ref={focus.addRef} size="sm" variant="outline" disabled={!canAdd} onClick={add}>
+        <AddButton ref={focus.addRef} disabled={!canAdd} onClick={add}>
           Add {label.toLowerCase()}
-        </Button>
+        </AddButton>
       </div>
       <FieldError name={name} />
       {focus.status}
+    </Fieldset>
+  );
+}
+
+/**
+ * An array of enum members as a group of checkboxes, one per member, named by its legend and
+ * described by its help and error text.
+ */
+function EnumSetField({
+  name,
+  label,
+  help,
+  options,
+  chosen,
+  toggle,
+}: {
+  name: string;
+  label: string;
+  help: string | undefined;
+  options: string[];
+  chosen: unknown[];
+  toggle: (option: string, on: boolean) => void;
+}) {
+  const id = useId();
+  const { control, helpId, errorId } = useFieldControl(name, id, {
+    help: help !== undefined,
+    required: false,
+  });
+  return (
+    <fieldset
+      className="grid min-w-0 gap-1.5"
+      data-field={name}
+      aria-describedby={control['aria-describedby']}
+    >
+      <Legend variant="label">{label}</Legend>
+      <div className="flex flex-wrap gap-x-5 gap-y-2">
+        {options.map((option) => (
+          <label
+            key={option}
+            className="flex cursor-pointer items-center gap-2 font-mono text-sm font-medium"
+          >
+            <Checkbox
+              checked={chosen.includes(option)}
+              onChange={(e) => toggle(option, e.target.checked)}
+            />
+            {option}
+          </label>
+        ))}
+      </div>
+      <FieldHelp id={helpId} help={help} />
+      <FieldError name={name} id={errorId} />
     </fieldset>
   );
 }
@@ -316,14 +392,10 @@ function RecordField({
     focus.announce(`Removed ${label.toLowerCase()} ${key}`);
   };
   return (
-    <fieldset ref={focus.ref} tabIndex={-1} className={FIELDSET} data-field={name}>
-      <legend className={LEGEND}>{label}</legend>
+    <Fieldset ref={focus.ref} tabIndex={-1} data-field={name}>
+      <Legend>{label}</Legend>
       {entries.map(([key, value], index) => (
-        <div
-          key={rowIds.get(key)}
-          data-collection-row={index}
-          className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-2"
-        >
+        <div key={rowIds.get(key)} data-collection-row={index} className={COLLECTION_ROW}>
           <RecordKey
             label={`${label} key ${index + 1}`}
             value={key}
@@ -331,15 +403,13 @@ function RecordField({
             otherKeys={entries.filter(([other]) => other !== key).map(([other]) => other)}
             announce={(message) => focus.announce(message, undefined, false)}
           />
-          <Button
-            size="icon"
-            variant="ghost"
-            className="col-start-2 row-start-1"
-            aria-label={`Remove ${label.toLowerCase()} ${key}`}
-            onClick={() => remove(key)}
-          >
-            <Icon name="close" />
-          </Button>
+          {/* Beside the key, and before the value in the reading and Tab order. */}
+          <div className="col-start-2 row-start-1">
+            <RemoveButton
+              aria-label={`Remove ${label.toLowerCase()} ${key}`}
+              onClick={() => remove(key)}
+            />
+          </div>
           <div className="col-span-2 col-start-1 row-start-2 min-w-0">
             {valueShape.kind === 'string' ? (
               <Input
@@ -360,13 +430,13 @@ function RecordField({
         </div>
       ))}
       <div>
-        <Button ref={focus.addRef} size="sm" variant="outline" onClick={add}>
+        <AddButton ref={focus.addRef} onClick={add}>
           Add entry
-        </Button>
+        </AddButton>
       </div>
       <FieldError name={name} />
       {focus.status}
-    </fieldset>
+    </Fieldset>
   );
 }
 
@@ -440,13 +510,21 @@ function UnionField({
   const index = matchOption(shape.options, value, shape.discriminator);
   const option = shape.options[index] as Schema;
   const optionShape = shapeOf(option);
+  // The variant picker is the union's own control: it carries the marker, the help, and the error.
+  const { required, help } = fieldMeta(schema);
+  const { control, helpId, errorId } = useFieldControl(name, id, {
+    help: help !== undefined,
+    required,
+  });
   return (
-    <fieldset className={FIELDSET} data-field={name}>
-      <legend className={LEGEND}>{label}</legend>
-      <div className="grid gap-1.5">
-        <Label htmlFor={id}>{shape.discriminator ? humanize(shape.discriminator) : 'Kind'}</Label>
+    <Fieldset data-field={name}>
+      <Legend>{label}</Legend>
+      <FieldGroup>
+        <Label htmlFor={id} required={required}>
+          {shape.discriminator ? humanize(shape.discriminator) : 'Kind'}
+        </Label>
         <Select
-          id={id}
+          {...control}
           value={unset ? '' : String(index)}
           onChange={(e) => {
             repathParseErrors(parseErrors, [{ from: name }]);
@@ -454,20 +532,21 @@ function UnionField({
             field.onChange(initialValue(shape.options[Number(e.target.value)] as Schema));
           }}
         >
-          {optional && !hasDefault ? <option value="">(not set)</option> : null}
+          {optional && !hasDefault ? <option value="">{NOT_SET}</option> : null}
           {shape.options.map((o, i) => (
             <option key={i} value={i}>
               {optionLabel(o, shape.discriminator)}
             </option>
           ))}
         </Select>
-      </div>
+        <FieldHelp id={helpId} help={help} />
+      </FieldGroup>
       {unset ? null : optionShape.kind === 'object' ? (
         <ObjectBody shape={optionShape.shape} name={name} skip={shape.discriminator} />
       ) : optionShape.kind === 'literal' ? null : (
         <Field schema={option} name={name} label="Value" />
       )}
-      <FieldError name={name} />
-    </fieldset>
+      <FieldError name={name} id={errorId} />
+    </Fieldset>
   );
 }

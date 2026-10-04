@@ -81,6 +81,14 @@ export function unwrap(schema: Schema): Unwrapped {
   return { base: current, optional, hasDefault, ...(hasDefault ? { defaultValue } : {}) };
 }
 
+/**
+ * A schema's `.describe()` text: on the schema itself, else on the schema under its optional,
+ * default, and similar wrappers. Undefined when neither has one.
+ */
+export function descriptionOf(schema: Schema): string | undefined {
+  return schema.description ?? unwrap(schema).base.description;
+}
+
 export type StringFormat = 'text' | 'template' | 'expression';
 
 export type FieldShape =

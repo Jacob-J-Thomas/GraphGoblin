@@ -1,10 +1,12 @@
 /** JSON fields: a CodeMirror JSON editor that keeps unparsed text until it parses or is dropped. */
 import { useId, useState } from 'react';
 import { Button, HelpText } from '../../components/ui/index.js';
-import { parseJson, prettyJson } from '../../lib/utils.js';
+import { cn, parseJson, prettyJson } from '../../lib/utils.js';
 import { CodeEditor } from '../CodeEditor.js';
+import { LanguageTag } from '../CodeField.js';
+import { unwrap } from '../introspect.js';
 import { useParseErrors } from '../parse-errors.js';
-import { Row, useField, type FieldProps } from './shared.js';
+import { fieldMeta, Row, useField, type FieldProps } from './shared.js';
 
 export function JsonText({
   path,
@@ -12,14 +14,24 @@ export function JsonText({
   value,
   onChange,
   id,
+  describedBy,
+  invalid = false,
+  required = false,
+  placeholder,
 }: {
   path: string;
   label: string;
   value: unknown;
   onChange: (value: unknown) => void;
   id?: string;
+  /** Ids of the field's help and error text; the parse error is added while there is one. */
+  describedBy?: string | undefined;
+  invalid?: boolean | undefined;
+  required?: boolean | undefined;
+  placeholder?: string | undefined;
 }) {
   const parseErrors = useParseErrors();
+  const parseErrorId = useId();
   // Unparsed text from an earlier visit to this field wins over the last valid value.
   const [stored] = useState(() => parseErrors.get(path));
   const [text, setText] = useState(() => stored?.text ?? prettyJson(value));
@@ -49,11 +61,16 @@ export function JsonText({
     setError(message);
   };
   return (
-    <div className="grid min-w-0 flex-1 gap-1.5">
+    <div className="grid min-w-0 flex-1">
       <CodeEditor
         language="json"
         label={label}
         {...(id ? { id } : {})}
+        minLines={2}
+        placeholder={placeholder}
+        describedBy={cn(describedBy, error && parseErrorId) || undefined}
+        invalid={invalid || error !== undefined}
+        required={required}
         value={text}
         onChange={(next) => {
           setText(next);
@@ -69,33 +86,61 @@ export function JsonText({
           } else fail(next, `invalid JSON: ${parsed.error}`);
         }}
       />
-      {error ? (
-        <HelpText tone="bad" className="flex flex-wrap items-center gap-2">
-          {error.replace(/^invalid JSON/, 'Invalid JSON')}{' '}
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => {
-              // Back to the last valid value; the typed text is dropped.
-              const restored = prettyJson(value);
-              setText(restored);
-              fail(restored, undefined);
-            }}
+      {/* Polite, so the message is read once typing pauses rather than on every keystroke. */}
+      <div aria-live="polite">
+        {error ? (
+          <HelpText
+            id={parseErrorId}
+            tone="bad"
+            className="mt-1.5 flex flex-wrap items-center gap-2"
           >
-            Discard text
-          </Button>
-        </HelpText>
-      ) : null}
+            {error.replace(/^invalid JSON/, 'Invalid JSON')}{' '}
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                // Back to the last valid value; the typed text is dropped.
+                const restored = prettyJson(value);
+                setText(restored);
+                fail(restored, undefined);
+              }}
+            >
+              Discard text
+            </Button>
+          </HelpText>
+        ) : null}
+      </div>
     </div>
   );
 }
 
-export function JsonField({ name, label }: FieldProps) {
+export function JsonField({ schema, name, label }: FieldProps) {
   const field = useField(name);
   const id = useId();
+  const { required, help } = fieldMeta(schema);
+  const { hasDefault, defaultValue } = unwrap(schema);
   return (
-    <Row label={`${label} (JSON)`} htmlFor={id} name={name}>
-      <JsonText path={name} label={label} id={id} value={field.value} onChange={field.onChange} />
+    <Row
+      label={label}
+      htmlFor={id}
+      name={name}
+      required={required}
+      help={help}
+      aside={<LanguageTag>JSON</LanguageTag>}
+    >
+      {(control) => (
+        <JsonText
+          path={name}
+          label={label}
+          id={id}
+          value={field.value}
+          onChange={field.onChange}
+          describedBy={control['aria-describedby']}
+          invalid={control['aria-invalid']}
+          required={required}
+          placeholder={hasDefault ? prettyJson(defaultValue) : undefined}
+        />
+      )}
     </Row>
   );
 }
