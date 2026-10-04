@@ -29,6 +29,16 @@ function propertyType(schema: PropertySchema): 'string' | 'number' | 'boolean' |
   return 'json';
 }
 
+/**
+ * How an enum value reads in its select: a string as itself unless the enum also holds a value
+ * that reads the same (a string "1" beside the number 1), then quoted; anything else as JSON.
+ */
+function enumLabel(option: unknown, options: unknown[]): string {
+  if (typeof option !== 'string') return JSON.stringify(option);
+  const clash = options.some((other) => other !== option && JSON.stringify(other) === option);
+  return clash ? JSON.stringify(option) : option;
+}
+
 function objectProperties(
   schema: JsonSchema | undefined,
 ): Record<string, PropertySchema> | undefined {
@@ -42,8 +52,9 @@ function objectProperties(
 /**
  * A form for a JSON Schema: the wait node's `inputSchema` or a manual trigger's input. Object
  * schemas get one field per property (strings, numbers, booleans, enums; anything else as JSON);
- * any other schema, or none, gets a single JSON editor. Values are checked with `domain`'s
- * validator before `onSubmit`.
+ * any other schema, or none, gets a single JSON editor. An enum choice is sent as the value it
+ * stands for (a number stays a number). Values are checked with `domain`'s validator before
+ * `onSubmit`.
  */
 export function JsonSchemaForm({
   schema,
@@ -74,6 +85,8 @@ export function JsonSchemaForm({
       if (value === undefined || value === '') continue;
       const type = propertyType(prop);
       if (type === 'number') out[key] = Number(value);
+      // Enum selects hold the chosen option's index, so values of any type come back as they are.
+      else if (type === 'enum') out[key] = prop.enum?.[Number(value)];
       else if (type === 'json') {
         const parsed = parseJson(String(value));
         if (!parsed.ok) return { ok: false, errors: [`${key}: invalid JSON`] };
@@ -126,9 +139,9 @@ export function JsonSchemaForm({
                   onChange={(e) => setValues({ ...values, [key]: e.target.value })}
                 >
                   <option value="">(choose)</option>
-                  {(prop.enum ?? []).map((option) => (
-                    <option key={String(option)} value={String(option)}>
-                      {String(option)}
+                  {(prop.enum ?? []).map((option, index, options) => (
+                    <option key={index} value={String(index)}>
+                      {enumLabel(option, options)}
                     </option>
                   ))}
                 </Select>

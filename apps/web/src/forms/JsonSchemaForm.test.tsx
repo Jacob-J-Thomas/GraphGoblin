@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { JsonSchemaForm } from './JsonSchemaForm.js';
@@ -48,6 +48,50 @@ describe('JsonSchemaForm', () => {
       note: 'hi',
       ok: true,
     });
+  });
+
+  it('sends an enum choice as the value it stands for, not its text', async () => {
+    const user = userEvent.setup();
+    const submit = vi.fn();
+    render(
+      <JsonSchemaForm
+        schema={{
+          type: 'object',
+          required: ['priority'],
+          properties: {
+            priority: { type: 'integer', enum: [1, 2] },
+            strict: { enum: [true, false, null] },
+            mode: { enum: ['1', 1] },
+          },
+        }}
+        submitLabel="Go"
+        onSubmit={submit}
+      />,
+    );
+    const priority = screen.getByLabelText('priority');
+    expect(
+      within(priority)
+        .getAllByRole('option')
+        .map((o) => o.textContent),
+    ).toEqual(['(choose)', '1', '2']);
+    await user.selectOptions(priority, '1');
+    await user.selectOptions(screen.getByLabelText('strict'), 'null');
+    // A string and a number with the same text stay apart.
+    const mode = screen.getByLabelText('mode');
+    expect(
+      within(mode)
+        .getAllByRole('option')
+        .map((o) => o.textContent),
+    ).toEqual(['(choose)', '"1"', '1']);
+    await user.selectOptions(mode, '"1"');
+    await user.click(screen.getByRole('button', { name: 'Go' }));
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(submit).toHaveBeenLastCalledWith({ priority: 1, strict: null, mode: '1' });
+
+    await user.selectOptions(screen.getByLabelText('strict'), 'false');
+    await user.selectOptions(mode, '1');
+    await user.click(screen.getByRole('button', { name: 'Go' }));
+    expect(submit).toHaveBeenLastCalledWith({ priority: 1, strict: false, mode: 1 });
   });
 
   it('falls back to a JSON editor for non-object schemas or none', async () => {
