@@ -729,9 +729,19 @@ describe('migration 0003 model catalog max effort', () => {
   });
 
   it('upgrades every model id seeded in 1.0.0', async () => {
-    const rows = DEFAULT_MODEL_CATALOG.map((entry) =>
-      legacyEntry({ ...entry, efforts: oldEfforts }),
-    );
+    // The migration freezes the ids 1.0.0 shipped; models added later are seeded with max already.
+    const seededIn100 = [
+      'gpt-6-luna',
+      'gpt-6.1-sol',
+      'gpt-6-sol',
+      'gpt-6-astra',
+      'gpt-5.6-luna',
+      'gpt-5.6-sol',
+      'gpt-5.6-terra',
+      'gpt-5.5',
+    ];
+    expect(DEFAULT_MODEL_CATALOG.map((e) => e.model)).toEqual(expect.arrayContaining(seededIn100));
+    const rows = seededIn100.map((model) => legacyEntry({ model, displayName: model }));
     await withUpgrade(rows, (current) =>
       expectRows(
         current,
