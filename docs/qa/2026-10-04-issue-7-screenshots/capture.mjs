@@ -11,7 +11,8 @@
  * static `data-theme="dark"` default and with the attribute flipped to `light`. Playwright comes
  * from apps/web's devDependencies; on Windows the installed Edge is used, as in the E2E config
  * (set GG_E2E_BROWSER_CHANNEL to override). Pass a third argument to write elsewhere (for example
- * a scratch folder for extra checks).
+ * a scratch folder for extra checks), and set GG_CAPTURE_ONLY to a comma-separated list of screen
+ * names to take only those.
  */
 import { spawn } from 'node:child_process';
 import { mkdirSync } from 'node:fs';
@@ -275,6 +276,13 @@ function screens({ base, apiKeyBase, nightly, waitingRun }) {
       ready: 'Needs a fix?',
       select: `[data-testid="node-${id}"]`,
     })),
+    {
+      name: 'editor-search',
+      url: `${base}/app/loops/${nightly}/edit`,
+      ready: 'Needs a fix?',
+      select: '[data-testid="node-triage"]',
+      search: { field: 'prompt.template', text: 'payload' },
+    },
     { name: 'runs', url: `${base}/app/runs`, ready: 'Children' },
     { name: 'inspector', url: `${base}/app/runs/${waitingRun}`, ready: 'Input requested' },
     { name: 'events', url: `${base}/app/events`, ready: 'issue.opened' },
@@ -302,6 +310,16 @@ async function shoot(browser, screen, size, theme, dir) {
   if (screen.select) {
     await page.locator(screen.select).click({ position: { x: 60, y: 12 } });
   }
+  if (screen.search) {
+    // CodeMirror's search panel (Ctrl+F) in the template field, with a match selected.
+    await page.locator(`[data-field="${screen.search.field}"] .cm-content`).click();
+    await page.keyboard.press('Control+f');
+    await page
+      .locator(`[data-field="${screen.search.field}"] .cm-textfield[name="search"]`)
+      .fill(screen.search.text);
+    await page.keyboard.press('Enter');
+    await page.locator(`[data-field="${screen.search.field}"] .cm-search`).scrollIntoViewIfNeeded();
+  }
   if (screen.offline) {
     await context.setOffline(true);
     await page.getByText('You are offline').waitFor();
@@ -321,7 +339,10 @@ async function main() {
     const seeded = await seed(base, control);
     const extra = await call(control, '/apps', 'POST', { requireApiKey: true });
     const browser = await chromium.launch(channel ? { channel } : {});
-    const list = screens({ base, apiKeyBase: extra.url, ...seeded });
+    const only = process.env['GG_CAPTURE_ONLY']?.split(',');
+    const list = screens({ base, apiKeyBase: extra.url, ...seeded }).filter(
+      (screen) => !only || only.includes(screen.name),
+    );
     for (const { theme, dir } of THEMES) {
       mkdirSync(dir, { recursive: true });
       for (const size of SIZES) {

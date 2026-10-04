@@ -67,6 +67,96 @@ const ROLE_STYLES: Record<SyntaxRole, Record<string, string>> = {
 
 const SELECTION = 'var(--accent-subtle)';
 
+const FOCUS_RING = {
+  outline: 'var(--focus-ring-width) solid var(--focus-ring)',
+  outlineOffset: '1px',
+};
+
+/**
+ * The search and replace panel (Ctrl+F) and its matches. CodeMirror's base theme draws the fields
+ * white and the buttons with a light gradient, which is unreadable on the dark theme, so every
+ * part is restyled with the semantic tokens: the panel on the overlay surface, fields like the
+ * app's inputs, buttons like secondary buttons, and matches with the --code-match tokens.
+ */
+const SEARCH_PANEL = {
+  '.cm-panels': {
+    backgroundColor: 'var(--surface-overlay)',
+    color: 'var(--text-default)',
+  },
+  '.cm-panels.cm-panels-top': { borderBottom: '1px solid var(--border-default)' },
+  '.cm-panels.cm-panels-bottom': { borderTop: '1px solid var(--border-default)' },
+  '.cm-panel.cm-search': {
+    padding: '6px 28px 6px 8px',
+    fontFamily: 'var(--font-ui)',
+    fontSize: 'var(--font-size-xs)',
+  },
+  '.cm-panel.cm-search label': {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '4px',
+    color: 'var(--text-default)',
+    fontSize: 'var(--font-size-xs)',
+    fontWeight: 'var(--font-weight-medium)',
+    cursor: 'pointer',
+  },
+  '.cm-panel.cm-search input[type=checkbox]': {
+    accentColor: 'var(--accent)',
+    margin: '0',
+    cursor: 'pointer',
+  },
+  '.cm-panel.cm-search input[type=checkbox]:focus-visible': FOCUS_RING,
+  '.cm-textfield': {
+    backgroundColor: 'var(--surface-field)',
+    color: 'var(--text-default)',
+    border: '1px solid var(--border-strong)',
+    borderRadius: 'var(--radius-sm)',
+    fontFamily: 'var(--font-code)',
+    fontSize: 'var(--font-size-xs)',
+    padding: '3px 8px',
+  },
+  '.cm-textfield::placeholder': { color: 'var(--text-subtle)', opacity: '1' },
+  '.cm-textfield:hover': { borderColor: 'var(--text-muted)' },
+  '.cm-textfield:focus': { ...FOCUS_RING, borderColor: 'var(--accent-strong)' },
+  '.cm-button': {
+    backgroundImage: 'none',
+    backgroundColor: 'var(--surface-control)',
+    color: 'var(--text-default)',
+    border: '1px solid var(--border-strong)',
+    borderRadius: 'var(--radius-sm)',
+    fontFamily: 'var(--font-ui)',
+    fontSize: 'var(--font-size-xs)',
+    fontWeight: 'var(--font-weight-semibold)',
+    padding: '3px 10px',
+    cursor: 'pointer',
+  },
+  '.cm-button:hover': { backgroundColor: 'var(--surface-hover)' },
+  '.cm-button:active': { backgroundImage: 'none', backgroundColor: 'var(--surface-hover)' },
+  '.cm-button:focus-visible': FOCUS_RING,
+  '.cm-panel.cm-search [name=close]': {
+    color: 'var(--text-muted)',
+    backgroundColor: 'transparent',
+    borderRadius: 'var(--radius-sm)',
+    fontSize: 'var(--font-size-lg)',
+    lineHeight: '1',
+    padding: '2px 6px',
+    top: '4px',
+    cursor: 'pointer',
+  },
+  '.cm-panel.cm-search [name=close]:hover': {
+    color: 'var(--text-default)',
+    backgroundColor: 'var(--surface-hover)',
+  },
+  '.cm-panel.cm-search [name=close]:focus-visible': FOCUS_RING,
+  '.cm-searchMatch': {
+    backgroundColor: 'var(--code-match)',
+    outline: '1px solid var(--code-match-border)',
+  },
+  '.cm-searchMatch.cm-searchMatch-selected': {
+    backgroundColor: 'var(--code-match-selected)',
+    outline: '1px solid var(--code-match-selected-border)',
+  },
+};
+
 export const codeTheme: Extension = [
   EditorView.theme({
     '&': {
@@ -115,17 +205,7 @@ export const codeTheme: Extension = [
       backgroundColor: 'var(--accent-subtle)',
       color: 'var(--accent-on-subtle)',
     },
-    '.cm-panels': {
-      backgroundColor: 'var(--surface-overlay)',
-      color: 'var(--text-default)',
-    },
-    '.cm-panels.cm-panels-top': { borderBottom: '1px solid var(--border-default)' },
-    '.cm-panels.cm-panels-bottom': { borderTop: '1px solid var(--border-default)' },
-    '.cm-searchMatch': {
-      backgroundColor: 'var(--status-warn-bg)',
-      outline: '1px solid var(--status-warn-border)',
-    },
-    '.cm-searchMatch.cm-searchMatch-selected': { backgroundColor: 'var(--accent-subtle)' },
+    ...SEARCH_PANEL,
     ...Object.fromEntries(
       Object.entries(ROLE_STYLES).map(([role, style]) => [`.gg-tok-${role}`, style]),
     ),

@@ -12,26 +12,27 @@ Regenerate with `node docs/qa/2026-10-04-issue-7-screenshots/capture.mjs before|
 
 Each screen is captured at 1024x768 (`-1024`) and 1440x900 (`-1440`).
 
-| File               | Screen                                                                                      |
-| ------------------ | ------------------------------------------------------------------------------------------- |
-| `loops`            | Loops list with create, import, and six loops in every publish state and last-run status    |
-| `editor-trigger`   | Editor, `nightly-triage` (one node of each kind and a loop-back), the trigger node selected |
-| `editor-decision`  | The same loop, the decision node selected (routes, Liquid question, JSONata expression)     |
-| `editor-inference` | The inference node selected (harness, model, effort, session, Liquid template)              |
-| `editor-script`    | The script node selected (command, args, cwd, env, stdin)                                   |
-| `editor-mutate`    | The mutate node selected (operations with a Liquid content field)                           |
-| `editor-subloop`   | The subloop node selected (subloop picker with the child's trigger input and return)        |
-| `editor-wait`      | The wait node selected (mode, prompt, input schema, expose-to checkboxes)                   |
-| `editor-heartbeat` | The heartbeat node selected (interval, probe, JSONata `until`, deadline)                    |
-| `editor-exit`      | The exit node selected (criteria, default, loop back, return mapping)                       |
-| `runs`             | Runs list with filters and four runs (waiting, succeeded, cancelled, failed)                |
-| `inspector`        | Run inspector on a waiting run: input form, timeline (live), thread at the last event       |
-| `events`           | Events list with two inbound events and their payloads                                      |
-| `settings`         | Settings, top of the page (model catalog with a disabled model, defaults)                   |
-| `api-key`          | A second API instance with `GG_REQUIRE_API_KEY=true`: the "API key required" panel          |
-| `not-found`        | An unknown route                                                                            |
-| `offline`          | Loops with the browser offline: the offline banner                                          |
-| `update-toast`     | Loops with a new build waiting (`graphgoblinPwa.simulateUpdate()`): the update toast        |
+| File               | Screen                                                                                          |
+| ------------------ | ----------------------------------------------------------------------------------------------- |
+| `loops`            | Loops list with create, import, and six loops in every publish state and last-run status        |
+| `editor-trigger`   | Editor, `nightly-triage` (one node of each kind and a loop-back), the trigger node selected     |
+| `editor-decision`  | The same loop, the decision node selected (routes, Liquid question, JSONata expression)         |
+| `editor-inference` | The inference node selected (harness, model, effort, session, Liquid template)                  |
+| `editor-script`    | The script node selected (command, args, cwd, env, stdin)                                       |
+| `editor-mutate`    | The mutate node selected (operations with a Liquid content field)                               |
+| `editor-subloop`   | The subloop node selected (subloop picker with the child's trigger input and return)            |
+| `editor-wait`      | The wait node selected (mode, prompt, input schema, expose-to checkboxes)                       |
+| `editor-heartbeat` | The heartbeat node selected (interval, probe, JSONata `until`, deadline)                        |
+| `editor-exit`      | The exit node selected (criteria, default, loop back, return mapping)                           |
+| `editor-search`    | The inference node's template with CodeMirror's search panel open (Ctrl+F) and a match selected |
+| `runs`             | Runs list with filters and four runs (waiting, succeeded, cancelled, failed)                    |
+| `inspector`        | Run inspector on a waiting run: input form, timeline (live), thread at the last event           |
+| `events`           | Events list with two inbound events and their payloads                                          |
+| `settings`         | Settings, top of the page (model catalog with a disabled model, defaults)                       |
+| `api-key`          | A second API instance with `GG_REQUIRE_API_KEY=true`: the "API key required" panel              |
+| `not-found`        | An unknown route                                                                                |
+| `offline`          | Loops with the browser offline: the offline banner                                              |
+| `update-toast`     | Loops with a new build waiting (`graphgoblinPwa.simulateUpdate()`): the update toast            |
 
 ## Differences from the approved sample
 
