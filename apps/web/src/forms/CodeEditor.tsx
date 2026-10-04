@@ -6,6 +6,7 @@ import { EditorState, type Extension } from '@codemirror/state';
 import { EditorView, placeholder as placeholderExt } from '@codemirror/view';
 import { basicSetup } from 'codemirror';
 import { useEffect, useRef } from 'react';
+import { cn } from '../lib/utils.js';
 
 export type CodeLanguage = 'liquid' | 'jsonata' | 'json';
 
@@ -32,6 +33,8 @@ export interface CodeEditorProps {
   id?: string;
   placeholder?: string;
   minLines?: number;
+  /** Square the bottom corners so a preview can sit directly under the editor. */
+  attached?: boolean;
 }
 
 /** A CodeMirror 6 editor bound to a string value. External value changes replace the document. */
@@ -43,6 +46,7 @@ export function CodeEditor({
   id,
   placeholder,
   minLines = 2,
+  attached = false,
 }: CodeEditorProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
@@ -89,7 +93,12 @@ export function CodeEditor({
   return (
     <div
       ref={hostRef}
-      className="overflow-hidden rounded-md border border-slate-300 bg-white text-sm focus-within:outline-2 focus-within:outline-emerald-600"
+      className={cn(
+        'min-w-0 overflow-hidden rounded-md border border-strong bg-code-bg text-sm',
+        'focus-within:border-accent-strong focus-within:outline-2 focus-within:outline-offset-2',
+        'focus-within:outline-focus',
+        attached && 'rounded-b-none',
+      )}
     />
   );
 }
