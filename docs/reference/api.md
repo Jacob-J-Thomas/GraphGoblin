@@ -46,14 +46,15 @@ Starting, observing, and controlling runs.
 
 Owner settings and the model catalog.
 
-| Method | Path                               | Summary                          | Parameters                                                           | Request body                                        | Responses |
-| ------ | ---------------------------------- | -------------------------------- | -------------------------------------------------------------------- | --------------------------------------------------- | --------- |
-| GET    | `/settings`                        | Owner settings                   | -                                                                    | -                                                   | 200       |
-| PUT    | `/settings`                        | Update owner settings            | -                                                                    | `object`                                            | 200       |
-| DELETE | `/settings/{key}`                  | Reset one setting to its default | `key`: string (path, required)                                       | -                                                   | 204       |
-| GET    | `/model-catalog`                   | The model catalog                | -                                                                    | -                                                   | 200       |
-| PUT    | `/model-catalog/{harness}/{model}` | Add or update a catalog entry    | `harness`: string (path, required), `model`: string (path, required) | `{ displayName, efforts, defaultEffort, enabled? }` | 200       |
-| DELETE | `/model-catalog/{harness}/{model}` | Remove a catalog entry           | `harness`: string (path, required), `model`: string (path, required) | -                                                   | 204       |
+| Method | Path                               | Summary                           | Parameters                                                           | Request body                                                 | Responses |
+| ------ | ---------------------------------- | --------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------ | --------- |
+| GET    | `/settings`                        | Owner settings                    | -                                                                    | -                                                            | 200       |
+| PUT    | `/settings`                        | Update owner settings             | -                                                                    | `object`                                                     | 200       |
+| DELETE | `/settings/{key}`                  | Reset one setting to its default  | `key`: string (path, required)                                       | -                                                            | 204       |
+| GET    | `/model-catalog`                   | The model catalog                 | -                                                                    | -                                                            | 200       |
+| PUT    | `/model-catalog/{harness}/{model}` | Edit a LiteLLM catalog entry      | `harness`: string (path, required), `model`: string (path, required) | `{ displayName, efforts, defaultEffort, enabled?, source? }` | 200       |
+| PATCH  | `/model-catalog/{harness}/{model}` | Enable or disable a catalog entry | `harness`: string (path, required), `model`: string (path, required) | `{ enabled }`                                                | 200       |
+| DELETE | `/model-catalog/{harness}/{model}` | Remove a LiteLLM catalog entry    | `harness`: string (path, required), `model`: string (path, required) | -                                                            | 204       |
 
 ## secrets
 

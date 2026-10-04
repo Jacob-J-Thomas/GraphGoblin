@@ -207,7 +207,7 @@ function checkDefaultModel(
       'default-model',
       'Default model',
       'fail',
-      `GG_DEFAULT_MODEL "${model}" is not in ${where}; add it in settings or pick a listed model`,
+      `GG_DEFAULT_MODEL "${model}" is not in ${where}; pick a listed harness model and enable it in Settings`,
     );
   }
   if (!entry.enabled) {

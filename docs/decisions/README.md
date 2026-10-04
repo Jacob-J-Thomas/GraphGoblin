@@ -21,3 +21,4 @@ One file per decision. Status is Accepted unless stated. Supersede by adding a n
 | [0015](ADR-0015-wp-d2-open-questions.md)                 | Visit cap under `maxIterations`, draft conflicts with `If-Match`, and the first API key        |
 | [0016](ADR-0016-api-key-scope-delegation.md)             | API keys may delegate only their own scopes                                                    |
 | [0017](ADR-0017-design-tokens-and-web-components.md)     | Two-tier design tokens and the web component structure                                         |
+| [0018](ADR-0018-model-catalog-source.md)                 | Harness model metadata is managed; enabled is an owner preference                              |

@@ -17,6 +17,7 @@ import { fileURLToPath } from 'node:url';
 import { buildApp, createContainer, loadConfig } from '@graphgoblin/api';
 import { createTestApp, type TestApp } from '@graphgoblin/api/testing';
 import type { ScriptedTurn } from '@graphgoblin/engine/testing';
+import { ModelCatalogEntrySchema } from '@graphgoblin/contracts';
 import { originalWorker as cleanWorker } from './worker.js';
 
 const dist = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'dist');
@@ -126,6 +127,9 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
       target.structured.respondWith(() => (queue.length > 1 ? queue.shift() : queue[0]));
       return { ok: true };
     }
+    case '/catalog/upsert':
+      await target.container.repos.catalog.upsert(ModelCatalogEntrySchema.parse(body));
+      return { ok: true };
     case '/timers/poll':
       await target.container.timers.poll();
       return { ok: true };

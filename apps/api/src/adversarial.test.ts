@@ -154,6 +154,7 @@ describe('adversarial API invariants', () => {
     'DELETE /settings/{key}': 'settings:write',
     'GET /model-catalog': 'settings:read',
     'PUT /model-catalog/{harness}/{model}': 'settings:write',
+    'PATCH /model-catalog/{harness}/{model}': 'settings:write',
     'DELETE /model-catalog/{harness}/{model}': 'settings:write',
     'GET /secrets': 'secrets:read',
     'PUT /secrets/{name}': 'secrets:write',
@@ -232,7 +233,7 @@ describe('adversarial API invariants', () => {
     for (const [path, operations] of Object.entries(t.app.swagger().paths!)) {
       if (path.startsWith('/hooks/') || path.endsWith('/validate')) continue;
       for (const method of Object.keys(operations)) {
-        if (!['post', 'put', 'delete'].includes(method)) continue;
+        if (!['post', 'put', 'patch', 'delete'].includes(method)) continue;
         let payload: Record<string, unknown> | undefined;
         if (path === '/loops' || path.endsWith('/draft')) payload = { definition: minimalLoop() };
         else if (path.endsWith('/import') || path === '/settings' || path.endsWith('/runs'))
@@ -245,6 +246,8 @@ describe('adversarial API invariants', () => {
         else if (path === '/events') payload = { type: 'scope-test', payload: null };
         else if (path.startsWith('/model-catalog/') && method === 'put')
           payload = { displayName: 'Model', efforts: ['low'], defaultEffort: 'low' };
+        else if (path.startsWith('/model-catalog/') && method === 'patch')
+          payload = { enabled: false };
         else if (path.endsWith('/replay')) payload = { nodeId: 'scope-test' };
         const url = path.replace(/\{([^}]+)\}/g, (_, name: string) =>
           name === 'id' ? fakeUlid('id') : 'scope-test',

@@ -240,6 +240,7 @@ export interface paths {
                                 message: string;
                                 nodeId?: string | undefined;
                                 edgeId?: string | undefined;
+                                path?: string | undefined;
                             }[];
                         };
                     };
@@ -293,6 +294,7 @@ export interface paths {
                                 message: string;
                                 nodeId?: string | undefined;
                                 edgeId?: string | undefined;
+                                path?: string | undefined;
                             }[];
                         };
                     };
@@ -415,6 +417,7 @@ export interface paths {
                                 message: string;
                                 nodeId?: string | undefined;
                                 edgeId?: string | undefined;
+                                path?: string | undefined;
                             }[];
                         };
                     };
@@ -469,6 +472,7 @@ export interface paths {
                                 message: string;
                                 nodeId?: string | undefined;
                                 edgeId?: string | undefined;
+                                path?: string | undefined;
                             }[];
                             publishable: boolean;
                         };
@@ -511,6 +515,15 @@ export interface paths {
                     content: {
                         "application/json": {
                             version: components["schemas"]["LoopVersionRecord"];
+                            issues: {
+                                code: string;
+                                /** @enum {string} */
+                                severity: "error" | "warning";
+                                message: string;
+                                nodeId?: string | undefined;
+                                edgeId?: string | undefined;
+                                path?: string | undefined;
+                            }[];
                         };
                     };
                 };
@@ -1557,6 +1570,8 @@ export interface paths {
                             items: {
                                 harness: string;
                                 model: string;
+                                /** @enum {string} */
+                                source: "harness" | "litellm";
                                 displayName: string;
                                 efforts: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max")[];
                                 /** @enum {string} */
@@ -1584,7 +1599,10 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        /** Add or update a catalog entry */
+        /**
+         * Edit a LiteLLM catalog entry
+         * @description Harness entries return 409 MODEL_MANAGED_BY_HARNESS. New LiteLLM entries return 409 LITELLM_NOT_CONFIGURED until a provider is configured. Existing source is immutable; omitting enabled preserves its current value.
+         */
         put: {
             parameters: {
                 query?: never;
@@ -1602,8 +1620,9 @@ export interface paths {
                         efforts: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max")[];
                         /** @enum {string} */
                         defaultEffort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
-                        /** @default true */
                         enabled?: boolean | undefined;
+                        /** @enum {string} */
+                        source?: ("harness" | "litellm") | undefined;
                     };
                 };
             };
@@ -1617,6 +1636,8 @@ export interface paths {
                         "application/json": {
                             harness: string;
                             model: string;
+                            /** @enum {string} */
+                            source: "harness" | "litellm";
                             displayName: string;
                             efforts: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max")[];
                             /** @enum {string} */
@@ -1628,7 +1649,10 @@ export interface paths {
             };
         };
         post?: never;
-        /** Remove a catalog entry */
+        /**
+         * Remove a LiteLLM catalog entry
+         * @description Harness entries return 409 MODEL_MANAGED_BY_HARNESS; absent entries return 404 MODEL_NOT_FOUND.
+         */
         delete: {
             parameters: {
                 query?: never;
@@ -1652,7 +1676,49 @@ export interface paths {
         };
         options?: never;
         head?: never;
-        patch?: never;
+        /**
+         * Enable or disable a catalog entry
+         * @description Requires settings:write. Updates only enabled for either source; 404 MODEL_NOT_FOUND when absent.
+         */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    harness: string;
+                    model: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        enabled: boolean;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            harness: string;
+                            model: string;
+                            /** @enum {string} */
+                            source: "harness" | "litellm";
+                            displayName: string;
+                            efforts: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max")[];
+                            /** @enum {string} */
+                            defaultEffort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                            enabled: boolean;
+                        };
+                    };
+                };
+            };
+        };
         trace?: never;
     };
     "/events": {
