@@ -10,12 +10,11 @@ import {
   RequiredNote,
   SegmentedControl,
   Select,
-  Switch,
   Textarea,
 } from '../components/ui/index.js';
 import { cn, parseJson } from '../lib/utils.js';
 import { LanguageTag } from './CodeField.js';
-import { isSegmented, NOT_SET } from './fields/choice.js';
+import { isSegmented, NOT_SET, YES_NO } from './fields/choice.js';
 
 interface PropertySchema {
   type?: string | string[];
@@ -194,33 +193,23 @@ function PropertyField({
     ...(required ? { 'aria-required': true as const } : {}),
   };
   let field: ReactNode;
-  if (type === 'boolean' && !required && !hasDefault) {
-    field = (
-      <SegmentedControl
-        legend={label}
-        notSet={NOT_SET}
-        options={[
-          { value: 'true', label: 'Yes' },
-          { value: 'false', label: 'No' },
-        ]}
-        value={typeof value === 'boolean' ? String(value) : undefined}
-        onChange={(next) => onChange(next === undefined ? undefined : next === 'true')}
-        describedBy={control['aria-describedby']}
-      />
-    );
-  } else if (type === 'boolean') {
-    field = (
-      <div className="flex min-w-0 items-center justify-between gap-3">
-        <Label id={`${id}-label`} htmlFor={id} required={required} className="cursor-pointer">
-          {label}
-        </Label>
-        <Switch
-          {...control}
-          aria-labelledby={`${id}-label`}
-          checked={value === true}
-          onCheckedChange={onChange}
-        />
-      </div>
+  if (type === 'boolean') {
+    // The form starts empty and sends only what it shows, so a boolean is never a switch here (a
+    // switch always shows on or off): an optional one offers "Not set", and a required one starts
+    // with neither Yes nor No chosen.
+    const common = {
+      legend: label,
+      options: YES_NO,
+      value: typeof value === 'boolean' ? String(value) : undefined,
+      required,
+      describedBy: control['aria-describedby'],
+    };
+    const choose = (next: string | undefined) =>
+      onChange(next === undefined ? undefined : next === 'true');
+    field = required ? (
+      <SegmentedControl {...common} onChange={choose} />
+    ) : (
+      <SegmentedControl {...common} notSet={NOT_SET} onChange={choose} />
     );
   } else if (type === 'enum') {
     field = (
@@ -268,10 +257,11 @@ function PropertyField({
 
 /**
  * A form for a JSON Schema: the wait node's `inputSchema` or a manual trigger's input. Object
- * schemas get one field per property, drawn as SchemaForm draws its fields (text and number
- * inputs, a switch for a required or defaulted boolean and Not set / Yes / No for an optional one,
- * a segmented control or select for an enum, and anything else as JSON), with the properties the
- * schema requires marked; any other schema, or none, gets a single JSON editor. An enum choice is
+ * schemas get one field per property, drawn with the controls SchemaForm uses (text and number
+ * inputs, Yes / No segments for a boolean, with Not set unless it is required, a segmented control
+ * or select for an enum, and anything else as JSON), with the properties the schema requires
+ * marked; any other schema, or none, gets a single JSON editor. The form starts empty, so nothing
+ * shows a value it would not send (a switch, always on or off, has no place here). An enum choice is
  * kept by value and sent as the value it stands for (a number stays a number). A field left unset
  * is not sent. The value is checked with `domain`'s validator before `onSubmit`, as the API will
  * check it: an empty JSON editor as `null`, which is what the API validates when no input is sent.

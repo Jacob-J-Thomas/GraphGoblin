@@ -176,12 +176,20 @@ describe('JsonSchemaForm', () => {
     await user.click(radio('decision', 'escalate'));
     expect(group).not.toHaveAttribute('aria-invalid');
 
-    // A required boolean and a defaulted one are switches; the default shows as help.
-    const approved = screen.getByRole('switch', { name: 'approved' });
-    expect(approved).toHaveAttribute('aria-required', 'true');
-    const notify = screen.getByRole('switch', { name: 'notify' });
-    expect(notify).toHaveAccessibleDescription('Default: true');
-    await user.click(approved);
+    // Booleans show only what would be sent: a required one starts with neither Yes nor No, an
+    // optional one (even with a default, shown as help) at "Not set".
+    expect(radioNames('approved')).toEqual(['Yes', 'No']);
+    expect(screen.getByRole('radiogroup', { name: 'approved' })).toHaveAttribute(
+      'aria-required',
+      'true',
+    );
+    expect(radio('approved', 'Yes')).not.toBeChecked();
+    expect(radio('approved', 'No')).not.toBeChecked();
+    expect(radio('notify', 'Not set')).toBeChecked();
+    expect(screen.getByRole('radiogroup', { name: 'notify' })).toHaveAccessibleDescription(
+      'Default: true',
+    );
+    await user.click(radio('approved', 'Yes'));
     // A string default is a placeholder; five members make a select with "Not set".
     expect(screen.getByLabelText('reason')).toHaveAttribute('placeholder', 'none given');
     expect(screen.getByLabelText('reason')).toBeRequired();

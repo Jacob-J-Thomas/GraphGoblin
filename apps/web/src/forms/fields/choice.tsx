@@ -23,7 +23,8 @@ export function isSegmented(options: readonly unknown[]): boolean {
   return options.length >= 2 && options.length <= 4;
 }
 
-const YES_NO = [
+/** The two segments of a boolean that may also be unset (after "Not set"). */
+export const YES_NO = [
   { value: 'true', label: 'Yes' },
   { value: 'false', label: 'No' },
 ] as const;
