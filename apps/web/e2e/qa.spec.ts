@@ -242,7 +242,8 @@ test('keyboard only: add a node, connect it, and publish', async ({ page }) => {
   await page.getByLabel('New loop name').press('Enter');
   await expect(page.getByRole('heading', { name: 'qa keyboard' })).toBeVisible();
 
-  // Every step from here is a key press: Tab and Shift+Tab move, Enter acts, Esc closes.
+  // Every step from here is a key press: Tab and Shift+Tab move, Enter acts, the arrow keys change a
+  // focused select (closed, as Edge and Chromium do on Windows and Linux), Esc closes.
   await tabTo(page, page.getByRole('button', { name: 'Add Wait node' }));
   await page.keyboard.press('Enter');
   await expect(page.getByTestId('node-wait')).toBeInViewport();
@@ -265,7 +266,9 @@ test('keyboard only: add a node, connect it, and publish', async ({ page }) => {
   await page.keyboard.press('Enter');
   const startForm = page.getByRole('form', { name: 'Connect start' });
   await tabTo(page, startForm.getByLabel('To'));
-  await startForm.getByLabel('To').selectOption('wait');
+  await expect(startForm.getByLabel('To')).toHaveValue('done');
+  await page.keyboard.press('ArrowDown');
+  await expect(startForm.getByLabel('To')).toHaveValue('wait');
   await tabTo(page, startForm.getByRole('button', { name: 'Connect' }));
   await page.keyboard.press('Enter');
   await page.keyboard.press('Escape');
@@ -279,7 +282,10 @@ test('keyboard only: add a node, connect it, and publish', async ({ page }) => {
   await expect(waitDialog).toBeVisible();
   const waitForm = page.getByRole('form', { name: 'Connect wait' });
   await tabTo(page, waitForm.getByLabel('To'));
-  await waitForm.getByLabel('To').selectOption('done');
+  await page.keyboard.press('ArrowDown');
+  await expect(waitForm.getByLabel('To')).toHaveValue('wait');
+  await page.keyboard.press('ArrowUp');
+  await expect(waitForm.getByLabel('To')).toHaveValue('done');
   await tabTo(page, waitForm.getByRole('button', { name: 'Connect' }));
   await page.keyboard.press('Enter');
   // Past the last control, Tab comes back round to the first: focus stays in the dialog.
