@@ -25,6 +25,7 @@ GraphGoblin is built for AI engineers. AI-driven development lifecycle (AIDLC) p
 | 12  | [Implementation plan](12-implementation-plan.md)             | Milestones M0 to M8 with tasks and acceptance criteria                             |
 | 13  | [Open questions](13-open-questions.md)                       | Items that still need a decision, and which milestone they block                   |
 | 14  | [Work packages](14-work-packages.md)                         | Delegated work packages, delivery waves, and acceptance criteria from M3 onward    |
+| 15  | [Issue workflow](15-issue-workflow.md)                       | Issue gates, QA scope, model routing, milestones, and the planned AIDLC lifecycle  |
 | -   | [reference/nodes.md](reference/nodes.md)                     | Node config reference, generated from the schemas (`pnpm docs:generate`)           |
 | -   | [reference/api.md](reference/api.md)                         | REST API reference, generated from the OpenAPI document                            |
 | -   | [decisions/](decisions/)                                     | Architecture decision records                                                      |
