@@ -1,0 +1,343 @@
+/*
+ * GraphGoblin design tokens: visual-direction sample for #7 (light theme only).
+ *
+ * Two tiers. The primitive tier (palette scales) is referenced only by the semantic tier below it;
+ * components use semantic tokens only. A dark theme (#11) is a value swap: it redefines the
+ * semantic tier under :root[data-theme='dark'] and leaves component styles untouched.
+ *
+ * Font: Geist and Geist Mono, SIL Open Font License 1.1 (fonts/OFL.txt), from the `geist` npm
+ * package 1.7.2 (dist/fonts/geist-sans/Geist-Variable.woff2, dist/fonts/geist-mono/GeistMono-Variable.woff2).
+ */
+
+@font-face {
+  font-family: 'Geist';
+  src: url('fonts/Geist-Variable.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('fonts/GeistMono-Variable.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ------------------------------------------------------------------------------------------ */
+/* Primitive tier: palette scales. Never referenced by components.                            */
+/* ------------------------------------------------------------------------------------------ */
+
+:root {
+  /* Goblin green: the accent. */
+  --green-50: #f1f9e9;
+  --green-100: #e0f2cc;
+  --green-200: #c3e69e;
+  --green-300: #a2d76b;
+  --green-400: #84c743;
+  --green-500: #6aaf2a;
+  --green-600: #528e1e;
+  --green-700: #3f701a;
+  --green-800: #315717;
+  --green-900: #264414;
+  --green-950: #142808;
+
+  /* Brown: warm surfaces, the canvas grid, the loop-back edge, the mutate kind, the mascot. */
+  --brown-50: #f8f3ec;
+  --brown-100: #f0e5d6;
+  --brown-200: #e2cfb4;
+  --brown-300: #cdb089;
+  --brown-400: #b48e5e;
+  --brown-500: #9a7142;
+  --brown-600: #7d5932;
+  --brown-700: #634627;
+  --brown-800: #4b361f;
+  --brown-900: #352718;
+
+  /* Grey: slightly warm so it sits with the brown. 0 is the raised-surface white. */
+  --grey-0: #ffffff;
+  --grey-25: #fbfaf8;
+  --grey-50: #f6f5f2;
+  --grey-100: #edebe6;
+  --grey-200: #e0ddd6;
+  --grey-300: #cbc6bd;
+  --grey-400: #a8a298;
+  --grey-500: #847d72;
+  --grey-600: #6a645a;
+  --grey-700: #524c44;
+  --grey-800: #33302b;
+  --grey-900: #26231f;
+  --grey-950: #1a1815;
+
+  /* Magenta: rare highlight moments only (heartbeat kind, canvas selection, new items). */
+  --magenta-50: #fdf0fa;
+  --magenta-100: #fadcf2;
+  --magenta-200: #f5b5e4;
+  --magenta-300: #ee85d0;
+  --magenta-400: #e254ba;
+  --magenta-500: #cc2e9f;
+  --magenta-600: #ad1e85;
+  --magenta-700: #8c186c;
+  --magenta-800: #6d1555;
+  --magenta-900: #4f1140;
+
+  /* Status hues. Blue means success and orange means failure (colour-blind safe, with glyphs). */
+  --blue-50: #eff5ff;
+  --blue-100: #dce8fe;
+  --blue-200: #bdd4fc;
+  --blue-300: #8fb6f8;
+  --blue-400: #5e92f0;
+  --blue-500: #3b73e0;
+  --blue-600: #2a5bc4;
+  --blue-700: #22489e;
+  --blue-800: #1e3b7e;
+  --blue-900: #1b3163;
+
+  --orange-50: #fff4ec;
+  --orange-100: #ffe4d0;
+  --orange-200: #fec7a0;
+  --orange-300: #fba068;
+  --orange-400: #f57b36;
+  --orange-500: #e35f14;
+  --orange-600: #c24a0c;
+  --orange-700: #9c3b0d;
+  --orange-800: #7c3110;
+  --orange-900: #632a10;
+
+  --amber-50: #fff9e8;
+  --amber-100: #fef0c3;
+  --amber-200: #fde08a;
+  --amber-300: #fbcb4e;
+  --amber-400: #f5b420;
+  --amber-500: #dc9908;
+  --amber-600: #b57a04;
+  --amber-700: #8e5e08;
+  --amber-800: #74490d;
+  --amber-900: #5f3c10;
+
+  --violet-50: #f5f2ff;
+  --violet-100: #eae4fe;
+  --violet-200: #d6cbfd;
+  --violet-300: #b8a5fa;
+  --violet-400: #9a7df4;
+  --violet-500: #7f5ae8;
+  --violet-600: #6a42d2;
+  --violet-700: #5833b0;
+  --violet-800: #482b8e;
+  --violet-900: #3b2672;
+
+  --red-50: #fef2f2;
+  --red-100: #fde1e0;
+  --red-200: #fbc5c3;
+  --red-300: #f69b97;
+  --red-400: #ee6a64;
+  --red-500: #de4039;
+  --red-600: #c42d27;
+  --red-700: #a2241f;
+  --red-800: #841f1c;
+  --red-900: #6c1d1b;
+}
+
+/* ------------------------------------------------------------------------------------------ */
+/* Semantic tier: the only names components use. Light values.                                */
+/* ------------------------------------------------------------------------------------------ */
+
+:root {
+  color-scheme: light;
+
+  /* Surface */
+  --surface-app: var(--grey-50);
+  --surface-raised: var(--grey-0);
+  --surface-sunken: var(--brown-50);
+  --surface-overlay: var(--grey-0);
+  --surface-hover: var(--grey-100);
+  --surface-inverse: var(--grey-950);
+  --surface-inverse-raised: var(--grey-800);
+
+  /* Text */
+  --text-default: var(--grey-900);
+  --text-muted: var(--grey-700);
+  --text-subtle: var(--grey-600);
+  --text-inverse: var(--grey-0);
+  --text-inverse-muted: var(--grey-300);
+  --text-link: var(--green-700);
+  --text-on-accent: var(--grey-950);
+  --text-on-danger: var(--grey-0);
+
+  /* Border */
+  --border-default: var(--grey-200);
+  --border-strong: var(--grey-500);
+  --border-subtle: var(--grey-100);
+  --border-inverse: var(--grey-800);
+
+  /* Accent */
+  --accent: var(--green-400);
+  --accent-hover: var(--green-300);
+  --accent-active: var(--green-500);
+  --accent-subtle: var(--green-100);
+  --accent-on-subtle: var(--green-800);
+  --accent-strong: var(--green-700);
+  --accent-highlight: var(--magenta-600);
+  --accent-highlight-subtle: var(--magenta-50);
+
+  /* Danger */
+  --danger: var(--red-600);
+  --danger-hover: var(--red-700);
+  --danger-subtle: var(--red-50);
+  --danger-on-subtle: var(--red-800);
+
+  /* Status: tinted background, foreground text and glyph, and an accent border (3:1). */
+  --status-neutral-bg: var(--grey-100);
+  --status-neutral-fg: var(--grey-800);
+  --status-neutral-border: var(--grey-500);
+  --status-good-bg: var(--blue-100);
+  --status-good-fg: var(--blue-800);
+  --status-good-border: var(--blue-600);
+  --status-bad-bg: var(--orange-100);
+  --status-bad-fg: var(--orange-800);
+  --status-bad-border: var(--orange-600);
+  --status-warn-bg: var(--amber-100);
+  --status-warn-fg: var(--amber-800);
+  --status-warn-border: var(--amber-600);
+  --status-info-bg: var(--violet-100);
+  --status-info-fg: var(--violet-800);
+  --status-info-border: var(--violet-600);
+
+  /* Node kind: a strong colour (chip, icon, stripe) and a subtle fill. */
+  --kind-trigger: var(--green-600);
+  --kind-trigger-subtle: var(--green-50);
+  --kind-decision: var(--blue-600);
+  --kind-decision-subtle: var(--blue-50);
+  --kind-inference: var(--violet-600);
+  --kind-inference-subtle: var(--violet-50);
+  --kind-script: var(--grey-700);
+  --kind-script-subtle: var(--grey-100);
+  --kind-mutate: var(--brown-600);
+  --kind-mutate-subtle: var(--brown-50);
+  --kind-subloop: var(--orange-600);
+  --kind-subloop-subtle: var(--orange-50);
+  --kind-wait: var(--amber-600);
+  --kind-wait-subtle: var(--amber-50);
+  --kind-heartbeat: var(--magenta-600);
+  --kind-heartbeat-subtle: var(--magenta-50);
+  --kind-exit: var(--red-600);
+  --kind-exit-subtle: var(--red-50);
+
+  /* Focus: one ring colour that holds 3:1 on every surface, light or inverse. */
+  --focus-ring: var(--green-600);
+  --focus-ring-width: 2px;
+  --focus-offset: 2px;
+
+  /* Code (CodeMirror theme hooks) */
+  --code-bg: var(--grey-25);
+  --code-active-line: var(--green-50);
+  --code-fg: var(--grey-900);
+  --code-gutter: var(--grey-600);
+  --code-keyword: var(--violet-700);
+  --code-string: var(--green-700);
+  --code-number: var(--blue-700);
+  --code-comment: var(--grey-600);
+  --code-operator: var(--brown-600);
+
+  /* Canvas (xyflow theme hooks) */
+  --canvas-bg: var(--grey-25);
+  --canvas-grid: var(--brown-200);
+  --canvas-edge: var(--grey-500);
+  --canvas-edge-selected: var(--green-700);
+  --canvas-edge-loop: var(--brown-500);
+  --canvas-handle: var(--grey-700);
+  --canvas-node-selected: var(--magenta-500);
+
+  /* Elevation: shadows tinted with a warm surface-aware colour (an RGB triple). */
+  --shadow-color: 52 40 24;
+  --shadow-0: none;
+  --shadow-1: 0 1px 2px rgb(var(--shadow-color) / 0.08), 0 1px 1px rgb(var(--shadow-color) / 0.04);
+  --shadow-2:
+    0 4px 12px -2px rgb(var(--shadow-color) / 0.12), 0 2px 4px rgb(var(--shadow-color) / 0.06);
+  --shadow-3:
+    0 16px 40px -8px rgb(var(--shadow-color) / 0.22), 0 4px 12px rgb(var(--shadow-color) / 0.08);
+}
+
+/* Reserved for #11: dark values for every semantic token above, and nothing else. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+/* ------------------------------------------------------------------------------------------ */
+/* Type, space, radius, motion                                                                */
+/* ------------------------------------------------------------------------------------------ */
+
+:root {
+  /* Families. --font-ui is the indirection #40 switches; components use --font-ui and --font-code. */
+  --font-sans: 'Geist', ui-sans-serif, system-ui, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  --font-ui: var(--font-sans);
+  --font-code: var(--font-mono);
+
+  /* Sizes (Tailwind's @theme maps these to its --text-* size namespace at the cutover). */
+  --font-size-2xs: 0.625rem; /* 10px */
+  --font-size-xs: 0.75rem; /* 12px */
+  --font-size-sm: 0.8125rem; /* 13px */
+  --font-size-md: 0.875rem; /* 14px: body */
+  --font-size-lg: 1rem; /* 16px */
+  --font-size-xl: 1.25rem; /* 20px */
+  --font-size-2xl: 1.75rem; /* 28px: page titles */
+
+  --line-height-tight: 1.2;
+  --line-height-snug: 1.35;
+  --line-height-normal: 1.5;
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --letter-spacing-tight: -0.02em;
+  --letter-spacing-wide: 0.06em;
+
+  /* Space: a 4px base, plus named gaps. */
+  --space-0: 0;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-field: var(--space-4);
+  --space-stack: var(--space-3);
+  --space-section: var(--space-6);
+  --space-page: var(--space-8);
+
+  /* Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* Motion */
+  --duration-fast: 120ms;
+  --duration-base: 180ms;
+  --duration-slow: 280ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-emphasised: cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+@media (max-width: 640px) {
+  :root {
+    --space-page: var(--space-4);
+    --font-size-2xl: 1.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0ms;
+    --duration-base: 0ms;
+    --duration-slow: 0ms;
+  }
+}

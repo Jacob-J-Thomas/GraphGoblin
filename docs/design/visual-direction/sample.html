@@ -1,0 +1,4853 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#1a1815" />
+    <title>GraphGoblin visual direction</title>
+    <link rel="preload" href="fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin />
+    <link
+      rel="preload"
+      href="fonts/GeistMono-Variable.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link rel="stylesheet" href="tokens.css" />
+    <style>
+      /*
+       * Component styles for the sample. They use semantic tokens only (plus the type, space,
+       * radius, shadow, and motion scales). The palette swatches on the component sheet are the one
+       * documented exception: they show the primitive tier itself.
+       */
+
+      /* Base ------------------------------------------------------------------------------- */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      html {
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
+      }
+      body {
+        margin: 0;
+        font-family: var(--font-ui);
+        font-size: var(--font-size-md);
+        line-height: var(--line-height-normal);
+        color: var(--text-default);
+        background: var(--surface-app);
+        -webkit-font-smoothing: antialiased;
+        font-variant-numeric: tabular-nums;
+      }
+      h1,
+      h2,
+      h3,
+      p,
+      figure {
+        margin: 0;
+      }
+      a {
+        color: var(--text-link);
+        text-decoration-thickness: 1px;
+        text-underline-offset: 3px;
+      }
+      code,
+      .mono {
+        font-family: var(--font-code);
+        font-size: 0.92em;
+      }
+      button {
+        font: inherit;
+      }
+      :focus-visible,
+      .is-focus {
+        outline: var(--focus-ring-width) solid var(--focus-ring);
+        outline-offset: var(--focus-offset);
+      }
+      .visually-hidden {
+        position: absolute !important;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+        border: 0;
+      }
+      .icon {
+        width: 16px;
+        height: 16px;
+        flex: none;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .sprite {
+        position: absolute;
+        width: 0;
+        height: 0;
+        overflow: hidden;
+      }
+
+      /* Views: sample.html#loops shows one view; no hash shows the index and every view. ----- */
+      .view {
+        position: relative;
+      }
+      body:has(.view:target) > :not(.view:target, .sprite, script) {
+        display: none;
+      }
+      .view + .view,
+      .cover + .view {
+        border-top: 12px solid var(--surface-inverse);
+      }
+      body:has(.view:target) .view {
+        border-top: 0;
+      }
+      .cover {
+        max-width: 860px;
+        margin: 0 auto;
+        padding: var(--space-12) var(--space-page);
+        display: grid;
+        gap: var(--space-4);
+      }
+      .cover ul {
+        margin: 0;
+        padding-left: var(--space-5);
+        display: grid;
+        gap: var(--space-1);
+      }
+
+      /* App bar and main navigation --------------------------------------------------------- */
+      .appbar {
+        position: relative;
+        z-index: 20;
+        display: flex;
+        align-items: center;
+        gap: var(--space-8);
+        height: 56px;
+        padding: 0 var(--space-6);
+        background: var(--surface-inverse);
+        color: var(--text-inverse);
+      }
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--text-inverse);
+        text-decoration: none;
+        font-size: var(--font-size-lg);
+        font-weight: var(--font-weight-semibold);
+        letter-spacing: -0.015em;
+        border-radius: var(--radius-sm);
+      }
+      .brand b {
+        font-weight: inherit;
+        color: var(--accent);
+      }
+      .brand-mark {
+        width: 30px;
+        height: 30px;
+        flex: none;
+      }
+      .bm-body {
+        fill: var(--accent);
+      }
+      .bm-eye {
+        fill: var(--surface-inverse);
+      }
+      .bm-port {
+        fill: var(--text-inverse);
+      }
+      .bm-mouth {
+        fill: none;
+        stroke: var(--surface-inverse);
+        stroke-width: 1.6;
+        stroke-linecap: round;
+      }
+      .mainnav {
+        display: flex;
+        align-items: center;
+        gap: var(--space-1);
+      }
+      .mainnav a {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-2);
+        height: 34px;
+        padding: 0 14px;
+        border-radius: var(--radius-full);
+        color: var(--text-inverse-muted);
+        text-decoration: none;
+        font-weight: var(--font-weight-medium);
+        transition:
+          background-color var(--duration-fast) var(--ease-standard),
+          color var(--duration-fast) var(--ease-standard);
+      }
+      .mainnav a:hover {
+        background: var(--surface-inverse-raised);
+        color: var(--text-inverse);
+      }
+      .mainnav a[aria-current='page'] {
+        background: var(--accent);
+        color: var(--text-on-accent);
+        font-weight: var(--font-weight-semibold);
+      }
+      .menu-toggle {
+        display: none;
+      }
+
+      /* Page layout ------------------------------------------------------------------------- */
+      .page {
+        max-width: 1240px;
+        margin: 0 auto;
+        padding: var(--space-page);
+        display: grid;
+        gap: var(--space-section);
+      }
+      .page-wide {
+        max-width: none;
+      }
+      .page-head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--space-3) var(--space-4);
+      }
+      .page-title {
+        font-size: var(--font-size-2xl);
+        line-height: var(--line-height-tight);
+        font-weight: var(--font-weight-bold);
+        letter-spacing: var(--letter-spacing-tight);
+      }
+      .eyebrow {
+        font-size: var(--font-size-xs);
+        font-weight: var(--font-weight-semibold);
+        letter-spacing: var(--letter-spacing-wide);
+        text-transform: uppercase;
+        color: var(--text-muted);
+      }
+      .muted {
+        color: var(--text-muted);
+      }
+      .subtle {
+        color: var(--text-subtle);
+      }
+      .nowrap {
+        white-space: nowrap;
+      }
+      .stack {
+        display: grid;
+        gap: var(--space-stack);
+      }
+      .cluster {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--space-2);
+      }
+
+      /* Card -------------------------------------------------------------------------------- */
+      .card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-1);
+        min-width: 0;
+      }
+      .card-head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-2) var(--space-3);
+        padding: var(--space-3) var(--space-5);
+        min-height: 52px;
+        border-bottom: 1px solid var(--border-default);
+      }
+      .card-title {
+        font-size: var(--font-size-md);
+        font-weight: var(--font-weight-semibold);
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+      }
+      .card-body {
+        padding: var(--space-5);
+      }
+      .card-flush {
+        overflow: hidden;
+      }
+
+      /* Buttons ----------------------------------------------------------------------------- */
+      .btn {
+        --btn-h: 36px;
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        height: var(--btn-h);
+        padding: 0 14px;
+        border: 1px solid transparent;
+        border-radius: var(--radius-md);
+        background: transparent;
+        color: var(--text-default);
+        font-size: var(--font-size-md);
+        font-weight: var(--font-weight-semibold);
+        line-height: 1;
+        white-space: nowrap;
+        text-decoration: none;
+        cursor: pointer;
+        user-select: none;
+        transition:
+          background-color var(--duration-fast) var(--ease-standard),
+          border-color var(--duration-fast) var(--ease-standard),
+          box-shadow var(--duration-fast) var(--ease-standard),
+          transform var(--duration-fast) var(--ease-standard);
+      }
+      .btn .icon {
+        width: 16px;
+        height: 16px;
+      }
+      .btn-sm {
+        --btn-h: 32px;
+        padding: 0 11px;
+        gap: 6px;
+        font-size: var(--font-size-sm);
+      }
+      .btn-sm .icon {
+        width: 15px;
+        height: 15px;
+      }
+      .btn-icon {
+        width: var(--btn-h);
+        padding: 0;
+      }
+      .btn:active:not(:disabled) {
+        transform: translateY(1px);
+        box-shadow: none;
+      }
+      /* Primary: goblin green with a pressable ledge. */
+      .btn-primary {
+        background: var(--accent);
+        color: var(--text-on-accent);
+        border-color: var(--accent-strong);
+        box-shadow: 0 2px 0 var(--accent-strong);
+      }
+      .btn-primary:hover {
+        background: var(--accent-hover);
+      }
+      .btn-primary:active:not(:disabled) {
+        background: var(--accent-active);
+        transform: translateY(2px);
+      }
+      .btn-secondary {
+        background: var(--surface-sunken);
+        border-color: var(--border-strong);
+        box-shadow: 0 1px 0 var(--border-strong);
+      }
+      .btn-secondary:hover {
+        background: var(--surface-hover);
+      }
+      .btn-outline {
+        background: var(--surface-raised);
+        border-color: var(--border-strong);
+        box-shadow: 0 1px 0 var(--border-strong);
+      }
+      .btn-outline:hover {
+        background: var(--surface-sunken);
+      }
+      .btn-destructive {
+        background: var(--danger);
+        color: var(--text-on-danger);
+        border-color: var(--danger-hover);
+        box-shadow: 0 1px 0 var(--danger-hover);
+      }
+      .btn-destructive:hover {
+        background: var(--danger-hover);
+      }
+      /* Proposal: a soft destructive style for row-level Delete; solid destructive confirms. */
+      .btn-danger-soft {
+        background: var(--surface-raised);
+        color: var(--danger);
+        border-color: var(--danger);
+        box-shadow: 0 1px 0 var(--danger);
+      }
+      .btn-danger-soft:hover {
+        background: var(--danger-subtle);
+        color: var(--danger-on-subtle);
+      }
+      .btn-ghost:hover {
+        background: var(--surface-hover);
+      }
+      .btn:disabled,
+      .btn[aria-disabled='true'] {
+        opacity: 0.45;
+        cursor: not-allowed;
+        box-shadow: none;
+      }
+      .btn.is-hover.btn-primary {
+        background: var(--accent-hover);
+      }
+      .btn.is-hover.btn-outline {
+        background: var(--surface-sunken);
+      }
+
+      /* Badges ------------------------------------------------------------------------------ */
+      .tone-neutral {
+        --tone-bg: var(--status-neutral-bg);
+        --tone-fg: var(--status-neutral-fg);
+        --tone-border: var(--status-neutral-border);
+      }
+      .tone-good {
+        --tone-bg: var(--status-good-bg);
+        --tone-fg: var(--status-good-fg);
+        --tone-border: var(--status-good-border);
+      }
+      .tone-bad {
+        --tone-bg: var(--status-bad-bg);
+        --tone-fg: var(--status-bad-fg);
+        --tone-border: var(--status-bad-border);
+      }
+      .tone-warn {
+        --tone-bg: var(--status-warn-bg);
+        --tone-fg: var(--status-warn-fg);
+        --tone-border: var(--status-warn-border);
+      }
+      .tone-info {
+        --tone-bg: var(--status-info-bg);
+        --tone-fg: var(--status-info-fg);
+        --tone-border: var(--status-info-border);
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        height: 24px;
+        padding: 0 10px;
+        border-radius: var(--radius-full);
+        background: var(--tone-bg, var(--status-neutral-bg));
+        color: var(--tone-fg, var(--status-neutral-fg));
+        font-size: var(--font-size-xs);
+        font-weight: var(--font-weight-semibold);
+        line-height: 1;
+        white-space: nowrap;
+        text-decoration: none;
+        border: 0;
+      }
+      .badge:has(.icon) {
+        padding-left: 7px;
+      }
+      .badge .icon {
+        width: 13px;
+        height: 13px;
+        stroke-width: 2.5;
+      }
+      a.badge:hover,
+      button.badge:hover {
+        box-shadow: inset 0 0 0 1px var(--tone-border, var(--status-neutral-border));
+      }
+      button.badge {
+        cursor: pointer;
+      }
+      .badge-sm {
+        height: 20px;
+        padding: 0 7px;
+        font-size: 11px;
+        gap: 4px;
+      }
+      .badge-sm .icon {
+        width: 11px;
+        height: 11px;
+      }
+      .badge-new {
+        background: var(--accent-highlight-subtle);
+        color: var(--accent-highlight);
+      }
+      .lang {
+        font-family: var(--font-code);
+        font-size: 11px;
+        font-weight: var(--font-weight-medium);
+        color: var(--text-muted);
+        padding: 1px 6px;
+        border-radius: var(--radius-sm);
+        background: var(--surface-sunken);
+      }
+
+      /* Alerts and banners ------------------------------------------------------------------ */
+      .alert {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 2px var(--space-3);
+        padding: var(--space-3) var(--space-4);
+        border-radius: var(--radius-md);
+        background: var(--tone-bg);
+        box-shadow: inset 4px 0 0 var(--tone-border);
+        color: var(--text-default);
+        font-size: var(--font-size-sm);
+        line-height: var(--line-height-snug);
+      }
+      .alert > .icon {
+        grid-row: span 2;
+        width: 18px;
+        height: 18px;
+        margin-top: 1px;
+        color: var(--tone-fg);
+      }
+      .alert-title {
+        font-weight: var(--font-weight-semibold);
+        color: var(--tone-fg);
+      }
+      .banner {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--space-1) var(--space-3);
+        padding: var(--space-2) var(--space-6);
+        background: var(--status-warn-bg);
+        box-shadow: inset 0 -1px 0 var(--status-warn-border);
+        font-size: var(--font-size-sm);
+      }
+      .banner .icon {
+        color: var(--status-warn-fg);
+      }
+      .banner strong {
+        color: var(--status-warn-fg);
+      }
+      .toast {
+        position: absolute;
+        right: var(--space-6);
+        bottom: var(--space-6);
+        z-index: 30;
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
+        padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4);
+        background: var(--surface-overlay);
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-3);
+        font-size: var(--font-size-sm);
+        font-weight: var(--font-weight-medium);
+      }
+      .toast-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--accent-highlight);
+        box-shadow: 0 0 0 4px var(--accent-highlight-subtle);
+      }
+
+      /* Form controls ----------------------------------------------------------------------- */
+      .field {
+        display: grid;
+        gap: 6px;
+        min-width: 0;
+      }
+      .label-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-2);
+      }
+      .label {
+        font-size: var(--font-size-sm);
+        font-weight: var(--font-weight-medium);
+        color: var(--text-default);
+        line-height: 1.3;
+      }
+      .help {
+        font-size: var(--font-size-xs);
+        color: var(--text-muted);
+        line-height: var(--line-height-snug);
+      }
+      .error {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: var(--font-size-xs);
+        font-weight: var(--font-weight-medium);
+        color: var(--status-bad-fg);
+      }
+      .error .icon {
+        width: 13px;
+        height: 13px;
+        stroke-width: 2.5;
+      }
+      .input,
+      .select,
+      .textarea {
+        width: 100%;
+        min-width: 0;
+        height: 36px;
+        padding: 0 var(--space-3);
+        border: 1px solid var(--border-strong);
+        border-radius: var(--radius-md);
+        background: var(--surface-raised);
+        color: var(--text-default);
+        font: inherit;
+        font-size: var(--font-size-md);
+        transition:
+          border-color var(--duration-fast) var(--ease-standard),
+          box-shadow var(--duration-fast) var(--ease-standard);
+      }
+      .input::placeholder,
+      .textarea::placeholder {
+        color: var(--text-subtle);
+      }
+      .input:hover,
+      .select:hover,
+      .textarea:hover {
+        border-color: var(--text-muted);
+      }
+      .input:focus-visible,
+      .select:focus-visible,
+      .textarea:focus-visible,
+      .input.is-focus,
+      .textarea.is-focus {
+        border-color: var(--accent-strong);
+      }
+      .input[aria-invalid='true'] {
+        border-color: var(--status-bad-border);
+      }
+      .input:disabled,
+      .select:disabled,
+      .textarea:disabled {
+        background: var(--surface-sunken);
+        color: var(--text-subtle);
+        border-color: var(--border-default);
+        cursor: not-allowed;
+      }
+      .input.mono {
+        font-family: var(--font-code);
+        font-size: var(--font-size-sm);
+      }
+      .textarea {
+        height: auto;
+        min-height: 64px;
+        padding: var(--space-2) var(--space-3);
+        line-height: 1.45;
+        resize: vertical;
+      }
+      .select-wrap {
+        position: relative;
+        min-width: 0;
+      }
+      .select {
+        appearance: none;
+        padding-right: 34px;
+        cursor: pointer;
+      }
+      .select-wrap > .icon {
+        position: absolute;
+        right: 11px;
+        top: 50%;
+        translate: 0 -50%;
+        pointer-events: none;
+        color: var(--text-muted);
+      }
+      .fieldset {
+        margin: 0;
+        padding: var(--space-3) var(--space-4) var(--space-4);
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-md);
+        display: grid;
+        gap: var(--space-3);
+        min-width: 0;
+      }
+      .fieldset legend {
+        padding: 0 var(--space-1);
+        margin-left: calc(-1 * var(--space-1));
+        font-size: var(--font-size-sm);
+        font-weight: var(--font-weight-semibold);
+      }
+      .fieldset-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      /* Switch (proposal for booleans with a default) */
+      .switch {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-3);
+        cursor: pointer;
+        font-size: var(--font-size-sm);
+        font-weight: var(--font-weight-medium);
+      }
+      .switch input,
+      .seg input,
+      .tchip input,
+      .check input,
+      .file input {
+        position: absolute;
+        opacity: 0;
+        width: 1px;
+        height: 1px;
+        margin: 0;
+      }
+      .switch-track {
+        position: relative;
+        flex: none;
+        width: 38px;
+        height: 22px;
+        border-radius: var(--radius-full);
+        background: var(--surface-sunken);
+        border: 1px solid var(--border-strong);
+        transition:
+          background-color var(--duration-base) var(--ease-standard),
+          border-color var(--duration-base) var(--ease-standard);
+      }
+      .switch-track::after {
+        content: '';
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: var(--text-muted);
+        transition:
+          transform var(--duration-base) var(--ease-emphasised),
+          background-color var(--duration-base) var(--ease-standard);
+      }
+      .switch input:checked + .switch-track {
+        background: var(--accent);
+        border-color: var(--accent-strong);
+      }
+      .switch input:checked + .switch-track::after {
+        transform: translateX(16px);
+        background: var(--text-on-accent);
+      }
+      .switch input:focus-visible + .switch-track,
+      .switch .switch-track.is-focus {
+        outline: var(--focus-ring-width) solid var(--focus-ring);
+        outline-offset: var(--focus-offset);
+      }
+      .switch input:disabled + .switch-track,
+      .switch input:disabled ~ span {
+        opacity: 0.45;
+      }
+      .switch-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-3);
+      }
+
+      /* Segmented control (proposal for small enums and union variants) */
+      .seg {
+        display: inline-flex;
+        justify-self: start;
+        padding: 3px;
+        gap: 2px;
+        border: 1px solid var(--border-strong);
+        border-radius: var(--radius-md);
+        background: var(--surface-sunken);
+        max-width: 100%;
+      }
+      .seg label {
+        position: relative;
+        display: inline-flex;
+      }
+      .seg span {
+        display: inline-flex;
+        align-items: center;
+        height: 28px;
+        padding: 0 12px;
+        border-radius: 6px;
+        color: var(--text-muted);
+        font-size: var(--font-size-sm);
+        font-weight: var(--font-weight-medium);
+        cursor: pointer;
+        white-space: nowrap;
+        transition:
+          background-color var(--duration-fast) var(--ease-standard),
+          color var(--duration-fast) var(--ease-standard);
+      }
+      .seg span:hover {
+        color: var(--text-default);
+        background: var(--surface-hover);
+      }
+      .seg input:checked + span {
+        background: var(--accent-subtle);
+        color: var(--accent-on-subtle);
+        font-weight: var(--font-weight-semibold);
+        box-shadow: inset 0 0 0 1px var(--accent-strong);
+      }
+      .seg input:focus-visible + span {
+        outline: var(--focus-ring-width) solid var(--focus-ring);
+        outline-offset: 1px;
+      }
+      .seg-fill {
+        display: flex;
+        justify-self: stretch;
+      }
+      .seg-fill label {
+        flex: 1;
+      }
+      .seg-fill span {
+        flex: 1;
+        justify-content: center;
+      }
+
+      /* Toggle chips (proposal for arrays of enums) and checkboxes */
+      .tchip span {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        height: 30px;
+        padding: 0 12px;
+        border: 1px solid var(--border-strong);
+        border-radius: var(--radius-full);
+        background: var(--surface-raised);
+        font-family: var(--font-code);
+        font-size: var(--font-size-sm);
+        cursor: pointer;
+      }
+      .tchip span .icon {
+        display: none;
+        width: 14px;
+        height: 14px;
+        stroke-width: 2.6;
+      }
+      .tchip input:checked + span {
+        background: var(--accent-subtle);
+        color: var(--accent-on-subtle);
+        border-color: var(--accent-strong);
+        font-weight: var(--font-weight-semibold);
+        padding-left: 9px;
+      }
+      .tchip input:checked + span .icon {
+        display: block;
+      }
+      .tchip input:focus-visible + span {
+        outline: var(--focus-ring-width) solid var(--focus-ring);
+        outline-offset: var(--focus-offset);
+      }
+      .check {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-2);
+        font-size: var(--font-size-sm);
+        font-weight: var(--font-weight-medium);
+        cursor: pointer;
+      }
+      .check-box {
+        display: grid;
+        place-items: center;
+        width: 18px;
+        height: 18px;
+        border: 1px solid var(--border-strong);
+        border-radius: 5px;
+        background: var(--surface-raised);
+      }
+      .check-box .icon {
+        width: 13px;
+        height: 13px;
+        stroke-width: 3;
+        opacity: 0;
+      }
+      .check input:checked + .check-box {
+        background: var(--accent);
+        border-color: var(--accent-strong);
+        color: var(--text-on-accent);
+      }
+      .check input:checked + .check-box .icon {
+        opacity: 1;
+      }
+      .check input:focus-visible + .check-box {
+        outline: var(--focus-ring-width) solid var(--focus-ring);
+        outline-offset: var(--focus-offset);
+      }
+
+      /* File picker (proposal) */
+      .file {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-3);
+        cursor: pointer;
+      }
+      .file-name {
+        font-size: var(--font-size-sm);
+        color: var(--text-muted);
+      }
+      .file input:focus-visible + .btn {
+        outline: var(--focus-ring-width) solid var(--focus-ring);
+        outline-offset: var(--focus-offset);
+      }
+
+      /* Code field (CodeMirror hooks) */
+      .code {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        border: 1px solid var(--border-strong);
+        border-radius: var(--radius-md) var(--radius-md) 0 0;
+        background: var(--code-bg);
+        font-family: var(--font-code);
+        font-size: 12.5px;
+        line-height: 20px;
+        color: var(--code-fg);
+        overflow: hidden;
+      }
+      .code.is-focus {
+        border-color: var(--accent-strong);
+      }
+      .code-gutter {
+        padding: 6px var(--space-2) 6px var(--space-3);
+        color: var(--code-gutter);
+        text-align: right;
+        user-select: none;
+        border-right: 1px solid var(--border-default);
+      }
+      .code-lines {
+        padding: 6px 0;
+        min-width: 0;
+      }
+      .code-line {
+        padding: 0 var(--space-3);
+        overflow-wrap: anywhere;
+      }
+      .code-line.is-active {
+        background: var(--code-active-line);
+      }
+      .caret {
+        display: inline-block;
+        width: 2px;
+        height: 15px;
+        margin-left: 1px;
+        vertical-align: -3px;
+        background: var(--code-fg);
+      }
+      .tok-kw {
+        color: var(--code-keyword);
+        font-weight: var(--font-weight-medium);
+      }
+      .tok-str {
+        color: var(--code-string);
+      }
+      .tok-num {
+        color: var(--code-number);
+      }
+      .tok-com {
+        color: var(--code-comment);
+        font-style: italic;
+      }
+      .tok-op {
+        color: var(--code-operator);
+        font-weight: var(--font-weight-semibold);
+      }
+      .preview {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2px var(--space-2);
+        align-items: baseline;
+        padding: 6px var(--space-3);
+        border: 1px solid var(--border-strong);
+        border-top: 0;
+        border-radius: 0 0 var(--radius-md) var(--radius-md);
+        background: var(--surface-sunken);
+        font-size: var(--font-size-xs);
+      }
+      .preview-label {
+        font-weight: var(--font-weight-semibold);
+        color: var(--text-muted);
+        white-space: nowrap;
+      }
+      .preview-out {
+        font-family: var(--font-code);
+        color: var(--text-default);
+      }
+
+      /* Tables, responsive ------------------------------------------------------------------ */
+      .table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        text-align: left;
+      }
+      .table th {
+        padding: 10px var(--space-4);
+        background: var(--surface-sunken);
+        border-bottom: 1px solid var(--border-default);
+        font-size: var(--font-size-xs);
+        font-weight: var(--font-weight-semibold);
+        letter-spacing: var(--letter-spacing-wide);
+        text-transform: uppercase;
+        color: var(--text-muted);
+        white-space: nowrap;
+      }
+      .table td {
+        padding: 14px var(--space-4);
+        border-bottom: 1px solid var(--border-default);
+        vertical-align: middle;
+      }
+      .table tbody tr:last-child td {
+        border-bottom: 0;
+      }
+      .table tbody tr {
+        transition: background-color var(--duration-fast) var(--ease-standard);
+      }
+      .table tbody tr:hover {
+        background: var(--surface-hover);
+      }
+      .table .num {
+        text-align: right;
+      }
+      .table .actions {
+        width: 1%;
+        text-align: right;
+        white-space: nowrap;
+      }
+      .cell-name a {
+        color: var(--text-default);
+        font-weight: var(--font-weight-semibold);
+        font-size: 15px;
+        text-decoration: none;
+      }
+      .cell-name a:hover {
+        text-decoration: underline;
+      }
+      .cell-name p {
+        margin-top: 2px;
+        font-size: var(--font-size-sm);
+        color: var(--text-muted);
+      }
+      .row-actions {
+        display: inline-flex;
+        justify-content: flex-end;
+        gap: var(--space-2);
+      }
+      .meta-time {
+        font-size: var(--font-size-sm);
+        color: var(--text-muted);
+        white-space: nowrap;
+      }
+      .id-link {
+        font-family: var(--font-code);
+        font-size: var(--font-size-sm);
+        font-weight: var(--font-weight-medium);
+      }
+
+      /* Loops page ------------------------------------------------------------------------- */
+      .loops-tools {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: var(--space-5) var(--space-8);
+        padding: var(--space-5);
+      }
+      .create {
+        display: flex;
+        align-items: flex-end;
+        gap: var(--space-2);
+      }
+      .create .field {
+        width: 300px;
+      }
+
+      /* Runs page filters */
+      .filters {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        gap: var(--space-4);
+        padding: var(--space-5);
+      }
+      .filters .field {
+        width: 220px;
+      }
+
+      /* Node kinds -------------------------------------------------------------------------- */
+      .k-trigger {
+        --k: var(--kind-trigger);
+        --k-subtle: var(--kind-trigger-subtle);
+      }
+      .k-decision {
+        --k: var(--kind-decision);
+        --k-subtle: var(--kind-decision-subtle);
+      }
+      .k-inference {
+        --k: var(--kind-inference);
+        --k-subtle: var(--kind-inference-subtle);
+      }
+      .k-script {
+        --k: var(--kind-script);
+        --k-subtle: var(--kind-script-subtle);
+      }
+      .k-mutate {
+        --k: var(--kind-mutate);
+        --k-subtle: var(--kind-mutate-subtle);
+      }
+      .k-subloop {
+        --k: var(--kind-subloop);
+        --k-subtle: var(--kind-subloop-subtle);
+      }
+      .k-wait {
+        --k: var(--kind-wait);
+        --k-subtle: var(--kind-wait-subtle);
+      }
+      .k-heartbeat {
+        --k: var(--kind-heartbeat);
+        --k-subtle: var(--kind-heartbeat-subtle);
+      }
+      .k-exit {
+        --k: var(--kind-exit);
+        --k-subtle: var(--kind-exit-subtle);
+      }
+      .kchip {
+        display: inline-grid;
+        place-items: center;
+        flex: none;
+        width: 28px;
+        height: 28px;
+        border-radius: var(--radius-md);
+        background: var(--k);
+        color: var(--text-inverse);
+      }
+      .kchip .icon {
+        width: 16px;
+        height: 16px;
+      }
+      .kchip-sm {
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+      }
+      .kchip-sm .icon {
+        width: 13px;
+        height: 13px;
+        stroke-width: 2.2;
+      }
+      .kchip-xs {
+        width: 18px;
+        height: 18px;
+        border-radius: 5px;
+      }
+      .kchip-xs .icon {
+        width: 11px;
+        height: 11px;
+        stroke-width: 2.4;
+      }
+      .kbadge {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        height: 30px;
+        padding: 0 12px 0 4px;
+        border-radius: var(--radius-full);
+        background: var(--k-subtle);
+        font-size: var(--font-size-sm);
+        font-weight: var(--font-weight-semibold);
+      }
+      .kbadge .kchip {
+        border-radius: var(--radius-full);
+      }
+
+      /* Editor ------------------------------------------------------------------------------ */
+      .view-editor {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        min-height: 640px;
+        overflow: hidden;
+      }
+      .editor {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      .editor-bar {
+        position: relative;
+        z-index: 3;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--space-2) var(--space-3);
+        padding: 10px var(--space-4);
+        background: var(--surface-raised);
+        border-bottom: 1px solid var(--border-default);
+      }
+      .crumbs {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        min-width: 0;
+      }
+      .crumbs a {
+        color: var(--text-muted);
+        text-decoration: none;
+      }
+      .crumbs a:hover {
+        color: var(--text-default);
+        text-decoration: underline;
+      }
+      .crumbs .sep {
+        color: var(--text-subtle);
+      }
+      .editor-title {
+        font-size: var(--font-size-lg);
+        font-weight: var(--font-weight-semibold);
+        letter-spacing: -0.01em;
+      }
+      .save-state {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: var(--font-size-sm);
+        color: var(--text-muted);
+      }
+      .save-state .icon {
+        width: 15px;
+        height: 15px;
+        color: var(--status-good-fg);
+      }
+      .editor-actions {
+        margin-left: auto;
+        display: flex;
+        gap: var(--space-2);
+      }
+      .editor-main {
+        position: relative;
+        flex: 1;
+        min-height: 0;
+        display: grid;
+        grid-template-columns: 200px minmax(0, 1fr) 380px;
+        grid-template-rows: minmax(0, 1fr);
+      }
+
+      /* Palette */
+      .palette {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: var(--space-4) var(--space-3);
+        background: var(--surface-sunken);
+        border-right: 1px solid var(--border-default);
+        overflow: auto;
+      }
+      .palette-title {
+        padding: 0 var(--space-1) var(--space-1);
+      }
+      .pal-item {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        align-items: center;
+        column-gap: 10px;
+        width: 100%;
+        padding: 7px 10px 7px 7px;
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-md);
+        background: var(--surface-raised);
+        box-shadow: var(--shadow-1);
+        color: var(--text-default);
+        text-align: left;
+        cursor: grab;
+        transition:
+          transform var(--duration-fast) var(--ease-standard),
+          box-shadow var(--duration-fast) var(--ease-standard),
+          background-color var(--duration-fast) var(--ease-standard),
+          border-color var(--duration-fast) var(--ease-standard);
+      }
+      .pal-item:hover,
+      .pal-item.is-hover {
+        background: var(--k-subtle);
+        border-color: var(--k);
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-2);
+      }
+      .pal-item .kchip {
+        grid-row: span 2;
+      }
+      .pal-name {
+        font-size: var(--font-size-sm);
+        font-weight: var(--font-weight-semibold);
+        line-height: 1.25;
+      }
+      .pal-desc {
+        font-size: var(--font-size-xs);
+        line-height: 1.3;
+        color: var(--text-muted);
+      }
+
+      /* Canvas */
+      .canvas {
+        position: relative;
+        overflow: hidden;
+        background-color: var(--canvas-bg);
+        background-image: radial-gradient(circle, var(--canvas-grid) 1.3px, transparent 1.6px);
+        background-size: 22px 22px;
+        background-position: 11px 11px;
+      }
+      .graph {
+        position: absolute;
+        left: var(--gx, 54px);
+        top: var(--gy, 170px);
+        width: 776px;
+        height: 482px;
+        transform: scale(var(--gz, 1));
+        transform-origin: 0 0;
+      }
+      .edges {
+        position: absolute;
+        left: -60px;
+        top: -60px;
+        width: 900px;
+        height: 600px;
+        overflow: visible;
+        pointer-events: none;
+      }
+      .edge {
+        fill: none;
+        stroke: var(--canvas-edge);
+        stroke-width: 1.75;
+      }
+      .edge-loop {
+        stroke: var(--canvas-edge-loop);
+        stroke-width: 2;
+        stroke-dasharray: 7 5;
+      }
+      .edge-label {
+        position: absolute;
+        transform: translate(-50%, -50%);
+        padding: 1px 8px;
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-full);
+        background: var(--surface-raised);
+        box-shadow: var(--shadow-1);
+        font-family: var(--font-code);
+        font-size: 11px;
+        font-weight: var(--font-weight-medium);
+        color: var(--text-muted);
+        white-space: nowrap;
+      }
+      .edge-label-loop {
+        color: var(--text-default);
+        border-color: var(--canvas-edge-loop);
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .edge-label-loop .icon {
+        width: 11px;
+        height: 11px;
+        color: var(--canvas-edge-loop);
+        stroke-width: 2.4;
+      }
+      .node {
+        position: absolute;
+        width: 184px;
+        background: var(--surface-raised);
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-2);
+        font-size: var(--font-size-xs);
+        cursor: grab;
+      }
+      .node-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        height: 36px;
+        padding: 0 8px 0 7px;
+        background: var(--k-subtle);
+        border-bottom: 1px solid var(--border-default);
+        border-radius: calc(var(--radius-lg) - 1px) calc(var(--radius-lg) - 1px) 0 0;
+      }
+      .node-kind {
+        font-size: var(--font-size-2xs);
+        font-weight: var(--font-weight-bold);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+      }
+      .node-head .badge {
+        margin-left: auto;
+      }
+      .node-body {
+        padding: 8px 12px 10px;
+      }
+      .node-label {
+        font-size: var(--font-size-md);
+        font-weight: var(--font-weight-semibold);
+        line-height: 20px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .node-id {
+        font-family: var(--font-code);
+        font-size: 11.5px;
+        line-height: 16px;
+        color: var(--text-muted);
+      }
+      .node-ports {
+        margin-top: 4px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 2px;
+      }
+      .port {
+        position: relative;
+        height: 18px;
+        line-height: 18px;
+        font-family: var(--font-code);
+        font-size: var(--font-size-2xs);
+        font-weight: var(--font-weight-medium);
+        color: var(--text-muted);
+      }
+      .handle {
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: var(--canvas-handle);
+        border: 2px solid var(--surface-raised);
+      }
+      .port .handle {
+        right: -19px;
+        top: 3px;
+      }
+      .handle-in {
+        left: -7px;
+        top: calc(50% - 6px);
+      }
+      .node.is-selected {
+        border-color: var(--canvas-node-selected);
+        box-shadow:
+          0 0 0 2px var(--canvas-node-selected),
+          0 0 0 7px var(--accent-highlight-subtle),
+          var(--shadow-2);
+      }
+      .flow-controls {
+        position: absolute;
+        left: var(--space-4);
+        bottom: var(--space-4);
+        display: flex;
+        flex-direction: column;
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-md);
+        background: var(--surface-raised);
+        box-shadow: var(--shadow-2);
+        overflow: hidden;
+      }
+      .flow-controls button {
+        display: grid;
+        place-items: center;
+        width: 34px;
+        height: 34px;
+        border: 0;
+        border-bottom: 1px solid var(--border-default);
+        background: none;
+        color: var(--text-default);
+        cursor: pointer;
+      }
+      .flow-controls button:last-child {
+        border-bottom: 0;
+      }
+      .flow-controls button:hover {
+        background: var(--surface-hover);
+      }
+
+      /* Property panel and bottom sheet */
+      .panel {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        background: var(--surface-raised);
+        border-left: 1px solid var(--border-default);
+      }
+      .sheet-head {
+        display: none;
+      }
+      .panel-tabs {
+        display: flex;
+        gap: var(--space-1);
+        padding: 0 var(--space-4);
+        border-bottom: 1px solid var(--border-default);
+      }
+      .tab {
+        position: relative;
+        height: 46px;
+        padding: 0 var(--space-3);
+        border: 0;
+        background: none;
+        color: var(--text-muted);
+        font-weight: var(--font-weight-medium);
+        cursor: pointer;
+      }
+      .tab:hover {
+        color: var(--text-default);
+      }
+      .tab[aria-selected='true'] {
+        color: var(--text-default);
+        font-weight: var(--font-weight-semibold);
+      }
+      .tab[aria-selected='true']::after {
+        content: '';
+        position: absolute;
+        left: var(--space-2);
+        right: var(--space-2);
+        bottom: -1px;
+        height: 3px;
+        border-radius: 3px 3px 0 0;
+        background: var(--accent-strong);
+      }
+      .panel-scroll {
+        flex: 1;
+        min-height: 0;
+        overflow: auto;
+      }
+      .panel-section {
+        padding: var(--space-5);
+        display: grid;
+        gap: var(--space-field);
+      }
+      .panel-node {
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
+      }
+      .panel-node h2 {
+        font-size: var(--font-size-lg);
+        font-weight: var(--font-weight-semibold);
+        line-height: 1.2;
+      }
+      .panel-node .mono {
+        font-size: var(--font-size-sm);
+        color: var(--text-muted);
+      }
+      .grid-2 {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: var(--space-3);
+      }
+      .route-row {
+        display: grid;
+        grid-template-columns: 92px minmax(0, 1fr) auto;
+        gap: var(--space-2);
+        align-items: start;
+      }
+      .route-head {
+        display: grid;
+        grid-template-columns: 92px minmax(0, 1fr) 32px;
+        gap: var(--space-2);
+      }
+      .route-row .textarea {
+        min-height: 36px;
+        padding-top: 7px;
+      }
+      .subhead {
+        font-size: var(--font-size-sm);
+        font-weight: var(--font-weight-semibold);
+      }
+      .conn-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: var(--space-1);
+      }
+      .conn-list li {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-2);
+        padding: 4px 4px 4px var(--space-3);
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-md);
+        font-size: var(--font-size-sm);
+      }
+      .conn-list code {
+        font-size: var(--font-size-sm);
+      }
+      .validation {
+        padding: var(--space-4) var(--space-5) var(--space-5);
+        border-top: 1px solid var(--border-default);
+        background: var(--surface-raised);
+        display: grid;
+        gap: var(--space-2);
+      }
+      .v-item {
+        display: block;
+        width: 100%;
+        padding: var(--space-2) var(--space-3);
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-md);
+        background: var(--surface-raised);
+        text-align: left;
+        font-size: var(--font-size-xs);
+        line-height: 1.5;
+        cursor: pointer;
+      }
+      .v-item:hover {
+        background: var(--surface-hover);
+      }
+      .v-code {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-weight: var(--font-weight-semibold);
+        color: var(--status-bad-fg);
+      }
+      .v-code .icon {
+        width: 12px;
+        height: 12px;
+        stroke-width: 2.8;
+      }
+
+      /* Run inspector ----------------------------------------------------------------------- */
+      .run-head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--space-3) var(--space-4);
+      }
+      .run-title {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 2px var(--space-3);
+        font-size: var(--font-size-xl);
+        font-weight: var(--font-weight-semibold);
+        letter-spacing: -0.01em;
+      }
+      .run-title .mono {
+        font-size: var(--font-size-md);
+        font-weight: var(--font-weight-medium);
+        color: var(--text-muted);
+        letter-spacing: 0;
+      }
+      .run-meta {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--space-2) var(--space-4);
+        font-size: var(--font-size-sm);
+        color: var(--text-muted);
+      }
+      .run-meta a {
+        font-weight: var(--font-weight-medium);
+      }
+      .run-controls {
+        margin-left: auto;
+        display: flex;
+        gap: var(--space-2);
+      }
+      .annot {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--space-2);
+        padding: var(--space-3) var(--space-4);
+        border: 1px dashed var(--border-strong);
+        border-radius: var(--radius-md);
+      }
+      .annot .eyebrow {
+        margin-right: var(--space-2);
+      }
+      .inspect-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr);
+        gap: var(--space-section);
+        align-items: start;
+      }
+      .live {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: var(--font-size-xs);
+        font-weight: var(--font-weight-semibold);
+        color: var(--accent-on-subtle);
+        background: var(--accent-subtle);
+        padding: 3px 9px 3px 8px;
+        border-radius: var(--radius-full);
+      }
+      .live::before {
+        content: '';
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--accent-strong);
+        box-shadow: 0 0 0 3px var(--accent);
+      }
+      .timeline {
+        list-style: none;
+        margin: 0;
+        padding: var(--space-2);
+        max-height: 760px;
+        overflow: auto;
+      }
+      .wait-form {
+        display: grid;
+        gap: var(--space-5);
+      }
+      .wait-prompt {
+        font-size: var(--font-size-lg);
+        font-weight: var(--font-weight-semibold);
+      }
+      .wait-fields {
+        display: grid;
+        grid-template-columns: auto auto minmax(240px, 440px);
+        justify-content: start;
+        align-items: end;
+        gap: var(--space-4) var(--space-8);
+      }
+      .wait-fields .switch {
+        height: 36px;
+      }
+      .tl-row {
+        display: grid;
+        grid-template-columns: 30px auto minmax(0, 1fr);
+        align-items: center;
+        gap: var(--space-2);
+        width: 100%;
+        padding: 5px var(--space-2);
+        border: 0;
+        border-radius: var(--radius-sm);
+        background: none;
+        color: var(--text-default);
+        text-align: left;
+        font-size: var(--font-size-sm);
+        cursor: pointer;
+      }
+      .tl-row:hover {
+        background: var(--surface-hover);
+      }
+      .tl-row[aria-current='true'] {
+        background: var(--accent-subtle);
+        box-shadow: inset 3px 0 0 var(--accent-strong);
+      }
+      .tl-seq {
+        font-family: var(--font-code);
+        font-size: var(--font-size-xs);
+        color: var(--text-subtle);
+        text-align: right;
+      }
+      .tl-type {
+        font-family: var(--font-code);
+        font-size: 12.5px;
+        font-weight: var(--font-weight-medium);
+      }
+      .tl-desc {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        min-width: 0;
+        color: var(--text-muted);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .diff {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: var(--space-3);
+      }
+      .diff li {
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-md);
+        overflow: hidden;
+      }
+      .diff-head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--space-2);
+        padding: var(--space-2) var(--space-3);
+        background: var(--surface-sunken);
+        border-bottom: 1px solid var(--border-default);
+        font-size: var(--font-size-sm);
+      }
+      .diff-cols {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      }
+      .diff pre,
+      .pre {
+        margin: 0;
+        padding: var(--space-2) var(--space-3);
+        font-family: var(--font-code);
+        font-size: 12.5px;
+        line-height: 1.5;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+      }
+      .diff-before {
+        background: var(--status-bad-bg);
+        color: var(--status-bad-fg);
+      }
+      .diff-after {
+        background: var(--status-good-bg);
+        color: var(--status-good-fg);
+      }
+      .msgs {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: var(--space-2);
+      }
+      .msgs li {
+        padding: var(--space-3);
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-md);
+        display: grid;
+        gap: var(--space-1);
+      }
+      .msg-head {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+      }
+      .msg-head code {
+        color: var(--text-muted);
+        font-size: var(--font-size-xs);
+      }
+      .pre {
+        border-radius: var(--radius-md);
+        background: var(--code-bg);
+        border: 1px solid var(--border-default);
+        color: var(--code-fg);
+      }
+      .details summary {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        list-style: none;
+        cursor: pointer;
+        font-weight: var(--font-weight-semibold);
+        border-radius: var(--radius-sm);
+      }
+      .details summary::-webkit-details-marker {
+        display: none;
+      }
+      .details summary .icon {
+        transition: transform var(--duration-base) var(--ease-standard);
+        rotate: -90deg;
+        color: var(--text-muted);
+      }
+      .details[open] summary .icon {
+        rotate: 0deg;
+      }
+      .details-card {
+        padding: var(--space-4) var(--space-5);
+      }
+      .form-actions {
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
+      }
+
+      /* Component sheet ---------------------------------------------------------------------- */
+      .doc-bar {
+        display: flex;
+        align-items: center;
+        gap: var(--space-4);
+        height: 56px;
+        padding: 0 var(--space-6);
+        background: var(--surface-inverse);
+        color: var(--text-inverse);
+      }
+      .doc-bar .muted {
+        color: var(--text-inverse-muted);
+      }
+      .doc-section {
+        display: grid;
+        gap: var(--space-4);
+      }
+      .doc-h2 {
+        font-size: var(--font-size-xl);
+        font-weight: var(--font-weight-semibold);
+        letter-spacing: -0.01em;
+      }
+      .doc-note {
+        font-size: var(--font-size-sm);
+        color: var(--text-muted);
+        max-width: 80ch;
+      }
+      .doc-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: var(--space-4);
+      }
+      .doc-tile {
+        display: grid;
+        gap: var(--space-3);
+        align-content: start;
+      }
+      .scale {
+        display: grid;
+        grid-template-columns: 76px repeat(11, minmax(0, 1fr));
+        gap: 4px;
+        align-items: center;
+        font-size: 11px;
+      }
+      .scale > span:first-child {
+        font-weight: var(--font-weight-semibold);
+        font-size: var(--font-size-xs);
+      }
+      .sw {
+        height: 40px;
+        border-radius: 6px;
+        box-shadow: inset 0 0 0 1px var(--border-default);
+      }
+      .scale-steps {
+        display: grid;
+        grid-template-columns: 76px repeat(11, minmax(0, 1fr));
+        gap: 4px;
+        font-family: var(--font-code);
+        font-size: 10px;
+        color: var(--text-muted);
+        text-align: center;
+      }
+      .tokens-table td,
+      .tokens-table th {
+        padding: 8px 12px;
+      }
+      .tok-swatch {
+        display: inline-block;
+        width: 18px;
+        height: 18px;
+        border-radius: 5px;
+        vertical-align: -4px;
+        margin-right: 8px;
+        box-shadow: inset 0 0 0 1px var(--border-default);
+      }
+      .type-spec {
+        display: grid;
+        gap: var(--space-3);
+      }
+      .type-spec div {
+        display: grid;
+        grid-template-columns: 120px 1fr;
+        align-items: baseline;
+        gap: var(--space-4);
+      }
+      .focus-tile {
+        display: grid;
+        gap: var(--space-3);
+        justify-items: start;
+        padding: var(--space-4);
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border-default);
+        font-size: var(--font-size-xs);
+        font-weight: var(--font-weight-medium);
+      }
+      .elev {
+        display: grid;
+        place-items: center;
+        height: 88px;
+        border-radius: var(--radius-lg);
+        background: var(--surface-raised);
+        font-size: var(--font-size-sm);
+        font-weight: var(--font-weight-medium);
+        color: var(--text-muted);
+      }
+      .mini-canvas {
+        position: relative;
+        padding: var(--space-6);
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--border-default);
+        background-color: var(--canvas-bg);
+        background-image: radial-gradient(circle, var(--canvas-grid) 1.3px, transparent 1.6px);
+        background-size: 22px 22px;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, 184px);
+        gap: var(--space-6);
+      }
+      .mini-canvas .node {
+        position: relative;
+      }
+
+      /* Tablet: palette rail, bottom sheet, single-column inspector (proposal for #41) ------- */
+      @media (max-width: 1024px) {
+        .editor-main {
+          grid-template-columns: 60px minmax(0, 1fr);
+        }
+        .palette {
+          align-items: center;
+          padding: var(--space-3) var(--space-2);
+          gap: var(--space-2);
+        }
+        .palette-title,
+        .pal-text {
+          position: absolute;
+          width: 1px;
+          height: 1px;
+          overflow: hidden;
+          clip: rect(0 0 0 0);
+          white-space: nowrap;
+        }
+        .pal-item {
+          display: grid;
+          place-items: center;
+          width: 44px;
+          height: 44px;
+          padding: 0;
+        }
+        .pal-item .kchip {
+          grid-row: auto;
+        }
+        .panel {
+          position: absolute;
+          left: calc(60px + var(--space-3));
+          right: var(--space-3);
+          bottom: 0;
+          z-index: 5;
+          height: min(60%, 600px);
+          border: 1px solid var(--border-default);
+          border-bottom: 0;
+          border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+          box-shadow: var(--shadow-3);
+          background: var(--surface-overlay);
+          transition: height var(--duration-slow) var(--ease-standard);
+        }
+        .panel[data-collapsed] {
+          height: auto;
+        }
+        .panel[data-collapsed] .panel-tabs,
+        .panel[data-collapsed] .panel-scroll {
+          display: none;
+        }
+        .sheet-head {
+          display: grid;
+          grid-template-columns: auto 1fr auto auto;
+          align-items: center;
+          gap: var(--space-3);
+          padding: 18px var(--space-4) var(--space-3);
+          position: relative;
+          border-bottom: 1px solid var(--border-default);
+        }
+        .sheet-head::before {
+          content: '';
+          position: absolute;
+          top: 7px;
+          left: 50%;
+          translate: -50% 0;
+          width: 40px;
+          height: 4px;
+          border-radius: var(--radius-full);
+          background: var(--border-strong);
+        }
+        .sheet-head h2 {
+          font-size: var(--font-size-md);
+          font-weight: var(--font-weight-semibold);
+        }
+        .sheet-head .mono {
+          color: var(--text-muted);
+          font-size: var(--font-size-sm);
+          font-weight: var(--font-weight-regular);
+        }
+        .panel[data-collapsed] .sheet-toggle .icon {
+          rotate: 180deg;
+        }
+        .graph {
+          --gx: 54px;
+          --gy: 70px;
+          --gz: 0.8;
+        }
+        .editor-bar .hide-tablet {
+          display: none;
+        }
+        .inspect-grid {
+          grid-template-columns: minmax(0, 1fr);
+        }
+        .timeline {
+          max-height: 420px;
+        }
+        .wait-fields {
+          grid-template-columns: auto minmax(0, 1fr);
+        }
+        .wait-fields .field:last-child {
+          grid-column: 1 / -1;
+        }
+      }
+
+      /* Phone: menu, stacked rows, one-column forms (proposal for #41) -------------------------- */
+      @media (max-width: 640px) {
+        .appbar {
+          padding: 0 var(--space-4);
+          justify-content: space-between;
+        }
+        .menu-toggle {
+          display: inline-flex;
+          align-items: center;
+          gap: var(--space-2);
+          height: 40px;
+          padding: 0 12px;
+          border: 1px solid var(--border-inverse);
+          border-radius: var(--radius-md);
+          background: transparent;
+          color: var(--text-inverse);
+          font-weight: var(--font-weight-medium);
+          cursor: pointer;
+        }
+        .menu-toggle .icon-close {
+          display: none;
+        }
+        .appbar[data-open] .menu-toggle .icon-open {
+          display: none;
+        }
+        .appbar[data-open] .menu-toggle .icon-close {
+          display: block;
+        }
+        .mainnav {
+          display: none;
+          position: absolute;
+          top: 56px;
+          left: 0;
+          right: 0;
+          flex-direction: column;
+          align-items: stretch;
+          gap: 2px;
+          padding: var(--space-2) var(--space-3) var(--space-4);
+          background: var(--surface-inverse);
+          border-top: 1px solid var(--border-inverse);
+          box-shadow: var(--shadow-3);
+        }
+        .appbar[data-open] .mainnav {
+          display: flex;
+        }
+        .mainnav a {
+          height: 48px;
+          padding: 0 var(--space-4);
+          border-radius: var(--radius-md);
+          font-size: var(--font-size-lg);
+        }
+        .mainnav a[aria-current='page'] {
+          background: var(--surface-inverse-raised);
+          color: var(--text-inverse);
+          box-shadow: inset 4px 0 0 var(--accent);
+        }
+        .banner {
+          padding: var(--space-2) var(--space-4);
+        }
+        .loops-tools {
+          padding: var(--space-4);
+        }
+        .create,
+        .create .field,
+        .filters .field {
+          width: 100%;
+        }
+        .create .field {
+          flex: 1;
+        }
+        .filters {
+          padding: var(--space-4);
+        }
+        .rtable thead {
+          position: absolute;
+          width: 1px;
+          height: 1px;
+          overflow: hidden;
+          clip: rect(0 0 0 0);
+        }
+        .rtable,
+        .rtable tbody,
+        .rtable tr,
+        .rtable td {
+          display: block;
+        }
+        .rtable tbody tr {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+          gap: var(--space-3) var(--space-4);
+          padding: var(--space-4);
+          border-bottom: 1px solid var(--border-default);
+        }
+        .rtable tbody tr:last-child {
+          border-bottom: 0;
+        }
+        .rtable td,
+        .rtable td.actions {
+          width: auto;
+          padding: 0;
+          border: 0;
+          text-align: left;
+          white-space: normal;
+          min-width: 0;
+        }
+        .rtable td[data-label]::before {
+          content: attr(data-label);
+          display: block;
+          margin-bottom: 4px;
+          font-size: 11px;
+          font-weight: var(--font-weight-semibold);
+          letter-spacing: var(--letter-spacing-wide);
+          text-transform: uppercase;
+          color: var(--text-muted);
+        }
+        .rtable .wide {
+          grid-column: 1 / -1;
+        }
+        .rtable .row-actions {
+          display: flex;
+          width: 100%;
+        }
+        .rtable .row-actions .btn {
+          flex: 1 1 auto;
+        }
+        .toast {
+          left: var(--space-4);
+          right: var(--space-4);
+          bottom: var(--space-4);
+        }
+        .toast span:first-of-type {
+          flex: 1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Icons: original strokes, 24px grid, drawn for this sample (proposal). -->
+    <svg class="sprite" aria-hidden="true" focusable="false">
+      <symbol id="i-trigger" viewBox="0 0 24 24">
+        <path d="M13 2.5 4.5 13.5H11l-1 8 8.5-11H12l1-8Z" />
+      </symbol>
+      <symbol id="i-decision" viewBox="0 0 24 24">
+        <path d="M12 2.8 21.2 12 12 21.2 2.8 12Z" />
+        <path d="M12 8.5v4l2.5 2" />
+      </symbol>
+      <symbol id="i-inference" viewBox="0 0 24 24">
+        <path
+          d="M10.5 3.5c.7 4.6 3 6.9 7.5 7.5-4.5.6-6.8 2.9-7.5 7.5-.7-4.6-3-6.9-7.5-7.5 4.5-.6 6.8-2.9 7.5-7.5Z"
+        />
+        <path d="M19 3v4M17 5h4" />
+      </symbol>
+      <symbol id="i-script" viewBox="0 0 24 24">
+        <path d="m5 7.5 4.5 4.5L5 16.5M12.5 17H19" />
+      </symbol>
+      <symbol id="i-mutate" viewBox="0 0 24 24">
+        <path d="M4 20h4L19.5 8.5a2.8 2.8 0 0 0-4-4L4 16v4Z" />
+        <path d="m13.5 6.5 4 4" />
+      </symbol>
+      <symbol id="i-subloop" viewBox="0 0 24 24">
+        <rect x="8" y="8" width="12.5" height="12.5" rx="3" />
+        <path d="M16 8V6.5a3 3 0 0 0-3-3H6.5a3 3 0 0 0-3 3V13a3 3 0 0 0 3 3H8" />
+      </symbol>
+      <symbol id="i-wait" viewBox="0 0 24 24">
+        <path d="M6 3h12M6 21h12M7.5 3v2.5a4.5 4.5 0 0 0 9 0V3M7.5 21v-2.5a4.5 4.5 0 0 1 9 0V21" />
+      </symbol>
+      <symbol id="i-heartbeat" viewBox="0 0 24 24">
+        <path d="M2.5 12.5h4l2.5-6 4.5 11 2.5-5h5.5" />
+      </symbol>
+      <symbol id="i-exit" viewBox="0 0 24 24">
+        <path d="M5.5 21V3.5M5.5 4h12.5l-2.5 4.5L18 13H5.5" />
+      </symbol>
+      <symbol id="i-queued" viewBox="0 0 24 24">
+        <circle cx="5.5" cy="12" r="1.6" fill="currentColor" stroke="none" />
+        <circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none" />
+        <circle cx="18.5" cy="12" r="1.6" fill="currentColor" stroke="none" />
+      </symbol>
+      <symbol id="i-running" viewBox="0 0 24 24">
+        <path d="M7.5 5v14l11-7Z" fill="currentColor" />
+      </symbol>
+      <symbol id="i-paused" viewBox="0 0 24 24"><path d="M9 5.5v13M15 5.5v13" /></symbol>
+      <symbol id="i-succeeded" viewBox="0 0 24 24"><path d="m4.5 12.5 5 5L19.5 7" /></symbol>
+      <symbol id="i-failed" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" /></symbol>
+      <symbol id="i-cancelled" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="8.5" />
+        <path d="m6 6 12 12" />
+      </symbol>
+      <symbol id="i-exhausted" viewBox="0 0 24 24">
+        <path d="M20 12a8 8 0 1 1-2.4-5.7" />
+        <path d="M20.5 3.5v4h-4" />
+      </symbol>
+      <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" /></symbol>
+      <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" /></symbol>
+      <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></symbol>
+      <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14" /></symbol>
+      <symbol id="i-fit" viewBox="0 0 24 24">
+        <path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" />
+      </symbol>
+      <symbol id="i-lock" viewBox="0 0 24 24">
+        <rect x="5" y="11" width="14" height="10" rx="2.5" />
+        <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+      </symbol>
+      <symbol id="i-export" viewBox="0 0 24 24">
+        <path d="M12 4v11M7 10.5l5 5 5-5M5 20h14" />
+      </symbol>
+      <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 20V9M7 13.5l5-5 5 5M5 4h14" /></symbol>
+      <symbol id="i-trash" viewBox="0 0 24 24">
+        <path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" />
+      </symbol>
+      <symbol id="i-check-circle" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9" />
+        <path d="m8 12.5 3 3 5-6" />
+      </symbol>
+      <symbol id="i-alert" viewBox="0 0 24 24">
+        <path d="M10.3 4.2 2.6 18a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 4.2a2 2 0 0 0-3.4 0Z" />
+        <path d="M12 10v4M12 17.2h.01" />
+      </symbol>
+      <symbol id="i-info" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 11v5.5M12 7.8h.01" />
+      </symbol>
+      <symbol id="i-offline" viewBox="0 0 24 24">
+        <path
+          d="M2.5 8.5a15 15 0 0 1 5-3M21.5 8.5A15 15 0 0 0 11 4.6M5.5 12a10 10 0 0 1 3.4-2.3M18.5 12a10 10 0 0 0-2.7-2M9 15.5a5 5 0 0 1 6 0M12 19.5h.01M3 3l18 18"
+        />
+      </symbol>
+      <symbol id="i-sliders" viewBox="0 0 24 24">
+        <path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1" />
+        <circle cx="15" cy="6" r="2" />
+        <circle cx="9" cy="12" r="2" />
+        <circle cx="17" cy="18" r="2" />
+      </symbol>
+      <symbol id="i-send" viewBox="0 0 24 24">
+        <path d="M21 3 10.5 13.5M21 3l-6.5 18-4-7.5L3 9.5Z" />
+      </symbol>
+      <symbol id="i-sparkle" viewBox="0 0 24 24">
+        <path
+          d="M12 3c.7 4.8 3.2 7.3 8 8-4.8.7-7.3 3.2-8 8-.7-4.8-3.2-7.3-8-8 4.8-.7 7.3-3.2 8-8Z"
+        />
+      </symbol>
+      <symbol id="i-loop" viewBox="0 0 24 24">
+        <path
+          d="M4 12a8 8 0 0 1 13.7-5.7L20 8.5M20 3.5v5h-5M20 12a8 8 0 0 1-13.7 5.7L4 15.5M4 20.5v-5h5"
+        />
+      </symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5" /></symbol>
+    </svg>
+
+    <!-- Index: shown without a hash. -->
+    <main class="cover">
+      <p class="eyebrow">GraphGoblin · issue #7 · visual direction</p>
+      <h1 class="page-title">Visual-direction sample</h1>
+      <p class="muted">
+        A static prototype of the proposed light theme: goblin green with brown, warm dark grey, and
+        rare magenta, set in Geist. Every colour comes from <code>tokens.css</code>. Open one view
+        with its hash, or scroll to see them all.
+      </p>
+      <ul>
+        <li><a href="#loops">Loops list</a> (1440 and 390 px)</li>
+        <li><a href="#editor">Editor shell</a> (1440 and 768 px)</li>
+        <li><a href="#nav">Header and main navigation</a> (1440 and 390 px)</li>
+        <li><a href="#inspector">Run inspector</a> (1440 and 768 px)</li>
+        <li><a href="#components">Component sheet</a></li>
+      </ul>
+    </main>
+
+    <!-- ================================================================================== -->
+    <!-- Loops list                                                                          -->
+    <!-- ================================================================================== -->
+    <section class="view" id="loops" aria-label="Loops list">
+      <header class="appbar">
+        <a class="brand" href="#loops" aria-label="GraphGoblin">
+          <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+            <path class="bm-body" d="M9.4 11 .6 7.2l5 8.8Zm13.2 0 8.8-3.8-5 8.8Z" />
+            <rect class="bm-body" x="5" y="8.5" width="22" height="17" rx="6" />
+            <circle class="bm-eye" cx="12.3" cy="15.6" r="2" />
+            <circle class="bm-eye" cx="19.7" cy="15.6" r="2" />
+            <path class="bm-mouth" d="M13 20.6q3 1.9 6 0" />
+            <circle class="bm-port" cx="5" cy="19" r="2.4" />
+            <circle class="bm-port" cx="27" cy="19" r="2.4" />
+          </svg>
+          <span>Graph<b>Goblin</b></span>
+        </a>
+        <button
+          class="menu-toggle"
+          type="button"
+          data-menu-toggle
+          aria-expanded="false"
+          aria-controls="nav-loops"
+        >
+          <svg class="icon icon-open"><use href="#i-menu" /></svg>
+          <svg class="icon icon-close"><use href="#i-close" /></svg>
+          Menu
+        </button>
+        <nav class="mainnav" id="nav-loops" aria-label="Main">
+          <a href="#loops" aria-current="page">Loops</a>
+          <a href="#nav">Runs</a>
+          <a href="#nav">Events</a>
+          <a href="#nav">Settings</a>
+        </nav>
+      </header>
+
+      <div class="page">
+        <div class="page-head">
+          <h1 class="page-title">Loops</h1>
+        </div>
+
+        <section class="card loops-tools" aria-label="Create or import">
+          <form class="create" aria-label="Create loop">
+            <div class="field">
+              <label class="label" for="loops-new">New loop name</label>
+              <input
+                class="input"
+                id="loops-new"
+                value="weekly-digest"
+                placeholder="nightly-triage"
+              />
+            </div>
+            <button class="btn btn-primary" type="submit">Create</button>
+          </form>
+          <div class="field">
+            <span class="label" id="loops-import-label">Import an exported loop (JSON)</span>
+            <label class="file">
+              <input
+                type="file"
+                accept="application/json,.json"
+                aria-labelledby="loops-import-label"
+              />
+              <span class="btn btn-outline btn-sm">
+                <svg class="icon"><use href="#i-upload" /></svg>
+                Choose file
+              </span>
+              <span class="file-name">No file chosen</span>
+            </label>
+          </div>
+        </section>
+
+        <section class="card card-flush" aria-label="Loops">
+          <table class="table rtable">
+            <thead>
+              <tr>
+                <th scope="col">Name</th>
+                <th scope="col">State</th>
+                <th scope="col">Last run</th>
+                <th scope="col">Updated</th>
+                <th scope="col" class="actions">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="cell-name wide">
+                  <a href="#editor">nightly-triage</a>
+                  <p>Triages new issues every night and opens a fix when one is needed</p>
+                </td>
+                <td class="wide">
+                  <span class="badge tone-warn">published, unpublished changes</span>
+                </td>
+                <td data-label="Last run">
+                  <a class="badge tone-warn" href="#inspector"
+                    ><svg class="icon"><use href="#i-wait" /></svg>waiting</a
+                  >
+                </td>
+                <td data-label="Updated"><span class="meta-time">10/2/2026, 9:41:12 PM</span></td>
+                <td class="actions wide">
+                  <div class="row-actions">
+                    <a class="btn btn-secondary btn-sm" href="#editor"
+                      ><svg class="icon"><use href="#i-mutate" /></svg>Edit</a
+                    >
+                    <button
+                      class="btn btn-secondary btn-sm"
+                      type="button"
+                      aria-label="Export nightly-triage"
+                    >
+                      <svg class="icon"><use href="#i-export" /></svg>Export
+                    </button>
+                    <button
+                      class="btn btn-danger-soft btn-sm"
+                      type="button"
+                      aria-label="Delete nightly-triage"
+                    >
+                      <svg class="icon"><use href="#i-trash" /></svg>Delete
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="cell-name wide">
+                  <a href="#editor">pr-review</a>
+                  <p>Reviews an open pull request and leaves comments</p>
+                </td>
+                <td class="wide"><span class="badge tone-good">published</span></td>
+                <td data-label="Last run">
+                  <a class="badge tone-good" href="#inspector"
+                    ><svg class="icon"><use href="#i-succeeded" /></svg>succeeded</a
+                  >
+                </td>
+                <td data-label="Updated"><span class="meta-time">10/2/2026, 6:05:47 PM</span></td>
+                <td class="actions wide">
+                  <div class="row-actions">
+                    <a class="btn btn-secondary btn-sm" href="#editor"
+                      ><svg class="icon"><use href="#i-mutate" /></svg>Edit</a
+                    >
+                    <button
+                      class="btn btn-secondary btn-sm"
+                      type="button"
+                      aria-label="Export pr-review"
+                    >
+                      <svg class="icon"><use href="#i-export" /></svg>Export
+                    </button>
+                    <button
+                      class="btn btn-danger-soft btn-sm"
+                      type="button"
+                      aria-label="Delete pr-review"
+                    >
+                      <svg class="icon"><use href="#i-trash" /></svg>Delete
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="cell-name wide">
+                  <a href="#editor">issue-labeller</a>
+                  <p>Labels incoming issues by area and type</p>
+                </td>
+                <td class="wide"><span class="badge tone-good">published</span></td>
+                <td data-label="Last run">
+                  <a class="badge tone-bad" href="#inspector"
+                    ><svg class="icon"><use href="#i-failed" /></svg>failed</a
+                  >
+                </td>
+                <td data-label="Updated"><span class="meta-time">10/1/2026, 11:18:03 AM</span></td>
+                <td class="actions wide">
+                  <div class="row-actions">
+                    <a class="btn btn-secondary btn-sm" href="#editor"
+                      ><svg class="icon"><use href="#i-mutate" /></svg>Edit</a
+                    >
+                    <button
+                      class="btn btn-secondary btn-sm"
+                      type="button"
+                      aria-label="Export issue-labeller"
+                    >
+                      <svg class="icon"><use href="#i-export" /></svg>Export
+                    </button>
+                    <button
+                      class="btn btn-danger-soft btn-sm"
+                      type="button"
+                      aria-label="Delete issue-labeller"
+                    >
+                      <svg class="icon"><use href="#i-trash" /></svg>Delete
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="cell-name wide">
+                  <a href="#editor">weekly-summary</a>
+                  <p>Drafts the weekly summary and waits for approval</p>
+                </td>
+                <td class="wide"><span class="badge tone-good">published</span></td>
+                <td data-label="Last run">
+                  <a class="badge tone-info" href="#inspector"
+                    ><svg class="icon"><use href="#i-running" /></svg>running</a
+                  >
+                </td>
+                <td data-label="Updated"><span class="meta-time">9/30/2026, 4:52:30 PM</span></td>
+                <td class="actions wide">
+                  <div class="row-actions">
+                    <a class="btn btn-secondary btn-sm" href="#editor"
+                      ><svg class="icon"><use href="#i-mutate" /></svg>Edit</a
+                    >
+                    <button
+                      class="btn btn-secondary btn-sm"
+                      type="button"
+                      aria-label="Export weekly-summary"
+                    >
+                      <svg class="icon"><use href="#i-export" /></svg>Export
+                    </button>
+                    <button
+                      class="btn btn-danger-soft btn-sm"
+                      type="button"
+                      aria-label="Delete weekly-summary"
+                    >
+                      <svg class="icon"><use href="#i-trash" /></svg>Delete
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="cell-name wide">
+                  <a href="#editor">docs-sync</a>
+                  <p>Keeps the user guide in step with the API reference</p>
+                </td>
+                <td class="wide"><span class="badge tone-good">published</span></td>
+                <td data-label="Last run">
+                  <a class="badge tone-neutral" href="#inspector"
+                    ><svg class="icon"><use href="#i-cancelled" /></svg>cancelled</a
+                  >
+                </td>
+                <td data-label="Updated"><span class="meta-time">9/29/2026, 10:12:09 AM</span></td>
+                <td class="actions wide">
+                  <div class="row-actions">
+                    <a class="btn btn-secondary btn-sm" href="#editor"
+                      ><svg class="icon"><use href="#i-mutate" /></svg>Edit</a
+                    >
+                    <button
+                      class="btn btn-destructive btn-sm"
+                      type="button"
+                      aria-label="Confirm delete docs-sync"
+                    >
+                      <svg class="icon"><use href="#i-trash" /></svg>Confirm delete
+                    </button>
+                    <button class="btn btn-ghost btn-sm" type="button">Keep</button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="cell-name wide">
+                  <a href="#editor">release-notes</a>
+                  <p>Drafts release notes from merged pull requests</p>
+                </td>
+                <td class="wide"><span class="badge tone-neutral">draft only</span></td>
+                <td data-label="Last run"><span class="meta-time">never run</span></td>
+                <td data-label="Updated"><span class="meta-time">9/27/2026, 3:30:55 PM</span></td>
+                <td class="actions wide">
+                  <div class="row-actions">
+                    <a class="btn btn-secondary btn-sm" href="#editor"
+                      ><svg class="icon"><use href="#i-mutate" /></svg>Edit</a
+                    >
+                    <button
+                      class="btn btn-secondary btn-sm"
+                      type="button"
+                      aria-label="Export release-notes"
+                    >
+                      <svg class="icon"><use href="#i-export" /></svg>Export
+                    </button>
+                    <button
+                      class="btn btn-danger-soft btn-sm"
+                      type="button"
+                      aria-label="Delete release-notes"
+                    >
+                      <svg class="icon"><use href="#i-trash" /></svg>Delete
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+      </div>
+    </section>
+
+    <!-- ================================================================================== -->
+    <!-- Editor shell                                                                        -->
+    <!-- ================================================================================== -->
+    <section class="view view-editor" id="editor" aria-label="Editor">
+      <header class="appbar">
+        <a class="brand" href="#loops" aria-label="GraphGoblin">
+          <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+            <path class="bm-body" d="M9.4 11 .6 7.2l5 8.8Zm13.2 0 8.8-3.8-5 8.8Z" />
+            <rect class="bm-body" x="5" y="8.5" width="22" height="17" rx="6" />
+            <circle class="bm-eye" cx="12.3" cy="15.6" r="2" />
+            <circle class="bm-eye" cx="19.7" cy="15.6" r="2" />
+            <path class="bm-mouth" d="M13 20.6q3 1.9 6 0" />
+            <circle class="bm-port" cx="5" cy="19" r="2.4" />
+            <circle class="bm-port" cx="27" cy="19" r="2.4" />
+          </svg>
+          <span>Graph<b>Goblin</b></span>
+        </a>
+        <button
+          class="menu-toggle"
+          type="button"
+          data-menu-toggle
+          aria-expanded="false"
+          aria-controls="nav-editor"
+        >
+          <svg class="icon icon-open"><use href="#i-menu" /></svg>
+          <svg class="icon icon-close"><use href="#i-close" /></svg>
+          Menu
+        </button>
+        <nav class="mainnav" id="nav-editor" aria-label="Main">
+          <a href="#loops" aria-current="page">Loops</a>
+          <a href="#nav">Runs</a>
+          <a href="#nav">Events</a>
+          <a href="#nav">Settings</a>
+        </nav>
+      </header>
+
+      <div class="editor">
+        <header class="editor-bar">
+          <nav class="crumbs" aria-label="Breadcrumb">
+            <a href="#loops">Loops</a>
+            <span class="sep" aria-hidden="true">/</span>
+            <h1 class="editor-title">nightly-triage</h1>
+          </nav>
+          <span class="badge tone-good">published v3</span>
+          <span class="save-state" data-testid="save-state">
+            <svg class="icon" aria-hidden="true"><use href="#i-check-circle" /></svg>All changes
+            saved
+          </span>
+          <button
+            class="badge tone-bad"
+            type="button"
+            title="1 validation error will block publishing"
+          >
+            <svg class="icon" aria-hidden="true"><use href="#i-failed" /></svg>1 error
+          </button>
+          <div class="editor-actions">
+            <button class="btn btn-outline" type="button">
+              <svg class="icon" aria-hidden="true"><use href="#i-sliders" /></svg>Loop settings
+            </button>
+            <button class="btn btn-outline" type="button">
+              <svg class="icon" aria-hidden="true"><use href="#i-running" /></svg>Run
+            </button>
+            <button
+              class="btn btn-primary"
+              type="button"
+              title="1 validation error(s) will block publishing"
+            >
+              <svg class="icon" aria-hidden="true"><use href="#i-send" /></svg>Publish
+            </button>
+          </div>
+        </header>
+
+        <div class="editor-main">
+          <aside class="palette">
+            <nav aria-label="Node palette" class="stack" style="gap: 6px">
+              <h2 class="eyebrow palette-title">Palette</h2>
+              <button
+                class="pal-item k-trigger"
+                type="button"
+                draggable="true"
+                aria-label="Add Trigger node"
+                title="Starts a run"
+              >
+                <span class="kchip" aria-hidden="true"
+                  ><svg class="icon"><use href="#i-trigger" /></svg
+                ></span>
+                <span class="pal-text pal-name">Trigger</span
+                ><span class="pal-text pal-desc">Starts a run</span>
+              </button>
+              <button
+                class="pal-item k-decision"
+                type="button"
+                draggable="true"
+                aria-label="Add Decision node"
+                title="Chooses a labelled route"
+              >
+                <span class="kchip" aria-hidden="true"
+                  ><svg class="icon"><use href="#i-decision" /></svg
+                ></span>
+                <span class="pal-text pal-name">Decision</span
+                ><span class="pal-text pal-desc">Chooses a labelled route</span>
+              </button>
+              <button
+                class="pal-item k-inference is-hover"
+                type="button"
+                draggable="true"
+                aria-label="Add Inference node"
+                title="Hands work to a harness"
+              >
+                <span class="kchip" aria-hidden="true"
+                  ><svg class="icon"><use href="#i-inference" /></svg
+                ></span>
+                <span class="pal-text pal-name">Inference</span
+                ><span class="pal-text pal-desc">Hands work to a harness</span>
+              </button>
+              <button
+                class="pal-item k-script"
+                type="button"
+                draggable="true"
+                aria-label="Add Script node"
+                title="Runs a program"
+              >
+                <span class="kchip" aria-hidden="true"
+                  ><svg class="icon"><use href="#i-script" /></svg
+                ></span>
+                <span class="pal-text pal-name">Script</span
+                ><span class="pal-text pal-desc">Runs a program</span>
+              </button>
+              <button
+                class="pal-item k-mutate"
+                type="button"
+                draggable="true"
+                aria-label="Add Mutate node"
+                title="Changes the context thread"
+              >
+                <span class="kchip" aria-hidden="true"
+                  ><svg class="icon"><use href="#i-mutate" /></svg
+                ></span>
+                <span class="pal-text pal-name">Mutate</span
+                ><span class="pal-text pal-desc">Changes the context thread</span>
+              </button>
+              <button
+                class="pal-item k-subloop"
+                type="button"
+                draggable="true"
+                aria-label="Add Subloop node"
+                title="Runs another loop"
+              >
+                <span class="kchip" aria-hidden="true"
+                  ><svg class="icon"><use href="#i-subloop" /></svg
+                ></span>
+                <span class="pal-text pal-name">Subloop</span
+                ><span class="pal-text pal-desc">Runs another loop</span>
+              </button>
+              <button
+                class="pal-item k-wait"
+                type="button"
+                draggable="true"
+                aria-label="Add Wait node"
+                title="Parks until input, time, or a signal"
+              >
+                <span class="kchip" aria-hidden="true"
+                  ><svg class="icon"><use href="#i-wait" /></svg
+                ></span>
+                <span class="pal-text pal-name">Wait</span
+                ><span class="pal-text pal-desc">Parks until input, time, or a signal</span>
+              </button>
+              <button
+                class="pal-item k-heartbeat"
+                type="button"
+                draggable="true"
+                aria-label="Add Heartbeat node"
+                title="Polls on an interval"
+              >
+                <span class="kchip" aria-hidden="true"
+                  ><svg class="icon"><use href="#i-heartbeat" /></svg
+                ></span>
+                <span class="pal-text pal-name">Heartbeat</span
+                ><span class="pal-text pal-desc">Polls on an interval</span>
+              </button>
+              <button
+                class="pal-item k-exit"
+                type="button"
+                draggable="true"
+                aria-label="Add Exit node"
+                title="Finishes or loops back"
+              >
+                <span class="kchip" aria-hidden="true"
+                  ><svg class="icon"><use href="#i-exit" /></svg
+                ></span>
+                <span class="pal-text pal-name">Exit</span
+                ><span class="pal-text pal-desc">Finishes or loops back</span>
+              </button>
+            </nav>
+          </aside>
+
+          <main class="canvas" aria-label="Canvas">
+            <div class="graph">
+              <svg class="edges" viewBox="-60 -60 900 600" aria-hidden="true">
+                <path class="edge" d="M184 94H214Q224 94 224 84V67Q224 57 234 57H264" />
+                <path class="edge" d="M448 94H478Q488 94 488 84V77Q488 67 498 67H528" />
+                <path
+                  class="edge"
+                  d="M712 94H726Q736 94 736 104V149Q736 159 726 159H-14Q-24 159 -24 169V231Q-24 241 -14 241H0"
+                />
+                <path
+                  class="edge"
+                  d="M712 114H742Q752 114 752 124V333Q752 343 742 343H250Q240 343 240 353V415Q240 425 250 425H264"
+                />
+                <path class="edge" d="M184 278H214Q224 278 224 268V251Q224 241 234 241H264" />
+                <path class="edge" d="M448 278H478Q488 278 488 268V251Q488 241 498 241H528" />
+                <path
+                  class="edge"
+                  d="M712 278H726Q736 278 736 288V313Q736 323 726 323H-14Q-24 323 -24 333V415Q-24 425 -14 425H0"
+                />
+                <path class="edge" d="M184 462H214Q224 462 224 452V435Q224 425 234 425H264" />
+                <path class="edge" d="M448 462H478Q488 462 488 452V435Q488 425 498 425H528" />
+                <path
+                  class="edge edge-loop"
+                  d="M712 462H766Q776 462 776 452V-26Q776 -36 766 -36H250Q240 -36 240 -26V47Q240 57 250 57H264"
+                />
+              </svg>
+              <span class="edge-label" style="left: 664px; top: 159px">yes</span>
+              <span class="edge-label" style="left: 752px; top: 232px">no</span>
+              <span class="edge-label edge-label-loop" style="left: 520px; top: -36px"
+                ><svg class="icon" aria-hidden="true"><use href="#i-loop" /></svg>loopBack</span
+              >
+
+              <div class="node k-trigger" style="left: 0; top: 0">
+                <div class="node-head">
+                  <span class="kchip kchip-sm" aria-hidden="true"
+                    ><svg class="icon"><use href="#i-trigger" /></svg></span
+                  ><span class="node-kind">Trigger</span>
+                </div>
+                <div class="node-body">
+                  <div class="node-label">Nightly</div>
+                  <div class="node-id">nightly</div>
+                  <div class="node-ports">
+                    <div class="port">out<span class="handle"></span></div>
+                  </div>
+                </div>
+              </div>
+              <div class="node k-inference" style="left: 264px; top: 0">
+                <span class="handle handle-in"></span>
+                <div class="node-head">
+                  <span class="kchip kchip-sm" aria-hidden="true"
+                    ><svg class="icon"><use href="#i-inference" /></svg></span
+                  ><span class="node-kind">Inference</span>
+                </div>
+                <div class="node-body">
+                  <div class="node-label">Triage issues</div>
+                  <div class="node-id">triage</div>
+                  <div class="node-ports">
+                    <div class="port">out<span class="handle"></span></div>
+                  </div>
+                </div>
+              </div>
+              <div class="node k-decision is-selected" style="left: 528px; top: 0">
+                <span class="handle handle-in"></span>
+                <div class="node-head">
+                  <span class="kchip kchip-sm" aria-hidden="true"
+                    ><svg class="icon"><use href="#i-decision" /></svg></span
+                  ><span class="node-kind">Decision</span>
+                </div>
+                <div class="node-body">
+                  <div class="node-label">Needs a fix?</div>
+                  <div class="node-id">needs-fix</div>
+                  <div class="node-ports">
+                    <div class="port">yes<span class="handle"></span></div>
+                    <div class="port">no<span class="handle"></span></div>
+                  </div>
+                </div>
+              </div>
+              <div class="node k-script" style="left: 0; top: 184px">
+                <span class="handle handle-in"></span>
+                <div class="node-head">
+                  <span class="kchip kchip-sm" aria-hidden="true"
+                    ><svg class="icon"><use href="#i-script" /></svg></span
+                  ><span class="node-kind">Script</span>
+                </div>
+                <div class="node-body">
+                  <div class="node-label">Run tests</div>
+                  <div class="node-id">run-tests</div>
+                  <div class="node-ports">
+                    <div class="port">out<span class="handle"></span></div>
+                  </div>
+                </div>
+              </div>
+              <div class="node k-subloop" style="left: 264px; top: 184px">
+                <span class="handle handle-in"></span>
+                <div class="node-head">
+                  <span class="kchip kchip-sm" aria-hidden="true"
+                    ><svg class="icon"><use href="#i-subloop" /></svg></span
+                  ><span class="node-kind">Subloop</span>
+                  <span class="badge badge-sm tone-bad" title="Validation issues"
+                    ><svg class="icon" aria-hidden="true"><use href="#i-failed" /></svg>1
+                    issue</span
+                  >
+                </div>
+                <div class="node-body">
+                  <div class="node-label">Open PR</div>
+                  <div class="node-id">open-pr</div>
+                  <div class="node-ports">
+                    <div class="port">out<span class="handle"></span></div>
+                  </div>
+                </div>
+              </div>
+              <div class="node k-heartbeat" style="left: 528px; top: 184px">
+                <span class="handle handle-in"></span>
+                <div class="node-head">
+                  <span class="kchip kchip-sm" aria-hidden="true"
+                    ><svg class="icon"><use href="#i-heartbeat" /></svg></span
+                  ><span class="node-kind">Heartbeat</span>
+                </div>
+                <div class="node-body">
+                  <div class="node-label">Watch CI</div>
+                  <div class="node-id">watch-ci</div>
+                  <div class="node-ports">
+                    <div class="port">out<span class="handle"></span></div>
+                  </div>
+                </div>
+              </div>
+              <div class="node k-wait" style="left: 0; top: 368px">
+                <span class="handle handle-in"></span>
+                <div class="node-head">
+                  <span class="kchip kchip-sm" aria-hidden="true"
+                    ><svg class="icon"><use href="#i-wait" /></svg></span
+                  ><span class="node-kind">Wait</span>
+                </div>
+                <div class="node-body">
+                  <div class="node-label">Approve merge</div>
+                  <div class="node-id">approve</div>
+                  <div class="node-ports">
+                    <div class="port">out<span class="handle"></span></div>
+                  </div>
+                </div>
+              </div>
+              <div class="node k-mutate" style="left: 264px; top: 368px">
+                <span class="handle handle-in"></span>
+                <div class="node-head">
+                  <span class="kchip kchip-sm" aria-hidden="true"
+                    ><svg class="icon"><use href="#i-mutate" /></svg></span
+                  ><span class="node-kind">Mutate</span>
+                </div>
+                <div class="node-body">
+                  <div class="node-label">Record outcome</div>
+                  <div class="node-id">record</div>
+                  <div class="node-ports">
+                    <div class="port">out<span class="handle"></span></div>
+                  </div>
+                </div>
+              </div>
+              <div class="node k-exit" style="left: 528px; top: 368px">
+                <span class="handle handle-in"></span>
+                <div class="node-head">
+                  <span class="kchip kchip-sm" aria-hidden="true"
+                    ><svg class="icon"><use href="#i-exit" /></svg></span
+                  ><span class="node-kind">Exit</span>
+                </div>
+                <div class="node-body">
+                  <div class="node-label">Done</div>
+                  <div class="node-id">done</div>
+                  <div class="node-ports">
+                    <div class="port">loopBack<span class="handle"></span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="flow-controls" aria-label="Canvas controls">
+              <button type="button" aria-label="Zoom in">
+                <svg class="icon"><use href="#i-plus" /></svg>
+              </button>
+              <button type="button" aria-label="Zoom out">
+                <svg class="icon"><use href="#i-minus" /></svg>
+              </button>
+              <button type="button" aria-label="Fit view">
+                <svg class="icon"><use href="#i-fit" /></svg>
+              </button>
+              <button type="button" aria-label="Toggle interactivity">
+                <svg class="icon"><use href="#i-lock" /></svg>
+              </button>
+            </div>
+          </main>
+
+          <aside class="panel" aria-label="Properties">
+            <div class="sheet-head">
+              <span class="kchip kchip-sm k-decision" aria-hidden="true"
+                ><svg class="icon"><use href="#i-decision" /></svg
+              ></span>
+              <h2>Decision <span class="mono">needs-fix</span></h2>
+              <button class="badge tone-bad" type="button">
+                <svg class="icon" aria-hidden="true"><use href="#i-failed" /></svg>1 error
+              </button>
+              <button
+                class="btn btn-ghost btn-sm btn-icon sheet-toggle"
+                type="button"
+                data-sheet-toggle
+                aria-expanded="true"
+                aria-label="Collapse the properties sheet"
+              >
+                <svg class="icon"><use href="#i-chevron" /></svg>
+              </button>
+            </div>
+            <div class="panel-tabs" role="tablist" aria-label="Panels">
+              <button class="tab" role="tab" aria-selected="true" type="button">Node</button>
+              <button class="tab" role="tab" aria-selected="false" type="button">Loop</button>
+              <button class="tab" role="tab" aria-selected="false" type="button">Run</button>
+            </div>
+            <div class="panel-scroll">
+              <section class="panel-section" aria-label="Node properties">
+                <div class="panel-node">
+                  <span class="kchip k-decision" aria-hidden="true"
+                    ><svg class="icon"><use href="#i-decision" /></svg
+                  ></span>
+                  <div>
+                    <h2>Decision</h2>
+                    <span class="mono">needs-fix</span>
+                  </div>
+                </div>
+
+                <div class="grid-2">
+                  <div class="field">
+                    <label class="label" for="ed-id">Node id</label>
+                    <input class="input mono" id="ed-id" value="needs-fix" />
+                  </div>
+                  <div class="field">
+                    <label class="label" for="ed-label">Label</label>
+                    <input class="input" id="ed-label" value="Needs a fix?" />
+                  </div>
+                </div>
+
+                <fieldset class="fieldset">
+                  <legend>Routes</legend>
+                  <div class="route-head help" aria-hidden="true">
+                    <span>Label</span><span>Description</span><span></span>
+                  </div>
+                  <div class="route-row">
+                    <input class="input mono" aria-label="Routes 1 label" value="yes" />
+                    <textarea class="textarea" rows="2" aria-label="Routes 1 description">
+A code change would resolve the issue</textarea>
+                    <button
+                      class="btn btn-ghost btn-sm btn-icon"
+                      type="button"
+                      aria-label="Remove routes 1"
+                    >
+                      <svg class="icon"><use href="#i-close" /></svg>
+                    </button>
+                  </div>
+                  <div class="route-row">
+                    <input class="input mono" aria-label="Routes 2 label" value="no" />
+                    <textarea class="textarea" rows="1" aria-label="Routes 2 description">
+Nothing to change</textarea>
+                    <button
+                      class="btn btn-ghost btn-sm btn-icon"
+                      type="button"
+                      aria-label="Remove routes 2"
+                    >
+                      <svg class="icon"><use href="#i-close" /></svg>
+                    </button>
+                  </div>
+                  <div>
+                    <button class="btn btn-ghost btn-sm" type="button">
+                      <svg class="icon"><use href="#i-plus" /></svg>Add routes
+                    </button>
+                  </div>
+                </fieldset>
+
+                <div class="field">
+                  <div class="label-row">
+                    <label class="label" for="ed-question">Question</label
+                    ><span class="lang">Liquid</span>
+                  </div>
+                  <div>
+                    <div
+                      class="code is-focus"
+                      id="ed-question"
+                      role="textbox"
+                      aria-multiline="true"
+                      aria-label="Question"
+                      tabindex="0"
+                    >
+                      <div class="code-gutter" aria-hidden="true">1</div>
+                      <div class="code-lines">
+                        <div class="code-line is-active">
+                          Does <span class="tok-op">{{</span> lastOutput
+                          <span class="tok-op">}}</span> call for a code change?<span
+                            class="caret"
+                          ></span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="preview" data-testid="preview">
+                      <span class="preview-label">Preview (sample thread):</span
+                      ><span class="preview-out"
+                        >Does tests failed on main call for a code change?</span
+                      >
+                    </div>
+                  </div>
+                </div>
+
+                <fieldset class="fieldset">
+                  <legend>Context</legend>
+                  <div class="field">
+                    <span class="label" id="ed-messages">Messages</span>
+                    <div class="seg" role="radiogroup" aria-labelledby="ed-messages">
+                      <label><input type="radio" name="ed-msg" /><span>none</span></label>
+                      <label><input type="radio" name="ed-msg" checked /><span>last</span></label>
+                      <label><input type="radio" name="ed-msg" /><span>all</span></label>
+                      <label><input type="radio" name="ed-msg" /><span>count</span></label>
+                      <label><input type="radio" name="ed-msg" /><span>where</span></label>
+                    </div>
+                  </div>
+                  <label class="switch switch-row">
+                    <span>Include last output</span>
+                    <input type="checkbox" role="switch" checked />
+                    <span class="switch-track"></span>
+                  </label>
+                </fieldset>
+
+                <div class="field">
+                  <span class="label" id="ed-strategy">Strategy</span>
+                  <div class="cluster" role="group" aria-labelledby="ed-strategy">
+                    <label class="tchip"
+                      ><input type="checkbox" /><span
+                        ><svg class="icon"><use href="#i-check" /></svg>jev</span
+                      ></label
+                    >
+                    <label class="tchip"
+                      ><input type="checkbox" checked /><span
+                        ><svg class="icon"><use href="#i-check" /></svg>codex</span
+                      ></label
+                    >
+                    <label class="tchip"
+                      ><input type="checkbox" checked /><span
+                        ><svg class="icon"><use href="#i-check" /></svg>expression</span
+                      ></label
+                    >
+                  </div>
+                  <span class="help">Tried in order until one answers.</span>
+                </div>
+
+                <fieldset class="fieldset">
+                  <legend>Codex</legend>
+                  <div class="grid-2">
+                    <div class="field">
+                      <label class="label" for="ed-model">Model</label>
+                      <input class="input mono" id="ed-model" value="gpt-6.1-sol" />
+                    </div>
+                    <div class="field">
+                      <label class="label" for="ed-effort">Effort</label>
+                      <div class="select-wrap">
+                        <select class="select" id="ed-effort">
+                          <option value="">(not set)</option>
+                          <option>minimal</option>
+                          <option>low</option>
+                          <option selected>medium</option>
+                          <option>high</option>
+                          <option>xhigh</option>
+                          <option>max</option>
+                        </select>
+                        <svg class="icon" aria-hidden="true"><use href="#i-chevron" /></svg>
+                      </div>
+                    </div>
+                  </div>
+                </fieldset>
+
+                <fieldset class="fieldset">
+                  <legend>Expression</legend>
+                  <div class="field">
+                    <div class="label-row">
+                      <label class="label" for="ed-jsonata">Jsonata</label
+                      ><span class="lang">JSONata</span>
+                    </div>
+                    <div>
+                      <div
+                        class="code"
+                        id="ed-jsonata"
+                        role="textbox"
+                        aria-multiline="true"
+                        aria-label="Jsonata"
+                        tabindex="0"
+                      >
+                        <div class="code-gutter" aria-hidden="true">1<br />2</div>
+                        <div class="code-lines">
+                          <div class="code-line">
+                            <span class="tok-com">/* by severity */</span>
+                          </div>
+                          <div class="code-line">
+                            vars.severity <span class="tok-op">&gt;=</span>
+                            <span class="tok-num">2</span> <span class="tok-op">?</span>
+                            <span class="tok-str">"yes"</span> <span class="tok-op">:</span>
+                            <span class="tok-str">"no"</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="preview">
+                        <span class="preview-label">Preview (sample thread):</span
+                        ><span class="preview-out">"yes"</span>
+                      </div>
+                    </div>
+                  </div>
+                </fieldset>
+
+                <label class="switch switch-row">
+                  <span>Record alternatives</span>
+                  <input type="checkbox" role="switch" checked />
+                  <span class="switch-track"></span>
+                </label>
+
+                <div class="stack" style="gap: var(--space-2)">
+                  <h3 class="subhead">Connections</h3>
+                  <ul class="conn-list">
+                    <li>
+                      <span><code>yes</code> → <code>run-tests</code></span
+                      ><button
+                        class="btn btn-ghost btn-sm btn-icon"
+                        type="button"
+                        aria-label="Remove edge e3"
+                      >
+                        <svg class="icon"><use href="#i-close" /></svg>
+                      </button>
+                    </li>
+                    <li>
+                      <span><code>no</code> → <code>record</code></span
+                      ><button
+                        class="btn btn-ghost btn-sm btn-icon"
+                        type="button"
+                        aria-label="Remove edge e4"
+                      >
+                        <svg class="icon"><use href="#i-close" /></svg>
+                      </button>
+                    </li>
+                  </ul>
+                </div>
+                <div>
+                  <button class="btn btn-danger-soft btn-sm" type="button">
+                    <svg class="icon"><use href="#i-trash" /></svg>Delete node
+                  </button>
+                </div>
+              </section>
+
+              <section class="validation" aria-label="Validation">
+                <div class="label-row">
+                  <h2 class="eyebrow">Validation</h2>
+                  <span class="help">1 error, 0 warnings</span>
+                </div>
+                <button class="v-item" type="button">
+                  <span class="v-code"
+                    ><svg class="icon" aria-hidden="true"><use href="#i-failed" /></svg>SCHEMA</span
+                  >
+                  <code>open-pr</code><code>.loopRef.loopId</code> must be a ULID
+                </button>
+              </section>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================================== -->
+    <!-- Header and main navigation, with the shell's offline banner and update toast        -->
+    <!-- ================================================================================== -->
+    <section
+      class="view"
+      id="nav"
+      aria-label="Header and main navigation"
+      style="min-height: 100vh"
+    >
+      <header class="appbar">
+        <a class="brand" href="#loops" aria-label="GraphGoblin">
+          <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+            <path class="bm-body" d="M9.4 11 .6 7.2l5 8.8Zm13.2 0 8.8-3.8-5 8.8Z" />
+            <rect class="bm-body" x="5" y="8.5" width="22" height="17" rx="6" />
+            <circle class="bm-eye" cx="12.3" cy="15.6" r="2" />
+            <circle class="bm-eye" cx="19.7" cy="15.6" r="2" />
+            <path class="bm-mouth" d="M13 20.6q3 1.9 6 0" />
+            <circle class="bm-port" cx="5" cy="19" r="2.4" />
+            <circle class="bm-port" cx="27" cy="19" r="2.4" />
+          </svg>
+          <span>Graph<b>Goblin</b></span>
+        </a>
+        <button
+          class="menu-toggle"
+          type="button"
+          data-menu-toggle
+          aria-expanded="false"
+          aria-controls="nav-nav"
+        >
+          <svg class="icon icon-open"><use href="#i-menu" /></svg>
+          <svg class="icon icon-close"><use href="#i-close" /></svg>
+          Menu
+        </button>
+        <nav class="mainnav" id="nav-nav" aria-label="Main">
+          <a href="#loops">Loops</a>
+          <a href="#nav" aria-current="page">Runs</a>
+          <a href="#nav">Events</a>
+          <a href="#nav">Settings</a>
+        </nav>
+      </header>
+      <div class="banner" role="status">
+        <svg class="icon" aria-hidden="true"><use href="#i-offline" /></svg>
+        <strong>You are offline</strong>
+        <span
+          >The app keeps working with what it has; saving, running, and live updates resume when you
+          reconnect.</span
+        >
+      </div>
+
+      <div class="page" style="padding-bottom: 120px">
+        <div class="page-head"><h1 class="page-title">Runs</h1></div>
+        <section class="card filters" aria-label="Filters">
+          <div class="field">
+            <label class="label" for="nav-loop">Loop</label>
+            <div class="select-wrap">
+              <select class="select" id="nav-loop">
+                <option>All loops</option>
+                <option>nightly-triage</option>
+              </select>
+              <svg class="icon" aria-hidden="true"><use href="#i-chevron" /></svg>
+            </div>
+          </div>
+          <div class="field">
+            <label class="label" for="nav-status">Status</label>
+            <div class="select-wrap">
+              <select class="select" id="nav-status">
+                <option>Any status</option>
+                <option>waiting</option>
+              </select>
+              <svg class="icon" aria-hidden="true"><use href="#i-chevron" /></svg>
+            </div>
+          </div>
+          <div class="field">
+            <label class="label" for="nav-parent">Parent</label>
+            <div class="select-wrap">
+              <select class="select" id="nav-parent">
+                <option>Any</option>
+                <option>Top-level runs only</option>
+              </select>
+              <svg class="icon" aria-hidden="true"><use href="#i-chevron" /></svg>
+            </div>
+          </div>
+        </section>
+
+        <section class="card card-flush" aria-label="Runs">
+          <table class="table rtable">
+            <thead>
+              <tr>
+                <th scope="col">Run</th>
+                <th scope="col">Loop</th>
+                <th scope="col">Status</th>
+                <th scope="col">Started</th>
+                <th scope="col">Parent</th>
+                <th scope="col">Children</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="wide">
+                  <a class="id-link" href="#inspector">01JD5Q7M2K8V4N6T3W9R1B8C5D</a>
+                </td>
+                <td data-label="Loop">nightly-triage</td>
+                <td data-label="Status">
+                  <span class="badge tone-warn"
+                    ><svg class="icon"><use href="#i-wait" /></svg>waiting</span
+                  >
+                </td>
+                <td data-label="Started"><span class="meta-time">10/2/2026, 9:41:12 PM</span></td>
+                <td data-label="Parent"><span class="subtle">-</span></td>
+                <td data-label="Children"><a href="#nav">children</a></td>
+              </tr>
+              <tr>
+                <td class="wide">
+                  <a class="id-link" href="#inspector">01JD5P3H6F2Q8M4X7Z1K9C3V2B</a>
+                </td>
+                <td data-label="Loop">pr-review</td>
+                <td data-label="Status">
+                  <span class="badge tone-good"
+                    ><svg class="icon"><use href="#i-succeeded" /></svg>succeeded</span
+                  >
+                </td>
+                <td data-label="Started"><span class="meta-time">10/2/2026, 9:43:05 PM</span></td>
+                <td data-label="Parent"><a class="id-link" href="#inspector">1B8C5D</a></td>
+                <td data-label="Children"><a href="#nav">children</a></td>
+              </tr>
+              <tr>
+                <td class="wide">
+                  <a class="id-link" href="#inspector">01JD4ZB6T0Y5R2E8W3Q7N1M4K6</a>
+                </td>
+                <td data-label="Loop">issue-labeller</td>
+                <td data-label="Status">
+                  <span class="badge tone-bad"
+                    ><svg class="icon"><use href="#i-failed" /></svg>failed</span
+                  >
+                </td>
+                <td data-label="Started"><span class="meta-time">10/1/2026, 11:18:03 AM</span></td>
+                <td data-label="Parent"><span class="subtle">-</span></td>
+                <td data-label="Children"><a href="#nav">children</a></td>
+              </tr>
+              <tr>
+                <td class="wide">
+                  <a class="id-link" href="#inspector">01JD4W9C1D7S5F3G8H2J6K4E0M</a>
+                </td>
+                <td data-label="Loop">weekly-summary</td>
+                <td data-label="Status">
+                  <span class="badge tone-info"
+                    ><svg class="icon"><use href="#i-running" /></svg>running</span
+                  >
+                </td>
+                <td data-label="Started"><span class="meta-time">9/30/2026, 4:52:30 PM</span></td>
+                <td data-label="Parent"><span class="subtle">-</span></td>
+                <td data-label="Children"><a href="#nav">children</a></td>
+              </tr>
+              <tr>
+                <td class="wide">
+                  <a class="id-link" href="#inspector">01JD4R5X3C1V9B7N5M3K1J9H7G</a>
+                </td>
+                <td data-label="Loop">nightly-triage</td>
+                <td data-label="Status">
+                  <span class="badge tone-bad"
+                    ><svg class="icon"><use href="#i-exhausted" /></svg>exhausted</span
+                  >
+                </td>
+                <td data-label="Started"><span class="meta-time">9/28/2026, 9:40:00 PM</span></td>
+                <td data-label="Parent"><span class="subtle">-</span></td>
+                <td data-label="Children"><a href="#nav">children</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+      </div>
+
+      <div class="toast" role="status" aria-live="polite">
+        <span class="toast-dot" aria-hidden="true"></span>
+        <span>A new version is available</span>
+        <button class="btn btn-primary btn-sm" type="button">Update</button>
+        <button class="btn btn-ghost btn-sm" type="button">Later</button>
+      </div>
+    </section>
+
+    <!-- ================================================================================== -->
+    <!-- Run inspector                                                                       -->
+    <!-- ================================================================================== -->
+    <section class="view" id="inspector" aria-label="Run inspector">
+      <header class="appbar">
+        <a class="brand" href="#loops" aria-label="GraphGoblin">
+          <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+            <path class="bm-body" d="M9.4 11 .6 7.2l5 8.8Zm13.2 0 8.8-3.8-5 8.8Z" />
+            <rect class="bm-body" x="5" y="8.5" width="22" height="17" rx="6" />
+            <circle class="bm-eye" cx="12.3" cy="15.6" r="2" />
+            <circle class="bm-eye" cx="19.7" cy="15.6" r="2" />
+            <path class="bm-mouth" d="M13 20.6q3 1.9 6 0" />
+            <circle class="bm-port" cx="5" cy="19" r="2.4" />
+            <circle class="bm-port" cx="27" cy="19" r="2.4" />
+          </svg>
+          <span>Graph<b>Goblin</b></span>
+        </a>
+        <button
+          class="menu-toggle"
+          type="button"
+          data-menu-toggle
+          aria-expanded="false"
+          aria-controls="nav-inspector"
+        >
+          <svg class="icon icon-open"><use href="#i-menu" /></svg>
+          <svg class="icon icon-close"><use href="#i-close" /></svg>
+          Menu
+        </button>
+        <nav class="mainnav" id="nav-inspector" aria-label="Main">
+          <a href="#loops">Loops</a>
+          <a href="#nav" aria-current="page">Runs</a>
+          <a href="#nav">Events</a>
+          <a href="#nav">Settings</a>
+        </nav>
+      </header>
+
+      <div class="page page-wide">
+        <div class="stack" style="gap: var(--space-3)">
+          <div class="run-head">
+            <h1 class="run-title">Run <span class="mono">01JD5Q7M2K8V4N6T3W9R1B8C5D</span></h1>
+            <span class="badge tone-warn" data-status="waiting"
+              ><svg class="icon" aria-hidden="true"><use href="#i-wait" /></svg>waiting</span
+            >
+            <div class="run-controls">
+              <button class="btn btn-outline" type="button">
+                <svg class="icon" aria-hidden="true"><use href="#i-paused" /></svg>Pause
+              </button>
+              <button class="btn btn-destructive" type="button">
+                <svg class="icon" aria-hidden="true"><use href="#i-cancelled" /></svg>Cancel run
+              </button>
+            </div>
+          </div>
+          <div class="run-meta">
+            <span>iteration 1</span>
+            <span>at <code>approve</code></span>
+            <a href="#editor">loop</a>
+            <a href="#nav">child runs</a>
+          </div>
+        </div>
+
+        <div class="annot" aria-label="Sample annotation: every run status">
+          <span class="eyebrow">Sample annotation · every run status</span>
+          <span class="badge tone-neutral" data-status="queued"
+            ><svg class="icon" aria-hidden="true"><use href="#i-queued" /></svg>queued</span
+          >
+          <span class="badge tone-info" data-status="running"
+            ><svg class="icon" aria-hidden="true"><use href="#i-running" /></svg>running</span
+          >
+          <span class="badge tone-warn" data-status="waiting"
+            ><svg class="icon" aria-hidden="true"><use href="#i-wait" /></svg>waiting</span
+          >
+          <span class="badge tone-warn" data-status="paused"
+            ><svg class="icon" aria-hidden="true"><use href="#i-paused" /></svg>paused</span
+          >
+          <span class="badge tone-good" data-status="succeeded"
+            ><svg class="icon" aria-hidden="true"><use href="#i-succeeded" /></svg>succeeded</span
+          >
+          <span class="badge tone-bad" data-status="failed"
+            ><svg class="icon" aria-hidden="true"><use href="#i-failed" /></svg>failed</span
+          >
+          <span class="badge tone-neutral" data-status="cancelled"
+            ><svg class="icon" aria-hidden="true"><use href="#i-cancelled" /></svg>cancelled</span
+          >
+          <span class="badge tone-bad" data-status="exhausted"
+            ><svg class="icon" aria-hidden="true"><use href="#i-exhausted" /></svg>exhausted</span
+          >
+        </div>
+
+        <section class="card" aria-label="Input requested">
+          <div class="card-head">
+            <h2 class="card-title">
+              <span class="kchip kchip-sm k-wait" aria-hidden="true"
+                ><svg class="icon"><use href="#i-wait" /></svg></span
+              >Input requested
+            </h2>
+          </div>
+          <form class="card-body wait-form" aria-label="Submit input">
+            <p class="wait-prompt">Merge the fix?</p>
+            <div class="wait-fields">
+              <label class="switch">
+                <input type="checkbox" role="switch" id="in-approved" checked />
+                <span class="switch-track"></span>
+                <span>Approved</span>
+              </label>
+              <div class="field">
+                <span class="label" id="in-method">Merge method</span>
+                <div class="seg" role="radiogroup" aria-labelledby="in-method">
+                  <label><input type="radio" name="in-method" /><span>merge</span></label>
+                  <label><input type="radio" name="in-method" checked /><span>squash</span></label>
+                  <label><input type="radio" name="in-method" /><span>rebase</span></label>
+                </div>
+              </div>
+              <div class="field">
+                <label class="label" for="in-comment">Comment</label>
+                <input class="input" id="in-comment" placeholder="Posted on the pull request" />
+              </div>
+            </div>
+            <div class="form-actions">
+              <button class="btn btn-primary" type="submit">Submit input</button>
+            </div>
+          </form>
+        </section>
+
+        <div class="inspect-grid">
+          <section class="card" aria-label="Timeline">
+            <div class="card-head">
+              <h2 class="card-title">
+                Timeline <span class="muted" style="font-weight: 500">(25 events)</span>
+              </h2>
+              <span class="live">live</span>
+            </div>
+            <ol class="timeline" aria-label="Timeline">
+              <li>
+                <button class="tl-row" type="button">
+                  <span class="tl-seq">#1</span><code class="tl-type">run.queued</code
+                  ><span class="tl-desc"></span>
+                </button>
+              </li>
+              <li>
+                <button class="tl-row" type="button">
+                  <span class="tl-seq">#2</span><code class="tl-type">run.started</code
+                  ><span class="tl-desc">attempt 1</span>
+                </button>
+              </li>
+              <li>
+                <button class="tl-row" type="button">
+                  <span class="tl-seq">#3</span><code class="tl-type">node.started</code
+                  ><span class="tl-desc"
+                    ><span class="kchip kchip-xs k-trigger" aria-hidden="true"
+                      ><svg class="icon"><use href="#i-trigger" /></svg></span
+                    >nightly (trigger) attempt 1</span
+                  >
+                </button>
+              </li>
+              <li>
+                <button class="tl-row" type="button">
+                  <span class="tl-seq">#4</span><code class="tl-type">node.finished</code
+                  ><span class="tl-desc"
+                    ><span class="kchip kchip-xs k-trigger" aria-hidden="true"
+                      ><svg class="icon"><use href="#i-trigger" /></svg></span
+                    >nightly → out, 1 change, 4 ms</span
+                  >
+                </button>
+              </li>
+              <li>
+                <button class="tl-row" type="button">
+                  <span class="tl-seq">#5</span><code class="tl-type">node.started</code
+                  ><span class="tl-desc"
+                    ><span class="kchip kchip-xs k-inference" aria-hidden="true"
+                      ><svg class="icon"><use href="#i-inference" /></svg></span
+                    >triage (inference) attempt 1</span
+                  >
+                </button>
+              </li>
+              <li>
+                <button class="tl-row" type="button">
+                  <span class="tl-seq">#6</span><code class="tl-type">harness.session</code
+                  ><span class="tl-desc">triage</span>
+                </button>
+              </li>
+              <li>
+                <button class="tl-row" type="button">
+                  <span class="tl-seq">#7</span><code class="tl-type">node.progress</code
+                  ><span class="tl-desc">triage</span>
+                </button>
+              </li>
+              <li>
+                <button class="tl-row" type="button">
+                  <span class="tl-seq">#8</span><code class="tl-type">node.progress</code
+                  ><span class="tl-desc">triage</span>
+                </button>
+              </li>
+              <li>
+                <button class="tl-row" type="button">
+                  <span class="tl-seq">#9</span><code class="tl-type">harness.usage</code
+                  ><span class="tl-desc">triage</span>
+                </button>
+              </li>
+              <li>
+                <button class="tl-row" type="button">
+                  <span class="tl-seq">#10</span><code class="tl-type">node.finished</code
+                  ><span class="tl-desc"
+                    ><span class="kchip kchip-xs k-inference" aria-hidden="true"
+                      ><svg class="icon"><use href="#i-inference" /></svg></span
+                    >triage → out, 2 changes, 41823 ms</span
+                  >
+                </button>
+              </li>
+              <li>
+                <button class="tl-row" type="button">
+                  <span class="tl-seq">#11</span><code class="tl-type">node.started</code
+                  ><span class="tl-desc"
+                    ><span class="kchip kchip-xs k-decision" aria-hidden="true"
+                      ><svg class="icon"><use href="#i-decision" /></svg></span
+                    >needs-fix (decision) attempt 1</span
+                  >
+                </button>
+              </li>
+              <li>
+                <button class="tl-row" type="button">
+                  <span class="tl-seq">#12</span><code class="tl-type">decision.made</code
+                  ><span class="tl-desc">needs-fix</span>
+                </button>
+              </li>
+              <li>
+                <button class="tl-row" type="button" aria-current="true">
+                  <span class="tl-seq">#13</span><code class="tl-type">node.finished</code
+                  ><span class="tl-desc"
+                    ><span class="kchip kchip-xs k-decision" aria-hidden="true"
+                      ><svg class="icon"><use href="#i-decision" /></svg></span
+                    >needs-fix → yes, 2 changes, 2210 ms</span
+                  >
+                </button>
+              </li>
+              <li>
+                <button class="tl-row" type="button">
+                  <span class="tl-seq">#14</span><code class="tl-type">node.started</code
+                  ><span class="tl-desc"
+                    ><span class="kchip kchip-xs k-script" aria-hidden="true"
+                      ><svg class="icon"><use href="#i-script" /></svg></span
+                    >run-tests (script) attempt 1</span
+                  >
+                </button>
+              </li>
+              <li>
+                <button class="tl-row" type="button">
+                  <span class="tl-seq">#15</span><code class="tl-type">node.finished</code
+                  ><span class="tl-desc"
+                    ><span class="kchip kchip-xs k-script" aria-hidden="true"
+                      ><svg class="icon"><use href="#i-script" /></svg></span
+                    >run-tests → out, 1 change, 18342 ms</span
+                  >
+                </button>
+              </li>
+              <li>
+                <button class="tl-row" type="button">
+                  <span class="tl-seq">#16</span><code class="tl-type">node.started</code
+                  ><span class="tl-desc"
+                    ><span class="kchip kchip-xs k-subloop" aria-hidden="true"
+                      ><svg class="icon"><use href="#i-subloop" /></svg></span
+                    >open-pr (subloop) attempt 1</span
+                  >
+                </button>
+              </li>
+              <li>
+                <button class="tl-row" type="button">
+                  <span class="tl-seq">#17</span><code class="tl-type">child_run.started</code
+                  ><span class="tl-desc">open-pr</span>
+                </button>
+              </li>
+              <li>
+                <button class="tl-row" type="button">
+                  <span class="tl-seq">#18</span><code class="tl-type">child_run.finished</code
+                  ><span class="tl-desc">open-pr</span>
+                </button>
+              </li>
+              <li>
+                <button class="tl-row" type="button">
+                  <span class="tl-seq">#19</span><code class="tl-type">node.finished</code
+                  ><span class="tl-desc"
+                    ><span class="kchip kchip-xs k-subloop" aria-hidden="true"
+                      ><svg class="icon"><use href="#i-subloop" /></svg></span
+                    >open-pr → out, 1 change, 95112 ms</span
+                  >
+                </button>
+              </li>
+              <li>
+                <button class="tl-row" type="button">
+                  <span class="tl-seq">#20</span><code class="tl-type">node.started</code
+                  ><span class="tl-desc"
+                    ><span class="kchip kchip-xs k-heartbeat" aria-hidden="true"
+                      ><svg class="icon"><use href="#i-heartbeat" /></svg></span
+                    >watch-ci (heartbeat) attempt 1</span
+                  >
+                </button>
+              </li>
+              <li>
+                <button class="tl-row" type="button">
+                  <span class="tl-seq">#21</span><code class="tl-type">heartbeat.beat</code
+                  ><span class="tl-desc">watch-ci</span>
+                </button>
+              </li>
+              <li>
+                <button class="tl-row" type="button">
+                  <span class="tl-seq">#22</span><code class="tl-type">heartbeat.beat</code
+                  ><span class="tl-desc">watch-ci</span>
+                </button>
+              </li>
+              <li>
+                <button class="tl-row" type="button">
+                  <span class="tl-seq">#23</span><code class="tl-type">node.finished</code
+                  ><span class="tl-desc"
+                    ><span class="kchip kchip-xs k-heartbeat" aria-hidden="true"
+                      ><svg class="icon"><use href="#i-heartbeat" /></svg></span
+                    >watch-ci → out, 0 changes, 120004 ms</span
+                  >
+                </button>
+              </li>
+              <li>
+                <button class="tl-row" type="button">
+                  <span class="tl-seq">#24</span><code class="tl-type">node.started</code
+                  ><span class="tl-desc"
+                    ><span class="kchip kchip-xs k-wait" aria-hidden="true"
+                      ><svg class="icon"><use href="#i-wait" /></svg></span
+                    >approve (wait) attempt 1</span
+                  >
+                </button>
+              </li>
+              <li>
+                <button class="tl-row" type="button">
+                  <span class="tl-seq">#25</span><code class="tl-type">run.waiting</code
+                  ><span class="tl-desc">approve waits for input</span>
+                </button>
+              </li>
+            </ol>
+          </section>
+
+          <div class="stack" style="gap: var(--space-section)">
+            <section class="card" aria-label="Patch">
+              <div class="card-head"><h2 class="card-title">Patch from needs-fix</h2></div>
+              <div class="card-body">
+                <ul class="diff" aria-label="Patch diff">
+                  <li>
+                    <div class="diff-head">
+                      <span class="badge badge-sm">add</span><code>/vars/needsFix</code>
+                    </div>
+                    <div class="diff-cols">
+                      <pre class="diff-before">− (absent)</pre>
+                      <pre class="diff-after">+ true</pre>
+                    </div>
+                  </li>
+                  <li>
+                    <div class="diff-head">
+                      <span class="badge badge-sm">replace</span><code>/lastOutput</code>
+                    </div>
+                    <div class="diff-cols">
+                      <pre class="diff-before">
+− "Three new issues. #482 (editor crash on paste) needs a code change; #483 and #485 are questions."</pre>
+                      <pre class="diff-after">+ "yes"</pre>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            </section>
+
+            <section class="card" aria-label="Thread">
+              <div class="card-head"><h2 class="card-title">Thread at event 13</h2></div>
+              <div class="card-body stack" style="gap: var(--space-4)">
+                <div class="stack" style="gap: var(--space-2)">
+                  <h3 class="subhead">Messages (3)</h3>
+                  <ol class="msgs" aria-label="Messages">
+                    <li>
+                      <div class="msg-head">
+                        <span class="badge badge-sm">user</span><code>nightly</code>
+                      </div>
+                      <p>Triage the issues opened since the last run.</p>
+                    </li>
+                    <li>
+                      <div class="msg-head">
+                        <span class="badge badge-sm">assistant</span><code>triage</code>
+                      </div>
+                      <p>
+                        Three new issues. #482 (editor crash on paste) needs a code change; #483 and
+                        #485 are questions.
+                      </p>
+                    </li>
+                    <li>
+                      <div class="msg-head">
+                        <span class="badge badge-sm">note</span><code>needs-fix</code>
+                      </div>
+                      <p>Route yes, chosen by expression; codex not consulted.</p>
+                    </li>
+                  </ol>
+                </div>
+                <div class="stack" style="gap: var(--space-2)">
+                  <h3 class="subhead">Variables</h3>
+                  <pre class="pre" aria-label="Variables">
+{
+  "severity": 3,
+  "needsFix": true
+}</pre>
+                </div>
+                <details class="details">
+                  <summary>
+                    <svg class="icon" aria-hidden="true"><use href="#i-chevron" /></svg>Full thread
+                    JSON
+                  </summary>
+                </details>
+              </div>
+            </section>
+
+            <details class="card details details-card">
+              <summary>
+                <svg class="icon" aria-hidden="true"><use href="#i-chevron" /></svg>Node progress (6
+                nodes)
+              </summary>
+            </details>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================================== -->
+    <!-- Component sheet                                                                     -->
+    <!-- ================================================================================== -->
+    <section class="view" id="components" aria-label="Component sheet">
+      <header class="doc-bar">
+        <a class="brand" href="#loops" aria-label="GraphGoblin">
+          <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+            <path class="bm-body" d="M9.4 11 .6 7.2l5 8.8Zm13.2 0 8.8-3.8-5 8.8Z" />
+            <rect class="bm-body" x="5" y="8.5" width="22" height="17" rx="6" />
+            <circle class="bm-eye" cx="12.3" cy="15.6" r="2" />
+            <circle class="bm-eye" cx="19.7" cy="15.6" r="2" />
+            <path class="bm-mouth" d="M13 20.6q3 1.9 6 0" />
+            <circle class="bm-port" cx="5" cy="19" r="2.4" />
+            <circle class="bm-port" cx="27" cy="19" r="2.4" />
+          </svg>
+          <span>Graph<b>Goblin</b></span>
+        </a>
+        <span class="muted">Component sheet · light theme · issue #7</span>
+      </header>
+
+      <div class="page" style="max-width: 1320px">
+        <!-- Palette ------------------------------------------------------------------------ -->
+        <section class="doc-section">
+          <h2 class="doc-h2">Palette</h2>
+          <p class="doc-note">
+            The primitive tier. Components never use these directly; the semantic tokens below pick
+            from them. Grey is warmed towards the brown; magenta is reserved for rare highlights.
+          </p>
+          <div class="card card-body stack" style="gap: 10px">
+            <div class="scale-steps">
+              <span></span><span>50</span><span>100</span><span>200</span><span>300</span
+              ><span>400</span><span>500</span><span>600</span><span>700</span><span>800</span
+              ><span>900</span><span>950</span>
+            </div>
+            <div class="scale">
+              <span>green</span><span class="sw" style="background: var(--green-50)"></span
+              ><span class="sw" style="background: var(--green-100)"></span
+              ><span class="sw" style="background: var(--green-200)"></span
+              ><span class="sw" style="background: var(--green-300)"></span
+              ><span class="sw" style="background: var(--green-400)"></span
+              ><span class="sw" style="background: var(--green-500)"></span
+              ><span class="sw" style="background: var(--green-600)"></span
+              ><span class="sw" style="background: var(--green-700)"></span
+              ><span class="sw" style="background: var(--green-800)"></span
+              ><span class="sw" style="background: var(--green-900)"></span
+              ><span class="sw" style="background: var(--green-950)"></span>
+            </div>
+            <div class="scale">
+              <span>brown</span><span class="sw" style="background: var(--brown-50)"></span
+              ><span class="sw" style="background: var(--brown-100)"></span
+              ><span class="sw" style="background: var(--brown-200)"></span
+              ><span class="sw" style="background: var(--brown-300)"></span
+              ><span class="sw" style="background: var(--brown-400)"></span
+              ><span class="sw" style="background: var(--brown-500)"></span
+              ><span class="sw" style="background: var(--brown-600)"></span
+              ><span class="sw" style="background: var(--brown-700)"></span
+              ><span class="sw" style="background: var(--brown-800)"></span
+              ><span class="sw" style="background: var(--brown-900)"></span><span></span>
+            </div>
+            <div class="scale">
+              <span>grey</span><span class="sw" style="background: var(--grey-50)"></span
+              ><span class="sw" style="background: var(--grey-100)"></span
+              ><span class="sw" style="background: var(--grey-200)"></span
+              ><span class="sw" style="background: var(--grey-300)"></span
+              ><span class="sw" style="background: var(--grey-400)"></span
+              ><span class="sw" style="background: var(--grey-500)"></span
+              ><span class="sw" style="background: var(--grey-600)"></span
+              ><span class="sw" style="background: var(--grey-700)"></span
+              ><span class="sw" style="background: var(--grey-800)"></span
+              ><span class="sw" style="background: var(--grey-900)"></span
+              ><span class="sw" style="background: var(--grey-950)"></span>
+            </div>
+            <div class="scale">
+              <span>magenta</span><span class="sw" style="background: var(--magenta-50)"></span
+              ><span class="sw" style="background: var(--magenta-100)"></span
+              ><span class="sw" style="background: var(--magenta-200)"></span
+              ><span class="sw" style="background: var(--magenta-300)"></span
+              ><span class="sw" style="background: var(--magenta-400)"></span
+              ><span class="sw" style="background: var(--magenta-500)"></span
+              ><span class="sw" style="background: var(--magenta-600)"></span
+              ><span class="sw" style="background: var(--magenta-700)"></span
+              ><span class="sw" style="background: var(--magenta-800)"></span
+              ><span class="sw" style="background: var(--magenta-900)"></span><span></span>
+            </div>
+            <div class="scale">
+              <span>blue</span><span class="sw" style="background: var(--blue-50)"></span
+              ><span class="sw" style="background: var(--blue-100)"></span
+              ><span class="sw" style="background: var(--blue-200)"></span
+              ><span class="sw" style="background: var(--blue-300)"></span
+              ><span class="sw" style="background: var(--blue-400)"></span
+              ><span class="sw" style="background: var(--blue-500)"></span
+              ><span class="sw" style="background: var(--blue-600)"></span
+              ><span class="sw" style="background: var(--blue-700)"></span
+              ><span class="sw" style="background: var(--blue-800)"></span
+              ><span class="sw" style="background: var(--blue-900)"></span><span></span>
+            </div>
+            <div class="scale">
+              <span>orange</span><span class="sw" style="background: var(--orange-50)"></span
+              ><span class="sw" style="background: var(--orange-100)"></span
+              ><span class="sw" style="background: var(--orange-200)"></span
+              ><span class="sw" style="background: var(--orange-300)"></span
+              ><span class="sw" style="background: var(--orange-400)"></span
+              ><span class="sw" style="background: var(--orange-500)"></span
+              ><span class="sw" style="background: var(--orange-600)"></span
+              ><span class="sw" style="background: var(--orange-700)"></span
+              ><span class="sw" style="background: var(--orange-800)"></span
+              ><span class="sw" style="background: var(--orange-900)"></span><span></span>
+            </div>
+            <div class="scale">
+              <span>amber</span><span class="sw" style="background: var(--amber-50)"></span
+              ><span class="sw" style="background: var(--amber-100)"></span
+              ><span class="sw" style="background: var(--amber-200)"></span
+              ><span class="sw" style="background: var(--amber-300)"></span
+              ><span class="sw" style="background: var(--amber-400)"></span
+              ><span class="sw" style="background: var(--amber-500)"></span
+              ><span class="sw" style="background: var(--amber-600)"></span
+              ><span class="sw" style="background: var(--amber-700)"></span
+              ><span class="sw" style="background: var(--amber-800)"></span
+              ><span class="sw" style="background: var(--amber-900)"></span><span></span>
+            </div>
+            <div class="scale">
+              <span>violet</span><span class="sw" style="background: var(--violet-50)"></span
+              ><span class="sw" style="background: var(--violet-100)"></span
+              ><span class="sw" style="background: var(--violet-200)"></span
+              ><span class="sw" style="background: var(--violet-300)"></span
+              ><span class="sw" style="background: var(--violet-400)"></span
+              ><span class="sw" style="background: var(--violet-500)"></span
+              ><span class="sw" style="background: var(--violet-600)"></span
+              ><span class="sw" style="background: var(--violet-700)"></span
+              ><span class="sw" style="background: var(--violet-800)"></span
+              ><span class="sw" style="background: var(--violet-900)"></span><span></span>
+            </div>
+            <div class="scale">
+              <span>red</span><span class="sw" style="background: var(--red-50)"></span
+              ><span class="sw" style="background: var(--red-100)"></span
+              ><span class="sw" style="background: var(--red-200)"></span
+              ><span class="sw" style="background: var(--red-300)"></span
+              ><span class="sw" style="background: var(--red-400)"></span
+              ><span class="sw" style="background: var(--red-500)"></span
+              ><span class="sw" style="background: var(--red-600)"></span
+              ><span class="sw" style="background: var(--red-700)"></span
+              ><span class="sw" style="background: var(--red-800)"></span
+              ><span class="sw" style="background: var(--red-900)"></span><span></span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Type ---------------------------------------------------------------------------- -->
+        <section class="doc-section">
+          <h2 class="doc-h2">Type</h2>
+          <div class="card card-body type-spec">
+            <div>
+              <span class="eyebrow">2xl · 28</span
+              ><span
+                style="
+                  font-size: var(--font-size-2xl);
+                  font-weight: 600;
+                  letter-spacing: var(--letter-spacing-tight);
+                  line-height: 1.2;
+                "
+                >Loops that run while you sleep</span
+              >
+            </div>
+            <div>
+              <span class="eyebrow">xl · 20</span
+              ><span style="font-size: var(--font-size-xl); font-weight: 600"
+                >Run 01JD5Q7M2K8V4N6T3W9R1B8C5D</span
+              >
+            </div>
+            <div>
+              <span class="eyebrow">lg · 16</span
+              ><span style="font-size: var(--font-size-lg); font-weight: 600">nightly-triage</span>
+            </div>
+            <div>
+              <span class="eyebrow">md · 14</span
+              ><span>Triages new issues every night and opens a fix when one is needed.</span>
+            </div>
+            <div>
+              <span class="eyebrow">sm · 13</span
+              ><span style="font-size: var(--font-size-sm)" class="muted"
+                >Labels, descriptions, and secondary text.</span
+              >
+            </div>
+            <div>
+              <span class="eyebrow">xs · 12</span
+              ><span style="font-size: var(--font-size-xs)" class="muted"
+                >Help text, badges, timestamps: 10/2/2026, 9:41:12 PM</span
+              >
+            </div>
+            <div>
+              <span class="eyebrow">2xs · 10</span
+              ><span
+                style="
+                  font-size: var(--font-size-2xs);
+                  font-weight: 700;
+                  letter-spacing: 0.08em;
+                  text-transform: uppercase;
+                "
+                class="muted"
+                >Node kind labels and port names</span
+              >
+            </div>
+            <div>
+              <span class="eyebrow">Mono · 13</span
+              ><code style="font-size: var(--font-size-sm)"
+                >vars.severity &gt;= 2 ? "yes" : "no"</code
+              >
+            </div>
+          </div>
+        </section>
+
+        <!-- Buttons ------------------------------------------------------------------------- -->
+        <section class="doc-section">
+          <h2 class="doc-h2">Buttons</h2>
+          <p class="doc-note">
+            Every button reads as a button at rest: a fill or a 3:1 border with a one-pixel ledge, a
+            pointer cursor, and a 32 px minimum height. Primary presses down onto its ledge.
+          </p>
+          <div class="card card-body stack" style="gap: var(--space-4)">
+            <div class="cluster">
+              <button class="btn btn-primary" type="button">
+                <svg class="icon"><use href="#i-send" /></svg>Publish
+              </button>
+              <button class="btn btn-secondary" type="button">Secondary</button>
+              <button class="btn btn-outline" type="button">Outline</button>
+              <button class="btn btn-destructive" type="button">Cancel run</button>
+              <button class="btn btn-danger-soft" type="button">
+                <svg class="icon"><use href="#i-trash" /></svg>Delete (proposal)
+              </button>
+              <button class="btn btn-ghost" type="button">Ghost</button>
+            </div>
+            <div class="cluster">
+              <button class="btn btn-primary btn-sm" type="button">Update</button>
+              <button class="btn btn-secondary btn-sm" type="button">
+                <svg class="icon"><use href="#i-export" /></svg>Export
+              </button>
+              <button class="btn btn-outline btn-sm" type="button">Connect</button>
+              <button class="btn btn-destructive btn-sm" type="button">Confirm delete</button>
+              <button class="btn btn-danger-soft btn-sm" type="button">Delete node</button>
+              <button class="btn btn-ghost btn-sm" type="button">Keep</button>
+              <button class="btn btn-ghost btn-sm btn-icon" type="button" aria-label="Remove">
+                <svg class="icon"><use href="#i-close" /></svg>
+              </button>
+            </div>
+            <div class="cluster">
+              <button class="btn btn-primary" type="button" disabled>Create</button>
+              <button class="btn btn-secondary" type="button" disabled>Secondary</button>
+              <button class="btn btn-outline" type="button" disabled>Run</button>
+              <button class="btn btn-destructive" type="button" disabled>Cancel run</button>
+              <button class="btn btn-danger-soft" type="button" disabled>Delete</button>
+              <button class="btn btn-ghost" type="button" disabled>Ghost</button>
+              <span class="help">disabled</span>
+            </div>
+            <div class="cluster">
+              <button class="btn btn-primary is-hover" type="button">Hover</button>
+              <button class="btn btn-outline is-hover" type="button">Hover</button>
+              <button class="btn btn-primary is-focus" type="button">Focus</button>
+              <button class="btn btn-outline is-focus" type="button">Focus</button>
+              <button class="btn btn-danger-soft is-focus" type="button">Focus</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Badges and alerts ---------------------------------------------------------------- -->
+        <section class="doc-section">
+          <h2 class="doc-h2">Badges and alerts</h2>
+          <div class="doc-grid" style="grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr)">
+            <div class="card card-body doc-tile">
+              <span class="eyebrow">Tones</span>
+              <div class="cluster">
+                <span class="badge tone-neutral">neutral</span>
+                <span class="badge tone-good">good</span>
+                <span class="badge tone-bad">bad</span>
+                <span class="badge tone-warn">warn</span>
+                <span class="badge tone-info">info</span>
+                <span class="badge badge-new"
+                  ><svg class="icon" aria-hidden="true"><use href="#i-sparkle" /></svg>New
+                  (proposal)</span
+                >
+              </div>
+              <span class="eyebrow"
+                >Run status (blue success, orange failure, always with a glyph)</span
+              >
+              <div class="cluster">
+                <span class="badge tone-neutral"
+                  ><svg class="icon"><use href="#i-queued" /></svg>queued</span
+                >
+                <span class="badge tone-info"
+                  ><svg class="icon"><use href="#i-running" /></svg>running</span
+                >
+                <span class="badge tone-warn"
+                  ><svg class="icon"><use href="#i-wait" /></svg>waiting</span
+                >
+                <span class="badge tone-warn"
+                  ><svg class="icon"><use href="#i-paused" /></svg>paused</span
+                >
+                <span class="badge tone-good"
+                  ><svg class="icon"><use href="#i-succeeded" /></svg>succeeded</span
+                >
+                <span class="badge tone-bad"
+                  ><svg class="icon"><use href="#i-failed" /></svg>failed</span
+                >
+                <span class="badge tone-neutral"
+                  ><svg class="icon"><use href="#i-cancelled" /></svg>cancelled</span
+                >
+                <span class="badge tone-bad"
+                  ><svg class="icon"><use href="#i-exhausted" /></svg>exhausted</span
+                >
+              </div>
+              <span class="eyebrow">Publish state</span>
+              <div class="cluster">
+                <span class="badge tone-neutral">draft only</span>
+                <span class="badge tone-warn">published, unpublished changes</span>
+                <span class="badge tone-good">published</span>
+              </div>
+              <span class="eyebrow">Node kinds (icons are a proposal)</span>
+              <div class="cluster">
+                <span class="kbadge k-trigger"
+                  ><span class="kchip kchip-sm"
+                    ><svg class="icon"><use href="#i-trigger" /></svg></span
+                  >Trigger</span
+                >
+                <span class="kbadge k-decision"
+                  ><span class="kchip kchip-sm"
+                    ><svg class="icon"><use href="#i-decision" /></svg></span
+                  >Decision</span
+                >
+                <span class="kbadge k-inference"
+                  ><span class="kchip kchip-sm"
+                    ><svg class="icon"><use href="#i-inference" /></svg></span
+                  >Inference</span
+                >
+                <span class="kbadge k-script"
+                  ><span class="kchip kchip-sm"
+                    ><svg class="icon"><use href="#i-script" /></svg></span
+                  >Script</span
+                >
+                <span class="kbadge k-mutate"
+                  ><span class="kchip kchip-sm"
+                    ><svg class="icon"><use href="#i-mutate" /></svg></span
+                  >Mutate</span
+                >
+                <span class="kbadge k-subloop"
+                  ><span class="kchip kchip-sm"
+                    ><svg class="icon"><use href="#i-subloop" /></svg></span
+                  >Subloop</span
+                >
+                <span class="kbadge k-wait"
+                  ><span class="kchip kchip-sm"
+                    ><svg class="icon"><use href="#i-wait" /></svg></span
+                  >Wait</span
+                >
+                <span class="kbadge k-heartbeat"
+                  ><span class="kchip kchip-sm"
+                    ><svg class="icon"><use href="#i-heartbeat" /></svg></span
+                  >Heartbeat</span
+                >
+                <span class="kbadge k-exit"
+                  ><span class="kchip kchip-sm"
+                    ><svg class="icon"><use href="#i-exit" /></svg></span
+                  >Exit</span
+                >
+              </div>
+            </div>
+            <div class="card card-body doc-tile">
+              <span class="eyebrow">Alerts</span>
+              <div class="alert tone-bad" role="alert">
+                <svg class="icon" aria-hidden="true"><use href="#i-failed" /></svg
+                ><span class="alert-title">Publish failed</span
+                ><span>The draft could not be saved; fix the issues below first.</span>
+              </div>
+              <div class="alert tone-warn" role="status">
+                <svg class="icon" aria-hidden="true"><use href="#i-alert" /></svg
+                ><span class="alert-title">The draft changed on the server</span
+                ><span
+                  >Another tab or device saved this loop's draft after this editor loaded it.</span
+                >
+              </div>
+              <div class="alert tone-good" role="status">
+                <svg class="icon" aria-hidden="true"><use href="#i-check-circle" /></svg
+                ><span class="alert-title">Published version 4.</span
+                ><span>Runs started from now use it.</span>
+              </div>
+              <div class="alert tone-info" role="status">
+                <svg class="icon" aria-hidden="true"><use href="#i-info" /></svg
+                ><span class="alert-title">Restored unsaved changes from this device.</span
+                ><span>They are saved to the server on the next edit.</span>
+              </div>
+              <div class="alert tone-neutral" role="status">
+                <svg class="icon" aria-hidden="true"><use href="#i-info" /></svg
+                ><span class="alert-title">Nothing to publish</span
+                ><span>There are no changes since the published version.</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Form controls ------------------------------------------------------------------- -->
+        <section class="doc-section">
+          <h2 class="doc-h2">Form controls</h2>
+          <p class="doc-note">
+            Control borders hold 3:1 against their surface. The switch, segmented control, toggle
+            chips, tri-state control, and file picker are proposals for #8.
+          </p>
+          <div class="doc-grid" style="grid-template-columns: repeat(3, minmax(0, 1fr))">
+            <div class="card card-body doc-tile">
+              <div class="field">
+                <label class="label" for="cs-in1">Text input</label
+                ><input class="input" id="cs-in1" placeholder="nightly-triage" />
+              </div>
+              <div class="field">
+                <label class="label" for="cs-in2">Focused</label
+                ><input class="input is-focus" id="cs-in2" value="weekly-digest" />
+              </div>
+              <div class="field">
+                <label class="label" for="cs-in3">Invalid</label>
+                <input
+                  class="input mono"
+                  id="cs-in3"
+                  value="2nd-node"
+                  aria-invalid="true"
+                  aria-describedby="cs-in3-err"
+                />
+                <span class="error" id="cs-in3-err"
+                  ><svg class="icon" aria-hidden="true"><use href="#i-failed" /></svg>Use a letter
+                  first, then letters, digits, _ or -</span
+                >
+              </div>
+              <div class="field">
+                <label class="label" for="cs-in4">Disabled</label
+                ><input class="input" id="cs-in4" value="workspace" disabled />
+              </div>
+            </div>
+            <div class="card card-body doc-tile">
+              <div class="field">
+                <label class="label" for="cs-sel">Select</label>
+                <div class="select-wrap">
+                  <select class="select" id="cs-sel">
+                    <option>workspace-write</option></select
+                  ><svg class="icon" aria-hidden="true"><use href="#i-chevron" /></svg>
+                </div>
+              </div>
+              <div class="field">
+                <label class="label" for="cs-ta">Textarea</label
+                ><textarea class="textarea" id="cs-ta" rows="3">
+Labels incoming issues by area and type</textarea
+                ><span class="help">Shown in the loops list.</span>
+              </div>
+              <div class="field">
+                <span class="label">File picker</span>
+                <label class="file"
+                  ><input type="file" aria-label="Import an exported loop (JSON)" /><span
+                    class="btn btn-outline btn-sm"
+                    ><svg class="icon"><use href="#i-upload" /></svg>Choose file</span
+                  ><span class="file-name">No file chosen</span></label
+                >
+              </div>
+            </div>
+            <div class="card card-body doc-tile">
+              <label class="switch switch-row"
+                ><span>Switch, on</span><input type="checkbox" role="switch" checked /><span
+                  class="switch-track"
+                ></span
+              ></label>
+              <label class="switch switch-row"
+                ><span>Switch, off</span><input type="checkbox" role="switch" /><span
+                  class="switch-track"
+                ></span
+              ></label>
+              <label class="switch switch-row"
+                ><span>Switch, focused</span><input type="checkbox" role="switch" checked /><span
+                  class="switch-track is-focus"
+                ></span
+              ></label>
+              <label class="switch switch-row"
+                ><span>Switch, disabled</span><input type="checkbox" role="switch" disabled /><span
+                  class="switch-track"
+                ></span
+              ></label>
+              <div class="field">
+                <span class="label" id="cs-tri">Network access (optional, no default)</span>
+                <div class="seg seg-fill" role="radiogroup" aria-labelledby="cs-tri">
+                  <label><input type="radio" name="cs-tri" checked /><span>not set</span></label>
+                  <label><input type="radio" name="cs-tri" /><span>yes</span></label>
+                  <label><input type="radio" name="cs-tri" /><span>no</span></label>
+                </div>
+              </div>
+              <div class="field">
+                <span class="label" id="cs-seg">Approval (segmented)</span>
+                <div class="seg" role="radiogroup" aria-labelledby="cs-seg">
+                  <label><input type="radio" name="cs-seg" checked /><span>never</span></label>
+                  <label><input type="radio" name="cs-seg" /><span>on-request</span></label>
+                </div>
+              </div>
+              <div class="cluster">
+                <label class="check"
+                  ><input type="checkbox" checked /><span class="check-box"
+                    ><svg class="icon"><use href="#i-check" /></svg></span
+                  >Checkbox</label
+                >
+                <label class="check"
+                  ><input type="checkbox" /><span class="check-box"
+                    ><svg class="icon"><use href="#i-check" /></svg></span
+                  >Unchecked</label
+                >
+              </div>
+              <div class="cluster">
+                <label class="tchip"
+                  ><input type="checkbox" checked /><span
+                    ><svg class="icon"><use href="#i-check" /></svg>messages</span
+                  ></label
+                >
+                <label class="tchip"
+                  ><input type="checkbox" /><span
+                    ><svg class="icon"><use href="#i-check" /></svg>artifacts</span
+                  ></label
+                >
+                <label class="tchip"
+                  ><input type="checkbox" checked /><span
+                    ><svg class="icon"><use href="#i-check" /></svg>vars</span
+                  ></label
+                >
+              </div>
+            </div>
+            <div class="card card-body grid-2" style="grid-column: 1 / -1; gap: var(--space-5)">
+              <div class="field">
+                <div class="label-row">
+                  <span class="label">Prompt template</span><span class="lang">Liquid</span>
+                </div>
+                <div>
+                  <div
+                    class="code"
+                    role="textbox"
+                    aria-multiline="true"
+                    aria-label="Prompt template"
+                    tabindex="0"
+                  >
+                    <div class="code-gutter" aria-hidden="true">1<br />2<br />3</div>
+                    <div class="code-lines">
+                      <div class="code-line">
+                        <span class="tok-op">{%</span> <span class="tok-kw">if</span> vars.severity
+                        <span class="tok-op">&gt;</span> <span class="tok-num">2</span>
+                        <span class="tok-op">%}</span>Urgent: <span class="tok-op">{%</span>
+                        <span class="tok-kw">endif</span> <span class="tok-op">%}</span>
+                      </div>
+                      <div class="code-line is-active">
+                        Summarise: <span class="tok-op">{{</span> lastMessage.content
+                        <span class="tok-op">|</span> <span class="tok-kw">truncate</span>:
+                        <span class="tok-num">400</span> <span class="tok-op">}}</span
+                        ><span class="caret"></span>
+                      </div>
+                      <div class="code-line">
+                        <span class="tok-com"
+                          >{% comment %} sent to the harness {% endcomment %}</span
+                        >
+                      </div>
+                    </div>
+                  </div>
+                  <div class="preview">
+                    <span class="preview-label">Preview (sample thread):</span
+                    ><span class="preview-out"
+                      >Urgent: Summarise: The build failed on main after the dependency bump.</span
+                    >
+                  </div>
+                </div>
+              </div>
+              <div class="field">
+                <div class="label-row">
+                  <span class="label">Return mapping</span><span class="lang">JSONata</span>
+                </div>
+                <div>
+                  <div
+                    class="code"
+                    role="textbox"
+                    aria-multiline="true"
+                    aria-label="Return mapping"
+                    tabindex="0"
+                  >
+                    <div class="code-gutter" aria-hidden="true">1</div>
+                    <div class="code-lines">
+                      <div class="code-line">
+                        { <span class="tok-str">"fixed"</span>: vars.needsFix,
+                        <span class="tok-str">"tries"</span>: <span class="tok-num">3</span> }
+                      </div>
+                    </div>
+                  </div>
+                  <div class="preview">
+                    <span class="preview-label">Preview (sample thread):</span
+                    ><span class="preview-out">{ "fixed": true, "tries": 3 }</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Cards and table ------------------------------------------------------------------ -->
+        <section class="doc-section">
+          <h2 class="doc-h2">Cards and table</h2>
+          <div class="doc-grid" style="grid-template-columns: minmax(0, 1fr) minmax(0, 2fr)">
+            <section class="card">
+              <div class="card-head">
+                <h3 class="card-title">Result</h3>
+                <button class="btn btn-ghost btn-sm" type="button">Copy</button>
+              </div>
+              <div class="card-body"><pre class="pre">{ "fixed": true, "pr": 491 }</pre></div>
+            </section>
+            <section class="card card-flush">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th scope="col">Model</th>
+                    <th scope="col">Harness</th>
+                    <th scope="col">Status</th>
+                    <th scope="col" class="num">Default effort</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>gpt-6.1-sol</code></td>
+                    <td>codex</td>
+                    <td><span class="badge tone-good">enabled</span></td>
+                    <td class="num">medium</td>
+                  </tr>
+                  <tr>
+                    <td><code>gpt-6-luna</code></td>
+                    <td>codex</td>
+                    <td><span class="badge tone-good">enabled</span></td>
+                    <td class="num">low</td>
+                  </tr>
+                  <tr>
+                    <td><code>gpt-6-astra</code></td>
+                    <td>codex</td>
+                    <td><span class="badge tone-neutral">disabled</span></td>
+                    <td class="num">xhigh</td>
+                  </tr>
+                </tbody>
+              </table>
+            </section>
+          </div>
+        </section>
+
+        <!-- Node cards ----------------------------------------------------------------------- -->
+        <section class="doc-section">
+          <h2 class="doc-h2">Node cards</h2>
+          <p class="doc-note">
+            One per kind, each with its own colour and icon; a selected card (magenta ring) and a
+            card with a validation issue.
+          </p>
+          <div class="mini-canvas">
+            <div class="node k-trigger">
+              <div class="node-head">
+                <span class="kchip kchip-sm"
+                  ><svg class="icon"><use href="#i-trigger" /></svg></span
+                ><span class="node-kind">Trigger</span>
+              </div>
+              <div class="node-body">
+                <div class="node-label">Nightly</div>
+                <div class="node-id">nightly</div>
+                <div class="node-ports">
+                  <div class="port">out<span class="handle"></span></div>
+                </div>
+              </div>
+            </div>
+            <div class="node k-decision is-selected">
+              <span class="handle handle-in"></span>
+              <div class="node-head">
+                <span class="kchip kchip-sm"
+                  ><svg class="icon"><use href="#i-decision" /></svg></span
+                ><span class="node-kind">Decision</span>
+              </div>
+              <div class="node-body">
+                <div class="node-label">Needs a fix?</div>
+                <div class="node-id">needs-fix</div>
+                <div class="node-ports">
+                  <div class="port">yes<span class="handle"></span></div>
+                  <div class="port">no<span class="handle"></span></div>
+                </div>
+              </div>
+            </div>
+            <div class="node k-inference">
+              <span class="handle handle-in"></span>
+              <div class="node-head">
+                <span class="kchip kchip-sm"
+                  ><svg class="icon"><use href="#i-inference" /></svg></span
+                ><span class="node-kind">Inference</span>
+              </div>
+              <div class="node-body">
+                <div class="node-label">Triage issues</div>
+                <div class="node-id">triage</div>
+                <div class="node-ports">
+                  <div class="port">out<span class="handle"></span></div>
+                </div>
+              </div>
+            </div>
+            <div class="node k-script">
+              <span class="handle handle-in"></span>
+              <div class="node-head">
+                <span class="kchip kchip-sm"
+                  ><svg class="icon"><use href="#i-script" /></svg></span
+                ><span class="node-kind">Script</span>
+              </div>
+              <div class="node-body">
+                <div class="node-label">Run tests</div>
+                <div class="node-id">run-tests</div>
+                <div class="node-ports">
+                  <div class="port">out<span class="handle"></span></div>
+                  <div class="port">failing<span class="handle"></span></div>
+                </div>
+              </div>
+            </div>
+            <div class="node k-mutate">
+              <span class="handle handle-in"></span>
+              <div class="node-head">
+                <span class="kchip kchip-sm"
+                  ><svg class="icon"><use href="#i-mutate" /></svg></span
+                ><span class="node-kind">Mutate</span>
+              </div>
+              <div class="node-body">
+                <div class="node-label">Record outcome</div>
+                <div class="node-id">record</div>
+                <div class="node-ports">
+                  <div class="port">out<span class="handle"></span></div>
+                </div>
+              </div>
+            </div>
+            <div class="node k-subloop">
+              <span class="handle handle-in"></span>
+              <div class="node-head">
+                <span class="kchip kchip-sm"
+                  ><svg class="icon"><use href="#i-subloop" /></svg></span
+                ><span class="node-kind">Subloop</span
+                ><span class="badge badge-sm tone-bad"
+                  ><svg class="icon"><use href="#i-failed" /></svg>1 issue</span
+                >
+              </div>
+              <div class="node-body">
+                <div class="node-label">Open PR</div>
+                <div class="node-id">open-pr</div>
+                <div class="node-ports">
+                  <div class="port">out<span class="handle"></span></div>
+                </div>
+              </div>
+            </div>
+            <div class="node k-wait">
+              <span class="handle handle-in"></span>
+              <div class="node-head">
+                <span class="kchip kchip-sm"
+                  ><svg class="icon"><use href="#i-wait" /></svg></span
+                ><span class="node-kind">Wait</span>
+              </div>
+              <div class="node-body">
+                <div class="node-label">Approve merge</div>
+                <div class="node-id">approve</div>
+                <div class="node-ports">
+                  <div class="port">out<span class="handle"></span></div>
+                </div>
+              </div>
+            </div>
+            <div class="node k-heartbeat">
+              <span class="handle handle-in"></span>
+              <div class="node-head">
+                <span class="kchip kchip-sm"
+                  ><svg class="icon"><use href="#i-heartbeat" /></svg></span
+                ><span class="node-kind">Heartbeat</span>
+              </div>
+              <div class="node-body">
+                <div class="node-label">Watch CI</div>
+                <div class="node-id">watch-ci</div>
+                <div class="node-ports">
+                  <div class="port">out<span class="handle"></span></div>
+                </div>
+              </div>
+            </div>
+            <div class="node k-exit">
+              <span class="handle handle-in"></span>
+              <div class="node-head">
+                <span class="kchip kchip-sm"
+                  ><svg class="icon"><use href="#i-exit" /></svg></span
+                ><span class="node-kind">Exit</span>
+              </div>
+              <div class="node-body">
+                <div class="node-label">Done</div>
+                <div class="node-id">done</div>
+                <div class="node-ports">
+                  <div class="port">loopBack<span class="handle"></span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Focus ring ----------------------------------------------------------------------- -->
+        <section class="doc-section">
+          <h2 class="doc-h2">Focus ring on every surface</h2>
+          <p class="doc-note">
+            One ring colour (<code>--focus-ring</code>, 2 px, offset 2 px) holds 3:1 on every
+            surface below, including the dark header; see contrast.md.
+          </p>
+          <div
+            class="doc-grid"
+            style="grid-template-columns: repeat(auto-fill, minmax(190px, 1fr))"
+          >
+            <div class="focus-tile" style="background: var(--surface-app)">
+              surface-app<button class="btn btn-outline btn-sm is-focus" type="button">
+                Focused
+              </button>
+            </div>
+            <div class="focus-tile" style="background: var(--surface-raised)">
+              surface-raised<button class="btn btn-primary btn-sm is-focus" type="button">
+                Focused
+              </button>
+            </div>
+            <div class="focus-tile" style="background: var(--surface-sunken)">
+              surface-sunken<button class="btn btn-outline btn-sm is-focus" type="button">
+                Focused
+              </button>
+            </div>
+            <div
+              class="focus-tile"
+              style="background: var(--surface-overlay); box-shadow: var(--shadow-3)"
+            >
+              surface-overlay<button class="btn btn-ghost btn-sm is-focus" type="button">
+                Focused
+              </button>
+            </div>
+            <div
+              class="focus-tile"
+              style="
+                background: var(--surface-inverse);
+                color: var(--text-inverse);
+                border-color: var(--surface-inverse);
+              "
+            >
+              surface-inverse<a
+                class="is-focus"
+                href="#nav"
+                style="color: var(--text-inverse-muted)"
+                >Runs</a
+              >
+            </div>
+            <div
+              class="focus-tile"
+              style="
+                background: var(--surface-inverse-raised);
+                color: var(--text-inverse);
+                border-color: var(--surface-inverse-raised);
+              "
+            >
+              surface-inverse-raised<a
+                class="is-focus"
+                href="#nav"
+                style="color: var(--text-inverse)"
+                >Events</a
+              >
+            </div>
+            <div class="focus-tile" style="background: var(--accent-subtle)">
+              accent-subtle<button class="btn btn-outline btn-sm is-focus" type="button">
+                Focused
+              </button>
+            </div>
+            <div class="focus-tile" style="background: var(--danger-subtle)">
+              danger-subtle<button class="btn btn-destructive btn-sm is-focus" type="button">
+                Focused
+              </button>
+            </div>
+            <div class="focus-tile tone-good" style="background: var(--tone-bg)">
+              status-good-bg<button class="btn btn-outline btn-sm is-focus" type="button">
+                Focused
+              </button>
+            </div>
+            <div class="focus-tile tone-bad" style="background: var(--tone-bg)">
+              status-bad-bg<button class="btn btn-outline btn-sm is-focus" type="button">
+                Focused
+              </button>
+            </div>
+            <div class="focus-tile tone-warn" style="background: var(--tone-bg)">
+              status-warn-bg<button class="btn btn-outline btn-sm is-focus" type="button">
+                Reload server draft
+              </button>
+            </div>
+            <div class="focus-tile tone-info" style="background: var(--tone-bg)">
+              status-info-bg<button class="btn btn-outline btn-sm is-focus" type="button">
+                Focused
+              </button>
+            </div>
+            <div class="focus-tile tone-neutral" style="background: var(--tone-bg)">
+              status-neutral-bg<button class="btn btn-outline btn-sm is-focus" type="button">
+                Focused
+              </button>
+            </div>
+            <div class="focus-tile" style="background: var(--code-bg)">
+              code-bg<span class="mono is-focus" style="padding: 2px 4px">lastOutput</span>
+            </div>
+            <div class="focus-tile" style="background: var(--canvas-bg)">
+              canvas-bg
+              <div class="node k-trigger is-focus" style="position: relative; width: 120px">
+                <div class="node-head">
+                  <span class="kchip kchip-sm"
+                    ><svg class="icon"><use href="#i-trigger" /></svg></span
+                  ><span class="node-kind">Trigger</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Elevation, radius, motion --------------------------------------------------------- -->
+        <section class="doc-section">
+          <h2 class="doc-h2">Elevation, radius, and motion</h2>
+          <div
+            class="doc-grid"
+            style="grid-template-columns: repeat(auto-fill, minmax(200px, 1fr))"
+          >
+            <div
+              class="elev"
+              style="box-shadow: var(--shadow-1); border: 1px solid var(--border-default)"
+            >
+              shadow-1 · cards
+            </div>
+            <div class="elev" style="box-shadow: var(--shadow-2)">shadow-2 · nodes, menus</div>
+            <div class="elev" style="box-shadow: var(--shadow-3)">shadow-3 · sheets, toasts</div>
+            <div
+              class="elev"
+              style="border: 1px solid var(--border-default); border-radius: var(--radius-sm)"
+            >
+              radius-sm 4 · md 8 · lg 12 · xl 16
+            </div>
+          </div>
+          <p class="doc-note">
+            Motion: <code>--duration-fast</code> 120 ms (hover), <code>--duration-base</code> 180 ms
+            (switches, panels), <code>--duration-slow</code> 280 ms (the bottom sheet);
+            <code>--ease-standard</code> for movement and <code>--ease-emphasised</code> (a small
+            overshoot) for the switch thumb. All durations drop to 0 under
+            <code>prefers-reduced-motion</code>.
+          </p>
+        </section>
+      </div>
+    </section>
+
+    <script>
+      // The only script: the narrow-width menu toggle and the bottom-sheet toggle.
+      for (const button of document.querySelectorAll('[data-menu-toggle]')) {
+        button.addEventListener('click', () => {
+          const open = button.closest('.appbar').toggleAttribute('data-open');
+          button.setAttribute('aria-expanded', String(open));
+        });
+      }
+      for (const button of document.querySelectorAll('[data-sheet-toggle]')) {
+        button.addEventListener('click', () => {
+          const collapsed = button.closest('.panel').toggleAttribute('data-collapsed');
+          button.setAttribute('aria-expanded', String(!collapsed));
+          button.setAttribute(
+            'aria-label',
+            collapsed ? 'Expand the properties sheet' : 'Collapse the properties sheet',
+          );
+        });
+      }
+    </script>
+  </body>
+</html>
