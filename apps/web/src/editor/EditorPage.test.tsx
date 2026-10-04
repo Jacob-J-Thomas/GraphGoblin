@@ -185,8 +185,11 @@ describe('EditorPage', () => {
     expect(popover).toHaveTextContent('PORT_UNCONNECTED');
     expect(popover).toHaveTextContent('NODE_UNREACHABLE');
     expect(useEditorStore.getState().nodeDialogOpen).toBe(false);
+    // Open, it renders in document.body (jsdom has no popover API), out of the scaled canvas.
+    expect(popover.parentElement).toBe(document.body);
     await user.keyboard('{Escape}');
-    expect(popover).toBeEmptyDOMElement();
+    expect(popoverOf(badge)).toBeEmptyDOMElement();
+    expect(popoverOf(badge)).toHaveAttribute('hidden');
     expect(badge).toHaveFocus();
 
     // A click on the node opens its editor with the generated form.

@@ -1,7 +1,14 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { CLOSE_DELAY, closePopovers, OPEN_DELAY, placePopover, Popover } from './index.js';
+import {
+  anchorInView,
+  CLOSE_DELAY,
+  closePopovers,
+  OPEN_DELAY,
+  placePopover,
+  Popover,
+} from './index.js';
 
 /** A popover between two plain buttons, with two controls inside; the first closes it. */
 function Harness({ label = 'Details', name = 'Info' }: { label?: string; name?: string }) {
@@ -51,6 +58,26 @@ function rect(box: { top: number; left: number; width: number; height: number })
 afterEach(() => {
   vi.useRealTimers();
   vi.restoreAllMocks();
+});
+
+describe('anchorInView', () => {
+  const viewport = { width: 1000, height: 800 };
+  const box = (top: number, left: number) => ({ top, left, bottom: top + 24, right: left + 24 });
+
+  it('holds while any of the trigger is inside the viewport', () => {
+    expect(anchorInView(box(100, 100), viewport)).toBe(true);
+    expect(anchorInView(box(-20, 100), viewport)).toBe(true);
+    expect(anchorInView(box(790, 990), viewport)).toBe(true);
+    // jsdom's zero-size boxes at the origin count as visible.
+    expect(anchorInView({ top: 0, left: 0, bottom: 0, right: 0 }, viewport)).toBe(true);
+  });
+
+  it('fails once the trigger is entirely outside, on any side', () => {
+    expect(anchorInView(box(-30, 100), viewport)).toBe(false);
+    expect(anchorInView(box(801, 100), viewport)).toBe(false);
+    expect(anchorInView(box(100, -30), viewport)).toBe(false);
+    expect(anchorInView(box(100, 1001), viewport)).toBe(false);
+  });
 });
 
 describe('placePopover', () => {
@@ -285,16 +312,46 @@ describe('Popover', () => {
     expect(isOpen()).toBe(false);
   });
 
-  it('keeps focus moves inside open, and closes when focus goes nowhere', () => {
+  it('keeps focus moves inside open, and closes when focus leaves with nothing else holding it', () => {
     render(<Harness />);
+    // Pinned by a click: a focus move inside keeps it; one to another control closes it.
     fireEvent.click(trigger());
     const first = screen.getByRole('button', { name: 'First Info' });
+    const after = screen.getByRole('button', { name: 'After Info' });
     fireEvent.blur(trigger(), { relatedTarget: first });
     expect(isOpen()).toBe(true);
-    fireEvent.blur(first, { relatedTarget: null });
+    fireEvent.blur(first, { relatedTarget: after });
     expect(isOpen()).toBe(false);
     // Closed already: a blur changes nothing.
     fireEvent.blur(trigger(), { relatedTarget: null });
+    expect(isOpen()).toBe(false);
+    // Opened by focus, with the pointer elsewhere: focus going nowhere closes it.
+    act(() => trigger().focus());
+    expect(isOpen()).toBe(true);
+    act(() => trigger().blur());
+    expect(isOpen()).toBe(false);
+  });
+
+  it('forgets focus that was inside when its controls go, so hover alone decides next time', () => {
+    vi.useFakeTimers();
+    render(<Harness />);
+    // A row takes focus, then closes the popover without returning focus (as choosing an issue
+    // does): the row unmounts with no focusout.
+    fireEvent.click(trigger());
+    const second = screen.getByRole('button', { name: 'Second Info' });
+    act(() => second.focus());
+    act(() => closePopovers());
+    expect(isOpen()).toBe(false);
+    // Opened by hover now, it closes once the pointer leaves.
+    fireEvent.pointerEnter(trigger(), { pointerType: 'mouse' });
+    act(() => {
+      vi.advanceTimersByTime(OPEN_DELAY);
+    });
+    expect(isOpen()).toBe(true);
+    fireEvent.pointerLeave(trigger(), { pointerType: 'mouse' });
+    act(() => {
+      vi.advanceTimersByTime(CLOSE_DELAY);
+    });
     expect(isOpen()).toBe(false);
   });
 
@@ -396,10 +453,14 @@ describe('Popover', () => {
     const anchor = vi
       .spyOn(trigger(), 'getBoundingClientRect')
       .mockReturnValue(rect({ top: 700, left: 1000, width: 24, height: 24 }));
+    // Open first: without the popover API it moves to document.body as it opens.
+    fireEvent.click(trigger());
     vi.spyOn(popover(), 'getBoundingClientRect').mockReturnValue(
       rect({ top: 0, left: 0, width: 300, height: 200 }),
     );
-    fireEvent.click(trigger());
+    act(() => {
+      window.dispatchEvent(new Event('resize'));
+    });
     // jsdom's window is 1024 x 768: no room below, so above; shifted left to stay inside.
     expect(popover().style).toMatchObject({
       top: `${700 - 6 - 200}px`,
@@ -456,5 +517,157 @@ describe('Popover', () => {
         vi.advanceTimersByTime(OPEN_DELAY * 2);
       }),
     ).not.toThrow();
+  });
+});
+
+describe('Popover: what holds it open (#15 review)', () => {
+  const button = (name: string) => screen.getByRole('button', { name });
+
+  it('opened by hover, stays while focus is inside after the pointer leaves, then closes when both are gone', () => {
+    vi.useFakeTimers();
+    render(<Harness />);
+    fireEvent.pointerEnter(trigger(), { pointerType: 'mouse' });
+    act(() => {
+      vi.advanceTimersByTime(OPEN_DELAY);
+    });
+    expect(isOpen()).toBe(true);
+    // Focus moves into its rows (Shift+Tab from the next control, say), then the pointer leaves.
+    act(() => button('Second Info').focus());
+    fireEvent.pointerLeave(trigger(), { pointerType: 'mouse' });
+    act(() => {
+      vi.advanceTimersByTime(CLOSE_DELAY * 5);
+    });
+    expect(isOpen()).toBe(true);
+    expect(button('Second Info')).toHaveFocus();
+    // Focus leaves too: nothing holds it any more.
+    act(() => button('After Info').focus());
+    expect(isOpen()).toBe(false);
+  });
+
+  it('opened by focus, stays while hovered after focus leaves, then closes when both are gone', () => {
+    vi.useFakeTimers();
+    render(<Harness />);
+    act(() => trigger().focus());
+    expect(isOpen()).toBe(true);
+    fireEvent.pointerEnter(popover(), { pointerType: 'mouse' });
+    act(() => button('After Info').focus());
+    expect(isOpen()).toBe(true);
+    fireEvent.pointerLeave(popover(), { pointerType: 'mouse' });
+    act(() => {
+      vi.advanceTimersByTime(CLOSE_DELAY - 10);
+    });
+    expect(isOpen()).toBe(true);
+    act(() => {
+      vi.advanceTimersByTime(10);
+    });
+    expect(isOpen()).toBe(false);
+  });
+
+  it('pinned by a click, stays when the pointer leaves or focus goes nowhere, and closes when focus moves on', () => {
+    vi.useFakeTimers();
+    render(<Harness />);
+    fireEvent.pointerEnter(trigger(), { pointerType: 'mouse' });
+    fireEvent.click(trigger());
+    act(() => trigger().focus());
+    fireEvent.pointerLeave(trigger(), { pointerType: 'mouse' });
+    act(() => {
+      vi.advanceTimersByTime(CLOSE_DELAY * 5);
+    });
+    expect(isOpen()).toBe(true);
+    // Focus going nowhere (the window losing focus) keeps it; focus moving to a control closes it.
+    fireEvent.blur(trigger(), { relatedTarget: null });
+    expect(isOpen()).toBe(true);
+    act(() => button('After Info').focus());
+    expect(isOpen()).toBe(false);
+  });
+
+  it('a press that never became a click does not stop the next keyboard focus opening it', () => {
+    render(<Harness />);
+    // A touch that turned into a scroll: cancelled.
+    fireEvent.pointerDown(trigger(), { pointerType: 'touch' });
+    fireEvent.pointerCancel(trigger(), { pointerType: 'touch' });
+    act(() => trigger().focus());
+    expect(isOpen()).toBe(true);
+    act(() => button('After Info').focus());
+    expect(isOpen()).toBe(false);
+    // A mouse press released somewhere else, so no click.
+    fireEvent.pointerDown(trigger());
+    fireEvent.pointerUp(document.body);
+    act(() => trigger().focus());
+    expect(isOpen()).toBe(true);
+    // During a press the focus it brings still opens nothing (the click decides).
+    act(() => button('After Info').focus());
+    fireEvent.pointerDown(trigger());
+    act(() => trigger().focus());
+    expect(isOpen()).toBe(false);
+    fireEvent.pointerUp(trigger());
+    fireEvent.click(trigger());
+    expect(isOpen()).toBe(true);
+  });
+
+  it('closes when its trigger has left the viewport, and still clamps a partly visible one', () => {
+    render(<Harness />);
+    fireEvent.click(trigger());
+    const anchor = vi.spyOn(trigger(), 'getBoundingClientRect');
+    vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(500);
+    vi.spyOn(popover(), 'getBoundingClientRect').mockReturnValue(
+      rect({ top: 0, left: 0, width: 300, height: 200 }),
+    );
+    // Partly visible after the window shrank: placed above, inside the viewport.
+    anchor.mockReturnValue(rect({ top: 490, left: 100, width: 24, height: 24 }));
+    act(() => {
+      window.dispatchEvent(new Event('resize'));
+    });
+    expect(isOpen()).toBe(true);
+    expect(popover().style.top).toBe(`${490 - 6 - 200}px`);
+    // Entirely below the viewport: it closes rather than float somewhere else.
+    anchor.mockReturnValue(rect({ top: 750, left: 100, width: 24, height: 24 }));
+    act(() => {
+      window.dispatchEvent(new Event('resize'));
+    });
+    expect(isOpen()).toBe(false);
+  });
+
+  it('without the popover API, opens in document.body, out of transformed ancestors, keeping the keyboard order', async () => {
+    const user = userEvent.setup();
+    render(
+      <div data-testid="scaled" style={{ transform: 'scale(2)' }}>
+        <Harness />
+      </div>,
+    );
+    act(() => button('Before Info').focus());
+    await user.tab();
+    expect(trigger()).toHaveFocus();
+    expect(isOpen()).toBe(true);
+    expect(popover().parentElement).toBe(document.body);
+    expect(screen.getByTestId('scaled')).not.toContainElement(popover());
+    // Tab from the trigger moves into the first row; Shift+Tab from it goes back to the trigger.
+    await user.tab();
+    expect(button('First Info')).toHaveFocus();
+    await user.tab({ shift: true });
+    expect(trigger()).toHaveFocus();
+    expect(isOpen()).toBe(true);
+    await user.tab();
+    await user.tab();
+    expect(button('Second Info')).toHaveFocus();
+    // Tab past the last row closes it and carries on after the trigger.
+    await user.tab();
+    expect(button('After Info')).toHaveFocus();
+    expect(isOpen()).toBe(false);
+    // Closed, it is back beside its trigger, hidden, so aria-controls still resolves.
+    expect(trigger().nextElementSibling).toBe(popover());
+    expect(popover()).toHaveAttribute('hidden');
+  });
+
+  it('without the popover API, stays in place inside a modal dialog, which would make the page inert', () => {
+    render(
+      <dialog open>
+        <Harness />
+      </dialog>,
+    );
+    fireEvent.click(trigger());
+    expect(isOpen()).toBe(true);
+    expect(trigger().nextElementSibling).toBe(popover());
+    expect(popover().closest('dialog')).not.toBeNull();
   });
 });

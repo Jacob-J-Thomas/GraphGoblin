@@ -12,10 +12,8 @@ import {
   type ReactNode,
   type RefObject,
 } from 'react';
+import { createPortal } from 'react-dom';
 import { cn } from '../../lib/utils.js';
-
-/** How the popover was opened, which decides what closes it. */
-type OpenedBy = 'hover' | 'focus' | 'click';
 
 /** Pointer hover opens the popover after this long (ms), so a pointer passing over opens nothing. */
 export const OPEN_DELAY = 150;
@@ -69,6 +67,22 @@ export function placePopover(
   return { top, left, maxHeight: room, side };
 }
 
+/**
+ * Whether any of the trigger's box is inside the viewport. A popover whose trigger is entirely
+ * outside (the window shrank, say) closes rather than float where nothing explains it.
+ */
+export function anchorInView(
+  anchor: { top: number; bottom: number; left: number; right: number },
+  viewport: { width: number; height: number },
+): boolean {
+  return (
+    anchor.bottom >= 0 &&
+    anchor.top <= viewport.height &&
+    anchor.right >= 0 &&
+    anchor.left <= viewport.width
+  );
+}
+
 /** What the trigger needs: spread these onto a `<button type="button">`, with its own name. */
 export interface PopoverTriggerProps {
   ref: RefObject<HTMLButtonElement | null>;
@@ -101,93 +115,165 @@ export interface PopoverProps {
 
 const ITEMS = 'button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])';
 
-/**
- * Whether this browser has the popover API (every current one does). Without it (an old browser,
- * or jsdom, whose default stylesheet hides every `[popover]` element) the popover is a plain
- * fixed-position element shown in place.
- */
+const TABBABLE = [
+  'a[href]',
+  'button:not([disabled])',
+  'input:not([disabled]):not([type="hidden"])',
+  'select:not([disabled])',
+  'textarea:not([disabled])',
+  '[contenteditable="true"]',
+  '[tabindex]:not([tabindex="-1"])',
+].join(',');
+
+/** The control Tab reaches after `from` in document order, leaving out anything inside `skip`. */
+function nextTabbable(from: HTMLElement, skip: Element | null): HTMLElement | undefined {
+  const order = [...document.querySelectorAll<HTMLElement>(TABBABLE)].filter(
+    (el) => el.tabIndex >= 0 && !el.closest('[hidden], [inert]') && !skip?.contains(el),
+  );
+  const index = order.indexOf(from);
+  return index < 0 ? undefined : order[index + 1];
+}
+
+/** Whether this browser has the popover API (every current one does; jsdom does not). */
 function hasPopoverApi(): boolean {
   return typeof HTMLElement.prototype.showPopover === 'function';
 }
 
+function viewportSize(): { width: number; height: number } {
+  return {
+    width: document.documentElement.clientWidth || window.innerWidth,
+    height: window.innerHeight,
+  };
+}
+
 /**
- * A tooltip-style popover that meets WCAG 1.4.13 (content on hover or focus): it opens on pointer
- * hover after a short delay, on keyboard focus of its trigger, and on click or tap; it stays open
- * while the pointer is over the trigger or the popover (so the pointer can move into it), and closes
- * shortly after the pointer has left both, on Esc (focus returns to the trigger when it was inside),
- * on a press outside, and when focus leaves both. Opened by focus or a click, it stays until one of
- * those happens; a second click on the trigger closes it.
+ * A tooltip-style popover that meets WCAG 1.4.13 (content on hover or focus).
  *
- * It renders in the top layer (the native `popover` attribute, shown with `showPopover()`), so no
- * panel, card, or dialog covers it and a scaled canvas does not scale it, and it sits right after
- * its trigger in the DOM, so Tab moves from the trigger into it and on out. It is placed from the
- * trigger's box: below or above (never over the trigger), shifted to stay inside the viewport, and
- * scrolling when taller than the room there. ArrowDown on the trigger moves into it; the arrow keys,
- * Home, and End move between its controls. A click inside it or on the trigger goes no further
- * (a canvas node must not open under it). It has no animation, so reduced motion needs nothing.
+ * - **Opening.** Pointer hover opens it after a short delay, keyboard focus of the trigger opens it
+ *   at once, and a click or tap pins it open (a click on a popover that hover or focus opened pins
+ *   it; a click on a pinned one closes it). The focus a pointer press brings opens nothing by
+ *   itself: the click decides; a press that ends without a click (a cancelled touch that became a
+ *   scroll, a release elsewhere) leaves keyboard focus working as usual.
+ * - **Staying open.** Hover (the pointer over the trigger or the popover, so the pointer can move
+ *   into it) and focus inside either one are tracked separately, and it stays open while either
+ *   holds: it closes shortly after the pointer has left both while focus is elsewhere, or when focus
+ *   leaves both while the pointer is elsewhere. A pinned popover ignores both and closes when focus
+ *   moves on to another control.
+ * - **Closing.** Esc (focus returns to the trigger when it was inside; a dialog around it stays
+ *   open), a press outside, a second click on the trigger, opening another popover,
+ *   `closePopovers()`, or its trigger leaving the viewport.
+ * - **Rendering.** In the top layer (the native `popover` attribute, shown with `showPopover()`),
+ *   so no panel, card, or dialog covers it and a scaled canvas does not scale it, right after its
+ *   trigger in the DOM, so Tab moves from the trigger into it and on out. Without the popover API it
+ *   is a fixed-position element portalled to `document.body` while open (out of any transformed
+ *   ancestor, such as a zoomed canvas node), with the same keyboard order kept by hand: Tab from the
+ *   trigger moves into the first control, Shift+Tab from the first control returns to the trigger,
+ *   and Tab past the last control closes it and carries on after the trigger. Inside a modal
+ *   dialog, which makes the rest of the page inert, it stays in place instead.
+ * - **Placement** from the trigger's box: below or above (never over the trigger), shifted to stay
+ *   inside the viewport, and scrolling when taller than the room there; again on resize, on a scroll
+ *   around it, and after every render.
+ * - **Keys and clicks.** ArrowDown on the trigger moves into it; the arrow keys, Home, and End move
+ *   between its controls. A click inside it or on the trigger goes no further (a canvas node must
+ *   not open under it). It has no animation, so reduced motion needs nothing.
  */
 export function Popover({ label, trigger, children, className }: PopoverProps) {
   const id = useId();
-  const [openedBy, setOpenedBy] = useState<OpenedBy | undefined>();
-  const open = openedBy !== undefined;
+  const native = hasPopoverApi();
+  const [open, setOpen] = useState(false);
+  /** Pinned by a click: hover and focus no longer decide when it closes. */
+  const [pinned, setPinned] = useState(false);
+  /** Without the popover API: where it renders while open (`null`: in place, inside a dialog). */
+  const [portal, setPortal] = useState<Element | null>(null);
+  const liveRef = useRef({ open, pinned });
+  liveRef.current = { open, pinned };
   const wrapperRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  /** A pointer press on the trigger: the focus it brings opens nothing (the click decides). */
+  /** Where the pointer is: over the trigger, over the popover (mouse and pen only). */
+  const hoverRef = useRef({ trigger: false, popover: false });
+  /** Whether focus is on the trigger or inside the popover. */
+  const focusWithinRef = useRef(false);
+  /** A pointer press on the trigger is under way: the focus it brings opens nothing. */
   const pressRef = useRef(false);
   /** Set while this component moves focus to the trigger itself, which opens nothing either. */
   const quietRef = useRef(false);
   /** Focus the popover's first control once it is shown (ArrowDown on the trigger). */
   const focusFirstRef = useRef(false);
+  const portalled = open && !native && portal !== null;
 
   const clearTimer = () => {
     clearTimeout(timerRef.current);
     timerRef.current = undefined;
   };
 
+  /** Whether `node` is the trigger, the popover, or inside either (the popover may be portalled). */
+  const inside = (node: unknown): boolean =>
+    node instanceof Node &&
+    Boolean(wrapperRef.current?.contains(node) || popoverRef.current?.contains(node));
+
+  const focusTriggerQuietly = () => {
+    quietRef.current = true;
+    triggerRef.current?.focus();
+    quietRef.current = false;
+  };
+
   const close = useCallback((options?: { returnFocus?: boolean }) => {
     clearTimeout(timerRef.current);
     timerRef.current = undefined;
-    setOpenedBy(undefined);
+    // The popover is gone from under the pointer, whatever pointerleave would have said.
+    hoverRef.current.popover = false;
+    setOpen(false);
+    setPinned(false);
     if (options?.returnFocus) {
       quietRef.current = true;
       triggerRef.current?.focus();
       quietRef.current = false;
     }
+    // Its controls unmount without a focusout: focus stays within only if it is on the trigger.
+    focusWithinRef.current = document.activeElement === triggerRef.current;
   }, []);
 
-  const show = (by: OpenedBy) => {
+  const show = (pin: boolean) => {
     clearTimer();
     for (const other of [...openPopovers.keys()]) if (other !== close) other();
-    setOpenedBy(by);
+    if (!native) setPortal(triggerRef.current?.closest('dialog') ? null : document.body);
+    setOpen(true);
+    if (pin) setPinned(true);
+  };
+
+  /** Close unless something still holds it open: a pin, the pointer over it, or focus inside. */
+  const dismissIfIdle = () => {
+    const hover = hoverRef.current;
+    if (!liveRef.current.open || liveRef.current.pinned) return;
+    if (hover.trigger || hover.popover || focusWithinRef.current) return;
+    close();
   };
 
   const place = useCallback(() => {
     const popover = popoverRef.current;
     const anchor = triggerRef.current;
     if (!popover || !anchor) return;
+    const viewport = viewportSize();
+    const box = anchor.getBoundingClientRect();
+    if (!anchorInView(box, viewport)) {
+      close();
+      return;
+    }
     // Measured at its natural height; the scroll position survives the measurement.
     const { scrollTop } = popover;
     popover.style.maxHeight = '';
-    const placement = placePopover(
-      anchor.getBoundingClientRect(),
-      popover.getBoundingClientRect(),
-      {
-        width: document.documentElement.clientWidth || window.innerWidth,
-        height: window.innerHeight,
-      },
-    );
+    const placement = placePopover(box, popover.getBoundingClientRect(), viewport);
     popover.style.top = `${placement.top}px`;
     popover.style.left = `${placement.left}px`;
     popover.style.maxHeight = `${placement.maxHeight}px`;
     popover.scrollTop = scrollTop;
     popover.dataset['side'] = placement.side;
-  }, []);
+  }, [close]);
 
   // Into the top layer when it opens, out when it closes or unmounts; `hidden` hides it while
   // closed either way.
-  const native = hasPopoverApi();
   useLayoutEffect(() => {
     const popover = popoverRef.current;
     if (!open || !popover || !native) return;
@@ -211,16 +297,18 @@ export function Popover({ label, trigger, children, className }: PopoverProps) {
   // another popover closes this one.
   useEffect(() => {
     if (!open) return;
+    const isInside = (node: unknown) =>
+      node instanceof Node &&
+      Boolean(wrapperRef.current?.contains(node) || popoverRef.current?.contains(node));
     const onPointerDown = (event: globalThis.PointerEvent) => {
-      if (event.target instanceof Node && wrapperRef.current?.contains(event.target)) return;
-      close();
+      if (!isInside(event.target)) close();
     };
     const onKeyDown = (event: globalThis.KeyboardEvent) => {
       if (event.key !== 'Escape') return;
       // Only the popover closes: not a dialog it sits in, and nothing on the canvas.
       event.preventDefault();
       event.stopPropagation();
-      close({ returnFocus: Boolean(wrapperRef.current?.contains(document.activeElement)) });
+      close({ returnFocus: isInside(document.activeElement) });
     };
     // Something around it scrolled (not its own list): follow the trigger.
     const onScroll = (event: Event) => {
@@ -243,20 +331,30 @@ export function Popover({ label, trigger, children, className }: PopoverProps) {
 
   useEffect(() => () => clearTimeout(timerRef.current), []);
 
-  const onPointerEnter = (event: PointerEvent<HTMLElement>) => {
+  const onPointerEnter = (part: 'trigger' | 'popover') => (event: PointerEvent<HTMLElement>) => {
     // Touch has no hover: a tap is a click.
     if (event.pointerType === 'touch') return;
+    hoverRef.current[part] = true;
     clearTimer();
-    if (!open) timerRef.current = setTimeout(() => show('hover'), OPEN_DELAY);
+    if (!liveRef.current.open && part === 'trigger')
+      timerRef.current = setTimeout(() => show(false), OPEN_DELAY);
   };
 
-  const onPointerLeave = (event: PointerEvent<HTMLElement>) => {
+  const onPointerLeave = (part: 'trigger' | 'popover') => (event: PointerEvent<HTMLElement>) => {
     if (event.pointerType === 'touch') return;
+    hoverRef.current[part] = false;
     clearTimer();
-    if (openedBy === 'hover') timerRef.current = setTimeout(() => close(), CLOSE_DELAY);
+    if (liveRef.current.open) timerRef.current = setTimeout(dismissIfIdle, CLOSE_DELAY);
   };
 
   const items = () => [...(popoverRef.current?.querySelectorAll<HTMLElement>(ITEMS) ?? [])];
+
+  /** The end of a pointer press, with or without a click: keyboard focus opens it again. */
+  const endPress = () => {
+    pressRef.current = false;
+    document.removeEventListener('pointerup', endPress, true);
+    document.removeEventListener('pointercancel', endPress, true);
+  };
 
   const triggerProps: PopoverTriggerProps = {
     ref: triggerRef,
@@ -265,36 +363,57 @@ export function Popover({ label, trigger, children, className }: PopoverProps) {
     'aria-haspopup': 'dialog',
     onPointerDown: () => {
       pressRef.current = true;
+      document.addEventListener('pointerup', endPress, true);
+      document.addEventListener('pointercancel', endPress, true);
     },
     onFocus: () => {
-      const pressed = pressRef.current;
-      pressRef.current = false;
-      if (quietRef.current || pressed) return;
-      if (openedBy === undefined || openedBy === 'hover') show('focus');
+      if (quietRef.current || pressRef.current) return;
+      if (!liveRef.current.open) show(false);
     },
     onClick: (event) => {
       event.stopPropagation();
-      pressRef.current = false;
-      if (openedBy === 'click') close();
-      else show('click');
+      if (liveRef.current.open && liveRef.current.pinned) close();
+      else show(true);
     },
     onKeyDown: (event) => {
-      if (event.key !== 'ArrowDown') return;
-      event.preventDefault();
       const first = items()[0];
-      if (first) first.focus();
-      else {
-        focusFirstRef.current = true;
-        show(openedBy === 'click' ? 'click' : 'focus');
+      if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        if (first) first.focus();
+        else if (!liveRef.current.open) {
+          focusFirstRef.current = true;
+          show(false);
+        }
+      } else if (event.key === 'Tab' && !event.shiftKey && portalled && first) {
+        // Portalled away from the trigger: Tab still moves into it.
+        event.preventDefault();
+        first.focus();
       }
     },
-    onPointerEnter,
-    onPointerLeave,
+    onPointerEnter: onPointerEnter('trigger'),
+    onPointerLeave: onPointerLeave('trigger'),
   };
 
   const onPopoverKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     const list = items();
     const index = list.indexOf(document.activeElement as HTMLElement);
+    if (event.key === 'Tab' && portalled) {
+      if (event.shiftKey && index <= 0) {
+        // Back from the first control (or the popover itself) to the trigger.
+        event.preventDefault();
+        focusTriggerQuietly();
+      } else if (!event.shiftKey && index === list.length - 1) {
+        // Past the last control: close, and carry on to what follows the trigger.
+        event.preventDefault();
+        const after = triggerRef.current
+          ? nextTabbable(triggerRef.current, popoverRef.current)
+          : undefined;
+        close();
+        if (after) after.focus();
+        else focusTriggerQuietly();
+      }
+      return;
+    }
     let next: HTMLElement | undefined;
     if (event.key === 'ArrowDown') next = list[index + 1] ?? list[0];
     else if (event.key === 'ArrowUp') next = index <= 0 ? triggerRef.current! : list[index - 1];
@@ -302,45 +421,57 @@ export function Popover({ label, trigger, children, className }: PopoverProps) {
     else if (event.key === 'End') next = list.at(-1);
     if (!next) return;
     event.preventDefault();
-    if (next === triggerRef.current) quietRef.current = true;
-    next.focus();
-    quietRef.current = false;
+    if (next === triggerRef.current) focusTriggerQuietly();
+    else next.focus();
   };
 
-  const onBlur = (event: FocusEvent<HTMLDivElement>) => {
-    // Hover keeps its own rule (the pointer leaving); otherwise focus leaving both closes it.
-    if (!open || openedBy === 'hover') return;
+  const onFocusIn = () => {
+    focusWithinRef.current = true;
+  };
+
+  const onFocusOut = (event: FocusEvent<HTMLDivElement>) => {
     const next = event.relatedTarget;
-    if (next instanceof Node && wrapperRef.current?.contains(next)) return;
-    close();
+    if (inside(next)) return;
+    focusWithinRef.current = false;
+    if (!liveRef.current.open) return;
+    // Pinned: focus moving on to another control closes it; focus going nowhere (the window losing
+    // focus) does not. Otherwise it closes unless the pointer still holds it.
+    if (liveRef.current.pinned) {
+      if (next) close();
+    } else dismissIfIdle();
   };
 
+  const popover = (
+    <div
+      ref={popoverRef}
+      id={id}
+      popover={native ? 'manual' : undefined}
+      role="dialog"
+      aria-label={label}
+      tabIndex={-1}
+      hidden={!open}
+      onPointerEnter={onPointerEnter('popover')}
+      onPointerLeave={onPointerLeave('popover')}
+      onKeyDown={onPopoverKeyDown}
+      onClick={(event) => event.stopPropagation()}
+      className={cn(
+        // The UA centres a popover in the viewport; it is placed from its trigger instead. The
+        // z-index matters only without the popover API (no top layer).
+        'fixed inset-auto z-50 m-0 w-max max-w-[min(24rem,calc(100vw-1rem))] overflow-auto',
+        'rounded-lg border border-default bg-surface-overlay p-2 text-left text-sm font-regular whitespace-normal text-default shadow-3',
+        'cursor-default select-text focus:outline-none',
+        className,
+      )}
+    >
+      {open ? (typeof children === 'function' ? children({ close }) : children) : null}
+    </div>
+  );
+
+  // React passes focus events from a portalled popover up to this wrapper, as if it were inside.
   return (
-    <div ref={wrapperRef} className="contents" onBlur={onBlur}>
+    <div ref={wrapperRef} className="contents" onFocus={onFocusIn} onBlur={onFocusOut}>
       {trigger(triggerProps)}
-      <div
-        ref={popoverRef}
-        id={id}
-        popover={native ? 'manual' : undefined}
-        role="dialog"
-        aria-label={label}
-        tabIndex={-1}
-        hidden={!open}
-        onPointerEnter={onPointerEnter}
-        onPointerLeave={onPointerLeave}
-        onKeyDown={onPopoverKeyDown}
-        onClick={(event) => event.stopPropagation()}
-        className={cn(
-          // The UA centres a popover in the viewport; it is placed from its trigger instead. The
-          // z-index matters only without the popover API (no top layer).
-          'fixed inset-auto z-50 m-0 w-max max-w-[min(24rem,calc(100vw-1rem))] overflow-auto',
-          'rounded-lg border border-default bg-surface-overlay p-2 text-left text-sm font-regular whitespace-normal text-default shadow-3',
-          'cursor-default select-text focus:outline-none',
-          className,
-        )}
-      >
-        {open ? (typeof children === 'function' ? children({ close }) : children) : null}
-      </div>
+      {portalled ? createPortal(popover, portal) : popover}
     </div>
   );
 }

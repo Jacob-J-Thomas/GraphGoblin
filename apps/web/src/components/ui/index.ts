@@ -10,6 +10,7 @@ export { Card } from './card.js';
 export { Dialog, type DialogCloseReason, type DialogProps } from './dialog.js';
 export { Checkbox, FieldGroup, HelpText, Input, Label, Select, Textarea } from './field.js';
 export {
+  anchorInView,
   CLOSE_DELAY,
   closePopovers,
   OPEN_DELAY,
