@@ -1,4 +1,4 @@
-import { useId, useState } from 'react';
+import { useId, useRef, useState, type KeyboardEvent } from 'react';
 import { NavLink } from 'react-router';
 import { cn } from '../../lib/utils.js';
 import { Icon } from '../icons/index.js';
@@ -16,18 +16,28 @@ export interface NavItem {
 
 /**
  * The main navigation on the header. The current page gets a green underline directly under its
- * label. Below 640 px the links fold into a Menu button and a full-width panel.
+ * label. Below 640 px the links fold into a Menu button and a full-width panel, a disclosure that
+ * Escape closes (from the button or from inside the panel), returning focus to the button.
  */
 export function MainNav({ items }: { items: readonly NavItem[] }) {
   const [open, setOpen] = useState(false);
   const navId = useId();
+  const menuRef = useRef<HTMLButtonElement>(null);
+  const closeOnEscape = (event: KeyboardEvent) => {
+    if (event.key !== 'Escape' || !open) return;
+    event.preventDefault();
+    setOpen(false);
+    (menuRef.current as HTMLButtonElement).focus();
+  };
   return (
     <>
       <button
+        ref={menuRef}
         type="button"
         aria-expanded={open}
         aria-controls={navId}
         onClick={() => setOpen((o) => !o)}
+        onKeyDown={closeOnEscape}
         className={cn(
           'ml-auto inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border border-inverse px-3',
           'font-medium text-inverse focus-visible:outline-2 focus-visible:outline-offset-2',
@@ -40,6 +50,7 @@ export function MainNav({ items }: { items: readonly NavItem[] }) {
       <nav
         id={navId}
         aria-label="Main"
+        onKeyDown={closeOnEscape}
         className={cn(
           'flex gap-1 sm:static sm:flex sm:flex-row sm:items-stretch sm:self-stretch',
           'max-sm:absolute max-sm:inset-x-0 max-sm:top-14 max-sm:z-10 max-sm:flex-col',

@@ -57,6 +57,47 @@ describe('MainNav', () => {
   });
 });
 
+describe('MainNav Escape', () => {
+  it('closes the open menu with Escape from inside it and returns focus to the button', async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={['/loops']}>
+        <MainNav items={NAV} />
+      </MemoryRouter>,
+    );
+    const menu = screen.getByRole('button', { name: 'Menu' });
+    const nav = screen.getByRole('navigation', { name: 'Main' });
+    await user.click(menu);
+    expect(menu).toHaveAttribute('aria-expanded', 'true');
+    await user.tab();
+    expect(screen.getByRole('link', { name: 'Loops' })).toHaveFocus();
+    await user.keyboard('{Escape}');
+    expect(menu).toHaveAttribute('aria-expanded', 'false');
+    expect(menu).toHaveAttribute('aria-controls', nav.id);
+    expect(nav).toHaveClass('max-sm:hidden');
+    expect(menu).toHaveFocus();
+  });
+
+  it('closes from the button, and Escape does nothing while the menu is closed', async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={['/loops']}>
+        <MainNav items={NAV} />
+      </MemoryRouter>,
+    );
+    const menu = screen.getByRole('button', { name: 'Menu' });
+    await user.click(menu);
+    await user.keyboard('{Escape}');
+    expect(menu).toHaveAttribute('aria-expanded', 'false');
+    expect(menu).toHaveFocus();
+    // Closed (as on desktop widths): Escape in the navigation leaves focus where it is.
+    screen.getByRole('link', { name: 'Loops' }).focus();
+    await user.keyboard('{Escape}');
+    expect(screen.getByRole('link', { name: 'Loops' })).toHaveFocus();
+    expect(menu).toHaveAttribute('aria-expanded', 'false');
+  });
+});
+
 describe('AppShell', () => {
   it('frames the screen with the logo, navigation, and offline banner', () => {
     const { rerender } = render(
