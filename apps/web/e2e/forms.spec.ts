@@ -94,7 +94,9 @@ for (const theme of ['dark', 'light']) {
     await page.evaluate((theme) => {
       document.documentElement.dataset['theme'] = theme;
     }, theme);
-    await page.getByRole('tab', { name: 'Loop', exact: true }).click();
+    // The loop panel is expanded by default at this width; open it when a smaller default collapsed it.
+    const loopToggle = page.getByRole('button', { name: 'Loop settings', exact: true });
+    if ((await loopToggle.getAttribute('aria-expanded')) !== 'true') await loopToggle.click();
     const variables = page.getByRole('group', { name: 'Variables', exact: true });
     await variables.getByRole('button', { name: 'Add entry', exact: true }).click();
     await page.getByLabel('Variables key 1').fill('value');
@@ -142,7 +144,6 @@ for (const theme of ['dark', 'light']) {
       .toEqual({ value: { type: 'boolean' } });
     // String record sibling in the node properties uses the same row layout.
     await page.getByTestId('node-approve').click();
-    await page.getByRole('tab', { name: 'Node', exact: true }).click();
     await page.getByLabel('Env key 1').fill('RENAMED');
     await page.getByLabel('Env value 1').fill('edited');
     await page

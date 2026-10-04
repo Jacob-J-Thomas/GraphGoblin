@@ -182,7 +182,7 @@ curl -sS http://127.0.0.1:4747/system/preflight
 **Settings → Harness preflight** in the UI, and `GET /harness/preflight`, show the Codex check alone.
 
 1. Open **Loops**, enter a name in **New loop name**, and click **Create**. The editor opens on a starter graph that connects a manual trigger to an exit.
-2. Click **Publish**, then **Run**, and click **Start run**. The inspector opens and should show a succeeded run.
+2. Click **Publish**, then **Open in Runs**, and click **Start run**. The inspector opens and should show a succeeded run.
 3. Follow [Build a loop](02-build-a-loop.md) to insert an inference node and have Codex produce a result.
 
 ## Locate your data

@@ -69,7 +69,13 @@ export function runRecord(overrides: Partial<RunRecord> = {}): RunRecord {
 export class FakeApi {
   loops = new Map<
     string,
-    { loop: LoopRecord; draft?: LoopVersionRecord; current?: LoopVersionRecord }
+    {
+      loop: LoopRecord;
+      draft?: LoopVersionRecord;
+      current?: LoopVersionRecord;
+      /** Every published version, oldest first. */
+      history: LoopVersionRecord[];
+    }
   >();
   runs = new Map<string, RunRecord>();
   threads = new Map<string, ContextThread>();
@@ -152,8 +158,31 @@ export class FakeApi {
       createdAt: TS,
       updatedAt: TS,
     };
-    this.loops.set(loopId, { loop, ...(draft ? { draft } : {}), ...(current ? { current } : {}) });
+    this.loops.set(loopId, {
+      loop,
+      ...(draft ? { draft } : {}),
+      ...(current ? { current } : {}),
+      history: current ? [current] : [],
+    });
     return loop;
+  }
+
+  /** Publish `definition` as the loop's next version, as the editor's Publish would. */
+  publishVersion(loopId: string, definition: LoopDefinitionInput): LoopVersionRecord {
+    const entry = this.loops.get(loopId)!;
+    const version: LoopVersionRecord = {
+      id: id('version'),
+      loopId,
+      version: (entry.current?.version ?? 0) + 1,
+      status: 'published',
+      definition: LoopDefinitionSchema.parse(definition),
+      createdAt: TS,
+      publishedAt: TS,
+    };
+    entry.current = version;
+    entry.history.push(version);
+    entry.loop = { ...entry.loop, currentVersionId: version.id };
+    return version;
   }
 
   /** The draft token the real API derives: a hash of the draft, or else the published definition. */
@@ -370,10 +399,19 @@ export class FakeApi {
         }
         const version: LoopVersionRecord = { ...entry.draft, status: 'published', publishedAt: TS };
         entry.current = version;
+        entry.history.push(version);
         delete entry.draft;
         const { draftVersionId: _d, ...loop } = entry.loop;
         entry.loop = { ...loop, currentVersionId: version.id };
         return json({ version });
+      },
+    ],
+    [
+      'GET /loops/:id/versions',
+      (_call, [loopId]) => {
+        const entry = this.loops.get(loopId!);
+        if (!entry) return problem(404, 'LOOP_NOT_FOUND', 'loop not found');
+        return json({ items: [...entry.history, ...(entry.draft ? [entry.draft] : [])] });
       },
     ],
     [
@@ -401,9 +439,12 @@ export class FakeApi {
       'POST /loops/:id/runs',
       (call, [loopId]) => {
         const entry = this.loops.get(loopId!);
-        if (!entry?.current) return problem(409, 'VERSION_NOT_PUBLISHED', 'publish first');
-        const run = this.addRun({ loopId: loopId!, versionId: entry.current.id, status: 'queued' });
-        void call;
+        if (!entry?.current)
+          return problem(404, 'LOOP_NOT_FOUND', 'the loop has no published version');
+        const asked = (call.body as { versionId?: string } | undefined)?.versionId;
+        const version = asked ? entry.history.find((v) => v.id === asked) : entry.current;
+        if (!version) return problem(404, 'VERSION_NOT_FOUND', `version ${asked} not found`);
+        const run = this.addRun({ loopId: loopId!, versionId: version.id, status: 'queued' });
         return json({ run }, 202);
       },
     ],

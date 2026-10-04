@@ -7,11 +7,11 @@ import { useParams } from 'react-router';
 import { useApi } from '../api/context.js';
 import { keys } from '../api/queries.js';
 import { ErrorState } from '../components/status.js';
-import { Alert, Button } from '../components/ui/index.js';
+import { Alert, Button, useSidePanelState } from '../components/ui/index.js';
 import { errorMessage, formatDateTime, isOfflineError, problemIssues } from '../lib/utils.js';
 import { Canvas } from './Canvas.js';
-import { EditorSidePanel, type PanelTab } from './EditorSidePanel.js';
-import { EditorToolbar } from './EditorToolbar.js';
+import { ConflictNotice } from './ConflictNotice.js';
+import { EditorToolbar, OpenInRuns } from './EditorToolbar.js';
 import {
   fieldErrorIssues,
   issueKey,
@@ -19,6 +19,8 @@ import {
   validateDraft,
   type EditorIssue,
 } from './model.js';
+import { NodeEditorDialog } from './NodeEditorDialog.js';
+import { LOOP_PANEL_STORAGE_KEY, LoopPanel, loopPanelDefault } from './LoopPanel.js';
 import { Palette } from './Palette.js';
 import { useEditorStore } from './store.js';
 import { useAutosave } from './useAutosave.js';
@@ -27,8 +29,9 @@ import { useResolveConflict } from './useResolveConflict.js';
 
 /**
  * The loop editor: the toolbar, notices about the draft (restored, set aside, conflicting,
- * unsaved, published), the palette, the canvas, and the side panel. Loading and conflict
- * resolution live in useLoadEditor and useResolveConflict.
+ * unsaved, published), the palette, the canvas, the collapsible loop panel (loop settings and the
+ * validation list), and the node editor dialog for the node opened on the canvas. Loading and
+ * conflict resolution live in useLoadEditor and useResolveConflict. Runs start from Runs.
  */
 export function EditorPage() {
   const { loopId = '' } = useParams();
@@ -40,8 +43,13 @@ export function EditorPage() {
   const saveState = useEditorStore((s) => s.saveState);
   const saveMessage = useEditorStore((s) => s.saveMessage);
   const connectionError = useEditorStore((s) => s.connectionError);
-  const [tab, setTab] = useState<PanelTab>('node');
-  const [settingsEpoch, setSettingsEpoch] = useState(0);
+  const selectedNodeId = useEditorStore((s) => s.selectedNodeId);
+  const nodeDialogOpen = useEditorStore((s) => s.nodeDialogOpen);
+  const nodeDialogSession = useEditorStore((s) => s.nodeDialogSession);
+  const [panelExpanded, setPanelExpanded] = useSidePanelState(
+    LOOP_PANEL_STORAGE_KEY,
+    loopPanelDefault,
+  );
   const flush = useAutosave(client);
   const conflict = useEditorStore((s) => s.conflict);
   const resolve = useResolveConflict(loopId, flush);
@@ -113,6 +121,7 @@ export function EditorPage() {
   const def = definition as LoopDefinitionInput;
   const published = query.data?.current?.definition;
   const errors = validation.issues.filter((i) => i.severity === 'error').length;
+  const editing = nodeDialogOpen ? def.nodes.find((n) => n.id === selectedNodeId) : undefined;
 
   const notices = [
     restored ? (
@@ -134,31 +143,7 @@ export function EditorPage() {
         </span>
       </Alert>
     ) : null,
-    conflict ? (
-      <Alert key="conflict" tone="warn" title="The draft changed on the server">
-        Another tab or device saved this loop&apos;s draft after this editor loaded it. Your changes
-        are kept on this device and nothing was overwritten.{' '}
-        <span className="mt-2 flex flex-wrap gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={resolve.busy}
-            onClick={() => void resolve.reload()}
-          >
-            Reload server draft
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={resolve.busy}
-            onClick={() => void resolve.overwrite()}
-          >
-            Overwrite with this copy
-          </Button>
-        </span>
-        {resolve.error ? <span className="mt-1 block">{resolve.error}</span> : null}
-      </Alert>
-    ) : null,
+    conflict ? <ConflictNotice key="conflict" resolve={resolve} /> : null,
     saveMessage && (saveState === 'offline' || saveState === 'error' || saveState === 'invalid') ? (
       <Alert key="save" tone="warn">
         {saveMessage}
@@ -166,9 +151,13 @@ export function EditorPage() {
     ) : null,
     publish.isSuccess && publishedRevision === revision ? (
       <Alert key="published" tone="good">
-        {publish.data.version
-          ? `Published version ${publish.data.version.version}.`
-          : 'Nothing to publish: there are no changes since the published version.'}
+        <span className="flex flex-wrap items-center gap-x-3">
+          {publish.data.version
+            ? `Published version ${publish.data.version.version}.`
+            : 'Nothing to publish: there are no changes since the published version.'}
+          {/* The "run it" prompt: the same link as the toolbar's, to the New run flow. */}
+          {publish.data.version ? <OpenInRuns loopId={loopId} published /> : null}
+        </span>
       </Alert>
     ) : null,
     publish.isError ? (
@@ -191,6 +180,7 @@ export function EditorPage() {
   return (
     <div className="flex h-[calc(100vh-3.5rem)] flex-col">
       <EditorToolbar
+        loopId={loopId}
         name={def.name}
         published={Boolean(published)}
         version={query.data?.current?.version}
@@ -198,11 +188,8 @@ export function EditorPage() {
         saveMessage={saveMessage}
         errors={errors}
         publishing={publish.isPending}
-        onLoopSettings={() => {
-          setTab('loop');
-          setSettingsEpoch((e) => e + 1);
-        }}
-        onRun={() => setTab('run')}
+        loopPanelExpanded={panelExpanded}
+        onLoopSettings={() => setPanelExpanded(!panelExpanded)}
         onPublish={() => publish.mutate()}
       />
       {notices.length > 0 ? (
@@ -218,17 +205,25 @@ export function EditorPage() {
           <main className="min-w-0 flex-1">
             <Canvas definition={def} issues={validation.issues} />
           </main>
-          <EditorSidePanel
-            tab={tab}
-            onTab={setTab}
+          <LoopPanel
             definition={def}
             issues={validation.issues}
-            loopId={loopId}
-            settingsEpoch={settingsEpoch}
-            published={published}
+            expanded={panelExpanded}
+            onExpandedChange={setPanelExpanded}
           />
         </div>
       </ReactFlowProvider>
+      {/* Outside the canvas, so keys pressed in the dialog never reach the canvas handlers. */}
+      {editing ? (
+        <NodeEditorDialog
+          key={nodeDialogSession}
+          node={editing}
+          definition={def}
+          issues={validation.issues}
+          loopId={loopId}
+          notice={conflict ? <ConflictNotice resolve={resolve} /> : null}
+        />
+      ) : null}
     </div>
   );
 }

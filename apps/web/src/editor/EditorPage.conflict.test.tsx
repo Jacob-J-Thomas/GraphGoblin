@@ -114,6 +114,37 @@ describe('draft conflicts (If-Match)', () => {
     expect(await screen.findByText(/down/)).toBeInTheDocument();
   });
 
+  it('answers a conflict from inside an open node editor', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const loop = api.addLoop(newLoopDefinition('mine'));
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'mine' });
+    act(() => useEditorStore.getState().openNode('start'));
+    const dialog = await screen.findByRole('dialog', { name: 'Edit trigger start' });
+    api.saveDraftElsewhere(loop.id, { ...newLoopDefinition('mine'), description: 'theirs' });
+    await user.type(within(dialog).getByLabelText('Label'), ' here');
+    expect(await within(dialog).findByText(TITLE, undefined, SAVE_WAIT)).toBeInTheDocument();
+    expect(screen.getByTestId('save-state')).toHaveTextContent('Draft changed elsewhere');
+
+    // Overwrite from the dialog: saved, and the editor stays open on the node.
+    await user.click(within(dialog).getByRole('button', { name: 'Overwrite with this copy' }));
+    await waitFor(
+      () => expect(screen.getByTestId('save-state')).toHaveTextContent('All changes saved'),
+      SAVE_WAIT,
+    );
+    expect(within(dialog).queryByText(TITLE)).toBeNull();
+    expect(screen.getByRole('dialog', { name: 'Edit trigger start' })).toBe(dialog);
+
+    // Reload from the dialog: the server draft replaces this copy and the editor closes.
+    api.saveDraftElsewhere(loop.id, newLoopDefinition('saved elsewhere'));
+    await user.type(within(dialog).getByLabelText('Label'), '!');
+    expect(await within(dialog).findByText(TITLE, undefined, SAVE_WAIT)).toBeInTheDocument();
+    await user.click(within(dialog).getByRole('button', { name: 'Reload server draft' }));
+    expect(await screen.findByRole('heading', { name: 'saved elsewhere' })).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
   it('does not save over the server draft when leaving in conflict', async () => {
     const api = new FakeApi();
     const loop = api.addLoop(newLoopDefinition('mine'));

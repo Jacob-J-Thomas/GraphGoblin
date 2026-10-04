@@ -29,6 +29,25 @@ function propertyType(schema: PropertySchema): 'string' | 'number' | 'boolean' |
   return 'json';
 }
 
+/**
+ * How an enum value reads in its select: a string as itself unless the enum also holds a value
+ * that reads the same (a string "1" beside the number 1), then quoted; anything else as JSON.
+ */
+function enumLabel(option: unknown, options: unknown[]): string {
+  if (typeof option !== 'string') return JSON.stringify(option);
+  const clash = options.some((other) => other !== option && JSON.stringify(other) === option);
+  return clash ? JSON.stringify(option) : option;
+}
+
+/**
+ * An enum member as the value its select holds: its JSON text, so a choice survives the schema
+ * changing under a mounted form (members reordered, added, or removed) and keeps meaning that
+ * member. A string and a number with the same text ("1" and 1) stay apart.
+ */
+function enumKey(option: unknown): string {
+  return JSON.stringify(option) ?? 'null';
+}
+
 function objectProperties(
   schema: JsonSchema | undefined,
 ): Record<string, PropertySchema> | undefined {
@@ -40,10 +59,53 @@ function objectProperties(
 }
 
 /**
+ * A select over an enum's members. When the chosen member is no longer offered (the schema changed
+ * while the form was open) it shows "(choose)" and says so, and the form refuses to send.
+ */
+function EnumSelect({
+  id,
+  options,
+  value,
+  onChange,
+}: {
+  id: string;
+  options: unknown[];
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const gone = value !== '' && !options.some((option) => enumKey(option) === value);
+  return (
+    <>
+      <Select
+        id={id}
+        value={gone ? '' : value}
+        aria-invalid={gone ? true : undefined}
+        aria-describedby={gone ? `${id}-gone` : undefined}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        <option value="">(choose)</option>
+        {options.map((option, index) => (
+          <option key={index} value={enumKey(option)}>
+            {enumLabel(option, options)}
+          </option>
+        ))}
+      </Select>
+      {gone ? (
+        <HelpText id={`${id}-gone`} tone="bad">
+          The choice {value} is no longer offered; choose again.
+        </HelpText>
+      ) : null}
+    </>
+  );
+}
+
+/**
  * A form for a JSON Schema: the wait node's `inputSchema` or a manual trigger's input. Object
  * schemas get one field per property (strings, numbers, booleans, enums; anything else as JSON);
- * any other schema, or none, gets a single JSON editor. Values are checked with `domain`'s
- * validator before `onSubmit`.
+ * any other schema, or none, gets a single JSON editor. An enum choice is kept by value and sent
+ * as the value it stands for (a number stays a number). The value is checked with `domain`'s validator before
+ * `onSubmit`, as the API will check it: an empty JSON editor as `null`, which is what the API
+ * validates when no input is sent.
  */
 export function JsonSchemaForm({
   schema,
@@ -74,7 +136,17 @@ export function JsonSchemaForm({
       if (value === undefined || value === '') continue;
       const type = propertyType(prop);
       if (type === 'number') out[key] = Number(value);
-      else if (type === 'json') {
+      // Enum selects hold the chosen member's JSON text: the member comes back with its type. A
+      // choice the schema no longer offers is refused, never silently left out.
+      else if (type === 'enum') {
+        const member = (prop.enum ?? []).find((option) => enumKey(option) === value);
+        if (member === undefined)
+          return {
+            ok: false,
+            errors: [`${prop.title ?? key}: ${String(value)} is no longer offered`],
+          };
+        out[key] = member;
+      } else if (type === 'json') {
         const parsed = parseJson(String(value));
         if (!parsed.ok) return { ok: false, errors: [`${key}: invalid JSON`] };
         out[key] = parsed.value;
@@ -87,8 +159,9 @@ export function JsonSchemaForm({
     event.preventDefault();
     const collected = collect();
     if (!collected.ok) return setErrors(collected.errors);
-    if (schema && collected.value !== undefined) {
-      const result = validateJson(schema, collected.value);
+    if (schema) {
+      // No input at all reaches the API's check as null.
+      const result = validateJson(schema, collected.value ?? null);
       if (!result.ok) return setErrors(result.errors);
     }
     setErrors([]);
@@ -120,18 +193,12 @@ export function JsonSchemaForm({
             <FieldGroup key={key} className="max-w-[440px]">
               <Label htmlFor={fieldId}>{label}</Label>
               {type === 'enum' ? (
-                <Select
+                <EnumSelect
                   id={fieldId}
+                  options={prop.enum ?? []}
                   value={String(values[key] ?? '')}
-                  onChange={(e) => setValues({ ...values, [key]: e.target.value })}
-                >
-                  <option value="">(choose)</option>
-                  {(prop.enum ?? []).map((option) => (
-                    <option key={String(option)} value={String(option)}>
-                      {String(option)}
-                    </option>
-                  ))}
-                </Select>
+                  onChange={(value) => setValues({ ...values, [key]: value })}
+                />
               ) : type === 'json' ? (
                 <Textarea
                   id={fieldId}

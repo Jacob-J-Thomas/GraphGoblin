@@ -7,5 +7,7 @@ export { Badge, type Tone } from './badge.js';
 export { Button, buttonStyles } from './button.js';
 export { ConfirmAction } from './confirm-action.js';
 export { Card } from './card.js';
+export { Dialog, type DialogCloseReason, type DialogProps } from './dialog.js';
 export { Checkbox, FieldGroup, HelpText, Input, Label, Select, Textarea } from './field.js';
+export { SidePanel, readPanelState, useSidePanelState, writePanelState } from './side-panel.js';
 export { Table, Td, Th } from './table.js';

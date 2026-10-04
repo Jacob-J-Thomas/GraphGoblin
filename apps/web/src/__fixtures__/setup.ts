@@ -2,6 +2,7 @@ import '@testing-library/jest-dom/vitest';
 import 'fake-indexeddb/auto';
 import { cleanup, configure } from '@testing-library/react';
 import { afterEach } from 'vitest';
+import { dialogClose } from './dialog.js';
 
 // Whole-app renders under a busy parallel run can take longer than the 1 s default.
 configure({ asyncUtilTimeout: 5000 });
@@ -30,24 +31,40 @@ Range.prototype.getClientRects ??= emptyRects;
 Range.prototype.getBoundingClientRect ??= zeroRect;
 Element.prototype.scrollIntoView ??= function scrollIntoView() {};
 
+// jsdom has HTMLDialogElement but not showModal or close. A minimal stand-in: showModal sets the
+// open attribute, close removes it and fires `close` as a queued task, as browsers do (or at once,
+// see __fixtures__/dialog.ts), and Esc fires a cancelable `cancel` at the open dialog, closing it
+// unless a handler prevents that. There is no top layer or inertness; tests of those run in the
+// browser (e2e).
+const dialogPrototype: Pick<HTMLDialogElement, 'showModal' | 'close'> = HTMLDialogElement.prototype;
+if (!Object.hasOwn(HTMLDialogElement.prototype, 'showModal')) {
+  dialogPrototype.showModal = function showModal(this: HTMLDialogElement) {
+    this.setAttribute('open', '');
+  };
+  dialogPrototype.close = function close(this: HTMLDialogElement, value?: string) {
+    if (!this.hasAttribute('open')) return;
+    this.removeAttribute('open');
+    if (value !== undefined) this.returnValue = value;
+    if (dialogClose.delivery === 'sync') this.dispatchEvent(new Event('close'));
+    else setTimeout(() => this.dispatchEvent(new Event('close')), 0);
+  };
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape' || event.defaultPrevented) return;
+    const dialog = [...document.querySelectorAll('dialog[open]')].at(-1);
+    if (!(dialog instanceof HTMLDialogElement)) return;
+    if (dialog.dispatchEvent(new Event('cancel', { cancelable: true }))) dialog.close();
+  });
+}
+
 class DOMMatrixStub {
   m22 = 1;
   constructor(_init?: string) {}
 }
 globalThis.DOMMatrixReadOnly ??= DOMMatrixStub as unknown as typeof DOMMatrixReadOnly;
 
-// jsdom has no modal top layer. Edge tests exercise native focus containment and Escape.
-HTMLDialogElement.prototype.showModal ??= function showModal() {
-  this.open = true;
-};
-HTMLDialogElement.prototype.close ??= function close() {
-  if (!this.open) return;
-  this.open = false;
-  queueMicrotask(() => this.dispatchEvent(new Event('close')));
-};
-
 afterEach(() => {
   cleanup();
+  dialogClose.delivery = 'task';
   sessionStorage.clear();
   localStorage.clear();
 });

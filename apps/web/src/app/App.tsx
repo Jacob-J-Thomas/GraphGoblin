@@ -7,6 +7,7 @@ import { EventsPage } from '../events/EventsPage.js';
 import { useOnline } from '../lib/online.js';
 import { LoopsPage } from '../loops/LoopsPage.js';
 import { UpdateToast } from '../pwa/UpdateToast.js';
+import { NewRunPage } from '../runs/new/NewRunPage.js';
 import { RunInspectorPage } from '../runs/RunInspectorPage.js';
 import { RunsPage } from '../runs/RunsPage.js';
 import { SettingsPage } from '../settings/SettingsPage.js';
@@ -54,6 +55,7 @@ export function App() {
         <Route path="loops" element={<LoopsPage />} />
         <Route path="loops/:loopId/edit" element={<EditorRoute />} />
         <Route path="runs" element={<RunsPage />} />
+        <Route path="runs/new" element={<NewRunPage />} />
         <Route path="runs/:runId" element={<RunInspectorPage />} />
         <Route path="events" element={<EventsPage />} />
         <Route path="settings" element={<SettingsPage />} />

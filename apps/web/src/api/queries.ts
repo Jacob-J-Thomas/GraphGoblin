@@ -16,6 +16,8 @@ import { useApi } from './context.js';
 export const keys = {
   loops: ['loops'] as const,
   loop: (id: string) => ['loops', id] as const,
+  /** Under the loop's key, so invalidating the loop (after a publish) refetches them too. */
+  versions: (id: string) => ['loops', id, 'versions'] as const,
   runs: (query: ListRunsQuery = {}) => ['runs', 'list', query] as const,
   run: (id: string) => ['runs', 'one', id] as const,
   thread: (id: string) => ['runs', 'thread', id] as const,
@@ -35,6 +37,11 @@ export function useLoops() {
 export function useLoop(id: string) {
   const client = useApi();
   return useQuery({ queryKey: keys.loop(id), queryFn: () => loops.get(client, id) });
+}
+
+export function useLoopVersions(id: string) {
+  const client = useApi();
+  return useQuery({ queryKey: keys.versions(id), queryFn: () => loops.versions(client, id) });
 }
 
 export function useRuns(query: ListRunsQuery = {}, refetchInterval: number | false = false) {

@@ -30,6 +30,38 @@ describe('editor store', () => {
     expect(store().revision).toBe(4);
   });
 
+  it('opens and closes the node editor without touching the selection', () => {
+    store().load('L1', newLoopDefinition('a'));
+    store().openNode('nowhere');
+    expect(store()).toMatchObject({ selectedNodeId: undefined, nodeDialogOpen: false });
+    store().openNode('start');
+    expect(store()).toMatchObject({ selectedNodeId: 'start', nodeDialogOpen: true });
+    // Opening the node already open keeps its session; another node starts a new one.
+    const session = store().nodeDialogSession;
+    store().openNode('start');
+    expect(store().nodeDialogSession).toBe(session);
+    store().openNode('done');
+    expect(store().nodeDialogSession).toBe(session + 1);
+    store().openNode('start');
+    store().closeNodeDialog();
+    expect(store()).toMatchObject({ selectedNodeId: 'start', nodeDialogOpen: false });
+    // Selecting alone does not open it; renaming keeps it on the node; deleting closes it.
+    store().select('done');
+    expect(store().nodeDialogOpen).toBe(false);
+    store().openNode('done');
+    store().renameNode('done', 'finish');
+    expect(store()).toMatchObject({ selectedNodeId: 'finish', nodeDialogOpen: true });
+    store().removeNode('start');
+    expect(store()).toMatchObject({ selectedNodeId: 'finish', nodeDialogOpen: true });
+    store().removeNode('finish');
+    expect(store()).toMatchObject({ selectedNodeId: undefined, nodeDialogOpen: false });
+    // A load closes it too.
+    store().load('L1', newLoopDefinition('a'));
+    store().openNode('start');
+    store().load('L1', newLoopDefinition('b'));
+    expect(store().nodeDialogOpen).toBe(false);
+  });
+
   it('adds, updates, moves, renames, and removes nodes', () => {
     store().load('L1', newLoopDefinition('a'));
     const id = store().addNode('mutate', { x: 1, y: 2 });

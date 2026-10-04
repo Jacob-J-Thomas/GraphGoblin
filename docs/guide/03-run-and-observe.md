@@ -2,12 +2,16 @@
 
 ## Start from the UI
 
-Open a published loop in the editor, select **Run**, choose its manual trigger, fill in the input form, and click **Start run**. The UI opens the inspector for the new run. Runs started here record the invocation source `manual.ui`.
+Runs start from the **Runs** screen. Click **New run** and choose a published loop. Then choose its version (the current one unless you pick an older published version; the run keeps the version it started with), one of its manual triggers, and the input, in a form generated from the trigger's `inputSchema`. The input is checked against that schema before anything is sent, and a refusal from the API is shown under the form. Click **Start run**; the inspector opens for the new run. You can start more runs of the same loop while earlier ones are still running. Runs started here record the invocation source `manual.ui`.
 
-The Runs screen lists runs across loops and filters by loop, status, and parent. Its browser routes are:
+In the editor, **Open in Runs** (in the toolbar, and in the notice after a publish) opens New run with that loop already chosen. Until the loop has a published version it is disabled and says why. The editor itself starts no runs.
+
+The Runs screen lists runs across loops and filters by loop, status, and parent; with a loop filter set, **New run** starts with that loop chosen. The chosen loop is part of the address, so a link or a reload keeps it. Its browser routes are:
 
 ```text
 /app/runs
+/app/runs/new
+/app/runs/new?loop=<loop-id>
 /app/runs/<run-id>
 ```
 

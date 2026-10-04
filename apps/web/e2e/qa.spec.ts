@@ -3,8 +3,17 @@
  * the built app against the in-process API; `control()` scripts the fake harness through the E2E
  * server's control port.
  */
-import type { APIRequestContext, Page } from '@playwright/test';
-import { approvalLoop, control, expect, publishLoop, test } from './fixtures.js';
+import type { APIRequestContext, Locator, Page } from '@playwright/test';
+import {
+  approvalLoop,
+  closeNode,
+  control,
+  expect,
+  openNode,
+  publishLoop,
+  showLoopPanel,
+  test,
+} from './fixtures.js';
 
 const start = { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } };
 const done = { id: 'done', kind: 'exit', label: 'Done', config: {} };
@@ -170,39 +179,62 @@ test('the editor blocks publishing on template syntax errors and unparsed JSON, 
 }) => {
   const loopId = await publishLoop(request, approvalLoop('qa syntax'));
   await page.goto(`/app/loops/${loopId}/edit`);
-  await page.getByTestId('node-approve').click();
+  await showLoopPanel(page);
+  await openNode(page, 'approve');
   const prompt = page.locator('[data-field="prompt"] .cm-content');
   await prompt.click();
   await page.keyboard.press('Control+A');
   await page.keyboard.type('Approve {% if x %}');
   const validation = page.getByRole('region', { name: 'Validation' });
   await expect(validation).toContainText('TEMPLATE_INVALID');
+  // The page behind the node editor is inert: close it to reach Publish.
+  await closeNode(page);
   await page.getByRole('button', { name: 'Publish' }).click();
   await expect(page.getByText('Publish failed')).toBeVisible();
   await expect(page.getByText(/TEMPLATE_INVALID|template at node/).first()).toBeVisible();
 
+  await openNode(page, 'approve');
   await prompt.click();
   await page.keyboard.press('Control+A');
   await page.keyboard.type('Approve?');
   await expect(validation).toContainText('Ready to publish');
 
-  // Input schema text that is not JSON blocks publishing until fixed.
+  // Input schema text that is not JSON blocks publishing until fixed, after the editor closes.
   const schema = page.locator('[data-field="inputSchema"] .cm-content');
   await schema.click();
   await page.keyboard.type('{"type": ');
   await expect(validation).toContainText('FIELD_UNPARSED');
+  await closeNode(page);
   await page.getByRole('button', { name: 'Publish' }).click();
   await expect(page.getByText(/does not parse; fix them first/)).toBeVisible();
   // Delete with focus on the Publish button must not delete the selected node.
   await page.keyboard.press('Delete');
   await expect(page.getByTestId('node-approve')).toBeVisible();
+  await openNode(page, 'approve');
   await schema.click();
   await page.keyboard.press('Control+A');
   await page.keyboard.press('Delete');
   await expect(validation).toContainText('Ready to publish');
+  // Delete and Backspace inside the editor edit the field, never the graph.
+  await expect(page.getByTestId('node-approve')).toBeVisible();
+  await closeNode(page);
   await page.getByRole('button', { name: 'Publish' }).click();
   await expect(page.getByText(/Published version 2\.|Nothing to publish/)).toBeVisible();
 });
+
+/**
+ * Press Tab (or Shift+Tab) until `target` has focus, as a keyboard user would, failing after
+ * `limit` presses.
+ */
+async function tabTo(page: Page, target: Locator, { back = false, limit = 80 } = {}) {
+  for (
+    let i = 0;
+    i < limit && !(await target.evaluate((el) => el === document.activeElement));
+    i += 1
+  )
+    await page.keyboard.press(back ? 'Shift+Tab' : 'Tab');
+  await expect(target).toBeFocused();
+}
 
 test('keyboard only: add a node, connect it, and publish', async ({ page }) => {
   await page.goto('/app/loops');
@@ -210,27 +242,61 @@ test('keyboard only: add a node, connect it, and publish', async ({ page }) => {
   await page.getByLabel('New loop name').press('Enter');
   await expect(page.getByRole('heading', { name: 'qa keyboard' })).toBeVisible();
 
-  await page.getByRole('button', { name: 'Add Wait node' }).focus();
+  // Every step from here is a key press: Tab and Shift+Tab move, Enter acts, the arrow keys change a
+  // focused select (closed, as Edge and Chromium do on Windows and Linux), Esc closes.
+  await tabTo(page, page.getByRole('button', { name: 'Add Wait node' }));
   await page.keyboard.press('Enter');
   await expect(page.getByTestId('node-wait')).toBeInViewport();
   // Rewire start -> wait -> done with the Connect forms.
-  // Canvas nodes are focusable; Enter selects the focused node.
-  await page.locator('.react-flow__node[data-id="start"]').focus();
+  // Canvas nodes are focusable; Enter opens the focused node's editor and Esc closes it.
+  const startNode = page.locator('.react-flow__node[data-id="start"]');
+  await tabTo(page, startNode);
   await page.keyboard.press('Enter');
-  await page.getByRole('button', { name: 'Remove edge e1' }).focus();
+  const startDialog = page.getByRole('dialog', { name: 'Edit trigger start' });
+  await expect(startDialog).toBeVisible();
+  await expect(startDialog.getByRole('heading', { name: 'Edit trigger start' })).toBeFocused();
+  // Tab walks the dialog in visual order: close, id, label, the config form, connections.
+  await page.keyboard.press('Tab');
+  await expect(startDialog.getByRole('button', { name: 'Close' })).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(startDialog.getByLabel('Node id')).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(startDialog.getByLabel('Label')).toBeFocused();
+  await tabTo(page, startDialog.getByRole('button', { name: 'Remove edge e1' }));
   await page.keyboard.press('Enter');
   const startForm = page.getByRole('form', { name: 'Connect start' });
-  await startForm.getByLabel('To').selectOption('wait');
-  await startForm.getByRole('button', { name: 'Connect' }).focus();
+  await tabTo(page, startForm.getByLabel('To'));
+  await expect(startForm.getByLabel('To')).toHaveValue('done');
+  await page.keyboard.press('ArrowDown');
+  await expect(startForm.getByLabel('To')).toHaveValue('wait');
+  await tabTo(page, startForm.getByRole('button', { name: 'Connect' }));
   await page.keyboard.press('Enter');
-  await page.locator('.react-flow__node[data-id="wait"]').focus();
+  await page.keyboard.press('Escape');
+  await expect(startDialog).toHaveCount(0);
+  await expect(startNode).toBeFocused();
+
+  const waitNode = page.locator('.react-flow__node[data-id="wait"]');
+  await tabTo(page, waitNode);
   await page.keyboard.press('Enter');
+  const waitDialog = page.getByRole('dialog', { name: 'Edit wait wait' });
+  await expect(waitDialog).toBeVisible();
   const waitForm = page.getByRole('form', { name: 'Connect wait' });
-  await waitForm.getByLabel('To').selectOption('done');
-  await waitForm.getByRole('button', { name: 'Connect' }).focus();
+  await tabTo(page, waitForm.getByLabel('To'));
+  await page.keyboard.press('ArrowDown');
+  await expect(waitForm.getByLabel('To')).toHaveValue('wait');
+  await page.keyboard.press('ArrowUp');
+  await expect(waitForm.getByLabel('To')).toHaveValue('done');
+  await tabTo(page, waitForm.getByRole('button', { name: 'Connect' }));
   await page.keyboard.press('Enter');
+  // Past the last control, Tab comes back round to the first: focus stays in the dialog.
+  await tabTo(page, waitDialog.getByRole('button', { name: 'Done' }));
+  await page.keyboard.press('Tab');
+  await expect(waitDialog.getByRole('button', { name: 'Close' })).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(waitDialog).toHaveCount(0);
+  await expect(waitNode).toBeFocused();
   await expect(page.getByText('Ready to publish')).toBeVisible();
-  await page.getByRole('button', { name: 'Publish' }).focus();
+  await tabTo(page, page.getByRole('button', { name: 'Publish' }), { back: true });
   await page.keyboard.press('Enter');
   await expect(page.getByText('Published version 1.')).toBeVisible();
 });
@@ -238,13 +304,13 @@ test('keyboard only: add a node, connect it, and publish', async ({ page }) => {
 test('an edit made right before leaving the editor is kept', async ({ page, request }) => {
   const loopId = await publishLoop(request, approvalLoop('qa leave'));
   await page.goto(`/app/loops/${loopId}/edit`);
-  await page.getByRole('button', { name: 'Loop settings' }).click();
+  await showLoopPanel(page);
   await page.getByLabel('Description').fill('typed just before leaving');
   // Leave inside the 600 ms autosave window.
-  await page.getByRole('link', { name: 'Runs' }).click();
+  await page.getByRole('link', { name: 'Runs', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Runs' })).toBeVisible();
   await page.goto(`/app/loops/${loopId}/edit`);
-  await page.getByRole('button', { name: 'Loop settings' }).click();
+  await showLoopPanel(page);
   await expect(page.getByLabel('Description')).toHaveValue('typed just before leaving');
   await expect
     .poll(async () => {
@@ -368,6 +434,7 @@ test('main screens fit 1024x768 without horizontal scrolling, and deep links loa
     '/app/loops',
     `/app/loops/${loopId}/edit`,
     '/app/runs',
+    `/app/runs/new?loop=${loopId}`,
     `/app/runs/${runId}`,
     '/app/events',
     '/app/settings',

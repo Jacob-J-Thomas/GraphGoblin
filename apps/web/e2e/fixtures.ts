@@ -1,4 +1,4 @@
-import { test as base, expect, type APIRequestContext } from '@playwright/test';
+import { test as base, expect, type APIRequestContext, type Page } from '@playwright/test';
 
 /** Tests run against the server global-setup started; its URL arrives through the environment. */
 export const test = base.extend({
@@ -49,6 +49,30 @@ export async function control(request: APIRequestContext, path: string, body: un
   const res = await request.post(`${base}${path}`, { data: body });
   expect(res.ok()).toBe(true);
   return (await res.json()) as Record<string, unknown>;
+}
+
+/**
+ * Expand the editor's loop panel (loop settings and the validation list) unless it already is:
+ * with nothing remembered it starts expanded at 1280 px and wider, collapsed below.
+ */
+export async function showLoopPanel(page: Page): Promise<void> {
+  const toggle = page.getByRole('button', { name: 'Loop settings' });
+  if ((await toggle.getAttribute('aria-expanded')) !== 'true') await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+}
+
+/** Open a node's editor by clicking its card (on the header band, away from port handles). */
+export async function openNode(page: Page, nodeId: string) {
+  await page.getByTestId(`node-${nodeId}`).click({ position: { x: 60, y: 12 } });
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toBeVisible();
+  return dialog;
+}
+
+/** Close the open node editor with its Done button. */
+export async function closeNode(page: Page): Promise<void> {
+  await page.getByRole('dialog').getByRole('button', { name: 'Done' }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
 }
 
 /** Create and publish a loop through the API; returns its id. */
