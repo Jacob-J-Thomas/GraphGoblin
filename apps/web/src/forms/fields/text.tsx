@@ -1,9 +1,9 @@
 /** Text-entry fields: strings (plain, multi-line, template, expression) and numbers. */
-import { useId } from 'react';
+import { useId, useState } from 'react';
 import { Input, Textarea } from '../../components/ui/index.js';
 import { CodeField } from '../CodeField.js';
 import { unwrap, type FieldShape } from '../introspect.js';
-import { Row, useField, type FieldProps } from './shared.js';
+import { Row, useField, useFieldErrorMessage, type FieldProps } from './shared.js';
 
 const LANGUAGE_TAG: Record<'template' | 'expression', string> = {
   template: 'Liquid',
@@ -20,7 +20,16 @@ export function StringField({
   const id = useId();
   const { optional, defaultValue } = unwrap(schema);
   const value = typeof field.value === 'string' ? field.value : '';
-  const set = (next: string) => field.onChange(next === '' && optional ? undefined : next);
+  const errorMessage = useFieldErrorMessage(name);
+  const [draft, setDraft] = useState<{ text: string; stored: unknown }>();
+  const displayed = draft && draft.stored === field.value ? draft.text : value;
+  const set = (next: string) => {
+    const blank = shape.format === 'expression' ? next.trim() === '' : next === '';
+    const stored = blank ? (optional ? undefined : '') : next;
+    // Validation sees a blank expression, while its editor retains the user's exact document.
+    setDraft({ text: next, stored });
+    field.onChange(stored);
+  };
   if (shape.format !== 'text') {
     return (
       <Row
@@ -35,11 +44,13 @@ export function StringField({
       >
         <CodeField
           kind={shape.format}
-          value={value}
+          value={displayed}
           onChange={set}
           label={label}
           id={id}
           optional={optional}
+          errorMessage={errorMessage}
+          requiredMessage={schema.safeParse('').error?.issues[0]?.message}
         />
       </Row>
     );

@@ -112,7 +112,7 @@ describe('SchemaForm', () => {
   });
 
   it.each(['template', 'expression'] as const)(
-    'omits an empty optional %s preview but keeps required and malformed previews',
+    'omits blank %s previews unless a required template, and keeps malformed previews',
     async (kind) => {
       const sourceSchema = kind === 'template' ? TemplateSchema : ExpressionSchema;
       render(
@@ -125,13 +125,10 @@ describe('SchemaForm', () => {
       const optional = screen.getByLabelText('Optional').closest('[data-field]')!;
       const required = screen.getByLabelText('Required').closest('[data-field]')!;
       expect(within(optional as HTMLElement).queryByTestId('preview')).not.toBeInTheDocument();
-      expect(within(required as HTMLElement).getByTestId('preview')).toBeInTheDocument();
-      if (kind === 'expression') {
-        await waitFor(() =>
-          expect(within(required as HTMLElement).getByTestId('preview')).toHaveTextContent(
-            'failed to compile',
-          ),
-        );
+      if (kind === 'template') {
+        expect(within(required as HTMLElement).getByTestId('preview')).toBeInTheDocument();
+      } else {
+        expect(within(required as HTMLElement).queryByTestId('preview')).not.toBeInTheDocument();
       }
       setCode('Optional', kind === 'template' ? '{% if %}' : '(');
       await waitFor(() =>
@@ -228,22 +225,17 @@ describe('SchemaForm', () => {
     [NodeConfigSchemas.heartbeat, { intervalSeconds: 5, maxBeats: 2 }, 'Until'],
     [NodeConfigSchemas.wait, { mode: 'signal', name: 'go' }, 'Filter'],
     [NodeConfigSchemas.mutate, { operations: [{ op: 'truncate', keep: { last: 2 } }] }, 'Where'],
-  ] as const)(
-    'treats optional node conditions as absent only when exactly empty',
-    async (schema, initial, label) => {
-      render(<Harness schema={schema} initial={initial} spy={vi.fn()} />);
-      const field = screen.getByLabelText(label).closest('[data-field]') as HTMLElement;
-      expect(within(field).queryByTestId('preview')).not.toBeInTheDocument();
-      setCode(label, ' ');
-      await waitFor(() =>
-        expect(within(field).getByTestId('preview')).toHaveTextContent('failed to compile'),
-      );
-      setCode(label, 'true');
-      await waitFor(() => expect(within(field).getByTestId('preview')).toHaveTextContent('true'));
-      setCode(label, '');
-      expect(within(field).queryByTestId('preview')).not.toBeInTheDocument();
-    },
-  );
+  ] as const)('treats blank optional node conditions as absent', async (schema, initial, label) => {
+    render(<Harness schema={schema} initial={initial} spy={vi.fn()} />);
+    const field = screen.getByLabelText(label).closest('[data-field]') as HTMLElement;
+    expect(within(field).queryByTestId('preview')).not.toBeInTheDocument();
+    setCode(label, ' ');
+    expect(within(field).queryByTestId('preview')).not.toBeInTheDocument();
+    setCode(label, 'true');
+    await waitFor(() => expect(within(field).getByTestId('preview')).toHaveTextContent('true'));
+    setCode(label, '');
+    expect(within(field).queryByTestId('preview')).not.toBeInTheDocument();
+  });
 
   it.each([
     [
@@ -270,9 +262,8 @@ describe('SchemaForm', () => {
     async (schema, initial, label) => {
       render(<Harness schema={schema} initial={initial} spy={vi.fn()} />);
       const field = screen.getByLabelText(label).closest('[data-field]') as HTMLElement;
-      await waitFor(() =>
-        expect(within(field).getByTestId('preview')).toHaveTextContent('failed to compile'),
-      );
+      expect(within(field).queryByTestId('preview')).not.toBeInTheDocument();
+      await waitFor(() => expect(within(field).getByRole('alert')).toBeInTheDocument());
       setCode(label, 'vars.');
       await waitFor(() =>
         expect(within(field).getByTestId('preview')).toHaveTextContent('failed to compile'),

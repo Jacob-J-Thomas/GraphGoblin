@@ -52,7 +52,7 @@ export async function control(request: APIRequestContext, path: string, body: un
 }
 
 /**
- * Expand the editor's loop panel (loop settings and the validation list) unless it already is:
+ * Expand the editor's loop panel (the loop's name, description, settings, and variables) unless it is:
  * with nothing remembered it starts expanded at 1280 px and wider, collapsed below.
  */
 export async function showLoopPanel(page: Page): Promise<void> {
