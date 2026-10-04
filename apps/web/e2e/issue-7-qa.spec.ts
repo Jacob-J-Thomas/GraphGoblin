@@ -2,7 +2,7 @@
  * Regression specs for the issue #7 QA pass (docs/qa/2026-10-04-issue-7-qa.md): reduced motion and
  * long text against the built app.
  */
-import type { Page } from '@playwright/test';
+import type { APIRequestContext, Page } from '@playwright/test';
 import { approvalLoop, control, expect, publishLoop, test } from './fixtures.js';
 
 const start = { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } };
@@ -43,14 +43,24 @@ function motion(page: Page) {
   }));
 }
 
+/**
+ * A turn the fake harness never finishes on its own: the longest delay setTimeout accepts (about
+ * 24.8 days; anything longer would fire at once). The run stays running until the test cancels it,
+ * which aborts the turn.
+ */
+const HELD_UNTIL_CANCELLED = 2 ** 31 - 1;
+
+const runStatus = async (request: APIRequestContext, runId: string) =>
+  ((await (await request.get(`/runs/${runId}`)).json()) as { status: string }).status;
+
 test('I7-QA-03: reduced motion stops the running and live pulses at full opacity', async ({
   page,
   request,
 }) => {
   await control(request, '/harness/script', {
-    turns: [{ matchPrompt: 'SLOW PULSE', delayMs: 20_000 }],
+    turns: [{ matchPrompt: 'HELD PULSE', delayMs: HELD_UNTIL_CANCELLED }],
   });
-  const loopId = await publishLoop(request, slowLoop('qa reduced motion', 'SLOW PULSE'));
+  const loopId = await publishLoop(request, slowLoop('qa reduced motion', 'HELD PULSE'));
   const res = await request.post(`/loops/${loopId}/runs`, { data: {} });
   const runId = ((await res.json()) as { run: { id: string } }).run.id;
   try {
@@ -75,9 +85,16 @@ test('I7-QA-03: reduced motion stops the running and live pulses at full opacity
     // A fresh load under reduced motion never starts the pulse at all.
     await page.reload();
     await expect(page.locator('[data-status="running"]').first()).toBeVisible();
-    expect((await motion(page)).animations).toEqual([]);
+    await expect(page.getByText(/events, live/)).toBeVisible();
+    const reloaded = await motion(page);
+    expect(reloaded.pulses.length).toBeGreaterThanOrEqual(2);
+    expect(reloaded.animations).toEqual([]);
+    // Every assertion above saw a run that was still running: the harness held it.
+    expect(await runStatus(request, runId)).toBe('running');
   } finally {
+    // Release the held turn; the run ends now rather than in 24 days.
     await request.post(`/runs/${runId}/cancel`);
+    await expect.poll(() => runStatus(request, runId)).toBe('cancelled');
   }
 });
 
