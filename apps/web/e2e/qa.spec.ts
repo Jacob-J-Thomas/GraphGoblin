@@ -3,7 +3,7 @@
  * the built app against the in-process API; `control()` scripts the fake harness through the E2E
  * server's control port.
  */
-import type { APIRequestContext, Page } from '@playwright/test';
+import type { APIRequestContext, Locator, Page } from '@playwright/test';
 import {
   approvalLoop,
   closeNode,
@@ -222,42 +222,75 @@ test('the editor blocks publishing on template syntax errors and unparsed JSON, 
   await expect(page.getByText(/Published version 2\.|Nothing to publish/)).toBeVisible();
 });
 
+/**
+ * Press Tab (or Shift+Tab) until `target` has focus, as a keyboard user would, failing after
+ * `limit` presses.
+ */
+async function tabTo(page: Page, target: Locator, { back = false, limit = 80 } = {}) {
+  for (
+    let i = 0;
+    i < limit && !(await target.evaluate((el) => el === document.activeElement));
+    i += 1
+  )
+    await page.keyboard.press(back ? 'Shift+Tab' : 'Tab');
+  await expect(target).toBeFocused();
+}
+
 test('keyboard only: add a node, connect it, and publish', async ({ page }) => {
   await page.goto('/app/loops');
   await page.getByLabel('New loop name').fill('qa keyboard');
   await page.getByLabel('New loop name').press('Enter');
   await expect(page.getByRole('heading', { name: 'qa keyboard' })).toBeVisible();
 
-  await page.getByRole('button', { name: 'Add Wait node' }).focus();
+  // Every step from here is a key press: Tab and Shift+Tab move, Enter acts, Esc closes.
+  await tabTo(page, page.getByRole('button', { name: 'Add Wait node' }));
   await page.keyboard.press('Enter');
   await expect(page.getByTestId('node-wait')).toBeInViewport();
   // Rewire start -> wait -> done with the Connect forms.
   // Canvas nodes are focusable; Enter opens the focused node's editor and Esc closes it.
   const startNode = page.locator('.react-flow__node[data-id="start"]');
-  await startNode.focus();
+  await tabTo(page, startNode);
   await page.keyboard.press('Enter');
   const startDialog = page.getByRole('dialog', { name: 'Edit trigger start' });
   await expect(startDialog).toBeVisible();
-  await page.getByRole('button', { name: 'Remove edge e1' }).focus();
+  await expect(startDialog.getByRole('heading', { name: 'Edit trigger start' })).toBeFocused();
+  // Tab walks the dialog in visual order: close, id, label, the config form, connections.
+  await page.keyboard.press('Tab');
+  await expect(startDialog.getByRole('button', { name: 'Close' })).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(startDialog.getByLabel('Node id')).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(startDialog.getByLabel('Label')).toBeFocused();
+  await tabTo(page, startDialog.getByRole('button', { name: 'Remove edge e1' }));
   await page.keyboard.press('Enter');
   const startForm = page.getByRole('form', { name: 'Connect start' });
+  await tabTo(page, startForm.getByLabel('To'));
   await startForm.getByLabel('To').selectOption('wait');
-  await startForm.getByRole('button', { name: 'Connect' }).focus();
+  await tabTo(page, startForm.getByRole('button', { name: 'Connect' }));
   await page.keyboard.press('Enter');
   await page.keyboard.press('Escape');
   await expect(startDialog).toHaveCount(0);
   await expect(startNode).toBeFocused();
+
   const waitNode = page.locator('.react-flow__node[data-id="wait"]');
-  await waitNode.focus();
+  await tabTo(page, waitNode);
   await page.keyboard.press('Enter');
+  const waitDialog = page.getByRole('dialog', { name: 'Edit wait wait' });
+  await expect(waitDialog).toBeVisible();
   const waitForm = page.getByRole('form', { name: 'Connect wait' });
+  await tabTo(page, waitForm.getByLabel('To'));
   await waitForm.getByLabel('To').selectOption('done');
-  await waitForm.getByRole('button', { name: 'Connect' }).focus();
+  await tabTo(page, waitForm.getByRole('button', { name: 'Connect' }));
   await page.keyboard.press('Enter');
+  // Past the last control, Tab comes back round to the first: focus stays in the dialog.
+  await tabTo(page, waitDialog.getByRole('button', { name: 'Done' }));
+  await page.keyboard.press('Tab');
+  await expect(waitDialog.getByRole('button', { name: 'Close' })).toBeFocused();
   await page.keyboard.press('Escape');
+  await expect(waitDialog).toHaveCount(0);
   await expect(waitNode).toBeFocused();
   await expect(page.getByText('Ready to publish')).toBeVisible();
-  await page.getByRole('button', { name: 'Publish' }).focus();
+  await tabTo(page, page.getByRole('button', { name: 'Publish' }), { back: true });
   await page.keyboard.press('Enter');
   await expect(page.getByText('Published version 1.')).toBeVisible();
 });
