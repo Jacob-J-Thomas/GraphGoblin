@@ -1,7 +1,10 @@
 import { GraphGoblinApiError, loops, type GraphGoblinClient } from '@graphgoblin/api-client';
 import type { LoopDefinitionInput } from '@graphgoblin/contracts';
+import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef } from 'react';
+import { keys } from '../api/queries.js';
 import { recordServerSave, saveLocalDraft } from '../drafts/local-drafts.js';
+import { subscribeApiRecovery, useReachability } from '../lib/reachability.js';
 import { errorMessage, isOfflineError } from '../lib/utils.js';
 import { validateDraft } from './model.js';
 import { useEditorStore } from './store.js';
@@ -62,6 +65,8 @@ export function useAutosave(
   client: GraphGoblinClient,
   delayMs = AUTOSAVE_DELAY_MS,
 ): () => Promise<boolean> {
+  const queryClient = useQueryClient();
+  const recoveryRead = useRef<{ generation: number; revision: number } | undefined>(undefined);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const pending = useRef<
     | { loopId: string; definition: LoopDefinitionInput; revision: number; generation: number }
@@ -120,6 +125,22 @@ export function useAutosave(
               'offline',
               'Offline: the draft is kept on this device and saved when the API is back.',
             );
+            // A save can be the first request to notice an outage. Refresh the active loop
+            // read once per revision so query-driven reachability can recover it. A reachable
+            // read with a persistently failing PUT must not create a read/save retry loop.
+            const queryKey = keys.loop(loopId);
+            if (
+              !isOfflineError(queryClient.getQueryState(queryKey)?.error) &&
+              (recoveryRead.current?.generation !== generation ||
+                recoveryRead.current.revision !== rev)
+            ) {
+              recoveryRead.current = { generation, revision: rev };
+              useReachability.setState({ apiReachable: false });
+              void queryClient.refetchQueries(
+                { queryKey, exact: true, type: 'active' },
+                { cancelRefetch: false },
+              );
+            }
           } else {
             setSaveState('error', errorMessage(error));
           }
@@ -140,7 +161,7 @@ export function useAutosave(
         // Edited while the request was in flight: the server holds an older revision; go again.
       }
     });
-  }, [client]);
+  }, [client, queryClient]);
 
   useEffect(() => {
     const { loopId, definition, savedRevision, baseToken } = useEditorStore.getState();
@@ -182,10 +203,12 @@ export function useAutosave(
   );
 
   useEffect(() => {
-    // Retry as soon as the browser is back online.
+    // Both browser reconnect and confirmed API recovery use the same serialized save path.
     const retry = () => void save();
+    const unsubscribeRecovery = subscribeApiRecovery(retry);
     window.addEventListener('online', retry);
     return () => {
+      unsubscribeRecovery();
       window.removeEventListener('online', retry);
       clearTimeout(timer.current);
     };

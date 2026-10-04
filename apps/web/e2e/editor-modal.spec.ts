@@ -4,7 +4,15 @@
  * layer and inert page, focus, and storage that jsdom cannot show.
  */
 import type { APIRequestContext, Page } from '@playwright/test';
-import { approvalLoop, closeNode, expect, openNode, publishLoop, test } from './fixtures.js';
+import {
+  approvalLoop,
+  closeNode,
+  expect,
+  openNode,
+  publishLoop,
+  showLoopPanel,
+  test,
+} from './fixtures.js';
 
 async function createLoop(request: APIRequestContext, definition: unknown): Promise<string> {
   const created = await request.post('/loops', { data: { definition } });
@@ -312,6 +320,7 @@ test('a draft conflict is answered from inside an open node editor', async ({
 
   // Tab B opens a node; tab A saves first.
   const dialog = await openNode(b, 'approve');
+  await showLoopPanel(a);
   await a.getByLabel('Description').fill('from tab A');
   await expect(a.getByTestId('save-state')).toHaveText('All changes saved');
 

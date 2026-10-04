@@ -86,6 +86,7 @@ describe('query reconnect', () => {
     name: string;
     useRead: (loopId: string, runId: string) => UseQueryResult<unknown>;
   }[] = [
+    { name: 'Loops', useRead: useLoops },
     { name: 'loop details', useRead: (loopId) => useLoop(loopId) },
     { name: 'Runs', useRead: () => useRuns() },
     { name: 'run inspector', useRead: (_loopId, runId) => useRun(runId) },
@@ -97,6 +98,31 @@ describe('query reconnect', () => {
     { name: 'Settings API keys', useRead: useApiKeys },
     { name: 'Settings preflight', useRead: usePreflight },
   ];
+
+  it.each(reads)(
+    'recovers $name when the API returns with the browser still online',
+    async ({ useRead }) => {
+      const api = new FakeApi();
+      const loop = api.addLoop(minimalLoop());
+      const run = api.addRun({ loopId: loop.id, status: 'succeeded' });
+      api.override('GET /healthz', () => new Response('ok'));
+      api.offline = true;
+      const view = mountQuery(api, () => useRead(loop.id, run.id));
+      try {
+        await waitFor(() => expect(view.result.current.isError).toBe(true));
+        expect(view.fetch).toHaveBeenCalledTimes(2);
+        api.offline = false;
+        await waitFor(() => expect(view.result.current.isSuccess).toBe(true), { timeout: 4_000 });
+        expect(view.result.current.data).toBeDefined();
+        expect(view.fetch.mock.calls.some(([request]) => request.url.endsWith('/healthz'))).toBe(
+          true,
+        );
+      } finally {
+        view.unmount();
+        view.queryClient.clear();
+      }
+    },
+  );
 
   it.each(reads)('recovers the cold offline $name query', async ({ useRead }) => {
     onlineManager.setOnline(true);

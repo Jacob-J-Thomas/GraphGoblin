@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react';
+import { useReachability } from './reachability.js';
 
 function subscribe(callback: () => void): () => void {
   window.addEventListener('online', callback);
@@ -12,4 +13,11 @@ function subscribe(callback: () => void): () => void {
 /** Whether the browser believes it is online. Updates on `online` and `offline` events. */
 export function useOnline(): boolean {
   return useSyncExternalStore(subscribe, () => navigator.onLine);
+}
+
+/** Banner reason; browser connectivity remains independent of API reachability. */
+export function useConnectionStatus(): 'online' | 'offline' | 'api-unreachable' {
+  const online = useOnline();
+  const apiReachable = useReachability((state) => state.apiReachable);
+  return !online ? 'offline' : apiReachable ? 'online' : 'api-unreachable';
 }

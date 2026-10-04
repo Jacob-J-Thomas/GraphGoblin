@@ -1,4 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { GraphGoblinApiError } from '@graphgoblin/api-client';
+import { QueryClient, QueryObserver } from '@tanstack/react-query';
+import { createAppClient } from '../api/context.js';
+import { startReachability, useReachability } from '../lib/reachability.js';
 import { registerPwa } from './register.js';
 import { usePwaStore } from './store.js';
 
@@ -6,7 +10,12 @@ type Listener = (event: { isUpdate?: boolean }) => void;
 
 function fakeWorkbox() {
   const listeners = new Map<string, Listener[]>();
+  const registration = {
+    waiting: null as ServiceWorker | null,
+    update: vi.fn((): Promise<void> => Promise.resolve()),
+  };
   return {
+    registration,
     listeners,
     emit(type: string, event: { isUpdate?: boolean } = {}) {
       for (const l of listeners.get(type) ?? []) l(event);
@@ -14,17 +23,180 @@ function fakeWorkbox() {
     addEventListener: vi.fn((type: string, listener: Listener) => {
       listeners.set(type, [...(listeners.get(type) ?? []), listener]);
     }),
-    register: vi.fn(() => Promise.resolve(undefined)),
+    register: vi.fn((): Promise<ServiceWorkerRegistration | undefined> =>
+      Promise.resolve(registration as unknown as ServiceWorkerRegistration),
+    ),
     messageSkipWaiting: vi.fn(),
   };
 }
 
 afterEach(() => {
+  window.graphgoblinPwa?.dispose();
   usePwaStore.setState({ needRefresh: false, applyUpdate: undefined, offlineReady: false });
+  useReachability.setState({ apiReachable: true });
   delete window.graphgoblinPwa;
+  vi.useRealTimers();
+  vi.restoreAllMocks();
 });
 
 describe('registerPwa', () => {
+  it('prompts immediately for a worker already waiting at registration without activating it', async () => {
+    const wb = fakeWorkbox();
+    wb.registration.waiting = {} as ServiceWorker;
+    registerPwa({ createWorkbox: () => wb as never, serviceWorkerSupported: true });
+    await Promise.resolve();
+    expect(usePwaStore.getState().needRefresh).toBe(true);
+    expect(wb.messageSkipWaiting).not.toHaveBeenCalled();
+    usePwaStore.getState().dismiss();
+    window.dispatchEvent(new Event('focus'));
+    await Promise.resolve();
+    expect(usePwaStore.getState().needRefresh).toBe(false);
+    expect(wb.messageSkipWaiting).not.toHaveBeenCalled();
+  });
+
+  it('checks on registration, focus, visibility and hourly; clears everything on dispose', async () => {
+    vi.useFakeTimers();
+    const wb = fakeWorkbox();
+    const hook = registerPwa({ createWorkbox: () => wb as never, serviceWorkerSupported: true });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(wb.registration.update).toHaveBeenCalledTimes(1);
+    window.dispatchEvent(new Event('focus'));
+    await vi.advanceTimersByTimeAsync(0);
+    document.dispatchEvent(new Event('visibilitychange'));
+    await vi.advanceTimersByTimeAsync(0);
+    window.dispatchEvent(new Event('online'));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(wb.registration.update).toHaveBeenCalledTimes(4);
+    await vi.advanceTimersByTimeAsync(3_600_000);
+    expect(wb.registration.update).toHaveBeenCalledTimes(5);
+    hook.dispose();
+    window.dispatchEvent(new Event('focus'));
+    document.dispatchEvent(new Event('visibilitychange'));
+    window.dispatchEvent(new Event('online'));
+    await vi.advanceTimersByTimeAsync(3_600_000);
+    expect(wb.registration.update).toHaveBeenCalledTimes(5);
+  });
+
+  it('never checks while hidden, browser offline, or API unreachable; holds one check in flight', async () => {
+    vi.useFakeTimers();
+    const visibility = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
+    const online = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(true);
+    const wb = fakeWorkbox();
+    registerPwa({ createWorkbox: () => wb as never, serviceWorkerSupported: true });
+    await vi.advanceTimersByTimeAsync(3_600_000);
+    expect(wb.registration.update).not.toHaveBeenCalled();
+    visibility.mockReturnValue('visible');
+    online.mockReturnValue(false);
+    window.dispatchEvent(new Event('focus'));
+    useReachability.setState({ apiReachable: false });
+    online.mockReturnValue(true);
+    window.dispatchEvent(new Event('focus'));
+    expect(wb.registration.update).not.toHaveBeenCalled();
+    useReachability.setState({ apiReachable: true });
+    let finish!: () => void;
+    wb.registration.update.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          finish = resolve;
+        }),
+    );
+    window.dispatchEvent(new Event('focus'));
+    document.dispatchEvent(new Event('visibilitychange'));
+    await vi.advanceTimersByTimeAsync(3_600_000);
+    expect(wb.registration.update).toHaveBeenCalledTimes(1);
+    finish();
+    await vi.advanceTimersByTimeAsync(0);
+    window.dispatchEvent(new Event('focus'));
+    expect(wb.registration.update).toHaveBeenCalledTimes(2);
+    finish();
+  });
+
+  it('checks when the API comes back from an outage', async () => {
+    vi.useFakeTimers();
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    let available = false;
+    const observer = new QueryObserver(queryClient, {
+      queryKey: ['loops'],
+      queryFn: () =>
+        available ? Promise.resolve('ok') : Promise.reject(GraphGoblinApiError.network('refused')),
+    });
+    const unsubscribe = observer.subscribe(() => undefined);
+    await observer.refetch();
+    const stop = startReachability(
+      queryClient,
+      createAppClient('http://api.test', () => Promise.resolve(new Response('ok'))),
+    );
+    const wb = fakeWorkbox();
+    registerPwa({ createWorkbox: () => wb as never, serviceWorkerSupported: true });
+    try {
+      await vi.advanceTimersByTimeAsync(0);
+      expect(wb.registration.update).not.toHaveBeenCalled();
+      available = true;
+      await vi.advanceTimersByTimeAsync(2_000);
+      expect(wb.registration.update).toHaveBeenCalledTimes(1);
+    } finally {
+      stop();
+      unsubscribe();
+      queryClient.clear();
+    }
+  });
+
+  it('warns only once per failure streak and resets after a successful check', async () => {
+    vi.useFakeTimers();
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const wb = fakeWorkbox();
+    wb.registration.update.mockRejectedValue(new Error('offline'));
+    registerPwa({ createWorkbox: () => wb as never, serviceWorkerSupported: true });
+    await vi.advanceTimersByTimeAsync(0);
+    window.dispatchEvent(new Event('focus'));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(warn).toHaveBeenCalledTimes(1);
+    wb.registration.update.mockResolvedValue(undefined);
+    window.dispatchEvent(new Event('focus'));
+    await vi.advanceTimersByTimeAsync(0);
+    wb.registration.update.mockRejectedValue(new Error('unregistered'));
+    window.dispatchEvent(new Event('focus'));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(warn).toHaveBeenCalledTimes(2);
+    window.dispatchEvent(new Event('pagehide'));
+    await vi.advanceTimersByTimeAsync(3_600_000);
+    expect(wb.registration.update).toHaveBeenCalledTimes(4);
+  });
+
+  it('ignores a registration that finishes after disposal, including a waiting worker', async () => {
+    const wb = fakeWorkbox();
+    let finish!: (registration: ServiceWorkerRegistration) => void;
+    wb.register.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    );
+    const hook = registerPwa({ createWorkbox: () => wb as never, serviceWorkerSupported: true });
+    hook.dispose();
+    wb.registration.waiting = {} as ServiceWorker;
+    finish(wb.registration as unknown as ServiceWorkerRegistration);
+    await Promise.resolve();
+    wb.emit('waiting');
+    expect(usePwaStore.getState().needRefresh).toBe(false);
+    expect(wb.registration.update).not.toHaveBeenCalled();
+  });
+
+  it('resumes checks when a page returns from the browser back-forward cache', async () => {
+    vi.useFakeTimers();
+    const visibility = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible');
+    const wb = fakeWorkbox();
+    registerPwa({ createWorkbox: () => wb as never, serviceWorkerSupported: true });
+    await vi.advanceTimersByTimeAsync(0);
+    visibility.mockReturnValue('hidden');
+    window.dispatchEvent(new PageTransitionEvent('pagehide', { persisted: true }));
+    await vi.advanceTimersByTimeAsync(3_600_000);
+    expect(wb.registration.update).toHaveBeenCalledTimes(1);
+    visibility.mockReturnValue('visible');
+    window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(wb.registration.update).toHaveBeenCalledTimes(2);
+  });
   it('prompts on a waiting worker and activates it only after confirmation', () => {
     const wb = fakeWorkbox();
     const reload = vi.fn();

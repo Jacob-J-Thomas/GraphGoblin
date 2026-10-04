@@ -1,4 +1,164 @@
-import { approvalLoop, expect, publishLoop, test } from './fixtures.js';
+import { approvalLoop, control, expect, publishLoop, showLoopPanel, test } from './fixtures.js';
+
+for (const [index, screen] of ['Loops', 'Runs', 'Events', 'Settings', 'run inspector'].entries()) {
+  test(`${screen} recovers after the API listener restarts with the browser online`, async ({
+    page,
+    request,
+  }) => {
+    const name = `API recovery ${index}`;
+    const loopId = await publishLoop(request, approvalLoop(name));
+    const started = await request.post(`/loops/${loopId}/runs`, {
+      data: { triggerNodeId: 'start', input: {} },
+    });
+    expect(started.ok()).toBe(true);
+    const { run } = (await started.json()) as { run: { id: string } };
+    const path =
+      screen === 'run inspector' ? `/app/runs/${run.id}` : `/app/${screen.toLowerCase()}`;
+    const endpoint =
+      screen === 'run inspector'
+        ? `/runs/${run.id}`
+        : screen === 'Settings'
+          ? '/settings'
+          : `/${screen.toLowerCase()}`;
+    await page.goto(path);
+    await page.evaluate(async () => {
+      await navigator.serviceWorker.ready;
+    });
+    await page.reload();
+    await expect
+      .poll(() => page.evaluate(() => navigator.serviceWorker.controller !== null))
+      .toBe(true);
+    await expect.poll(() => page.evaluate(() => document.visibilityState)).toBe('visible');
+    await control(request, '/api/listener', { listening: false });
+    try {
+      // The shell comes from the worker, but API requests now see a genuinely refused socket.
+      await page.reload();
+      const offline = page.getByText(/needs the GraphGoblin API, which cannot be reached/);
+      await expect(offline.first()).toBeVisible();
+      await expect(
+        page.getByText('Cannot reach the GraphGoblin API', { exact: true }),
+      ).toBeVisible();
+      expect(await page.evaluate(() => navigator.onLine)).toBe(true);
+      const back = page.waitForResponse(
+        (response) => new URL(response.url()).pathname === endpoint && response.status() === 200,
+        { timeout: 6_000 },
+      );
+      const start = Date.now();
+      await control(request, '/api/listener', { listening: true });
+      await back;
+      expect(Date.now() - start).toBeLessThan(6_000);
+      await expect(offline).toHaveCount(0);
+      await expect(
+        page.getByText('Cannot reach the GraphGoblin API', { exact: true }),
+      ).toBeHidden();
+      await expect(page).toHaveURL(new RegExp(`${path}$`));
+    } finally {
+      await control(request, '/api/listener', { listening: true });
+    }
+  });
+}
+
+test('an offline editor draft saves after the API listener returns without navigation', async ({
+  page,
+  request,
+}) => {
+  const name = 'API draft recovery';
+  const loopId = await publishLoop(request, approvalLoop(name));
+  const loaded = (await (await request.get(`/loops/${loopId}`)).json()) as { draftToken: string };
+  await page.goto(`/app/loops/${loopId}/edit`);
+  await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();
+  await showLoopPanel(page);
+  const navigation: string[] = [];
+  page.on('framenavigated', (frame) => {
+    if (frame === page.mainFrame()) navigation.push(frame.url());
+  });
+  await control(request, '/api/listener', { listening: false });
+  try {
+    await page.getByLabel('Description').fill('draft kept through an API outage');
+    await expect(page.getByTestId('save-state')).toHaveText('Offline: saved on this device');
+    await expect(page.getByLabel('Description')).toHaveValue('draft kept through an API outage');
+    expect(await page.evaluate(() => navigator.onLine)).toBe(true);
+    const saved = page.waitForResponse(
+      (response) =>
+        new URL(response.url()).pathname === `/loops/${loopId}/draft` &&
+        response.request().method() === 'PUT' &&
+        response.status() === 200,
+      { timeout: 6_000 },
+    );
+    await control(request, '/api/listener', { listening: true });
+    const response = await saved;
+    expect(response.request().headers()['if-match']).toBe(`"${loaded.draftToken}"`);
+    await expect(page.getByTestId('save-state')).toHaveText('All changes saved', {
+      timeout: 6_000,
+    });
+    await expect(page.getByLabel('Description')).toHaveValue('draft kept through an API outage');
+    const server = (await (await request.get(`/loops/${loopId}`)).json()) as {
+      draft: { definition: { description: string } };
+    };
+    expect(server.draft.definition.description).toBe('draft kept through an API outage');
+    expect(navigation).toHaveLength(0);
+  } finally {
+    await control(request, '/api/listener', { listening: true });
+  }
+});
+
+test('an open window detects a changed worker on focus, prompts, and updates only on confirmation', async ({
+  page,
+  request,
+}) => {
+  await page.goto('/app/loops');
+  await page.evaluate(async () => {
+    await navigator.serviceWorker.ready;
+  });
+  await page.reload();
+  await expect
+    .poll(() => page.evaluate(() => navigator.serviceWorker.controller !== null))
+    .toBe(true);
+  await expect(page.getByRole('heading', { name: 'Loops', exact: true })).toBeVisible();
+  const initialWorker = await page.evaluate(() => navigator.serviceWorker.controller?.scriptURL);
+  const navigation = [] as string[];
+  page.on('framenavigated', (frame) => {
+    if (frame === page.mainFrame()) navigation.push(frame.url());
+  });
+  try {
+    await control(request, '/worker/build');
+    // Drive the window event the app listens to; there is no navigation or registration.update in the test.
+    await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+    const toast = page.getByRole('status').filter({ hasText: 'A new version is available' });
+    await expect(toast).toBeVisible({ timeout: 20_000 });
+    expect(navigation).toHaveLength(0);
+    expect(await page.evaluate(() => navigator.serviceWorker.controller?.scriptURL)).toBe(
+      initialWorker,
+    );
+    expect(await page.evaluate(() => window.graphgoblinPwa?.appliedUpdates)).toBe(0);
+    expect(
+      await page.evaluate(async () =>
+        Boolean((await navigator.serviceWorker.getRegistration('/app/'))?.waiting),
+      ),
+    ).toBe(true);
+    await toast.getByRole('button', { name: 'Later' }).click();
+    await expect(toast).toBeHidden();
+    expect(navigation).toHaveLength(0);
+
+    // Fresh registration sees the existing waiting worker immediately, without a second interaction.
+    await page.reload();
+    await expect(toast).toBeVisible();
+    const reloaded = page.waitForEvent('framenavigated', (frame) => frame === page.mainFrame());
+    await toast.getByRole('button', { name: 'Update', exact: true }).click();
+    await reloaded;
+    await expect(page.getByRole('heading', { name: 'Loops', exact: true })).toBeVisible();
+    await expect(toast).toBeHidden();
+    await expect
+      .poll(() =>
+        page.evaluate(
+          async () => (await navigator.serviceWorker.getRegistration('/app/'))?.waiting === null,
+        ),
+      )
+      .toBe(true);
+  } finally {
+    await control(request, '/worker/reset');
+  }
+});
 
 test('registers the service worker and asks before applying an update', async ({ page }) => {
   await page.goto('/app/');
