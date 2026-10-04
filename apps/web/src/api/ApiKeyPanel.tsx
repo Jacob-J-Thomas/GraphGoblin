@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { Button, Card, Input, Label } from '../components/ui/index.js';
+import { Button, Card, FieldGroup, Input, Label } from '../components/ui/index.js';
 import { syncApiKeyAcrossTabs, useApiKeyStore } from './api-key.js';
 
 /**
@@ -31,15 +31,19 @@ export function ApiKeyPanel() {
     setValue('');
   };
   return (
-    <div className="p-4 pb-0">
+    <div className="mx-auto w-full max-w-[1240px] px-page pt-page">
       <Card title="API key required">
-        <p className="mb-2 text-sm text-slate-700">
+        <p className="mb-4 text-sm text-muted">
           {stored
             ? 'The API refused the key stored in this browser. It may have been revoked; enter another one.'
             : 'This GraphGoblin server requires an API key (Settings → API keys creates them). Enter one here; it is kept in this browser only.'}
         </p>
-        <form className="flex items-end gap-2" aria-label="Enter API key" onSubmit={submit}>
-          <div className="flex-1">
+        <form
+          className="flex flex-wrap items-end gap-2"
+          aria-label="Enter API key"
+          onSubmit={submit}
+        >
+          <FieldGroup className="min-w-[240px] flex-1">
             <Label htmlFor="api-key-input">API key</Label>
             <Input
               id="api-key-input"
@@ -49,7 +53,7 @@ export function ApiKeyPanel() {
               onChange={(e) => setValue(e.target.value)}
               placeholder="gg_…"
             />
-          </div>
+          </FieldGroup>
           <Button type="submit" disabled={!value.trim()}>
             Use key
           </Button>

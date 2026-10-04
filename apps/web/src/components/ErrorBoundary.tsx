@@ -25,9 +25,9 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, State> {
     const { error } = this.state;
     if (!error) return this.props.children;
     return (
-      <div className="p-4">
+      <div className="mx-auto w-full max-w-[1240px] p-page">
         <Alert title="This screen failed to render">
-          <p className="mb-2">{error.message}</p>
+          <p className="mb-3">{error.message}</p>
           <Button size="sm" variant="outline" onClick={() => this.setState({ error: undefined })}>
             Try again
           </Button>
