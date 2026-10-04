@@ -1,10 +1,11 @@
 import type { GraphGoblinClient } from '@graphgoblin/api-client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { StrictMode, type ReactNode } from 'react';
+import { StrictMode, useEffect, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { BrowserRouter } from 'react-router';
 import { ApiProvider, createAppClient } from '../api/context.js';
 import { applyTheme, currentTheme, readStoredTheme, useThemeAcrossTabs } from '../lib/theme.js';
+import { isOfflineError } from '../lib/utils.js';
 import { registerPwa } from '../pwa/register.js';
 import { App } from './App.js';
 
@@ -26,6 +27,19 @@ export function Providers({
   queryClient: QueryClient;
   children: ReactNode;
 }) {
+  useEffect(() => {
+    // Query assumes online on a cold load, so an offline reload has no false -> true transition.
+    // Retry transport failures on the browser event too; keep HTTP errors and retry limits intact.
+    const reconnect = () => {
+      void queryClient.refetchQueries(
+        { type: 'active', predicate: (query) => isOfflineError(query.state.error) },
+        { cancelRefetch: false },
+      );
+    };
+    window.addEventListener('online', reconnect);
+    return () => window.removeEventListener('online', reconnect);
+  }, [queryClient]);
+
   return (
     <ApiProvider client={client}>
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
