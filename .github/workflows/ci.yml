@@ -42,6 +42,9 @@ jobs:
       - name: Layer rules
         run: pnpm check:layers
 
+      - name: Design token rules
+        run: pnpm check:tokens
+
       - name: Dependency graph rules
         run: pnpm check:deps
 
@@ -53,6 +56,9 @@ jobs:
 
       - name: Generated docs are current
         run: pnpm check:docs
+
+      - name: Design token contrast table is current and passing
+        run: pnpm check:contrast
 
       - name: Dependency audit
         run: pnpm audit --audit-level=high

@@ -44,13 +44,15 @@ The first pass (WP-D2, 2026-10-03) drove the built app with Playwright on Micros
 2. Typecheck every package, test files included.
 3. Lint.
 4. dependency-cruiser: layer rules and no circular imports.
-5. Unit tests with coverage thresholds.
-6. Licence allowlist check over the full dependency tree.
-7. Generated reference docs are current (`pnpm check:docs`).
-8. Dependency audit for known vulnerabilities, failing on high and critical.
-9. Build every package and app.
-10. Playwright E2E on the built app.
-11. Build the container image on the default branch.
+5. Design token guard: no palette classes or colour literals in web components (`pnpm check:tokens`).
+6. Unit tests with coverage thresholds.
+7. Licence allowlist check over the full dependency tree.
+8. Generated reference docs are current (`pnpm check:docs`).
+9. Design token contrast table is current and every enforced pair passes (`pnpm check:contrast`).
+10. Dependency audit for known vulnerabilities, failing on high and critical.
+11. Build every package and app.
+12. Playwright E2E on the built app.
+13. Build the container image on the default branch.
 
 Nightly: live smoke suite, and the test matrix against both SQLite and Postgres once `adapter-postgres` exists.
 
