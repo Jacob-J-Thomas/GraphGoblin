@@ -72,6 +72,8 @@ For a repository workspace, use an absolute path. For a temporary workspace, use
 
 Declare variable names and JSON Schemas in **Variables**; initialise their values with a mutation or mapping.
 
+Empty optional expressions count as absent and show no preview. Whitespace counts as supplied.
+
 ## Publish, import, and export
 
 Click **Publish** to save the draft and freeze a numbered version. Runs pin a version; later edits and publications do not change runs already started. Publishing also arms automatic triggers for the new version. The editor shows the current published version; the API exposes version history:

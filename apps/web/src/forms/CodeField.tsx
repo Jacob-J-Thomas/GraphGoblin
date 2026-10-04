@@ -38,14 +38,19 @@ export function CodeField({
   onChange,
   label,
   id,
+  optional = false,
 }: {
   kind: PreviewKind;
   value: string;
   onChange: (value: string) => void;
   label: string;
   id: string;
+  optional?: boolean;
 }) {
   const language: CodeLanguage = kind === 'template' ? 'liquid' : 'jsonata';
+  // An exactly empty optional string is stored as unset by StringField. Whitespace remains a
+  // supplied expression and must still compile (or report its error).
+  const showPreview = !optional || value !== '';
   return (
     <div>
       <CodeEditor
@@ -54,9 +59,9 @@ export function CodeField({
         language={language}
         label={label}
         id={id}
-        attached
+        attached={showPreview}
       />
-      <Preview kind={kind} source={value} />
+      {showPreview ? <Preview kind={kind} source={value} /> : null}
     </div>
   );
 }
