@@ -443,6 +443,20 @@ describe('EditorPage', () => {
     expect(screen.queryByText(/expected object, received undefined/)).toBeNull();
   });
 
+  it('shows the right node when the open editor is switched to another node of the same kind', async () => {
+    const api = new FakeApi();
+    const loop = api.addLoop(kitchenSinkLoop());
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'kitchen-sink' });
+    act(() => useEditorStore.getState().openNode('start'));
+    expect(await screen.findByRole('dialog', { name: 'Edit trigger start' })).toBeInTheDocument();
+    expect(screen.queryByLabelText('Expression')).toBeNull();
+    act(() => useEditorStore.getState().openNode('nightly'));
+    const dialog = await screen.findByRole('dialog', { name: 'Edit trigger nightly' });
+    expect(within(dialog).getByLabelText('Expression')).toHaveValue('0 2 * * *');
+    expect(within(dialog).getByLabelText('Node id')).toHaveValue('nightly');
+  });
+
   it('says in the dialog why a connection was refused', async () => {
     const user = userEvent.setup();
     const api = new FakeApi();

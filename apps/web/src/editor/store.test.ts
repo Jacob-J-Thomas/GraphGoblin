@@ -36,6 +36,13 @@ describe('editor store', () => {
     expect(store()).toMatchObject({ selectedNodeId: undefined, nodeDialogOpen: false });
     store().openNode('start');
     expect(store()).toMatchObject({ selectedNodeId: 'start', nodeDialogOpen: true });
+    // Opening the node already open keeps its session; another node starts a new one.
+    const session = store().nodeDialogSession;
+    store().openNode('start');
+    expect(store().nodeDialogSession).toBe(session);
+    store().openNode('done');
+    expect(store().nodeDialogSession).toBe(session + 1);
+    store().openNode('start');
     store().closeNodeDialog();
     expect(store()).toMatchObject({ selectedNodeId: 'start', nodeDialogOpen: false });
     // Selecting alone does not open it; renaming keeps it on the node; deleting closes it.

@@ -24,6 +24,11 @@ export interface EditorState {
    * it; closing it keeps the selection. It closes when the node is deleted or a loop loads.
    */
   nodeDialogOpen: boolean;
+  /**
+   * Bumped when the dialog opens on a node (not by a rename), so the editor remounts its forms for
+   * that node even when it was already open on another one.
+   */
+  nodeDialogSession: number;
   /** Bumped on every edit; autosave compares it with `savedRevision`. */
   revision: number;
   savedRevision: number;
@@ -92,6 +97,7 @@ const INITIAL = {
   definition: undefined,
   selectedNodeId: undefined,
   nodeDialogOpen: false,
+  nodeDialogSession: 0,
   revision: 0,
   savedRevision: 0,
   saveState: 'idle' as SaveState,
@@ -131,7 +137,14 @@ export const useEditorStore = create<EditorState>((set, get) => {
 
     openNode: (nodeId) => {
       if (!get().definition?.nodes.some((n) => n.id === nodeId)) return;
-      set({ selectedNodeId: nodeId, nodeDialogOpen: true });
+      set((s) => ({
+        selectedNodeId: nodeId,
+        nodeDialogOpen: true,
+        nodeDialogSession:
+          s.nodeDialogOpen && s.selectedNodeId === nodeId
+            ? s.nodeDialogSession
+            : s.nodeDialogSession + 1,
+      }));
     },
 
     closeNodeDialog: () => set({ nodeDialogOpen: false }),

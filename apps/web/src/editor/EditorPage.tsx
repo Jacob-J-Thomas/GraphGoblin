@@ -45,6 +45,7 @@ export function EditorPage() {
   const connectionError = useEditorStore((s) => s.connectionError);
   const selectedNodeId = useEditorStore((s) => s.selectedNodeId);
   const nodeDialogOpen = useEditorStore((s) => s.nodeDialogOpen);
+  const nodeDialogSession = useEditorStore((s) => s.nodeDialogSession);
   const [panelExpanded, setPanelExpanded] = useSidePanelState(
     LOOP_PANEL_STORAGE_KEY,
     loopPanelDefault,
@@ -215,6 +216,7 @@ export function EditorPage() {
       {/* Outside the canvas, so keys pressed in the dialog never reach the canvas handlers. */}
       {editing ? (
         <NodeEditorDialog
+          key={nodeDialogSession}
           node={editing}
           definition={def}
           issues={validation.issues}
