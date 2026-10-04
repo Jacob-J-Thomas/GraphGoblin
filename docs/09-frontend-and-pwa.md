@@ -37,6 +37,7 @@ A React single-page application built with Vite, served by the API process in 1.
 - Update flow: the service worker detects a new build, the app shows a toast "A new version is available" with an Update button, the user confirms, the new worker activates, and the page reloads. No automatic activation.
 - Precache: the app shell only. API responses are never cached by the worker.
 - Offline: the shell opens and unsaved editor drafts persist in IndexedDB. Anything needing the backend shows a clear offline state. Active queries that failed because the API could not be reached retry on the browser's `online` event, including after an offline reload, without navigating. Each fetch keeps the one-retry limit; HTTP errors keep the existing query behaviour. There is no offline execution.
+- Reconnect limitation: if the `online` event arrives while a no-data fetch is still in flight, before its connectivity error is stored, recovery still depends on that fetch's remaining retry or a later refetch.
 - Install: a web manifest with icons; an install hint in settings.
 
 ## State and data (Decided)

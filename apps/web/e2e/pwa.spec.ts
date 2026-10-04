@@ -36,10 +36,11 @@ test('cold offline Loops reload recovers on reconnect without navigating', async
   context,
   request,
 }) => {
-  const name = 'cold offline reconnect';
+  const name = `cold offline reconnect ${test.info().repeatEachIndex}-${test.info().retry}`;
   await publishLoop(request, approvalLoop(name));
   await page.goto('/app/loops');
-  await expect(page.getByRole('link', { name, exact: true })).toBeVisible();
+  const row = page.getByRole('row').filter({ has: page.getByRole('link', { name, exact: true }) });
+  await expect(row).toBeVisible();
   await page.evaluate(async () => {
     await navigator.serviceWorker.ready;
   });
@@ -55,7 +56,7 @@ test('cold offline Loops reload recovers on reconnect without navigating', async
     const offline = page.getByText(/Loops needs the GraphGoblin API/);
     await expect(offline).toBeVisible();
     await expect(page.getByText('You are offline', { exact: true })).toBeVisible();
-    await expect(page.getByRole('link', { name, exact: true })).toBeHidden();
+    await expect(row).toBeHidden();
 
     const recovered = page.waitForResponse(
       (response) => new URL(response.url()).pathname === '/loops' && response.status() === 200,
@@ -63,7 +64,7 @@ test('cold offline Loops reload recovers on reconnect without navigating', async
     );
     await context.setOffline(false);
     await recovered;
-    await expect(page.getByRole('link', { name, exact: true })).toBeVisible({ timeout: 5_000 });
+    await expect(row).toBeVisible({ timeout: 5_000 });
     await expect(offline).toBeHidden();
     await expect(page.getByText('You are offline', { exact: true })).toBeHidden();
     await expect(page).toHaveURL(/\/app\/loops$/);

@@ -1,6 +1,11 @@
 import { minimalLoop } from '@graphgoblin/contracts/testing';
 import { GraphGoblinApiError } from '@graphgoblin/api-client';
-import { onlineManager, type UseQueryResult } from '@tanstack/react-query';
+import {
+  onlineManager,
+  useQuery,
+  type QueryFunctionContext,
+  type UseQueryResult,
+} from '@tanstack/react-query';
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -22,10 +27,13 @@ import {
   useSettings,
 } from './queries.js';
 
-function mountQuery<T>(api: FakeApi, useRead: () => UseQueryResult<T>) {
+function mountQuery<T>(
+  api: FakeApi,
+  useRead: () => UseQueryResult<T>,
+  queryClient = createQueryClient(),
+) {
   const fetch = vi.fn(api.fetch);
   const client = createAppClient('http://graphgoblin.test', fetch);
-  const queryClient = createQueryClient();
   queryClient.setDefaultOptions({
     queries: { ...queryClient.getDefaultOptions().queries, retryDelay: 0 },
   });
@@ -51,8 +59,7 @@ afterEach(() => {
 
 describe('query reconnect', () => {
   it('recovers a cold offline Loops query on the online event without navigation', async () => {
-    // A cold page gets no offline event: Query starts online despite navigator.onLine.
-    const online = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+    // A cold page gets no offline event, so Query's manager still assumes online.
     onlineManager.setOnline(true);
     const api = new FakeApi();
     const loop = api.addLoop(minimalLoop());
@@ -64,7 +71,6 @@ describe('query reconnect', () => {
       expect(view.fetch).toHaveBeenCalledTimes(2);
 
       api.offline = false;
-      online.mockReturnValue(true);
       act(reconnect);
 
       await waitFor(() => expect(view.result.current.isSuccess).toBe(true));
@@ -93,7 +99,6 @@ describe('query reconnect', () => {
   ];
 
   it.each(reads)('recovers the cold offline $name query', async ({ useRead }) => {
-    const online = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
     onlineManager.setOnline(true);
     const api = new FakeApi();
     const loop = api.addLoop(minimalLoop());
@@ -105,7 +110,6 @@ describe('query reconnect', () => {
       expect(isOfflineError(view.result.current.error)).toBe(true);
       expect(view.fetch).toHaveBeenCalledTimes(2);
       api.offline = false;
-      online.mockReturnValue(true);
       act(reconnect);
       await waitFor(() => expect(view.result.current.isSuccess).toBe(true));
       expect(view.result.current.data).toBeDefined();
@@ -161,10 +165,13 @@ describe('query reconnect', () => {
   });
 
   it('does not refetch inactive failures or fresh successful queries, and removes its listener', async () => {
+    // Install Query's own listeners before observing the provider's registration.
+    const queryClient = createQueryClient();
+    queryClient.mount();
     const add = vi.spyOn(window, 'addEventListener');
     const remove = vi.spyOn(window, 'removeEventListener');
     const api = new FakeApi();
-    const view = mountQuery(api, useLoops);
+    const view = mountQuery(api, useLoops, queryClient);
     const inactive = vi.fn(() =>
       Promise.reject(GraphGoblinApiError.network(new TypeError('offline'))),
     );
@@ -180,19 +187,19 @@ describe('query reconnect', () => {
       });
       expect(inactive).toHaveBeenCalledTimes(2);
       expect(view.fetch).toHaveBeenCalledTimes(1);
-      const listener = add.mock.calls.find(
-        ([name, , options]) => name === 'online' && options === undefined,
-      )?.[1];
-      expect(listener).toBeDefined();
+      const registrations = add.mock.calls.filter(([name]) => name === 'online');
+      expect(registrations).toHaveLength(1);
+      const listener = registrations[0]![1];
       view.unmount();
       expect(remove).toHaveBeenCalledWith('online', listener);
     } finally {
       view.unmount();
+      queryClient.unmount();
       view.queryClient.clear();
     }
   });
 
-  it('deduplicates recovery when Query also sees an offline-to-online transition', async () => {
+  it('recovers after Query observes an offline-to-online transition', async () => {
     const api = new FakeApi();
     api.offline = true;
     const view = mountQuery(api, useLoops);
@@ -207,6 +214,60 @@ describe('query reconnect', () => {
       await waitFor(() => expect(view.result.current.isSuccess).toBe(true));
       expect(view.fetch).toHaveBeenCalledTimes(3);
     } finally {
+      view.unmount();
+      view.queryClient.clear();
+    }
+  });
+
+  it('keeps a cached-data fetch in flight on reconnect without cancelling or starting another request', async () => {
+    let finish!: (value: string) => void;
+    const response = new Promise<string>((resolve) => {
+      finish = resolve;
+    });
+    let next = () => Promise.resolve('cached');
+    const cancelled = vi.fn();
+    const request = vi.fn(({ signal }: QueryFunctionContext) => {
+      signal.addEventListener('abort', cancelled);
+      return next();
+    });
+    const view = mountQuery(new FakeApi(), () =>
+      useQuery({ queryKey: ['in-flight'], queryFn: request, notifyOnChangeProps: 'all' }),
+    );
+    try {
+      await waitFor(() => expect(view.result.current.data).toBe('cached'));
+      next = () => Promise.reject(GraphGoblinApiError.network(new TypeError('offline')));
+      await act(async () => {
+        await view.result.current.refetch();
+      });
+      await waitFor(() => expect(view.result.current.error).toBeInstanceOf(GraphGoblinApiError));
+      expect(view.result.current.data).toBe('cached');
+
+      // A failed background refresh retains its data and error while the next fetch is running.
+      next = () => response;
+      request.mockClear();
+      let pending!: ReturnType<typeof view.result.current.refetch>;
+      act(() => {
+        pending = view.result.current.refetch();
+      });
+      await waitFor(() => expect(view.result.current.fetchStatus).toBe('fetching'));
+      const signal = request.mock.calls[0]![0].signal;
+      await act(async () => {
+        reconnect();
+        await Promise.resolve();
+      });
+      expect(signal.aborted).toBe(false);
+      expect(cancelled).not.toHaveBeenCalled();
+      expect(request).toHaveBeenCalledTimes(1);
+
+      await act(async () => {
+        finish('refreshed');
+        await pending;
+      });
+      await waitFor(() => expect(view.result.current.data).toBe('refreshed'));
+      expect(view.result.current.isSuccess).toBe(true);
+      expect(request).toHaveBeenCalledTimes(1);
+    } finally {
+      finish('refreshed');
       view.unmount();
       view.queryClient.clear();
     }
