@@ -3,6 +3,7 @@ import {
   Background,
   Controls,
   ReactFlow,
+  type FitViewOptions,
   useReactFlow,
   type Connection,
   type Edge,
@@ -23,6 +24,11 @@ import { NodeCard, type FlowNode } from './NodeCard.js';
 import { useEditorStore } from './store.js';
 
 const nodeTypes = { gg: NodeCard };
+
+/** Fit the graph with room on the left for the zoom controls, so they never cover a card. */
+const FIT_VIEW_OPTIONS: FitViewOptions = {
+  padding: { top: '8%', right: '8%', bottom: '8%', left: '72px' },
+};
 
 type Size = { width: number; height: number };
 
@@ -183,10 +189,11 @@ export function Canvas({
         onNodeDragStop={(_, node) => endDrag(node.id, node.position)}
         onPaneClick={() => select(undefined)}
         fitView
+        fitViewOptions={FIT_VIEW_OPTIONS}
         deleteKeyCode={null}
       >
         <Background gap={22} size={1.3} />
-        <Controls />
+        <Controls fitViewOptions={FIT_VIEW_OPTIONS} />
       </ReactFlow>
     </div>
   );
