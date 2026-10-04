@@ -16,7 +16,22 @@ import { useEditorStore } from './store.js';
 const GROUP_LABEL = 'px-2 pt-0.5 text-xs font-semibold text-muted';
 
 /**
- * The loop's validation at a glance, beside Publish. With no issues it says "Ready to publish".
+ * Where the API's own checks (cron syntax, subloop references: `POST /loops/{id}/validate`) stand
+ * for the saved draft: under way, failed (offline, say), or done.
+ */
+export type ServerCheck = 'pending' | 'error' | 'done';
+
+/** What the indicator says when there is nothing to list, by the server check's state. */
+const STATUS: Record<ServerCheck, { icon: 'queued' | 'info' | 'check-circle'; text: string }> = {
+  pending: { icon: 'queued', text: 'Checking…' },
+  error: { icon: 'info', text: 'Validation unavailable' },
+  done: { icon: 'check-circle', text: 'Ready to publish' },
+};
+
+/**
+ * The loop's validation at a glance, beside Publish. With no issues it says "Ready to publish",
+ * but only once the API's checks of the saved draft have answered: until then "Checking…", and
+ * "Validation unavailable" (muted: nothing is known to be wrong) when they could not run.
  * Otherwise it is a button named by the counts ("2 errors, 1 warning", from the same merged list
  * Publish checks) that opens a popover listing every loop-level and edge issue in full, then one
  * row per node with issues ("prep: 2 issues"), which opens that node; each node's badge on the
@@ -25,23 +40,34 @@ const GROUP_LABEL = 'px-2 pt-0.5 text-xs font-semibold text-muted';
 export function ValidationIndicator({
   issues,
   definition,
+  check = 'done',
 }: {
   issues: readonly EditorIssue[];
   definition: LoopDefinitionInput;
+  check?: ServerCheck;
 }) {
   const loopGroupId = useId();
   const nodeGroupId = useId();
   // Where focus goes when "Discard text" removed the last issue, and with it the button.
   const readyRef = useRef<HTMLSpanElement>(null);
   if (issues.length === 0) {
+    const status = STATUS[check];
     return (
       <span
         ref={readyRef}
         tabIndex={-1}
-        className="inline-flex h-9 shrink-0 items-center gap-1.5 text-sm font-medium text-status-good-fg"
+        title={
+          check === 'error'
+            ? 'The server’s checks (cron expressions, subloops) could not run; Publish runs them again.'
+            : undefined
+        }
+        className={cn(
+          'inline-flex h-9 shrink-0 items-center gap-1.5 text-sm font-medium',
+          check === 'done' ? 'text-status-good-fg' : 'text-muted',
+        )}
       >
-        <Icon name="check-circle" />
-        Ready to publish
+        <Icon name={status.icon} />
+        {status.text}
       </span>
     );
   }

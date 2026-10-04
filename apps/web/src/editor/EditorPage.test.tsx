@@ -65,7 +65,7 @@ describe('EditorPage', () => {
     expect(screen.queryByLabelText('Name')).toBeNull();
     // Validation lives in the toolbar now, whatever the panel's state.
     expect(within(rail).queryByText('Ready to publish')).toBeNull();
-    expect(screen.getByText('Ready to publish')).toBeVisible();
+    expect(await screen.findByText('Ready to publish')).toBeVisible();
 
     // Expanding moves focus into the panel; the choice is remembered for the next visit.
     await user.click(toggle);
@@ -166,7 +166,7 @@ describe('EditorPage', () => {
 
     expect(await screen.findByRole('heading', { name: 'my loop' })).toBeInTheDocument();
     expect(screen.getByText('draft only')).toBeInTheDocument();
-    expect(screen.getByText('Ready to publish')).toBeInTheDocument();
+    expect(await screen.findByText('Ready to publish')).toBeInTheDocument();
     expect(screen.getByTestId('node-start')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Add Wait node' }));
@@ -399,6 +399,34 @@ describe('EditorPage', () => {
     expect(screen.queryByText('Publish failed')).toBeNull();
     useEditorStore.getState().updateMeta({ description: 'changed' });
     await waitFor(() => expect(screen.queryByText(/Nothing to publish/)).toBeNull());
+  });
+
+  it('waits for the server check before "Ready to publish", and says when it is unavailable', async () => {
+    const api = new FakeApi();
+    let release: () => void = () => undefined;
+    let fail = false;
+    api.override('POST /loops/:id/validate', async () => {
+      if (fail) throw new TypeError('Failed to fetch');
+      await new Promise<void>((resolve) => (release = resolve));
+      return new Response(JSON.stringify({ issues: [], publishable: true }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+    });
+    const loop = api.addLoop(newLoopDefinition('checking'));
+    renderApp(`/loops/${loop.id}/edit`, api);
+    // Locally valid, but the server's checks (cron, subloops) have not answered yet.
+    expect(await screen.findByText('Checking…')).toBeInTheDocument();
+    expect(screen.queryByText('Ready to publish')).toBeNull();
+    act(() => release());
+    expect(await screen.findByText('Ready to publish')).toBeInTheDocument();
+    // The next check fails (offline): not ready, not an error either.
+    fail = true;
+    act(() => useEditorStore.getState().updateMeta({ description: 'changed' }));
+    expect(await screen.findByText('Validation unavailable', {}, SAVE_WAIT)).toHaveClass(
+      'text-muted',
+    );
+    expect(screen.queryByText('Ready to publish')).toBeNull();
   });
 
   it('shows the issues only the API finds on the node’s badge and in the counts', async () => {

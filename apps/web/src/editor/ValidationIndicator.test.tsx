@@ -38,6 +38,28 @@ describe('ValidationIndicator', () => {
     expect(screen.queryByRole('button')).toBeNull();
   });
 
+  it('says "Ready to publish" only once the server check is done; until then, or if it fails, says so', () => {
+    const { rerender } = render(
+      <ValidationIndicator issues={[]} definition={definition} check="pending" />,
+    );
+    expect(screen.getByText('Checking…')).toHaveClass('text-muted');
+    expect(screen.queryByText('Ready to publish')).toBeNull();
+    expect(screen.queryByRole('button')).toBeNull();
+    rerender(<ValidationIndicator issues={[]} definition={definition} check="error" />);
+    const unavailable = screen.getByText('Validation unavailable');
+    expect(unavailable).toHaveClass('text-muted');
+    expect(unavailable).not.toHaveClass('text-status-bad-fg');
+    expect(unavailable).toHaveAttribute('title', expect.stringMatching(/server/));
+    expect(screen.queryByText('Ready to publish')).toBeNull();
+    rerender(<ValidationIndicator issues={[]} definition={definition} check="done" />);
+    expect(screen.getByText('Ready to publish')).toHaveClass('text-status-good-fg');
+    // With issues the counts show whatever the server check is doing.
+    rerender(<ValidationIndicator issues={[onPrep]} definition={definition} check="pending" />);
+    expect(screen.getByRole('button', { name: '1 error' })).toBeInTheDocument();
+    rerender(<ValidationIndicator issues={[onPrep]} definition={definition} check="error" />);
+    expect(screen.getByRole('button', { name: '1 error' })).toBeInTheDocument();
+  });
+
   it('is a button named by the counts, toned by the worst severity', () => {
     const { rerender } = render(
       <ValidationIndicator issues={[loopLevel, onPrep, edge]} definition={definition} />,

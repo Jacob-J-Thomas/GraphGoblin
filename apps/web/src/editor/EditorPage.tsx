@@ -189,7 +189,19 @@ export function EditorPage() {
         saveState={saveState}
         saveMessage={saveMessage}
         errors={errors}
-        validation={<ValidationIndicator issues={validation.issues} definition={def} />}
+        validation={
+          <ValidationIndicator
+            issues={validation.issues}
+            definition={def}
+            check={
+              serverCheck.isError
+                ? 'error'
+                : serverCheck.isPending || serverCheck.isFetching
+                  ? 'pending'
+                  : 'done'
+            }
+          />
+        }
         publishing={publish.isPending}
         loopPanelExpanded={panelExpanded}
         onLoopSettings={() => setPanelExpanded(!panelExpanded)}
