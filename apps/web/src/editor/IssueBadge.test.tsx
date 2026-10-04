@@ -153,7 +153,13 @@ describe('IssueList', () => {
         subject
         issues={[
           { code: 'NO_EXIT', severity: 'error', message: 'needs an exit' },
-          { code: 'EDGE_TO_MISSING', severity: 'error', message: 'no target', edgeId: 'e7' },
+          {
+            code: 'SCHEMA',
+            severity: 'error',
+            message: 'no target',
+            edgeId: 'e7',
+            path: 'to.node',
+          },
           { code: 'CRON_INVALID', severity: 'error', message: 'bad cron', nodeId: 'gone' },
         ]}
       />,
@@ -163,6 +169,8 @@ describe('IssueList', () => {
     expect(items[0]).toHaveTextContent('needs an exit');
     expect(items[0]!.querySelectorAll('code')).toHaveLength(0);
     expect(within(items[1]!).getByText('edge e7').tagName).toBe('CODE');
+    expect(within(items[1]!).getByText('to.node').tagName).toBe('CODE');
+    expect(items[1]).toHaveTextContent('edge e7 to.node');
     expect(within(items[2]!).getByText('node gone').tagName).toBe('CODE');
   });
 
