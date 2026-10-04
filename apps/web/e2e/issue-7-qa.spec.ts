@@ -3,7 +3,7 @@
  * long text against the built app.
  */
 import type { Page } from '@playwright/test';
-import { control, expect, publishLoop, test } from './fixtures.js';
+import { approvalLoop, control, expect, publishLoop, test } from './fixtures.js';
 
 const start = { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } };
 const done = { id: 'done', kind: 'exit', label: 'Done', config: {} };
@@ -78,5 +78,38 @@ test('I7-QA-03: reduced motion stops the running and live pulses at full opacity
     expect((await motion(page)).animations).toEqual([]);
   } finally {
     await request.post(`/runs/${runId}/cancel`);
+  }
+});
+
+const pageOverflows = (page: Page) =>
+  page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
+
+test('I7-QA-01: the longest valid loop name stays inside the editor toolbar and the lists', async ({
+  page,
+  request,
+}) => {
+  const name = 'W'.repeat(120);
+  const loopId = await publishLoop(request, approvalLoop(name));
+  await request.post(`/loops/${loopId}/runs`, { data: {} });
+  for (const viewport of [
+    { width: 1440, height: 900 },
+    { width: 720, height: 450 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto(`/app/loops/${loopId}/edit`);
+    const heading = page.getByRole('heading', { level: 1, name });
+    await expect(heading).toBeVisible();
+    await expect(heading).toHaveAttribute('title', name);
+    // Cut short with an ellipsis, inside the page, with every action still on screen.
+    expect(await heading.evaluate((h) => h.scrollWidth > h.clientWidth)).toBe(true);
+    expect(await pageOverflows(page), `editor at ${viewport.width}`).toBe(false);
+    for (const action of ['Loop settings', 'Run', 'Publish']) {
+      await expect(page.getByRole('button', { name: action, exact: true })).toBeInViewport();
+    }
+    for (const path of ['/app/loops', '/app/runs']) {
+      await page.goto(path);
+      await expect(page.locator('td', { hasText: name }).first()).toBeVisible();
+      expect(await pageOverflows(page), `${path} at ${viewport.width}`).toBe(false);
+    }
   }
 });
