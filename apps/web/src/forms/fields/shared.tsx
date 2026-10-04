@@ -79,6 +79,3 @@ export function Row({
 /** A group of fields for an object, array, record, or union, with its name as the legend. */
 export const FIELDSET = 'grid min-w-0 gap-3 rounded-md border border-default px-4 pt-3 pb-4';
 export const LEGEND = '-ml-1 px-1 text-sm font-semibold';
-
-/** A native checkbox in the accent colour (the switch and toggle chips are #8). */
-export const CHECKBOX = 'size-4 shrink-0 cursor-pointer accent-accent';

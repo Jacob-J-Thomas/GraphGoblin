@@ -23,9 +23,6 @@ export function MutationError({ error }: { error: unknown }) {
   return error ? <HelpText tone="bad">{errorMessage(error)}</HelpText> : null;
 }
 
-/** A native checkbox in the accent colour (the switch and toggle chips are #8). */
-export const CHECKBOX = 'size-4 cursor-pointer accent-accent';
-
 /** A row in a settings list: the item on the left, its actions on the right. */
 export const LIST_ROW =
   'flex flex-wrap items-center justify-between gap-2 border-b border-default py-2 last:border-b-0';

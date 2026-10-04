@@ -9,6 +9,7 @@ import { QueryState } from '../../components/status.js';
 import {
   Button,
   Card,
+  Checkbox,
   FieldGroup,
   Input,
   Label,
@@ -17,7 +18,7 @@ import {
   Td,
   Th,
 } from '../../components/ui/index.js';
-import { CHECKBOX, EFFORTS, MutationError, useInvalidate, type CatalogEntry } from '../shared.js';
+import { EFFORTS, MutationError, useInvalidate, type CatalogEntry } from '../shared.js';
 
 function ModelForm({ initial, onDone }: { initial?: CatalogEntry; onDone: () => void }) {
   const client = useApi();
@@ -85,9 +86,7 @@ function ModelForm({ initial, onDone }: { initial?: CatalogEntry; onDone: () => 
         <legend className="mb-2 text-sm font-medium">Allowed efforts</legend>
         {EFFORTS.map((e) => (
           <label key={e} className="flex cursor-pointer items-center gap-2 font-medium">
-            <input
-              type="checkbox"
-              className={CHECKBOX}
+            <Checkbox
               checked={efforts.includes(e)}
               onChange={(ev) =>
                 setEfforts(ev.target.checked ? [...efforts, e] : efforts.filter((x) => x !== e))
@@ -179,9 +178,7 @@ export function ModelCatalogSection() {
                       {entry.efforts.join(', ')} (default {entry.defaultEffort})
                     </Td>
                     <Td>
-                      <input
-                        type="checkbox"
-                        className={CHECKBOX}
+                      <Checkbox
                         aria-label={`Enable ${entry.model}`}
                         checked={entry.enabled}
                         onChange={() => toggle.mutate(entry)}

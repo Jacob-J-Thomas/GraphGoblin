@@ -3,6 +3,7 @@ import { validateJson } from '@graphgoblin/domain';
 import { useId, useState, type FormEvent } from 'react';
 import {
   Button,
+  Checkbox,
   FieldGroup,
   HelpText,
   Input,
@@ -104,10 +105,8 @@ export function JsonSchemaForm({
           if (type === 'boolean') {
             return (
               <div key={key} className="flex items-center gap-2">
-                <input
+                <Checkbox
                   id={fieldId}
-                  type="checkbox"
-                  className="size-4 cursor-pointer accent-accent"
                   checked={values[key] === true}
                   onChange={(e) => setValues({ ...values, [key]: e.target.checked })}
                 />

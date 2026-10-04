@@ -6,5 +6,5 @@ export { Alert } from './alert.js';
 export { Badge, type Tone } from './badge.js';
 export { Button } from './button.js';
 export { Card } from './card.js';
-export { FieldGroup, HelpText, Input, Label, Select, Textarea } from './field.js';
+export { Checkbox, FieldGroup, HelpText, Input, Label, Select, Textarea } from './field.js';
 export { Table, Td, Th } from './table.js';

@@ -6,6 +6,7 @@ import {
   Badge,
   Button,
   Card,
+  Checkbox,
   FieldGroup,
   HelpText,
   Input,
@@ -86,6 +87,18 @@ describe('fields', () => {
     expect(select.parentElement?.querySelector('svg[data-icon="chevron"]')).not.toBeNull();
     const notes = screen.getByLabelText('Notes');
     expect(notes).toHaveClass('font-mono', 'font-sans');
+  });
+});
+
+describe('Checkbox', () => {
+  it('is a native checkbox in the accent colour', async () => {
+    const onChange = vi.fn();
+    render(<Checkbox aria-label="Enable" className="extra" onChange={onChange} />);
+    const box = screen.getByRole('checkbox', { name: 'Enable' });
+    expect(box).toHaveClass('accent-accent', 'extra');
+    await userEvent.setup().click(box);
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(box).toBeChecked();
   });
 });
 

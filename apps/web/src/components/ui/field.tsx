@@ -46,6 +46,20 @@ export function Select({ className, ...props }: SelectHTMLAttributes<HTMLSelectE
   );
 }
 
+/** A native checkbox in the accent colour (the switch and toggle chips are #8). */
+export function Checkbox({
+  className,
+  ...props
+}: Omit<InputHTMLAttributes<HTMLInputElement>, 'type'>) {
+  return (
+    <input
+      type="checkbox"
+      className={cn('size-4 shrink-0 cursor-pointer accent-accent', className)}
+      {...props}
+    />
+  );
+}
+
 export function Label({ className, ...props }: LabelHTMLAttributes<HTMLLabelElement>) {
   return (
     <label

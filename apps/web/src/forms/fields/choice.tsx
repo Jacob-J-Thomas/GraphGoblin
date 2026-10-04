@@ -1,8 +1,8 @@
 /** Choice fields: booleans (checkbox, or a tri-state select), enums, and single literals. */
 import { useId } from 'react';
-import { Label, Select } from '../../components/ui/index.js';
+import { Checkbox, Label, Select } from '../../components/ui/index.js';
 import { unwrap } from '../introspect.js';
-import { CHECKBOX, FieldError, Row, useField, type FieldProps } from './shared.js';
+import { FieldError, Row, useField, type FieldProps } from './shared.js';
 
 export function BooleanField({ schema, name, label }: FieldProps) {
   const field = useField(name);
@@ -29,13 +29,7 @@ export function BooleanField({ schema, name, label }: FieldProps) {
   const checked = typeof field.value === 'boolean' ? field.value : defaultValue === true;
   return (
     <div className="flex flex-wrap items-center gap-2" data-field={name}>
-      <input
-        id={id}
-        type="checkbox"
-        className={CHECKBOX}
-        checked={checked}
-        onChange={(e) => field.onChange(e.target.checked)}
-      />
+      <Checkbox id={id} checked={checked} onChange={(e) => field.onChange(e.target.checked)} />
       <Label htmlFor={id} className="cursor-pointer">
         {label}
       </Label>

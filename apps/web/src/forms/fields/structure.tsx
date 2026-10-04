@@ -5,7 +5,7 @@
  */
 import { useId } from 'react';
 import { Icon } from '../../components/icons/index.js';
-import { Button, Input, Label, Select } from '../../components/ui/index.js';
+import { Button, Checkbox, Input, Label, Select } from '../../components/ui/index.js';
 import {
   humanize,
   initialValue,
@@ -18,15 +18,7 @@ import {
 } from '../introspect.js';
 import { BooleanField, EnumField, LiteralField } from './choice.js';
 import { JsonField, JsonText } from './json.js';
-import {
-  CHECKBOX,
-  FIELDSET,
-  FieldError,
-  joinPath,
-  LEGEND,
-  useField,
-  type FieldProps,
-} from './shared.js';
+import { FIELDSET, FieldError, joinPath, LEGEND, useField, type FieldProps } from './shared.js';
 import { NumberField, StringField } from './text.js';
 
 /** Dispatch on the schema's shape. */
@@ -139,9 +131,7 @@ function ArrayField({
               key={option}
               className="flex cursor-pointer items-center gap-2 font-mono text-sm font-medium"
             >
-              <input
-                type="checkbox"
-                className={CHECKBOX}
+              <Checkbox
                 checked={items.includes(option)}
                 onChange={(e) => toggle(option, e.target.checked)}
               />
