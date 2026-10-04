@@ -29,7 +29,7 @@ function seeded(source: 'harness' | 'litellm' = 'harness'): FakeApi {
   ];
   api.secretList = [{ name: 'jev-api-key', createdAt: TS, updatedAt: TS }];
   api.apiKeyList = [
-    { id: 'k1', ownerId: 'local', label: 'mcp', scopes: ['*'], createdAt: TS },
+    { id: 'k1', ownerId: 'local', label: 'mcp', scopes: ['*'], createdAt: TS, current: false },
     {
       id: 'k2',
       ownerId: 'local',
@@ -37,6 +37,7 @@ function seeded(source: 'harness' | 'litellm' = 'harness'): FakeApi {
       scopes: ['runs:write'],
       createdAt: TS,
       revokedAt: TS,
+      current: false,
     },
   ];
   api.preflight = [
@@ -425,14 +426,17 @@ describe('SettingsPage', () => {
     await waitFor(() => expect(screen.getByRole('heading', { name: 'Secrets' })).toHaveFocus());
   });
 
-  it('warns about losing this browser access when revoking a key while one is stored', async () => {
+  it('warns about browser access only when revoking the current key', async () => {
     useApiKeyStore.getState().save('gg_browser_key');
     try {
-      renderApp('/settings', seeded());
+      const api = seeded();
+      api.apiKeyList[0]!.current = true;
+      renderApp('/settings', api);
       const user = userEvent.setup();
       await user.click(await screen.findByRole('button', { name: 'Revoke mcp' }));
+      expect(screen.getByText('This browser')).toBeInTheDocument();
       expect(screen.getByRole('alertdialog')).toHaveTextContent(
-        'this browser will lose access and show the API key panel',
+        'Revoking this key will sign this browser out and show the API key panel. Enter another valid key to continue.',
       );
       await user.click(screen.getByRole('button', { name: 'Keep' }));
     } finally {

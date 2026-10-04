@@ -31,7 +31,6 @@ export function ApiKeysSection() {
       invalidate(keys.apiKeys);
     },
   });
-  const stored = useApiKeyStore((s) => s.key);
   return (
     <Card title="API keys">
       <div className="grid gap-4">
@@ -67,6 +66,7 @@ export function ApiKeysSection() {
                   <span>
                     {k.label} <span className="text-xs text-muted">({k.scopes.join(', ')})</span>{' '}
                     {k.revokedAt ? <Badge>revoked</Badge> : null}
+                    {k.current ? <Badge>This browser</Badge> : null}
                   </span>
                   {k.revokedAt ? null : (
                     <ConfirmAction
@@ -80,11 +80,10 @@ export function ApiKeysSection() {
                       consequences={
                         <>
                           <p>Clients using this API key will get 401 immediately.</p>
-                          {stored ? (
+                          {k.current ? (
                             <p>
-                              This browser sends an API key. If you revoke that key, this browser
-                              will lose access and show the API key panel, where you must enter
-                              another valid key.
+                              Revoking this key will sign this browser out and show the API key
+                              panel. Enter another valid key to continue.
                             </p>
                           ) : null}
                         </>
