@@ -288,10 +288,12 @@ function screens({ base, apiKeyBase, nightly, waitingRun }) {
     { name: 'events', url: `${base}/app/events`, ready: 'issue.opened' },
     { name: 'settings', url: `${base}/app/settings`, ready: 'GPT-6 Astra' },
     {
+      // The theme control is new with the cutover, so `before` has nothing to photograph here.
       name: 'settings-appearance',
       url: `${base}/app/settings`,
       ready: 'GPT-6 Astra',
       focus: 'input[name="theme"]:checked',
+      afterOnly: true,
     },
     { name: 'api-key', url: `${apiKeyBase}/app/loops`, ready: 'API key required' },
     { name: 'not-found', url: `${base}/app/nowhere`, ready: 'Page not found.' },
@@ -360,7 +362,7 @@ async function main() {
     const browser = await chromium.launch(channel ? { channel } : {});
     const only = process.env['GG_CAPTURE_ONLY']?.split(',');
     const list = screens({ base, apiKeyBase: extra.url, ...seeded }).filter(
-      (screen) => !only || only.includes(screen.name),
+      (screen) => (!only || only.includes(screen.name)) && (mode !== 'before' || !screen.afterOnly),
     );
     for (const { theme, dir } of THEMES) {
       mkdirSync(dir, { recursive: true });
