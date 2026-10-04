@@ -32,12 +32,17 @@ describe('EditorPage', () => {
 
     await user.click(screen.getByRole('button', { name: 'Add Wait node' }));
     expect(screen.getByTestId('node-wait')).toBeInTheDocument();
-    // The new node is selected, so its generated form shows; its port is unconnected.
-    expect(screen.getByRole('form', { name: 'wait config' })).toBeInTheDocument();
+    // The new node is selected but its editor stays closed; its port is unconnected.
+    expect(useEditorStore.getState().selectedNodeId).toBe('wait');
+    expect(screen.queryByRole('dialog')).toBeNull();
     expect(screen.getAllByText(/PORT_UNCONNECTED|NODE_UNREACHABLE/).length).toBeGreaterThan(0);
 
-    await user.clear(screen.getByLabelText('Label'));
-    await user.type(screen.getByLabelText('Label'), 'Approval');
+    // A click on the node opens its editor with the generated form.
+    fireEvent.click(screen.getByTestId('node-wait'));
+    const dialog = screen.getByRole('dialog', { name: 'Edit wait wait' });
+    expect(within(dialog).getByRole('form', { name: 'wait config' })).toBeInTheDocument();
+    await user.clear(within(dialog).getByLabelText('Label'));
+    await user.type(within(dialog).getByLabelText('Label'), 'Approval');
     expect(within(screen.getByTestId('node-wait')).getByText('Approval')).toBeInTheDocument();
 
     await waitFor(
@@ -71,6 +76,8 @@ describe('EditorPage', () => {
     expect(screen.getByTestId('node-script')).toBeInTheDocument();
     fireEvent.drop(canvas, { dataTransfer: { getData: () => 'nonsense' } });
     expect(useEditorStore.getState().definition!.nodes).toHaveLength(3);
+    // Dropping selects the new node; it does not open its editor.
+    expect(screen.queryByRole('dialog')).toBeNull();
 
     // A palette drag start carries the kind.
     const set: Record<string, string> = {};
@@ -102,9 +109,11 @@ describe('EditorPage', () => {
     const local = await loadLocalDraft(loop.id);
     expect(local?.synced).toBe(false);
     expect(local?.definition.nodes.map((n) => n.id)).toContain('subloop');
-    // Clicking a schema issue selects its node.
+    // Clicking a schema issue opens its node.
+    act(() => useEditorStore.getState().select(undefined));
     await user.click(screen.getAllByRole('button', { name: /SCHEMA subloop/ })[0]!);
     expect(useEditorStore.getState().selectedNodeId).toBe('subloop');
+    expect(screen.getByRole('dialog', { name: 'Edit subloop subloop' })).toBeInTheDocument();
   });
 
   it('keeps a newer server draft over an older unsynced local copy, and can switch', async () => {
@@ -190,7 +199,12 @@ describe('EditorPage', () => {
     expect(await screen.findByText('Publish failed')).toBeInTheDocument();
     expect(screen.getAllByText(/mutate/).length).toBeGreaterThan(0);
 
+    // Delete node, in the node's editor, removes it and closes the editor.
+    fireEvent.click(screen.getByTestId('node-mutate'));
     await user.click(screen.getByRole('button', { name: 'Delete node' }));
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(screen.queryByTestId('node-mutate')).toBeNull();
+    expect(screen.getByTestId('canvas')).toHaveFocus();
     await user.click(screen.getByRole('button', { name: 'Publish' }));
     expect(await screen.findByText('Published version 1.')).toBeInTheDocument();
     await waitFor(() => expect(screen.getByRole('button', { name: 'Run' })).toBeEnabled());
@@ -230,7 +244,7 @@ describe('EditorPage', () => {
     api.serverOnlyIssues = [];
 
     // The trigger's input schema editor holds text that is not JSON.
-    useEditorStore.getState().select('start');
+    act(() => useEditorStore.getState().openNode('start'));
     await screen.findByRole('form', { name: 'start config' });
     setCode('Input schema', '{"type": ');
     expect(await screen.findByText(/FIELD_UNPARSED/)).toBeInTheDocument();
@@ -242,15 +256,15 @@ describe('EditorPage', () => {
     setCode('Input schema', '{"type": "object"}');
     await waitFor(() => expect(screen.queryByText(/FIELD_UNPARSED/)).toBeNull());
 
-    // Leaving the node keeps the blocker and the text; coming back shows the text again.
+    // Closing the editor keeps the blocker and the text; opening it again shows the text again.
     setCode('Input schema', '{"broken": ');
     expect(await screen.findByText(/FIELD_UNPARSED/)).toBeInTheDocument();
-    useEditorStore.getState().select(undefined);
-    await screen.findByText('Select a node to edit its properties.');
+    await user.click(screen.getByRole('button', { name: 'Done' }));
+    expect(screen.queryByRole('dialog')).toBeNull();
     expect(screen.getByText(/FIELD_UNPARSED/)).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Publish' }));
     expect(await screen.findByText(/does not parse; fix them first/)).toBeInTheDocument();
-    useEditorStore.getState().select('start');
+    act(() => useEditorStore.getState().openNode('start'));
     await screen.findByRole('form', { name: 'start config' });
     expect(getCode('Input schema')).toBe('{"broken": ');
 
@@ -270,7 +284,7 @@ describe('EditorPage', () => {
     // Discarding from the validation panel works when the field is gone.
     setCode('Input schema', '[');
     expect(await screen.findByText(/FIELD_UNPARSED/)).toBeInTheDocument();
-    useEditorStore.getState().select(undefined);
+    act(() => useEditorStore.getState().closeNodeDialog());
     await user.click(
       await screen.findByRole('button', { name: 'Discard unparsed text at inputSchema' }),
     );
@@ -284,7 +298,13 @@ describe('EditorPage', () => {
     renderApp(`/loops/${loop.id}/edit`, api);
     await screen.findByRole('heading', { name: 'keys' });
     await user.click(screen.getByRole('button', { name: 'Add Wait node' }));
-    const form = screen.getByRole('form', { name: 'Connect wait' });
+    // Enter on the focused node opens its editor, with focus on the dialog's heading.
+    const card = screen.getByTestId('node-wait').closest<HTMLElement>('.react-flow__node')!;
+    act(() => card.focus());
+    await user.keyboard('{Enter}');
+    const dialog = screen.getByRole('dialog', { name: 'Edit wait wait' });
+    expect(within(dialog).getByRole('heading', { name: 'Edit wait wait' })).toHaveFocus();
+    const form = within(dialog).getByRole('form', { name: 'Connect wait' });
     await user.selectOptions(within(form).getByLabelText('To'), 'done');
     await user.click(within(form).getByRole('button', { name: 'Connect' }));
     expect(useEditorStore.getState().definition?.edges).toContainEqual(
@@ -295,9 +315,25 @@ describe('EditorPage', () => {
     );
     // Its only port is now used, so the form is gone.
     expect(screen.queryByRole('form', { name: 'Connect wait' })).toBeNull();
+    // Delete or Backspace in the dialog edits nothing on the canvas (WP-D2 D19).
+    await user.click(within(dialog).getByRole('button', { name: 'Remove edge e2' }));
+    act(() => within(dialog).getByLabelText('Label').focus());
+    await user.keyboard('{Delete}{Backspace}');
+    act(() => within(dialog).getByRole('button', { name: 'Done' }).focus());
+    await user.keyboard('{Delete}{Backspace}');
+    expect(useEditorStore.getState().definition?.nodes.some((n) => n.id === 'wait')).toBe(true);
+    // Esc closes it; focus returns to the node, which stays selected.
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(card).toHaveFocus();
+    expect(useEditorStore.getState()).toMatchObject({
+      selectedNodeId: 'wait',
+      nodeDialogOpen: false,
+    });
 
     // A new exit's default return channels are shown as a default until customized.
     await user.click(screen.getByRole('button', { name: 'Add Exit node' }));
+    act(() => useEditorStore.getState().openNode('exit'));
     expect(await screen.findByText('[{"kind":"caller"}]')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Customize channels' }));
     await waitFor(() =>
@@ -310,6 +346,23 @@ describe('EditorPage', () => {
       ).toEqual([{ kind: 'caller' }]),
     );
     expect(screen.queryByText(/expected object, received undefined/)).toBeNull();
+  });
+
+  it('says in the dialog why a connection was refused', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const loop = api.addLoop(newLoopDefinition('refused'));
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'refused' });
+    await user.click(screen.getByRole('button', { name: 'Add Wait node' }));
+    act(() => useEditorStore.getState().openNode('wait'));
+    const form = await screen.findByRole('form', { name: 'Connect wait' });
+    await user.selectOptions(within(form).getByLabelText('To'), 'done');
+    // The chosen target disappears before Connect is pressed (as another edit could do).
+    act(() => useEditorStore.getState().removeNode('done'));
+    act(() => useEditorStore.getState().openNode('wait'));
+    await user.click(within(form).getByRole('button', { name: 'Connect' }));
+    expect(within(form).getByRole('alert')).toHaveTextContent('Connection refused: unknown node');
   });
 
   it('never lets an older save land after a newer one', async () => {
@@ -477,13 +530,14 @@ describe('EditorPage', () => {
     await user.click(screen.getByRole('button', { name: 'Add entry' }));
     expect(Object.keys(useEditorStore.getState().definition!.variables!)).toContain('key2');
 
-    await user.click(screen.getByRole('tab', { name: 'Node' }));
-    useEditorStore.getState().select('check');
+    act(() => useEditorStore.getState().openNode('check'));
+    const dialog = await screen.findByRole('dialog', { name: 'Edit script check' });
     await screen.findByRole('form', { name: 'check config' });
-    const idInput = screen.getByLabelText('Node id');
+    const idInput = within(dialog).getByLabelText('Node id');
     await user.clear(idInput);
     await user.type(idInput, '9bad{Enter}');
     expect(screen.getByText(/Use a letter first/)).toBeInTheDocument();
+    expect(idInput).toHaveAttribute('aria-invalid', 'true');
     await user.clear(idInput);
     await user.type(idInput, 'infer{Enter}');
     expect(screen.getByText(/"infer" is already used/)).toBeInTheDocument();
@@ -491,16 +545,63 @@ describe('EditorPage', () => {
     await user.type(idInput, 'verify');
     fireEvent.blur(idInput);
     expect(useEditorStore.getState().selectedNodeId).toBe('verify');
+    // The dialog follows the rename and keeps focus where it was.
+    expect(screen.getByRole('dialog', { name: 'Edit script verify' })).toBe(dialog);
+    expect(screen.queryByText(/is already used/)).toBeNull();
     fireEvent.blur(screen.getByLabelText('Node id'));
 
     await user.click(screen.getByRole('button', { name: /Remove edge e5b/ }));
     expect(useEditorStore.getState().definition!.edges.some((e) => e.id === 'e5b')).toBe(false);
 
-    useEditorStore.getState().removeEdge('e2');
-    useEditorStore.getState().select('nightly');
+    act(() => useEditorStore.getState().removeEdge('e2'));
+    act(() => useEditorStore.getState().openNode('nightly'));
     expect(await screen.findByText('No outgoing edges.')).toBeInTheDocument();
-    useEditorStore.getState().select(undefined);
-    expect(await screen.findByText('Select a node to edit its properties.')).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: 'Edit trigger nightly' })).toBeInTheDocument();
+    act(() => useEditorStore.getState().closeNodeDialog());
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(useEditorStore.getState().selectedNodeId).toBe('nightly');
+  });
+
+  it('applies an id typed in the dialog when it closes, and stops once for an id that cannot apply', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const loop = api.addLoop(kitchenSinkLoop());
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'kitchen-sink' });
+    act(() => useEditorStore.getState().openNode('check'));
+    const idInput = (await screen.findByRole('dialog')).querySelector<HTMLInputElement>(
+      '#node-id',
+    )!;
+    // A valid id still being typed applies when the dialog closes.
+    await user.clear(idInput);
+    await user.type(idInput, 'verify');
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(useEditorStore.getState().definition!.nodes.some((n) => n.id === 'verify')).toBe(true);
+    expect(useEditorStore.getState().selectedNodeId).toBe('verify');
+
+    // An invalid one keeps the dialog open once, with the reason and focus on the field.
+    act(() => useEditorStore.getState().openNode('verify'));
+    const again = within(await screen.findByRole('dialog')).getByLabelText('Node id');
+    await user.clear(again);
+    await user.type(again, '1st');
+    await user.keyboard('{Escape}');
+    expect(screen.getByRole('dialog', { name: 'Edit script verify' })).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent(/Use a letter first/);
+    expect(again).toHaveFocus();
+    // Closing again drops it: the id is unchanged.
+    await user.click(screen.getByRole('button', { name: 'Close' }));
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(useEditorStore.getState().selectedNodeId).toBe('verify');
+
+    // Closed by the browser itself (a repeated Esc): it follows at once, dropping the bad id.
+    act(() => useEditorStore.getState().openNode('verify'));
+    const third = within(await screen.findByRole('dialog')).getByLabelText('Node id');
+    await user.clear(third);
+    await user.type(third, 'infer');
+    act(() => screen.getByRole<HTMLDialogElement>('dialog').close());
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(useEditorStore.getState().definition!.nodes.some((n) => n.id === 'verify')).toBe(true);
   });
 
   it('picks a published subloop and shows its signature', async () => {
@@ -531,6 +632,7 @@ describe('EditorPage', () => {
     const loop = api.addLoop(newLoopDefinition('parent'));
     renderApp(`/loops/${loop.id}/edit`, api);
     await user.click(await screen.findByRole('button', { name: 'Add Subloop node' }));
+    fireEvent.click(screen.getByTestId('node-subloop'));
     await user.type(await screen.findByLabelText('Find a published loop'), 'chi');
     const pick = screen.getByLabelText('Subloop');
     expect(within(pick).queryByText('unpublished')).not.toBeInTheDocument();
@@ -555,7 +657,7 @@ describe('EditorPage', () => {
     });
     renderApp(`/loops/${loop.id}/edit`, api);
     await screen.findByRole('heading', { name: 'p' });
-    useEditorStore.getState().select('sub');
+    act(() => useEditorStore.getState().openNode('sub'));
     expect(await screen.findByText('This loop has no published version.')).toBeInTheDocument();
     await user.selectOptions(screen.getByLabelText('Subloop'), '');
   });

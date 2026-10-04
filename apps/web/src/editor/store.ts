@@ -19,6 +19,11 @@ export interface EditorState {
   loopId: string | undefined;
   definition: LoopDefinitionInput | undefined;
   selectedNodeId: string | undefined;
+  /**
+   * Whether the node editor dialog is open for the selected node. Selecting alone does not open
+   * it; closing it keeps the selection. It closes when the node is deleted or a loop loads.
+   */
+  nodeDialogOpen: boolean;
   /** Bumped on every edit; autosave compares it with `savedRevision`. */
   revision: number;
   savedRevision: number;
@@ -49,6 +54,10 @@ export interface EditorState {
   ) => void;
   reset: () => void;
   select: (nodeId: string | undefined) => void;
+  /** Select a node and open its editor dialog. */
+  openNode: (nodeId: string) => void;
+  /** Close the node editor dialog; the node stays selected. */
+  closeNodeDialog: () => void;
   addNode: (kind: NodeKind, position: { x: number; y: number }) => string;
   updateNode: (nodeId: string, changes: { label?: string; config?: unknown }) => void;
   renameNode: (nodeId: string, nextId: string) => void;
@@ -82,6 +91,7 @@ const INITIAL = {
   loopId: undefined,
   definition: undefined,
   selectedNodeId: undefined,
+  nodeDialogOpen: false,
   revision: 0,
   savedRevision: 0,
   saveState: 'idle' as SaveState,
@@ -118,6 +128,13 @@ export const useEditorStore = create<EditorState>((set, get) => {
     reset: () => set({ ...INITIAL, generation: (generations += 1) }),
 
     select: (nodeId) => set({ selectedNodeId: nodeId }),
+
+    openNode: (nodeId) => {
+      if (!get().definition?.nodes.some((n) => n.id === nodeId)) return;
+      set({ selectedNodeId: nodeId, nodeDialogOpen: true });
+    },
+
+    closeNodeDialog: () => set({ nodeDialogOpen: false }),
 
     addNode: (kind, position) => {
       const def = get().definition;
@@ -199,7 +216,8 @@ export const useEditorStore = create<EditorState>((set, get) => {
           }),
         edges: d.edges.filter((e) => e.from.node !== nodeId && e.to.node !== nodeId),
       }));
-      if (get().selectedNodeId === nodeId) set({ selectedNodeId: undefined });
+      if (get().selectedNodeId === nodeId)
+        set({ selectedNodeId: undefined, nodeDialogOpen: false });
       get().clearFieldErrors(`node:${nodeId}`);
     },
 

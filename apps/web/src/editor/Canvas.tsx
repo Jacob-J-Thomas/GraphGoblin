@@ -3,6 +3,7 @@ import {
   Background,
   Controls,
   ReactFlow,
+  type AriaLabelConfig,
   type FitViewOptions,
   useReactFlow,
   type Connection,
@@ -10,12 +11,14 @@ import {
   type EdgeChange,
   type IsValidConnection,
   type NodeChange,
+  type NodeMouseHandler,
   type XYPosition,
 } from '@xyflow/react';
 import { useMemo, useState, type DragEvent, type KeyboardEvent } from 'react';
 import {
   canvasPorts,
   connectionProblem,
+  KIND_INFO,
   KIND_MIME,
   NODE_KINDS,
   type EditorIssue,
@@ -29,6 +32,32 @@ const nodeTypes = { gg: NodeCard };
 const FIT_VIEW_OPTIONS: FitViewOptions = {
   padding: { top: '8%', right: '8%', bottom: '8%', left: '72px' },
 };
+
+/**
+ * How far (px) the pointer may move between press and release for a click on a node, which opens
+ * its editor. Further, and it is a drag that moves the node and opens nothing; xyflow starts the
+ * drag only past the same distance, so a press is always exactly one of the two.
+ */
+const CLICK_DISTANCE = 3;
+
+/** What screen readers say about a focused node and edge (xyflow's defaults mention select only). */
+const ARIA_LABELS: Partial<AriaLabelConfig> = {
+  'node.a11yDescription.default':
+    'Press Enter to edit the node, or Space to select it. With a node selected, press Delete to remove it.',
+  'node.a11yDescription.keyboardDisabled':
+    'Press Enter to edit the node, or Space to select it. With a node selected, use the arrow keys to move it and Delete to remove it.',
+};
+
+/**
+ * Where focus goes when the node editor closes: the node's card on the canvas, or the canvas itself
+ * when the node is gone (deleted).
+ */
+export function canvasFocusTarget(nodeId: string | undefined): HTMLElement | null {
+  const card = nodeId
+    ? document.querySelector<HTMLElement>(`.react-flow__node[data-id="${nodeId}"]`)
+    : null;
+  return card ?? document.querySelector<HTMLElement>('[data-editor-canvas]');
+}
 
 type Size = { width: number; height: number };
 
@@ -46,6 +75,7 @@ function buildNodes(
       type: 'gg',
       position: dragging[node.id] ?? node.ui ?? { x: 0, y: 0 },
       selected: node.id === selected,
+      ariaLabel: `${KIND_INFO[node.kind].label} ${node.label} (${node.id})`,
       ...(size ? { measured: size } : {}),
       data: {
         node,
@@ -90,7 +120,8 @@ export function Canvas({
   issues: EditorIssue[];
 }) {
   const selected = useEditorStore((s) => s.selectedNodeId);
-  const { select, moveNode, removeNode, connect, removeEdge, addNode } = useEditorStore.getState();
+  const { select, openNode, moveNode, removeNode, connect, removeEdge, addNode } =
+    useEditorStore.getState();
   const { screenToFlowPosition } = useReactFlow();
   const [measured, setMeasured] = useState<Record<string, Size>>({});
   const [dragging, setDragging] = useState<Record<string, XYPosition>>({});
@@ -149,12 +180,30 @@ export function Canvas({
     addNode(kind, screenToFlowPosition({ x: event.clientX, y: event.clientY }));
   };
 
-  // Delete or Backspace removes the selected edge or node only while focus is on the canvas.
-  // xyflow's own handler listens on the whole document, so the keys deleted the selected node
-  // with focus on a toolbar button too, with no undo.
+  // A click without a drag opens the node's editor (a drag past CLICK_DISTANCE suppresses the
+  // click). A click on a port handle starts or ends a connection instead.
+  const onNodeClick: NodeMouseHandler<FlowNode> = (event, node) => {
+    if ((event.target as Element).closest('.react-flow__handle')) return;
+    openNode(node.id);
+  };
+
+  // Enter on a focused node opens its editor; Space still only selects it (xyflow). Delete or
+  // Backspace removes the selected edge or node only while focus is on the canvas: xyflow's own
+  // handler listens on the whole document, so the keys deleted the selected node with focus on a
+  // toolbar button too, with no undo. The node editor dialog renders outside the canvas, and keys
+  // from any dialog are ignored here as well.
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (event.key !== 'Delete' && event.key !== 'Backspace') return;
     const target = event.target as HTMLElement;
+    if (target.closest('dialog')) return;
+    if (event.key === 'Enter' && target.classList.contains('react-flow__node')) {
+      const id = target.dataset['id'];
+      if (id) {
+        event.preventDefault();
+        openNode(id);
+      }
+      return;
+    }
+    if (event.key !== 'Delete' && event.key !== 'Backspace') return;
     if (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return;
     if (selectedEdge) {
       removeEdge(selectedEdge);
@@ -169,8 +218,11 @@ export function Canvas({
 
   return (
     <div
-      className="h-full w-full"
+      className="h-full w-full focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus"
       data-testid="canvas"
+      data-editor-canvas=""
+      // Focus lands here when the node editor closes on a deleted node.
+      tabIndex={-1}
       onKeyDown={onKeyDown}
       onDragOver={(event) => {
         event.preventDefault();
@@ -187,10 +239,14 @@ export function Canvas({
         onConnect={onConnect}
         isValidConnection={isValidConnection}
         onNodeDragStop={(_, node) => endDrag(node.id, node.position)}
+        onNodeClick={onNodeClick}
+        nodeClickDistance={CLICK_DISTANCE}
+        nodeDragThreshold={CLICK_DISTANCE}
         onPaneClick={() => select(undefined)}
         fitView
         fitViewOptions={FIT_VIEW_OPTIONS}
         deleteKeyCode={null}
+        ariaLabelConfig={ARIA_LABELS}
       >
         <Background gap={22} size={1.3} />
         <Controls fitViewOptions={FIT_VIEW_OPTIONS} />

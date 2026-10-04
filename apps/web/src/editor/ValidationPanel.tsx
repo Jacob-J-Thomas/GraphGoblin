@@ -3,7 +3,7 @@ import { cn } from '../lib/utils.js';
 import type { EditorIssue } from './model.js';
 import { useEditorStore } from './store.js';
 
-/** Live results of the same validation the API runs on publish. Click an issue to select its node. */
+/** Live results of the same validation the API runs on publish. Click an issue to open its node. */
 export function ValidationPanel({ issues }: { issues: EditorIssue[] }) {
   const errors = issues.filter((i) => i.severity === 'error').length;
   const warnings = issues.length - errors;
@@ -33,7 +33,7 @@ export function ValidationPanel({ issues }: { issues: EditorIssue[] }) {
                 type="button"
                 className="block w-full cursor-pointer rounded-md border border-default bg-surface-raised px-3 py-2 text-left text-xs leading-normal hover:bg-surface-hover disabled:cursor-default disabled:hover:bg-surface-raised"
                 disabled={!issue.nodeId}
-                onClick={() => useEditorStore.getState().select(issue.nodeId)}
+                onClick={() => useEditorStore.getState().openNode(issue.nodeId!)}
               >
                 <span
                   className={cn(

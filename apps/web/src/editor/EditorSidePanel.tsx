@@ -2,19 +2,17 @@ import type { LoopDefinition, LoopDefinitionInput } from '@graphgoblin/contracts
 import { cn } from '../lib/utils.js';
 import { LoopSettingsPanel } from './LoopSettingsPanel.js';
 import type { EditorIssue } from './model.js';
-import { PropertyPanel } from './PropertyPanel.js';
 import { RunLauncher } from './RunLauncher.js';
 import { ValidationPanel } from './ValidationPanel.js';
 
-export type PanelTab = 'node' | 'loop' | 'run';
+export type PanelTab = 'loop' | 'run';
 
 const TABS: { id: PanelTab; label: string }[] = [
-  { id: 'node', label: 'Node' },
   { id: 'loop', label: 'Loop' },
   { id: 'run', label: 'Run' },
 ];
 
-/** The right-hand panel: Node, Loop, and Run tabs over the live validation results. */
+/** The right-hand panel: Loop and Run tabs over the live validation results. Nodes edit in a dialog. */
 export function EditorSidePanel({
   tab,
   onTab,
@@ -60,9 +58,6 @@ export function EditorSidePanel({
       </div>
       <div className="min-h-0 flex-1 overflow-auto">
         <div className="p-5">
-          {tab === 'node' ? (
-            <PropertyPanel definition={definition} issues={issues} loopId={loopId} />
-          ) : null}
           {tab === 'loop' ? (
             <LoopSettingsPanel definition={definition} epoch={settingsEpoch} />
           ) : null}

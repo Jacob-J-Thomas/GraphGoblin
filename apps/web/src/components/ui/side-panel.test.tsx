@@ -2,13 +2,7 @@ import { act, render, renderHook, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import {
-  Button,
-  readPanelState,
-  SidePanel,
-  useSidePanelState,
-  writePanelState,
-} from './index.js';
+import { Button, readPanelState, SidePanel, useSidePanelState, writePanelState } from './index.js';
 
 const KEY = 'test-panel';
 

@@ -10,6 +10,7 @@ import { ErrorState } from '../components/status.js';
 import { Alert, Button } from '../components/ui/index.js';
 import { errorMessage, formatDateTime, isOfflineError, problemIssues } from '../lib/utils.js';
 import { Canvas } from './Canvas.js';
+import { ConflictNotice } from './ConflictNotice.js';
 import { EditorSidePanel, type PanelTab } from './EditorSidePanel.js';
 import { EditorToolbar } from './EditorToolbar.js';
 import {
@@ -19,6 +20,7 @@ import {
   validateDraft,
   type EditorIssue,
 } from './model.js';
+import { NodeEditorDialog } from './NodeEditorDialog.js';
 import { Palette } from './Palette.js';
 import { useEditorStore } from './store.js';
 import { useAutosave } from './useAutosave.js';
@@ -40,7 +42,9 @@ export function EditorPage() {
   const saveState = useEditorStore((s) => s.saveState);
   const saveMessage = useEditorStore((s) => s.saveMessage);
   const connectionError = useEditorStore((s) => s.connectionError);
-  const [tab, setTab] = useState<PanelTab>('node');
+  const selectedNodeId = useEditorStore((s) => s.selectedNodeId);
+  const nodeDialogOpen = useEditorStore((s) => s.nodeDialogOpen);
+  const [tab, setTab] = useState<PanelTab>('loop');
   const [settingsEpoch, setSettingsEpoch] = useState(0);
   const flush = useAutosave(client);
   const conflict = useEditorStore((s) => s.conflict);
@@ -113,6 +117,7 @@ export function EditorPage() {
   const def = definition as LoopDefinitionInput;
   const published = query.data?.current?.definition;
   const errors = validation.issues.filter((i) => i.severity === 'error').length;
+  const editing = nodeDialogOpen ? def.nodes.find((n) => n.id === selectedNodeId) : undefined;
 
   const notices = [
     restored ? (
@@ -134,31 +139,7 @@ export function EditorPage() {
         </span>
       </Alert>
     ) : null,
-    conflict ? (
-      <Alert key="conflict" tone="warn" title="The draft changed on the server">
-        Another tab or device saved this loop&apos;s draft after this editor loaded it. Your changes
-        are kept on this device and nothing was overwritten.{' '}
-        <span className="mt-2 flex flex-wrap gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={resolve.busy}
-            onClick={() => void resolve.reload()}
-          >
-            Reload server draft
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={resolve.busy}
-            onClick={() => void resolve.overwrite()}
-          >
-            Overwrite with this copy
-          </Button>
-        </span>
-        {resolve.error ? <span className="mt-1 block">{resolve.error}</span> : null}
-      </Alert>
-    ) : null,
+    conflict ? <ConflictNotice key="conflict" resolve={resolve} /> : null,
     saveMessage && (saveState === 'offline' || saveState === 'error' || saveState === 'invalid') ? (
       <Alert key="save" tone="warn">
         {saveMessage}
@@ -229,6 +210,16 @@ export function EditorPage() {
           />
         </div>
       </ReactFlowProvider>
+      {/* Outside the canvas, so keys pressed in the dialog never reach the canvas handlers. */}
+      {editing ? (
+        <NodeEditorDialog
+          node={editing}
+          definition={def}
+          issues={validation.issues}
+          loopId={loopId}
+          notice={conflict ? <ConflictNotice resolve={resolve} /> : null}
+        />
+      ) : null}
     </div>
   );
 }

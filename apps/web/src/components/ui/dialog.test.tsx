@@ -167,7 +167,6 @@ describe('Dialog', () => {
     await user.click(screen.getByRole('button', { name: 'Open' }));
     await user.click(screen.getByRole('button', { name: 'Close' }));
     expect(screen.getByRole('button', { name: 'Open' })).toHaveFocus();
-
   });
 
   it('leaves focus to the browser when its opener is gone too', async () => {

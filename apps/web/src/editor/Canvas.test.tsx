@@ -2,7 +2,7 @@ import { kitchenSinkLoop } from '@graphgoblin/contracts/testing';
 import { act, fireEvent, render } from '@testing-library/react';
 import type { ReactFlowProps } from '@xyflow/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { Canvas } from './Canvas.js';
+import { Canvas, canvasFocusTarget } from './Canvas.js';
 import type { FlowNode } from './NodeCard.js';
 import { useEditorStore } from './store.js';
 
@@ -159,6 +159,56 @@ describe('Canvas handlers', () => {
     fireEvent.keyDown(canvas, { key: 'Backspace' });
     expect(store().definition!.edges.some((e) => e.id === 'e1')).toBe(false);
     expect(flow().deleteKeyCode).toBeNull();
+  });
+
+  it('opens a node on a click, but not on a click on one of its port handles', () => {
+    renderCanvas();
+    expect(flow()).toMatchObject({ nodeClickDistance: 3, nodeDragThreshold: 3 });
+    const node = flow().nodes!.find((n) => n.id === 'infer')!;
+    expect(node.ariaLabel).toBe('Inference Infer (infer)');
+    const handle = document.createElement('div');
+    handle.className = 'react-flow__handle';
+    const dot = handle.appendChild(document.createElement('span'));
+    act(() => flow().onNodeClick!({ target: dot } as never, node));
+    expect(store().nodeDialogOpen).toBe(false);
+    act(() => flow().onNodeClick!({ target: document.createElement('div') } as never, node));
+    expect(store()).toMatchObject({ selectedNodeId: 'infer', nodeDialogOpen: true });
+  });
+
+  it('opens the focused node on Enter, and ignores keys from a dialog', () => {
+    const view = renderCanvas();
+    const canvas = view.getByTestId('canvas');
+    const card = document.createElement('div');
+    card.className = 'react-flow__node';
+    card.dataset['id'] = 'prep';
+    canvas.appendChild(card);
+    const nameless = document.createElement('div');
+    nameless.className = 'react-flow__node';
+    canvas.appendChild(nameless);
+    fireEvent.keyDown(nameless, { key: 'Enter' });
+    fireEvent.keyDown(canvas, { key: 'Enter' });
+    expect(store().nodeDialogOpen).toBe(false);
+    fireEvent.keyDown(card, { key: 'Enter' });
+    expect(store()).toMatchObject({ selectedNodeId: 'prep', nodeDialogOpen: true });
+
+    // Delete from inside a dialog (were one rendered in the canvas) never removes the node.
+    const dialog = canvas.appendChild(document.createElement('dialog'));
+    const button = dialog.appendChild(document.createElement('button'));
+    fireEvent.keyDown(button, { key: 'Delete' });
+    expect(store().definition!.nodes.some((n) => n.id === 'prep')).toBe(true);
+  });
+
+  it('finds where focus returns after the node editor: the node, else the canvas', () => {
+    const view = renderCanvas();
+    const canvas = view.getByTestId('canvas');
+    expect(canvasFocusTarget('prep')).toBe(canvas);
+    expect(canvasFocusTarget(undefined)).toBe(canvas);
+    const card = canvas.appendChild(document.createElement('div'));
+    card.className = 'react-flow__node';
+    card.dataset['id'] = 'prep';
+    expect(canvasFocusTarget('prep')).toBe(card);
+    view.unmount();
+    expect(canvasFocusTarget('prep')).toBeNull();
   });
 
   it('applies edge changes and removals', () => {
