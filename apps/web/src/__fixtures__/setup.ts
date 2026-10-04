@@ -36,6 +36,16 @@ class DOMMatrixStub {
 }
 globalThis.DOMMatrixReadOnly ??= DOMMatrixStub as unknown as typeof DOMMatrixReadOnly;
 
+// jsdom has no modal top layer. Edge tests exercise native focus containment and Escape.
+HTMLDialogElement.prototype.showModal ??= function showModal() {
+  this.open = true;
+};
+HTMLDialogElement.prototype.close ??= function close() {
+  if (!this.open) return;
+  this.open = false;
+  queueMicrotask(() => this.dispatchEvent(new Event('close')));
+};
+
 afterEach(() => {
   cleanup();
   sessionStorage.clear();

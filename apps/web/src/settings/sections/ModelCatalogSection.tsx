@@ -1,6 +1,6 @@
-import { modelCatalog } from '@graphgoblin/api-client';
+import { GraphGoblinApiError, modelCatalog } from '@graphgoblin/api-client';
 import type { Effort } from '@graphgoblin/contracts';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 import { useApi } from '../../api/context.js';
 import { keys, useModelCatalog } from '../../api/queries.js';
@@ -10,6 +10,7 @@ import {
   Button,
   Card,
   Checkbox,
+  ConfirmAction,
   FieldGroup,
   Input,
   Label,
@@ -112,6 +113,7 @@ function ModelForm({ initial, onDone }: { initial?: CatalogEntry; onDone: () => 
 /** The models runs may use, per harness: add, edit, enable or disable, and delete. */
 export function ModelCatalogSection() {
   const client = useApi();
+  const queryClient = useQueryClient();
   const invalidate = useInvalidate();
   const query = useModelCatalog();
   const [editing, setEditing] = useState<string | undefined>();
@@ -125,11 +127,6 @@ export function ModelCatalogSection() {
       }),
     onSuccess: () => invalidate(keys.catalog),
   });
-  const remove = useMutation({
-    mutationFn: (entry: CatalogEntry) => modelCatalog.remove(client, entry.harness, entry.model),
-    onSuccess: () => invalidate(keys.catalog),
-  });
-  const error = toggle.error ?? remove.error;
   return (
     <Card
       flush
@@ -193,14 +190,24 @@ export function ModelCatalogSection() {
                       >
                         Edit
                       </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => remove.mutate(entry)}
-                        aria-label={`Delete ${entry.model}`}
-                      >
-                        Delete
-                      </Button>
+                      <ConfirmAction
+                        name={entry.model}
+                        onDismiss={(error) => {
+                          if (error instanceof GraphGoblinApiError && error.status === 404)
+                            return queryClient.invalidateQueries({ queryKey: keys.catalog });
+                        }}
+                        consequences={
+                          <p>
+                            The model “{entry.displayName}” ({entry.harness}/{entry.model}) will be
+                            removed from the catalog. If it is a seeded model, it returns at the
+                            next server start.
+                          </p>
+                        }
+                        onConfirm={async () => {
+                          await modelCatalog.remove(client, entry.harness, entry.model);
+                          await queryClient.invalidateQueries({ queryKey: keys.catalog });
+                        }}
+                      />
                     </Td>
                   </tr>
                 ))}
@@ -209,9 +216,9 @@ export function ModelCatalogSection() {
           )}
         </QueryState>
       </div>
-      {error ? (
+      {toggle.error ? (
         <div className="border-t border-default px-5 py-3">
-          <MutationError error={error} />
+          <MutationError error={toggle.error} />
         </div>
       ) : null}
     </Card>

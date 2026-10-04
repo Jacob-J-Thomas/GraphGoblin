@@ -1,10 +1,11 @@
 import { loops } from '@graphgoblin/api-client';
 import type { LoopRecord, RunRecord } from '@graphgoblin/contracts';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState, type ChangeEvent, type FormEvent } from 'react';
+import { useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { useApi } from '../api/context.js';
 import { keys, useLoops, useRuns } from '../api/queries.js';
+import { Icon } from '../components/icons/index.js';
 import { Page, PageHeader } from '../components/layout/index.js';
 import { QueryState, RunStatusBadge } from '../components/status.js';
 import {
@@ -12,6 +13,8 @@ import {
   Badge,
   Button,
   Card,
+  ConfirmAction,
+  buttonStyles,
   FieldGroup,
   HelpText,
   Input,
@@ -148,69 +151,61 @@ function ImportLoop() {
 function LoopActions({ loop }: { loop: LoopRecord }) {
   const client = useApi();
   const queryClient = useQueryClient();
-  const [confirming, setConfirming] = useState(false);
+  const exportingRef = useRef(false);
   const exportLoop = useMutation({
     mutationFn: () => loops.export(client, loop.id, { draft: !loop.currentVersionId }),
     onSuccess: (document) => downloadJson(`${fileSlug(loop.name)}.graphgoblin.json`, document),
-  });
-  const remove = useMutation({
-    mutationFn: async () => {
-      await loops.remove(client, loop.id);
-      await clearLocalDraft(loop.id);
+    onSettled: () => {
+      exportingRef.current = false;
     },
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: keys.loops }),
   });
   return (
-    <div className="flex flex-col items-end gap-1">
-      <div className="flex items-center justify-end gap-1 whitespace-nowrap">
+    <div className="relative flex flex-col items-end gap-2">
+      <div className="flex items-center justify-end gap-2">
         <Link
           to={`/loops/${loop.id}/edit`}
-          className="rounded-md px-2.5 py-1.5 text-sm font-semibold text-link hover:bg-surface-hover"
+          className={buttonStyles({ variant: 'outline', size: 'sm' })}
+          aria-label={`Edit ${loop.name}`}
         >
+          <Icon name="edit" />
           Edit
         </Link>
         <Button
           size="sm"
-          variant="ghost"
-          onClick={() => exportLoop.mutate()}
+          variant="outline"
+          aria-disabled={exportLoop.isPending}
+          aria-busy={exportLoop.isPending}
+          onClick={() => {
+            if (exportingRef.current) return;
+            exportingRef.current = true;
+            exportLoop.mutate();
+          }}
           aria-label={`Export ${loop.name}`}
         >
-          Export
+          <Icon name="export" />
+          {exportLoop.isPending ? 'Exporting…' : 'Export'}
         </Button>
-        {confirming ? (
-          <>
-            <Button
-              size="sm"
-              variant="destructive"
-              onClick={() => remove.mutate()}
-              aria-label={`Confirm delete ${loop.name}`}
-            >
-              Confirm delete
-            </Button>
-            <Button size="sm" variant="ghost" onClick={() => setConfirming(false)}>
-              Keep
-            </Button>
-          </>
-        ) : (
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => setConfirming(true)}
-            aria-label={`Delete ${loop.name}`}
-          >
-            Delete
-          </Button>
-        )}
+        <span role="status" className="sr-only">
+          {exportLoop.isPending ? `Exporting ${loop.name}…` : ''}
+        </span>
+        <ConfirmAction
+          name={loop.name}
+          returnFocusTo="loops-heading"
+          consequences={
+            <p>
+              The loop, all its versions and its triggers will be removed. Loops using it as a
+              subloop will no longer be able to start it.
+            </p>
+          }
+          onConfirm={async () => {
+            await loops.remove(client, loop.id);
+            await clearLocalDraft(loop.id);
+            await queryClient.invalidateQueries({ queryKey: keys.loops });
+          }}
+        />
       </div>
       {exportLoop.isError ? (
-        <HelpText tone="bad" className="text-right">
-          {errorMessage(exportLoop.error)}
-        </HelpText>
-      ) : null}
-      {remove.isError ? (
-        <HelpText tone="bad" className="text-right">
-          {errorMessage(remove.error)}
-        </HelpText>
+        <Alert title={`Could not export “${loop.name}”.`}>{errorMessage(exportLoop.error)}</Alert>
       ) : null}
     </div>
   );
@@ -222,7 +217,7 @@ export function LoopsPage() {
   const latest = latestRuns(runsQuery.data ?? []);
   return (
     <Page>
-      <PageHeader title="Loops" />
+      <PageHeader title="Loops" titleId="loops-heading" />
       <Card>
         <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-5">
           <CreateLoop />

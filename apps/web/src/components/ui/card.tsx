@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useId, type ReactNode } from 'react';
 import { cn } from '../../lib/utils.js';
 
 /**
@@ -19,8 +19,10 @@ export function Card({
   className?: string;
   children: ReactNode;
 }) {
+  const titleId = useId();
   return (
     <section
+      aria-labelledby={title ? titleId : undefined}
       className={cn(
         'min-w-0 rounded-lg border border-default bg-surface-raised shadow-1',
         flush && 'overflow-hidden',
@@ -30,7 +32,9 @@ export function Card({
       {title || actions ? (
         <header className="flex min-h-13 flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-default px-5 py-3">
           {title ? (
-            <h2 className="flex items-center gap-2 text-md font-semibold">{title}</h2>
+            <h2 id={titleId} className="flex items-center gap-2 text-md font-semibold">
+              {title}
+            </h2>
           ) : (
             <span />
           )}
