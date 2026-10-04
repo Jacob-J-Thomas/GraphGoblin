@@ -1,9 +1,8 @@
 # 06 - Harness integration
 
 Each inference node selects its harness through `config.harness`, defaulting to `codex`.
-Loop settings supply model and effort only. Deprecated loop harness input is resolved onto
-inference nodes before execution; decision strategies and structured repair still use their
-own Codex ports. See [ADR-0019](decisions/ADR-0019-inference-node-harness.md).
+Loop settings supply model and effort only; loop-level harness input is rejected.
+Decision strategies and structured repair still use their own Codex ports. See [ADR-0019](decisions/ADR-0019-inference-node-harness.md).
 
 ## The harness port (Decided)
 

@@ -1,7 +1,8 @@
-import { kitchenSinkLoop, legacyHarnessLoop, minimalLoop } from '@graphgoblin/contracts/testing';
+import { kitchenSinkLoop, minimalLoop } from '@graphgoblin/contracts/testing';
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { StrictMode } from 'react';
+import { createStore, get } from 'idb-keyval';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { nextTask } from '../__fixtures__/dialog.js';
 import { FakeApi, problem } from '../__fixtures__/fake-api.js';
@@ -12,6 +13,7 @@ import {
   loadSetAsideDraft,
   saveLocalDraft,
   saveSetAsideDraft,
+  type LocalDraft,
 } from '../drafts/local-drafts.js';
 import { useApiKeyStore } from '../api/api-key.js';
 import { LOOP_PANEL_STORAGE_KEY } from './LoopPanel.js';
@@ -26,32 +28,14 @@ describe('EditorPage', () => {
   // validation list in it, so they start with it expanded (the setup clears storage after each).
   beforeEach(() => localStorage.setItem(LOOP_PANEL_STORAGE_KEY, 'expanded'));
 
-  it('restores a legacy device draft canonically; Harness belongs to the inference dialog', async () => {
+  it('shows Harness only in the inference dialog', async () => {
     const api = new FakeApi();
-    const loop = api.addLoop(minimalLoop());
-    await saveLocalDraft({
-      loopId: loop.id,
-      definition: legacyHarnessLoop(),
-      savedAt: '2099-01-01T00:00:00.000Z',
-      synced: false,
-    });
+    const loop = api.addLoop(kitchenSinkLoop());
     renderApp(`/loops/${loop.id}/edit`, api);
-    await screen.findByRole('heading', { name: 'minimal' });
+    await screen.findByRole('form', { name: 'Loop settings form' });
     expect(screen.queryByLabelText('Harness')).not.toBeInTheDocument();
-    expect(useEditorStore.getState().definition?.settings?.defaults).not.toHaveProperty('harness');
     act(() => useEditorStore.getState().openNode('infer'));
-    const dialog = screen.getByRole('dialog');
-    expect(within(dialog).getByLabelText('Harness')).toHaveValue('codex');
-    expect(useEditorStore.getState().definition?.nodes[1]).toMatchObject({
-      config: { harness: 'codex' },
-    });
-    await waitFor(
-      () => expect(api.callsTo('PUT', `/loops/${loop.id}/draft`).length).toBeGreaterThan(0),
-      SAVE_WAIT,
-    );
-    expect(api.callsTo('PUT', `/loops/${loop.id}/draft`)[0]?.body).toMatchObject({
-      definition: { settings: { defaults: {} } },
-    });
+    expect(within(screen.getByRole('dialog')).getByLabelText('Harness')).toHaveValue('codex');
   });
 
   it('collapses and expands the loop panel from the toolbar and remembers it', async () => {
@@ -218,9 +202,10 @@ describe('EditorPage', () => {
     );
     expect(screen.getByText(/Fix the schema errors/)).toBeInTheDocument();
     expect(api.callsTo('PUT', `/loops/${loop.id}/draft`)).toHaveLength(0);
-    const local = await loadLocalDraft(loop.id);
+    const local = await get<LocalDraft>(loop.id, createStore('graphgoblin', 'drafts'));
     expect(local?.synced).toBe(false);
     expect(local?.definition.nodes.map((n) => n.id)).toContain('subloop');
+    expect(await loadLocalDraft(loop.id)).toBeUndefined();
     // Clicking a schema issue opens its node.
     act(() => useEditorStore.getState().select(undefined));
     await user.click(screen.getAllByRole('button', { name: /SCHEMA subloop/ })[0]!);

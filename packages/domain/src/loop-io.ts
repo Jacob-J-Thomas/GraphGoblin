@@ -1,6 +1,6 @@
 import {
-  LoopDefinitionCompatibilitySchema,
-  LoopExportCompatibilitySchema,
+  LoopDefinitionSchema,
+  LoopExportSchema,
   type LoopDefinition,
   type LoopExport,
 } from '@graphgoblin/contracts';
@@ -19,7 +19,7 @@ export function exportLoop(def: LoopDefinition, exportedAt: string): LoopExport 
     format: 'graphgoblin-loop',
     formatVersion: 1,
     exportedAt,
-    loop: LoopDefinitionCompatibilitySchema.parse(def),
+    loop: def,
   };
 }
 
@@ -36,12 +36,18 @@ export function importLoop(input: unknown): {
     input !== null &&
     ('format' in input || 'formatVersion' in input || 'exportedAt' in input || 'loop' in input);
   const parsed = envelope
-    ? LoopExportCompatibilitySchema.safeParse(input)
-    : LoopDefinitionCompatibilitySchema.safeParse(input);
+    ? LoopExportSchema.safeParse(input)
+    : LoopDefinitionSchema.safeParse(input);
   if (parsed.success) {
     const definition = 'loop' in parsed.data ? parsed.data.loop : parsed.data;
     return { definition, issues: validateLoop(definition) };
   }
-  const errors = parsed.error.issues.map((i) => `${i.path.join('.') || '<root>'}: ${i.message}`);
+  const errors = parsed.error.issues.flatMap((issue) => {
+    const paths =
+      issue.code === 'unrecognized_keys'
+        ? issue.keys.map((key) => [...issue.path, key])
+        : [issue.path];
+    return paths.map((path) => `${path.join('.') || '<root>'}: ${issue.message}`);
+  });
   throw new LoopImportError('document is neither a loop export nor a loop definition', { errors });
 }

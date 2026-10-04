@@ -48,7 +48,8 @@ Ports: one output per route label.
 ## Inferencing (Decided)
 
 Hands a request to a harness session. Choose the harness on each inference node with
-`config.harness`; omission defaults to `codex`. Loop defaults provide model and effort.
+`config.harness`; omission defaults to `codex`. Loop defaults provide model and effort;
+`settings.defaults.harness` is an unknown field and is rejected.
 Codex is the only harness in 1.0. Full adapter detail is in 06.
 
 ```ts

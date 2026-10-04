@@ -70,15 +70,15 @@ Validation rules enforced by `domain` before a version can be published:
 - No edge targets a trigger node's input.
 
 Harness selection belongs to inference nodes (`config.harness`, default `codex`). Loop defaults
-provide only model and effort. The contracts compatibility input parser accepts deprecated
-`settings.defaults.harness`, validates it before removal, and inherits it only onto inference
-nodes whose harness was omitted. Explicit node harnesses win. Canonical definitions and all
-new exports omit the legacy field; schema and export format versions remain 1. Stored versions
-are normalised on read without rewriting their JSON, ids, numbers, or publication timestamps.
-See [ADR-0019](decisions/ADR-0019-inference-node-harness.md).
+provide only model and effort. Definitions containing `settings.defaults.harness` are rejected
+as unknown keys; imports and API clients must remove it. There is no compatibility parser.
+Schema and export format versions remain 1. See [ADR-0019](decisions/ADR-0019-inference-node-harness.md).
 
 ## Versioning (Decided)
 
+- Upgrade migration `0005` rewrites stored version definitions once, removing only
+  `settings.defaults.harness`. Existing inference nodes already carry their explicit harness.
+  Version ids, numbers, creation and publication timestamps, and run pins stay unchanged.
 - Editing creates or updates a **draft** version. Publishing freezes it as the loop's current version.
 - A run pins the version it started with and finishes on it, even if a newer version is published meanwhile.
 - New runs always use the latest published version.

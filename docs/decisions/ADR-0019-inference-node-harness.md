@@ -1,43 +1,38 @@
-# ADR-0019 - Harness selection belongs to inference nodes
+# ADR-0019 - Harness is chosen on inference nodes only
 
 Date: 2026-10-04. Status: Accepted.
 
 ## Context
 
-A loop-level harness duplicates inference-node configuration and implies that other node kinds
-choose a harness too. Existing stored definitions, portable files, and device drafts contain
-`settings.defaults.harness`. Zod encodes API responses, so response schemas must remain encodable.
+Loop-level harness settings duplicate inference-node configuration and imply that other node
+kinds select a harness. After approving the initial plan, the owner clarified at 18:09Z:
+"I'm not really worried about maintaining v1 compatibility. I'd rather ensure the code is as
+well written, and maintainable as possible" and "There is no reason to support legacy."
+The repository-wide direction is recorded in [ADR-0020](ADR-0020-clean-design-until-release.md).
 
 ## Decision
 
-Canonical loop defaults contain only model and effort. Each inference node selects its harness;
-omission defaults to Codex. The loop panel renders canonical settings; the inference dialog keeps
-its Harness field. Decision strategies and structured repair retain their existing ports.
+Loop defaults contain model and effort only. Each inference node chooses `config.harness`,
+defaulting to Codex. The loop settings form has no Harness control; the inference dialog keeps
+it. Decision strategies and structured repair retain their existing ports.
 
-`LoopDefinitionCompatibilitySchema` is the shared input parser. It validates the optional,
-deprecated legacy harness enum without injecting a loop harness default, preserves omitted node
-harnesses until inheritance, fills only omitted inference values from the legacy value, removes
-the legacy field, and validates the canonical result. Explicit node values win. Parsing is
-non-mutating and idempotent. Invalid legacy values remain errors even with explicit node values.
-Production supports only Codex; a test-only second identifier proves the shared inheritance rule.
+Use only canonical schemas for API bodies and portable import/export. Reject
+`settings.defaults.harness` as an unknown field with its path. Recognize export envelopes by
+their keys before validation, preserving envelope error paths under `LOOP_IMPORT_ERROR`.
+Schema and export format versions remain 1.
 
-Create, draft save, validate, portable import, and SQLite version reads use this parser. The domain
-importer chooses an export envelope before validation so envelope errors retain their prefixed
-paths and `LOOP_IMPORT_ERROR`. Every new export is canonical, including exports of old versions.
-API response schemas have no one-way transforms. OpenAPI requests advertise compatibility input
-while responses describe canonical output. Schema and format versions stay 1.
+Migration `0005_inference_node_harness` removes the obsolete field from stored version JSON
+once at startup. Old stored inference nodes already carry explicit harnesses from the previous
+parser, so no node changes are necessary. Version identity, numbering, timestamps, run pins,
+replay, and recovery remain intact. There is no read-time normalization or compatibility layer.
 
-SQLite normalises only at read time. There is no migration or rewrite of stored JSON, version
-ids, version numbers, or publication timestamps. Pinning, replay, and recovery keep their existing
-version identity. Valid legacy device drafts are normalised when loaded; invalid unfinished
-drafts remain editable with compatibility validation errors and a canonical settings projection.
-
-Catalog warnings for a loop-default model use the inference default (`codex`).
+Device drafts that no longer parse against the canonical schema are discarded on load,
+including set-aside copies. Older exported files and API clients must remove the field, as
+described in the CHANGELOG upgrade notes.
 
 ## Consequences
 
-New writes and exports use node-only harness configuration. Old files and stored versions remain
-usable. A future harness must extend the production enum and adapter wiring; compatibility input
-cannot enable unsupported harnesses. Read-time validation rejects corrupt stored definitions.
-Rollback needs no database migration, since the previous contracts already default omitted loop
-harnesses to Codex. Re-upgrading resolves retained legacy JSON again without rewriting history.
+The contract and its consumers have one maintainable shape. The one-off migration changes
+stored version definitions without changing their execution semantics. Imported files require
+an explicit edit, and obsolete unsynced device edits are lost. Loop-default model catalog
+warnings check Codex until a second harness requires a broader check.

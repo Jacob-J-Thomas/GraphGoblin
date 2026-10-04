@@ -11,7 +11,7 @@ import type {
   RunEvent,
   RunRecord,
 } from '@graphgoblin/contracts';
-import { LoopDefinitionCompatibilitySchema } from '@graphgoblin/contracts';
+import { LoopDefinitionSchema } from '@graphgoblin/contracts';
 import { fakeUlid, sampleThread } from '@graphgoblin/contracts/testing';
 import {
   exportLoop,
@@ -143,7 +143,7 @@ export class FakeApi {
     options: { published?: boolean; draft?: boolean } = {},
   ): LoopRecord {
     const loopId = id('loop');
-    const parsed = LoopDefinitionCompatibilitySchema.parse(definition);
+    const parsed = LoopDefinitionSchema.parse(definition);
     const version = (status: 'draft' | 'published', n: number): LoopVersionRecord => ({
       id: id('version'),
       loopId,
@@ -182,7 +182,7 @@ export class FakeApi {
       loopId,
       version: (entry.current?.version ?? 0) + 1,
       status: 'published',
-      definition: LoopDefinitionCompatibilitySchema.parse(definition),
+      definition: LoopDefinitionSchema.parse(definition),
       createdAt: TS,
       publishedAt: TS,
     };
@@ -202,7 +202,7 @@ export class FakeApi {
   /** Save a draft as another tab or device would, without If-Match. */
   saveDraftElsewhere(loopId: string, definition: LoopDefinitionInput): void {
     const entry = this.loops.get(loopId)!;
-    const parsed = LoopDefinitionCompatibilitySchema.parse(definition);
+    const parsed = LoopDefinitionSchema.parse(definition);
     entry.draft = {
       id: entry.draft?.id ?? id('version'),
       loopId,
@@ -317,7 +317,7 @@ export class FakeApi {
           {
             loop,
             draft: entry.draft,
-            issues: validateLoop(LoopDefinitionCompatibilitySchema.parse(def)),
+            issues: validateLoop(LoopDefinitionSchema.parse(def)),
           },
           201,
         );
@@ -354,7 +354,7 @@ export class FakeApi {
       (call, [loopId]) => {
         const entry = this.loops.get(loopId!);
         if (!entry) return problem(404, 'LOOP_NOT_FOUND');
-        const parsed = LoopDefinitionCompatibilitySchema.safeParse(
+        const parsed = LoopDefinitionSchema.safeParse(
           (call.body as { definition: unknown }).definition,
         );
         if (!parsed.success)
@@ -392,7 +392,7 @@ export class FakeApi {
     [
       'POST /loops/:id/validate',
       (call) => {
-        const parsed = LoopDefinitionCompatibilitySchema.safeParse(
+        const parsed = LoopDefinitionSchema.safeParse(
           (call.body as { definition?: unknown }).definition,
         );
         if (!parsed.success)

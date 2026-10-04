@@ -8,7 +8,7 @@ import type {
   LoopDefinitionInput as ContractLoopDefinition,
   RunEvent,
 } from '@graphgoblin/contracts';
-import { fakeUlid, legacyHarnessLoop, minimalLoop } from '@graphgoblin/contracts/testing';
+import { fakeUlid, minimalLoop } from '@graphgoblin/contracts/testing';
 import { createTestApp, type TestApp } from '@graphgoblin/api/testing';
 import {
   apiKeys,
@@ -74,27 +74,6 @@ describe('against the in-process API (local trusted mode)', () => {
     expect(preflight[0]?.harness).toBe('codex');
     const installation = await system.installation(client);
     expect(installation.checks.find((c) => c.id === 'database')?.status).toBe('ok');
-  });
-
-  it('reads, runs and replays an old stored loop through the generated client', async () => {
-    const created = await loops.create(client, minimalLoop());
-    const published = await loops.publish(client, created.loop.id);
-    await t.container.handle.client.execute({
-      sql: 'UPDATE loop_versions SET definition = ? WHERE id = ?',
-      args: [JSON.stringify(legacyHarnessLoop()), published.id],
-    });
-    const detail = await loops.get(client, created.loop.id);
-    expect(detail.current?.definition.settings.defaults).not.toHaveProperty('harness');
-    expect(detail.current?.definition.nodes[1]).toMatchObject({ config: { harness: 'codex' } });
-    const exported = await loops.export(client, created.loop.id);
-    const imported = await loops.import(client, exported);
-    expect(imported.draft.definition).toEqual(exported.loop);
-    const started = await runs.start(client, created.loop.id, {});
-    await t.idle();
-    expect((await runs.get(client, started.id)).status).toBe('succeeded');
-    const replay = await runs.replay(client, started.id, 'infer');
-    await t.idle();
-    expect((await runs.get(client, replay.id)).status).toBe('succeeded');
   });
 
   it('manages a loop through its whole lifecycle', async () => {

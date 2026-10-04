@@ -1,4 +1,4 @@
-import { kitchenSinkLoop, legacyHarnessLoop, minimalLoop } from '@graphgoblin/contracts/testing';
+import { kitchenSinkLoop, minimalLoop } from '@graphgoblin/contracts/testing';
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
@@ -6,34 +6,6 @@ import { FakeApi, problem, TS } from '../__fixtures__/fake-api.js';
 import { renderApp } from '../__fixtures__/render.js';
 
 describe('LoopsPage', () => {
-  it.each([false, true])(
-    'imports old bare definitions and export envelopes (%j)',
-    async (envelope) => {
-      const user = userEvent.setup();
-      const api = new FakeApi();
-      renderApp('/loops', api);
-      const input = await screen.findByLabelText('Import an exported loop (JSON)');
-      const legacy = legacyHarnessLoop();
-      await user.upload(
-        input,
-        new File(
-          [
-            JSON.stringify(
-              envelope
-                ? { format: 'graphgoblin-loop', formatVersion: 1, exportedAt: TS, loop: legacy }
-                : legacy,
-            ),
-          ],
-          'legacy.json',
-          { type: 'application/json' },
-        ),
-      );
-      expect(await screen.findByText('Imported "minimal".')).toBeInTheDocument();
-      const entry = [...api.loops.values()][0]!;
-      expect(entry.draft?.definition.settings.defaults).not.toHaveProperty('harness');
-      expect(entry.draft?.definition.nodes[1]).toMatchObject({ config: { harness: 'codex' } });
-    },
-  );
   it('lists loops with publish state and last run status', async () => {
     const api = new FakeApi();
     const draft = api.addLoop({

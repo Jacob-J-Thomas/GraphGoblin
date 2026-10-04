@@ -8,7 +8,7 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import type { LoopDefinitionInput } from '@graphgoblin/contracts';
-import { fakeUlid, legacyHarnessLoop, minimalLoop } from '@graphgoblin/contracts/testing';
+import { fakeUlid, minimalLoop } from '@graphgoblin/contracts/testing';
 import { createTestApp, type TestApp } from '@graphgoblin/api/testing';
 import { createGraphGoblinClient } from '@graphgoblin/api-client';
 import { createMcpServer, readAllEvents } from './index.js';
@@ -145,34 +145,6 @@ describe('MCP server against the in-process API', () => {
       expect(tool.inputSchema.type).toBe('object');
     }
     expect(client.getInstructions()).toContain('wait_for_run');
-  });
-
-  it('describes, starts and replays a raw legacy stored loop through the client', async () => {
-    const loopId = await t.publishLoop({ ...minimalLoop(), name: 'legacy-mcp' });
-    const loop = await t.container.repos.loops.getLoop(loopId);
-    await t.container.handle.client.execute({
-      sql: 'UPDATE loop_versions SET definition = ? WHERE id = ?',
-      args: [
-        JSON.stringify({ ...legacyHarnessLoop(), name: 'legacy-mcp' }),
-        loop!.currentVersionId!,
-      ],
-    });
-    const described = body<{ version: { status: string } }>(
-      await call('describe_loop', { loopId }),
-    );
-    expect(described.version.status).toBe('published');
-    const started = body<{ runId: string }>(await call('start_run', { loopId }));
-    await t.idle();
-    expect(body<{ status: string }>(await call('get_run', { runId: started.runId })).status).toBe(
-      'succeeded',
-    );
-    const replay = body<{ id: string }>(
-      await call('replay_run', { runId: started.runId, nodeId: 'infer' }),
-    );
-    await t.idle();
-    expect(body<{ status: string }>(await call('get_run', { runId: replay.id })).status).toBe(
-      'succeeded',
-    );
   });
 
   it('lists and describes loops by id and by name', async () => {

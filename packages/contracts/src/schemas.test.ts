@@ -66,6 +66,25 @@ describe('common schemas', () => {
 });
 
 describe('loop definition', () => {
+  it('rejects removed loop-default fields as unknown keys', () => {
+    const result = LoopDefinitionSchema.safeParse({
+      ...minimalLoop(),
+      settings: { defaults: { harness: 'codex' } },
+    });
+    expect(result.success).toBe(false);
+    if (!result.success)
+      expect(result.error.issues).toContainEqual(
+        expect.objectContaining({
+          code: 'unrecognized_keys',
+          path: ['settings', 'defaults'],
+          keys: ['harness'],
+        }),
+      );
+    expect(InferenceConfigSchema.parse({ prompt: { template: 'Hello' } }).harness).toBe('codex');
+    expect(
+      InferenceConfigSchema.safeParse({ harness: 'wrong', prompt: { template: 'Hello' } }).success,
+    ).toBe(false);
+  });
   it('parses the minimal loop and applies defaults', () => {
     const loop = LoopDefinitionSchema.parse(minimalLoop());
     expect(loop.settings.maxIterations).toBe(10);

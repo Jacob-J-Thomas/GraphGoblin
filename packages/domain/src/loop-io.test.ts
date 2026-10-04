@@ -1,34 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { LoopDefinitionSchema } from '@graphgoblin/contracts';
-import { FIXTURE_TS, legacyHarnessLoop, minimalLoop } from '@graphgoblin/contracts/testing';
+import { FIXTURE_TS, minimalLoop } from '@graphgoblin/contracts/testing';
 import { exportLoop, importLoop, LoopImportError } from './loop-io.js';
 
 describe('exportLoop / importLoop', () => {
-  it.each([false, true])(
-    'imports legacy definitions and envelopes (%j) and exports canonically',
-    (envelope) => {
-      const legacy = legacyHarnessLoop();
-      const input = envelope
-        ? { format: 'graphgoblin-loop', formatVersion: 1, exportedAt: FIXTURE_TS, loop: legacy }
-        : legacy;
-      const imported = importLoop(input);
-      expect(imported.issues).toEqual([]);
-      expect(imported.definition.settings.defaults).not.toHaveProperty('harness');
-      expect(imported.definition.nodes[1]).toMatchObject({ config: { harness: 'codex' } });
-      const first = exportLoop(imported.definition, FIXTURE_TS);
-      expect(exportLoop(importLoop(first).definition, FIXTURE_TS)).toEqual(first);
-      // Old in-memory callers of exportLoop also receive a canonical export.
-      const old = {
-        ...imported.definition,
-        settings: {
-          ...imported.definition.settings,
-          defaults: { harness: 'codex', ...imported.definition.settings.defaults },
-        },
-      };
-      expect(exportLoop(old, FIXTURE_TS)).toEqual(first);
-    },
-  );
-
   it.each(['format', 'formatVersion', 'exportedAt', 'loop'])(
     'reports invalid envelope %s using its own path',
     (field) => {
@@ -36,7 +11,7 @@ describe('exportLoop / importLoop', () => {
         format: 'graphgoblin-loop',
         formatVersion: 1,
         exportedAt: FIXTURE_TS,
-        loop: legacyHarnessLoop(),
+        loop: minimalLoop(),
         [field]: null,
       };
       try {
@@ -51,15 +26,16 @@ describe('exportLoop / importLoop', () => {
     },
   );
 
-  it.each([false, true])('preserves invalid legacy harness paths (%j)', (envelope) => {
-    const legacy = { ...legacyHarnessLoop(), settings: { defaults: { harness: 'wrong' } } };
+  it.each([false, true])('rejects removed loop defaults with the field path (%j)', (envelope) => {
+    const definition = { ...minimalLoop(), settings: { defaults: { harness: 'codex' } } };
     const input = envelope
-      ? { format: 'graphgoblin-loop', formatVersion: 1, exportedAt: FIXTURE_TS, loop: legacy }
-      : legacy;
+      ? { format: 'graphgoblin-loop', formatVersion: 1, exportedAt: FIXTURE_TS, loop: definition }
+      : definition;
     try {
       importLoop(input);
       expect.fail('expected import rejection');
     } catch (error) {
+      expect(error).toBeInstanceOf(LoopImportError);
       expect((error as LoopImportError).details).toMatchObject({
         errors: expect.arrayContaining([
           expect.stringContaining(`${envelope ? 'loop.' : ''}settings.defaults.harness:`),
@@ -67,11 +43,14 @@ describe('exportLoop / importLoop', () => {
       });
     }
   });
+
   it('round-trips an export document', () => {
     const def = LoopDefinitionSchema.parse(minimalLoop());
     const exported = exportLoop(def, FIXTURE_TS);
     expect(exported.format).toBe('graphgoblin-loop');
     const imported = importLoop(JSON.parse(JSON.stringify(exported)));
+    expect(imported.definition).toEqual(def);
+    expect(exportLoop(imported.definition, FIXTURE_TS)).toEqual(exported);
     expect(imported.definition.name).toBe('minimal');
     expect(imported.issues).toEqual([]);
   });

@@ -1,47 +1,26 @@
-import { legacyHarnessLoop, FIXTURE_TS } from '@graphgoblin/contracts/testing';
-import { expect, openNode, test } from './fixtures.js';
+import { minimalLoop } from '@graphgoblin/contracts/testing';
+import { expect, openNode, publishLoop, showLoopPanel, test } from './fixtures.js';
 
-for (const envelope of [false, true]) {
-  test(`imports a legacy ${envelope ? 'envelope' : 'definition'} and shows Harness only on inference`, async ({
-    page,
-    request,
-  }) => {
-    const source = legacyHarnessLoop();
-    const legacy = {
-      ...source,
-      name: `legacy-harness-${envelope}`,
-      nodes: source.nodes.map((node, index) => ({ ...node, ui: { x: index * 260, y: 80 } })),
-    };
-    await page.goto('/app/loops');
-    await page.getByLabel('Import an exported loop (JSON)').setInputFiles({
-      name: 'legacy.json',
-      mimeType: 'application/json',
-      buffer: Buffer.from(
-        JSON.stringify(
-          envelope
-            ? {
-                format: 'graphgoblin-loop',
-                formatVersion: 1,
-                exportedAt: FIXTURE_TS,
-                loop: legacy,
-              }
-            : legacy,
-        ),
-      ),
-    });
-    await expect(page.getByText(`Imported "${legacy.name}".`)).toBeVisible();
-    await page.getByRole('link', { name: `Edit ${legacy.name}`, exact: true }).click();
-    await expect(page.getByRole('heading', { name: legacy.name })).toBeVisible();
-    await expect(page.getByLabel('Harness', { exact: true })).toHaveCount(0);
-    const dialog = await openNode(page, 'infer');
-    await expect(dialog.getByLabel('Harness', { exact: true })).toHaveValue('codex');
-    const loopId = /\/loops\/([^/]+)\/edit/.exec(page.url())![1]!;
-    const response = await request.get(`/loops/${loopId}/export?draft=true`);
-    expect(response.status()).toBe(200);
-    const exported = (await response.json()) as {
-      loop: { settings: { defaults: object }; nodes: { config: object }[] };
-    };
-    expect(exported.loop.settings.defaults).not.toHaveProperty('harness');
-    expect(exported.loop.nodes[1]?.config).toHaveProperty('harness', 'codex');
+test('shows Harness on inference nodes only', async ({ page, request }) => {
+  const source = minimalLoop();
+  const loopId = await publishLoop(request, {
+    ...source,
+    name: 'node-harness',
+    nodes: [
+      source.nodes[0],
+      { id: 'infer', kind: 'inference', label: 'Infer', config: { prompt: { template: 'Hello' } } },
+      source.nodes[1],
+    ].map((node, index) => ({ ...node, ui: { x: index * 260, y: 80 } })),
+    edges: [
+      { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'infer' } },
+      { id: 'e2', from: { node: 'infer', port: 'out' }, to: { node: 'done' } },
+    ],
   });
-}
+  await page.goto(`/app/loops/${loopId}/edit`);
+  await showLoopPanel(page);
+  const form = page.getByRole('form', { name: 'Loop settings form', exact: true });
+  await expect(form).toBeVisible();
+  await expect(form.getByLabel('Harness', { exact: true })).toHaveCount(0);
+  const dialog = await openNode(page, 'infer');
+  await expect(dialog.getByLabel('Harness', { exact: true })).toHaveValue('codex');
+});

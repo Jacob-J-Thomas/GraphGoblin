@@ -1,5 +1,5 @@
-import type { LoopDefinitionInput } from '@graphgoblin/contracts';
-import { createStore, del, get, set, update, type UseStore } from 'idb-keyval';
+import { LoopDefinitionSchema, type LoopDefinitionInput } from '@graphgoblin/contracts';
+import { createStore, del, promisifyRequest, set, update, type UseStore } from 'idb-keyval';
 
 /**
  * Unsaved editor drafts mirrored to IndexedDB, so a reload or an offline spell never loses work.
@@ -27,7 +27,23 @@ export async function saveLocalDraft(draft: LocalDraft): Promise<void> {
 }
 
 export async function loadLocalDraft(loopId: string): Promise<LocalDraft | undefined> {
-  return get<LocalDraft>(loopId, draftStore());
+  return loadDraft(loopId);
+}
+
+/** Discard device copies that no longer satisfy the current contract. */
+async function loadDraft(key: string): Promise<LocalDraft | undefined> {
+  return draftStore()('readwrite', (store) => {
+    let draft: LocalDraft | undefined;
+    const request = store.get(key) as IDBRequest<LocalDraft | undefined>;
+    request.onsuccess = () => {
+      draft = request.result;
+      if (draft && !LoopDefinitionSchema.safeParse(draft.definition).success) {
+        store.delete(key);
+        draft = undefined;
+      }
+    };
+    return promisifyRequest(store.transaction).then(() => draft);
+  });
 }
 
 /**
@@ -77,7 +93,7 @@ export async function saveSetAsideDraft(draft: LocalDraft): Promise<void> {
 }
 
 export async function loadSetAsideDraft(loopId: string): Promise<LocalDraft | undefined> {
-  return get<LocalDraft>(setAsideKey(loopId), draftStore());
+  return loadDraft(setAsideKey(loopId));
 }
 
 export async function clearSetAsideDraft(loopId: string): Promise<void> {

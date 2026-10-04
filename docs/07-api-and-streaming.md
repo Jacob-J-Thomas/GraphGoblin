@@ -49,21 +49,20 @@ Settings and catalog
 
 All list endpoints are paginated with cursors. All ids are ULIDs.
 
-## Loop definition compatibility
+## Loop definition inputs
 
-Canonical loop settings have model and effort defaults only. Select `config.harness` on each
-inference node; omission defaults to Codex. Create, draft save, and validate request bodies accept
-the deprecated optional `settings.defaults.harness` through `LoopDefinitionCompatibilitySchema`.
-It validates the legacy enum, inherits it only onto inference nodes with an omitted harness,
-removes the field, and validates canonical output. Explicit node harnesses win. Invalid legacy
-values are rejected at their field path, even with explicit valid node harnesses.
+Loop settings have model and effort defaults only. Select `config.harness` on each inference
+node; omission defaults to Codex. Create, draft save, and validate request bodies use the
+canonical `LoopDefinitionSchema`. `settings.defaults.harness` is rejected as an unknown key,
+with its field path, regardless of its value.
 
-`POST /loops/import` delegates to `domain.importLoop`, accepting both bare definitions and portable
-export envelopes. Envelope errors retain paths such as `loop.settings.defaults.harness`,
-`formatVersion`, or `exportedAt`, under `LOOP_IMPORT_ERROR`. Ordinary bodies use `VALIDATION_FAILED`.
-All responses and new exports are canonical and use encodable schemas without one-way transforms.
-Stored legacy versions are normalised on every read without rewriting history, so detail,
-version history, publish, execution, recovery, and replay agree. Schema and format versions stay 1.
+`POST /loops/import` delegates to `domain.importLoop`, accepting canonical bare definitions
+and portable export envelopes. Envelope errors retain paths such as
+`loop.settings.defaults.harness`, `formatVersion`, or `exportedAt`, under `LOOP_IMPORT_ERROR`.
+Ordinary bodies use `VALIDATION_FAILED`. Responses and exports use the canonical, encodable
+schemas. Startup migration `0005` removes the obsolete field from stored version definitions
+once; there is no tolerant read path. Schema and format versions stay 1. Older files and API
+clients must remove the field before sending a definition (see the CHANGELOG upgrade notes).
 
 ## SSE protocol (Decided)
 
@@ -199,6 +198,10 @@ PUT retains displayName, efforts, defaultEffort, and optional enabled (omitting 
 `POST /loops`, `POST /loops/import`, `PUT /loops/{id}/draft`, `POST /loops/{id}/validate`, and `POST /loops/{id}/publish` report the same issue list: the `domain` rules (`validateLoop`, which includes Liquid and JSONata syntax checks), trigger checks such as cron syntax, and subloop references, which must name a loop of the same owner with a published version (`SUBLOOP_NOT_FOUND`, `SUBLOOP_NOT_PUBLISHED`; a loop may reference itself). `publishable` from validate is true exactly when publish would accept the draft. The editor runs the `domain` rules locally and adds the API-only issues from validate.
 
 The API reads the catalog once per issue collection, next to subloop checks, and adds warning-severity `MODEL_DISABLED` or `MODEL_NOT_IN_CATALOG` for explicit inference `config.model` (the node's harness), decision `config.codex.model` (Codex, only when strategy includes `codex`), and `settings.defaults.model` (the inference default harness, `codex`). Node warnings include nodeId and node-relative paths `config.model` or `config.codex.model`; loop-default warnings use `settings.defaults.model` without nodeId. Unspecified models and unused decision Codex settings add no catalog warning. Publishing succeeds when only warnings exist and returns `{ version, issues }`; warnings do not enforce the catalog at runtime. The shared contracts issue schema supports optional paths, and the editor already shows warnings and their node identity.
+
+Known limitation: loop-default model warnings always check the Codex catalog, the only supported
+inference harness. Revisit this check when a second harness exists so a model inherited by nodes
+using different harnesses can be checked against each relevant catalog.
 
 ## Draft conflicts (Decided, WP-F2, ADR-0015)
 
