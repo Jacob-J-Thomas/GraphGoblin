@@ -26,11 +26,6 @@ const OTHER_CONTROLS = [
   '[tabindex]:not([tabindex="-1"])',
 ].join(',');
 
-/** A value for a double-quoted attribute selector: quotes and backslashes escaped. */
-function attributeValue(value: string): string {
-  return value.replace(/["\\]/g, '\\$&');
-}
-
 /** The control to focus inside `field`: the first value control, else the first other one. */
 function firstFocusable(field: Element): HTMLElement | undefined {
   for (const selector of [VALUE_CONTROLS, OTHER_CONTROLS]) {
@@ -47,12 +42,16 @@ function firstFocusable(field: Element): HTMLElement | undefined {
  * path (a nested field whose form shows its parent as one JSON editor, say), the parent paths are
  * tried in turn: `routes.0.label`, then `routes.0`, then `routes`. Returns whether anything took
  * focus; the caller decides the fallback (the node editor's heading).
+ *
+ * Paths come from user data (a record key may hold a quote, a backslash, or a newline), so the
+ * attribute values are compared as strings rather than built into a selector.
  */
 export function focusField(root: ParentNode, path: string): boolean {
+  const fields = [...root.querySelectorAll('[data-field]')];
   const segments = path.split('.').filter((segment) => segment !== '');
   for (let length = segments.length; length > 0; length -= 1) {
     const name = segments.slice(0, length).join('.');
-    const field = root.querySelector(`[data-field="${attributeValue(name)}"]`);
+    const field = fields.find((el) => el.getAttribute('data-field') === name);
     const control = field ? firstFocusable(field) : undefined;
     if (control) {
       control.focus();

@@ -26,8 +26,11 @@ function editorBody(): HTMLElement {
   return root;
 }
 
+/** The element labelled `name` (compared directly: names may hold any character). */
 const named = (root: HTMLElement, name: string) =>
-  root.querySelector<HTMLElement>(`[aria-label="${name}"]`)!;
+  [...root.querySelectorAll<HTMLElement>('[aria-label]')].find(
+    (el) => el.getAttribute('aria-label') === name,
+  )!;
 
 afterEach(() => {
   document.body.innerHTML = '';
@@ -43,6 +46,29 @@ describe('focusField', () => {
     expect(named(root, 'Prompt')).toHaveFocus();
     expect(focusField(config, 'odd"name')).toBe(true);
     expect(named(root, 'Odd')).toHaveFocus();
+  });
+
+  it('finds fields whose path holds any character, such as a record key with a newline', () => {
+    const root = editorBody();
+    const config = root.querySelector('[data-field-scope="config"]')!;
+    const env = config.appendChild(document.createElement('fieldset'));
+    env.setAttribute('data-field', 'env');
+    const keys = ['bad\nkey', 'quote"and\\back\\slash', "it's]\t[x=y"];
+    for (const key of keys) {
+      const row = env.appendChild(document.createElement('div'));
+      row.setAttribute('data-field', `env.${key}`);
+      const input = row.appendChild(document.createElement('input'));
+      input.setAttribute('aria-label', `value of ${key}`);
+    }
+    for (const key of keys) {
+      expect(focusField(config, `env.${key}`)).toBe(true);
+      expect(named(root, `value of ${key}`)).toHaveFocus();
+      expect(focusIssuePath(root, `config.env.${key}`)).toBe(true);
+      expect(named(root, `value of ${key}`)).toHaveFocus();
+    }
+    // A key that is not there falls back to the record itself, without throwing.
+    expect(focusField(config, 'env.other\nkey')).toBe(true);
+    expect(named(root, `value of ${keys[0]}`)).toHaveFocus();
   });
 
   it('falls back to the parent paths, preferring a value control over a button', () => {

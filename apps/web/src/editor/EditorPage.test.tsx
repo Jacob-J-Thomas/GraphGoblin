@@ -586,6 +586,42 @@ describe('EditorPage', () => {
     expect(screen.getByRole('dialog').querySelector('#node-label')).toHaveFocus();
   });
 
+  it('opens a node at an issue whose path holds a newline, a quote, or a backslash', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const def = newLoopDefinition('odd keys');
+    const keys = ['bad\nkey', 'quote"back\\slash'];
+    const script = (value: string) => ({
+      command: 'node',
+      args: ['x.js'],
+      env: Object.fromEntries(keys.map((key) => [key, value])),
+    });
+    def.nodes.push({ id: 'run', kind: 'script', label: 'Run', config: script('ok') });
+    const loop = api.addLoop(def);
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'odd keys' });
+    // Values over the 8,192-character limit: schema issues at config.env.<key>.
+    act(() => useEditorStore.getState().updateNode('run', { config: script('x'.repeat(8193)) }));
+    const badge = nodeBadge('run')!;
+    await user.click(badge);
+    const rows = popoverButtons(badge, /config\.env\./);
+    expect(rows.map((row) => row.querySelectorAll('code')[0]!.textContent)).toEqual(
+      keys.map((key) => `config.env.${key}`),
+    );
+    for (const index of [0, 1]) {
+      if (index > 0) {
+        act(() => useEditorStore.getState().closeNodeDialog());
+        await user.click(badge);
+      }
+      await user.click(popoverButtons(badge, /config\.env\./)[index]!);
+      const dialog = screen.getByRole('dialog', { name: 'Edit script run' });
+      // No row per key carries a field path, so focus goes to the env record itself.
+      expect(dialog.querySelector('[data-field="env"]')).toContainElement(
+        document.activeElement as HTMLElement,
+      );
+    }
+  });
+
   it('connects nodes from the keyboard and customizes a default list', async () => {
     const user = userEvent.setup();
     const api = new FakeApi();
