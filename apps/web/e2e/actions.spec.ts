@@ -169,7 +169,9 @@ test('revoking this browser key warns and brings up the API key panel', async ({
   await trigger.click();
   const dialog = page.getByRole('alertdialog');
   await expect(dialog).toContainText('401 immediately');
-  await expect(dialog).toContainText('this browser will lose access and show the API key panel');
+  await expect(dialog).toContainText(
+    'Revoking this key will sign this browser out and show the API key panel. Enter another valid key to continue.',
+  );
   await dialog.getByRole('button', { name: 'Confirm revoke e2e' }).click();
   await expect(page.getByRole('heading', { name: 'API key required' })).toBeVisible();
   await expect(page.getByLabel('API key', { exact: true })).toBeFocused();

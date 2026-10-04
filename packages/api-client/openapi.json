@@ -13281,10 +13281,11 @@
     },
     "/api-keys": {
       "get": {
-        "summary": "List API keys",
+        "summary": "List API keys with the current authenticated key flagged",
         "tags": [
           "api-keys"
         ],
+        "description": "Requires api-keys:read. Each item has a required current boolean: true only for the key that authenticated this list request when API keys are required. All items are false in trusted mode, even with a valid bearer key. This is a response snapshot, never persisted. Only this owner's key metadata is returned; tokens and hashes are never returned.",
         "responses": {
           "200": {
             "description": "Default Response",
@@ -13321,6 +13322,9 @@
                           },
                           "revokedAt": {
                             "type": "string"
+                          },
+                          "current": {
+                            "type": "boolean"
                           }
                         },
                         "required": [
@@ -13328,7 +13332,8 @@
                           "ownerId",
                           "label",
                           "scopes",
-                          "createdAt"
+                          "createdAt",
+                          "current"
                         ],
                         "additionalProperties": false
                       }
