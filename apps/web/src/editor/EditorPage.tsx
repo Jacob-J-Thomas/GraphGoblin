@@ -7,11 +7,10 @@ import { useParams } from 'react-router';
 import { useApi } from '../api/context.js';
 import { keys } from '../api/queries.js';
 import { ErrorState } from '../components/status.js';
-import { Alert, Button } from '../components/ui/index.js';
+import { Alert, Button, useSidePanelState } from '../components/ui/index.js';
 import { errorMessage, formatDateTime, isOfflineError, problemIssues } from '../lib/utils.js';
 import { Canvas } from './Canvas.js';
 import { ConflictNotice } from './ConflictNotice.js';
-import { EditorSidePanel } from './EditorSidePanel.js';
 import { EditorToolbar, OpenInRuns } from './EditorToolbar.js';
 import {
   fieldErrorIssues,
@@ -21,6 +20,7 @@ import {
   type EditorIssue,
 } from './model.js';
 import { NodeEditorDialog } from './NodeEditorDialog.js';
+import { LOOP_PANEL_STORAGE_KEY, LoopPanel, loopPanelDefault } from './LoopPanel.js';
 import { Palette } from './Palette.js';
 import { useEditorStore } from './store.js';
 import { useAutosave } from './useAutosave.js';
@@ -29,8 +29,9 @@ import { useResolveConflict } from './useResolveConflict.js';
 
 /**
  * The loop editor: the toolbar, notices about the draft (restored, set aside, conflicting,
- * unsaved, published), the palette, the canvas, and the side panel. Loading and conflict
- * resolution live in useLoadEditor and useResolveConflict.
+ * unsaved, published), the palette, the canvas, the collapsible loop panel (loop settings and the
+ * validation list), and the node editor dialog for the node opened on the canvas. Loading and
+ * conflict resolution live in useLoadEditor and useResolveConflict. Runs start from Runs.
  */
 export function EditorPage() {
   const { loopId = '' } = useParams();
@@ -44,7 +45,10 @@ export function EditorPage() {
   const connectionError = useEditorStore((s) => s.connectionError);
   const selectedNodeId = useEditorStore((s) => s.selectedNodeId);
   const nodeDialogOpen = useEditorStore((s) => s.nodeDialogOpen);
-  const [settingsEpoch, setSettingsEpoch] = useState(0);
+  const [panelExpanded, setPanelExpanded] = useSidePanelState(
+    LOOP_PANEL_STORAGE_KEY,
+    loopPanelDefault,
+  );
   const flush = useAutosave(client);
   const conflict = useEditorStore((s) => s.conflict);
   const resolve = useResolveConflict(loopId, flush);
@@ -183,10 +187,8 @@ export function EditorPage() {
         saveMessage={saveMessage}
         errors={errors}
         publishing={publish.isPending}
-        onLoopSettings={() => {
-          setSettingsEpoch((e) => e + 1);
-          document.getElementById('loop-name')?.focus();
-        }}
+        loopPanelExpanded={panelExpanded}
+        onLoopSettings={() => setPanelExpanded(!panelExpanded)}
         onPublish={() => publish.mutate()}
       />
       {notices.length > 0 ? (
@@ -202,10 +204,11 @@ export function EditorPage() {
           <main className="min-w-0 flex-1">
             <Canvas definition={def} issues={validation.issues} />
           </main>
-          <EditorSidePanel
+          <LoopPanel
             definition={def}
             issues={validation.issues}
-            settingsEpoch={settingsEpoch}
+            expanded={panelExpanded}
+            onExpandedChange={setPanelExpanded}
           />
         </div>
       </ReactFlowProvider>

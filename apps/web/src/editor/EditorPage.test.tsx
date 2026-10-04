@@ -1,7 +1,7 @@
 import { kitchenSinkLoop, minimalLoop } from '@graphgoblin/contracts/testing';
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { FakeApi, problem } from '../__fixtures__/fake-api.js';
 import { renderApp } from '../__fixtures__/render.js';
 import {
@@ -11,14 +11,95 @@ import {
   saveSetAsideDraft,
 } from '../drafts/local-drafts.js';
 import { useApiKeyStore } from '../api/api-key.js';
-import { KIND_MIME } from './model.js';
-import { newLoopDefinition } from './model.js';
+import { LOOP_PANEL_STORAGE_KEY } from './LoopPanel.js';
+import { KIND_MIME, newLoopDefinition } from './model.js';
 import { getCode, setCode } from '../__fixtures__/codemirror.js';
 import { useEditorStore } from './store.js';
 
 const SAVE_WAIT = { timeout: 4000 };
 
 describe('EditorPage', () => {
+  // jsdom's window is 1024 px wide, where the loop panel starts collapsed; most tests read the
+  // validation list in it, so they start with it expanded (the setup clears storage after each).
+  beforeEach(() => localStorage.setItem(LOOP_PANEL_STORAGE_KEY, 'expanded'));
+
+  it('collapses and expands the loop panel from the toolbar and remembers it', async () => {
+    const user = userEvent.setup();
+    localStorage.clear();
+    const api = new FakeApi();
+    const loop = api.addLoop(minimalLoop());
+    const first = renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'minimal' });
+    // Below 1280 px nothing stored means collapsed: a rail with Show and the issue count.
+    const toggle = screen.getByRole('button', { name: 'Loop settings' });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(toggle).toHaveAttribute('aria-controls', 'loop-panel');
+    expect(screen.getByRole('complementary', { name: 'Loop' })).toHaveAttribute('id', 'loop-panel');
+    expect(screen.queryByLabelText('Name')).toBeNull();
+    expect(screen.getByText('Ready to publish')).toHaveClass('sr-only');
+
+    // Expanding moves focus into the panel; the choice is remembered for the next visit.
+    await user.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('heading', { name: 'Loop' })).toHaveFocus();
+    expect(screen.getByLabelText('Name')).toHaveValue('minimal');
+    expect(screen.getByRole('region', { name: 'Validation' })).toBeInTheDocument();
+    expect(localStorage.getItem(LOOP_PANEL_STORAGE_KEY)).toBe('expanded');
+    first.unmount();
+    renderApp(`/loops/${loop.id}/edit`, api);
+    expect(await screen.findByLabelText('Name')).toBeInTheDocument();
+
+    // The panel's own Hide button collapses it too, leaving focus on Show.
+    await user.click(screen.getByRole('button', { name: 'Hide loop' }));
+    expect(screen.getByRole('button', { name: 'Show loop' })).toHaveFocus();
+    expect(screen.getByRole('button', { name: 'Loop settings' })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    );
+    expect(localStorage.getItem(LOOP_PANEL_STORAGE_KEY)).toBe('collapsed');
+  });
+
+  it('starts with the loop panel expanded on wide windows, and counts issues on its rail', async () => {
+    const user = userEvent.setup();
+    localStorage.clear();
+    const width = vi.spyOn(window, 'innerWidth', 'get').mockReturnValue(1440);
+    const api = new FakeApi();
+    const loop = api.addLoop(minimalLoop());
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'minimal' });
+    expect(screen.getByRole('button', { name: 'Loop settings' })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
+    width.mockRestore();
+    // Collapsed, the rail keeps the counts: an exit criterion above the ceiling is a warning,
+    // and a new wait node brings two errors (unconnected port, unreachable node).
+    await user.click(screen.getByRole('button', { name: 'Loop settings' }));
+    const rail = screen.getByRole('complementary', { name: 'Loop' });
+    act(() =>
+      useEditorStore.getState().updateNode('done', {
+        config: { criteria: [{ when: 'max-iterations', value: 99 }] },
+      }),
+    );
+    expect(within(rail).getByTitle('1 warning')).toHaveTextContent('1 warning');
+    expect(within(rail).queryByTitle(/error/)).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Add Wait node' }));
+    expect(within(rail).getByTitle('2 errors')).toHaveTextContent('2 errors');
+    // One error (text that does not parse) and two warnings (a second exit above the ceiling).
+    act(() => useEditorStore.getState().removeNode('wait'));
+    act(() =>
+      useEditorStore.getState().setFieldError('settings', 'x', { message: 'bad', text: '{' }),
+    );
+    expect(within(rail).getByTitle('1 error')).toHaveTextContent('1 error');
+    act(() => {
+      useEditorStore.getState().addNode('exit', { x: 0, y: 0 });
+      useEditorStore.getState().updateNode('exit', {
+        config: { criteria: [{ when: 'max-iterations', value: 99 }] },
+      });
+    });
+    expect(within(rail).getByTitle('2 warnings')).toHaveTextContent('2 warnings');
+  });
+
   it('loads a draft, adds nodes from the palette, edits properties, and autosaves', async () => {
     const user = userEvent.setup();
     const api = new FakeApi();
@@ -532,8 +613,9 @@ describe('EditorPage', () => {
     renderApp(`/loops/${loop.id}/edit`, api);
     await screen.findByRole('heading', { name: 'kitchen-sink' });
 
-    await user.click(screen.getByRole('button', { name: 'Loop settings' }));
-    const name = screen.getByLabelText('Name');
+    // The loop panel (expanded) holds the loop's own settings.
+    const panel = screen.getByRole('complementary', { name: 'Loop' });
+    const name = within(panel).getByLabelText('Name');
     await user.clear(name);
     await user.type(name, 'sink');
     expect(screen.getByRole('heading', { name: 'sink' })).toBeInTheDocument();

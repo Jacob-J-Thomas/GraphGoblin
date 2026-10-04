@@ -10,14 +10,11 @@ import { useEditorStore } from './store.js';
 
 const VariablesFormSchema = z.object({ variables: VariableDeclarationsSchema });
 
-/** Loop name, description, settings, and declared variables (name to JSON Schema). */
-export function LoopSettingsPanel({
-  definition,
-  epoch,
-}: {
-  definition: LoopDefinitionInput;
-  epoch: number;
-}) {
+/**
+ * Loop name, description, settings, and declared variables (name to JSON Schema). The forms keep
+ * their own state: remount this (a `key`) when the definition is replaced, as a load does.
+ */
+export function LoopSettingsPanel({ definition }: { definition: LoopDefinitionInput }) {
   const { updateMeta, updateSettings, updateVariables, setFieldError } = useEditorStore.getState();
   const fieldErrors = useEditorStore((s) => s.fieldErrors);
   return (
@@ -41,7 +38,6 @@ export function LoopSettingsPanel({
       </FieldGroup>
       <h3 className="mt-2 text-xs font-semibold tracking-wide text-muted uppercase">Settings</h3>
       <SchemaForm
-        key={`settings:${epoch}`}
         schema={LoopSettingsSchema}
         value={definition.settings ?? {}}
         label="Loop settings form"
@@ -54,7 +50,6 @@ export function LoopSettingsPanel({
         <HelpText>Each variable maps a name to a JSON Schema.</HelpText>
       </div>
       <SchemaForm
-        key={`variables:${epoch}`}
         schema={VariablesFormSchema}
         value={{ variables: definition.variables ?? {} }}
         label="Variables form"
