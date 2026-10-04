@@ -5,6 +5,178 @@ import { describe, expect, it, vi } from 'vitest';
 import { ConfirmAction } from './confirm-action.js';
 
 describe('ConfirmAction', () => {
+  it('review: reopens a queued native close while busy', async () => {
+    let finish!: () => void;
+    const show = vi.spyOn(HTMLDialogElement.prototype, 'showModal');
+    render(
+      <ConfirmAction
+        name="busy"
+        consequences="Versions are removed."
+        onConfirm={() =>
+          new Promise<void>((resolve) => {
+            finish = resolve;
+          })
+        }
+      />,
+    );
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Delete busy' }));
+    await user.click(screen.getByRole('button', { name: 'Confirm delete busy' }));
+    const modal = screen.getByRole<HTMLDialogElement>('alertdialog');
+    try {
+      await act(
+        () =>
+          new Promise<void>((resolve) =>
+            queueMicrotask(() => {
+              modal.open = false;
+              fireEvent(modal, new Event('close'));
+              resolve();
+            }),
+          ),
+      );
+      expect(show).toHaveBeenCalledTimes(2);
+      expect(modal.open).toBe(true);
+      expect(modal).toHaveFocus();
+    } finally {
+      await act(() => Promise.resolve(finish()));
+    }
+  });
+
+  it('review: follows an idle native close so the trigger can open again', async () => {
+    render(<ConfirmAction name="idle" consequences="Gone." onConfirm={() => Promise.resolve()} />);
+    const user = userEvent.setup();
+    const trigger = screen.getByRole('button', { name: 'Delete idle' });
+    await user.click(trigger);
+    const modal = screen.getByRole<HTMLDialogElement>('alertdialog');
+    modal.open = false;
+    fireEvent(modal, new Event('close'));
+    await user.click(trigger);
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+  });
+
+  it('consumes a queued programmatic close after reopening without swallowing the next native close', async () => {
+    vi.spyOn(HTMLDialogElement.prototype, 'close').mockImplementation(function (
+      this: HTMLDialogElement,
+    ) {
+      this.open = false;
+    });
+    render(<ConfirmAction name="race" consequences="Gone." onConfirm={() => Promise.resolve()} />);
+    const user = userEvent.setup();
+    const trigger = screen.getByRole('button', { name: 'Delete race' });
+    await user.click(trigger);
+    const modal = screen.getByRole<HTMLDialogElement>('alertdialog');
+    await user.click(screen.getByRole('button', { name: 'Keep' }));
+    await user.click(trigger);
+    fireEvent(modal, new Event('close'));
+    expect(modal.open).toBe(true);
+    await act(() => new Promise((resolve) => requestAnimationFrame(resolve)));
+    expect(screen.getByRole('button', { name: 'Keep' })).toHaveFocus();
+    modal.open = false;
+    fireEvent(modal, new Event('close'));
+    await user.click(trigger);
+    expect(modal.open).toBe(true);
+  });
+
+  it('preserves an existing tabindex on the explicit fallback target', async () => {
+    function Rows() {
+      const [exists, setExists] = useState(true);
+      return (
+        <>
+          <h2 id="fallback" tabIndex={0}>
+            Models
+          </h2>
+          {exists ? (
+            <ConfirmAction
+              name="model"
+              returnFocusTo="fallback"
+              consequences="Gone."
+              onConfirm={() => {
+                setExists(false);
+                return Promise.resolve();
+              }}
+            />
+          ) : null}
+        </>
+      );
+    }
+    render(<Rows />);
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Delete model' }));
+    await user.click(screen.getByRole('button', { name: 'Confirm delete model' }));
+    const heading = screen.getByRole('heading');
+    await waitFor(() => expect(heading).toHaveFocus());
+    expect(heading).toHaveAttribute('tabindex', '0');
+  });
+
+  it('review: derives the revoke name and announces a dialog with a ban icon', () => {
+    render(
+      <ConfirmAction
+        action="revoke"
+        name="CI"
+        consequences="Clients get 401."
+        onConfirm={() => Promise.resolve()}
+      />,
+    );
+    const trigger = screen.getByRole('button', { name: 'Revoke CI' });
+    expect(trigger).toHaveAttribute('aria-haspopup', 'dialog');
+    expect(trigger.querySelector('[data-icon="cancelled"]')).not.toBeNull();
+  });
+
+  it('review: pending content cannot select status text through a disabled button', async () => {
+    let finish!: () => void;
+    render(
+      <ConfirmAction
+        name="pending"
+        consequences="Gone."
+        onConfirm={() =>
+          new Promise<void>((resolve) => {
+            finish = resolve;
+          })
+        }
+      />,
+    );
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Delete pending' }));
+    await user.click(screen.getByRole('button', { name: 'Confirm delete pending' }));
+    try {
+      expect(screen.getByRole('alertdialog')).toHaveClass('select-none');
+    } finally {
+      await act(() => Promise.resolve(finish()));
+    }
+  });
+
+  it('review: an explicit focus target wins over the first section heading without tabindex residue', async () => {
+    function Rows() {
+      const [exists, setExists] = useState(true);
+      const options = { returnFocusTo: 'chosen-heading' };
+      return (
+        <section aria-labelledby="first-heading">
+          <h2 id="first-heading">First</h2>
+          <h2 id="chosen-heading">Chosen</h2>
+          {exists ? (
+            <ConfirmAction
+              {...options}
+              name="row"
+              consequences="Gone."
+              onConfirm={() => {
+                setExists(false);
+                return Promise.resolve();
+              }}
+            />
+          ) : null}
+        </section>
+      );
+    }
+    render(<Rows />);
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Delete row' }));
+    await user.click(screen.getByRole('button', { name: 'Confirm delete row' }));
+    const heading = screen.getByRole('heading', { name: 'Chosen' });
+    await waitFor(() => expect(heading).toHaveFocus());
+    expect(heading).toHaveAttribute('tabindex', '-1');
+    heading.blur();
+    expect(heading).not.toHaveAttribute('tabindex');
+  });
   it('names the item, announces consequences, focuses Keep, and returns focus on cancellation', async () => {
     const user = userEvent.setup();
     const confirm = vi.fn();
@@ -100,6 +272,7 @@ describe('ConfirmAction', () => {
         const [exists, setExists] = useState(true);
         const action = exists ? (
           <ConfirmAction
+            {...(!section ? { returnFocusTo: 'loops-heading' } : {})}
             name="row"
             consequences="Row is removed."
             onConfirm={() => {
@@ -110,10 +283,10 @@ describe('ConfirmAction', () => {
         ) : null;
         return (
           <main>
-            <h1>Loops</h1>
+            <h1 id="loops-heading">Loops</h1>
             {section ? (
-              <section>
-                <h2>Secrets</h2>
+              <section aria-labelledby="secrets-heading">
+                <h2 id="secrets-heading">Secrets</h2>
                 {action}
               </section>
             ) : (
@@ -129,6 +302,10 @@ describe('ConfirmAction', () => {
       await waitFor(() =>
         expect(screen.getByRole('heading', { name: section ? 'Secrets' : 'Loops' })).toHaveFocus(),
       );
+      screen.getByRole('heading', { name: section ? 'Secrets' : 'Loops' }).blur();
+      expect(
+        screen.getByRole('heading', { name: section ? 'Secrets' : 'Loops' }),
+      ).not.toHaveAttribute('tabindex');
     },
   );
 });

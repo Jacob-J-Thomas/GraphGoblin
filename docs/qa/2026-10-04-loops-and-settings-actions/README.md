@@ -2,6 +2,8 @@
 
 The change gives Loops one bordered, icon-labelled Edit / Export / Delete group and uses the same soft destructive buttons and solid destructive confirmation on Loops, models, secrets, and API keys. A shared native alert dialog names the item and consequences, focuses Keep, wraps Tab, locks cancellation and duplicate submission while pending, retains API errors until dismissal/retry, and restores focus after refreshed rows disappear. No backend, contract, dependency, or model-table redesign changes.
 
+The PR #50 review follow-up fixes native repeated-Escape dismissal, Export focus, stale 404 rows, API-key input focus, and confirmation accessibility. See [review fixes and current verification](review-fixes.md) for each reproduction, regression test, gate result, and remaining review limits. The verification below records the initial implementation.
+
 ## Files changed
 
 - Primitives: `apps/web/src/components/ui/button.tsx`, `confirm-action.tsx`, `index.ts`, and `components/icons/icon.tsx`; `buttonStyles` supports links and the soft destructive variant. Button props accept React 19 refs.
@@ -15,7 +17,9 @@ The change gives Loops one bordered, icon-labelled Edit / Export / Delete group 
 
 Captured from the production build in headless Microsoft Edge using `apps/web/e2e/server.ts`: real API, in-memory database, temporary data directory, fake harness, ephemeral loopback ports. Both capture runs and the E2E runs stop their isolated servers. No owner server or owner data directory is used. Regenerate with `pnpm.cmd build`, then `node docs/qa/2026-10-04-loops-and-settings-actions/capture.mjs before` on the baseline, or `after` on this change.
 
-## Verification
+The review follow-up refreshes only `secret-confirm` and `key-confirm` in the after directories: Jev startup re-seeding adds visible text and Revoke uses a ban icon. Those eight images cover both themes and viewports. The remaining 32 images retain the initial before/after evidence because those states did not visibly change. Capture specific states with `node docs/qa/2026-10-04-loops-and-settings-actions/capture.mjs after secret-confirm key-confirm`.
+
+## Initial implementation verification
 
 | Gate                                                      | Result                                          |
 | --------------------------------------------------------- | ----------------------------------------------- |
@@ -41,4 +45,4 @@ Screenshot review found and fixed inherited `whitespace-nowrap` / right alignmen
 - The API does not reveal which listed key this browser sends. Whenever a browser key is stored, every revoke confirmation gives an explicit conditional warning about losing browser access and showing the API key panel. No identity is guessed. The authenticated Edge test revokes the actual browser key and verifies that panel appears. Exact per-row current-key identification would need API support outside this scope; the owner should decide whether that follow-up is wanted.
 - Native `role="alertdialog"` is the shared pattern. Keep/Escape dismisses a failed operation; its reason stays visible while the dialog remains open. Review screen-reader announcement with assistive technology, which was not exercised here, and keyboard behaviour in browsers beyond the verified Edge.
 - The mobile table still scrolls horizontally; #24 owns the model catalog structure and responsive layout is separate work. Dialogs fit both requested viewports and themes.
-- GitHub issue reads returned 401, so the supplied brief was the scope source. The opt-in LIVE Codex test was skipped because this UI change needs no external harness call. No commits, index changes, pushes, or branch changes were made. Human product review and the Claude review remain for the orchestrator/owner.
+- GitHub issue reads returned 401, so the supplied brief was the scope source. The opt-in LIVE Codex test was skipped because this UI change needs no external harness call. No commits, index changes, pushes, or branch changes were made. Claude's PR #50 review led to the linked follow-up; review of those fixes remains for the orchestrator/owner.

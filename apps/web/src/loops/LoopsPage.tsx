@@ -160,7 +160,7 @@ function LoopActions({ loop }: { loop: LoopRecord }) {
     },
   });
   return (
-    <div className="flex flex-col items-end gap-2">
+    <div className="relative flex flex-col items-end gap-2">
       <div className="flex items-center justify-end gap-2">
         <Link
           to={`/loops/${loop.id}/edit`}
@@ -173,7 +173,7 @@ function LoopActions({ loop }: { loop: LoopRecord }) {
         <Button
           size="sm"
           variant="outline"
-          disabled={exportLoop.isPending}
+          aria-disabled={exportLoop.isPending}
           aria-busy={exportLoop.isPending}
           onClick={() => {
             if (exportingRef.current) return;
@@ -185,8 +185,12 @@ function LoopActions({ loop }: { loop: LoopRecord }) {
           <Icon name="export" />
           {exportLoop.isPending ? 'Exporting…' : 'Export'}
         </Button>
+        <span role="status" className="sr-only">
+          {exportLoop.isPending ? `Exporting ${loop.name}…` : ''}
+        </span>
         <ConfirmAction
           name={loop.name}
+          returnFocusTo="loops-heading"
           consequences={
             <p>
               The loop, all its versions and its triggers will be removed. Loops using it as a
@@ -213,7 +217,7 @@ export function LoopsPage() {
   const latest = latestRuns(runsQuery.data ?? []);
   return (
     <Page>
-      <PageHeader title="Loops" />
+      <PageHeader title="Loops" titleId="loops-heading" />
       <Card>
         <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-5">
           <CreateLoop />

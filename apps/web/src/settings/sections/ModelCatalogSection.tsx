@@ -1,4 +1,4 @@
-import { modelCatalog } from '@graphgoblin/api-client';
+import { GraphGoblinApiError, modelCatalog } from '@graphgoblin/api-client';
 import type { Effort } from '@graphgoblin/contracts';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
@@ -192,6 +192,10 @@ export function ModelCatalogSection() {
                       </Button>
                       <ConfirmAction
                         name={entry.model}
+                        onDismiss={(error) => {
+                          if (error instanceof GraphGoblinApiError && error.status === 404)
+                            return queryClient.invalidateQueries({ queryKey: keys.catalog });
+                        }}
                         consequences={
                           <p>
                             The model “{entry.displayName}” ({entry.harness}/{entry.model}) will be

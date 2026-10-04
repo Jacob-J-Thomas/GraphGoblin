@@ -17,6 +17,7 @@ export const buttonStyles = variants({
     'active:shadow-none',
     'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
     'disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none',
+    'aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none',
   ],
   variants: {
     variant: {

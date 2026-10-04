@@ -1,4 +1,4 @@
-import { secrets } from '@graphgoblin/api-client';
+import { GraphGoblinApiError, secrets } from '@graphgoblin/api-client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useApi } from '../../api/context.js';
@@ -95,6 +95,10 @@ export function SecretsSection() {
                   <ConfirmAction
                     name={s.name}
                     accessibleName={`Delete secret ${s.name}`}
+                    onDismiss={(error) => {
+                      if (error instanceof GraphGoblinApiError && error.status === 404)
+                        return queryClient.invalidateQueries({ queryKey: keys.secrets });
+                    }}
                     consequences={
                       <>
                         <p>
@@ -109,6 +113,8 @@ export function SecretsSection() {
                         {s.name === 'jev-api-key' ? (
                           <p>
                             Removing jev-api-key turns Jev decisions off until the key is set again.
+                            If GG_JEV_API_KEY is set, startup re-seeds the deleted secret at the
+                            next server start.
                           </p>
                         ) : null}
                       </>

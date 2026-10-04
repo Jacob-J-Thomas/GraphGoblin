@@ -1,4 +1,4 @@
-import { apiKeys } from '@graphgoblin/api-client';
+import { apiKeys, GraphGoblinApiError } from '@graphgoblin/api-client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useApiKeyStore } from '../../api/api-key.js';
@@ -73,6 +73,10 @@ export function ApiKeysSection() {
                       action="revoke"
                       name={k.label}
                       accessibleName={`Revoke ${k.label}`}
+                      onDismiss={(error) => {
+                        if (error instanceof GraphGoblinApiError && error.status === 404)
+                          return queryClient.invalidateQueries({ queryKey: keys.apiKeys });
+                      }}
                       consequences={
                         <>
                           <p>Clients using this API key will get 401 immediately.</p>

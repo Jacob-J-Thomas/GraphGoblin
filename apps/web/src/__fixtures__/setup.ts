@@ -41,7 +41,9 @@ HTMLDialogElement.prototype.showModal ??= function showModal() {
   this.open = true;
 };
 HTMLDialogElement.prototype.close ??= function close() {
+  if (!this.open) return;
   this.open = false;
+  queueMicrotask(() => this.dispatchEvent(new Event('close')));
 };
 
 afterEach(() => {

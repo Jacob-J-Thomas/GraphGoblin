@@ -174,13 +174,16 @@ describe('LoopsPage', () => {
     expect(edit).toHaveClass('h-8', 'border-strong', 'cursor-pointer');
     const user = userEvent.setup();
     await user.click(button);
-    expect(button).toBeDisabled();
+    expect(button).toHaveAttribute('aria-disabled', 'true');
+    expect(button).toHaveFocus();
     expect(button).toHaveTextContent('Exporting…');
+    expect(screen.getByText('Exporting slow…')).toHaveAttribute('role', 'status');
     fireEvent.click(button);
     expect(api.callsTo('GET', /\/export$/)).toHaveLength(1);
     await act(() => Promise.resolve(finish(problem(404, 'VERSION_NOT_FOUND', 'no version'))));
     expect(await screen.findByRole('alert')).toHaveTextContent('no version');
-    expect(button).toBeEnabled();
+    expect(button).toHaveAttribute('aria-disabled', 'false');
+    expect(button).toHaveFocus();
   });
 
   it('shows a clear offline state', async () => {

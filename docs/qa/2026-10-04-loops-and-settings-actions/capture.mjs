@@ -10,6 +10,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const web = resolve(here, '../../../apps/web');
 const { chromium } = createRequire(join(web, 'package.json'))('@playwright/test');
 const phase = process.argv[2] ?? 'after';
+const states = new Set(process.argv.slice(3));
 const server = spawn(
   process.execPath,
   ['--conditions=development', '--import', 'tsx', 'e2e/server.ts'],
@@ -64,6 +65,7 @@ try {
       const out = join(here, `${phase}-${theme}`);
       mkdirSync(out, { recursive: true });
       async function shot(name) {
+        if (states.size > 0 && !states.has(name)) return;
         await page.evaluate(() => document.fonts.ready);
         await page.screenshot({ path: join(out, `${name}-${viewport.width}.png`) });
       }

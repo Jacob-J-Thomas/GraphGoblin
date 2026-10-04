@@ -26,6 +26,10 @@ test('Loops keeps on cancel, contains keyboard focus, exports, and deletes on co
   await page.getByRole('button', { name: 'Confirm delete actions loop' }).click();
   await expect(trigger).toHaveCount(0);
   await expect(page.getByRole('heading', { name: 'Loops', exact: true })).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('heading', { name: 'Loops', exact: true })).not.toHaveAttribute(
+    'tabindex',
+  );
   expect((await request.get(`/loops/${id}`)).status()).toBe(404);
 });
 
@@ -84,6 +88,10 @@ test('Settings confirms model removal and reports an API second-delete error', a
   await expect(page.getByRole('alert')).toContainText('MODEL_NOT_FOUND');
   await expect(page.getByRole('alertdialog')).toBeVisible();
   await page.getByRole('button', { name: 'Keep' }).click();
+  await expect(page.getByRole('button', { name: 'Delete actions-model', exact: true })).toHaveCount(
+    0,
+  );
+  await expect(page.getByRole('heading', { name: 'Model catalog', exact: true })).toBeFocused();
 });
 
 test('revoking this browser key warns and brings up the API key panel', async ({
@@ -103,4 +111,152 @@ test('revoking this browser key warns and brings up the API key panel', async ({
   await expect(dialog).toContainText('this browser will lose access and show the API key panel');
   await dialog.getByRole('button', { name: 'Confirm revoke e2e' }).click();
   await expect(page.getByRole('heading', { name: 'API key required' })).toBeVisible();
+  await expect(page.getByLabel('API key', { exact: true })).toBeFocused();
+});
+
+for (const confirmWith of ['mouse', 'keyboard'] as const) {
+  test(`review: repeated Escape keeps a pending ${confirmWith} confirmation modal`, async ({
+    page,
+    request,
+  }) => {
+    const name = `escape-${confirmWith}`;
+    const id = await publishLoop(request, approvalLoop(name));
+    let release!: () => void;
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let arrived!: () => void;
+    const started = new Promise<void>((resolve) => {
+      arrived = resolve;
+    });
+    await page.route(`**/loops/${id}`, async (route) => {
+      if (route.request().method() !== 'DELETE') {
+        await route.continue();
+        return;
+      }
+      arrived();
+      await held;
+      await route.fulfill({
+        status: 409,
+        contentType: 'application/problem+json',
+        body: JSON.stringify({
+          type: 'about:blank',
+          title: 'LOOP_IN_USE',
+          status: 409,
+          code: 'LOOP_IN_USE',
+          detail: 'The loop has active runs; finish them first.',
+        }),
+      });
+    });
+    try {
+      await page.goto('/app/loops');
+      const trigger = page.getByRole('button', { name: `Delete ${name}`, exact: true });
+      await trigger.click();
+      const confirmation = page.getByRole('button', { name: `Confirm delete ${name}` });
+      if (confirmWith === 'mouse') await confirmation.click();
+      else {
+        await confirmation.focus();
+        await page.keyboard.press('Enter');
+      }
+      await started;
+      for (let i = 0; i < 6; i++) await page.keyboard.press('Escape');
+      const modal = page.locator('dialog:modal');
+      await expect(modal).toHaveCount(1);
+      await expect(modal).toHaveAttribute('aria-busy', 'true');
+      release();
+      await expect(modal.getByRole('alert')).toContainText(
+        'The loop has active runs; finish them first.',
+      );
+      await modal.getByRole('button', { name: 'Keep' }).click();
+      await expect(modal).toHaveCount(0);
+      await trigger.click();
+      await expect(page.locator('dialog:modal')).toHaveCount(1);
+      await page.getByRole('button', { name: 'Keep' }).click();
+    } finally {
+      release();
+    }
+  });
+}
+
+test('review: keyboard export keeps focus and announces progress', async ({ page, request }) => {
+  const id = await publishLoop(request, approvalLoop('focus-export'));
+  let release!: () => void;
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route(`**/loops/${id}/export*`, async (route) => {
+    await held;
+    await route.fulfill({
+      status: 404,
+      contentType: 'application/problem+json',
+      body: JSON.stringify({
+        type: 'about:blank',
+        title: 'VERSION_NOT_FOUND',
+        status: 404,
+        code: 'VERSION_NOT_FOUND',
+        detail: 'No version.',
+      }),
+    });
+  });
+  try {
+    await page.goto('/app/loops');
+    const button = page.getByRole('button', { name: 'Export focus-export' });
+    await button.focus();
+    await page.keyboard.press('Enter');
+    await expect(button).toContainText('Exporting');
+    await expect(button).toBeFocused();
+    await expect(
+      page.getByRole('status').filter({ hasText: 'Exporting focus-export' }),
+    ).toBeVisible();
+    await page.keyboard.press('Enter');
+    release();
+    await expect(page.getByRole('alert')).toContainText('No version.');
+    await expect(button).toBeFocused();
+  } finally {
+    release();
+  }
+});
+
+test('review: pending double clicks cannot select status text', async ({ page, request }) => {
+  const id = await publishLoop(request, approvalLoop('selection-guard'));
+  let release!: () => void;
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route(`**/loops/${id}`, async (route) => {
+    if (route.request().method() !== 'DELETE') {
+      await route.continue();
+      return;
+    }
+    await held;
+    await route.fulfill({
+      status: 409,
+      contentType: 'application/problem+json',
+      body: JSON.stringify({
+        type: 'about:blank',
+        title: 'LOOP_IN_USE',
+        status: 409,
+        code: 'LOOP_IN_USE',
+        detail: 'Still in use.',
+      }),
+    });
+  });
+  try {
+    await page.goto('/app/loops');
+    await page.getByRole('button', { name: 'Delete selection-guard', exact: true }).click();
+    const button = page.getByRole('button', { name: 'Confirm delete selection-guard' });
+    const box = await button.boundingBox();
+    if (!box) throw new Error('Confirm is not visible');
+    await page.mouse.dblclick(box.x + box.width / 2, box.y + box.height / 2);
+    const dialog = page.locator('dialog:modal');
+    await expect(dialog).toHaveAttribute('aria-busy', 'true');
+    expect(await dialog.evaluate((element) => getComputedStyle(element).userSelect)).toBe('none');
+    await dialog.getByRole('status').dblclick();
+    expect(await page.evaluate(() => window.getSelection()?.toString())).toBe('');
+    release();
+    await expect(dialog.getByRole('alert')).toContainText('Still in use.');
+    await dialog.getByRole('button', { name: 'Keep' }).click();
+  } finally {
+    release();
+  }
 });

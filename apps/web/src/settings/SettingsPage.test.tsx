@@ -45,6 +45,81 @@ function seeded(): FakeApi {
 }
 
 describe('SettingsPage', () => {
+  it.each([
+    [
+      'Delete gpt-6-luna',
+      'Confirm delete gpt-6-luna',
+      'DELETE /model-catalog/:harness/:model',
+      'catalog',
+      '/model-catalog',
+      'Model catalog',
+    ],
+    [
+      'Delete secret jev-api-key',
+      'Confirm delete jev-api-key',
+      'DELETE /secrets/:name',
+      'secretList',
+      '/secrets',
+      'Secrets',
+    ],
+    [
+      'Revoke mcp',
+      'Confirm revoke mcp',
+      'DELETE /api-keys/:id',
+      'apiKeyList',
+      '/api-keys',
+      'API keys',
+    ],
+  ] as const)(
+    'review: refreshes the vanished %s after a 404 is dismissed',
+    async (label, confirmation, route, list, listRoute, heading) => {
+      const api = seeded();
+      let finish!: () => void;
+      const refreshed = new Promise<void>((resolve) => {
+        finish = resolve;
+      });
+      api.override(route, () => {
+        api[list] = [];
+        api.override(`GET ${listRoute}`, async () => {
+          await refreshed;
+          return new Response(JSON.stringify({ items: api[list] }), {
+            headers: { 'content-type': 'application/json' },
+          });
+        });
+        return problem(404, 'NOT_FOUND', 'Already removed.');
+      });
+      renderApp('/settings', api);
+      const user = userEvent.setup();
+      await user.click(await screen.findByRole('button', { name: label }));
+      await user.click(screen.getByRole('button', { name: confirmation }));
+      expect(await screen.findByRole('alert')).toHaveTextContent('Already removed.');
+      await user.click(screen.getByRole('button', { name: 'Keep' }));
+      await waitFor(() => expect(screen.getByRole('button', { name: label })).toHaveFocus());
+      await act(() => Promise.resolve(finish()));
+      await waitFor(() =>
+        expect(screen.queryByRole('button', { name: label })).not.toBeInTheDocument(),
+      );
+      await waitFor(() => expect(screen.getByRole('heading', { name: heading })).toHaveFocus());
+    },
+  );
+
+  it('review: shows no browser-key warning when no key is stored', async () => {
+    useApiKeyStore.getState().forget();
+    renderApp('/settings', seeded());
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: 'Revoke mcp' }));
+    expect(screen.getByRole('alertdialog')).not.toHaveTextContent('This browser sends an API key');
+    expect(screen.getByRole('alertdialog')).not.toHaveTextContent('show the API key panel');
+  });
+
+  it('review: describes startup re-seeding in the Jev deletion confirmation', async () => {
+    renderApp('/settings', seeded());
+    await userEvent
+      .setup()
+      .click(await screen.findByRole('button', { name: 'Delete secret jev-api-key' }));
+    expect(screen.getByRole('alertdialog')).toHaveTextContent('GG_JEV_API_KEY');
+    expect(screen.getByRole('alertdialog')).toHaveTextContent('next server start');
+  });
   it('edits, toggles, adds, and deletes models in the catalog', async () => {
     const user = userEvent.setup();
     const api = seeded();

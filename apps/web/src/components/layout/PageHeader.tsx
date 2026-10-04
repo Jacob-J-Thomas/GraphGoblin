@@ -30,16 +30,20 @@ export function Page({
 /** The screen title, with optional inline details after it and actions on the right. */
 export function PageHeader({
   title,
+  titleId,
   actions,
   children,
 }: {
   title: ReactNode;
+  titleId?: string;
   actions?: ReactNode;
   children?: ReactNode;
 }) {
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
-      <h1 className="text-2xl leading-tight font-bold tracking-tight">{title}</h1>
+      <h1 id={titleId} className="text-2xl leading-tight font-bold tracking-tight">
+        {title}
+      </h1>
       {children}
       {actions ? <div className="ml-auto flex flex-wrap gap-2">{actions}</div> : null}
     </div>
