@@ -66,7 +66,7 @@ Validation rules enforced by `domain` before a version can be published:
 - Every trigger connects, directly or through other nodes, to an exit.
 - Every output port of every non-exit node is connected. Exit `loopBack` is optional.
 - Node configs validate against their kind's schema. Referenced variables exist. Referenced subloops exist and are published (checked by the API, which can see other loops; a loop may reference itself).
-- Every supplied Liquid template and JSONata expression contains non-whitespace source and parses or compiles, in node configs and loop settings (`TEMPLATE_INVALID`, `EXPRESSION_INVALID`). Omit optional blank source; the editor clears it. This authoring rule lives in shared domain validation, so API imports and publishing agree with the editor without changing contracts parsing or fixture defaults.
+- Every supplied Liquid template parses and every JSONata expression contains non-whitespace source and compiles, in node configs and loop settings (`TEMPLATE_INVALID`, `EXPRESSION_INVALID`). Empty and whitespace-only templates are valid and render exactly as authored. Omit optional blank expressions; the editor clears them. For optional templates, only exactly empty input means absent in the form; whitespace is preserved. This authoring rule lives in shared domain validation, so API imports and publishing agree with the editor without changing contracts parsing or fixture defaults.
 - No edge targets a trigger node's input.
 
 ## Versioning (Decided)

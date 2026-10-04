@@ -43,7 +43,8 @@ export function repathParseErrors(
 ): void {
   const moved = Object.entries(channel.errors ?? {}).flatMap(([path, error]) => {
     const change = changes.find(
-      ({ from, exact }) => path === from || (!exact && path.startsWith(`${from}.`)),
+      ({ from, exact }) =>
+        path === from || (!exact && (from === '' || path.startsWith(`${from}.`))),
     );
     if (!change) return [];
     return [

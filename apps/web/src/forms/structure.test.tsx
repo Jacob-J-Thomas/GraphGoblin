@@ -186,7 +186,7 @@ it('refuses a colliding record key while retaining the typed key and both values
   fireEvent.change(key, { target: { value: 'A' } });
   expect(screen.getByLabelText('Env key 2')).toHaveValue('A');
   expect(screen.getByLabelText('Env key 2')).toHaveAttribute('aria-invalid', 'true');
-  expect(screen.getByRole('alert')).toHaveTextContent(/already exists/);
+  expect(screen.getByLabelText('Env key 2')).toHaveAccessibleDescription(/already exists/);
   expect(spy.mock.calls).toHaveLength(calls);
   expect(screen.getByLabelText('Env value 1')).toHaveValue('one');
   expect(screen.getByLabelText('Env value 2')).toHaveValue('three');
@@ -206,7 +206,7 @@ it('focuses and announces an added array item', async () => {
     />,
   );
   await user.click(screen.getByRole('button', { name: 'Add args' }));
-  expect(screen.getByLabelText('Args 3')).toHaveFocus();
+  await waitFor(() => expect(screen.getByLabelText('Args 3')).toHaveFocus());
   expect(within(screen.getByRole('group', { name: 'Args' })).getByRole('status')).toHaveTextContent(
     'Added args 3',
   );
@@ -250,7 +250,7 @@ it('focuses and announces added and removed record entries', async () => {
   );
   const group = screen.getByRole('group', { name: 'Variables' });
   await user.click(within(group).getByRole('button', { name: 'Add entry' }));
-  expect(screen.getByLabelText('Variables key 1')).toHaveFocus();
+  await waitFor(() => expect(screen.getByLabelText('Variables key 1')).toHaveFocus());
   expect(within(group).getByRole('status')).toHaveTextContent('Added variables key1');
   await user.click(screen.getByRole('button', { name: 'Remove variables key1' }));
   expect(within(group).getByRole('button', { name: 'Add entry' })).toHaveFocus();
@@ -274,7 +274,7 @@ it('uses the collection as a safe focus fallback when an invalid array still exc
   expect(spy.mock.calls.at(-1)?.[0]).toEqual({ items: ['one', 'three'] });
 });
 
-it('treats required and optional whitespace source as blank without trimming nonblank source', async () => {
+it('treats expression whitespace as blank and preserves template whitespace', async () => {
   const { ExpressionSchema, TemplateSchema } = await import('@graphgoblin/contracts');
   const spy = vi.fn();
   render(
@@ -293,11 +293,13 @@ it('treats required and optional whitespace source as blank without trimming non
   setCode('Optional', ' \t\n');
   setCode('Liquid', ' \t\n');
   expect(spy.mock.calls.at(-1)?.[0]).not.toHaveProperty('optional');
-  expect(spy.mock.calls.at(-1)?.[0]).not.toHaveProperty('liquid');
-  expect(screen.queryAllByTestId('preview')).toHaveLength(2);
+  expect(spy.mock.calls.at(-1)?.[0]).toHaveProperty('liquid', ' \t\n');
+  expect(screen.queryAllByTestId('preview')).toHaveLength(3);
   setCode('Required', ' \t\n');
   setCode('Template', ' \t\n');
-  expect(screen.getAllByText('Required', { selector: '[role="alert"]' })).toHaveLength(2);
+  expect(getCode('Required')).toBe(' \t\n');
+  expect(getCode('Template')).toBe(' \t\n');
+  expect(screen.queryByText('Required', { selector: '[role="alert"]' })).not.toBeInTheDocument();
   setCode('Template', ' hello ');
   expect(spy.mock.calls.at(-1)?.[0]).toMatchObject({ template: ' hello ' });
 });

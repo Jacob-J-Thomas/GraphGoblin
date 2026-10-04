@@ -85,8 +85,8 @@ export function syntaxIssues(def: LoopDefinition): SyntaxIssue[] {
   const issues: SyntaxIssue[] = [];
   const report = (item: Found, nodeId?: string) => {
     const problem =
-      item.source.trim() === ''
-        ? `${item.kind} is required; omit optional blank source`
+      item.kind === 'expression' && item.source.trim() === ''
+        ? 'expression is required; a blank expression is not valid'
         : item.kind === 'template'
           ? checkTemplate(item.source)
           : checkExpression(item.source);

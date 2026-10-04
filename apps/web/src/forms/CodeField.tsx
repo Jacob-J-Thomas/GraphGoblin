@@ -40,6 +40,8 @@ export function CodeField({
   label,
   id,
   optional = false,
+  errorMessage,
+  requiredMessage,
 }: {
   kind: PreviewKind;
   value: string;
@@ -47,24 +49,29 @@ export function CodeField({
   label: string;
   id: string;
   optional?: boolean;
+  errorMessage?: string | undefined;
+  requiredMessage?: string | undefined;
 }) {
   const language: CodeLanguage = kind === 'template' ? 'liquid' : 'jsonata';
-  // Blank optional source is unset by StringField; nonblank source keeps its original spacing.
-  const blank = value.trim() === '';
-  const showPreview = !optional || !blank;
+  const [edited, setEdited] = useState(false);
+  const blank = kind === 'expression' ? value.trim() === '' : value === '';
+  const showPreview = !blank || (kind === 'template' && !optional);
   return (
     <div>
       <CodeEditor
         value={value}
-        onChange={onChange}
+        onChange={(next) => {
+          setEdited(true);
+          onChange(next);
+        }}
         language={language}
         label={label}
         id={id}
         attached={showPreview}
       />
-      {!optional && blank ? (
-        <HelpText tone="bad" role="alert">
-          Required
+      {kind === 'expression' && !optional && blank && !errorMessage ? (
+        <HelpText tone="bad" role={edited ? 'alert' : undefined}>
+          {requiredMessage ?? 'Required'}
         </HelpText>
       ) : null}
       {showPreview ? <Preview kind={kind} source={value} /> : null}

@@ -87,6 +87,7 @@ function ObjectField({
   const field = useField(name);
   const { optional, hasDefault, base } = unwrap(schema);
   const absent = field.value === undefined || field.value === null;
+  const parseErrors = useParseErrors();
   if (optional && !hasDefault && absent) {
     return (
       <div data-field={name}>
@@ -101,7 +102,14 @@ function ObjectField({
       <legend className={LEGEND}>{label}</legend>
       {optional && !hasDefault ? (
         <div>
-          <Button size="sm" variant="ghost" onClick={() => field.onChange(undefined)}>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              repathParseErrors(parseErrors, [{ from: name }]);
+              field.onChange(undefined);
+            }}
+          >
             Remove {label.toLowerCase()}
           </Button>
         </div>
@@ -126,8 +134,18 @@ function ArrayField({
   const element = shapeOf(shape.element);
   const parseErrors = useParseErrors();
   const focus = useCollectionFocus();
-  const [rowIds, setRowIds] = useState(() => items.map((_, i) => i));
-  const nextIdRef = useRef(items.length);
+  const [identity, setIdentity] = useState(() => ({
+    ids: items.map((_, i) => i),
+    nextId: items.length,
+  }));
+  let rowIds = identity.ids;
+  // External resets and shared union fields can change the count without a collection action.
+  // Reconcile before rendering children so every row has a unique identity on its first mount.
+  if (rowIds.length !== items.length) {
+    let nextId = identity.nextId;
+    rowIds = Array.from({ length: items.length }, (_, i) => rowIds[i] ?? nextId++);
+    setIdentity({ ids: rowIds, nextId });
+  }
   const remove = (index: number) => {
     const current = itemsOf(field.read());
     repathParseErrors(
@@ -137,14 +155,16 @@ function ArrayField({
         ...(offset === 0 ? {} : { to: joinPath(name, index + offset - 1) }),
       })),
     );
-    setRowIds((ids) => ids.filter((_, i) => i !== index));
+    setIdentity((previous) => ({ ...previous, ids: previous.ids.filter((_, i) => i !== index) }));
     field.onChange(current.filter((_, i) => i !== index));
     focus.announce(`Removed ${label.toLowerCase()} ${index + 1}`);
   };
   const add = () => {
     const current = itemsOf(field.read());
-    const id = nextIdRef.current++;
-    setRowIds((ids) => [...ids, id]);
+    setIdentity((previous) => ({
+      ids: [...previous.ids, previous.nextId],
+      nextId: previous.nextId + 1,
+    }));
     field.onChange([...current, initialValue(shape.element)]);
     focus.announce(`Added ${label.toLowerCase()} ${current.length + 1}`, current.length);
   };
@@ -308,6 +328,8 @@ function RecordField({
             label={`${label} key ${index + 1}`}
             value={key}
             rename={(next) => rename(key, next)}
+            otherKeys={entries.filter(([other]) => other !== key).map(([other]) => other)}
+            announce={(message) => focus.announce(message, undefined, false)}
           />
           <Button
             size="icon"
@@ -353,14 +375,20 @@ function RecordKey({
   label,
   value,
   rename,
+  otherKeys,
+  announce,
 }: {
   label: string;
   value: string;
   rename: (next: string) => boolean;
+  otherKeys: string[];
+  announce: (message: string) => void;
 }) {
   const id = useId();
   const [text, setText] = useState(value);
-  const [error, setError] = useState<string>();
+  const error = otherKeys.includes(text)
+    ? `Key "${text}" already exists. Choose a unique key.`
+    : undefined;
   return (
     <div className="min-w-0">
       <Input
@@ -372,11 +400,19 @@ function RecordKey({
         onChange={(event) => {
           const next = event.target.value;
           setText(next);
-          setError(rename(next) ? undefined : `Key "${next}" already exists. Choose a unique key.`);
+          rename(next);
+        }}
+        onBlur={() => {
+          if (error) {
+            setText(value);
+            announce(`Reverted key to "${value}"`);
+          } else if (text !== value) {
+            rename(text);
+          }
         }}
       />
       {error ? (
-        <HelpText id={id} tone="bad" role="alert">
+        <HelpText id={id} tone="bad">
           {error}
         </HelpText>
       ) : null}
@@ -392,6 +428,7 @@ function UnionField({
 }: FieldProps & { shape: Extract<FieldShape, { kind: 'union' }> }) {
   const field = useField(name);
   const id = useId();
+  const parseErrors = useParseErrors();
   const { optional, hasDefault, defaultValue } = unwrap(schema);
   const value: unknown = field.value === undefined && hasDefault ? defaultValue : field.value;
   const unset = value === undefined;
@@ -407,6 +444,7 @@ function UnionField({
           id={id}
           value={unset ? '' : String(index)}
           onChange={(e) => {
+            repathParseErrors(parseErrors, [{ from: name }]);
             if (e.target.value === '') return field.onChange(undefined);
             field.onChange(initialValue(shape.options[Number(e.target.value)] as Schema));
           }}

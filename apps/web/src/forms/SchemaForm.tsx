@@ -11,7 +11,12 @@ import {
   shapeOf,
   type Schema,
 } from './introspect.js';
-import { ParseErrorContext, type ParseError, type ParseErrorChannel } from './parse-errors.js';
+import {
+  ParseErrorContext,
+  repathParseErrors,
+  type ParseError,
+  type ParseErrorChannel,
+} from './parse-errors.js';
 import { stripUnset } from './unset.js';
 
 export interface SchemaFormProps {
@@ -109,6 +114,7 @@ export function SchemaForm({
 
   const switchVariant = (index: number) => {
     if (shape.kind !== 'union') return;
+    repathParseErrors(parseErrorChannel, [{ from: '' }]);
     const next = asValues(initialValue(shape.options[index] as Schema));
     setUnionIndex(index);
     form.reset(next);

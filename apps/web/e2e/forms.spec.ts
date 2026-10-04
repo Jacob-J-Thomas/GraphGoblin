@@ -116,7 +116,7 @@ test('collection focus and collision refusal preserve the saved values', async (
   await code(page, 'Args 3', 'new');
   await page.getByLabel('Env key 2').fill('A');
   await expect(page.getByLabel('Env key 2')).toHaveAttribute('aria-invalid', 'true');
-  await expect(dialog.getByRole('alert')).toContainText('already exists');
+  await expect(page.getByLabel('Env key 2')).toHaveAccessibleDescription(/already exists/);
   await expect(page.getByLabel('Env value 1')).toHaveValue('one');
   await expect(page.getByLabel('Env value 2')).toHaveValue('three');
   await expect
@@ -234,6 +234,94 @@ test('blank optional source is absent in the form and raw blank source cannot pu
       ]),
     });
   }
+});
+
+test('empty and whitespace templates survive editing, API validation, publishing, and import', async ({
+  page,
+  request,
+}) => {
+  const id = await createLoop(request, { command: 'cut', args: ['-d', 'before', '-f1', 'before'] });
+  await page.goto(`/app/loops/${id}/edit`);
+  await openNode(page, 'approve');
+  await code(page, 'Args 2', ' ');
+  await code(page, 'Args 4', '');
+  await expect(page.getByLabel('Args 2', { exact: true })).toHaveText(' ');
+  await expect
+    .poll(
+      async () =>
+        (await draft(request, id)).draft.definition.nodes.find((n) => n.id === 'approve')?.config
+          .args,
+    )
+    .toEqual(['-d', ' ', '-f1', '']);
+  const validated = await request.post(`/loops/${id}/validate`, {
+    data: { definition: (await draft(request, id)).draft.definition },
+  });
+  expect(await validated.json()).toMatchObject({ publishable: true, issues: [] });
+  expect((await request.post(`/loops/${id}/publish`)).status()).toBe(200);
+  const exported = await request.get(`/loops/${id}/export`);
+  const imported = await request.post('/loops/import', { data: await exported.json() });
+  expect(imported.status()).toBe(201);
+  expect(await imported.json()).toMatchObject({ issues: [] });
+});
+
+test('required whitespace expressions are reported by the form and API validation, import, and publish', async ({
+  page,
+  request,
+}) => {
+  const id = await createLoop(
+    request,
+    {
+      operations: [
+        { op: 'set', path: '/vars/value', value: { kind: 'expression', jsonata: 'true' } },
+      ],
+    },
+    'mutate',
+  );
+  await page.goto(`/app/loops/${id}/edit`);
+  const dialog = await openNode(page, 'approve');
+  await code(page, 'Jsonata', ' ');
+  const row = dialog.locator('[data-field="operations.0.value.jsonata"]');
+  await expect(row.getByTestId('preview')).toHaveCount(0);
+  await expect(row.getByRole('alert')).toHaveCount(1);
+  await expect(dialog.getByLabel('Jsonata', { exact: true })).toHaveText(' ');
+  await expect(row.getByRole('alert')).toContainText('Too small');
+  const definition = approvalLoop('raw blank expression');
+  const raw = {
+    ...definition,
+    nodes: definition.nodes.map((node) =>
+      node.id === 'approve'
+        ? {
+            ...node,
+            kind: 'mutate',
+            config: {
+              operations: [
+                { op: 'set', path: '/vars/value', value: { kind: 'expression', jsonata: ' ' } },
+              ],
+            },
+          }
+        : node,
+    ),
+  };
+  const imported = await request.post('/loops/import', { data: raw });
+  expect(imported.status()).toBe(201);
+  const result = (await imported.json()) as {
+    loop: { id: string };
+    issues: { code: string; message: string }[];
+  };
+  expect(result.issues).toContainEqual(
+    expect.objectContaining({
+      code: 'EXPRESSION_INVALID',
+      message: expect.stringContaining('expression is required; a blank expression is not valid'),
+    }),
+  );
+  const validated = await request.post(`/loops/${result.loop.id}/validate`, {
+    data: { definition: raw },
+  });
+  expect(await validated.json()).toMatchObject({
+    publishable: false,
+    issues: expect.arrayContaining([expect.objectContaining({ code: 'EXPRESSION_INVALID' })]),
+  });
+  expect((await request.post(`/loops/${result.loop.id}/publish`)).status()).toBe(422);
 });
 
 for (const theme of ['dark', 'light']) {
