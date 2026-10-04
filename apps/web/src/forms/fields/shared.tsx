@@ -45,12 +45,16 @@ export function joinPath(base: string, key: string | number): string {
   return base === '' ? String(key) : `${base}.${key}`;
 }
 
-export function FieldError({ name }: { name: string }) {
+export function useFieldErrorMessage(name: string) {
   const {
     formState: { errors },
   } = useFormContext();
   const error = get(errors, name) as { message?: string; root?: { message?: string } } | undefined;
-  const message = error?.message ?? error?.root?.message;
+  return error?.message ?? error?.root?.message;
+}
+
+export function FieldError({ name }: { name: string }) {
+  const message = useFieldErrorMessage(name);
   if (!message) return null;
   return (
     <HelpText tone="bad" role="alert">
