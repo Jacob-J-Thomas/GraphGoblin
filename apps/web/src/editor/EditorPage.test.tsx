@@ -185,13 +185,20 @@ describe('EditorPage', () => {
     expect(await screen.findByText(/Could not load loop/)).toBeInTheDocument();
   });
 
-  it('publishes, surfaces 422 issues, and starts a run from the run panel', async () => {
+  it('publishes, surfaces 422 issues, and links to the New run flow once published', async () => {
     const user = userEvent.setup();
     const api = new FakeApi();
     const loop = api.addLoop(minimalLoop());
     renderApp(`/loops/${loop.id}/edit`, api);
     await screen.findByRole('heading', { name: 'minimal' });
-    expect(screen.getByRole('button', { name: 'Run' })).toBeDisabled();
+    // Runs start only from Runs: before a publish the link is disabled and says why.
+    expect(screen.queryByRole('button', { name: 'Run' })).toBeNull();
+    const disabled = screen.getByRole('link', { name: 'Open in Runs' });
+    expect(disabled).toHaveAttribute('aria-disabled', 'true');
+    expect(disabled).not.toHaveAttribute('href');
+    expect(disabled).toHaveAccessibleDescription(/Publish the loop first/);
+    await user.click(disabled);
+    expect(screen.getByTestId('location')).toHaveTextContent(`/loops/${loop.id}/edit`);
 
     // Structural error: the server refuses with 422 and the issues are listed.
     await user.click(screen.getByRole('button', { name: 'Add Mutate node' }));
@@ -207,11 +214,18 @@ describe('EditorPage', () => {
     expect(screen.getByTestId('canvas')).toHaveFocus();
     await user.click(screen.getByRole('button', { name: 'Publish' }));
     expect(await screen.findByText('Published version 1.')).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Run' })).toBeEnabled());
-
-    await user.click(screen.getByRole('button', { name: 'Run' }));
-    await user.click(screen.getByRole('button', { name: 'Start run' }));
-    await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent(/^\/runs\//));
+    // The toolbar link and the published notice's "run it" link both lead to New run.
+    await waitFor(() =>
+      expect(screen.getAllByRole('link', { name: 'Open in Runs' })).toHaveLength(2),
+    );
+    for (const link of screen.getAllByRole('link', { name: 'Open in Runs' }))
+      expect(link).toHaveAttribute('href', `/runs/new?loop=${loop.id}`);
+    await user.click(screen.getAllByRole('link', { name: 'Open in Runs' })[1]!);
+    expect(await screen.findByRole('heading', { name: 'New run' })).toBeInTheDocument();
+    await user.click(await screen.findByRole('button', { name: 'Start run' }));
+    await waitFor(() =>
+      expect(screen.getByTestId('location')).toHaveTextContent(/^\/runs\/[0-9A-Z]{26}$/),
+    );
   });
 
   it('says there is nothing to publish when the loop has no changes, and hides it after an edit', async () => {

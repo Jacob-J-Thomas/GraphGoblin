@@ -3,14 +3,29 @@ import { RunStatusSchema } from '@graphgoblin/contracts';
 import { Link, useSearchParams } from 'react-router';
 import { useLoops, useRuns } from '../api/queries.js';
 import { Page, PageHeader } from '../components/layout/index.js';
+import { Icon } from '../components/icons/index.js';
 import { QueryState, RunStatusBadge } from '../components/status.js';
-import { Button, Card, FieldGroup, Label, Select, Table, Td, Th } from '../components/ui/index.js';
+import {
+  Button,
+  buttonStyles,
+  Card,
+  FieldGroup,
+  Label,
+  Select,
+  Table,
+  Td,
+  Th,
+} from '../components/ui/index.js';
 import { formatDateTime } from '../lib/utils.js';
+import { newRunPath } from './new/paths.js';
 
 const ID_LINK = 'font-mono text-sm font-medium text-link underline-offset-[3px] hover:underline';
 const LINK = 'text-link underline-offset-[3px] hover:underline';
 
-/** Runs across loops, filtered by loop, status, and parent run. Filters live in the URL. */
+/**
+ * Runs across loops, filtered by loop, status, and parent run (filters live in the URL), and the
+ * New run action: the only place the app starts runs.
+ */
 export function RunsPage() {
   const [params, setParams] = useSearchParams();
   const loopId = params.get('loop') ?? '';
@@ -34,7 +49,16 @@ export function RunsPage() {
 
   return (
     <Page>
-      <PageHeader title="Runs" />
+      <PageHeader
+        title="Runs"
+        actions={
+          // With the list filtered to one loop, the new run starts with that loop chosen.
+          <Link to={newRunPath(loopId)} className={buttonStyles()}>
+            <Icon name="plus" />
+            New run
+          </Link>
+        }
+      />
       <Card>
         <div className="flex flex-wrap items-end gap-4">
           <FieldGroup className="w-[220px] max-sm:w-full">

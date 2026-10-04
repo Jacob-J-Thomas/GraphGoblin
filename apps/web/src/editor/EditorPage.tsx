@@ -11,8 +11,8 @@ import { Alert, Button } from '../components/ui/index.js';
 import { errorMessage, formatDateTime, isOfflineError, problemIssues } from '../lib/utils.js';
 import { Canvas } from './Canvas.js';
 import { ConflictNotice } from './ConflictNotice.js';
-import { EditorSidePanel, type PanelTab } from './EditorSidePanel.js';
-import { EditorToolbar } from './EditorToolbar.js';
+import { EditorSidePanel } from './EditorSidePanel.js';
+import { EditorToolbar, OpenInRuns } from './EditorToolbar.js';
 import {
   fieldErrorIssues,
   issueKey,
@@ -44,7 +44,6 @@ export function EditorPage() {
   const connectionError = useEditorStore((s) => s.connectionError);
   const selectedNodeId = useEditorStore((s) => s.selectedNodeId);
   const nodeDialogOpen = useEditorStore((s) => s.nodeDialogOpen);
-  const [tab, setTab] = useState<PanelTab>('loop');
   const [settingsEpoch, setSettingsEpoch] = useState(0);
   const flush = useAutosave(client);
   const conflict = useEditorStore((s) => s.conflict);
@@ -147,9 +146,13 @@ export function EditorPage() {
     ) : null,
     publish.isSuccess && publishedRevision === revision ? (
       <Alert key="published" tone="good">
-        {publish.data.version
-          ? `Published version ${publish.data.version.version}.`
-          : 'Nothing to publish: there are no changes since the published version.'}
+        <span className="flex flex-wrap items-center gap-x-3">
+          {publish.data.version
+            ? `Published version ${publish.data.version.version}.`
+            : 'Nothing to publish: there are no changes since the published version.'}
+          {/* The "run it" prompt: the same link as the toolbar's, to the New run flow. */}
+          {publish.data.version ? <OpenInRuns loopId={loopId} published /> : null}
+        </span>
       </Alert>
     ) : null,
     publish.isError ? (
@@ -172,6 +175,7 @@ export function EditorPage() {
   return (
     <div className="flex h-[calc(100vh-3.5rem)] flex-col">
       <EditorToolbar
+        loopId={loopId}
         name={def.name}
         published={Boolean(published)}
         version={query.data?.current?.version}
@@ -180,10 +184,9 @@ export function EditorPage() {
         errors={errors}
         publishing={publish.isPending}
         onLoopSettings={() => {
-          setTab('loop');
           setSettingsEpoch((e) => e + 1);
+          document.getElementById('loop-name')?.focus();
         }}
-        onRun={() => setTab('run')}
         onPublish={() => publish.mutate()}
       />
       {notices.length > 0 ? (
@@ -200,13 +203,9 @@ export function EditorPage() {
             <Canvas definition={def} issues={validation.issues} />
           </main>
           <EditorSidePanel
-            tab={tab}
-            onTab={setTab}
             definition={def}
             issues={validation.issues}
-            loopId={loopId}
             settingsEpoch={settingsEpoch}
-            published={published}
           />
         </div>
       </ReactFlowProvider>

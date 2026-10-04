@@ -36,8 +36,14 @@ describe('RunsPage', () => {
     await waitFor(() =>
       expect(screen.queryByRole('link', { name: child.id })).not.toBeInTheDocument(),
     );
+    expect(screen.getByRole('link', { name: 'New run' })).toHaveAttribute('href', '/runs/new');
     await user.selectOptions(screen.getByLabelText('Loop'), loop.id);
     expect(api.calls.at(-1)!.search.get('loopId')).toBe(loop.id);
+    // Filtered to a loop, New run starts with that loop chosen.
+    expect(screen.getByRole('link', { name: 'New run' })).toHaveAttribute(
+      'href',
+      `/runs/new?loop=${loop.id}`,
+    );
     await user.selectOptions(screen.getByLabelText('Status'), '');
     await user.selectOptions(screen.getByLabelText('Parent'), 'none');
     await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('parent=none'));

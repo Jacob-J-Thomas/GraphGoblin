@@ -34,8 +34,7 @@ Element.prototype.scrollIntoView ??= function scrollIntoView() {};
 // open attribute, close removes it and fires `close`, and Esc fires a cancelable `cancel` at the
 // open dialog, closing it unless a handler prevents that, as the browser does. There is no top
 // layer or inertness; tests of those run in the browser (e2e).
-const dialogPrototype: Pick<HTMLDialogElement, 'showModal' | 'close'> =
-  HTMLDialogElement.prototype;
+const dialogPrototype: Pick<HTMLDialogElement, 'showModal' | 'close'> = HTMLDialogElement.prototype;
 if (!Object.hasOwn(HTMLDialogElement.prototype, 'showModal')) {
   dialogPrototype.showModal = function showModal(this: HTMLDialogElement) {
     this.setAttribute('open', '');
