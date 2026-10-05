@@ -12,6 +12,7 @@ import {
   HelpText,
   Input,
   Label,
+  RequiredNote,
 } from '../../components/ui/index.js';
 import { formatDateTime } from '../../lib/utils.js';
 import { LIST_ROW, MutationError, useInvalidate } from '../shared.js';
@@ -48,26 +49,39 @@ export function SecretsSection() {
             set.mutate();
           }}
         >
+          <RequiredNote className="basis-full" />
           <FieldGroup className="w-[260px]">
-            <Label htmlFor="secret-name">Name</Label>
+            <Label htmlFor="secret-name" required>
+              Name
+            </Label>
             <Input
               id="secret-name"
               className="font-mono text-sm"
               value={name}
+              aria-required
               aria-invalid={nameInvalid}
               aria-describedby="secret-name-hint"
               onChange={(e) => setName(e.target.value)}
             />
-            <HelpText id="secret-name-hint" tone={nameInvalid ? 'bad' : 'muted'}>
+            {/* Keyed by state: when the name breaks the rule, the rule mounts again as an alert. */}
+            <HelpText
+              key={nameInvalid ? 'invalid' : 'valid'}
+              id="secret-name-hint"
+              role={nameInvalid ? 'alert' : undefined}
+              tone={nameInvalid ? 'bad' : 'muted'}
+            >
               A letter, then letters, digits, _ . or - (up to 128).
             </HelpText>
           </FieldGroup>
           <FieldGroup className="w-[260px]">
-            <Label htmlFor="secret-value">Value</Label>
+            <Label htmlFor="secret-value" required>
+              Value
+            </Label>
             <Input
               id="secret-value"
               type="password"
               autoComplete="off"
+              aria-required
               value={value}
               onChange={(e) => setValue(e.target.value)}
             />

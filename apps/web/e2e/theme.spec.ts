@@ -66,7 +66,7 @@ test('Light applies at once, survives reloads without a flash, and Dark comes ba
 }) => {
   await recordFirstPaint(page);
   await page.goto('/app/settings');
-  const group = page.getByRole('group', { name: 'Theme' });
+  const group = page.getByRole('radiogroup', { name: 'Theme' });
   await group.getByText('Light', { exact: true }).click();
   await expect(group.getByRole('radio', { name: 'Light' })).toBeChecked();
   expect(await shown(page)).toBe('light');

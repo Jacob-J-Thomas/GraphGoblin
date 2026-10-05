@@ -1,4 +1,4 @@
-import { Ajv, type ValidateFunction } from 'ajv';
+import { Ajv, type ErrorObject, type ValidateFunction } from 'ajv';
 import addFormatsImport from 'ajv-formats';
 import type { JsonSchema } from '@graphgoblin/contracts';
 
@@ -11,9 +11,23 @@ addFormats(ajv);
 const cache = new Map<string, ValidateFunction>();
 const CACHE_LIMIT = 256;
 
+/** One problem with a value, located: what a form needs to put the message beside its field. */
+export interface SchemaIssue {
+  /**
+   * Where the problem is, as property names and array indexes from the root (JSON Pointer
+   * segments, unescaped). A missing required property ends with that property's name.
+   */
+  path: string[];
+  /** What is wrong there, without the path: "must be integer", "is required". */
+  message: string;
+}
+
 export interface SchemaValidation {
   ok: boolean;
+  /** One line per problem, led by its JSON Pointer ("/n must be >= 1"). */
   errors: string[];
+  /** The same problems, located (empty when `ok`). */
+  issues: SchemaIssue[];
 }
 
 function stableKey(schema: JsonSchema): string {
@@ -50,17 +64,31 @@ export function validateJson(schema: JsonSchema, value: unknown): SchemaValidati
   try {
     validate = compileSchema(schema);
   } catch (error) {
-    return {
-      ok: false,
-      errors: [`invalid schema: ${error instanceof Error ? error.message : String(error)}`],
-    };
+    const message = `invalid schema: ${error instanceof Error ? error.message : String(error)}`;
+    return { ok: false, errors: [message], issues: [{ path: [], message }] };
   }
   const ok = validate(value);
-  if (ok) return { ok: true, errors: [] };
-  const errors = (validate.errors ?? []).map((e) =>
-    `${e.instancePath || '/'} ${e.message ?? 'is invalid'}`.trim(),
-  );
-  return { ok: false, errors };
+  if (ok) return { ok: true, errors: [], issues: [] };
+  const found = validate.errors ?? [];
+  const errors = found.map((e) => `${e.instancePath || '/'} ${e.message ?? 'is invalid'}`.trim());
+  return { ok: false, errors, issues: found.map(issueOf) };
+}
+
+/** JSON Pointer segments, unescaped (`~1` is `/`, `~0` is `~`). */
+function pointerSegments(pointer: string): string[] {
+  if (pointer === '') return [];
+  return pointer
+    .slice(1)
+    .split('/')
+    .map((segment) => segment.replace(/~1/g, '/').replace(/~0/g, '~'));
+}
+
+/** An Ajv error as a located issue; a missing property (`required`) is located at itself. */
+function issueOf(error: ErrorObject): SchemaIssue {
+  const path = pointerSegments(error.instancePath);
+  const missing = (error.params as { missingProperty?: unknown }).missingProperty;
+  if (typeof missing === 'string') return { path: [...path, missing], message: 'is required' };
+  return { path, message: error.message ?? 'is invalid' };
 }
 
 /** FNV-1a 64-bit hash of the stable serialisation, as 16 hex characters. Browser-safe. */

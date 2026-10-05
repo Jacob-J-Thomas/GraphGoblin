@@ -123,11 +123,13 @@ describe('fields', () => {
 });
 
 describe('Checkbox', () => {
-  it('is a native checkbox in the accent colour', async () => {
+  it('is a native checkbox drawn as a box with an accent fill and a tick', async () => {
     const onChange = vi.fn();
     render(<Checkbox aria-label="Enable" className="extra" onChange={onChange} />);
     const box = screen.getByRole('checkbox', { name: 'Enable' });
-    expect(box).toHaveClass('accent-accent', 'extra');
+    expect(box).toHaveClass('appearance-none', 'border-strong', 'checked:bg-accent');
+    expect(box.parentElement).toHaveClass('extra');
+    expect(box.parentElement?.querySelector('svg[data-icon="check"]')).not.toBeNull();
     await userEvent.setup().click(box);
     expect(onChange).toHaveBeenCalledTimes(1);
     expect(box).toBeChecked();

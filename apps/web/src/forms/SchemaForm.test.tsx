@@ -285,10 +285,12 @@ describe('SchemaForm', () => {
     await user.clear(screen.getByLabelText('Timeout seconds'));
     expect(last(spy)['timeoutSeconds']).toBeUndefined();
 
-    await user.selectOptions(screen.getByLabelText('Stdin'), 'none');
+    const stdin = screen.getByRole('radiogroup', { name: 'Stdin' });
+    await user.click(within(stdin).getByRole('radio', { name: 'none' }));
     expect(last(spy)['stdin']).toBe('none');
     // Defaults show through until the user sets a value.
-    expect(screen.getByLabelText('Stdout')).toHaveValue('last-output');
+    const stdout = screen.getByRole('radiogroup', { name: 'Stdout' });
+    expect(within(stdout).getByRole('radio', { name: 'last-output' })).toBeChecked();
     expect(screen.getByLabelText('Cwd')).toHaveAttribute('placeholder', 'workspace');
   });
 
@@ -387,7 +389,7 @@ describe('SchemaForm', () => {
       where: 'true',
     });
 
-    // Optional boolean renders as a tri-state select; optional enum offers "not set".
+    // An optional enum of more than four options is a select that offers "Not set".
     await user.click(screen.getByRole('button', { name: 'Add codex' }));
     await user.selectOptions(screen.getByLabelText('Effort'), 'high');
     expect(last(spy)['codex']).toEqual({ effort: 'high' });
@@ -408,9 +410,10 @@ describe('SchemaForm', () => {
         spy={spy}
       />,
     );
-    await user.selectOptions(screen.getByLabelText('Network access'), 'true');
+    const network = screen.getByRole('radiogroup', { name: 'Network access' });
+    await user.click(within(network).getByRole('radio', { name: 'Yes' }));
     expect((last(spy)['harnessOptions'] as Record<string, unknown>)['networkAccess']).toBe(true);
-    await user.selectOptions(screen.getByLabelText('Network access'), '');
+    await user.click(within(network).getByRole('radio', { name: 'Not set' }));
     expect(
       (last(spy)['harnessOptions'] as Record<string, unknown>)['networkAccess'],
     ).toBeUndefined();
