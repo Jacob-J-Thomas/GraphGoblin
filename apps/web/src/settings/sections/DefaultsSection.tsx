@@ -3,7 +3,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useApi } from '../../api/context.js';
 import { keys, useModelCatalog, useSettings } from '../../api/queries.js';
 import { QueryState } from '../../components/status.js';
-import { Card, FieldGroup, Label, Select } from '../../components/ui/index.js';
+import { Card, FieldGroup, HelpText, Label, Select } from '../../components/ui/index.js';
 import { EFFORTS, MutationError, useInvalidate } from '../shared.js';
 
 /** The owner's default model and effort, read by the engine at run start. */
@@ -12,6 +12,10 @@ export function DefaultsSection() {
   const invalidate = useInvalidate();
   const settingsQuery = useSettings();
   const catalogQuery = useModelCatalog();
+  const storedModel = settingsQuery.data?.['defaultModel'];
+  const defaultModel = typeof storedModel === 'string' ? storedModel : '';
+  const currentEntry = catalogQuery.data?.find((entry) => entry.model === defaultModel);
+  const unavailable = Boolean(defaultModel && catalogQuery.data && !currentEntry?.enabled);
   // "(server default)" removes the setting, so the server's configured default applies again.
   const save = useMutation({
     mutationFn: async ([key, value]: [string, string]) => {
@@ -32,10 +36,20 @@ export function DefaultsSection() {
               <Label htmlFor="default-model">Default model</Label>
               <Select
                 id="default-model"
-                value={typeof values['defaultModel'] === 'string' ? values['defaultModel'] : ''}
+                value={defaultModel}
+                aria-describedby={unavailable ? 'default-model-help' : undefined}
                 onChange={(e) => save.mutate(['defaultModel', e.target.value])}
               >
                 <option value="">(server default)</option>
+                {defaultModel && !currentEntry?.enabled ? (
+                  <option value={defaultModel}>
+                    {currentEntry
+                      ? `${currentEntry.displayName} (disabled)`
+                      : catalogQuery.data
+                        ? `${defaultModel} (not in catalog)`
+                        : defaultModel}
+                  </option>
+                ) : null}
                 {(catalogQuery.data ?? [])
                   .filter((m) => m.enabled)
                   .map((m) => (
@@ -44,6 +58,11 @@ export function DefaultsSection() {
                     </option>
                   ))}
               </Select>
+              {unavailable ? (
+                <HelpText id="default-model-help">
+                  Runs keep using this model until you choose another model or (server default).
+                </HelpText>
+              ) : null}
             </FieldGroup>
             <FieldGroup className="w-[200px]">
               <Label htmlFor="default-effort">Default effort</Label>

@@ -124,7 +124,7 @@ describe('SettingsPage', () => {
   ] as const)(
     'review: refreshes the vanished %s after a 404 is dismissed',
     async (label, confirmation, route, list, listRoute, heading) => {
-      const api = seeded();
+      const api = seeded(list === 'catalog' ? 'litellm' : 'harness');
       let finish!: () => void;
       const refreshed = new Promise<void>((resolve) => {
         finish = resolve;
@@ -179,7 +179,7 @@ describe('SettingsPage', () => {
     renderApp('/settings', api);
     expect(await screen.findByText('Luna', { selector: 'span' })).toBeInTheDocument();
 
-    await user.click(screen.getByLabelText('Enable gpt-6-sol'));
+    await user.click(screen.getByRole('switch', { name: 'Enable Sol' }));
     await waitFor(() =>
       expect(api.callsTo('PATCH', '/model-catalog/codex/gpt-6-sol')[0]!.body).toMatchObject({
         enabled: true,
@@ -200,7 +200,6 @@ describe('SettingsPage', () => {
       displayName: 'Luna 2',
       efforts: ['high', 'xhigh'],
       defaultEffort: 'high',
-      enabled: true,
     });
 
     await user.click(screen.getByRole('button', { name: 'Add model' }));
@@ -209,7 +208,7 @@ describe('SettingsPage', () => {
     await user.click(within(add).getByRole('button', { name: 'Save model' }));
     expect(
       await screen.findByText(
-        /LiteLLM is not configured; adding local models is not available yet/,
+        /LiteLLM is not configured. Adding local models is not available yet./,
       ),
     ).toBeInTheDocument();
     expect(api.callsTo('PUT', '/model-catalog/codex/gpt-7')[0]?.body).toMatchObject({
@@ -225,7 +224,7 @@ describe('SettingsPage', () => {
 
     await user.click(screen.getByRole('button', { name: 'Delete gpt-6-sol' }));
     expect(screen.getByRole('alertdialog')).toHaveTextContent(
-      'Harness models cannot be deleted. Removing a LiteLLM model leaves its loops referencing it.',
+      'Removing a LiteLLM model leaves its loops referencing it.',
     );
     await user.click(screen.getByRole('button', { name: 'Confirm delete gpt-6-sol' }));
     await waitFor(() =>
@@ -238,55 +237,190 @@ describe('SettingsPage', () => {
     renderApp('/settings', seeded('litellm'));
     await user.click(await screen.findByRole('button', { name: 'Delete gpt-6-sol' }));
     expect(screen.getByRole('alertdialog')).toHaveTextContent(
-      'Harness models cannot be deleted. Removing a LiteLLM model leaves its loops referencing it.',
+      'Removing a LiteLLM model leaves its loops referencing it.',
     );
   });
 
   it('shows catalog save errors', async () => {
     const user = userEvent.setup();
-    const api = seeded();
+    const api = seeded('litellm');
     api.override('PUT /model-catalog/:harness/:model', () =>
       problem(400, 'INVALID_INPUT', 'defaultEffort must be one of efforts'),
     );
     api.override('PATCH /model-catalog/:harness/:model', () =>
-      problem(404, 'MODEL_NOT_FOUND', 'model not in catalog'),
+      problem(403, 'FORBIDDEN', 'No permission to change this model.'),
     );
     renderApp('/settings', api);
     await user.click(await screen.findByRole('button', { name: 'Edit gpt-6-luna' }));
     await user.click(screen.getByRole('button', { name: 'Save model' }));
     expect(await screen.findByText(/defaultEffort must be one of efforts/)).toBeInTheDocument();
-    await user.click(screen.getByLabelText('Enable gpt-6-luna'));
-    expect(await screen.findByText(/model not in catalog/)).toBeInTheDocument();
+    await user.click(screen.getByRole('switch', { name: 'Enable Luna' }));
+    expect(await screen.findByText(/No permission to change this model./)).toBeInTheDocument();
   });
 
-  it('toggles harness models with PATCH and surfaces managed edit/delete errors', async () => {
+  it('shows only enable switches for harness models and keeps Defaults in sync', async () => {
     const user = userEvent.setup();
     const api = seeded();
     const before = { ...api.catalog[0]! };
     renderApp('/settings', api);
-    const enabled = await screen.findByLabelText('Enable gpt-6-luna');
-    await user.click(enabled);
+    const enabled = await screen.findByRole('switch', { name: 'Enable Luna' });
+    const catalog = screen.getByRole('region', { name: 'Model catalog' });
+    expect(within(catalog).queryByRole('button')).not.toBeInTheDocument();
+    expect(
+      within(catalog).queryByRole('columnheader', { name: 'Actions' }),
+    ).not.toBeInTheDocument();
+    expect(within(catalog).getAllByRole('switch')).toHaveLength(2);
+    expect(
+      within(catalog).getByText(/Local models served through LiteLLM will appear here/),
+    ).toBeInTheDocument();
+    expect(catalog).toHaveTextContent('see the Settings guide, Choose a model and effort.');
+    expect(within(catalog).queryByRole('link')).not.toBeInTheDocument();
+    const defaults = screen.getByLabelText('Default model');
+    expect(within(defaults).getByRole('option', { name: 'Luna' })).toBeInTheDocument();
+    enabled.focus();
+    await user.keyboard(' ');
     await waitFor(() => expect(enabled).not.toBeChecked());
     expect(api.callsTo('PATCH', '/model-catalog/codex/gpt-6-luna')[0]?.body).toEqual({
       enabled: false,
     });
     expect(api.catalog[0]).toEqual({ ...before, enabled: false });
-    await user.click(enabled);
+    await waitFor(() =>
+      expect(within(defaults).queryByRole('option', { name: 'Luna' })).not.toBeInTheDocument(),
+    );
+    expect(within(enabled.closest('tr')!).getByRole('status')).toHaveTextContent('Luna: Disabled');
+    await waitFor(() => expect(enabled).toBeEnabled());
+    enabled.focus();
+    await user.keyboard('{Enter}');
     await waitFor(() => expect(enabled).toBeChecked());
     expect(api.catalog[0]).toEqual(before);
-    await user.click(screen.getByRole('button', { name: 'Edit gpt-6-luna' }));
-    await user.click(screen.getByRole('button', { name: 'Save model' }));
-    expect(
-      await screen.findByText(/Harness models can only be enabled or disabled/),
-    ).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Cancel' }));
-    await user.click(screen.getByRole('button', { name: 'Delete gpt-6-luna' }));
-    await user.click(screen.getByRole('button', { name: 'Confirm delete gpt-6-luna' }));
-    expect(await screen.findByRole('alertdialog')).toHaveTextContent(
-      'Harness models can only be enabled or disabled',
+    await waitFor(() =>
+      expect(within(defaults).getByRole('option', { name: 'Luna' })).toBeInTheDocument(),
     );
-    expect(api.catalog[0]).toEqual(before);
+    expect(within(enabled.closest('tr')!).getByRole('status')).toHaveTextContent('Luna: Enabled');
+    expect(api.callsTo('PUT', '/model-catalog/codex/gpt-6-luna')).toHaveLength(0);
+    expect(api.callsTo('DELETE', '/model-catalog/codex/gpt-6-luna')).toHaveLength(0);
   });
+
+  it('offers Add, Edit and Delete only for LiteLLM rows in a mixed catalog', async () => {
+    const api = seeded();
+    api.catalog[1]!.source = 'litellm';
+    renderApp('/settings', api);
+    const user = userEvent.setup();
+    const harness = (await screen.findByRole('switch', { name: 'Enable Luna' })).closest('tr')!;
+    const local = screen.getByRole('switch', { name: 'Enable Sol' }).closest('tr')!;
+    expect(within(harness).queryByRole('button')).not.toBeInTheDocument();
+    expect(within(local).getByRole('button', { name: 'Edit gpt-6-sol' })).toBeInTheDocument();
+    expect(within(local).getByRole('button', { name: 'Delete gpt-6-sol' })).toBeInTheDocument();
+    expect(
+      screen.queryByText(/Local models served through LiteLLM will appear here/),
+    ).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Add model' }));
+    const add = screen.getByRole('form', { name: 'Add model' });
+    await user.type(within(add).getByLabelText('Model id'), 'local');
+    await user.click(within(add).getByRole('button', { name: 'Save model' }));
+    expect(await within(add).findByRole('alert')).toHaveTextContent(
+      'LiteLLM is not configured. Adding local models is not available yet.',
+    );
+    await user.click(within(add).getByRole('button', { name: 'Cancel' }));
+    await user.click(within(local).getByRole('button', { name: 'Delete gpt-6-sol' }));
+    await user.click(screen.getByRole('button', { name: 'Confirm delete gpt-6-sol' }));
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: 'Add model' })).not.toBeInTheDocument(),
+    );
+    expect(
+      screen.getByText(/Local models served through LiteLLM will appear here/),
+    ).toBeInTheDocument();
+  });
+
+  it.each(['vanished switch', 'another control'] as const)(
+    'refreshes a vanished toggle and preserves focus on %s',
+    async (focus) => {
+      const api = seeded();
+      let finish!: () => void;
+      const held = new Promise<void>((resolve) => {
+        finish = resolve;
+      });
+      api.override('PATCH /model-catalog/:harness/:model', async () => {
+        await held;
+        api.catalog = api.catalog.filter((entry) => entry.model !== 'gpt-6-luna');
+        return problem(404, 'MODEL_NOT_FOUND');
+      });
+      renderApp('/settings', api);
+      const user = userEvent.setup();
+      const enabled = await screen.findByRole('switch', { name: 'Enable Luna' });
+      await user.click(enabled);
+      const defaults = screen.getByLabelText('Default model');
+      if (focus === 'another control') defaults.focus();
+      await act(() => Promise.resolve(finish()));
+      await waitFor(() => expect(enabled).not.toBeInTheDocument());
+      const catalog = screen.getByRole('region', { name: 'Model catalog' });
+      expect(within(catalog).getAllByRole('status')[0]).toHaveTextContent(
+        'Luna: This model is no longer in the catalog.',
+      );
+      expect(catalog).not.toHaveTextContent('Refresh Settings');
+      expect(api.callsTo('GET', '/model-catalog')).toHaveLength(2);
+      await waitFor(() =>
+        expect(
+          focus === 'another control'
+            ? defaults
+            : screen.getByRole('heading', { name: 'Model catalog' }),
+        ).toHaveFocus(),
+      );
+    },
+  );
+
+  it('keeps the local-model note hidden until the catalog is loaded', async () => {
+    const api = seeded();
+    let finish!: () => void;
+    const held = new Promise<void>((resolve) => {
+      finish = resolve;
+    });
+    api.override('GET /model-catalog', async (call) => {
+      await held;
+      return api.builtIn(call);
+    });
+    renderApp('/settings', api);
+    expect(screen.queryByText(/Local models served through LiteLLM/)).not.toBeInTheDocument();
+    await act(() => Promise.resolve(finish()));
+    expect(await screen.findByText(/Local models served through LiteLLM/)).toBeInTheDocument();
+  });
+
+  it.each(['disabled', 'missing'] as const)(
+    'shows the saved %s default truthfully until another model is chosen',
+    async (state) => {
+      const api = seeded();
+      api.settingsValues = { defaultModel: 'gpt-6-luna' };
+      renderApp('/settings', api);
+      const user = userEvent.setup();
+      const enabled = await screen.findByRole('switch', { name: 'Enable Luna' });
+      const model = screen.getByLabelText('Default model');
+      if (state === 'missing') {
+        api.override('PATCH /model-catalog/:harness/:model', () => {
+          api.catalog = api.catalog.filter((entry) => entry.model !== 'gpt-6-luna');
+          return problem(404, 'MODEL_NOT_FOUND');
+        });
+      }
+      await user.click(enabled);
+      const name = state === 'disabled' ? 'Luna (disabled)' : 'gpt-6-luna (not in catalog)';
+      await waitFor(() => expect(within(model).getByRole('option', { name })).toBeInTheDocument());
+      expect(model).toHaveValue('gpt-6-luna');
+      expect(api.settingsValues['defaultModel']).toBe('gpt-6-luna');
+      expect(model).toHaveAccessibleDescription(
+        'Runs keep using this model until you choose another model or (server default).',
+      );
+      if (state === 'disabled') {
+        await user.click(enabled);
+        await waitFor(() =>
+          expect(within(model).getByRole('option', { name: 'Luna' })).toBeInTheDocument(),
+        );
+        expect(screen.queryByText(/Runs keep using this model/)).not.toBeInTheDocument();
+      }
+      await user.selectOptions(model, '');
+      await waitFor(() => expect(api.settingsValues).not.toHaveProperty('defaultModel'));
+      await waitFor(() => expect(model).toHaveValue(''));
+      expect(screen.queryByText(/Runs keep using this model/)).not.toBeInTheDocument();
+    },
+  );
 
   it('saves default model and effort', async () => {
     const user = userEvent.setup();
@@ -372,7 +506,7 @@ describe('SettingsPage', () => {
   ])(
     'confirms %s, cancels without a request, and surfaces a second-delete error',
     async (label, confirmLabel, path, route, consequence) => {
-      const api = seeded();
+      const api = seeded(route === 'DELETE /model-catalog/:harness/:model' ? 'litellm' : 'harness');
       api.override(route, () => problem(404, 'NOT_FOUND', 'The item was already removed.'));
       renderApp('/settings', api);
       const user = userEvent.setup();
