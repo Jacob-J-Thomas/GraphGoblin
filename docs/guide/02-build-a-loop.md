@@ -19,13 +19,16 @@ The editor lives at this browser route:
 /app/loops/<loop-id>/edit
 ```
 
-Edits autosave after a short debounce and are mirrored in IndexedDB. A schema-invalid draft stays on the device with **Saved on this device only**; fix it before relying on the server copy. Offline saves retry on reconnect. An unsynced local draft takes precedence on reload, unless the server saved a newer draft since; then the server copy is shown and the device copy is offered with **Use this device's copy instead**.
+Edits autosave after a short debounce and are mirrored in IndexedDB. A schema-invalid draft stays on the device with **Saved on this device only**; fix it before relying on the server copy. Offline saves retry on reconnect. Device drafts saved before the node-only harness change were discarded by a one-off store upgrade. An unsynced local draft takes precedence on reload, unless the server saved a newer draft since; then the server copy is shown and the device copy is offered with **Use this device's copy instead**.
 
 The restored-draft notice and notices about schema-invalid, offline, or failed saves can be dismissed. The toolbar continues to show when changes are kept only on this device or a save has failed. A dismissed restore notice stays hidden while editing that loaded draft and appears again if a later reload restores it. A dismissed save notice stays hidden through edits that end in the same state; it returns after a successful save, a different save problem or message, or a new load.
 
 Every save tells the server which copy the edit started from. If another tab, device, or API client saved the draft in between, nothing is overwritten: **The draft changed on the server** appears (inside the node dialog too, when one is open), autosave stops, and you choose **Reload server draft** (take theirs, dropping this editor's unsaved changes and closing the dialog) or **Overwrite with this copy** (keep yours). Until you choose, edits stay on this device and **Publish** refuses. API clients get the same protection by sending `If-Match` with the `draftToken` from `GET /loops/{id}` (see [API, streaming, and MCP](../07-api-and-streaming.md#draft-conflicts-decided-wp-f2-adr-0015)).
 
 ## Choose nodes
+
+Choose **Harness** in each inference node's dialog. It defaults to **Codex** when omitted.
+Loop settings offer model and effort defaults. Remove `settings.defaults.harness` from older files before importing them.
 
 **Trigger (`trigger`).** Choose `subtype`: `manual`, `cron`, `webhook`, `event`, or `poll`. For manual starts, set `inputSchema` to validate input and `exposeTo` to declare intended `ui`, `api`, and `mcp` surfaces. The trigger records its payload as an output and follows `out`. Configure automatic sources in [Triggers](04-triggers.md).
 
@@ -61,19 +64,19 @@ Fix errors before publishing: missing trigger or exit, unconnected or doubly con
 
 ## Set workspace and limits
 
-| Setting             | Configure it                                                                                                                                    |
-| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| `maxIterations`     | Default 10, range 1 to 10,000. It limits exit loop-backs (the run ends `exhausted`) and fresh visits per node (the run fails `MAX_ITERATIONS`). |
-| `workingDirectory`  | `temp` (default), `fixed` with `path`, or `template` with a Liquid `template`. The filesystem adapter creates the resolved directory if needed. |
-| `subloopDepthLimit` | Default 8, range 1 to 64. A subloop node can replace it with `depthLimitOverride`.                                                              |
-| `defaults`          | Set the Codex `harness`, optional `model`, and optional `effort`. Node values override loop defaults, which override API-process defaults.      |
+| Setting             | Configure it                                                                                                                                                    |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `maxIterations`     | Default 10, range 1 to 10,000. It limits exit loop-backs (the run ends `exhausted`) and fresh visits per node (the run fails `MAX_ITERATIONS`).                 |
+| `workingDirectory`  | `temp` (default), `fixed` with `path`, or `template` with a Liquid `template`. The filesystem adapter creates the resolved directory if needed.                 |
+| `subloopDepthLimit` | Default 8, range 1 to 64. A subloop node can replace it with `depthLimitOverride`.                                                                              |
+| `defaults`          | Set optional `model` and `effort`. Node values override loop defaults, which override owner and API-process defaults. Harness is chosen on each inference node. |
 
 For a repository workspace, use an absolute path. For a temporary workspace, use:
 
 ```json
 {
   "workingDirectory": { "kind": "temp" },
-  "defaults": { "harness": "codex", "model": "gpt-6-luna", "effort": "low" },
+  "defaults": { "model": "gpt-6-luna", "effort": "low" },
   "maxIterations": 3,
   "subloopDepthLimit": 8
 }
@@ -141,7 +144,7 @@ Save this bare definition as a JSON file and import it. It follows the contracts
   "description": "Ask Codex for a short explanation of a topic.",
   "settings": {
     "workingDirectory": { "kind": "temp" },
-    "defaults": { "harness": "codex", "model": "gpt-6-luna", "effort": "low" },
+    "defaults": { "model": "gpt-6-luna", "effort": "low" },
     "maxIterations": 3,
     "subloopDepthLimit": 8
   },

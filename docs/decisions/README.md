@@ -22,3 +22,5 @@ One file per decision. Status is Accepted unless stated. Supersede by adding a n
 | [0016](ADR-0016-api-key-scope-delegation.md)             | API keys may delegate only their own scopes                                                    |
 | [0017](ADR-0017-design-tokens-and-web-components.md)     | Two-tier design tokens and the web component structure                                         |
 | [0018](ADR-0018-model-catalog-source.md)                 | Harness model metadata is managed; enabled is an owner preference                              |
+| [0019](ADR-0019-inference-node-harness.md)               | Harness is chosen on inference nodes only                                                      |
+| [0020](ADR-0020-clean-design-until-release.md)           | Clean design over backward compatibility until release                                         |

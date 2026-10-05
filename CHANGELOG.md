@@ -10,6 +10,18 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 - Model catalog entries now expose source. Harness models, including all migrated legacy rows, can only be enabled/disabled through PATCH; PUT/DELETE return `MODEL_MANAGED_BY_HARNESS`. Existing LiteLLM rows remain editable/deletable, while new LiteLLM entries return `LITELLM_NOT_CONFIGURED` pending provider support.
 - Startup refreshes seeded harness names, efforts, and default efforts while preserving enabled. Hand-added legacy metadata remains intact. Validate/publish return advisory disabled/missing-model warnings with field paths, and successful publish now includes issues.
 
+### Upgrade notes
+
+- Harness is chosen on inference nodes only. Loop `settings.defaults` now contains model and effort; `settings.defaults.harness` is gone.
+- On the first startup after upgrade, migration `0005` removes that field from stored loop versions. Node harnesses, version ids and numbers, published timestamps, and run pins are preserved.
+- Exports and API clients that still send the field are rejected with its field path. Remove it before import or create/save/validate. For a bare definition or export envelope:
+
+  ```sh
+  jq 'del(.settings.defaults.harness, .loop.settings.defaults.harness)' old-loop.json > loop.json
+  ```
+
+- Device drafts saved before this change are discarded by a one-off IndexedDB store upgrade, including set-aside copies. The server copy remains available. New in-progress drafts persist across reloads, including drafts with schema errors.
+
 ### Fixed
 
 - Seeded Codex model catalog entries now list `max`, matching the editor. The max-effort migration preserves existing edits; startup then refreshes seeded harness metadata as described above, keeping enabled choices. The Codex adapter still maps `max` to `xhigh`.

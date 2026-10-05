@@ -196,7 +196,7 @@ describe('SqliteRunRepository', () => {
     old.close();
     const current = openDatabase({ url });
     try {
-      expect(await current.pendingMigrations()).toBe(3);
+      expect(await current.pendingMigrations()).toBe(4);
       await current.migrate();
       const repo = new SqliteRunRepository(current.db);
       expect(await repo.listUnfinalized()).toEqual([]);
@@ -678,7 +678,7 @@ describe('migration 0003 model catalog max effort', () => {
     }
     const current = openDatabase({ url });
     try {
-      expect(await current.pendingMigrations()).toBe(2);
+      expect(await current.pendingMigrations()).toBe(3);
       await current.migrate();
       expect(await current.pendingMigrations()).toBe(0);
       await check(current);

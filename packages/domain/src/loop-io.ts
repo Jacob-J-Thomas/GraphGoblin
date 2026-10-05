@@ -15,7 +15,12 @@ export class LoopImportError extends DomainError {
 
 /** Wrap a definition in the portable export envelope. */
 export function exportLoop(def: LoopDefinition, exportedAt: string): LoopExport {
-  return { format: 'graphgoblin-loop', formatVersion: 1, exportedAt, loop: def };
+  return {
+    format: 'graphgoblin-loop',
+    formatVersion: 1,
+    exportedAt,
+    loop: def,
+  };
 }
 
 /**
@@ -26,16 +31,23 @@ export function importLoop(input: unknown): {
   definition: LoopDefinition;
   issues: ValidationIssue[];
 } {
-  const asExport = LoopExportSchema.safeParse(input);
-  const asDefinition = asExport.success ? undefined : LoopDefinitionSchema.safeParse(input);
-  if (asExport.success) {
-    return { definition: asExport.data.loop, issues: validateLoop(asExport.data.loop) };
+  const envelope =
+    typeof input === 'object' &&
+    input !== null &&
+    ('format' in input || 'formatVersion' in input || 'exportedAt' in input || 'loop' in input);
+  const parsed = envelope
+    ? LoopExportSchema.safeParse(input)
+    : LoopDefinitionSchema.safeParse(input);
+  if (parsed.success) {
+    const definition = 'loop' in parsed.data ? parsed.data.loop : parsed.data;
+    return { definition, issues: validateLoop(definition) };
   }
-  if (asDefinition?.success) {
-    return { definition: asDefinition.data, issues: validateLoop(asDefinition.data) };
-  }
-  const errors = (asDefinition?.error ?? asExport.error).issues.map(
-    (i) => `${i.path.join('.') || '<root>'}: ${i.message}`,
-  );
+  const errors = parsed.error.issues.flatMap((issue) => {
+    const paths =
+      issue.code === 'unrecognized_keys'
+        ? issue.keys.map((key) => [...issue.path, key])
+        : [issue.path];
+    return paths.map((path) => `${path.join('.') || '<root>'}: ${issue.message}`);
+  });
   throw new LoopImportError('document is neither a loop export nor a loop definition', { errors });
 }

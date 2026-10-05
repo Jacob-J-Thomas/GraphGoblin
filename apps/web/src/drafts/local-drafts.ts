@@ -1,5 +1,5 @@
 import type { LoopDefinitionInput } from '@graphgoblin/contracts';
-import { createStore, del, get, set, update, type UseStore } from 'idb-keyval';
+import { del, get, promisifyRequest, set, update, type UseStore } from 'idb-keyval';
 
 /**
  * Unsaved editor drafts mirrored to IndexedDB, so a reload or an offline spell never loses work.
@@ -15,11 +15,36 @@ export interface LocalDraft {
   baseToken?: string;
 }
 
-let store: UseStore | undefined;
+let database: Promise<IDBDatabase> | undefined;
 
 function draftStore(): UseStore {
-  store ??= createStore('graphgoblin', 'drafts');
-  return store;
+  if (!database) {
+    const request = indexedDB.open('graphgoblin', 2);
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      // Retire pre-upgrade device copies once; new drafts can be incomplete while editing.
+      if (db.objectStoreNames.contains('drafts')) db.deleteObjectStore('drafts');
+      db.createObjectStore('drafts');
+    };
+    database = promisifyRequest(request);
+    void database.then(
+      (db) => {
+        db.onversionchange = () => {
+          db.close();
+          database = undefined;
+        };
+        db.onclose = () => {
+          database = undefined;
+        };
+      },
+      () => {
+        database = undefined;
+      },
+    );
+  }
+  const connection = database;
+  return (mode, callback) =>
+    connection.then((db) => callback(db.transaction('drafts', mode).objectStore('drafts')));
 }
 
 export async function saveLocalDraft(draft: LocalDraft): Promise<void> {
@@ -27,7 +52,7 @@ export async function saveLocalDraft(draft: LocalDraft): Promise<void> {
 }
 
 export async function loadLocalDraft(loopId: string): Promise<LocalDraft | undefined> {
-  return get<LocalDraft>(loopId, draftStore());
+  return get(loopId, draftStore());
 }
 
 /**
@@ -77,7 +102,7 @@ export async function saveSetAsideDraft(draft: LocalDraft): Promise<void> {
 }
 
 export async function loadSetAsideDraft(loopId: string): Promise<LocalDraft | undefined> {
-  return get<LocalDraft>(setAsideKey(loopId), draftStore());
+  return get(setAsideKey(loopId), draftStore());
 }
 
 export async function clearSetAsideDraft(loopId: string): Promise<void> {
