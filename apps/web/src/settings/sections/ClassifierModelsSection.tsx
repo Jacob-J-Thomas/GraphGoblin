@@ -110,8 +110,8 @@ export function ClassifierModelsSection() {
   const [editing, setEditing] = useState<string | undefined>();
   const [notice, setNotice] = useState('');
   // The element (by id) to focus once it is on the page: a saved row's Edit button may only
-  // appear after the refreshed list renders.
-  const [focusTarget, setFocusTarget] = useState<string | undefined>();
+  // appear after the refreshed list renders, so every render after closing a form looks for it.
+  const focusTargetRef = useRef<string | undefined>(undefined);
   const headingRef = useRef<HTMLSpanElement>(null);
   const hasCustom = query.data?.some((entry) => entry.source === 'custom') ?? false;
   const existingIds = (query.data ?? []).map((entry) => entry.id);
@@ -121,22 +121,22 @@ export function ClassifierModelsSection() {
   const refresh = () => queryClient.invalidateQueries({ queryKey: keys.classifiers });
 
   useEffect(() => {
-    if (focusTarget === undefined) return;
-    const target = document.getElementById(focusTarget);
+    const id = focusTargetRef.current;
+    const target = id === undefined ? null : document.getElementById(id);
     if (!target) return;
+    focusTargetRef.current = undefined;
     target.focus();
-    setFocusTarget(undefined);
   });
 
   /** Open a form; a focus still waiting from the last one is dropped. */
   const openForm = (which: string) => {
-    setFocusTarget(undefined);
+    focusTargetRef.current = undefined;
     setEditing(which);
   };
   /** Close the form and put focus back on what opened it, or on the saved row's Edit button. */
   const closeForm = (returnTo: string) => {
+    focusTargetRef.current = returnTo;
     setEditing(undefined);
-    setFocusTarget(returnTo);
   };
 
   return (
