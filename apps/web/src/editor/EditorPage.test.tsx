@@ -48,6 +48,16 @@ describe('EditorPage', () => {
   // loop settings in it, so they start with it expanded (the setup clears storage after each).
   beforeEach(() => localStorage.setItem(LOOP_PANEL_STORAGE_KEY, 'expanded'));
 
+  it('shows Harness only in the inference dialog', async () => {
+    const api = new FakeApi();
+    const loop = api.addLoop(kitchenSinkLoop());
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('form', { name: 'Loop settings form' });
+    expect(screen.queryByLabelText('Harness')).not.toBeInTheDocument();
+    act(() => useEditorStore.getState().openNode('infer'));
+    expect(within(screen.getByRole('dialog')).getByLabelText('Harness')).toHaveValue('codex');
+  });
+
   it('collapses and expands the loop panel from its own controls and remembers it', async () => {
     const user = userEvent.setup();
     localStorage.clear();
@@ -258,7 +268,7 @@ describe('EditorPage', () => {
     const user = userEvent.setup();
     const api = new FakeApi();
     const loop = api.addLoop(newLoopDefinition('invalid'));
-    renderApp(`/loops/${loop.id}/edit`, api);
+    const view = renderApp(`/loops/${loop.id}/edit`, api);
     await user.click(await screen.findByRole('button', { name: 'Add Subloop node' }));
     await waitFor(
       () => expect(screen.getByTestId('save-state')).toHaveTextContent('Saved on this device only'),
@@ -279,6 +289,20 @@ describe('EditorPage', () => {
     expect(dialog.querySelector('[data-field="loopRef"]')).toContainElement(
       document.activeElement as HTMLElement,
     );
+
+    view.unmount();
+    renderApp(`/loops/${loop.id}/edit`, api);
+    expect(
+      await screen.findByText('Restored unsaved changes from this device.'),
+    ).toBeInTheDocument();
+    await waitFor(
+      () => expect(screen.getByTestId('save-state')).toHaveTextContent('Saved on this device only'),
+      SAVE_WAIT,
+    );
+    expect((await loadLocalDraft(loop.id))?.definition.nodes.map((node) => node.id)).toContain(
+      'subloop',
+    );
+    expect(api.callsTo('PUT', `/loops/${loop.id}/draft`)).toHaveLength(0);
   });
 
   it('shows a dismissed save notice again after the draft returns to the same invalid state', async () => {

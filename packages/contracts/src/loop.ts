@@ -1,12 +1,5 @@
 import { z } from 'zod';
-import {
-  EffortSchema,
-  HarnessIdSchema,
-  SlugSchema,
-  TemplateSchema,
-  TimestampSchema,
-  UlidSchema,
-} from './common.js';
+import { EffortSchema, SlugSchema, TemplateSchema, TimestampSchema, UlidSchema } from './common.js';
 import { NodeSchema } from './nodes.js';
 import { VariableDeclarationsSchema } from './thread.js';
 
@@ -22,7 +15,6 @@ export const LoopSettingsSchema = z.strictObject({
   workingDirectory: WorkingDirectorySpecSchema.default({ kind: 'temp' }),
   defaults: z
     .strictObject({
-      harness: HarnessIdSchema.default('codex'),
       model: z.string().min(1).optional(),
       effort: EffortSchema.optional(),
     })
