@@ -188,6 +188,13 @@ describe('SegmentedControl', () => {
     const segment = radio.nextElementSibling as HTMLElement;
     expect(segment).toHaveAttribute('title', long);
     expect(segment).toHaveClass('max-w-full', 'min-w-0', 'whitespace-nowrap');
+    // The chosen, focus, and forced-colours states come from the shared ChoiceGroup.
+    expect(segment).toHaveClass(
+      'peer-checked:bg-accent-subtle',
+      'peer-checked:ring-accent-strong',
+      'peer-focus-visible:outline-focus',
+      'forced-colors:peer-checked:outline',
+    );
     expect(screen.getByText(long)).toHaveClass('overflow-x-clip', 'text-ellipsis', 'min-w-0');
     expect(radio.closest('label')).toHaveClass('max-w-full', 'min-w-0');
   });

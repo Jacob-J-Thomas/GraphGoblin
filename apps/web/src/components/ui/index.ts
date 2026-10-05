@@ -7,6 +7,7 @@ export { Badge, type Tone } from './badge.js';
 export { Button, buttonStyles } from './button.js';
 export { ConfirmAction } from './confirm-action.js';
 export { Card } from './card.js';
+export { ChoiceGroup, type Choice, type ChoiceGroupProps } from './choice-group.js';
 export { Dialog, type DialogCloseReason, type DialogProps } from './dialog.js';
 export {
   Disclosure,

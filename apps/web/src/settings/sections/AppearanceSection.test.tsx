@@ -99,12 +99,28 @@ describe('the Font control', () => {
       const option = radio.closest('label');
       expect(option).toHaveAttribute('data-font', radio.getAttribute('value'));
       const name = document.getElementById(radio.getAttribute('aria-labelledby') ?? '');
-      expect(name).toHaveClass('font-display');
+      expect(name?.querySelector('.font-display')).toHaveTextContent(/\w/);
       const description = document.getElementById(radio.getAttribute('aria-describedby') ?? '');
-      expect(description).toHaveClass('font-sans');
+      expect(description?.querySelector('.font-sans')).toHaveTextContent(/\w/);
       expect(option).toContainElement(name);
       expect(option).toContainElement(description);
     }
+  });
+
+  it('draws its options with the same radio states as the theme control (the shared ChoiceGroup)', () => {
+    render(<AppearanceSection />);
+    const face = (name: string) => screen.getByRole('radio', { name }).nextElementSibling;
+    const shared = [
+      'peer-checked:bg-accent-subtle',
+      'peer-checked:ring-accent-strong',
+      'peer-focus-visible:outline-focus',
+      'forced-colors:peer-checked:outline',
+      'peer-disabled:opacity-45',
+    ];
+    for (const name of ['Dark', 'Geist', 'OpenDyslexic']) expect(face(name)).toHaveClass(...shared);
+    for (const radio of screen.getAllByRole('radio')) expect(radio).toHaveClass('peer', 'sr-only');
+    expect(screen.getByRole('radio', { name: 'Geist' })).toHaveAttribute('name', 'font');
+    expect(screen.getByRole('radio', { name: 'Dark' })).toHaveAttribute('name', 'theme');
   });
 
   it('applies a click at once, remembers it, and leaves the theme alone', async () => {
