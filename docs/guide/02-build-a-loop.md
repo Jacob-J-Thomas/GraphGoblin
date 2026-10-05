@@ -27,6 +27,7 @@ Every save tells the server which copy the edit started from. If another tab, de
 
 Choose **Harness** in each inference node's dialog. It defaults to **Codex** when omitted.
 Loop settings offer model and effort defaults. Remove `settings.defaults.harness` from older files before importing them.
+If import is refused, the alert lists each invalid field's path and reason, including this removed field.
 
 **Trigger (`trigger`).** Choose `subtype`: `manual`, `cron`, `webhook`, `event`, or `poll`. For manual starts, set `inputSchema` to validate input and `exposeTo` to declare intended `ui`, `api`, and `mcp` surfaces. The trigger records its payload as an output and follows `out`. Configure automatic sources in [Triggers](04-triggers.md).
 

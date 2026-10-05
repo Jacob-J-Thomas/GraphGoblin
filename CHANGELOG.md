@@ -21,6 +21,15 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   ```
 
 - Device drafts saved before this change are discarded by a one-off IndexedDB store upgrade, including set-aside copies. The server copy remains available. New in-progress drafts persist across reloads, including drafts with schema errors.
+- Close other GraphGoblin tabs and windows after updating so the device-draft store can upgrade.
+- To roll back after migration `0005`, stop the API and restore the pre-upgrade backup of the data directory before running the previous release. The previous release requires the removed field in its loop responses. Alternatively, with the API stopped, restore the field and remove only the `0005` ledger entry:
+
+  ```sql
+  UPDATE loop_versions SET definition = json_set(definition, '$.settings.defaults.harness', 'codex') WHERE json_extract(definition, '$.settings.defaults.harness') IS NULL;
+  DELETE FROM __drizzle_migrations WHERE created_at = 1791152101266;
+  ```
+
+  This manual rollback does not recover edited seed metadata; restore the pre-upgrade backup for that. Re-upgrading applies `0005` again. Current exports and API clients must still use the canonical definition shape.
 
 ### Fixed
 
