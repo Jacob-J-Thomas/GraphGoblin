@@ -86,7 +86,7 @@ test('a restored-draft notice stays dismissed through edits and returns after a 
   await page.evaluate(
     async ({ loopId, definition }) => {
       const db = await new Promise<IDBDatabase>((resolve, reject) => {
-        const request = indexedDB.open('graphgoblin', 1);
+        const request = indexedDB.open('graphgoblin', 2);
         request.onupgradeneeded = () => request.result.createObjectStore('drafts');
         request.onsuccess = () => resolve(request.result);
         request.onerror = () => reject(request.error ?? new Error('IndexedDB open failed'));

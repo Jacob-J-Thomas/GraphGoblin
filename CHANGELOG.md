@@ -4,6 +4,11 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+### Added
+
+- Separate owner-scoped classifier model catalog, with built-in Jev and registered HTTP Choice endpoints. REST `GET /classifier-models` and `PUT`, `PATCH`, `DELETE /classifier-models/{id}` use settings scopes; api-client `classifierModels` wraps them. Configured status derives from usable referenced secrets without provider calls.
+- Optional Decision `jev.model` catalog selection, shared publish diagnostics, immutable runtime client snapshots with catalog/secret refresh, and `decision.made.classifierModel` provenance. Exit Noul keeps built-in Jev. Kev-4B owner serving/licence/protocol research is documented; model serving is external.
+
 ### Changed
 
 - `GET /api-keys` requires a `current` boolean on every list item, identifying the key authenticating that request when keys are required. Settings marks it as **This browser** and warns before revoking it; when a browser stores a key but no row is marked, confirmations explain the possible sign-out and **Forget key** recovery. Changing keys refreshes the marker, and late 401 responses from a previous key no longer show the key panel.
@@ -11,6 +16,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 - Startup refreshes seeded harness names, efforts, and default efforts while preserving enabled. Hand-added legacy metadata remains intact. Validate/publish return advisory disabled/missing-model warnings with field paths, and successful publish now includes issues.
 
 ### Upgrade notes
+
+- Migration `0006` adds `classifier_models`; startup seeds managed Jev metadata before recovery while preserving enabled. The new table does not rewrite loop definitions, versions, runs, events, secrets, or LLM catalog data; earlier migrations still apply their intended changes. Omitted `jev.model` defaults to catalog `jev`. Rebuild generated-client consumers together; older strict readers may reject exports containing explicit classifier selection.
 
 - Harness is chosen on inference nodes only. Loop `settings.defaults` now contains model and effort; `settings.defaults.harness` is gone.
 - On the first startup after upgrade, migration `0005` removes that field from stored loop versions. Node harnesses, version ids and numbers, published timestamps, and run pins are preserved.

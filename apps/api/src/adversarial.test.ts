@@ -153,6 +153,10 @@ describe('adversarial API invariants', () => {
     'PUT /settings': 'settings:write',
     'DELETE /settings/{key}': 'settings:write',
     'GET /model-catalog': 'settings:read',
+    'GET /classifier-models': 'settings:read',
+    'PUT /classifier-models/{id}': 'settings:write',
+    'PATCH /classifier-models/{id}': 'settings:write',
+    'DELETE /classifier-models/{id}': 'settings:write',
     'PUT /model-catalog/{harness}/{model}': 'settings:write',
     'PATCH /model-catalog/{harness}/{model}': 'settings:write',
     'DELETE /model-catalog/{harness}/{model}': 'settings:write',
@@ -632,11 +636,12 @@ describe('adversarial API invariants', () => {
     expect((await t.app.inject({ method: 'DELETE', url: `/loops/${child}` })).statusCode).toBe(204);
   });
 
-  it('ADV-009: every id route validates ULIDs before repository lookup', async () => {
+  it('ADV-009: every ULID id route validates before repository lookup', async () => {
     const t = await app();
     let checked = 0;
     for (const [path, methods] of Object.entries(t.app.swagger().paths!)) {
-      if (!path.includes('{id}')) continue;
+      // Classifier catalog ids are URL-safe names, rather than entity ULIDs.
+      if (!path.includes('{id}') || path.startsWith('/classifier-models/')) continue;
       for (const method of Object.keys(methods)) {
         if (!['get', 'post', 'put', 'delete'].includes(method)) continue;
         const response = await t.app.inject({

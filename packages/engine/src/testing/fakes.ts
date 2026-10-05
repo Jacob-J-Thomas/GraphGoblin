@@ -19,6 +19,9 @@ import type {
   ArtifactStorePort,
   ChoiceRequest,
   ChoiceResult,
+  ClassifierPort,
+  ClassifierRegistryPort,
+  ClassifierResolution,
   ClockPort,
   DeciderPort,
   EnginePorts,
@@ -680,7 +683,39 @@ export const DEFAULT_TEST_SETTINGS: EngineSettings = {
   structuredTimeoutMs: 5000,
 };
 
+export class FakeClassifierRegistry implements ClassifierRegistryPort {
+  readonly requests: { ownerId: string; modelId: string }[] = [];
+  readonly models = new Map<string, ClassifierPort & Partial<Pick<DeciderPort, 'available'>>>();
+  readonly unavailable = new Map<
+    string,
+    Extract<ClassifierResolution, { status: 'unavailable' }>
+  >();
+  constructor(builtin?: ClassifierPort & Partial<Pick<DeciderPort, 'available'>>) {
+    if (builtin) this.models.set('jev', builtin);
+  }
+  resolve(ownerId: string, modelId: string): Promise<ClassifierResolution> {
+    this.requests.push({ ownerId, modelId });
+    const unavailable = this.unavailable.get(modelId);
+    if (unavailable) return Promise.resolve(unavailable);
+    const classifier = this.models.get(modelId);
+    if (!classifier)
+      return Promise.resolve({
+        status: 'unavailable',
+        reason: 'CLASSIFIER_MODEL_NOT_FOUND',
+        message: `Classifier '${modelId}' not found`,
+      });
+    if (classifier.available && !classifier.available())
+      return Promise.resolve({
+        status: 'unavailable',
+        reason: 'CLASSIFIER_SECRET_MISSING',
+        message: `Classifier '${modelId}' is unconfigured`,
+      });
+    return Promise.resolve({ status: 'ready', classifier });
+  }
+}
+
 export interface FakePorts extends EnginePorts {
+  classifiers: FakeClassifierRegistry;
   clock: FakeClock;
   ids: FakeIds;
   logger: CapturingLogger;
@@ -720,6 +755,7 @@ export function createFakePorts(options: { secrets?: Record<string, string> } = 
     harnesses: { codex: harness },
     harness,
     deciders: [jev, codexDecider],
+    classifiers: new FakeClassifierRegistry(jev),
     jev,
     codexDecider,
     structured: structuredFake,

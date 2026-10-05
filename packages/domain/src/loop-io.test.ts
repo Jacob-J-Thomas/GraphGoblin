@@ -4,6 +4,39 @@ import { FIXTURE_TS, minimalLoop } from '@graphgoblin/contracts/testing';
 import { exportLoop, importLoop, LoopImportError } from './loop-io.js';
 
 describe('exportLoop / importLoop', () => {
+  it.each([undefined, 'kev.local'])(
+    'preserves classifier references and the omitted default on portable export/import (%s)',
+    (model) => {
+      const base = minimalLoop();
+      const definition = LoopDefinitionSchema.parse({
+        ...base,
+        nodes: [
+          base.nodes[0],
+          {
+            id: 'decide',
+            kind: 'decision',
+            label: 'Choose',
+            config: {
+              routes: [
+                { label: 'yes', description: 'Yes' },
+                { label: 'no', description: 'No' },
+              ],
+              question: '?',
+              strategy: ['jev'],
+              ...(model ? { jev: { model } } : {}),
+            },
+          },
+          base.nodes[1],
+        ],
+        edges: [
+          { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'decide' } },
+          { id: 'e2', from: { node: 'decide', port: 'yes' }, to: { node: 'done' } },
+          { id: 'e3', from: { node: 'decide', port: 'no' }, to: { node: 'done' } },
+        ],
+      });
+      expect(importLoop(exportLoop(definition, FIXTURE_TS)).definition).toEqual(definition);
+    },
+  );
   it.each(['format', 'formatVersion', 'exportedAt', 'loop'])(
     'reports invalid envelope %s using its own path',
     (field) => {

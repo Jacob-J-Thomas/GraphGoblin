@@ -59,16 +59,16 @@ Chooses one of several labelled routes with Jev, Codex, or a JSONata expression.
 
 Ports: One output per route label.
 
-| Field                | Type                                              | Required | Default | Description                                                                     |
-| -------------------- | ------------------------------------------------- | -------- | ------- | ------------------------------------------------------------------------------- |
-| `routes`             | object[]                                          | yes      |         | At least two labelled routes, each with a description the decider reads.        |
-| `question`           | string                                            | yes      |         | Liquid template rendered against the thread; the question the decider answers.  |
-| `context`            | { messages?, vars?, includeLastOutput? }          | no       | `{}`    | How much of the thread the decider sees: messages, vars, the last output.       |
-| `strategy`           | array of (`"jev"` \| `"codex"` \| `"expression"`) | yes      |         | Ordered fallback chain of strategies.                                           |
-| `jev`                | { primitive?, minConfidence? }                    | no       |         | Jev options; a choice below `minConfidence` falls through to the next strategy. |
-| `codex`              | { model?, effort? }                               | no       |         | Model and effort for the Codex decider.                                         |
-| `expression`         | { jsonata }                                       | no       |         | JSONata that must evaluate to a route label.                                    |
-| `recordAlternatives` | boolean                                           | no       | `true`  | Record the routes not taken, with confidences, on `decision.made`.              |
+| Field                | Type                                              | Required | Default | Description                                                                                                                                                                  |
+| -------------------- | ------------------------------------------------- | -------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `routes`             | object[]                                          | yes      |         | At least two labelled routes, each with a description the decider reads.                                                                                                     |
+| `question`           | string                                            | yes      |         | Liquid template rendered against the thread; the question the decider answers.                                                                                               |
+| `context`            | { messages?, vars?, includeLastOutput? }          | no       | `{}`    | How much of the thread the decider sees: messages, vars, the last output.                                                                                                    |
+| `strategy`           | array of (`"jev"` \| `"codex"` \| `"expression"`) | yes      |         | Ordered fallback chain of strategies.                                                                                                                                        |
+| `jev`                | { primitive?, model?, minConfidence? }            | no       |         | Choice classifier options: optional `model` is a catalog id (default `jev`); unavailable configuration or a choice below `minConfidence` falls through to the next strategy. |
+| `codex`              | { model?, effort? }                               | no       |         | Model and effort for the Codex decider.                                                                                                                                      |
+| `expression`         | { jsonata }                                       | no       |         | JSONata that must evaluate to a route label.                                                                                                                                 |
+| `recordAlternatives` | boolean                                           | no       | `true`  | Record the routes not taken, with confidences, on `decision.made`.                                                                                                           |
 
 ## Inferencing (`inference`)
 

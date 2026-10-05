@@ -6,6 +6,7 @@ import {
   CapturingLogger,
   FakeClock,
   FakeDecider,
+  FakeClassifierRegistry,
   FakeHarness,
   FakeStructured,
 } from '@graphgoblin/engine/testing';
@@ -13,6 +14,11 @@ import { buildApp } from '../app.js';
 import { loadConfig } from '../config.js';
 import { createContainer, type Container } from '../container.js';
 import type { ApiInstance } from '../types.js';
+export {
+  startFakeClassifierEndpoint,
+  type FakeClassifierRequest,
+  type FakeClassifierResponse,
+} from './fake-classifier.js';
 
 export interface TestApp {
   app: ApiInstance;
@@ -33,6 +39,8 @@ export interface TestApp {
 export interface TestAppOptions {
   requireApiKey?: boolean;
   env?: Record<string, string>;
+  /** Exercise real catalog/secret resolution and HTTP transport, retaining fake Codex. */
+  realClassifiers?: boolean;
 }
 
 /** An API over an in-memory database with fake harness, deciders, and structured completion. */
@@ -55,6 +63,7 @@ export async function createTestApp(options: TestAppOptions = {}): Promise<TestA
   const container = await createContainer(config, {
     harnesses: { codex: harness },
     deciders: [jev, codex],
+    ...(!options.realClassifiers ? { classifiers: new FakeClassifierRegistry(jev) } : {}),
     structured,
     startTimers: false,
     logger,

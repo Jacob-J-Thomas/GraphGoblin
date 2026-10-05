@@ -95,7 +95,7 @@ Every behaviour-affecting setting is passed as a per-thread option on every sess
 
 `HarnessPort.resume` receives the same `HarnessStartRequest` as `start`: the node's model, effort, harness options, capabilities, and working directory, plus the turn. The engine sends it for `resume-previous` and `resume-named` turns, schema-repair turns, and crash-recovery continuations, so `resumeThread(id, options)` gets exactly the thread options `startThread` would, including after a restart. The adapter keeps no per-session memory.
 
-Composition: `apps/api` builds `createCodexAdapters({ logger, model: GG_DEFAULT_MODEL, effort: GG_DEFAULT_EFFORT, codexBinary: GG_CODEX_BINARY })` and registers harness `codex`, the structured port, and the deciders `[jev, codex]` (Jev first, Codex as the fallback; decision nodes select by id and skip an unavailable one). `GG_CODEX_BINARY` is optional: a path to a `codex` executable or `.js` launcher; unset, the SDK's bundled CLI is used. Building the adapters spawns nothing; the CLI starts only with a session or a preflight.
+Composition: `apps/api` builds `createCodexAdapters({ logger, model: GG_DEFAULT_MODEL, effort: GG_DEFAULT_EFFORT, codexBinary: GG_CODEX_BINARY })` and registers harness `codex`, the structured port, deciders for Codex and built-in Jev Noul, and the classifier registry for Decision Choice. `GG_CODEX_BINARY` is optional: a path to a `codex` executable or `.js` launcher; unset, the SDK's bundled CLI is used. Building the adapters spawns nothing; the CLI starts only with a session or a preflight.
 
 ### Event normalisation (Decided)
 
@@ -133,7 +133,7 @@ await jev.init();
 // ports: harnesses: { codex: codex.harness }, structured: codex.structured, deciders: [jev, codex.decider]
 ```
 
-Call `jev.refresh()` after the `jev-api-key` secret changes.
+The API additionally supplies `ports.classifiers: ClassifierRegistryPort`. Choice decisions use `resolve(ownerId, catalogId)`; `deciders` continues to supply Codex decisions and the built-in Noul exit facade. The facade gates `available()` on the built-in catalog's enabled state and calls `jev.refresh()` after `jev-api-key` changes. The registry creates SDK or HTTP clients from immutable configuration snapshots, invalidates them on catalog/referenced-secret writes and deletes, and rechecks metadata and usable secrets on every resolution. An in-flight request keeps its snapshot; subsequent decisions see the edit.
 
 ### Context injection (Decided)
 
@@ -159,6 +159,8 @@ Usage reported by the harness is written to `harness.usage` events and rolled in
 
 ### Model catalog (Decided)
 
+There are two catalogs: `model_catalog` is the harness LLM catalog described below; `classifier_models` is an owner-scoped catalog of Choice/classification, Noul, and Score capabilities, with provider model ids, API roots, and optional secret references. Classifiers have no harness effort fields. See [ADR-0021](decisions/ADR-0021-classifier-model-catalog.md).
+
 The `model_catalog` table carries `source: 'harness' | 'litellm'` and `enabled`. Harness entries are enable/disable only, using PATCH; their metadata cannot be edited or deleted through the API. Startup inserts missing seeds as harness entries and refreshes seeded display names, efforts, and default efforts from `DEFAULT_MODEL_CATALOG`, preserving enabled. It lists all six canonical efforts; Codex maps `max` to `xhigh`.
 
 Migration `0004` adds source with a harness default, preserving every legacy row. User-edited seeded rows become harness-owned and their metadata re-syncs on the next startup, while enabled stays as chosen. Hand-added legacy rows also become harness-owned: they keep their values and can be toggled, but are frozen for PUT/DELETE. Existing LiteLLM rows can be edited/deleted and are never refreshed by the harness seed. Creating LiteLLM entries returns `LITELLM_NOT_CONFIGURED` until the provider work ships; no new key convention is defined.
@@ -183,12 +185,53 @@ Decision nodes with strategy `codex`, the `coerce` operation's repair, and infer
 
 ## Jev decider (Decided, M4)
 
+Decision `jev.model` is an optional classifier catalog id, defaulting to `jev`. Startup seeds that built-in before run recovery and refreshes its managed metadata without resetting enabled. Its fixed provider remains the pinned TypeSafe SDK, `jev-latest`, `https://api.typesafe.ai`, and `jev-api-key`. Exit Noul continues through this built-in alone. Configuration status is a local usable-secret check, with no provider request; it does not establish reachability or valid provider authentication.
+
 `packages/adapter-jev` implements `DeciderPort` (`id: 'jev'`) over `@typesafe-ai/sdk` 0.6.0 (MIT, no dependencies). Both primitives call `POST https://api.typesafe.ai/v1/systemone` with a bearer key from the secret `jev-api-key`:
 
 - `choose` sends the decision context as `state` and one `choice` question whose criteria map each route label to its description. It returns the chosen label, the reported confidence (or the label's probability), and every other label with its probability as `alternatives`, highest first. The engine compares the confidence with `jev.minConfidence` and falls through to the next strategy below it.
 - `judge` sends one `noul` (yes/no) question; `holds` is `noul >= 0.5` and `confidence` is the probability of the answer given.
 
 `available()` is synchronous: the decider resolves the key in the background at construction and caches a client; `init()` awaits that, and `refresh()` re-reads the secret. Without a key it is unavailable and the engine skips it. Failures carry codes: `DECIDER_UNAVAILABLE`, `DECIDER_NOT_AUTHENTICATED` (401, 403), `DECIDER_RATE_LIMITED` (429), `DECIDER_HTTP_ERROR`, `DECIDER_UNREACHABLE`, and `DECIDER_INVALID_RESPONSE` (the response is validated with Zod). The SDK retries 408, 429, and 5xx twice by default with a 10 s per-attempt timeout; aborts surface as `AbortError`. The base URL and model are explicit options (`baseUrl`, default `https://api.typesafe.ai`; `model`, default `jev-latest`), never read from `TYPESAFE_*` environment variables.
+
+## HTTP classifier endpoint contract (Decided, ADR-0021)
+
+Register a custom entry with provider `http`, displayName, providerModel, nonempty unique primitives, an HTTP(S) API root without embedded credentials/query/fragment, and optional secretRef. New entries are disabled; metadata edits preserve enabled. The secret reference uses the Secrets name syntax and contains no credential value. Capability listing may include Noul/Score, but HTTP execution in this change implements Choice only.
+
+The infrastructure HTTP client sends `POST {endpoint}/v1/systemone`, `Content-Type: application/json`, and `Authorization: Bearer <resolved secret>` only when secretRef is set:
+
+```json
+{
+  "model": "kev-latest",
+  "state": { "task": "Review the change" },
+  "questions": {
+    "answer": {
+      "type": "choice",
+      "instructions": "Which route?",
+      "criteria": { "ship": "Ready to merge", "fix": "Needs work" }
+    }
+  }
+}
+```
+
+Minimum response:
+
+```json
+{
+  "answers": {
+    "answer": {
+      "type": "choice",
+      "choice": "ship",
+      "confidence": 0.8,
+      "probabilities": { "ship": 0.8, "fix": 0.2 }
+    }
+  }
+}
+```
+
+The selected label must be declared, probabilities must cover exactly every submitted label, and all probability/confidence values must be finite and in `[0,1]`. Omitted confidence uses the selected probability. Provider model/usage and additional provider metadata may accompany the response. Requests have a 10-second deadline, respect executor cancellation, and reject redirects. Malformed JSON or invalid answers produce `DECIDER_INVALID_RESPONSE`; 401/403, 429, other HTTP errors, connection failures, and timeouts have distinct transport diagnostics, with no credential or untrusted provider body in them. Provider errors retain the engine's existing failure behaviour; only unavailable configuration and low confidence fall through the strategy chain.
+
+Kev-4B's owner recommends `kev.serve` on CUDA or Apple Silicon MLX; the protocol and Apache-2.0 licence were inspected in owner source, with evidence in [research/jev.md](research/jev.md#kev-http-protocol-verification-2026-10-05). GraphGoblin registers an existing service; it does not install or serve models. A different native protocol needs a bridge exposing this contract. Ordinary LiteLLM chat-completion routing does not supply Choice probabilities, so it is outside this classifier path.
 
 ## Post-1.0 adapters (recorded)
 

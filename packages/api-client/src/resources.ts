@@ -216,6 +216,20 @@ export const modelCatalog = {
   },
 };
 
+export const classifierModels = {
+  list: async (client: GraphGoblinClient) => unwrap(await client.GET('/classifier-models')).items,
+  upsert: async (
+    client: GraphGoblinClient,
+    modelId: string,
+    metadata: RequestBody<'/classifier-models/{id}', 'put'>,
+  ) => unwrap(await client.PUT('/classifier-models/{id}', { ...id(modelId), body: metadata })),
+  setEnabled: async (client: GraphGoblinClient, modelId: string, enabled: boolean) =>
+    unwrap(await client.PATCH('/classifier-models/{id}', { ...id(modelId), body: { enabled } })),
+  remove: async (client: GraphGoblinClient, modelId: string): Promise<void> => {
+    unwrap(await client.DELETE('/classifier-models/{id}', id(modelId)));
+  },
+};
+
 export const events = {
   /** Publish an inbound event on the bus. */
   publish: async (client: GraphGoblinClient, event: RequestBody<'/events', 'post'>) =>

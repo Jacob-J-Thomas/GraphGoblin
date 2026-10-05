@@ -34,14 +34,16 @@ type DecisionConfig = {
     includeLastOutput?: boolean;
   };
   strategy: ('jev' | 'codex' | 'expression')[]; // ordered fallback chain
-  jev?: { primitive: 'choice'; minConfidence?: number };
+  jev?: { primitive: 'choice'; model?: string; minConfidence?: number }; // classifier catalog id
   codex?: { model?: string; effort?: Effort }; // a Codex thread with an output schema of { route, reasoning }
   expression?: { jsonata: string }; // must evaluate to one of the route labels
   recordAlternatives: boolean;
 };
 ```
 
-Behaviour: strategies are tried in order. Jev is skipped if no Jev key is configured. If Jev answers below `minConfidence`, the next strategy runs. The chosen route, confidence, and alternatives are written to a `decision.made` event and to `lastOutput`.
+Behaviour: strategies are tried in order. `jev.model` selects an exact owner-scoped classifier catalog id; omission defaults to built-in `jev` (provider model `jev-latest`). The registry resolves it at each decision, including resumed execution. An explicit selection never substitutes the built-in. Unknown ids (`CLASSIFIER_MODEL_NOT_FOUND`) and entries without Choice (`CLASSIFIER_PRIMITIVE_UNSUPPORTED`) block publication. Disabled models (`CLASSIFIER_MODEL_DISABLED`), missing or blank required secrets (`CLASSIFIER_SECRET_MISSING`), and unreadable secrets (`CLASSIFIER_SECRET_UNREADABLE`) warn at `config.jev.model`, naming the node, model, and Settings remedy. These unavailable strategies are skipped with the specific reason in `DECISION_NO_ROUTE`'s `tried` details. Without another strategy the decision cannot currently produce a route.
+
+If a classifier answers below `minConfidence`, the next strategy runs. Provider errors fail the step and cancellation propagates; HTTP errors do not silently fall through. The chosen route, confidence, and alternatives are written to `decision.made` and `lastOutput`; successful classifier events also carry `classifierModel`, the catalog id. `lastOutput` keeps its existing shape. Classification is Choice with categorical labels. Scorer-only entries can be listed but cannot execute a Choice decision.
 
 Ports: one output per route label.
 
@@ -203,6 +205,8 @@ Two readings of "heartbeat" fit this node. The first is "poll until a condition 
 Ports: `out`.
 
 ## Exit (Decided semantics, Draft config)
+
+Exit predicates with strategy `jev` continue to use built-in Jev's Noul path and its current enable/secret availability. There is no exit classifier selector; custom HTTP classifiers execute Decision Choice only.
 
 Decides whether the loop is done, what it returns, where that goes, and whether to go around again.
 

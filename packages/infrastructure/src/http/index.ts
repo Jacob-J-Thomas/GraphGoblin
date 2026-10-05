@@ -5,3 +5,4 @@
  */
 export * from './probes.js';
 export * from './delivery.js';
+export * from './classifier.js';

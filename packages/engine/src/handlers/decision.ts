@@ -2,7 +2,7 @@ import type { JsonValue } from '@graphgoblin/contracts';
 import { evaluateExpression, threadView } from '@graphgoblin/domain';
 import { RunFailureError } from '../errors.js';
 import type { NodeContext, NodeHandler } from '../handler.js';
-import type { ChoiceResult } from '../ports.js';
+import type { ClassifierPort, ChoiceResult } from '../ports.js';
 import { outputPatch, selectMessages, toJson } from './common.js';
 
 async function decisionContext(ctx: NodeContext<'decision'>): Promise<JsonValue> {
@@ -43,7 +43,18 @@ export const decisionHandler: NodeHandler<'decision'> = {
         tried.push(`expression returned "${label}"`);
         continue;
       }
-      const decider = ctx.ports.deciders.find((d) => d.id === strategy && d.available());
+      let decider: ClassifierPort | undefined;
+      const classifierModel = strategy === 'jev' ? (config.jev?.model ?? 'jev') : undefined;
+      if (classifierModel !== undefined) {
+        const selection = await ctx.ports.classifiers.resolve(ctx.run.ownerId, classifierModel);
+        if (selection.status === 'unavailable') {
+          tried.push(`jev unavailable: ${selection.reason}: ${selection.message}`);
+          continue;
+        }
+        decider = selection.classifier;
+      } else {
+        decider = ctx.ports.deciders.find((d) => d.id === strategy && d.available());
+      }
       if (!decider) {
         tried.push(`${strategy} unavailable`);
         continue;
@@ -81,7 +92,7 @@ export const decisionHandler: NodeHandler<'decision'> = {
         tried.push(`${strategy} confidence ${result.confidence} below ${minConfidence}`);
         continue;
       }
-      return decide(ctx, strategy, result);
+      return decide(ctx, strategy, result, classifierModel);
     }
 
     throw new RunFailureError(
@@ -99,11 +110,13 @@ async function decide(
   ctx: NodeContext<'decision'>,
   strategy: 'jev' | 'codex' | 'expression',
   result: ChoiceResult,
+  classifierModel?: string,
 ) {
   await ctx.services.record({
     type: 'decision.made',
     nodeId: ctx.node.id,
     strategy,
+    ...(classifierModel !== undefined ? { classifierModel } : {}),
     route: result.label,
     ...(result.confidence !== undefined ? { confidence: result.confidence } : {}),
     ...(ctx.config.recordAlternatives && result.alternatives
