@@ -1,7 +1,16 @@
 import { mkdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import type { APIRequestContext, Locator, Page } from '@playwright/test';
-import { approvalLoop, closeNode, expect, openNode, showLoopPanel, test } from './fixtures.js';
+import {
+  approvalLoop,
+  closeNode,
+  expect,
+  openAdvanced,
+  openItem,
+  openNode,
+  showLoopPanel,
+  test,
+} from './fixtures.js';
 
 async function createLoop(request: APIRequestContext, config: unknown, kind = 'script') {
   const definition = approvalLoop(`forms ${kind}`);
@@ -114,6 +123,7 @@ test('collection focus and collision refusal preserve the saved values', async (
   await expect(page.getByLabel('Args 3', { exact: true })).toBeFocused();
   await expect(args.getByRole('status')).toHaveText('Added args 3');
   await code(page, 'Args 3', 'new');
+  await openAdvanced(dialog);
   await page.getByLabel('Env key 2').fill('A');
   await expect(page.getByLabel('Env key 2')).toHaveAttribute('aria-invalid', 'true');
   await expect(page.getByLabel('Env key 2')).toHaveAccessibleDescription(/already exists/);
@@ -279,6 +289,7 @@ test('required whitespace expressions are reported by the form and API validatio
   );
   await page.goto(`/app/loops/${id}/edit`);
   const dialog = await openNode(page, 'approve');
+  await openItem(dialog, 'Operations 1');
   await code(page, 'Jsonata', ' ');
   const row = dialog.locator('[data-field="operations.0.value.jsonata"]');
   await expect(row.getByTestId('preview')).toHaveCount(0);
@@ -383,6 +394,7 @@ for (const theme of ['dark', 'light']) {
       .toEqual({ value: { type: 'boolean' } });
     // String record sibling in the node properties uses the same row layout.
     await page.getByTestId('node-approve').click();
+    await openAdvanced(page.getByRole('dialog'));
     await page.getByLabel('Env key 1').fill('RENAMED');
     await page.getByLabel('Env value 1').fill('edited');
     await page
@@ -416,3 +428,75 @@ for (const theme of ['dark', 'light']) {
     await expect(until.getByTestId('preview')).toHaveCount(0);
   });
 }
+
+test('#14: inference shows its basic fields, the rest under Advanced, which says what it hides and opens for an issue', async ({
+  page,
+  request,
+}) => {
+  const id = await createLoop(request, { prompt: { template: 'Hi' } }, 'inference');
+  await page.goto(`/app/loops/${id}/edit`);
+  const dialog = await openNode(page, 'approve');
+  const timeoutOf = async () =>
+    (
+      (await draft(request, id)).draft.definition.nodes.find((n) => n.id === 'approve')?.config as
+        { timeoutSeconds?: number } | undefined
+    )?.timeoutSeconds;
+
+  // The basic set: harness, model, effort, session, prompt, and the sandbox.
+  await expect(dialog.getByLabel('Harness', { exact: true })).toBeVisible();
+  await expect(dialog.getByLabel('Model', { exact: true })).toBeVisible();
+  await expect(dialog.getByLabel('Effort', { exact: true })).toBeVisible();
+  await expect(dialog.getByRole('group', { name: 'Session', exact: true })).toBeVisible();
+  await expect(dialog.getByRole('group', { name: 'Prompt', exact: true })).toBeVisible();
+  const sandbox = dialog.getByRole('radiogroup', { name: 'Sandbox', exact: true });
+  await expect(sandbox).toBeVisible();
+  // Help from the schema's description sits under a field.
+  await expect(sandbox).toHaveAccessibleDescription(/What the session may change/);
+  // The rest is under Advanced, collapsed.
+  const advanced = dialog.getByRole('button', { name: /^Advanced\b/ });
+  await expect(advanced).toHaveAttribute('aria-expanded', 'false');
+  await expect(dialog.getByRole('radiogroup', { name: 'Approval', exact: true })).toBeHidden();
+  await expect(dialog.getByLabel('Timeout seconds', { exact: true })).toBeHidden();
+
+  // By keyboard: Tab from the last basic field reaches the toggle, with the focus ring; Enter opens.
+  await sandbox.getByRole('radio', { name: 'workspace-write' }).focus();
+  await page.keyboard.press('Tab');
+  await expect(advanced).toBeFocused();
+  await expect(advanced).toHaveCSS('outline-style', 'solid');
+  await expect(advanced).toHaveCSS('outline-width', '2px');
+  await page.keyboard.press('Enter');
+  await expect(advanced).toHaveAttribute('aria-expanded', 'true');
+  const panel = page.locator(`[id="${await advanced.getAttribute('aria-controls')}"]`);
+  for (const group of ['Context', 'Harness options', 'Output', 'Limits']) {
+    await expect(panel.getByRole('group', { name: group, exact: true })).toBeVisible();
+  }
+
+  // A value set inside, then collapsed: the toggle says so.
+  await dialog.getByLabel('Timeout seconds', { exact: true }).fill('120');
+  await expect.poll(timeoutOf).toBe(120);
+  await advanced.click();
+  await expect(advanced).toHaveAttribute('aria-expanded', 'false');
+  await expect(advanced).toContainText('1 set');
+  await expect(advanced).toHaveAccessibleName('Advanced 1 set');
+
+  // An issue inside, collapsed: flagged, and following it from the node's badge opens the group.
+  await advanced.click();
+  await dialog.getByLabel('Timeout seconds', { exact: true }).fill('0');
+  await advanced.click();
+  await expect(advanced).toContainText('1 error');
+  await closeNode(page);
+  const badge = page
+    .locator('.react-flow__node[data-id="approve"]')
+    .getByRole('button', { name: /issues? on approve$/ });
+  await badge.click();
+  await page
+    .getByRole('dialog', { name: 'Issues on approve' })
+    .getByRole('button', { name: /timeoutSeconds/ })
+    .click();
+  const editor = page.getByRole('dialog', { name: 'Edit inference approve' });
+  await expect(editor.getByRole('button', { name: /^Advanced\b/ })).toHaveAttribute(
+    'aria-expanded',
+    'true',
+  );
+  await expect(editor.getByLabel('Timeout seconds', { exact: true })).toBeFocused();
+});

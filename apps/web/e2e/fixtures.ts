@@ -1,4 +1,10 @@
-import { test as base, expect, type APIRequestContext, type Page } from '@playwright/test';
+import {
+  test as base,
+  expect,
+  type APIRequestContext,
+  type Locator,
+  type Page,
+} from '@playwright/test';
 
 /** Tests run against the server global-setup started; its URL arrives through the environment. */
 export const test = base.extend({
@@ -71,6 +77,25 @@ export async function openNode(page: Page, nodeId: string) {
   const dialog = page.getByRole('dialog');
   await expect(dialog).toBeVisible();
   return dialog;
+}
+
+/**
+ * Expand the node editor's Advanced options (#14) unless they are open already, and return the
+ * toggle. Advanced fields stay collapsed under it until then.
+ */
+export async function openAdvanced(scope: Page | Locator) {
+  const toggle = scope.getByRole('button', { name: /^Advanced\b/ });
+  if ((await toggle.getAttribute('aria-expanded')) === 'false') await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  return toggle;
+}
+
+/** Expand a collapsed list item, such as "Operations 1" of a mutate node (#14). */
+export async function openItem(scope: Page | Locator, name: string) {
+  const toggle = scope.getByRole('button', { name: new RegExp(`^${name}\\b`) });
+  if ((await toggle.getAttribute('aria-expanded')) === 'false') await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  return toggle;
 }
 
 /** Close the open node editor with its Done button. */
