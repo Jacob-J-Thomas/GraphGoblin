@@ -24,6 +24,32 @@ vi.mock('../drafts/local-drafts.js', async (importOriginal) => {
 });
 
 describe('restoring a set-aside copy', () => {
+  it('keeps a dismissed restore notice hidden while the restored editor generation is edited', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const loop = api.addLoop(newLoopDefinition('server copy'));
+    await drafts.saveLocalDraft({
+      loopId: loop.id,
+      definition: newLoopDefinition('older local copy'),
+      savedAt: '2026-10-01T00:00:00.000Z',
+      synced: false,
+    });
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await user.click(await screen.findByRole('button', { name: "Use this device's copy instead" }));
+    expect(
+      await screen.findByText('Restored unsaved changes from this device.'),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Dismiss notice' }));
+    expect(screen.queryByText('Restored unsaved changes from this device.')).toBeNull();
+    expect(screen.getByText('Notice dismissed')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByTestId('save-state')).toHaveFocus());
+    expect(screen.getByTestId('save-state')).toHaveAttribute('tabindex', '-1');
+
+    act(() => useEditorStore.getState().updateMeta({ description: 'edited after dismissal' }));
+    expect(screen.queryByText('Restored unsaved changes from this device.')).toBeNull();
+  });
+
   it('does not load into another loop opened while the restore was being persisted', async () => {
     const user = userEvent.setup();
     const api = new FakeApi();
