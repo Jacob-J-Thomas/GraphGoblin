@@ -217,6 +217,13 @@ describe('EditorPage', () => {
     expect(screen.getByTestId('save-state').querySelector('svg[data-icon="alert"]')).not.toBeNull();
     await waitFor(() => expect(screen.getByTestId('save-state')).toHaveFocus());
 
+    act(() => useEditorStore.getState().updateMeta({ description: 'edited while still invalid' }));
+    await waitFor(
+      () => expect(screen.getByTestId('save-state')).toHaveTextContent('Saved on this device only'),
+      SAVE_WAIT,
+    );
+    expect(screen.queryByText(/Fix the schema errors/)).toBeNull();
+
     act(() => useEditorStore.getState().removeNode('subloop'));
     await waitFor(
       () => expect(screen.getByTestId('save-state')).toHaveTextContent('All changes saved'),
@@ -224,6 +231,28 @@ describe('EditorPage', () => {
     );
     await user.click(addSubloop);
     expect(await screen.findByText(/Fix the schema errors/)).toBeInTheDocument();
+  });
+
+  it('keeps a dismissed offline save notice hidden after an edit that remains offline', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const loop = api.addLoop(newLoopDefinition('offline dismissal'));
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'offline dismissal' });
+    api.offline = true;
+    act(() => useEditorStore.getState().updateMeta({ description: 'first offline edit' }));
+
+    const offlineNotice = await screen.findByText(/Offline: the draft is kept on this device/);
+    await user.click(screen.getByRole('button', { name: 'Dismiss notice' }));
+    expect(offlineNotice).not.toBeInTheDocument();
+
+    act(() => useEditorStore.getState().updateMeta({ description: 'second offline edit' }));
+    await waitFor(
+      () =>
+        expect(screen.getByTestId('save-state')).toHaveTextContent('Offline: saved on this device'),
+      SAVE_WAIT,
+    );
+    expect(screen.queryByText(/Offline: the draft is kept on this device/)).toBeNull();
   });
 
   it('keeps a newer server draft over an older unsynced local copy, and can switch', async () => {

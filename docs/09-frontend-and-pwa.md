@@ -123,9 +123,9 @@ The adversarial QA report is `docs/qa/2026-10-03-wp-d2.md`. Behaviour that chang
 - Choosing "Use this device's copy instead" for a set-aside copy is an explicit overwrite of the server draft shown.
 - Regression: `src/editor/EditorPage.conflict.test.tsx` and the two-tab E2E `e2e/drafts.spec.ts`.
 
-## Editor notices (#45)
+## Editor notices (Decided, #45)
 
-The informational notice that a device draft was restored and save notices for schema-invalid, offline, or failed saves can be dismissed. A restored notice stays dismissed for that editor load; a later load that restores a device draft shows it again. A save notice stays dismissed only while its save state and message remain unchanged, and reappears if either changes. The toolbar keeps the local-only or failed-save status visible with a warning icon after the notice closes. Dismissal is announced politely, and focus moves to the next dismiss control or the toolbar save status. Alerts with a required action, including set-aside drafts and draft conflicts, remain until answered.
+The informational notice that a device draft was restored and save notices for schema-invalid, offline, or failed saves can be dismissed. A restored notice stays dismissed for that editor load; a later load that restores a device draft shows it again. A save notice stays dismissed through edits that end in the same state; it returns after a successful save, a different save problem or message, or a new load. The toolbar keeps the local-only or failed-save status visible with a warning icon after the notice closes. Dismissal is announced politely, and focus moves to the next dismiss control or the toolbar save status. Alerts with a required action, including set-aside drafts and draft conflicts, remain until answered.
 
 ## Node editor, loop panel, and New run (Decided, #13 and #46)
 

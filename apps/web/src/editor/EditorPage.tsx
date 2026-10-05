@@ -8,6 +8,7 @@ import { useApi } from '../api/context.js';
 import { keys } from '../api/queries.js';
 import { ErrorState } from '../components/status.js';
 import { Alert, Button, useSidePanelState } from '../components/ui/index.js';
+import { focusFallback } from '../lib/focus.js';
 import { errorMessage, formatDateTime, isOfflineError, problemIssues } from '../lib/utils.js';
 import { Canvas } from './Canvas.js';
 import { ConflictNotice } from './ConflictNotice.js';
@@ -27,21 +28,6 @@ import { useAutosave } from './useAutosave.js';
 import { useLoadEditor } from './useLoadEditor.js';
 import { useResolveConflict } from './useResolveConflict.js';
 
-function focusTemporarily(element: HTMLElement | null): void {
-  if (!element) return;
-  const previousTabIndex = element.getAttribute('tabindex');
-  element.tabIndex = -1;
-  element.addEventListener(
-    'blur',
-    () => {
-      if (previousTabIndex === null) element.removeAttribute('tabindex');
-      else element.setAttribute('tabindex', previousTabIndex);
-    },
-    { once: true },
-  );
-  element.focus();
-}
-
 /**
  * The loop editor: the toolbar, notices about the draft (restored, set aside, conflicting,
  * unsaved, published), the palette, the canvas, the collapsible loop panel (loop settings and the
@@ -52,7 +38,7 @@ export function EditorPage() {
   const { loopId = '' } = useParams();
   const client = useApi();
   const queryClient = useQueryClient();
-  const { query, restored, ready, setAside, restoreSetAside, discardSetAside } =
+  const { query, restoredGeneration, ready, setAside, restoreSetAside, discardSetAside } =
     useLoadEditor(loopId);
   const definition = useEditorStore((s) => s.definition);
   const saveState = useEditorStore((s) => s.saveState);
@@ -135,18 +121,20 @@ export function EditorPage() {
   const noticeContainerRef = useRef<HTMLDivElement>(null);
   const saveStatusRef = useRef<HTMLSpanElement>(null);
 
-  // A dismissal applies to one uninterrupted state/message episode. Store transitions clear it,
-  // so the same save message becomes visible again after recovering and later failing anew.
+  // Pending and saving are transient parts of an edit. Keep a dismissal until saving settles on
+  // a different state/message or a new editor load starts.
   useEffect(
     () =>
-      useEditorStore.subscribe((state, previous) => {
-        if (
-          state.generation !== previous.generation ||
-          state.saveState !== previous.saveState ||
-          state.saveMessage !== previous.saveMessage
-        ) {
-          setDismissedSaveNotice(undefined);
-        }
+      useEditorStore.subscribe((state) => {
+        if (state.saveState === 'pending' || state.saveState === 'saving') return;
+        setDismissedSaveNotice((dismissed) =>
+          dismissed &&
+          dismissed.generation === state.generation &&
+          dismissed.state === state.saveState &&
+          dismissed.message === state.saveMessage
+            ? dismissed
+            : undefined,
+        );
       }),
     [],
   );
@@ -164,7 +152,8 @@ export function EditorPage() {
   const saveNoticeIsActive =
     Boolean(saveMessage) &&
     (saveState === 'offline' || saveState === 'error' || saveState === 'invalid');
-  const showRestoredNotice = restored && dismissedRestoreGeneration !== generation;
+  const showRestoredNotice =
+    restoredGeneration === generation && dismissedRestoreGeneration !== generation;
   const showSaveNotice =
     saveNoticeIsActive &&
     (dismissedSaveNotice?.generation !== generation ||
@@ -176,7 +165,7 @@ export function EditorPage() {
       const nextDismissButton =
         noticeContainerRef.current?.querySelector<HTMLButtonElement>('[data-alert-dismiss]');
       if (nextDismissButton) nextDismissButton.focus();
-      else focusTemporarily(saveStatusRef.current);
+      else focusFallback(saveStatusRef.current);
     });
   };
 
@@ -262,9 +251,7 @@ export function EditorPage() {
         loopPanelExpanded={panelExpanded}
         onLoopSettings={() => setPanelExpanded(!panelExpanded)}
         onPublish={() => publish.mutate()}
-        saveStatusRef={(element) => {
-          saveStatusRef.current = element;
-        }}
+        saveStatusRef={saveStatusRef}
       />
       {notices.length > 0 ? (
         <div

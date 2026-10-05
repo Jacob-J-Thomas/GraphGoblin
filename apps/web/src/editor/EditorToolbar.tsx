@@ -1,4 +1,4 @@
-import { useId } from 'react';
+import { useId, type Ref } from 'react';
 import { Link } from 'react-router';
 import { Icon } from '../components/icons/index.js';
 import { Badge, Button } from '../components/ui/index.js';
@@ -90,7 +90,7 @@ export function EditorToolbar({
   loopPanelExpanded: boolean;
   onLoopSettings: () => void;
   onPublish: () => void;
-  saveStatusRef: (element: HTMLSpanElement | null) => void;
+  saveStatusRef?: Ref<HTMLSpanElement>;
 }) {
   return (
     <header className="relative z-[3] flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-default bg-surface-raised px-4 py-2.5">

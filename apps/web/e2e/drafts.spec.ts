@@ -122,7 +122,7 @@ test('a restored-draft notice stays dismissed through edits and returns after a 
   await expect(page.getByRole('heading', { name: 'older local copy' })).toBeVisible();
   const restoredNotice = page.getByText('Restored unsaved changes from this device.');
   await expect(restoredNotice).toBeVisible();
-  await expect(page.getByTestId('save-state')).toContainText(/Save failed|saved on this device/);
+  await expect(page.getByTestId('save-state')).toHaveText('Offline: saved on this device');
 
   const dismissButtons = page.getByRole('button', { name: 'Dismiss notice' });
   await dismissButtons.nth(0).click();
@@ -137,6 +137,10 @@ test('a restored-draft notice stays dismissed through edits and returns after a 
   await showLoopPanel(page);
   await page.getByLabel('Description').fill('edited while the restore notice is dismissed');
   await expect(restoredNotice).toBeHidden();
+  await expect(page.getByTestId('save-state')).toHaveText('Offline: saved on this device');
+  await expect(
+    page.getByText('Offline: the draft is kept on this device and saved when the API is back.'),
+  ).toBeHidden();
 
   await page.reload();
   await expect(page.getByRole('heading', { name: 'older local copy' })).toBeVisible();

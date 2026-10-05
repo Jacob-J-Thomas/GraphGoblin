@@ -34,8 +34,8 @@ const ALERT_TONES: Record<Tone, { box: string; accent: string; icon: IconName }>
 
 /**
  * A tinted message with a tone edge and icon. `bad` is announced as an alert; the other tones are
- * polite status messages. A word too long for the line (a path, an id, a URL) breaks rather than
- * spilling out of the box.
+ * polite status messages. Set `onDismiss` to add a dismiss button. A word too long for the line (a
+ * path, an id, a URL) breaks rather than spilling out of the box.
  */
 export function Alert({
   tone = 'bad',
@@ -55,7 +55,10 @@ export function Alert({
     <div
       role={tone === 'bad' ? 'alert' : 'status'}
       className={cn(
-        'grid grid-cols-[auto_minmax(0,1fr)_auto] gap-x-3 gap-y-0.5 rounded-md border-l-4 px-4 py-3',
+        cn(
+          'grid gap-x-3 gap-y-0.5 rounded-md border-l-4 px-4 py-3',
+          onDismiss ? 'grid-cols-[auto_minmax(0,1fr)_auto]' : 'grid-cols-[auto_minmax(0,1fr)]',
+        ),
         'min-w-0 text-sm leading-snug text-default wrap-anywhere',
         style.box,
         className,
@@ -72,7 +75,7 @@ export function Alert({
           size="icon"
           aria-label="Dismiss notice"
           data-alert-dismiss=""
-          className="col-start-3 row-start-1 row-span-2 self-start"
+          className="-my-1.5 col-start-3 row-start-1 row-span-2 self-start"
           onClick={onDismiss}
         >
           <Icon name="close" />

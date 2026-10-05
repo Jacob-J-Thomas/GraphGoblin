@@ -259,6 +259,7 @@ describe('Alert', () => {
 
     const dismiss = screen.getByRole('button', { name: 'Dismiss notice' });
     expect(dismiss).toHaveClass('bg-transparent', 'size-8', 'focus-visible:outline-2');
+    expect(dismiss).toHaveClass('-my-1.5');
     expect(dismiss.querySelector('svg[data-icon="close"]')).not.toBeNull();
     expect(dismiss).toHaveClass('col-start-3', 'row-span-2');
     expect(screen.getByText('Restored.')).toHaveClass('col-start-2');
@@ -272,7 +273,7 @@ describe('Alert', () => {
     const word = 'W'.repeat(350);
     render(<Alert title={word}>{word}</Alert>);
     const alert = screen.getByRole('alert');
-    expect(alert).toHaveClass('wrap-anywhere', 'min-w-0', 'grid-cols-[auto_minmax(0,1fr)_auto]');
+    expect(alert).toHaveClass('wrap-anywhere', 'min-w-0', 'grid-cols-[auto_minmax(0,1fr)]');
     expect(alert.lastElementChild).toHaveClass('min-w-0');
   });
 });

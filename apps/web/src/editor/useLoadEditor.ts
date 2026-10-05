@@ -17,7 +17,7 @@ import { useEditorStore } from './store.js';
  */
 export function useLoadEditor(loopId: string) {
   const query = useLoop(loopId);
-  const [restored, setRestored] = useState(false);
+  const [restoredGeneration, setRestoredGeneration] = useState<number>();
   const [setAside, setSetAside] = useState<LocalDraft | undefined>();
   const [ready, setReady] = useState(false);
   const dataRef = useRef(query.data);
@@ -48,7 +48,7 @@ export function useLoadEditor(loopId: string) {
             dirty: true,
             baseToken: local.baseToken ?? serverToken,
           });
-          setRestored(true);
+          setRestoredGeneration(useEditorStore.getState().generation);
         } else if (server) {
           if (serverIsNewer) await saveSetAsideDraft(local);
           if (cancelled) return;
@@ -88,7 +88,7 @@ export function useLoadEditor(loopId: string) {
       // Choosing this copy over the newer server draft is an explicit overwrite: base it on the
       // server draft shown now.
       now.load(loopId, restoredCopy.definition, { dirty: true, baseToken: now.baseToken });
-      setRestored(true);
+      setRestoredGeneration(useEditorStore.getState().generation);
     }
     await clearSetAsideDraft(loopId);
   };
@@ -96,5 +96,5 @@ export function useLoadEditor(loopId: string) {
     setSetAside(undefined);
     void clearSetAsideDraft(loopId);
   };
-  return { query, restored, ready, setAside, restoreSetAside, discardSetAside };
+  return { query, restoredGeneration, ready, setAside, restoreSetAside, discardSetAside };
 }
