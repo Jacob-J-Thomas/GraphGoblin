@@ -56,9 +56,10 @@ export async function control(request: APIRequestContext, path: string, body: un
  * is already open. With nothing remembered it starts expanded at 1280 px and wider, collapsed below.
  */
 export async function showLoopPanel(page: Page): Promise<void> {
-  const show = page.getByRole('button', { name: 'Show loop' });
-  if (await show.count()) await show.click();
-  await expect(page.getByRole('button', { name: 'Hide loop' })).toHaveAttribute(
+  await expect(page.getByRole('button', { name: /^(Show|Hide) loop settings$/ })).toBeVisible();
+  const show = page.getByRole('button', { name: 'Show loop settings' });
+  if (await show.isVisible()) await show.click();
+  await expect(page.getByRole('button', { name: 'Hide loop settings' })).toHaveAttribute(
     'aria-expanded',
     'true',
   );

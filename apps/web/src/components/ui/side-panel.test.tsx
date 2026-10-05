@@ -55,7 +55,7 @@ function Harness({ initial }: { initial: boolean }) {
       </Button>
       <SidePanel
         id="panel"
-        title="Loop"
+        title="Loop settings"
         expanded={expanded}
         onExpandedChange={setExpanded}
         rail={<span>3 variables</span>}
@@ -70,27 +70,30 @@ describe('SidePanel', () => {
   it('collapses to a rail with a Show button and its summary, and expands again', async () => {
     const user = userEvent.setup();
     render(<Harness initial={true} />);
-    const panel = screen.getByRole('complementary', { name: 'Loop' });
+    const panel = screen.getByRole('complementary', { name: 'Loop settings' });
     expect(panel).toHaveAttribute('id', 'panel');
     expect(screen.getByText('Panel body')).toBeInTheDocument();
     expect(screen.queryByText('3 variables')).toBeNull();
-    const hide = screen.getByRole('button', { name: 'Hide loop' });
+    const hide = screen.getByRole('button', { name: 'Hide loop settings' });
     expect(hide).toHaveAttribute('aria-expanded', 'true');
     expect(hide).toHaveAttribute('aria-controls', 'panel');
 
     // Its own Hide button is gone once collapsed, so focus moves to Show.
     await user.click(hide);
     expect(screen.queryByText('Panel body')).toBeNull();
-    expect(screen.getByRole('complementary', { name: 'Loop' })).toHaveAttribute('id', 'panel');
+    expect(screen.getByRole('complementary', { name: 'Loop settings' })).toHaveAttribute(
+      'id',
+      'panel',
+    );
     expect(screen.getByText('3 variables')).toBeInTheDocument();
-    const show = screen.getByRole('button', { name: 'Show loop' });
+    const show = screen.getByRole('button', { name: 'Show loop settings' });
     expect(show).toHaveAttribute('aria-expanded', 'false');
     expect(show).toHaveAttribute('aria-controls', 'panel');
     expect(show).toHaveFocus();
 
     // Expanding moves focus to the panel's heading.
     await user.click(show);
-    expect(screen.getByRole('heading', { name: 'Loop' })).toHaveFocus();
+    expect(screen.getByRole('heading', { name: 'Loop settings' })).toHaveFocus();
   });
 
   it('leaves focus on an outside toggle that collapses it, and focuses the heading when it opens', async () => {
@@ -98,68 +101,71 @@ describe('SidePanel', () => {
     render(<Harness initial={false} />);
     const toggle = screen.getByRole('button', { name: 'Toggle' });
     await user.click(toggle);
-    expect(screen.getByRole('heading', { name: 'Loop' })).toHaveFocus();
+    expect(screen.getByRole('heading', { name: 'Loop settings' })).toHaveFocus();
     await user.click(toggle);
     expect(toggle).toHaveFocus();
-    expect(screen.getByRole('button', { name: 'Show loop' })).not.toHaveFocus();
+    expect(screen.getByRole('button', { name: 'Show loop settings' })).not.toHaveFocus();
   });
 
   it('keeps only its Show button on the rail when it has no summary', () => {
     render(
-      <SidePanel id="bare" title="Loop" expanded={false} onExpandedChange={() => undefined}>
+      <SidePanel
+        id="bare"
+        title="Loop settings"
+        expanded={false}
+        onExpandedChange={() => undefined}
+      >
         <p>Panel body</p>
       </SidePanel>,
     );
-    const rail = screen.getByRole('complementary', { name: 'Loop' });
-    expect(rail.children).toHaveLength(1);
-    expect(rail.firstElementChild).toBe(screen.getByRole('button', { name: 'Show loop' }));
+    const rail = screen.getByRole('complementary', { name: 'Loop settings' });
+    expect(rail.querySelectorAll('button')).toHaveLength(1);
+    expect(rail.firstElementChild).toBe(screen.getByRole('button', { name: 'Show loop settings' }));
+    expect(rail.children[1]).toHaveAttribute('data-testid', 'bare-rail-content');
+    expect(rail.children[1]?.childElementCount).toBe(0);
+    expect(
+      screen.getByRole('button', { name: 'Show loop settings' }).querySelector('svg'),
+    ).toHaveAttribute('data-icon', 'panel');
   });
 
-  it('places a left panel border and its Hide control on the left edge', async () => {
+  it('keeps a left panel rail ordered and moves Hide to Show on collapse', async () => {
     const user = userEvent.setup();
-    const setExpanded = vi.fn();
-    const { rerender } = render(
-      <SidePanel
-        id="left-panel"
-        title="Palette"
-        side="left"
-        expanded={false}
-        onExpandedChange={setExpanded}
-      >
-        <p>Palette body</p>
-      </SidePanel>,
-    );
+    function LeftHarness() {
+      const [expanded, setExpanded] = useState(false);
+      return (
+        <SidePanel
+          id="left-panel"
+          title="Palette"
+          side="left"
+          expanded={expanded}
+          onExpandedChange={setExpanded}
+        >
+          <p>Palette body</p>
+        </SidePanel>
+      );
+    }
+    render(<LeftHarness />);
 
     const rail = screen.getByRole('complementary', { name: 'Palette' });
-    expect(rail.className).toContain('border-r');
-    expect(rail.className).not.toContain('border-l');
+    expect(rail).toHaveAttribute('data-side', 'left');
     const show = screen.getByRole('button', { name: 'Show palette' });
     expect(show).toHaveAttribute('aria-expanded', 'false');
     expect(show).toHaveAttribute('aria-controls', 'left-panel');
-    expect(show).toHaveClass('min-h-11', 'min-w-11');
+    expect(show).toHaveClass('pointer-coarse:min-h-11', 'pointer-coarse:min-w-11');
+    expect(show.querySelector('svg')).toHaveAttribute('data-icon', 'panel');
+    expect(show.querySelector('svg')).toHaveStyle({ transform: 'scaleX(-1)' });
     await user.click(show);
-    expect(setExpanded).toHaveBeenCalledWith(true);
-
-    rerender(
-      <SidePanel
-        id="left-panel"
-        title="Palette"
-        side="left"
-        expanded
-        onExpandedChange={setExpanded}
-      >
-        <p>Palette body</p>
-      </SidePanel>,
-    );
     const panel = screen.getByRole('complementary', { name: 'Palette' });
-    expect(panel.className).toContain('border-r');
+    expect(panel).toHaveAttribute('data-side', 'left');
     const heading = screen.getByRole('heading', { name: 'Palette' });
+    expect(heading).toHaveFocus();
     const hide = screen.getByRole('button', { name: 'Hide palette' });
-    expect(hide.parentElement?.className).toContain('flex-row-reverse');
+    expect(hide.parentElement?.children[0]).toBe(hide);
+    expect(hide.parentElement?.children[1]).toBe(heading);
     expect(hide).toHaveAttribute('aria-expanded', 'true');
     expect(hide).toHaveAttribute('aria-controls', 'left-panel');
     await user.click(hide);
-    expect(setExpanded).toHaveBeenLastCalledWith(false);
-    expect(heading).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Palette' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Show palette' })).toHaveFocus();
   });
 });

@@ -335,9 +335,7 @@ for (const theme of ['dark', 'light']) {
     await page.evaluate((theme) => {
       document.documentElement.dataset['theme'] = theme;
     }, theme);
-    // Open the loop panel when a smaller default collapsed it.
-    const showLoop = page.getByRole('button', { name: 'Show loop', exact: true });
-    if (await showLoop.count()) await showLoop.click();
+    await showLoopPanel(page);
     const variables = page.getByRole('group', { name: 'Variables', exact: true });
     await variables.getByRole('button', { name: 'Add entry', exact: true }).click();
     await page.getByLabel('Variables key 1').fill('value');

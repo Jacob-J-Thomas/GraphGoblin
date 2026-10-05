@@ -37,11 +37,12 @@ export function LoopPanel({
   return (
     <SidePanel
       id={LOOP_PANEL_ID}
-      title="Loop"
+      title="Loop settings"
+      icon="sliders"
       expanded={expanded}
       onExpandedChange={onExpandedChange}
     >
-      <div className="min-h-0 flex-1 overflow-auto p-5">
+      <div className="relative min-h-0 flex-1 overflow-auto p-5">
         <LoopSettingsPanel key={generation} definition={definition} />
       </div>
     </SidePanel>

@@ -56,10 +56,10 @@ describe('EditorPage', () => {
     const first = renderApp(`/loops/${loop.id}/edit`, api);
     await screen.findByRole('heading', { name: 'minimal' });
     // Below 1280 px nothing stored means collapsed: a rail with its Show button.
-    const rail = screen.getByRole('complementary', { name: 'Loop' });
+    const rail = screen.getByRole('complementary', { name: 'Loop settings' });
     expect(rail).toHaveAttribute('id', 'loop-panel');
     expect(within(rail).getAllByRole('button')).toHaveLength(1);
-    const show = screen.getByRole('button', { name: 'Show loop' });
+    const show = screen.getByRole('button', { name: 'Show loop settings' });
     expect(show).toHaveAttribute('aria-expanded', 'false');
     expect(show).toHaveAttribute('aria-controls', 'loop-panel');
     expect(screen.queryByRole('button', { name: 'Loop settings' })).toBeNull();
@@ -71,9 +71,9 @@ describe('EditorPage', () => {
 
     // Expanding moves focus into the panel; the choice is remembered for the next visit.
     await user.click(show);
-    expect(screen.getByRole('heading', { name: 'Loop' })).toHaveFocus();
+    expect(screen.getByRole('heading', { name: 'Loop settings' })).toHaveFocus();
     expect(screen.getByLabelText('Name')).toHaveValue('minimal');
-    expect(screen.getByRole('button', { name: 'Hide loop' })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: 'Hide loop settings' })).toHaveAttribute(
       'aria-expanded',
       'true',
     );
@@ -85,9 +85,9 @@ describe('EditorPage', () => {
     expect(await screen.findByLabelText('Name')).toBeInTheDocument();
 
     // The panel's own Hide button collapses it too, leaving focus on Show.
-    await user.click(screen.getByRole('button', { name: 'Hide loop' }));
-    expect(screen.getByRole('button', { name: 'Show loop' })).toHaveFocus();
-    expect(screen.getByRole('button', { name: 'Show loop' })).toHaveAttribute(
+    await user.click(screen.getByRole('button', { name: 'Hide loop settings' }));
+    expect(screen.getByRole('button', { name: 'Show loop settings' })).toHaveFocus();
+    expect(screen.getByRole('button', { name: 'Show loop settings' })).toHaveAttribute(
       'aria-expanded',
       'false',
     );
@@ -102,14 +102,14 @@ describe('EditorPage', () => {
     const loop = api.addLoop(minimalLoop());
     renderApp(`/loops/${loop.id}/edit`, api);
     await screen.findByRole('heading', { name: 'minimal' });
-    expect(screen.getByRole('button', { name: 'Hide loop' })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: 'Hide loop settings' })).toHaveAttribute(
       'aria-expanded',
       'true',
     );
     width.mockRestore();
     // The toolbar's indicator counts the merged list; each node's badge counts its own issues.
     // An exit criterion above the ceiling is a warning.
-    await user.click(screen.getByRole('button', { name: 'Hide loop' }));
+    await user.click(screen.getByRole('button', { name: 'Hide loop settings' }));
     act(() =>
       useEditorStore.getState().updateNode('done', {
         config: { criteria: [{ when: 'max-iterations', value: 99 }] },
@@ -1028,7 +1028,7 @@ describe('EditorPage', () => {
     await screen.findByRole('heading', { name: 'kitchen-sink' });
 
     // The loop panel (expanded) holds the loop's own settings.
-    const panel = screen.getByRole('complementary', { name: 'Loop' });
+    const panel = screen.getByRole('complementary', { name: 'Loop settings' });
     const name = within(panel).getByLabelText('Name');
     await user.clear(name);
     await user.type(name, 'sink');

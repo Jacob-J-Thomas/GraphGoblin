@@ -32,11 +32,11 @@ function PaletteButton({
       type="button"
       draggable
       aria-label={`Add ${KIND_INFO[kind].label} node`}
-      title={KIND_INFO[kind].description}
+      title={`${KIND_INFO[kind].label}: ${KIND_INFO[kind].description}`}
       style={kindStyle(kind)}
       className={
         compact
-          ? 'grid size-11 shrink-0 cursor-grab place-items-center rounded-md border border-default bg-surface-raised shadow-1 transition-[background-color,border-color,box-shadow,translate] hover:-translate-y-px hover:border-kind hover:bg-kind-subtle hover:shadow-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus'
+          ? 'grid size-10 shrink-0 cursor-grab place-items-center rounded-md border border-default bg-surface-raised shadow-1 transition-[background-color,border-color,box-shadow,translate] hover:-translate-y-px hover:border-kind hover:bg-kind-subtle hover:shadow-2 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus pointer-coarse:size-11'
           : 'grid w-full cursor-grab grid-cols-[auto_minmax(0,1fr)] items-center gap-x-2.5 rounded-md border border-default bg-surface-raised py-[7px] pr-2.5 pl-[7px] text-left text-default shadow-1 transition-[translate,box-shadow,background-color,border-color] hover:-translate-y-px hover:border-kind hover:bg-kind-subtle hover:shadow-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus'
       }
       onDragStart={(event: DragEvent<HTMLButtonElement>) => {
@@ -92,9 +92,11 @@ export function Palette({
       expandedWidth={200}
       rail={
         <div className="flex flex-col items-center gap-1.5">
-          {NODE_KINDS.map((kind) => (
-            <PaletteButton key={kind} kind={kind} compact onAdd={add} />
-          ))}
+          <div className="flex flex-col items-center gap-1.5 py-1">
+            {NODE_KINDS.map((kind) => (
+              <PaletteButton key={kind} kind={kind} compact onAdd={add} />
+            ))}
+          </div>
         </div>
       }
     >

@@ -41,9 +41,13 @@ describe('Palette rail', () => {
       const button = screen.getByRole('button', {
         name: `Add ${KIND_INFO[kind].label} node`,
       });
-      expect(button).toHaveAttribute('title', KIND_INFO[kind].description);
+      expect(button).toHaveAttribute(
+        'title',
+        `${KIND_INFO[kind].label}: ${KIND_INFO[kind].description}`,
+      );
       expect(button).toHaveAttribute('draggable', 'true');
-      expect(button.className).toContain('size-11');
+      expect(button.className).toContain('size-10');
+      expect(button.className).toContain('pointer-coarse:size-11');
     }
 
     const beforeClick = useEditorStore.getState().definition!.nodes.length;

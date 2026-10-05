@@ -121,7 +121,9 @@ test('I7-QA-01: the longest valid loop name stays inside the editor toolbar and 
     expect(await heading.evaluate((h) => h.scrollWidth > h.clientWidth)).toBe(true);
     expect(await pageOverflows(page), `editor at ${viewport.width}`).toBe(false);
     await expect(page.getByRole('button', { name: 'Publish', exact: true })).toBeInViewport();
-    await expect(page.getByRole('button', { name: /^(Show|Hide) loop$/ })).toBeInViewport();
+    await expect(
+      page.getByRole('button', { name: /^(Show|Hide) loop settings$/ }),
+    ).toBeInViewport();
     await expect(page.getByRole('link', { name: 'Open in Runs', exact: true })).toBeInViewport();
     for (const path of ['/app/loops', '/app/runs']) {
       await page.goto(path);
@@ -149,7 +151,10 @@ test('I7-QA-02: overlong text stays inside Alert, Badge, and Button', async ({ p
 
   // Badge and Button: the editor's own, copied into the side panel with overlong labels.
   await page.goto(`/app/loops/${loopId}/edit`);
-  const panel = page.getByRole('complementary', { name: 'Loop' }).locator('.overflow-auto').first();
+  const panel = page
+    .getByRole('complementary', { name: 'Loop settings' })
+    .locator('.overflow-auto')
+    .first();
   await expect(panel).toBeVisible();
   const fits = await panel.evaluate((region) => {
     const copy = (selector: string, text: string) =>

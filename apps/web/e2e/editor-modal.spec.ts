@@ -212,32 +212,38 @@ test('the loop panel collapses and expands from its own controls and is remember
   const loopId = await createLoop(request, approvalLoop('qa loop panel'));
   await page.goto(`/app/loops/${loopId}/edit`);
   // 1440 px wide: expanded, with the loop's settings; validation sits beside Publish (#15).
-  await expect(page.getByRole('button', { name: 'Hide loop' })).toHaveAttribute(
+  await expect
+    .poll(() => page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight))
+    .toBe(0);
+  await expect(page.getByRole('button', { name: 'Hide loop settings' })).toHaveAttribute(
     'aria-expanded',
     'true',
   );
   await expect(page.getByLabel('Name', { exact: true })).toHaveValue('qa loop panel');
-  const panel = page.getByRole('complementary', { name: 'Loop' });
+  const panel = page.getByRole('complementary', { name: 'Loop settings' });
   await expect(panel.getByRole('region', { name: 'Validation' })).toHaveCount(0);
   await expect(panel.getByText('Ready to publish')).toHaveCount(0);
   await expect(page.getByText('Ready to publish')).toBeVisible();
 
-  await page.getByRole('button', { name: 'Hide loop' }).click();
-  await expect(page.getByRole('button', { name: 'Show loop' })).toHaveAttribute(
+  await page.getByRole('button', { name: 'Hide loop settings' }).click();
+  await expect(page.getByRole('button', { name: 'Show loop settings' })).toHaveAttribute(
     'aria-expanded',
     'false',
   );
+  await expect(
+    page.getByRole('button', { name: 'Show loop settings' }).locator('svg'),
+  ).toHaveAttribute('data-icon', 'sliders');
   await expect(page.getByLabel('Name', { exact: true })).toHaveCount(0);
   await page.reload();
-  await expect(page.getByRole('button', { name: 'Show loop' })).toHaveAttribute(
+  await expect(page.getByRole('button', { name: 'Show loop settings' })).toHaveAttribute(
     'aria-expanded',
     'false',
   );
 
-  await page.getByRole('button', { name: 'Show loop' }).click();
-  await expect(page.getByRole('heading', { name: 'Loop', exact: true })).toBeFocused();
+  await page.getByRole('button', { name: 'Show loop settings' }).click();
+  await expect(page.getByRole('heading', { name: 'Loop settings', exact: true })).toBeFocused();
   await page.reload();
-  await expect(page.getByRole('button', { name: 'Hide loop' })).toHaveAttribute(
+  await expect(page.getByRole('button', { name: 'Hide loop settings' })).toHaveAttribute(
     'aria-expanded',
     'true',
   );
@@ -262,10 +268,10 @@ test('the loop panel collapses and expands from its own controls and is remember
   const errors: string[] = [];
   small.on('pageerror', (error) => errors.push(error.message));
   await small.goto(`/app/loops/${loopId}/edit`);
-  const smallShow = small.getByRole('button', { name: 'Show loop' });
+  const smallShow = small.getByRole('button', { name: 'Show loop settings' });
   await expect(smallShow).toHaveAttribute('aria-expanded', 'false');
   await smallShow.click();
-  await expect(small.getByRole('button', { name: 'Hide loop' })).toHaveAttribute(
+  await expect(small.getByRole('button', { name: 'Hide loop settings' })).toHaveAttribute(
     'aria-expanded',
     'true',
   );
