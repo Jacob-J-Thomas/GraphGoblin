@@ -21,6 +21,9 @@ jobs:
       # bound is enforced only on a manual run, because the shared runner's frame time measures the
       # runner (software rendering, two cores), not the router.
       GG_ROUTING_STRICT_PERF: ${{ github.event_name == 'workflow_dispatch' && '1' || '' }}
+      # The two-core runner spikes single routing samples (10 ms seen against 5 to 7 ms); 12 ms
+      # still catches a regression of the router while the summary records the real numbers.
+      GG_ROUTING_LIMIT_MS: ${{ github.event_name == 'workflow_dispatch' && '8' || '12' }}
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4

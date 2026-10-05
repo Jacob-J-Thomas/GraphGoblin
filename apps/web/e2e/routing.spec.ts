@@ -524,7 +524,9 @@ for (const count of [100, 300])
       await writeFile(info.outputPath('drag.cpuprofile'), JSON.stringify(result.profile));
       await profile.detach();
     }
-    const routingLimit = 8;
+    // The shared runner (two cores, software rendering) spikes single samples; its workflow passes
+    // a looser bound and records every number. Local and manual runs keep 8 ms.
+    const routingLimit = Number(process.env['GG_ROUTING_LIMIT_MS'] ?? 8);
     const report = {
       nodes: count,
       edges: count * 2,
