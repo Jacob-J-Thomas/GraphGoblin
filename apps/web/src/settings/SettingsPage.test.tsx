@@ -369,6 +369,43 @@ describe('SettingsPage', () => {
     },
   );
 
+  it('review: focuses the heading when a row vanishes while its toggle is pending, and clears the notice on the next toggle', async () => {
+    const api = seeded();
+    let release!: () => void;
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let arrive!: () => void;
+    const arrived = new Promise<void>((resolve) => {
+      arrive = resolve;
+    });
+    api.override('PATCH /model-catalog/:harness/:model', async (call, [, model]) => {
+      if (model !== 'gpt-6-luna') return api.builtIn(call);
+      arrive();
+      await held;
+      return problem(404, 'MODEL_NOT_FOUND');
+    });
+    const { queryClient } = renderApp('/settings', api);
+    const user = userEvent.setup();
+    const enabled = await screen.findByRole('switch', { name: 'Enable Luna' });
+    await user.click(enabled);
+    await arrived;
+    // Another refresh removes the row while its PATCH is held: focus falls to the page body.
+    api.catalog = api.catalog.filter((entry) => entry.model !== 'gpt-6-luna');
+    await act(() => queryClient.invalidateQueries({ queryKey: ['model-catalog'] }));
+    await waitFor(() => expect(enabled).not.toBeInTheDocument());
+    expect(document.activeElement).toBe(document.body);
+    await act(() => Promise.resolve(release()));
+    await waitFor(() =>
+      expect(screen.getByRole('heading', { name: 'Model catalog' })).toHaveFocus(),
+    );
+    const catalog = screen.getByRole('region', { name: 'Model catalog' });
+    const notice = within(catalog).getAllByRole('status')[0]!;
+    expect(notice).toHaveTextContent('Luna: This model is no longer in the catalog.');
+    await user.click(screen.getByRole('switch', { name: 'Enable Sol' }));
+    await waitFor(() => expect(notice).toBeEmptyDOMElement());
+  });
+
   it('keeps the local-model note hidden until the catalog is loaded', async () => {
     const api = seeded();
     let finish!: () => void;
@@ -443,7 +480,9 @@ describe('SettingsPage', () => {
     const user = userEvent.setup();
     const api = seeded();
     renderApp('/settings', api);
-    expect(await screen.findByText('jev-api-key')).toBeInTheDocument();
+    // The Secrets list, not the classifier section, which shows Jev's secret reference too.
+    const list = screen.getByRole('region', { name: 'Secrets' });
+    expect(await within(list).findByText('jev-api-key')).toBeInTheDocument();
     // A name the API would refuse is flagged before sending.
     await user.type(screen.getByLabelText('Name'), 'bad name');
     expect(screen.getByLabelText('Name')).toHaveAttribute('aria-invalid', 'true');
@@ -461,7 +500,7 @@ describe('SettingsPage', () => {
     expect(api.callsTo('PUT', '/secrets/github-token')[0]!.body).toEqual({ value: 's3cret' });
     await user.click(screen.getByRole('button', { name: 'Delete secret jev-api-key' }));
     await user.click(screen.getByRole('button', { name: 'Confirm delete jev-api-key' }));
-    await waitFor(() => expect(screen.queryByText('jev-api-key')).not.toBeInTheDocument());
+    await waitFor(() => expect(within(list).queryByText('jev-api-key')).not.toBeInTheDocument());
   });
 
   it('creates an API key, shows the token once, and revokes keys', async () => {

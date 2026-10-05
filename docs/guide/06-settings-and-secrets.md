@@ -8,11 +8,11 @@ Open **Settings** from the navigation bar:
 /app/settings
 ```
 
-Choose the colour theme under **Appearance** (below), and manage **Model catalog**, **Defaults**, **Secrets**, and **API keys** here, and check **Harness preflight**. The **Install** card explains the browser's PWA installation action. With `GG_REQUIRE_API_KEY=true` the app shell still loads, asks for a key on the first 401, and keeps it in this browser; **This browser's API key** shows it and **Forget key** removes it (other open tabs follow).
+Choose the colour theme under **Appearance** (below), and manage **Model catalog**, **Classifier models**, **Defaults**, **Secrets**, and **API keys** here, and check **Harness preflight**. The **Install** card explains the browser's PWA installation action. With `GG_REQUIRE_API_KEY=true` the app shell still loads, asks for a key on the first 401, and keeps it in this browser; **This browser's API key** shows it and **Forget key** removes it (other open tabs follow).
 
 ## Confirm destructive actions
 
-Deleting a model, deleting a secret, or revoking a key opens the same named confirmation used on Loops. **Keep** receives focus; Keep or Escape cancels without changing anything. **Confirm delete** or **Confirm revoke** starts the request, disables both buttons until it finishes, and announces progress. Escape cannot dismiss a pending request, even with repeated presses. API errors (including 404 when an item was already removed) stay visible until you dismiss or retry. Dismissing a 404 refreshes the list to remove the stale row. Focus returns to the action, or its section heading if the row disappears. These actions cannot be undone. Model deletion applies only to LiteLLM entries; harness entries have no Edit or Delete actions and remain available to enable or disable. A deleted `jev-api-key` secret also returns at the next start if `GG_JEV_API_KEY` is still set (or its `JEV_API_KEY` fallback applies).
+Deleting a model, deleting a classifier model, deleting a secret, or revoking a key opens the same named confirmation used on Loops. **Keep** receives focus; Keep or Escape cancels without changing anything. **Confirm delete** or **Confirm revoke** starts the request, disables both buttons until it finishes, and announces progress. Escape cannot dismiss a pending request, even with repeated presses. API errors (including 404 when an item was already removed) stay visible until you dismiss or retry. Dismissing a 404 refreshes the list to remove the stale row. Focus returns to the action, or its section heading if the row disappears. These actions cannot be undone. Model deletion applies only to LiteLLM entries; harness entries have no Edit or Delete actions and remain available to enable or disable. Classifier deletion applies only to classifiers you registered; built-in Jev can only be enabled or disabled (see [Configure classifier models](#configure-classifier-models)). A deleted `jev-api-key` secret also returns at the next start if `GG_JEV_API_KEY` is still set (or its `JEV_API_KEY` fallback applies).
 
 Only the API key marked **This browser** adds the browser sign-out warning. Other active keys still warn that their clients receive 401 immediately. In trusted mode no key is marked; if this browser stores a key, every active row instead explains that revoking it may sign this browser out and that **Forget key** in Settings clears it.
 
@@ -63,6 +63,46 @@ The owner defaults in **Settings → Default model** and **Default effort** (`PU
 
 The editor's Model dropdowns use this same catalog: inference nodes filter by their Harness, and loop defaults and decision Codex settings use Codex. Enabled entries show both display name and id; disabled entries are hidden unless already selected. Missing or disabled saved models and unsupported saved efforts stay in place with a field warning. Use **Model catalog in Settings** beside a picker to return here. Choose **(loop default)** in a node or **(owner default)** in loop settings to leave its model unset. Effort choices follow the selected catalog model, with its default effort shown in the unset choice as guidance only. Leaving effort unset preserves the resolution order above. Without a catalog model selected, all six effort levels are offered. An unavailable catalog makes the current model and effort read-only until **Retry model catalog** or automatic query recovery succeeds; Model shows the shared notice and retry, and Effort refers to it. A failed refresh keeps cached choices editable with a notice that the catalog may be out of date. Recovery never substitutes values.
 
+## Configure classifier models
+
+**Settings → Classifier models**, below the model catalog, lists the classifiers a decision's `jev` strategy can use to choose a route: the built-in **Jev** first, then the ones you register. Each row shows the provider and the model name it sends, what it can answer (**Choice / classification**, **Noul**, **Score**; decisions use Choice), whether it is configured, and an **Enabled** switch. Configured and enabled are separate: **Needs a key** means the secret the classifier sends is missing, blank, or unreadable, with the reason and an **Open Secrets** link that takes you to [Store secrets](#store-secrets); **Configured** only means its settings are complete, not that the endpoint answers.
+
+Built-in Jev uses the alias `jev-latest` and the secret `jev-api-key` (see [Store secrets](#store-secrets)). It can only be enabled or disabled. Disabling it also stops Exit predicates that use Jev: they fail with `DECIDER_UNAVAILABLE` when evaluated.
+
+### Register a classifier you host
+
+An open-source classifier registers as an HTTP endpoint that speaks the Jev-compatible Choice protocol, `POST <endpoint>/v1/systemone` ([the contract](../06-harness-integration.md#http-classifier-endpoint-contract-decided-adr-0021)). GraphGoblin does not install or run models. For Kev, start its owner's server as [the Kev research note](../research/jev.md#kev-http-protocol-verification-2026-10-05) describes; it listens on port 8008 by default. Then choose **Add classifier** and fill in:
+
+| Field             | Kev                                                                |
+| ----------------- | ------------------------------------------------------------------ |
+| Id                | `kev`: a lowercase letter, then lowercase letters, digits, `_ . -` |
+| Display name      | `Kev 4B`                                                           |
+| Provider model id | `kev-latest`                                                       |
+| Endpoint          | `http://127.0.0.1:8008`, the API root without `/v1/systemone`      |
+| Capabilities      | **Choice / classification**                                        |
+| Bearer secret     | **(none)**, unless you started Kev with `KEV_API_KEY` (see below)  |
+
+**Save classifier** checks the fields first and explains each problem beside its field. The id cannot change later, because loops refer to it, and `jev` and existing ids are taken. **Add classifier** waits until the list has loaded, so the id can be checked against it, and adding never replaces an existing classifier: if another tab or script registered the same id in the meantime, Settings says so, saves nothing, and refreshes the list. A new classifier starts disabled: switch it on when its server is running.
+
+If the server wants a bearer key (Kev does when `KEV_API_KEY` is set), store the key in **Secrets** first, then choose its name under **Bearer secret**. With a secret, the endpoint must use `https://` unless its host is loopback (`localhost`, `127.0.0.0/8`, or `[::1]`), so a key is never sent in clear text across a network. Saving a classifier with a secret needs an API key with both `settings:write` and `secrets:write`; without the second, Settings says so and saves nothing. Choosing **(none)** on an edit removes the secret.
+
+**Edit** changes everything but the id and keeps the enabled state. **Delete** asks first: decision nodes that select the classifier keep its id, their Jev strategy is skipped (a later strategy runs, or the run fails with `DECISION_NO_ROUTE` when Jev is the only one) until you choose another model, and drafts that still select it cannot be published. The secret it used stays in Secrets.
+
+### Choose a classifier in a decision
+
+Open the decision node and pick under **Jev → Model**. The first option, **Jev (jev), the default**, leaves the choice out of the loop so the built-in applies; the others are the enabled classifiers that answer Choice, with **(needs a key)** after any that still lack their key. Choosing another classifier adds the decision's Jev settings for you; **Add jev options** adds them without changing the model (for **Min confidence**, say). Changing the model keeps the decision's other Jev settings. Each choice is one step for Undo.
+
+Kev reports a rescaled confidence, `(p - 1/K) / (1 - 1/K)` for the chosen label's probability `p` and `K` routes, so a threshold means more than it does for a raw probability: with two routes, a `minConfidence` of 0.5 needs a probability of 0.75. Below the threshold, the next strategy runs.
+
+### When a selected classifier is unavailable
+
+The node editor never clears a selection by itself. A selected classifier that was disabled, deleted, or no longer answers Choice stays selected, marked **(disabled)**, **(not in catalog)**, or **(no Choice)**, with the reason and the remedy under the field. When the decision's strategy does not include Jev, the selection is not checked yet, and the text says what to fix before you add Jev to the strategy. The node's warnings and errors follow changes you make in Settings (enabling, disabling, deleting, or setting a key) without editing the loop. The editor's checks agree with the API's:
+
+- **Disabled** or **needs a key**: a warning on the node. Publishing still works; at run time the Jev strategy is skipped and the next strategy runs. With no next strategy the warning says the decision cannot currently produce a route, and the run would fail with `DECISION_NO_ROUTE`.
+- **Not in the catalog** or **no Choice**: an error that blocks publishing the draft until you choose another model or register the classifier again. A loop published before keeps running and skips the strategy, as above.
+
+Choosing the issue in the node's badge opens the node with **Model** focused. Scripts and agents use the same catalog over REST: `GET /classifier-models` and `PUT` (with `If-None-Match: *` to create without replacing; an existing id answers 409 `CLASSIFIER_EXISTS`), `PATCH` (`{ "enabled": true }`), and `DELETE /classifier-models/{id}`; see [API, streaming, and MCP](../07-api-and-streaming.md#classifier-catalog-decided-adr-0021).
+
 ## Store secrets
 
 In **Secrets**, enter a name and value, then click **Set secret**, or send `PUT /secrets/{name}` with a body of `{ "value": "..." }`. Names start with a letter and contain up to 128 letters, digits, `_`, `.`, or `-`. Values are write-only: listing returns names and timestamps, and setting a secret returns metadata rather than the value. Loop configs carry references; the server resolves them during execution. Do not paste secret values into prompts, expressions, or ordinary config fields.
@@ -91,7 +131,7 @@ For a script environment variable, use this reference syntax:
 
 A missing secret fails the run with `SECRET_MISSING`; set it and resume. A missing webhook signing secret makes the endpoint answer 503 `HOOK_NOT_READY`, and a missing return-channel secret sends the delivery unsigned.
 
-The secret's deletion confirmation spells out those effects for webhook triggers, webhook return channels, and script `env` values written as `secret:<name>`. Deleting `jev-api-key` also warns that Jev decisions turn off until the key is set again, and that startup re-seeds it if `GG_JEV_API_KEY` is set.
+The secret's deletion confirmation spells out those effects for webhook triggers, webhook return channels, and script `env` values written as `secret:<name>`. Deleting `jev-api-key` also warns that Jev decisions turn off until the key is set again, and that startup re-seeds it if `GG_JEV_API_KEY` is set. Deleting a secret that a registered classifier sends as its bearer key names that classifier: it will need a key, and decisions that select it skip their Jev strategy until the secret is set again. **Classifier models** shows the change at once, as it does when you set a secret.
 
 Secret reads never send plaintext back to the browser or API client. Server-side resolution supplies the Jev key to Jev and script values to the invoked process, so values can leave the process for their intended consumer. Scripts and external tools can print secrets into their output; avoid that and redact sensitive thread content before forwarding it. The secret store does not automatically scrub arbitrary output or earlier event-log entries.
 

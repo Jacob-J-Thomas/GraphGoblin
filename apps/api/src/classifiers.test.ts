@@ -209,6 +209,69 @@ describe('classifier catalog HTTP API', () => {
       errors: [expect.objectContaining({ path: expect.any(String) })],
     });
   });
+  it('creates only with If-None-Match: *, refusing an existing id with CLASSIFIER_EXISTS', async () => {
+    const create = (input: Record<string, unknown>, ifNoneMatch = '*') =>
+      t.app.inject({
+        method: 'PUT',
+        url: '/classifier-models/kev',
+        headers: { 'if-none-match': ifNoneMatch },
+        payload: input,
+      });
+    const created = await create(metadata);
+    expect(created.statusCode).toBe(200);
+    expect(created.json()).toMatchObject({
+      id: 'kev',
+      enabled: false,
+      endpoint: metadata.endpoint,
+    });
+    await toggle('kev', true);
+    // A second create of the same id (a stale tab, or a list that had not loaded) changes nothing.
+    const refused = await create({
+      ...metadata,
+      providerModel: 'other-model',
+      endpoint: 'http://127.0.0.1:9009',
+    });
+    expect(refused.statusCode).toBe(409);
+    expect(refused.json()).toMatchObject({
+      code: 'CLASSIFIER_EXISTS',
+      detail: "Classifier 'kev' already exists",
+    });
+    expect((await list()).find((model) => model.id === 'kev')).toMatchObject({
+      providerModel: 'kev-native',
+      endpoint: 'http://127.0.0.1:8008',
+      enabled: true,
+    });
+    // Without the header the PUT still replaces; only `*` is a valid precondition.
+    expect((await upsert('kev', { ...metadata, providerModel: 'edited' })).statusCode).toBe(200);
+    const malformed = await create(metadata, '"etag"');
+    expect(malformed.statusCode).toBe(400);
+    expect(malformed.json()).toHaveProperty('code', 'VALIDATION_FAILED');
+    // Built-in Jev keeps its own refusal.
+    const builtin = await t.app.inject({
+      method: 'PUT',
+      url: '/classifier-models/jev',
+      headers: { 'if-none-match': '*' },
+      payload: metadata,
+    });
+    expect(builtin.json()).toHaveProperty('code', 'CLASSIFIER_MANAGED_BY_SYSTEM');
+  });
+  it('lets exactly one of two concurrent create-only requests for an id succeed', async () => {
+    const results = await Promise.all(
+      ['first', 'second'].map((providerModel) =>
+        t.app.inject({
+          method: 'PUT',
+          url: '/classifier-models/race',
+          headers: { 'if-none-match': '*' },
+          payload: { ...metadata, providerModel },
+        }),
+      ),
+    );
+    expect(results.map((r) => r.statusCode).sort()).toEqual([200, 409]);
+    const winner = results.find((r) => r.statusCode === 200)!.json<{ providerModel: string }>();
+    expect((await list()).find((model) => model.id === 'race')?.providerModel).toBe(
+      winner.providerModel,
+    );
+  });
   it('rejects invalid ids and enabled bodies', async () => {
     expect((await toggle('1bad', true)).statusCode).toBe(400);
     for (const id of ['JEV', 'Jev', 'Kev']) expect((await upsert(id)).statusCode).toBe(400);

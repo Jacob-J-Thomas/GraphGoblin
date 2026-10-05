@@ -15,7 +15,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from 'node:ht
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildApp, createContainer, loadConfig } from '@graphgoblin/api';
-import { createTestApp, type TestApp } from '@graphgoblin/api/testing';
+import { createTestApp, startFakeClassifierEndpoint, type TestApp } from '@graphgoblin/api/testing';
 import type { ScriptedTurn } from '@graphgoblin/engine/testing';
 import { ModelCatalogEntrySchema } from '@graphgoblin/contracts';
 import { originalWorker as cleanWorker } from '../src/e2e-support/worker.js';
@@ -30,8 +30,18 @@ if (!existsSync(join(dist, 'index.html'))) {
 
 const apps: TestApp[] = [];
 const closers: (() => Promise<void>)[] = [];
-async function startApp(env: Record<string, string> = {}, requireApiKey = false) {
-  const app = await createTestApp({ env: { GG_WEB_DIST: dist, ...env }, requireApiKey });
+/** Loopback Choice endpoints started for classifier specs, by their API root. */
+const classifiers = new Map<string, Awaited<ReturnType<typeof startFakeClassifierEndpoint>>>();
+async function startApp(
+  env: Record<string, string> = {},
+  requireApiKey = false,
+  realClassifiers = false,
+) {
+  const app = await createTestApp({
+    env: { GG_WEB_DIST: dist, ...env },
+    requireApiKey,
+    realClassifiers,
+  });
   apps.push(app);
   const url = await app.app.listen({ host: '127.0.0.1', port: 0 });
   return { app, url };
@@ -157,10 +167,32 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
       });
       return { url: await live.listen({ host: '127.0.0.1', port: 0 }) };
     }
+    case '/classifier/start': {
+      // A Choice endpoint answering the first route with probability 1, as `kev.serve` would.
+      const fake = await startFakeClassifierEndpoint();
+      classifiers.set(fake.endpoint, fake);
+      closers.push(fake.close);
+      return { endpoint: fake.endpoint };
+    }
+    case '/classifier/requests': {
+      const fake = classifiers.get(String(body['endpoint']));
+      if (!fake) throw new Error(`no fake classifier at ${String(body['endpoint'])}`);
+      return {
+        requests: fake.requests.map((r) => ({
+          method: r.method,
+          url: r.url,
+          model: r.body.model,
+          bearer: r.authorization !== undefined,
+          labels: Object.keys(r.body.questions.answer.criteria),
+        })),
+      };
+    }
     case '/apps': {
       const extra = await startApp(
         (body['env'] as Record<string, string> | undefined) ?? {},
         body['requireApiKey'] === true,
+        // The real catalog, secret resolution, and HTTP transport for classifiers (#43).
+        body['realClassifiers'] === true,
       );
       // A key minted directly in the store: with GG_REQUIRE_API_KEY even POST /api-keys needs one.
       const { token } = await extra.app.container.repos.apiKeys.create('local', 'e2e', ['*']);

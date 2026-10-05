@@ -7,12 +7,15 @@ import { cn } from '../../lib/utils.js';
  * that content scroll sideways when it is wider than the card (narrow windows, 200% zoom).
  */
 export function Card({
+  id,
   title,
   actions,
   flush = false,
   className,
   children,
 }: {
+  /** The section's id, for a link to it (Settings → Secrets, say). */
+  id?: string;
   title?: ReactNode;
   actions?: ReactNode;
   flush?: boolean;
@@ -22,6 +25,7 @@ export function Card({
   const titleId = useId();
   return (
     <section
+      id={id}
       aria-labelledby={title ? titleId : undefined}
       className={cn(
         'min-w-0 rounded-lg border border-default bg-surface-raised shadow-1',

@@ -72,7 +72,7 @@ test('WCAG reference results, symmetry and both channel transfer branches', () =
 
 test('pair data validates all groups and preserves the sample with focus on every surface', () => {
   validatePairs(pairs);
-  assert.equal(pairs.text.length, 100);
+  assert.equal(pairs.text.length, 101);
   assert.equal(pairs.nonText.length, 126);
   assert.equal(pairs.decorative.length, 17);
   // The editor's issue badges (#15): their edge, for errors and warnings, and the focus ring hold
@@ -141,7 +141,7 @@ test('report measures both themes, enforcing unrounded ratios and listing decora
   assert.equal(result.failures.length, 0);
   assert.match(
     result.markdown,
-    /100 text pairs \(0 below 4.5:1\), 126 non-text pairs \(0 below 3:1\)/,
+    /101 text pairs \(0 below 4.5:1\), 126 non-text pairs \(0 below 3:1\)/,
   );
   // The issue badge rows (#15) are measured and pass in both themes: 18 band edges per theme.
   const badgeRows = result.markdown

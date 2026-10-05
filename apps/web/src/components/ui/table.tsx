@@ -1,4 +1,4 @@
-import type { HTMLAttributes } from 'react';
+import type { HTMLAttributes, TdHTMLAttributes } from 'react';
 import { cn } from '../../lib/utils.js';
 
 /** A data table: sunken header row, hairline rows that tint on hover. Put it in a flush Card. */
@@ -29,7 +29,7 @@ export function Th({ className, ...props }: HTMLAttributes<HTMLTableCellElement>
   );
 }
 
-export function Td({ className, ...props }: HTMLAttributes<HTMLTableCellElement>) {
+export function Td({ className, ...props }: TdHTMLAttributes<HTMLTableCellElement>) {
   return (
     <td className={cn('border-b border-default px-4 py-3.5 align-middle', className)} {...props} />
   );
