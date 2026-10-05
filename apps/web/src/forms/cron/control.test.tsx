@@ -6,6 +6,7 @@ import { FakeApi, problem } from '../../__fixtures__/fake-api.js';
 import { renderWith } from '../../__fixtures__/render.js';
 import { NODE_FIELD_CONTROLS } from '../../editor/field-controls.js';
 import { SchemaForm } from '../SchemaForm.js';
+import { focusField } from '../../editor/focus-field.js';
 
 const json = (next: string[]) =>
   new Response(JSON.stringify({ next }), { headers: { 'content-type': 'application/json' } });
@@ -46,7 +47,7 @@ describe('cron schedule control', () => {
     expect(screen.getByLabelText('Repeat')).toHaveValue('weekdays');
     expect(screen.getByText('Every weekday at 09:00, Europe/London')).toBeVisible();
     expect(change).not.toHaveBeenCalled();
-    const runs = screen.getByRole('region', { name: 'Upcoming runs' });
+    const runs = await screen.findByRole('region', { name: 'Upcoming runs' });
     await waitFor(() => expect(within(runs).getAllByRole('listitem')).toHaveLength(2));
     expect(runs.querySelectorAll('time')[1]).toHaveAttribute(
       'datetime',
@@ -79,23 +80,23 @@ describe('cron schedule control', () => {
     fireEvent.change(screen.getByLabelText('At time'), { target: { value: '12:34' } });
     expect(raw()).toHaveValue('34 12 * * *');
     await user.selectOptions(repeat, 'weekdays');
-    expect(raw()).toHaveValue('0 9 * * 1-5');
+    expect(raw()).toHaveValue('34 12 * * 1-5');
     await user.selectOptions(repeat, 'weekly');
     screen.getByLabelText('Wednesday').focus();
     await user.keyboard(' ');
-    expect(raw()).toHaveValue('0 9 * * 1,3');
+    expect(raw()).toHaveValue('34 12 * * 1,3');
     await user.click(screen.getByLabelText('Monday'));
     await user.click(screen.getByLabelText('Wednesday'));
     expect(screen.getByRole('alert')).toHaveTextContent('Choose at least one day.');
     await user.click(screen.getByLabelText('Friday'));
-    expect(raw()).toHaveValue('0 9 * * 5');
+    expect(raw()).toHaveValue('34 12 * * 5');
     await user.selectOptions(repeat, 'monthly');
     fireEvent.change(screen.getByLabelText('Day of month'), { target: { value: '31' } });
-    expect(raw()).toHaveValue('0 9 31 * *');
+    expect(raw()).toHaveValue('34 12 31 * *');
     await waitFor(() =>
       expect(change).toHaveBeenLastCalledWith({
         subtype: 'cron',
-        expression: '0 9 31 * *',
+        expression: '34 12 31 * *',
         timezone: 'UTC',
         missedFirePolicy: 'skip',
         enabled: true,
@@ -137,13 +138,16 @@ describe('cron schedule control', () => {
     await user.clear(raw());
     await user.type(raw(), 'broken');
     expect(calls(api)).toHaveLength(1);
-    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Invalid schedule:'));
+    await waitFor(() => expect(screen.getByText('Invalid schedule: bad expression')).toBeVisible());
+    expect(raw()).toHaveAccessibleDescription(
+      expect.stringContaining('Invalid schedule: bad expression'),
+    );
     expect(calls(api)).toHaveLength(2);
     await user.clear(screen.getByLabelText('Timezone'));
     await user.type(screen.getByLabelText('Timezone'), 'Mars/Olympus');
     expect(screen.getByLabelText('Timezone')).toHaveAttribute('aria-invalid', 'true');
     expect(screen.getByLabelText('Timezone')).toHaveAccessibleDescription(
-      'Choose an IANA time zone from the list.',
+      'IANA time zone the expression is evaluated in. Enter a valid IANA time zone.',
     );
     await new Promise((resolve) => setTimeout(resolve, 400));
     expect(calls(api)).toHaveLength(2);
@@ -155,7 +159,9 @@ describe('cron schedule control', () => {
       throw new TypeError('Failed to fetch');
     });
     await waitFor(() =>
-      expect(screen.getByRole('alert')).toHaveTextContent('Preview unavailable.'),
+      expect(screen.getByText(/^Preview unavailable\./)).toHaveTextContent(
+        'Cannot reach the schedule preview API',
+      ),
     );
     expect(screen.getByText(/Current expression:/)).toHaveTextContent('0 9 * * *');
     expect(raw()).toHaveValue('0 9 * * *');
@@ -187,8 +193,155 @@ describe('cron schedule control', () => {
     await user.selectOptions(screen.getByLabelText('Repeat'), 'daily');
     fireEvent.change(screen.getByLabelText('At time'), { target: { value: '' } });
     expect(screen.getByRole('alert')).toHaveTextContent('Choose a time.');
+    fireEvent.change(screen.getByLabelText('At time'), { target: { value: '09:00' } });
     await user.selectOptions(screen.getByLabelText('Repeat'), 'monthly');
     fireEvent.change(screen.getByLabelText('Day of month'), { target: { value: '' } });
     expect(screen.getByRole('alert')).toHaveTextContent('1 to 31');
+  });
+  it.each(['Etc/UTC', 'Asia/Kolkata'])(
+    'accepts the valid zone %s even outside the suggestion list',
+    async (timezone) => {
+      const { api, change } = setup('0 9 * * *', timezone);
+      await waitFor(() => expect(screen.getAllByRole('listitem')).toHaveLength(2));
+      expect(screen.getByLabelText('Timezone')).not.toHaveAttribute('aria-invalid', 'true');
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+      expect(calls(api)[0]?.body).toEqual({ expression: '0 9 * * *', timezone, count: 5 });
+      expect(change).not.toHaveBeenCalled();
+    },
+  );
+  it('opens with no schedule, makes no preview request, and adds no edit until a preset is chosen', async () => {
+    const { api, change, user } = setup('');
+    expect(screen.getByLabelText('Repeat')).toHaveValue('empty');
+    expect(
+      screen.getByText('Choose a schedule to see upcoming runs.', { selector: 'p:not([role])' }),
+    ).toBeVisible();
+    expect(screen.queryByRole('region', { name: 'Upcoming runs' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    expect(calls(api)).toHaveLength(0);
+    expect(change).not.toHaveBeenCalled();
+    await user.selectOptions(screen.getByLabelText('Repeat'), 'daily');
+    await waitFor(() =>
+      expect(change).toHaveBeenLastCalledWith(expect.objectContaining({ expression: '0 9 * * *' })),
+    );
+    await waitFor(() => expect(calls(api)).toHaveLength(1));
+  });
+  it.each([
+    ['0 9 * * *', 'At time', 'Choose a time.'],
+    ['*/5 * * * *', 'Every (minutes)', 'Choose a whole number from 1 to 59.'],
+    ['0 9 12 * *', 'Day of month', 'Choose a whole number from 1 to 31.'],
+  ])('keeps the stored expression %s after clearing %s', async (expression, label, message) => {
+    const { change, api } = setup(expression);
+    await waitFor(() => expect(calls(api)).toHaveLength(1));
+    fireEvent.change(screen.getByLabelText(label), { target: { value: '' } });
+    expect(screen.getByRole('alert')).toHaveTextContent(message);
+    expect(raw()).toHaveValue(expression);
+    expect(change).not.toHaveBeenCalled();
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    expect(calls(api)).toHaveLength(1);
+  });
+  it('keeps the stored weekly expression after clearing all days, then commits a complete choice', async () => {
+    const { change, user } = setup('0 9 * * 1');
+    await user.click(screen.getByLabelText('Monday'));
+    expect(screen.getByRole('alert')).toHaveTextContent('Choose at least one day.');
+    expect(raw()).toHaveValue('0 9 * * 1');
+    expect(change).not.toHaveBeenCalled();
+    await user.click(screen.getByLabelText('Wednesday'));
+    await waitFor(() =>
+      expect(change).toHaveBeenLastCalledWith(expect.objectContaining({ expression: '0 9 * * 3' })),
+    );
+  });
+  it('retains time, days, and monthly day even through presets without those fields', async () => {
+    const { user } = setup('25 17 * * 1,3');
+    await user.selectOptions(screen.getByLabelText('Repeat'), 'monthly');
+    fireEvent.change(screen.getByLabelText('Day of month'), { target: { value: '28' } });
+    await user.selectOptions(screen.getByLabelText('Repeat'), 'hours');
+    await user.selectOptions(screen.getByLabelText('Repeat'), 'weekly');
+    expect(screen.getByLabelText('At time')).toHaveValue('17:25');
+    expect(screen.getByLabelText('Monday')).toBeChecked();
+    expect(screen.getByLabelText('Wednesday')).toBeChecked();
+    await user.selectOptions(screen.getByLabelText('Repeat'), 'monthly');
+    expect(screen.getByLabelText('Day of month')).toHaveValue(28);
+    expect(raw()).toHaveValue('25 17 28 * *');
+  });
+  it('reveals and focuses raw text on Custom selection and when following an expression issue', async () => {
+    const { user, container } = setup();
+    expect(raw()).not.toBeVisible();
+    expect(focusField(container, 'expression')).toBe(true);
+    expect(raw()).toBeVisible();
+    expect(raw()).toHaveFocus();
+    await user.click(screen.getByRole('button', { name: 'Advanced Cron expression' }));
+    await user.selectOptions(screen.getByLabelText('Repeat'), 'custom');
+    expect(raw()).toBeVisible();
+    expect(raw()).toHaveFocus();
+  });
+  it('shows the expression problem count on Advanced', async () => {
+    const { api } = setup('bad');
+    api.override('POST /triggers/cron/preview', () =>
+      problem(400, 'CRON_INVALID', 'invalid pattern'),
+    );
+    await waitFor(() =>
+      expect(
+        screen.getByRole('button', { name: 'Advanced Cron expression 1 error' }),
+      ).toBeVisible(),
+    );
+  });
+  it('announces debounced values through one stable status, not raw typing', async () => {
+    const { user } = setup('0 9 * * *');
+    const schedule = within(screen.getByRole('group', { name: 'Schedule' }));
+    await waitFor(() =>
+      expect(schedule.getByRole('status')).toHaveTextContent('Upcoming runs ready.'),
+    );
+    const status = schedule.getByRole('status');
+    const before = status.textContent;
+    await user.selectOptions(screen.getByLabelText('Repeat'), 'custom');
+    fireEvent.change(raw(), { target: { value: 'b' } });
+    expect(schedule.getByRole('status')).toBe(status);
+    expect(status.textContent).toBe(before);
+    fireEvent.change(raw(), { target: { value: 'broken' } });
+    expect(status.textContent).toBe(before);
+    await waitFor(() => expect(status).toHaveTextContent('Custom expression: broken'));
+    expect(schedule.getAllByRole('status')).toHaveLength(1);
+  });
+  it.each([
+    [403, 'FORBIDDEN', 'this key lacks loops:read'],
+    [503, 'UNAVAILABLE', 'scheduler is unavailable'],
+  ])(
+    'shows the HTTP %s detail without calling it a transport failure',
+    async (status, code, detail) => {
+      const { api } = setup();
+      api.override('POST /triggers/cron/preview', () =>
+        problem(Number(status), String(code), String(detail)),
+      );
+      await waitFor(() => expect(screen.getByText(`Preview unavailable. ${detail}`)).toBeVisible());
+      expect(screen.queryByText(/Cannot reach/)).not.toBeInTheDocument();
+      expect(screen.queryByText(new RegExp(`${code}:`))).not.toBeInTheDocument();
+    },
+  );
+  it('omits the duplicate viewer time when the zones resolve identically', async () => {
+    setup('0 9 * * *', Intl.DateTimeFormat().resolvedOptions().timeZone);
+    await waitFor(() => expect(screen.getAllByRole('listitem')).toHaveLength(2));
+    expect(screen.queryByText(/^Your time:/)).not.toBeInTheDocument();
+  });
+  it('keeps help and schema error descriptions alongside a local zone error, with the button after them', async () => {
+    const { user } = setup();
+    fireEvent.change(screen.getByLabelText('Timezone'), { target: { value: 'x'.repeat(65) } });
+    await waitFor(() =>
+      expect(screen.getByLabelText('Timezone')).toHaveAccessibleDescription(
+        expect.stringContaining('Too big:'),
+      ),
+    );
+    const input = screen.getByLabelText('Timezone');
+    expect(input).toHaveAccessibleDescription(
+      expect.stringContaining('IANA time zone the expression is evaluated in.'),
+    );
+    expect(input).toHaveAccessibleDescription(
+      expect.stringContaining('Enter a valid IANA time zone.'),
+    );
+    const help = screen.getByText('IANA time zone the expression is evaluated in.');
+    const button = screen.getByRole('button', { name: 'Use my time zone' });
+    expect(help.compareDocumentPosition(button) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    await user.click(button);
+    expect(input).not.toHaveAttribute('aria-invalid', 'true');
   });
 });

@@ -8,9 +8,11 @@ import {
   scheduleSummary,
   timezoneError,
   type Schedule,
+  type BuiltSchedule,
+  schedulePreferences,
 } from './model.js';
 
-const cases: [Exclude<Schedule, { kind: 'custom' }>, string, string][] = [
+const cases: [BuiltSchedule, string, string][] = [
   [{ kind: 'minutes', every: 5 }, '*/5 * * * *', 'Every 5 minutes'],
   [{ kind: 'hours', every: 3 }, '0 */3 * * *', 'Every 3 hours'],
   [{ kind: 'daily', time: '09:30' }, '30 9 * * *', 'Every day at 09:30'],
@@ -18,7 +20,7 @@ const cases: [Exclude<Schedule, { kind: 'custom' }>, string, string][] = [
   [
     { kind: 'weekly', time: '18:45', days: [0, 2, 6] },
     '45 18 * * 0,2,6',
-    'Every Sunday, Tuesday, Saturday at 18:45',
+    'Every Sunday, Tuesday, and Saturday at 18:45',
   ],
   [{ kind: 'monthly', time: '00:00', day: 31 }, '0 0 31 * *', 'Monthly on day 31 at 00:00'],
 ];
@@ -50,7 +52,7 @@ describe('cron preset model', () => {
   ])('preserves custom %s', (expression) => {
     expect(parseSchedule(expression)).toEqual({ kind: 'custom' });
     expect(scheduleSummary(parseSchedule(expression), expression, 'UTC')).toBe(
-      `Custom expression: ${expression}, UTC`,
+      `Custom expression: ${expression} · UTC`,
     );
   });
   it('recognises spacing, wildcard minutes and sorted day sets without rewriting source', () => {
@@ -60,6 +62,7 @@ describe('cron preset model', () => {
       days: [1, 3],
     });
     expect(parseSchedule('* * * * *')).toEqual({ kind: 'minutes', every: 1 });
+    expect(parseSchedule('0 * * * *')).toEqual({ kind: 'hours', every: 1 });
     expect(scheduleSummary({ kind: 'hours', every: 1 }, '', 'UTC')).toBe('Every hour, UTC');
     expect(scheduleSummary({ kind: 'minutes', every: 1 }, '', 'UTC')).toBe('Every minute, UTC');
   });
@@ -79,8 +82,39 @@ describe('cron preset model', () => {
   it('checks zones locally and formats the zone offset on both sides of DST', () => {
     expect(timezoneError('UTC')).toBeUndefined();
     expect(timezoneError('Europe/London')).toBeUndefined();
+    expect(timezoneError('Etc/UTC')).toBeUndefined();
+    expect(timezoneError('Asia/Kolkata')).toBeUndefined();
     expect(timezoneError('Mars/Olympus')).toContain('IANA');
     expect(formatSlot('2026-03-28T09:00:00.000Z', 'Europe/London')).toContain('09:00:00');
     expect(formatSlot('2026-03-29T08:00:00.000Z', 'Europe/London')).toContain('GMT+1');
+  });
+  it('treats an empty expression as no schedule chosen', () => {
+    expect(parseSchedule('')).toEqual({ kind: 'empty' });
+    expect(parseSchedule('  ')).toEqual({ kind: 'empty' });
+    expect(scheduleSummary({ kind: 'empty' }, '', 'UTC')).toBe(
+      'Choose a schedule to see upcoming runs.',
+    );
+  });
+  it('retains applicable time, weekly days, and monthly day across presets', () => {
+    const previous = {
+      ...schedulePreferences({ kind: 'monthly', time: '17:25', day: 28 }),
+      ...schedulePreferences({ kind: 'weekly', time: '17:25', days: [1, 3] }),
+    };
+    expect(defaultSchedule('daily', previous)).toEqual({ kind: 'daily', time: '17:25' });
+    expect(defaultSchedule('weekdays', previous)).toEqual({ kind: 'weekdays', time: '17:25' });
+    expect(defaultSchedule('weekly', previous)).toEqual({
+      kind: 'weekly',
+      time: '17:25',
+      days: [1, 3],
+    });
+    expect(defaultSchedule('monthly', previous)).toEqual({
+      kind: 'monthly',
+      time: '17:25',
+      day: 28,
+    });
+    expect(schedulePreferences({ kind: 'hours', every: 1 })).toEqual({});
+    expect(scheduleSummary({ kind: 'weekly', time: '17:25', days: [1, 3] }, '', 'UTC')).toBe(
+      'Every Monday and Wednesday at 17:25, UTC',
+    );
   });
 });

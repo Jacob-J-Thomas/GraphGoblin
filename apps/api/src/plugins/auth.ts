@@ -44,6 +44,7 @@ const SCOPE_OVERRIDES: Record<string, string> = {
   'POST /loops/:id/runs': 'runs:write',
   // Validation reads the loop and saves nothing.
   'POST /loops/:id/validate': 'loops:read',
+  // Preview computes slots without saving or arming a schedule.
   'POST /triggers/cron/preview': 'loops:read',
 };
 

@@ -7,7 +7,19 @@ export type Schedule =
   | { kind: 'weekdays'; time: string }
   | { kind: 'weekly'; time: string; days: number[] }
   | { kind: 'monthly'; time: string; day: number }
+  | { kind: 'empty' }
   | { kind: 'custom' };
+
+export type BuiltSchedule = Exclude<Schedule, { kind: 'custom' | 'empty' }>;
+export type SchedulePreferences = { time?: string; days?: number[]; day?: number };
+
+export function schedulePreferences(schedule: Schedule): SchedulePreferences {
+  return {
+    ...('time' in schedule ? { time: schedule.time } : {}),
+    ...(schedule.kind === 'weekly' ? { days: schedule.days } : {}),
+    ...(schedule.kind === 'monthly' ? { day: schedule.day } : {}),
+  };
+}
 
 export const PRESETS: ReadonlyArray<{ value: Preset; label: string }> = [
   { value: 'minutes', label: 'Every N minutes' },
@@ -19,22 +31,22 @@ export const PRESETS: ReadonlyArray<{ value: Preset; label: string }> = [
 ];
 export const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-export function defaultSchedule(kind: Preset): Exclude<Schedule, { kind: 'custom' }> {
+export function defaultSchedule(kind: Preset, previous: SchedulePreferences = {}): BuiltSchedule {
   switch (kind) {
     case 'minutes':
     case 'hours':
       return { kind, every: 1 };
     case 'daily':
     case 'weekdays':
-      return { kind, time: '09:00' };
+      return { kind, time: previous.time ?? '09:00' };
     case 'weekly':
-      return { kind, time: '09:00', days: [1] };
+      return { kind, time: previous.time ?? '09:00', days: previous.days ?? [1] };
     case 'monthly':
-      return { kind, time: '09:00', day: 1 };
+      return { kind, time: previous.time ?? '09:00', day: previous.day ?? 1 };
   }
 }
 
-export function scheduleExpression(schedule: Exclude<Schedule, { kind: 'custom' }>): string {
+export function scheduleExpression(schedule: BuiltSchedule): string {
   if (schedule.kind === 'minutes') return `*/${schedule.every} * * * *`;
   if (schedule.kind === 'hours') return `0 */${schedule.every} * * *`;
   const [hour, minute] = schedule.time.split(':').map(Number);
@@ -56,6 +68,7 @@ const integer = (text: string, min: number, max: number) =>
 
 /** Never writes back: loading even noncanonical spacing or a custom expression is lossless. */
 export function parseSchedule(expression: string): Schedule {
+  if (expression.trim() === '') return { kind: 'empty' };
   const parts = expression.trim().split(/\s+/);
   const [minute = '', hour = '', day = '', month = '', week = ''] = parts;
   if (parts.length !== 5 || month !== '*') return { kind: 'custom' };
@@ -65,6 +78,7 @@ export function parseSchedule(expression: string): Schedule {
     if (minute === '0' && hour.startsWith('*/') && integer(hour.slice(2), 1, 23))
       return { kind: 'hours', every: Number(hour.slice(2)) };
     if (minute === '*' && hour === '*') return { kind: 'minutes', every: 1 };
+    if (minute === '0' && hour === '*') return { kind: 'hours', every: 1 };
   }
   if (!integer(minute, 0, 59) || !integer(hour, 0, 23)) return { kind: 'custom' };
   const time = `${String(Number(hour)).padStart(2, '0')}:${String(Number(minute)).padStart(2, '0')}`;
@@ -94,13 +108,15 @@ export function scheduleSummary(schedule: Schedule, expression: string, timezone
       summary = `Every weekday at ${schedule.time}`;
       break;
     case 'weekly':
-      summary = `Every ${schedule.days.map((day) => DAYS[day]).join(', ')} at ${schedule.time}`;
+      summary = `Every ${new Intl.ListFormat('en', { type: 'conjunction' }).format(schedule.days.map((day) => DAYS[day]!))} at ${schedule.time}`;
       break;
     case 'monthly':
       summary = `Monthly on day ${schedule.day} at ${schedule.time}`;
       break;
     case 'custom':
-      summary = `Custom expression: ${expression}`;
+      return `Custom expression: ${expression} · ${timezone}`;
+    case 'empty':
+      return 'Choose a schedule to see upcoming runs.';
   }
   return `${summary}, ${timezone}`;
 }
@@ -124,8 +140,14 @@ export function scheduleError(schedule: Schedule): string | undefined {
 
 /** UTC is the schema default, but Intl's enumeration deliberately omits it. */
 export const TIMEZONES = ['UTC', ...Intl.supportedValuesOf('timeZone')];
-export const timezoneError = (timezone: string) =>
-  TIMEZONES.includes(timezone) ? undefined : 'Choose an IANA time zone from the list.';
+export function timezoneError(timezone: string): string | undefined {
+  try {
+    new Intl.DateTimeFormat('en', { timeZone: timezone });
+    return undefined;
+  } catch {
+    return 'Enter a valid IANA time zone.';
+  }
+}
 
 export function formatSlot(timestamp: string, timezone: string): string {
   return new Intl.DateTimeFormat(undefined, {

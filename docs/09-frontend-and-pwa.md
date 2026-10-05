@@ -196,23 +196,36 @@ field metadata. `forms/cron/model.ts` owns the six presets (minutes, hours, dail
 weekdays, weekly day choices, monthly day), expression generation, recognition,
 and summaries. It never rewrites a loaded expression; recognised expressions
 reopen in the builder, while all others show Custom expression plus the exact raw
-source. Only an explicit preset edit generates a replacement expression. Minute
+source. An empty expression offers Choose a schedule without requesting a preview
+or adding an edit on mount. Incomplete builder edits stay local and keep the last
+valid expression; only a valid preset edit generates a replacement expression.
+Switching presets retains time, weekly day choices, and the monthly day. Minute
 and hour steps restart at the hour and day boundaries; monthly days absent from
 a month are skipped.
 
 The searchable timezone input uses the browser's `Intl.supportedValuesOf('timeZone')`
-in a native keyboard-operable datalist, with UTC added for the schema default.
-Use my time zone fills the browser's zone. Timezone, missed-fire policy, and enabled
-stay simple visible fields. The schedule's own Advanced disclosure, using the
-shared primitive, holds the raw expression: this is the one exemption from the
+in a native keyboard-operable datalist as suggestions, with UTC added for the schema
+default. Local validation constructs `Intl.DateTimeFormat` with the entered zone,
+so accepted IANA aliases outside the suggestions are also usable. Use my time zone
+fills the browser's zone. The timezone picker, missed-fire policy, and enabled stay
+visible. The schedule's own Advanced disclosure, using the
+shared primitive, holds the raw expression and its problem count; choosing Custom
+expression or following an expression issue reveals and focuses the raw field.
+This is the one exemption from the
 rule that trigger fields have no Advanced section. Saved configuration remains
 `expression`, `timezone`, `missedFirePolicy`, and `enabled`.
 
 Preview requests debounce for 350 ms and use the generated API client and TanStack
 Query against `POST /triggers/cron/preview`. The server's `CRON_INVALID` response
-shows inline, and unsupported zones are flagged locally without a request. Results
+shows its detail inline, and zones rejected by `Intl.DateTimeFormat` are flagged
+locally without a request. The datalist is not a validation allowlist. One stable
+status element announces the debounced summary and preview state; the visible
+summary can update while typing without announcing each keystroke. HTTP errors
+show the server's detail, while transport failures say the API cannot be reached.
+Results
 from an earlier expression or zone are hidden immediately on editing. Five slots
-show the trigger's time and the viewer's local time with offset and date; a finite
+show the trigger's time and the viewer's local time with offset and date, omitting
+the duplicate viewer line when both zones resolve to the same zone; a finite
 schedule may have fewer. When the API is unavailable, the current expression stays
 visible with an unavailable message. Native labelled time and number inputs,
 day checkboxes, and the datalist use the shared theme tokens and focus states.

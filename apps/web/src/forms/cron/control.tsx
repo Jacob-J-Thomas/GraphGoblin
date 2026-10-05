@@ -1,5 +1,6 @@
 import { GraphGoblinApiError } from '@graphgoblin/api-client';
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
+import { useWatch } from 'react-hook-form';
 import { useCronPreview } from '../../api/queries.js';
 import {
   Button,
@@ -12,9 +13,11 @@ import {
   Label,
   Legend,
   Select,
+  revealDisclosures,
 } from '../../components/ui/index.js';
 import { useField, type FieldProps } from '../fields.js';
-import { FieldError, Row } from '../fields/shared.js';
+import { Row, fieldMeta, useProblemCount } from '../fields/shared.js';
+import { ProblemBadge } from '../fields/structure.js';
 import {
   DAYS,
   PRESETS,
@@ -24,31 +27,46 @@ import {
   parseSchedule,
   scheduleError,
   scheduleExpression,
+  schedulePreferences,
   scheduleSummary,
   timezoneError,
   type Preset,
   type Schedule,
+  type BuiltSchedule,
 } from './model.js';
 
 /** Custom expression field; it binds only the existing string, never a new config object. */
 export function CronControl({ name }: FieldProps) {
   const field = useField(name);
   const zonePath = name.replace(/expression$/, 'timezone');
-  const zone = useField(zonePath);
+  const zone: unknown = useWatch({ name: zonePath });
   const expression = typeof field.value === 'string' ? field.value : '';
-  const timezone = typeof zone.value === 'string' ? zone.value : 'UTC';
+  const timezone = typeof zone === 'string' ? zone : 'UTC';
   const [draft, setDraft] = useState<{ expression: string; schedule: Schedule }>();
   const schedule = draft?.expression === expression ? draft.schedule : parseSchedule(expression);
   const id = useId();
+  const rawRef = useRef<HTMLDivElement>(null);
+  const preferencesRef = useRef(schedulePreferences(parseSchedule(expression)));
   const error = scheduleError(schedule);
-  const preview = useSchedulePreview(expression, timezone, error === undefined);
-  const commit = (next: Exclude<Schedule, { kind: 'custom' }>) => {
+  const summary = scheduleSummary(schedule, expression, timezone);
+  const preview = useSchedulePreview(expression, timezone, summary, error === undefined);
+  const problems = useProblemCount([name]);
+  const cronInvalid =
+    preview.enabled &&
+    preview.query.error instanceof GraphGoblinApiError &&
+    preview.query.error.code === 'CRON_INVALID';
+  const commit = (next: BuiltSchedule) => {
+    preferencesRef.current = { ...preferencesRef.current, ...schedulePreferences(next) };
+    if (scheduleError(next) !== undefined) {
+      setDraft({ expression, schedule: next });
+      return;
+    }
     const value = scheduleExpression(next);
     setDraft({ expression: value, schedule: next });
     field.onChange(value);
   };
   return (
-    <Fieldset data-field={name}>
+    <Fieldset data-field={`${name}.schedule`}>
       <Legend>Schedule</Legend>
       <FieldGroup>
         <Label htmlFor={`${id}-preset`}>Repeat</Label>
@@ -56,10 +74,19 @@ export function CronControl({ name }: FieldProps) {
           id={`${id}-preset`}
           value={schedule.kind}
           onChange={(e) => {
-            if (e.target.value === 'custom') setDraft({ expression, schedule: { kind: 'custom' } });
-            else commit(defaultSchedule(e.target.value as Preset));
+            if (e.target.value === 'custom') {
+              setDraft({ expression, schedule: { kind: 'custom' } });
+              const raw = rawRef.current?.querySelector('input');
+              if (raw) {
+                revealDisclosures(raw);
+                raw.focus();
+              }
+            } else commit(defaultSchedule(e.target.value as Preset, preferencesRef.current));
           }}
         >
+          <option value="empty" disabled>
+            Choose a schedule…
+          </option>
           {PRESETS.map(({ value, label }) => (
             <option key={value} value={value}>
               {label}
@@ -137,8 +164,9 @@ export function CronControl({ name }: FieldProps) {
           <HelpText>Months without this day are skipped.</HelpText>
         </FieldGroup>
       ) : null}
-      <p className="text-sm text-default" aria-live="polite">
-        {scheduleSummary(schedule, expression, timezone)}
+      <p className="text-sm text-default">{summary}</p>
+      <p role="status" aria-live="polite" aria-atomic="true" className="sr-only">
+        {preview.announcement}
       </p>
       <HelpText id={`${id}-error`} tone="bad" role={error ? 'alert' : undefined}>
         {error}
@@ -149,47 +177,94 @@ export function CronControl({ name }: FieldProps) {
         preview={preview}
         errorId={`${id}-preview-error`}
       />
-      <Disclosure label="Advanced" summary="Cron expression">
-        <FieldGroup>
-          <Label htmlFor={`${id}-raw`} required>
-            Cron expression
-          </Label>
-          <Input
-            id={`${id}-raw`}
-            value={expression}
-            maxLength={256}
-            onBlur={field.onBlur}
-            aria-required="true"
-            aria-describedby={`${id}-preview-error`}
-            aria-invalid={
-              preview.enabled &&
-              preview.query.error instanceof GraphGoblinApiError &&
-              preview.query.error.code === 'CRON_INVALID'
-            }
-            onChange={(e) => {
-              setDraft(undefined);
-              field.onChange(e.target.value);
-            }}
-          />
-          <HelpText>Five or six fields. Custom expressions are kept exactly as entered.</HelpText>
-          <FieldError name={name} />
-        </FieldGroup>
+      <Disclosure
+        label="Advanced"
+        summary={
+          <>
+            Cron expression <ProblemBadge count={Math.max(problems, cronInvalid ? 1 : 0)} />
+          </>
+        }
+      >
+        <div ref={rawRef}>
+          <Row
+            name={name}
+            label="Cron expression"
+            htmlFor={`${id}-raw`}
+            required
+            help="Five, six, or seven fields, or a cron nickname such as @daily. Custom expressions are kept exactly as entered."
+          >
+            {(control) => (
+              <Input
+                {...control}
+                value={expression}
+                maxLength={256}
+                onBlur={field.onBlur}
+                aria-describedby={
+                  [
+                    control['aria-describedby'],
+                    preview.enabled && preview.query.isError ? `${id}-preview-error` : undefined,
+                  ]
+                    .filter(Boolean)
+                    .join(' ') || undefined
+                }
+                aria-invalid={cronInvalid ? true : control['aria-invalid']}
+                onChange={(e) => {
+                  setDraft(undefined);
+                  preferencesRef.current = {
+                    ...preferencesRef.current,
+                    ...schedulePreferences(parseSchedule(e.target.value)),
+                  };
+                  field.onChange(e.target.value);
+                }}
+              />
+            )}
+          </Row>
+        </div>
       </Disclosure>
     </Fieldset>
   );
 }
 
-function useSchedulePreview(expression: string, timezone: string, valid: boolean) {
-  const [settled, setSettled] = useState({ expression: '', timezone: '' });
+function useSchedulePreview(expression: string, timezone: string, summary: string, valid: boolean) {
+  const requestable = expression.trim() !== '' && valid && timezoneError(timezone) === undefined;
+  const [settled, setSettled] = useState({
+    expression: '',
+    timezone: '',
+    summary: '',
+    valid: false,
+  });
   useEffect(() => {
-    const timer = setTimeout(() => setSettled({ expression, timezone }), 350);
+    const timer = setTimeout(
+      () => setSettled({ expression, timezone, summary, valid: requestable }),
+      350,
+    );
     return () => clearTimeout(timer);
-  }, [expression, timezone]);
-  const ready = settled.expression === expression && settled.timezone === timezone;
-  const zoneError = timezoneError(timezone);
-  const enabled = ready && valid && zoneError === undefined;
-  const query = useCronPreview(expression, timezone, enabled);
-  return { query, enabled, valid: valid && zoneError === undefined };
+  }, [expression, timezone, summary, requestable]);
+  const ready =
+    settled.expression === expression &&
+    settled.timezone === timezone &&
+    settled.summary === summary &&
+    settled.valid === requestable;
+  const enabled = ready && requestable;
+  const query = useCronPreview(settled.expression, settled.timezone, enabled);
+  const announcement = !settled.valid
+    ? settled.expression.trim() === ''
+      ? 'Choose a schedule to see upcoming runs.'
+      : 'Complete the schedule to preview upcoming runs.'
+    : `${settled.summary}. ${query.isError ? previewErrorMessage(query.error) : query.isPending || query.isFetching ? 'Loading upcoming runs…' : query.data.next.length === 0 ? 'No upcoming runs for this expression.' : 'Upcoming runs ready.'}`;
+  return { query, enabled, valid: requestable, announcement };
+}
+
+function previewErrorMessage(error: unknown): string {
+  if (error instanceof GraphGoblinApiError) {
+    if (error.status === 0)
+      return 'Preview unavailable. Cannot reach the schedule preview API; your current expression is kept.';
+    const detail = error.detail ?? `The server returned HTTP ${error.status}.`;
+    return error.code === 'CRON_INVALID'
+      ? `Invalid schedule: ${detail}`
+      : `Preview unavailable. ${detail}`;
+  }
+  return 'Preview unavailable. Please try again.';
 }
 
 function CronPreview({
@@ -204,11 +279,11 @@ function CronPreview({
   errorId: string;
 }) {
   const { query: preview, enabled, valid } = state;
+  if (!valid) return null;
   const localZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const message =
-    preview.error instanceof GraphGoblinApiError && preview.error.code === 'CRON_INVALID'
-      ? `Invalid schedule: ${preview.error.message}`
-      : 'Preview unavailable. Cannot reach the schedule preview API; your current expression is kept.';
+  const sameZone =
+    new Intl.DateTimeFormat('en', { timeZone: timezone }).resolvedOptions().timeZone === localZone;
+  const message = previewErrorMessage(preview.error);
   return (
     <section aria-label="Upcoming runs" className="grid min-w-0 gap-2">
       {enabled && preview.isError ? (
@@ -216,34 +291,35 @@ function CronPreview({
           Current expression: <code>{expression}</code> · {timezone}
         </p>
       ) : null}
-      {valid ? (
-        !enabled || preview.isFetching ? (
-          <HelpText role="status">Loading upcoming runs…</HelpText>
-        ) : preview.isError ? (
-          <HelpText id={errorId} tone="bad" role="alert">
-            {message}
-          </HelpText>
-        ) : preview.data ? (
-          <>
-            <p className="text-sm font-medium">
-              Next five runs · {timezone} / your time ({localZone})
-            </p>
-            {preview.data.next.length === 0 ? (
-              <HelpText>No upcoming runs for this expression.</HelpText>
-            ) : (
-              <ol className="grid gap-2 text-xs">
-                {preview.data.next.map((timestamp) => (
-                  <li key={timestamp} className="grid gap-1">
-                    <time dateTime={timestamp}>{formatSlot(timestamp, timezone)}</time>
+      {!enabled || preview.isPending || preview.isFetching ? (
+        <HelpText>Loading upcoming runs…</HelpText>
+      ) : preview.isError ? (
+        <HelpText id={errorId} tone="bad">
+          {message}
+        </HelpText>
+      ) : preview.data ? (
+        <>
+          <p className="text-sm font-medium">
+            Next five runs · {timezone}
+            {sameZone ? '' : ` / your time (${localZone})`}
+          </p>
+          {preview.data.next.length === 0 ? (
+            <HelpText>No upcoming runs for this expression.</HelpText>
+          ) : (
+            <ol className="grid gap-2 text-xs">
+              {preview.data.next.map((timestamp) => (
+                <li key={timestamp} className="grid gap-1">
+                  <time dateTime={timestamp}>{formatSlot(timestamp, timezone)}</time>
+                  {sameZone ? null : (
                     <span className="text-muted">
                       Your time: {formatSlot(timestamp, localZone)}
                     </span>
-                  </li>
-                ))}
-              </ol>
-            )}
-          </>
-        ) : null
+                  )}
+                </li>
+              ))}
+            </ol>
+          )}
+        </>
       ) : null}
     </section>
   );
@@ -255,39 +331,48 @@ export function CronTimezoneControl({ name, label, schema }: FieldProps) {
   const value = typeof field.value === 'string' ? field.value : 'UTC';
   const id = useId();
   const error = timezoneError(value);
+  const meta = fieldMeta(schema);
   return (
-    <Row name={name} label={label} htmlFor={id} help={schema.description}>
-      {(control) => (
-        <>
-          <Input
-            {...control}
-            value={value}
-            list={`${id}-zones`}
-            maxLength={64}
-            onBlur={field.onBlur}
-            aria-invalid={error ? true : control['aria-invalid']}
-            aria-describedby={error ? `${id}-zone-error` : control['aria-describedby']}
-            onChange={(e) => field.onChange(e.target.value)}
-          />
-          <datalist id={`${id}-zones`}>
-            {TIMEZONES.map((zone) => (
-              <option key={zone} value={zone} />
-            ))}
-          </datalist>
-          {error ? (
-            <HelpText id={`${id}-zone-error`} tone="bad" role="alert">
-              {error}
-            </HelpText>
-          ) : null}
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={() => field.onChange(Intl.DateTimeFormat().resolvedOptions().timeZone)}
-          >
-            Use my time zone
-          </Button>
-        </>
-      )}
-    </Row>
+    <div className="grid gap-2">
+      <Row name={name} label={label} htmlFor={id} help={meta.help} required={meta.required}>
+        {(control) => (
+          <>
+            <Input
+              {...control}
+              value={value}
+              list={`${id}-zones`}
+              maxLength={64}
+              onBlur={field.onBlur}
+              aria-invalid={error ? true : control['aria-invalid']}
+              aria-describedby={
+                [control['aria-describedby'], error ? `${id}-zone-error` : undefined]
+                  .filter(Boolean)
+                  .join(' ') || undefined
+              }
+              onChange={(e) => field.onChange(e.target.value)}
+            />
+            <datalist id={`${id}-zones`}>
+              {TIMEZONES.map((zone) => (
+                <option key={zone} value={zone} />
+              ))}
+            </datalist>
+            {error ? (
+              <HelpText id={`${id}-zone-error`} tone="bad" role="alert">
+                {error}
+              </HelpText>
+            ) : null}
+          </>
+        )}
+      </Row>
+      <div>
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={() => field.onChange(Intl.DateTimeFormat().resolvedOptions().timeZone)}
+        >
+          Use my time zone
+        </Button>
+      </div>
+    </div>
   );
 }

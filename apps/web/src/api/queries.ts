@@ -1,7 +1,7 @@
 import {
   apiKeys,
-  events,
   cron,
+  events,
   loops,
   modelCatalog,
   runs,
@@ -28,6 +28,8 @@ export const keys = {
   apiKeys: ['api-keys'] as const,
   preflight: ['preflight'] as const,
   events: ['events'] as const,
+  cronPreview: (expression: string, timezone: string) =>
+    ['cron-preview', expression, timezone] as const,
 };
 
 export function useLoops() {
@@ -101,7 +103,7 @@ export function useInboundEvents() {
 export function useCronPreview(expression: string, timezone: string, enabled: boolean) {
   const client = useApi();
   return useQuery({
-    queryKey: ['cron-preview', expression, timezone],
+    queryKey: keys.cronPreview(expression, timezone),
     queryFn: ({ signal }) => cron.preview(client, { expression, timezone, count: 5 }, { signal }),
     enabled,
     retry: false,
