@@ -80,7 +80,7 @@ An open-source classifier registers as an HTTP endpoint that speaks the Jev-comp
 | Capabilities      | **Choice / classification**                                        |
 | Bearer secret     | **(none)**, unless you started Kev with `KEV_API_KEY` (see below)  |
 
-**Save classifier** checks the fields first and explains each problem beside its field. The id cannot change later, because loops refer to it, and `jev` and existing ids are taken. A new classifier starts disabled: switch it on when its server is running.
+**Save classifier** checks the fields first and explains each problem beside its field. The id cannot change later, because loops refer to it, and `jev` and existing ids are taken. **Add classifier** waits until the list has loaded, so the id can be checked against it, and adding never replaces an existing classifier: if another tab or script registered the same id in the meantime, Settings says so, saves nothing, and refreshes the list. A new classifier starts disabled: switch it on when its server is running.
 
 If the server wants a bearer key (Kev does when `KEV_API_KEY` is set), store the key in **Secrets** first, then choose its name under **Bearer secret**. With a secret, the endpoint must use `https://` unless its host is loopback (`localhost`, `127.0.0.0/8`, or `[::1]`), so a key is never sent in clear text across a network. Saving a classifier with a secret needs an API key with both `settings:write` and `secrets:write`; without the second, Settings says so and saves nothing. Choosing **(none)** on an edit removes the secret.
 
@@ -88,18 +88,18 @@ If the server wants a bearer key (Kev does when `KEV_API_KEY` is set), store the
 
 ### Choose a classifier in a decision
 
-Open the decision node, add its Jev options with **Add jev** if it has none, and pick under **Model**. The first option, **Jev (jev), the default**, leaves the choice out of the loop so the built-in applies; the others are the enabled classifiers that answer Choice, with **(needs a key)** after any that still lack their key. Changing the model keeps the decision's other Jev settings, such as **Min confidence**.
+Open the decision node and pick under **Jev → Model**. The first option, **Jev (jev), the default**, leaves the choice out of the loop so the built-in applies; the others are the enabled classifiers that answer Choice, with **(needs a key)** after any that still lack their key. Choosing another classifier adds the decision's Jev settings for you; **Add jev options** adds them without changing the model (for **Min confidence**, say). Changing the model keeps the decision's other Jev settings. Each choice is one step for Undo.
 
 Kev reports a rescaled confidence, `(p - 1/K) / (1 - 1/K)` for the chosen label's probability `p` and `K` routes, so a threshold means more than it does for a raw probability: with two routes, a `minConfidence` of 0.5 needs a probability of 0.75. Below the threshold, the next strategy runs.
 
 ### When a selected classifier is unavailable
 
-The node editor never clears a selection by itself. A selected classifier that was disabled, deleted, or no longer answers Choice stays selected, marked **(disabled)**, **(not in catalog)**, or **(no Choice)**, with the reason and the remedy under the field. The editor's checks agree with the API's:
+The node editor never clears a selection by itself. A selected classifier that was disabled, deleted, or no longer answers Choice stays selected, marked **(disabled)**, **(not in catalog)**, or **(no Choice)**, with the reason and the remedy under the field. When the decision's strategy does not include Jev, the selection is not checked yet, and the text says what to fix before you add Jev to the strategy. The node's warnings and errors follow changes you make in Settings (enabling, disabling, deleting, or setting a key) without editing the loop. The editor's checks agree with the API's:
 
 - **Disabled** or **needs a key**: a warning on the node. Publishing still works; at run time the Jev strategy is skipped and the next strategy runs. With no next strategy the warning says the decision cannot currently produce a route, and the run would fail with `DECISION_NO_ROUTE`.
 - **Not in the catalog** or **no Choice**: an error that blocks publishing the draft until you choose another model or register the classifier again. A loop published before keeps running and skips the strategy, as above.
 
-Choosing the issue in the node's badge opens the node with **Model** focused (or **Add jev** when the decision uses the built-in by default). Scripts and agents use the same catalog over REST: `GET /classifier-models` and `PUT`, `PATCH` (`{ "enabled": true }`), and `DELETE /classifier-models/{id}`; see [API, streaming, and MCP](../07-api-and-streaming.md#classifier-catalog-decided-adr-0021).
+Choosing the issue in the node's badge opens the node with **Model** focused. Scripts and agents use the same catalog over REST: `GET /classifier-models` and `PUT` (with `If-None-Match: *` to create without replacing; an existing id answers 409 `CLASSIFIER_EXISTS`), `PATCH` (`{ "enabled": true }`), and `DELETE /classifier-models/{id}`; see [API, streaming, and MCP](../07-api-and-streaming.md#classifier-catalog-decided-adr-0021).
 
 ## Store secrets
 

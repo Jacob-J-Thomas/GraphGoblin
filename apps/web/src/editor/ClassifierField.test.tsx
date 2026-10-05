@@ -13,11 +13,11 @@ const ROUTES = [
   { label: 'no', description: 'No' },
 ];
 
-function decision(jev?: Record<string, unknown>) {
+function decision(jev?: Record<string, unknown>, strategy = ['jev', 'expression']) {
   return {
     routes: ROUTES,
     question: 'Which?',
-    strategy: ['jev', 'expression'],
+    strategy,
     expression: { jsonata: '"yes"' },
     ...(jev ? { jev } : {}),
   };
@@ -196,9 +196,55 @@ describe('ClassifierField', () => {
     expect(changes).toEqual([]);
   });
 
-  it('is not drawn while the decision has no Jev options', () => {
-    setup(decision());
-    expect(screen.queryByRole('combobox', { name: 'Model' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Add jev' })).toBeInTheDocument();
+  it('is drawn without Jev options, shows the default, and adds them only for another choice', async () => {
+    const user = userEvent.setup();
+    const { picker, options, changes, jevGroup } = setup(decision());
+    await waitFor(() => expect(options()).toHaveLength(3));
+    expect(picker()).toHaveValue('');
+    expect(within(jevGroup()).getByRole('button', { name: 'Add jev options' })).toBeInTheDocument();
+    expect(within(jevGroup()).queryByLabelText('Min confidence')).not.toBeInTheDocument();
+    // Re-choosing the default changes nothing: the decision stays without a jev block.
+    picker().focus();
+    await user.selectOptions(picker(), '');
+    expect(changes).toEqual([]);
+    await user.selectOptions(picker(), 'kev');
+    expect(changes.at(-1)).toMatchObject({ jev: { model: 'kev' } });
+    expect(within(jevGroup()).getByLabelText('Min confidence')).toBeInTheDocument();
+    // Add jev options adds the block with its defaults and keeps the built-in default.
+    await user.selectOptions(picker(), '');
+    await user.click(within(jevGroup()).getByRole('button', { name: 'Remove jev' }));
+    expect(changes.at(-1)).not.toHaveProperty('jev');
+    await user.click(within(jevGroup()).getByRole('button', { name: 'Add jev options' }));
+    expect(changes.at(-1)).toHaveProperty('jev');
+    expect(picker()).toHaveValue('');
   });
+
+  it.each([
+    [
+      'off',
+      'Off (off) is disabled. Enable it in Settings, Classifier models, or choose another model, before adding Jev to the strategy.',
+    ],
+    [
+      'gone',
+      'gone is not in the classifier catalog. Choose an available model, or register gone again in Settings, Classifier models, before adding Jev to the strategy.',
+    ],
+    [
+      'scorer',
+      'Scorer (scorer) cannot answer Choice decisions. Choose a model with Choice / classification before adding Jev to the strategy.',
+    ],
+    [
+      'keyed',
+      "Keyed (keyed) needs a key, which the Jev strategy will need. Missing or blank secret 'keyed-key'. Set it in Settings, Secrets.",
+    ],
+  ])(
+    'explains %s as a requirement for the Jev strategy when the strategy does not use it',
+    async (id, why) => {
+      const { picker } = setup(decision({ primitive: 'choice', model: id }, ['expression']));
+      await waitFor(() =>
+        expect(picker()).toHaveAccessibleDescription(
+          `Classifier catalog id; built-in jev when omitted. ${why}`,
+        ),
+      );
+    },
+  );
 });

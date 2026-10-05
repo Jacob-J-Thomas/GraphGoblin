@@ -5,7 +5,7 @@ import { ReactFlowProvider } from '@xyflow/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router';
 import { useApi } from '../api/context.js';
-import { keys } from '../api/queries.js';
+import { classifierFingerprint, keys, useClassifierModels } from '../api/queries.js';
 import { ErrorState } from '../components/status.js';
 import { Alert, Button, useSidePanelState } from '../components/ui/index.js';
 import { focusFallback } from '../lib/focus.js';
@@ -69,10 +69,16 @@ export function EditorPage() {
     () => (definition ? validateDraft(definition) : { issues: [], schemaValid: false }),
     [definition],
   );
-  // The API's own checks (cron syntax, subloop references) for the revision the server holds.
+  // The classifier checks read the catalog and its secrets, which change without a draft edit:
+  // the API's checks run again when what they read of it changes.
+  const classifiers = useClassifierModels();
+  const classifierState = classifierFingerprint(classifiers.data);
+  // The API's own checks (cron syntax, subloop references, classifiers) for the revision the
+  // server holds. They wait for the catalog's first answer, success or not, so opening the editor
+  // does not run them twice.
   const serverCheck = useQuery({
-    queryKey: ['loops', loopId, 'validate', savedRevision],
-    enabled: Boolean(definition) && local.schemaValid,
+    queryKey: keys.validation(loopId, savedRevision, classifierState),
+    enabled: Boolean(definition) && local.schemaValid && !classifiers.isPending,
     staleTime: Infinity,
     retry: false,
     queryFn: async () => {

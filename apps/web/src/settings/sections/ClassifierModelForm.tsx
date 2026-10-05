@@ -3,7 +3,7 @@ import type { ClassifierModelSummary } from '@graphgoblin/contracts';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { useApi } from '../../api/context.js';
-import { keys, useSecrets } from '../../api/queries.js';
+import { refreshClassifierState, useSecrets } from '../../api/queries.js';
 import {
   Button,
   Checkbox,
@@ -36,6 +36,8 @@ export function classifierMessages(error: unknown): MutationMessages {
   return {
     CLASSIFIER_MODEL_NOT_FOUND: 'This classifier is no longer in the catalog.',
     CLASSIFIER_MANAGED_BY_SYSTEM: 'Built-in Jev can only be enabled or disabled.',
+    CLASSIFIER_EXISTS:
+      'A classifier with this id was added since the list loaded, so nothing was saved. Choose another id, or cancel and edit that classifier.',
     VALIDATION_FAILED: first
       ? `The API refused these settings: ${first}.`
       : 'The API refused these settings.',
@@ -54,11 +56,17 @@ export function classifierMessages(error: unknown): MutationMessages {
 export function ClassifierModelForm({
   initial,
   existingIds,
+  catalogReady,
   onDone,
 }: {
   /** The entry being edited; absent when adding. */
   initial?: ClassifierModelSummary | undefined;
   existingIds: readonly string[];
+  /**
+   * Whether the classifier list has loaded, so `existingIds` is the catalog. A new entry is not
+   * sent before then; the server's create-only precondition backs this up for stale lists.
+   */
+  catalogReady: boolean;
   /** Called after Cancel or a successful save, with the saved entry. */
   onDone: (saved?: ClassifierModelSummary) => void;
 }) {
@@ -70,14 +78,22 @@ export function ClassifierModelForm({
   const isNew = initial === undefined;
   const [values, setValues] = useState<ClassifierFormValues>(() => initialValues(initial));
   const [submitted, setSubmitted] = useState(false);
+  const [waiting, setWaiting] = useState(false);
   const errors: ClassifierFormErrors = submitted
     ? validateClassifier(values, { existingIds, isNew })
     : {};
   const save = useMutation({
-    mutationFn: () => classifierModels.upsert(client, values.id, toPut(values)),
-    onSuccess: async (saved) => {
-      await queryClient.invalidateQueries({ queryKey: keys.classifiers });
-      onDone(saved);
+    // Adding never replaces: `create` sends If-None-Match: *, refused when the id exists. An edit
+    // replaces the entry it was opened for, whatever the id field holds.
+    mutationFn: () =>
+      initial === undefined
+        ? classifierModels.create(client, values.id, toPut(values))
+        : classifierModels.upsert(client, initial.id, toPut(values)),
+    onSuccess: () => refreshClassifierState(queryClient),
+    onError: (failure) => {
+      // Added elsewhere since this list loaded: refresh it, so the id check names the clash.
+      if (failure instanceof GraphGoblinApiError && failure.code === 'CLASSIFIER_EXISTS')
+        return refreshClassifierState(queryClient);
     },
   });
   const fieldId = (field: ClassifierFormField) => `${formId}-${field}`;
@@ -87,12 +103,20 @@ export function ClassifierModelForm({
     document.getElementById(`${formId}-${isNew ? 'id' : 'displayName'}`)?.focus();
   }, [formId, isNew]);
 
-  const set = <K extends ClassifierFormField>(field: K, value: ClassifierFormValues[K]) =>
+  const set = <K extends ClassifierFormField>(field: K, value: ClassifierFormValues[K]) => {
+    // The id of an entry being edited is fixed (its input is read-only).
+    if (field === 'id' && !isNew) return;
     setValues((current) => ({ ...current, [field]: value }));
+  };
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
     if (save.isPending) return;
+    if (isNew && !catalogReady) {
+      setWaiting(true);
+      return;
+    }
+    setWaiting(false);
     setSubmitted(true);
     const found = validateClassifier(values, { existingIds, isNew });
     const first = FORM_FIELDS.find((field) => found[field] !== undefined);
@@ -104,7 +128,10 @@ export function ClassifierModelForm({
       target?.focus();
       return;
     }
-    save.mutate();
+    // Completion closes this form only while it is still open: a save that finishes after Cancel
+    // (or after another form replaced this one) must not close whatever form is open by then.
+    // TanStack Query drops these per-call callbacks once the form has unmounted.
+    save.mutate(undefined, { onSuccess: (saved) => onDone(saved) });
   };
 
   /** Props linking a control to its help and error text. */
@@ -305,6 +332,12 @@ export function ClassifierModelForm({
           Cancel
         </Button>
         <MutationError error={save.error} messages={classifierMessages(save.error)} announce />
+        {waiting ? (
+          <HelpText tone="bad" role="alert">
+            The classifier list has not loaded yet, so a new id cannot be checked. Save once it has
+            loaded.
+          </HelpText>
+        ) : null}
       </div>
     </form>
   );

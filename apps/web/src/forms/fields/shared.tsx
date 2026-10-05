@@ -19,15 +19,23 @@ export interface FieldProps {
    * label): a group drops its border and keeps its legend for assistive technology only.
    */
   bare?: boolean | undefined;
+  /**
+   * Set when the field is drawn while its optional parent object is absent (only for a control
+   * that `drawsWithoutParent`): the parent's path and the value its Add button would create. The
+   * field then shows its effective value, and a change writes the whole parent rather than the
+   * field alone, so nothing is added to the form until the user chooses something.
+   */
+  absentParent?: { name: string; initial: Record<string, unknown> } | undefined;
 }
 
 /**
  * A control that draws a field in place of its default renderer, registered under the name its
  * metadata's `control` gives (`.meta(field('…', { control: 'model' }))` in `@graphgoblin/contracts`).
  * It gets the field's props and binds to the form itself (`useField`); it may draw the default
- * renderer too (`DefaultField`), for a raw-value toggle, say.
+ * renderer too (`DefaultField`), for a raw-value toggle, say. With `drawsWithoutParent` it is also
+ * drawn while its optional parent object is absent (see `FieldProps.absentParent`).
  */
-export type FieldControl = ComponentType<FieldProps>;
+export type FieldControl = ComponentType<FieldProps> & { drawsWithoutParent?: boolean };
 
 /** Registered controls by name. SchemaForm's `controls` prop provides them to every field. */
 export type FieldControls = Readonly<Record<string, FieldControl>>;

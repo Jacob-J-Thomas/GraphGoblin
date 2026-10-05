@@ -1,4 +1,4 @@
-import { act, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import {
@@ -204,6 +204,158 @@ describe('ClassifierModelsSection', () => {
     await waitFor(() =>
       expect(screen.getByRole('button', { name: 'Edit classifier local' })).toHaveFocus(),
     );
+  });
+
+  it('review: keeps Add unavailable until the list has loaded, then creates only', async () => {
+    const api = seeded();
+    const gate = hold();
+    api.override('GET /classifier-models', async (call) => {
+      gate.arrive();
+      await gate.held;
+      return api.builtIn(call);
+    });
+    renderApp('/settings', api);
+    const user = userEvent.setup();
+    const add = await within(region()).findByRole('button', { name: 'Add classifier' });
+    await gate.arrived;
+    expect(add).toHaveAttribute('aria-disabled', 'true');
+    expect(add).toHaveAccessibleDescription('Available once the classifier list has loaded.');
+    await user.click(add);
+    expect(screen.queryByRole('form', { name: 'Add classifier' })).not.toBeInTheDocument();
+    await act(() => Promise.resolve(gate.release()));
+    await waitFor(() => expect(add).toHaveAttribute('aria-disabled', 'false'));
+    expect(add).not.toHaveAccessibleDescription();
+    await user.click(add);
+    const form = screen.getByRole('form', { name: 'Add classifier' });
+    await user.type(within(form).getByLabelText('Id'), 'fresh');
+    await user.type(within(form).getByLabelText('Display name'), 'Fresh');
+    await user.type(within(form).getByLabelText('Provider model id'), 'fresh-latest');
+    await user.type(within(form).getByLabelText('Endpoint'), 'http://127.0.0.1:8009');
+    await user.click(within(form).getByRole('button', { name: 'Save classifier' }));
+    await waitFor(() => expect(api.callsTo('PUT', '/classifier-models/fresh')).toHaveLength(1));
+    expect(api.callsTo('PUT', '/classifier-models/fresh')[0]!.headers.get('if-none-match')).toBe(
+      '*',
+    );
+  });
+
+  it('review: says why a new entry waits when the list is being refetched with an error', async () => {
+    const api = seeded();
+    const { queryClient } = renderApp('/settings', api);
+    const user = userEvent.setup();
+    await user.click(await within(region()).findByRole('button', { name: 'Add classifier' }));
+    const form = screen.getByRole('form', { name: 'Add classifier' });
+    await user.type(within(form).getByLabelText('Id'), 'fresh');
+    // The list fails to refresh while the form is open: the ids it holds may be out of date.
+    api.override('GET /classifier-models', () => problem(503, 'UNAVAILABLE'));
+    await act(() => queryClient.refetchQueries({ queryKey: keys.classifiers }));
+    await user.click(within(form).getByRole('button', { name: 'Save classifier' }));
+    expect(within(form).getByRole('alert')).toHaveTextContent(
+      'The classifier list has not loaded yet, so a new id cannot be checked. Save once it has loaded.',
+    );
+    expect(api.callsTo('PUT', /^\/classifier-models\//)).toHaveLength(0);
+  });
+
+  it('review: an id added elsewhere is refused by the server, explained, and named by the refreshed check', async () => {
+    const api = seeded();
+    renderApp('/settings', api);
+    const user = userEvent.setup();
+    await user.click(await within(region()).findByRole('button', { name: 'Add classifier' }));
+    const form = screen.getByRole('form', { name: 'Add classifier' });
+    await user.type(within(form).getByLabelText('Id'), 'late');
+    await user.type(within(form).getByLabelText('Display name'), 'Mine');
+    await user.type(within(form).getByLabelText('Provider model id'), 'mine-latest');
+    await user.type(within(form).getByLabelText('Endpoint'), 'http://127.0.0.1:9009');
+    // Another tab registers the same id after this list loaded.
+    api.classifiers.push(customClassifier({ id: 'late', displayName: 'Theirs' }));
+    await user.click(within(form).getByRole('button', { name: 'Save classifier' }));
+    expect(await within(form).findByText(/was added since the list loaded/)).toHaveTextContent(
+      'A classifier with this id was added since the list loaded, so nothing was saved. Choose another id, or cancel and edit that classifier.',
+    );
+    expect(api.classifiers.find((c) => c.id === 'late')).toMatchObject({
+      displayName: 'Theirs',
+      providerModel: 'late-latest',
+    });
+    // The list refreshed, so the id check now names the clash.
+    await within(region()).findByRole('switch', { name: 'Enable Theirs' });
+    await user.click(within(form).getByRole('button', { name: 'Save classifier' }));
+    expect(
+      within(form).getByText('A classifier with id late already exists; edit it instead.'),
+    ).toBeInTheDocument();
+    expect(api.callsTo('PUT', '/classifier-models/late')).toHaveLength(1);
+  });
+
+  it('review: an old save finishing after Cancel does not close the form opened since', async () => {
+    const api = seeded();
+    const gate = hold();
+    api.override('PUT /classifier-models/:id', async (call) => {
+      gate.arrive();
+      await gate.held;
+      return api.builtIn(call);
+    });
+    renderApp('/settings', api);
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: 'Edit classifier kev' }));
+    await user.click(screen.getByRole('button', { name: 'Save classifier' }));
+    await gate.arrived;
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+    await user.click(screen.getByRole('button', { name: 'Add classifier' }));
+    const form = screen.getByRole('form', { name: 'Add classifier' });
+    const id = within(form).getByLabelText('Id');
+    await user.type(id, 'typed');
+    await act(() => Promise.resolve(gate.release()));
+    await waitFor(() => expect(api.callsTo('GET', '/classifier-models').length).toBeGreaterThan(1));
+    expect(screen.getByRole('form', { name: 'Add classifier' })).toBe(form);
+    expect(id).toHaveValue('typed');
+    expect(id).toHaveFocus();
+  });
+
+  it('review: an edit saves to the entry it was opened for, whatever the id field is set to', async () => {
+    const api = seeded();
+    renderApp('/settings', api);
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: 'Edit classifier kev' }));
+    const form = screen.getByRole('form', { name: 'Edit classifier kev' });
+    // A script (or an extension) changes the read-only input.
+    fireEvent.change(within(form).getByLabelText('Id'), { target: { value: 'zeta' } });
+    expect(within(form).getByLabelText('Id')).toHaveValue('kev');
+    await user.click(within(form).getByRole('button', { name: 'Save classifier' }));
+    await waitFor(() => expect(api.callsTo('PUT', '/classifier-models/kev')).toHaveLength(1));
+    expect(api.callsTo('PUT', '/classifier-models/zeta')).toHaveLength(0);
+    expect(
+      api.callsTo('PUT', '/classifier-models/kev')[0]!.headers.get('if-none-match'),
+    ).toBeNull();
+    expect(api.classifiers.find((c) => c.id === 'zeta')).toMatchObject({ primitives: ['score'] });
+  });
+
+  it('review: catalog and secret writes mark the editor’s checks of saved drafts stale', async () => {
+    const api = seeded();
+    const { queryClient } = renderApp('/settings', api);
+    const user = userEvent.setup();
+    const key = keys.validation('loop', 3, '[]');
+    const stale = () => queryClient.getQueryState(key)?.isInvalidated;
+    const reset = () => queryClient.setQueryData(key, []);
+    reset();
+    // A toggle.
+    const zeta = await screen.findByRole('switch', { name: 'Enable Zeta scorer' });
+    await user.click(zeta);
+    await waitFor(() => expect(stale()).toBe(true));
+    // Setting a secret.
+    reset();
+    expect(stale()).toBe(false);
+    await user.type(screen.getByLabelText('Name'), 'new-key');
+    await user.type(screen.getByLabelText('Value'), 'fixture');
+    await user.click(screen.getByRole('button', { name: 'Set secret' }));
+    await waitFor(() => expect(stale()).toBe(true));
+    // Deleting one.
+    reset();
+    await user.click(screen.getByRole('button', { name: 'Delete secret new-key' }));
+    await user.click(screen.getByRole('button', { name: 'Confirm delete new-key' }));
+    await waitFor(() => expect(stale()).toBe(true));
+    // Deleting a classifier.
+    reset();
+    await user.click(screen.getByRole('button', { name: 'Delete classifier zeta' }));
+    await user.click(screen.getByRole('button', { name: 'Confirm delete zeta' }));
+    await waitFor(() => expect(stale()).toBe(true));
   });
 
   it('opens only the Add form when a classifier has the id new', async () => {

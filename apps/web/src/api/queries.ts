@@ -10,7 +10,8 @@ import {
   system,
   type ListRunsQuery,
 } from '@graphgoblin/api-client';
-import { useQuery } from '@tanstack/react-query';
+import type { ClassifierModelSummary } from '@graphgoblin/contracts';
+import { useQuery, type QueryClient } from '@tanstack/react-query';
 import { useApi } from './context.js';
 
 /** Query keys, so mutations can invalidate exactly what they change. */
@@ -19,6 +20,13 @@ export const keys = {
   loop: (id: string) => ['loops', id] as const,
   /** Under the loop's key, so invalidating the loop (after a publish) refetches them too. */
   versions: (id: string) => ['loops', id, 'versions'] as const,
+  /**
+   * The API's checks of a saved draft (`POST /loops/{id}/validate`), for one saved revision and
+   * one state of the classifier catalog (`classifierFingerprint`): the classifier checks read the
+   * catalog and its secrets, which change without a draft edit.
+   */
+  validation: (id: string, revision: number, classifiers: string) =>
+    ['loops', id, 'validate', revision, classifiers] as const,
   runs: (query: ListRunsQuery = {}) => ['runs', 'list', query] as const,
   run: (id: string) => ['runs', 'one', id] as const,
   thread: (id: string) => ['runs', 'thread', id] as const,
@@ -80,6 +88,43 @@ export function useModelCatalog() {
 export function useClassifierModels() {
   const client = useApi();
   return useQuery({ queryKey: keys.classifiers, queryFn: () => classifierModels.list(client) });
+}
+
+/**
+ * What the API's classifier checks read from the catalog, as a string for a query key: each
+ * entry's id, display name (in the messages), capabilities, enabled and configured state, and the
+ * reason it is not configured. A refetch that finds the same catalog gives the same string, so it
+ * does not run the checks again; any change the checks would report gives a new one.
+ */
+export function classifierFingerprint(entries: readonly ClassifierModelSummary[] | undefined) {
+  if (!entries) return '';
+  return JSON.stringify(
+    entries.map((e) => [
+      e.id,
+      e.displayName,
+      e.primitives,
+      e.enabled,
+      e.configured,
+      e.configurationReason ?? '',
+    ]),
+  );
+}
+
+/**
+ * After a classifier or secret write: refetch the classifier summaries, and mark the editor's API
+ * checks of saved drafts stale, since their classifier warnings and errors follow the catalog and
+ * its secrets. The checks are not refetched here: one running now would store the new server
+ * state under the old catalog's key. The summaries' new fingerprint (`keys.validation`) runs them
+ * under the new key, and an old key coming back is checked again rather than trusted.
+ */
+export function refreshClassifierState(queryClient: QueryClient): Promise<unknown> {
+  return Promise.all([
+    queryClient.invalidateQueries({
+      predicate: ({ queryKey }) => queryKey[0] === 'loops' && queryKey[2] === 'validate',
+      refetchType: 'none',
+    }),
+    queryClient.invalidateQueries({ queryKey: keys.classifiers }),
+  ]);
 }
 
 export function useSecrets() {

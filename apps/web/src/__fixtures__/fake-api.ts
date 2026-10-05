@@ -8,7 +8,9 @@ import type {
   ClassifierModelEntry,
   ClassifierModelSummary,
   ContextThread,
+  LoopDefinition,
   LoopDefinitionInput,
+  LoopIssue,
   LoopRecord,
   LoopVersionRecord,
   RunEvent,
@@ -270,6 +272,30 @@ export class FakeApi {
     this.streams.delete(runId);
   }
 
+  /**
+   * The API's classifier checks, in part: a decision whose strategy includes Jev and whose model
+   * (default `jev`) is missing from the catalog or disabled. Secret checks are left out, so the
+   * built-in without `jev-api-key` raises nothing here.
+   */
+  classifierIssues(definition: LoopDefinition): LoopIssue[] {
+    return definition.nodes.flatMap((node): LoopIssue[] => {
+      if (node.kind !== 'decision' || !node.config.strategy.includes('jev')) return [];
+      const id = node.config.jev?.model ?? 'jev';
+      const entry = this.classifiers.find((c) => c.id === id);
+      const issue = (code: string, severity: 'error' | 'warning', message: string): LoopIssue => ({
+        code,
+        severity,
+        nodeId: node.id,
+        path: 'config.jev.model',
+        message: `Decision '${node.label}' (${node.id}), classifier '${entry?.displayName ?? id}' (${id}): ${message}`,
+      });
+      if (!entry) return [issue('CLASSIFIER_MODEL_NOT_FOUND', 'error', 'model not found.')];
+      if (!entry.enabled)
+        return [issue('CLASSIFIER_MODEL_DISABLED', 'warning', 'model is disabled.')];
+      return [];
+    });
+  }
+
   /** An entry as GET reports it: configured unless its secret is not in `secretList`. */
   classifierSummary(entry: ClassifierModelEntry): ClassifierModelSummary {
     const missing =
@@ -437,7 +463,11 @@ export class FakeApi {
         );
         if (!parsed.success)
           return problem(400, 'VALIDATION_FAILED', 'the request did not match the schema');
-        const issues = [...validateLoop(parsed.data), ...this.serverOnlyIssues];
+        const issues = [
+          ...validateLoop(parsed.data),
+          ...this.serverOnlyIssues,
+          ...this.classifierIssues(parsed.data),
+        ];
         return json({ issues, publishable: !issues.some((i) => i.severity === 'error') });
       },
     ],
@@ -662,6 +692,8 @@ export class FakeApi {
             parsed.error.issues.map((i) => ({ path: `/${i.path.join('/')}`, message: i.message })),
           );
         const existing = this.classifiers.find((c) => c.id === classifierId);
+        if (existing && call.headers.get('if-none-match') === '*')
+          return problem(409, 'CLASSIFIER_EXISTS', `Classifier '${classifierId}' already exists`);
         const entry: ClassifierModelEntry = {
           id: classifierId!,
           ...parsed.data,

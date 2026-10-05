@@ -179,6 +179,7 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
       if (!fake) throw new Error(`no fake classifier at ${String(body['endpoint'])}`);
       return {
         requests: fake.requests.map((r) => ({
+          method: r.method,
           url: r.url,
           model: r.body.model,
           bearer: r.authorization !== undefined,

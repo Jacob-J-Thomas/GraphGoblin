@@ -3,7 +3,7 @@ import type { ClassifierModelSummary } from '@graphgoblin/contracts';
 import { useQueryClient } from '@tanstack/react-query';
 import { Fragment, useEffect, useId, useRef, useState } from 'react';
 import { useApi } from '../../api/context.js';
-import { keys, useClassifierModels } from '../../api/queries.js';
+import { keys, refreshClassifierState, useClassifierModels } from '../../api/queries.js';
 import { Icon } from '../../components/icons/index.js';
 import { QueryState } from '../../components/status.js';
 import {
@@ -121,7 +121,11 @@ export function ClassifierModelsSection() {
   const addButtonId = `${sectionId}-add`;
   const editButtonId = (id: string) => `${sectionId}-edit-${id}`;
   const heading = () => headingRef.current?.closest('h2') ?? null;
-  const refresh = () => queryClient.invalidateQueries({ queryKey: keys.classifiers });
+  // Catalog writes also refresh the editor's API checks, whose classifier issues read the catalog.
+  const refresh = () => refreshClassifierState(queryClient);
+  // Adding needs the current catalog: until it has loaded, a new id cannot be checked against it.
+  const catalogReady = query.isSuccess;
+  const addHintId = `${sectionId}-add-hint`;
 
   useEffect(() => {
     const id = focusTargetRef.current;
@@ -147,16 +151,28 @@ export function ClassifierModelsSection() {
       flush
       title={<span ref={headingRef}>Classifier models</span>}
       actions={
-        <Button
-          id={addButtonId}
-          size="sm"
-          variant="outline"
-          aria-expanded={editing === ADDING}
-          onClick={() => openForm(ADDING)}
-        >
-          <Icon name="plus" />
-          Add classifier
-        </Button>
+        <>
+          {/* aria-disabled, not disabled: it keeps its place in the Tab order and says why. */}
+          <Button
+            id={addButtonId}
+            size="sm"
+            variant="outline"
+            aria-expanded={editing === ADDING}
+            aria-disabled={!catalogReady}
+            aria-describedby={catalogReady ? undefined : addHintId}
+            onClick={() => {
+              if (catalogReady) openForm(ADDING);
+            }}
+          >
+            <Icon name="plus" />
+            Add classifier
+          </Button>
+          {catalogReady ? null : (
+            <span id={addHintId} className="sr-only">
+              Available once the classifier list has loaded.
+            </span>
+          )}
+        </>
       }
     >
       <div className="grid gap-1 border-b border-default px-5 py-3">
@@ -177,6 +193,7 @@ export function ClassifierModelsSection() {
         <div className="border-b border-default p-5">
           <ClassifierModelForm
             existingIds={existingIds}
+            catalogReady={catalogReady}
             onDone={(saved) => closeForm(saved ? editButtonId(saved.id) : addButtonId)}
           />
         </div>
@@ -312,6 +329,7 @@ export function ClassifierModelsSection() {
                           <ClassifierModelForm
                             initial={entry}
                             existingIds={existingIds}
+                            catalogReady={catalogReady}
                             onDone={() => closeForm(editButtonId(entry.id))}
                           />
                         </Td>

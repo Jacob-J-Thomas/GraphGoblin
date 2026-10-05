@@ -51,10 +51,18 @@ describe('classifier issue paths', () => {
     expect(picker).toHaveFocus();
   });
 
-  it('config.jev.model without Jev options focuses the button that adds them', () => {
+  it('config.jev.model without Jev options focuses the picker, which shows the default', () => {
     const root = body('decision', decision());
     expect(focusIssuePath(root, 'config.jev.model')).toBe(true);
-    expect(screen.getByRole('button', { name: 'Add jev' })).toHaveFocus();
+    const picker = within(screen.getByRole('group', { name: 'Jev' })).getByRole('combobox', {
+      name: 'Model',
+    });
+    expect(picker).toHaveFocus();
+    expect(picker).toHaveValue('');
+    // The block's own path finds the picker first too.
+    picker.blur();
+    expect(focusIssuePath(root, 'config.jev')).toBe(true);
+    expect(picker).toHaveFocus();
   });
 
   it('config.criteria.N.strategy focuses that exit criterion’s chosen strategy', () => {

@@ -20,6 +20,7 @@ async function instance(request: APIRequestContext): Promise<Instance> {
 }
 
 interface EndpointRequest {
+  method: string;
   url: string;
   model: string;
   bearer: boolean;
@@ -220,6 +221,14 @@ test('Settings registers, enables, edits, disables, and deletes a classifier fro
     primitives: ['choice'],
     provider: 'http',
   });
+  // Add creates only: a second create of the id is refused and changes nothing.
+  expect(await put.request().headerValue('if-none-match')).toBe('*');
+  const again = await request.put(`${target.url}/classifier-models/kev`, {
+    headers: { 'if-none-match': '*' },
+    data: { ...put.request().postDataJSON(), providerModel: 'replaced' },
+  });
+  expect(again.status()).toBe(409);
+  expect(await again.json()).toMatchObject({ code: 'CLASSIFIER_EXISTS' });
   const edit = section.getByRole('button', { name: 'Edit classifier kev' });
   await expect(edit).toBeFocused();
   const kev = section.getByRole('switch', { name: 'Enable Kev 4B' });
@@ -252,7 +261,10 @@ test('Settings registers, enables, edits, disables, and deletes a classifier fro
     (r) => r.request().method() === 'PUT' && r.url().endsWith('/classifier-models/kev'),
   );
   await page.keyboard.press('Enter');
-  expect((await edited).request().postDataJSON()).not.toHaveProperty('enabled');
+  const editRequest = (await edited).request();
+  expect(editRequest.postDataJSON()).not.toHaveProperty('enabled');
+  expect(editRequest.postDataJSON()).toMatchObject({ providerModel: 'kev-latest' });
+  expect(await editRequest.headerValue('if-none-match')).toBeNull();
   await expect(edit).toBeFocused();
   await expect(section.getByRole('switch', { name: 'Enable Kev local' })).toBeChecked();
 
@@ -303,11 +315,12 @@ test('a decision selects the classifier, publishes, and runs against its endpoin
     }),
   );
   await page.goto(`${target.url}/app/loops/${loopId}/edit`);
+  // The decision has no jev block: the picker shows the built-in default all the same.
   const editor = await openNode(page, 'pick');
-  await editor.getByRole('button', { name: 'Add jev' }).click();
   const picker = editor
     .getByRole('group', { name: 'Jev' })
     .getByRole('combobox', { name: 'Model' });
+  await expect(editor.getByRole('button', { name: 'Add jev options' })).toBeVisible();
   await expect(picker.locator('option:checked')).toHaveText('Jev (jev), the default (needs a key)');
   await expect(picker.getByRole('option')).toHaveText([
     'Jev (jev), the default (needs a key)',
@@ -340,7 +353,13 @@ test('a decision selects the classifier, publishes, and runs against its endpoin
   const made = events.find((e) => e.type === 'decision.made');
   expect(made).toMatchObject({ strategy: 'jev', classifierModel: 'kev', route: 'yes' });
   expect(await endpointRequests(request, target.endpoint)).toEqual([
-    { url: '/v1/systemone', model: 'kev-latest', bearer: false, labels: ['yes', 'no'] },
+    {
+      method: 'POST',
+      url: '/v1/systemone',
+      model: 'kev-latest',
+      bearer: false,
+      labels: ['yes', 'no'],
+    },
   ]);
 });
 
@@ -413,9 +432,16 @@ test('missing-key, disabled, and deleted classifiers warn or block, and runs fal
   );
   await loneIssues.screenshot({ path: testInfo.outputPath('classifier-issue-popover-dark.png') });
   await missing.click();
-  // No Jev options yet: focus lands on the button that adds them, next to the picker.
+  // No jev block: focus lands on the picker, which shows the built-in default and its problem.
   const loneEditor = page.getByRole('dialog', { name: 'Edit decision lone' });
-  await expect(loneEditor.getByRole('button', { name: 'Add jev' })).toBeFocused();
+  const lonePicker = loneEditor
+    .getByRole('group', { name: 'Jev' })
+    .getByRole('combobox', { name: 'Model' });
+  await expect(lonePicker).toBeFocused();
+  await expect(lonePicker.locator('option:checked')).toHaveText(
+    'Jev (jev), the default (needs a key)',
+  );
+  await expect(lonePicker).toHaveAccessibleDescription(/Jev \(jev\) needs a key/);
   await page.keyboard.press('Escape');
 
   // Deleted while a published loop refers to it: an error blocks publishing the draft, the
@@ -565,5 +591,20 @@ for (const theme of ['dark', 'light'] as const) {
     await reopened.screenshot({
       path: testInfo.outputPath(`classifier-picker-disabled-${theme}.png`),
     });
+
+    // A decision without Jev settings: the picker shows the built-in default above Add jev options.
+    const plainId = await createLoop(
+      request,
+      target.url,
+      decisionLoop('classifier picker default', {
+        strategy: ['jev', 'expression'],
+        expression: { jsonata: '"no"' },
+      }),
+    );
+    await page.goto(`${target.url}/app/loops/${plainId}/edit`);
+    const plain = (await openNode(page, 'pick')).getByRole('group', { name: 'Jev' });
+    await expect(plain.getByRole('combobox', { name: 'Model' })).toHaveValue('');
+    await expect(plain.getByRole('button', { name: 'Add jev options' })).toBeVisible();
+    await plain.screenshot({ path: testInfo.outputPath(`classifier-picker-default-${theme}.png`) });
   });
 }
