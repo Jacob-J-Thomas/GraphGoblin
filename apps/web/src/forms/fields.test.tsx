@@ -198,6 +198,27 @@ describe('form controls in the schema-driven form', () => {
     expect(descriptionOf(z.string().describe('Outer'))).toBe('Outer');
     expect(descriptionOf(z.string().describe('Inner').optional())).toBe('Inner');
     expect(descriptionOf(z.string())).toBeUndefined();
+    // A description in the middle of the wrapper chain, which neither the outer schema nor the
+    // base carries.
+    expect(descriptionOf(z.string().default('').describe('Help').optional())).toBe('Help');
+    expect(descriptionOf(z.string().describe('Base').default('').optional())).toBe('Base');
+    expect(
+      descriptionOf(
+        z
+          .string()
+          .transform((s) => s.length)
+          .describe('Piped'),
+      ),
+    ).toBe('Piped');
+    expect(
+      descriptionOf(
+        z
+          .string()
+          .describe('Input')
+          .transform((s) => s.length),
+      ),
+    ).toBe('Input');
+    expect(descriptionOf(z.string().default('').optional())).toBeUndefined();
   });
 
   it('keeps Row usable with plain children and no control id', () => {

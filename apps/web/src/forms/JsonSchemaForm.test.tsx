@@ -41,7 +41,12 @@ describe('JsonSchemaForm', () => {
     );
     expect(screen.getByText('How many')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Go' }));
-    expect(screen.getByRole('alert')).toHaveTextContent(/count/);
+    // The problem shows beside its field, under the field's title, and describes its control.
+    expect(screen.getByRole('alert')).toHaveTextContent('Count is required');
+    expect(screen.getByLabelText('Count')).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByLabelText('Count')).toHaveAccessibleDescription(
+      'How many Count is required',
+    );
     expect(submit).not.toHaveBeenCalled();
 
     await user.type(screen.getByLabelText('Count'), '3');
@@ -212,6 +217,123 @@ describe('JsonSchemaForm', () => {
       />,
     );
     expect(screen.queryByText(/Required fields are marked/)).toBeNull();
+  });
+
+  it('gives each field its own ids, whatever its property is called', async () => {
+    const user = userEvent.setup();
+    const submit = vi.fn();
+    render(
+      <JsonSchemaForm
+        schema={{
+          type: 'object',
+          properties: {
+            name: { type: 'string', description: 'Who asked' },
+            'name-help': { type: 'string' },
+            'review status': { type: 'string', description: 'Where the review stands' },
+            // A computed key: an own property named __proto__, as JSON.parse would make it.
+            ['__proto__']: { type: 'string' },
+          },
+        }}
+        submitLabel="Go"
+        onSubmit={submit}
+      />,
+    );
+    const name = screen.getByRole('textbox', { name: 'name' });
+    const nameHelp = screen.getByRole('textbox', { name: 'name-help' });
+    const review = screen.getByRole('textbox', { name: 'review status' });
+    expect(name).toHaveAccessibleDescription('Who asked');
+    expect(nameHelp).not.toHaveAttribute('aria-describedby');
+    expect(review).toHaveAccessibleDescription('Where the review stands');
+    const ids = [...document.querySelectorAll('[id]')].map((el) => el.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    for (const id of [name.id, nameHelp.id, review.id]) expect(id).not.toMatch(/name|review/);
+    await user.type(name, 'Ada');
+    await user.type(nameHelp, 'b');
+    await user.type(review, 'open');
+    await user.type(screen.getByRole('textbox', { name: '__proto__' }), 'own');
+    await user.click(screen.getByRole('button', { name: 'Go' }));
+    const sent = submit.mock.calls.at(-1)?.[0] as Record<string, unknown>;
+    // Every property is sent as an own property, __proto__ included.
+    expect(Object.entries(sent)).toEqual([
+      ['name', 'Ada'],
+      ['name-help', 'b'],
+      ['review status', 'open'],
+      ['__proto__', 'own'],
+    ]);
+    expect(Object.getPrototypeOf(sent)).toBe(Object.prototype);
+  });
+
+  it('puts each problem beside its field: required boolean, text, enum, and the value as a whole', async () => {
+    const user = userEvent.setup();
+    const submit = vi.fn();
+    render(
+      <JsonSchemaForm
+        schema={{
+          type: 'object',
+          required: ['approved', 'risk'],
+          minProperties: 3,
+          properties: {
+            approved: { type: 'boolean', title: 'Approval', description: 'Ship it?' },
+            reason: { type: 'string', title: 'Reason', minLength: 3 },
+            risk: { enum: ['low', 'high'], title: 'Risk' },
+          },
+        }}
+        submitLabel="Go"
+        onSubmit={submit}
+      />,
+    );
+    await user.type(screen.getByLabelText('Reason'), 'ab');
+    await user.click(screen.getByRole('button', { name: 'Go' }));
+    expect(submit).not.toHaveBeenCalled();
+    const approval = screen.getByRole('radiogroup', { name: 'Approval' });
+    expect(approval).toHaveAttribute('aria-invalid', 'true');
+    expect(approval).toHaveAccessibleDescription('Ship it? Approval is required');
+    const reason = screen.getByLabelText('Reason');
+    expect(reason).toHaveAttribute('aria-invalid', 'true');
+    expect(reason).toHaveAccessibleDescription('Reason must NOT have fewer than 3 characters');
+    const risk = screen.getByRole('radiogroup', { name: 'Risk' });
+    expect(risk).toHaveAttribute('aria-invalid', 'true');
+    expect(risk).toHaveAccessibleDescription('Risk is required');
+    // Each field's problem is announced; only the problem with no field goes to the summary,
+    // and no message speaks in JSON Pointers about a field.
+    const alerts = screen.getAllByRole('alert').map((alert) => alert.textContent);
+    expect(alerts).toEqual([
+      'Approval is required',
+      'Reason must NOT have fewer than 3 characters',
+      'Risk is required',
+      '/ must NOT have fewer than 3 properties',
+    ]);
+    expect(alerts.join(' ')).not.toMatch(/required property/);
+
+    // Editing a field clears its own problem only.
+    await user.click(radio('Approval', 'Yes'));
+    expect(approval).not.toHaveAttribute('aria-invalid');
+    expect(approval).toHaveAccessibleDescription('Ship it?');
+    expect(reason).toHaveAttribute('aria-invalid', 'true');
+    await user.type(reason, 'c');
+    expect(reason).not.toHaveAttribute('aria-invalid');
+    expect(reason).not.toHaveAttribute('aria-describedby');
+    await user.click(radio('Risk', 'high'));
+    await user.click(screen.getByRole('button', { name: 'Go' }));
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(submit).toHaveBeenLastCalledWith({ approved: true, reason: 'abc', risk: 'high' });
+  });
+
+  it('links the raw JSON editor to its problems, whether the text does not parse or does not fit', async () => {
+    const user = userEvent.setup();
+    render(<JsonSchemaForm schema={{ type: 'number' }} submitLabel="Send" onSubmit={vi.fn()} />);
+    const input = screen.getByLabelText('Input (JSON)');
+    await user.type(input, '{{');
+    await user.click(screen.getByRole('button', { name: 'Send' }));
+    expect(input).toHaveAttribute('aria-invalid', 'true');
+    expect(input).toHaveAccessibleDescription(/^Invalid JSON/);
+    await user.clear(input);
+    expect(input).not.toHaveAttribute('aria-invalid');
+    await user.type(input, '"x"');
+    await user.click(screen.getByRole('button', { name: 'Send' }));
+    expect(input).toHaveAttribute('aria-invalid', 'true');
+    expect(input).toHaveAccessibleDescription('/ must be number');
+    expect(screen.getByRole('alert')).toHaveTextContent('/ must be number');
   });
 
   it('checks an empty input against the schema as the API will (as null)', async () => {

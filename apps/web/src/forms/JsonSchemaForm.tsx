@@ -1,5 +1,5 @@
 import type { JsonSchema } from '@graphgoblin/contracts';
-import { validateJson } from '@graphgoblin/domain';
+import { validateJson, type SchemaIssue } from '@graphgoblin/domain';
 import { useId, useState, type FormEvent, type ReactNode } from 'react';
 import {
   Button,
@@ -52,19 +52,73 @@ function enumKey(option: unknown): string {
   return JSON.stringify(option) ?? 'null';
 }
 
-function objectProperties(
-  schema: JsonSchema | undefined,
-): Record<string, PropertySchema> | undefined {
+/** The schema's properties, in order; property names are data and may be any string. */
+function objectProperties(schema: JsonSchema | undefined): [string, PropertySchema][] | undefined {
   if (!schema || schema['type'] !== 'object') return undefined;
   const props = schema['properties'];
   return typeof props === 'object' && props !== null
-    ? (props as Record<string, PropertySchema>)
+    ? Object.entries(props as Record<string, PropertySchema>)
     : undefined;
 }
 
 function requiredProperties(schema: JsonSchema | undefined): Set<string> {
   const required = schema?.['required'];
   return new Set(Array.isArray(required) ? required.filter((k) => typeof k === 'string') : []);
+}
+
+/** The name a property shows: its title, else its key. */
+function titleOf(name: string, prop: PropertySchema): string {
+  return prop.title ?? name;
+}
+
+/** What failed, by property (shown and announced beside its field), and for the value as a whole. */
+interface Problems {
+  fields: ReadonlyMap<string, string[]>;
+  form: string[];
+}
+
+const NO_PROBLEMS: Problems = { fields: new Map(), form: [] };
+
+/**
+ * A validation issue as a message beside the property it names: "Approval is required", "Issue
+ * limit must be integer", "Labels /1 must be string". Issues about no form property (the value as
+ * a whole, or an additional property) stay with the form.
+ */
+function placeIssues(
+  issues: SchemaIssue[],
+  properties: [string, PropertySchema][],
+  messageOf: (issue: SchemaIssue) => string,
+): Problems {
+  const fields = new Map<string, string[]>();
+  const form: string[] = [];
+  for (const issue of issues) {
+    const [name, ...rest] = issue.path;
+    const prop = name === undefined ? undefined : properties.find(([key]) => key === name)?.[1];
+    if (name === undefined || prop === undefined) {
+      form.push(messageOf(issue));
+      continue;
+    }
+    const where = rest.length > 0 ? ` /${rest.join('/')}` : '';
+    fields.set(name, [
+      ...(fields.get(name) ?? []),
+      `${titleOf(name, prop)}${where} ${issue.message}`,
+    ]);
+  }
+  return { fields, form };
+}
+
+/** A field's error messages, linked to its control by `id` and announced when they appear. */
+function FieldErrors({ id, messages }: { id: string; messages: string[] }) {
+  if (messages.length === 0) return null;
+  return (
+    <div id={id} role="alert" className="grid gap-0.5">
+      {messages.map((message, index) => (
+        <HelpText key={index} tone="bad">
+          {message}
+        </HelpText>
+      ))}
+    </div>
+  );
 }
 
 /** The ARIA that links a property's control to its help and error text. */
@@ -100,6 +154,7 @@ function EnumChoice({
 }) {
   const gone = value !== '' && !options.some((option) => enumKey(option) === value);
   const describedBy = cn(control['aria-describedby'], gone && goneId) || undefined;
+  const invalid = gone || control['aria-invalid'] === true;
   const message = gone ? (
     <HelpText id={goneId} tone="bad">
       The choice {value} is no longer offered; choose again.
@@ -115,7 +170,7 @@ function EnumChoice({
       value: value === '' || gone ? undefined : value,
       required,
       describedBy,
-      invalid: gone,
+      invalid,
     };
     return (
       <>
@@ -140,7 +195,7 @@ function EnumChoice({
       <Select
         {...control}
         value={gone ? '' : value}
-        aria-invalid={gone || undefined}
+        aria-invalid={invalid || undefined}
         aria-describedby={describedBy}
         onChange={(e) => onChange(e.target.value)}
       >
@@ -157,26 +212,28 @@ function EnumChoice({
 }
 
 /**
- * One property's field: label (or legend), control, help, and any error, linked by id. Help is the
- * property's description, then its default when a placeholder cannot show it.
+ * One property's field: label (or legend), control, help, and its errors, linked by ids generated
+ * here (the property's name is data, used only to look its value up). Help is the property's
+ * description, then its default when a placeholder cannot show it.
  */
 function PropertyField({
-  id,
   name,
   prop,
   required,
   value,
+  errors,
   onChange,
 }: {
-  id: string;
   name: string;
   prop: PropertySchema;
   required: boolean;
   value: string | boolean | undefined;
+  errors: string[];
   onChange: (value: string | boolean | undefined) => void;
 }) {
+  const id = useId();
   const type = propertyType(prop);
-  const label = prop.title ?? name;
+  const label = titleOf(name, prop);
   const hasDefault = prop.default !== undefined;
   const placeholder =
     hasDefault && (type === 'string' || type === 'number') ? String(prop.default) : undefined;
@@ -187,9 +244,13 @@ function PropertyField({
     .filter(Boolean)
     .join(' · ');
   const helpId = `${id}-help`;
+  const errorId = `${id}-error`;
+  const invalid = errors.length > 0;
+  const describedBy = cn(help && helpId, invalid && errorId);
   const control: Control = {
     id,
-    ...(help ? { 'aria-describedby': helpId } : {}),
+    ...(describedBy ? { 'aria-describedby': describedBy } : {}),
+    ...(invalid ? { 'aria-invalid': true as const } : {}),
     ...(required ? { 'aria-required': true as const } : {}),
   };
   let field: ReactNode;
@@ -203,6 +264,7 @@ function PropertyField({
       value: typeof value === 'boolean' ? String(value) : undefined,
       required,
       describedBy: control['aria-describedby'],
+      invalid,
     };
     const choose = (next: string | undefined) =>
       onChange(next === undefined ? undefined : next === 'true');
@@ -251,6 +313,7 @@ function PropertyField({
     <FieldGroup className="max-w-[440px]">
       {field}
       {help ? <HelpText id={helpId}>{help}</HelpText> : null}
+      <FieldErrors id={errorId} messages={errors} />
     </FieldGroup>
   );
 }
@@ -265,6 +328,9 @@ function PropertyField({
  * kept by value and sent as the value it stands for (a number stays a number). A field left unset
  * is not sent. The value is checked with `domain`'s validator before `onSubmit`, as the API will
  * check it: an empty JSON editor as `null`, which is what the API validates when no input is sent.
+ * Each problem shows beside its field (linked to the control, which is marked invalid, and
+ * announced); a problem with the value as a whole shows under the form, or under the JSON editor.
+ * Editing a field clears its problems.
  */
 export function JsonSchemaForm({
   schema,
@@ -277,93 +343,129 @@ export function JsonSchemaForm({
   onSubmit: (value: unknown) => void;
   busy?: boolean;
 }) {
-  const id = useId();
+  const rawId = useId();
   const properties = objectProperties(schema);
   const required = requiredProperties(schema);
-  const [values, setValues] = useState<Record<string, string | boolean>>({});
+  const [values, setValues] = useState<ReadonlyMap<string, string | boolean>>(() => new Map());
   const [raw, setRaw] = useState('');
-  const [errors, setErrors] = useState<string[]>([]);
+  const [problems, setProblems] = useState<Problems>(NO_PROBLEMS);
 
-  const set = (key: string, value: string | boolean | undefined) =>
+  const set = (key: string, value: string | boolean | undefined) => {
     setValues((current) => {
-      const { [key]: _previous, ...rest } = current;
-      return value === undefined ? rest : { ...rest, [key]: value };
+      const next = new Map(current);
+      if (value === undefined) next.delete(key);
+      else next.set(key, value);
+      return next;
     });
+    setProblems((current) => {
+      if (!current.fields.has(key)) return current;
+      const fields = new Map(current.fields);
+      fields.delete(key);
+      return { ...current, fields };
+    });
+  };
 
-  const collect = (): { ok: true; value: unknown } | { ok: false; errors: string[] } => {
-    if (!properties) {
-      if (raw.trim() === '') return { ok: true, value: undefined };
-      const parsed = parseJson(raw);
-      return parsed.ok ? parsed : { ok: false, errors: [`Invalid JSON: ${parsed.error}`] };
-    }
-    const out: Record<string, unknown> = {};
-    for (const [key, prop] of Object.entries(properties)) {
-      const value = values[key];
+  /**
+   * The value the fields stand for, and what is wrong with a field before the schema is asked (an
+   * enum choice no longer offered, JSON that does not parse): those fields are left out.
+   */
+  const collectFields = (props: [string, PropertySchema][]) => {
+    // Entries, then an object: a property named "__proto__" stays an own property.
+    const out: [string, unknown][] = [];
+    const fields = new Map<string, string[]>();
+    for (const [key, prop] of props) {
+      const value = values.get(key);
       if (value === undefined || value === '') continue;
       const type = propertyType(prop);
-      if (type === 'number') out[key] = Number(value);
+      if (type === 'number') out.push([key, Number(value)]);
       // Enum controls hold the chosen member's JSON text: the member comes back with its type. A
       // choice the schema no longer offers is refused, never silently left out.
       else if (type === 'enum') {
         const member = (prop.enum ?? []).find((option) => enumKey(option) === value);
         if (member === undefined)
-          return {
-            ok: false,
-            errors: [`${prop.title ?? key}: ${String(value)} is no longer offered`],
-          };
-        out[key] = member;
+          fields.set(key, [`${titleOf(key, prop)}: ${String(value)} is no longer offered`]);
+        else out.push([key, member]);
       } else if (type === 'json') {
         const parsed = parseJson(String(value));
-        if (!parsed.ok) return { ok: false, errors: [`${key}: invalid JSON`] };
-        out[key] = parsed.value;
-      } else out[key] = value;
+        if (parsed.ok) out.push([key, parsed.value]);
+        else fields.set(key, [`${titleOf(key, prop)}: invalid JSON (${parsed.error})`]);
+      } else out.push([key, value]);
     }
-    return { ok: true, value: out };
+    return { value: Object.fromEntries(out), fields };
   };
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    const collected = collect();
-    if (!collected.ok) return setErrors(collected.errors);
-    if (schema) {
+    let value: unknown;
+    let next: Problems;
+    if (properties && schema) {
+      const collected = collectFields(properties);
+      value = collected.value;
+      const result = validateJson(schema, value);
+      const placed = result.ok
+        ? NO_PROBLEMS
+        : placeIssues(
+            result.issues,
+            properties,
+            (issue) => `/${issue.path.join('/')} ${issue.message}`,
+          );
+      // A field's own problem (text that does not parse, a choice no longer offered) is what to
+      // fix first; the schema's view of the value left out would only repeat it.
+      const fields = new Map(placed.fields);
+      for (const [key, messages] of collected.fields) fields.set(key, messages);
+      next = { fields, form: placed.form };
+    } else {
+      if (raw.trim() !== '') {
+        const parsed = parseJson(raw);
+        if (!parsed.ok)
+          return setProblems({ fields: new Map(), form: [`Invalid JSON: ${parsed.error}`] });
+        value = parsed.value;
+      }
       // No input at all reaches the API's check as null.
-      const result = validateJson(schema, collected.value ?? null);
-      if (!result.ok) return setErrors(result.errors);
+      const result = schema ? validateJson(schema, value ?? null) : undefined;
+      next = { fields: new Map(), form: result?.errors ?? [] };
     }
-    setErrors([]);
-    onSubmit(collected.value);
+    setProblems(next);
+    if (next.fields.size === 0 && next.form.length === 0) onSubmit(value);
   };
 
-  const anyRequired = properties ? Object.keys(properties).some((key) => required.has(key)) : false;
+  const anyRequired = properties ? properties.some(([key]) => required.has(key)) : false;
+  const rawInvalid = !properties && problems.form.length > 0;
   return (
     <form onSubmit={submit} noValidate aria-label={submitLabel} className="grid gap-field">
       {anyRequired ? <RequiredNote /> : null}
       {properties ? (
-        Object.entries(properties).map(([key, prop]) => (
+        properties.map(([key, prop]) => (
           <PropertyField
             key={key}
-            id={`${id}-${key}`}
             name={key}
             prop={prop}
             required={required.has(key)}
-            value={values[key]}
+            value={values.get(key)}
+            errors={problems.fields.get(key) ?? []}
             onChange={(value) => set(key, value)}
           />
         ))
       ) : (
         <FieldGroup className="max-w-[440px]">
-          <Label htmlFor={`${id}-json`}>Input (JSON)</Label>
+          <Label htmlFor={rawId}>Input (JSON)</Label>
           <Textarea
-            id={`${id}-json`}
+            id={rawId}
             value={raw}
             placeholder="{}"
-            onChange={(e) => setRaw(e.target.value)}
+            aria-invalid={rawInvalid || undefined}
+            aria-describedby={rawInvalid ? `${rawId}-error` : undefined}
+            onChange={(e) => {
+              setRaw(e.target.value);
+              setProblems(NO_PROBLEMS);
+            }}
           />
+          <FieldErrors id={`${rawId}-error`} messages={problems.form} />
         </FieldGroup>
       )}
-      {errors.length > 0 ? (
+      {properties && problems.form.length > 0 ? (
         <ul role="alert" className="list-disc pl-4 text-xs font-medium text-status-bad-fg">
-          {errors.map((e, i) => (
+          {problems.form.map((e, i) => (
             <li key={i}>{e}</li>
           ))}
         </ul>

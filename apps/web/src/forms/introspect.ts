@@ -82,11 +82,19 @@ export function unwrap(schema: Schema): Unwrapped {
 }
 
 /**
- * A schema's `.describe()` text: on the schema itself, else on the schema under its optional,
- * default, and similar wrappers. Undefined when neither has one.
+ * A schema's `.describe()` text: the outermost one along its wrapper chain (optional, default,
+ * pipe input, and the like, down to the base), since `.describe()` may sit at any layer, as in
+ * `z.string().default('').describe('Help').optional()`. Undefined when no layer has one.
  */
 export function descriptionOf(schema: Schema): string | undefined {
-  return schema.description ?? unwrap(schema).base.description;
+  let current = schema;
+  for (;;) {
+    if (current.description !== undefined) return current.description;
+    const def = defOf(current);
+    if (def.type === 'pipe' && def.in) current = def.in;
+    else if (WRAPPERS.has(def.type) && def.innerType) current = def.innerType;
+    else return undefined;
+  }
 }
 
 export type StringFormat = 'text' | 'template' | 'expression';
