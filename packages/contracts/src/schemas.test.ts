@@ -66,11 +66,30 @@ describe('common schemas', () => {
 });
 
 describe('loop definition', () => {
+  it('rejects removed loop-default fields as unknown keys', () => {
+    const result = LoopDefinitionSchema.safeParse({
+      ...minimalLoop(),
+      settings: { defaults: { harness: 'codex' } },
+    });
+    expect(result.success).toBe(false);
+    if (!result.success)
+      expect(result.error.issues).toContainEqual(
+        expect.objectContaining({
+          code: 'unrecognized_keys',
+          path: ['settings', 'defaults'],
+          keys: ['harness'],
+        }),
+      );
+    expect(InferenceConfigSchema.parse({ prompt: { template: 'Hello' } }).harness).toBe('codex');
+    expect(
+      InferenceConfigSchema.safeParse({ harness: 'wrong', prompt: { template: 'Hello' } }).success,
+    ).toBe(false);
+  });
   it('parses the minimal loop and applies defaults', () => {
     const loop = LoopDefinitionSchema.parse(minimalLoop());
     expect(loop.settings.maxIterations).toBe(10);
     expect(loop.settings.workingDirectory).toEqual({ kind: 'temp' });
-    expect(loop.settings.defaults.harness).toBe('codex');
+    expect(loop.settings.defaults).not.toHaveProperty('harness');
     const exit = loop.nodes.find((n) => n.kind === 'exit');
     expect(exit?.kind === 'exit' && exit.config.return.channels).toEqual([{ kind: 'caller' }]);
     expect(loop.edges[0]?.to.port).toBe('in');

@@ -14,7 +14,13 @@ import type {
 } from '@graphgoblin/contracts';
 import { LoopDefinitionSchema } from '@graphgoblin/contracts';
 import { fakeUlid, sampleThread } from '@graphgoblin/contracts/testing';
-import { stableHash, validateLoop } from '@graphgoblin/domain';
+import {
+  exportLoop,
+  importLoop,
+  LoopImportError,
+  stableHash,
+  validateLoop,
+} from '@graphgoblin/domain';
 
 export const TS = '2026-10-02T12:00:00.000Z';
 
@@ -302,7 +308,11 @@ export class FakeApi {
         const loop = this.addLoop(def);
         const entry = this.loops.get(loop.id)!;
         return json(
-          { loop, draft: entry.draft, issues: validateLoop(LoopDefinitionSchema.parse(def)) },
+          {
+            loop,
+            draft: entry.draft,
+            issues: validateLoop(LoopDefinitionSchema.parse(def)),
+          },
           201,
         );
       },
@@ -310,15 +320,17 @@ export class FakeApi {
     [
       'POST /loops/import',
       (call) => {
-        const body = call.body as { loop?: LoopDefinitionInput };
-        if (!body.loop)
-          return problem(
-            400,
-            'LOOP_IMPORT_ERROR',
-            'document is neither a loop export nor a loop definition',
+        try {
+          const imported = importLoop(call.body);
+          const loop = this.addLoop(imported.definition);
+          return json(
+            { loop, draft: this.loops.get(loop.id)!.draft, issues: imported.issues },
+            201,
           );
-        const loop = this.addLoop(body.loop);
-        return json({ loop, draft: this.loops.get(loop.id)!.draft, issues: [] }, 201);
+        } catch (error) {
+          if (!(error instanceof LoopImportError)) throw error;
+          return problem(400, error.code, error.message, error.details);
+        }
       },
     ],
     [
@@ -415,12 +427,7 @@ export class FakeApi {
         const entry = this.loops.get(loopId!);
         const version = call.search.get('draft') === 'true' ? entry?.draft : entry?.current;
         if (!version) return problem(404, 'VERSION_NOT_FOUND', 'the loop has no published version');
-        return json({
-          format: 'graphgoblin-loop',
-          formatVersion: 1,
-          exportedAt: TS,
-          loop: version.definition,
-        });
+        return json(exportLoop(version.definition, TS));
       },
     ],
     [
