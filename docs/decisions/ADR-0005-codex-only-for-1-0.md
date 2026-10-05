@@ -12,6 +12,8 @@ Ship 1.0 with Codex as the only `HarnessPort` implementation. Keep the port harn
 
 ## Consequences
 
+Post-1.0 classifier extension: [ADR-0021](ADR-0021-classifier-model-catalog.md) adds a separate classifier catalog and owner-hosted HTTP Choice endpoints, with built-in Jev still on its SDK. This does not change the historical Codex-only harness decision or introduce a LiteLLM harness.
+
 - One adapter to get right, one set of fixtures, one model catalog.
 - Every model call in 1.0, including decisions and schema repair, runs through Codex on the subscription, with Jev as the only API-key service.
 - The port must not leak Codex concepts; the Claude research doc lists the differences the port already accommodates.

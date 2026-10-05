@@ -92,7 +92,6 @@ describe('SettingsPage', () => {
         }
       } finally {
         await act(() => Promise.resolve(finish()));
-        act(() => useApiKeyStore.getState().forget());
       }
     },
   );
@@ -430,19 +429,15 @@ describe('SettingsPage', () => {
 
   it('warns about browser access only when revoking the current key', async () => {
     useApiKeyStore.getState().save('gg_browser_key');
-    try {
-      const api = seeded();
-      api.apiKeyList[0]!.current = true;
-      renderApp('/settings', api);
-      const user = userEvent.setup();
-      await user.click(await screen.findByRole('button', { name: 'Revoke mcp' }));
-      expect(screen.getByText('This browser')).toBeInTheDocument();
-      expect(screen.getByRole('alertdialog')).toHaveTextContent(
-        'Revoking this key will sign this browser out and show the API key panel. Enter another valid key to continue.',
-      );
-      await user.click(screen.getByRole('button', { name: 'Keep' }));
-    } finally {
-      useApiKeyStore.getState().forget();
-    }
+    const api = seeded();
+    api.apiKeyList[0]!.current = true;
+    renderApp('/settings', api);
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: 'Revoke mcp' }));
+    expect(screen.getByText('This browser')).toBeInTheDocument();
+    expect(screen.getByRole('alertdialog')).toHaveTextContent(
+      'Revoking this key will sign this browser out and show the API key panel. Enter another valid key to continue.',
+    );
+    await user.click(screen.getByRole('button', { name: 'Keep' }));
   });
 });

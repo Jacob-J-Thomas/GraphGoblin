@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ClassifierModelIdSchema } from './classifiers.js';
 import {
   EffortSchema,
   ExpressionSchema,
@@ -192,11 +193,16 @@ export const DecisionConfigSchema = z
     jev: z
       .strictObject({
         primitive: z.literal('choice').default('choice'),
+        model: ClassifierModelIdSchema.optional().meta(
+          field('Classifier catalog id; built-in `jev` when omitted.', { control: 'classifier' }),
+        ),
         minConfidence: z.number().min(0).max(1).optional(),
       })
       .optional()
       .meta(
-        field('Jev options; a choice below `minConfidence` falls through to the next strategy.'),
+        field(
+          'Choice classifier options: optional `model` is a catalog id (default `jev`); unavailable configuration or a choice below `minConfidence` falls through to the next strategy.',
+        ),
       ),
     codex: z
       .strictObject({ model: z.string().min(1).optional(), effort: EffortSchema.optional() })

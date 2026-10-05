@@ -1,4 +1,6 @@
 import {
+  ClassifierModelSummarySchema,
+  ClassifierModelPutSchema,
   ContextThreadSchema,
   JsonValueSchema,
   LoopDefinitionSchema,
@@ -28,6 +30,8 @@ import { z } from 'zod';
 export const openApiRegistry = z.registry<{ id: string }>();
 
 const COMPONENTS: ReadonlyArray<[z.ZodType, string]> = [
+  [ClassifierModelSummarySchema, 'ClassifierModelSummary'],
+  [ClassifierModelPutSchema, 'ClassifierModelPut'],
   [JsonValueSchema, 'JsonValue'],
   [LoopDefinitionSchema, 'LoopDefinition'],
   [LoopExportSchema, 'LoopExport'],

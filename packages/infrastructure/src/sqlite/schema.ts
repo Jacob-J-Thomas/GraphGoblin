@@ -1,4 +1,5 @@
 import type {
+  ClassifierModelEntry,
   ContextThread,
   Effort,
   JsonValue,
@@ -161,6 +162,25 @@ export const settings = sqliteTable(
   (t) => [primaryKey({ columns: [t.ownerId, t.key] })],
 );
 
+export const classifierModels = sqliteTable(
+  'classifier_models',
+  {
+    ownerId: text('owner_id').notNull(),
+    id: text('id').notNull(),
+    displayName: text('display_name').notNull(),
+    source: text('source', { enum: ['builtin', 'custom'] }).notNull(),
+    provider: text('provider', { enum: ['typesafe', 'http'] }).notNull(),
+    providerModel: text('provider_model').notNull(),
+    primitives: text('primitives', { mode: 'json' })
+      .$type<ClassifierModelEntry['primitives']>()
+      .notNull(),
+    endpoint: text('endpoint').notNull(),
+    secretRef: text('secret_ref'),
+    enabled: integer('enabled', { mode: 'boolean' }).notNull().default(false),
+  },
+  (t) => [primaryKey({ columns: [t.ownerId, t.id] })],
+);
+
 export const modelCatalog = sqliteTable(
   'model_catalog',
   {
@@ -246,6 +266,7 @@ export const inboundEvents = sqliteTable(
 );
 
 export const schema = {
+  classifierModels,
   loops,
   loopVersions,
   runs,
