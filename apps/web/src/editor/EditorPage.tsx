@@ -2,12 +2,13 @@ import { GraphGoblinApiError, loops } from '@graphgoblin/api-client';
 import type { LoopDefinitionInput } from '@graphgoblin/contracts';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ReactFlowProvider } from '@xyflow/react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router';
 import { useApi } from '../api/context.js';
 import { keys } from '../api/queries.js';
 import { ErrorState } from '../components/status.js';
 import { Alert, Button, useSidePanelState } from '../components/ui/index.js';
+import { focusFallback } from '../lib/focus.js';
 import { errorMessage, formatDateTime, isOfflineError, problemIssues } from '../lib/utils.js';
 import { Canvas } from './Canvas.js';
 import { ConflictNotice } from './ConflictNotice.js';
@@ -39,11 +40,12 @@ export function EditorPage() {
   const { loopId = '' } = useParams();
   const client = useApi();
   const queryClient = useQueryClient();
-  const { query, restored, ready, setAside, restoreSetAside, discardSetAside } =
+  const { query, restoredGeneration, ready, setAside, restoreSetAside, discardSetAside } =
     useLoadEditor(loopId);
   const definition = useEditorStore((s) => s.definition);
   const saveState = useEditorStore((s) => s.saveState);
   const saveMessage = useEditorStore((s) => s.saveMessage);
+  const generation = useEditorStore((s) => s.generation);
   const connectionError = useEditorStore((s) => s.connectionError);
   const selectedNodeId = useEditorStore((s) => s.selectedNodeId);
   const nodeDialogOpen = useEditorStore((s) => s.nodeDialogOpen);
@@ -117,6 +119,31 @@ export function EditorPage() {
   const revision = useEditorStore((s) => s.revision);
   // The outcome stays visible only until the next edit; after that it describes an older draft.
   const [publishedRevision, setPublishedRevision] = useState<number | undefined>();
+  const [dismissedRestoreGeneration, setDismissedRestoreGeneration] = useState<number>();
+  const [dismissedSaveNotice, setDismissedSaveNotice] = useState<
+    { generation: number; state: typeof saveState; message: string } | undefined
+  >();
+  const [dismissalAnnouncement, setDismissalAnnouncement] = useState(0);
+  const noticeContainerRef = useRef<HTMLDivElement>(null);
+  const saveStatusRef = useRef<HTMLSpanElement>(null);
+
+  // Pending and saving are transient parts of an edit. Keep a dismissal until saving settles on
+  // a different state/message or a new editor load starts.
+  useEffect(
+    () =>
+      useEditorStore.subscribe((state) => {
+        if (state.saveState === 'pending' || state.saveState === 'saving') return;
+        setDismissedSaveNotice((dismissed) =>
+          dismissed &&
+          dismissed.generation === state.generation &&
+          dismissed.state === state.saveState &&
+          dismissed.message === state.saveMessage
+            ? dismissed
+            : undefined,
+        );
+      }),
+    [],
+  );
 
   if (!ready) {
     if (query.isError && !isOfflineError(query.error))
@@ -128,10 +155,36 @@ export function EditorPage() {
   const published = query.data?.current?.definition;
   const errors = validation.issues.filter((i) => i.severity === 'error').length;
   const editing = nodeDialogOpen ? def.nodes.find((n) => n.id === selectedNodeId) : undefined;
+  const saveNoticeIsActive =
+    Boolean(saveMessage) &&
+    (saveState === 'offline' || saveState === 'error' || saveState === 'invalid');
+  const showRestoredNotice =
+    restoredGeneration === generation && dismissedRestoreGeneration !== generation;
+  const showSaveNotice =
+    saveNoticeIsActive &&
+    (dismissedSaveNotice?.generation !== generation ||
+      dismissedSaveNotice.state !== saveState ||
+      dismissedSaveNotice.message !== saveMessage);
+  const announceDismissalAndRestoreFocus = () => {
+    setDismissalAnnouncement((count) => count + 1);
+    window.requestAnimationFrame(() => {
+      const nextDismissButton =
+        noticeContainerRef.current?.querySelector<HTMLButtonElement>('[data-alert-dismiss]');
+      if (nextDismissButton) nextDismissButton.focus();
+      else focusFallback(saveStatusRef.current);
+    });
+  };
 
   const notices = [
-    restored ? (
-      <Alert key="restored" tone="info">
+    showRestoredNotice ? (
+      <Alert
+        key="restored"
+        tone="info"
+        onDismiss={() => {
+          setDismissedRestoreGeneration(generation);
+          announceDismissalAndRestoreFocus();
+        }}
+      >
         Restored unsaved changes from this device.
       </Alert>
     ) : null,
@@ -150,8 +203,15 @@ export function EditorPage() {
       </Alert>
     ) : null,
     conflict ? <ConflictNotice key="conflict" resolve={resolve} /> : null,
-    saveMessage && (saveState === 'offline' || saveState === 'error' || saveState === 'invalid') ? (
-      <Alert key="save" tone="warn">
+    showSaveNotice ? (
+      <Alert
+        key="save"
+        tone="warn"
+        onDismiss={() => {
+          setDismissedSaveNotice({ generation, state: saveState, message: saveMessage ?? '' });
+          announceDismissalAndRestoreFocus();
+        }}
+      >
         {saveMessage}
       </Alert>
     ) : null,
@@ -208,12 +268,21 @@ export function EditorPage() {
         }
         publishing={publish.isPending}
         onPublish={() => publish.mutate()}
+        saveStatusRef={saveStatusRef}
       />
       {notices.length > 0 ? (
-        <div className="grid shrink-0 gap-2 border-b border-default bg-surface-raised px-4 py-3">
+        <div
+          ref={noticeContainerRef}
+          className="grid shrink-0 gap-2 border-b border-default bg-surface-raised px-4 py-3"
+        >
           {notices}
         </div>
       ) : null}
+      <span aria-live="polite" aria-atomic="true" className="sr-only">
+        <span key={dismissalAnnouncement}>
+          {dismissalAnnouncement > 0 ? 'Notice dismissed' : ''}
+        </span>
+      </span>
       <ReactFlowProvider>
         <div className="flex min-h-0 flex-1">
           <Palette expanded={paletteExpanded} onExpandedChange={setPaletteExpanded} />

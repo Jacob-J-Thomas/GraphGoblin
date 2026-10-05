@@ -14,10 +14,16 @@ describe('bootstrap', () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('offline'));
     const container = document.createElement('div');
     document.body.appendChild(container);
-    const root = bootstrap(container, { baseUrl: 'http://graphgoblin.test' });
+    const dispose = vi.fn();
+    registerPwa.mockReturnValueOnce({ dispose });
+    let root!: Root;
+    act(() => {
+      root = bootstrap(container, { baseUrl: 'http://graphgoblin.test' });
+    });
     expect(await screen.findByText('Page not found.')).toBeInTheDocument();
     expect(registerPwa).toHaveBeenCalledTimes(1);
     act(() => root.unmount());
+    expect(dispose).toHaveBeenCalledTimes(1);
 
     const second = bootstrap(container, { registerServiceWorker: false, basename: '/app' });
     expect(registerPwa).toHaveBeenCalledTimes(1);
