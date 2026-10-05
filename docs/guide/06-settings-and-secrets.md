@@ -33,7 +33,9 @@ Only the API key marked **This browser** adds the browser sign-out warning. Othe
 | **OpenDyslexic**          | For some dyslexic readers: letters weighted at the bottom. Much wider, so long labels cut off. |
 | **Inter**                 | Neutral: a plainer alternative to Geist.                                                       |
 
-Click an option, or Tab to the chosen one and use the arrow keys. The font changes at once, without a reload, and this browser remembers it: the app opens in your font on the next visit, with no flash of another, and other open tabs switch too. Code, ids, and JSON always stay in Geist Mono. The fonts come with the app, so they work offline. The choice is per browser, kept in `localStorage` (`graphgoblin-font`); a private window or blocked site data opens in Geist. While a font loads, or if it cannot load, text shows in your system's font until it arrives. This list is a shortlist that will be pruned. Text size and spacing settings are not available yet.
+Click an option, or Tab to the chosen one and use the arrow keys. The font changes at once, without a reload, and this browser remembers it: on the next visit the app starts with your font already chosen, and other open tabs switch too. Code, ids, and JSON always stay in Geist Mono. The fonts come with the app, so they work offline. The choice is per browser, kept in `localStorage` (`graphgoblin-font`); a private window or blocked site data opens in Geist.
+
+While a font is loading, or if it cannot load, the text it sets shows in the next font in its list and stays usable: Chakra Petch headings and the wordmark show in Geist, and the other fonts, Geist included, show in your system's interface font (Segoe UI on Windows). Text size and spacing settings are not available yet.
 
 ## Choose a model and effort
 

@@ -15,14 +15,22 @@
  * horizontal page scroll, text cut off by an ellipsis or a clip, and the font the browser actually
  * rendered the body text and the first heading in (CSS.getPlatformFontsForNode). Playwright comes
  * from apps/web's devDependencies; on Windows the installed Edge is used, as in the E2E config (set
- * GG_E2E_BROWSER_CHANNEL to override). Set GG_CAPTURE_ONLY to a comma-separated list of faces to
- * take only those.
+ * GG_E2E_BROWSER_CHANNEL to override).
+ *
+ * The faces are the app's own list (FONTS in apps/web/src/lib/font.ts, which the Font control
+ * renders), and each face's expected families come from its rule in apps/web/src/styles/fonts.css.
+ * Before every shot the script checks that the page shows the requested face (data-font on <html>
+ * and the computed text and heading families), and after it that the browser drew those families;
+ * anything else stops the script, so a pruned or broken face is never photographed as Geist. Set
+ * GG_CAPTURE_ONLY to a comma-separated list of faces, and GG_CAPTURE_SCREENS to one of screens
+ * (loops, editor-dialog, inspector, settings, editor, font-control), to take only those; their
+ * metrics replace the matching entries in metrics.json.
  */
 import { spawn } from 'node:child_process';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, '..', '..', '..');
@@ -34,14 +42,44 @@ const out = process.argv[2] ? resolve(process.argv[2]) : here;
 const channel =
   process.env['GG_E2E_BROWSER_CHANNEL'] ?? (process.platform === 'win32' ? 'msedge' : undefined);
 
-const FONTS = [
-  'geist',
-  'space-grotesk',
-  'chakra-petch',
-  'atkinson-hyperlegible',
-  'opendyslexic',
-  'inter',
-];
+/** Import a TypeScript module of the app through tsx (apps/web's devDependency). */
+async function importApp(path) {
+  const tsx = dirname(require.resolve('tsx/package.json'));
+  const api = JSON.parse(readFileSync(join(tsx, 'package.json'), 'utf8')).exports['./esm/api'];
+  const { tsImport } = await import(pathToFileURL(join(tsx, api.import.default)).href);
+  return tsImport(pathToFileURL(join(webRoot, path)).href, import.meta.url);
+}
+
+const { FONTS } = await importApp('src/lib/font.ts');
+const FONTS_CSS = readFileSync(join(webRoot, 'src', 'styles', 'fonts.css'), 'utf8');
+const TOKENS_CSS = readFileSync(join(webRoot, 'src', 'styles', 'tokens.css'), 'utf8');
+
+/** The first family a token value names, with var(--font-sans) read from tokens.css. */
+function firstFamily(value) {
+  if (value.startsWith('var(--font-sans)')) return /--font-sans:\s*'([^']+)'/.exec(TOKENS_CSS)[1];
+  const quoted = /^'([^']+)'/.exec(value);
+  if (!quoted) throw new Error(`cannot read a family from "${value}"`);
+  return quoted[1];
+}
+
+/** The text (--font-ui) and heading (--font-display) families fonts.css gives a face. */
+function expectedFamilies(font) {
+  const rule = new RegExp(`\\[data-font='${font}'\\]\\s*{([^}]*)}`).exec(FONTS_CSS);
+  if (!rule) throw new Error(`styles/fonts.css has no rule for data-font='${font}'`);
+  const token = (name) => {
+    const declaration = new RegExp(`${name}:\\s*([^;]+);`).exec(rule[1]);
+    if (!declaration) throw new Error(`the rule for '${font}' does not set ${name}`);
+    return firstFamily(declaration[1].trim());
+  };
+  return { text: token('--font-ui'), heading: token('--font-display') };
+}
+
+const firstOf = (family) =>
+  family
+    .split(',')[0]
+    .trim()
+    .replace(/^["']|["']$/g, '');
+
 const THEMES = ['dark', 'light'];
 const SIZES = [
   { suffix: '1024', width: 1024, height: 768, scale: 1 },
@@ -239,7 +277,7 @@ function screens({ base, nightly, waitingRun }) {
       click: '[data-testid="node-needs-fix"]',
     },
     { name: 'inspector', url: `${base}/app/runs/${waitingRun}`, ready: 'Input requested' },
-    { name: 'settings', url: `${base}/app/settings`, ready: 'Atkinson Hyperlegible' },
+    { name: 'settings', url: `${base}/app/settings`, ready: 'Model catalog' },
   ];
 }
 
@@ -251,9 +289,9 @@ async function measure(page) {
   const { root: doc } = await cdp.send('DOM.getDocument', { depth: 0 });
   const rendered = async (selector) => {
     const { nodeId } = await cdp.send('DOM.querySelector', { nodeId: doc.nodeId, selector });
-    if (!nodeId) return null;
+    if (!nodeId) return [];
     const { fonts } = await cdp.send('CSS.getPlatformFontsForNode', { nodeId });
-    return fonts.map((font) => `${font.familyName} (${font.glyphCount})`).join(', ');
+    return fonts.map((font) => ({ family: font.familyName, glyphs: font.glyphCount }));
   };
   const layout = await page.evaluate(() => {
     const root = document.documentElement;
@@ -291,11 +329,52 @@ async function measure(page) {
       cut: [...new Set(cut)].slice(0, 20),
     };
   });
+  const body = await rendered('[data-gg-sample]');
+  const heading = await rendered('h1, h2');
+  const list = (fonts) => fonts.map((font) => `${font.family} (${font.glyphs})`).join(', ');
   return {
-    ...layout,
-    bodyRendered: await rendered('[data-gg-sample]'),
-    headingRendered: await rendered('h1, h2'),
+    metrics: { ...layout, bodyRendered: list(body), headingRendered: list(heading) },
+    drawn: { body: body.map((font) => font.family), heading: heading.map((font) => font.family) },
   };
+}
+
+/** Stop the script unless the page shows `font`: its attribute and its computed families. */
+async function expectShown(page, font, label) {
+  const expected = expectedFamilies(font);
+  const shown = await page.evaluate(() => {
+    const heading = document.querySelector('h1');
+    return {
+      font: document.documentElement.getAttribute('data-font'),
+      text: getComputedStyle(document.body).fontFamily,
+      heading: heading ? getComputedStyle(heading).fontFamily : null,
+    };
+  });
+  const problems = [];
+  if (shown.font !== font) problems.push(`data-font is ${JSON.stringify(shown.font)}`);
+  if (firstOf(shown.text) !== expected.text) problems.push(`text family is ${shown.text}`);
+  if (shown.heading === null) problems.push('there is no h1 to check the heading family on');
+  else if (firstOf(shown.heading) !== expected.heading) {
+    problems.push(`heading family is ${shown.heading}`);
+  }
+  if (problems.length > 0) {
+    throw new Error(
+      `${label}: expected ${font} (${JSON.stringify(expected)}): ${problems.join('; ')}`,
+    );
+  }
+  return expected;
+}
+
+/** Stop the script unless the browser drew the expected families (a face that failed to load). */
+function expectDrawn(drawn, expected, label) {
+  const has = (families, wanted) => families.some((family) => family.startsWith(wanted));
+  if (drawn.body.length > 0 && !has(drawn.body, expected.text)) {
+    throw new Error(`${label}: text drawn in ${drawn.body.join(', ')}, not ${expected.text}`);
+  }
+  if (drawn.heading.length > 0 && !has(drawn.heading, expected.heading)) {
+    throw new Error(
+      `${label}: heading drawn in ${drawn.heading.join(', ')}, not ${expected.heading}`,
+    );
+  }
 }
 
 async function shoot(browser, screen, size, font, theme, dir) {
@@ -327,8 +406,11 @@ async function shoot(browser, screen, size, font, theme, dir) {
   await page.evaluate(() => document.fonts.ready);
   await page.waitForTimeout(400);
   const name = `${screen.name}-${theme}-${size.suffix}.png`;
+  // Check before the picture is written, so a failed face never leaves a screenshot behind.
+  const expected = await expectShown(page, font, `${font}/${name}`);
+  const { metrics, drawn } = await measure(page);
+  expectDrawn(drawn, expected, `${font}/${name}`);
   await page.screenshot({ path: join(dir, name) });
-  const metrics = await measure(page);
   await context.close();
   return { file: `${font}/${name}`, ...metrics };
 }
@@ -347,6 +429,13 @@ async function shootControl(browser, base, theme) {
   const group = page.getByRole('radiogroup', { name: 'Font' });
   await group.waitFor();
   await page.evaluate(() => document.fonts.ready);
+  // The control offers exactly the app's faces, each option previewing its own.
+  const offered = await group
+    .locator('label[data-font]')
+    .evaluateAll((options) => options.map((option) => option.getAttribute('data-font')));
+  if (offered.join() !== FONTS.join()) {
+    throw new Error(`the Font control offers ${offered.join()}, not ${FONTS.join()}`);
+  }
   // Tab from the chosen theme lands on the chosen face, so its focus ring shows.
   await page.locator('input[name="theme"]:checked').focus();
   await page.keyboard.press('Tab');
@@ -355,38 +444,65 @@ async function shootControl(browser, base, theme) {
   await context.close();
 }
 
+/** Comma-separated names from the environment, each checked against what exists. */
+function chosen(variable, known) {
+  const names = process.env[variable]?.split(',').filter(Boolean);
+  if (!names) return known;
+  const unknown = names.filter((name) => !known.includes(name));
+  if (unknown.length > 0) throw new Error(`${variable}: no ${unknown.join(', ')} in ${known}`);
+  return names;
+}
+
 async function main() {
+  const faces = chosen('GG_CAPTURE_ONLY', FONTS);
+  const names = ['loops', 'editor-dialog', 'inspector', 'settings', 'editor', 'font-control'];
+  const wanted = chosen('GG_CAPTURE_SCREENS', names);
   const { child, base, control } = await startServer();
   const results = [];
   try {
     const seeded = await seed(base, control);
     const browser = await chromium.launch(channel ? { channel } : {});
-    const only = process.env['GG_CAPTURE_ONLY']?.split(',');
     const list = screens({ base, ...seeded });
     const editor = list.find((screen) => screen.name === 'editor-dialog');
     mkdirSync(out, { recursive: true });
-    for (const theme of THEMES) await shootControl(browser, base, theme);
-    for (const font of FONTS.filter((f) => !only || only.includes(f))) {
+    if (wanted.includes('font-control')) {
+      for (const theme of THEMES) await shootControl(browser, base, theme);
+    }
+    for (const font of faces) {
       const dir = join(out, font);
       mkdirSync(dir, { recursive: true });
       for (const theme of THEMES) {
         for (const size of SIZES) {
-          for (const screen of list) {
+          for (const screen of list.filter((s) => wanted.includes(s.name))) {
             results.push(await shoot(browser, screen, size, font, theme, dir));
             console.log(`${font} ${screen.name}-${theme}-${size.suffix}`);
           }
         }
       }
-      // The canvas at 200%: the node cards themselves, no dialog over them.
-      const canvas = { ...editor, name: 'editor', click: undefined };
-      results.push(await shoot(browser, canvas, ZOOM, font, 'dark', dir));
-      console.log(`${font} editor-dark-${ZOOM.suffix}`);
+      if (wanted.includes('editor')) {
+        // The canvas at 200%: the node cards themselves, no dialog over them.
+        const canvas = { ...editor, name: 'editor', click: undefined };
+        results.push(await shoot(browser, canvas, ZOOM, font, 'dark', dir));
+        console.log(`${font} editor-dark-${ZOOM.suffix}`);
+      }
     }
     await browser.close();
   } finally {
     child.stdin.end('stop\n');
   }
-  writeFileSync(join(out, 'metrics.json'), `${JSON.stringify(results, null, 2)}\n`);
+  // A partial run replaces its own entries in place and keeps the rest of the set's measurements;
+  // entries of faces the app no longer offers are dropped.
+  const file = join(out, 'metrics.json');
+  const kept = existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : [];
+  const fresh = new Map(results.map((result) => [result.file, result]));
+  const merged = kept
+    .filter((entry) => FONTS.includes(entry.file.split('/')[0]))
+    .map((entry) => {
+      const replacement = fresh.get(entry.file);
+      fresh.delete(entry.file);
+      return replacement ?? entry;
+    });
+  writeFileSync(file, `${JSON.stringify([...merged, ...fresh.values()], null, 2)}\n`);
 }
 
 await main();

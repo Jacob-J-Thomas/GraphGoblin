@@ -75,13 +75,29 @@ The faces Settings → Appearance → Font offers (#40) are vendored files in `a
 | `OpenDyslexic-Regular.woff2` (101 KiB)             | antijingoist/opendyslexic `compiled/OpenDyslexic-Regular.woff2` at `77bda89f` (also forge.hackers.town) | None (RFN "OpenDyslexic")                  |
 | `OpenDyslexic-Bold.woff2` (106 KiB)                | antijingoist/opendyslexic `compiled/OpenDyslexic-Bold.woff2` at `77bda89f`                              | None (RFN "OpenDyslexic")                  |
 
-The subset keeps Google Fonts' Latin range plus the arrows the app shows, fontTools' default OpenType features plus tabular figures, and every name record (copyright, licence, and URLs), with fontTools 4.66 (`pip install fonttools brotli`):
+The subset keeps Google Fonts' Latin range plus the arrows the app shows, fontTools' default OpenType features plus tabular figures, and every name record (copyright, licence, and URLs), with fontTools 4.66.1 (`pip install fonttools==4.66.1 brotli`). The instancer stamps the font's modified time, so `SOURCE_DATE_EPOCH` pins it to the Inter source commit's time; with it, both commands rebuild the shipped files byte for byte:
 
 ```sh
+SOURCE_DATE_EPOCH=1717679533 fonttools varLib.instancer 'Inter[opsz,wght].ttf' opsz=14 -o Inter-opsz14.ttf   # Inter only, first
 pyftsubset <source>.ttf --flavor=woff2 --layout-features+=tnum --name-IDs='*' --name-legacy --notdef-outline \
   --unicodes='U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2190-2193,U+2212,U+2215,U+FEFF,U+FFFD'
-fonttools varLib.instancer 'Inter[opsz,wght].ttf' opsz=14 -o Inter-opsz14.ttf   # before subsetting Inter
 ```
+
+SHA-256 of every shipped font file, and of the upstream file it is or was built from (fetched from the pinned commit, or from the `geist` 1.7.2 npm tarball, on 2026-10-05). The unmodified files equal their upstream byte for byte; the subset files are what the commands above produce from the upstream source:
+
+| File                                      | SHA-256 of the shipped file                                        | Upstream file and its SHA-256                                                                                          |
+| ----------------------------------------- | ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
+| `Geist-Variable.woff2`                    | `a369fcf5628ea2aa4e1b9e2ec6a5b3624e365bda588e1f0f2f12b564f728fbb8` | `geist` 1.7.2 `dist/fonts/geist-sans/Geist-Variable.woff2`: identical                                                  |
+| `GeistMono-Variable.woff2`                | `fba8f577f38a2bbcbe818efa6348dd58f36303a10b8737c42fefad275be563ab` | `geist` 1.7.2 `dist/fonts/geist-mono/GeistMono-Variable.woff2`: identical                                              |
+| `OpenDyslexic-Regular.woff2`              | `0441bc21071e42db57c217f93fbc48d3b55a2987c02814c94dc93621c42e8695` | `compiled/OpenDyslexic-Regular.woff2` at `77bda89f`: identical                                                         |
+| `OpenDyslexic-Bold.woff2`                 | `b534a0b84ef3cca941ebdb506ce3f4e0010aa4ef881271bac8b6959dbf694fbf` | `compiled/OpenDyslexic-Bold.woff2` at `77bda89f`: identical                                                            |
+| `SpaceGrotesk-Variable.woff2`             | `cacae3b69e6a42ec1abe64aa56e06a42eafc79595334721fa2079fedb5a64a36` | `SpaceGrotesk[wght].ttf` at `2861cb7b`: `acad6de1fc93436f5c0f1f4137751ef04f1aea3063e7036535970ffcfbd79f72`             |
+| `ChakraPetch-SemiBold.woff2`              | `f9aef47a359e6f2049762506e1593eb059a6998cb6d296c626217a245b3836f3` | `ChakraPetch-SemiBold.ttf` at `c011968d`: `45264de3204ddbd5fb3e14a2402acd5c630d16650ae5fc221d2c52da46a6734b`           |
+| `ChakraPetch-Bold.woff2`                  | `29ffeb8cbb760c5e224a5352e3689a4285d38db517afd952d0ba7f27794a8b13` | `ChakraPetch-Bold.ttf` at `c011968d`: `65fbf76d95651697275e19db4d717c0e95a789ddd3476478b05292104db278a0`               |
+| `AtkinsonHyperlegibleNext-Variable.woff2` | `229f28e5533a79ee06dc7a403909671bc14405bd0db2210b2dbf84dab16e9a0f` | `AtkinsonHyperlegibleNext[wght].ttf` at `66eef707`: `5a455d1cfa099b601ab70751bb9673e8fe1854dc4500c80e1a220d0d75e31745` |
+| `Inter-Variable.woff2`                    | `e998470b12b64b2cc1d8ca31ae60ee8dd76c503a2ba194a72d3321d46f049a87` | `Inter[opsz,wght].ttf` at `e1d64801`: `29160a80ff49ddcab2c97711247e08b1fab27a484a329ce8b813d820dc559031`               |
+
+Full commits: google/fonts `2861cb7b12f90c0a294a12ed666e381e2211872f`, `c011968d86a629939a4fd8b62a3b18549db0d855`, `66eef70728ca29f28c31cdc5e7947f2c2de73e8d`, `e1d6480102fed30739fead0faee463101f892c8f`; antijingoist/opendyslexic `77bda89f3f2069c78d81d33de43b461c2de6c48e`. `OFL-OpenDyslexic.txt` is that commit's `OFL.txt`, byte for byte.
 
 ## Recorded alternatives and their licences
 
