@@ -117,7 +117,8 @@ export function SidePanel({
           aria-controls={id}
           title={`Show ${title.toLowerCase()}`}
           className={cn(
-            'min-h-10 min-w-10 pointer-coarse:min-h-11 pointer-coarse:min-w-11 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus',
+            // The inset offset must beat the button's own outset offset whatever the rule order.
+            'min-h-10 min-w-10 pointer-coarse:min-h-11 pointer-coarse:min-w-11 focus-visible:outline-2 focus-visible:-outline-offset-2! focus-visible:outline-focus',
             side === 'left' ? 'self-start' : 'self-end',
           )}
           onClick={() => onExpandedChange(true)}
@@ -126,7 +127,7 @@ export function SidePanel({
         </Button>
         <div
           data-testid={`${id}-rail-content`}
-          className="min-h-0 w-full flex-1 overflow-x-hidden overflow-y-auto"
+          className="min-h-0 w-full flex-1 overflow-x-hidden overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {rail}
         </div>
@@ -158,7 +159,7 @@ export function SidePanel({
               title={`Hide ${title.toLowerCase()}`}
               onClick={() => onExpandedChange(false)}
             >
-              <Icon name="panel" />
+              <Icon name="panel" style={{ transform: 'scaleX(-1)' }} />
             </Button>
             <h2
               id={headingId}
