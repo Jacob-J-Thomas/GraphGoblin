@@ -10,6 +10,7 @@ import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
+import { openAdvanced } from '../__fixtures__/advanced.js';
 import { getCode, setCode } from '../__fixtures__/codemirror.js';
 import { SchemaForm } from './SchemaForm.js';
 import type { Schema } from './introspect.js';
@@ -149,6 +150,7 @@ describe('SchemaForm', () => {
         spy={spy}
       />,
     );
+    openAdvanced();
     const env = screen.getByRole('group', { name: 'Env' });
     await user.clear(screen.getByLabelText('Env value 1'));
     await user.type(screen.getByLabelText('Env value 1'), 'edited');
@@ -261,6 +263,9 @@ describe('SchemaForm', () => {
     'keeps required mapping and decision expression errors',
     async (schema, initial, label) => {
       render(<Harness schema={schema} initial={initial} spy={vi.fn()} />);
+      // A list item that collapses (a mutation) opens to show its fields.
+      const item = screen.queryByRole('button', { name: /^Operations 1/ });
+      if (item) await userEvent.setup().click(item);
       const field = screen.getByLabelText(label).closest('[data-field]') as HTMLElement;
       expect(within(field).queryByTestId('preview')).not.toBeInTheDocument();
       await waitFor(() => expect(within(field).getByRole('alert')).toBeInTheDocument());
@@ -275,6 +280,7 @@ describe('SchemaForm', () => {
     const user = userEvent.setup();
     const spy = vi.fn();
     render(<Harness schema={NodeConfigSchemas.script} initial={{ command: 'node' }} spy={spy} />);
+    openAdvanced();
     const command = screen.getByLabelText('Command');
     await user.clear(command);
     await user.type(command, 'python');
@@ -305,6 +311,7 @@ describe('SchemaForm', () => {
     await user.click(screen.getByRole('button', { name: 'Remove args 1' }));
     expect(last(spy)['args']).toEqual([]);
 
+    openAdvanced();
     const routes = screen
       .getAllByRole('group')
       .find((g) => g.getAttribute('data-field') === 'exitCodeRoutes')!;
@@ -380,7 +387,8 @@ describe('SchemaForm', () => {
     await user.click(screen.getByRole('button', { name: 'Remove expression' }));
     expect(last(spy)['expression']).toBeUndefined();
 
-    // Context messages: union of literals, a number, and an object.
+    // Context messages: union of literals, a number, and an object, under Advanced.
+    openAdvanced();
     const kind = within(screen.getByRole('group', { name: 'Messages' })).getByLabelText('Kind');
     await user.selectOptions(kind, '3');
     expect((last(spy)['context'] as Record<string, unknown>)['messages']).toBe(1);
@@ -410,6 +418,7 @@ describe('SchemaForm', () => {
         spy={spy}
       />,
     );
+    openAdvanced();
     const network = screen.getByRole('radiogroup', { name: 'Network access' });
     await user.click(within(network).getByRole('radio', { name: 'Yes' }));
     expect((last(spy)['harnessOptions'] as Record<string, unknown>)['networkAccess']).toBe(true);

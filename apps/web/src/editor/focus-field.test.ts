@@ -150,6 +150,37 @@ describe('focusField', () => {
     expect(focusableIn(root.querySelector('[data-field="off"]')!)).toEqual([]);
   });
 
+  it('opens collapsed disclosures around the control, and only those', () => {
+    const root = document.body.appendChild(document.createElement('div'));
+    root.innerHTML = `
+      <div data-disclosure-panel hidden>
+        <div data-field="timeout"><input aria-label="Timeout" /></div>
+        <div data-disclosure-panel hidden>
+          <div data-field="ops.0.path"><input aria-label="Path" /></div>
+        </div>
+        <div hidden><div data-field="secret"><input aria-label="Secret" /></div></div>
+      </div>
+      <div inert><div data-disclosure-panel hidden>
+        <div data-field="inert"><input aria-label="Inert" /></div>
+      </div></div>`;
+    const panels = [...root.querySelectorAll<HTMLElement>('[data-disclosure-panel]')];
+    // A disclosure (components/ui/disclosure.tsx) opens its panel when asked.
+    for (const panel of panels) {
+      panel.addEventListener('graphgoblin:reveal', () => panel.removeAttribute('hidden'));
+    }
+    expect(focusField(root, 'ops.0.path')).toBe(true);
+    expect(named(root, 'Path')).toHaveFocus();
+    expect(panels[0]).not.toHaveAttribute('hidden');
+    expect(panels[1]).not.toHaveAttribute('hidden');
+    panels[0]!.setAttribute('hidden', '');
+    expect(focusField(root, 'timeout')).toBe(true);
+    expect(named(root, 'Timeout')).toHaveFocus();
+    // Hidden for another reason, or inert: out of reach, and nothing is opened.
+    expect(focusField(root, 'secret')).toBe(false);
+    expect(focusField(root, 'inert')).toBe(false);
+    expect(panels[2]).toHaveAttribute('hidden');
+  });
+
   it('reports false when nothing matches', () => {
     const root = editorBody();
     (document.activeElement as HTMLElement | null)?.blur();

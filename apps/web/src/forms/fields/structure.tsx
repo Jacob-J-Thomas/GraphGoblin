@@ -3,11 +3,22 @@
  * for their children, so they live in one module with it: the field families they draw on are
  * imported, never the other way round.
  */
-import { useEffect, useId, useRef, useState, type ComponentProps } from 'react';
+import {
+  use,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type ComponentProps,
+  type ReactNode,
+} from 'react';
+import { useWatch } from 'react-hook-form';
 import { Icon } from '../../components/icons/index.js';
 import {
+  Badge,
   Button,
   Checkbox,
+  Disclosure,
   Fieldset,
   FieldGroup,
   HelpText,
@@ -18,6 +29,7 @@ import {
   Select,
 } from '../../components/ui/index.js';
 import { cn } from '../../lib/utils.js';
+import { labelOf } from '../layout.js';
 import { repathParseErrors, useParseErrors } from '../parse-errors.js';
 import {
   humanize,
@@ -33,6 +45,7 @@ import { BooleanField, EnumField, LiteralField, NOT_SET } from './choice.js';
 import { useCollectionFocus } from './collection.js';
 import { JsonControl, JsonField } from './json.js';
 import {
+  FieldControlsContext,
   FieldError,
   FieldHelp,
   fieldMeta,
@@ -41,12 +54,26 @@ import {
   useField,
   useFieldControl,
   useFieldErrorMessage,
+  useProblemCount,
   type FieldProps,
 } from './shared.js';
 import { NumberField, StringControl, StringField } from './text.js';
+import { stripUnset } from '../unset.js';
 
-/** Dispatch on the schema's shape. */
-export function Field({ schema, name, label }: FieldProps) {
+/**
+ * A field: the control registered under its metadata's `control` name (SchemaForm's `controls`),
+ * else the default renderer for its shape.
+ */
+export function Field(props: FieldProps) {
+  const controls = use(FieldControlsContext);
+  const name = fieldMeta(props.schema).control;
+  // Only the registry's own entries: a name such as `toString` is not a registered control.
+  const Control = name !== undefined && Object.hasOwn(controls, name) ? controls[name] : undefined;
+  return Control ? <Control {...props} /> : <DefaultField {...props} />;
+}
+
+/** The default renderer: dispatch on the schema's shape. */
+export function DefaultField({ schema, name, label, bare }: FieldProps) {
   const shape = shapeOf(schema);
   switch (shape.kind) {
     case 'string':
@@ -60,13 +87,15 @@ export function Field({ schema, name, label }: FieldProps) {
     case 'literal':
       return <LiteralField name={name} label={label} value={shape.value} />;
     case 'object':
-      return <ObjectField schema={schema} name={name} label={label} shape={shape.shape} />;
+      return (
+        <ObjectField schema={schema} name={name} label={label} shape={shape.shape} bare={bare} />
+      );
     case 'array':
       return <ArrayField schema={schema} name={name} label={label} shape={shape} />;
     case 'record':
       return <RecordField schema={schema} name={name} label={label} shape={shape} />;
     case 'union':
-      return <UnionField schema={schema} name={name} label={label} shape={shape} />;
+      return <UnionField schema={schema} name={name} label={label} shape={shape} bare={bare} />;
     case 'json':
       return <JsonField schema={schema} name={name} label={label} />;
   }
@@ -86,9 +115,41 @@ function ObjectBody({
       {Object.entries(shape)
         .filter(([key]) => key !== skip)
         .map(([key, child]) => (
-          <Field key={key} schema={child} name={joinPath(name, key)} label={humanize(key)} />
+          <Field key={key} schema={child} name={joinPath(name, key)} label={labelOf(key, child)} />
         ))}
     </>
+  );
+}
+
+/**
+ * A group's frame: a bordered fieldset named by its legend, or, `bare` inside a frame that already
+ * names it (a collapsible list item), a borderless one whose legend only assistive technology reads.
+ */
+function GroupFrame({
+  name,
+  label,
+  bare,
+  helpId,
+  help,
+  children,
+}: {
+  name: string;
+  label: string;
+  bare?: boolean | undefined;
+  helpId?: string | undefined;
+  help?: string | undefined;
+  children: ReactNode;
+}) {
+  return (
+    <Fieldset
+      data-field={name}
+      className={bare ? 'border-0 p-0' : undefined}
+      aria-describedby={help !== undefined ? helpId : undefined}
+    >
+      <Legend className={bare ? 'sr-only' : undefined}>{label}</Legend>
+      {helpId !== undefined ? <FieldHelp id={helpId} help={help} /> : null}
+      {children}
+    </Fieldset>
   );
 }
 
@@ -97,9 +158,12 @@ function ObjectField({
   name,
   label,
   shape,
+  bare,
 }: FieldProps & { shape: Record<string, Schema> }) {
   const field = useField(name);
+  const helpId = `${useId()}-help`;
   const { optional, hasDefault, base } = unwrap(schema);
+  const { help } = fieldMeta(schema);
   const absent = field.value === undefined || field.value === null;
   const parseErrors = useParseErrors();
   if (optional && !hasDefault && absent) {
@@ -112,8 +176,7 @@ function ObjectField({
     );
   }
   return (
-    <Fieldset data-field={name}>
-      <Legend>{label}</Legend>
+    <GroupFrame name={name} label={label} bare={bare} helpId={helpId} help={help}>
       {optional && !hasDefault ? (
         <div>
           <Button
@@ -131,7 +194,7 @@ function ObjectField({
       ) : null}
       <ObjectBody shape={shape} name={name} />
       <FieldError name={name} />
-    </Fieldset>
+    </GroupFrame>
   );
 }
 
@@ -161,6 +224,9 @@ function RemoveButton(props: { 'aria-label': string; onClick: () => void }) {
 const COLLECTION_ROW =
   'grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-x-2 gap-y-1.5 border-l-2 border-default pl-3';
 
+/** One collapsible row of a list (`collapseItems`), on the same rail; its header holds Remove. */
+const COLLAPSIBLE_ROW = 'grid min-w-0 border-l-2 border-default pl-2';
+
 function ArrayField({
   schema,
   name,
@@ -179,6 +245,8 @@ function ArrayField({
     ids: items.map((_, i) => i),
     nextId: items.length,
   }));
+  // Rows there when the form opened have the first ids; collapsible ones start collapsed.
+  const [openedWith] = useState(items.length);
   let rowIds = identity.ids;
   // External resets and shared union fields can change the count without a collection action.
   // Reconcile before rendering children so every row has a unique identity on its first mount.
@@ -209,7 +277,8 @@ function ArrayField({
     field.onChange([...current, initialValue(shape.element)]);
     focus.announce(`Added ${label.toLowerCase()} ${current.length + 1}`, current.length);
   };
-  const { required, help } = fieldMeta(schema);
+  const { required, help, collapseItems } = fieldMeta(schema);
+  const collapsible = collapseItems === true && element.kind === 'union';
   const rule =
     element.kind === 'enum'
       ? choicesRule(shape.min, shape.max, element.options.length)
@@ -267,21 +336,34 @@ function ArrayField({
     <Fieldset ref={focus.ref} tabIndex={-1} data-field={name} aria-describedby={group.describedBy}>
       <GroupLegend label={label} required={required} />
       <GroupText group={group} help={help} rule={rule} />
-      {items.map((_, index) => (
-        <div key={rowIds[index]} data-collection-row={index} className={COLLECTION_ROW}>
-          <Field
-            schema={shape.element}
-            name={joinPath(name, index)}
-            label={`${label} ${index + 1}`}
+      {items.map((_, index) => {
+        const removeButton = (
+          <RemoveButton
+            aria-label={`Remove ${label.toLowerCase()} ${index + 1}`}
+            onClick={() => remove(index)}
           />
-          <div className={compound ? 'self-end' : 'mt-6'}>
-            <RemoveButton
-              aria-label={`Remove ${label.toLowerCase()} ${index + 1}`}
-              onClick={() => remove(index)}
+        );
+        return collapsible ? (
+          <div key={rowIds[index]} data-collection-row={index} className={COLLAPSIBLE_ROW}>
+            <CollapsibleItem
+              element={shape.element}
+              name={joinPath(name, index)}
+              label={`${label} ${index + 1}`}
+              defaultOpen={(rowIds[index] ?? 0) >= openedWith}
+              remove={removeButton}
             />
           </div>
-        </div>
-      ))}
+        ) : (
+          <div key={rowIds[index]} data-collection-row={index} className={COLLECTION_ROW}>
+            <Field
+              schema={shape.element}
+              name={joinPath(name, index)}
+              label={`${label} ${index + 1}`}
+            />
+            <div className={compound ? 'self-end' : 'mt-6'}>{removeButton}</div>
+          </div>
+        );
+      })}
       <div>
         <AddButton ref={focus.addRef} disabled={!canAdd} onClick={add}>
           Add {label.toLowerCase()}
@@ -631,6 +713,7 @@ function UnionField({
   name,
   label,
   shape,
+  bare,
 }: FieldProps & { shape: Extract<FieldShape, { kind: 'union' }> }) {
   const field = useField(name);
   const id = useId();
@@ -648,8 +731,7 @@ function UnionField({
     required,
   });
   return (
-    <Fieldset data-field={name}>
-      <Legend>{label}</Legend>
+    <GroupFrame name={name} label={label} bare={bare}>
       <FieldGroup>
         <Label htmlFor={id} required={required}>
           {shape.discriminator ? humanize(shape.discriminator) : 'Kind'}
@@ -678,6 +760,93 @@ function UnionField({
         <Field schema={option} name={name} label="Value" />
       )}
       <FieldError name={name} id={errorId} />
-    </Fieldset>
+    </GroupFrame>
+  );
+}
+
+/**
+ * The one-line summary of a list item of a discriminated union: its kind (the tag's value) and its
+ * path, or whatever its first short text says ("set /vars/topic", "drop messages").
+ */
+export function itemSummary(
+  element: Schema,
+  value: unknown,
+): { kind: string; detail: string | undefined } | undefined {
+  const shape = shapeOf(element);
+  if (shape.kind !== 'union' || !shape.discriminator) return undefined;
+  if (typeof value !== 'object' || value === null) return undefined;
+  const record = value as Record<string, unknown>;
+  const kind = record[shape.discriminator];
+  if (typeof kind !== 'string') return undefined;
+  const option = shapeOf(shape.options[matchOption(shape.options, value, shape.discriminator)]!);
+  const keys = option.kind === 'object' ? Object.keys(option.shape) : [];
+  const detail = keys
+    .filter((key) => key !== shape.discriminator)
+    .map((key) => record[key])
+    .find(
+      (item): item is string | number =>
+        (typeof item === 'string' && item.trim() !== '') || typeof item === 'number',
+    );
+  return { kind, detail: detail === undefined ? undefined : String(detail) };
+}
+
+/**
+ * One item of a list whose items collapse (`collapseItems`): a disclosure whose header names the
+ * item, summarises it (its kind and path), and flags its problems while it is collapsed, with the
+ * item's Remove button beside it. Items there when the form opened start collapsed; added ones
+ * start open.
+ */
+function CollapsibleItem({
+  element,
+  name,
+  label,
+  defaultOpen,
+  remove,
+}: {
+  element: Schema;
+  name: string;
+  label: string;
+  defaultOpen: boolean;
+  remove: ReactNode;
+}) {
+  const value: unknown = useWatch({ name });
+  const summary = itemSummary(element, stripUnset(value));
+  const problems = useProblemCount([name]);
+  return (
+    <Disclosure
+      variant="row"
+      defaultOpen={defaultOpen}
+      label={<span className="font-medium">{label}</span>}
+      summary={
+        <>
+          {summary ? (
+            <span className="flex min-w-0 items-baseline gap-1.5 font-mono text-xs">
+              <code className="rounded-sm bg-surface-sunken px-1 text-default">{summary.kind}</code>
+              {summary.detail === undefined ? null : (
+                <>
+                  {' '}
+                  <span className="min-w-0 truncate text-muted">{summary.detail}</span>
+                </>
+              )}
+            </span>
+          ) : null}{' '}
+          <ProblemBadge count={problems} />
+        </>
+      }
+      actions={remove}
+    >
+      <Field schema={element} name={name} label={label} bare />
+    </Disclosure>
+  );
+}
+
+/** "1 error", "3 errors" on the bad tone, with its glyph; nothing when there are none. */
+export function ProblemBadge({ count }: { count: number }) {
+  if (count === 0) return null;
+  return (
+    <Badge size="sm" tone="bad">
+      <Icon name="alert" />
+      {count} {count === 1 ? 'error' : 'errors'}
+    </Badge>
   );
 }

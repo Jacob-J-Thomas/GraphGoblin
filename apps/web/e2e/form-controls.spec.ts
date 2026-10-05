@@ -4,7 +4,7 @@
  * `aria-required`; an error describes its control; the file picker is a labelled native input.
  */
 import type { APIRequestContext, Page } from '@playwright/test';
-import { approvalLoop, expect, openNode, publishLoop, test } from './fixtures.js';
+import { approvalLoop, expect, openAdvanced, openNode, publishLoop, test } from './fixtures.js';
 
 async function createLoop(request: APIRequestContext, kind: string, config: unknown) {
   const definition = approvalLoop(`controls ${kind}`);
@@ -45,6 +45,7 @@ test('switches and segmented controls work by keyboard and save what they show',
   const id = await createLoop(request, 'script', { command: 'node' });
   await page.goto(`/app/loops/${id}/edit`);
   const dialog = await openNode(page, 'approve');
+  await openAdvanced(dialog);
 
   // A segmented control: Tab lands on the chosen segment, the arrow keys move the choice.
   const stdin = dialog.getByRole('radiogroup', { name: 'Stdin', exact: true });
@@ -68,6 +69,7 @@ test('a switch toggles with Space and Enter, and an optional boolean can go back
   const id = await createLoop(request, 'inference', { prompt: { template: 'hi' } });
   await page.goto(`/app/loops/${id}/edit`);
   const dialog = await openNode(page, 'approve');
+  await openAdvanced(dialog);
   const network = dialog.getByRole('radiogroup', { name: 'Network access', exact: true });
   await expect(network.getByRole('radio', { name: 'Not set' })).toBeChecked();
   await network.getByRole('radio', { name: 'Not set' }).focus();
@@ -99,6 +101,7 @@ test('a switch toggles with Space and Enter, and an optional boolean can go back
   });
   await page.goto(`/app/loops/${decisionId}/edit`);
   const decision = await openNode(page, 'approve');
+  await openAdvanced(decision);
   const record = decision.getByRole('switch', { name: 'Record alternatives', exact: true });
   await expect(record).toBeChecked();
   const box = await record.boundingBox();
