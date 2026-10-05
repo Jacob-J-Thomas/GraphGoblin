@@ -1,20 +1,22 @@
 import { kitchenSinkLoop } from '@graphgoblin/contracts/testing';
 import { act, fireEvent, render, screen } from '@testing-library/react';
-import type { ReactFlowProps } from '@xyflow/react';
+import { Position, type ReactFlowProps } from '@xyflow/react';
 import { createPortal } from 'react-dom';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { closePopovers, Popover } from '../components/ui/index.js';
 import { buildCardData, Canvas, canvasFocusTarget } from './Canvas.js';
 import type { EditorIssue } from './model.js';
 import type { FlowNode } from './NodeCard.js';
+import { historyClock } from './history.js';
 import { useEditorStore } from './store.js';
 import { decisionBackRoute, routingInput, simpleLoop } from '../__fixtures__/routing.js';
-import { BackwardEdge } from './BackwardEdge.js';
+import { OrthogonalEdge, type OrthogonalEdgeData } from './OrthogonalEdge.js';
 import type { RoutingGeometry } from './useRouting.js';
-import type { RouteChannel } from './route-channels.js';
 
 let props: ReactFlowProps<FlowNode> | undefined;
 let geometry: RoutingGeometry = { nodes: [], preparationMs: 0 };
+/** Render the orthogonal edges too (the real component, in a stand-in wrapper), for #44. */
+let drawEdges = false;
 
 vi.mock('@xyflow/react', async (importOriginal) => {
   const actual = await importOriginal<Record<string, unknown>>();
@@ -22,12 +24,48 @@ vi.mock('@xyflow/react', async (importOriginal) => {
     ...actual,
     ReactFlow: (p: ReactFlowProps<FlowNode>) => {
       props = p;
-      return <div data-testid="flow" />;
+      return <div data-testid="flow">{drawEdges ? <EdgeLayer flow={p} /> : null}</div>;
     },
     useReactFlow: () => ({ screenToFlowPosition: (p: { x: number; y: number }) => p }),
-    useStore: () => geometry,
+    // The edge's handles read the zoom; everything else here reads the routing geometry.
+    useStore: (selector?: { name?: string }) => (selector?.name === 'zoomOf' ? 1 : geometry),
   };
 });
+
+/** xyflow's edge wrappers, reduced to what the orthogonal edge reads: ports and focus. */
+function EdgeLayer({ flow: p }: { flow: ReactFlowProps<FlowNode> }) {
+  const Edge = p.edgeTypes!['orthogonal'] as typeof OrthogonalEdge;
+  return (
+    <svg>
+      {p
+        .edges!.filter((e) => e.type === 'orthogonal')
+        .map((e) => {
+          const from = geometry.nodes.find((n) => n.id === e.source)!.outputs[e.sourceHandle!]!;
+          const to = geometry.nodes.find((n) => n.id === e.target)!.input!;
+          return (
+            <g key={e.id} className="react-flow__edge" tabIndex={0} data-id={e.id}>
+              <Edge
+                id={e.id}
+                source={e.source}
+                target={e.target}
+                sourceX={from.x}
+                sourceY={from.y}
+                targetX={to.x}
+                targetY={to.y}
+                sourcePosition={Position.Right}
+                targetPosition={Position.Left}
+                data={e.data as OrthogonalEdgeData}
+                label={e.label}
+                selected={!!e.selected}
+                selectable
+                deletable
+              />
+            </g>
+          );
+        })}
+    </svg>
+  );
+}
 
 const store = () => useEditorStore.getState();
 const flow = () => props as ReactFlowProps<FlowNode>;
@@ -56,7 +94,7 @@ describe('Canvas handlers', () => {
     expect(decide.data.ports).toEqual(['good', 'bad']);
     const loopBack = flow().edges!.find((e) => e.id === 'e11')!;
     expect(loopBack).toMatchObject({ label: 'loopBack', animated: true, sourceHandle: 'loopBack' });
-    expect(flow().edgeTypes).toEqual({ backward: BackwardEdge });
+    expect(flow().edgeTypes).toEqual({ orthogonal: OrthogonalEdge });
     expect(flow().edges!.find((e) => e.id === 'e1')!.label).toBeUndefined();
   });
 
@@ -67,12 +105,13 @@ describe('Canvas handlers', () => {
     const view = renderCanvas([]);
     const back = flow().edges!.find((e) => e.id === 'return')!;
     expect(back).toMatchObject({
-      type: 'backward',
+      type: 'orthogonal',
       label: 'loopBack',
       animated: true,
       ariaLabel: 'done loopBack to work',
+      data: { forward: false, suspended: false },
     });
-    const channel = back.data as RouteChannel;
+    const { channel } = back.data as OrthogonalEdgeData;
     expect(channel.getSnapshot()).toMatchObject({ blocked: false });
     const previousPath = channel.getSnapshot();
     const measured = structuredClone(geometry.nodes);
@@ -85,7 +124,10 @@ describe('Canvas handlers', () => {
     expect(flow().edges!.find((e) => e.id === 'start-work')!.type).toBe('smoothstep');
     const forward = flow().edges!.find((e) => e.id === 'start-work');
     act(() => flow().onEdgesChange!([{ type: 'select', id: 'return', selected: true }]));
-    expect(flow().edges!.find((e) => e.id === 'return')!.selected).toBe(true);
+    expect(flow().edges!.find((e) => e.id === 'return')).toMatchObject({
+      selected: true,
+      zIndex: 2000,
+    });
     expect(flow().edges!.find((e) => e.id === 'return')!.data).toBe(back.data);
     expect(flow().edges!.find((e) => e.id === 'start-work')).toBe(forward);
     fireEvent.keyDown(view.getByTestId('canvas'), { key: 'Delete' });
@@ -116,8 +158,8 @@ describe('Canvas handlers', () => {
   it('waits for measurements of decision returns and self-loops without drawing a crossing fallback', () => {
     store().load('L1', decisionBackRoute());
     renderCanvas([]);
-    expect(flow().edges!.find((e) => e.id === 'retry')).toMatchObject({ type: 'backward' });
-    expect(flow().edges!.find((e) => e.id === 'self')).toMatchObject({ type: 'backward' });
+    expect(flow().edges!.find((e) => e.id === 'retry')).toMatchObject({ type: 'orthogonal' });
+    expect(flow().edges!.find((e) => e.id === 'self')).toMatchObject({ type: 'orthogonal' });
     expect(flow().edges!.find((e) => e.id === 'finish')!.type).toBe('smoothstep');
     // A horizontal move may change direction before the next handle measurement arrives.
     act(() =>
@@ -407,5 +449,203 @@ describe('Canvas handlers', () => {
     expect(flow().edges!.find((e) => e.id === 'e1')!.selected).toBe(true);
     act(() => flow().onEdgesChange!([{ type: 'select', id: 'e1', selected: false }]));
     expect(flow().edges!.find((e) => e.id === 'e1')!.selected).toBe(false);
+  });
+});
+
+describe('manual edge routes (#44)', () => {
+  let clock = 0;
+  beforeEach(() => {
+    // jsdom does not lay out SVG text; xyflow measures label pills with getBBox.
+    Object.defineProperty(SVGElement.prototype, 'getBBox', {
+      configurable: true,
+      value: () => ({ x: 0, y: 0, width: 56, height: 11 }),
+    });
+    drawEdges = true;
+    clock = 0;
+    vi.spyOn(historyClock, 'now').mockImplementation(() => clock);
+    const definition = simpleLoop();
+    geometry = { nodes: routingInput(definition).nodes, preparationMs: 0 };
+    store().load('L1', definition);
+  });
+  afterEach(() => {
+    drawEdges = false;
+    vi.restoreAllMocks();
+  });
+
+  /** The canvas as the editor page renders it: on the store's current definition. */
+  function Live() {
+    const definition = useEditorStore((s) => s.definition)!;
+    return <Canvas definition={definition} issues={[]} />;
+  }
+  const route = (id: string) => store().definition!.edges.find((e) => e.id === id)!.ui?.route;
+  const select = (id: string) =>
+    act(() => flow().onEdgesChange!([{ type: 'select', id, selected: true }]));
+  const handle = (name: string) => screen.getByRole('button', { name });
+  const labels = () => store().past.map((entry) => entry.label);
+  const edge = (id: string) => flow().edges!.find((e) => e.id === id)!;
+  /** Move a card in the routing geometry (xyflow's measurement) and in the store (the drop). */
+  const moveCard = (id: string, x: number, y: number) => {
+    geometry = {
+      nodes: geometry.nodes.map((n) => {
+        if (n.id !== id) return n;
+        const shift = (p: { x: number; y: number }) => ({ x: p.x + x - n.x, y: p.y + y - n.y });
+        return {
+          ...n,
+          x,
+          y,
+          outputs: Object.fromEntries(Object.entries(n.outputs).map(([k, p]) => [k, shift(p)])),
+          ...(n.input ? { input: shift(n.input) } : {}),
+        };
+      }),
+      preparationMs: 0,
+    };
+  };
+
+  it('drags a forward edge segment into a manual route in one undo step, and resets it', () => {
+    render(<Live />);
+    expect(edge('start-work').type).toBe('smoothstep');
+    select('start-work');
+    // Selected, the forward edge shows its smoothstep path's segments: stub, trunk, stub.
+    expect(edge('start-work').type).toBe('orthogonal');
+    const trunk = handle('Route segment 2 of 3, vertical');
+    // The press closes the open step, so the drag is a step of its own (as for a node drag).
+    act(() => store().moveNode('check', { x: 610, y: 100 }));
+    expect(store().openStep).toBeDefined();
+    fireEvent.pointerDown(trunk, { button: 0, clientX: 10, clientY: 10 });
+    expect(store().openStep).toBeUndefined();
+    fireEvent.pointerMove(window, { clientX: 25, clientY: 90 });
+    fireEvent.pointerMove(window, { clientX: 40, clientY: 90 });
+    // The preview is routed (and drawn) while the store waits for the release.
+    expect(route('start-work')).toBeUndefined();
+    expect(edge('start-work').ariaLabel).toBe('start out to work, manual route');
+    fireEvent.pointerUp(window);
+    expect(route('start-work')).toEqual([272]);
+    expect(labels()).toEqual(['move check', 'reroute start to work']);
+    expect(screen.getByText('Route changed.')).toBeInTheDocument();
+    // A later move of the released pointer changes nothing.
+    fireEvent.pointerMove(window, { clientX: 400, clientY: 10 });
+    expect(route('start-work')).toEqual([272]);
+
+    fireEvent.click(handle('Reset route'));
+    expect(route('start-work')).toBeUndefined();
+    expect(labels()).toEqual([
+      'move check',
+      'reroute start to work',
+      'reset route of start to work',
+    ]);
+    expect(
+      screen.getByText('Route reset: the connection routes automatically.'),
+    ).toBeInTheDocument();
+    act(() => store().undo());
+    expect(route('start-work')).toEqual([272]);
+    act(() => store().redo());
+    expect(route('start-work')).toBeUndefined();
+  });
+
+  it('nudges a loop-back lane by grid lines as one step, through cards when the author wants', () => {
+    render(<Live />);
+    select('return');
+    const lane = () => handle('Route segment 3 of 5, horizontal');
+    expect((edge('return').data as OrthogonalEdgeData).forward).toBe(false);
+    fireEvent.keyDown(lane(), { key: 'ArrowDown' });
+    expect(route('return')).toEqual([1116, 264, 268]);
+    expect(screen.getByText('Segment at y 264.')).toBeInTheDocument();
+    clock += 100;
+    fireEvent.keyDown(lane(), { key: 'ArrowUp' });
+    expect(route('return')![1]).toBe(242);
+    // Up again runs the lane through the row of cards: kept, drawn dotted, and announced.
+    clock += 100;
+    fireEvent.keyDown(lane(), { key: 'ArrowUp' });
+    expect(route('return')![1]).toBe(220);
+    expect(screen.getByText('Segment at y 220. It crosses a card.')).toBeInTheDocument();
+    expect(edge('return').ariaLabel).toBe('done loopBack to work, manual route, crosses a card');
+    expect(screen.getByText('Crosses a card')).toBeInTheDocument();
+    // Shift moves five grid lines: out above the cards again.
+    clock += 100;
+    fireEvent.keyDown(lane(), { key: 'ArrowUp', shiftKey: true });
+    expect(route('return')![1]).toBe(110);
+    clock += 100;
+    fireEvent.keyDown(lane(), { key: 'ArrowUp' });
+    expect(route('return')![1]).toBe(88);
+    // Arrows across the segment do nothing; the whole run of nudges is one step.
+    fireEvent.keyDown(lane(), { key: 'ArrowLeft' });
+    expect(labels()).toEqual(['reroute done loopBack to work']);
+    act(() => store().undo());
+    expect(route('return')).toBeUndefined();
+  });
+
+  it('keeps a drag where it is released, even across a card, and Escape cancels a drag', () => {
+    render(<Live />);
+    select('return');
+    const press = () =>
+      fireEvent.pointerDown(handle('Route segment 3 of 5, horizontal'), {
+        button: 0,
+        clientX: 0,
+        clientY: 0,
+      });
+    press();
+    fireEvent.pointerMove(window, { clientX: 0, clientY: 60 });
+    fireEvent.keyDown(window, { key: 'Shift' });
+    fireEvent.keyDown(window, { key: 'Escape' });
+    fireEvent.pointerUp(window);
+    expect(route('return')).toBeUndefined();
+    // A press that never moves is not an edit, and a cancelled pointer keeps nothing.
+    press();
+    fireEvent.pointerUp(window);
+    press();
+    fireEvent.pointerMove(window, { clientX: 0, clientY: 60 });
+    fireEvent.pointerCancel(window);
+    expect(store().past).toHaveLength(0);
+    press();
+    fireEvent.pointerMove(window, { clientX: 0, clientY: -90 });
+    // The preview across the cards is drawn dotted while it is held there.
+    expect(document.querySelector('.gg-route-crossing')).not.toBeNull();
+    fireEvent.pointerUp(window);
+    expect(route('return')).toEqual([1116, 164, 268]);
+    expect(screen.getByText('Route changed. It crosses a card.')).toBeInTheDocument();
+  });
+
+  it('lets a moved card take a manual route back to automatic, in the move’s own undo step', () => {
+    const definition = simpleLoop();
+    definition.edges.find((e) => e.id === 'return')!.ui = { route: [1116, 290, 268] };
+    store().load('L1', definition);
+    render(<Live />);
+    expect(edge('return').ariaLabel).toBe('done loopBack to work, manual route');
+    // Dragging `check` down onto the lane: the route is set aside while the card is over it.
+    const check = flow().nodes!.find((n) => n.id === 'check')!;
+    act(() => flow().onNodeDragStart!({} as never, check, [check]));
+    moveCard('check', 600, 240);
+    act(() =>
+      flow().onNodesChange!([
+        { type: 'position', id: 'check', position: { x: 600, y: 240 }, dragging: true },
+      ]),
+    );
+    expect(edge('return').ariaLabel).toBe(
+      'done loopBack to work, manual route set aside under a moving card',
+    );
+    expect(edge('return').data).toMatchObject({ suspended: true });
+    // Released there: the route is removed in the move's step and the edge routes automatically.
+    act(() =>
+      flow().onNodesChange!([
+        { type: 'position', id: 'check', position: { x: 600, y: 240 }, dragging: false },
+      ]),
+    );
+    act(() => flow().onNodeDragStop!({} as never, { ...check, position: { x: 600, y: 240 } }, []));
+    expect(route('return')).toBeUndefined();
+    expect(labels()).toEqual(['move check']);
+    expect(
+      screen.getByText('A manual route would cross a card and now routes automatically.'),
+    ).toBeInTheDocument();
+    act(() => store().undo());
+    expect(route('return')).toEqual([1116, 290, 268]);
+    expect(store().definition!.nodes.find((n) => n.id === 'check')!.ui).toEqual({ x: 600, y: 100 });
+    // A move that keeps the route clear keeps the route (the stubs follow the ports).
+    moveCard('check', 600, 100);
+    act(() =>
+      flow().onNodesChange!([
+        { type: 'position', id: 'done', position: { x: 920, y: 120 }, dragging: false },
+      ]),
+    );
+    expect(route('return')).toEqual([1116, 290, 268]);
   });
 });

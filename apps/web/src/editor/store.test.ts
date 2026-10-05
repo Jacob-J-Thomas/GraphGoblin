@@ -329,6 +329,64 @@ describe('undo and redo', () => {
     expect(store().past).toHaveLength(steps);
   });
 
+  it('stores, merges, resets, and restores an edge’s manual route (#44)', () => {
+    store().load('L1', newLoopDefinition('a'));
+    const edge = () => store().definition!.edges[0]!;
+    const id = edge().id;
+    // An unknown edge, or removing a route the edge does not have, changes nothing.
+    store().setEdgeRoute('missing', [1]);
+    store().setEdgeRoute(id, undefined);
+    expect(store().past).toHaveLength(0);
+    store().setEdgeRoute(id, [160]);
+    expect(edge().ui).toEqual({ route: [160] });
+    // Arrow-key nudges of one edge in quick succession are one step, like a node's.
+    clock += 100;
+    store().setEdgeRoute(id, [182]);
+    clock += 100;
+    store().setEdgeRoute(id, [204]);
+    expect(store().past.map((entry) => entry.label)).toEqual(['reroute start to done']);
+    // A drag closes the step before it, so its single change is a step of its own.
+    store().closeStep();
+    store().setEdgeRoute(id, [240, 300, 260]);
+    // Reset is a step of its own, however soon it follows.
+    store().setEdgeRoute(id, undefined);
+    expect(edge()).not.toHaveProperty('ui');
+    expect(store().past.map((entry) => entry.label)).toEqual([
+      'reroute start to done',
+      'reroute start to done',
+      'reset route of start to done',
+    ]);
+    store().undo();
+    expect(edge().ui).toEqual({ route: [240, 300, 260] });
+    store().undo();
+    expect(edge().ui).toEqual({ route: [204] });
+    store().undo();
+    expect(edge()).not.toHaveProperty('ui');
+    store().redo();
+    store().redo();
+    store().redo();
+    expect(edge()).not.toHaveProperty('ui');
+    // The route belongs to the edge: a rename keeps it; removing the edge removes it.
+    store().undo();
+    store().renameNode('start', 'begin');
+    expect(edge()).toMatchObject({ from: { node: 'begin' }, ui: { route: [240, 300, 260] } });
+    store().removeEdge(id);
+    expect(store().definition!.edges).toHaveLength(0);
+    store().undo();
+    expect(edge().ui).toEqual({ route: [240, 300, 260] });
+    // A node move that removes or changes a route it disturbs merges it into the move's step.
+    pause();
+    const steps = store().past.length;
+    store().moveNode('done', { x: 500, y: 300 });
+    store().setEdgeRoute(id, undefined, 'move:done');
+    expect(store().past).toHaveLength(steps + 1);
+    expect(store().past.at(-1)!.label).toBe('move done');
+    store().setEdgeRoute(id, [10], 'move:done');
+    expect(store().past).toHaveLength(steps + 1);
+    store().undo();
+    expect(edge().ui).toEqual({ route: [240, 300, 260] });
+  });
+
   it('merges a form’s unparsed text with its edits, and brings it back on undo', () => {
     store().load('L1', newLoopDefinition('a'));
     const schema = { type: 'object' };

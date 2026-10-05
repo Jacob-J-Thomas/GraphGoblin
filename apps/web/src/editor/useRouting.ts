@@ -2,6 +2,7 @@ import { useStore, type ReactFlowState } from '@xyflow/react';
 import { useState } from 'react';
 import {
   createRoutingPlan,
+  sameEdge,
   sameNode,
   SearchWorkspace,
   type RoutingEdge,
@@ -82,15 +83,8 @@ export function createRoutingCache() {
       geometry === previousGeometry &&
       previous &&
       edges.length === previous.edges.length &&
-      edges.every((e, i) => {
-        const old = previous!.edges[i]!;
-        return (
-          e.id === old.id &&
-          e.source === old.source &&
-          e.target === old.target &&
-          e.port === old.port
-        );
-      })
+      // Fixed (manual) routes are part of the key: a dragged segment re-plans the routes it affects.
+      edges.every((e, i) => e.id === previous!.edges[i]!.id && sameEdge(e, previous!.edges[i]))
     )
       return previous;
     const preparationMs = geometry === previousGeometry ? 0 : geometry.preparationMs;

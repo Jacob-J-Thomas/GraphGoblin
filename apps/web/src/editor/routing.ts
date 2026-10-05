@@ -19,6 +19,7 @@ import {
   placeLabel,
   type LabelPlacement,
 } from './routing-labels.js';
+import { crossesCards, drawnPoints, sameRoute } from './manual-route.js';
 export { intersectsBox, simplify, type Point } from './routing-geometry.js';
 export { SearchWorkspace } from './routing-search.js';
 
@@ -35,9 +36,21 @@ export interface RoutingEdge {
   source: string;
   target: string;
   port: string;
+  /**
+   * A fixed (manual) route, in the contract's `edge.ui.route` form (#44). It is drawn as given,
+   * with stubs from the current port tips, and automatic routes reserve around it. One that
+   * crosses a card is set aside for the automatic route, unless `allowCrossing`.
+   */
+  route?: readonly number[];
+  /**
+   * The author put the route where it is (a stored route, a segment drag): draw it even across a
+   * card, flagged `crossing`. Without it (a route a moving card now lands on), a crossing route
+   * falls back to the automatic route.
+   */
+  allowCrossing?: boolean;
 }
 export interface RoutedEdge extends Record<string, unknown> {
-  /** #44 replaces these ordered points independently of how they were obtained. */
+  /** Ordered orthogonal points from the source port's tip to the target port's tip. */
   points: readonly Point[];
   lane?: Lane;
   label: Point;
@@ -58,6 +71,12 @@ export interface RoutedEdge extends Record<string, unknown> {
   /** Only a port inside another real card is blocked. Search failure has a separate explanation. */
   blocked: boolean;
   unavailable: boolean;
+  /** Drawn from the edge's fixed (manual) route rather than found by the router. */
+  manual?: boolean;
+  /** A manual route the author left crossing a card: drawn dotted, as a warning. */
+  crossing?: boolean;
+  /** An automatic route standing in for a manual route that crosses a card. */
+  suspended?: boolean;
 }
 export interface RoutingPlan {
   clearance: number;
@@ -65,6 +84,8 @@ export interface RoutingPlan {
   edges: readonly RoutingEdge[];
   routes: ReadonlyMap<string, RoutedEdge>;
   directions: ReadonlyMap<string, boolean>;
+  /** Edges whose manual route crosses a card and is set aside for the automatic route. */
+  suspended: ReadonlySet<string>;
   dependencies: ReadonlyMap<string, RouteDependencies>;
   statistics: { rerouted: number; expansions: number; checks: number };
 }
@@ -148,8 +169,11 @@ export function sameNode(a: RoutingNode, b: RoutingNode): boolean {
     Object.entries(a.outputs).every(([port, point]) => samePoint(point, b.outputs[port]))
   );
 }
-const sameEdge = (a: RoutingEdge, b: RoutingEdge | undefined) =>
+const sameConnection = (a: RoutingEdge, b: RoutingEdge | undefined) =>
   !!b && a.source === b.source && a.target === b.target && a.port === b.port;
+/** The same connection with the same fixed route: a reused route stays valid. */
+export const sameEdge = (a: RoutingEdge, b: RoutingEdge | undefined): boolean =>
+  sameConnection(a, b) && sameRoute(a.route, b!.route) && !a.allowCrossing === !b!.allowCrossing;
 export const routeMessage = (route: Pick<RoutedEdge, 'blocked' | 'unavailable'>): string =>
   route.blocked
     ? 'Port covered by a card; move the card'
@@ -203,6 +227,7 @@ interface Work {
   from: Point;
   to: Point;
   span: number;
+  backward: boolean;
 }
 
 /** Decoration cannot invalidate a path. Use another horizontal, then a clear fallback pill. */
@@ -733,6 +758,136 @@ function cornerRadii(points: readonly Point[], index: BoxIndex): number[] {
   });
 }
 
+/** Whether a recomputed route equals the previous one, so the previous object can be kept. */
+function sameRouted(before: RoutedEdge, route: RoutedEdge): boolean {
+  return (
+    before.padding === route.padding &&
+    before.lanePadding === route.lanePadding &&
+    before.lane?.y === route.lane?.y &&
+    before.lane?.left === route.lane?.left &&
+    before.lane?.right === route.lane?.right &&
+    before.laneGap === route.laneGap &&
+    before.labelWidth === route.labelWidth &&
+    before.blocked === route.blocked &&
+    before.unavailable === route.unavailable &&
+    before.manual === route.manual &&
+    before.crossing === route.crossing &&
+    before.suspended === route.suspended &&
+    samePoint(before.label, route.label) &&
+    before.bounds.left === route.bounds.left &&
+    before.bounds.right === route.bounds.right &&
+    before.bounds.top === route.bounds.top &&
+    before.bounds.bottom === route.bounds.bottom &&
+    before.points.length === route.points.length &&
+    before.points.every((p, i) => samePoint(p, route.points[i])) &&
+    before.radii.every((r, i) => r === route.radii[i])
+  );
+}
+
+/** A route's horizontal segments between its first and last (the port stubs). */
+function innerLanes(points: readonly Point[]): Lane[] {
+  const lanes: Lane[] = [];
+  for (let i = 2; i < points.length - 1; i += 1) {
+    const a = points[i - 1]!;
+    const b = points[i]!;
+    if (a.y === b.y) lanes.push({ y: a.y, left: Math.min(a.x, b.x), right: Math.max(a.x, b.x) });
+  }
+  return lanes;
+}
+
+/**
+ * Reserve a route for the automatic routes after it: its vertical trunks, its label, and its lane.
+ * A manual route reserves every inner horizontal, since any of them may run anywhere.
+ */
+function reserve(reservations: Reservations, route: RoutedEdge): void {
+  reservations.add(route.points, route.lane, route.labelBounds);
+  if (route.manual)
+    for (const lane of innerLanes(route.points))
+      if (lane.y !== route.lane?.y || lane.left !== route.lane.left) reservations.add([], lane);
+}
+
+/** What a route reserves for later routes, as boxes: trunks, lanes, and its label. */
+function reservedBoxes(route: RoutedEdge): Box[] {
+  const boxes: Box[] = [];
+  for (let i = 1; i < route.points.length; i += 1) {
+    const a = route.points[i - 1]!;
+    const b = route.points[i]!;
+    if (a.x === b.x) boxes.push(bounds([a, b]));
+  }
+  const lanes = route.manual ? innerLanes(route.points) : [];
+  if (route.lane) lanes.push(route.lane);
+  for (const lane of lanes)
+    boxes.push({ id: '', left: lane.left, right: lane.right, top: lane.y, bottom: lane.y });
+  if (route.labelBounds) boxes.push(route.labelBounds);
+  return boxes;
+}
+
+/**
+ * The reserved elements one route has and the other has not. Later routes read reservations only
+ * through queries that touch the reserved elements themselves (lane separation, shared trunks,
+ * candidate lanes, labels), so these exact boxes, not the routes' whole envelopes, decide which
+ * later routes must be replanned: dragging a manual lane replans only routes near the lane.
+ */
+function reservationDifference(before: RoutedEdge | undefined, after: RoutedEdge | undefined) {
+  const key = (b: Box) => `${b.left},${b.right},${b.top},${b.bottom}`;
+  const [old, next] = [before, after].map((r) => (r ? reservedBoxes(r) : []));
+  const oldKeys = new Set(old!.map(key));
+  const nextKeys = new Set(next!.map(key));
+  return [
+    ...old!.filter((b) => !nextKeys.has(key(b))),
+    ...next!.filter((b) => !oldKeys.has(key(b))),
+  ];
+}
+
+/** Whether any segment enters a card's body (handles do not count: a route may touch a port). */
+function crossesAnyCard(points: readonly Point[], index: BoxIndex): boolean {
+  for (let i = 1; i < points.length; i += 1) {
+    const cards = index.query(bounds([points[i - 1]!, points[i]!])).filter((box) => !box.handle);
+    if (crossesCards([points[i - 1]!, points[i]!], cards)) return true;
+  }
+  return false;
+}
+
+/**
+ * Describe fixed points the way the router describes its own routes: the longest inner horizontal
+ * as the lane, a label clear of cards and earlier labels (on another horizontal, or above the path
+ * when none has room), corner radii that keep every curve out of cards, and reservation bounds.
+ */
+function manualRoute(
+  work: Pick<Work, 'edge' | 'from' | 'to'>,
+  points: readonly Point[],
+  crossing: boolean,
+  index: BoxIndex,
+  reservations: Reservations,
+): RoutedEdge {
+  const described = describe([...points], work.from, work.to, ROUTING_RADIUS, false, 0);
+  const labelled = labelRoute(described, work.edge.port, work.from, index, reservations);
+  return {
+    ...labelled,
+    radii: cornerRadii(points, index),
+    manual: true,
+    ...(crossing ? { crossing: true } : {}),
+  };
+}
+
+/**
+ * The route description of given orthogonal points (#44's manual routes, or any caller's): lane,
+ * label position and envelope, corner radii, crossing, and bounds, among the given cards.
+ */
+export function describeRoute(
+  points: readonly Point[],
+  port: string,
+  nodes: readonly RoutingNode[],
+): RoutedEdge {
+  const work = {
+    edge: { id: '', source: '', target: '', port },
+    from: points[0]!,
+    to: points.at(-1)!,
+  };
+  const index = new BoxIndex(nodes.flatMap(nodeBoxes));
+  return manualRoute(work, points, crossesAnyCard(points, index), index, new Reservations());
+}
+
 /**
  * Pure route planning with an optional prior plan. Replaying the deterministic order consults
  * the same predecessors as a fresh plan, even when a move changes span order. Recorded query
@@ -775,12 +930,19 @@ export function createRoutingPlan(
       edge,
       from,
       to,
-      sameEdge(edge, oldEdges.get(edge.id)) ? previous?.directions.get(edge.id) : undefined,
+      sameConnection(edge, oldEdges.get(edge.id)) ? previous?.directions.get(edge.id) : undefined,
     );
     directions.set(edge.id, backward);
-    if (backward) work.push({ edge, source, target, from, to, span: Math.abs(from.x - to.x) });
+    if (backward || edge.route)
+      work.push({ edge, source, target, from, to, span: Math.abs(from.x - to.x), backward });
   }
-  work.sort((a, b) => a.span - b.span || a.edge.id.localeCompare(b.edge.id));
+  // Fixed routes come first: every automatic route then reserves around them.
+  work.sort(
+    (a, b) =>
+      Number(!!b.edge.route) - Number(!!a.edge.route) ||
+      a.span - b.span ||
+      a.edge.id.localeCompare(b.edge.id),
+  );
   const routes = new Map<string, RoutedEdge>();
   const dependencies = new Map<string, RouteDependencies>();
   const reservations = new Reservations();
@@ -792,16 +954,14 @@ export function createRoutingPlan(
   const compareReservation = (id: string) => {
     const before = oldPrefix.has(id) ? previous?.routes.get(id) : undefined;
     const after = routes.get(id);
-    if (before === after) reservationChanges.delete(id);
-    else
-      reservationChanges.set(
-        id,
-        [before, after].flatMap((r) => (r ? [r.bounds] : [])),
-      );
+    const changes = before === after ? [] : reservationDifference(before, after);
+    if (changes.length) reservationChanges.set(id, changes);
+    else reservationChanges.delete(id);
   };
   const index = new BoxIndex(nodes.flatMap(nodeBoxes));
   const outgoing = new Map<string, number>();
   const incoming = new Map<string, number>();
+  const suspended = new Set<string>();
   const statistics = { rerouted: 0, expansions: 0, checks: 0 };
   for (const item of work) {
     const id = item.edge.id;
@@ -840,12 +1000,34 @@ export function createRoutingPlan(
     ) {
       routes.set(id, before);
       dependencies.set(id, reads);
-      reservations.add(before.points, before.lane, before.labelBounds);
+      reserve(reservations, before);
       compareReservation(id);
       continue;
     }
     index.reads = new Footprint();
     reservations.reads = new Footprint();
+    statistics.rerouted += 1;
+    const fixed = item.edge.route && drawnPoints(item.edge.route, item.from, item.to);
+    const crossing = !!fixed && crossesAnyCard(fixed, index);
+    if (fixed && (!crossing || item.edge.allowCrossing)) {
+      const route = manualRoute(item, fixed, crossing, index, reservations);
+      dependencies.set(id, {
+        boxes: index.reads,
+        reservations: reservations.reads,
+        sourceRank,
+        targetRank,
+      });
+      routes.set(id, before && sameRouted(before, route) ? before : route);
+      reserve(reservations, route);
+      compareReservation(id);
+      continue;
+    }
+    if (!item.backward) {
+      // A forward edge whose manual route crosses a card: xyflow's automatic path draws it.
+      suspended.add(id);
+      compareReservation(id);
+      continue;
+    }
     const attempt = (squeeze = false) => {
       // A route starts and ends on its own cards' handles: only other cards' handles need room.
       index.exempt = [item.source.id, item.target.id];
@@ -874,11 +1056,12 @@ export function createRoutingPlan(
     }
     // A route with at least the full radius of padding cannot curve into a card. A tighter one
     // reads the boxes beside each corner, as part of this route's dependencies.
-    const route =
+    let route =
       routed.padding >= ROUTING_RADIUS
         ? routed
         : { ...routed, radii: cornerRadii(routed.points, index) };
-    statistics.rerouted += 1;
+    // A backward edge whose manual route crosses a card falls back to its automatic route.
+    if (fixed) route = { ...route, suspended: true };
     statistics.expansions += expansions;
     dependencies.set(id, {
       boxes: index.reads,
@@ -886,31 +1069,13 @@ export function createRoutingPlan(
       sourceRank,
       targetRank,
     });
-    const unchanged =
-      before &&
-      before.padding === route.padding &&
-      before.lanePadding === route.lanePadding &&
-      before.lane?.y === route.lane?.y &&
-      before.lane?.left === route.lane?.left &&
-      before.lane?.right === route.lane?.right &&
-      before.laneGap === route.laneGap &&
-      before.labelWidth === route.labelWidth &&
-      before.blocked === route.blocked &&
-      before.unavailable === route.unavailable &&
-      samePoint(before.label, route.label) &&
-      before.bounds.left === route.bounds.left &&
-      before.bounds.right === route.bounds.right &&
-      before.bounds.top === route.bounds.top &&
-      before.bounds.bottom === route.bounds.bottom &&
-      before.points.length === route.points.length &&
-      before.points.every((p, i) => samePoint(p, route.points[i])) &&
-      before.radii.every((r, i) => r === route.radii[i]);
-    routes.set(id, unchanged ? before : route);
-    reservations.add(route.points, route.lane, route.labelBounds);
+    routes.set(id, before && sameRouted(before, route) ? before : route);
+    reserve(reservations, route);
     compareReservation(id);
   }
   statistics.checks = index.checks;
-  return { nodes, edges, routes, directions, dependencies, statistics, clearance };
+  for (const [id, route] of routes) if (route.suspended) suspended.add(id);
+  return { nodes, edges, routes, directions, suspended, dependencies, statistics, clearance };
 }
 
 export function routeBackwardEdges(

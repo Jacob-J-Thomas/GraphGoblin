@@ -1,0 +1,86 @@
+/*
+ * Manual edge routes (#44): the segment handles and Reset route toolbar of a selected edge, and the
+ * preview of a drag that would cross a card. The handles are scaled against the zoom, so their
+ * sizes here are screen pixels: a 24 px target (44 px for a coarse pointer) around a 12 px dot.
+ */
+
+.react-flow__edge .gg-route-handle {
+  outline: none;
+  pointer-events: all;
+}
+
+.react-flow__edge .gg-route-handle-x {
+  cursor: ew-resize;
+}
+
+.react-flow__edge .gg-route-handle-y {
+  cursor: ns-resize;
+}
+
+.react-flow__edge .gg-route-handle-hit {
+  fill: transparent;
+  r: 12px;
+}
+
+@media (pointer: coarse) {
+  .react-flow__edge .gg-route-handle-hit {
+    r: 22px;
+  }
+}
+
+/* The dot: the selected-edge stroke (3:1 on the canvas) around the raised surface. */
+.react-flow__edge .gg-route-handle-dot {
+  fill: var(--surface-raised);
+  stroke: var(--canvas-edge-selected);
+  stroke-width: 2.5px;
+}
+
+.react-flow__edge .gg-route-handle:hover .gg-route-handle-dot {
+  fill: var(--canvas-edge-selected);
+}
+
+/* Keyboard focus: the token ring around the dot, 2 px wide with a 2 px gap. */
+.react-flow__edge .gg-route-handle-ring {
+  fill: none;
+  stroke: transparent;
+  stroke-width: var(--focus-ring-width, 2px);
+}
+
+.react-flow__edge .gg-route-handle:focus-visible .gg-route-handle-ring {
+  stroke: var(--focus-ring);
+}
+
+.react-flow__edge .gg-route-toolbar-frame {
+  overflow: visible;
+  pointer-events: none;
+}
+
+.react-flow__edge .gg-route-toolbar > * {
+  pointer-events: all;
+}
+
+/* A drag preview that crosses a card is dotted: releasing it there keeps the old route. */
+.react-flow .react-flow__edge .react-flow__edge-path.gg-route-crossing {
+  stroke-dasharray: 2 6;
+  animation: none;
+}
+
+@media (forced-colors: active) {
+  .react-flow__edge .gg-route-handle-dot {
+    fill: Canvas;
+    stroke: CanvasText;
+  }
+
+  .react-flow__edge .gg-route-handle:hover .gg-route-handle-dot {
+    fill: Highlight;
+  }
+
+  .react-flow__edge .gg-route-handle:focus-visible .gg-route-handle-ring {
+    stroke: Highlight;
+  }
+
+  /* The edge opts out of forced colours for its paths; its HTML toolbar takes system colours. */
+  .react-flow__edge .gg-route-toolbar {
+    forced-color-adjust: auto;
+  }
+}

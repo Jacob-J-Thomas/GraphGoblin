@@ -3137,6 +3137,9 @@ export interface components {
                      */
                     port?: "in" | undefined;
                 };
+                ui?: {
+                    route: number[];
+                } | undefined;
             }[];
         };
         LoopExportInput: {
@@ -4633,6 +4636,9 @@ export interface components {
                      */
                     port: "in";
                 };
+                ui?: {
+                    route: number[];
+                } | undefined;
             }[];
         };
         LoopExport: {

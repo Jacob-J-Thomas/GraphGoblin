@@ -55,7 +55,7 @@ async function openGraph(
     if (await button.isVisible()) await button.click();
   }
   await page.getByRole('button', { name: 'Fit view' }).click();
-  await expect(page.locator('.react-flow__edge-backward title').first()).toBeAttached();
+  await expect(page.locator('.react-flow__edge-orthogonal title').first()).toBeAttached();
   await page.evaluate(() => document.fonts.ready);
   return loop.id;
 }
@@ -88,7 +88,7 @@ for (const theme of ['dark', 'light']) {
       const definition = fixture();
       await openGraph(page, request, definition, theme);
       await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
-      const backwards = page.locator('.react-flow__edge-backward');
+      const backwards = page.locator('.react-flow__edge-orthogonal');
       expect(await backwards.count()).toBeGreaterThan(0);
       for (const path of await backwards.locator('.react-flow__edge-path').all()) {
         await expect(path).toHaveAttribute('d', /^M.*Q/);

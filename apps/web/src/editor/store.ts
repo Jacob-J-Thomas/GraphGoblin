@@ -106,6 +106,17 @@ export interface EditorState {
   removeNode: (nodeId: string) => void;
   connect: (connection: ConnectionRequest) => string | null;
   removeEdge: (edgeId: string) => void;
+  /**
+   * Store an edge's manual route (`edge.ui.route`, #44), or with `undefined` remove it so the edge
+   * routes automatically again. A drag ends in one call; a run of arrow-key nudges of one edge's
+   * segments merges into one step, like a node's; a reset is a step of its own.
+   */
+  setEdgeRoute: (
+    edgeId: string,
+    route: readonly number[] | undefined,
+    /** Merge into the open step with this key: a node move that resets a route it now crosses. */
+    coalesceKey?: string,
+  ) => void;
   updateMeta: (changes: { name?: string; description?: string }) => void;
   updateSettings: (settings: unknown) => void;
   updateVariables: (variables: unknown) => void;
@@ -464,6 +475,24 @@ export const useEditorStore = create<EditorState>((set, get) => {
           }),
         }),
         { label: `remove edge ${edgeName(edge)}` },
+      );
+    },
+
+    setEdgeRoute: (edgeId, route, coalesceKey) => {
+      const edge = get().definition?.edges.find((e) => e.id === edgeId);
+      if (!edge) return;
+      edit(
+        (d) => ({
+          ...d,
+          edges: d.edges.map((e) => {
+            if (e.id !== edgeId) return e;
+            const { ui: _previous, ...rest } = e;
+            return route ? { ...rest, ui: { route: [...route] } } : rest;
+          }),
+        }),
+        route
+          ? { label: `reroute ${edgeName(edge)}`, coalesceKey: coalesceKey ?? `route:${edgeId}` }
+          : { label: `reset route of ${edgeName(edge)}`, coalesceKey },
       );
     },
 

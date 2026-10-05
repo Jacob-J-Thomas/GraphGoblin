@@ -27,6 +27,36 @@ describe('routing measurement and cache', () => {
     expect(measures[0]!.duration).toBeGreaterThanOrEqual(0.5);
   });
 
+  it('includes manual routes in the key: a changed route replans, an equal one reuses the plan', () => {
+    const input = routingInput(simpleLoop());
+    const route = createRoutingCache();
+    const geometry = { nodes: input.nodes, preparationMs: 0 };
+    const automatic = route(geometry, input.edges);
+    const routed = input.edges.map((e) =>
+      e.id === 'return' ? { ...e, route: [1120, 420, 260] } : e,
+    );
+    const manual = route(geometry, routed);
+    expect(manual).not.toBe(automatic);
+    expect(manual.routes.get('return')).toMatchObject({ manual: true });
+    // A new array with the same positions (a re-render) keeps the plan.
+    expect(
+      route(
+        geometry,
+        routed.map((e) => ({ ...e, ...(e.route ? { route: [...e.route] } : {}) })),
+      ),
+    ).toBe(manual);
+    const preview = route(
+      geometry,
+      routed.map((e) => (e.route ? { ...e, allowCrossing: true } : e)),
+    );
+    expect(preview).not.toBe(manual);
+    const moved = route(
+      geometry,
+      routed.map((e) => (e.route ? { ...e, route: [1120, 440, 260] } : e)),
+    );
+    expect(moved.routes.get('return')!.lane!.y).toBe(440);
+  });
+
   it('uses absolute node positions and measured handle tips, ignoring selection and viewport', () => {
     const node: InternalNode = {
       id: 'a',

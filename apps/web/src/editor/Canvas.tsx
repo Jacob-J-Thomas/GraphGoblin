@@ -25,7 +25,18 @@ import {
   type KeyboardEvent,
 } from 'react';
 import { closePopovers } from '../components/ui/index.js';
-import { BackwardEdge } from './BackwardEdge.js';
+import {
+  crossesCards,
+  drawnPoints,
+  findSegment,
+  midpoint,
+  moveSegment,
+  normalize,
+  nudged,
+  sameRoute,
+} from './manual-route.js';
+import { OrthogonalEdge, type OrthogonalEdgeData } from './OrthogonalEdge.js';
+import { RouteEditingContext, type RouteEditing } from './route-editing.js';
 import {
   canvasPorts,
   connectionProblem,
@@ -38,12 +49,17 @@ import {
 } from './model.js';
 import { NodeCard, type FlowNode, type NodeCardData } from './NodeCard.js';
 import { useEditorStore } from './store.js';
-import { backwardDirection, routeMessage, type RoutedEdge } from './routing.js';
+import { backwardDirection, routeMessage, type RoutingNode, type RoutingPlan } from './routing.js';
 import { useRouting } from './useRouting.js';
 import { createRouteChannels } from './route-channels.js';
 
 const nodeTypes = { gg: NodeCard };
-const edgeTypes = { backward: BackwardEdge };
+const edgeTypes = { orthogonal: OrthogonalEdge };
+
+/** The background's dot spacing; keyboard nudges of a route segment move by it (#44). */
+export const CANVAS_GRID = 22;
+/** A selected edge draws above the cards, so its segment handles and toolbar are never covered. */
+const SELECTED_EDGE_Z = 2000;
 
 /** Fit the graph with room on the left for the zoom controls, so they never cover a card. */
 const FIT_VIEW_OPTIONS: FitViewOptions = {
@@ -131,22 +147,25 @@ function buildNodes(
 }
 
 /**
- * Forward edges keep their existing smoothstep path. Backward paths come from measured canvas
- * geometry (#18); labels and the exit's animated dash retain the existing token styles.
+ * Unselected forward edges without a manual route keep xyflow's smoothstep path. Backward paths
+ * (#18) and manual routes (#44) come from the routing plan; a selected edge always uses the
+ * orthogonal edge, which shows its segment handles. Labels and the exit's animated dash keep the
+ * existing token styles.
  */
 function buildEdges(
   def: LoopDefinitionInput,
   selected: string | undefined,
-  routes: ReadonlyMap<string, RoutedEdge>,
+  plan: Pick<RoutingPlan, 'routes' | 'directions' | 'suspended'>,
   previous: ReadonlyMap<string, Edge>,
   nodes: readonly FlowNode[],
-  directions: ReadonlyMap<string, boolean>,
   channels: ReturnType<typeof createRouteChannels>,
 ): Edge[] {
+  const { routes, directions } = plan;
   const positions = new Map(nodes.map((node) => [node.id, node]));
   return def.edges.map((edge) => {
     const before = previous.get(edge.id);
     const route = routes.get(edge.id);
+    const beforeData = before?.data as OrthogonalEdgeData | undefined;
     // A new backward connection waits for its own handles; measured connections keep their
     // routes while an unrelated card awaits measurement.
     const from = positions.get(edge.from.node);
@@ -158,11 +177,30 @@ function buildEdges(
         { id: edge.id, source: edge.from.node, target: edge.to.node, port: edge.from.port },
         { x: from.position.x + (from.measured?.width ?? 184) + 6, y: 0 },
         { x: to.position.x - 6, y: 0 },
-        before ? before.type === 'backward' : undefined,
+        before ? before.type === 'orthogonal' && !beforeData?.forward : undefined,
       );
-    const type = (directions.get(edge.id) ?? pendingDirection) ? 'backward' : 'smoothstep';
-    const data = type === 'backward' ? channels.edge(edge.id, route) : undefined;
-    const ariaLabel = `${edge.from.node} ${edge.from.port} to ${edge.to.node}${route && routeMessage(route) ? ': ' + routeMessage(route) : ''}`;
+    const backward = directions.get(edge.id) ?? pendingDirection;
+    const isSelected = edge.id === selected;
+    const suspended = plan.suspended.has(edge.id);
+    const type = route || backward || isSelected ? 'orthogonal' : 'smoothstep';
+    const channel = type === 'orthogonal' ? channels.edge(edge.id, route) : undefined;
+    // Keep the data object while nothing in it changed: xyflow re-renders an edge on a new one.
+    const data: OrthogonalEdgeData | undefined =
+      channel &&
+      (beforeData?.channel === channel &&
+      beforeData.forward === !backward &&
+      beforeData.suspended === suspended
+        ? beforeData
+        : { channel, forward: !backward, suspended });
+    const status = route && routeMessage(route) ? ': ' + routeMessage(route) : '';
+    const manual = route?.manual
+      ? route.crossing
+        ? ', manual route, crosses a card'
+        : ', manual route'
+      : suspended
+        ? ', manual route set aside under a moving card'
+        : '';
+    const ariaLabel = `${edge.from.node} ${edge.from.port} to ${edge.to.node}${status}${manual}`;
     // xyflow subscribes each edge to its object identity. Keep untouched edges asleep during a
     // drag, even though another path or selection changed in the same graph.
     if (
@@ -173,7 +211,7 @@ function buildEdges(
       before.data === data &&
       before.ariaLabel === ariaLabel &&
       before.type === type &&
-      before.selected === (edge.id === selected)
+      before.selected === isSelected
     )
       return before;
     return {
@@ -184,7 +222,8 @@ function buildEdges(
       sourceHandle: edge.from.port,
       target: edge.to.node,
       targetHandle: 'in',
-      selected: edge.id === selected,
+      selected: isSelected,
+      ...(isSelected ? { zIndex: SELECTED_EDGE_Z } : {}),
       ...(data ? { data } : {}),
       ariaLabel,
       ...(edge.from.port !== 'out'
@@ -193,6 +232,55 @@ function buildEdges(
       ...(edge.from.port === 'loopBack' ? { animated: true, className: 'gg-edge-loop' } : {}),
     };
   });
+}
+
+const cardBoxes = (nodes: readonly RoutingNode[]) =>
+  nodes.map((n) => ({
+    id: n.id,
+    left: n.x,
+    right: n.x + n.width,
+    top: n.y,
+    bottom: n.y + n.height,
+  }));
+
+/** A card moved to `x, y` with its ports. */
+function placed(node: RoutingNode, x: number, y: number): RoutingNode {
+  const dx = x - node.x;
+  const dy = y - node.y;
+  const shift = (p: XYPosition) => ({ x: p.x + dx, y: p.y + dy });
+  return {
+    ...node,
+    x,
+    y,
+    outputs: Object.fromEntries(Object.entries(node.outputs).map(([port, p]) => [port, shift(p)])),
+    ...(node.input ? { input: shift(node.input) } : {}),
+  };
+}
+
+/**
+ * The manual routes that moving card `id` from its stored position to `position` makes cross a
+ * card (any card, its own included, as when a port moves past its route). Routes the author
+ * already left crossing a card are not among them.
+ */
+export function newlyCrossed(
+  definition: LoopDefinitionInput | undefined,
+  plan: Pick<RoutingPlan, 'nodes'>,
+  id: string,
+  position: XYPosition,
+): string[] {
+  const card = plan.nodes.find((n) => n.id === id);
+  const stored = definition?.nodes.find((n) => n.id === id)?.ui ?? { x: 0, y: 0 };
+  if (!definition || !card) return [];
+  const crosses = (nodes: readonly RoutingNode[], edge: LoopDefinitionInput['edges'][number]) => {
+    const from = nodes.find((n) => n.id === edge.from.node)?.outputs[edge.from.port];
+    const to = nodes.find((n) => n.id === edge.to.node)?.input;
+    return !!from && !!to && crossesCards(drawnPoints(edge.ui!.route, from, to), cardBoxes(nodes));
+  };
+  const before = plan.nodes.map((n) => (n === card ? placed(n, stored.x, stored.y) : n));
+  const after = plan.nodes.map((n) => (n === card ? placed(n, position.x, position.y) : n));
+  return definition.edges
+    .filter((edge) => edge.ui && !crosses(before, edge) && crosses(after, edge))
+    .map((edge) => edge.id);
 }
 
 /**
@@ -207,9 +295,25 @@ export function Canvas({
   issues: readonly EditorIssue[];
 }) {
   const selected = useEditorStore((s) => s.selectedNodeId);
-  const { select, openNode, moveNode, removeNode, connect, removeEdge, addNode, closeStep } =
-    useEditorStore.getState();
+  const {
+    select,
+    openNode,
+    moveNode,
+    removeNode,
+    connect,
+    removeEdge,
+    addNode,
+    closeStep,
+    setEdgeRoute,
+  } = useEditorStore.getState();
   const { screenToFlowPosition } = useReactFlow();
+  // A segment drag in progress (#44): its route is routed as a preview until the pointer is up.
+  const [routeDrag, setRouteDrag] = useState<{ edgeId: string; route: readonly number[] }>();
+  const [announcement, setAnnouncement] = useState({ text: '', key: 0 });
+  const announce = useCallback(
+    (text: string) => setAnnouncement((previous) => ({ text, key: previous.key + 1 })),
+    [],
+  );
   const [measured, setMeasured] = useState<Record<string, Size>>({});
   const [dragging, setDragging] = useState<Record<string, XYPosition>>({});
   const [selectedEdge, setSelectedEdge] = useState<string | undefined>();
@@ -233,32 +337,42 @@ export function Canvas({
     nodesRef.current = new Map(next.map((node) => [node.id, node]));
     return next;
   }, [definition, cardData, selected, measured, dragging]);
+  // Manual routes the author left crossing a card when a card drag began: they stay drawn. Any
+  // other manual route that the moving card lands on shows its automatic route instead, and is
+  // removed if the card is released there.
+  const [nodeDrag, setNodeDrag] = useState<ReadonlySet<string>>();
   const routingEdges = useMemo(
     () =>
-      definition.edges.map((edge) => ({
-        id: edge.id,
-        source: edge.from.node,
-        target: edge.to.node,
-        port: edge.from.port,
-      })),
-    [definition.edges],
+      definition.edges.map((edge) => {
+        const preview = routeDrag?.edgeId === edge.id ? routeDrag.route : undefined;
+        const route = preview ?? edge.ui?.route;
+        return {
+          id: edge.id,
+          source: edge.from.node,
+          target: edge.to.node,
+          port: edge.from.port,
+          ...(route ? { route } : {}),
+          ...(route && (preview || !nodeDrag || nodeDrag.has(edge.id))
+            ? { allowCrossing: true }
+            : {}),
+        };
+      }),
+    [definition.edges, routeDrag, nodeDrag],
   );
-  const { routes, directions } = useRouting(routingEdges);
+  const plan = useRouting(routingEdges);
+  const { routes } = plan;
+  // The route editor reads the latest card boxes when a drag ends or a nudge lands.
+  const planRef = useRef(plan);
+  useLayoutEffect(() => {
+    planRef.current = plan;
+  }, [plan]);
   const [channels] = useState(createRouteChannels);
   useLayoutEffect(() => {
     channels.publish(routes, new Set(routingEdges.map((edge) => edge.id)));
   }, [channels, routes, routingEdges]);
   const edges = useMemo(() => {
     const previous = edgesRef.current;
-    const next = buildEdges(
-      definition,
-      selectedEdge,
-      routes,
-      previous.byId,
-      nodes,
-      directions,
-      channels,
-    );
+    const next = buildEdges(definition, selectedEdge, plan, previous.byId, nodes, channels);
     if (
       next.length === previous.value.length &&
       next.every((edge, index) => edge === previous.value[index])
@@ -266,14 +380,95 @@ export function Canvas({
       return previous.value;
     edgesRef.current = { byId: new Map(next.map((edge) => [edge.id, edge])), value: next };
     return next;
-  }, [definition, selectedEdge, routes, nodes, directions, channels]);
+  }, [definition, selectedEdge, plan, nodes, channels]);
+
+  // Segment handles and Reset route (#44). A drag previews through the router and ends in one
+  // store change; the step before it is closed first, as for a node drag. Where the author puts a
+  // segment is kept, even across a card: the route is then drawn dotted and announced as crossing.
+  const editing = useMemo<RouteEditing>(() => {
+    const store = (edgeId: string, route: readonly number[], from: XYPosition, to: XYPosition) => {
+      const stored = normalize(route, from, to);
+      setEdgeRoute(edgeId, stored.length ? stored : undefined);
+      return stored;
+    };
+    const crossing = (route: readonly number[], from: XYPosition, to: XYPosition) =>
+      crossesCards(drawnPoints(route, from, to), cardBoxes(planRef.current.nodes))
+        ? ' It crosses a card.'
+        : '';
+    return {
+      begin(edgeId, base, segment, pointer) {
+        closeStep();
+        const start = screenToFlowPosition({ x: pointer.clientX, y: pointer.clientY });
+        let latest: number[] | undefined;
+        const move = (event: PointerEvent) => {
+          const at = screenToFlowPosition({ x: event.clientX, y: event.clientY });
+          const delta = segment.axis === 'x' ? at.x - start.x : at.y - start.y;
+          const value = Math.round(segment.value + delta);
+          latest = moveSegment(base.route, segment.index, value, base.from, base.to).route;
+          setRouteDrag({ edgeId, route: latest });
+        };
+        const stop = (keep: boolean) => {
+          window.removeEventListener('pointermove', move);
+          window.removeEventListener('pointerup', release);
+          window.removeEventListener('pointercancel', cancel);
+          window.removeEventListener('keydown', escape, true);
+          setRouteDrag(undefined);
+          if (!keep || !latest) return;
+          const before = normalize(base.route, base.from, base.to);
+          if (sameRoute(normalize(latest, base.from, base.to), before)) return;
+          store(edgeId, latest, base.from, base.to);
+          announce(`Route changed.${crossing(latest, base.from, base.to)}`);
+        };
+        const release = () => stop(true);
+        const cancel = () => stop(false);
+        const escape = (event: globalThis.KeyboardEvent) => {
+          if (event.key !== 'Escape') return;
+          event.preventDefault();
+          event.stopPropagation();
+          stop(false);
+        };
+        window.addEventListener('pointermove', move);
+        window.addEventListener('pointerup', release);
+        window.addEventListener('pointercancel', cancel);
+        window.addEventListener('keydown', escape, true);
+      },
+      nudge(edgeId, base, segment, direction, steps) {
+        const value = nudged(segment.value, direction, steps);
+        const moved = moveSegment(base.route, segment.index, value, base.from, base.to);
+        const stored = store(edgeId, moved.route, base.from, base.to);
+        announce(`Segment at ${segment.axis} ${value}.${crossing(stored, base.from, base.to)}`);
+        const near = midpoint({
+          a: { ...segment.a, [segment.axis]: value },
+          b: { ...segment.b, [segment.axis]: value },
+        });
+        return findSegment(stored, base.from, base.to, segment.axis, value, near);
+      },
+      reset(edgeId) {
+        setEdgeRoute(edgeId, undefined);
+        announce('Route reset: the connection routes automatically.');
+      },
+    };
+  }, [announce, closeStep, screenToFlowPosition, setEdgeRoute]);
 
   const endDrag = useCallback(
     (id: string, position: XYPosition) => {
+      const reset = newlyCrossed(
+        useEditorStore.getState().definition,
+        planRef.current,
+        id,
+        position,
+      );
       moveNode(id, position);
+      // Part of the move's step: undoing the move brings the routes back with it.
+      for (const edgeId of reset) setEdgeRoute(edgeId, undefined, `move:${id}`);
+      if (reset.length)
+        announce(
+          `${reset.length === 1 ? 'A manual route' : `${reset.length} manual routes`} would cross a card and now route${reset.length === 1 ? 's' : ''} automatically.`,
+        );
       setDragging(({ [id]: _done, ...rest }) => rest);
+      setNodeDrag(undefined);
     },
-    [moveNode],
+    [announce, moveNode, setEdgeRoute],
   );
 
   // xyflow writes each changed callback into its store separately. Stable handlers avoid
@@ -333,6 +528,8 @@ export function Canvas({
     closeCanvasPopovers();
     // Each drag is an undo step of its own, however soon it follows the last move.
     closeStep();
+    const crossing = [...planRef.current.routes].filter(([, route]) => route.crossing);
+    setNodeDrag(new Set(crossing.map(([edgeId]) => edgeId)));
   }, [closeCanvasPopovers, closeStep]);
 
   const onDrop = (event: DragEvent<HTMLDivElement>) => {
@@ -386,32 +583,35 @@ export function Canvas({
   // A geometry-only update publishes edge channels without rendering the whole canvas again.
   const flow = useMemo(
     () => (
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        nodeTypes={nodeTypes}
-        edgeTypes={edgeTypes}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        isValidConnection={isValidConnection}
-        onNodeDragStop={onNodeDragStop}
-        onMove={closeCanvasPopovers}
-        onNodeDragStart={onNodeDragStart}
-        onNodeClick={onNodeClick}
-        nodeClickDistance={CLICK_DISTANCE}
-        nodeDragThreshold={CLICK_DISTANCE}
-        onPaneClick={onPaneClick}
-        fitView
-        fitViewOptions={FIT_VIEW_OPTIONS}
-        deleteKeyCode={null}
-        ariaLabelConfig={ARIA_LABELS}
-      >
-        <Background gap={22} size={1.3} />
-        <Controls fitViewOptions={FIT_VIEW_OPTIONS} />
-      </ReactFlow>
+      <RouteEditingContext value={editing}>
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          isValidConnection={isValidConnection}
+          onNodeDragStop={onNodeDragStop}
+          onMove={closeCanvasPopovers}
+          onNodeDragStart={onNodeDragStart}
+          onNodeClick={onNodeClick}
+          nodeClickDistance={CLICK_DISTANCE}
+          nodeDragThreshold={CLICK_DISTANCE}
+          onPaneClick={onPaneClick}
+          fitView
+          fitViewOptions={FIT_VIEW_OPTIONS}
+          deleteKeyCode={null}
+          ariaLabelConfig={ARIA_LABELS}
+        >
+          <Background gap={CANVAS_GRID} size={1.3} />
+          <Controls fitViewOptions={FIT_VIEW_OPTIONS} />
+        </ReactFlow>
+      </RouteEditingContext>
     ),
     [
+      editing,
       nodes,
       edges,
       onNodesChange,
@@ -442,6 +642,9 @@ export function Canvas({
       onDrop={onDrop}
     >
       {flow}
+      <span aria-live="polite" aria-atomic="true" className="sr-only">
+        <span key={announcement.key}>{announcement.text}</span>
+      </span>
     </div>
   );
 }
