@@ -1773,12 +1773,14 @@ export interface paths {
         get?: never;
         /**
          * Create or replace custom HTTP classifier metadata
-         * @description Requires settings:write, and secrets:write when secretRef is supplied. New entries start disabled; edits preserve enabled. Omitted secretRef clears authentication. Built-in Jev returns 409 CLASSIFIER_MANAGED_BY_SYSTEM.
+         * @description Requires settings:write, and secrets:write when secretRef is supplied. New entries start disabled; edits preserve enabled. Omitted secretRef clears authentication. Built-in Jev returns 409 CLASSIFIER_MANAGED_BY_SYSTEM. Send `If-None-Match: *` to create only: an existing id then answers 409 CLASSIFIER_EXISTS and nothing changes.
          */
         put: {
             parameters: {
                 query?: never;
-                header?: never;
+                header?: {
+                    "if-none-match"?: "*";
+                };
                 path: {
                     id: string;
                 };

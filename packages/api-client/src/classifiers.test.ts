@@ -51,6 +51,18 @@ describe('classifier client against the real API', () => {
         providerModel: 'kev-next',
       }),
     ).toMatchObject({ enabled: true, providerModel: 'kev-next' });
+    // Create-only: an existing id is refused and keeps its metadata.
+    await expect(
+      classifierModels.create(client, 'kev.local', { ...metadata, providerModel: 'replaced' }),
+    ).rejects.toMatchObject({ status: 409, code: 'CLASSIFIER_EXISTS' });
+    expect(
+      (await classifierModels.list(client)).find((model) => model.id === 'kev.local'),
+    ).toMatchObject({ providerModel: 'kev-next' });
+    expect(await classifierModels.create(client, 'kev.fresh', metadata)).toMatchObject({
+      id: 'kev.fresh',
+      enabled: false,
+    });
+    await classifierModels.remove(client, 'kev.fresh');
     await classifierModels.remove(client, 'kev.local');
     await expect(classifierModels.setEnabled(client, 'kev.local', true)).rejects.toMatchObject({
       status: 404,
@@ -66,7 +78,12 @@ describe('classifier client against the real API', () => {
     });
   });
   it('encodes ids, sends enabled-only PATCH, and propagates problem details', async () => {
-    const calls: { method: string; pathname: string; body: unknown }[] = [];
+    const calls: {
+      method: string;
+      pathname: string;
+      body: unknown;
+      ifNoneMatch: string | null;
+    }[] = [];
     const transport = createGraphGoblinClient({
       baseUrl: 'http://test.local',
       fetch: async (request) => {
@@ -74,6 +91,7 @@ describe('classifier client against the real API', () => {
           method: request.method,
           pathname: new URL(request.url).pathname,
           body: request.method === 'DELETE' ? undefined : ((await request.json()) as unknown),
+          ifNoneMatch: request.headers.get('if-none-match'),
         });
         return new Response(
           JSON.stringify({ status: 400, code: 'VALIDATION_FAILED', errors: [{ path: '/id' }] }),
@@ -85,6 +103,7 @@ describe('classifier client against the real API', () => {
       () => classifierModels.upsert(transport, 'space /?#', metadata),
       () => classifierModels.setEnabled(transport, 'space /?#', true),
       () => classifierModels.remove(transport, 'space /?#'),
+      () => classifierModels.create(transport, 'space /?#', metadata),
     ]) {
       await expect(call()).rejects.toMatchObject({
         status: 400,
@@ -93,8 +112,11 @@ describe('classifier client against the real API', () => {
       });
     }
     expect(calls.map((call) => call.pathname)).toEqual(
-      Array(3).fill('/classifier-models/space%20%2F%3F%23'),
+      Array(4).fill('/classifier-models/space%20%2F%3F%23'),
     );
     expect(calls[1]?.body).toEqual({ enabled: true });
+    // Only create sends the create-only precondition.
+    expect(calls.map((call) => call.ifNoneMatch)).toEqual([null, null, null, '*']);
+    expect(calls[3]?.body).toEqual(metadata);
   });
 });

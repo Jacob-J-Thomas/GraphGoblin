@@ -223,6 +223,21 @@ export const classifierModels = {
     modelId: string,
     metadata: RequestBody<'/classifier-models/{id}', 'put'>,
   ) => unwrap(await client.PUT('/classifier-models/{id}', { ...id(modelId), body: metadata })),
+  /**
+   * Create a custom classifier, never replacing one: sends `If-None-Match: *`, so an id that
+   * already exists is refused with `CLASSIFIER_EXISTS` (409) and nothing changes.
+   */
+  create: async (
+    client: GraphGoblinClient,
+    modelId: string,
+    metadata: RequestBody<'/classifier-models/{id}', 'put'>,
+  ) =>
+    unwrap(
+      await client.PUT('/classifier-models/{id}', {
+        params: { path: { id: modelId }, header: { 'if-none-match': '*' } },
+        body: metadata,
+      }),
+    ),
   setEnabled: async (client: GraphGoblinClient, modelId: string, enabled: boolean) =>
     unwrap(await client.PATCH('/classifier-models/{id}', { ...id(modelId), body: { enabled } })),
   remove: async (client: GraphGoblinClient, modelId: string): Promise<void> => {

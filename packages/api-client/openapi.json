@@ -14135,7 +14135,7 @@
         "tags": [
           "settings"
         ],
-        "description": "Requires settings:write, and secrets:write when secretRef is supplied. New entries start disabled; edits preserve enabled. Omitted secretRef clears authentication. Built-in Jev returns 409 CLASSIFIER_MANAGED_BY_SYSTEM.",
+        "description": "Requires settings:write, and secrets:write when secretRef is supplied. New entries start disabled; edits preserve enabled. Omitted secretRef clears authentication. Built-in Jev returns 409 CLASSIFIER_MANAGED_BY_SYSTEM. Send `If-None-Match: *` to create only: an existing id then answers 409 CLASSIFIER_EXISTS and nothing changes.",
         "requestBody": {
           "required": true,
           "content": {
@@ -14155,6 +14155,17 @@
             "in": "path",
             "name": "id",
             "required": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "*"
+              ]
+            },
+            "in": "header",
+            "name": "if-none-match",
+            "required": false
           }
         ],
         "responses": {
