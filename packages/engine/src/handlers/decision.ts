@@ -1,21 +1,10 @@
 import type { JsonValue } from '@graphgoblin/contracts';
 import { evaluateExpression, threadView } from '@graphgoblin/domain';
+import { summarizeDeciderError } from '../decider-errors.js';
 import { isAbortError, RunFailureError } from '../errors.js';
 import type { NodeContext, NodeHandler } from '../handler.js';
 import type { ClassifierPort, ChoiceResult } from '../ports.js';
 import { outputPatch, selectMessages, toJson } from './common.js';
-
-/** Provider exception messages, stacks, and even codes may contain their raw answer or a key. */
-const DECIDER_FAILURE_MESSAGES: Record<string, string> = {
-  DECIDER_UNAVAILABLE: 'Decision provider is unavailable',
-  DECIDER_NOT_AUTHENTICATED: 'Decision provider rejected authentication',
-  DECIDER_RATE_LIMITED: 'Decision provider rate limit exceeded',
-  DECIDER_HTTP_ERROR: 'Decision provider request failed',
-  DECIDER_UNREACHABLE: 'Classifier endpoint is unreachable',
-  DECIDER_INVALID_RESPONSE: 'Decision provider returned an invalid response',
-  DECIDER_REDIRECT: 'Classifier redirects are not followed',
-  DECIDER_TIMEOUT: 'Decision provider request timed out',
-};
 
 async function decisionContext(ctx: NodeContext<'decision'>): Promise<JsonValue> {
   const view = threadView(ctx.thread) as unknown as Record<string, unknown>;
@@ -52,7 +41,7 @@ export const decisionHandler: NodeHandler<'decision'> = {
         );
         const label = typeof value === 'string' ? value : String(value);
         if (labels.has(label)) return decide(ctx, strategy, { label });
-        tried.push('expression returned a route that is not declared on this node');
+        tried.push(`expression returned "${label}"`);
         continue;
       }
       let decider: ClassifierPort | undefined;
@@ -88,19 +77,15 @@ export const decisionHandler: NodeHandler<'decision'> = {
         );
       } catch (error) {
         if (isAbortError(error) || ctx.signal.aborted) throw error;
-        const code =
-          typeof error === 'object' &&
-          error !== null &&
-          'code' in error &&
-          typeof error.code === 'string' &&
-          Object.hasOwn(DECIDER_FAILURE_MESSAGES, error.code)
-            ? error.code
-            : undefined;
-        throw new RunFailureError(
-          'INTERNAL_ERROR',
-          code ? DECIDER_FAILURE_MESSAGES[code]! : 'Decision provider request failed',
-          { nodeId: ctx.node.id, details: { strategy, ...(code ? { code } : {}) } },
+        const { message, ...diagnostic } = summarizeDeciderError(error);
+        ctx.ports.logger.warn(
+          { nodeId: ctx.node.id, strategy, ...diagnostic },
+          'decision provider failed',
         );
+        throw new RunFailureError('INTERNAL_ERROR', message, {
+          nodeId: ctx.node.id,
+          details: { strategy, ...(diagnostic.code ? { code: diagnostic.code } : {}) },
+        });
       }
       if (!labels.has(result.label)) {
         tried.push(`${strategy} chose a route that is not declared on this node`);
@@ -151,10 +136,12 @@ async function decide(
     ...(result.confidence !== undefined ? { confidence: result.confidence } : {}),
     ...(ctx.config.recordAlternatives && result.alternatives
       ? {
-          alternatives: result.alternatives.map((a) => ({
-            route: a.label,
-            ...(a.confidence !== undefined ? { confidence: a.confidence } : {}),
-          })),
+          alternatives: result.alternatives
+            .filter((a) => ctx.config.routes.some((route) => route.label === a.label))
+            .map((a) => ({
+              route: a.label,
+              ...(a.confidence !== undefined ? { confidence: a.confidence } : {}),
+            })),
         }
       : {}),
   });

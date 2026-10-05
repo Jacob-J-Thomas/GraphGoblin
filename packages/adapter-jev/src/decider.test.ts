@@ -105,6 +105,20 @@ describe('availability', () => {
 });
 
 describe('choose', () => {
+  it.each([
+    { ship: 0.8, fix: 0.1, drop: 0.1, 'gg-private-alternative-regression': 0.1 },
+    { ship: 0.8, fix: 0.2 },
+    { ship: 0.8, fix: 0.1, 'gg-private-alternative-regression': 0.1 },
+  ])('requires exactly the submitted probability labels (%j)', async (probabilities) => {
+    const { fetch } = stubFetch(
+      json(200, { answers: { answer: { type: 'choice', choice: 'ship', probabilities } } }),
+    );
+    const decider = await ready({ fetch });
+    await expect(decider.choose(choiceRequest, signal())).rejects.toMatchObject({
+      code: 'DECIDER_INVALID_RESPONSE',
+      message: 'Unexpected Jev choice response',
+    });
+  });
   it('sends a choice question and maps label, confidence, and ranked alternatives', async () => {
     const { fetch, calls } = stubFetch(
       json(
@@ -175,15 +189,27 @@ describe('choose', () => {
     expect(body.model).toBe('jev-latest');
   });
 
-  it('reports zero confidence when the chosen label has no probability', async () => {
+  it('keeps unknown choices for engine fallback when probabilities cover every submitted label', async () => {
     const { fetch } = stubFetch(
-      json(200, { answers: { answer: { type: 'choice', choice: 'ship', probabilities: {} } } }),
+      json(200, {
+        answers: {
+          answer: {
+            type: 'choice',
+            choice: 'unknown',
+            probabilities: { ship: 0.8, fix: 0.1, drop: 0.1 },
+          },
+        },
+      }),
     );
     const decider = await ready({ fetch });
     expect(await decider.choose(choiceRequest, signal())).toEqual({
-      label: 'ship',
+      label: 'unknown',
       confidence: 0,
-      alternatives: [],
+      alternatives: [
+        { label: 'ship', confidence: 0.8 },
+        { label: 'fix', confidence: 0.1 },
+        { label: 'drop', confidence: 0.1 },
+      ],
     });
   });
 
@@ -235,6 +261,23 @@ describe('judge', () => {
 });
 
 describe('errors', () => {
+  it.each(['choose', 'judge'] as const)(
+    'never reflects an HTTP error body from %s',
+    async (method) => {
+      const marker = 'gg-private-exit-error-regression';
+      const { fetch } = stubFetch(json(400, { error: { message: marker } }));
+      const decider = await ready({ fetch });
+      const request =
+        method === 'choose'
+          ? decider.choose(choiceRequest, signal())
+          : decider.judge({ question: 'Done?', context: null }, signal());
+      await expect(request).rejects.toMatchObject({
+        code: 'DECIDER_HTTP_ERROR',
+        status: 400,
+        message: 'Jev request failed (400)',
+      });
+    },
+  );
   it('maps HTTP failures to coded errors', async () => {
     const { fetch } = stubFetch(
       json(401, { error: 'invalid key' }),
@@ -294,7 +337,7 @@ describe('errors', () => {
     };
     await expect(decider.choose(choiceRequest, signal())).rejects.toMatchObject({
       code: 'DECIDER_HTTP_ERROR',
-      message: 'Jev request failed: weird',
+      message: 'Jev request failed',
     });
   });
 
@@ -309,7 +352,9 @@ describe('errors', () => {
     ).client.logger;
     sdkLogger.warn('w');
     sdkLogger.error('e');
-    expect(log.warn).toHaveBeenCalledWith({}, 'jev: w');
-    expect(log.error).toHaveBeenCalledWith({}, 'jev: e');
+    expect(log.warn).toHaveBeenCalledWith({}, 'jev: SDK warning');
+    expect(log.warn).toHaveBeenCalledWith({}, 'jev: SDK error');
+    expect(JSON.stringify(log.warn.mock.calls)).not.toMatch(/jev: [we]"/);
+    expect(log.error).not.toHaveBeenCalled();
   });
 });

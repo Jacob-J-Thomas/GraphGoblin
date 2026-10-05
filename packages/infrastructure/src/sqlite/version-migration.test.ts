@@ -20,14 +20,14 @@ describe('inference-node harness data migration', () => {
     };
     await mkdir(join(migrations, 'meta'), { recursive: true });
     await mkdir(data);
-    for (const entry of journal.entries.filter((entry) => entry.idx < 5)) {
+    for (const entry of journal.entries.filter((entry) => entry.idx < 3)) {
       await copyFile(join(source, `${entry.tag}.sql`), join(migrations, `${entry.tag}.sql`));
     }
     await writeFile(
       join(migrations, 'meta/_journal.json'),
       JSON.stringify({
         ...journal,
-        entries: journal.entries.filter((entry) => entry.idx < 5),
+        entries: journal.entries.filter((entry) => entry.idx < 3),
       }),
     );
     const canonical = LoopDefinitionSchema.parse(minimalLoop());
@@ -44,6 +44,11 @@ describe('inference-node harness data migration', () => {
       if (typeof definition !== 'string') throw new Error('expected stored definition JSON');
       return JSON.parse(definition) as unknown;
     };
+    const stopDatabase = async () => {
+      // Checkpoint and release WAL files before copying or removing this Windows file fixture.
+      await handle.client.execute('PRAGMA journal_mode = DELETE');
+      handle.close();
+    };
     try {
       await handle.migrate();
       await handle.client.execute({
@@ -58,7 +63,8 @@ describe('inference-node harness data migration', () => {
         ],
       });
       const ledger = (await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows;
-      handle.close();
+      expect(ledger).toHaveLength(3);
+      await stopDatabase();
       await cp(data, backup, { recursive: true });
       handle = openDatabase({ url: databaseUrl(data) });
       await handle.migrate();
@@ -66,7 +72,7 @@ describe('inference-node harness data migration', () => {
       expect((await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows).toHaveLength(
         7,
       );
-      handle.close();
+      await stopDatabase();
 
       // Restore the whole stopped data directory into an empty destination, including its ledger.
       await cp(backup, restored, { recursive: true });
@@ -76,9 +82,9 @@ describe('inference-node harness data migration', () => {
       expect((await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows).toEqual(
         ledger,
       );
-      handle.close();
+      await stopDatabase();
       handle = openDatabase({ url: databaseUrl(restored) });
-      expect(await handle.pendingMigrations()).toBe(2);
+      expect(await handle.pendingMigrations()).toBe(4);
       await handle.migrate();
       expect(LoopDefinitionSchema.parse(await stored())).toEqual(canonical);
       expect(await handle.pendingMigrations()).toBe(0);
@@ -87,7 +93,7 @@ describe('inference-node harness data migration', () => {
       );
       expect((await handle.client.execute('SELECT * FROM classifier_models')).rows).toEqual([]);
     } finally {
-      handle.close();
+      await stopDatabase();
       await rm(root, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
     }
   }, 45_000);

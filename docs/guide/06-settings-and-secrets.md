@@ -249,7 +249,7 @@ Alternatively, supply `GG_MASTER_KEY` containing base64 that decodes to exactly 
 
 ## Back up and restore
 
-Before upgrading, make a full backup using the steps below. To roll back, stop the API and restore the pre-upgrade backup of the entire data directory before running the previous release. There is no partial rollback: do not edit the migration ledger or undo individual migrations. The backup restores both the stored definitions and migration state, so a later upgrade can apply every required migration again; it also recovers any seed metadata changed at startup.
+Before upgrading, make a full backup using the steps below. To roll back, stop the API and restore the pre-upgrade backup of the entire data directory before running the previous release. Restoring the backup discards runs, edits, and secrets made since the upgrade. There is no partial rollback: do not edit the migration ledger or undo individual migrations. The backup restores both the stored definitions and migration state, so a later upgrade can apply every required migration again; it also recovers any seed metadata changed at startup.
 
 1. [Stop the API safely](01-install-and-first-run.md#stop-and-restart-safely) and confirm the process has exited.
 2. Copy the entire data directory, including the database, any WAL/SHM files, master key, artifacts, and temporary workspaces. Store the backup securely because it contains both encrypted secrets and their decryption key.

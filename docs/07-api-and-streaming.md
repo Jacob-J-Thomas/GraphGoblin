@@ -117,11 +117,13 @@ including daylight-saving changes. A finite or impossible schedule can return
 fewer slots or an empty array. The route creates no schedules and starts no runs.
 
 An invalid expression or timezone returns 400 Problem Details with code
-`CRON_INVALID`, with `errors: [{ path, message }]` naming `config.expression` or
-`config.timezone`; malformed body fields or bounds return 400 `VALIDATION_FAILED`.
+`CRON_INVALID`, with `errors: [{ path, message }]` naming `/expression` or
+`/timezone`, following the request body's JSON-pointer convention used by
+`VALIDATION_FAILED` for malformed fields or bounds.
 There is no server summary: the web control describes the preset model, and labels
 other expressions as custom without rewriting them. Validate and publish retain
-their `CRON_INVALID` issues, with nodeId and the same node-relative field paths.
+their `CRON_INVALID` issues, with nodeId and node-relative `config.expression` or
+`config.timezone` paths.
 Following an expression issue opens Advanced and focuses the raw expression;
 following a timezone issue focuses the time zone control.
 
@@ -237,7 +239,7 @@ PUT requires strict custom HTTP metadata, including provider `http`; it rejects 
 
 Successful classifier decisions add `classifierModel` (the catalog id) to the `decision.made` payload while retaining strategy `jev`, route/confidence/alternatives, and the existing lastOutput shape. Expression and Codex decisions omit this field. It records selection separately from the native providerModel sent to the endpoint. Existing events without the optional field remain valid.
 
-Decision failure details in run snapshots and events never contain the provider's raw answer. HTTP classifiers reject an undeclared choice with `DECIDER_INVALID_RESPONSE` and a fixed message. The decision handler summarizes provider exceptions with fixed text and `failure.details.strategy`, retaining only recognized `DECIDER_*` codes in `failure.details.code`; provider messages, names, stacks, error bodies, and arbitrary codes are not persisted. Provider exceptions still fail the step with `INTERNAL_ERROR`, and cancellation still propagates. Built-in Jev and Codex unknown choices still try the next strategy, with fixed diagnostics naming only the strategy. Invalid confidence diagnostics are fixed, and low-confidence diagnostics contain only validated numbers.
+Decision and exit-predicate failure details in run snapshots, paged events, and streams never contain the provider's raw answer. Both paths share fixed failure summaries and retain the selected strategy and recognized `DECIDER_*` codes; unknown provider codes become `DECIDER_ERROR` at the exit and catch-all boundaries. Provider messages, names, stacks, error bodies, and arbitrary codes are not persisted. Engine provider warnings contain only an allowlisted error name, recognized code, numeric HTTP status when available, and strategy and node identifiers; Jev SDK logs use fixed summaries. Provider exceptions fail the step with `INTERNAL_ERROR`, and cancellation still propagates. HTTP classifiers reject undeclared choices; Jev also rejects probabilities that do not cover exactly the submitted labels. Built-in Jev and Codex unknown choices still try the next strategy, with fixed diagnostics naming only the strategy. Successful decision events retain only declared routes in alternatives. Invalid confidence diagnostics are fixed, and low-confidence diagnostics contain only validated numbers. Expression diagnostics retain the author's expression result to help identify route mismatches.
 
 ## Validation agreement (Decided, WP-D2)
 

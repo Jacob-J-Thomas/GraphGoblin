@@ -61,7 +61,7 @@ describe('cron preview endpoint', () => {
       status: 400,
       errors: [
         {
-          path: `config.${'expression' in override ? 'expression' : 'timezone'}`,
+          path: `/${'expression' in override ? 'expression' : 'timezone'}`,
           message: expect.any(String),
         },
       ],

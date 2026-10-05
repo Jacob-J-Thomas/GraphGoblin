@@ -5,7 +5,8 @@ import {
   threadView,
   type PredicateAnswer,
 } from '@graphgoblin/domain';
-import { RunFailureError } from '../errors.js';
+import { DeciderFailureError } from '../decider-errors.js';
+import { isAbortError, RunFailureError } from '../errors.js';
 import type { NodeContext, NodeHandler } from '../handler.js';
 import { toJson } from './common.js';
 
@@ -30,10 +31,19 @@ async function askPredicate(
     lastMessage: ctx.thread.messages.at(-1)?.content ?? null,
     iteration: ctx.run.iteration,
   });
-  return decider.judge(
-    { question, context, ...(resolved ? { model: resolved.model, effort: resolved.effort } : {}) },
-    ctx.signal,
-  );
+  try {
+    return await decider.judge(
+      {
+        question,
+        context,
+        ...(resolved ? { model: resolved.model, effort: resolved.effort } : {}),
+      },
+      ctx.signal,
+    );
+  } catch (error) {
+    if (isAbortError(error) || ctx.signal.aborted) throw error;
+    throw new DeciderFailureError(error, decider.id);
+  }
 }
 
 export const exitHandler: NodeHandler<'exit'> = {
