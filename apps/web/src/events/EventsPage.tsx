@@ -5,7 +5,7 @@ import { QueryState } from '../components/status.js';
 import { Card, Table, Td, Th } from '../components/ui/index.js';
 import { formatDateTime, prettyJson } from '../lib/utils.js';
 
-const LINK = 'text-link underline-offset-[3px] hover:underline';
+const LINK = 'touch-target text-link underline-offset-[3px] hover:underline';
 
 /** `api`, `run:<runId>`, or `webhook:<endpointId>` as a readable origin. */
 function Source({ source }: { source: string }) {
@@ -36,7 +36,7 @@ export function EventsPage() {
             <p className="text-sm text-muted">No inbound events yet.</p>
           ) : (
             <Card flush>
-              <Table>
+              <Table stack="lg">
                 <thead>
                   <tr>
                     <Th>Received</Th>
@@ -50,17 +50,19 @@ export function EventsPage() {
                 <tbody>
                   {items.map((event) => (
                     <tr key={event.id}>
-                      <Td className="text-sm whitespace-nowrap text-muted">
+                      <Td label="Received" className="text-sm whitespace-nowrap text-muted">
                         {formatDateTime(event.receivedAt)}
                       </Td>
-                      <Td>
+                      <Td label="Type">
                         <code>{event.type}</code>
                       </Td>
-                      <Td className="text-sm">
+                      <Td label="Source" className="text-sm">
                         <Source source={event.source} />
                       </Td>
-                      <Td className="text-sm">{event.dedupeKey ?? '-'}</Td>
-                      <Td className="text-sm">
+                      <Td label="Dedupe key" className="text-sm">
+                        {event.dedupeKey ?? '-'}
+                      </Td>
+                      <Td label="Started runs" className="text-sm">
                         {event.runIds.length === 0 ? (
                           <span className="text-muted">none</span>
                         ) : (
@@ -75,8 +77,8 @@ export function EventsPage() {
                           </ul>
                         )}
                       </Td>
-                      <Td>
-                        <pre className="max-w-md overflow-auto rounded-md border border-default bg-code-bg px-2 py-1 text-xs text-code-fg">
+                      <Td label="Payload">
+                        <pre className="max-w-md min-w-0 overflow-auto rounded-md border border-default bg-code-bg px-2 py-1 text-xs text-code-fg">
                           {prettyJson(event.payload)}
                         </pre>
                       </Td>

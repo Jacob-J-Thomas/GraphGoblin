@@ -4,6 +4,7 @@ import { useWatch } from 'react-hook-form';
 import { useCronPreview } from '../../api/queries.js';
 import {
   Button,
+  CHECKBOX_LABEL,
   Checkbox,
   Disclosure,
   FieldGroup,
@@ -15,6 +16,7 @@ import {
   Select,
   revealDisclosures,
 } from '../../components/ui/index.js';
+import { cn } from '../../lib/utils.js';
 import { useField, type FieldProps } from '../fields.js';
 import { Row, fieldMeta, useProblemCount } from '../fields/shared.js';
 import { ProblemBadge } from '../fields/structure.js';
@@ -25,6 +27,7 @@ import {
   defaultSchedule,
   formatSlot,
   parseSchedule,
+  recordPreferences,
   scheduleError,
   scheduleExpression,
   schedulePreferences,
@@ -56,7 +59,7 @@ export function CronControl({ name }: FieldProps) {
     preview.query.error instanceof GraphGoblinApiError &&
     preview.query.error.code === 'CRON_INVALID';
   const commit = (next: BuiltSchedule) => {
-    preferencesRef.current = { ...preferencesRef.current, ...schedulePreferences(next) };
+    preferencesRef.current = recordPreferences(preferencesRef.current, next);
     if (scheduleError(next) !== undefined) {
       setDraft({ expression, schedule: next });
       return;
@@ -130,7 +133,7 @@ export function CronControl({ name }: FieldProps) {
           <Legend variant="label">Days of the week</Legend>
           <div className="flex flex-wrap gap-x-4 gap-y-2">
             {DAYS.map((day, index) => (
-              <label key={day} className="flex items-center gap-2 text-sm">
+              <label key={day} className={cn(CHECKBOX_LABEL, 'text-sm')}>
                 <Checkbox
                   checked={schedule.days.includes(index)}
                   onChange={(e) =>
@@ -164,7 +167,8 @@ export function CronControl({ name }: FieldProps) {
           <HelpText>Months without this day are skipped.</HelpText>
         </FieldGroup>
       ) : null}
-      <p className="text-sm text-default">{summary}</p>
+      {/* An incomplete schedule shows what to choose in the error line below, in its place. */}
+      {error ? null : <p className="text-sm text-default">{summary}</p>}
       <p role="status" aria-live="polite" aria-atomic="true" className="sr-only">
         {preview.announcement}
       </p>
@@ -210,10 +214,10 @@ export function CronControl({ name }: FieldProps) {
                 aria-invalid={cronInvalid ? true : control['aria-invalid']}
                 onChange={(e) => {
                   setDraft(undefined);
-                  preferencesRef.current = {
-                    ...preferencesRef.current,
-                    ...schedulePreferences(parseSchedule(e.target.value)),
-                  };
+                  preferencesRef.current = recordPreferences(
+                    preferencesRef.current,
+                    parseSchedule(e.target.value),
+                  );
                   field.onChange(e.target.value);
                 }}
               />

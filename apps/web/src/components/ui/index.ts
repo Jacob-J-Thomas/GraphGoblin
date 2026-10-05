@@ -16,8 +16,11 @@ export {
 } from './disclosure.js';
 export {
   Checkbox,
+  CHECKBOX_LABEL,
   FIELD_FRAME,
+  FIELD_ROW,
   FieldGroup,
+  FieldRow,
   HelpText,
   Input,
   Label,
@@ -45,6 +48,12 @@ export {
   type SegmentedControlProps,
   type SegmentedOption,
 } from './segmented-control.js';
-export { SidePanel, readPanelState, useSidePanelState, writePanelState } from './side-panel.js';
+export {
+  SidePanel,
+  readPanelState,
+  useSidePanelState,
+  writePanelState,
+  type PanelOverlay,
+} from './side-panel.js';
 export { Switch, type SwitchProps } from './switch.js';
-export { Table, Td, Th } from './table.js';
+export { Table, Td, Th, type TableStack } from './table.js';

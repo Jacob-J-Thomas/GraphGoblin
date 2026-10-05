@@ -43,7 +43,7 @@ export function RunInspectorPage() {
                 cutover); the grid only places the controls at the top right. */}
             <header className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-3 max-sm:grid-cols-1">
               <div className="col-start-1 row-start-1 flex flex-wrap items-center gap-x-4 gap-y-3">
-                <h1 className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-xl font-semibold tracking-[-0.01em]">
+                <h1 className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-xl font-semibold tracking-[-0.01em] text-heading">
                   Run{' '}
                   <span className="font-mono text-md font-medium tracking-normal text-muted">
                     {run.id}

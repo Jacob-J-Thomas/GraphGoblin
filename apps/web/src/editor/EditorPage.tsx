@@ -278,7 +278,7 @@ export function EditorPage() {
   ].filter(Boolean);
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] flex-col">
+    <div className="flex h-[calc(100dvh-3.5rem)] min-h-80 flex-col">
       <EditorToolbar
         loopId={loopId}
         name={def.name}
@@ -318,7 +318,7 @@ export function EditorPage() {
         </span>
       </span>
       <ReactFlowProvider>
-        <div className="flex min-h-0 flex-1">
+        <div className="relative flex min-h-0 flex-1">
           <Palette expanded={paletteExpanded} onExpandedChange={setPaletteExpanded} />
           <main className="min-w-0 flex-1">
             <Canvas definition={def} issues={validation.issues} />

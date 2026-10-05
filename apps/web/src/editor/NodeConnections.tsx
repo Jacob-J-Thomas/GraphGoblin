@@ -41,7 +41,7 @@ function ConnectForm({
         if (!problem) onConnected(chosenPort);
       }}
     >
-      <div className="grid grid-cols-[minmax(7rem,auto)_minmax(0,1fr)_auto] items-end gap-2">
+      <div className="grid grid-cols-[minmax(7rem,auto)_minmax(0,1fr)_auto] items-end gap-2 max-sm:grid-cols-1">
         <FieldGroup>
           <Label htmlFor="connect-port">Output</Label>
           <Select id="connect-port" value={chosenPort} onChange={(e) => setPort(e.target.value)}>
@@ -65,7 +65,12 @@ function ConnectForm({
             ))}
           </Select>
         </FieldGroup>
-        <Button type="submit" variant="outline" disabled={!target}>
+        <Button
+          type="submit"
+          variant="outline"
+          disabled={!target}
+          className="max-sm:justify-self-start"
+        >
           Connect
         </Button>
       </div>

@@ -23,7 +23,7 @@ export function Switch({ checked, onCheckedChange, className, onClick, ...props 
       role="switch"
       aria-checked={checked}
       className={cn(
-        'group/switch relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full',
+        'group/switch touch-target relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full',
         'border border-strong bg-surface-sunken p-0 transition-colors hover:border-field-hover',
         'aria-checked:border-accent-strong aria-checked:bg-accent aria-checked:hover:bg-accent-hover',
         'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',

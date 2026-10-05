@@ -128,6 +128,64 @@ describe('SidePanel', () => {
     ).toHaveAttribute('data-icon', 'panel');
   });
 
+  it.each([
+    ['right', 'lg', 'max-lg:right-0'],
+    ['left', 'md', 'max-md:left-0'],
+  ] as const)(
+    'floats a %s panel over the content below %s while expanded, never as a rail (#41)',
+    (side, overlayBelow, edge) => {
+      const { rerender } = render(
+        <SidePanel
+          id="floating"
+          title="Loop settings"
+          side={side}
+          expanded
+          overlayBelow={overlayBelow}
+          onExpandedChange={() => undefined}
+        >
+          <p>Panel body</p>
+        </SidePanel>,
+      );
+      const panel = screen.getByRole('complementary', { name: 'Loop settings' });
+      expect(panel).toHaveClass(
+        `max-${overlayBelow}:absolute`,
+        edge,
+        `max-${overlayBelow}:shadow-3`,
+      );
+      // Its head is a band with the heading colour (tinted in light, #11).
+      expect(screen.getByRole('heading', { name: 'Loop settings' })).toHaveClass('text-heading');
+      expect(screen.getByRole('heading', { name: 'Loop settings' }).parentElement).toHaveClass(
+        'bg-surface-head',
+      );
+      rerender(
+        <SidePanel
+          id="floating"
+          title="Loop settings"
+          side={side}
+          expanded={false}
+          overlayBelow={overlayBelow}
+          onExpandedChange={() => undefined}
+        >
+          <p>Panel body</p>
+        </SidePanel>,
+      );
+      expect(screen.getByRole('complementary', { name: 'Loop settings' })).not.toHaveClass(
+        `max-${overlayBelow}:absolute`,
+      );
+    },
+  );
+
+  it('stays in its own column at every width without overlayBelow', () => {
+    render(
+      <SidePanel id="docked" title="Loop settings" expanded onExpandedChange={() => undefined}>
+        <p>Panel body</p>
+      </SidePanel>,
+    );
+    expect(screen.getByRole('complementary', { name: 'Loop settings' }).className).not.toMatch(
+      /absolute/,
+    );
+  });
+
   it('keeps a left panel rail ordered and moves Hide to Show on collapse', async () => {
     const user = userEvent.setup();
     function LeftHarness() {

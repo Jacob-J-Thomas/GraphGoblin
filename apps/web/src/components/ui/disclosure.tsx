@@ -70,7 +70,7 @@ export function Disclosure({
       onClick={() => setOpen((current) => !current)}
       className={cn(
         'group/disclosure flex min-w-0 cursor-pointer items-center gap-2 text-left text-default',
-        'rounded-md transition-colors hover:bg-surface-hover',
+        'rounded-md transition-colors hover:bg-surface-hover pointer-coarse:min-h-11',
         'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
         box ? 'w-full px-4 py-2.5 text-sm font-semibold' : 'flex-1 px-1.5 py-1 text-sm',
       )}

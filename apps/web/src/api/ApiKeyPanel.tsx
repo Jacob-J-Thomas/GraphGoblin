@@ -1,6 +1,15 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { Button, Card, FieldGroup, Input, Label, RequiredNote } from '../components/ui/index.js';
+import {
+  Button,
+  Card,
+  FIELD_ROW,
+  FieldGroup,
+  Input,
+  Label,
+  RequiredNote,
+} from '../components/ui/index.js';
+import { cn } from '../lib/utils.js';
 import { syncApiKeyAcrossTabs, useApiKeyStore } from './api-key.js';
 import { keys } from './queries.js';
 
@@ -69,13 +78,9 @@ export function ApiKeyPanel() {
             ? 'The API refused the key stored in this browser. It may have been revoked; enter another one.'
             : 'This GraphGoblin server requires an API key (Settings → API keys creates them). Enter one here; it is kept in this browser only.'}
         </p>
-        <form
-          className="flex flex-wrap items-end gap-2"
-          aria-label="Enter API key"
-          onSubmit={submit}
-        >
+        <form className={cn(FIELD_ROW, 'items-end')} aria-label="Enter API key" onSubmit={submit}>
           <RequiredNote className="basis-full" />
-          <FieldGroup className="min-w-[240px] flex-1">
+          <FieldGroup className="min-w-60 flex-1">
             <Label htmlFor="api-key-input" required>
               API key
             </Label>

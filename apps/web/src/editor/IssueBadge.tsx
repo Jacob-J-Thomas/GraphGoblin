@@ -53,7 +53,7 @@ export function IssueBadge({
           data-severity={severity}
           className={cn(
             CANVAS_INERT,
-            'inline-flex h-6 min-w-6 shrink-0 cursor-pointer items-center justify-center gap-1 rounded-full border px-1.5',
+            'touch-target inline-flex h-6 min-w-6 shrink-0 cursor-pointer items-center justify-center gap-1 rounded-full border px-1.5',
             'text-[11px] leading-none font-semibold [&_svg]:size-3 [&_svg]:stroke-[2.6]',
             'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
             SEVERITY_CLASSES[severity],

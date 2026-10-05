@@ -34,7 +34,10 @@ const NUMBER = [
 
 export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) {
   return (
-    <input className={cn(FIELD, 'h-9', props.type === 'number' && NUMBER, className)} {...props} />
+    <input
+      className={cn(FIELD, 'h-9 pointer-coarse:h-11', props.type === 'number' && NUMBER, className)}
+      {...props}
+    />
   );
 }
 
@@ -52,7 +55,11 @@ export function Select({ className, ...props }: SelectHTMLAttributes<HTMLSelectE
   return (
     <span className="relative block min-w-0">
       <select
-        className={cn(FIELD, 'h-9 cursor-pointer appearance-none pr-9', className)}
+        className={cn(
+          FIELD,
+          'h-9 cursor-pointer appearance-none pr-9 pointer-coarse:h-11',
+          className,
+        )}
         {...props}
       />
       <Icon
@@ -94,6 +101,12 @@ export function Checkbox({
     </span>
   );
 }
+
+/**
+ * The `<label>` around a Checkbox and its text: the whole line is the target, at least 44 px tall
+ * where the pointer is coarse (the box keeps its size).
+ */
+export const CHECKBOX_LABEL = 'flex cursor-pointer items-center gap-2 pointer-coarse:min-h-11';
 
 /**
  * The required marker after a label: an asterisk in the error tone. It is decorative: the control
@@ -146,6 +159,23 @@ export function Label({
 /** A label above its control (and any help or error text below it), 6 px apart. */
 export function FieldGroup({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return <div className={cn('grid min-w-0 content-start gap-1.5', className)} {...props} />;
+}
+
+/**
+ * Fields side by side that wrap, 12 px apart; below 640 px they become one column, every field (and
+ * note) the full width whatever width it asked for, while a button keeps its own width at the start
+ * of its line. For a `<form>` or `<div>` of `FieldGroup`s and buttons: `FieldRow` (its fields
+ * aligned on their controls' bottom edge), or `FIELD_ROW` on an element of its own, which adds its
+ * own cross-axis alignment (`items-end`, or `items-start` when a field has help under it).
+ */
+export const FIELD_ROW = cn(
+  'flex flex-wrap gap-3',
+  'max-sm:flex-col max-sm:items-stretch max-sm:[&>*]:w-full',
+  'max-sm:[&>button]:w-auto max-sm:[&>button]:self-start',
+);
+
+export function FieldRow({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
+  return <div className={cn(FIELD_ROW, 'items-end', className)} {...props} />;
 }
 
 /** Help text under a field; `tone="bad"` for an error, `tone="warn"` for an advisory. */

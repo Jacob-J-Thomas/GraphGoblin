@@ -96,7 +96,7 @@ export function SegmentedControl<T extends string>({
             <span
               title={typeof segment.label === 'string' ? segment.label : undefined}
               className={cn(
-                'inline-flex h-7 max-w-full min-w-0 cursor-pointer items-center rounded-[6px] px-3 text-sm',
+                'inline-flex h-7 max-w-full min-w-0 cursor-pointer items-center rounded-[6px] px-3 text-sm pointer-coarse:h-11',
                 'font-medium whitespace-nowrap text-muted transition-colors',
                 'peer-[:not(:checked)]:hover:bg-surface-hover peer-[:not(:checked)]:hover:text-default',
                 'peer-checked:bg-accent-subtle peer-checked:font-semibold peer-checked:text-accent-on-subtle',

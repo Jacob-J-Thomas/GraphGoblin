@@ -3,7 +3,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useApi } from '../../api/context.js';
 import { keys, useModelCatalog, useSettings } from '../../api/queries.js';
 import { QueryState } from '../../components/status.js';
-import { Card, FieldGroup, HelpText, Label, Select } from '../../components/ui/index.js';
+import { Card, FieldGroup, FieldRow, HelpText, Label, Select } from '../../components/ui/index.js';
 import { EFFORTS, MutationError, useInvalidate } from '../shared.js';
 
 /** The owner's default model and effort, read by the engine at run start. */
@@ -31,7 +31,7 @@ export function DefaultsSection() {
     <Card title="Defaults">
       <QueryState query={settingsQuery} what="Settings">
         {(values) => (
-          <div className="flex flex-wrap gap-4">
+          <FieldRow>
             <FieldGroup className="w-[240px]">
               <Label htmlFor="default-model">Default model</Label>
               <Select
@@ -77,7 +77,7 @@ export function DefaultsSection() {
                 ))}
               </Select>
             </FieldGroup>
-          </div>
+          </FieldRow>
         )}
       </QueryState>
       <MutationError error={save.error} />

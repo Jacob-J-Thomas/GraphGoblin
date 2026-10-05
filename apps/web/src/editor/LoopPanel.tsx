@@ -44,6 +44,7 @@ export function LoopPanel({
       id={LOOP_PANEL_ID}
       title="Loop settings"
       icon="sliders"
+      overlayBelow="lg"
       expanded={expanded}
       onExpandedChange={onExpandedChange}
     >

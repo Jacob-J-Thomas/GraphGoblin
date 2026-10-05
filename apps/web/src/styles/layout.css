@@ -1,0 +1,167 @@
+/*
+ * Responsive layout utilities (#41). The breakpoints are Tailwind's defaults, the only ones the
+ * app uses (docs/09, "Breakpoints and layout primitives"): sm 40rem (640 px), md 48rem (768 px),
+ * lg 64rem (1024 px), xl 80rem (1280 px). Components reach these through the primitives in
+ * components/ (Table's `stack`, FieldRow, SidePanel's `overlayBelow`, Page), not one by one.
+ */
+
+/*
+ * A data table whose rows stack below a breakpoint (components/ui/table.tsx, `stack`). Each row
+ * becomes a block and each cell a line that starts with its column's name (the cell's `data-label`,
+ * drawn as decoration with empty alternative text, so assistive technology hears the column header
+ * as before); a cell without a label (the row's name, its actions) takes the whole line. The header
+ * row stays in the document, visually hidden, so the table keeps its headers. Long words break
+ * rather than widen the page. The display rules sit in :where(), so a cell a screen hides at that
+ * width (`hidden lg:table-cell`) stays hidden; on touch each line is 44 px tall, so links in
+ * neighbouring lines never overlap.
+ *
+ * The two utilities are the same rules under two breakpoints (CSS cannot take a breakpoint from a
+ * variable): md for tables of three or four columns (Settings), lg for wider ones (Loops, Runs,
+ * Events).
+ */
+@utility table-stack-md {
+  @media (width < 48rem) {
+    & > thead {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+    & > tbody,
+    & > tbody > tr {
+      display: block;
+    }
+    :where(& > tbody > tr > td) {
+      display: block;
+    }
+    :where(& > tbody > tr > td[data-label]) {
+      display: grid;
+    }
+    & > tbody > tr {
+      padding: var(--space-3) var(--space-4);
+      border-bottom: 1px solid var(--border-default);
+    }
+    & > tbody > tr:last-child {
+      border-bottom: 0;
+    }
+    & > tbody > tr > td {
+      border: 0;
+      padding: var(--space-1) 0;
+      overflow-wrap: anywhere;
+      text-align: start;
+    }
+    & > tbody > tr > td[data-label] {
+      grid-template-columns: minmax(5.5rem, 30%) minmax(0, 1fr);
+      align-items: center;
+      justify-items: start;
+      column-gap: var(--space-3);
+      @media (pointer: coarse) {
+        min-height: 2.75rem;
+      }
+    }
+    & > tbody > tr > td[data-label]::before {
+      content: attr(data-label) / '';
+      font-size: var(--font-size-xs);
+      font-weight: var(--font-weight-semibold);
+      letter-spacing: var(--letter-spacing-wide);
+      text-transform: uppercase;
+      color: var(--text-table-head);
+    }
+  }
+}
+
+@utility table-stack-lg {
+  @media (width < 64rem) {
+    & > thead {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+    & > tbody,
+    & > tbody > tr {
+      display: block;
+    }
+    :where(& > tbody > tr > td) {
+      display: block;
+    }
+    :where(& > tbody > tr > td[data-label]) {
+      display: grid;
+    }
+    & > tbody > tr {
+      padding: var(--space-3) var(--space-4);
+      border-bottom: 1px solid var(--border-default);
+    }
+    & > tbody > tr:last-child {
+      border-bottom: 0;
+    }
+    & > tbody > tr > td {
+      border: 0;
+      padding: var(--space-1) 0;
+      overflow-wrap: anywhere;
+      text-align: start;
+    }
+    & > tbody > tr > td[data-label] {
+      grid-template-columns: minmax(5.5rem, 30%) minmax(0, 1fr);
+      align-items: center;
+      justify-items: start;
+      column-gap: var(--space-3);
+      @media (pointer: coarse) {
+        min-height: 2.75rem;
+      }
+    }
+    & > tbody > tr > td[data-label]::before {
+      content: attr(data-label) / '';
+      font-size: var(--font-size-xs);
+      font-weight: var(--font-weight-semibold);
+      letter-spacing: var(--letter-spacing-wide);
+      text-transform: uppercase;
+      color: var(--text-table-head);
+    }
+  }
+}
+
+/*
+ * The visible affordance of a sideways scroller (a flush Card's body, a table still wider than its
+ * card): a soft shadow on each edge that has more content beyond it. The two cover gradients scroll
+ * with the content and hide a shadow at the start and the end; the shadows stay at the edges.
+ * `--scroll-cover` is the scroller's own surface (the raised card by default).
+ */
+@utility scroll-shadow-x {
+  --scroll-cover: var(--surface-raised);
+  --scroll-shade: color-mix(in oklab, var(--border-strong) 55%, transparent);
+  background:
+    linear-gradient(to right, var(--scroll-cover) 40%, transparent) left center / 2rem 100%
+      no-repeat local,
+    linear-gradient(to left, var(--scroll-cover) 40%, transparent) right center / 2rem 100%
+      no-repeat local,
+    radial-gradient(farthest-side at 0 50%, var(--scroll-shade), transparent) left center / 0.75rem
+      100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, var(--scroll-shade), transparent) right center /
+      0.75rem 100% no-repeat scroll;
+  background-color: var(--scroll-cover);
+}
+
+/*
+ * A 44 px target on coarse pointers for a control drawn smaller (the issue badge, a switch, a link
+ * in a table): an invisible box centred on it takes the touch, so the control keeps its look and
+ * its place. Fine pointers are unchanged.
+ */
+@utility touch-target {
+  @media (pointer: coarse) {
+    position: relative;
+    &::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: max(100%, 2.75rem);
+      height: max(100%, 2.75rem);
+      transform: translate(-50%, -50%);
+    }
+  }
+}

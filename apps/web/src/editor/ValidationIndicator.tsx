@@ -82,7 +82,7 @@ export function ValidationIndicator({
           {...props}
           data-severity={severity}
           className={cn(
-            'inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-md border px-2.5 text-sm font-semibold whitespace-nowrap',
+            'inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-md border px-2.5 text-sm font-semibold whitespace-nowrap pointer-coarse:h-11',
             'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus [&_svg]:size-[15px] [&_svg]:stroke-[2.4]',
             SEVERITY_CLASSES[severity],
           )}
@@ -118,7 +118,7 @@ export function ValidationIndicator({
                     <li key={nodeId}>
                       <button
                         type="button"
-                        className="flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-surface-hover"
+                        className="flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-surface-hover pointer-coarse:min-h-11"
                         onClick={() => {
                           close();
                           useEditorStore.getState().openNode(nodeId);

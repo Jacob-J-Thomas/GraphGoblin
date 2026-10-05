@@ -24,7 +24,7 @@ function PatchDiff({ nodeId, lines }: { nodeId: string; lines: PatchLine[] }) {
                 </>
               ) : null}
             </div>
-            <div className="grid grid-cols-2">
+            <div className="grid sm:grid-cols-2">
               <pre className={`${PRE} bg-status-bad-bg text-status-bad-fg`}>
                 − {prettyJson(line.before) || '(absent)'}
               </pre>

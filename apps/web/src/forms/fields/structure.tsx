@@ -17,6 +17,7 @@ import { Icon } from '../../components/icons/index.js';
 import {
   Badge,
   Button,
+  CHECKBOX_LABEL,
   Checkbox,
   Disclosure,
   Fieldset,
@@ -529,10 +530,7 @@ function EnumSetField({
       <GroupLegend label={label} required={required} variant="label" />
       <div className="flex flex-wrap gap-x-5 gap-y-2">
         {options.map((option) => (
-          <label
-            key={option}
-            className="flex cursor-pointer items-center gap-2 font-mono text-sm font-medium"
-          >
+          <label key={option} className={cn(CHECKBOX_LABEL, 'font-mono text-sm font-medium')}>
             <Checkbox
               checked={chosen.includes(option)}
               onChange={(e) => toggle(option, e.target.checked)}
