@@ -75,9 +75,22 @@ describe('CronScheduler.nextFire', () => {
     expect(
       CronScheduler.nextFire('0 0 0 1 1 * 2020', 'UTC', new Date('2026-01-01T00:00:00Z')),
     ).toBeUndefined();
-    expect(CronScheduler.validate('*/5 * * * *', 'Europe/Stockholm')).toBeNull();
-    expect(CronScheduler.validate('not a cron', 'UTC')).toEqual(expect.any(String));
-    expect(CronScheduler.validate('* * * * *', 'Not/AZone')).toEqual(expect.any(String));
+    expect(CronScheduler.validate('*/5 * * * *', 'Europe/Stockholm')).toBeUndefined();
+    expect(CronScheduler.validate('not a cron', 'UTC')).toEqual({
+      field: 'expression',
+      message: expect.any(String),
+    });
+    expect(CronScheduler.validate('* * * * *', 'Not/AZone')).toEqual({
+      field: 'timezone',
+      message: expect.any(String),
+    });
+    expect(CronScheduler.validate('* * * * *', '')).toEqual({
+      field: 'timezone',
+      message: 'A time zone is required.',
+    });
+    expect(CronScheduler.validate('0 0 0 1 1 * 1900', 'Not/AZone')).toMatchObject({
+      field: 'timezone',
+    });
   });
 });
 

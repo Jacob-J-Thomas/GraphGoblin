@@ -8,7 +8,7 @@ Open **Settings** from the navigation bar:
 /app/settings
 ```
 
-Choose the colour theme under **Appearance** (below), and manage **Model catalog**, **Classifier models**, **Defaults**, **Secrets**, and **API keys** here, and check **Harness preflight**. The **Install** card explains the browser's PWA installation action. With `GG_REQUIRE_API_KEY=true` the app shell still loads, asks for a key on the first 401, and keeps it in this browser; **This browser's API key** shows it and **Forget key** removes it (other open tabs follow).
+Choose the colour theme and the font under **Appearance** (below), and manage **Model catalog**, **Classifier models**, **Defaults**, **Secrets**, and **API keys** here, and check **Harness preflight**. The **Install** card explains the browser's PWA installation action. With `GG_REQUIRE_API_KEY=true` the app shell still loads, asks for a key on the first 401, and keeps it in this browser; **This browser's API key** shows it and **Forget key** removes it (other open tabs follow).
 
 ## Confirm destructive actions
 
@@ -19,6 +19,23 @@ Only the API key marked **This browser** adds the browser sign-out warning. Othe
 ## Choose the theme
 
 **Appearance → Theme** switches between **Dark** (the default) and **Light**. The change applies at once, without a reload, and this browser remembers it: the app opens in your theme on the next visit, with no flash of the other one, and other open tabs switch too. Use Tab to reach the control and the arrow keys to change it. The choice is per browser, kept in `localStorage` (`graphgoblin-theme`); a private window or blocked site data opens in Dark. A **System** option that follows the operating system will come with the installer.
+
+## Choose the font
+
+**Appearance → Font**, under the theme, sets the typeface of the whole app. Each option shows its name in its own face, with a line about it:
+
+| Font                      | What it is                                                                                     |
+| ------------------------- | ---------------------------------------------------------------------------------------------- |
+| **Geist** (the default)   | Compact and clean.                                                                             |
+| **Space Grotesk**         | Characterful: quirky, engineered letters for all text.                                         |
+| **Chakra Petch**          | Robotic, squared-off headings and wordmark; the rest of the text stays in Geist.               |
+| **Atkinson Hyperlegible** | Easier reading: letters shaped so that similar ones (I, l, 1; O, 0) are hard to confuse.       |
+| **OpenDyslexic**          | For some dyslexic readers: letters weighted at the bottom. Much wider, so long labels cut off. |
+| **Inter**                 | Neutral: a plainer alternative to Geist.                                                       |
+
+Click an option, or Tab to the chosen one and use the arrow keys. The font changes at once, without a reload, and this browser remembers it: on the next visit the app starts with your font already chosen, and other open tabs switch too. Code, ids, and JSON always stay in Geist Mono. The fonts come with the app, so they work offline. The choice is per browser, kept in `localStorage` (`graphgoblin-font`); a private window or blocked site data opens in Geist.
+
+While a font is loading, or if it cannot load, the text it sets shows in the next font in its list and stays usable: Chakra Petch headings and the wordmark show in Geist, and the other fonts, Geist included, show in your system's interface font (Segoe UI on Windows). Text size and spacing settings are not available yet.
 
 ## Choose a model and effort
 
@@ -44,7 +61,7 @@ Invoke-RestMethod -Method Patch -Uri "$env:GG_API_URL/model-catalog/codex/gpt-6-
 
 With API keys enabled, include a bearer key with `settings:write`; listing needs `settings:read`. PATCH returns the full entry (200) or `MODEL_NOT_FOUND` (404). PUT/DELETE against harness rows, including old hand-added ones, return `MODEL_MANAGED_BY_HARNESS`; PUT requesting a new `source: "litellm"` returns `LITELLM_NOT_CONFIGURED`. LiteLLM PUT retains the existing source, preserves enabled when omitted, and requires default effort to belong to efforts.
 
-Validation and publication warn with `MODEL_DISABLED` or `MODEL_NOT_IN_CATALOG` when an explicit inference model, a decision's Codex model (only when its strategy includes Codex), or loop `settings.defaults.model` is disabled or missing from the relevant catalog: the inference node's selected harness for `config.model`, and Codex for decision Codex models and loop-default models. Node warnings identify the node and relative field path (`config.model` or `config.codex.model`); defaults identify `settings.defaults.model`. Warnings do not block publishing or execution. Back up before upgrade. [ADR-0018](../decisions/ADR-0018-model-catalog-source.md) needs no SQL rollback for `0004` alone; after `0005`, follow the [CHANGELOG rollback steps](../../CHANGELOG.md#upgrade-notes) to restore the pre-upgrade data backup or put the required loop-default harness field back while the API is stopped. SQL rollback does not recover edited seed metadata.
+Validation and publication warn with `MODEL_DISABLED` or `MODEL_NOT_IN_CATALOG` when an explicit inference model, a decision's Codex model (only when its strategy includes Codex), or loop `settings.defaults.model` is disabled or missing from the relevant catalog: the inference node's selected harness for `config.model`, and Codex for decision Codex models and loop-default models. Node warnings identify the node and relative field path (`config.model` or `config.codex.model`); defaults identify `settings.defaults.model`. Warnings do not block publishing or execution. Follow [Back up and restore](#back-up-and-restore) before upgrading or rolling back.
 
 Set `model` and `effort` on the inference node or in loop `defaults`, set owner defaults in **Defaults** (below), or set the API's environment before startup:
 
@@ -248,6 +265,8 @@ Alternatively, supply `GG_MASTER_KEY` containing base64 that decodes to exactly 
 > After 1.0: The planned OS-keyring source and per-secret envelope key wrapping. The current implementation reads a file or environment master key and encrypts secret values directly with it.
 
 ## Back up and restore
+
+Before upgrading, make a full backup using the steps below. To roll back, stop the API and restore the pre-upgrade backup of the entire data directory before running the previous release. Restoring the backup discards runs, edits, and secrets made since the upgrade. There is no partial rollback: do not edit the migration ledger or undo individual migrations. The backup restores both the stored definitions and migration state, so a later upgrade can apply every required migration again; it also recovers any seed metadata changed at startup.
 
 1. [Stop the API safely](01-install-and-first-run.md#stop-and-restart-safely) and confirm the process has exited.
 2. Copy the entire data directory, including the database, any WAL/SHM files, master key, artifacts, and temporary workspaces. Store the backup securely because it contains both encrypted secrets and their decryption key.

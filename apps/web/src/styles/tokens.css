@@ -449,10 +449,13 @@
 /* ------------------------------------------------------------------------------------------ */
 
 :root {
-  /* Families. --font-ui is the indirection #40 switches; components use --font-ui and --font-code. */
-  --font-sans: 'Geist', ui-sans-serif, system-ui, 'Segoe UI', Roboto, sans-serif;
+  /* Families. Components use --font-ui (text), --font-display (headings and the wordmark), and
+     --font-code; the Font choice in Settings swaps the first two (fonts.css, #40). */
+  --font-fallback: ui-sans-serif, system-ui, 'Segoe UI', Roboto, sans-serif;
+  --font-sans: 'Geist', var(--font-fallback);
   --font-mono: 'Geist Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
   --font-ui: var(--font-sans);
+  --font-display: var(--font-sans);
   --font-code: var(--font-mono);
 
   /* Sizes (Tailwind's @theme maps these to its --text-* size namespace at the cutover). */
