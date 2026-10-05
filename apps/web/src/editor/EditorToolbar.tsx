@@ -1,4 +1,4 @@
-import { useId } from 'react';
+import { useId, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { Icon } from '../components/icons/index.js';
 import { Badge, Button } from '../components/ui/index.js';
@@ -71,6 +71,7 @@ export function EditorToolbar({
   saveState,
   saveMessage,
   errors,
+  validation,
   publishing,
   loopPanelExpanded,
   onLoopSettings,
@@ -84,6 +85,8 @@ export function EditorToolbar({
   saveState: SaveState;
   saveMessage: string | undefined;
   errors: number;
+  /** The validation indicator, shown left of Publish. */
+  validation?: ReactNode;
   publishing: boolean;
   /** Whether the loop panel is expanded: "Loop settings" expands and collapses it. */
   loopPanelExpanded: boolean;
@@ -125,6 +128,7 @@ export function EditorToolbar({
           Loop settings
         </Button>
         <OpenInRuns loopId={loopId} published={published} />
+        {validation}
         <Button
           onClick={onPublish}
           disabled={publishing}

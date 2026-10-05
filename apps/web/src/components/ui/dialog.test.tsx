@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { StrictMode, useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
@@ -332,5 +332,31 @@ describe('Dialog', () => {
     close.setAttribute('disabled', '');
     fireEvent.keyDown(dialog(), { key: 'Tab' });
     expect(dialog()).not.toHaveAttribute('aria-describedby');
+  });
+
+  it('shows header actions between the title and the close button, outside its name', async () => {
+    const user = userEvent.setup();
+    render(
+      <Dialog
+        open
+        onClose={() => undefined}
+        title="Edit wait approve"
+        actions={<Button aria-label="2 issues on approve">2</Button>}
+      >
+        <Input aria-label="Label" />
+      </Dialog>,
+    );
+    const open = screen.getByRole('dialog', { name: 'Edit wait approve' });
+    const header = open.querySelector('header')!;
+    const buttons = within(header).getAllByRole('button');
+    expect(buttons.map((b) => b.getAttribute('aria-label'))).toEqual([
+      '2 issues on approve',
+      'Close',
+    ]);
+    // In the Tab order after the heading, before the close button.
+    await user.tab();
+    expect(buttons[0]).toHaveFocus();
+    await user.tab();
+    expect(buttons[1]).toHaveFocus();
   });
 });

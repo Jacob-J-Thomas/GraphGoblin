@@ -6,6 +6,7 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ### Changed
 
+- `GET /api-keys` requires a `current` boolean on every list item, identifying the key authenticating that request when keys are required. Settings marks it as **This browser** and warns before revoking it; when a browser stores a key but no row is marked, confirmations explain the possible sign-out and **Forget key** recovery. Changing keys refreshes the marker, and late 401 responses from a previous key no longer show the key panel.
 - Model catalog entries now expose source. Harness models, including all migrated legacy rows, can only be enabled/disabled through PATCH; PUT/DELETE return `MODEL_MANAGED_BY_HARNESS`. Existing LiteLLM rows remain editable/deletable, while new LiteLLM entries return `LITELLM_NOT_CONFIGURED` pending provider support.
 - Startup refreshes seeded harness names, efforts, and default efforts while preserving enabled. Hand-added legacy metadata remains intact. Validate/publish return advisory disabled/missing-model warnings with field paths, and successful publish now includes issues.
 

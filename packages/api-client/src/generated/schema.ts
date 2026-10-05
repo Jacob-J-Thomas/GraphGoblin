@@ -1427,7 +1427,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List API keys */
+        /**
+         * List API keys with the current authenticated key flagged
+         * @description Requires api-keys:read. Each item has a required current boolean: true only for the key that authenticated this list request when API keys are required. All items are false in trusted mode, even with a valid bearer key. This is a response snapshot, never persisted. Only this owner's key metadata is returned; tokens and hashes are never returned.
+         */
         get: {
             parameters: {
                 query?: never;
@@ -1452,6 +1455,7 @@ export interface paths {
                                 createdAt: string;
                                 lastUsedAt?: string | undefined;
                                 revokedAt?: string | undefined;
+                                current: boolean;
                             }[];
                         };
                     };

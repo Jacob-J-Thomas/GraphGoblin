@@ -1,26 +1,30 @@
 import type { NodeInput } from '@graphgoblin/contracts';
 import { Handle, Position, type Node, type NodeProps } from '@xyflow/react';
-import { Icon } from '../components/icons/index.js';
-import { Badge } from '../components/ui/index.js';
+import { memo } from 'react';
 import { cn } from '../lib/utils.js';
+import { canvasFocusTarget } from './canvas-focus.js';
+import { IssueBadge } from './IssueBadge.js';
 import { KindChip, kindStyle } from './KindChip.js';
-import { KIND_INFO } from './model.js';
+import { KIND_INFO, type EditorIssue } from './model.js';
+import { useEditorStore } from './store.js';
 
 export interface NodeCardData extends Record<string, unknown> {
   node: NodeInput;
   ports: string[];
-  issueCount: number;
+  /** The node's validation issues, from the same merged list Publish checks. */
+  issues: readonly EditorIssue[];
 }
 
 export type FlowNode = Node<NodeCardData, 'gg'>;
 
 /**
  * One loop node on the canvas: a header band tinted with the kind's colour (chip, kind name, and
- * an issue count), then the label, the id, and a labelled output handle per port. A selected card
- * wears the magenta ring.
+ * the issue badge, whose popover lists the issues), then the label, the id, and a labelled output
+ * handle per port. A selected card wears the magenta ring. Memoised: the canvas keeps a node's data
+ * object while the node and its issues are unchanged, so an edit elsewhere does not re-render it.
  */
-export function NodeCard({ data, selected }: NodeProps<FlowNode>) {
-  const { node, ports, issueCount } = data;
+export const NodeCard = memo(function NodeCard({ data, selected }: NodeProps<FlowNode>) {
+  const { node, ports, issues } = data;
   const info = KIND_INFO[node.kind];
   return (
     <div
@@ -41,11 +45,14 @@ export function NodeCard({ data, selected }: NodeProps<FlowNode>) {
         <span className="text-2xs font-bold tracking-[0.08em] text-muted uppercase">
           {info.label}
         </span>
-        {issueCount > 0 ? (
-          <Badge tone="bad" size="sm" className="ml-auto" title="Validation issues">
-            <Icon name="failed" />
-            {issueCount} issue{issueCount === 1 ? '' : 's'}
-          </Badge>
+        {issues.length > 0 ? (
+          <IssueBadge
+            nodeId={node.id}
+            issues={issues}
+            className="ml-auto"
+            onChoose={(issue) => useEditorStore.getState().openNode(node.id, { field: issue.path })}
+            fallbackFocus={() => canvasFocusTarget(node.id)}
+          />
         ) : null}
       </div>
       <div className="px-3 pt-2 pb-2.5">
@@ -73,4 +80,4 @@ export function NodeCard({ data, selected }: NodeProps<FlowNode>) {
       </div>
     </div>
   );
-}
+});

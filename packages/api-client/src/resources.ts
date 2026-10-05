@@ -176,7 +176,8 @@ export const secrets = {
 };
 
 export const apiKeys = {
-  list: async (client: GraphGoblinClient) => unwrap(await client.GET('/api-keys')).items,
+  list: async (client: GraphGoblinClient, options: { signal?: AbortSignal } = {}) =>
+    unwrap(await client.GET('/api-keys', options)).items,
   /** Create a key. The plaintext `token` is returned once and never again. */
   create: async (client: GraphGoblinClient, body: RequestBody<'/api-keys', 'post'>) =>
     unwrap(await client.POST('/api-keys', { body })),

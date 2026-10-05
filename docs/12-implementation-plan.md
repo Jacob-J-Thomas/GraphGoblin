@@ -115,7 +115,7 @@ Tasks:
 
 1. App shell, routing, generated client, auth-less local mode.
 2. Loops list, create, import, export, publish.
-3. Editor: canvas, palette, property panels from schemas, validation panel, variables, subloop picker, templates with preview.
+3. Editor: canvas, palette, property panels from schemas, validation panel (since #15, issue badges on the nodes and counts beside Publish), variables, subloop picker, templates with preview.
 4. Runs list and run inspector with SSE, thread viewer, patch diffs, wait-for-input form, controls.
 5. Settings: model catalog, defaults, secrets, API keys, harness preflight.
 6. PWA: manifest, service worker with the prompt update flow, offline shell, IndexedDB drafts.

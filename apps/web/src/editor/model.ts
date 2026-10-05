@@ -170,7 +170,7 @@ export function connectionProblem(
 
 export type EditorIssue = ValidationIssue & {
   path?: string;
-  /** For FIELD_UNPARSED: where the unparsed text is kept, so the panel can discard it. */
+  /** For FIELD_UNPARSED: where the unparsed text is kept, so its issue row can discard it. */
   discard?: { scope: string; path: string };
 };
 
@@ -237,6 +237,82 @@ export function mergeIssues(
   const seen = new Set(local.issues.map(issueKey));
   const extra = local.schemaValid ? (server ?? []).filter((i) => !seen.has(issueKey(i))) : [];
   return [...fields, ...local.issues, ...extra];
+}
+
+/** How many errors and warnings a list holds. */
+export function issueCounts(issues: readonly EditorIssue[]): { errors: number; warnings: number } {
+  const errors = issues.filter((i) => i.severity === 'error').length;
+  return { errors, warnings: issues.length - errors };
+}
+
+function plural(count: number, noun: string): string {
+  return `${count} ${noun}${count === 1 ? '' : 's'}`;
+}
+
+/** "1 issue", "3 issues". */
+export function issuesLabel(count: number): string {
+  return plural(count, 'issue');
+}
+
+/** "2 errors, 1 warning", "1 error", or "3 warnings": the parts that are not zero. */
+export function countsLabel(issues: readonly EditorIssue[]): string {
+  const { errors, warnings } = issueCounts(issues);
+  const parts = [
+    errors > 0 ? plural(errors, 'error') : '',
+    warnings > 0 ? plural(warnings, 'warning') : '',
+  ];
+  return parts.filter(Boolean).join(', ');
+}
+
+/** The issues about each node, by node id, in list order. */
+export function issuesByNode(issues: readonly EditorIssue[]): Map<string, EditorIssue[]> {
+  const byNode = new Map<string, EditorIssue[]>();
+  for (const issue of issues) {
+    if (issue.nodeId === undefined) continue;
+    const list = byNode.get(issue.nodeId);
+    if (list) list.push(issue);
+    else byNode.set(issue.nodeId, [issue]);
+  }
+  return byNode;
+}
+
+/**
+ * The issues as the editor shows them: those about a node of the definition (its card's badge
+ * lists them), per node in the definition's order, and the rest in list order: loop-level issues,
+ * edge issues, and issues about a node that is no longer there (a server check of an older
+ * revision, say). Every issue is in exactly one place, so the counts always add up.
+ */
+export function groupIssues(
+  issues: readonly EditorIssue[],
+  definition: LoopDefinitionInput,
+): { general: EditorIssue[]; nodes: { nodeId: string; issues: EditorIssue[] }[] } {
+  const byNode = issuesByNode(issues);
+  const ids = [...new Set(definition.nodes.map((n) => n.id))];
+  const nodes = ids.flatMap((nodeId) => {
+    const list = byNode.get(nodeId);
+    return list ? [{ nodeId, issues: list }] : [];
+  });
+  const present = new Set(ids);
+  const general = issues.filter((i) => i.nodeId === undefined || !present.has(i.nodeId));
+  return { general, nodes };
+}
+
+/** Whether two issue lists say the same thing, so a node card showing one need not re-render. */
+export function sameIssues(a: readonly EditorIssue[], b: readonly EditorIssue[]): boolean {
+  return (
+    a.length === b.length &&
+    a.every((issue, index) => {
+      const other = b[index]!;
+      return (
+        issueKey(issue) === issueKey(other) &&
+        issue.severity === other.severity &&
+        issue.edgeId === other.edgeId &&
+        issue.path === other.path &&
+        issue.discard?.scope === other.discard?.scope &&
+        issue.discard?.path === other.discard?.path
+      );
+    })
+  );
 }
 
 /** A new loop: a manual trigger wired to an exit. */

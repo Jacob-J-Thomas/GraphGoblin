@@ -1,8 +1,11 @@
 import { kitchenSinkLoop } from '@graphgoblin/contracts/testing';
-import { act, fireEvent, render } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import type { ReactFlowProps } from '@xyflow/react';
+import { createPortal } from 'react-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { Canvas, canvasFocusTarget } from './Canvas.js';
+import { closePopovers, Popover } from '../components/ui/index.js';
+import { buildCardData, Canvas, canvasFocusTarget } from './Canvas.js';
+import type { EditorIssue } from './model.js';
 import type { FlowNode } from './NodeCard.js';
 import { useEditorStore } from './store.js';
 
@@ -28,25 +31,90 @@ describe('Canvas handlers', () => {
     store().load('L1', kitchenSinkLoop());
   });
 
-  function renderCanvas() {
+  const ISSUE: EditorIssue = { code: 'X', severity: 'error', message: 'm', nodeId: 'prep' };
+
+  function renderCanvas(issues: EditorIssue[] = [ISSUE]) {
     const def = store().definition!;
-    return render(
-      <Canvas
-        definition={def}
-        issues={[{ code: 'X', severity: 'error', message: 'm', nodeId: 'prep' }]}
-      />,
-    );
+    return render(<Canvas definition={def} issues={issues} />);
   }
 
-  it('maps the definition to nodes with ports and issue counts, and edges with labels', () => {
+  const data = (id: string) => flow().nodes!.find((n) => n.id === id)!.data;
+
+  it('maps the definition to nodes with ports and issues, and edges with labels', () => {
     renderCanvas();
     const prep = flow().nodes!.find((n) => n.id === 'prep')!;
-    expect(prep.data).toMatchObject({ ports: ['out'], issueCount: 1 });
+    expect(prep.data).toMatchObject({ ports: ['out'], issues: [ISSUE] });
+    expect(data('infer').issues).toEqual([]);
     const decide = flow().nodes!.find((n) => n.id === 'decide')!;
     expect(decide.data.ports).toEqual(['good', 'bad']);
     const loopBack = flow().edges!.find((e) => e.id === 'e11')!;
     expect(loopBack).toMatchObject({ label: 'loopBack', animated: true, sourceHandle: 'loopBack' });
     expect(flow().edges!.find((e) => e.id === 'e1')!.label).toBeUndefined();
+  });
+
+  it('keeps a node’s data while its node and issues are unchanged, so its card does not re-render', () => {
+    const view = renderCanvas();
+    const prep = data('prep');
+    const infer = data('infer');
+    // Validation ran again: new but equal issue objects, and a new issue on another node.
+    const other: EditorIssue = { ...ISSUE, nodeId: 'infer' };
+    view.rerender(<Canvas definition={store().definition!} issues={[{ ...ISSUE }, other]} />);
+    expect(data('prep')).toBe(prep);
+    expect(data('infer')).not.toBe(infer);
+    expect(data('infer').issues).toEqual([other]);
+    // An edit to one node gives only that node new data.
+    const check = data('check');
+    act(() => store().updateNode('prep', { label: 'Prepare' }));
+    view.rerender(<Canvas definition={store().definition!} issues={[{ ...ISSUE }, other]} />);
+    expect(data('prep')).not.toBe(prep);
+    expect(data('prep').node.label).toBe('Prepare');
+    expect(data('check')).toBe(check);
+
+    // The cache itself: the previous object when node and issues match, a new one otherwise.
+    const def = store().definition!;
+    const first = buildCardData(def, [ISSUE], new Map());
+    const second = buildCardData(def, [{ ...ISSUE }], first);
+    expect(second.get('prep')).toBe(first.get('prep'));
+    expect(buildCardData(def, [], first).get('prep')!.issues).toEqual([]);
+  });
+
+  it('closes the popovers on the canvas when it pans or zooms and when a node drag starts', () => {
+    const view = renderCanvas();
+    const canvas = view.getByTestId('canvas');
+    const probe = (name: string) => (
+      <Popover
+        label={name}
+        trigger={(props) => (
+          <button type="button" {...props}>
+            {name}
+          </button>
+        )}
+      >
+        <p>{name} body</p>
+      </Popover>
+    );
+    render(
+      <>
+        {createPortal(probe('Inside'), canvas)}
+        {probe('Outside')}
+      </>,
+    );
+    const toggle = (name: string) => fireEvent.click(screen.getByRole('button', { name }));
+    const isOpen = (name: string) =>
+      screen.getByRole('button', { name }).getAttribute('aria-expanded') === 'true';
+    // A popover elsewhere (the toolbar's) stays open: nothing it hangs from moved.
+    toggle('Outside');
+    act(() => flow().onMove!(null, { x: 10, y: 0, zoom: 1 }));
+    expect(isOpen('Outside')).toBe(true);
+    toggle('Inside');
+    expect(isOpen('Inside')).toBe(true);
+    act(() => flow().onMove!(null, { x: 20, y: 0, zoom: 1 }));
+    expect(isOpen('Inside')).toBe(false);
+    toggle('Inside');
+    const node = flow().nodes!.find((n) => n.id === 'prep')!;
+    act(() => flow().onNodeDragStart!({} as never, node, [node]));
+    expect(isOpen('Inside')).toBe(false);
+    act(() => closePopovers());
   });
 
   it('validates connections and forwards them to the store', () => {
@@ -147,6 +215,12 @@ describe('Canvas handlers', () => {
     canvas.appendChild(input);
     fireEvent.keyDown(input, { key: 'Delete' });
     fireEvent.keyDown(canvas, { key: 'a' });
+    // Nor do keys from a node's issue badge or its popover (xyflow's `nokey`).
+    const badge = canvas.appendChild(document.createElement('button'));
+    badge.className = 'nokey';
+    fireEvent.keyDown(badge, { key: 'Delete' });
+    fireEvent.keyDown(badge, { key: 'Enter' });
+    expect(store().nodeDialogOpen).toBe(false);
     expect(store().definition!.nodes.some((n) => n.id === 'prep')).toBe(true);
     fireEvent.keyDown(canvas, { key: 'Delete' });
     expect(store().definition!.nodes.some((n) => n.id === 'prep')).toBe(false);

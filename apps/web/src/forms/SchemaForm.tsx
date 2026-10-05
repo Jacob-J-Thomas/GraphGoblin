@@ -11,7 +11,12 @@ import {
   shapeOf,
   type Schema,
 } from './introspect.js';
-import { ParseErrorContext, type ParseError, type ParseErrorChannel } from './parse-errors.js';
+import {
+  ParseErrorContext,
+  repathParseErrors,
+  type ParseError,
+  type ParseErrorChannel,
+} from './parse-errors.js';
 import { stripUnset } from './unset.js';
 
 export interface SchemaFormProps {
@@ -78,6 +83,9 @@ export function SchemaForm({
       report: (path, error) => {
         const current = parseErrorsRef.current?.[path];
         if (current?.message === error?.message && current?.text === error?.text) return;
+        // Collection actions can clear and then reuse a path before React renders again.
+        const { [path]: _previous, ...rest } = parseErrorsRef.current ?? {};
+        parseErrorsRef.current = error ? { ...rest, [path]: error } : rest;
         onParseErrorRef.current?.(path, error);
       },
       tracked,
@@ -106,6 +114,7 @@ export function SchemaForm({
 
   const switchVariant = (index: number) => {
     if (shape.kind !== 'union') return;
+    repathParseErrors(parseErrorChannel, [{ from: '' }]);
     const next = asValues(initialValue(shape.options[index] as Schema));
     setUnionIndex(index);
     form.reset(next);

@@ -62,6 +62,42 @@ describe('editor store', () => {
     expect(store().nodeDialogOpen).toBe(false);
   });
 
+  it('keeps a pending focus target for the node editor until it is used or the editor closes', () => {
+    store().load('L1', newLoopDefinition('a'));
+    expect(store().nodeFocus).toBeUndefined();
+    // Opened at an issue's field: the target names the node and the path.
+    store().openNode('start', { field: 'config.inputSchema' });
+    expect(store()).toMatchObject({
+      selectedNodeId: 'start',
+      nodeDialogOpen: true,
+      nodeFocus: { nodeId: 'start', field: 'config.inputSchema' },
+    });
+    // The editor uses it once and clears it.
+    store().clearNodeFocus();
+    expect(store().nodeFocus).toBeUndefined();
+    // Already open on the node: a new target, same session (the dialog focuses it at once).
+    const session = store().nodeDialogSession;
+    store().openNode('start', { field: 'label' });
+    expect(store()).toMatchObject({ nodeDialogSession: session, nodeFocus: { field: 'label' } });
+    // Without a field (or with an empty one) the heading takes focus: no target.
+    store().openNode('done');
+    expect(store().nodeFocus).toBeUndefined();
+    store().openNode('done', { field: '' });
+    expect(store().nodeFocus).toBeUndefined();
+    store().openNode('done', { field: undefined });
+    expect(store().nodeFocus).toBeUndefined();
+    // An unknown node opens nothing and leaves the target alone; closing drops it.
+    store().openNode('start', { field: 'label' });
+    store().openNode('nowhere', { field: 'id' });
+    expect(store().nodeFocus).toEqual({ nodeId: 'start', field: 'label' });
+    store().closeNodeDialog();
+    expect(store().nodeFocus).toBeUndefined();
+    // A load forgets it.
+    store().openNode('start', { field: 'label' });
+    store().load('L1', newLoopDefinition('b'));
+    expect(store().nodeFocus).toBeUndefined();
+  });
+
   it('adds, updates, moves, renames, and removes nodes', () => {
     store().load('L1', newLoopDefinition('a'));
     const id = store().addNode('mutate', { x: 1, y: 2 });
