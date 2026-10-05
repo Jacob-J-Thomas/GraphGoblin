@@ -55,6 +55,33 @@ MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, 0BSD, Unlicense, CC0-1.0.
 | drizzle-kit                                                                                                            | Apache-2.0 | `packages/infrastructure` migration generation; dev-only                                                                                         |
 | openapi-typescript                                                                                                     | MIT        | `packages/api-client` type generation; dev-only and pulls `@redocly/openapi-core` (MIT)                                                          |
 | Geist, Geist Mono (fonts)                                                                                              | OFL-1.1    | Font files, not npm: `geist` 1.7.2 woff2 with `OFL.txt` in `apps/web/public/fonts/` (#7) and the design sample; npm allowlist unchanged          |
+| Space Grotesk 2.000 (font)                                                                                             | OFL-1.1    | Font file, not npm: subset woff2 with `OFL-SpaceGrotesk.txt` in `apps/web/public/fonts/` (#40); see Font files below                             |
+| Chakra Petch 1.000 (font)                                                                                              | OFL-1.1    | Font files, not npm: SemiBold and Bold, subset woff2 with `OFL-ChakraPetch.txt` (#40); see Font files below                                      |
+| Atkinson Hyperlegible Next 2.001 (font)                                                                                | OFL-1.1    | Font file, not npm: subset woff2 with `OFL-AtkinsonHyperlegibleNext.txt` (#40); see Font files below                                             |
+| OpenDyslexic 0.990 (font)                                                                                              | OFL-1.1    | Font files, not npm: upstream Regular and Bold woff2, unmodified (Reserved Font Name), with `OFL-OpenDyslexic.txt` (#40); see Font files below   |
+| Inter 4.001 (font)                                                                                                     | OFL-1.1    | Font file, not npm: optical size fixed at 14, subset woff2 with `OFL-Inter.txt` (#40); see Font files below                                      |
+
+## Font files
+
+The faces Settings → Appearance → Font offers (#40) are vendored files in `apps/web/public/fonts/`, each with its licence text beside it; no npm package is added, so the npm allowlist is unchanged. Every one is SIL OFL 1.1, which allows bundling, modifying, and redistributing with the licence. A modified font may not use a Reserved Font Name (RFN), and the OFL FAQ (2.6) counts subsetting a web font as modification, so only faces without an RFN are subset.
+
+| File                                               | Source (path at commit)                                                                                 | Change                                     |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| `SpaceGrotesk-Variable.woff2` (21 KiB)             | google/fonts `ofl/spacegrotesk/SpaceGrotesk[wght].ttf` at `2861cb7b`                                    | Subset                                     |
+| `ChakraPetch-SemiBold.woff2` (9 KiB)               | google/fonts `ofl/chakrapetch/ChakraPetch-SemiBold.ttf` at `c011968d`                                   | Subset                                     |
+| `ChakraPetch-Bold.woff2` (9 KiB)                   | google/fonts `ofl/chakrapetch/ChakraPetch-Bold.ttf` at `c011968d`                                       | Subset                                     |
+| `AtkinsonHyperlegibleNext-Variable.woff2` (33 KiB) | google/fonts `ofl/atkinsonhyperlegiblenext/AtkinsonHyperlegibleNext[wght].ttf` at `66eef707`            | Subset                                     |
+| `Inter-Variable.woff2` (46 KiB)                    | google/fonts `ofl/inter/Inter[opsz,wght].ttf` at `e1d64801`                                             | Optical size axis fixed at 14, then subset |
+| `OpenDyslexic-Regular.woff2` (101 KiB)             | antijingoist/opendyslexic `compiled/OpenDyslexic-Regular.woff2` at `77bda89f` (also forge.hackers.town) | None (RFN "OpenDyslexic")                  |
+| `OpenDyslexic-Bold.woff2` (106 KiB)                | antijingoist/opendyslexic `compiled/OpenDyslexic-Bold.woff2` at `77bda89f`                              | None (RFN "OpenDyslexic")                  |
+
+The subset keeps Google Fonts' Latin range plus the arrows the app shows, fontTools' default OpenType features plus tabular figures, and every name record (copyright, licence, and URLs), with fontTools 4.66 (`pip install fonttools brotli`):
+
+```sh
+pyftsubset <source>.ttf --flavor=woff2 --layout-features+=tnum --name-IDs='*' --name-legacy --notdef-outline \
+  --unicodes='U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2190-2193,U+2212,U+2215,U+FEFF,U+FFFD'
+fonttools varLib.instancer 'Inter[opsz,wght].ttf' opsz=14 -o Inter-opsz14.ttf   # before subsetting Inter
+```
 
 ## Recorded alternatives and their licences
 
@@ -70,6 +97,8 @@ MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, 0BSD, Unlicense, CC0-1.0.
 | NestJS, Hono                                         | MIT                        | HTTP framework alternatives                                                             |
 | SvelteKit, Svelte Flow                               | MIT                        | Frontend alternative                                                                    |
 | Monaco editor                                        | MIT                        | Rejected for bundle size, not licence                                                   |
+| Michroma, Orbitron (fonts)                           | OFL-1.1                    | #40 display candidates, rejected on width and legibility; Orbitron has an RFN           |
+| IBM Plex Sans (font)                                 | OFL-1.1                    | #40 neutral candidate; its RFN "Plex" rules out a subset under the name, so Inter       |
 
 ## Rejected for licence reasons
 
