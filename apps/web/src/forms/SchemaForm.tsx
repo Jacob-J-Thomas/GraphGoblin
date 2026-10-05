@@ -17,6 +17,7 @@ import {
   repathParseErrors,
   type ParseError,
   type ParseErrorChannel,
+  type ParseErrorReason,
 } from './parse-errors.js';
 import { stripUnset } from './unset.js';
 
@@ -30,8 +31,11 @@ export interface SchemaFormProps {
   label: string;
   /** Stored text that did not parse (JSON), by field path; fields show it again when remounted. */
   parseErrors?: Record<string, ParseError> | undefined;
-  /** Called when a field's text stops or starts parsing (`undefined` clears the path). */
-  onParseError?: (path: string, error: ParseError | undefined) => void;
+  /**
+   * Called when a field's text stops or starts parsing (`undefined` clears the path); `reason` is
+   * `'discard'` when the user dropped the text (Discard text) rather than fixing it.
+   */
+  onParseError?: (path: string, error: ParseError | undefined, reason?: ParseErrorReason) => void;
 }
 
 interface Issue {
@@ -85,19 +89,23 @@ export function SchemaForm({
   onParseErrorRef.current = onParseError;
   const tracked = onParseError !== undefined;
   const parseErrorChannel = useMemo<ParseErrorChannel>(
-    () => ({
-      get: (path) => parseErrorsRef.current?.[path],
-      report: (path, error) => {
+    () => {
+      const update = (path: string, error: ParseError | undefined, reason?: ParseErrorReason) => {
         const current = parseErrorsRef.current?.[path];
         if (current?.message === error?.message && current?.text === error?.text) return;
         // Collection actions can clear and then reuse a path before React renders again.
         const { [path]: _previous, ...rest } = parseErrorsRef.current ?? {};
         parseErrorsRef.current = error ? { ...rest, [path]: error } : rest;
-        onParseErrorRef.current?.(path, error);
-      },
-      tracked,
-      errors: parseErrors,
-    }),
+        onParseErrorRef.current?.(path, error, reason);
+      };
+      return {
+        get: (path) => parseErrorsRef.current?.[path],
+        report: (path, error) => update(path, error),
+        discard: (path) => update(path, undefined, 'discard'),
+        tracked,
+        errors: parseErrors,
+      };
+    },
     // `errors` is the stored state fields compare against to notice an external discard.
     [parseErrors, tracked],
   );

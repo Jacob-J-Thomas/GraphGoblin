@@ -32,8 +32,10 @@ export function LoopPanel({
   expanded: boolean;
   onExpandedChange: (expanded: boolean) => void;
 }) {
-  // The settings forms keep their own state; a load (reload, restore) replaces the definition.
+  // The settings forms keep their own state; a load (reload, restore) replaces the definition,
+  // and an undo or redo restores another one.
   const generation = useEditorStore((s) => s.generation);
+  const historyEpoch = useEditorStore((s) => s.historyEpoch);
   return (
     <SidePanel
       id={LOOP_PANEL_ID}
@@ -43,7 +45,7 @@ export function LoopPanel({
       onExpandedChange={onExpandedChange}
     >
       <div className="relative min-h-0 flex-1 overflow-auto p-5">
-        <LoopSettingsPanel key={generation} definition={definition} />
+        <LoopSettingsPanel key={`${generation}:${historyEpoch}`} definition={definition} />
       </div>
     </SidePanel>
   );

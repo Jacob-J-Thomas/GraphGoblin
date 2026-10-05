@@ -5,6 +5,7 @@ import { Badge, Button } from '../components/ui/index.js';
 import { cn } from '../lib/utils.js';
 import { newRunPath } from '../runs/new/paths.js';
 import type { SaveState } from './store.js';
+import { UndoRedo } from './UndoRedo.js';
 
 const SAVE_LABEL: Record<SaveState, string> = {
   idle: '',
@@ -124,6 +125,7 @@ export function EditorToolbar({
         {SAVE_LABEL[saveState]}
       </span>
       <div className="ml-auto flex items-center gap-2">
+        <UndoRedo />
         <OpenInRuns loopId={loopId} published={published} />
         {validation}
         <Button

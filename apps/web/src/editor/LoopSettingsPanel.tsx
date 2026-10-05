@@ -65,7 +65,7 @@ export function LoopSettingsPanel({ definition }: { definition: LoopDefinitionIn
         label="Loop settings form"
         onChange={updateSettings}
         parseErrors={fieldErrors['settings']}
-        onParseError={(path, error) => setFieldError('settings', path, error)}
+        onParseError={(path, error, reason) => setFieldError('settings', path, error, reason)}
       />
       <div className="mt-2 grid gap-1">
         <h3 className="text-xs font-semibold tracking-wide text-muted uppercase">Variables</h3>
@@ -77,7 +77,7 @@ export function LoopSettingsPanel({ definition }: { definition: LoopDefinitionIn
         label="Variables form"
         onChange={(value) => updateVariables((value as { variables?: unknown }).variables ?? {})}
         parseErrors={fieldErrors['variables']}
-        onParseError={(path, error) => setFieldError('variables', path, error)}
+        onParseError={(path, error, reason) => setFieldError('variables', path, error, reason)}
       />
     </section>
   );
