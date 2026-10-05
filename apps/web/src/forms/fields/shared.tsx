@@ -2,7 +2,7 @@
  * What every field renderer shares: the react-hook-form binding with an explicit "unset" state,
  * the label row, help and error text linked to the control, and the required marker.
  */
-import { useId, type ReactNode } from 'react';
+import { createContext, use, useId, type ReactNode } from 'react';
 import { get, useController, useFormContext } from 'react-hook-form';
 import { FieldGroup, HelpText, Label } from '../../components/ui/index.js';
 import { descriptionOf, unwrap, type Schema } from '../introspect.js';
@@ -45,12 +45,22 @@ export function joinPath(base: string, key: string | number): string {
   return base === '' ? String(key) : `${base}.${key}`;
 }
 
+/**
+ * The schema's issues with the whole value, by field path (the path's segments joined with "."):
+ * SchemaForm checks every change against the schema and provides them. react-hook-form reports an
+ * error only at a field it controls, so a value inside one field's value, such as a record entry,
+ * finds its message here, by the exact path (a record key may hold any character, dots included).
+ */
+export const FieldIssuesContext = createContext<ReadonlyMap<string, string>>(new Map());
+
+/** The message for the field at `name`: react-hook-form's, else the schema issue at that path. */
 export function useFieldErrorMessage(name: string) {
   const {
     formState: { errors },
   } = useFormContext();
+  const issues = use(FieldIssuesContext);
   const error = get(errors, name) as { message?: string; root?: { message?: string } } | undefined;
-  return error?.message ?? error?.root?.message;
+  return error?.message ?? error?.root?.message ?? issues.get(name);
 }
 
 /**
@@ -62,9 +72,13 @@ export function fieldMeta(schema: Schema): { required: boolean; help: string | u
   return { required: !unwrap(schema).optional, help: descriptionOf(schema) };
 }
 
-/** The ARIA a field's control carries: its id, the text that describes it, and its state. */
+/**
+ * The ARIA a field's control carries: its id, the text that describes it, its state, and its full
+ * name when the visible label is a shorter caption (see `Row`).
+ */
 export interface ControlProps {
   id: string;
+  'aria-label'?: string;
   'aria-describedby'?: string;
   'aria-invalid'?: true;
   'aria-required'?: true;
@@ -113,10 +127,13 @@ export function FieldHelp({ id, help }: { id: string; help: string | undefined }
  * A label above its control, with an optional tag on the right (a code field's language), then
  * help and error text. `children` may be a function of the control's props (`id`,
  * `aria-describedby`, `aria-invalid`, `aria-required`), so the control is linked to the text
- * below it. `data-field` carries the field's path for focusing it from an issue.
+ * below it. `data-field` carries the field's path for focusing it from an issue. `caption` shows a
+ * shorter visible label (a record row's "Value") while `label` stays the control's accessible name
+ * (`aria-label`, "Env value 1").
  */
 export function Row({
   label,
+  caption,
   htmlFor,
   aside,
   children,
@@ -125,6 +142,7 @@ export function Row({
   help,
 }: {
   label: string;
+  caption?: string | undefined;
   htmlFor?: string;
   aside?: ReactNode;
   children: ReactNode | ((control: ControlProps) => ReactNode);
@@ -134,15 +152,14 @@ export function Row({
 }) {
   const generatedId = useId();
   const id = htmlFor ?? generatedId;
-  const { control, helpId, errorId } = useFieldControl(name, id, {
-    help: help !== undefined,
-    required,
-  });
+  const field = useFieldControl(name, id, { help: help !== undefined, required });
+  const { helpId, errorId } = field;
+  const control = caption === undefined ? field.control : { ...field.control, 'aria-label': label };
   return (
     <FieldGroup data-field={name}>
       <div className="flex min-w-0 items-center justify-between gap-2">
         <Label htmlFor={id} required={required}>
-          {label}
+          {caption ?? label}
         </Label>
         {aside}
       </div>

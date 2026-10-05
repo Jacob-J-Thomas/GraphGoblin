@@ -14,11 +14,12 @@ import {
   Input,
   Label,
   Legend,
+  RequiredMarker,
   Select,
 } from '../../components/ui/index.js';
+import { cn } from '../../lib/utils.js';
 import { repathParseErrors, useParseErrors } from '../parse-errors.js';
 import {
-  descriptionOf,
   humanize,
   initialValue,
   matchOption,
@@ -30,7 +31,7 @@ import {
 } from '../introspect.js';
 import { BooleanField, EnumField, LiteralField, NOT_SET } from './choice.js';
 import { useCollectionFocus } from './collection.js';
-import { JsonField, JsonText } from './json.js';
+import { JsonControl, JsonField } from './json.js';
 import {
   FieldError,
   FieldHelp,
@@ -39,9 +40,10 @@ import {
   useCollectionField,
   useField,
   useFieldControl,
+  useFieldErrorMessage,
   type FieldProps,
 } from './shared.js';
-import { NumberField, StringField } from './text.js';
+import { NumberField, StringControl, StringField } from './text.js';
 
 /** Dispatch on the schema's shape. */
 export function Field({ schema, name, label }: FieldProps) {
@@ -207,6 +209,12 @@ function ArrayField({
     field.onChange([...current, initialValue(shape.element)]);
     focus.announce(`Added ${label.toLowerCase()} ${current.length + 1}`, current.length);
   };
+  const { required, help } = fieldMeta(schema);
+  const rule =
+    element.kind === 'enum'
+      ? choicesRule(shape.min, shape.max, element.options.length)
+      : itemsRule(shape.min);
+  const group = useGroupDescription(name, help, rule);
 
   if (element.kind === 'enum') {
     const toggle = (option: string, on: boolean) => {
@@ -218,7 +226,10 @@ function ArrayField({
       <EnumSetField
         name={name}
         label={label}
-        help={descriptionOf(schema)}
+        required={required}
+        help={help}
+        rule={rule}
+        group={group}
         options={element.options}
         chosen={items}
         toggle={toggle}
@@ -253,8 +264,9 @@ function ArrayField({
   // control keeps Remove beside that control (below the row's label).
   const compound = ['object', 'array', 'record', 'union'].includes(element.kind);
   return (
-    <Fieldset ref={focus.ref} tabIndex={-1} data-field={name}>
-      <Legend>{label}</Legend>
+    <Fieldset ref={focus.ref} tabIndex={-1} data-field={name} aria-describedby={group.describedBy}>
+      <GroupLegend label={label} required={required} />
+      <GroupText group={group} help={help} rule={rule} />
       {items.map((_, index) => (
         <div key={rowIds[index]} data-collection-row={index} className={COLLECTION_ROW}>
           <Field
@@ -275,43 +287,120 @@ function ArrayField({
           Add {label.toLowerCase()}
         </AddButton>
       </div>
-      <FieldError name={name} />
+      <FieldError name={name} id={group.ids.error} />
       {focus.status}
     </Fieldset>
   );
 }
 
+/** How many items a list needs, when it needs any: "At least 2 items." */
+function itemsRule(min: number | undefined): string | undefined {
+  if (min === undefined || min < 1) return undefined;
+  return `At least ${min} ${min === 1 ? 'item' : 'items'}.`;
+}
+
+/**
+ * How many members of an enum a set takes, when that limits the choice: "Choose at least 1.",
+ * "Choose at most 2.", or both. A maximum of every member limits nothing.
+ */
+function choicesRule(min: number | undefined, max: number | undefined, count: number) {
+  const parts = [
+    ...(min !== undefined && min >= 1 ? [`at least ${min}`] : []),
+    ...(max !== undefined && max < count ? [`at most ${max}`] : []),
+  ];
+  return parts.length === 0 ? undefined : `Choose ${parts.join(' and ')}.`;
+}
+
+/**
+ * Ids for a group's (an array's, a record's, a set of choices') help, rule, and error text, and the
+ * description that links them to the group. A group takes no `aria-required` (it is no form
+ * control); its legend shows the marker and the rule says what it needs.
+ */
+function useGroupDescription(name: string, help: string | undefined, rule: string | undefined) {
+  const id = useId();
+  const message = useFieldErrorMessage(name);
+  const ids = { help: `${id}-help`, rule: `${id}-rule`, error: `${id}-error` };
+  const describedBy =
+    cn(rule !== undefined && ids.rule, help !== undefined && ids.help, message && ids.error) ||
+    undefined;
+  return { ids, describedBy };
+}
+
+type GroupDescription = ReturnType<typeof useGroupDescription>;
+
+/** A group's legend with the required marker after it (outside its accessible name). */
+function GroupLegend({
+  label,
+  required,
+  variant = 'group',
+}: {
+  label: string;
+  required: boolean;
+  variant?: 'group' | 'label';
+}) {
+  return (
+    <Legend variant={variant}>
+      {label}
+      {required ? (
+        <>
+          {' '}
+          <RequiredMarker />
+        </>
+      ) : null}
+    </Legend>
+  );
+}
+
+/** A group's rule ("At least 2 items.") and help, under its legend. */
+function GroupText({
+  group,
+  help,
+  rule,
+}: {
+  group: GroupDescription;
+  help: string | undefined;
+  rule: string | undefined;
+}) {
+  return (
+    <>
+      {rule === undefined ? null : <HelpText id={group.ids.rule}>{rule}</HelpText>}
+      <FieldHelp id={group.ids.help} help={help} />
+    </>
+  );
+}
+
 /**
  * An array of enum members as a group of checkboxes, one per member, named by its legend and
- * described by its help and error text.
+ * described by its rule, help, and error text. The group, not each checkbox, is marked required.
  */
 function EnumSetField({
   name,
   label,
+  required,
   help,
+  rule,
+  group,
   options,
   chosen,
   toggle,
 }: {
   name: string;
   label: string;
+  required: boolean;
   help: string | undefined;
+  rule: string | undefined;
+  group: GroupDescription;
   options: string[];
   chosen: unknown[];
   toggle: (option: string, on: boolean) => void;
 }) {
-  const id = useId();
-  const { control, helpId, errorId } = useFieldControl(name, id, {
-    help: help !== undefined,
-    required: false,
-  });
   return (
     <fieldset
       className="grid min-w-0 gap-1.5"
       data-field={name}
-      aria-describedby={control['aria-describedby']}
+      aria-describedby={group.describedBy}
     >
-      <Legend variant="label">{label}</Legend>
+      <GroupLegend label={label} required={required} variant="label" />
       <div className="flex flex-wrap gap-x-5 gap-y-2">
         {options.map((option) => (
           <label
@@ -326,8 +415,8 @@ function EnumSetField({
           </label>
         ))}
       </div>
-      <FieldHelp id={helpId} help={help} />
-      <FieldError name={name} id={errorId} />
+      <GroupText group={group} help={help} rule={rule} />
+      <FieldError name={name} id={group.ids.error} />
     </fieldset>
   );
 }
@@ -391,9 +480,12 @@ function RecordField({
     commit(currentEntries().filter(([existing]) => existing !== key));
     focus.announce(`Removed ${label.toLowerCase()} ${key}`);
   };
+  const { required, help } = fieldMeta(schema);
+  const group = useGroupDescription(name, help, undefined);
   return (
-    <Fieldset ref={focus.ref} tabIndex={-1} data-field={name}>
-      <Legend>{label}</Legend>
+    <Fieldset ref={focus.ref} tabIndex={-1} data-field={name} aria-describedby={group.describedBy}>
+      <GroupLegend label={label} required={required} />
+      <GroupText group={group} help={help} rule={undefined} />
       {entries.map(([key, value], index) => (
         <div key={rowIds.get(key)} data-collection-row={index} className={COLLECTION_ROW}>
           <RecordKey
@@ -404,28 +496,22 @@ function RecordField({
             announce={(message) => focus.announce(message, undefined, false)}
           />
           {/* Beside the key, and before the value in the reading and Tab order. */}
-          <div className="col-start-2 row-start-1">
+          <div className="col-start-2 row-start-1 mt-6">
             <RemoveButton
               aria-label={`Remove ${label.toLowerCase()} ${key}`}
               onClick={() => remove(key)}
             />
           </div>
+          {/* The value is a field of its own at `<record>.<key>`: its marker, help, error, and
+              unparsed JSON all follow that path, so a rename or removal moves them with the row. */}
           <div className="col-span-2 col-start-1 row-start-2 min-w-0">
-            {valueShape.kind === 'string' ? (
-              <Input
-                aria-label={`${label} value ${index + 1}`}
-                className="font-mono text-sm"
-                value={typeof value === 'string' ? value : ''}
-                onChange={(e) => setValue(index, e.target.value)}
-              />
-            ) : (
-              <JsonText
-                path={joinPath(name, key)}
-                label={`${label} value ${index + 1}`}
-                value={value}
-                onChange={(v) => setValue(index, v)}
-              />
-            )}
+            <RecordValue
+              schema={shape.value}
+              name={joinPath(name, key)}
+              label={`${label} value ${index + 1}`}
+              value={value}
+              onChange={(next) => setValue(index, next)}
+            />
           </div>
         </div>
       ))}
@@ -434,9 +520,50 @@ function RecordField({
           Add entry
         </AddButton>
       </div>
-      <FieldError name={name} />
+      <FieldError name={name} id={group.ids.error} />
       {focus.status}
     </Fieldset>
+  );
+}
+
+/**
+ * One record entry's value, drawn by the same field renderers as any other field over the value
+ * the record hands it: a string as an input or a template or expression editor, anything else as
+ * JSON. Its visible caption is "Value"; its accessible name says which record and row.
+ */
+function RecordValue({
+  schema,
+  name,
+  label,
+  value,
+  onChange,
+}: {
+  schema: Schema;
+  name: string;
+  label: string;
+  value: unknown;
+  onChange: (value: unknown) => void;
+}) {
+  const shape = shapeOf(schema);
+  return shape.kind === 'string' ? (
+    <StringControl
+      schema={schema}
+      shape={shape}
+      name={name}
+      label={label}
+      caption="Value"
+      value={value}
+      onChange={onChange}
+    />
+  ) : (
+    <JsonControl
+      schema={schema}
+      name={name}
+      label={label}
+      caption="Value"
+      value={value}
+      onChange={onChange}
+    />
   );
 }
 
@@ -455,6 +582,7 @@ function RecordKey({
   announce: (message: string) => void;
 }) {
   const id = useId();
+  const inputId = `${id}-key`;
   const [text, setText] = useState(value);
   const error = otherKeys.includes(text)
     ? `Key "${text}" already exists. Choose a unique key.`
@@ -465,8 +593,11 @@ function RecordKey({
     announcedErrorRef.current = error !== undefined;
   }, [error, text, announce]);
   return (
-    <div className="min-w-0">
+    <FieldGroup>
+      {/* A short caption over the key; the input's accessible name says which record and row. */}
+      <Label htmlFor={inputId}>Key</Label>
       <Input
+        id={inputId}
         aria-label={label}
         className="font-mono text-sm"
         value={text}
@@ -491,7 +622,7 @@ function RecordKey({
           {error}
         </HelpText>
       ) : null}
-    </div>
+    </FieldGroup>
   );
 }
 

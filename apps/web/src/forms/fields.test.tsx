@@ -1,4 +1,9 @@
-import { NodeConfigSchemas, TemplateSchema, ExpressionSchema } from '@graphgoblin/contracts';
+import {
+  ExpressionSchema,
+  NodeConfigSchemas,
+  TemplateSchema,
+  VariableDeclarationsSchema,
+} from '@graphgoblin/contracts';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
@@ -219,6 +224,93 @@ describe('form controls in the schema-driven form', () => {
       ),
     ).toBe('Input');
     expect(descriptionOf(z.string().default('').optional())).toBeUndefined();
+  });
+
+  it('draws record values as fields: marked, linked to their error, and announced', async () => {
+    const user = userEvent.setup();
+    render(
+      <Harness
+        schema={z.object({ variables: VariableDeclarationsSchema })}
+        initial={{ variables: { first: { type: 'string' } } }}
+        spy={vi.fn()}
+      />,
+    );
+    const row = screen.getByLabelText('Variables key 1').closest('[data-collection-row]');
+    // Captions over the key and the value; the value is required, so it carries the marker.
+    expect(within(row as HTMLElement).getByText('Key').tagName).toBe('LABEL');
+    expect(within(row as HTMLElement).getByText('Value').nextElementSibling).toHaveTextContent('*');
+    const value = code('Variables value 1');
+    expect(value).toHaveAttribute('aria-required', 'true');
+    expect(value.closest('[data-field]')).toHaveAttribute('data-field', 'variables.first');
+    // A JSON Schema must be an object: `[]` parses, so the schema's error is the value's own.
+    setCode('Variables value 1', '[]');
+    await waitFor(() => expect(code('Variables value 1')).toHaveAttribute('aria-invalid', 'true'));
+    const field = value.closest('[data-field]') as HTMLElement;
+    const alert = within(field).getByRole('alert');
+    expect(code('Variables value 1')).toHaveAccessibleDescription(alert.textContent ?? '');
+    setCode('Variables value 1', '{"type":"number"}');
+    await waitFor(() => expect(code('Variables value 1')).not.toHaveAttribute('aria-invalid'));
+    // Renaming the key moves the field's path with the row.
+    await user.clear(screen.getByLabelText('Variables key 1'));
+    await user.type(screen.getByLabelText('Variables key 1'), 'renamed');
+    expect(code('Variables value 1').closest('[data-field]')).toHaveAttribute(
+      'data-field',
+      'variables.renamed',
+    );
+  });
+
+  it('draws expression record values as required JSONata editors', async () => {
+    const spy = vi.fn();
+    render(
+      <Harness
+        schema={z.object({ vars: z.record(z.string(), ExpressionSchema) })}
+        initial={{ vars: { score: 'vars.count + 1' } }}
+        spy={spy}
+      />,
+    );
+    const value = code('Vars value 1');
+    expect(value).toHaveAttribute('aria-required', 'true');
+    const field = value.closest('[data-field]') as HTMLElement;
+    expect(within(field).getByText('JSONata')).toBeInTheDocument();
+    setCode('Vars value 1', ' ');
+    await waitFor(() => expect(code('Vars value 1')).toHaveAttribute('aria-invalid', 'true'));
+    expect(within(field).getAllByRole('alert').length).toBeGreaterThan(0);
+    setCode('Vars value 1', 'true');
+    expect(last(spy)['vars']).toEqual({ score: 'true' });
+  });
+
+  it('marks required collections at the group, and says how many they need', async () => {
+    const user = userEvent.setup();
+    render(
+      <Harness
+        schema={NodeConfigSchemas.decision}
+        initial={{
+          routes: [
+            { label: 'yes', description: '' },
+            { label: 'no', description: '' },
+          ],
+          question: 'q',
+          strategy: ['jev'],
+        }}
+        spy={vi.fn()}
+      />,
+    );
+    const strategy = screen.getByRole('group', { name: 'Strategy' });
+    expect(within(strategy).getByText('*')).toHaveAttribute('aria-hidden', 'true');
+    expect(strategy).toHaveAccessibleDescription('Choose at least 1.');
+    for (const box of within(strategy).getAllByRole('checkbox')) expect(box).not.toBeRequired();
+    // Unchecking every strategy: the group is described by its rule and the error.
+    await user.click(within(strategy).getByRole('checkbox', { name: 'jev' }));
+    await waitFor(() =>
+      expect(strategy).toHaveAccessibleDescription(/^Choose at least 1\. .*>=1 items/),
+    );
+    expect(within(strategy).getByRole('alert')).toBeInTheDocument();
+    const routes = screen.getByRole('group', { name: 'Routes' });
+    expect(routes).toHaveAccessibleDescription('At least 2 items.');
+    // Optional collections carry no marker and no rule.
+    const vars = screen.getByRole('group', { name: 'Vars' });
+    expect(within(vars).queryByText('*')).toBeNull();
+    expect(vars).not.toHaveAttribute('aria-describedby');
   });
 
   it('keeps Row usable with plain children and no control id', () => {

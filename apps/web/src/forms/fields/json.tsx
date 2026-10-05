@@ -114,14 +114,30 @@ export function JsonText({
   );
 }
 
-export function JsonField({ schema, name, label }: FieldProps) {
-  const field = useField(name);
+/**
+ * A JSON field over a value it is handed, in the field row (label, JSON tag, required marker,
+ * help, and the error at `name`, linked to the editor). `name` is also where unparsed text is kept
+ * (the parse-error path). JsonField binds it to the form; a record row hands it one entry's value.
+ */
+export function JsonControl({
+  schema,
+  name,
+  label,
+  caption,
+  value,
+  onChange,
+}: FieldProps & {
+  caption?: string | undefined;
+  value: unknown;
+  onChange: (value: unknown) => void;
+}) {
   const id = useId();
   const { required, help } = fieldMeta(schema);
   const { hasDefault, defaultValue } = unwrap(schema);
   return (
     <Row
       label={label}
+      caption={caption}
       htmlFor={id}
       name={name}
       required={required}
@@ -133,8 +149,8 @@ export function JsonField({ schema, name, label }: FieldProps) {
           path={name}
           label={label}
           id={id}
-          value={field.value}
-          onChange={field.onChange}
+          value={value}
+          onChange={onChange}
           describedBy={control['aria-describedby']}
           invalid={control['aria-invalid']}
           required={required}
@@ -142,5 +158,18 @@ export function JsonField({ schema, name, label }: FieldProps) {
         />
       )}
     </Row>
+  );
+}
+
+export function JsonField({ schema, name, label }: FieldProps) {
+  const field = useField(name);
+  return (
+    <JsonControl
+      schema={schema}
+      name={name}
+      label={label}
+      value={field.value}
+      onChange={field.onChange}
+    />
   );
 }
