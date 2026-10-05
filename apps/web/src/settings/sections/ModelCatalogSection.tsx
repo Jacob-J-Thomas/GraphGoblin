@@ -1,7 +1,7 @@
 import { GraphGoblinApiError, modelCatalog } from '@graphgoblin/api-client';
 import type { Effort } from '@graphgoblin/contracts';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
+import { useRef, useState, type FormEvent } from 'react';
 import { useApi } from '../../api/context.js';
 import { keys, useModelCatalog } from '../../api/queries.js';
 import { Icon } from '../../components/icons/index.js';
@@ -17,12 +17,25 @@ import {
   Legend,
   RequiredNote,
   Select,
-  Switch,
   Table,
   Td,
   Th,
 } from '../../components/ui/index.js';
-import { EFFORTS, MutationError, useInvalidate, type CatalogEntry } from '../shared.js';
+import { focusFallback } from '../../lib/focus.js';
+import {
+  EnableSwitch,
+  EFFORTS,
+  MutationError,
+  useInvalidate,
+  type CatalogEntry,
+  type MutationMessages,
+} from '../shared.js';
+
+export const CATALOG_MESSAGES: MutationMessages = {
+  MODEL_MANAGED_BY_HARNESS: 'Harness models can only be enabled or disabled.',
+  LITELLM_NOT_CONFIGURED: 'LiteLLM is not configured. Adding local models is not available yet.',
+  MODEL_NOT_FOUND: 'This model is no longer in the catalog.',
+};
 
 function ModelForm({ initial, onDone }: { initial?: CatalogEntry; onDone: () => void }) {
   const client = useApi();
@@ -37,8 +50,7 @@ function ModelForm({ initial, onDone }: { initial?: CatalogEntry; onDone: () => 
         displayName: displayName || model,
         efforts,
         defaultEffort,
-        enabled: initial?.enabled ?? true,
-        ...(!initial ? { source: 'litellm' as const } : {}),
+        ...(!initial ? { source: 'litellm' as const, enabled: true } : {}),
       }),
     onSuccess: () => {
       invalidate(keys.catalog);
@@ -114,69 +126,9 @@ function ModelForm({ initial, onDone }: { initial?: CatalogEntry; onDone: () => 
         <Button size="sm" variant="ghost" onClick={onDone}>
           Cancel
         </Button>
-        <MutationError error={save.error} announce />
+        <MutationError error={save.error} messages={CATALOG_MESSAGES} announce />
       </div>
     </form>
-  );
-}
-
-/** Each row owns its request so other models remain operable while it saves. */
-function ModelEnabled({ entry }: { entry: CatalogEntry }) {
-  const client = useApi();
-  const queryClient = useQueryClient();
-  const id = useId();
-  const restoreFocusRef = useRef(false);
-  const toggle = useMutation({
-    mutationFn: (enabled: boolean) =>
-      modelCatalog.setEnabled(client, entry.harness, entry.model, enabled),
-    onSuccess: async (updated) => {
-      queryClient.setQueryData<CatalogEntry[]>(keys.catalog, (items) =>
-        items?.map((item) =>
-          item.harness === updated.harness && item.model === updated.model ? updated : item,
-        ),
-      );
-      await queryClient.invalidateQueries({ queryKey: keys.catalog });
-    },
-  });
-  useEffect(() => {
-    if (toggle.isPending || !restoreFocusRef.current) return;
-    restoreFocusRef.current = false;
-    // Native disabled buttons lose focus in Edge. Preserve a deliberate move to another control.
-    if (document.activeElement === document.body) document.getElementById(`${id}-switch`)?.focus();
-  }, [id, toggle.isPending]);
-  // Only the in-flight control is optimistic; a refusal leaves the catalog and defaults intact.
-  const checked = toggle.isPending ? toggle.variables : entry.enabled;
-  return (
-    <div className="grid gap-2">
-      <div className="flex items-center gap-2">
-        <Switch
-          id={`${id}-switch`}
-          aria-label={`Enable ${entry.displayName}`}
-          aria-describedby={`${id}-status${toggle.error ? ` ${id}-error` : ''}`}
-          aria-busy={toggle.isPending}
-          checked={checked}
-          disabled={toggle.isPending}
-          onCheckedChange={(enabled) => {
-            restoreFocusRef.current = document.activeElement?.id === `${id}-switch`;
-            toggle.mutate(enabled);
-          }}
-        />
-        <span id={`${id}-status`} role="status" aria-atomic="true" className="text-xs text-muted">
-          <span className="sr-only">{entry.displayName}:</span>{' '}
-          {toggle.isPending ? (
-            <span className="inline-flex items-center gap-1">
-              <Icon name="wait" />
-              {checked ? 'Enabling…' : 'Disabling…'}
-            </span>
-          ) : entry.enabled ? (
-            'Enabled'
-          ) : (
-            'Disabled'
-          )}
-        </span>
-      </div>
-      <MutationError id={`${id}-error`} error={toggle.error} announce />
-    </div>
   );
 }
 
@@ -186,31 +138,34 @@ export function ModelCatalogSection() {
   const queryClient = useQueryClient();
   const query = useModelCatalog();
   const [editing, setEditing] = useState<string | undefined>();
+  const [notice, setNotice] = useState('');
+  const headingRef = useRef<HTMLSpanElement>(null);
   const hasLocalModels = query.data?.some((entry) => entry.source === 'litellm') ?? false;
   return (
     <Card
       flush
-      title="Model catalog"
+      title={<span ref={headingRef}>Model catalog</span>}
       actions={
         hasLocalModels ? (
           <Button size="sm" variant="outline" onClick={() => setEditing('new')}>
             <Icon name="plus" />
             Add model
           </Button>
-        ) : (
+        ) : query.data ? (
           <p className="max-w-prose text-sm text-muted">
             Local models served through LiteLLM will appear here once the LiteLLM adapter is
-            configured.{' '}
-            <a
-              href="https://github.com/Jacob-J-Thomas/GraphGoblin/blob/main/docs/guide/06-settings-and-secrets.md#choose-a-model-and-effort"
-              className="rounded-sm text-link underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-            >
-              Learn about local models
-            </a>
+            configured; see the Settings guide, Choose a model and effort.
           </p>
-        )
+        ) : null
       }
     >
+      <div
+        role="status"
+        aria-atomic="true"
+        className={notice ? 'px-5 py-3 text-sm text-status-bad-fg' : 'sr-only'}
+      >
+        {notice}
+      </div>
       {hasLocalModels && editing === 'new' ? (
         <div className="border-b border-default p-5">
           <ModelForm onDone={() => setEditing(undefined)} />
@@ -249,7 +204,42 @@ export function ModelCatalogSection() {
                       {entry.efforts.join(', ')} (default {entry.defaultEffort})
                     </Td>
                     <Td>
-                      <ModelEnabled entry={entry} />
+                      <EnableSwitch
+                        name={entry.displayName}
+                        enabled={entry.enabled}
+                        messages={CATALOG_MESSAGES}
+                        onToggle={async (enabled) => {
+                          const updated = await modelCatalog.setEnabled(
+                            client,
+                            entry.harness,
+                            entry.model,
+                            enabled,
+                          );
+                          queryClient.setQueryData<CatalogEntry[]>(keys.catalog, (items) =>
+                            items?.map((item) =>
+                              item.harness === updated.harness && item.model === updated.model
+                                ? updated
+                                : item,
+                            ),
+                          );
+                          await queryClient.invalidateQueries({ queryKey: keys.catalog });
+                        }}
+                        onError={async (error) => {
+                          if (!(error instanceof GraphGoblinApiError) || error.status !== 404)
+                            return;
+                          const opener = document.activeElement;
+                          setNotice(`${entry.displayName}: ${CATALOG_MESSAGES['MODEL_NOT_FOUND']}`);
+                          await queryClient.invalidateQueries({ queryKey: keys.catalog });
+                          requestAnimationFrame(() => {
+                            if (
+                              opener &&
+                              !opener.isConnected &&
+                              document.activeElement === document.body
+                            )
+                              focusFallback(headingRef.current?.closest('h2') ?? null);
+                          });
+                        }}
+                      />
                     </Td>
                     {hasLocalModels ? (
                       <Td className="text-right whitespace-nowrap">

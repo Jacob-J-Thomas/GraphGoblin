@@ -201,7 +201,6 @@ describe('SettingsPage', () => {
       displayName: 'Luna 2',
       efforts: ['high', 'xhigh'],
       defaultEffort: 'high',
-      enabled: true,
     });
 
     await user.click(screen.getByRole('button', { name: 'Add model' }));
@@ -250,14 +249,14 @@ describe('SettingsPage', () => {
       problem(400, 'INVALID_INPUT', 'defaultEffort must be one of efforts'),
     );
     api.override('PATCH /model-catalog/:harness/:model', () =>
-      problem(404, 'MODEL_NOT_FOUND', 'model not in catalog'),
+      problem(403, 'FORBIDDEN', 'No permission to change this model.'),
     );
     renderApp('/settings', api);
     await user.click(await screen.findByRole('button', { name: 'Edit gpt-6-luna' }));
     await user.click(screen.getByRole('button', { name: 'Save model' }));
     expect(await screen.findByText(/defaultEffort must be one of efforts/)).toBeInTheDocument();
     await user.click(screen.getByRole('switch', { name: 'Enable Luna' }));
-    expect(await screen.findByText(/This model is no longer in the catalog./)).toBeInTheDocument();
+    expect(await screen.findByText(/No permission to change this model./)).toBeInTheDocument();
   });
 
   it('shows only enable switches for harness models and keeps Defaults in sync', async () => {
@@ -275,10 +274,8 @@ describe('SettingsPage', () => {
     expect(
       within(catalog).getByText(/Local models served through LiteLLM will appear here/),
     ).toBeInTheDocument();
-    expect(within(catalog).getByRole('link', { name: 'Learn about local models' })).toHaveAttribute(
-      'href',
-      'https://github.com/Jacob-J-Thomas/GraphGoblin/blob/main/docs/guide/06-settings-and-secrets.md#choose-a-model-and-effort',
-    );
+    expect(catalog).toHaveTextContent('see the Settings guide, Choose a model and effort.');
+    expect(within(catalog).queryByRole('link')).not.toBeInTheDocument();
     const defaults = screen.getByLabelText('Default model');
     expect(within(defaults).getByRole('option', { name: 'Luna' })).toBeInTheDocument();
     enabled.focus();
@@ -336,100 +333,93 @@ describe('SettingsPage', () => {
     ).toBeInTheDocument();
   });
 
-  it.each([
-    ['MODEL_MANAGED_BY_HARNESS', 409, 'Harness models can only be enabled or disabled.'],
-    [
-      'LITELLM_NOT_CONFIGURED',
-      409,
-      'LiteLLM is not configured. Adding local models is not available yet.',
-    ],
-    [
-      'MODEL_NOT_FOUND',
-      404,
-      'This model is no longer in the catalog. Refresh Settings to see the current models.',
-    ],
-  ] as const)('announces %s and rolls a pending toggle back', async (code, status, message) => {
-    const api = seeded();
-    let finish!: (response: Response) => void;
-    api.override(
-      'PATCH /model-catalog/:harness/:model',
-      () =>
-        new Promise<Response>((resolve) => {
-          finish = resolve;
-        }),
-    );
-    renderApp('/settings', api);
-    const user = userEvent.setup();
-    const enabled = await screen.findByRole('switch', { name: 'Enable Luna' });
-    const row = within(enabled.closest('tr')!);
-    await user.click(enabled);
-    expect(enabled).not.toBeChecked();
-    expect(enabled).toBeDisabled();
-    expect(enabled).toHaveAttribute('aria-busy', 'true');
-    expect(row.getByRole('status')).toHaveTextContent('Luna: Disabling…');
-    expect(screen.getByRole('switch', { name: 'Enable Sol' })).toBeEnabled();
-    expect(
-      within(screen.getByLabelText('Default model')).getByRole('option', { name: 'Luna' }),
-    ).toBeInTheDocument();
-    await user.click(enabled);
-    expect(api.callsTo('PATCH', '/model-catalog/codex/gpt-6-luna')).toHaveLength(1);
-    await act(() => Promise.resolve(finish(problem(status, code))));
-    expect(await row.findByRole('alert')).toHaveTextContent(message);
-    expect(enabled).toBeChecked();
-    expect(enabled).toBeEnabled();
-    expect(enabled).toHaveAccessibleDescription(`Luna: Enabled ${message}`);
-    expect(api.catalog[0]!.enabled).toBe(true);
-    // A successful retry clears the refusal and updates both views.
-    api.override('PATCH /model-catalog/:harness/:model', () => {
-      api.catalog[0]!.enabled = false;
-      return new Response(JSON.stringify(api.catalog[0]), {
-        headers: { 'content-type': 'application/json' },
-      });
-    });
-    await user.click(enabled);
-    await waitFor(() => expect(enabled).toBeEnabled());
-    expect(enabled).not.toBeChecked();
-    expect(row.queryByRole('alert')).not.toBeInTheDocument();
-    await waitFor(() =>
-      expect(
-        within(screen.getByLabelText('Default model')).queryByRole('option', { name: 'Luna' }),
-      ).not.toBeInTheDocument(),
-    );
-  });
-
-  it.each(['document', 'another control', 'unfocused switch'] as const)(
-    'restores catalog switch focus after saving with focus on %s',
+  it.each(['vanished switch', 'another control'] as const)(
+    'refreshes a vanished toggle and preserves focus on %s',
     async (focus) => {
       const api = seeded();
       let finish!: () => void;
-      api.override(
-        'PATCH /model-catalog/:harness/:model',
-        () =>
-          new Promise<Response>((resolve) => {
-            finish = () => {
-              api.catalog[0]!.enabled = false;
-              resolve(
-                new Response(JSON.stringify(api.catalog[0]), {
-                  headers: { 'content-type': 'application/json' },
-                }),
-              );
-            };
-          }),
-      );
+      const held = new Promise<void>((resolve) => {
+        finish = resolve;
+      });
+      api.override('PATCH /model-catalog/:harness/:model', async () => {
+        await held;
+        api.catalog = api.catalog.filter((entry) => entry.model !== 'gpt-6-luna');
+        return problem(404, 'MODEL_NOT_FOUND');
+      });
       renderApp('/settings', api);
+      const user = userEvent.setup();
       const enabled = await screen.findByRole('switch', { name: 'Enable Luna' });
-      if (focus === 'unfocused switch') fireEvent.click(enabled);
-      else await userEvent.setup().click(enabled);
-      await waitFor(() => expect(enabled).toBeDisabled());
-      // jsdom retains focus when disabling a button; reproduce Edge's native blur.
-      enabled.blur();
+      await user.click(enabled);
       const defaults = screen.getByLabelText('Default model');
       if (focus === 'another control') defaults.focus();
       await act(() => Promise.resolve(finish()));
-      await waitFor(() => expect(enabled).toBeEnabled());
-      if (focus === 'document') expect(enabled).toHaveFocus();
-      else if (focus === 'another control') expect(defaults).toHaveFocus();
-      else expect(document.body).toHaveFocus();
+      await waitFor(() => expect(enabled).not.toBeInTheDocument());
+      const catalog = screen.getByRole('region', { name: 'Model catalog' });
+      expect(within(catalog).getAllByRole('status')[0]).toHaveTextContent(
+        'Luna: This model is no longer in the catalog.',
+      );
+      expect(catalog).not.toHaveTextContent('Refresh Settings');
+      expect(api.callsTo('GET', '/model-catalog')).toHaveLength(2);
+      await waitFor(() =>
+        expect(
+          focus === 'another control'
+            ? defaults
+            : screen.getByRole('heading', { name: 'Model catalog' }),
+        ).toHaveFocus(),
+      );
+    },
+  );
+
+  it('keeps the local-model note hidden until the catalog is loaded', async () => {
+    const api = seeded();
+    let finish!: () => void;
+    const held = new Promise<void>((resolve) => {
+      finish = resolve;
+    });
+    api.override('GET /model-catalog', async (call) => {
+      await held;
+      return api.builtIn(call);
+    });
+    renderApp('/settings', api);
+    expect(screen.queryByText(/Local models served through LiteLLM/)).not.toBeInTheDocument();
+    await act(() => Promise.resolve(finish()));
+    expect(await screen.findByText(/Local models served through LiteLLM/)).toBeInTheDocument();
+  });
+
+  it.each(['disabled', 'missing'] as const)(
+    'shows the saved %s default truthfully until another model is chosen',
+    async (state) => {
+      const api = seeded();
+      api.settingsValues = { defaultModel: 'gpt-6-luna' };
+      renderApp('/settings', api);
+      const user = userEvent.setup();
+      const enabled = await screen.findByRole('switch', { name: 'Enable Luna' });
+      const model = screen.getByLabelText('Default model');
+      if (state === 'missing') {
+        api.override('PATCH /model-catalog/:harness/:model', () => {
+          api.catalog = api.catalog.filter((entry) => entry.model !== 'gpt-6-luna');
+          return problem(404, 'MODEL_NOT_FOUND');
+        });
+      }
+      await user.click(enabled);
+      const name = state === 'disabled' ? 'Luna (disabled)' : 'gpt-6-luna (not in catalog)';
+      await waitFor(() => expect(within(model).getByRole('option', { name })).toBeInTheDocument());
+      expect(model).toHaveValue('gpt-6-luna');
+      expect(api.settingsValues['defaultModel']).toBe('gpt-6-luna');
+      expect(model).toHaveAccessibleDescription(
+        'Runs keep using this model until you choose another model or (server default).',
+      );
+      if (state === 'disabled') {
+        await user.click(enabled);
+        await waitFor(() =>
+          expect(within(model).getByRole('option', { name: 'Luna' })).toBeInTheDocument(),
+        );
+        expect(screen.queryByText(/Runs keep using this model/)).not.toBeInTheDocument();
+      }
+      await user.selectOptions(model, '');
+      await waitFor(() => expect(api.settingsValues).not.toHaveProperty('defaultModel'));
+      await waitFor(() => expect(model).toHaveValue(''));
+      expect(screen.queryByText(/Runs keep using this model/)).not.toBeInTheDocument();
     },
   );
 

@@ -20,6 +20,8 @@ Catalog membership remains advisory: API validation returns `MODEL_DISABLED` or 
 
 Old PUT toggle callers must switch to PATCH; API-client upsert/remove remain for LiteLLM rows. The existing Settings checkbox uses PATCH; Add/Edit/Delete retain the existing error display until the separate Settings redesign. MCP and the Codex plugin have no catalog-write callers.
 
+Amendment (#24): the Settings redesign uses enable switches and hides Add/Edit/Delete for harness entries; LiteLLM entries retain metadata actions with plain refusal messages.
+
 ### Migration and rollback
 
 The additive migration preserves rows and all old columns. Drizzle's standard migrator applies it once and records it in the migration ledger. Fresh startup and repeated migrations are supported.
