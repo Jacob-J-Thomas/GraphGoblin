@@ -13,7 +13,6 @@ import {
   saveLocalDraft,
   saveSetAsideDraft,
 } from '../drafts/local-drafts.js';
-import { useApiKeyStore } from '../api/api-key.js';
 import { LOOP_PANEL_STORAGE_KEY } from './LoopPanel.js';
 import { KIND_MIME, newLoopDefinition } from './model.js';
 import { getCode, setCode } from '../__fixtures__/codemirror.js';
@@ -1017,7 +1016,6 @@ describe('EditorPage', () => {
     await user.type(screen.getByLabelText('API key', { selector: 'input' }), 'gg_good');
     await user.click(screen.getByRole('button', { name: 'Use key' }));
     expect(await screen.findByRole('heading', { name: 'guarded' })).toBeInTheDocument();
-    useApiKeyStore.setState({ key: undefined, rejected: false });
   });
 
   it('keeps an edit made just before leaving the editor', async () => {
