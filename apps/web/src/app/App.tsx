@@ -4,7 +4,7 @@ import { ErrorBoundary } from '../components/ErrorBoundary.js';
 import { AppShell, Page, type NavItem } from '../components/layout/index.js';
 import { EditorPage } from '../editor/EditorPage.js';
 import { EventsPage } from '../events/EventsPage.js';
-import { useOnline } from '../lib/online.js';
+import { useConnectionStatus } from '../lib/online.js';
 import { LoopsPage } from '../loops/LoopsPage.js';
 import { UpdateToast } from '../pwa/UpdateToast.js';
 import { NewRunPage } from '../runs/new/NewRunPage.js';
@@ -20,10 +20,14 @@ const NAV: readonly NavItem[] = [
 ];
 
 function Layout() {
-  const online = useOnline();
+  const connection = useConnectionStatus();
   const location = useLocation();
   return (
-    <AppShell nav={NAV} offline={!online}>
+    <AppShell
+      nav={NAV}
+      offline={connection === 'offline'}
+      apiUnreachable={connection === 'api-unreachable'}
+    >
       <ApiKeyPanel />
       <ErrorBoundary key={location.pathname}>
         <Outlet />
