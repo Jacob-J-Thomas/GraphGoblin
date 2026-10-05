@@ -1,9 +1,18 @@
-import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { FakeApi, problem, TS } from '../__fixtures__/fake-api.js';
 import { renderApp } from '../__fixtures__/render.js';
 import { useApiKeyStore } from '../api/api-key.js';
+
+// The API key store is module state that outlives each test's app, so reset it here, and unmount
+// first: changing the key while the app is mounted refetches every query, and a refetch answered
+// 401 without a key marks the store rejected again. The next test would then render the API key
+// panel, which takes focus as soon as no dialog is open.
+afterEach(() => {
+  cleanup();
+  useApiKeyStore.getState().forget();
+});
 
 function seeded(source: 'harness' | 'litellm' = 'harness'): FakeApi {
   const api = new FakeApi();
@@ -92,7 +101,6 @@ describe('SettingsPage', () => {
         }
       } finally {
         await act(() => Promise.resolve(finish()));
-        act(() => useApiKeyStore.getState().forget());
       }
     },
   );
@@ -430,19 +438,15 @@ describe('SettingsPage', () => {
 
   it('warns about browser access only when revoking the current key', async () => {
     useApiKeyStore.getState().save('gg_browser_key');
-    try {
-      const api = seeded();
-      api.apiKeyList[0]!.current = true;
-      renderApp('/settings', api);
-      const user = userEvent.setup();
-      await user.click(await screen.findByRole('button', { name: 'Revoke mcp' }));
-      expect(screen.getByText('This browser')).toBeInTheDocument();
-      expect(screen.getByRole('alertdialog')).toHaveTextContent(
-        'Revoking this key will sign this browser out and show the API key panel. Enter another valid key to continue.',
-      );
-      await user.click(screen.getByRole('button', { name: 'Keep' }));
-    } finally {
-      useApiKeyStore.getState().forget();
-    }
+    const api = seeded();
+    api.apiKeyList[0]!.current = true;
+    renderApp('/settings', api);
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: 'Revoke mcp' }));
+    expect(screen.getByText('This browser')).toBeInTheDocument();
+    expect(screen.getByRole('alertdialog')).toHaveTextContent(
+      'Revoking this key will sign this browser out and show the API key panel. Enter another valid key to continue.',
+    );
+    await user.click(screen.getByRole('button', { name: 'Keep' }));
   });
 });
