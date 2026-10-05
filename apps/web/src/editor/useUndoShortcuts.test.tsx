@@ -109,6 +109,13 @@ describe('platform and keys', () => {
         <div contentEditable={false} data-testid="not-editable" />
         <div className="cm-editor">
           <div data-testid="code" />
+          <div className="cm-panels">
+            <input type="checkbox" aria-label="match case" />
+            <button type="button">next</button>
+          </div>
+        </div>
+        <div contentEditable suppressContentEditableWarning>
+          <input type="checkbox" aria-label="checkbox in editable" />
         </div>
         <button type="button">Press</button>
       </div>,
@@ -119,6 +126,11 @@ describe('platform and keys', () => {
     }
     expect(isEditableTarget(screen.getByTestId('inside'))).toBe(true);
     expect(isEditableTarget(screen.getByTestId('code'))).toBe(true);
+    // Anything inside a code editor or a content-editable element belongs to it, even a checkbox
+    // or a button (CodeMirror's search panel).
+    expect(isEditableTarget(screen.getByLabelText('match case'))).toBe(true);
+    expect(isEditableTarget(screen.getByRole('button', { name: 'next' }))).toBe(true);
+    expect(isEditableTarget(screen.getByLabelText('checkbox in editable'))).toBe(true);
     // Choices, switches, selects, and buttons have no text to undo: the editor's undo applies.
     for (const label of ['pick', 'switch input', ...OTHER_TYPES.map((type) => `${type} input`)]) {
       expect(isEditableTarget(screen.getByLabelText(label)), label).toBe(false);

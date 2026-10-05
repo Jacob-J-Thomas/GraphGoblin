@@ -1,4 +1,4 @@
-import { act, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { getCode, setCode } from '../__fixtures__/codemirror.js';
@@ -212,6 +212,29 @@ describe('EditorPage undo and redo', () => {
     expect(badge()).toBeVisible();
     await user.keyboard(REDO);
     expect(badge()).toBeNull();
+  });
+
+  it('leaves the keys to a code editor’s search panel, checkboxes and all', async () => {
+    const user = userEvent.setup();
+    await openEditor();
+    await user.click(screen.getByRole('button', { name: 'Add Wait node' }));
+    const dialog = await editNode('start', 'Edit trigger start');
+    const code = within(dialog)
+      .getAllByLabelText('Input schema')
+      .find((el) => el.classList.contains('cm-content'))!;
+    act(() => code.focus());
+    // CodeMirror's own Mod-f opens its search panel inside the editor.
+    fireEvent.keyDown(code, { key: 'f', code: 'KeyF', ctrlKey: true });
+    const matchCase = await within(dialog).findByRole('checkbox', { name: /match case/i });
+    act(() => matchCase.focus());
+    const steps = store().past.length;
+    fireEvent.keyDown(matchCase, { key: 'z', code: 'KeyZ', ctrlKey: true });
+    // Nothing undone: the Wait node stays, the form did not remount, the search stays open.
+    expect(store().past).toHaveLength(steps);
+    expect(store().historyEpoch).toBe(0);
+    expect(screen.getByTestId('node-wait')).toBeInTheDocument();
+    expect(matchCase).toBeInTheDocument();
+    expect(matchCase).toHaveFocus();
   });
 
   it('takes unparsed text back and forth with the step that typed it', async () => {

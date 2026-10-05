@@ -70,12 +70,14 @@ const TEXT_EDITORS = [
 
 /**
  * Whether a key press comes from a text editor, which keeps its own undo of the text: a text-entry
- * input, a textarea, a content-editable element, or CodeMirror. Checkboxes, radios, switches,
- * selects, and buttons have no text to undo, so the editor's undo applies there.
+ * input, a textarea, a content-editable element, or CodeMirror, including anything inside one (the
+ * search panel's checkboxes in a code editor belong to that editor). Elsewhere checkboxes, radios,
+ * switches, selects, and buttons have no text to undo, so the editor's undo applies there.
  */
 export function isEditableTarget(target: EventTarget | null): boolean {
-  if (target instanceof HTMLInputElement) return TEXT_INPUTS.has(target.type);
-  return target instanceof Element && target.closest(TEXT_EDITORS) !== null;
+  if (!(target instanceof Element)) return false;
+  if (target.closest(TEXT_EDITORS) !== null) return true;
+  return target instanceof HTMLInputElement && TEXT_INPUTS.has(target.type);
 }
 
 /** The focusable heading that names the nearest dialog or panel around `element`, if any. */
