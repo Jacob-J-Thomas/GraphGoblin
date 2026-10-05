@@ -1,11 +1,17 @@
 import { GraphGoblinApiError, loops } from '@graphgoblin/api-client';
-import type { LoopDefinitionInput } from '@graphgoblin/contracts';
+import type { ClassifierModelSummary, LoopDefinitionInput } from '@graphgoblin/contracts';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ReactFlowProvider } from '@xyflow/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router';
 import { useApi } from '../api/context.js';
-import { keys, usePrefetchModelCatalog } from '../api/queries.js';
+import {
+  classifierFingerprint,
+  isValidationKey,
+  keys,
+  useClassifierModels,
+  usePrefetchModelCatalog,
+} from '../api/queries.js';
 import { ErrorState } from '../components/status.js';
 import { Alert, Button, useSidePanelState } from '../components/ui/index.js';
 import { focusFallback } from '../lib/focus.js';
@@ -70,15 +76,28 @@ export function EditorPage() {
     () => (definition ? validateDraft(definition) : { issues: [], schemaValid: false }),
     [definition],
   );
-  // The API's own checks (cron syntax, subloop references) for the revision the server holds.
+  // The classifier checks read the catalog and its secrets, which change without a draft edit:
+  // the API's checks run again when what they read of it changes.
+  const classifiers = useClassifierModels();
+  const classifierState = classifierFingerprint(classifiers.data);
+  // The API's own checks (cron syntax, subloop references, classifiers) for the revision the
+  // server holds. They wait for the catalog's first answer, success or not, so opening the editor
+  // does not run them twice.
   const serverCheck = useQuery({
-    queryKey: ['loops', loopId, 'validate', savedRevision],
-    enabled: Boolean(definition) && local.schemaValid,
+    queryKey: keys.validation(loopId, savedRevision, classifierState),
+    enabled: Boolean(definition) && local.schemaValid && !classifiers.isPending,
     staleTime: Infinity,
     retry: false,
     queryFn: async () => {
       const checked = definition as LoopDefinitionInput;
       const result = await loops.validate(client, loopId, checked);
+      // The catalog changed while the check ran, so its answer may describe either state: drop
+      // it rather than store it under this catalog's key. The new catalog's own check runs.
+      const now = classifierFingerprint(
+        queryClient.getQueryData<ClassifierModelSummary[]>(keys.classifiers),
+      );
+      if (now !== classifierState)
+        throw new Error('The classifier catalog changed during the check; checking again.');
       const known = new Set(validateDraft(checked).issues.map(issueKey));
       return result.issues
         .map(({ nodeId, edgeId, ...rest }): EditorIssue => ({
@@ -89,6 +108,18 @@ export function EditorPage() {
         .filter((issue) => !known.has(issueKey(issue)));
     },
   });
+  // When the catalog changes (a write here, or another tab's seen on a refresh), checks keyed by
+  // any other catalog state are no longer trusted: one still running is cancelled, so its answer
+  // is not kept, and each is marked stale, so going back to that state checks again.
+  useEffect(() => {
+    const others = {
+      predicate: ({ queryKey }: { queryKey: readonly unknown[] }) =>
+        isValidationKey(queryKey) && queryKey[1] === loopId && queryKey[4] !== classifierState,
+    };
+    void queryClient
+      .cancelQueries(others)
+      .then(() => queryClient.invalidateQueries({ ...others, refetchType: 'none' }));
+  }, [queryClient, loopId, classifierState]);
   const validation = useMemo(
     () => ({
       issues: mergeIssues(local, serverCheck.data, fieldErrorIssues(fieldErrors)),

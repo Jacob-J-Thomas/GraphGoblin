@@ -55,6 +55,8 @@ import {
   useFieldControl,
   useFieldErrorMessage,
   useProblemCount,
+  type FieldControl,
+  type FieldControls,
   type FieldProps,
 } from './shared.js';
 import { NumberField, StringControl, StringField } from './text.js';
@@ -70,6 +72,12 @@ export function Field(props: FieldProps) {
   // Only the registry's own entries: a name such as `toString` is not a registered control.
   const Control = name !== undefined && Object.hasOwn(controls, name) ? controls[name] : undefined;
   return Control ? <Control {...props} /> : <DefaultField {...props} />;
+}
+
+/** The control registered under the field's metadata `control` name, if any (as `Field` finds it). */
+function controlFor(controls: FieldControls, schema: Schema): FieldControl | undefined {
+  const name = fieldMeta(schema).control;
+  return name !== undefined && Object.hasOwn(controls, name) ? controls[name] : undefined;
 }
 
 /** The default renderer: dispatch on the schema's shape. */
@@ -105,17 +113,30 @@ function ObjectBody({
   shape,
   name,
   skip,
+  only,
+  absentParent,
 }: {
   shape: Record<string, Schema>;
   name: string;
   skip?: string | undefined;
+  /** Draw only these keys (the object is absent and they are drawn without it). */
+  only?: readonly string[] | undefined;
+  absentParent?: FieldProps['absentParent'];
 }) {
   return (
     <>
       {Object.entries(shape)
-        .filter(([key]) => key !== skip)
+        .filter(([key]) => key !== skip && (only === undefined || only.includes(key)))
         .map(([key, child]) => (
-          <Field key={key} schema={child} name={joinPath(name, key)} label={labelOf(key, child)} />
+          // Keyed by the key, so a field drawn while the object is absent stays the same element
+          // (and keeps focus) when the object is added.
+          <Field
+            key={key}
+            schema={child}
+            name={joinPath(name, key)}
+            label={labelOf(key, child)}
+            absentParent={absentParent}
+          />
         ))}
     </>
   );
@@ -162,11 +183,17 @@ function ObjectField({
 }: FieldProps & { shape: Record<string, Schema> }) {
   const field = useField(name);
   const helpId = `${useId()}-help`;
+  const controls = use(FieldControlsContext);
   const { optional, hasDefault, base } = unwrap(schema);
   const { help } = fieldMeta(schema);
-  const absent = field.value === undefined || field.value === null;
+  const removable = optional && !hasDefault;
+  const missing = removable && (field.value === undefined || field.value === null);
+  // Fields whose registered control is drawn even while this object is absent (#43's classifier).
+  const standalone = removable
+    ? Object.keys(shape).filter((key) => controlFor(controls, shape[key]!)?.drawsWithoutParent)
+    : [];
   const parseErrors = useParseErrors();
-  if (optional && !hasDefault && absent) {
+  if (missing && standalone.length === 0) {
     return (
       <div data-field={name}>
         <AddButton onClick={() => field.onChange(initialValue(base))}>
@@ -175,9 +202,11 @@ function ObjectField({
       </div>
     );
   }
+  // Absent with standalone fields: the same frame shows them and an Add for the rest, so adding
+  // the object (by Add, or by choosing in such a field) keeps those fields' elements and focus.
   return (
     <GroupFrame name={name} label={label} bare={bare} helpId={helpId} help={help}>
-      {optional && !hasDefault ? (
+      {removable && !missing ? (
         <div>
           <Button
             size="sm"
@@ -192,8 +221,23 @@ function ObjectField({
           </Button>
         </div>
       ) : null}
-      <ObjectBody shape={shape} name={name} />
-      <FieldError name={name} />
+      <ObjectBody
+        shape={shape}
+        name={name}
+        only={missing ? standalone : undefined}
+        absentParent={
+          missing ? { name, initial: initialValue(base) as Record<string, unknown> } : undefined
+        }
+      />
+      {missing ? (
+        <div>
+          <AddButton onClick={() => field.onChange(initialValue(base))}>
+            Add {label.toLowerCase()} options
+          </AddButton>
+        </div>
+      ) : (
+        <FieldError name={name} />
+      )}
     </GroupFrame>
   );
 }

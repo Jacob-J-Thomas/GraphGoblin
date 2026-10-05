@@ -190,7 +190,10 @@ describe('catalog field controls', () => {
       api,
     );
     const group = screen.getByRole('group', { name: 'Codex' });
-    await ready();
+    // Scoped: the decision also shows its Jev classifier picker, labelled Model too (#43).
+    await waitFor(() =>
+      expect(within(group).getByLabelText('Model')).not.toHaveAttribute('aria-readonly'),
+    );
     const model = within(group).getByLabelText('Model');
     const effort = within(group).getByLabelText('Effort');
     expect(model).toHaveValue('alpha');
