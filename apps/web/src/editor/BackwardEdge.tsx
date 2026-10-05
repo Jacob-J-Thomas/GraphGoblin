@@ -38,7 +38,7 @@ export const BackwardEdge = memo(function BackwardEdge({
       <title>{fullLabel}</title>
       <BaseEdge
         id={id}
-        path={roundedPath(route.points, route.radius)}
+        path={roundedPath(route.points, route.radii)}
         label={visibleLabel || undefined}
         labelX={route.label.x}
         labelY={route.label.y}

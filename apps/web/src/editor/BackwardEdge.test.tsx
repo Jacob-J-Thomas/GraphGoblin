@@ -20,6 +20,7 @@ const route: RoutedEdge = {
   blocked: false,
   unavailable: false,
   radius: 8,
+  radii: [0, 8, 8, 8, 8, 0],
   padding: 32,
   lanePadding: 32,
   bounds: { id: '', left: -20, right: 130, top: 0, bottom: 180 },

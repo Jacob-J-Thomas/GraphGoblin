@@ -3,6 +3,7 @@ import {
   Footprint,
   Reservations,
   bounds,
+  clearanceOf,
   distance,
   expand,
   simplify,
@@ -12,7 +13,12 @@ import {
   type Point,
 } from './routing-geometry.js';
 import { detour, SearchWorkspace } from './routing-search.js';
-import { placeLabel, type LabelPlacement } from './routing-labels.js';
+import {
+  LABEL_CHARACTER_WIDTH,
+  LABEL_PADDING,
+  placeLabel,
+  type LabelPlacement,
+} from './routing-labels.js';
 export { intersectsBox, simplify, type Point } from './routing-geometry.js';
 export { SearchWorkspace } from './routing-search.js';
 
@@ -37,7 +43,13 @@ export interface RoutedEdge extends Record<string, unknown> {
   label: Point;
   labelWidth: number;
   labelBounds?: Box;
+  /** The label's corner allowance: the escape padding's radius, at most `ROUTING_RADIUS`. */
   radius: number;
+  /**
+   * The drawn radius at each point (0 at both ends): the full `ROUTING_RADIUS` wherever the corner
+   * has room, smaller only where the rounded curve would otherwise enter a card or its handles.
+   */
+  radii: readonly number[];
   padding: number;
   /** Full stand-off of the labelled lane, even when endpoint escapes need less padding. */
   lanePadding: number;
@@ -85,6 +97,8 @@ export function backwardDirection(
       ? delta >= -DIRECTION_HYSTERESIS
       : delta > DIRECTION_HYSTERESIS;
 }
+/** Port handles are 12 px dots centred on the card's edge; the measured tip is their outer edge. */
+export const HANDLE_SIZE = 12;
 const nodeBox = (n: RoutingNode): Box => ({
   id: n.id,
   left: n.x,
@@ -92,6 +106,35 @@ const nodeBox = (n: RoutingNode): Box => ({
   top: n.y,
   bottom: n.y + n.height,
 });
+/**
+ * A card and the strips of handles protruding from its sides. Clearance counts from the handles
+ * too, so no lane or column passes a few pixels from another card's port and reads as joined to
+ * it. Handles inside the card body (unit fixtures put tips on the edge) add nothing.
+ */
+function nodeBoxes(n: RoutingNode): Box[] {
+  const body = nodeBox(n);
+  const boxes = [body];
+  const outputs = Object.values(n.outputs);
+  const strip = (left: number, right: number, ys: number[]) => {
+    if (left < body.left || right > body.right)
+      boxes.push({
+        id: n.id,
+        left,
+        right,
+        top: Math.min(...ys) - HANDLE_SIZE / 2,
+        bottom: Math.max(...ys) + HANDLE_SIZE / 2,
+        handle: true,
+      });
+  };
+  if (outputs.length)
+    strip(
+      Math.min(...outputs.map((p) => p.x)) - HANDLE_SIZE,
+      Math.max(...outputs.map((p) => p.x)),
+      outputs.map((p) => p.y),
+    );
+  if (n.input) strip(n.input.x, n.input.x + HANDLE_SIZE, [n.input.y]);
+  return boxes;
+}
 const samePoint = (a: Point | undefined, b: Point | undefined) => a?.x === b?.x && a?.y === b?.y;
 export function sameNode(a: RoutingNode, b: RoutingNode): boolean {
   if (a === b) return true;
@@ -107,12 +150,18 @@ export function sameNode(a: RoutingNode, b: RoutingNode): boolean {
 }
 const sameEdge = (a: RoutingEdge, b: RoutingEdge | undefined) =>
   !!b && a.source === b.source && a.target === b.target && a.port === b.port;
-export const routeMessage = (route: RoutedEdge): string =>
+export const routeMessage = (route: Pick<RoutedEdge, 'blocked' | 'unavailable'>): string =>
   route.blocked
     ? 'Port covered by a card; move the card'
     : route.unavailable
       ? 'No clear route; move a card'
       : '';
+/** The text drawn in a route's pill: the port's name, and the warning of a route that has none. */
+export function routeText(port: string, route: Pick<RoutedEdge, 'blocked' | 'unavailable'>) {
+  const name = port === 'out' ? '' : port;
+  const message = routeMessage(route);
+  return message ? `${name || 'Connection'}: ${message}` : name;
+}
 
 function describe(
   points: Point[],
@@ -136,6 +185,7 @@ function describe(
     points,
     ...(lane ? { lane } : {}),
     radius,
+    radii: points.map((_, i) => (i && i < points.length - 1 ? radius : 0)),
     padding,
     lanePadding,
     blocked,
@@ -185,6 +235,10 @@ function labelRoute(
       index,
       reservations,
     );
+  return withLabel(route, label);
+}
+
+function withLabel(route: RoutedEdge, label: LabelPlacement): RoutedEdge {
   const b = label.labelBounds;
   return {
     ...route,
@@ -201,6 +255,34 @@ function labelRoute(
   };
 }
 
+/**
+ * A connection without a path still shows its name and warning in a pill. Its envelope is the whole
+ * text (the edge never shortens a warning), searched upward from above the port until it clears
+ * every card, handle, and earlier label, so no card paints over the explanation.
+ */
+function messageRoute(
+  work: Work,
+  blocked: boolean,
+  index: BoxIndex,
+  reservations: Reservations,
+): RoutedEdge {
+  const { from, to } = work;
+  const route = describe([], from, to, 0, blocked);
+  const text = routeText(work.edge.port, route);
+  const full = text.length * LABEL_CHARACTER_WIDTH;
+  const half = (full + LABEL_PADDING) / 2;
+  let label: LabelPlacement | undefined;
+  for (let y = from.y - 48; !label || label.labelWidth < full; y -= 24)
+    label = placeLabel(
+      { y, left: from.x - half - 140, right: from.x + half + 140 },
+      text,
+      0,
+      index,
+      reservations,
+    );
+  return withLabel(route, label);
+}
+
 function candidates(
   start: Point,
   end: Point,
@@ -212,7 +294,7 @@ function candidates(
   const nearby = index.query(expand(region, padding), true);
   return [
     ...new Set([
-      ...nearby.flatMap((b) => [b.top - padding, b.bottom + padding]),
+      ...nearby.flatMap((b) => (b.handle ? [] : [b.top - padding, b.bottom + padding])),
       ...reservations
         .nearbyLanes(region)
         .flatMap((l) => [l.y - LANE_GAP, l.y + LANE_GAP, l.y - 12, l.y + 12]),
@@ -232,11 +314,12 @@ function routeOne(
   targetRank: number,
   clearance: number,
   workspace: SearchWorkspace,
+  squeeze = false,
 ): { route: RoutedEdge; expansions: number } {
   const { source, target, from, to } = work;
   const fullPadding = Math.max(0, clearance) + ROUTING_RADIUS;
   if (index.covers(from, source.id) || index.covers(to, target.id))
-    return { route: describe([], from, to, 0, true), expansions: 0 };
+    return { route: messageRoute(work, true, index, reservations), expansions: 0 };
   // Only endpoint escapes shrink in tight spaces; horizontal lanes retain the full envelope.
   let room = fullPadding * 2;
   for (const [port, own] of [
@@ -250,7 +333,10 @@ function routeOne(
         Math.max(box.left - port.x, port.x - box.right, box.top - port.y, port.y - box.bottom, 0),
       );
     }
-  const paddings = [...new Set([fullPadding, Math.min(fullPadding / 2, room / 2), 0])];
+  // A squeeze (handles ignored) is the zero-clearance last resort: no other padding applies.
+  const paddings = squeeze
+    ? [0]
+    : [...new Set([fullPadding, Math.min(fullPadding / 2, room / 2), 0])];
   let expansions = 0;
   type Column = { point: Point; range?: [number, number] };
   const columnClear = (column: Column, y: number, padding: number) => {
@@ -354,7 +440,10 @@ function routeOne(
             top: y - fullPadding,
             bottom: y + fullPadding,
           })
-          .filter((b) => y > b.top - fullPadding && y < b.bottom + fullPadding);
+          .filter(
+            (b) =>
+              y > b.top - clearanceOf(b, fullPadding) && y < b.bottom + clearanceOf(b, fullPadding),
+          );
         // Columns are ordered by stub length. Prune cost before collision checks; check each
         // remaining vertical once, including wider pairs needed for labels on short spans.
         for (const startColumn of row.starts) {
@@ -373,8 +462,8 @@ function routeOne(
               !reservations.laneFree(a, b, gap) ||
               obstacles.some(
                 (box) =>
-                  Math.min(a.x, b.x) < box.right + fullPadding &&
-                  Math.max(a.x, b.x) > box.left - fullPadding,
+                  Math.min(a.x, b.x) < box.right + clearanceOf(box, fullPadding) &&
+                  Math.max(a.x, b.x) > box.left - clearanceOf(box, fullPadding),
               )
             )
               continue;
@@ -556,7 +645,7 @@ function routeOne(
         let left = Math.min(a.x, b!.x);
         const boxes = index
           .query(expand(bounds([a, b!]), fullPadding))
-          .map((box) => expand(box, fullPadding))
+          .map((box) => expand(box, clearanceOf(box, fullPadding)))
           .filter((box) => a.y > box.top && a.y < box.bottom)
           .sort((x, y) => x.left - y.left);
         const lanes: Lane[] = [];
@@ -609,7 +698,39 @@ function routeOne(
     else delete route.lane;
     return { route: labelRoute(route, work.edge.port, from, index, reservations), expansions };
   }
-  return { route: describe([], from, to, 0), expansions };
+  return { route: messageRoute(work, false, index, reservations), expansions };
+}
+
+/**
+ * The largest radius, up to `ROUTING_RADIUS`, at which each corner's curve stays out of every card
+ * and handle. A corner's quadratic curve bulges into the corner's inner quadrant, along the
+ * parabola √s + √t = √r from the corner (s and t measured along its two segments), so a box whose
+ * nearest point in that quadrant is (s, t) allows r up to (√s + √t)². Corners with room keep the
+ * full radius even when another part of the route squeezed through a tight escape.
+ */
+function cornerRadii(points: readonly Point[], index: BoxIndex): number[] {
+  return points.map((b, i) => {
+    const a = points[i - 1];
+    const c = points[i + 1];
+    if (!a || !c) return 0;
+    let radius = Math.min(ROUTING_RADIUS, distance(a, b) / 2, distance(b, c) / 2);
+    if (radius <= 0) return 0;
+    // Each segment's own unit direction away from the corner, in screen axes.
+    const u = { x: Math.sign(a.x - b.x), y: Math.sign(a.y - b.y) };
+    const v = { x: Math.sign(c.x - b.x), y: Math.sign(c.y - b.y) };
+    const along = (box: Box, d: Point): [number, number] => {
+      const low = d.x ? (box.left - b.x) * d.x : (box.top - b.y) * d.y;
+      const high = d.x ? (box.right - b.x) * d.x : (box.bottom - b.y) * d.y;
+      return [Math.min(low, high), Math.max(low, high)];
+    };
+    for (const box of index.query(expand(bounds([b]), radius))) {
+      const [s0, s1] = along(box, u);
+      const [t0, t1] = along(box, v);
+      if (s1 <= 0 || t1 <= 0) continue;
+      radius = Math.min(radius, (Math.sqrt(Math.max(0, s0)) + Math.sqrt(Math.max(0, t0))) ** 2);
+    }
+    return radius;
+  });
 }
 
 /**
@@ -632,14 +753,14 @@ export function createRoutingPlan(
     const old = oldNodes.get(node.id);
     if (!old || !sameNode(old, node)) {
       changed.add(node.id);
-      changedBoxes.push(nodeBox(node));
-      if (old) changedBoxes.push(nodeBox(old));
+      changedBoxes.push(...nodeBoxes(node));
+      if (old) changedBoxes.push(...nodeBoxes(old));
     }
     oldNodes.delete(node.id);
   }
   for (const old of oldNodes.values()) {
     changed.add(old.id);
-    changedBoxes.push(nodeBox(old));
+    changedBoxes.push(...nodeBoxes(old));
   }
   const oldEdges = new Map(previous?.edges.map((e) => [e.id, e]));
   const directions = new Map<string, boolean>();
@@ -678,7 +799,7 @@ export function createRoutingPlan(
         [before, after].flatMap((r) => (r ? [r.bounds] : [])),
       );
   };
-  const index = new BoxIndex(nodes.map(nodeBox));
+  const index = new BoxIndex(nodes.flatMap(nodeBoxes));
   const outgoing = new Map<string, number>();
   const incoming = new Map<string, number>();
   const statistics = { rerouted: 0, expansions: 0, checks: 0 };
@@ -725,15 +846,38 @@ export function createRoutingPlan(
     }
     index.reads = new Footprint();
     reservations.reads = new Footprint();
-    const { route, expansions } = routeOne(
-      item,
-      index,
-      reservations,
-      sourceRank,
-      targetRank,
-      clearance,
-      workspace,
-    );
+    const attempt = (squeeze = false) => {
+      // A route starts and ends on its own cards' handles: only other cards' handles need room.
+      index.exempt = [item.source.id, item.target.id];
+      const result = routeOne(
+        item,
+        index,
+        reservations,
+        sourceRank,
+        targetRank,
+        clearance,
+        workspace,
+        squeeze,
+      );
+      index.exempt = [];
+      return result;
+    };
+    let { route: routed, expansions } = attempt();
+    if (routed.unavailable && index.hasHandles) {
+      // Last resort: squeeze past protruding handles at zero clearance (never through a card)
+      // rather than lose a connection that runs along touching cards.
+      index.handles = false;
+      const squeezed = attempt(true);
+      index.handles = true;
+      expansions += squeezed.expansions;
+      routed = squeezed.route;
+    }
+    // A route with at least the full radius of padding cannot curve into a card. A tighter one
+    // reads the boxes beside each corner, as part of this route's dependencies.
+    const route =
+      routed.padding >= ROUTING_RADIUS
+        ? routed
+        : { ...routed, radii: cornerRadii(routed.points, index) };
     statistics.rerouted += 1;
     statistics.expansions += expansions;
     dependencies.set(id, {
@@ -759,7 +903,8 @@ export function createRoutingPlan(
       before.bounds.top === route.bounds.top &&
       before.bounds.bottom === route.bounds.bottom &&
       before.points.length === route.points.length &&
-      before.points.every((p, i) => samePoint(p, route.points[i]));
+      before.points.every((p, i) => samePoint(p, route.points[i])) &&
+      before.radii.every((r, i) => r === route.radii[i]);
     routes.set(id, unchanged ? before : route);
     reservations.add(route.points, route.lane, route.labelBounds);
     compareReservation(id);
@@ -776,15 +921,22 @@ export function routeBackwardEdges(
   return createRoutingPlan(nodes, edges, clearance).routes;
 }
 
-/** #44 drawing hook; reduced envelopes reduce corner radius too, down to square corners. */
-export function roundedPath(points: readonly Point[], radius = ROUTING_RADIUS): string {
+/** Draw ordered orthogonal points with rounded corners: one radius, or one per point. */
+export function roundedPath(
+  points: readonly Point[],
+  radius: number | readonly number[] = ROUTING_RADIUS,
+): string {
   if (!points.length) return '';
   let path = `M ${points[0]!.x} ${points[0]!.y}`;
   for (let i = 1; i < points.length - 1; i += 1) {
     const a = points[i - 1]!;
     const b = points[i]!;
     const c = points[i + 1]!;
-    const r = Math.min(radius, distance(a, b) / 2, distance(b, c) / 2);
+    const r = Math.min(
+      typeof radius === 'number' ? radius : (radius[i] ?? 0),
+      distance(a, b) / 2,
+      distance(b, c) / 2,
+    );
     const before = { x: b.x + Math.sign(a.x - b.x) * r, y: b.y + Math.sign(a.y - b.y) * r };
     const after = { x: b.x + Math.sign(c.x - b.x) * r, y: b.y + Math.sign(c.y - b.y) * r };
     path += ` L ${before.x} ${before.y} Q ${b.x} ${b.y} ${after.x} ${after.y}`;

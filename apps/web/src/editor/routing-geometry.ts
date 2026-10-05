@@ -8,7 +8,22 @@ export interface Box {
   right: number;
   top: number;
   bottom: number;
+  /**
+   * A card's protruding port handles. Routes keep their clearance from it, but it neither covers
+   * a port nor seeds lane candidates (it never reaches past its card's top or bottom).
+   */
+  handle?: boolean;
 }
+
+/**
+ * Handles are part of their card for clearance, but a route need not stay as far from a 12 px dot
+ * as from a card: a few pixels already keep it from reading as joined to the port. Bodies keep the
+ * full padding, which covers the 6 px protrusion whenever the padding is generous.
+ */
+export const HANDLE_CLEARANCE = 12;
+export const handleClearance = (padding: number): number => Math.min(padding, HANDLE_CLEARANCE);
+export const clearanceOf = (box: Box, padding: number): number =>
+  box.handle ? handleClearance(padding) : padding;
 
 export const expand = (b: Box, padding: number): Box => ({
   id: b.id,
@@ -91,14 +106,27 @@ export class Footprint {
 export class BoxIndex {
   reads = new Footprint();
   checks = 0;
+  /**
+   * Whether handle strips count. A route that finds no way with them gets one last attempt without
+   * them, so a connection squeezed along touching cards is still drawn rather than lost.
+   */
+  handles = true;
+  /** The cards whose own handles the current route ignores: its ports sit on them. */
+  exempt: readonly string[] = [];
   private cells = new Map<string, Box[]>();
+  /** Whether any card has protruding handles (otherwise a handle-less retry changes nothing). */
+  readonly hasHandles: boolean;
   constructor(readonly boxes: readonly Box[]) {
+    this.hasHandles = boxes.some((box) => box.handle);
     for (const box of boxes)
       this.cellsFor(box, (key) => {
         const cell = this.cells.get(key);
         if (cell) cell.push(box);
         else this.cells.set(key, [box]);
       });
+  }
+  private counts(box: Box): boolean {
+    return !box.handle || (this.handles && !this.exempt.includes(box.id));
   }
   private cellsFor(box: Box, visit: (key: string) => void): void {
     for (let x = Math.floor(box.left / 256); x <= Math.floor(box.right / 256); x += 1)
@@ -111,29 +139,32 @@ export class BoxIndex {
     const found = new Set<Box>();
     this.cellsFor(box, (key) => {
       for (const candidate of this.cells.get(key) ?? [])
-        if (overlapsBox(box, candidate)) found.add(candidate);
+        if (this.counts(candidate) && overlapsBox(box, candidate)) found.add(candidate);
     });
     return [...found];
   }
   clear(a: Point, b: Point, padding: number, own?: string): boolean {
-    const region = expand(bounds([a, b]), padding);
+    const segment = bounds([a, b]);
+    const region = expand(segment, padding);
     this.checks += 1;
     this.reads.touch(region);
     for (let x = Math.floor(region.left / 256); x <= Math.floor(region.right / 256); x += 1)
       for (let y = Math.floor(region.top / 256); y <= Math.floor(region.bottom / 256); y += 1)
-        for (const box of this.cells.get(`${x},${y}`) ?? [])
+        for (const box of this.cells.get(`${x},${y}`) ?? []) {
+          if (box.id === own || !this.counts(box)) continue;
+          const pad = clearanceOf(box, padding);
           if (
-            box.id !== own &&
-            region.left < box.right &&
-            region.right > box.left &&
-            region.top < box.bottom &&
-            region.bottom > box.top
+            segment.left - pad < box.right &&
+            segment.right + pad > box.left &&
+            segment.top - pad < box.bottom &&
+            segment.bottom + pad > box.top
           )
             return false;
+        }
     return true;
   }
   covers(p: Point, own: string): boolean {
-    return this.query(bounds([p])).some((box) => box.id !== own && contains(box, p));
+    return this.query(bounds([p])).some((box) => box.id !== own && !box.handle && contains(box, p));
   }
   /** Maximal clear vertical interval through a column, calculated once per escape. */
   verticalRange(p: Point, top: number, bottom: number, padding: number): [number, number] {
@@ -144,9 +175,10 @@ export class BoxIndex {
       top: top - padding,
       bottom: bottom + padding,
     })) {
-      if (p.x <= box.left - padding || p.x >= box.right + padding) continue;
-      if (p.y >= box.bottom + padding) top = Math.max(top, box.bottom + padding);
-      else if (p.y <= box.top - padding) bottom = Math.min(bottom, box.top - padding);
+      const pad = clearanceOf(box, padding);
+      if (p.x <= box.left - pad || p.x >= box.right + pad) continue;
+      if (p.y >= box.bottom + pad) top = Math.max(top, box.bottom + pad);
+      else if (p.y <= box.top - pad) bottom = Math.min(bottom, box.top - pad);
       else return [1, 0];
     }
     return [top, bottom];

@@ -10,13 +10,14 @@ import {
   createRoutingPlan,
   routeBackwardEdges,
   routeMessage,
+  ROUTING_RADIUS,
   SearchWorkspace,
   type RoutedEdge,
   type RoutingEdge,
   type RoutingNode,
 } from './routing.js';
 import { detour, SEARCH_LIMIT } from './routing-search.js';
-import { BoxIndex, Reservations } from './routing-geometry.js';
+import { BoxIndex, distance, Reservations } from './routing-geometry.js';
 
 const box = (
   id: string,
@@ -48,8 +49,14 @@ function geometry(nodes: readonly RoutingNode[], edge: RoutingEdge, route: Route
     const a = route.points[i - 1]!;
     const b = route.points[i]!;
     expect(a.x === b.x || a.y === b.y, edge.id).toBe(true);
-    for (const n of nodes) {
-      const pad = Math.max(0, route.padding - route.radius);
+    // Other cards' protruding handles count as part of their card for clearance (#18 review), at
+    // up to 12 px. A route's own ports sit on its own cards' handles, which it may pass, and the
+    // zero-clearance last resort may squeeze past any handle; routes with padding are checked.
+    for (const n of handleObstacles(nodes, edge, route)) {
+      const pad = Math.max(
+        0,
+        (n.handle ? Math.min(route.padding, 12) : route.padding) - route.radius,
+      );
       const hit =
         a.y === b.y
           ? a.y > n.y - pad &&
@@ -71,12 +78,12 @@ function geometry(nodes: readonly RoutingNode[], edge: RoutingEdge, route: Route
     }
   }
   const lane = route.lane;
-  for (const n of lane ? nodes : [])
+  for (const n of lane ? handleObstacles(nodes, edge, route) : [])
     expect(
-      lane!.y > n.y - route.lanePadding &&
-        lane!.y < n.y + n.height + route.lanePadding &&
-        lane!.left < n.x + n.width + route.lanePadding &&
-        lane!.right > n.x - route.lanePadding,
+      lane!.y > n.y - (n.handle ? 12 : route.lanePadding) &&
+        lane!.y < n.y + n.height + (n.handle ? 12 : route.lanePadding) &&
+        lane!.left < n.x + n.width + (n.handle ? 12 : route.lanePadding) &&
+        lane!.right > n.x - (n.handle ? 12 : route.lanePadding),
       edge.id + ' lane clearance ' + JSON.stringify({ route, node: n }),
     ).toBe(false);
 }
@@ -114,7 +121,30 @@ function labelGeometry(routes: Iterable<RoutedEdge>, nodes: readonly RoutingNode
 }
 
 /** Independent candidate/segment checks: distance must never buy compression of an available lane. */
+/** Card bodies plus the 12 px handle strips protruding from their sides, as the router sees them. */
+function obstaclesOf(nodes: readonly RoutingNode[]) {
+  return nodes.flatMap((n) => {
+    const strips = [
+      ...Object.values(n.outputs).map((p) => ({ x: p.x - 12, y: p.y - 6, width: 12, height: 12 })),
+      ...(n.input ? [{ x: n.input.x, y: n.input.y - 6, width: 12, height: 12 }] : []),
+    ]
+      .filter((s) => s.x < n.x || s.x + s.width > n.x + n.width)
+      .map((s) => ({ ...s, id: n.id, handle: true }));
+    return [
+      { id: n.id, x: n.x, y: n.y, width: n.width, height: n.height, handle: false },
+      ...strips,
+    ];
+  });
+}
+
+function handleObstacles(nodes: readonly RoutingNode[], edge: RoutingEdge, route: RoutedEdge) {
+  return obstaclesOf(nodes).filter(
+    (o) => !o.handle || (route.padding > 0 && o.id !== edge.source && o.id !== edge.target),
+  );
+}
+
 function lanePriority(nodes: readonly RoutingNode[], routes: Iterable<RoutedEdge>) {
+  const obstacles = obstaclesOf(nodes);
   const previous: RoutedEdge[] = [];
   let checked = 0;
   for (const route of routes) {
@@ -163,21 +193,25 @@ function lanePriority(nodes: readonly RoutingNode[], routes: Iterable<RoutedEdge
         const right = Math.max(start!.x, end!.x);
         const horizontalHit =
           left === right ||
-          nodes.some(
-            (n) =>
-              y > n.y - 32 &&
-              y < n.y + n.height + 32 &&
-              left < n.x + n.width + 32 &&
-              right > n.x - 32,
-          );
+          obstacles.some((n) => {
+            const pad = n.handle ? 12 : 32;
+            return (
+              y > n.y - pad &&
+              y < n.y + n.height + pad &&
+              left < n.x + n.width + pad &&
+              right > n.x - pad
+            );
+          });
         const verticalHit = [start!, end!].some((p) =>
-          nodes.some(
-            (n) =>
-              p.x > n.x - route.padding &&
-              p.x < n.x + n.width + route.padding &&
-              Math.min(p.y, y) < n.y + n.height + route.padding &&
-              Math.max(p.y, y) > n.y - route.padding,
-          ),
+          obstacles.some((n) => {
+            const pad = n.handle ? Math.min(route.padding, 12) : route.padding;
+            return (
+              p.x > n.x - pad &&
+              p.x < n.x + n.width + pad &&
+              Math.min(p.y, y) < n.y + n.height + pad &&
+              Math.max(p.y, y) > n.y - pad
+            );
+          }),
         );
         const reserved = previous.some(
           (r) =>
@@ -263,6 +297,73 @@ describe('routing review regressions', () => {
       if (gap < 6) expect(measured.blocked).toBe(true);
       else geometry(nodes, e, measured);
     }
+  });
+
+  it('keeps every corner round where it has room, and never curves into a card or handle', () => {
+    let tight = 0;
+    for (let gap = 6; gap <= 80; gap += 1) {
+      // Only the source escape is squeezed by its neighbour; the entry side has plenty of room.
+      const nodes = [
+        box('source', 400, 0, 184, 122, 6),
+        box('target', 0, 0, 184, 122, 6),
+        box('neighbour', 584 + gap, 0, 184, 122, 6),
+      ];
+      const e = connection('source', 'target');
+      const route = routeBackwardEdges(nodes, [e]).get(e.id)!;
+      geometry(nodes, e, route);
+      expect(route.radii).toHaveLength(route.points.length);
+      expect([route.radii[0], route.radii.at(-1)]).toEqual([0, 0]);
+      if (route.padding < ROUTING_RADIUS) {
+        tight += 1;
+        // The lane's corners are far from every card: full radius despite the tight escape (the
+        // whole route used to take the escape's smaller radius).
+        const lane = route.points.flatMap((p, i) =>
+          i > 0 && i < route.points.length - 1 && p.y === route.lane!.y ? [route.radii[i]] : [],
+        );
+        expect(lane, JSON.stringify(route)).toEqual([8, 8]);
+      }
+      const boxes = obstaclesOf(nodes);
+      for (let i = 1; i < route.points.length - 1; i += 1) {
+        const [a, b, c] = [route.points[i - 1]!, route.points[i]!, route.points[i + 1]!];
+        const r = Math.min(route.radii[i]!, distance(a, b) / 2, distance(b, c) / 2);
+        const before = { x: b.x + Math.sign(a.x - b.x) * r, y: b.y + Math.sign(a.y - b.y) * r };
+        const after = { x: b.x + Math.sign(c.x - b.x) * r, y: b.y + Math.sign(c.y - b.y) * r };
+        // Sample the drawn quadratic curve independently of the router's formula.
+        for (let t = 0; t <= 1; t += 0.05) {
+          const x = (1 - t) ** 2 * before.x + 2 * t * (1 - t) * b.x + t ** 2 * after.x;
+          const y = (1 - t) ** 2 * before.y + 2 * t * (1 - t) * b.y + t ** 2 * after.y;
+          for (const o of boxes)
+            expect(
+              x > o.x + 1e-9 &&
+                x < o.x + o.width - 1e-9 &&
+                y > o.y + 1e-9 &&
+                y < o.y + o.height - 1e-9,
+              JSON.stringify({ gap, i, x, y, o }),
+            ).toBe(false);
+        }
+      }
+    }
+    expect(tight).toBeGreaterThan(0);
+  });
+
+  it('keeps entry columns clear of a neighbour’s protruding out handle', () => {
+    // A neighbour above and left of the target, its out handle beside the entry approach.
+    let checked = 0;
+    for (let right = 330; right <= 392; right += 2)
+      for (const top of [150, 200, 230]) {
+        const nodes = [
+          box('target', 400, 300, 184, 122, 6),
+          box('neighbour', right - 184, top, 184, 122, 6),
+          box('source', 800, 300, 184, 122, 6),
+          box('floor', 100, 440, 1200, 400, 6),
+        ];
+        const e = connection('source', 'target');
+        const route = routeBackwardEdges(nodes, [e]).get(e.id)!;
+        // geometry() keeps the handle strips min(padding, 12) px away whenever padding allows.
+        geometry(nodes, e, route);
+        checked += 1;
+      }
+    expect(checked).toBe(96);
   });
 
   it('allocates the inner return first even when ids put the outer return first', () => {
@@ -486,6 +587,9 @@ describe('routing review regressions', () => {
     const route = plan.routes.get(e.id)!;
     expect(route).toMatchObject({ blocked: false, unavailable: true, points: [] });
     expect(routeMessage(route)).toBe('No clear route; move a card');
+    // Its warning pill is placed clear of every card, not at a fixed point inside the source.
+    expect(labelGeometry([route], nodes)).toBe(1);
+    expect(route.labelWidth).toBe('Connection: No clear route; move a card'.length * 7);
     expect(plan.statistics.expansions).toBeLessThanOrEqual(3 * SEARCH_LIMIT);
     const buffer = workspace.costs;
     createRoutingPlan(nodes, [e], undefined, undefined, workspace);
@@ -499,6 +603,7 @@ describe('routing review regressions', () => {
     let searches = 0;
     let labels = 0;
     let alternatives = 0;
+    let covered = 0;
     for (let trial = 0; trial < 300; trial += 1) {
       const nodes: RoutingNode[] = [];
       for (let i = 0; i < 24; i += 1) {
@@ -531,6 +636,7 @@ describe('routing review regressions', () => {
       searches += plan.statistics.expansions > 0 ? 1 : 0;
       for (const e of edges) {
         const route = plan.routes.get(e.id);
+        if (route?.blocked) covered += 1;
         if (!route || route.blocked) continue;
         expect(
           route.unavailable,
@@ -564,7 +670,9 @@ describe('routing review regressions', () => {
     }
     expect(checked).toBeGreaterThan(3000);
     expect(searches).toBeGreaterThan(20);
-    expect(labels).toBe(checked);
+    // Covered ports keep a clear warning pill too: every label avoids every card and other label.
+    expect(covered).toBeGreaterThan(0);
+    expect(labels).toBe(checked + covered);
     expect(alternatives).toBeGreaterThan(100);
   }, 60_000);
 });
