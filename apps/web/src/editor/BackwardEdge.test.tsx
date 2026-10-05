@@ -21,6 +21,7 @@ const route: RoutedEdge = {
   unavailable: false,
   radius: 8,
   padding: 32,
+  lanePadding: 32,
   bounds: { id: '', left: -20, right: 130, top: 0, bottom: 180 },
 };
 const props: EdgeProps<BackwardFlowEdge> = {
@@ -76,6 +77,12 @@ describe('BackwardEdge', () => {
     );
     expect(view.container.querySelector('title')).toHaveTextContent(label);
     expect(view.container.querySelector('.react-flow__edge-text')!.textContent).toMatch(/…$/);
+    view.rerender(
+      <svg>
+        <BackwardEdge {...props} label={label} data={channel({ ...route, labelWidth: 7 })} />
+      </svg>,
+    );
+    expect(view.container.querySelector('.react-flow__edge-text')).toHaveTextContent(/^…$/);
     view.rerender(
       <svg>
         <BackwardEdge {...props} label={undefined} />

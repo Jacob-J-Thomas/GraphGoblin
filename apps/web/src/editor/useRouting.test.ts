@@ -14,7 +14,8 @@ describe('routing measurement and cache', () => {
     changed[0]!.y -= 20;
     const next = route({ nodes: changed, preparationMs: 0.5 }, input.edges);
     expect(next.routes.get('return')).toBe(first.routes.get('return'));
-    expect(next.statistics.rerouted).toBe(0);
+    // The trigger participates in candidate generation, even though the winning path is unchanged.
+    expect(next.statistics.rerouted).toBe(1);
     const moved = structuredClone(changed);
     moved[3]!.outputs['loopBack']!.y += 10;
     expect(route({ nodes: moved, preparationMs: 0 }, input.edges).routes.get('return')).not.toBe(

@@ -44,8 +44,23 @@ export const bounds = (points: readonly Point[]): Box => ({
 export const distance = (a: Point, b: Point): number => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
 export const sorted = (values: number[]): number[] => [...new Set(values)].sort((a, b) => a - b);
 
+/** The region actually consulted by a route, including rejected alternatives. */
+export class Footprint {
+  box: Box | undefined;
+  touch(box: Box): void {
+    if (!this.box) this.box = { ...box };
+    else {
+      this.box.left = Math.min(this.box.left, box.left);
+      this.box.right = Math.max(this.box.right, box.right);
+      this.box.top = Math.min(this.box.top, box.top);
+      this.box.bottom = Math.max(this.box.bottom, box.bottom);
+    }
+  }
+}
+
 /** A fixed-cell index of real card boxes, queried with the current route's padding. */
 export class BoxIndex {
+  reads = new Footprint();
   private cells = new Map<string, Box[]>();
   constructor(readonly boxes: readonly Box[]) {
     for (const box of boxes)
@@ -61,6 +76,7 @@ export class BoxIndex {
         visit(`${x},${y}`);
   }
   query(box: Box): Box[] {
+    this.reads.touch(box);
     const found = new Set<Box>();
     this.cellsFor(box, (key) => {
       for (const candidate of this.cells.get(key) ?? [])
@@ -103,9 +119,12 @@ export const overlaps = (left: number, right: number, lane: Lane): boolean =>
 /** Horizontal lanes may compress in crowded gaps; long shared vertical trunks never do. */
 export class Reservations {
   readonly lanes: Lane[] = [];
+  readonly labels: Box[] = [];
+  reads = new Footprint();
   private laneCells = new Map<number, Lane[]>();
   private verticals = new Map<number, { top: number; bottom: number }[]>();
-  add(points: readonly Point[], lane?: Lane): void {
+  add(points: readonly Point[], lane?: Lane, label?: Box): void {
+    if (label) this.labels.push(label);
     if (lane) {
       this.lanes.push(lane);
       const key = Math.floor(lane.y / 24);
@@ -124,6 +143,7 @@ export class Reservations {
     }
   }
   verticalFree(a: Point, b: Point): boolean {
+    this.reads.touch(bounds([a, b]));
     return (
       a.x !== b.x ||
       !(this.verticals.get(a.x) ?? []).some(
@@ -133,6 +153,7 @@ export class Reservations {
   }
   laneFree(a: Point, b: Point, gap: number): boolean {
     if (!gap) return true;
+    this.reads.touch(expand(bounds([a, b]), gap));
     for (let key = Math.floor((a.y - gap) / 24); key <= Math.floor((a.y + gap) / 24); key += 1)
       if (
         (this.laneCells.get(key) ?? []).some(
@@ -141,5 +162,15 @@ export class Reservations {
       )
         return false;
     return true;
+  }
+  nearbyLanes(region: Box): Lane[] {
+    this.reads.touch(region);
+    return this.lanes.filter(
+      (l) => l.y >= region.top && l.y <= region.bottom && overlaps(region.left, region.right, l),
+    );
+  }
+  nearbyLabels(region: Box): Box[] {
+    this.reads.touch(region);
+    return this.labels.filter((b) => overlapsBox(b, region));
   }
 }

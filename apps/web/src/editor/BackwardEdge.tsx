@@ -2,6 +2,7 @@ import { BaseEdge, type Edge, type EdgeProps } from '@xyflow/react';
 import { memo, useSyncExternalStore } from 'react';
 import { roundedPath, routeMessage } from './routing.js';
 import type { RouteChannel } from './route-channels.js';
+import { LABEL_CHARACTER_WIDTH } from './routing-labels.js';
 
 export type BackwardFlowEdge = Edge<RouteChannel, 'backward'>;
 const noSnapshot = () => undefined;
@@ -27,10 +28,10 @@ export const BackwardEdge = memo(function BackwardEdge({
     ? `${textLabel || 'Connection'}: ${routeMessage(route)}`
     : textLabel;
   // Fit text on the straight segment; the edge's accessible name and title retain the full port.
-  const capacity = Math.floor(route.labelWidth / 7);
+  const capacity = Math.floor(route.labelWidth / LABEL_CHARACTER_WIDTH);
   const visibleLabel =
     fullLabel.length > capacity && !routeMessage(route)
-      ? `${fullLabel.slice(0, Math.max(1, capacity - 1))}…`
+      ? `${fullLabel.slice(0, Math.max(0, capacity - 1))}…`
       : fullLabel;
   return (
     <>

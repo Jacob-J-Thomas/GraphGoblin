@@ -74,6 +74,8 @@ export function detour(
   padding: number,
   reservations: Reservations,
   workspace: SearchWorkspace,
+  lanePadding = padding,
+  laneLength = 0,
 ): { points: Point[]; expansions: number } {
   const region = expand(bounds([start, end]), 160);
   const boxes = index.query(expand(region, padding)).map((b) => expand(b, padding));
@@ -110,11 +112,18 @@ export function detour(
     y: ys[Math.floor(vertex / width)]!,
   });
   const vertexAt = (p: Point) => ys.indexOf(p.y) * width + xs.indexOf(p.x);
+  const jump = (v: number, step: number) => {
+    const column = v % width;
+    for (let x = column + step; x >= 0 && x < width; x += step)
+      if (Math.abs(xs[x]! - xs[column]!) >= laneLength) return [v - column + x];
+    return [];
+  };
   const neighbours = (v: number) => [
     ...(v % width > 0 ? [v - 1] : []),
     ...((v % width) + 1 < width ? [v + 1] : []),
     ...(v >= width ? [v - width] : []),
     ...(v + width < width * ys.length ? [v + width] : []),
+    ...(laneLength ? [...jump(v, -1), ...jump(v, 1)] : []),
   ];
   const freedom = (v: number) =>
     neighbours(v).filter((n) => index.clear(point(v), point(n), padding)).length;
@@ -128,10 +137,12 @@ export function detour(
     ((direction === 0 && p.y !== destination.y) || (direction === 1 && p.x !== destination.x)
       ? BEND_COST
       : 0);
-  workspace.prepare(width * ys.length * 2);
+  // Direction and whether a full-clearance lane has been reached are both search state.
+  // This prevents a narrow endpoint corridor from becoming the entire return lane.
+  workspace.prepare(width * ys.length * 4);
   const { costs, previous, visited, frontier } = workspace;
-  costs[first * 2] = 0;
-  frontier.push(first * 2, estimate(point(first), 0));
+  costs[first * 4] = 0;
+  frontier.push(first * 4, estimate(point(first), 0));
   let expansions = 0;
   for (
     let state = frontier.pop();
@@ -139,11 +150,11 @@ export function detour(
     state = frontier.pop()
   ) {
     if (visited[state]) continue;
-    const vertex = Math.floor(state / 2);
-    if (vertex === goal) {
+    const vertex = Math.floor(state / 4);
+    if (vertex === goal && state & 2) {
       const path: Point[] = [];
       for (let cursor = state; cursor !== -1; cursor = previous[cursor]!)
-        path.push(point(Math.floor(cursor / 2)));
+        path.push(point(Math.floor(cursor / 4)));
       return { points: simplify(reverse ? path : path.reverse()), expansions };
     }
     visited[state] = 1;
@@ -152,7 +163,15 @@ export function detour(
     for (const next of neighbours(vertex)) {
       const b = point(next);
       const direction = a.y === b.y ? 0 : 1;
-      const id = next * 2 + direction;
+      const parent = previous[state]!;
+      if (parent !== -1 && direction === state % 2) {
+        const before = point(Math.floor(parent / 4));
+        if ((a.x - before.x) * (b.x - a.x) + (a.y - before.y) * (b.y - a.y) < 0) continue;
+      }
+      const hasLane =
+        state & 2 ||
+        (direction === 0 && Math.abs(a.x - b.x) >= laneLength && index.clear(a, b, lanePadding));
+      const id = next * 4 + direction + (hasLane ? 2 : 0);
       const cost =
         costs[state]! +
         Math.abs(a.x - b.x) +

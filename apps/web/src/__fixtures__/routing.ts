@@ -112,6 +112,43 @@ export function decisionBackRoute(): LoopDefinitionInput {
   };
 }
 
+export function sixReturnDecision(): LoopDefinitionInput {
+  const labels = Array.from({ length: 6 }, (_, i) => `return-${i + 1}`);
+  return {
+    schemaVersion: 1,
+    name: 'Six decision returns',
+    nodes: [
+      node('start', 'trigger', 0),
+      node('work', 'mutate', 300),
+      {
+        ...node('decide', 'decision', 650),
+        kind: 'decision',
+        config: {
+          routes: [...labels, 'finish'].map((label) => ({ label, description: label })),
+          question: 'Choose a return',
+          strategy: ['expression'],
+          expression: { jsonata: '"finish"' },
+        },
+      },
+      node('done', 'exit', 1000),
+    ],
+    edges: [
+      edge('begin', 'start', 'work'),
+      edge('next', 'work', 'decide'),
+      ...labels.map((port) => edge(port, 'decide', 'work', port)),
+      edge('finish', 'decide', 'done', 'finish'),
+    ],
+  };
+}
+
+export function tightGap(): LoopDefinitionInput {
+  const definition = simpleLoop();
+  definition.name = 'Eight pixel neighbour gap';
+  definition.nodes.find((n) => n.id === 'done')!.ui = { x: 600, y: 100 };
+  definition.nodes.find((n) => n.id === 'check')!.ui = { x: 792, y: 100 };
+  return definition;
+}
+
 /** Two connected ports per card on average, including return, same-column and self routes. */
 export function denseGraph(count = 100): LoopDefinitionInput {
   const nodes: NodeInput[] = [node('start', 'trigger', 0, 0)];

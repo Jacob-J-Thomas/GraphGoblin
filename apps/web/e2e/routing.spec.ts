@@ -1,7 +1,7 @@
 /**
  * #18 against the built app and an isolated in-memory API on an ephemeral port (global-setup).
  * Windows uses Edge; set GG_E2E_BROWSER_CHANNEL=msedge explicitly on other installed runners.
- * GG_ROUTING_SCREENSHOTS=1 writes the eight owner-review images into docs/qa; normal CI keeps
+ * GG_ROUTING_SCREENSHOTS=1 writes the owner-review images into docs/qa; normal CI keeps
  * them in test-results. Performance runs three real pointer drags of five seconds each.
  */
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -13,6 +13,8 @@ import {
   denseGraph,
   nestedLoops,
   simpleLoop,
+  sixReturnDecision,
+  tightGap,
 } from '../src/__fixtures__/routing.js';
 import { expect, test } from './fixtures.js';
 
@@ -73,6 +75,8 @@ for (const theme of ['dark', 'light']) {
     'nested-loops': nestedLoops,
     'decision-back-route': decisionBackRoute,
     'dense-100-nodes': denseGraph,
+    'six-return-decision': sixReturnDecision,
+    'eight-pixel-gap': tightGap,
   })) {
     test(`${theme}: ${name} routes and labels, owner screenshot`, async ({
       page,
@@ -89,6 +93,32 @@ for (const theme of ['dark', 'light']) {
       }
       for (const label of await backwards.locator('.react-flow__edge-text').all())
         await expect(label).toBeVisible();
+      const collisions = await backwards
+        .locator('.react-flow__edge-textbg')
+        .evaluateAll((elements) => {
+          const labels = elements.map((el) => el.getBoundingClientRect());
+          const cards = [...document.querySelectorAll('.react-flow__node')].map((el) =>
+            el.getBoundingClientRect(),
+          );
+          let hits = 0;
+          for (const [i, a] of labels.entries())
+            for (const b of [...labels.slice(0, i), ...cards])
+              if (a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top)
+                hits += 1;
+          return hits;
+        });
+      expect(collisions).toBe(0);
+      if (name === 'six-return-decision') await expect(backwards).toHaveCount(6);
+      if (name === 'eight-pixel-gap') {
+        const source = (await page.getByTestId('node-done').boundingBox())!;
+        const neighbour = (await page.getByTestId('node-check').boundingBox())!;
+        const scale = source.width / 184;
+        expect((neighbour.x - source.x - source.width) / scale).toBeCloseTo(8, 1);
+        const pill = (await edge(page, 'return')
+          .locator('.react-flow__edge-textbg')
+          .boundingBox())!;
+        expect(pill.y > source.y + source.height || pill.y + pill.height < source.y).toBe(true);
+      }
       await screenshot(page, info, `${name}-${theme}`);
     });
   }
