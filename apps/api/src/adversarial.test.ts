@@ -223,6 +223,46 @@ describe('adversarial API invariants', () => {
     await t.idle();
   });
 
+  const CLASSIFIER_SECRET_SCOPE_CASES = [
+    { scopes: ['settings:write'], status: 403 },
+    { scopes: ['settings:write', 'secrets:read'], status: 403 },
+    { scopes: ['secrets:write'], status: 403 },
+    { scopes: ['settings:read', 'secrets:write'], status: 403 },
+    { scopes: ['settings:write', 'secrets:write'], status: 200 },
+    { scopes: ['*'], status: 200 },
+  ];
+  it.each(CLASSIFIER_SECRET_SCOPE_CASES)(
+    'ADV-008: classifier PUT secretRef requires both write scopes (%j)',
+    async ({ scopes, status }) => {
+      const t = await app({ requireApiKey: true });
+      const key = await t.container.repos.apiKeys.create(
+        'local',
+        'conditional classifier scope',
+        scopes,
+      );
+      await t.container.repos.secretsFor('local').set('github-token', 'private-owner-secret');
+      const response = await t.app.inject({
+        method: 'PUT',
+        url: '/classifier-models/kev',
+        headers: { authorization: `Bearer ${key.token}` },
+        payload: {
+          provider: 'http',
+          displayName: 'Kev',
+          providerModel: 'kev',
+          primitives: ['choice'],
+          endpoint: 'http://127.0.0.1:8008',
+          secretRef: 'github-token',
+        },
+      });
+      expect(response.statusCode).toBe(status);
+      if (status === 403) {
+        expect(response.json()).toHaveProperty('code', 'FORBIDDEN');
+        expect(await t.container.repos.classifiers.findOne('local', 'kev')).toBeUndefined();
+      } else expect(response.json()).toMatchObject({ enabled: false, configured: true });
+      expect(response.body).not.toContain('private-owner-secret');
+    },
+  );
+
   it('ADV-008: local trusted mode keeps full access without a key', async () => {
     const t = await app();
     for (const url of ['/loops', '/runs', '/settings', '/secrets', '/api-keys', '/events']) {

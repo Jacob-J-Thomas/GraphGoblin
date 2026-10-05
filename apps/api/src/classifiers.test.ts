@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   LoopDefinitionSchema,
   type ClassifierModelSummary,
@@ -15,6 +15,7 @@ beforeEach(async () => {
   t = await createTestApp({ realClassifiers: true });
 });
 afterEach(async () => {
+  vi.unstubAllGlobals();
   await t.close();
 });
 const metadata = {
@@ -71,15 +72,70 @@ function decisionLoop(model?: string, fallback = true): LoopDefinitionInput {
 }
 
 describe('classifier catalog HTTP API', () => {
+  it('requires secrets:write to attach a secret and permits settings-only edits that clear it', async () => {
+    const fixture = await startFakeClassifierEndpoint();
+    try {
+      await t.container.repos.secretsFor('local').set('github-token', 'private-owner-token');
+      const limited = await t.container.repos.apiKeys.create('local', 'settings only', [
+        'settings:write',
+      ]);
+      const allowed = await t.container.repos.apiKeys.create('local', 'settings and secrets', [
+        'settings:write',
+        'secrets:write',
+      ]);
+      const put = (token: string, secretRef?: string) =>
+        t.app.inject({
+          method: 'PUT',
+          url: '/classifier-models/kev',
+          headers: { authorization: `Bearer ${token}` },
+          payload: { ...metadata, endpoint: fixture.endpoint, ...(secretRef ? { secretRef } : {}) },
+        });
+      expect(
+        (
+          await t.app.inject({
+            url: '/secrets',
+            headers: { authorization: `Bearer ${limited.token}` },
+          })
+        ).statusCode,
+      ).toBe(403);
+      const rejected = await put(limited.token, 'github-token');
+      expect(rejected.statusCode).toBe(403);
+      expect(rejected.json()).toHaveProperty('code', 'FORBIDDEN');
+      expect(await t.container.repos.classifiers.findOne('local', 'kev')).toBeUndefined();
+      expect(fixture.requests).toEqual([]);
+      expect((await put(allowed.token, 'github-token')).statusCode).toBe(200);
+      await toggle('kev', true);
+      const loopId = await t.publishLoop(decisionLoop('kev'));
+      const run = async () => {
+        await t.app.inject({ method: 'POST', url: `/loops/${loopId}/runs`, payload: {} });
+        await t.idle();
+      };
+      await run();
+      expect(fixture.requests[0]?.authorization).toBe('Bearer private-owner-token');
+      expect((await put(limited.token, 'github-token')).statusCode).toBe(403);
+      expect((await put(limited.token)).json()).toMatchObject({ enabled: true, configured: true });
+      expect(await t.container.repos.classifiers.findOne('local', 'kev')).not.toHaveProperty(
+        'secretRef',
+      );
+      await run();
+      expect(fixture.requests[1]?.authorization).toBeUndefined();
+    } finally {
+      await fixture.close();
+    }
+  });
   it('returns a configured/enabled distinction and protects builtin metadata', async () => {
     expect(await list()).toEqual([
       {
         ...BUILTIN_CLASSIFIER,
         configured: false,
-        configurationReason: "Missing or blank secret 'jev-api-key'",
+        configurationReason: "Missing or blank secret 'jev-api-key'. Set it in Settings, Secrets.",
       },
     ]);
     expect((await upsert('jev')).json()).toMatchObject({
+      code: 'CLASSIFIER_MANAGED_BY_SYSTEM',
+      status: 409,
+    });
+    expect((await upsert('jev', { invalid: 'metadata' })).json()).toMatchObject({
       code: 'CLASSIFIER_MANAGED_BY_SYSTEM',
       status: 409,
     });
@@ -139,6 +195,7 @@ describe('classifier catalog HTTP API', () => {
     { configured: true },
     { apiKey: 'key' },
     { endpoint: 'https://user:key@host' },
+    { endpoint: 'http://classifier.example', secretRef: 'required-key' },
     { primitives: ['choice', 'choice'] },
   ])('rejects invalid metadata with field paths %j', async (bad) => {
     const response = await t.app.inject({
@@ -154,6 +211,8 @@ describe('classifier catalog HTTP API', () => {
   });
   it('rejects invalid ids and enabled bodies', async () => {
     expect((await toggle('1bad', true)).statusCode).toBe(400);
+    for (const id of ['JEV', 'Jev', 'Kev']) expect((await upsert(id)).statusCode).toBe(400);
+    expect((await list()).map((model) => model.id)).toEqual(['jev']);
     for (const payload of [{}, { enabled: 'yes' }, { enabled: false, endpoint: 'http://host' }]) {
       expect(
         (await t.app.inject({ method: 'PATCH', url: '/classifier-models/jev', payload })).json(),
@@ -252,7 +311,7 @@ describe('classifier catalog HTTP API', () => {
       await t.container.onSecretChanged('local', 'kev-key');
       expect(await status()).toMatchObject({
         configured: false,
-        configurationReason: "Unreadable secret 'kev-key'",
+        configurationReason: "Unreadable secret 'kev-key'. Set it in Settings, Secrets.",
       });
       await t.app.inject({ method: 'DELETE', url: '/secrets/kev-key' });
       expect((await status()).configured).toBe(false);
@@ -265,6 +324,99 @@ describe('classifier catalog HTTP API', () => {
 });
 
 describe('classifier publish validation agreement', () => {
+  it.each(['disabled', 'missing', 'blank', 'unreadable', 'configured'])(
+    'reports built-in Jev exit predicate warnings on all five endpoints (%s)',
+    async (state) => {
+      if (state !== 'missing')
+        await t.container.repos
+          .secretsFor('local')
+          .set('jev-api-key', state === 'blank' ? ' ' : 'test-key');
+      if (state === 'disabled') await toggle('jev', false);
+      if (state === 'unreadable')
+        await t.container.handle.client.execute(
+          "UPDATE secrets SET ciphertext = 'broken' WHERE name = 'jev-api-key'",
+        );
+      const base = minimalLoop();
+      const definition: LoopDefinitionInput = {
+        ...base,
+        nodes: base.nodes.map((node) =>
+          node.kind === 'exit'
+            ? {
+                ...node,
+                config: {
+                  criteria: [
+                    {
+                      when: 'predicate',
+                      strategy: 'expression',
+                      jsonata: 'false',
+                      outcome: 'success',
+                    },
+                    { when: 'predicate', strategy: 'jev', question: 'Done?', outcome: 'success' },
+                  ],
+                },
+              }
+            : node,
+        ),
+      };
+      const created = await t.app.inject({
+        method: 'POST',
+        url: '/loops',
+        payload: { definition },
+      });
+      expect(created.statusCode, created.body).toBe(201);
+      const { loop, issues } = created.json<{ loop: { id: string }; issues: LoopIssue[] }>();
+      if (state === 'configured') expect(issues).toEqual([]);
+      else
+        expect(issues).toEqual([
+          expect.objectContaining({
+            code:
+              state === 'disabled'
+                ? 'CLASSIFIER_MODEL_DISABLED'
+                : state === 'unreadable'
+                  ? 'CLASSIFIER_SECRET_UNREADABLE'
+                  : 'CLASSIFIER_SECRET_MISSING',
+            severity: 'warning',
+            nodeId: 'done',
+            path: 'config.criteria.1.strategy',
+            message: expect.stringContaining("Exit 'Done' (done), classifier 'Jev' (jev)"),
+          }),
+        ]);
+      if (issues.length) {
+        expect(issues[0]?.message).toContain('DECIDER_UNAVAILABLE');
+        expect(issues[0]?.message).toContain(
+          state === 'disabled'
+            ? 'Enable it in Settings, Classifier models.'
+            : "secret 'jev-api-key'. Set it in Settings, Secrets.",
+        );
+      }
+      const saved = await t.app.inject({
+        method: 'PUT',
+        url: `/loops/${loop.id}/draft`,
+        payload: { definition },
+      });
+      const imported = await t.app.inject({
+        method: 'POST',
+        url: '/loops/import',
+        payload: {
+          format: 'graphgoblin-loop',
+          formatVersion: 1,
+          exportedAt: FIXTURE_TS,
+          loop: definition,
+        },
+      });
+      const validated = await t.app.inject({
+        method: 'POST',
+        url: `/loops/${loop.id}/validate`,
+        payload: { definition },
+      });
+      const published = await t.app.inject({ method: 'POST', url: `/loops/${loop.id}/publish` });
+      for (const response of [saved, imported, validated, published]) {
+        expect(response.statusCode, response.body).toBe(response === imported ? 201 : 200);
+        expect(response.json().issues).toEqual(issues);
+      }
+      expect(validated.json().publishable).toBe(true);
+    },
+  );
   it.each([
     'missing',
     'no-choice',
@@ -378,6 +530,81 @@ describe('classifier publish validation agreement', () => {
 });
 
 describe('classifier runtime hot reload', () => {
+  it.each([true, false])(
+    'lets an unknown HTTP label fall through, or exhaust the chain (fallback %s)',
+    async (fallback) => {
+      const fixture = await startFakeClassifierEndpoint();
+      fixture.respondWith(() => ({
+        body: {
+          answers: {
+            answer: { type: 'choice', choice: 'undeclared', probabilities: { yes: 0.8, no: 0.2 } },
+          },
+        },
+      }));
+      try {
+        await upsert('kev', { ...metadata, endpoint: fixture.endpoint });
+        await toggle('kev', true);
+        const loopId = await t.publishLoop(decisionLoop('kev', fallback));
+        const started = await t.app.inject({
+          method: 'POST',
+          url: `/loops/${loopId}/runs`,
+          payload: {},
+        });
+        const id = started.json().run.id as string;
+        await t.idle();
+        const run = await t.container.repos.runs.get(id);
+        if (fallback) {
+          expect(run).toMatchObject({ status: 'succeeded', result: 'no' });
+          expect(
+            (await t.container.repos.events.read(id)).find(
+              (event) => event.type === 'decision.made',
+            ),
+          ).toMatchObject({ route: 'no', strategy: 'expression' });
+        } else
+          expect(run).toMatchObject({
+            status: 'failed',
+            failure: {
+              code: 'DECISION_NO_ROUTE',
+              details: { tried: ['jev chose unknown route "undeclared"'] },
+            },
+          });
+      } finally {
+        await fixture.close();
+      }
+    },
+  );
+  it('passes the engine logger to the decision-time Jev SDK client', async () => {
+    const fetch = vi.fn(() =>
+      Promise.resolve(
+        new Response(
+          JSON.stringify({
+            answers: {
+              answer: { type: 'choice', choice: 'yes', probabilities: { yes: 1, no: 0 } },
+            },
+          }),
+          { headers: { 'content-type': 'application/json' } },
+        ),
+      ),
+    );
+    vi.stubGlobal('fetch', fetch);
+    await t.container.repos.secretsFor('local').set('jev-api-key', 'dummy-key');
+    const resolved = await t.container.classifierRegistry.resolve('local', 'jev');
+    expect(resolved.status).toBe('ready');
+    if (resolved.status !== 'ready') throw new Error('expected configured Jev');
+    await resolved.classifier.choose(
+      {
+        question: 'Choose',
+        options: [
+          { label: 'yes', description: 'Approve' },
+          { label: 'no', description: 'Reject' },
+        ],
+        context: {},
+      },
+      new AbortController().signal,
+    );
+    expect(fetch).toHaveBeenCalledOnce();
+    expect(t.logger.lines.some((entry) => entry.msg.startsWith('jev: '))).toBe(true);
+  });
   it('uses catalog/provider ids, updates secrets and metadata, preserves in-flight snapshots and falls through deleted/disabled published references', async () => {
     const fixture = await startFakeClassifierEndpoint();
     try {
@@ -497,7 +724,10 @@ describe('classifier runtime hot reload', () => {
     await t.idle();
     expect(await t.container.repos.runs.get(id)).toMatchObject({
       status: 'failed',
-      failure: { message: 'Classifier endpoint is unreachable' },
+      failure: {
+        message: 'Classifier endpoint is unreachable',
+        details: { code: 'DECIDER_UNREACHABLE' },
+      },
     });
     expect(
       (await t.container.repos.events.read(id)).some((event) => event.type === 'decision.made'),

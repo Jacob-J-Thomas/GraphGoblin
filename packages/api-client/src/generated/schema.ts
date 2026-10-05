@@ -1773,7 +1773,7 @@ export interface paths {
         get?: never;
         /**
          * Create or replace custom HTTP classifier metadata
-         * @description New entries start disabled; edits preserve enabled. Omitted secretRef clears authentication. Built-in Jev returns 409 CLASSIFIER_MANAGED_BY_SYSTEM.
+         * @description Requires settings:write, and secrets:write when secretRef is supplied. New entries start disabled; edits preserve enabled. Omitted secretRef clears authentication. Built-in Jev returns 409 CLASSIFIER_MANAGED_BY_SYSTEM.
          */
         put: {
             parameters: {

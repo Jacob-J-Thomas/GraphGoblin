@@ -4,7 +4,7 @@ import {
   type ClassifierModelEntry,
   type ClassifierModelPut,
 } from '@graphgoblin/contracts';
-import { and, eq } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 import type { Database } from './db.js';
 import { classifierModels } from './schema.js';
 
@@ -30,7 +30,7 @@ export class SqliteClassifierModels {
         .select()
         .from(classifierModels)
         .where(eq(classifierModels.ownerId, ownerId))
-        .orderBy(classifierModels.id)
+        .orderBy(desc(eq(classifierModels.source, 'builtin')), classifierModels.id)
     ).map(entry);
   }
 

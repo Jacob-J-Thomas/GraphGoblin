@@ -202,7 +202,7 @@ export async function createContainer(
       resolve: (name) => (migrated ? ownerSecrets.resolve(name) : Promise.resolve(undefined)),
     };
     const jev = createJevDecider({ secrets: jevSecrets, logger, secretName: JEV_SECRET });
-    const classifierRegistry = new ClassifierRegistry(classifiers, secretsFor);
+    const classifierRegistry = new ClassifierRegistry(classifiers, secretsFor, logger);
     let builtinEnabled = false;
     const refreshBuiltin = async (): Promise<void> => {
       builtinEnabled = (await classifiers.findOne(LOCAL_OWNER, 'jev'))?.enabled ?? false;

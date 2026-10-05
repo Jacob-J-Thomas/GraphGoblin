@@ -7,6 +7,7 @@ import {
 import { z } from 'zod';
 import type { Container } from '../container.js';
 import { problem } from '../plugins/errors.js';
+import { hasScope } from '../plugins/auth.js';
 import type { ApiInstance } from '../types.js';
 
 export function registerClassifierRoutes(app: ApiInstance, container: Container): void {
@@ -32,19 +33,28 @@ export function registerClassifierRoutes(app: ApiInstance, container: Container)
         tags: ['settings'],
         summary: 'Create or replace custom HTTP classifier metadata',
         description:
-          'New entries start disabled; edits preserve enabled. Omitted secretRef clears authentication. Built-in Jev returns 409 CLASSIFIER_MANAGED_BY_SYSTEM.',
+          'Requires settings:write, and secrets:write when secretRef is supplied. New entries start disabled; edits preserve enabled. Omitted secretRef clears authentication. Built-in Jev returns 409 CLASSIFIER_MANAGED_BY_SYSTEM.',
         params,
         body: ClassifierModelPutSchema,
         response,
       },
+      preValidation: async (request, reply) => {
+        if (request.params.id === 'jev')
+          return problem(
+            reply,
+            409,
+            'CLASSIFIER_MANAGED_BY_SYSTEM',
+            'Built-in Jev can only be enabled or disabled',
+          );
+      },
     },
     async (request, reply) => {
-      if (request.params.id === 'jev')
+      if (request.body.secretRef !== undefined && !hasScope(request.auth.scopes, 'secrets:write'))
         return problem(
           reply,
-          409,
-          'CLASSIFIER_MANAGED_BY_SYSTEM',
-          'Built-in Jev can only be enabled or disabled',
+          403,
+          'FORBIDDEN',
+          'Attaching a classifier secret requires the secrets:write scope',
         );
       const entry = await classifiers.upsert(request.auth.ownerId, request.params.id, request.body);
       await container.onClassifierChanged(request.auth.ownerId, entry.id);

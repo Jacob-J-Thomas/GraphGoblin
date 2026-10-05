@@ -43,7 +43,7 @@ describe('classifier contracts', () => {
     ).not.toHaveProperty('source');
     expect(ClassifierModelPatchSchema.parse({ enabled: true })).toEqual({ enabled: true });
   });
-  it.each(['', '1model', '../kev', 'kev/path', 'white space', 'x'.repeat(65)])(
+  it.each(['', 'JEV', 'Jev', 'Kev', '1model', '../kev', 'kev/path', 'white space', 'x'.repeat(65)])(
     'rejects invalid id %s',
     (id) => {
       expect(ClassifierModelIdSchema.safeParse(id).success).toBe(false);
@@ -67,10 +67,49 @@ describe('classifier contracts', () => {
     { endpoint: 'https://host?token=secret' },
     { endpoint: 'https://host/#fragment' },
     { endpoint: 'not a URL' },
+    { endpoint: 'https://host:0' },
+    { endpoint: 'https://host:000/api' },
+    { endpoint: 'https://host/v1/systemone' },
+    { endpoint: 'https://host/api/v1/systemone/' },
+    { endpoint: 'https://host/api path' },
+    { endpoint: 'https://host/api%20path' },
+    { endpoint: 'https://host/api%09path' },
+    { endpoint: 'https://host/api%zz' },
     { secretRef: '../key' },
     { secretRef: '' },
   ])('rejects unsafe/unsupported custom input %j', (change) => {
     expect(ClassifierModelPutSchema.safeParse({ ...metadata, ...change }).success).toBe(false);
+  });
+  it.each([
+    ['https://classifier.example/api', true],
+    ['http://localhost:9000', true],
+    ['http://127.0.0.1:9000', true],
+    ['http://127.200.30.4:9000/api', true],
+    ['http://[::1]:9000', true],
+    ['http://classifier.example/api', false],
+    ['http://192.168.1.1:9000', false],
+    ['http://localhost.example', false],
+    ['http://128.0.0.1', false],
+    ['http://[::ffff:127.0.0.1]', false],
+  ] as const)('requires TLS for authenticated non-loopback endpoints (%s)', (endpoint, valid) => {
+    const input = { ...metadata, endpoint };
+    const entry = { ...input, id: 'kev', source: 'custom', enabled: true };
+    for (const parsed of [
+      ClassifierModelPutSchema.safeParse(input),
+      ClassifierModelEntrySchema.safeParse(entry),
+      ClassifierModelSummarySchema.safeParse({ ...entry, configured: true }),
+    ]) {
+      expect(parsed.success).toBe(valid);
+      if (!parsed.success)
+        expect(parsed.error.issues).toContainEqual(
+          expect.objectContaining({
+            path: ['endpoint'],
+            message: expect.stringContaining('must use HTTPS'),
+          }),
+        );
+    }
+    const { secretRef: _ref, ...unauthenticated } = input;
+    expect(ClassifierModelPutSchema.safeParse(unauthenticated).success).toBe(true);
   });
   it('reserves Jev and enforces ownership/provider combinations', () => {
     for (const change of [{ id: 'jev' }, { provider: 'typesafe' }, { source: 'builtin' }]) {

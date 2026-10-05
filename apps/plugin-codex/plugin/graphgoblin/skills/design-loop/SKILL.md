@@ -34,6 +34,8 @@ Rules: node and edge ids are lowercase slugs and unique; every node has a `label
 
 Decision strategy `jev` optionally selects a classifier catalog id with `jev.model`; omission means the built-in `jev`. The `jev` block also supports `primitive: "choice"` and `minConfidence`. Inspect `/classifier-models` through REST when choosing an enabled entry supporting Choice; no classifier MCP tool is added. Explicit selections never substitute the built-in. Unknown ids or entries without Choice block publication. Disabled entries and missing/blank or unreadable required secrets warn that this strategy will be skipped; configure the model in Settings and its secret in Settings, Secrets, or add a later strategy. Low confidence also tries the next strategy. Exit predicates retain the built-in Jev Noul path and have no model selector.
 
+Jev Exit predicates receive the same enable/secret warnings at `config.criteria.<index>.strategy`; an unavailable predicate fails with `DECIDER_UNAVAILABLE` when evaluated. Classifier ids are lowercase. Registering an HTTP classifier with `secretRef` needs both `settings:write` and `secrets:write`; authenticated remote endpoints require HTTPS.
+
 Select the harness on each inference node with `config.harness` (default `codex`, the only
 supported harness). Loop `settings.defaults` contains only optional model and effort.
 Do not put a harness in loop defaults. Model and effort inherit from loop and owner defaults

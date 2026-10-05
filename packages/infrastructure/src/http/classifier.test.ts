@@ -40,7 +40,10 @@ async function endpoint(body: unknown = valid, status = 200, delay = false) {
       body: JSON.parse(text) as unknown,
     });
     if (delay) return;
-    res.writeHead(status, { 'content-type': 'application/json' });
+    res.writeHead(status, {
+      'content-type': 'application/json',
+      ...(status >= 300 && status < 400 ? { location: '/redirect-target' } : {}),
+    });
     res.end(typeof body === 'string' ? body : JSON.stringify(body));
   }
   server = createServer((req, res) => {
@@ -118,7 +121,6 @@ describe('HTTP Choice classifier', () => {
     '{broken',
     {},
     { answers: { answer: { type: 'noul' } } },
-    { answers: { answer: { ...valid.answers.answer, choice: 'other' } } },
     { answers: { answer: { ...valid.answers.answer, probabilities: { yes: 0.8 } } } },
     { answers: { answer: { ...valid.answers.answer, probabilities: { yes: 0.8, extra: 0.2 } } } },
     {
@@ -138,6 +140,52 @@ describe('HTTP Choice classifier', () => {
       ),
     ).rejects.toMatchObject({ code: 'DECIDER_INVALID_RESPONSE' });
   });
+  it.each([undefined, 0.7])(
+    'returns an unknown selection for handler fall-through (confidence %s)',
+    async (confidence) => {
+      const fixture = await endpoint({
+        answers: {
+          answer: {
+            ...valid.answers.answer,
+            choice: 'undeclared',
+            ...(confidence !== undefined ? { confidence } : {}),
+          },
+        },
+      });
+      const answer = await new HttpChoiceClassifier({
+        endpoint: fixture.url,
+        providerModel: 'kev',
+      }).choose(request, new AbortController().signal);
+      expect(answer).toEqual({
+        label: 'undeclared',
+        ...(confidence !== undefined ? { confidence } : {}),
+        alternatives: [
+          { label: 'yes', confidence: 0.8 },
+          { label: 'no', confidence: 0.2 },
+        ],
+      });
+    },
+  );
+  it.each([301, 302, 307, 308])(
+    'reports HTTP %i redirects without following or echoing the bearer',
+    async (status) => {
+      const fixture = await endpoint('private-test-key', status);
+      const error: unknown = await new HttpChoiceClassifier({
+        endpoint: fixture.url,
+        providerModel: 'kev',
+        bearer: 'private-test-key',
+      })
+        .choose(request, new AbortController().signal)
+        .catch((error: unknown) => error);
+      expect(error).toMatchObject({
+        code: 'DECIDER_REDIRECT',
+        status,
+        message: 'Classifier redirects are not followed',
+      });
+      expect(fixture.calls.map((call) => call.url)).toEqual(['/api/v1/systemone']);
+      expect(String(error)).not.toContain('private-test-key');
+    },
+  );
   it.each([
     [401, 'DECIDER_NOT_AUTHENTICATED'],
     [403, 'DECIDER_NOT_AUTHENTICATED'],

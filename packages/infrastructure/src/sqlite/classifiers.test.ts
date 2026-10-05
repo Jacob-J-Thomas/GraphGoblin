@@ -59,6 +59,15 @@ describe('classifier repository', () => {
       expect(edited).toMatchObject({ id: 'kev', enabled: true, displayName: 'Edited' });
       expect(edited).not.toHaveProperty('secretRef');
       expect(await repo.list('local')).toEqual([await repo.findOne('local', 'jev'), edited]);
+      for (const id of ['zebra', 'alpha', 'beta']) await repo.upsert('local', id, metadata);
+      expect((await repo.list('local')).map((model) => model.id)).toEqual([
+        'jev',
+        'alpha',
+        'beta',
+        'kev',
+        'zebra',
+      ]);
+      expect((await repo.list('other')).map((model) => model.id)).toEqual(['jev']);
       expect(await repo.findOne('other', 'kev')).toBeUndefined();
       expect(await repo.setEnabled('other', 'kev', false)).toBeUndefined();
       expect(await repo.delete('other', 'kev')).toBe(false);

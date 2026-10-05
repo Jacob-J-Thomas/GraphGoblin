@@ -7,7 +7,7 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 ### Added
 
 - Undo and redo in the loop editor: every change to the draft, from the toolbar's Undo and Redo buttons (named by the change they make) or with Ctrl+Z and Ctrl+Shift+Z or Ctrl+Y (Cmd+Z and Cmd+Shift+Z on a Mac) outside text fields. Typing in one field and one drag are one step each; an undo is saved like any edit; the editor keeps the last 100 steps until it reloads (#17).
-- Separate owner-scoped classifier model catalog, with built-in Jev and registered HTTP Choice endpoints. REST `GET /classifier-models` and `PUT`, `PATCH`, `DELETE /classifier-models/{id}` use settings scopes; api-client `classifierModels` wraps them. Configured status derives from usable referenced secrets without provider calls.
+- Separate owner-scoped classifier model catalog, with built-in Jev and registered HTTP Choice endpoints using lowercase ids. REST `GET /classifier-models` and `PUT`, `PATCH`, `DELETE /classifier-models/{id}` use settings scopes; PUT with `secretRef` additionally requires `secrets:write`. Authenticated endpoints require HTTPS except on loopback. api-client `classifierModels` wraps these routes. Configured status derives from usable referenced secrets without provider calls.
 - Optional Decision `jev.model` catalog selection, shared publish diagnostics, immutable runtime client snapshots with catalog/secret refresh, and `decision.made.classifierModel` provenance. Exit Noul keeps built-in Jev. Kev-4B owner serving/licence/protocol research is documented; model serving is external.
 
 ### Changed

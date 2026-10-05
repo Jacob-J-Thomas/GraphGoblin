@@ -44,7 +44,7 @@ Settings and catalog
   PUT    /model-catalog/{harness}/{model}  edit existing LiteLLM metadata (settings:write)
   DELETE /model-catalog/{harness}/{model}  remove a LiteLLM entry, 204 (settings:write)
   GET    /classifier-models             owner classifier summaries with configured/enabled (settings:read)
-  PUT    /classifier-models/{id}        create/replace custom HTTP metadata, 200 summary (settings:write)
+  PUT    /classifier-models/{id}        create/replace custom HTTP metadata, 200 summary (settings:write; also secrets:write with secretRef)
   PATCH  /classifier-models/{id}        exactly { enabled: boolean }, 200 summary (settings:write)
   DELETE /classifier-models/{id}        remove custom metadata, 204; preserve secrets/references (settings:write)
   GET    /harness/preflight             Codex installed and authenticated?
@@ -89,6 +89,8 @@ clients must remove the field before sending a definition (see the CHANGELOG upg
 - **Path ids**: resource ids in paths (loop, version, run, API key) must be ULIDs. A malformed id is a `400 VALIDATION_FAILED`, not a lookup that ends in `404`. Node names, signal names, secret names, model names, setting keys, artifact ids, and webhook tokens keep their own formats.
 - **Required keys** (`GG_REQUIRE_API_KEY=true`): every route outside the [public route list](#public-routes-decided-by-implementation-2026-10-03) needs a key. On the first 401 the web app asks for a key, keeps it in the browser's `localStorage`, and sends it on every request and event stream. Settings can forget it.
 - **Post-1.0**: an `AuthProvider` interface in `apps/api` with OIDC as the first hosted implementation. Every handler already receives an `ownerId` from the auth layer; in 1.0 it is always `local`.
+
+PUT `/classifier-models/{id}` also requires `secrets:write` when its validated body supplies `secretRef`, because the registered endpoint will receive that secret as a bearer. This additional check returns `403 FORBIDDEN` before persistence or secret resolution. `secrets:read` is insufficient; local trusted mode and `*` retain access. A settings-only metadata edit may omit `secretRef`, which clears authentication.
 
 ### Public routes (Decided by implementation, 2026-10-03)
 
@@ -201,9 +203,9 @@ PUT retains displayName, efforts, defaultEffort, and optional enabled (omitting 
 
 ### Classifier catalog (Decided, ADR-0021)
 
-`/classifier-models` shares the `settings` scope alias: GET needs `settings:read`; PUT/PATCH/DELETE need `settings:write`, checked before body parsing. Secret-read scope is not required to see configuration status. Entries expose id, displayName, source (`builtin`/`custom`), provider (`typesafe`/`http`), providerModel, unique nonempty primitives (`choice`, `noul`, `score`), endpoint, optional secretRef, and enabled. Summaries add configured and an optional configurationReason naming a missing/blank or unreadable secret. GET makes no provider request and does not establish reachability or valid provider authentication.
+`/classifier-models` shares the `settings` scope alias: GET needs `settings:read`; PUT/PATCH/DELETE need `settings:write`, checked before body parsing. PUT additionally requires `secrets:write` when the validated body carries `secretRef`; otherwise it returns `403 FORBIDDEN`. Trusted mode and `*` have both scopes. Secret-read scope is not required to see configuration status. Entries expose id, displayName, source (`builtin`/`custom`), provider (`typesafe`/`http`), providerModel, unique nonempty primitives (`choice`, `noul`, `score`), endpoint, optional secretRef, and enabled. Summaries add configured and an optional configurationReason naming a missing/blank or unreadable secret and the Settings, Secrets remedy. GET makes no provider request and does not establish reachability or valid provider authentication. GET orders built-in Jev first, then custom entries by id.
 
-PUT requires strict custom HTTP metadata, including provider `http`; it rejects id, source, enabled, status fields, and credentials in the body. Creation starts disabled; replacement preserves enabled and clears an omitted secretRef. PATCH accepts exactly enabled, even when a required secret is absent. Built-in `jev` is enable-only, seeded before recovery; restart refreshes managed metadata and preserves enabled. DELETE leaves secrets and published loop references intact. Classifier id syntax is `[A-Za-z][A-Za-z0-9_.-]{0,63}`. Endpoint roots require HTTP(S) with no credentials, query, or fragment; secretRef follows the Secrets name syntax.
+PUT requires strict custom HTTP metadata, including provider `http`; it rejects id, source, enabled, status fields, and credentials in the body. Creation starts disabled; replacement preserves enabled and clears an omitted secretRef. PATCH accepts exactly enabled, even when a required secret is absent. Built-in `jev` is enable-only, seeded before recovery; restart refreshes managed metadata and preserves enabled. DELETE leaves secrets and published loop references intact. Classifier id syntax is `[a-z][a-z0-9_.-]{0,63}`; uppercase variants are rejected. Endpoint roots require HTTP(S) with no credentials, query, fragment, whitespace, port 0, or terminal `/v1/systemone` path. Authenticated endpoints require HTTPS except on loopback (`localhost`, `127.0.0.0/8`, `[::1]`); secretRef follows the Secrets name syntax.
 
 | Code                           | HTTP | Meaning                                       |
 | ------------------------------ | ---- | --------------------------------------------- |
@@ -224,6 +226,8 @@ The API reads the catalog once per issue collection, next to subloop checks, and
 Known limitation: loop-default model warnings always check the Codex catalog, the only supported
 inference harness. Revisit this check when a second harness exists so a model inherited by nodes
 using different harnesses can be checked against each relevant catalog.
+
+Exit predicates whose strategy is `jev` check built-in Jev in the same five admission endpoints. They report `CLASSIFIER_MODEL_DISABLED`, `CLASSIFIER_SECRET_MISSING`, or `CLASSIFIER_SECRET_UNREADABLE` warnings at node-relative `config.criteria.<index>.strategy`, naming the exit, model, and Settings remedy. Warnings allow publication; if that unavailable predicate is evaluated, the exit fails with `DECIDER_UNAVAILABLE` rather than skipping it.
 
 ## Draft conflicts (Decided, WP-F2, ADR-0015)
 

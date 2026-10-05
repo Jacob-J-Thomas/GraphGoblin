@@ -36,7 +36,7 @@ export class HttpChoiceClassifier implements ClassifierPort {
     try {
       const response = await (this.options.fetch ?? fetch)(this.url, {
         method: 'POST',
-        redirect: 'error',
+        redirect: 'manual',
         headers: {
           'Content-Type': 'application/json',
           ...(this.options.bearer !== undefined
@@ -59,8 +59,10 @@ export class HttpChoiceClassifier implements ClassifierPort {
         }),
       });
       if (!response.ok) {
-        const code =
-          response.status === 401 || response.status === 403
+        const redirect = response.status >= 300 && response.status < 400;
+        const code = redirect
+          ? 'DECIDER_REDIRECT'
+          : response.status === 401 || response.status === 403
             ? 'DECIDER_NOT_AUTHENTICATED'
             : response.status === 429
               ? 'DECIDER_RATE_LIMITED'
@@ -69,7 +71,9 @@ export class HttpChoiceClassifier implements ClassifierPort {
         await response.body?.cancel();
         throw new HttpClassifierError(
           code,
-          `Classifier request failed (HTTP ${response.status})`,
+          redirect
+            ? 'Classifier redirects are not followed'
+            : `Classifier request failed (HTTP ${response.status})`,
           response.status,
         );
       }
@@ -98,18 +102,18 @@ export class HttpChoiceClassifier implements ClassifierPort {
     const { choice, confidence, probabilities } = parsed.data.answers.answer;
     const labels = new Set(request.options.map((option) => option.label));
     if (
-      !labels.has(choice) ||
       Object.keys(probabilities).length !== labels.size ||
       [...labels].some((label) => !Object.hasOwn(probabilities, label))
     ) {
       throw new HttpClassifierError(
         'DECIDER_INVALID_RESPONSE',
-        'Classifier must select a declared label and cover exactly the submitted labels',
+        'Classifier probabilities must cover exactly the submitted labels',
       );
     }
+    const selectedConfidence = confidence ?? probabilities[choice];
     return {
       label: choice,
-      confidence: confidence ?? probabilities[choice]!,
+      ...(selectedConfidence !== undefined ? { confidence: selectedConfidence } : {}),
       alternatives: Object.entries(probabilities)
         .filter(([label]) => label !== choice)
         .sort((a, b) => b[1] - a[1])

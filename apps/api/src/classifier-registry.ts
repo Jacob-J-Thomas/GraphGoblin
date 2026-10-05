@@ -4,6 +4,7 @@ import type {
   ClassifierPort,
   ClassifierRegistryPort,
   ClassifierResolution,
+  Logger,
   SecretsPort,
 } from '@graphgoblin/engine';
 import { HttpChoiceClassifier } from '@graphgoblin/infrastructure/http';
@@ -45,6 +46,7 @@ export class ClassifierRegistry implements ClassifierRegistryPort {
   constructor(
     private readonly repo: Pick<SqliteClassifierModels, 'findOne' | 'list'>,
     private readonly secretsFor: (ownerId: string) => SecretsPort,
+    private readonly logger: Logger,
   ) {}
 
   private async configuration(
@@ -59,13 +61,13 @@ export class ClassifierRegistry implements ClassifierRegistryPort {
         : {
             configured: false,
             reason: 'CLASSIFIER_SECRET_MISSING',
-            message: `Missing or blank secret '${entry.secretRef}'`,
+            message: `Missing or blank secret '${entry.secretRef}'. Set it in Settings, Secrets.`,
           };
     } catch {
       return {
         configured: false,
         reason: 'CLASSIFIER_SECRET_UNREADABLE',
-        message: `Unreadable secret '${entry.secretRef}'`,
+        message: `Unreadable secret '${entry.secretRef}'. Set it in Settings, Secrets.`,
       };
     }
   }
@@ -147,6 +149,7 @@ export class ClassifierRegistry implements ClassifierRegistryPort {
         ...(entry.secretRef !== undefined ? { secretName: entry.secretRef } : {}),
         baseUrl: entry.endpoint,
         model: entry.providerModel,
+        logger: this.logger,
       });
       await jev.init();
       classifier = jev;

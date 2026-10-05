@@ -58,6 +58,7 @@ function sources(overrides: Partial<PreflightSources> = {}): PreflightSources {
     harnesses: { codex: new FakeHarness() },
     pendingMigrations: () => Promise.resolve(0),
     jevKey: () => Promise.resolve('jev-key'),
+    jevEnabled: () => Promise.resolve(true),
     catalog: () => Promise.resolve(DEFAULT_MODEL_CATALOG),
     ...overrides,
   };
@@ -222,6 +223,11 @@ describe('runPreflight', () => {
   });
 
   it('only warns about Jev, and checks the default model against the catalog', async () => {
+    const disabledJev = await runPreflight(sources({ jevEnabled: () => Promise.resolve(false) }));
+    expect(byId(disabledJev, 'jev')).toMatchObject({
+      status: 'ok',
+      message: 'API key set (secret "jev-api-key") (disabled in Settings)',
+    });
     const noJev = await runPreflight(sources({ jevKey: () => Promise.resolve('  ') }));
     expect(noJev.ok).toBe(true);
     expect(byId(noJev, 'jev')).toMatchObject({ status: 'warn', message: /optional/ });
@@ -290,11 +296,13 @@ describe('graphgoblin-api --preflight', () => {
     });
     await container.start();
     await container.repos.secretsFor(LOCAL_OWNER).set(JEV_SECRET, 'k');
+    await container.repos.classifiers.setEnabled(LOCAL_OWNER, 'jev', false);
     await container.stop();
 
     const ready = await cli(env);
     expect(ready.code).toBe(0);
     expect(ready.out).toContain('0 failed, 0 warning(s)');
+    expect(ready.out).toContain('API key set (secret "jev-api-key") (disabled in Settings)');
 
     const harness = new FakeHarness();
     harness.preflightResult = { ok: false, authenticated: false, problems: ['not logged in'] };
@@ -383,6 +391,14 @@ describe('GET /system/preflight', () => {
       expect(byId(report, 'master-key')?.status).toBe('ok');
       expect(byId(report, 'jev')?.status).toBe('warn');
       expect(byId(report, 'default-model')?.status).toBe('ok');
+      await t.container.repos.secretsFor(LOCAL_OWNER).set(JEV_SECRET, 'key');
+      await t.app.inject({
+        method: 'PATCH',
+        url: '/classifier-models/jev',
+        payload: { enabled: false },
+      });
+      const disabled = (await t.app.inject('/system/preflight')).json<PreflightReport>();
+      expect(byId(disabled, 'jev')?.message).toContain('(disabled in Settings)');
     } finally {
       await t.close();
     }

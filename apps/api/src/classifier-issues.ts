@@ -1,7 +1,7 @@
 import type { LoopDefinition, LoopIssue } from '@graphgoblin/contracts';
 import type { Container } from './container.js';
 
-/** Shared by every definition admission endpoint; paths are relative to the decision node. */
+/** Shared by every definition admission endpoint; paths are relative to the node. */
 export async function classifierIssues(
   container: Container,
   ownerId: string,
@@ -10,52 +10,80 @@ export async function classifierIssues(
   const entries = await container.repos.classifiers.list(ownerId);
   const issues: LoopIssue[] = [];
   for (const node of definition.nodes) {
-    if (node.kind !== 'decision' || !node.config.strategy.includes('jev')) continue;
-    const id = node.config.jev?.model ?? 'jev';
-    const entry = entries.find((model) => model.id === id);
-    const prefix = `Decision '${node.label}' (${node.id}), classifier '${entry?.displayName ?? id}' (${id})`;
-    const skipped =
-      node.config.strategy.length === 1
-        ? '; this strategy will be skipped and the decision cannot currently produce a route.'
-        : '; this strategy will be skipped.';
-    const add = (code: string, severity: 'error' | 'warning', message: string) => {
-      issues.push({
-        code,
-        severity,
-        nodeId: node.id,
-        path: 'config.jev.model',
-        message: `${prefix}: ${message}`,
-      });
-    };
-    if (!entry) {
-      add(
-        'CLASSIFIER_MODEL_NOT_FOUND',
-        'error',
-        'model not found. Register it in Settings, Classifier models, or select an existing model.',
-      );
-      continue;
+    const selections: {
+      id: string;
+      primitive: 'choice' | 'noul';
+      path: string;
+      kind: string;
+      unavailable: string;
+    }[] =
+      node.kind === 'decision' && node.config.strategy.includes('jev')
+        ? [
+            {
+              id: node.config.jev?.model ?? 'jev',
+              primitive: 'choice',
+              path: 'config.jev.model',
+              kind: 'Decision',
+              unavailable:
+                node.config.strategy.length === 1
+                  ? 'This strategy will be skipped and the decision cannot currently produce a route.'
+                  : 'This strategy will be skipped.',
+            },
+          ]
+        : node.kind === 'exit'
+          ? node.config.criteria.flatMap((criterion, index) =>
+              criterion.when === 'predicate' && criterion.strategy === 'jev'
+                ? [
+                    {
+                      id: 'jev',
+                      primitive: 'noul',
+                      path: `config.criteria.${index}.strategy`,
+                      kind: 'Exit',
+                      unavailable:
+                        'This predicate cannot run; the exit will fail with DECIDER_UNAVAILABLE when it is evaluated.',
+                    },
+                  ]
+                : [],
+            )
+          : [];
+    for (const selection of selections) {
+      const { id, path, kind, primitive, unavailable } = selection;
+      const entry = entries.find((model) => model.id === id);
+      const prefix = `${kind} '${node.label}' (${node.id}), classifier '${entry?.displayName ?? id}' (${id})`;
+      const add = (code: string, severity: 'error' | 'warning', message: string) => {
+        issues.push({
+          code,
+          severity,
+          nodeId: node.id,
+          path,
+          message: `${prefix}: ${message}`,
+        });
+      };
+      if (!entry) {
+        add(
+          'CLASSIFIER_MODEL_NOT_FOUND',
+          'error',
+          'model not found. Register it in Settings, Classifier models, or select an existing model.',
+        );
+        continue;
+      }
+      if (!entry.primitives.includes(primitive)) {
+        add(
+          'CLASSIFIER_PRIMITIVE_UNSUPPORTED',
+          'error',
+          `${primitive === 'choice' ? 'Choice' : 'Noul'} is not supported. Select a compatible classifier or edit its capabilities in Settings, Classifier models.`,
+        );
+        continue;
+      }
+      if (!entry.enabled)
+        add(
+          'CLASSIFIER_MODEL_DISABLED',
+          'warning',
+          `model is disabled. Enable it in Settings, Classifier models. ${unavailable}`,
+        );
+      const { summary, issue } = await container.classifierRegistry.inspect(ownerId, entry);
+      if (issue) add(issue, 'warning', `${summary.configurationReason} ${unavailable}`);
     }
-    if (!entry.primitives.includes('choice')) {
-      add(
-        'CLASSIFIER_PRIMITIVE_UNSUPPORTED',
-        'error',
-        'Choice is not supported. Select a Choice classifier or edit its capabilities in Settings, Classifier models.',
-      );
-      continue;
-    }
-    if (!entry.enabled)
-      add(
-        'CLASSIFIER_MODEL_DISABLED',
-        'warning',
-        `model is disabled. Enable it in Settings, Classifier models${skipped}`,
-      );
-    const { summary, issue } = await container.classifierRegistry.inspect(ownerId, entry);
-    if (issue)
-      add(
-        issue,
-        'warning',
-        `${summary.configurationReason}. Set it in Settings, Secrets${skipped}`,
-      );
   }
   return issues;
 }

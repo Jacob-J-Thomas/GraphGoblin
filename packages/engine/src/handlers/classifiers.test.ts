@@ -142,6 +142,7 @@ describe('classifier selection through the executor', () => {
     expect((await e.runToIdle(throws.loopId)).failure).toMatchObject({
       code: 'INTERNAL_ERROR',
       message: 'provider failed',
+      details: { code: 'DECIDER_HTTP_ERROR', name: 'Error', stack: expect.any(String) },
     });
   });
   it('passes executor cancellation to the selected provider', async () => {
