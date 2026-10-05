@@ -20,6 +20,39 @@ import { createFakePorts, DEFAULT_TEST_SETTINGS } from './testing/fakes.js';
 import { createInitialThread } from './thread.js';
 
 describe('a minimal run', () => {
+  it.each(['DECIDER_HTTP_ERROR', 'DECIDER_private-marker'])(
+    'guards raw coded exceptions at the manager boundary (%s)',
+    async (code) => {
+      const engine = await createTestEngine();
+      engine.ports.scripts.run = () =>
+        Promise.reject(
+          Object.assign(new Error('private-marker'), { code, name: 'private-marker', status: 400 }),
+        );
+      const version = engine.publish(
+        singleNodeLoop('raw-provider-error', {
+          id: 'script',
+          kind: 'script',
+          label: 'Script',
+          config: { command: 'unused' },
+        }),
+      );
+      const run = await engine.runToIdle(version.loopId);
+      expect(run.failure).toMatchObject({
+        code: 'INTERNAL_ERROR',
+        message: 'Decision provider request failed',
+        details: { code: code === 'DECIDER_HTTP_ERROR' ? code : 'DECIDER_ERROR' },
+      });
+      expect(JSON.stringify([run, engine.events(run.id), engine.ports.logger.lines])).not.toContain(
+        'private-marker',
+      );
+      expect(engine.ports.logger.lines).toContainEqual(
+        expect.objectContaining({
+          level: 'warn',
+          obj: expect.objectContaining({ name: 'Error', status: 400 }),
+        }),
+      );
+    },
+  );
   it('runs trigger to exit and records the expected events', async () => {
     const engine = await createTestEngine();
     const version = engine.publish(minimalLoop());
