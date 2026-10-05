@@ -1,18 +1,9 @@
-import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { FakeApi, problem, TS } from '../__fixtures__/fake-api.js';
 import { renderApp } from '../__fixtures__/render.js';
 import { useApiKeyStore } from '../api/api-key.js';
-
-// The API key store is module state that outlives each test's app, so reset it here, and unmount
-// first: changing the key while the app is mounted refetches every query, and a refetch answered
-// 401 without a key marks the store rejected again. The next test would then render the API key
-// panel, which takes focus as soon as no dialog is open.
-afterEach(() => {
-  cleanup();
-  useApiKeyStore.getState().forget();
-});
 
 function seeded(source: 'harness' | 'litellm' = 'harness'): FakeApi {
   const api = new FakeApi();
