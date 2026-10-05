@@ -109,6 +109,12 @@ describe('EditorPage undo and redo', () => {
     expect(within(dialog).getByLabelText('Subtype')).toHaveDisplayValue('manual');
     await user.keyboard(REDO);
     expect(within(dialog).getByLabelText('Subtype')).toHaveDisplayValue('cron');
+    // From the select itself: it has no text to undo, so the editor's undo applies, and focus
+    // stays on the (remounted) select.
+    act(() => within(dialog).getByLabelText('Subtype').focus());
+    await user.keyboard(UNDO);
+    expect(within(dialog).getByLabelText('Subtype')).toHaveDisplayValue('manual');
+    expect(within(dialog).getByLabelText('Subtype')).toHaveFocus();
     await user.click(within(dialog).getByRole('button', { name: 'Done' }));
 
     const settings = store().definition!.settings;
@@ -166,6 +172,46 @@ describe('EditorPage undo and redo', () => {
     await user.keyboard(UNDO);
     expect(within(dialog).getByLabelText('Node id')).toHaveValue('done');
     expect(within(dialog).queryByText(/Use a letter first/)).toBeNull();
+  });
+
+  it('undoes a Discard text made right after the typing, from the field or the badge', async () => {
+    const user = userEvent.setup();
+    await openEditor();
+    await user.click(screen.getByRole('button', { name: 'Add Wait node' }));
+    const dialog = await editNode('start', 'Edit trigger start');
+    const badge = () => within(dialog).queryByRole('button', { name: '1 issue on start' });
+
+    // The field's own Discard, within a second of the typing.
+    setCode('Input schema', '{"type": ');
+    await user.click(await within(dialog).findByRole('button', { name: 'Discard text' }));
+    await waitFor(() => expect(badge()).toBeNull());
+    expect(store().past.map((step) => step.label)).toEqual([
+      'add wait',
+      'edit config of start',
+      'discard text in inputSchema of start',
+    ]);
+    focusDone(dialog);
+    await user.keyboard(UNDO);
+    expect(getCode('Input schema')).toBe('{"type": ');
+    expect(badge()).toBeVisible();
+    expect(screen.getByTestId('node-wait')).toBeInTheDocument();
+    await user.keyboard(REDO);
+    expect(store().fieldErrors).toEqual({});
+    expect(badge()).toBeNull();
+    expect(getCode('Input schema')).not.toContain('"type"');
+
+    // The badge popover's Discard is a step of its own too.
+    setCode('Input schema', '[1, ');
+    await user.click(await within(dialog).findByRole('button', { name: '1 issue on start' }));
+    await user.click(screen.getByRole('button', { name: 'Discard unparsed text at inputSchema' }));
+    await waitFor(() => expect(badge()).toBeNull());
+    expect(store().past.at(-1)!.label).toBe('discard text in inputSchema of start');
+    focusDone(dialog);
+    await user.keyboard(UNDO);
+    expect(getCode('Input schema')).toBe('[1, ');
+    expect(badge()).toBeVisible();
+    await user.keyboard(REDO);
+    expect(badge()).toBeNull();
   });
 
   it('takes unparsed text back and forth with the step that typed it', async () => {

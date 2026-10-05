@@ -74,10 +74,33 @@ describe('platform and keys', () => {
     expect(historyShortcut(press({ key: 'z', ctrlKey: true }), true)).toBeUndefined();
   });
 
-  it('leaves form controls and text editors to their own undo', () => {
+  const TEXT_TYPES = [
+    'text',
+    'search',
+    'url',
+    'email',
+    'password',
+    'number',
+    'tel',
+    'date',
+    'datetime-local',
+    'month',
+    'week',
+    'time',
+  ];
+  const OTHER_TYPES = ['checkbox', 'radio', 'range', 'color', 'file', 'button', 'submit', 'reset'];
+
+  it('leaves text editors to their own undo, and nothing else', () => {
     const { container } = render(
       <div>
-        <input aria-label="text" />
+        <input aria-label="untyped" />
+        {[...TEXT_TYPES, ...OTHER_TYPES].map((type) => (
+          <input key={type} type={type} aria-label={`${type} input`} />
+        ))}
+        <input type="checkbox" role="switch" aria-label="switch input" />
+        <button type="button" role="switch" aria-checked="false">
+          Switch button
+        </button>
         <textarea aria-label="area" />
         <select aria-label="pick" />
         <div contentEditable suppressContentEditableWarning data-testid="editable">
@@ -90,13 +113,19 @@ describe('platform and keys', () => {
         <button type="button">Press</button>
       </div>,
     );
-    for (const label of ['text', 'area', 'pick']) {
-      expect(isEditableTarget(screen.getByLabelText(label))).toBe(true);
+    // Text-entry inputs, textareas, content-editable elements, and CodeMirror keep the keys.
+    for (const label of ['untyped', 'area', ...TEXT_TYPES.map((type) => `${type} input`)]) {
+      expect(isEditableTarget(screen.getByLabelText(label)), label).toBe(true);
     }
     expect(isEditableTarget(screen.getByTestId('inside'))).toBe(true);
     expect(isEditableTarget(screen.getByTestId('code'))).toBe(true);
+    // Choices, switches, selects, and buttons have no text to undo: the editor's undo applies.
+    for (const label of ['pick', 'switch input', ...OTHER_TYPES.map((type) => `${type} input`)]) {
+      expect(isEditableTarget(screen.getByLabelText(label)), label).toBe(false);
+    }
+    expect(isEditableTarget(screen.getByRole('switch', { name: 'Switch button' }))).toBe(false);
     expect(isEditableTarget(screen.getByTestId('not-editable'))).toBe(false);
-    expect(isEditableTarget(screen.getByRole('button'))).toBe(false);
+    expect(isEditableTarget(screen.getByRole('button', { name: 'Press' }))).toBe(false);
     expect(isEditableTarget(container)).toBe(false);
     expect(isEditableTarget(document)).toBe(false);
     expect(isEditableTarget(null)).toBe(false);
@@ -107,6 +136,8 @@ describe('platform and keys', () => {
 function Harness({ apple = false, children }: { apple?: boolean; children?: ReactNode }) {
   useUndoShortcuts(apple);
   const epoch = useEditorStore((s) => s.historyEpoch);
+  // The loop's name stands for a value the form shows: "a" or "b".
+  const name = useEditorStore((s) => s.definition?.name);
   return (
     <>
       <section aria-labelledby="panel-heading">
@@ -118,7 +149,23 @@ function Harness({ apple = false, children }: { apple?: boolean; children?: Reac
             <button type="button">Add item</button>
             <input aria-label="Item" />
           </div>
+          <fieldset data-field="flags">
+            <input type="checkbox" aria-label="Flag one" />
+            <input type="checkbox" aria-label="Flag two" />
+            <input type="checkbox" role="switch" aria-label="Flag switch" />
+          </fieldset>
+          <fieldset data-field="choice">
+            <input type="radio" name="choice" aria-label="Choice a" defaultChecked={name === 'a'} />
+            <input type="radio" name="choice" aria-label="Choice b" defaultChecked={name === 'b'} />
+          </fieldset>
+          <div data-field="pick">
+            <select aria-label="Pick" defaultValue={name}>
+              <option value="a">a</option>
+              <option value="b">b</option>
+            </select>
+          </div>
           <button type="button">Loose button</button>
+          {name === 'b' ? <button type="button">Last in panel</button> : null}
         </div>
       </section>
       <div key={`outside-${epoch}`}>
@@ -126,6 +173,9 @@ function Harness({ apple = false, children }: { apple?: boolean; children?: Reac
       </div>
       <div data-editor-canvas="" tabIndex={-1} data-testid="canvas" />
       {children}
+      <div key={`end-${epoch}`}>
+        {name === 'b' ? <button type="button">Last on page</button> : null}
+      </div>
     </>
   );
 }
@@ -182,29 +232,103 @@ describe('useUndoShortcuts', () => {
     const undoKey = () =>
       keydown(document.activeElement ?? document.body, { key: 'z', ctrlKey: true });
 
-    // A button inside a field: focus moves to the same field of the new form.
+    // A button inside a field: focus moves to the same control of the new form.
     act(() => screen.getByRole('button', { name: 'Add item' }).focus());
     undoKey();
     expect(store().definition!.name).toBe('a');
-    expect(screen.getByLabelText('Item')).toHaveFocus();
+    expect(screen.getByRole('button', { name: 'Add item' })).toHaveFocus();
 
-    // Outside any field: the heading of the panel it was in.
-    store().redo();
+    // Outside any field: the control in the same place of what stayed (the panel, the page).
+    act(() => store().redo());
     act(() => screen.getByRole('button', { name: 'Loose button' }).focus());
     undoKey();
+    expect(screen.getByRole('button', { name: 'Loose button' })).toHaveFocus();
+    act(() => store().redo());
+    act(() => screen.getByRole('button', { name: 'Unlabelled area' }).focus());
+    undoKey();
+    expect(screen.getByRole('button', { name: 'Unlabelled area' })).toHaveFocus();
+
+    // A control the undo removed, with nothing in its place: the panel's heading.
+    act(() => store().redo());
+    act(() => screen.getByRole('button', { name: 'Last in panel' }).focus());
+    undoKey();
+    expect(screen.queryByRole('button', { name: 'Last in panel' })).toBeNull();
     expect(screen.getByRole('heading', { name: 'Panel' })).toHaveFocus();
 
     // Nowhere named: the canvas.
-    store().redo();
-    act(() => screen.getByRole('button', { name: 'Unlabelled area' }).focus());
+    act(() => store().redo());
+    act(() => screen.getByRole('button', { name: 'Last on page' }).focus());
     undoKey();
+    expect(screen.queryByRole('button', { name: 'Last on page' })).toBeNull();
     expect(screen.getByTestId('canvas')).toHaveFocus();
 
     // Focus on something that stays: it stays.
-    store().redo();
+    act(() => store().redo());
     undoKey();
     expect(screen.getByTestId('canvas')).toHaveFocus();
     expect(store().definition!.name).toBe('a');
+  });
+
+  it('undoes from a checkbox, a switch, a radio, or a select, keeping focus in place', () => {
+    render(<Harness />);
+    const undoFrom = (label: string) => {
+      const control = screen.getByLabelText(label);
+      act(() => control.focus());
+      return keydown(control, { key: 'z', ctrlKey: true });
+    };
+    const redoFrom = (label: string) =>
+      keydown(screen.getByLabelText(label), { key: 'y', ctrlKey: true });
+
+    // The second checkbox of a group: focus goes to the second checkbox of the new form.
+    expect(undoFrom('Flag two')).toBe(false);
+    expect(store().definition!.name).toBe('a');
+    expect(screen.getByLabelText('Flag two')).toHaveFocus();
+    redoFrom('Flag two');
+    expect(store().definition!.name).toBe('b');
+    undoFrom('Flag switch');
+    expect(store().definition!.name).toBe('a');
+    expect(screen.getByLabelText('Flag switch')).toHaveFocus();
+    redoFrom('Flag switch');
+
+    // A radio group whose choice the undo changed: the newly checked radio takes focus.
+    expect(screen.getByLabelText('Choice b')).toBeChecked();
+    undoFrom('Choice b');
+    expect(store().definition!.name).toBe('a');
+    expect(screen.getByLabelText('Choice a')).toBeChecked();
+    expect(screen.getByLabelText('Choice a')).toHaveFocus();
+    redoFrom('Choice a');
+    expect(screen.getByLabelText('Choice b')).toHaveFocus();
+
+    // A select: the select of the new form, showing the restored value.
+    undoFrom('Pick');
+    expect(store().definition!.name).toBe('a');
+    expect(screen.getByLabelText('Pick')).toHaveFocus();
+    expect(screen.getByLabelText('Pick')).toHaveValue('a');
+  });
+
+  it('falls back to the field’s first control when the same place is gone', () => {
+    /** A field whose second button exists only while the loop is named "b". */
+    function Shrinking() {
+      const epoch = useEditorStore((s) => s.historyEpoch);
+      const name = useEditorStore((s) => s.definition?.name);
+      return (
+        <section key={epoch} data-testid="shrinking">
+          <div data-field="rows">
+            <button type="button">Row one</button>
+            {name === 'b' ? <button type="button">Row two</button> : null}
+          </div>
+        </section>
+      );
+    }
+    render(
+      <Harness>
+        <Shrinking />
+      </Harness>,
+    );
+    act(() => screen.getByRole('button', { name: 'Row two' }).focus());
+    keydown(screen.getByRole('button', { name: 'Row two' }), { key: 'z', ctrlKey: true });
+    expect(screen.queryByRole('button', { name: 'Row two' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Row one' })).toHaveFocus();
   });
 
   it('leaves focus where a closing component put it', () => {

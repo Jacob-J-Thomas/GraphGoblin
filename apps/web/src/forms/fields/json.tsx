@@ -76,10 +76,10 @@ export function JsonText({
             size="sm"
             variant="ghost"
             onClick={() => {
-              // Back to the last valid value; the typed text is dropped.
-              const restored = prettyJson(value);
-              setText(restored);
-              fail(restored, undefined);
+              // Back to the last valid value; the typed text is dropped (an undo step of its own).
+              setText(prettyJson(value));
+              parseErrors.discard(path);
+              setError(undefined);
             }}
           >
             Discard text

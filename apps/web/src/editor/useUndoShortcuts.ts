@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { flushSync } from 'react-dom';
 import { canvasFocusTarget } from './canvas-focus.js';
-import { focusField } from './focus-field.js';
+import { focusableIn, focusField, groupFocus } from './focus-field.js';
 import { useEditorStore } from './store.js';
 
 export type HistoryDirection = 'undo' | 'redo';
@@ -46,20 +46,36 @@ export function historyShortcut(
   return undefined;
 }
 
-const EDITABLE = [
-  'input',
+/** Input types whose text the browser edits, and so undoes, itself. */
+const TEXT_INPUTS = new Set([
+  'text',
+  'search',
+  'url',
+  'email',
+  'password',
+  'number',
+  'tel',
+  'date',
+  'datetime-local',
+  'month',
+  'week',
+  'time',
+]);
+
+const TEXT_EDITORS = [
   'textarea',
-  'select',
   '[contenteditable]:not([contenteditable="false"])',
   '.cm-editor',
 ].join(',');
 
 /**
- * Whether a key press comes from a form control or a text editor, which keep their own undo (or
- * have none): text fields, selects, content-editable elements, and CodeMirror.
+ * Whether a key press comes from a text editor, which keeps its own undo of the text: a text-entry
+ * input, a textarea, a content-editable element, or CodeMirror. Checkboxes, radios, switches,
+ * selects, and buttons have no text to undo, so the editor's undo applies there.
  */
 export function isEditableTarget(target: EventTarget | null): boolean {
-  return target instanceof Element && target.closest(EDITABLE) !== null;
+  if (target instanceof HTMLInputElement) return TEXT_INPUTS.has(target.type);
+  return target instanceof Element && target.closest(TEXT_EDITORS) !== null;
 }
 
 /** The focusable heading that names the nearest dialog or panel around `element`, if any. */
@@ -71,22 +87,89 @@ function namingHeading(element: Element): HTMLElement | null {
 }
 
 /**
+ * What a control is, as far as a remounted copy of it can tell: its element, type, role, and
+ * name (its `aria-label`, else its label's text, else its own text). Ids are generated per mount,
+ * so they cannot say it.
+ */
+function identity(el: HTMLElement): string {
+  const labels = 'labels' in el ? (el as HTMLInputElement).labels : null;
+  const name = el.getAttribute('aria-label') ?? labels?.[0]?.textContent ?? el.textContent;
+  const type = el.getAttribute('type') ?? '';
+  return `${el.tagName}|${type}|${el.getAttribute('role') ?? ''}|${(name ?? '').trim()}`;
+}
+
+/** Where a control sits among the focusable controls of a part of the page. */
+interface Whereabouts {
+  identity: string;
+  /** Which of the controls with the same identity it is. */
+  nth: number;
+  /** Its place among all of them. */
+  place: number;
+}
+
+function whereabouts(control: HTMLElement, scope: Element): Whereabouts {
+  const all = focusableIn(scope);
+  const id = identity(control);
+  const same = all.filter((el) => identity(el) === id);
+  return { identity: id, nth: same.indexOf(control), place: all.indexOf(control) };
+}
+
+/**
+ * The control in `scope` that stands where the old one did: the same control (by identity, the
+ * last of its kind when there are fewer now), else, with `byPlace`, whatever is in its place now.
+ */
+function findAgain(scope: Element, where: Whereabouts, byPlace: boolean): HTMLElement | undefined {
+  const all = focusableIn(scope);
+  const same = all.filter((el) => identity(el) === where.identity);
+  return same[Math.min(where.nth, same.length - 1)] ?? (byPlace ? all[where.place] : undefined);
+}
+
+/**
  * Undo or redo one step, keeping keyboard focus where the user was. The forms that keep their own
- * state remount with the restored values, so a control focused inside one (a button, say) is
- * replaced: focus moves to the same field of the new form, else to the heading of the dialog or
- * panel it was in, else to the canvas.
+ * state remount with the restored values, so a control focused inside one (a checkbox, a select,
+ * a button) is replaced. Focus moves to the same control in the same field of the new form (else
+ * to whatever is in its place, else to the field's first control); outside any field, to the same
+ * control in the part of the page that stayed; failing those, to the heading of the dialog or
+ * panel it was in, else to the canvas. A radio stands for its group's checked radio. The same
+ * control is the one with the same element, type, role, and name, counted among its namesakes.
  */
 export function runHistory(direction: HistoryDirection): void {
   const before = document.activeElement;
-  const field = before?.closest('[data-field]')?.getAttribute('data-field') ?? undefined;
-  const ancestors: Element[] = [];
-  for (let el = before?.parentElement; el; el = el.parentElement) ancestors.push(el);
+  const control = before instanceof HTMLElement && before !== document.body ? before : undefined;
+  const field = control?.closest('[data-field]');
+  const path = field?.getAttribute('data-field') ?? undefined;
+  const inField = field && control ? whereabouts(control, field) : undefined;
+  // The innermost element around the control that survives the remount is only known afterwards.
+  const around: { element: Element; where: Whereabouts }[] = [];
+  if (control) {
+    for (let el = control.parentElement; el && el !== document.body; el = el.parentElement) {
+      around.push({ element: el, where: whereabouts(control, el) });
+    }
+  }
   flushSync(() => useEditorStore.getState()[direction]());
-  if (!before || before.isConnected) return;
+  if (!control || control.isConnected) return;
   // Something already placed focus (a node editor that closed returns it to the canvas).
   if (document.activeElement && document.activeElement !== document.body) return;
-  const anchor = ancestors.find((el) => el.isConnected);
-  if (anchor && field !== undefined && focusField(anchor, field)) return;
+  const kept = around.find(({ element }) => element.isConnected);
+  const anchor = kept?.element;
+  if (anchor && path !== undefined && inField) {
+    const again = [...anchor.querySelectorAll('[data-field]')].find(
+      (el) => el.getAttribute('data-field') === path,
+    );
+    const target = again ? findAgain(again, inField, true) : undefined;
+    if (again && target) {
+      groupFocus(target, again).focus();
+      return;
+    }
+    if (focusField(anchor, path)) return;
+  }
+  // Outside a field only the same control will do: a node card an undo removed is not replaced by
+  // its neighbour.
+  const target = kept ? findAgain(kept.element, kept.where, false) : undefined;
+  if (anchor && target) {
+    groupFocus(target, anchor).focus();
+    return;
+  }
   const fallback =
     (anchor ? namingHeading(anchor) : null) ??
     canvasFocusTarget(useEditorStore.getState().selectedNodeId);

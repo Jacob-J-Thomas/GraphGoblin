@@ -22,6 +22,9 @@ describe('UndoRedo', () => {
     }
     expect(undo).toHaveAttribute('title', 'Undo');
     expect(undo).toHaveAttribute('aria-keyshortcuts', 'Control+Z');
+    // 32 px for a mouse, 44 px for a coarse pointer (the size is checked in e2e/undo.spec.ts).
+    for (const button of [undo, redo])
+      expect(button).toHaveClass('size-8', 'pointer-coarse:size-11');
     expect(redo).toHaveAttribute('aria-keyshortcuts', 'Control+Shift+Z Control+Y');
     // Pressing a button with nothing to do does nothing.
     await user.click(undo);

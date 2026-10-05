@@ -352,6 +352,46 @@ describe('undo and redo', () => {
     expect(store().fieldErrors).toEqual({ 'node:start': { inputSchema: unparsed } });
   });
 
+  it('keeps a discard of unparsed text as a step of its own, however soon it follows the typing', () => {
+    store().load('L1', newLoopDefinition('a'));
+    store().addNode('wait', { x: 0, y: 0 });
+    pause();
+    store().setFieldError('node:start', 'inputSchema', unparsed);
+    // Discarded at once: still its own step, so the typing step is not dropped with it.
+    store().setFieldError('node:start', 'inputSchema', undefined, 'discard');
+    expect(store().past.map((entry) => entry.label)).toEqual([
+      'add wait',
+      'edit config of start',
+      'discard text in inputSchema of start',
+    ]);
+    store().undo();
+    expect(store().fieldErrors).toEqual({ 'node:start': { inputSchema: unparsed } });
+    expect(node('wait')).toBeDefined();
+    store().redo();
+    expect(store().fieldErrors).toEqual({});
+    // Typing right after a discard starts a new step too; the loop's forms name their scope.
+    store().setFieldError('settings', 'defaults', unparsed);
+    store().setFieldError('settings', 'defaults', undefined, 'discard');
+    store().setFieldError('variables', 'variables.n', unparsed);
+    store().setFieldError('variables', 'variables.n', undefined, 'discard');
+    expect(
+      store()
+        .past.slice(-4)
+        .map((entry) => entry.label),
+    ).toEqual([
+      'edit loop settings',
+      'discard text in defaults of loop settings',
+      'edit variables',
+      'discard text in variables.n of variables',
+    ]);
+    // Clearing by typing until the text parses still merges with the typing.
+    pause();
+    const steps = store().past.length;
+    store().setFieldError('node:start', 'inputSchema', unparsed);
+    store().setFieldError('node:start', 'inputSchema', undefined);
+    expect(store().past).toHaveLength(steps);
+  });
+
   it('restores a deleted node with its edges, unparsed text, and an exit’s loop-back target', () => {
     store().load('L1', newLoopDefinition('a'));
     store().addNode('mutate', { x: 0, y: 0 });

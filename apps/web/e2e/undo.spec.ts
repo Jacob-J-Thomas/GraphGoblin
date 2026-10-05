@@ -239,6 +239,82 @@ test('typing a label, then Ctrl+Z outside the field, restores the label in one s
   // CodeMirror closed the brace as it was typed.
   await expect(start.locator('[data-field="inputSchema"] .cm-content')).toHaveText('{"type": }');
   await expect(start.getByRole('button', { name: '1 issue on start' })).toBeVisible();
+
+  // Discard text straight after typing is a step of its own: undo brings the text back.
+  const schema = start.locator('[data-field="inputSchema"] .cm-content');
+  await schema.click();
+  await page.keyboard.press('Control+a');
+  await page.keyboard.press('Delete');
+  await page.keyboard.type('{"a": ');
+  await expect(schema).toHaveText('{"a": }');
+  await start.getByRole('button', { name: 'Discard text' }).click();
+  await expect(start.getByRole('button', { name: '1 issue on start' })).toHaveCount(0);
+  await expect(schema).toHaveText('{}');
+  await expect(undoButton(page)).toHaveAccessibleName('Undo discard text in inputSchema of start');
+  await start.getByRole('button', { name: 'Done' }).focus();
+  await page.keyboard.press('Control+z');
+  await expect(schema).toHaveText('{"a": }');
+  await expect(start.getByRole('button', { name: '1 issue on start' })).toBeVisible();
+  await page.keyboard.press('Control+Shift+z');
+  await expect(start.getByRole('button', { name: '1 issue on start' })).toHaveCount(0);
+  await expect(schema).toHaveText('{}');
+});
+
+test('Ctrl+Z from a checkbox or a select undoes and keeps focus on that control', async ({
+  page,
+  request,
+}) => {
+  const loopId = await createLoop(request, approvalLoop('qa undo controls'));
+  await page.goto(`/app/loops/${loopId}/edit`);
+  const start = await openNode(page, 'start');
+  const mcp = start.getByRole('checkbox', { name: 'mcp' });
+  await expect(mcp).toBeChecked();
+  await mcp.click();
+  await expect(mcp).not.toBeChecked();
+  await expect(mcp).toBeFocused();
+  await page.keyboard.press('Control+z');
+  await expect(start.getByRole('checkbox', { name: 'mcp' })).toBeChecked();
+  await expect(start.getByRole('checkbox', { name: 'mcp' })).toBeFocused();
+  await page.keyboard.press('Control+y');
+  await expect(start.getByRole('checkbox', { name: 'mcp' })).not.toBeChecked();
+
+  const subtype = start.getByLabel('Subtype');
+  await subtype.selectOption('cron');
+  await expect(start.getByLabel('Expression')).toBeVisible();
+  await subtype.focus();
+  await page.keyboard.press('Control+z');
+  await expect(start.getByLabel('Subtype').locator('option:checked')).toHaveText('manual');
+  await expect(start.getByLabel('Expression')).toHaveCount(0);
+  await expect(start.getByLabel('Subtype')).toBeFocused();
+});
+
+test('the Undo and Redo buttons are 32 px for a mouse and 44 px for touch', async ({
+  page,
+  request,
+}) => {
+  const loopId = await createLoop(request, approvalLoop('qa undo targets'));
+  await page.goto(`/app/loops/${loopId}/edit`);
+  for (const button of [undoButton(page), redoButton(page)]) {
+    const box = (await button.boundingBox())!;
+    expect([Math.round(box.width), Math.round(box.height)]).toEqual([32, 32]);
+  }
+  const context = await page
+    .context()
+    .browser()!
+    .newContext({
+      baseURL: process.env['GG_E2E_BASE_URL'] ?? '',
+      viewport: { width: 1440, height: 900 },
+      hasTouch: true,
+    });
+  const touch = await context.newPage();
+  await touch.goto(`/app/loops/${loopId}/edit`);
+  expect(await touch.evaluate(() => matchMedia('(pointer: coarse)').matches)).toBe(true);
+  for (const button of [undoButton(touch), redoButton(touch)]) {
+    const box = (await button.boundingBox())!;
+    expect(Math.round(box.width)).toBeGreaterThanOrEqual(44);
+    expect(Math.round(box.height)).toBeGreaterThanOrEqual(44);
+  }
+  await context.close();
 });
 
 test('undoing a delete restores the node, its edges, and the exit’s loop-back; a rename undoes too', async ({

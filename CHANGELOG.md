@@ -4,6 +4,10 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+### Added
+
+- Undo and redo in the loop editor: every change to the draft, from the toolbar's Undo and Redo buttons (named by the change they make) or with Ctrl+Z and Ctrl+Shift+Z or Ctrl+Y (Cmd+Z and Cmd+Shift+Z on a Mac) outside text fields. Typing in one field and one drag are one step each; an undo is saved like any edit; the editor keeps the last 100 steps until it reloads (#17).
+
 ### Changed
 
 - `GET /api-keys` requires a `current` boolean on every list item, identifying the key authenticating that request when keys are required. Settings marks it as **This browser** and warns before revoking it; when a browser stores a key but no row is marked, confirmations explain the possible sign-out and **Forget key** recovery. Changing keys refreshes the marker, and late 401 responses from a previous key no longer show the key panel.

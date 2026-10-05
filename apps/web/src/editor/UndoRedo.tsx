@@ -26,6 +26,8 @@ function HistoryButton({
     <Button
       size="icon"
       variant="ghost"
+      // 32 px for a mouse; a 44 px target where the primary pointer is coarse (touch).
+      className="pointer-coarse:size-11"
       title={name}
       aria-keyshortcuts={shortcut}
       aria-disabled={step === undefined ? true : undefined}

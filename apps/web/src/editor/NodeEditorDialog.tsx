@@ -235,7 +235,9 @@ export function NodeEditorDialog({
             label={`${node.id} config`}
             onChange={(config) => updateNode(node.id, { config })}
             parseErrors={fieldErrors[`node:${node.id}`]}
-            onParseError={(path, error) => setFieldError(`node:${node.id}`, path, error)}
+            onParseError={(path, error, reason) =>
+              setFieldError(`node:${node.id}`, path, error, reason)
+            }
           />
         </div>
         <NodeConnections

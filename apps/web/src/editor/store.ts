@@ -1,6 +1,7 @@
 import type { EdgeSchema, LoopDefinitionInput, NodeInput, NodeKind } from '@graphgoblin/contracts';
 import type { z } from 'zod';
 import { create } from 'zustand';
+import type { ParseErrorReason } from '../forms/parse-errors.js';
 import {
   historyClock,
   recordStep,
@@ -113,9 +114,15 @@ export interface EditorState {
   setConflict: (conflict: { serverToken: string | undefined } | undefined) => void;
   /**
    * Record (or, with `undefined`, clear) the unparsed text of a form field. It is a change like
-   * any other for undo: it merges into the step of the form's other changes.
+   * any other for undo: typing merges into the step of the form's other changes, while a discard
+   * (`reason` `'discard'`, the user's "Discard text") is a step of its own.
    */
-  setFieldError: (scope: string, path: string, error: FieldError | undefined) => void;
+  setFieldError: (
+    scope: string,
+    path: string,
+    error: FieldError | undefined,
+    reason?: ParseErrorReason,
+  ) => void;
   /**
    * Go back one step, or forward one undone step. Either is an edit of the draft (the revision
    * goes up and autosave runs) unless only unparsed field text changed. The renamed node stays
@@ -167,12 +174,26 @@ const INITIAL = {
   historyEpoch: 0,
 };
 
-/** The undo step of a change to a form's unparsed text: the same step as the form's own edits. */
-function fieldErrorStep(scope: string): HistoryStep {
+/**
+ * The undo step of a change to a form's unparsed text. Typing is the same step as the form's own
+ * edits; a discard is a step of its own that never merges, so undo always brings the text back.
+ */
+function fieldErrorStep(
+  scope: string,
+  path: string,
+  reason: ParseErrorReason | undefined,
+): HistoryStep {
+  if (reason === 'discard') return { label: `discard text in ${path} of ${scopeName(scope)}` };
   if (scope.startsWith('node:')) return configStep(scope.slice('node:'.length));
   if (scope === 'settings') return SETTINGS_STEP;
   if (scope === 'variables') return VARIABLES_STEP;
   return { label: `edit ${scope}`, coalesceKey: scope };
+}
+
+/** A form scope in an undo label: the node's id, "loop settings", or "variables". */
+function scopeName(scope: string): string {
+  if (scope.startsWith('node:')) return scope.slice('node:'.length);
+  return scope === 'settings' ? 'loop settings' : scope;
 }
 
 function configStep(nodeId: string): HistoryStep {
@@ -484,7 +505,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
 
     setConflict: (conflict) => set({ conflict }),
 
-    setFieldError: (scope, path, error) => {
+    setFieldError: (scope, path, error, reason) => {
       const s = get();
       const previous = s.fieldErrors[scope]?.[path];
       if (previous?.message === error?.message && previous?.text === error?.text) return;
@@ -500,7 +521,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
               historyOf(s),
               { definition, fieldErrors: s.fieldErrors },
               { definition, fieldErrors },
-              fieldErrorStep(scope),
+              fieldErrorStep(scope, path, reason),
               historyClock.now(),
             )
           : {}),
