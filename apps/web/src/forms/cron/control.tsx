@@ -59,11 +59,11 @@ export function CronControl({ name }: FieldProps) {
     preview.query.error instanceof GraphGoblinApiError &&
     preview.query.error.code === 'CRON_INVALID';
   const commit = (next: BuiltSchedule) => {
-    preferencesRef.current = recordPreferences(preferencesRef.current, next);
     if (scheduleError(next) !== undefined) {
       setDraft({ expression, schedule: next });
       return;
     }
+    preferencesRef.current = recordPreferences(preferencesRef.current, next);
     const value = scheduleExpression(next);
     setDraft({ expression: value, schedule: next });
     field.onChange(value);

@@ -84,7 +84,10 @@ export function SegmentedControl<T extends string>({
         {segments.map((segment) => (
           // A segment never grows wider than the track: a long label ends in an ellipsis, with the
           // whole text kept for the radio's name and shown on hover (title).
-          <label key={segment.key} className="relative inline-flex max-w-full min-w-0">
+          <label
+            key={segment.key}
+            className="relative inline-flex max-w-full min-w-0 pointer-coarse:min-h-11 pointer-coarse:min-w-11"
+          >
             <input
               type="radio"
               name={group}
@@ -96,7 +99,7 @@ export function SegmentedControl<T extends string>({
             <span
               title={typeof segment.label === 'string' ? segment.label : undefined}
               className={cn(
-                'inline-flex h-7 max-w-full min-w-0 cursor-pointer items-center rounded-[6px] px-3 text-sm pointer-coarse:h-11',
+                'inline-flex h-7 max-w-full min-w-0 cursor-pointer items-center justify-center rounded-[6px] px-3 text-sm pointer-coarse:min-h-11 pointer-coarse:min-w-11',
                 'font-medium whitespace-nowrap text-muted transition-colors',
                 'peer-[:not(:checked)]:hover:bg-surface-hover peer-[:not(:checked)]:hover:text-default',
                 'peer-checked:bg-accent-subtle peer-checked:font-semibold peer-checked:text-accent-on-subtle',

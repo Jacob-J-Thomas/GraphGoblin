@@ -1,7 +1,7 @@
 import type { LoopDefinitionInput, NodeInput } from '@graphgoblin/contracts';
 import { useState } from 'react';
 import { Icon } from '../components/icons/index.js';
-import { Button, FieldGroup, HelpText, Label, Select } from '../components/ui/index.js';
+import { Button, FieldGroup, FieldRow, HelpText, Label, Select } from '../components/ui/index.js';
 import { canvasPorts } from './model.js';
 import { useEditorStore } from './store.js';
 
@@ -41,8 +41,8 @@ function ConnectForm({
         if (!problem) onConnected(chosenPort);
       }}
     >
-      <div className="grid grid-cols-[minmax(7rem,auto)_minmax(0,1fr)_auto] items-end gap-2 max-sm:grid-cols-1">
-        <FieldGroup>
+      <FieldRow>
+        <FieldGroup className="min-w-28">
           <Label htmlFor="connect-port">Output</Label>
           <Select id="connect-port" value={chosenPort} onChange={(e) => setPort(e.target.value)}>
             {ports.map((p) => (
@@ -50,7 +50,7 @@ function ConnectForm({
             ))}
           </Select>
         </FieldGroup>
-        <FieldGroup>
+        <FieldGroup className="flex-1">
           <Label htmlFor="connect-target">To</Label>
           <Select
             id="connect-target"
@@ -65,15 +65,10 @@ function ConnectForm({
             ))}
           </Select>
         </FieldGroup>
-        <Button
-          type="submit"
-          variant="outline"
-          disabled={!target}
-          className="max-sm:justify-self-start"
-        >
+        <Button type="submit" variant="outline" disabled={!target}>
           Connect
         </Button>
-      </div>
+      </FieldRow>
       {refused ? (
         <HelpText id="connect-refused" role="alert" tone="bad">
           Connection refused: {refused}

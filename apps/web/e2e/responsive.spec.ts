@@ -1,11 +1,21 @@
 /**
- * Narrow widths, touch, and zoom (#41): the header navigation, a stacked table, a one-column form,
- * the editor at its 768 px floor (select, edit, connect, validate, publish), no sideways page scroll
- * or cut-off control on any screen at 360, 768, 1024, and 1440 px, 44 px targets on a coarse
- * pointer, and reflow at 200% zoom.
+ * Responsive review (#41): both stored themes, every page and transient state at four widths,
+ * all nine node dialogs at 360/768 px, pointer and keyboard authoring at 768 px, coarse-pointer
+ * targets (including radio labels and short choices), and reflow at 200% zoom. Group related
+ * states instead of creating a separate browser test for each matrix cell.
  */
-import type { Page } from '@playwright/test';
-import { approvalLoop, closeNode, expect, publishLoop, test } from './fixtures.js';
+import { writeFile } from 'node:fs/promises';
+import type { Locator, Page } from '@playwright/test';
+import {
+  approvalLoop,
+  closeNode,
+  control,
+  expect,
+  openAdvanced,
+  openItem,
+  publishLoop,
+  test,
+} from './fixtures.js';
 
 const WIDTHS = [
   { width: 360, height: 780 },
@@ -14,328 +24,658 @@ const WIDTHS = [
   { width: 1440, height: 900 },
 ];
 
-/** Whether the page scrolls sideways. */
-const pageOverflows = (page: Page) =>
-  page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
+/** The actual page scroll width, compared to the CSS viewport (including at zoom). */
+const scrollWidth = (page: Page) =>
+  page.evaluate(() => ({
+    scrollWidth: document.scrollingElement!.scrollWidth,
+    innerWidth: window.innerWidth,
+  }));
+const pageOverflows = async (page: Page) => {
+  const sizes = await scrollWidth(page);
+  return sizes.scrollWidth > sizes.innerWidth;
+};
 
 /**
- * Controls the user can see but cannot fully reach: any visible button, link, or field whose box
- * runs past either side of the window. Canvas nodes and edges are left out (the canvas pans), as
- * are visually hidden controls (one pixel, or clipped).
+ * Check the viewport and each clipping ancestor, not just the window edge. Canvas content pans;
+ * visually hidden radios are measured by their drawn labels. In a scoped state, scroll each
+ * control into view first so intentionally scrolling dialog bodies can still be reached in full.
  */
-const cutOffControls = (page: Page) =>
-  page.evaluate(() => {
-    const width = document.documentElement.clientWidth;
-    return [
-      ...document.querySelectorAll<HTMLElement>(
+async function cutOffControls(page: Page, scope?: Locator) {
+  return (scope ?? page.locator('body')).evaluate((root, reveal) => {
+    const failures: string[] = [];
+    const controls = [
+      ...root.querySelectorAll<HTMLElement>(
         'button, a[href], input:not([type=hidden]), select, textarea, [role=link]',
       ),
-    ]
-      .filter((el) => {
-        if (el.closest('.react-flow__node, .react-flow__edge, .react-flow__edgelabel-renderer'))
-          return false;
-        const rect = el.getBoundingClientRect();
-        if (rect.width <= 1 || rect.height <= 1) return false;
-        const style = getComputedStyle(el);
-        if (style.visibility === 'hidden' || style.opacity === '0') return false;
-        // A transparent file input lies over its button; the button is what is drawn.
-        if (el instanceof HTMLInputElement && el.type === 'file') return false;
-        return rect.left < -1 || rect.right > width + 1;
-      })
-      .map((el) => el.getAttribute('aria-label') ?? el.textContent?.trim() ?? el.tagName);
-  });
-
-async function seed(request: Parameters<typeof publishLoop>[0]) {
-  const loopId = await publishLoop(request, approvalLoop('responsive sweep'));
-  const res = await request.post(`/loops/${loopId}/runs`, { data: {} });
-  const runId = ((await res.json()) as { run: { id: string } }).run.id;
-  await request.post('/events', { data: { type: 'issue.opened', payload: { number: 41 } } });
-  return { loopId, runId };
+    ];
+    for (const control of controls) {
+      if (control.closest('.react-flow__node, .react-flow__edge, .react-flow__edgelabel-renderer'))
+        continue;
+      if (control instanceof HTMLInputElement && control.type === 'file') continue;
+      const el =
+        control instanceof HTMLInputElement && control.type === 'radio'
+          ? (control.closest('label') ?? control)
+          : control;
+      let rect = el.getBoundingClientRect();
+      const style = getComputedStyle(el);
+      if (
+        rect.width <= 1 ||
+        rect.height <= 1 ||
+        style.visibility === 'hidden' ||
+        style.opacity === '0'
+      )
+        continue;
+      if (reveal) {
+        el.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' });
+        rect = el.getBoundingClientRect();
+      }
+      let clipped = rect.left < -1 || rect.right > innerWidth + 1;
+      if (reveal) clipped ||= rect.top < -1 || rect.bottom > innerHeight + 1;
+      for (let parent = el.parentElement; parent; parent = parent.parentElement) {
+        const css = getComputedStyle(parent);
+        const box = parent.getBoundingClientRect();
+        // Use the client box: borders and scrollbars cannot draw a control.
+        const left = box.left + parent.clientLeft;
+        const top = box.top + parent.clientTop;
+        if (/^(auto|scroll|hidden|clip)$/.test(css.overflowX))
+          clipped ||= rect.left < left - 1 || rect.right > left + parent.clientWidth + 1;
+        if (reveal && /^(auto|scroll|hidden|clip)$/.test(css.overflowY))
+          clipped ||= rect.top < top - 1 || rect.bottom > top + parent.clientHeight + 1;
+      }
+      if (clipped)
+        failures.push(
+          control.getAttribute('aria-label') ?? control.textContent?.trim() ?? control.tagName,
+        );
+    }
+    return failures;
+  }, Boolean(scope));
 }
 
-test('no screen scrolls sideways or cuts a control off at 360, 768, 1024, and 1440 px', async ({
-  page,
-  request,
-}) => {
-  const { loopId, runId } = await seed(request);
-  const screens = [
-    ['/app/loops', 'responsive sweep'],
-    [`/app/loops/${loopId}/edit`, 'Approve'],
-    ['/app/runs', 'responsive sweep'],
-    [`/app/runs/new?loop=${loopId}`, 'Start run'],
-    [`/app/runs/${runId}`, 'Input requested'],
-    ['/app/events', 'issue.opened'],
-    ['/app/settings', 'Model catalog'],
-    ['/app/nowhere', 'Page not found'],
-  ] as const;
-  for (const viewport of WIDTHS) {
-    await page.setViewportSize(viewport);
-    for (const [path, ready] of screens) {
-      await page.goto(path);
-      await expect(page.getByText(ready).filter({ visible: true }).first()).toBeVisible();
-      expect(await pageOverflows(page), `${path} at ${viewport.width}`).toBe(false);
-      expect(await cutOffControls(page), `${path} at ${viewport.width}`).toEqual([]);
-    }
-  }
-});
-
-test('the header navigation folds into a Menu at 360 px and shows its links at 768 px', async ({
-  page,
-}) => {
-  await page.setViewportSize({ width: 360, height: 780 });
-  await page.goto('/app/loops');
-  const menu = page.getByRole('button', { name: 'Menu' });
-  const nav = page.getByRole('navigation', { name: 'Main' });
-  await expect(menu).toBeVisible();
-  await expect(menu).toHaveAttribute('aria-expanded', 'false');
-  await expect(nav.getByRole('link', { name: 'Runs' })).toBeHidden();
-  await menu.click();
-  await expect(menu).toHaveAttribute('aria-expanded', 'true');
-  for (const name of ['Loops', 'Runs', 'Events', 'Settings']) {
-    const link = nav.getByRole('link', { name });
-    await expect(link).toBeVisible();
-    // Each link is a full-width row at least 44 px tall.
-    expect((await link.boundingBox())!.height).toBeGreaterThanOrEqual(44);
-  }
-  await nav.getByRole('link', { name: 'Runs' }).click();
-  await expect(page).toHaveURL(/\/app\/runs$/);
-  await expect(page.getByRole('heading', { level: 1, name: 'Runs' })).toBeVisible();
-  await expect(menu).toHaveAttribute('aria-expanded', 'false');
-  await expect(nav.getByRole('link', { name: 'Loops' })).toBeHidden();
-  // Escape closes it from inside and gives focus back to Menu.
-  await menu.click();
-  await nav.getByRole('link', { name: 'Loops' }).focus();
-  await page.keyboard.press('Escape');
-  await expect(menu).toBeFocused();
-  await expect(menu).toHaveAttribute('aria-expanded', 'false');
-  expect(await pageOverflows(page)).toBe(false);
-
-  await page.setViewportSize({ width: 768, height: 1024 });
-  await expect(menu).toBeHidden();
-  for (const name of ['Loops', 'Runs', 'Events', 'Settings'])
-    await expect(nav.getByRole('link', { name })).toBeVisible();
-  await expect(nav.getByRole('link', { name: 'Runs' })).toHaveAttribute('aria-current', 'page');
-});
-
-test('the runs table stacks its rows below 1024 px, keeping its column headers', async ({
-  page,
-  request,
-}) => {
-  const { runId } = await seed(request);
-  await page.goto('/app/runs');
-  const row = page.getByRole('row').filter({ hasText: runId });
-  const status = row.getByRole('cell').filter({ has: page.locator('[data-status]') });
-  for (const { width, height } of [
-    { width: 360, height: 780 },
-    { width: 768, height: 1024 },
-  ]) {
-    await page.setViewportSize({ width, height });
-    await expect(row).toBeVisible();
-    // A stacked row: each cell is a line under the previous one, starting with its column name.
-    const cells = await row.getByRole('cell').evaluateAll((tds) =>
-      tds.map((td) => ({
-        display: getComputedStyle(td).display,
-        label: getComputedStyle(td, '::before').content,
-        top: td.getBoundingClientRect().top,
-      })),
+async function geometry(page: Page, state: string, scope?: Locator) {
+  await page.evaluate(() => document.fonts.ready);
+  expect(await cutOffControls(page, scope), `${state}: clipped controls`).toEqual([]);
+  const sizes = await scrollWidth(page);
+  if (scope) {
+    const box = (await scope.boundingBox())!;
+    expect(box.x, `${state}: container left`).toBeGreaterThanOrEqual(-1);
+    expect(box.x + box.width, `${state}: container right`).toBeLessThanOrEqual(
+      sizes.innerWidth + 1,
     );
-    expect(cells.length).toBe(6);
-    for (const [i, cell] of cells.entries()) {
-      expect(cell.display).not.toBe('table-cell');
-      if (i > 0) expect(cell.top).toBeGreaterThan(cells[i - 1]!.top);
-    }
-    expect(await status.evaluate((td) => getComputedStyle(td, '::before').content)).toContain(
-      'Status',
-    );
-    // The drawn column name is decoration: the cell's name is still only its value.
-    await expect(status).not.toHaveAccessibleName(/status/i);
-    await expect(status).toHaveAccessibleName(/waiting/);
-    // The headers stay for assistive technology, out of sight: their row group is clipped to 1 px.
-    const header = page.getByRole('columnheader', { name: 'Status' });
-    await expect(header).toHaveCount(1);
-    const group = (await header.locator('xpath=ancestor::thead').boundingBox())!;
-    expect(Math.max(group.width, group.height)).toBeLessThanOrEqual(1);
-    await expect(header.locator('xpath=ancestor::thead')).toHaveCSS('overflow', 'hidden');
-    expect(await pageOverflows(page)).toBe(false);
   }
-  // From 1024 px it is a table again, its cells side by side.
-  await page.setViewportSize({ width: 1024, height: 768 });
-  const tops = await row
-    .getByRole('cell')
-    .evaluateAll((tds) => tds.map((td) => Math.round(td.getBoundingClientRect().top)));
-  expect(new Set(tops).size).toBe(1);
-  await expect(status).toHaveCSS('display', 'table-cell');
-});
+  expect(sizes.scrollWidth, `${state}: sideways page scroll`).toBeLessThanOrEqual(sizes.innerWidth);
+  return { state, ...sizes };
+}
 
-test('a Settings form turns into one column of full-width fields at 360 px', async ({ page }) => {
-  await page.goto('/app/settings');
-  const form = page.getByRole('form', { name: 'Set secret' });
-  const name = form.getByLabel('Name');
-  const value = form.getByLabel('Value');
-  const submit = form.getByRole('button', { name: 'Set secret' });
+const SETTINGS = [
+  'Appearance',
+  'Model catalog',
+  'Classifier models',
+  'Defaults',
+  'Secrets',
+  'API keys',
+  "This browser's API key",
+  'Harness preflight',
+  'Install',
+];
 
-  await page.setViewportSize({ width: 360, height: 780 });
-  await expect(name).toBeVisible();
-  const box = (await form.boundingBox())!;
-  const nameBox = (await name.boundingBox())!;
-  const valueBox = (await value.boundingBox())!;
-  const submitBox = (await submit.boundingBox())!;
-  // One column: Value under Name, the button under both, each field the form's full width.
-  expect(valueBox.y).toBeGreaterThan(nameBox.y + nameBox.height);
-  expect(submitBox.y).toBeGreaterThan(valueBox.y + valueBox.height);
-  expect(nameBox.width).toBeGreaterThan(box.width - 2);
-  expect(valueBox.width).toBeGreaterThan(box.width - 2);
-  // The button keeps its own width at the start of its line.
-  expect(submitBox.width).toBeLessThan(box.width / 2);
-  expect(Math.abs(submitBox.x - box.x)).toBeLessThan(2);
-  expect(await pageOverflows(page)).toBe(false);
-
-  await page.setViewportSize({ width: 768, height: 1024 });
-  const wideName = (await name.boundingBox())!;
-  const wideValue = (await value.boundingBox())!;
-  expect(Math.round(wideValue.y)).toBe(Math.round(wideName.y));
-  expect(wideValue.x).toBeGreaterThan(wideName.x + wideName.width);
-});
-
-test('at 768 px the editor selects, edits, connects, validates, and publishes a node', async ({
-  page,
-  request,
-}) => {
-  // start -> approve, with the exit not yet connected: the loop starts with errors.
-  const definition = approvalLoop('responsive editor');
-  const created = await request.post('/loops', {
-    data: { definition: { ...definition, edges: definition.edges.slice(0, 1) } },
-  });
-  const loopId = ((await created.json()) as { loop: { id: string } }).loop.id;
-  await page.setViewportSize({ width: 768, height: 1024 });
-  await page.goto(`/app/loops/${loopId}/edit`);
-  await expect(page.getByTestId('node-approve')).toBeVisible();
-  expect(await pageOverflows(page)).toBe(false);
-  // Every toolbar action is on screen, wrapped rather than cut off.
-  for (const name of [/^Undo/, /^Redo/, /error/, /^Publish$/])
-    await expect(page.getByRole('button', { name }).first()).toBeInViewport();
-  await expect(page.getByRole('link', { name: 'Open in Runs' })).toBeInViewport();
-
-  // Validate: the unconnected exit shows as errors beside Publish.
-  const indicator = page.getByRole('button', { name: /\d+ errors?/ });
-  await expect(indicator).toBeVisible();
-
-  // Select and edit: a click opens the node's editor; rename its label.
-  await page.getByTestId('node-approve').click({ position: { x: 60, y: 12 } });
-  const dialog = page.getByRole('dialog', { name: 'Edit wait approve' });
-  await expect(dialog).toBeVisible();
-  await dialog.getByLabel('Label', { exact: true }).fill('Approve release');
-  await closeNode(page);
-  await expect(page.getByTestId('node-approve')).toContainText('Approve release');
-  await expect(page.locator('.react-flow__node[data-id="approve"]')).toHaveClass(/selected/);
-
-  // Connect: drag from the wait's output port to the exit's input on the canvas.
-  await page.locator('.react-flow__controls-fitview').click();
-  const from = page.locator('.react-flow__handle[data-nodeid="approve"][data-handleid="out"]');
-  const to = page.locator('.react-flow__handle[data-nodeid="done"][data-handleid="in"]');
-  await from.dragTo(to);
-  await expect(page.locator('.react-flow__edge')).toHaveCount(2);
-
-  // Validated: nothing left to fix, then published.
-  await expect(page.getByText('Ready to publish')).toBeVisible();
-  await page.getByRole('button', { name: 'Publish', exact: true }).click();
-  await expect(page.getByText('Published version 1.')).toBeVisible();
-
-  // The loop panel floats over the canvas below 1024 px instead of narrowing it.
-  const canvas = page.getByTestId('canvas');
-  const before = (await canvas.boundingBox())!.width;
-  await page.getByRole('button', { name: 'Show loop settings' }).click();
-  const panel = page.getByRole('complementary', { name: 'Loop settings' });
-  await expect(panel).toHaveCSS('position', 'absolute');
-  expect((await canvas.boundingBox())!.width).toBeGreaterThanOrEqual(before);
-  expect(await pageOverflows(page)).toBe(false);
-});
-
-/**
- * Visible buttons, fields, and links smaller than 44 px each way. A control that keeps a small
- * look counts by the touch box around it (`touch-target`, an absolute ::after).
- */
-const smallTargets = (page: Page) =>
-  page.evaluate(() =>
+/** Real configurations exercise cron, code fields, collections, and nested options. */
+async function seedDialogs(request: Parameters<typeof publishLoop>[0]) {
+  const child = await publishLoop(request, approvalLoop('responsive child'));
+  const configs = [
+    ['trigger', { subtype: 'cron', expression: '30 7 * * 1' }],
     [
-      ...document.querySelectorAll<HTMLElement>(
-        'button, a[href], [role=link], input:not([type=checkbox]):not([type=radio]):not([type=file]), select',
-      ),
-    ]
-      .filter((el) => {
-        if (el.closest('.react-flow__node, .react-flow__edge')) return false;
-        const rect = el.getBoundingClientRect();
-        return rect.width > 1 && rect.height > 1 && getComputedStyle(el).visibility !== 'hidden';
-      })
-      .filter((el) => {
-        const rect = el.getBoundingClientRect();
-        const after = getComputedStyle(el, '::after');
-        const touch =
-          after.content !== 'none' && after.position === 'absolute'
-            ? { width: parseFloat(after.width), height: parseFloat(after.height) }
-            : { width: rect.width, height: rect.height };
-        return Math.min(touch.width, touch.height) < 43.5;
-      })
-      .map((el) => el.getAttribute('aria-label') ?? el.textContent?.trim() ?? el.tagName),
-  );
-
-test('on a coarse pointer the controls are at least 44 px', async ({
-  browser,
-  baseURL,
-  request,
-}) => {
-  const { loopId, runId } = await seed(request);
-  const context = await browser.newContext({
-    baseURL: baseURL as string,
-    viewport: { width: 768, height: 1024 },
-    hasTouch: true,
-    isMobile: true,
-    serviceWorkers: 'block',
+      'decision',
+      {
+        routes: [
+          { label: 'yes', description: 'Continue' },
+          { label: 'no', description: 'Stop' },
+        ],
+        question: 'Continue?',
+        strategy: ['expression'],
+        expression: { jsonata: '"yes"' },
+      },
+    ],
+    ['inference', { prompt: { template: 'Summarise {{ lastMessage.content }}' } }],
+    ['script', { command: 'node', args: ['script.js'] }],
+    ['mutate', { operations: [{ op: 'append-message', role: 'note', content: 'Note' }] }],
+    ['subloop', { loopRef: { loopId: child } }],
+    ['wait', { mode: 'input', prompt: 'Approve?' }],
+    ['heartbeat', { intervalSeconds: 60, maxBeats: 3 }],
+    ['exit', {}],
+  ] as const;
+  const created = await request.post('/loops', {
+    data: {
+      definition: {
+        schemaVersion: 1,
+        name: 'responsive dialogs',
+        nodes: configs.map(([kind, config], i) => ({
+          id: kind,
+          kind,
+          label: kind,
+          config,
+          ui: { x: (i % 3) * 260, y: Math.floor(i / 3) * 200 },
+        })),
+        edges: [],
+      },
+    },
   });
-  const page = await context.newPage();
-  try {
-    for (const [path, ready] of [
-      ['/app/settings', 'GPT-5.5'],
-      ['/app/loops', 'responsive sweep'],
-      [`/app/loops/${loopId}/edit`, 'Approve'],
-      ['/app/runs', 'responsive sweep'],
-      [`/app/runs/${runId}`, 'Input requested'],
-      ['/app/events', 'issue.opened'],
-    ] as const) {
-      await page.goto(path);
-      expect(await page.evaluate(() => matchMedia('(pointer: coarse)').matches)).toBe(true);
-      await expect(page.getByText(ready).filter({ visible: true }).first()).toBeVisible();
-      expect(await smallTargets(page), path).toEqual([]);
-    }
-    // The theme's segments (radios drawn as labelled segments).
-    await page.goto('/app/settings');
-    const segment = page.getByRole('radio', { name: 'Dark' }).locator('xpath=..');
-    expect((await segment.boundingBox())!.height).toBeGreaterThanOrEqual(44);
-  } finally {
-    await context.close();
-  }
-});
+  expect(created.status()).toBe(201);
+  return {
+    loopId: ((await created.json()) as { loop: { id: string } }).loop.id,
+    kinds: configs.map(([kind]) => kind),
+  };
+}
 
-test('at 200% zoom (1024 by 768 px) Loops, the editor, a run, and Settings reflow without sideways scrolling', async ({
-  page,
-  request,
-}) => {
-  const { loopId, runId } = await seed(request);
-  // 200% zoom of a 1024 by 768 window lays the page out in 512 by 384 CSS pixels.
-  await page.setViewportSize({ width: 512, height: 384 });
-  for (const [path, ready] of [
-    ['/app/loops', 'responsive sweep'],
-    [`/app/loops/${loopId}/edit`, 'Approve'],
-    [`/app/runs/${runId}`, 'Input requested'],
-    ['/app/settings', 'Model catalog'],
-  ] as const) {
-    await page.goto(path);
-    await expect(page.getByText(ready).filter({ visible: true }).first()).toBeVisible();
-    expect(await pageOverflows(page), path).toBe(false);
-    expect(await cutOffControls(page), path).toEqual([]);
-  }
-  // The editor keeps a usable canvas and its Publish button at that size.
-  await page.goto(`/app/loops/${loopId}/edit`);
-  await expect(page.getByRole('button', { name: 'Publish', exact: true })).toBeVisible();
-  expect((await page.getByTestId('canvas').boundingBox())!.height).toBeGreaterThan(120);
-});
+for (const theme of ['dark', 'light'] as const) {
+  test.describe(`responsive ${theme}`, () => {
+    test.beforeEach(async ({ context }) => {
+      await context.addInitScript(
+        (choice) => localStorage.setItem('graphgoblin-theme', choice),
+        theme,
+      );
+    });
+
+    async function seed(request: Parameters<typeof publishLoop>[0]) {
+      const loopId = await publishLoop(request, approvalLoop('responsive sweep'));
+      const res = await request.post(`/loops/${loopId}/runs`, { data: {} });
+      const runId = ((await res.json()) as { run: { id: string } }).run.id;
+      await request.post('/events', { data: { type: 'issue.opened', payload: { number: 41 } } });
+      return { loopId, runId };
+    }
+
+    test('screens and transient states fit at 360, 768, 1024, and 1440 px', async ({
+      page,
+      request,
+    }, testInfo) => {
+      // Four viewports, every Settings section, and real outage probes share this test.
+      test.setTimeout(120_000);
+      const { loopId, runId } = await seed(request);
+      const keyed = await control(request, '/apps', { requireApiKey: true });
+      const evidence: { theme: string; state: string; scrollWidth: number; innerWidth: number }[] =
+        [];
+      const measure = async (state: string, scope?: Locator) => {
+        evidence.push({ theme, ...(await geometry(page, state, scope)) });
+      };
+      const screens = [
+        ['Loops', '/app/loops', 'responsive sweep'],
+        ['Editor', `/app/loops/${loopId}/edit`, 'Approve'],
+        ['Runs', '/app/runs', 'responsive sweep'],
+        ['New run', `/app/runs/new?loop=${loopId}`, 'Start run'],
+        ['Run inspector', `/app/runs/${runId}`, 'Input requested'],
+        ['Events', '/app/events', 'issue.opened'],
+        ['Settings', '/app/settings', 'GPT-5.5'],
+        ['404', '/app/nowhere', 'Page not found'],
+      ] as const;
+      for (const viewport of WIDTHS) {
+        await page.setViewportSize(viewport);
+        for (const [state, path, ready] of screens) {
+          await page.goto(path);
+          await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+          await expect(page.getByText(ready).filter({ visible: true }).first()).toBeVisible();
+          await measure(state);
+          if (state === 'Settings') {
+            for (const name of SETTINGS) {
+              const section = page.getByRole('region', { name, exact: true });
+              await expect(section).toBeVisible();
+              await measure(`Settings: ${name}`, section);
+            }
+          }
+        }
+
+        await page.goto(`${String(keyed['url'])}/app/loops`);
+        await expect(page.getByRole('heading', { name: 'API key required' })).toBeVisible();
+        await measure('API key panel', page.getByRole('form', { name: 'Enter API key' }));
+
+        // A real query transport failure creates probe demand; /healthz also fails during the outage.
+        let probes = 0;
+        await page.route(
+          (url) => url.pathname === '/healthz',
+          async (route) => {
+            probes += 1;
+            await route.abort('connectionrefused');
+          },
+        );
+        await page.route(
+          (url) => url.pathname === '/loops',
+          (route) => route.abort('connectionrefused'),
+        );
+        await page.goto('/app/loops');
+        const offline = page
+          .getByRole('status')
+          .filter({ hasText: 'Cannot reach the GraphGoblin API' });
+        await expect(offline).toBeVisible();
+        await expect.poll(() => probes).toBeGreaterThan(0);
+        await measure('Offline banner (API outage)', offline);
+        await page.unrouteAll({ behavior: 'wait' });
+
+        await page.goto('/app/loops');
+        await expect(page.getByText('responsive sweep').first()).toBeVisible();
+        await expect.poll(() => page.evaluate(() => Boolean(window.graphgoblinPwa))).toBe(true);
+        await page.evaluate(() => window.graphgoblinPwa!.simulateUpdate());
+        const toast = page.getByRole('status').filter({ hasText: 'A new version is available' });
+        await expect(toast).toBeVisible();
+        await measure('Update toast', toast);
+
+        // The same malformed Events test route used by screens.capture.ts exercises the real boundary.
+        await page.route(
+          (url) => url.pathname === '/events',
+          (route) =>
+            route.fulfill({
+              json: {
+                items: [
+                  { id: 'broken', type: 'x', source: 'api', receivedAt: new Date().toISOString() },
+                ],
+              },
+            }),
+        );
+        await page.goto('/app/events');
+        const error = page.getByRole('alert').filter({ hasText: 'This screen failed to render' });
+        await expect(error).toBeVisible();
+        await measure('Error boundary', error);
+        await page.unrouteAll({ behavior: 'wait' });
+      }
+      const path = testInfo.outputPath('scroll-widths.json');
+      await writeFile(path, JSON.stringify(evidence, null, 2) + '\n');
+      await testInfo.attach('scroll-widths', { path, contentType: 'application/json' });
+      const table = [
+        '| Screen / state | Theme | 360 px | 768 px | 1024 px | 1440 px |',
+        '| --- | --- | --- | --- | --- | --- |',
+        ...[...new Set(evidence.map((row) => row.state))].map((state) => {
+          const cells = evidence
+            .filter((row) => row.state === state)
+            .map((row) => `${row.scrollWidth} / ${row.innerWidth}`);
+          return `| ${state} | ${theme} | ${cells.join(' | ')} |`;
+        }),
+      ].join('\n');
+      const markdown = testInfo.outputPath('scroll-widths.md');
+      await writeFile(markdown, table + '\n');
+      await testInfo.attach('scroll-width table', { path: markdown, contentType: 'text/markdown' });
+    });
+
+    test('all nine node dialogs fit their controls at 360 and 768 px', async ({
+      page,
+      request,
+    }) => {
+      const { loopId, kinds } = await seedDialogs(request);
+      for (const viewport of WIDTHS.slice(0, 2)) {
+        await page.setViewportSize(viewport);
+        await page.goto(`/app/loops/${loopId}/edit`);
+        for (const kind of kinds) {
+          await page.locator(`.react-flow__node[data-id="${kind}"]`).focus();
+          await page.keyboard.press('Enter');
+          const dialog = page.getByRole('dialog', { name: `Edit ${kind} ${kind}` });
+          await expect(dialog).toBeVisible();
+          await geometry(page, `${kind} dialog at ${viewport.width}`, dialog);
+          const advanced = dialog.getByRole('button', { name: /^Advanced\b/ });
+          if (await advanced.count()) {
+            await openAdvanced(dialog);
+            await geometry(page, `${kind} advanced at ${viewport.width}`, dialog);
+          }
+          if (kind === 'mutate') {
+            await openItem(dialog, 'Operations 1');
+            await geometry(page, `mutate operation at ${viewport.width}`, dialog);
+          }
+          await page.keyboard.press('Escape');
+          await expect(dialog).toHaveCount(0);
+        }
+      }
+    });
+
+    test('the header navigation folds into a Menu at 360 px and shows its links at 768 px', async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: 360, height: 780 });
+      await page.goto('/app/loops');
+      const menu = page.getByRole('button', { name: 'Menu' });
+      const nav = page.getByRole('navigation', { name: 'Main' });
+      await expect(menu).toBeVisible();
+      await expect(menu).toHaveAttribute('aria-expanded', 'false');
+      await expect(nav.getByRole('link', { name: 'Runs' })).toBeHidden();
+      await menu.click();
+      await expect(menu).toHaveAttribute('aria-expanded', 'true');
+      for (const name of ['Loops', 'Runs', 'Events', 'Settings']) {
+        const link = nav.getByRole('link', { name });
+        await expect(link).toBeVisible();
+        // Each link is a full-width row at least 44 px tall.
+        expect((await link.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+      }
+      await nav.getByRole('link', { name: 'Runs' }).click();
+      await expect(page).toHaveURL(/\/app\/runs$/);
+      await expect(page.getByRole('heading', { level: 1, name: 'Runs' })).toBeVisible();
+      await expect(menu).toHaveAttribute('aria-expanded', 'false');
+      await expect(nav.getByRole('link', { name: 'Loops' })).toBeHidden();
+      // Escape closes it from inside and gives focus back to Menu.
+      await menu.click();
+      await nav.getByRole('link', { name: 'Loops' }).focus();
+      await page.keyboard.press('Escape');
+      await expect(menu).toBeFocused();
+      await expect(menu).toHaveAttribute('aria-expanded', 'false');
+      expect(await pageOverflows(page)).toBe(false);
+
+      await page.setViewportSize({ width: 768, height: 1024 });
+      await expect(menu).toBeHidden();
+      for (const name of ['Loops', 'Runs', 'Events', 'Settings'])
+        await expect(nav.getByRole('link', { name })).toBeVisible();
+      await expect(nav.getByRole('link', { name: 'Runs' })).toHaveAttribute('aria-current', 'page');
+    });
+
+    test('the runs table stacks its rows below 1024 px, keeping its column headers', async ({
+      page,
+      request,
+    }) => {
+      const { runId } = await seed(request);
+      await page.goto('/app/runs');
+      const row = page.getByRole('row').filter({ hasText: runId });
+      const status = row.getByRole('cell').filter({ has: page.locator('[data-status]') });
+      for (const { width, height } of [
+        { width: 360, height: 780 },
+        { width: 768, height: 1024 },
+      ]) {
+        await page.setViewportSize({ width, height });
+        await expect(row).toBeVisible();
+        // A stacked row: each cell is a line under the previous one, starting with its column name.
+        const cells = await row.getByRole('cell').evaluateAll((tds) =>
+          tds.map((td) => ({
+            display: getComputedStyle(td).display,
+            label: getComputedStyle(td, '::before').content,
+            top: td.getBoundingClientRect().top,
+          })),
+        );
+        expect(cells.length).toBe(6);
+        for (const [i, cell] of cells.entries()) {
+          expect(cell.display).not.toBe('table-cell');
+          if (i > 0) expect(cell.top).toBeGreaterThan(cells[i - 1]!.top);
+        }
+        expect(await status.evaluate((td) => getComputedStyle(td, '::before').content)).toContain(
+          'Status',
+        );
+        // The drawn column name is decoration: the cell's name is still only its value.
+        await expect(status).not.toHaveAccessibleName(/status/i);
+        await expect(status).toHaveAccessibleName(/waiting/);
+        // The headers stay for assistive technology, out of sight: their row group is clipped to 1 px.
+        const header = page.getByRole('columnheader', { name: 'Status' });
+        await expect(header).toHaveCount(1);
+        const group = (await header.locator('xpath=ancestor::thead').boundingBox())!;
+        expect(Math.max(group.width, group.height)).toBeLessThanOrEqual(1);
+        await expect(header.locator('xpath=ancestor::thead')).toHaveCSS('overflow', 'hidden');
+        expect(await pageOverflows(page)).toBe(false);
+      }
+      // From 1024 px it is a table again, its cells side by side.
+      await page.setViewportSize({ width: 1024, height: 768 });
+      const tops = await row
+        .getByRole('cell')
+        .evaluateAll((tds) => tds.map((td) => Math.round(td.getBoundingClientRect().top)));
+      expect(new Set(tops).size).toBe(1);
+      await expect(status).toHaveCSS('display', 'table-cell');
+    });
+
+    test('a Settings form turns into one column of full-width fields at 360 px', async ({
+      page,
+    }) => {
+      await page.goto('/app/settings');
+      const form = page.getByRole('form', { name: 'Set secret' });
+      const name = form.getByLabel('Name');
+      const value = form.getByLabel('Value');
+      const submit = form.getByRole('button', { name: 'Set secret' });
+
+      await page.setViewportSize({ width: 360, height: 780 });
+      await expect(name).toBeVisible();
+      const box = (await form.boundingBox())!;
+      const nameBox = (await name.boundingBox())!;
+      const valueBox = (await value.boundingBox())!;
+      const submitBox = (await submit.boundingBox())!;
+      // One column: Value under Name, the button under both, each field the form's full width.
+      expect(valueBox.y).toBeGreaterThan(nameBox.y + nameBox.height);
+      expect(submitBox.y).toBeGreaterThan(valueBox.y + valueBox.height);
+      expect(nameBox.width).toBeGreaterThan(box.width - 2);
+      expect(valueBox.width).toBeGreaterThan(box.width - 2);
+      // The button keeps its own width at the start of its line.
+      expect(submitBox.width).toBeLessThan(box.width / 2);
+      expect(Math.abs(submitBox.x - box.x)).toBeLessThan(2);
+      expect(await pageOverflows(page)).toBe(false);
+
+      await page.setViewportSize({ width: 768, height: 1024 });
+      const wideName = (await name.boundingBox())!;
+      const wideValue = (await value.boundingBox())!;
+      expect(Math.round(wideValue.y)).toBe(Math.round(wideName.y));
+      expect(wideValue.x).toBeGreaterThan(wideName.x + wideName.width);
+    });
+
+    test('at 768 px the editor selects, edits, connects, validates, and publishes a node', async ({
+      page,
+      request,
+    }) => {
+      // start -> approve, with the exit not yet connected: the loop starts with errors.
+      const definition = approvalLoop('responsive editor');
+      const created = await request.post('/loops', {
+        data: { definition: { ...definition, edges: definition.edges.slice(0, 1) } },
+      });
+      const loopId = ((await created.json()) as { loop: { id: string } }).loop.id;
+      await page.setViewportSize({ width: 768, height: 1024 });
+      await page.goto(`/app/loops/${loopId}/edit`);
+      await expect(page.getByTestId('node-approve')).toBeVisible();
+      expect(await pageOverflows(page)).toBe(false);
+      // Every toolbar action is on screen, wrapped rather than cut off.
+      for (const name of [/^Undo/, /^Redo/, /error/, /^Publish$/])
+        await expect(page.getByRole('button', { name }).first()).toBeInViewport();
+      await expect(page.getByRole('link', { name: 'Open in Runs' })).toBeInViewport();
+
+      // Validate: the unconnected exit shows as errors beside Publish.
+      const indicator = page.getByRole('button', { name: /\d+ errors?/ });
+      await expect(indicator).toBeVisible();
+
+      // Select and edit: a click opens the node's editor; rename its label.
+      await page.getByTestId('node-approve').click({ position: { x: 60, y: 12 } });
+      const dialog = page.getByRole('dialog', { name: 'Edit wait approve' });
+      await expect(dialog).toBeVisible();
+      await dialog.getByLabel('Label', { exact: true }).fill('Approve release');
+      await closeNode(page);
+      await expect(page.getByTestId('node-approve')).toContainText('Approve release');
+      await expect(page.locator('.react-flow__node[data-id="approve"]')).toHaveClass(/selected/);
+
+      // Connect: drag from the wait's output port to the exit's input on the canvas.
+      await page.locator('.react-flow__controls-fitview').click();
+      const from = page.locator('.react-flow__handle[data-nodeid="approve"][data-handleid="out"]');
+      const to = page.locator('.react-flow__handle[data-nodeid="done"][data-handleid="in"]');
+      await from.dragTo(to);
+      await expect(page.locator('.react-flow__edge')).toHaveCount(2);
+
+      // Validated: nothing left to fix, then published.
+      await expect(page.getByText('Ready to publish')).toBeVisible();
+      await page.getByRole('button', { name: 'Publish', exact: true }).click();
+      await expect(page.getByText('Published version 1.')).toBeVisible();
+
+      // The loop panel floats over the canvas below 1024 px instead of narrowing it.
+      const canvas = page.getByTestId('canvas');
+      const before = (await canvas.boundingBox())!.width;
+      await page.getByRole('button', { name: 'Show loop settings' }).click();
+      const panel = page.getByRole('complementary', { name: 'Loop settings' });
+      await expect(panel).toHaveCSS('position', 'absolute');
+      expect((await canvas.boundingBox())!.width).toBeGreaterThanOrEqual(before);
+      expect(await pageOverflows(page)).toBe(false);
+    });
+
+    test('at 768 px keyboard authoring adds, edits, connects, validates, and publishes', async ({
+      page,
+      request,
+    }) => {
+      const definition = approvalLoop('responsive keyboard');
+      const created = await request.post('/loops', {
+        data: {
+          definition: {
+            ...definition,
+            nodes: definition.nodes.filter((node) => node.id !== 'approve'),
+            edges: [],
+          },
+        },
+      });
+      expect(created.status()).toBe(201);
+      const loopId = ((await created.json()) as { loop: { id: string } }).loop.id;
+      await page.setViewportSize({ width: 768, height: 1024 });
+      await page.goto(`/app/loops/${loopId}/edit`);
+      await expect(page.getByRole('button', { name: 'Show palette' })).toHaveAttribute(
+        'aria-expanded',
+        'false',
+      );
+      // Traverse the actual rail with Tab; all authoring below uses only keyboard events.
+      await page.getByRole('button', { name: 'Publish', exact: true }).focus();
+      await page.keyboard.press('Tab');
+      await expect(page.getByRole('button', { name: 'Show palette' })).toBeFocused();
+      for (let i = 0; i < 7; i += 1) await page.keyboard.press('Tab');
+      await expect(page.getByRole('button', { name: 'Add Wait node' })).toBeFocused();
+      await page.keyboard.press('Enter');
+      await expect(page.getByTestId('node-wait')).toBeVisible();
+      const open = async (id: string) => {
+        await page.locator(`.react-flow__node[data-id="${id}"]`).focus();
+        await page.keyboard.press('Enter');
+        await expect(page.getByRole('dialog')).toBeVisible();
+        return page.getByRole('dialog');
+      };
+      let dialog = await open('wait');
+      await dialog.getByLabel('Label', { exact: true }).focus();
+      await page.keyboard.press('ControlOrMeta+A');
+      await page.keyboard.type('Keyboard approval');
+      await dialog.getByLabel('To', { exact: true }).focus();
+      await page.keyboard.press('Home'); // Done is the first non-trigger target.
+      await expect(dialog.getByLabel('To', { exact: true })).toHaveValue('done');
+      await dialog.getByRole('button', { name: 'Connect', exact: true }).press('Enter');
+      await expect(dialog.getByText('No outgoing edges.')).toHaveCount(0);
+      await page.keyboard.press('Escape');
+      await expect(page.getByTestId('node-wait')).toContainText('Keyboard approval');
+      dialog = await open('start');
+      await dialog.getByLabel('To', { exact: true }).focus();
+      await page.keyboard.press('End'); // Wait is the last target.
+      await expect(dialog.getByLabel('To', { exact: true })).toHaveValue('wait');
+      await dialog.getByRole('button', { name: 'Connect', exact: true }).press('Enter');
+      await page.keyboard.press('Escape');
+      await expect(page.locator('.react-flow__edge')).toHaveCount(2);
+      await expect(page.getByText('Ready to publish')).toBeVisible();
+      await geometry(page, 'keyboard editor');
+      await page.getByRole('button', { name: 'Publish', exact: true }).press('Enter');
+      await expect(page.getByText('Published version 1.')).toBeVisible();
+    });
+
+    /**
+     * Visible buttons, fields, and links smaller than 44 px each way. A control that keeps a small
+     * look counts by the touch box around it (`touch-target`, an absolute ::after).
+     */
+    const smallTargets = (page: Page) =>
+      page.evaluate(() =>
+        [
+          ...document.querySelectorAll<HTMLElement>(
+            'button, a[href], [role=link], input:not([type=checkbox]):not([type=file]), select',
+          ),
+        ]
+          .map((el) =>
+            el instanceof HTMLInputElement && el.type === 'radio'
+              ? (el.closest('label') ?? el)
+              : el,
+          )
+          .filter((el) => {
+            if (el.closest('.react-flow__node, .react-flow__edge')) return false;
+            const rect = el.getBoundingClientRect();
+            return (
+              rect.width > 1 && rect.height > 1 && getComputedStyle(el).visibility !== 'hidden'
+            );
+          })
+          .filter((el) => {
+            const rect = el.getBoundingClientRect();
+            const after = getComputedStyle(el, '::after');
+            const touch =
+              after.content !== 'none' && after.position === 'absolute'
+                ? { width: parseFloat(after.width), height: parseFloat(after.height) }
+                : { width: rect.width, height: rect.height };
+            return Math.min(touch.width, touch.height) < 43.5;
+          })
+          .map((el) => el.getAttribute('aria-label') ?? el.textContent?.trim() ?? el.tagName),
+      );
+
+    test('on a coarse pointer the controls are at least 44 px', async ({
+      browser,
+      baseURL,
+      request,
+    }) => {
+      // This grouped test traverses six screens and nine dialogs, then closes its touch context.
+      test.setTimeout(120_000);
+      const { loopId, runId } = await seed(request);
+      const context = await browser.newContext({
+        baseURL: baseURL as string,
+        viewport: { width: 768, height: 1024 },
+        hasTouch: true,
+        isMobile: true,
+        serviceWorkers: 'block',
+      });
+      await context.addInitScript(
+        (choice) => localStorage.setItem('graphgoblin-theme', choice),
+        theme,
+      );
+      const page = await context.newPage();
+      try {
+        for (const [path, ready] of [
+          ['/app/settings', 'GPT-5.5'],
+          ['/app/loops', 'responsive sweep'],
+          [`/app/loops/${loopId}/edit`, 'Approve'],
+          ['/app/runs', 'responsive sweep'],
+          [`/app/runs/${runId}`, 'Input requested'],
+          ['/app/events', 'issue.opened'],
+        ] as const) {
+          await page.goto(path);
+          expect(await page.evaluate(() => matchMedia('(pointer: coarse)').matches)).toBe(true);
+          await expect(page.getByText(ready).filter({ visible: true }).first()).toBeVisible();
+          expect(await smallTargets(page), path).toEqual([]);
+        }
+        // Exercise every node's radios and short choices, including inference's boolean "No".
+        const { loopId: dialogs, kinds } = await seedDialogs(request);
+        await page.goto(`/app/loops/${dialogs}/edit`);
+        for (const kind of kinds) {
+          await page.locator(`.react-flow__node[data-id="${kind}"]`).focus();
+          await page.keyboard.press('Enter');
+          const dialog = page.getByRole('dialog');
+          await expect(dialog).toBeVisible();
+          if (await dialog.getByRole('button', { name: /^Advanced\b/ }).count())
+            await openAdvanced(dialog);
+          expect(await smallTargets(page), `${kind} touch controls`).toEqual([]);
+          if (kind === 'inference') {
+            const short = dialog.getByRole('radio', { name: 'No', exact: true });
+            expect(await short.count()).toBeGreaterThan(0);
+            for (const radio of await short.all()) {
+              const box = (await radio.locator('xpath=..').boundingBox())!;
+              expect(box.width).toBeGreaterThanOrEqual(44);
+              expect(box.height).toBeGreaterThanOrEqual(44);
+              await radio.locator('xpath=..').tap();
+              await expect(radio).toBeChecked();
+            }
+          }
+          await page.keyboard.press('Escape');
+          await expect(dialog).toHaveCount(0);
+        }
+      } finally {
+        await context.close();
+      }
+    });
+
+    test('at 200% zoom (1024 by 768 px) Loops, the editor, a run, and Settings reflow without sideways scrolling', async ({
+      page,
+      request,
+    }) => {
+      const { loopId, runId } = await seed(request);
+      // 200% zoom of a 1024 by 768 window lays the page out in 512 by 384 CSS pixels.
+      await page.setViewportSize({ width: 512, height: 384 });
+      for (const [path, ready] of [
+        ['/app/loops', 'responsive sweep'],
+        [`/app/loops/${loopId}/edit`, 'Approve'],
+        [`/app/runs/${runId}`, 'Input requested'],
+        ['/app/settings', 'Model catalog'],
+      ] as const) {
+        await page.goto(path);
+        await expect(page.getByText(ready).filter({ visible: true }).first()).toBeVisible();
+        expect(await pageOverflows(page), path).toBe(false);
+        expect(await cutOffControls(page), path).toEqual([]);
+      }
+      // The editor keeps a usable canvas and its Publish button at that size.
+      await page.goto(`/app/loops/${loopId}/edit`);
+      await expect(page.getByRole('button', { name: 'Publish', exact: true })).toBeVisible();
+      expect((await page.getByTestId('canvas').boundingBox())!.height).toBeGreaterThan(120);
+    });
+  });
+}

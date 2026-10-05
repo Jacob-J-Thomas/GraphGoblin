@@ -251,7 +251,7 @@ describe('cron schedule control', () => {
       expect(change).toHaveBeenLastCalledWith(expect.objectContaining({ expression: '0 9 * * 3' })),
     );
   });
-  it('says what to choose rather than a summary with a gap, and a cleared time falls back to the default on another preset (#41)', async () => {
+  it('says what to choose and retains the last valid time after an incomplete edit (#41)', async () => {
     const { user } = setup('30 7 * * 1');
     expect(screen.getByText('Every Monday at 07:30, UTC')).toBeVisible();
     await user.click(screen.getByLabelText('Monday'));
@@ -262,11 +262,27 @@ describe('cron schedule control', () => {
     fireEvent.change(screen.getByLabelText('At time'), { target: { value: '' } });
     expect(screen.queryByText(/Every Monday at ,/)).not.toBeInTheDocument();
     expect(screen.getAllByText('Choose a time.')).toHaveLength(1);
-    // The cleared time is not carried over: the next preset starts complete, at the default.
+    // An incomplete draft never replaces the last valid preference.
     await user.selectOptions(screen.getByLabelText('Repeat'), 'daily');
-    expect(screen.getByLabelText('At time')).toHaveValue('09:00');
-    expect(screen.getByText('Every day at 09:00, UTC')).toBeVisible();
-    expect(raw()).toHaveValue('0 9 * * *');
+    expect(screen.getByLabelText('At time')).toHaveValue('07:30');
+    expect(screen.getByText('Every day at 07:30, UTC')).toBeVisible();
+    expect(raw()).toHaveValue('30 7 * * *');
+  });
+  it('retains the last valid weekly days and monthly day after clearing them', async () => {
+    const { user } = setup('30 7 * * 3');
+    await user.click(screen.getByLabelText('Wednesday'));
+    await user.selectOptions(screen.getByLabelText('Repeat'), 'daily');
+    await user.selectOptions(screen.getByLabelText('Repeat'), 'weekly');
+    expect(screen.getByLabelText('Wednesday')).toBeChecked();
+    expect(screen.getByLabelText('Monday')).not.toBeChecked();
+    expect(raw()).toHaveValue('30 7 * * 3');
+    await user.selectOptions(screen.getByLabelText('Repeat'), 'monthly');
+    fireEvent.change(screen.getByLabelText('Day of month'), { target: { value: '28' } });
+    fireEvent.change(screen.getByLabelText('Day of month'), { target: { value: '' } });
+    await user.selectOptions(screen.getByLabelText('Repeat'), 'hours');
+    await user.selectOptions(screen.getByLabelText('Repeat'), 'monthly');
+    expect(screen.getByLabelText('Day of month')).toHaveValue(28);
+    expect(raw()).toHaveValue('30 7 28 * *');
   });
   it('retains time, days, and monthly day even through presets without those fields', async () => {
     const { user } = setup('25 17 * * 1,3');
