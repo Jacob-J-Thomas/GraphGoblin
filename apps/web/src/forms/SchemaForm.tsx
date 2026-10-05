@@ -3,7 +3,7 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { FormProvider, useForm, type FieldValues, type Resolver } from 'react-hook-form';
 import { FieldGroup, Label, Select } from '../components/ui/index.js';
 import { FieldControlsContext, type FieldControls } from './fields.js';
-import { FieldIssuesContext, ProblemPathsContext } from './fields/shared.js';
+import { FieldIssuesContext, FormScopeContext, ProblemPathsContext } from './fields/shared.js';
 import {
   humanize,
   initialValue,
@@ -169,56 +169,58 @@ export function SchemaForm({
       <FieldIssuesContext value={issuesByPath}>
         <FieldControlsContext value={controls ?? NO_CONTROLS}>
           <ProblemPathsContext value={problems ?? NO_PROBLEMS}>
-            <FormProvider {...form}>
-              <form
-                aria-label={label}
-                noValidate
-                onSubmit={(e) => e.preventDefault()}
-                className="grid gap-field"
-              >
-                {shape.kind === 'union' ? (
-                  <FieldGroup>
-                    <Label htmlFor={id}>{humanize(shape.discriminator ?? 'kind')}</Label>
-                    <Select
-                      id={id}
-                      value={String(unionIndex)}
-                      onChange={(e) => switchVariant(Number(e.target.value))}
+            <FormScopeContext value={{ schema: variantSchema, id }}>
+              <FormProvider {...form}>
+                <form
+                  aria-label={label}
+                  noValidate
+                  onSubmit={(e) => e.preventDefault()}
+                  className="grid gap-field"
+                >
+                  {shape.kind === 'union' ? (
+                    <FieldGroup>
+                      <Label htmlFor={id}>{humanize(shape.discriminator ?? 'kind')}</Label>
+                      <Select
+                        id={id}
+                        value={String(unionIndex)}
+                        onChange={(e) => switchVariant(Number(e.target.value))}
+                      >
+                        {shape.options.map((option, index) => (
+                          <option key={index} value={index}>
+                            {optionLabel(option, shape.discriminator)}
+                          </option>
+                        ))}
+                      </Select>
+                    </FieldGroup>
+                  ) : null}
+                  {layout ? (
+                    <LayoutItems items={layout.basic} keyPrefix={String(unionIndex)} />
+                  ) : null}
+                  {layout && layout.advanced.length > 0 ? (
+                    <AdvancedFields
+                      key={unionIndex}
+                      sections={layout.advanced}
+                      keyPrefix={String(unionIndex)}
+                    />
+                  ) : null}
+                  {issues.length > 0 ? (
+                    <div
+                      className="grid gap-1 rounded-md border-l-4 border-status-bad-border bg-status-bad-bg px-3 py-2 text-xs leading-snug"
+                      aria-label="Config issues"
                     >
-                      {shape.options.map((option, index) => (
-                        <option key={index} value={index}>
-                          {optionLabel(option, shape.discriminator)}
-                        </option>
-                      ))}
-                    </Select>
-                  </FieldGroup>
-                ) : null}
-                {layout ? (
-                  <LayoutItems items={layout.basic} keyPrefix={String(unionIndex)} />
-                ) : null}
-                {layout && layout.advanced.length > 0 ? (
-                  <AdvancedFields
-                    key={unionIndex}
-                    sections={layout.advanced}
-                    keyPrefix={String(unionIndex)}
-                  />
-                ) : null}
-                {issues.length > 0 ? (
-                  <div
-                    className="grid gap-1 rounded-md border-l-4 border-status-bad-border bg-status-bad-bg px-3 py-2 text-xs leading-snug"
-                    aria-label="Config issues"
-                  >
-                    <p className="font-semibold text-status-bad-fg">Config issues</p>
-                    <ul className="list-disc pl-4">
-                      {issues.map((issue, index) => (
-                        <li key={index}>
-                          {issue.path ? <code>{issue.path}</code> : 'config'}: {issue.message}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ) : null}
-              </form>
-            </FormProvider>
+                      <p className="font-semibold text-status-bad-fg">Config issues</p>
+                      <ul className="list-disc pl-4">
+                        {issues.map((issue, index) => (
+                          <li key={index}>
+                            {issue.path ? <code>{issue.path}</code> : 'config'}: {issue.message}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+                </form>
+              </FormProvider>
+            </FormScopeContext>
           </ProblemPathsContext>
         </FieldControlsContext>
       </FieldIssuesContext>

@@ -14,6 +14,9 @@ import {
   Textarea,
 } from '../components/ui/index.js';
 import { SchemaForm } from '../forms/SchemaForm.js';
+import { CatalogWarningsContext } from '../forms/fields/model.js';
+import { LOOP_FIELD_CONTROLS } from './field-controls.js';
+import type { EditorIssue } from './model.js';
 import { useEditorStore } from './store.js';
 
 const VariablesFormSchema = z.object({ variables: VariableDeclarationsSchema });
@@ -22,7 +25,13 @@ const VariablesFormSchema = z.object({ variables: VariableDeclarationsSchema });
  * Loop name, description, settings, and declared variables (name to JSON Schema). The forms keep
  * their own state: remount this (a `key`) when the definition is replaced, as a load does.
  */
-export function LoopSettingsPanel({ definition }: { definition: LoopDefinitionInput }) {
+export function LoopSettingsPanel({
+  definition,
+  issues = [],
+}: {
+  definition: LoopDefinitionInput;
+  issues?: readonly EditorIssue[] | undefined;
+}) {
   const { updateMeta, updateSettings, updateVariables, setFieldError } = useEditorStore.getState();
   const fieldErrors = useEditorStore((s) => s.fieldErrors);
   // The contract's own message for a name it refuses (a blank one, say).
@@ -59,14 +68,21 @@ export function LoopSettingsPanel({ definition }: { definition: LoopDefinitionIn
         />
       </FieldGroup>
       <h3 className="mt-2 text-xs font-semibold tracking-wide text-muted uppercase">Settings</h3>
-      <SchemaForm
-        schema={LoopSettingsSchema}
-        value={definition.settings ?? {}}
-        label="Loop settings form"
-        onChange={updateSettings}
-        parseErrors={fieldErrors['settings']}
-        onParseError={(path, error, reason) => setFieldError('settings', path, error, reason)}
-      />
+      <CatalogWarningsContext
+        value={issues
+          .filter((issue) => !issue.nodeId && issue.path?.startsWith('settings.'))
+          .map((issue) => ({ ...issue, path: issue.path?.slice('settings.'.length) }))}
+      >
+        <SchemaForm
+          schema={LoopSettingsSchema}
+          controls={LOOP_FIELD_CONTROLS}
+          value={definition.settings ?? {}}
+          label="Loop settings form"
+          onChange={updateSettings}
+          parseErrors={fieldErrors['settings']}
+          onParseError={(path, error, reason) => setFieldError('settings', path, error, reason)}
+        />
+      </CatalogWarningsContext>
       <div className="mt-2 grid gap-1">
         <h3 className="text-xs font-semibold tracking-wide text-muted uppercase">Variables</h3>
         <HelpText>Each variable maps a name to a JSON Schema.</HelpText>

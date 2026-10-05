@@ -33,7 +33,7 @@ test('LIVE: build, publish, and run an inference loop against Codex from the UI'
   await prompt.click();
   await page.keyboard.press('Control+A');
   await page.keyboard.type('Reply with exactly the single word OK and nothing else.');
-  await props.getByLabel('Model', { exact: true }).fill('gpt-6-luna');
+  await props.getByLabel('Model', { exact: true }).selectOption('gpt-6-luna');
   await props.getByLabel('Effort', { exact: true }).selectOption('low');
   await props
     .getByRole('radiogroup', { name: 'Sandbox', exact: true })
