@@ -44,7 +44,8 @@ export function GoblinMark({ className }: { className?: string }) {
 
 /**
  * The header lockup: the mark and the "GraphGoblin" wordmark (`variant="wordmark"` drops the mark).
- * "Goblin" takes the accent on the dark header and the deeper accent on a light surface.
+ * "Goblin" takes the accent on the dark header and the deeper accent on a light surface. The
+ * wordmark is set in the display face, like headings (--font-display, chosen in Settings).
  */
 export function Logo({
   variant = 'full',
@@ -58,7 +59,7 @@ export function Logo({
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-2.5 text-lg font-semibold tracking-[-0.015em]',
+        'inline-flex items-center gap-2.5 font-display text-lg font-semibold tracking-[-0.015em]',
         surface === 'inverse' ? 'text-inverse' : 'text-default',
         className,
       )}

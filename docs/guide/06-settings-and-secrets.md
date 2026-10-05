@@ -8,7 +8,7 @@ Open **Settings** from the navigation bar:
 /app/settings
 ```
 
-Choose the colour theme under **Appearance** (below), and manage **Model catalog**, **Classifier models**, **Defaults**, **Secrets**, and **API keys** here, and check **Harness preflight**. The **Install** card explains the browser's PWA installation action. With `GG_REQUIRE_API_KEY=true` the app shell still loads, asks for a key on the first 401, and keeps it in this browser; **This browser's API key** shows it and **Forget key** removes it (other open tabs follow).
+Choose the colour theme and the font under **Appearance** (below), and manage **Model catalog**, **Classifier models**, **Defaults**, **Secrets**, and **API keys** here, and check **Harness preflight**. The **Install** card explains the browser's PWA installation action. With `GG_REQUIRE_API_KEY=true` the app shell still loads, asks for a key on the first 401, and keeps it in this browser; **This browser's API key** shows it and **Forget key** removes it (other open tabs follow).
 
 ## Confirm destructive actions
 
@@ -19,6 +19,23 @@ Only the API key marked **This browser** adds the browser sign-out warning. Othe
 ## Choose the theme
 
 **Appearance → Theme** switches between **Dark** (the default) and **Light**. The change applies at once, without a reload, and this browser remembers it: the app opens in your theme on the next visit, with no flash of the other one, and other open tabs switch too. Use Tab to reach the control and the arrow keys to change it. The choice is per browser, kept in `localStorage` (`graphgoblin-theme`); a private window or blocked site data opens in Dark. A **System** option that follows the operating system will come with the installer.
+
+## Choose the font
+
+**Appearance → Font**, under the theme, sets the typeface of the whole app. Each option shows its name in its own face, with a line about it:
+
+| Font                      | What it is                                                                                     |
+| ------------------------- | ---------------------------------------------------------------------------------------------- |
+| **Geist** (the default)   | Compact and clean.                                                                             |
+| **Space Grotesk**         | Characterful: quirky, engineered letters for all text.                                         |
+| **Chakra Petch**          | Robotic, squared-off headings and wordmark; the rest of the text stays in Geist.               |
+| **Atkinson Hyperlegible** | Easier reading: letters shaped so that similar ones (I, l, 1; O, 0) are hard to confuse.       |
+| **OpenDyslexic**          | For some dyslexic readers: letters weighted at the bottom. Much wider, so long labels cut off. |
+| **Inter**                 | Neutral: a plainer alternative to Geist.                                                       |
+
+Click an option, or Tab to the chosen one and use the arrow keys. The font changes at once, without a reload, and this browser remembers it: on the next visit the app starts with your font already chosen, and other open tabs switch too. Code, ids, and JSON always stay in Geist Mono. The fonts come with the app, so they work offline. The choice is per browser, kept in `localStorage` (`graphgoblin-font`); a private window or blocked site data opens in Geist.
+
+While a font is loading, or if it cannot load, the text it sets shows in the next font in its list and stays usable: Chakra Petch headings and the wordmark show in Geist, and the other fonts, Geist included, show in your system's interface font (Segoe UI on Windows). Text size and spacing settings are not available yet.
 
 ## Choose a model and effort
 

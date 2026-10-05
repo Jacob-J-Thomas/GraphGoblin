@@ -3,6 +3,7 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig, type Plugin } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
+import { fontBootScript } from './src/lib/font.js';
 import { themeBootScript } from './src/lib/theme.js';
 import { appChromeColors } from './src/styles/palette.js';
 
@@ -38,8 +39,8 @@ const CHROME = { dark: appChromeColors(TOKENS, 'dark'), light: appChromeColors(T
 /**
  * Adds to index.html's <head>, right after the charset and ahead of the stylesheet: the
  * `theme-color` meta tag with the default (dark) header colour and both themes' colours as data-dark
- * and data-light, then the inline boot script that shows the stored theme before first paint
- * (src/lib/theme.ts).
+ * and data-light, then the inline boot scripts that show the stored theme (src/lib/theme.ts) and
+ * the stored font (src/lib/font.ts, which also preloads that font's files) before first paint.
  */
 function themeHead(): Plugin {
   const charset = '<meta charset="UTF-8" />';
@@ -55,7 +56,8 @@ function themeHead(): Plugin {
         charset,
         `${charset}
     ${meta}
-    <script>${themeBootScript()}</script>`,
+    <script>${themeBootScript()}</script>
+    <script>${fontBootScript(APP_BASE)}</script>`,
       );
     },
   };
@@ -100,7 +102,8 @@ export default defineConfig({
       workbox: {
         // Precache the app shell only. API responses are never cached: there is no runtime
         // caching, and navigations outside /app/ are never answered from the cache.
-        // The fonts are part of the shell, so the offline app keeps its typeface.
+        // The fonts are part of the shell, every face Settings offers included (public/fonts), so
+        // the offline app keeps whichever typeface was chosen.
         globPatterns: ['**/*.{js,css,html,svg,png,webmanifest,woff2}'],
         navigateFallback: `${APP_BASE}index.html`,
         navigateFallbackAllowlist: [/^\/app\//],
