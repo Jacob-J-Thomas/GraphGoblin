@@ -113,21 +113,37 @@ export function classifierFingerprint(entries: readonly ClassifierModelSummary[]
   );
 }
 
+/** Whether a query key is one of the editor's API checks (`keys.validation`). */
+export function isValidationKey(queryKey: readonly unknown[]): boolean {
+  return queryKey[0] === 'loops' && queryKey[2] === 'validate';
+}
+
 /**
- * After a classifier or secret write: refetch the classifier summaries, and mark the editor's API
- * checks of saved drafts stale, since their classifier warnings and errors follow the catalog and
- * its secrets. The checks are not refetched here: one running now would store the new server
- * state under the old catalog's key. The summaries' new fingerprint (`keys.validation`) runs them
- * under the new key, and an old key coming back is checked again rather than trusted.
+ * After a classifier or secret write: refetch the classifier summaries, and make the editor's API
+ * checks of saved drafts run again, since their classifier warnings and errors follow the catalog
+ * and its secrets.
+ *
+ * Checks still running are cancelled first: one that finishes after the write may have read the
+ * new server state and would store it under the old catalog's key (`keys.validation` holds the
+ * catalog fingerprint the check was issued for). Every check is then marked stale without being
+ * refetched, so none runs against an out-of-date key; once the summaries are back, the active
+ * checks already keyed by the catalog as it now is (a write the checks do not read) run again,
+ * and the others run under their new key when the editor renders it.
  */
-export function refreshClassifierState(queryClient: QueryClient): Promise<unknown> {
-  return Promise.all([
-    queryClient.invalidateQueries({
-      predicate: ({ queryKey }) => queryKey[0] === 'loops' && queryKey[2] === 'validate',
-      refetchType: 'none',
-    }),
-    queryClient.invalidateQueries({ queryKey: keys.classifiers }),
-  ]);
+export async function refreshClassifierState(queryClient: QueryClient): Promise<void> {
+  const validation = {
+    predicate: ({ queryKey }: { queryKey: readonly unknown[] }) => isValidationKey(queryKey),
+  };
+  await queryClient.cancelQueries(validation);
+  await queryClient.invalidateQueries({ ...validation, refetchType: 'none' });
+  await queryClient.invalidateQueries({ queryKey: keys.classifiers });
+  const now = classifierFingerprint(
+    queryClient.getQueryData<ClassifierModelSummary[]>(keys.classifiers),
+  );
+  await queryClient.refetchQueries({
+    predicate: ({ queryKey }) => isValidationKey(queryKey) && queryKey[4] === now,
+    type: 'active',
+  });
 }
 
 /** Start the catalog request before a node dialog or the loop settings form opens. */

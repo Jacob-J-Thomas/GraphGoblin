@@ -1,5 +1,5 @@
 import { GraphGoblinApiError, loops } from '@graphgoblin/api-client';
-import type { LoopDefinitionInput } from '@graphgoblin/contracts';
+import type { ClassifierModelSummary, LoopDefinitionInput } from '@graphgoblin/contracts';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ReactFlowProvider } from '@xyflow/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -7,6 +7,7 @@ import { useParams } from 'react-router';
 import { useApi } from '../api/context.js';
 import {
   classifierFingerprint,
+  isValidationKey,
   keys,
   useClassifierModels,
   usePrefetchModelCatalog,
@@ -90,6 +91,13 @@ export function EditorPage() {
     queryFn: async () => {
       const checked = definition as LoopDefinitionInput;
       const result = await loops.validate(client, loopId, checked);
+      // The catalog changed while the check ran, so its answer may describe either state: drop
+      // it rather than store it under this catalog's key. The new catalog's own check runs.
+      const now = classifierFingerprint(
+        queryClient.getQueryData<ClassifierModelSummary[]>(keys.classifiers),
+      );
+      if (now !== classifierState)
+        throw new Error('The classifier catalog changed during the check; checking again.');
       const known = new Set(validateDraft(checked).issues.map(issueKey));
       return result.issues
         .map(({ nodeId, edgeId, ...rest }): EditorIssue => ({
@@ -100,6 +108,18 @@ export function EditorPage() {
         .filter((issue) => !known.has(issueKey(issue)));
     },
   });
+  // When the catalog changes (a write here, or another tab's seen on a refresh), checks keyed by
+  // any other catalog state are no longer trusted: one still running is cancelled, so its answer
+  // is not kept, and each is marked stale, so going back to that state checks again.
+  useEffect(() => {
+    const others = {
+      predicate: ({ queryKey }: { queryKey: readonly unknown[] }) =>
+        isValidationKey(queryKey) && queryKey[1] === loopId && queryKey[4] !== classifierState,
+    };
+    void queryClient
+      .cancelQueries(others)
+      .then(() => queryClient.invalidateQueries({ ...others, refetchType: 'none' }));
+  }, [queryClient, loopId, classifierState]);
   const validation = useMemo(
     () => ({
       issues: mergeIssues(local, serverCheck.data, fieldErrorIssues(fieldErrors)),

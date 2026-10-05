@@ -1,10 +1,11 @@
 import type { LoopDefinitionInput } from '@graphgoblin/contracts';
+import type { QueryClient } from '@tanstack/react-query';
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { BUILTIN_JEV, customClassifier, FakeApi } from '../__fixtures__/fake-api.js';
 import { renderApp } from '../__fixtures__/render.js';
-import { keys, refreshClassifierState } from '../api/queries.js';
+import { isValidationKey, keys, refreshClassifierState } from '../api/queries.js';
 import { LOOP_PANEL_STORAGE_KEY } from './LoopPanel.js';
 import { useEditorStore } from './store.js';
 
@@ -74,6 +75,121 @@ async function openPicker() {
   await waitFor(() => expect(within(picker).getAllByRole('option')).toHaveLength(3));
   return { dialog, picker };
 }
+
+/** Hold the next validation request until `release`; later ones answer at once. */
+function holdFirstValidation(api: FakeApi, beforeAnswer?: () => void) {
+  let release!: () => void;
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  let arrive!: () => void;
+  const arrived = new Promise<void>((resolve) => {
+    arrive = resolve;
+  });
+  let first = true;
+  api.override('POST /loops/:id/validate', async (call) => {
+    if (!first) return api.builtIn(call);
+    first = false;
+    arrive();
+    await held;
+    // Answered with the server's state when it is released, as a slow request would be.
+    beforeAnswer?.();
+    return api.builtIn(call);
+  });
+  return { release, arrived };
+}
+
+const setKev = (api: FakeApi, enabled: boolean) => {
+  api.classifiers = api.classifiers.map((c) => (c.id === 'kev' ? { ...c, enabled } : c));
+};
+
+/** The cached API checks of the loop, by the catalog fingerprint they were issued for. */
+const cachedChecks = (queryClient: QueryClient) =>
+  queryClient
+    .getQueryCache()
+    .findAll({ predicate: ({ queryKey }) => isValidationKey(queryKey) })
+    .map((query) => ({
+      catalog: query.queryKey[4],
+      data: query.state.data as unknown[] | undefined,
+    }));
+
+describe('API checks held across a catalog change (#43 re-review)', () => {
+  beforeEach(() => localStorage.setItem(LOOP_PANEL_STORAGE_KEY, 'expanded'));
+
+  it('drops a check that was running when Settings changed the catalog, and clears after re-enabling', async () => {
+    const api = new FakeApi();
+    const gate = holdFirstValidation(api);
+    const { queryClient } = (() => {
+      api.classifiers = [BUILTIN_JEV, customClassifier({ id: 'kev', displayName: 'Kev 4B' })];
+      const loop = api.addLoop(decisionLoop({ primitive: 'choice', model: 'kev' }));
+      return renderApp(`/loops/${loop.id}/edit`, api);
+    })();
+    await loaded();
+    // The first check is held while Kev is enabled.
+    await gate.arrived;
+    setKev(api, false);
+    await act(() => refreshClassifierState(queryClient));
+    await waitFor(() => expect(nodeBadge('pick')).toHaveAttribute('aria-label', '1 issue on pick'));
+    // The held check now answers with the disabled state; it was cancelled, so nothing keeps it.
+    await act(() => Promise.resolve(gate.release()));
+    expect(api.callsTo('POST', /\/validate$/)).toHaveLength(2);
+    const enabledKey = cachedChecks(queryClient).find(
+      (c) => typeof c.catalog === 'string' && c.catalog.includes('"kev","Kev 4B",["choice"],true'),
+    );
+    expect(enabledKey?.data).toBeUndefined();
+    // Re-enabled, seen by a refresh of the summaries alone: checked again, and the badge clears.
+    setKev(api, true);
+    await act(() => queryClient.invalidateQueries({ queryKey: keys.classifiers }));
+    await waitFor(() => expect(nodeBadge('pick')).toBeNull());
+    expect(api.callsTo('POST', /\/validate$/)).toHaveLength(3);
+    expect(api.callsTo('PUT', /\/draft$/)).toHaveLength(0);
+  });
+
+  it('drops a held check when another tab changes the catalog (a summaries refresh only)', async () => {
+    const api = new FakeApi();
+    const gate = holdFirstValidation(api);
+    api.classifiers = [BUILTIN_JEV, customClassifier({ id: 'kev', displayName: 'Kev 4B' })];
+    const loop = api.addLoop(decisionLoop({ primitive: 'choice', model: 'kev' }));
+    const { queryClient } = renderApp(`/loops/${loop.id}/edit`, api);
+    await loaded();
+    await gate.arrived;
+    setKev(api, false);
+    await act(() => queryClient.invalidateQueries({ queryKey: keys.classifiers }));
+    await waitFor(() => expect(nodeBadge('pick')).toHaveAttribute('aria-label', '1 issue on pick'));
+    await act(() => Promise.resolve(gate.release()));
+    setKev(api, true);
+    await act(() => queryClient.invalidateQueries({ queryKey: keys.classifiers }));
+    await waitFor(() => expect(nodeBadge('pick')).toBeNull());
+    expect(api.callsTo('PUT', /\/draft$/)).toHaveLength(0);
+  });
+
+  it('drops a check whose answer arrives after the catalog changed, before the editor saw it', async () => {
+    const api = new FakeApi();
+    // The client exists once the app renders; the held request reads it later.
+    const app: { queryClient?: QueryClient } = {};
+    const gate = holdFirstValidation(api, () => {
+      // The summaries change in the cache just before the held answer is read.
+      setKev(api, false);
+      app.queryClient!.setQueryData(keys.classifiers, [
+        api.classifierSummary(BUILTIN_JEV),
+        api.classifierSummary(api.classifiers.find((c) => c.id === 'kev')!),
+      ]);
+    });
+    api.classifiers = [BUILTIN_JEV, customClassifier({ id: 'kev', displayName: 'Kev 4B' })];
+    const loop = api.addLoop(decisionLoop({ primitive: 'choice', model: 'kev' }));
+    const { queryClient } = renderApp(`/loops/${loop.id}/edit`, api);
+    app.queryClient = queryClient;
+    await loaded();
+    await gate.arrived;
+    await act(() => Promise.resolve(gate.release()));
+    await waitFor(() => expect(nodeBadge('pick')).toHaveAttribute('aria-label', '1 issue on pick'));
+    // The held answer was not stored under the enabled catalog's key.
+    const enabledKey = cachedChecks(queryClient).find(
+      (c) => typeof c.catalog === 'string' && c.catalog.includes('"kev","Kev 4B",["choice"],true'),
+    );
+    expect(enabledKey?.data).toBeUndefined();
+  });
+});
 
 describe('the classifier picker in the node editor', () => {
   beforeEach(() => localStorage.setItem(LOOP_PANEL_STORAGE_KEY, 'expanded'));
