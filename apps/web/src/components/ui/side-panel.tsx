@@ -49,35 +49,42 @@ export function useSidePanelState(
 }
 
 /**
- * A panel on the right of the main content that collapses to a narrow rail. Expanded, it shows its
- * heading, a Hide button, and its content; collapsed, the rail keeps a Show button and whatever
- * `rail` holds (a short summary), so the panel never disappears without a trace. The panel keeps
- * its `id` in both states, so a toggle elsewhere can name it in `aria-controls`. When it expands,
- * focus moves to its heading; when its own Hide button collapses it, focus moves to Show.
+ * A panel beside the main content that collapses to a narrow rail. Expanded, it shows its heading,
+ * a Hide button, and its content; collapsed, the rail keeps a Show button and whatever `rail` holds
+ * (a short summary), so the panel never disappears without a trace. The panel keeps its `id` in
+ * both states, so a control can name it in `aria-controls`. When it expands, focus moves to its
+ * heading; when its own Hide button collapses it, focus moves to Show.
  */
 export function SidePanel({
   id,
   title,
+  side = 'right',
   expanded,
   onExpandedChange,
   rail,
   children,
   className,
+  expandedWidth = 380,
 }: {
   id: string;
   /** The heading; also the panel's accessible name. */
   title: string;
+  /** Which edge the panel occupies. */
+  side?: 'left' | 'right';
   expanded: boolean;
   onExpandedChange: (expanded: boolean) => void;
   /** Shown under the Show button while collapsed. */
   rail?: ReactNode;
   children: ReactNode;
+  /** Expanded width in pixels; the collapsed rail always uses the primitive's narrow width. */
+  expandedWidth?: number;
   className?: string;
 }) {
   const headingId = useId();
   const headingRef = useRef<HTMLHeadingElement>(null);
   const showRef = useRef<HTMLButtonElement>(null);
   const previousRef = useRef(expanded);
+  const border = side === 'left' ? 'border-r' : 'border-l';
 
   useEffect(() => {
     if (previousRef.current === expanded) return;
@@ -93,7 +100,7 @@ export function SidePanel({
         id={id}
         aria-label={title}
         className={cn(
-          'flex w-11 shrink-0 flex-col items-center gap-2 border-l border-default bg-surface-raised py-2',
+          `flex w-11 shrink-0 flex-col items-center gap-2 ${border} border-default bg-surface-raised py-2`,
           className,
         )}
       >
@@ -105,6 +112,7 @@ export function SidePanel({
           aria-expanded={false}
           aria-controls={id}
           title={`Show ${title.toLowerCase()}`}
+          className={cn('min-h-11 min-w-11', side === 'left' ? 'self-start' : 'self-end')}
           onClick={() => onExpandedChange(true)}
         >
           <Icon name="panel" />
@@ -117,12 +125,15 @@ export function SidePanel({
     <aside
       id={id}
       aria-labelledby={headingId}
-      className={cn(
-        'flex w-[380px] shrink-0 flex-col border-l border-default bg-surface-raised',
-        className,
-      )}
+      style={{ width: expandedWidth }}
+      className={cn(`flex shrink-0 flex-col ${border} border-default bg-surface-raised`, className)}
     >
-      <div className="flex h-[46px] shrink-0 items-center justify-between gap-2 border-b border-default pr-2 pl-5">
+      <div
+        className={cn(
+          'flex h-[46px] shrink-0 items-center justify-between gap-2 border-b border-default',
+          side === 'left' ? 'flex-row-reverse pl-2 pr-5' : 'pr-2 pl-5',
+        )}
+      >
         <h2
           id={headingId}
           ref={headingRef}

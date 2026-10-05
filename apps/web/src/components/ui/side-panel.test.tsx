@@ -114,4 +114,52 @@ describe('SidePanel', () => {
     expect(rail.children).toHaveLength(1);
     expect(rail.firstElementChild).toBe(screen.getByRole('button', { name: 'Show loop' }));
   });
+
+  it('places a left panel border and its Hide control on the left edge', async () => {
+    const user = userEvent.setup();
+    const setExpanded = vi.fn();
+    const { rerender } = render(
+      <SidePanel
+        id="left-panel"
+        title="Palette"
+        side="left"
+        expanded={false}
+        onExpandedChange={setExpanded}
+      >
+        <p>Palette body</p>
+      </SidePanel>,
+    );
+
+    const rail = screen.getByRole('complementary', { name: 'Palette' });
+    expect(rail.className).toContain('border-r');
+    expect(rail.className).not.toContain('border-l');
+    const show = screen.getByRole('button', { name: 'Show palette' });
+    expect(show).toHaveAttribute('aria-expanded', 'false');
+    expect(show).toHaveAttribute('aria-controls', 'left-panel');
+    expect(show).toHaveClass('min-h-11', 'min-w-11');
+    await user.click(show);
+    expect(setExpanded).toHaveBeenCalledWith(true);
+
+    rerender(
+      <SidePanel
+        id="left-panel"
+        title="Palette"
+        side="left"
+        expanded
+        onExpandedChange={setExpanded}
+      >
+        <p>Palette body</p>
+      </SidePanel>,
+    );
+    const panel = screen.getByRole('complementary', { name: 'Palette' });
+    expect(panel.className).toContain('border-r');
+    const heading = screen.getByRole('heading', { name: 'Palette' });
+    const hide = screen.getByRole('button', { name: 'Hide palette' });
+    expect(hide.parentElement?.className).toContain('flex-row-reverse');
+    expect(hide).toHaveAttribute('aria-expanded', 'true');
+    expect(hide).toHaveAttribute('aria-controls', 'left-panel');
+    await user.click(hide);
+    expect(setExpanded).toHaveBeenLastCalledWith(false);
+    expect(heading).toBeInTheDocument();
+  });
 });

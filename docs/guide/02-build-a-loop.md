@@ -3,15 +3,15 @@
 ## Edit the starter graph
 
 1. Open **Loops**, enter a name in **New loop name**, and click **Create**. The editor opens on the starter graph. Click **Edit** to open an existing loop.
-2. Drag a node from the left palette onto the canvas, or click its palette button to add it. The new node is selected.
+2. Drag a node from the left palette onto the canvas, or click its palette button to add it. The palette collapses to a rail; its icon buttons still add nodes by click or Enter and can be dragged. The new node is selected.
 3. Click a node to edit it, or move to it with **Tab** and press **Enter**. Its editor opens in a dialog named **Edit _kind_ _id_**: set its ID, label, and config. IDs start with a letter and contain letters, digits, underscores, or hyphens; keep them unique. Dragging a node moves it without opening the dialog.
 4. Remove the starter edge before inserting your own path. Use **Connections** in the node's dialog to remove an edge, or select the edge on the canvas and press **Delete** or **Backspace**.
 5. Drag from a labelled output handle to the next node's input handle, or use the dialog's **Connect** form, which is the keyboard path: pick one of the node's free outputs and a target. **Delete node** in the dialog removes the node and its edges.
-6. Use the **Loop** panel on the right for the loop's name, description, workspace, defaults, limits, and declared variables.
+6. Use the **Loop** panel on the right for the loop's name, description, workspace, defaults, limits, and declared variables. Its Show and Hide buttons collapse or expand it.
 
 Edits in the dialog save as you type, so closing it never discards anything: use **Done**, the close button, **Esc**, or a click outside it, and focus returns to the node. An ID you are still typing applies when the dialog closes; an ID that cannot apply keeps the dialog open once with the reason, and closing again keeps the old ID. **Delete** and **Backspace** inside the dialog only edit text. While the dialog is open the rest of the editor waits, so close it to reach **Publish** or the palette. Below 768 px wide the dialog is a sheet along the bottom of the window.
 
-**Loop settings** in the toolbar shows or hides the loop panel, as does the panel's own button. The browser remembers the choice; until you choose, the panel starts expanded on windows at least 1280 px wide and collapsed below. Collapsed, it keeps a narrow rail with its show button. Validation stays in sight either way, on the nodes and beside **Publish** (see [Connect and validate](#connect-and-validate)).
+The **Palette** and **Loop** panels each have their own Show and Hide buttons. The browser remembers both choices; until you choose, the palette starts expanded on windows at least 1024 px wide and collapsed below, and the loop panel starts expanded at 1280 px and wider and collapsed below. Each collapsed panel keeps a narrow rail with its Show button. Validation stays in sight either way, on the nodes and beside **Publish** (see [Connect and validate](#connect-and-validate)).
 
 The editor lives at this browser route:
 

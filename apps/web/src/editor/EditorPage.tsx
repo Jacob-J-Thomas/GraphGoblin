@@ -21,7 +21,7 @@ import {
 } from './model.js';
 import { NodeEditorDialog } from './NodeEditorDialog.js';
 import { LOOP_PANEL_STORAGE_KEY, LoopPanel, loopPanelDefault } from './LoopPanel.js';
-import { Palette } from './Palette.js';
+import { PALETTE_STORAGE_KEY, Palette, palettePanelDefault } from './Palette.js';
 import { useEditorStore } from './store.js';
 import { useAutosave } from './useAutosave.js';
 import { useLoadEditor } from './useLoadEditor.js';
@@ -51,6 +51,10 @@ export function EditorPage() {
   const [panelExpanded, setPanelExpanded] = useSidePanelState(
     LOOP_PANEL_STORAGE_KEY,
     loopPanelDefault,
+  );
+  const [paletteExpanded, setPaletteExpanded] = useSidePanelState(
+    PALETTE_STORAGE_KEY,
+    palettePanelDefault,
   );
   const flush = useAutosave(client);
   const conflict = useEditorStore((s) => s.conflict);
@@ -203,8 +207,6 @@ export function EditorPage() {
           />
         }
         publishing={publish.isPending}
-        loopPanelExpanded={panelExpanded}
-        onLoopSettings={() => setPanelExpanded(!panelExpanded)}
         onPublish={() => publish.mutate()}
       />
       {notices.length > 0 ? (
@@ -214,9 +216,7 @@ export function EditorPage() {
       ) : null}
       <ReactFlowProvider>
         <div className="flex min-h-0 flex-1">
-          <aside className="w-[200px] shrink-0 overflow-auto border-r border-default bg-surface-sunken px-3 py-4">
-            <Palette />
-          </aside>
+          <Palette expanded={paletteExpanded} onExpandedChange={setPaletteExpanded} />
           <main className="min-w-0 flex-1">
             <Canvas definition={def} issues={validation.issues} />
           </main>

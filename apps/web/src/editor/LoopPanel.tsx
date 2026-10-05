@@ -3,7 +3,7 @@ import { SidePanel } from '../components/ui/index.js';
 import { LoopSettingsPanel } from './LoopSettingsPanel.js';
 import { useEditorStore } from './store.js';
 
-/** The panel's element id, for the toolbar toggle's `aria-controls`. */
+/** The panel's element id, for its Show and Hide controls' `aria-controls`. */
 export const LOOP_PANEL_ID = 'loop-panel';
 
 /** Where this browser remembers whether the panel is expanded ("expanded" or "collapsed"). */

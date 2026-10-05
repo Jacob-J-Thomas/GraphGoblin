@@ -48,7 +48,7 @@ describe('EditorPage', () => {
   // loop settings in it, so they start with it expanded (the setup clears storage after each).
   beforeEach(() => localStorage.setItem(LOOP_PANEL_STORAGE_KEY, 'expanded'));
 
-  it('collapses and expands the loop panel from the toolbar and remembers it', async () => {
+  it('collapses and expands the loop panel from its own controls and remembers it', async () => {
     const user = userEvent.setup();
     localStorage.clear();
     const api = new FakeApi();
@@ -56,22 +56,27 @@ describe('EditorPage', () => {
     const first = renderApp(`/loops/${loop.id}/edit`, api);
     await screen.findByRole('heading', { name: 'minimal' });
     // Below 1280 px nothing stored means collapsed: a rail with its Show button.
-    const toggle = screen.getByRole('button', { name: 'Loop settings' });
-    expect(toggle).toHaveAttribute('aria-expanded', 'false');
-    expect(toggle).toHaveAttribute('aria-controls', 'loop-panel');
     const rail = screen.getByRole('complementary', { name: 'Loop' });
     expect(rail).toHaveAttribute('id', 'loop-panel');
     expect(within(rail).getAllByRole('button')).toHaveLength(1);
+    const show = screen.getByRole('button', { name: 'Show loop' });
+    expect(show).toHaveAttribute('aria-expanded', 'false');
+    expect(show).toHaveAttribute('aria-controls', 'loop-panel');
+    expect(screen.queryByRole('button', { name: 'Loop settings' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Palette' })).toBeNull();
     expect(screen.queryByLabelText('Name')).toBeNull();
     // Validation lives in the toolbar now, whatever the panel's state.
     expect(within(rail).queryByText('Ready to publish')).toBeNull();
     expect(await screen.findByText('Ready to publish')).toBeVisible();
 
     // Expanding moves focus into the panel; the choice is remembered for the next visit.
-    await user.click(toggle);
-    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    await user.click(show);
     expect(screen.getByRole('heading', { name: 'Loop' })).toHaveFocus();
     expect(screen.getByLabelText('Name')).toHaveValue('minimal');
+    expect(screen.getByRole('button', { name: 'Hide loop' })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
     // The panel holds only the loop's own configuration: no validation section.
     expect(screen.queryByRole('region', { name: 'Validation' })).toBeNull();
     expect(localStorage.getItem(LOOP_PANEL_STORAGE_KEY)).toBe('expanded');
@@ -82,7 +87,7 @@ describe('EditorPage', () => {
     // The panel's own Hide button collapses it too, leaving focus on Show.
     await user.click(screen.getByRole('button', { name: 'Hide loop' }));
     expect(screen.getByRole('button', { name: 'Show loop' })).toHaveFocus();
-    expect(screen.getByRole('button', { name: 'Loop settings' })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: 'Show loop' })).toHaveAttribute(
       'aria-expanded',
       'false',
     );
@@ -97,14 +102,14 @@ describe('EditorPage', () => {
     const loop = api.addLoop(minimalLoop());
     renderApp(`/loops/${loop.id}/edit`, api);
     await screen.findByRole('heading', { name: 'minimal' });
-    expect(screen.getByRole('button', { name: 'Loop settings' })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: 'Hide loop' })).toHaveAttribute(
       'aria-expanded',
       'true',
     );
     width.mockRestore();
     // The toolbar's indicator counts the merged list; each node's badge counts its own issues.
     // An exit criterion above the ceiling is a warning.
-    await user.click(screen.getByRole('button', { name: 'Loop settings' }));
+    await user.click(screen.getByRole('button', { name: 'Hide loop' }));
     act(() =>
       useEditorStore.getState().updateNode('done', {
         config: { criteria: [{ when: 'max-iterations', value: 99 }] },

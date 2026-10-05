@@ -120,9 +120,8 @@ test('I7-QA-01: the longest valid loop name stays inside the editor toolbar and 
     // Cut short with an ellipsis, inside the page, with every action still on screen.
     expect(await heading.evaluate((h) => h.scrollWidth > h.clientWidth)).toBe(true);
     expect(await pageOverflows(page), `editor at ${viewport.width}`).toBe(false);
-    for (const action of ['Loop settings', 'Publish']) {
-      await expect(page.getByRole('button', { name: action, exact: true })).toBeInViewport();
-    }
+    await expect(page.getByRole('button', { name: 'Publish', exact: true })).toBeInViewport();
+    await expect(page.getByRole('button', { name: /^(Show|Hide) loop$/ })).toBeInViewport();
     await expect(page.getByRole('link', { name: 'Open in Runs', exact: true })).toBeInViewport();
     for (const path of ['/app/loops', '/app/runs']) {
       await page.goto(path);
@@ -158,7 +157,7 @@ test('I7-QA-02: overlong text stays inside Alert, Badge, and Button', async ({ p
         .find((el) => el.textContent === text)!
         .cloneNode(true) as HTMLElement;
     const badge = copy('span.rounded-full', 'published v1');
-    const button = copy('button', 'Loop settings');
+    const button = copy('button', 'Publish');
     badge.lastElementChild!.textContent = 'long badge '.repeat(45);
     button.lastElementChild!.textContent = 'long action '.repeat(45);
     region.append(badge, button);
