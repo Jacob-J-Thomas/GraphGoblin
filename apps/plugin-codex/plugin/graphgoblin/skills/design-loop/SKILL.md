@@ -32,6 +32,11 @@ Rules: node and edge ids are lowercase slugs and unique; every node has a `label
 
 ### Node catalog (the nine kinds)
 
+Select the harness on each inference node with `config.harness` (default `codex`, the only
+supported harness). Loop `settings.defaults` contains only optional model and effort.
+Do not put a harness in loop defaults. Model and effort inherit from loop and owner defaults
+when omitted on the node; decision strategies and structured repair keep their own Codex ports.
+
 | Kind        | Purpose                                          | Key config                                                                                                                                                                                                                     |
 | ----------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `trigger`   | Starts a run; a loop may have several            | `subtype`: `manual` (`inputSchema?`, `exposeTo` of `ui`/`api`/`mcp`), `cron` (`expression`, `timezone`, `missedFirePolicy`), `webhook` (`signature.secretRef`, `filter?`), `event` (`eventType`, `filter?`), `poll` (stretch)  |

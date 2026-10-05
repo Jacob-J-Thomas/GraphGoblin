@@ -38,6 +38,7 @@ Triggers and events
 
 Settings and catalog
   CRUD   /secrets  /api-keys  /settings   (schedules follow publish; read them at /loops/{id}/triggers)
+  GET    /api-keys                      owner key metadata with required current: boolean (the key authenticating this request)
   GET    /model-catalog                 catalog entries, including source and enabled (settings:read)
   PATCH  /model-catalog/{harness}/{model}  { enabled: boolean }, 200 entry (settings:write)
   PUT    /model-catalog/{harness}/{model}  edit existing LiteLLM metadata (settings:write)
@@ -48,6 +49,21 @@ Settings and catalog
 ```
 
 All list endpoints are paginated with cursors. All ids are ULIDs.
+
+## Loop definition inputs
+
+Loop settings have model and effort defaults only. Select `config.harness` on each inference
+node; omission defaults to Codex. Create, draft save, and validate request bodies use the
+canonical `LoopDefinitionSchema`. `settings.defaults.harness` is rejected as an unknown key,
+with its field path, regardless of its value.
+
+`POST /loops/import` delegates to `domain.importLoop`, accepting canonical bare definitions
+and portable export envelopes. Envelope errors retain paths such as
+`loop.settings.defaults.harness`, `formatVersion`, or `exportedAt`, under `LOOP_IMPORT_ERROR`.
+Ordinary bodies use `VALIDATION_FAILED`. Responses and exports use the canonical, encodable
+schemas. Startup migration `0005` removes the obsolete field from stored version definitions
+once; there is no tolerant read path. Schema and format versions stay 1. Older files and API
+clients must remove the field before sending a definition (see the CHANGELOG upgrade notes).
 
 ## SSE protocol (Decided)
 
@@ -64,6 +80,7 @@ All list endpoints are paginated with cursors. All ids are ULIDs.
 - **Local trusted mode**: the API binds to `127.0.0.1` and the browser app on the same machine needs no credentials. A warning is logged if the bind address is changed without API keys enabled.
 - **API keys**: other applications and the MCP server authenticate with a bearer key. Keys are shown once, stored hashed, and carry scopes (`loops:read`, `runs:write`, and so on).
 - **Scopes (Decided by implementation, WP-G, 2026-10-03)**: every private route, read or write, needs a scope, checked in the same `onRequest` hook that authenticates the key, before the body is parsed or any data is read (`requiredScope` in `apps/api/src/plugins/auth.ts`). The scope is `<resource>:read` for `GET` and `HEAD` and `<resource>:write` for everything else, where the resource is the route's first path segment: `loops`, `runs`, `settings`, `secrets`, `api-keys`, `events`, and `system`. `/model-catalog` shares `settings`, and `/harness/preflight` shares `system` with `/system/preflight`. Two routes are overridden: `POST /loops/{id}/runs` needs `runs:write`, and `POST /loops/{id}/validate`, which saves nothing, needs `loops:read`. A write scope implies the read scope of the same resource, so a `runs:write` key can follow the runs it starts. `*` grants everything, and local trusted mode (no key presented, keys not required) acts with `*`. A key without the scope gets `403 FORBIDDEN`, even when the request would also fail validation. A request that matches no route gets its `404` regardless of scopes. The adversarial API suite holds a table of every advertised route and its scope; adding a route means adding it there.
+- **Current API key**: `GET /api-keys` adds a required `current: boolean` to every item. It is true only when keys are required and the authenticated API-key actor id matches that row. Exactly the key authenticating this request is flagged; revoked keys cannot authenticate, and other owners' keys are not listed; a list request already accepted can report its own key as both current and revoked. In trusted mode every row is false, with or without a valid bearer key. The flag is a response snapshot, never persisted or included in the creation response; tokens and hashes are never listed. Headers (including `x-graphgoblin-client`), query parameters, bodies, and labels cannot choose the flag.
 - **API-key delegation**: `POST /api-keys` requires `api-keys:write`. Local trusted mode and callers holding `*` may grant any scopes; omitting `scopes` defaults to `["*"]` only for them. A scoped caller must list `scopes` explicitly or gets `400 VALIDATION_FAILED` with a message explaining that requirement. It may grant only scopes it holds, including reads implied by its write scopes, and may never grant `*`. A request containing unheld scopes or `*` gets `403 SCOPE_NOT_DELEGABLE`, listing all offending scopes in `detail` and `errors.scopes`, without creating a key. An `api-keys:write` key can still list and revoke every key for the local owner, including `*` keys. See [ADR-0016](decisions/ADR-0016-api-key-scope-delegation.md).
 - **Path ids**: resource ids in paths (loop, version, run, API key) must be ULIDs. A malformed id is a `400 VALIDATION_FAILED`, not a lookup that ends in `404`. Node names, signal names, secret names, model names, setting keys, artifact ids, and webhook tokens keep their own formats.
 - **Required keys** (`GG_REQUIRE_API_KEY=true`): every route outside the [public route list](#public-routes-decided-by-implementation-2026-10-03) needs a key. On the first 401 the web app asks for a key, keeps it in the browser's `localStorage`, and sends it on every request and event stream. Settings can forget it.
@@ -182,7 +199,11 @@ PUT retains displayName, efforts, defaultEffort, and optional enabled (omitting 
 
 `POST /loops`, `POST /loops/import`, `PUT /loops/{id}/draft`, `POST /loops/{id}/validate`, and `POST /loops/{id}/publish` report the same issue list: the `domain` rules (`validateLoop`, which includes Liquid and JSONata syntax checks), trigger checks such as cron syntax, and subloop references, which must name a loop of the same owner with a published version (`SUBLOOP_NOT_FOUND`, `SUBLOOP_NOT_PUBLISHED`; a loop may reference itself). `publishable` from validate is true exactly when publish would accept the draft. The editor runs the `domain` rules locally and adds the API-only issues from validate.
 
-The API reads the catalog once per issue collection, next to subloop checks, and adds warning-severity `MODEL_DISABLED` or `MODEL_NOT_IN_CATALOG` for explicit inference `config.model` (the node's harness), decision `config.codex.model` (Codex, only when strategy includes `codex`), and `settings.defaults.model` (the default harness). Node warnings include nodeId and node-relative paths `config.model` or `config.codex.model`; loop-default warnings use `settings.defaults.model` without nodeId. Unspecified models and unused decision Codex settings add no catalog warning. Publishing succeeds when only warnings exist and returns `{ version, issues }`; warnings do not enforce the catalog at runtime. The shared contracts issue schema supports optional paths, and the editor already shows warnings and their node identity.
+The API reads the catalog once per issue collection, next to subloop checks, and adds warning-severity `MODEL_DISABLED` or `MODEL_NOT_IN_CATALOG` for explicit inference `config.model` (the node's harness), decision `config.codex.model` (Codex, only when strategy includes `codex`), and `settings.defaults.model` (the inference default harness, `codex`). Node warnings include nodeId and node-relative paths `config.model` or `config.codex.model`; loop-default warnings use `settings.defaults.model` without nodeId. Unspecified models and unused decision Codex settings add no catalog warning. Publishing succeeds when only warnings exist and returns `{ version, issues }`; warnings do not enforce the catalog at runtime. The shared contracts issue schema supports optional paths, and the editor already shows warnings and their node identity.
+
+Known limitation: loop-default model warnings always check the Codex catalog, the only supported
+inference harness. Revisit this check when a second harness exists so a model inherited by nodes
+using different harnesses can be checked against each relevant catalog.
 
 ## Draft conflicts (Decided, WP-F2, ADR-0015)
 

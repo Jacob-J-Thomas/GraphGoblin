@@ -1,4 +1,5 @@
 import { Workbox } from 'workbox-window';
+import { subscribeApiRecovery, useReachability } from '../lib/reachability.js';
 import { usePwaStore } from './store.js';
 
 /** The hook the app exposes so tests and tools can drive the update flow (docs/09). */
@@ -7,6 +8,8 @@ export interface PwaTestHook {
   simulateUpdate(): void;
   /** How many times an update was applied (the user confirmed). */
   readonly appliedUpdates: number;
+  /** Remove scheduled checks and listeners when the app unmounts or the page unloads. */
+  dispose(this: void): void;
 }
 
 declare global {
@@ -39,6 +42,8 @@ export function registerPwa(options: RegisterPwaOptions = {}): PwaTestHook {
   const reload = options.reload ?? (() => window.location.reload());
   const supported = options.serviceWorkerSupported ?? 'serviceWorker' in navigator;
   let applied = 0;
+  let disposed = false;
+  let cleanup = () => undefined;
   const store = usePwaStore.getState();
 
   const hook: PwaTestHook = {
@@ -49,6 +54,10 @@ export function registerPwa(options: RegisterPwaOptions = {}): PwaTestHook {
     get appliedUpdates() {
       return applied;
     },
+    dispose: () => {
+      disposed = true;
+      cleanup();
+    },
   };
   window.graphgoblinPwa = hook;
 
@@ -57,18 +66,122 @@ export function registerPwa(options: RegisterPwaOptions = {}): PwaTestHook {
     options.createWorkbox ??
     ((swUrl: string, swScope: string) => new Workbox(swUrl, { scope: swScope }));
   const wb = create(url, scope);
-  wb.addEventListener('waiting', () => {
+  const promptedWorkers = new WeakSet<ServiceWorker>();
+  const prompt = (worker?: ServiceWorker) => {
+    if (disposed || (worker && promptedWorkers.has(worker))) return;
+    if (worker) promptedWorkers.add(worker);
     store.promptUpdate(() => {
       applied += 1;
       wb.addEventListener('controlling', () => reload());
       wb.messageSkipWaiting();
     });
-  });
+  };
+  wb.addEventListener('waiting', (event) => prompt(event.sw));
   wb.addEventListener('activated', (event) => {
-    if (!event.isUpdate) store.setOfflineReady();
+    if (!disposed && !event.isUpdate) store.setOfflineReady();
   });
-  void wb.register().catch((error: unknown) => {
-    console.warn('service worker registration failed', error);
-  });
+  let registration: ServiceWorkerRegistration | undefined;
+  let checking = false;
+  let warned = false;
+  let lastFocusCheck = Number.NEGATIVE_INFINITY;
+  let focusTimer: ReturnType<typeof setTimeout> | undefined;
+  const clearFocusTimer = () => {
+    clearTimeout(focusTimer);
+    focusTimer = undefined;
+  };
+  const workerListeners = new Map<ServiceWorker, () => void>();
+  const promptWaiting = () => {
+    if (registration?.active && registration.waiting) prompt(registration.waiting);
+  };
+  const watchInstalling = () => {
+    const worker = registration?.installing;
+    if (!worker || workerListeners.has(worker)) return;
+    const changed = () => {
+      // The first install briefly waits too, before activating without an older worker to replace.
+      if (worker.state === 'installed' && registration?.active && registration.waiting === worker)
+        prompt(worker);
+      if (worker.state === 'installed' || worker.state === 'redundant') {
+        worker.removeEventListener('statechange', changed);
+        workerListeners.delete(worker);
+      }
+    };
+    workerListeners.set(worker, changed);
+    worker.addEventListener('statechange', changed);
+    changed();
+  };
+  const check = async (fromFocus = false) => {
+    if (!disposed) promptWaiting();
+    if (
+      disposed ||
+      !registration ||
+      checking ||
+      document.visibilityState !== 'visible' ||
+      !navigator.onLine ||
+      !useReachability.getState().apiReachable
+    )
+      return;
+    const remaining = lastFocusCheck + 60_000 - Date.now();
+    if (fromFocus && remaining > 0) {
+      focusTimer ??= setTimeout(() => {
+        focusTimer = undefined;
+        void check(true);
+      }, remaining);
+      return;
+    }
+    clearFocusTimer();
+    if (fromFocus) lastFocusCheck = Date.now();
+    checking = true;
+    try {
+      await registration.update();
+      if (!disposed) {
+        watchInstalling();
+        promptWaiting();
+      }
+      warned = false;
+    } catch (error) {
+      if (!warned) console.warn('service worker update check failed', error);
+      warned = true;
+    } finally {
+      checking = false;
+    }
+  };
+  const trigger = () => void check();
+  const focus = () => void check(true);
+  const pageHide = (event: PageTransitionEvent) => {
+    // A cached page may be restored with the same JS state; keep its lifecycle intact.
+    if (!event.persisted) hook.dispose();
+  };
+  const unsubscribe = subscribeApiRecovery(trigger);
+  const interval = setInterval(trigger, 60 * 60 * 1_000);
+  window.addEventListener('focus', focus);
+  window.addEventListener('online', trigger);
+  document.addEventListener('visibilitychange', trigger);
+  window.addEventListener('pagehide', pageHide);
+  window.addEventListener('pageshow', trigger);
+  cleanup = () => {
+    clearInterval(interval);
+    clearFocusTimer();
+    unsubscribe();
+    registration?.removeEventListener('updatefound', watchInstalling);
+    for (const [worker, listener] of workerListeners)
+      worker.removeEventListener('statechange', listener);
+    workerListeners.clear();
+    window.removeEventListener('focus', focus);
+    window.removeEventListener('online', trigger);
+    document.removeEventListener('visibilitychange', trigger);
+    window.removeEventListener('pagehide', pageHide);
+    window.removeEventListener('pageshow', trigger);
+  };
+  void wb.register().then(
+    (result) => {
+      if (disposed) return;
+      registration = result;
+      // Workbox drops its own listener for later external updates. Own the whole registration.
+      registration?.addEventListener('updatefound', watchInstalling);
+      watchInstalling();
+      trigger();
+    },
+    (error: unknown) => console.warn('service worker registration failed', error),
+  );
   return hook;
 }

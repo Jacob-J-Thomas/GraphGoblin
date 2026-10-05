@@ -3,15 +3,15 @@
 ## Edit the starter graph
 
 1. Open **Loops**, enter a name in **New loop name**, and click **Create**. The editor opens on the starter graph. Click **Edit** to open an existing loop.
-2. Drag a node from the left palette onto the canvas, or click its palette button to add it. The new node is selected.
+2. Drag a node from the left palette onto the canvas, or click its palette button to add it. Hide collapses the palette to a rail, and Show expands it; its icon buttons still add nodes by click or Enter and can be dragged. The new node is selected.
 3. Click a node to edit it, or move to it with **Tab** and press **Enter**. Its editor opens in a dialog named **Edit _kind_ _id_**: set its ID, label, and config. IDs start with a letter and contain letters, digits, underscores, or hyphens; keep them unique. Dragging a node moves it without opening the dialog.
 4. Remove the starter edge before inserting your own path. Use **Connections** in the node's dialog to remove an edge, or select the edge on the canvas and press **Delete** or **Backspace**.
 5. Drag from a labelled output handle to the next node's input handle, or use the dialog's **Connect** form, which is the keyboard path: pick one of the node's free outputs and a target. **Delete node** in the dialog removes the node and its edges.
-6. Use the **Loop** panel on the right for the loop's name, description, workspace, defaults, limits, and declared variables.
+6. Use the **Loop settings** panel on the right for the loop's name, description, workspace, defaults, limits, and declared variables. Its Show and Hide buttons collapse or expand it.
 
 Edits in the dialog save as you type, so closing it never discards anything: use **Done**, the close button, **Esc**, or a click outside it, and focus returns to the node. An ID you are still typing applies when the dialog closes; an ID that cannot apply keeps the dialog open once with the reason, and closing again keeps the old ID. **Delete** and **Backspace** inside the dialog only edit text. While the dialog is open the rest of the editor waits, so close it to reach **Publish** or the palette. Below 768 px wide the dialog is a sheet along the bottom of the window.
 
-**Loop settings** in the toolbar shows or hides the loop panel, as does the panel's own button. The browser remembers the choice; until you choose, the panel starts expanded on windows at least 1280 px wide and collapsed below. Collapsed, it keeps a narrow rail with its show button. Validation stays in sight either way, on the nodes and beside **Publish** (see [Connect and validate](#connect-and-validate)).
+The **Palette** and **Loop settings** panels each have their own Show and Hide buttons. The browser remembers both choices; until you choose, the palette starts expanded on windows at least 1024 px wide and collapsed below, and the loop panel starts expanded at 1280 px and wider and collapsed below. Each collapsed panel keeps a narrow rail with its Show button. Validation stays in sight either way, on the nodes and beside **Publish** (see [Connect and validate](#connect-and-validate)).
 
 The editor lives at this browser route:
 
@@ -19,11 +19,17 @@ The editor lives at this browser route:
 /app/loops/<loop-id>/edit
 ```
 
-Edits autosave after a short debounce and are mirrored in IndexedDB. A schema-invalid draft stays on the device with **Saved on this device only**; fix it before relying on the server copy. Offline saves retry on reconnect. An unsynced local draft takes precedence on reload, unless the server saved a newer draft since; then the server copy is shown and the device copy is offered with **Use this device's copy instead**.
+Edits autosave after a short debounce and are mirrored in IndexedDB. A schema-invalid draft stays on the device with **Saved on this device only**; fix it before relying on the server copy. Offline saves retry on reconnect. Device drafts saved before the node-only harness change were discarded by a one-off store upgrade. An unsynced local draft takes precedence on reload, unless the server saved a newer draft since; then the server copy is shown and the device copy is offered with **Use this device's copy instead**.
+
+The restored-draft notice and notices about schema-invalid, offline, or failed saves can be dismissed. The toolbar continues to show when changes are kept only on this device or a save has failed. A dismissed restore notice stays hidden while editing that loaded draft and appears again if a later reload restores it. A dismissed save notice stays hidden through edits that end in the same state; it returns after a successful save, a different save problem or message, or a new load.
 
 Every save tells the server which copy the edit started from. If another tab, device, or API client saved the draft in between, nothing is overwritten: **The draft changed on the server** appears (inside the node dialog too, when one is open), autosave stops, and you choose **Reload server draft** (take theirs, dropping this editor's unsaved changes and closing the dialog) or **Overwrite with this copy** (keep yours). Until you choose, edits stay on this device and **Publish** refuses. API clients get the same protection by sending `If-Match` with the `draftToken` from `GET /loops/{id}` (see [API, streaming, and MCP](../07-api-and-streaming.md#draft-conflicts-decided-wp-f2-adr-0015)).
 
 ## Choose nodes
+
+Choose **Harness** in each inference node's dialog. It defaults to **Codex** when omitted.
+Loop settings offer model and effort defaults. Remove `settings.defaults.harness` from older files before importing them.
+If import is refused, the alert lists each invalid field's path and reason, including this removed field.
 
 **Trigger (`trigger`).** Choose `subtype`: `manual`, `cron`, `webhook`, `event`, or `poll`. For manual starts, set `inputSchema` to validate input and `exposeTo` to declare intended `ui`, `api`, and `mcp` surfaces. The trigger records its payload as an output and follows `out`. Configure automatic sources in [Triggers](04-triggers.md).
 
@@ -59,19 +65,19 @@ Fix errors before publishing: missing trigger or exit, unconnected or doubly con
 
 ## Set workspace and limits
 
-| Setting             | Configure it                                                                                                                                    |
-| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| `maxIterations`     | Default 10, range 1 to 10,000. It limits exit loop-backs (the run ends `exhausted`) and fresh visits per node (the run fails `MAX_ITERATIONS`). |
-| `workingDirectory`  | `temp` (default), `fixed` with `path`, or `template` with a Liquid `template`. The filesystem adapter creates the resolved directory if needed. |
-| `subloopDepthLimit` | Default 8, range 1 to 64. A subloop node can replace it with `depthLimitOverride`.                                                              |
-| `defaults`          | Set the Codex `harness`, optional `model`, and optional `effort`. Node values override loop defaults, which override API-process defaults.      |
+| Setting             | Configure it                                                                                                                                                    |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `maxIterations`     | Default 10, range 1 to 10,000. It limits exit loop-backs (the run ends `exhausted`) and fresh visits per node (the run fails `MAX_ITERATIONS`).                 |
+| `workingDirectory`  | `temp` (default), `fixed` with `path`, or `template` with a Liquid `template`. The filesystem adapter creates the resolved directory if needed.                 |
+| `subloopDepthLimit` | Default 8, range 1 to 64. A subloop node can replace it with `depthLimitOverride`.                                                                              |
+| `defaults`          | Set optional `model` and `effort`. Node values override loop defaults, which override owner and API-process defaults. Harness is chosen on each inference node. |
 
 For a repository workspace, use an absolute path. For a temporary workspace, use:
 
 ```json
 {
   "workingDirectory": { "kind": "temp" },
-  "defaults": { "harness": "codex", "model": "gpt-6-luna", "effort": "low" },
+  "defaults": { "model": "gpt-6-luna", "effort": "low" },
   "maxIterations": 3,
   "subloopDepthLimit": 8
 }
@@ -141,7 +147,7 @@ Save this bare definition as a JSON file and import it. It follows the contracts
   "description": "Ask Codex for a short explanation of a topic.",
   "settings": {
     "workingDirectory": { "kind": "temp" },
-    "defaults": { "harness": "codex", "model": "gpt-6-luna", "effort": "low" },
+    "defaults": { "model": "gpt-6-luna", "effort": "low" },
     "maxIterations": 3,
     "subloopDepthLimit": 8
   },

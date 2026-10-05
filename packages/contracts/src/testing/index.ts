@@ -116,7 +116,7 @@ export function kitchenSinkLoop(): LoopDefinitionInput {
     description: 'Every node kind, for tests.',
     settings: {
       workingDirectory: { kind: 'fixed', path: '/tmp/work' },
-      defaults: { harness: 'codex', model: 'gpt-6-luna', effort: 'low' },
+      defaults: { model: 'gpt-6-luna', effort: 'low' },
       maxIterations: 3,
     },
     variables: { topic: { type: 'string' } },

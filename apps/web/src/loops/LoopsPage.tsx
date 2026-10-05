@@ -27,7 +27,14 @@ import {
 } from '../components/ui/index.js';
 import { clearLocalDraft } from '../drafts/local-drafts.js';
 import { newLoopDefinition } from '../editor/model.js';
-import { downloadJson, errorMessage, fileSlug, formatDateTime, parseJson } from '../lib/utils.js';
+import {
+  downloadJson,
+  errorMessage,
+  fileSlug,
+  formatDateTime,
+  parseJson,
+  problemIssues,
+} from '../lib/utils.js';
 
 function PublishState({ loop }: { loop: LoopRecord }) {
   if (!loop.currentVersionId) return <Badge>draft only</Badge>;
@@ -110,7 +117,8 @@ function ImportLoop() {
         issues: created.issues.map((i) => `${i.code}: ${i.message}`),
       });
     },
-    onError: (error) => setMessage({ tone: 'bad', text: errorMessage(error) }),
+    onError: (error) =>
+      setMessage({ tone: 'bad', text: errorMessage(error), issues: problemIssues(error) }),
   });
   const onFile = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];

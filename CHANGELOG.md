@@ -6,8 +6,30 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ### Changed
 
+- `GET /api-keys` requires a `current` boolean on every list item, identifying the key authenticating that request when keys are required. Settings marks it as **This browser** and warns before revoking it; when a browser stores a key but no row is marked, confirmations explain the possible sign-out and **Forget key** recovery. Changing keys refreshes the marker, and late 401 responses from a previous key no longer show the key panel.
 - Model catalog entries now expose source. Harness models, including all migrated legacy rows, can only be enabled/disabled through PATCH; PUT/DELETE return `MODEL_MANAGED_BY_HARNESS`. Existing LiteLLM rows remain editable/deletable, while new LiteLLM entries return `LITELLM_NOT_CONFIGURED` pending provider support.
 - Startup refreshes seeded harness names, efforts, and default efforts while preserving enabled. Hand-added legacy metadata remains intact. Validate/publish return advisory disabled/missing-model warnings with field paths, and successful publish now includes issues.
+
+### Upgrade notes
+
+- Harness is chosen on inference nodes only. Loop `settings.defaults` now contains model and effort; `settings.defaults.harness` is gone.
+- On the first startup after upgrade, migration `0005` removes that field from stored loop versions. Node harnesses, version ids and numbers, published timestamps, and run pins are preserved.
+- Exports and API clients that still send the field are rejected with its field path. Remove it before import or create/save/validate. For a bare definition or export envelope:
+
+  ```sh
+  jq 'del(.settings.defaults.harness, .loop.settings.defaults.harness)' old-loop.json > loop.json
+  ```
+
+- Device drafts saved before this change are discarded by a one-off IndexedDB store upgrade, including set-aside copies. The server copy remains available. New in-progress drafts persist across reloads, including drafts with schema errors.
+- Close other GraphGoblin tabs and windows after updating so the device-draft store can upgrade.
+- To roll back after migration `0005`, stop the API and restore the pre-upgrade backup of the data directory before running the previous release. The previous release requires the removed field in its loop responses. Alternatively, with the API stopped, restore the field and remove only the `0005` ledger entry:
+
+  ```sql
+  UPDATE loop_versions SET definition = json_set(definition, '$.settings.defaults.harness', 'codex') WHERE json_extract(definition, '$.settings.defaults.harness') IS NULL;
+  DELETE FROM __drizzle_migrations WHERE created_at = 1791152101266;
+  ```
+
+  This manual rollback does not recover edited seed metadata; restore the pre-upgrade backup for that. Re-upgrading applies `0005` again. Current exports and API clients must still use the canonical definition shape.
 
 ### Fixed
 

@@ -5,7 +5,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { BrowserRouter } from 'react-router';
 import { ApiProvider, createAppClient } from '../api/context.js';
 import { applyTheme, currentTheme, readStoredTheme, useThemeAcrossTabs } from '../lib/theme.js';
-import { isOfflineError } from '../lib/utils.js';
+import { startReachability } from '../lib/reachability.js';
 import { registerPwa } from '../pwa/register.js';
 import { App } from './App.js';
 
@@ -27,18 +27,7 @@ export function Providers({
   queryClient: QueryClient;
   children: ReactNode;
 }) {
-  useEffect(() => {
-    // Query assumes online on a cold load, so an offline reload has no false -> true transition.
-    // Retry transport failures on the browser event too; keep HTTP errors and retry limits intact.
-    const reconnect = () => {
-      void queryClient.refetchQueries(
-        { type: 'active', predicate: (query) => isOfflineError(query.state.error) },
-        { cancelRefetch: false },
-      );
-    };
-    window.addEventListener('online', reconnect);
-    return () => window.removeEventListener('online', reconnect);
-  }, [queryClient]);
+  useEffect(() => startReachability(queryClient, client), [queryClient, client]);
 
   return (
     <ApiProvider client={client}>
@@ -50,6 +39,14 @@ export function Providers({
 /** Keeps the theme in step with other tabs for as long as the app is mounted. */
 function ThemeAcrossTabs() {
   useThemeAcrossTabs();
+  return null;
+}
+
+function PwaRegistration() {
+  useEffect(() => {
+    const registration = registerPwa();
+    return () => registration?.dispose();
+  }, []);
   return null;
 }
 
@@ -72,15 +69,17 @@ export function bootstrap(container: HTMLElement, options: BootstrapOptions = {}
   if (stored !== currentTheme()) applyTheme(stored);
   const root = createRoot(container);
   root.render(
-    <StrictMode>
-      <ThemeAcrossTabs />
-      <Providers client={client} queryClient={createQueryClient()}>
-        <BrowserRouter basename={options.basename ?? '/app'}>
-          <App />
-        </BrowserRouter>
-      </Providers>
-    </StrictMode>,
+    <>
+      {(options.registerServiceWorker ?? true) ? <PwaRegistration /> : null}
+      <StrictMode>
+        <ThemeAcrossTabs />
+        <Providers client={client} queryClient={createQueryClient()}>
+          <BrowserRouter basename={options.basename ?? '/app'}>
+            <App />
+          </BrowserRouter>
+        </Providers>
+      </StrictMode>
+    </>,
   );
-  if (options.registerServiceWorker ?? true) registerPwa();
   return root;
 }

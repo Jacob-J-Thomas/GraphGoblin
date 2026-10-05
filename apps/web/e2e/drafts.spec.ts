@@ -30,11 +30,12 @@ test('two tabs editing one draft: the stale tab is asked to reload or overwrite'
   expect(created.status()).toBe(201);
   const loopId = ((await created.json()) as { loop: { id: string } }).loop.id;
 
+  // Let each tab finish foreground initialization before opening the next one.
   const a = await context.newPage();
-  const b = await context.newPage();
   await a.goto(`/app/loops/${loopId}/edit`);
-  await b.goto(`/app/loops/${loopId}/edit`);
   await expect(a.getByRole('heading', { name: 'qa conflict' })).toBeVisible();
+  const b = await context.newPage();
+  await b.goto(`/app/loops/${loopId}/edit`);
   await expect(b.getByRole('heading', { name: 'qa conflict' })).toBeVisible();
 
   // Tab A saves first.
@@ -67,4 +68,83 @@ test('two tabs editing one draft: the stale tab is asked to reload or overwrite'
   await describeLoop(a, 'tab A late');
   await expect(a.getByText('The draft changed on the server')).toBeVisible();
   expect(await serverDescription(request, loopId)).toBe('tab B wins');
+});
+
+test('a restored-draft notice stays dismissed through edits and returns after a restoring reload', async ({
+  page,
+  request,
+}) => {
+  const created = await request.post('/loops', {
+    data: { definition: approvalLoop('server copy') },
+  });
+  expect(created.status()).toBe(201);
+  const { loop } = (await created.json()) as { loop: { id: string } };
+  const localDefinition = approvalLoop('older local copy');
+  await page.goto('/app/loops');
+
+  // Seed an older unsynced browser copy so the editor offers it separately from the server draft.
+  await page.evaluate(
+    async ({ loopId, definition }) => {
+      const db = await new Promise<IDBDatabase>((resolve, reject) => {
+        // Version 2 is the app's current store version; an older version would be retired on load.
+        const request = indexedDB.open('graphgoblin', 2);
+        request.onupgradeneeded = () => request.result.createObjectStore('drafts');
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error ?? new Error('IndexedDB open failed'));
+      });
+      await new Promise<void>((resolve, reject) => {
+        const transaction = db.transaction('drafts', 'readwrite');
+        transaction.objectStore('drafts').put(
+          {
+            loopId,
+            definition,
+            savedAt: '2000-01-01T00:00:00.000Z',
+            synced: false,
+          },
+          loopId,
+        );
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = () =>
+          reject(transaction.error ?? new Error('IndexedDB write failed'));
+        transaction.onabort = () =>
+          reject(transaction.error ?? new Error('IndexedDB write aborted'));
+      });
+      db.close();
+    },
+    { loopId: loop.id, definition: localDefinition },
+  );
+
+  // Keep the accepted local copy unsynced so the reload below exercises restoration again.
+  await page.route(`**/loops/${loop.id}/draft`, (route) =>
+    route.request().method() === 'PUT' ? route.abort() : route.continue(),
+  );
+  await page.goto(`/app/loops/${loop.id}/edit`);
+  await expect(page.getByRole('heading', { name: 'server copy' })).toBeVisible();
+  await page.getByRole('button', { name: "Use this device's copy instead" }).click();
+  await expect(page.getByRole('heading', { name: 'older local copy' })).toBeVisible();
+  const restoredNotice = page.getByText('Restored unsaved changes from this device.');
+  await expect(restoredNotice).toBeVisible();
+  await expect(page.getByTestId('save-state')).toHaveText('Offline: saved on this device');
+
+  const dismissButtons = page.getByRole('button', { name: 'Dismiss notice' });
+  await dismissButtons.nth(0).click();
+  await expect(restoredNotice).toBeHidden();
+  await expect(page.getByText('Notice dismissed')).toBeAttached();
+  await expect(dismissButtons).toHaveCount(1);
+  await expect(dismissButtons).toBeFocused();
+  await dismissButtons.click();
+  await expect(page.getByTestId('save-state')).toBeFocused();
+  await expect(page.getByTestId('save-state')).toHaveAttribute('tabindex', '-1');
+
+  await showLoopPanel(page);
+  await page.getByLabel('Description').fill('edited while the restore notice is dismissed');
+  await expect(restoredNotice).toBeHidden();
+  await expect(page.getByTestId('save-state')).toHaveText('Offline: saved on this device');
+  await expect(
+    page.getByText('Offline: the draft is kept on this device and saved when the API is back.'),
+  ).toBeHidden();
+
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'older local copy' })).toBeVisible();
+  await expect(page.getByText('Restored unsaved changes from this device.')).toBeVisible();
 });

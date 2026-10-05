@@ -48,7 +48,17 @@ describe('EditorPage', () => {
   // loop settings in it, so they start with it expanded (the setup clears storage after each).
   beforeEach(() => localStorage.setItem(LOOP_PANEL_STORAGE_KEY, 'expanded'));
 
-  it('collapses and expands the loop panel from the toolbar and remembers it', async () => {
+  it('shows Harness only in the inference dialog', async () => {
+    const api = new FakeApi();
+    const loop = api.addLoop(kitchenSinkLoop());
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('form', { name: 'Loop settings form' });
+    expect(screen.queryByLabelText('Harness')).not.toBeInTheDocument();
+    act(() => useEditorStore.getState().openNode('infer'));
+    expect(within(screen.getByRole('dialog')).getByLabelText('Harness')).toHaveValue('codex');
+  });
+
+  it('collapses and expands the loop panel from its own controls and remembers it', async () => {
     const user = userEvent.setup();
     localStorage.clear();
     const api = new FakeApi();
@@ -56,22 +66,27 @@ describe('EditorPage', () => {
     const first = renderApp(`/loops/${loop.id}/edit`, api);
     await screen.findByRole('heading', { name: 'minimal' });
     // Below 1280 px nothing stored means collapsed: a rail with its Show button.
-    const toggle = screen.getByRole('button', { name: 'Loop settings' });
-    expect(toggle).toHaveAttribute('aria-expanded', 'false');
-    expect(toggle).toHaveAttribute('aria-controls', 'loop-panel');
-    const rail = screen.getByRole('complementary', { name: 'Loop' });
+    const rail = screen.getByRole('complementary', { name: 'Loop settings' });
     expect(rail).toHaveAttribute('id', 'loop-panel');
     expect(within(rail).getAllByRole('button')).toHaveLength(1);
+    const show = screen.getByRole('button', { name: 'Show loop settings' });
+    expect(show).toHaveAttribute('aria-expanded', 'false');
+    expect(show).toHaveAttribute('aria-controls', 'loop-panel');
+    expect(screen.queryByRole('button', { name: 'Loop settings' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Palette' })).toBeNull();
     expect(screen.queryByLabelText('Name')).toBeNull();
     // Validation lives in the toolbar now, whatever the panel's state.
     expect(within(rail).queryByText('Ready to publish')).toBeNull();
     expect(await screen.findByText('Ready to publish')).toBeVisible();
 
     // Expanding moves focus into the panel; the choice is remembered for the next visit.
-    await user.click(toggle);
-    expect(toggle).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByRole('heading', { name: 'Loop' })).toHaveFocus();
+    await user.click(show);
+    expect(screen.getByRole('heading', { name: 'Loop settings' })).toHaveFocus();
     expect(screen.getByLabelText('Name')).toHaveValue('minimal');
+    expect(screen.getByRole('button', { name: 'Hide loop settings' })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
     // The panel holds only the loop's own configuration: no validation section.
     expect(screen.queryByRole('region', { name: 'Validation' })).toBeNull();
     expect(localStorage.getItem(LOOP_PANEL_STORAGE_KEY)).toBe('expanded');
@@ -80,9 +95,9 @@ describe('EditorPage', () => {
     expect(await screen.findByLabelText('Name')).toBeInTheDocument();
 
     // The panel's own Hide button collapses it too, leaving focus on Show.
-    await user.click(screen.getByRole('button', { name: 'Hide loop' }));
-    expect(screen.getByRole('button', { name: 'Show loop' })).toHaveFocus();
-    expect(screen.getByRole('button', { name: 'Loop settings' })).toHaveAttribute(
+    await user.click(screen.getByRole('button', { name: 'Hide loop settings' }));
+    expect(screen.getByRole('button', { name: 'Show loop settings' })).toHaveFocus();
+    expect(screen.getByRole('button', { name: 'Show loop settings' })).toHaveAttribute(
       'aria-expanded',
       'false',
     );
@@ -97,14 +112,14 @@ describe('EditorPage', () => {
     const loop = api.addLoop(minimalLoop());
     renderApp(`/loops/${loop.id}/edit`, api);
     await screen.findByRole('heading', { name: 'minimal' });
-    expect(screen.getByRole('button', { name: 'Loop settings' })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: 'Hide loop settings' })).toHaveAttribute(
       'aria-expanded',
       'true',
     );
     width.mockRestore();
     // The toolbar's indicator counts the merged list; each node's badge counts its own issues.
     // An exit criterion above the ceiling is a warning.
-    await user.click(screen.getByRole('button', { name: 'Loop settings' }));
+    await user.click(screen.getByRole('button', { name: 'Hide loop settings' }));
     act(() =>
       useEditorStore.getState().updateNode('done', {
         config: { criteria: [{ when: 'max-iterations', value: 99 }] },
@@ -253,7 +268,7 @@ describe('EditorPage', () => {
     const user = userEvent.setup();
     const api = new FakeApi();
     const loop = api.addLoop(newLoopDefinition('invalid'));
-    renderApp(`/loops/${loop.id}/edit`, api);
+    const view = renderApp(`/loops/${loop.id}/edit`, api);
     await user.click(await screen.findByRole('button', { name: 'Add Subloop node' }));
     await waitFor(
       () => expect(screen.getByTestId('save-state')).toHaveTextContent('Saved on this device only'),
@@ -274,6 +289,75 @@ describe('EditorPage', () => {
     expect(dialog.querySelector('[data-field="loopRef"]')).toContainElement(
       document.activeElement as HTMLElement,
     );
+
+    view.unmount();
+    renderApp(`/loops/${loop.id}/edit`, api);
+    expect(
+      await screen.findByText('Restored unsaved changes from this device.'),
+    ).toBeInTheDocument();
+    await waitFor(
+      () => expect(screen.getByTestId('save-state')).toHaveTextContent('Saved on this device only'),
+      SAVE_WAIT,
+    );
+    expect((await loadLocalDraft(loop.id))?.definition.nodes.map((node) => node.id)).toContain(
+      'subloop',
+    );
+    expect(api.callsTo('PUT', `/loops/${loop.id}/draft`)).toHaveLength(0);
+  });
+
+  it('shows a dismissed save notice again after the draft returns to the same invalid state', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const loop = api.addLoop(newLoopDefinition('dismiss save notice'));
+    renderApp(`/loops/${loop.id}/edit`, api);
+    const addSubloop = await screen.findByRole('button', { name: 'Add Subloop node' });
+
+    await user.click(addSubloop);
+    expect(await screen.findByText(/Fix the schema errors/)).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByTestId('save-state')).toHaveTextContent('Saved on this device only'),
+    );
+    await user.click(screen.getByRole('button', { name: 'Dismiss notice' }));
+    expect(screen.queryByText(/Fix the schema errors/)).toBeNull();
+    expect(screen.getByTestId('save-state').querySelector('svg[data-icon="alert"]')).not.toBeNull();
+    await waitFor(() => expect(screen.getByTestId('save-state')).toHaveFocus());
+
+    act(() => useEditorStore.getState().updateMeta({ description: 'edited while still invalid' }));
+    await waitFor(
+      () => expect(screen.getByTestId('save-state')).toHaveTextContent('Saved on this device only'),
+      SAVE_WAIT,
+    );
+    expect(screen.queryByText(/Fix the schema errors/)).toBeNull();
+
+    act(() => useEditorStore.getState().removeNode('subloop'));
+    await waitFor(
+      () => expect(screen.getByTestId('save-state')).toHaveTextContent('All changes saved'),
+      SAVE_WAIT,
+    );
+    await user.click(addSubloop);
+    expect(await screen.findByText(/Fix the schema errors/)).toBeInTheDocument();
+  });
+
+  it('keeps a dismissed offline save notice hidden after an edit that remains offline', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const loop = api.addLoop(newLoopDefinition('offline dismissal'));
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'offline dismissal' });
+    api.offline = true;
+    act(() => useEditorStore.getState().updateMeta({ description: 'first offline edit' }));
+
+    const offlineNotice = await screen.findByText(/Offline: the draft is kept on this device/);
+    await user.click(screen.getByRole('button', { name: 'Dismiss notice' }));
+    expect(offlineNotice).not.toBeInTheDocument();
+
+    act(() => useEditorStore.getState().updateMeta({ description: 'second offline edit' }));
+    await waitFor(
+      () =>
+        expect(screen.getByTestId('save-state')).toHaveTextContent('Offline: saved on this device'),
+      SAVE_WAIT,
+    );
+    expect(screen.queryByText(/Offline: the draft is kept on this device/)).toBeNull();
   });
 
   it('keeps a newer server draft over an older unsynced local copy, and can switch', async () => {
@@ -968,7 +1052,7 @@ describe('EditorPage', () => {
     await screen.findByRole('heading', { name: 'kitchen-sink' });
 
     // The loop panel (expanded) holds the loop's own settings.
-    const panel = screen.getByRole('complementary', { name: 'Loop' });
+    const panel = screen.getByRole('complementary', { name: 'Loop settings' });
     const name = within(panel).getByLabelText('Name');
     await user.clear(name);
     await user.type(name, 'sink');

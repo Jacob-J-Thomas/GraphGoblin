@@ -1,31 +1,16 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { focusFallback } from '../../lib/focus.js';
 import { errorMessage } from '../../lib/utils.js';
 import { Icon } from '../icons/index.js';
 import { Alert } from './alert.js';
 import { Button } from './button.js';
-
-/** A heading needs tabindex while focused; release that temporary attribute on blur. */
-function focusFallback(target: HTMLElement) {
-  if (target.hasAttribute('tabindex')) {
-    target.focus();
-    return;
-  }
-  target.tabIndex = -1;
-  // Chromium blurs a heading if tabindex is removed while it still has focus.
-  const restore = () => {
-    target.removeEventListener('blur', restore);
-    target.removeAttribute('tabindex');
-  };
-  target.addEventListener('blur', restore, { once: true });
-  target.focus();
-  if (document.activeElement !== target) restore();
-}
 
 /** Shared destructive action: modal background blocking, safe focus, and retry. */
 export function ConfirmAction({
   action = 'delete',
   name,
   accessibleName,
+  'aria-describedby': describedBy,
   consequences,
   onConfirm,
   onConfirmed,
@@ -35,6 +20,8 @@ export function ConfirmAction({
   action?: 'delete' | 'revoke';
   name: string;
   accessibleName?: string;
+  /** Description of the opener, separate from the confirmation's consequences. */
+  'aria-describedby'?: string | undefined;
   consequences: ReactNode;
   onConfirm: () => Promise<unknown>;
   /** Optional list refresh; never extends the destructive request's pending state. */
@@ -142,6 +129,7 @@ export function ConfirmAction({
         size="sm"
         variant="destructive-soft"
         aria-label={accessibleName ?? `${verb} ${name}`}
+        aria-describedby={describedBy}
         aria-haspopup="dialog"
         onClick={() => {
           setError(undefined);
