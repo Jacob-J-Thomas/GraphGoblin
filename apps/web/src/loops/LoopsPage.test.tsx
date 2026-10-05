@@ -77,6 +77,9 @@ describe('LoopsPage', () => {
 
     await user.upload(input, new File(['not json'], 'bad.json', { type: 'application/json' }));
     expect(await screen.findByText('bad.json is not a JSON document.')).toBeInTheDocument();
+    // The refusal describes the picker, after the chosen file's name, and marks it invalid.
+    expect(input).toHaveAttribute('aria-invalid', 'true');
+    expect(input).toHaveAccessibleDescription('bad.json bad.json is not a JSON document.');
 
     await user.upload(input, new File(['{"nope":1}'], 'other.json', { type: 'application/json' }));
     expect(await screen.findByText(/neither a loop export/)).toBeInTheDocument();

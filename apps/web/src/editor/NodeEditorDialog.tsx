@@ -106,6 +106,7 @@ export function NodeEditorDialog({
     useEditorStore.getState();
   const info = KIND_INFO[node.kind];
   const nodeIssues = issues.filter((i) => i.nodeId === node.id);
+  const labelIssue = nodeIssues.find((i) => i.path === 'label' && i.severity === 'error');
 
   // Opened at an issue: focus its field once the form is in place (the dialog has focused its
   // heading by now), then forget the request. The clear waits a task, so a Strict Mode replay of
@@ -205,9 +206,17 @@ export function NodeEditorDialog({
             <Input
               id="node-label"
               aria-required
+              aria-invalid={labelIssue ? true : undefined}
+              aria-describedby={labelIssue ? 'node-label-error' : undefined}
               value={node.label}
               onChange={(e) => updateNode(node.id, { label: e.target.value })}
             />
+            {/* The loop's validation of the label (a blank one, say), beside the field too. */}
+            {labelIssue ? (
+              <HelpText id="node-label-error" role="alert" tone="bad">
+                {labelIssue.message}
+              </HelpText>
+            ) : null}
           </FieldGroup>
         </div>
         {node.kind === 'subloop' ? (

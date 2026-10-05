@@ -116,6 +116,8 @@ function ImportLoop() {
     const file = event.target.files?.[0];
     event.target.value = '';
     if (!file) return;
+    // A new choice starts over: the last result no longer describes the picker.
+    setMessage(undefined);
     const parsed = parseJson(await file.text());
     if (!parsed.ok || typeof parsed.value !== 'object' || parsed.value === null) {
       setMessage({ tone: 'bad', text: `${file.name} is not a JSON document.` });
@@ -126,21 +128,26 @@ function ImportLoop() {
   return (
     <FieldGroup>
       <Label htmlFor="import-loop">Import an exported loop (JSON)</Label>
+      {/* A refused file describes the picker and marks it invalid until the next choice. */}
       <FilePicker
         id="import-loop"
         accept="application/json,.json"
+        aria-invalid={message?.tone === 'bad' || undefined}
+        aria-describedby={message?.tone === 'bad' ? 'import-loop-result' : undefined}
         onChange={(e) => void onFile(e)}
       />
       {message ? (
-        <Alert tone={message.tone} title={message.text}>
-          {message.issues && message.issues.length > 0 ? (
-            <ul className="list-disc pl-4 text-xs">
-              {message.issues.map((issue, i) => (
-                <li key={i}>{issue}</li>
-              ))}
-            </ul>
-          ) : null}
-        </Alert>
+        <div id="import-loop-result">
+          <Alert tone={message.tone} title={message.text}>
+            {message.issues && message.issues.length > 0 ? (
+              <ul className="list-disc pl-4 text-xs">
+                {message.issues.map((issue, i) => (
+                  <li key={i}>{issue}</li>
+                ))}
+              </ul>
+            ) : null}
+          </Alert>
+        </div>
       ) : null}
     </FieldGroup>
   );
