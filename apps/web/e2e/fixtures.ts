@@ -52,13 +52,17 @@ export async function control(request: APIRequestContext, path: string, body: un
 }
 
 /**
- * Expand the editor's loop panel (the loop's name, description, settings, and variables) unless it is:
- * with nothing remembered it starts expanded at 1280 px and wider, collapsed below.
+ * Expand the editor's loop panel (the loop's name, description, settings, and variables) unless it
+ * is already open. With nothing remembered it starts expanded at 1280 px and wider, collapsed below.
  */
 export async function showLoopPanel(page: Page): Promise<void> {
-  const toggle = page.getByRole('button', { name: 'Loop settings' });
-  if ((await toggle.getAttribute('aria-expanded')) !== 'true') await toggle.click();
-  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.getByRole('button', { name: /^(Show|Hide) loop settings$/ })).toBeVisible();
+  const show = page.getByRole('button', { name: 'Show loop settings' });
+  if (await show.isVisible()) await show.click();
+  await expect(page.getByRole('button', { name: 'Hide loop settings' })).toHaveAttribute(
+    'aria-expanded',
+    'true',
+  );
 }
 
 /** Open a node's editor by clicking its card (on the header band, away from port handles). */
