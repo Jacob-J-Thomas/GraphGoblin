@@ -22,6 +22,8 @@ export type StreamStatus = 'connecting' | 'live' | 'finished' | 'error';
  * storage, and refetch the run once per event.
  */
 export const EVENT_BATCH_MS = 100;
+// Matches the API's default SSE heartbeat interval (apps/api/src/sse.ts).
+const STREAM_HEARTBEAT_MS = 15_000;
 
 /**
  * Live tail of a run's events through the API client's SSE helper. Resumes after the stored cursor,
@@ -70,6 +72,7 @@ export function useRunEvents(
     const connect = () => {
       const currentConnection = ++connection;
       const current = () => active && connection === currentConnection;
+      let openedAt: number | undefined;
       flush(); // Commit the old connection's buffer before taking its resume cursor.
       subscription?.close();
       inTransportBackoff = false;
@@ -81,12 +84,16 @@ export function useRunEvents(
         after: useRunEventStore.getState().runs[runId]?.lastSeq ?? 0,
         onOpen: () => {
           if (!current()) return;
+          openedAt = Date.now();
           inTransportBackoff = false;
           markApiReachable();
           setStatus('live');
         },
         onError: (err, attempt) => {
           if (!current() || attempt === 0) return; // Invalid frames are not connection drops.
+          if (openedAt !== undefined && Date.now() - openedAt >= STREAM_HEARTBEAT_MS)
+            reportedOutage = false;
+          openedAt = undefined;
           inTransportBackoff =
             err instanceof TypeError || (err instanceof GraphGoblinApiError && err.status === 0);
           // Clean EOF and HTTP errors keep the SSE helper's existing backoff.

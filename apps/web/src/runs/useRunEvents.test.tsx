@@ -88,7 +88,7 @@ describe('run stream reachability', () => {
     expect(subscribe).toHaveBeenCalledTimes(1);
   });
 
-  it('re-arms an outage only when an event advances the cursor, not on acceptance or replay', async () => {
+  it('re-arms an outage on cursor progress rather than acceptance or replay alone', async () => {
     vi.useFakeTimers();
     mountStream();
     const reads = vi.spyOn(queryClient, 'refetchQueries').mockResolvedValue(undefined);
@@ -130,6 +130,82 @@ describe('run stream reachability', () => {
     });
     expect(subscribe).toHaveBeenCalledTimes(3);
     expect(options(2).after).toBe(6);
+  });
+
+  it.each([15_000, 20_000])(
+    'reports and recovers two quiet-stream outages separated by %i ms open',
+    async (openMs) => {
+      vi.useFakeTimers();
+      vi.setSystemTime(0);
+      mountStream();
+      const reads = vi.spyOn(queryClient, 'refetchQueries').mockResolvedValue(undefined);
+      const recovered = vi.fn();
+      const unsubscribe = subscribeApiRecovery(recovered);
+      try {
+        for (let outage = 0; outage < 2; outage++) {
+          act(() => options(outage).onOpen?.());
+          await act(async () => {
+            await vi.advanceTimersByTimeAsync(openMs);
+          });
+          act(() => options(outage).onError?.(GraphGoblinApiError.network('refused'), 1));
+          expect(useReachability.getState().apiReachable).toBe(false);
+          expect(reads).toHaveBeenCalledTimes(outage + 1);
+          expect(subscribe).toHaveBeenCalledTimes(outage + 1);
+          await act(async () => {
+            markApiReachable();
+            await Promise.resolve();
+          });
+          expect(recovered).toHaveBeenCalledTimes(outage + 1);
+          expect(subscribe).toHaveBeenCalledTimes(outage + 2);
+        }
+      } finally {
+        unsubscribe();
+      }
+    },
+  );
+
+  it('reports rapid two-second drops once and does not restart again on recovery', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(0);
+    mountStream();
+    const reads = vi.spyOn(queryClient, 'refetchQueries').mockResolvedValue(undefined);
+    const recovered = vi.fn();
+    const unsubscribe = subscribeApiRecovery(recovered);
+    try {
+      act(() => options().onError?.(new TypeError('reader failed'), 1));
+      await act(async () => {
+        markApiReachable();
+        await Promise.resolve();
+      });
+      expect(subscribe).toHaveBeenCalledTimes(2);
+      for (let attempt = 1; attempt <= 10; attempt++) {
+        act(() => options(1).onOpen?.());
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(2_000);
+        });
+        act(() => {
+          options(1).onError?.(new TypeError('reader failed'), attempt);
+          markApiReachable();
+        });
+        expect(useReachability.getState().apiReachable).toBe(true);
+        expect(reads).toHaveBeenCalledTimes(1);
+        expect(recovered).toHaveBeenCalledTimes(1);
+        expect(subscribe).toHaveBeenCalledTimes(2);
+      }
+      // Time spent failing to reconnect is not time spent on an accepted connection.
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(30_000);
+      });
+      act(() => {
+        options(1).onError?.(GraphGoblinApiError.network('refused'), 11);
+        markApiReachable();
+      });
+      expect(reads).toHaveBeenCalledTimes(1);
+      expect(recovered).toHaveBeenCalledTimes(1);
+      expect(subscribe).toHaveBeenCalledTimes(2);
+    } finally {
+      unsubscribe();
+    }
   });
 
   it.each([0, 2_000])(
