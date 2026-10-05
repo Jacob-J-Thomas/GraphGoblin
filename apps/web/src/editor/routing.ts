@@ -5,7 +5,6 @@ import {
   bounds,
   distance,
   expand,
-  overlapsBox,
   simplify,
   sorted,
   type Box,
@@ -54,15 +53,23 @@ export interface RoutingPlan {
   edges: readonly RoutingEdge[];
   routes: ReadonlyMap<string, RoutedEdge>;
   directions: ReadonlyMap<string, boolean>;
-  dependencies: ReadonlyMap<string, { boxes: Box | undefined; reservations: Box | undefined }>;
-  statistics: { rerouted: number; expansions: number };
+  dependencies: ReadonlyMap<string, RouteDependencies>;
+  statistics: { rerouted: number; expansions: number; checks: number };
+}
+interface RouteDependencies {
+  boxes: Footprint;
+  reservations: Footprint;
+  sourceRank: number;
+  targetRank: number;
 }
 export const ROUTING_CLEARANCE = 24;
 export const ROUTING_RADIUS = 8;
 export const LANE_GAP = 24;
 export const DIRECTION_HYSTERESIS = 8;
 const COLUMN_GAP = 12;
-const CANDIDATE_LIMIT = 32;
+// Inside the endpoint interval the distance is constant, including at fractional drag coordinates.
+const verticalTravel = (from: number, to: number, y: number) =>
+  Math.abs(from - to) + 2 * Math.max(Math.min(from, to) - y, y - Math.max(from, to), 0);
 
 export function backwardDirection(
   edge: RoutingEdge,
@@ -148,6 +155,52 @@ interface Work {
   span: number;
 }
 
+/** Decoration cannot invalidate a path. Use another horizontal, then a clear fallback pill. */
+function labelRoute(
+  route: RoutedEdge,
+  port: string,
+  from: Point,
+  index: BoxIndex,
+  reservations: Reservations,
+): RoutedEdge {
+  const lanes = route.points
+    .flatMap((a, i) => {
+      const b = route.points[i + 1];
+      return b && a.y === b.y
+        ? [{ y: a.y, left: Math.min(a.x, b.x), right: Math.max(a.x, b.x) }]
+        : [];
+    })
+    .sort((a, b) => b.right - b.left - (a.right - a.left));
+  if (route.lane) lanes.unshift(route.lane);
+  let label: LabelPlacement | undefined;
+  for (const lane of lanes) {
+    label = placeLabel(lane, port, route.radius, index, reservations);
+    if (label) break;
+  }
+  for (let y = from.y - 48; !label; y -= 24)
+    label = placeLabel(
+      { y, left: from.x - 140, right: from.x + 140 },
+      port,
+      route.radius,
+      index,
+      reservations,
+    );
+  const b = label.labelBounds;
+  return {
+    ...route,
+    ...label,
+    bounds: b
+      ? {
+          id: '',
+          left: Math.min(route.bounds.left, b.left),
+          right: Math.max(route.bounds.right, b.right),
+          top: Math.min(route.bounds.top, b.top),
+          bottom: Math.max(route.bounds.bottom, b.bottom),
+        }
+      : route.bounds,
+  };
+}
+
 function candidates(
   start: Point,
   end: Point,
@@ -156,20 +209,19 @@ function candidates(
   reservations: Reservations,
 ): number[] {
   const region = expand(bounds([start, end]), 192);
-  const nearby = index.query(expand(region, padding));
-  return sorted([
-    ...nearby.flatMap((b) => [b.top - padding, b.bottom + padding]),
-    ...reservations
-      .nearbyLanes(region)
-      .flatMap((l) => [l.y - LANE_GAP, l.y + LANE_GAP, l.y - 12, l.y + 12]),
-  ])
+  const nearby = index.query(expand(region, padding), true);
+  return [
+    ...new Set([
+      ...nearby.flatMap((b) => [b.top - padding, b.bottom + padding]),
+      ...reservations
+        .nearbyLanes(region)
+        .flatMap((l) => [l.y - LANE_GAP, l.y + LANE_GAP, l.y - 12, l.y + 12]),
+    ]),
+  ]
     .filter((y) => y >= region.top && y <= region.bottom)
-    .sort(
-      (a, b) =>
-        Math.abs(start.y - a) + Math.abs(end.y - a) - Math.abs(start.y - b) - Math.abs(end.y - b) ||
-        b - a,
-    )
-    .slice(0, CANDIDATE_LIMIT);
+    .map((y) => ({ y, travel: verticalTravel(start.y, end.y, y) }))
+    .sort((a, b) => a.travel - b.travel || b.y - a.y)
+    .map(({ y }) => y);
 }
 
 function routeOne(
@@ -200,7 +252,29 @@ function routeOne(
     }
   const paddings = [...new Set([fullPadding, Math.min(fullPadding / 2, room / 2), 0])];
   let expansions = 0;
+  type Column = { point: Point; range?: [number, number] };
+  const columnClear = (column: Column, y: number, padding: number) => {
+    column.range ??= reservations.verticalRange(
+      column.point,
+      ...index.verticalRange(
+        column.point,
+        Math.min(from.y, to.y) - 192,
+        Math.max(from.y, to.y) + 192,
+        padding,
+      ),
+    );
+    return y >= column.range[0] && y <= column.range[1];
+  };
   const escapes = new Map<number, { starts: Point[]; ends: Point[] }>();
+  const prepared = new Map<
+    number,
+    {
+      ys: number[];
+      starts: Column[];
+      ends: Column[];
+      clear: Map<number, boolean>;
+    }
+  >();
   const escapeAt = (padding: number) => {
     const cached = escapes.get(padding);
     if (cached) return cached;
@@ -208,12 +282,20 @@ function routeOne(
     const tx = Math.min(target.x - padding, to.x);
     // Port/incoming ranks separate shared-card trunks. Alternatives handle columns blocked by a neighbour.
     const offsets = (rank: number) => sorted([rank * COLUMN_GAP, 0, 12, 24, 36, 48]);
-    const starts = offsets(sourceRank)
-      .map((offset) => ({ x: sx + offset, y: from.y }))
-      .filter((p) => index.clear(from, p, padding, source.id));
-    const ends = offsets(targetRank)
-      .map((offset) => ({ x: tx - offset, y: to.y }))
-      .filter((p) => index.clear(p, to, padding, target.id));
+    const stubs = (port: Point, points: Point[], own: string) =>
+      index.clear(port, points.at(-1)!, padding, own)
+        ? points
+        : points.filter((p) => index.clear(port, p, padding, own));
+    const starts = stubs(
+      from,
+      offsets(sourceRank).map((offset) => ({ x: sx + offset, y: from.y })),
+      source.id,
+    );
+    const ends = stubs(
+      to,
+      offsets(targetRank).map((offset) => ({ x: tx - offset, y: to.y })),
+      target.id,
+    );
     const escape = { starts, ends };
     escapes.set(padding, escape);
     return escape;
@@ -225,30 +307,75 @@ function routeOne(
     let bestCost = Infinity;
     let bestPadding = fullPadding;
     let bestLabel: LabelPlacement | undefined;
+    let unlabelled: RoutedEdge | undefined;
+    let unlabelledCost = Infinity;
     for (const padding of paddings) {
       const { starts, ends } = escapeAt(padding);
       if (!starts.length || !ends.length) continue;
-      const ys = candidates(starts[0]!, ends[0]!, index, fullPadding, reservations);
+      let row = prepared.get(padding);
+      if (!row) {
+        const ys = candidates(starts[0]!, ends[0]!, index, fullPadding, reservations);
+        const column = (point: Point): Column => ({ point });
+        row = { ys, starts: starts.map(column), ends: ends.map(column), clear: new Map() };
+        prepared.set(padding, row);
+      }
+      const { ys } = row;
       for (const y of ys) {
-        const travel = 2 * (Math.abs(from.y - y) + Math.abs(to.y - y));
-        if (travel > bestCost) continue;
+        const travel = 2 * verticalTravel(from.y, to.y, y);
+        if (travel + Math.abs(from.x - starts[0]!.x) + Math.abs(to.x - ends[0]!.x) >= bestCost)
+          break;
+        const firstStart = row.starts.find((c) => columnClear(c, y, padding));
+        const firstEnd = row.ends.find((c) => columnClear(c, y, padding));
+        if (
+          !firstStart ||
+          !firstEnd ||
+          travel + Math.abs(from.x - firstStart.point.x) + Math.abs(to.x - firstEnd.point.x) >=
+            bestCost
+        )
+          continue;
+        // Every column pair crosses this common horizontal span. Reject it once, not once
+        // for every escape pair and spacing tier (the hot path in a tall column of cards).
+        const left = Math.min(starts[0]!.x, ends.at(-1)!.x);
+        const right = Math.max(ends[0]!.x, starts.at(-1)!.x);
+        const innerLeft = Math.min(starts.at(-1)!.x, ends[0]!.x);
+        const innerRight = Math.max(ends.at(-1)!.x, starts[0]!.x);
+        const common = innerLeft <= innerRight;
+        const a0 = { x: innerLeft, y };
+        const b0 = { x: innerRight, y };
+        if (common) {
+          if (!row.clear.has(y)) row.clear.set(y, index.clear(a0, b0, fullPadding));
+          if (!row.clear.get(y) || !reservations.laneFree(a0, b0, gap)) continue;
+        }
+        const obstacles = index
+          .query({
+            id: '',
+            left: left - fullPadding,
+            right: right + fullPadding,
+            top: y - fullPadding,
+            bottom: y + fullPadding,
+          })
+          .filter((b) => y > b.top - fullPadding && y < b.bottom + fullPadding);
         // Columns are ordered by stub length. Prune cost before collision checks; check each
         // remaining vertical once, including wider pairs needed for labels on short spans.
-        const endClear: (boolean | undefined)[] = [];
-        for (const start of starts) {
+        for (const startColumn of row.starts) {
+          const start = startColumn.point;
           const sourceCost = travel + Math.abs(from.x - start.x);
           if (sourceCost + Math.abs(to.x - ends[0]!.x) >= bestCost) break;
           const a = { x: start.x, y };
-          if (!reservations.verticalFree(start, a) || !index.clear(start, a, padding)) continue;
-          for (const [i, end] of ends.entries()) {
+          if (!columnClear(startColumn, y, padding)) continue;
+          for (const endColumn of row.ends) {
+            const end = endColumn.point;
             const b = { x: end.x, y };
             const cost = sourceCost + Math.abs(to.x - end.x);
             if (cost >= bestCost) break;
-            endClear[i] ??= reservations.verticalFree(end, b) && index.clear(end, b, padding);
             if (
-              !endClear[i] ||
+              !columnClear(endColumn, y, padding) ||
               !reservations.laneFree(a, b, gap) ||
-              !index.clear(a, b, fullPadding)
+              obstacles.some(
+                (box) =>
+                  Math.min(a.x, b.x) < box.right + fullPadding &&
+                  Math.max(a.x, b.x) > box.left - fullPadding,
+              )
             )
               continue;
             const label = placeLabel(
@@ -258,7 +385,23 @@ function routeOne(
               index,
               reservations,
             );
-            if (!label) continue;
+            if (!label) {
+              if (cost < unlabelledCost) {
+                unlabelled = {
+                  ...describe(
+                    simplify([from, start, a, b, end, to]),
+                    from,
+                    to,
+                    padding,
+                    false,
+                    fullPadding,
+                  ),
+                  laneGap: gap,
+                };
+                unlabelledCost = cost;
+              }
+              continue;
+            }
             best = [from, start, a, b, end, to];
             bestCost = cost;
             bestPadding = padding;
@@ -274,13 +417,49 @@ function routeOne(
         // Keep dependencies for every y that could beat its cost, plus the query padding. This
         // avoids invalidating neighbouring rows merely because candidate discovery saw them.
         const extra = (bestCost / 2 - Math.abs(from.y - to.y)) / 2;
+        const possible: [number, number][] = [];
+        const row = prepared.get(fullPadding)!;
+        // Short spans already have a small dependency region. Refine only long trunks,
+        // where merging their two strips would otherwise invalidate whole columns of cards.
+        if (Math.abs(from.y - to.y) <= 384)
+          possible.push([Math.min(from.y, to.y) - extra, Math.max(from.y, to.y) + extra]);
+        else
+          for (const start of row.starts)
+            for (const end of row.ends) {
+              const stubs = Math.abs(from.x - start.point.x) + Math.abs(to.x - end.point.x);
+              const slack = (bestCost - stubs - 2 * Math.abs(from.y - to.y)) / 4;
+              if (slack < 0) continue;
+              columnClear(start, from.y, fullPadding);
+              columnClear(end, to.y, fullPadding);
+              const low = Math.max(
+                start.range![0],
+                end.range![0],
+                Math.min(from.y, to.y) - slack,
+                slack === 0 ? best[2]!.y : -Infinity,
+              );
+              const high = Math.min(start.range![1], end.range![1], Math.max(from.y, to.y) + slack);
+              if (low <= high) possible.push([low, high]);
+            }
+        const merged: [number, number][] = [];
+        for (const interval of possible.sort((a, b) => a[0] - b[0])) {
+          const last = merged.at(-1);
+          if (last && last[1] >= interval[0]) last[1] = Math.max(last[1], interval[1]);
+          else merged.push([...interval]);
+        }
         for (const [reads, margin] of [
           [index.reads, fullPadding],
           [reservations.reads, LANE_GAP],
         ] as const) {
-          if (!reads.box) continue;
-          reads.box.top = Math.max(reads.box.top, Math.min(from.y, to.y) - extra - margin);
-          reads.box.bottom = Math.min(reads.box.bottom, Math.max(from.y, to.y) + extra + margin);
+          // Equal-cost candidates prefer the greater y. Once the minimum stub/travel cost
+          // wins, lower candidate boundaries cannot change that choice. Collision reads
+          // remain separate strips: empty space between the two trunks is not a dependency.
+          const top = Math.min(from.y, to.y) - extra - margin;
+          const bottom = Math.max(from.y, to.y) + extra + margin;
+          reads.restrict(
+            top,
+            bottom,
+            merged.map(([low, high]) => [low - margin, high + margin]),
+          );
         }
       }
       return {
@@ -292,6 +471,11 @@ function routeOne(
         expansions,
       };
     }
+    if (unlabelled)
+      return {
+        route: labelRoute(unlabelled, work.edge.port, from, index, reservations),
+        expansions,
+      };
   }
   for (const padding of paddings) {
     const { starts, ends } = escapeAt(padding);
@@ -310,14 +494,17 @@ function routeOne(
     expansions += search.expansions;
     if (!search.points.length) continue;
     const points = simplify([from, ...search.points, to]);
+    let fallbackLane: Lane | undefined;
     // A narrow escape can need several bends. Lift its main horizontal segment out to the full
     // envelope; only the approach/departure keep the reduced clearance found by A*.
     const horizontals = points
       .map((a, i) => ({ a, b: points[i + 1], i }))
-      .filter(({ a, b, i }) => i > 0 && i < points.length - 2 && b && a.y === b.y)
+      .filter(({ a, b }) => b && a.y === b.y)
       .sort((a, b) => Math.abs(b.a.x - b.b!.x) - Math.abs(a.a.x - a.b!.x));
     for (const gap of [LANE_GAP, 12, 0]) {
+      let unlabelled: RoutedEdge | undefined;
       for (const { a, b, i } of horizontals) {
+        if (i === 0 || i >= points.length - 2) continue;
         const ys = [
           a.y,
           ...candidates(points[i - 1]!, points[i + 2]!, index, fullPadding, reservations),
@@ -342,8 +529,15 @@ function routeOne(
             index,
             reservations,
           );
-          if (!label) continue;
           const lifted = simplify([...points.slice(0, i), first, last, ...points.slice(i + 2)]);
+          if (!label) {
+            unlabelled ??= {
+              ...describe(lifted, from, to, padding, false, fullPadding),
+              lane,
+              laneGap: gap,
+            };
+            continue;
+          }
           return {
             route: {
               ...describe(lifted, from, to, padding, false, fullPadding),
@@ -368,7 +562,7 @@ function routeOne(
         const lanes: Lane[] = [];
         for (const obstacle of [...boxes, { left: right, right }]) {
           const end = Math.min(obstacle.left, right);
-          if (end - left > 2 * ROUTING_RADIUS) lanes.push({ y: a.y, left, right: end });
+          if (end > left) lanes.push({ y: a.y, left, right: end });
           left = Math.max(left, obstacle.right);
         }
         lanes.sort((x, y) => y.right - y.left - (x.right - x.left));
@@ -377,6 +571,7 @@ function routeOne(
             !reservations.laneFree({ x: lane.left, y: lane.y }, { x: lane.right, y: lane.y }, gap)
           )
             continue;
+          fallbackLane ??= lane;
           const label = placeLabel(
             lane,
             work.edge.port,
@@ -384,6 +579,11 @@ function routeOne(
             index,
             reservations,
           );
+          unlabelled ??= {
+            ...describe(points, from, to, padding, false, fullPadding),
+            lane,
+            laneGap: gap,
+          };
           if (label)
             return {
               route: {
@@ -396,7 +596,18 @@ function routeOne(
             };
         }
       }
+      if (unlabelled)
+        return {
+          route: labelRoute(unlabelled, work.edge.port, from, index, reservations),
+          expansions,
+        };
     }
+    // A valid Z/step path can have only endpoint horizontals. Label placement must never
+    // erase it. Prefer its longest horizontal; otherwise use a clear fallback above the path.
+    const route = describe(points, from, to, padding, false, fullPadding);
+    if (fallbackLane) route.lane = fallbackLane;
+    else delete route.lane;
+    return { route: labelRoute(route, work.edge.port, from, index, reservations), expansions };
   }
   return { route: describe([], from, to, 0), expansions };
 }
@@ -431,10 +642,6 @@ export function createRoutingPlan(
     changedBoxes.push(nodeBox(old));
   }
   const oldEdges = new Map(previous?.edges.map((e) => [e.id, e]));
-  const topologyChanged =
-    clearance !== previous?.clearance ||
-    edges.length !== oldEdges.size ||
-    edges.some((e) => !sameEdge(e, oldEdges.get(e.id)));
   const directions = new Map<string, boolean>();
   const work: Work[] = [];
   for (const edge of edges) {
@@ -454,7 +661,7 @@ export function createRoutingPlan(
   }
   work.sort((a, b) => a.span - b.span || a.edge.id.localeCompare(b.edge.id));
   const routes = new Map<string, RoutedEdge>();
-  const dependencies = new Map<string, { boxes: Box | undefined; reservations: Box | undefined }>();
+  const dependencies = new Map<string, RouteDependencies>();
   const reservations = new Reservations();
   const oldOrder = [...(previous?.routes.keys() ?? [])];
   const oldPositions = new Map(oldOrder.map((id, i) => [id, i]));
@@ -474,7 +681,7 @@ export function createRoutingPlan(
   const index = new BoxIndex(nodes.map(nodeBox));
   const outgoing = new Map<string, number>();
   const incoming = new Map<string, number>();
-  const statistics = { rerouted: 0, expansions: 0 };
+  const statistics = { rerouted: 0, expansions: 0, checks: 0 };
   for (const item of work) {
     const id = item.edge.id;
     const oldPosition = oldPositions.get(id) ?? 0;
@@ -497,14 +704,17 @@ export function createRoutingPlan(
     const before = previous?.routes.get(id);
     const reads = previous?.dependencies.get(id);
     if (
-      !topologyChanged &&
+      clearance === previous?.clearance &&
+      sameEdge(item.edge, oldEdges.get(id)) &&
       before &&
       reads &&
+      sourceRank === reads.sourceRank &&
+      targetRank === reads.targetRank &&
       !changed.has(item.source.id) &&
       !changed.has(item.target.id) &&
-      !changedBoxes.some((b) => reads.boxes && overlapsBox(reads.boxes, b)) &&
+      !changedBoxes.some((b) => reads.boxes.intersects(b)) &&
       ![...reservationChanges.values()].some((boxes) =>
-        boxes.some((b) => reads.reservations && overlapsBox(reads.reservations, b)),
+        boxes.some((b) => reads.reservations.intersects(b)),
       )
     ) {
       routes.set(id, before);
@@ -526,7 +736,12 @@ export function createRoutingPlan(
     );
     statistics.rerouted += 1;
     statistics.expansions += expansions;
-    dependencies.set(id, { boxes: index.reads.box, reservations: reservations.reads.box });
+    dependencies.set(id, {
+      boxes: index.reads,
+      reservations: reservations.reads,
+      sourceRank,
+      targetRank,
+    });
     const unchanged =
       before &&
       before.padding === route.padding &&
@@ -549,6 +764,7 @@ export function createRoutingPlan(
     reservations.add(route.points, route.lane, route.labelBounds);
     compareReservation(id);
   }
+  statistics.checks = index.checks;
   return { nodes, edges, routes, directions, dependencies, statistics, clearance };
 }
 

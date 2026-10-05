@@ -15,7 +15,8 @@ import {
   type RoutingEdge,
   type RoutingNode,
 } from './routing.js';
-import { SEARCH_LIMIT } from './routing-search.js';
+import { detour, SEARCH_LIMIT } from './routing-search.js';
+import { BoxIndex, Reservations } from './routing-geometry.js';
 
 const box = (
   id: string,
@@ -69,14 +70,14 @@ function geometry(nodes: readonly RoutingNode[], edge: RoutingEdge, route: Route
       }
     }
   }
-  const lane = route.lane!;
-  for (const n of nodes)
+  const lane = route.lane;
+  for (const n of lane ? nodes : [])
     expect(
-      lane.y > n.y - route.lanePadding &&
-        lane.y < n.y + n.height + route.lanePadding &&
-        lane.left < n.x + n.width + route.lanePadding &&
-        lane.right > n.x - route.lanePadding,
-      edge.id + ' lane clearance',
+      lane!.y > n.y - route.lanePadding &&
+        lane!.y < n.y + n.height + route.lanePadding &&
+        lane!.left < n.x + n.width + route.lanePadding &&
+        lane!.right > n.x - route.lanePadding,
+      edge.id + ' lane clearance ' + JSON.stringify({ route, node: n }),
     ).toBe(false);
 }
 
@@ -117,8 +118,10 @@ function lanePriority(nodes: readonly RoutingNode[], routes: Iterable<RoutedEdge
   const previous: RoutedEdge[] = [];
   let checked = 0;
   for (const route of routes) {
-    if (route.points.length === 6 && route.laneGap !== 24) {
-      const [from, start, , , end, to] = route.points;
+    if (route.points.length >= 4 && route.laneGap !== 24) {
+      const [from, start] = route.points;
+      const end = route.points.at(-2);
+      const to = route.points.at(-1);
       const region = {
         left: Math.min(start!.x, end!.x) - 192,
         right: Math.max(start!.x, end!.x) + 192,
@@ -154,18 +157,19 @@ function lanePriority(nodes: readonly RoutingNode[], routes: Iterable<RoutedEdge
               Math.abs(to!.y - a) -
               Math.abs(from!.y - b) -
               Math.abs(to!.y - b) || b - a,
-        )
-        .slice(0, 32);
+        );
       for (const y of ys) {
         const left = Math.min(start!.x, end!.x);
         const right = Math.max(start!.x, end!.x);
-        const horizontalHit = nodes.some(
-          (n) =>
-            y > n.y - 32 &&
-            y < n.y + n.height + 32 &&
-            left < n.x + n.width + 32 &&
-            right > n.x - 32,
-        );
+        const horizontalHit =
+          left === right ||
+          nodes.some(
+            (n) =>
+              y > n.y - 32 &&
+              y < n.y + n.height + 32 &&
+              left < n.x + n.width + 32 &&
+              right > n.x - 32,
+          );
         const verticalHit = [start!, end!].some((p) =>
           nodes.some(
             (n) =>
@@ -190,18 +194,9 @@ function lanePriority(nodes: readonly RoutingNode[], routes: Iterable<RoutedEdge
                 ),
             ),
         );
-        const half = route.labelBounds ? (route.labelWidth + 18) / 2 : 0;
-        const middle = (left + right) / 2;
-        const labelHit = previous.some(
-          (r) =>
-            r.labelBounds &&
-            Math.abs(r.label.y - y) < 22 &&
-            middle - half < r.labelBounds.right &&
-            middle + half > r.labelBounds.left,
-        );
         checked += 1;
         expect(
-          horizontalHit || verticalHit || reserved || labelHit,
+          horizontalHit || verticalHit || reserved,
           JSON.stringify({ route, freeCandidate: y }),
         ).toBe(true);
       }
@@ -212,6 +207,49 @@ function lanePriority(nodes: readonly RoutingNode[], routes: Iterable<RoutedEdge
 }
 
 describe('routing review regressions', () => {
+  it.each([1, -1])(
+    'keeps a forward loop-back Z detour without a middle horizontal (direction %s)',
+    (direction) => {
+      const nodes = [
+        box('source', 0, 0),
+        box('target', 500, 220),
+        box('ceiling', 180, -100, 120, 100),
+        box('shelf', 180, 154, 120, 64),
+        box('wall', 400, 0, 100, 200),
+      ];
+      for (const n of nodes) {
+        n.outputs = { loopBack: n.outputs['out']! };
+        if (direction < 0) {
+          n.y = -n.y - n.height;
+          n.input!.y *= -1;
+          n.outputs['loopBack']!.y *= -1;
+        }
+      }
+      const e = { ...connection('source', 'target'), port: 'loopBack' };
+      const index = new BoxIndex(
+        nodes.map((n) => ({
+          id: n.id,
+          left: n.x,
+          right: n.x + n.width,
+          top: n.y,
+          bottom: n.y + n.height,
+        })),
+      );
+      const search = detour(
+        { x: 216, y: 91.5 * direction },
+        { x: 468, y: 281 * direction },
+        index,
+        32,
+        new Reservations(),
+        new SearchWorkspace(),
+      );
+      expect(search.points.length).toBeGreaterThan(0);
+      expect(search.expansions).toBeLessThan(100);
+      const route = routeBackwardEdges(nodes, [e]).get(e.id)!;
+      geometry(nodes, e, route);
+      expect(labelGeometry([route], nodes)).toBe(1);
+    },
+  );
   it('keeps a route throughout the 0–80 px gap sweep, reducing padding without crossing cards', () => {
     const e = connection('source', 'target');
     for (let gap = 0; gap <= 80; gap += 1) {
@@ -311,12 +349,32 @@ describe('routing review regressions', () => {
       // Playwright measures the actual wall-clock cache miss and frame budget separately.
       expect(statistics.rerouted).toBe(edges.length);
       expect(statistics.expansions).toBe(0);
+      expect(statistics.checks).toBeLessThanOrEqual(72 * edges.length);
       for (const e of edges) {
         const route = routes.get(e.id)!;
         geometry(nodes, e, route);
         expect(route.bounds.bottom - route.bounds.top).toBeLessThan(400);
       }
       distinctTrunks(routes.values());
+      let previous = createRoutingPlan(nodes, edges);
+      for (let step = 0; step < 16; step += 1) {
+        const moved = structuredClone(nodes);
+        const n = moved[Math.floor(count / 2) - 6]!;
+        const dx = Math.sin(step / 3) * 10;
+        const dy = Math.cos(step / 3) * 8;
+        n.x += dx;
+        n.y += dy;
+        for (const p of [n.input!, ...Object.values(n.outputs)]) {
+          p.x += dx;
+          p.y += dy;
+        }
+        const next = createRoutingPlan(moved, edges, undefined, previous);
+        expect(next.statistics.rerouted).toBeLessThanOrEqual(step < 2 ? edges.length : 12);
+        expect(next.statistics.expansions).toBe(0);
+        expect(next.statistics.checks).toBeLessThanOrEqual(step < 2 ? 72 * edges.length : 1000);
+        expect(next.routes, `column drag ${step}`).toEqual(createRoutingPlan(moved, edges).routes);
+        previous = next;
+      }
     },
   );
 
@@ -341,7 +399,9 @@ describe('routing review regressions', () => {
     const next = createRoutingPlan(moved, edges, undefined, first);
     expect(next.statistics.rerouted).toBeGreaterThan(0);
     // Rejected alternatives are dependencies too; the broader footprint still keeps this local.
-    expect(next.statistics.rerouted).toBeLessThan(30);
+    expect(next.statistics.rerouted).toBeLessThanOrEqual(16);
+    expect(next.statistics.expansions).toBe(0);
+    expect(next.statistics.checks).toBeLessThanOrEqual(1000);
     expect(next.routes.get('retry-4')).toBe(first.routes.get('retry-4'));
     for (const e of edges) {
       const route = next.routes.get(e.id);
@@ -353,9 +413,9 @@ describe('routing review regressions', () => {
     expect(createRoutingPlan(moved, edges, undefined, added).statistics.rerouted).toBeGreaterThan(
       0,
     );
-    expect(
-      createRoutingPlan(moved, edges.slice(1), undefined, next).statistics.rerouted,
-    ).toBeGreaterThan(15);
+    const removed = createRoutingPlan(moved, edges.slice(1), undefined, next);
+    expect(removed.statistics.rerouted).toBe(0); // Removing a forward edge has no lane reservation.
+    expect(removed.routes).toEqual(createRoutingPlan(moved, edges.slice(1)).routes);
   });
 
   it('matches a fresh plan after moves, span-order changes, and returning to the original boxes', () => {
@@ -382,6 +442,35 @@ describe('routing review regressions', () => {
       previous = returned;
     }
   });
+
+  it.each([100, 300])(
+    'matches fresh routing at every sampled drag step on %s cards',
+    (count) => {
+      const { nodes, edges } = routingInput(denseGraph(count));
+      let previous = createRoutingPlan(nodes, edges);
+      for (let step = 0; step < 40; step += 1) {
+        const moved = structuredClone(nodes);
+        const n = moved[Math.floor(count / 20) * 10 - 6]!;
+        const dx = Math.sin(step / 5) * 60;
+        const dy = Math.cos(step / 5) * 48;
+        n.x += dx;
+        n.y += dy;
+        for (const p of [n.input!, ...Object.values(n.outputs)]) {
+          p.x += dx;
+          p.y += dy;
+        }
+        const next = createRoutingPlan(moved, edges, undefined, previous);
+        expect(next.routes, `drag step ${step}`).toEqual(createRoutingPlan(moved, edges).routes);
+        // This larger 60 x 48 px sweep crosses neighbouring return lanes. Keep its measured
+        // fan-out bounded too; the smaller performance drag has the tighter bound above.
+        expect(next.statistics.expansions).toBe(0);
+        expect(next.statistics.rerouted).toBeLessThanOrEqual(count === 100 ? 28 : 38);
+        expect(next.statistics.checks).toBeLessThanOrEqual(count === 100 ? 850 : 1200);
+        previous = next;
+      }
+    },
+    60_000,
+  );
 
   it('bounds an enclosed-target search and reuses its buffers; only real covered ports are blocked', () => {
     const nodes = [
@@ -435,9 +524,9 @@ describe('routing review regressions', () => {
       }
       const edges = nodes.slice(1).map((n, i) => ({
         ...connection(n.id, nodes[Math.floor(random() * i)]!.id),
-        port: 'back',
+        port: 'loopBack',
       }));
-      for (const n of nodes) n.outputs = { back: n.outputs['out']! };
+      for (const n of nodes) n.outputs = { loopBack: n.outputs['out']! };
       const plan = createRoutingPlan(nodes, edges);
       searches += plan.statistics.expansions > 0 ? 1 : 0;
       for (const e of edges) {
@@ -462,7 +551,7 @@ describe('routing review regressions', () => {
         const n = moved[Math.floor(moved.length / 2)]!;
         n.y += 30;
         n.input!.y += 30;
-        n.outputs['back']!.y += 30;
+        n.outputs['loopBack']!.y += 30;
         const next = createRoutingPlan(moved, edges, undefined, plan);
         expect(next.routes, 'incremental sparse trial ' + trial).toEqual(
           createRoutingPlan(moved, edges).routes,
@@ -473,7 +562,7 @@ describe('routing review regressions', () => {
         ).toEqual(plan.routes);
       }
     }
-    expect(checked).toBeGreaterThan(1500);
+    expect(checked).toBeGreaterThan(3000);
     expect(searches).toBeGreaterThan(20);
     expect(labels).toBe(checked);
     expect(alternatives).toBeGreaterThan(100);

@@ -11,6 +11,7 @@ import type { LoopDefinitionInput } from '@graphgoblin/contracts';
 import {
   decisionBackRoute,
   denseGraph,
+  forwardLoopBack,
   nestedLoops,
   simpleLoop,
   sixReturnDecision,
@@ -77,6 +78,7 @@ for (const theme of ['dark', 'light']) {
     'dense-100-nodes': denseGraph,
     'six-return-decision': sixReturnDecision,
     'eight-pixel-gap': tightGap,
+    'forward-loop-back-detour': forwardLoopBack,
   })) {
     test(`${theme}: ${name} routes and labels, owner screenshot`, async ({
       page,
@@ -524,9 +526,10 @@ for (const count of [100, 300])
       await writeFile(info.outputPath('drag.cpuprofile'), JSON.stringify(result.profile));
       await profile.detach();
     }
-    // The shared runner (two cores, software rendering) spikes single samples; its workflow passes
-    // a looser bound and records every number. Local and manual runs keep 8 ms.
-    const routingLimit = Number(process.env['GG_ROUTING_LIMIT_MS'] ?? 8);
+    // A single drag can spike on the shared two-core runner. Keep the same 8 ms bound
+    // everywhere, applying it to the median of the three independently reported drag p95s.
+    const medianRoutingP95Ms = [...repetitions].sort((a, b) => a.routingP95Ms - b.routingP95Ms)[1]!
+      .routingP95Ms;
     const report = {
       nodes: count,
       edges: count * 2,
@@ -537,7 +540,8 @@ for (const count of [100, 300])
       browser: browser.version(),
       userAgent: await page.evaluate(() => navigator.userAgent),
       viewport: page.viewportSize(),
-      targets: { routingP95Ms: routingLimit, addedFrameP95Ms: 4 },
+      targets: { medianRoutingP95Ms: 8, addedFrameP95Ms: 4 },
+      medianRoutingP95Ms,
       idle: { frameP95Ms: p95(idleFrames), frameSamples: idleFrames.length },
       repetitions,
     };
@@ -557,17 +561,17 @@ for (const count of [100, 300])
       ),
       json + '\n',
     );
-    // The routing bound (<8 ms for the entire cache miss) always applies. The added frame p95
+    // The median routing bound (<8 ms for the entire cache miss) always applies. The added frame p95
     // (<4 ms over the same graph's idle baseline, meaningful at 60/100/120 Hz) is enforced only
     // under GG_ROUTING_STRICT_PERF, which the routing-perf workflow sets: on a developer machine
     // running other suites, frame time measures the machine, not the router, and is recorded
     // in the report for the hand-off instead.
     const strictPerf = process.env['GG_ROUTING_STRICT_PERF'] === '1';
+    expect(medianRoutingP95Ms).toBeLessThan(8);
     for (const result of repetitions) {
       expect(result.routingSamples).toBeGreaterThan(60);
       expect(result.frameSamples).toBeGreaterThan(120);
       expect(result.reroutedEdgesP95).toBeGreaterThan(0);
-      expect(result.routingP95Ms).toBeLessThan(routingLimit);
       if (strictPerf) expect(result.addedFrameP95Ms).toBeLessThan(4);
     }
   });

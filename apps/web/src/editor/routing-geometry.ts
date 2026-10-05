@@ -34,20 +34,26 @@ export function intersectsBox(a: Point, b: Point, box: Box): boolean {
         Math.max(a.y, b.y) > box.top &&
         Math.min(a.y, b.y) < box.bottom;
 }
-export const bounds = (points: readonly Point[]): Box => ({
-  id: '',
-  left: Math.min(...points.map((p) => p.x)),
-  right: Math.max(...points.map((p) => p.x)),
-  top: Math.min(...points.map((p) => p.y)),
-  bottom: Math.max(...points.map((p) => p.y)),
-});
+export function bounds(points: readonly Point[]): Box {
+  const box = { id: '', left: Infinity, right: -Infinity, top: Infinity, bottom: -Infinity };
+  for (const p of points) {
+    box.left = Math.min(box.left, p.x);
+    box.right = Math.max(box.right, p.x);
+    box.top = Math.min(box.top, p.y);
+    box.bottom = Math.max(box.bottom, p.y);
+  }
+  return box;
+}
 export const distance = (a: Point, b: Point): number => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
 export const sorted = (values: number[]): number[] => [...new Set(values)].sort((a, b) => a - b);
 
 /** The region actually consulted by a route, including rejected alternatives. */
 export class Footprint {
   box: Box | undefined;
-  touch(box: Box): void {
+  private regions: Box[] = [];
+  private discoveries: Box[] = [];
+  touch(box: Box, discovery = false): void {
+    (discovery ? this.discoveries : this.regions).push(box);
     if (!this.box) this.box = { ...box };
     else {
       this.box.left = Math.min(this.box.left, box.left);
@@ -56,11 +62,35 @@ export class Footprint {
       this.box.bottom = Math.max(this.box.bottom, box.bottom);
     }
   }
+  restrict(top: number, bottom: number, ranges: readonly (readonly [number, number])[]): void {
+    const clipped: Box[] = [];
+    const keep = (box: Box, low: number, high: number) => {
+      low = Math.max(box.top, low);
+      high = Math.min(box.bottom, high);
+      if (low <= high)
+        clipped.push(
+          low === box.top && high === box.bottom ? box : { ...box, top: low, bottom: high },
+        );
+    };
+    for (const box of this.regions) keep(box, top, bottom);
+    for (const box of this.discoveries) for (const [low, high] of ranges) keep(box, low, high);
+    this.regions = clipped;
+    this.discoveries = [];
+  }
+  intersects(box: Box): boolean {
+    return (
+      !!this.box &&
+      overlapsBox(this.box, box) &&
+      (this.regions.some((r) => overlapsBox(r, box)) ||
+        this.discoveries.some((r) => overlapsBox(r, box)))
+    );
+  }
 }
 
 /** A fixed-cell index of real card boxes, queried with the current route's padding. */
 export class BoxIndex {
   reads = new Footprint();
+  checks = 0;
   private cells = new Map<string, Box[]>();
   constructor(readonly boxes: readonly Box[]) {
     for (const box of boxes)
@@ -75,8 +105,9 @@ export class BoxIndex {
       for (let y = Math.floor(box.top / 256); y <= Math.floor(box.bottom / 256); y += 1)
         visit(`${x},${y}`);
   }
-  query(box: Box): Box[] {
-    this.reads.touch(box);
+  query(box: Box, discovery = false): Box[] {
+    this.checks += 1;
+    this.reads.touch(box, discovery);
     const found = new Set<Box>();
     this.cellsFor(box, (key) => {
       for (const candidate of this.cells.get(key) ?? [])
@@ -85,12 +116,40 @@ export class BoxIndex {
     return [...found];
   }
   clear(a: Point, b: Point, padding: number, own?: string): boolean {
-    return !this.query(expand(bounds([a, b]), padding)).some(
-      (box) => box.id !== own && intersectsBox(a, b, expand(box, padding)),
-    );
+    const region = expand(bounds([a, b]), padding);
+    this.checks += 1;
+    this.reads.touch(region);
+    for (let x = Math.floor(region.left / 256); x <= Math.floor(region.right / 256); x += 1)
+      for (let y = Math.floor(region.top / 256); y <= Math.floor(region.bottom / 256); y += 1)
+        for (const box of this.cells.get(`${x},${y}`) ?? [])
+          if (
+            box.id !== own &&
+            region.left < box.right &&
+            region.right > box.left &&
+            region.top < box.bottom &&
+            region.bottom > box.top
+          )
+            return false;
+    return true;
   }
   covers(p: Point, own: string): boolean {
     return this.query(bounds([p])).some((box) => box.id !== own && contains(box, p));
+  }
+  /** Maximal clear vertical interval through a column, calculated once per escape. */
+  verticalRange(p: Point, top: number, bottom: number, padding: number): [number, number] {
+    for (const box of this.query({
+      id: '',
+      left: p.x - padding,
+      right: p.x + padding,
+      top: top - padding,
+      bottom: bottom + padding,
+    })) {
+      if (p.x <= box.left - padding || p.x >= box.right + padding) continue;
+      if (p.y >= box.bottom + padding) top = Math.max(top, box.bottom + padding);
+      else if (p.y <= box.top - padding) bottom = Math.min(bottom, box.top - padding);
+      else return [1, 0];
+    }
+    return [top, bottom];
   }
 }
 
@@ -151,6 +210,15 @@ export class Reservations {
       )
     );
   }
+  verticalRange(p: Point, top: number, bottom: number): [number, number] {
+    this.reads.touch({ id: '', left: p.x, right: p.x, top, bottom });
+    for (const segment of this.verticals.get(p.x) ?? []) {
+      if (p.y >= segment.bottom) top = Math.max(top, segment.bottom);
+      else if (p.y <= segment.top) bottom = Math.min(bottom, segment.top);
+      else return [p.y, p.y];
+    }
+    return [top, bottom];
+  }
   laneFree(a: Point, b: Point, gap: number): boolean {
     if (!gap) return true;
     this.reads.touch(expand(bounds([a, b]), gap));
@@ -164,7 +232,7 @@ export class Reservations {
     return true;
   }
   nearbyLanes(region: Box): Lane[] {
-    this.reads.touch(region);
+    this.reads.touch(region, true);
     return this.lanes.filter(
       (l) => l.y >= region.top && l.y <= region.bottom && overlaps(region.left, region.right, l),
     );

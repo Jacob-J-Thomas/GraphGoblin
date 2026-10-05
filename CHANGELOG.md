@@ -45,6 +45,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ### Fixed
 
+- Forward-pointing loop-backs keep valid detours even without a middle label segment. Backward routing checks the full nearby lane reach before compression and avoids repeating collision work across lane candidates; incremental drag routes match fresh planning (#18).
+
 - Backward editor connections prefer free lanes before compression, keep labels apart and lanes clear of close neighbours, and restore the same routes after moving cards away and back (#18).
 
 - Seeded Codex model catalog entries now list `max`, matching the editor. The max-effort migration preserves existing edits; startup then refreshes seeded harness metadata as described above, keeping enabled choices. The Codex adapter still maps `max` to `xhigh`.

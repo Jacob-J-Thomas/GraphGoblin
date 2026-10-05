@@ -21,9 +21,6 @@ jobs:
       # bound is enforced only on a manual run, because the shared runner's frame time measures the
       # runner (software rendering, two cores), not the router.
       GG_ROUTING_STRICT_PERF: ${{ github.event_name == 'workflow_dispatch' && '1' || '' }}
-      # The two-core runner spikes single routing samples (10 ms seen against 5 to 7 ms); 12 ms
-      # still catches a regression of the router while the summary records the real numbers.
-      GG_ROUTING_LIMIT_MS: ${{ github.event_name == 'workflow_dispatch' && '8' || '12' }}
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -47,10 +44,10 @@ jobs:
           import { readdir, readFile, appendFile } from 'node:fs/promises';
           const folder = process.env.GG_ROUTING_REPORT_DIR;
           const files = await readdir(folder).catch(() => []);
-          const rows = ['# Routing performance', '', 'Whole cache miss includes geometry preparation, invalidation, routing and identity reuse. Limits: routing p95 <8 ms; drag minus idle frame p95 <4 ms.', '', '| Nodes | Browser | Drag | Routing p95 | Idle frame p95 | Drag frame p95 | Added frame p95 |', '| --- | --- | --- | --- | --- | --- | --- |'];
+          const rows = ['# Routing performance', '', 'Whole cache miss includes geometry preparation, invalidation, routing and identity reuse. Limits: median of three routing p95s <8 ms; drag minus idle frame p95 <4 ms on manual dispatch only.', '', '| Nodes | Browser | Drag | Routing p95 | Fixture median | Idle frame p95 | Drag frame p95 | Added frame p95 |', '| --- | --- | --- | --- | --- | --- | --- | --- |'];
           for (const file of files.filter(f => f.endsWith('.json')).sort()) {
             const report = JSON.parse(await readFile(folder + '/' + file, 'utf8'));
-            for (const run of report.repetitions) rows.push(`| ${report.nodes} | ${report.channel} ${report.browser} | ${run.repetition} | ${run.routingP95Ms.toFixed(3)} ms | ${report.idle.frameP95Ms.toFixed(3)} ms | ${run.frameP95Ms.toFixed(3)} ms | ${run.addedFrameP95Ms.toFixed(3)} ms |`);
+            for (const run of report.repetitions) rows.push(`| ${report.nodes} | ${report.channel} ${report.browser} | ${run.repetition} | ${run.routingP95Ms.toFixed(3)} ms | ${report.medianRoutingP95Ms.toFixed(3)} ms | ${report.idle.frameP95Ms.toFixed(3)} ms | ${run.frameP95Ms.toFixed(3)} ms | ${run.addedFrameP95Ms.toFixed(3)} ms |`);
           }
           if (!files.length) rows.push('', 'No measurement report was produced; inspect the failed setup/test step.');
           await appendFile(process.env.GITHUB_STEP_SUMMARY, rows.join('\n') + '\n');

@@ -149,6 +149,23 @@ export function tightGap(): LoopDefinitionInput {
   return definition;
 }
 
+/** An exit can point right: the clear Z path has no middle horizontal after stub simplification. */
+export function forwardLoopBack(): LoopDefinitionInput {
+  return {
+    schemaVersion: 1,
+    name: 'Forward loop-back detour',
+    nodes: [
+      node('start', 'trigger', -300, 0),
+      exit('done', 0, 'work', 0),
+      node('work', 'wait', 700, 280),
+      node('ceiling', 'wait', 180, -150),
+      node('shelf', 'wait', 180, 160),
+      node('wall', 'wait', 500, 30),
+    ],
+    edges: [edge('begin', 'start', 'done'), edge('return', 'done', 'work', 'loopBack')],
+  };
+}
+
 /** Two connected ports per card on average, including return, same-column and self routes. */
 export function denseGraph(count = 100): LoopDefinitionInput {
   const nodes: NodeInput[] = [node('start', 'trigger', 0, 0)];
