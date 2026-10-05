@@ -54,6 +54,78 @@ function decisionLoop(name: string, config: Record<string, unknown>): LoopDefini
 }
 
 describe('decision node', () => {
+  it.each(['jev', 'codex'] as const)(
+    'records only declared alternatives from %s',
+    async (strategy) => {
+      const engine = await createTestEngine();
+      const marker = 'gg-private-alternative-regression';
+      const decider = strategy === 'jev' ? engine.ports.jev : engine.ports.codexDecider;
+      decider.choose = () =>
+        Promise.resolve({
+          label: 'good',
+          confidence: 0.8,
+          alternatives: [
+            { label: 'bad', confidence: 0.1 },
+            { label: marker, confidence: 0.1 },
+          ],
+        });
+      const version = engine.publish(
+        decisionLoop('alternatives', { strategy: [strategy], recordAlternatives: true }),
+      );
+      const run = await engine.runToIdle(version.loopId);
+      expect(run.status).toBe('succeeded');
+      expect(engine.events(run.id).find((event) => event.type === 'decision.made')).toMatchObject({
+        alternatives: [{ route: 'bad', confidence: 0.1 }],
+      });
+      expect(JSON.stringify(engine.events(run.id))).not.toContain(marker);
+    },
+  );
+  it.each(['jev', 'codex'] as const)(
+    'summarizes %s exceptions without retaining provider messages, stacks, names or arbitrary codes',
+    async (strategy) => {
+      const engine = await createTestEngine();
+      const marker = 'gg-provider-error-private-regression';
+      const decider = strategy === 'jev' ? engine.ports.jev : engine.ports.codexDecider;
+      for (const code of ['DECIDER_INVALID_RESPONSE', `DECIDER_${marker}`, undefined]) {
+        decider.choose = () =>
+          Promise.reject(
+            Object.assign(new Error(marker), { name: marker, ...(code ? { code } : {}) }),
+          );
+        const version = engine.publish(
+          decisionLoop(`error-${code ?? 'none'}`, { strategy: [strategy] }),
+        );
+        const run = await engine.runToIdle(version.loopId);
+        expect(run.failure).toMatchObject({
+          code: 'INTERNAL_ERROR',
+          nodeId: 'decide',
+          details: { strategy },
+        });
+        expect(run.failure?.details).toEqual({
+          strategy,
+          ...(code === 'DECIDER_INVALID_RESPONSE' ? { code } : {}),
+        });
+        expect(JSON.stringify(run)).not.toContain(marker);
+        expect(JSON.stringify(engine.events(run.id))).not.toContain(marker);
+        expect(JSON.stringify(engine.ports.logger.lines)).not.toContain(marker);
+        expect(engine.ports.logger.lines).toContainEqual(
+          expect.objectContaining({
+            level: 'warn',
+            obj: expect.objectContaining({ strategy, name: 'Error' }),
+          }),
+        );
+      }
+      // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors -- Exercise an untrusted provider that rejects with a raw string.
+      decider.choose = () => Promise.reject(marker);
+      const version = engine.publish(decisionLoop('string-error', { strategy: [strategy] }));
+      const run = await engine.runToIdle(version.loopId);
+      expect(run.failure).toMatchObject({
+        code: 'INTERNAL_ERROR',
+        message: 'Decision provider request failed',
+      });
+      expect(JSON.stringify(run)).not.toContain(marker);
+      expect(JSON.stringify(engine.events(run.id))).not.toContain(marker);
+    },
+  );
   it('routes with an expression and records the decision', async () => {
     const engine = await createTestEngine();
     const version = engine.publish(
@@ -132,9 +204,41 @@ describe('decision node', () => {
     expect(run.status).toBe('failed');
     expect(run.failure?.code).toBe('DECISION_NO_ROUTE');
     expect(run.failure?.message).toMatch(/jev unavailable/);
-    expect(run.failure?.message).toMatch(/codex chose unknown route "meh"/);
-    expect(run.failure?.message).toMatch(/expression returned "nope"/);
+    expect(run.failure?.message).toContain('codex chose a route that is not declared on this node');
+    expect(run.failure?.message).toContain('expression returned "nope"');
   });
+
+  it.each(['jev', 'codex'] as const)(
+    'keeps %s unknown-label fallback without persisting the raw answer',
+    async (strategy) => {
+      const engine = await createTestEngine();
+      const marker = 'gg-provider-bearer-private-regression';
+      const decider = strategy === 'jev' ? engine.ports.jev : engine.ports.codexDecider;
+      decider.choose = () => Promise.resolve({ label: marker, confidence: 1 });
+      const fallback = engine.publish(
+        decisionLoop('fallback', {
+          strategy: [strategy, 'expression'],
+          expression: { jsonata: '"good"' },
+        }),
+      );
+      const routed = await engine.runToIdle(fallback.loopId);
+      expect(routed).toMatchObject({ status: 'succeeded', result: 'good' });
+      expect(
+        engine.events(routed.id).find((event) => event.type === 'decision.made'),
+      ).toMatchObject({ strategy: 'expression', route: 'good' });
+      const only = engine.publish(decisionLoop('only', { strategy: [strategy] }));
+      const failed = await engine.runToIdle(only.loopId);
+      expect(failed.failure).toMatchObject({
+        code: 'DECISION_NO_ROUTE',
+        nodeId: 'decide',
+        details: { tried: [`${strategy} chose a route that is not declared on this node`] },
+      });
+      for (const run of [routed, failed]) {
+        expect(JSON.stringify(run)).not.toContain(marker);
+        expect(JSON.stringify(engine.events(run.id))).not.toContain(marker);
+      }
+    },
+  );
 });
 
 describe('mutate node', () => {
@@ -410,6 +514,58 @@ describe('script node', () => {
 });
 
 describe('exit node and return channels', () => {
+  it.each(['jev', 'codex'] as const)(
+    'sanitizes %s predicate failures and preserves cancellation',
+    async (strategy) => {
+      const engine = await createTestEngine();
+      const decider = strategy === 'jev' ? engine.ports.jev : engine.ports.codexDecider;
+      const marker = 'gg-private-predicate-error-regression';
+      decider.judge = () =>
+        Promise.reject(
+          Object.assign(new Error(marker), {
+            code: 'DECIDER_HTTP_ERROR',
+            name: 'JevError',
+            status: 400,
+          }),
+        );
+      const version = engine.publish(
+        singleNodeLoop(
+          'exit-error',
+          {
+            id: 'noop',
+            kind: 'mutate',
+            label: 'M',
+            config: { operations: [{ op: 'delete', path: '/vars/x' }] },
+          },
+          {
+            criteria: [{ when: 'predicate', strategy, question: 'Done?', outcome: 'success' }],
+          },
+        ),
+      );
+      const run = await engine.runToIdle(version.loopId);
+      expect(run.failure).toMatchObject({
+        code: 'INTERNAL_ERROR',
+        message: 'Decision provider request failed',
+        details: { code: 'DECIDER_HTTP_ERROR', strategy },
+      });
+      expect(JSON.stringify([run, engine.events(run.id), engine.ports.logger.lines])).not.toContain(
+        marker,
+      );
+      expect(engine.ports.logger.lines).toContainEqual(
+        expect.objectContaining({
+          level: 'warn',
+          obj: expect.objectContaining({
+            name: 'JevError',
+            code: 'DECIDER_HTTP_ERROR',
+            status: 400,
+            strategy,
+          }),
+        }),
+      );
+      decider.judge = () => Promise.reject(new DOMException('aborted', 'AbortError'));
+      expect((await engine.runToIdle(version.loopId)).status).toBe('cancelled');
+    },
+  );
   it('loops back until exhausted and reports the iteration count', async () => {
     const engine = await createTestEngine();
     const loop: LoopDefinitionInput = {

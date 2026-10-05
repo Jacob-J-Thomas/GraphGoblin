@@ -78,11 +78,11 @@ export function registerTriggerRoutes(app: ApiInstance, container: Container): v
     },
     async (request, reply) => {
       const { expression, timezone, count, from } = request.body;
-      const invalid =
-        timezone.length === 0
-          ? 'A time zone is required.'
-          : CronScheduler.validate(expression, timezone);
-      if (invalid !== null) return problem(reply, 400, 'CRON_INVALID', invalid);
+      const invalid = CronScheduler.validate(expression, timezone);
+      if (invalid)
+        return problem(reply, 400, 'CRON_INVALID', invalid.message, [
+          { path: `/${invalid.field}`, message: invalid.message },
+        ]);
       const next: string[] = [];
       let after = from === undefined ? container.ports.clock.now() : new Date(from);
       for (let i = 0; i < count; i++) {
