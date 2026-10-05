@@ -1,10 +1,18 @@
 import {
+  LoopDefinitionSchema,
   LoopSettingsSchema,
   VariableDeclarationsSchema,
   type LoopDefinitionInput,
 } from '@graphgoblin/contracts';
 import { z } from 'zod';
-import { FieldGroup, HelpText, Input, Label, Textarea } from '../components/ui/index.js';
+import {
+  FieldGroup,
+  HelpText,
+  Input,
+  Label,
+  RequiredNote,
+  Textarea,
+} from '../components/ui/index.js';
 import { SchemaForm } from '../forms/SchemaForm.js';
 import { useEditorStore } from './store.js';
 
@@ -17,15 +25,29 @@ const VariablesFormSchema = z.object({ variables: VariableDeclarationsSchema });
 export function LoopSettingsPanel({ definition }: { definition: LoopDefinitionInput }) {
   const { updateMeta, updateSettings, updateVariables, setFieldError } = useEditorStore.getState();
   const fieldErrors = useEditorStore((s) => s.fieldErrors);
+  // The contract's own message for a name it refuses (a blank one, say).
+  const nameError = LoopDefinitionSchema.shape.name.safeParse(definition.name).error?.issues[0]
+    ?.message;
   return (
     <section aria-label="Loop settings" className="grid gap-field">
+      <RequiredNote />
       <FieldGroup>
-        <Label htmlFor="loop-name">Name</Label>
+        <Label htmlFor="loop-name" required>
+          Name
+        </Label>
         <Input
           id="loop-name"
+          aria-required
+          aria-invalid={nameError ? true : undefined}
+          aria-describedby={nameError ? 'loop-name-error' : undefined}
           value={definition.name}
           onChange={(e) => updateMeta({ name: e.target.value })}
         />
+        {nameError ? (
+          <HelpText id="loop-name-error" role="alert" tone="bad">
+            {nameError}
+          </HelpText>
+        ) : null}
       </FieldGroup>
       <FieldGroup>
         <Label htmlFor="loop-description">Description</Label>

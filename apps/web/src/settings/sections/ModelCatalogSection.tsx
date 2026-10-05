@@ -14,7 +14,10 @@ import {
   FieldGroup,
   Input,
   Label,
+  Legend,
+  RequiredNote,
   Select,
+  Switch,
   Table,
   Td,
   Th,
@@ -52,13 +55,17 @@ function ModelForm({ initial, onDone }: { initial?: CatalogEntry; onDone: () => 
       aria-label={initial ? `Edit ${initial.model}` : 'Add model'}
       className="grid gap-4 rounded-md border border-default bg-surface-sunken p-4"
     >
+      {initial ? null : <RequiredNote />}
       <div className="flex flex-wrap gap-3">
         <FieldGroup className="w-[220px]">
-          <Label htmlFor="model-id">Model id</Label>
+          <Label htmlFor="model-id" required={!initial}>
+            Model id
+          </Label>
           <Input
             id="model-id"
             className="font-mono text-sm"
             value={model}
+            aria-required={!initial || undefined}
             disabled={Boolean(initial)}
             onChange={(e) => setModel(e.target.value)}
           />
@@ -84,19 +91,21 @@ function ModelForm({ initial, onDone }: { initial?: CatalogEntry; onDone: () => 
           </Select>
         </FieldGroup>
       </div>
-      <fieldset className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
-        <legend className="mb-2 text-sm font-medium">Allowed efforts</legend>
-        {EFFORTS.map((e) => (
-          <label key={e} className="flex cursor-pointer items-center gap-2 font-medium">
-            <Checkbox
-              checked={efforts.includes(e)}
-              onChange={(ev) =>
-                setEfforts(ev.target.checked ? [...efforts, e] : efforts.filter((x) => x !== e))
-              }
-            />
-            {e}
-          </label>
-        ))}
+      <fieldset className="min-w-0">
+        <Legend variant="label">Allowed efforts</Legend>
+        <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm">
+          {EFFORTS.map((e) => (
+            <label key={e} className="flex cursor-pointer items-center gap-2 font-medium">
+              <Checkbox
+                checked={efforts.includes(e)}
+                onChange={(ev) =>
+                  setEfforts(ev.target.checked ? [...efforts, e] : efforts.filter((x) => x !== e))
+                }
+              />
+              {e}
+            </label>
+          ))}
+        </div>
       </fieldset>
       <div className="flex flex-wrap items-center gap-2">
         <Button type="submit" size="sm" disabled={!model || save.isPending}>
@@ -171,10 +180,10 @@ export function ModelCatalogSection() {
                       {entry.efforts.join(', ')} (default {entry.defaultEffort})
                     </Td>
                     <Td>
-                      <Checkbox
+                      <Switch
                         aria-label={`Enable ${entry.model}`}
                         checked={entry.enabled}
-                        onChange={() => toggle.mutate(entry)}
+                        onCheckedChange={() => toggle.mutate(entry)}
                       />
                     </Td>
                     <Td className="text-right whitespace-nowrap">

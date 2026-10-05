@@ -81,6 +81,22 @@ export function unwrap(schema: Schema): Unwrapped {
   return { base: current, optional, hasDefault, ...(hasDefault ? { defaultValue } : {}) };
 }
 
+/**
+ * A schema's `.describe()` text: the outermost one along its wrapper chain (optional, default,
+ * pipe input, and the like, down to the base), since `.describe()` may sit at any layer, as in
+ * `z.string().default('').describe('Help').optional()`. Undefined when no layer has one.
+ */
+export function descriptionOf(schema: Schema): string | undefined {
+  let current = schema;
+  for (;;) {
+    if (current.description !== undefined) return current.description;
+    const def = defOf(current);
+    if (def.type === 'pipe' && def.in) current = def.in;
+    else if (WRAPPERS.has(def.type) && def.innerType) current = def.innerType;
+    else return undefined;
+  }
+}
+
 export type StringFormat = 'text' | 'template' | 'expression';
 
 export type FieldShape =

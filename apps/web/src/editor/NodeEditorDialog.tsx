@@ -13,6 +13,7 @@ import {
   HelpText,
   Input,
   Label,
+  RequiredNote,
   type DialogCloseReason,
 } from '../components/ui/index.js';
 import { SchemaForm } from '../forms/SchemaForm.js';
@@ -116,6 +117,7 @@ export function NodeEditorDialog({
     useEditorStore.getState();
   const info = KIND_INFO[node.kind];
   const nodeIssues = issues.filter((i) => i.nodeId === node.id);
+  const labelIssue = nodeIssues.find((i) => i.path === 'label' && i.severity === 'error');
 
   // Opened at an issue: focus its field once the form is in place (the dialog has focused its
   // heading by now), then forget the request. The clear waits a task, so a Strict Mode replay of
@@ -182,14 +184,18 @@ export function NodeEditorDialog({
     >
       <section ref={bodyRef} aria-label="Node properties" className="grid gap-field">
         {notice}
+        <RequiredNote />
         {/* Issue paths `id` and `label` name these fields (focus-field.ts). */}
         <div data-field-scope="node" className="grid grid-cols-2 gap-3 max-sm:grid-cols-1">
           <FieldGroup data-field="id">
-            <Label htmlFor="node-id">Node id</Label>
+            <Label htmlFor="node-id" required>
+              Node id
+            </Label>
             <Input
               id="node-id"
               className="font-mono text-sm"
               value={id.value}
+              aria-required
               aria-invalid={id.error ? true : undefined}
               aria-describedby={id.error ? 'node-id-error' : undefined}
               onChange={(e) => setIdState({ ...id, value: e.target.value })}
@@ -205,12 +211,23 @@ export function NodeEditorDialog({
             ) : null}
           </FieldGroup>
           <FieldGroup data-field="label">
-            <Label htmlFor="node-label">Label</Label>
+            <Label htmlFor="node-label" required>
+              Label
+            </Label>
             <Input
               id="node-label"
+              aria-required
+              aria-invalid={labelIssue ? true : undefined}
+              aria-describedby={labelIssue ? 'node-label-error' : undefined}
               value={node.label}
               onChange={(e) => updateNode(node.id, { label: e.target.value })}
             />
+            {/* The loop's validation of the label (a blank one, say), beside the field too. */}
+            {labelIssue ? (
+              <HelpText id="node-label-error" role="alert" tone="bad">
+                {labelIssue.message}
+              </HelpText>
+            ) : null}
           </FieldGroup>
         </div>
         {node.kind === 'subloop' ? (

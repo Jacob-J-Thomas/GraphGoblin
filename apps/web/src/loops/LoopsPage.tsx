@@ -16,9 +16,11 @@ import {
   ConfirmAction,
   buttonStyles,
   FieldGroup,
+  FilePicker,
   HelpText,
   Input,
   Label,
+  RequiredNote,
   Table,
   Td,
   Th,
@@ -33,14 +35,6 @@ import {
   parseJson,
   problemIssues,
 } from '../lib/utils.js';
-
-/** The native file picker, its button drawn like an outline button. */
-const FILE_INPUT = [
-  'max-w-full cursor-pointer text-sm text-muted',
-  'file:mr-3 file:h-8 file:cursor-pointer file:rounded-md file:border file:border-strong',
-  'file:bg-surface-raised file:px-[11px] file:text-sm file:font-semibold file:text-default',
-  'file:shadow-ledge hover:file:bg-surface-hover',
-].join(' ');
 
 function PublishState({ loop }: { loop: LoopRecord }) {
   if (!loop.currentVersionId) return <Badge>draft only</Badge>;
@@ -80,11 +74,17 @@ function CreateLoop() {
       className="flex flex-wrap items-end gap-2 max-sm:w-full"
       aria-label="Create loop"
     >
+      <RequiredNote className="basis-full" />
       <FieldGroup className="w-[300px] max-sm:flex-1">
-        <Label htmlFor="new-loop-name">New loop name</Label>
+        <Label htmlFor="new-loop-name" required>
+          New loop name
+        </Label>
         <Input
           id="new-loop-name"
           value={name}
+          aria-required
+          aria-invalid={create.isError || undefined}
+          aria-describedby={create.isError ? 'new-loop-error' : undefined}
           onChange={(e) => setName(e.target.value)}
           placeholder="nightly-triage"
         />
@@ -93,7 +93,7 @@ function CreateLoop() {
         Create
       </Button>
       {create.isError ? (
-        <HelpText tone="bad" className="basis-full">
+        <HelpText id="new-loop-error" role="alert" tone="bad" className="basis-full">
           {errorMessage(create.error)}
         </HelpText>
       ) : null}
@@ -124,6 +124,8 @@ function ImportLoop() {
     const file = event.target.files?.[0];
     event.target.value = '';
     if (!file) return;
+    // A new choice starts over: the last result no longer describes the picker.
+    setMessage(undefined);
     const parsed = parseJson(await file.text());
     if (!parsed.ok || typeof parsed.value !== 'object' || parsed.value === null) {
       setMessage({ tone: 'bad', text: `${file.name} is not a JSON document.` });
@@ -134,23 +136,26 @@ function ImportLoop() {
   return (
     <FieldGroup>
       <Label htmlFor="import-loop">Import an exported loop (JSON)</Label>
-      <input
+      {/* A refused file describes the picker and marks it invalid until the next choice. */}
+      <FilePicker
         id="import-loop"
-        type="file"
         accept="application/json,.json"
-        className={FILE_INPUT}
+        aria-invalid={message?.tone === 'bad' || undefined}
+        aria-describedby={message?.tone === 'bad' ? 'import-loop-result' : undefined}
         onChange={(e) => void onFile(e)}
       />
       {message ? (
-        <Alert tone={message.tone} title={message.text}>
-          {message.issues && message.issues.length > 0 ? (
-            <ul className="list-disc pl-4 text-xs">
-              {message.issues.map((issue, i) => (
-                <li key={i}>{issue}</li>
-              ))}
-            </ul>
-          ) : null}
-        </Alert>
+        <div id="import-loop-result">
+          <Alert tone={message.tone} title={message.text}>
+            {message.issues && message.issues.length > 0 ? (
+              <ul className="list-disc pl-4 text-xs">
+                {message.issues.map((issue, i) => (
+                  <li key={i}>{issue}</li>
+                ))}
+              </ul>
+            ) : null}
+          </Alert>
+        </div>
       ) : null}
     </FieldGroup>
   );

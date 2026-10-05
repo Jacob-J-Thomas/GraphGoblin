@@ -176,7 +176,11 @@ describe('RunInspectorPage', () => {
     });
     renderApp(`/runs/${run.id}`, api);
     expect(await screen.findByText('Approve the plan?')).toBeInTheDocument();
-    await user.click(screen.getByLabelText('approved'));
+    await user.click(
+      within(screen.getByRole('radiogroup', { name: 'approved' })).getByRole('radio', {
+        name: 'Yes',
+      }),
+    );
     await user.type(screen.getByLabelText('note'), 'ship it');
     await user.click(screen.getByRole('button', { name: 'Submit input' }));
     await waitFor(() => expect(api.callsTo('POST', `/runs/${run.id}/input`)).toHaveLength(1));
