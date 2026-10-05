@@ -31,7 +31,7 @@ type LoopDefinition = {
   description?: string;
   settings: {
     workingDirectory: WorkingDirectorySpec; // see 04 and 06
-    defaults: { harness: 'codex'; model?: string; effort?: Effort };
+    defaults: { model?: string; effort?: Effort };
     maxIterations: number; // hard ceiling on loop-backs and on fresh visits per node; exit nodes may set lower
     subloopDepthLimit: number; // default 8
   };
@@ -69,8 +69,16 @@ Validation rules enforced by `domain` before a version can be published:
 - Every supplied Liquid template parses and every JSONata expression contains non-whitespace source and compiles, in node configs and loop settings (`TEMPLATE_INVALID`, `EXPRESSION_INVALID`). Empty and whitespace-only templates are valid and render exactly as authored. Omit optional blank expressions; the editor clears them. For optional templates, only exactly empty input means absent in the form; whitespace is preserved. This authoring rule lives in shared domain validation, so API imports and publishing agree with the editor without changing contracts parsing or fixture defaults.
 - No edge targets a trigger node's input.
 
+Harness selection belongs to inference nodes (`config.harness`, default `codex`). Loop defaults
+provide only model and effort. Definitions containing `settings.defaults.harness` are rejected
+as unknown keys; imports and API clients must remove it. There is no compatibility parser.
+Schema and export format versions remain 1. See [ADR-0019](decisions/ADR-0019-inference-node-harness.md).
+
 ## Versioning (Decided)
 
+- Upgrade migration `0005` rewrites stored version definitions once, removing only
+  `settings.defaults.harness`. Existing inference nodes already carry their explicit harness.
+  Version ids, numbers, creation and publication timestamps, and run pins stay unchanged.
 - Editing creates or updates a **draft** version. Publishing freezes it as the loop's current version.
 - A run pins the version it started with and finishes on it, even if a newer version is published meanwhile.
 - New runs always use the latest published version.

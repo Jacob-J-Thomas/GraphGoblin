@@ -1971,11 +1971,6 @@ export interface components {
                 }) | undefined;
                 /** @default {} */
                 defaults?: {
-                    /**
-                     * @default codex
-                     * @enum {string}
-                     */
-                    harness?: "codex" | undefined;
                     model?: string | undefined;
                     /** @enum {string} */
                     effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
@@ -3456,11 +3451,6 @@ export interface components {
                     kind: "temp";
                 };
                 defaults: {
-                    /**
-                     * @default codex
-                     * @enum {string}
-                     */
-                    harness: "codex";
                     model?: string | undefined;
                     /** @enum {string} */
                     effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
