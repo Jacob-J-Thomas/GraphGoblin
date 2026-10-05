@@ -367,10 +367,16 @@ async function expectShown(page, font, label) {
 /** Stop the script unless the browser drew the expected families (a face that failed to load). */
 function expectDrawn(drawn, expected, label) {
   const has = (families, wanted) => families.some((family) => family.startsWith(wanted));
-  if (drawn.body.length > 0 && !has(drawn.body, expected.text)) {
+  if (drawn.body.length === 0) {
+    throw new Error(`${label}: text probe drew no fonts`);
+  }
+  if (!has(drawn.body, expected.text)) {
     throw new Error(`${label}: text drawn in ${drawn.body.join(', ')}, not ${expected.text}`);
   }
-  if (drawn.heading.length > 0 && !has(drawn.heading, expected.heading)) {
+  if (drawn.heading.length === 0) {
+    throw new Error(`${label}: heading probe drew no fonts`);
+  }
+  if (!has(drawn.heading, expected.heading)) {
     throw new Error(
       `${label}: heading drawn in ${drawn.heading.join(', ')}, not ${expected.heading}`,
     );
