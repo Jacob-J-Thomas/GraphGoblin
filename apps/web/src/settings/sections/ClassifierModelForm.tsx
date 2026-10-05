@@ -3,7 +3,7 @@ import type { ClassifierModelSummary } from '@graphgoblin/contracts';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { useApi } from '../../api/context.js';
-import { refreshClassifierState, useSecrets } from '../../api/queries.js';
+import { refreshCatalogState, useSecrets } from '../../api/queries.js';
 import {
   Button,
   Checkbox,
@@ -89,11 +89,11 @@ export function ClassifierModelForm({
       initial === undefined
         ? classifierModels.create(client, values.id, toPut(values))
         : classifierModels.upsert(client, initial.id, toPut(values)),
-    onSuccess: () => refreshClassifierState(queryClient),
+    onSuccess: () => refreshCatalogState(queryClient),
     onError: (failure) => {
       // Added elsewhere since this list loaded: refresh it, so the id check names the clash.
       if (failure instanceof GraphGoblinApiError && failure.code === 'CLASSIFIER_EXISTS')
-        return refreshClassifierState(queryClient);
+        return refreshCatalogState(queryClient);
     },
   });
   const fieldId = (field: ClassifierFormField) => `${formId}-${field}`;

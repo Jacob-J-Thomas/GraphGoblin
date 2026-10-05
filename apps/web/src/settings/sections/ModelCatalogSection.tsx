@@ -3,7 +3,7 @@ import type { Effort } from '@graphgoblin/contracts';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRef, useState, type FormEvent } from 'react';
 import { useApi } from '../../api/context.js';
-import { keys, useModelCatalog } from '../../api/queries.js';
+import { keys, refreshCatalogState, useModelCatalog } from '../../api/queries.js';
 import { Icon } from '../../components/icons/index.js';
 import { QueryState } from '../../components/status.js';
 import {
@@ -26,7 +26,6 @@ import {
   EFFORTS,
   MutationError,
   restoreVanishedToggleFocus,
-  useInvalidate,
   type CatalogEntry,
   type MutationMessages,
 } from '../shared.js';
@@ -39,7 +38,7 @@ export const CATALOG_MESSAGES: MutationMessages = {
 
 function ModelForm({ initial, onDone }: { initial?: CatalogEntry; onDone: () => void }) {
   const client = useApi();
-  const invalidate = useInvalidate();
+  const queryClient = useQueryClient();
   const [model, setModel] = useState(initial?.model ?? '');
   const [displayName, setDisplayName] = useState(initial?.displayName ?? '');
   const [efforts, setEfforts] = useState<Effort[]>(initial?.efforts ?? ['low', 'medium', 'high']);
@@ -53,7 +52,8 @@ function ModelForm({ initial, onDone }: { initial?: CatalogEntry; onDone: () => 
         ...(!initial ? { source: 'litellm' as const, enabled: true } : {}),
       }),
     onSuccess: () => {
-      invalidate(keys.catalog);
+      // The editor's checks of saved drafts read the catalog too.
+      void refreshCatalogState(queryClient);
       onDone();
     },
   });
@@ -224,13 +224,13 @@ export function ModelCatalogSection() {
                                 : item,
                             ),
                           );
-                          await queryClient.invalidateQueries({ queryKey: keys.catalog });
+                          await refreshCatalogState(queryClient);
                         }}
                         onError={async (error, failure) => {
                           if (!(error instanceof GraphGoblinApiError) || error.status !== 404)
                             return;
                           setNotice(`${entry.displayName}: ${CATALOG_MESSAGES['MODEL_NOT_FOUND']}`);
-                          await queryClient.invalidateQueries({ queryKey: keys.catalog });
+                          await refreshCatalogState(queryClient);
                           restoreVanishedToggleFocus(
                             failure,
                             headingRef.current?.closest('h2') ?? null,
@@ -254,7 +254,7 @@ export function ModelCatalogSection() {
                               name={entry.model}
                               onDismiss={(error) => {
                                 if (error instanceof GraphGoblinApiError && error.status === 404)
-                                  return queryClient.invalidateQueries({ queryKey: keys.catalog });
+                                  return refreshCatalogState(queryClient);
                               }}
                               consequences={
                                 <p>
@@ -264,7 +264,7 @@ export function ModelCatalogSection() {
                               }
                               onConfirm={async () => {
                                 await modelCatalog.remove(client, entry.harness, entry.model);
-                                await queryClient.invalidateQueries({ queryKey: keys.catalog });
+                                await refreshCatalogState(queryClient);
                               }}
                             />
                           </>

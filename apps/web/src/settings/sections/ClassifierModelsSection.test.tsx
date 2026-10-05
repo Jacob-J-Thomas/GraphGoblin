@@ -331,7 +331,7 @@ describe('ClassifierModelsSection', () => {
     const api = seeded();
     const { queryClient } = renderApp('/settings', api);
     const user = userEvent.setup();
-    const key = keys.validation('loop', 3, '[]');
+    const key = keys.validation('loop', 'token-3', '[]');
     const stale = () => queryClient.getQueryState(key)?.isInvalidated;
     const reset = () => queryClient.setQueryData(key, []);
     reset();
