@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ClassifierModelIdSchema } from './classifiers.js';
 import {
   EffortSchema,
   ExpressionSchema,
@@ -133,6 +134,7 @@ export const DecisionConfigSchema = z
     jev: z
       .strictObject({
         primitive: z.literal('choice').default('choice'),
+        model: ClassifierModelIdSchema.optional(),
         minConfidence: z.number().min(0).max(1).optional(),
       })
       .optional(),

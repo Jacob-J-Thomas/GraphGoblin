@@ -46,15 +46,19 @@ Starting, observing, and controlling runs.
 
 Owner settings and the model catalog.
 
-| Method | Path                               | Summary                           | Parameters                                                           | Request body                                                 | Responses |
-| ------ | ---------------------------------- | --------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------ | --------- |
-| GET    | `/settings`                        | Owner settings                    | -                                                                    | -                                                            | 200       |
-| PUT    | `/settings`                        | Update owner settings             | -                                                                    | `object`                                                     | 200       |
-| DELETE | `/settings/{key}`                  | Reset one setting to its default  | `key`: string (path, required)                                       | -                                                            | 204       |
-| GET    | `/model-catalog`                   | The model catalog                 | -                                                                    | -                                                            | 200       |
-| PUT    | `/model-catalog/{harness}/{model}` | Edit a LiteLLM catalog entry      | `harness`: string (path, required), `model`: string (path, required) | `{ displayName, efforts, defaultEffort, enabled?, source? }` | 200       |
-| PATCH  | `/model-catalog/{harness}/{model}` | Enable or disable a catalog entry | `harness`: string (path, required), `model`: string (path, required) | `{ enabled }`                                                | 200       |
-| DELETE | `/model-catalog/{harness}/{model}` | Remove a LiteLLM catalog entry    | `harness`: string (path, required), `model`: string (path, required) | -                                                            | 204       |
+| Method | Path                               | Summary                                                            | Parameters                                                           | Request body                                                 | Responses |
+| ------ | ---------------------------------- | ------------------------------------------------------------------ | -------------------------------------------------------------------- | ------------------------------------------------------------ | --------- |
+| GET    | `/settings`                        | Owner settings                                                     | -                                                                    | -                                                            | 200       |
+| PUT    | `/settings`                        | Update owner settings                                              | -                                                                    | `object`                                                     | 200       |
+| DELETE | `/settings/{key}`                  | Reset one setting to its default                                   | `key`: string (path, required)                                       | -                                                            | 204       |
+| GET    | `/model-catalog`                   | The model catalog                                                  | -                                                                    | -                                                            | 200       |
+| PUT    | `/model-catalog/{harness}/{model}` | Edit a LiteLLM catalog entry                                       | `harness`: string (path, required), `model`: string (path, required) | `{ displayName, efforts, defaultEffort, enabled?, source? }` | 200       |
+| PATCH  | `/model-catalog/{harness}/{model}` | Enable or disable a catalog entry                                  | `harness`: string (path, required), `model`: string (path, required) | `{ enabled }`                                                | 200       |
+| DELETE | `/model-catalog/{harness}/{model}` | Remove a LiteLLM catalog entry                                     | `harness`: string (path, required), `model`: string (path, required) | -                                                            | 204       |
+| GET    | `/classifier-models`               | List owner classifier models with local configuration status       | -                                                                    | -                                                            | 200       |
+| PUT    | `/classifier-models/{id}`          | Create or replace custom HTTP classifier metadata                  | `id`: string (path, required)                                        | `ClassifierModelPutInput`                                    | 200       |
+| PATCH  | `/classifier-models/{id}`          | Enable or disable a classifier model                               | `id`: string (path, required)                                        | `{ enabled }`                                                | 200       |
+| DELETE | `/classifier-models/{id}`          | Remove a custom classifier, preserving secrets and loop references | `id`: string (path, required)                                        | -                                                            | 204       |
 
 ## secrets
 

@@ -2,6 +2,7 @@ import '@testing-library/jest-dom/vitest';
 import 'fake-indexeddb/auto';
 import { cleanup, configure } from '@testing-library/react';
 import { afterEach } from 'vitest';
+import { useApiKeyStore } from '../api/api-key.js';
 import { dialogClose } from './dialog.js';
 
 // Whole-app renders under a busy parallel run can take longer than the 1 s default.
@@ -64,6 +65,11 @@ globalThis.DOMMatrixReadOnly ??= DOMMatrixStub as unknown as typeof DOMMatrixRea
 
 afterEach(() => {
   cleanup();
+  // The API key store is module state that outlives each test's app. Reset it only after the
+  // unmount: changing the key while the app is mounted refetches every query, and a refetch
+  // answered 401 without a key marks the store rejected again, so the next test would render the
+  // API key panel, which takes focus as soon as no dialog is open.
+  useApiKeyStore.getState().forget();
   dialogClose.delivery = 'task';
   sessionStorage.clear();
   localStorage.clear();

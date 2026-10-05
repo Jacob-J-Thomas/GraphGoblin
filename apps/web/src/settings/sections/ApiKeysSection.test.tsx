@@ -1,6 +1,6 @@
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { FakeApi, problem, TS } from '../../__fixtures__/fake-api.js';
 import { renderApp } from '../../__fixtures__/render.js';
 import { API_KEY_STORAGE, useApiKeyStore } from '../../api/api-key.js';
@@ -30,10 +30,6 @@ function json(items: FakeApi['apiKeyList']) {
     headers: { 'content-type': 'application/json' },
   });
 }
-afterEach(() => {
-  useApiKeyStore.setState({ key: undefined, rejected: false });
-  localStorage.removeItem(API_KEY_STORAGE);
-});
 
 describe('current browser key in Settings', () => {
   it('marks A and revokes B without the browser warning or losing access', async () => {

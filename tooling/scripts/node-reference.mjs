@@ -42,7 +42,7 @@ export const NODE_DOCS = {
       question: 'Liquid template rendered against the thread; the question the decider answers.',
       context: 'How much of the thread the decider sees: messages, vars, the last output.',
       strategy: 'Ordered fallback chain of strategies.',
-      jev: 'Jev options; a choice below `minConfidence` falls through to the next strategy.',
+      jev: 'Choice classifier options: optional `model` is a catalog id (default `jev`); unavailable configuration or a choice below `minConfidence` falls through to the next strategy.',
       codex: 'Model and effort for the Codex decider.',
       expression: 'JSONata that must evaluate to a route label.',
       recordAlternatives: 'Record the routes not taken, with confidences, on `decision.made`.',
