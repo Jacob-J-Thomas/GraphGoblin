@@ -3,6 +3,8 @@ import { Position, type EdgeProps } from '@xyflow/react';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { BackwardEdge, type BackwardFlowEdge } from './BackwardEdge.js';
 import type { RoutedEdge } from './routing.js';
+import { createRouteChannels } from './route-channels.js';
+const channel = (route: RoutedEdge) => createRouteChannels().edge('return', route);
 
 const route: RoutedEdge = {
   points: [
@@ -16,6 +18,10 @@ const route: RoutedEdge = {
   label: { x: 55, y: 180 },
   labelWidth: 118,
   blocked: false,
+  unavailable: false,
+  radius: 8,
+  padding: 32,
+  bounds: { id: '', left: -20, right: 130, top: 0, bottom: 180 },
 };
 const props: EdgeProps<BackwardFlowEdge> = {
   id: 'return',
@@ -27,7 +33,7 @@ const props: EdgeProps<BackwardFlowEdge> = {
   targetY: 40,
   sourcePosition: Position.Right,
   targetPosition: Position.Left,
-  data: route,
+  data: channel(route),
   label: 'loopBack',
   selected: false,
   selectable: true,
@@ -88,12 +94,16 @@ describe('BackwardEdge', () => {
   it('keeps an obstructed connection labelled without a colliding path', () => {
     const view = render(
       <svg>
-        <BackwardEdge {...props} label={undefined} data={{ ...route, points: [], blocked: true }} />
+        <BackwardEdge
+          {...props}
+          label={undefined}
+          data={channel({ ...route, points: [], blocked: true })}
+        />
       </svg>,
     );
     expect(view.container.querySelector('.react-flow__edge-path')).toHaveAttribute('d', '');
     expect(view.container.querySelector('.react-flow__edge-text')).toHaveTextContent(
-      'Connection: move overlapping nodes apart',
+      'Connection: Port covered by a card; move the card',
     );
   });
 });

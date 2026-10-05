@@ -1,25 +1,29 @@
 import { Position, type InternalNode } from '@xyflow/react';
 import { describe, expect, it } from 'vitest';
 import { routingInput, simpleLoop } from '../__fixtures__/routing.js';
-import { createRoutingCache, ROUTING_MEASURE, routingGeometryKey } from './useRouting.js';
+import { createRoutingCache, ROUTING_MEASURE, createGeometrySelector } from './useRouting.js';
 
 describe('routing measurement and cache', () => {
   it('routes once per geometry/topology change, retains unchanged routes, and bounds the timeline', () => {
     const input = routingInput(simpleLoop());
     const route = createRoutingCache();
-    const edges = JSON.stringify(input.edges);
-    const key = JSON.stringify(input.nodes);
-    const first = route(key, edges);
-    expect(route(key, edges)).toBe(first);
-    // Move an unrelated trigger, which is outside the return span.
-    input.nodes[0]!.y -= 20;
-    const next = route(JSON.stringify(input.nodes), edges);
-    expect(next).not.toBe(first);
-    expect(next.get('return')).toBe(first.get('return'));
-    input.nodes[3]!.outputs['loopBack']!.y += 10;
-    expect(route(JSON.stringify(input.nodes), edges).get('return')).not.toBe(first.get('return'));
-    expect(route(key, '[]').size).toBe(0);
-    expect(performance.getEntriesByName(ROUTING_MEASURE)).toHaveLength(1);
+    const geometry = { nodes: input.nodes, preparationMs: 0.5 };
+    const first = route(geometry, input.edges);
+    expect(route(geometry, [...input.edges])).toBe(first);
+    const changed = structuredClone(input.nodes);
+    changed[0]!.y -= 20;
+    const next = route({ nodes: changed, preparationMs: 0.5 }, input.edges);
+    expect(next.routes.get('return')).toBe(first.routes.get('return'));
+    expect(next.statistics.rerouted).toBe(0);
+    const moved = structuredClone(changed);
+    moved[3]!.outputs['loopBack']!.y += 10;
+    expect(route({ nodes: moved, preparationMs: 0 }, input.edges).routes.get('return')).not.toBe(
+      first.routes.get('return'),
+    );
+    expect(route(geometry, []).routes.size).toBe(0);
+    const measures = performance.getEntriesByName(ROUTING_MEASURE);
+    expect(measures).toHaveLength(1);
+    expect(measures[0]!.duration).toBeGreaterThanOrEqual(0.5);
   });
 
   it('uses absolute node positions and measured handle tips, ignoring selection and viewport', () => {
@@ -61,8 +65,9 @@ describe('routing measurement and cache', () => {
       },
     };
     const state = { nodeLookup: new Map([['a', node]]) };
-    const key = routingGeometryKey(state);
-    expect(JSON.parse(key)).toEqual([
+    const select = createGeometrySelector();
+    const key = select(state);
+    expect(key.nodes).toEqual([
       {
         id: 'a',
         x: 100,
@@ -73,17 +78,19 @@ describe('routing measurement and cache', () => {
         input: { x: 94, y: 261 },
       },
     ]);
+    state.nodeLookup.set('new', { ...node, id: 'new', measured: {} });
+    expect(select(state)).toBe(key);
     node.selected = true;
-    expect(routingGeometryKey(state)).toBe(key);
+    expect(select(state)).toBe(key);
     node.internals.handleBounds = { source: null, target: null };
-    expect(JSON.parse(routingGeometryKey(state))).toEqual([
+    expect(select(state).nodes).toEqual([
       { id: 'a', x: 100, y: 200, width: 184, height: 122, outputs: {} },
     ]);
     delete node.internals.handleBounds;
-    expect(routingGeometryKey(state)).toBe('[]');
+    expect(select(state).nodes).toEqual([]);
     node.measured = {};
-    expect(routingGeometryKey(state)).toBe('[]');
+    expect(select(state).nodes).toEqual([]);
     node.measured = { width: 184 };
-    expect(routingGeometryKey(state)).toBe('[]');
+    expect(select(state).nodes).toEqual([]);
   });
 });

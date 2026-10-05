@@ -1,192 +1,113 @@
-/** Canvas geometry only: no draft/store access, DOM, clock, or layout mutation. */
-export interface Point {
-  x: number;
-  y: number;
-}
+import {
+  BoxIndex,
+  Reservations,
+  bounds,
+  distance,
+  expand,
+  overlaps,
+  overlapsBox,
+  simplify,
+  sorted,
+  type Box,
+  type Lane,
+  type Point,
+} from './routing-geometry.js';
+import { detour, SearchWorkspace } from './routing-search.js';
+export { intersectsBox, simplify, type Point } from './routing-geometry.js';
+export { SearchWorkspace } from './routing-search.js';
 
+/** Geometry only: no editor store, DOM, clock, or layout mutation. */
 export interface RoutingNode extends Point {
   id: string;
   width: number;
   height: number;
-  /** Absolute, measured port tips (not the centre of the handle). */
   outputs: Readonly<Record<string, Point>>;
   input?: Point;
 }
-
 export interface RoutingEdge {
   id: string;
   source: string;
   target: string;
   port: string;
 }
-
-export interface Lane {
-  y: number;
-  left: number;
-  right: number;
-}
-
 export interface RoutedEdge extends Record<string, unknown> {
-  /** #44 can replace these ordered orthogonal points before they reach the renderer. */
+  /** #44 replaces these ordered points independently of how they were obtained. */
   points: readonly Point[];
   lane?: Lane;
   label: Point;
   labelWidth: number;
-  /** A covered port has no clearance-preserving route; never draw through the covering card. */
+  radius: number;
+  padding: number;
+  bounds: Box;
+  /** Only a port inside another real card is blocked. Search failure has a separate explanation. */
   blocked: boolean;
+  unavailable: boolean;
 }
-
+export interface RoutingPlan {
+  clearance: number;
+  nodes: readonly RoutingNode[];
+  edges: readonly RoutingEdge[];
+  routes: ReadonlyMap<string, RoutedEdge>;
+  directions: ReadonlyMap<string, boolean>;
+  statistics: { rerouted: number; expansions: number };
+}
 export const ROUTING_CLEARANCE = 24;
 export const ROUTING_RADIUS = 8;
 export const LANE_GAP = 24;
+export const DIRECTION_HYSTERESIS = 8;
+const COLUMN_GAP = 12;
+const CANDIDATE_LIMIT = 32;
 
-interface Box {
-  id: string;
-  left: number;
-  right: number;
-  top: number;
-  bottom: number;
+export function backwardDirection(
+  edge: RoutingEdge,
+  from: Point,
+  to: Point,
+  previous?: boolean,
+): boolean {
+  if (edge.port === 'loopBack' || edge.source === edge.target) return true;
+  const delta = from.x - to.x;
+  return previous === undefined
+    ? delta >= 0
+    : previous
+      ? delta >= -DIRECTION_HYSTERESIS
+      : delta > DIRECTION_HYSTERESIS;
 }
-
-/** Boundaries may be touched; the open padded interior may not be entered. */
-export function intersectsBox(a: Point, b: Point, box: Box): boolean {
-  return a.y === b.y
-    ? a.y > box.top &&
-        a.y < box.bottom &&
-        Math.max(a.x, b.x) > box.left &&
-        Math.min(a.x, b.x) < box.right
-    : a.x > box.left &&
-        a.x < box.right &&
-        Math.max(a.y, b.y) > box.top &&
-        Math.min(a.y, b.y) < box.bottom;
-}
-
-function clear(a: Point, b: Point, boxes: readonly Box[]): boolean {
-  return !boxes.some((box) => intersectsBox(a, b, box));
-}
-
-function overlaps(left: number, right: number, lane: Lane): boolean {
-  return left < lane.right && right > lane.left;
-}
-
-function freeLane(a: Point, b: Point, lanes: readonly Lane[]): boolean {
-  return !lanes.some(
-    (lane) =>
-      Math.abs(a.y - lane.y) < LANE_GAP && overlaps(Math.min(a.x, b.x), Math.max(a.x, b.x), lane),
+const nodeBox = (n: RoutingNode): Box => ({
+  id: n.id,
+  left: n.x,
+  right: n.x + n.width,
+  top: n.y,
+  bottom: n.y + n.height,
+});
+const samePoint = (a: Point | undefined, b: Point | undefined) => a?.x === b?.x && a?.y === b?.y;
+export function sameNode(a: RoutingNode, b: RoutingNode): boolean {
+  if (a === b) return true;
+  return (
+    a.id === b.id &&
+    samePoint(a, b) &&
+    a.width === b.width &&
+    a.height === b.height &&
+    samePoint(a.input, b.input) &&
+    Object.keys(a.outputs).length === Object.keys(b.outputs).length &&
+    Object.entries(a.outputs).every(([port, point]) => samePoint(point, b.outputs[port]))
   );
 }
+const sameEdge = (a: RoutingEdge, b: RoutingEdge | undefined) =>
+  !!b && a.source === b.source && a.target === b.target && a.port === b.port;
+export const routeMessage = (route: RoutedEdge): string =>
+  route.blocked
+    ? 'Port covered by a card; move the card'
+    : route.unavailable
+      ? 'No clear route; move a card'
+      : '';
 
-/** Remove duplicate/collinear points without changing the geometry. */
-export function simplify(points: readonly Point[]): Point[] {
-  const result: Point[] = [];
-  for (const p of points) {
-    const b = result.at(-1);
-    if (b?.x === p.x && b.y === p.y) continue;
-    const a = result.at(-2);
-    if (a && b && ((a.x === b.x && b.x === p.x) || (a.y === b.y && b.y === p.y))) {
-      result[result.length - 1] = p;
-    } else result.push(p);
-  }
-  return result;
-}
-
-function distance(a: Point, b: Point): number {
-  return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
-}
-
-/** Small min-heap for the exceptional, obstructed-escape search. */
-class Frontier {
-  private entries: { id: number; cost: number }[] = [];
-
-  push(id: number, cost: number): void {
-    const entry = { id, cost };
-    let index = this.entries.length;
-    this.entries.push(entry);
-    while (index > 0) {
-      const parent = (index - 1) >> 1;
-      if (this.entries[parent]!.cost <= cost) break;
-      this.entries[index] = this.entries[parent]!;
-      index = parent;
-    }
-    this.entries[index] = entry;
-  }
-
-  pop(): number | undefined {
-    const first = this.entries[0];
-    const last = this.entries.pop();
-    if (this.entries.length && last) {
-      let index = 0;
-      while (index * 2 + 1 < this.entries.length) {
-        let child = index * 2 + 1;
-        if (this.entries[child + 1] && this.entries[child + 1]!.cost < this.entries[child]!.cost)
-          child += 1;
-        if (this.entries[child]!.cost >= last.cost) break;
-        this.entries[index] = this.entries[child]!;
-        index = child;
-      }
-      this.entries[index] = last;
-    }
-    return first?.id;
-  }
-}
-
-const sorted = (values: number[]) => [...new Set(values)].sort((a, b) => a - b);
-
-/**
- * A* on a lazily visited rectilinear grid of obstacle boundaries. Only used when straight
- * escapes cannot reach a common lane (staggered cards, overlapping obstacle clusters). The
- * outermost coordinates guarantee an outside corridor; no diagonal or unsafe fallback exists.
- */
-function detour(start: Point, end: Point, boxes: readonly Box[], lanes: readonly Lane[]): Point[] {
-  const xs = sorted([start.x, end.x, ...boxes.flatMap((b) => [b.left, b.right])]);
-  const ys = sorted([
-    start.y,
-    end.y,
-    ...boxes.flatMap((b) => [b.top, b.bottom]),
-    ...lanes.flatMap((l) => [l.y - LANE_GAP, l.y + LANE_GAP]),
-  ]);
-  const width = xs.length;
-  const point = (id: number): Point => ({ x: xs[id % width]!, y: ys[Math.floor(id / width)]! });
-  const first = ys.indexOf(start.y) * width + xs.indexOf(start.x);
-  const goal = ys.indexOf(end.y) * width + xs.indexOf(end.x);
-  const costs = new Float64Array(width * ys.length).fill(Infinity);
-  const previous = new Int32Array(costs.length).fill(-1);
-  const visited = new Uint8Array(costs.length);
-  const frontier = new Frontier();
-  costs[first] = 0;
-  frontier.push(first, distance(start, end));
-  for (let id = frontier.pop(); id !== undefined; id = frontier.pop()) {
-    if (id === goal) {
-      const path: Point[] = [];
-      for (let cursor = goal; cursor !== -1; cursor = previous[cursor]!) path.push(point(cursor));
-      return simplify(path.reverse());
-    }
-    if (visited[id]) continue;
-    visited[id] = 1;
-    const a = point(id);
-    const x = id % width;
-    const neighbours = [
-      ...(x > 0 ? [id - 1] : []),
-      ...(x + 1 < width ? [id + 1] : []),
-      ...(id >= width ? [id - width] : []),
-      ...(id + width < costs.length ? [id + width] : []),
-    ];
-    for (const next of neighbours) {
-      if (visited[next]) continue;
-      const b = point(next);
-      const cost = costs[id]! + distance(a, b);
-      if (cost >= costs[next]! || !clear(a, b, boxes)) continue;
-      if (a.y === b.y && !freeLane(a, b, lanes)) continue;
-      costs[next] = cost;
-      previous[next] = id;
-      frontier.push(next, cost + distance(b, end));
-    }
-  }
-  return [];
-}
-
-/** The longest horizontal interior segment carries the label and reserves the return lane. */
-function describe(points: Point[], fallback: Point): RoutedEdge {
+function describe(
+  points: Point[],
+  from: Point,
+  to: Point,
+  padding: number,
+  blocked = false,
+): RoutedEdge {
   let lane: Lane | undefined;
   for (let i = 2; i < points.length - 1; i += 1) {
     const a = points[i - 1]!;
@@ -196,95 +117,252 @@ function describe(points: Point[], fallback: Point): RoutedEdge {
     const right = Math.max(a.x, b.x);
     if (!lane || right - left > lane.right - lane.left) lane = { y: a.y, left, right };
   }
+  const radius = Math.min(ROUTING_RADIUS, padding);
   return {
     points,
     ...(lane ? { lane } : {}),
-    label: lane ? { x: (lane.left + lane.right) / 2, y: lane.y } : fallback,
-    labelWidth: lane ? Math.max(0, lane.right - lane.left - 2 * ROUTING_RADIUS - 16) : 200,
-    blocked: points.length === 0,
+    radius,
+    padding,
+    blocked,
+    unavailable: !blocked && !points.length,
+    bounds: expand(bounds([from, to, ...points]), ROUTING_CLEARANCE + ROUTING_RADIUS),
+    label: lane ? { x: (lane.left + lane.right) / 2, y: lane.y } : { x: from.x, y: from.y - 48 },
+    labelWidth: lane ? Math.max(0, lane.right - lane.left - 2 * radius - 16) : 240,
   };
 }
 
+interface Work {
+  edge: RoutingEdge;
+  source: RoutingNode;
+  target: RoutingNode;
+  from: Point;
+  to: Point;
+  span: number;
+}
+
+function candidates(
+  start: Point,
+  end: Point,
+  index: BoxIndex,
+  padding: number,
+  reservations: Reservations,
+): number[] {
+  const region = expand(bounds([start, end]), 112);
+  const nearby = index.query(expand(region, padding));
+  return sorted([
+    ...nearby.flatMap((b) => [b.top - padding, b.bottom + padding]),
+    ...reservations.lanes
+      .filter(
+        (l) => l.y >= region.top && l.y <= region.bottom && overlaps(region.left, region.right, l),
+      )
+      .flatMap((l) => [l.y - LANE_GAP, l.y + LANE_GAP, l.y - 12, l.y + 12]),
+  ])
+    .filter((y) => y >= region.top && y <= region.bottom)
+    .sort(
+      (a, b) =>
+        Math.abs(start.y - a) + Math.abs(end.y - a) - Math.abs(start.y - b) - Math.abs(end.y - b) ||
+        b - a,
+    )
+    .slice(0, CANDIDATE_LIMIT);
+}
+
+function routeOne(
+  work: Work,
+  index: BoxIndex,
+  reservations: Reservations,
+  sourceRank: number,
+  targetRank: number,
+  clearance: number,
+  workspace: SearchWorkspace,
+): { route: RoutedEdge; expansions: number } {
+  const { source, target, from, to } = work;
+  const fullPadding = Math.max(0, clearance) + ROUTING_RADIUS;
+  if (index.covers(from, source.id) || index.covers(to, target.id))
+    return { route: describe([], from, to, 0, true), expansions: 0 };
+  // Reduce the envelope in tight spaces. Unlike a padded-box test, only a real card can cover a port.
+  let room = fullPadding * 2;
+  for (const [port, own] of [
+    [from, source.id],
+    [to, target.id],
+  ] as const)
+    for (const box of index.query(expand(bounds([port]), room))) {
+      if (box.id === own) continue;
+      room = Math.min(
+        room,
+        Math.max(box.left - port.x, port.x - box.right, box.top - port.y, port.y - box.bottom, 0),
+      );
+    }
+  const paddings = [...new Set([fullPadding, Math.min(fullPadding / 2, room / 2), 0])];
+  let expansions = 0;
+  for (const padding of paddings) {
+    const sx = Math.max(source.x + source.width + padding, from.x);
+    const tx = Math.min(target.x - padding, to.x);
+    // Port/incoming ranks separate shared-card trunks. Alternatives handle columns blocked by a neighbour.
+    const offsets = (rank: number) => sorted([Math.min(rank, 7) * COLUMN_GAP, 0, 12, 24, 36, 48]);
+    const starts = offsets(sourceRank)
+      .map((offset) => ({ x: sx + offset, y: from.y }))
+      .filter((p) => index.clear(from, p, padding, source.id));
+    const ends = offsets(targetRank)
+      .map((offset) => ({ x: tx - offset, y: to.y }))
+      .filter((p) => index.clear(p, to, padding, target.id));
+    if (!starts.length || !ends.length) continue;
+    const ys = candidates(starts[0]!, ends[0]!, index, padding, reservations);
+    let best: Point[] = [];
+    let bestCost = Infinity;
+    for (const gap of [LANE_GAP, 12, 0]) {
+      for (const y of ys) {
+        const travel =
+          2 * (Math.abs(from.y - y) + Math.abs(to.y - y)) +
+          (gap === LANE_GAP ? 0 : gap === 12 ? 64 : 128);
+        if (travel > bestCost) continue;
+        // Test each escape once, not every source/target column permutation.
+        const start = starts.find(
+          (p) =>
+            reservations.verticalFree(p, { x: p.x, y }) && index.clear(p, { x: p.x, y }, padding),
+        );
+        const end = ends.find(
+          (p) =>
+            reservations.verticalFree(p, { x: p.x, y }) && index.clear(p, { x: p.x, y }, padding),
+        );
+        if (!start || !end) continue;
+        const a = { x: start.x, y };
+        const b = { x: end.x, y };
+        const cost = travel + Math.abs(from.x - start.x) + Math.abs(to.x - end.x);
+        if (cost >= bestCost || !reservations.laneFree(a, b, gap) || !index.clear(a, b, padding))
+          continue;
+        best = [from, start, a, b, end, to];
+        bestCost = cost;
+      }
+    }
+    if (best.length) return { route: describe(simplify(best), from, to, padding), expansions };
+    const search = detour(starts[0]!, ends[0]!, index, padding, reservations, workspace);
+    expansions += search.expansions;
+    if (search.points.length)
+      return {
+        route: describe(simplify([from, ...search.points, to]), from, to, padding),
+        expansions,
+      };
+  }
+  return { route: describe([], from, to, 0), expansions };
+}
+
 /**
- * Route only loopBack, self and non-forward (including same-column) edges. Deterministic id order
- * assigns nearby free horizontal lanes to overlapping spans. First try a six-point path around
- * the cards; search a boundary grid only if obstacles block both vertical escapes. Extra radius
- * outside the requested clearance keeps the rounded SVG corners outside the padded boxes too.
+ * Pure route planning with an optional prior plan. Changes invalidate only endpoint routes and
+ * spans intersecting a card's old/new box. Scratch buffers are an allocation optimisation only.
  */
+export function createRoutingPlan(
+  nodes: readonly RoutingNode[],
+  edges: readonly RoutingEdge[],
+  clearance = ROUTING_CLEARANCE,
+  previous?: RoutingPlan,
+  workspace = new SearchWorkspace(),
+): RoutingPlan {
+  const byId = new Map(nodes.map((n) => [n.id, n]));
+  const oldNodes = new Map(previous?.nodes.map((n) => [n.id, n]));
+  const changed = new Set<string>();
+  const changedBoxes: Box[] = [];
+  for (const node of nodes) {
+    const old = oldNodes.get(node.id);
+    if (!old || !sameNode(old, node)) {
+      changed.add(node.id);
+      changedBoxes.push(expand(nodeBox(node), clearance + ROUTING_RADIUS));
+      if (old) changedBoxes.push(expand(nodeBox(old), clearance + ROUTING_RADIUS));
+    }
+    oldNodes.delete(node.id);
+  }
+  for (const old of oldNodes.values()) {
+    changed.add(old.id);
+    changedBoxes.push(expand(nodeBox(old), clearance + ROUTING_RADIUS));
+  }
+  const oldEdges = new Map(previous?.edges.map((e) => [e.id, e]));
+  const topologyChanged =
+    clearance !== previous?.clearance ||
+    edges.length !== oldEdges.size ||
+    edges.some((e) => !sameEdge(e, oldEdges.get(e.id)));
+  const directions = new Map<string, boolean>();
+  const work: Work[] = [];
+  for (const edge of edges) {
+    const source = byId.get(edge.source);
+    const target = byId.get(edge.target);
+    const from = source?.outputs[edge.port];
+    const to = target?.input;
+    if (!source || !target || !from || !to) continue;
+    const backward = backwardDirection(
+      edge,
+      from,
+      to,
+      sameEdge(edge, oldEdges.get(edge.id)) ? previous?.directions.get(edge.id) : undefined,
+    );
+    directions.set(edge.id, backward);
+    if (backward) work.push({ edge, source, target, from, to, span: Math.abs(from.x - to.x) });
+  }
+  work.sort((a, b) => a.span - b.span || a.edge.id.localeCompare(b.edge.id));
+  const routes = new Map<string, RoutedEdge>();
+  const reservations = new Reservations();
+  for (const item of work) {
+    const before = previous?.routes.get(item.edge.id);
+    if (
+      !topologyChanged &&
+      before &&
+      !changed.has(item.source.id) &&
+      !changed.has(item.target.id) &&
+      !changedBoxes.some((b) => overlapsBox(before.bounds, b))
+    ) {
+      routes.set(item.edge.id, before);
+      reservations.add(before.points, before.lane);
+    }
+  }
+  const index = new BoxIndex(nodes.map(nodeBox));
+  const outgoing = new Map<string, number>();
+  const incoming = new Map<string, number>();
+  const statistics = { rerouted: 0, expansions: 0 };
+  for (const item of work) {
+    const port = item.source.id + ':' + item.edge.port;
+    const sourceRank =
+      Object.keys(item.source.outputs).indexOf(item.edge.port) + (outgoing.get(port) ?? 0);
+    const targetRank = incoming.get(item.target.id) ?? 0;
+    outgoing.set(port, (outgoing.get(port) ?? 0) + 1);
+    incoming.set(item.target.id, targetRank + 1);
+    if (routes.has(item.edge.id)) continue;
+    const { route, expansions } = routeOne(
+      item,
+      index,
+      reservations,
+      sourceRank,
+      targetRank,
+      clearance,
+      workspace,
+    );
+    statistics.rerouted += 1;
+    statistics.expansions += expansions;
+    const before = previous?.routes.get(item.edge.id);
+    const unchanged =
+      before &&
+      before.padding === route.padding &&
+      before.blocked === route.blocked &&
+      before.unavailable === route.unavailable &&
+      samePoint(before.label, route.label) &&
+      before.bounds.left === route.bounds.left &&
+      before.bounds.right === route.bounds.right &&
+      before.bounds.top === route.bounds.top &&
+      before.bounds.bottom === route.bounds.bottom &&
+      before.points.length === route.points.length &&
+      before.points.every((p, i) => samePoint(p, route.points[i]));
+    routes.set(item.edge.id, unchanged ? before : route);
+    reservations.add(route.points, route.lane);
+  }
+  return { nodes, edges, routes, directions, statistics, clearance };
+}
+
 export function routeBackwardEdges(
   nodes: readonly RoutingNode[],
   edges: readonly RoutingEdge[],
   clearance = ROUTING_CLEARANCE,
 ): ReadonlyMap<string, RoutedEdge> {
-  const padding = Math.max(0, clearance) + ROUTING_RADIUS;
-  const boxes = nodes.map((node): Box => ({
-    id: node.id,
-    left: node.x - padding,
-    right: node.x + node.width + padding,
-    top: node.y - padding,
-    bottom: node.y + node.height + padding,
-  }));
-  const byId = new Map(nodes.map((node, index) => [node.id, { node, box: boxes[index]! }]));
-  const boundaries = sorted(boxes.flatMap((box) => [box.top, box.bottom]));
-  const lanes: Lane[] = [];
-  const result = new Map<string, RoutedEdge>();
-  for (const edge of [...edges].sort((a, b) => a.id.localeCompare(b.id))) {
-    const source = byId.get(edge.source);
-    const target = byId.get(edge.target);
-    if (!source || !target || (edge.port !== 'loopBack' && target.node.x > source.node.x)) continue;
-    const from = source.node.outputs[edge.port];
-    const to = target.node.input;
-    if (!from || !to) continue;
-    const start = { x: source.box.right, y: from.y };
-    const end = { x: target.box.left, y: to.y };
-    const fallback = { x: start.x, y: source.box.top - LANE_GAP };
-    // A port covered by another padded card cannot escape horizontally without a collision.
-    if (
-      boxes.some(
-        (box) =>
-          (box.id !== source.node.id && intersectsBox(from, start, box)) ||
-          (box.id !== target.node.id && intersectsBox(end, to, box)),
-      )
-    ) {
-      result.set(edge.id, describe([], fallback));
-      continue;
-    }
-    const left = Math.min(start.x, end.x);
-    const right = Math.max(start.x, end.x);
-    const candidates = sorted([
-      ...boundaries,
-      ...lanes
-        .filter((lane) => overlaps(left, right, lane))
-        .flatMap((lane) => [lane.y - LANE_GAP, lane.y + LANE_GAP]),
-    ]).sort(
-      (a, b) =>
-        Math.abs(start.y - a) +
-          Math.abs(end.y - a) -
-          (Math.abs(start.y - b) + Math.abs(end.y - b)) || b - a,
-    );
-    let middle: Point[] = [];
-    for (const y of candidates) {
-      const a = { x: start.x, y };
-      const b = { x: end.x, y };
-      if (
-        freeLane(a, b, lanes) &&
-        clear(start, a, boxes) &&
-        clear(a, b, boxes) &&
-        clear(b, end, boxes)
-      ) {
-        middle = [start, a, b, end];
-        break;
-      }
-    }
-    if (!middle.length) middle = detour(start, end, boxes, lanes);
-    const route = describe(middle.length ? simplify([from, ...middle, to]) : [], fallback);
-    if (route.lane) lanes.push(route.lane);
-    result.set(edge.id, route);
-  }
-  return result;
+  return createRoutingPlan(nodes, edges, clearance).routes;
 }
 
-/** The drawing hook for #44: it accepts points independently of how they were obtained. */
+/** #44 drawing hook; reduced envelopes reduce corner radius too, down to square corners. */
 export function roundedPath(points: readonly Point[], radius = ROUTING_RADIUS): string {
   if (!points.length) return '';
   let path = `M ${points[0]!.x} ${points[0]!.y}`;

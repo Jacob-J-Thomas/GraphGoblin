@@ -6,7 +6,7 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ### Added
 
-- Padded, rounded orthogonal routing for backward editor edges, with separate return lanes, obstacle avoidance, accessible labels and focus, and the existing animated loop-back dash (#18).
+- Padded, rounded orthogonal routing for backward editor edges, with adaptive clearance for close cards, inner-first return lanes, distinct vertical trunks, obstacle avoidance, accessible labels and focus, and the existing animated loop-back dash (#18).
 
 - Undo and redo in the loop editor: every change to the draft, from the toolbar's Undo and Redo buttons (named by the change they make) or with Ctrl+Z and Ctrl+Shift+Z or Ctrl+Y (Cmd+Z and Cmd+Shift+Z on a Mac) outside text fields. Typing in one field and one drag are one step each; an undo is saved like any edit; the editor keeps the last 100 steps until it reloads (#17).
 

@@ -15,7 +15,15 @@ import {
   type OnNodeDrag,
   type XYPosition,
 } from '@xyflow/react';
-import { useCallback, useMemo, useRef, useState, type DragEvent, type KeyboardEvent } from 'react';
+import {
+  useCallback,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type DragEvent,
+  type KeyboardEvent,
+} from 'react';
 import { closePopovers } from '../components/ui/index.js';
 import { BackwardEdge } from './BackwardEdge.js';
 import {
@@ -30,8 +38,9 @@ import {
 } from './model.js';
 import { NodeCard, type FlowNode, type NodeCardData } from './NodeCard.js';
 import { useEditorStore } from './store.js';
-import type { RoutedEdge } from './routing.js';
+import { backwardDirection, routeMessage, type RoutedEdge } from './routing.js';
 import { useRouting } from './useRouting.js';
+import { createRouteChannels } from './route-channels.js';
 
 const nodeTypes = { gg: NodeCard };
 const edgeTypes = { backward: BackwardEdge };
@@ -131,19 +140,29 @@ function buildEdges(
   routes: ReadonlyMap<string, RoutedEdge>,
   previous: ReadonlyMap<string, Edge>,
   nodes: readonly FlowNode[],
+  directions: ReadonlyMap<string, boolean>,
+  channels: ReturnType<typeof createRouteChannels>,
 ): Edge[] {
-  const positions = new Map(nodes.map((node) => [node.id, node.position]));
+  const positions = new Map(nodes.map((node) => [node.id, node]));
   return def.edges.map((edge) => {
     const before = previous.get(edge.id);
     const route = routes.get(edge.id);
-    // While any new card is awaiting measurement, a known backward edge waits for its route;
-    // it must never briefly fall back to a smoothstep crossing that unmeasured card.
+    // A new backward connection waits for its own handles; measured connections keep their
+    // routes while an unrelated card awaits measurement.
     const from = positions.get(edge.from.node);
     const to = positions.get(edge.to.node);
-    const type =
-      route || edge.from.port === 'loopBack' || (from && to && to.x <= from.x)
-        ? 'backward'
-        : 'smoothstep';
+    const pendingDirection =
+      !!from &&
+      !!to &&
+      backwardDirection(
+        { id: edge.id, source: edge.from.node, target: edge.to.node, port: edge.from.port },
+        { x: from.position.x + (from.measured?.width ?? 184) + 6, y: 0 },
+        { x: to.position.x - 6, y: 0 },
+        before ? before.type === 'backward' : undefined,
+      );
+    const type = (directions.get(edge.id) ?? pendingDirection) ? 'backward' : 'smoothstep';
+    const data = type === 'backward' ? channels.edge(edge.id, route) : undefined;
+    const ariaLabel = `${edge.from.node} ${edge.from.port} to ${edge.to.node}${route && routeMessage(route) ? ': ' + routeMessage(route) : ''}`;
     // xyflow subscribes each edge to its object identity. Keep untouched edges asleep during a
     // drag, even though another path or selection changed in the same graph.
     if (
@@ -151,7 +170,8 @@ function buildEdges(
       before.source === edge.from.node &&
       before.target === edge.to.node &&
       before.sourceHandle === edge.from.port &&
-      before.data === route &&
+      before.data === data &&
+      before.ariaLabel === ariaLabel &&
       before.type === type &&
       before.selected === (edge.id === selected)
     )
@@ -165,12 +185,8 @@ function buildEdges(
       target: edge.to.node,
       targetHandle: 'in',
       selected: edge.id === selected,
-      ...(route
-        ? {
-            data: route,
-            ariaLabel: `${edge.from.node} ${edge.from.port} to ${edge.to.node}${route.blocked ? ': move overlapping nodes apart' : ''}`,
-          }
-        : {}),
+      ...(data ? { data } : {}),
+      ariaLabel,
       ...(edge.from.port !== 'out'
         ? { label: edge.from.port, labelBgPadding: [8, 3], labelBgBorderRadius: 9 }
         : {}),
@@ -227,10 +243,22 @@ export function Canvas({
       })),
     [definition.edges],
   );
-  const routes = useRouting(routingEdges);
+  const { routes, directions } = useRouting(routingEdges);
+  const [channels] = useState(createRouteChannels);
+  useLayoutEffect(() => {
+    channels.publish(routes, new Set(routingEdges.map((edge) => edge.id)));
+  }, [channels, routes, routingEdges]);
   const edges = useMemo(() => {
     const previous = edgesRef.current;
-    const next = buildEdges(definition, selectedEdge, routes, previous.byId, nodes);
+    const next = buildEdges(
+      definition,
+      selectedEdge,
+      routes,
+      previous.byId,
+      nodes,
+      directions,
+      channels,
+    );
     if (
       next.length === previous.value.length &&
       next.every((edge, index) => edge === previous.value[index])
@@ -238,7 +266,7 @@ export function Canvas({
       return previous.value;
     edgesRef.current = { byId: new Map(next.map((edge) => [edge.id, edge])), value: next };
     return next;
-  }, [definition, selectedEdge, routes, nodes]);
+  }, [definition, selectedEdge, routes, nodes, directions, channels]);
 
   const endDrag = useCallback(
     (id: string, position: XYPosition) => {
@@ -316,10 +344,14 @@ export function Canvas({
 
   // A click without a drag opens the node's editor (a drag past CLICK_DISTANCE suppresses the
   // click). A click on a port handle starts or ends a connection instead.
-  const onNodeClick: NodeMouseHandler<FlowNode> = (event, node) => {
-    if ((event.target as Element).closest('.react-flow__handle')) return;
-    openNode(node.id);
-  };
+  const onNodeClick: NodeMouseHandler<FlowNode> = useCallback(
+    (event, node) => {
+      if ((event.target as Element).closest('.react-flow__handle')) return;
+      openNode(node.id);
+    },
+    [openNode],
+  );
+  const onPaneClick = useCallback(() => select(undefined), [select]);
 
   // Enter on a focused node opens its editor; Space still only selects it (xyflow). Delete or
   // Backspace removes the selected edge or node only while focus is on the canvas: xyflow's own
@@ -351,21 +383,9 @@ export function Canvas({
     event.preventDefault();
   };
 
-  return (
-    <div
-      ref={rootRef}
-      className="h-full w-full focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus"
-      data-testid="canvas"
-      data-editor-canvas=""
-      // Focus lands here when the node editor closes on a deleted node.
-      tabIndex={-1}
-      onKeyDown={onKeyDown}
-      onDragOver={(event) => {
-        event.preventDefault();
-        event.dataTransfer.dropEffect = 'move';
-      }}
-      onDrop={onDrop}
-    >
+  // A geometry-only update publishes edge channels without rendering the whole canvas again.
+  const flow = useMemo(
+    () => (
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -381,7 +401,7 @@ export function Canvas({
         onNodeClick={onNodeClick}
         nodeClickDistance={CLICK_DISTANCE}
         nodeDragThreshold={CLICK_DISTANCE}
-        onPaneClick={() => select(undefined)}
+        onPaneClick={onPaneClick}
         fitView
         fitViewOptions={FIT_VIEW_OPTIONS}
         deleteKeyCode={null}
@@ -390,6 +410,38 @@ export function Canvas({
         <Background gap={22} size={1.3} />
         <Controls fitViewOptions={FIT_VIEW_OPTIONS} />
       </ReactFlow>
+    ),
+    [
+      nodes,
+      edges,
+      onNodesChange,
+      onEdgesChange,
+      onConnect,
+      isValidConnection,
+      onNodeDragStop,
+      closeCanvasPopovers,
+      onNodeDragStart,
+      onNodeClick,
+      onPaneClick,
+    ],
+  );
+
+  return (
+    <div
+      ref={rootRef}
+      className="h-full w-full focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus"
+      data-testid="canvas"
+      data-editor-canvas=""
+      // Focus lands here when the node editor closes on a deleted node.
+      tabIndex={-1}
+      onKeyDown={onKeyDown}
+      onDragOver={(event) => {
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'move';
+      }}
+      onDrop={onDrop}
+    >
+      {flow}
     </div>
   );
 }

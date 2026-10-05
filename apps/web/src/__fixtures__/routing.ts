@@ -112,11 +112,11 @@ export function decisionBackRoute(): LoopDefinitionInput {
   };
 }
 
-/** Exactly 100 cards and 200 connected ports, including return, same-column and self routes. */
-export function denseGraph(): LoopDefinitionInput {
+/** Two connected ports per card on average, including return, same-column and self routes. */
+export function denseGraph(count = 100): LoopDefinitionInput {
   const nodes: NodeInput[] = [node('start', 'trigger', 0, 0)];
   const edges = [edge('begin', 'start', 'n1')];
-  for (let i = 1; i < 99; i += 1) {
+  for (let i = 1; i < count - 1; i += 1) {
     const labels = i < 3 ? ['next', 'retry', 'self'] : ['next', 'retry'];
     nodes.push({
       ...node(`n${i}`, 'decision', (i % 10) * 320, Math.floor(i / 10) * 270),
@@ -128,13 +128,18 @@ export function denseGraph(): LoopDefinitionInput {
         expression: { jsonata: '"next"' },
       },
     });
-    edges.push(edge(`next-${i}`, `n${i}`, i === 98 ? 'done' : `n${i + 1}`, 'next'));
+    edges.push(edge(`next-${i}`, `n${i}`, i === count - 2 ? 'done' : `n${i + 1}`, 'next'));
     edges.push(edge(`retry-${i}`, `n${i}`, i === 1 ? 'n1' : `n${i - 1}`, 'retry'));
     if (i < 3) edges.push(edge(`self-${i}`, `n${i}`, `n${i}`, 'self'));
   }
-  nodes.push(exit('done', 9 * 320, 'n1', 9 * 270));
+  nodes.push(exit('done', 9 * 320, 'n1', Math.floor((count - 1) / 10) * 270));
   edges.push(edge('return', 'done', 'n1', 'loopBack'));
-  return { schemaVersion: 1, name: 'Dense graph: 100 nodes, 200 edges', nodes, edges };
+  return {
+    schemaVersion: 1,
+    name: `Dense graph: ${count} nodes, ${count * 2} edges`,
+    nodes,
+    edges,
+  };
 }
 
 /** Unit fixtures use explicit boxes/ports; browser tests use xyflow's actual measurements. */

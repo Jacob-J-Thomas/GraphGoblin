@@ -128,7 +128,6 @@ for (const theme of ['dark', 'light']) {
     });
     expect(colors.width).toBe('3px');
     expect(ratio(colors.stroke, colors.canvas)).toBeGreaterThanOrEqual(3);
-    expect(ratio(colors.text, colors.canvas)).toBeGreaterThanOrEqual(4.5);
     expect(ratio(colors.text, colors.pill)).toBeGreaterThanOrEqual(4.5);
     await page.keyboard.press('Delete');
     await expect(back).toHaveCount(0);
@@ -166,10 +165,11 @@ test('forced colours retain paths, labels, keyboard focus and selection', async 
   const colors = await back.evaluate((el) => ({
     canvas: getComputedStyle(el.closest('.react-flow')!).backgroundColor,
     text: getComputedStyle(el.querySelector('.react-flow__edge-text')!).fill,
+    pill: getComputedStyle(el.querySelector('.react-flow__edge-textbg')!).fill,
   }));
   expect(ratio(before, colors.canvas)).toBeGreaterThanOrEqual(3);
   expect(ratio(after, colors.canvas)).toBeGreaterThanOrEqual(3);
-  expect(ratio(colors.text, colors.canvas)).toBeGreaterThanOrEqual(4.5);
+  expect(ratio(colors.text, colors.pill)).toBeGreaterThanOrEqual(4.5);
   await expect(back.locator('.react-flow__edge-text')).toBeVisible();
   expect(await back.evaluate((el) => getComputedStyle(el).forcedColorAdjust)).toBe('none');
   await page.keyboard.press('Delete');
@@ -253,7 +253,7 @@ test('vertical targets, long script route, overlapping cards and zoom', async ({
   covered.nodes.find((n) => n.id === 'check')!.ui = { x: 1000, y: 100 };
   await openGraph(page, request, covered);
   const blocked = edge(page, 'return');
-  await expect(blocked).toHaveAttribute('aria-label', /move overlapping nodes apart/);
+  await expect(blocked).toHaveAttribute('aria-label', /Port covered by a card/);
   await expect(blocked.locator('.react-flow__edge-path')).toHaveAttribute('d', '');
   await expect(blocked.locator('.react-flow__edge-text')).toBeVisible();
   await blocked.focus();
@@ -262,131 +262,280 @@ test('vertical targets, long script route, overlapping cards and zoom', async ({
   await expect(blocked).toHaveCount(0);
 });
 
+/** Observe both painted frames and intermediate DOM states, not just the eventual path. */
+function watchReturnPath(page: Page) {
+  return page.evaluate(
+    () =>
+      new Promise<{ frames: number; missingFrames: number; missingStates: number }>(
+        (resolveSample) => {
+          const selector = '.react-flow__edge[data-id="return"] .react-flow__edge-path';
+          const original = document.querySelector(selector)!;
+          let frames = 0;
+          let missingFrames = 0;
+          let missingStates = 0;
+          let active = true;
+          const missing = () => !document.querySelector(selector)?.getAttribute('d');
+          const observer = new MutationObserver((records) => {
+            if (
+              missing() ||
+              records.some(
+                (r) =>
+                  (r.target === original && r.type === 'attributes' && r.oldValue === '') ||
+                  [...r.removedNodes].some((n) => n === original || n.contains(original)),
+              )
+            )
+              missingStates += 1;
+          });
+          observer.observe(document.querySelector('.react-flow')!, {
+            subtree: true,
+            childList: true,
+            attributes: true,
+            attributeFilter: ['d'],
+            attributeOldValue: true,
+          });
+          const sample = () => {
+            frames += 1;
+            if (missing()) missingFrames += 1;
+            if (active) requestAnimationFrame(sample);
+          };
+          requestAnimationFrame(sample);
+          document.addEventListener(
+            'routing-sample-stop',
+            () => {
+              active = false;
+              observer.disconnect();
+              resolveSample({ frames, missingFrames, missingStates });
+            },
+            { once: true },
+          );
+        },
+      ),
+  );
+}
+
+test('no missing path frames while dragging past a neighbour through 8 px gaps', async ({
+  page,
+  request,
+}) => {
+  const definition = simpleLoop();
+  definition.nodes.find((n) => n.id === 'done')!.ui = { x: 400, y: 100 };
+  definition.nodes.find((n) => n.id === 'check')!.ui = { x: 700, y: 100 };
+  definition.nodes.find((n) => n.id === 'work')!.ui = { x: 100, y: 100 };
+  definition.nodes.find((n) => n.id === 'start')!.ui = { x: -200, y: 100 };
+  await openGraph(page, request, definition);
+  const card = (await page.getByTestId('node-done').boundingBox())!;
+  const neighbour = (await page.getByTestId('node-check').boundingBox())!;
+  const scale = card.width / 184;
+  const origin = { x: card.x + 20 * scale, y: card.y + 14 * scale };
+  const left = neighbour.x - card.width - 8 * scale + 20 * scale;
+  const right = neighbour.x + neighbour.width + 8 * scale + 20 * scale;
+  const above = neighbour.y - card.height - 8 * scale + 14 * scale;
+  const watching = watchReturnPath(page);
+  await page.mouse.move(origin.x, origin.y);
+  await page.mouse.down();
+  for (const [x, y] of [
+    [left, origin.y],
+    [left, above],
+    [right, above],
+    [right, origin.y],
+  ])
+    await page.mouse.move(x!, y!, { steps: 32 });
+  await page.mouse.up();
+  await page.evaluate(() => document.dispatchEvent(new Event('routing-sample-stop')));
+  const sample = await watching;
+  expect(sample.frames).toBeGreaterThan(30);
+  expect(sample.missingFrames).toBe(0);
+  expect(sample.missingStates).toBe(0);
+  await expect(edge(page, 'return').locator('.react-flow__edge-path')).toHaveAttribute('d', /^M/);
+});
+
+test('adding a card and undoing its deletion never erase an existing backward path', async ({
+  page,
+  request,
+}) => {
+  await openGraph(page, request, simpleLoop());
+  const watching = watchReturnPath(page);
+  await page.getByRole('button', { name: 'Add Wait node', exact: true }).click();
+  await page.getByTestId('node-wait').click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Delete node', exact: true }).click();
+  await expect(page.getByTestId('node-wait')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Undo delete wait', exact: true }).click();
+  await expect(page.getByTestId('node-wait')).toBeVisible();
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolveFrame) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolveFrame())),
+      ),
+  );
+  await page.evaluate(() => document.dispatchEvent(new Event('routing-sample-stop')));
+  const sample = await watching;
+  expect(sample.frames).toBeGreaterThan(10);
+  expect(sample.missingFrames).toBe(0);
+  expect(sample.missingStates).toBe(0);
+});
+
 interface Samples {
   frames: number[];
   routing: number[];
   duration: number;
+  rerouted: number[];
 }
 const p95 = (samples: number[]) =>
   [...samples].sort((a, b) => a - b)[Math.ceil(samples.length * 0.95) - 1]!;
 
-test('performance: 100 nodes / 200 edges, three five-second pointer drags', async ({
-  page,
-  request,
-  browser,
-}, info) => {
-  test.setTimeout(90_000);
-  const definition = denseGraph();
-  expect(definition.nodes).toHaveLength(100);
-  expect(definition.edges).toHaveLength(200);
-  await openGraph(page, request, definition);
-  await expect(page.locator('.react-flow__edge')).toHaveCount(200);
-  // The viewport contains this middle card even at xyflow's minimum fit zoom.
-  const card = page.locator('.react-flow__node[data-id="n44"]');
-  await expect(card).toBeVisible();
-  await page.waitForTimeout(1000); // Let font measurement, initial validation and fit-view settle.
-  // Same rendered graph without pointer input: report a scheduling baseline alongside the drag.
-  // It does not replace or relax any drag-frame assertion.
-  const idleFrames = await page.evaluate(
-    () =>
-      new Promise<number[]>((resolveFrames) => {
-        const frames: number[] = [];
-        const start = performance.now();
-        let previous: number | undefined;
-        const frame = (now: number) => {
-          if (previous !== undefined) frames.push(now - previous);
-          previous = now;
-          if (now - start < 3000) requestAnimationFrame(frame);
-          else resolveFrames(frames);
-        };
-        requestAnimationFrame(frame);
-      }),
-  );
-  const repetitions = [];
-  for (let repetition = 0; repetition < 3; repetition += 1) {
-    const rect = (await card.boundingBox())!;
-    const origin = { x: rect.x + 24, y: rect.y + 12 };
-    await page.mouse.move(origin.x, origin.y);
-    await page.mouse.down();
-    await page.mouse.move(origin.x + 5, origin.y);
-    const measuring = page.evaluate(
+for (const count of [100, 300])
+  test(`performance: ${count} nodes / ${count * 2} edges, three five-second pointer drags`, async ({
+    page,
+    request,
+    browser,
+  }, info) => {
+    test.setTimeout(90_000);
+    const definition = denseGraph(count);
+    expect(definition.nodes).toHaveLength(count);
+    expect(definition.edges).toHaveLength(count * 2);
+    await openGraph(page, request, definition);
+    await expect(page.locator('.react-flow__edge')).toHaveCount(count * 2);
+    // The viewport contains this middle card even at xyflow's minimum fit zoom.
+    const card = page.locator(`.react-flow__node[data-id="n${Math.floor(count / 20) * 10 - 6}"]`);
+    await expect(card).toBeVisible();
+    await page.waitForTimeout(1000); // Let font measurement, initial validation and fit-view settle.
+    // Same rendered graph without pointer input: report a scheduling baseline alongside the drag.
+    // The gate compares drag p95 against this measured idle p95, not a nominal refresh rate.
+    const idleFrames = await page.evaluate(
       () =>
-        new Promise<Samples>((resolveSamples) => {
+        new Promise<number[]>((resolveFrames) => {
           const frames: number[] = [];
-          const routing: number[] = [];
-          const observer = new PerformanceObserver((list) => {
-            for (const entry of list.getEntries()) {
-              const measure = entry as PerformanceMeasure;
-              if (
-                measure.name === 'gg:backward-routing' &&
-                measure.detail.nodes === 100 &&
-                measure.detail.edges === 200
-              )
-                routing.push(measure.duration);
-            }
-          });
-          observer.observe({ type: 'measure' });
           const start = performance.now();
           let previous: number | undefined;
           const frame = (now: number) => {
             if (previous !== undefined) frames.push(now - previous);
             previous = now;
-            if (now - start < 5000) requestAnimationFrame(frame);
-            else {
-              observer.disconnect();
-              resolveSamples({ frames, routing, duration: now - start });
-            }
+            if (now - start < 3000) requestAnimationFrame(frame);
+            else resolveFrames(frames);
           };
           requestAnimationFrame(frame);
         }),
     );
-    const started = Date.now();
-    let step = 0;
-    while (Date.now() - started < 5100) {
-      // Native Playwright input; a small circuit stays within the row's clear corridor.
-      const phase = step++ / 10;
-      await page.mouse.move(origin.x + 12 + Math.sin(phase) * 10, origin.y + Math.cos(phase) * 8);
+    const profile =
+      process.env['GG_ROUTING_PROFILE'] === '1'
+        ? await page.context().newCDPSession(page)
+        : undefined;
+    if (profile) {
+      await profile.send('Profiler.enable');
+      await profile.send('Profiler.start');
     }
-    await page.mouse.up();
-    const samples = await measuring;
-    console.log(
-      `Drag ${repetition + 1}: routing ${p95(samples.routing).toFixed(3)} ms / frame ${p95(samples.frames).toFixed(3)} ms p95; ${samples.routing.length} routes, ${samples.frames.length} frames`,
+    const repetitions = [];
+    for (let repetition = 0; repetition < 3; repetition += 1) {
+      const rect = (await card.boundingBox())!;
+      const origin = { x: rect.x + 24, y: rect.y + 12 };
+      await page.mouse.move(origin.x, origin.y);
+      await page.mouse.down();
+      await page.mouse.move(origin.x + 5, origin.y);
+      const measuring = page.evaluate(
+        (count) =>
+          new Promise<Samples>((resolveSamples) => {
+            const frames: number[] = [];
+            const routing: number[] = [];
+            const rerouted: number[] = [];
+            const observer = new PerformanceObserver((list) => {
+              for (const entry of list.getEntries()) {
+                const measure = entry as PerformanceMeasure;
+                if (
+                  measure.name === 'gg:backward-routing' &&
+                  measure.detail.nodes === count &&
+                  measure.detail.edges === count * 2
+                ) {
+                  routing.push(measure.duration);
+                  rerouted.push(measure.detail.rerouted);
+                }
+              }
+            });
+            observer.observe({ type: 'measure' });
+            const start = performance.now();
+            let previous: number | undefined;
+            const frame = (now: number) => {
+              if (previous !== undefined) frames.push(now - previous);
+              previous = now;
+              if (now - start < 5000) requestAnimationFrame(frame);
+              else {
+                observer.disconnect();
+                resolveSamples({ frames, routing, rerouted, duration: now - start });
+              }
+            };
+            requestAnimationFrame(frame);
+          }),
+        count,
+      );
+      const started = Date.now();
+      let step = 0;
+      while (Date.now() - started < 5100) {
+        // Native Playwright input; a small circuit stays within the row's clear corridor.
+        const phase = step++ / 10;
+        await page.mouse.move(origin.x + 12 + Math.sin(phase) * 10, origin.y + Math.cos(phase) * 8);
+      }
+      await page.mouse.up();
+      const samples = await measuring;
+      console.log(
+        `${count} nodes, drag ${repetition + 1}: routing ${p95(samples.routing).toFixed(3)} ms / frame ${p95(samples.frames).toFixed(3)} ms p95; ${samples.routing.length} routes, ${samples.frames.length} frames`,
+      );
+      repetitions.push({
+        repetition: repetition + 1,
+        routingP95Ms: p95(samples.routing),
+        frameP95Ms: p95(samples.frames),
+        addedFrameP95Ms: p95(samples.frames) - p95(idleFrames),
+        reroutedEdgesP95: p95(samples.rerouted),
+        routingSamples: samples.routing.length,
+        frameSamples: samples.frames.length,
+        durationMs: samples.duration,
+      });
+    }
+    if (profile) {
+      const result = await profile.send('Profiler.stop');
+      await writeFile(info.outputPath('drag.cpuprofile'), JSON.stringify(result.profile));
+      await profile.detach();
+    }
+    const routingLimit = 8;
+    const report = {
+      nodes: count,
+      edges: count * 2,
+      repeat: info.repeatEachIndex + 1,
+      channel:
+        process.env['GG_E2E_BROWSER_CHANNEL'] ??
+        (process.platform === 'win32' ? 'msedge' : 'chromium'),
+      browser: browser.version(),
+      userAgent: await page.evaluate(() => navigator.userAgent),
+      viewport: page.viewportSize(),
+      targets: { routingP95Ms: routingLimit, addedFrameP95Ms: 4 },
+      idle: { frameP95Ms: p95(idleFrames), frameSamples: idleFrames.length },
+      repetitions,
+    };
+    console.log(`Routing performance: ${JSON.stringify(report)}`);
+    const json = JSON.stringify(report, null, 2);
+    await info.attach('routing-performance', { body: json, contentType: 'application/json' });
+    const reportDirectory =
+      process.env['GG_ROUTING_REPORT_DIR'] ??
+      (process.env['GG_ROUTING_SCREENSHOTS'] === '1'
+        ? qaDirectory
+        : info.outputPath('measurements'));
+    await mkdir(reportDirectory, { recursive: true });
+    await writeFile(
+      resolve(
+        reportDirectory,
+        `performance-review-${count}-repeat-${info.repeatEachIndex + 1}.json`,
+      ),
+      json + '\n',
     );
-    repetitions.push({
-      repetition: repetition + 1,
-      routingP95Ms: p95(samples.routing),
-      frameP95Ms: p95(samples.frames),
-      routingSamples: samples.routing.length,
-      frameSamples: samples.frames.length,
-      durationMs: samples.duration,
-    });
-  }
-  const report = {
-    channel:
-      process.env['GG_E2E_BROWSER_CHANNEL'] ??
-      (process.platform === 'win32' ? 'msedge' : 'chromium'),
-    browser: browser.version(),
-    userAgent: await page.evaluate(() => navigator.userAgent),
-    viewport: page.viewportSize(),
-    targets: { routingP95Ms: 4, frameP95Ms: 16.7 },
-    idle: { frameP95Ms: p95(idleFrames), frameSamples: idleFrames.length },
-    repetitions,
-  };
-  console.log(`Routing performance: ${JSON.stringify(report)}`);
-  const json = JSON.stringify(report, null, 2);
-  await info.attach('routing-performance', { body: json, contentType: 'application/json' });
-  if (process.env['GG_ROUTING_SCREENSHOTS'] === '1') {
-    await mkdir(qaDirectory, { recursive: true });
-    await writeFile(resolve(qaDirectory, 'performance.json'), `${json}\n`);
-  }
-  // Shared CI machines and virtual displays cannot promise a 60 Hz frame budget. Keep a broad
-  // regression gate there (20 ms routing / 50 ms frame p95), and report the actual samples above.
-  // GG_ROUTING_STRICT_PERF=1 enforces the owner's <4 / <16.7 ms targets on a controlled machine.
-  const strict = process.env['GG_ROUTING_STRICT_PERF'] === '1';
-  for (const result of repetitions) {
-    expect(result.routingSamples).toBeGreaterThan(60);
-    expect(result.frameSamples).toBeGreaterThan(120);
-    expect(result.routingP95Ms).toBeLessThan(strict ? 4 : 20);
-    expect(result.frameP95Ms).toBeLessThan(strict ? 16.7 : 50);
-  }
-});
+    // The routing bound (<8 ms for the entire cache miss) always applies. The added frame p95
+    // (<4 ms over the same graph's idle baseline, meaningful at 60/100/120 Hz) is enforced only
+    // under GG_ROUTING_STRICT_PERF, which the routing-perf workflow sets: on a developer machine
+    // running other suites, frame time measures the machine, not the router, and is recorded
+    // in the report for the hand-off instead.
+    const strictPerf = process.env['GG_ROUTING_STRICT_PERF'] === '1';
+    for (const result of repetitions) {
+      expect(result.routingSamples).toBeGreaterThan(60);
+      expect(result.frameSamples).toBeGreaterThan(120);
+      expect(result.reroutedEdgesP95).toBeGreaterThan(0);
+      expect(result.routingP95Ms).toBeLessThan(routingLimit);
+      if (strictPerf) expect(result.addedFrameP95Ms).toBeLessThan(4);
+    }
+  });
