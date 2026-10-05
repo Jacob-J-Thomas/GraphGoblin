@@ -1,6 +1,7 @@
 import type { EdgeSchema, LoopDefinitionInput, NodeInput, NodeKind } from '@graphgoblin/contracts';
 import type { z } from 'zod';
 import { create } from 'zustand';
+import type { FormChange } from '../forms/changes.js';
 import type { ParseErrorReason } from '../forms/parse-errors.js';
 import {
   historyClock,
@@ -100,28 +101,41 @@ export interface EditorState {
   /** Forget the pending focus target once the dialog has used it. */
   clearNodeFocus: () => void;
   addNode: (kind: NodeKind, position: { x: number; y: number }) => string;
-  updateNode: (nodeId: string, changes: { label?: string; config?: unknown }) => void;
+  /**
+   * Change a node's label or config. `change` says how a config change counts for undo (the
+   * config form's `FormChange`): a commit is a step of its own, typing merges per field. A config
+   * change without one (a subloop pick) is a step of its own.
+   */
+  updateNode: (
+    nodeId: string,
+    changes: { label?: string; config?: unknown },
+    change?: FormChange,
+  ) => void;
   renameNode: (nodeId: string, nextId: string) => void;
   moveNode: (nodeId: string, position: { x: number; y: number }) => void;
   removeNode: (nodeId: string) => void;
   connect: (connection: ConnectionRequest) => string | null;
   removeEdge: (edgeId: string) => void;
   updateMeta: (changes: { name?: string; description?: string }) => void;
-  updateSettings: (settings: unknown) => void;
-  updateVariables: (variables: unknown) => void;
+  /** Replace the loop's settings; `change` as for `updateNode`'s config. */
+  updateSettings: (settings: unknown, change?: FormChange) => void;
+  /** Replace the loop's variables; `change` as for `updateNode`'s config. */
+  updateVariables: (variables: unknown, change?: FormChange) => void;
   setSaveState: (state: SaveState, message?: string, revision?: number) => void;
   setBaseToken: (token: string | undefined) => void;
   setConflict: (conflict: { serverToken: string | undefined } | undefined) => void;
   /**
    * Record (or, with `undefined`, clear) the unparsed text of a form field. It is a change like
-   * any other for undo: typing merges into the step of the form's other changes, while a discard
-   * (`reason` `'discard'`, the user's "Discard text") is a step of its own.
+   * any other for undo: typed text merges into the step of the typing in that field, text a
+   * commit moves or drops (a row's removal) is part of that commit's step (`change`), and a
+   * discard (`reason` `'discard'`, the user's "Discard text") is a step of its own.
    */
   setFieldError: (
     scope: string,
     path: string,
     error: FieldError | undefined,
     reason?: ParseErrorReason,
+    change?: FormChange,
   ) => void;
   /**
    * Go back one step, or forward one undone step. Either is an edit of the draft (the revision
@@ -175,19 +189,35 @@ const INITIAL = {
 };
 
 /**
- * The undo step of a change to a form's unparsed text. Typing is the same step as the form's own
- * edits; a discard is a step of its own that never merges, so undo always brings the text back.
+ * The undo step of a change to a form's unparsed text: part of the change that made it (typing in
+ * that field unless `change` says otherwise). A discard is a step of its own that never merges, so
+ * undo always brings the text back.
  */
 function fieldErrorStep(
   scope: string,
   path: string,
   reason: ParseErrorReason | undefined,
+  change: FormChange | undefined,
 ): HistoryStep {
   if (reason === 'discard') return { label: `discard text in ${path} of ${scopeName(scope)}` };
-  if (scope.startsWith('node:')) return configStep(scope.slice('node:'.length));
-  if (scope === 'settings') return SETTINGS_STEP;
-  if (scope === 'variables') return VARIABLES_STEP;
-  return { label: `edit ${scope}`, coalesceKey: scope };
+  const typed = change ?? { path, kind: 'typing', id: 0 };
+  if (scope.startsWith('node:')) return configStep(scope.slice('node:'.length), typed);
+  if (scope === 'settings') return formStep('edit loop settings', 'settings', typed);
+  if (scope === 'variables') return formStep('edit variables', 'variables', typed);
+  return formStep(`edit ${scope}`, scope, typed);
+}
+
+/**
+ * The undo step of a form's change (`FormChange`): typing merges with more typing in the same
+ * field (the key names the form and the field's path), a commit is a step of its own (the key
+ * names that one commit, so the writes it makes are one step). Without a change, a step of its own.
+ */
+function formStep(label: string, form: string, change: FormChange | undefined): HistoryStep {
+  if (!change) return { label };
+  return {
+    label,
+    coalesceKey: change.kind === 'typing' ? `${form}:${change.path}` : `${form}#commit${change.id}`,
+  };
 }
 
 /** A form scope in an undo label: the node's id, "loop settings", or "variables". */
@@ -196,12 +226,9 @@ function scopeName(scope: string): string {
   return scope === 'settings' ? 'loop settings' : scope;
 }
 
-function configStep(nodeId: string): HistoryStep {
-  return { label: `edit config of ${nodeId}`, coalesceKey: `config:${nodeId}` };
+function configStep(nodeId: string, change: FormChange | undefined): HistoryStep {
+  return formStep(`edit config of ${nodeId}`, `config:${nodeId}`, change);
 }
-
-const SETTINGS_STEP: HistoryStep = { label: 'edit loop settings', coalesceKey: 'settings' };
-const VARIABLES_STEP: HistoryStep = { label: 'edit variables', coalesceKey: 'variables' };
 
 /** An edge in an undo label: "start to done", or "decide yes to infer" from a named port. */
 function edgeName(edge: EdgeInput): string {
@@ -328,7 +355,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
       return id;
     },
 
-    updateNode: (nodeId, changes) =>
+    updateNode: (nodeId, changes, change) =>
       edit(
         (d) => ({
           ...d,
@@ -342,11 +369,11 @@ export const useEditorStore = create<EditorState>((set, get) => {
               : n,
           ),
         }),
-        // Typing in one field is one step: the label and the config form each have their own.
+        // Typing in one field is one step: the label, and each field of the config form.
         changes.config === undefined
           ? { label: `edit label of ${nodeId}`, coalesceKey: `label:${nodeId}` }
           : changes.label === undefined
-            ? configStep(nodeId)
+            ? configStep(nodeId, change)
             : { label: `edit ${nodeId}`, coalesceKey: `node:${nodeId}` },
       ),
 
@@ -485,13 +512,16 @@ export const useEditorStore = create<EditorState>((set, get) => {
             : { label: 'edit loop name and description', coalesceKey: 'meta' },
       ),
 
-    updateSettings: (settings) =>
-      edit((d) => ({ ...d, settings: settings as LoopDefinitionInput['settings'] }), SETTINGS_STEP),
+    updateSettings: (settings, change) =>
+      edit(
+        (d) => ({ ...d, settings: settings as LoopDefinitionInput['settings'] }),
+        formStep('edit loop settings', 'settings', change),
+      ),
 
-    updateVariables: (variables) =>
+    updateVariables: (variables, change) =>
       edit(
         (d) => ({ ...d, variables: variables as LoopDefinitionInput['variables'] }),
-        VARIABLES_STEP,
+        formStep('edit variables', 'variables', change),
       ),
 
     setSaveState: (saveState, message, revision) =>
@@ -505,7 +535,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
 
     setConflict: (conflict) => set({ conflict }),
 
-    setFieldError: (scope, path, error, reason) => {
+    setFieldError: (scope, path, error, reason, change) => {
       const s = get();
       const previous = s.fieldErrors[scope]?.[path];
       if (previous?.message === error?.message && previous?.text === error?.text) return;
@@ -521,7 +551,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
               historyOf(s),
               { definition, fieldErrors: s.fieldErrors },
               { definition, fieldErrors },
-              fieldErrorStep(scope, path, reason),
+              fieldErrorStep(scope, path, reason, change),
               historyClock.now(),
             )
           : {}),

@@ -14,8 +14,15 @@ export interface DisclosureProps {
   summary?: ReactNode;
   /** Controls after the toggle in the header, such as a list item's Remove button. */
   actions?: ReactNode;
-  /** Whether the panel starts open; afterwards the toggle decides. */
+  /** Whether the panel starts open; afterwards the toggle decides. Ignored when `open` is set. */
   defaultOpen?: boolean;
+  /**
+   * Whether the panel is open, when the caller keeps the state (so it outlives a remount): the
+   * toggle and `revealDisclosures` then ask for a change through `onOpenChange`.
+   */
+  open?: boolean | undefined;
+  /** Called with the state the toggle (or `revealDisclosures`) asks for. */
+  onOpenChange?: ((open: boolean) => void) | undefined;
   /**
    * `box`: a bordered section whose full-width header is the toggle (a form's Advanced options).
    * `row`: a compact header for one item of a list, its panel below.
@@ -32,20 +39,31 @@ export interface DisclosureProps {
  *
  * The panel stays mounted while it is hidden (`hidden`), so the fields inside keep their state and
  * their validation, and `revealDisclosures` can open it from outside, at once, to focus a field in
- * it. The open state is the component's own: it starts from `defaultOpen` on every mount.
+ * it. The open state is the component's own, from `defaultOpen` on every mount, unless the caller
+ * keeps it (`open` and `onOpenChange`), as the node editor does so an undo's remount keeps it.
  */
 export function Disclosure({
   label,
   summary,
   actions,
   defaultOpen = false,
+  open: controlledOpen,
+  onOpenChange,
   variant = 'box',
   className,
   children,
 }: DisclosureProps) {
   const id = useId();
   const panelId = `${id}-panel`;
-  const [open, setOpen] = useState(defaultOpen);
+  const [ownOpen, setOwnOpen] = useState(defaultOpen);
+  const open = controlledOpen ?? ownOpen;
+  const setOpen = (next: boolean) => {
+    if (controlledOpen === undefined) setOwnOpen(next);
+    onOpenChange?.(next);
+  };
+  // The reveal listener is added once; it asks through the latest setter.
+  const setOpenRef = useRef(setOpen);
+  setOpenRef.current = setOpen;
   const toggleRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -55,7 +73,7 @@ export function Disclosure({
       // Shown in this task, so the caller can focus inside it now; React's state follows.
       panel.hidden = false;
       toggleRef.current?.setAttribute('aria-expanded', 'true');
-      setOpen(true);
+      setOpenRef.current(true);
     };
     panel.addEventListener(REVEAL, reveal);
     return () => panel.removeEventListener(REVEAL, reveal);
@@ -67,7 +85,7 @@ export function Disclosure({
       type="button"
       aria-expanded={open}
       aria-controls={panelId}
-      onClick={() => setOpen((current) => !current)}
+      onClick={() => setOpen(!open)}
       className={cn(
         'group/disclosure flex min-w-0 cursor-pointer items-center gap-2 text-left text-default',
         'rounded-md transition-colors hover:bg-surface-hover',

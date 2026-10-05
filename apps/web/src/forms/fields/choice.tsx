@@ -79,7 +79,7 @@ function SegmentedField({
 }
 
 export function BooleanField({ schema, name, label }: FieldProps) {
-  const field = useField(name);
+  const field = useField(name, 'commit');
   const id = useId();
   const labelId = `${id}-label`;
   const { hasDefault, defaultValue, optional } = unwrap(schema);
@@ -123,7 +123,7 @@ export function BooleanField({ schema, name, label }: FieldProps) {
 }
 
 export function EnumField({ schema, name, label, options }: FieldProps & { options: string[] }) {
-  const field = useField(name);
+  const field = useField(name, 'commit');
   const id = useId();
   const { hasDefault, defaultValue, optional } = unwrap(schema);
   const { required, help } = fieldMeta(schema);

@@ -4,7 +4,7 @@ import {
   type LoopDefinitionInput,
   type NodeInput,
 } from '@graphgoblin/contracts';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Icon } from '../components/icons/index.js';
 import {
   Button,
@@ -16,6 +16,7 @@ import {
   RequiredNote,
   type DialogCloseReason,
 } from '../components/ui/index.js';
+import type { DisclosureStates } from '../forms/disclosures.js';
 import { SchemaForm } from '../forms/SchemaForm.js';
 import { CatalogWarningsContext } from '../forms/fields/model.js';
 import { canvasFocusTarget } from './canvas-focus.js';
@@ -105,6 +106,14 @@ export function NodeEditorDialog({
   const historyEpoch = useEditorStore((s) => s.historyEpoch);
   const bodyRef = useRef<HTMLElement>(null);
   const [epoch, setEpoch] = useState(0);
+  // Which of the config form's disclosures are open (Advanced, collapsed list items). Kept here,
+  // not in the form, so the remounts below (undo and redo, a subloop pick) keep what the user
+  // opened; the dialog is mounted per node and per opening, so another node starts collapsed.
+  const [openDisclosures, setOpenDisclosures] = useState<DisclosureStates>({});
+  const disclosures = useMemo(
+    () => ({ open: openDisclosures, setOpen: setOpenDisclosures }),
+    [openDisclosures],
+  );
   const [idState, setIdState] = useState<IdDraft>({
     for: node.id,
     epoch: historyEpoch,
@@ -267,10 +276,11 @@ export function NodeEditorDialog({
               label={`${node.id} config`}
               controls={NODE_FIELD_CONTROLS}
               problems={configProblems}
-              onChange={(config) => updateNode(node.id, { config })}
+              disclosures={disclosures}
+              onChange={(config, change) => updateNode(node.id, { config }, change)}
               parseErrors={fieldErrors[`node:${node.id}`]}
-              onParseError={(path, error, reason) =>
-                setFieldError(`node:${node.id}`, path, error, reason)
+              onParseError={(path, error, reason, change) =>
+                setFieldError(`node:${node.id}`, path, error, reason, change)
               }
             />
           </CatalogWarningsContext>
