@@ -210,7 +210,8 @@ test('an issue only the server finds (a bad cron expression) shows on the badge 
   await page.goto(`/app/loops/${loopId}/edit`);
   await expect(page.getByText('Ready to publish')).toBeVisible();
   const editor = await openNode(page, 'nightly');
-  await editor.getByLabel('Expression').fill('every night');
+  await editor.getByRole('button', { name: 'Advanced Cron expression' }).click();
+  await editor.getByLabel('Cron expression').fill('every night');
   await closeNode(page);
   await expect(page.getByTestId('save-state')).toHaveText('All changes saved');
   const nightly = badge(page, 'nightly');

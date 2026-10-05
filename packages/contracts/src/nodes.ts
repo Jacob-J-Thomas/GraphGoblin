@@ -88,13 +88,17 @@ export const TriggerConfigSchema = z.discriminatedUnion('subtype', [
   }),
   z.strictObject({
     subtype: z.literal('cron'),
-    expression: z.string().min(1).max(256).meta(field('Cron expression, five or six fields.')),
+    expression: z
+      .string()
+      .min(1)
+      .max(256)
+      .meta(field('Cron expression, five or six fields.', { control: 'cron' })),
     timezone: z
       .string()
       .min(1)
       .max(64)
       .default('UTC')
-      .meta(field('IANA time zone the expression is evaluated in.')),
+      .meta(field('IANA time zone the expression is evaluated in.', { control: 'cron-timezone' })),
     missedFirePolicy: z
       .enum(['skip', 'run-once', 'run-each'])
       .default('skip')

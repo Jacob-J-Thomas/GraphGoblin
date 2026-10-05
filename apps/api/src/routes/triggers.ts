@@ -1,5 +1,11 @@
-import { JsonValueSchema, UlidSchema } from '@graphgoblin/contracts';
+import {
+  CronPreviewRequestSchema,
+  CronPreviewResponseSchema,
+  JsonValueSchema,
+  UlidSchema,
+} from '@graphgoblin/contracts';
 import { EngineRequestError } from '@graphgoblin/engine';
+import { CronScheduler } from '@graphgoblin/infrastructure/scheduler';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import type { Container } from '../container.js';
@@ -59,6 +65,35 @@ const PollTargetSchema = z.object({
 
 export function registerTriggerRoutes(app: ApiInstance, container: Container): void {
   const { repos, triggers } = container;
+
+  app.post(
+    '/triggers/cron/preview',
+    {
+      schema: {
+        tags: ['triggers'],
+        summary: 'Preview upcoming cron slots without arming a schedule (loops:read)',
+        body: CronPreviewRequestSchema,
+        response: { 200: CronPreviewResponseSchema },
+      },
+    },
+    async (request, reply) => {
+      const { expression, timezone, count, from } = request.body;
+      const invalid =
+        timezone.length === 0
+          ? 'A time zone is required.'
+          : CronScheduler.validate(expression, timezone);
+      if (invalid !== null) return problem(reply, 400, 'CRON_INVALID', invalid);
+      const next: string[] = [];
+      let after = from === undefined ? container.ports.clock.now() : new Date(from);
+      for (let i = 0; i < count; i++) {
+        const slot = CronScheduler.nextFire(expression, timezone, after);
+        if (slot === undefined) break;
+        next.push(slot.toISOString());
+        after = slot;
+      }
+      return { next };
+    },
+  );
 
   // Signed webhook receiver. Public (see plugins/auth.ts); the HMAC signature is the credential.
   // The body is read raw, because the signature covers the exact bytes the sender produced.
