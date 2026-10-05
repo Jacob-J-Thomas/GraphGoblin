@@ -21,9 +21,31 @@ import { useEditorStore } from './store.js';
 
 const SAVE_WAIT = { timeout: 4000 };
 
+/**
+ * A canvas node's issue badge, or null. jsdom never measures nodes, so xyflow keeps them
+ * `visibility: hidden`, which leaves their contents without accessible names: canvas badges and
+ * their popovers are found by their `aria-label` and text here (e2e/validation.spec.ts checks the
+ * accessible names in a browser).
+ */
+const nodeBadge = (id: string) =>
+  screen
+    .getByTestId(`node-${id}`)
+    .querySelector<HTMLButtonElement>(`button[aria-label$=" on ${id}"]`);
+
+/** The popover a badge or the indicator controls. */
+const popoverOf = (trigger: HTMLElement) =>
+  document.getElementById(trigger.getAttribute('aria-controls')!)!;
+
+/** The buttons of a canvas badge's popover whose label or text matches `name`. */
+const popoverButtons = (trigger: HTMLElement, name: RegExp | string) =>
+  [...popoverOf(trigger).querySelectorAll('button')].filter((button) => {
+    const label = button.getAttribute('aria-label') ?? button.textContent ?? '';
+    return typeof name === 'string' ? label === name : name.test(label);
+  });
+
 describe('EditorPage', () => {
   // jsdom's window is 1024 px wide, where the loop panel starts collapsed; most tests read the
-  // validation list in it, so they start with it expanded (the setup clears storage after each).
+  // loop settings in it, so they start with it expanded (the setup clears storage after each).
   beforeEach(() => localStorage.setItem(LOOP_PANEL_STORAGE_KEY, 'expanded'));
 
   it('collapses and expands the loop panel from the toolbar and remembers it', async () => {
@@ -33,20 +55,25 @@ describe('EditorPage', () => {
     const loop = api.addLoop(minimalLoop());
     const first = renderApp(`/loops/${loop.id}/edit`, api);
     await screen.findByRole('heading', { name: 'minimal' });
-    // Below 1280 px nothing stored means collapsed: a rail with Show and the issue count.
+    // Below 1280 px nothing stored means collapsed: a rail with its Show button.
     const toggle = screen.getByRole('button', { name: 'Loop settings' });
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
     expect(toggle).toHaveAttribute('aria-controls', 'loop-panel');
-    expect(screen.getByRole('complementary', { name: 'Loop' })).toHaveAttribute('id', 'loop-panel');
+    const rail = screen.getByRole('complementary', { name: 'Loop' });
+    expect(rail).toHaveAttribute('id', 'loop-panel');
+    expect(within(rail).getAllByRole('button')).toHaveLength(1);
     expect(screen.queryByLabelText('Name')).toBeNull();
-    expect(screen.getByText('Ready to publish')).toHaveClass('sr-only');
+    // Validation lives in the toolbar now, whatever the panel's state.
+    expect(within(rail).queryByText('Ready to publish')).toBeNull();
+    expect(await screen.findByText('Ready to publish')).toBeVisible();
 
     // Expanding moves focus into the panel; the choice is remembered for the next visit.
     await user.click(toggle);
     expect(toggle).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByRole('heading', { name: 'Loop' })).toHaveFocus();
     expect(screen.getByLabelText('Name')).toHaveValue('minimal');
-    expect(screen.getByRole('region', { name: 'Validation' })).toBeInTheDocument();
+    // The panel holds only the loop's own configuration: no validation section.
+    expect(screen.queryByRole('region', { name: 'Validation' })).toBeNull();
     expect(localStorage.getItem(LOOP_PANEL_STORAGE_KEY)).toBe('expanded');
     first.unmount();
     renderApp(`/loops/${loop.id}/edit`, api);
@@ -62,7 +89,7 @@ describe('EditorPage', () => {
     expect(localStorage.getItem(LOOP_PANEL_STORAGE_KEY)).toBe('collapsed');
   });
 
-  it('starts with the loop panel expanded on wide windows, and counts issues on its rail', async () => {
+  it('starts with the loop panel expanded on wide windows, and counts issues beside Publish', async () => {
     const user = userEvent.setup();
     localStorage.clear();
     const width = vi.spyOn(window, 'innerWidth', 'get').mockReturnValue(1440);
@@ -75,32 +102,60 @@ describe('EditorPage', () => {
       'true',
     );
     width.mockRestore();
-    // Collapsed, the rail keeps the counts: an exit criterion above the ceiling is a warning,
-    // and a new wait node brings two errors (unconnected port, unreachable node).
+    // The toolbar's indicator counts the merged list; each node's badge counts its own issues.
+    // An exit criterion above the ceiling is a warning.
     await user.click(screen.getByRole('button', { name: 'Loop settings' }));
-    const rail = screen.getByRole('complementary', { name: 'Loop' });
     act(() =>
       useEditorStore.getState().updateNode('done', {
         config: { criteria: [{ when: 'max-iterations', value: 99 }] },
       }),
     );
-    expect(within(rail).getByTitle('1 warning')).toHaveTextContent('1 warning');
-    expect(within(rail).queryByTitle(/error/)).toBeNull();
+    expect(screen.getByRole('button', { name: '1 warning' })).toHaveAttribute(
+      'data-severity',
+      'warning',
+    );
+    expect(nodeBadge('done')).toHaveAttribute('aria-label', '1 issue on done');
+    expect(nodeBadge('done')).toHaveAttribute('data-severity', 'warning');
+    expect(nodeBadge('start')).toBeNull();
+    expect(screen.queryByText('Ready to publish')).toBeNull();
+    // A new wait node brings two errors (unconnected port, unreachable node).
     await user.click(screen.getByRole('button', { name: 'Add Wait node' }));
-    expect(within(rail).getByTitle('2 errors')).toHaveTextContent('2 errors');
-    // One error (text that does not parse) and two warnings (a second exit above the ceiling).
+    expect(screen.getByRole('button', { name: '2 errors, 1 warning' })).toHaveAttribute(
+      'data-severity',
+      'error',
+    );
+    expect(nodeBadge('wait')).toHaveAttribute('aria-label', '2 issues on wait');
+    expect(nodeBadge('wait')).toHaveTextContent('2');
+    // One error (loop settings text that does not parse) and two warnings (a second exit above
+    // the ceiling); the loop-level error has no node, so no badge.
     act(() => useEditorStore.getState().removeNode('wait'));
     act(() =>
       useEditorStore.getState().setFieldError('settings', 'x', { message: 'bad', text: '{' }),
     );
-    expect(within(rail).getByTitle('1 error')).toHaveTextContent('1 error');
+    expect(screen.getByRole('button', { name: '1 error, 1 warning' })).toBeInTheDocument();
     act(() => {
       useEditorStore.getState().addNode('exit', { x: 0, y: 0 });
       useEditorStore.getState().updateNode('exit', {
         config: { criteria: [{ when: 'max-iterations', value: 99 }] },
       });
     });
-    expect(within(rail).getByTitle('2 warnings')).toHaveTextContent('2 warnings');
+    // The new exit is also unreachable (an error).
+    const indicator = screen.getByRole('button', { name: '2 errors, 2 warnings' });
+    expect(nodeBadge('done')).toHaveAttribute('aria-label', '1 issue on done');
+    expect(nodeBadge('exit')).toHaveAttribute('aria-label', '2 issues on exit');
+    // Its popover lists the loop-level issue in full and one row per node.
+    await user.click(indicator);
+    const popover = screen.getByRole('dialog', { name: 'Loop issues' });
+    expect(within(popover).getByRole('group', { name: 'Loop and connections' })).toHaveTextContent(
+      'settings.x',
+    );
+    expect(
+      within(within(popover).getByRole('group', { name: 'Nodes' }))
+        .getAllByRole('button')
+        .map((b) => b.textContent),
+    ).toEqual(['done: 1 issue', 'exit: 2 issues']);
+    await user.click(within(popover).getByRole('button', { name: 'exit: 2 issues' }));
+    expect(screen.getByRole('dialog', { name: 'Edit exit exit' })).toBeInTheDocument();
   });
 
   it('loads a draft, adds nodes from the palette, edits properties, and autosaves', async () => {
@@ -111,7 +166,7 @@ describe('EditorPage', () => {
 
     expect(await screen.findByRole('heading', { name: 'my loop' })).toBeInTheDocument();
     expect(screen.getByText('draft only')).toBeInTheDocument();
-    expect(screen.getByText('Ready to publish')).toBeInTheDocument();
+    expect(await screen.findByText('Ready to publish')).toBeInTheDocument();
     expect(screen.getByTestId('node-start')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Add Wait node' }));
@@ -119,7 +174,23 @@ describe('EditorPage', () => {
     // The new node is selected but its editor stays closed; its port is unconnected.
     expect(useEditorStore.getState().selectedNodeId).toBe('wait');
     expect(screen.queryByRole('dialog')).toBeNull();
-    expect(screen.getAllByText(/PORT_UNCONNECTED|NODE_UNREACHABLE/).length).toBeGreaterThan(0);
+    const badge = nodeBadge('wait')!;
+    expect(badge).toHaveAttribute('aria-label', '2 issues on wait');
+    // A click on its badge opens only the popover, which names the problems. (Once the 200 ms pan
+    // to the new node is over: any move of the canvas closes issue popovers.)
+    await act(() => new Promise((resolve) => setTimeout(resolve, 300)));
+    await user.click(badge);
+    const popover = popoverOf(badge);
+    expect(popover).toHaveAttribute('aria-label', 'Issues on wait');
+    expect(popover).toHaveTextContent('PORT_UNCONNECTED');
+    expect(popover).toHaveTextContent('NODE_UNREACHABLE');
+    expect(useEditorStore.getState().nodeDialogOpen).toBe(false);
+    // Open, it renders in document.body (jsdom has no popover API), out of the scaled canvas.
+    expect(popover.parentElement).toBe(document.body);
+    await user.keyboard('{Escape}');
+    expect(popoverOf(badge)).toBeEmptyDOMElement();
+    expect(popoverOf(badge)).toHaveAttribute('hidden');
+    expect(badge).toHaveFocus();
 
     // A click on the node opens its editor with the generated form.
     fireEvent.click(screen.getByTestId('node-wait'));
@@ -193,11 +264,16 @@ describe('EditorPage', () => {
     const local = await loadLocalDraft(loop.id);
     expect(local?.synced).toBe(false);
     expect(local?.definition.nodes.map((n) => n.id)).toContain('subloop');
-    // Clicking a schema issue opens its node.
+    // Choosing a schema issue in the node's badge opens its node at the field.
     act(() => useEditorStore.getState().select(undefined));
-    await user.click(screen.getAllByRole('button', { name: /SCHEMA subloop/ })[0]!);
+    const badge = nodeBadge('subloop')!;
+    await user.click(badge);
+    await user.click(popoverButtons(badge, /SCHEMA/)[0]!);
     expect(useEditorStore.getState().selectedNodeId).toBe('subloop');
-    expect(screen.getByRole('dialog', { name: 'Edit subloop subloop' })).toBeInTheDocument();
+    const dialog = screen.getByRole('dialog', { name: 'Edit subloop subloop' });
+    expect(dialog.querySelector('[data-field="loopRef"]')).toContainElement(
+      document.activeElement as HTMLElement,
+    );
   });
 
   it('shows a dismissed save notice again after the draft returns to the same invalid state', async () => {
@@ -380,7 +456,35 @@ describe('EditorPage', () => {
     await waitFor(() => expect(screen.queryByText(/Nothing to publish/)).toBeNull());
   });
 
-  it('lists the issues only the API finds and blocks publishing on JSON that does not parse', async () => {
+  it('waits for the server check before "Ready to publish", and says when it is unavailable', async () => {
+    const api = new FakeApi();
+    let release: () => void = () => undefined;
+    let fail = false;
+    api.override('POST /loops/:id/validate', async () => {
+      if (fail) throw new TypeError('Failed to fetch');
+      await new Promise<void>((resolve) => (release = resolve));
+      return new Response(JSON.stringify({ issues: [], publishable: true }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+    });
+    const loop = api.addLoop(newLoopDefinition('checking'));
+    renderApp(`/loops/${loop.id}/edit`, api);
+    // Locally valid, but the server's checks (cron, subloops) have not answered yet.
+    expect(await screen.findByText('Checking…')).toBeInTheDocument();
+    expect(screen.queryByText('Ready to publish')).toBeNull();
+    act(() => release());
+    expect(await screen.findByText('Ready to publish')).toBeInTheDocument();
+    // The next check fails (offline): not ready, not an error either.
+    fail = true;
+    act(() => useEditorStore.getState().updateMeta({ description: 'changed' }));
+    expect(await screen.findByText('Validation unavailable', {}, SAVE_WAIT)).toHaveClass(
+      'text-muted',
+    );
+    expect(screen.queryByText('Ready to publish')).toBeNull();
+  });
+
+  it('shows the issues only the API finds on the node’s badge and in the counts', async () => {
     const user = userEvent.setup();
     const api = new FakeApi();
     api.serverOnlyIssues = [
@@ -393,55 +497,215 @@ describe('EditorPage', () => {
     ];
     const loop = api.addLoop(minimalLoop());
     renderApp(`/loops/${loop.id}/edit`, api);
-    expect(await screen.findByText(/cron trigger "start": bad/)).toBeInTheDocument();
-    api.serverOnlyIssues = [];
+    // After the server's check: a badge on the trigger, and the counts beside Publish.
+    await waitFor(() =>
+      expect(nodeBadge('start')).toHaveAttribute('aria-label', '1 issue on start'),
+    );
+    const badge = nodeBadge('start')!;
+    expect(screen.getByRole('button', { name: '1 error' })).toBeInTheDocument();
+    await user.click(badge);
+    const popover = popoverOf(badge);
+    expect(popover).toHaveTextContent('CRON_INVALID');
+    expect(popover).toHaveTextContent('cron trigger "start": bad');
+    // An issue without a field opens its node, with focus on the editor's heading.
+    await user.click(popoverButtons(badge, /CRON_INVALID/)[0]!);
+    const dialog = screen.getByRole('dialog', { name: 'Edit trigger start' });
+    expect(within(dialog).getByRole('heading', { name: 'Edit trigger start' })).toHaveFocus();
+    // The editor's own badge, beside its title, lists it too.
+    expect(within(dialog).getByRole('button', { name: '1 issue on start' })).toBeInTheDocument();
+    expect(within(dialog).queryByRole('list', { name: 'Node issues' })).toBeNull();
+    // Publish refuses with the server's message, as before.
+    act(() => useEditorStore.getState().closeNodeDialog());
+    await user.click(screen.getByRole('button', { name: 'Publish' }));
+    expect(await screen.findByText('Publish failed')).toBeInTheDocument();
+    expect(screen.getByText(/cron trigger "start": bad/)).toBeInTheDocument();
+  });
 
-    // The trigger's input schema editor holds text that is not JSON.
+  it('blocks publishing on JSON that does not parse, and discards it from the badges', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const loop = api.addLoop(minimalLoop());
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'minimal' });
+    const onCanvas = () => nodeBadge('start');
+    const editor = () => screen.getByRole('dialog', { name: 'Edit trigger start' });
+
+    // The trigger's input schema editor holds text that is not JSON: the editor's badge says so.
     act(() => useEditorStore.getState().openNode('start'));
     await screen.findByRole('form', { name: 'start config' });
     setCode('Input schema', '{"type": ');
-    expect(await screen.findByText(/FIELD_UNPARSED/)).toBeInTheDocument();
+    const inEditor = await within(editor()).findByRole('button', { name: '1 issue on start' });
+    await user.click(inEditor);
+    const popover = screen.getByRole('dialog', { name: 'Issues on start' });
+    expect(popover).toHaveTextContent('FIELD_UNPARSED');
+    expect(popover).toHaveTextContent('config.inputSchema');
+    // Esc closes the popover, not the editor around it.
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog', { name: 'Issues on start' })).toBeNull();
+    expect(editor()).toHaveAttribute('open');
+    expect(inEditor).toHaveFocus();
     await user.click(screen.getByRole('button', { name: 'Publish' }));
     expect(await screen.findByText(/does not parse; fix them first/)).toBeInTheDocument();
     expect(api.callsTo('POST', `/loops/${loop.id}/publish`)).toHaveLength(0);
 
     // Fixing the text clears the issue.
     setCode('Input schema', '{"type": "object"}');
-    await waitFor(() => expect(screen.queryByText(/FIELD_UNPARSED/)).toBeNull());
+    await waitFor(() => expect(onCanvas()).toBeNull());
 
-    // Closing the editor keeps the blocker and the text; opening it again shows the text again.
+    // Closing the editor keeps the blocker and the text.
     setCode('Input schema', '{"broken": ');
-    expect(await screen.findByText(/FIELD_UNPARSED/)).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Done' }));
+    await within(editor()).findByRole('button', { name: '1 issue on start' });
+    await user.click(within(editor()).getByRole('button', { name: 'Done' }));
     expect(screen.queryByRole('dialog')).toBeNull();
-    expect(screen.getByText(/FIELD_UNPARSED/)).toBeInTheDocument();
+    expect(onCanvas()).toHaveAttribute('aria-label', '1 issue on start');
     await user.click(screen.getByRole('button', { name: 'Publish' }));
     expect(await screen.findByText(/does not parse; fix them first/)).toBeInTheDocument();
-    act(() => useEditorStore.getState().openNode('start'));
+
+    // Choosing the issue on the canvas opens the node with the field focused, text and all.
+    await user.click(onCanvas()!);
+    await user.click(popoverButtons(onCanvas()!, /FIELD_UNPARSED/)[0]!);
     await screen.findByRole('form', { name: 'start config' });
     expect(getCode('Input schema')).toBe('{"broken": ');
+    expect(editor().querySelector('[data-field="inputSchema"] .cm-content')).toHaveFocus();
 
     // Discarding in the field restores the last valid value and clears the blocker.
     await user.click(screen.getByRole('button', { name: 'Discard text' }));
-    await waitFor(() => expect(screen.queryByText(/FIELD_UNPARSED/)).toBeNull());
+    await waitFor(() => expect(onCanvas()).toBeNull());
     expect(getCode('Input schema')).toContain('"object"');
 
-    // Discarding from the validation panel with the field mounted resets the field too.
+    // Discarding from the editor's badge with the field mounted resets the field too; the badge
+    // goes with the issue, and focus goes to the editor's heading rather than the page.
     setCode('Input schema', '{"mounted": ');
-    expect(await screen.findByText(/FIELD_UNPARSED/)).toBeInTheDocument();
+    await user.click(await within(editor()).findByRole('button', { name: '1 issue on start' }));
     await user.click(screen.getByRole('button', { name: 'Discard unparsed text at inputSchema' }));
-    await waitFor(() => expect(screen.queryByText(/FIELD_UNPARSED/)).toBeNull());
+    await waitFor(() => expect(onCanvas()).toBeNull());
     expect(getCode('Input schema')).toContain('"object"');
     expect(screen.queryByText(/Invalid JSON/)).toBeNull();
-
-    // Discarding from the validation panel works when the field is gone.
-    setCode('Input schema', '[');
-    expect(await screen.findByText(/FIELD_UNPARSED/)).toBeInTheDocument();
-    act(() => useEditorStore.getState().closeNodeDialog());
-    await user.click(
-      await screen.findByRole('button', { name: 'Discard unparsed text at inputSchema' }),
+    await waitFor(() =>
+      expect(within(editor()).getByRole('heading', { name: 'Edit trigger start' })).toHaveFocus(),
     );
-    await waitFor(() => expect(screen.queryByText(/FIELD_UNPARSED/)).toBeNull());
+
+    // Discarding from the canvas badge works when the field is gone; focus goes to the node.
+    setCode('Input schema', '[');
+    await waitFor(() => expect(onCanvas()).not.toBeNull());
+    act(() => useEditorStore.getState().closeNodeDialog());
+    await user.click(onCanvas()!);
+    await user.click(popoverButtons(onCanvas()!, 'Discard unparsed text at inputSchema')[0]!);
+    await waitFor(() => expect(onCanvas()).toBeNull());
+    await waitFor(() =>
+      expect(screen.getByTestId('node-start').closest('.react-flow__node')).toHaveFocus(),
+    );
+  });
+
+  it('opens a node at an issue’s field from its badge, by pointer or keyboard', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const def = newLoopDefinition('fields');
+    const decision = {
+      routes: [
+        { label: 'a', description: 'first' },
+        { label: 'b', description: 'second' },
+      ],
+      question: 'Which?',
+      strategy: ['expression' as const],
+      expression: { jsonata: '"b"' },
+    };
+    def.nodes.push({ id: 'pick', kind: 'decision', label: 'Pick', config: decision });
+    const loop = api.addLoop(def);
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'fields' });
+    // The first route loses its label: a schema issue at config.routes.0.label.
+    act(() =>
+      useEditorStore.getState().updateNode('pick', {
+        config: { ...decision, routes: [{ label: '', description: 'first' }, decision.routes[1]] },
+      }),
+    );
+    const badge = nodeBadge('pick')!;
+    // Clicking the badge opens only its popover; choosing the issue opens the node at the field.
+    await user.click(badge);
+    expect(useEditorStore.getState().nodeDialogOpen).toBe(false);
+    expect(popoverOf(badge)).toHaveAttribute('aria-label', 'Issues on pick');
+    await user.click(popoverButtons(badge, /config\.routes\.0\.label/)[0]!);
+    const dialog = screen.getByRole('dialog', { name: 'Edit decision pick' });
+    const routeLabel = dialog.querySelector('[data-field="routes.0.label"] input');
+    expect(routeLabel).toHaveFocus();
+    await waitFor(() => expect(useEditorStore.getState().nodeFocus).toBeUndefined());
+
+    // In the open editor, the badge beside the title focuses fields without reopening anything.
+    act(() => dialog.querySelector<HTMLInputElement>('#node-label')!.focus());
+    const header = within(dialog).getByRole('button', { name: /^\d+ issues? on pick$/ });
+    await user.click(header);
+    await user.click(
+      within(screen.getByRole('dialog', { name: 'Issues on pick' })).getByRole('button', {
+        name: /config\.routes\.0\.label/,
+      }),
+    );
+    expect(routeLabel).toHaveFocus();
+    expect(screen.getByRole('dialog', { name: 'Edit decision pick' })).toBe(dialog);
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).toBeNull();
+
+    // Keyboard: focus opens the badge's popover, ArrowDown moves in, Enter chooses.
+    act(() => badge.focus());
+    expect(badge).toHaveAttribute('aria-expanded', 'true');
+    await user.keyboard('{ArrowDown}');
+    expect(document.activeElement).toHaveTextContent(/config\.routes\.0\.label/);
+    await user.keyboard('{Enter}');
+    const reopened = screen.getByRole('dialog', { name: 'Edit decision pick' });
+    expect(reopened.querySelector('[data-field="routes.0.label"] input')).toHaveFocus();
+
+    // Once the schema holds, the graph's issues (no field) focus the heading instead.
+    act(() => useEditorStore.getState().updateNode('pick', { config: decision }));
+    await user.click(within(reopened).getByRole('button', { name: /^\d+ issues? on pick$/ }));
+    const rows = within(screen.getByRole('dialog', { name: 'Issues on pick' })).getAllByRole(
+      'button',
+    );
+    expect(rows[0]).not.toHaveTextContent('config.');
+    await user.click(rows[0]!);
+    expect(within(reopened).getByRole('heading', { name: 'Edit decision pick' })).toHaveFocus();
+
+    // A path with no field leaves focus on the heading; a node field takes it.
+    act(() => useEditorStore.getState().closeNodeDialog());
+    act(() => useEditorStore.getState().openNode('pick', { field: 'config.nothing' }));
+    expect(screen.getByRole('heading', { name: 'Edit decision pick' })).toHaveFocus();
+    act(() => useEditorStore.getState().openNode('pick', { field: 'label' }));
+    expect(screen.getByRole('dialog').querySelector('#node-label')).toHaveFocus();
+  });
+
+  it('opens a node at an issue whose path holds a newline, a quote, or a backslash', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const def = newLoopDefinition('odd keys');
+    const keys = ['bad\nkey', 'quote"back\\slash'];
+    const script = (value: string) => ({
+      command: 'node',
+      args: ['x.js'],
+      env: Object.fromEntries(keys.map((key) => [key, value])),
+    });
+    def.nodes.push({ id: 'run', kind: 'script', label: 'Run', config: script('ok') });
+    const loop = api.addLoop(def);
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'odd keys' });
+    // Values over the 8,192-character limit: schema issues at config.env.<key>.
+    act(() => useEditorStore.getState().updateNode('run', { config: script('x'.repeat(8193)) }));
+    const badge = nodeBadge('run')!;
+    await user.click(badge);
+    const rows = popoverButtons(badge, /config\.env\./);
+    expect(rows.map((row) => row.querySelectorAll('code')[0]!.textContent)).toEqual(
+      keys.map((key) => `config.env.${key}`),
+    );
+    for (const index of [0, 1]) {
+      if (index > 0) {
+        act(() => useEditorStore.getState().closeNodeDialog());
+        await user.click(badge);
+      }
+      await user.click(popoverButtons(badge, /config\.env\./)[index]!);
+      const dialog = screen.getByRole('dialog', { name: 'Edit script run' });
+      // No row per key carries a field path, so focus goes to the env record itself.
+      expect(dialog.querySelector('[data-field="env"]')).toContainElement(
+        document.activeElement as HTMLElement,
+      );
+    }
   });
 
   it('connects nodes from the keyboard and customizes a default list', async () => {
@@ -535,6 +799,13 @@ describe('EditorPage', () => {
     expect(screen.getByRole('dialog', { name: 'Edit exit done' })).toHaveAttribute('open');
     await user.keyboard('{Escape}');
     expect(useEditorStore.getState().nodeDialogOpen).toBe(false);
+
+    // Opened at a field: the replayed effects still leave focus on the field.
+    act(() => useEditorStore.getState().openNode('done', { field: 'label' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Edit exit done' });
+    await act(nextTask);
+    expect(dialog.querySelector('#node-label')).toHaveFocus();
+    expect(useEditorStore.getState().nodeFocus).toBeUndefined();
   });
 
   it('says in the dialog why a connection was refused', async () => {

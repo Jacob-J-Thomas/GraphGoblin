@@ -58,7 +58,7 @@ function Harness({ initial }: { initial: boolean }) {
         title="Loop"
         expanded={expanded}
         onExpandedChange={setExpanded}
-        rail={<span>2 errors</span>}
+        rail={<span>3 variables</span>}
       >
         <p>Panel body</p>
       </SidePanel>
@@ -73,7 +73,7 @@ describe('SidePanel', () => {
     const panel = screen.getByRole('complementary', { name: 'Loop' });
     expect(panel).toHaveAttribute('id', 'panel');
     expect(screen.getByText('Panel body')).toBeInTheDocument();
-    expect(screen.queryByText('2 errors')).toBeNull();
+    expect(screen.queryByText('3 variables')).toBeNull();
     const hide = screen.getByRole('button', { name: 'Hide loop' });
     expect(hide).toHaveAttribute('aria-expanded', 'true');
     expect(hide).toHaveAttribute('aria-controls', 'panel');
@@ -82,7 +82,7 @@ describe('SidePanel', () => {
     await user.click(hide);
     expect(screen.queryByText('Panel body')).toBeNull();
     expect(screen.getByRole('complementary', { name: 'Loop' })).toHaveAttribute('id', 'panel');
-    expect(screen.getByText('2 errors')).toBeInTheDocument();
+    expect(screen.getByText('3 variables')).toBeInTheDocument();
     const show = screen.getByRole('button', { name: 'Show loop' });
     expect(show).toHaveAttribute('aria-expanded', 'false');
     expect(show).toHaveAttribute('aria-controls', 'panel');
@@ -102,5 +102,16 @@ describe('SidePanel', () => {
     await user.click(toggle);
     expect(toggle).toHaveFocus();
     expect(screen.getByRole('button', { name: 'Show loop' })).not.toHaveFocus();
+  });
+
+  it('keeps only its Show button on the rail when it has no summary', () => {
+    render(
+      <SidePanel id="bare" title="Loop" expanded={false} onExpandedChange={() => undefined}>
+        <p>Panel body</p>
+      </SidePanel>,
+    );
+    const rail = screen.getByRole('complementary', { name: 'Loop' });
+    expect(rail.children).toHaveLength(1);
+    expect(rail.firstElementChild).toBe(screen.getByRole('button', { name: 'Show loop' }));
   });
 });

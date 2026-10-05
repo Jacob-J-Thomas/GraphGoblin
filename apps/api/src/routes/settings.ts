@@ -1,4 +1,6 @@
 import {
+  ApiKeySchema,
+  ApiKeyListResponseSchema,
   EffortSchema,
   JsonValueSchema,
   UlidSchema,
@@ -15,15 +17,6 @@ const SecretSummarySchema = z.object({
   name: z.string(),
   createdAt: z.string(),
   updatedAt: z.string(),
-});
-const ApiKeySchema = z.object({
-  id: z.string(),
-  ownerId: z.string(),
-  label: z.string(),
-  scopes: z.array(z.string()),
-  createdAt: z.string(),
-  lastUsedAt: z.string().optional(),
-  revokedAt: z.string().optional(),
 });
 const ModelEntrySchema = ModelCatalogEntrySchema;
 
@@ -154,12 +147,23 @@ export function registerSettingsRoutes(app: ApiInstance, container: Container): 
     {
       schema: {
         tags: ['api-keys'],
-        summary: 'List API keys',
-        response: { 200: z.object({ items: z.array(ApiKeySchema) }) },
+        summary: 'List API keys with the current authenticated key flagged',
+        description:
+          'Requires api-keys:read. Each item has a required current boolean: true only for the key ' +
+          'that authenticated this list request when API keys are required. All items are false in ' +
+          'trusted mode, even with a valid bearer key. This is a response snapshot, never persisted. ' +
+          "Only this owner's key metadata is returned; tokens and hashes are never returned.",
+        response: { 200: ApiKeyListResponseSchema },
       },
     },
     async (request) => ({
-      items: await repos.apiKeys.list(request.auth.ownerId),
+      items: (await repos.apiKeys.list(request.auth.ownerId)).map((key) => ({
+        ...key,
+        current:
+          container.config.requireApiKey &&
+          request.auth.actor.kind === 'api-key' &&
+          request.auth.actor.id === key.id,
+      })),
     }),
   );
 

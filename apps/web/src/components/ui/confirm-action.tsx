@@ -10,6 +10,7 @@ export function ConfirmAction({
   action = 'delete',
   name,
   accessibleName,
+  'aria-describedby': describedBy,
   consequences,
   onConfirm,
   onConfirmed,
@@ -19,6 +20,8 @@ export function ConfirmAction({
   action?: 'delete' | 'revoke';
   name: string;
   accessibleName?: string;
+  /** Description of the opener, separate from the confirmation's consequences. */
+  'aria-describedby'?: string | undefined;
   consequences: ReactNode;
   onConfirm: () => Promise<unknown>;
   /** Optional list refresh; never extends the destructive request's pending state. */
@@ -126,6 +129,7 @@ export function ConfirmAction({
         size="sm"
         variant="destructive-soft"
         aria-label={accessibleName ?? `${verb} ${name}`}
+        aria-describedby={describedBy}
         aria-haspopup="dialog"
         onClick={() => {
           setError(undefined);

@@ -27,12 +27,14 @@ import { useEditorStore } from './store.js';
 import { useAutosave } from './useAutosave.js';
 import { useLoadEditor } from './useLoadEditor.js';
 import { useResolveConflict } from './useResolveConflict.js';
+import { ValidationIndicator } from './ValidationIndicator.js';
 
 /**
- * The loop editor: the toolbar, notices about the draft (restored, set aside, conflicting,
- * unsaved, published), the palette, the canvas, the collapsible loop panel (loop settings and the
- * validation list), and the node editor dialog for the node opened on the canvas. Loading and
- * conflict resolution live in useLoadEditor and useResolveConflict. Runs start from Runs.
+ * The loop editor: the toolbar (with the validation indicator beside Publish), notices about the
+ * draft (restored, set aside, conflicting, unsaved, published), the palette, the canvas (each node
+ * with its issue badge), the collapsible loop panel (loop settings), and the node editor dialog for
+ * the node opened on the canvas. Loading and conflict resolution live in useLoadEditor and
+ * useResolveConflict. Runs start from Runs.
  */
 export function EditorPage() {
   const { loopId = '' } = useParams();
@@ -247,6 +249,19 @@ export function EditorPage() {
         saveState={saveState}
         saveMessage={saveMessage}
         errors={errors}
+        validation={
+          <ValidationIndicator
+            issues={validation.issues}
+            definition={def}
+            check={
+              serverCheck.isError
+                ? 'error'
+                : serverCheck.isPending || serverCheck.isFetching
+                  ? 'pending'
+                  : 'done'
+            }
+          />
+        }
         publishing={publish.isPending}
         loopPanelExpanded={panelExpanded}
         onLoopSettings={() => setPanelExpanded(!panelExpanded)}
@@ -276,7 +291,6 @@ export function EditorPage() {
           </main>
           <LoopPanel
             definition={def}
-            issues={validation.issues}
             expanded={panelExpanded}
             onExpandedChange={setPanelExpanded}
           />

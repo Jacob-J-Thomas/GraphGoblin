@@ -24,6 +24,7 @@ dependency-cruiser 18 refuses Node 23. Where the default Node is 23, run `check:
 - Only permissive licences (MIT, Apache-2.0, BSD, ISC). `pnpm check:licenses` enforces the allowlist in `tooling/license-allowlist.json`; add a line to `docs/research/licenses.md` for every new dependency.
 - Relative imports use explicit `.js` extensions (NodeNext). Zod 4: use `.prefault({})` for object defaults whose fields have defaults.
 - Keep docs in sync: a behaviour change updates the relevant numbered doc; a decision change adds an ADR.
+- Clean design over backward compatibility, until the owner says otherwise (2026-10-04): the product is not released and has no production users. Do not build compatibility schemas, deprecated input paths, tolerant parsing of old data shapes, or dual code paths. Change the contract to its clean shape; when stored data must change, add a one-off migration that rewrites it; when exports or clients must change, say so in the CHANGELOG upgrade notes. The owner updates their local instance by hand when a change needs it.
 - Before picking up a GitHub issue, read `docs/15-issue-workflow.md` for its gate, routing, and delivery rules.
 - Commits carry no assistant attribution of any kind.
 

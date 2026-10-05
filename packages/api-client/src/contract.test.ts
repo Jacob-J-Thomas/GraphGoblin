@@ -272,6 +272,8 @@ describe('against the in-process API (local trusted mode)', () => {
     const created = await apiKeys.create(client, { label: 'ci', scopes: ['loops:read'] });
     expect(created.token).toEqual(expect.any(String));
     expect((await apiKeys.list(client)).map((k) => k.id)).toContain(created.key.id);
+    expect((await apiKeys.list(client)).every((k) => k.current === false)).toBe(true);
+    expect(created.key).not.toHaveProperty('current');
     await apiKeys.revoke(client, created.key.id);
 
     await t.container.repos.catalog.upsert({
@@ -337,6 +339,26 @@ describe('against the in-process API (API keys required)', () => {
   });
   afterAll(async () => {
     await t.close();
+  });
+
+  it('returns a required current boolean for each client without changing key creation', async () => {
+    const a = await t.container.repos.apiKeys.create('local', 'client A', ['*']);
+    const clientA = createGraphGoblinClient({ baseUrl, apiKey: a.token, client: 'ui' });
+    const b = await apiKeys.create(clientA, { label: 'client B', scopes: ['*'] });
+    expect(b.key).not.toHaveProperty('current');
+    const clientB = createGraphGoblinClient({ baseUrl, apiKey: b.token, client: 'mcp' });
+    for (const [client, id] of [
+      [clientA, a.record.id],
+      [clientB, b.key.id],
+    ] as const) {
+      const items = await apiKeys.list(client);
+      expect(items.filter((key) => key.current).map((key) => key.id)).toEqual([id]);
+      expect(items.every((key) => typeof key.current === 'boolean')).toBe(true);
+      for (const item of items) {
+        expect(item).not.toHaveProperty('token');
+        expect(item).not.toHaveProperty('hash');
+      }
+    }
   });
 
   it('sends the bearer key and client kind on REST calls and on the SSE stream', async () => {

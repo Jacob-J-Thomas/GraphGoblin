@@ -80,7 +80,10 @@ export function useSecrets() {
 
 export function useApiKeys() {
   const client = useApi();
-  return useQuery({ queryKey: keys.apiKeys, queryFn: () => apiKeys.list(client) });
+  return useQuery({
+    queryKey: keys.apiKeys,
+    queryFn: ({ signal }) => apiKeys.list(client, { signal }),
+  });
 }
 
 export function usePreflight() {
