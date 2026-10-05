@@ -1,6 +1,7 @@
 import { useId, type ReactNode } from 'react';
 import { cn } from '../../lib/utils.js';
 import { RequiredMarker } from './field.js';
+import { ellipsize } from './ellipsis.js';
 import { Legend } from './fieldset.js';
 
 export interface SegmentedOption<T extends string> {
@@ -76,12 +77,14 @@ export function SegmentedControl<T extends string>({
       </Legend>
       <div
         className={cn(
-          'inline-flex w-fit max-w-full flex-wrap gap-0.5 rounded-md border border-strong',
+          'inline-flex w-fit max-w-full min-w-0 flex-wrap gap-0.5 rounded-md border border-strong',
           'bg-surface-sunken p-[3px] group-aria-invalid/segmented:border-status-bad-border',
         )}
       >
         {segments.map((segment) => (
-          <label key={segment.key} className="relative inline-flex min-w-0">
+          // A segment never grows wider than the track: a long label ends in an ellipsis, with the
+          // whole text kept for the radio's name and shown on hover (title).
+          <label key={segment.key} className="relative inline-flex max-w-full min-w-0">
             <input
               type="radio"
               name={group}
@@ -91,8 +94,9 @@ export function SegmentedControl<T extends string>({
               className="peer sr-only"
             />
             <span
+              title={typeof segment.label === 'string' ? segment.label : undefined}
               className={cn(
-                'inline-flex h-7 min-w-0 cursor-pointer items-center rounded-[6px] px-3 text-sm',
+                'inline-flex h-7 max-w-full min-w-0 cursor-pointer items-center rounded-[6px] px-3 text-sm',
                 'font-medium whitespace-nowrap text-muted transition-colors',
                 'peer-[:not(:checked)]:hover:bg-surface-hover peer-[:not(:checked)]:hover:text-default',
                 'peer-checked:bg-accent-subtle peer-checked:font-semibold peer-checked:text-accent-on-subtle',
@@ -102,7 +106,7 @@ export function SegmentedControl<T extends string>({
                 'peer-disabled:cursor-not-allowed peer-disabled:opacity-45',
               )}
             >
-              {segment.label}
+              {ellipsize(segment.label)}
             </span>
           </label>
         ))}

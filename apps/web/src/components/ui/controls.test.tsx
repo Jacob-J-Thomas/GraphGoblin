@@ -146,6 +146,27 @@ describe('SegmentedControl', () => {
     expect(screen.getByTestId('value')).toHaveTextContent('false');
   });
 
+  it('ends a long segment label in an ellipsis, keeping the whole text as its name', () => {
+    const long = 'Escalate to the on-call reviewer and wait for their decision';
+    render(
+      <SegmentedControl
+        legend="Next step"
+        options={[
+          { value: 'long', label: long },
+          { value: 'short', label: 'Stop' },
+        ]}
+        value="long"
+        onChange={vi.fn()}
+      />,
+    );
+    const radio = screen.getByRole('radio', { name: long });
+    const segment = radio.nextElementSibling as HTMLElement;
+    expect(segment).toHaveAttribute('title', long);
+    expect(segment).toHaveClass('max-w-full', 'min-w-0', 'whitespace-nowrap');
+    expect(screen.getByText(long)).toHaveClass('overflow-x-clip', 'text-ellipsis', 'min-w-0');
+    expect(radio.closest('label')).toHaveClass('max-w-full', 'min-w-0');
+  });
+
   it('shares one name between its radios and can be disabled', () => {
     render(
       <SegmentedControl

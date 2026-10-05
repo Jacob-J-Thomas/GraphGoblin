@@ -4,7 +4,7 @@
  * `aria-required`; an error describes its control; the file picker is a labelled native input.
  */
 import type { APIRequestContext, Page } from '@playwright/test';
-import { approvalLoop, expect, openNode, test } from './fixtures.js';
+import { approvalLoop, expect, openNode, publishLoop, test } from './fixtures.js';
 
 async function createLoop(request: APIRequestContext, kind: string, config: unknown) {
   const definition = approvalLoop(`controls ${kind}`);
@@ -176,5 +176,73 @@ test('the import file picker is a labelled native input that names the chosen fi
     buffer: Buffer.from('not json'),
   });
   await expect(page.getByText('not-a-loop.json is not a JSON document.')).toBeVisible();
-  await expect(input).toHaveAccessibleDescription('not-a-loop.json');
+  // The refusal describes the picker too, after the chosen file's name.
+  await expect(input).toHaveAttribute('aria-invalid', 'true');
+  await expect(input).toHaveAccessibleDescription(
+    'not-a-loop.json not-a-loop.json is not a JSON document.',
+  );
+});
+
+test('the run form keeps a long choice inside its field and puts each problem beside its field', async ({
+  page,
+  request,
+}) => {
+  const long = 'Escalate to the on-call reviewer and wait for their decision';
+  expect(long).toHaveLength(60);
+  const definition = approvalLoop('controls run form');
+  const id = await publishLoop(request, {
+    ...definition,
+    nodes: definition.nodes.map((node) =>
+      node.id === 'start'
+        ? {
+            ...node,
+            config: {
+              subtype: 'manual',
+              inputSchema: {
+                type: 'object',
+                required: ['approved', 'next'],
+                properties: {
+                  approved: { type: 'boolean', title: 'Approval' },
+                  next: { enum: [long, 'Stop here'], title: 'Next step' },
+                  reason: { type: 'string', title: 'Reason', minLength: 3 },
+                },
+              },
+            },
+          }
+        : node,
+    ),
+  });
+  await page.goto(`/app/runs/new?loop=${id}`);
+  const next = page.getByRole('radiogroup', { name: 'Next step', exact: true });
+  const option = next.getByRole('radio', { name: long, exact: true });
+  const text = next.getByText(long, { exact: true });
+  await expect(option).toHaveCount(1);
+  // The 60-character segment stays inside its field (440 px at most): whole when it fits, cut
+  // short with an ellipsis when the window is narrow, and never widening the field or the page.
+  for (const width of [1280, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    const field = await next.boundingBox();
+    const segment = await next.locator('label').filter({ hasText: long }).boundingBox();
+    expect(field?.width).toBeLessThanOrEqual(440);
+    expect((segment?.x ?? 0) + (segment?.width ?? 0)).toBeLessThanOrEqual(
+      (field?.x ?? 0) + (field?.width ?? 0) + 0.5,
+    );
+    expect(await next.evaluate((el) => el.scrollWidth > el.clientWidth)).toBe(false);
+    expect(await text.evaluate((el) => el.scrollWidth > el.clientWidth)).toBe(width === 390);
+  }
+  await expect(text.locator('xpath=..')).toHaveAttribute('title', long);
+  await text.click();
+  await expect(option).toBeChecked();
+  await page.setViewportSize({ width: 1280, height: 900 });
+
+  // Problems sit beside their fields: the unchosen required boolean and a short reason.
+  await page.getByLabel('Reason', { exact: true }).fill('ab');
+  await page.getByRole('button', { name: 'Start run', exact: true }).click();
+  const approval = page.getByRole('radiogroup', { name: 'Approval', exact: true });
+  await expect(approval).toHaveAttribute('aria-invalid', 'true');
+  await expect(approval).toHaveAccessibleDescription('Approval is required');
+  const reason = page.getByLabel('Reason', { exact: true });
+  await expect(reason).toHaveAttribute('aria-invalid', 'true');
+  await expect(reason).toHaveAccessibleDescription(/Reason must NOT have fewer than 3 characters/);
+  await expect(page).toHaveURL(/\/app\/runs\/new/);
 });
