@@ -123,7 +123,7 @@ describe('EditorPage undo and redo', () => {
     await user.clear(iterations);
     await user.type(iterations, '4');
     expect(store().definition!.settings).toMatchObject({ maxIterations: 4 });
-    act(() => screen.getByRole('heading', { name: 'Loop' }).focus());
+    act(() => screen.getByRole('heading', { name: 'Loop settings' }).focus());
     await user.keyboard(UNDO);
     expect(store().definition!.settings).toBe(settings);
     expect(screen.getByLabelText('Max iterations')).toHaveValue(10);

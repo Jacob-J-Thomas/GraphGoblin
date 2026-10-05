@@ -3,17 +3,17 @@
 ## Edit the starter graph
 
 1. Open **Loops**, enter a name in **New loop name**, and click **Create**. The editor opens on the starter graph. Click **Edit** to open an existing loop.
-2. Drag a node from the left palette onto the canvas, or click its palette button to add it. The new node is selected.
+2. Drag a node from the left palette onto the canvas, or click its palette button to add it. Hide collapses the palette to a rail, and Show expands it; its icon buttons still add nodes by click or Enter and can be dragged. The new node is selected.
 3. Click a node to edit it, or move to it with **Tab** and press **Enter**. Its editor opens in a dialog named **Edit _kind_ _id_**: set its ID, label, and config. IDs start with a letter and contain letters, digits, underscores, or hyphens; keep them unique. Dragging a node moves it without opening the dialog.
 4. Remove the starter edge before inserting your own path. Use **Connections** in the node's dialog to remove an edge, or select the edge on the canvas and press **Delete** or **Backspace**.
 5. Drag from a labelled output handle to the next node's input handle, or use the dialog's **Connect** form, which is the keyboard path: pick one of the node's free outputs and a target. **Delete node** in the dialog removes the node and its edges.
-6. Use the **Loop** panel on the right for the loop's name, description, workspace, defaults, limits, and declared variables.
+6. Use the **Loop settings** panel on the right for the loop's name, description, workspace, defaults, limits, and declared variables. Its Show and Hide buttons collapse or expand it.
 
 Edits in the dialog save as you type, so closing it never discards anything: use **Done**, the close button, **Esc**, or a click outside it, and focus returns to the node. An ID you are still typing applies when the dialog closes; an ID that cannot apply keeps the dialog open once with the reason, and closing again keeps the old ID. **Delete** and **Backspace** inside the dialog only edit text. While the dialog is open the rest of the editor waits, so close it to reach **Publish** or the palette. Below 768 px wide the dialog is a sheet along the bottom of the window.
 
 **Undo** and **Redo** at the start of the toolbar's buttons take back or repeat a change to the loop: adding, moving, connecting, renaming, or deleting nodes, removing edges, and edits to labels, config, the loop's name and description, settings, and variables. Each button's name says what it will change, for example **Undo move start**. **Ctrl+Z** undoes and **Ctrl+Shift+Z** or **Ctrl+Y** redoes (**Cmd+Z** and **Cmd+Shift+Z** on a Mac) with focus anywhere except a text field or a code editor, where the keys undo your typing in that field instead; on a checkbox, an option, a list, or a button they undo the editor. Typing in one field is one step, as is one drag; deleting a node and undoing brings back its edges and any loop-back to it, and **Discard text** can be undone like any change. An undo is saved like any other edit. The editor keeps the last 100 steps for as long as it is open; reloading it or choosing **Reload server draft** starts afresh.
 
-**Loop settings** in the toolbar shows or hides the loop panel, as does the panel's own button. The browser remembers the choice; until you choose, the panel starts expanded on windows at least 1280 px wide and collapsed below. Collapsed, it keeps a narrow rail with its show button. Validation stays in sight either way, on the nodes and beside **Publish** (see [Connect and validate](#connect-and-validate)).
+The **Palette** and **Loop settings** panels each have their own Show and Hide buttons. The browser remembers both choices; until you choose, the palette starts expanded on windows at least 1024 px wide and collapsed below, and the loop panel starts expanded at 1280 px and wider and collapsed below. Each collapsed panel keeps a narrow rail with its Show button. Validation stays in sight either way, on the nodes and beside **Publish** (see [Connect and validate](#connect-and-validate)).
 
 The editor lives at this browser route:
 

@@ -335,9 +335,7 @@ for (const theme of ['dark', 'light']) {
     await page.evaluate((theme) => {
       document.documentElement.dataset['theme'] = theme;
     }, theme);
-    // The loop panel is expanded by default at this width; open it when a smaller default collapsed it.
-    const loopToggle = page.getByRole('button', { name: 'Loop settings', exact: true });
-    if ((await loopToggle.getAttribute('aria-expanded')) !== 'true') await loopToggle.click();
+    await showLoopPanel(page);
     const variables = page.getByRole('group', { name: 'Variables', exact: true });
     await variables.getByRole('button', { name: 'Add entry', exact: true }).click();
     await page.getByLabel('Variables key 1').fill('value');

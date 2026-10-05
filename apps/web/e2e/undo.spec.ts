@@ -451,10 +451,10 @@ test('keeps the last 100 steps: 101 edits and 101 undos leave the first edit', a
   // Alternating fields: every edit is a step of its own.
   for (let i = 1; i <= 101; i += 1) await (i % 2 === 1 ? name : description).fill(`edit ${i}`);
   await expect(name).toHaveValue('edit 101');
-  await page.getByRole('heading', { name: 'Loop', exact: true }).focus();
+  await page.getByRole('heading', { name: 'Loop settings', exact: true }).focus();
   for (let i = 0; i < 101; i += 1) await page.keyboard.press('Control+z');
   await expect(name).toHaveValue('edit 1');
   await expect(description).toHaveValue('');
   await expect(undoButton(page)).toHaveAccessibleName('Undo');
-  await expect(page.getByRole('heading', { name: 'Loop', exact: true })).toBeFocused();
+  await expect(page.getByRole('heading', { name: 'Loop settings', exact: true })).toBeFocused();
 });

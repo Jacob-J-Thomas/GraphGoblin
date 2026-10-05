@@ -4,7 +4,6 @@ import { Icon } from '../components/icons/index.js';
 import { Badge, Button } from '../components/ui/index.js';
 import { cn } from '../lib/utils.js';
 import { newRunPath } from '../runs/new/paths.js';
-import { LOOP_PANEL_ID } from './LoopPanel.js';
 import type { SaveState } from './store.js';
 import { UndoRedo } from './UndoRedo.js';
 
@@ -74,8 +73,6 @@ export function EditorToolbar({
   errors,
   validation,
   publishing,
-  loopPanelExpanded,
-  onLoopSettings,
   onPublish,
   saveStatusRef,
 }: {
@@ -90,9 +87,6 @@ export function EditorToolbar({
   /** The validation indicator, shown left of Publish. */
   validation?: ReactNode;
   publishing: boolean;
-  /** Whether the loop panel is expanded: "Loop settings" expands and collapses it. */
-  loopPanelExpanded: boolean;
-  onLoopSettings: () => void;
   onPublish: () => void;
   saveStatusRef?: Ref<HTMLSpanElement>;
 }) {
@@ -132,15 +126,6 @@ export function EditorToolbar({
       </span>
       <div className="ml-auto flex items-center gap-2">
         <UndoRedo />
-        <Button
-          variant="outline"
-          aria-expanded={loopPanelExpanded}
-          aria-controls={LOOP_PANEL_ID}
-          onClick={onLoopSettings}
-        >
-          <Icon name="sliders" />
-          Loop settings
-        </Button>
         <OpenInRuns loopId={loopId} published={published} />
         {validation}
         <Button
