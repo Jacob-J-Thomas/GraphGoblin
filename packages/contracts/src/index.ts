@@ -7,8 +7,10 @@
 export const CONTRACTS_SCHEMA_VERSION = 1 as const;
 
 export * from './common.js';
+export * from './meta.js';
 export * from './api-keys.js';
 export * from './catalog.js';
+export * from './classifiers.js';
 export * from './issues.js';
 export * from './patch.js';
 export * from './thread.js';

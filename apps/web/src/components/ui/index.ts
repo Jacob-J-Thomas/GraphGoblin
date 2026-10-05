@@ -9,6 +9,12 @@ export { ConfirmAction } from './confirm-action.js';
 export { Card } from './card.js';
 export { Dialog, type DialogCloseReason, type DialogProps } from './dialog.js';
 export {
+  Disclosure,
+  DISCLOSURE_PANEL_SELECTOR,
+  revealDisclosures,
+  type DisclosureProps,
+} from './disclosure.js';
+export {
   Checkbox,
   FIELD_FRAME,
   FieldGroup,

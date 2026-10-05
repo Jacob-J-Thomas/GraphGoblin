@@ -27,6 +27,7 @@ export {
   events,
   loops,
   modelCatalog,
+  classifierModels,
   runs,
   secrets,
   settings,

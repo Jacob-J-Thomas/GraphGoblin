@@ -5,6 +5,7 @@ import { StrictMode, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { beforeEach, expect, it, vi } from 'vitest';
 import { z } from 'zod';
+import { openAdvanced } from '../__fixtures__/advanced.js';
 import { getCode, setCode } from '../__fixtures__/codemirror.js';
 import { fieldErrorIssues } from '../editor/model.js';
 import { useEditorStore } from '../editor/store.js';
@@ -114,6 +115,7 @@ it('rechecks a refused key when its conflicting row is removed', async () => {
       label="form"
     />,
   );
+  openAdvanced();
   fireEvent.change(screen.getByLabelText('Env key 2'), { target: { value: 'A' } });
   await user.click(screen.getByRole('button', { name: 'Remove env A' }));
   expect(screen.getByLabelText('Env key 1')).not.toHaveAttribute('aria-invalid', 'true');
@@ -131,6 +133,7 @@ it('announces each collision transition once and includes the reason when revert
       />
     </StrictMode>,
   );
+  openAdvanced();
   const key = screen.getByLabelText('Env key 3');
   const status = within(screen.getByRole('group', { name: 'Env' })).getByRole('status');
   key.focus();
@@ -170,6 +173,7 @@ it('reverts a still-refused key on blur and announces it without duplicating the
       label="form"
     />,
   );
+  openAdvanced();
   const key = screen.getByLabelText('Env key 2');
   fireEvent.change(key, { target: { value: 'A' } });
   expect(key).toHaveAccessibleDescription('Key "A" already exists. Choose a unique key.');
@@ -196,6 +200,7 @@ it('commits an available key draft on blur after its conflicting row disappears'
       label="form"
     />,
   );
+  openAdvanced();
   fireEvent.change(screen.getByLabelText('Env key 2'), { target: { value: 'A' } });
   fireEvent.click(screen.getByRole('button', { name: 'Remove env A' }));
   fireEvent.blur(screen.getByLabelText('Env key 1'));

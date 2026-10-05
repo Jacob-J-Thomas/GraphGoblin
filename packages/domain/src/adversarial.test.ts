@@ -93,7 +93,7 @@ describe('adversarial domain invariants', () => {
       registerHooks({ resolve(s,c,n) { return n(s.startsWith('.') && s.endsWith('.js') ? s.slice(0,-3)+'.ts' : s,c); },
         load(u,c,n) { return u.endsWith('.ts') ? {format:'module', shortCircuit:true, source:ts.transpile(readFileSync(new URL(u),'utf8'), {module:ts.ModuleKind.ESNext})} : n(u,c); } });
       const { evaluateExpression } = await import(${JSON.stringify(module)});
-      try { await evaluateExpression(${JSON.stringify(expression)}, {}, {timeoutMs: 10}); process.exit(2); }
+      try { await evaluateExpression(${JSON.stringify(expression)}, {}, {timeoutMs: 2_000}); process.exit(2); }
       catch (error) { process.stderr.write(String(error.message)); process.exit(0); }`;
     const result = await new Promise<string>((resolve, reject) => {
       const child = spawn(process.execPath, ['--input-type=module', '-e', code], {
@@ -278,7 +278,7 @@ describe('adversarial domain invariants', () => {
       registerHooks({ resolve(s,c,n) { return n(s.startsWith('.') && s.endsWith('.js') ? s.slice(0,-3)+'.ts' : s,c); },
         load(u,c,n) { return u.endsWith('.ts') ? {format:'module', shortCircuit:true, source:ts.transpile(readFileSync(new URL(u),'utf8'), {module:ts.ModuleKind.ESNext})} : n(u,c); } });
       const { evaluateExpression } = await import(${JSON.stringify(module)});
-      try { await evaluateExpression(${JSON.stringify(expression)}, {}, { timeoutMs: 10 }); process.stdout.write('accepted'); }
+      try { await evaluateExpression(${JSON.stringify(expression)}, {}, { timeoutMs: 2_000 }); process.stdout.write('accepted'); }
       catch (e) { process.stdout.write('rejected:' + e.message); }`;
       const result = spawnSync(process.execPath, ['--input-type=module', '-e', code], {
         cwd: fileURLToPath(new URL('..', import.meta.url)),

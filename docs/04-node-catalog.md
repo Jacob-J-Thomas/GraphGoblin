@@ -1,6 +1,6 @@
 # 04 - Node catalog
 
-Every node has an `id`, `kind`, `label`, `config`, canvas position, and ports. Every node kind implements the same handler contract (see 05). Configs are Zod schemas in `contracts`; the editor renders property panels from them and the API validates against them. Node-level `model` and `effort` fields are optional and fall back to loop defaults, then to owner settings.
+Every node has an `id`, `kind`, `label`, `config`, canvas position, and ports. Every node kind implements the same handler contract (see 05). Configs are Zod schemas in `contracts`; the editor renders property panels from them and the API validates against them. Each config field carries metadata in the schema (`fieldMeta`: a description, and whether it is advanced): the editor shows the description as the field's help and keeps the advanced fields of the inference, decision, script, and subloop nodes under a collapsed Advanced group, and the generated [node reference](reference/nodes.md) lists both (see 09, "Basic and advanced fields"). Node-level `model` and `effort` fields are optional and fall back to loop defaults, then to owner settings.
 
 There are **no error ports** in 1.0. Failures are handled by the engine's resiliency model (05). Nodes that legitimately produce different outcomes express them as labelled routes, which is a routing concept, not an error concept.
 
@@ -34,14 +34,16 @@ type DecisionConfig = {
     includeLastOutput?: boolean;
   };
   strategy: ('jev' | 'codex' | 'expression')[]; // ordered fallback chain
-  jev?: { primitive: 'choice'; minConfidence?: number };
+  jev?: { primitive: 'choice'; model?: string; minConfidence?: number }; // classifier catalog id
   codex?: { model?: string; effort?: Effort }; // a Codex thread with an output schema of { route, reasoning }
   expression?: { jsonata: string }; // must evaluate to one of the route labels
   recordAlternatives: boolean;
 };
 ```
 
-Behaviour: strategies are tried in order. Jev is skipped if no Jev key is configured. If Jev answers below `minConfidence`, the next strategy runs. The chosen route, confidence, and alternatives are written to a `decision.made` event and to `lastOutput`.
+Behaviour: strategies are tried in order. `jev.model` selects an exact owner-scoped classifier catalog id; omission defaults to built-in `jev` (provider model `jev-latest`). The registry resolves it at each decision, including resumed execution. An explicit selection never substitutes the built-in. Unknown ids (`CLASSIFIER_MODEL_NOT_FOUND`) and entries without Choice (`CLASSIFIER_PRIMITIVE_UNSUPPORTED`) block publication. Disabled models (`CLASSIFIER_MODEL_DISABLED`), missing or blank required secrets (`CLASSIFIER_SECRET_MISSING`), and unreadable secrets (`CLASSIFIER_SECRET_UNREADABLE`) warn at `config.jev.model`, naming the node, model, and Settings remedy. These unavailable strategies are skipped with the specific reason in `DECISION_NO_ROUTE`'s `tried` details. Without another strategy the decision cannot currently produce a route.
+
+If a classifier answers below `minConfidence`, the next strategy runs. Kev rescales confidence as `(p_max - 1/K) / (1 - 1/K)`, where `K` is the number of routes: two routes with selected probability 0.75 give confidence 0.5. See the [Kev research note](research/jev.md#kev-http-protocol-verification-2026-10-05) when choosing a threshold. An undeclared selected label also tries the next strategy, recording "chose unknown route" in the exhausted chain's `tried` details. Malformed responses and provider errors fail the step and cancellation propagates; HTTP errors do not silently fall through. The chosen route, confidence, and alternatives are written to `decision.made` and `lastOutput`; successful classifier events also carry `classifierModel`, the catalog id. `lastOutput` keeps its existing shape. Classification is Choice with categorical labels. Scorer-only entries can be listed but cannot execute a Choice decision.
 
 Ports: one output per route label.
 
@@ -152,7 +154,7 @@ type SubloopConfig = {
     mode: 'result-only' | 'merge' | 'custom';
     resultTo?: { lastOutput?: boolean; var?: string }; // where the child's return payload lands
     vars?: { strategy: 'child-wins' | 'parent-wins' | 'explicit'; map?: Record<string, string> };
-    messages?: 'none' | 'result-note' | 'all' | { where: string };
+    messages?: 'none' | 'last' | number | 'all' | { where: string }; // selection of the child's messages
     artifacts?: 'none' | 'all' | { where: string };
     custom?: { patch: string }; // JSONata producing a JSON Patch for the parent thread
     usage: 'roll-up' | 'separate';
@@ -173,7 +175,7 @@ Parks the run until something happens. In engine terms the run stops and is late
 | ---------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
 | `input`    | `prompt` template, `inputSchema?`, `exposeTo: ('ui' \| 'api' \| 'mcp')[]` | A human or agent providing input through the UI, REST, or the MCP tool    |
 | `duration` | `seconds`                                                                 | A persisted timer                                                         |
-| `until`    | `timestamp` (Liquid or JSONata)                                           | A persisted timer                                                         |
+| `until`    | `timestamp`, a Liquid template rendering an ISO 8601 timestamp            | A persisted timer                                                         |
 | `signal`   | `name`, `filter?: JSONata`                                                | A named signal delivered through REST or MCP, or a matching inbound event |
 
 Common fields: `timeoutSeconds?`, `onTimeout: 'continue' | 'fail-run'` (default `continue`, with `lastOutput = { timedOut: true }` so a decision node can branch).
@@ -205,6 +207,8 @@ Ports: `out`.
 ## Exit (Decided semantics, Draft config)
 
 Decides whether the loop is done, what it returns, where that goes, and whether to go around again.
+
+Exit predicates with strategy `jev` continue to use built-in Jev's Noul path and its current enable/secret availability. There is no exit classifier selector; custom HTTP classifiers execute Decision Choice only. Disabled, missing/blank-secret, and unreadable-secret states produce the same classifier warnings as decisions, at `config.criteria.<index>.strategy`. Enable Jev in Settings, Classifier models, or set `jev-api-key` in Settings, Secrets. These warnings allow publication; an unavailable Jev predicate fails with `DECIDER_UNAVAILABLE` when evaluated.
 
 ```ts
 type ExitConfig = {

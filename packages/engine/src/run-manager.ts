@@ -1155,7 +1155,17 @@ export class RunManager {
                 nodeId,
                 resumable: true,
                 details:
-                  error instanceof Error ? { name: error.name, stack: error.stack ?? null } : null,
+                  error instanceof Error
+                    ? {
+                        name: error.name,
+                        stack: error.stack ?? null,
+                        ...('code' in error &&
+                        typeof error.code === 'string' &&
+                        error.code.startsWith('DECIDER_')
+                          ? { code: error.code }
+                          : {}),
+                      }
+                    : null,
               };
         this.ports.logger.error({ runId, nodeId, failure }, 'node failed');
         await this.failRun(runId, failure);

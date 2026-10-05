@@ -1,0 +1,415 @@
+{
+  "format": "graphgoblin-loop",
+  "formatVersion": 1,
+  "exportedAt": "2026-10-02T12:00:00.000Z",
+  "loop": {
+    "schemaVersion": 1,
+    "name": "kitchen-sink",
+    "description": "Every node kind, for tests.",
+    "settings": {
+      "workingDirectory": {
+        "kind": "fixed",
+        "path": "/tmp/work"
+      },
+      "defaults": {
+        "model": "gpt-6-luna",
+        "effort": "low"
+      },
+      "maxIterations": 3,
+      "subloopDepthLimit": 8
+    },
+    "variables": {
+      "topic": {
+        "type": "string"
+      }
+    },
+    "nodes": [
+      {
+        "id": "start",
+        "label": "Start",
+        "ui": {
+          "x": 0,
+          "y": 0
+        },
+        "kind": "trigger",
+        "config": {
+          "subtype": "manual",
+          "exposeTo": [
+            "ui",
+            "api",
+            "mcp"
+          ]
+        }
+      },
+      {
+        "id": "nightly",
+        "label": "Nightly",
+        "ui": {
+          "x": 0,
+          "y": 0
+        },
+        "kind": "trigger",
+        "config": {
+          "subtype": "cron",
+          "expression": "0 2 * * *",
+          "timezone": "UTC",
+          "missedFirePolicy": "skip",
+          "enabled": true
+        }
+      },
+      {
+        "id": "prep",
+        "label": "Prepare",
+        "ui": {
+          "x": 0,
+          "y": 0
+        },
+        "kind": "mutate",
+        "config": {
+          "operations": [
+            {
+              "op": "set",
+              "path": "/vars/topic",
+              "value": {
+                "kind": "literal",
+                "value": "loops"
+              }
+            },
+            {
+              "op": "append-message",
+              "role": "note",
+              "content": "Topic is {{ vars.topic }}"
+            }
+          ]
+        }
+      },
+      {
+        "id": "infer",
+        "label": "Infer",
+        "ui": {
+          "x": 0,
+          "y": 0
+        },
+        "kind": "inference",
+        "config": {
+          "harness": "codex",
+          "session": {
+            "policy": "fresh"
+          },
+          "prompt": {
+            "template": "Write about {{ vars.topic }}."
+          },
+          "input": [],
+          "harnessOptions": {
+            "sandbox": "workspace-write",
+            "approval": "never"
+          },
+          "output": {
+            "captureTranscript": "artifact",
+            "toMessages": "final",
+            "transforms": [],
+            "schema": {
+              "jsonSchema": {
+                "type": "object",
+                "required": [
+                  "ok"
+                ]
+              },
+              "native": true,
+              "repair": {
+                "enabled": true,
+                "maxAttempts": 2,
+                "onFailure": "fail-run"
+              }
+            }
+          }
+        }
+      },
+      {
+        "id": "check",
+        "label": "Check",
+        "ui": {
+          "x": 0,
+          "y": 0
+        },
+        "kind": "script",
+        "config": {
+          "command": "node",
+          "args": [
+            "check.js"
+          ],
+          "cwd": "workspace",
+          "stdin": "thread",
+          "stdout": "last-output",
+          "exitCodeRoutes": {
+            "0": "out",
+            "3": "retry"
+          }
+        }
+      },
+      {
+        "id": "decide",
+        "label": "Decide",
+        "ui": {
+          "x": 0,
+          "y": 0
+        },
+        "kind": "decision",
+        "config": {
+          "routes": [
+            {
+              "label": "good",
+              "description": "Looks good"
+            },
+            {
+              "label": "bad",
+              "description": "Needs work"
+            }
+          ],
+          "question": "Is the output acceptable?",
+          "context": {
+            "messages": "last",
+            "includeLastOutput": true
+          },
+          "strategy": [
+            "expression"
+          ],
+          "expression": {
+            "jsonata": "lastOutput.value.ok ? \"good\" : \"bad\""
+          },
+          "recordAlternatives": true
+        }
+      },
+      {
+        "id": "sub",
+        "label": "Sub",
+        "ui": {
+          "x": 0,
+          "y": 0
+        },
+        "kind": "subloop",
+        "config": {
+          "loopRef": {
+            "loopId": "YR3VKRN0N8NSTP5794CGCJ22KD",
+            "version": "latest"
+          },
+          "input": {
+            "mode": "inherit"
+          },
+          "output": {
+            "mode": "result-only",
+            "resultTo": {
+              "lastOutput": true
+            },
+            "usage": "roll-up"
+          }
+        }
+      },
+      {
+        "id": "approve",
+        "label": "Approve",
+        "ui": {
+          "x": 0,
+          "y": 0
+        },
+        "kind": "wait",
+        "config": {
+          "mode": "input",
+          "prompt": "Approve?",
+          "exposeTo": [
+            "ui",
+            "api",
+            "mcp"
+          ],
+          "timeoutSeconds": 3600,
+          "onTimeout": "continue"
+        }
+      },
+      {
+        "id": "poll",
+        "label": "Poll",
+        "ui": {
+          "x": 0,
+          "y": 0
+        },
+        "kind": "heartbeat",
+        "config": {
+          "intervalSeconds": 60,
+          "probe": {
+            "kind": "none"
+          },
+          "maxBeats": 5,
+          "onExhausted": "continue",
+          "record": "summary"
+        }
+      },
+      {
+        "id": "done",
+        "label": "Done",
+        "ui": {
+          "x": 0,
+          "y": 0
+        },
+        "kind": "exit",
+        "config": {
+          "criteria": [
+            {
+              "when": "max-iterations",
+              "value": 3,
+              "outcome": "exhausted"
+            }
+          ],
+          "default": "loop-back",
+          "loopBack": {
+            "targetNodeId": "prep"
+          },
+          "return": {
+            "mapping": "{ \"topic\": vars.topic }",
+            "channels": [
+              {
+                "kind": "caller"
+              },
+              {
+                "kind": "log"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "e1",
+        "from": {
+          "node": "start",
+          "port": "out"
+        },
+        "to": {
+          "node": "prep",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e2",
+        "from": {
+          "node": "nightly",
+          "port": "out"
+        },
+        "to": {
+          "node": "prep",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e3",
+        "from": {
+          "node": "prep",
+          "port": "out"
+        },
+        "to": {
+          "node": "infer",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e4",
+        "from": {
+          "node": "infer",
+          "port": "out"
+        },
+        "to": {
+          "node": "check",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e5",
+        "from": {
+          "node": "check",
+          "port": "out"
+        },
+        "to": {
+          "node": "decide",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e5b",
+        "from": {
+          "node": "check",
+          "port": "retry"
+        },
+        "to": {
+          "node": "infer",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e6",
+        "from": {
+          "node": "decide",
+          "port": "good"
+        },
+        "to": {
+          "node": "sub",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e7",
+        "from": {
+          "node": "decide",
+          "port": "bad"
+        },
+        "to": {
+          "node": "approve",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e8",
+        "from": {
+          "node": "sub",
+          "port": "out"
+        },
+        "to": {
+          "node": "poll",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e9",
+        "from": {
+          "node": "approve",
+          "port": "out"
+        },
+        "to": {
+          "node": "poll",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e10",
+        "from": {
+          "node": "poll",
+          "port": "out"
+        },
+        "to": {
+          "node": "done",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e11",
+        "from": {
+          "node": "done",
+          "port": "loopBack"
+        },
+        "to": {
+          "node": "prep",
+          "port": "in"
+        }
+      }
+    ]
+  }
+}

@@ -16,7 +16,7 @@ Jev is TypeSafe AI's decision model, released 15 September 2026. It takes typed 
 
 - Hosted API. Input pricing around $0.042 per million tokens, output free, 64K context per request, text input only.
 - Official SDKs for JavaScript and Python. Also available through OpenRouter.
-- Open-weight alternatives compatible with the Jev API exist under the name Kev, from 0.8B to 27B parameters, for self-hosting.
+- Kev is an open-weight alternative. The owner-served Choice protocol and licences of Kev-4B were inspected on 2026-10-05 (evidence below); other variants were not verified here.
 
 ## SDK (verified, `@typesafe-ai/sdk` 0.6.0)
 
@@ -80,7 +80,26 @@ A `noul` answer is `{ "type": "noul", "noul": 0.9 }`, where `noul` is the probab
 
 - Decision node strategy `jev` with the Choice primitive: route labels and descriptions become the criteria, the rendered question becomes the instructions, and the selected decision context (trigger, messages, vars, last output) becomes the state. Scalar contexts are wrapped as `{ "value": ... }` because state must be text, an object, an array, or null. The adapter returns the reported confidence (falling back to the chosen label's probability) and the other labels as alternatives; the engine compares the confidence with `minConfidence` and, below it, runs the next strategy.
 - Exit criteria predicates with strategy `jev` use Noul: `holds = noul >= 0.5`, `confidence` is the probability of the answer given.
-- The API key lives in the GraphGoblin secret store under `jev-api-key` and is the only API-key service in 1.0.
+- The built-in API key lives in the GraphGoblin secret store under `jev-api-key`. Decision `jev.model` optionally selects an owner-scoped classifier catalog id; omission defaults to built-in `jev`, whose provider model remains `jev-latest`. Custom HTTP entries use their own providerModel and optional bearer secretRef. No credentials travel with loop exports. The registry resolves current metadata/secrets on every decision and captures an immutable request configuration; catalog or referenced-secret edits invalidate cached clients. Disabled/unconfigured entries skip this strategy; provider failures retain existing failure behaviour. Exit Noul uses the built-in only.
+
+## Kev HTTP protocol verification (2026-10-05)
+
+Verified the owner's [Kev-4B model card](https://huggingface.co/jaredpalmer/kev-4b/tree/6cfce5c2fa4b4bd64026336ab649c5ca78857d52) and [Kev repository](https://github.com/jaredpalmer/kev/tree/fe64b1274ea7f80d4095866df90666abb03e9cf6), specifically `kev/api.py`, `kev/serve.py`, `tests/test_api.py`, and `LICENSE`. The card identifies the Kev adapter/heads and the Qwen3.5-4B base as Apache-2.0; the serving repository also carries Apache-2.0. No Kev code or dependency is bundled in GraphGoblin.
+
+The card recommends the owner's `kev.serve`, using CUDA bf16/fused kernels or automatic Apple Silicon MLX selection:
+
+```sh
+git clone https://github.com/jaredpalmer/kev.git
+cd kev
+uv sync --extra serve
+uv run --extra serve python -m kev.serve --run jaredpalmer/kev-4b --port 8008
+```
+
+The optional pinned run is `jaredpalmer/kev-4b@v1.0`. Register the resulting API root (for example `http://127.0.0.1:8008`) as provider `http`, providerModel `kev-latest`, primitives including `choice`. The server permits unauthenticated requests when `KEV_API_KEY` is unset; if the operator sets it, put that value in GraphGoblin Secrets and register its name as secretRef.
+
+The inspected server implements native `POST /v1/systemone`. Its request includes model, state, and named questions; a Choice question accepts type, instructions, and a criteria map of submitted labels to descriptions. It returns `answers.<question>` with type `choice`, a declared selected label, confidence, and probabilities for every submitted label. Its own tests assert label coverage and bounded probabilities. `choice_confidence` rescales the selected maximum probability as `(p_max - 1/K) / (1 - 1/K)`, where `K` is the number of labels: two labels at selected probability 0.75 give confidence 0.5. GraphGoblin preserves reported confidence and only uses the selected probability when confidence is omitted. Optional response model/usage/latency/truncation metadata is accepted without affecting routing. The bearer middleware checks `Authorization: Bearer <KEV_API_KEY>` and returns 401 on mismatch.
+
+This verifies the served protocol and licence from owner source, without loading weights or running Kev inference. Local deterministic HTTP fixtures exercise GraphGoblin's actual request/response, authentication, failure, timeout, and cancellation paths. No owner-supplied running Kev endpoint was available. Hosting/installing models and bridges for other protocols remain outside this change; ordinary LiteLLM chat routing does not establish compatibility with this Choice contract. See [06](../06-harness-integration.md#http-classifier-endpoint-contract-decided-adr-0021).
 
 ## Verified live (2026-10-03)
 

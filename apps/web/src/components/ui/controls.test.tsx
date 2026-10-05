@@ -33,6 +33,31 @@ function ControlledSwitch({ initial = false, disabled = false }) {
 }
 
 describe('Switch', () => {
+  it.each([true, 'true'] as const)(
+    'retains focus but ignores activation with aria-disabled=%s',
+    async (disabled) => {
+      const onCheckedChange = vi.fn();
+      render(
+        <Switch
+          aria-label="Pending"
+          checked
+          aria-disabled={disabled}
+          aria-busy
+          onCheckedChange={onCheckedChange}
+        />,
+      );
+      const user = userEvent.setup();
+      await user.tab();
+      const toggle = screen.getByRole('switch', { name: 'Pending' });
+      expect(toggle).toHaveFocus();
+      expect(toggle).not.toBeDisabled();
+      expect(toggle).toHaveClass('aria-disabled:cursor-not-allowed', 'aria-busy:cursor-wait');
+      await user.keyboard(' {Enter}');
+      await user.click(toggle);
+      expect(onCheckedChange).not.toHaveBeenCalled();
+      expect(toggle).toHaveFocus();
+    },
+  );
   it('is a labelled switch that toggles on click, Space, Enter, and a click on its label', async () => {
     const user = userEvent.setup();
     render(<ControlledSwitch />);

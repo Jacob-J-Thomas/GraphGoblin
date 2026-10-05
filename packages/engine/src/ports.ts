@@ -234,6 +234,26 @@ export interface DeciderPort {
   judge(request: YesNoRequest, signal: AbortSignal): Promise<PredicateAnswer>;
 }
 
+/** Choice-only provider snapshot; an in-flight request retains its resolved configuration. */
+export interface ClassifierPort {
+  choose(request: ChoiceRequest, signal: AbortSignal): Promise<ChoiceResult>;
+}
+
+export type ClassifierUnavailableReason =
+  | 'CLASSIFIER_MODEL_NOT_FOUND'
+  | 'CLASSIFIER_PRIMITIVE_UNSUPPORTED'
+  | 'CLASSIFIER_MODEL_DISABLED'
+  | 'CLASSIFIER_SECRET_MISSING'
+  | 'CLASSIFIER_SECRET_UNREADABLE';
+
+export type ClassifierResolution =
+  | { status: 'ready'; classifier: ClassifierPort }
+  | { status: 'unavailable'; reason: ClassifierUnavailableReason; message: string };
+
+export interface ClassifierRegistryPort {
+  resolve(ownerId: string, modelId: string): Promise<ClassifierResolution>;
+}
+
 /** A single structured completion: prompt in, schema-shaped value out. Used for repair and Codex decisions. */
 export interface StructuredPort {
   complete(
@@ -354,6 +374,7 @@ export interface EnginePorts {
   sessions: HarnessSessionRepository;
   harnesses: Partial<Record<HarnessId, HarnessPort>>;
   deciders: DeciderPort[];
+  classifiers: ClassifierRegistryPort;
   structured?: StructuredPort;
   scripts: ScriptPort;
   workspace: WorkspacePort;

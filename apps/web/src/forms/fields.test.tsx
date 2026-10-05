@@ -10,6 +10,7 @@ import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
+import { openAdvanced } from '../__fixtures__/advanced.js';
 import { setCode } from '../__fixtures__/codemirror.js';
 import { Row } from './fields/shared.js';
 import { descriptionOf, type Schema } from './introspect.js';
@@ -97,6 +98,9 @@ describe('form controls in the schema-driven form', () => {
         spy={spy}
       />,
     );
+    // Record alternatives is an advanced field: under the collapsed Advanced disclosure.
+    expect(screen.queryByRole('switch', { name: 'Record alternatives' })).toBeNull();
+    openAdvanced();
     const record = screen.getByRole('switch', { name: 'Record alternatives' });
     expect(record).toBeChecked();
     await user.click(record);
@@ -297,20 +301,28 @@ describe('form controls in the schema-driven form', () => {
     );
     const strategy = screen.getByRole('group', { name: 'Strategy' });
     expect(within(strategy).getByText('*')).toHaveAttribute('aria-hidden', 'true');
-    expect(strategy).toHaveAccessibleDescription('Choose at least 1.');
+    // The rule, then the help from the field's metadata.
+    expect(strategy).toHaveAccessibleDescription(
+      'Choose at least 1. Ordered fallback chain of strategies.',
+    );
     for (const box of within(strategy).getAllByRole('checkbox')) expect(box).not.toBeRequired();
     // Unchecking every strategy: the group is described by its rule and the error.
     await user.click(within(strategy).getByRole('checkbox', { name: 'jev' }));
     await waitFor(() =>
-      expect(strategy).toHaveAccessibleDescription(/^Choose at least 1\. .*>=1 items/),
+      expect(strategy).toHaveAccessibleDescription(
+        /^Choose at least 1\. Ordered fallback chain of strategies\. .*>=1 items/,
+      ),
     );
     expect(within(strategy).getByRole('alert')).toBeInTheDocument();
     const routes = screen.getByRole('group', { name: 'Routes' });
-    expect(routes).toHaveAccessibleDescription('At least 2 items.');
-    // Optional collections carry no marker and no rule.
+    expect(routes).toHaveAccessibleDescription(
+      'At least 2 items. At least two labelled routes, each with a description the decider reads.',
+    );
+    // Optional collections carry no marker and no rule, only their help.
+    openAdvanced();
     const vars = screen.getByRole('group', { name: 'Vars' });
     expect(within(vars).queryByText('*')).toBeNull();
-    expect(vars).not.toHaveAttribute('aria-describedby');
+    expect(vars).toHaveAccessibleDescription('Variables the decider reads.');
   });
 
   it('keeps Row usable with plain children and no control id', () => {

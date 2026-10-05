@@ -27,12 +27,17 @@ export function Switch({ checked, onCheckedChange, className, onClick, ...props 
         'border border-strong bg-surface-sunken p-0 transition-colors hover:border-field-hover',
         'aria-checked:border-accent-strong aria-checked:bg-accent aria-checked:hover:bg-accent-hover',
         'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
-        'disabled:cursor-not-allowed disabled:opacity-45',
+        'disabled:cursor-not-allowed disabled:opacity-45 aria-disabled:cursor-not-allowed aria-busy:cursor-wait',
         className,
       )}
       onClick={(event) => {
         onClick?.(event);
-        if (!event.defaultPrevented) onCheckedChange(!checked);
+        if (
+          !event.defaultPrevented &&
+          props['aria-disabled'] !== true &&
+          props['aria-disabled'] !== 'true'
+        )
+          onCheckedChange(!checked);
       }}
       {...props}
     >
@@ -42,6 +47,8 @@ export function Switch({ checked, onCheckedChange, className, onClick, ...props 
           'absolute top-[2px] left-[2px] size-[18px] rounded-full bg-thumb-off',
           'transition-[translate,background-color] duration-(--duration-base) ease-emphasised',
           'group-aria-checked/switch:translate-x-5 group-aria-checked/switch:bg-thumb-on',
+          // Dim only the thumb while pending so the focus ring retains its contrast.
+          'group-aria-disabled/switch:opacity-45',
           // Forced colours drop backgrounds: a solid border keeps the thumb, whose side shows the state.
           'forced-colors:border-[9px] forced-colors:border-solid',
         )}

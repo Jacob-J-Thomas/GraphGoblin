@@ -162,6 +162,16 @@ describe('syntax checks', () => {
       ['TEMPLATE_INVALID', 'note'],
     ]);
     expect(issues[1]?.message).toMatch(/^template at node "ask" prompt\.template: /);
+    // Each names its field, so the editor can count and focus it.
+    expect(issues.map((i) => i.path)).toEqual([
+      'settings.workingDirectory.template',
+      'config.prompt.template',
+      'config.question',
+      'config.expression.jsonata',
+      'config.args.1',
+      'config.input.vars.a',
+      'config.operations.0.content',
+    ]);
     expect(issues[0]?.message).toMatch(/^template at loop settings workingDirectory\.template/);
     expect(issues[4]?.message).toContain('args.1');
     expect(issues[5]?.message).toContain('input.vars.a');

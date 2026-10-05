@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { CodexHarness } from '@graphgoblin/adapter-codex';
 import { JevDecider } from '@graphgoblin/adapter-jev';
+import type { DeciderPort } from '@graphgoblin/engine';
 import { CapturingLogger } from '@graphgoblin/engine/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildApp } from './app.js';
@@ -30,10 +31,10 @@ function config(env: Record<string, string> = {}) {
   });
 }
 
-function jevOf(container: Container): JevDecider {
+function jevOf(container: Container): DeciderPort {
   const jev = container.ports.deciders.find((d) => d.id === 'jev');
-  expect(jev).toBeInstanceOf(JevDecider);
-  return jev as JevDecider;
+  expect(jev).toBeDefined();
+  return jev!;
 }
 
 describe('default adapters', () => {
@@ -85,12 +86,12 @@ describe('default adapters', () => {
   });
 
   it('ignores other secrets and other owners', async () => {
-    const jev = jevOf(container);
-    const refresh = vi.spyOn(jev, 'refresh');
+    const refresh = vi.spyOn(JevDecider.prototype, 'refresh');
     await app.inject({ method: 'PUT', url: '/secrets/other', payload: { value: 'x' } });
     await container.onSecretChanged('someone-else', JEV_SECRET);
     expect(refresh).not.toHaveBeenCalled();
     expect(hook).toHaveBeenCalledWith(LOCAL_OWNER, 'other');
+    refresh.mockRestore();
   });
 
   it('does not notify when deleting a secret that does not exist', async () => {
@@ -98,9 +99,97 @@ describe('default adapters', () => {
     expect(res.statusCode).toBe(404);
     expect(hook).not.toHaveBeenCalled();
   });
+
+  it('keeps exit Noul on built-in Jev, with enable and secret refresh, while Choice snapshots are cached independently', async () => {
+    await app.inject({
+      method: 'PUT',
+      url: `/secrets/${JEV_SECRET}`,
+      payload: { value: 'first-key' },
+    });
+    const first = await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev');
+    expect(first.status).toBe('ready');
+    if (first.status !== 'ready') throw new Error('expected configured Jev');
+    expect(first.classifier).toBeInstanceOf(JevDecider);
+    expect(await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev')).toEqual(first);
+    await app.inject({
+      method: 'PUT',
+      url: `/secrets/${JEV_SECRET}`,
+      payload: { value: 'second-key' },
+    });
+    const next = await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev');
+    expect(next.status).toBe('ready');
+    if (next.status !== 'ready') throw new Error('expected configured Jev');
+    expect(next.classifier).not.toBe(first.classifier);
+    const judge = vi
+      .spyOn(JevDecider.prototype, 'judge')
+      .mockResolvedValue({ holds: true, confidence: 1 });
+    const choose = vi
+      .spyOn(JevDecider.prototype, 'choose')
+      .mockResolvedValue({ label: 'yes', confidence: 1 });
+    try {
+      expect(
+        await jevOf(container).judge(
+          { question: 'Done?', context: {} },
+          new AbortController().signal,
+        ),
+      ).toEqual({ holds: true, confidence: 1 });
+      await jevOf(container).choose(
+        { question: '?', context: {}, options: [{ label: 'yes', description: '' }] },
+        new AbortController().signal,
+      );
+      expect(judge).toHaveBeenCalledOnce();
+      expect(choose).toHaveBeenCalledOnce();
+    } finally {
+      judge.mockRestore();
+      choose.mockRestore();
+    }
+    await app.inject({
+      method: 'PATCH',
+      url: '/classifier-models/jev',
+      payload: { enabled: false },
+    });
+    expect(jevOf(container).available()).toBe(false);
+    expect(await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev')).toMatchObject({
+      reason: 'CLASSIFIER_MODEL_DISABLED',
+    });
+    await app.inject({
+      method: 'PATCH',
+      url: '/classifier-models/jev',
+      payload: { enabled: true },
+    });
+    expect(jevOf(container).available()).toBe(true);
+    await app.inject({ method: 'DELETE', url: `/secrets/${JEV_SECRET}` });
+    expect(jevOf(container).available()).toBe(false);
+    expect(await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev')).toMatchObject({
+      reason: 'CLASSIFIER_SECRET_MISSING',
+    });
+  });
 });
 
 describe('Jev key at boot', () => {
+  it('seeds before recovery, refreshes metadata, and preserves a disabled built-in across real restarts', async () => {
+    const first = await createContainer(config(), { startTimers: false });
+    await first.start();
+    await first.repos.classifiers.setEnabled(LOCAL_OWNER, 'jev', false);
+    await first.handle.client.execute(
+      "UPDATE classifier_models SET display_name = 'stale' WHERE id = 'jev'",
+    );
+    await first.stop();
+    const second = await createContainer(config(), { startTimers: false });
+    const recover = vi.spyOn(second.manager, 'start').mockImplementation(async () => {
+      expect(await second.repos.classifiers.findOne(LOCAL_OWNER, 'jev')).toMatchObject({
+        displayName: 'Jev',
+        enabled: false,
+      });
+    });
+    try {
+      await second.start();
+      expect(recover).toHaveBeenCalledOnce();
+      expect(jevOf(second).available()).toBe(false);
+    } finally {
+      await second.stop();
+    }
+  });
   it('seeds an encrypted local-owner secret once, keeps it across restarts, and never logs the value', async () => {
     const key = 'test-environment-seed-key';
     const logger = new CapturingLogger();

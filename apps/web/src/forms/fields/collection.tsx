@@ -1,4 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
+import { DISCLOSURE_PANEL_SELECTOR } from '../../components/ui/index.js';
+
+/**
+ * Where a row's first control is found: the row, or the panel of a collapsible row (its header's
+ * toggle is not where an added item is filled in).
+ */
+function rowScope(collection: HTMLElement | null, row: number): Element | null | undefined {
+  const element = collection?.querySelector(`:scope > [data-collection-row="${row}"]`);
+  return element?.querySelector(DISCLOSURE_PANEL_SELECTOR) ?? element;
+}
 
 /** Focus only after the new controls have mounted, and keep repeated actions announceable. */
 export function useCollectionFocus() {
@@ -18,11 +28,9 @@ export function useCollectionFocus() {
           ? addRef.current?.disabled
             ? ref.current
             : addRef.current
-          : ref.current
-              ?.querySelector(`:scope > [data-collection-row="${action.row}"]`)
-              ?.querySelector<HTMLElement>(
-                'input:not(:disabled), textarea:not(:disabled), select:not(:disabled), [contenteditable="true"], button:not(:disabled)',
-              );
+          : rowScope(ref.current, action.row)?.querySelector<HTMLElement>(
+              'input:not(:disabled), textarea:not(:disabled), select:not(:disabled), [contenteditable="true"], button:not(:disabled)',
+            );
       (target ?? ref.current)?.focus();
     };
     // Removal moves focus immediately to a safe control. Added CodeMirror views may be recreated
