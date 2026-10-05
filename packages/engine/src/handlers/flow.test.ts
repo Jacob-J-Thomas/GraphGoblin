@@ -54,6 +54,45 @@ function decisionLoop(name: string, config: Record<string, unknown>): LoopDefini
 }
 
 describe('decision node', () => {
+  it.each(['jev', 'codex'] as const)(
+    'summarizes %s exceptions without retaining provider messages, stacks, names or arbitrary codes',
+    async (strategy) => {
+      const engine = await createTestEngine();
+      const marker = 'gg-provider-error-private-regression';
+      const decider = strategy === 'jev' ? engine.ports.jev : engine.ports.codexDecider;
+      for (const code of ['DECIDER_INVALID_RESPONSE', `DECIDER_${marker}`, undefined]) {
+        decider.choose = () =>
+          Promise.reject(
+            Object.assign(new Error(marker), { name: marker, ...(code ? { code } : {}) }),
+          );
+        const version = engine.publish(
+          decisionLoop(`error-${code ?? 'none'}`, { strategy: [strategy] }),
+        );
+        const run = await engine.runToIdle(version.loopId);
+        expect(run.failure).toMatchObject({
+          code: 'INTERNAL_ERROR',
+          nodeId: 'decide',
+          details: { strategy },
+        });
+        expect(run.failure?.details).toEqual({
+          strategy,
+          ...(code === 'DECIDER_INVALID_RESPONSE' ? { code } : {}),
+        });
+        expect(JSON.stringify(run)).not.toContain(marker);
+        expect(JSON.stringify(engine.events(run.id))).not.toContain(marker);
+      }
+      // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors -- Exercise an untrusted provider that rejects with a raw string.
+      decider.choose = () => Promise.reject(marker);
+      const version = engine.publish(decisionLoop('string-error', { strategy: [strategy] }));
+      const run = await engine.runToIdle(version.loopId);
+      expect(run.failure).toMatchObject({
+        code: 'INTERNAL_ERROR',
+        message: 'Decision provider request failed',
+      });
+      expect(JSON.stringify(run)).not.toContain(marker);
+      expect(JSON.stringify(engine.events(run.id))).not.toContain(marker);
+    },
+  );
   it('routes with an expression and records the decision', async () => {
     const engine = await createTestEngine();
     const version = engine.publish(
@@ -132,9 +171,43 @@ describe('decision node', () => {
     expect(run.status).toBe('failed');
     expect(run.failure?.code).toBe('DECISION_NO_ROUTE');
     expect(run.failure?.message).toMatch(/jev unavailable/);
-    expect(run.failure?.message).toMatch(/codex chose unknown route "meh"/);
-    expect(run.failure?.message).toMatch(/expression returned "nope"/);
+    expect(run.failure?.message).toContain('codex chose a route that is not declared on this node');
+    expect(run.failure?.message).toContain(
+      'expression returned a route that is not declared on this node',
+    );
   });
+
+  it.each(['jev', 'codex'] as const)(
+    'keeps %s unknown-label fallback without persisting the raw answer',
+    async (strategy) => {
+      const engine = await createTestEngine();
+      const marker = 'gg-provider-bearer-private-regression';
+      const decider = strategy === 'jev' ? engine.ports.jev : engine.ports.codexDecider;
+      decider.choose = () => Promise.resolve({ label: marker, confidence: 1 });
+      const fallback = engine.publish(
+        decisionLoop('fallback', {
+          strategy: [strategy, 'expression'],
+          expression: { jsonata: '"good"' },
+        }),
+      );
+      const routed = await engine.runToIdle(fallback.loopId);
+      expect(routed).toMatchObject({ status: 'succeeded', result: 'good' });
+      expect(
+        engine.events(routed.id).find((event) => event.type === 'decision.made'),
+      ).toMatchObject({ strategy: 'expression', route: 'good' });
+      const only = engine.publish(decisionLoop('only', { strategy: [strategy] }));
+      const failed = await engine.runToIdle(only.loopId);
+      expect(failed.failure).toMatchObject({
+        code: 'DECISION_NO_ROUTE',
+        nodeId: 'decide',
+        details: { tried: [`${strategy} chose a route that is not declared on this node`] },
+      });
+      for (const run of [routed, failed]) {
+        expect(JSON.stringify(run)).not.toContain(marker);
+        expect(JSON.stringify(engine.events(run.id))).not.toContain(marker);
+      }
+    },
+  );
 });
 
 describe('mutate node', () => {

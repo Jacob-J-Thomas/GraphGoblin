@@ -56,7 +56,16 @@ describe('cron preview endpoint', () => {
     const response = await t.app.inject({ method: 'POST', url, payload: { ...base, ...override } });
     expect(response.statusCode).toBe(400);
     expect(response.headers['content-type']).toContain('application/problem+json');
-    expect(response.json()).toMatchObject({ code: 'CRON_INVALID', status: 400 });
+    expect(response.json()).toMatchObject({
+      code: 'CRON_INVALID',
+      status: 400,
+      errors: [
+        {
+          path: `config.${'expression' in override ? 'expression' : 'timezone'}`,
+          message: expect.any(String),
+        },
+      ],
+    });
   });
   it.each([
     { count: 0 },
@@ -70,27 +79,50 @@ describe('cron preview endpoint', () => {
     expect(response.statusCode).toBe(400);
     expect(response.json()).toMatchObject({ code: 'VALIDATION_FAILED' });
   });
-  it('keeps the CRON_INVALID issue on validate and publish', async () => {
-    t = await createTestApp();
-    const definition = minimalLoop();
-    definition.nodes[0] = {
-      id: 'start',
-      kind: 'trigger',
-      label: 'Start',
-      config: { subtype: 'cron', expression: 'bad', timezone: 'UTC' },
-    };
-    const created = await t.app.inject({ method: 'POST', url: '/loops', payload: { definition } });
-    const id = created.json<{ loop: { id: string } }>().loop.id;
-    const validate = await t.app.inject({
-      method: 'POST',
-      url: `/loops/${id}/validate`,
-      payload: { definition },
-    });
-    expect(validate.json<{ issues: { code: string }[] }>().issues).toEqual(
-      expect.arrayContaining([expect.objectContaining({ code: 'CRON_INVALID' })]),
-    );
-    const publish = await t.app.inject({ method: 'POST', url: `/loops/${id}/publish` });
-    expect(publish.statusCode).toBe(422);
-    expect(publish.body).toContain('CRON_INVALID');
-  });
+  it.each([
+    { expression: 'bad', timezone: 'UTC', field: 'expression' },
+    { expression: '0 9 * * *', timezone: 'Mars/Olympus', field: 'timezone' },
+  ])(
+    'keeps the CRON_INVALID field path on every admission endpoint ($field)',
+    async ({ expression, timezone, field }) => {
+      t = await createTestApp();
+      const definition = minimalLoop();
+      definition.nodes[0] = {
+        id: 'start',
+        kind: 'trigger',
+        label: 'Start',
+        config: { subtype: 'cron', expression, timezone },
+      };
+      const created = await t.app.inject({
+        method: 'POST',
+        url: '/loops',
+        payload: { definition },
+      });
+      const id = created.json<{ loop: { id: string } }>().loop.id;
+      const issue = expect.objectContaining({
+        code: 'CRON_INVALID',
+        nodeId: 'start',
+        path: `config.${field}`,
+      });
+      expect(created.json().issues).toEqual(expect.arrayContaining([issue]));
+      const validate = await t.app.inject({
+        method: 'POST',
+        url: `/loops/${id}/validate`,
+        payload: { definition },
+      });
+      expect(validate.json<{ issues: { code: string }[] }>().issues).toEqual(
+        expect.arrayContaining([issue]),
+      );
+      for (const response of [
+        await t.app.inject({ method: 'PUT', url: `/loops/${id}/draft`, payload: { definition } }),
+        await t.app.inject({ method: 'POST', url: '/loops/import', payload: definition }),
+      ]) {
+        expect(response.statusCode).toBeLessThan(300);
+        expect(response.json().issues).toEqual(expect.arrayContaining([issue]));
+      }
+      const publish = await t.app.inject({ method: 'POST', url: `/loops/${id}/publish` });
+      expect(publish.statusCode).toBe(422);
+      expect(publish.json().errors).toEqual(expect.arrayContaining([issue]));
+    },
+  );
 });

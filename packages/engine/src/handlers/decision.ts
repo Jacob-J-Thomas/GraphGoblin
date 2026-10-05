@@ -1,9 +1,21 @@
 import type { JsonValue } from '@graphgoblin/contracts';
 import { evaluateExpression, threadView } from '@graphgoblin/domain';
-import { RunFailureError } from '../errors.js';
+import { isAbortError, RunFailureError } from '../errors.js';
 import type { NodeContext, NodeHandler } from '../handler.js';
 import type { ClassifierPort, ChoiceResult } from '../ports.js';
 import { outputPatch, selectMessages, toJson } from './common.js';
+
+/** Provider exception messages, stacks, and even codes may contain their raw answer or a key. */
+const DECIDER_FAILURE_MESSAGES: Record<string, string> = {
+  DECIDER_UNAVAILABLE: 'Decision provider is unavailable',
+  DECIDER_NOT_AUTHENTICATED: 'Decision provider rejected authentication',
+  DECIDER_RATE_LIMITED: 'Decision provider rate limit exceeded',
+  DECIDER_HTTP_ERROR: 'Decision provider request failed',
+  DECIDER_UNREACHABLE: 'Classifier endpoint is unreachable',
+  DECIDER_INVALID_RESPONSE: 'Decision provider returned an invalid response',
+  DECIDER_REDIRECT: 'Classifier redirects are not followed',
+  DECIDER_TIMEOUT: 'Decision provider request timed out',
+};
 
 async function decisionContext(ctx: NodeContext<'decision'>): Promise<JsonValue> {
   const view = threadView(ctx.thread) as unknown as Record<string, unknown>;
@@ -40,7 +52,7 @@ export const decisionHandler: NodeHandler<'decision'> = {
         );
         const label = typeof value === 'string' ? value : String(value);
         if (labels.has(label)) return decide(ctx, strategy, { label });
-        tried.push(`expression returned "${label}"`);
+        tried.push('expression returned a route that is not declared on this node');
         continue;
       }
       let decider: ClassifierPort | undefined;
@@ -63,17 +75,35 @@ export const decisionHandler: NodeHandler<'decision'> = {
         strategy === 'codex'
           ? ctx.services.resolveModel(config.codex?.model, config.codex?.effort)
           : undefined;
-      const result = await decider.choose(
-        {
-          question,
-          options: config.routes.map((r) => ({ label: r.label, description: r.description })),
-          context,
-          ...(resolved ? { model: resolved.model, effort: resolved.effort } : {}),
-        },
-        ctx.signal,
-      );
+      let result: ChoiceResult;
+      try {
+        result = await decider.choose(
+          {
+            question,
+            options: config.routes.map((r) => ({ label: r.label, description: r.description })),
+            context,
+            ...(resolved ? { model: resolved.model, effort: resolved.effort } : {}),
+          },
+          ctx.signal,
+        );
+      } catch (error) {
+        if (isAbortError(error) || ctx.signal.aborted) throw error;
+        const code =
+          typeof error === 'object' &&
+          error !== null &&
+          'code' in error &&
+          typeof error.code === 'string' &&
+          Object.hasOwn(DECIDER_FAILURE_MESSAGES, error.code)
+            ? error.code
+            : undefined;
+        throw new RunFailureError(
+          'INTERNAL_ERROR',
+          code ? DECIDER_FAILURE_MESSAGES[code]! : 'Decision provider request failed',
+          { nodeId: ctx.node.id, details: { strategy, ...(code ? { code } : {}) } },
+        );
+      }
       if (!labels.has(result.label)) {
-        tried.push(`${strategy} chose unknown route "${result.label}"`);
+        tried.push(`${strategy} chose a route that is not declared on this node`);
         continue;
       }
       if (

@@ -6,6 +6,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ### Added
 
+- Validation badges on nodes and beside Publish open popovers with the issues and links to the fields that need attention (#15).
+- Editor notices can be dismissed individually (#45).
 - Settings → **Classifier models**, below the model catalog (#43): built-in Jev and the HTTP classifiers you register, each with its provider and model name, capabilities (Choice shown as "Choice / classification"), whether it is configured (**Needs a key** with the reason and a link to Secrets), and an Enabled switch. Jev can only be enabled or disabled, and its switch says that disabling it also stops Exit predicates that use Jev. **Add classifier**, **Edit**, and **Delete** (with a confirmation naming the consequences) manage custom entries; the form checks the id, names, endpoint, capabilities, and the https-with-a-secret rule against the contract before sending, and offers the owner's secret names for the bearer key. Setting or deleting a secret refreshes the classifiers' status. The decision node's **Jev → Model** picker, shown even before the decision has Jev settings, offers built-in Jev as the default and the enabled classifiers with Choice, flags one that needs a key, and keeps a disabled, deleted, or Choice-less selection visible with the reason instead of clearing it; the node's classifier warnings follow catalog and secret changes without a draft edit. `PUT /classifier-models/{id}` accepts `If-None-Match: *` to create only (409 `CLASSIFIER_EXISTS` for an existing id), and api-client adds `classifierModels.create`; Settings' Add uses it, so it never replaces an entry it had not loaded. Both themes, keyboard operation, and 768 px; see the Settings guide, Configure classifier models.
 - Catalog Model and Effort pickers for inference nodes, loop defaults, and decision Codex settings. Missing or disabled models and unsupported efforts stay selected and flagged; an unavailable catalog keeps current values read-only until recovery. Each model picker links to the model catalog in Settings (#16).
 - Node editor: cron triggers get a schedule builder with six presets, a searchable time zone picker with Use my time zone, a plain-language summary, and the next five runs in the trigger's zone and yours from the new read-only `POST /triggers/cron/preview` (`loops:read`); the raw expression stays under the schedule's Advanced toggle and custom expressions are kept unchanged (#20).
@@ -16,12 +18,15 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ### Changed
 
+- Forms share switches, segmented controls, file pickers, fieldsets, required-field markers, help text, and per-field errors (#8).
+- The node palette can be collapsed. Loop settings stay in the panel titled **Loop settings**, and the toolbar's Loop settings button has been removed (#59).
 - `GET /api-keys` requires a `current` boolean on every list item, identifying the key authenticating that request when keys are required. Settings marks it as **This browser** and warns before revoking it; when a browser stores a key but no row is marked, confirmations explain the possible sign-out and **Forget key** recovery. Changing keys refreshes the marker, and late 401 responses from a previous key no longer show the key panel.
 - Model catalog entries now expose source. Harness models, including all migrated legacy rows, can only be enabled/disabled through PATCH; PUT/DELETE return `MODEL_MANAGED_BY_HARNESS`. Existing LiteLLM rows remain editable/deletable, while new LiteLLM entries return `LITELLM_NOT_CONFIGURED` pending provider support.
 - Startup refreshes seeded harness names, efforts, and default efforts while preserving enabled. Hand-added legacy metadata remains intact. Validate/publish return advisory disabled/missing-model warnings with field paths, and successful publish now includes issues.
 
 ### Upgrade notes
 
+- `CronScheduler.validate` now returns `{ field: 'expression' | 'timezone', message }` for an invalid schedule and `undefined` for a valid one. Callers must use the structured field result.
 - Migration `0006` adds `classifier_models`; startup seeds managed Jev metadata before recovery while preserving enabled. The new table does not rewrite loop definitions, versions, runs, events, secrets, or LLM catalog data; earlier migrations still apply their intended changes. Omitted `jev.model` defaults to catalog `jev`. Rebuild generated-client consumers together; older strict readers may reject exports containing explicit classifier selection.
 
 - Harness is chosen on inference nodes only. Loop `settings.defaults` now contains model and effort; `settings.defaults.harness` is gone.
@@ -34,17 +39,15 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 - Device drafts saved before this change are discarded by a one-off IndexedDB store upgrade, including set-aside copies. The server copy remains available. New in-progress drafts persist across reloads, including drafts with schema errors.
 - Close other GraphGoblin tabs and windows after updating so the device-draft store can upgrade.
-- To roll back after migration `0005`, stop the API and restore the pre-upgrade backup of the data directory before running the previous release. The previous release requires the removed field in its loop responses. Alternatively, with the API stopped, restore the field and remove only the `0005` ledger entry:
-
-  ```sql
-  UPDATE loop_versions SET definition = json_set(definition, '$.settings.defaults.harness', 'codex') WHERE json_extract(definition, '$.settings.defaults.harness') IS NULL;
-  DELETE FROM __drizzle_migrations WHERE created_at = 1791152101266;
-  ```
-
-  This manual rollback does not recover edited seed metadata; restore the pre-upgrade backup for that. Re-upgrading applies `0005` again. Current exports and API clients must still use the canonical definition shape.
+- Before upgrading, follow [Back up and restore](docs/guide/06-settings-and-secrets.md#back-up-and-restore). To roll back, stop the API and restore the pre-upgrade data-directory backup before running the previous release; there is no partial rollback. Current exports and API clients must still use the canonical definition shape.
 
 ### Fixed
 
+- Decision failure details no longer include a provider's raw answer. HTTP classifiers reject choices outside the submitted routes; Jev and Codex keep their fallback with safe diagnostics.
+- Cron validation issues identify the expression or time zone field, so following a badge focuses the right control and reveals Advanced for the raw expression.
+- Structural forms keep parse errors with their rows, refuse duplicate keys, and preserve focus and announcements when rows change (#53).
+- The app probes API reachability and restores queries, event streams, and autosave when the API returns (#55).
+- The app checks for service worker updates when it regains focus (#56).
 - Settings model catalog: when another refresh removes a row while its Enabled switch is saving and the API then answers 404, focus moves to the section heading instead of staying on the page body, and the "no longer in the catalog" notice clears on the next toggle (#24 review follow-ups, applied to Classifier models too).
 - Seeded Codex model catalog entries now list `max`, matching the editor. The max-effort migration preserves existing edits; startup then refreshes seeded harness metadata as described above, keeping enabled choices. The Codex adapter still maps `max` to `xhigh`.
 

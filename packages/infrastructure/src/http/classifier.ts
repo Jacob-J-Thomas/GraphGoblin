@@ -110,10 +110,16 @@ export class HttpChoiceClassifier implements ClassifierPort {
         'Classifier probabilities must cover exactly the submitted labels',
       );
     }
-    const selectedConfidence = confidence ?? probabilities[choice];
+    if (!labels.has(choice)) {
+      throw new HttpClassifierError(
+        'DECIDER_INVALID_RESPONSE',
+        'Classifier choice must be one of the submitted labels',
+      );
+    }
     return {
       label: choice,
-      ...(selectedConfidence !== undefined ? { confidence: selectedConfidence } : {}),
+      // Exact label coverage and choice membership above guarantee a selected probability.
+      confidence: confidence ?? probabilities[choice]!,
       alternatives: Object.entries(probabilities)
         .filter(([label]) => label !== choice)
         .sort((a, b) => b[1] - a[1])

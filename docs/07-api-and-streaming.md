@@ -117,10 +117,13 @@ including daylight-saving changes. A finite or impossible schedule can return
 fewer slots or an empty array. The route creates no schedules and starts no runs.
 
 An invalid expression or timezone returns 400 Problem Details with code
-`CRON_INVALID`; malformed body fields or bounds return 400 `VALIDATION_FAILED`.
+`CRON_INVALID`, with `errors: [{ path, message }]` naming `config.expression` or
+`config.timezone`; malformed body fields or bounds return 400 `VALIDATION_FAILED`.
 There is no server summary: the web control describes the preset model, and labels
 other expressions as custom without rewriting them. Validate and publish retain
-their existing `CRON_INVALID` issues.
+their `CRON_INVALID` issues, with nodeId and the same node-relative field paths.
+Following an expression issue opens Advanced and focuses the raw expression;
+following a timezone issue focuses the time zone control.
 
 ## Return delivery (Decided)
 
@@ -233,6 +236,8 @@ PUT requires strict custom HTTP metadata, including provider `http`; it rejects 
 | `CLASSIFIER_EXISTS`            | 409  | Create-only PUT (`If-None-Match: *`) of an existing id. |
 
 Successful classifier decisions add `classifierModel` (the catalog id) to the `decision.made` payload while retaining strategy `jev`, route/confidence/alternatives, and the existing lastOutput shape. Expression and Codex decisions omit this field. It records selection separately from the native providerModel sent to the endpoint. Existing events without the optional field remain valid.
+
+Decision failure details in run snapshots and events never contain the provider's raw answer. HTTP classifiers reject an undeclared choice with `DECIDER_INVALID_RESPONSE` and a fixed message. The decision handler summarizes provider exceptions with fixed text and `failure.details.strategy`, retaining only recognized `DECIDER_*` codes in `failure.details.code`; provider messages, names, stacks, error bodies, and arbitrary codes are not persisted. Provider exceptions still fail the step with `INTERNAL_ERROR`, and cancellation still propagates. Built-in Jev and Codex unknown choices still try the next strategy, with fixed diagnostics naming only the strategy. Invalid confidence diagnostics are fixed, and low-confidence diagnostics contain only validated numbers.
 
 ## Validation agreement (Decided, WP-D2)
 

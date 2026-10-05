@@ -20,6 +20,11 @@ Concurrency: every firing starts a new run, in parallel with any already running
 
 Ports: `out`.
 
+Invalid cron schedules produce `CRON_INVALID` issues with the trigger's nodeId and
+`config.expression` or `config.timezone`, identifying the field to fix. Following
+an expression issue in the editor opens the schedule's Advanced group and focuses
+the raw expression; a timezone issue focuses the time zone control.
+
 ## Decision (Decided strategies, Draft config)
 
 Chooses one of several labelled routes.
@@ -43,7 +48,7 @@ type DecisionConfig = {
 
 Behaviour: strategies are tried in order. `jev.model` selects an exact owner-scoped classifier catalog id; omission defaults to built-in `jev` (provider model `jev-latest`). The registry resolves it at each decision, including resumed execution. An explicit selection never substitutes the built-in. Unknown ids (`CLASSIFIER_MODEL_NOT_FOUND`) and entries without Choice (`CLASSIFIER_PRIMITIVE_UNSUPPORTED`) block publication. Disabled models (`CLASSIFIER_MODEL_DISABLED`), missing or blank required secrets (`CLASSIFIER_SECRET_MISSING`), and unreadable secrets (`CLASSIFIER_SECRET_UNREADABLE`) warn at `config.jev.model`, naming the node, model, and Settings remedy. These unavailable strategies are skipped with the specific reason in `DECISION_NO_ROUTE`'s `tried` details. Without another strategy the decision cannot currently produce a route.
 
-If a classifier answers below `minConfidence`, the next strategy runs. Kev rescales confidence as `(p_max - 1/K) / (1 - 1/K)`, where `K` is the number of routes: two routes with selected probability 0.75 give confidence 0.5. See the [Kev research note](research/jev.md#kev-http-protocol-verification-2026-10-05) when choosing a threshold. An undeclared selected label also tries the next strategy, recording "chose unknown route" in the exhausted chain's `tried` details. Malformed responses and provider errors fail the step and cancellation propagates; HTTP errors do not silently fall through. The chosen route, confidence, and alternatives are written to `decision.made` and `lastOutput`; successful classifier events also carry `classifierModel`, the catalog id. `lastOutput` keeps its existing shape. Classification is Choice with categorical labels. Scorer-only entries can be listed but cannot execute a Choice decision.
+If a classifier answers below `minConfidence`, the next strategy runs. Kev rescales confidence as `(p_max - 1/K) / (1 - 1/K)`, where `K` is the number of routes: two routes with selected probability 0.75 give confidence 0.5. See the [Kev research note](research/jev.md#kev-http-protocol-verification-2026-10-05) when choosing a threshold. An undeclared label from built-in Jev or Codex tries the next strategy, recording fixed text without the raw answer in the exhausted chain's `tried` details. HTTP classifiers instead reject undeclared choices with `DECIDER_INVALID_RESPONSE`. Malformed responses and provider errors fail the step and cancellation propagates; HTTP errors do not silently fall through. Decision failure details never contain the provider's raw answer. The chosen route, confidence, and alternatives are written to `decision.made` and `lastOutput`; successful classifier events also carry `classifierModel`, the catalog id. `lastOutput` keeps its existing shape. Classification is Choice with categorical labels. Scorer-only entries can be listed but cannot execute a Choice decision.
 
 Ports: one output per route label.
 
