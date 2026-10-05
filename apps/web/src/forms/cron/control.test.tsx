@@ -308,6 +308,12 @@ describe('cron schedule control', () => {
     expect(raw()).toBeVisible();
     expect(raw()).toHaveFocus();
   });
+  it('focuses the timezone field without opening the expression disclosure', () => {
+    const { container } = setup();
+    expect(focusField(container, 'timezone')).toBe(true);
+    expect(screen.getByLabelText('Timezone')).toHaveFocus();
+    expect(raw()).not.toBeVisible();
+  });
   it('shows the expression problem count on Advanced', async () => {
     const { api } = setup('bad');
     api.override('POST /triggers/cron/preview', () =>

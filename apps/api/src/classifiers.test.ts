@@ -7,6 +7,13 @@ import {
   type RunRecord,
 } from '@graphgoblin/contracts';
 import { FIXTURE_TS, minimalLoop } from '@graphgoblin/contracts/testing';
+import { createJevDecider } from '@graphgoblin/adapter-jev';
+import {
+  createCodexDecider,
+  createCodexHarness,
+  createCodexStructured,
+  type CodexThreadLike,
+} from '@graphgoblin/adapter-codex';
 import { BUILTIN_CLASSIFIER } from './classifier-registry.js';
 import { createTestApp, startFakeClassifierEndpoint, type TestApp } from './testing/test-app.js';
 
@@ -593,19 +600,207 @@ describe('classifier publish validation agreement', () => {
 });
 
 describe('classifier runtime hot reload', () => {
+  it('rejects Jev probabilities with an undeclared secret key before any run read', async () => {
+    const marker = 'gg-private-alternative-regression';
+    vi.stubGlobal('fetch', () =>
+      Promise.resolve(
+        new Response(
+          JSON.stringify({
+            answers: {
+              answer: {
+                type: 'choice',
+                choice: 'yes',
+                probabilities: { yes: 0.8, no: 0.1, [marker]: 0.1 },
+              },
+            },
+          }),
+          { headers: { 'content-type': 'application/json' } },
+        ),
+      ),
+    );
+    await t.container.repos.secretsFor('local').set('jev-api-key', 'test-key');
+    const definition = decisionLoop();
+    for (const node of definition.nodes)
+      if (node.kind === 'decision') node.config.recordAlternatives = true;
+    const loopId = await t.publishLoop(definition);
+    const started = await t.app.inject({
+      method: 'POST',
+      url: `/loops/${loopId}/runs`,
+      payload: {},
+    });
+    await t.idle();
+    const run = await safeFailureReads(started.json().run.id as string, marker);
+    expect(run.failure?.details).toEqual({ strategy: 'jev', code: 'DECIDER_INVALID_RESPONSE' });
+  });
+
+  it('keeps real Jev exit HTTP error bodies out of snapshots, events, streams and logs', async () => {
+    const marker = 'gg-private-exit-error-regression';
+    const decider = createJevDecider({
+      secrets: { resolve: () => Promise.resolve('test-key') },
+      logger: t.logger,
+      retry: { maxRetries: 0 },
+      fetch: () =>
+        Promise.resolve(
+          new Response(JSON.stringify({ error: { message: marker } }), {
+            status: 400,
+            headers: { 'content-type': 'application/json', 'x-typesafe-request-id': marker },
+          }),
+        ),
+    });
+    await decider.init();
+    t.jev.judge = (request, signal) =>
+      decider.judge(request, signal ?? new AbortController().signal);
+    const definition = minimalLoop();
+    for (const node of definition.nodes)
+      if (node.kind === 'exit')
+        node.config = {
+          criteria: [{ when: 'predicate', strategy: 'jev', question: 'Done?', outcome: 'success' }],
+        };
+    const loopId = await t.publishLoop(definition);
+    const started = await t.app.inject({
+      method: 'POST',
+      url: `/loops/${loopId}/runs`,
+      payload: {},
+    });
+    await t.idle();
+    const run = await safeFailureReads(started.json().run.id as string, marker);
+    expect(run.failure?.message).toBe('Decision provider request failed');
+    expect(run.failure?.details).toEqual({ code: 'DECIDER_HTTP_ERROR', strategy: 'jev' });
+    expect(JSON.stringify(t.logger.lines)).not.toContain(marker);
+    expect(t.logger.lines).toContainEqual(
+      expect.objectContaining({
+        level: 'warn',
+        obj: expect.objectContaining({
+          name: 'JevError',
+          code: 'DECIDER_HTTP_ERROR',
+          status: 400,
+          strategy: 'jev',
+        }),
+      }),
+    );
+  });
+  async function safeFailureReads(id: string, marker: string) {
+    const reader = await t.container.repos.apiKeys.create('local', 'failure reader', ['runs:read']);
+    const headers = { authorization: `Bearer ${reader.token}` };
+    expect((await t.app.inject({ url: '/secrets', headers })).statusCode).toBe(403);
+    const snapshot = await t.app.inject({ url: `/runs/${id}`, headers });
+    expect(snapshot.json()).toMatchObject({
+      status: 'failed',
+      failure: { code: 'INTERNAL_ERROR' },
+    });
+    const events = await t.app.inject({ url: `/runs/${id}/events`, headers });
+    expect(events.json().items).toEqual(
+      expect.arrayContaining([expect.objectContaining({ type: 'run.failed' })]),
+    );
+    const stream = await t.app.inject({
+      url: `/runs/${id}/events`,
+      headers: { ...headers, accept: 'text/event-stream' },
+    });
+    expect(stream.body).toContain('event: run.failed');
+    for (const response of [snapshot, events, stream]) {
+      expect(response.statusCode).toBe(200);
+      expect(response.body).not.toContain(marker);
+    }
+    return snapshot.json<RunRecord>();
+  }
+
+  it.each([200, 400])(
+    'sanitizes real built-in Jev validation paths and error bodies (HTTP %i)',
+    async (status) => {
+      const marker = 'gg-provider-error-private-regression';
+      vi.stubGlobal('fetch', () =>
+        Promise.resolve(
+          new Response(
+            JSON.stringify(
+              status === 200
+                ? {
+                    answers: {
+                      answer: {
+                        type: 'choice',
+                        choice: 'yes',
+                        probabilities: { yes: 0.8, no: 0.2, [marker]: 'invalid' },
+                      },
+                    },
+                  }
+                : { error: marker },
+            ),
+            { status, headers: { 'content-type': 'application/json' } },
+          ),
+        ),
+      );
+      await t.container.repos.secretsFor('local').set('jev-api-key', marker);
+      const loopId = await t.publishLoop(decisionLoop());
+      const started = await t.app.inject({
+        method: 'POST',
+        url: `/loops/${loopId}/runs`,
+        payload: {},
+      });
+      const id = started.json().run.id as string;
+      await t.idle();
+      const run = await safeFailureReads(id, marker);
+      expect(run.failure?.details).toEqual({
+        strategy: 'jev',
+        code: status === 200 ? 'DECIDER_INVALID_RESPONSE' : 'DECIDER_HTTP_ERROR',
+      });
+    },
+  );
+
+  it('sanitizes a real Codex turn failure before persisting it for run readers', async () => {
+    const marker = 'gg-codex-provider-error-private-regression';
+    const thread: CodexThreadLike = {
+      runStreamed: () =>
+        Promise.resolve({
+          events: (async function* () {
+            yield await Promise.resolve({ type: 'thread.started', thread_id: 'fake-thread' });
+            yield { type: 'turn.failed', error: { message: marker } };
+          })(),
+        }),
+    };
+    const harness = createCodexHarness({
+      clientFactory: () => ({ startThread: () => thread, resumeThread: () => thread }),
+    });
+    const decider = createCodexDecider(
+      createCodexStructured(harness, { workingDirectory: t.dataDir }),
+    );
+    t.codex.choose = (request, signal) =>
+      decider.choose(request, signal ?? new AbortController().signal);
+    const definition = decisionLoop();
+    for (const node of definition.nodes)
+      if (node.kind === 'decision') node.config.strategy = ['codex'];
+    const loopId = await t.publishLoop(definition);
+    const started = await t.app.inject({
+      method: 'POST',
+      url: `/loops/${loopId}/runs`,
+      payload: {},
+    });
+    const id = started.json().run.id as string;
+    await t.idle();
+    const run = await safeFailureReads(id, marker);
+    expect(run.failure?.details).toEqual({ strategy: 'codex' });
+  });
   it.each([true, false])(
-    'lets an unknown HTTP label fall through, or exhaust the chain (fallback %s)',
+    'never exposes an echoed classifier bearer to runs:read (fallback %s)',
     async (fallback) => {
       const fixture = await startFakeClassifierEndpoint();
-      fixture.respondWith(() => ({
+      const bearer = 'gg-provider-bearer-private-regression';
+      fixture.respondWith((request) => ({
         body: {
           answers: {
-            answer: { type: 'choice', choice: 'undeclared', probabilities: { yes: 0.8, no: 0.2 } },
+            answer: {
+              type: 'choice',
+              choice: request.authorization?.slice('Bearer '.length),
+              probabilities: { yes: 0.8, no: 0.2 },
+            },
           },
         },
       }));
       try {
-        await upsert('kev', { ...metadata, endpoint: fixture.endpoint });
+        await t.container.repos.secretsFor('local').set('classifier-key', bearer);
+        await upsert('kev', {
+          ...metadata,
+          endpoint: fixture.endpoint,
+          secretRef: 'classifier-key',
+        });
         await toggle('kev', true);
         const loopId = await t.publishLoop(decisionLoop('kev', fallback));
         const started = await t.app.inject({
@@ -615,22 +810,40 @@ describe('classifier runtime hot reload', () => {
         });
         const id = started.json().run.id as string;
         await t.idle();
-        const run = await t.container.repos.runs.get(id);
-        if (fallback) {
-          expect(run).toMatchObject({ status: 'succeeded', result: 'no' });
-          expect(
-            (await t.container.repos.events.read(id)).find(
-              (event) => event.type === 'decision.made',
-            ),
-          ).toMatchObject({ route: 'no', strategy: 'expression' });
-        } else
-          expect(run).toMatchObject({
-            status: 'failed',
-            failure: {
-              code: 'DECISION_NO_ROUTE',
-              details: { tried: ['jev chose unknown route "undeclared"'] },
-            },
-          });
+        expect(fixture.requests[0]?.authorization).toBe(`Bearer ${bearer}`);
+        const reader = await t.container.repos.apiKeys.create('local', 'run reader', ['runs:read']);
+        const headers = { authorization: `Bearer ${reader.token}` };
+        expect((await t.app.inject({ url: '/secrets', headers })).statusCode).toBe(403);
+        const snapshot = await t.app.inject({ url: `/runs/${id}`, headers });
+        expect(snapshot.statusCode).toBe(200);
+        expect(snapshot.json()).toMatchObject({
+          status: 'failed',
+          failure: {
+            code: 'INTERNAL_ERROR',
+            message: 'Decision provider returned an invalid response',
+            details: { code: 'DECIDER_INVALID_RESPONSE' },
+          },
+        });
+        const events = await t.app.inject({ url: `/runs/${id}/events`, headers });
+        expect(events.statusCode).toBe(200);
+        expect(events.json().items).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              type: 'run.failed',
+              failure: expect.objectContaining({
+                details: expect.objectContaining({ code: 'DECIDER_INVALID_RESPONSE' }),
+              }),
+            }),
+          ]),
+        );
+        const stream = await t.app.inject({
+          url: `/runs/${id}/events`,
+          headers: { ...headers, accept: 'text/event-stream' },
+        });
+        expect(stream.statusCode).toBe(200);
+        expect(stream.body).toContain('event: run.failed');
+        for (const response of [snapshot, events, stream])
+          expect(response.body).not.toContain(bearer);
       } finally {
         await fixture.close();
       }

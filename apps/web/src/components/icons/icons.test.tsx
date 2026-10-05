@@ -44,7 +44,7 @@ describe('icons', () => {
 describe('Logo', () => {
   it('pairs the goblin mark with the wordmark on the header', () => {
     const { container } = render(<Logo className="extra" />);
-    expect(container.firstElementChild).toHaveClass('text-inverse', 'extra');
+    expect(container.firstElementChild).toHaveClass('text-inverse', 'font-display', 'extra');
     expect(container.firstElementChild).toHaveTextContent('GraphGoblin');
     expect(container.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
     expect(screen.getByText('Goblin')).toHaveClass('text-accent');
