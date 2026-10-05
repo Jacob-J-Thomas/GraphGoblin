@@ -35,6 +35,7 @@ it('registers the node and loop pickers and forwards exact server validation war
     },
   ];
   const definition = kitchenSinkLoop();
+  definition.settings = { ...definition.settings, defaults: { model: 'alpha' } };
   const inference = definition.nodes.find((node) => node.kind === 'inference')!;
   api.serverOnlyIssues[0] = { ...api.serverOnlyIssues[0]!, nodeId: inference.id };
   const loop = api.addLoop(definition);

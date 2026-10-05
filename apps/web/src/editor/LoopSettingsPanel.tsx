@@ -14,13 +14,12 @@ import {
   Textarea,
 } from '../components/ui/index.js';
 import { SchemaForm } from '../forms/SchemaForm.js';
-import { CatalogWarningsContext, EffortField, LoopModelField } from '../forms/fields/model.js';
-import type { FieldControls } from '../forms/fields.js';
+import { CatalogWarningsContext } from '../forms/fields/model.js';
+import { LOOP_FIELD_CONTROLS } from './field-controls.js';
 import type { EditorIssue } from './model.js';
 import { useEditorStore } from './store.js';
 
 const VariablesFormSchema = z.object({ variables: VariableDeclarationsSchema });
-const LOOP_FIELD_CONTROLS: FieldControls = { model: LoopModelField, effort: EffortField };
 
 /**
  * Loop name, description, settings, and declared variables (name to JSON Schema). The forms keep

@@ -1,15 +1,18 @@
-import { InferenceConfigSchema, LoopSettingsSchema } from '@graphgoblin/contracts';
-import { act, screen, waitFor, within } from '@testing-library/react';
+import {
+  InferenceConfigSchema,
+  LoopSettingsSchema,
+  NodeConfigSchemas,
+} from '@graphgoblin/contracts';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { FakeApi, problem } from '../../__fixtures__/fake-api.js';
 import { renderWith } from '../../__fixtures__/render.js';
 import { keys } from '../../api/queries.js';
-import { NODE_FIELD_CONTROLS } from '../../editor/field-controls.js';
-import { NODE_FORM_SCHEMAS } from '../../editor/form-schemas.js';
+import { LOOP_FIELD_CONTROLS, NODE_FIELD_CONTROLS } from '../../editor/field-controls.js';
 import { SchemaForm } from '../SchemaForm.js';
-import { CatalogWarningsContext, EffortField, LoopModelField } from './model.js';
+import { CatalogWarningsContext } from './model.js';
 
 const entry = (model: string, enabled = true, harness = 'codex'): FakeApi['catalog'][number] => ({
   model,
@@ -42,17 +45,134 @@ function setup(value: object = {}, catalog = [entry('alpha')]) {
 const model = () => screen.getByLabelText('Model', { exact: true });
 const effort = () => screen.getByLabelText('Effort', { exact: true });
 async function ready() {
-  await waitFor(() => expect(model().tagName).toBe('SELECT'));
+  await waitFor(() => expect(model()).not.toHaveAttribute('aria-readonly'));
 }
 
 describe('catalog field controls', () => {
+  it('retains the same focused select while a pending catalog loads without writing values', async () => {
+    const api = new FakeApi();
+    api.catalog = [entry('alpha')];
+    let resolveFetch: ((response: Response) => void) | undefined;
+    api.override(
+      'GET /model-catalog',
+      () =>
+        new Promise<Response>((resolve) => {
+          resolveFetch = resolve;
+        }),
+    );
+    const change = vi.fn();
+    renderWith(
+      <SchemaForm
+        schema={InferenceConfigSchema}
+        value={{ model: 'alpha', prompt: { template: 'hi' } }}
+        label="Inference"
+        onChange={change}
+        controls={NODE_FIELD_CONTROLS}
+      />,
+      '/',
+      api,
+    );
+    const focused = model();
+    focused.focus();
+    expect(focused).toHaveAttribute('aria-readonly', 'true');
+    act(() => {
+      resolveFetch?.(
+        new Response(JSON.stringify({ items: api.catalog }), {
+          headers: { 'content-type': 'application/json' },
+        }),
+      );
+    });
+    await ready();
+    expect(model()).toBe(focused);
+    expect(model()).toHaveFocus();
+    expect(model()).toHaveValue('alpha');
+    expect(change).not.toHaveBeenCalled();
+  });
+
+  it('derives an omitted harness from the sibling schema default', async () => {
+    const api = new FakeApi();
+    api.catalog = [entry('alpha'), entry('other', true, 'another')];
+    renderWith(
+      <SchemaForm
+        schema={InferenceConfigSchema.extend({
+          harness: z.enum(['codex', 'another']).default('another'),
+        })}
+        value={{ prompt: { template: 'hi' } }}
+        label="Inference"
+        onChange={vi.fn()}
+        controls={NODE_FIELD_CONTROLS}
+      />,
+      '/',
+      api,
+    );
+    await ready();
+    expect(
+      within(model())
+        .getAllByRole('option')
+        .map((option) => option.getAttribute('value')),
+    ).toEqual(['', 'other']);
+  });
+
+  it.each([
+    ['missing', 'MODEL_NOT_IN_CATALOG', [entry('alpha')]],
+    ['disabled', 'MODEL_DISABLED', [entry('disabled', false)]],
+  ])(
+    'shows one warning for a locally %s model instead of repeating the matching server warning',
+    async (current, code, catalog) => {
+      const api = new FakeApi();
+      api.catalog = catalog;
+      renderWith(
+        <CatalogWarningsContext value={[{ path: 'model', code, message: 'Same server warning' }]}>
+          <SchemaForm
+            schema={InferenceConfigSchema}
+            value={{ model: current, prompt: { template: 'hi' } }}
+            label="Inference"
+            onChange={vi.fn()}
+            controls={NODE_FIELD_CONTROLS}
+          />
+        </CatalogWarningsContext>,
+        '/',
+        api,
+      );
+      await ready();
+      expect(model()).not.toHaveAccessibleDescription(/Same server warning/);
+      const notice = within(screen.getByRole('form', { name: 'Inference' })).getByRole('status');
+      expect(notice).toHaveClass('text-status-warn-fg');
+      expect(notice.querySelector('[data-icon="alert"]')).toBeInTheDocument();
+    },
+  );
+
+  it('keeps server warnings when no catalog data is available', async () => {
+    const api = new FakeApi();
+    api.override('GET /model-catalog', () => problem(503, 'FAILED', 'catalog unavailable'));
+    renderWith(
+      <CatalogWarningsContext
+        value={[{ path: 'model', code: 'MODEL_NOT_IN_CATALOG', message: 'Server warning' }]}
+      >
+        <SchemaForm
+          schema={InferenceConfigSchema}
+          value={{ model: 'missing', prompt: { template: 'hi' } }}
+          label="Inference"
+          onChange={vi.fn()}
+          controls={NODE_FIELD_CONTROLS}
+        />
+      </CatalogWarningsContext>,
+      '/',
+      api,
+    );
+    await waitFor(() => expect(model()).toHaveAccessibleDescription(/Cannot load/));
+    expect(model()).toHaveAccessibleDescription(/MODEL_NOT_IN_CATALOG: Server warning/);
+    expect(model()).toHaveAttribute('aria-readonly', 'true');
+    expect(screen.getByRole('button', { name: 'Retry model catalog' })).toBeEnabled();
+  });
+
   it('uses Codex entries and sibling effort within the decision Codex group', async () => {
     const api = new FakeApi();
     api.catalog = [entry('alpha'), entry('hidden', false), entry('other', true, 'another')];
     const change = vi.fn();
     renderWith(
       <SchemaForm
-        schema={NODE_FORM_SCHEMAS.decision}
+        schema={NodeConfigSchemas.decision}
         value={{
           routes: [
             { label: 'yes', description: '' },
@@ -70,7 +190,7 @@ describe('catalog field controls', () => {
       api,
     );
     const group = screen.getByRole('group', { name: 'Codex' });
-    await waitFor(() => expect(within(group).getByLabelText('Model').tagName).toBe('SELECT'));
+    await ready();
     const model = within(group).getByLabelText('Model');
     const effort = within(group).getByLabelText('Effort');
     expect(model).toHaveValue('alpha');
@@ -93,6 +213,9 @@ describe('catalog field controls', () => {
     expect(model()).toHaveAccessibleDescription(/No enabled models/);
     expect(within(effort()).getAllByRole('option')).toHaveLength(7);
     expect(change).not.toHaveBeenCalled();
+    model().focus();
+    await user.tab();
+    expect(screen.getByRole('link', { name: 'Model catalog in Settings' })).toHaveFocus();
     await user.click(screen.getByRole('link', { name: 'Model catalog in Settings' }));
     expect(screen.getByTestId('location')).toHaveTextContent('/settings');
   });
@@ -108,7 +231,7 @@ describe('catalog field controls', () => {
       within(effort())
         .getAllByRole('option')
         .map((o) => o.textContent),
-    ).toEqual(['(inherited effort; catalog default: low)', 'low', 'high']);
+    ).toEqual(['(inherited; the catalog suggests low)', 'low', 'high']);
     expect(effort()).toHaveValue('');
     await user.selectOptions(effort(), 'high');
     expect(change).toHaveBeenLastCalledWith(
@@ -155,7 +278,7 @@ describe('catalog field controls', () => {
     const user = userEvent.setup();
     await user.click(screen.getByRole('radio', { name: 'another' }));
     expect(model()).toHaveValue('beta');
-    expect(model()).toHaveAccessibleDescription(/not in catalog/);
+    expect(model()).toHaveAccessibleDescription(/not in the catalog/);
     expect(
       within(model())
         .getAllByRole('option')
@@ -172,11 +295,12 @@ describe('catalog field controls', () => {
       const { change, user } = setup({ model: current }, catalog);
       await ready();
       expect(model()).toHaveValue(current);
-      expect(model()).toHaveAccessibleDescription(new RegExp(marker));
+      const sentence = marker === 'not in catalog' ? 'not in the catalog' : marker;
+      expect(model()).toHaveAccessibleDescription(new RegExp(sentence));
       expect(within(model()).getByRole('option', { name: new RegExp(marker) })).toBeDisabled();
       expect(change).not.toHaveBeenCalled();
       await user.selectOptions(model(), 'alpha');
-      expect(model()).not.toHaveAccessibleDescription(new RegExp(marker));
+      expect(model()).not.toHaveAccessibleDescription(new RegExp(sentence));
       expect(
         within(model()).queryByRole('option', { name: new RegExp(marker) }),
       ).not.toBeInTheDocument();
@@ -231,36 +355,58 @@ describe('catalog field controls', () => {
       api,
     );
     expect(model()).toHaveValue('alpha');
-    expect(model()).toHaveAttribute('readonly');
+    expect(model().tagName).toBe('SELECT');
+    expect(model()).toHaveAttribute('aria-readonly', 'true');
     expect(model()).toHaveAccessibleDescription(/Loading the model catalog/);
-    expect(screen.getAllByRole('button', { name: 'Retry model catalog' })[0]).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Retry model catalog' })).toBeDisabled();
+    expect(screen.getAllByText(/Loading the model catalog/)).toHaveLength(1);
+    expect(effort()).toHaveAccessibleDescription(/Loading the model catalog/);
+    fireEvent.change(model(), { target: { value: '' } });
+    fireEvent.change(effort(), { target: { value: '' } });
+    expect(model()).toHaveValue('alpha');
+    expect(effort()).toHaveValue('high');
     act(() => rejectFetch?.(new TypeError('Failed to fetch')));
     await waitFor(() =>
       expect(model()).toHaveAccessibleDescription(/Cannot load the model catalog/),
     );
     expect(effort()).toHaveValue('high');
-    expect(effort()).toHaveAttribute('readonly');
+    expect(effort()).toHaveAttribute('aria-readonly', 'true');
+    expect(effort()).toHaveAccessibleDescription(/Cannot load the model catalog/);
+    expect(screen.getAllByText(/Cannot load the model catalog/)).toHaveLength(1);
     api.override('GET /model-catalog', (call) => api.builtIn(call));
-    await userEvent
-      .setup()
-      .click(screen.getAllByRole('button', { name: 'Retry model catalog' })[0]!);
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Retry model catalog' }));
     await ready();
     expect(model()).toHaveValue('alpha');
     expect(effort()).toHaveValue('high');
     expect(change).not.toHaveBeenCalled();
   });
 
-  it('protects cached choices after a failed refresh and recovers automatically', async () => {
-    const { api, queryClient } = setup({});
+  it('keeps cached choices editable and focused after a failed refresh, then recovers', async () => {
+    const { api, queryClient, user, change } = setup({ model: 'alpha' });
     await ready();
+    const focused = model();
+    focused.focus();
     api.override('GET /model-catalog', () => problem(500, 'FAILED', 'catalog failed'));
     await act(() => queryClient.invalidateQueries({ queryKey: keys.catalog }));
-    await waitFor(() => expect(model()).toHaveAttribute('readonly'));
-    expect(model()).toHaveValue('(loop default)');
+    await waitFor(() => expect(model()).toHaveAccessibleDescription(/catalog may be out of date/));
+    expect(model()).toBe(focused);
+    expect(model()).toHaveFocus();
+    expect(model()).not.toHaveAttribute('aria-readonly');
+    expect(model()).toHaveValue('alpha');
+    expect(effort()).toHaveAccessibleDescription(/catalog may be out of date/);
+    expect(screen.getAllByText(/catalog may be out of date/)).toHaveLength(1);
+    expect(screen.getByRole('button', { name: 'Retry model catalog' })).toBeEnabled();
+    expect(change).not.toHaveBeenCalled();
+    await user.selectOptions(effort(), 'high');
+    expect(change).toHaveBeenLastCalledWith(
+      expect.objectContaining({ model: 'alpha', effort: 'high' }),
+    );
     api.override('GET /model-catalog', (call) => api.builtIn(call));
     await act(() => queryClient.invalidateQueries({ queryKey: keys.catalog }));
     await ready();
-    expect(model()).toHaveValue('');
+    await waitFor(() => expect(model()).not.toHaveAccessibleDescription(/out of date/));
+    expect(model()).toHaveValue('alpha');
+    expect(effort()).toHaveValue('high');
   });
 
   it('shows validation catalog warnings only at their exact field paths', async () => {
@@ -291,8 +437,7 @@ describe('catalog field controls', () => {
     expect(model()).not.toHaveAttribute('aria-invalid');
     api.override('GET /model-catalog', () => problem(503, 'FAILED', 'catalog unavailable'));
     await act(() => queryClient.invalidateQueries({ queryKey: keys.catalog }));
-    await waitFor(() => expect(model()).toHaveAttribute('readonly'));
-    expect(model()).toHaveAccessibleDescription(/Cannot load the model catalog/);
+    await waitFor(() => expect(model()).toHaveAccessibleDescription(/catalog may be out of date/));
     expect(model()).toHaveAccessibleDescription(/MODEL_DISABLED: Server warning for alpha/);
   });
 
@@ -306,7 +451,7 @@ describe('catalog field controls', () => {
         value={{ defaults: { model: 'alpha' } }}
         label="Settings"
         onChange={change}
-        controls={{ model: LoopModelField, effort: EffortField }}
+        controls={LOOP_FIELD_CONTROLS}
       />,
       '/',
       api,

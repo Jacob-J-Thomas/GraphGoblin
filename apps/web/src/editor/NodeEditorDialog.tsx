@@ -1,4 +1,9 @@
-import { SlugSchema, type LoopDefinitionInput, type NodeInput } from '@graphgoblin/contracts';
+import {
+  NodeConfigSchemas,
+  SlugSchema,
+  type LoopDefinitionInput,
+  type NodeInput,
+} from '@graphgoblin/contracts';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Icon } from '../components/icons/index.js';
 import {
@@ -15,7 +20,6 @@ import { SchemaForm } from '../forms/SchemaForm.js';
 import { CatalogWarningsContext } from '../forms/fields/model.js';
 import { canvasFocusTarget } from './canvas-focus.js';
 import { NODE_FIELD_CONTROLS } from './field-controls.js';
-import { NODE_FORM_SCHEMAS } from './form-schemas.js';
 import { focusIssuePath } from './focus-field.js';
 import { IssueBadge } from './IssueBadge.js';
 import { KindChip } from './KindChip.js';
@@ -258,7 +262,7 @@ export function NodeEditorDialog({
           >
             <SchemaForm
               key={`${node.kind}:${epoch}:${historyEpoch}`}
-              schema={NODE_FORM_SCHEMAS[node.kind]}
+              schema={NodeConfigSchemas[node.kind]}
               value={node.config}
               label={`${node.id} config`}
               controls={NODE_FIELD_CONTROLS}

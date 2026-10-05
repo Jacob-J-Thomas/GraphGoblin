@@ -33,22 +33,9 @@ Choose **Harness** in each inference node's dialog. It defaults to **Codex** whe
 Loop settings offer model and effort defaults. Remove `settings.defaults.harness` from older files before importing them.
 If import is refused, the alert lists each invalid field's path and reason, including this removed field.
 
-**Model** is a native dropdown of enabled catalog entries for the inference node's **Harness**,
-showing each display name and model id. **(loop default)** leaves the node's model unset; the loop's
-**Defaults → Model** uses Codex entries and **(owner default)** leaves the loop default unset.
-The decision node's **Codex → Model** and **Effort** use the same catalog controls with Codex entries.
-Use **Model catalog in Settings** beside the picker to enable a model. There is no free-text option.
-Tab reaches the dropdown; arrow keys change the selection and typing a name finds a matching entry.
-**Effort** offers the chosen model's efforts, or all six efforts when no catalog model is selected.
-The unset choice shows the catalog's default effort as guidance; it still inherits the loop, owner,
-and process defaults, rather than saving that suggested effort.
+**Model** is a native dropdown of enabled catalog entries for the inference node's **Harness**, showing each display name and model id. **(loop default)** leaves the node's model unset; the loop's **Defaults → Model** uses Codex entries and **(owner default)** leaves the loop default unset. The decision node's **Codex → Model** and **Effort** use the same catalog controls with Codex entries. Use **Model catalog in Settings** beside the picker to enable a model. There is no free-text option. Tab reaches the dropdown, then the Settings link; arrow keys change the selection and typing a name finds a matching entry. **Effort** offers the chosen model's efforts, or all six efforts when no catalog model is selected. The unset choice says **(inherited; the catalog suggests low)** when the catalog suggests low. This is guidance: the effective inherited effort may differ, because unset effort still inherits the loop, owner, and process defaults.
 
-A saved model that is missing or disabled stays selected with **not in catalog** or
-**disabled in the catalog** and a warning. An effort the selected model does not support stays
-selected and flagged too. Changing the model never changes effort silently. Catalog validation
-warnings also appear beside the model field and do not block publishing. If the catalog cannot
-load, the current values are read-only with a message and **Retry model catalog**; the pickers
-return when the query recovers without changing the saved values.
+A saved model that is missing or disabled stays selected with **not in catalog** or **disabled in the catalog** and a warning. An effort the selected model does not support stays selected and flagged too. Changing the model never changes effort silently. Catalog validation warnings appear beside the model field when they add information and do not block publishing. If the catalog cannot load, the current values remain in read-only dropdowns with one message and **Retry model catalog** beside Model; the pickers recover without changing saved values or dropping keyboard focus. A failed refresh keeps cached choices editable and warns that the catalog may be out of date.
 
 **Trigger (`trigger`).** Choose `subtype`: `manual`, `cron`, `webhook`, `event`, or `poll`. For manual starts, set `inputSchema` to validate input and `exposeTo` to declare intended `ui`, `api`, and `mcp` surfaces. The trigger records its payload as an output and follows `out`. Configure automatic sources in [Triggers](04-triggers.md).
 

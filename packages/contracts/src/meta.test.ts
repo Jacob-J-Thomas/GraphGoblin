@@ -53,13 +53,21 @@ describe('field metadata', () => {
   it('registers catalog model and effort controls without changing optional field values', () => {
     const inference = InferenceConfigSchema.shape;
     const defaults = LoopSettingsSchema.shape.defaults.unwrap().shape;
-    for (const fields of [inference, defaults]) {
+    const decision = NodeConfigSchemas.decision.shape.codex.unwrap().shape;
+    for (const fields of [inference, defaults, decision]) {
       expect(fieldMeta(fields.model).control).toBe('model');
       expect(fieldMeta(fields.effort).control).toBe('effort');
       expect(fields.model.parse(undefined)).toBeUndefined();
       expect(fields.model.parse('unknown-model')).toBe('unknown-model');
       expect(fields.effort.parse('max')).toBe('max');
     }
+    const codex = z.toJSONSchema(NodeConfigSchemas.decision).properties?.codex;
+    expect(codex).toMatchObject({
+      properties: {
+        model: { control: 'model' },
+        effort: { control: 'effort' },
+      },
+    });
   });
   it('builds metadata from a description and options', () => {
     expect(field('What it is.')).toEqual({ description: 'What it is.' });

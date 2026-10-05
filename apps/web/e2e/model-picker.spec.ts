@@ -48,6 +48,7 @@ for (const theme of ['dark', 'light']) {
     await page.goto(`/app/loops/${loop.id}/edit`);
     const dialog = await openNode(page, 'infer');
     const model = dialog.getByLabel('Model', { exact: true });
+    await expect(model).not.toHaveAttribute('aria-readonly');
     await expect(model).toHaveValue('');
     await model.focus();
     await page.keyboard.type(`Picker ${theme}`);
@@ -55,7 +56,7 @@ for (const theme of ['dark', 'light']) {
     await expect(model).toHaveValue(selected);
     const effort = dialog.getByLabel('Effort', { exact: true });
     await expect(effort.locator('option')).toHaveText([
-      '(inherited effort; catalog default: low)',
+      '(inherited; the catalog suggests low)',
       'low',
       'high',
     ]);
@@ -90,7 +91,7 @@ for (const theme of ['dark', 'light']) {
   });
 }
 
-test('an unknown model in an imported loop stays selected and field warnings include the API warning', async ({
+test('an unknown model in an imported loop stays selected without repeating the matching API warning', async ({
   page,
   request,
 }) => {
@@ -106,8 +107,12 @@ test('an unknown model in an imported loop stays selected and field warnings inc
   await expect(model.locator('option:checked')).toHaveText(
     'imported-unknown-model (not in catalog)',
   );
-  await expect(model).toHaveAccessibleDescription(/not in catalog/);
-  await expect(model).toHaveAccessibleDescription(/MODEL_NOT_IN_CATALOG/);
+  await expect(model).toHaveAccessibleDescription(/not in the catalog/);
+  await expect(model).not.toHaveAccessibleDescription(/MODEL_NOT_IN_CATALOG/);
+  await expect(dialog.locator('[data-field="model"] [role="status"] svg')).toHaveAttribute(
+    'data-icon',
+    'alert',
+  );
   await expect(dialog.getByRole('link', { name: 'Model catalog in Settings' })).toHaveAttribute(
     'href',
     '/app/settings',
@@ -124,7 +129,7 @@ test('an unknown model in an imported loop stays selected and field warnings inc
   const offlineDialog = await openNode(page, 'infer');
   const offlineModel = offlineDialog.getByLabel('Model', { exact: true });
   await expect(offlineModel).toHaveValue('imported-unknown-model');
-  await expect(offlineModel).toHaveAttribute('readonly', '');
+  await expect(offlineModel).toHaveAttribute('aria-readonly', 'true');
   await expect(offlineModel).toHaveAccessibleDescription(/Cannot load the model catalog/);
   await expect(offlineModel).toHaveAccessibleDescription(/MODEL_NOT_IN_CATALOG/);
 });
@@ -152,11 +157,11 @@ test('catalog failure preserves the current values until retry and loop defaults
   const dialog = await openNode(page, 'infer');
   const model = dialog.getByLabel('Model', { exact: true });
   await expect(model).toHaveValue(chosen.model);
-  await expect(model).toHaveAttribute('readonly', '');
+  await expect(model).toHaveAttribute('aria-readonly', 'true');
   await expect(model).toHaveAccessibleDescription(/Cannot load the model catalog/);
   await page.unroute('**/model-catalog');
-  await dialog.getByRole('button', { name: 'Retry model catalog' }).first().click();
-  await expect(model).not.toHaveAttribute('readonly');
+  await dialog.getByRole('button', { name: 'Retry model catalog' }).click();
+  await expect(model).not.toHaveAttribute('aria-readonly');
   await expect(model).toHaveValue(chosen.model);
   await closeNode(page);
   await showLoopPanel(page);
@@ -233,4 +238,76 @@ test('the decision Codex group uses catalog models and keeps unsupported efforts
     LoopDefinitionSchema.parse(stored.current.definition).nodes.find((node) => node.id === 'infer')
       ?.config,
   ).toMatchObject({ codex: { model: 'picker-decision', effort: 'high' } });
+});
+
+test('following a model issue keeps focus through a delayed catalog and a failed cached refresh', async ({
+  page,
+  request,
+}) => {
+  const imported = await request.post('/loops/import', {
+    data: inferenceLoop('delayed catalog focus', 'focus-unknown-model'),
+  });
+  expect(imported.status()).toBe(201);
+  const { loop } = (await imported.json()) as { loop: { id: string } };
+  let release: (() => void) | undefined;
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  let requested = false;
+  await page.route('**/model-catalog', async (route) => {
+    requested = true;
+    await held;
+    await route.continue();
+  });
+  await page.goto(`/app/loops/${loop.id}/edit`);
+  // The editor prefetches before any node dialog is opened.
+  await expect.poll(() => requested).toBe(true);
+  await page
+    .locator('.react-flow__node[data-id="infer"]')
+    .getByRole('button', { name: '1 issue on infer' })
+    .click();
+  await page
+    .getByRole('dialog', { name: 'Issues on infer' })
+    .getByRole('button', { name: /^Warning MODEL_NOT_IN_CATALOG/ })
+    .click();
+  const dialog = page.getByRole('dialog', { name: /^Edit inference/ });
+  const model = dialog.getByLabel('Model', { exact: true });
+  await expect(model).toHaveAttribute('aria-readonly', 'true');
+  await expect(model).toBeFocused();
+  const focused = await model.elementHandle();
+  // Hold the request for the review reproduction's delay after the issue has focused the field.
+  await page.waitForTimeout(2500);
+  release?.();
+  await expect(model).not.toHaveAttribute('aria-readonly');
+  await expect(model).toBeFocused();
+  expect(await model.evaluate((element, previous) => element === previous, focused)).toBe(true);
+  await expect(model).toHaveValue('focus-unknown-model');
+  await page.unroute('**/model-catalog');
+  await page.route('**/model-catalog', (route) =>
+    route.fulfill({
+      status: 503,
+      contentType: 'application/problem+json',
+      body: JSON.stringify({ status: 503, code: 'FAILED', detail: 'catalog unavailable' }),
+    }),
+  );
+  // RefetchOnWindowFocus needs a hidden-to-visible transition, without moving field focus.
+  await page.waitForTimeout(2100);
+  await page.evaluate(() => {
+    Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'hidden' });
+    document.dispatchEvent(new Event('visibilitychange', { bubbles: true }));
+    Reflect.deleteProperty(document, 'visibilityState');
+    document.dispatchEvent(new Event('visibilitychange', { bubbles: true }));
+  });
+  await expect(model).toHaveAccessibleDescription(/catalog may be out of date/);
+  await expect(model).toBeFocused();
+  await expect(model).not.toHaveAttribute('aria-readonly');
+  const choice = (await model.locator('option:not(:disabled)').nth(1).getAttribute('value')) ?? '';
+  expect(choice).not.toBe('');
+  await model.selectOption(choice);
+  await expect(model).toHaveValue(choice);
+  await model.focus();
+  await page.keyboard.press('Tab');
+  await expect(dialog.getByRole('button', { name: 'Retry model catalog' })).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(dialog.getByRole('link', { name: 'Model catalog in Settings' })).toBeFocused();
 });

@@ -9,7 +9,7 @@ import {
   system,
   type ListRunsQuery,
 } from '@graphgoblin/api-client';
-import { useQuery } from '@tanstack/react-query';
+import { usePrefetchQuery, useQuery } from '@tanstack/react-query';
 import { useApi } from './context.js';
 
 /** Query keys, so mutations can invalidate exactly what they change. */
@@ -71,6 +71,12 @@ export function useSettings() {
 export function useModelCatalog() {
   const client = useApi();
   return useQuery({ queryKey: keys.catalog, queryFn: () => modelCatalog.list(client) });
+}
+
+/** Start the catalog request before a node dialog or the loop settings form opens. */
+export function usePrefetchModelCatalog() {
+  const client = useApi();
+  usePrefetchQuery({ queryKey: keys.catalog, queryFn: () => modelCatalog.list(client) });
 }
 
 export function useSecrets() {

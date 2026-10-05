@@ -148,17 +148,21 @@ export function FieldGroup({ className, ...props }: HTMLAttributes<HTMLDivElemen
   return <div className={cn('grid min-w-0 content-start gap-1.5', className)} {...props} />;
 }
 
-/** Help text under a field; `tone="bad"` for a validation message. */
+/** Help text under a field; `tone="bad"` for an error, `tone="warn"` for an advisory. */
 export function HelpText({
   tone = 'muted',
   className,
   ...props
-}: HTMLAttributes<HTMLParagraphElement> & { tone?: 'muted' | 'bad' }) {
+}: HTMLAttributes<HTMLParagraphElement> & { tone?: 'muted' | 'bad' | 'warn' }) {
   return (
     <p
       className={cn(
         'text-xs leading-snug',
-        tone === 'bad' ? 'font-medium text-status-bad-fg' : 'text-muted',
+        tone === 'bad'
+          ? 'font-medium text-status-bad-fg'
+          : tone === 'warn'
+            ? 'text-status-warn-fg'
+            : 'text-muted',
         className,
       )}
       {...props}

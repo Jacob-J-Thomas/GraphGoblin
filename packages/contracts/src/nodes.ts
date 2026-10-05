@@ -205,7 +205,24 @@ export const DecisionConfigSchema = z
         ),
       ),
     codex: z
-      .strictObject({ model: z.string().min(1).optional(), effort: EffortSchema.optional() })
+      .strictObject({
+        model: z
+          .string()
+          .min(1)
+          .optional()
+          .meta(
+            field(
+              'Model for the Codex decider; falls back to the loop default, then to the owner setting.',
+              { control: 'model' },
+            ),
+          ),
+        effort: EffortSchema.optional().meta(
+          field(
+            'Reasoning effort; falls back like the model. The catalog default effort is guidance only.',
+            { control: 'effort' },
+          ),
+        ),
+      })
       .optional()
       .meta(field('Model and effort for the Codex decider.')),
     expression: z

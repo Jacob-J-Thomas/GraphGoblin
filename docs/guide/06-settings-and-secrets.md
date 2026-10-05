@@ -61,16 +61,7 @@ Restart the API after changing process defaults. Resolution is node value, then 
 
 The owner defaults in **Settings → Default model** and **Default effort** (`PUT /settings` with `defaultModel` and `defaultEffort`) need no restart: they are read each time a run starts or resumes, so a change applies to the next run. Choose **(server default)** to remove one and fall back to the process default. `defaultEffort` must be an effort level the API knows; anything else is refused with 400.
 
-The editor's Model dropdowns use this same catalog: inference nodes filter by their Harness, and
-loop defaults and decision Codex settings use Codex. Enabled entries show both display name and id; disabled entries are hidden
-unless already selected. Missing or disabled saved models and unsupported saved efforts stay in
-place with a field warning. Use **Model catalog in Settings** beside a picker to return here.
-Choose **(loop default)** in a node or **(owner default)** in loop settings to leave its model unset.
-Effort choices follow the selected catalog model, with its default effort shown in the unset
-choice as guidance only. Leaving effort unset preserves the resolution order above. Without a
-catalog model selected, all six effort levels are offered. An unavailable catalog makes the
-current model and effort read-only until **Retry model catalog** or automatic query recovery
-succeeds; recovery never substitutes values.
+The editor's Model dropdowns use this same catalog: inference nodes filter by their Harness, and loop defaults and decision Codex settings use Codex. Enabled entries show both display name and id; disabled entries are hidden unless already selected. Missing or disabled saved models and unsupported saved efforts stay in place with a field warning. Use **Model catalog in Settings** beside a picker to return here. Choose **(loop default)** in a node or **(owner default)** in loop settings to leave its model unset. Effort choices follow the selected catalog model, with its default effort shown in the unset choice as guidance only. Leaving effort unset preserves the resolution order above. Without a catalog model selected, all six effort levels are offered. An unavailable catalog makes the current model and effort read-only until **Retry model catalog** or automatic query recovery succeeds; Model shows the shared notice and retry, and Effort refers to it. A failed refresh keeps cached choices editable with a notice that the catalog may be out of date. Recovery never substitutes values.
 
 ## Store secrets
 

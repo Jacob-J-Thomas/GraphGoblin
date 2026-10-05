@@ -190,32 +190,11 @@ The owner's request: reduce the visual chaos of the node options while keeping e
 
 ### Catalog model and effort controls (#16)
 
-The metadata controls `model` and `effort` are registered in `editor/field-controls.ts` for node
-configs and in `LoopSettingsPanel.tsx` for loop defaults. `forms/fields/model.tsx` binds through
-`useField` and watches the sibling harness and model through react-hook-form. The inference
-harness selects the catalog partition; loop defaults use Codex because there is no loop harness.
-The decision Codex form reuses the inference model and effort field schemas, including their
-metadata, through `editor/form-schemas.ts`; `safeExtend` retains the decision refinements and
-the canonical decision contract and Jev classifier fields stay unchanged.
-Model uses the shared native `Select`, with enabled entries labelled by display name and id and
-an unset **(loop default)** choice (**(owner default)** for loop defaults). Native keyboard
-navigation and typeahead remain available, and the shared tokens cover both themes. The adjacent
-**Model catalog in Settings** link opens Settings; there is no free-text model entry.
+The metadata controls `model` and `effort` are registered together in `editor/field-controls.ts` for node configs and loop defaults. The inference, decision Codex, and loop-default fields carry this metadata in the contracts; every form uses its canonical contract schema. `forms/fields/model.tsx` binds through `useField` and watches the sibling harness and model through react-hook-form. The inference harness selects the catalog partition, using the sibling schema's default when unset; groups without a harness use the inference contract's Codex default. `FormScopeContext` supplies the active form schema and unique scope for sibling notice IDs. Model uses the shared native `Select`, with enabled entries labelled by display name and id and an unset **(loop default)** choice (**(owner default)** for loop defaults). Native keyboard navigation and typeahead remain available, and the shared tokens cover both themes. The **Model catalog in Settings** link follows the control and help text in Tab order; there is no free-text model entry.
 
-Effort offers the selected model's efforts, or every canonical effort when its metadata is
-unavailable or no model is selected. Its unset option shows the catalog default effort as guidance
-only; the engine's node → loop → owner → process resolution is unchanged. Changing model or harness
-never rewrites model or effort. A current missing/disabled model or unsupported effort stays
-selected as an unavailable option with a descriptive field warning. Catalog validation warnings
-(`MODEL_DISABLED`, `MODEL_NOT_IN_CATALOG`) are passed by exact relative field path through
-`CatalogWarningsContext` from the editor's merged validation list. They remain warnings.
+Effort offers the selected model's efforts, or every canonical effort when its metadata is unavailable or no model is selected. Its unset option says **(inherited; the catalog suggests low)** when low is suggested; the engine's node → loop → owner → process resolution is unchanged and the effective inherited effort may differ. Changing model or harness never rewrites model or effort. A current missing/disabled model or unsupported effort stays selected as an unavailable option with a warning glyph and `HelpText`'s `warn` tone. Catalog validation warnings (`MODEL_DISABLED`, `MODEL_NOT_IN_CATALOG`) are passed by exact relative field path through `CatalogWarningsContext` from the editor's merged validation list. A server warning matching the local catalog status is omitted from the field notice while catalog data is available; unavailable data or a different warning keeps it visible. They remain warnings.
 
-While the catalog query is pending or failed, including a failed refresh of cached entries, the
-controls show their current values as read-only inputs with a clear loading/unavailable message
-and **Retry model catalog**. Successful retry or automatic query recovery restores the selects.
-No fetch, refresh, or recovery writes form values. Unit cases cover catalog sizes, harness
-filtering, retained values, dependent effort, and failure/recovery; Edge checks cover publication
-and execution with the selected options.
+The editor prefetches the catalog on mount. While no catalog data is available, the same native selects retain their current values and focus, expose `aria-readonly`, and ignore changes. One loading/unavailable notice and **Retry model catalog** appear on Model; Effort's description points to that notice. Successful retry or automatic query recovery makes the existing controls editable. A failed refresh with cached data keeps choices editable and shows a notice that the catalog may be out of date. No fetch, refresh, or recovery writes form values. Unit cases cover catalog sizes, harness filtering and schema defaults, retained values, dependent effort, warning deduplication, focus, and failure/recovery; Edge checks cover publication and execution with the selected options, and focus through a delayed catalog and failed refresh.
 
 ### Validation badges (Decided, #15)
 
