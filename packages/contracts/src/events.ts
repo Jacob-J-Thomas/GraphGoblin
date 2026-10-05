@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ClassifierModelIdSchema } from './classifiers.js';
 import {
   EffortSchema,
   HarnessIdSchema,
@@ -124,6 +125,7 @@ export const RunEventSchema = z.discriminatedUnion('type', [
     type: z.literal('decision.made'),
     nodeId: SlugSchema,
     strategy: z.enum(['jev', 'codex', 'expression']),
+    classifierModel: ClassifierModelIdSchema.optional(),
     route: SlugSchema,
     confidence: z.number().min(0).max(1).optional(),
     alternatives: z

@@ -49,6 +49,7 @@ const SCOPE_OVERRIDES: Record<string, string> = {
 /** Path segments that share another resource's scope. */
 const SCOPE_RESOURCE_ALIASES: Record<string, string> = {
   'model-catalog': 'settings',
+  'classifier-models': 'settings',
   harness: 'system',
 };
 

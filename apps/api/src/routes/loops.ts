@@ -21,6 +21,7 @@ import { EngineRequestError } from '@graphgoblin/engine';
 import type { FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import type { Container } from '../container.js';
+import { classifierIssues } from '../classifier-issues.js';
 import { problem } from '../plugins/errors.js';
 import type { ApiInstance } from '../types.js';
 
@@ -186,6 +187,7 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
       ...container.triggers.checkDefinition(def),
       ...(await subloopIssues(ownerId, def, selfId)),
       ...(await catalogIssues(def)),
+      ...(await classifierIssues(container, ownerId, def)),
     ];
   }
 

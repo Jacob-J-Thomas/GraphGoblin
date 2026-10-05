@@ -86,7 +86,8 @@ async function seedVersion(status: 'draft' | 'published', definition = inference
   await t.container.handle.client.execute(
     'DELETE FROM __drizzle_migrations WHERE created_at > 1791136800000',
   );
-  expect(await t.container.handle.pendingMigrations()).toBe(1);
+  await t.container.handle.client.execute('DROP TABLE classifier_models');
+  expect(await t.container.handle.pendingMigrations()).toBe(2);
   await t.container.handle.migrate();
   return { loopId, versionId, raw };
 }
@@ -245,6 +246,7 @@ describe('migrated SQLite versions through the API', () => {
           { sql: 'INSERT INTO loop_versions (id, loop_id, version, status, definition, created_at, published_at) VALUES (?, ?, 1, ?, ?, ?, ?)', args: [versionId, loopId, 'published', JSON.stringify({ ...definition, settings: { ...definition.settings, defaults: { ...definition.settings.defaults, harness: 'codex' } } }), '${FIXTURE_TS}', '${FIXTURE_TS}'] },
         ], 'write');
         await first.handle.client.execute('DELETE FROM __drizzle_migrations WHERE created_at > 1791136800000');
+        await first.handle.client.execute('DROP TABLE classifier_models');
         const started = await app.inject({ method: 'POST', url: '/loops/' + loopId + '/runs', payload: {} });
         assert.equal(started.statusCode, 202, started.body);
         runId = started.json().run.id;

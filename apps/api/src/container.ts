@@ -15,6 +15,7 @@ import {
   SqliteEventStore,
   SqliteLoopRepository,
   SqliteModelCatalog,
+  SqliteClassifierModels,
   SqliteRunRepository,
   SqliteSecrets,
   SqliteSessionRepository,
@@ -31,6 +32,7 @@ import { EffortSchema, type Effort, type HarnessId } from '@graphgoblin/contract
 import {
   RunManager,
   type ClockPort,
+  type ClassifierRegistryPort,
   type DeciderPort,
   type EnginePorts,
   type EngineSettings,
@@ -43,6 +45,7 @@ import {
   type StructuredPort,
 } from '@graphgoblin/engine';
 import type { ApiConfig } from './config.js';
+import { BUILTIN_CLASSIFIER, ClassifierRegistry } from './classifier-registry.js';
 import { acquireDataDirLock } from './data-dir-lock.js';
 import { InboundEventBus } from './event-bus.js';
 import { UlidIds } from './ids.js';
@@ -65,6 +68,7 @@ export interface ContainerOverrides {
   logger?: Logger;
   harnesses?: Partial<Record<HarnessId, HarnessPort>>;
   deciders?: DeciderPort[];
+  classifiers?: ClassifierRegistryPort;
   structured?: StructuredPort;
   masterKey?: Buffer;
   probes?: HttpProbePort;
@@ -87,6 +91,7 @@ export interface Container {
   polls: PollTriggers;
   bus: InboundEventBus;
   masterKey: Buffer;
+  classifierRegistry: ClassifierRegistry;
   repos: {
     runs: SqliteRunRepository;
     loops: SqliteLoopRepository;
@@ -95,6 +100,7 @@ export interface Container {
     settings: SqliteSettings;
     apiKeys: SqliteApiKeys;
     catalog: SqliteModelCatalog;
+    classifiers: SqliteClassifierModels;
     schedules: SqliteScheduleStore;
     endpoints: SqliteWebhookEndpoints;
     inbound: SqliteInboundEvents;
@@ -102,6 +108,7 @@ export interface Container {
   };
   /** Tell adapters a secret changed. The settings routes call this after a set or delete. */
   onSecretChanged(ownerId: string, name: string): Promise<void>;
+  onClassifierChanged(ownerId: string, id: string): Promise<void>;
   /** Migrate, seed, recover runs, re-arm triggers, and start timers and cron under the data-directory lock. */
   start(): Promise<void>;
   stop(): Promise<void>;
@@ -162,6 +169,7 @@ export async function createContainer(
     const settingsRepo = new SqliteSettings(db, clock);
     const apiKeys = new SqliteApiKeys(db, clock, ids);
     const catalog = new SqliteModelCatalog(db);
+    const classifiers = new SqliteClassifierModels(db);
     const secretsFor = (ownerId: string): SqliteSecrets =>
       new SqliteSecrets(db, clock, masterKey, ownerId);
     const timers = new TimerService(new SqliteTimerStore(db), clock, {
@@ -194,8 +202,20 @@ export async function createContainer(
       resolve: (name) => (migrated ? ownerSecrets.resolve(name) : Promise.resolve(undefined)),
     };
     const jev = createJevDecider({ secrets: jevSecrets, logger, secretName: JEV_SECRET });
+    const classifierRegistry = new ClassifierRegistry(classifiers, secretsFor, logger);
+    let builtinEnabled = false;
+    const refreshBuiltin = async (): Promise<void> => {
+      builtinEnabled = (await classifiers.findOne(LOCAL_OWNER, 'jev'))?.enabled ?? false;
+    };
+    const exitJev: DeciderPort = {
+      id: 'jev',
+      available: () => builtinEnabled && jev.available(),
+      choose: (request, signal) => jev.choose(request, signal),
+      judge: (request, signal) => jev.judge(request, signal),
+    };
     const secretHooks: SecretChangeHook[] = [
       async (ownerId, name) => {
+        classifierRegistry.secretChanged(ownerId, name);
         if (ownerId === LOCAL_OWNER && name === JEV_SECRET) await jev.refresh();
       },
       ...(overrides.secretHooks ?? []),
@@ -211,8 +231,9 @@ export async function createContainer(
       loops,
       sessions,
       harnesses: overrides.harnesses ?? { codex: codex.harness },
-      // Decision nodes pick a strategy by id; Jev first, the Codex decider as the fallback.
-      deciders: overrides.deciders ?? [jev, codex.decider],
+      // Codex Choice and built-in Noul exits; classifier Choice uses the registry.
+      deciders: overrides.deciders ?? [exitJev, codex.decider],
+      classifiers: overrides.classifiers ?? classifierRegistry,
       structured,
       scripts: overrides.scripts ?? new ProcessScripts(),
       workspace: new FsWorkspace(config.dataDir),
@@ -310,6 +331,7 @@ export async function createContainer(
       polls,
       bus,
       masterKey,
+      classifierRegistry,
       repos: {
         runs,
         loops,
@@ -318,6 +340,7 @@ export async function createContainer(
         settings: settingsRepo,
         apiKeys,
         catalog,
+        classifiers,
         schedules,
         endpoints,
         inbound,
@@ -326,12 +349,18 @@ export async function createContainer(
       async onSecretChanged(ownerId, name) {
         for (const hook of secretHooks) await hook(ownerId, name);
       },
+      async onClassifierChanged(ownerId, id) {
+        classifierRegistry.invalidate(ownerId, id);
+        if (ownerId === LOCAL_OWNER && id === 'jev') await refreshBuiltin();
+      },
       start() {
         if (stopping) return Promise.reject(new Error('container has been stopped'));
         starting ??= (async () => {
           try {
             await handle.migrate();
             migrated = true;
+            await classifiers.seedBuiltin(LOCAL_OWNER, BUILTIN_CLASSIFIER);
+            await refreshBuiltin();
             if (config.jevApiKey && (await ownerSecrets.resolve(JEV_SECRET)) === undefined) {
               await ownerSecrets.set(JEV_SECRET, config.jevApiKey);
               logger.info({}, 'seeded jev-api-key from GG_JEV_API_KEY');

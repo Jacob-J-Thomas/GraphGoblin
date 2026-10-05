@@ -44,7 +44,7 @@ async function upgrade(check: (db: DatabaseHandle) => Promise<void>) {
   }
   const current = openDatabase({ url });
   try {
-    expect(await current.pendingMigrations()).toBe(3);
+    expect(await current.pendingMigrations()).toBe(4);
     await current.migrate();
     await check(current);
     expect(await current.pendingMigrations()).toBe(0);
@@ -207,10 +207,11 @@ describe('model catalog source migration and repository', () => {
       await catalog.seed();
       const rows = (await catalog.list()).map(({ source: _source, ...row }) => row);
       await handle.client.execute('ALTER TABLE model_catalog DROP COLUMN source');
+      await handle.client.execute('DROP TABLE classifier_models');
       await handle.client.execute(
         'DELETE FROM __drizzle_migrations WHERE created_at >= 1791136800000',
       );
-      expect(await handle.pendingMigrations()).toBe(2);
+      expect(await handle.pendingMigrations()).toBe(3);
       await handle.migrate();
       expect(await catalog.list()).toEqual(rows.map((row) => ({ ...row, source: 'harness' })));
     } finally {

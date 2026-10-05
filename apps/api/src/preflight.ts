@@ -7,6 +7,7 @@ import type { HarnessPort } from '@graphgoblin/engine';
 import {
   DEFAULT_MODEL_CATALOG,
   SqliteModelCatalog,
+  SqliteClassifierModels,
   SqliteSecrets,
   databaseFilePath,
   openDatabase,
@@ -53,6 +54,8 @@ export interface PreflightSources {
   pendingMigrations(): Promise<number | 'missing'>;
   /** The Jev API key, if set. Only called once the database is migrated. */
   jevKey(): Promise<string | undefined>;
+  /** Built-in catalog availability; no provider call. Only read after migration. */
+  jevEnabled(): Promise<boolean>;
   /** The model catalog. Only called once the database is migrated. */
   catalog(): Promise<ModelCatalogEntry[]>;
 }
@@ -268,7 +271,12 @@ export async function runPreflight(sources: PreflightSources): Promise<Preflight
       const key = (await sources.jevKey())?.trim();
       checks.push(
         key
-          ? check('jev', 'Jev', 'ok', `API key set (secret "${JEV_SECRET}")`)
+          ? check(
+              'jev',
+              'Jev',
+              'ok',
+              `API key set (secret "${JEV_SECRET}")${(await sources.jevEnabled()) ? '' : ' (disabled in Settings)'}`,
+            )
           : check(
               'jev',
               'Jev',
@@ -300,6 +308,8 @@ export function containerPreflightSources(container: Container): PreflightSource
     harnesses: container.ports.harnesses,
     pendingMigrations: () => container.handle.pendingMigrations(),
     jevKey: () => container.repos.secretsFor(LOCAL_OWNER).resolve(JEV_SECRET),
+    jevEnabled: async () =>
+      (await container.repos.classifiers.findOne(LOCAL_OWNER, 'jev'))?.enabled ?? true,
     catalog: () => container.repos.catalog.list(),
   };
 }
@@ -402,6 +412,7 @@ export async function configPreflightSources(
           ? Promise.resolve('missing' as const)
           : Promise.reject(failure instanceof Error ? failure : new Error(String(failure))),
       jevKey: () => Promise.resolve(undefined),
+      jevEnabled: () => Promise.resolve(true),
       catalog: () => Promise.resolve(DEFAULT_MODEL_CATALOG),
       close: () => undefined,
     };
@@ -417,6 +428,8 @@ export async function configPreflightSources(
           )
         : Promise.resolve(undefined),
     catalog: () => new SqliteModelCatalog(handle.db).list(),
+    jevEnabled: async () =>
+      (await new SqliteClassifierModels(handle.db).findOne(LOCAL_OWNER, 'jev'))?.enabled ?? true,
     close: () => handle.close(),
   };
 }
