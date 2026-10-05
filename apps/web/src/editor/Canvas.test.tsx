@@ -8,8 +8,13 @@ import { buildCardData, Canvas, canvasFocusTarget } from './Canvas.js';
 import type { EditorIssue } from './model.js';
 import type { FlowNode } from './NodeCard.js';
 import { useEditorStore } from './store.js';
+import { decisionBackRoute, routingInput, simpleLoop } from '../__fixtures__/routing.js';
+import { BackwardEdge } from './BackwardEdge.js';
+import type { RoutingGeometry } from './useRouting.js';
+import type { RouteChannel } from './route-channels.js';
 
 let props: ReactFlowProps<FlowNode> | undefined;
+let geometry: RoutingGeometry = { nodes: [], preparationMs: 0 };
 
 vi.mock('@xyflow/react', async (importOriginal) => {
   const actual = await importOriginal<Record<string, unknown>>();
@@ -20,6 +25,7 @@ vi.mock('@xyflow/react', async (importOriginal) => {
       return <div data-testid="flow" />;
     },
     useReactFlow: () => ({ screenToFlowPosition: (p: { x: number; y: number }) => p }),
+    useStore: () => geometry,
   };
 });
 
@@ -28,6 +34,7 @@ const flow = () => props as ReactFlowProps<FlowNode>;
 
 describe('Canvas handlers', () => {
   beforeEach(() => {
+    geometry = { nodes: [], preparationMs: 0 };
     store().load('L1', kitchenSinkLoop());
   });
 
@@ -49,19 +56,96 @@ describe('Canvas handlers', () => {
     expect(decide.data.ports).toEqual(['good', 'bad']);
     const loopBack = flow().edges!.find((e) => e.id === 'e11')!;
     expect(loopBack).toMatchObject({ label: 'loopBack', animated: true, sourceHandle: 'loopBack' });
+    expect(flow().edgeTypes).toEqual({ backward: BackwardEdge });
     expect(flow().edges!.find((e) => e.id === 'e1')!.label).toBeUndefined();
+  });
+
+  it('uses routed geometry only for backward edges and deletes loopBack with its config', () => {
+    const definition = simpleLoop();
+    geometry = { nodes: routingInput(definition).nodes, preparationMs: 0 };
+    store().load('L1', definition);
+    const view = renderCanvas([]);
+    const back = flow().edges!.find((e) => e.id === 'return')!;
+    expect(back).toMatchObject({
+      type: 'backward',
+      label: 'loopBack',
+      animated: true,
+      ariaLabel: 'done loopBack to work',
+    });
+    const channel = back.data as RouteChannel;
+    expect(channel.getSnapshot()).toMatchObject({ blocked: false });
+    const previousPath = channel.getSnapshot();
+    const measured = structuredClone(geometry.nodes);
+    measured[3]!.outputs['loopBack']!.y += 10;
+    geometry = { nodes: measured, preparationMs: 0 };
+    const previousEdges = flow().edges;
+    view.rerender(<Canvas definition={store().definition!} issues={[]} />);
+    expect(channel.getSnapshot()).not.toBe(previousPath);
+    expect(flow().edges).toBe(previousEdges);
+    expect(flow().edges!.find((e) => e.id === 'start-work')!.type).toBe('smoothstep');
+    const forward = flow().edges!.find((e) => e.id === 'start-work');
+    act(() => flow().onEdgesChange!([{ type: 'select', id: 'return', selected: true }]));
+    expect(flow().edges!.find((e) => e.id === 'return')!.selected).toBe(true);
+    expect(flow().edges!.find((e) => e.id === 'return')!.data).toBe(back.data);
+    expect(flow().edges!.find((e) => e.id === 'start-work')).toBe(forward);
+    fireEvent.keyDown(view.getByTestId('canvas'), { key: 'Delete' });
+    expect(store().definition!.edges.some((e) => e.id === 'return')).toBe(false);
+    expect(store().definition!.nodes.find((n) => n.id === 'done')!.config).not.toHaveProperty(
+      'loopBack',
+    );
+    expect(store().past).toHaveLength(1);
+    act(() => store().undo());
+    expect(store().definition!.nodes.find((n) => n.id === 'done')!.config).toHaveProperty(
+      'loopBack.targetNodeId',
+      'work',
+    );
+  });
+
+  it('names an obstructed edge for keyboard users', () => {
+    const definition = simpleLoop();
+    const { nodes } = routingInput(definition);
+    nodes.push({ ...nodes[0]!, id: 'cover', x: 1000 });
+    geometry = { nodes, preparationMs: 0 };
+    store().load('L1', definition);
+    renderCanvas([]);
+    expect(flow().edges!.find((e) => e.id === 'return')!.ariaLabel).toContain(
+      'Port covered by a card',
+    );
+  });
+
+  it('waits for measurements of decision returns and self-loops without drawing a crossing fallback', () => {
+    store().load('L1', decisionBackRoute());
+    renderCanvas([]);
+    expect(flow().edges!.find((e) => e.id === 'retry')).toMatchObject({ type: 'backward' });
+    expect(flow().edges!.find((e) => e.id === 'self')).toMatchObject({ type: 'backward' });
+    expect(flow().edges!.find((e) => e.id === 'finish')!.type).toBe('smoothstep');
+    // A horizontal move may change direction before the next handle measurement arrives.
+    act(() =>
+      flow().onNodesChange!([
+        { type: 'position', id: 'decide', position: { x: 80, y: 100 }, dragging: true },
+      ]),
+    );
+    expect(flow().edges!.find((e) => e.id === 'retry')!.type).toBe('smoothstep');
   });
 
   it('keeps a node’s data while its node and issues are unchanged, so its card does not re-render', () => {
     const view = renderCanvas();
     const prep = data('prep');
     const infer = data('infer');
+    const unchangedNode = flow().nodes!.find((n) => n.id === 'check');
+    const unchangedEdges = flow().edges;
+    const clickNode = flow().onNodeClick;
+    const clickPane = flow().onPaneClick;
     // Validation ran again: new but equal issue objects, and a new issue on another node.
     const other: EditorIssue = { ...ISSUE, nodeId: 'infer' };
     view.rerender(<Canvas definition={store().definition!} issues={[{ ...ISSUE }, other]} />);
     expect(data('prep')).toBe(prep);
     expect(data('infer')).not.toBe(infer);
     expect(data('infer').issues).toEqual([other]);
+    expect(flow().nodes!.find((n) => n.id === 'check')).toBe(unchangedNode);
+    expect(flow().edges).toBe(unchangedEdges);
+    expect(flow().onNodeClick).toBe(clickNode);
+    expect(flow().onPaneClick).toBe(clickPane);
     // An edit to one node gives only that node new data.
     const check = data('check');
     act(() => store().updateNode('prep', { label: 'Prepare it' }));
@@ -69,6 +153,7 @@ describe('Canvas handlers', () => {
     expect(data('prep')).not.toBe(prep);
     expect(data('prep').node.label).toBe('Prepare it');
     expect(data('check')).toBe(check);
+    expect(flow().nodes!.find((n) => n.id === 'check')).toBe(unchangedNode);
 
     // The cache itself: the previous object when node and issues match, a new one otherwise.
     const def = store().definition!;
