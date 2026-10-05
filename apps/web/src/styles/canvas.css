@@ -71,6 +71,46 @@
   fill: var(--text-default);
 }
 
+/* Edges receive focus on their SVG group. Outline the path itself, not its huge bounding box. */
+.react-flow .react-flow__edge.selectable:focus-visible {
+  outline: none;
+}
+
+.react-flow .react-flow__edge.selectable:focus-visible .react-flow__edge-path {
+  stroke: var(--focus-ring);
+  stroke-width: 3;
+}
+
+.react-flow .react-flow__edge.selectable:focus-visible .react-flow__edge-textbg {
+  stroke: var(--focus-ring);
+  stroke-width: 2;
+}
+
+/* Explicit system colours retain SVG paths, labels, selection and focus in contrast themes. */
+@media (forced-colors: active) {
+  .react-flow {
+    --canvas-bg: Canvas;
+    --canvas-edge: CanvasText;
+    --canvas-edge-loop: CanvasText;
+    --canvas-edge-selected: Highlight;
+    --focus-ring: Highlight;
+  }
+
+  .react-flow__edge {
+    forced-color-adjust: none;
+  }
+
+  .react-flow__edge .react-flow__edge-textbg {
+    fill: Canvas;
+    stroke: CanvasText;
+  }
+
+  .react-flow__edge .react-flow__edge-text,
+  .react-flow__edge.gg-edge-loop .react-flow__edge-text {
+    fill: CanvasText;
+  }
+}
+
 /* Zoom, fit, and lock controls: one bordered stack on the raised surface. */
 .react-flow__controls {
   overflow: hidden;

@@ -94,6 +94,17 @@ test('pair data validates all groups and preserves the sample with focus on ever
     assert.ok(has(pairs.nonText, fg, '--surface-overlay'), `${fg} on --surface-overlay`);
   }
   assert.ok(has(pairs.decorative, '--surface-overlay', '--canvas-bg'));
+  for (const fg of ['--text-default', '--text-muted']) {
+    assert.ok(has(pairs.text, fg, '--surface-raised'), `${fg} label on pill (#18)`);
+  }
+  for (const fg of [
+    '--canvas-edge',
+    '--canvas-edge-loop',
+    '--canvas-edge-selected',
+    '--focus-ring',
+  ]) {
+    assert.ok(has(pairs.nonText, fg, '--canvas-bg'), `${fg} stroke on canvas (#18)`);
+  }
   // The shipped tokens keep every value of the approved sample in both themes. Values are compared
   // with their var() references expanded, so a shipped token may route a sample value through a
   // new alias (the header hairline's stops) without changing what it resolves to.
