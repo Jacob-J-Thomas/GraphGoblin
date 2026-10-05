@@ -22,6 +22,8 @@ interface SyntaxIssue {
   severity: 'error';
   message: string;
   nodeId?: string;
+  /** The field: `config.<path>` in the node, or `settings.<path>` in the loop's settings. */
+  path: string;
 }
 
 /** The slice of a Zod 4 schema this walker reads. */
@@ -101,6 +103,7 @@ export function syntaxIssues(def: LoopDefinition): SyntaxIssue[] {
       severity: 'error',
       message: `${item.kind} at ${where} ${item.path}: ${problem}`,
       ...(nodeId ? { nodeId } : {}),
+      path: [nodeId ? 'config' : 'settings', item.path].filter(Boolean).join('.'),
     });
   };
   for (const item of findAuthoredSources(LoopSettingsSchema, def.settings)) report(item);

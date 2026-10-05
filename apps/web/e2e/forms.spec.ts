@@ -500,3 +500,37 @@ test('#14: inference shows its basic fields, the rest under Advanced, which says
   );
   await expect(editor.getByLabel('Timeout seconds', { exact: true })).toBeFocused();
 });
+
+test('#14: a collapsed group or operation flags an expression that does not compile, and its issue opens both', async ({
+  page,
+  request,
+}) => {
+  const id = await createLoop(
+    request,
+    {
+      prompt: { template: 'Hi' },
+      input: [{ op: 'drop', target: 'messages', where: 'vars.' }],
+      output: { schema: { jsonSchema: {} } },
+    },
+    'inference',
+  );
+  await page.goto(`/app/loops/${id}/edit`);
+  const dialog = await openNode(page, 'approve');
+  // The domain's syntax check, not the schema, finds it; the empty JSON Schema counts as set.
+  const advanced = dialog.getByRole('button', { name: /^Advanced\b/ });
+  await expect(advanced).toHaveAccessibleName('Advanced 2 set 1 error');
+  await advanced.click();
+  const operation = dialog.getByRole('button', { name: /^Input 1 drop messages/ });
+  await expect(operation).toHaveAttribute('aria-expanded', 'false');
+  await expect(operation).toHaveAccessibleName('Input 1 drop messages 1 error');
+  // Collapse again, then follow the issue from the editor's badge: both open at the field.
+  await advanced.click();
+  await dialog.getByRole('button', { name: /issues? on approve$/ }).click();
+  await page
+    .getByRole('dialog', { name: 'Issues on approve' })
+    .getByRole('button', { name: /EXPRESSION_INVALID/ })
+    .click();
+  await expect(advanced).toHaveAttribute('aria-expanded', 'true');
+  await expect(operation).toHaveAttribute('aria-expanded', 'true');
+  await expect(dialog.locator('[data-field="input.0.where"] .cm-content')).toBeFocused();
+});

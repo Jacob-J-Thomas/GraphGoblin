@@ -67,7 +67,8 @@ import { stripUnset } from '../unset.js';
 export function Field(props: FieldProps) {
   const controls = use(FieldControlsContext);
   const name = fieldMeta(props.schema).control;
-  const Control = name === undefined ? undefined : controls[name];
+  // Only the registry's own entries: a name such as `toString` is not a registered control.
+  const Control = name !== undefined && Object.hasOwn(controls, name) ? controls[name] : undefined;
   return Control ? <Control {...props} /> : <DefaultField {...props} />;
 }
 

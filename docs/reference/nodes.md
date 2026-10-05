@@ -158,11 +158,11 @@ Ports: `out`.
 
 ### `mode: "until"`
 
-| Field            | Type                         | Required | Default      | Description                                                       |
-| ---------------- | ---------------------------- | -------- | ------------ | ----------------------------------------------------------------- |
-| `timestamp`      | string                       | yes      |              | When to resume; Liquid or JSONata producing an ISO timestamp.     |
-| `timeoutSeconds` | integer                      | no       |              | Give up after this long.                                          |
-| `onTimeout`      | `"continue"` \| `"fail-run"` | no       | `"continue"` | Continue with `lastOutput = { timedOut: true }`, or fail the run. |
+| Field            | Type                         | Required | Default      | Description                                                           |
+| ---------------- | ---------------------------- | -------- | ------------ | --------------------------------------------------------------------- |
+| `timestamp`      | string                       | yes      |              | When to resume: a Liquid template that renders an ISO 8601 timestamp. |
+| `timeoutSeconds` | integer                      | no       |              | Give up after this long.                                              |
+| `onTimeout`      | `"continue"` \| `"fail-run"` | no       | `"continue"` | Continue with `lastOutput = { timedOut: true }`, or fail the run.     |
 
 ### `mode: "signal"`
 

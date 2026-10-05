@@ -131,7 +131,8 @@ function sameJson(a: unknown, b: unknown): boolean {
 /**
  * Whether a field holds a value of its own: set, and not its default. An object holds one when
  * any of its fields does (so `{}` or a copy of each default does not count); an empty list or map
- * without a default holds nothing.
+ * without a default holds nothing. An opaque JSON value (a JSON Schema, `unknown`) counts as soon
+ * as it is supplied, `{}` included: an empty JSON Schema is a choice, not the absence of one.
  */
 export function isCustomized(schema: Schema, value: unknown): boolean {
   const current = stripUnset(value);
@@ -140,6 +141,7 @@ export function isCustomized(schema: Schema, value: unknown): boolean {
   if (hasDefault && sameJson(current, defaultValue)) return false;
   if (typeof current !== 'object' || current === null) return true;
   const shape = shapeOf(base);
+  if (shape.kind === 'json') return true;
   if (shape.kind === 'object' && !Array.isArray(current)) {
     return Object.entries(current).some(([key, item]) => {
       const field = shape.shape[key];

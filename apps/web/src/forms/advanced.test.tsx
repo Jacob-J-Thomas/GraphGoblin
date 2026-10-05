@@ -1,11 +1,6 @@
-import {
-  NodeConfigSchemas,
-  field,
-  fieldMeta as contractsFieldMeta,
-  type NodeKind,
-} from '@graphgoblin/contracts';
+import { NodeConfigSchemas, field, type NodeKind } from '@graphgoblin/contracts';
 import { everyFieldLoop } from '@graphgoblin/contracts/testing';
-import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
@@ -13,7 +8,7 @@ import { z } from 'zod';
 import { openAdvanced } from '../__fixtures__/advanced.js';
 import { focusField } from '../editor/focus-field.js';
 import { DefaultField, useField, type FieldControls, type FieldProps } from './fields.js';
-import { shapeOf, unwrap, type Schema } from './introspect.js';
+import { matchOption, shapeOf, unwrap, type Schema } from './introspect.js';
 import type { ParseError } from './parse-errors.js';
 import { SchemaForm } from './SchemaForm.js';
 
@@ -22,12 +17,14 @@ function Harness({
   initial,
   controls,
   parseErrors,
+  problems,
   spy = () => undefined,
 }: {
   schema: Schema;
   initial: unknown;
   controls?: FieldControls;
   parseErrors?: Record<string, ParseError>;
+  problems?: readonly string[];
   spy?: (value: unknown) => void;
 }) {
   const [value, setValue] = useState(initial);
@@ -38,6 +35,7 @@ function Harness({
       label="form"
       controls={controls}
       parseErrors={parseErrors}
+      problems={problems}
       onChange={(next) => {
         setValue(next);
         spy(next);
@@ -82,6 +80,83 @@ function objectOf(kind: NodeKind, config: Record<string, unknown>): Record<strin
   const variant = shapeOf(option);
   if (variant.kind !== 'object') throw new Error(kind);
   return variant.shape;
+}
+
+/** What a field path must show: a value control, any control (Add, a picker), or just be there. */
+interface Expected {
+  path: string;
+  control: 'value' | 'any' | 'none';
+}
+
+const VALUE_CONTROL =
+  'input:not([type="hidden"]), select, textarea, [contenteditable="true"], [role="switch"]';
+const ANY_CONTROL = `${VALUE_CONTROL}, button`;
+
+const recordOf = (value: unknown) =>
+  typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : {};
+
+/**
+ * Every field the form must draw for `value` under `schema` at `path`, down to the leaves: an
+ * object's fields (an absent optional one is its Add button), each item of a list, each entry of a
+ * record (its value is one field, a JSON editor when it is opaque), and the fields of the union
+ * variant the value has. A JSON value is one editor, whatever it holds.
+ */
+function expectedFields(schema: Schema, value: unknown, path: string, out: Expected[]) {
+  const { hasDefault, defaultValue, optional } = unwrap(schema);
+  const current = value === undefined && hasDefault ? defaultValue : value;
+  const shape = shapeOf(schema);
+  switch (shape.kind) {
+    case 'object':
+      if (current === undefined && optional) {
+        out.push({ path, control: 'any' });
+        return;
+      }
+      out.push({ path, control: 'none' });
+      for (const [key, child] of Object.entries(shape.shape)) {
+        expectedFields(child, recordOf(current)[key], `${path}.${key}`, out);
+      }
+      return;
+    case 'array':
+      out.push({ path, control: 'any' });
+      if (shapeOf(shape.element).kind === 'enum' || !Array.isArray(current)) return;
+      current.forEach((item, index) =>
+        expectedFields(shape.element, item, `${path}.${index}`, out),
+      );
+      return;
+    case 'record':
+      out.push({ path, control: 'any' });
+      for (const key of Object.keys(recordOf(current))) {
+        out.push({ path: `${path}.${key}`, control: 'value' });
+      }
+      return;
+    case 'union': {
+      out.push({ path, control: 'value' });
+      if (current === undefined) return;
+      const index = matchOption(shape.options, current, shape.discriminator);
+      const option = shapeOf(shape.options[index]!);
+      if (option.kind !== 'object') return;
+      for (const [key, child] of Object.entries(option.shape)) {
+        if (key === shape.discriminator) continue;
+        expectedFields(child, recordOf(current)[key], `${path}.${key}`, out);
+      }
+      return;
+    }
+    case 'literal':
+      out.push({ path, control: 'none' });
+      return;
+    default:
+      out.push({ path, control: 'value' });
+  }
+}
+
+/** Open the Advanced disclosure and every collapsed item, nested ones included. */
+function openEverything() {
+  const form = screen.getByRole('form', { name: 'form' });
+  for (let round = 0; round < 5; round += 1) {
+    const closed = [...form.querySelectorAll<HTMLElement>('button[aria-expanded="false"]')];
+    if (closed.length === 0) return;
+    for (const button of closed) fireEvent.click(button);
+  }
 }
 
 const toggle = () => screen.queryByRole('button', { name: /^Advanced\b/ });
@@ -193,38 +268,54 @@ describe('basic fields first, advanced ones behind a disclosure', () => {
   });
 
   it.each(Object.keys(NodeConfigSchemas) as NodeKind[])(
-    'keeps every %s field editable once Advanced and collapsed items are open',
-    async (kind) => {
-      const user = userEvent.setup();
+    'keeps every %s field editable, down to nested leaves, once Advanced and items are open',
+    (kind) => {
       for (const config of configsOf(kind)) {
         cleanup();
         render(<Harness schema={NodeConfigSchemas[kind]} initial={config} />);
-        if (toggle()) openAdvanced();
-        for (const item of screen.queryAllByRole('button', { name: /^\w[\w ]* \d+ / })) {
-          if (item.getAttribute('aria-expanded') === 'false') await user.click(item);
-        }
+        openEverything();
+        const expected: Expected[] = [];
         for (const [key, schema] of Object.entries(objectOf(kind, config))) {
           if (key === 'subtype' || key === 'mode') continue;
-          const base = shapeOf(unwrap(schema).base);
-          // A split object's fields are each placed on their own.
-          const paths =
-            base.kind === 'object' &&
-            Object.values(base.shape).some((f) => contractsFieldMeta(f).advanced)
-              ? Object.keys(base.shape).map((child) => `${key}.${child}`)
-              : [key];
-          for (const path of paths) {
-            const el = fieldAt(path);
-            expect(el, `${kind} ${path}`).toBeDefined();
-            expect(el!.closest('[hidden]'), `${kind} ${path} hidden`).toBeNull();
-            const control = el!.querySelector(
-              'input, select, textarea, [contenteditable="true"], button',
-            );
-            expect(control, `${kind} ${path} control`).not.toBeNull();
-          }
+          expectedFields(schema, config[key], key, expected);
+        }
+        expect(expected.length, kind).toBeGreaterThan(0);
+        for (const { path, control } of expected) {
+          const el = fieldAt(path);
+          expect(el, `${kind} ${path}`).toBeDefined();
+          expect(el!.closest('[hidden]'), `${kind} ${path} hidden`).toBeNull();
+          if (control === 'none') continue;
+          const found = el!.querySelector(control === 'value' ? VALUE_CONTROL : ANY_CONTROL);
+          expect(found, `${kind} ${path} ${control} control`).not.toBeNull();
         }
       }
     },
   );
+
+  it('expects the nested leaves and variant fields, and would notice one not drawn', () => {
+    const [config] = configsOf('inference');
+    render(<Harness schema={NodeConfigSchemas.inference} initial={config} />);
+    openEverything();
+    const expected: Expected[] = [];
+    expectedFields(NodeConfigSchemas.inference.shape.output, config!['output'], 'output', expected);
+    expectedFields(NodeConfigSchemas.inference.shape.input, config!['input'], 'input', expected);
+    expect(expected).toEqual(
+      expect.arrayContaining([
+        { path: 'output.schema.repair.maxAttempts', control: 'value' },
+        { path: 'output.transforms.0.patterns', control: 'any' },
+        { path: 'output.transforms.0.patterns.0', control: 'value' },
+        { path: 'input.0.keep.last', control: 'value' },
+        { path: 'input.0.where', control: 'value' },
+      ]),
+    );
+    // A JSON value is one editor, whatever it holds.
+    expect(expected.filter((e) => e.path.startsWith('output.schema.jsonSchema'))).toEqual([
+      { path: 'output.schema.jsonSchema', control: 'value' },
+    ]);
+    // Removing a nested control leaves its field without one, which the walk checks.
+    fieldAt('output.schema.repair.maxAttempts')!.querySelector('input')!.remove();
+    expect(fieldAt('output.schema.repair.maxAttempts')!.querySelector(VALUE_CONTROL)).toBeNull();
+  });
 
   it('labels split fields by their title, and shows descriptions as help with code', () => {
     const [config] = configsOf('subloop');
@@ -319,6 +410,37 @@ describe('basic fields first, advanced ones behind a disclosure', () => {
     const block = fieldAt('context')!;
     expect(block.closest('[hidden]')).toBeNull();
     expect(within(block).getByRole('alert')).toHaveTextContent(/bogus/i);
+  });
+
+  it('counts errors found outside the form, such as an expression that does not compile', () => {
+    render(
+      <Harness
+        schema={NodeConfigSchemas.inference}
+        initial={{
+          prompt: { template: 'Hi' },
+          input: [{ op: 'drop', target: 'messages', where: 'vars.' }],
+        }}
+        // The loop's validation found it (EXPRESSION_INVALID at config.input.0.where); the
+        // prompt's is a basic field's, not Advanced's.
+        problems={['input.0.where', 'prompt.template']}
+      />,
+    );
+    expect(toggle()).toHaveAccessibleName('Advanced 1 set 1 error');
+    openAdvanced();
+    // The collapsed operation says so too.
+    expect(screen.getByRole('button', { name: /^Input 1 drop messages/ })).toHaveAccessibleName(
+      'Input 1 drop messages 1 error',
+    );
+  });
+
+  it('counts an explicitly empty JSON Schema as set: it turns structured output on', () => {
+    render(
+      <Harness
+        schema={NodeConfigSchemas.inference}
+        initial={{ prompt: { template: 'Hi' }, output: { schema: { jsonSchema: {} } } }}
+      />,
+    );
+    expect(toggle()).toHaveAccessibleName('Advanced 1 set');
   });
 
   it('says "1 error" for one problem', async () => {
@@ -488,6 +610,23 @@ describe('registered controls', () => {
     expect(screen.getByRole('textbox', { name: 'Model (raw)' })).toHaveValue('picked');
     // A control name nothing registered falls back to the default renderer.
     expect(screen.getByRole('textbox', { name: 'Other' })).toBeInTheDocument();
+  });
+
+  it('draws the default renderer for a name the registry only inherits, such as toString', () => {
+    const inherited = z.object({
+      name: z
+        .string()
+        .optional()
+        .meta(field('A name.', { control: 'toString' })),
+      other: z
+        .string()
+        .optional()
+        .meta(field('Another.', { control: 'constructor' })),
+    });
+    render(<Harness schema={inherited} initial={{}} controls={{ model: ModelPicker }} />);
+    expect(screen.getByRole('textbox', { name: 'Name' })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Other' })).toBeInTheDocument();
+    expect(screen.queryByText(/object Undefined/)).toBeNull();
   });
 
   it('draws the default renderer when no controls are given', () => {

@@ -1,4 +1,4 @@
-import { field, NodeConfigSchemas, TemplateSchema } from '@graphgoblin/contracts';
+import { field, JsonSchemaSchema, NodeConfigSchemas, TemplateSchema } from '@graphgoblin/contracts';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { itemSummary } from './fields.js';
@@ -173,6 +173,13 @@ describe('isCustomized', () => {
     expect(isCustomized(z.record(z.string(), z.string()).optional(), {})).toBe(false);
     expect(isCustomized(z.record(z.string(), z.string()).optional(), { a: '' })).toBe(true);
     expect(isCustomized(z.unknown(), null)).toBe(true);
+    // An opaque JSON value counts once supplied, even `{}`: an empty JSON Schema is a choice.
+    expect(isCustomized(JsonSchemaSchema.optional(), {})).toBe(true);
+    expect(isCustomized(z.unknown(), {})).toBe(true);
+    expect(isCustomized(z.json().optional(), [])).toBe(true);
+    const schema = shape(NodeConfigSchemas.inference.shape.output)['schema']!;
+    expect(isCustomized(schema, { jsonSchema: {} })).toBe(true);
+    expect(isCustomized(schema, {})).toBe(false);
     expect(isCustomized(z.object({ a: z.array(z.number()) }), { a: [1, { b: 2 }] })).toBe(true);
   });
 

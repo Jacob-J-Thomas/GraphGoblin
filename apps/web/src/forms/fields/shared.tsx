@@ -101,15 +101,24 @@ export function isWithin(issuePath: string, path: string): boolean {
 }
 
 /**
+ * Paths, relative to the form's value, of errors found outside the form: the loop's validation of
+ * the draft, such as the domain's template and expression checks and the API's (SchemaForm's
+ * `problems`). Collapsed groups count them with the form's own.
+ */
+export const ProblemPathsContext = createContext<readonly string[]>([]);
+
+/**
  * How many problems lie in a part of the form that may be hidden (a collapsed Advanced group or
  * list item), so its summary can say so: the paths with a schema issue (SchemaForm's check of the
- * whole value) or unparsed JSON text inside any of `fields`, or exactly at one of `exact` (an
- * object whose own message shows there). Each path counts once.
+ * whole value), unparsed JSON text, or an error found outside the form (`ProblemPathsContext`)
+ * inside any of `fields`, or exactly at one of `exact` (an object whose own message shows there).
+ * Each path counts once.
  */
 export function useProblemCount(fields: readonly string[], exact: readonly string[] = []): number {
   const issues = use(FieldIssuesContext);
+  const outside = use(ProblemPathsContext);
   const parseErrors = useParseErrors();
-  const paths = new Set([...issues.keys(), ...Object.keys(parseErrors.errors ?? {})]);
+  const paths = new Set([...issues.keys(), ...Object.keys(parseErrors.errors ?? {}), ...outside]);
   let count = 0;
   for (const path of paths) {
     if (exact.includes(path) || fields.some((field) => isWithin(path, field))) count += 1;

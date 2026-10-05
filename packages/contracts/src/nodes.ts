@@ -612,7 +612,7 @@ export const WaitConfigSchema = z.discriminatedUnion('mode', [
   z.strictObject({
     mode: z.literal('until'),
     timestamp: TemplateSchema.meta(
-      field('When to resume; Liquid or JSONata producing an ISO timestamp.'),
+      field('When to resume: a Liquid template that renders an ISO 8601 timestamp.'),
     ),
     ...WaitCommon,
   }),

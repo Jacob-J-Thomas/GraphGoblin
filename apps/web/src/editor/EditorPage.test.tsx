@@ -301,6 +301,36 @@ describe('EditorPage', () => {
     expect(timeout()).toHaveFocus();
   });
 
+  it('flags a collapsed Advanced group or operation holding an expression that does not compile', async () => {
+    const api = new FakeApi();
+    const definition = kitchenSinkLoop();
+    const loop = api.addLoop(definition);
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'kitchen-sink' });
+    const infer = definition.nodes.find((node) => node.id === 'infer')!;
+    const sub = definition.nodes.find((node) => node.id === 'sub')!;
+    // Schema-valid, so only the loop's validation finds them: EXPRESSION_INVALID at their paths.
+    act(() => {
+      useEditorStore.getState().updateNode('infer', {
+        config: { ...infer.config, input: [{ op: 'drop', target: 'messages', where: 'vars.' }] },
+      });
+      useEditorStore.getState().updateNode('sub', {
+        config: { ...sub.config, input: { mode: 'project', vars: { topic: 'vars.' } } },
+      });
+    });
+    act(() => useEditorStore.getState().openNode('infer'));
+    const advanced = () =>
+      within(screen.getByRole('dialog')).getByRole('button', { name: /^Advanced/ });
+    await waitFor(() => expect(advanced()).toHaveAccessibleName('Advanced 2 set 1 error'));
+    await userEvent.setup().click(advanced());
+    expect(
+      within(screen.getByRole('dialog')).getByRole('button', { name: /^Input 1 drop/ }),
+    ).toHaveAccessibleName('Input 1 drop messages 1 error');
+
+    act(() => useEditorStore.getState().openNode('sub'));
+    await waitFor(() => expect(advanced()).toHaveAccessibleName('Advanced 1 set 1 error'));
+  });
+
   it('keeps schema-invalid drafts on the device and explains why', async () => {
     const user = userEvent.setup();
     const api = new FakeApi();

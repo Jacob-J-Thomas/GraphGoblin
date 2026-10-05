@@ -154,7 +154,7 @@ type SubloopConfig = {
     mode: 'result-only' | 'merge' | 'custom';
     resultTo?: { lastOutput?: boolean; var?: string }; // where the child's return payload lands
     vars?: { strategy: 'child-wins' | 'parent-wins' | 'explicit'; map?: Record<string, string> };
-    messages?: 'none' | 'result-note' | 'all' | { where: string };
+    messages?: 'none' | 'last' | number | 'all' | { where: string }; // selection of the child's messages
     artifacts?: 'none' | 'all' | { where: string };
     custom?: { patch: string }; // JSONata producing a JSON Patch for the parent thread
     usage: 'roll-up' | 'separate';
@@ -175,7 +175,7 @@ Parks the run until something happens. In engine terms the run stops and is late
 | ---------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
 | `input`    | `prompt` template, `inputSchema?`, `exposeTo: ('ui' \| 'api' \| 'mcp')[]` | A human or agent providing input through the UI, REST, or the MCP tool    |
 | `duration` | `seconds`                                                                 | A persisted timer                                                         |
-| `until`    | `timestamp` (Liquid or JSONata)                                           | A persisted timer                                                         |
+| `until`    | `timestamp`, a Liquid template rendering an ISO 8601 timestamp            | A persisted timer                                                         |
 | `signal`   | `name`, `filter?: JSONata`                                                | A named signal delivered through REST or MCP, or a matching inbound event |
 
 Common fields: `timeoutSeconds?`, `onTimeout: 'continue' | 'fail-run'` (default `continue`, with `lastOutput = { timedOut: true }` so a decision node can branch).
