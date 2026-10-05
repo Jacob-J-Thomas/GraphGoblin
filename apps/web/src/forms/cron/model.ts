@@ -21,6 +21,35 @@ export function schedulePreferences(schedule: Schedule): SchedulePreferences {
   };
 }
 
+const VALID_TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
+const validDay = (day: number) => Number.isInteger(day) && day >= 1 && day <= 31;
+
+/**
+ * The preferences after an edit of `schedule`, which switching presets carries over: each time,
+ * set of days, or monthly day the schedule holds is recorded when it is complete, and forgotten
+ * when it is not (a cleared time, no day ticked), so the next preset falls back to its default
+ * rather than starting incomplete. Parts the schedule does not hold are kept.
+ */
+export function recordPreferences(
+  previous: SchedulePreferences,
+  schedule: Schedule,
+): SchedulePreferences {
+  const next = { ...previous };
+  if ('time' in schedule) {
+    if (VALID_TIME.test(schedule.time)) next.time = schedule.time;
+    else delete next.time;
+  }
+  if (schedule.kind === 'weekly') {
+    if (schedule.days.length > 0) next.days = schedule.days;
+    else delete next.days;
+  }
+  if (schedule.kind === 'monthly') {
+    if (validDay(schedule.day)) next.day = schedule.day;
+    else delete next.day;
+  }
+  return next;
+}
+
 export const PRESETS: ReadonlyArray<{ value: Preset; label: string }> = [
   { value: 'minutes', label: 'Every N minutes' },
   { value: 'hours', label: 'Every N hours' },
@@ -92,7 +121,13 @@ export function parseSchedule(expression: string): Schedule {
   return { kind: 'custom' };
 }
 
+/**
+ * One line describing the schedule in its time zone. A schedule still missing a part says what to
+ * choose instead ("Choose a time.", "Choose at least one day."), never a sentence with a gap.
+ */
 export function scheduleSummary(schedule: Schedule, expression: string, timezone: string): string {
+  const missing = scheduleError(schedule);
+  if (missing !== undefined) return missing;
   let summary: string;
   switch (schedule.kind) {
     case 'minutes':
@@ -127,13 +162,9 @@ export function scheduleError(schedule: Schedule): string | undefined {
     if (!Number.isInteger(schedule.every) || schedule.every < 1 || schedule.every > max)
       return `Choose a whole number from 1 to ${max}.`;
   }
-  if ('time' in schedule && !/^([01]\d|2[0-3]):[0-5]\d$/.test(schedule.time))
-    return 'Choose a time.';
+  if ('time' in schedule && !VALID_TIME.test(schedule.time)) return 'Choose a time.';
   if (schedule.kind === 'weekly' && schedule.days.length === 0) return 'Choose at least one day.';
-  if (
-    schedule.kind === 'monthly' &&
-    (!Number.isInteger(schedule.day) || schedule.day < 1 || schedule.day > 31)
-  )
+  if (schedule.kind === 'monthly' && !validDay(schedule.day))
     return 'Choose a whole number from 1 to 31.';
   return undefined;
 }

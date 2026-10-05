@@ -251,6 +251,23 @@ describe('cron schedule control', () => {
       expect(change).toHaveBeenLastCalledWith(expect.objectContaining({ expression: '0 9 * * 3' })),
     );
   });
+  it('says what to choose rather than a summary with a gap, and a cleared time falls back to the default on another preset (#41)', async () => {
+    const { user } = setup('30 7 * * 1');
+    expect(screen.getByText('Every Monday at 07:30, UTC')).toBeVisible();
+    await user.click(screen.getByLabelText('Monday'));
+    expect(screen.queryByText(/^Every\s+at/)).not.toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent('Choose at least one day.');
+    expect(screen.getAllByText('Choose at least one day.')).toHaveLength(1);
+    await user.click(screen.getByLabelText('Monday'));
+    fireEvent.change(screen.getByLabelText('At time'), { target: { value: '' } });
+    expect(screen.queryByText(/Every Monday at ,/)).not.toBeInTheDocument();
+    expect(screen.getAllByText('Choose a time.')).toHaveLength(1);
+    // The cleared time is not carried over: the next preset starts complete, at the default.
+    await user.selectOptions(screen.getByLabelText('Repeat'), 'daily');
+    expect(screen.getByLabelText('At time')).toHaveValue('09:00');
+    expect(screen.getByText('Every day at 09:00, UTC')).toBeVisible();
+    expect(raw()).toHaveValue('0 9 * * *');
+  });
   it('retains time, days, and monthly day even through presets without those fields', async () => {
     const { user } = setup('25 17 * * 1,3');
     await user.selectOptions(screen.getByLabelText('Repeat'), 'monthly');
