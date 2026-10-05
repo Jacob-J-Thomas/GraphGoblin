@@ -1,4 +1,5 @@
 import { EffortSchema, type Effort } from '@graphgoblin/contracts';
+import { GraphGoblinApiError } from '@graphgoblin/api-client';
 import { useQueryClient, type QueryKey } from '@tanstack/react-query';
 import { HelpText } from '../components/ui/index.js';
 import { errorMessage } from '../lib/utils.js';
@@ -20,8 +21,28 @@ export function useInvalidate() {
   return (key: QueryKey) => void queryClient.invalidateQueries({ queryKey: key });
 }
 
-export function MutationError({ error }: { error: unknown }) {
-  return error ? <HelpText tone="bad">{errorMessage(error)}</HelpText> : null;
+const CATALOG_ERRORS: Record<string, string> = {
+  MODEL_MANAGED_BY_HARNESS: 'Harness models can only be enabled or disabled.',
+  LITELLM_NOT_CONFIGURED: 'LiteLLM is not configured. Adding local models is not available yet.',
+  MODEL_NOT_FOUND:
+    'This model is no longer in the catalog. Refresh Settings to see the current models.',
+};
+
+export function MutationError({
+  error,
+  id,
+  announce = false,
+}: {
+  error: unknown;
+  id?: string;
+  announce?: boolean;
+}) {
+  const message = error instanceof GraphGoblinApiError ? CATALOG_ERRORS[error.code] : undefined;
+  return error ? (
+    <HelpText id={id} tone="bad" role={announce ? 'alert' : undefined}>
+      {message ?? errorMessage(error)}
+    </HelpText>
+  ) : null;
 }
 
 /** A row in a settings list: the item on the left, its actions on the right. */

@@ -1,7 +1,7 @@
 import { GraphGoblinApiError, modelCatalog } from '@graphgoblin/api-client';
 import type { Effort } from '@graphgoblin/contracts';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState, type FormEvent } from 'react';
+import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { useApi } from '../../api/context.js';
 import { keys, useModelCatalog } from '../../api/queries.js';
 import { Icon } from '../../components/icons/index.js';
@@ -114,36 +114,104 @@ function ModelForm({ initial, onDone }: { initial?: CatalogEntry; onDone: () => 
         <Button size="sm" variant="ghost" onClick={onDone}>
           Cancel
         </Button>
-        <MutationError error={save.error} />
+        <MutationError error={save.error} announce />
       </div>
     </form>
   );
 }
 
-/** The models runs may use, per harness: add, edit, enable or disable, and delete. */
+/** Each row owns its request so other models remain operable while it saves. */
+function ModelEnabled({ entry }: { entry: CatalogEntry }) {
+  const client = useApi();
+  const queryClient = useQueryClient();
+  const id = useId();
+  const restoreFocusRef = useRef(false);
+  const toggle = useMutation({
+    mutationFn: (enabled: boolean) =>
+      modelCatalog.setEnabled(client, entry.harness, entry.model, enabled),
+    onSuccess: async (updated) => {
+      queryClient.setQueryData<CatalogEntry[]>(keys.catalog, (items) =>
+        items?.map((item) =>
+          item.harness === updated.harness && item.model === updated.model ? updated : item,
+        ),
+      );
+      await queryClient.invalidateQueries({ queryKey: keys.catalog });
+    },
+  });
+  useEffect(() => {
+    if (toggle.isPending || !restoreFocusRef.current) return;
+    restoreFocusRef.current = false;
+    // Native disabled buttons lose focus in Edge. Preserve a deliberate move to another control.
+    if (document.activeElement === document.body) document.getElementById(`${id}-switch`)?.focus();
+  }, [id, toggle.isPending]);
+  // Only the in-flight control is optimistic; a refusal leaves the catalog and defaults intact.
+  const checked = toggle.isPending ? toggle.variables : entry.enabled;
+  return (
+    <div className="grid gap-2">
+      <div className="flex items-center gap-2">
+        <Switch
+          id={`${id}-switch`}
+          aria-label={`Enable ${entry.displayName}`}
+          aria-describedby={`${id}-status${toggle.error ? ` ${id}-error` : ''}`}
+          aria-busy={toggle.isPending}
+          checked={checked}
+          disabled={toggle.isPending}
+          onCheckedChange={(enabled) => {
+            restoreFocusRef.current = document.activeElement?.id === `${id}-switch`;
+            toggle.mutate(enabled);
+          }}
+        />
+        <span id={`${id}-status`} role="status" aria-atomic="true" className="text-xs text-muted">
+          <span className="sr-only">{entry.displayName}:</span>{' '}
+          {toggle.isPending ? (
+            <span className="inline-flex items-center gap-1">
+              <Icon name="wait" />
+              {checked ? 'Enabling…' : 'Disabling…'}
+            </span>
+          ) : entry.enabled ? (
+            'Enabled'
+          ) : (
+            'Disabled'
+          )}
+        </span>
+      </div>
+      <MutationError id={`${id}-error`} error={toggle.error} announce />
+    </div>
+  );
+}
+
+/** Harness models offer enable controls; local LiteLLM rows also offer metadata actions. */
 export function ModelCatalogSection() {
   const client = useApi();
   const queryClient = useQueryClient();
-  const invalidate = useInvalidate();
   const query = useModelCatalog();
   const [editing, setEditing] = useState<string | undefined>();
-  const toggle = useMutation({
-    mutationFn: (entry: CatalogEntry) =>
-      modelCatalog.setEnabled(client, entry.harness, entry.model, !entry.enabled),
-    onSuccess: () => invalidate(keys.catalog),
-  });
+  const hasLocalModels = query.data?.some((entry) => entry.source === 'litellm') ?? false;
   return (
     <Card
       flush
       title="Model catalog"
       actions={
-        <Button size="sm" variant="outline" onClick={() => setEditing('new')}>
-          <Icon name="plus" />
-          Add model
-        </Button>
+        hasLocalModels ? (
+          <Button size="sm" variant="outline" onClick={() => setEditing('new')}>
+            <Icon name="plus" />
+            Add model
+          </Button>
+        ) : (
+          <p className="max-w-prose text-sm text-muted">
+            Local models served through LiteLLM will appear here once the LiteLLM adapter is
+            configured.{' '}
+            <a
+              href="https://github.com/Jacob-J-Thomas/GraphGoblin/blob/main/docs/guide/06-settings-and-secrets.md#choose-a-model-and-effort"
+              className="rounded-sm text-link underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+            >
+              Learn about local models
+            </a>
+          </p>
+        )
       }
     >
-      {editing === 'new' ? (
+      {hasLocalModels && editing === 'new' ? (
         <div className="border-b border-default p-5">
           <ModelForm onDone={() => setEditing(undefined)} />
         </div>
@@ -158,14 +226,15 @@ export function ModelCatalogSection() {
                   <Th>Model</Th>
                   <Th>Efforts</Th>
                   <Th>Enabled</Th>
-                  <Th className="w-px text-right">Actions</Th>
+                  {hasLocalModels ? <Th className="w-px text-right">Actions</Th> : null}
                 </tr>
               </thead>
               <tbody>
                 {items.map((entry) => (
                   <tr key={`${entry.harness}/${entry.model}`}>
                     <Td>
-                      {editing === entry.model ? (
+                      {entry.source === 'litellm' &&
+                      editing === `${entry.harness}/${entry.model}` ? (
                         <ModelForm initial={entry} onDone={() => setEditing(undefined)} />
                       ) : (
                         <>
@@ -180,40 +249,41 @@ export function ModelCatalogSection() {
                       {entry.efforts.join(', ')} (default {entry.defaultEffort})
                     </Td>
                     <Td>
-                      <Switch
-                        aria-label={`Enable ${entry.model}`}
-                        checked={entry.enabled}
-                        onCheckedChange={() => toggle.mutate(entry)}
-                      />
+                      <ModelEnabled entry={entry} />
                     </Td>
-                    <Td className="text-right whitespace-nowrap">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => setEditing(entry.model)}
-                        aria-label={`Edit ${entry.model}`}
-                      >
-                        Edit
-                      </Button>
-                      <ConfirmAction
-                        name={entry.model}
-                        onDismiss={(error) => {
-                          if (error instanceof GraphGoblinApiError && error.status === 404)
-                            return queryClient.invalidateQueries({ queryKey: keys.catalog });
-                        }}
-                        consequences={
-                          <p>
-                            Model: “{entry.displayName}” ({entry.harness}/{entry.model}). Harness
-                            models cannot be deleted. Removing a LiteLLM model leaves its loops
-                            referencing it.
-                          </p>
-                        }
-                        onConfirm={async () => {
-                          await modelCatalog.remove(client, entry.harness, entry.model);
-                          await queryClient.invalidateQueries({ queryKey: keys.catalog });
-                        }}
-                      />
-                    </Td>
+                    {hasLocalModels ? (
+                      <Td className="text-right whitespace-nowrap">
+                        {entry.source === 'litellm' ? (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => setEditing(`${entry.harness}/${entry.model}`)}
+                              aria-label={`Edit ${entry.model}`}
+                            >
+                              Edit
+                            </Button>
+                            <ConfirmAction
+                              name={entry.model}
+                              onDismiss={(error) => {
+                                if (error instanceof GraphGoblinApiError && error.status === 404)
+                                  return queryClient.invalidateQueries({ queryKey: keys.catalog });
+                              }}
+                              consequences={
+                                <p>
+                                  Model: “{entry.displayName}” ({entry.harness}/{entry.model}).
+                                  Removing a LiteLLM model leaves its loops referencing it.
+                                </p>
+                              }
+                              onConfirm={async () => {
+                                await modelCatalog.remove(client, entry.harness, entry.model);
+                                await queryClient.invalidateQueries({ queryKey: keys.catalog });
+                              }}
+                            />
+                          </>
+                        ) : null}
+                      </Td>
+                    ) : null}
                   </tr>
                 ))}
               </tbody>
@@ -221,11 +291,6 @@ export function ModelCatalogSection() {
           )}
         </QueryState>
       </div>
-      {toggle.error ? (
-        <div className="border-t border-default px-5 py-3">
-          <MutationError error={toggle.error} />
-        </div>
-      ) : null}
     </Card>
   );
 }

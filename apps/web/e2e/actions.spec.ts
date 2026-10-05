@@ -76,9 +76,15 @@ test('Settings confirms model removal and reports an API second-delete error', a
   });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/app/settings');
+  await expect(page.getByRole('button', { name: 'Add model', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Edit actions-model', exact: true })).toBeVisible();
+  const harnessRow = page
+    .getByRole('switch', { name: 'Enable GPT-6 Luna' })
+    .locator('xpath=ancestor::tr');
+  await expect(harnessRow.getByRole('button')).toHaveCount(0);
   await page.getByRole('button', { name: 'Delete actions-model', exact: true }).click();
   await expect(page.getByRole('alertdialog')).toContainText(
-    'Harness models cannot be deleted. Removing a LiteLLM model leaves its loops referencing it.',
+    'Removing a LiteLLM model leaves its loops referencing it.',
   );
   expect(
     await page.getByRole('alertdialog').evaluate((element) => ({
@@ -98,62 +104,183 @@ test('Settings confirms model removal and reports an API second-delete error', a
   await expect(page.getByRole('heading', { name: 'Model catalog', exact: true })).toBeFocused();
 });
 
-test('Settings toggles harness entries using PATCH and reports managed edit/delete errors', async ({
+test('Settings harness switches follow keyboard toggles and update Default model', async ({
   page,
   request,
 }) => {
-  await request.patch('/model-catalog/codex/gpt-6-luna', { data: { enabled: true } });
+  const instance = await control(request, '/apps');
+  const url = String(instance['url']);
   const before = ModelCatalogEntrySchema.array()
-    .parse(((await (await request.get('/model-catalog')).json()) as { items: unknown }).items)
+    .parse(((await (await request.get(`${url}/model-catalog`)).json()) as { items: unknown }).items)
     .find((entry) => entry.model === 'gpt-6-luna');
-  await page.goto('/app/settings');
-  const checkbox = page.getByLabel('Enable gpt-6-luna', { exact: true });
-  await expect(checkbox).toBeChecked();
+  await page.goto(`${url}/app/settings`);
+  const catalog = page.getByRole('region', { name: 'Model catalog' });
+  await expect(catalog.getByRole('button')).toHaveCount(0);
+  await expect(catalog.getByRole('columnheader', { name: 'Actions' })).toHaveCount(0);
+  await expect(catalog).toContainText(
+    'Local models served through LiteLLM will appear here once the LiteLLM adapter is configured.',
+  );
+  const guide = catalog.getByRole('link', { name: 'Learn about local models' });
+  await expect(guide).toHaveAttribute(
+    'href',
+    'https://github.com/Jacob-J-Thomas/GraphGoblin/blob/main/docs/guide/06-settings-and-secrets.md#choose-a-model-and-effort',
+  );
+  // Reach the guide and then the chosen row through the catalog's keyboard order.
+  for (
+    let i = 0;
+    i < 12 && !(await guide.evaluate((element) => element === document.activeElement));
+    i++
+  ) {
+    await page.keyboard.press('Tab');
+  }
+  await expect(guide).toBeFocused();
+  const enabled = catalog.getByRole('switch', {
+    name: `Enable ${before!.displayName}`,
+    exact: true,
+  });
+  for (
+    let i = 0;
+    i < (await catalog.getByRole('switch').count()) &&
+    !(await enabled.evaluate((element) => element === document.activeElement));
+    i++
+  ) {
+    await page.keyboard.press('Tab');
+  }
+  await expect(enabled).toBeFocused();
+  await expect(enabled).toBeChecked();
+  const defaults = page.getByLabel('Default model', { exact: true });
+  await expect(
+    defaults.getByRole('option', { name: before!.displayName, exact: true }),
+  ).toHaveCount(1);
   const patch = page.waitForResponse(
     (response) =>
       response.request().method() === 'PATCH' &&
       response.url().endsWith('/model-catalog/codex/gpt-6-luna'),
   );
-  await checkbox.click();
+  await page.keyboard.press('Space');
   expect((await patch).status()).toBe(200);
-  await expect(checkbox).not.toBeChecked();
+  await expect(enabled).not.toBeChecked();
+  await expect(enabled).toBeEnabled();
+  await expect(
+    defaults.getByRole('option', { name: before!.displayName, exact: true }),
+  ).toHaveCount(0);
+  await expect(enabled.locator('xpath=ancestor::tr').getByRole('status')).toContainText('Disabled');
   const disabled = ModelCatalogEntrySchema.array()
-    .parse(((await (await request.get('/model-catalog')).json()) as { items: unknown }).items)
+    .parse(((await (await request.get(`${url}/model-catalog`)).json()) as { items: unknown }).items)
     .find((entry) => entry.model === 'gpt-6-luna');
   expect(disabled).toEqual({ ...before, enabled: false });
-  await checkbox.click();
-  await expect(checkbox).toBeChecked();
-  await page.getByRole('button', { name: 'Edit gpt-6-luna', exact: true }).click();
-  await page.getByRole('button', { name: 'Save model', exact: true }).click();
-  await expect(page.getByRole('form', { name: 'Edit gpt-6-luna' })).toContainText(
-    'Harness models can only be enabled or disabled',
-  );
-  await page.getByRole('button', { name: 'Cancel', exact: true }).click();
-  await page.getByRole('button', { name: 'Delete gpt-6-luna', exact: true }).click();
-  await page.getByRole('button', { name: 'Confirm delete gpt-6-luna', exact: true }).click();
-  await expect(page.getByRole('alertdialog')).toContainText('MODEL_MANAGED_BY_HARNESS');
-  await expect(page.getByRole('alertdialog')).toContainText(
-    'Harness models can only be enabled or disabled',
-  );
-  await page.getByRole('button', { name: 'Keep', exact: true }).click();
-  await page.getByRole('button', { name: 'Add model', exact: true }).click();
-  const add = page.getByRole('form', { name: 'Add model' });
-  await add.getByLabel('Model id', { exact: true }).fill('my-local-model');
-  const added = page.waitForResponse(
-    (response) =>
-      response.request().method() === 'PUT' &&
-      response.url().endsWith('/model-catalog/codex/my-local-model'),
-  );
-  await add.getByRole('button', { name: 'Save model', exact: true }).click();
-  const refused = await added;
-  expect(refused.request().postDataJSON()).toMatchObject({ source: 'litellm' });
-  expect(refused.status()).toBe(409);
-  await expect(add).toContainText('LITELLM_NOT_CONFIGURED');
-  await expect(add).toContainText(
-    'LiteLLM is not configured; adding local models is not available yet',
-  );
-  expect((await request.get('/model-catalog')).status()).toBe(200);
+  await expect(enabled).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(enabled).toBeChecked();
+  await expect(enabled).toBeEnabled();
+  await expect(
+    defaults.getByRole('option', { name: before!.displayName, exact: true }),
+  ).toHaveCount(1);
+  await expect(enabled.locator('xpath=ancestor::tr').getByRole('status')).toContainText('Enabled');
 });
+
+test('Settings holds a catalog toggle, announces refusal, and restores the switch and Defaults', async ({
+  page,
+  request,
+}) => {
+  const instance = await control(request, '/apps');
+  const url = String(instance['url']);
+  let release!: () => void;
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route(`${url}/model-catalog/codex/gpt-6-luna`, async (route) => {
+    expect(route.request().method()).toBe('PATCH');
+    expect(route.request().postDataJSON()).toEqual({ enabled: false });
+    await held;
+    await route.fulfill({
+      status: 404,
+      contentType: 'application/problem+json',
+      body: JSON.stringify({
+        type: 'about:blank',
+        title: 'MODEL_NOT_FOUND',
+        status: 404,
+        code: 'MODEL_NOT_FOUND',
+      }),
+    });
+  });
+  try {
+    await page.goto(`${url}/app/settings`);
+    const enabled = page.getByRole('switch', { name: 'Enable GPT-6 Luna', exact: true });
+    const row = enabled.locator('xpath=ancestor::tr');
+    await enabled.click();
+    await expect(enabled).toBeDisabled();
+    await expect(enabled).toHaveAttribute('aria-busy', 'true');
+    await expect(enabled).not.toBeChecked();
+    await expect(row.getByRole('status')).toContainText('Disabling…');
+    await expect(row.locator('svg')).toHaveCount(1);
+    const defaults = page.getByLabel('Default model');
+    await expect(defaults.getByRole('option', { name: 'GPT-6 Luna', exact: true })).toHaveCount(1);
+    release();
+    await expect(row.getByRole('alert')).toHaveText(
+      'This model is no longer in the catalog. Refresh Settings to see the current models.',
+    );
+    await expect(enabled).toBeChecked();
+    await expect(enabled).toBeEnabled();
+    await expect(enabled).toHaveAttribute('aria-busy', 'false');
+    await expect(row.getByRole('status')).toContainText('Enabled');
+    await expect(defaults.getByRole('option', { name: 'GPT-6 Luna', exact: true })).toHaveCount(1);
+  } finally {
+    release();
+  }
+});
+
+for (const theme of ['dark', 'light'] as const) {
+  test(`Settings catalog has visible keyboard focus in ${theme}`, async ({
+    page,
+    request,
+  }, testInfo) => {
+    const instance = await control(request, '/apps');
+    const url = String(instance['url']);
+    await page.addInitScript((choice) => localStorage.setItem('graphgoblin-theme', choice), theme);
+    await request.patch(`${url}/model-catalog/codex/gpt-6-sol`, { data: { enabled: false } });
+    await page.goto(`${url}/app/settings`);
+    const catalog = page.getByRole('region', { name: 'Model catalog' });
+    const guide = catalog.getByRole('link', { name: 'Learn about local models' });
+    for (
+      let i = 0;
+      i < 12 && !(await guide.evaluate((element) => element === document.activeElement));
+      i++
+    )
+      await page.keyboard.press('Tab');
+    await expect(guide).toBeFocused();
+    const enabled = catalog.getByRole('switch', { name: 'Enable GPT-6 Luna', exact: true });
+    for (
+      let i = 0;
+      i < (await catalog.getByRole('switch').count()) &&
+      !(await enabled.evaluate((element) => element === document.activeElement));
+      i++
+    ) {
+      await page.keyboard.press('Tab');
+    }
+    await expect(enabled).toBeFocused();
+    const appearance = await enabled.evaluate((element) => {
+      const style = getComputedStyle(element);
+      const bounds = element.getBoundingClientRect();
+      return {
+        width: bounds.width,
+        height: bounds.height,
+        outline: style.outlineStyle,
+        outlineWidth: style.outlineWidth,
+        outlineColour: style.outlineColor,
+        theme: document.documentElement.dataset['theme'],
+      };
+    });
+    expect(appearance).toMatchObject({
+      width: 44,
+      height: 24,
+      outline: 'solid',
+      outlineWidth: '2px',
+      theme,
+    });
+    await catalog.screenshot({ path: testInfo.outputPath(`model-catalog-${theme}.png`) });
+  });
+}
 
 test('revoking this browser key warns and brings up the API key panel', async ({
   page,
