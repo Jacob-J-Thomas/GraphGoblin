@@ -293,7 +293,11 @@ export const InferenceConfigSchema = z.strictObject({
         control: 'model',
       }),
     ),
-  effort: EffortSchema.optional().meta(field('Reasoning effort; falls back like the model.')),
+  effort: EffortSchema.optional().meta(
+    field('Reasoning effort; falls back like the model. Catalog default effort is guidance only.', {
+      control: 'effort',
+    }),
+  ),
   session: SessionPolicySchema.default({ policy: 'fresh' }).meta(
     field('Start fresh, resume the previous session, or resume a named session.'),
   ),

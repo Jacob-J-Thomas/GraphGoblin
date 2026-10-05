@@ -1,9 +1,4 @@
-import {
-  NodeConfigSchemas,
-  SlugSchema,
-  type LoopDefinitionInput,
-  type NodeInput,
-} from '@graphgoblin/contracts';
+import { SlugSchema, type LoopDefinitionInput, type NodeInput } from '@graphgoblin/contracts';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Icon } from '../components/icons/index.js';
 import {
@@ -17,8 +12,10 @@ import {
   type DialogCloseReason,
 } from '../components/ui/index.js';
 import { SchemaForm } from '../forms/SchemaForm.js';
+import { CatalogWarningsContext } from '../forms/fields/model.js';
 import { canvasFocusTarget } from './canvas-focus.js';
 import { NODE_FIELD_CONTROLS } from './field-controls.js';
+import { NODE_FORM_SCHEMAS } from './form-schemas.js';
 import { focusIssuePath } from './focus-field.js';
 import { IssueBadge } from './IssueBadge.js';
 import { KindChip } from './KindChip.js';
@@ -251,19 +248,28 @@ export function NodeEditorDialog({
         {/* Not keyed by the node id: a rename keeps the form (and focus) where it is. Issue paths
             `config.<path>` name its fields (focus-field.ts). */}
         <div data-field-scope="config" className="grid min-w-0">
-          <SchemaForm
-            key={`${node.kind}:${epoch}:${historyEpoch}`}
-            schema={NodeConfigSchemas[node.kind]}
-            value={node.config}
-            label={`${node.id} config`}
-            controls={NODE_FIELD_CONTROLS}
-            problems={configProblems}
-            onChange={(config) => updateNode(node.id, { config })}
-            parseErrors={fieldErrors[`node:${node.id}`]}
-            onParseError={(path, error, reason) =>
-              setFieldError(`node:${node.id}`, path, error, reason)
-            }
-          />
+          <CatalogWarningsContext
+            value={nodeIssues.map((issue) => ({
+              ...issue,
+              path: issue.path?.startsWith('config.')
+                ? issue.path.slice('config.'.length)
+                : issue.path,
+            }))}
+          >
+            <SchemaForm
+              key={`${node.kind}:${epoch}:${historyEpoch}`}
+              schema={NODE_FORM_SCHEMAS[node.kind]}
+              value={node.config}
+              label={`${node.id} config`}
+              controls={NODE_FIELD_CONTROLS}
+              problems={configProblems}
+              onChange={(config) => updateNode(node.id, { config })}
+              parseErrors={fieldErrors[`node:${node.id}`]}
+              onParseError={(path, error, reason) =>
+                setFieldError(`node:${node.id}`, path, error, reason)
+              }
+            />
+          </CatalogWarningsContext>
         </div>
         <NodeConnections
           node={node}

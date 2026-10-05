@@ -3,6 +3,7 @@ import { z } from 'zod';
 import {
   ExpressionSchema,
   InferenceConfigSchema,
+  LoopSettingsSchema,
   MutationListSchema,
   NodeConfigSchemas,
   SubloopConfigSchema,
@@ -49,6 +50,17 @@ const shapeOf = (schema: unknown) =>
   (schema as Walkable)._zod.def.shape as Record<string, z.ZodType>;
 
 describe('field metadata', () => {
+  it('registers catalog model and effort controls without changing optional field values', () => {
+    const inference = InferenceConfigSchema.shape;
+    const defaults = LoopSettingsSchema.shape.defaults.unwrap().shape;
+    for (const fields of [inference, defaults]) {
+      expect(fieldMeta(fields.model).control).toBe('model');
+      expect(fieldMeta(fields.effort).control).toBe('effort');
+      expect(fields.model.parse(undefined)).toBeUndefined();
+      expect(fields.model.parse('unknown-model')).toBe('unknown-model');
+      expect(fields.effort.parse('max')).toBe('max');
+    }
+  });
   it('builds metadata from a description and options', () => {
     expect(field('What it is.')).toEqual({ description: 'What it is.' });
     expect(field('What it is.', { advanced: true, group: 'Limits' })).toEqual({

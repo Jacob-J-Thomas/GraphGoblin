@@ -293,6 +293,7 @@ export function EditorPage() {
           </main>
           <LoopPanel
             definition={def}
+            issues={validation.issues}
             expanded={panelExpanded}
             onExpandedChange={setPanelExpanded}
           />

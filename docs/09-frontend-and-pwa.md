@@ -184,9 +184,38 @@ The owner's request: reduce the visual chaos of the node options while keeping e
 - **Following an issue.** `focusField` (`editor/focus-field.ts`) finds a field inside a collapsed disclosure (an Advanced group or a list item) and opens every disclosure around it (`revealDisclosures`, which shows the panel at once and lets the component's state follow) before focusing it; fields hidden for any other reason stay out of reach. So choosing an issue in a node's badge, on the canvas or beside the editor's title, opens the group at the field (a template or expression that does not parse included, now that those issues name their field), and an undo that remounts the form reopens it to put focus back where it was.
 - **Collapsible operations.** A list whose metadata sets `collapseItems` (every mutation list: a mutate node's `operations`, an inference node's `input` and `output.transforms`) draws each item as a disclosure whose header names it ("Operations 1"), summarises it in one line (its kind and its path, or whatever its first short text says: "set /vars/topic", "drop messages"), flags its problems ("1 error"), and keeps its Remove button beside it. Items there when the form opens start collapsed; an added one starts open, with focus on its first control. Inside, the item's group keeps its name for assistive technology without a second visible legend. Add and Remove work as before (#53).
 - **Help.** A field's description shows as help under it, linked with `aria-describedby`, its backtick spans as code; a nested object shows its help under its legend.
-- **Custom controls.** A field whose metadata names a `control` is drawn by the control registered under that name (an own entry of the registry: a name such as `toString` is not one), else as usual: `SchemaForm`'s `controls` prop (`FieldControls`, a map from name to a component taking the field's props; `FieldControlsContext` passes it to every `Field`). A control binds with `useField` and may draw the default renderer too (`DefaultField`), for a raw-value toggle. The node editor passes `NODE_FIELD_CONTROLS` (`editor/field-controls.ts`), empty for now; the inference `model` field already names `model`, for the model picker (#16), and the decision's `jev.model` names `classifier`, for the classifier picker (#43); the cron builder (#20) registers its control the same way.
+- **Custom controls.** A field whose metadata names a `control` is drawn by the control registered under that name (an own entry of the registry: a name such as `toString` is not one), else as usual: `SchemaForm`'s `controls` prop (`FieldControls`, a map from name to a component taking the field's props; `FieldControlsContext` passes it to every `Field`). A control binds with `useField` and may draw the default renderer too (`DefaultField`), for a raw-value toggle. The node editor passes `NODE_FIELD_CONTROLS` (`editor/field-controls.ts`), which registers the catalog `model` and `effort` controls (#16); the decision's `jev.model` names `classifier`, for the classifier picker (#43); the cron builder (#20) registers its control the same way.
 - **Saved values.** Placement changes where a field is drawn, not what it saves: the same edits report the same config (the field paths and bindings are those of before), which the API parses and stores in schema order.
 - **Regression.** `packages/contracts/src/meta.test.ts` and `parse-identity.test.ts` (golden parse output of every config field, written before the metadata), `packages/domain/src/parse-identity.test.ts` (exports, imports, and the template and expression walk), `tooling/scripts/node-reference.test.mjs`, `components/ui/disclosure.test.tsx`, `forms/layout.test.ts`, `forms/advanced.test.tsx` (the four simple kinds unchanged, each basic set, every field editable with Advanced open, the counts, following issues, collapsible operations, and registered controls), `forms/saved-values.test.tsx`, `editor/focus-field.test.ts`, `editor/EditorPage.test.tsx`, and Edge `e2e/forms.spec.ts`.
+
+### Catalog model and effort controls (#16)
+
+The metadata controls `model` and `effort` are registered in `editor/field-controls.ts` for node
+configs and in `LoopSettingsPanel.tsx` for loop defaults. `forms/fields/model.tsx` binds through
+`useField` and watches the sibling harness and model through react-hook-form. The inference
+harness selects the catalog partition; loop defaults use Codex because there is no loop harness.
+The decision Codex form reuses the inference model and effort field schemas, including their
+metadata, through `editor/form-schemas.ts`; `safeExtend` retains the decision refinements and
+the canonical decision contract and Jev classifier fields stay unchanged.
+Model uses the shared native `Select`, with enabled entries labelled by display name and id and
+an unset **(loop default)** choice (**(owner default)** for loop defaults). Native keyboard
+navigation and typeahead remain available, and the shared tokens cover both themes. The adjacent
+**Model catalog in Settings** link opens Settings; there is no free-text model entry.
+
+Effort offers the selected model's efforts, or every canonical effort when its metadata is
+unavailable or no model is selected. Its unset option shows the catalog default effort as guidance
+only; the engine's node → loop → owner → process resolution is unchanged. Changing model or harness
+never rewrites model or effort. A current missing/disabled model or unsupported effort stays
+selected as an unavailable option with a descriptive field warning. Catalog validation warnings
+(`MODEL_DISABLED`, `MODEL_NOT_IN_CATALOG`) are passed by exact relative field path through
+`CatalogWarningsContext` from the editor's merged validation list. They remain warnings.
+
+While the catalog query is pending or failed, including a failed refresh of cached entries, the
+controls show their current values as read-only inputs with a clear loading/unavailable message
+and **Retry model catalog**. Successful retry or automatic query recovery restores the selects.
+No fetch, refresh, or recovery writes form values. Unit cases cover catalog sizes, harness
+filtering, retained values, dependent effort, and failure/recovery; Edge checks cover publication
+and execution with the selected options.
 
 ### Validation badges (Decided, #15)
 
