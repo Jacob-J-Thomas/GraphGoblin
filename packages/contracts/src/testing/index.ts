@@ -3,6 +3,7 @@
  * These are data, not behaviour; they are covered by the tests that use them.
  */
 import type { ContextThread, Invocation } from '../thread.js';
+import type { RepairPolicyInput } from '../common.js';
 import type { LoopDefinitionInput } from '../loop.js';
 
 const ULID_ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
@@ -114,7 +115,12 @@ export function minimalLoop(): LoopDefinitionInput {
  * and after a change to the schemas' metadata. It is schema-valid, not a runnable graph.
  */
 export function everyFieldLoop(): LoopDefinitionInput {
-  const repair = { enabled: true, maxAttempts: 2, prompt: 'Fix it.', onFailure: 'continue-raw' };
+  const repair: RepairPolicyInput = {
+    enabled: true,
+    maxAttempts: 2,
+    prompt: 'Fix it.',
+    onFailure: 'continue-raw',
+  };
   return {
     schemaVersion: 1,
     name: 'every-field',

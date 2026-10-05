@@ -27,11 +27,12 @@ describe('the every-field loop', () => {
   it('sets every config field of every node kind and subtype', () => {
     const nodes = everyFieldLoop().nodes;
     for (const [kind, schema] of Object.entries(NodeConfigSchemas)) {
-      const def = (schema as unknown as Walkable)._zod.def;
+      const walkable = schema as unknown as Walkable;
+      const def = walkable._zod.def;
       const configs = nodes
         .filter((node) => node.kind === kind)
         .map((node) => node.config as Record<string, unknown>);
-      for (const option of def.options ?? [schema as unknown as Walkable]) {
+      for (const option of def.options ?? [walkable]) {
         const shape = option._zod.def.shape ?? {};
         const tag = def.discriminator;
         const value = tag ? shape[tag]?._zod.def.values?.[0] : undefined;
