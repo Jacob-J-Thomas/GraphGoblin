@@ -71,7 +71,12 @@ function CreateLoop() {
     if (name.trim()) create.mutate(name.trim());
   };
   return (
-    <form onSubmit={submit} className={cn(FIELD_ROW, 'items-end')} aria-label="Create loop">
+    <form
+      onSubmit={submit}
+      // The form sits beside Import in a wrapping row; on its own line it takes the whole width.
+      className={cn(FIELD_ROW, 'items-end max-sm:w-full')}
+      aria-label="Create loop"
+    >
       <RequiredNote className="basis-full" />
       <FieldGroup className="w-[300px]">
         <Label htmlFor="new-loop-name" required>
