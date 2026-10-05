@@ -44,6 +44,7 @@ const SCOPE_OVERRIDES: Record<string, string> = {
   'POST /loops/:id/runs': 'runs:write',
   // Validation reads the loop and saves nothing.
   'POST /loops/:id/validate': 'loops:read',
+  'POST /triggers/cron/preview': 'loops:read',
 };
 
 /** Path segments that share another resource's scope. */

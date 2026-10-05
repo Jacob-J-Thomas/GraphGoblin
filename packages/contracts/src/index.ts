@@ -11,6 +11,7 @@ export * from './meta.js';
 export * from './api-keys.js';
 export * from './catalog.js';
 export * from './classifiers.js';
+export * from './cron.js';
 export * from './issues.js';
 export * from './patch.js';
 export * from './thread.js';

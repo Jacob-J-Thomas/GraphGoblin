@@ -280,11 +280,11 @@ test('Ctrl+Z from a checkbox or a select undoes and keeps focus on that control'
 
   const subtype = start.getByLabel('Subtype');
   await subtype.selectOption('cron');
-  await expect(start.getByLabel('Expression')).toBeVisible();
+  await expect(start.getByLabel('Repeat')).toBeVisible();
   await subtype.focus();
   await page.keyboard.press('Control+z');
   await expect(start.getByLabel('Subtype').locator('option:checked')).toHaveText('manual');
-  await expect(start.getByLabel('Expression')).toHaveCount(0);
+  await expect(start.getByLabel('Repeat')).toHaveCount(0);
   await expect(start.getByLabel('Subtype')).toBeFocused();
 });
 

@@ -1,6 +1,7 @@
 import {
   apiKeys,
   events,
+  cron,
   loops,
   modelCatalog,
   runs,
@@ -94,4 +95,16 @@ export function usePreflight() {
 export function useInboundEvents() {
   const client = useApi();
   return useQuery({ queryKey: keys.events, queryFn: () => events.list(client) });
+}
+
+/** The control enables this only once its expression and zone have stopped changing. */
+export function useCronPreview(expression: string, timezone: string, enabled: boolean) {
+  const client = useApi();
+  return useQuery({
+    queryKey: ['cron-preview', expression, timezone],
+    queryFn: ({ signal }) => cron.preview(client, { expression, timezone, count: 5 }, { signal }),
+    enabled,
+    retry: false,
+    staleTime: 0,
+  });
 }
