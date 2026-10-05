@@ -206,6 +206,20 @@ describe('ClassifierModelsSection', () => {
     );
   });
 
+  it('opens only the Add form when a classifier has the id new', async () => {
+    const api = seeded();
+    api.classifiers.push(customClassifier({ id: 'new', displayName: 'Newest' }));
+    renderApp('/settings', api);
+    const user = userEvent.setup();
+    await user.click(await within(region()).findByRole('button', { name: 'Add classifier' }));
+    expect(screen.getByRole('form', { name: 'Add classifier' })).toBeInTheDocument();
+    expect(screen.queryByRole('form', { name: 'Edit classifier new' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Edit classifier new' })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    );
+  });
+
   it('cancels Add back to its button', async () => {
     renderApp('/settings', seeded());
     const user = userEvent.setup();

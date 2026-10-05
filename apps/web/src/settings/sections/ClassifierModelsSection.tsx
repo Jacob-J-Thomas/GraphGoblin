@@ -31,6 +31,9 @@ export const CLASSIFIER_TOGGLE_MESSAGES: MutationMessages = {
   FORBIDDEN: 'Enabling or disabling classifiers needs an API key with the settings:write scope.',
 };
 
+/** What `editing` holds while the Add form is open: never a classifier id, which starts a-z. */
+const ADDING = '+add';
+
 const PROVIDERS: Record<ClassifierModelSummary['provider'], string> = {
   typesafe: 'TypeSafe',
   http: 'HTTP endpoint',
@@ -148,8 +151,8 @@ export function ClassifierModelsSection() {
           id={addButtonId}
           size="sm"
           variant="outline"
-          aria-expanded={editing === 'new'}
-          onClick={() => openForm('new')}
+          aria-expanded={editing === ADDING}
+          onClick={() => openForm(ADDING)}
         >
           <Icon name="plus" />
           Add classifier
@@ -170,7 +173,7 @@ export function ClassifierModelsSection() {
           {notice}
         </div>
       </div>
-      {editing === 'new' ? (
+      {editing === ADDING ? (
         <div className="border-b border-default p-5">
           <ClassifierModelForm
             existingIds={existingIds}
