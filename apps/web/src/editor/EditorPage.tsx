@@ -5,7 +5,12 @@ import { ReactFlowProvider } from '@xyflow/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router';
 import { useApi } from '../api/context.js';
-import { classifierFingerprint, keys, useClassifierModels } from '../api/queries.js';
+import {
+  classifierFingerprint,
+  keys,
+  useClassifierModels,
+  usePrefetchModelCatalog,
+} from '../api/queries.js';
 import { ErrorState } from '../components/status.js';
 import { Alert, Button, useSidePanelState } from '../components/ui/index.js';
 import { focusFallback } from '../lib/focus.js';
@@ -38,6 +43,7 @@ import { ValidationIndicator } from './ValidationIndicator.js';
  * useResolveConflict. Runs start from Runs.
  */
 export function EditorPage() {
+  usePrefetchModelCatalog();
   const { loopId = '' } = useParams();
   const client = useApi();
   const queryClient = useQueryClient();
@@ -299,6 +305,7 @@ export function EditorPage() {
           </main>
           <LoopPanel
             definition={def}
+            issues={validation.issues}
             expanded={panelExpanded}
             onExpandedChange={setPanelExpanded}
           />

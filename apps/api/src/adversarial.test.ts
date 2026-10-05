@@ -136,6 +136,7 @@ describe('adversarial API invariants', () => {
     'GET /loops/{id}/versions/{versionId}': 'loops:read',
     'GET /loops/{id}/export': 'loops:read',
     'GET /loops/{id}/triggers': 'loops:read',
+    'POST /triggers/cron/preview': 'loops:read',
     'POST /loops/{id}/runs': 'runs:write',
     'GET /runs': 'runs:read',
     'GET /runs/{id}': 'runs:read',

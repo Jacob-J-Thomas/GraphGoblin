@@ -31,6 +31,7 @@ Runs
   POST   /runs/{id}/replay              fork a new run at a node; body: { nodeId }; 202 { run }; 409 REPLAY_NODE_NOT_REACHED (see 05)
 
 Triggers and events
+  POST   /triggers/cron/preview         next cron slots without saving or arming; loops:read
   POST   /hooks/{endpointToken}         signed webhook receiver (public; HMAC, timestamp window, replay, 1 MB, rate limit; see 08)
   GET    /loops/{id}/triggers           schedules, webhook endpoints (path only, never the secret), armed poll triggers
   POST   /events                        inbound event bus; body: { type, payload, dedupeKey? }; fires event triggers, returns runIds and duplicate
@@ -83,7 +84,7 @@ clients must remove the field before sending a definition (see the CHANGELOG upg
 
 - **Local trusted mode**: the API binds to `127.0.0.1` and the browser app on the same machine needs no credentials. A warning is logged if the bind address is changed without API keys enabled.
 - **API keys**: other applications and the MCP server authenticate with a bearer key. Keys are shown once, stored hashed, and carry scopes (`loops:read`, `runs:write`, and so on).
-- **Scopes (Decided by implementation, WP-G, 2026-10-03)**: every private route, read or write, needs a scope, checked in the same `onRequest` hook that authenticates the key, before the body is parsed or any data is read (`requiredScope` in `apps/api/src/plugins/auth.ts`). The scope is `<resource>:read` for `GET` and `HEAD` and `<resource>:write` for everything else, where the resource is the route's first path segment: `loops`, `runs`, `settings`, `secrets`, `api-keys`, `events`, and `system`. `/model-catalog` and `/classifier-models` share `settings`, and `/harness/preflight` shares `system` with `/system/preflight`. Two routes are overridden: `POST /loops/{id}/runs` needs `runs:write`, and `POST /loops/{id}/validate`, which saves nothing, needs `loops:read`. A write scope implies the read scope of the same resource, so a `runs:write` key can follow the runs it starts. `*` grants everything, and local trusted mode (no key presented, keys not required) acts with `*`. A key without the scope gets `403 FORBIDDEN`, even when the request would also fail validation. A request that matches no route gets its `404` regardless of scopes. The adversarial API suite holds a table of every advertised route and its scope; adding a route means adding it there.
+- **Scopes (Decided by implementation, WP-G, 2026-10-03)**: every private route, read or write, needs a scope, checked in the same `onRequest` hook that authenticates the key, before the body is parsed or any data is read (`requiredScope` in `apps/api/src/plugins/auth.ts`). The scope is `<resource>:read` for `GET` and `HEAD` and `<resource>:write` for everything else, where the resource is the route's first path segment: `loops`, `runs`, `settings`, `secrets`, `api-keys`, `events`, and `system`. `/model-catalog` and `/classifier-models` share `settings`, and `/harness/preflight` shares `system` with `/system/preflight`. Three routes are overridden: `POST /loops/{id}/runs` needs `runs:write`, and `POST /loops/{id}/validate`, which saves nothing, needs `loops:read`; `POST /triggers/cron/preview` also saves nothing and needs `loops:read`. A write scope implies the read scope of the same resource, so a `runs:write` key can follow the runs it starts. `*` grants everything, and local trusted mode (no key presented, keys not required) acts with `*`. A key without the scope gets `403 FORBIDDEN`, even when the request would also fail validation. A request that matches no route gets its `404` regardless of scopes. The adversarial API suite holds a table of every advertised route and its scope; adding a route means adding it there.
 - **Current API key**: `GET /api-keys` adds a required `current: boolean` to every item. It is true only when keys are required and the authenticated API-key actor id matches that row. Exactly the key authenticating this request is flagged; revoked keys cannot authenticate, and other owners' keys are not listed; a list request already accepted can report its own key as both current and revoked. In trusted mode every row is false, with or without a valid bearer key. The flag is a response snapshot, never persisted or included in the creation response; tokens and hashes are never listed. Headers (including `x-graphgoblin-client`), query parameters, bodies, and labels cannot choose the flag.
 - **API-key delegation**: `POST /api-keys` requires `api-keys:write`. Local trusted mode and callers holding `*` may grant any scopes; omitting `scopes` defaults to `["*"]` only for them. A scoped caller must list `scopes` explicitly or gets `400 VALIDATION_FAILED` with a message explaining that requirement. It may grant only scopes it holds, including reads implied by its write scopes, and may never grant `*`. A request containing unheld scopes or `*` gets `403 SCOPE_NOT_DELEGABLE`, listing all offending scopes in `detail` and `errors.scopes`, without creating a key. An `api-keys:write` key can still list and revoke every key for the local owner, including `*` keys. See [ADR-0016](decisions/ADR-0016-api-key-scope-delegation.md).
 - **Path ids**: resource ids in paths (loop, version, run, API key) must be ULIDs. A malformed id is a `400 VALIDATION_FAILED`, not a lookup that ends in `404`. Node names, signal names, secret names, model names, setting keys, artifact ids, and webhook tokens keep their own formats.
@@ -103,6 +104,23 @@ The `/docs` prefix is on the public list, but the Swagger UI is registered there
 `/hooks/<token>` needs no API key because the HMAC signature is the credential; see [Webhook](08-triggers-and-integrations.md#webhook-decided-shipped-in-m6). `/app/`, `/`, and `/app` stay public because the web shell holds no data and every API call it makes is still authenticated.
 
 Everything outside these public prefixes and exact paths is private. With `GG_REQUIRE_API_KEY=true`, it needs a bearer API key. When keys are not required, a request without a key runs in local trusted mode; a request that presents a key is still authenticated and limited to that key's scopes.
+
+## Cron preview (Decided, #20)
+
+`POST /triggers/cron/preview` requires `loops:read` (also implied by `loops:write`).
+Its JSON body is `{ expression, timezone, count?, from? }`: expression at most 256
+characters, timezone at most 64, count an integer from 1 to 10 (default 5), and
+from an ISO timestamp with a UTC marker or offset (default the server clock).
+The response is 200 `{ next: [timestamps] }`, containing UTC ISO timestamps
+strictly after from. Each slot is computed through `CronScheduler.nextFire`,
+including daylight-saving changes. A finite or impossible schedule can return
+fewer slots or an empty array. The route creates no schedules and starts no runs.
+
+An invalid expression or timezone returns 400 Problem Details with code
+`CRON_INVALID`; malformed body fields or bounds return 400 `VALIDATION_FAILED`.
+There is no server summary: the web control describes the preset model, and labels
+other expressions as custom without rewriting them. Validate and publish retain
+their existing `CRON_INVALID` issues.
 
 ## Return delivery (Decided)
 

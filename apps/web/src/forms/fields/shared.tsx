@@ -42,6 +42,11 @@ export type FieldControls = Readonly<Record<string, FieldControl>>;
 
 export const FieldControlsContext = createContext<FieldControls>({});
 
+/** The active form schema and a unique scope for controls that describe sibling fields. */
+export const FormScopeContext = createContext<{ schema: Schema; id: string } | undefined>(
+  undefined,
+);
+
 /**
  * `useController` with an explicit "unset" state. react-hook-form shows a field's initial value
  * again when its value becomes `undefined`, so clearing stores the UNSET sentinel instead, which
@@ -214,6 +219,7 @@ export function Row({
   caption,
   htmlFor,
   aside,
+  after,
   children,
   name,
   required = false,
@@ -223,6 +229,7 @@ export function Row({
   caption?: string | undefined;
   htmlFor?: string;
   aside?: ReactNode;
+  after?: ReactNode;
   children: ReactNode | ((control: ControlProps) => ReactNode);
   name: string;
   required?: boolean;
@@ -244,6 +251,7 @@ export function Row({
       {typeof children === 'function' ? children(control) : children}
       <FieldHelp id={helpId} help={help} />
       <FieldError name={name} id={errorId} />
+      {after}
     </FieldGroup>
   );
 }

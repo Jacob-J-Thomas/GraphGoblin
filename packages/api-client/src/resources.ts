@@ -6,6 +6,14 @@
 import type { GraphGoblinClient, paths } from './client.js';
 import { unwrap } from './errors.js';
 
+export const cron = {
+  preview: async (
+    client: GraphGoblinClient,
+    body: RequestBody<'/triggers/cron/preview', 'post'>,
+    options: { signal?: AbortSignal } = {},
+  ) => unwrap(await client.POST('/triggers/cron/preview', { body, ...options })),
+};
+
 type Method = 'get' | 'put' | 'patch' | 'post' | 'delete';
 
 /** The JSON request body of an operation. */

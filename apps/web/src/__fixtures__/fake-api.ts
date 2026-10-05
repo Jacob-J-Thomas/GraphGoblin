@@ -24,6 +24,7 @@ import {
   LoopImportError,
   stableHash,
   validateLoop,
+  type ValidationIssue,
 } from '@graphgoblin/domain';
 
 export const TS = '2026-10-02T12:00:00.000Z';
@@ -153,12 +154,7 @@ export class FakeApi {
   /** When set, every request without `Bearer <requiredKey>` is a 401, as with GG_REQUIRE_API_KEY. */
   requiredKey: string | undefined;
   /** Issues only the real API finds (cron syntax, subloop references), for validate and publish. */
-  serverOnlyIssues: {
-    code: string;
-    severity: 'error' | 'warning';
-    message: string;
-    nodeId?: string;
-  }[] = [];
+  serverOnlyIssues: ValidationIssue[] = [];
   private overrides = new Map<string, Handler>();
   private streams = new Map<string, Set<ReadableStreamDefaultController<Uint8Array>>>();
 

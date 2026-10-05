@@ -1,6 +1,7 @@
 import {
   apiKeys,
   classifierModels,
+  cron,
   events,
   loops,
   modelCatalog,
@@ -11,7 +12,7 @@ import {
   type ListRunsQuery,
 } from '@graphgoblin/api-client';
 import type { ClassifierModelSummary } from '@graphgoblin/contracts';
-import { useQuery, type QueryClient } from '@tanstack/react-query';
+import { usePrefetchQuery, useQuery, type QueryClient } from '@tanstack/react-query';
 import { useApi } from './context.js';
 
 /** Query keys, so mutations can invalidate exactly what they change. */
@@ -38,6 +39,8 @@ export const keys = {
   apiKeys: ['api-keys'] as const,
   preflight: ['preflight'] as const,
   events: ['events'] as const,
+  cronPreview: (expression: string, timezone: string) =>
+    ['cron-preview', expression, timezone] as const,
 };
 
 export function useLoops() {
@@ -127,6 +130,12 @@ export function refreshClassifierState(queryClient: QueryClient): Promise<unknow
   ]);
 }
 
+/** Start the catalog request before a node dialog or the loop settings form opens. */
+export function usePrefetchModelCatalog() {
+  const client = useApi();
+  usePrefetchQuery({ queryKey: keys.catalog, queryFn: () => modelCatalog.list(client) });
+}
+
 export function useSecrets() {
   const client = useApi();
   return useQuery({ queryKey: keys.secrets, queryFn: () => secrets.list(client) });
@@ -148,4 +157,16 @@ export function usePreflight() {
 export function useInboundEvents() {
   const client = useApi();
   return useQuery({ queryKey: keys.events, queryFn: () => events.list(client) });
+}
+
+/** The control enables this only once its expression and zone have stopped changing. */
+export function useCronPreview(expression: string, timezone: string, enabled: boolean) {
+  const client = useApi();
+  return useQuery({
+    queryKey: keys.cronPreview(expression, timezone),
+    queryFn: ({ signal }) => cron.preview(client, { expression, timezone, count: 5 }, { signal }),
+    enabled,
+    retry: false,
+    staleTime: 0,
+  });
 }

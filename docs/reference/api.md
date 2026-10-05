@@ -93,10 +93,11 @@ The inbound event bus.
 
 Schedules, webhook endpoints, and the public /hooks receiver.
 
-| Method | Path                   | Summary                                                                      | Parameters                       | Request body | Responses |
-| ------ | ---------------------- | ---------------------------------------------------------------------------- | -------------------------------- | ------------ | --------- |
-| GET    | `/loops/{id}/triggers` | Schedules, webhook endpoints, and armed poll triggers of a loop              | `id`: string (path, required)    | -            | 200       |
-| POST   | `/hooks/{token}`       | Signed webhook receiver (public; HMAC, timestamp window, dedupe, rate limit) | `token`: string (path, required) | -            | 202       |
+| Method | Path                     | Summary                                                                      | Parameters                       | Request body                              | Responses |
+| ------ | ------------------------ | ---------------------------------------------------------------------------- | -------------------------------- | ----------------------------------------- | --------- |
+| POST   | `/triggers/cron/preview` | Preview upcoming cron slots without arming a schedule (loops:read)           | -                                | `{ expression, timezone, count?, from? }` | 200       |
+| GET    | `/loops/{id}/triggers`   | Schedules, webhook endpoints, and armed poll triggers of a loop              | `id`: string (path, required)    | -                                         | 200       |
+| POST   | `/hooks/{token}`         | Signed webhook receiver (public; HMAC, timestamp window, dedupe, rate limit) | `token`: string (path, required) | -                                         | 202       |
 
 ## system
 
