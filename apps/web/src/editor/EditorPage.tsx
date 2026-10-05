@@ -106,16 +106,13 @@ export function EditorPage() {
     [baseToken, definition],
   );
   // The API's own checks (cron syntax, subloop references, the catalogs) of the saved draft. They
-  // wait for both catalogs' first answers, success or not, so opening the editor does not run
-  // them twice.
+  // wait for the classifier catalog's first answer, success or not, so opening the editor does not
+  // run them twice. They do not wait for the model catalog: its pickers stay usable (read-only)
+  // while it loads, and an issue found meanwhile can be followed to them; a model catalog that
+  // arrives after the first check is a change of state (unknown to known) and runs them once more.
   const serverCheck = useQuery({
     queryKey: keys.validation(loopId, draftKey, catalogState),
-    enabled:
-      Boolean(definition) &&
-      saved &&
-      local.schemaValid &&
-      !classifiers.isPending &&
-      !models.isPending,
+    enabled: Boolean(definition) && saved && local.schemaValid && !classifiers.isPending,
     staleTime: Infinity,
     retry: false,
     queryFn: async () => {

@@ -109,22 +109,23 @@ type ModelFields = Pick<
  * (in the messages), capabilities, enabled and configured state, and the reason it is not
  * configured (which names its secret). A refetch that finds the same catalogs gives the same
  * string, so it does not run the checks again; any change the checks would report gives a new one.
- * A catalog not loaded yet (or that failed to load) counts as empty.
+ * A catalog not loaded (yet, or after a failed load) is unknown (`null`), not empty, so its loading
+ * is a change too.
  */
 export function catalogFingerprint(
   models: readonly ModelFields[] | undefined,
   classifiers: readonly ClassifierModelSummary[] | undefined,
 ): string {
   return JSON.stringify([
-    (models ?? []).map((e) => [e.harness, e.model, e.enabled, e.efforts, e.defaultEffort]),
-    (classifiers ?? []).map((e) => [
+    models?.map((e) => [e.harness, e.model, e.enabled, e.efforts, e.defaultEffort]) ?? null,
+    classifiers?.map((e) => [
       e.id,
       e.displayName,
       e.primitives,
       e.enabled,
       e.configured,
       e.configurationReason ?? '',
-    ]),
+    ]) ?? null,
   ]);
 }
 
