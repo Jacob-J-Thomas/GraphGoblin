@@ -45,6 +45,9 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ### Fixed
 
+- Editor drafts: while an older GraphGoblin tab or window blocks the device-draft store upgrade, the editor no longer claims edits are kept on the device. A notice says device storage is blocked and asks you to close other GraphGoblin tabs and windows; unsaved changes show as **Kept in this window only** until it works again, when they are written to the device at once; a server save shows as **All changes saved** instead of staying pending.
+- Editor validation: the API's checks run again for a reloaded server draft (a draft with an invalid cron expression no longer shows **Ready to publish**) and when a model is disabled or enabled in the model catalog, from Settings or another tab, so `MODEL_DISABLED` reaches the node badge; a catalog refetch that changes nothing runs no check.
+- Editor undo: each choice in a node or loop form (a picker, select, switch, segment, checkbox, or adding or removing a row) is an undo step of its own, and typing is one step per field, so changing Model then Effort undoes in two steps. Undo and redo keep the node editor's Advanced group and opened list items open.
 - Settings model catalog: when another refresh removes a row while its Enabled switch is saving and the API then answers 404, focus moves to the section heading instead of staying on the page body, and the "no longer in the catalog" notice clears on the next toggle (#24 review follow-ups, applied to Classifier models too).
 - Seeded Codex model catalog entries now list `max`, matching the editor. The max-effort migration preserves existing edits; startup then refreshes seeded harness metadata as described above, keeping enabled choices. The Codex adapter still maps `max` to `xhigh`.
 

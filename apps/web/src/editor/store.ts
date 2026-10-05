@@ -51,6 +51,12 @@ export interface EditorState {
   /** Bumped on every edit; autosave compares it with `savedRevision`. */
   revision: number;
   savedRevision: number;
+  /**
+   * The newest revision whose copy on this device (the IndexedDB mirror) was written, so the
+   * editor says "saved on this device" only once that write succeeded. Undefined until one has.
+   */
+  deviceRevision: number | undefined;
+  /** Where the server copy stands (`saveState`), with the server's reason when a save failed. */
   saveState: SaveState;
   saveMessage: string | undefined;
   /** Why the last attempted connection was refused. */
@@ -123,6 +129,8 @@ export interface EditorState {
   updateVariables: (variables: unknown, change?: FormChange) => void;
   setSaveState: (state: SaveState, message?: string, revision?: number) => void;
   setBaseToken: (token: string | undefined) => void;
+  /** Record that the device copy of `revision` was written (see `deviceRevision`). */
+  setDeviceRevision: (revision: number) => void;
   setConflict: (conflict: { serverToken: string | undefined } | undefined) => void;
   /**
    * Record (or, with `undefined`, clear) the unparsed text of a form field. It is a change like
@@ -175,6 +183,7 @@ const INITIAL = {
   nodeFocus: undefined,
   revision: 0,
   savedRevision: 0,
+  deviceRevision: undefined,
   saveState: 'idle' as SaveState,
   saveMessage: undefined,
   connectionError: undefined,
@@ -532,6 +541,9 @@ export const useEditorStore = create<EditorState>((set, get) => {
       })),
 
     setBaseToken: (baseToken) => set({ baseToken }),
+
+    setDeviceRevision: (revision) =>
+      set((s) => ({ deviceRevision: Math.max(revision, s.deviceRevision ?? revision) })),
 
     setConflict: (conflict) => set({ conflict }),
 

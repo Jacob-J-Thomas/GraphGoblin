@@ -16,6 +16,7 @@ import {
 } from '../api/queries.js';
 import { ErrorState } from '../components/status.js';
 import { Alert, Button, useSidePanelState } from '../components/ui/index.js';
+import { deviceStorageProblem } from '../drafts/local-drafts.js';
 import { focusFallback } from '../lib/focus.js';
 import { errorMessage, formatDateTime, isOfflineError, problemIssues } from '../lib/utils.js';
 import { Canvas } from './Canvas.js';
@@ -29,14 +30,21 @@ import {
   type EditorIssue,
 } from './model.js';
 import { NodeEditorDialog } from './NodeEditorDialog.js';
+import { deviceCopyOf, deviceNotice, saveNotice, useDeviceStorageProblem } from './save-status.js';
 import { LOOP_PANEL_STORAGE_KEY, LoopPanel, loopPanelDefault } from './LoopPanel.js';
 import { PALETTE_STORAGE_KEY, Palette, palettePanelDefault } from './Palette.js';
-import { useEditorStore } from './store.js';
+import { useEditorStore, type EditorState } from './store.js';
 import { useAutosave } from './useAutosave.js';
 import { useLoadEditor } from './useLoadEditor.js';
 import { useResolveConflict } from './useResolveConflict.js';
 import { useUndoShortcuts } from './useUndoShortcuts.js';
 import { ValidationIndicator } from './ValidationIndicator.js';
+
+/** The save notice for a store state, as the editor shows it now (`saveNotice`). */
+function noticeOf(state: EditorState): string | undefined {
+  const device = deviceCopyOf(state.revision, state.deviceRevision, deviceStorageProblem());
+  return saveNotice(state.saveState, state.saveMessage, device);
+}
 
 /**
  * The loop editor: the toolbar (with the validation indicator beside Publish), notices about the
@@ -175,6 +183,15 @@ export function EditorPage() {
   const [dismissedSaveNotice, setDismissedSaveNotice] = useState<
     { generation: number; state: typeof saveState; message: string } | undefined
   >();
+  const [dismissedDeviceNotice, setDismissedDeviceNotice] = useState<
+    { generation: number; message: string } | undefined
+  >();
+  // Where the edits are besides the server: on this device once the mirror write of this revision
+  // succeeded, in this window only when device storage refused it (`save-status.ts`).
+  const storageProblem = useDeviceStorageProblem();
+  const deviceRevision = useEditorStore((s) => s.deviceRevision);
+  const device = deviceCopyOf(revision, deviceRevision, storageProblem);
+  const notice = saveNotice(saveState, saveMessage, device);
   const [dismissalAnnouncement, setDismissalAnnouncement] = useState(0);
   const noticeContainerRef = useRef<HTMLDivElement>(null);
   const saveStatusRef = useRef<HTMLSpanElement>(null);
@@ -189,7 +206,7 @@ export function EditorPage() {
           dismissed &&
           dismissed.generation === state.generation &&
           dismissed.state === state.saveState &&
-          dismissed.message === state.saveMessage
+          dismissed.message === (noticeOf(state) ?? '')
             ? dismissed
             : undefined,
         );
@@ -207,16 +224,19 @@ export function EditorPage() {
   const published = query.data?.current?.definition;
   const errors = validation.issues.filter((i) => i.severity === 'error').length;
   const editing = nodeDialogOpen ? def.nodes.find((n) => n.id === selectedNodeId) : undefined;
-  const saveNoticeIsActive =
-    Boolean(saveMessage) &&
-    (saveState === 'offline' || saveState === 'error' || saveState === 'invalid');
+  const saveNoticeIsActive = Boolean(notice);
   const showRestoredNotice =
     restoredGeneration === generation && dismissedRestoreGeneration !== generation;
   const showSaveNotice =
     saveNoticeIsActive &&
     (dismissedSaveNotice?.generation !== generation ||
       dismissedSaveNotice.state !== saveState ||
-      dismissedSaveNotice.message !== saveMessage);
+      dismissedSaveNotice.message !== notice);
+  const deviceProblem = storageProblem ? deviceNotice(storageProblem) : undefined;
+  const showDeviceNotice =
+    deviceProblem !== undefined &&
+    (dismissedDeviceNotice?.generation !== generation ||
+      dismissedDeviceNotice.message !== deviceProblem.body);
   const announceDismissalAndRestoreFocus = () => {
     setDismissalAnnouncement((count) => count + 1);
     window.requestAnimationFrame(() => {
@@ -254,17 +274,31 @@ export function EditorPage() {
         </span>
       </Alert>
     ) : null,
-    conflict ? <ConflictNotice key="conflict" resolve={resolve} /> : null,
+    conflict ? <ConflictNotice key="conflict" resolve={resolve} device={device} /> : null,
     showSaveNotice ? (
       <Alert
         key="save"
         tone="warn"
         onDismiss={() => {
-          setDismissedSaveNotice({ generation, state: saveState, message: saveMessage ?? '' });
+          setDismissedSaveNotice({ generation, state: saveState, message: notice ?? '' });
           announceDismissalAndRestoreFocus();
         }}
       >
-        {saveMessage}
+        {notice}
+      </Alert>
+    ) : null,
+    // Device storage's own notice, apart from the save state: a server save still counts as one.
+    showDeviceNotice ? (
+      <Alert
+        key="device"
+        tone="warn"
+        title={deviceProblem.title}
+        onDismiss={() => {
+          setDismissedDeviceNotice({ generation, message: deviceProblem.body });
+          announceDismissalAndRestoreFocus();
+        }}
+      >
+        {deviceProblem.body}
       </Alert>
     ) : null,
     publish.isSuccess && publishedRevision === revision ? (
@@ -303,7 +337,8 @@ export function EditorPage() {
         published={Boolean(published)}
         version={query.data?.current?.version}
         saveState={saveState}
-        saveMessage={saveMessage}
+        device={device}
+        saveMessage={notice ?? saveMessage}
         errors={errors}
         validation={
           <ValidationIndicator
@@ -357,7 +392,7 @@ export function EditorPage() {
           definition={def}
           issues={validation.issues}
           loopId={loopId}
-          notice={conflict ? <ConflictNotice resolve={resolve} /> : null}
+          notice={conflict ? <ConflictNotice resolve={resolve} device={device} /> : null}
         />
       ) : null}
     </div>
