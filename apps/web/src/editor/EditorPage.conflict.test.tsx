@@ -161,6 +161,7 @@ describe('draft conflicts (If-Match)', () => {
   });
 
   it('sends the token a restored device copy was based on, so a newer server draft conflicts', async () => {
+    const user = userEvent.setup();
     const api = new FakeApi();
     const loop = api.addLoop(newLoopDefinition('mine'));
     await saveLocalDraft({
@@ -172,10 +173,18 @@ describe('draft conflicts (If-Match)', () => {
       baseToken: 'stale-token',
     });
     renderApp(`/loops/${loop.id}/edit`, api);
+    expect(
+      await screen.findByText('Restored unsaved changes from this device.'),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Dismiss notice' }));
     expect(await screen.findByText(TITLE, undefined, SAVE_WAIT)).toBeInTheDocument();
     expect(api.callsTo('PUT', `/loops/${loop.id}/draft`)[0]!.headers.get('if-match')).toBe(
       '"stale-token"',
     );
+
+    await user.click(screen.getByRole('button', { name: 'Reload server draft' }));
+    expect(await screen.findByRole('heading', { name: 'mine' })).toBeInTheDocument();
+    expect(screen.queryByText('Restored unsaved changes from this device.')).toBeNull();
   });
 
   it('saves an undo or redo like any edit: If-Match, the device copy, and the conflict stop', async () => {

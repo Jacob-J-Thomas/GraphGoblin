@@ -23,6 +23,8 @@ The editor lives at this browser route:
 
 Edits autosave after a short debounce and are mirrored in IndexedDB. A schema-invalid draft stays on the device with **Saved on this device only**; fix it before relying on the server copy. Offline saves retry on reconnect. An unsynced local draft takes precedence on reload, unless the server saved a newer draft since; then the server copy is shown and the device copy is offered with **Use this device's copy instead**.
 
+The restored-draft notice and notices about schema-invalid, offline, or failed saves can be dismissed. The toolbar continues to show when changes are kept only on this device or a save has failed. A dismissed restore notice stays hidden while editing that loaded draft and appears again if a later reload restores it. A dismissed save notice stays hidden through edits that end in the same state; it returns after a successful save, a different save problem or message, or a new load.
+
 Every save tells the server which copy the edit started from. If another tab, device, or API client saved the draft in between, nothing is overwritten: **The draft changed on the server** appears (inside the node dialog too, when one is open), autosave stops, and you choose **Reload server draft** (take theirs, dropping this editor's unsaved changes and undo history and closing the dialog) or **Overwrite with this copy** (keep yours). Until you choose, edits stay on this device and **Publish** refuses. API clients get the same protection by sending `If-Match` with the `draftToken` from `GET /loops/{id}` (see [API, streaming, and MCP](../07-api-and-streaming.md#draft-conflicts-decided-wp-f2-adr-0015)).
 
 ## Choose nodes

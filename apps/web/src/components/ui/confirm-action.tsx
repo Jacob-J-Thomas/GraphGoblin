@@ -1,25 +1,9 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { focusFallback } from '../../lib/focus.js';
 import { errorMessage } from '../../lib/utils.js';
 import { Icon } from '../icons/index.js';
 import { Alert } from './alert.js';
 import { Button } from './button.js';
-
-/** A heading needs tabindex while focused; release that temporary attribute on blur. */
-function focusFallback(target: HTMLElement) {
-  if (target.hasAttribute('tabindex')) {
-    target.focus();
-    return;
-  }
-  target.tabIndex = -1;
-  // Chromium blurs a heading if tabindex is removed while it still has focus.
-  const restore = () => {
-    target.removeEventListener('blur', restore);
-    target.removeAttribute('tabindex');
-  };
-  target.addEventListener('blur', restore, { once: true });
-  target.focus();
-  if (document.activeElement !== target) restore();
-}
 
 /** Shared destructive action: modal background blocking, safe focus, and retry. */
 export function ConfirmAction({
