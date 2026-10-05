@@ -2,9 +2,11 @@ import { NodeConfigSchemas, TemplateSchema, ExpressionSchema } from '@graphgobli
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
+import { FormProvider, useForm } from 'react-hook-form';
 import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { setCode } from '../__fixtures__/codemirror.js';
+import { Row } from './fields/shared.js';
 import { descriptionOf, type Schema } from './introspect.js';
 import { SchemaForm } from './SchemaForm.js';
 
@@ -196,5 +198,23 @@ describe('form controls in the schema-driven form', () => {
     expect(descriptionOf(z.string().describe('Outer'))).toBe('Outer');
     expect(descriptionOf(z.string().describe('Inner').optional())).toBe('Inner');
     expect(descriptionOf(z.string())).toBeUndefined();
+  });
+
+  it('keeps Row usable with plain children and no control id', () => {
+    function Plain() {
+      const form = useForm();
+      return (
+        <FormProvider {...form}>
+          <Row label="Note" name="note" help="Free text">
+            <span>static</span>
+          </Row>
+        </FormProvider>
+      );
+    }
+    render(<Plain />);
+    const row = screen.getByText('static').closest('[data-field]') as HTMLElement;
+    expect(row).toHaveAttribute('data-field', 'note');
+    expect(within(row).getByText('Note').tagName).toBe('LABEL');
+    expect(within(row).getByText('Free text')).toBeInTheDocument();
   });
 });
