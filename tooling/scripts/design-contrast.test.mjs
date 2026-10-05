@@ -72,7 +72,7 @@ test('WCAG reference results, symmetry and both channel transfer branches', () =
 
 test('pair data validates all groups and preserves the sample with focus on every surface', () => {
   validatePairs(pairs);
-  assert.equal(pairs.text.length, 96);
+  assert.equal(pairs.text.length, 98);
   assert.equal(pairs.nonText.length, 125);
   assert.equal(pairs.decorative.length, 17);
   // The editor's issue badges (#15): their edge, for errors and warnings, and the focus ring hold
@@ -91,6 +91,9 @@ test('pair data validates all groups and preserves the sample with focus on ever
     assert.ok(has(pairs.nonText, fg, '--surface-overlay'), `${fg} on --surface-overlay`);
   }
   assert.ok(has(pairs.decorative, '--surface-overlay', '--canvas-bg'));
+  for (const fg of ['--text-default', '--text-muted']) {
+    assert.ok(has(pairs.text, fg, '--canvas-bg'), `${fg} label on canvas (#18)`);
+  }
   // The shipped tokens keep every value of the approved sample in both themes. Values are compared
   // with their var() references expanded, so a shipped token may route a sample value through a
   // new alias (the header hairline's stops) without changing what it resolves to.
@@ -138,7 +141,7 @@ test('report measures both themes, enforcing unrounded ratios and listing decora
   assert.equal(result.failures.length, 0);
   assert.match(
     result.markdown,
-    /96 text pairs \(0 below 4.5:1\), 125 non-text pairs \(0 below 3:1\)/,
+    /98 text pairs \(0 below 4.5:1\), 125 non-text pairs \(0 below 3:1\)/,
   );
   // The issue badge rows (#15) are measured and pass in both themes: 18 band edges per theme.
   const badgeRows = result.markdown

@@ -12,10 +12,12 @@ import {
   type IsValidConnection,
   type NodeChange,
   type NodeMouseHandler,
+  type OnNodeDrag,
   type XYPosition,
 } from '@xyflow/react';
-import { useMemo, useRef, useState, type DragEvent, type KeyboardEvent } from 'react';
+import { useCallback, useMemo, useRef, useState, type DragEvent, type KeyboardEvent } from 'react';
 import { closePopovers } from '../components/ui/index.js';
+import { BackwardEdge } from './BackwardEdge.js';
 import {
   canvasPorts,
   connectionProblem,
@@ -28,8 +30,11 @@ import {
 } from './model.js';
 import { NodeCard, type FlowNode, type NodeCardData } from './NodeCard.js';
 import { useEditorStore } from './store.js';
+import type { RoutedEdge } from './routing.js';
+import { useRouting } from './useRouting.js';
 
 const nodeTypes = { gg: NodeCard };
+const edgeTypes = { backward: BackwardEdge };
 
 /** Fit the graph with room on the left for the zoom controls, so they never cover a card. */
 const FIT_VIEW_OPTIONS: FitViewOptions = {
@@ -88,41 +93,90 @@ function buildNodes(
   selected: string | undefined,
   measured: Record<string, Size>,
   dragging: Record<string, XYPosition>,
+  previous: ReadonlyMap<string, FlowNode>,
 ): FlowNode[] {
   return def.nodes.map((node) => {
     const size = measured[node.id];
+    const position = dragging[node.id] ?? node.ui ?? { x: 0, y: 0 };
+    const card = data.get(node.id)!;
+    const before = previous.get(node.id);
+    if (
+      before &&
+      before.data === card &&
+      before.position.x === position.x &&
+      before.position.y === position.y &&
+      before.measured === size &&
+      before.selected === (node.id === selected)
+    )
+      return before;
     return {
       id: node.id,
       type: 'gg',
-      position: dragging[node.id] ?? node.ui ?? { x: 0, y: 0 },
+      position,
       selected: node.id === selected,
       ariaLabel: `${KIND_INFO[node.kind].label} ${node.label} (${node.id})`,
       ...(size ? { measured: size } : {}),
-      data: data.get(node.id)!,
+      data: card,
     };
   });
 }
 
 /**
- * Edges as orthogonal steps with rounded corners (xyflow's built-in smoothstep path; the routing
- * itself is xyflow's, see #18), labels as pills, and the exit's loop-back animated and dashed in
- * the loop colour (styles/canvas.css).
+ * Forward edges keep their existing smoothstep path. Backward paths come from measured canvas
+ * geometry (#18); labels and the exit's animated dash retain the existing token styles.
  */
-function buildEdges(def: LoopDefinitionInput, selected: string | undefined): Edge[] {
-  return def.edges.map((edge) => ({
-    id: edge.id,
-    type: 'smoothstep',
-    pathOptions: { borderRadius: 10 },
-    source: edge.from.node,
-    sourceHandle: edge.from.port,
-    target: edge.to.node,
-    targetHandle: 'in',
-    selected: edge.id === selected,
-    ...(edge.from.port !== 'out'
-      ? { label: edge.from.port, labelBgPadding: [8, 3], labelBgBorderRadius: 9 }
-      : {}),
-    ...(edge.from.port === 'loopBack' ? { animated: true, className: 'gg-edge-loop' } : {}),
-  }));
+function buildEdges(
+  def: LoopDefinitionInput,
+  selected: string | undefined,
+  routes: ReadonlyMap<string, RoutedEdge>,
+  previous: ReadonlyMap<string, Edge>,
+  nodes: readonly FlowNode[],
+): Edge[] {
+  const positions = new Map(nodes.map((node) => [node.id, node.position]));
+  return def.edges.map((edge) => {
+    const before = previous.get(edge.id);
+    const route = routes.get(edge.id);
+    // While any new card is awaiting measurement, a known backward edge waits for its route;
+    // it must never briefly fall back to a smoothstep crossing that unmeasured card.
+    const from = positions.get(edge.from.node);
+    const to = positions.get(edge.to.node);
+    const type =
+      route || edge.from.port === 'loopBack' || (from && to && to.x <= from.x)
+        ? 'backward'
+        : 'smoothstep';
+    // xyflow subscribes each edge to its object identity. Keep untouched edges asleep during a
+    // drag, even though another path or selection changed in the same graph.
+    if (
+      before &&
+      before.source === edge.from.node &&
+      before.target === edge.to.node &&
+      before.sourceHandle === edge.from.port &&
+      before.data === route &&
+      before.type === type &&
+      before.selected === (edge.id === selected)
+    )
+      return before;
+    return {
+      id: edge.id,
+      type,
+      pathOptions: { borderRadius: 10 },
+      source: edge.from.node,
+      sourceHandle: edge.from.port,
+      target: edge.to.node,
+      targetHandle: 'in',
+      selected: edge.id === selected,
+      ...(route
+        ? {
+            data: route,
+            ariaLabel: `${edge.from.node} ${edge.from.port} to ${edge.to.node}${route.blocked ? ': move overlapping nodes apart' : ''}`,
+          }
+        : {}),
+      ...(edge.from.port !== 'out'
+        ? { label: edge.from.port, labelBgPadding: [8, 3], labelBgBorderRadius: 9 }
+        : {}),
+      ...(edge.from.port === 'loopBack' ? { animated: true, className: 'gg-edge-loop' } : {}),
+    };
+  });
 }
 
 /**
@@ -144,61 +198,114 @@ export function Canvas({
   const [dragging, setDragging] = useState<Record<string, XYPosition>>({});
   const [selectedEdge, setSelectedEdge] = useState<string | undefined>();
   const cardDataRef = useRef<ReadonlyMap<string, NodeCardData>>(new Map());
+  const nodesRef = useRef<ReadonlyMap<string, FlowNode>>(new Map());
+  const edgesRef = useRef({ byId: new Map<string, Edge>(), value: [] as Edge[] });
   const rootRef = useRef<HTMLDivElement>(null);
   // A node's issue popover is placed from its badge: a pan, a zoom, or a drag closes it. Popovers
   // elsewhere (the toolbar's) stay, since nothing they hang from moved.
-  const closeCanvasPopovers = () => closePopovers(rootRef.current);
+  const closeCanvasPopovers = useCallback(() => closePopovers(rootRef.current), []);
 
   const cardData = useMemo(() => {
     const next = buildCardData(definition, issues, cardDataRef.current);
     cardDataRef.current = next;
     return next;
   }, [definition, issues]);
-  const nodes = useMemo(
-    () => buildNodes(definition, cardData, selected, measured, dragging),
-    [definition, cardData, selected, measured, dragging],
+  const nodes = useMemo(() => {
+    // xyflow can retain the other 99 internal nodes while one card moves. Card-data memoisation
+    // alone would still recreate their wrappers and handle lookups on every drag frame.
+    const next = buildNodes(definition, cardData, selected, measured, dragging, nodesRef.current);
+    nodesRef.current = new Map(next.map((node) => [node.id, node]));
+    return next;
+  }, [definition, cardData, selected, measured, dragging]);
+  const routingEdges = useMemo(
+    () =>
+      definition.edges.map((edge) => ({
+        id: edge.id,
+        source: edge.from.node,
+        target: edge.to.node,
+        port: edge.from.port,
+      })),
+    [definition.edges],
   );
-  const edges = useMemo(() => buildEdges(definition, selectedEdge), [definition, selectedEdge]);
+  const routes = useRouting(routingEdges);
+  const edges = useMemo(() => {
+    const previous = edgesRef.current;
+    const next = buildEdges(definition, selectedEdge, routes, previous.byId, nodes);
+    if (
+      next.length === previous.value.length &&
+      next.every((edge, index) => edge === previous.value[index])
+    )
+      return previous.value;
+    edgesRef.current = { byId: new Map(next.map((edge) => [edge.id, edge])), value: next };
+    return next;
+  }, [definition, selectedEdge, routes, nodes]);
 
-  const endDrag = (id: string, position: XYPosition) => {
-    moveNode(id, position);
-    setDragging(({ [id]: _done, ...rest }) => rest);
-  };
+  const endDrag = useCallback(
+    (id: string, position: XYPosition) => {
+      moveNode(id, position);
+      setDragging(({ [id]: _done, ...rest }) => rest);
+    },
+    [moveNode],
+  );
 
-  const onNodesChange = (changes: NodeChange<FlowNode>[]) => {
-    for (const change of changes) {
-      if (change.type === 'dimensions' && change.dimensions) {
-        const size = change.dimensions;
-        setMeasured((m) => ({ ...m, [change.id]: size }));
-      } else if (change.type === 'position' && change.position) {
-        const position = change.position;
-        if (change.dragging) setDragging((d) => ({ ...d, [change.id]: position }));
-        else endDrag(change.id, position);
-      } else if (change.type === 'select' && change.selected) {
-        select(change.id);
-      } else if (change.type === 'remove') {
-        removeNode(change.id);
+  // xyflow writes each changed callback into its store separately. Stable handlers avoid
+  // notifying every node/edge subscriber several extra times on each drag frame.
+  const onNodesChange = useCallback(
+    (changes: NodeChange<FlowNode>[]) => {
+      for (const change of changes) {
+        if (change.type === 'dimensions' && change.dimensions) {
+          const size = change.dimensions;
+          setMeasured((m) => ({ ...m, [change.id]: size }));
+        } else if (change.type === 'position' && change.position) {
+          const position = change.position;
+          if (change.dragging) setDragging((d) => ({ ...d, [change.id]: position }));
+          else endDrag(change.id, position);
+        } else if (change.type === 'select' && change.selected) {
+          select(change.id);
+        } else if (change.type === 'remove') {
+          removeNode(change.id);
+        }
       }
-    }
-  };
+    },
+    [endDrag, select, removeNode],
+  );
 
-  const onEdgesChange = (changes: EdgeChange[]) => {
-    for (const change of changes) {
-      if (change.type === 'select') setSelectedEdge(change.selected ? change.id : undefined);
-      if (change.type === 'remove') removeEdge(change.id);
-    }
-  };
+  const onEdgesChange = useCallback(
+    (changes: EdgeChange[]) => {
+      for (const change of changes) {
+        if (change.type === 'select') setSelectedEdge(change.selected ? change.id : undefined);
+        if (change.type === 'remove') removeEdge(change.id);
+      }
+    },
+    [removeEdge],
+  );
 
-  const isValidConnection: IsValidConnection = (conn) =>
-    connectionProblem(definition, {
-      source: conn.source,
-      sourceHandle: conn.sourceHandle ?? null,
-      target: conn.target,
-    }) === null;
+  const isValidConnection: IsValidConnection = useCallback(
+    (conn) =>
+      connectionProblem(definition, {
+        source: conn.source,
+        sourceHandle: conn.sourceHandle ?? null,
+        target: conn.target,
+      }) === null,
+    [definition],
+  );
 
-  const onConnect = (conn: Connection) => {
-    connect({ source: conn.source, sourceHandle: conn.sourceHandle, target: conn.target });
-  };
+  const onConnect = useCallback(
+    (conn: Connection) => {
+      connect({ source: conn.source, sourceHandle: conn.sourceHandle, target: conn.target });
+    },
+    [connect],
+  );
+
+  const onNodeDragStop: OnNodeDrag<FlowNode> = useCallback(
+    (_, node) => endDrag(node.id, node.position),
+    [endDrag],
+  );
+  const onNodeDragStart = useCallback(() => {
+    closeCanvasPopovers();
+    // Each drag is an undo step of its own, however soon it follows the last move.
+    closeStep();
+  }, [closeCanvasPopovers, closeStep]);
 
   const onDrop = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -263,17 +370,14 @@ export function Canvas({
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         isValidConnection={isValidConnection}
-        onNodeDragStop={(_, node) => endDrag(node.id, node.position)}
+        onNodeDragStop={onNodeDragStop}
         onMove={closeCanvasPopovers}
-        onNodeDragStart={() => {
-          closeCanvasPopovers();
-          // Each drag is an undo step of its own, however soon it follows the last move.
-          closeStep();
-        }}
+        onNodeDragStart={onNodeDragStart}
         onNodeClick={onNodeClick}
         nodeClickDistance={CLICK_DISTANCE}
         nodeDragThreshold={CLICK_DISTANCE}
