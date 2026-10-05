@@ -5,5 +5,11 @@
  * choice (booleans, enums, literals), json, and structure (the dispatcher with objects, arrays,
  * records, and unions, which render fields of their own).
  */
-export { joinPath } from './fields/shared.js';
-export { Field } from './fields/structure.js';
+export {
+  FieldControlsContext,
+  joinPath,
+  type FieldControl,
+  type FieldControls,
+  type FieldProps,
+} from './fields/shared.js';
+export { DefaultField, Field, itemSummary } from './fields/structure.js';

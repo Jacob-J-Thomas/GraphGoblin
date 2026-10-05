@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { FormProvider, useForm, type FieldValues, type Resolver } from 'react-hook-form';
 import { FieldGroup, Label, Select } from '../components/ui/index.js';
-import { Field, joinPath } from './fields.js';
+import { FieldControlsContext, type FieldControls } from './fields.js';
 import { FieldIssuesContext } from './fields/shared.js';
 import {
   humanize,
@@ -12,6 +12,7 @@ import {
   shapeOf,
   type Schema,
 } from './introspect.js';
+import { formLayout } from './layout.js';
 import {
   ParseErrorContext,
   repathParseErrors,
@@ -19,6 +20,7 @@ import {
   type ParseErrorChannel,
   type ParseErrorReason,
 } from './parse-errors.js';
+import { AdvancedFields, LayoutItems } from './sections.js';
 import { stripUnset } from './unset.js';
 
 export interface SchemaFormProps {
@@ -36,7 +38,14 @@ export interface SchemaFormProps {
    * `'discard'` when the user dropped the text (Discard text) rather than fixing it.
    */
   onParseError?: (path: string, error: ParseError | undefined, reason?: ParseErrorReason) => void;
+  /**
+   * Controls that draw fields in place of the default renderer, by the name a field's metadata
+   * gives in `control` (`FieldControl`); a field naming no registered control is drawn as usual.
+   */
+  controls?: FieldControls | undefined;
 }
+
+const NO_CONTROLS: FieldControls = {};
 
 interface Issue {
   path: string;
@@ -60,6 +69,10 @@ function asValues(value: unknown): FieldValues {
  * A form generated from a Zod schema with react-hook-form and the Zod resolver. Every change is
  * reported upward as-is so the caller (the editor store) never loses input; schema issues are shown
  * inline per field and as a summary. Remount with a `key` to load a different value.
+ *
+ * The contracts' field metadata places the fields (`formLayout`): the basic ones first, in schema
+ * order, then the advanced ones under a collapsed Advanced disclosure, grouped under headings. The
+ * disclosure's state is the form's own and starts collapsed on every mount.
  */
 export function SchemaForm({
   schema,
@@ -68,6 +81,7 @@ export function SchemaForm({
   label,
   parseErrors,
   onParseError,
+  controls,
 }: SchemaFormProps) {
   const shape = shapeOf(schema);
   const id = useId();
@@ -125,7 +139,12 @@ export function SchemaForm({
   const [unionIndex, setUnionIndex] = useState(() =>
     shape.kind === 'union' ? matchOption(shape.options, value, shape.discriminator) : 0,
   );
-  const variant = shape.kind === 'union' ? shapeOf(shape.options[unionIndex] as Schema) : shape;
+  const variantSchema = shape.kind === 'union' ? (shape.options[unionIndex] as Schema) : schema;
+  const discriminator = shape.kind === 'union' ? shape.discriminator : undefined;
+  const layout = useMemo(() => {
+    const variant = shapeOf(variantSchema);
+    return variant.kind === 'object' ? formLayout(variant.shape, '', discriminator) : undefined;
+  }, [variantSchema, discriminator]);
 
   const switchVariant = (index: number) => {
     if (shape.kind !== 'union') return;
@@ -140,58 +159,56 @@ export function SchemaForm({
   return (
     <ParseErrorContext value={parseErrorChannel}>
       <FieldIssuesContext value={issuesByPath}>
-        <FormProvider {...form}>
-          <form
-            aria-label={label}
-            noValidate
-            onSubmit={(e) => e.preventDefault()}
-            className="grid gap-field"
-          >
-            {shape.kind === 'union' ? (
-              <FieldGroup>
-                <Label htmlFor={id}>{humanize(shape.discriminator ?? 'kind')}</Label>
-                <Select
-                  id={id}
-                  value={String(unionIndex)}
-                  onChange={(e) => switchVariant(Number(e.target.value))}
+        <FieldControlsContext value={controls ?? NO_CONTROLS}>
+          <FormProvider {...form}>
+            <form
+              aria-label={label}
+              noValidate
+              onSubmit={(e) => e.preventDefault()}
+              className="grid gap-field"
+            >
+              {shape.kind === 'union' ? (
+                <FieldGroup>
+                  <Label htmlFor={id}>{humanize(shape.discriminator ?? 'kind')}</Label>
+                  <Select
+                    id={id}
+                    value={String(unionIndex)}
+                    onChange={(e) => switchVariant(Number(e.target.value))}
+                  >
+                    {shape.options.map((option, index) => (
+                      <option key={index} value={index}>
+                        {optionLabel(option, shape.discriminator)}
+                      </option>
+                    ))}
+                  </Select>
+                </FieldGroup>
+              ) : null}
+              {layout ? <LayoutItems items={layout.basic} keyPrefix={String(unionIndex)} /> : null}
+              {layout && layout.advanced.length > 0 ? (
+                <AdvancedFields
+                  key={unionIndex}
+                  sections={layout.advanced}
+                  keyPrefix={String(unionIndex)}
+                />
+              ) : null}
+              {issues.length > 0 ? (
+                <div
+                  className="grid gap-1 rounded-md border-l-4 border-status-bad-border bg-status-bad-bg px-3 py-2 text-xs leading-snug"
+                  aria-label="Config issues"
                 >
-                  {shape.options.map((option, index) => (
-                    <option key={index} value={index}>
-                      {optionLabel(option, shape.discriminator)}
-                    </option>
-                  ))}
-                </Select>
-              </FieldGroup>
-            ) : null}
-            {variant.kind === 'object'
-              ? Object.entries(variant.shape)
-                  .filter(([key]) => shape.kind !== 'union' || key !== shape.discriminator)
-                  .map(([key, child]) => (
-                    <Field
-                      key={`${unionIndex}:${key}`}
-                      schema={child}
-                      name={joinPath('', key)}
-                      label={humanize(key)}
-                    />
-                  ))
-              : null}
-            {issues.length > 0 ? (
-              <div
-                className="grid gap-1 rounded-md border-l-4 border-status-bad-border bg-status-bad-bg px-3 py-2 text-xs leading-snug"
-                aria-label="Config issues"
-              >
-                <p className="font-semibold text-status-bad-fg">Config issues</p>
-                <ul className="list-disc pl-4">
-                  {issues.map((issue, index) => (
-                    <li key={index}>
-                      {issue.path ? <code>{issue.path}</code> : 'config'}: {issue.message}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
-          </form>
-        </FormProvider>
+                  <p className="font-semibold text-status-bad-fg">Config issues</p>
+                  <ul className="list-disc pl-4">
+                    {issues.map((issue, index) => (
+                      <li key={index}>
+                        {issue.path ? <code>{issue.path}</code> : 'config'}: {issue.message}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+            </form>
+          </FormProvider>
+        </FieldControlsContext>
       </FieldIssuesContext>
     </ParseErrorContext>
   );
