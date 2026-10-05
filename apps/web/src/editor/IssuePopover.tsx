@@ -118,7 +118,7 @@ export function IssueList({
               aria-label={`Discard unparsed text at ${issue.discard.path}`}
               onClick={() => {
                 const { scope, path } = issue.discard!;
-                useEditorStore.getState().setFieldError(scope, path, undefined);
+                useEditorStore.getState().setFieldError(scope, path, undefined, 'discard');
                 onDiscard?.(issue);
               }}
             >

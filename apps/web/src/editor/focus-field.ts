@@ -26,13 +26,33 @@ const OTHER_CONTROLS = [
   '[tabindex]:not([tabindex="-1"])',
 ].join(',');
 
+const shown = (el: Element) => !el.closest('[hidden], [inert]');
+
+/**
+ * A radio stands for its group: the group's checked radio, where Tab lands, takes focus in its
+ * place. Any other control is itself.
+ */
+export function groupFocus(control: HTMLElement, within: ParentNode): HTMLElement {
+  if (!(control instanceof HTMLInputElement) || control.type !== 'radio' || control.checked)
+    return control;
+  const checked = [
+    ...within.querySelectorAll<HTMLInputElement>('input[type="radio"]:checked'),
+  ].find((radio) => radio.name === control.name && !radio.disabled && shown(radio));
+  return checked ?? control;
+}
+
+/** Every control inside `field` that can take focus, value controls or not, in document order. */
+export function focusableIn(field: Element): HTMLElement[] {
+  return [...field.querySelectorAll<HTMLElement>(`${VALUE_CONTROLS},${OTHER_CONTROLS}`)].filter(
+    shown,
+  );
+}
+
 /** The control to focus inside `field`: the first value control, else the first other one. */
 function firstFocusable(field: Element): HTMLElement | undefined {
   for (const selector of [VALUE_CONTROLS, OTHER_CONTROLS]) {
-    const found = [...field.querySelectorAll<HTMLElement>(selector)].find(
-      (el) => !el.closest('[hidden], [inert]'),
-    );
-    if (found) return found;
+    const found = [...field.querySelectorAll<HTMLElement>(selector)].find(shown);
+    if (found) return groupFocus(found, field);
   }
   return undefined;
 }

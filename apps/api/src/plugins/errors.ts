@@ -82,16 +82,16 @@ export function registerErrorHandler(app: FastifyInstance): void {
           'the request did not match the schema',
           error.validation.flatMap((v) => {
             const keys = v.params['keys'];
-            const paths =
-              v.keyword === 'unrecognized_keys' && Array.isArray(keys)
-                ? keys
-                    .filter((key): key is string => typeof key === 'string')
-                    .map(
-                      (key) =>
-                        `${v.instancePath}/${key.replaceAll('~', '~0').replaceAll('/', '~1')}`,
-                    )
-                : [v.instancePath];
-            return paths.map((path) => ({ path, message: v.message }));
+            if (v.keyword === 'unrecognized_keys' && Array.isArray(keys)) {
+              const base = v.instancePath === '/' ? '' : v.instancePath;
+              return keys
+                .filter((key): key is string => typeof key === 'string')
+                .map((key) => ({
+                  path: `${base}/${key.replaceAll('~', '~0').replaceAll('/', '~1')}`,
+                  message: `Unrecognized key ${JSON.stringify(key)}`,
+                }));
+            }
+            return [{ path: v.instancePath, message: v.message }];
           }),
         );
       }

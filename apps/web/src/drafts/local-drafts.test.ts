@@ -1,6 +1,6 @@
 import { minimalLoop } from '@graphgoblin/contracts/testing';
 import { IDBFactory } from 'fake-indexeddb';
-import { promisifyRequest } from 'idb-keyval';
+import { createStore, promisifyRequest, set } from 'idb-keyval';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type * as LocalDrafts from './local-drafts.js';
 
@@ -21,6 +21,67 @@ afterEach(async () => {
 });
 
 describe('local drafts in IndexedDB', () => {
+  it('silently skips blocked loads, rejects saves, and retries after the old tab closes', async () => {
+    const oldStore = createStore('graphgoblin', 'drafts');
+    const draft = { loopId: 'blocked', definition: minimalLoop(), savedAt: 'now', synced: false };
+    await set(draft.loopId, draft, oldStore);
+    const oldDatabase = await oldStore('readonly', (store) => store.transaction.db);
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      const result = Promise.all([
+        drafts.loadLocalDraft(draft.loopId),
+        drafts.loadSetAsideDraft(draft.loopId),
+        drafts.saveLocalDraft(draft).then(
+          () => 'saved',
+          (error: unknown) => error,
+        ),
+      ]);
+      const deadline = new Promise<string>((resolve) => {
+        timer = setTimeout(() => resolve('still blocked'), 4000);
+      });
+      expect(await Promise.race([result, deadline])).toEqual([
+        undefined,
+        undefined,
+        expect.objectContaining({ message: expect.stringContaining('Close other GraphGoblin') }),
+      ]);
+    } finally {
+      clearTimeout(timer);
+      oldDatabase.close();
+    }
+    await drafts.saveLocalDraft(draft);
+    expect(await drafts.loadLocalDraft(draft.loopId)).toEqual(draft);
+  });
+
+  it('finishes an upgrade when the older tab closes before the timeout', async () => {
+    const oldStore = createStore('graphgoblin', 'drafts');
+    await set('before-upgrade', 'old copy', oldStore);
+    const oldDatabase = await oldStore('readonly', (store) => store.transaction.db);
+    oldDatabase.onversionchange = () => {
+      setTimeout(() => oldDatabase.close(), 10);
+    };
+    try {
+      expect(await drafts.loadLocalDraft('before-upgrade')).toBeUndefined();
+      await drafts.saveLocalDraft({
+        loopId: 'after-upgrade',
+        definition: minimalLoop(),
+        savedAt: 'now',
+        synced: false,
+      });
+      expect(await drafts.loadLocalDraft('after-upgrade')).toMatchObject({
+        loopId: 'after-upgrade',
+      });
+    } finally {
+      oldDatabase.close();
+    }
+  });
+
+  it('keeps other database failures visible instead of treating them as an absent copy', async () => {
+    const opening = indexedDB.open('graphgoblin', 3);
+    opening.onupgradeneeded = () => opening.result.createObjectStore('drafts');
+    (await promisifyRequest(opening)).close();
+    await expect(drafts.loadLocalDraft('future')).rejects.toHaveProperty('name', 'VersionError');
+  });
+
   it('retires the version 1 store once and opens an empty version 2 store', async () => {
     const opening = indexedDB.open('graphgoblin', 1);
     opening.onupgradeneeded = () => opening.result.createObjectStore('drafts');

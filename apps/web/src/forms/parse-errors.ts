@@ -11,11 +11,19 @@ export interface ParseError {
   text: string;
 }
 
+/**
+ * Why a path's unparsed text went away when the user asked for it ("Discard text"), as opposed to
+ * the text starting to parse. The editor's undo history records a discard as a step of its own.
+ */
+export type ParseErrorReason = 'discard';
+
 export interface ParseErrorChannel {
   /** The stored unparsed text for a path, if any, so a remounted field shows it again. */
   get: (path: string) => ParseError | undefined;
   /** Record (or, with `undefined`, clear) the unparsed text for a path. */
   report: (path: string, error: ParseError | undefined) => void;
+  /** Drop the unparsed text for a path because the user discarded it. */
+  discard: (path: string) => void;
   /** True when a store keeps the reports; only then can an entry be discarded from outside. */
   tracked: boolean;
   /** The stored entries now, so a mounted field notices one discarded elsewhere. */
@@ -25,6 +33,7 @@ export interface ParseErrorChannel {
 const NONE: ParseErrorChannel = {
   get: () => undefined,
   report: () => undefined,
+  discard: () => undefined,
   tracked: false,
   errors: undefined,
 };

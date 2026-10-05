@@ -40,8 +40,16 @@ export function errorMessage(error: unknown): string {
 
 /** Problem-details `errors` as a list of strings, for 400 and 422 responses. */
 export function problemIssues(error: unknown): string[] {
-  if (!(error instanceof GraphGoblinApiError) || !Array.isArray(error.errors)) return [];
-  return error.errors.map((item: unknown) => {
+  if (!(error instanceof GraphGoblinApiError)) return [];
+  const details =
+    error.code === 'LOOP_IMPORT_ERROR' &&
+    typeof error.errors === 'object' &&
+    error.errors !== null &&
+    'errors' in error.errors
+      ? error.errors.errors
+      : error.errors;
+  if (!Array.isArray(details)) return [];
+  return details.map((item: unknown) => {
     if (typeof item === 'object' && item !== null && 'message' in item) {
       const where =
         'nodeId' in item && typeof item.nodeId === 'string'

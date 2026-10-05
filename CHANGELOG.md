@@ -6,6 +6,7 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ### Added
 
+- Undo and redo in the loop editor: every change to the draft, from the toolbar's Undo and Redo buttons (named by the change they make) or with Ctrl+Z and Ctrl+Shift+Z or Ctrl+Y (Cmd+Z and Cmd+Shift+Z on a Mac) outside text fields. Typing in one field and one drag are one step each; an undo is saved like any edit; the editor keeps the last 100 steps until it reloads (#17).
 - Separate owner-scoped classifier model catalog, with built-in Jev and registered HTTP Choice endpoints. REST `GET /classifier-models` and `PUT`, `PATCH`, `DELETE /classifier-models/{id}` use settings scopes; api-client `classifierModels` wraps them. Configured status derives from usable referenced secrets without provider calls.
 - Optional Decision `jev.model` catalog selection, shared publish diagnostics, immutable runtime client snapshots with catalog/secret refresh, and `decision.made.classifierModel` provenance. Exit Noul keeps built-in Jev. Kev-4B owner serving/licence/protocol research is documented; model serving is external.
 
@@ -28,6 +29,15 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   ```
 
 - Device drafts saved before this change are discarded by a one-off IndexedDB store upgrade, including set-aside copies. The server copy remains available. New in-progress drafts persist across reloads, including drafts with schema errors.
+- Close other GraphGoblin tabs and windows after updating so the device-draft store can upgrade.
+- To roll back after migration `0005`, stop the API and restore the pre-upgrade backup of the data directory before running the previous release. The previous release requires the removed field in its loop responses. Alternatively, with the API stopped, restore the field and remove only the `0005` ledger entry:
+
+  ```sql
+  UPDATE loop_versions SET definition = json_set(definition, '$.settings.defaults.harness', 'codex') WHERE json_extract(definition, '$.settings.defaults.harness') IS NULL;
+  DELETE FROM __drizzle_migrations WHERE created_at = 1791152101266;
+  ```
+
+  This manual rollback does not recover edited seed metadata; restore the pre-upgrade backup for that. Re-upgrading applies `0005` again. Current exports and API clients must still use the canonical definition shape.
 
 ### Fixed
 

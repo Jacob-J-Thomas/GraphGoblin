@@ -11,6 +11,35 @@ afterEach(async () => {
 });
 
 describe('canonical loop definition inputs', () => {
+  it.each(['root', 'nested'] as const)(
+    'reports each unknown %s key with its own escaped pointer and message',
+    async (level) => {
+      const extras = { extra: true, 'slash/~': true };
+      const response = await t.app.inject(
+        level === 'root'
+          ? {
+              method: 'PATCH',
+              url: '/model-catalog/codex/gpt-6-luna',
+              payload: { enabled: false, ...extras },
+            }
+          : {
+              method: 'POST',
+              url: '/loops',
+              payload: { definition: { ...minimalLoop(), settings: { defaults: extras } } },
+            },
+      );
+      const base = level === 'root' ? '' : '/definition/settings/defaults';
+      expect(response.statusCode, response.body).toBe(400);
+      expect(response.json()).toMatchObject({
+        code: 'VALIDATION_FAILED',
+        errors: [
+          { path: `${base}/extra`, message: 'Unrecognized key "extra"' },
+          { path: `${base}/slash~1~0`, message: 'Unrecognized key "slash/~"' },
+        ],
+      });
+    },
+  );
+
   it('rejects an unsupported inference harness with its node path', async () => {
     const loopId = await t.publishLoop(minimalLoop());
     const source = minimalLoop();

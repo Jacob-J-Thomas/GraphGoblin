@@ -137,7 +137,7 @@ export function Canvas({
   issues: readonly EditorIssue[];
 }) {
   const selected = useEditorStore((s) => s.selectedNodeId);
-  const { select, openNode, moveNode, removeNode, connect, removeEdge, addNode } =
+  const { select, openNode, moveNode, removeNode, connect, removeEdge, addNode, closeStep } =
     useEditorStore.getState();
   const { screenToFlowPosition } = useReactFlow();
   const [measured, setMeasured] = useState<Record<string, Size>>({});
@@ -269,7 +269,11 @@ export function Canvas({
         isValidConnection={isValidConnection}
         onNodeDragStop={(_, node) => endDrag(node.id, node.position)}
         onMove={closeCanvasPopovers}
-        onNodeDragStart={closeCanvasPopovers}
+        onNodeDragStart={() => {
+          closeCanvasPopovers();
+          // Each drag is an undo step of its own, however soon it follows the last move.
+          closeStep();
+        }}
         onNodeClick={onNodeClick}
         nodeClickDistance={CLICK_DISTANCE}
         nodeDragThreshold={CLICK_DISTANCE}
