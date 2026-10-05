@@ -53,13 +53,13 @@ export function EventsPage() {
                       <Td label="Received" className="text-sm whitespace-nowrap text-muted">
                         {formatDateTime(event.receivedAt)}
                       </Td>
-                      <Td label="Type">
+                      <Td label="Type" className="wrap-anywhere">
                         <code>{event.type}</code>
                       </Td>
                       <Td label="Source" className="text-sm">
                         <Source source={event.source} />
                       </Td>
-                      <Td label="Dedupe key" className="text-sm">
+                      <Td label="Dedupe key" className="text-sm wrap-anywhere">
                         {event.dedupeKey ?? '-'}
                       </Td>
                       <Td label="Started runs" className="text-sm">

@@ -80,7 +80,7 @@ export function ApiKeyPanel() {
         </p>
         <form className={cn(FIELD_ROW, 'items-end')} aria-label="Enter API key" onSubmit={submit}>
           <RequiredNote className="basis-full" />
-          <FieldGroup className="min-w-60 flex-1">
+          <FieldGroup className="max-w-lg min-w-60 flex-1">
             <Label htmlFor="api-key-input" required>
               API key
             </Label>

@@ -5,9 +5,10 @@
  *   pnpm --filter @graphgoblin/web capture:screens
  *
  * The capture runs against the E2E server (the real API over an in-memory database with the fake
- * harness, serving apps/web/dist), seeds loops, runs in every state, inbound events, a disabled
- * catalog model, a secret, and an API key through the API, and photographs each screen with
- * reduced motion so pulses hold still. Output goes to docs/qa/2026-10-05-issue-41-sweep/<theme>/
+ * harness, serving apps/web/dist), seeds loops, runs in every state (succeeded, failed, waiting,
+ * cancelled, running, paused, and one of a few hundred events), inbound events, a disabled catalog
+ * model, a secret, and an API key through the API, plus a second instance that requires a key, and
+ * photographs each screen with reduced motion so pulses hold still. Output goes to docs/qa/2026-10-05-issue-41-sweep/<theme>/
  * as `<screen>-<width>.png` (Settings as a full-page shot).
  *
  * Options, as environment variables:
@@ -52,7 +53,13 @@ interface Seeded {
   liveRun: string;
   succeededRun: string;
   failedRun: string;
+  /** A run of a few hundred events, which the inspector renders in batches. */
+  batchRun: string;
+  /** A held run paused from the API, when the engine paused it in time. */
+  pausedRun: string | undefined;
   apiKeyBase: string;
+  /** A key of the instance that requires one, stored in the browser for its Settings. */
+  apiKeyToken: string;
 }
 
 interface Screen {
@@ -64,8 +71,10 @@ interface Screen {
   apiKey?: boolean;
   /** Only at these widths (a narrow-only state). */
   widths?: readonly number[];
-  /** localStorage entries set before the app loads (panel states). */
-  storage?: Record<string, string>;
+  /** localStorage entries set before the app loads (panel states, a stored key). */
+  storage?: (s: Seeded) => Record<string, string>;
+  /** Skip the screen when the seed could not make its state. */
+  when?: (s: Seeded) => boolean;
   fullPage?: boolean;
   /** Part of the light "before" set. */
   before?: boolean;
@@ -206,6 +215,8 @@ async function seed(api: APIRequestContext): Promise<Seeded> {
       },
       { matchPrompt: 'SUMMARY', items: 6, finalText: 'Three issues need a decision.' },
       { matchPrompt: 'HELD', items: 3, delayMs: HELD },
+      { matchPrompt: 'PAUSE', items: 2, delayMs: HELD },
+      { matchPrompt: 'MANY', items: 240, finalText: 'Digest ready.' },
     ],
   });
   const create = async (definition: unknown) =>
@@ -268,6 +279,32 @@ async function seed(api: APIRequestContext): Promise<Seeded> {
   const liveRun = await run(watch);
   await waitForStatus(api, liveRun, ['running']);
 
+  const digest = await create(
+    chain('changelog-digest', 'Summarises a busy day of merged changes', [
+      ask('digest', 'Digest', 'MANY changes in {{ trigger.payload }}'),
+    ]),
+  );
+  await publish(digest);
+  const batchRun = await run(digest);
+  await waitForStatus(api, batchRun, ['succeeded']);
+
+  const backup = await create(
+    chain('nightly-backup', 'Backs up the workspace and pauses for review', [
+      ask('backup', 'Back up', 'PAUSE before the backup of {{ trigger.payload }}'),
+    ]),
+  );
+  await publish(backup);
+  let pausedRun: string | undefined = await run(backup);
+  await waitForStatus(api, pausedRun, ['running']);
+  await api.post(`/runs/${pausedRun}/pause`);
+  try {
+    await waitForStatus(api, pausedRun, ['paused']);
+  } catch {
+    // The engine pauses between nodes; a turn held this long may not reach one in time.
+    await api.post(`/runs/${pausedRun}/cancel`);
+    pausedRun = undefined;
+  }
+
   await create(
     chain('release-notes', 'Drafts release notes from merged pull requests', [
       ask('notes', 'Write notes', 'Release notes for {{ trigger.payload }}'),
@@ -326,12 +363,18 @@ async function seed(api: APIRequestContext): Promise<Seeded> {
     liveRun,
     succeededRun,
     failedRun,
+    batchRun,
+    pausedRun,
     apiKeyBase: String(extra['url']),
+    apiKeyToken: String(extra['token']),
   };
 }
 
 const EDITOR_READY = 'Needs a fix?';
-const expanded = { 'graphgoblin-palette': 'expanded', 'graphgoblin-loop-panel': 'expanded' };
+const expanded = () => ({
+  'graphgoblin-palette': 'expanded',
+  'graphgoblin-loop-panel': 'expanded',
+});
 
 /** Open a node's editor from the keyboard, which works however small the canvas draws it. */
 async function openNodeDialog(page: Page, id: string) {
@@ -436,6 +479,18 @@ const SCREENS: Screen[] = [
     },
   },
   { name: 'inspector-failed', path: (s) => `/app/runs/${s.failedRun}`, ready: 'Failed:' },
+  {
+    name: 'inspector-paused',
+    path: (s) => `/app/runs/${s.pausedRun ?? ''}`,
+    ready: 'Resume',
+    when: (s) => s.pausedRun !== undefined,
+  },
+  {
+    // Several hundred events arrive and render in batches; the timeline scrolls in its card.
+    name: 'inspector-event-batches',
+    path: (s) => `/app/runs/${s.batchRun}`,
+    ready: /\d{3} events, complete/,
+  },
   { name: 'events', path: () => '/app/events', ready: 'issue.opened' },
   {
     name: 'settings',
@@ -443,6 +498,17 @@ const SCREENS: Screen[] = [
     ready: 'GPT-6 Astra',
     fullPage: true,
     before: true,
+  },
+  {
+    // The instance that requires a key, with one stored: API keys mark this browser's own.
+    name: 'settings-api-keys',
+    path: () => '/app/settings',
+    ready: 'This browser',
+    apiKey: true,
+    storage: (s) => ({ 'graphgoblin-api-key': s.apiKeyToken }),
+    act: async (page) => {
+      await page.getByRole('heading', { name: 'API keys' }).scrollIntoViewIfNeeded();
+    },
   },
   { name: 'api-key', path: () => '/app/loops', ready: 'API key required', apiKey: true },
   {
@@ -512,7 +578,7 @@ async function shoot(
           // A page without storage keeps the defaults.
         }
       },
-      { theme, storage: screen.storage ?? {} },
+      { theme, storage: screen.storage?.(seeded) ?? {} },
     );
     const page = await context.newPage();
     await screen.setup?.(page);
@@ -551,6 +617,10 @@ test('capture every screen', async ({ browser, baseURL }) => {
           if (only && !only.includes(screen.name)) continue;
           if (BEFORE && !screen.before) continue;
           if (screen.widths && !screen.widths.includes(size.width)) continue;
+          if (screen.when && !screen.when(seeded)) {
+            console.log(`skipped ${screen.name}: the seed could not make its state`);
+            continue;
+          }
           try {
             await shoot(browser, base, seeded, screen, size, theme, dir);
             console.log(`${theme} ${screen.name}-${size.width}`);
@@ -562,7 +632,9 @@ test('capture every screen', async ({ browser, baseURL }) => {
       }
     }
   } finally {
+    // Release the held turns; the runs end now rather than in 24 days.
     await api.post(`/runs/${seeded.liveRun}/cancel`);
+    if (seeded.pausedRun) await api.post(`/runs/${seeded.pausedRun}/cancel`);
     await api.dispose();
   }
   if (failures.length > 0) throw new Error(`Screens not captured:\n${failures.join('\n')}`);

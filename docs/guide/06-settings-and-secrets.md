@@ -18,7 +18,7 @@ Only the API key marked **This browser** adds the browser sign-out warning. Othe
 
 ## Choose the theme
 
-**Appearance → Theme** switches between **Dark** (the default) and **Light**. The change applies at once, without a reload, and this browser remembers it: the app opens in your theme on the next visit, with no flash of the other one, and other open tabs switch too. Use Tab to reach the control and the arrow keys to change it. The choice is per browser, kept in `localStorage` (`graphgoblin-theme`); a private window or blocked site data opens in Dark. A **System** option that follows the operating system will come with the installer.
+**Appearance → Theme** switches between **Dark** (the default) and **Light**. Light keeps a white page with warm, tinted cards and panels and dark-brown titles, rather than white on white. The change applies at once, without a reload, and this browser remembers it: the app opens in your theme on the next visit, with no flash of the other one, and other open tabs switch too. Use Tab to reach the control and the arrow keys to change it. The choice is per browser, kept in `localStorage` (`graphgoblin-theme`); a private window or blocked site data opens in Dark. A **System** option that follows the operating system will come with the installer.
 
 ## Choose a model and effort
 

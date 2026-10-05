@@ -259,7 +259,7 @@ export function LoopsPage() {
                     const run = latest.get(loop.id);
                     return (
                       <tr key={loop.id}>
-                        <Td className="min-w-56">
+                        <Td className="min-w-56 wrap-anywhere">
                           <Link
                             to={`/loops/${loop.id}/edit`}
                             className="touch-target text-[15px] font-semibold text-default no-underline hover:underline"

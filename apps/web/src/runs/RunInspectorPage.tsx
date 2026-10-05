@@ -13,7 +13,7 @@ import { Timeline } from './inspector/Timeline.js';
 import { WaitPanel } from './inspector/WaitPanel.js';
 import { useRunEvents } from './useRunEvents.js';
 
-const META_LINK = 'font-medium text-link underline-offset-[3px] hover:underline';
+const META_LINK = 'touch-target font-medium text-link underline-offset-[3px] hover:underline';
 
 /**
  * One run: its status and controls, failure or result, the waiting-for-input form, then the

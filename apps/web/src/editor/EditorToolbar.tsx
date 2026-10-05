@@ -92,7 +92,10 @@ export function EditorToolbar({
 }) {
   return (
     <header className="relative z-[3] flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-default bg-surface-raised px-4 py-2.5">
-      <Link to="/loops" className="text-muted no-underline hover:text-default hover:underline">
+      <Link
+        to="/loops"
+        className="touch-target text-muted no-underline hover:text-default hover:underline"
+      >
         Loops
       </Link>
       <span className="text-subtle">/</span>

@@ -139,7 +139,9 @@ export function RunsPage() {
                           {run.id}
                         </Link>
                       </Td>
-                      <Td label="Loop">{names.get(run.loopId) ?? run.loopId}</Td>
+                      <Td label="Loop" className="wrap-anywhere">
+                        {names.get(run.loopId) ?? run.loopId}
+                      </Td>
                       <Td label="Status">
                         <RunStatusBadge status={run.status} />
                       </Td>

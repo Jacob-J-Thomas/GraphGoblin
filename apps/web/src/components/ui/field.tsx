@@ -170,7 +170,8 @@ export function FieldGroup({ className, ...props }: HTMLAttributes<HTMLDivElemen
  */
 export const FIELD_ROW = cn(
   'flex flex-wrap gap-3',
-  'max-sm:flex-col max-sm:items-stretch max-sm:[&>*]:w-full',
+  // One column that never wraps into a second one; a note's basis-full must not become a height.
+  'max-sm:flex-col max-sm:flex-nowrap max-sm:items-stretch max-sm:[&>*]:w-full max-sm:[&>*]:basis-auto',
   'max-sm:[&>button]:w-auto max-sm:[&>button]:self-start',
 );
 
