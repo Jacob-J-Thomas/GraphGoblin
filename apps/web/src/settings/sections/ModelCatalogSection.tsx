@@ -21,11 +21,11 @@ import {
   Td,
   Th,
 } from '../../components/ui/index.js';
-import { focusFallback } from '../../lib/focus.js';
 import {
   EnableSwitch,
   EFFORTS,
   MutationError,
+  restoreVanishedToggleFocus,
   useInvalidate,
   type CatalogEntry,
   type MutationMessages,
@@ -209,6 +209,8 @@ export function ModelCatalogSection() {
                         enabled={entry.enabled}
                         messages={CATALOG_MESSAGES}
                         onToggle={async (enabled) => {
+                          // A new toggle replaces the previous vanished-model notice.
+                          setNotice('');
                           const updated = await modelCatalog.setEnabled(
                             client,
                             entry.harness,
@@ -224,20 +226,15 @@ export function ModelCatalogSection() {
                           );
                           await queryClient.invalidateQueries({ queryKey: keys.catalog });
                         }}
-                        onError={async (error) => {
+                        onError={async (error, failure) => {
                           if (!(error instanceof GraphGoblinApiError) || error.status !== 404)
                             return;
-                          const opener = document.activeElement;
                           setNotice(`${entry.displayName}: ${CATALOG_MESSAGES['MODEL_NOT_FOUND']}`);
                           await queryClient.invalidateQueries({ queryKey: keys.catalog });
-                          requestAnimationFrame(() => {
-                            if (
-                              opener &&
-                              !opener.isConnected &&
-                              document.activeElement === document.body
-                            )
-                              focusFallback(headingRef.current?.closest('h2') ?? null);
-                          });
+                          restoreVanishedToggleFocus(
+                            failure,
+                            headingRef.current?.closest('h2') ?? null,
+                          );
                         }}
                       />
                     </Td>

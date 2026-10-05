@@ -5,6 +5,8 @@
  */
 import type {
   ApiKeyListItem,
+  ClassifierModelEntry,
+  ClassifierModelSummary,
   ContextThread,
   LoopDefinitionInput,
   LoopRecord,
@@ -12,7 +14,7 @@ import type {
   RunEvent,
   RunRecord,
 } from '@graphgoblin/contracts';
-import { LoopDefinitionSchema } from '@graphgoblin/contracts';
+import { ClassifierModelPutSchema, LoopDefinitionSchema } from '@graphgoblin/contracts';
 import { fakeUlid, sampleThread } from '@graphgoblin/contracts/testing';
 import {
   exportLoop,
@@ -73,6 +75,35 @@ export function runRecord(overrides: Partial<RunRecord> = {}): RunRecord {
   };
 }
 
+/** The built-in classifier as the API seeds it. */
+export const BUILTIN_JEV: ClassifierModelEntry = {
+  id: 'jev',
+  displayName: 'Jev',
+  source: 'builtin',
+  provider: 'typesafe',
+  providerModel: 'jev-latest',
+  primitives: ['choice', 'noul', 'score'],
+  endpoint: 'https://api.typesafe.ai',
+  secretRef: 'jev-api-key',
+  enabled: true,
+};
+
+/** A custom HTTP classifier entry, for tests. */
+export function customClassifier(
+  overrides: Partial<ClassifierModelEntry> & { id: string },
+): ClassifierModelEntry {
+  return {
+    displayName: overrides.id,
+    source: 'custom',
+    provider: 'http',
+    providerModel: `${overrides.id}-latest`,
+    primitives: ['choice'],
+    endpoint: 'http://127.0.0.1:8008',
+    enabled: true,
+    ...overrides,
+  };
+}
+
 export class FakeApi {
   loops = new Map<
     string,
@@ -97,6 +128,8 @@ export class FakeApi {
     enabled: boolean;
   }[] = [];
   secretList: { name: string; createdAt: string; updatedAt: string }[] = [];
+  /** Classifier entries; GET derives `configured` from `secretList`, as the API does from secrets. */
+  classifiers: ClassifierModelEntry[] = [BUILTIN_JEV];
   apiKeyList: ApiKeyListItem[] = [];
   settingsValues: Record<string, unknown> = {};
   inbound: {
@@ -235,6 +268,19 @@ export class FakeApi {
   dropStreams(runId: string): void {
     for (const controller of this.streams.get(runId) ?? []) controller.close();
     this.streams.delete(runId);
+  }
+
+  /** An entry as GET reports it: configured unless its secret is not in `secretList`. */
+  classifierSummary(entry: ClassifierModelEntry): ClassifierModelSummary {
+    const missing =
+      entry.secretRef !== undefined && !this.secretList.some((s) => s.name === entry.secretRef);
+    return missing
+      ? {
+          ...entry,
+          configured: false,
+          configurationReason: `Missing or blank secret '${entry.secretRef}'. Set it in Settings, Secrets.`,
+        }
+      : { ...entry, configured: true };
   }
 
   callsTo(method: string, path: string | RegExp): RecordedCall[] {
@@ -584,6 +630,81 @@ export class FakeApi {
             'Harness models can only be enabled or disabled',
           );
         this.catalog = this.catalog.filter((m) => !(m.model === model && m.harness === harness));
+        return new Response(null, { status: 204 });
+      },
+    ],
+    [
+      'GET /classifier-models',
+      () =>
+        json({
+          items: [...this.classifiers]
+            .sort((a, b) =>
+              a.source !== b.source ? (a.source === 'builtin' ? -1 : 1) : a.id.localeCompare(b.id),
+            )
+            .map((entry) => this.classifierSummary(entry)),
+        }),
+    ],
+    [
+      'PUT /classifier-models/:id',
+      (call, [classifierId]) => {
+        if (classifierId === 'jev')
+          return problem(
+            409,
+            'CLASSIFIER_MANAGED_BY_SYSTEM',
+            'Built-in Jev can only be enabled or disabled',
+          );
+        const parsed = ClassifierModelPutSchema.safeParse(call.body);
+        if (!parsed.success)
+          return problem(
+            400,
+            'VALIDATION_FAILED',
+            'the request did not match the schema',
+            parsed.error.issues.map((i) => ({ path: `/${i.path.join('/')}`, message: i.message })),
+          );
+        const existing = this.classifiers.find((c) => c.id === classifierId);
+        const entry: ClassifierModelEntry = {
+          id: classifierId!,
+          ...parsed.data,
+          source: 'custom',
+          enabled: existing?.enabled ?? false,
+        };
+        this.classifiers = [...this.classifiers.filter((c) => c.id !== classifierId), entry];
+        return json(this.classifierSummary(entry));
+      },
+    ],
+    [
+      'PATCH /classifier-models/:id',
+      (call, [classifierId]) => {
+        const entry = this.classifiers.find((c) => c.id === classifierId);
+        if (!entry)
+          return problem(
+            404,
+            'CLASSIFIER_MODEL_NOT_FOUND',
+            `Classifier '${classifierId}' not found`,
+          );
+        const body = call.body as { enabled?: unknown };
+        if (typeof body.enabled !== 'boolean' || Object.keys(body).length !== 1)
+          return problem(400, 'VALIDATION_FAILED');
+        entry.enabled = body.enabled;
+        return json(this.classifierSummary(entry));
+      },
+    ],
+    [
+      'DELETE /classifier-models/:id',
+      (_call, [classifierId]) => {
+        if (classifierId === 'jev')
+          return problem(
+            409,
+            'CLASSIFIER_MANAGED_BY_SYSTEM',
+            'Built-in Jev can only be enabled or disabled',
+          );
+        if (!this.classifiers.some((c) => c.id === classifierId))
+          return problem(
+            404,
+            'CLASSIFIER_MODEL_NOT_FOUND',
+            `Classifier '${classifierId}' not found`,
+          );
+        this.classifiers = this.classifiers.filter((c) => c.id !== classifierId);
         return new Response(null, { status: 204 });
       },
     ],

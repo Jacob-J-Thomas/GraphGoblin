@@ -1,5 +1,6 @@
 import {
   apiKeys,
+  classifierModels,
   events,
   loops,
   modelCatalog,
@@ -23,6 +24,8 @@ export const keys = {
   thread: (id: string) => ['runs', 'thread', id] as const,
   settings: ['settings'] as const,
   catalog: ['model-catalog'] as const,
+  /** Classifier summaries: their configured state follows the secrets they reference. */
+  classifiers: ['classifier-models'] as const,
   secrets: ['secrets'] as const,
   apiKeys: ['api-keys'] as const,
   preflight: ['preflight'] as const,
@@ -71,6 +74,12 @@ export function useSettings() {
 export function useModelCatalog() {
   const client = useApi();
   return useQuery({ queryKey: keys.catalog, queryFn: () => modelCatalog.list(client) });
+}
+
+/** The owner's classifier models, built-in first, with each one's configured state. */
+export function useClassifierModels() {
+  const client = useApi();
+  return useQuery({ queryKey: keys.classifiers, queryFn: () => classifierModels.list(client) });
 }
 
 export function useSecrets() {

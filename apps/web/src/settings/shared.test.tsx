@@ -7,7 +7,7 @@ import { FakeApi } from '../__fixtures__/fake-api.js';
 import { renderWith } from '../__fixtures__/render.js';
 import { useApi } from '../api/context.js';
 import { CATALOG_MESSAGES } from './sections/ModelCatalogSection.js';
-import { EnableSwitch, MutationError } from './shared.js';
+import { EnableSwitch, MutationError, restoreVanishedToggleFocus, SecretsLink } from './shared.js';
 
 describe('MutationError', () => {
   it('uses caller messages, otherwise preserves the normal error display', () => {
@@ -188,4 +188,94 @@ describe('EnableSwitch', () => {
       });
     },
   );
+});
+
+describe('EnableSwitch focus and description', () => {
+  it('describes the switch with its help and reports the focused opener of a refused toggle', async () => {
+    const failures: (HTMLElement | null)[] = [];
+    renderWith(
+      <EnableSwitch
+        name="Jev"
+        enabled
+        description="Disabling Jev also stops Exit predicates that use Jev."
+        onToggle={() => Promise.reject(new GraphGoblinApiError({ status: 403, code: 'FORBIDDEN' }))}
+        onError={(_error, { opener }) => {
+          failures.push(opener);
+        }}
+      />,
+    );
+    const toggle = screen.getByRole('switch', { name: 'Enable Jev' });
+    expect(toggle).toHaveAccessibleDescription(
+      'Jev: Enabled Disabling Jev also stops Exit predicates that use Jev.',
+    );
+    // Activated with focus on it: the switch is the opener.
+    await userEvent.setup().click(toggle);
+    await waitFor(() => expect(failures).toEqual([toggle]));
+    // Activated without focus (a script click): there is no opener to restore.
+    act(() => toggle.blur());
+    fireEvent.click(toggle);
+    await waitFor(() => expect(failures).toEqual([toggle, null]));
+  });
+});
+
+describe('restoreVanishedToggleFocus', () => {
+  const frame = () => new Promise((resolve) => requestAnimationFrame(resolve));
+
+  it('focuses the heading only when the focused switch is gone and focus fell to the body', async () => {
+    const heading = document.createElement('h2');
+    const opener = document.createElement('button');
+    const kept = document.createElement('button');
+    const other = document.createElement('button');
+    document.body.append(heading, opener, kept, other);
+    try {
+      opener.focus();
+      opener.remove();
+      restoreVanishedToggleFocus({ opener }, heading);
+      await frame();
+      expect(heading).toHaveFocus();
+      heading.blur();
+      // The switch is still on the page: focus stays where it is.
+      restoreVanishedToggleFocus({ opener: kept }, heading);
+      await frame();
+      expect(heading).not.toHaveFocus();
+      // Focus moved on deliberately: kept there.
+      other.focus();
+      restoreVanishedToggleFocus({ opener }, heading);
+      await frame();
+      expect(other).toHaveFocus();
+      // No opener (the switch did not have focus): nothing moves.
+      other.blur();
+      restoreVanishedToggleFocus({ opener: null }, heading);
+      await frame();
+      expect(document.activeElement).toBe(document.body);
+    } finally {
+      heading.remove();
+      kept.remove();
+      other.remove();
+    }
+  });
+});
+
+describe('SecretsLink', () => {
+  it('moves focus to the Secrets heading, or behaves as a plain link without the section', async () => {
+    const user = userEvent.setup();
+    const { unmount } = renderWith(
+      <>
+        <SecretsLink>Open Secrets</SecretsLink>
+        <section id="secrets" aria-labelledby="secrets-title">
+          <h2 id="secrets-title">Secrets</h2>
+        </section>
+      </>,
+    );
+    const link = screen.getByRole('link', { name: 'Open Secrets' });
+    expect(link).toHaveAttribute('href', '#secrets');
+    await user.click(link);
+    expect(screen.getByRole('heading', { name: 'Secrets' })).toHaveFocus();
+    unmount();
+    renderWith(<SecretsLink>Open Secrets</SecretsLink>);
+    const plain = screen.getByRole('link', { name: 'Open Secrets' });
+    const click = new MouseEvent('click', { bubbles: true, cancelable: true });
+    plain.dispatchEvent(click);
+    expect(click.defaultPrevented).toBe(false);
+  });
 });
