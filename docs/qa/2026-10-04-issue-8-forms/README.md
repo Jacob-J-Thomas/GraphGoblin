@@ -34,6 +34,7 @@ The seed: `form-gallery`, one node of each kind configured to show most control 
 - Enums of two to four options (stdin, stdout, sandbox, approval, capture transcript, to messages, priority) became segmented controls; longer ones stay selects, with **Not set** for an optional one.
 - Required fields carry an asterisk and each form says so on its first line; help and errors sit under their control and are linked to it.
 - Collection rows sit on a rail with Remove as an icon button beside the row's control; Add is a secondary button with a plus. Nested objects and unions are quiet bordered fieldsets.
+- After the review (2026-10-05): record entries are captioned **Key** and **Value**, and each value is a field with its own marker, help, and error; required lists and sets of options show the marker at their legend and say how many they need; the run form shows each problem under its field (`new-run-invalid`) instead of only in a summary.
 - Code fields (Liquid, JSONata, JSON) share the input frame and focus ring, are as tall as an input on one line, and carry a language tag (JSON fields gained one).
 - The import's raw file input became a picker button with the chosen file's name.
 
