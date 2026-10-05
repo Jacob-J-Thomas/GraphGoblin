@@ -30,11 +30,12 @@ test('two tabs editing one draft: the stale tab is asked to reload or overwrite'
   expect(created.status()).toBe(201);
   const loopId = ((await created.json()) as { loop: { id: string } }).loop.id;
 
+  // Let each tab finish foreground initialization before opening the next one.
   const a = await context.newPage();
-  const b = await context.newPage();
   await a.goto(`/app/loops/${loopId}/edit`);
-  await b.goto(`/app/loops/${loopId}/edit`);
   await expect(a.getByRole('heading', { name: 'qa conflict' })).toBeVisible();
+  const b = await context.newPage();
+  await b.goto(`/app/loops/${loopId}/edit`);
   await expect(b.getByRole('heading', { name: 'qa conflict' })).toBeVisible();
 
   // Tab A saves first.

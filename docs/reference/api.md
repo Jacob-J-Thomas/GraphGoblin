@@ -70,11 +70,11 @@ Named secrets (values are never returned).
 
 Keys for other applications and the MCP server.
 
-| Method | Path             | Summary                                    | Parameters                    | Request body         | Responses |
-| ------ | ---------------- | ------------------------------------------ | ----------------------------- | -------------------- | --------- |
-| GET    | `/api-keys`      | List API keys                              | -                             | -                    | 200       |
-| POST   | `/api-keys`      | Create an API key; the token is shown once | -                             | `{ label, scopes? }` | 201       |
-| DELETE | `/api-keys/{id}` | Revoke an API key                          | `id`: string (path, required) | -                    | 204       |
+| Method | Path             | Summary                                                  | Parameters                    | Request body         | Responses |
+| ------ | ---------------- | -------------------------------------------------------- | ----------------------------- | -------------------- | --------- |
+| GET    | `/api-keys`      | List API keys with the current authenticated key flagged | -                             | -                    | 200       |
+| POST   | `/api-keys`      | Create an API key; the token is shown once               | -                             | `{ label, scopes? }` | 201       |
+| DELETE | `/api-keys/{id}` | Revoke an API key                                        | `id`: string (path, required) | -                    | 204       |
 
 ## events
 
