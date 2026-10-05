@@ -2,6 +2,7 @@ import type { LoopDefinitionInput } from '@graphgoblin/contracts';
 import { SidePanel } from '../components/ui/index.js';
 import { LoopSettingsPanel } from './LoopSettingsPanel.js';
 import { useEditorStore } from './store.js';
+import type { EditorIssue } from './model.js';
 
 /** The panel's element id, for its Show and Hide controls' `aria-controls`. */
 export const LOOP_PANEL_ID = 'loop-panel';
@@ -25,10 +26,12 @@ export function loopPanelDefault(): boolean {
  */
 export function LoopPanel({
   definition,
+  issues,
   expanded,
   onExpandedChange,
 }: {
   definition: LoopDefinitionInput;
+  issues?: readonly EditorIssue[];
   expanded: boolean;
   onExpandedChange: (expanded: boolean) => void;
 }) {
@@ -45,7 +48,11 @@ export function LoopPanel({
       onExpandedChange={onExpandedChange}
     >
       <div className="relative min-h-0 flex-1 overflow-auto p-5">
-        <LoopSettingsPanel key={`${generation}:${historyEpoch}`} definition={definition} />
+        <LoopSettingsPanel
+          key={`${generation}:${historyEpoch}`}
+          definition={definition}
+          issues={issues}
+        />
       </div>
     </SidePanel>
   );

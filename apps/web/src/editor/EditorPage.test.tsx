@@ -871,7 +871,9 @@ describe('EditorPage', () => {
     expect(screen.queryByLabelText('Expression')).toBeNull();
     act(() => useEditorStore.getState().openNode('nightly'));
     const dialog = await screen.findByRole('dialog', { name: 'Edit trigger nightly' });
-    expect(within(dialog).getByLabelText('Expression')).toHaveValue('0 2 * * *');
+    expect(within(dialog).getByLabelText('Cron expression')).toHaveValue('0 2 * * *');
+    expect(within(dialog).getByLabelText('Repeat')).toHaveValue('daily');
+    expect(within(dialog).getByLabelText('At time')).toHaveValue('02:00');
     expect(within(dialog).getByLabelText('Node id')).toHaveValue('nightly');
   });
 

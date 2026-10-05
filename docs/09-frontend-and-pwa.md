@@ -181,7 +181,7 @@ The owner's decisions of 2026-10-04: a node is edited in a modal dialog, the rig
 
 ### Basic and advanced fields (Decided, #14)
 
-The owner's request: reduce the visual chaos of the node options while keeping every option. The cluttered kinds show a short basic set first and keep the rest under a collapsed Advanced disclosure; trigger, wait, heartbeat, and exit keep every field in sight, in schema order, with no Advanced section. The split per kind (approved by the owner for the v1.1 batch, schema keys):
+The owner's request: reduce the visual chaos of the node options while keeping every option. The cluttered kinds show a short basic set first and keep the rest under a collapsed Advanced disclosure; trigger, wait, heartbeat, and exit keep every field in sight, in schema order, with no Advanced section, except the cron schedule control's own raw-expression disclosure (#20). The split per kind (approved by the owner for the v1.1 batch, schema keys):
 
 | Kind      | Basic                                                                       | Advanced, by group                                                                                                                                                                                                                                      |
 | --------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -198,9 +198,64 @@ The owner's request: reduce the visual chaos of the node options while keeping e
 - **Following an issue.** `focusField` (`editor/focus-field.ts`) finds a field inside a collapsed disclosure (an Advanced group or a list item) and opens every disclosure around it (`revealDisclosures`, which shows the panel at once and lets the component's state follow) before focusing it; fields hidden for any other reason stay out of reach. So choosing an issue in a node's badge, on the canvas or beside the editor's title, opens the group at the field (a template or expression that does not parse included, now that those issues name their field), and an undo that remounts the form reopens it to put focus back where it was.
 - **Collapsible operations.** A list whose metadata sets `collapseItems` (every mutation list: a mutate node's `operations`, an inference node's `input` and `output.transforms`) draws each item as a disclosure whose header names it ("Operations 1"), summarises it in one line (its kind and its path, or whatever its first short text says: "set /vars/topic", "drop messages"), flags its problems ("1 error"), and keeps its Remove button beside it. Items there when the form opens start collapsed; an added one starts open, with focus on its first control. Inside, the item's group keeps its name for assistive technology without a second visible legend. Add and Remove work as before (#53).
 - **Help.** A field's description shows as help under it, linked with `aria-describedby`, its backtick spans as code; a nested object shows its help under its legend.
-- **Custom controls.** A field whose metadata names a `control` is drawn by the control registered under that name (an own entry of the registry: a name such as `toString` is not one), else as usual: `SchemaForm`'s `controls` prop (`FieldControls`, a map from name to a component taking the field's props; `FieldControlsContext` passes it to every `Field`). A control binds with `useField` and may draw the default renderer too (`DefaultField`), for a raw-value toggle. The node editor passes `NODE_FIELD_CONTROLS` (`editor/field-controls.ts`), empty for now; the inference `model` field already names `model`, for the model picker (#16), and the decision's `jev.model` names `classifier`, for the classifier picker (#43); the cron builder (#20) registers its control the same way.
+- **Custom controls.** A field whose metadata names a `control` is drawn by the control registered under that name (an own entry of the registry: a name such as `toString` is not one), else as usual: `SchemaForm`'s `controls` prop (`FieldControls`, a map from name to a component taking the field's props; `FieldControlsContext` passes it to every `Field`). A control binds with `useField` and may draw the default renderer too (`DefaultField`), for a raw-value toggle. The node editor passes `NODE_FIELD_CONTROLS` (`editor/field-controls.ts`), which registers the catalog `model` and `effort` controls (#16) and the cron builder's `cron` and `cron-timezone` (#20); the decision's `jev.model` names `classifier`, for the classifier picker (#43), registered the same way.
 - **Saved values.** Placement changes where a field is drawn, not what it saves: the same edits report the same config (the field paths and bindings are those of before), which the API parses and stores in schema order.
 - **Regression.** `packages/contracts/src/meta.test.ts` and `parse-identity.test.ts` (golden parse output of every config field, written before the metadata), `packages/domain/src/parse-identity.test.ts` (exports, imports, and the template and expression walk), `tooling/scripts/node-reference.test.mjs`, `components/ui/disclosure.test.tsx`, `forms/layout.test.ts`, `forms/advanced.test.tsx` (the four simple kinds unchanged, each basic set, every field editable with Advanced open, the counts, following issues, collapsible operations, and registered controls), `forms/saved-values.test.tsx`, `editor/focus-field.test.ts`, `editor/EditorPage.test.tsx`, and Edge `e2e/forms.spec.ts`.
+
+### Cron schedule control (Decided, #20)
+
+The node control registry (`editor/field-controls.ts`) registers `cron` for a cron
+trigger's expression and `cron-timezone` for its timezone, selected by contract
+field metadata. `forms/cron/model.ts` owns the six presets (minutes, hours, daily,
+weekdays, weekly day choices, monthly day), expression generation, recognition,
+and summaries. It never rewrites a loaded expression; recognised expressions
+reopen in the builder, while all others show Custom expression plus the exact raw
+source. An empty expression offers Choose a schedule without requesting a preview
+or adding an edit on mount. Incomplete builder edits stay local and keep the last
+valid expression; only a valid preset edit generates a replacement expression.
+Switching presets retains time, weekly day choices, and the monthly day. Minute
+and hour steps restart at the hour and day boundaries; monthly days absent from
+a month are skipped.
+
+The searchable timezone input uses the browser's `Intl.supportedValuesOf('timeZone')`
+in a native keyboard-operable datalist as suggestions, with UTC added for the schema
+default. Local validation constructs `Intl.DateTimeFormat` with the entered zone,
+so accepted IANA aliases outside the suggestions are also usable. Use my time zone
+fills the browser's zone. The timezone picker, missed-fire policy, and enabled stay
+visible. The schedule's own Advanced disclosure, using the
+shared primitive, holds the raw expression and its problem count; choosing Custom
+expression or following an expression issue reveals and focuses the raw field.
+This is the one exemption from the
+rule that trigger fields have no Advanced section. Saved configuration remains
+`expression`, `timezone`, `missedFirePolicy`, and `enabled`.
+
+Preview requests debounce for 350 ms and use the generated API client and TanStack
+Query against `POST /triggers/cron/preview`. The server's `CRON_INVALID` response
+shows its detail inline, and zones rejected by `Intl.DateTimeFormat` are flagged
+locally without a request. The datalist is not a validation allowlist. One stable
+status element announces the debounced summary and preview state; the visible
+summary can update while typing without announcing each keystroke. HTTP errors
+show the server's detail, while transport failures say the API cannot be reached.
+Results
+from an earlier expression or zone are hidden immediately on editing. Five slots
+show the trigger's time and the viewer's local time with offset and date, omitting
+the duplicate viewer line when both zones resolve to the same zone; a finite
+schedule may have fewer. When the API is unavailable, the current expression stays
+visible with an unavailable message. Native labelled time and number inputs,
+day checkboxes, and the datalist use the shared theme tokens and focus states.
+
+Regression: `forms/cron/model.test.ts`, `forms/cron/control.test.tsx`,
+`apps/api/src/cron-preview.test.ts`, contracts and client tests, and Edge
+`e2e/cron.spec.ts` cover round trips, unchanged custom source, local and server
+errors, debounce, unavailable API, stale results, keyboard use, and London DST.
+
+### Catalog model and effort controls (#16)
+
+The metadata controls `model` and `effort` are registered together in `editor/field-controls.ts` for node configs and loop defaults. The inference, decision Codex, and loop-default fields carry this metadata in the contracts; every form uses its canonical contract schema. `forms/fields/model.tsx` binds through `useField` and watches the sibling harness and model through react-hook-form. The inference harness selects the catalog partition, using the sibling schema's default when unset; groups without a harness use the inference contract's Codex default. `FormScopeContext` supplies the active form schema and unique scope for sibling notice IDs. Model uses the shared native `Select`, with enabled entries labelled by display name and id and an unset **(loop default)** choice (**(owner default)** for loop defaults). Native keyboard navigation and typeahead remain available, and the shared tokens cover both themes. The **Model catalog in Settings** link follows the control and help text in Tab order; there is no free-text model entry.
+
+Effort offers the selected model's efforts, or every canonical effort when its metadata is unavailable or no model is selected. Its unset option says **(inherited; the catalog suggests low)** when low is suggested; the engine's node → loop → owner → process resolution is unchanged and the effective inherited effort may differ. Changing model or harness never rewrites model or effort. A current missing/disabled model or unsupported effort stays selected as an unavailable option with a warning glyph and `HelpText`'s `warn` tone. Catalog validation warnings (`MODEL_DISABLED`, `MODEL_NOT_IN_CATALOG`) are passed by exact relative field path through `CatalogWarningsContext` from the editor's merged validation list. A server warning matching the local catalog status is omitted from the field notice while catalog data is available; unavailable data or a different warning keeps it visible. They remain warnings.
+
+The editor prefetches the catalog on mount. While no catalog data is available, the same native selects retain their current values and focus, expose `aria-readonly`, and ignore changes. One loading/unavailable notice and **Retry model catalog** appear on Model; Effort's description points to that notice. Successful retry or automatic query recovery makes the existing controls editable. A failed refresh with cached data keeps choices editable and shows a notice that the catalog may be out of date. No fetch, refresh, or recovery writes form values. Unit cases cover catalog sizes, harness filtering and schema defaults, retained values, dependent effort, warning deduplication, focus, and failure/recovery; Edge checks cover publication and execution with the selected options, and focus through a delayed catalog and failed refresh.
 
 ### Validation badges (Decided, #15)
 

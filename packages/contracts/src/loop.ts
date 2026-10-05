@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { EffortSchema, SlugSchema, TemplateSchema, TimestampSchema, UlidSchema } from './common.js';
 import { NodeSchema } from './nodes.js';
+import { field } from './meta.js';
 import { VariableDeclarationsSchema } from './thread.js';
 
 /** Where a run works. Fixed path, templated from the trigger, or a fresh temporary directory. */
@@ -15,8 +16,21 @@ export const LoopSettingsSchema = z.strictObject({
   workingDirectory: WorkingDirectorySpecSchema.default({ kind: 'temp' }),
   defaults: z
     .strictObject({
-      model: z.string().min(1).optional(),
-      effort: EffortSchema.optional(),
+      model: z
+        .string()
+        .min(1)
+        .optional()
+        .meta(
+          field('Default Codex model; falls back to the owner setting, then the process default.', {
+            control: 'model',
+          }),
+        ),
+      effort: EffortSchema.optional().meta(
+        field(
+          'Default effort; falls back to the owner setting, then the process default. Catalog default effort is guidance only.',
+          { control: 'effort' },
+        ),
+      ),
     })
     .prefault({}),
   maxIterations: z.number().int().positive().max(10_000).default(10),

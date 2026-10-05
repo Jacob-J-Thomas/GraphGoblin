@@ -25,6 +25,7 @@ export {
 export {
   apiKeys,
   events,
+  cron,
   loops,
   modelCatalog,
   classifierModels,

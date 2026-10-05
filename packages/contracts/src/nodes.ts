@@ -88,13 +88,17 @@ export const TriggerConfigSchema = z.discriminatedUnion('subtype', [
   }),
   z.strictObject({
     subtype: z.literal('cron'),
-    expression: z.string().min(1).max(256).meta(field('Cron expression, five or six fields.')),
+    expression: z
+      .string()
+      .min(1)
+      .max(256)
+      .meta(field('Cron expression, five or six fields.', { control: 'cron' })),
     timezone: z
       .string()
       .min(1)
       .max(64)
       .default('UTC')
-      .meta(field('IANA time zone the expression is evaluated in.')),
+      .meta(field('IANA time zone the expression is evaluated in.', { control: 'cron-timezone' })),
     missedFirePolicy: z
       .enum(['skip', 'run-once', 'run-each'])
       .default('skip')
@@ -205,7 +209,24 @@ export const DecisionConfigSchema = z
         ),
       ),
     codex: z
-      .strictObject({ model: z.string().min(1).optional(), effort: EffortSchema.optional() })
+      .strictObject({
+        model: z
+          .string()
+          .min(1)
+          .optional()
+          .meta(
+            field(
+              'Model for the Codex decider; falls back to the loop default, then to the owner setting.',
+              { control: 'model' },
+            ),
+          ),
+        effort: EffortSchema.optional().meta(
+          field(
+            'Reasoning effort; falls back like the model. The catalog default effort is guidance only.',
+            { control: 'effort' },
+          ),
+        ),
+      })
       .optional()
       .meta(field('Model and effort for the Codex decider.')),
     expression: z
@@ -293,7 +314,11 @@ export const InferenceConfigSchema = z.strictObject({
         control: 'model',
       }),
     ),
-  effort: EffortSchema.optional().meta(field('Reasoning effort; falls back like the model.')),
+  effort: EffortSchema.optional().meta(
+    field('Reasoning effort; falls back like the model. Catalog default effort is guidance only.', {
+      control: 'effort',
+    }),
+  ),
   session: SessionPolicySchema.default({ policy: 'fresh' }).meta(
     field('Start fresh, resume the previous session, or resume a named session.'),
   ),
