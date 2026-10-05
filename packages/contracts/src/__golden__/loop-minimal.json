@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "name": "minimal",
+  "settings": {
+    "workingDirectory": {
+      "kind": "temp"
+    },
+    "defaults": {},
+    "maxIterations": 10,
+    "subloopDepthLimit": 8
+  },
+  "variables": {},
+  "nodes": [
+    {
+      "id": "start",
+      "label": "Start",
+      "ui": {
+        "x": 0,
+        "y": 0
+      },
+      "kind": "trigger",
+      "config": {
+        "subtype": "manual",
+        "exposeTo": [
+          "ui",
+          "api",
+          "mcp"
+        ]
+      }
+    },
+    {
+      "id": "done",
+      "label": "Done",
+      "ui": {
+        "x": 0,
+        "y": 0
+      },
+      "kind": "exit",
+      "config": {
+        "criteria": [],
+        "default": "success",
+        "return": {
+          "mapping": "none",
+          "channels": [
+            {
+              "kind": "caller"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": {
+        "node": "start",
+        "port": "out"
+      },
+      "to": {
+        "node": "done",
+        "port": "in"
+      }
+    }
+  ]
+}

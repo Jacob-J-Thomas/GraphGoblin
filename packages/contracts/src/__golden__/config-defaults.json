@@ -1,0 +1,107 @@
+{
+  "trigger": {
+    "subtype": "manual",
+    "exposeTo": [
+      "ui",
+      "api",
+      "mcp"
+    ]
+  },
+  "decision": {
+    "routes": [
+      {
+        "label": "a",
+        "description": ""
+      },
+      {
+        "label": "b",
+        "description": ""
+      }
+    ],
+    "question": "",
+    "context": {
+      "messages": "last",
+      "includeLastOutput": true
+    },
+    "strategy": [
+      "codex"
+    ],
+    "recordAlternatives": true
+  },
+  "inference": {
+    "harness": "codex",
+    "session": {
+      "policy": "fresh"
+    },
+    "prompt": {
+      "template": ""
+    },
+    "input": [],
+    "harnessOptions": {
+      "sandbox": "workspace-write",
+      "approval": "never"
+    },
+    "output": {
+      "captureTranscript": "artifact",
+      "toMessages": "final",
+      "transforms": []
+    }
+  },
+  "script": {
+    "command": "true",
+    "args": [],
+    "cwd": "workspace",
+    "stdin": "thread",
+    "stdout": "last-output"
+  },
+  "mutate": {
+    "operations": [
+      {
+        "op": "delete",
+        "path": "/vars/x"
+      }
+    ]
+  },
+  "subloop": {
+    "loopRef": {
+      "loopId": "01ARZ3NDEKTSV4RRFFQ69G5FAV",
+      "version": "latest"
+    },
+    "input": {
+      "mode": "inherit"
+    },
+    "output": {
+      "mode": "result-only",
+      "resultTo": {
+        "lastOutput": true
+      },
+      "usage": "roll-up"
+    }
+  },
+  "wait": {
+    "mode": "duration",
+    "seconds": 1,
+    "onTimeout": "continue"
+  },
+  "heartbeat": {
+    "intervalSeconds": 1,
+    "probe": {
+      "kind": "none"
+    },
+    "maxBeats": 1,
+    "onExhausted": "continue",
+    "record": "summary"
+  },
+  "exit": {
+    "criteria": [],
+    "default": "success",
+    "return": {
+      "mapping": "none",
+      "channels": [
+        {
+          "kind": "caller"
+        }
+      ]
+    }
+  }
+}

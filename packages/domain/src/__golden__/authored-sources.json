@@ -1,0 +1,283 @@
+[
+  {
+    "node": "manual",
+    "sources": []
+  },
+  {
+    "node": "cron",
+    "sources": []
+  },
+  {
+    "node": "hook",
+    "sources": [
+      {
+        "kind": "expression",
+        "source": "payload.id",
+        "path": "dedupeKey"
+      },
+      {
+        "kind": "expression",
+        "source": "payload.action = \"opened\"",
+        "path": "filter"
+      }
+    ]
+  },
+  {
+    "node": "event",
+    "sources": [
+      {
+        "kind": "expression",
+        "source": "payload.ok",
+        "path": "filter"
+      },
+      {
+        "kind": "expression",
+        "source": "payload.id",
+        "path": "dedupeKey"
+      }
+    ]
+  },
+  {
+    "node": "poller",
+    "sources": [
+      {
+        "kind": "template",
+        "source": "https://example.test/{{ vars.topic }}",
+        "path": "probe.url"
+      },
+      {
+        "kind": "template",
+        "source": "application/json",
+        "path": "probe.headers.accept"
+      },
+      {
+        "kind": "template",
+        "source": "{\"q\": 1}",
+        "path": "probe.body"
+      },
+      {
+        "kind": "expression",
+        "source": "probe.status = 200",
+        "path": "fireWhen"
+      },
+      {
+        "kind": "expression",
+        "source": "probe.body.id",
+        "path": "dedupeKey"
+      }
+    ]
+  },
+  {
+    "node": "decide",
+    "sources": [
+      {
+        "kind": "template",
+        "source": "Is {{ vars.topic }} done?",
+        "path": "question"
+      },
+      {
+        "kind": "expression",
+        "source": "\"good\"",
+        "path": "expression.jsonata"
+      }
+    ]
+  },
+  {
+    "node": "infer",
+    "sources": [
+      {
+        "kind": "template",
+        "source": "Write about {{ vars.topic }}.",
+        "path": "prompt.template"
+      },
+      {
+        "kind": "template",
+        "source": "# {{ vars.topic }}",
+        "path": "contextFiles.0.template"
+      },
+      {
+        "kind": "template",
+        "source": "Fix it.",
+        "path": "output.schema.repair.prompt"
+      }
+    ]
+  },
+  {
+    "node": "run-script",
+    "sources": [
+      {
+        "kind": "template",
+        "source": "check.js",
+        "path": "args.0"
+      },
+      {
+        "kind": "template",
+        "source": "{{ vars.topic }}",
+        "path": "args.1"
+      }
+    ]
+  },
+  {
+    "node": "shape",
+    "sources": [
+      {
+        "kind": "template",
+        "source": "{{ vars.a }}",
+        "path": "operations.1.value.template"
+      },
+      {
+        "kind": "expression",
+        "source": "vars.a.n",
+        "path": "operations.2.value.jsonata"
+      },
+      {
+        "kind": "template",
+        "source": "Hello",
+        "path": "operations.4.content"
+      },
+      {
+        "kind": "template",
+        "source": "Be brief.",
+        "path": "operations.5.messages.0.content"
+      },
+      {
+        "kind": "expression",
+        "source": "role = \"tool\"",
+        "path": "operations.6.where"
+      },
+      {
+        "kind": "expression",
+        "source": "name = \"tmp\"",
+        "path": "operations.7.where"
+      },
+      {
+        "kind": "expression",
+        "source": "true",
+        "path": "operations.8.where"
+      },
+      {
+        "kind": "template",
+        "source": "Fix it.",
+        "path": "operations.10.repair.prompt"
+      }
+    ]
+  },
+  {
+    "node": "sub",
+    "sources": [
+      {
+        "kind": "expression",
+        "source": "vars.topic",
+        "path": "input.vars.childTopic"
+      },
+      {
+        "kind": "expression",
+        "source": "role = \"user\"",
+        "path": "input.messages.where"
+      },
+      {
+        "kind": "template",
+        "source": "From the parent.",
+        "path": "input.inject.0.content"
+      },
+      {
+        "kind": "expression",
+        "source": "{ \"topic\": vars.topic }",
+        "path": "input.trigger.payload"
+      },
+      {
+        "kind": "expression",
+        "source": "child.vars.topic",
+        "path": "output.vars.map.topic"
+      },
+      {
+        "kind": "expression",
+        "source": "true",
+        "path": "output.artifacts.where"
+      },
+      {
+        "kind": "expression",
+        "source": "[]",
+        "path": "output.custom.patch"
+      }
+    ]
+  },
+  {
+    "node": "ask",
+    "sources": [
+      {
+        "kind": "template",
+        "source": "Approve {{ vars.topic }}?",
+        "path": "prompt"
+      }
+    ]
+  },
+  {
+    "node": "pause",
+    "sources": []
+  },
+  {
+    "node": "later",
+    "sources": [
+      {
+        "kind": "template",
+        "source": "{{ vars.when }}",
+        "path": "timestamp"
+      }
+    ]
+  },
+  {
+    "node": "signal",
+    "sources": [
+      {
+        "kind": "expression",
+        "source": "payload.ok",
+        "path": "filter"
+      }
+    ]
+  },
+  {
+    "node": "beat",
+    "sources": [
+      {
+        "kind": "template",
+        "source": "--fast",
+        "path": "probe.args.0"
+      },
+      {
+        "kind": "expression",
+        "source": "probe.exitCode = 0",
+        "path": "until"
+      },
+      {
+        "kind": "template",
+        "source": "{{ vars.deadline }}",
+        "path": "deadline"
+      }
+    ]
+  },
+  {
+    "node": "count",
+    "sources": []
+  },
+  {
+    "node": "done",
+    "sources": [
+      {
+        "kind": "template",
+        "source": "Done?",
+        "path": "criteria.2.question"
+      },
+      {
+        "kind": "expression",
+        "source": "false",
+        "path": "criteria.3.jsonata"
+      },
+      {
+        "kind": "expression",
+        "source": "{ \"topic\": vars.topic }",
+        "path": "return.mapping"
+      }
+    ]
+  }
+]
