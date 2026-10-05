@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { focusField, focusIssuePath } from './focus-field.js';
+import { focusableIn, focusField, focusIssuePath, groupFocus } from './focus-field.js';
 
 /** A node editor body as the dialog renders it: the node's own fields, then the config form. */
 function editorBody(): HTMLElement {
@@ -81,6 +81,49 @@ describe('focusField', () => {
     expect(focusField(config, 'channels.0.kind')).toBe(true);
     expect(root.querySelector('[data-field="channels"] button')).toHaveFocus();
     expect(focusField(config, 'off')).toBe(false);
+  });
+
+  it('focuses a radio group’s checked radio, where Tab lands, rather than its first', () => {
+    const root = document.body.appendChild(document.createElement('div'));
+    root.innerHTML = `
+      <fieldset data-field="mode">
+        <input type="radio" name="m" value="a" aria-label="A" />
+        <input type="radio" name="m" value="b" aria-label="B" checked />
+        <input type="radio" name="other" value="c" aria-label="C" checked />
+      </fieldset>
+      <fieldset data-field="none">
+        <input type="radio" name="n" aria-label="N1" />
+        <input type="radio" name="n" aria-label="N2" />
+      </fieldset>
+      <fieldset data-field="hidden-choice">
+        <input type="radio" name="h" aria-label="H1" />
+        <div hidden><input type="radio" name="h" aria-label="H2" checked /></div>
+      </fieldset>`;
+    expect(focusField(root, 'mode')).toBe(true);
+    expect(named(root, 'B')).toHaveFocus();
+    // Nothing checked (or only a hidden radio): the first radio.
+    expect(focusField(root, 'none')).toBe(true);
+    expect(named(root, 'N1')).toHaveFocus();
+    expect(focusField(root, 'hidden-choice')).toBe(true);
+    expect(named(root, 'H1')).toHaveFocus();
+    // A checked radio, and any other control, stands for itself.
+    expect(groupFocus(named(root, 'C'), root)).toBe(named(root, 'C'));
+    const button = root.appendChild(document.createElement('button'));
+    expect(groupFocus(button, root)).toBe(button);
+  });
+
+  it('lists every focusable control of a field in document order', () => {
+    const root = editorBody();
+    const routes = root.querySelector('[data-field="routes"]')!;
+    expect(focusableIn(routes)).toEqual([
+      root.querySelector('[data-field="routes"] button'),
+      named(root, 'Route label'),
+    ]);
+    // Hidden and disabled controls are left out.
+    expect(focusableIn(root.querySelector('[data-field="channels"]')!)).toEqual([
+      root.querySelector('[data-field="channels"] button'),
+    ]);
+    expect(focusableIn(root.querySelector('[data-field="off"]')!)).toEqual([]);
   });
 
   it('reports false when nothing matches', () => {

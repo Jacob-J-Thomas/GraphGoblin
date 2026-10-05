@@ -64,10 +64,10 @@ describe('Canvas handlers', () => {
     expect(data('infer').issues).toEqual([other]);
     // An edit to one node gives only that node new data.
     const check = data('check');
-    act(() => store().updateNode('prep', { label: 'Prepare' }));
+    act(() => store().updateNode('prep', { label: 'Prepare it' }));
     view.rerender(<Canvas definition={store().definition!} issues={[{ ...ISSUE }, other]} />);
     expect(data('prep')).not.toBe(prep);
-    expect(data('prep').node.label).toBe('Prepare');
+    expect(data('prep').node.label).toBe('Prepare it');
     expect(data('check')).toBe(check);
 
     // The cache itself: the previous object when node and issues match, a new one otherwise.
@@ -204,6 +204,31 @@ describe('Canvas handlers', () => {
     expect(store().definition!.nodes.some((n) => n.id === 'poll')).toBe(false);
     act(() => flow().onPaneClick!({} as never));
     expect(store().selectedNodeId).toBeUndefined();
+  });
+
+  it('records each drag as one undo step, though its stop reports the position twice', () => {
+    renderCanvas();
+    const prepUi = () => store().definition!.nodes.find((n) => n.id === 'prep')!.ui;
+    const drag = (end: { x: number; y: number }) => {
+      const prep = flow().nodes!.find((n) => n.id === 'prep')!;
+      act(() => flow().onNodeDragStart!({} as never, prep, []));
+      act(() =>
+        flow().onNodesChange!([{ type: 'position', id: 'prep', position: end, dragging: true }]),
+      );
+      act(() =>
+        flow().onNodesChange!([{ type: 'position', id: 'prep', position: end, dragging: false }]),
+      );
+      act(() => flow().onNodeDragStop!({} as never, { ...prep, position: end }, []));
+    };
+    drag({ x: 120, y: 140 });
+    expect(store().past.map((step) => step.label)).toEqual(['move prep']);
+    // A second drag right after the first is a step of its own.
+    drag({ x: 200, y: 140 });
+    expect(store().past.map((step) => step.label)).toEqual(['move prep', 'move prep']);
+    act(() => store().undo());
+    expect(prepUi()).toEqual({ x: 120, y: 140 });
+    act(() => store().undo());
+    expect(prepUi()).toBeUndefined();
   });
 
   it('deletes the selection with Delete or Backspace only while focus is on the canvas', () => {
