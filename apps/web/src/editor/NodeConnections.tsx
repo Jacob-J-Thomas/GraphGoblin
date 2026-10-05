@@ -41,7 +41,7 @@ function ConnectForm({
         if (!problem) onConnected(chosenPort);
       }}
     >
-      <div className="flex items-end gap-2">
+      <div className="grid grid-cols-[minmax(7rem,auto)_minmax(0,1fr)_auto] items-end gap-2">
         <FieldGroup>
           <Label htmlFor="connect-port">Output</Label>
           <Select id="connect-port" value={chosenPort} onChange={(e) => setPort(e.target.value)}>
@@ -50,9 +50,14 @@ function ConnectForm({
             ))}
           </Select>
         </FieldGroup>
-        <FieldGroup className="flex-1">
+        <FieldGroup>
           <Label htmlFor="connect-target">To</Label>
-          <Select id="connect-target" value={target} onChange={(e) => setTarget(e.target.value)}>
+          <Select
+            id="connect-target"
+            value={target}
+            aria-describedby={refused ? 'connect-refused' : undefined}
+            onChange={(e) => setTarget(e.target.value)}
+          >
             {targets.map((n) => (
               <option key={n.id} value={n.id}>
                 {n.label} ({n.id})
@@ -65,7 +70,7 @@ function ConnectForm({
         </Button>
       </div>
       {refused ? (
-        <HelpText role="alert" tone="bad">
+        <HelpText id="connect-refused" role="alert" tone="bad">
           Connection refused: {refused}
         </HelpText>
       ) : null}

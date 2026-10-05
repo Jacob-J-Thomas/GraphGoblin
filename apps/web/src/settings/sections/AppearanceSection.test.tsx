@@ -16,7 +16,8 @@ describe('AppearanceSection', () => {
   it('offers Dark and Light as a labelled radio group, Dark chosen by default', () => {
     render(<AppearanceSection />);
     expect(screen.getByRole('heading', { name: 'Appearance' })).toBeInTheDocument();
-    const group = screen.getByRole('group', { name: 'Theme' });
+    const group = screen.getByRole('radiogroup', { name: 'Theme' });
+    expect(group).toHaveAccessibleDescription(/Dark is the default/);
     const dark = screen.getByRole('radio', { name: 'Dark' });
     const light = screen.getByRole('radio', { name: 'Light' });
     expect(group).toContainElement(dark);

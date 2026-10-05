@@ -11,13 +11,14 @@
 
 /**
  * What can take focus inside a field, in order of preference: the controls that hold the value
- * (inputs, selects, text areas, CodeMirror editors), then anything else (an "Add" button, say).
- * Within each group the first in document order wins.
+ * (inputs, selects, text areas, switches, CodeMirror editors), then anything else (an "Add"
+ * button, say). Within each group the first in document order wins.
  */
 const VALUE_CONTROLS = [
   'input:not([disabled]):not([type="hidden"])',
   'select:not([disabled])',
   'textarea:not([disabled])',
+  'button[role="switch"]:not([disabled])',
   '[contenteditable="true"]',
 ].join(',');
 const OTHER_CONTROLS = [
@@ -29,8 +30,9 @@ const OTHER_CONTROLS = [
 const shown = (el: Element) => !el.closest('[hidden], [inert]');
 
 /**
- * A radio stands for its group: the group's checked radio, where Tab lands, takes focus in its
- * place. Any other control is itself.
+ * A radio stands for its group (a segmented control, say): the group's checked radio, where Tab
+ * lands, takes focus in its place so the arrow keys move on from the current choice. Any other
+ * control is itself.
  */
 export function groupFocus(control: HTMLElement, within: ParentNode): HTMLElement {
   if (!(control instanceof HTMLInputElement) || control.type !== 'radio' || control.checked)

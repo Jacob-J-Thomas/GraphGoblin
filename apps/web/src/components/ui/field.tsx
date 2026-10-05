@@ -8,17 +8,34 @@ import type {
 import { cn } from '../../lib/utils.js';
 import { Icon } from '../icons/index.js';
 
-/** Shared by inputs, selects, and textareas: a 3:1 border on the field surface, green on focus. */
+/**
+ * The frame every text-entry control shares (inputs, selects, text areas, and the code editors in
+ * forms/CodeEditor.tsx): a 3:1 border with 8 px corners and a lighter edge on hover. Each control
+ * adds its surface, its focus ring (2 px, outside a green edge), and the bad-tone edge when invalid.
+ */
+export const FIELD_FRAME =
+  'rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover';
+
+/** Shared by inputs, selects, and textareas: the frame, the type, and the focus and disabled states. */
 const FIELD = [
-  'w-full min-w-0 rounded-md border border-strong bg-surface-field px-3 text-md text-default',
-  'placeholder:text-subtle transition-[border-color,box-shadow] hover:border-field-hover',
+  FIELD_FRAME,
+  'bg-surface-field aria-invalid:border-status-bad-border',
+  'w-full min-w-0 px-3 text-md text-default placeholder:text-subtle',
   'focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2',
-  'focus-visible:outline-focus aria-invalid:border-status-bad-border',
+  'focus-visible:outline-focus',
   'disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle',
 ];
 
+/** Number inputs drop the browser's spin buttons; the arrow keys still step the value. */
+const NUMBER = [
+  '[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none',
+  '[&::-webkit-outer-spin-button]:appearance-none',
+];
+
 export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) {
-  return <input className={cn(FIELD, 'h-9', className)} {...props} />;
+  return (
+    <input className={cn(FIELD, 'h-9', props.type === 'number' && NUMBER, className)} {...props} />
+  );
 }
 
 export function Textarea({ className, ...props }: TextareaHTMLAttributes<HTMLTextAreaElement>) {
@@ -46,26 +63,83 @@ export function Select({ className, ...props }: SelectHTMLAttributes<HTMLSelectE
   );
 }
 
-/** A native checkbox in the accent colour (the switch and toggle chips are #8). */
+/**
+ * A native checkbox drawn as an 18 px box: a 3:1 edge, and when checked the accent fill with an ink
+ * tick. The input itself is the box, so labels, keyboard, and form behaviour stay native; forced
+ * colours mode shows the system checkbox. `className` sizes and places the box's wrapper.
+ */
 export function Checkbox({
   className,
   ...props
 }: Omit<InputHTMLAttributes<HTMLInputElement>, 'type'>) {
   return (
-    <input
-      type="checkbox"
-      className={cn('size-4 shrink-0 cursor-pointer accent-accent', className)}
-      {...props}
-    />
+    <span className={cn('relative inline-grid size-[18px] shrink-0 place-items-center', className)}>
+      <input
+        type="checkbox"
+        className={cn(
+          'peer col-start-1 row-start-1 m-0 size-[18px] cursor-pointer appearance-none rounded-[5px]',
+          'border border-strong bg-surface-raised transition-colors hover:border-field-hover',
+          'checked:border-accent-strong checked:bg-accent checked:hover:bg-accent-hover',
+          'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
+          'disabled:cursor-not-allowed disabled:opacity-45',
+          'forced-colors:appearance-auto',
+        )}
+        {...props}
+      />
+      <Icon
+        name="check"
+        strokeWidth={3}
+        className="pointer-events-none col-start-1 row-start-1 size-[13px] text-on-accent opacity-0 peer-checked:opacity-100 forced-colors:hidden"
+      />
+    </span>
   );
 }
 
-export function Label({ className, ...props }: LabelHTMLAttributes<HTMLLabelElement>) {
+/**
+ * The required marker after a label: an asterisk in the error tone. It is decorative: the control
+ * carries `aria-required`, which assistive technology announces.
+ */
+export function RequiredMarker({ className }: { className?: string }) {
   return (
+    <span aria-hidden="true" className={cn('font-semibold text-status-bad-fg', className)}>
+      *
+    </span>
+  );
+}
+
+/**
+ * The first line of a form with required fields. It explains the visual marker only, so it is
+ * hidden from assistive technology, which hears "required" on each such control instead.
+ */
+export function RequiredNote({ className }: { className?: string }) {
+  return (
+    <p aria-hidden="true" className={cn('text-xs leading-snug text-muted', className)}>
+      Required fields are marked <RequiredMarker />
+    </p>
+  );
+}
+
+/**
+ * A field label. `required` adds the marker after it, outside the `<label>` element, so the
+ * label's text (and the control's accessible name) stays exactly the field's name.
+ */
+export function Label({
+  className,
+  required = false,
+  ...props
+}: LabelHTMLAttributes<HTMLLabelElement> & { required?: boolean }) {
+  const label = (
     <label
       className={cn('block text-sm leading-[1.3] font-medium text-default', className)}
       {...props}
     />
+  );
+  if (!required) return label;
+  return (
+    <span className="flex min-w-0 items-baseline gap-1">
+      {label}
+      <RequiredMarker />
+    </span>
   );
 }
 
