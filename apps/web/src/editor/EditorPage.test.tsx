@@ -263,6 +263,74 @@ describe('EditorPage', () => {
     ).toBeInTheDocument();
   });
 
+  it('opens the node editor’s Advanced group to focus an issue’s field inside it', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const definition = kitchenSinkLoop();
+    const loop = api.addLoop(definition);
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'kitchen-sink' });
+    // An advanced field that does not validate.
+    const infer = definition.nodes.find((node) => node.id === 'infer')!;
+    act(() =>
+      useEditorStore
+        .getState()
+        .updateNode('infer', { config: { ...infer.config, timeoutSeconds: 0 } }),
+    );
+    const editor = () => screen.getByRole('dialog', { name: 'Edit inference infer' });
+    const advanced = () => within(editor()).getByRole('button', { name: /^Advanced/ });
+    const timeout = () => within(editor()).getByRole('spinbutton', { name: 'Timeout seconds' });
+
+    // From the node's badge on the canvas: the editor opens with Advanced open at the field.
+    await waitFor(() => expect(nodeBadge('infer')).not.toBeNull());
+    const badge = nodeBadge('infer')!;
+    await user.click(badge);
+    await user.click(popoverButtons(badge, /timeoutSeconds/)[0]!);
+    await waitFor(() => expect(timeout()).toHaveFocus());
+    expect(advanced()).toHaveAttribute('aria-expanded', 'true');
+
+    // Collapsed, the group says it holds the problem; the editor's own badge opens it again.
+    await user.click(advanced());
+    expect(advanced()).toHaveAttribute('aria-expanded', 'false');
+    expect(advanced()).toHaveAccessibleName(/1 error/);
+    const inEditor = within(editor()).getByRole('button', { name: '1 issue on infer' });
+    await user.click(inEditor);
+    const popover = screen.getByRole('dialog', { name: 'Issues on infer' });
+    await user.click(within(popover).getByRole('button', { name: /timeoutSeconds/ }));
+    expect(advanced()).toHaveAttribute('aria-expanded', 'true');
+    expect(timeout()).toHaveFocus();
+  });
+
+  it('flags a collapsed Advanced group or operation holding an expression that does not compile', async () => {
+    const api = new FakeApi();
+    const definition = kitchenSinkLoop();
+    const loop = api.addLoop(definition);
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'kitchen-sink' });
+    const infer = definition.nodes.find((node) => node.id === 'infer')!;
+    const sub = definition.nodes.find((node) => node.id === 'sub')!;
+    // Schema-valid, so only the loop's validation finds them: EXPRESSION_INVALID at their paths.
+    act(() => {
+      useEditorStore.getState().updateNode('infer', {
+        config: { ...infer.config, input: [{ op: 'drop', target: 'messages', where: 'vars.' }] },
+      });
+      useEditorStore.getState().updateNode('sub', {
+        config: { ...sub.config, input: { mode: 'project', vars: { topic: 'vars.' } } },
+      });
+    });
+    act(() => useEditorStore.getState().openNode('infer'));
+    const advanced = () =>
+      within(screen.getByRole('dialog')).getByRole('button', { name: /^Advanced/ });
+    await waitFor(() => expect(advanced()).toHaveAccessibleName('Advanced 2 set 1 error'));
+    await userEvent.setup().click(advanced());
+    expect(
+      within(screen.getByRole('dialog')).getByRole('button', { name: /^Input 1 drop/ }),
+    ).toHaveAccessibleName('Input 1 drop messages 1 error');
+
+    act(() => useEditorStore.getState().openNode('sub'));
+    await waitFor(() => expect(advanced()).toHaveAccessibleName('Advanced 1 set 1 error'));
+  });
+
   it('keeps schema-invalid drafts on the device and explains why', async () => {
     const user = userEvent.setup();
     const api = new FakeApi();

@@ -5,9 +5,11 @@
  * (`id`, `label`) and the config form with `data-field-scope` so an issue path such as
  * `config.routes.0.label` finds its control.
  *
- * #14 will collapse rarely used fields into Advanced groups; `focusField` is where it will expand
- * the group holding the field before focusing it.
+ * A field may sit in a collapsed disclosure (a form's Advanced group, a collapsed list item, #14),
+ * which keeps its panel mounted but hidden: `focusField` opens every disclosure around the control
+ * (`revealDisclosures`) before focusing it.
  */
+import { DISCLOSURE_PANEL_SELECTOR, revealDisclosures } from '../components/ui/index.js';
 
 /**
  * What can take focus inside a field, in order of preference: the controls that hold the value
@@ -30,6 +32,22 @@ const OTHER_CONTROLS = [
 const shown = (el: Element) => !el.closest('[hidden], [inert]');
 
 /**
+ * Shown, or hidden only by collapsed disclosures, which `revealDisclosures` can open; anything
+ * else hidden or inert stays out of reach.
+ */
+function reachable(el: Element): boolean {
+  if (el.closest('[inert]')) return false;
+  for (
+    let hidden = el.closest('[hidden]');
+    hidden;
+    hidden = hidden.parentElement?.closest('[hidden]') ?? null
+  ) {
+    if (!hidden.matches(DISCLOSURE_PANEL_SELECTOR)) return false;
+  }
+  return true;
+}
+
+/**
  * A radio stands for its group (a segmented control, say): the group's checked radio, where Tab
  * lands, takes focus in its place so the arrow keys move on from the current choice. Any other
  * control is itself.
@@ -50,17 +68,24 @@ export function focusableIn(field: Element): HTMLElement[] {
   );
 }
 
-/** The control to focus inside `field`: the first value control, else the first other one. */
+/**
+ * The control to focus inside `field`, the first value control, else the first other one,
+ * counting those in collapsed disclosures; the disclosures around it are opened.
+ */
 function firstFocusable(field: Element): HTMLElement | undefined {
   for (const selector of [VALUE_CONTROLS, OTHER_CONTROLS]) {
-    const found = [...field.querySelectorAll<HTMLElement>(selector)].find(shown);
-    if (found) return groupFocus(found, field);
+    const found = [...field.querySelectorAll<HTMLElement>(selector)].find(reachable);
+    if (found) {
+      revealDisclosures(found);
+      return groupFocus(found, field);
+    }
   }
   return undefined;
 }
 
 /**
- * Focus the first control inside `[data-field="<path>"]` under `root`. When no field has the full
+ * Focus the first control inside `[data-field="<path>"]` under `root`, opening any collapsed
+ * disclosure (an Advanced group, a list item) that holds it first. When no field has the full
  * path (a nested field whose form shows its parent as one JSON editor, say), the parent paths are
  * tried in turn: `routes.0.label`, then `routes.0`, then `routes`. Returns whether anything took
  * focus; the caller decides the fallback (the node editor's heading).

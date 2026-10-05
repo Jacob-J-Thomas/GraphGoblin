@@ -3,6 +3,7 @@
  * These are data, not behaviour; they are covered by the tests that use them.
  */
 import type { ContextThread, Invocation } from '../thread.js';
+import type { RepairPolicyInput } from '../common.js';
 import type { LoopDefinitionInput } from '../loop.js';
 
 const ULID_ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
@@ -105,6 +106,321 @@ export function minimalLoop(): LoopDefinitionInput {
       { id: 'done', kind: 'exit', label: 'Done', config: {} },
     ],
     edges: [{ id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'done' } }],
+  };
+}
+
+/**
+ * A loop that sets every config field of every node kind, every subtype, mode, and operation, so
+ * a test can check that parsing it (and exporting and importing it) gives the same value before
+ * and after a change to the schemas' metadata. It is schema-valid, not a runnable graph.
+ */
+export function everyFieldLoop(): LoopDefinitionInput {
+  const repair: RepairPolicyInput = {
+    enabled: true,
+    maxAttempts: 2,
+    prompt: 'Fix it.',
+    onFailure: 'continue-raw',
+  };
+  return {
+    schemaVersion: 1,
+    name: 'every-field',
+    description: 'Every config field of every node kind, for parse checks.',
+    settings: {
+      workingDirectory: { kind: 'template', template: '/work/{{ trigger.payload.repo }}' },
+      defaults: { model: 'gpt-6-luna', effort: 'medium' },
+      maxIterations: 7,
+      subloopDepthLimit: 4,
+    },
+    variables: { topic: { type: 'string' }, count: { type: 'number' } },
+    nodes: [
+      {
+        id: 'manual',
+        kind: 'trigger',
+        label: 'Manual',
+        ui: { x: 10, y: 20 },
+        config: { subtype: 'manual', inputSchema: { type: 'object' }, exposeTo: ['ui', 'mcp'] },
+      },
+      {
+        id: 'cron',
+        kind: 'trigger',
+        label: 'Cron',
+        config: {
+          subtype: 'cron',
+          expression: '*/5 * * * *',
+          timezone: 'Europe/Paris',
+          missedFirePolicy: 'run-each',
+          enabled: false,
+        },
+      },
+      {
+        id: 'hook',
+        kind: 'trigger',
+        label: 'Hook',
+        config: {
+          subtype: 'webhook',
+          signature: { scheme: 'hmac-sha256', header: 'x-sig', secretRef: 'hook-secret' },
+          replayWindowSeconds: 120,
+          dedupeKey: 'payload.id',
+          filter: 'payload.action = "opened"',
+        },
+      },
+      {
+        id: 'event',
+        kind: 'trigger',
+        label: 'Event',
+        config: {
+          subtype: 'event',
+          eventType: 'build-done',
+          filter: 'payload.ok',
+          dedupeKey: 'payload.id',
+        },
+      },
+      {
+        id: 'poller',
+        kind: 'trigger',
+        label: 'Poller',
+        config: {
+          subtype: 'poll',
+          intervalSeconds: 30,
+          probe: {
+            kind: 'http',
+            method: 'POST',
+            url: 'https://example.test/{{ vars.topic }}',
+            headers: { accept: 'application/json' },
+            body: '{"q": 1}',
+            timeoutSeconds: 10,
+          },
+          fireWhen: 'probe.status = 200',
+          dedupeKey: 'probe.body.id',
+          enabled: false,
+        },
+      },
+      {
+        id: 'decide',
+        kind: 'decision',
+        label: 'Decide',
+        config: {
+          routes: [
+            { label: 'good', description: 'Looks good' },
+            { label: 'bad', description: 'Needs work' },
+          ],
+          question: 'Is {{ vars.topic }} done?',
+          context: { messages: 3, vars: ['topic'], includeLastOutput: false },
+          strategy: ['jev', 'codex', 'expression'],
+          jev: { primitive: 'choice', minConfidence: 0.7 },
+          codex: { model: 'gpt-6-sol', effort: 'high' },
+          expression: { jsonata: '"good"' },
+          recordAlternatives: false,
+        },
+      },
+      {
+        id: 'infer',
+        kind: 'inference',
+        label: 'Infer',
+        config: {
+          harness: 'codex',
+          model: 'gpt-6-sol',
+          effort: 'xhigh',
+          session: { policy: 'resume-named', key: 'main' },
+          prompt: { template: 'Write about {{ vars.topic }}.' },
+          input: [{ op: 'truncate', keep: { last: 4 } }],
+          contextFiles: [{ path: 'notes/context.md', template: '# {{ vars.topic }}' }],
+          harnessOptions: {
+            sandbox: 'read-only',
+            approval: 'on-request',
+            networkAccess: true,
+            webSearch: false,
+            configOverrides: { model_verbosity: 'low' },
+          },
+          capabilities: { mcpServers: ['github'], plugins: ['lint'], skills: ['review'] },
+          output: {
+            captureTranscript: 'none',
+            toMessages: 'final-and-notes',
+            transforms: [{ op: 'redact', patterns: ['sk-[a-z0-9]+'] }],
+            schema: { jsonSchema: { type: 'object' }, native: false, repair },
+          },
+          timeoutSeconds: 900,
+        },
+      },
+      {
+        id: 'run-script',
+        kind: 'script',
+        label: 'Script',
+        config: {
+          command: 'node',
+          args: ['check.js', '{{ vars.topic }}'],
+          cwd: '/srv/checks',
+          env: { TOKEN: 'secret:gh-token', MODE: 'strict' },
+          stdin: 'last-output',
+          stdout: 'patch',
+          exitCodeRoutes: { '3': 'retry', '4': 'skip' },
+          timeoutSeconds: 60,
+        },
+      },
+      {
+        id: 'shape',
+        kind: 'mutate',
+        label: 'Shape',
+        config: {
+          operations: [
+            { op: 'set', path: '/vars/a', value: { kind: 'literal', value: { n: [1, null] } } },
+            { op: 'set', path: '/vars/b', value: { kind: 'template', template: '{{ vars.a }}' } },
+            { op: 'set', path: '/vars/c', value: { kind: 'expression', jsonata: 'vars.a.n' } },
+            { op: 'delete', path: '/vars/c' },
+            { op: 'append-message', role: 'user', content: 'Hello', tags: ['greeting'] },
+            {
+              op: 'inject',
+              position: 1,
+              messages: [{ role: 'system', content: 'Be brief.', tags: ['style'] }],
+            },
+            {
+              op: 'truncate',
+              keep: { first: 1, last: 2, maxEstimatedTokens: 4000 },
+              where: 'role = "tool"',
+            },
+            { op: 'drop', target: 'artifacts', where: 'name = "tmp"' },
+            {
+              op: 'replace',
+              target: 'vars',
+              where: 'true',
+              pattern: 'foo',
+              flags: 'gi',
+              replacement: 'bar',
+            },
+            { op: 'redact', target: 'messages', patterns: ['\\d{16}'], replacement: '[CARD]' },
+            {
+              op: 'coerce',
+              source: '/lastOutput/value',
+              jsonSchema: { type: 'object' },
+              repair,
+              target: '/vars/coerced',
+            },
+          ],
+        },
+      },
+      {
+        id: 'sub',
+        kind: 'subloop',
+        label: 'Sub',
+        config: {
+          loopRef: { loopId: FIXTURE_IDS.childLoop, version: 3 },
+          input: {
+            mode: 'project',
+            exclude: ['artifacts', 'outputs'],
+            vars: { childTopic: 'vars.topic' },
+            messages: { where: 'role = "user"' },
+            artifacts: 'all',
+            inject: [{ role: 'note', content: 'From the parent.', tags: ['parent'] }],
+            trigger: { payload: '{ "topic": vars.topic }' },
+          },
+          output: {
+            mode: 'custom',
+            resultTo: { lastOutput: false, var: 'childResult' },
+            vars: { strategy: 'explicit', map: { topic: 'child.vars.topic' } },
+            messages: 'last',
+            artifacts: { where: 'true' },
+            custom: { patch: '[]' },
+            usage: 'separate',
+          },
+          depthLimitOverride: 2,
+        },
+      },
+      {
+        id: 'ask',
+        kind: 'wait',
+        label: 'Ask',
+        config: {
+          mode: 'input',
+          prompt: 'Approve {{ vars.topic }}?',
+          inputSchema: { type: 'boolean' },
+          exposeTo: ['ui'],
+          timeoutSeconds: 600,
+          onTimeout: 'fail-run',
+        },
+      },
+      {
+        id: 'pause',
+        kind: 'wait',
+        label: 'Pause',
+        config: { mode: 'duration', seconds: 30, timeoutSeconds: 40, onTimeout: 'continue' },
+      },
+      {
+        id: 'later',
+        kind: 'wait',
+        label: 'Later',
+        config: {
+          mode: 'until',
+          timestamp: '{{ vars.when }}',
+          timeoutSeconds: 86400,
+          onTimeout: 'fail-run',
+        },
+      },
+      {
+        id: 'signal',
+        kind: 'wait',
+        label: 'Signal',
+        config: {
+          mode: 'signal',
+          name: 'go',
+          filter: 'payload.ok',
+          timeoutSeconds: 5,
+          onTimeout: 'continue',
+        },
+      },
+      {
+        id: 'beat',
+        kind: 'heartbeat',
+        label: 'Beat',
+        config: {
+          intervalSeconds: 15,
+          probe: { kind: 'script', command: 'check', args: ['--fast'], timeoutSeconds: 20 },
+          until: 'probe.exitCode = 0',
+          maxBeats: 40,
+          deadline: '{{ vars.deadline }}',
+          onExhausted: 'fail-run',
+          record: 'full',
+        },
+      },
+      {
+        id: 'count',
+        kind: 'heartbeat',
+        label: 'Count',
+        config: { intervalSeconds: 5, probe: { kind: 'signal-count', name: 'tick' }, maxBeats: 3 },
+      },
+      {
+        id: 'done',
+        kind: 'exit',
+        label: 'Done',
+        config: {
+          criteria: [
+            { when: 'max-iterations', value: 5, outcome: 'exhausted' },
+            { when: 'max-duration', seconds: 3600 },
+            {
+              when: 'predicate',
+              strategy: 'jev',
+              question: 'Done?',
+              minConfidence: 0.5,
+              outcome: 'success',
+            },
+            { when: 'predicate', strategy: 'expression', jsonata: 'false', outcome: 'failure' },
+            { when: 'last-output-matches', jsonSchema: { type: 'object' } },
+          ],
+          default: 'loop-back',
+          loopBack: { targetNodeId: 'infer' },
+          return: {
+            mapping: '{ "topic": vars.topic }',
+            channels: [
+              { kind: 'caller' },
+              { kind: 'webhook', url: 'https://example.test/done', secretRef: 'hook-secret' },
+              { kind: 'file', path: 'out/result.md', format: 'markdown' },
+              { kind: 'event', eventType: 'loop-done' },
+              { kind: 'log' },
+            ],
+          },
+        },
+      },
+    ],
+    edges: [{ id: 'e1', from: { node: 'manual', port: 'out' }, to: { node: 'decide' } }],
   };
 }
 

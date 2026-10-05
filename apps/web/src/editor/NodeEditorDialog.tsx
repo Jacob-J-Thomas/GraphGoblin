@@ -18,6 +18,7 @@ import {
 } from '../components/ui/index.js';
 import { SchemaForm } from '../forms/SchemaForm.js';
 import { canvasFocusTarget } from './canvas-focus.js';
+import { NODE_FIELD_CONTROLS } from './field-controls.js';
 import { focusIssuePath } from './focus-field.js';
 import { IssueBadge } from './IssueBadge.js';
 import { KindChip } from './KindChip.js';
@@ -118,6 +119,11 @@ export function NodeEditorDialog({
   const info = KIND_INFO[node.kind];
   const nodeIssues = issues.filter((i) => i.nodeId === node.id);
   const labelIssue = nodeIssues.find((i) => i.path === 'label' && i.severity === 'error');
+  // The loop's errors about config fields (template and expression syntax, the API's checks), so
+  // a collapsed Advanced group or operation holding one says so.
+  const configProblems = nodeIssues.flatMap((i) =>
+    i.severity === 'error' && i.path?.startsWith('config.') ? [i.path.slice('config.'.length)] : [],
+  );
 
   // Opened at an issue: focus its field once the form is in place (the dialog has focused its
   // heading by now), then forget the request. The clear waits a task, so a Strict Mode replay of
@@ -250,6 +256,8 @@ export function NodeEditorDialog({
             schema={NodeConfigSchemas[node.kind]}
             value={node.config}
             label={`${node.id} config`}
+            controls={NODE_FIELD_CONTROLS}
+            problems={configProblems}
             onChange={(config) => updateNode(node.id, { config })}
             parseErrors={fieldErrors[`node:${node.id}`]}
             onParseError={(path, error, reason) =>

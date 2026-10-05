@@ -4,7 +4,12 @@
  * renderer knows. Refinements (`superRefine`, `refine`) are not introspected; they surface as
  * validation messages through the resolver instead.
  */
-import { ExpressionSchema, JsonSchemaSchema, TemplateSchema } from '@graphgoblin/contracts';
+import {
+  ExpressionSchema,
+  JsonSchemaSchema,
+  sameSchema,
+  TemplateSchema,
+} from '@graphgoblin/contracts';
 import type { z } from 'zod';
 
 export type Schema = z.ZodType;
@@ -115,12 +120,18 @@ function checks(def: Def): CheckDef[] {
   return (def.checks ?? []).map((c) => c._zod.def);
 }
 
-/** Reduce a (base) schema to the field shape the renderer draws. Unknown shapes become JSON. */
+/**
+ * Reduce a (base) schema to the field shape the renderer draws. Unknown shapes become JSON. The
+ * shared Liquid, JSONata, and JSON Schema schemas are recognised through a field's own metadata
+ * (`sameSchema`: `.meta()` copies a schema with the same definition).
+ */
 export function shapeOf(schema: Schema): FieldShape {
   const { base } = unwrap(schema);
-  if (base === TemplateSchema) return { kind: 'string', format: 'template' };
-  if (base === ExpressionSchema) return { kind: 'string', format: 'expression', minLength: 1 };
-  if (base === JsonSchemaSchema) return { kind: 'json' };
+  if (sameSchema(base, TemplateSchema)) return { kind: 'string', format: 'template' };
+  if (sameSchema(base, ExpressionSchema)) {
+    return { kind: 'string', format: 'expression', minLength: 1 };
+  }
+  if (sameSchema(base, JsonSchemaSchema)) return { kind: 'json' };
   const def = defOf(base);
   switch (def.type) {
     case 'string': {

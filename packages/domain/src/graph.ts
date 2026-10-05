@@ -8,6 +8,11 @@ export interface ValidationIssue {
   /** Node or edge id the issue is about, when applicable. */
   nodeId?: string;
   edgeId?: string;
+  /**
+   * The field the issue is about, when one is: relative to the node (`config.prompt.template`)
+   * when `nodeId` is set, else to the definition (`settings.workingDirectory.template`).
+   */
+  path?: string;
 }
 
 /** Output ports a node exposes, derived from its kind and config. */

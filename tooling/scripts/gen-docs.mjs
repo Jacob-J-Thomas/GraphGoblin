@@ -12,7 +12,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import * as prettier from 'prettier';
 import { renderApiReference } from './api-reference.mjs';
-import { renderNodeReference } from './node-reference.mjs';
+import { nodeFieldDocs, renderNodeReference } from './node-reference.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const contractsDist = join(root, 'packages', 'contracts', 'dist', 'index.js');
@@ -24,8 +24,11 @@ export const OUTPUTS = {
   api: join(root, 'docs', 'reference', 'api.md'),
 };
 
-/** Config JSON Schemas per node kind, input side, from the built contracts package. */
-async function nodeConfigJsonSchemas() {
+/**
+ * From the built contracts package: the config JSON Schema per node kind (input side) and each
+ * field's docs, read with the contracts' own `fieldMeta`.
+ */
+async function nodeConfigDocs() {
   if (!existsSync(contractsDist)) {
     throw new Error(
       'packages/contracts/dist is missing; run `pnpm --filter @graphgoblin/contracts build` first',
@@ -33,12 +36,16 @@ async function nodeConfigJsonSchemas() {
   }
   const contracts = await import(pathToFileURL(contractsDist).href);
   const { z } = await import(pathToFileURL(contractsZod).href);
-  return Object.fromEntries(
+  const jsonSchemas = Object.fromEntries(
     Object.entries(contracts.NodeConfigSchemas).map(([kind, schema]) => [
       kind,
       z.toJSONSchema(schema, { io: 'input', unrepresentable: 'any' }),
     ]),
   );
+  return {
+    jsonSchemas,
+    fieldDocs: nodeFieldDocs(contracts.NodeConfigSchemas, contracts.fieldMeta),
+  };
 }
 
 async function format(markdown, file) {
@@ -48,7 +55,8 @@ async function format(markdown, file) {
 
 /** Render both references, formatted. Returns a map of output path to content. */
 export async function generate() {
-  const nodes = renderNodeReference(await nodeConfigJsonSchemas());
+  const { jsonSchemas, fieldDocs } = await nodeConfigDocs();
+  const nodes = renderNodeReference(jsonSchemas, fieldDocs);
   const api = renderApiReference(JSON.parse(readFileSync(openApiPath, 'utf8')));
   return {
     [OUTPUTS.nodes]: await format(nodes, OUTPUTS.nodes),

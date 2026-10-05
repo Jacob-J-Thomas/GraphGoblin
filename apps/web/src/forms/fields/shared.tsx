@@ -2,9 +2,11 @@
  * What every field renderer shares: the react-hook-form binding with an explicit "unset" state,
  * the label row, help and error text linked to the control, and the required marker.
  */
-import { createContext, use, useId, type ReactNode } from 'react';
+import { fieldMeta as schemaMeta, type FieldMeta } from '@graphgoblin/contracts';
+import { createContext, use, useId, type ComponentType, type ReactNode } from 'react';
 import { get, useController, useFormContext } from 'react-hook-form';
 import { FieldGroup, HelpText, Label } from '../../components/ui/index.js';
+import { useParseErrors } from '../parse-errors.js';
 import { descriptionOf, unwrap, type Schema } from '../introspect.js';
 import { isUnset, UNSET } from '../unset.js';
 
@@ -12,7 +14,25 @@ export interface FieldProps {
   schema: Schema;
   name: string;
   label: string;
+  /**
+   * Drawn inside a frame that already names it (a collapsible list item, whose header shows the
+   * label): a group drops its border and keeps its legend for assistive technology only.
+   */
+  bare?: boolean | undefined;
 }
+
+/**
+ * A control that draws a field in place of its default renderer, registered under the name its
+ * metadata's `control` gives (`.meta(field('…', { control: 'model' }))` in `@graphgoblin/contracts`).
+ * It gets the field's props and binds to the form itself (`useField`); it may draw the default
+ * renderer too (`DefaultField`), for a raw-value toggle, say.
+ */
+export type FieldControl = ComponentType<FieldProps>;
+
+/** Registered controls by name. SchemaForm's `controls` prop provides them to every field. */
+export type FieldControls = Readonly<Record<string, FieldControl>>;
+
+export const FieldControlsContext = createContext<FieldControls>({});
 
 /**
  * `useController` with an explicit "unset" state. react-hook-form shows a field's initial value
@@ -65,11 +85,45 @@ export function useFieldErrorMessage(name: string) {
 
 /**
  * What a schema says about its field beyond its shape: required when it is neither optional nor
- * defaulted (a required field shows the marker and its control `aria-required`), and its
- * `.describe()` text, shown as help.
+ * defaulted (a required field shows the marker and its control `aria-required`), its description
+ * (`.describe()` or the contracts' field metadata), shown as help, and the rest of its metadata
+ * (`fieldMeta` in `@graphgoblin/contracts`: title, advanced, group, control, collapseItems).
  */
-export function fieldMeta(schema: Schema): { required: boolean; help: string | undefined } {
-  return { required: !unwrap(schema).optional, help: descriptionOf(schema) };
+export function fieldMeta(
+  schema: Schema,
+): FieldMeta & { required: boolean; help: string | undefined } {
+  return { ...schemaMeta(schema), required: !unwrap(schema).optional, help: descriptionOf(schema) };
+}
+
+/** Whether an issue or unparsed-text path lies in a field at `path` (the field or inside it). */
+export function isWithin(issuePath: string, path: string): boolean {
+  return issuePath === path || issuePath.startsWith(`${path}.`);
+}
+
+/**
+ * Paths, relative to the form's value, of errors found outside the form: the loop's validation of
+ * the draft, such as the domain's template and expression checks and the API's (SchemaForm's
+ * `problems`). Collapsed groups count them with the form's own.
+ */
+export const ProblemPathsContext = createContext<readonly string[]>([]);
+
+/**
+ * How many problems lie in a part of the form that may be hidden (a collapsed Advanced group or
+ * list item), so its summary can say so: the paths with a schema issue (SchemaForm's check of the
+ * whole value), unparsed JSON text, or an error found outside the form (`ProblemPathsContext`)
+ * inside any of `fields`, or exactly at one of `exact` (an object whose own message shows there).
+ * Each path counts once.
+ */
+export function useProblemCount(fields: readonly string[], exact: readonly string[] = []): number {
+  const issues = use(FieldIssuesContext);
+  const outside = use(ProblemPathsContext);
+  const parseErrors = useParseErrors();
+  const paths = new Set([...issues.keys(), ...Object.keys(parseErrors.errors ?? {}), ...outside]);
+  let count = 0;
+  for (const path of paths) {
+    if (exact.includes(path) || fields.some((field) => isWithin(path, field))) count += 1;
+  }
+  return count;
 }
 
 /**
@@ -118,9 +172,25 @@ export function FieldError({ name, id }: { name: string; id?: string }) {
   );
 }
 
+/** Help text with its `code` spans (between backticks, as the reference writes them) as code. */
+export function helpContent(help: string): ReactNode {
+  const parts = help.split('`');
+  // An odd number of backticks is not a code span: show the text as it is.
+  if (parts.length < 3 || parts.length % 2 === 0) return help;
+  return parts.map((part, index) =>
+    index % 2 === 1 ? (
+      <code key={index} className="font-mono">
+        {part}
+      </code>
+    ) : (
+      part
+    ),
+  );
+}
+
 /** A field's help text (from its schema's description), when it has any. */
 export function FieldHelp({ id, help }: { id: string; help: string | undefined }) {
-  return help === undefined ? null : <HelpText id={id}>{help}</HelpText>;
+  return help === undefined ? null : <HelpText id={id}>{helpContent(help)}</HelpText>;
 }
 
 /**

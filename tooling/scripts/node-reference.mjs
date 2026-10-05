@@ -1,9 +1,11 @@
 /**
  * Render `docs/reference/nodes.md` from the node config schemas in `@graphgoblin/contracts`.
  * The caller converts each config schema to JSON Schema (Zod 4 `z.toJSONSchema`, input side, so
- * defaults show and fields with defaults are optional) and passes the result here; this module is
- * pure so it can be tested without building the contracts package. Purposes, ports, and field
- * descriptions come from docs/04-node-catalog.md and live in NODE_DOCS below.
+ * defaults show and fields with defaults are optional) and reads each field's metadata with the
+ * contracts' `fieldMeta` (`nodeFieldDocs`), and passes both here; this module is pure so it can be
+ * tested without building the contracts package. Purposes and ports come from
+ * docs/04-node-catalog.md and live in NODE_DOCS below; each field's description, and whether the
+ * forms keep it under Advanced, are the schemas' own metadata.
  */
 
 /** Node kinds in catalog order, with the one-line purpose and ports from docs/04. */
@@ -14,139 +16,113 @@ export const NODE_DOCS = {
       'Starts a run. A loop may have several triggers; each produces the same trigger envelope.',
     ports: '`out`.',
     variantKey: 'subtype',
-    fields: {
-      subtype: 'Which kind of trigger this is.',
-      inputSchema: 'JSON Schema the manual input must satisfy.',
-      exposeTo: 'Surfaces that may start the run: the web app, the REST API, MCP.',
-      expression: 'Cron expression, five or six fields.',
-      timezone: 'IANA time zone the expression is evaluated in.',
-      missedFirePolicy: 'What to do with fires missed while the server was down.',
-      enabled: 'Whether the schedule or poller is armed.',
-      signature:
-        'HMAC signing: scheme, the header carrying the signature, and the secret holding the key.',
-      replayWindowSeconds: 'How far the signed timestamp may be from the server clock.',
-      dedupeKey: 'JSONata producing a key; a repeated key does not start another run.',
-      filter: 'JSONata predicate; payloads that fail it are recorded and ignored.',
-      eventType: 'Inbound event type that fires the trigger.',
-      intervalSeconds: 'Seconds between probes.',
-      probe: 'What to call on each poll: HTTP, a script, a signal count, or nothing.',
-      fireWhen: 'JSONata over the probe result; a run starts when it is true.',
-    },
   },
   decision: {
     title: 'Decision',
     purpose: 'Chooses one of several labelled routes with Jev, Codex, or a JSONata expression.',
     ports: 'One output per route label.',
-    fields: {
-      routes: 'At least two labelled routes, each with a description the decider reads.',
-      question: 'Liquid template rendered against the thread; the question the decider answers.',
-      context: 'How much of the thread the decider sees: messages, vars, the last output.',
-      strategy: 'Ordered fallback chain of strategies.',
-      jev: 'Choice classifier options: optional `model` is a catalog id (default `jev`); unavailable configuration or a choice below `minConfidence` falls through to the next strategy.',
-      codex: 'Model and effort for the Codex decider.',
-      expression: 'JSONata that must evaluate to a route label.',
-      recordAlternatives: 'Record the routes not taken, with confidences, on `decision.made`.',
-    },
   },
   inference: {
     title: 'Inferencing',
     purpose: 'Hands a request to a harness session (Codex in 1.0).',
     ports: '`out`.',
-    fields: {
-      harness: 'Harness that runs the session.',
-      model: 'Model; falls back to the loop default, then to the owner setting.',
-      effort: 'Reasoning effort; falls back like the model.',
-      session: 'Start fresh, resume the previous session, or resume a named session.',
-      prompt: 'Liquid template rendered against the thread.',
-      input: 'Mutations applied to the thread view the template sees.',
-      contextFiles: 'Files written under the working directory before the session starts.',
-      harnessOptions: 'Sandbox, approval, network, web search, and raw config overrides.',
-      capabilities: 'MCP servers, plugins, and skills, resolved by the adapter.',
-      output:
-        'Transcript capture, how the answer lands in messages, transforms, and an optional output schema with repair.',
-      timeoutSeconds: 'Optional watchdog; a timeout fails the run.',
-    },
   },
   script: {
     title: 'Script',
     purpose: 'Runs a user-written program.',
     ports: '`out` plus any labels in `exitCodeRoutes`.',
-    fields: {
-      command: 'Program to run.',
-      args: 'Arguments; each may be a Liquid template.',
-      cwd: '`workspace` for the run working directory, or a path.',
-      env: 'Extra environment; values may be `secret:<name>`.',
-      stdin: 'What the program reads on standard input.',
-      stdout: 'How standard output is used: a JSON Patch, the last output, or ignored.',
-      exitCodeRoutes: 'Exit code to route label; an unmapped non-zero code fails the run.',
-      timeoutSeconds: 'Optional watchdog; a timeout fails the run.',
-    },
   },
   mutate: {
     title: 'Context mutation',
     purpose: 'Applies an ordered list of operations to the thread. No LLM calls.',
     ports: '`out`.',
-    fields: {
-      operations:
-        'Operations applied in order: set, delete, append-message, inject, truncate, drop, replace, redact, coerce.',
-    },
   },
   subloop: {
     title: 'Subloop',
     purpose: 'Executes another loop as a child run and waits for it.',
     ports: '`out`.',
-    fields: {
-      loopRef: 'The child loop and the version to pin (`latest` or a number).',
-      input: 'How the child thread is built from the parent: inherit, project, or fresh.',
-      output: 'How the child result flows back into the parent thread.',
-      depthLimitOverride: 'Raise or lower the nesting limit for this node.',
-    },
   },
   wait: {
     title: 'Wait',
     purpose: 'Parks the run until input, a time, or a signal arrives.',
     ports: '`out`.',
     variantKey: 'mode',
-    fields: {
-      mode: 'What resumes the run.',
-      prompt: 'Liquid template shown to whoever provides the input.',
-      inputSchema: 'JSON Schema the input must satisfy.',
-      exposeTo: 'Surfaces that may provide the input.',
-      seconds: 'How long to wait.',
-      timestamp: 'When to resume; Liquid or JSONata producing an ISO timestamp.',
-      name: 'Signal name to wait for.',
-      filter: 'JSONata predicate over the signal payload.',
-      timeoutSeconds: 'Give up after this long.',
-      onTimeout: 'Continue with `lastOutput = { timedOut: true }`, or fail the run.',
-    },
   },
   heartbeat: {
     title: 'Heartbeat',
     purpose: 'Repeats a probe on an interval until a condition, deadline, or beat limit.',
     ports: '`out`.',
-    fields: {
-      intervalSeconds: 'Seconds between beats; the run is parked in between.',
-      probe: 'What to do on each beat: HTTP, a script, a signal count, or nothing.',
-      until: 'JSONata over `{ probe, thread, beat }`; stops when true.',
-      maxBeats: 'Stop after this many beats.',
-      deadline: 'Stop at this time.',
-      onExhausted: 'Continue with `lastOutput = { exhausted: true }`, or fail the run.',
-      record: 'Record a summary or the full probe result on each `heartbeat.beat`.',
-    },
   },
   exit: {
     title: 'Exit',
     purpose:
       'Decides whether the loop is done, what it returns, where that goes, and whether to go around again.',
     ports: '`loopBack`, only when configured.',
-    fields: {
-      criteria: 'Evaluated in order; the first that matches decides the outcome.',
-      default: 'What happens when no criterion matches.',
-      loopBack: 'The node a loop-back returns to.',
-      return: 'JSONata mapping for the return payload and the channels it is delivered to.',
-    },
   },
 };
+
+/** Wrappers that leave a field's meaning alone (Zod 4 `_zod.def.type`). */
+const WRAPPERS = new Set([
+  'optional',
+  'nullable',
+  'default',
+  'prefault',
+  'nonoptional',
+  'readonly',
+  'catch',
+]);
+
+/** A Zod schema under its optional, default, and similar wrappers. */
+function unwrapZod(schema) {
+  let current = schema;
+  while (WRAPPERS.has(current._zod.def.type) && current._zod.def.innerType) {
+    current = current._zod.def.innerType;
+  }
+  return current;
+}
+
+/**
+ * Whether the forms keep a field under their Advanced disclosure: `'yes'`, `''`, or, for an object
+ * split between the two (some of its fields advanced, as `harnessOptions`), which of its fields
+ * stay with the basic ones: "all but `sandbox`". `readMeta` is the contracts' `fieldMeta`.
+ */
+export function advancedMarker(schema, readMeta) {
+  if (readMeta(schema).advanced) return 'yes';
+  const base = unwrapZod(schema);
+  if (base._zod.def.type !== 'object') return '';
+  const fields = Object.entries(base._zod.def.shape ?? {});
+  if (!fields.some(([, child]) => readMeta(child).advanced)) return '';
+  const basic = fields.filter(([, child]) => !readMeta(child).advanced).map(([name]) => name);
+  return basic.length === 0 ? 'yes' : `all but ${basic.map((name) => `\`${name}\``).join(', ')}`;
+}
+
+/**
+ * Each node kind's field docs, read from its Zod config schema with `readMeta` (the contracts'
+ * `fieldMeta`): one map per variant of a union, in the union's order (as `oneOf` in its JSON
+ * Schema), else one map, from field name to its description and Advanced marker.
+ */
+export function nodeFieldDocs(configSchemas, readMeta) {
+  return Object.fromEntries(
+    Object.entries(configSchemas).map(([kind, schema]) => {
+      const def = schema._zod.def;
+      const objects = def.type === 'union' ? def.options : [schema];
+      return [
+        kind,
+        objects.map((object) =>
+          Object.fromEntries(
+            Object.entries(unwrapZod(object)._zod.def.shape ?? {}).map(([name, child]) => [
+              name,
+              {
+                description: readMeta(child).description,
+                advanced: advancedMarker(child, readMeta),
+              },
+            ]),
+          ),
+        ),
+      ];
+    }),
+  );
+}
 
 /** Escape text for a Markdown table cell. */
 function cell(text) {
@@ -202,8 +178,11 @@ export function discriminator(variants) {
   return undefined;
 }
 
-/** Table rows for one object schema: name, type, required, default, description. */
-export function fieldRows(objectSchema, descriptions, skip = new Set()) {
+/**
+ * Table rows for one object schema: name, type, required, default, Advanced, and description.
+ * `docs` maps a field name to its description and Advanced marker.
+ */
+export function fieldRows(objectSchema, docs, skip = new Set()) {
   const required = new Set(objectSchema.required ?? []);
   return Object.entries(objectSchema.properties ?? {})
     .filter(([name]) => !skip.has(name))
@@ -212,26 +191,40 @@ export function fieldRows(objectSchema, descriptions, skip = new Set()) {
       type: typeOf(schema),
       required: required.has(name),
       default: 'default' in schema ? literal(schema.default) : '',
-      description: descriptions[name] ?? '',
+      advanced: docs[name]?.advanced ?? '',
+      description: docs[name]?.description ?? '',
     }));
 }
 
+/** A Markdown table of rows, with an Advanced column only when a row has a marker. */
 function table(rows) {
+  const advanced = rows.some((r) => r.advanced);
+  const columns = ['Field', 'Type', 'Required', 'Default'];
+  if (advanced) columns.push('Advanced');
+  columns.push('Description');
+  const line = (cells) => `| ${cells.join(' | ')} |`;
   return [
-    '| Field | Type | Required | Default | Description |',
-    '| --- | --- | --- | --- | --- |',
-    ...rows.map(
-      (r) =>
-        `| \`${r.name}\` | ${cell(r.type)} | ${r.required ? 'yes' : 'no'} | ${cell(r.default)} | ${cell(r.description)} |`,
+    line(columns),
+    line(columns.map(() => '---')),
+    ...rows.map((r) =>
+      line([
+        `\`${r.name}\``,
+        cell(r.type),
+        r.required ? 'yes' : 'no',
+        cell(r.default),
+        ...(advanced ? [cell(r.advanced)] : []),
+        cell(r.description),
+      ]),
     ),
   ].join('\n');
 }
 
 /**
- * Fields that have no description in NODE_DOCS. The generator fails on any, so a new config field
- * cannot reach the reference undocumented.
+ * Fields with no description in the schemas' metadata (`fieldDocs`, see `nodeFieldDocs`), and
+ * kinds missing from NODE_DOCS. The generator fails on any, so a new config field cannot reach the
+ * reference undocumented. A union's tag (`subtype`, `mode`) names its variant's table, not a row.
  */
-export function undocumentedFields(jsonSchemas) {
+export function undocumentedFields(jsonSchemas, fieldDocs) {
   const missing = [];
   for (const [kind, schema] of Object.entries(jsonSchemas)) {
     const docs = NODE_DOCS[kind];
@@ -240,21 +233,25 @@ export function undocumentedFields(jsonSchemas) {
       continue;
     }
     const objects = schema.oneOf ?? schema.anyOf ?? [schema];
-    for (const object of objects) {
+    objects.forEach((object, index) => {
       for (const name of Object.keys(object.properties ?? {})) {
-        if (!docs.fields[name]) missing.push(`${kind}.${name}`);
+        if (name === docs.variantKey) continue;
+        if (!fieldDocs[kind]?.[index]?.[name]?.description) missing.push(`${kind}.${name}`);
       }
-    }
+    });
   }
   return [...new Set(missing)];
 }
 
-/** Render the whole reference. `jsonSchemas` maps node kind to its config JSON Schema. */
-export function renderNodeReference(jsonSchemas) {
-  const missing = undocumentedFields(jsonSchemas);
+/**
+ * Render the whole reference. `jsonSchemas` maps node kind to its config JSON Schema; `fieldDocs`
+ * holds each field's description and Advanced marker (see `nodeFieldDocs`).
+ */
+export function renderNodeReference(jsonSchemas, fieldDocs) {
+  const missing = undocumentedFields(jsonSchemas, fieldDocs);
   if (missing.length > 0) {
     throw new Error(
-      `node reference: add descriptions to NODE_DOCS for ${missing.join(', ')} (tooling/scripts/node-reference.mjs)`,
+      `node reference: describe ${missing.join(', ')} with .meta(field(...)) in packages/contracts/src/nodes.ts`,
     );
   }
   const out = [
@@ -264,6 +261,8 @@ export function renderNodeReference(jsonSchemas) {
     '',
     'Every node has an `id`, a `kind`, a `label`, a canvas position, and a `config` whose fields are listed here. Behaviour, examples, and the reasoning behind each node are in [04 - Node catalog](../04-node-catalog.md). Types are the input side of the schema: a field with a default may be omitted.',
     '',
+    'Descriptions are the schemas\' field metadata, which the node editor shows as each field\'s help. **Advanced** marks the fields the editor keeps under its collapsed Advanced options; "all but" names the fields of an object that stay with the basic ones.',
+    '',
   ];
   for (const [kind, docs] of Object.entries(NODE_DOCS)) {
     const schema = jsonSchemas[kind];
@@ -271,17 +270,17 @@ export function renderNodeReference(jsonSchemas) {
     out.push(`## ${docs.title} (\`${kind}\`)`, '', docs.purpose, '', `Ports: ${docs.ports}`, '');
     const variants = docs.variantKey ? (schema.oneOf ?? schema.anyOf) : undefined;
     if (variants) {
-      for (const variant of variants) {
+      variants.forEach((variant, index) => {
         const value = variant.properties?.[docs.variantKey]?.const;
         out.push(
           `### \`${docs.variantKey}: ${JSON.stringify(value)}\``,
           '',
-          table(fieldRows(variant, docs.fields, new Set([docs.variantKey]))),
+          table(fieldRows(variant, fieldDocs[kind][index], new Set([docs.variantKey]))),
           '',
         );
-      }
+      });
     } else {
-      out.push(table(fieldRows(schema, docs.fields)), '');
+      out.push(table(fieldRows(schema, fieldDocs[kind][0])), '');
     }
   }
   return out.join('\n');
