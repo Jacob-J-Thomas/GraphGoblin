@@ -18,6 +18,7 @@ import {
 } from '../components/ui/index.js';
 import { SchemaForm } from '../forms/SchemaForm.js';
 import { canvasFocusTarget } from './canvas-focus.js';
+import { NODE_FIELD_CONTROLS } from './field-controls.js';
 import { focusIssuePath } from './focus-field.js';
 import { IssueBadge } from './IssueBadge.js';
 import { KindChip } from './KindChip.js';
@@ -250,6 +251,7 @@ export function NodeEditorDialog({
             schema={NodeConfigSchemas[node.kind]}
             value={node.config}
             label={`${node.id} config`}
+            controls={NODE_FIELD_CONTROLS}
             onChange={(config) => updateNode(node.id, { config })}
             parseErrors={fieldErrors[`node:${node.id}`]}
             onParseError={(path, error, reason) =>

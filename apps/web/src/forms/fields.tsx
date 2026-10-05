@@ -8,6 +8,7 @@
 export {
   FieldControlsContext,
   joinPath,
+  useField,
   type FieldControl,
   type FieldControls,
   type FieldProps,

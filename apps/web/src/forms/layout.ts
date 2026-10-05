@@ -22,8 +22,9 @@ export interface Placement {
 
 /**
  * Fields of a split object, kept together under the object's path (`data-field`), so an issue
- * about the object itself (an unknown key, say) finds them; `showsError` marks the block that
- * shows the object's own message: its first one under Advanced, else its basic one.
+ * about the object itself (an unknown key, say) finds them, the basic block first; `showsError`
+ * marks the block that shows the object's own message: its basic one, always in sight, else its
+ * first one under Advanced.
  */
 export interface OwnedFields {
   owner: string;
@@ -105,10 +106,11 @@ export function formLayout(shape: Record<string, Schema>, base = '', skip?: stri
       } else kept.push(placement);
     }
     if (kept.length > 0) {
-      basic.push({ owner: name, fields: kept, showsError: moved.size === 0 });
+      basic.push({ owner: name, fields: kept, showsError: true });
     }
     [...moved].forEach(([heading, placements], index) => {
-      section(heading).push({ owner: name, fields: placements, showsError: index === 0 });
+      const showsError = kept.length === 0 && index === 0;
+      section(heading).push({ owner: name, fields: placements, showsError });
     });
   }
   return { basic, advanced };
