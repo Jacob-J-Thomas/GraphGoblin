@@ -1,13 +1,16 @@
 /**
  * Authoring-time syntax checks for every Liquid template and JSONata expression in a loop. The
  * schemas in `contracts` mark those strings by reusing `TemplateSchema` and `ExpressionSchema`, so
- * walking a node's config alongside its kind's schema finds them all, wherever they are nested.
+ * walking a node's config alongside its kind's schema finds them all, wherever they are nested. A
+ * field may carry its own metadata (`.meta()`, a copy with the same definition), so the walk
+ * recognises them with `sameSchema` rather than `===`.
  */
 import {
   ExpressionSchema,
   LoopSettingsSchema,
   NodeConfigSchemas,
   TemplateSchema,
+  sameSchema,
   type LoopDefinition,
 } from '@graphgoblin/contracts';
 import { checkExpression } from './expression.js';
@@ -41,9 +44,10 @@ const WRAPPERS = new Set([
 
 function walk(schema: SchemaLike, value: unknown, path: string, found: Found[]): void {
   if (value === undefined || value === null) return;
-  if ((schema as unknown) === TemplateSchema || (schema as unknown) === ExpressionSchema) {
+  const template = sameSchema(schema, TemplateSchema);
+  if (template || sameSchema(schema, ExpressionSchema)) {
     if (typeof value === 'string') {
-      const kind = (schema as unknown) === TemplateSchema ? 'template' : 'expression';
+      const kind = template ? 'template' : 'expression';
       found.push({ kind, source: value, path });
     }
     return;

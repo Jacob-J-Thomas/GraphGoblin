@@ -7,6 +7,7 @@ import {
   TemplateSchema,
   ValueSourceSchema,
 } from './common.js';
+import type { FieldMeta } from './meta.js';
 import { MessageRoleSchema } from './thread.js';
 
 /**
@@ -105,7 +106,11 @@ export const MutationOperationSchema = z.discriminatedUnion('op', [
 export type MutationOperation = z.infer<typeof MutationOperationSchema>;
 export type MutationOperationInput = z.input<typeof MutationOperationSchema>;
 
-export const MutationListSchema = z.array(MutationOperationSchema).max(128);
+/** In the forms each operation of a list collapses to its kind and path (`collapseItems`). */
+export const MutationListSchema = z
+  .array(MutationOperationSchema)
+  .max(128)
+  .meta({ collapseItems: true } satisfies FieldMeta);
 export type MutationList = z.infer<typeof MutationListSchema>;
 
 export { MessageSelectionSchema, CollectionSelectionSchema, InjectedMessageSchema };
