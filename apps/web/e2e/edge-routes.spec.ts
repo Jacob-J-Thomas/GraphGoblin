@@ -323,6 +323,73 @@ test('moving a card onto a manual route takes it back to automatic, in the moveâ
   expect(await storedRoute(request, loopId, 'return')).toEqual([1176, 330, 600]);
 });
 
+test('an existing deliberate crossing keeps its route until a move introduces another crossed card', async ({
+  page,
+  request,
+}) => {
+  const definition = crossingLoop();
+  definition.edges.find((e) => e.id === 'start-work')!.ui = { route: [400] };
+  const loopId = await createLoop(request, definition);
+  await openLoop(page, loopId);
+  expect(await cardsCrossed(page, 'start-work', [])).toEqual(['side']);
+  const zoom = await page
+    .locator('.react-flow__viewport')
+    .evaluate((element) => new DOMMatrix(getComputedStyle(element).transform).a);
+  const moveStart = async (dx: number) => {
+    const box = (await page.getByTestId('node-start').boundingBox())!;
+    await page.mouse.move(box.x + 60, box.y + 12);
+    await page.mouse.down();
+    await page.mouse.move(box.x + 60 + dx * zoom, box.y + 12, { steps: 12 });
+  };
+  await moveStart(-20);
+  await page.mouse.up();
+  await saved(page);
+  expect(await storedRoute(request, loopId, 'start-work')).toEqual([400]);
+  await page.getByRole('button', { name: 'Undo move start', exact: true }).click();
+  await saved(page);
+  await moveStart(300);
+  await expect
+    .poll(async () => (await cardsCrossed(page, 'start-work', [])).sort())
+    .toEqual(['side', 'start']);
+  await page.mouse.up();
+  await saved(page);
+  expect(await storedRoute(request, loopId, 'start-work')).toBeUndefined();
+  await page.getByRole('button', { name: 'Undo move start', exact: true }).click();
+  await saved(page);
+  const restored = await draft(request, loopId);
+  expect(restored.nodes.find((n) => n.id === 'start')!.ui).toEqual({ x: 0, y: 100 });
+  expect(restored.edges.find((e) => e.id === 'start-work')!.ui?.route).toEqual([400]);
+});
+
+test('32 alternating first-stub splits preserve a saveable and publishable route at the limit', async ({
+  page,
+  request,
+}) => {
+  const definition = crossingLoop();
+  definition.edges.find((e) => e.id === 'start-work')!.ui = { route: [400] };
+  const loopId = await createLoop(request, definition);
+  await openLoop(page, loopId);
+  await select(page, 'start-work');
+  for (let i = 0; i < 31; i += 1) {
+    await segment(page, 'start-work', 1).focus();
+    await page.keyboard.press(i % 2 ? 'ArrowUp' : 'ArrowDown');
+    await expect(edge(page, 'start-work').locator('.gg-route-handle')).toHaveCount(5 + i * 2);
+  }
+  await saved(page);
+  const valid = await storedRoute(request, loopId, 'start-work');
+  expect(valid).toHaveLength(63);
+  await segment(page, 'start-work', 1).focus();
+  await page.keyboard.press('ArrowUp');
+  await expect(page.getByTestId('canvas').locator('[aria-live="polite"]')).toHaveText(
+    'This route has as many segments as a route can hold',
+  );
+  await expect(segment(page, 'start-work', 1)).toBeFocused();
+  await saved(page);
+  expect(await storedRoute(request, loopId, 'start-work')).toEqual(valid);
+  await page.getByRole('button', { name: 'Publish' }).click();
+  await expect(page.getByText('Published version 1.')).toBeVisible();
+});
+
 test('routes survive export and import, publish pins them, and runs ignore them', async ({
   page,
   request,

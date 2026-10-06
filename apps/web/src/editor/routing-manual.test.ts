@@ -38,7 +38,95 @@ const withRoute = (
     e.id === id ? { ...e, route, ...(allowCrossing ? { allowCrossing } : {}) } : e,
   );
 
+/** A clear endpoint horizontal across the automatic loop-back's preferred return lane. */
+function endpointLane(last = false, distant = false) {
+  const { nodes, edges } = loop();
+  const targetX = last || distant ? 2500 : 1300;
+  nodes.push(
+    {
+      id: 'manual-source',
+      x: -164,
+      y: last ? 410 : 154,
+      width: 184,
+      height: 122,
+      outputs: { out: { x: 20, y: last ? 510 : 254 } },
+    },
+    {
+      id: 'manual-target',
+      x: targetX,
+      y: 193,
+      width: 184,
+      height: 400,
+      outputs: {},
+      input: { x: targetX, y: last ? 254 : 510 },
+    },
+  );
+  const manual: RoutingEdge = {
+    id: 'manual',
+    source: 'manual-source',
+    target: 'manual-target',
+    port: 'out',
+    route: [last ? 20 : targetX],
+  };
+  return { nodes, edges: [...edges, manual] };
+}
+
+function expectEndpointSpacing(plan: ReturnType<typeof createRoutingPlan>) {
+  const manual = plan.routes.get('manual')!;
+  const automatic = plan.routes.get('return')!;
+  expect(manual).toMatchObject({ manual: true });
+  expect(manual.crossing).toBeUndefined();
+  expect(automatic.laneGap).toBe(24);
+  for (let i = 1; i < manual.points.length; i += 1) {
+    const a = manual.points[i - 1]!;
+    const b = manual.points[i]!;
+    if (a.y !== b.y) continue;
+    const lane = automatic.lane!;
+    if (Math.min(a.x, b.x) < lane.right && Math.max(a.x, b.x) > lane.left)
+      expect(Math.abs(lane.y - a.y)).toBeGreaterThanOrEqual(automatic.laneGap!);
+  }
+}
+
 describe('manual routes in the router (#44)', () => {
+  it.each([false, true])(
+    'reserves the manual endpoint horizontal against automatic overlap (last: %s)',
+    (last) => {
+      const { nodes, edges } = endpointLane(last);
+      const without = createRoutingPlan(
+        nodes,
+        edges.filter((e) => e.id !== 'manual'),
+      );
+      expect(without.routes.get('return')!.lane).toMatchObject({ y: 254 });
+      const lane = without.routes.get('return')!.lane!;
+      expect(lane.right - lane.left).toBe(848);
+      expectEndpointSpacing(createRoutingPlan(nodes, edges));
+    },
+  );
+
+  it.each([false, true])(
+    'invalidates automatic routes when only a distant port and its endpoint horizontal move (last: %s)',
+    (last) => {
+      const { nodes, edges } = endpointLane(last, true);
+      const id = last ? 'manual-target' : 'manual-source';
+      const away = moved(nodes, id, 0, -30);
+      const before = createRoutingPlan(away, edges);
+      const reads = before.dependencies.get('return')!;
+      // Isolate reservation invalidation: neither endpoint card touches the automatic route's reads.
+      const card = nodes.find((n) => n.id === id)!;
+      expect(
+        reads.boxes.intersects({
+          id,
+          left: card.x,
+          right: card.x + card.width,
+          top: card.y,
+          bottom: card.y + card.height,
+        }),
+      ).toBe(false);
+      const after = createRoutingPlan(nodes, edges, undefined, before);
+      expect(after.routes).toEqual(createRoutingPlan(nodes, edges).routes);
+      expectEndpointSpacing(after);
+    },
+  );
   it('draws a fixed loop-back as given, from the current port tips, labelled on its lane', () => {
     const { nodes, edges } = loop();
     const fixed = withRoute(edges, 'return', [1120, 420, 260]);

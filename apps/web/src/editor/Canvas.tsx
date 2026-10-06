@@ -1,4 +1,4 @@
-import type { LoopDefinitionInput, NodeKind } from '@graphgoblin/contracts';
+import { EdgeRouteSchema, type LoopDefinitionInput, type NodeKind } from '@graphgoblin/contracts';
 import {
   Background,
   Controls,
@@ -260,7 +260,7 @@ function placed(node: RoutingNode, x: number, y: number): RoutingNode {
 /**
  * The manual routes that moving card `id` from its stored position to `position` makes cross a
  * card (any card, its own included, as when a port moves past its route). Routes the author
- * already left crossing a card are not among them.
+ * already left crossing a particular card keep that intersection; only newly crossed cards count.
  */
 export function newlyCrossed(
   definition: LoopDefinitionInput | undefined,
@@ -274,12 +274,22 @@ export function newlyCrossed(
   const crosses = (nodes: readonly RoutingNode[], edge: LoopDefinitionInput['edges'][number]) => {
     const from = nodes.find((n) => n.id === edge.from.node)?.outputs[edge.from.port];
     const to = nodes.find((n) => n.id === edge.to.node)?.input;
-    return !!from && !!to && crossesCards(drawnPoints(edge.ui!.route, from, to), cardBoxes(nodes));
+    if (!from || !to) return new Set<string>();
+    const points = drawnPoints(edge.ui!.route, from, to);
+    return new Set(
+      cardBoxes(nodes)
+        .filter((box) => crossesCards(points, [box]))
+        .map((box) => box.id),
+    );
   };
   const before = plan.nodes.map((n) => (n === card ? placed(n, stored.x, stored.y) : n));
   const after = plan.nodes.map((n) => (n === card ? placed(n, position.x, position.y) : n));
   return definition.edges
-    .filter((edge) => edge.ui && !crosses(before, edge) && crosses(after, edge))
+    .filter((edge) => {
+      if (!edge.ui) return false;
+      const deliberate = crosses(before, edge);
+      return [...crosses(after, edge)].some((cardId) => !deliberate.has(cardId));
+    })
     .map((edge) => edge.id);
 }
 
@@ -388,6 +398,10 @@ export function Canvas({
   const editing = useMemo<RouteEditing>(() => {
     const store = (edgeId: string, route: readonly number[], from: XYPosition, to: XYPosition) => {
       const stored = normalize(route, from, to);
+      if (stored.length && !EdgeRouteSchema.safeParse(stored).success) {
+        announce('This route has as many segments as a route can hold');
+        return undefined;
+      }
       setEdgeRoute(edgeId, stored.length ? stored : undefined);
       return stored;
     };
@@ -416,7 +430,7 @@ export function Canvas({
           if (!keep || !latest) return;
           const before = normalize(base.route, base.from, base.to);
           if (sameRoute(normalize(latest, base.from, base.to), before)) return;
-          store(edgeId, latest, base.from, base.to);
+          if (!store(edgeId, latest, base.from, base.to)) return;
           announce(`Route changed.${crossing(latest, base.from, base.to)}`);
         };
         const release = () => stop(true);
@@ -436,6 +450,7 @@ export function Canvas({
         const value = nudged(segment.value, direction, steps);
         const moved = moveSegment(base.route, segment.index, value, base.from, base.to);
         const stored = store(edgeId, moved.route, base.from, base.to);
+        if (!stored) return undefined;
         announce(`Segment at ${segment.axis} ${value}.${crossing(stored, base.from, base.to)}`);
         const near = midpoint({
           a: { ...segment.a, [segment.axis]: value },

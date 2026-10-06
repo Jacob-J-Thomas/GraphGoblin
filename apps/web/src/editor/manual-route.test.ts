@@ -1,3 +1,4 @@
+import { EdgeRouteSchema } from '@graphgoblin/contracts';
 import { getSmoothStepPath, Position } from '@xyflow/react';
 import { describe, expect, it } from 'vitest';
 import {
@@ -145,6 +146,21 @@ describe('manual routes', () => {
       ),
     ).toBe(false);
     expect(crossesCards([{ x: 0, y: 0 }], [card])).toBe(false);
+  });
+
+  it('can exceed the coordinate limit after repeated stub splits, but a collapsed split still fits', () => {
+    let route = [130];
+    for (let i = 0; i < 31; i += 1)
+      route = normalize(moveSegment(route, 1, i % 2 ? 44 : 22, from, to).route, from, to);
+    expect(route).toHaveLength(63);
+    expect(EdgeRouteSchema.safeParse(route).success).toBe(true);
+    const oversized = normalize(moveSegment(route, 1, -22, from, to).route, from, to);
+    expect(oversized).toHaveLength(65);
+    expect(EdgeRouteSchema.safeParse(oversized).success).toBe(false);
+    // The limit applies after normalisation: splitting to the neighbouring height collapses a bend.
+    const collapsed = normalize(moveSegment(route, 1, route[1]!, from, to).route, from, to);
+    expect(collapsed).toHaveLength(63);
+    expect(EdgeRouteSchema.safeParse(collapsed).success).toBe(true);
   });
 
   it('matches xyflow’s smoothstep points for a forward edge, wide and narrow', () => {

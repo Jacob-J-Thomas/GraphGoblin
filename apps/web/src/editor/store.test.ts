@@ -18,6 +18,23 @@ describe('editor store', () => {
     expect(store().addNode('exit', { x: 0, y: 0 })).toBe('exit');
   });
 
+  it('refuses invalid manual routes without changing the draft or its undo history', () => {
+    store().load('L1', newLoopDefinition('a'));
+    const id = store().definition!.edges[0]!.id;
+    store().setEdgeRoute(id, [160]);
+    const before = store();
+    for (const invalid of [
+      [],
+      [1, 2],
+      Array.from({ length: 65 }, (_, i) => i),
+      [Infinity],
+      [NaN],
+    ]) {
+      store().setEdgeRoute(id, invalid);
+      expect(store()).toBe(before);
+    }
+  });
+
   it('loads clean or dirty and bumps the revision on edits', () => {
     store().load('L1', newLoopDefinition('a'));
     expect(store()).toMatchObject({ loopId: 'L1', revision: 0, saveState: 'saved' });

@@ -799,26 +799,32 @@ function sameRouted(before: RoutedEdge, route: RoutedEdge): boolean {
   );
 }
 
-/** A route's horizontal segments between its first and last (the port stubs). */
-function innerLanes(points: readonly Point[]): Lane[] {
+/** Every non-zero horizontal, including the stubs recomputed from the current port tips. */
+function horizontalLanes(points: readonly Point[]): Lane[] {
   const lanes: Lane[] = [];
-  for (let i = 2; i < points.length - 1; i += 1) {
+  for (let i = 1; i < points.length; i += 1) {
     const a = points[i - 1]!;
     const b = points[i]!;
-    if (a.y === b.y) lanes.push({ y: a.y, left: Math.min(a.x, b.x), right: Math.max(a.x, b.x) });
+    if (a.y === b.y && a.x !== b.x)
+      lanes.push({ y: a.y, left: Math.min(a.x, b.x), right: Math.max(a.x, b.x) });
   }
   return lanes;
 }
 
 /**
  * Reserve a route for the automatic routes after it: its vertical trunks, its label, and its lane.
- * A manual route reserves every inner horizontal, since any of them may run anywhere.
+ * A manual route reserves every horizontal, since its port stubs may also run anywhere.
  */
 function reserve(reservations: Reservations, route: RoutedEdge): void {
   reservations.add(route.points, route.lane, route.labelBounds);
   if (route.manual)
-    for (const lane of innerLanes(route.points))
-      if (lane.y !== route.lane?.y || lane.left !== route.lane.left) reservations.add([], lane);
+    for (const lane of horizontalLanes(route.points))
+      if (
+        lane.y !== route.lane?.y ||
+        lane.left !== route.lane.left ||
+        lane.right !== route.lane.right
+      )
+        reservations.add([], lane);
 }
 
 /** What a route reserves for later routes, as boxes: trunks, lanes, and its label. */
@@ -829,7 +835,7 @@ function reservedBoxes(route: RoutedEdge): Box[] {
     const b = route.points[i]!;
     if (a.x === b.x) boxes.push(bounds([a, b]));
   }
-  const lanes = route.manual ? innerLanes(route.points) : [];
+  const lanes = route.manual ? horizontalLanes(route.points) : [];
   if (route.lane) lanes.push(route.lane);
   for (const lane of lanes)
     boxes.push({ id: '', left: lane.left, right: lane.right, top: lane.y, bottom: lane.y });

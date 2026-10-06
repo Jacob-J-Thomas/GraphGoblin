@@ -1,3 +1,4 @@
+import { EdgeRouteSchema, LoopDefinitionSchema } from '@graphgoblin/contracts';
 import { kitchenSinkLoop } from '@graphgoblin/contracts/testing';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { Position, type ReactFlowProps } from '@xyflow/react';
@@ -12,6 +13,7 @@ import { useEditorStore } from './store.js';
 import { decisionBackRoute, routingInput, simpleLoop } from '../__fixtures__/routing.js';
 import { OrthogonalEdge, type OrthogonalEdgeData } from './OrthogonalEdge.js';
 import type { RoutingGeometry } from './useRouting.js';
+import { drawnPoints, crossesCards, moveSegment, normalize } from './manual-route.js';
 
 let props: ReactFlowProps<FlowNode> | undefined;
 let geometry: RoutingGeometry = { nodes: [], preparationMs: 0 };
@@ -647,5 +649,109 @@ describe('manual edge routes (#44)', () => {
       ]),
     );
     expect(route('return')).toEqual([1116, 290, 268]);
+  });
+
+  it.each([false, true])(
+    'protects a deliberately crossing route against a new source-card crossing (new: %s)',
+    (addsCrossing) => {
+      const definition = simpleLoop();
+      const stored = [240, 80, 650, 240, 270];
+      definition.edges.find((e) => e.id === 'start-work')!.ui = { route: stored };
+      store().load('L1', definition);
+      const crossed = () => {
+        const from = geometry.nodes.find((n) => n.id === 'start')!.outputs['out']!;
+        const to = geometry.nodes.find((n) => n.id === 'work')!.input!;
+        const points = drawnPoints(stored, from, to);
+        return geometry.nodes
+          .filter((n) =>
+            crossesCards(points, [
+              {
+                id: n.id,
+                left: n.x,
+                right: n.x + n.width,
+                top: n.y,
+                bottom: n.y + n.height,
+              },
+            ]),
+          )
+          .map((n) => n.id);
+      };
+      expect(crossed()).toEqual(['check']);
+      render(<Live />);
+      const start = flow().nodes!.find((n) => n.id === 'start')!;
+      act(() => flow().onNodeDragStart!({} as never, start, [start]));
+      const position = { x: addsCrossing ? 80 : -20, y: 100 };
+      moveCard('start', position.x, position.y);
+      expect(crossed()).toEqual(addsCrossing ? ['start', 'check'] : ['check']);
+      act(() =>
+        flow().onNodesChange!([{ type: 'position', id: 'start', position, dragging: true }]),
+      );
+      act(() =>
+        flow().onNodesChange!([{ type: 'position', id: 'start', position, dragging: false }]),
+      );
+      act(() => flow().onNodeDragStop!({} as never, { ...start, position }, []));
+      expect(route('start-work')).toEqual(addsCrossing ? undefined : stored);
+      expect(labels()).toEqual(['move start']);
+      act(() => store().undo());
+      expect(route('start-work')).toEqual(stored);
+      expect(store().definition!.nodes.find((n) => n.id === 'start')!.ui).toEqual({ x: 0, y: 100 });
+    },
+  );
+
+  it.each(['drag', 'nudge'])(
+    'refuses a %s that splits a 63-coordinate route, keeping the valid draft',
+    (edit) => {
+      const from = geometry.nodes[0]!.outputs['out']!;
+      const to = geometry.nodes[1]!.input!;
+      let stored = [240];
+      for (let i = 0; i < 31; i += 1)
+        stored = normalize(moveSegment(stored, 1, i % 2 ? 242 : 220, from, to).route, from, to);
+      expect(stored).toHaveLength(63);
+      expect(normalize(moveSegment(stored, 1, 264, from, to).route, from, to)).toHaveLength(65);
+      store().setEdgeRoute('start-work', stored);
+      render(<Live />);
+      select('start-work');
+      const before = store();
+      const first = handle('Route segment 1 of 65, horizontal');
+      if (edit === 'drag') {
+        fireEvent.pointerDown(first, { button: 0, clientX: 0, clientY: 0 });
+        fireEvent.pointerMove(window, { clientX: 0, clientY: 64 });
+        fireEvent.pointerUp(window);
+      } else {
+        first.focus();
+        fireEvent.keyDown(first, { key: 'ArrowUp' });
+        expect(first).toHaveFocus();
+      }
+      expect(route('start-work')).toEqual(stored);
+      expect(store().revision).toBe(before.revision);
+      expect(store().past).toEqual(before.past);
+      expect(LoopDefinitionSchema.safeParse(store().definition).success).toBe(true);
+      expect(
+        screen.getByText('This route has as many segments as a route can hold'),
+      ).toBeInTheDocument();
+    },
+  );
+
+  it('keeps the store valid through 32 alternating edits of the first stub from one coordinate', () => {
+    store().setEdgeRoute('start-work', [240]);
+    render(<Live />);
+    select('start-work');
+    let lastValid: number[] | undefined;
+    for (let i = 0; i < 32; i += 1) {
+      fireEvent.keyDown(
+        handle(`Route segment 1 of ${route('start-work')!.length + 2}, horizontal`),
+        {
+          key: i % 2 ? 'ArrowUp' : 'ArrowDown',
+        },
+      );
+      expect(route('start-work')).toHaveLength(1 + 2 * Math.min(i + 1, 31));
+      expect(EdgeRouteSchema.safeParse(route('start-work')).success).toBe(true);
+      expect(LoopDefinitionSchema.safeParse(store().definition).success).toBe(true);
+      if (i === 30) lastValid = route('start-work');
+    }
+    expect(route('start-work')).toEqual(lastValid);
+    expect(
+      screen.getByText('This route has as many segments as a route can hold'),
+    ).toBeInTheDocument();
   });
 });

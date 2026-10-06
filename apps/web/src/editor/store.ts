@@ -1,4 +1,10 @@
-import type { EdgeSchema, LoopDefinitionInput, NodeInput, NodeKind } from '@graphgoblin/contracts';
+import {
+  EdgeRouteSchema,
+  type EdgeSchema,
+  type LoopDefinitionInput,
+  type NodeInput,
+  type NodeKind,
+} from '@graphgoblin/contracts';
 import type { z } from 'zod';
 import { create } from 'zustand';
 import type { ParseErrorReason } from '../forms/parse-errors.js';
@@ -479,6 +485,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
     },
 
     setEdgeRoute: (edgeId, route, coalesceKey) => {
+      if (route !== undefined && !EdgeRouteSchema.safeParse(route).success) return;
       const edge = get().definition?.edges.find((e) => e.id === edgeId);
       if (!edge) return;
       edit(
