@@ -148,3 +148,55 @@ test('a restored-draft notice stays dismissed through edits and returns after a 
   await expect(page.getByRole('heading', { name: 'older local copy' })).toBeVisible();
   await expect(page.getByText('Restored unsaved changes from this device.')).toBeVisible();
 });
+
+test('an older version’s open connection blocks device drafts: the editor says so until it closes (review F2)', async ({
+  context,
+  request,
+}) => {
+  const created = await request.post('/loops', {
+    data: { definition: approvalLoop('qa blocked storage') },
+  });
+  expect(created.status()).toBe(201);
+  const loopId = ((await created.json()) as { loop: { id: string } }).loop.id;
+
+  // A tab of the previous version: its version 1 connection stays open and ignores
+  // `versionchange`, so this version's store upgrade waits for it.
+  const older = await context.newPage();
+  await older.goto('/app/loops');
+  await older.evaluate(
+    () =>
+      new Promise<void>((resolve, reject) => {
+        const request = indexedDB.open('graphgoblin', 1);
+        request.onupgradeneeded = () => request.result.createObjectStore('drafts');
+        request.onsuccess = () => {
+          (window as unknown as { olderTab: IDBDatabase }).olderTab = request.result;
+          resolve();
+        };
+        request.onerror = () => reject(request.error ?? new Error('IndexedDB open failed'));
+      }),
+  );
+
+  const page = await context.newPage();
+  await page.goto(`/app/loops/${loopId}/edit`);
+  await expect(page.getByRole('heading', { name: 'qa blocked storage' })).toBeVisible();
+  await expect(page.getByText('Changes are not kept on this device')).toBeVisible();
+  await expect(page.getByText(/Close other GraphGoblin tabs and windows\./)).toBeVisible();
+
+  // A schema-invalid edit (a subloop without its loop) cannot go to the server, and the device
+  // refuses it: the editor says it is in this window only.
+  await page.getByRole('button', { name: 'Add Subloop node' }).click();
+  await expect(page.getByTestId('save-state')).toHaveText('Kept in this window only');
+  await expect(
+    page.getByText(
+      'Fix the schema errors to save to the server. Changes are kept in this window only.',
+    ),
+  ).toBeVisible();
+
+  // The older tab closes its connection: the upgrade completes, and the edit is on the device.
+  await older.evaluate(() => (window as unknown as { olderTab: IDBDatabase }).olderTab.close());
+  await expect(page.getByText('Changes are not kept on this device')).toBeHidden();
+  await expect(page.getByTestId('save-state')).toHaveText('Saved on this device only');
+  await page.reload();
+  await expect(page.getByText('Restored unsaved changes from this device.')).toBeVisible();
+  await expect(page.locator('.react-flow__node[data-id="subloop"]')).toBeVisible();
+});

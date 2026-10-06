@@ -203,6 +203,7 @@ describe('catalog field controls', () => {
     await userEvent.setup().selectOptions(effort, 'low');
     expect(change).toHaveBeenLastCalledWith(
       expect.objectContaining({ codex: { model: 'alpha', effort: 'low' } }),
+      expect.objectContaining({ path: 'codex.effort', kind: 'commit' }),
     );
   });
   it('shows an empty catalog with only the inherited choice and a Settings link', async () => {
@@ -239,6 +240,7 @@ describe('catalog field controls', () => {
     await user.selectOptions(effort(), 'high');
     expect(change).toHaveBeenLastCalledWith(
       expect.objectContaining({ model: 'alpha', effort: 'high' }),
+      expect.objectContaining({ path: 'effort', kind: 'commit' }),
     );
     await user.selectOptions(model(), '');
     expect(change.mock.lastCall?.[0]).not.toHaveProperty('model');
@@ -403,6 +405,7 @@ describe('catalog field controls', () => {
     await user.selectOptions(effort(), 'high');
     expect(change).toHaveBeenLastCalledWith(
       expect.objectContaining({ model: 'alpha', effort: 'high' }),
+      expect.objectContaining({ path: 'effort', kind: 'commit' }),
     );
     api.override('GET /model-catalog', (call) => api.builtIn(call));
     await act(() => queryClient.invalidateQueries({ queryKey: keys.catalog }));

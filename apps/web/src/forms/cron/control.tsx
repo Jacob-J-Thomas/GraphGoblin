@@ -15,6 +15,8 @@ import {
   Select,
   revealDisclosures,
 } from '../../components/ui/index.js';
+import { useFormChange } from '../changes.js';
+import { useDisclosureState } from '../disclosures.js';
 import { useField, type FieldProps } from '../fields.js';
 import { Row, fieldMeta, useProblemCount } from '../fields/shared.js';
 import { ProblemBadge } from '../fields/structure.js';
@@ -37,7 +39,7 @@ import {
 
 /** Custom expression field; it binds only the existing string, never a new config object. */
 export function CronControl({ name }: FieldProps) {
-  const field = useField(name);
+  const field = useField(name, 'typing');
   const zonePath = name.replace(/expression$/, 'timezone');
   const zone: unknown = useWatch({ name: zonePath });
   const expression = typeof field.value === 'string' ? field.value : '';
@@ -65,6 +67,13 @@ export function CronControl({ name }: FieldProps) {
     setDraft({ expression: value, schedule: next });
     field.onChange(value);
   };
+  // The field binds as typing (the raw expression, the step and time inputs); the preset select
+  // and the day checkboxes are choices, each an undo step of its own.
+  const change = useFormChange();
+  const choose = (next: BuiltSchedule) =>
+    change({ path: name, kind: 'commit' }, () => commit(next));
+  // The raw expression's disclosure, kept with the form's (so an undo's remount keeps it open).
+  const rawDisclosure = useDisclosureState(`${name}#advanced`, false);
   return (
     <Fieldset data-field={`${name}.schedule`}>
       <Legend>Schedule</Legend>
@@ -81,7 +90,7 @@ export function CronControl({ name }: FieldProps) {
                 revealDisclosures(raw);
                 raw.focus();
               }
-            } else commit(defaultSchedule(e.target.value as Preset, preferencesRef.current));
+            } else choose(defaultSchedule(e.target.value as Preset, preferencesRef.current));
           }}
         >
           <option value="empty" disabled>
@@ -134,7 +143,7 @@ export function CronControl({ name }: FieldProps) {
                 <Checkbox
                   checked={schedule.days.includes(index)}
                   onChange={(e) =>
-                    commit({
+                    choose({
                       ...schedule,
                       days: e.target.checked
                         ? [...schedule.days, index].sort()
@@ -178,6 +187,7 @@ export function CronControl({ name }: FieldProps) {
         errorId={`${id}-preview-error`}
       />
       <Disclosure
+        {...rawDisclosure}
         label="Advanced"
         summary={
           <>
@@ -327,7 +337,8 @@ function CronPreview({
 
 /** Searchable native datalist: typing and keyboard selection both retain the IANA identifier. */
 export function CronTimezoneControl({ name, label, schema }: FieldProps) {
-  const field = useField(name);
+  const field = useField(name, 'typing');
+  const change = useFormChange();
   const value = typeof field.value === 'string' ? field.value : 'UTC';
   const id = useId();
   const error = timezoneError(value);
@@ -368,7 +379,11 @@ export function CronTimezoneControl({ name, label, schema }: FieldProps) {
         <Button
           size="sm"
           variant="secondary"
-          onClick={() => field.onChange(Intl.DateTimeFormat().resolvedOptions().timeZone)}
+          onClick={() =>
+            change({ path: name, kind: 'commit' }, () =>
+              field.onChange(Intl.DateTimeFormat().resolvedOptions().timeZone),
+            )
+          }
         >
           Use my time zone
         </Button>

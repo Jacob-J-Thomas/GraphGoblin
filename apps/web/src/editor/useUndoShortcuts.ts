@@ -141,6 +141,9 @@ export function runHistory(direction: HistoryDirection): void {
   const control = before instanceof HTMLElement && before !== document.body ? before : undefined;
   const field = control?.closest('[data-field]');
   const path = field?.getAttribute('data-field') ?? undefined;
+  const row = control?.closest('[data-row-id]');
+  const rowId = row?.getAttribute('data-row-id');
+  const rowPath = row?.getAttribute('data-row-path');
   const inField = field && control ? whereabouts(control, field) : undefined;
   // The innermost element around the control that survives the remount is only known afterwards.
   const around: { element: Element; where: Whereabouts }[] = [];
@@ -156,8 +159,20 @@ export function runHistory(direction: HistoryDirection): void {
   const kept = around.find(({ element }) => element.isConnected);
   const anchor = kept?.element;
   if (anchor && path !== undefined && inField) {
+    // A collection removal changes indices. Follow the surviving row's identity, so restoring
+    // focus never opens a different row that the user deliberately left collapsed.
+    const restoredRow =
+      rowId === undefined || rowId === null
+        ? undefined
+        : [...anchor.querySelectorAll('[data-row-id]')].find(
+            (el) => el.getAttribute('data-row-id') === rowId,
+          );
+    const restoredPath =
+      restoredRow && rowPath && (path === rowPath || path.startsWith(`${rowPath}.`))
+        ? restoredRow.getAttribute('data-row-path') + path.slice(rowPath.length)
+        : path;
     const again = [...anchor.querySelectorAll('[data-field]')].find(
-      (el) => el.getAttribute('data-field') === path,
+      (el) => el.getAttribute('data-field') === restoredPath,
     );
     // The remounted form starts with its disclosures collapsed; the control was in an open one.
     if (again) revealDisclosures(again);
@@ -166,7 +181,7 @@ export function runHistory(direction: HistoryDirection): void {
       groupFocus(target, again).focus();
       return;
     }
-    if (focusField(anchor, path)) return;
+    if (focusField(anchor, restoredPath)) return;
   }
   // Outside a field only the same control will do: a node card an undo removed is not replaced by
   // its neighbour.

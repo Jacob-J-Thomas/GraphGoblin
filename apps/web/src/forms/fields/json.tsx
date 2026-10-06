@@ -162,7 +162,7 @@ export function JsonControl({
 }
 
 export function JsonField({ schema, name, label }: FieldProps) {
-  const field = useField(name);
+  const field = useField(name, 'typing');
   return (
     <JsonControl
       schema={schema}

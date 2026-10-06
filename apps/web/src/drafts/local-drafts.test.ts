@@ -20,21 +20,31 @@ afterEach(async () => {
   }
 });
 
+/** Settle `promise` as a value: its result, or the error it rejected with. */
+const settled = (promise: Promise<unknown>) =>
+  promise.then(
+    (value) => value ?? 'done',
+    (error: unknown) => error,
+  );
+
 describe('local drafts in IndexedDB', () => {
-  it('silently skips blocked loads, rejects saves, and retries after the old tab closes', async () => {
+  it('silently skips blocked loads, rejects saves, says it is blocked, and recovers when the old tab closes', async () => {
+    // An older tab's version 1 connection that does not close on `versionchange`.
     const oldStore = createStore('graphgoblin', 'drafts');
     const draft = { loopId: 'blocked', definition: minimalLoop(), savedAt: 'now', synced: false };
     await set(draft.loopId, draft, oldStore);
     const oldDatabase = await oldStore('readonly', (store) => store.transaction.db);
+    const changes: unknown[] = [];
+    const unsubscribe = drafts.subscribeDeviceStorage(() =>
+      changes.push(drafts.deviceStorageProblem()),
+    );
     let timer: ReturnType<typeof setTimeout> | undefined;
     try {
+      expect(drafts.deviceStorageProblem()).toBeUndefined();
       const result = Promise.all([
         drafts.loadLocalDraft(draft.loopId),
         drafts.loadSetAsideDraft(draft.loopId),
-        drafts.saveLocalDraft(draft).then(
-          () => 'saved',
-          (error: unknown) => error,
-        ),
+        settled(drafts.saveLocalDraft(draft)),
       ]);
       const deadline = new Promise<string>((resolve) => {
         timer = setTimeout(() => resolve('still blocked'), 4000);
@@ -44,10 +54,42 @@ describe('local drafts in IndexedDB', () => {
         undefined,
         expect.objectContaining({ message: expect.stringContaining('Close other GraphGoblin') }),
       ]);
+      expect(drafts.deviceStorageProblem()).toEqual({
+        kind: 'blocked',
+        message: expect.stringContaining('Close other GraphGoblin'),
+      });
+      expect(changes).toHaveLength(1);
+      // Known to be blocked: later operations fail at once, without another grace period.
+      const started = performance.now();
+      expect(
+        await Promise.all([
+          settled(drafts.saveLocalDraft(draft)),
+          settled(drafts.recordServerSave(draft.loopId, draft.definition, 'token')),
+          settled(drafts.clearSetAsideDraft(draft.loopId)),
+        ]),
+      ).toEqual([
+        expect.objectContaining({ message: expect.stringContaining('Close other') }),
+        expect.objectContaining({ message: expect.stringContaining('Close other') }),
+        expect.objectContaining({ message: expect.stringContaining('Close other') }),
+      ]);
+      expect(performance.now() - started).toBeLessThan(1000);
     } finally {
       clearTimeout(timer);
-      oldDatabase.close();
     }
+    // The old tab lets go: the pending upgrade completes and the store says so by itself.
+    const recovered = new Promise<void>((resolve) => {
+      const stop = drafts.subscribeDeviceStorage(() => {
+        if (drafts.deviceStorageProblem()) return;
+        stop();
+        resolve();
+      });
+    });
+    oldDatabase.close();
+    await recovered;
+    expect(changes.at(-1)).toBeUndefined();
+    unsubscribe();
+    // The upgrade retired the version 1 copy; writes work again.
+    expect(await drafts.loadLocalDraft(draft.loopId)).toBeUndefined();
     await drafts.saveLocalDraft(draft);
     expect(await drafts.loadLocalDraft(draft.loopId)).toEqual(draft);
   });
@@ -80,6 +122,18 @@ describe('local drafts in IndexedDB', () => {
     opening.onupgradeneeded = () => opening.result.createObjectStore('drafts');
     (await promisifyRequest(opening)).close();
     await expect(drafts.loadLocalDraft('future')).rejects.toHaveProperty('name', 'VersionError');
+    // The storage says it failed, and why, until an operation succeeds again (the next one opens
+    // the store afresh).
+    expect(drafts.deviceStorageProblem()).toMatchObject({ kind: 'failed' });
+    expect(drafts.deviceStorageProblem()?.message).not.toBe('');
+    await promisifyRequest(indexedDB.deleteDatabase('graphgoblin'));
+    await drafts.saveLocalDraft({
+      loopId: 'again',
+      definition: minimalLoop(),
+      savedAt: 'now',
+      synced: false,
+    });
+    expect(drafts.deviceStorageProblem()).toBeUndefined();
   });
 
   it('retires the version 1 store once and opens an empty version 2 store', async () => {

@@ -288,6 +288,55 @@ test('Ctrl+Z from a checkbox or a select undoes and keeps focus on that control'
   await expect(start.getByLabel('Subtype')).toBeFocused();
 });
 
+test('model then effort are two undo steps, and undo and redo keep Advanced open (review F5, F6)', async ({
+  page,
+  request,
+}) => {
+  const loop = approvalLoop('qa undo pickers');
+  const loopId = await createLoop(request, {
+    ...loop,
+    nodes: [
+      ...loop.nodes,
+      {
+        id: 'infer',
+        kind: 'inference',
+        label: 'Infer',
+        config: { prompt: { template: 'hi' } },
+        ui: { x: 260, y: 260 },
+      },
+    ],
+  });
+  await page.goto(`/app/loops/${loopId}/edit`);
+  const dialog = await openNode(page, 'infer');
+  const advanced = dialog.getByRole('button', { name: /^Advanced\b/ });
+  await advanced.click();
+  await expect(advanced).toHaveAttribute('aria-expanded', 'true');
+  const model = dialog.getByLabel('Model', { exact: true });
+  const effort = dialog.getByLabel('Effort', { exact: true });
+  await expect(model).not.toHaveAttribute('aria-readonly');
+  const picked = await model.locator('option').nth(1).getAttribute('value');
+  // Two choices within a second.
+  await model.selectOption(picked);
+  await effort.selectOption({ index: 1 });
+  const effortPicked = await effort.inputValue();
+  expect(effortPicked).not.toBe('');
+  await effort.focus();
+  // The first undo takes back the effort only; the second, the model.
+  await page.keyboard.press('Control+z');
+  await expect(effort).toHaveValue('');
+  await expect(model).toHaveValue(picked!);
+  await expect(effort).toBeFocused();
+  await expect(advanced).toHaveAttribute('aria-expanded', 'true');
+  await page.keyboard.press('Control+z');
+  await expect(model).toHaveValue('');
+  await expect(advanced).toHaveAttribute('aria-expanded', 'true');
+  await page.keyboard.press('Control+Shift+z');
+  await expect(model).toHaveValue(picked!);
+  await expect(effort).toHaveValue('');
+  await expect(advanced).toHaveAttribute('aria-expanded', 'true');
+  await expect(dialog.getByRole('spinbutton', { name: 'Timeout seconds' })).toBeVisible();
+});
+
 test('the Undo and Redo buttons are 32 px for a mouse and 44 px for touch', async ({
   page,
   request,

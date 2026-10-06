@@ -11,8 +11,12 @@ import {
   system,
   type ListRunsQuery,
 } from '@graphgoblin/api-client';
-import type { ClassifierModelSummary } from '@graphgoblin/contracts';
-import { usePrefetchQuery, useQuery, type QueryClient } from '@tanstack/react-query';
+import type {
+  ClassifierModelSummary,
+  LoopDefinitionInput,
+  ModelCatalogEntry,
+} from '@graphgoblin/contracts';
+import { useQuery, type QueryClient } from '@tanstack/react-query';
 import { useApi } from './context.js';
 
 /** Query keys, so mutations can invalidate exactly what they change. */
@@ -22,12 +26,12 @@ export const keys = {
   /** Under the loop's key, so invalidating the loop (after a publish) refetches them too. */
   versions: (id: string) => ['loops', id, 'versions'] as const,
   /**
-   * The API's checks of a saved draft (`POST /loops/{id}/validate`), for one saved revision and
-   * one state of the classifier catalog (`classifierFingerprint`): the classifier checks read the
-   * catalog and its secrets, which change without a draft edit.
+   * The API's checks of a saved draft (`POST /loops/{id}/validate`), keyed by what they read: the
+   * draft (its server draft token, a hash of its content, or `draftContentKey` when there is no
+   * token) and the catalogs (`catalogFingerprint`), which change without a draft edit.
    */
-  validation: (id: string, revision: number, classifiers: string) =>
-    ['loops', id, 'validate', revision, classifiers] as const,
+  validation: (id: string, draft: string, catalogs: string) =>
+    ['loops', id, 'validate', draft, catalogs] as const,
   runs: (query: ListRunsQuery = {}) => ['runs', 'list', query] as const,
   run: (id: string) => ['runs', 'one', id] as const,
   thread: (id: string) => ['runs', 'thread', id] as const,
@@ -93,24 +97,60 @@ export function useClassifierModels() {
   return useQuery({ queryKey: keys.classifiers, queryFn: () => classifierModels.list(client) });
 }
 
+type ModelFields = Pick<
+  ModelCatalogEntry,
+  'harness' | 'model' | 'enabled' | 'efforts' | 'defaultEffort'
+>;
+
 /**
- * What the API's classifier checks read from the catalog, as a string for a query key: each
- * entry's id, display name (in the messages), capabilities, enabled and configured state, and the
- * reason it is not configured. A refetch that finds the same catalog gives the same string, so it
- * does not run the checks again; any change the checks would report gives a new one.
+ * What the API's checks read from the catalogs, as a string for a query key. From the LLM model
+ * catalog (`MODEL_DISABLED`, `MODEL_NOT_IN_CATALOG`): each entry's harness and model id, enabled
+ * state, efforts, and default effort. From the classifier catalog: each entry's id, display name
+ * (in the messages), capabilities, enabled and configured state, and the reason it is not
+ * configured (which names its secret). A refetch that finds the same catalogs gives the same
+ * string, so it does not run the checks again; any change the checks would report gives a new one.
+ * A catalog not loaded (yet, or after a failed load) is unknown (`null`), not empty, so its loading
+ * is a change too.
  */
-export function classifierFingerprint(entries: readonly ClassifierModelSummary[] | undefined) {
-  if (!entries) return '';
-  return JSON.stringify(
-    entries.map((e) => [
+export function catalogFingerprint(
+  models: readonly ModelFields[] | undefined,
+  classifiers: readonly ClassifierModelSummary[] | undefined,
+): string {
+  return JSON.stringify([
+    models?.map((e) => [e.harness, e.model, e.enabled, e.efforts, e.defaultEffort]) ?? null,
+    classifiers?.map((e) => [
       e.id,
       e.displayName,
       e.primitives,
       e.enabled,
       e.configured,
       e.configurationReason ?? '',
-    ]),
+    ]) ?? null,
+  ]);
+}
+
+/** The catalogs' fingerprint as the query cache holds them now. */
+export function cachedCatalogFingerprint(queryClient: QueryClient): string {
+  return catalogFingerprint(
+    queryClient.getQueryData<ModelFields[]>(keys.catalog),
+    queryClient.getQueryData<ClassifierModelSummary[]>(keys.classifiers),
   );
+}
+
+/**
+ * A key for a definition's content, for the API's checks when the server gave no draft token (the
+ * token is itself a hash of the server draft): 53-bit FNV-1a over its JSON, in base 36.
+ */
+export function draftContentKey(definition: LoopDefinitionInput): string {
+  const text = JSON.stringify(definition);
+  let high = 0x811c9dc5;
+  let low = 0x050c5d1f;
+  for (let i = 0; i < text.length; i += 1) {
+    const code = text.charCodeAt(i);
+    high = Math.imul(high ^ code, 0x01000193);
+    low = Math.imul(low ^ code, 0x01000193);
+  }
+  return `content:${((high >>> 0) * 0x200000 + ((low >>> 0) & 0x1fffff)).toString(36)}`;
 }
 
 /** Whether a query key is one of the editor's API checks (`keys.validation`). */
@@ -119,37 +159,39 @@ export function isValidationKey(queryKey: readonly unknown[]): boolean {
 }
 
 /**
- * After a classifier or secret write: refetch the classifier summaries, and make the editor's API
- * checks of saved drafts run again, since their classifier warnings and errors follow the catalog
- * and its secrets.
+ * After a write to either catalog (a model's or a classifier's) or to a secret: refetch both
+ * catalogs, and make the editor's API checks of saved drafts run again, since their catalog
+ * warnings and errors follow the catalogs and the secrets the classifiers use.
  *
  * Checks still running are cancelled first: one that finishes after the write may have read the
- * new server state and would store it under the old catalog's key (`keys.validation` holds the
- * catalog fingerprint the check was issued for). Every check is then marked stale without being
- * refetched, so none runs against an out-of-date key; once the summaries are back, the active
- * checks already keyed by the catalog as it now is (a write the checks do not read) run again,
- * and the others run under their new key when the editor renders it.
+ * new server state and would store it under the old catalogs' key (`keys.validation` holds the
+ * fingerprint the check was issued for). Every check is then marked stale without being
+ * refetched, so none runs against an out-of-date key; once the catalogs are back, the active
+ * checks still stale under the resolved fingerprint run again. A new fingerprint may already
+ * have been checked while the other catalog was loading; its fresh or in-flight check is kept.
  */
-export async function refreshClassifierState(queryClient: QueryClient): Promise<void> {
+export async function refreshCatalogState(queryClient: QueryClient): Promise<void> {
   const validation = {
     predicate: ({ queryKey }: { queryKey: readonly unknown[] }) => isValidationKey(queryKey),
   };
   await queryClient.cancelQueries(validation);
   await queryClient.invalidateQueries({ ...validation, refetchType: 'none' });
-  await queryClient.invalidateQueries({ queryKey: keys.classifiers });
-  const now = classifierFingerprint(
-    queryClient.getQueryData<ClassifierModelSummary[]>(keys.classifiers),
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: keys.catalog }),
+    queryClient.invalidateQueries({ queryKey: keys.classifiers }),
+  ]);
+  const now = cachedCatalogFingerprint(queryClient);
+  await queryClient.refetchQueries(
+    {
+      predicate: (query) =>
+        isValidationKey(query.queryKey) &&
+        query.queryKey[4] === now &&
+        query.isStale() &&
+        query.state.fetchStatus === 'idle',
+      type: 'active',
+    },
+    { cancelRefetch: false },
   );
-  await queryClient.refetchQueries({
-    predicate: ({ queryKey }) => isValidationKey(queryKey) && queryKey[4] === now,
-    type: 'active',
-  });
-}
-
-/** Start the catalog request before a node dialog or the loop settings form opens. */
-export function usePrefetchModelCatalog() {
-  const client = useApi();
-  usePrefetchQuery({ queryKey: keys.catalog, queryFn: () => modelCatalog.list(client) });
 }
 
 export function useSecrets() {
