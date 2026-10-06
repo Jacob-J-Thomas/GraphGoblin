@@ -3,6 +3,7 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig, type Plugin } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
+import { API_PREFIXES } from './src/api/prefixes.js';
 import { fontBootScript } from './src/lib/font.js';
 import { themeBootScript } from './src/lib/theme.js';
 import { appChromeColors } from './src/styles/palette.js';
@@ -14,19 +15,6 @@ import { appChromeColors } from './src/styles/palette.js';
 export const APP_BASE = '/app/';
 
 const API_TARGET = process.env['GG_API_URL'] ?? 'http://127.0.0.1:4747';
-const API_PREFIXES = [
-  '/loops',
-  '/runs',
-  '/settings',
-  '/secrets',
-  '/api-keys',
-  '/model-catalog',
-  '/events',
-  '/harness',
-  '/healthz',
-  '/version',
-  '/openapi.json',
-];
 
 /**
  * The colours that cannot be CSS variables (the `theme-color` meta tag and the web manifest) are

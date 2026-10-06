@@ -1,0 +1,17 @@
+export const API_PREFIXES = [
+  '/api-keys',
+  '/classifier-models',
+  '/events',
+  '/harness',
+  '/healthz',
+  '/hooks',
+  '/loops',
+  '/model-catalog',
+  '/openapi.json',
+  '/runs',
+  '/secrets',
+  '/settings',
+  '/system',
+  '/triggers',
+  '/version',
+] as const;
