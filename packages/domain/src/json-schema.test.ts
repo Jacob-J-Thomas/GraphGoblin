@@ -11,22 +11,49 @@ describe('validateJson', () => {
         n: { type: 'integer', minimum: 1 },
       },
     };
-    expect(validateJson(schema, { email: 'a@b.co', n: 2 })).toEqual({ ok: true, errors: [] });
+    expect(validateJson(schema, { email: 'a@b.co', n: 2 })).toEqual({
+      ok: true,
+      errors: [],
+      issues: [],
+    });
     const bad = validateJson(schema, { email: 'nope', n: 0 });
     expect(bad.ok).toBe(false);
     expect(bad.errors.join('\n')).toMatch(/\/email/);
     expect(bad.errors.join('\n')).toMatch(/\/n/);
+    expect(bad.issues).toEqual([
+      { path: ['email'], message: 'must match format "email"' },
+      { path: ['n'], message: 'must be >= 1' },
+    ]);
+  });
+
+  it('locates issues: a missing property at itself, nested paths unescaped', () => {
+    const schema = {
+      type: 'object',
+      required: ['approved', 'review status'],
+      properties: {
+        'a/b~c': { type: 'array', items: { type: 'string' } },
+      },
+    };
+    const bad = validateJson(schema, { 'a/b~c': ['x', 2] });
+    expect(bad.errors).toContain("/ must have required property 'approved'");
+    expect(bad.issues).toEqual([
+      { path: ['approved'], message: 'is required' },
+      { path: ['review status'], message: 'is required' },
+      { path: ['a/b~c', '1'], message: 'must be string' },
+    ]);
   });
 
   it('reports root-level failures with "/"', () => {
     const bad = validateJson({ type: 'string' }, 5);
     expect(bad.errors[0]).toMatch(/^\/ /);
+    expect(bad.issues).toEqual([{ path: [], message: 'must be string' }]);
   });
 
   it('reports invalid schemas as validation errors', () => {
     const result = validateJson({ type: 'not-a-type' }, 1);
     expect(result.ok).toBe(false);
     expect(result.errors[0]).toMatch(/invalid schema/);
+    expect(result.issues[0]).toEqual({ path: [], message: result.errors[0] });
   });
 
   it('reuses compiled schemas and evicts beyond the cache limit', () => {

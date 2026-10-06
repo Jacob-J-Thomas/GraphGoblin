@@ -157,6 +157,18 @@ const SEARCH_PANEL = {
   },
 };
 
+/** A code line's height and the content's padding above and below the lines, in px. */
+const LINE_HEIGHT = 20;
+const CONTENT_PADDING = 7;
+
+/**
+ * The content height that shows `lines` lines. One line, with the field frame's 1 px edges, is
+ * 36 px: the height of a text input, so a one-line template or expression lines up with them.
+ */
+export function codeLinesHeight(lines: number): string {
+  return `${lines * LINE_HEIGHT + 2 * CONTENT_PADDING}px`;
+}
+
 export const codeTheme: Extension = [
   EditorView.theme({
     '&': {
@@ -164,9 +176,10 @@ export const codeTheme: Extension = [
       color: 'var(--code-fg)',
       fontSize: '12.5px',
     },
+    // The field frame around the editor (forms/CodeEditor.tsx) draws the focus ring.
     '&.cm-focused': { outline: 'none' },
-    '.cm-scroller': { fontFamily: 'var(--font-code)', lineHeight: '20px' },
-    '.cm-content': { caretColor: 'var(--code-fg)', padding: '6px 0' },
+    '.cm-scroller': { fontFamily: 'var(--font-code)', lineHeight: `${LINE_HEIGHT}px` },
+    '.cm-content': { caretColor: 'var(--code-fg)', padding: `${CONTENT_PADDING}px 0` },
     '.cm-line': { padding: '0 12px' },
     '.cm-cursor, .cm-dropCursor': { borderLeftColor: 'var(--code-fg)' },
     '.cm-gutters': {

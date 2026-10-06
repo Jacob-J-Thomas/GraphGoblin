@@ -32,6 +32,7 @@ import {
   validateJson,
 } from '@graphgoblin/domain';
 import { AppendConflictError, RunFailureError, describeError, isAbortError } from './errors.js';
+import { deciderFailure, isDeciderError } from './decider-errors.js';
 import type {
   ChildOutcome,
   ChildStartRequest,
@@ -1146,18 +1147,33 @@ export class RunManager {
           await this.finalizeCancel(runId);
           return;
         }
+        const providerFailure =
+          !(error instanceof RunFailureError) && isDeciderError(error)
+            ? deciderFailure(error)
+            : undefined;
         const failure: RunFailure =
           error instanceof RunFailureError
             ? error.toFailure(nodeId)
             : {
                 code: 'INTERNAL_ERROR',
-                message: describeError(error),
+                message: providerFailure?.message ?? describeError(error),
                 nodeId,
                 resumable: true,
                 details:
-                  error instanceof Error ? { name: error.name, stack: error.stack ?? null } : null,
+                  providerFailure?.details ??
+                  (error instanceof Error
+                    ? {
+                        name: error.name,
+                        stack: error.stack ?? null,
+                      }
+                    : null),
               };
-        this.ports.logger.error({ runId, nodeId, failure }, 'node failed');
+        if (providerFailure)
+          this.ports.logger.warn(
+            { runId, nodeId, ...providerFailure.diagnostic },
+            'node provider failed',
+          );
+        else this.ports.logger.error({ runId, nodeId, failure }, 'node failed');
         await this.failRun(runId, failure);
         return;
       }

@@ -20,6 +20,7 @@
     ["--text-link", "--surface-app", "Links on the page background"],
     ["--text-link", "--surface-raised", "Links in cards and tables"],
     ["--text-link", "--surface-sunken", "Links in sunken panels"],
+    ["--text-link", "--surface-hover", "Open Secrets link in a hovered classifier row"],
     ["--text-default", "--accent-subtle", "Selected timeline row"],
     ["--text-muted", "--accent-subtle", "Event description in a selected row"],
     ["--text-subtle", "--accent-subtle", "Sequence number in a selected row"],
@@ -44,8 +45,20 @@
     ["--text-default", "--status-warn-bg", "warn alert body"],
     ["--status-info-fg", "--status-info-bg", "info badge and alert title, with its glyph"],
     ["--text-default", "--status-info-bg", "info alert body"],
-    ["--status-bad-fg", "--surface-raised", "Validation error line, field error"],
-    ["--status-warn-fg", "--surface-raised", "Validation warning line"],
+    ["--status-bad-fg", "--surface-raised", "Validation error line, field error, required marker"],
+    ["--status-bad-fg", "--surface-hover", "Catalog toggle refusal in a hovered row"],
+    [
+      "--status-bad-fg",
+      "--surface-sunken",
+      "Field error and required marker in a sunken panel (the model form)"
+    ],
+    [
+      "--status-warn-fg",
+      "--surface-raised",
+      "Validation warning line and field warning, with its glyph"
+    ],
+    ["--status-warn-fg", "--surface-overlay", "Field warning in the node dialog, with its glyph"],
+    ["--status-warn-fg", "--surface-sunken", "Field warning in a sunken panel, with its glyph"],
     ["--status-good-fg", "--surface-raised", "\"All changes saved\" check, \"Ready to publish\""],
     ["--text-inverse", "--surface-inverse", "Header wordmark and active text"],
     ["--text-inverse-muted", "--surface-inverse", "Header nav items, theme button"],
@@ -95,7 +108,19 @@
     ["--text-default", "--kind-subloop-subtle", "subloop palette item, hover"],
     ["--text-default", "--kind-wait-subtle", "wait palette item, hover"],
     ["--text-default", "--kind-heartbeat-subtle", "heartbeat palette item, hover"],
-    ["--text-default", "--kind-exit-subtle", "exit palette item, hover"]
+    ["--text-default", "--kind-exit-subtle", "exit palette item, hover"],
+    ["--text-heading", "--surface-app", "Page titles (the dark-brown accent in light)"],
+    ["--text-heading", "--surface-raised", "Loop name in the editor toolbar"],
+    ["--text-heading", "--surface-head", "Card, side panel, and dialog titles on their head band"],
+    ["--text-default", "--surface-head", "Text in a card or dialog head"],
+    ["--text-muted", "--surface-head", "Dialog description, notes in a card head"],
+    ["--text-table-head", "--surface-sunken", "Table column headers"],
+    [
+      "--text-table-head",
+      "--surface-raised",
+      "Column names before the cells of a stacked table row"
+    ],
+    ["--text-table-head", "--surface-hover", "Column names in a hovered stacked row"]
   ],
   "nonText": [
     ["--focus-ring", "--surface-app", "Focus ring (2px, offset 2px)"],
@@ -136,6 +161,7 @@
     ["--danger", "--surface-raised", "Soft destructive button edge, destructive button fill"],
     ["--danger", "--surface-overlay", "Soft destructive button edge in the sheet"],
     ["--status-bad-border", "--surface-raised", "Invalid input border"],
+    ["--status-bad-border", "--surface-sunken", "Invalid field edge in a sunken panel"],
     ["--status-neutral-border", "--surface-raised", "neutral alert accent bar in a card"],
     [
       "--status-neutral-border",
@@ -201,7 +227,142 @@
     ["--canvas-handle", "--canvas-bg", "Port handle against the canvas"],
     ["--focus-ring", "--surface-hover", "Focus ring (2px, offset 2px)"],
     ["--focus-ring", "--surface-control", "Focus ring (2px, offset 2px)"],
-    ["--focus-ring", "--surface-field", "Focus ring (2px, offset 2px)"]
+    ["--focus-ring", "--surface-field", "Focus ring (2px, offset 2px)"],
+    [
+      "--status-bad-border",
+      "--kind-trigger-subtle",
+      "trigger node: error issue badge edge on its band"
+    ],
+    [
+      "--status-warn-border",
+      "--kind-trigger-subtle",
+      "trigger node: warning issue badge edge on its band"
+    ],
+    [
+      "--focus-ring",
+      "--kind-trigger-subtle",
+      "Focus ring (2px, offset 2px) on the trigger node band"
+    ],
+    [
+      "--status-bad-border",
+      "--kind-decision-subtle",
+      "decision node: error issue badge edge on its band"
+    ],
+    [
+      "--status-warn-border",
+      "--kind-decision-subtle",
+      "decision node: warning issue badge edge on its band"
+    ],
+    [
+      "--focus-ring",
+      "--kind-decision-subtle",
+      "Focus ring (2px, offset 2px) on the decision node band"
+    ],
+    [
+      "--status-bad-border",
+      "--kind-inference-subtle",
+      "inference node: error issue badge edge on its band"
+    ],
+    [
+      "--status-warn-border",
+      "--kind-inference-subtle",
+      "inference node: warning issue badge edge on its band"
+    ],
+    [
+      "--focus-ring",
+      "--kind-inference-subtle",
+      "Focus ring (2px, offset 2px) on the inference node band"
+    ],
+    [
+      "--status-bad-border",
+      "--kind-script-subtle",
+      "script node: error issue badge edge on its band"
+    ],
+    [
+      "--status-warn-border",
+      "--kind-script-subtle",
+      "script node: warning issue badge edge on its band"
+    ],
+    [
+      "--focus-ring",
+      "--kind-script-subtle",
+      "Focus ring (2px, offset 2px) on the script node band"
+    ],
+    [
+      "--status-bad-border",
+      "--kind-mutate-subtle",
+      "mutate node: error issue badge edge on its band"
+    ],
+    [
+      "--status-warn-border",
+      "--kind-mutate-subtle",
+      "mutate node: warning issue badge edge on its band"
+    ],
+    [
+      "--focus-ring",
+      "--kind-mutate-subtle",
+      "Focus ring (2px, offset 2px) on the mutate node band"
+    ],
+    [
+      "--status-bad-border",
+      "--kind-subloop-subtle",
+      "subloop node: error issue badge edge on its band"
+    ],
+    [
+      "--status-warn-border",
+      "--kind-subloop-subtle",
+      "subloop node: warning issue badge edge on its band"
+    ],
+    [
+      "--focus-ring",
+      "--kind-subloop-subtle",
+      "Focus ring (2px, offset 2px) on the subloop node band"
+    ],
+    ["--status-bad-border", "--kind-wait-subtle", "wait node: error issue badge edge on its band"],
+    [
+      "--status-warn-border",
+      "--kind-wait-subtle",
+      "wait node: warning issue badge edge on its band"
+    ],
+    ["--focus-ring", "--kind-wait-subtle", "Focus ring (2px, offset 2px) on the wait node band"],
+    [
+      "--status-bad-border",
+      "--kind-heartbeat-subtle",
+      "heartbeat node: error issue badge edge on its band"
+    ],
+    [
+      "--status-warn-border",
+      "--kind-heartbeat-subtle",
+      "heartbeat node: warning issue badge edge on its band"
+    ],
+    [
+      "--focus-ring",
+      "--kind-heartbeat-subtle",
+      "Focus ring (2px, offset 2px) on the heartbeat node band"
+    ],
+    ["--status-bad-border", "--kind-exit-subtle", "exit node: error issue badge edge on its band"],
+    [
+      "--status-warn-border",
+      "--kind-exit-subtle",
+      "exit node: warning issue badge edge on its band"
+    ],
+    ["--focus-ring", "--kind-exit-subtle", "Focus ring (2px, offset 2px) on the exit node band"],
+    ["--status-bad-border", "--surface-overlay", "Error chip edge in the issues popover"],
+    ["--status-warn-border", "--surface-overlay", "Warning chip edge in the issues popover"],
+    ["--focus-ring", "--surface-head", "Focus ring (2px, offset 2px)"],
+    ["--border-strong", "--surface-head", "Outline and secondary buttons in a card or dialog head"],
+    ["--accent-strong", "--surface-head", "Primary button edge in a dialog foot"],
+    ["--danger", "--surface-head", "Destructive button fill in a dialog foot"],
+    [
+      "--status-bad-border",
+      "--surface-head",
+      "Error issue badge edge beside the node dialog's title"
+    ],
+    [
+      "--status-warn-border",
+      "--surface-head",
+      "Warning issue badge edge beside the node dialog's title"
+    ]
   ],
   "decorative": [
     [
@@ -235,6 +396,16 @@
     ],
     ["--accent-hairline-end", "--surface-inverse", "Header hairline, magenta end (decorative)"],
     ["--mascot-skin", "--surface-inverse", "Mascot against the header (a logo)"],
-    ["--mascot-glint", "--mascot-ink", "Mascot eye glint"]
+    ["--mascot-glint", "--mascot-ink", "Mascot eye glint"],
+    [
+      "--surface-overlay",
+      "--canvas-bg",
+      "Issues popover over the canvas (also carries an edge and a shadow)"
+    ],
+    [
+      "--surface-head",
+      "--surface-raised",
+      "Card, panel, and dialog head bands (a hairline and the title mark them)"
+    ]
   ]
 }

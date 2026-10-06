@@ -80,7 +80,19 @@ export function registerErrorHandler(app: FastifyInstance): void {
           400,
           'VALIDATION_FAILED',
           'the request did not match the schema',
-          error.validation.map((v) => ({ path: v.instancePath, message: v.message })),
+          error.validation.flatMap((v) => {
+            const keys = v.params['keys'];
+            if (v.keyword === 'unrecognized_keys' && Array.isArray(keys)) {
+              const base = v.instancePath === '/' ? '' : v.instancePath;
+              return keys
+                .filter((key): key is string => typeof key === 'string')
+                .map((key) => ({
+                  path: `${base}/${key.replaceAll('~', '~0').replaceAll('/', '~1')}`,
+                  message: `Unrecognized key ${JSON.stringify(key)}`,
+                }));
+            }
+            return [{ path: v.instancePath, message: v.message }];
+          }),
         );
       }
       if (isResponseSerializationError(error)) {

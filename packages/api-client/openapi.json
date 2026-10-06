@@ -13,6 +13,131 @@
       }
     },
     "schemas": {
+      "ClassifierModelSummaryInput": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_.-]{0,63}$"
+          },
+          "displayName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "providerModel": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "primitives": {
+            "minItems": 1,
+            "maxItems": 3,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "choice",
+                "noul",
+                "score"
+              ]
+            }
+          },
+          "endpoint": {
+            "type": "string",
+            "maxLength": 4096,
+            "format": "uri"
+          },
+          "secretRef": {
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,127}$"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "builtin",
+              "custom"
+            ]
+          },
+          "provider": {
+            "type": "string",
+            "enum": [
+              "typesafe",
+              "http"
+            ]
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "configured": {
+            "type": "boolean"
+          },
+          "configurationReason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "displayName",
+          "providerModel",
+          "primitives",
+          "endpoint",
+          "source",
+          "provider",
+          "enabled",
+          "configured"
+        ],
+        "additionalProperties": false
+      },
+      "ClassifierModelPutInput": {
+        "type": "object",
+        "properties": {
+          "displayName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "providerModel": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "primitives": {
+            "minItems": 1,
+            "maxItems": 3,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "choice",
+                "noul",
+                "score"
+              ]
+            }
+          },
+          "endpoint": {
+            "type": "string",
+            "maxLength": 4096,
+            "format": "uri"
+          },
+          "secretRef": {
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,127}$"
+          },
+          "provider": {
+            "type": "string",
+            "const": "http"
+          }
+        },
+        "required": [
+          "displayName",
+          "providerModel",
+          "primitives",
+          "endpoint",
+          "provider"
+        ],
+        "additionalProperties": false
+      },
       "JsonValueInput": {
         "anyOf": [
           {
@@ -125,13 +250,6 @@
                 "default": {},
                 "type": "object",
                 "properties": {
-                  "harness": {
-                    "default": "codex",
-                    "type": "string",
-                    "enum": [
-                      "codex"
-                    ]
-                  },
                   "model": {
                     "type": "string",
                     "minLength": 1
@@ -682,6 +800,10 @@
                               "default": "choice",
                               "type": "string",
                               "const": "choice"
+                            },
+                            "model": {
+                              "type": "string",
+                              "pattern": "^[a-z][a-z0-9_.-]{0,63}$"
                             },
                             "minConfidence": {
                               "type": "number",
@@ -3543,6 +3665,23 @@
                     "node"
                   ],
                   "additionalProperties": false
+                },
+                "ui": {
+                  "type": "object",
+                  "properties": {
+                    "route": {
+                      "minItems": 1,
+                      "maxItems": 63,
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      }
+                    }
+                  },
+                  "required": [
+                    "route"
+                  ],
+                  "additionalProperties": false
                 }
               },
               "required": [
@@ -4873,6 +5012,10 @@
                   "expression"
                 ]
               },
+              "classifierModel": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_.-]{0,63}$"
+              },
               "route": {
                 "type": "string",
                 "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
@@ -5696,6 +5839,131 @@
         ],
         "additionalProperties": false
       },
+      "ClassifierModelSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_.-]{0,63}$"
+          },
+          "displayName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "providerModel": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "primitives": {
+            "minItems": 1,
+            "maxItems": 3,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "choice",
+                "noul",
+                "score"
+              ]
+            }
+          },
+          "endpoint": {
+            "type": "string",
+            "maxLength": 4096,
+            "format": "uri"
+          },
+          "secretRef": {
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,127}$"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "builtin",
+              "custom"
+            ]
+          },
+          "provider": {
+            "type": "string",
+            "enum": [
+              "typesafe",
+              "http"
+            ]
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "configured": {
+            "type": "boolean"
+          },
+          "configurationReason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "displayName",
+          "providerModel",
+          "primitives",
+          "endpoint",
+          "source",
+          "provider",
+          "enabled",
+          "configured"
+        ],
+        "additionalProperties": false
+      },
+      "ClassifierModelPut": {
+        "type": "object",
+        "properties": {
+          "displayName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "providerModel": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "primitives": {
+            "minItems": 1,
+            "maxItems": 3,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "choice",
+                "noul",
+                "score"
+              ]
+            }
+          },
+          "endpoint": {
+            "type": "string",
+            "maxLength": 4096,
+            "format": "uri"
+          },
+          "secretRef": {
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,127}$"
+          },
+          "provider": {
+            "type": "string",
+            "const": "http"
+          }
+        },
+        "required": [
+          "displayName",
+          "providerModel",
+          "primitives",
+          "endpoint",
+          "provider"
+        ],
+        "additionalProperties": false
+      },
       "JsonValue": {
         "anyOf": [
           {
@@ -5806,13 +6074,6 @@
               "defaults": {
                 "type": "object",
                 "properties": {
-                  "harness": {
-                    "default": "codex",
-                    "type": "string",
-                    "enum": [
-                      "codex"
-                    ]
-                  },
                   "model": {
                     "type": "string",
                     "minLength": 1
@@ -5829,9 +6090,6 @@
                     ]
                   }
                 },
-                "required": [
-                  "harness"
-                ],
                 "additionalProperties": false
               },
               "maxIterations": {
@@ -6386,6 +6644,10 @@
                               "default": "choice",
                               "type": "string",
                               "const": "choice"
+                            },
+                            "model": {
+                              "type": "string",
+                              "pattern": "^[a-z][a-z0-9_.-]{0,63}$"
                             },
                             "minConfidence": {
                               "type": "number",
@@ -9351,6 +9613,23 @@
                     "port"
                   ],
                   "additionalProperties": false
+                },
+                "ui": {
+                  "type": "object",
+                  "properties": {
+                    "route": {
+                      "minItems": 1,
+                      "maxItems": 63,
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      }
+                    }
+                  },
+                  "required": [
+                    "route"
+                  ],
+                  "additionalProperties": false
                 }
               },
               "required": [
@@ -10689,6 +10968,10 @@
                   "expression"
                 ]
               },
+              "classifierModel": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_.-]{0,63}$"
+              },
               "route": {
                 "type": "string",
                 "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
@@ -11799,6 +12082,9 @@
                           },
                           "edgeId": {
                             "type": "string"
+                          },
+                          "path": {
+                            "type": "string"
                           }
                         },
                         "required": [
@@ -11879,6 +12165,9 @@
                             "type": "string"
                           },
                           "edgeId": {
+                            "type": "string"
+                          },
+                          "path": {
                             "type": "string"
                           }
                         },
@@ -12056,6 +12345,9 @@
                           },
                           "edgeId": {
                             "type": "string"
+                          },
+                          "path": {
+                            "type": "string"
                           }
                         },
                         "required": [
@@ -12146,6 +12438,9 @@
                           },
                           "edgeId": {
                             "type": "string"
+                          },
+                          "path": {
+                            "type": "string"
                           }
                         },
                         "required": [
@@ -12199,10 +12494,47 @@
                   "properties": {
                     "version": {
                       "$ref": "#/components/schemas/LoopVersionRecord"
+                    },
+                    "issues": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "type": "string"
+                          },
+                          "severity": {
+                            "type": "string",
+                            "enum": [
+                              "error",
+                              "warning"
+                            ]
+                          },
+                          "message": {
+                            "type": "string"
+                          },
+                          "nodeId": {
+                            "type": "string"
+                          },
+                          "edgeId": {
+                            "type": "string"
+                          },
+                          "path": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "code",
+                          "severity",
+                          "message"
+                        ],
+                        "additionalProperties": false
+                      }
                     }
                   },
                   "required": [
-                    "version"
+                    "version",
+                    "issues"
                   ],
                   "additionalProperties": false
                 }
@@ -13232,10 +13564,11 @@
     },
     "/api-keys": {
       "get": {
-        "summary": "List API keys",
+        "summary": "List API keys with the current authenticated key flagged",
         "tags": [
           "api-keys"
         ],
+        "description": "Requires api-keys:read. Each item has a required current boolean: true only for the key that authenticated this list request when API keys are required. All items are false in trusted mode, even with a valid bearer key. This is a response snapshot, never persisted. Only this owner's key metadata is returned; tokens and hashes are never returned.",
         "responses": {
           "200": {
             "description": "Default Response",
@@ -13272,6 +13605,9 @@
                           },
                           "revokedAt": {
                             "type": "string"
+                          },
+                          "current": {
+                            "type": "boolean"
                           }
                         },
                         "required": [
@@ -13279,7 +13615,8 @@
                           "ownerId",
                           "label",
                           "scopes",
-                          "createdAt"
+                          "createdAt",
+                          "current"
                         ],
                         "additionalProperties": false
                       }
@@ -13437,6 +13774,13 @@
                           "model": {
                             "type": "string"
                           },
+                          "source": {
+                            "type": "string",
+                            "enum": [
+                              "harness",
+                              "litellm"
+                            ]
+                          },
                           "displayName": {
                             "type": "string"
                           },
@@ -13472,6 +13816,7 @@
                         "required": [
                           "harness",
                           "model",
+                          "source",
                           "displayName",
                           "efforts",
                           "defaultEffort",
@@ -13494,10 +13839,11 @@
     },
     "/model-catalog/{harness}/{model}": {
       "put": {
-        "summary": "Add or update a catalog entry",
+        "summary": "Edit a LiteLLM catalog entry",
         "tags": [
           "settings"
         ],
+        "description": "Harness entries return 409 MODEL_MANAGED_BY_HARNESS. New LiteLLM entries return 409 LITELLM_NOT_CONFIGURED until a provider is configured. Existing source is immutable; omitting enabled preserves its current value.",
         "requestBody": {
           "required": true,
           "content": {
@@ -13536,8 +13882,14 @@
                     ]
                   },
                   "enabled": {
-                    "default": true,
                     "type": "boolean"
+                  },
+                  "source": {
+                    "type": "string",
+                    "enum": [
+                      "harness",
+                      "litellm"
+                    ]
                   }
                 },
                 "required": [
@@ -13581,6 +13933,13 @@
                     "model": {
                       "type": "string"
                     },
+                    "source": {
+                      "type": "string",
+                      "enum": [
+                        "harness",
+                        "litellm"
+                      ]
+                    },
                     "displayName": {
                       "type": "string"
                     },
@@ -13616,6 +13975,119 @@
                   "required": [
                     "harness",
                     "model",
+                    "source",
+                    "displayName",
+                    "efforts",
+                    "defaultEffort",
+                    "enabled"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Enable or disable a catalog entry",
+        "tags": [
+          "settings"
+        ],
+        "description": "Requires settings:write. Updates only enabled for either source; 404 MODEL_NOT_FOUND when absent.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "harness",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "model",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "harness": {
+                      "type": "string"
+                    },
+                    "model": {
+                      "type": "string"
+                    },
+                    "source": {
+                      "type": "string",
+                      "enum": [
+                        "harness",
+                        "litellm"
+                      ]
+                    },
+                    "displayName": {
+                      "type": "string"
+                    },
+                    "efforts": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "minimal",
+                          "low",
+                          "medium",
+                          "high",
+                          "xhigh",
+                          "max"
+                        ]
+                      }
+                    },
+                    "defaultEffort": {
+                      "type": "string",
+                      "enum": [
+                        "minimal",
+                        "low",
+                        "medium",
+                        "high",
+                        "xhigh",
+                        "max"
+                      ]
+                    },
+                    "enabled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "harness",
+                    "model",
+                    "source",
                     "displayName",
                     "efforts",
                     "defaultEffort",
@@ -13629,10 +14101,11 @@
         }
       },
       "delete": {
-        "summary": "Remove a catalog entry",
+        "summary": "Remove a LiteLLM catalog entry",
         "tags": [
           "settings"
         ],
+        "description": "Harness entries return 409 MODEL_MANAGED_BY_HARNESS; absent entries return 404 MODEL_NOT_FOUND.",
         "parameters": [
           {
             "schema": {
@@ -13654,6 +14127,231 @@
         "responses": {
           "204": {
             "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/classifier-models": {
+      "get": {
+        "summary": "List owner classifier models with local configuration status",
+        "tags": [
+          "settings"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ClassifierModelSummary"
+                      }
+                    }
+                  },
+                  "required": [
+                    "items"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/classifier-models/{id}": {
+      "put": {
+        "summary": "Create or replace custom HTTP classifier metadata",
+        "tags": [
+          "settings"
+        ],
+        "description": "Requires settings:write, and secrets:write when secretRef is supplied. New entries start disabled; edits preserve enabled. Omitted secretRef clears authentication. Built-in Jev returns 409 CLASSIFIER_MANAGED_BY_SYSTEM. Send `If-None-Match: *` to create only: an existing id then answers 409 CLASSIFIER_EXISTS and nothing changes.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClassifierModelPutInput"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_.-]{0,63}$"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "*"
+              ]
+            },
+            "in": "header",
+            "name": "if-none-match",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassifierModelSummary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Enable or disable a classifier model",
+        "tags": [
+          "settings"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_.-]{0,63}$"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassifierModelSummary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Remove a custom classifier, preserving secrets and loop references",
+        "tags": [
+          "settings"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_.-]{0,63}$"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/triggers/cron/preview": {
+      "post": {
+        "summary": "Preview upcoming cron slots without arming a schedule (loops:read)",
+        "tags": [
+          "triggers"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "expression": {
+                    "type": "string",
+                    "maxLength": 256
+                  },
+                  "timezone": {
+                    "type": "string",
+                    "maxLength": 64
+                  },
+                  "count": {
+                    "default": 5,
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 10
+                  },
+                  "from": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  }
+                },
+                "required": [
+                  "expression",
+                  "timezone"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "next": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                      }
+                    }
+                  },
+                  "required": [
+                    "next"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
           }
         }
       }

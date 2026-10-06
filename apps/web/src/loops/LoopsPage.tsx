@@ -15,25 +15,28 @@ import {
   Card,
   ConfirmAction,
   buttonStyles,
+  FIELD_ROW,
   FieldGroup,
+  FilePicker,
   HelpText,
   Input,
   Label,
+  RequiredNote,
   Table,
   Td,
   Th,
 } from '../components/ui/index.js';
 import { clearLocalDraft } from '../drafts/local-drafts.js';
 import { newLoopDefinition } from '../editor/model.js';
-import { downloadJson, errorMessage, fileSlug, formatDateTime, parseJson } from '../lib/utils.js';
-
-/** The native file picker, its button drawn like an outline button. */
-const FILE_INPUT = [
-  'max-w-full cursor-pointer text-sm text-muted',
-  'file:mr-3 file:h-8 file:cursor-pointer file:rounded-md file:border file:border-strong',
-  'file:bg-surface-raised file:px-[11px] file:text-sm file:font-semibold file:text-default',
-  'file:shadow-ledge hover:file:bg-surface-hover',
-].join(' ');
+import {
+  cn,
+  downloadJson,
+  errorMessage,
+  fileSlug,
+  formatDateTime,
+  parseJson,
+  problemIssues,
+} from '../lib/utils.js';
 
 function PublishState({ loop }: { loop: LoopRecord }) {
   if (!loop.currentVersionId) return <Badge>draft only</Badge>;
@@ -70,14 +73,21 @@ function CreateLoop() {
   return (
     <form
       onSubmit={submit}
-      className="flex flex-wrap items-end gap-2 max-sm:w-full"
+      // The form sits beside Import in a wrapping row; on its own line it takes the whole width.
+      className={cn(FIELD_ROW, 'items-end max-sm:w-full')}
       aria-label="Create loop"
     >
-      <FieldGroup className="w-[300px] max-sm:flex-1">
-        <Label htmlFor="new-loop-name">New loop name</Label>
+      <RequiredNote className="basis-full" />
+      <FieldGroup className="w-[300px]">
+        <Label htmlFor="new-loop-name" required>
+          New loop name
+        </Label>
         <Input
           id="new-loop-name"
           value={name}
+          aria-required
+          aria-invalid={create.isError || undefined}
+          aria-describedby={create.isError ? 'new-loop-error' : undefined}
           onChange={(e) => setName(e.target.value)}
           placeholder="nightly-triage"
         />
@@ -86,7 +96,7 @@ function CreateLoop() {
         Create
       </Button>
       {create.isError ? (
-        <HelpText tone="bad" className="basis-full">
+        <HelpText id="new-loop-error" role="alert" tone="bad" className="basis-full">
           {errorMessage(create.error)}
         </HelpText>
       ) : null}
@@ -110,12 +120,15 @@ function ImportLoop() {
         issues: created.issues.map((i) => `${i.code}: ${i.message}`),
       });
     },
-    onError: (error) => setMessage({ tone: 'bad', text: errorMessage(error) }),
+    onError: (error) =>
+      setMessage({ tone: 'bad', text: errorMessage(error), issues: problemIssues(error) }),
   });
   const onFile = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = '';
     if (!file) return;
+    // A new choice starts over: the last result no longer describes the picker.
+    setMessage(undefined);
     const parsed = parseJson(await file.text());
     if (!parsed.ok || typeof parsed.value !== 'object' || parsed.value === null) {
       setMessage({ tone: 'bad', text: `${file.name} is not a JSON document.` });
@@ -126,23 +139,26 @@ function ImportLoop() {
   return (
     <FieldGroup>
       <Label htmlFor="import-loop">Import an exported loop (JSON)</Label>
-      <input
+      {/* A refused file describes the picker and marks it invalid until the next choice. */}
+      <FilePicker
         id="import-loop"
-        type="file"
         accept="application/json,.json"
-        className={FILE_INPUT}
+        aria-invalid={message?.tone === 'bad' || undefined}
+        aria-describedby={message?.tone === 'bad' ? 'import-loop-result' : undefined}
         onChange={(e) => void onFile(e)}
       />
       {message ? (
-        <Alert tone={message.tone} title={message.text}>
-          {message.issues && message.issues.length > 0 ? (
-            <ul className="list-disc pl-4 text-xs">
-              {message.issues.map((issue, i) => (
-                <li key={i}>{issue}</li>
-              ))}
-            </ul>
-          ) : null}
-        </Alert>
+        <div id="import-loop-result">
+          <Alert tone={message.tone} title={message.text}>
+            {message.issues && message.issues.length > 0 ? (
+              <ul className="list-disc pl-4 text-xs">
+                {message.issues.map((issue, i) => (
+                  <li key={i}>{issue}</li>
+                ))}
+              </ul>
+            ) : null}
+          </Alert>
+        </div>
       ) : null}
     </FieldGroup>
   );
@@ -160,8 +176,8 @@ function LoopActions({ loop }: { loop: LoopRecord }) {
     },
   });
   return (
-    <div className="relative flex flex-col items-end gap-2">
-      <div className="flex items-center justify-end gap-2">
+    <div className="relative flex flex-col items-end gap-2 max-lg:items-start max-lg:pt-2">
+      <div className="flex items-center justify-end gap-2 max-lg:flex-wrap max-lg:justify-start">
         <Link
           to={`/loops/${loop.id}/edit`}
           className={buttonStyles({ variant: 'outline', size: 'sm' })}
@@ -232,13 +248,14 @@ export function LoopsPage() {
             </p>
           ) : (
             <Card flush>
-              <Table>
+              {/* Rows stack below 1024 px; the update time sits under the name, so the name
+                  column keeps room for itself at 1024 px. */}
+              <Table stack="lg">
                 <thead>
                   <tr>
                     <Th>Name</Th>
                     <Th>State</Th>
                     <Th>Last run</Th>
-                    <Th>Updated</Th>
                     <Th className="w-px text-right">Actions</Th>
                   </tr>
                 </thead>
@@ -247,31 +264,32 @@ export function LoopsPage() {
                     const run = latest.get(loop.id);
                     return (
                       <tr key={loop.id}>
-                        <Td>
+                        <Td className="min-w-56 wrap-anywhere">
                           <Link
                             to={`/loops/${loop.id}/edit`}
-                            className="text-[15px] font-semibold text-default no-underline hover:underline"
+                            className="touch-target text-[15px] font-semibold text-default no-underline hover:underline"
                           >
                             {loop.name}
                           </Link>
                           {loop.description ? (
                             <p className="mt-0.5 text-sm text-muted">{loop.description}</p>
                           ) : null}
+                          <p className="mt-1 text-xs text-subtle">
+                            Updated{' '}
+                            <time dateTime={loop.updatedAt}>{formatDateTime(loop.updatedAt)}</time>
+                          </p>
                         </Td>
-                        <Td>
+                        <Td label="State">
                           <PublishState loop={loop} />
                         </Td>
-                        <Td>
+                        <Td label="Last run">
                           {run ? (
-                            <Link to={`/runs/${run.id}`}>
+                            <Link to={`/runs/${run.id}`} className="touch-target inline-flex w-fit">
                               <RunStatusBadge status={run.status} />
                             </Link>
                           ) : (
                             <span className="text-sm text-muted">never run</span>
                           )}
-                        </Td>
-                        <Td className="text-sm whitespace-nowrap text-muted">
-                          {formatDateTime(loop.updatedAt)}
                         </Td>
                         <Td>
                           <LoopActions loop={loop} />

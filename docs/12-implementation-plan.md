@@ -115,7 +115,7 @@ Tasks:
 
 1. App shell, routing, generated client, auth-less local mode.
 2. Loops list, create, import, export, publish.
-3. Editor: canvas, palette, property panels from schemas, validation panel, variables, subloop picker, templates with preview.
+3. Editor: canvas, palette, property panels from schemas, validation panel (since #15, issue badges on the nodes and counts beside Publish), variables, subloop picker, templates with preview.
 4. Runs list and run inspector with SSE, thread viewer, patch diffs, wait-for-input form, controls.
 5. Settings: model catalog, defaults, secrets, API keys, harness preflight.
 6. PWA: manifest, service worker with the prompt update flow, offline shell, IndexedDB drafts.
@@ -229,7 +229,7 @@ Product gaps known at 1.0 (each marked "After 1.0" in the guide or recorded in a
 - Secrets: no OS-keyring master-key source and no per-secret envelope keys.
 - Settings has no scheduler status card, and the API no scheduler status endpoint (WP-D2 gap).
 - The Events screen does not list webhook endpoints; they are on `GET /loops/{id}/triggers` (WP-D2 gap).
-- Editor: CodeMirror modes for Liquid and JSONata are stand-ins with no completion against a sample thread; no keyboard shortcuts for add, connect, or fit beyond the palette buttons and the Connect form; no undo; variables are edited in the Loop tab, not a side sheet (WP-D2 gaps).
+- Editor: CodeMirror modes for Liquid and JSONata are stand-ins with no completion against a sample thread; no keyboard shortcuts for add, connect, or fit beyond the palette buttons and the Connect form; variables are edited in the Loop tab, not a side sheet (WP-D2 gaps).
 - `run.queued.initialThread` has no size cap; offloading large seeds to the artifact store is the follow-up (05).
 - `list_runs` pages by creation timestamp, so runs created in the same millisecond can be skipped across a page boundary (M7 notes).
 

@@ -2,6 +2,7 @@ import '@testing-library/jest-dom/vitest';
 import 'fake-indexeddb/auto';
 import { cleanup, configure } from '@testing-library/react';
 import { afterEach } from 'vitest';
+import { useApiKeyStore } from '../api/api-key.js';
 import { dialogClose } from './dialog.js';
 
 // Whole-app renders under a busy parallel run can take longer than the 1 s default.
@@ -37,13 +38,22 @@ Element.prototype.scrollIntoView ??= function scrollIntoView() {};
 // unless a handler prevents that. There is no top layer or inertness; tests of those run in the
 // browser (e2e).
 const dialogPrototype: Pick<HTMLDialogElement, 'showModal' | 'close'> = HTMLDialogElement.prototype;
+const dialogOpeners = new WeakMap<HTMLDialogElement, Element | null>();
 if (!Object.hasOwn(HTMLDialogElement.prototype, 'showModal')) {
   dialogPrototype.showModal = function showModal(this: HTMLDialogElement) {
+    dialogOpeners.set(this, document.activeElement);
     this.setAttribute('open', '');
   };
   dialogPrototype.close = function close(this: HTMLDialogElement, value?: string) {
     if (!this.hasAttribute('open')) return;
     this.removeAttribute('open');
+    const opener = dialogOpeners.get(this);
+    if (
+      opener instanceof HTMLElement &&
+      opener.isConnected &&
+      this.contains(document.activeElement)
+    )
+      opener.focus();
     if (value !== undefined) this.returnValue = value;
     if (dialogClose.delivery === 'sync') this.dispatchEvent(new Event('close'));
     else setTimeout(() => this.dispatchEvent(new Event('close')), 0);
@@ -64,6 +74,11 @@ globalThis.DOMMatrixReadOnly ??= DOMMatrixStub as unknown as typeof DOMMatrixRea
 
 afterEach(() => {
   cleanup();
+  // The API key store is module state that outlives each test's app. Reset it only after the
+  // unmount: changing the key while the app is mounted refetches every query, and a refetch
+  // answered 401 without a key marks the store rejected again, so the next test would render the
+  // API key panel, which takes focus as soon as no dialog is open.
+  useApiKeyStore.getState().forget();
   dialogClose.delivery = 'task';
   sessionStorage.clear();
   localStorage.clear();

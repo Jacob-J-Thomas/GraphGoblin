@@ -64,14 +64,24 @@ export class CronScheduler {
     return cron.nextRun(after) ?? undefined;
   }
 
-  /** Null when the expression and timezone are usable, otherwise the reason. */
-  static validate(expression: string, timezone: string): string | null {
+  /** Undefined when usable, otherwise the field that failed and its reason. */
+  static validate(
+    expression: string,
+    timezone: string,
+  ): { field: 'expression' | 'timezone'; message: string } | undefined {
     try {
-      CronScheduler.nextFire(expression, timezone, new Date(0));
-      return null;
+      CronScheduler.nextFire(expression, 'UTC', new Date(0));
     } catch (error) {
-      return describe(error);
+      return { field: 'expression', message: describe(error) };
     }
+    if (timezone.length === 0) return { field: 'timezone', message: 'A time zone is required.' };
+    try {
+      // Validate even when the expression has no future slots and never converts a date.
+      new Intl.DateTimeFormat('en', { timeZone: timezone });
+    } catch (error) {
+      return { field: 'timezone', message: describe(error) };
+    }
+    return undefined;
   }
 
   onFire(listener: Listener): () => void {

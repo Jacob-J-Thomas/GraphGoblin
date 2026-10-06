@@ -1,4 +1,12 @@
-import { EffortSchema, JsonValueSchema, UlidSchema } from '@graphgoblin/contracts';
+import {
+  ApiKeySchema,
+  ApiKeyListResponseSchema,
+  EffortSchema,
+  JsonValueSchema,
+  UlidSchema,
+  ModelCatalogEntrySchema,
+  ModelCatalogSourceSchema,
+} from '@graphgoblin/contracts';
 import { z } from 'zod';
 import type { Container } from '../container.js';
 import { hasScope } from '../plugins/auth.js';
@@ -10,23 +18,7 @@ const SecretSummarySchema = z.object({
   createdAt: z.string(),
   updatedAt: z.string(),
 });
-const ApiKeySchema = z.object({
-  id: z.string(),
-  ownerId: z.string(),
-  label: z.string(),
-  scopes: z.array(z.string()),
-  createdAt: z.string(),
-  lastUsedAt: z.string().optional(),
-  revokedAt: z.string().optional(),
-});
-const ModelEntrySchema = z.object({
-  harness: z.string(),
-  model: z.string(),
-  displayName: z.string(),
-  efforts: z.array(EffortSchema),
-  defaultEffort: EffortSchema,
-  enabled: z.boolean(),
-});
+const ModelEntrySchema = ModelCatalogEntrySchema;
 
 /** Settings the engine reads (the run defaults); other keys are stored as given. */
 const KnownSettingsSchema = z.looseObject({
@@ -155,12 +147,23 @@ export function registerSettingsRoutes(app: ApiInstance, container: Container): 
     {
       schema: {
         tags: ['api-keys'],
-        summary: 'List API keys',
-        response: { 200: z.object({ items: z.array(ApiKeySchema) }) },
+        summary: 'List API keys with the current authenticated key flagged',
+        description:
+          'Requires api-keys:read. Each item has a required current boolean: true only for the key ' +
+          'that authenticated this list request when API keys are required. All items are false in ' +
+          'trusted mode, even with a valid bearer key. This is a response snapshot, never persisted. ' +
+          "Only this owner's key metadata is returned; tokens and hashes are never returned.",
+        response: { 200: ApiKeyListResponseSchema },
       },
     },
     async (request) => ({
-      items: await repos.apiKeys.list(request.auth.ownerId),
+      items: (await repos.apiKeys.list(request.auth.ownerId)).map((key) => ({
+        ...key,
+        current:
+          container.config.requireApiKey &&
+          request.auth.actor.kind === 'api-key' &&
+          request.auth.actor.id === key.id,
+      })),
     }),
   );
 
@@ -251,26 +254,75 @@ export function registerSettingsRoutes(app: ApiInstance, container: Container): 
     {
       schema: {
         tags: ['settings'],
-        summary: 'Add or update a catalog entry',
+        summary: 'Edit a LiteLLM catalog entry',
+        description:
+          'Harness entries return 409 MODEL_MANAGED_BY_HARNESS. New LiteLLM entries return 409 LITELLM_NOT_CONFIGURED until a provider is configured. Existing source is immutable; omitting enabled preserves its current value.',
         params: z.object({ harness: z.string(), model: z.string() }),
         body: z.object({
           displayName: z.string().min(1),
           efforts: z.array(EffortSchema).min(1),
           defaultEffort: EffortSchema,
-          enabled: z.boolean().default(true),
+          enabled: z.boolean().optional(),
+          source: ModelCatalogSourceSchema.optional(),
         }),
         response: { 200: ModelEntrySchema },
       },
     },
     async (request, reply) => {
+      const existing = await repos.catalog.findOne(request.params.harness, request.params.model);
+      const source = existing?.source ?? request.body.source ?? 'harness';
+      if (source === 'harness')
+        return problem(
+          reply,
+          409,
+          'MODEL_MANAGED_BY_HARNESS',
+          existing
+            ? 'Harness models can only be enabled or disabled'
+            : 'Models for this harness come from the harness and cannot be added',
+        );
+      if (!existing)
+        return problem(
+          reply,
+          409,
+          'LITELLM_NOT_CONFIGURED',
+          'LiteLLM is not configured; adding local models is not available yet',
+        );
+      if (request.body.source !== undefined && request.body.source !== source)
+        return problem(reply, 400, 'INVALID_INPUT', 'catalog source cannot be changed');
       if (!request.body.efforts.includes(request.body.defaultEffort))
         return problem(reply, 400, 'INVALID_INPUT', 'defaultEffort must be one of efforts');
       const entry = {
         harness: request.params.harness,
         model: request.params.model,
         ...request.body,
+        source,
+        enabled: request.body.enabled ?? existing.enabled,
       };
       await repos.catalog.upsert(entry);
+      return entry;
+    },
+  );
+
+  app.patch(
+    '/model-catalog/:harness/:model',
+    {
+      schema: {
+        tags: ['settings'],
+        summary: 'Enable or disable a catalog entry',
+        description:
+          'Requires settings:write. Updates only enabled for either source; 404 MODEL_NOT_FOUND when absent.',
+        params: z.object({ harness: z.string(), model: z.string() }),
+        body: z.strictObject({ enabled: z.boolean() }),
+        response: { 200: ModelEntrySchema },
+      },
+    },
+    async (request, reply) => {
+      const entry = await repos.catalog.setEnabled(
+        request.params.harness,
+        request.params.model,
+        request.body.enabled,
+      );
+      if (!entry) return problem(reply, 404, 'MODEL_NOT_FOUND', 'model not in catalog');
       return entry;
     },
   );
@@ -280,12 +332,22 @@ export function registerSettingsRoutes(app: ApiInstance, container: Container): 
     {
       schema: {
         tags: ['settings'],
-        summary: 'Remove a catalog entry',
+        summary: 'Remove a LiteLLM catalog entry',
+        description:
+          'Harness entries return 409 MODEL_MANAGED_BY_HARNESS; absent entries return 404 MODEL_NOT_FOUND.',
         params: z.object({ harness: z.string(), model: z.string() }),
         response: { 204: z.null() },
       },
     },
     async (request, reply) => {
+      const entry = await repos.catalog.findOne(request.params.harness, request.params.model);
+      if (entry?.source === 'harness')
+        return problem(
+          reply,
+          409,
+          'MODEL_MANAGED_BY_HARNESS',
+          'Harness models can only be enabled or disabled',
+        );
       const deleted = await repos.catalog.delete(request.params.harness, request.params.model);
       if (!deleted) return problem(reply, 404, 'MODEL_NOT_FOUND', 'model not in catalog');
       return reply.status(204).send(null);

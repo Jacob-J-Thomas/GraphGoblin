@@ -33,6 +33,7 @@
 
   /* Brown: warm surfaces, the canvas grid, the loop-back edge, the mutate kind. */
   --brown-50: #f8f3ec;
+  --brown-75: #f4ece1;
   --brown-100: #f0e5d6;
   --brown-200: #e2cfb4;
   --brown-300: #cdb089;
@@ -172,21 +173,27 @@
 [data-theme='light'] {
   color-scheme: light;
 
-  /* Surface */
-  --surface-app: var(--grey-50);
-  --surface-raised: var(--grey-0);
-  --surface-sunken: var(--grey-0);
+  /* Surface. Tuned for less glare (#11, owner feedback of 2026-10-04): the page stays white, and
+     what sits on it is filled with warm brown tints instead of more white: cards, panels, the
+     editor toolbar, and dialogs on --surface-raised; card and panel heads, table heads, wells, and
+     tracks a step deeper; fields and code stay light so what you type stands out. */
+  --surface-app: var(--grey-0);
+  --surface-raised: var(--brown-50);
+  --surface-sunken: var(--brown-75);
+  --surface-head: var(--brown-100);
   --surface-overlay: var(--grey-0);
-  --surface-hover: var(--grey-100);
-  --surface-control: var(--grey-50);
+  --surface-hover: var(--brown-100);
+  --surface-control: var(--grey-0);
   --surface-field: var(--grey-0);
   --surface-inverse: var(--grey-950);
   --surface-inverse-raised: var(--grey-800);
   /* The veil behind a modal dialog: the page stays visible but recedes (decorative). */
   --scrim: color-mix(in oklab, var(--grey-950) 42%, transparent);
 
-  /* Text */
+  /* Text. Titles and table heads carry the dark-brown accent (#11). */
   --text-default: var(--grey-900);
+  --text-heading: var(--brown-900);
+  --text-table-head: var(--brown-700);
   --text-muted: var(--grey-700);
   --text-subtle: var(--grey-600);
   --text-inverse: var(--grey-0);
@@ -195,10 +202,10 @@
   --text-on-accent: var(--grey-950);
   --text-on-danger: var(--grey-0);
 
-  /* Border */
-  --border-default: var(--grey-200);
-  --border-strong: var(--grey-500);
-  --border-subtle: var(--grey-100);
+  /* Border: warm hairlines; control edges in a darker brown that keeps 3:1 on every surface. */
+  --border-default: var(--brown-200);
+  --border-strong: var(--brown-500);
+  --border-subtle: var(--brown-100);
   --border-inverse: var(--grey-800);
 
   /* Accent */
@@ -240,7 +247,7 @@
   --status-bad-border: var(--orange-600);
   --status-warn-bg: var(--amber-100);
   --status-warn-fg: var(--amber-800);
-  --status-warn-border: var(--amber-600);
+  --status-warn-border: var(--amber-700);
   --status-info-bg: var(--violet-100);
   --status-info-fg: var(--violet-800);
   --status-info-border: var(--violet-600);
@@ -327,6 +334,8 @@
   --surface-app: var(--grey-975);
   --surface-raised: var(--grey-925);
   --surface-sunken: var(--grey-950);
+  /* Heads sit on their card here: dark keeps one surface per card (the light theme tints them). */
+  --surface-head: var(--grey-925);
   --surface-overlay: var(--grey-900);
   --surface-hover: var(--grey-800);
   --surface-control: var(--grey-850);
@@ -337,6 +346,8 @@
 
   /* Text */
   --text-default: var(--grey-100);
+  --text-heading: var(--grey-100);
+  --text-table-head: var(--grey-300);
   --text-muted: var(--grey-300);
   --text-subtle: var(--grey-400);
   --text-inverse: var(--grey-100);
@@ -449,10 +460,13 @@
 /* ------------------------------------------------------------------------------------------ */
 
 :root {
-  /* Families. --font-ui is the indirection #40 switches; components use --font-ui and --font-code. */
-  --font-sans: 'Geist', ui-sans-serif, system-ui, 'Segoe UI', Roboto, sans-serif;
+  /* Families. Components use --font-ui (text), --font-display (headings and the wordmark), and
+     --font-code; the Font choice in Settings swaps the first two (fonts.css, #40). */
+  --font-fallback: ui-sans-serif, system-ui, 'Segoe UI', Roboto, sans-serif;
+  --font-sans: 'Geist', var(--font-fallback);
   --font-mono: 'Geist Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
   --font-ui: var(--font-sans);
+  --font-display: var(--font-sans);
   --font-code: var(--font-mono);
 
   /* Sizes (Tailwind's @theme maps these to its --text-* size namespace at the cutover). */

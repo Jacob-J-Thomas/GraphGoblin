@@ -115,6 +115,7 @@ for (const source of [
     }
     if (source === 'decision') {
       e.ports.deciders = [];
+      e.ports.classifiers.models.clear();
       def = singleNodeLoop(source, {
         id: 'decide',
         kind: 'decision',

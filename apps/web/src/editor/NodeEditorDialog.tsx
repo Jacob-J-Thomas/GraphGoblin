@@ -4,7 +4,7 @@ import {
   type LoopDefinitionInput,
   type NodeInput,
 } from '@graphgoblin/contracts';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Icon } from '../components/icons/index.js';
 import {
   Button,
@@ -13,10 +13,16 @@ import {
   HelpText,
   Input,
   Label,
+  RequiredNote,
   type DialogCloseReason,
 } from '../components/ui/index.js';
+import { createDisclosureIdentities, type DisclosureStates } from '../forms/disclosures.js';
 import { SchemaForm } from '../forms/SchemaForm.js';
-import { canvasFocusTarget } from './Canvas.js';
+import { CatalogWarningsContext } from '../forms/fields/model.js';
+import { canvasFocusTarget } from './canvas-focus.js';
+import { NODE_FIELD_CONTROLS } from './field-controls.js';
+import { focusIssuePath } from './focus-field.js';
+import { IssueBadge } from './IssueBadge.js';
 import { KindChip } from './KindChip.js';
 import { KIND_INFO, type EditorIssue } from './model.js';
 import { NodeConnections } from './NodeConnections.js';
@@ -41,6 +47,22 @@ function subloopId(config: unknown): string {
   return typeof ref?.loopId === 'string' ? ref.loopId : '';
 }
 
+/** The heading of the dialog `from` sits in (it names the dialog). */
+function dialogHeading(from: Element | null): HTMLElement | null {
+  const id = from?.closest('dialog')?.getAttribute('aria-labelledby');
+  return id ? document.getElementById(id) : null;
+}
+
+/**
+ * Focus the field at an issue's path inside the node editor's body (`root`): a config field, the
+ * id, or the label. Without a path, or when no field matches, focus goes to the dialog's heading.
+ */
+function focusIssue(root: HTMLElement | null, path: string | undefined): void {
+  if (!root) return;
+  if (path && focusIssuePath(root, path)) return;
+  dialogHeading(root)?.focus();
+}
+
 /**
  * The id being typed for a node. It applies on Enter, on leaving the field, and when the dialog
  * closes; `warned` is the text the user was already stopped for once.
@@ -48,15 +70,18 @@ function subloopId(config: unknown): string {
 interface IdDraft {
   /** The node id this draft was typed for; a draft for another id is stale. */
   for: string;
+  /** The store's `historyEpoch` it was typed in; an undo or redo since makes it stale too. */
+  epoch: number;
   value: string;
   error?: string | undefined;
   warned?: string | undefined;
 }
 
 /**
- * The editor of one node, in a modal dialog named "Edit <kind> <id>": id, label, the subloop
- * picker, the config form generated from the kind's schema, the node's issues, its connections
- * with the Connect form (the keyboard path for edges), and Delete node. Every edit goes to the
+ * The editor of one node, in a modal dialog named "Edit <kind> <id>": the node's issue badge beside
+ * the title (choosing an issue focuses its field), id, label, the subloop picker, the config form
+ * generated from the kind's schema, its connections with the Connect form (the keyboard path for
+ * edges), and Delete node. Opened at an issue (`openNode(id, { field })`), it focuses that field. Every edit goes to the
  * store as it is made (and autosaves from there), so closing never discards anything, with one
  * exception handled here: an id still being typed. A valid one is applied on close; an invalid one
  * keeps the dialog open once, with the reason, and is dropped if the user closes again.
@@ -76,14 +101,54 @@ export function NodeEditorDialog({
   notice?: ReactNode;
 }) {
   const fieldErrors = useEditorStore((s) => s.fieldErrors);
+  const nodeFocus = useEditorStore((s) => s.nodeFocus);
+  // Bumped by undo and redo: the config form remounts with the restored values.
+  const historyEpoch = useEditorStore((s) => s.historyEpoch);
+  const bodyRef = useRef<HTMLElement>(null);
   const [epoch, setEpoch] = useState(0);
-  const [idState, setIdState] = useState<IdDraft>({ for: node.id, value: node.id });
+  // Which of the config form's disclosures are open (Advanced, collapsed list items). Kept here,
+  // not in the form, so the remounts below (undo and redo, a subloop pick) keep what the user
+  // opened; the dialog is mounted per node and per opening, so another node starts collapsed.
+  const [openDisclosures, setOpenDisclosures] = useState<DisclosureStates>({});
+  const [disclosureIdentities] = useState(createDisclosureIdentities);
+  const disclosures = useMemo(
+    () => ({
+      open: openDisclosures,
+      setOpen: setOpenDisclosures,
+      identities: disclosureIdentities,
+    }),
+    [openDisclosures, disclosureIdentities],
+  );
+  const [idState, setIdState] = useState<IdDraft>({
+    for: node.id,
+    epoch: historyEpoch,
+    value: node.id,
+  });
   // After a rename the node has its new id, which the draft already holds.
-  const id: IdDraft = idState.for === node.id ? idState : { for: node.id, value: node.id };
+  const id: IdDraft =
+    idState.for === node.id && idState.epoch === historyEpoch
+      ? idState
+      : { for: node.id, epoch: historyEpoch, value: node.id };
   const { updateNode, removeNode, renameNode, closeNodeDialog, setFieldError } =
     useEditorStore.getState();
   const info = KIND_INFO[node.kind];
   const nodeIssues = issues.filter((i) => i.nodeId === node.id);
+  const labelIssue = nodeIssues.find((i) => i.path === 'label' && i.severity === 'error');
+  // The loop's errors about config fields (template and expression syntax, the API's checks), so
+  // a collapsed Advanced group or operation holding one says so.
+  const configProblems = nodeIssues.flatMap((i) =>
+    i.severity === 'error' && i.path?.startsWith('config.') ? [i.path.slice('config.'.length)] : [],
+  );
+
+  // Opened at an issue: focus its field once the form is in place (the dialog has focused its
+  // heading by now), then forget the request. The clear waits a task, so a Strict Mode replay of
+  // this effect still finds the request.
+  useEffect(() => {
+    if (nodeFocus?.nodeId !== node.id) return;
+    focusIssue(bodyRef.current, nodeFocus.field);
+    const timer = setTimeout(() => useEditorStore.getState().clearNodeFocus(), 0);
+    return () => clearTimeout(timer);
+  }, [nodeFocus, node.id]);
 
   const commitId = () => {
     const error = idProblem(id.value, node.id, definition);
@@ -109,6 +174,16 @@ export function NodeEditorDialog({
       open
       onClose={requestClose}
       icon={<KindChip kind={node.kind} />}
+      actions={
+        nodeIssues.length > 0 ? (
+          <IssueBadge
+            nodeId={node.id}
+            issues={nodeIssues}
+            onChoose={(issue) => focusIssue(bodyRef.current, issue.path)}
+            fallbackFocus={() => dialogHeading(bodyRef.current)}
+          />
+        ) : undefined
+      }
       title={
         <>
           Edit {info.label.toLowerCase()}{' '}
@@ -128,15 +203,20 @@ export function NodeEditorDialog({
         </>
       }
     >
-      <section aria-label="Node properties" className="grid gap-field">
+      <section ref={bodyRef} aria-label="Node properties" className="grid gap-field">
         {notice}
-        <div className="grid grid-cols-2 gap-3 max-sm:grid-cols-1">
-          <FieldGroup>
-            <Label htmlFor="node-id">Node id</Label>
+        <RequiredNote />
+        {/* Issue paths `id` and `label` name these fields (focus-field.ts). */}
+        <div data-field-scope="node" className="grid grid-cols-2 gap-3 max-sm:grid-cols-1">
+          <FieldGroup data-field="id">
+            <Label htmlFor="node-id" required>
+              Node id
+            </Label>
             <Input
               id="node-id"
               className="font-mono text-sm"
               value={id.value}
+              aria-required
               aria-invalid={id.error ? true : undefined}
               aria-describedby={id.error ? 'node-id-error' : undefined}
               onChange={(e) => setIdState({ ...id, value: e.target.value })}
@@ -151,13 +231,24 @@ export function NodeEditorDialog({
               </HelpText>
             ) : null}
           </FieldGroup>
-          <FieldGroup>
-            <Label htmlFor="node-label">Label</Label>
+          <FieldGroup data-field="label">
+            <Label htmlFor="node-label" required>
+              Label
+            </Label>
             <Input
               id="node-label"
+              aria-required
+              aria-invalid={labelIssue ? true : undefined}
+              aria-describedby={labelIssue ? 'node-label-error' : undefined}
               value={node.label}
               onChange={(e) => updateNode(node.id, { label: e.target.value })}
             />
+            {/* The loop's validation of the label (a blank one, say), beside the field too. */}
+            {labelIssue ? (
+              <HelpText id="node-label-error" role="alert" tone="bad">
+                {labelIssue.message}
+              </HelpText>
+            ) : null}
           </FieldGroup>
         </div>
         {node.kind === 'subloop' ? (
@@ -172,26 +263,33 @@ export function NodeEditorDialog({
             }}
           />
         ) : null}
-        {/* Not keyed by the node id: a rename keeps the form (and focus) where it is. */}
-        <SchemaForm
-          key={`${node.kind}:${epoch}`}
-          schema={NodeConfigSchemas[node.kind]}
-          value={node.config}
-          label={`${node.id} config`}
-          onChange={(config) => updateNode(node.id, { config })}
-          parseErrors={fieldErrors[`node:${node.id}`]}
-          onParseError={(path, error) => setFieldError(`node:${node.id}`, path, error)}
-        />
-        {nodeIssues.length > 0 ? (
-          <ul
-            className="list-disc pl-4 text-xs leading-snug text-status-bad-fg"
-            aria-label="Node issues"
+        {/* Not keyed by the node id: a rename keeps the form (and focus) where it is. Issue paths
+            `config.<path>` name its fields (focus-field.ts). */}
+        <div data-field-scope="config" className="grid min-w-0">
+          <CatalogWarningsContext
+            value={nodeIssues.map((issue) => ({
+              ...issue,
+              path: issue.path?.startsWith('config.')
+                ? issue.path.slice('config.'.length)
+                : issue.path,
+            }))}
           >
-            {nodeIssues.map((issue, index) => (
-              <li key={index}>{issue.message}</li>
-            ))}
-          </ul>
-        ) : null}
+            <SchemaForm
+              key={`${node.kind}:${epoch}:${historyEpoch}`}
+              schema={NodeConfigSchemas[node.kind]}
+              value={node.config}
+              label={`${node.id} config`}
+              controls={NODE_FIELD_CONTROLS}
+              problems={configProblems}
+              disclosures={disclosures}
+              onChange={(config, change) => updateNode(node.id, { config }, change)}
+              parseErrors={fieldErrors[`node:${node.id}`]}
+              onParseError={(path, error, reason, change) =>
+                setFieldError(`node:${node.id}`, path, error, reason, change)
+              }
+            />
+          </CatalogWarningsContext>
+        </div>
         <NodeConnections
           node={node}
           definition={definition}

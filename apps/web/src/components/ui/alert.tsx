@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { cn } from '../../lib/utils.js';
 import { Icon, type IconName } from '../icons/index.js';
 import type { Tone } from './badge.js';
+import { Button } from './button.js';
 
 const ALERT_TONES: Record<Tone, { box: string; accent: string; icon: IconName }> = {
   neutral: {
@@ -33,35 +34,52 @@ const ALERT_TONES: Record<Tone, { box: string; accent: string; icon: IconName }>
 
 /**
  * A tinted message with a tone edge and icon. `bad` is announced as an alert; the other tones are
- * polite status messages. A word too long for the line (a path, an id, a URL) breaks rather than
- * spilling out of the box.
+ * polite status messages. Set `onDismiss` to add a dismiss button. A word too long for the line (a
+ * path, an id, a URL) breaks rather than spilling out of the box.
  */
 export function Alert({
   tone = 'bad',
   title,
   className,
   children,
+  onDismiss,
 }: {
   tone?: Tone;
   title?: string;
   className?: string;
   children?: ReactNode;
+  onDismiss?: () => void;
 }) {
   const style = ALERT_TONES[tone];
   return (
     <div
       role={tone === 'bad' ? 'alert' : 'status'}
       className={cn(
-        'grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-0.5 rounded-md border-l-4 px-4 py-3',
+        cn(
+          'grid gap-x-3 gap-y-0.5 rounded-md border-l-4 px-4 py-3',
+          onDismiss ? 'grid-cols-[auto_minmax(0,1fr)_auto]' : 'grid-cols-[auto_minmax(0,1fr)]',
+        ),
         'min-w-0 text-sm leading-snug text-default wrap-anywhere',
         style.box,
         className,
       )}
     >
       <Icon name={style.icon} className={cn('row-span-2 mt-px size-[18px]', style.accent)} />
-      {title ? <p className={cn('font-semibold', style.accent)}>{title}</p> : null}
+      {title ? <p className={cn('col-start-2 font-semibold', style.accent)}>{title}</p> : null}
       {children !== undefined && children !== null ? (
-        <div className="min-w-0 [&_a]:text-link">{children}</div>
+        <div className="col-start-2 min-w-0 [&_a]:text-link">{children}</div>
+      ) : null}
+      {onDismiss ? (
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Dismiss notice"
+          data-alert-dismiss=""
+          className="-my-1.5 col-start-3 row-start-1 row-span-2 self-start"
+          onClick={onDismiss}
+        >
+          <Icon name="close" />
+        </Button>
       ) : null}
     </div>
   );

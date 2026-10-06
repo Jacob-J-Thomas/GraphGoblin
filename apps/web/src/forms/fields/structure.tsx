@@ -3,9 +3,37 @@
  * for their children, so they live in one module with it: the field families they draw on are
  * imported, never the other way round.
  */
-import { useId } from 'react';
+import {
+  use,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type ComponentProps,
+  type ReactNode,
+} from 'react';
+import { useWatch } from 'react-hook-form';
 import { Icon } from '../../components/icons/index.js';
-import { Button, Checkbox, Input, Label, Select } from '../../components/ui/index.js';
+import {
+  Badge,
+  Button,
+  CHECKBOX_LABEL,
+  Checkbox,
+  Disclosure,
+  Fieldset,
+  FieldGroup,
+  HelpText,
+  Input,
+  Label,
+  Legend,
+  RequiredMarker,
+  Select,
+} from '../../components/ui/index.js';
+import { cn } from '../../lib/utils.js';
+import { useFormChange } from '../changes.js';
+import { useCollectionIdentities, useDisclosureState, useDisclosureStore } from '../disclosures.js';
+import { labelOf } from '../layout.js';
+import { repathParseErrors, useParseErrors } from '../parse-errors.js';
 import {
   humanize,
   initialValue,
@@ -16,21 +44,47 @@ import {
   type FieldShape,
   type Schema,
 } from '../introspect.js';
-import { BooleanField, EnumField, LiteralField } from './choice.js';
-import { JsonField, JsonText } from './json.js';
+import { BooleanField, EnumField, LiteralField, NOT_SET } from './choice.js';
+import { useCollectionFocus } from './collection.js';
+import { JsonControl, JsonField } from './json.js';
 import {
-  FIELDSET,
+  FieldControlsContext,
   FieldError,
+  FieldHelp,
+  fieldMeta,
   joinPath,
-  LEGEND,
   useCollectionField,
   useField,
+  useFieldControl,
+  useFieldErrorMessage,
+  useProblemCount,
+  type FieldControl,
+  type FieldControls,
   type FieldProps,
 } from './shared.js';
-import { NumberField, StringField } from './text.js';
+import { NumberField, StringControl, StringField } from './text.js';
+import { stripUnset } from '../unset.js';
 
-/** Dispatch on the schema's shape. */
-export function Field({ schema, name, label }: FieldProps) {
+/**
+ * A field: the control registered under its metadata's `control` name (SchemaForm's `controls`),
+ * else the default renderer for its shape.
+ */
+export function Field(props: FieldProps) {
+  const controls = use(FieldControlsContext);
+  const name = fieldMeta(props.schema).control;
+  // Only the registry's own entries: a name such as `toString` is not a registered control.
+  const Control = name !== undefined && Object.hasOwn(controls, name) ? controls[name] : undefined;
+  return Control ? <Control {...props} /> : <DefaultField {...props} />;
+}
+
+/** The control registered under the field's metadata `control` name, if any (as `Field` finds it). */
+function controlFor(controls: FieldControls, schema: Schema): FieldControl | undefined {
+  const name = fieldMeta(schema).control;
+  return name !== undefined && Object.hasOwn(controls, name) ? controls[name] : undefined;
+}
+
+/** The default renderer: dispatch on the schema's shape. */
+export function DefaultField({ schema, name, label, bare }: FieldProps) {
   const shape = shapeOf(schema);
   switch (shape.kind) {
     case 'string':
@@ -44,13 +98,15 @@ export function Field({ schema, name, label }: FieldProps) {
     case 'literal':
       return <LiteralField name={name} label={label} value={shape.value} />;
     case 'object':
-      return <ObjectField schema={schema} name={name} label={label} shape={shape.shape} />;
+      return (
+        <ObjectField schema={schema} name={name} label={label} shape={shape.shape} bare={bare} />
+      );
     case 'array':
       return <ArrayField schema={schema} name={name} label={label} shape={shape} />;
     case 'record':
       return <RecordField schema={schema} name={name} label={label} shape={shape} />;
     case 'union':
-      return <UnionField schema={schema} name={name} label={label} shape={shape} />;
+      return <UnionField schema={schema} name={name} label={label} shape={shape} bare={bare} />;
     case 'json':
       return <JsonField schema={schema} name={name} label={label} />;
   }
@@ -60,19 +116,64 @@ function ObjectBody({
   shape,
   name,
   skip,
+  only,
+  absentParent,
 }: {
   shape: Record<string, Schema>;
   name: string;
   skip?: string | undefined;
+  /** Draw only these keys (the object is absent and they are drawn without it). */
+  only?: readonly string[] | undefined;
+  absentParent?: FieldProps['absentParent'];
 }) {
   return (
     <>
       {Object.entries(shape)
-        .filter(([key]) => key !== skip)
+        .filter(([key]) => key !== skip && (only === undefined || only.includes(key)))
         .map(([key, child]) => (
-          <Field key={key} schema={child} name={joinPath(name, key)} label={humanize(key)} />
+          // Keyed by the key, so a field drawn while the object is absent stays the same element
+          // (and keeps focus) when the object is added.
+          <Field
+            key={key}
+            schema={child}
+            name={joinPath(name, key)}
+            label={labelOf(key, child)}
+            absentParent={absentParent}
+          />
         ))}
     </>
+  );
+}
+
+/**
+ * A group's frame: a bordered fieldset named by its legend, or, `bare` inside a frame that already
+ * names it (a collapsible list item), a borderless one whose legend only assistive technology reads.
+ */
+function GroupFrame({
+  name,
+  label,
+  bare,
+  helpId,
+  help,
+  children,
+}: {
+  name: string;
+  label: string;
+  bare?: boolean | undefined;
+  helpId?: string | undefined;
+  help?: string | undefined;
+  children: ReactNode;
+}) {
+  return (
+    <Fieldset
+      data-field={name}
+      className={bare ? 'border-0 p-0' : undefined}
+      aria-describedby={help !== undefined ? helpId : undefined}
+    >
+      <Legend className={bare ? 'sr-only' : undefined}>{label}</Legend>
+      {helpId !== undefined ? <FieldHelp id={helpId} help={help} /> : null}
+      {children}
+    </Fieldset>
   );
 }
 
@@ -81,34 +182,101 @@ function ObjectField({
   name,
   label,
   shape,
+  bare,
 }: FieldProps & { shape: Record<string, Schema> }) {
-  const field = useField(name);
+  const field = useField(name, 'commit');
+  const helpId = `${useId()}-help`;
+  const controls = use(FieldControlsContext);
   const { optional, hasDefault, base } = unwrap(schema);
-  const absent = field.value === undefined || field.value === null;
-  if (optional && !hasDefault && absent) {
+  const { help } = fieldMeta(schema);
+  const removable = optional && !hasDefault;
+  const missing = removable && (field.value === undefined || field.value === null);
+  // Fields whose registered control is drawn even while this object is absent (#43's classifier).
+  const standalone = removable
+    ? Object.keys(shape).filter((key) => controlFor(controls, shape[key]!)?.drawsWithoutParent)
+    : [];
+  const parseErrors = useParseErrors();
+  const change = useFormChange();
+  if (missing && standalone.length === 0) {
     return (
       <div data-field={name}>
-        <Button size="sm" variant="outline" onClick={() => field.onChange(initialValue(base))}>
+        <AddButton onClick={() => field.onChange(initialValue(base))}>
           Add {label.toLowerCase()}
-        </Button>
+        </AddButton>
       </div>
     );
   }
+  // Absent with standalone fields: the same frame shows them and an Add for the rest, so adding
+  // the object (by Add, or by choosing in such a field) keeps those fields' elements and focus.
   return (
-    <fieldset className={FIELDSET} data-field={name}>
-      <legend className={LEGEND}>{label}</legend>
-      {optional && !hasDefault ? (
+    <GroupFrame name={name} label={label} bare={bare} helpId={helpId} help={help}>
+      {removable && !missing ? (
         <div>
-          <Button size="sm" variant="ghost" onClick={() => field.onChange(undefined)}>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() =>
+              // One step: the object and the unparsed text inside it go together.
+              change({ path: name, kind: 'commit' }, () => {
+                repathParseErrors(parseErrors, [{ from: name }]);
+                field.onChange(undefined);
+              })
+            }
+          >
+            <Icon name="close" />
             Remove {label.toLowerCase()}
           </Button>
         </div>
       ) : null}
-      <ObjectBody shape={shape} name={name} />
-      <FieldError name={name} />
-    </fieldset>
+      <ObjectBody
+        shape={shape}
+        name={name}
+        only={missing ? standalone : undefined}
+        absentParent={
+          missing ? { name, initial: initialValue(base) as Record<string, unknown> } : undefined
+        }
+      />
+      {missing ? (
+        <div>
+          <AddButton onClick={() => field.onChange(initialValue(base))}>
+            Add {label.toLowerCase()} options
+          </AddButton>
+        </div>
+      ) : (
+        <FieldError name={name} />
+      )}
+    </GroupFrame>
   );
 }
+
+/** Adds an item, an entry, or an optional group: a secondary button with a plus. */
+function AddButton({ children, ...props }: ComponentProps<typeof Button>) {
+  return (
+    <Button size="sm" variant="secondary" {...props}>
+      <Icon name="plus" />
+      {children}
+    </Button>
+  );
+}
+
+/**
+ * Removes one row of a collection: an icon button named for the row ("Remove args 2"), beside the
+ * row's controls, so Tab reaches it after them, as it reads.
+ */
+function RemoveButton(props: { 'aria-label': string; onClick: () => void }) {
+  return (
+    <Button size="icon" variant="ghost" {...props}>
+      <Icon name="close" />
+    </Button>
+  );
+}
+
+/** One row of a collection, on a left rail: the row's fields, then its Remove button. */
+const COLLECTION_ROW =
+  'grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-x-2 gap-y-1.5 border-l-2 border-default pl-3';
+
+/** One collapsible row of a list (`collapseItems`), on the same rail; its header holds Remove. */
+const COLLAPSIBLE_ROW = 'grid min-w-0 border-l-2 border-default pl-2';
 
 function ArrayField({
   schema,
@@ -122,6 +290,43 @@ function ArrayField({
     Array.isArray(value) ? value : Array.isArray(defaultValue) ? defaultValue : [];
   const items = itemsOf(field.value);
   const element = shapeOf(shape.element);
+  const parseErrors = useParseErrors();
+  const change = useFormChange();
+  const focus = useCollectionFocus();
+  const identities = useCollectionIdentities();
+  const rowIds = identities.get(name, items.length);
+  const [openedWith] = useState(() => new Set(rowIds));
+  const { required, help, collapseItems } = fieldMeta(schema);
+  const collapsible = collapseItems === true && element.kind === 'union';
+  const disclosures = useDisclosureStore();
+  const remove = (index: number) => {
+    const current = itemsOf(field.read());
+    // The row goes; the rows after it move up one, with their unparsed text and open state.
+    const moves = current.slice(index).map((_, offset) => ({
+      from: joinPath(name, index + offset),
+      ...(offset === 0 ? {} : { to: joinPath(name, index + offset - 1) }),
+    }));
+    // One step: the row, and the unparsed text of the rows after it.
+    change({ path: name, kind: 'commit' }, () => {
+      identities.remove(name, index);
+      repathParseErrors(parseErrors, moves);
+      field.onChange(current.filter((_, i) => i !== index));
+    });
+    focus.announce(`Removed ${label.toLowerCase()} ${index + 1}`);
+  };
+  const add = () => {
+    const current = itemsOf(field.read());
+    identities.add(name);
+    field.onChange([...current, initialValue(shape.element)]);
+    // An added item starts open, and stays open when the form remounts (an undo elsewhere).
+    if (collapsible) disclosures.open(joinPath(name, current.length));
+    focus.announce(`Added ${label.toLowerCase()} ${current.length + 1}`, current.length);
+  };
+  const rule =
+    element.kind === 'enum'
+      ? choicesRule(shape.min, shape.max, element.options.length)
+      : itemsRule(shape.min);
+  const group = useGroupDescription(name, help, rule);
 
   if (element.kind === 'enum') {
     const toggle = (option: string, on: boolean) => {
@@ -130,24 +335,17 @@ function ArrayField({
       field.onChange(next);
     };
     return (
-      <fieldset className="grid gap-2" data-field={name}>
-        <legend className="mb-2 text-sm font-medium">{label}</legend>
-        <div className="flex flex-wrap gap-x-4 gap-y-2">
-          {element.options.map((option) => (
-            <label
-              key={option}
-              className="flex cursor-pointer items-center gap-2 font-mono text-sm font-medium"
-            >
-              <Checkbox
-                checked={items.includes(option)}
-                onChange={(e) => toggle(option, e.target.checked)}
-              />
-              {option}
-            </label>
-          ))}
-        </div>
-        <FieldError name={name} />
-      </fieldset>
+      <EnumSetField
+        name={name}
+        label={label}
+        required={required}
+        help={help}
+        rule={rule}
+        group={group}
+        options={element.options}
+        chosen={items}
+        toggle={toggle}
+      />
     );
   }
 
@@ -155,57 +353,204 @@ function ArrayField({
     // Item fields bind to paths inside the value; drawing them over a default the value does not
     // hold yet would make them validate `undefined`. Show the default and copy it on request.
     return (
-      <fieldset className={FIELDSET} data-field={name}>
-        <legend className={LEGEND}>{label}</legend>
+      <Fieldset data-field={name}>
+        <Legend>{label}</Legend>
         <p className="text-xs text-muted">
           Default: <code className="text-default">{JSON.stringify(defaultValue)}</code>
         </p>
         <div>
           <Button
             size="sm"
-            variant="outline"
+            variant="secondary"
             onClick={() => field.onChange(structuredClone(defaultValue))}
           >
+            <Icon name="edit" />
             Customize {label.toLowerCase()}
           </Button>
         </div>
-      </fieldset>
+      </Fieldset>
     );
   }
   const canAdd = shape.max === undefined || items.length < shape.max;
+  // A row holding a group of fields keeps Remove at its foot, after them; a row holding one
+  // control keeps Remove beside that control (below the row's label).
+  const compound = ['object', 'array', 'record', 'union'].includes(element.kind);
   return (
-    <fieldset className={FIELDSET} data-field={name}>
-      <legend className={LEGEND}>{label}</legend>
-      {items.map((_, index) => (
-        <div key={index} className="grid gap-2 border-l-2 border-default pl-3">
-          <Field
-            schema={shape.element}
-            name={joinPath(name, index)}
-            label={`${label} ${index + 1}`}
+    <Fieldset ref={focus.ref} tabIndex={-1} data-field={name} aria-describedby={group.describedBy}>
+      <GroupLegend label={label} required={required} />
+      <GroupText group={group} help={help} rule={rule} />
+      {items.map((_, index) => {
+        const removeButton = (
+          <RemoveButton
+            aria-label={`Remove ${label.toLowerCase()} ${index + 1}`}
+            onClick={() => remove(index)}
           />
-          <div>
-            <Button
-              size="sm"
-              variant="ghost"
-              aria-label={`Remove ${label.toLowerCase()} ${index + 1}`}
-              onClick={() => field.onChange(itemsOf(field.read()).filter((__, i) => i !== index))}
-            >
-              Remove
-            </Button>
+        );
+        return collapsible ? (
+          <div
+            key={rowIds[index]}
+            data-collection-row={index}
+            data-row-id={rowIds[index]}
+            data-row-path={joinPath(name, index)}
+            className={COLLAPSIBLE_ROW}
+          >
+            <CollapsibleItem
+              element={shape.element}
+              name={joinPath(name, index)}
+              label={`${label} ${index + 1}`}
+              defaultOpen={!openedWith.has(rowIds[index]!)}
+              remove={removeButton}
+            />
           </div>
-        </div>
-      ))}
+        ) : (
+          <div
+            key={rowIds[index]}
+            data-collection-row={index}
+            data-row-id={rowIds[index]}
+            data-row-path={joinPath(name, index)}
+            className={COLLECTION_ROW}
+          >
+            <Field
+              schema={shape.element}
+              name={joinPath(name, index)}
+              label={`${label} ${index + 1}`}
+            />
+            <div className={compound ? 'self-end' : 'mt-6'}>{removeButton}</div>
+          </div>
+        );
+      })}
       <div>
-        <Button
-          size="sm"
-          variant="outline"
-          disabled={!canAdd}
-          onClick={() => field.onChange([...itemsOf(field.read()), initialValue(shape.element)])}
-        >
+        <AddButton ref={focus.addRef} disabled={!canAdd} onClick={add}>
           Add {label.toLowerCase()}
-        </Button>
+        </AddButton>
       </div>
-      <FieldError name={name} />
+      <FieldError name={name} id={group.ids.error} />
+      {focus.status}
+    </Fieldset>
+  );
+}
+
+/** How many items a list needs, when it needs any: "At least 2 items." */
+function itemsRule(min: number | undefined): string | undefined {
+  if (min === undefined || min < 1) return undefined;
+  return `At least ${min} ${min === 1 ? 'item' : 'items'}.`;
+}
+
+/**
+ * How many members of an enum a set takes, when that limits the choice: "Choose at least 1.",
+ * "Choose at most 2.", or both. A maximum of every member limits nothing.
+ */
+function choicesRule(min: number | undefined, max: number | undefined, count: number) {
+  const parts = [
+    ...(min !== undefined && min >= 1 ? [`at least ${min}`] : []),
+    ...(max !== undefined && max < count ? [`at most ${max}`] : []),
+  ];
+  return parts.length === 0 ? undefined : `Choose ${parts.join(' and ')}.`;
+}
+
+/**
+ * Ids for a group's (an array's, a record's, a set of choices') help, rule, and error text, and the
+ * description that links them to the group. A group takes no `aria-required` (it is no form
+ * control); its legend shows the marker and the rule says what it needs.
+ */
+function useGroupDescription(name: string, help: string | undefined, rule: string | undefined) {
+  const id = useId();
+  const message = useFieldErrorMessage(name);
+  const ids = { help: `${id}-help`, rule: `${id}-rule`, error: `${id}-error` };
+  const describedBy =
+    cn(rule !== undefined && ids.rule, help !== undefined && ids.help, message && ids.error) ||
+    undefined;
+  return { ids, describedBy };
+}
+
+type GroupDescription = ReturnType<typeof useGroupDescription>;
+
+/** A group's legend with the required marker after it (outside its accessible name). */
+function GroupLegend({
+  label,
+  required,
+  variant = 'group',
+}: {
+  label: string;
+  required: boolean;
+  variant?: 'group' | 'label';
+}) {
+  return (
+    <Legend variant={variant}>
+      {label}
+      {required ? (
+        <>
+          {' '}
+          <RequiredMarker />
+        </>
+      ) : null}
+    </Legend>
+  );
+}
+
+/** A group's rule ("At least 2 items.") and help, under its legend. */
+function GroupText({
+  group,
+  help,
+  rule,
+}: {
+  group: GroupDescription;
+  help: string | undefined;
+  rule: string | undefined;
+}) {
+  return (
+    <>
+      {rule === undefined ? null : <HelpText id={group.ids.rule}>{rule}</HelpText>}
+      <FieldHelp id={group.ids.help} help={help} />
+    </>
+  );
+}
+
+/**
+ * An array of enum members as a group of checkboxes, one per member, named by its legend and
+ * described by its rule, help, and error text. The group, not each checkbox, is marked required.
+ */
+function EnumSetField({
+  name,
+  label,
+  required,
+  help,
+  rule,
+  group,
+  options,
+  chosen,
+  toggle,
+}: {
+  name: string;
+  label: string;
+  required: boolean;
+  help: string | undefined;
+  rule: string | undefined;
+  group: GroupDescription;
+  options: string[];
+  chosen: unknown[];
+  toggle: (option: string, on: boolean) => void;
+}) {
+  return (
+    <fieldset
+      className="grid min-w-0 gap-1.5"
+      data-field={name}
+      aria-describedby={group.describedBy}
+    >
+      <GroupLegend label={label} required={required} variant="label" />
+      <div className="flex flex-wrap gap-x-5 gap-y-2">
+        {options.map((option) => (
+          <label key={option} className={cn(CHECKBOX_LABEL, 'font-mono text-sm font-medium')}>
+            <Checkbox
+              checked={chosen.includes(option)}
+              onChange={(e) => toggle(option, e.target.checked)}
+            />
+            {option}
+          </label>
+        ))}
+      </div>
+      <GroupText group={group} help={help} rule={rule} />
+      <FieldError name={name} id={group.ids.error} />
     </fieldset>
   );
 }
@@ -224,68 +569,204 @@ function RecordField({
   const entries = Object.entries(record);
   const currentEntries = () => Object.entries(recordOf(field.read()));
   const valueShape = shapeOf(shape.value);
+  const parseErrors = useParseErrors();
+  const change = useFormChange();
+  const focus = useCollectionFocus();
+  const [rowIds, setRowIds] = useState(() => new Map(entries.map(([key], i) => [key, i])));
+  const nextIdRef = useRef(entries.length);
   const commit = (next: [string, unknown][]) =>
     field.onChange(next.length === 0 && optional ? undefined : Object.fromEntries(next));
-  const rename = (index: number, key: string) =>
-    commit(currentEntries().map((entry, i) => (i === index ? [key, entry[1]] : entry)));
-  const setValue = (index: number, value: unknown) =>
-    commit(currentEntries().map((entry, i) => (i === index ? [entry[0], value] : entry)));
+  const rename = (oldKey: string, key: string): boolean => {
+    const current = currentEntries();
+    if (current.some(([existing]) => existing === key && existing !== oldKey)) return false;
+    // Typing in the row's key input: the key changes with each keystroke, so the row names it.
+    change({ path: `${name}#key${rowIds.get(oldKey)}`, kind: 'typing' }, () => {
+      repathParseErrors(parseErrors, [
+        { from: joinPath(name, oldKey), to: joinPath(name, key), exact: true },
+      ]);
+      commit(current.map((entry) => (entry[0] === oldKey ? [key, entry[1]] : entry)));
+    });
+    setRowIds((ids) => {
+      const next = new Map(ids);
+      const id = next.get(oldKey)!;
+      next.delete(oldKey);
+      next.set(key, id);
+      return next;
+    });
+    return true;
+  };
+  // Typing in an entry's value: a field of its own, at `<record>.<key>`.
+  const setValue = (index: number, key: string, value: unknown) =>
+    change({ path: joinPath(name, key), kind: 'typing' }, () =>
+      commit(currentEntries().map((entry, i) => (i === index ? [entry[0], value] : entry))),
+    );
   const add = () => {
     const current = recordOf(field.read());
     const currentRows = Object.entries(current);
     let n = currentRows.length + 1;
     while (`key${n}` in current) n += 1;
-    commit([
-      ...currentRows,
-      [`key${n}`, valueShape.kind === 'string' ? '' : initialValue(shape.value)],
-    ]);
+    const key = `key${n}`;
+    const id = nextIdRef.current++;
+    setRowIds((ids) => new Map(ids).set(key, id));
+    commit([...currentRows, [key, valueShape.kind === 'string' ? '' : initialValue(shape.value)]]);
+    focus.announce(`Added ${label.toLowerCase()} ${key}`, currentRows.length);
   };
+  const remove = (key: string) => {
+    // One step: the entry and its unparsed text.
+    change({ path: name, kind: 'commit' }, () => {
+      repathParseErrors(parseErrors, [{ from: joinPath(name, key), exact: true }]);
+      commit(currentEntries().filter(([existing]) => existing !== key));
+    });
+    setRowIds((ids) => {
+      const next = new Map(ids);
+      next.delete(key);
+      return next;
+    });
+    focus.announce(`Removed ${label.toLowerCase()} ${key}`);
+  };
+  const { required, help } = fieldMeta(schema);
+  const group = useGroupDescription(name, help, undefined);
   return (
-    <fieldset className={FIELDSET} data-field={name}>
-      <legend className={LEGEND}>{label}</legend>
+    <Fieldset ref={focus.ref} tabIndex={-1} data-field={name} aria-describedby={group.describedBy}>
+      <GroupLegend label={label} required={required} />
+      <GroupText group={group} help={help} rule={undefined} />
       {entries.map(([key, value], index) => (
-        <div key={index} className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
-          <Input
-            aria-label={`${label} key ${index + 1}`}
-            className="font-mono text-sm"
+        <div key={rowIds.get(key)} data-collection-row={index} className={COLLECTION_ROW}>
+          <RecordKey
+            label={`${label} key ${index + 1}`}
             value={key}
-            onChange={(e) => rename(index, e.target.value)}
+            rename={(next) => rename(key, next)}
+            otherKeys={entries.filter(([other]) => other !== key).map(([other]) => other)}
+            announce={(message) => focus.announce(message, undefined, false)}
           />
-          <Button
-            size="icon"
-            variant="ghost"
-            className="col-start-2 row-start-1"
-            aria-label={`Remove ${label.toLowerCase()} ${key}`}
-            onClick={() => commit(currentEntries().filter((_, i) => i !== index))}
-          >
-            <Icon name="close" />
-          </Button>
+          {/* Beside the key, and before the value in the reading and Tab order. */}
+          <div className="col-start-2 row-start-1 mt-6">
+            <RemoveButton
+              aria-label={`Remove ${label.toLowerCase()} ${key}`}
+              onClick={() => remove(key)}
+            />
+          </div>
+          {/* The value is a field of its own at `<record>.<key>`: its marker, help, error, and
+              unparsed JSON all follow that path, so a rename or removal moves them with the row. */}
           <div className="col-span-2 col-start-1 row-start-2 min-w-0">
-            {valueShape.kind === 'string' ? (
-              <Input
-                aria-label={`${label} value ${index + 1}`}
-                className="font-mono text-sm"
-                value={typeof value === 'string' ? value : ''}
-                onChange={(e) => setValue(index, e.target.value)}
-              />
-            ) : (
-              <JsonText
-                path={joinPath(name, key)}
-                label={`${label} value ${index + 1}`}
-                value={value}
-                onChange={(v) => setValue(index, v)}
-              />
-            )}
+            <RecordValue
+              schema={shape.value}
+              name={joinPath(name, key)}
+              label={`${label} value ${index + 1}`}
+              value={value}
+              onChange={(next) => setValue(index, key, next)}
+            />
           </div>
         </div>
       ))}
       <div>
-        <Button size="sm" variant="outline" onClick={add}>
+        <AddButton ref={focus.addRef} onClick={add}>
           Add entry
-        </Button>
+        </AddButton>
       </div>
-      <FieldError name={name} />
-    </fieldset>
+      <FieldError name={name} id={group.ids.error} />
+      {focus.status}
+    </Fieldset>
+  );
+}
+
+/**
+ * One record entry's value, drawn by the same field renderers as any other field over the value
+ * the record hands it: a string as an input or a template or expression editor, anything else as
+ * JSON. Its visible caption is "Value"; its accessible name says which record and row.
+ */
+function RecordValue({
+  schema,
+  name,
+  label,
+  value,
+  onChange,
+}: {
+  schema: Schema;
+  name: string;
+  label: string;
+  value: unknown;
+  onChange: (value: unknown) => void;
+}) {
+  const shape = shapeOf(schema);
+  return shape.kind === 'string' ? (
+    <StringControl
+      schema={schema}
+      shape={shape}
+      name={name}
+      label={label}
+      caption="Value"
+      value={value}
+      onChange={onChange}
+    />
+  ) : (
+    <JsonControl
+      schema={schema}
+      name={name}
+      label={label}
+      caption="Value"
+      value={value}
+      onChange={onChange}
+    />
+  );
+}
+
+/** A rejected rename keeps its draft text while the record keeps both committed values. */
+function RecordKey({
+  label,
+  value,
+  rename,
+  otherKeys,
+  announce,
+}: {
+  label: string;
+  value: string;
+  rename: (next: string) => boolean;
+  otherKeys: string[];
+  announce: (message: string) => void;
+}) {
+  const id = useId();
+  const inputId = `${id}-key`;
+  const [text, setText] = useState(value);
+  const error = otherKeys.includes(text)
+    ? `Key "${text}" already exists. Choose a unique key.`
+    : undefined;
+  const announcedErrorRef = useRef(false);
+  useEffect(() => {
+    if (error && !announcedErrorRef.current) announce(`Key "${text}" already exists`);
+    announcedErrorRef.current = error !== undefined;
+  }, [error, text, announce]);
+  return (
+    <FieldGroup>
+      {/* A short caption over the key; the input's accessible name says which record and row. */}
+      <Label htmlFor={inputId}>Key</Label>
+      <Input
+        id={inputId}
+        aria-label={label}
+        className="font-mono text-sm"
+        value={text}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? id : undefined}
+        onChange={(event) => {
+          const next = event.target.value;
+          setText(next);
+          rename(next);
+        }}
+        onBlur={() => {
+          if (error) {
+            setText(value);
+            announce(`Reverted key to "${value}": "${text}" already exists`);
+          } else if (text !== value) {
+            rename(text);
+          }
+        }}
+      />
+      {error ? (
+        <HelpText id={id} tone="bad">
+          {error}
+        </HelpText>
+      ) : null}
+    </FieldGroup>
   );
 }
 
@@ -294,42 +775,148 @@ function UnionField({
   name,
   label,
   shape,
+  bare,
 }: FieldProps & { shape: Extract<FieldShape, { kind: 'union' }> }) {
-  const field = useField(name);
+  const field = useField(name, 'commit');
   const id = useId();
+  const parseErrors = useParseErrors();
+  const change = useFormChange();
   const { optional, hasDefault, defaultValue } = unwrap(schema);
   const value: unknown = field.value === undefined && hasDefault ? defaultValue : field.value;
   const unset = value === undefined;
   const index = matchOption(shape.options, value, shape.discriminator);
   const option = shape.options[index] as Schema;
   const optionShape = shapeOf(option);
+  // The variant picker is the union's own control: it carries the marker, the help, and the error.
+  const { required, help } = fieldMeta(schema);
+  const { control, helpId, errorId } = useFieldControl(name, id, {
+    help: help !== undefined,
+    required,
+  });
   return (
-    <fieldset className={FIELDSET} data-field={name}>
-      <legend className={LEGEND}>{label}</legend>
-      <div className="grid gap-1.5">
-        <Label htmlFor={id}>{shape.discriminator ? humanize(shape.discriminator) : 'Kind'}</Label>
+    <GroupFrame name={name} label={label} bare={bare}>
+      <FieldGroup>
+        <Label htmlFor={id} required={required}>
+          {shape.discriminator ? humanize(shape.discriminator) : 'Kind'}
+        </Label>
         <Select
-          id={id}
+          {...control}
           value={unset ? '' : String(index)}
           onChange={(e) => {
-            if (e.target.value === '') return field.onChange(undefined);
-            field.onChange(initialValue(shape.options[Number(e.target.value)] as Schema));
+            const chosen = e.target.value;
+            // One step: the variant and the unparsed text of the fields it replaces.
+            change({ path: name, kind: 'commit' }, () => {
+              repathParseErrors(parseErrors, [{ from: name }]);
+              field.onChange(
+                chosen === '' ? undefined : initialValue(shape.options[Number(chosen)] as Schema),
+              );
+            });
           }}
         >
-          {optional && !hasDefault ? <option value="">(not set)</option> : null}
+          {optional && !hasDefault ? <option value="">{NOT_SET}</option> : null}
           {shape.options.map((o, i) => (
             <option key={i} value={i}>
               {optionLabel(o, shape.discriminator)}
             </option>
           ))}
         </Select>
-      </div>
+        <FieldHelp id={helpId} help={help} />
+      </FieldGroup>
       {unset ? null : optionShape.kind === 'object' ? (
         <ObjectBody shape={optionShape.shape} name={name} skip={shape.discriminator} />
       ) : optionShape.kind === 'literal' ? null : (
         <Field schema={option} name={name} label="Value" />
       )}
-      <FieldError name={name} />
-    </fieldset>
+      <FieldError name={name} id={errorId} />
+    </GroupFrame>
+  );
+}
+
+/**
+ * The one-line summary of a list item of a discriminated union: its kind (the tag's value) and its
+ * path, or whatever its first short text says ("set /vars/topic", "drop messages").
+ */
+export function itemSummary(
+  element: Schema,
+  value: unknown,
+): { kind: string; detail: string | undefined } | undefined {
+  const shape = shapeOf(element);
+  if (shape.kind !== 'union' || !shape.discriminator) return undefined;
+  if (typeof value !== 'object' || value === null) return undefined;
+  const record = value as Record<string, unknown>;
+  const kind = record[shape.discriminator];
+  if (typeof kind !== 'string') return undefined;
+  const option = shapeOf(shape.options[matchOption(shape.options, value, shape.discriminator)]!);
+  const keys = option.kind === 'object' ? Object.keys(option.shape) : [];
+  const detail = keys
+    .filter((key) => key !== shape.discriminator)
+    .map((key) => record[key])
+    .find(
+      (item): item is string | number =>
+        (typeof item === 'string' && item.trim() !== '') || typeof item === 'number',
+    );
+  return { kind, detail: detail === undefined ? undefined : String(detail) };
+}
+
+/**
+ * One item of a list whose items collapse (`collapseItems`): a disclosure whose header names the
+ * item, summarises it (its kind and path), and flags its problems while it is collapsed, with the
+ * item's Remove button beside it. Items there when the form opened start collapsed; added ones
+ * start open.
+ */
+function CollapsibleItem({
+  element,
+  name,
+  label,
+  defaultOpen,
+  remove,
+}: {
+  element: Schema;
+  name: string;
+  label: string;
+  defaultOpen: boolean;
+  remove: ReactNode;
+}) {
+  const value: unknown = useWatch({ name });
+  const summary = itemSummary(element, stripUnset(value));
+  const problems = useProblemCount([name]);
+  // The path resolves to a stable row id, so a removal and history travel keep its own state.
+  const state = useDisclosureState(name, defaultOpen);
+  return (
+    <Disclosure
+      variant="row"
+      {...state}
+      label={<span className="font-medium">{label}</span>}
+      summary={
+        <>
+          {summary ? (
+            <span className="flex min-w-0 items-baseline gap-1.5 font-mono text-xs">
+              <code className="rounded-sm bg-surface-sunken px-1 text-default">{summary.kind}</code>
+              {summary.detail === undefined ? null : (
+                <>
+                  {' '}
+                  <span className="min-w-0 truncate text-muted">{summary.detail}</span>
+                </>
+              )}
+            </span>
+          ) : null}{' '}
+          <ProblemBadge count={problems} />
+        </>
+      }
+      actions={remove}
+    >
+      <Field schema={element} name={name} label={label} bare />
+    </Disclosure>
+  );
+}
+
+/** "1 error", "3 errors" on the bad tone, with its glyph; nothing when there are none. */
+export function ProblemBadge({ count }: { count: number }) {
+  if (count === 0) return null;
+  return (
+    <Badge size="sm" tone="bad">
+      <Icon name="alert" />
+      {count} {count === 1 ? 'error' : 'errors'}
+    </Badge>
   );
 }

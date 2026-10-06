@@ -1,12 +1,43 @@
 import { GraphGoblinApiError, loops, type GraphGoblinClient } from '@graphgoblin/api-client';
 import type { LoopDefinitionInput } from '@graphgoblin/contracts';
+import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef } from 'react';
-import { recordServerSave, saveLocalDraft } from '../drafts/local-drafts.js';
+import { keys } from '../api/queries.js';
+import {
+  deviceStorageProblem,
+  recordServerSave,
+  saveLocalDraft,
+  subscribeDeviceStorage,
+} from '../drafts/local-drafts.js';
+import { markApiUnreachable, subscribeApiRecovery } from '../lib/reachability.js';
 import { errorMessage, isOfflineError } from '../lib/utils.js';
 import { validateDraft } from './model.js';
 import { useEditorStore } from './store.js';
 
 export const AUTOSAVE_DELAY_MS = 600;
+
+/**
+ * Write the editor's current edits to this device as its unsynced copy, and record the revision
+ * there once the write succeeds. A refused write leaves the edits in memory; the device storage's
+ * state (`deviceStorageProblem`) says why, and the editor reports it.
+ */
+function mirror(): void {
+  const { loopId, definition, revision, generation, baseToken } = useEditorStore.getState();
+  if (!loopId || !definition) return;
+  void saveLocalDraft({
+    loopId,
+    definition,
+    savedAt: new Date().toISOString(),
+    synced: false,
+    ...(baseToken ? { baseToken } : {}),
+  }).then(
+    () => {
+      const now = useEditorStore.getState();
+      if (now.loopId === loopId && now.generation === generation) now.setDeviceRevision(revision);
+    },
+    () => undefined,
+  );
+}
 
 /** One chain of draft saves per loop: requests for a loop never overlap or complete out of order. */
 const queues = new Map<string, Promise<unknown>>();
@@ -31,6 +62,8 @@ export function serializeSave<T>(loopId: string, job: () => Promise<T>): Promise
  * After the server accepted a save: advance the loop's token, whether or not the editor that sent
  * it is still open, and record it on the device copy (`recordServerSave`). A newer edit mirrored
  * since the save started stays unsynced and keeps winning on the next load, now based on `token`.
+ * The server holds the draft whether or not this device can record that: a device storage failure
+ * is reported as its own notice (`deviceStorageProblem`), never as a save still pending.
  */
 async function recordSaved(
   loopId: string,
@@ -38,7 +71,7 @@ async function recordSaved(
   token: string,
 ): Promise<void> {
   latestTokens.set(loopId, token);
-  await recordServerSave(loopId, definition, token);
+  await recordServerSave(loopId, definition, token).catch(() => undefined);
 }
 
 /** The server's token from a 409 `DRAFT_CONFLICT`, or false when `error` is something else. */
@@ -49,19 +82,25 @@ export function draftConflict(error: unknown): { serverToken: string | undefined
 }
 
 export const CONFLICT_MESSAGE =
-  'The draft changed on the server (another tab or device saved it). Changes are kept on this device until you choose.';
+  'The draft changed on the server (another tab or device saved it). Nothing is saved to the server until you choose.';
 
 /**
  * Debounced autosave. Every edit is mirrored to IndexedDB at once, so nothing is lost offline or
- * when leaving the editor; a schema-valid draft is then saved with `PUT /loops/{id}/draft`. Saves
- * for a loop are serialized (including the one sent when the editor unmounts), and a save only
- * updates the editor if the same loop is still loaded in the same editor generation. Returns
- * `flush`, which saves now and resolves to whether the server holds the current revision.
+ * when leaving the editor; the store learns which revision is on the device once that write
+ * succeeds (`deviceRevision`), and the device storage's state says when it cannot (blocked by
+ * another window's older version, or failing), in which case the edits are in this window only
+ * until it works again: when it does, unsaved edits are written to the device at once. A
+ * schema-valid draft is then saved with `PUT /loops/{id}/draft`. Saves for a loop are serialized
+ * (including the one sent when the editor unmounts), and a save only updates the editor if the
+ * same loop is still loaded in the same editor generation. Returns `flush`, which saves now and
+ * resolves to whether the server holds the current revision.
  */
 export function useAutosave(
   client: GraphGoblinClient,
   delayMs = AUTOSAVE_DELAY_MS,
 ): () => Promise<boolean> {
+  const queryClient = useQueryClient();
+  const recoveryRead = useRef<{ generation: number; revision: number } | undefined>(undefined);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const pending = useRef<
     | { loopId: string; definition: LoopDefinitionInput; revision: number; generation: number }
@@ -95,11 +134,10 @@ export function useAutosave(
         if (state.conflict) return false;
         const { definition, revision: rev, savedRevision, setSaveState, baseToken } = state;
         if (rev === savedRevision) return true;
+        // Where the edits are instead (this device, or this window only) is the device copy's to
+        // say, once its write has answered (`saveNotice`).
         if (!validateDraft(definition).schemaValid) {
-          setSaveState(
-            'invalid',
-            'Fix the schema errors to save to the server. Changes are kept on this device.',
-          );
+          setSaveState('invalid');
           return false;
         }
         setSaveState('saving');
@@ -116,10 +154,23 @@ export function useAutosave(
             now.setConflict(conflict);
             setSaveState('conflict', CONFLICT_MESSAGE);
           } else if (isOfflineError(error)) {
-            setSaveState(
-              'offline',
-              'Offline: the draft is kept on this device and saved when the API is back.',
-            );
+            setSaveState('offline');
+            // A save can be the first request to notice an outage. Refresh the active loop
+            // read once per revision so query-driven reachability can recover it. A reachable
+            // read with a persistently failing PUT must not create a read/save retry loop.
+            const queryKey = keys.loop(loopId);
+            if (
+              !isOfflineError(queryClient.getQueryState(queryKey)?.error) &&
+              (recoveryRead.current?.generation !== generation ||
+                recoveryRead.current.revision !== rev)
+            ) {
+              recoveryRead.current = { generation, revision: rev };
+              markApiUnreachable();
+              void queryClient.refetchQueries(
+                { queryKey, exact: true, type: 'active' },
+                { cancelRefetch: false },
+              );
+            }
           } else {
             setSaveState('error', errorMessage(error));
           }
@@ -140,24 +191,30 @@ export function useAutosave(
         // Edited while the request was in flight: the server holds an older revision; go again.
       }
     });
-  }, [client]);
+  }, [client, queryClient]);
 
   useEffect(() => {
-    const { loopId, definition, savedRevision, baseToken } = useEditorStore.getState();
+    const { loopId, definition, savedRevision } = useEditorStore.getState();
     if (revision === savedRevision || !loopId || !definition) return;
     // Mirror the edit to this device at once: navigating away or closing the tab inside the
     // debounce window must not lose it. The server save stays debounced.
     pending.current = { loopId, definition, revision, generation: loadGeneration };
-    void saveLocalDraft({
-      loopId,
-      definition,
-      savedAt: new Date().toISOString(),
-      synced: false,
-      ...(baseToken ? { baseToken } : {}),
-    });
+    mirror();
     clearTimeout(timer.current);
     timer.current = setTimeout(() => void save(), delayMs);
   }, [revision, loadGeneration, save, delayMs]);
+
+  // Device storage that refused the mirror (blocked by another window) works again: put the edits
+  // that are only in this window on the device now, rather than on the next edit.
+  useEffect(
+    () =>
+      subscribeDeviceStorage(() => {
+        if (deviceStorageProblem()) return;
+        const { loopId, revision: rev, savedRevision, deviceRevision } = useEditorStore.getState();
+        if (loopId && rev !== savedRevision && deviceRevision !== rev) mirror();
+      }),
+    [],
+  );
 
   useEffect(
     () => () => {
@@ -182,10 +239,12 @@ export function useAutosave(
   );
 
   useEffect(() => {
-    // Retry as soon as the browser is back online.
+    // Both browser reconnect and confirmed API recovery use the same serialized save path.
     const retry = () => void save();
+    const unsubscribeRecovery = subscribeApiRecovery(retry);
     window.addEventListener('online', retry);
     return () => {
+      unsubscribeRecovery();
       window.removeEventListener('online', retry);
       clearTimeout(timer.current);
     };

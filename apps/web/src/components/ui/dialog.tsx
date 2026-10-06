@@ -60,6 +60,8 @@ export interface DialogProps {
   description?: ReactNode;
   /** Shown before the title, for example a node kind's chip. */
   icon?: ReactNode;
+  /** Shown after the title, before the close button: controls about the whole dialog. */
+  actions?: ReactNode;
   /** Actions pinned under the scrolling body. */
   footer?: ReactNode;
   children: ReactNode;
@@ -92,6 +94,7 @@ export function Dialog({
   title,
   description,
   icon,
+  actions,
   footer,
   children,
   closeLabel = 'Close',
@@ -224,14 +227,14 @@ export function Dialog({
         className,
       )}
     >
-      <header className="flex shrink-0 items-start gap-3 border-b border-default py-3.5 pr-3 pl-5">
+      <header className="flex shrink-0 items-start gap-3 border-b border-default bg-surface-head py-3.5 pr-3 pl-5">
         {icon}
         <div className="grid min-w-0 flex-1 gap-0.5 pt-0.5">
           <h2
             id={titleId}
             ref={headingRef}
             tabIndex={-1}
-            className="text-lg leading-tight font-semibold wrap-anywhere focus:outline-none"
+            className="text-lg leading-tight font-semibold text-heading wrap-anywhere focus:outline-none"
           >
             {title}
           </h2>
@@ -241,6 +244,7 @@ export function Dialog({
             </p>
           ) : null}
         </div>
+        {actions ? <div className="flex shrink-0 items-center gap-2 pt-1">{actions}</div> : null}
         <Button
           size="icon"
           variant="ghost"
@@ -252,7 +256,7 @@ export function Dialog({
       </header>
       <div className="min-h-0 flex-1 overflow-auto p-5">{children}</div>
       {footer ? (
-        <footer className="flex shrink-0 flex-wrap items-center gap-2 border-t border-default px-5 py-3">
+        <footer className="flex shrink-0 flex-wrap items-center gap-2 border-t border-default bg-surface-head px-5 py-3">
           {footer}
         </footer>
       ) : null}

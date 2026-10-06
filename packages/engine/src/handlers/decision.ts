@@ -1,8 +1,9 @@
 import type { JsonValue } from '@graphgoblin/contracts';
 import { evaluateExpression, threadView } from '@graphgoblin/domain';
-import { RunFailureError } from '../errors.js';
+import { summarizeDeciderError } from '../decider-errors.js';
+import { isAbortError, RunFailureError } from '../errors.js';
 import type { NodeContext, NodeHandler } from '../handler.js';
-import type { ChoiceResult } from '../ports.js';
+import type { ClassifierPort, ChoiceResult } from '../ports.js';
 import { outputPatch, selectMessages, toJson } from './common.js';
 
 async function decisionContext(ctx: NodeContext<'decision'>): Promise<JsonValue> {
@@ -43,7 +44,18 @@ export const decisionHandler: NodeHandler<'decision'> = {
         tried.push(`expression returned "${label}"`);
         continue;
       }
-      const decider = ctx.ports.deciders.find((d) => d.id === strategy && d.available());
+      let decider: ClassifierPort | undefined;
+      const classifierModel = strategy === 'jev' ? (config.jev?.model ?? 'jev') : undefined;
+      if (classifierModel !== undefined) {
+        const selection = await ctx.ports.classifiers.resolve(ctx.run.ownerId, classifierModel);
+        if (selection.status === 'unavailable') {
+          tried.push(`jev unavailable: ${selection.reason}: ${selection.message}`);
+          continue;
+        }
+        decider = selection.classifier;
+      } else {
+        decider = ctx.ports.deciders.find((d) => d.id === strategy && d.available());
+      }
       if (!decider) {
         tried.push(`${strategy} unavailable`);
         continue;
@@ -52,17 +64,31 @@ export const decisionHandler: NodeHandler<'decision'> = {
         strategy === 'codex'
           ? ctx.services.resolveModel(config.codex?.model, config.codex?.effort)
           : undefined;
-      const result = await decider.choose(
-        {
-          question,
-          options: config.routes.map((r) => ({ label: r.label, description: r.description })),
-          context,
-          ...(resolved ? { model: resolved.model, effort: resolved.effort } : {}),
-        },
-        ctx.signal,
-      );
+      let result: ChoiceResult;
+      try {
+        result = await decider.choose(
+          {
+            question,
+            options: config.routes.map((r) => ({ label: r.label, description: r.description })),
+            context,
+            ...(resolved ? { model: resolved.model, effort: resolved.effort } : {}),
+          },
+          ctx.signal,
+        );
+      } catch (error) {
+        if (isAbortError(error) || ctx.signal.aborted) throw error;
+        const { message, ...diagnostic } = summarizeDeciderError(error);
+        ctx.ports.logger.warn(
+          { nodeId: ctx.node.id, strategy, ...diagnostic },
+          'decision provider failed',
+        );
+        throw new RunFailureError('INTERNAL_ERROR', message, {
+          nodeId: ctx.node.id,
+          details: { strategy, ...(diagnostic.code ? { code: diagnostic.code } : {}) },
+        });
+      }
       if (!labels.has(result.label)) {
-        tried.push(`${strategy} chose unknown route "${result.label}"`);
+        tried.push(`${strategy} chose a route that is not declared on this node`);
         continue;
       }
       if (
@@ -81,7 +107,7 @@ export const decisionHandler: NodeHandler<'decision'> = {
         tried.push(`${strategy} confidence ${result.confidence} below ${minConfidence}`);
         continue;
       }
-      return decide(ctx, strategy, result);
+      return decide(ctx, strategy, result, classifierModel);
     }
 
     throw new RunFailureError(
@@ -99,19 +125,23 @@ async function decide(
   ctx: NodeContext<'decision'>,
   strategy: 'jev' | 'codex' | 'expression',
   result: ChoiceResult,
+  classifierModel?: string,
 ) {
   await ctx.services.record({
     type: 'decision.made',
     nodeId: ctx.node.id,
     strategy,
+    ...(classifierModel !== undefined ? { classifierModel } : {}),
     route: result.label,
     ...(result.confidence !== undefined ? { confidence: result.confidence } : {}),
     ...(ctx.config.recordAlternatives && result.alternatives
       ? {
-          alternatives: result.alternatives.map((a) => ({
-            route: a.label,
-            ...(a.confidence !== undefined ? { confidence: a.confidence } : {}),
-          })),
+          alternatives: result.alternatives
+            .filter((a) => ctx.config.routes.some((route) => route.label === a.label))
+            .map((a) => ({
+              route: a.label,
+              ...(a.confidence !== undefined ? { confidence: a.confidence } : {}),
+            })),
         }
       : {}),
   });

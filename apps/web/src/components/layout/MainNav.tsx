@@ -39,7 +39,7 @@ export function MainNav({ items }: { items: readonly NavItem[] }) {
         onClick={() => setOpen((o) => !o)}
         onKeyDown={closeOnEscape}
         className={cn(
-          'ml-auto inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border border-inverse px-3',
+          'ml-auto inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border border-inverse px-3 pointer-coarse:h-11',
           'font-medium text-inverse focus-visible:outline-2 focus-visible:outline-offset-2',
           'focus-visible:outline-focus sm:hidden',
         )}

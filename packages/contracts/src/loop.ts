@@ -1,13 +1,7 @@
 import { z } from 'zod';
-import {
-  EffortSchema,
-  HarnessIdSchema,
-  SlugSchema,
-  TemplateSchema,
-  TimestampSchema,
-  UlidSchema,
-} from './common.js';
+import { EffortSchema, SlugSchema, TemplateSchema, TimestampSchema, UlidSchema } from './common.js';
 import { NodeSchema } from './nodes.js';
+import { field } from './meta.js';
 import { VariableDeclarationsSchema } from './thread.js';
 
 /** Where a run works. Fixed path, templated from the trigger, or a fresh temporary directory. */
@@ -22,9 +16,21 @@ export const LoopSettingsSchema = z.strictObject({
   workingDirectory: WorkingDirectorySpecSchema.default({ kind: 'temp' }),
   defaults: z
     .strictObject({
-      harness: HarnessIdSchema.default('codex'),
-      model: z.string().min(1).optional(),
-      effort: EffortSchema.optional(),
+      model: z
+        .string()
+        .min(1)
+        .optional()
+        .meta(
+          field('Default Codex model; falls back to the owner setting, then the process default.', {
+            control: 'model',
+          }),
+        ),
+      effort: EffortSchema.optional().meta(
+        field(
+          'Default effort; falls back to the owner setting, then the process default. Catalog default effort is guidance only.',
+          { control: 'effort' },
+        ),
+      ),
     })
     .prefault({}),
   maxIterations: z.number().int().positive().max(10_000).default(10),
@@ -32,10 +38,30 @@ export const LoopSettingsSchema = z.strictObject({
 });
 export type LoopSettings = z.infer<typeof LoopSettingsSchema>;
 
+/**
+ * An edge's manual route on the canvas (#44): the positions of the route's inner segments in
+ * canvas coordinates, alternating the x of a vertical segment and the y of a horizontal one
+ * (x, y, x, ..., x). The first and last segments are horizontal and run from the ports' own
+ * heights, so the route stays attached to both ports when a card moves. Layout only, like a node's
+ * `ui`: the engine ignores it.
+ */
+export const EdgeRouteSchema = z
+  .array(z.number())
+  .min(1)
+  .max(63)
+  .refine((route) => route.length % 2 === 1, {
+    message: 'A route alternates x and y and starts and ends with an x: it has an odd length',
+  })
+  .describe(
+    'Manual route: inner segment positions, alternating the x of a vertical segment and the y of a horizontal one (x, y, ..., x). The end segments follow the ports. Editor layout only; runs ignore it.',
+  );
+
 export const EdgeSchema = z.strictObject({
   id: SlugSchema,
   from: z.strictObject({ node: SlugSchema, port: SlugSchema }),
   to: z.strictObject({ node: SlugSchema, port: z.literal('in').default('in') }),
+  /** Canvas layout of the edge. Without it the editor routes the edge automatically. */
+  ui: z.strictObject({ route: EdgeRouteSchema }).optional(),
 });
 export type Edge = z.infer<typeof EdgeSchema>;
 

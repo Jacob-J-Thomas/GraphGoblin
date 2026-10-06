@@ -2,12 +2,22 @@ import { GraphGoblinApiError, loops } from '@graphgoblin/api-client';
 import type { LoopDefinitionInput } from '@graphgoblin/contracts';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ReactFlowProvider } from '@xyflow/react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router';
 import { useApi } from '../api/context.js';
-import { keys } from '../api/queries.js';
+import {
+  cachedCatalogFingerprint,
+  catalogFingerprint,
+  draftContentKey,
+  isValidationKey,
+  keys,
+  useClassifierModels,
+  useModelCatalog,
+} from '../api/queries.js';
 import { ErrorState } from '../components/status.js';
 import { Alert, Button, useSidePanelState } from '../components/ui/index.js';
+import { deviceStorageProblem } from '../drafts/local-drafts.js';
+import { focusFallback } from '../lib/focus.js';
 import { errorMessage, formatDateTime, isOfflineError, problemIssues } from '../lib/utils.js';
 import { Canvas } from './Canvas.js';
 import { ConflictNotice } from './ConflictNotice.js';
@@ -20,28 +30,39 @@ import {
   type EditorIssue,
 } from './model.js';
 import { NodeEditorDialog } from './NodeEditorDialog.js';
+import { deviceCopyOf, deviceNotice, saveNotice, useDeviceStorageProblem } from './save-status.js';
 import { LOOP_PANEL_STORAGE_KEY, LoopPanel, loopPanelDefault } from './LoopPanel.js';
-import { Palette } from './Palette.js';
-import { useEditorStore } from './store.js';
+import { PALETTE_STORAGE_KEY, Palette, palettePanelDefault } from './Palette.js';
+import { useEditorStore, type EditorState } from './store.js';
 import { useAutosave } from './useAutosave.js';
 import { useLoadEditor } from './useLoadEditor.js';
 import { useResolveConflict } from './useResolveConflict.js';
+import { useUndoShortcuts } from './useUndoShortcuts.js';
+import { ValidationIndicator } from './ValidationIndicator.js';
+
+/** The save notice for a store state, as the editor shows it now (`saveNotice`). */
+function noticeOf(state: EditorState): string | undefined {
+  const device = deviceCopyOf(state.revision, state.deviceRevision, deviceStorageProblem());
+  return saveNotice(state.saveState, state.saveMessage, device);
+}
 
 /**
- * The loop editor: the toolbar, notices about the draft (restored, set aside, conflicting,
- * unsaved, published), the palette, the canvas, the collapsible loop panel (loop settings and the
- * validation list), and the node editor dialog for the node opened on the canvas. Loading and
- * conflict resolution live in useLoadEditor and useResolveConflict. Runs start from Runs.
+ * The loop editor: the toolbar (with the validation indicator beside Publish), notices about the
+ * draft (restored, set aside, conflicting, unsaved, published), the palette, the canvas (each node
+ * with its issue badge), the collapsible loop panel (loop settings), and the node editor dialog for
+ * the node opened on the canvas. Loading and conflict resolution live in useLoadEditor and
+ * useResolveConflict. Runs start from Runs.
  */
 export function EditorPage() {
   const { loopId = '' } = useParams();
   const client = useApi();
   const queryClient = useQueryClient();
-  const { query, restored, ready, setAside, restoreSetAside, discardSetAside } =
+  const { query, restoredGeneration, ready, setAside, restoreSetAside, discardSetAside } =
     useLoadEditor(loopId);
   const definition = useEditorStore((s) => s.definition);
   const saveState = useEditorStore((s) => s.saveState);
   const saveMessage = useEditorStore((s) => s.saveMessage);
+  const generation = useEditorStore((s) => s.generation);
   const connectionError = useEditorStore((s) => s.connectionError);
   const selectedNodeId = useEditorStore((s) => s.selectedNodeId);
   const nodeDialogOpen = useEditorStore((s) => s.nodeDialogOpen);
@@ -50,24 +71,60 @@ export function EditorPage() {
     LOOP_PANEL_STORAGE_KEY,
     loopPanelDefault,
   );
+  const [paletteExpanded, setPaletteExpanded] = useSidePanelState(
+    PALETTE_STORAGE_KEY,
+    palettePanelDefault,
+  );
   const flush = useAutosave(client);
+  useUndoShortcuts();
   const conflict = useEditorStore((s) => s.conflict);
   const resolve = useResolveConflict(loopId, flush);
   const savedRevision = useEditorStore((s) => s.savedRevision);
+  const revision = useEditorStore((s) => s.revision);
+  const baseToken = useEditorStore((s) => s.baseToken);
   const fieldErrors = useEditorStore((s) => s.fieldErrors);
   const local = useMemo(
     () => (definition ? validateDraft(definition) : { issues: [], schemaValid: false }),
     [definition],
   );
-  // The API's own checks (cron syntax, subloop references) for the revision the server holds.
+  // The catalog checks read the model catalog, the classifier catalog, and the classifiers'
+  // secrets, which change without a draft edit: the API's checks run again when what they read of
+  // them changes. Loading the model catalog here also has it ready before a node dialog or the
+  // loop settings form needs it, and its refetch (on focus, say) finds another tab's change.
+  const models = useModelCatalog();
+  const classifiers = useClassifierModels();
+  const catalogsResolved = models.data !== undefined && classifiers.data !== undefined;
+  const catalogState = useMemo(
+    () => catalogFingerprint(models.data, classifiers.data),
+    [models.data, classifiers.data],
+  );
+  // The draft the API's checks validate: the server's copy, named by its draft token (which every
+  // save and every reload of the server draft changes), else by its content. Only a copy the
+  // server holds is checked (no unsaved edits), so the key always names what was checked.
+  const saved = revision === savedRevision;
+  const draftKey = useMemo(
+    () => baseToken ?? (definition ? draftContentKey(definition) : ''),
+    [baseToken, definition],
+  );
+  // The API's own checks (cron syntax, subloop references, the catalogs) of the saved draft. They
+  // wait for the classifier catalog's first answer, success or not, so opening the editor does not
+  // run them twice. They do not wait for the model catalog: its pickers stay usable (read-only)
+  // while it loads, and an issue found meanwhile can be followed to them; a model catalog that
+  // arrives after the first check is a change of state (unknown to known) and runs them once more.
   const serverCheck = useQuery({
-    queryKey: ['loops', loopId, 'validate', savedRevision],
-    enabled: Boolean(definition) && local.schemaValid,
-    staleTime: Infinity,
+    queryKey: keys.validation(loopId, draftKey, catalogState),
+    enabled: Boolean(definition) && saved && local.schemaValid && !classifiers.isPending,
+    // Unknown catalogs cannot certify freshness, even if this request found no issues. Keep its
+    // badges available, but check again on reopening or recovery instead of trusting that answer.
+    staleTime: catalogsResolved ? Infinity : 0,
     retry: false,
     queryFn: async () => {
       const checked = definition as LoopDefinitionInput;
       const result = await loops.validate(client, loopId, checked);
+      // A catalog changed while the check ran, so its answer may describe either state: drop it
+      // rather than store it under this state's key. The new state's own check runs.
+      if (cachedCatalogFingerprint(queryClient) !== catalogState)
+        throw new Error('A catalog changed during the check; checking again.');
       const known = new Set(validateDraft(checked).issues.map(issueKey));
       return result.issues
         .map(({ nodeId, edgeId, ...rest }): EditorIssue => ({
@@ -78,6 +135,18 @@ export function EditorPage() {
         .filter((issue) => !known.has(issueKey(issue)));
     },
   });
+  // When a catalog changes (a write here, or another tab's seen on a refresh), checks keyed by any
+  // other catalog state are no longer trusted: one still running is cancelled, so its answer is
+  // not kept, and each is marked stale, so going back to that state checks again.
+  useEffect(() => {
+    const others = {
+      predicate: ({ queryKey }: { queryKey: readonly unknown[] }) =>
+        isValidationKey(queryKey) && queryKey[1] === loopId && queryKey[4] !== catalogState,
+    };
+    void queryClient
+      .cancelQueries(others)
+      .then(() => queryClient.invalidateQueries({ ...others, refetchType: 'none' }));
+  }, [queryClient, loopId, catalogState]);
   const validation = useMemo(
     () => ({
       issues: mergeIssues(local, serverCheck.data, fieldErrorIssues(fieldErrors)),
@@ -88,7 +157,9 @@ export function EditorPage() {
   const publish = useMutation({
     mutationFn: async () => {
       if (Object.keys(useEditorStore.getState().fieldErrors).length > 0)
-        throw new Error('Some fields hold text that does not parse; fix them first.');
+        throw new Error(
+          'Some fields hold input that is not a valid value yet; complete or discard it first.',
+        );
       const saved = await flush();
       if (!saved && useEditorStore.getState().conflict)
         throw new Error('The draft changed on the server; reload it or overwrite it first.');
@@ -108,9 +179,42 @@ export function EditorPage() {
       void queryClient.invalidateQueries({ queryKey: keys.loops });
     },
   });
-  const revision = useEditorStore((s) => s.revision);
   // The outcome stays visible only until the next edit; after that it describes an older draft.
   const [publishedRevision, setPublishedRevision] = useState<number | undefined>();
+  const [dismissedRestoreGeneration, setDismissedRestoreGeneration] = useState<number>();
+  const [dismissedSaveNotice, setDismissedSaveNotice] = useState<
+    { generation: number; state: typeof saveState; message: string } | undefined
+  >();
+  const [dismissedDeviceNotice, setDismissedDeviceNotice] = useState<
+    { generation: number; message: string } | undefined
+  >();
+  // Where the edits are besides the server: on this device once the mirror write of this revision
+  // succeeded, in this window only when device storage refused it (`save-status.ts`).
+  const storageProblem = useDeviceStorageProblem();
+  const deviceRevision = useEditorStore((s) => s.deviceRevision);
+  const device = deviceCopyOf(revision, deviceRevision, storageProblem);
+  const notice = saveNotice(saveState, saveMessage, device);
+  const [dismissalAnnouncement, setDismissalAnnouncement] = useState(0);
+  const noticeContainerRef = useRef<HTMLDivElement>(null);
+  const saveStatusRef = useRef<HTMLSpanElement>(null);
+
+  // Pending and saving are transient parts of an edit. Keep a dismissal until saving settles on
+  // a different state/message or a new editor load starts.
+  useEffect(
+    () =>
+      useEditorStore.subscribe((state) => {
+        if (state.saveState === 'pending' || state.saveState === 'saving') return;
+        setDismissedSaveNotice((dismissed) =>
+          dismissed &&
+          dismissed.generation === state.generation &&
+          dismissed.state === state.saveState &&
+          dismissed.message === (noticeOf(state) ?? '')
+            ? dismissed
+            : undefined,
+        );
+      }),
+    [],
+  );
 
   if (!ready) {
     if (query.isError && !isOfflineError(query.error))
@@ -122,10 +226,39 @@ export function EditorPage() {
   const published = query.data?.current?.definition;
   const errors = validation.issues.filter((i) => i.severity === 'error').length;
   const editing = nodeDialogOpen ? def.nodes.find((n) => n.id === selectedNodeId) : undefined;
+  const saveNoticeIsActive = Boolean(notice);
+  const showRestoredNotice =
+    restoredGeneration === generation && dismissedRestoreGeneration !== generation;
+  const showSaveNotice =
+    saveNoticeIsActive &&
+    (dismissedSaveNotice?.generation !== generation ||
+      dismissedSaveNotice.state !== saveState ||
+      dismissedSaveNotice.message !== notice);
+  const deviceProblem = storageProblem ? deviceNotice(storageProblem) : undefined;
+  const showDeviceNotice =
+    deviceProblem !== undefined &&
+    (dismissedDeviceNotice?.generation !== generation ||
+      dismissedDeviceNotice.message !== deviceProblem.body);
+  const announceDismissalAndRestoreFocus = () => {
+    setDismissalAnnouncement((count) => count + 1);
+    window.requestAnimationFrame(() => {
+      const nextDismissButton =
+        noticeContainerRef.current?.querySelector<HTMLButtonElement>('[data-alert-dismiss]');
+      if (nextDismissButton) nextDismissButton.focus();
+      else focusFallback(saveStatusRef.current);
+    });
+  };
 
   const notices = [
-    restored ? (
-      <Alert key="restored" tone="info">
+    showRestoredNotice ? (
+      <Alert
+        key="restored"
+        tone="info"
+        onDismiss={() => {
+          setDismissedRestoreGeneration(generation);
+          announceDismissalAndRestoreFocus();
+        }}
+      >
         Restored unsaved changes from this device.
       </Alert>
     ) : null,
@@ -143,10 +276,31 @@ export function EditorPage() {
         </span>
       </Alert>
     ) : null,
-    conflict ? <ConflictNotice key="conflict" resolve={resolve} /> : null,
-    saveMessage && (saveState === 'offline' || saveState === 'error' || saveState === 'invalid') ? (
-      <Alert key="save" tone="warn">
-        {saveMessage}
+    conflict ? <ConflictNotice key="conflict" resolve={resolve} device={device} /> : null,
+    showSaveNotice ? (
+      <Alert
+        key="save"
+        tone="warn"
+        onDismiss={() => {
+          setDismissedSaveNotice({ generation, state: saveState, message: notice ?? '' });
+          announceDismissalAndRestoreFocus();
+        }}
+      >
+        {notice}
+      </Alert>
+    ) : null,
+    // Device storage's own notice, apart from the save state: a server save still counts as one.
+    showDeviceNotice ? (
+      <Alert
+        key="device"
+        tone="warn"
+        title={deviceProblem.title}
+        onDismiss={() => {
+          setDismissedDeviceNotice({ generation, message: deviceProblem.body });
+          announceDismissalAndRestoreFocus();
+        }}
+      >
+        {deviceProblem.body}
       </Alert>
     ) : null,
     publish.isSuccess && publishedRevision === revision ? (
@@ -178,30 +332,49 @@ export function EditorPage() {
   ].filter(Boolean);
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] flex-col">
+    <div className="flex h-[calc(100dvh-3.5rem)] min-h-80 flex-col">
       <EditorToolbar
         loopId={loopId}
         name={def.name}
         published={Boolean(published)}
         version={query.data?.current?.version}
         saveState={saveState}
-        saveMessage={saveMessage}
+        device={device}
+        saveMessage={notice ?? saveMessage}
         errors={errors}
+        validation={
+          <ValidationIndicator
+            issues={validation.issues}
+            definition={def}
+            check={
+              serverCheck.isError || (!catalogsResolved && (models.isError || classifiers.isError))
+                ? 'error'
+                : !catalogsResolved || serverCheck.isPending || serverCheck.isFetching
+                  ? 'pending'
+                  : 'done'
+            }
+          />
+        }
         publishing={publish.isPending}
-        loopPanelExpanded={panelExpanded}
-        onLoopSettings={() => setPanelExpanded(!panelExpanded)}
         onPublish={() => publish.mutate()}
+        saveStatusRef={saveStatusRef}
       />
       {notices.length > 0 ? (
-        <div className="grid shrink-0 gap-2 border-b border-default bg-surface-raised px-4 py-3">
+        <div
+          ref={noticeContainerRef}
+          className="grid shrink-0 gap-2 border-b border-default bg-surface-raised px-4 py-3"
+        >
           {notices}
         </div>
       ) : null}
+      <span aria-live="polite" aria-atomic="true" className="sr-only">
+        <span key={dismissalAnnouncement}>
+          {dismissalAnnouncement > 0 ? 'Notice dismissed' : ''}
+        </span>
+      </span>
       <ReactFlowProvider>
-        <div className="flex min-h-0 flex-1">
-          <aside className="w-[200px] shrink-0 overflow-auto border-r border-default bg-surface-sunken px-3 py-4">
-            <Palette />
-          </aside>
+        <div className="relative flex min-h-0 flex-1">
+          <Palette expanded={paletteExpanded} onExpandedChange={setPaletteExpanded} />
           <main className="min-w-0 flex-1">
             <Canvas definition={def} issues={validation.issues} />
           </main>
@@ -221,7 +394,7 @@ export function EditorPage() {
           definition={def}
           issues={validation.issues}
           loopId={loopId}
-          notice={conflict ? <ConflictNotice resolve={resolve} /> : null}
+          notice={conflict ? <ConflictNotice resolve={resolve} device={device} /> : null}
         />
       ) : null}
     </div>

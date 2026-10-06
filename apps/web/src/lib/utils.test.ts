@@ -64,6 +64,19 @@ describe('utils', () => {
     expect(problemIssues(new GraphGoblinApiError({ status: 400, code: 'X' }))).toEqual([]);
   });
 
+  it('lists nested import error details without dropping their field paths', () => {
+    const details = ['loop.settings.defaults.harness: Unrecognized key', 'loop.name: Too small'];
+    expect(
+      problemIssues(
+        new GraphGoblinApiError({
+          status: 400,
+          code: 'LOOP_IMPORT_ERROR',
+          errors: { errors: details },
+        }),
+      ),
+    ).toEqual(details);
+  });
+
   it('parses JSON safely', () => {
     expect(parseJson('{"a":1}')).toEqual({ ok: true, value: { a: 1 } });
     expect(parseJson('{').ok).toBe(false);

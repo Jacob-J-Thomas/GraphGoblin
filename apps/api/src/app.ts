@@ -16,6 +16,7 @@ import { registerStatic } from './plugins/static.js';
 import { registerLoopRoutes } from './routes/loops.js';
 import { registerRunRoutes } from './routes/runs.js';
 import { registerSettingsRoutes } from './routes/settings.js';
+import { registerClassifierRoutes } from './routes/classifiers.js';
 import { registerSystemRoutes } from './routes/system.js';
 import { registerTriggerRoutes } from './routes/triggers.js';
 import { API_VERSION, type ApiInstance } from './types.js';
@@ -82,6 +83,7 @@ export async function buildApp(
   registerLoopRoutes(app, container);
   registerRunRoutes(app, container);
   registerSettingsRoutes(app, container);
+  registerClassifierRoutes(app, container);
   registerTriggerRoutes(app, container);
   await registerStatic(app, container.config.webDist);
 

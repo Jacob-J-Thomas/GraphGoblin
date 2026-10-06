@@ -136,6 +136,7 @@ describe('adversarial API invariants', () => {
     'GET /loops/{id}/versions/{versionId}': 'loops:read',
     'GET /loops/{id}/export': 'loops:read',
     'GET /loops/{id}/triggers': 'loops:read',
+    'POST /triggers/cron/preview': 'loops:read',
     'POST /loops/{id}/runs': 'runs:write',
     'GET /runs': 'runs:read',
     'GET /runs/{id}': 'runs:read',
@@ -153,7 +154,12 @@ describe('adversarial API invariants', () => {
     'PUT /settings': 'settings:write',
     'DELETE /settings/{key}': 'settings:write',
     'GET /model-catalog': 'settings:read',
+    'GET /classifier-models': 'settings:read',
+    'PUT /classifier-models/{id}': 'settings:write',
+    'PATCH /classifier-models/{id}': 'settings:write',
+    'DELETE /classifier-models/{id}': 'settings:write',
     'PUT /model-catalog/{harness}/{model}': 'settings:write',
+    'PATCH /model-catalog/{harness}/{model}': 'settings:write',
     'DELETE /model-catalog/{harness}/{model}': 'settings:write',
     'GET /secrets': 'secrets:read',
     'PUT /secrets/{name}': 'secrets:write',
@@ -218,6 +224,46 @@ describe('adversarial API invariants', () => {
     await t.idle();
   });
 
+  const CLASSIFIER_SECRET_SCOPE_CASES = [
+    { scopes: ['settings:write'], status: 403 },
+    { scopes: ['settings:write', 'secrets:read'], status: 403 },
+    { scopes: ['secrets:write'], status: 403 },
+    { scopes: ['settings:read', 'secrets:write'], status: 403 },
+    { scopes: ['settings:write', 'secrets:write'], status: 200 },
+    { scopes: ['*'], status: 200 },
+  ];
+  it.each(CLASSIFIER_SECRET_SCOPE_CASES)(
+    'ADV-008: classifier PUT secretRef requires both write scopes (%j)',
+    async ({ scopes, status }) => {
+      const t = await app({ requireApiKey: true });
+      const key = await t.container.repos.apiKeys.create(
+        'local',
+        'conditional classifier scope',
+        scopes,
+      );
+      await t.container.repos.secretsFor('local').set('github-token', 'private-owner-secret');
+      const response = await t.app.inject({
+        method: 'PUT',
+        url: '/classifier-models/kev',
+        headers: { authorization: `Bearer ${key.token}` },
+        payload: {
+          provider: 'http',
+          displayName: 'Kev',
+          providerModel: 'kev',
+          primitives: ['choice'],
+          endpoint: 'http://127.0.0.1:8008',
+          secretRef: 'github-token',
+        },
+      });
+      expect(response.statusCode).toBe(status);
+      if (status === 403) {
+        expect(response.json()).toHaveProperty('code', 'FORBIDDEN');
+        expect(await t.container.repos.classifiers.findOne('local', 'kev')).toBeUndefined();
+      } else expect(response.json()).toMatchObject({ enabled: false, configured: true });
+      expect(response.body).not.toContain('private-owner-secret');
+    },
+  );
+
   it('ADV-008: local trusted mode keeps full access without a key', async () => {
     const t = await app();
     for (const url of ['/loops', '/runs', '/settings', '/secrets', '/api-keys', '/events']) {
@@ -232,7 +278,7 @@ describe('adversarial API invariants', () => {
     for (const [path, operations] of Object.entries(t.app.swagger().paths!)) {
       if (path.startsWith('/hooks/') || path.endsWith('/validate')) continue;
       for (const method of Object.keys(operations)) {
-        if (!['post', 'put', 'delete'].includes(method)) continue;
+        if (!['post', 'put', 'patch', 'delete'].includes(method)) continue;
         let payload: Record<string, unknown> | undefined;
         if (path === '/loops' || path.endsWith('/draft')) payload = { definition: minimalLoop() };
         else if (path.endsWith('/import') || path === '/settings' || path.endsWith('/runs'))
@@ -245,6 +291,8 @@ describe('adversarial API invariants', () => {
         else if (path === '/events') payload = { type: 'scope-test', payload: null };
         else if (path.startsWith('/model-catalog/') && method === 'put')
           payload = { displayName: 'Model', efforts: ['low'], defaultEffort: 'low' };
+        else if (path.startsWith('/model-catalog/') && method === 'patch')
+          payload = { enabled: false };
         else if (path.endsWith('/replay')) payload = { nodeId: 'scope-test' };
         const url = path.replace(/\{([^}]+)\}/g, (_, name: string) =>
           name === 'id' ? fakeUlid('id') : 'scope-test',
@@ -629,11 +677,12 @@ describe('adversarial API invariants', () => {
     expect((await t.app.inject({ method: 'DELETE', url: `/loops/${child}` })).statusCode).toBe(204);
   });
 
-  it('ADV-009: every id route validates ULIDs before repository lookup', async () => {
+  it('ADV-009: every ULID id route validates before repository lookup', async () => {
     const t = await app();
     let checked = 0;
     for (const [path, methods] of Object.entries(t.app.swagger().paths!)) {
-      if (!path.includes('{id}')) continue;
+      // Classifier catalog ids are URL-safe names, rather than entity ULIDs.
+      if (!path.includes('{id}') || path.startsWith('/classifier-models/')) continue;
       for (const method of Object.keys(methods)) {
         if (!['get', 'post', 'put', 'delete'].includes(method)) continue;
         const response = await t.app.inject({

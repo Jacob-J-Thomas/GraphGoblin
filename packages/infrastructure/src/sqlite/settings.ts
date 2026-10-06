@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from 'node:crypto';
-import type { Effort, JsonValue } from '@graphgoblin/contracts';
+import type { Effort, JsonValue, ModelCatalogEntry } from '@graphgoblin/contracts';
 import type { ClockPort, IdPort } from '@graphgoblin/engine';
 import { and, eq, isNull } from 'drizzle-orm';
 import type { Database } from './db.js';
@@ -145,21 +145,15 @@ export class SqliteApiKeys {
 // Model catalog
 // ---------------------------------------------------------------------------
 
-export interface ModelCatalogEntry {
-  harness: string;
-  model: string;
-  displayName: string;
-  efforts: Effort[];
-  defaultEffort: Effort;
-  enabled: boolean;
-}
+export type { ModelCatalogEntry } from '@graphgoblin/contracts';
 
 const CODEX_EFFORTS: Effort[] = ['minimal', 'low', 'medium', 'high', 'xhigh', 'max'];
 
-/** Models seen on the development machine on 2026-10-02 (docs/research/codex-sdk.md). Editable in settings. */
+/** Harness-owned metadata; Settings may only change enabled. */
 export const DEFAULT_MODEL_CATALOG: ModelCatalogEntry[] = [
   {
     harness: 'codex',
+    source: 'harness',
     model: 'gpt-6-luna',
     displayName: 'GPT-6 Luna',
     efforts: CODEX_EFFORTS,
@@ -168,6 +162,7 @@ export const DEFAULT_MODEL_CATALOG: ModelCatalogEntry[] = [
   },
   {
     harness: 'codex',
+    source: 'harness',
     model: 'gpt-6.1-sol',
     displayName: 'GPT-6.1 Sol',
     efforts: CODEX_EFFORTS,
@@ -176,6 +171,7 @@ export const DEFAULT_MODEL_CATALOG: ModelCatalogEntry[] = [
   },
   {
     harness: 'codex',
+    source: 'harness',
     model: 'gpt-6-sol',
     displayName: 'GPT-6 Sol',
     efforts: CODEX_EFFORTS,
@@ -184,6 +180,7 @@ export const DEFAULT_MODEL_CATALOG: ModelCatalogEntry[] = [
   },
   {
     harness: 'codex',
+    source: 'harness',
     model: 'gpt-6-astra',
     displayName: 'GPT-6 Astra',
     efforts: CODEX_EFFORTS,
@@ -192,6 +189,7 @@ export const DEFAULT_MODEL_CATALOG: ModelCatalogEntry[] = [
   },
   {
     harness: 'codex',
+    source: 'harness',
     model: 'gpt-5.6-luna',
     displayName: 'GPT-5.6 Luna',
     efforts: CODEX_EFFORTS,
@@ -200,6 +198,7 @@ export const DEFAULT_MODEL_CATALOG: ModelCatalogEntry[] = [
   },
   {
     harness: 'codex',
+    source: 'harness',
     model: 'gpt-5.6-sol',
     displayName: 'GPT-5.6 Sol',
     efforts: CODEX_EFFORTS,
@@ -208,6 +207,7 @@ export const DEFAULT_MODEL_CATALOG: ModelCatalogEntry[] = [
   },
   {
     harness: 'codex',
+    source: 'harness',
     model: 'gpt-5.6-terra',
     displayName: 'GPT-5.6 Terra',
     efforts: CODEX_EFFORTS,
@@ -216,6 +216,7 @@ export const DEFAULT_MODEL_CATALOG: ModelCatalogEntry[] = [
   },
   {
     harness: 'codex',
+    source: 'harness',
     model: 'gpt-5.5',
     displayName: 'GPT-5.5',
     efforts: CODEX_EFFORTS,
@@ -227,16 +228,30 @@ export const DEFAULT_MODEL_CATALOG: ModelCatalogEntry[] = [
 export class SqliteModelCatalog {
   constructor(private readonly db: Database) {}
 
-  /** Insert the defaults for any model not yet present. Never overwrites edits. */
+  /** Refresh harness metadata, preserving enabled and rows outside the seed. Returns inserts. */
   async seed(entries: ModelCatalogEntry[] = DEFAULT_MODEL_CATALOG): Promise<number> {
     let inserted = 0;
     for (const entry of entries) {
       const result = await this.db
         .insert(modelCatalog)
-        .values(entry)
+        .values({ ...entry, source: 'harness' })
         .onConflictDoNothing()
         .returning({ model: modelCatalog.model });
       inserted += result.length;
+      await this.db
+        .update(modelCatalog)
+        .set({
+          displayName: entry.displayName,
+          efforts: entry.efforts,
+          defaultEffort: entry.defaultEffort,
+        })
+        .where(
+          and(
+            eq(modelCatalog.harness, entry.harness),
+            eq(modelCatalog.model, entry.model),
+            eq(modelCatalog.source, 'harness'),
+          ),
+        );
     }
     return inserted;
   }
@@ -249,6 +264,7 @@ export class SqliteModelCatalog {
     return rows.map((r) => ({
       harness: r.harness,
       model: r.model,
+      source: r.source,
       displayName: r.displayName,
       efforts: r.efforts,
       defaultEffort: r.defaultEffort,
@@ -261,6 +277,25 @@ export class SqliteModelCatalog {
       .insert(modelCatalog)
       .values(entry)
       .onConflictDoUpdate({ target: [modelCatalog.harness, modelCatalog.model], set: entry });
+  }
+
+  async findOne(harness: string, model: string): Promise<ModelCatalogEntry | undefined> {
+    return this.db.query.modelCatalog.findFirst({
+      where: and(eq(modelCatalog.harness, harness), eq(modelCatalog.model, model)),
+    });
+  }
+
+  async setEnabled(
+    harness: string,
+    model: string,
+    enabled: boolean,
+  ): Promise<ModelCatalogEntry | undefined> {
+    const rows = await this.db
+      .update(modelCatalog)
+      .set({ enabled })
+      .where(and(eq(modelCatalog.harness, harness), eq(modelCatalog.model, model)))
+      .returning();
+    return rows[0];
   }
 
   async delete(harness: string, model: string): Promise<boolean> {

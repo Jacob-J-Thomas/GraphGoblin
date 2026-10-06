@@ -3,6 +3,8 @@ import {
   LoopExportSchema,
   LoopRecordSchema,
   LoopVersionRecordSchema,
+  LoopIssueSchema,
+  type LoopIssue,
   UlidSchema,
   type LoopDefinition,
   type LoopRecord,
@@ -19,16 +21,11 @@ import { EngineRequestError } from '@graphgoblin/engine';
 import type { FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import type { Container } from '../container.js';
+import { classifierIssues } from '../classifier-issues.js';
 import { problem } from '../plugins/errors.js';
 import type { ApiInstance } from '../types.js';
 
-export const IssueSchema = z.object({
-  code: z.string(),
-  severity: z.enum(['error', 'warning']),
-  message: z.string(),
-  nodeId: z.string().optional(),
-  edgeId: z.string().optional(),
-});
+export const IssueSchema = LoopIssueSchema;
 
 const DraftTokenSchema = z.string().meta({
   description:
@@ -146,20 +143,51 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
     return issues;
   }
 
-  /**
-   * Every check publishing applies: the shared domain rules, trigger checks such as cron syntax,
-   * and subloop references. Validate, draft saves, create, and import report the same list, so
-   * the editor and `POST /loops/{id}/validate` never disagree with publish.
-   */
+  /** Advisory catalog checks stay here because the domain has no catalog I/O. */
+  async function catalogIssues(def: LoopDefinition): Promise<LoopIssue[]> {
+    const catalog = await container.repos.catalog.list();
+    const issues: LoopIssue[] = [];
+    function check(
+      harness: string,
+      model: string | undefined,
+      path: string,
+      nodeId?: string,
+    ): void {
+      if (model === undefined) return;
+      const entry = catalog.find((row) => row.harness === harness && row.model === model);
+      if (entry?.enabled) return;
+      issues.push({
+        code: entry ? 'MODEL_DISABLED' : 'MODEL_NOT_IN_CATALOG',
+        severity: 'warning',
+        message: entry
+          ? `model ${model} is disabled for ${harness}`
+          : `model ${model} is not in the catalog for ${harness}`,
+        path,
+        ...(nodeId ? { nodeId } : {}),
+      });
+    }
+    check('codex', def.settings.defaults.model, 'settings.defaults.model');
+    def.nodes.forEach((node) => {
+      if (node.kind === 'inference')
+        check(node.config.harness, node.config.model, 'config.model', node.id);
+      if (node.kind === 'decision' && node.config.strategy.includes('codex'))
+        check('codex', node.config.codex?.model, 'config.codex.model', node.id);
+    });
+    return issues;
+  }
+
+  /** All publish checks, also reported by create/import, draft saves, and validate. */
   async function publishIssues(
     ownerId: string,
     def: LoopDefinition,
     selfId?: string,
-  ): Promise<ValidationIssue[]> {
+  ): Promise<LoopIssue[]> {
     return [
       ...validateLoop(def),
       ...container.triggers.checkDefinition(def),
       ...(await subloopIssues(ownerId, def, selfId)),
+      ...(await catalogIssues(def)),
+      ...(await classifierIssues(container, ownerId, def)),
     ];
   }
 
@@ -350,7 +378,9 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
         tags: ['loops'],
         summary: 'Validate the draft and freeze it as a new version',
         params: IdParams,
-        response: { 200: z.object({ version: LoopVersionRecordSchema }) },
+        response: {
+          200: z.object({ version: LoopVersionRecordSchema, issues: z.array(IssueSchema) }),
+        },
       },
     },
     async (request, reply) => {
@@ -368,7 +398,7 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
         if (!version) return { kind: 'no-draft' as const };
         // Schedules and webhook endpoints follow the published version (ADR-0008).
         await container.triggers.armVersion(loop, version);
-        return { kind: 'published' as const, version };
+        return { kind: 'published' as const, version, issues };
       });
       if (outcome.kind === 'invalid') {
         return problem(
@@ -382,7 +412,7 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
       if (outcome.kind === 'no-draft') {
         return problem(reply, 409, 'NO_DRAFT', 'the loop has no draft to publish');
       }
-      return { version: outcome.version };
+      return { version: outcome.version, issues: outcome.issues };
     },
   );
 

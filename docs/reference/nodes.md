@@ -4,6 +4,8 @@
 
 Every node has an `id`, a `kind`, a `label`, a canvas position, and a `config` whose fields are listed here. Behaviour, examples, and the reasoning behind each node are in [04 - Node catalog](../04-node-catalog.md). Types are the input side of the schema: a field with a default may be omitted.
 
+Descriptions are the schemas' field metadata, which the node editor shows as each field's help. **Advanced** marks the fields the editor keeps under its collapsed Advanced options; "all but" names the fields of an object that stay with the basic ones.
+
 ## Trigger (`trigger`)
 
 Starts a run. A loop may have several triggers; each produces the same trigger envelope.
@@ -24,7 +26,7 @@ Ports: `out`.
 | `expression`       | string                                   | yes      |          | Cron expression, five or six fields.                    |
 | `timezone`         | string                                   | no       | `"UTC"`  | IANA time zone the expression is evaluated in.          |
 | `missedFirePolicy` | `"skip"` \| `"run-once"` \| `"run-each"` | no       | `"skip"` | What to do with fires missed while the server was down. |
-| `enabled`          | boolean                                  | no       | `true`   | Whether the schedule or poller is armed.                |
+| `enabled`          | boolean                                  | no       | `true`   | Whether the schedule is armed.                          |
 
 ### `subtype: "webhook"`
 
@@ -51,7 +53,7 @@ Ports: `out`.
 | `probe`           | one of `"http"` \| `"script"` \| `"signal-count"` \| `"none"` by `kind` | yes      |         | What to call on each poll: HTTP, a script, a signal count, or nothing. |
 | `fireWhen`        | string                                                                  | yes      |         | JSONata over the probe result; a run starts when it is true.           |
 | `dedupeKey`       | string                                                                  | no       |         | JSONata producing a key; a repeated key does not start another run.    |
-| `enabled`         | boolean                                                                 | no       | `true`  | Whether the schedule or poller is armed.                               |
+| `enabled`         | boolean                                                                 | no       | `true`  | Whether the poller is armed.                                           |
 
 ## Decision (`decision`)
 
@@ -59,16 +61,16 @@ Chooses one of several labelled routes with Jev, Codex, or a JSONata expression.
 
 Ports: One output per route label.
 
-| Field                | Type                                              | Required | Default | Description                                                                     |
-| -------------------- | ------------------------------------------------- | -------- | ------- | ------------------------------------------------------------------------------- |
-| `routes`             | object[]                                          | yes      |         | At least two labelled routes, each with a description the decider reads.        |
-| `question`           | string                                            | yes      |         | Liquid template rendered against the thread; the question the decider answers.  |
-| `context`            | { messages?, vars?, includeLastOutput? }          | no       | `{}`    | How much of the thread the decider sees: messages, vars, the last output.       |
-| `strategy`           | array of (`"jev"` \| `"codex"` \| `"expression"`) | yes      |         | Ordered fallback chain of strategies.                                           |
-| `jev`                | { primitive?, minConfidence? }                    | no       |         | Jev options; a choice below `minConfidence` falls through to the next strategy. |
-| `codex`              | { model?, effort? }                               | no       |         | Model and effort for the Codex decider.                                         |
-| `expression`         | { jsonata }                                       | no       |         | JSONata that must evaluate to a route label.                                    |
-| `recordAlternatives` | boolean                                           | no       | `true`  | Record the routes not taken, with confidences, on `decision.made`.              |
+| Field                | Type                                              | Required | Default | Advanced | Description                                                                                                                                                                  |
+| -------------------- | ------------------------------------------------- | -------- | ------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `routes`             | object[]                                          | yes      |         |          | At least two labelled routes, each with a description the decider reads.                                                                                                     |
+| `question`           | string                                            | yes      |         |          | Liquid template rendered against the thread; the question the decider answers.                                                                                               |
+| `context`            | { messages?, vars?, includeLastOutput? }          | no       | `{}`    | yes      | How much of the thread the decider sees: messages, vars, the last output.                                                                                                    |
+| `strategy`           | array of (`"jev"` \| `"codex"` \| `"expression"`) | yes      |         |          | Ordered fallback chain of strategies.                                                                                                                                        |
+| `jev`                | { primitive?, model?, minConfidence? }            | no       |         |          | Choice classifier options: optional `model` is a catalog id (default `jev`); unavailable configuration or a choice below `minConfidence` falls through to the next strategy. |
+| `codex`              | { model?, effort? }                               | no       |         |          | Model and effort for the Codex decider.                                                                                                                                      |
+| `expression`         | { jsonata }                                       | no       |         |          | JSONata that must evaluate to a route label.                                                                                                                                 |
+| `recordAlternatives` | boolean                                           | no       | `true`  | yes      | Record the routes not taken, with confidences, on `decision.made`.                                                                                                           |
 
 ## Inferencing (`inference`)
 
@@ -76,19 +78,19 @@ Hands a request to a harness session (Codex in 1.0).
 
 Ports: `out`.
 
-| Field            | Type                                                                                                                                                       | Required | Default              | Description                                                                                                  |
-| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | -------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `harness`        | `"codex"`                                                                                                                                                  | no       | `"codex"`            | Harness that runs the session.                                                                               |
-| `model`          | string                                                                                                                                                     | no       |                      | Model; falls back to the loop default, then to the owner setting.                                            |
-| `effort`         | `"minimal"` \| `"low"` \| `"medium"` \| `"high"` \| `"xhigh"` \| `"max"`                                                                                   | no       |                      | Reasoning effort; falls back like the model.                                                                 |
-| `session`        | one of `"fresh"` \| `"resume-previous"` \| `"resume-named"` by `policy`                                                                                    | no       | `{"policy":"fresh"}` | Start fresh, resume the previous session, or resume a named session.                                         |
-| `prompt`         | { template }                                                                                                                                               | yes      |                      | Liquid template rendered against the thread.                                                                 |
-| `input`          | array of (one of `"set"` \| `"delete"` \| `"append-message"` \| `"inject"` \| `"truncate"` \| `"drop"` \| `"replace"` \| `"redact"` \| `"coerce"` by `op`) | no       | `[]`                 | Mutations applied to the thread view the template sees.                                                      |
-| `contextFiles`   | object[]                                                                                                                                                   | no       |                      | Files written under the working directory before the session starts.                                         |
-| `harnessOptions` | object                                                                                                                                                     | no       | `{}`                 | Sandbox, approval, network, web search, and raw config overrides.                                            |
-| `capabilities`   | { mcpServers?, plugins?, skills? }                                                                                                                         | no       |                      | MCP servers, plugins, and skills, resolved by the adapter.                                                   |
-| `output`         | { captureTranscript?, toMessages?, transforms?, schema? }                                                                                                  | no       | `{}`                 | Transcript capture, how the answer lands in messages, transforms, and an optional output schema with repair. |
-| `timeoutSeconds` | integer                                                                                                                                                    | no       |                      | Optional watchdog; a timeout fails the run.                                                                  |
+| Field            | Type                                                                                                                                                       | Required | Default              | Advanced          | Description                                                                                                  |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | -------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------ |
+| `harness`        | `"codex"`                                                                                                                                                  | no       | `"codex"`            |                   | Harness that runs the session.                                                                               |
+| `model`          | string                                                                                                                                                     | no       |                      |                   | Model; falls back to the loop default, then to the owner setting.                                            |
+| `effort`         | `"minimal"` \| `"low"` \| `"medium"` \| `"high"` \| `"xhigh"` \| `"max"`                                                                                   | no       |                      |                   | Reasoning effort; falls back like the model. Catalog default effort is guidance only.                        |
+| `session`        | one of `"fresh"` \| `"resume-previous"` \| `"resume-named"` by `policy`                                                                                    | no       | `{"policy":"fresh"}` |                   | Start fresh, resume the previous session, or resume a named session.                                         |
+| `prompt`         | { template }                                                                                                                                               | yes      |                      |                   | Liquid template rendered against the thread.                                                                 |
+| `input`          | array of (one of `"set"` \| `"delete"` \| `"append-message"` \| `"inject"` \| `"truncate"` \| `"drop"` \| `"replace"` \| `"redact"` \| `"coerce"` by `op`) | no       | `[]`                 | yes               | Mutations applied to the thread view the template sees.                                                      |
+| `contextFiles`   | object[]                                                                                                                                                   | no       |                      | yes               | Files written under the working directory before the session starts.                                         |
+| `harnessOptions` | object                                                                                                                                                     | no       | `{}`                 | all but `sandbox` | Sandbox, approval, network, web search, and raw config overrides.                                            |
+| `capabilities`   | { mcpServers?, plugins?, skills? }                                                                                                                         | no       |                      | yes               | MCP servers, plugins, and skills, resolved by the adapter.                                                   |
+| `output`         | { captureTranscript?, toMessages?, transforms?, schema? }                                                                                                  | no       | `{}`                 | yes               | Transcript capture, how the answer lands in messages, transforms, and an optional output schema with repair. |
+| `timeoutSeconds` | integer                                                                                                                                                    | no       |                      | yes               | Optional watchdog; a timeout fails the run.                                                                  |
 
 ## Script (`script`)
 
@@ -96,16 +98,16 @@ Runs a user-written program.
 
 Ports: `out` plus any labels in `exitCodeRoutes`.
 
-| Field            | Type                                       | Required | Default         | Description                                                             |
-| ---------------- | ------------------------------------------ | -------- | --------------- | ----------------------------------------------------------------------- |
-| `command`        | string                                     | yes      |                 | Program to run.                                                         |
-| `args`           | string[]                                   | no       | `[]`            | Arguments; each may be a Liquid template.                               |
-| `cwd`            | string                                     | no       | `"workspace"`   | `workspace` for the run working directory, or a path.                   |
-| `env`            | map of string                              | no       |                 | Extra environment; values may be `secret:<name>`.                       |
-| `stdin`          | `"thread"` \| `"last-output"` \| `"none"`  | no       | `"thread"`      | What the program reads on standard input.                               |
-| `stdout`         | `"patch"` \| `"last-output"` \| `"ignore"` | no       | `"last-output"` | How standard output is used: a JSON Patch, the last output, or ignored. |
-| `exitCodeRoutes` | map of string                              | no       |                 | Exit code to route label; an unmapped non-zero code fails the run.      |
-| `timeoutSeconds` | integer                                    | no       |                 | Optional watchdog; a timeout fails the run.                             |
+| Field            | Type                                       | Required | Default         | Advanced | Description                                                             |
+| ---------------- | ------------------------------------------ | -------- | --------------- | -------- | ----------------------------------------------------------------------- |
+| `command`        | string                                     | yes      |                 |          | Program to run.                                                         |
+| `args`           | string[]                                   | no       | `[]`            |          | Arguments; each may be a Liquid template.                               |
+| `cwd`            | string                                     | no       | `"workspace"`   |          | `workspace` for the run working directory, or a path.                   |
+| `env`            | map of string                              | no       |                 | yes      | Extra environment; values may be `secret:<name>`.                       |
+| `stdin`          | `"thread"` \| `"last-output"` \| `"none"`  | no       | `"thread"`      | yes      | What the program reads on standard input.                               |
+| `stdout`         | `"patch"` \| `"last-output"` \| `"ignore"` | no       | `"last-output"` | yes      | How standard output is used: a JSON Patch, the last output, or ignored. |
+| `exitCodeRoutes` | map of string                              | no       |                 | yes      | Exit code to route label; an unmapped non-zero code fails the run.      |
+| `timeoutSeconds` | integer                                    | no       |                 | yes      | Optional watchdog; a timeout fails the run.                             |
 
 ## Context mutation (`mutate`)
 
@@ -123,12 +125,12 @@ Executes another loop as a child run and waits for it.
 
 Ports: `out`.
 
-| Field                | Type                 | Required | Default | Description                                                                |
-| -------------------- | -------------------- | -------- | ------- | -------------------------------------------------------------------------- |
-| `loopRef`            | { loopId, version? } | yes      |         | The child loop and the version to pin (`latest` or a number).              |
-| `input`              | object               | no       | `{}`    | How the child thread is built from the parent: inherit, project, or fresh. |
-| `output`             | object               | no       | `{}`    | How the child result flows back into the parent thread.                    |
-| `depthLimitOverride` | integer              | no       |         | Raise or lower the nesting limit for this node.                            |
+| Field                | Type                 | Required | Default | Advanced       | Description                                                                |
+| -------------------- | -------------------- | -------- | ------- | -------------- | -------------------------------------------------------------------------- |
+| `loopRef`            | { loopId, version? } | yes      |         |                | The child loop and the version to pin (`latest` or a number).              |
+| `input`              | object               | no       | `{}`    | all but `mode` | How the child thread is built from the parent: inherit, project, or fresh. |
+| `output`             | object               | no       | `{}`    | all but `mode` | How the child result flows back into the parent thread.                    |
+| `depthLimitOverride` | integer              | no       |         | yes            | Raise or lower the nesting limit for this node.                            |
 
 ## Wait (`wait`)
 
@@ -156,11 +158,11 @@ Ports: `out`.
 
 ### `mode: "until"`
 
-| Field            | Type                         | Required | Default      | Description                                                       |
-| ---------------- | ---------------------------- | -------- | ------------ | ----------------------------------------------------------------- |
-| `timestamp`      | string                       | yes      |              | When to resume; Liquid or JSONata producing an ISO timestamp.     |
-| `timeoutSeconds` | integer                      | no       |              | Give up after this long.                                          |
-| `onTimeout`      | `"continue"` \| `"fail-run"` | no       | `"continue"` | Continue with `lastOutput = { timedOut: true }`, or fail the run. |
+| Field            | Type                         | Required | Default      | Description                                                           |
+| ---------------- | ---------------------------- | -------- | ------------ | --------------------------------------------------------------------- |
+| `timestamp`      | string                       | yes      |              | When to resume: a Liquid template that renders an ISO 8601 timestamp. |
+| `timeoutSeconds` | integer                      | no       |              | Give up after this long.                                              |
+| `onTimeout`      | `"continue"` \| `"fail-run"` | no       | `"continue"` | Continue with `lastOutput = { timedOut: true }`, or fail the run.     |
 
 ### `mode: "signal"`
 

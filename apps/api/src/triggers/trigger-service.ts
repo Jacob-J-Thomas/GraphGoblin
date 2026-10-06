@@ -166,8 +166,9 @@ export class TriggerService {
         issues.push({
           code: 'CRON_INVALID',
           severity: 'error',
-          message: `cron trigger "${node.id}": ${problem}`,
+          message: `cron trigger "${node.id}": ${problem.message}`,
           nodeId: node.id,
+          path: `config.${problem.field}`,
         });
       }
     }

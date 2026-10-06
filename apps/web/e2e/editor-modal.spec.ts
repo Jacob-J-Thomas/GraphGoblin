@@ -4,7 +4,15 @@
  * layer and inert page, focus, and storage that jsdom cannot show.
  */
 import type { APIRequestContext, Page } from '@playwright/test';
-import { approvalLoop, closeNode, expect, openNode, publishLoop, test } from './fixtures.js';
+import {
+  approvalLoop,
+  closeNode,
+  expect,
+  openNode,
+  publishLoop,
+  showLoopPanel,
+  test,
+} from './fixtures.js';
 
 async function createLoop(request: APIRequestContext, definition: unknown): Promise<string> {
   const created = await request.post('/loops', { data: { definition } });
@@ -197,29 +205,48 @@ test('below 768 px the node editor is a full-width sheet along the bottom edge',
   expect(box.y).toBeGreaterThan(10);
 });
 
-test('the loop panel collapses and expands from Loop settings and is remembered', async ({
+test('the loop panel collapses and expands from its own controls and is remembered', async ({
   page,
   request,
 }) => {
   const loopId = await createLoop(request, approvalLoop('qa loop panel'));
   await page.goto(`/app/loops/${loopId}/edit`);
-  const toggle = page.getByRole('button', { name: 'Loop settings' });
-  // 1440 px wide: expanded, with the settings and the validation list.
-  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  // 1440 px wide: expanded, with the loop's settings; validation sits beside Publish (#15).
+  await expect
+    .poll(() => page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight))
+    .toBe(0);
+  await expect(page.getByRole('button', { name: 'Hide loop settings' })).toHaveAttribute(
+    'aria-expanded',
+    'true',
+  );
   await expect(page.getByLabel('Name', { exact: true })).toHaveValue('qa loop panel');
-  await expect(page.getByRole('region', { name: 'Validation' })).toContainText('Ready to publish');
+  const panel = page.getByRole('complementary', { name: 'Loop settings' });
+  await expect(panel.getByRole('region', { name: 'Validation' })).toHaveCount(0);
+  await expect(panel.getByText('Ready to publish')).toHaveCount(0);
+  await expect(page.getByText('Ready to publish')).toBeVisible();
 
-  await toggle.click();
-  await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  await page.getByRole('button', { name: 'Hide loop settings' }).click();
+  await expect(page.getByRole('button', { name: 'Show loop settings' })).toHaveAttribute(
+    'aria-expanded',
+    'false',
+  );
+  await expect(
+    page.getByRole('button', { name: 'Show loop settings' }).locator('svg'),
+  ).toHaveAttribute('data-icon', 'sliders');
   await expect(page.getByLabel('Name', { exact: true })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Show loop' })).toBeVisible();
   await page.reload();
-  await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.getByRole('button', { name: 'Show loop settings' })).toHaveAttribute(
+    'aria-expanded',
+    'false',
+  );
 
-  await toggle.click();
-  await expect(page.getByRole('heading', { name: 'Loop', exact: true })).toBeFocused();
+  await page.getByRole('button', { name: 'Show loop settings' }).click();
+  await expect(page.getByRole('heading', { name: 'Loop settings', exact: true })).toBeFocused();
   await page.reload();
-  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.getByRole('button', { name: 'Hide loop settings' })).toHaveAttribute(
+    'aria-expanded',
+    'true',
+  );
 
   // A fresh browser at 1024 px starts collapsed; storage that throws changes nothing visible.
   const narrow = await page
@@ -241,10 +268,17 @@ test('the loop panel collapses and expands from Loop settings and is remembered'
   const errors: string[] = [];
   small.on('pageerror', (error) => errors.push(error.message));
   await small.goto(`/app/loops/${loopId}/edit`);
-  const smallToggle = small.getByRole('button', { name: 'Loop settings' });
-  await expect(smallToggle).toHaveAttribute('aria-expanded', 'false');
-  await smallToggle.click();
-  await expect(smallToggle).toHaveAttribute('aria-expanded', 'true');
+  const smallShow = small.getByRole('button', { name: 'Show loop settings' });
+  await expect(smallShow).toHaveAttribute('aria-expanded', 'false');
+  await smallShow.click();
+  await expect(small.getByRole('button', { name: 'Hide loop settings' })).toHaveAttribute(
+    'aria-expanded',
+    'true',
+  );
+  await expect(small.getByRole('button', { name: 'Hide palette' })).toHaveAttribute(
+    'aria-expanded',
+    'true',
+  );
   await expect(small.getByLabel('Name', { exact: true })).toBeVisible();
   expect(errors).toEqual([]);
   await narrow.close();
@@ -307,15 +341,20 @@ test('a draft conflict is answered from inside an open node editor', async ({
   const a = await context.newPage();
   const b = await context.newPage();
   await a.goto(`/app/loops/${loopId}/edit`);
+  await expect(a.getByRole('heading', { name: 'qa modal conflict' })).toBeVisible();
   await b.goto(`/app/loops/${loopId}/edit`);
   await expect(b.getByRole('heading', { name: 'qa modal conflict' })).toBeVisible();
 
   // Tab B opens a node; tab A saves first.
   const dialog = await openNode(b, 'approve');
+  await a.bringToFront();
+  await showLoopPanel(a);
   await a.getByLabel('Description').fill('from tab A');
-  await expect(a.getByTestId('save-state')).toHaveText('All changes saved');
+  // The debounced save and its device mirror must finish before B attempts a stale save.
+  await expect(a.getByTestId('save-state')).toHaveText('All changes saved', { timeout: 30_000 });
 
   // Tab B edits in the dialog: refused, and asked inside the dialog, where it can answer.
+  await b.bringToFront();
   await dialog.getByLabel('Label').fill('Approve in B');
   await expect(dialog.getByText('The draft changed on the server')).toBeVisible();
   await expect(b.getByTestId('save-state')).toHaveText('Draft changed elsewhere');

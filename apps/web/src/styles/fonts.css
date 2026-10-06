@@ -1,9 +1,20 @@
 /*
- * Geist and Geist Mono 1.7.2 (SIL Open Font License 1.1, apps/web/public/fonts/OFL.txt), from the
- * `geist` npm package (dist/fonts/geist-sans/Geist-Variable.woff2 and
- * dist/fonts/geist-mono/GeistMono-Variable.woff2). Self-hosted under public/fonts so the service
- * worker precaches them with the app shell; index.html preloads the UI face. Components never name
- * a family: they use --font-ui and --font-code (tokens.css), which #40 can switch.
+ * The typefaces, self-hosted under public/fonts so the service worker precaches them with the app
+ * shell (vite.config.ts globs every woff2 in the build), each with font-display: swap so text shows
+ * in the fallback stack while a face loads. Components never name a family: they use --font-ui
+ * (text), --font-display (headings and the wordmark), and --font-code (tokens.css). Settings →
+ * Appearance → Font (#40) sets data-font on <html> (src/lib/font.ts, which also lists the files the
+ * boot script preloads), and the rules after the faces swap the first two tokens. Code stays in
+ * Geist Mono whatever the choice.
+ *
+ * Every face is SIL Open Font License 1.1; each licence text sits beside its files in
+ * public/fonts, and docs/research/licenses.md records the sources:
+ *   Geist and Geist Mono 1.7.2 (OFL.txt): the `geist` npm package, unmodified.
+ *   Space Grotesk 2.000, Chakra Petch 1.000 (SemiBold and Bold), Atkinson Hyperlegible Next 2.001,
+ *   and Inter 4.001 (optical size fixed at 14): google/fonts, subset to Latin plus the arrows the app
+ *   shows, with the default OpenType features and tabular figures.
+ *   OpenDyslexic 0.990 (Regular and Bold): the upstream woff2 files, unmodified, because its
+ *   Reserved Font Name may not be used for a subset.
  */
 
 @font-face {
@@ -20,4 +31,115 @@
   font-weight: 100 900;
   font-style: normal;
   font-display: swap;
+}
+
+@font-face {
+  font-family: 'Space Grotesk';
+  src: url('/fonts/SpaceGrotesk-Variable.woff2') format('woff2');
+  font-weight: 300 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Chakra Petch';
+  src: url('/fonts/ChakraPetch-SemiBold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Chakra Petch';
+  src: url('/fonts/ChakraPetch-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Atkinson Hyperlegible Next';
+  src: url('/fonts/AtkinsonHyperlegibleNext-Variable.woff2') format('woff2');
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'OpenDyslexic';
+  src: url('/fonts/OpenDyslexic-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'OpenDyslexic';
+  src: url('/fonts/OpenDyslexic-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Inter';
+  src: url('/fonts/Inter-Variable.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/*
+ * The choices. `:root[data-font=...]` outranks the defaults on :root in tokens.css; the bare
+ * attribute lets one element show another face (each option in the Font control previews its own),
+ * as data-theme does for themes. Every rule sets both tokens, because a token that refers to
+ * another resolves where it is declared. No attribute, or an unknown one, is Geist.
+ */
+:root[data-font='geist'],
+[data-font='geist'] {
+  --font-ui: var(--font-sans);
+  --font-display: var(--font-sans);
+}
+
+:root[data-font='space-grotesk'],
+[data-font='space-grotesk'] {
+  --font-ui: 'Space Grotesk', var(--font-fallback);
+  --font-display: 'Space Grotesk', var(--font-fallback);
+}
+
+/* A headings and wordmark face over Geist text: dense screens keep their body face. */
+:root[data-font='chakra-petch'],
+[data-font='chakra-petch'] {
+  --font-ui: var(--font-sans);
+  --font-display: 'Chakra Petch', var(--font-sans);
+}
+
+:root[data-font='atkinson-hyperlegible'],
+[data-font='atkinson-hyperlegible'] {
+  --font-ui: 'Atkinson Hyperlegible Next', var(--font-fallback);
+  --font-display: 'Atkinson Hyperlegible Next', var(--font-fallback);
+}
+
+:root[data-font='opendyslexic'],
+[data-font='opendyslexic'] {
+  --font-ui: 'OpenDyslexic', var(--font-fallback);
+  --font-display: 'OpenDyslexic', var(--font-fallback);
+}
+
+:root[data-font='inter'],
+[data-font='inter'] {
+  --font-ui: 'Inter', var(--font-fallback);
+  --font-display: 'Inter', var(--font-fallback);
+}
+
+/* Headings take the display face; a heading with its own family utility (font-mono) keeps it. */
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-display);
+  }
 }

@@ -6,7 +6,15 @@
 import type { GraphGoblinClient, paths } from './client.js';
 import { unwrap } from './errors.js';
 
-type Method = 'get' | 'put' | 'post' | 'delete';
+export const cron = {
+  preview: async (
+    client: GraphGoblinClient,
+    body: RequestBody<'/triggers/cron/preview', 'post'>,
+    options: { signal?: AbortSignal } = {},
+  ) => unwrap(await client.POST('/triggers/cron/preview', { body, ...options })),
+};
+
+type Method = 'get' | 'put' | 'patch' | 'post' | 'delete';
 
 /** The JSON request body of an operation. */
 export type RequestBody<P extends keyof paths, M extends Method> = paths[P][M] extends {
@@ -69,8 +77,18 @@ export const loops = {
         body: { definition },
       }),
     ),
-  validate: async (client: GraphGoblinClient, loopId: string, definition: LoopDefinitionBody) =>
-    unwrap(await client.POST('/loops/{id}/validate', { ...id(loopId), body: { definition } })),
+  validate: async (client: GraphGoblinClient, loopId: string, definition: LoopDefinitionBody) => {
+    const result = unwrap(
+      await client.POST('/loops/{id}/validate', { ...id(loopId), body: { definition } }),
+    );
+    // JSON omits undefined fields. Preserve that guarantee for exact optional consumer types.
+    return {
+      ...result,
+      issues: result.issues.map(({ path, ...issue }) =>
+        path === undefined ? issue : { ...issue, path },
+      ),
+    };
+  },
   publish: async (client: GraphGoblinClient, loopId: string) =>
     unwrap(await client.POST('/loops/{id}/publish', id(loopId))).version,
   versions: async (client: GraphGoblinClient, loopId: string) =>
@@ -166,7 +184,8 @@ export const secrets = {
 };
 
 export const apiKeys = {
-  list: async (client: GraphGoblinClient) => unwrap(await client.GET('/api-keys')).items,
+  list: async (client: GraphGoblinClient, options: { signal?: AbortSignal } = {}) =>
+    unwrap(await client.GET('/api-keys', options)).items,
   /** Create a key. The plaintext `token` is returned once and never again. */
   create: async (client: GraphGoblinClient, body: RequestBody<'/api-keys', 'post'>) =>
     unwrap(await client.POST('/api-keys', { body })),
@@ -177,6 +196,13 @@ export const apiKeys = {
 
 export const modelCatalog = {
   list: async (client: GraphGoblinClient) => unwrap(await client.GET('/model-catalog')).items,
+  setEnabled: async (client: GraphGoblinClient, harness: string, model: string, enabled: boolean) =>
+    unwrap(
+      await client.PATCH('/model-catalog/{harness}/{model}', {
+        params: { path: { harness, model } },
+        body: { enabled },
+      }),
+    ),
   upsert: async (
     client: GraphGoblinClient,
     harness: string,
@@ -195,6 +221,35 @@ export const modelCatalog = {
         params: { path: { harness, model } },
       }),
     );
+  },
+};
+
+export const classifierModels = {
+  list: async (client: GraphGoblinClient) => unwrap(await client.GET('/classifier-models')).items,
+  upsert: async (
+    client: GraphGoblinClient,
+    modelId: string,
+    metadata: RequestBody<'/classifier-models/{id}', 'put'>,
+  ) => unwrap(await client.PUT('/classifier-models/{id}', { ...id(modelId), body: metadata })),
+  /**
+   * Create a custom classifier, never replacing one: sends `If-None-Match: *`, so an id that
+   * already exists is refused with `CLASSIFIER_EXISTS` (409) and nothing changes.
+   */
+  create: async (
+    client: GraphGoblinClient,
+    modelId: string,
+    metadata: RequestBody<'/classifier-models/{id}', 'put'>,
+  ) =>
+    unwrap(
+      await client.PUT('/classifier-models/{id}', {
+        params: { path: { id: modelId }, header: { 'if-none-match': '*' } },
+        body: metadata,
+      }),
+    ),
+  setEnabled: async (client: GraphGoblinClient, modelId: string, enabled: boolean) =>
+    unwrap(await client.PATCH('/classifier-models/{id}', { ...id(modelId), body: { enabled } })),
+  remove: async (client: GraphGoblinClient, modelId: string): Promise<void> => {
+    unwrap(await client.DELETE('/classifier-models/{id}', id(modelId)));
   },
 };
 

@@ -31,19 +31,44 @@ Runs
   POST   /runs/{id}/replay              fork a new run at a node; body: { nodeId }; 202 { run }; 409 REPLAY_NODE_NOT_REACHED (see 05)
 
 Triggers and events
+  POST   /triggers/cron/preview         next cron slots without saving or arming; loops:read
   POST   /hooks/{endpointToken}         signed webhook receiver (public; HMAC, timestamp window, replay, 1 MB, rate limit; see 08)
   GET    /loops/{id}/triggers           schedules, webhook endpoints (path only, never the secret), armed poll triggers
   POST   /events                        inbound event bus; body: { type, payload, dedupeKey? }; fires event triggers, returns runIds and duplicate
   GET    /events?type=&before=&limit=   stored inbound events (API, exit channels, webhooks), newest first
 
 Settings and catalog
-  CRUD   /secrets  /api-keys  /model-catalog  /settings   (schedules follow publish; read them at /loops/{id}/triggers)
+  CRUD   /secrets  /api-keys  /settings   (schedules follow publish; read them at /loops/{id}/triggers)
+  GET    /api-keys                      owner key metadata with required current: boolean (the key authenticating this request)
+  GET    /model-catalog                 catalog entries, including source and enabled (settings:read)
+  PATCH  /model-catalog/{harness}/{model}  { enabled: boolean }, 200 entry (settings:write)
+  PUT    /model-catalog/{harness}/{model}  edit existing LiteLLM metadata (settings:write)
+  DELETE /model-catalog/{harness}/{model}  remove a LiteLLM entry, 204 (settings:write)
+  GET    /classifier-models             owner classifier summaries with configured/enabled (settings:read)
+  PUT    /classifier-models/{id}        create/replace custom HTTP metadata, 200 summary (settings:write; also secrets:write with secretRef); If-None-Match: * creates only
+  PATCH  /classifier-models/{id}        exactly { enabled: boolean }, 200 summary (settings:write)
+  DELETE /classifier-models/{id}        remove custom metadata, 204; preserve secrets/references (settings:write)
   GET    /harness/preflight             Codex installed and authenticated?
   GET    /system/preflight              first-run checks: Node, data dir, master key, database, harnesses, Jev, default model (11)
   GET    /openapi.json   GET /healthz   GET /version   (all public; Swagger UI at /docs when enabled)
 ```
 
-All list endpoints are paginated with cursors. All ids are ULIDs.
+Run and loop lists are paginated with cursors. Loop/run ids are ULIDs; classifier ids are bounded URL-safe names, with `jev` reserved for the built-in.
+
+## Loop definition inputs
+
+Loop settings have model and effort defaults only. Select `config.harness` on each inference
+node; omission defaults to Codex. Create, draft save, and validate request bodies use the
+canonical `LoopDefinitionSchema`. `settings.defaults.harness` is rejected as an unknown key,
+with its field path, regardless of its value.
+
+`POST /loops/import` delegates to `domain.importLoop`, accepting canonical bare definitions
+and portable export envelopes. Envelope errors retain paths such as
+`loop.settings.defaults.harness`, `formatVersion`, or `exportedAt`, under `LOOP_IMPORT_ERROR`.
+Ordinary bodies use `VALIDATION_FAILED`. Responses and exports use the canonical, encodable
+schemas. Startup migration `0005` removes the obsolete field from stored version definitions
+once; there is no tolerant read path. Schema and format versions stay 1. Older files and API
+clients must remove the field before sending a definition (see the CHANGELOG upgrade notes).
 
 ## SSE protocol (Decided)
 
@@ -59,11 +84,14 @@ All list endpoints are paginated with cursors. All ids are ULIDs.
 
 - **Local trusted mode**: the API binds to `127.0.0.1` and the browser app on the same machine needs no credentials. A warning is logged if the bind address is changed without API keys enabled.
 - **API keys**: other applications and the MCP server authenticate with a bearer key. Keys are shown once, stored hashed, and carry scopes (`loops:read`, `runs:write`, and so on).
-- **Scopes (Decided by implementation, WP-G, 2026-10-03)**: every private route, read or write, needs a scope, checked in the same `onRequest` hook that authenticates the key, before the body is parsed or any data is read (`requiredScope` in `apps/api/src/plugins/auth.ts`). The scope is `<resource>:read` for `GET` and `HEAD` and `<resource>:write` for everything else, where the resource is the route's first path segment: `loops`, `runs`, `settings`, `secrets`, `api-keys`, `events`, and `system`. `/model-catalog` shares `settings`, and `/harness/preflight` shares `system` with `/system/preflight`. Two routes are overridden: `POST /loops/{id}/runs` needs `runs:write`, and `POST /loops/{id}/validate`, which saves nothing, needs `loops:read`. A write scope implies the read scope of the same resource, so a `runs:write` key can follow the runs it starts. `*` grants everything, and local trusted mode (no key presented, keys not required) acts with `*`. A key without the scope gets `403 FORBIDDEN`, even when the request would also fail validation. A request that matches no route gets its `404` regardless of scopes. The adversarial API suite holds a table of every advertised route and its scope; adding a route means adding it there.
+- **Scopes (Decided by implementation, WP-G, 2026-10-03)**: every private route, read or write, needs a scope, checked in the same `onRequest` hook that authenticates the key, before the body is parsed or any data is read (`requiredScope` in `apps/api/src/plugins/auth.ts`). The scope is `<resource>:read` for `GET` and `HEAD` and `<resource>:write` for everything else, where the resource is the route's first path segment: `loops`, `runs`, `settings`, `secrets`, `api-keys`, `events`, and `system`. `/model-catalog` and `/classifier-models` share `settings`, and `/harness/preflight` shares `system` with `/system/preflight`. Three routes are overridden: `POST /loops/{id}/runs` needs `runs:write`, and `POST /loops/{id}/validate`, which saves nothing, needs `loops:read`; `POST /triggers/cron/preview` also saves nothing and needs `loops:read`. A write scope implies the read scope of the same resource, so a `runs:write` key can follow the runs it starts. `*` grants everything, and local trusted mode (no key presented, keys not required) acts with `*`. A key without the scope gets `403 FORBIDDEN`, even when the request would also fail validation. A request that matches no route gets its `404` regardless of scopes. The adversarial API suite holds a table of every advertised route and its scope; adding a route means adding it there.
+- **Current API key**: `GET /api-keys` adds a required `current: boolean` to every item. It is true only when keys are required and the authenticated API-key actor id matches that row. Exactly the key authenticating this request is flagged; revoked keys cannot authenticate, and other owners' keys are not listed; a list request already accepted can report its own key as both current and revoked. In trusted mode every row is false, with or without a valid bearer key. The flag is a response snapshot, never persisted or included in the creation response; tokens and hashes are never listed. Headers (including `x-graphgoblin-client`), query parameters, bodies, and labels cannot choose the flag.
 - **API-key delegation**: `POST /api-keys` requires `api-keys:write`. Local trusted mode and callers holding `*` may grant any scopes; omitting `scopes` defaults to `["*"]` only for them. A scoped caller must list `scopes` explicitly or gets `400 VALIDATION_FAILED` with a message explaining that requirement. It may grant only scopes it holds, including reads implied by its write scopes, and may never grant `*`. A request containing unheld scopes or `*` gets `403 SCOPE_NOT_DELEGABLE`, listing all offending scopes in `detail` and `errors.scopes`, without creating a key. An `api-keys:write` key can still list and revoke every key for the local owner, including `*` keys. See [ADR-0016](decisions/ADR-0016-api-key-scope-delegation.md).
 - **Path ids**: resource ids in paths (loop, version, run, API key) must be ULIDs. A malformed id is a `400 VALIDATION_FAILED`, not a lookup that ends in `404`. Node names, signal names, secret names, model names, setting keys, artifact ids, and webhook tokens keep their own formats.
 - **Required keys** (`GG_REQUIRE_API_KEY=true`): every route outside the [public route list](#public-routes-decided-by-implementation-2026-10-03) needs a key. On the first 401 the web app asks for a key, keeps it in the browser's `localStorage`, and sends it on every request and event stream. Settings can forget it.
 - **Post-1.0**: an `AuthProvider` interface in `apps/api` with OIDC as the first hosted implementation. Every handler already receives an `ownerId` from the auth layer; in 1.0 it is always `local`.
+
+PUT `/classifier-models/{id}` also requires `secrets:write` when its validated body supplies `secretRef`, because the registered endpoint will receive that secret as a bearer. This additional check returns `403 FORBIDDEN` before persistence or secret resolution. `secrets:read` is insufficient; local trusted mode and `*` retain access. A settings-only metadata edit may omit `secretRef`, which clears authentication. Changing an existing entry's endpoint with `settings:write` alone is an accepted capability of that scope: no secret travels to the new endpoint, but later decisions that select the entry send their context (the rendered question, labels, and state) there, as that scope already decides which models and defaults runs use.
 
 ### Public routes (Decided by implementation, 2026-10-03)
 
@@ -76,6 +104,28 @@ The `/docs` prefix is on the public list, but the Swagger UI is registered there
 `/hooks/<token>` needs no API key because the HMAC signature is the credential; see [Webhook](08-triggers-and-integrations.md#webhook-decided-shipped-in-m6). `/app/`, `/`, and `/app` stay public because the web shell holds no data and every API call it makes is still authenticated.
 
 Everything outside these public prefixes and exact paths is private. With `GG_REQUIRE_API_KEY=true`, it needs a bearer API key. When keys are not required, a request without a key runs in local trusted mode; a request that presents a key is still authenticated and limited to that key's scopes.
+
+## Cron preview (Decided, #20)
+
+`POST /triggers/cron/preview` requires `loops:read` (also implied by `loops:write`).
+Its JSON body is `{ expression, timezone, count?, from? }`: expression at most 256
+characters, timezone at most 64, count an integer from 1 to 10 (default 5), and
+from an ISO timestamp with a UTC marker or offset (default the server clock).
+The response is 200 `{ next: [timestamps] }`, containing UTC ISO timestamps
+strictly after from. Each slot is computed through `CronScheduler.nextFire`,
+including daylight-saving changes. A finite or impossible schedule can return
+fewer slots or an empty array. The route creates no schedules and starts no runs.
+
+An invalid expression or timezone returns 400 Problem Details with code
+`CRON_INVALID`, with `errors: [{ path, message }]` naming `/expression` or
+`/timezone`, following the request body's JSON-pointer convention used by
+`VALIDATION_FAILED` for malformed fields or bounds.
+There is no server summary: the web control describes the preset model, and labels
+other expressions as custom without rewriting them. Validate and publish retain
+their `CRON_INVALID` issues, with nodeId and node-relative `config.expression` or
+`config.timezone` paths.
+Following an expression issue opens Advanced and focuses the raw expression;
+following a timezone issue focuses the time zone control.
 
 ## Return delivery (Decided)
 
@@ -152,7 +202,7 @@ Codex installs a plugin by copying it into `~/.codex/plugins/cache/<marketplace>
 - **Generated types.** `openapi.json` (the API's document) and `src/generated/schema.ts` (from `openapi-typescript`) are committed. `pnpm --filter @graphgoblin/api-client generate` re-emits both from the API's source; a test fails with that instruction when either drifts from the live API. The API emits large and recursive contract schemas (`JsonValue`, `LoopDefinition`, `RunRecord`, `RunEvent`, `ContextThread`, ...) as named components from a dedicated registry in `apps/api/src/openapi-registry.ts`; request-side components carry an `Input` suffix.
 - **Factory.** `createGraphGoblinClient({ baseUrl, apiKey?, fetch?, client? })` returns a typed openapi-fetch client. `apiKey` becomes `authorization: Bearer ...`; `client: 'ui' | 'mcp'` becomes `x-graphgoblin-client`, which the API maps to the `manual.ui` or `manual.mcp` invocation source.
 - **Errors.** Non-2xx responses throw `GraphGoblinApiError` with the problem's `status`, `code`, `detail`, and `errors`; transport failures throw it with `status: 0` and `code: 'NETWORK_ERROR'`. `unwrap(result)` does the same for raw openapi-fetch calls.
-- **Resource wrappers.** `loops`, `runs`, `settings`, `secrets`, `apiKeys`, `modelCatalog`, `events`, and `system` take the client first and return the response body, for example `await runs.start(client, loopId, { input })` or `await runs.replay(client, runId, nodeId)`.
+- **Resource wrappers.** `loops`, `runs`, `settings`, `secrets`, `apiKeys`, `modelCatalog`, `classifierModels`, `events`, and `system` take the client first and return the response body, for example `await runs.start(client, loopId, { input })` or `await runs.replay(client, runId, nodeId)`. Classifier helpers are `list(client)`, `upsert(client, id, metadata)`, `create(client, id, metadata)` (the same PUT with `If-None-Match: *`, refused with `CLASSIFIER_EXISTS` when the id exists), `setEnabled(client, id, enabled)`, and `remove(client, id)`; ids are encoded and API problems propagate unchanged.
 - **Live events.** `subscribeRunEvents({ client, runId, after?, onEvent, signal? })` reads `GET /runs/{id}/events` as SSE, validates each frame with `RunEventSchema`, and calls `onEvent` in `seq` order. It remembers the last delivered `seq`; if the connection drops before `run.finished`, `run.failed`, or `run.cancelled`, it reconnects with `after=<lastSeq>` after an exponential backoff (500 ms doubling, capped at 30 s, reset after a connection that makes progress) and discards replayed events it has already delivered. 408, 425, 429, 5xx, and network errors are retried; other statuses reject `done`. A frame that fails validation is reported through `onError` and skipped. It returns `{ close(), done, lastSeq }`.
 - **Waiting.** `waitForRun(client, runId, { timeoutMs, pollMs?, signal? })` polls `GET /runs/{id}` until a terminal status or the timeout and returns `{ run, finished }`; the MCP `wait_for_run` tool is built on it.
 
@@ -160,9 +210,50 @@ Codex installs a plugin by copying it into `~/.codex/plugins/cache/<marketplace>
 
 Problem Details, RFC 9457, with a stable `code` field drawn from `contracts`. Validation errors include the Zod issue path. Request errors Fastify raises itself use stable codes too: `MALFORMED_BODY` (invalid or empty JSON, 400), `BODY_TOO_LARGE` (over the 8 MB limit, 413), `UNSUPPORTED_MEDIA_TYPE` (415); other framework errors are `BAD_REQUEST`, so no `FST_ERR_*` code reaches a client.
 
+### Model catalog (Decided, ADR-0018)
+
+Entries include `source: 'harness' | 'litellm'`. GET requires `settings:read`; all mutations require `settings:write`. PATCH accepts only `{ enabled: boolean }` and returns the full entry with 200; repeated toggles are safe. Use `modelCatalog.setEnabled(client, harness, model, enabled)` in the client. Existing `upsert` and `remove` helpers remain for LiteLLM rows; no client helper was removed.
+
+PUT retains displayName, efforts, defaultEffort, and optional enabled (omitting it preserves the entry's current value), adding optional source. Existing source governs ownership and cannot be changed. An omitted source on creation means harness, so old scripts creating harness models are now refused. Requesting `source: 'litellm'` on a new entry is also refused until LiteLLM configuration ships. Existing LiteLLM entries may be edited without specifying source. Scripts that previously PUT a complete harness entry to toggle enabled must use PATCH instead. MCP tools and Codex plugin skills do not call these catalog routes.
+
+| Code                       | HTTP | Meaning                                                                                                                                                                                                 |
+| -------------------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MODEL_MANAGED_BY_HARNESS` | 409  | Existing harness edit/delete: "Harness models can only be enabled or disabled". Harness creation: "Models for this harness come from the harness and cannot be added". Includes hand-added legacy rows. |
+| `LITELLM_NOT_CONFIGURED`   | 409  | LiteLLM creation: "LiteLLM is not configured; adding local models is not available yet". Settings Add model requests this source.                                                                       |
+| `MODEL_NOT_FOUND`          | 404  | PATCH or DELETE of a missing entry.                                                                                                                                                                     |
+| `INVALID_INPUT`            | 400  | LiteLLM PUT changes source or defaultEffort is absent from efforts.                                                                                                                                     |
+| `VALIDATION_FAILED`        | 400  | Invalid body, including a missing/non-boolean enabled or extra PATCH fields.                                                                                                                            |
+
+### Classifier catalog (Decided, ADR-0021)
+
+`/classifier-models` shares the `settings` scope alias: GET needs `settings:read`; PUT/PATCH/DELETE need `settings:write`, checked before body parsing. PUT additionally requires `secrets:write` when the validated body carries `secretRef`; otherwise it returns `403 FORBIDDEN`. Trusted mode and `*` have both scopes. Secret-read scope is not required to see configuration status. Entries expose id, displayName, source (`builtin`/`custom`), provider (`typesafe`/`http`), providerModel, unique nonempty primitives (`choice`, `noul`, `score`), endpoint, optional secretRef, and enabled. Summaries add configured and an optional configurationReason naming a missing/blank or unreadable secret and the Settings, Secrets remedy. GET makes no provider request and does not establish reachability or valid provider authentication. GET orders built-in Jev first, then custom entries by id.
+
+PUT requires strict custom HTTP metadata, including provider `http`; it rejects id, source, enabled, status fields, and credentials in the body. Creation starts disabled; replacement preserves enabled and clears an omitted secretRef. A PUT carrying `If-None-Match: *` creates only: when the id already exists it answers 409 `CLASSIFIER_EXISTS` and changes nothing, so a client that has not seen the current catalog (a list still loading, a stale tab) cannot replace an entry by adding one with the same id. Settings' Add sends it; Edit and scripts that mean to replace do not. Any other `If-None-Match` value is a 400 `VALIDATION_FAILED`. PUTs for one owner and id are serialized in the API process, so of two concurrent create-only requests exactly one creates the entry. PATCH accepts exactly enabled, even when a required secret is absent. Built-in `jev` is enable-only, seeded before recovery; restart refreshes managed metadata and preserves enabled. DELETE leaves secrets and published loop references intact. Classifier id syntax is `[a-z][a-z0-9_.-]{0,63}`; uppercase variants are rejected. Endpoint roots require HTTP(S) with no credentials, query, fragment, whitespace, port 0, or terminal `/v1/systemone` path. Authenticated endpoints require HTTPS except on loopback (`localhost`, `127.0.0.0/8`, `[::1]`); secretRef follows the Secrets name syntax.
+
+| Code                           | HTTP | Meaning                                                 |
+| ------------------------------ | ---- | ------------------------------------------------------- |
+| `VALIDATION_FAILED`            | 400  | Invalid id or strict input, with field paths.           |
+| `CLASSIFIER_MODEL_NOT_FOUND`   | 404  | Missing PATCH/DELETE target.                            |
+| `CLASSIFIER_MANAGED_BY_SYSTEM` | 409  | PUT or DELETE of built-in `jev`.                        |
+| `CLASSIFIER_EXISTS`            | 409  | Create-only PUT (`If-None-Match: *`) of an existing id. |
+
+Successful classifier decisions add `classifierModel` (the catalog id) to the `decision.made` payload while retaining strategy `jev`, route/confidence/alternatives, and the existing lastOutput shape. Expression and Codex decisions omit this field. It records selection separately from the native providerModel sent to the endpoint. Existing events without the optional field remain valid.
+
+Decision and exit-predicate failure details in run snapshots, paged events, and streams never contain the provider's raw answer. Both paths share fixed failure summaries and retain the selected strategy and recognized `DECIDER_*` codes; unknown provider codes become `DECIDER_ERROR` at the exit and catch-all boundaries. Provider messages, names, stacks, error bodies, and arbitrary codes are not persisted. Engine provider warnings contain only an allowlisted error name, recognized code, numeric HTTP status when available, and strategy and node identifiers; Jev SDK logs use fixed summaries. Provider exceptions fail the step with `INTERNAL_ERROR`, and cancellation still propagates. HTTP classifiers reject undeclared choices; Jev also rejects probabilities that do not cover exactly the submitted labels. Built-in Jev and Codex unknown choices still try the next strategy, with fixed diagnostics naming only the strategy. Successful decision events retain only declared routes in alternatives. Invalid confidence diagnostics are fixed, and low-confidence diagnostics contain only validated numbers. Expression diagnostics retain the author's expression result to help identify route mismatches.
+
 ## Validation agreement (Decided, WP-D2)
 
+Classifier validation also joins the same shared issue collection for create, import, draft save, validate, and publish. It applies only to decisions whose strategy includes `jev`, resolving `config.jev.model` or the default `jev` for the request owner. Unknown models and unsupported Choice produce error-severity `CLASSIFIER_MODEL_NOT_FOUND` and `CLASSIFIER_PRIMITIVE_UNSUPPORTED`. Disabled, missing/blank-secret, and unreadable-secret states produce warnings `CLASSIFIER_MODEL_DISABLED`, `CLASSIFIER_SECRET_MISSING`, and `CLASSIFIER_SECRET_UNREADABLE`. Issues name the node/model and Settings remedy, use node-relative `config.jev.model` plus nodeId, and explain skipped strategies (including inability to route with no later strategy). Warnings allow publication; errors make validate's publishable false and publish return 422 `LOOP_INVALID` with the same issues. Published references remain intact after catalog deletion and use runtime fall-through or `DECISION_NO_ROUTE` until corrected.
+
 `POST /loops`, `POST /loops/import`, `PUT /loops/{id}/draft`, `POST /loops/{id}/validate`, and `POST /loops/{id}/publish` report the same issue list: the `domain` rules (`validateLoop`, which includes Liquid and JSONata syntax checks), trigger checks such as cron syntax, and subloop references, which must name a loop of the same owner with a published version (`SUBLOOP_NOT_FOUND`, `SUBLOOP_NOT_PUBLISHED`; a loop may reference itself). `publishable` from validate is true exactly when publish would accept the draft. The editor runs the `domain` rules locally and adds the API-only issues from validate.
+
+The API reads the catalog once per issue collection, next to subloop checks, and adds warning-severity `MODEL_DISABLED` or `MODEL_NOT_IN_CATALOG` for explicit inference `config.model` (the node's harness), decision `config.codex.model` (Codex, only when strategy includes `codex`), and `settings.defaults.model` (the inference default harness, `codex`). Node warnings include nodeId and node-relative paths `config.model` or `config.codex.model`; loop-default warnings use `settings.defaults.model` without nodeId. Unspecified models and unused decision Codex settings add no catalog warning. Publishing succeeds when only warnings exist and returns `{ version, issues }`; warnings do not enforce the catalog at runtime. The shared contracts issue schema supports optional paths, and the editor already shows warnings and their node identity.
+
+Known limitation: loop-default model warnings always check the Codex catalog, the only supported
+inference harness. Revisit this check when a second harness exists so a model inherited by nodes
+using different harnesses can be checked against each relevant catalog.
+
+Exit predicates whose strategy is `jev` check built-in Jev in the same five admission endpoints. They report `CLASSIFIER_MODEL_DISABLED`, `CLASSIFIER_SECRET_MISSING`, or `CLASSIFIER_SECRET_UNREADABLE` warnings at node-relative `config.criteria.<index>.strategy`, naming the exit, model, and Settings remedy. Warnings allow publication; if that unavailable predicate is evaluated, the exit fails with `DECIDER_UNAVAILABLE` rather than skipping it.
 
 ## Draft conflicts (Decided, WP-F2, ADR-0015)
 

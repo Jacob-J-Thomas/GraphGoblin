@@ -61,8 +61,15 @@ export function withApiKey(fetch: (request: Request) => Promise<Response>) {
     if (key && !request.headers.has('authorization')) {
       request.headers.set('authorization', `Bearer ${key}`);
     }
+    // A cancelled query can still deliver a response. Only reject the credentials it sent,
+    // including an explicit bearer header, while they still belong to this browser.
+    const sentKey = /^Bearer\s+(.+)$/i
+      .exec(request.headers.get('authorization') ?? '')?.[1]
+      ?.trim();
     const response = await fetch(request);
-    if (response.status === 401) useApiKeyStore.getState().markRejected();
+    const current = useApiKeyStore.getState();
+    if (response.status === 401 && (current.key?.trim() || undefined) === sentKey)
+      current.markRejected();
     return response;
   };
 }

@@ -1,13 +1,16 @@
 /**
  * Authoring-time syntax checks for every Liquid template and JSONata expression in a loop. The
  * schemas in `contracts` mark those strings by reusing `TemplateSchema` and `ExpressionSchema`, so
- * walking a node's config alongside its kind's schema finds them all, wherever they are nested.
+ * walking a node's config alongside its kind's schema finds them all, wherever they are nested. A
+ * field may carry its own metadata (`.meta()`, a copy with the same definition), so the walk
+ * recognises them with `sameSchema` rather than `===`.
  */
 import {
   ExpressionSchema,
   LoopSettingsSchema,
   NodeConfigSchemas,
   TemplateSchema,
+  sameSchema,
   type LoopDefinition,
 } from '@graphgoblin/contracts';
 import { checkExpression } from './expression.js';
@@ -19,6 +22,8 @@ interface SyntaxIssue {
   severity: 'error';
   message: string;
   nodeId?: string;
+  /** The field: `config.<path>` in the node, or `settings.<path>` in the loop's settings. */
+  path: string;
 }
 
 /** The slice of a Zod 4 schema this walker reads. */
@@ -41,9 +46,10 @@ const WRAPPERS = new Set([
 
 function walk(schema: SchemaLike, value: unknown, path: string, found: Found[]): void {
   if (value === undefined || value === null) return;
-  if ((schema as unknown) === TemplateSchema || (schema as unknown) === ExpressionSchema) {
+  const template = sameSchema(schema, TemplateSchema);
+  if (template || sameSchema(schema, ExpressionSchema)) {
     if (typeof value === 'string') {
-      const kind = (schema as unknown) === TemplateSchema ? 'template' : 'expression';
+      const kind = template ? 'template' : 'expression';
       found.push({ kind, source: value, path });
     }
     return;
@@ -85,7 +91,11 @@ export function syntaxIssues(def: LoopDefinition): SyntaxIssue[] {
   const issues: SyntaxIssue[] = [];
   const report = (item: Found, nodeId?: string) => {
     const problem =
-      item.kind === 'template' ? checkTemplate(item.source) : checkExpression(item.source);
+      item.kind === 'expression' && item.source.trim() === ''
+        ? 'expression is required; a blank expression is not valid'
+        : item.kind === 'template'
+          ? checkTemplate(item.source)
+          : checkExpression(item.source);
     if (problem === null) return;
     const where = nodeId ? `node "${nodeId}"` : 'loop settings';
     issues.push({
@@ -93,6 +103,7 @@ export function syntaxIssues(def: LoopDefinition): SyntaxIssue[] {
       severity: 'error',
       message: `${item.kind} at ${where} ${item.path}: ${problem}`,
       ...(nodeId ? { nodeId } : {}),
+      path: [nodeId ? 'config' : 'settings', item.path].filter(Boolean).join('.'),
     });
   };
   for (const item of findAuthoredSources(LoopSettingsSchema, def.settings)) report(item);

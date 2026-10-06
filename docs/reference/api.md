@@ -46,14 +46,19 @@ Starting, observing, and controlling runs.
 
 Owner settings and the model catalog.
 
-| Method | Path                               | Summary                          | Parameters                                                           | Request body                                        | Responses |
-| ------ | ---------------------------------- | -------------------------------- | -------------------------------------------------------------------- | --------------------------------------------------- | --------- |
-| GET    | `/settings`                        | Owner settings                   | -                                                                    | -                                                   | 200       |
-| PUT    | `/settings`                        | Update owner settings            | -                                                                    | `object`                                            | 200       |
-| DELETE | `/settings/{key}`                  | Reset one setting to its default | `key`: string (path, required)                                       | -                                                   | 204       |
-| GET    | `/model-catalog`                   | The model catalog                | -                                                                    | -                                                   | 200       |
-| PUT    | `/model-catalog/{harness}/{model}` | Add or update a catalog entry    | `harness`: string (path, required), `model`: string (path, required) | `{ displayName, efforts, defaultEffort, enabled? }` | 200       |
-| DELETE | `/model-catalog/{harness}/{model}` | Remove a catalog entry           | `harness`: string (path, required), `model`: string (path, required) | -                                                   | 204       |
+| Method | Path                               | Summary                                                            | Parameters                                                           | Request body                                                 | Responses |
+| ------ | ---------------------------------- | ------------------------------------------------------------------ | -------------------------------------------------------------------- | ------------------------------------------------------------ | --------- |
+| GET    | `/settings`                        | Owner settings                                                     | -                                                                    | -                                                            | 200       |
+| PUT    | `/settings`                        | Update owner settings                                              | -                                                                    | `object`                                                     | 200       |
+| DELETE | `/settings/{key}`                  | Reset one setting to its default                                   | `key`: string (path, required)                                       | -                                                            | 204       |
+| GET    | `/model-catalog`                   | The model catalog                                                  | -                                                                    | -                                                            | 200       |
+| PUT    | `/model-catalog/{harness}/{model}` | Edit a LiteLLM catalog entry                                       | `harness`: string (path, required), `model`: string (path, required) | `{ displayName, efforts, defaultEffort, enabled?, source? }` | 200       |
+| PATCH  | `/model-catalog/{harness}/{model}` | Enable or disable a catalog entry                                  | `harness`: string (path, required), `model`: string (path, required) | `{ enabled }`                                                | 200       |
+| DELETE | `/model-catalog/{harness}/{model}` | Remove a LiteLLM catalog entry                                     | `harness`: string (path, required), `model`: string (path, required) | -                                                            | 204       |
+| GET    | `/classifier-models`               | List owner classifier models with local configuration status       | -                                                                    | -                                                            | 200       |
+| PUT    | `/classifier-models/{id}`          | Create or replace custom HTTP classifier metadata                  | `id`: string (path, required), `if-none-match`: string (header)      | `ClassifierModelPutInput`                                    | 200       |
+| PATCH  | `/classifier-models/{id}`          | Enable or disable a classifier model                               | `id`: string (path, required)                                        | `{ enabled }`                                                | 200       |
+| DELETE | `/classifier-models/{id}`          | Remove a custom classifier, preserving secrets and loop references | `id`: string (path, required)                                        | -                                                            | 204       |
 
 ## secrets
 
@@ -69,11 +74,11 @@ Named secrets (values are never returned).
 
 Keys for other applications and the MCP server.
 
-| Method | Path             | Summary                                    | Parameters                    | Request body         | Responses |
-| ------ | ---------------- | ------------------------------------------ | ----------------------------- | -------------------- | --------- |
-| GET    | `/api-keys`      | List API keys                              | -                             | -                    | 200       |
-| POST   | `/api-keys`      | Create an API key; the token is shown once | -                             | `{ label, scopes? }` | 201       |
-| DELETE | `/api-keys/{id}` | Revoke an API key                          | `id`: string (path, required) | -                    | 204       |
+| Method | Path             | Summary                                                  | Parameters                    | Request body         | Responses |
+| ------ | ---------------- | -------------------------------------------------------- | ----------------------------- | -------------------- | --------- |
+| GET    | `/api-keys`      | List API keys with the current authenticated key flagged | -                             | -                    | 200       |
+| POST   | `/api-keys`      | Create an API key; the token is shown once               | -                             | `{ label, scopes? }` | 201       |
+| DELETE | `/api-keys/{id}` | Revoke an API key                                        | `id`: string (path, required) | -                    | 204       |
 
 ## events
 
@@ -88,10 +93,11 @@ The inbound event bus.
 
 Schedules, webhook endpoints, and the public /hooks receiver.
 
-| Method | Path                   | Summary                                                                      | Parameters                       | Request body | Responses |
-| ------ | ---------------------- | ---------------------------------------------------------------------------- | -------------------------------- | ------------ | --------- |
-| GET    | `/loops/{id}/triggers` | Schedules, webhook endpoints, and armed poll triggers of a loop              | `id`: string (path, required)    | -            | 200       |
-| POST   | `/hooks/{token}`       | Signed webhook receiver (public; HMAC, timestamp window, dedupe, rate limit) | `token`: string (path, required) | -            | 202       |
+| Method | Path                     | Summary                                                                      | Parameters                       | Request body                              | Responses |
+| ------ | ------------------------ | ---------------------------------------------------------------------------- | -------------------------------- | ----------------------------------------- | --------- |
+| POST   | `/triggers/cron/preview` | Preview upcoming cron slots without arming a schedule (loops:read)           | -                                | `{ expression, timezone, count?, from? }` | 200       |
+| GET    | `/loops/{id}/triggers`   | Schedules, webhook endpoints, and armed poll triggers of a loop              | `id`: string (path, required)    | -                                         | 200       |
+| POST   | `/hooks/{token}`         | Signed webhook receiver (public; HMAC, timestamp window, dedupe, rate limit) | `token`: string (path, required) | -                                         | 202       |
 
 ## system
 

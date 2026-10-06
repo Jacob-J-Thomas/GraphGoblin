@@ -1,10 +1,11 @@
-import { Navigate, Outlet, Route, Routes, useLocation, useParams } from 'react-router';
+import { Link, Navigate, Outlet, Route, Routes, useLocation, useParams } from 'react-router';
 import { ApiKeyPanel } from '../api/ApiKeyPanel.js';
 import { ErrorBoundary } from '../components/ErrorBoundary.js';
-import { AppShell, Page, type NavItem } from '../components/layout/index.js';
+import { AppShell, Page, PageHeader, type NavItem } from '../components/layout/index.js';
+import { buttonStyles, Card } from '../components/ui/index.js';
 import { EditorPage } from '../editor/EditorPage.js';
 import { EventsPage } from '../events/EventsPage.js';
-import { useOnline } from '../lib/online.js';
+import { useConnectionStatus } from '../lib/online.js';
 import { LoopsPage } from '../loops/LoopsPage.js';
 import { UpdateToast } from '../pwa/UpdateToast.js';
 import { NewRunPage } from '../runs/new/NewRunPage.js';
@@ -20,10 +21,14 @@ const NAV: readonly NavItem[] = [
 ];
 
 function Layout() {
-  const online = useOnline();
+  const connection = useConnectionStatus();
   const location = useLocation();
   return (
-    <AppShell nav={NAV} offline={!online}>
+    <AppShell
+      nav={NAV}
+      offline={connection === 'offline'}
+      apiUnreachable={connection === 'api-unreachable'}
+    >
       <ApiKeyPanel />
       <ErrorBoundary key={location.pathname}>
         <Outlet />
@@ -33,10 +38,22 @@ function Layout() {
   );
 }
 
+/** An unknown address inside the app: say so, and offer the way back to the start. */
 function NotFound() {
   return (
     <Page>
-      <p className="text-md text-muted">Page not found.</p>
+      <PageHeader title="Page not found" />
+      <Card>
+        <div className="grid justify-items-start gap-4">
+          <p className="text-md text-muted">
+            Nothing in GraphGoblin lives at this address. The link may be mistyped, or what it
+            pointed to may have been deleted.
+          </p>
+          <Link to="/loops" className={buttonStyles({ variant: 'outline' })}>
+            Go to Loops
+          </Link>
+        </div>
+      </Card>
     </Page>
   );
 }

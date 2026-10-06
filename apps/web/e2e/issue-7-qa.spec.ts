@@ -5,6 +5,12 @@
 import type { APIRequestContext, Page } from '@playwright/test';
 import { approvalLoop, control, expect, publishLoop, test } from './fixtures.js';
 
+declare global {
+  interface Window {
+    pulseStarts?: string[];
+  }
+}
+
 const start = { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } };
 const done = { id: 'done', kind: 'exit', label: 'Done', config: {} };
 
@@ -69,26 +75,44 @@ test('I7-QA-03: reduced motion stops the running and live pulses at full opacity
     await expect(page.locator('[data-status="running"]').first()).toBeVisible();
     await expect(page.getByText(/events, live/)).toBeVisible();
     // With motion allowed the glyph and the live dot pulse, so the measurement sees them.
-    const moving = await motion(page);
-    expect(moving.pulses.length).toBeGreaterThanOrEqual(2);
-    expect(moving.animations).toContain('gg-pulse');
+    await expect.poll(async () => (await motion(page)).pulses.length).toBeGreaterThanOrEqual(2);
+    await expect.poll(async () => (await motion(page)).animations).toContain('gg-pulse');
 
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await expect.poll(async () => (await motion(page)).animations).toEqual([]);
-    const still = await motion(page);
-    expect(still.pulses.length).toBeGreaterThanOrEqual(2);
-    for (const pulse of still.pulses) expect(pulse).toEqual({ name: 'none', opacity: '1' });
+    const pulses = page.locator('.animate-pulse-soft');
+    await expect.poll(() => pulses.count()).toBeGreaterThanOrEqual(2);
+    for (const pulse of await pulses.all()) {
+      await expect(pulse).toHaveCSS('animation-name', 'none');
+      await expect(pulse).toHaveCSS('opacity', '1');
+    }
     // Transitions stay collapsed to an instant change.
+    const still = await motion(page);
     expect(still.transitions.length).toBeGreaterThan(0);
     for (const seconds of still.transitions) expect(seconds).toBeLessThanOrEqual(0.00001);
 
     // A fresh load under reduced motion never starts the pulse at all.
+    await page.addInitScript(() => {
+      const started: string[] = [];
+      Object.assign(window, { pulseStarts: started });
+      document.addEventListener(
+        'animationstart',
+        (event) => {
+          if (event.animationName === 'gg-pulse') started.push(event.animationName);
+        },
+        true,
+      );
+    });
     await page.reload();
     await expect(page.locator('[data-status="running"]').first()).toBeVisible();
     await expect(page.getByText(/events, live/)).toBeVisible();
-    const reloaded = await motion(page);
-    expect(reloaded.pulses.length).toBeGreaterThanOrEqual(2);
-    expect(reloaded.animations).toEqual([]);
+    await expect.poll(async () => (await motion(page)).pulses.length).toBeGreaterThanOrEqual(2);
+    expect((await motion(page)).animations).toEqual([]);
+    for (const pulse of await pulses.all()) {
+      await expect(pulse).toHaveCSS('animation-name', 'none');
+      await expect(pulse).toHaveCSS('opacity', '1');
+    }
+    expect(await page.evaluate(() => window.pulseStarts)).toEqual([]);
     // Every assertion above saw a run that was still running: the harness held it.
     expect(await runStatus(request, runId)).toBe('running');
   } finally {
@@ -120,9 +144,10 @@ test('I7-QA-01: the longest valid loop name stays inside the editor toolbar and 
     // Cut short with an ellipsis, inside the page, with every action still on screen.
     expect(await heading.evaluate((h) => h.scrollWidth > h.clientWidth)).toBe(true);
     expect(await pageOverflows(page), `editor at ${viewport.width}`).toBe(false);
-    for (const action of ['Loop settings', 'Publish']) {
-      await expect(page.getByRole('button', { name: action, exact: true })).toBeInViewport();
-    }
+    await expect(page.getByRole('button', { name: 'Publish', exact: true })).toBeInViewport();
+    await expect(
+      page.getByRole('button', { name: /^(Show|Hide) loop settings$/ }),
+    ).toBeInViewport();
     await expect(page.getByRole('link', { name: 'Open in Runs', exact: true })).toBeInViewport();
     for (const path of ['/app/loops', '/app/runs']) {
       await page.goto(path);
@@ -150,7 +175,10 @@ test('I7-QA-02: overlong text stays inside Alert, Badge, and Button', async ({ p
 
   // Badge and Button: the editor's own, copied into the side panel with overlong labels.
   await page.goto(`/app/loops/${loopId}/edit`);
-  const panel = page.getByRole('region', { name: 'Validation' });
+  const panel = page
+    .getByRole('complementary', { name: 'Loop settings' })
+    .locator('.overflow-auto')
+    .first();
   await expect(panel).toBeVisible();
   const fits = await panel.evaluate((region) => {
     const copy = (selector: string, text: string) =>
@@ -158,7 +186,7 @@ test('I7-QA-02: overlong text stays inside Alert, Badge, and Button', async ({ p
         .find((el) => el.textContent === text)!
         .cloneNode(true) as HTMLElement;
     const badge = copy('span.rounded-full', 'published v1');
-    const button = copy('button', 'Loop settings');
+    const button = copy('button', 'Publish');
     badge.lastElementChild!.textContent = 'long badge '.repeat(45);
     button.lastElementChild!.textContent = 'long action '.repeat(45);
     region.append(badge, button);

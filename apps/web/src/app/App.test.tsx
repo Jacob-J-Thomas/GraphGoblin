@@ -58,7 +58,8 @@ describe('App shell', () => {
     renderApp('/events');
     expect(await screen.findByText('No inbound events yet.')).toBeInTheDocument();
     renderApp('/nowhere');
-    expect(screen.getByText('Page not found.')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Page not found' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Go to Loops' })).toHaveAttribute('href', '/loops');
   });
 
   it('shows an offline banner while the browser is offline', async () => {
@@ -70,6 +71,31 @@ describe('App shell', () => {
       window.dispatchEvent(new Event('online'));
     });
     await waitFor(() => expect(screen.queryByText('You are offline')).not.toBeInTheDocument());
+  });
+
+  it('distinguishes an unreachable API from browser offline and clears both on recovery', async () => {
+    const api = new FakeApi();
+    api.override('GET /healthz', () => new Response('ok'));
+    api.offline = true;
+    const online = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(true);
+    renderApp('/loops', api);
+    expect(await screen.findByText('Cannot reach the GraphGoblin API')).toBeInTheDocument();
+    expect(screen.queryByText('You are offline')).not.toBeInTheDocument();
+    online.mockReturnValue(false);
+    act(() => {
+      window.dispatchEvent(new Event('offline'));
+    });
+    expect(await screen.findByText('You are offline')).toBeInTheDocument();
+    expect(screen.queryByText('Cannot reach the GraphGoblin API')).not.toBeInTheDocument();
+    api.offline = false;
+    online.mockReturnValue(true);
+    act(() => {
+      window.dispatchEvent(new Event('online'));
+    });
+    await waitFor(() => {
+      expect(screen.queryByText('Cannot reach the GraphGoblin API')).not.toBeInTheDocument();
+      expect(screen.queryByText('You are offline')).not.toBeInTheDocument();
+    });
   });
 
   it('shows the update toast and updates only after confirmation', async () => {

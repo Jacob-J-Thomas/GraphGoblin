@@ -32,6 +32,7 @@ The `TriggerService` in `apps/api/src/triggers/` owns everything between an exte
 
 ## Cron (Decided, shipped in M6)
 
+- The trigger editor offers six schedule presets, a searchable IANA timezone picker (default UTC), a summary, and the next five slots in both the trigger and viewer zones. Raw cron lives under the schedule's Advanced disclosure; custom expressions are preserved. The read-only `POST /triggers/cron/preview` calls `CronScheduler.nextFire` and requires `loops:read`; an invalid expression or zone returns 400 `CRON_INVALID` before publishing (see 07 and guide 04).
 - croner (MIT) computes slots in the trigger's `timezone`, including daylight-saving changes. The next fire time is persisted in `schedules.next_fire_at`.
 - `CronScheduler` in `packages/infrastructure/src/scheduler` polls for due schedules every `GG_TIMER_POLL_MS` (default 1 s). A schedule is advanced in the store before its listeners run, so a crash mid-fire loses at most that fire and never repeats it.
 - At boot, before polling starts, each enabled schedule whose next fire time is already past applies its `missedFirePolicy`: `skip` moves to the next future slot without firing; `run-once` fires one catch-up run for the latest missed slot; `run-each` retains the latest missed slots, up to `RUN_EACH_CAP` (100) per schedule, and fires them oldest first. Past the cap the older slots are dropped with a warning naming the number dropped and the first retained slot; a minutely schedule down for a day would otherwise start 1,440 runs at once.

@@ -11,10 +11,13 @@ import {
   Button,
   Card,
   ConfirmAction,
+  FIELD_ROW,
   FieldGroup,
   Input,
   Label,
+  RequiredNote,
 } from '../../components/ui/index.js';
+import { cn } from '../../lib/utils.js';
 import { LIST_ROW, MutationError, useInvalidate } from '../shared.js';
 
 /** API keys for scripts and other clients: create one (the token is shown once), revoke it. */
@@ -23,6 +26,8 @@ export function ApiKeysSection() {
   const queryClient = useQueryClient();
   const invalidate = useInvalidate();
   const query = useApiKeys();
+  const stored = useApiKeyStore((s) => s.key);
+  const warnStoredKey = Boolean(stored) && !query.data?.some((key) => key.current);
   const [label, setLabel] = useState('');
   const create = useMutation({
     mutationFn: () => apiKeys.create(client, { label, scopes: ['*'] }),
@@ -31,21 +36,28 @@ export function ApiKeysSection() {
       invalidate(keys.apiKeys);
     },
   });
-  const stored = useApiKeyStore((s) => s.key);
   return (
     <Card title="API keys">
       <div className="grid gap-4">
         <form
-          className="flex flex-wrap items-end gap-3"
+          className={cn(FIELD_ROW, 'items-end')}
           aria-label="Create API key"
           onSubmit={(e) => {
             e.preventDefault();
             create.mutate();
           }}
         >
+          <RequiredNote className="basis-full" />
           <FieldGroup className="w-[260px]">
-            <Label htmlFor="key-label">Label</Label>
-            <Input id="key-label" value={label} onChange={(e) => setLabel(e.target.value)} />
+            <Label htmlFor="key-label" required>
+              Label
+            </Label>
+            <Input
+              id="key-label"
+              aria-required
+              value={label}
+              onChange={(e) => setLabel(e.target.value)}
+            />
           </FieldGroup>
           <Button type="submit" disabled={!label || create.isPending}>
             Create key
@@ -66,13 +78,15 @@ export function ApiKeysSection() {
                 <li key={k.id} className={LIST_ROW}>
                   <span>
                     {k.label} <span className="text-xs text-muted">({k.scopes.join(', ')})</span>{' '}
-                    {k.revokedAt ? <Badge>revoked</Badge> : null}
+                    {k.revokedAt ? <Badge>revoked</Badge> : null}{' '}
+                    {k.current ? <Badge id={`api-key-current-${k.id}`}>This browser</Badge> : null}
                   </span>
                   {k.revokedAt ? null : (
                     <ConfirmAction
                       action="revoke"
                       name={k.label}
                       accessibleName={`Revoke ${k.label}`}
+                      aria-describedby={k.current ? `api-key-current-${k.id}` : undefined}
                       onDismiss={(error) => {
                         if (error instanceof GraphGoblinApiError && error.status === 404)
                           return queryClient.invalidateQueries({ queryKey: keys.apiKeys });
@@ -80,11 +94,16 @@ export function ApiKeysSection() {
                       consequences={
                         <>
                           <p>Clients using this API key will get 401 immediately.</p>
-                          {stored ? (
+                          {k.current ? (
                             <p>
-                              This browser sends an API key. If you revoke that key, this browser
-                              will lose access and show the API key panel, where you must enter
-                              another valid key.
+                              Revoking this key will sign this browser out and show the API key
+                              panel. Enter another valid key to continue.
+                            </p>
+                          ) : warnStoredKey ? (
+                            <p>
+                              This browser still sends a stored API key. If this is that key,
+                              revoking it signs this browser out and shows the API key panel; Forget
+                              key in Settings also clears it.
                             </p>
                           ) : null}
                         </>
@@ -103,7 +122,7 @@ export function ApiKeysSection() {
   );
 }
 
-/** The key this browser sends (GG_REQUIRE_API_KEY mode). The value itself is never shown. */
+/** The key this browser sends, including in trusted mode. The value itself is never shown. */
 export function BrowserKeySection() {
   const stored = useApiKeyStore((s) => s.key);
   const forget = useApiKeyStore((s) => s.forget);

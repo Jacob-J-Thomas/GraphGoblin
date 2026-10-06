@@ -237,6 +237,25 @@ describe('against the in-process API (local trusted mode)', () => {
     expect(attempts).toBe(0);
   });
 
+  it('preserves catalog warning paths when validation and publication succeed', async () => {
+    const definition = { ...minimalLoop(), settings: { defaults: { model: 'not-in-catalog' } } };
+    const { loop } = await loops.create(client, definition);
+    const validated = await loops.validate(client, loop.id, definition);
+    expect(validated.publishable).toBe(true);
+    expect(validated.issues).toEqual([
+      expect.objectContaining({
+        code: 'MODEL_NOT_IN_CATALOG',
+        severity: 'warning',
+        path: 'settings.defaults.model',
+      }),
+    ]);
+    const published = await client.POST('/loops/{id}/publish', {
+      params: { path: { id: loop.id } },
+    });
+    expect(published.response.status).toBe(200);
+    expect(published.data?.issues).toEqual(validated.issues);
+  });
+
   it('covers settings, secrets, API keys, the model catalog, and inbound events', async () => {
     expect(await settings.update(client, { theme: 'dark' })).toMatchObject({ theme: 'dark' });
     expect(await settings.get(client)).toMatchObject({ theme: 'dark' });
@@ -253,14 +272,55 @@ describe('against the in-process API (local trusted mode)', () => {
     const created = await apiKeys.create(client, { label: 'ci', scopes: ['loops:read'] });
     expect(created.token).toEqual(expect.any(String));
     expect((await apiKeys.list(client)).map((k) => k.id)).toContain(created.key.id);
+    expect((await apiKeys.list(client)).every((k) => k.current === false)).toBe(true);
+    expect(created.key).not.toHaveProperty('current');
     await apiKeys.revoke(client, created.key.id);
 
+    await t.container.repos.catalog.upsert({
+      harness: 'codex',
+      model: 'test-model',
+      source: 'litellm',
+      displayName: 'Test',
+      efforts: ['low'],
+      defaultEffort: 'low',
+      enabled: true,
+    });
     const entry = await modelCatalog.upsert(client, 'codex', 'test-model', {
       displayName: 'Test',
       efforts: ['low'],
       defaultEffort: 'low',
     });
+    expect(entry.source).toBe('litellm');
     expect(entry.enabled).toBe(true);
+    expect((await modelCatalog.setEnabled(client, 'codex', 'test-model', false)).enabled).toBe(
+      false,
+    );
+    expect((await modelCatalog.setEnabled(client, 'codex', 'gpt-6-luna', false)).source).toBe(
+      'harness',
+    );
+    await expect(
+      modelCatalog.upsert(client, 'codex', 'gpt-6-luna', {
+        displayName: 'Edited',
+        efforts: ['low'],
+        defaultEffort: 'low',
+      }),
+    ).rejects.toMatchObject({ status: 409, code: 'MODEL_MANAGED_BY_HARNESS' });
+    await expect(modelCatalog.remove(client, 'codex', 'gpt-6-luna')).rejects.toMatchObject({
+      status: 409,
+      code: 'MODEL_MANAGED_BY_HARNESS',
+    });
+    await expect(modelCatalog.setEnabled(client, 'codex', 'missing', true)).rejects.toMatchObject({
+      status: 404,
+      code: 'MODEL_NOT_FOUND',
+    });
+    await expect(
+      modelCatalog.upsert(client, 'future', 'new', {
+        source: 'litellm',
+        displayName: 'New',
+        efforts: ['low'],
+        defaultEffort: 'low',
+      }),
+    ).rejects.toMatchObject({ status: 409, code: 'LITELLM_NOT_CONFIGURED' });
     expect((await modelCatalog.list(client)).map((m) => m.model)).toContain('test-model');
     await modelCatalog.remove(client, 'codex', 'test-model');
 
@@ -279,6 +339,26 @@ describe('against the in-process API (API keys required)', () => {
   });
   afterAll(async () => {
     await t.close();
+  });
+
+  it('returns a required current boolean for each client without changing key creation', async () => {
+    const a = await t.container.repos.apiKeys.create('local', 'client A', ['*']);
+    const clientA = createGraphGoblinClient({ baseUrl, apiKey: a.token, client: 'ui' });
+    const b = await apiKeys.create(clientA, { label: 'client B', scopes: ['*'] });
+    expect(b.key).not.toHaveProperty('current');
+    const clientB = createGraphGoblinClient({ baseUrl, apiKey: b.token, client: 'mcp' });
+    for (const [client, id] of [
+      [clientA, a.record.id],
+      [clientB, b.key.id],
+    ] as const) {
+      const items = await apiKeys.list(client);
+      expect(items.filter((key) => key.current).map((key) => key.id)).toEqual([id]);
+      expect(items.every((key) => typeof key.current === 'boolean')).toBe(true);
+      for (const item of items) {
+        expect(item).not.toHaveProperty('token');
+        expect(item).not.toHaveProperty('hash');
+      }
+    }
   });
 
   it('sends the bearer key and client kind on REST calls and on the SSE stream', async () => {

@@ -1,4 +1,10 @@
-import { test as base, expect, type APIRequestContext, type Page } from '@playwright/test';
+import {
+  test as base,
+  expect,
+  type APIRequestContext,
+  type Locator,
+  type Page,
+} from '@playwright/test';
 
 /** Tests run against the server global-setup started; its URL arrives through the environment. */
 export const test = base.extend({
@@ -52,13 +58,17 @@ export async function control(request: APIRequestContext, path: string, body: un
 }
 
 /**
- * Expand the editor's loop panel (loop settings and the validation list) unless it already is:
- * with nothing remembered it starts expanded at 1280 px and wider, collapsed below.
+ * Expand the editor's loop panel (the loop's name, description, settings, and variables) unless it
+ * is already open. With nothing remembered it starts expanded at 1280 px and wider, collapsed below.
  */
 export async function showLoopPanel(page: Page): Promise<void> {
-  const toggle = page.getByRole('button', { name: 'Loop settings' });
-  if ((await toggle.getAttribute('aria-expanded')) !== 'true') await toggle.click();
-  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.getByRole('button', { name: /^(Show|Hide) loop settings$/ })).toBeVisible();
+  const show = page.getByRole('button', { name: 'Show loop settings' });
+  if (await show.isVisible()) await show.click();
+  await expect(page.getByRole('button', { name: 'Hide loop settings' })).toHaveAttribute(
+    'aria-expanded',
+    'true',
+  );
 }
 
 /** Open a node's editor by clicking its card (on the header band, away from port handles). */
@@ -67,6 +77,25 @@ export async function openNode(page: Page, nodeId: string) {
   const dialog = page.getByRole('dialog');
   await expect(dialog).toBeVisible();
   return dialog;
+}
+
+/**
+ * Expand the node editor's Advanced options (#14) unless they are open already, and return the
+ * toggle. Advanced fields stay collapsed under it until then.
+ */
+export async function openAdvanced(scope: Page | Locator) {
+  const toggle = scope.getByRole('button', { name: /^Advanced\b/ });
+  if ((await toggle.getAttribute('aria-expanded')) === 'false') await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  return toggle;
+}
+
+/** Expand a collapsed list item, such as "Operations 1" of a mutate node (#14). */
+export async function openItem(scope: Page | Locator, name: string) {
+  const toggle = scope.getByRole('button', { name: new RegExp(`^${name}\\b`) });
+  if ((await toggle.getAttribute('aria-expanded')) === 'false') await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  return toggle;
 }
 
 /** Close the open node editor with its Done button. */

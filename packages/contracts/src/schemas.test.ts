@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   ContextThreadSchema,
   DecisionConfigSchema,
+  EdgeRouteSchema,
   EffortSchema,
   ExitConfigSchema,
   HeartbeatConfigSchema,
@@ -66,11 +67,30 @@ describe('common schemas', () => {
 });
 
 describe('loop definition', () => {
+  it('rejects removed loop-default fields as unknown keys', () => {
+    const result = LoopDefinitionSchema.safeParse({
+      ...minimalLoop(),
+      settings: { defaults: { harness: 'codex' } },
+    });
+    expect(result.success).toBe(false);
+    if (!result.success)
+      expect(result.error.issues).toContainEqual(
+        expect.objectContaining({
+          code: 'unrecognized_keys',
+          path: ['settings', 'defaults'],
+          keys: ['harness'],
+        }),
+      );
+    expect(InferenceConfigSchema.parse({ prompt: { template: 'Hello' } }).harness).toBe('codex');
+    expect(
+      InferenceConfigSchema.safeParse({ harness: 'wrong', prompt: { template: 'Hello' } }).success,
+    ).toBe(false);
+  });
   it('parses the minimal loop and applies defaults', () => {
     const loop = LoopDefinitionSchema.parse(minimalLoop());
     expect(loop.settings.maxIterations).toBe(10);
     expect(loop.settings.workingDirectory).toEqual({ kind: 'temp' });
-    expect(loop.settings.defaults.harness).toBe('codex');
+    expect(loop.settings.defaults).not.toHaveProperty('harness');
     const exit = loop.nodes.find((n) => n.kind === 'exit');
     expect(exit?.kind === 'exit' && exit.config.return.channels).toEqual([{ kind: 'caller' }]);
     expect(loop.edges[0]?.to.port).toBe('in');
@@ -85,6 +105,31 @@ describe('loop definition', () => {
     expect(infer?.kind === 'inference' && infer.config.harnessOptions.sandbox).toBe(
       'workspace-write',
     );
+  });
+
+  it('keeps an edge’s manual route and refuses malformed ones (#44)', () => {
+    const routed = (ui: unknown) => {
+      const loop = minimalLoop();
+      loop.edges[0] = { ...loop.edges[0]!, ui } as (typeof loop.edges)[number];
+      return LoopDefinitionSchema.safeParse(loop);
+    };
+    const parsed = routed({ route: [240, -60.5, 480] });
+    expect(parsed.success && parsed.data.edges[0]?.ui).toEqual({ route: [240, -60.5, 480] });
+    expect(routed({ route: [12] }).success).toBe(true);
+    // Without `ui` an edge routes automatically; nothing else about it changes shape.
+    expect(LoopDefinitionSchema.parse(minimalLoop()).edges[0]).not.toHaveProperty('ui');
+    for (const bad of [
+      { route: [] },
+      { route: [1, 2] },
+      { route: [1, Number.NaN, 3] },
+      { route: [1, Number.POSITIVE_INFINITY, 3] },
+      { route: Array.from({ length: 65 }, (_, i) => i) },
+      { route: ['1'] },
+      {},
+      { route: [1], extra: true },
+    ])
+      expect(routed(bad).success, JSON.stringify(bad)).toBe(false);
+    expect(EdgeRouteSchema.safeParse([1, 2]).error?.issues[0]?.message).toMatch(/odd length/);
   });
 
   it('rejects unknown keys', () => {

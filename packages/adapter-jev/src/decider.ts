@@ -113,12 +113,12 @@ function mapError(error: unknown): Error {
     if (error.status === 429) {
       return new JevError('DECIDER_RATE_LIMITED', 'Jev rate limit exceeded', error.status);
     }
-    return new JevError('DECIDER_HTTP_ERROR', `Jev request failed: ${error.message}`, error.status);
+    return new JevError('DECIDER_HTTP_ERROR', `Jev request failed (${error.status})`, error.status);
   }
   if (error instanceof APIConnectionError) {
-    return new JevError('DECIDER_UNREACHABLE', `Jev is unreachable: ${error.message}`);
+    return new JevError('DECIDER_UNREACHABLE', 'Jev is unreachable');
   }
-  return new JevError('DECIDER_HTTP_ERROR', `Jev request failed: ${describeError(error)}`);
+  return new JevError('DECIDER_HTTP_ERROR', 'Jev request failed');
 }
 
 export class JevDecider implements DeciderPort {
@@ -170,16 +170,15 @@ export class JevDecider implements DeciderPort {
       ...(this.options.timeoutMs !== undefined ? { timeout: this.options.timeoutMs } : {}),
       ...(this.options.retry ? { retry: this.options.retry } : {}),
       ...(this.options.fetch ? { fetch: this.options.fetch } : {}),
-      // Route SDK logs to ours. The SDK logs request bodies (run context) at debug, so they only
-      // appear when the engine logger has debug enabled.
+      // SDK messages can include response headers, bodies or transport text. Keep fixed summaries.
       logLevel: logger ? 'debug' : 'off',
       ...(logger
         ? {
             logger: {
-              debug: (message: string) => logger.debug({}, `jev: ${message}`),
-              info: (message: string) => logger.debug({}, `jev: ${message}`),
-              warn: (message: string) => logger.warn({}, `jev: ${message}`),
-              error: (message: string) => logger.error({}, `jev: ${message}`),
+              debug: () => logger.debug({}, 'jev: SDK debug event'),
+              info: () => logger.debug({}, 'jev: SDK information event'),
+              warn: () => logger.warn({}, 'jev: SDK warning'),
+              error: () => logger.warn({}, 'jev: SDK error'),
             },
           }
         : {}),
@@ -188,10 +187,7 @@ export class JevDecider implements DeciderPort {
 
   private requireClient(): TypeSafeClient {
     if (!this.client) {
-      throw new JevError(
-        'DECIDER_UNAVAILABLE',
-        `no Jev API key in secret "${this.options.secretName ?? 'jev-api-key'}"`,
-      );
+      throw new JevError('DECIDER_UNAVAILABLE', 'Jev API key is unavailable');
     }
     return this.client;
   }
@@ -213,12 +209,17 @@ export class JevDecider implements DeciderPort {
     }
     const parsed = ChoiceResultSchema.safeParse(body);
     if (!parsed.success) {
-      throw new JevError(
-        'DECIDER_INVALID_RESPONSE',
-        `unexpected Jev choice response: ${parsed.error.message}`,
-      );
+      throw new JevError('DECIDER_INVALID_RESPONSE', 'Unexpected Jev choice response');
     }
     const { choice: label, confidence, probabilities } = parsed.data.answers.answer;
+    const labels = new Set(request.options.map((option) => option.label));
+    const probabilityLabels = Object.keys(probabilities);
+    if (
+      probabilityLabels.length !== labels.size ||
+      probabilityLabels.some((key) => !labels.has(key))
+    ) {
+      throw new JevError('DECIDER_INVALID_RESPONSE', 'Unexpected Jev choice response');
+    }
     const alternatives = Object.entries(probabilities)
       .filter(([other]) => other !== label)
       .sort((a, b) => b[1] - a[1])
@@ -243,10 +244,7 @@ export class JevDecider implements DeciderPort {
     }
     const parsed = NoulResultSchema.safeParse(body);
     if (!parsed.success) {
-      throw new JevError(
-        'DECIDER_INVALID_RESPONSE',
-        `unexpected Jev yes/no response: ${parsed.error.message}`,
-      );
+      throw new JevError('DECIDER_INVALID_RESPONSE', 'Unexpected Jev yes/no response');
     }
     const yes = parsed.data.answers.answer.noul;
     const holds = yes >= 0.5;

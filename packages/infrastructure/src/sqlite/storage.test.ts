@@ -196,7 +196,7 @@ describe('SqliteRunRepository', () => {
     old.close();
     const current = openDatabase({ url });
     try {
-      expect(await current.pendingMigrations()).toBe(2);
+      expect(await current.pendingMigrations()).toBe(5);
       await current.migrate();
       const repo = new SqliteRunRepository(current.db);
       expect(await repo.listUnfinalized()).toEqual([]);
@@ -611,6 +611,7 @@ describe('settings, api keys, model catalog', () => {
       harness: 'codex',
       model: 'gpt-6-luna',
       displayName: 'Luna',
+      source: 'harness',
       efforts: ['low'],
       defaultEffort: 'low',
       enabled: true,
@@ -625,7 +626,7 @@ describe('settings, api keys, model catalog', () => {
 
 describe('migration 0003 model catalog max effort', () => {
   const oldEfforts = '["minimal","low","medium","high","xhigh"]';
-  type LegacyEntry = Omit<ModelCatalogEntry, 'efforts'> & { efforts: string };
+  type LegacyEntry = Omit<ModelCatalogEntry, 'efforts' | 'source'> & { efforts: string };
 
   function legacyEntry(overrides: Partial<LegacyEntry> = {}): LegacyEntry {
     return {
@@ -677,7 +678,7 @@ describe('migration 0003 model catalog max effort', () => {
     }
     const current = openDatabase({ url });
     try {
-      expect(await current.pendingMigrations()).toBe(1);
+      expect(await current.pendingMigrations()).toBe(4);
       await current.migrate();
       expect(await current.pendingMigrations()).toBe(0);
       await check(current);
@@ -696,7 +697,11 @@ describe('migration 0003 model catalog max effort', () => {
     expect(entries).toHaveLength(rows.length);
     expect(entries).toEqual(
       expect.arrayContaining(
-        rows.map((row) => ({ ...row, efforts: JSON.parse(row.efforts) as unknown })),
+        rows.map((row) => ({
+          ...row,
+          source: 'harness',
+          efforts: JSON.parse(row.efforts) as unknown,
+        })),
       ),
     );
     // Check the actual JSON text too: excluded rows must be unchanged byte for byte.
@@ -706,6 +711,7 @@ describe('migration 0003 model catalog max effort', () => {
       expect.arrayContaining(
         rows.map((row) => ({
           harness: row.harness,
+          source: 'harness',
           model: row.model,
           display_name: row.displayName,
           efforts: row.efforts,
@@ -825,6 +831,7 @@ describe('migration 0003 model catalog max effort', () => {
       expect(stored.rows).toEqual([
         {
           harness: row.harness,
+          source: 'harness',
           model: row.model,
           display_name: row.displayName,
           efforts: row.efforts,
@@ -857,16 +864,21 @@ describe('migration 0003 model catalog max effort', () => {
     });
   });
 
-  it('does not reapply the upgrade or seeding after a user restores the old efforts', async () => {
+  it('does not reapply the migration but seeding restores current harness efforts', async () => {
     const row = legacyEntry();
     await withUpgrade([row], async (current) => {
       const catalog = new SqliteModelCatalog(current.db);
-      await catalog.upsert({ ...row, efforts: ['minimal', 'low', 'medium', 'high', 'xhigh'] });
+      await catalog.upsert({
+        ...row,
+        source: 'harness',
+        efforts: ['minimal', 'low', 'medium', 'high', 'xhigh'],
+      });
       await current.migrate();
       await catalog.seed();
       expect((await catalog.list()).find((entry) => entry.model === row.model)).toEqual({
         ...row,
-        efforts: ['minimal', 'low', 'medium', 'high', 'xhigh'],
+        source: 'harness',
+        efforts: ['minimal', 'low', 'medium', 'high', 'xhigh', 'max'],
       });
     });
   });

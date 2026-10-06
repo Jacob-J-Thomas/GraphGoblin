@@ -15,7 +15,7 @@ it('preserves unparsed text across value changes until discarded, then uses the 
   expect(getCode('Value')).toBe('{oops');
   expect(screen.getByText(/Invalid JSON/)).toBeInTheDocument();
   expect(onChange).not.toHaveBeenCalled();
-  await user.click(screen.getByRole('button', { name: 'Discard text' }));
+  await user.click(screen.getByRole('button', { name: 'Discard the unparsed text' }));
   expect(JSON.parse(getCode('Value'))).toEqual({ count: 2 });
   expect(screen.queryByText(/Invalid JSON/)).not.toBeInTheDocument();
 });

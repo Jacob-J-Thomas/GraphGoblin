@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { cn } from '../../lib/utils.js';
-import { Icon } from '../icons/index.js';
+import { Icon, type IconName } from '../icons/index.js';
 import { Button } from './button.js';
 
 type PanelState = 'expanded' | 'collapsed';
@@ -48,36 +48,70 @@ export function useSidePanelState(
   return [expanded, set] as const;
 }
 
+/** Below which breakpoint an expanded panel floats over the content: md (768 px) or lg (1024 px). */
+export type PanelOverlay = 'md' | 'lg';
+
 /**
- * A panel on the right of the main content that collapses to a narrow rail. Expanded, it shows its
- * heading, a Hide button, and its content; collapsed, the rail keeps a Show button and whatever
- * `rail` holds (a short summary), so the panel never disappears without a trace. The panel keeps
- * its `id` in both states, so a toggle elsewhere can name it in `aria-controls`. When it expands,
- * focus moves to its heading; when its own Hide button collapses it, focus moves to Show.
+ * Where an expanded panel floats over the content (its parent is `relative`) instead of taking its
+ * own column: along its edge, full height, with an overlay shadow, leaving at least a rail's width
+ * of the content beside it. Static class names, per side and breakpoint, so Tailwind sees them.
+ */
+const OVERLAY: Record<'left' | 'right', Record<PanelOverlay, string>> = {
+  left: {
+    md: 'max-md:absolute max-md:inset-y-0 max-md:left-0 max-md:z-10 max-md:max-w-[calc(100%-2.75rem)] max-md:shadow-3',
+    lg: 'max-lg:absolute max-lg:inset-y-0 max-lg:left-0 max-lg:z-10 max-lg:max-w-[calc(100%-2.75rem)] max-lg:shadow-3',
+  },
+  right: {
+    md: 'max-md:absolute max-md:inset-y-0 max-md:right-0 max-md:z-10 max-md:max-w-[calc(100%-2.75rem)] max-md:shadow-3',
+    lg: 'max-lg:absolute max-lg:inset-y-0 max-lg:right-0 max-lg:z-10 max-lg:max-w-[calc(100%-2.75rem)] max-lg:shadow-3',
+  },
+};
+
+/**
+ * A panel beside the main content that collapses to a narrow rail. Expanded, it shows its heading,
+ * a Hide button, and its content; collapsed, the rail keeps a Show button and whatever `rail` holds
+ * (a short summary), so the panel never disappears without a trace. The panel keeps its `id` in
+ * both states, so a control can name it in `aria-controls`. When it expands, focus moves to its
+ * heading; when its own Hide button collapses it, focus moves to Show. With `overlayBelow`, an
+ * expanded panel floats over the content below that breakpoint instead of narrowing it (the
+ * editor's split pane on narrow windows); its parent must be `relative`.
  */
 export function SidePanel({
   id,
   title,
+  side = 'right',
+  icon = 'panel',
   expanded,
   onExpandedChange,
   rail,
   children,
   className,
+  expandedWidth = 380,
+  overlayBelow,
 }: {
   id: string;
   /** The heading; also the panel's accessible name. */
   title: string;
+  /** Which edge the panel occupies. */
+  side?: 'left' | 'right';
+  /** The Show control's glyph. The panel glyph is used by default. */
+  icon?: IconName;
   expanded: boolean;
   onExpandedChange: (expanded: boolean) => void;
   /** Shown under the Show button while collapsed. */
   rail?: ReactNode;
   children: ReactNode;
+  /** Expanded width in pixels; the collapsed rail always uses the primitive's narrow width. */
+  expandedWidth?: number;
+  /** Float over the content below this breakpoint while expanded. */
+  overlayBelow?: PanelOverlay;
   className?: string;
 }) {
   const headingId = useId();
   const headingRef = useRef<HTMLHeadingElement>(null);
   const showRef = useRef<HTMLButtonElement>(null);
   const previousRef = useRef(expanded);
+  const border = side === 'left' ? 'border-r' : 'border-l';
 
   useEffect(() => {
     if (previousRef.current === expanded) return;
@@ -92,8 +126,9 @@ export function SidePanel({
       <aside
         id={id}
         aria-label={title}
+        data-side={side}
         className={cn(
-          'flex w-11 shrink-0 flex-col items-center gap-2 border-l border-default bg-surface-raised py-2',
+          `flex w-11 shrink-0 flex-col items-center gap-2 ${border} border-default bg-surface-raised py-2 pointer-coarse:w-[45px]`,
           className,
         )}
       >
@@ -105,11 +140,21 @@ export function SidePanel({
           aria-expanded={false}
           aria-controls={id}
           title={`Show ${title.toLowerCase()}`}
+          className={cn(
+            // The inset offset must beat the button's own outset offset whatever the rule order.
+            'min-h-10 min-w-10 pointer-coarse:min-h-11 pointer-coarse:min-w-11 focus-visible:outline-2 focus-visible:-outline-offset-2! focus-visible:outline-focus',
+            side === 'left' ? 'self-start' : 'self-end',
+          )}
           onClick={() => onExpandedChange(true)}
         >
-          <Icon name="panel" />
+          <Icon name={icon} style={{ transform: side === 'left' ? 'scaleX(-1)' : 'none' }} />
         </Button>
-        {rail}
+        <div
+          data-testid={`${id}-rail-content`}
+          className="min-h-0 w-full flex-1 overflow-x-hidden overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
+          {rail}
+        </div>
       </aside>
     );
   }
@@ -117,31 +162,65 @@ export function SidePanel({
     <aside
       id={id}
       aria-labelledby={headingId}
+      data-side={side}
+      style={{ width: expandedWidth }}
       className={cn(
-        'flex w-[380px] shrink-0 flex-col border-l border-default bg-surface-raised',
+        `flex shrink-0 flex-col ${border} border-default bg-surface-raised`,
+        overlayBelow && OVERLAY[side][overlayBelow],
         className,
       )}
     >
-      <div className="flex h-[46px] shrink-0 items-center justify-between gap-2 border-b border-default pr-2 pl-5">
-        <h2
-          id={headingId}
-          ref={headingRef}
-          tabIndex={-1}
-          className="text-md font-semibold focus:outline-none"
-        >
-          {title}
-        </h2>
-        <Button
-          size="icon"
-          variant="ghost"
-          aria-label={`Hide ${title.toLowerCase()}`}
-          aria-expanded={true}
-          aria-controls={id}
-          title={`Hide ${title.toLowerCase()}`}
-          onClick={() => onExpandedChange(false)}
-        >
-          <Icon name="panel" />
-        </Button>
+      <div
+        className={cn(
+          'flex h-[46px] shrink-0 items-center justify-between gap-2 border-b border-default bg-surface-head',
+          side === 'left' ? 'pl-2 pr-5' : 'pr-2 pl-5',
+        )}
+      >
+        {side === 'left' ? (
+          <>
+            <Button
+              size="icon"
+              variant="ghost"
+              aria-label={`Hide ${title.toLowerCase()}`}
+              aria-expanded={true}
+              aria-controls={id}
+              title={`Hide ${title.toLowerCase()}`}
+              onClick={() => onExpandedChange(false)}
+            >
+              <Icon name="panel" style={{ transform: 'scaleX(-1)' }} />
+            </Button>
+            <h2
+              id={headingId}
+              ref={headingRef}
+              tabIndex={-1}
+              className="text-md font-semibold text-heading focus:outline-none"
+            >
+              {title}
+            </h2>
+          </>
+        ) : (
+          <>
+            <h2
+              id={headingId}
+              ref={headingRef}
+              tabIndex={-1}
+              className="text-md font-semibold text-heading focus:outline-none"
+            >
+              {title}
+            </h2>
+            <Button
+              size="icon"
+              variant="ghost"
+              aria-label={`Hide ${title.toLowerCase()}`}
+              aria-expanded={true}
+              aria-controls={id}
+              title={`Hide ${title.toLowerCase()}`}
+              onClick={() => onExpandedChange(false)}
+            >
+              <Icon name="panel" />
+            </Button>
+          </>
+        )}
       </div>
       {children}
     </aside>

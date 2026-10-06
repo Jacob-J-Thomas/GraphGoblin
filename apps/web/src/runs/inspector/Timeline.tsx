@@ -51,7 +51,7 @@ export function Timeline({
               aria-current={event.seq === selected ? 'true' : undefined}
               className={cn(
                 'grid w-full cursor-pointer grid-cols-[30px_auto_minmax(0,1fr)] items-center gap-2',
-                'rounded-sm px-2 py-[5px] text-left text-sm text-default hover:bg-surface-hover',
+                'rounded-sm px-2 py-[5px] text-left text-sm text-default hover:bg-surface-hover pointer-coarse:min-h-11',
                 'aria-[current=true]:bg-accent-subtle aria-[current=true]:shadow-current-row',
                 'forced-colors:aria-[current=true]:outline',
               )}

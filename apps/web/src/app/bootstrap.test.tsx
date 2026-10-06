@@ -2,6 +2,7 @@ import { act, render, screen } from '@testing-library/react';
 import type { Root } from 'react-dom/client';
 import { describe, expect, it, vi } from 'vitest';
 import { useApi } from '../api/context.js';
+import { FONT_STORAGE_KEY } from '../lib/font.js';
 import { subscribeTheme, THEME_STORAGE_KEY } from '../lib/theme.js';
 import { bootstrap, createQueryClient } from './bootstrap.js';
 
@@ -14,10 +15,16 @@ describe('bootstrap', () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('offline'));
     const container = document.createElement('div');
     document.body.appendChild(container);
-    const root = bootstrap(container, { baseUrl: 'http://graphgoblin.test' });
-    expect(await screen.findByText('Page not found.')).toBeInTheDocument();
+    const dispose = vi.fn();
+    registerPwa.mockReturnValueOnce({ dispose });
+    let root!: Root;
+    act(() => {
+      root = bootstrap(container, { baseUrl: 'http://graphgoblin.test' });
+    });
+    expect(await screen.findByRole('heading', { name: 'Page not found' })).toBeInTheDocument();
     expect(registerPwa).toHaveBeenCalledTimes(1);
     act(() => root.unmount());
+    expect(dispose).toHaveBeenCalledTimes(1);
 
     const second = bootstrap(container, { registerServiceWorker: false, basename: '/app' });
     expect(registerPwa).toHaveBeenCalledTimes(1);
@@ -75,6 +82,33 @@ describe('bootstrap', () => {
     act(() => second.unmount());
 
     unsubscribe();
+    container.remove();
+    fetchSpy.mockRestore();
+  });
+
+  it('applies the stored font if the boot script did not, leaves a shown one, and follows other tabs', () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('offline'));
+    localStorage.setItem(FONT_STORAGE_KEY, 'opendyslexic');
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    let root!: Root;
+    act(() => {
+      root = bootstrap(container, { registerServiceWorker: false });
+    });
+    expect(document.documentElement.dataset['font']).toBe('opendyslexic');
+    localStorage.setItem(FONT_STORAGE_KEY, 'inter');
+    window.dispatchEvent(new StorageEvent('storage', { key: FONT_STORAGE_KEY }));
+    expect(document.documentElement.dataset['font']).toBe('inter');
+    act(() => root.unmount());
+
+    // Nothing stored and nothing shown: Geist, with no attribute added.
+    localStorage.clear();
+    delete document.documentElement.dataset['font'];
+    act(() => {
+      root = bootstrap(container, { registerServiceWorker: false });
+    });
+    expect(document.documentElement.hasAttribute('data-font')).toBe(false);
+    act(() => root.unmount());
     container.remove();
     fetchSpy.mockRestore();
   });

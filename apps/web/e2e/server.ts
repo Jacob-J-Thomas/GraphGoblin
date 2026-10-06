@@ -9,14 +9,16 @@
  * instances with other configuration (for example `GG_REQUIRE_API_KEY=true`).
  */
 import { existsSync } from 'node:fs';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildApp, createContainer, loadConfig } from '@graphgoblin/api';
-import { createTestApp, type TestApp } from '@graphgoblin/api/testing';
+import { createTestApp, startFakeClassifierEndpoint, type TestApp } from '@graphgoblin/api/testing';
 import type { ScriptedTurn } from '@graphgoblin/engine/testing';
+import { ModelCatalogEntrySchema } from '@graphgoblin/contracts';
+import { originalWorker as cleanWorker } from '../src/e2e-support/worker.js';
 
 const dist = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'dist');
 if (!existsSync(join(dist, 'index.html'))) {
@@ -28,14 +30,48 @@ if (!existsSync(join(dist, 'index.html'))) {
 
 const apps: TestApp[] = [];
 const closers: (() => Promise<void>)[] = [];
-async function startApp(env: Record<string, string> = {}, requireApiKey = false) {
-  const app = await createTestApp({ env: { GG_WEB_DIST: dist, ...env }, requireApiKey });
+/** Loopback Choice endpoints started for classifier specs, by their API root. */
+const classifiers = new Map<string, Awaited<ReturnType<typeof startFakeClassifierEndpoint>>>();
+async function startApp(
+  env: Record<string, string> = {},
+  requireApiKey = false,
+  realClassifiers = false,
+) {
+  const app = await createTestApp({
+    env: { GG_WEB_DIST: dist, ...env },
+    requireApiKey,
+    realClassifiers,
+  });
   apps.push(app);
   const url = await app.app.listen({ host: '127.0.0.1', port: 0 });
   return { app, url };
 }
 
 const main = await startApp();
+const mainPort = Number(new URL(main.url).port);
+const workerPath = join(dist, 'sw.js');
+const originalWorker = cleanWorker(await readFile(workerPath, 'utf8'));
+let workerBuild = 0;
+
+/** Drop real HTTP connections, then reuse the same listener and in-memory API state. */
+async function setApiListening(listening: boolean): Promise<void> {
+  const server = main.app.app.server;
+  if (listening === server.listening) return;
+  if (listening) {
+    await new Promise<void>((done, reject) => {
+      server.once('error', reject);
+      server.listen(mainPort, '127.0.0.1', () => {
+        server.removeListener('error', reject);
+        done();
+      });
+    });
+  } else {
+    await new Promise<void>((done, reject) => {
+      server.close((error) => (error ? reject(error) : done()));
+      server.closeAllConnections();
+    });
+  }
+}
 
 /** A scripted turn as JSON: `items` may be a count of generated progress items. */
 interface TurnSpec {
@@ -77,6 +113,16 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
   const body = await readJson(request);
   const target = main.app;
   switch (request.url) {
+    case '/api/listener':
+      await setApiListening(body['listening'] !== false);
+      return { ok: true };
+    case '/worker/build':
+      workerBuild += 1;
+      await writeFile(workerPath, `${originalWorker}\n// E2E build ${workerBuild}\n`);
+      return { build: workerBuild };
+    case '/worker/reset':
+      await writeFile(workerPath, originalWorker);
+      return { ok: true };
     case '/harness/script':
       target.harness.script(((body['turns'] as TurnSpec[] | undefined) ?? []).map(toTurn));
       return { ok: true };
@@ -91,6 +137,9 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
       target.structured.respondWith(() => (queue.length > 1 ? queue.shift() : queue[0]));
       return { ok: true };
     }
+    case '/catalog/upsert':
+      await target.container.repos.catalog.upsert(ModelCatalogEntrySchema.parse(body));
+      return { ok: true };
     case '/timers/poll':
       await target.container.timers.poll();
       return { ok: true };
@@ -118,10 +167,32 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
       });
       return { url: await live.listen({ host: '127.0.0.1', port: 0 }) };
     }
+    case '/classifier/start': {
+      // A Choice endpoint answering the first route with probability 1, as `kev.serve` would.
+      const fake = await startFakeClassifierEndpoint();
+      classifiers.set(fake.endpoint, fake);
+      closers.push(fake.close);
+      return { endpoint: fake.endpoint };
+    }
+    case '/classifier/requests': {
+      const fake = classifiers.get(String(body['endpoint']));
+      if (!fake) throw new Error(`no fake classifier at ${String(body['endpoint'])}`);
+      return {
+        requests: fake.requests.map((r) => ({
+          method: r.method,
+          url: r.url,
+          model: r.body.model,
+          bearer: r.authorization !== undefined,
+          labels: Object.keys(r.body.questions.answer.criteria),
+        })),
+      };
+    }
     case '/apps': {
       const extra = await startApp(
         (body['env'] as Record<string, string> | undefined) ?? {},
         body['requireApiKey'] === true,
+        // The real catalog, secret resolution, and HTTP transport for classifiers (#43).
+        body['realClassifiers'] === true,
       );
       // A key minted directly in the store: with GG_REQUIRE_API_KEY even POST /api-keys needs one.
       const { token } = await extra.app.container.repos.apiKeys.create('local', 'e2e', ['*']);
@@ -157,6 +228,8 @@ async function stop(): Promise<void> {
   if (stopping) return;
   stopping = true;
   controlServer.close();
+  await setApiListening(true);
+  await writeFile(workerPath, originalWorker);
   for (const app of apps) await app.close();
   for (const close of closers) await close();
   process.exit(0);

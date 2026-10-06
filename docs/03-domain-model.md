@@ -31,7 +31,7 @@ type LoopDefinition = {
   description?: string;
   settings: {
     workingDirectory: WorkingDirectorySpec; // see 04 and 06
-    defaults: { harness: 'codex'; model?: string; effort?: Effort };
+    defaults: { model?: string; effort?: Effort };
     maxIterations: number; // hard ceiling on loop-backs and on fresh visits per node; exit nodes may set lower
     subloopDepthLimit: number; // default 8
   };
@@ -47,7 +47,12 @@ type Node = {
   config: unknown;
   ui: { x: number; y: number };
 };
-type Edge = { id: string; from: { node: string; port: string }; to: { node: string; port: 'in' } };
+type Edge = {
+  id: string;
+  from: { node: string; port: string };
+  to: { node: string; port: 'in' };
+  ui?: { route: number[] }; // manual canvas route (#44); without it the editor routes automatically
+};
 type NodeKind =
   | 'trigger'
   | 'decision'
@@ -60,17 +65,27 @@ type NodeKind =
   | 'exit';
 ```
 
+An edge's `ui.route` is canvas layout, like a node's `ui`: the positions of the route's inner segments in canvas coordinates, alternating the x of a vertical segment and the y of a horizontal one (`x, y, ..., x`, so an odd count from 1 to 63). The first and last segments are horizontal and run from the ports' own heights, so the route stays attached when a card moves. The route lives on the edge it draws: deleting the edge deletes it, renaming a node keeps it, and versions pin it with the rest of the definition. The engine ignores it. Schema and export format versions stay 1; definitions without the field are unchanged.
+
 Validation rules enforced by `domain` before a version can be published:
 
 - At least one trigger node and at least one exit node.
 - Every trigger connects, directly or through other nodes, to an exit.
 - Every output port of every non-exit node is connected. Exit `loopBack` is optional.
 - Node configs validate against their kind's schema. Referenced variables exist. Referenced subloops exist and are published (checked by the API, which can see other loops; a loop may reference itself).
-- Every Liquid template parses and every JSONata expression compiles, in node configs and loop settings (`TEMPLATE_INVALID`, `EXPRESSION_INVALID`).
+- Every supplied Liquid template parses and every JSONata expression contains non-whitespace source and compiles, in node configs and loop settings (`TEMPLATE_INVALID`, `EXPRESSION_INVALID`, each with the field's `path`: `config.<path>` relative to its node, or `settings.<path>`). Empty and whitespace-only templates are valid and render exactly as authored. Omit optional blank expressions; the editor clears them. For optional templates, only exactly empty input means absent in the form; whitespace is preserved. This authoring rule lives in shared domain validation, so API imports and publishing agree with the editor without changing contracts parsing or fixture defaults.
 - No edge targets a trigger node's input.
+
+Harness selection belongs to inference nodes (`config.harness`, default `codex`). Loop defaults
+provide only model and effort. Definitions containing `settings.defaults.harness` are rejected
+as unknown keys; imports and API clients must remove it. There is no compatibility parser.
+Schema and export format versions remain 1. See [ADR-0019](decisions/ADR-0019-inference-node-harness.md).
 
 ## Versioning (Decided)
 
+- Upgrade migration `0005` rewrites stored version definitions once, removing only
+  `settings.defaults.harness`. Existing inference nodes already carry their explicit harness.
+  Version ids, numbers, creation and publication timestamps, and run pins stay unchanged.
 - Editing creates or updates a **draft** version. Publishing freezes it as the loop's current version.
 - A run pins the version it started with and finishes on it, even if a newer version is published meanwhile.
 - New runs always use the latest published version.
