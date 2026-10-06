@@ -72,7 +72,7 @@ function IssueSummary({ issue, subject }: { issue: EditorIssue; subject: boolean
   );
 }
 
-const ROW = 'grid w-full gap-1 rounded-md px-2 py-1.5 text-left';
+const ROW = 'grid w-full gap-1 rounded-md px-2 py-1.5 text-left pointer-coarse:min-h-11';
 
 /**
  * Issues as rows: each shows its severity (icon and word), code, message, and field path. With

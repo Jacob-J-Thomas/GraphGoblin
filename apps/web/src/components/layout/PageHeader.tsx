@@ -41,7 +41,7 @@ export function PageHeader({
 }) {
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
-      <h1 id={titleId} className="text-2xl leading-tight font-bold tracking-tight">
+      <h1 id={titleId} className="text-2xl leading-tight font-bold tracking-tight text-heading">
         {title}
       </h1>
       {children}

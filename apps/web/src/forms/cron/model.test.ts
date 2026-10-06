@@ -3,6 +3,7 @@ import {
   defaultSchedule,
   formatSlot,
   parseSchedule,
+  recordPreferences,
   scheduleError,
   scheduleExpression,
   scheduleSummary,
@@ -116,5 +117,37 @@ describe('cron preset model', () => {
     expect(scheduleSummary({ kind: 'weekly', time: '17:25', days: [1, 3] }, '', 'UTC')).toBe(
       'Every Monday and Wednesday at 17:25, UTC',
     );
+  });
+  it('says what to choose instead of a summary with a gap (#41)', () => {
+    expect(scheduleSummary({ kind: 'daily', time: '' }, '0 9 * * *', 'UTC')).toBe('Choose a time.');
+    expect(scheduleSummary({ kind: 'weekly', time: '09:00', days: [] }, '0 9 * * 1', 'UTC')).toBe(
+      'Choose at least one day.',
+    );
+    expect(scheduleSummary({ kind: 'minutes', every: 0 }, '*/5 * * * *', 'UTC')).toBe(
+      'Choose a whole number from 1 to 59.',
+    );
+  });
+  it('records only complete preferences, so an incomplete part falls back to the default (#41)', () => {
+    const chosen = recordPreferences({}, { kind: 'weekly', time: '07:30', days: [2] });
+    expect(chosen).toEqual({ time: '07:30', days: [2] });
+    // A cleared time and no ticked day are forgotten, not carried to the next preset.
+    const cleared = recordPreferences(chosen, { kind: 'weekly', time: '', days: [] });
+    expect(cleared).toEqual({});
+    expect(defaultSchedule('daily', cleared)).toEqual({ kind: 'daily', time: '09:00' });
+    expect(defaultSchedule('weekly', cleared)).toEqual({
+      kind: 'weekly',
+      time: '09:00',
+      days: [1],
+    });
+    // A monthly day out of range is forgotten too; parts a schedule does not hold are kept.
+    const monthly = recordPreferences(chosen, { kind: 'monthly', time: '07:30', day: 0 });
+    expect(monthly).toEqual({ time: '07:30', days: [2] });
+    expect(defaultSchedule('monthly', monthly)).toEqual({ kind: 'monthly', time: '07:30', day: 1 });
+    expect(recordPreferences(monthly, { kind: 'monthly', time: '07:30', day: 15 })).toEqual({
+      time: '07:30',
+      days: [2],
+      day: 15,
+    });
+    expect(recordPreferences(chosen, { kind: 'hours', every: 2 })).toEqual(chosen);
   });
 });

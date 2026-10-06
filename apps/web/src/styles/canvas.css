@@ -144,3 +144,38 @@
 .react-flow__attribution a {
   color: var(--text-subtle);
 }
+
+/*
+ * Touch (#41): on a coarse pointer the zoom, fit, and lock buttons are 44 px, and each port handle
+ * takes a touch 44 px wide and 20 px tall around its 12 px dot (the dot keeps its look; ports stack
+ * 20 px apart, so taller boxes would overlap), so a connection starts from a finger. The node
+ * editor's Connect form is the full-size alternative to dragging an edge.
+ */
+@media (pointer: coarse) {
+  .react-flow__controls-button {
+    width: 44px;
+    height: 44px;
+  }
+
+  .react-flow__handle::after {
+    content: '';
+    position: absolute;
+    /* The 12 px dot's positioning box excludes its two 2 px borders: 8 + 36 by 8 + 12. */
+    inset: -6px -18px;
+  }
+
+  /* The attribution link keeps its small credit and takes a 44 px touch (as touch-target). */
+  .react-flow__attribution a {
+    position: relative;
+  }
+
+  .react-flow__attribution a::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, 2.75rem);
+    height: max(100%, 2.75rem);
+    transform: translate(-50%, -50%);
+  }
+}

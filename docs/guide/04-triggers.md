@@ -43,13 +43,15 @@ Invalid expressions and zones show an inline error before publishing. If the
 preview API cannot be reached, the current expression stays visible with a clear
 unavailable message.
 
-Open the schedule's **Advanced → Cron expression** to enter the syntax accepted by
-croner: five fields, six with seconds, seven with seconds and year, or nicknames
+Open the schedule's **Advanced → Cron expression** to enter the syntax the scheduler
+accepts: five fields, six with seconds, seven with seconds and year, or nicknames
 such as `@daily` and `@hourly`. Recognised expressions reopen in the builder; others show
 **Custom expression** and keep exactly what you typed. Switching explicitly to a
 preset replaces the expression with that preset, retaining applicable time and
 day choices. Incomplete builder edits keep the last valid expression until they
-are complete. A new cron trigger offers **Choose a schedule…** before any preview.
+are complete, and keep the last valid time and day choices when switching presets.
+For example, clearing weekly 07:30 and switching to Daily restores 07:30.
+A new cron trigger offers **Choose a schedule…** before any preview.
 The timezone picker, missed-fire policy, and enabled flag remain visible alongside
 the schedule. The saved config shape is unchanged:
 

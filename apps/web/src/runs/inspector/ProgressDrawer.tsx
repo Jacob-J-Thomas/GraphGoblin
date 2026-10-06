@@ -1,5 +1,5 @@
 import type { RunEvent } from '@graphgoblin/contracts';
-import { Icon } from '../../components/icons/index.js';
+import { Disclosure } from '../../components/ui/index.js';
 import { prettyJson } from '../../lib/utils.js';
 import { describeEvent, nodeActivity } from '../projections.js';
 
@@ -7,16 +7,13 @@ import { describeEvent, nodeActivity } from '../projections.js';
 export function ProgressDrawer({ events }: { events: RunEvent[] }) {
   const activity = nodeActivity(events);
   return (
-    <details className="group min-w-0 rounded-lg border border-default bg-surface-raised px-5 py-4 shadow-1">
-      <summary className="flex w-fit cursor-pointer list-none items-center gap-2 rounded-sm font-semibold [&::-webkit-details-marker]:hidden">
-        <Icon
-          name="chevron"
-          className="-rotate-90 text-muted transition-transform group-open:rotate-0"
-        />
-        Node progress ({activity.size} nodes)
-      </summary>
+    <Disclosure
+      label={<span className="font-semibold">Node progress ({activity.size} nodes)</span>}
+      variant="row"
+      className="rounded-lg border border-default bg-surface-raised px-5 py-4 shadow-1"
+    >
       {[...activity.entries()].map(([nodeId, items]) => (
-        <div key={nodeId} className="mt-3 grid gap-1">
+        <div key={nodeId} className="grid gap-1">
           <h3 className="font-mono text-xs font-semibold">{nodeId}</h3>
           <ul className="grid gap-0.5 text-xs text-muted">
             {items.map((e) => (
@@ -30,6 +27,6 @@ export function ProgressDrawer({ events }: { events: RunEvent[] }) {
           </ul>
         </div>
       ))}
-    </details>
+    </Disclosure>
   );
 }

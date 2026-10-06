@@ -227,14 +227,14 @@ export function Dialog({
         className,
       )}
     >
-      <header className="flex shrink-0 items-start gap-3 border-b border-default py-3.5 pr-3 pl-5">
+      <header className="flex shrink-0 items-start gap-3 border-b border-default bg-surface-head py-3.5 pr-3 pl-5">
         {icon}
         <div className="grid min-w-0 flex-1 gap-0.5 pt-0.5">
           <h2
             id={titleId}
             ref={headingRef}
             tabIndex={-1}
-            className="text-lg leading-tight font-semibold wrap-anywhere focus:outline-none"
+            className="text-lg leading-tight font-semibold text-heading wrap-anywhere focus:outline-none"
           >
             {title}
           </h2>
@@ -256,7 +256,7 @@ export function Dialog({
       </header>
       <div className="min-h-0 flex-1 overflow-auto p-5">{children}</div>
       {footer ? (
-        <footer className="flex shrink-0 flex-wrap items-center gap-2 border-t border-default px-5 py-3">
+        <footer className="flex shrink-0 flex-wrap items-center gap-2 border-t border-default bg-surface-head px-5 py-3">
           {footer}
         </footer>
       ) : null}

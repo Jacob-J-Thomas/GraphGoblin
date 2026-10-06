@@ -58,7 +58,8 @@ describe('App shell', () => {
     renderApp('/events');
     expect(await screen.findByText('No inbound events yet.')).toBeInTheDocument();
     renderApp('/nowhere');
-    expect(screen.getByText('Page not found.')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Page not found' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Go to Loops' })).toHaveAttribute('href', '/loops');
   });
 
   it('shows an offline banner while the browser is offline', async () => {

@@ -6,6 +6,7 @@ import { useApi } from '../../api/context.js';
 import { refreshCatalogState, useSecrets } from '../../api/queries.js';
 import {
   Button,
+  CHECKBOX_LABEL,
   Checkbox,
   FieldGroup,
   HelpText,
@@ -16,7 +17,7 @@ import {
   RequiredNote,
   Select,
 } from '../../components/ui/index.js';
-import { errorMessage, problemIssues } from '../../lib/utils.js';
+import { cn, errorMessage, problemIssues } from '../../lib/utils.js';
 import {
   FORM_FIELDS,
   initialValues,
@@ -259,7 +260,7 @@ export function ClassifierModelForm({
         </Legend>
         <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm">
           {PRIMITIVES.map(({ value, label }) => (
-            <label key={value} className="flex cursor-pointer items-center gap-2 font-medium">
+            <label key={value} className={cn(CHECKBOX_LABEL, 'font-medium')}>
               <Checkbox
                 checked={values.primitives.includes(value)}
                 onChange={(e) =>

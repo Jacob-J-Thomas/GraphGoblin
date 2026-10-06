@@ -21,7 +21,7 @@ describe('bootstrap', () => {
     act(() => {
       root = bootstrap(container, { baseUrl: 'http://graphgoblin.test' });
     });
-    expect(await screen.findByText('Page not found.')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Page not found' })).toBeInTheDocument();
     expect(registerPwa).toHaveBeenCalledTimes(1);
     act(() => root.unmount());
     expect(dispose).toHaveBeenCalledTimes(1);

@@ -161,7 +161,7 @@ export function SecretsLink({ children, ...props }: AnchorHTMLAttributes<HTMLAnc
     <a
       {...props}
       href={`#${SECRETS_SECTION}`}
-      className="font-medium text-link underline underline-offset-[3px]"
+      className="touch-target font-medium text-link underline underline-offset-[3px]"
       onClick={(event) => {
         const heading = document.getElementById(SECRETS_SECTION)?.querySelector('h2') ?? null;
         if (!heading) return;

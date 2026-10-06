@@ -9,7 +9,7 @@ import type { SaveState } from './store.js';
 import { UndoRedo } from './UndoRedo.js';
 
 const RUNS_LINK = cn(
-  'inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md px-2.5 text-md font-semibold',
+  'inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md px-2.5 text-md font-semibold pointer-coarse:h-11',
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
 );
 
@@ -87,13 +87,16 @@ export function EditorToolbar({
 }) {
   return (
     <header className="relative z-[3] flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-default bg-surface-raised px-4 py-2.5">
-      <Link to="/loops" className="text-muted no-underline hover:text-default hover:underline">
+      <Link
+        to="/loops"
+        className="touch-target text-muted no-underline hover:text-default hover:underline"
+      >
         Loops
       </Link>
       <span className="text-subtle">/</span>
       {/* A long name (up to 120 characters) ends in an ellipsis on its own line; hover shows it. */}
       <h1
-        className="max-w-full min-w-0 truncate text-lg font-semibold tracking-[-0.01em]"
+        className="max-w-full min-w-0 truncate text-lg font-semibold tracking-[-0.01em] text-heading"
         title={name}
       >
         {name}
@@ -119,7 +122,7 @@ export function EditorToolbar({
         ) : null}
         {saveLabel(saveState, device)}
       </span>
-      <div className="ml-auto flex items-center gap-2">
+      <div className="ml-auto flex max-w-full flex-wrap items-center justify-end gap-2">
         <UndoRedo />
         <OpenInRuns loopId={loopId} published={published} />
         {validation}

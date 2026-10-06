@@ -15,6 +15,7 @@ import {
   Card,
   ConfirmAction,
   buttonStyles,
+  FIELD_ROW,
   FieldGroup,
   FilePicker,
   HelpText,
@@ -28,6 +29,7 @@ import {
 import { clearLocalDraft } from '../drafts/local-drafts.js';
 import { newLoopDefinition } from '../editor/model.js';
 import {
+  cn,
   downloadJson,
   errorMessage,
   fileSlug,
@@ -71,11 +73,12 @@ function CreateLoop() {
   return (
     <form
       onSubmit={submit}
-      className="flex flex-wrap items-end gap-2 max-sm:w-full"
+      // The form sits beside Import in a wrapping row; on its own line it takes the whole width.
+      className={cn(FIELD_ROW, 'items-end max-sm:w-full')}
       aria-label="Create loop"
     >
       <RequiredNote className="basis-full" />
-      <FieldGroup className="w-[300px] max-sm:flex-1">
+      <FieldGroup className="w-[300px]">
         <Label htmlFor="new-loop-name" required>
           New loop name
         </Label>
@@ -173,8 +176,8 @@ function LoopActions({ loop }: { loop: LoopRecord }) {
     },
   });
   return (
-    <div className="relative flex flex-col items-end gap-2">
-      <div className="flex items-center justify-end gap-2">
+    <div className="relative flex flex-col items-end gap-2 max-lg:items-start max-lg:pt-2">
+      <div className="flex items-center justify-end gap-2 max-lg:flex-wrap max-lg:justify-start">
         <Link
           to={`/loops/${loop.id}/edit`}
           className={buttonStyles({ variant: 'outline', size: 'sm' })}
@@ -245,13 +248,14 @@ export function LoopsPage() {
             </p>
           ) : (
             <Card flush>
-              <Table>
+              {/* Rows stack below 1024 px; the update time sits under the name, so the name
+                  column keeps room for itself at 1024 px. */}
+              <Table stack="lg">
                 <thead>
                   <tr>
                     <Th>Name</Th>
                     <Th>State</Th>
                     <Th>Last run</Th>
-                    <Th>Updated</Th>
                     <Th className="w-px text-right">Actions</Th>
                   </tr>
                 </thead>
@@ -260,31 +264,32 @@ export function LoopsPage() {
                     const run = latest.get(loop.id);
                     return (
                       <tr key={loop.id}>
-                        <Td>
+                        <Td className="min-w-56 wrap-anywhere">
                           <Link
                             to={`/loops/${loop.id}/edit`}
-                            className="text-[15px] font-semibold text-default no-underline hover:underline"
+                            className="touch-target text-[15px] font-semibold text-default no-underline hover:underline"
                           >
                             {loop.name}
                           </Link>
                           {loop.description ? (
                             <p className="mt-0.5 text-sm text-muted">{loop.description}</p>
                           ) : null}
+                          <p className="mt-1 text-xs text-subtle">
+                            Updated{' '}
+                            <time dateTime={loop.updatedAt}>{formatDateTime(loop.updatedAt)}</time>
+                          </p>
                         </Td>
-                        <Td>
+                        <Td label="State">
                           <PublishState loop={loop} />
                         </Td>
-                        <Td>
+                        <Td label="Last run">
                           {run ? (
-                            <Link to={`/runs/${run.id}`}>
+                            <Link to={`/runs/${run.id}`} className="touch-target inline-flex w-fit">
                               <RunStatusBadge status={run.status} />
                             </Link>
                           ) : (
                             <span className="text-sm text-muted">never run</span>
                           )}
-                        </Td>
-                        <Td className="text-sm whitespace-nowrap text-muted">
-                          {formatDateTime(loop.updatedAt)}
                         </Td>
                         <Td>
                           <LoopActions loop={loop} />

@@ -10,7 +10,10 @@ import {
   buttonStyles,
   Card,
   Checkbox,
+  CHECKBOX_LABEL,
+  FIELD_ROW,
   FieldGroup,
+  FieldRow,
   HelpText,
   Input,
   Label,
@@ -146,6 +149,10 @@ describe('Card', () => {
     expect(screen.getByRole('heading', { name: 'Model catalog', level: 2 })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Add model' })).toBeInTheDocument();
     expect(screen.getByText('body').parentElement).toHaveClass('p-5');
+    // The head is a band in the head surface (tinted in light, #11) with the heading colour.
+    const heading = screen.getByRole('heading', { name: 'Model catalog' });
+    expect(heading.parentElement).toHaveClass('bg-surface-head');
+    expect(heading).toHaveClass('text-heading');
   });
 
   it('renders actions without a title, and a flush body', () => {
@@ -158,7 +165,10 @@ describe('Card', () => {
     expect(screen.getByText('actions')).toBeInTheDocument();
     expect(container.firstElementChild).toHaveClass('overflow-hidden', 'mine');
     expect(screen.getByText('table').parentElement).not.toHaveClass('p-5');
-    expect(screen.getByText('table').parentElement).toHaveClass('overflow-x-auto');
+    expect(screen.getByText('table').parentElement).toHaveClass(
+      'overflow-x-auto',
+      'scroll-shadow-x',
+    );
   });
 
   it('renders only the body when there is no head', () => {
@@ -297,7 +307,61 @@ describe('Table', () => {
       </Table>,
     );
     expect(screen.getByRole('table')).toHaveClass('border-separate', 'extra');
-    expect(screen.getByRole('columnheader', { name: 'Name' })).toHaveClass('bg-surface-sunken');
+    expect(screen.getByRole('table')).not.toHaveClass('table-stack-md', 'table-stack-lg');
+    expect(screen.getByRole('columnheader', { name: 'Name' })).toHaveClass(
+      'bg-surface-sunken',
+      'text-table-head',
+    );
     expect(screen.getByRole('cell', { name: 'nightly' })).toHaveClass('text-xs', 'border-default');
+    expect(screen.getByRole('cell', { name: 'nightly' })).not.toHaveAttribute('data-label');
+  });
+
+  it.each([
+    ['md', 'table-stack-md'],
+    ['lg', 'table-stack-lg'],
+  ] as const)(
+    'stacks its rows below %s, each labelled cell naming its column (#41)',
+    (stack, className) => {
+      render(
+        <Table stack={stack}>
+          <thead>
+            <tr>
+              <Th>Run</Th>
+              <Th>Status</Th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <Td>run-1</Td>
+              <Td label="Status">failed</Td>
+            </tr>
+          </tbody>
+        </Table>,
+      );
+      expect(screen.getByRole('table')).toHaveClass(className);
+      // The column names stay in the header for assistive technology; the label only decorates.
+      expect(screen.getByRole('columnheader', { name: 'Status' })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: 'failed' })).toHaveAttribute('data-label', 'Status');
+      expect(screen.getByRole('cell', { name: 'run-1' })).not.toHaveAttribute('data-label');
+    },
+  );
+});
+
+describe('FieldRow', () => {
+  it('wraps fields, then turns into one column of full-width fields below 640 px (#41)', () => {
+    render(
+      <FieldRow className="extra" data-testid="row">
+        <FieldGroup className="w-[220px]">
+          <Label htmlFor="x">X</Label>
+          <Input id="x" />
+        </FieldGroup>
+        <Button>Go</Button>
+      </FieldRow>,
+    );
+    const row = screen.getByTestId('row');
+    expect(row).toHaveClass('flex', 'flex-wrap', 'items-end', 'max-sm:flex-col', 'extra');
+    expect(row).toHaveClass('max-sm:[&>*]:w-full', 'max-sm:[&>button]:w-auto');
+    expect(FIELD_ROW).not.toContain('items-end');
+    expect(CHECKBOX_LABEL).toContain('pointer-coarse:min-h-11');
   });
 });

@@ -10,6 +10,7 @@ import {
   buttonStyles,
   Card,
   FieldGroup,
+  FieldRow,
   Label,
   Select,
   Table,
@@ -19,8 +20,9 @@ import {
 import { formatDateTime } from '../lib/utils.js';
 import { newRunPath } from './new/paths.js';
 
-const ID_LINK = 'font-mono text-sm font-medium text-link underline-offset-[3px] hover:underline';
-const LINK = 'text-link underline-offset-[3px] hover:underline';
+const ID_LINK =
+  'touch-target font-mono text-sm font-medium text-link underline-offset-[3px] hover:underline';
+const LINK = 'touch-target text-link underline-offset-[3px] hover:underline';
 
 /**
  * Runs across loops, filtered by loop, status, and parent run (filters live in the URL), and the
@@ -60,8 +62,8 @@ export function RunsPage() {
         }
       />
       <Card>
-        <div className="flex flex-wrap items-end gap-4">
-          <FieldGroup className="w-[220px] max-sm:w-full">
+        <FieldRow>
+          <FieldGroup className="w-[220px]">
             <Label htmlFor="filter-loop">Loop</Label>
             <Select
               id="filter-loop"
@@ -76,7 +78,7 @@ export function RunsPage() {
               ))}
             </Select>
           </FieldGroup>
-          <FieldGroup className="w-[220px] max-sm:w-full">
+          <FieldGroup className="w-[220px]">
             <Label htmlFor="filter-status">Status</Label>
             <Select
               id="filter-status"
@@ -91,7 +93,7 @@ export function RunsPage() {
               ))}
             </Select>
           </FieldGroup>
-          <FieldGroup className="w-[220px] max-sm:w-full">
+          <FieldGroup className="w-[220px]">
             <Label htmlFor="filter-parent">Parent</Label>
             <Select
               id="filter-parent"
@@ -110,7 +112,7 @@ export function RunsPage() {
               Clear filters
             </Button>
           ) : null}
-        </div>
+        </FieldRow>
       </Card>
       <QueryState query={runsQuery} what="Runs">
         {(items) =>
@@ -118,7 +120,7 @@ export function RunsPage() {
             <p className="text-sm text-muted">No runs match.</p>
           ) : (
             <Card flush>
-              <Table>
+              <Table stack="lg">
                 <thead>
                   <tr>
                     <Th>Run</Th>
@@ -137,14 +139,16 @@ export function RunsPage() {
                           {run.id}
                         </Link>
                       </Td>
-                      <Td>{names.get(run.loopId) ?? run.loopId}</Td>
-                      <Td>
+                      <Td label="Loop" className="wrap-anywhere">
+                        {names.get(run.loopId) ?? run.loopId}
+                      </Td>
+                      <Td label="Status">
                         <RunStatusBadge status={run.status} />
                       </Td>
-                      <Td className="text-sm whitespace-nowrap text-muted">
+                      <Td label="Started" className="text-sm whitespace-nowrap text-muted">
                         {formatDateTime(run.startedAt ?? run.createdAt)}
                       </Td>
-                      <Td>
+                      <Td label="Parent">
                         {run.parentRunId ? (
                           <Link className={ID_LINK} to={`/runs/${run.parentRunId}`}>
                             {run.parentRunId.slice(-6)}
@@ -153,7 +157,7 @@ export function RunsPage() {
                           <span className="text-subtle">-</span>
                         )}
                       </Td>
-                      <Td>
+                      <Td label="Children">
                         <Link className={LINK} to={`/runs?parent=${run.id}`}>
                           children
                         </Link>

@@ -8,13 +8,14 @@ import {
   Button,
   Card,
   ConfirmAction,
+  FIELD_ROW,
   FieldGroup,
   HelpText,
   Input,
   Label,
   RequiredNote,
 } from '../../components/ui/index.js';
-import { formatDateTime } from '../../lib/utils.js';
+import { cn, formatDateTime } from '../../lib/utils.js';
 import { LIST_ROW, MutationError, SECRETS_SECTION, useInvalidate } from '../shared.js';
 
 /** The API's rule for secret names (PUT /secrets/{name}). */
@@ -56,7 +57,7 @@ export function SecretsSection() {
       <div className="grid gap-4">
         <HelpText>Values are write-only: they are never shown again.</HelpText>
         <form
-          className="flex flex-wrap items-start gap-3"
+          className={cn(FIELD_ROW, 'items-start')}
           aria-label="Set secret"
           onSubmit={(e) => {
             e.preventDefault();

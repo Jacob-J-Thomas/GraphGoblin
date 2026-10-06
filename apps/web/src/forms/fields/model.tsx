@@ -131,7 +131,7 @@ function CatalogField({
       required={required}
       after={
         kind === 'model' ? (
-          <Link className="text-xs text-link underline" to="/settings">
+          <Link className="touch-target text-xs text-link underline" to="/settings">
             Model catalog in Settings
           </Link>
         ) : undefined

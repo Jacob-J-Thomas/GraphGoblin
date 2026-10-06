@@ -1,7 +1,6 @@
 import type { ContextThread, RunEvent } from '@graphgoblin/contracts';
 import { useMemo } from 'react';
-import { Icon } from '../../components/icons/index.js';
-import { Alert, Badge, Card } from '../../components/ui/index.js';
+import { Alert, Badge, Card, Disclosure } from '../../components/ui/index.js';
 import { prettyJson } from '../../lib/utils.js';
 import { initialThreadFrom, patchDiff, tryThreadAt, type PatchLine } from '../projections.js';
 
@@ -24,7 +23,7 @@ function PatchDiff({ nodeId, lines }: { nodeId: string; lines: PatchLine[] }) {
                 </>
               ) : null}
             </div>
-            <div className="grid grid-cols-2">
+            <div className="grid sm:grid-cols-2">
               <pre className={`${PRE} bg-status-bad-bg text-status-bad-fg`}>
                 − {prettyJson(line.before) || '(absent)'}
               </pre>
@@ -96,21 +95,14 @@ export function ThreadViewer({
               {prettyJson(thread.vars)}
             </pre>
           </div>
-          <details className="group">
-            <summary className="flex w-fit cursor-pointer list-none items-center gap-2 rounded-sm font-semibold [&::-webkit-details-marker]:hidden">
-              <Icon
-                name="chevron"
-                className="-rotate-90 text-muted transition-transform group-open:rotate-0"
-              />
-              Full thread JSON
-            </summary>
+          <Disclosure label={<span className="font-semibold">Full thread JSON</span>} variant="row">
             <pre
-              className={`${PRE} mt-2 overflow-auto rounded-md border border-default bg-code-bg text-code-fg`}
+              className={`${PRE} overflow-auto rounded-md border border-default bg-code-bg text-code-fg`}
               data-testid="thread-json"
             >
               {prettyJson(thread)}
             </pre>
-          </details>
+          </Disclosure>
         </div>
       </Card>
     </div>

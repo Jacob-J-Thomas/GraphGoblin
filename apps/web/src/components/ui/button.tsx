@@ -35,9 +35,9 @@ export const buttonStyles = variants({
         'border-transparent bg-transparent text-default hover:bg-surface-hover active:translate-y-px',
     },
     size: {
-      sm: 'h-8 gap-1.5 px-[11px] text-sm [&_svg]:size-[15px]',
-      md: 'h-9 gap-[7px] px-3.5 text-md',
-      icon: 'size-8 p-0 text-sm [&_svg]:size-[15px]',
+      sm: 'h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px]',
+      md: 'h-9 gap-[7px] px-3.5 text-md pointer-coarse:h-11',
+      icon: 'size-8 p-0 text-sm pointer-coarse:size-11 [&_svg]:size-[15px]',
     },
   },
   defaults: { variant: 'default', size: 'md' },
