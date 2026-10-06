@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 /** The browser describes only schedules it can build; the API owns cron semantics. */
 export type Preset = 'minutes' | 'hours' | 'daily' | 'weekdays' | 'weekly' | 'monthly';
 export type Schedule =
@@ -12,6 +14,31 @@ export type Schedule =
 
 export type BuiltSchedule = Exclude<Schedule, { kind: 'custom' | 'empty' }>;
 export type SchedulePreferences = { time?: string; days?: number[]; day?: number };
+
+// Shape validation deliberately accepts incomplete parts (zero, an empty time or no days).
+const BuilderInputSchema = z.discriminatedUnion('kind', [
+  z.strictObject({ kind: z.literal('minutes'), every: z.number() }),
+  z.strictObject({ kind: z.literal('hours'), every: z.number() }),
+  z.strictObject({ kind: z.literal('daily'), time: z.string() }),
+  z.strictObject({ kind: z.literal('weekdays'), time: z.string() }),
+  z.strictObject({
+    kind: z.literal('weekly'),
+    time: z.string(),
+    days: z.array(z.int().min(0).max(6)),
+  }),
+  z.strictObject({ kind: z.literal('monthly'), time: z.string(), day: z.number() }),
+]);
+
+/** Held builder input is untrusted; malformed JSON or a wrong shape uses the saved expression. */
+export function parseScheduleInput(text: string, expression: string): Schedule {
+  try {
+    const parsed = BuilderInputSchema.safeParse(JSON.parse(text));
+    if (parsed.success) return parsed.data;
+  } catch {
+    // The backing expression still describes the last complete schedule.
+  }
+  return parseSchedule(expression);
+}
 
 export function schedulePreferences(schedule: Schedule): SchedulePreferences {
   return {

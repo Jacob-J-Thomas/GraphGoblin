@@ -217,7 +217,7 @@ test('the editor blocks publishing on template syntax errors and unparsed JSON, 
   await expect(issues).toHaveAccessibleName('1 issue on approve');
   await issues.click();
   await expect(page.getByRole('dialog', { name: 'Issues on approve' })).toContainText(
-    'FIELD_UNPARSED',
+    'FIELD_INPUT_INVALID',
   );
   await page.keyboard.press('Escape');
   await closeNode(page);

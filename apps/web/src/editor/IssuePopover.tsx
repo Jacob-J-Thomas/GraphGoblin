@@ -22,7 +22,7 @@ export function worstSeverity(issues: readonly EditorIssue[]): EditorIssue['seve
 }
 
 /**
- * Close a popover after "Discard text", with focus back on its trigger; when the discard removed
+ * Close a popover after "Discard the unparsed text", with focus back on its trigger; when the discard removed
  * the last issue and so the trigger too, focus goes to `fallback` instead of the page.
  */
 export function refocusAfterDiscard(
@@ -77,8 +77,8 @@ const ROW = 'grid w-full gap-1 rounded-md px-2 py-1.5 text-left pointer-coarse:m
 /**
  * Issues as rows: each shows its severity (icon and word), code, message, and field path. With
  * `onChoose`, each row is a button (open the node at the field); otherwise the rows only inform.
- * An issue for text that does not parse (`FIELD_UNPARSED`) keeps its "Discard text" button, which
- * drops the text and the issue.
+ * A held-input issue (`FIELD_INPUT_INVALID`) keeps a discard button using the control's noun
+ * (the unparsed text or the incomplete schedule), which drops the input and the issue.
  */
 export function IssueList({
   issues,
@@ -88,7 +88,7 @@ export function IssueList({
 }: {
   issues: readonly EditorIssue[];
   onChoose?: ((issue: EditorIssue) => void) | undefined;
-  /** Called after "Discard text" has dropped an issue's text. */
+  /** Called after discarding an issue's held input. */
   onDiscard?: ((issue: EditorIssue) => void) | undefined;
   /** Name each issue's node or edge (for a list from the whole loop). */
   subject?: boolean;
@@ -115,14 +115,14 @@ export function IssueList({
               size="sm"
               variant="outline"
               className="ml-2"
-              aria-label={`Discard unparsed text at ${issue.discard.path}`}
+              aria-label={`Discard the ${issue.discard.input ?? 'unparsed text'} at ${issue.discard.path}`}
               onClick={() => {
                 const { scope, path } = issue.discard!;
                 useEditorStore.getState().setFieldError(scope, path, undefined, 'discard');
                 onDiscard?.(issue);
               }}
             >
-              Discard text
+              Discard the {issue.discard.input ?? 'unparsed text'}
             </Button>
           ) : null}
         </li>

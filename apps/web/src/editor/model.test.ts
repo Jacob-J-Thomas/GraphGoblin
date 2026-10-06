@@ -194,6 +194,12 @@ describe('issue display helpers', () => {
     expect(sameIssues([issue], [{ ...issue, severity: 'warning' }])).toBe(false);
     expect(sameIssues([issue], [{ ...issue, edgeId: 'e1' }])).toBe(false);
     expect(sameIssues([issue], [{ ...issue, path: 'config.y' }])).toBe(false);
+    expect(
+      sameIssues(
+        [issue],
+        [{ ...issue, discard: { ...issue.discard!, input: 'incomplete schedule' } }],
+      ),
+    ).toBe(false);
     expect(sameIssues([issue], [{ ...issue, discard: { scope: 'node:other', path: 'x' } }])).toBe(
       false,
     );

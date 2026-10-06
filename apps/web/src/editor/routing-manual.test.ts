@@ -193,7 +193,7 @@ describe('manual routes in the router (#44)', () => {
         }),
       ).toBe(false);
     expect(blocked.routes).toEqual(createRoutingPlan([...nodes, blocker], fixed).routes);
-    // A forward route through a card: the edge falls back to its automatic (smoothstep) path.
+    // Both the forward manual route and its smoothstep fallback cross this wall: keep manual.
     const wall = {
       ...blocker,
       id: 'wall',
@@ -204,8 +204,8 @@ describe('manual routes in the router (#44)', () => {
       input: { x: 230, y: 50 },
     };
     const forward = createRoutingPlan([...nodes, wall], fixed, undefined, blocked);
-    expect(forward.suspended.has('start-work')).toBe(true);
-    expect(forward.routes.has('start-work')).toBe(false);
+    expect(forward.suspended.has('start-work')).toBe(false);
+    expect(forward.routes.get('start-work')).toMatchObject({ manual: true, crossing: true });
     // Moving the card away brings the manual routes back.
     const back = createRoutingPlan(nodes, fixed, undefined, forward);
     expect(back.suspended.size).toBe(0);
@@ -219,6 +219,66 @@ describe('manual routes in the router (#44)', () => {
     );
     expect(preview.routes.get('return')).toMatchObject({ manual: true, crossing: true });
     expect(preview.suspended.size).toBe(0);
+  });
+
+  it.each([false, true])(
+    'suspends a newly crossed forward route only if its replacement is clear (obstructed: %s)',
+    (obstructed) => {
+      const card = (id: string, x: number, y: number): RoutingNode => ({
+        id,
+        x,
+        y,
+        width: 184,
+        height: 122,
+        outputs: { out: { x: x + 190, y: y + 61 } },
+        input: { x: x - 6, y: y + 61 },
+      });
+      const nodes = [
+        card('source', 0, 0),
+        card('target', 700, 0),
+        card('wall', 330, obstructed ? 0 : -200),
+        card('moving', 330, 500),
+      ];
+      const edges: RoutingEdge[] = [
+        {
+          id: 'manual',
+          source: 'source',
+          target: 'target',
+          port: 'out',
+          route: [250, 300, 650],
+          allowCrossing: new Set(),
+        },
+      ];
+      const before = createRoutingPlan(nodes, edges);
+      const after = createRoutingPlan(moved(nodes, 'moving', 0, -250), edges, undefined, before);
+      expect(after.suspended.has('manual')).toBe(!obstructed);
+      if (obstructed)
+        expect(after.routes.get('manual')).toMatchObject({ manual: true, crossing: true });
+      else expect(after.routes.has('manual')).toBe(false);
+      expect(after.routes).toEqual(
+        createRoutingPlan(moved(nodes, 'moving', 0, -250), edges).routes,
+      );
+      // Removing the original fallback obstacle invalidates the kept route's recorded reads.
+      if (obstructed) {
+        const clear = createRoutingPlan(
+          moved(moved(nodes, 'moving', 0, -250), 'wall', 0, -200),
+          edges,
+          undefined,
+          after,
+        );
+        expect(clear.suspended.has('manual')).toBe(true);
+      }
+    },
+  );
+
+  it('keeps a newly crossed backward route when its automatic port is covered', () => {
+    const { nodes, edges } = loop();
+    const fixed = withRoute(edges, 'return', [1120, 420, 260]);
+    const before = createRoutingPlan(nodes, fixed);
+    const cover = { ...nodes[3]!, id: 'cover', x: 1070, outputs: {} };
+    const plan = createRoutingPlan([...nodes, cover], fixed, undefined, before);
+    expect(plan.routes.get('return')).toMatchObject({ manual: true, crossing: true });
+    expect(plan.suspended.has('return')).toBe(false);
   });
 
   it('makes automatic routes reserve around a fixed route’s lanes and trunks', () => {

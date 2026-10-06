@@ -157,7 +157,9 @@ export function EditorPage() {
   const publish = useMutation({
     mutationFn: async () => {
       if (Object.keys(useEditorStore.getState().fieldErrors).length > 0)
-        throw new Error('Some fields hold text that does not parse; fix them first.');
+        throw new Error(
+          'Some fields hold input that is not a valid value yet; complete or discard it first.',
+        );
       const saved = await flush();
       if (!saved && useEditorStore.getState().conflict)
         throw new Error('The draft changed on the server; reload it or overwrite it first.');

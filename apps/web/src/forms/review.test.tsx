@@ -235,7 +235,7 @@ it('retains identical unparsed text in a surviving nested array row after cleari
   await user.click(screen.getByRole('button', { name: 'Remove items 1' }));
   expect(getCode('Value')).toBe('{same');
   expect(useEditorStore.getState().fieldErrors['review']).toEqual({
-    'items.0.value': { message: expect.any(String), text: '{same' },
+    'items.0.value': { message: expect.any(String), text: '{same', input: 'unparsed text' },
   });
   expect(screen.getByText(/Invalid JSON/)).toBeInTheDocument();
 });

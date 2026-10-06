@@ -4,17 +4,19 @@ import { createContext, use } from 'react';
  * Input a form field cannot turn into a complete value (unparsed JSON, an unfinished schedule).
  * `text` holds the raw input or the serialized builder state. The field keeps the last
  * valid value, so the schema alone never notices; the form reports the text and its error upward,
- * keyed by field path, and the editor keeps both, as a blocking issue, until the text parses or
- * the user discards it. Leaving the field does not clear it: coming back shows the text again.
+ * keyed by field path, and the editor keeps both as a blocking issue until the input is complete
+ * or the user discards it. Leaving the field does not clear it: coming back shows the input again.
  */
 export interface ParseError {
   message: string;
   text: string;
+  /** The control's short noun for the discard action. */
+  input?: 'unparsed text' | 'incomplete schedule';
 }
 
 /**
- * Why a path's unparsed text went away when the user asked for it ("Discard text"), as opposed to
- * the text starting to parse. The editor's undo history records a discard as a step of its own.
+ * Why held input went away when the user discarded it, rather than completing it.
+ * The editor's undo history records a discard as a step of its own.
  */
 export type ParseErrorReason = 'discard';
 

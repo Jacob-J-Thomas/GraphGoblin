@@ -1,4 +1,5 @@
 import type { LoopDefinitionInput } from '@graphgoblin/contracts';
+import type { ParseError } from '../forms/parse-errors.js';
 
 /**
  * The editor's undo history (#17). Every change of the draft is a step: the store's `edit` records
@@ -23,7 +24,7 @@ export interface HistoryStep {
 }
 
 /** Field text that does not parse, per form scope and path (the store's `fieldErrors`). */
-export type FieldErrors = Record<string, Record<string, { message: string; text: string }>>;
+export type FieldErrors = Record<string, Record<string, ParseError>>;
 
 /** The part of the editor state a step changes. */
 export interface Snapshot {

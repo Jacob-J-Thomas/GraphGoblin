@@ -634,8 +634,20 @@ describe('EditorPage', () => {
     expect(screen.queryByText('Ready to publish')).toBeNull();
     expect(screen.getByRole('button', { name: '1 error' })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Publish' }));
-    await screen.findByText(/does not parse; fix them first/);
+    await screen.findByText(/not a valid value yet; complete or discard it first/);
     expect(api.callsTo('POST', `/loops/${loop.id}/publish`)).toHaveLength(0);
+    const badge = nodeBadge('start')!;
+    await user.click(badge);
+    const discard = popoverButtons(badge, 'Discard the incomplete schedule at expression')[0]!;
+    expect(discard).toHaveTextContent('Discard the incomplete schedule');
+    expect(discard.parentElement).toHaveTextContent('FIELD_INPUT_INVALID');
+    expect(discard.parentElement).toHaveTextContent(
+      'This field holds input that is not a valid value yet.',
+    );
+    await user.click(discard);
+    expect(await screen.findByText('Ready to publish')).toBeInTheDocument();
+    act(() => useEditorStore.getState().undo());
+    expect(screen.queryByText('Ready to publish')).toBeNull();
     act(() => useEditorStore.getState().undo());
     expect(await screen.findByText('Ready to publish')).toBeInTheDocument();
   });
@@ -656,7 +668,7 @@ describe('EditorPage', () => {
     const inEditor = await within(editor()).findByRole('button', { name: '1 issue on start' });
     await user.click(inEditor);
     const popover = screen.getByRole('dialog', { name: 'Issues on start' });
-    expect(popover).toHaveTextContent('FIELD_UNPARSED');
+    expect(popover).toHaveTextContent('FIELD_INPUT_INVALID');
     expect(popover).toHaveTextContent('config.inputSchema');
     // Esc closes the popover, not the editor around it.
     await user.keyboard('{Escape}');
@@ -664,7 +676,9 @@ describe('EditorPage', () => {
     expect(editor()).toHaveAttribute('open');
     expect(inEditor).toHaveFocus();
     await user.click(screen.getByRole('button', { name: 'Publish' }));
-    expect(await screen.findByText(/does not parse; fix them first/)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/not a valid value yet; complete or discard it first/),
+    ).toBeInTheDocument();
     expect(api.callsTo('POST', `/loops/${loop.id}/publish`)).toHaveLength(0);
 
     // Fixing the text clears the issue.
@@ -678,17 +692,19 @@ describe('EditorPage', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(onCanvas()).toHaveAttribute('aria-label', '1 issue on start');
     await user.click(screen.getByRole('button', { name: 'Publish' }));
-    expect(await screen.findByText(/does not parse; fix them first/)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/not a valid value yet; complete or discard it first/),
+    ).toBeInTheDocument();
 
     // Choosing the issue on the canvas opens the node with the field focused, text and all.
     await user.click(onCanvas()!);
-    await user.click(popoverButtons(onCanvas()!, /FIELD_UNPARSED/)[0]!);
+    await user.click(popoverButtons(onCanvas()!, /FIELD_INPUT_INVALID/)[0]!);
     await screen.findByRole('form', { name: 'start config' });
     expect(getCode('Input schema')).toBe('{"broken": ');
     expect(editor().querySelector('[data-field="inputSchema"] .cm-content')).toHaveFocus();
 
     // Discarding in the field restores the last valid value and clears the blocker.
-    await user.click(screen.getByRole('button', { name: 'Discard text' }));
+    await user.click(screen.getByRole('button', { name: 'Discard the unparsed text' }));
     await waitFor(() => expect(onCanvas()).toBeNull());
     expect(getCode('Input schema')).toContain('"object"');
 
@@ -696,7 +712,9 @@ describe('EditorPage', () => {
     // goes with the issue, and focus goes to the editor's heading rather than the page.
     setCode('Input schema', '{"mounted": ');
     await user.click(await within(editor()).findByRole('button', { name: '1 issue on start' }));
-    await user.click(screen.getByRole('button', { name: 'Discard unparsed text at inputSchema' }));
+    await user.click(
+      screen.getByRole('button', { name: 'Discard the unparsed text at inputSchema' }),
+    );
     await waitFor(() => expect(onCanvas()).toBeNull());
     expect(getCode('Input schema')).toContain('"object"');
     expect(screen.queryByText(/Invalid JSON/)).toBeNull();
@@ -709,7 +727,7 @@ describe('EditorPage', () => {
     await waitFor(() => expect(onCanvas()).not.toBeNull());
     act(() => useEditorStore.getState().closeNodeDialog());
     await user.click(onCanvas()!);
-    await user.click(popoverButtons(onCanvas()!, 'Discard unparsed text at inputSchema')[0]!);
+    await user.click(popoverButtons(onCanvas()!, 'Discard the unparsed text at inputSchema')[0]!);
     await waitFor(() => expect(onCanvas()).toBeNull());
     await waitFor(() =>
       expect(screen.getByTestId('node-start').closest('.react-flow__node')).toHaveFocus(),

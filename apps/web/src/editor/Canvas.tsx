@@ -6,6 +6,8 @@ import {
   type AriaLabelConfig,
   type FitViewOptions,
   useReactFlow,
+  useStore,
+  type ReactFlowState,
   type Connection,
   type Edge,
   type EdgeChange,
@@ -23,13 +25,13 @@ import {
   useState,
   type DragEvent,
   type KeyboardEvent,
+  type RefObject,
 } from 'react';
 import { closePopovers } from '../components/ui/index.js';
 import {
   crossesCards,
   crossedCardIds,
   drawnPoints,
-  forwardPoints,
   findSegment,
   midpoint,
   moveSegment,
@@ -51,13 +53,7 @@ import {
 } from './model.js';
 import { NodeCard, type FlowNode, type NodeCardData } from './NodeCard.js';
 import { useEditorStore } from './store.js';
-import {
-  backwardDirection,
-  createRoutingPlan,
-  routeMessage,
-  type RoutingNode,
-  type RoutingPlan,
-} from './routing.js';
+import { backwardDirection, routeMessage, type RoutingNode, type RoutingPlan } from './routing.js';
 import { useRouting } from './useRouting.js';
 import { createRouteChannels } from './route-channels.js';
 
@@ -68,6 +64,8 @@ const edgeTypes = { orthogonal: OrthogonalEdge };
 export const CANVAS_GRID = 22;
 /** A selected edge draws above the cards, so its segment handles and toolbar are never covered. */
 const SELECTED_EDGE_Z = 2000;
+const MIN_CANVAS_ZOOM = 0.5;
+const MAX_CANVAS_ZOOM = 2;
 
 /** Fit the graph with room on the left for the zoom controls, so they never cover a card. */
 const FIT_VIEW_OPTIONS: FitViewOptions = {
@@ -94,6 +92,20 @@ export { canvasFocusTarget } from './canvas-focus.js';
 type Size = { width: number; height: number };
 
 const NO_ISSUES: readonly EditorIssue[] = [];
+
+const zoomOf = (state: ReactFlowState) => state.transform[2];
+
+/** Publish zoom without re-rendering the canvas or its cards on each viewport change. */
+function CanvasZoom({ canvasRef }: { canvasRef: RefObject<HTMLDivElement | null> }) {
+  const zoom = useStore(zoomOf);
+  useLayoutEffect(() => {
+    canvasRef.current?.style.setProperty(
+      '--gg-canvas-zoom',
+      String(Math.min(MAX_CANVAS_ZOOM, Math.max(MIN_CANVAS_ZOOM, zoom))),
+    );
+  }, [canvasRef, zoom]);
+  return null;
+}
 
 /**
  * Each node's card data: the node, its ports, and its issues. A node whose definition and issues
@@ -351,9 +363,11 @@ export function Canvas({
     nodesRef.current = new Map(next.map((node) => [node.id, node]));
     return next;
   }, [definition, cardData, selected, measured, dragging]);
-  // Pin each manual route's deliberate intersections at drag start. A newly crossed card sets
-  // the route aside during the drag, matching the reset when the card is released there.
+  // Pin deliberate intersections at drag start. The plan sets a newly crossing route aside
+  // only when its automatic replacement is clear; otherwise preview and drop keep it dotted.
   const [nodeDrag, setNodeDrag] = useState<ReadonlyMap<string, ReadonlySet<string>>>();
+  const [drop, setDrop] = useState<{ id: string; position: XYPosition }>();
+  const committedDropRef = useRef(drop);
   const authoredCrossings = useMemo(
     () => new Set(definition.nodes.map((n) => n.id)),
     [definition.nodes],
@@ -472,52 +486,52 @@ export function Canvas({
     };
   }, [announce, closeStep, screenToFlowPosition, setEdgeRoute]);
 
+  const pinnedCrossings = useCallback(() => {
+    const cards = cardBoxes(planRef.current.nodes);
+    return new Map(
+      [...planRef.current.routes]
+        .filter(([, route]) => route.manual)
+        .map(([edgeId, route]) => [edgeId, crossedCardIds(route.points, cards)]),
+    );
+  }, []);
   const endDrag = useCallback(
     (id: string, position: XYPosition) => {
-      const definition = useEditorStore.getState().definition;
-      const candidates = newlyCrossed(definition, planRef.current, id, position);
-      // Inspect the actual automatic replacement before removing a route. Forward smoothstep
-      // connections do not avoid obstacles, so resetting can introduce a different crossing.
-      const nodes = planRef.current.nodes.map((n) =>
-        n.id === id ? placed(n, position.x, position.y) : n,
-      );
-      const automatic = candidates.length
-        ? createRoutingPlan(
-            nodes,
-            planRef.current.edges.map((edge) => {
-              if (!candidates.includes(edge.id)) return edge;
-              const { route: _route, ...rest } = edge;
-              return rest;
-            }),
-            planRef.current.clearance,
-            planRef.current,
-          )
-        : undefined;
-      const reset = candidates.filter((edgeId) => {
-        const edge = definition!.edges.find((e) => e.id === edgeId)!;
-        const from = nodes.find((n) => n.id === edge.from.node)?.outputs[edge.from.port];
-        const to = nodes.find((n) => n.id === edge.to.node)?.input;
-        if (!from || !to) return false;
-        const points = automatic!.routes.get(edgeId)?.points ?? forwardPoints(from, to);
-        return !crossesCards(points, cardBoxes(nodes));
-      });
-      moveNode(id, position);
-      // Part of the move's step: undoing the move brings the routes back with it.
-      for (const edgeId of reset) setEdgeRoute(edgeId, undefined, `move:${id}`);
-      if (reset.length)
-        announce(
-          `${reset.length === 1 ? 'A manual route' : `${reset.length} manual routes`} would cross a card and now route${reset.length === 1 ? 's' : ''} automatically.`,
-        );
-      const kept = candidates.length - reset.length;
-      if (kept)
-        announce(
-          `${kept === 1 ? 'A manual route is' : `${kept} manual routes are`} kept because the automatic replacement crosses a card. Crosses a card; move the card or edit the route.`,
-        );
-      setDragging(({ [id]: _done, ...rest }) => rest);
-      setNodeDrag(undefined);
+      // Wait for the plan at the drop position, including a final move without a drag frame.
+      setNodeDrag((current) => current ?? pinnedCrossings());
+      setDragging((current) => ({ ...current, [id]: position }));
+      setDrop({ id, position });
     },
-    [announce, moveNode, setEdgeRoute],
+    [pinnedCrossings],
   );
+  useLayoutEffect(() => {
+    // Each queued drop commits once, even if React repeats an effect before state is cleared.
+    if (!drop || committedDropRef.current === drop) return;
+    const { id, position } = drop;
+    const card = plan.nodes.find((n) => n.id === id);
+    if (card && (card.x !== position.x || card.y !== position.y)) return;
+    committedDropRef.current = drop;
+    const definition = useEditorStore.getState().definition;
+    const candidates = newlyCrossed(definition, plan, id, position);
+    const reset = candidates.filter((edgeId) => plan.suspended.has(edgeId));
+    moveNode(id, position);
+    // Part of the move's step: undoing the move brings the routes back with it.
+    for (const edgeId of reset) setEdgeRoute(edgeId, undefined, `move:${id}`);
+    const messages: string[] = [];
+    if (reset.length)
+      messages.push(
+        `${reset.length === 1 ? 'A manual route' : `${reset.length} manual routes`} would cross a card and now route${reset.length === 1 ? 's' : ''} automatically.`,
+      );
+    const kept = candidates.length - reset.length;
+    if (kept)
+      messages.push(
+        `${kept === 1 ? 'A manual route is' : `${kept} manual routes are`} kept because the automatic replacement crosses a card. Crosses a card; move the card or edit the route.`,
+      );
+    if (messages.length)
+      setAnnouncement((previous) => ({ text: messages.join(' '), key: previous.key + 1 }));
+    setDragging(({ [id]: _done, ...rest }) => rest);
+    setNodeDrag(undefined);
+    setDrop(undefined);
+  }, [drop, plan, moveNode, setEdgeRoute]);
 
   // xyflow writes each changed callback into its store separately. Stable handlers avoid
   // notifying every node/edge subscriber several extra times on each drag frame.
@@ -584,15 +598,8 @@ export function Canvas({
     closeCanvasPopovers();
     // Each drag is an undo step of its own, however soon it follows the last move.
     closeStep();
-    const cards = cardBoxes(planRef.current.nodes);
-    setNodeDrag(
-      new Map(
-        [...planRef.current.routes]
-          .filter(([, route]) => route.manual)
-          .map(([edgeId, route]) => [edgeId, crossedCardIds(route.points, cards)]),
-      ),
-    );
-  }, [closeCanvasPopovers, closeStep]);
+    setNodeDrag(pinnedCrossings());
+  }, [closeCanvasPopovers, closeStep, pinnedCrossings]);
 
   const onDrop = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -663,6 +670,8 @@ export function Canvas({
           nodeDragThreshold={CLICK_DISTANCE}
           onPaneClick={onPaneClick}
           fitView
+          minZoom={MIN_CANVAS_ZOOM}
+          maxZoom={MAX_CANVAS_ZOOM}
           fitViewOptions={FIT_VIEW_OPTIONS}
           deleteKeyCode={null}
           ariaLabelConfig={ARIA_LABELS}
@@ -704,6 +713,7 @@ export function Canvas({
       onDrop={onDrop}
     >
       {flow}
+      <CanvasZoom canvasRef={rootRef} />
       <span aria-live="polite" aria-atomic="true" className="sr-only">
         <span key={announcement.key}>{announcement.text}</span>
       </span>

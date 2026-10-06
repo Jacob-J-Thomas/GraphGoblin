@@ -89,7 +89,7 @@ test('incomplete weekly Monday 07:30 blocks publish, survives dialog remount, an
   await dialog.getByRole('button', { name: 'Done', exact: true }).click();
   await expect(page.getByText('Ready to publish')).toHaveCount(0);
   await page.getByRole('button', { name: 'Publish', exact: true }).click();
-  await expect(page.getByText(/does not parse; fix them first/)).toBeVisible();
+  await expect(page.getByText(/not a valid value yet; complete or discard it first/)).toBeVisible();
   await openNode(page, 'start');
   await expect(dialog.getByLabel('Monday')).not.toBeChecked();
   await expect(dialog.getByLabel('At time')).toHaveValue('07:30');
@@ -273,10 +273,10 @@ test('typing a label, then Ctrl+Z outside the field, restores the label in one s
   const start = await openNode(page, 'start');
   await start.locator('[data-field="inputSchema"] .cm-content').click();
   await page.keyboard.type('{"type": ');
-  const discard = start.getByRole('button', { name: 'Discard text' });
+  const discard = start.getByRole('button', { name: 'Discard the unparsed text' });
   await discard.focus();
   await page.keyboard.press('Control+z');
-  await expect(start.getByRole('button', { name: 'Discard text' })).toHaveCount(0);
+  await expect(start.getByRole('button', { name: 'Discard the unparsed text' })).toHaveCount(0);
   await expect(start.locator('[data-field="inputSchema"] .cm-content')).toBeFocused();
   await expect(start.locator('[data-field="inputSchema"] .cm-content')).not.toContainText('type');
   await start.getByRole('button', { name: 'Done' }).focus();
@@ -285,14 +285,14 @@ test('typing a label, then Ctrl+Z outside the field, restores the label in one s
   await expect(start.locator('[data-field="inputSchema"] .cm-content')).toHaveText('{"type": }');
   await expect(start.getByRole('button', { name: '1 issue on start' })).toBeVisible();
 
-  // Discard text straight after typing is a step of its own: undo brings the text back.
+  // Discard the unparsed text straight after typing is a step of its own: undo brings the text back.
   const schema = start.locator('[data-field="inputSchema"] .cm-content');
   await schema.click();
   await page.keyboard.press('Control+a');
   await page.keyboard.press('Delete');
   await page.keyboard.type('{"a": ');
   await expect(schema).toHaveText('{"a": }');
-  await start.getByRole('button', { name: 'Discard text' }).click();
+  await start.getByRole('button', { name: 'Discard the unparsed text' }).click();
   await expect(start.getByRole('button', { name: '1 issue on start' })).toHaveCount(0);
   await expect(schema).toHaveText('{}');
   await expect(undoButton(page)).toHaveAccessibleName('Undo discard text in inputSchema of start');

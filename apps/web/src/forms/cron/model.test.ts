@@ -3,6 +3,7 @@ import {
   defaultSchedule,
   formatSlot,
   parseSchedule,
+  parseScheduleInput,
   recordPreferences,
   scheduleError,
   scheduleExpression,
@@ -26,6 +27,27 @@ const cases: [BuiltSchedule, string, string][] = [
   [{ kind: 'monthly', time: '00:00', day: 31 }, '0 0 31 * *', 'Monthly on day 31 at 00:00'],
 ];
 describe('cron preset model', () => {
+  it.each([
+    '{',
+    'null',
+    '[]',
+    '{"kind":"weekly","time":"07:30"}',
+    '{"kind":"weekly","time":"07:30","days":[7]}',
+    '{"kind":"daily","time":9}',
+  ])('falls back to the saved schedule for malformed held input %s', (text) => {
+    expect(parseScheduleInput(text, '30 7 * * 1')).toEqual({
+      kind: 'weekly',
+      time: '07:30',
+      days: [1],
+    });
+  });
+  it('restores shaped incomplete builder input without requiring complete parts', () => {
+    expect(parseScheduleInput('{"kind":"weekly","time":"07:30","days":[]}', '30 7 * * 1')).toEqual({
+      kind: 'weekly',
+      time: '07:30',
+      days: [],
+    });
+  });
   it.each(cases)('builds, describes and reopens %j', (model, expression, summary) => {
     expect(scheduleExpression(model)).toBe(expression);
     expect(parseSchedule(expression)).toEqual(model);

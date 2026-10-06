@@ -30,6 +30,7 @@ import {
   defaultSchedule,
   formatSlot,
   parseSchedule,
+  parseScheduleInput,
   recordPreferences,
   scheduleError,
   scheduleExpression,
@@ -54,7 +55,7 @@ export function CronControl({ name }: FieldProps) {
   // Incomplete builder input uses this field's parse-error channel, just like unparsed JSON.
   // Its text is the builder state, rather than a replacement for the last valid expression.
   const schedule: Schedule = stored
-    ? (JSON.parse(stored.text) as BuiltSchedule)
+    ? parseScheduleInput(stored.text, expression)
     : draft?.expression === expression &&
         (!parseErrors.tracked || scheduleError(draft.schedule) === undefined)
       ? draft.schedule
@@ -75,7 +76,11 @@ export function CronControl({ name }: FieldProps) {
     change({ path: name, kind: 'typing' }, () => {
       const message = scheduleError(next);
       if (message !== undefined) {
-        parseErrors.report(name, { message, text: JSON.stringify(next) });
+        parseErrors.report(name, {
+          message,
+          text: JSON.stringify(next),
+          input: 'incomplete schedule',
+        });
         setDraft({ expression, schedule: next });
         return;
       }

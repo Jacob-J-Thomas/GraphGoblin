@@ -366,22 +366,23 @@ All 168 page measurements pass. Geometry also checks each visible control agains
 
 The inspector's Full thread JSON and Node progress now render through the shared `Disclosure` (`apps/web/src/runs/inspector/ThreadViewer.tsx`, `ProgressDrawer.tsx`), including its 44 px coarse-pointer toggle and keyboard/ARIA behavior. The label stays semibold while panel text keeps its previous weight. Touch E2E taps both toggles, checks `aria-expanded`, and checks that their panels open and close.
 
-`apps/web/src/forms/CodeEditor.tsx` gives content a coarse-pointer minimum of `max(44px, codeLinesHeight(minLines))`, preserving taller fields. `apps/web/src/components/ui/field.tsx` gives `CHECKBOX_LABEL` a 44 px minimum width as well as height. `apps/web/src/styles/canvas.css` uses `inset: -18px` from the handle's 8 px positioning box, producing the documented 44 by 44 px hit box. `docs/09-frontend-and-pwa.md` describes these sizes.
+`apps/web/src/forms/CodeEditor.tsx` gives content a coarse-pointer minimum of `max(44px, codeLinesHeight(minLines))`, preserving taller fields. `apps/web/src/components/ui/field.tsx` gives `CHECKBOX_LABEL` a 44 px minimum width as well as height. `apps/web/src/styles/canvas.css` now counter-scales port targets by viewport zoom, with a small rounding allowance, keeping at least 44 by 44 px on screen. `docs/09-frontend-and-pwa.md` describes these sizes.
 
-The touch selector in `apps/web/e2e/responsive.spec.ts` includes `summary`, `.cm-editor`, and checkbox inputs measured by their labels. It measures every visible code editor across all nine node dialogs (including the expanded mutate operation), taps the short ui label, and checks every handle's pseudo-element. These are measured CSS pixels at 768 by 1024 on a coarse pointer, after fonts load; the default face is Geist. Port sizes are before the canvas's pan/zoom transform. Both themes give the same dimensions. The original measurements came from HEAD `76f07eb`; touch-target evidence is refreshed for R3 from the 2026-10-06 Edge run, built from `49c2f6a` plus these uncommitted fixes. Raw values for all 26 measurements: [touch-targets.json](touch-targets.json).
+The touch selector in `apps/web/e2e/responsive.spec.ts` includes `summary`, `.cm-editor`, and checkbox inputs measured by their labels. It measures every visible code editor across all nine node dialogs (including the expanded mutate operation), taps the short ui label, and checks every handle's pseudo-element. The form controls are measured CSS pixels at 768 by 1024 on a coarse pointer after fonts load; ports are now measured on screen at fitted zoom at both 768 and 360 px; the default face is Geist. The original port measurements were before the canvas transform; the second phase 3/4 review below replaces them with on-screen measurements at fitted zoom. Both themes give the same dimensions. The original measurements came from HEAD `76f07eb`; touch-target evidence is refreshed for R3 from the 2026-10-06 Edge run, built from `49c2f6a` plus the first-round fixes committed as `634e9bd`. Current raw values for all 28 measurements: [touch-targets.json](touch-targets.json).
 
-| Target                      | Dark width × height | Light width × height |
-| --------------------------- | ------------------- | -------------------- |
-| Full thread JSON toggle     | 662 × 44            | 662 × 44             |
-| Node progress toggle        | 662 × 44            | 662 × 44             |
-| Decision Question editor    | 596 × 44            | 596 × 44             |
-| Decision JSONata editor     | 562 × 44            | 562 × 44             |
-| Wait Prompt editor          | 596 × 44            | 596 × 44             |
-| Mutate Content editor       | 514 × 44            | 514 × 44             |
-| Wait ui checkbox label      | 44 × 44             | 44 × 44              |
-| Port hit box (every handle) | 44 × 44             | 44 × 44              |
+| Target                              | Dark width × height | Light width × height |
+| ----------------------------------- | ------------------- | -------------------- |
+| Full thread JSON toggle             | 662 × 44            | 662 × 44             |
+| Node progress toggle                | 662 × 44            | 662 × 44             |
+| Decision Question editor            | 596 × 44            | 596 × 44             |
+| Decision JSONata editor             | 562 × 44            | 562 × 44             |
+| Wait Prompt editor                  | 596 × 44            | 596 × 44             |
+| Mutate Content editor               | 514 × 44            | 514 × 44             |
+| Wait ui checkbox label              | 44 × 44             | 44 × 44              |
+| Port hit box at 768 px, zoom 0.7841 | 44.02 × 44.02       | 44.02 × 44.02        |
+| Port hit box at 360 px, zoom 0.5000 | 44.02 × 44.02       | 44.02 × 44.02        |
 
-The one-line editor content and `.cm-editor` are 44 px tall; their field frame adds two 1 px borders (46 px overall). The two-line Input schema stays 54 px tall. Ports now have 44 px targets in both dimensions; coarse-pointer output rows grow to 44 px with a 2 px gap, so adjacent hit boxes do not overlap. Connect remains an alternative.
+The one-line editor content and `.cm-editor` are 44 px tall; their field frame adds two 1 px borders (46 px overall). The two-line Input schema stays 54 px tall. Ports now have at least 44 px on-screen targets in both dimensions. Coarse-pointer rows counter-scale to keep targets apart: measured spacing is 45.56 px at 768 px and 45.00 px at 360 px. Connect remains an alternative.
 
 ### Gates and counts
 
@@ -395,3 +396,9 @@ The one-line editor content and `.cm-editor` are 44 px tall; their field frame a
 ## Adversarial R3 follow-up (2026-10-06)
 
 Coarse-pointer canvas ports now have 44 by 44 px hit boxes in both themes. Output rows grow from 18 to 44 px, retaining their 2 px gap, so targets do not overlap and only touch cards grow. Fine-pointer card geometry is unchanged. `responsive.spec.ts` asserts both target dimensions and at least 44 px between output rows; `touch-targets.json` is refreshed from its actual Edge attachments. Verification results are recorded in the [phase 3/4 follow-up handoff](../2026-10-06-phase-3-4-code-fixes/README.md).
+
+## Second phase 3/4 review: ports at fitted zoom (2026-10-06)
+
+The canvas publishes xyflow zoom through `--gg-canvas-zoom`, clamped to its supported 0.5 to 2 range. Coarse-pointer hit boxes counter-scale to at least 44 by 44 **screen pixels**, including a 1/32 CSS px allowance for transformed layout rounding, and output rows use `max(44px, 44px / zoom)` with the existing gap, preventing overlap after scaling. Fine-pointer layout stays unchanged. `responsive.spec.ts` measures the pseudo-element dimensions multiplied by the actual viewport transform at 768 and 360 px, in both themes, and checks the on-screen spacing of a decision's two outputs. The refreshed [touch-targets.json](touch-targets.json) records fitted zoom beside both viewport widths. Current verification is in the [second-review handoff](../2026-10-06-phase-3-4-code-fixes/README.md#second-review-on-634e9bd).
+
+Final Edge 154.0.4258.53 checks passed **20 / 20** in 1.7 minutes after rebuilding the rounding fix. At 768 px, fitted zoom is **0.7841**, every port target measures **44.02 × 44.02 px**, and the minimum output-row spacing is **45.56 px**; at 360 px, zoom is **0.5000**, targets measure **44.02 × 44.02 px**, and spacing is **45.00 px**. Both themes agree. The test asserts the transformed minimum strictly (>=44), with an upper bound of 44.1 px, rather than accepting a value just below 44 through a closeness assertion.

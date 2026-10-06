@@ -16,6 +16,7 @@ function setup(
   expression = '0 9 * * *',
   timezone: string | undefined = 'UTC',
   api = new FakeApi(),
+  held: Record<string, ParseError> = {},
 ) {
   const change = vi.fn();
   const parseError = vi.fn();
@@ -23,7 +24,7 @@ function setup(
     json(['2026-03-28T09:00:00.000Z', '2026-03-29T08:00:00.000Z']),
   );
   function Form() {
-    const [errors, setErrors] = useState<Record<string, ParseError>>({});
+    const [errors, setErrors] = useState<Record<string, ParseError>>(held);
     return (
       <SchemaForm
         schema={NodeConfigSchemas.trigger}
@@ -55,6 +56,17 @@ const calls = (api: FakeApi) => api.calls.filter((call) => call.path === '/trigg
 const raw = () => screen.getByLabelText('Cron expression');
 
 describe('cron schedule control', () => {
+  it.each(['{', '{"kind":"weekly","time":"07:30","days":null}'])(
+    'safely restores the backing schedule when held state is malformed: %s',
+    (text) => {
+      setup('30 7 * * 1', 'UTC', new FakeApi(), {
+        expression: { message: 'Incomplete schedule', text, input: 'incomplete schedule' },
+      });
+      expect(screen.getByLabelText('Monday')).toBeChecked();
+      expect(screen.getByLabelText('At time')).toHaveValue('07:30');
+      expect(raw()).toHaveValue('30 7 * * 1');
+    },
+  );
   it('loads a saved schedule unchanged and shows trigger and viewer times from the API', async () => {
     const { change, api, user } = setup('0 9 * * 1-5', 'Europe/London');
     expect(screen.getByLabelText('Repeat')).toHaveValue('weekdays');
@@ -272,6 +284,7 @@ describe('cron schedule control', () => {
       {
         message: 'Choose at least one day.',
         text: JSON.stringify({ kind: 'weekly', time: '07:30', days: [] }),
+        input: 'incomplete schedule',
       },
       undefined,
       expect.objectContaining({ path: 'expression', kind: 'commit' }),

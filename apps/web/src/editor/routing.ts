@@ -19,7 +19,7 @@ import {
   placeLabel,
   type LabelPlacement,
 } from './routing-labels.js';
-import { crossesCards, drawnPoints, sameRoute } from './manual-route.js';
+import { crossesCards, drawnPoints, forwardPoints, sameRoute } from './manual-route.js';
 export { intersectsBox, simplify, type Point } from './routing-geometry.js';
 export { SearchWorkspace } from './routing-search.js';
 
@@ -39,12 +39,12 @@ export interface RoutingEdge {
   /**
    * A fixed (manual) route, in the contract's `edge.ui.route` form (#44). It is drawn as given,
    * with stubs from the current port tips, and automatic routes reserve around it. One that
-   * crosses a card is set aside for the automatic route, unless `allowCrossing`.
+   * newly crosses a card is set aside only when the automatic replacement is clear.
    */
   route?: readonly number[];
   /**
-   * Cards the author deliberately crossed. A crossing outside this set falls back to the
-   * automatic route. During a node drag the set is pinned to the intersections at drag start;
+   * Cards the author deliberately crossed. A crossing outside this set uses the automatic
+   * route only if it crosses no card. During a node drag the set is pinned at drag start;
    * stored routes and segment edits allow every current card.
    */
   allowCrossing?: ReadonlySet<string>;
@@ -1046,7 +1046,8 @@ export function createRoutingPlan(
     statistics.rerouted += 1;
     const fixed = item.edge.route && drawnPoints(item.edge.route, item.from, item.to);
     const crossing = !!fixed && crossesAnyCard(fixed, index);
-    if (fixed && (!crossing || !crossesAnyCard(fixed, index, item.edge.allowCrossing))) {
+    const keepManual = () => {
+      if (!fixed) return;
       const route = manualRoute(item, fixed, crossing, index, reservations);
       dependencies.set(id, {
         boxes: index.reads,
@@ -1057,12 +1058,19 @@ export function createRoutingPlan(
       routes.set(id, before && sameRouted(before, route) ? before : route);
       reserve(reservations, route);
       compareReservation(id);
+    };
+    if (fixed && (!crossing || !crossesAnyCard(fixed, index, item.edge.allowCrossing))) {
+      keepManual();
       continue;
     }
     if (!item.backward) {
-      // A forward edge whose manual route crosses a card: xyflow's automatic path draws it.
-      suspended.add(id);
-      compareReservation(id);
+      // xyflow's forward fallback does not avoid cards. Keep the dotted manual route when
+      // resetting would introduce a crossing, in both the preview and the eventual drop.
+      if (crossesAnyCard(forwardPoints(item.from, item.to), index)) keepManual();
+      else {
+        suspended.add(id);
+        compareReservation(id);
+      }
       continue;
     }
     const attempt = () => {
@@ -1095,9 +1103,14 @@ export function createRoutingPlan(
       routed.padding >= ROUTING_RADIUS
         ? routed
         : { ...routed, radii: cornerRadii(routed.points, index) };
-    // A backward edge whose manual route crosses a card falls back to its automatic route.
-    if (fixed) route = { ...route, suspended: true };
     statistics.expansions += expansions;
+    if (fixed) {
+      if (routed.blocked || routed.unavailable || crossesAnyCard(route.points, index)) {
+        keepManual();
+        continue;
+      }
+      route = { ...route, suspended: true };
+    }
     dependencies.set(id, {
       boxes: index.reads,
       reservations: reservations.reads,

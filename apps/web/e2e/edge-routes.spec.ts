@@ -400,9 +400,10 @@ test('an existing deliberate crossing stays manual when a new crossing has no cl
   await moveStart(300);
   await expect(edge(page, 'start-work')).toHaveAttribute(
     'aria-label',
-    /set aside under a moving card/,
+    /manual route, crosses a card/,
   );
-  await expect(path(page, 'start-work')).not.toHaveClass(/gg-route-crossing/);
+  await expect(path(page, 'start-work')).toHaveClass(/gg-route-crossing/);
+  const previewPath = await path(page, 'start-work').getAttribute('d');
   await page.mouse.up();
   await saved(page);
   // The moved source's output now lies inside `side`; its automatic replacement crosses that
@@ -413,6 +414,7 @@ test('an existing deliberate crossing stays manual when a new crossing has no cl
     /manual route, crosses a card/,
   );
   await expect(path(page, 'start-work')).toHaveClass(/gg-route-crossing/);
+  await expect(path(page, 'start-work')).toHaveAttribute('d', previewPath!);
   await page.getByRole('button', { name: 'Undo move start', exact: true }).click();
   await saved(page);
   const restored = await draft(request, loopId);

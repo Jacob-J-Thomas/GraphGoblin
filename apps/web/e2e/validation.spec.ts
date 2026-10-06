@@ -104,7 +104,7 @@ test('hover: the popover opens, stays while the pointer is in it, and choosing a
   // In the top layer, and not scaled by the canvas.
   expect(await list.evaluate((el) => el.matches(':popover-open'))).toBe(true);
   // The pointer moves into it: it stays, well past the grace period.
-  const row = list.getByRole('button', { name: /FIELD_UNPARSED/ });
+  const row = list.getByRole('button', { name: /FIELD_INPUT_INVALID/ });
   await expect(row).toContainText('config.inputSchema');
   await row.hover();
   await page.waitForTimeout(600);
@@ -133,7 +133,7 @@ test('keyboard: Tab to the badge opens it, Enter keeps it, the arrow keys reach 
   await breakInputSchema(page);
   const start = badge(page, 'start');
   const list = popover(page, 'start');
-  const row = list.getByRole('button', { name: /FIELD_UNPARSED/ });
+  const row = list.getByRole('button', { name: /FIELD_INPUT_INVALID/ });
 
   // From the node, Tab reaches its badge, which opens the popover on focus.
   await card(page, 'start').focus();
@@ -171,14 +171,17 @@ test('keyboard: Tab to the badge opens it, Enter keeps it, the arrow keys reach 
   await expect(editor.getByRole('button', { name: '1 issue on start' })).toBeFocused();
 });
 
-test('Discard text in the popover drops unparsed text and its issue', async ({ page, request }) => {
+test('Discard the unparsed text in the popover drops unparsed text and its issue', async ({
+  page,
+  request,
+}) => {
   const loopId = await createLoop(request, approvalLoop('qa badge discard'));
   await page.goto(`/app/loops/${loopId}/edit`);
   await breakInputSchema(page);
   await expect(page.getByRole('button', { name: '1 error' })).toBeVisible();
   await badge(page, 'start').click();
   await popover(page, 'start')
-    .getByRole('button', { name: 'Discard unparsed text at inputSchema' })
+    .getByRole('button', { name: 'Discard the unparsed text at inputSchema' })
     .click();
   await expect(badge(page, 'start')).toHaveCount(0);
   await expect(page.getByText('Ready to publish')).toBeVisible();

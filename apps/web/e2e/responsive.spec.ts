@@ -703,47 +703,76 @@ for (const theme of ['dark', 'light'] as const) {
               await expect(panel).toBeHidden();
             }
           }
-          if (path === `/app/loops/${loopId}/edit`) {
-            // The pseudo-element is measured in CSS pixels before the canvas's pan/zoom transform.
-            const ports = await page.locator('.react-flow__handle').evaluateAll((handles) =>
-              handles.map((handle) => {
-                const hit = getComputedStyle(handle, '::after');
-                return { width: parseFloat(hit.width), height: parseFloat(hit.height) };
-              }),
-            );
-            expect(ports.length).toBeGreaterThan(0);
-            for (const box of ports) {
-              expect(box.width, 'port touch width').toBe(44);
-              expect(box.height, 'port touch height').toBe(44);
-            }
-            measurements.push({ theme, target: 'Port hit box (each handle)', ...ports[0]! });
-            console.log(
-              `touch ${theme}: port hit boxes ${ports[0]!.width} x ${ports[0]!.height} px`,
-            );
-          }
         }
         // Exercise every node's radios and short choices, including inference's boolean "No".
         const { loopId: dialogs, kinds } = await seedDialogs(request);
         await page.goto(`/app/loops/${dialogs}/edit`);
         await expect(page.locator('.react-flow__node')).toHaveCount(kinds.length);
-        // This fixture includes a decision with two ports: spacing must be exercised, not vacuous.
-        await page.evaluate(() => document.fonts.ready);
-        const spacing = await page.locator('.gg-node-ports').evaluateAll((groups) =>
-          groups.flatMap((group) => {
-            const rows = [...group.querySelectorAll('.gg-node-port')];
-            return rows
-              .slice(1)
-              .map(
-                (row, i) => row.getBoundingClientRect().top - rows[i]!.getBoundingClientRect().top,
-              );
-          }),
-        );
-        expect(spacing.length).toBeGreaterThan(0);
-        const zoom = await page
-          .locator('.react-flow__viewport')
-          .evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).a);
-        for (const distance of spacing)
-          expect(distance / zoom, 'non-overlapping output targets').toBeGreaterThanOrEqual(44);
+        // The fixture includes a decision with two outputs, so overlap checks are not vacuous.
+        // Measure the pseudo-element after the actual fitted viewport transform at both widths.
+        for (const width of [768, 360]) {
+          await page.setViewportSize({ width, height: 1024 });
+          await page.goto(`/app/loops/${dialogs}/edit`);
+          await expect(page.locator('.react-flow__node')).toHaveCount(kinds.length);
+          await page.evaluate(() => document.fonts.ready);
+          await page.getByRole('button', { name: 'Fit view' }).click();
+          const sizes = () =>
+            page.locator('.react-flow__handle').evaluateAll((handles) => {
+              const viewport = document.querySelector('.react-flow__viewport')!;
+              const zoom = new DOMMatrix(getComputedStyle(viewport).transform).a;
+              return handles.map((handle) => {
+                const hit = getComputedStyle(handle, '::after');
+                return {
+                  width: parseFloat(hit.width) * zoom,
+                  height: parseFloat(hit.height) * zoom,
+                  zoom,
+                };
+              });
+            });
+          await expect
+            .poll(async () =>
+              (await sizes()).every(
+                (box) =>
+                  box.width >= 44 && box.width < 44.1 && box.height >= 44 && box.height < 44.1,
+              ),
+            )
+            .toBe(true);
+          const ports = await sizes();
+          expect(ports.length).toBeGreaterThan(0);
+          for (const box of ports) {
+            expect(box.width, `${width} px port on-screen width`).toBeGreaterThanOrEqual(44);
+            expect(box.height, `${width} px port on-screen height`).toBeGreaterThanOrEqual(44);
+            expect(box.width).toBeLessThan(44.1);
+            expect(box.height).toBeLessThan(44.1);
+          }
+          measurements.push({
+            theme,
+            target: `Port hit box at ${width} px (fitted zoom ${ports[0]!.zoom.toFixed(4)})`,
+            width: Number(ports[0]!.width.toFixed(2)),
+            height: Number(ports[0]!.height.toFixed(2)),
+          });
+          const spacing = await page.locator('.gg-node-ports').evaluateAll((groups) =>
+            groups.flatMap((group) => {
+              const rows = [...group.querySelectorAll('.gg-node-port')];
+              return rows
+                .slice(1)
+                .map(
+                  (row, i) =>
+                    row.getBoundingClientRect().top - rows[i]!.getBoundingClientRect().top,
+                );
+            }),
+          );
+          expect(spacing.length).toBeGreaterThan(0);
+          for (const distance of spacing)
+            expect(
+              distance,
+              `${width} px non-overlapping on-screen output targets`,
+            ).toBeGreaterThanOrEqual(44);
+          console.log(
+            `touch ${theme}: ${width} px fitted zoom ${ports[0]!.zoom.toFixed(4)}, ports ${ports[0]!.width.toFixed(2)} x ${ports[0]!.height.toFixed(2)} px, row spacing ${Math.min(...spacing).toFixed(2)} px`,
+          );
+        }
+        await page.setViewportSize({ width: 768, height: 1024 });
         for (const kind of kinds) {
           await page.locator(`.react-flow__node[data-id="${kind}"]`).focus();
           await page.keyboard.press('Enter');

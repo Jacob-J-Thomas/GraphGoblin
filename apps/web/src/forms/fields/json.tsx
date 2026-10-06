@@ -57,7 +57,10 @@ export function JsonText({
   const fail = (next: string, message: string | undefined) => {
     // Store first: a render that sees the local error must also see the stored entry, or it would
     // read as discarded.
-    parseErrors.report(path, message === undefined ? undefined : { message, text: next });
+    parseErrors.report(
+      path,
+      message === undefined ? undefined : { message, text: next, input: 'unparsed text' },
+    );
     setError(message);
   };
   return (
@@ -105,7 +108,7 @@ export function JsonText({
                 setError(undefined);
               }}
             >
-              Discard text
+              Discard the unparsed text
             </Button>
           </HelpText>
         ) : null}

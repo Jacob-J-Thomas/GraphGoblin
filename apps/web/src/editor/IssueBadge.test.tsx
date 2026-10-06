@@ -126,8 +126,10 @@ describe('IssueBadge', () => {
     }
     render(<Live />);
     await user.click(screen.getByRole('button', { name: '2 issues on prep' }));
-    const discard = screen.getByRole('button', { name: 'Discard unparsed text at inputSchema' });
-    expect(discard).toHaveTextContent('Discard text');
+    const discard = screen.getByRole('button', {
+      name: 'Discard the unparsed text at inputSchema',
+    });
+    expect(discard).toHaveTextContent('Discard the unparsed text');
     await user.click(discard);
     // One issue left: the popover closes with focus back on its badge.
     expect(store().fieldErrors).toEqual({
@@ -139,7 +141,7 @@ describe('IssueBadge', () => {
 
     // The last one: the badge goes, and focus goes to the fallback rather than the page.
     await user.click(left);
-    await user.click(screen.getByRole('button', { name: 'Discard unparsed text at output' }));
+    await user.click(screen.getByRole('button', { name: 'Discard the unparsed text at output' }));
     expect(store().fieldErrors).toEqual({});
     expect(screen.queryByRole('button', { name: /on prep/ })).toBeNull();
     await waitFor(() => expect(screen.getByRole('button', { name: 'Fallback' })).toHaveFocus());
