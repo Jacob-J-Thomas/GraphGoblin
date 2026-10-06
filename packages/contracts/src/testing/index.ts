@@ -420,7 +420,14 @@ export function everyFieldLoop(): LoopDefinitionInput {
         },
       },
     ],
-    edges: [{ id: 'e1', from: { node: 'manual', port: 'out' }, to: { node: 'decide' } }],
+    edges: [
+      {
+        id: 'e1',
+        from: { node: 'manual', port: 'out' },
+        to: { node: 'decide' },
+        ui: { route: [240, 360, 420] },
+      },
+    ],
   };
 }
 

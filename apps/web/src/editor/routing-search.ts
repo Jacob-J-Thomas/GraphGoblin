@@ -2,6 +2,7 @@ import {
   bounds,
   expand,
   simplify,
+  handleClearance,
   sorted,
   type Point,
   type BoxIndex,
@@ -78,7 +79,19 @@ export function detour(
   laneLength = 0,
 ): { points: Point[]; expansions: number } {
   const region = expand(bounds([start, end]), 160);
-  const boxes = index.query(expand(region, padding)).map((b) => expand(b, padding));
+  const found = index.query(expand(region, padding));
+  // Grid lines: every card body's padded edges, and the edge of a handle strip's own (smaller)
+  // clearance where it reaches beyond them. Collision checks consult the exact boxes.
+  const boxes = found.filter((b) => !b.handle).map((b) => expand(b, padding));
+  const handleLines = found.flatMap((b) => {
+    if (!b.handle) return [];
+    const card = found.find((c) => c.id === b.id && !c.handle);
+    const reach = handleClearance(padding);
+    return [
+      ...(!card || b.left - reach < card.left - padding ? [b.left - reach] : []),
+      ...(!card || b.right + reach > card.right + padding ? [b.right + reach] : []),
+    ];
+  });
   // Bound both grid storage and exploration. Collision checks still consult every indexed card.
   const nearest = (values: number[], a: number, b: number) =>
     sorted(values)
@@ -92,7 +105,7 @@ export function detour(
     start.x,
     end.x,
     ...nearest(
-      [region.left, region.right, ...boxes.flatMap((b) => [b.left, b.right])],
+      [region.left, region.right, ...boxes.flatMap((b) => [b.left, b.right]), ...handleLines],
       start.x,
       end.x,
     ),

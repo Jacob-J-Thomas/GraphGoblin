@@ -9,7 +9,7 @@ import {
 // The 11 px code font fits within 7 px per character. Include padding, stroke and breathing room.
 export const LABEL_HEIGHT = 22;
 export const LABEL_CHARACTER_WIDTH = 7;
-const LABEL_PADDING = 18;
+export const LABEL_PADDING = 18;
 
 export interface LabelPlacement {
   label: Point;

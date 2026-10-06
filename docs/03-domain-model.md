@@ -47,7 +47,12 @@ type Node = {
   config: unknown;
   ui: { x: number; y: number };
 };
-type Edge = { id: string; from: { node: string; port: string }; to: { node: string; port: 'in' } };
+type Edge = {
+  id: string;
+  from: { node: string; port: string };
+  to: { node: string; port: 'in' };
+  ui?: { route: number[] }; // manual canvas route (#44); without it the editor routes automatically
+};
 type NodeKind =
   | 'trigger'
   | 'decision'
@@ -59,6 +64,8 @@ type NodeKind =
   | 'heartbeat'
   | 'exit';
 ```
+
+An edge's `ui.route` is canvas layout, like a node's `ui`: the positions of the route's inner segments in canvas coordinates, alternating the x of a vertical segment and the y of a horizontal one (`x, y, ..., x`, so an odd count from 1 to 63). The first and last segments are horizontal and run from the ports' own heights, so the route stays attached when a card moves. The route lives on the edge it draws: deleting the edge deletes it, renaming a node keeps it, and versions pin it with the rest of the definition. The engine ignores it. Schema and export format versions stay 1; definitions without the field are unchanged.
 
 Validation rules enforced by `domain` before a version can be published:
 
