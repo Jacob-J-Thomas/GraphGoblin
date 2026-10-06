@@ -132,6 +132,21 @@ const nodeBox = (n: RoutingNode): Box => ({
  * too, so no lane or column passes a few pixels from another card's port and reads as joined to
  * it. Handles inside the card body (unit fixtures put tips on the edge) add nothing.
  */
+/** One box covering a card and its handles: what a moved card changes, for invalidation. */
+function cardExtent(n: RoutingNode): Box {
+  const boxes = nodeBoxes(n);
+  return boxes.length === 1
+    ? boxes[0]!
+    : {
+        ...bounds(
+          boxes.flatMap((b) => [
+            { x: b.left, y: b.top },
+            { x: b.right, y: b.bottom },
+          ]),
+        ),
+        id: n.id,
+      };
+}
 function nodeBoxes(n: RoutingNode): Box[] {
   const body = nodeBox(n);
   const boxes = [body];
@@ -828,15 +843,13 @@ function reservedBoxes(route: RoutedEdge): Box[] {
  * candidate lanes, labels), so these exact boxes, not the routes' whole envelopes, decide which
  * later routes must be replanned: dragging a manual lane replans only routes near the lane.
  */
-function reservationDifference(before: RoutedEdge | undefined, after: RoutedEdge | undefined) {
+function reservationDifference(before: RoutedEdge, after: RoutedEdge): Box[] {
   const key = (b: Box) => `${b.left},${b.right},${b.top},${b.bottom}`;
-  const [old, next] = [before, after].map((r) => (r ? reservedBoxes(r) : []));
-  const oldKeys = new Set(old!.map(key));
-  const nextKeys = new Set(next!.map(key));
-  return [
-    ...old!.filter((b) => !nextKeys.has(key(b))),
-    ...next!.filter((b) => !oldKeys.has(key(b))),
-  ];
+  const old = reservedBoxes(before);
+  const next = reservedBoxes(after);
+  const oldKeys = new Set(old.map(key));
+  const nextKeys = new Set(next.map(key));
+  return [...old.filter((b) => !nextKeys.has(key(b))), ...next.filter((b) => !oldKeys.has(key(b)))];
 }
 
 /** Whether any segment enters a card's body (handles do not count: a route may touch a port). */
@@ -908,14 +921,14 @@ export function createRoutingPlan(
     const old = oldNodes.get(node.id);
     if (!old || !sameNode(old, node)) {
       changed.add(node.id);
-      changedBoxes.push(...nodeBoxes(node));
-      if (old) changedBoxes.push(...nodeBoxes(old));
+      changedBoxes.push(cardExtent(node));
+      if (old) changedBoxes.push(cardExtent(old));
     }
     oldNodes.delete(node.id);
   }
   for (const old of oldNodes.values()) {
     changed.add(old.id);
-    changedBoxes.push(...nodeBoxes(old));
+    changedBoxes.push(cardExtent(old));
   }
   const oldEdges = new Map(previous?.edges.map((e) => [e.id, e]));
   const directions = new Map<string, boolean>();
@@ -954,7 +967,14 @@ export function createRoutingPlan(
   const compareReservation = (id: string) => {
     const before = oldPrefix.has(id) ? previous?.routes.get(id) : undefined;
     const after = routes.get(id);
-    const changes = before === after ? [] : reservationDifference(before, after);
+    // A route present on one side only changes everything it reserves: its envelope covers that.
+    // Two different routes change only the elements that differ.
+    const changes =
+      before === after
+        ? []
+        : before && after
+          ? reservationDifference(before, after)
+          : [(before ?? after)!.bounds];
     if (changes.length) reservationChanges.set(id, changes);
     else reservationChanges.delete(id);
   };
