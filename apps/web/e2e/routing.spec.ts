@@ -548,7 +548,8 @@ for (const count of [100, 300])
       await profile.detach();
     }
     // Shared two-core PR runners measured 0.8-5.2 ms for the same code, so their median
-    // bound is 8 ms. Strict local/manual runs enforce the issue's 4 ms routing criterion.
+    // bound is 8 ms. Strict runs (local, or a manual dispatch with Strict set) enforce the
+    // issue's 4 ms routing criterion.
     const strictPerf = process.env['GG_ROUTING_STRICT_PERF'] === '1';
     const medianRoutingLimitMs = strictPerf ? 4 : 8;
     const medianRoutingP95Ms = [...repetitions].sort((a, b) => a.routingP95Ms - b.routingP95Ms)[1]!
