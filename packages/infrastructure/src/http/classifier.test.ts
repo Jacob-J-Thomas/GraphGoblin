@@ -141,13 +141,14 @@ describe('HTTP Choice classifier', () => {
     ).rejects.toMatchObject({ code: 'DECIDER_INVALID_RESPONSE' });
   });
   it.each([undefined, 0.7])(
-    'returns an unknown selection for handler fall-through (confidence %s)',
+    'rejects a bearer echoed as the choice without retaining it (confidence %s)',
     async (confidence) => {
+      const bearer = 'gg-provider-bearer-private-regression';
       const fixture = await endpoint({
         answers: {
           answer: {
             ...valid.answers.answer,
-            choice: 'undeclared',
+            choice: bearer,
             ...(confidence !== undefined ? { confidence } : {}),
           },
         },
@@ -155,14 +156,30 @@ describe('HTTP Choice classifier', () => {
       const answer = await new HttpChoiceClassifier({
         endpoint: fixture.url,
         providerModel: 'kev',
-      }).choose(request, new AbortController().signal);
-      expect(answer).toEqual({
-        label: 'undeclared',
-        ...(confidence !== undefined ? { confidence } : {}),
-        alternatives: [
-          { label: 'yes', confidence: 0.8 },
-          { label: 'no', confidence: 0.2 },
-        ],
+        bearer,
+      })
+        .choose(request, new AbortController().signal)
+        .catch((error: unknown) => error);
+      expect(answer).toMatchObject({
+        code: 'DECIDER_INVALID_RESPONSE',
+        message: 'Classifier choice must be one of the submitted labels',
+      });
+      expect(String(answer)).not.toContain(bearer);
+      expect(fixture.calls[0]?.auth).toBe(`Bearer ${bearer}`);
+    },
+  );
+  it.each(['', ' yes', 'YES', 'yеs', '__proto__', 'constructor'])(
+    'requires exact label membership for choice %j',
+    async (choice) => {
+      const fixture = await endpoint({ answers: { answer: { ...valid.answers.answer, choice } } });
+      await expect(
+        new HttpChoiceClassifier({ endpoint: fixture.url, providerModel: 'kev' }).choose(
+          request,
+          new AbortController().signal,
+        ),
+      ).rejects.toMatchObject({
+        code: 'DECIDER_INVALID_RESPONSE',
+        message: 'Classifier choice must be one of the submitted labels',
       });
     },
   );

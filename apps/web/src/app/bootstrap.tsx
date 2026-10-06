@@ -4,6 +4,7 @@ import { StrictMode, useEffect, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { BrowserRouter } from 'react-router';
 import { ApiProvider, createAppClient } from '../api/context.js';
+import { applyFont, currentFont, readStoredFont, useFontAcrossTabs } from '../lib/font.js';
 import { applyTheme, currentTheme, readStoredTheme, useThemeAcrossTabs } from '../lib/theme.js';
 import { startReachability } from '../lib/reachability.js';
 import { registerPwa } from '../pwa/register.js';
@@ -36,9 +37,10 @@ export function Providers({
   );
 }
 
-/** Keeps the theme in step with other tabs for as long as the app is mounted. */
-function ThemeAcrossTabs() {
+/** Keeps the theme and the font in step with other tabs for as long as the app is mounted. */
+function AppearanceAcrossTabs() {
   useThemeAcrossTabs();
+  useFontAcrossTabs();
   return null;
 }
 
@@ -58,21 +60,23 @@ export interface BootstrapOptions {
 }
 
 /**
- * Mount the app into `container`, follow theme changes made in other tabs while it is mounted, and
- * register the service worker. index.html's boot script has already shown the stored theme; if it
- * could not run (a future Content-Security-Policy, say), the stored theme is applied here instead,
- * late but right.
+ * Mount the app into `container`, follow theme and font changes made in other tabs while it is
+ * mounted, and register the service worker. index.html's boot scripts have already shown the stored
+ * theme and font; if they could not run (a future Content-Security-Policy, say), the stored ones are
+ * applied here instead, late but right.
  */
 export function bootstrap(container: HTMLElement, options: BootstrapOptions = {}): Root {
   const client = createAppClient(options.baseUrl ?? window.location.origin);
   const stored = readStoredTheme();
   if (stored !== currentTheme()) applyTheme(stored);
+  const storedFont = readStoredFont();
+  if (storedFont !== currentFont()) applyFont(storedFont);
   const root = createRoot(container);
   root.render(
     <>
       {(options.registerServiceWorker ?? true) ? <PwaRegistration /> : null}
       <StrictMode>
-        <ThemeAcrossTabs />
+        <AppearanceAcrossTabs />
         <Providers client={client} queryClient={createQueryClient()}>
           <BrowserRouter basename={options.basename ?? '/app'}>
             <App />
