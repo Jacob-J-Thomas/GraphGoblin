@@ -2,6 +2,8 @@
 
 Date: 2026-10-05. Regenerated on merged HEAD `d5f9ed2` with the uncommitted second-review fixes. The real app, built with `pnpm.cmd build` and served by `apps/web/e2e/server.ts` (the in-memory API with the fake harness), photographed in Edge with reduced motion so pulses hold still. Every screen and state at 360 by 780, 768 by 1024, 1024 by 768, and 1440 by 900 px in both themes; Settings as a full-page shot.
 
+The two `loops-360.png` shots were refreshed on `125985f` with the uncommitted pre-release follow-ups. Below 640 px, the shared stacked-table cells put their labels above full-width values so the entire "published, unpublished changes" badge fits. Edge `e2e/responsive.spec.ts` checks the text and its clipping ancestors at 360 px in both themes. Other screenshots retain the capture described above.
+
 - `dark/` and `light/`: the merged app after the sweep and review fixes, including the Settings Font control (#40) and shared edge routing (#18); Dark (the default) and Light chosen the way Settings → Appearance does (the stored theme, shown by the boot script before first paint).
 - `before-light/`: Loops, the editor, the run inspector, and Settings at 768 and 1440 px in Light before the tuning (a build of `cb46771`, the feature branch before this work). The seed then had no API key yet, so its Settings shows none; that is data, not design.
 

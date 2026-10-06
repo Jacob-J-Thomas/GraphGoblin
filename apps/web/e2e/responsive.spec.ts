@@ -184,6 +184,57 @@ for (const theme of ['dark', 'light'] as const) {
       return { loopId, runId };
     }
 
+    test('the full published-with-changes state fits a stacked Loops row at 360 px', async ({
+      page,
+      request,
+    }) => {
+      const definition = approvalLoop(`responsive changed loop ${theme}`);
+      const loopId = await publishLoop(request, definition);
+      const edited = await request.put(`/loops/${loopId}/draft`, {
+        data: { definition: { ...definition, description: 'Unpublished edit' } },
+      });
+      expect(edited.status()).toBe(200);
+      await page.setViewportSize(WIDTHS[0]!);
+      await page.goto('/app/loops');
+      await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+      const row = page.getByRole('row').filter({
+        has: page.getByRole('link', { name: definition.name, exact: true }),
+      });
+      const state = row.getByText('published, unpublished changes', { exact: true });
+      await expect(state).toBeVisible();
+      await state.scrollIntoViewIfNeeded();
+      await page.evaluate(() => document.fonts.ready);
+      // Visibility and the DOM text alone miss ellipsis clipping. Measure the rendered text
+      // against its own box, the badge, and every clipping ancestor up to the viewport.
+      const clipped = await state.evaluate((el) => {
+        if (el.scrollWidth > el.clientWidth) return true;
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        for (const rect of range.getClientRects()) {
+          if (rect.left < 0 || rect.right > innerWidth) return true;
+          for (let parent: Element | null = el; parent; parent = parent.parentElement) {
+            const css = getComputedStyle(parent);
+            const box = parent.getBoundingClientRect();
+            const left = box.left + parent.clientLeft;
+            const top = box.top + parent.clientTop;
+            if (
+              /^(auto|scroll|hidden|clip)$/.test(css.overflowX) &&
+              (rect.left < left - 1 || rect.right > left + parent.clientWidth + 1)
+            )
+              return true;
+            if (
+              /^(auto|scroll|hidden|clip)$/.test(css.overflowY) &&
+              (rect.top < top - 1 || rect.bottom > top + parent.clientHeight + 1)
+            )
+              return true;
+          }
+        }
+        return false;
+      });
+      expect(clipped, `${theme}: full publish state is readable`).toBe(false);
+      await geometry(page, 'Loops with unpublished changes');
+    });
+
     test('screens and transient states fit at 360, 768, 1024, and 1440 px', async ({
       page,
       request,

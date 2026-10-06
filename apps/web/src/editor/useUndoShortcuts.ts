@@ -127,6 +127,27 @@ function findAgain(scope: Element, where: Whereabouts, byPlace: boolean): HTMLEl
   return same[Math.min(where.nth, same.length - 1)] ?? (byPlace ? all[where.place] : undefined);
 }
 
+/** A vanished row yields to a shown neighbour's header, else its collection's Add or fieldset. */
+function focusCollection(root: Element, path: string | undefined, index: number): boolean {
+  const collection = [...root.querySelectorAll<HTMLElement>('[data-field]')].find(
+    (el) => el.getAttribute('data-field') === path,
+  );
+  if (!collection || collection.closest('[hidden], [inert]')) return false;
+  const rows = [...collection.querySelectorAll('[data-row-id]')].filter(
+    (el) => el.parentElement?.closest('[data-field]') === collection,
+  );
+  const nearest = rows[Math.min(index, rows.length - 1)];
+  const toggle = nearest
+    ? focusableIn(nearest).find((el) => el.matches('button[aria-expanded]'))
+    : undefined;
+  const add = focusableIn(collection).find(
+    (el) =>
+      el.matches('button') && el.closest('[data-row-id]') === collection.closest('[data-row-id]'),
+  );
+  (toggle ?? add ?? collection).focus();
+  return document.activeElement !== document.body;
+}
+
 /**
  * Undo or redo one step, keeping keyboard focus where the user was. The forms that keep their own
  * state remount with the restored values, so a control focused inside one (a checkbox, a select,
@@ -144,6 +165,10 @@ export function runHistory(direction: HistoryDirection): void {
   const row = control?.closest('[data-row-id]');
   const rowId = row?.getAttribute('data-row-id');
   const rowPath = row?.getAttribute('data-row-path');
+  const collection = row?.parentElement?.closest('[data-field]');
+  const collectionPath = collection?.getAttribute('data-field');
+  const rowIndex = Number(row?.getAttribute('data-collection-row') ?? 0);
+  const inRow = row && control ? whereabouts(control, row) : undefined;
   const inField = field && control ? whereabouts(control, field) : undefined;
   // The innermost element around the control that survives the remount is only known afterwards.
   const around: { element: Element; where: Whereabouts }[] = [];
@@ -158,15 +183,33 @@ export function runHistory(direction: HistoryDirection): void {
   if (document.activeElement && document.activeElement !== document.body) return;
   const kept = around.find(({ element }) => element.isConnected);
   const anchor = kept?.element;
+  const restoredRow =
+    rowId === undefined || rowId === null
+      ? undefined
+      : [...(anchor?.querySelectorAll('[data-row-id]') ?? [])].find(
+          (el) => el.getAttribute('data-row-id') === rowId,
+        );
+  if (rowId !== undefined && rowId !== null && !restoredRow) {
+    // The old index can now name another row. Never reveal it or walk up that stale field path.
+    if (anchor && focusCollection(anchor, collectionPath ?? undefined, rowIndex)) return;
+    const fallback =
+      (anchor ? namingHeading(anchor) : null) ??
+      canvasFocusTarget(useEditorStore.getState().selectedNodeId);
+    fallback?.focus();
+    return;
+  }
+  if (restoredRow && inRow && field && !row?.contains(field)) {
+    // Header toggles and Remove belong to the collection field. Their names include a changing
+    // row number, so match within the surviving row before using their row-local position.
+    const target = findAgain(restoredRow, inRow, true);
+    if (target) {
+      target.focus();
+      return;
+    }
+  }
   if (anchor && path !== undefined && inField) {
     // A collection removal changes indices. Follow the surviving row's identity, so restoring
     // focus never opens a different row that the user deliberately left collapsed.
-    const restoredRow =
-      rowId === undefined || rowId === null
-        ? undefined
-        : [...anchor.querySelectorAll('[data-row-id]')].find(
-            (el) => el.getAttribute('data-row-id') === rowId,
-          );
     const restoredPath =
       restoredRow && rowPath && (path === rowPath || path.startsWith(`${rowPath}.`))
         ? restoredRow.getAttribute('data-row-path') + path.slice(rowPath.length)

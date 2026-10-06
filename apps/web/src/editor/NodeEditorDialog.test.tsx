@@ -147,4 +147,122 @@ describe('NodeEditorDialog disclosures across undo and redo', () => {
     expect(item(1)).toHaveAttribute('aria-expanded', 'false');
     expect(item(2)).toHaveAttribute('aria-expanded', 'true');
   });
+
+  it('redoing a removal from the removed row keeps its neighbour collapsed', async () => {
+    const user = userEvent.setup();
+    const dialog = await openDialog(
+      {
+        id: 'mut',
+        kind: 'mutate',
+        label: 'Mut',
+        config: {
+          operations: [
+            { op: 'delete', path: '/vars/a' },
+            { op: 'delete', path: '/vars/b' },
+          ],
+        },
+      },
+      'Edit mutate mut',
+    );
+    const item = (n: number) =>
+      within(dialog).getByRole('button', { name: new RegExp(`^Operations ${n}\\b`) });
+    await user.click(item(1));
+    await user.click(within(dialog).getByRole('button', { name: 'Remove operations 1' }));
+    await user.keyboard(UNDO);
+    const op = within(within(dialog).getByRole('group', { name: 'Operations 1' })).getByLabelText(
+      'Op',
+    );
+    act(() => op.focus());
+    await user.keyboard(REDO);
+    expect(item(1)).toHaveAttribute('aria-expanded', 'false');
+    expect(item(1)).toHaveFocus();
+    await user.keyboard(UNDO);
+    expect(item(1)).toHaveAttribute('aria-expanded', 'true');
+    expect(item(2)).toHaveAttribute('aria-expanded', 'false');
+    expect(item(2)).toHaveFocus();
+  });
+
+  it('undoing an add from its picker focuses a shown header without opening that row', async () => {
+    const user = userEvent.setup();
+    const dialog = await openDialog(
+      {
+        id: 'mut',
+        kind: 'mutate',
+        label: 'Mut',
+        config: { operations: [{ op: 'delete', path: '/vars/a' }] },
+      },
+      'Edit mutate mut',
+    );
+    const item = (n: number) =>
+      within(dialog).getByRole('button', { name: new RegExp(`^Operations ${n}\\b`) });
+    await user.click(within(dialog).getByRole('button', { name: 'Add operations' }));
+    const op = within(within(dialog).getByRole('group', { name: 'Operations 2' })).getByLabelText(
+      'Op',
+    );
+    await waitFor(() => expect(op).toHaveFocus());
+    await user.keyboard(UNDO);
+    expect(item(1)).toHaveAttribute('aria-expanded', 'false');
+    expect(item(1)).toHaveFocus();
+    await user.keyboard(REDO);
+    expect(item(1)).toHaveAttribute('aria-expanded', 'false');
+    expect(item(2)).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it.each(['toggle', 'remove'] as const)(
+    'follows the same row when undo and redo move its header %s',
+    async (headerControl) => {
+      const user = userEvent.setup();
+      const dialog = await openDialog(
+        {
+          id: 'mut',
+          kind: 'mutate',
+          label: 'Mut',
+          // Identical rows must still have separate disclosure and focus identities.
+          config: {
+            operations: Array.from({ length: 2 }, () => ({ op: 'delete', path: '/vars/a' })),
+          },
+        },
+        'Edit mutate mut',
+      );
+      const item = (n: number) =>
+        within(dialog).getByRole('button', { name: new RegExp(`^Operations ${n}\\b`) });
+      const header = (n: number) =>
+        headerControl === 'toggle'
+          ? item(n)
+          : within(dialog).getByRole('button', { name: `Remove operations ${n}` });
+      await user.click(within(dialog).getByRole('button', { name: 'Remove operations 1' }));
+      act(() => header(1).focus());
+      await user.keyboard(UNDO);
+      expect(header(2)).toHaveFocus();
+      expect(item(1)).toHaveAttribute('aria-expanded', 'false');
+      expect(item(2)).toHaveAttribute('aria-expanded', 'false');
+      await user.keyboard(REDO);
+      expect(header(1)).toHaveFocus();
+      expect(item(1)).toHaveAttribute('aria-expanded', 'false');
+    },
+  );
+
+  it('undoing the only added row returns focus to the collection Add button', async () => {
+    const user = userEvent.setup();
+    const dialog = await openDialog(
+      {
+        id: 'mut',
+        kind: 'mutate',
+        label: 'Mut',
+        config: { operations: [{ op: 'delete', path: '/vars/a' }] },
+      },
+      'Edit mutate mut',
+    );
+    const add = () => within(dialog).getByRole('button', { name: 'Add operations' });
+    await user.click(within(dialog).getByRole('button', { name: 'Remove operations 1' }));
+    await user.click(add());
+    await waitFor(() =>
+      expect(
+        within(within(dialog).getByRole('group', { name: 'Operations 1' })).getByLabelText('Op'),
+      ).toHaveFocus(),
+    );
+    await user.keyboard(UNDO);
+    expect(within(dialog).queryByRole('button', { name: /^Operations 1\b/ })).toBeNull();
+    expect(add()).toHaveFocus();
+  });
 });
