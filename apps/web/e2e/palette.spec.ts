@@ -112,9 +112,6 @@ test('the palette rail adds nodes, supports drag, and remembers its state', asyn
   await page.keyboard.press('Enter');
   await expect(page.getByTestId('node-script')).toBeVisible();
 
-  await page.getByRole('button', { name: 'Add Subloop node' }).dragTo(page.getByTestId('canvas'));
-  await expect(page.getByTestId('node-subloop')).toBeVisible();
-
   await page.getByRole('button', { name: 'Show palette' }).click();
   await expect(page.getByRole('heading', { name: 'Palette', exact: true })).toBeFocused();
   expect(Math.round((await palette.boundingBox())!.width)).toBe(200);
@@ -129,6 +126,10 @@ test('the palette rail adds nodes, supports drag, and remembers its state', asyn
   await page.getByRole('button', { name: 'Show loop settings' }).click();
   await expect(page.getByRole('heading', { name: 'Loop settings', exact: true })).toBeFocused();
   await expectEditorTabOrder(page);
+  // The incomplete Subloop produces a save notice with its own toolbar tab stop.
+  // Exercise drag after the tab-order checks so that notice cannot change their keyboard path.
+  await page.getByRole('button', { name: 'Add Subloop node' }).dragTo(page.getByTestId('canvas'));
+  await expect(page.getByTestId('node-subloop')).toBeVisible();
   const hide = page.getByRole('button', { name: 'Hide palette' });
   await expect(hide).toHaveAttribute('aria-expanded', 'true');
   await expect(hide).toHaveAttribute('aria-controls', 'palette');

@@ -69,16 +69,19 @@ test('I7-QA-03: reduced motion stops the running and live pulses at full opacity
     await expect(page.locator('[data-status="running"]').first()).toBeVisible();
     await expect(page.getByText(/events, live/)).toBeVisible();
     // With motion allowed the glyph and the live dot pulse, so the measurement sees them.
-    const moving = await motion(page);
-    expect(moving.pulses.length).toBeGreaterThanOrEqual(2);
-    expect(moving.animations).toContain('gg-pulse');
+    await expect.poll(async () => (await motion(page)).pulses.length).toBeGreaterThanOrEqual(2);
+    await expect.poll(async () => (await motion(page)).animations).toContain('gg-pulse');
 
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await expect.poll(async () => (await motion(page)).animations).toEqual([]);
-    const still = await motion(page);
-    expect(still.pulses.length).toBeGreaterThanOrEqual(2);
-    for (const pulse of still.pulses) expect(pulse).toEqual({ name: 'none', opacity: '1' });
+    const pulses = page.locator('.animate-pulse-soft');
+    await expect.poll(() => pulses.count()).toBeGreaterThanOrEqual(2);
+    for (const pulse of await pulses.all()) {
+      await expect(pulse).toHaveCSS('animation-name', 'none');
+      await expect(pulse).toHaveCSS('opacity', '1');
+    }
     // Transitions stay collapsed to an instant change.
+    const still = await motion(page);
     expect(still.transitions.length).toBeGreaterThan(0);
     for (const seconds of still.transitions) expect(seconds).toBeLessThanOrEqual(0.00001);
 
@@ -86,9 +89,12 @@ test('I7-QA-03: reduced motion stops the running and live pulses at full opacity
     await page.reload();
     await expect(page.locator('[data-status="running"]').first()).toBeVisible();
     await expect(page.getByText(/events, live/)).toBeVisible();
-    const reloaded = await motion(page);
-    expect(reloaded.pulses.length).toBeGreaterThanOrEqual(2);
-    expect(reloaded.animations).toEqual([]);
+    await expect.poll(async () => (await motion(page)).pulses.length).toBeGreaterThanOrEqual(2);
+    await expect.poll(async () => (await motion(page)).animations).toEqual([]);
+    for (const pulse of await pulses.all()) {
+      await expect(pulse).toHaveCSS('animation-name', 'none');
+      await expect(pulse).toHaveCSS('opacity', '1');
+    }
     // Every assertion above saw a run that was still running: the harness held it.
     expect(await runStatus(request, runId)).toBe('running');
   } finally {

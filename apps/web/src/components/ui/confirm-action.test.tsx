@@ -5,6 +5,59 @@ import { describe, expect, it, vi } from 'vitest';
 import { ConfirmAction } from './confirm-action.js';
 
 describe('ConfirmAction', () => {
+  it.each(['same tick', 'after the refresh frame'] as const)(
+    'focuses the section heading when action settlement and row removal occur %s',
+    async (timing) => {
+      const frames: FrameRequestCallback[] = [];
+      vi.spyOn(globalThis, 'requestAnimationFrame').mockImplementation((callback) => {
+        frames.push(callback);
+        return frames.length;
+      });
+      const flushFrames = () => frames.splice(0).forEach((callback) => callback(0));
+      let finish!: () => void;
+      const action = new Promise<void>((resolve) => {
+        finish = resolve;
+      });
+      let remove!: () => void;
+      function Rows() {
+        const [exists, setExists] = useState(true);
+        remove = () => setExists(false);
+        return (
+          <section aria-labelledby="race-heading">
+            <h2 id="race-heading">Models</h2>
+            {exists ? (
+              <ConfirmAction
+                name="race row"
+                consequences="Gone."
+                onConfirm={() => action}
+                onConfirmed={() => Promise.resolve()}
+              />
+            ) : null}
+          </section>
+        );
+      }
+      render(<Rows />);
+      const user = userEvent.setup();
+      const trigger = screen.getByRole('button', { name: 'Delete race row' });
+      await user.click(trigger);
+      await user.click(screen.getByRole('button', { name: 'Confirm delete race row' }));
+      await act(async () => {
+        finish();
+        if (timing === 'same tick') remove();
+        await action;
+      });
+      act(flushFrames);
+      if (timing === 'after the refresh frame') {
+        // The refresh and every scheduled frame finish while React still shows the opener.
+        expect(trigger).toHaveFocus();
+        await act(() => Promise.resolve(remove()));
+        act(flushFrames);
+      }
+      expect(trigger).not.toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Models' })).toHaveFocus();
+    },
+  );
+
   it('prevents busy Escape at keydown before the browser can close or restore background focus', async () => {
     let finish!: () => void;
     render(

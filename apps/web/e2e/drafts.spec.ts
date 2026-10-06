@@ -16,6 +16,7 @@ async function serverDescription(request: APIRequestContext, loopId: string) {
 }
 
 async function describeLoop(page: Page, text: string): Promise<void> {
+  await page.bringToFront();
   await showLoopPanel(page);
   await page.getByLabel('Description').fill(text);
 }
@@ -40,8 +41,11 @@ test('two tabs editing one draft: the stale tab is asked to reload or overwrite'
 
   // Tab A saves first.
   await describeLoop(a, 'from tab A');
-  await expect(a.getByTestId('save-state')).toHaveText('All changes saved');
-  await expect.poll(() => serverDescription(request, loopId)).toBe('from tab A');
+  // Read the stored draft before allowing the other tab to attempt its stale write.
+  await expect
+    .poll(() => serverDescription(request, loopId), { timeout: 30_000 })
+    .toBe('from tab A');
+  await expect(a.getByTestId('save-state')).toHaveText('All changes saved', { timeout: 30_000 });
 
   // Tab B, still on the copy it loaded, is refused and asked; nothing is overwritten.
   await describeLoop(b, 'from tab B');
@@ -57,12 +61,16 @@ test('two tabs editing one draft: the stale tab is asked to reload or overwrite'
 
   // Tab A saves again; tab B edits again, conflicts, and overwrites this time.
   await describeLoop(a, 'tab A again');
-  await expect.poll(() => serverDescription(request, loopId)).toBe('tab A again');
+  await expect
+    .poll(() => serverDescription(request, loopId), { timeout: 30_000 })
+    .toBe('tab A again');
   await describeLoop(b, 'tab B wins');
   await expect(b.getByText('The draft changed on the server')).toBeVisible();
   await b.getByRole('button', { name: 'Overwrite with this copy' }).click();
-  await expect(b.getByTestId('save-state')).toHaveText('All changes saved');
-  await expect.poll(() => serverDescription(request, loopId)).toBe('tab B wins');
+  await expect
+    .poll(() => serverDescription(request, loopId), { timeout: 30_000 })
+    .toBe('tab B wins');
+  await expect(b.getByTestId('save-state')).toHaveText('All changes saved', { timeout: 30_000 });
 
   // Tab A is now the stale one.
   await describeLoop(a, 'tab A late');

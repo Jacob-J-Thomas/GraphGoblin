@@ -152,10 +152,14 @@ test('Settings catalog edits LiteLLM models, refuses Add, and reports a second-d
   await expect(page.getByRole('alert')).toContainText('MODEL_NOT_FOUND');
   await expect(page.getByRole('alertdialog')).toBeVisible();
   await page.getByRole('button', { name: 'Keep' }).click();
+  // Focus is restored after both catalog queries settle, later than the row's removal.
+  await expect(page.getByRole('heading', { name: 'Model catalog', exact: true })).toBeFocused({
+    timeout: 30_000,
+  });
   await expect(page.getByRole('button', { name: 'Delete actions-model', exact: true })).toHaveCount(
     0,
   );
-  await expect(page.getByRole('heading', { name: 'Model catalog', exact: true })).toBeFocused();
+  await expect(page.getByRole('alertdialog')).toHaveCount(0);
 });
 
 test('Settings harness switches follow keyboard toggles and update Default model', async ({
@@ -291,19 +295,16 @@ test('Settings catalog refreshes a vanished toggle and announces the reason at t
     await expect(enabled).toHaveAttribute('aria-busy', 'true');
     await expect(enabled).not.toBeChecked();
     await expect(enabled).toBeFocused();
-    const refreshed = page.waitForRequest(
-      (req) => req.method() === 'GET' && req.url() === `${url}/model-catalog`,
-    );
     release();
-    await refreshed;
+    // A GET starting does not mean the queries settled or the focus callback ran.
+    await expect(catalog.getByRole('heading', { name: 'Model catalog', exact: true })).toBeFocused({
+      timeout: 30_000,
+    });
     await expect(enabled).toHaveCount(0);
     await expect(
       catalog.getByRole('status').filter({ hasText: 'no longer in the catalog' }),
     ).toHaveText('GPT-6 Luna: This model is no longer in the catalog.');
     await expect(catalog).not.toContainText('Refresh Settings');
-    await expect(
-      catalog.getByRole('heading', { name: 'Model catalog', exact: true }),
-    ).toBeFocused();
     await expect(
       page.getByLabel('Default model').getByRole('option', { name: 'GPT-6 Luna', exact: true }),
     ).toHaveCount(0);
@@ -428,7 +429,8 @@ for (const confirmWith of ['mouse', 'keyboard'] as const) {
         page,
         request,
       }) => {
-        const name = `escape-${confirmWith}-${outcome}-${escapeCount}`;
+        // Refused deletions keep their loop; repeated specs must not match its old action too.
+        const name = `escape-${confirmWith}-${outcome}-${escapeCount}-${test.info().repeatEachIndex}`;
         const id = await publishLoop(request, approvalLoop(name));
         let release!: () => void;
         const held = new Promise<void>((resolve) => {
@@ -551,11 +553,14 @@ test('revocation closes before a held key-list refresh removes the action later'
   try {
     await page.getByRole('button', { name: 'Confirm revoke late-refresh' }).click();
     await started;
-    await expect(page.getByRole('alertdialog')).toHaveCount(0, { timeout: 1000 });
+    await expect(page.getByRole('alertdialog')).toHaveCount(0);
     await expect(trigger).toBeFocused();
     release();
+    // The refresh removes the opener before its completion callback restores heading focus.
+    await expect(page.getByRole('heading', { name: 'API keys', exact: true })).toBeFocused({
+      timeout: 30_000,
+    });
     await expect(trigger).toHaveCount(0);
-    await expect(page.getByRole('heading', { name: 'API keys', exact: true })).toBeFocused();
   } finally {
     release();
   }
@@ -615,7 +620,8 @@ test('own-key revocation closes before the held 401 refetch and focuses the key 
 });
 
 test('review: keyboard export keeps focus and announces progress', async ({ page, request }) => {
-  const id = await publishLoop(request, approvalLoop('focus-export'));
+  const name = `focus-export-${test.info().repeatEachIndex}`;
+  const id = await publishLoop(request, approvalLoop(name));
   let release!: () => void;
   const held = new Promise<void>((resolve) => {
     release = resolve;
@@ -636,14 +642,12 @@ test('review: keyboard export keeps focus and announces progress', async ({ page
   });
   try {
     await page.goto('/app/loops');
-    const button = page.getByRole('button', { name: 'Export focus-export' });
+    const button = page.getByRole('button', { name: `Export ${name}` });
     await button.focus();
     await page.keyboard.press('Enter');
     await expect(button).toContainText('Exporting');
     await expect(button).toBeFocused();
-    await expect(
-      page.getByRole('status').filter({ hasText: 'Exporting focus-export' }),
-    ).toBeVisible();
+    await expect(page.getByRole('status').filter({ hasText: `Exporting ${name}` })).toBeVisible();
     await page.keyboard.press('Enter');
     release();
     await expect(page.getByRole('alert')).toContainText('No version.');
@@ -654,7 +658,8 @@ test('review: keyboard export keeps focus and announces progress', async ({ page
 });
 
 test('review: pending double clicks cannot select status text', async ({ page, request }) => {
-  const id = await publishLoop(request, approvalLoop('selection-guard'));
+  const name = `selection-guard-${test.info().repeatEachIndex}`;
+  const id = await publishLoop(request, approvalLoop(name));
   let release!: () => void;
   const held = new Promise<void>((resolve) => {
     release = resolve;
@@ -679,8 +684,8 @@ test('review: pending double clicks cannot select status text', async ({ page, r
   });
   try {
     await page.goto('/app/loops');
-    await page.getByRole('button', { name: 'Delete selection-guard', exact: true }).click();
-    const button = page.getByRole('button', { name: 'Confirm delete selection-guard' });
+    await page.getByRole('button', { name: `Delete ${name}`, exact: true }).click();
+    const button = page.getByRole('button', { name: `Confirm delete ${name}` });
     const box = await button.boundingBox();
     if (!box) throw new Error('Confirm is not visible');
     await page.mouse.dblclick(box.x + box.width / 2, box.y + box.height / 2);

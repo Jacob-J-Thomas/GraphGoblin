@@ -1,6 +1,7 @@
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import { defaultScheduler, notifyManager } from '@tanstack/react-query';
 import { FakeApi, problem, TS } from '../__fixtures__/fake-api.js';
 import { renderApp } from '../__fixtures__/render.js';
 import { useApiKeyStore } from '../api/api-key.js';
@@ -48,6 +49,46 @@ function seeded(source: 'harness' | 'litellm' = 'harness'): FakeApi {
 }
 
 describe('SettingsPage', () => {
+  it.each([
+    ['Delete gpt-6-luna', 'Confirm delete gpt-6-luna', 'Model catalog'],
+    ['Delete secret jev-api-key', 'Confirm delete jev-api-key', 'Secrets'],
+    ['Revoke mcp', 'Confirm revoke mcp', 'API keys'],
+  ] as const)(
+    'recovers heading focus when %s refreshes before React commits its row removal',
+    async (label, confirmation, heading) => {
+      const api = seeded('litellm');
+      const { queryClient } = renderApp('/settings', api);
+      const user = userEvent.setup();
+      const trigger = await screen.findByRole('button', { name: label });
+      await waitFor(() => expect(queryClient.isFetching()).toBe(0));
+      await user.click(trigger);
+      const notifications: (() => void)[] = [];
+      const frames: FrameRequestCallback[] = [];
+      const frame = vi.spyOn(globalThis, 'requestAnimationFrame').mockImplementation((callback) => {
+        frames.push(callback);
+        return frames.length;
+      });
+      notifyManager.setScheduler((callback) => notifications.push(callback));
+      try {
+        await user.click(screen.getByRole('button', { name: confirmation }));
+        await waitFor(() => expect(queryClient.isFetching()).toBe(0));
+        await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
+        act(() => frames.splice(0).forEach((callback) => callback(0)));
+        // The request settled and the old frame ran; the query's render notification is held.
+        expect(trigger).toHaveFocus();
+        expect(trigger).toBeInTheDocument();
+        expect(notifications.length).toBeGreaterThan(0);
+        await act(() => Promise.resolve(notifications.splice(0).forEach((callback) => callback())));
+        expect(trigger).not.toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: heading })).toHaveFocus();
+      } finally {
+        notifyManager.setScheduler(defaultScheduler);
+        frame.mockRestore();
+        await act(() => Promise.resolve(notifications.splice(0).forEach((callback) => callback())));
+      }
+    },
+  );
+
   it.each(['success', '401'] as const)(
     'finishes revocation before a held list refresh, then restores focus after %s',
     async (outcome) => {

@@ -4,7 +4,7 @@ import { useMutation, useQueryClient, type QueryKey } from '@tanstack/react-quer
 import { useId, useRef, type AnchorHTMLAttributes, type ReactNode } from 'react';
 import { Icon } from '../components/icons/index.js';
 import { HelpText, Switch } from '../components/ui/index.js';
-import { focusFallback } from '../lib/focus.js';
+import { focusFallback, restoreFocusAfterRemoval } from '../lib/focus.js';
 import { errorMessage } from '../lib/utils.js';
 
 export const EFFORTS = EffortSchema.options;
@@ -142,10 +142,12 @@ export function restoreVanishedToggleFocus(
   { opener }: ToggleFailure,
   heading: HTMLElement | null,
 ): void {
-  requestAnimationFrame(() => {
-    const active = document.activeElement;
-    if (opener && !opener.isConnected && (active === null || active === document.body))
-      focusFallback(heading);
+  if (!opener || !heading) return;
+  restoreFocusAfterRemoval({
+    opener,
+    scope: heading.closest<HTMLElement>('section') ?? heading,
+    target: () => heading,
+    restoreOpener: false,
   });
 }
 
