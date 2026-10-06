@@ -4,11 +4,11 @@ import { useFormContext, useWatch } from 'react-hook-form';
 import { useClassifierModels } from '../api/queries.js';
 import { Icon } from '../components/icons/index.js';
 import { HelpText, Select } from '../components/ui/index.js';
+import { useFormChange } from '../forms/changes.js';
 import { fieldMeta, joinPath, Row } from '../forms/fields/shared.js';
 import type { FieldProps } from '../forms/fields.js';
 import { isUnset, UNSET } from '../forms/unset.js';
 import { errorMessage } from '../lib/utils.js';
-import { useEditorStore } from './store.js';
 
 /** The built-in classifier's id: what a decision uses when `jev.model` is absent. */
 export const BUILTIN_CLASSIFIER = 'jev';
@@ -84,6 +84,7 @@ function unavailable(
  */
 export function ClassifierField({ schema, name, label, absentParent }: FieldProps) {
   const { setValue } = useFormContext();
+  const change = useFormChange();
   const watched: unknown = useWatch({ name });
   const blockName = absentParent?.name ?? parentOf(name);
   const strategy: unknown = useWatch({ name: joinPath(parentOf(blockName), 'strategy') });
@@ -116,20 +117,18 @@ export function ClassifierField({ schema, name, label, absentParent }: FieldProp
       ? `Classifier models could not be loaded: ${errorMessage(query.error)}. The current choice is kept.`
       : problem?.why;
 
-  const choose = (next: string | undefined) => {
-    const how = { shouldDirty: true, shouldTouch: true, shouldValidate: true };
-    const { closeStep } = useEditorStore.getState();
-    // Each pick is an undo step of its own, however soon it follows the last change.
-    closeStep();
-    if (absentParent) {
-      // Choosing the default leaves the decision without a `jev` block, as it was.
-      if (next !== undefined)
-        setValue(absentParent.name, { ...absentParent.initial, [lastKey(name)]: next }, how);
-    } else {
-      setValue(name, next ?? UNSET, how);
-    }
-    closeStep();
-  };
+  // Each pick is a commit: an undo step of its own, however soon it follows the last change.
+  const choose = (next: string | undefined) =>
+    change({ path: name, kind: 'commit' }, () => {
+      const how = { shouldDirty: true, shouldTouch: true, shouldValidate: true };
+      if (absentParent) {
+        // Choosing the default leaves the decision without a `jev` block, as it was.
+        if (next !== undefined)
+          setValue(absentParent.name, { ...absentParent.initial, [lastKey(name)]: next }, how);
+      } else {
+        setValue(name, next ?? UNSET, how);
+      }
+    });
 
   return (
     <Row label={label} name={name} required={required} help={help}>

@@ -4,6 +4,7 @@
  */
 import { useWatch } from 'react-hook-form';
 import { Badge, Disclosure, Fieldset, Legend } from '../components/ui/index.js';
+import { ADVANCED_KEY, useDisclosureState } from './disclosures.js';
 import { Field } from './fields.js';
 import { FieldError, useProblemCount } from './fields/shared.js';
 import { ProblemBadge } from './fields/structure.js';
@@ -59,7 +60,8 @@ export function LayoutItems({
 }
 
 /**
- * The advanced fields under a collapsed disclosure named Advanced, each group under its heading
+ * The advanced fields under a disclosure named Advanced, collapsed until opened (its state under
+ * `ADVANCED_KEY` in the form's disclosure states), each group under its heading
  * (a section fieldset with a legend). Its toggle says how many of them hold a value of their own
  * ("2 set") and how many problems are inside ("1 error"), so a collapsed group never hides either.
  */
@@ -82,8 +84,11 @@ export function AdvancedFields({
     placements.map((placement) => placement.name),
     owners,
   );
+  // Collapsed until opened; whoever keeps the form's disclosures keeps it across remounts.
+  const state = useDisclosureState(ADVANCED_KEY, false);
   return (
     <Disclosure
+      {...state}
       label="Advanced"
       summary={
         <>

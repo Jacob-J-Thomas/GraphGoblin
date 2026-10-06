@@ -4,14 +4,22 @@ import {
   ExpressionSchema,
   TemplateSchema,
   VariableDeclarationsSchema,
+  type NodeInput,
 } from '@graphgoblin/contracts';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { openAdvanced } from '../__fixtures__/advanced.js';
 import { getCode, setCode } from '../__fixtures__/codemirror.js';
+import { FakeApi } from '../__fixtures__/fake-api.js';
+import { renderWith } from '../__fixtures__/render.js';
+import { NODE_FIELD_CONTROLS } from '../editor/field-controls.js';
+import { historyClock } from '../editor/history.js';
+import { newLoopDefinition } from '../editor/model.js';
+import { useEditorStore } from '../editor/store.js';
+import type { FieldControls } from './fields.js';
 import { SchemaForm } from './SchemaForm.js';
 import type { Schema } from './introspect.js';
 
@@ -500,5 +508,166 @@ describe('SchemaForm', () => {
     await user.click(screen.getByRole('button', { name: 'Add items' }));
     expect(last(spy)['items']).toEqual([2]);
     expect(screen.getByRole('button', { name: 'Add items' })).toBeDisabled();
+  });
+});
+
+/**
+ * A node's config form wired to the editor store as the node editor wires it: every change goes
+ * to `updateNode` with the change the form reports, and an undo or redo remounts the form.
+ */
+function StoreForm({ schema, controls }: { schema: Schema; controls?: FieldControls }) {
+  const config = useEditorStore((s) => s.definition?.nodes.find((n) => n.id === 'n')?.config);
+  const epoch = useEditorStore((s) => s.historyEpoch);
+  const parseErrors = useEditorStore((s) => s.fieldErrors['node:n']);
+  return (
+    <SchemaForm
+      key={epoch}
+      schema={schema}
+      value={config}
+      label="form"
+      controls={controls}
+      onChange={(next, change) =>
+        useEditorStore.getState().updateNode('n', { config: next }, change)
+      }
+      parseErrors={parseErrors}
+      onParseError={(path, error, reason, change) =>
+        useEditorStore.getState().setFieldError('node:n', path, error, reason, change)
+      }
+    />
+  );
+}
+
+describe('SchemaForm changes and undo steps', () => {
+  const steps = () => useEditorStore.getState().past.length;
+  const config = () =>
+    useEditorStore.getState().definition!.nodes.find((n) => n.id === 'n')!.config as Record<
+      string,
+      unknown
+    >;
+  const undo = () => act(() => useEditorStore.getState().undo());
+  beforeEach(() => {
+    // Every change lands inside the merge window: only what the form reports keeps steps apart.
+    vi.spyOn(historyClock, 'now').mockReturnValue(0);
+  });
+  afterEach(() => vi.restoreAllMocks());
+
+  function load(config: Record<string, unknown>, kind: NodeInput['kind'] = 'mutate') {
+    const definition = newLoopDefinition('steps');
+    useEditorStore.getState().load('L1', {
+      ...definition,
+      nodes: [...definition.nodes, { id: 'n', kind, label: 'N', config } as NodeInput],
+    });
+  }
+
+  it('makes three keystrokes one step, typing in another field another, and each toggle a step', async () => {
+    const user = userEvent.setup();
+    load({});
+    render(
+      <StoreForm
+        schema={z.object({
+          first: z.string().optional(),
+          second: z.string().optional(),
+          on: z.boolean().default(false),
+        })}
+      />,
+    );
+    await user.type(screen.getByLabelText('First'), 'abc');
+    expect(config()['first']).toBe('abc');
+    expect(steps()).toBe(1);
+    await user.type(screen.getByLabelText('Second'), 'xy');
+    expect(steps()).toBe(2);
+    await user.click(screen.getByRole('switch', { name: 'On' }));
+    await user.click(screen.getByRole('switch', { name: 'On' }));
+    expect(config()['on']).toBe(false);
+    expect(steps()).toBe(4);
+    undo();
+    expect(config()['on']).toBe(true);
+    undo();
+    expect(config()['on']).not.toBe(true);
+    undo();
+    expect(config()).not.toHaveProperty('second');
+    expect(config()['first']).toBe('abc');
+    undo();
+    expect(config()).not.toHaveProperty('first');
+    expect(screen.getByLabelText('First')).toHaveValue('');
+  });
+
+  it('makes the model and then the effort picker two steps', async () => {
+    const user = userEvent.setup();
+    load({ prompt: { template: 'hello' } }, 'inference');
+    const api = new FakeApi();
+    api.catalog = [
+      {
+        harness: 'codex',
+        model: 'alpha',
+        source: 'harness',
+        displayName: 'Alpha',
+        efforts: ['low', 'high'],
+        defaultEffort: 'low',
+        enabled: true,
+      },
+    ];
+    renderWith(
+      <StoreForm schema={NodeConfigSchemas.inference} controls={NODE_FIELD_CONTROLS} />,
+      '/',
+      api,
+    );
+    const model = () => screen.getByLabelText('Model', { exact: true });
+    const effort = () => screen.getByLabelText('Effort', { exact: true });
+    await waitFor(() => expect(model()).not.toHaveAttribute('aria-readonly'));
+    await user.selectOptions(model(), 'alpha');
+    await user.selectOptions(effort(), 'high');
+    expect(config()).toMatchObject({ model: 'alpha', effort: 'high' });
+    expect(steps()).toBe(2);
+    undo();
+    expect(config()).toMatchObject({ model: 'alpha' });
+    expect(config()).not.toHaveProperty('effort');
+    expect(model()).toHaveValue('alpha');
+    undo();
+    expect(config()).not.toHaveProperty('model');
+  });
+
+  it('makes a row removal one step with the unparsed text it moves, apart from the typing', async () => {
+    const user = userEvent.setup();
+    load({ items: [1, 2, 3] });
+    render(<StoreForm schema={z.object({ items: z.array(z.unknown()) })} />);
+    // Text that does not parse, typed in the third row: one typing step.
+    setCode('Items 3', '{"open');
+    expect(useEditorStore.getState().fieldErrors['node:n']).toHaveProperty(['items.2']);
+    expect(steps()).toBe(1);
+    // Removing the first row moves the text up with its row and drops a value: one more step.
+    await user.click(screen.getByRole('button', { name: 'Remove items 1' }));
+    expect(config()['items']).toEqual([2, 3]);
+    expect(useEditorStore.getState().fieldErrors['node:n']).toEqual({
+      'items.1': expect.objectContaining({ text: '{"open' }),
+    });
+    expect(steps()).toBe(2);
+    undo();
+    expect(config()['items']).toEqual([1, 2, 3]);
+    expect(useEditorStore.getState().fieldErrors['node:n']).toEqual({
+      'items.2': expect.objectContaining({ text: '{"open' }),
+    });
+    expect(getCode('Items 3')).toBe('{"open');
+    undo();
+    expect(useEditorStore.getState().fieldErrors).toEqual({});
+  });
+
+  it('reports typing in a record value at its path, a key rename by its row, and Add as a commit', async () => {
+    const user = userEvent.setup();
+    const reports: unknown[] = [];
+    render(
+      <SchemaForm
+        schema={z.object({ env: z.record(z.string(), z.string()) })}
+        value={{ env: { HOME: '/home' } }}
+        label="form"
+        onChange={(_next, change) => reports.push(change)}
+      />,
+    );
+    await user.type(screen.getByLabelText('Env value 1'), 'x');
+    expect(reports.at(-1)).toMatchObject({ path: 'env.HOME', kind: 'typing' });
+    await user.type(screen.getByLabelText('Env key 1'), 'Y');
+    expect(reports.at(-1)).toMatchObject({ path: 'env#key0', kind: 'typing' });
+    await user.click(screen.getByRole('button', { name: 'Add entry' }));
+    expect(reports.at(-1)).toMatchObject({ path: 'env', kind: 'commit' });
   });
 });

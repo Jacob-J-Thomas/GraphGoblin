@@ -3,7 +3,7 @@ import type { ClassifierModelSummary } from '@graphgoblin/contracts';
 import { useQueryClient } from '@tanstack/react-query';
 import { Fragment, useEffect, useId, useRef, useState } from 'react';
 import { useApi } from '../../api/context.js';
-import { keys, refreshClassifierState, useClassifierModels } from '../../api/queries.js';
+import { keys, refreshCatalogState, useClassifierModels } from '../../api/queries.js';
 import { Icon } from '../../components/icons/index.js';
 import { QueryState } from '../../components/status.js';
 import {
@@ -122,7 +122,7 @@ export function ClassifierModelsSection() {
   const editButtonId = (id: string) => `${sectionId}-edit-${id}`;
   const heading = () => headingRef.current?.closest('h2') ?? null;
   // Catalog writes also refresh the editor's API checks, whose classifier issues read the catalog.
-  const refresh = () => refreshClassifierState(queryClient);
+  const refresh = () => refreshCatalogState(queryClient);
   // Adding needs the current catalog: until it has loaded, a new id cannot be checked against it.
   const catalogReady = query.isSuccess;
   const addHintId = `${sectionId}-add-hint`;

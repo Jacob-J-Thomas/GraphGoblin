@@ -6,6 +6,7 @@ import { fieldMeta as schemaMeta, type FieldMeta } from '@graphgoblin/contracts'
 import { createContext, use, useId, type ComponentType, type ReactNode } from 'react';
 import { get, useController, useFormContext } from 'react-hook-form';
 import { FieldGroup, HelpText, Label } from '../../components/ui/index.js';
+import { useFormChange, type ChangeKind } from '../changes.js';
 import { useParseErrors } from '../parse-errors.js';
 import { descriptionOf, unwrap, type Schema } from '../introspect.js';
 import { isUnset, UNSET } from '../unset.js';
@@ -51,19 +52,28 @@ export const FormScopeContext = createContext<{ schema: Schema; id: string } | u
  * `useController` with an explicit "unset" state. react-hook-form shows a field's initial value
  * again when its value becomes `undefined`, so clearing stores the UNSET sentinel instead, which
  * this hook reads back as `undefined` and SchemaForm strips before validation and reporting.
+ *
+ * `kind` says how the field's changes count for undo (`ChangeKind`): a control that types text
+ * binds with `typing`, one that chooses (a select, a switch, segments, checkboxes) with `commit`.
+ * An action that wraps its writes in its own change (`useFormChange`) keeps that description.
  */
-export function useField(name: string) {
+export function useField(name: string, kind: ChangeKind) {
   const { field } = useController({ name });
+  const change = useFormChange();
   return {
     value: isUnset(field.value) ? undefined : (field.value as unknown),
-    onChange: (value: unknown) => field.onChange(value === undefined ? UNSET : value),
+    onChange: (value: unknown) =>
+      change({ path: name, kind }, () => field.onChange(value === undefined ? UNSET : value)),
     onBlur: field.onBlur,
   };
 }
 
-/** Read the live collection only when an action needs it, without a second subscription. */
+/**
+ * Read the live collection only when an action needs it, without a second subscription. Its own
+ * writes (adding and removing rows) are commits.
+ */
 export function useCollectionField(name: string) {
-  const field = useField(name);
+  const field = useField(name, 'commit');
   const { getValues } = useFormContext();
   return {
     ...field,

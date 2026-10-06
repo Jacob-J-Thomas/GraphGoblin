@@ -94,13 +94,17 @@ describe('cron schedule control', () => {
     fireEvent.change(screen.getByLabelText('Day of month'), { target: { value: '31' } });
     expect(raw()).toHaveValue('34 12 31 * *');
     await waitFor(() =>
-      expect(change).toHaveBeenLastCalledWith({
-        subtype: 'cron',
-        expression: '34 12 31 * *',
-        timezone: 'UTC',
-        missedFirePolicy: 'skip',
-        enabled: true,
-      }),
+      expect(change).toHaveBeenLastCalledWith(
+        {
+          subtype: 'cron',
+          expression: '34 12 31 * *',
+          timezone: 'UTC',
+          missedFirePolicy: 'skip',
+          enabled: true,
+        },
+        // A number typed in the builder is typing in the expression field.
+        expect.objectContaining({ path: 'expression', kind: 'typing' }),
+      ),
     );
   });
   it('keeps custom source on load, switch to custom, and unrelated timezone edits; recognises raw presets', async () => {
@@ -222,7 +226,11 @@ describe('cron schedule control', () => {
     expect(change).not.toHaveBeenCalled();
     await user.selectOptions(screen.getByLabelText('Repeat'), 'daily');
     await waitFor(() =>
-      expect(change).toHaveBeenLastCalledWith(expect.objectContaining({ expression: '0 9 * * *' })),
+      expect(change).toHaveBeenLastCalledWith(
+        expect.objectContaining({ expression: '0 9 * * *' }),
+        // Choosing a preset is a commit: an undo step of its own.
+        expect.objectContaining({ path: 'expression', kind: 'commit' }),
+      ),
     );
     await waitFor(() => expect(calls(api)).toHaveLength(1));
   });
@@ -248,7 +256,10 @@ describe('cron schedule control', () => {
     expect(change).not.toHaveBeenCalled();
     await user.click(screen.getByLabelText('Wednesday'));
     await waitFor(() =>
-      expect(change).toHaveBeenLastCalledWith(expect.objectContaining({ expression: '0 9 * * 3' })),
+      expect(change).toHaveBeenLastCalledWith(
+        expect.objectContaining({ expression: '0 9 * * 3' }),
+        expect.objectContaining({ path: 'expression', kind: 'commit' }),
+      ),
     );
   });
   it('says what to choose and retains the last valid time after an incomplete edit (#41)', async () => {

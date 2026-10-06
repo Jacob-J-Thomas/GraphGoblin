@@ -15,9 +15,48 @@ export interface LocalDraft {
   baseToken?: string;
 }
 
-let database: Promise<IDBDatabase> | undefined;
+/**
+ * Why device storage refused its last operation. `blocked`: another GraphGoblin window still holds
+ * an older version's connection, so the store upgrade cannot run (it clears by itself when that
+ * window lets go); `failed`: anything else (it clears when an operation succeeds again).
+ */
+export interface DeviceStorageProblem {
+  kind: 'blocked' | 'failed';
+  message: string;
+}
+
+/** How long an upgrade may wait for other windows before device storage counts as blocked. */
+const BLOCKED_GRACE_MS = 3000;
+
+const BLOCKED_MESSAGE = 'Close other GraphGoblin tabs and windows so device drafts can be saved.';
 
 class DraftStoreBlockedError extends Error {}
+
+let database: Promise<IDBDatabase> | undefined;
+let problem: DeviceStorageProblem | undefined;
+const listeners = new Set<() => void>();
+
+function report(next: DeviceStorageProblem | undefined): void {
+  if (problem?.kind === next?.kind && problem?.message === next?.message) return;
+  problem = next;
+  for (const listener of listeners) listener();
+}
+
+/** The device storage's state now: undefined while it works (or before it was first used). */
+export function deviceStorageProblem(): DeviceStorageProblem | undefined {
+  return problem;
+}
+
+/**
+ * Called whenever the device storage's state changes: an operation fails, one succeeds after a
+ * failure, or the upgrade other windows were blocking completes. Returns the unsubscribe.
+ */
+export function subscribeDeviceStorage(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
 
 function openDraftDatabase(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -27,12 +66,8 @@ function openDraftDatabase(): Promise<IDBDatabase> {
     request.onblocked = () => {
       blockedTimeout ??= setTimeout(() => {
         timedOut = true;
-        reject(
-          new DraftStoreBlockedError(
-            'Close other GraphGoblin tabs and windows so device drafts can be saved.',
-          ),
-        );
-      }, 3000);
+        reject(new DraftStoreBlockedError(BLOCKED_MESSAGE));
+      }, BLOCKED_GRACE_MS);
     };
     request.onupgradeneeded = () => {
       const db = request.result;
@@ -42,51 +77,85 @@ function openDraftDatabase(): Promise<IDBDatabase> {
     };
     request.onsuccess = () => {
       clearTimeout(blockedTimeout);
-      // An open request cannot be cancelled while blocked. Close its eventual connection.
-      if (timedOut) request.result.close();
-      else resolve(request.result);
+      if (!timedOut) return resolve(request.result);
+      // The other windows let go after the grace: the store is available from now on, and its
+      // users hear so at once rather than on their next write.
+      connect(Promise.resolve(request.result));
+      report(undefined);
     };
     request.onerror = () => {
       clearTimeout(blockedTimeout);
-      reject(request.error ?? new Error('The device-draft database could not be opened.'));
+      const error = request.error ?? new Error('The device-draft database could not be opened.');
+      if (!timedOut) return reject(error);
+      // The upgrade that was blocked failed after all: the next operation opens again.
+      database = undefined;
+      report({ kind: 'failed', message: error.message });
     };
   });
 }
 
+/** Use `opening` as the connection, and forget it when it closes or fails. */
+function connect(opening: Promise<IDBDatabase>): void {
+  database = opening;
+  void opening.then(
+    (db) => {
+      db.onversionchange = () => {
+        db.close();
+        if (database === opening) database = undefined;
+      };
+      db.onclose = () => {
+        if (database === opening) database = undefined;
+      };
+    },
+    (error: unknown) => {
+      // While blocked, operations keep this rejection and fail at once, until the pending upgrade
+      // completes and replaces it (above). After any other failure the next operation opens again.
+      if (!(error instanceof DraftStoreBlockedError) && database === opening) database = undefined;
+    },
+  );
+}
+
 function draftStore(): UseStore {
-  if (!database) {
-    database = openDraftDatabase();
-    void database.then(
-      (db) => {
-        db.onversionchange = () => {
-          db.close();
-          database = undefined;
-        };
-        db.onclose = () => {
-          database = undefined;
-        };
-      },
-      () => {
-        database = undefined;
-      },
-    );
-  }
-  const connection = database;
+  if (!database) connect(openDraftDatabase());
+  const connection = database!;
   return (mode, callback) =>
     connection.then((db) => callback(db.transaction('drafts', mode).objectStore('drafts')));
 }
 
+/**
+ * Run one operation on the store and keep the device storage's state up to date: a success means
+ * it works, a failure says why (`deviceStorageProblem`). The failure is rethrown.
+ */
+async function run<T>(operation: (store: UseStore) => Promise<T>): Promise<T> {
+  try {
+    const result = await operation(draftStore());
+    report(undefined);
+    return result;
+  } catch (error) {
+    report(
+      error instanceof DraftStoreBlockedError
+        ? { kind: 'blocked', message: error.message }
+        : {
+            kind: 'failed',
+            message: error instanceof Error ? error.message || error.name : String(error),
+          },
+    );
+    throw error;
+  }
+}
+
 export async function saveLocalDraft(draft: LocalDraft): Promise<void> {
-  await set(draft.loopId, draft, draftStore());
+  await run((store) => set(draft.loopId, draft, store));
 }
 
 export async function loadLocalDraft(loopId: string): Promise<LocalDraft | undefined> {
   return loadDraft(loopId);
 }
 
+/** A blocked store reads as no copy, so the editor opens on the server's; the state says why. */
 async function loadDraft(key: string): Promise<LocalDraft | undefined> {
   try {
-    return await get<LocalDraft>(key, draftStore());
+    return await run((store) => get<LocalDraft>(key, store));
   } catch (error) {
     if (error instanceof DraftStoreBlockedError) return undefined;
     throw error;
@@ -104,27 +173,31 @@ export async function recordServerSave(
   definition: LoopDefinitionInput,
   token: string,
 ): Promise<void> {
-  await update<LocalDraft>(
-    loopId,
-    (local) => {
-      if (local && JSON.stringify(local.definition) !== JSON.stringify(definition)) {
-        return { ...local, baseToken: token };
-      }
-      return {
-        loopId,
-        definition,
-        savedAt: new Date().toISOString(),
-        synced: true,
-        baseToken: token,
-      };
-    },
-    draftStore(),
+  await run((store) =>
+    update<LocalDraft>(
+      loopId,
+      (local) => {
+        if (local && JSON.stringify(local.definition) !== JSON.stringify(definition)) {
+          return { ...local, baseToken: token };
+        }
+        return {
+          loopId,
+          definition,
+          savedAt: new Date().toISOString(),
+          synced: true,
+          baseToken: token,
+        };
+      },
+      store,
+    ),
   );
 }
 
 export async function clearLocalDraft(loopId: string): Promise<void> {
-  await del(loopId, draftStore());
-  await del(setAsideKey(loopId), draftStore());
+  await run(async (store) => {
+    await del(loopId, store);
+    await del(setAsideKey(loopId), store);
+  });
 }
 
 /**
@@ -136,7 +209,7 @@ function setAsideKey(loopId: string): string {
 }
 
 export async function saveSetAsideDraft(draft: LocalDraft): Promise<void> {
-  await set(setAsideKey(draft.loopId), draft, draftStore());
+  await run((store) => set(setAsideKey(draft.loopId), draft, store));
 }
 
 export async function loadSetAsideDraft(loopId: string): Promise<LocalDraft | undefined> {
@@ -144,5 +217,5 @@ export async function loadSetAsideDraft(loopId: string): Promise<LocalDraft | un
 }
 
 export async function clearSetAsideDraft(loopId: string): Promise<void> {
-  await del(setAsideKey(loopId), draftStore());
+  await run((store) => del(setAsideKey(loopId), store));
 }

@@ -47,6 +47,9 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ### Fixed
 
+- Editor drafts: while an older GraphGoblin tab or window blocks the device-draft store upgrade, the editor no longer claims edits are kept on the device. A notice says device storage is blocked and asks you to close other GraphGoblin tabs and windows; unsaved changes show as **Kept in this window only** until it works again, when they are written to the device at once; a server save shows as **All changes saved** instead of staying pending.
+- Editor validation: the API's checks run again for a reloaded server draft (a draft with an invalid cron expression no longer shows **Ready to publish**) and when a model is disabled or enabled in the model catalog, from Settings or another tab, so `MODEL_DISABLED` reaches the node badge; a catalog refetch that changes nothing runs no check.
+- Editor undo: each choice in a node or loop form (a picker, select, switch, segment, checkbox, or adding or removing a row) is an undo step of its own, and typing is one step per field, so changing Model then Effort undoes in two steps. Undo and redo keep the node editor's Advanced group and opened list items open.
 - Decision and exit-predicate failures exclude provider answers and error bodies. Jev rejects undeclared probability labels, and decision events retain only declared alternatives. HTTP classifiers reject choices outside the submitted routes; Jev and Codex keep their fallback with safe diagnostics.
 - Structural forms keep parse errors with their rows, refuse duplicate keys, and preserve focus and announcements when rows change (#53).
 - The app probes API reachability and restores queries, event streams, and autosave when the API returns (#55).

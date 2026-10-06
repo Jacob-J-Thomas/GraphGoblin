@@ -4,19 +4,9 @@ import { Icon } from '../components/icons/index.js';
 import { Badge, Button } from '../components/ui/index.js';
 import { cn } from '../lib/utils.js';
 import { newRunPath } from '../runs/new/paths.js';
+import { saveLabel, type DeviceCopy } from './save-status.js';
 import type { SaveState } from './store.js';
 import { UndoRedo } from './UndoRedo.js';
-
-const SAVE_LABEL: Record<SaveState, string> = {
-  idle: '',
-  pending: 'Unsaved changes',
-  saving: 'Saving…',
-  saved: 'All changes saved',
-  invalid: 'Saved on this device only',
-  offline: 'Offline: saved on this device',
-  error: 'Save failed',
-  conflict: 'Draft changed elsewhere',
-};
 
 const RUNS_LINK = cn(
   'inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md px-2.5 text-md font-semibold pointer-coarse:h-11',
@@ -69,6 +59,7 @@ export function EditorToolbar({
   published,
   version,
   saveState,
+  device,
   saveMessage,
   errors,
   validation,
@@ -81,7 +72,11 @@ export function EditorToolbar({
   /** Whether the loop has a published version, and its number. */
   published: boolean;
   version: number | undefined;
+  /** Where the server copy stands. */
   saveState: SaveState;
+  /** Where the current edits are kept besides the server (`saveLabel` says which matters). */
+  device: DeviceCopy;
+  /** The indicator's tooltip: the save notice's text, or the server's message. */
   saveMessage: string | undefined;
   errors: number;
   /** The validation indicator, shown left of Publish. */
@@ -125,7 +120,7 @@ export function EditorToolbar({
             )}
           />
         ) : null}
-        {SAVE_LABEL[saveState]}
+        {saveLabel(saveState, device)}
       </span>
       <div className="ml-auto flex max-w-full flex-wrap items-center justify-end gap-2">
         <UndoRedo />

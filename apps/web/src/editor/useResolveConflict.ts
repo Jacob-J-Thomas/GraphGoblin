@@ -47,13 +47,16 @@ export function useResolveConflict(loopId: string, flush: () => Promise<boolean>
       const definition = detail.draft?.definition ?? detail.current?.definition;
       if (!definition) throw new Error('The server has no draft or published version to load.');
       queryClient.setQueryData(keys.loop(loopId), detail);
+      // The server holds this draft. Device storage that refuses the synced copy (blocked by
+      // another window, say) is reported by its own notice and does not stop the reload; a copy
+      // left unsynced on the device is based on an older token, so its next save asks again.
       await saveLocalDraft({
         loopId,
         definition,
         savedAt: new Date().toISOString(),
         synced: true,
         ...(detail.draftToken ? { baseToken: detail.draftToken } : {}),
-      });
+      }).catch(() => undefined);
       if (!stillAsking()) return;
       useEditorStore.getState().load(loopId, definition, { baseToken: detail.draftToken });
     });

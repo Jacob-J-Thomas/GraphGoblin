@@ -57,7 +57,7 @@ function CatalogField({
   kind,
   unsetLabel = '(loop default)',
 }: FieldProps & { kind: 'model' | 'effort'; unsetLabel?: string }) {
-  const field = useField(name);
+  const field = useField(name, 'commit');
   const { help, required } = fieldMeta(schema);
   const { query, entries, entry, catalogNoticeId } = useCatalogField(name);
   const id = useId();
