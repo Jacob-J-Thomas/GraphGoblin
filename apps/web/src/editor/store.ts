@@ -175,7 +175,7 @@ export interface EditorState {
 
 export interface FieldError {
   message: string;
-  /** The text as typed. */
+  /** The text as typed, or a serialized incomplete builder state. */
   text: string;
 }
 

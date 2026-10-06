@@ -66,6 +66,51 @@ function loopBackLoop(name: string) {
   };
 }
 
+test('incomplete weekly Monday 07:30 blocks publish, survives dialog remount, and undoes once', async ({
+  page,
+  request,
+}) => {
+  const definition = approvalLoop('qa incomplete cron');
+  const loopId = await createLoop(request, {
+    ...definition,
+    nodes: definition.nodes.map((node) =>
+      node.id === 'start'
+        ? { ...node, config: { subtype: 'cron', expression: '30 7 * * 1', timezone: 'UTC' } }
+        : node,
+    ),
+  });
+  await page.goto(`/app/loops/${loopId}/edit`);
+  await expect(page.getByText('Ready to publish')).toBeVisible();
+  await openNode(page, 'start');
+  const dialog = page.getByRole('dialog', { name: 'Edit trigger start' });
+  await dialog.getByLabel('Monday').uncheck();
+  await expect(dialog.getByRole('alert')).toHaveText('Choose at least one day.');
+  await expect(dialog.getByRole('button', { name: '1 issue on start' })).toBeVisible();
+  await dialog.getByRole('button', { name: 'Done', exact: true }).click();
+  await expect(page.getByText('Ready to publish')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Publish', exact: true }).click();
+  await expect(page.getByText(/does not parse; fix them first/)).toBeVisible();
+  await openNode(page, 'start');
+  await expect(dialog.getByLabel('Monday')).not.toBeChecked();
+  await expect(dialog.getByLabel('At time')).toHaveValue('07:30');
+  await expect(dialog.getByRole('alert')).toHaveText('Choose at least one day.');
+  await dialog.getByLabel('Monday').focus();
+  await page.keyboard.press('Control+z');
+  await expect(dialog.getByLabel('Monday')).toBeChecked();
+  await expect(dialog.getByRole('alert')).toHaveCount(0);
+  await page.keyboard.press('Control+Shift+z');
+  await expect(dialog.getByLabel('Monday')).not.toBeChecked();
+  await expect(dialog.getByRole('alert')).toHaveText('Choose at least one day.');
+  await dialog.getByRole('button', { name: 'Done', exact: true }).click();
+  await undoButton(page).click();
+  await expect(undoButton(page)).toHaveAttribute('aria-disabled', 'true');
+  await expect(page.getByText('Ready to publish')).toBeVisible();
+  expect(
+    (await serverDraft(request, loopId)).draft.definition.nodes.find((n) => n.id === 'start')!
+      .config['expression'],
+  ).toBe('30 7 * * 1');
+});
+
 test('undo and redo from the toolbar and the keys, saved like any edit', async ({
   page,
   request,

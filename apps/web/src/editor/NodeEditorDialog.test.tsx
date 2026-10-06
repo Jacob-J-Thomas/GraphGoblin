@@ -46,6 +46,49 @@ const advanced = (dialog: HTMLElement) =>
 describe('NodeEditorDialog disclosures across undo and redo', () => {
   beforeEach(() => localStorage.setItem(LOOP_PANEL_STORAGE_KEY, 'expanded'));
 
+  it('keeps incomplete Monday 07:30 across closing, reopening, undo and redo', async () => {
+    const user = userEvent.setup();
+    const dialog = await openDialog(
+      {
+        id: 'cron',
+        kind: 'trigger',
+        label: 'Cron',
+        config: {
+          subtype: 'cron',
+          expression: '30 7 * * 1',
+          timezone: 'UTC',
+        },
+      },
+      'Edit trigger cron',
+    );
+    await user.click(within(dialog).getByLabelText('Monday'));
+    expect(within(dialog).getByRole('alert')).toHaveTextContent('Choose at least one day.');
+    expect(store().fieldErrors['node:cron']?.['expression']?.message).toBe(
+      'Choose at least one day.',
+    );
+    expect(store().past).toHaveLength(1);
+    await user.click(within(dialog).getByRole('button', { name: 'Done' }));
+    act(() => store().openNode('cron'));
+    const reopened = await screen.findByRole('dialog', { name: 'Edit trigger cron' });
+    const monday = () => within(reopened).getByLabelText('Monday');
+    expect(monday()).not.toBeChecked();
+    expect(within(reopened).getByLabelText('At time')).toHaveValue('07:30');
+    expect(within(reopened).getByRole('alert')).toHaveTextContent('Choose at least one day.');
+    monday().focus();
+    await user.keyboard(UNDO);
+    expect(monday()).toBeChecked();
+    expect(store().fieldErrors).toEqual({});
+    expect(store().past).toHaveLength(0);
+    await user.keyboard(REDO);
+    expect(monday()).not.toBeChecked();
+    expect(within(reopened).getByRole('alert')).toHaveTextContent('Choose at least one day.');
+    // A badge discard restores the stored expression even while this field is mounted.
+    act(() => store().setFieldError('node:cron', 'expression', undefined, 'discard'));
+    expect(monday()).toBeChecked();
+    act(() => store().undo());
+    expect(monday()).not.toBeChecked();
+  });
+
   it('keeps Advanced open through an undo and a redo of a basic picker, with focus restored', async () => {
     const user = userEvent.setup();
     const dialog = await openDialog(

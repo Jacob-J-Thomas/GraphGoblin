@@ -10,6 +10,37 @@ const store = () => useEditorStore.getState();
 describe('editor store', () => {
   beforeEach(() => store().reset());
 
+  it('records clearing the last cron day as one choice, undo restores Monday and redo the blocker', () => {
+    const definition = newLoopDefinition('cron');
+    definition.nodes[0]!.config = { subtype: 'cron', expression: '30 7 * * 1', timezone: 'UTC' };
+    store().load('L1', definition);
+    const error = {
+      message: 'Choose at least one day.',
+      text: JSON.stringify({ kind: 'weekly', time: '07:30', days: [] }),
+    };
+    store().setFieldError('node:start', 'expression', error, undefined, {
+      path: 'expression',
+      kind: 'commit',
+      id: 501,
+    });
+    expect(store().past).toHaveLength(1);
+    expect(store().definition).toEqual(definition);
+    store().undo();
+    expect(store().fieldErrors).toEqual({});
+    expect(store().definition!.nodes[0]!.config).toMatchObject({ expression: '30 7 * * 1' });
+    store().redo();
+    expect(store().fieldErrors['node:start']?.['expression']).toEqual(error);
+    // Completing to the same expression still clears the blocker in its own commit.
+    store().setFieldError('node:start', 'expression', undefined, undefined, {
+      path: 'expression',
+      kind: 'commit',
+      id: 502,
+    });
+    expect(store().past).toHaveLength(2);
+    store().undo();
+    expect(store().fieldErrors['node:start']?.['expression']).toEqual(error);
+  });
+
   it('ignores edits before a loop is loaded', () => {
     store().updateMeta({ name: 'x' });
     expect(store().definition).toBeUndefined();

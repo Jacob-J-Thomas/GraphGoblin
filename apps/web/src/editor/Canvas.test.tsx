@@ -630,6 +630,66 @@ describe('manual edge routes (#44)', () => {
     expect(screen.getByText('Route changed. It crosses a card.')).toBeInTheDocument();
   });
 
+  it.each([false, true])(
+    'resets a moved-card crossing only when the forward replacement is clear (obstacle: %s)',
+    (obstacle) => {
+      const definition = simpleLoop();
+      const positions = [
+        { x: 0, y: 0 },
+        { x: 700, y: 0 },
+        { x: 330, y: obstacle ? 0 : -200 },
+        { x: 330, y: 500 },
+      ];
+      definition.nodes.forEach((n, i) => {
+        n.ui = positions[i]!;
+      });
+      const stored = [250, 300, 650];
+      definition.edges.find((e) => e.id === 'start-work')!.ui = { route: stored };
+      geometry = {
+        preparationMs: 0,
+        nodes: definition.nodes.map((n) => ({
+          id: n.id,
+          ...n.ui!,
+          width: 184,
+          height: 122,
+          outputs: {
+            out: { x: n.ui!.x + 190, y: n.ui!.y + 61 },
+            loopBack: { x: n.ui!.x + 190, y: n.ui!.y + 61 },
+          },
+          input: { x: n.ui!.x - 6, y: n.ui!.y + 61 },
+        })),
+      };
+      store().load('L1', definition);
+      render(<Live />);
+      expect(edge('start-work').ariaLabel).toBe('start out to work, manual route');
+      const mover = flow().nodes!.find((n) => n.id === 'done')!;
+      act(() => flow().onNodeDragStart!({} as never, mover, [mover]));
+      moveCard('done', 330, 250);
+      act(() =>
+        flow().onNodesChange!([
+          { type: 'position', id: 'done', position: { x: 330, y: 250 }, dragging: false },
+        ]),
+      );
+      expect(route('start-work')).toEqual(obstacle ? stored : undefined);
+      expect(labels()).toEqual(['move done']);
+      if (obstacle) {
+        expect(edge('start-work').ariaLabel).toContain('manual route, crosses a card');
+        expect(document.querySelector('.gg-route-crossing')).not.toBeNull();
+        select('start-work');
+        expect(screen.getByText('Crosses a card')).toBeInTheDocument();
+        expect(
+          screen.getByText(/kept because the automatic replacement crosses a card/),
+        ).toBeInTheDocument();
+      } else expect(edge('start-work').type).toBe('smoothstep');
+      act(() => store().undo());
+      expect(route('start-work')).toEqual(stored);
+      expect(store().definition!.nodes.find((n) => n.id === 'done')!.ui).toEqual({
+        x: 330,
+        y: 500,
+      });
+    },
+  );
+
   it('lets a moved card take a manual route back to automatic, in the move’s own undo step', () => {
     const definition = simpleLoop();
     definition.edges.find((e) => e.id === 'return')!.ui = { route: [1116, 290, 268] };

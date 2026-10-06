@@ -323,7 +323,53 @@ test('moving a card onto a manual route takes it back to automatic, in the moveâ
   expect(await storedRoute(request, loopId, 'return')).toEqual([1176, 330, 600]);
 });
 
-test('an existing deliberate crossing keeps its route until a move introduces another crossed card', async ({
+test('a node move keeps the manual detour if resetting would cross the original obstacle', async ({
+  page,
+  request,
+}) => {
+  const definition = crossingLoop();
+  const positions = [
+    { x: 0, y: 0 },
+    { x: 330, y: 0 },
+    { x: 700, y: 0 },
+    { x: 330, y: 500 },
+  ];
+  definition.nodes.forEach((node, i) => {
+    node.ui = positions[i]!;
+  });
+  const route = [250, 300, 650];
+  definition.edges.find((e) => e.id === 'start-work')!.ui = { route };
+  const loopId = await createLoop(request, definition);
+  await openLoop(page, loopId);
+  expect(await cardsCrossed(page, 'start-work', [])).toEqual([]);
+  const zoom = await page
+    .locator('.react-flow__viewport')
+    .evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).a);
+  const box = (await page.getByTestId('node-done').boundingBox())!;
+  await page.mouse.move(box.x + 60, box.y + 12);
+  await page.mouse.down();
+  await page.mouse.move(box.x + 60, box.y + 12 - 250 * zoom, { steps: 12 });
+  await page.mouse.up();
+  await saved(page);
+  expect(await storedRoute(request, loopId, 'start-work')).toEqual(route);
+  expect(await cardsCrossed(page, 'start-work', [])).toEqual(['done']);
+  await expect(edge(page, 'start-work')).toHaveAttribute(
+    'aria-label',
+    /manual route, crosses a card/,
+  );
+  await expect(path(page, 'start-work')).toHaveClass(/gg-route-crossing/);
+  await select(page, 'start-work');
+  await expect(page.getByText('Crosses a card', { exact: true })).toBeVisible();
+  await expect(page.getByTestId('canvas').locator('[aria-live="polite"]')).toContainText(
+    'kept because the automatic replacement crosses a card',
+  );
+  await page.getByRole('button', { name: 'Undo move done', exact: true }).click();
+  await saved(page);
+  expect(await storedRoute(request, loopId, 'start-work')).toEqual(route);
+  expect(await cardsCrossed(page, 'start-work', [])).toEqual([]);
+});
+
+test('an existing deliberate crossing stays manual when a new crossing has no clear replacement', async ({
   page,
   request,
 }) => {
@@ -359,7 +405,14 @@ test('an existing deliberate crossing keeps its route until a move introduces an
   await expect(path(page, 'start-work')).not.toHaveClass(/gg-route-crossing/);
   await page.mouse.up();
   await saved(page);
-  expect(await storedRoute(request, loopId, 'start-work')).toBeUndefined();
+  // The moved source's output now lies inside `side`; its automatic replacement crosses that
+  // card too, so the new safety rule keeps the route rather than clearing it into that crossing.
+  expect(await storedRoute(request, loopId, 'start-work')).toEqual([400]);
+  await expect(edge(page, 'start-work')).toHaveAttribute(
+    'aria-label',
+    /manual route, crosses a card/,
+  );
+  await expect(path(page, 'start-work')).toHaveClass(/gg-route-crossing/);
   await page.getByRole('button', { name: 'Undo move start', exact: true }).click();
   await saved(page);
   const restored = await draft(request, loopId);

@@ -714,7 +714,7 @@ for (const theme of ['dark', 'light'] as const) {
             expect(ports.length).toBeGreaterThan(0);
             for (const box of ports) {
               expect(box.width, 'port touch width').toBe(44);
-              expect(box.height, 'port touch height').toBe(20);
+              expect(box.height, 'port touch height').toBe(44);
             }
             measurements.push({ theme, target: 'Port hit box (each handle)', ...ports[0]! });
             console.log(
@@ -725,6 +725,25 @@ for (const theme of ['dark', 'light'] as const) {
         // Exercise every node's radios and short choices, including inference's boolean "No".
         const { loopId: dialogs, kinds } = await seedDialogs(request);
         await page.goto(`/app/loops/${dialogs}/edit`);
+        await expect(page.locator('.react-flow__node')).toHaveCount(kinds.length);
+        // This fixture includes a decision with two ports: spacing must be exercised, not vacuous.
+        await page.evaluate(() => document.fonts.ready);
+        const spacing = await page.locator('.gg-node-ports').evaluateAll((groups) =>
+          groups.flatMap((group) => {
+            const rows = [...group.querySelectorAll('.gg-node-port')];
+            return rows
+              .slice(1)
+              .map(
+                (row, i) => row.getBoundingClientRect().top - rows[i]!.getBoundingClientRect().top,
+              );
+          }),
+        );
+        expect(spacing.length).toBeGreaterThan(0);
+        const zoom = await page
+          .locator('.react-flow__viewport')
+          .evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).a);
+        for (const distance of spacing)
+          expect(distance / zoom, 'non-overlapping output targets').toBeGreaterThanOrEqual(44);
         for (const kind of kinds) {
           await page.locator(`.react-flow__node[data-id="${kind}"]`).focus();
           await page.keyboard.press('Enter');

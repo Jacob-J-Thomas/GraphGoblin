@@ -147,8 +147,8 @@
 
 /*
  * Touch (#41): on a coarse pointer the zoom, fit, and lock buttons are 44 px, and each port handle
- * takes a touch 44 px wide and 20 px tall around its 12 px dot (the dot keeps its look; ports stack
- * 20 px apart, so taller boxes would overlap), so a connection starts from a finger. The node
+ * takes a non-overlapping 44 by 44 px touch around its 12 px dot. Output rows grow to 44 px only
+ * on touch devices, so a connection starts from a finger. The node
  * editor's Connect form is the full-size alternative to dragging an edge.
  */
 @media (pointer: coarse) {
@@ -160,8 +160,13 @@
   .react-flow__handle::after {
     content: '';
     position: absolute;
-    /* The 12 px dot's positioning box excludes its two 2 px borders: 8 + 36 by 8 + 12. */
-    inset: -6px -18px;
+    /* The 12 px dot's positioning box excludes its two 2 px borders: 8 + 36 in both axes. */
+    inset: -18px;
+  }
+
+  .gg-node-port {
+    height: 44px;
+    line-height: 44px;
   }
 
   /* The attribution link keeps its small credit and takes a 44 px touch (as touch-target). */

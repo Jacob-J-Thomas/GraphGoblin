@@ -29,6 +29,7 @@ import {
   crossesCards,
   crossedCardIds,
   drawnPoints,
+  forwardPoints,
   findSegment,
   midpoint,
   moveSegment,
@@ -50,7 +51,13 @@ import {
 } from './model.js';
 import { NodeCard, type FlowNode, type NodeCardData } from './NodeCard.js';
 import { useEditorStore } from './store.js';
-import { backwardDirection, routeMessage, type RoutingNode, type RoutingPlan } from './routing.js';
+import {
+  backwardDirection,
+  createRoutingPlan,
+  routeMessage,
+  type RoutingNode,
+  type RoutingPlan,
+} from './routing.js';
 import { useRouting } from './useRouting.js';
 import { createRouteChannels } from './route-channels.js';
 
@@ -467,18 +474,44 @@ export function Canvas({
 
   const endDrag = useCallback(
     (id: string, position: XYPosition) => {
-      const reset = newlyCrossed(
-        useEditorStore.getState().definition,
-        planRef.current,
-        id,
-        position,
+      const definition = useEditorStore.getState().definition;
+      const candidates = newlyCrossed(definition, planRef.current, id, position);
+      // Inspect the actual automatic replacement before removing a route. Forward smoothstep
+      // connections do not avoid obstacles, so resetting can introduce a different crossing.
+      const nodes = planRef.current.nodes.map((n) =>
+        n.id === id ? placed(n, position.x, position.y) : n,
       );
+      const automatic = candidates.length
+        ? createRoutingPlan(
+            nodes,
+            planRef.current.edges.map((edge) => {
+              if (!candidates.includes(edge.id)) return edge;
+              const { route: _route, ...rest } = edge;
+              return rest;
+            }),
+            planRef.current.clearance,
+            planRef.current,
+          )
+        : undefined;
+      const reset = candidates.filter((edgeId) => {
+        const edge = definition!.edges.find((e) => e.id === edgeId)!;
+        const from = nodes.find((n) => n.id === edge.from.node)?.outputs[edge.from.port];
+        const to = nodes.find((n) => n.id === edge.to.node)?.input;
+        if (!from || !to) return false;
+        const points = automatic!.routes.get(edgeId)?.points ?? forwardPoints(from, to);
+        return !crossesCards(points, cardBoxes(nodes));
+      });
       moveNode(id, position);
       // Part of the move's step: undoing the move brings the routes back with it.
       for (const edgeId of reset) setEdgeRoute(edgeId, undefined, `move:${id}`);
       if (reset.length)
         announce(
           `${reset.length === 1 ? 'A manual route' : `${reset.length} manual routes`} would cross a card and now route${reset.length === 1 ? 's' : ''} automatically.`,
+        );
+      const kept = candidates.length - reset.length;
+      if (kept)
+        announce(
+          `${kept === 1 ? 'A manual route is' : `${kept} manual routes are`} kept because the automatic replacement crosses a card. Crosses a card; move the card or edit the route.`,
         );
       setDragging(({ [id]: _done, ...rest }) => rest);
       setNodeDrag(undefined);

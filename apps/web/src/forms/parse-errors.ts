@@ -1,7 +1,8 @@
 import { createContext, use } from 'react';
 
 /**
- * Text a form field cannot turn into a value (JSON that does not parse). The field keeps the last
+ * Input a form field cannot turn into a complete value (unparsed JSON, an unfinished schedule).
+ * `text` holds the raw input or the serialized builder state. The field keeps the last
  * valid value, so the schema alone never notices; the form reports the text and its error upward,
  * keyed by field path, and the editor keeps both, as a blocking issue, until the text parses or
  * the user discards it. Leaving the field does not clear it: coming back shows the text again.

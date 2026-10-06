@@ -617,6 +617,29 @@ describe('EditorPage', () => {
     expect(screen.getByText(/cron trigger "start": bad/)).toBeInTheDocument();
   });
 
+  it('blocks readiness and publish when Monday 07:30 has no day chosen', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const definition = newLoopDefinition('incomplete cron');
+    definition.nodes[0]!.config = { subtype: 'cron', expression: '30 7 * * 1', timezone: 'UTC' };
+    const loop = api.addLoop(definition);
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByText('Ready to publish');
+    act(() => useEditorStore.getState().openNode('start'));
+    const dialog = await screen.findByRole('dialog', { name: 'Edit trigger start' });
+    await user.click(within(dialog).getByLabelText('Monday'));
+    expect(within(dialog).getByRole('alert')).toHaveTextContent('Choose at least one day.');
+    expect(within(dialog).getByRole('button', { name: '1 issue on start' })).toBeInTheDocument();
+    await user.click(within(dialog).getByRole('button', { name: 'Done' }));
+    expect(screen.queryByText('Ready to publish')).toBeNull();
+    expect(screen.getByRole('button', { name: '1 error' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Publish' }));
+    await screen.findByText(/does not parse; fix them first/);
+    expect(api.callsTo('POST', `/loops/${loop.id}/publish`)).toHaveLength(0);
+    act(() => useEditorStore.getState().undo());
+    expect(await screen.findByText('Ready to publish')).toBeInTheDocument();
+  });
+
   it('blocks publishing on JSON that does not parse, and discards it from the badges', async () => {
     const user = userEvent.setup();
     const api = new FakeApi();
