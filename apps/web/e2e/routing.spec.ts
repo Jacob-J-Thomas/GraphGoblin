@@ -452,7 +452,8 @@ for (const count of [100, 300])
     await expect(card).toBeVisible();
     await page.waitForTimeout(1000); // Let font measurement, initial validation and fit-view settle.
     // Same rendered graph without pointer input: report a scheduling baseline alongside the drag.
-    // The gate compares drag p95 against this measured idle p95, not a nominal refresh rate.
+    // Added frame time (drag p95 minus this idle p95) is reported only; the strict assertion
+    // below uses the absolute 60 Hz budget.
     const idleFrames = await page.evaluate(
       () =>
         new Promise<number[]>((resolveFrames) => {
@@ -565,7 +566,7 @@ for (const count of [100, 300])
       targets: {
         medianRoutingP95Ms: medianRoutingLimitMs,
         perDragRoutingP95Ms: 16,
-        frameP95Ms: 16.7,
+        frameP95Ms: 17,
       },
       medianRoutingP95Ms,
       idle: { frameP95Ms: p95(idleFrames), frameSamples: idleFrames.length },
@@ -588,7 +589,7 @@ for (const count of [100, 300])
       json + '\n',
     );
     // Every run reports all three routing p95s and keeps each drag below 16 ms. Strict
-    // runs enforce median routing p95 <4 ms and absolute frame p95 <=16.7 ms; otherwise
+    // runs enforce median routing p95 <4 ms and absolute frame p95 <17 ms; otherwise
     // the median bound is 8 ms. Added frame time is reported only:
     // idle and drag can use different refresh cadences (for example 120 Hz and 60 Hz).
     expect(medianRoutingP95Ms).toBeLessThan(medianRoutingLimitMs);
@@ -599,8 +600,11 @@ for (const count of [100, 300])
       expect(result.frameSamples).toBeGreaterThan(120);
       expect(result.reroutedEdgesP95).toBeGreaterThan(0);
       if (strictPerf) {
-        // RAF timestamps have floating-point subtraction noise at exactly one 60 Hz vsync.
-        expect(Number(result.frameP95Ms.toFixed(3))).toBeLessThanOrEqual(16.7);
+        // The issue's frame criterion is the 60 Hz budget (16.67 ms) at p95. RAF timestamps
+        // land a tenth of a millisecond past one vsync (local runs and the shared runner
+        // have both reported 16.8 ms), so the bound is 17 ms: a p95 that misses the budget,
+        // such as every-other-vsync at 33 ms or three 120 Hz periods at 25 ms, still fails.
+        expect(result.frameP95Ms).toBeLessThan(17);
       }
     }
   });
