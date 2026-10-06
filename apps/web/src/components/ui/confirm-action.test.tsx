@@ -5,6 +5,29 @@ import { describe, expect, it, vi } from 'vitest';
 import { ConfirmAction } from './confirm-action.js';
 
 describe('ConfirmAction', () => {
+  it.each(['Keep', 'Escape'] as const)(
+    'starts no removal watch after plain %s, even when unrelated content renders',
+    async (cancel) => {
+      render(
+        <ConfirmAction name="kept" consequences="Gone." onConfirm={() => Promise.resolve()} />,
+      );
+      const user = userEvent.setup();
+      const trigger = screen.getByRole('button', { name: 'Delete kept' });
+      await user.click(trigger);
+      const observe = vi.spyOn(MutationObserver.prototype, 'observe');
+      if (cancel === 'Keep') await user.click(screen.getByRole('button', { name: 'Keep' }));
+      else fireEvent(screen.getByRole('alertdialog'), new Event('cancel', { cancelable: true }));
+      expect(trigger).toHaveFocus();
+      expect(observe).not.toHaveBeenCalled();
+      trigger.blur();
+      const badge = document.createElement('span');
+      document.body.append(badge);
+      await act(() => Promise.resolve());
+      expect(document.activeElement).toBe(document.body);
+      badge.remove();
+    },
+  );
+
   it.each(['same tick', 'after the refresh frame'] as const)(
     'focuses the section heading when action settlement and row removal occur %s',
     async (timing) => {
@@ -96,6 +119,7 @@ describe('ConfirmAction', () => {
     await user.click(trigger);
     const modal = screen.getByRole<HTMLDialogElement>('alertdialog');
     modal.open = false;
+    trigger.focus(); // The browser's native close returns focus before delivering the event.
     fireEvent(modal, new Event('close'));
     await waitFor(() => expect(trigger).toHaveFocus());
     await user.click(trigger);

@@ -5,6 +5,12 @@
 import type { APIRequestContext, Page } from '@playwright/test';
 import { approvalLoop, control, expect, publishLoop, test } from './fixtures.js';
 
+declare global {
+  interface Window {
+    pulseStarts?: string[];
+  }
+}
+
 const start = { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } };
 const done = { id: 'done', kind: 'exit', label: 'Done', config: {} };
 
@@ -86,15 +92,27 @@ test('I7-QA-03: reduced motion stops the running and live pulses at full opacity
     for (const seconds of still.transitions) expect(seconds).toBeLessThanOrEqual(0.00001);
 
     // A fresh load under reduced motion never starts the pulse at all.
+    await page.addInitScript(() => {
+      const started: string[] = [];
+      Object.assign(window, { pulseStarts: started });
+      document.addEventListener(
+        'animationstart',
+        (event) => {
+          if (event.animationName === 'gg-pulse') started.push(event.animationName);
+        },
+        true,
+      );
+    });
     await page.reload();
     await expect(page.locator('[data-status="running"]').first()).toBeVisible();
     await expect(page.getByText(/events, live/)).toBeVisible();
     await expect.poll(async () => (await motion(page)).pulses.length).toBeGreaterThanOrEqual(2);
-    await expect.poll(async () => (await motion(page)).animations).toEqual([]);
+    expect((await motion(page)).animations).toEqual([]);
     for (const pulse of await pulses.all()) {
       await expect(pulse).toHaveCSS('animation-name', 'none');
       await expect(pulse).toHaveCSS('opacity', '1');
     }
+    expect(await page.evaluate(() => window.pulseStarts)).toEqual([]);
     // Every assertion above saw a run that was still running: the harness held it.
     expect(await runStatus(request, runId)).toBe('running');
   } finally {

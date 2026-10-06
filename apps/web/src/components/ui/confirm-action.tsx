@@ -42,6 +42,7 @@ export function ConfirmAction({
   const programmaticClosesRef = useRef({ count: 0 });
   const failureRef = useRef<unknown>(undefined);
   const cancelFocusRestoreRef = useRef<() => void>(() => {});
+  const restoreRemovedFocusRef = useRef<(refresh?: Promise<unknown>) => void>(() => {});
   const id = useId();
   const verb = action === 'delete' ? 'Delete' : 'Revoke';
   const icon = action === 'delete' ? 'trash' : 'cancelled';
@@ -49,8 +50,9 @@ export function ConfirmAction({
   const dismiss = () => {
     setOpen(false);
     setError(undefined);
-    // The owning query renders refresh failures; focus follows its DOM commit independently.
-    void Promise.resolve(onDismiss?.(failureRef.current)).catch(() => undefined);
+    const refresh = onDismiss?.(failureRef.current);
+    // Plain Keep/Escape relies on native dialog focus return and starts no removal watch.
+    if (refresh) restoreRemovedFocusRef.current(refresh);
     failureRef.current = undefined;
   };
 
@@ -63,6 +65,16 @@ export function ConfirmAction({
     const fallbackId = returnFocusTo ?? section?.getAttribute('aria-labelledby');
     const scope = section ?? opener.closest('main') ?? opener.ownerDocument.body;
     cancelFocusRestoreRef.current();
+    restoreRemovedFocusRef.current = (refresh) => {
+      cancelFocusRestoreRef.current();
+      cancelFocusRestoreRef.current = restoreFocusAfterRemoval({
+        opener,
+        modal,
+        scope,
+        refresh,
+        target: fallbackId ? () => opener.ownerDocument.getElementById(fallbackId) : undefined,
+      });
+    };
     modal.showModal();
     keepRef.current!.focus();
     return () => {
@@ -71,12 +83,6 @@ export function ConfirmAction({
         closeEvents.count++;
         modal.close();
       }
-      cancelFocusRestoreRef.current = restoreFocusAfterRemoval({
-        opener,
-        modal,
-        scope,
-        target: fallbackId ? () => opener.ownerDocument.getElementById(fallbackId) : undefined,
-      });
     };
   }, [open, returnFocusTo]);
 
@@ -87,10 +93,11 @@ export function ConfirmAction({
     setError(undefined);
     failureRef.current = undefined;
     dialogRef.current!.focus();
+    const restoreRemovedFocus = restoreRemovedFocusRef.current;
     try {
       await onConfirm();
       setOpen(false);
-      if (onConfirmed) void onConfirmed().catch(() => undefined);
+      restoreRemovedFocus(onConfirmed?.());
     } catch (failure) {
       failureRef.current = failure;
       setError(errorMessage(failure));

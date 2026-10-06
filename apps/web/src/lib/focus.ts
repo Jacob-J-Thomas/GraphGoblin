@@ -18,28 +18,37 @@ export function focusFallback(target: HTMLElement | null): void {
 
 /**
  * Restore an action's focus after its DOM removal commits. A query may settle before React
- * removes the opener: keep watching while focus belongs to it, then use the explicit fallback.
- * Stop when the user moves on or the owning section leaves the page.
+ * removes the opener: watch only the expected removal, then use the explicit fallback.
+ * Never refocus the opener. Stop on deliberate blur, navigation, or 500 ms after refresh settles.
  */
 export function restoreFocusAfterRemoval({
   opener,
   scope,
   target,
   modal,
-  restoreOpener = true,
+  refresh,
 }: {
   opener: HTMLElement;
   scope: HTMLElement;
   target?: (() => HTMLElement | null) | undefined;
   modal?: HTMLDialogElement | undefined;
-  restoreOpener?: boolean;
+  refresh?: Promise<unknown> | undefined;
 }): () => void {
   const document = opener.ownerDocument;
   let stopped = false;
+  let expiry: ReturnType<typeof setTimeout> | undefined;
   const stop = () => {
     stopped = true;
+    clearTimeout(expiry);
     observer.disconnect();
     document.removeEventListener('focusin', restore);
+    opener.removeEventListener('focusout', leaveOpener);
+  };
+  const leaveOpener = () => {
+    // Removal need not emit focusout in Edge. If it does, the removal observer still owns it.
+    queueMicrotask(() => {
+      if (opener.isConnected && document.activeElement !== opener) stop();
+    });
   };
   const restore = () => {
     if (stopped) return;
@@ -55,7 +64,7 @@ export function restoreFocusAfterRemoval({
     )
       return stop();
     if (opener.isConnected) {
-      if (restoreOpener) opener.focus();
+      if (active !== opener) stop();
       return;
     }
     if (!target) return stop();
@@ -73,6 +82,11 @@ export function restoreFocusAfterRemoval({
     attributeFilter: ['open'],
   });
   document.addEventListener('focusin', restore);
+  opener.addEventListener('focusout', leaveOpener);
+  const expire = () => {
+    if (!stopped) expiry = setTimeout(stop, 500);
+  };
+  void Promise.resolve(refresh).then(expire, expire);
   restore();
   return stop;
 }

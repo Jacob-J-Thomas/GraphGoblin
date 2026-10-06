@@ -38,13 +38,22 @@ Element.prototype.scrollIntoView ??= function scrollIntoView() {};
 // unless a handler prevents that. There is no top layer or inertness; tests of those run in the
 // browser (e2e).
 const dialogPrototype: Pick<HTMLDialogElement, 'showModal' | 'close'> = HTMLDialogElement.prototype;
+const dialogOpeners = new WeakMap<HTMLDialogElement, Element | null>();
 if (!Object.hasOwn(HTMLDialogElement.prototype, 'showModal')) {
   dialogPrototype.showModal = function showModal(this: HTMLDialogElement) {
+    dialogOpeners.set(this, document.activeElement);
     this.setAttribute('open', '');
   };
   dialogPrototype.close = function close(this: HTMLDialogElement, value?: string) {
     if (!this.hasAttribute('open')) return;
     this.removeAttribute('open');
+    const opener = dialogOpeners.get(this);
+    if (
+      opener instanceof HTMLElement &&
+      opener.isConnected &&
+      this.contains(document.activeElement)
+    )
+      opener.focus();
     if (value !== undefined) this.returnValue = value;
     if (dialogClose.delivery === 'sync') this.dispatchEvent(new Event('close'));
     else setTimeout(() => this.dispatchEvent(new Event('close')), 0);

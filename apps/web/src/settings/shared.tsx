@@ -141,13 +141,14 @@ export function EnableSwitch({
 export function restoreVanishedToggleFocus(
   { opener }: ToggleFailure,
   heading: HTMLElement | null,
+  refresh?: Promise<unknown>,
 ): void {
   if (!opener || !heading) return;
   restoreFocusAfterRemoval({
     opener,
     scope: heading.closest<HTMLElement>('section') ?? heading,
     target: () => heading,
-    restoreOpener: false,
+    refresh,
   });
 }
 

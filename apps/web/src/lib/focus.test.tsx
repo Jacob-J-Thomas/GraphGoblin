@@ -42,6 +42,107 @@ describe('focusFallback', () => {
 });
 
 describe('restoreFocusAfterRemoval', () => {
+  it('disconnects a kept-row watch 500 ms after refresh settlement', async () => {
+    vi.useFakeTimers();
+    const scope = document.createElement('section');
+    const opener = document.createElement('button');
+    const heading = document.createElement('h2');
+    scope.append(opener, heading);
+    document.body.append(scope);
+    opener.focus();
+    let settle!: () => void;
+    const refresh = new Promise<void>((resolve) => {
+      settle = resolve;
+    });
+    const disconnect = vi.spyOn(MutationObserver.prototype, 'disconnect');
+    const stop = restoreFocusAfterRemoval({ opener, scope, target: () => heading, refresh });
+    try {
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(disconnect).not.toHaveBeenCalled();
+      settle();
+      await vi.advanceTimersByTimeAsync(499);
+      expect(disconnect).not.toHaveBeenCalled();
+      await vi.advanceTimersByTimeAsync(1);
+      expect(disconnect).toHaveBeenCalledOnce();
+      opener.remove();
+      await Promise.resolve();
+      expect(document.activeElement).toBe(document.body);
+      expect(heading).not.toHaveAttribute('tabindex');
+    } finally {
+      stop();
+      scope.remove();
+      vi.useRealTimers();
+    }
+  });
+
+  it('stops when a connected opener blurs to the body', async () => {
+    const scope = document.createElement('section');
+    const opener = document.createElement('button');
+    const heading = document.createElement('h2');
+    scope.append(opener, heading);
+    document.body.append(scope);
+    opener.focus();
+    const stop = restoreFocusAfterRemoval({ opener, scope, target: () => heading });
+    try {
+      opener.blur();
+      await Promise.resolve();
+      scope.append(document.createElement('span'));
+      await Promise.resolve();
+      expect(document.activeElement).toBe(document.body);
+      opener.remove();
+      await Promise.resolve();
+      expect(heading).not.toHaveAttribute('tabindex');
+    } finally {
+      stop();
+      scope.remove();
+    }
+  });
+
+  it('does not recover into the page while the modal has reopened', async () => {
+    const scope = document.createElement('section');
+    const opener = document.createElement('button');
+    const heading = document.createElement('h2');
+    const modal = document.createElement('dialog');
+    scope.append(opener, heading, modal);
+    document.body.append(scope);
+    opener.focus();
+    const stop = restoreFocusAfterRemoval({ opener, scope, modal, target: () => heading });
+    try {
+      modal.open = true;
+      opener.remove();
+      await Promise.resolve();
+      expect(heading).not.toHaveAttribute('tabindex');
+      modal.open = false;
+      await waitFor(() => expect(heading).toHaveFocus());
+    } finally {
+      stop();
+      scope.remove();
+    }
+  });
+
+  it('keeps watching when a connected fallback cannot yet receive focus', async () => {
+    const scope = document.createElement('section');
+    const opener = document.createElement('button');
+    const heading = document.createElement('h2');
+    scope.append(opener, heading);
+    document.body.append(scope);
+    opener.focus();
+    const focus = vi.spyOn(heading, 'focus').mockImplementationOnce(() => undefined);
+    const stop = restoreFocusAfterRemoval({ opener, scope, target: () => heading });
+    try {
+      opener.remove();
+      await Promise.resolve();
+      expect(document.activeElement).toBe(document.body);
+      expect(heading).not.toHaveAttribute('tabindex');
+      scope.append(document.createElement('span'));
+      await waitFor(() => expect(heading).toHaveFocus());
+      expect(focus).toHaveBeenCalledTimes(2);
+    } finally {
+      stop();
+      scope.remove();
+    }
+  });
+
   it('waits for an explicit fallback inserted after the opener was removed', async () => {
     const scope = document.createElement('section');
     const opener = document.createElement('button');
