@@ -16,7 +16,7 @@ import {
   RequiredNote,
   type DialogCloseReason,
 } from '../components/ui/index.js';
-import type { DisclosureStates } from '../forms/disclosures.js';
+import { createDisclosureIdentities, type DisclosureStates } from '../forms/disclosures.js';
 import { SchemaForm } from '../forms/SchemaForm.js';
 import { CatalogWarningsContext } from '../forms/fields/model.js';
 import { canvasFocusTarget } from './canvas-focus.js';
@@ -110,9 +110,14 @@ export function NodeEditorDialog({
   // not in the form, so the remounts below (undo and redo, a subloop pick) keep what the user
   // opened; the dialog is mounted per node and per opening, so another node starts collapsed.
   const [openDisclosures, setOpenDisclosures] = useState<DisclosureStates>({});
+  const [disclosureIdentities] = useState(createDisclosureIdentities);
   const disclosures = useMemo(
-    () => ({ open: openDisclosures, setOpen: setOpenDisclosures }),
-    [openDisclosures],
+    () => ({
+      open: openDisclosures,
+      setOpen: setOpenDisclosures,
+      identities: disclosureIdentities,
+    }),
+    [openDisclosures, disclosureIdentities],
   );
   const [idState, setIdState] = useState<IdDraft>({
     for: node.id,

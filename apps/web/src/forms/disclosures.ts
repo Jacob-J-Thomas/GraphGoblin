@@ -1,8 +1,8 @@
-import { createContext, use, type Dispatch, type SetStateAction } from 'react';
+import { createContext, use, useState, type Dispatch, type SetStateAction } from 'react';
 
 /**
  * Which disclosures of a schema-driven form are open, by key: `#advanced` for the form's Advanced
- * group, a collapsible list item's path (`operations.0`), and a control's own disclosure under its
+ * group, a stable collection row id, and a control's own disclosure under its
  * field's path (`expression#advanced`, the cron schedule's raw expression). A key with no entry
  * is at its disclosure's default.
  */
@@ -16,6 +16,92 @@ export type DisclosureStates = Readonly<Record<string, boolean>>;
 export interface DisclosureStore {
   open: DisclosureStates;
   setOpen: Dispatch<SetStateAction<DisclosureStates>>;
+  /** Row identities for form values retained by undo history, shared across remounts. */
+  identities?: DisclosureIdentities;
+}
+
+type CollectionRows = Readonly<Record<string, readonly number[]>>;
+
+export interface DisclosureIdentities {
+  snapshots: WeakMap<object, CollectionRows>;
+  nextId: number;
+}
+
+export function createDisclosureIdentities(): DisclosureIdentities {
+  return { snapshots: new WeakMap(), nextId: 0 };
+}
+
+/**
+ * Row ids follow collection actions, not row contents (identical rows are still distinct).
+ * Immutable id maps are associated with the same form values that history restores. Open states
+ * stay separate, so a later toggle follows its row through undo and redo rather than being undone.
+ */
+export function createCollectionIdentities(identities: DisclosureIdentities, value: unknown) {
+  let current = value;
+  let rows: CollectionRows =
+    typeof value === 'object' && value !== null ? (identities.snapshots.get(value) ?? {}) : {};
+  const remember = (next: unknown) => {
+    current = next;
+    if (typeof next === 'object' && next !== null) identities.snapshots.set(next, rows);
+  };
+  return {
+    remember,
+    get: (name: string, count: number): readonly number[] => {
+      const previous = rows[name] ?? [];
+      if (rows[name] === undefined || previous.length !== count) {
+        rows = {
+          ...rows,
+          [name]: Array.from({ length: count }, (_, i) => previous[i] ?? identities.nextId++),
+        };
+        remember(current);
+      }
+      return rows[name]!;
+    },
+    add: (name: string) => {
+      const id = identities.nextId++;
+      rows = { ...rows, [name]: [...(rows[name] ?? []), id] };
+      return id;
+    },
+    remove: (name: string, index: number) => {
+      const next: Record<string, readonly number[]> = {};
+      for (const [path, ids] of Object.entries(rows)) {
+        const suffix = path.startsWith(`${name}.`) ? path.slice(name.length + 1) : undefined;
+        const row = suffix === undefined ? undefined : Number(suffix.split('.')[0]);
+        if (row === index) continue;
+        const moved =
+          row !== undefined && row > index
+            ? `${name}.${row - 1}${suffix!.slice(String(row).length)}`
+            : path;
+        next[moved] = path === name ? ids.filter((_, i) => i !== index) : ids;
+      }
+      rows = next;
+    },
+    key: (path: string): string => {
+      // The innermost known row also identifies disclosures nested inside that row.
+      const parents = Object.keys(rows).sort((a, b) => b.length - a.length);
+      for (const name of parents) {
+        if (!path.startsWith(`${name}.`)) continue;
+        const suffix = path.slice(name.length + 1);
+        const index = /^\d+(?=\.|#|$)/.exec(suffix)?.[0];
+        const id = index === undefined ? undefined : rows[name]?.[Number(index)];
+        if (id !== undefined) return `#row:${id}${suffix.slice(index!.length)}`;
+      }
+      return path;
+    },
+  };
+}
+
+export const CollectionIdentitiesContext = createContext<
+  ReturnType<typeof createCollectionIdentities> | undefined
+>(undefined);
+
+export function useCollectionIdentities() {
+  const rows = use(CollectionIdentitiesContext);
+  // Field also works directly under react-hook-form; its rows then live for that field's mount.
+  const [ownRows] = useState(() =>
+    createCollectionIdentities(createDisclosureIdentities(), undefined),
+  );
+  return rows ?? ownRows;
 }
 
 /** The key of a form's Advanced group. */
@@ -32,39 +118,21 @@ export function useDisclosureState(
   defaultOpen: boolean,
 ): { open?: boolean; onOpenChange?: (open: boolean) => void; defaultOpen: boolean } {
   const store = use(DisclosureStoreContext);
+  const rows = use(CollectionIdentitiesContext);
+  const identity = rows?.key(key) ?? key;
   if (!store) return { defaultOpen };
   return {
     defaultOpen,
-    open: store.open[key] ?? defaultOpen,
-    onOpenChange: (open) => store.setOpen((all) => ({ ...all, [key]: open })),
+    open: store.open[identity] ?? defaultOpen,
+    onOpenChange: (open) => store.setOpen((all) => ({ ...all, [identity]: open })),
   };
 }
 
-/** Whether `key` is `path` or lies under it (`path.…` or `path#…`). */
-function isUnder(key: string, path: string): boolean {
-  return key === path || key.startsWith(`${path}.`) || key.startsWith(`${path}#`);
-}
-
-/**
- * Record a disclosure as open, or move or drop the states under some paths when the rows they
- * belong to move (a list item's removal shifts the items after it up one).
- */
+/** Record a disclosure as open under its stable identity. */
 export function useDisclosureStore() {
   const store = use(DisclosureStoreContext);
+  const rows = use(CollectionIdentitiesContext);
   return {
-    open: (key: string) => store?.setOpen((all) => ({ ...all, [key]: true })),
-    repath: (changes: readonly { from: string; to?: string }[]) =>
-      store?.setOpen((all) => {
-        const next: Record<string, boolean> = {};
-        for (const [key, open] of Object.entries(all)) {
-          const change = changes.find(({ from }) => isUnder(key, from));
-          if (!change) next[key] = open;
-        }
-        for (const [key, open] of Object.entries(all)) {
-          const change = changes.find(({ from }) => isUnder(key, from));
-          if (change?.to !== undefined) next[change.to + key.slice(change.from.length)] = open;
-        }
-        return next;
-      }),
+    open: (key: string) => store?.setOpen((all) => ({ ...all, [rows?.key(key) ?? key]: true })),
   };
 }

@@ -4,6 +4,9 @@ import { FormProvider, useForm, type FieldValues, type Resolver } from 'react-ho
 import { FieldGroup, Label, Select } from '../components/ui/index.js';
 import { FormChangeContext, nextChangeId, type ChangeScope, type FormChange } from './changes.js';
 import {
+  CollectionIdentitiesContext,
+  createCollectionIdentities,
+  createDisclosureIdentities,
   DisclosureStoreContext,
   type DisclosureStates,
   type DisclosureStore,
@@ -119,6 +122,10 @@ export function SchemaForm({
   const shape = shapeOf(schema);
   const id = useId();
   const [ownDisclosures, setOwnDisclosures] = useState<DisclosureStates>({});
+  const [ownIdentities] = useState(createDisclosureIdentities);
+  const [collections] = useState(() =>
+    createCollectionIdentities(disclosures?.identities ?? ownIdentities, value),
+  );
   const disclosureStore = useMemo<DisclosureStore>(
     () => disclosures ?? { open: ownDisclosures, setOpen: setOwnDisclosures },
     [disclosures, ownDisclosures],
@@ -184,6 +191,7 @@ export function SchemaForm({
     void form.trigger();
     const subscription = form.watch((values, { name }) => {
       const next = stripUnset(values);
+      collections.remember(next);
       setIssues(issuesOf(schema, next));
       // Every field describes its changes; a write that does not is a step of its own.
       const change = pendingChangeRef.current ?? {
@@ -194,7 +202,7 @@ export function SchemaForm({
       onChangeRef.current(next, change);
     });
     return () => subscription.unsubscribe();
-  }, [form, schema]);
+  }, [form, schema, collections]);
 
   const [unionIndex, setUnionIndex] = useState(() =>
     shape.kind === 'union' ? matchOption(shape.options, value, shape.discriminator) : 0,
@@ -212,6 +220,7 @@ export function SchemaForm({
       if (shape.kind !== 'union') return;
       repathParseErrors(parseErrorChannel, [{ from: '' }]);
       const next = asValues(initialValue(shape.options[index] as Schema));
+      collections.remember(next);
       setUnionIndex(index);
       form.reset(next);
       setIssues(issuesOf(schema, next));
@@ -220,68 +229,71 @@ export function SchemaForm({
 
   return (
     <FormChangeContext value={changeScope}>
-      <DisclosureStoreContext value={disclosureStore}>
-        <ParseErrorContext value={parseErrorChannel}>
-          <FieldIssuesContext value={issuesByPath}>
-            <FieldControlsContext value={controls ?? NO_CONTROLS}>
-              <ProblemPathsContext value={problems ?? NO_PROBLEMS}>
-                <FormScopeContext value={{ schema: variantSchema, id }}>
-                  <FormProvider {...form}>
-                    <form
-                      aria-label={label}
-                      noValidate
-                      onSubmit={(e) => e.preventDefault()}
-                      className="grid gap-field"
-                    >
-                      {shape.kind === 'union' ? (
-                        <FieldGroup>
-                          <Label htmlFor={id}>{humanize(shape.discriminator ?? 'kind')}</Label>
-                          <Select
-                            id={id}
-                            value={String(unionIndex)}
-                            onChange={(e) => switchVariant(Number(e.target.value))}
+      <CollectionIdentitiesContext value={collections}>
+        <DisclosureStoreContext value={disclosureStore}>
+          <ParseErrorContext value={parseErrorChannel}>
+            <FieldIssuesContext value={issuesByPath}>
+              <FieldControlsContext value={controls ?? NO_CONTROLS}>
+                <ProblemPathsContext value={problems ?? NO_PROBLEMS}>
+                  <FormScopeContext value={{ schema: variantSchema, id }}>
+                    <FormProvider {...form}>
+                      <form
+                        aria-label={label}
+                        noValidate
+                        onSubmit={(e) => e.preventDefault()}
+                        className="grid gap-field"
+                      >
+                        {shape.kind === 'union' ? (
+                          <FieldGroup>
+                            <Label htmlFor={id}>{humanize(shape.discriminator ?? 'kind')}</Label>
+                            <Select
+                              id={id}
+                              value={String(unionIndex)}
+                              onChange={(e) => switchVariant(Number(e.target.value))}
+                            >
+                              {shape.options.map((option, index) => (
+                                <option key={index} value={index}>
+                                  {optionLabel(option, shape.discriminator)}
+                                </option>
+                              ))}
+                            </Select>
+                          </FieldGroup>
+                        ) : null}
+                        {layout ? (
+                          <LayoutItems items={layout.basic} keyPrefix={String(unionIndex)} />
+                        ) : null}
+                        {layout && layout.advanced.length > 0 ? (
+                          <AdvancedFields
+                            key={unionIndex}
+                            sections={layout.advanced}
+                            keyPrefix={String(unionIndex)}
+                          />
+                        ) : null}
+                        {issues.length > 0 ? (
+                          <div
+                            className="grid gap-1 rounded-md border-l-4 border-status-bad-border bg-status-bad-bg px-3 py-2 text-xs leading-snug"
+                            aria-label="Config issues"
                           >
-                            {shape.options.map((option, index) => (
-                              <option key={index} value={index}>
-                                {optionLabel(option, shape.discriminator)}
-                              </option>
-                            ))}
-                          </Select>
-                        </FieldGroup>
-                      ) : null}
-                      {layout ? (
-                        <LayoutItems items={layout.basic} keyPrefix={String(unionIndex)} />
-                      ) : null}
-                      {layout && layout.advanced.length > 0 ? (
-                        <AdvancedFields
-                          key={unionIndex}
-                          sections={layout.advanced}
-                          keyPrefix={String(unionIndex)}
-                        />
-                      ) : null}
-                      {issues.length > 0 ? (
-                        <div
-                          className="grid gap-1 rounded-md border-l-4 border-status-bad-border bg-status-bad-bg px-3 py-2 text-xs leading-snug"
-                          aria-label="Config issues"
-                        >
-                          <p className="font-semibold text-status-bad-fg">Config issues</p>
-                          <ul className="list-disc pl-4">
-                            {issues.map((issue, index) => (
-                              <li key={index}>
-                                {issue.path ? <code>{issue.path}</code> : 'config'}: {issue.message}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      ) : null}
-                    </form>
-                  </FormProvider>
-                </FormScopeContext>
-              </ProblemPathsContext>
-            </FieldControlsContext>
-          </FieldIssuesContext>
-        </ParseErrorContext>
-      </DisclosureStoreContext>
+                            <p className="font-semibold text-status-bad-fg">Config issues</p>
+                            <ul className="list-disc pl-4">
+                              {issues.map((issue, index) => (
+                                <li key={index}>
+                                  {issue.path ? <code>{issue.path}</code> : 'config'}:{' '}
+                                  {issue.message}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        ) : null}
+                      </form>
+                    </FormProvider>
+                  </FormScopeContext>
+                </ProblemPathsContext>
+              </FieldControlsContext>
+            </FieldIssuesContext>
+          </ParseErrorContext>
+        </DisclosureStoreContext>
+      </CollectionIdentitiesContext>
     </FormChangeContext>
   );
 }

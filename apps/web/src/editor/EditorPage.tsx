@@ -93,6 +93,7 @@ export function EditorPage() {
   // loop settings form needs it, and its refetch (on focus, say) finds another tab's change.
   const models = useModelCatalog();
   const classifiers = useClassifierModels();
+  const catalogsResolved = models.data !== undefined && classifiers.data !== undefined;
   const catalogState = useMemo(
     () => catalogFingerprint(models.data, classifiers.data),
     [models.data, classifiers.data],
@@ -113,7 +114,9 @@ export function EditorPage() {
   const serverCheck = useQuery({
     queryKey: keys.validation(loopId, draftKey, catalogState),
     enabled: Boolean(definition) && saved && local.schemaValid && !classifiers.isPending,
-    staleTime: Infinity,
+    // Unknown catalogs cannot certify freshness, even if this request found no issues. Keep its
+    // badges available, but check again on reopening or recovery instead of trusting that answer.
+    staleTime: catalogsResolved ? Infinity : 0,
     retry: false,
     queryFn: async () => {
       const checked = definition as LoopDefinitionInput;
@@ -342,9 +345,9 @@ export function EditorPage() {
             issues={validation.issues}
             definition={def}
             check={
-              serverCheck.isError
+              serverCheck.isError || (!catalogsResolved && (models.isError || classifiers.isError))
                 ? 'error'
-                : serverCheck.isPending || serverCheck.isFetching
+                : !catalogsResolved || serverCheck.isPending || serverCheck.isFetching
                   ? 'pending'
                   : 'done'
             }

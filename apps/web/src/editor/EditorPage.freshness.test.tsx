@@ -1,6 +1,6 @@
 import type { LoopDefinitionInput, LoopIssue, NodeInput } from '@graphgoblin/contracts';
 import type { QueryClient } from '@tanstack/react-query';
-import { act, screen, waitFor } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { FakeApi } from '../__fixtures__/fake-api.js';
@@ -200,6 +200,139 @@ describe('freshness of the API checks (phase review F3)', () => {
       .findAll({ predicate: ({ queryKey }) => isValidationKey(queryKey) })
       .find((query) => String(query.queryKey[4]).includes('"alpha",true'));
     expect(enabled?.state.data).toBeUndefined();
+  });
+
+  it('never reuses a clean unknown-catalog answer as ready when reopened with a held retry', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    withServerChecks(api);
+    api.catalog = [ALPHA];
+    let release!: () => void;
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let retrying = false;
+    api.override('GET /model-catalog', async (call) => {
+      if (!retrying) {
+        return new Response(JSON.stringify({ code: 'FAILED', detail: 'Catalog unavailable' }), {
+          status: 503,
+        });
+      }
+      await held;
+      return api.builtIn(call);
+    });
+    const loop = api.addLoop(inferenceLoop());
+    const { queryClient } = renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'models' });
+    await waitFor(() => expect(cachedDraftKeys(queryClient)).toHaveLength(1));
+    expect(validations(api)).toBe(1);
+    expect(nodeBadge('infer')).toBeNull();
+    expect(screen.queryByText('Ready to publish')).toBeNull();
+    expect(await screen.findByText('Validation unavailable')).toBeInTheDocument();
+
+    await user.click(
+      within(screen.getByRole('navigation', { name: 'Main' })).getByRole('link', { name: 'Loops' }),
+    );
+    const catalogRequests = api.callsTo('GET', /^\/model-catalog$/).length;
+    retrying = true;
+    // Another tab changes the server catalog while this tab still has no catalog data.
+    api.catalog = [{ ...ALPHA, enabled: false }];
+    await user.click(await screen.findByRole('link', { name: 'models' }));
+    await screen.findByRole('heading', { name: 'models' });
+    await waitFor(() => expect(validations(api)).toBe(2));
+    await waitFor(() =>
+      expect(nodeBadge('infer')).toHaveAttribute('aria-label', '1 issue on infer'),
+    );
+    expect(screen.queryByText('Ready to publish')).toBeNull();
+    expect(queryClient.getQueryData(keys.catalog)).toBeUndefined();
+    expect(api.callsTo('GET', /^\/model-catalog$/)).toHaveLength(catalogRequests + 1);
+
+    await act(() => Promise.resolve(release()));
+    await waitFor(() => expect(queryClient.getQueryData(keys.catalog)).toEqual(api.catalog));
+    await waitFor(() => expect(validations(api)).toBe(3));
+    expect(nodeBadge('infer')).toHaveAttribute('aria-label', '1 issue on infer');
+    expect(screen.queryByText('Ready to publish')).toBeNull();
+    // The resolved fingerprint is fresh: an unchanged refresh adds no check.
+    await act(() => queryClient.invalidateQueries({ queryKey: keys.catalog }));
+    expect(validations(api)).toBe(3);
+  });
+
+  it.each([false, true])(
+    'checks a changed fingerprint once with a slow unchanged classifier catalog (held check: %s)',
+    async (holdCheck) => {
+      const api = new FakeApi();
+      withServerChecks(api);
+      api.catalog = [ALPHA];
+      const loop = api.addLoop(inferenceLoop());
+      const { queryClient } = renderApp(`/loops/${loop.id}/edit`, api);
+      await screen.findByText('Ready to publish');
+      const before = validations(api);
+      let releaseCatalog!: () => void;
+      const catalogHeld = new Promise<void>((resolve) => {
+        releaseCatalog = resolve;
+      });
+      api.override('GET /classifier-models', async (call) => {
+        await catalogHeld;
+        return api.builtIn(call);
+      });
+      let releaseCheck!: () => void;
+      const checkHeld = new Promise<void>((resolve) => {
+        releaseCheck = resolve;
+      });
+      withServerChecks(api, () => (holdCheck ? checkHeld : undefined));
+      api.catalog = [{ ...ALPHA, enabled: false }];
+      let refresh!: Promise<void>;
+      act(() => {
+        refresh = refreshCatalogState(queryClient);
+      });
+      await waitFor(() => expect(validations(api)).toBe(before + 1));
+      if (!holdCheck)
+        await waitFor(() =>
+          expect(nodeBadge('infer')).toHaveAttribute('aria-label', '1 issue on infer'),
+        );
+      expect(queryClient.isFetching({ queryKey: keys.classifiers })).toBe(1);
+      await act(async () => {
+        releaseCatalog();
+        await refresh;
+      });
+      expect(validations(api)).toBe(before + 1);
+      await act(() => Promise.resolve(releaseCheck()));
+      await waitFor(() =>
+        expect(nodeBadge('infer')).toHaveAttribute('aria-label', '1 issue on infer'),
+      );
+      expect(validations(api)).toBe(before + 1);
+    },
+  );
+
+  it('waits for the check under the resolved catalog even after a clean early answer', async () => {
+    const api = new FakeApi();
+    api.catalog = [ALPHA];
+    let releaseCatalog!: () => void;
+    const catalogHeld = new Promise<void>((resolve) => {
+      releaseCatalog = resolve;
+    });
+    api.override('GET /model-catalog', async (call) => {
+      await catalogHeld;
+      return api.builtIn(call);
+    });
+    let releaseCheck!: () => void;
+    const checkHeld = new Promise<void>((resolve) => {
+      releaseCheck = resolve;
+    });
+    withServerChecks(api, () => (validations(api) > 1 ? checkHeld : undefined));
+    const loop = api.addLoop(inferenceLoop());
+    const { queryClient } = renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'models' });
+    await waitFor(() => expect(cachedDraftKeys(queryClient)).toHaveLength(1));
+    expect(screen.queryByText('Ready to publish')).toBeNull();
+    expect(screen.getByText('Checking…')).toBeInTheDocument();
+    await act(() => Promise.resolve(releaseCatalog()));
+    await waitFor(() => expect(validations(api)).toBe(2));
+    expect(screen.queryByText('Ready to publish')).toBeNull();
+    expect(screen.getByText('Checking…')).toBeInTheDocument();
+    await act(() => Promise.resolve(releaseCheck()));
+    expect(await screen.findByText('Ready to publish')).toBeInTheDocument();
+    expect(validations(api)).toBe(2);
   });
 
   it('names a draft without a server token by its content, and by the token once saved', async () => {

@@ -131,5 +131,20 @@ describe('NodeEditorDialog disclosures across undo and redo', () => {
     expect(item(1)).toHaveAttribute('aria-expanded', 'false');
     await user.click(within(dialog).getByRole('button', { name: 'Remove operations 1' }));
     expect(item(1)).toHaveAttribute('aria-expanded', 'true');
+
+    // Undo the removal from the remaining row's picker: each restored row keeps its own state.
+    const remainingOp = () =>
+      within(within(dialog).getByRole('group', { name: 'Operations 1' })).getByLabelText('Op');
+    act(() => remainingOp().focus());
+    await user.keyboard(UNDO);
+    expect(item(1)).toHaveAttribute('aria-expanded', 'false');
+    expect(item(2)).toHaveAttribute('aria-expanded', 'true');
+    expect(op()).toHaveFocus();
+    await user.keyboard(REDO);
+    expect(within(dialog).queryByRole('button', { name: /^Operations 2\b/ })).toBeNull();
+    expect(item(1)).toHaveAttribute('aria-expanded', 'true');
+    await user.keyboard(UNDO);
+    expect(item(1)).toHaveAttribute('aria-expanded', 'false');
+    expect(item(2)).toHaveAttribute('aria-expanded', 'true');
   });
 });

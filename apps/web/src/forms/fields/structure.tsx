@@ -30,7 +30,7 @@ import {
 } from '../../components/ui/index.js';
 import { cn } from '../../lib/utils.js';
 import { useFormChange } from '../changes.js';
-import { useDisclosureState, useDisclosureStore } from '../disclosures.js';
+import { useCollectionIdentities, useDisclosureState, useDisclosureStore } from '../disclosures.js';
 import { labelOf } from '../layout.js';
 import { repathParseErrors, useParseErrors } from '../parse-errors.js';
 import {
@@ -292,20 +292,9 @@ function ArrayField({
   const parseErrors = useParseErrors();
   const change = useFormChange();
   const focus = useCollectionFocus();
-  const [identity, setIdentity] = useState(() => ({
-    ids: items.map((_, i) => i),
-    nextId: items.length,
-  }));
-  // Rows there when the form opened have the first ids; collapsible ones start collapsed.
-  const [openedWith] = useState(items.length);
-  let rowIds = identity.ids;
-  // External resets and shared union fields can change the count without a collection action.
-  // Reconcile before rendering children so every row has a unique identity on its first mount.
-  if (rowIds.length !== items.length) {
-    let nextId = identity.nextId;
-    rowIds = Array.from({ length: items.length }, (_, i) => rowIds[i] ?? nextId++);
-    setIdentity({ ids: rowIds, nextId });
-  }
+  const identities = useCollectionIdentities();
+  const rowIds = identities.get(name, items.length);
+  const [openedWith] = useState(() => new Set(rowIds));
   const { required, help, collapseItems } = fieldMeta(schema);
   const collapsible = collapseItems === true && element.kind === 'union';
   const disclosures = useDisclosureStore();
@@ -318,19 +307,15 @@ function ArrayField({
     }));
     // One step: the row, and the unparsed text of the rows after it.
     change({ path: name, kind: 'commit' }, () => {
+      identities.remove(name, index);
       repathParseErrors(parseErrors, moves);
       field.onChange(current.filter((_, i) => i !== index));
     });
-    disclosures.repath(moves);
-    setIdentity((previous) => ({ ...previous, ids: previous.ids.filter((_, i) => i !== index) }));
     focus.announce(`Removed ${label.toLowerCase()} ${index + 1}`);
   };
   const add = () => {
     const current = itemsOf(field.read());
-    setIdentity((previous) => ({
-      ids: [...previous.ids, previous.nextId],
-      nextId: previous.nextId + 1,
-    }));
+    identities.add(name);
     field.onChange([...current, initialValue(shape.element)]);
     // An added item starts open, and stays open when the form remounts (an undo elsewhere).
     if (collapsible) disclosures.open(joinPath(name, current.length));
@@ -401,17 +386,29 @@ function ArrayField({
           />
         );
         return collapsible ? (
-          <div key={rowIds[index]} data-collection-row={index} className={COLLAPSIBLE_ROW}>
+          <div
+            key={rowIds[index]}
+            data-collection-row={index}
+            data-row-id={rowIds[index]}
+            data-row-path={joinPath(name, index)}
+            className={COLLAPSIBLE_ROW}
+          >
             <CollapsibleItem
               element={shape.element}
               name={joinPath(name, index)}
               label={`${label} ${index + 1}`}
-              defaultOpen={(rowIds[index] ?? 0) >= openedWith}
+              defaultOpen={!openedWith.has(rowIds[index]!)}
               remove={removeButton}
             />
           </div>
         ) : (
-          <div key={rowIds[index]} data-collection-row={index} className={COLLECTION_ROW}>
+          <div
+            key={rowIds[index]}
+            data-collection-row={index}
+            data-row-id={rowIds[index]}
+            data-row-path={joinPath(name, index)}
+            className={COLLECTION_ROW}
+          >
             <Field
               schema={shape.element}
               name={joinPath(name, index)}
@@ -885,7 +882,7 @@ function CollapsibleItem({
   const value: unknown = useWatch({ name });
   const summary = itemSummary(element, stripUnset(value));
   const problems = useProblemCount([name]);
-  // Kept by the form's disclosure states under the item's path, so a remount keeps it.
+  // The path resolves to a stable row id, so a removal and history travel keep its own state.
   const state = useDisclosureState(name, defaultOpen);
   return (
     <Disclosure

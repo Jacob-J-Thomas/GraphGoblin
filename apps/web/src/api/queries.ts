@@ -167,8 +167,8 @@ export function isValidationKey(queryKey: readonly unknown[]): boolean {
  * new server state and would store it under the old catalogs' key (`keys.validation` holds the
  * fingerprint the check was issued for). Every check is then marked stale without being
  * refetched, so none runs against an out-of-date key; once the catalogs are back, the active
- * checks already keyed by the catalogs as they now are (a write the checks do not read) run again,
- * and the others run under their new key when the editor renders it.
+ * checks still stale under the resolved fingerprint run again. A new fingerprint may already
+ * have been checked while the other catalog was loading; its fresh or in-flight check is kept.
  */
 export async function refreshCatalogState(queryClient: QueryClient): Promise<void> {
   const validation = {
@@ -181,10 +181,17 @@ export async function refreshCatalogState(queryClient: QueryClient): Promise<voi
     queryClient.invalidateQueries({ queryKey: keys.classifiers }),
   ]);
   const now = cachedCatalogFingerprint(queryClient);
-  await queryClient.refetchQueries({
-    predicate: ({ queryKey }) => isValidationKey(queryKey) && queryKey[4] === now,
-    type: 'active',
-  });
+  await queryClient.refetchQueries(
+    {
+      predicate: (query) =>
+        isValidationKey(query.queryKey) &&
+        query.queryKey[4] === now &&
+        query.isStale() &&
+        query.state.fetchStatus === 'idle',
+      type: 'active',
+    },
+    { cancelRefetch: false },
+  );
 }
 
 export function useSecrets() {
