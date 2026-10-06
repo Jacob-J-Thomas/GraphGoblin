@@ -452,7 +452,8 @@ for (const count of [100, 300])
     await expect(card).toBeVisible();
     await page.waitForTimeout(1000); // Let font measurement, initial validation and fit-view settle.
     // Same rendered graph without pointer input: report a scheduling baseline alongside the drag.
-    // The gate compares drag p95 against this measured idle p95, not a nominal refresh rate.
+    // Added frame time (drag p95 minus this idle p95) is reported only; the strict assertion
+    // below uses the absolute 60 Hz budget.
     const idleFrames = await page.evaluate(
       () =>
         new Promise<number[]>((resolveFrames) => {
@@ -599,10 +600,10 @@ for (const count of [100, 300])
       expect(result.frameSamples).toBeGreaterThan(120);
       expect(result.reroutedEdgesP95).toBeGreaterThan(0);
       if (strictPerf) {
-        // The issue's frame criterion is one 60 Hz vsync (16.67 ms) at p95. RAF timestamps
-        // jitter by about a tenth of a millisecond at a single vsync (local runs and the
-        // shared runner have both reported 16.8 ms), while a dropped frame reads about
-        // 33 ms, so 17 ms separates the two without admitting a drop.
+        // The issue's frame criterion is the 60 Hz budget (16.67 ms) at p95. RAF timestamps
+        // land a tenth of a millisecond past one vsync (local runs and the shared runner
+        // have both reported 16.8 ms), so the bound is 17 ms: a p95 that misses the budget,
+        // such as every-other-vsync at 33 ms or three 120 Hz periods at 25 ms, still fails.
         expect(result.frameP95Ms).toBeLessThan(17);
       }
     }
