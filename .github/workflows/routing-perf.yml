@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       strict:
-        description: Enforce the strict bounds (median routing p95 <4 ms, frame p95 <17 ms). The shared runner meets 4 ms only on a quiet instance.
+        description: Enforce the strict bounds (median routing p95 <4 ms, frame p95 <17 ms). The shared runner's own spread straddles 4 ms.
         type: boolean
         default: false
   pull_request:
@@ -26,8 +26,9 @@ jobs:
       # p95 <16 ms: the shared two-core runner measured 0.8-5.2 ms for the same code.
       # A manual dispatch with Strict set enforces the issue's bounds instead: median
       # <4 ms and frame p95 <17 ms (the 60 Hz budget; timestamps land 0.1 ms past one
-      # vsync). The shared runner meets 4 ms only on a quiet instance (3.2 / 2.6 ms on
-      # one run, 4.7 / 4.3 ms on the next), so a strict failure there is not a verdict.
+      # vsync). The shared runner's own spread straddles 4 ms (3.2 / 2.6, 4.7 / 4.3 and
+      # 3.7 / 3.7 ms on three runs of the same code), so a strict failure there calls for
+      # a look at the numbers rather than a verdict.
       # Added frame time is reported, without a bound, because idle cadence can differ.
       GG_ROUTING_STRICT_PERF: ${{ inputs.strict && '1' || '' }}
     steps:
