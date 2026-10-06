@@ -233,11 +233,13 @@ export function ModelCatalogSection() {
                           if (!(error instanceof GraphGoblinApiError) || error.status !== 404)
                             return;
                           setNotice(`${entry.displayName}: ${CATALOG_MESSAGES['MODEL_NOT_FOUND']}`);
-                          await refreshCatalogState(queryClient);
+                          const refresh = refreshCatalogState(queryClient);
                           restoreVanishedToggleFocus(
                             failure,
                             headingRef.current?.closest('h2') ?? null,
+                            refresh,
                           );
+                          await refresh;
                         }}
                       />
                     </Td>

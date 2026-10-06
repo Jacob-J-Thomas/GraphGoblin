@@ -269,8 +269,9 @@ export function ClassifierModelsSection() {
                             setNotice(
                               `${entry.displayName}: ${CLASSIFIER_TOGGLE_MESSAGES['CLASSIFIER_MODEL_NOT_FOUND']}`,
                             );
-                            await refresh();
-                            restoreVanishedToggleFocus(failure, heading());
+                            const refreshed = refresh();
+                            restoreVanishedToggleFocus(failure, heading(), refreshed);
+                            await refreshed;
                           }}
                         />
                       </Td>

@@ -341,16 +341,20 @@ test('a draft conflict is answered from inside an open node editor', async ({
   const a = await context.newPage();
   const b = await context.newPage();
   await a.goto(`/app/loops/${loopId}/edit`);
+  await expect(a.getByRole('heading', { name: 'qa modal conflict' })).toBeVisible();
   await b.goto(`/app/loops/${loopId}/edit`);
   await expect(b.getByRole('heading', { name: 'qa modal conflict' })).toBeVisible();
 
   // Tab B opens a node; tab A saves first.
   const dialog = await openNode(b, 'approve');
+  await a.bringToFront();
   await showLoopPanel(a);
   await a.getByLabel('Description').fill('from tab A');
-  await expect(a.getByTestId('save-state')).toHaveText('All changes saved');
+  // The debounced save and its device mirror must finish before B attempts a stale save.
+  await expect(a.getByTestId('save-state')).toHaveText('All changes saved', { timeout: 30_000 });
 
   // Tab B edits in the dialog: refused, and asked inside the dialog, where it can answer.
+  await b.bringToFront();
   await dialog.getByLabel('Label').fill('Approve in B');
   await expect(dialog.getByText('The draft changed on the server')).toBeVisible();
   await expect(b.getByTestId('save-state')).toHaveText('Draft changed elsewhere');

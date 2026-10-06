@@ -45,6 +45,64 @@ test('Loops keeps on cancel, contains keyboard focus, exports, and deletes on co
   expect((await request.get(`/loops/${id}`)).status()).toBe(404);
 });
 
+test('Keep followed by a runs poll leaves body focus and Space opens no confirmation', async ({
+  page,
+  request,
+}) => {
+  const name = `cancel-poll-${test.info().repeatEachIndex}`;
+  const id = await publishLoop(request, approvalLoop(name));
+  await page.goto('/app/loops');
+  // Check this Edge version's removal events; the microtask must distinguish them from blur.
+  const removalEvents = await page.evaluate(async () => {
+    const probe = document.createElement('button');
+    document.body.append(probe);
+    const events: { duringEvent: boolean; afterMicrotask: boolean }[] = [];
+    probe.addEventListener('focusout', () => {
+      const event = { duringEvent: probe.isConnected, afterMicrotask: true };
+      events.push(event);
+      queueMicrotask(() => {
+        event.afterMicrotask = probe.isConnected;
+      });
+    });
+    probe.focus();
+    probe.remove();
+    await Promise.resolve();
+    return events;
+  });
+  console.log(`Focused-element removal focusout events: ${JSON.stringify(removalEvents)}`);
+  for (const event of removalEvents) expect(event.afterMicrotask).toBe(false);
+  const trigger = page.getByRole('button', { name: `Delete ${name}`, exact: true });
+  await trigger.click();
+  await page.getByRole('button', { name: 'Keep', exact: true }).click();
+  await expect(trigger).toBeFocused();
+  await page.getByRole('heading', { name: 'Loops', exact: true }).click();
+  await expect.poll(() => page.evaluate(() => document.activeElement === document.body)).toBe(true);
+  const response = await request.post(`/loops/${id}/runs`, { data: {} });
+  expect(response.status()).toBe(202);
+  const { run } = (await response.json()) as { run: { id: string } };
+  try {
+    // The regular five-second runs poll must commit the new badge before checking focus.
+    const row = page.getByRole('row').filter({ has: trigger });
+    await expect(row.getByRole('link', { name: 'waiting', exact: true })).toHaveAttribute(
+      'href',
+      `/app/runs/${run.id}`,
+    );
+    expect(await page.evaluate(() => document.activeElement === document.body)).toBe(true);
+    await page.keyboard.press('Space');
+    await expect(page.getByRole('alertdialog')).toHaveCount(0);
+    expect(await page.evaluate(() => document.activeElement === document.body)).toBe(true);
+  } finally {
+    await request.post(`/runs/${run.id}/cancel`);
+    await expect
+      .poll(
+        async () =>
+          ((await (await request.get(`/runs/${run.id}`)).json()) as { status: string }).status,
+      )
+      .toBe('cancelled');
+    await request.delete(`/loops/${id}`);
+  }
+});
+
 test('Settings keeps on cancel and deletes a secret after explicit confirmation', async ({
   page,
   request,
@@ -152,10 +210,12 @@ test('Settings catalog edits LiteLLM models, refuses Add, and reports a second-d
   await expect(page.getByRole('alert')).toContainText('MODEL_NOT_FOUND');
   await expect(page.getByRole('alertdialog')).toBeVisible();
   await page.getByRole('button', { name: 'Keep' }).click();
+  // Recovery follows the committed row removal, which can lag query settlement.
+  await expect(page.getByRole('heading', { name: 'Model catalog', exact: true })).toBeFocused();
   await expect(page.getByRole('button', { name: 'Delete actions-model', exact: true })).toHaveCount(
     0,
   );
-  await expect(page.getByRole('heading', { name: 'Model catalog', exact: true })).toBeFocused();
+  await expect(page.getByRole('alertdialog')).toHaveCount(0);
 });
 
 test('Settings harness switches follow keyboard toggles and update Default model', async ({
@@ -291,19 +351,16 @@ test('Settings catalog refreshes a vanished toggle and announces the reason at t
     await expect(enabled).toHaveAttribute('aria-busy', 'true');
     await expect(enabled).not.toBeChecked();
     await expect(enabled).toBeFocused();
-    const refreshed = page.waitForRequest(
-      (req) => req.method() === 'GET' && req.url() === `${url}/model-catalog`,
-    );
     release();
-    await refreshed;
+    // A GET starting does not mean React committed the removal and recovered focus.
+    await expect(
+      catalog.getByRole('heading', { name: 'Model catalog', exact: true }),
+    ).toBeFocused();
     await expect(enabled).toHaveCount(0);
     await expect(
       catalog.getByRole('status').filter({ hasText: 'no longer in the catalog' }),
     ).toHaveText('GPT-6 Luna: This model is no longer in the catalog.');
     await expect(catalog).not.toContainText('Refresh Settings');
-    await expect(
-      catalog.getByRole('heading', { name: 'Model catalog', exact: true }),
-    ).toBeFocused();
     await expect(
       page.getByLabel('Default model').getByRole('option', { name: 'GPT-6 Luna', exact: true }),
     ).toHaveCount(0);
@@ -428,7 +485,8 @@ for (const confirmWith of ['mouse', 'keyboard'] as const) {
         page,
         request,
       }) => {
-        const name = `escape-${confirmWith}-${outcome}-${escapeCount}`;
+        // Refused deletions keep their loop; repeated specs must not match its old action too.
+        const name = `escape-${confirmWith}-${outcome}-${escapeCount}-${test.info().repeatEachIndex}`;
         const id = await publishLoop(request, approvalLoop(name));
         let release!: () => void;
         const held = new Promise<void>((resolve) => {
@@ -551,11 +609,12 @@ test('revocation closes before a held key-list refresh removes the action later'
   try {
     await page.getByRole('button', { name: 'Confirm revoke late-refresh' }).click();
     await started;
-    await expect(page.getByRole('alertdialog')).toHaveCount(0, { timeout: 1000 });
+    await expect(page.getByRole('alertdialog')).toHaveCount(0);
     await expect(trigger).toBeFocused();
     release();
-    await expect(trigger).toHaveCount(0);
+    // The removal watch focuses the heading once React commits the refreshed row's removal.
     await expect(page.getByRole('heading', { name: 'API keys', exact: true })).toBeFocused();
+    await expect(trigger).toHaveCount(0);
   } finally {
     release();
   }
@@ -575,6 +634,10 @@ test('own-key revocation closes before the held 401 refetch and focuses the key 
   const held = new Promise<void>((resolve) => {
     release = resolve;
   });
+  let releaseRetry!: () => void;
+  const heldRetry = new Promise<void>((resolve) => {
+    releaseRetry = resolve;
+  });
   let arrived!: () => void;
   const started = new Promise<void>((resolve) => {
     arrived = resolve;
@@ -587,18 +650,23 @@ test('own-key revocation closes before the held 401 refetch and focuses the key 
   await page.route(`${url}/api-keys`, async (route) => {
     requests++;
     arrived();
-    if (requests === 2) retried();
-    await held;
+    if (requests === 1) await held;
+    else {
+      retried();
+      await heldRetry;
+    }
     await route.continue();
   });
   try {
     await page.getByRole('button', { name: 'Confirm revoke e2e' }).click();
     await started;
-    await expect(page.getByRole('alertdialog')).toHaveCount(0, { timeout: 1000 });
+    await expect(page.getByRole('alertdialog')).toHaveCount(0);
     release();
     await expect(page.getByRole('heading', { name: 'API key required' })).toBeVisible();
-    await expect(page.getByLabel('API key', { exact: true })).toBeFocused({ timeout: 500 });
     await retryStarted;
+    // Focus must reach the key panel while the retry cannot complete.
+    await expect(page.getByLabel('API key', { exact: true })).toBeFocused();
+    releaseRetry();
     await expect(
       page.getByRole('alert').filter({ hasText: 'Could not load api keys' }),
     ).toBeVisible();
@@ -611,11 +679,13 @@ test('own-key revocation closes before the held 401 refetch and focuses the key 
     await expect(page.getByLabel('API key', { exact: true })).toBeFocused();
   } finally {
     release();
+    releaseRetry();
   }
 });
 
 test('review: keyboard export keeps focus and announces progress', async ({ page, request }) => {
-  const id = await publishLoop(request, approvalLoop('focus-export'));
+  const name = `focus-export-${test.info().repeatEachIndex}`;
+  const id = await publishLoop(request, approvalLoop(name));
   let release!: () => void;
   const held = new Promise<void>((resolve) => {
     release = resolve;
@@ -636,14 +706,12 @@ test('review: keyboard export keeps focus and announces progress', async ({ page
   });
   try {
     await page.goto('/app/loops');
-    const button = page.getByRole('button', { name: 'Export focus-export' });
+    const button = page.getByRole('button', { name: `Export ${name}` });
     await button.focus();
     await page.keyboard.press('Enter');
     await expect(button).toContainText('Exporting');
     await expect(button).toBeFocused();
-    await expect(
-      page.getByRole('status').filter({ hasText: 'Exporting focus-export' }),
-    ).toBeVisible();
+    await expect(page.getByRole('status').filter({ hasText: `Exporting ${name}` })).toBeVisible();
     await page.keyboard.press('Enter');
     release();
     await expect(page.getByRole('alert')).toContainText('No version.');
@@ -654,7 +722,8 @@ test('review: keyboard export keeps focus and announces progress', async ({ page
 });
 
 test('review: pending double clicks cannot select status text', async ({ page, request }) => {
-  const id = await publishLoop(request, approvalLoop('selection-guard'));
+  const name = `selection-guard-${test.info().repeatEachIndex}`;
+  const id = await publishLoop(request, approvalLoop(name));
   let release!: () => void;
   const held = new Promise<void>((resolve) => {
     release = resolve;
@@ -679,8 +748,8 @@ test('review: pending double clicks cannot select status text', async ({ page, r
   });
   try {
     await page.goto('/app/loops');
-    await page.getByRole('button', { name: 'Delete selection-guard', exact: true }).click();
-    const button = page.getByRole('button', { name: 'Confirm delete selection-guard' });
+    await page.getByRole('button', { name: `Delete ${name}`, exact: true }).click();
+    const button = page.getByRole('button', { name: `Confirm delete ${name}` });
     const box = await button.boundingBox();
     if (!box) throw new Error('Confirm is not visible');
     await page.mouse.dblclick(box.x + box.width / 2, box.y + box.height / 2);

@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
-import { focusFallback } from '../../lib/focus.js';
+import { restoreFocusAfterRemoval } from '../../lib/focus.js';
 import { errorMessage } from '../../lib/utils.js';
 import { Icon } from '../icons/index.js';
 import { Alert } from './alert.js';
@@ -41,22 +41,18 @@ export function ConfirmAction({
   const confirmRef = useRef<HTMLButtonElement>(null);
   const programmaticClosesRef = useRef({ count: 0 });
   const failureRef = useRef<unknown>(undefined);
-  const restoreFocusRef = useRef<() => void>(() => {});
+  const cancelFocusRestoreRef = useRef<() => void>(() => {});
+  const restoreRemovedFocusRef = useRef<(refresh?: Promise<unknown>) => void>(() => {});
   const id = useId();
   const verb = action === 'delete' ? 'Delete' : 'Revoke';
   const icon = action === 'delete' ? 'trash' : 'cancelled';
 
-  const restoreAfter = (refreshed: void | Promise<unknown>) => {
-    const restoreFocus = restoreFocusRef.current;
-    // A list refresh can remove the opener after the dialog has already returned focus to it.
-    const afterRefresh = () => requestAnimationFrame(restoreFocus);
-    void Promise.resolve(refreshed).then(afterRefresh, afterRefresh);
-  };
-
   const dismiss = () => {
     setOpen(false);
     setError(undefined);
-    restoreAfter(onDismiss?.(failureRef.current));
+    const refresh = onDismiss?.(failureRef.current);
+    // Plain Keep/Escape relies on native dialog focus return and starts no removal watch.
+    if (refresh) restoreRemovedFocusRef.current(refresh);
     failureRef.current = undefined;
   };
 
@@ -65,30 +61,20 @@ export function ConfirmAction({
     const modal = dialogRef.current!;
     const opener = triggerRef.current!;
     const closeEvents = programmaticClosesRef.current;
-    const fallbackId =
-      returnFocusTo ?? opener.closest('section[aria-labelledby]')?.getAttribute('aria-labelledby');
-    const restoreFocus = () => {
-      if (modal.open) return;
-      const active = document.activeElement;
-      if (
-        active &&
-        active !== document.body &&
-        active !== opener &&
-        active !== modal &&
-        !modal.contains(active)
-      )
-        return;
-      const target = opener.isConnected
-        ? opener
-        : fallbackId
-          ? document.getElementById(fallbackId)
-          : null;
-      if (target) {
-        if (target === opener) target.focus();
-        else focusFallback(target);
-      }
+    const section = opener.closest<HTMLElement>('section[aria-labelledby]');
+    const fallbackId = returnFocusTo ?? section?.getAttribute('aria-labelledby');
+    const scope = section ?? opener.closest('main') ?? opener.ownerDocument.body;
+    cancelFocusRestoreRef.current();
+    restoreRemovedFocusRef.current = (refresh) => {
+      cancelFocusRestoreRef.current();
+      cancelFocusRestoreRef.current = restoreFocusAfterRemoval({
+        opener,
+        modal,
+        scope,
+        refresh,
+        target: fallbackId ? () => opener.ownerDocument.getElementById(fallbackId) : undefined,
+      });
     };
-    restoreFocusRef.current = restoreFocus;
     modal.showModal();
     keepRef.current!.focus();
     return () => {
@@ -97,8 +83,6 @@ export function ConfirmAction({
         closeEvents.count++;
         modal.close();
       }
-      // Wait for React to remove a successful deletion's row before restoring focus.
-      requestAnimationFrame(restoreFocus);
     };
   }, [open, returnFocusTo]);
 
@@ -109,10 +93,11 @@ export function ConfirmAction({
     setError(undefined);
     failureRef.current = undefined;
     dialogRef.current!.focus();
+    const restoreRemovedFocus = restoreRemovedFocusRef.current;
     try {
       await onConfirm();
       setOpen(false);
-      if (onConfirmed) restoreAfter(onConfirmed());
+      restoreRemovedFocus(onConfirmed?.());
     } catch (failure) {
       failureRef.current = failure;
       setError(errorMessage(failure));

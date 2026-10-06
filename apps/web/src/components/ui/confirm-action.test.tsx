@@ -5,6 +5,82 @@ import { describe, expect, it, vi } from 'vitest';
 import { ConfirmAction } from './confirm-action.js';
 
 describe('ConfirmAction', () => {
+  it.each(['Keep', 'Escape'] as const)(
+    'starts no removal watch after plain %s, even when unrelated content renders',
+    async (cancel) => {
+      render(
+        <ConfirmAction name="kept" consequences="Gone." onConfirm={() => Promise.resolve()} />,
+      );
+      const user = userEvent.setup();
+      const trigger = screen.getByRole('button', { name: 'Delete kept' });
+      await user.click(trigger);
+      const observe = vi.spyOn(MutationObserver.prototype, 'observe');
+      if (cancel === 'Keep') await user.click(screen.getByRole('button', { name: 'Keep' }));
+      else fireEvent(screen.getByRole('alertdialog'), new Event('cancel', { cancelable: true }));
+      expect(trigger).toHaveFocus();
+      expect(observe).not.toHaveBeenCalled();
+      trigger.blur();
+      const badge = document.createElement('span');
+      document.body.append(badge);
+      await act(() => Promise.resolve());
+      expect(document.activeElement).toBe(document.body);
+      badge.remove();
+    },
+  );
+
+  it.each(['same tick', 'after the refresh frame'] as const)(
+    'focuses the section heading when action settlement and row removal occur %s',
+    async (timing) => {
+      const frames: FrameRequestCallback[] = [];
+      vi.spyOn(globalThis, 'requestAnimationFrame').mockImplementation((callback) => {
+        frames.push(callback);
+        return frames.length;
+      });
+      const flushFrames = () => frames.splice(0).forEach((callback) => callback(0));
+      let finish!: () => void;
+      const action = new Promise<void>((resolve) => {
+        finish = resolve;
+      });
+      let remove!: () => void;
+      function Rows() {
+        const [exists, setExists] = useState(true);
+        remove = () => setExists(false);
+        return (
+          <section aria-labelledby="race-heading">
+            <h2 id="race-heading">Models</h2>
+            {exists ? (
+              <ConfirmAction
+                name="race row"
+                consequences="Gone."
+                onConfirm={() => action}
+                onConfirmed={() => Promise.resolve()}
+              />
+            ) : null}
+          </section>
+        );
+      }
+      render(<Rows />);
+      const user = userEvent.setup();
+      const trigger = screen.getByRole('button', { name: 'Delete race row' });
+      await user.click(trigger);
+      await user.click(screen.getByRole('button', { name: 'Confirm delete race row' }));
+      await act(async () => {
+        finish();
+        if (timing === 'same tick') remove();
+        await action;
+      });
+      act(flushFrames);
+      if (timing === 'after the refresh frame') {
+        // The refresh and every scheduled frame finish while React still shows the opener.
+        expect(trigger).toHaveFocus();
+        await act(() => Promise.resolve(remove()));
+        act(flushFrames);
+      }
+      expect(trigger).not.toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Models' })).toHaveFocus();
+    },
+  );
+
   it('prevents busy Escape at keydown before the browser can close or restore background focus', async () => {
     let finish!: () => void;
     render(
@@ -43,6 +119,7 @@ describe('ConfirmAction', () => {
     await user.click(trigger);
     const modal = screen.getByRole<HTMLDialogElement>('alertdialog');
     modal.open = false;
+    trigger.focus(); // The browser's native close returns focus before delivering the event.
     fireEvent(modal, new Event('close'));
     await waitFor(() => expect(trigger).toHaveFocus());
     await user.click(trigger);
