@@ -10,6 +10,7 @@ import {
   intersectsBox,
   roundedPath,
   routeBackwardEdges,
+  routeText,
   ROUTING_CLEARANCE,
   simplify,
   type Point,
@@ -125,8 +126,33 @@ describe('backward routing geometry', () => {
         [box('a', 700, 0), box('b', 0, 0), overlap],
         [edge('a', 'b')],
       );
-      expect(routes.get('a-b')).toMatchObject({ blocked: true, points: [] });
+      const route = routes.get('a-b')!;
+      expect(route).toMatchObject({ blocked: true, points: [] });
+      // The warning pill reserves its whole text and sits clear of every card, so no card paints
+      // over it (the drawn edge never shortens a warning).
+      const text = routeText('out', route);
+      expect(text).toBe('Connection: Port covered by a card; move the card');
+      expect(route.labelWidth).toBe(text.length * 7);
+      const pill = route.labelBounds!;
+      expect(pill.right - pill.left).toBe(text.length * 7 + 18);
+      for (const card of [box('a', 700, 0), box('b', 0, 0), overlap])
+        expect(
+          pill.left < card.x + card.width &&
+            pill.right > card.x &&
+            pill.top < card.y + card.height &&
+            pill.bottom > card.y,
+          JSON.stringify({ pill, card }),
+        ).toBe(false);
+      expect(route.label).toEqual({
+        x: (pill.left + pill.right) / 2,
+        y: (pill.top + pill.bottom) / 2,
+      });
     }
+    expect(routeText('loopBack', { blocked: false, unavailable: true })).toBe(
+      'loopBack: No clear route; move a card',
+    );
+    expect(routeText('loopBack', { blocked: false, unavailable: false })).toBe('loopBack');
+    expect(routeText('out', { blocked: false, unavailable: false })).toBe('');
   });
 
   it('handles an enclosed free port and many competing lanes without crossing obstacles', () => {

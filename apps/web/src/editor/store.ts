@@ -1,4 +1,10 @@
-import type { EdgeSchema, LoopDefinitionInput, NodeInput, NodeKind } from '@graphgoblin/contracts';
+import {
+  EdgeRouteSchema,
+  type EdgeSchema,
+  type LoopDefinitionInput,
+  type NodeInput,
+  type NodeKind,
+} from '@graphgoblin/contracts';
 import type { z } from 'zod';
 import { create } from 'zustand';
 import type { FormChange } from '../forms/changes.js';
@@ -122,6 +128,17 @@ export interface EditorState {
   removeNode: (nodeId: string) => void;
   connect: (connection: ConnectionRequest) => string | null;
   removeEdge: (edgeId: string) => void;
+  /**
+   * Store an edge's manual route (`edge.ui.route`, #44), or with `undefined` remove it so the edge
+   * routes automatically again. A drag ends in one call; a run of arrow-key nudges of one edge's
+   * segments merges into one step, like a node's; a reset is a step of its own.
+   */
+  setEdgeRoute: (
+    edgeId: string,
+    route: readonly number[] | undefined,
+    /** Merge into the open step with this key: a node move that resets a route it now crosses. */
+    coalesceKey?: string,
+  ) => void;
   updateMeta: (changes: { name?: string; description?: string }) => void;
   /** Replace the loop's settings; `change` as for `updateNode`'s config. */
   updateSettings: (settings: unknown, change?: FormChange) => void;
@@ -500,6 +517,25 @@ export const useEditorStore = create<EditorState>((set, get) => {
           }),
         }),
         { label: `remove edge ${edgeName(edge)}` },
+      );
+    },
+
+    setEdgeRoute: (edgeId, route, coalesceKey) => {
+      if (route !== undefined && !EdgeRouteSchema.safeParse(route).success) return;
+      const edge = get().definition?.edges.find((e) => e.id === edgeId);
+      if (!edge) return;
+      edit(
+        (d) => ({
+          ...d,
+          edges: d.edges.map((e) => {
+            if (e.id !== edgeId) return e;
+            const { ui: _previous, ...rest } = e;
+            return route ? { ...rest, ui: { route: [...route] } } : rest;
+          }),
+        }),
+        route
+          ? { label: `reroute ${edgeName(edge)}`, coalesceKey: coalesceKey ?? `route:${edgeId}` }
+          : { label: `reset route of ${edgeName(edge)}`, coalesceKey },
       );
     },
 

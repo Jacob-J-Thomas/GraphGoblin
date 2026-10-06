@@ -4,6 +4,24 @@ import { FIXTURE_TS, minimalLoop } from '@graphgoblin/contracts/testing';
 import { exportLoop, importLoop, LoopImportError } from './loop-io.js';
 
 describe('exportLoop / importLoop', () => {
+  it('carries manual edge routes (#44) through export and import unchanged', () => {
+    const base = minimalLoop();
+    const definition = LoopDefinitionSchema.parse({
+      ...base,
+      edges: [{ ...base.edges[0], ui: { route: [240, -80.5, 360] } }],
+    });
+    const exported = exportLoop(definition, FIXTURE_TS);
+    expect(exported.loop.edges[0]?.ui).toEqual({ route: [240, -80.5, 360] });
+    const imported = importLoop(JSON.parse(JSON.stringify(exported)));
+    expect(imported.definition).toEqual(definition);
+    expect(imported.issues).toEqual([]);
+    // A bare definition imports the same way; a malformed route is refused with its path.
+    expect(importLoop(definition).definition.edges[0]?.ui).toEqual({ route: [240, -80.5, 360] });
+    expect(() =>
+      importLoop({ ...definition, edges: [{ ...definition.edges[0], ui: { route: [1, 2] } }] }),
+    ).toThrow(LoopImportError);
+  });
+
   it.each([undefined, 'kev.local'])(
     'preserves classifier references and the omitted default on portable export/import (%s)',
     (model) => {

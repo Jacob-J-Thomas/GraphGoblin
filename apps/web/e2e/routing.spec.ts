@@ -55,7 +55,7 @@ async function openGraph(
     if (await button.isVisible()) await button.click();
   }
   await page.getByRole('button', { name: 'Fit view' }).click();
-  await expect(page.locator('.react-flow__edge-backward title').first()).toBeAttached();
+  await expect(page.locator('.react-flow__edge-orthogonal title').first()).toBeAttached();
   await page.evaluate(() => document.fonts.ready);
   return loop.id;
 }
@@ -88,7 +88,7 @@ for (const theme of ['dark', 'light']) {
       const definition = fixture();
       await openGraph(page, request, definition, theme);
       await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
-      const backwards = page.locator('.react-flow__edge-backward');
+      const backwards = page.locator('.react-flow__edge-orthogonal');
       expect(await backwards.count()).toBeGreaterThan(0);
       for (const path of await backwards.locator('.react-flow__edge-path').all()) {
         await expect(path).toHaveAttribute('d', /^M.*Q/);
@@ -288,6 +288,26 @@ test('vertical targets, long script route, overlapping cards and zoom', async ({
   await expect(blocked).toHaveAttribute('aria-label', /Port covered by a card/);
   await expect(blocked.locator('.react-flow__edge-path')).toHaveAttribute('d', '');
   await expect(blocked.locator('.react-flow__edge-text')).toBeVisible();
+  // toBeVisible ignores occlusion, and cards paint over edges: the warning pill must clear every
+  // card's box, and the topmost element at its centre must be the pill itself.
+  const pill = (await blocked.locator('.react-flow__edge-textbg').boundingBox())!;
+  for (const card of await page.locator('.react-flow__node').all()) {
+    const box = (await card.boundingBox())!;
+    expect(
+      pill.x < box.x + box.width &&
+        pill.x + pill.width > box.x &&
+        pill.y < box.y + box.height &&
+        pill.y + pill.height > box.y,
+      JSON.stringify({ pill, box }),
+    ).toBe(false);
+  }
+  expect(
+    await page.evaluate(
+      ({ x, y }) =>
+        !!document.elementFromPoint(x, y)?.closest('.react-flow__edge[data-id="return"]'),
+      { x: pill.x + pill.width / 2, y: pill.y + pill.height / 2 },
+    ),
+  ).toBe(true);
   await blocked.focus();
   await page.keyboard.press('Enter');
   await page.keyboard.press('Delete');
@@ -540,7 +560,7 @@ for (const count of [100, 300])
       browser: browser.version(),
       userAgent: await page.evaluate(() => navigator.userAgent),
       viewport: page.viewportSize(),
-      targets: { medianRoutingP95Ms: 8, addedFrameP95Ms: 4 },
+      targets: { medianRoutingP95Ms: 8, perDragRoutingP95Ms: 16, addedFrameP95Ms: 4 },
       medianRoutingP95Ms,
       idle: { frameP95Ms: p95(idleFrames), frameSamples: idleFrames.length },
       repetitions,
@@ -569,6 +589,8 @@ for (const count of [100, 300])
     const strictPerf = process.env['GG_ROUTING_STRICT_PERF'] === '1';
     expect(medianRoutingP95Ms).toBeLessThan(8);
     for (const result of repetitions) {
+      // A loose ceiling beside the median: no single drag may spike far past it.
+      expect(result.routingP95Ms).toBeLessThan(16);
       expect(result.routingSamples).toBeGreaterThan(60);
       expect(result.frameSamples).toBeGreaterThan(120);
       expect(result.reroutedEdgesP95).toBeGreaterThan(0);
