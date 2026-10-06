@@ -2,8 +2,9 @@
 /**
  * The #40 font sample: Loops, Runs, Events, New run, Not found, both editor node dialogs, the run
  * inspector, Settings (viewport and full page), in every face Settings → Appearance → Font offers,
- * at 1024x768 and 1440x900, in Dark and Light, plus the editor canvas at 200% zoom (a 1440x900
- * window at 200%: a 720x450 CSS viewport at device scale 2) in Dark for each face.
+ * at 1024x768 and 1440x900, in Dark and Light, plus those screens and the bare editor canvas at
+ * 200% zoom (a 1440x900 window at 200%: a 720x450 CSS viewport at device scale 2) in Dark and
+ * Light for each face.
  *
  *   node docs/qa/2026-10-05-issue-40-fonts/capture.mjs [out-dir]
  *
@@ -562,11 +563,17 @@ async function main() {
           }
         }
       }
+      const zoomScreens = list.filter((screen) => wanted.includes(screen.name));
       if (wanted.includes('editor')) {
-        // The canvas at 200%: the node cards themselves, no dialog over them.
-        const canvas = { ...editor, name: 'editor', click: undefined };
-        results.push(await shoot(browser, canvas, ZOOM, font, 'dark', dir));
-        console.log(`${font} editor-dark-${ZOOM.suffix}`);
+        // Keep the original bare-canvas zoom capture alongside the complete screen matrix.
+        zoomScreens.push({ ...editor, name: 'editor', click: undefined });
+      }
+      for (const theme of THEMES) {
+        for (const screen of zoomScreens) {
+          // Repeat every viewport capture at the same 200% geometry and in both themes.
+          results.push(await shoot(browser, screen, ZOOM, font, theme, dir));
+          console.log(`${font} ${screen.name}-${theme}-${ZOOM.suffix}`);
+        }
       }
     }
   } finally {
