@@ -1,30 +1,31 @@
 #!/usr/bin/env node
 /**
- * The #40 font sample: Loops, the editor with a node dialog open, the run inspector's timeline, and
- * Settings, in every face Settings → Appearance → Font offers, at 1024x768 and 1440x900, in Dark
- * and Light, plus the editor canvas at 200% zoom (a 1440x900 window at 200%: a 720x450 CSS
- * viewport at device scale 2) in Dark for each face.
+ * The #40 font sample: Loops, Runs, Events, New run, Not found, both editor node dialogs, the run
+ * inspector, Settings (viewport and full page), in every face Settings → Appearance → Font offers,
+ * at 1024x768 and 1440x900, in Dark and Light, plus the editor canvas at 200% zoom (a 1440x900
+ * window at 200%: a 720x450 CSS viewport at device scale 2) in Dark for each face.
  *
  *   node docs/qa/2026-10-05-issue-40-fonts/capture.mjs [out-dir]
  *
  * Run `pnpm build` first. The script starts apps/web/e2e/server.ts (the in-memory API with the
- * fake harness, serving apps/web/dist), seeds loops and runs through the API, and chooses each face
- * and theme the way Settings does (the stored `graphgoblin-font` and `graphgoblin-theme`, which the
- * boot scripts in index.html show before first paint). Each shot waits for the page's fonts to
+ * fake harness, serving apps/web/dist), seeds loops, runs, and inbound events through the API, and
+ * chooses each face and theme the way Settings does (the stored `graphgoblin-font` and
+ * `graphgoblin-theme`, which the boot scripts in index.html show before first paint). Each shot waits for the page's fonts to
  * load. It also measures every shot for readability problems and writes them to metrics.json:
  * horizontal page scroll, text cut off by an ellipsis or a clip, and the font the browser actually
- * rendered the body text and the first heading in (CSS.getPlatformFontsForNode). Playwright comes
- * from apps/web's devDependencies; on Windows the installed Edge is used, as in the E2E config (set
- * GG_E2E_BROWSER_CHANNEL to override).
+ * rendered the body text and the first heading in (CSS.getPlatformFontsForNode), and inner
+ * horizontal scroll containers. Playwright comes from apps/web's devDependencies; on Windows the
+ * installed Edge is used, as in the E2E config (set GG_E2E_BROWSER_CHANNEL to override).
  *
  * The faces are the app's own list (FONTS in apps/web/src/lib/font.ts, which the Font control
  * renders), and each face's expected families come from its rule in apps/web/src/styles/fonts.css.
  * Before every shot the script checks that the page shows the requested face (data-font on <html>
  * and the computed text and heading families), and after it that the browser drew those families;
  * anything else stops the script, so a pruned or broken face is never photographed as Geist. Set
- * GG_CAPTURE_ONLY to a comma-separated list of faces, and GG_CAPTURE_SCREENS to one of screens
- * (loops, editor-dialog, inspector, settings, editor, font-control), to take only those; their
- * metrics replace the matching entries in metrics.json.
+ * GG_CAPTURE_ONLY to a comma-separated list of faces, and GG_CAPTURE_SCREENS to a comma-separated
+ * list of screens (loops, runs, events, new-run, not-found, editor-dialog,
+ * editor-dialog-inference, inspector, settings, settings-full, editor, font-control), to take only
+ * those; their metrics replace the matching entries in metrics.json.
  */
 import { spawn } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -264,25 +265,61 @@ async function seed(base, control) {
 
   const nightly = await create(nightlyTriage(review));
   await publish(nightly);
-  return { nightly, waitingRun };
+
+  // Keep the Events screen populated with stable, recognizable inbound rows.
+  await call(base, '/events', 'POST', {
+    type: 'issue.opened',
+    payload: { repo: 'graphgoblin', number: 482, title: 'Editor crashes on paste' },
+    dedupeKey: 'issue-482',
+  });
+  await call(base, '/events', 'POST', {
+    type: 'build.finished',
+    payload: { ok: true },
+  });
+
+  return { nightly, weekly: approval, waitingRun };
 }
 
-function screens({ base, nightly, waitingRun }) {
+function screens({ base, nightly, weekly, waitingRun }) {
   return [
     { name: 'loops', url: `${base}/app/loops`, ready: 'nightly-triage' },
+    { name: 'runs', url: `${base}/app/runs`, ready: 'Children' },
+    { name: 'events', url: `${base}/app/events`, ready: 'issue.opened' },
+    { name: 'new-run', url: `${base}/app/runs/new?loop=${weekly}`, ready: 'Start run' },
+    { name: 'not-found', url: `${base}/app/nowhere`, ready: /not found/i },
     {
       name: 'editor-dialog',
       url: `${base}/app/loops/${nightly}/edit`,
       ready: 'Needs a fix?',
       click: '[data-testid="node-needs-fix"]',
     },
+    {
+      name: 'editor-dialog-inference',
+      url: `${base}/app/loops/${nightly}/edit`,
+      ready: 'Triage new issues',
+      act: async (page) => {
+        await page.locator('.react-flow__node[data-id="triage"]').focus();
+        await page.keyboard.press('Enter');
+        const dialog = page.getByRole('dialog');
+        await dialog.waitFor();
+        await dialog.getByLabel('Model', { exact: true }).waitFor();
+        await dialog.getByLabel('Effort', { exact: true }).waitFor();
+        await dialog.getByText('Advanced', { exact: true }).waitFor();
+      },
+    },
     { name: 'inspector', url: `${base}/app/runs/${waitingRun}`, ready: 'Input requested' },
     { name: 'settings', url: `${base}/app/settings`, ready: 'Model catalog' },
+    {
+      name: 'settings-full',
+      url: `${base}/app/settings`,
+      ready: 'Model catalog',
+      fullPage: true,
+    },
   ];
 }
 
 /** Readability measurements of what is on screen (see the header). */
-async function measure(page) {
+async function measure(page, fullPage) {
   const cdp = await page.context().newCDPSession(page);
   await cdp.send('DOM.enable');
   await cdp.send('CSS.enable');
@@ -293,15 +330,17 @@ async function measure(page) {
     const { fonts } = await cdp.send('CSS.getPlatformFontsForNode', { nodeId });
     return fonts.map((font) => ({ family: font.familyName, glyphs: font.glyphCount }));
   };
-  const layout = await page.evaluate(() => {
+  const layout = await page.evaluate((includeFullPage) => {
     const root = document.documentElement;
     const bodyFamily = getComputedStyle(document.body).fontFamily;
+    const visibleHeight = includeFullPage ? Math.max(innerHeight, root.scrollHeight) : innerHeight;
     const visible = (element) => {
       const box = element.getBoundingClientRect();
       // Screen-reader-only text is a 1 px box; it is never cut for a sighted reader.
-      return box.width > 2 && box.height > 2 && box.bottom > 0 && box.top < innerHeight;
+      return box.width > 2 && box.height > 2 && box.bottom > 0 && box.top < visibleHeight;
     };
     const cut = [];
+    const innerScroll = [];
     let sample;
     for (const element of document.body.querySelectorAll('*')) {
       if (!(element instanceof HTMLElement) || !element.textContent?.trim()) continue;
@@ -322,13 +361,33 @@ async function measure(page) {
       if (!clips || style.display === 'none' || style.visibility === 'hidden') continue;
       if (element.scrollWidth > element.clientWidth + 1) cut.push(element.textContent.trim());
     }
+    for (const element of document.body.querySelectorAll('*')) {
+      if (!(element instanceof HTMLElement) || !visible(element)) continue;
+      const style = getComputedStyle(element);
+      if (
+        (style.overflowX !== 'auto' && style.overflowX !== 'scroll') ||
+        element.scrollWidth <= element.clientWidth + 1
+      ) {
+        continue;
+      }
+      const table = element.matches('table') ? element : element.querySelector('table');
+      const tableName = document.querySelector('h1')?.textContent?.trim() ?? 'unnamed';
+      const label =
+        element.getAttribute('aria-label') ??
+        (table ? `${tableName} table` : undefined) ??
+        element.querySelector('caption,h1,h2,h3')?.textContent?.trim() ??
+        element.textContent?.trim().replace(/\s+/g, ' ').slice(0, 100) ??
+        element.tagName.toLowerCase();
+      innerScroll.push(label);
+    }
     return {
       font: root.getAttribute('data-font'),
       bodyFamily,
       pageScroll: root.scrollWidth > root.clientWidth,
       cut: [...new Set(cut)].slice(0, 20),
+      innerScroll: [...new Set(innerScroll)].slice(0, 20),
     };
-  });
+  }, fullPage);
   const body = await rendered('[data-gg-sample]');
   const heading = await rendered('h1, h2');
   const list = (fonts) => fonts.map((font) => `${font.family} (${font.glyphs})`).join(', ');
@@ -391,34 +450,38 @@ async function shoot(browser, screen, size, font, theme, dir) {
     serviceWorkers: 'block',
   });
   // Choose the face and theme the way Settings does: the boot scripts show them on load.
-  await context.addInitScript(
-    ([f, t]) => {
-      try {
-        window.localStorage.setItem('graphgoblin-font', f);
-        window.localStorage.setItem('graphgoblin-theme', t);
-      } catch {
-        // A page without storage keeps the defaults.
-      }
-    },
-    [font, theme],
-  );
-  const page = await context.newPage();
-  await page.goto(screen.url);
-  await page.getByText(screen.ready).first().waitFor();
-  if (screen.click) {
-    await page.locator(screen.click).click({ position: { x: 60, y: 12 } });
-    await page.getByRole('dialog').waitFor();
+  try {
+    await context.addInitScript(
+      ([f, t]) => {
+        try {
+          window.localStorage.setItem('graphgoblin-font', f);
+          window.localStorage.setItem('graphgoblin-theme', t);
+        } catch {
+          // A page without storage keeps the defaults.
+        }
+      },
+      [font, theme],
+    );
+    const page = await context.newPage();
+    await page.goto(screen.url);
+    await page.getByText(screen.ready).first().waitFor();
+    if (screen.click) {
+      await page.locator(screen.click).click({ position: { x: 60, y: 12 } });
+      await page.getByRole('dialog').waitFor();
+    }
+    await screen.act?.(page);
+    await page.evaluate(() => document.fonts.ready);
+    await page.waitForTimeout(400);
+    const name = `${screen.name}-${theme}-${size.suffix}.png`;
+    // Check before the picture is written, so a failed face never leaves a screenshot behind.
+    const expected = await expectShown(page, font, `${font}/${name}`);
+    const { metrics, drawn } = await measure(page, screen.fullPage === true);
+    expectDrawn(drawn, expected, `${font}/${name}`);
+    await page.screenshot({ path: join(dir, name), fullPage: screen.fullPage === true });
+    return { file: `${font}/${name}`, ...metrics };
+  } finally {
+    await context.close();
   }
-  await page.evaluate(() => document.fonts.ready);
-  await page.waitForTimeout(400);
-  const name = `${screen.name}-${theme}-${size.suffix}.png`;
-  // Check before the picture is written, so a failed face never leaves a screenshot behind.
-  const expected = await expectShown(page, font, `${font}/${name}`);
-  const { metrics, drawn } = await measure(page);
-  expectDrawn(drawn, expected, `${font}/${name}`);
-  await page.screenshot({ path: join(dir, name) });
-  await context.close();
-  return { file: `${font}/${name}`, ...metrics };
 }
 
 /** The Font control itself at device scale 2, keyboard focus on the chosen face (Geist). */
@@ -461,13 +524,27 @@ function chosen(variable, known) {
 
 async function main() {
   const faces = chosen('GG_CAPTURE_ONLY', FONTS);
-  const names = ['loops', 'editor-dialog', 'inspector', 'settings', 'editor', 'font-control'];
+  const names = [
+    'loops',
+    'runs',
+    'events',
+    'new-run',
+    'not-found',
+    'editor-dialog',
+    'editor-dialog-inference',
+    'inspector',
+    'settings',
+    'settings-full',
+    'editor',
+    'font-control',
+  ];
   const wanted = chosen('GG_CAPTURE_SCREENS', names);
   const { child, base, control } = await startServer();
   const results = [];
+  let browser;
   try {
     const seeded = await seed(base, control);
-    const browser = await chromium.launch(channel ? { channel } : {});
+    browser = await chromium.launch(channel ? { channel } : {});
     const list = screens({ base, ...seeded });
     const editor = list.find((screen) => screen.name === 'editor-dialog');
     mkdirSync(out, { recursive: true });
@@ -492,8 +569,8 @@ async function main() {
         console.log(`${font} editor-dark-${ZOOM.suffix}`);
       }
     }
-    await browser.close();
   } finally {
+    await browser?.close();
     child.stdin.end('stop\n');
   }
   // A partial run replaces its own entries in place and keeps the rest of the set's measurements;
