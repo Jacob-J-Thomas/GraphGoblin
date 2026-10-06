@@ -363,9 +363,10 @@ describe('undo and redo', () => {
     clock += 100;
     store().setEdgeRoute(id, [204]);
     expect(store().past.map((entry) => entry.label)).toEqual(['reroute start to done']);
-    // A drag closes the step before it, so its single change is a step of its own.
+    // A drag closes the step before it and on release, so a following nudge starts a new step.
     store().closeStep();
     store().setEdgeRoute(id, [240, 300, 260]);
+    store().closeStep();
     // Reset is a step of its own, however soon it follows.
     store().setEdgeRoute(id, undefined);
     expect(edge()).not.toHaveProperty('ui');
@@ -403,6 +404,31 @@ describe('undo and redo', () => {
     expect(store().past).toHaveLength(steps + 1);
     store().undo();
     expect(edge().ui).toEqual({ route: [240, 300, 260] });
+  });
+
+  it('separates a released route drag from immediate nudges, while those nudges still coalesce', () => {
+    store().load('L1', newLoopDefinition('a'));
+    const id = store().definition!.edges[0]!.id;
+    const route = () => store().definition!.edges[0]!.ui?.route;
+    const dragged = [240, 300, 260];
+    store().closeStep();
+    store().setEdgeRoute(id, dragged);
+    store().closeStep();
+    clock += 100;
+    store().setEdgeRoute(id, [240, 322, 260]);
+    clock += 100;
+    store().setEdgeRoute(id, [240, 344, 260]);
+    expect(store().past.map((step) => step.label)).toEqual([
+      'reroute start to done',
+      'reroute start to done',
+    ]);
+    store().undo();
+    expect(route()).toEqual(dragged);
+    store().undo();
+    expect(route()).toBeUndefined();
+    store().redo();
+    store().redo();
+    expect(route()).toEqual([240, 344, 260]);
   });
 
   it('merges a form’s unparsed text with its edits, and brings it back on undo', () => {

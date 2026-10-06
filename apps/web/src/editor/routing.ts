@@ -43,11 +43,11 @@ export interface RoutingEdge {
    */
   route?: readonly number[];
   /**
-   * The author put the route where it is (a stored route, a segment drag): draw it even across a
-   * card, flagged `crossing`. Without it (a route a moving card now lands on), a crossing route
-   * falls back to the automatic route.
+   * Cards the author deliberately crossed. A crossing outside this set falls back to the
+   * automatic route. During a node drag the set is pinned to the intersections at drag start;
+   * stored routes and segment edits allow every current card.
    */
-  allowCrossing?: boolean;
+  allowCrossing?: ReadonlySet<string>;
 }
 export interface RoutedEdge extends Record<string, unknown> {
   /** Ordered orthogonal points from the source port's tip to the target port's tip. */
@@ -71,6 +71,8 @@ export interface RoutedEdge extends Record<string, unknown> {
   /** Only a port inside another real card is blocked. Search failure has a separate explanation. */
   blocked: boolean;
   unavailable: boolean;
+  /** The last attempt ignored protruding handles while keeping card-body clearance. */
+  handlesIgnored?: boolean;
   /** Drawn from the edge's fixed (manual) route rather than found by the router. */
   manual?: boolean;
   /** A manual route the author left crossing a card: drawn dotted, as a warning. */
@@ -188,7 +190,12 @@ const sameConnection = (a: RoutingEdge, b: RoutingEdge | undefined) =>
   !!b && a.source === b.source && a.target === b.target && a.port === b.port;
 /** The same connection with the same fixed route: a reused route stays valid. */
 export const sameEdge = (a: RoutingEdge, b: RoutingEdge | undefined): boolean =>
-  sameConnection(a, b) && sameRoute(a.route, b!.route) && !a.allowCrossing === !b!.allowCrossing;
+  sameConnection(a, b) &&
+  sameRoute(a.route, b!.route) &&
+  sameCrossings(a.allowCrossing, b!.allowCrossing);
+
+const sameCrossings = (a: ReadonlySet<string> | undefined, b: ReadonlySet<string> | undefined) =>
+  a === b || ((a?.size ?? 0) === (b?.size ?? 0) && (!a || [...a].every((id) => b?.has(id))));
 export const routeMessage = (route: Pick<RoutedEdge, 'blocked' | 'unavailable'>): string =>
   route.blocked
     ? 'Port covered by a card; move the card'
@@ -354,7 +361,6 @@ function routeOne(
   targetRank: number,
   clearance: number,
   workspace: SearchWorkspace,
-  squeeze = false,
 ): { route: RoutedEdge; expansions: number } {
   const { source, target, from, to } = work;
   const fullPadding = Math.max(0, clearance) + ROUTING_RADIUS;
@@ -373,10 +379,8 @@ function routeOne(
         Math.max(box.left - port.x, port.x - box.right, box.top - port.y, port.y - box.bottom, 0),
       );
     }
-  // A squeeze (handles ignored) is the zero-clearance last resort: no other padding applies.
-  const paddings = squeeze
-    ? [0]
-    : [...new Set([fullPadding, Math.min(fullPadding / 2, room / 2), 0])];
+  // Both attempts use the same ladder: ignoring handles still needs room to escape card bodies.
+  const paddings = [...new Set([fullPadding, Math.min(fullPadding / 2, room / 2), 0])];
   let expansions = 0;
   type Column = { point: Point; range?: [number, number] };
   const columnClear = (column: Column, y: number, padding: number) => {
@@ -785,6 +789,7 @@ function sameRouted(before: RoutedEdge, route: RoutedEdge): boolean {
     before.labelWidth === route.labelWidth &&
     before.blocked === route.blocked &&
     before.unavailable === route.unavailable &&
+    before.handlesIgnored === route.handlesIgnored &&
     before.manual === route.manual &&
     before.crossing === route.crossing &&
     before.suspended === route.suspended &&
@@ -859,9 +864,15 @@ function reservationDifference(before: RoutedEdge, after: RoutedEdge): Box[] {
 }
 
 /** Whether any segment enters a card's body (handles do not count: a route may touch a port). */
-function crossesAnyCard(points: readonly Point[], index: BoxIndex): boolean {
+function crossesAnyCard(
+  points: readonly Point[],
+  index: BoxIndex,
+  allowed?: ReadonlySet<string>,
+): boolean {
   for (let i = 1; i < points.length; i += 1) {
-    const cards = index.query(bounds([points[i - 1]!, points[i]!])).filter((box) => !box.handle);
+    const cards = index
+      .query(bounds([points[i - 1]!, points[i]!]))
+      .filter((box) => !box.handle && !allowed?.has(box.id));
     if (crossesCards([points[i - 1]!, points[i]!], cards)) return true;
   }
   return false;
@@ -1035,7 +1046,7 @@ export function createRoutingPlan(
     statistics.rerouted += 1;
     const fixed = item.edge.route && drawnPoints(item.edge.route, item.from, item.to);
     const crossing = !!fixed && crossesAnyCard(fixed, index);
-    if (fixed && (!crossing || item.edge.allowCrossing)) {
+    if (fixed && (!crossing || !crossesAnyCard(fixed, index, item.edge.allowCrossing))) {
       const route = manualRoute(item, fixed, crossing, index, reservations);
       dependencies.set(id, {
         boxes: index.reads,
@@ -1054,7 +1065,7 @@ export function createRoutingPlan(
       compareReservation(id);
       continue;
     }
-    const attempt = (squeeze = false) => {
+    const attempt = () => {
       // A route starts and ends on its own cards' handles: only other cards' handles need room.
       index.exempt = [item.source.id, item.target.id];
       const result = routeOne(
@@ -1065,20 +1076,18 @@ export function createRoutingPlan(
         targetRank,
         clearance,
         workspace,
-        squeeze,
       );
       index.exempt = [];
       return result;
     };
     let { route: routed, expansions } = attempt();
     if (routed.unavailable && index.hasHandles) {
-      // Last resort: squeeze past protruding handles at zero clearance (never through a card)
-      // rather than lose a connection that runs along touching cards.
+      // Last resort: ignore protruding handles with the same padding ladder (never card bodies).
       index.handles = false;
-      const squeezed = attempt(true);
+      const squeezed = attempt();
       index.handles = true;
       expansions += squeezed.expansions;
-      routed = squeezed.route;
+      routed = { ...squeezed.route, handlesIgnored: true };
     }
     // A route with at least the full radius of padding cannot curve into a card. A tighter one
     // reads the boxes beside each corner, as part of this route's dependencies.

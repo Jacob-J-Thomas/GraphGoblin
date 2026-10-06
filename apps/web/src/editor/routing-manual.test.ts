@@ -32,7 +32,7 @@ const withRoute = (
   edges: readonly RoutingEdge[],
   id: string,
   route: number[],
-  allowCrossing = false,
+  allowCrossing?: ReadonlySet<string>,
 ) =>
   edges.map((e) =>
     e.id === id ? { ...e, route, ...(allowCrossing ? { allowCrossing } : {}) } : e,
@@ -215,7 +215,7 @@ describe('manual routes in the router (#44)', () => {
     // A route the author put across a card (a stored one, a drag) is drawn there, flagged.
     const preview = createRoutingPlan(
       [...nodes, blocker],
-      withRoute(edges, 'return', [1120, 420, 260], true),
+      withRoute(edges, 'return', [1120, 420, 260], new Set(['blocker'])),
     );
     expect(preview.routes.get('return')).toMatchObject({ manual: true, crossing: true });
     expect(preview.suspended.size).toBe(0);
@@ -254,7 +254,12 @@ describe('manual routes in the router (#44)', () => {
     let previous = createRoutingPlan(nodes, withRoute(edges, id, route), undefined, base);
     expect(previous.directions.get(id)).toBe(base.directions.get(id));
     for (let step = 1; step <= 12; step += 1) {
-      const dragged = withRoute(edges, id, [route[0]!, route[1]! + step * 3, route[2]!], true);
+      const dragged = withRoute(
+        edges,
+        id,
+        [route[0]!, route[1]! + step * 3, route[2]!],
+        new Set(nodes.map((n) => n.id)),
+      );
       const next = createRoutingPlan(nodes, dragged, undefined, previous);
       expect(next.routes, `segment drag ${step}`).toEqual(createRoutingPlan(nodes, dragged).routes);
       // The manual route itself, plus the automatic routes whose candidate lanes it changed: a

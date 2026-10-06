@@ -452,6 +452,29 @@ describe('Canvas handlers', () => {
     act(() => flow().onEdgesChange!([{ type: 'select', id: 'e1', selected: false }]));
     expect(flow().edges!.find((e) => e.id === 'e1')!.selected).toBe(false);
   });
+
+  it.each([false, true])(
+    'keeps the replacement edge selected in either callback order (replacement first: %s)',
+    (replacementFirst) => {
+      renderCanvas();
+      act(() => flow().onEdgesChange!([{ type: 'select', id: 'e11', selected: true }]));
+      const changes = [
+        { type: 'select' as const, id: 'e1', selected: true },
+        { type: 'select' as const, id: 'e11', selected: false },
+      ];
+      act(() => flow().onEdgesChange!(replacementFirst ? changes : [...changes].reverse()));
+      expect(
+        flow()
+          .edges!.filter((e) => e.selected)
+          .map((e) => e.id),
+      ).toEqual(['e1']);
+      // A deselection for some other edge cannot clear the current one.
+      act(() => flow().onEdgesChange!([{ type: 'select', id: 'e11', selected: false }]));
+      expect(flow().edges!.find((e) => e.id === 'e1')!.selected).toBe(true);
+      act(() => flow().onEdgesChange!([{ type: 'select', id: 'e1', selected: false }]));
+      expect(flow().edges!.some((e) => e.selected)).toBe(false);
+    },
+  );
 });
 
 describe('manual edge routes (#44)', () => {
@@ -686,6 +709,13 @@ describe('manual edge routes (#44)', () => {
       act(() =>
         flow().onNodesChange!([{ type: 'position', id: 'start', position, dragging: true }]),
       );
+      expect(edge('start-work').type).toBe(addsCrossing ? 'smoothstep' : 'orthogonal');
+      expect(route('start-work')).toEqual(stored);
+      expect(edge('start-work').ariaLabel).toContain(
+        addsCrossing
+          ? 'manual route set aside under a moving card'
+          : 'manual route, crosses a card',
+      );
       act(() =>
         flow().onNodesChange!([{ type: 'position', id: 'start', position, dragging: false }]),
       );
@@ -753,5 +783,25 @@ describe('manual edge routes (#44)', () => {
     expect(
       screen.getByText('This route has as many segments as a route can hold'),
     ).toBeInTheDocument();
+  });
+
+  it('keeps a nudge immediately after a route drag in its own undo step', () => {
+    render(<Live />);
+    select('return');
+    const lane = () => handle('Route segment 3 of 5, horizontal');
+    fireEvent.pointerDown(lane(), { button: 0, clientX: 0, clientY: 0 });
+    fireEvent.pointerMove(window, { clientX: 0, clientY: 40 });
+    fireEvent.pointerUp(window);
+    const dragged = route('return');
+    expect(dragged).toBeDefined();
+    expect(store().openStep).toBeUndefined();
+    clock += 100;
+    fireEvent.keyDown(lane(), { key: 'ArrowDown' });
+    expect(route('return')).not.toEqual(dragged);
+    expect(labels()).toEqual(['reroute done loopBack to work', 'reroute done loopBack to work']);
+    act(() => store().undo());
+    expect(route('return')).toEqual(dragged);
+    act(() => store().undo());
+    expect(route('return')).toBeUndefined();
   });
 });

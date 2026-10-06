@@ -342,15 +342,21 @@ test('an existing deliberate crossing keeps its route until a move introduces an
     await page.mouse.move(box.x + 60 + dx * zoom, box.y + 12, { steps: 12 });
   };
   await moveStart(-20);
+  await expect(edge(page, 'start-work')).toHaveAttribute(
+    'aria-label',
+    /manual route, crosses a card/,
+  );
   await page.mouse.up();
   await saved(page);
   expect(await storedRoute(request, loopId, 'start-work')).toEqual([400]);
   await page.getByRole('button', { name: 'Undo move start', exact: true }).click();
   await saved(page);
   await moveStart(300);
-  await expect
-    .poll(async () => (await cardsCrossed(page, 'start-work', [])).sort())
-    .toEqual(['side', 'start']);
+  await expect(edge(page, 'start-work')).toHaveAttribute(
+    'aria-label',
+    /set aside under a moving card/,
+  );
+  await expect(path(page, 'start-work')).not.toHaveClass(/gg-route-crossing/);
   await page.mouse.up();
   await saved(page);
   expect(await storedRoute(request, loopId, 'start-work')).toBeUndefined();

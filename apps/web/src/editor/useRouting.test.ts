@@ -47,9 +47,27 @@ describe('routing measurement and cache', () => {
     ).toBe(manual);
     const preview = route(
       geometry,
-      routed.map((e) => (e.route ? { ...e, allowCrossing: true } : e)),
+      routed.map((e) => (e.route ? { ...e, allowCrossing: new Set(['work']) } : e)),
     );
     expect(preview).not.toBe(manual);
+    // Equal sets, regardless of insertion order or identity, keep the cache; different card ids
+    // with the same size must invalidate it, or a node-drag preview can keep a new crossing.
+    const permitted = routed.map((e) =>
+      e.route ? { ...e, allowCrossing: new Set(['work', 'check']) } : e,
+    );
+    const allowed = route(geometry, permitted);
+    expect(
+      route(
+        geometry,
+        routed.map((e) => (e.route ? { ...e, allowCrossing: new Set(['check', 'work']) } : e)),
+      ),
+    ).toBe(allowed);
+    expect(
+      route(
+        geometry,
+        routed.map((e) => (e.route ? { ...e, allowCrossing: new Set(['done', 'work']) } : e)),
+      ),
+    ).not.toBe(allowed);
     const moved = route(
       geometry,
       routed.map((e) => (e.route ? { ...e, route: [1120, 440, 260] } : e)),

@@ -8,6 +8,7 @@ import {
 import {
   backwardDirection,
   createRoutingPlan,
+  intersectsBox,
   routeBackwardEdges,
   routeMessage,
   ROUTING_RADIUS,
@@ -51,7 +52,7 @@ function geometry(nodes: readonly RoutingNode[], edge: RoutingEdge, route: Route
     expect(a.x === b.x || a.y === b.y, edge.id).toBe(true);
     // Other cards' protruding handles count as part of their card for clearance (#18 review), at
     // up to 12 px. A route's own ports sit on its own cards' handles, which it may pass, and the
-    // zero-clearance last resort may squeeze past any handle; routes with padding are checked.
+    // last attempt may ignore handles at any padding; it must still avoid every card body.
     for (const n of handleObstacles(nodes, edge, route)) {
       const pad = Math.max(
         0,
@@ -139,7 +140,9 @@ function obstaclesOf(nodes: readonly RoutingNode[]) {
 
 function handleObstacles(nodes: readonly RoutingNode[], edge: RoutingEdge, route: RoutedEdge) {
   return obstaclesOf(nodes).filter(
-    (o) => !o.handle || (route.padding > 0 && o.id !== edge.source && o.id !== edge.target),
+    (o) =>
+      !o.handle ||
+      (!route.handlesIgnored && route.padding > 0 && o.id !== edge.source && o.id !== edge.target),
   );
 }
 
@@ -194,6 +197,7 @@ function lanePriority(nodes: readonly RoutingNode[], routes: Iterable<RoutedEdge
         const horizontalHit =
           left === right ||
           obstacles.some((n) => {
+            if (n.handle && route.handlesIgnored) return false;
             const pad = n.handle ? 12 : 32;
             return (
               y > n.y - pad &&
@@ -204,6 +208,7 @@ function lanePriority(nodes: readonly RoutingNode[], routes: Iterable<RoutedEdge
           });
         const verticalHit = [start!, end!].some((p) =>
           obstacles.some((n) => {
+            if (n.handle && route.handlesIgnored) return false;
             const pad = n.handle ? Math.min(route.padding, 12) : route.padding;
             return (
               p.x > n.x - pad &&
@@ -241,6 +246,60 @@ function lanePriority(nodes: readonly RoutingNode[], routes: Iterable<RoutedEdge
 }
 
 describe('routing review regressions', () => {
+  it.each([
+    { gap: 16, baseFound: 586 },
+    { gap: 24, baseFound: 587 },
+    { gap: 32, baseFound: 587 },
+  ])(
+    'finds at least the base router’s $baseFound routes in seeded 24-card grids with $gap px gaps',
+    ({ gap, baseFound }) => {
+      // Baselines measured with all four routing modules from cfa162d, seeds 1..32, 23 loop-backs
+      // per grid. Facing ports share a height and protrude 6 px, exposing the handle-less retry.
+      let found = 0;
+      for (let initialSeed = 1; initialSeed <= 32; initialSeed += 1) {
+        let seed = initialSeed;
+        const random = () => (seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 2 ** 32;
+        const nodes = Array.from({ length: 24 }, (_, i) => {
+          const n = box(
+            'n' + i,
+            (i % 6) * (184 + gap),
+            Math.floor(i / 6) * (122 + gap),
+            184,
+            122,
+            6,
+          );
+          n.outputs = { loopBack: { x: n.x + 190, y: n.y + 61 } };
+          return n;
+        });
+        const edges = nodes.slice(1).map((n, i) => ({
+          ...connection(n.id, nodes[Math.floor(random() * (i + 1))]!.id, 'e' + i),
+          port: 'loopBack',
+        }));
+        const plan = createRoutingPlan(nodes, edges);
+        for (const route of plan.routes.values()) {
+          expect(route.blocked).toBe(false);
+          if (route.unavailable) continue;
+          found += 1;
+          for (let i = 1; i < route.points.length; i += 1)
+            for (const n of nodes)
+              expect(
+                intersectsBox(route.points[i - 1]!, route.points[i]!, {
+                  id: n.id,
+                  left: n.x,
+                  right: n.x + n.width,
+                  top: n.y,
+                  bottom: n.y + n.height,
+                }),
+                `gap ${gap}, seed ${initialSeed}, card ${n.id}`,
+              ).toBe(false);
+        }
+        labelGeometry(plan.routes.values(), nodes);
+      }
+      expect(found).toBeGreaterThanOrEqual(baseFound);
+    },
+    60_000,
+  );
+
   it.each([1, -1])(
     'keeps a forward loop-back Z detour without a middle horizontal (direction %s)',
     (direction) => {

@@ -27,6 +27,7 @@ import {
 import { closePopovers } from '../components/ui/index.js';
 import {
   crossesCards,
+  crossedCardIds,
   drawnPoints,
   findSegment,
   midpoint,
@@ -276,11 +277,7 @@ export function newlyCrossed(
     const to = nodes.find((n) => n.id === edge.to.node)?.input;
     if (!from || !to) return new Set<string>();
     const points = drawnPoints(edge.ui!.route, from, to);
-    return new Set(
-      cardBoxes(nodes)
-        .filter((box) => crossesCards(points, [box]))
-        .map((box) => box.id),
-    );
+    return crossedCardIds(points, cardBoxes(nodes));
   };
   const before = plan.nodes.map((n) => (n === card ? placed(n, stored.x, stored.y) : n));
   const after = plan.nodes.map((n) => (n === card ? placed(n, position.x, position.y) : n));
@@ -347,27 +344,29 @@ export function Canvas({
     nodesRef.current = new Map(next.map((node) => [node.id, node]));
     return next;
   }, [definition, cardData, selected, measured, dragging]);
-  // Manual routes the author left crossing a card when a card drag began: they stay drawn. Any
-  // other manual route that the moving card lands on shows its automatic route instead, and is
-  // removed if the card is released there.
-  const [nodeDrag, setNodeDrag] = useState<ReadonlySet<string>>();
+  // Pin each manual route's deliberate intersections at drag start. A newly crossed card sets
+  // the route aside during the drag, matching the reset when the card is released there.
+  const [nodeDrag, setNodeDrag] = useState<ReadonlyMap<string, ReadonlySet<string>>>();
+  const authoredCrossings = useMemo(
+    () => new Set(definition.nodes.map((n) => n.id)),
+    [definition.nodes],
+  );
   const routingEdges = useMemo(
     () =>
       definition.edges.map((edge) => {
         const preview = routeDrag?.edgeId === edge.id ? routeDrag.route : undefined;
         const route = preview ?? edge.ui?.route;
+        const allowed = preview || !nodeDrag ? authoredCrossings : nodeDrag.get(edge.id);
         return {
           id: edge.id,
           source: edge.from.node,
           target: edge.to.node,
           port: edge.from.port,
           ...(route ? { route } : {}),
-          ...(route && (preview || !nodeDrag || nodeDrag.has(edge.id))
-            ? { allowCrossing: true }
-            : {}),
+          ...(route && allowed ? { allowCrossing: allowed } : {}),
         };
       }),
-    [definition.edges, routeDrag, nodeDrag],
+    [definition.edges, routeDrag, nodeDrag, authoredCrossings],
   );
   const plan = useRouting(routingEdges);
   const { routes } = plan;
@@ -431,6 +430,7 @@ export function Canvas({
           const before = normalize(base.route, base.from, base.to);
           if (sameRoute(normalize(latest, base.from, base.to), before)) return;
           if (!store(edgeId, latest, base.from, base.to)) return;
+          closeStep();
           announce(`Route changed.${crossing(latest, base.from, base.to)}`);
         };
         const release = () => stop(true);
@@ -510,8 +510,16 @@ export function Canvas({
 
   const onEdgesChange = useCallback(
     (changes: EdgeChange[]) => {
+      setSelectedEdge((current) => {
+        const replacement = changes.find((change) => change.type === 'select' && change.selected);
+        if (replacement?.type === 'select') return replacement.id;
+        return changes.some(
+          (change) => change.type === 'select' && !change.selected && change.id === current,
+        )
+          ? undefined
+          : current;
+      });
       for (const change of changes) {
-        if (change.type === 'select') setSelectedEdge(change.selected ? change.id : undefined);
         if (change.type === 'remove') removeEdge(change.id);
       }
     },
@@ -543,8 +551,14 @@ export function Canvas({
     closeCanvasPopovers();
     // Each drag is an undo step of its own, however soon it follows the last move.
     closeStep();
-    const crossing = [...planRef.current.routes].filter(([, route]) => route.crossing);
-    setNodeDrag(new Set(crossing.map(([edgeId]) => edgeId)));
+    const cards = cardBoxes(planRef.current.nodes);
+    setNodeDrag(
+      new Map(
+        [...planRef.current.routes]
+          .filter(([, route]) => route.manual)
+          .map(([edgeId, route]) => [edgeId, crossedCardIds(route.points, cards)]),
+      ),
+    );
   }, [closeCanvasPopovers, closeStep]);
 
   const onDrop = (event: DragEvent<HTMLDivElement>) => {

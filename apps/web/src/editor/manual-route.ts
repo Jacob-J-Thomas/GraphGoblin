@@ -183,6 +183,13 @@ export function crossesCards(points: readonly Point[], cards: readonly Box[]): b
   return false;
 }
 
+/** The specific cards a route enters, for preserving deliberate intersections during a move. */
+export const crossedCardIds = (
+  points: readonly Point[],
+  cards: readonly Box[],
+): ReadonlySet<string> =>
+  new Set(cards.filter((card) => crossesCards(points, [card])).map((card) => card.id));
+
 /**
  * The orthogonal points xyflow's smoothstep draws from a right-hand port to a left-hand one, so a
  * forward edge's handles sit on its drawn path and a drag starts from exactly that shape.
