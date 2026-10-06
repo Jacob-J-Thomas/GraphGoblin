@@ -103,10 +103,11 @@ export function Checkbox({
 }
 
 /**
- * The `<label>` around a Checkbox and its text: the whole line is the target, at least 44 px tall
+ * The `<label>` around a Checkbox and its text: the whole line is the target, at least 44 px each way
  * where the pointer is coarse (the box keeps its size).
  */
-export const CHECKBOX_LABEL = 'flex cursor-pointer items-center gap-2 pointer-coarse:min-h-11';
+export const CHECKBOX_LABEL =
+  'flex cursor-pointer items-center gap-2 pointer-coarse:min-h-11 pointer-coarse:min-w-11';
 
 /**
  * The required marker after a label: an asterisk in the error tone. It is decorative: the control

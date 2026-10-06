@@ -1,7 +1,8 @@
 /**
  * Responsive review (#41): both stored themes, every page and transient state at four widths,
  * all nine node dialogs at 360/768 px, pointer and keyboard authoring at 768 px, coarse-pointer
- * targets (including radio labels and short choices), and reflow at 200% zoom. Group related
+ * targets (including disclosures, code fields, checkbox/radio labels, and port hit boxes), and
+ * reflow at 200% zoom. Group related
  * states instead of creating a separate browser test for each matrix cell.
  */
 import { writeFile } from 'node:fs/promises';
@@ -563,11 +564,11 @@ for (const theme of ['dark', 'light'] as const) {
       page.evaluate(() =>
         [
           ...document.querySelectorAll<HTMLElement>(
-            'button, a[href], [role=link], input:not([type=checkbox]):not([type=file]), select',
+            'button, a[href], [role=link], input:not([type=file]), select, summary, .cm-editor',
           ),
         ]
           .map((el) =>
-            el instanceof HTMLInputElement && el.type === 'radio'
+            el instanceof HTMLInputElement && (el.type === 'radio' || el.type === 'checkbox')
               ? (el.closest('label') ?? el)
               : el,
           )
@@ -594,7 +595,7 @@ for (const theme of ['dark', 'light'] as const) {
       browser,
       baseURL,
       request,
-    }) => {
+    }, testInfo) => {
       // This grouped test traverses six screens and nine dialogs, then closes its touch context.
       test.setTimeout(120_000);
       const { loopId, runId } = await seed(request);
@@ -610,6 +611,21 @@ for (const theme of ['dark', 'light'] as const) {
         theme,
       );
       const page = await context.newPage();
+      const measurements: { theme: string; target: string; width: number; height: number }[] = [];
+      const measure = async (target: string, locator: Locator) => {
+        await page.evaluate(() => document.fonts.ready);
+        const box = (await locator.boundingBox())!;
+        const row = {
+          theme,
+          target,
+          width: Math.round(box.width * 100) / 100,
+          height: Math.round(box.height * 100) / 100,
+        };
+        expect(box.width, `${target}: touch width`).toBeGreaterThanOrEqual(44);
+        expect(box.height, `${target}: touch height`).toBeGreaterThanOrEqual(44);
+        measurements.push(row);
+        console.log(`touch ${theme}: ${target} ${row.width} x ${row.height} px`);
+      };
       try {
         for (const [path, ready] of [
           ['/app/settings', 'GPT-5.5'],
@@ -623,6 +639,37 @@ for (const theme of ['dark', 'light'] as const) {
           expect(await page.evaluate(() => matchMedia('(pointer: coarse)').matches)).toBe(true);
           await expect(page.getByText(ready).filter({ visible: true }).first()).toBeVisible();
           expect(await smallTargets(page), path).toEqual([]);
+          if (path === `/app/runs/${runId}`) {
+            for (const name of ['Full thread JSON', /^Node progress/]) {
+              const toggle = page.getByRole('button', { name });
+              await measure(await toggle.innerText(), toggle);
+              await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+              await toggle.tap();
+              await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+              const panel = page.locator(`[id="${await toggle.getAttribute('aria-controls')}"]`);
+              await expect(panel).toBeVisible();
+              await toggle.tap();
+              await expect(panel).toBeHidden();
+            }
+          }
+          if (path === `/app/loops/${loopId}/edit`) {
+            // The pseudo-element is measured in CSS pixels before the canvas's pan/zoom transform.
+            const ports = await page.locator('.react-flow__handle').evaluateAll((handles) =>
+              handles.map((handle) => {
+                const hit = getComputedStyle(handle, '::after');
+                return { width: parseFloat(hit.width), height: parseFloat(hit.height) };
+              }),
+            );
+            expect(ports.length).toBeGreaterThan(0);
+            for (const box of ports) {
+              expect(box.width, 'port touch width').toBe(44);
+              expect(box.height, 'port touch height').toBe(20);
+            }
+            measurements.push({ theme, target: 'Port hit box (each handle)', ...ports[0]! });
+            console.log(
+              `touch ${theme}: port hit boxes ${ports[0]!.width} x ${ports[0]!.height} px`,
+            );
+          }
         }
         // Exercise every node's radios and short choices, including inference's boolean "No".
         const { loopId: dialogs, kinds } = await seedDialogs(request);
@@ -634,7 +681,20 @@ for (const theme of ['dark', 'light'] as const) {
           await expect(dialog).toBeVisible();
           if (await dialog.getByRole('button', { name: /^Advanced\b/ }).count())
             await openAdvanced(dialog);
+          if (kind === 'mutate') await openItem(dialog, 'Operations 1');
           expect(await smallTargets(page), `${kind} touch controls`).toEqual([]);
+          for (const editor of await dialog.locator('.cm-editor').filter({ visible: true }).all()) {
+            const content = editor.locator('.cm-content');
+            await measure(`${kind}: ${await content.getAttribute('aria-label')}`, editor);
+            expect((await content.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+          }
+          if (kind === 'wait') {
+            const checkbox = dialog.getByRole('checkbox', { name: 'ui', exact: true });
+            await measure('wait: ui checkbox label', checkbox.locator('xpath=ancestor::label'));
+            const checked = await checkbox.isChecked();
+            await checkbox.locator('xpath=ancestor::label').tap();
+            await expect(checkbox).toBeChecked({ checked: !checked });
+          }
           if (kind === 'inference') {
             const short = dialog.getByRole('radio', { name: 'No', exact: true });
             expect(await short.count()).toBeGreaterThan(0);
@@ -649,6 +709,9 @@ for (const theme of ['dark', 'light'] as const) {
           await page.keyboard.press('Escape');
           await expect(dialog).toHaveCount(0);
         }
+        const path = testInfo.outputPath('touch-targets.json');
+        await writeFile(path, JSON.stringify(measurements, null, 2) + '\n');
+        await testInfo.attach('touch target sizes', { path, contentType: 'application/json' });
       } finally {
         await context.close();
       }
