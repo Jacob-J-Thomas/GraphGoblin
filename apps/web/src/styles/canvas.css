@@ -147,9 +147,9 @@
 
 /*
  * Touch (#41): on a coarse pointer the zoom, fit, and lock buttons are 44 px, and each port handle
- * takes a touch 44 px wide and 20 px tall around its 12 px dot (the dot keeps its look; ports stack
- * 20 px apart, so taller boxes would overlap), so a connection starts from a finger. The node
- * editor's Connect form is the full-size alternative to dragging an edge.
+ * counter-scales its absolute hit box without changing card layout. Height stops at the fixed
+ * 46 px output pitch; width stops at half the gap to the next card. Zoomed-out targets can be
+ * smaller than 44 screen pixels. The node editor's Connect form is the full-size alternative.
  */
 @media (pointer: coarse) {
   .react-flow__controls-button {
@@ -160,8 +160,20 @@
   .react-flow__handle::after {
     content: '';
     position: absolute;
-    /* The 12 px dot's positioning box excludes its two 2 px borders: 8 + 36 by 8 + 12. */
-    inset: -6px -18px;
+    top: 50%;
+    left: 50%;
+    /* Two layout subpixels cover rounding when the hit box is transformed back to the screen. */
+    width: min(
+      calc(44px / var(--gg-canvas-zoom, 1) + 0.03125px),
+      var(--gg-port-max-width, 88.03125px)
+    );
+    height: min(46px, calc(44px / var(--gg-canvas-zoom, 1) + 0.03125px));
+    transform: translate(-50%, -50%);
+  }
+
+  .gg-node-port {
+    height: 44px;
+    line-height: 44px;
   }
 
   /* The attribution link keeps its small credit and takes a 44 px touch (as touch-target). */

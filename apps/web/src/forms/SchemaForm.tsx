@@ -48,7 +48,7 @@ export interface SchemaFormProps {
   parseErrors?: Record<string, ParseError> | undefined;
   /**
    * Called when a field's text stops or starts parsing (`undefined` clears the path); `reason` is
-   * `'discard'` when the user dropped the text (Discard text) rather than fixing it. `change` is
+   * `'discard'` when the user dropped the text (Discard the unparsed text) rather than fixing it. `change` is
    * the change it belongs to: typing in that field, or the commit (a row's removal, say) that moved
    * or dropped it.
    */
@@ -165,7 +165,12 @@ export function SchemaForm({
     () => {
       const update = (path: string, error: ParseError | undefined, reason?: ParseErrorReason) => {
         const current = parseErrorsRef.current?.[path];
-        if (current?.message === error?.message && current?.text === error?.text) return;
+        if (
+          current?.message === error?.message &&
+          current?.text === error?.text &&
+          current?.input === error?.input
+        )
+          return;
         // Collection actions can clear and then reuse a path before React renders again.
         const { [path]: _previous, ...rest } = parseErrorsRef.current ?? {};
         parseErrorsRef.current = error ? { ...rest, [path]: error } : rest;

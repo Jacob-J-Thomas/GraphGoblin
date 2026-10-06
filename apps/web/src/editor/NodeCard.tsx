@@ -59,11 +59,11 @@ export const NodeCard = memo(function NodeCard({ data, selected }: NodeProps<Flo
         <div className="truncate text-md leading-5 font-semibold">{node.label}</div>
         <div className="truncate font-mono text-[11.5px] leading-4 text-muted">{node.id}</div>
         {ports.length > 0 ? (
-          <div className="mt-1 flex flex-col items-end gap-0.5">
+          <div className="gg-node-ports mt-1 flex flex-col items-end gap-0.5">
             {ports.map((port) => (
               <div
                 key={port}
-                className="relative h-[18px] pr-2 font-mono text-2xs leading-[18px] font-medium text-muted"
+                className="gg-node-port relative h-[18px] pr-2 font-mono text-2xs leading-[18px] font-medium text-muted"
               >
                 {port}
                 <Handle

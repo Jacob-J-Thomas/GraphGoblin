@@ -170,8 +170,8 @@ export function connectionProblem(
 
 export type EditorIssue = ValidationIssue & {
   path?: string;
-  /** For FIELD_UNPARSED: where the unparsed text is kept, so its issue row can discard it. */
-  discard?: { scope: string; path: string };
+  /** For FIELD_INPUT_INVALID: where held input is kept, and its control's discard noun. */
+  discard?: { scope: string; path: string; input?: 'unparsed text' | 'incomplete schedule' };
 };
 
 /** Schema issues first (they block saving), then the structural rules from `domain`. */
@@ -204,20 +204,23 @@ export function issueKey(issue: EditorIssue): string {
   return `${issue.code}|${issue.nodeId ?? ''}|${issue.message}`;
 }
 
-/** Field text that does not parse, as blocking issues (scope `node:<id>` points at the node). */
+/** Held input that is not a valid value yet, as blocking issues. */
 export function fieldErrorIssues(
-  fieldErrors: Record<string, Record<string, { message: string }>>,
+  fieldErrors: Record<
+    string,
+    Record<string, { message: string; input?: 'unparsed text' | 'incomplete schedule' }>
+  >,
 ): EditorIssue[] {
   return Object.entries(fieldErrors).flatMap(([scope, errors]) =>
-    Object.entries(errors).map(([path, { message }]): EditorIssue => {
+    Object.entries(errors).map(([path, { message, input }]): EditorIssue => {
       const nodeId = scope.startsWith('node:') ? scope.slice('node:'.length) : undefined;
       return {
-        code: 'FIELD_UNPARSED',
+        code: 'FIELD_INPUT_INVALID',
         severity: 'error',
-        message,
+        message: `This field holds input that is not a valid value yet. ${message}`,
         path: nodeId ? `config.${path}` : `${scope}.${path}`,
         ...(nodeId ? { nodeId } : {}),
-        discard: { scope, path },
+        discard: { scope, path, ...(input ? { input } : {}) },
       };
     }),
   );
@@ -309,7 +312,8 @@ export function sameIssues(a: readonly EditorIssue[], b: readonly EditorIssue[])
         issue.edgeId === other.edgeId &&
         issue.path === other.path &&
         issue.discard?.scope === other.discard?.scope &&
-        issue.discard?.path === other.discard?.path
+        issue.discard?.path === other.discard?.path &&
+        issue.discard?.input === other.discard?.input
       );
     })
   );

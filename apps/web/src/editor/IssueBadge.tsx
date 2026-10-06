@@ -35,7 +35,7 @@ export function IssueBadge({
   nodeId: string;
   issues: readonly EditorIssue[];
   onChoose: (issue: EditorIssue) => void;
-  /** Where focus goes when "Discard text" removed the last issue, and with it the badge. */
+  /** Where focus goes when "Discard the unparsed text" removed the last issue, and with it the badge. */
   fallbackFocus?: () => HTMLElement | null | undefined;
   className?: string;
 }) {

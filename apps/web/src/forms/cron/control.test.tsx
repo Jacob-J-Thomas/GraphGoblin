@@ -1,12 +1,14 @@
 import { NodeConfigSchemas } from '@graphgoblin/contracts';
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { FakeApi, problem } from '../../__fixtures__/fake-api.js';
 import { renderWith } from '../../__fixtures__/render.js';
 import { NODE_FIELD_CONTROLS } from '../../editor/field-controls.js';
 import { SchemaForm } from '../SchemaForm.js';
 import { focusField } from '../../editor/focus-field.js';
+import type { ParseError } from '../parse-errors.js';
 
 const json = (next: string[]) =>
   new Response(JSON.stringify({ next }), { headers: { 'content-type': 'application/json' } });
@@ -14,34 +16,57 @@ function setup(
   expression = '0 9 * * *',
   timezone: string | undefined = 'UTC',
   api = new FakeApi(),
+  held: Record<string, ParseError> = {},
 ) {
   const change = vi.fn();
+  const parseError = vi.fn();
   api.override('POST /triggers/cron/preview', () =>
     json(['2026-03-28T09:00:00.000Z', '2026-03-29T08:00:00.000Z']),
   );
-  const rendered = renderWith(
-    <SchemaForm
-      schema={NodeConfigSchemas.trigger}
-      value={{
-        subtype: 'cron',
-        expression,
-        ...(timezone === undefined ? {} : { timezone }),
-        missedFirePolicy: 'skip',
-        enabled: true,
-      }}
-      label="cron"
-      onChange={change}
-      controls={NODE_FIELD_CONTROLS}
-    />,
-    '/',
-    api,
-  );
-  return { ...rendered, change, user: userEvent.setup() };
+  function Form() {
+    const [errors, setErrors] = useState<Record<string, ParseError>>(held);
+    return (
+      <SchemaForm
+        schema={NodeConfigSchemas.trigger}
+        value={{
+          subtype: 'cron',
+          expression,
+          ...(timezone === undefined ? {} : { timezone }),
+          missedFirePolicy: 'skip',
+          enabled: true,
+        }}
+        label="cron"
+        onChange={change}
+        parseErrors={errors}
+        onParseError={(path, error, reason, action) => {
+          parseError(path, error, reason, action);
+          setErrors((previous) => {
+            const { [path]: _removed, ...rest } = previous;
+            return error ? { ...rest, [path]: error } : rest;
+          });
+        }}
+        controls={NODE_FIELD_CONTROLS}
+      />
+    );
+  }
+  const rendered = renderWith(<Form />, '/', api);
+  return { ...rendered, change, parseError, user: userEvent.setup() };
 }
 const calls = (api: FakeApi) => api.calls.filter((call) => call.path === '/triggers/cron/preview');
 const raw = () => screen.getByLabelText('Cron expression');
 
 describe('cron schedule control', () => {
+  it.each(['{', '{"kind":"weekly","time":"07:30","days":null}'])(
+    'safely restores the backing schedule when held state is malformed: %s',
+    (text) => {
+      setup('30 7 * * 1', 'UTC', new FakeApi(), {
+        expression: { message: 'Incomplete schedule', text, input: 'incomplete schedule' },
+      });
+      expect(screen.getByLabelText('Monday')).toBeChecked();
+      expect(screen.getByLabelText('At time')).toHaveValue('07:30');
+      expect(raw()).toHaveValue('30 7 * * 1');
+    },
+  );
   it('loads a saved schedule unchanged and shows trigger and viewer times from the API', async () => {
     const { change, api, user } = setup('0 9 * * 1-5', 'Europe/London');
     expect(screen.getByLabelText('Repeat')).toHaveValue('weekdays');
@@ -249,15 +274,25 @@ describe('cron schedule control', () => {
     expect(calls(api)).toHaveLength(1);
   });
   it('keeps the stored weekly expression after clearing all days, then commits a complete choice', async () => {
-    const { change, user } = setup('0 9 * * 1');
+    const { change, parseError, user } = setup('30 7 * * 1');
     await user.click(screen.getByLabelText('Monday'));
     expect(screen.getByRole('alert')).toHaveTextContent('Choose at least one day.');
-    expect(raw()).toHaveValue('0 9 * * 1');
+    expect(raw()).toHaveValue('30 7 * * 1');
     expect(change).not.toHaveBeenCalled();
+    expect(parseError).toHaveBeenLastCalledWith(
+      'expression',
+      {
+        message: 'Choose at least one day.',
+        text: JSON.stringify({ kind: 'weekly', time: '07:30', days: [] }),
+        input: 'incomplete schedule',
+      },
+      undefined,
+      expect.objectContaining({ path: 'expression', kind: 'commit' }),
+    );
     await user.click(screen.getByLabelText('Wednesday'));
     await waitFor(() =>
       expect(change).toHaveBeenLastCalledWith(
-        expect.objectContaining({ expression: '0 9 * * 3' }),
+        expect.objectContaining({ expression: '30 7 * * 3' }),
         expect.objectContaining({ path: 'expression', kind: 'commit' }),
       ),
     );

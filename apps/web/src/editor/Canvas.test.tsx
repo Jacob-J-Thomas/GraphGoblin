@@ -630,6 +630,120 @@ describe('manual edge routes (#44)', () => {
     expect(screen.getByText('Route changed. It crosses a card.')).toBeInTheDocument();
   });
 
+  it.each([false, true])(
+    'resets a moved-card crossing only when the forward replacement is clear (obstacle: %s)',
+    (obstacle) => {
+      const definition = simpleLoop();
+      const positions = [
+        { x: 0, y: 0 },
+        { x: 700, y: 0 },
+        { x: 330, y: obstacle ? 0 : -200 },
+        { x: 330, y: 500 },
+      ];
+      definition.nodes.forEach((n, i) => {
+        n.ui = positions[i]!;
+      });
+      const stored = [250, 300, 650];
+      definition.edges.find((e) => e.id === 'start-work')!.ui = { route: stored };
+      geometry = {
+        preparationMs: 0,
+        nodes: definition.nodes.map((n) => ({
+          id: n.id,
+          ...n.ui!,
+          width: 184,
+          height: 122,
+          outputs: {
+            out: { x: n.ui!.x + 190, y: n.ui!.y + 61 },
+            loopBack: { x: n.ui!.x + 190, y: n.ui!.y + 61 },
+          },
+          input: { x: n.ui!.x - 6, y: n.ui!.y + 61 },
+        })),
+      };
+      store().load('L1', definition);
+      render(<Live />);
+      expect(edge('start-work').ariaLabel).toBe('start out to work, manual route');
+      const mover = flow().nodes!.find((n) => n.id === 'done')!;
+      act(() => flow().onNodeDragStart!({} as never, mover, [mover]));
+      moveCard('done', 330, 250);
+      act(() =>
+        flow().onNodesChange!([
+          { type: 'position', id: 'done', position: { x: 330, y: 250 }, dragging: true },
+        ]),
+      );
+      if (obstacle) {
+        expect(edge('start-work').data).toMatchObject({ suspended: false });
+        expect(edge('start-work').ariaLabel).toContain('manual route, crosses a card');
+        expect(document.querySelector('.gg-route-crossing')).not.toBeNull();
+      } else {
+        expect(edge('start-work').type).toBe('smoothstep');
+        expect(edge('start-work').ariaLabel).toContain('set aside under a moving card');
+      }
+      act(() =>
+        flow().onNodesChange!([
+          { type: 'position', id: 'done', position: { x: 330, y: 250 }, dragging: false },
+        ]),
+      );
+      expect(route('start-work')).toEqual(obstacle ? stored : undefined);
+      expect(labels()).toEqual(['move done']);
+      if (obstacle) {
+        expect(edge('start-work').ariaLabel).toContain('manual route, crosses a card');
+        expect(document.querySelector('.gg-route-crossing')).not.toBeNull();
+        select('start-work');
+        expect(screen.getByText('Crosses a card')).toBeInTheDocument();
+        expect(
+          screen.getByText(/kept because the automatic replacement crosses a card/),
+        ).toBeInTheDocument();
+      } else expect(edge('start-work').type).toBe('smoothstep');
+      act(() => store().undo());
+      expect(route('start-work')).toEqual(stored);
+      expect(store().definition!.nodes.find((n) => n.id === 'done')!.ui).toEqual({
+        x: 330,
+        y: 500,
+      });
+    },
+  );
+
+  it('announces both a reset and a kept route from one node move in one live message', () => {
+    const definition = simpleLoop();
+    definition.edges.find((e) => e.id === 'start-work')!.ui = { route: [240, 290, 270] };
+    definition.edges.find((e) => e.id === 'return')!.ui = { route: [1116, 290, 268] };
+    // The forward fallback crosses this stationary card, while the loop-back can avoid it.
+    definition.nodes.push({
+      id: 'wall',
+      kind: 'exit',
+      label: 'Wall',
+      config: {},
+      ui: { x: 220, y: 120 },
+    });
+    geometry = {
+      nodes: routingInput(definition).nodes.map((n) =>
+        n.id === 'wall' ? { ...n, width: 20, outputs: {} } : n,
+      ),
+      preparationMs: 0,
+    };
+    store().load('L1', definition);
+    render(<Live />);
+    const mover = flow().nodes!.find((n) => n.id === 'check')!;
+    act(() => flow().onNodeDragStart!({} as never, mover, [mover]));
+    moveCard('check', 250, 240);
+    act(() =>
+      flow().onNodesChange!([
+        { type: 'position', id: 'check', position: { x: 250, y: 240 }, dragging: true },
+      ]),
+    );
+    act(() =>
+      flow().onNodesChange!([
+        { type: 'position', id: 'check', position: { x: 250, y: 240 }, dragging: false },
+      ]),
+    );
+    expect(route('start-work')).toEqual([240, 290, 270]);
+    expect(route('return')).toBeUndefined();
+    expect(screen.getByTestId('canvas').querySelector('[aria-live="polite"]')).toHaveTextContent(
+      'A manual route would cross a card and now routes automatically. A manual route is kept because the automatic replacement crosses a card. Crosses a card; move the card or edit the route.',
+    );
+    expect(labels()).toEqual(['move check']);
+  });
+
   it('lets a moved card take a manual route back to automatic, in the move’s own undo step', () => {
     const definition = simpleLoop();
     definition.edges.find((e) => e.id === 'return')!.ui = { route: [1116, 290, 268] };
@@ -672,6 +786,33 @@ describe('manual edge routes (#44)', () => {
       ]),
     );
     expect(route('return')).toEqual([1116, 290, 268]);
+  });
+
+  it('consumes the drop-position plan when the last position change has no preview frame', () => {
+    const definition = simpleLoop();
+    definition.edges.find((e) => e.id === 'return')!.ui = { route: [1116, 290, 268] };
+    store().load('L1', definition);
+    render(<Live />);
+    const check = flow().nodes!.find((n) => n.id === 'check')!;
+    act(() => flow().onNodeDragStart!({} as never, check, [check]));
+    moveCard('check', 600, 240);
+    act(() =>
+      flow().onNodesChange!([
+        { type: 'position', id: 'check', position: { x: 600, y: 240 }, dragging: true },
+      ]),
+    );
+    expect(edge('return').data).toMatchObject({ suspended: true });
+    // The release lands clear of the lane, after the last rendered suspended preview.
+    moveCard('check', 600, 340);
+    act(() =>
+      flow().onNodesChange!([
+        { type: 'position', id: 'check', position: { x: 600, y: 340 }, dragging: false },
+      ]),
+    );
+    expect(route('return')).toEqual([1116, 290, 268]);
+    expect(edge('return').ariaLabel).toBe('done loopBack to work, manual route');
+    expect(store().definition!.nodes.find((n) => n.id === 'check')!.ui).toEqual({ x: 600, y: 340 });
+    expect(labels()).toEqual(['move check']);
   });
 
   it.each([false, true])(

@@ -72,8 +72,8 @@ it('clears removed array errors and shifts surviving nested errors in the editor
   setCode('Value', '{third', 2);
   await user.click(screen.getByRole('button', { name: 'Remove items 1' }));
   expect(useEditorStore.getState().fieldErrors['test']).toEqual({
-    'items.0.value': { message: expect.any(String), text: '{second' },
-    'items.1.value': { message: expect.any(String), text: '{third' },
+    'items.0.value': { message: expect.any(String), text: '{second', input: 'unparsed text' },
+    'items.1.value': { message: expect.any(String), text: '{third', input: 'unparsed text' },
   });
   expect(getCode('Value', 0)).toBe('{second');
   expect(getCode('Value', 1)).toBe('{third');
@@ -113,7 +113,7 @@ it('renames an unparsed variable without losing its text or leaving the old issu
   expect(fieldErrorIssues(useEditorStore.getState().fieldErrors)[0]?.discard?.path).toBe(
     'variables.renamed',
   );
-  await user.click(screen.getByRole('button', { name: 'Discard text' }));
+  await user.click(screen.getByRole('button', { name: 'Discard the unparsed text' }));
   expect(fieldErrorIssues(useEditorStore.getState().fieldErrors)).toEqual([]);
   expect(JSON.parse(getCode('Variables value 1'))).toEqual({ type: 'string' });
 });

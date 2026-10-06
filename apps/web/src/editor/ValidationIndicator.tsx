@@ -48,7 +48,7 @@ export function ValidationIndicator({
 }) {
   const loopGroupId = useId();
   const nodeGroupId = useId();
-  // Where focus goes when "Discard text" removed the last issue, and with it the button.
+  // Where focus goes when "Discard the unparsed text" removed the last issue, and with it the button.
   const readyRef = useRef<HTMLSpanElement>(null);
   if (issues.length === 0) {
     const status = STATUS[check];

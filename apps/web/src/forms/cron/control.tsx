@@ -18,6 +18,7 @@ import {
 } from '../../components/ui/index.js';
 import { cn } from '../../lib/utils.js';
 import { useFormChange } from '../changes.js';
+import { useParseErrors } from '../parse-errors.js';
 import { useDisclosureState } from '../disclosures.js';
 import { useField, type FieldProps } from '../fields.js';
 import { Row, fieldMeta, useProblemCount } from '../fields/shared.js';
@@ -29,6 +30,7 @@ import {
   defaultSchedule,
   formatSlot,
   parseSchedule,
+  parseScheduleInput,
   recordPreferences,
   scheduleError,
   scheduleExpression,
@@ -48,7 +50,16 @@ export function CronControl({ name }: FieldProps) {
   const expression = typeof field.value === 'string' ? field.value : '';
   const timezone = typeof zone === 'string' ? zone : 'UTC';
   const [draft, setDraft] = useState<{ expression: string; schedule: Schedule }>();
-  const schedule = draft?.expression === expression ? draft.schedule : parseSchedule(expression);
+  const parseErrors = useParseErrors();
+  const stored = parseErrors.get(name);
+  // Incomplete builder input uses this field's parse-error channel, just like unparsed JSON.
+  // Its text is the builder state, rather than a replacement for the last valid expression.
+  const schedule: Schedule = stored
+    ? parseScheduleInput(stored.text, expression)
+    : draft?.expression === expression &&
+        (!parseErrors.tracked || scheduleError(draft.schedule) === undefined)
+      ? draft.schedule
+      : parseSchedule(expression);
   const id = useId();
   const rawRef = useRef<HTMLDivElement>(null);
   const preferencesRef = useRef(schedulePreferences(parseSchedule(expression)));
@@ -60,19 +71,27 @@ export function CronControl({ name }: FieldProps) {
     preview.enabled &&
     preview.query.error instanceof GraphGoblinApiError &&
     preview.query.error.code === 'CRON_INVALID';
-  const commit = (next: BuiltSchedule) => {
-    if (scheduleError(next) !== undefined) {
-      setDraft({ expression, schedule: next });
-      return;
-    }
-    preferencesRef.current = recordPreferences(preferencesRef.current, next);
-    const value = scheduleExpression(next);
-    setDraft({ expression: value, schedule: next });
-    field.onChange(value);
-  };
+  const change = useFormChange();
+  const commit = (next: BuiltSchedule) =>
+    change({ path: name, kind: 'typing' }, () => {
+      const message = scheduleError(next);
+      if (message !== undefined) {
+        parseErrors.report(name, {
+          message,
+          text: JSON.stringify(next),
+          input: 'incomplete schedule',
+        });
+        setDraft({ expression, schedule: next });
+        return;
+      }
+      parseErrors.report(name, undefined);
+      preferencesRef.current = recordPreferences(preferencesRef.current, next);
+      const value = scheduleExpression(next);
+      setDraft({ expression: value, schedule: next });
+      field.onChange(value);
+    });
   // The field binds as typing (the raw expression, the step and time inputs); the preset select
   // and the day checkboxes are choices, each an undo step of its own.
-  const change = useFormChange();
   const choose = (next: BuiltSchedule) =>
     change({ path: name, kind: 'commit' }, () => commit(next));
   // The raw expression's disclosure, kept with the form's (so an undo's remount keeps it open).
@@ -87,6 +106,7 @@ export function CronControl({ name }: FieldProps) {
           value={schedule.kind}
           onChange={(e) => {
             if (e.target.value === 'custom') {
+              change({ path: name, kind: 'commit' }, () => parseErrors.report(name, undefined));
               setDraft({ expression, schedule: { kind: 'custom' } });
               const raw = rawRef.current?.querySelector('input');
               if (raw) {
@@ -145,6 +165,7 @@ export function CronControl({ name }: FieldProps) {
               <label key={day} className={cn(CHECKBOX_LABEL, 'text-sm')}>
                 <Checkbox
                   checked={schedule.days.includes(index)}
+                  aria-invalid={!!error}
                   onChange={(e) =>
                     choose({
                       ...schedule,
@@ -222,14 +243,17 @@ export function CronControl({ name }: FieldProps) {
                     .join(' ') || undefined
                 }
                 aria-invalid={cronInvalid ? true : control['aria-invalid']}
-                onChange={(e) => {
-                  setDraft(undefined);
-                  preferencesRef.current = recordPreferences(
-                    preferencesRef.current,
-                    parseSchedule(e.target.value),
-                  );
-                  field.onChange(e.target.value);
-                }}
+                onChange={(e) =>
+                  change({ path: name, kind: 'typing' }, () => {
+                    parseErrors.report(name, undefined);
+                    setDraft(undefined);
+                    preferencesRef.current = recordPreferences(
+                      preferencesRef.current,
+                      parseSchedule(e.target.value),
+                    );
+                    field.onChange(e.target.value);
+                  })
+                }
               />
             )}
           </Row>

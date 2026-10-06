@@ -7,6 +7,7 @@
  */
 import { writeFile } from 'node:fs/promises';
 import type { Locator, Page } from '@playwright/test';
+import { denseGraph } from '../src/__fixtures__/routing.js';
 import {
   approvalLoop,
   closeNode,
@@ -17,6 +18,62 @@ import {
   publishLoop,
   test,
 } from './fixtures.js';
+
+/** Actual screen boxes: pseudo-elements are outside xyflow's measured handle/card geometry. */
+const portBoxes = (page: Page) =>
+  page.locator('.react-flow__handle').evaluateAll((handles) => {
+    const zoom = new DOMMatrix(
+      getComputedStyle(document.querySelector('.react-flow__viewport')!).transform,
+    ).a;
+    return handles.map((handle) => {
+      const hit = getComputedStyle(handle, '::after');
+      const center = handle.getBoundingClientRect();
+      const width = parseFloat(hit.width) * zoom;
+      const height = parseFloat(hit.height) * zoom;
+      return {
+        node: handle.getAttribute('data-nodeid'),
+        port: handle.getAttribute('data-handleid'),
+        width,
+        height,
+        zoom,
+        maxWidth: parseFloat(getComputedStyle(handle).getPropertyValue('--gg-port-max-width')),
+        left: center.left + center.width / 2 - width / 2,
+        right: center.left + center.width / 2 + width / 2,
+        top: center.top + center.height / 2 - height / 2,
+        bottom: center.top + center.height / 2 + height / 2,
+      };
+    });
+  });
+
+const canvasZoom = (page: Page) =>
+  page
+    .locator('.react-flow__viewport')
+    .evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).a);
+
+/** Real wheel input changes xyflow's viewport, not just the DOM transform. */
+async function zoomTo(page: Page, zoom: number) {
+  const current = await canvasZoom(page);
+  const canvas = (await page.getByTestId('canvas').boundingBox())!;
+  await page.mouse.move(canvas.x + canvas.width / 2, canvas.y + canvas.height / 2);
+  await page.mouse.wheel(0, Math.log2(current / zoom) / 0.002);
+  await expect.poll(() => canvasZoom(page)).toBeCloseTo(zoom, 3);
+  // ResizeObserver and React must have a chance to expose a geometry change after the transform.
+  await page.evaluate(
+    () =>
+      new Promise<void>((done) => requestAnimationFrame(() => requestAnimationFrame(() => done()))),
+  );
+}
+
+function expectDisjointPorts(ports: Awaited<ReturnType<typeof portBoxes>>) {
+  for (let i = 0; i < ports.length; i++)
+    for (const other of ports.slice(i + 1)) {
+      const box = ports[i]!;
+      const overlap =
+        Math.min(box.right, other.right) - Math.max(box.left, other.left) > 0.05 &&
+        Math.min(box.bottom, other.bottom) - Math.max(box.top, other.top) > 0.05;
+      expect(overlap, `${box.node}/${box.port} overlaps ${other.node}/${other.port}`).toBe(false);
+    }
+}
 
 const WIDTHS = [
   { width: 360, height: 780 },
@@ -703,28 +760,58 @@ for (const theme of ['dark', 'light'] as const) {
               await expect(panel).toBeHidden();
             }
           }
-          if (path === `/app/loops/${loopId}/edit`) {
-            // The pseudo-element is measured in CSS pixels before the canvas's pan/zoom transform.
-            const ports = await page.locator('.react-flow__handle').evaluateAll((handles) =>
-              handles.map((handle) => {
-                const hit = getComputedStyle(handle, '::after');
-                return { width: parseFloat(hit.width), height: parseFloat(hit.height) };
-              }),
-            );
-            expect(ports.length).toBeGreaterThan(0);
-            for (const box of ports) {
-              expect(box.width, 'port touch width').toBe(44);
-              expect(box.height, 'port touch height').toBe(20);
-            }
-            measurements.push({ theme, target: 'Port hit box (each handle)', ...ports[0]! });
-            console.log(
-              `touch ${theme}: port hit boxes ${ports[0]!.width} x ${ports[0]!.height} px`,
-            );
-          }
         }
         // Exercise every node's radios and short choices, including inference's boolean "No".
         const { loopId: dialogs, kinds } = await seedDialogs(request);
         await page.goto(`/app/loops/${dialogs}/edit`);
+        await expect(page.locator('.react-flow__node')).toHaveCount(kinds.length);
+        // Fixed 44 px rows keep a 46 px pitch in flow coordinates at every fitted zoom.
+        for (const width of [768, 360]) {
+          await page.setViewportSize({ width, height: 1024 });
+          await page.goto(`/app/loops/${dialogs}/edit`);
+          await expect(page.locator('.react-flow__node')).toHaveCount(kinds.length);
+          await page.evaluate(() => document.fonts.ready);
+          await page.getByRole('button', { name: 'Fit view' }).click();
+          await page.waitForTimeout(400); // Fit-view transition and initial card measurements.
+          const ports = await portBoxes(page);
+          expect(ports.length).toBeGreaterThan(0);
+          for (const box of ports) {
+            expect(box.width, `${width} px capped port width`).toBeCloseTo(
+              Math.min(44 + 0.03125 * box.zoom, box.maxWidth * box.zoom),
+              1,
+            );
+            expect(box.height, `${width} px port height`).toBeCloseTo(
+              Math.min(44 + 0.03125 * box.zoom, 46 * box.zoom),
+              1,
+            );
+          }
+          expectDisjointPorts(ports);
+          const uncapped = ports.find((box) => box.maxWidth > 88)!;
+          measurements.push({
+            theme,
+            target: `Port hit box at ${width} px (fitted zoom ${uncapped.zoom.toFixed(4)}, no nearby card)`,
+            width: Number(uncapped.width.toFixed(2)),
+            height: Number(uncapped.height.toFixed(2)),
+          });
+          const spacing = await page.locator('.gg-node-ports').evaluateAll((groups) =>
+            groups.flatMap((group) => {
+              const rows = [...group.querySelectorAll('.gg-node-port')];
+              return rows
+                .slice(1)
+                .map(
+                  (row, i) =>
+                    row.getBoundingClientRect().top - rows[i]!.getBoundingClientRect().top,
+                );
+            }),
+          );
+          expect(spacing.length).toBeGreaterThan(0);
+          for (const distance of spacing)
+            expect(distance / ports[0]!.zoom, `${width} px fixed output pitch`).toBeCloseTo(46, 1);
+          console.log(
+            `touch ${theme}: ${width} px fitted zoom ${uncapped.zoom.toFixed(4)}, uncapped ports ${uncapped.width.toFixed(2)} x ${uncapped.height.toFixed(2)} px, row spacing ${Math.min(...spacing).toFixed(2)} px`,
+          );
+        }
+        await page.setViewportSize({ width: 768, height: 1024 });
         for (const kind of kinds) {
           await page.locator(`.react-flow__node[data-id="${kind}"]`).focus();
           await page.keyboard.press('Enter');
@@ -763,6 +850,152 @@ for (const theme of ['dark', 'light'] as const) {
         const path = testInfo.outputPath('touch-targets.json');
         await writeFile(path, JSON.stringify(measurements, null, 2) + '\n');
         await testInfo.attach('touch target sizes', { path, contentType: 'application/json' });
+      } finally {
+        await context.close();
+      }
+    });
+
+    test('coarse-pointer zoom preserves card geometry, disjoint targets and the routing cache', async ({
+      browser,
+      baseURL,
+      request,
+    }, testInfo) => {
+      test.setTimeout(90_000);
+      const definition = {
+        ...approvalLoop('touch zoom layout'),
+        nodes: [
+          {
+            id: 'start',
+            kind: 'trigger',
+            label: 'Start',
+            config: { subtype: 'manual' },
+            ui: { x: -260, y: 0 },
+          },
+          {
+            id: 'decide',
+            kind: 'decision',
+            label: 'Decide',
+            config: {
+              question: 'Continue?',
+              strategy: ['expression'],
+              expression: { jsonata: '"yes"' },
+              routes: [
+                { label: 'yes', description: 'Continue' },
+                { label: 'no', description: 'Stop' },
+                { label: 'later', description: 'Wait' },
+              ],
+            },
+            ui: { x: 0, y: 0 },
+          },
+          {
+            id: 'peer',
+            kind: 'wait',
+            label: 'Peer',
+            config: { mode: 'input', prompt: 'Approve?' },
+            ui: { x: 260, y: 0 },
+          },
+          {
+            id: 'done',
+            kind: 'exit',
+            label: 'Done',
+            config: { loopBack: { targetNodeId: 'decide' } },
+            ui: { x: 520, y: 0 },
+          },
+        ],
+        edges: [
+          { id: 'start-decide', from: { node: 'start', port: 'out' }, to: { node: 'decide' } },
+          { id: 'decide-peer', from: { node: 'decide', port: 'yes' }, to: { node: 'peer' } },
+          { id: 'peer-done', from: { node: 'peer', port: 'out' }, to: { node: 'done' } },
+          { id: 'return', from: { node: 'done', port: 'loopBack' }, to: { node: 'decide' } },
+        ],
+      };
+      const response = await request.post('/loops', { data: { definition } });
+      expect(response.status(), await response.text()).toBe(201);
+      const { loop } = (await response.json()) as { loop: { id: string } };
+      const context = await browser.newContext({
+        baseURL: baseURL as string,
+        viewport: { width: 1440, height: 900 },
+        hasTouch: true,
+        isMobile: true,
+        serviceWorkers: 'block',
+      });
+      await context.addInitScript(
+        (choice) => localStorage.setItem('graphgoblin-theme', choice),
+        theme,
+      );
+      const page = await context.newPage();
+      try {
+        await page.goto(`/app/loops/${loop.id}/edit`);
+        await expect(page.locator('.react-flow__edge')).toHaveCount(4);
+        await page.evaluate(() => document.fonts.ready);
+        await page.waitForTimeout(500);
+        const heights: number[] = [];
+        const measurements = [];
+        await page.evaluate(() => performance.clearMeasures('gg:backward-routing'));
+        for (const zoom of [1, 0.784, 0.5, 1.2]) {
+          await zoomTo(page, zoom);
+          const height = await page
+            .getByTestId('node-decide')
+            .evaluate((el) => (el instanceof HTMLElement ? el.offsetHeight : 0));
+          heights.push(height);
+          const ports = await portBoxes(page);
+          expectDisjointPorts(ports);
+          const isolated = ports.find((box) => box.maxWidth > 88)!;
+          expect(isolated.width).toBeGreaterThanOrEqual(44);
+          expect(isolated.width).toBeLessThan(44.1);
+          expect(isolated.height).toBeCloseTo(Math.min(44 + 0.03125 * zoom, 46 * zoom), 1);
+          if (zoom >= 1) expect(isolated.height).toBeGreaterThanOrEqual(44);
+          const adjacent = ports.find((box) => box.node === 'decide' && box.port === 'yes')!;
+          expect(adjacent.maxWidth).toBeCloseTo(38, 1); // Half the 76 px gap at 260 px spacing.
+          expect(adjacent.width).toBeCloseTo(Math.min(44 + 0.03125 * zoom, 38 * zoom), 1);
+          const neighbor = await page.getByTestId('node-peer').boundingBox();
+          const card = (await page.getByTestId('node-decide').boundingBox())!;
+          expect(card.x + card.width).toBeLessThan(neighbor!.x);
+          measurements.push({
+            theme,
+            zoom,
+            cardHeight: height,
+            isolatedTarget: { width: isolated.width, height: isolated.height },
+            adjacentTarget: { width: adjacent.width, height: adjacent.height },
+            routingMeasures: await page.evaluate(
+              () => performance.getEntriesByName('gg:backward-routing').length,
+            ),
+          });
+        }
+        expect(heights).toEqual([232, 232, 232, 232]);
+        expect(
+          await page.evaluate(() => performance.getEntriesByName('gg:backward-routing')),
+        ).toHaveLength(0);
+        // The review's 300-node/eight-zoom reproduction: no geometry invalidation or routing work.
+        const dense = denseGraph(300);
+        const created = await request.post('/loops', { data: { definition: dense } });
+        expect(created.status()).toBe(201);
+        const { loop: large } = (await created.json()) as { loop: { id: string } };
+        await page.goto(`/app/loops/${large.id}/edit`);
+        await expect(page.locator('.react-flow__edge')).toHaveCount(600);
+        await page.evaluate(() => document.fonts.ready);
+        await page.waitForTimeout(500);
+        await page.evaluate(() => performance.clearMeasures('gg:backward-routing'));
+        for (const zoom of [0.6, 0.8, 1, 0.784, 0.5, 0.7, 0.9, 0.5]) await zoomTo(page, zoom);
+        expect(
+          await page.evaluate(() => performance.getEntriesByName('gg:backward-routing')),
+        ).toHaveLength(0);
+        const path = testInfo.outputPath('touch-zoom.json');
+        await writeFile(
+          path,
+          JSON.stringify(
+            { measurements, dense: { nodes: 300, edges: 600, zoomChanges: 8, routingMeasures: 0 } },
+            null,
+            2,
+          ) + '\n',
+        );
+        await testInfo.attach('touch zoom layout and targets', {
+          path,
+          contentType: 'application/json',
+        });
+        console.log(
+          `touch zoom ${theme}: ${JSON.stringify(measurements)}; 300 nodes, eight zoom changes, zero routing measures`,
+        );
       } finally {
         await context.close();
       }

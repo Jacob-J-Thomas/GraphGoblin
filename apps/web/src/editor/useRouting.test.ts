@@ -113,7 +113,7 @@ describe('routing measurement and cache', () => {
         },
       },
     };
-    const state = { nodeLookup: new Map([['a', node]]) };
+    const state = { nodeLookup: new Map([['a', node]]), transform: [0, 0, 1] };
     const select = createGeometrySelector();
     const key = select(state);
     expect(key.nodes).toEqual([
@@ -127,6 +127,17 @@ describe('routing measurement and cache', () => {
         input: { x: 94, y: 261 },
       },
     ]);
+    const route = createRoutingCache();
+    const edges = [{ id: 'self', source: 'a', target: 'a', port: 'out' }];
+    const plan = route(key, edges);
+    expect(plan.routes.size).toBe(1);
+    performance.clearMeasures(ROUTING_MEASURE);
+    for (const zoom of [0.784, 0.5, 1, 2]) {
+      state.transform = [10, 20, zoom];
+      expect(select(state)).toBe(key);
+      expect(route(select(state), edges)).toBe(plan);
+    }
+    expect(performance.getEntriesByName(ROUTING_MEASURE)).toHaveLength(0);
     state.nodeLookup.set('new', { ...node, id: 'new', measured: {} });
     expect(select(state)).toBe(key);
     node.selected = true;

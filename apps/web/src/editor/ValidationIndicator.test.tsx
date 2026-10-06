@@ -132,10 +132,10 @@ describe('ValidationIndicator', () => {
     render(<Live />);
     await user.click(screen.getByRole('button', { name: '1 error' }));
     const row = screen.getByRole('listitem');
-    expect(row).toHaveTextContent('FIELD_UNPARSED');
+    expect(row).toHaveTextContent('FIELD_INPUT_INVALID');
     expect(within(row).getByText('settings.defaults').tagName).toBe('CODE');
     await user.click(
-      within(row).getByRole('button', { name: 'Discard unparsed text at defaults' }),
+      within(row).getByRole('button', { name: 'Discard the unparsed text at defaults' }),
     );
     expect(useEditorStore.getState().fieldErrors).toEqual({});
     await waitFor(() => expect(screen.getByText('Ready to publish')).toHaveFocus());

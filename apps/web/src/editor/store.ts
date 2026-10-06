@@ -8,7 +8,7 @@ import {
 import type { z } from 'zod';
 import { create } from 'zustand';
 import type { FormChange } from '../forms/changes.js';
-import type { ParseErrorReason } from '../forms/parse-errors.js';
+import type { ParseError, ParseErrorReason } from '../forms/parse-errors.js';
 import {
   historyClock,
   recordStep,
@@ -153,7 +153,7 @@ export interface EditorState {
    * Record (or, with `undefined`, clear) the unparsed text of a form field. It is a change like
    * any other for undo: typed text merges into the step of the typing in that field, text a
    * commit moves or drops (a row's removal) is part of that commit's step (`change`), and a
-   * discard (`reason` `'discard'`, the user's "Discard text") is a step of its own.
+   * discard (`reason` `'discard'`, the user's "Discard the unparsed text") is a step of its own.
    */
   setFieldError: (
     scope: string,
@@ -173,11 +173,7 @@ export interface EditorState {
   closeStep: () => void;
 }
 
-export interface FieldError {
-  message: string;
-  /** The text as typed. */
-  text: string;
-}
+export type FieldError = ParseError;
 
 /** A pending focus request for the node editor: the node, and the issue path to focus there. */
 export interface NodeFocusTarget {
@@ -586,7 +582,12 @@ export const useEditorStore = create<EditorState>((set, get) => {
     setFieldError: (scope, path, error, reason, change) => {
       const s = get();
       const previous = s.fieldErrors[scope]?.[path];
-      if (previous?.message === error?.message && previous?.text === error?.text) return;
+      if (
+        previous?.message === error?.message &&
+        previous?.text === error?.text &&
+        previous?.input === error?.input
+      )
+        return;
       const { [path]: _previous, ...others } = s.fieldErrors[scope] ?? {};
       const scoped = error ? { ...others, [path]: error } : others;
       const { [scope]: _scope, ...rest } = s.fieldErrors;

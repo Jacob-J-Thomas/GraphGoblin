@@ -57,12 +57,12 @@ for (const timezone of ['Etc/UTC', 'Asia/Kolkata']) {
 }
 
 for (const scenario of [
-  { name: 'time', expression: '30 9 * * *', control: 'At time' },
-  { name: 'every', expression: '*/5 * * * *', control: 'Every (minutes)' },
-  { name: 'monthly day', expression: '0 9 12 * *', control: 'Day of month' },
-  { name: 'weekly days', expression: '0 9 * * 1', control: 'Monday' },
+  { name: 'time', expression: '30 9 * * *', control: 'At time', saved: '09:30' },
+  { name: 'every', expression: '*/5 * * * *', control: 'Every (minutes)', saved: '5' },
+  { name: 'monthly day', expression: '0 9 12 * *', control: 'Day of month', saved: '12' },
+  { name: 'weekly days', expression: '0 9 * * 1', control: 'Monday', saved: undefined },
 ]) {
-  test(`clearing ${scenario.name} leaves the saved expression unchanged and reopens correctly`, async ({
+  test(`clearing ${scenario.name} persists incomplete input, blocks readiness and undoes in one step`, async ({
     page,
     request,
   }, testInfo) => {
@@ -85,14 +85,27 @@ for (const scenario of [
     expect(previews).toBe(0);
     expect((await storedCron(request, id)).expression).toBe(scenario.expression);
     // Expose the unchanged backing value alongside the incomplete builder for evidence.
-    await dialog.getByRole('button', { name: 'Advanced Cron expression' }).click();
+    await dialog.getByRole('button', { name: /^Advanced Cron expression/ }).click();
     await expect(dialog.getByLabel('Cron expression')).toHaveValue(scenario.expression);
     await page.screenshot({ path: testInfo.outputPath('incomplete-keeps-saved.png') });
     await closeNode(page);
     dialog = await openNode(page, 'start');
     await expect(dialog.getByLabel('Repeat')).not.toHaveValue('custom');
+    if (scenario.name === 'weekly days')
+      await expect(dialog.getByLabel('Monday')).not.toBeChecked();
+    else await expect(dialog.getByLabel(scenario.control)).toHaveValue('');
+    await expect(dialog.getByRole('alert')).toBeVisible();
+    await expect(page.getByText('Ready to publish', { exact: true })).toHaveCount(0);
+    expect((await storedCron(request, id)).expression).toBe(scenario.expression);
+    await closeNode(page);
+    await page.getByRole('button', { name: /^Undo / }).click();
+    await expect(page.getByRole('button', { name: 'Undo', exact: true })).toBeDisabled();
+    await expect(page.getByText('Ready to publish', { exact: true })).toBeVisible();
+    dialog = await openNode(page, 'start');
     if (scenario.name === 'weekly days') await expect(dialog.getByLabel('Monday')).toBeChecked();
-    else await expect(dialog.getByLabel(scenario.control)).not.toHaveValue('');
+    else await expect(dialog.getByLabel(scenario.control)).toHaveValue(scenario.saved!);
+    await expect(dialog.getByRole('alert')).toHaveCount(0);
+    expect((await storedCron(request, id)).expression).toBe(scenario.expression);
   });
 }
 
