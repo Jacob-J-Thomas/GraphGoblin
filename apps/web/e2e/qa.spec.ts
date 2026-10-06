@@ -222,7 +222,11 @@ test('the editor blocks publishing on template syntax errors and unparsed JSON, 
   await page.keyboard.press('Escape');
   await closeNode(page);
   await page.getByRole('button', { name: 'Publish' }).click();
-  await expect(page.getByText(/does not parse; fix them first/)).toBeVisible();
+  await expect(
+    page.getByText(
+      'Some fields hold input that is not a valid value yet; complete or discard it first.',
+    ),
+  ).toBeVisible();
   // Delete with focus on the Publish button must not delete the selected node.
   await page.keyboard.press('Delete');
   await expect(page.getByTestId('node-approve')).toBeVisible();

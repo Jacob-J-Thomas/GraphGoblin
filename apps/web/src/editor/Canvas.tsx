@@ -56,6 +56,7 @@ import { useEditorStore } from './store.js';
 import { backwardDirection, routeMessage, type RoutingNode, type RoutingPlan } from './routing.js';
 import { useRouting } from './useRouting.js';
 import { createRouteChannels } from './route-channels.js';
+import { portWidthLimits } from './port-targets.js';
 
 const nodeTypes = { gg: NodeCard };
 const edgeTypes = { orthogonal: OrthogonalEdge };
@@ -96,7 +97,13 @@ const NO_ISSUES: readonly EditorIssue[] = [];
 const zoomOf = (state: ReactFlowState) => state.transform[2];
 
 /** Publish zoom without re-rendering the canvas or its cards on each viewport change. */
-function CanvasZoom({ canvasRef }: { canvasRef: RefObject<HTMLDivElement | null> }) {
+function CanvasZoom({
+  canvasRef,
+  nodes,
+}: {
+  canvasRef: RefObject<HTMLDivElement | null>;
+  nodes: readonly RoutingNode[];
+}) {
   const zoom = useStore(zoomOf);
   useLayoutEffect(() => {
     canvasRef.current?.style.setProperty(
@@ -104,6 +111,18 @@ function CanvasZoom({ canvasRef }: { canvasRef: RefObject<HTMLDivElement | null>
       String(Math.min(MAX_CANVAS_ZOOM, Math.max(MIN_CANVAS_ZOOM, zoom))),
     );
   }, [canvasRef, zoom]);
+  useLayoutEffect(() => {
+    if (!window.matchMedia?.('(pointer: coarse)').matches) return;
+    const limits = portWidthLimits(nodes);
+    for (const handle of canvasRef.current?.querySelectorAll<HTMLElement>('.react-flow__handle') ??
+      []) {
+      const node = limits.get(handle.dataset['nodeid'] ?? '');
+      const width = handle.classList.contains('target')
+        ? node?.input
+        : node?.outputs[handle.dataset['handleid'] ?? ''];
+      if (width !== undefined) handle.style.setProperty('--gg-port-max-width', `${width}px`);
+    }
+  }, [canvasRef, nodes]);
   return null;
 }
 
@@ -713,7 +732,7 @@ export function Canvas({
       onDrop={onDrop}
     >
       {flow}
-      <CanvasZoom canvasRef={rootRef} />
+      <CanvasZoom canvasRef={rootRef} nodes={plan.nodes} />
       <span aria-live="polite" aria-atomic="true" className="sr-only">
         <span key={announcement.key}>{announcement.text}</span>
       </span>

@@ -88,7 +88,7 @@ Additional Edge `validation.spec.ts`: **9 / 9 passed** in 15.9 seconds, verifyin
 
 ## Third review on 72c78b9
 
-HEAD is `72c78b9`, the orchestrator's second-round commit. This third-round change remains uncommitted. The orchestrator reported a shared-runner `routing-perf` failure at **5.2 ms** (100-node median) and **4.6 ms** (300-node median), against the second-round **below 4 ms** assertion. The same code has measured **0.8 to 5.2 ms** on that shared two-core runner, so its own variance exceeds the available margin. These remote numbers are supplied by the orchestrator; this round does not trigger a remote workflow.
+The third round started from `72c78b9`, the orchestrator's second-round commit. The orchestrator committed the third round as `2029b67`. The orchestrator reported a shared-runner `routing-perf` failure at **5.2 ms** (100-node median) and **4.6 ms** (300-node median), against the second-round **below 4 ms** assertion. The same code has measured **0.8 to 5.2 ms** on that shared two-core runner, so its own variance exceeds the available margin. These remote numbers are supplied by the orchestrator; this round does not trigger a remote workflow.
 
 `apps/web/e2e/routing.spec.ts` now enforces **median of three routing p95s below 8 ms** in normal mode for shared-runner pull requests. Under `GG_ROUTING_STRICT_PERF=1`, local and manual runs enforce the issue's **below 4 ms** routing criterion and **frame p95 at or below 16.7 ms**. Both modes retain the **below 16 ms per-drag ceiling**, every measurement, and the selected median target in JSON. The workflow comment and job summary, docs/09, and the #18 QA record use these criteria. The issue's routing criterion was met locally in the second review: strict medians **1.2 to 1.3 ms** at 100 nodes and **2.2 ms** at 300 nodes; the fresh measurements below verify this patch.
 
@@ -107,3 +107,75 @@ HEAD is `72c78b9`, the orchestrator's second-round commit. This third-round chan
 | strict | 300   | 4                            | 3.500 / 2.400 / 2.400 | 2.400       | 16.700              | 16.700 / 16.700 / 16.700 | 0.000 / 0.000 / 0.000                | [JSON](round-3/routing-strict/performance-review-300-repeat-1.json) |
 
 `pnpm.cmd format:check` and `pnpm.cmd check:docs` passed. The table rounds only for readability; raw JSON preserves all values and sample counts. Added frame p95 remains reported without a bound. Console logs and Playwright output are in `%TEMP%/gg-phase34-round3-20261006`; the four curated measurement reports above are retained as QA evidence. The only browser warning was `NO_COLOR` being ignored because `FORCE_COLOR` is set; PowerShell wraps native stderr in `NativeCommandError` when redirecting, while both test commands exited 0. Coverage was not deleted by this round. No load rerun was needed.
+
+## Fourth review on 2029b67
+
+The Opus re-check confirmed the earlier fixes, then found one stale full-suite publish expectation and card layout growing on coarse-pointer zoom changes. This fourth round starts from `2029b67` and remains uncommitted for the orchestrator. Logs and browser output are in `%TEMP%/gg-phase34-round4-20261006`; the API stays isolated and in memory on an ephemeral port.
+
+- **Publish wording:** `apps/web/e2e/qa.spec.ts` now expects the current held-input message: "Some fields hold input that is not a valid value yet; complete or discard it first." The scenario enters incomplete Input schema JSON, closes the dialog, attempts Publish, and observes its refusal. A whole-tree search of `apps/web` found no remaining old publish sentence, `FIELD_UNPARSED`, or old discard wording. `docs/guide/02-build-a-loop.md` names the unparsed-text and incomplete-schedule discard actions. The third-round status above now records commit `2029b67`.
+- **Zoom-independent card layout:** `apps/web/src/styles/canvas.css` fixes coarse-pointer rows at 44 CSS px plus the existing 2 px gap. Only the absolute port hit box counter-scales; height is capped at the 46 px pitch. `editor/port-targets.ts` uses a spatial index to cap width at half the next card's gap in the port's vertical strip. `Canvas.tsx` applies those geometry-only limits without changing measured handles or card data. Viewport zoom is absent from the routing cache key. The Connect form remains the full-size way to connect on a zoomed-out touch canvas.
+- **Regressions:** `port-targets.test.ts` covers cards 260 px apart, nearby versus vertically separate cards, per-output limits, covered ports and missing ports. `useRouting.test.ts` checks geometry and plan identity across viewport changes with a routed self-loop. `responsive.spec.ts` measures the actual transformed targets and disjoint hit boxes at fitted zoom; its new both-theme coarse-pointer reproduction checks a three-route decision card at zoom 1, 0.784, 0.5 and 1.2, and zero routing work during eight zoom changes on a 300-node / 600-edge graph. The sweep evidence, docs/09 and CHANGELOG document the smaller capped targets.
+
+### Fourth-review targeted verification
+
+- Targeted units: **3 files / 38 tests passed**. Final typecheck: **20 / 20 tasks**; lint: **11 / 11 tasks** with no source warnings. Tokens and contrast checks and generated docs passed. The first typecheck and lint found the new DOM locator's `HTMLElement | SVGElement` union at `offsetHeight`; an `instanceof HTMLElement` guard fixed it. The first format check found the changed helper's line wrapping; Prettier corrected it.
+- Rebuilt Edge zoom reproduction: **2 / 2 passed** in **23.8 seconds**, one per theme. The first probe failed both themes because the width cap was calculated from the port center (37.5 px), rather than the 76 px card gap (38 px); the limit now uses the card edges. Both output and input target limits remain geometry-only. Final probes keep all card and target boxes disjoint at 260 px spacing.
+- Both themes measured the same three-route card height and target dimensions. At zoom 1.2, the card is still 232 px tall and both target categories measure **44.03 by 44.03 screen px**. Each 300-node / 600-edge graph recorded **zero routing measures across eight real zoom changes**.
+
+| Zoom  | Card height (CSS px) | Target with horizontal room (screen px) | Target next to a card 260 px away (screen px) |
+| ----- | -------------------- | --------------------------------------- | --------------------------------------------- |
+| 1     | 232                  | 44.03 by 44.03                          | 38.00 by 44.03                                |
+| 0.784 | 232                  | 44.01 by 36.06                          | 29.79 by 36.06                                |
+| 0.5   | 232                  | 44.02 by 23.00                          | 19.00 by 23.00                                |
+
+### Fourth-review gates
+
+- Final `pnpm.cmd typecheck`: **20 / 20 tasks**; `pnpm.cmd lint`: **11 / 11 tasks**, no source lint warnings. `pnpm.cmd format:check`, `pnpm.cmd check:tokens` (**137 files**), `pnpm.cmd check:contrast` (**zero failing pairs**) and `pnpm.cmd check:docs` pass.
+- Full web coverage with **two workers**: **90 files / 999 tests passed** in **319.25 seconds**; statements **98.93%**, branches **96.29%**, functions **99.34%**, lines **99.52%**. Thresholds and exclusions are unchanged, and `apps/web/coverage/` is retained.
+- `pnpm.cmd build` on HEAD and the final build before the complete Edge suite both passed **11 / 11 tasks**. Intermediate rebuilds supported the targeted zoom probes.
+- Initial non-clean results are recorded above: the DOM-union type/lint error, one Prettier line-wrap warning and the card-gap probe. Non-failing output includes Turbo's cache I/O warning `Access is denied. (os error 5)`, Edge's `NO_COLOR`/`FORCE_COLOR` warning and PowerShell's `NativeCommandError` wrapper around native stderr. Final native static gates and coverage exited 0.
+
+The complete suite's touch probes match the targeted dimensions above. Fitted views at 768 px (**0.7841 zoom**) measure unconstrained targets **44.02 by 36.07 px**; at 360 px (**0.5 zoom**) they measure **44.02 by 23 px**. The refreshed [sweep measurements](../2026-10-05-issue-41-sweep/touch-targets.json) and [both-theme zoom/cache evidence](../2026-10-05-issue-41-sweep/touch-zoom.json) retain the actual full-suite results.
+
+### Fourth-review complete Edge suite
+
+`pnpm.cmd --filter @graphgoblin/web test:e2e` selected **all 238 tests** on Edge **154.0.4258.53**, with one worker and no retries: **237 passed, 1 skipped, 0 failed, 0 flaky**, in **534.48 seconds (8.9 minutes)**. The skip is the optional LIVE Codex test, since LIVE mode is not enabled. No failing-file load rerun was needed. The corrected publish-message scenario passed inside the whole `qa.spec.ts`, and both coarse-pointer zoom regressions passed inside the full responsive sweep. Source and build stayed unchanged during the run.
+
+| Spec                      | Passed | Skipped |
+| ------------------------- | ------ | ------- |
+| `actions.spec.ts`         | 61     | 0       |
+| `api-key-current.spec.ts` | 6      | 0       |
+| `classifiers.spec.ts`     | 5      | 0       |
+| `cron.spec.ts`            | 10     | 0       |
+| `drafts.spec.ts`          | 3      | 0       |
+| `edge-routes.spec.ts`     | 10     | 0       |
+| `editor-modal.spec.ts`    | 7      | 0       |
+| `fonts.spec.ts`           | 8      | 0       |
+| `form-controls.spec.ts`   | 6      | 0       |
+| `forms.spec.ts`           | 12     | 0       |
+| `issue-7-qa.spec.ts`      | 3      | 0       |
+| `live.spec.ts`            | 0      | 1       |
+| `loop-lifecycle.spec.ts`  | 2      | 0       |
+| `model-picker.spec.ts`    | 6      | 0       |
+| `node-harness.spec.ts`    | 1      | 0       |
+| `palette.spec.ts`         | 4      | 0       |
+| `pwa.spec.ts`             | 11     | 0       |
+| `qa.spec.ts`              | 10     | 0       |
+| `responsive.spec.ts`      | 22     | 0       |
+| `routing.spec.ts`         | 23     | 0       |
+| `theme.spec.ts`           | 4      | 0       |
+| `undo.spec.ts`            | 14     | 0       |
+| `validation.spec.ts`      | 9      | 0       |
+
+Full console output, JSON reporter output and Playwright attachments stay in Temp. Curated touch and routing measurements are retained in the QA records.
+
+### Fourth-review routing measurements
+
+The complete normal suite measured routing medians **1.2 / 2.3 ms** at 100 / 300 nodes. The separate whole-file strict run passed **23 / 23**, with no retries, in **68.55 seconds**: routing medians **1.3 / 2.1 ms**, every drag below 16 ms, every strict frame p95 at or below **16.7 ms**. This meets the issue's strict routing bound below 4 ms and absolute frame bound at or below 16.7 ms. Added frame p95 remains reported without a bound. Normal full-suite mode retains the 8 ms median bound for shared-runner variance.
+
+| Mode              | Nodes | Routing p95s (ms)     | Median (ms) | Idle frame p95 (ms) | Frame p95s (ms)         | Added frame p95s (ms, reported only) | Raw report                                                          |
+| ----------------- | ----- | --------------------- | ----------- | ------------------- | ----------------------- | ------------------------------------ | ------------------------------------------------------------------- |
+| normal full suite | 100   | 1.400 / 1.200 / 1.200 | 1.200       | 8.400               | 8.400 / 8.400 / 8.400   | 0.000 / 0.000 / 0.000                | [JSON](round-4/routing-suite/performance-review-100-repeat-1.json)  |
+| normal full suite | 300   | 2.500 / 2.300 / 2.200 | 2.300       | 8.400               | 8.400 / 8.400 / 8.500   | 0.000 / 0.000 / 0.100                | [JSON](round-4/routing-suite/performance-review-300-repeat-1.json)  |
+| strict            | 100   | 1.400 / 1.100 / 1.300 | 1.300       | 8.400               | 8.500 / 8.400 / 16.700  | 0.100 / 0.000 / 8.300                | [JSON](round-4/routing-strict/performance-review-100-repeat-1.json) |
+| strict            | 300   | 2.600 / 2.100 / 2.100 | 2.100       | 8.400               | 16.700 / 16.600 / 8.400 | 8.300 / 8.200 / 0.000                | [JSON](round-4/routing-strict/performance-review-300-repeat-1.json) |
