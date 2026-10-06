@@ -265,4 +265,74 @@ describe('NodeEditorDialog disclosures across undo and redo', () => {
     expect(within(dialog).queryByRole('button', { name: /^Operations 1\b/ })).toBeNull();
     expect(add()).toHaveFocus();
   });
+
+  it.each([false, true])(
+    'redoing removal from an injected message focuses the surviving operation header (open: %s)',
+    async (neighbourOpen) => {
+      const user = userEvent.setup();
+      const dialog = await openDialog(
+        {
+          id: 'mut',
+          kind: 'mutate',
+          label: 'Mut',
+          config: {
+            operations: [
+              { op: 'inject', position: 'end', messages: [{ role: 'note', content: 'First' }] },
+              { op: 'inject', position: 'end', messages: [{ role: 'note', content: 'Second' }] },
+            ],
+          },
+        },
+        'Edit mutate mut',
+      );
+      const item = (n: number) =>
+        within(dialog).getByRole('button', { name: new RegExp(`^Operations ${n}\\b`) });
+      await user.click(item(1));
+      if (neighbourOpen) await user.click(item(2));
+      await user.click(within(dialog).getByRole('button', { name: 'Remove operations 1' }));
+      await user.keyboard(UNDO);
+      const role = within(within(dialog).getByRole('group', { name: 'Operations 1' })).getByRole(
+        'combobox',
+        { name: 'Role' },
+      );
+      act(() => role.focus());
+      await user.keyboard(REDO);
+      expect(item(1)).toHaveFocus();
+      expect(item(1)).toHaveAttribute('aria-expanded', String(neighbourOpen));
+      await user.keyboard(UNDO);
+      expect(item(1)).toHaveAttribute('aria-expanded', 'true');
+      expect(item(2)).toHaveAttribute('aria-expanded', String(neighbourOpen));
+      expect(item(2)).toHaveFocus();
+    },
+  );
+
+  it('undoing an injected message add returns to its surviving operation collection', async () => {
+    const user = userEvent.setup();
+    const dialog = await openDialog(
+      {
+        id: 'mut',
+        kind: 'mutate',
+        label: 'Mut',
+        config: {
+          operations: [
+            { op: 'inject', position: 'end', messages: [{ role: 'note', content: 'First' }] },
+          ],
+        },
+      },
+      'Edit mutate mut',
+    );
+    const item = () => within(dialog).getByRole('button', { name: /^Operations 1\b/ });
+    await user.click(item());
+    const add = () => within(dialog).getByRole('button', { name: 'Add messages' });
+    await user.click(add());
+    await waitFor(() =>
+      expect(
+        within(within(dialog).getByRole('group', { name: 'Messages 2' })).getByRole('combobox', {
+          name: 'Role',
+        }),
+      ).toHaveFocus(),
+    );
+    await user.keyboard(UNDO);
+    expect(add()).toHaveFocus();
+    expect(item()).toHaveAttribute('aria-expanded', 'true');
+  });
 });

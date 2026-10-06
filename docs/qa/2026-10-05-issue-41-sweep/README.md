@@ -1,13 +1,22 @@
 # #41 responsive sweep and the #11 light-theme tuning: screenshots
 
-Date: 2026-10-05. Regenerated on merged HEAD `d5f9ed2` with the uncommitted second-review fixes. The real app, built with `pnpm.cmd build` and served by `apps/web/e2e/server.ts` (the in-memory API with the fake harness), photographed in Edge with reduced motion so pulses hold still. Every screen and state at 360 by 780, 768 by 1024, 1024 by 768, and 1440 by 900 px in both themes; Settings as a full-page shot.
+Date: 2026-10-05. The wider screenshots retain the merged HEAD `d5f9ed2` build with the second-review fixes. The real app, built with `pnpm.cmd build` and served by `apps/web/e2e/server.ts` (the in-memory API with the fake harness), photographed in Edge with reduced motion so pulses hold still. Every screen and state at 360 by 780, 768 by 1024, 1024 by 768, and 1440 by 900 px in both themes; Settings as a full-page shot.
 
-The two `loops-360.png` shots were refreshed on `125985f` with the uncommitted pre-release follow-ups. Below 640 px, the shared stacked-table cells put their labels above full-width values so the entire "published, unpublished changes" badge fits. Edge `e2e/responsive.spec.ts` checks the text and its clipping ancestors at 360 px in both themes. Other screenshots retain the capture described above.
+All Dark and Light 360 px shots were regenerated from `pnpm.cmd build` on HEAD `76f07eb` with the uncommitted second-round pre-release follow-ups. This includes Runs, Events, Settings (model and classifier catalogs), Loops behind its dialogs, and the Menu, offline banner, and update toast backgrounds. The full 360 px set was compared with the previous captures. The shared stacked-table labels sit above full-width values below 640 px. The new [Dark](dark/loops-unpublished-changes-360.png) and [Light](light/loops-unpublished-changes-360.png) Loops shots scroll the entire "published, unpublished changes" badge into view; Edge `e2e/responsive.spec.ts` verifies its text and clipping ancestors. Wider shots retain the build described above.
 
 - `dark/` and `light/`: the merged app after the sweep and review fixes, including the Settings Font control (#40) and shared edge routing (#18); Dark (the default) and Light chosen the way Settings → Appearance does (the stored theme, shown by the boot script before first paint).
 - `before-light/`: Loops, the editor, the run inspector, and Settings at 768 and 1440 px in Light before the tuning (a build of `cb46771`, the feature branch before this work). The seed then had no API key yet, so its Settings shows none; that is data, not design.
 
 Regenerate with `pnpm build` and `pnpm --filter @graphgoblin/web capture:screens` (`GG_CAPTURE_SET=before` on a build of an earlier commit for the before set; `GG_CAPTURE_ONLY`, `GG_CAPTURE_WIDTHS`, `GG_CAPTURE_THEMES`, and `GG_CAPTURE_OUT` narrow or redirect a run; see `apps/web/e2e/screens.capture.ts`).
+
+Regenerated 360 px filenames in both `dark/` and `light/` (68 shots; compared all 66 existing shots, refreshed 29 changed files, and added two badge shots):
+
+- `api-key-360.png`, `editor-360.png`, `editor-issues-360.png`, `editor-panels-open-360.png`, `editor-publish-refused-360.png`, `error-boundary-360.png`
+- `events-360.png`, `inspector-event-batches-360.png`, `inspector-failed-360.png`, `inspector-finished-360.png`, `inspector-live-360.png`, `inspector-paused-360.png`
+- `inspector-waiting-360.png`, `loops-360.png`, `loops-delete-confirm-360.png`, `loops-import-refused-360.png`, `loops-unpublished-changes-360.png`, `nav-menu-360.png`
+- `new-run-360.png`, `node-decision-360.png`, `node-exit-360.png`, `node-heartbeat-360.png`, `node-inference-360.png`, `node-mutate-360.png`
+- `node-script-360.png`, `node-subloop-360.png`, `node-trigger-360.png`, `node-wait-360.png`, `not-found-360.png`, `offline-360.png`
+- `runs-360.png`, `settings-360.png`, `settings-api-keys-360.png`, `update-toast-360.png`
 
 ## What the sweep changed, in short
 
@@ -296,7 +305,7 @@ Regenerate with `pnpm build` and `pnpm --filter @graphgoblin/web capture:screens
 
 ## Scroll-width measurements after review fixes
 
-Regenerated on merged HEAD `d5f9ed2` with the second-review fixes by `e2e/responsive.spec.ts` on installed Microsoft Edge against the isolated in-memory E2E API. Both themes are stored before navigation. Every cell is `document.scrollingElement.scrollWidth / innerWidth` in CSS pixels, measured after fonts load and the screen or transient state appears. Settings sections are measured individually after scrolling their controls into view. The offline row forces transport failures for `/loops` and `/healthz` and waits for a failed probe; the API key panel uses a separate instance requiring a key. Update uses the existing PWA test hook; the error boundary uses the malformed Events test route from the capture script. Raw values: [scroll-widths.json](scroll-widths.json).
+Regenerated from the HEAD `76f07eb` build with the uncommitted second-round pre-release follow-ups by `e2e/responsive.spec.ts` on installed Microsoft Edge against the isolated in-memory E2E API. Both themes are stored before navigation. Every cell is `document.scrollingElement.scrollWidth / innerWidth` in CSS pixels, measured after fonts load and the screen or transient state appears. Settings sections are measured individually after scrolling their controls into view. The offline row forces transport failures for `/loops` and `/healthz` and waits for a failed probe; the API key panel uses a separate instance requiring a key. Update uses the existing PWA test hook; the error boundary uses the malformed Events test route from the capture script. Raw values: [scroll-widths.json](scroll-widths.json).
 
 | Screen / state                   | Theme | 360 px    | 768 px    | 1024 px     | 1440 px     |
 | -------------------------------- | ----- | --------- | --------- | ----------- | ----------- |
@@ -359,7 +368,7 @@ The inspector's Full thread JSON and Node progress now render through the shared
 
 `apps/web/src/forms/CodeEditor.tsx` gives content a coarse-pointer minimum of `max(44px, codeLinesHeight(minLines))`, preserving taller fields. `apps/web/src/components/ui/field.tsx` gives `CHECKBOX_LABEL` a 44 px minimum width as well as height. `apps/web/src/styles/canvas.css` uses `inset: -6px -18px` from the handle's 8 px positioning box, producing the documented 44 by 20 px hit box. `docs/09-frontend-and-pwa.md` describes these sizes.
 
-The touch selector in `apps/web/e2e/responsive.spec.ts` includes `summary`, `.cm-editor`, and checkbox inputs measured by their labels. It measures every visible code editor across all nine node dialogs (including the expanded mutate operation), taps the short ui label, and checks every handle's pseudo-element. These are measured CSS pixels at 768 by 1024 on a coarse pointer, after fonts load; the default face is Geist. Port sizes are before the canvas's pan/zoom transform. Both themes give the same dimensions. Raw values for all 26 measurements: [touch-targets.json](touch-targets.json).
+The touch selector in `apps/web/e2e/responsive.spec.ts` includes `summary`, `.cm-editor`, and checkbox inputs measured by their labels. It measures every visible code editor across all nine node dialogs (including the expanded mutate operation), taps the short ui label, and checks every handle's pseudo-element. These are measured CSS pixels at 768 by 1024 on a coarse pointer, after fonts load; the default face is Geist. Port sizes are before the canvas's pan/zoom transform. Both themes give the same dimensions. Regenerated from the same HEAD `76f07eb` build and Edge run as the scroll-width measurements. Raw values for all 26 measurements: [touch-targets.json](touch-targets.json).
 
 | Target                      | Dark width × height | Light width × height |
 | --------------------------- | ------------------- | -------------------- |
