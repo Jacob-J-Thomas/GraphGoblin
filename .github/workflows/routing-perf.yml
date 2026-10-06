@@ -17,8 +17,9 @@ jobs:
     env:
       GG_E2E_BROWSER_CHANNEL: msedge
       GG_ROUTING_REPORT_DIR: ${{ github.workspace }}/routing-performance
-      # Every run enforces routing p95 <4 ms (median of three). Manual dispatch also enforces
-      # absolute frame p95 <=16.7 ms; shared PR runners can halve the refresh while dragging.
+      # Pull requests enforce median of three routing p95s <8 ms: the shared two-core
+      # runner measured 0.8-5.2 ms for the same code. Manual dispatch enforces <4 ms
+      # and absolute frame p95 <=16.7 ms. Every run keeps each drag's routing p95 <16 ms.
       # Added frame time is reported, without a bound, because idle cadence can differ.
       GG_ROUTING_STRICT_PERF: ${{ github.event_name == 'workflow_dispatch' && '1' || '' }}
     steps:
@@ -44,7 +45,7 @@ jobs:
           import { readdir, readFile, appendFile } from 'node:fs/promises';
           const folder = process.env.GG_ROUTING_REPORT_DIR;
           const files = await readdir(folder).catch(() => []);
-          const rows = ['# Routing performance', '', 'Whole cache miss includes geometry preparation, invalidation, routing and identity reuse. Limits: median of three routing p95s <4 ms; frame p95 <=16.7 ms on manual dispatch.', '', '| Nodes | Browser | Drag | Routing p95 | Fixture median | Idle frame p95 | Drag frame p95 | Added frame p95 |', '| --- | --- | --- | --- | --- | --- | --- | --- |'];
+          const rows = ['# Routing performance', '', 'Whole cache miss includes geometry preparation, invalidation, routing and identity reuse. Limits: pull requests: median of three routing p95s <8 ms; manual dispatch: <4 ms and frame p95 <=16.7 ms. Every drag: routing p95 <16 ms.', '', '| Nodes | Browser | Drag | Routing p95 | Fixture median | Idle frame p95 | Drag frame p95 | Added frame p95 |', '| --- | --- | --- | --- | --- | --- | --- | --- |'];
           for (const file of files.filter(f => f.endsWith('.json')).sort()) {
             const report = JSON.parse(await readFile(folder + '/' + file, 'utf8'));
             for (const run of report.repetitions) rows.push(`| ${report.nodes} | ${report.channel} ${report.browser} | ${run.repetition} | ${run.routingP95Ms.toFixed(3)} ms | ${report.medianRoutingP95Ms.toFixed(3)} ms | ${report.idle.frameP95Ms.toFixed(3)} ms | ${run.frameP95Ms.toFixed(3)} ms | ${run.addedFrameP95Ms.toFixed(3)} ms |`);
