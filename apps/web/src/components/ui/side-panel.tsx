@@ -48,12 +48,33 @@ export function useSidePanelState(
   return [expanded, set] as const;
 }
 
+/** Below which breakpoint an expanded panel floats over the content: md (768 px) or lg (1024 px). */
+export type PanelOverlay = 'md' | 'lg';
+
+/**
+ * Where an expanded panel floats over the content (its parent is `relative`) instead of taking its
+ * own column: along its edge, full height, with an overlay shadow, leaving at least a rail's width
+ * of the content beside it. Static class names, per side and breakpoint, so Tailwind sees them.
+ */
+const OVERLAY: Record<'left' | 'right', Record<PanelOverlay, string>> = {
+  left: {
+    md: 'max-md:absolute max-md:inset-y-0 max-md:left-0 max-md:z-10 max-md:max-w-[calc(100%-2.75rem)] max-md:shadow-3',
+    lg: 'max-lg:absolute max-lg:inset-y-0 max-lg:left-0 max-lg:z-10 max-lg:max-w-[calc(100%-2.75rem)] max-lg:shadow-3',
+  },
+  right: {
+    md: 'max-md:absolute max-md:inset-y-0 max-md:right-0 max-md:z-10 max-md:max-w-[calc(100%-2.75rem)] max-md:shadow-3',
+    lg: 'max-lg:absolute max-lg:inset-y-0 max-lg:right-0 max-lg:z-10 max-lg:max-w-[calc(100%-2.75rem)] max-lg:shadow-3',
+  },
+};
+
 /**
  * A panel beside the main content that collapses to a narrow rail. Expanded, it shows its heading,
  * a Hide button, and its content; collapsed, the rail keeps a Show button and whatever `rail` holds
  * (a short summary), so the panel never disappears without a trace. The panel keeps its `id` in
  * both states, so a control can name it in `aria-controls`. When it expands, focus moves to its
- * heading; when its own Hide button collapses it, focus moves to Show.
+ * heading; when its own Hide button collapses it, focus moves to Show. With `overlayBelow`, an
+ * expanded panel floats over the content below that breakpoint instead of narrowing it (the
+ * editor's split pane on narrow windows); its parent must be `relative`.
  */
 export function SidePanel({
   id,
@@ -66,6 +87,7 @@ export function SidePanel({
   children,
   className,
   expandedWidth = 380,
+  overlayBelow,
 }: {
   id: string;
   /** The heading; also the panel's accessible name. */
@@ -81,6 +103,8 @@ export function SidePanel({
   children: ReactNode;
   /** Expanded width in pixels; the collapsed rail always uses the primitive's narrow width. */
   expandedWidth?: number;
+  /** Float over the content below this breakpoint while expanded. */
+  overlayBelow?: PanelOverlay;
   className?: string;
 }) {
   const headingId = useId();
@@ -140,11 +164,15 @@ export function SidePanel({
       aria-labelledby={headingId}
       data-side={side}
       style={{ width: expandedWidth }}
-      className={cn(`flex shrink-0 flex-col ${border} border-default bg-surface-raised`, className)}
+      className={cn(
+        `flex shrink-0 flex-col ${border} border-default bg-surface-raised`,
+        overlayBelow && OVERLAY[side][overlayBelow],
+        className,
+      )}
     >
       <div
         className={cn(
-          'flex h-[46px] shrink-0 items-center justify-between gap-2 border-b border-default',
+          'flex h-[46px] shrink-0 items-center justify-between gap-2 border-b border-default bg-surface-head',
           side === 'left' ? 'pl-2 pr-5' : 'pr-2 pl-5',
         )}
       >
@@ -165,7 +193,7 @@ export function SidePanel({
               id={headingId}
               ref={headingRef}
               tabIndex={-1}
-              className="text-md font-semibold focus:outline-none"
+              className="text-md font-semibold text-heading focus:outline-none"
             >
               {title}
             </h2>
@@ -176,7 +204,7 @@ export function SidePanel({
               id={headingId}
               ref={headingRef}
               tabIndex={-1}
-              className="text-md font-semibold focus:outline-none"
+              className="text-md font-semibold text-heading focus:outline-none"
             >
               {title}
             </h2>

@@ -3,9 +3,10 @@ import type { ClassifierModelSummary } from '@graphgoblin/contracts';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { useApi } from '../../api/context.js';
-import { refreshClassifierState, useSecrets } from '../../api/queries.js';
+import { refreshCatalogState, useSecrets } from '../../api/queries.js';
 import {
   Button,
+  CHECKBOX_LABEL,
   Checkbox,
   FieldGroup,
   HelpText,
@@ -16,7 +17,7 @@ import {
   RequiredNote,
   Select,
 } from '../../components/ui/index.js';
-import { errorMessage, problemIssues } from '../../lib/utils.js';
+import { cn, errorMessage, problemIssues } from '../../lib/utils.js';
 import {
   FORM_FIELDS,
   initialValues,
@@ -89,11 +90,11 @@ export function ClassifierModelForm({
       initial === undefined
         ? classifierModels.create(client, values.id, toPut(values))
         : classifierModels.upsert(client, initial.id, toPut(values)),
-    onSuccess: () => refreshClassifierState(queryClient),
+    onSuccess: () => refreshCatalogState(queryClient),
     onError: (failure) => {
       // Added elsewhere since this list loaded: refresh it, so the id check names the clash.
       if (failure instanceof GraphGoblinApiError && failure.code === 'CLASSIFIER_EXISTS')
-        return refreshClassifierState(queryClient);
+        return refreshCatalogState(queryClient);
     },
   });
   const fieldId = (field: ClassifierFormField) => `${formId}-${field}`;
@@ -259,7 +260,7 @@ export function ClassifierModelForm({
         </Legend>
         <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm">
           {PRIMITIVES.map(({ value, label }) => (
-            <label key={value} className="flex cursor-pointer items-center gap-2 font-medium">
+            <label key={value} className={cn(CHECKBOX_LABEL, 'font-medium')}>
               <Checkbox
                 checked={values.primitives.includes(value)}
                 onChange={(e) =>

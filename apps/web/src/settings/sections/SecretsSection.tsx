@@ -2,24 +2,20 @@ import { GraphGoblinApiError, secrets } from '@graphgoblin/api-client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useApi } from '../../api/context.js';
-import {
-  keys,
-  refreshClassifierState,
-  useClassifierModels,
-  useSecrets,
-} from '../../api/queries.js';
+import { keys, refreshCatalogState, useClassifierModels, useSecrets } from '../../api/queries.js';
 import { QueryState } from '../../components/status.js';
 import {
   Button,
   Card,
   ConfirmAction,
+  FIELD_ROW,
   FieldGroup,
   HelpText,
   Input,
   Label,
   RequiredNote,
 } from '../../components/ui/index.js';
-import { formatDateTime } from '../../lib/utils.js';
+import { cn, formatDateTime } from '../../lib/utils.js';
 import { LIST_ROW, MutationError, SECRETS_SECTION, useInvalidate } from '../shared.js';
 
 /** The API's rule for secret names (PUT /secrets/{name}). */
@@ -52,7 +48,7 @@ export function SecretsSection() {
       setName('');
       invalidate(keys.secrets);
       // A classifier's configured state, and the editor's checks of it, follow its secret.
-      void refreshClassifierState(queryClient);
+      void refreshCatalogState(queryClient);
     },
   });
   const nameInvalid = name !== '' && !SECRET_NAME.test(name);
@@ -61,7 +57,7 @@ export function SecretsSection() {
       <div className="grid gap-4">
         <HelpText>Values are write-only: they are never shown again.</HelpText>
         <form
-          className="flex flex-wrap items-start gap-3"
+          className={cn(FIELD_ROW, 'items-start')}
           aria-label="Set secret"
           onSubmit={(e) => {
             e.preventDefault();
@@ -132,7 +128,7 @@ export function SecretsSection() {
                       if (error instanceof GraphGoblinApiError && error.status === 404)
                         return Promise.all([
                           queryClient.invalidateQueries({ queryKey: keys.secrets }),
-                          refreshClassifierState(queryClient),
+                          refreshCatalogState(queryClient),
                         ]);
                     }}
                     consequences={
@@ -164,7 +160,7 @@ export function SecretsSection() {
                       await secrets.remove(client, s.name);
                       await Promise.all([
                         queryClient.invalidateQueries({ queryKey: keys.secrets }),
-                        refreshClassifierState(queryClient),
+                        refreshCatalogState(queryClient),
                       ]);
                     }}
                   />

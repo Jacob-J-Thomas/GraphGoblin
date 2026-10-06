@@ -17,6 +17,7 @@ import { Icon } from '../../components/icons/index.js';
 import {
   Badge,
   Button,
+  CHECKBOX_LABEL,
   Checkbox,
   Disclosure,
   Fieldset,
@@ -29,6 +30,8 @@ import {
   Select,
 } from '../../components/ui/index.js';
 import { cn } from '../../lib/utils.js';
+import { useFormChange } from '../changes.js';
+import { useCollectionIdentities, useDisclosureState, useDisclosureStore } from '../disclosures.js';
 import { labelOf } from '../layout.js';
 import { repathParseErrors, useParseErrors } from '../parse-errors.js';
 import {
@@ -181,7 +184,7 @@ function ObjectField({
   shape,
   bare,
 }: FieldProps & { shape: Record<string, Schema> }) {
-  const field = useField(name);
+  const field = useField(name, 'commit');
   const helpId = `${useId()}-help`;
   const controls = use(FieldControlsContext);
   const { optional, hasDefault, base } = unwrap(schema);
@@ -193,6 +196,7 @@ function ObjectField({
     ? Object.keys(shape).filter((key) => controlFor(controls, shape[key]!)?.drawsWithoutParent)
     : [];
   const parseErrors = useParseErrors();
+  const change = useFormChange();
   if (missing && standalone.length === 0) {
     return (
       <div data-field={name}>
@@ -211,10 +215,13 @@ function ObjectField({
           <Button
             size="sm"
             variant="ghost"
-            onClick={() => {
-              repathParseErrors(parseErrors, [{ from: name }]);
-              field.onChange(undefined);
-            }}
+            onClick={() =>
+              // One step: the object and the unparsed text inside it go together.
+              change({ path: name, kind: 'commit' }, () => {
+                repathParseErrors(parseErrors, [{ from: name }]);
+                field.onChange(undefined);
+              })
+            }
           >
             <Icon name="close" />
             Remove {label.toLowerCase()}
@@ -284,45 +291,37 @@ function ArrayField({
   const items = itemsOf(field.value);
   const element = shapeOf(shape.element);
   const parseErrors = useParseErrors();
+  const change = useFormChange();
   const focus = useCollectionFocus();
-  const [identity, setIdentity] = useState(() => ({
-    ids: items.map((_, i) => i),
-    nextId: items.length,
-  }));
-  // Rows there when the form opened have the first ids; collapsible ones start collapsed.
-  const [openedWith] = useState(items.length);
-  let rowIds = identity.ids;
-  // External resets and shared union fields can change the count without a collection action.
-  // Reconcile before rendering children so every row has a unique identity on its first mount.
-  if (rowIds.length !== items.length) {
-    let nextId = identity.nextId;
-    rowIds = Array.from({ length: items.length }, (_, i) => rowIds[i] ?? nextId++);
-    setIdentity({ ids: rowIds, nextId });
-  }
+  const identities = useCollectionIdentities();
+  const rowIds = identities.get(name, items.length);
+  const [openedWith] = useState(() => new Set(rowIds));
+  const { required, help, collapseItems } = fieldMeta(schema);
+  const collapsible = collapseItems === true && element.kind === 'union';
+  const disclosures = useDisclosureStore();
   const remove = (index: number) => {
     const current = itemsOf(field.read());
-    repathParseErrors(
-      parseErrors,
-      current.slice(index).map((_, offset) => ({
-        from: joinPath(name, index + offset),
-        ...(offset === 0 ? {} : { to: joinPath(name, index + offset - 1) }),
-      })),
-    );
-    setIdentity((previous) => ({ ...previous, ids: previous.ids.filter((_, i) => i !== index) }));
-    field.onChange(current.filter((_, i) => i !== index));
+    // The row goes; the rows after it move up one, with their unparsed text and open state.
+    const moves = current.slice(index).map((_, offset) => ({
+      from: joinPath(name, index + offset),
+      ...(offset === 0 ? {} : { to: joinPath(name, index + offset - 1) }),
+    }));
+    // One step: the row, and the unparsed text of the rows after it.
+    change({ path: name, kind: 'commit' }, () => {
+      identities.remove(name, index);
+      repathParseErrors(parseErrors, moves);
+      field.onChange(current.filter((_, i) => i !== index));
+    });
     focus.announce(`Removed ${label.toLowerCase()} ${index + 1}`);
   };
   const add = () => {
     const current = itemsOf(field.read());
-    setIdentity((previous) => ({
-      ids: [...previous.ids, previous.nextId],
-      nextId: previous.nextId + 1,
-    }));
+    identities.add(name);
     field.onChange([...current, initialValue(shape.element)]);
+    // An added item starts open, and stays open when the form remounts (an undo elsewhere).
+    if (collapsible) disclosures.open(joinPath(name, current.length));
     focus.announce(`Added ${label.toLowerCase()} ${current.length + 1}`, current.length);
   };
-  const { required, help, collapseItems } = fieldMeta(schema);
-  const collapsible = collapseItems === true && element.kind === 'union';
   const rule =
     element.kind === 'enum'
       ? choicesRule(shape.min, shape.max, element.options.length)
@@ -388,17 +387,29 @@ function ArrayField({
           />
         );
         return collapsible ? (
-          <div key={rowIds[index]} data-collection-row={index} className={COLLAPSIBLE_ROW}>
+          <div
+            key={rowIds[index]}
+            data-collection-row={index}
+            data-row-id={rowIds[index]}
+            data-row-path={joinPath(name, index)}
+            className={COLLAPSIBLE_ROW}
+          >
             <CollapsibleItem
               element={shape.element}
               name={joinPath(name, index)}
               label={`${label} ${index + 1}`}
-              defaultOpen={(rowIds[index] ?? 0) >= openedWith}
+              defaultOpen={!openedWith.has(rowIds[index]!)}
               remove={removeButton}
             />
           </div>
         ) : (
-          <div key={rowIds[index]} data-collection-row={index} className={COLLECTION_ROW}>
+          <div
+            key={rowIds[index]}
+            data-collection-row={index}
+            data-row-id={rowIds[index]}
+            data-row-path={joinPath(name, index)}
+            className={COLLECTION_ROW}
+          >
             <Field
               schema={shape.element}
               name={joinPath(name, index)}
@@ -529,10 +540,7 @@ function EnumSetField({
       <GroupLegend label={label} required={required} variant="label" />
       <div className="flex flex-wrap gap-x-5 gap-y-2">
         {options.map((option) => (
-          <label
-            key={option}
-            className="flex cursor-pointer items-center gap-2 font-mono text-sm font-medium"
-          >
+          <label key={option} className={cn(CHECKBOX_LABEL, 'font-mono text-sm font-medium')}>
             <Checkbox
               checked={chosen.includes(option)}
               onChange={(e) => toggle(option, e.target.checked)}
@@ -562,6 +570,7 @@ function RecordField({
   const currentEntries = () => Object.entries(recordOf(field.read()));
   const valueShape = shapeOf(shape.value);
   const parseErrors = useParseErrors();
+  const change = useFormChange();
   const focus = useCollectionFocus();
   const [rowIds, setRowIds] = useState(() => new Map(entries.map(([key], i) => [key, i])));
   const nextIdRef = useRef(entries.length);
@@ -570,9 +579,13 @@ function RecordField({
   const rename = (oldKey: string, key: string): boolean => {
     const current = currentEntries();
     if (current.some(([existing]) => existing === key && existing !== oldKey)) return false;
-    repathParseErrors(parseErrors, [
-      { from: joinPath(name, oldKey), to: joinPath(name, key), exact: true },
-    ]);
+    // Typing in the row's key input: the key changes with each keystroke, so the row names it.
+    change({ path: `${name}#key${rowIds.get(oldKey)}`, kind: 'typing' }, () => {
+      repathParseErrors(parseErrors, [
+        { from: joinPath(name, oldKey), to: joinPath(name, key), exact: true },
+      ]);
+      commit(current.map((entry) => (entry[0] === oldKey ? [key, entry[1]] : entry)));
+    });
     setRowIds((ids) => {
       const next = new Map(ids);
       const id = next.get(oldKey)!;
@@ -580,11 +593,13 @@ function RecordField({
       next.set(key, id);
       return next;
     });
-    commit(current.map((entry) => (entry[0] === oldKey ? [key, entry[1]] : entry)));
     return true;
   };
-  const setValue = (index: number, value: unknown) =>
-    commit(currentEntries().map((entry, i) => (i === index ? [entry[0], value] : entry)));
+  // Typing in an entry's value: a field of its own, at `<record>.<key>`.
+  const setValue = (index: number, key: string, value: unknown) =>
+    change({ path: joinPath(name, key), kind: 'typing' }, () =>
+      commit(currentEntries().map((entry, i) => (i === index ? [entry[0], value] : entry))),
+    );
   const add = () => {
     const current = recordOf(field.read());
     const currentRows = Object.entries(current);
@@ -597,13 +612,16 @@ function RecordField({
     focus.announce(`Added ${label.toLowerCase()} ${key}`, currentRows.length);
   };
   const remove = (key: string) => {
-    repathParseErrors(parseErrors, [{ from: joinPath(name, key), exact: true }]);
+    // One step: the entry and its unparsed text.
+    change({ path: name, kind: 'commit' }, () => {
+      repathParseErrors(parseErrors, [{ from: joinPath(name, key), exact: true }]);
+      commit(currentEntries().filter(([existing]) => existing !== key));
+    });
     setRowIds((ids) => {
       const next = new Map(ids);
       next.delete(key);
       return next;
     });
-    commit(currentEntries().filter(([existing]) => existing !== key));
     focus.announce(`Removed ${label.toLowerCase()} ${key}`);
   };
   const { required, help } = fieldMeta(schema);
@@ -636,7 +654,7 @@ function RecordField({
               name={joinPath(name, key)}
               label={`${label} value ${index + 1}`}
               value={value}
-              onChange={(next) => setValue(index, next)}
+              onChange={(next) => setValue(index, key, next)}
             />
           </div>
         </div>
@@ -759,9 +777,10 @@ function UnionField({
   shape,
   bare,
 }: FieldProps & { shape: Extract<FieldShape, { kind: 'union' }> }) {
-  const field = useField(name);
+  const field = useField(name, 'commit');
   const id = useId();
   const parseErrors = useParseErrors();
+  const change = useFormChange();
   const { optional, hasDefault, defaultValue } = unwrap(schema);
   const value: unknown = field.value === undefined && hasDefault ? defaultValue : field.value;
   const unset = value === undefined;
@@ -784,9 +803,14 @@ function UnionField({
           {...control}
           value={unset ? '' : String(index)}
           onChange={(e) => {
-            repathParseErrors(parseErrors, [{ from: name }]);
-            if (e.target.value === '') return field.onChange(undefined);
-            field.onChange(initialValue(shape.options[Number(e.target.value)] as Schema));
+            const chosen = e.target.value;
+            // One step: the variant and the unparsed text of the fields it replaces.
+            change({ path: name, kind: 'commit' }, () => {
+              repathParseErrors(parseErrors, [{ from: name }]);
+              field.onChange(
+                chosen === '' ? undefined : initialValue(shape.options[Number(chosen)] as Schema),
+              );
+            });
           }}
         >
           {optional && !hasDefault ? <option value="">{NOT_SET}</option> : null}
@@ -856,10 +880,12 @@ function CollapsibleItem({
   const value: unknown = useWatch({ name });
   const summary = itemSummary(element, stripUnset(value));
   const problems = useProblemCount([name]);
+  // The path resolves to a stable row id, so a removal and history travel keep its own state.
+  const state = useDisclosureState(name, defaultOpen);
   return (
     <Disclosure
       variant="row"
-      defaultOpen={defaultOpen}
+      {...state}
       label={<span className="font-medium">{label}</span>}
       summary={
         <>

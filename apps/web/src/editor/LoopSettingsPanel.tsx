@@ -80,7 +80,9 @@ export function LoopSettingsPanel({
           label="Loop settings form"
           onChange={updateSettings}
           parseErrors={fieldErrors['settings']}
-          onParseError={(path, error, reason) => setFieldError('settings', path, error, reason)}
+          onParseError={(path, error, reason, change) =>
+            setFieldError('settings', path, error, reason, change)
+          }
         />
       </CatalogWarningsContext>
       <div className="mt-2 grid gap-1">
@@ -91,9 +93,13 @@ export function LoopSettingsPanel({
         schema={VariablesFormSchema}
         value={{ variables: definition.variables ?? {} }}
         label="Variables form"
-        onChange={(value) => updateVariables((value as { variables?: unknown }).variables ?? {})}
+        onChange={(value, change) =>
+          updateVariables((value as { variables?: unknown }).variables ?? {}, change)
+        }
         parseErrors={fieldErrors['variables']}
-        onParseError={(path, error, reason) => setFieldError('variables', path, error, reason)}
+        onParseError={(path, error, reason, change) =>
+          setFieldError('variables', path, error, reason, change)
+        }
       />
     </section>
   );

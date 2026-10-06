@@ -90,6 +90,7 @@ export function Palette({
       expanded={expanded}
       onExpandedChange={onExpandedChange}
       expandedWidth={200}
+      overlayBelow="md"
       rail={
         <div className="flex flex-col items-center gap-1.5">
           <div className="flex flex-col items-center gap-1.5 py-1">

@@ -5,7 +5,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { BUILTIN_JEV, customClassifier, FakeApi } from '../__fixtures__/fake-api.js';
 import { renderApp } from '../__fixtures__/render.js';
-import { isValidationKey, keys, refreshClassifierState } from '../api/queries.js';
+import { isValidationKey, keys, refreshCatalogState } from '../api/queries.js';
 import { LOOP_PANEL_STORAGE_KEY } from './LoopPanel.js';
 import { useEditorStore } from './store.js';
 
@@ -128,7 +128,7 @@ describe('API checks held across a catalog change (#43 re-review)', () => {
     // The first check is held while Kev is enabled.
     await gate.arrived;
     setKev(api, false);
-    await act(() => refreshClassifierState(queryClient));
+    await act(() => refreshCatalogState(queryClient));
     await waitFor(() => expect(nodeBadge('pick')).toHaveAttribute('aria-label', '1 issue on pick'));
     // The held check now answers with the disabled state; it was cancelled, so nothing keeps it.
     await act(() => Promise.resolve(gate.release()));
@@ -241,7 +241,7 @@ describe('the classifier picker in the node editor', () => {
     const validations = api.callsTo('POST', /\/validate$/).length;
     // Settings disables it: the catalog write refreshes the summaries and the editor's checks.
     api.classifiers = api.classifiers.map((c) => (c.id === 'kev' ? { ...c, enabled: false } : c));
-    await act(() => refreshClassifierState(queryClient));
+    await act(() => refreshCatalogState(queryClient));
     await waitFor(() => expect(nodeBadge('pick')).toHaveAttribute('aria-label', '1 issue on pick'));
     expect(api.callsTo('POST', /\/validate$/).length).toBeGreaterThan(validations);
     expect(store().revision).toBe(revision);

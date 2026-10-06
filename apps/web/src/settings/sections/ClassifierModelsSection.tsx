@@ -3,7 +3,7 @@ import type { ClassifierModelSummary } from '@graphgoblin/contracts';
 import { useQueryClient } from '@tanstack/react-query';
 import { Fragment, useEffect, useId, useRef, useState } from 'react';
 import { useApi } from '../../api/context.js';
-import { keys, refreshClassifierState, useClassifierModels } from '../../api/queries.js';
+import { keys, refreshCatalogState, useClassifierModels } from '../../api/queries.js';
 import { Icon } from '../../components/icons/index.js';
 import { QueryState } from '../../components/status.js';
 import {
@@ -122,7 +122,7 @@ export function ClassifierModelsSection() {
   const editButtonId = (id: string) => `${sectionId}-edit-${id}`;
   const heading = () => headingRef.current?.closest('h2') ?? null;
   // Catalog writes also refresh the editor's API checks, whose classifier issues read the catalog.
-  const refresh = () => refreshClassifierState(queryClient);
+  const refresh = () => refreshCatalogState(queryClient);
   // Adding needs the current catalog: until it has loaded, a new id cannot be checked against it.
   const catalogReady = query.isSuccess;
   const addHintId = `${sectionId}-add-hint`;
@@ -202,7 +202,7 @@ export function ClassifierModelsSection() {
       <div className={query.isSuccess ? undefined : 'p-5'}>
         <QueryState query={query} what="Classifier models">
           {(items) => (
-            <Table>
+            <Table stack="md">
               <thead>
                 <tr>
                   <Th>Model</Th>
@@ -235,10 +235,10 @@ export function ClassifierModelsSection() {
                       <Td className="hidden lg:table-cell">
                         <Capabilities entry={entry} />
                       </Td>
-                      <Td>
+                      <Td label="Status">
                         <StatusCell entry={entry} />
                       </Td>
-                      <Td>
+                      <Td label="Enabled">
                         <EnableSwitch
                           name={entry.displayName}
                           enabled={entry.enabled}
@@ -277,8 +277,9 @@ export function ClassifierModelsSection() {
                       {hasCustom ? (
                         <Td className="text-right whitespace-nowrap">
                           {entry.source === 'custom' ? (
-                            // Stacked below 1024 px, side by side above.
-                            <div className="flex flex-col items-end gap-1 lg:flex-row lg:justify-end">
+                            // One above the other from 768 to 1023 px, side by side above that
+                            // and in a stacked row (below 768 px).
+                            <div className="flex flex-col items-end gap-1 max-md:flex-row max-md:flex-wrap max-md:items-center lg:flex-row lg:justify-end">
                               <Button
                                 id={editButtonId(entry.id)}
                                 size="sm"

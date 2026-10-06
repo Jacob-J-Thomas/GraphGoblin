@@ -34,7 +34,7 @@ export interface CodeEditorProps {
   label: string;
   id?: string | undefined;
   placeholder?: string | undefined;
-  /** The editor's height when it holds fewer lines: one line is as tall as an input (36 px). */
+  /** The editor's height when it holds fewer lines: 36 px for one line, at least 44 px on touch. */
   minLines?: number;
   /** Square the bottom corners so a preview can sit directly under the editor. */
   attached?: boolean;
@@ -101,7 +101,12 @@ export function CodeEditor({
         attributesRef.current.of(
           contentAttributes({ label, id, language, describedBy, invalid, required }),
         ),
-        EditorView.theme({ '.cm-content': { minHeight: codeLinesHeight(minLines) } }),
+        EditorView.theme({
+          '.cm-content': { minHeight: codeLinesHeight(minLines) },
+          '@media (pointer: coarse)': {
+            '.cm-content': { minHeight: `max(44px, ${codeLinesHeight(minLines)})` },
+          },
+        }),
         ...(placeholder ? [placeholderExt(placeholder)] : []),
         EditorView.updateListener.of((update) => {
           if (update.docChanged) onChangeRef.current(update.state.doc.toString());

@@ -13,7 +13,7 @@ describe('palette', () => {
       tokenColor(tokens, 'dark', '--grey-990'),
     );
     expect(tokenColor(tokens, 'light', '--surface-app')).toBe(
-      tokenColor(tokens, 'light', '--grey-50'),
+      tokenColor(tokens, 'light', '--grey-0'),
     );
     expect(tokenColor(tokens, 'dark', '--surface-app')).not.toBe(
       tokenColor(tokens, 'light', '--surface-app'),
@@ -26,7 +26,7 @@ describe('palette', () => {
     expect(dark.themeColor).toBe(tokenColor(tokens, 'dark', '--grey-990'));
     expect(dark.backgroundColor).toBe(tokenColor(tokens, 'dark', '--grey-975'));
     expect(appChromeColors(tokens, 'light').backgroundColor).toBe(
-      tokenColor(tokens, 'light', '--grey-50'),
+      tokenColor(tokens, 'light', '--grey-0'),
     );
   });
 

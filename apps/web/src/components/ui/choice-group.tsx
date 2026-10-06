@@ -60,10 +60,12 @@ const LAYOUTS = {
     track: 'inline-flex w-fit max-w-full min-w-0 flex-wrap',
     // A segment never grows wider than the track: a long label ends in an ellipsis, with the whole
     // text kept for the radio's name and shown on hover (title).
-    option: 'relative inline-flex max-w-full min-w-0',
+    // On a coarse pointer every segment is at least 44 px in both dimensions (#41).
+    option:
+      'relative inline-flex max-w-full min-w-0 pointer-coarse:min-h-11 pointer-coarse:min-w-11',
     face: cn(
-      'inline-flex h-7 max-w-full min-w-0 items-center px-3 text-sm font-medium whitespace-nowrap',
-      'peer-checked:font-semibold',
+      'inline-flex h-7 max-w-full min-w-0 items-center justify-center px-3 text-sm font-medium whitespace-nowrap',
+      'pointer-coarse:min-h-11 pointer-coarse:min-w-11 peer-checked:font-semibold',
     ),
   },
   grid: {

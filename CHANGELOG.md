@@ -6,6 +6,7 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ### Added
 
+- A **Go to Loops** link on the 404 page, with a "Page not found" heading and explanation (#41).
 - Settings → **Appearance → Font** (#40): a choice of typeface for this browser, with Geist the default and a shortlist for the owner to prune: Space Grotesk (characterful, all text), Chakra Petch (robotic headings and wordmark over Geist text), Atkinson Hyperlegible Next and OpenDyslexic (easier reading), and Inter (neutral). Each option previews its own face. The choice only swaps the `--font-ui` and new `--font-display` tokens (headings and the wordmark), applies at once, is remembered in `localStorage` (`graphgoblin-font`), shows from the first paint with no flash (a boot script in `index.html` also preloads the face), follows other tabs, and falls back to Geist when storage is unavailable or holds an unknown value. Code stays in Geist Mono. Every face is self-hosted, SIL OFL 1.1, `font-display: swap`, and precached, so it works offline; the app shell grows by 325 KiB of font files. Text size and spacing preferences are not included.
 - Validation badges on nodes and beside Publish open popovers with the issues and links to the fields that need attention (#15).
 - Editor notices can be dismissed individually (#45).
@@ -21,6 +22,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ### Changed
 
+- Responsive sweep (#41): every screen works from 360 px to wide desktop without scrolling sideways or cutting off a control, and at 200% zoom. Loops, Runs, and Events show each row as a stacked block below 1024 px (Settings' tables below 768 px), each value under its column's name; forms become one column below 640 px; the header's links fold into Menu below 640 px. In the editor (authoring from 768 px) the toolbar wraps instead of hiding Publish, and the expanded loop settings (below 1024 px) and palette (below 768 px) float over the canvas instead of squeezing it. On touch screens controls are at least 44 px in both dimensions, including short segmented choices. Loops shows each loop's update time under its name; the run's patch diff stacks on narrow screens. The cron builder's summary says "Choose a time." or "Choose at least one day." instead of reading with a gap; incomplete edits keep the last valid time and days for the next preset.
+- Light theme tuned (part of #11): the page stays white, while cards, panels, the editor toolbar, and dialogs are filled with warm brown tints, their heads and table heads a step deeper, titles and column headers in dark brown, with warm borders and darker brown control edges, for less glare. The dark theme is unchanged. See Settings → Appearance.
 - Forms share switches, segmented controls, file pickers, fieldsets, required-field markers, help text, and per-field errors (#8).
 - The node palette can be collapsed. Loop settings stay in the panel titled **Loop settings**, and the toolbar's Loop settings button has been removed (#59).
 - `GET /api-keys` requires a `current` boolean on every list item, identifying the key authenticating that request when keys are required. Settings marks it as **This browser** and warns before revoking it; when a browser stores a key but no row is marked, confirmations explain the possible sign-out and **Forget key** recovery. Changing keys refreshes the marker, and late 401 responses from a previous key no longer show the key panel.
@@ -45,6 +48,9 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ### Fixed
 
+- Editor drafts: while an older GraphGoblin tab or window blocks the device-draft store upgrade, the editor no longer claims edits are kept on the device. A notice says device storage is blocked and asks you to close other GraphGoblin tabs and windows; unsaved changes show as **Kept in this window only** until it works again, when they are written to the device at once; a server save shows as **All changes saved** instead of staying pending.
+- Editor validation: the API's checks run again for a reloaded server draft (a draft with an invalid cron expression no longer shows **Ready to publish**) and when a model is disabled or enabled in the model catalog, from Settings or another tab, so `MODEL_DISABLED` reaches the node badge; a catalog refetch that changes nothing runs no check.
+- Editor undo: each choice in a node or loop form (a picker, select, switch, segment, checkbox, or adding or removing a row) is an undo step of its own, and typing is one step per field, so changing Model then Effort undoes in two steps. Undo and redo keep the node editor's Advanced group and opened list items open.
 - Decision and exit-predicate failures exclude provider answers and error bodies. Jev rejects undeclared probability labels, and decision events retain only declared alternatives. HTTP classifiers reject choices outside the submitted routes; Jev and Codex keep their fallback with safe diagnostics.
 - Structural forms keep parse errors with their rows, refuse duplicate keys, and preserve focus and announcements when rows change (#53).
 - The app probes API reachability and restores queries, event streams, and autosave when the API returns (#55).

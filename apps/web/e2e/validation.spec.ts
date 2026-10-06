@@ -5,7 +5,7 @@
  * jsdom cannot show.
  */
 import type { APIRequestContext, Page } from '@playwright/test';
-import { approvalLoop, closeNode, expect, openNode, test } from './fixtures.js';
+import { approvalLoop, closeNode, expect, openNode, showLoopPanel, test } from './fixtures.js';
 
 async function createLoop(request: APIRequestContext, definition: unknown): Promise<string> {
   const created = await request.post('/loops', { data: { definition } });
@@ -228,6 +228,48 @@ test('an issue only the server finds (a bad cron expression) shows on the badge 
   await expect(page.getByRole('alert').filter({ hasText: 'Publish failed' })).toContainText(
     message,
   );
+});
+
+test('a reloaded server draft is checked again, not answered from the draft loaded first (review F3)', async ({
+  page,
+  request,
+}) => {
+  const definition = (expression: string) => ({
+    schemaVersion: 1,
+    name: 'qa reload check',
+    nodes: [
+      {
+        id: 'nightly',
+        kind: 'trigger',
+        label: 'Nightly',
+        config: { subtype: 'cron', expression },
+        ui: { x: 0, y: 80 },
+      },
+      { id: 'done', kind: 'exit', label: 'Done', config: {}, ui: { x: 320, y: 80 } },
+    ],
+    edges: [{ id: 'e1', from: { node: 'nightly', port: 'out' }, to: { node: 'done' } }],
+  });
+  const loopId = await createLoop(request, definition('0 2 * * *'));
+  await page.goto(`/app/loops/${loopId}/edit`);
+  await expect(page.getByText('Ready to publish')).toBeVisible();
+  // Another client saves a draft whose cron expression the API refuses.
+  const elsewhere = await request.put(`/loops/${loopId}/draft`, {
+    data: { definition: definition('every night') },
+  });
+  expect(elsewhere.ok()).toBe(true);
+  // An edit here meets the conflict; reloading loads the other draft at revision 0 again.
+  await showLoopPanel(page);
+  await page.getByLabel('Description').fill('mine');
+  await expect(page.getByText('The draft changed on the server')).toBeVisible();
+  await page.getByRole('button', { name: 'Reload server draft' }).click();
+  await expect(page.getByText('The draft changed on the server')).toBeHidden();
+  await expect(badge(page, 'nightly')).toHaveAccessibleName('1 issue on nightly');
+  await expect(page.getByRole('button', { name: '1 error' })).toBeVisible();
+  await expect(page.getByText('Ready to publish')).toBeHidden();
+  await badge(page, 'nightly').click();
+  await expect(
+    popover(page, 'nightly').getByRole('button', { name: /CRON_INVALID/ }),
+  ).toBeVisible();
 });
 
 test('loop-level issues stay in sight beside Publish, which refuses with the same message', async ({

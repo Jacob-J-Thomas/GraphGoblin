@@ -3,14 +3,16 @@ import type { Effort } from '@graphgoblin/contracts';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRef, useState, type FormEvent } from 'react';
 import { useApi } from '../../api/context.js';
-import { keys, useModelCatalog } from '../../api/queries.js';
+import { keys, refreshCatalogState, useModelCatalog } from '../../api/queries.js';
 import { Icon } from '../../components/icons/index.js';
 import { QueryState } from '../../components/status.js';
 import {
   Button,
   Card,
+  CHECKBOX_LABEL,
   Checkbox,
   ConfirmAction,
+  FIELD_ROW,
   FieldGroup,
   Input,
   Label,
@@ -21,12 +23,12 @@ import {
   Td,
   Th,
 } from '../../components/ui/index.js';
+import { cn } from '../../lib/utils.js';
 import {
   EnableSwitch,
   EFFORTS,
   MutationError,
   restoreVanishedToggleFocus,
-  useInvalidate,
   type CatalogEntry,
   type MutationMessages,
 } from '../shared.js';
@@ -39,7 +41,7 @@ export const CATALOG_MESSAGES: MutationMessages = {
 
 function ModelForm({ initial, onDone }: { initial?: CatalogEntry; onDone: () => void }) {
   const client = useApi();
-  const invalidate = useInvalidate();
+  const queryClient = useQueryClient();
   const [model, setModel] = useState(initial?.model ?? '');
   const [displayName, setDisplayName] = useState(initial?.displayName ?? '');
   const [efforts, setEfforts] = useState<Effort[]>(initial?.efforts ?? ['low', 'medium', 'high']);
@@ -53,7 +55,8 @@ function ModelForm({ initial, onDone }: { initial?: CatalogEntry; onDone: () => 
         ...(!initial ? { source: 'litellm' as const, enabled: true } : {}),
       }),
     onSuccess: () => {
-      invalidate(keys.catalog);
+      // The editor's checks of saved drafts read the catalog too.
+      void refreshCatalogState(queryClient);
       onDone();
     },
   });
@@ -68,7 +71,7 @@ function ModelForm({ initial, onDone }: { initial?: CatalogEntry; onDone: () => 
       className="grid gap-4 rounded-md border border-default bg-surface-sunken p-4"
     >
       {initial ? null : <RequiredNote />}
-      <div className="flex flex-wrap gap-3">
+      <div className={FIELD_ROW}>
         <FieldGroup className="w-[220px]">
           <Label htmlFor="model-id" required={!initial}>
             Model id
@@ -107,7 +110,7 @@ function ModelForm({ initial, onDone }: { initial?: CatalogEntry; onDone: () => 
         <Legend variant="label">Allowed efforts</Legend>
         <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm">
           {EFFORTS.map((e) => (
-            <label key={e} className="flex cursor-pointer items-center gap-2 font-medium">
+            <label key={e} className={cn(CHECKBOX_LABEL, 'font-medium')}>
               <Checkbox
                 checked={efforts.includes(e)}
                 onChange={(ev) =>
@@ -175,7 +178,7 @@ export function ModelCatalogSection() {
       <div className={query.isSuccess ? undefined : 'p-5'}>
         <QueryState query={query} what="Model catalog">
           {(items) => (
-            <Table>
+            <Table stack="md">
               <thead>
                 <tr>
                   <Th>Model</Th>
@@ -200,10 +203,10 @@ export function ModelCatalogSection() {
                         </>
                       )}
                     </Td>
-                    <Td className="text-sm text-muted">
+                    <Td label="Efforts" className="text-sm text-muted">
                       {entry.efforts.join(', ')} (default {entry.defaultEffort})
                     </Td>
-                    <Td>
+                    <Td label="Enabled">
                       <EnableSwitch
                         name={entry.displayName}
                         enabled={entry.enabled}
@@ -224,13 +227,13 @@ export function ModelCatalogSection() {
                                 : item,
                             ),
                           );
-                          await queryClient.invalidateQueries({ queryKey: keys.catalog });
+                          await refreshCatalogState(queryClient);
                         }}
                         onError={async (error, failure) => {
                           if (!(error instanceof GraphGoblinApiError) || error.status !== 404)
                             return;
                           setNotice(`${entry.displayName}: ${CATALOG_MESSAGES['MODEL_NOT_FOUND']}`);
-                          await queryClient.invalidateQueries({ queryKey: keys.catalog });
+                          await refreshCatalogState(queryClient);
                           restoreVanishedToggleFocus(
                             failure,
                             headingRef.current?.closest('h2') ?? null,
@@ -254,7 +257,7 @@ export function ModelCatalogSection() {
                               name={entry.model}
                               onDismiss={(error) => {
                                 if (error instanceof GraphGoblinApiError && error.status === 404)
-                                  return queryClient.invalidateQueries({ queryKey: keys.catalog });
+                                  return refreshCatalogState(queryClient);
                               }}
                               consequences={
                                 <p>
@@ -264,7 +267,7 @@ export function ModelCatalogSection() {
                               }
                               onConfirm={async () => {
                                 await modelCatalog.remove(client, entry.harness, entry.model);
-                                await queryClient.invalidateQueries({ queryKey: keys.catalog });
+                                await refreshCatalogState(queryClient);
                               }}
                             />
                           </>

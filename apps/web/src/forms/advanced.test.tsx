@@ -590,7 +590,7 @@ describe('registered controls', () => {
   });
 
   function ModelPicker({ schema: own, name, label }: FieldProps) {
-    const value = useField(name);
+    const value = useField(name, 'commit');
     return (
       <div data-field={name}>
         <button type="button" onClick={() => value.onChange('picked')}>

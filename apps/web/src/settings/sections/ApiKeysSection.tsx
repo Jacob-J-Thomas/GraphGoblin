@@ -11,11 +11,13 @@ import {
   Button,
   Card,
   ConfirmAction,
+  FIELD_ROW,
   FieldGroup,
   Input,
   Label,
   RequiredNote,
 } from '../../components/ui/index.js';
+import { cn } from '../../lib/utils.js';
 import { LIST_ROW, MutationError, useInvalidate } from '../shared.js';
 
 /** API keys for scripts and other clients: create one (the token is shown once), revoke it. */
@@ -38,7 +40,7 @@ export function ApiKeysSection() {
     <Card title="API keys">
       <div className="grid gap-4">
         <form
-          className="flex flex-wrap items-end gap-3"
+          className={cn(FIELD_ROW, 'items-end')}
           aria-label="Create API key"
           onSubmit={(e) => {
             e.preventDefault();

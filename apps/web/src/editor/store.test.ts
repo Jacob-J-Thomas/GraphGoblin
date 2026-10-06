@@ -1,5 +1,6 @@
 import { kitchenSinkLoop } from '@graphgoblin/contracts/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { FormChange } from '../forms/changes.js';
 import { COALESCE_MS, HISTORY_LIMIT, historyClock } from './history.js';
 import { newLoopDefinition } from './model.js';
 import { useEditorStore } from './store.js';
@@ -410,7 +411,11 @@ describe('undo and redo', () => {
     // Typed JSON that does not parse, then does: the config field's one step.
     store().setFieldError('node:start', 'inputSchema', { message: 'invalid JSON', text: '{"t' });
     store().setFieldError('node:start', 'inputSchema', undefined);
-    store().updateNode('start', { config: { subtype: 'manual', inputSchema: schema } });
+    store().updateNode(
+      'start',
+      { config: { subtype: 'manual', inputSchema: schema } },
+      { path: 'inputSchema', kind: 'typing', id: 7 },
+    );
     expect(store().past).toHaveLength(1);
     store().undo();
     expect(node('start')!.config).toEqual({ subtype: 'manual' });
@@ -425,6 +430,95 @@ describe('undo and redo', () => {
     expect(node('start')!.config).toEqual({ subtype: 'manual', inputSchema: schema });
     store().redo();
     expect(store().fieldErrors).toEqual({ 'node:start': { inputSchema: unparsed } });
+  });
+
+  it('makes each form commit a step of its own and merges typing per field', () => {
+    store().load('L1', newLoopDefinition('a'));
+    let ids = 0;
+    const commit = (path: string): FormChange => ({ path, kind: 'commit', id: (ids += 1) });
+    const typing = (path: string): FormChange => ({ path, kind: 'typing', id: (ids += 1) });
+    const config = () => node('start')!.config as Record<string, unknown>;
+    const set = (changes: Record<string, unknown>, change: FormChange) =>
+      store().updateNode('start', { config: { ...config(), ...changes } }, change);
+    // Model, then effort, well inside the merge window: two steps.
+    set({ model: 'alpha' }, commit('model'));
+    clock += 100;
+    set({ effort: 'high' }, commit('effort'));
+    expect(store().past).toHaveLength(2);
+    // Three keystrokes in one field: one step.
+    for (const text of ['h', 'hi', 'hi!']) {
+      clock += 100;
+      set({ note: text }, typing('note'));
+    }
+    expect(store().past).toHaveLength(3);
+    // Typing in another field, at once: a step of its own.
+    set({ other: 'x' }, typing('other'));
+    expect(store().past).toHaveLength(4);
+    // A switch toggled twice in quick succession: a step each, at the same path.
+    set({ on: true }, commit('on'));
+    set({ on: false }, commit('on'));
+    expect(store().past).toHaveLength(6);
+    // Back to typing in the first field after a commit: a new step.
+    set({ note: 'hi!?' }, typing('note'));
+    expect(store().past).toHaveLength(7);
+    expect(new Set(store().past.map((entry) => entry.label))).toEqual(
+      new Set(['edit config of start']),
+    );
+
+    // Undo walks them back one at a time.
+    store().undo();
+    expect(config()['note']).toBe('hi!');
+    store().undo();
+    expect(config()['on']).toBe(true);
+    store().undo();
+    expect(config()).not.toHaveProperty('on');
+    store().undo();
+    expect(config()).not.toHaveProperty('other');
+    store().undo();
+    expect(config()).not.toHaveProperty('note');
+    store().undo();
+    expect(config()).toMatchObject({ model: 'alpha' });
+    expect(config()).not.toHaveProperty('effort');
+    store().undo();
+    expect(config()).not.toHaveProperty('model');
+  });
+
+  it('keeps the writes of one commit in one step: its value and the unparsed text it moves', () => {
+    store().load('L1', newLoopDefinition('a'));
+    store().updateVariables({ a: { type: 'string' }, b: { type: 'string' } });
+    pause();
+    const variables = store().definition!.variables;
+    // Text that does not parse, typed in row b: the typing step of `variables.b`.
+    const typed: FormChange = { path: 'variables.b', kind: 'typing', id: 1 };
+    store().setFieldError('variables', 'variables.b', unparsed, undefined, typed);
+    expect(store().past).toHaveLength(2);
+    // Removing row a: the commit moves row b's text and changes the value, all reported with its
+    // id, so it is one step however soon it follows the typing.
+    const removal: FormChange = { path: 'variables', kind: 'commit', id: 2 };
+    store().setFieldError('variables', 'variables.b', undefined, undefined, removal);
+    store().setFieldError('variables', 'variables.c', unparsed, undefined, removal);
+    store().updateVariables({ b: { type: 'string' } }, removal);
+    expect(store().past).toHaveLength(3);
+    store().undo();
+    expect(store().definition!.variables).toEqual(variables);
+    expect(store().fieldErrors).toEqual({ variables: { 'variables.b': unparsed } });
+    store().undo();
+    expect(store().fieldErrors).toEqual({});
+    // The loop settings form works the same way: typing in one field, then a choice.
+    pause();
+    store().updateSettings({ maxIterations: 5 }, { path: 'maxIterations', kind: 'typing', id: 3 });
+    store().updateSettings({ maxIterations: 50 }, { path: 'maxIterations', kind: 'typing', id: 4 });
+    store().updateSettings(
+      { maxIterations: 50, defaults: { effort: 'low' } },
+      { path: 'defaults.effort', kind: 'commit', id: 5 },
+    );
+    expect(
+      store()
+        .past.slice(-2)
+        .map((entry) => entry.label),
+    ).toEqual(['edit loop settings', 'edit loop settings']);
+    store().undo();
+    expect(store().definition!.settings).toEqual({ maxIterations: 50 });
   });
 
   it('keeps a discard of unparsed text as a step of its own, however soon it follows the typing', () => {

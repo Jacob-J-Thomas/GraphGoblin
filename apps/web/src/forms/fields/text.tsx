@@ -116,7 +116,7 @@ export function StringField({
   label,
   shape,
 }: FieldProps & { shape: Extract<FieldShape, { kind: 'string' }> }) {
-  const field = useField(name);
+  const field = useField(name, 'typing');
   return (
     <StringControl
       schema={schema}
@@ -136,7 +136,7 @@ export function NumberField({
   label,
   shape,
 }: FieldProps & { shape: Extract<FieldShape, { kind: 'number' }> }) {
-  const field = useField(name);
+  const field = useField(name, 'typing');
   const id = useId();
   const { defaultValue } = unwrap(schema);
   const { required, help } = fieldMeta(schema);
