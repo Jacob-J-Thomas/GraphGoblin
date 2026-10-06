@@ -337,6 +337,115 @@ test('model then effort are two undo steps, and undo and redo keep Advanced open
   await expect(dialog.getByRole('spinbutton', { name: 'Timeout seconds' })).toBeVisible();
 });
 
+test('row focus follows history without opening collapsed neighbours', async ({
+  page,
+  request,
+}) => {
+  const loop = approvalLoop('qa undo collapsed rows');
+  const loopId = await createLoop(request, {
+    ...loop,
+    nodes: [
+      ...loop.nodes,
+      {
+        id: 'mut',
+        kind: 'mutate',
+        label: 'Mut',
+        config: {
+          operations: [
+            { op: 'delete', path: '/vars/a' },
+            { op: 'delete', path: '/vars/b' },
+          ],
+        },
+        ui: { x: 260, y: 260 },
+      },
+    ],
+  });
+  await page.goto(`/app/loops/${loopId}/edit`);
+  const dialog = await openNode(page, 'mut');
+  const toggle = (n: number) =>
+    dialog.getByRole('button', { name: new RegExp(`^Operations ${n}\\b`) });
+  const remove = (n: number) => dialog.getByRole('button', { name: `Remove operations ${n}` });
+  const op = (n: number) => dialog.getByRole('group', { name: `Operations ${n}` }).getByLabel('Op');
+  await toggle(1).click();
+  await remove(1).click();
+  await page.keyboard.press('Control+z');
+  await op(1).focus();
+  await page.keyboard.press('Control+Shift+z');
+  await expect(toggle(1)).toHaveAttribute('aria-expanded', 'false');
+  await expect(toggle(1)).toBeFocused();
+  await page.keyboard.press('Control+z');
+  await expect(toggle(1)).toHaveAttribute('aria-expanded', 'true');
+  await expect(toggle(2)).toHaveAttribute('aria-expanded', 'false');
+  await expect(toggle(2)).toBeFocused();
+
+  // Both controls are outside the row's data-field, and their names change with its index.
+  for (const header of [toggle, remove]) {
+    await remove(1).click();
+    await header(1).focus();
+    await page.keyboard.press('Control+z');
+    await expect(header(2)).toBeFocused();
+    await expect(toggle(2)).toHaveAttribute('aria-expanded', 'false');
+    await page.keyboard.press('Control+Shift+z');
+    await expect(header(1)).toBeFocused();
+    await expect(toggle(1)).toHaveAttribute('aria-expanded', 'false');
+    await page.keyboard.press('Control+z');
+  }
+
+  // With only the collapsed neighbour left, undo an add while focused in its new picker.
+  await remove(1).click();
+  await dialog.getByRole('button', { name: 'Add operations' }).click();
+  await expect(op(2)).toBeFocused();
+  await page.keyboard.press('Control+z');
+  await expect(toggle(1)).toHaveAttribute('aria-expanded', 'false');
+  await expect(toggle(1)).toBeFocused();
+  await page.keyboard.press('Control+Shift+z');
+  await expect(toggle(1)).toHaveAttribute('aria-expanded', 'false');
+  await expect(toggle(2)).toHaveAttribute('aria-expanded', 'true');
+});
+
+test('nested message focus falls back to the surviving operation without revealing it', async ({
+  page,
+  request,
+}) => {
+  const loop = approvalLoop('qa undo nested rows');
+  const loopId = await createLoop(request, {
+    ...loop,
+    nodes: [
+      ...loop.nodes,
+      {
+        id: 'mut',
+        kind: 'mutate',
+        label: 'Mut',
+        config: {
+          operations: [
+            { op: 'inject', position: 'end', messages: [{ role: 'note', content: 'First' }] },
+            { op: 'inject', position: 'end', messages: [{ role: 'note', content: 'Second' }] },
+          ],
+        },
+        ui: { x: 260, y: 260 },
+      },
+    ],
+  });
+  await page.goto(`/app/loops/${loopId}/edit`);
+  const dialog = await openNode(page, 'mut');
+  const toggle = (n: number) =>
+    dialog.getByRole('button', { name: new RegExp(`^Operations ${n}\\b`) });
+  await toggle(1).click();
+  await dialog.getByRole('button', { name: 'Remove operations 1' }).click();
+  await page.keyboard.press('Control+z');
+  await dialog
+    .getByRole('group', { name: 'Operations 1' })
+    .getByRole('combobox', { name: 'Role' })
+    .focus();
+  await page.keyboard.press('Control+Shift+z');
+  await expect(toggle(1)).toBeFocused();
+  await expect(toggle(1)).toHaveAttribute('aria-expanded', 'false');
+  await page.keyboard.press('Control+z');
+  await expect(toggle(1)).toHaveAttribute('aria-expanded', 'true');
+  await expect(toggle(2)).toHaveAttribute('aria-expanded', 'false');
+  await expect(toggle(2)).toBeFocused();
+});
+
 test('the Undo and Redo buttons are 32 px for a mouse and 44 px for touch', async ({
   page,
   request,

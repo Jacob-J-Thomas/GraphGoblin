@@ -386,6 +386,19 @@ async function openNodeDialog(page: Page, id: string) {
 const SCREENS: Screen[] = [
   { name: 'loops', path: () => '/app/loops', ready: 'nightly-triage', before: true },
   {
+    name: 'loops-unpublished-changes',
+    path: () => '/app/loops',
+    ready: 'nightly-triage',
+    widths: [360],
+    act: async (page) => {
+      const row = page.getByRole('row').filter({
+        has: page.getByRole('link', { name: 'nightly-triage', exact: true }),
+      });
+      await row.scrollIntoViewIfNeeded();
+      await row.getByText('published, unpublished changes', { exact: true }).waitFor();
+    },
+  },
+  {
     name: 'loops-import-refused',
     path: () => '/app/loops',
     ready: 'nightly-triage',

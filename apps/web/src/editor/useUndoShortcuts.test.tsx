@@ -343,6 +343,91 @@ describe('useUndoShortcuts', () => {
     expect(screen.getByRole('button', { name: 'Row one' })).toHaveFocus();
   });
 
+  it('remaps a vanished inner collection through the surviving ancestor’s new path', () => {
+    function NestedRows() {
+      const epoch = useEditorStore((s) => s.historyEpoch);
+      const added = useEditorStore((s) => s.definition?.name) === 'b';
+      const path = added ? 'items.1' : 'items.0';
+      return (
+        <div key={epoch}>
+          <fieldset data-field="items" tabIndex={-1}>
+            <div data-row-id="outer" data-row-path={path} data-collection-row={added ? 1 : 0}>
+              <button type="button" aria-expanded="true">
+                Outer header
+              </button>
+              <fieldset data-field={`${path}.messages`} tabIndex={-1}>
+                {added ? (
+                  <div
+                    data-row-id="inner"
+                    data-row-path={`${path}.messages.0`}
+                    data-collection-row={0}
+                  >
+                    <button type="button">Inner control</button>
+                  </div>
+                ) : null}
+                <button type="button">Add messages</button>
+              </fieldset>
+            </div>
+          </fieldset>
+        </div>
+      );
+    }
+    render(
+      <Harness>
+        <NestedRows />
+      </Harness>,
+    );
+    const inner = screen.getByRole('button', { name: 'Inner control' });
+    act(() => inner.focus());
+    keydown(inner, { key: 'z', ctrlKey: true });
+    expect(screen.getByRole('button', { name: 'Add messages' })).toHaveFocus();
+    expect(screen.getByRole('button', { name: 'Outer header' })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
+  });
+
+  it.each(['heading', 'canvas'] as const)(
+    'a vanished row and collection fall back to the %s',
+    (fallback) => {
+      function VanishingCollection() {
+        const epoch = useEditorStore((s) => s.historyEpoch);
+        const added = useEditorStore((s) => s.definition?.name) === 'b';
+        return (
+          <section aria-labelledby={fallback === 'heading' ? 'missing-heading' : undefined}>
+            {fallback === 'heading' ? (
+              <h2 id="missing-heading" tabIndex={-1}>
+                Missing collection
+              </h2>
+            ) : null}
+            <div key={epoch}>
+              {added ? (
+                <fieldset data-field="items" tabIndex={-1}>
+                  <div data-row-id="gone" data-row-path="items.0" data-collection-row={0}>
+                    <button type="button">Gone row</button>
+                  </div>
+                </fieldset>
+              ) : null}
+            </div>
+          </section>
+        );
+      }
+      render(
+        <Harness>
+          <VanishingCollection />
+        </Harness>,
+      );
+      const gone = screen.getByRole('button', { name: 'Gone row' });
+      act(() => gone.focus());
+      keydown(gone, { key: 'z', ctrlKey: true });
+      const target =
+        fallback === 'heading'
+          ? screen.getByRole('heading', { name: 'Missing collection' })
+          : screen.getByTestId('canvas');
+      expect(target).toHaveFocus();
+    },
+  );
+
   it('leaves focus where a closing component put it', () => {
     /** Moves focus to the canvas as it unmounts, as the node editor does when its node goes. */
     function ReturnsFocus() {
