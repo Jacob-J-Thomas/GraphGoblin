@@ -347,10 +347,13 @@ export const InferenceConfigSchema = z.strictObject({
     }),
   ),
   capabilities: CapabilitiesSchema.optional().meta(
-    field('MCP servers, plugins, and skills, resolved by the adapter.', {
-      advanced: true,
-      group: 'Harness options',
-    }),
+    field(
+      'MCP server, plugin, and skill slugs are recorded but not yet resolved; use raw harness config overrides to configure tools.',
+      {
+        advanced: true,
+        group: 'Harness options',
+      },
+    ),
   ),
   output: z
     .strictObject({

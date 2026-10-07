@@ -29,6 +29,58 @@ const Actor = z.strictObject({
   id: z.string().min(1).max(256),
 });
 
+export const PROGRESS_SUMMARY_MAX = 2000;
+export const COMMAND_PREVIEW_MAX = 160;
+export const SCRIPT_PROGRESS_STDERR_MAX = 2000;
+
+export const ProgressItemStatusSchema = z.enum(['ok', 'failed', 'running']);
+const ProgressItemCommon = {
+  id: z.string().min(1).max(256),
+  summary: z.string().max(PROGRESS_SUMMARY_MAX),
+};
+const ProgressItemStatusField = { status: ProgressItemStatusSchema.optional() };
+
+/** Safe item projection used by inference progress events; provider detail never belongs here. */
+export const ProgressItemSchema = z.discriminatedUnion('type', [
+  z.strictObject({
+    ...ProgressItemCommon,
+    type: z.literal('command'),
+    commandPreview: z.string().max(COMMAND_PREVIEW_MAX).optional(),
+    exitCode: z.number().int().optional(),
+    status: ProgressItemStatusSchema,
+  }),
+  z.strictObject({ ...ProgressItemCommon, type: z.literal('message'), ...ProgressItemStatusField }),
+  z.strictObject({
+    ...ProgressItemCommon,
+    type: z.literal('reasoning'),
+    ...ProgressItemStatusField,
+  }),
+  z.strictObject({
+    ...ProgressItemCommon,
+    type: z.literal('file-change'),
+    ...ProgressItemStatusField,
+  }),
+  z.strictObject({
+    ...ProgressItemCommon,
+    type: z.literal('tool-call'),
+    ...ProgressItemStatusField,
+  }),
+  z.strictObject({ ...ProgressItemCommon, type: z.literal('search'), ...ProgressItemStatusField }),
+  z.strictObject({ ...ProgressItemCommon, type: z.literal('error'), ...ProgressItemStatusField }),
+  z.strictObject({ ...ProgressItemCommon, type: z.literal('other'), ...ProgressItemStatusField }),
+]);
+
+export const InferenceProgressSchema = z.strictObject({ item: ProgressItemSchema });
+export const ScriptProgressSchema = z.strictObject({
+  exitCode: z.number().int(),
+  stderr: z.string().max(SCRIPT_PROGRESS_STDERR_MAX),
+  stdoutBytes: z.number().int().nonnegative(),
+});
+export const NodeProgressSchema = z.union([InferenceProgressSchema, ScriptProgressSchema]);
+export type ProgressItemStatus = z.infer<typeof ProgressItemStatusSchema>;
+export type ProgressItem = z.infer<typeof ProgressItemSchema>;
+export type NodeProgress = z.infer<typeof NodeProgressSchema>;
+
 /**
  * The append-only run event log. One `seq` per run, strictly increasing.
  * Large payloads live in artifacts and are referenced here.
@@ -102,7 +154,7 @@ export const RunEventSchema = z.discriminatedUnion('type', [
     ...Base,
     type: z.literal('node.progress'),
     nodeId: SlugSchema,
-    progress: JsonValueSchema,
+    progress: NodeProgressSchema,
   }),
   z.strictObject({
     ...Base,

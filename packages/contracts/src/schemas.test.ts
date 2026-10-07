@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   ContextThreadSchema,
+  COMMAND_PREVIEW_MAX,
   DecisionConfigSchema,
   EdgeRouteSchema,
   EffortSchema,
@@ -15,6 +16,7 @@ import {
   NodeConfigSchemas,
   NodeKindSchema,
   NodeSchema,
+  PROGRESS_SUMMARY_MAX,
   RunEventSchema,
   RunRecordSchema,
   ScriptConfigSchema,
@@ -417,5 +419,67 @@ describe('thread, run, and events', () => {
         replayOf: { runId: 'x', nodeId: 'n' },
       }).success,
     ).toBe(false);
+  });
+
+  it('strictly validates the supported node progress variants and their bounds', () => {
+    const base = { runId: FIXTURE_IDS.run, seq: 1, ts: FIXTURE_TS };
+    const commandEvent = {
+      ...base,
+      type: 'node.progress',
+      nodeId: 'infer',
+      progress: {
+        item: {
+          id: 'command-1',
+          type: 'command',
+          summary: 'npm test (exit -1)',
+          commandPreview: 'npm test',
+          exitCode: -1,
+          status: 'failed',
+        },
+      },
+    };
+    const toolEvent = {
+      ...base,
+      type: 'node.progress',
+      nodeId: 'infer',
+      progress: {
+        item: {
+          id: 'tool-1',
+          type: 'tool-call',
+          summary: 'browser.search failed',
+          status: 'failed',
+        },
+      },
+    };
+    const scriptEvent = {
+      ...base,
+      type: 'node.progress',
+      nodeId: 'script',
+      progress: { exitCode: 0, stderr: '', stdoutBytes: 12 },
+    };
+
+    expect(RunEventSchema.parse(commandEvent)).toEqual(commandEvent);
+    expect(RunEventSchema.parse(toolEvent)).toEqual(toolEvent);
+    expect(RunEventSchema.parse(scriptEvent)).toEqual(scriptEvent);
+
+    const invalidProgress = [
+      { item: { ...commandEvent.progress.item, status: 'unknown' } },
+      { item: { ...commandEvent.progress.item, exitCode: '-1' } },
+      {
+        item: {
+          ...commandEvent.progress.item,
+          commandPreview: 'x'.repeat(COMMAND_PREVIEW_MAX + 1),
+        },
+      },
+      { item: { ...commandEvent.progress.item, summary: 'x'.repeat(PROGRESS_SUMMARY_MAX + 1) } },
+      { item: { ...commandEvent.progress.item, detail: { aggregated_output: 'private' } } },
+      { exitCode: 0, stderr: '', stdoutBytes: 0, detail: 'not allowed' },
+    ];
+    for (const progress of invalidProgress) {
+      expect(
+        RunEventSchema.safeParse({ ...commandEvent, progress }).success,
+        'invalid node progress payload should be rejected',
+      ).toBe(false);
+    }
   });
 });
