@@ -280,6 +280,21 @@ restricts tool lists, permission prompts, settings sources, and MCP configuratio
 the effective model, authentication source, tools, MCP servers, plugins, and skills reported by
 the CLI before accepting the session policy. Managed policy remains in force. The two hostile-project policy canaries passed for the tested restrictions; their limits and remaining native adapter verification are recorded in the [#26 QA report](qa/2026-10-07-issue-26.md).
 
+When an inference turn requests an output schema, the pinned CLI init must advertise exactly
+the allowed execution tools plus one `StructuredOutput` carrier. Without a schema, that carrier
+is refused. It is virtual output transport, so the CLI `--tools` list and execution-policy
+`tools` evidence remain unchanged; separate policy evidence names the carrier. A correlated
+carrier call/result records only bounded `other` progress with its name and status, never a
+file, command, input, or result body. Duplicate advertised tools, other unexpected tools,
+unmatched IDs, and non-boolean error markers fail closed. The final native
+`result.structured_output` remains the sole candidate for engine validation and repair; carrier
+input or final text cannot replace it. This exact carrier name/set was observed in CLI
+`2.1.285` init; its complete native call/result stream remains to be verified in the
+[#26 QA report](qa/2026-10-07-issue-26.md). The official
+[CLI reference](https://code.claude.com/docs/en/cli-reference) documents `--json-schema`, and
+[structured-output documentation](https://code.claude.com/docs/en/agent-sdk/structured-outputs)
+describes the final `structured_output` field; neither establishes this internal carrier name.
+
 ### Turns, defaults, and failures
 
 Model and effort resolve only within the selected harness: node, loop, owner Settings, then

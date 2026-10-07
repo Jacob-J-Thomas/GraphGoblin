@@ -34,6 +34,7 @@ const init = {
   plugins: [],
   skills: [],
 };
+const schemaInit = { ...init, tools: [...init.tools, 'StructuredOutput'] };
 const final = {
   type: 'result',
   subtype: 'success',
@@ -254,7 +255,7 @@ describe('Claude existing harness contract', () => {
   });
   it('validates structured results through the existing schema contract', async () => {
     const { harness, calls } = fixture({
-      records: [init, { ...final, structured_output: { ok: true } }],
+      records: [schemaInit, { ...final, structured_output: { ok: true } }],
     });
     const schema = {
       type: 'object',
@@ -269,6 +270,76 @@ describe('Claude existing harness contract', () => {
       ).result,
     ).toMatchObject({ structured: { ok: true } });
     expect(calls.at(-1)?.args).toContain(JSON.stringify(schema));
+  });
+  it('handles the native schema carrier without extending CLI execution tools or promoting carrier content', async () => {
+    const schema = { type: 'object', properties: { ok: { type: 'boolean' } }, required: ['ok'] };
+    const { harness, calls } = fixture({
+      records: [
+        schemaInit,
+        {
+          type: 'assistant',
+          message: {
+            content: [
+              {
+                type: 'tool_use',
+                id: 'carrier',
+                name: 'StructuredOutput',
+                input: { ok: true, file_path: 'PRIVATE_FILE', command: 'PRIVATE_COMMAND' },
+              },
+            ],
+          },
+        },
+        {
+          type: 'user',
+          message: {
+            content: [
+              {
+                type: 'tool_result',
+                tool_use_id: 'carrier',
+                is_error: false,
+                content: 'PRIVATE_CARRIER_RESULT',
+              },
+            ],
+          },
+        },
+        { ...final, structured_output: { ok: true } },
+      ],
+    });
+    const session = harness.start(
+      { ...request, turn: { prompt: 'synthetic', outputSchema: schema } },
+      new AbortController().signal,
+    );
+    const [completed, events] = await Promise.all([session.result, drain(session.events)]);
+    expect(completed.structured).toEqual({ ok: true });
+    expect(events.map((event) => event.type)).toEqual([
+      'session',
+      'item',
+      'item',
+      'item',
+      'usage',
+      'turn-complete',
+    ]);
+    expect(
+      completed.items
+        .filter((item) => item.id === 'carrier')
+        .map((item) => ({ type: item.type, status: item.status, detail: item.detail })),
+    ).toEqual([
+      {
+        type: 'other',
+        status: 'running',
+        detail: { carrier: 'StructuredOutput', kind: 'schema-output' },
+      },
+      {
+        type: 'other',
+        status: 'ok',
+        detail: { carrier: 'StructuredOutput', kind: 'schema-output' },
+      },
+    ]);
+    expect(JSON.stringify(completed.items)).not.toContain('PRIVATE');
+    const args = calls.find((call) => call.args.includes('--print'))!.args;
+    expect(args[args.indexOf('--tools') + 1]).toBe('Read,Glob,Grep');
+    expect(args[args.indexOf('--json-schema') + 1]).toBe(JSON.stringify(schema));
+    expect(args).not.toContain('StructuredOutput');
   });
   it('rejects malformed/incomplete/out-of-order streams and abnormal exit without final success evidence', async () => {
     for (const options of [
@@ -532,8 +603,8 @@ describe('Claude native structured repair through the engine', () => {
     async (candidate) => {
       const { harness, calls } = fixture({
         turns: [
-          [init, { ...final, result: '{"ok":true}', structured_output: candidate }],
-          [init, { ...final, structured_output: { ok: true } }],
+          [schemaInit, { ...final, result: '{"ok":true}', structured_output: candidate }],
+          [schemaInit, { ...final, structured_output: { ok: true } }],
         ],
       });
       const engine = await createTestEngine({

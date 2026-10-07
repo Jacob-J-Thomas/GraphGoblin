@@ -255,6 +255,10 @@ export class ClaudeAccumulator {
         'HARNESS_PROTOCOL_ERROR',
         'Claude resumed session does not match the requested session',
       );
+    const expectedTools =
+      this.options.schema === undefined
+        ? this.options.policy.tools
+        : [...this.options.policy.tools, 'StructuredOutput'];
     const tools = record.tools,
       plugins = record.plugins,
       skills = record.skills,
@@ -264,9 +268,9 @@ export class ClaudeAccumulator {
       record.permissionMode !== 'dontAsk' ||
       record.apiKeySource !== 'none' ||
       !Array.isArray(tools) ||
-      tools.length !== this.options.policy.tools.length ||
+      tools.length !== expectedTools.length ||
       new Set(tools).size !== tools.length ||
-      tools.some((tool) => typeof tool !== 'string' || !this.options.policy.tools.includes(tool)) ||
+      tools.some((tool) => typeof tool !== 'string' || !expectedTools.includes(tool)) ||
       !Array.isArray(mcp) ||
       mcp.length ||
       !Array.isArray(plugins) ||
@@ -297,6 +301,7 @@ export class ClaudeAccumulator {
         approval: this.evidence.approval,
         permissionMode: this.evidence.permissionMode,
         tools: [...this.evidence.tools],
+        structuredOutputCarrier: this.options.schema === undefined ? null : 'StructuredOutput',
         authMethod: this.evidence.authMethod,
         billingMode: this.evidence.billingMode,
         billingStatus: this.evidence.billingStatus,
@@ -327,6 +332,10 @@ export class ClaudeAccumulator {
     this.items.push(next);
     return { type: 'item', item: next };
   }
+  /** The pinned native schema carrier is metadata transport, not an execution capability. */
+  private isOutputCarrier(tool: string): boolean {
+    return this.options.schema !== undefined && tool === 'StructuredOutput';
+  }
   private assistant(record: ObjectValue): HarnessEvent[] {
     if (!object(record.message) || !Array.isArray(record.message.content)) throw protocolError();
     const events: HarnessEvent[] = [];
@@ -342,7 +351,10 @@ export class ClaudeAccumulator {
           }),
         );
       } else if (content.type === 'tool_use') {
-        if (typeof content.name !== 'string' || !this.options.policy.tools.includes(content.name))
+        if (
+          typeof content.name !== 'string' ||
+          (!this.options.policy.tools.includes(content.name) && !this.isOutputCarrier(content.name))
+        )
           throw new ClaudeHarnessError(
             'HARNESS_UNSUPPORTED_POLICY',
             'Claude attempted an unavailable tool',
@@ -355,6 +367,20 @@ export class ClaudeAccumulator {
         )
           throw protocolError();
         this.toolIds.set(content.id, content.name);
+        if (this.isOutputCarrier(content.name)) {
+          events.push(
+            this.item(
+              {
+                type: 'other',
+                summary: 'Claude structured output',
+                status: 'running',
+                detail: { carrier: 'StructuredOutput', kind: 'schema-output' },
+              },
+              content.id,
+            ),
+          );
+          continue;
+        }
         const file =
           typeof content.input.file_path === 'string'
             ? bounded(content.input.file_path)
@@ -401,6 +427,20 @@ export class ClaudeAccumulator {
       const tool = this.toolIds.get(content.tool_use_id)!;
       this.toolIds.delete(content.tool_use_id);
       const failed = content.is_error === true;
+      if (this.isOutputCarrier(tool)) {
+        events.push(
+          this.item(
+            {
+              type: 'other',
+              summary: 'Claude structured output' + (failed ? ' failed' : ' completed'),
+              status: failed ? 'failed' : 'ok',
+              detail: { carrier: 'StructuredOutput', kind: 'schema-output' },
+            },
+            content.tool_use_id,
+          ),
+        );
+        continue;
+      }
       events.push(
         this.item(
           {

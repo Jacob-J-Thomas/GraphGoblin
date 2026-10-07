@@ -255,7 +255,7 @@ describe('Claude stream contract and honest execution evidence', () => {
       additionalProperties: false,
     };
     const acc = accumulator(schema);
-    acc.push(init());
+    acc.push(init({ tools: [...policy.tools, 'StructuredOutput'] }));
     acc.push(result({ structured_output: { ok: true } }));
     expect(acc.finish().structured).toEqual({ ok: true });
     for (const changed of [
@@ -264,7 +264,7 @@ describe('Claude stream contract and honest execution evidence', () => {
       { structured_output: { ok: true, extra: 'PRIVATE' } },
     ]) {
       const bad = accumulator(schema);
-      bad.push(init());
+      bad.push(init({ tools: [...policy.tools, 'StructuredOutput'] }));
       bad.push(result(changed));
       expect(bad.finish()).toHaveProperty(
         'structured',
@@ -286,6 +286,168 @@ describe('Claude stream contract and honest execution evidence', () => {
   });
 });
 
+describe('conditional native structured-output carrier', () => {
+  const schema = {
+    type: 'object',
+    properties: { ok: { type: 'boolean' } },
+    required: ['ok'],
+    additionalProperties: false,
+  };
+  const schemaInit = (extra: Record<string, unknown> = {}) =>
+    init({ tools: [...policy.tools, 'StructuredOutput'], ...extra });
+  const carrier = (input: unknown = { ok: true }, toolId = 'schema1') => ({
+    type: 'assistant',
+    message: { content: [{ type: 'tool_use', id: toolId, name: 'StructuredOutput', input }] },
+  });
+  const settlement = (marker: Record<string, unknown> = {}, toolId = 'schema1') => ({
+    type: 'user',
+    message: {
+      content: [{ type: 'tool_result', tool_use_id: toolId, content: 'PRIVATE_RESULT', ...marker }],
+    },
+  });
+  it.each([
+    { marker: {}, status: 'ok' },
+    { marker: { is_error: false }, status: 'ok' },
+    { marker: { is_error: true }, status: 'failed' },
+  ])(
+    'records the requested schema carrier separately with $status settlement',
+    ({ marker, status }) => {
+      const acc = accumulator(schema);
+      const announced = acc.push(schemaInit());
+      expect(announced).toContainEqual({ type: 'session', sessionId: id, mode: 'fresh' });
+      expect(announced).toMatchObject([
+        {},
+        { item: { detail: { tools: policy.tools, structuredOutputCarrier: 'StructuredOutput' } } },
+      ]);
+      expect(acc.policyEvidence.tools).toEqual(['Read', 'Glob', 'Grep']);
+      const progress = acc.push(
+        carrier({ ok: 'invalid candidate', file_path: 'PRIVATE_FILE', command: 'PRIVATE_COMMAND' }),
+      );
+      expect(progress).toEqual([
+        {
+          type: 'item',
+          item: {
+            id: 'schema1',
+            type: 'other',
+            summary: 'Claude structured output',
+            status: 'running',
+            detail: { carrier: 'StructuredOutput', kind: 'schema-output' },
+          },
+        },
+      ]);
+      const settled = acc.push(settlement(marker));
+      expect(settled).toEqual([
+        {
+          type: 'item',
+          item: {
+            id: 'schema1',
+            type: 'other',
+            summary:
+              status === 'failed'
+                ? 'Claude structured output failed'
+                : 'Claude structured output completed',
+            status,
+            detail: { carrier: 'StructuredOutput', kind: 'schema-output' },
+          },
+        },
+      ]);
+      acc.push(result({ structured_output: { ok: true } }));
+      expect(acc.finish().structured).toEqual({ ok: true });
+      expect(
+        acc
+          .finish()
+          .items.filter((item) => item.id === 'schema1')
+          .map((item) => item.status),
+      ).toEqual(['running', status]);
+      expect(JSON.stringify(acc.finish().items)).not.toContain('PRIVATE');
+    },
+  );
+  it('rejects missing, duplicate, and extra init tools before announcing a schema session', () => {
+    for (const tools of [
+      policy.tools,
+      [...policy.tools, 'StructuredOutput', 'StructuredOutput'],
+      [...policy.tools, 'StructuredOutput', 'Bash'],
+      [...policy.tools, 'OtherOutput'],
+    ]) {
+      const acc = accumulator(schema);
+      expect(() => acc.push(schemaInit({ tools }))).toThrow(
+        expect.objectContaining({ code: 'HARNESS_UNSUPPORTED_POLICY' }),
+      );
+      expect(() => acc.policyEvidence).toThrow();
+      expect(() => acc.finish()).toThrow();
+    }
+  });
+  it('rejects carrier advertisement/use without a requested schema and preserves ordinary execution tools', () => {
+    expect(() => accumulator().push(schemaInit())).toThrow(
+      expect.objectContaining({ code: 'HARNESS_UNSUPPORTED_POLICY' }),
+    );
+    const acc = accumulator();
+    expect(acc.push(init())).toMatchObject([
+      {},
+      { item: { detail: { tools: policy.tools, structuredOutputCarrier: null } } },
+    ]);
+    expect(() => acc.push(carrier())).toThrow(
+      expect.objectContaining({ code: 'HARNESS_UNSUPPORTED_POLICY' }),
+    );
+    const structured = accumulator(schema);
+    structured.push(schemaInit());
+    for (const name of ['Bash', 'Write', 'OtherOutput'])
+      expect(() =>
+        structured.push({
+          type: 'assistant',
+          message: { content: [{ type: 'tool_use', id: name, name, input: {} }] },
+        }),
+      ).toThrow(expect.objectContaining({ code: 'HARNESS_UNSUPPORTED_POLICY' }));
+  });
+  it('requires well-formed carrier IDs, object inputs, and matching result correlation', () => {
+    for (const input of [null, [], 'PRIVATE_INPUT']) {
+      const acc = accumulator(schema);
+      acc.push(schemaInit());
+      expect(() => acc.push(carrier(input))).toThrow(
+        expect.objectContaining({ code: 'HARNESS_PROTOCOL_ERROR' }),
+      );
+    }
+    const acc = accumulator(schema);
+    acc.push(schemaInit());
+    expect(() => acc.push(carrier({}, ''))).toThrow(
+      expect.objectContaining({ code: 'HARNESS_PROTOCOL_ERROR' }),
+    );
+    acc.push(carrier());
+    expect(() => acc.push(carrier())).toThrow(
+      expect.objectContaining({ code: 'HARNESS_PROTOCOL_ERROR' }),
+    );
+    expect(() => acc.push(settlement({}, 'unmatched'))).toThrow(
+      expect.objectContaining({ code: 'HARNESS_PROTOCOL_ERROR' }),
+    );
+    expect(() => acc.push(result({ structured_output: { ok: true } }))).toThrow(
+      expect.objectContaining({ code: 'HARNESS_PROTOCOL_ERROR' }),
+    );
+    expect(() => acc.push(settlement({ is_error: 'PRIVATE_MARKER' }))).toThrow(
+      expect.objectContaining({ code: 'HARNESS_PROTOCOL_ERROR' }),
+    );
+    acc.push(settlement());
+    expect(() => acc.push(settlement())).toThrow(
+      expect.objectContaining({ code: 'HARNESS_PROTOCOL_ERROR' }),
+    );
+    acc.push(result({ structured_output: { ok: true } }));
+    expect(JSON.stringify(acc.finish().items)).not.toContain('PRIVATE');
+  });
+  it.each([{ ok: 'wrong' }, null, undefined])(
+    'leaves final native candidate %j to engine validation without carrier fallback',
+    (candidate) => {
+      const acc = accumulator(schema);
+      acc.push(schemaInit());
+      acc.push(carrier({ ok: true }));
+      acc.push(settlement());
+      acc.push(
+        result(
+          candidate === undefined ? { result: '{"ok":true}' } : { structured_output: candidate },
+        ),
+      );
+      expect(acc.finish()).toHaveProperty('structured', candidate);
+    },
+  );
+});
 describe('Claude transcript and error evidence limits', () => {
   it.each([
     { marker: {}, expected: 'ok' },
