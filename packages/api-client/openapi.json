@@ -5045,6 +5045,13 @@
                   ],
                   "additionalProperties": false
                 }
+              },
+              "skipped": {
+                "maxItems": 3,
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/StrategySkipInput"
+                }
               }
             },
             "required": [
@@ -5054,7 +5061,67 @@
               "type",
               "nodeId",
               "strategy",
-              "route"
+              "route",
+              "skipped"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "runId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "seq": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "ts": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "type": {
+                "type": "string",
+                "const": "exit.evaluated"
+              },
+              "nodeId": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
+              },
+              "iteration": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "maxIterations": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "criteria": {
+                "maxItems": 32,
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ExitCriterionEvaluationInput"
+                }
+              },
+              "result": {
+                "$ref": "#/components/schemas/ExitEvaluationOutcomeInput"
+              }
+            },
+            "required": [
+              "runId",
+              "seq",
+              "ts",
+              "type",
+              "nodeId",
+              "iteration",
+              "maxIterations",
+              "criteria",
+              "result"
             ],
             "additionalProperties": false
           },
@@ -5345,6 +5412,411 @@
               "type",
               "channel",
               "error"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "StrategySkipInput": {
+        "type": "object",
+        "properties": {
+          "strategy": {
+            "type": "string",
+            "enum": [
+              "jev",
+              "codex",
+              "expression"
+            ]
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "CLASSIFIER_MODEL_NOT_FOUND",
+              "CLASSIFIER_PRIMITIVE_UNSUPPORTED",
+              "CLASSIFIER_MODEL_DISABLED",
+              "CLASSIFIER_SECRET_MISSING",
+              "CLASSIFIER_SECRET_UNREADABLE",
+              "PROVIDER_UNAVAILABLE",
+              "EXPRESSION_NOT_APPLICABLE",
+              "UNDECLARED_ROUTE",
+              "INVALID_CONFIDENCE",
+              "LOW_CONFIDENCE"
+            ]
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          }
+        },
+        "required": [
+          "strategy",
+          "code",
+          "message"
+        ],
+        "additionalProperties": false
+      },
+      "ExitCriterionEvaluationInput": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "index": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 31
+              },
+              "strategy": {
+                "type": "string",
+                "enum": [
+                  "expression",
+                  "jev",
+                  "codex",
+                  "max-iterations",
+                  "max-duration",
+                  "last-output-matches"
+                ]
+              },
+              "model": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              },
+              "classifierModel": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_.-]{0,63}$"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "matched",
+                  "not-matched"
+                ]
+              },
+              "holds": {
+                "type": "boolean"
+              },
+              "confidence": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "minConfidence": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "reasoning": {
+                "type": "string",
+                "maxLength": 2048
+              }
+            },
+            "required": [
+              "index",
+              "strategy",
+              "status"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "index": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 31
+              },
+              "strategy": {
+                "type": "string",
+                "enum": [
+                  "expression",
+                  "jev",
+                  "codex",
+                  "max-iterations",
+                  "max-duration",
+                  "last-output-matches"
+                ]
+              },
+              "model": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              },
+              "classifierModel": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_.-]{0,63}$"
+              },
+              "status": {
+                "type": "string",
+                "const": "skipped"
+              },
+              "reason": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "enum": [
+                      "EARLIER_CRITERION_MATCHED",
+                      "EARLIER_CRITERION_FAILED"
+                    ]
+                  },
+                  "message": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256
+                  }
+                },
+                "required": [
+                  "code",
+                  "message"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "index",
+              "strategy",
+              "status",
+              "reason"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "index": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 31
+              },
+              "strategy": {
+                "type": "string",
+                "enum": [
+                  "expression",
+                  "jev",
+                  "codex",
+                  "max-iterations",
+                  "max-duration",
+                  "last-output-matches"
+                ]
+              },
+              "model": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              },
+              "classifierModel": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_.-]{0,63}$"
+              },
+              "status": {
+                "type": "string",
+                "const": "error"
+              },
+              "diagnostic": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "enum": [
+                      "CRITERION_ERROR",
+                      "RETURN_MAPPING_ERROR",
+                      "DECIDER_UNAVAILABLE",
+                      "DECIDER_NOT_AUTHENTICATED",
+                      "DECIDER_RATE_LIMITED",
+                      "DECIDER_HTTP_ERROR",
+                      "DECIDER_UNREACHABLE",
+                      "DECIDER_INVALID_RESPONSE",
+                      "DECIDER_REDIRECT",
+                      "DECIDER_TIMEOUT",
+                      "DECIDER_ERROR"
+                    ]
+                  },
+                  "message": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256
+                  },
+                  "status": {
+                    "type": "integer",
+                    "minimum": 100,
+                    "maximum": 599
+                  }
+                },
+                "required": [
+                  "code",
+                  "message"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "index",
+              "strategy",
+              "status",
+              "diagnostic"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "ExitEvaluationOutcomeInput": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "const": "completed"
+              },
+              "outcome": {
+                "type": "string",
+                "enum": [
+                  "success",
+                  "failure",
+                  "exhausted"
+                ]
+              },
+              "reason": {
+                "type": "string",
+                "enum": [
+                  "criterion-matched",
+                  "default-success"
+                ]
+              },
+              "criterionIndex": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 31
+              }
+            },
+            "required": [
+              "kind",
+              "outcome",
+              "reason"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "const": "looped-back"
+              },
+              "reason": {
+                "type": "string",
+                "const": "no-criterion-matched"
+              },
+              "targetNodeId": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
+              }
+            },
+            "required": [
+              "kind",
+              "reason",
+              "targetNodeId"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "const": "limit-reached"
+              },
+              "limit": {
+                "type": "string",
+                "enum": [
+                  "max-iterations",
+                  "max-duration",
+                  "iteration-ceiling"
+                ]
+              },
+              "value": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "criterionIndex": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 31
+              },
+              "outcome": {
+                "type": "string",
+                "const": "exhausted"
+              }
+            },
+            "required": [
+              "kind",
+              "limit",
+              "value",
+              "outcome"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "const": "failed"
+              },
+              "diagnostic": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "enum": [
+                      "CRITERION_ERROR",
+                      "RETURN_MAPPING_ERROR",
+                      "DECIDER_UNAVAILABLE",
+                      "DECIDER_NOT_AUTHENTICATED",
+                      "DECIDER_RATE_LIMITED",
+                      "DECIDER_HTTP_ERROR",
+                      "DECIDER_UNREACHABLE",
+                      "DECIDER_INVALID_RESPONSE",
+                      "DECIDER_REDIRECT",
+                      "DECIDER_TIMEOUT",
+                      "DECIDER_ERROR"
+                    ]
+                  },
+                  "message": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256
+                  },
+                  "status": {
+                    "type": "integer",
+                    "minimum": 100,
+                    "maximum": 599
+                  }
+                },
+                "required": [
+                  "code",
+                  "message"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "kind",
+              "diagnostic"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "const": "cancelled"
+              }
+            },
+            "required": [
+              "kind"
             ],
             "additionalProperties": false
           }
@@ -11001,6 +11473,13 @@
                   ],
                   "additionalProperties": false
                 }
+              },
+              "skipped": {
+                "maxItems": 3,
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/StrategySkip"
+                }
               }
             },
             "required": [
@@ -11010,7 +11489,67 @@
               "type",
               "nodeId",
               "strategy",
-              "route"
+              "route",
+              "skipped"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "runId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              "seq": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "ts": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "type": {
+                "type": "string",
+                "const": "exit.evaluated"
+              },
+              "nodeId": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
+              },
+              "iteration": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "maxIterations": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "criteria": {
+                "maxItems": 32,
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ExitCriterionEvaluation"
+                }
+              },
+              "result": {
+                "$ref": "#/components/schemas/ExitEvaluationOutcome"
+              }
+            },
+            "required": [
+              "runId",
+              "seq",
+              "ts",
+              "type",
+              "nodeId",
+              "iteration",
+              "maxIterations",
+              "criteria",
+              "result"
             ],
             "additionalProperties": false
           },
@@ -11301,6 +11840,411 @@
               "type",
               "channel",
               "error"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "StrategySkip": {
+        "type": "object",
+        "properties": {
+          "strategy": {
+            "type": "string",
+            "enum": [
+              "jev",
+              "codex",
+              "expression"
+            ]
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "CLASSIFIER_MODEL_NOT_FOUND",
+              "CLASSIFIER_PRIMITIVE_UNSUPPORTED",
+              "CLASSIFIER_MODEL_DISABLED",
+              "CLASSIFIER_SECRET_MISSING",
+              "CLASSIFIER_SECRET_UNREADABLE",
+              "PROVIDER_UNAVAILABLE",
+              "EXPRESSION_NOT_APPLICABLE",
+              "UNDECLARED_ROUTE",
+              "INVALID_CONFIDENCE",
+              "LOW_CONFIDENCE"
+            ]
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          }
+        },
+        "required": [
+          "strategy",
+          "code",
+          "message"
+        ],
+        "additionalProperties": false
+      },
+      "ExitCriterionEvaluation": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "index": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 31
+              },
+              "strategy": {
+                "type": "string",
+                "enum": [
+                  "expression",
+                  "jev",
+                  "codex",
+                  "max-iterations",
+                  "max-duration",
+                  "last-output-matches"
+                ]
+              },
+              "model": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              },
+              "classifierModel": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_.-]{0,63}$"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "matched",
+                  "not-matched"
+                ]
+              },
+              "holds": {
+                "type": "boolean"
+              },
+              "confidence": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "minConfidence": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "reasoning": {
+                "type": "string",
+                "maxLength": 2048
+              }
+            },
+            "required": [
+              "index",
+              "strategy",
+              "status"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "index": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 31
+              },
+              "strategy": {
+                "type": "string",
+                "enum": [
+                  "expression",
+                  "jev",
+                  "codex",
+                  "max-iterations",
+                  "max-duration",
+                  "last-output-matches"
+                ]
+              },
+              "model": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              },
+              "classifierModel": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_.-]{0,63}$"
+              },
+              "status": {
+                "type": "string",
+                "const": "skipped"
+              },
+              "reason": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "enum": [
+                      "EARLIER_CRITERION_MATCHED",
+                      "EARLIER_CRITERION_FAILED"
+                    ]
+                  },
+                  "message": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256
+                  }
+                },
+                "required": [
+                  "code",
+                  "message"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "index",
+              "strategy",
+              "status",
+              "reason"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "index": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 31
+              },
+              "strategy": {
+                "type": "string",
+                "enum": [
+                  "expression",
+                  "jev",
+                  "codex",
+                  "max-iterations",
+                  "max-duration",
+                  "last-output-matches"
+                ]
+              },
+              "model": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              },
+              "classifierModel": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_.-]{0,63}$"
+              },
+              "status": {
+                "type": "string",
+                "const": "error"
+              },
+              "diagnostic": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "enum": [
+                      "CRITERION_ERROR",
+                      "RETURN_MAPPING_ERROR",
+                      "DECIDER_UNAVAILABLE",
+                      "DECIDER_NOT_AUTHENTICATED",
+                      "DECIDER_RATE_LIMITED",
+                      "DECIDER_HTTP_ERROR",
+                      "DECIDER_UNREACHABLE",
+                      "DECIDER_INVALID_RESPONSE",
+                      "DECIDER_REDIRECT",
+                      "DECIDER_TIMEOUT",
+                      "DECIDER_ERROR"
+                    ]
+                  },
+                  "message": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256
+                  },
+                  "status": {
+                    "type": "integer",
+                    "minimum": 100,
+                    "maximum": 599
+                  }
+                },
+                "required": [
+                  "code",
+                  "message"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "index",
+              "strategy",
+              "status",
+              "diagnostic"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "ExitEvaluationOutcome": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "const": "completed"
+              },
+              "outcome": {
+                "type": "string",
+                "enum": [
+                  "success",
+                  "failure",
+                  "exhausted"
+                ]
+              },
+              "reason": {
+                "type": "string",
+                "enum": [
+                  "criterion-matched",
+                  "default-success"
+                ]
+              },
+              "criterionIndex": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 31
+              }
+            },
+            "required": [
+              "kind",
+              "outcome",
+              "reason"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "const": "looped-back"
+              },
+              "reason": {
+                "type": "string",
+                "const": "no-criterion-matched"
+              },
+              "targetNodeId": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
+              }
+            },
+            "required": [
+              "kind",
+              "reason",
+              "targetNodeId"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "const": "limit-reached"
+              },
+              "limit": {
+                "type": "string",
+                "enum": [
+                  "max-iterations",
+                  "max-duration",
+                  "iteration-ceiling"
+                ]
+              },
+              "value": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "criterionIndex": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 31
+              },
+              "outcome": {
+                "type": "string",
+                "const": "exhausted"
+              }
+            },
+            "required": [
+              "kind",
+              "limit",
+              "value",
+              "outcome"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "const": "failed"
+              },
+              "diagnostic": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "enum": [
+                      "CRITERION_ERROR",
+                      "RETURN_MAPPING_ERROR",
+                      "DECIDER_UNAVAILABLE",
+                      "DECIDER_NOT_AUTHENTICATED",
+                      "DECIDER_RATE_LIMITED",
+                      "DECIDER_HTTP_ERROR",
+                      "DECIDER_UNREACHABLE",
+                      "DECIDER_INVALID_RESPONSE",
+                      "DECIDER_REDIRECT",
+                      "DECIDER_TIMEOUT",
+                      "DECIDER_ERROR"
+                    ]
+                  },
+                  "message": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256
+                  },
+                  "status": {
+                    "type": "integer",
+                    "minimum": 100,
+                    "maximum": 599
+                  }
+                },
+                "required": [
+                  "code",
+                  "message"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "kind",
+              "diagnostic"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "const": "cancelled"
+              }
+            },
+            "required": [
+              "kind"
             ],
             "additionalProperties": false
           }

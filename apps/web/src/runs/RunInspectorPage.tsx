@@ -7,11 +7,13 @@ import { QueryState, RunStatusBadge } from '../components/status.js';
 import { Alert, Card } from '../components/ui/index.js';
 import { prettyJson } from '../lib/utils.js';
 import { ProgressDrawer } from './inspector/ProgressDrawer.js';
+import { EvaluationDetails } from './inspector/EvaluationDetails.js';
 import { RunControls } from './inspector/RunControls.js';
 import { ThreadViewer } from './inspector/ThreadViewer.js';
 import { Timeline } from './inspector/Timeline.js';
 import { WaitPanel } from './inspector/WaitPanel.js';
 import { useRunEvents } from './useRunEvents.js';
+import { describeEvent } from './projections.js';
 
 const META_LINK = 'touch-target font-medium text-link underline-offset-[3px] hover:underline';
 
@@ -33,6 +35,7 @@ export function RunInspectorPage() {
   });
   const [selectedSeq, setSelectedSeq] = useState<number | undefined>();
   const seq = selectedSeq ?? log.lastSeq;
+  const latestExit = log.events.filter((event) => event.type === 'exit.evaluated').at(-1);
 
   return (
     <Page wide>
@@ -76,6 +79,11 @@ export function RunInspectorPage() {
                 {run.failure.resumable ? ' (resumable)' : ''}
               </Alert>
             ) : null}
+            {latestExit ? (
+              <Card title="Exit evaluation">
+                <p>{describeEvent(latestExit)}</p>
+              </Card>
+            ) : null}
             {run.result !== undefined ? (
               <Card title="Result">
                 <pre
@@ -99,6 +107,7 @@ export function RunInspectorPage() {
           onSelect={setSelectedSeq}
         />
         <div className="grid min-w-0 gap-section">
+          <EvaluationDetails event={log.events.find((event) => event.seq === seq)} />
           {threadQuery.data ? (
             <ThreadViewer current={threadQuery.data} events={log.events} seq={seq} />
           ) : (

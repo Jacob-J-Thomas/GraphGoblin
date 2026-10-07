@@ -6,6 +6,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ### Added
 
+- Runs explain why an exit completed, looped back, or reached a limit. Select `exit.evaluated` in the inspector to read each criterion's result and confidence, the model or classifier used, and the Codex judge's short reasoning. Successful decisions also explain why earlier strategies were skipped.
+
 - A **Go to Loops** link on the 404 page, with a "Page not found" heading and explanation (#41).
 - Settings → **Appearance → Font** lets you choose a typeface for this browser and preview each option: Geist is the default, with Space Grotesk, Chakra Petch, Atkinson Hyperlegible Next, OpenDyslexic, and Inter as alternatives. Your choice applies immediately, appears without a flash on the next visit, and works across tabs and offline; code remains in Geist Mono. Text size and spacing are unchanged. (#40)
 - Validation badges on nodes and beside Publish open popovers with issues and links to the fields that need attention. Checks rerun for saved drafts and after model catalog changes, so node badges reflect when a selected model becomes unavailable or disabled. (#15)
@@ -29,6 +31,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 - Settings' Model catalog uses Enabled switches to turn entries on or off. If a refresh removes a row while its switch is saving, focus returns to the section heading, and the notice that the model is no longer available clears on the next toggle. (#24)
 
 ### Upgrade notes
+
+- `decision.made` now requires `skipped`; rebuild generated-client consumers with the server. Migration `0007` adds `skipped: []` to stored decisions that lack the field. The inspector starts a fresh session event cache and replays from the server. Earlier skip reasons and exit evaluations cannot be reconstructed. New `exit.evaluated` events include zero-based criterion indices; the inspector displays them starting at 1. No old event-shape parsing path is retained.
 
 - Migration `0006` adds `classifier_models`; startup seeds managed Jev metadata before recovery while preserving enabled. The new table does not rewrite loop definitions, versions, runs, events, secrets, or LLM catalog data; earlier migrations still apply their intended changes. Omitted `jev.model` defaults to catalog `jev`. Rebuild generated-client consumers together; older strict readers may reject exports containing explicit classifier selection.
 

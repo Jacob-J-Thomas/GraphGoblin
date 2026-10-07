@@ -44,7 +44,7 @@ async function upgrade(check: (db: DatabaseHandle) => Promise<void>) {
   }
   const current = openDatabase({ url });
   try {
-    expect(await current.pendingMigrations()).toBe(4);
+    expect(await current.pendingMigrations()).toBe(5);
     await current.migrate();
     await check(current);
     expect(await current.pendingMigrations()).toBe(0);
@@ -211,7 +211,7 @@ describe('model catalog source migration and repository', () => {
       await handle.client.execute(
         'DELETE FROM __drizzle_migrations WHERE created_at >= 1791136800000',
       );
-      expect(await handle.pendingMigrations()).toBe(3);
+      expect(await handle.pendingMigrations()).toBe(4);
       await handle.migrate();
       expect(await catalog.list()).toEqual(rows.map((row) => ({ ...row, source: 'harness' })));
     } finally {

@@ -80,6 +80,22 @@ clients must remove the field before sending a definition (see the CHANGELOG upg
 - Reconnecting with the last seen `seq` replays everything missed, because the stream is a tail of the persisted log.
 - `GET /events/stream` (Draft) offers a multiplexed stream of run status changes across all runs for dashboards.
 
+## Evaluation events
+
+JSON event pages and SSE carry the same strict `RunEvent` contract, also advertised in
+`/openapi.json`. Both preserve execution evidence before the run's terminal event.
+
+| Event            | Evidence                                                                                                                                                                                                                                                                                                                                                                                               |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `exit.evaluated` | Node, iteration, hard ceiling, ordered criteria with zero-based indices, strategy, matched/not-matched verdict, predicate boolean and confidence, resolved Codex model or Jev classifier, bounded Codex reasoning, skipped reasons and safe errors. `result` names completion and its matching criterion, loop-back and its cause, a configured or hard limit and its value, failure, or cancellation. |
+| `decision.made`  | Winning strategy, route, optional confidence, classifier and alternatives, plus required `skipped: [{ strategy, code, message }]` describing each strategy bypassed before the winner. An empty list means none were bypassed.                                                                                                                                                                         |
+
+Skip messages and failure diagnostics use fixed summaries and allowlisted codes; provider
+error bodies, credential values, and raw response payloads are excluded. Codex reasoning
+is its returned short justification, capped at 2,048 characters. Clients consuming the
+strict contract must upgrade with the server; migration `0007` supplies empty skip lists
+for historical decisions, whose missing evidence cannot be recovered.
+
 ## Authentication (Decided for 1.0)
 
 - **Local trusted mode**: the API binds to `127.0.0.1` and the browser app on the same machine needs no credentials. A warning is logged if the bind address is changed without API keys enabled.
@@ -237,7 +253,7 @@ PUT requires strict custom HTTP metadata, including provider `http`; it rejects 
 | `CLASSIFIER_MANAGED_BY_SYSTEM` | 409  | PUT or DELETE of built-in `jev`.                        |
 | `CLASSIFIER_EXISTS`            | 409  | Create-only PUT (`If-None-Match: *`) of an existing id. |
 
-Successful classifier decisions add `classifierModel` (the catalog id) to the `decision.made` payload while retaining strategy `jev`, route/confidence/alternatives, and the existing lastOutput shape. Expression and Codex decisions omit this field. It records selection separately from the native providerModel sent to the endpoint. Existing events without the optional field remain valid.
+Successful classifier decisions add `classifierModel` (the catalog id) to the `decision.made` payload while retaining strategy `jev`, route/confidence/alternatives, and the existing lastOutput shape. Expression and Codex decisions omit this field. It records selection separately from the native providerModel sent to the endpoint. Every decision event includes the skipped-strategy list described above.
 
 Decision and exit-predicate failure details in run snapshots, paged events, and streams never contain the provider's raw answer. Both paths share fixed failure summaries and retain the selected strategy and recognized `DECIDER_*` codes; unknown provider codes become `DECIDER_ERROR` at the exit and catch-all boundaries. Provider messages, names, stacks, error bodies, and arbitrary codes are not persisted. Engine provider warnings contain only an allowlisted error name, recognized code, numeric HTTP status when available, and strategy and node identifiers; Jev SDK logs use fixed summaries. Provider exceptions fail the step with `INTERNAL_ERROR`, and cancellation still propagates. HTTP classifiers reject undeclared choices; Jev also rejects probabilities that do not cover exactly the submitted labels. Built-in Jev and Codex unknown choices still try the next strategy, with fixed diagnostics naming only the strategy. Successful decision events retain only declared routes in alternatives. Invalid confidence diagnostics are fixed, and low-confidence diagnostics contain only validated numbers. Expression diagnostics retain the author's expression result to help identify route mismatches.
 
