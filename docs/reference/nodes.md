@@ -57,20 +57,15 @@ Ports: `out`.
 
 ## Decision (`decision`)
 
-Chooses one of several labelled routes with Jev, Codex, or a JSONata expression.
+Chooses one option using an explicit expression, classifier, or LLM evaluator.
 
-Ports: One output per route label.
+Ports: One output per stable option id; labels are display text.
 
-| Field                | Type                                              | Required | Default | Advanced | Description                                                                                                                                                                  |
-| -------------------- | ------------------------------------------------- | -------- | ------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `routes`             | object[]                                          | yes      |         |          | At least two labelled routes, each with a description the decider reads.                                                                                                     |
-| `question`           | string                                            | yes      |         |          | Liquid template rendered against the thread; the question the decider answers.                                                                                               |
-| `context`            | { messages?, vars?, includeLastOutput? }          | no       | `{}`    | yes      | How much of the thread the decider sees: messages, vars, the last output.                                                                                                    |
-| `strategy`           | array of (`"jev"` \| `"codex"` \| `"expression"`) | yes      |         |          | Ordered fallback chain of strategies.                                                                                                                                        |
-| `jev`                | { primitive?, model?, minConfidence? }            | no       |         |          | Choice classifier options: optional `model` is a catalog id (default `jev`); unavailable configuration or a choice below `minConfidence` falls through to the next strategy. |
-| `codex`              | { model?, effort? }                               | no       |         |          | Model and effort for the Codex decider.                                                                                                                                      |
-| `expression`         | { jsonata }                                       | no       |         |          | JSONata that must evaluate to a route label.                                                                                                                                 |
-| `recordAlternatives` | boolean                                           | no       | `true`  | yes      | Record the routes not taken, with confidences, on `decision.made`.                                                                                                           |
+| Field                | Type                                                         | Required | Default | Advanced | Description                                            |
+| -------------------- | ------------------------------------------------------------ | -------- | ------- | -------- | ------------------------------------------------------ |
+| `answer`             | { type, options }                                            | yes      |         |          | Declared Choice options and stable route identifiers.  |
+| `evaluation`         | one of `"expression"` \| `"classifier"` \| `"llm"` by `kind` | yes      |         |          | Exactly one evaluation method.                         |
+| `recordAlternatives` | boolean                                                      | no       | `true`  | yes      | Retain classifier probabilities in execution evidence. |
 
 ## Inferencing (`inference`)
 
@@ -81,8 +76,8 @@ Ports: `out`.
 | Field            | Type                                                                                                                                                       | Required | Default              | Advanced          | Description                                                                                                                 |
 | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | -------------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | `harness`        | `"codex"`                                                                                                                                                  | no       | `"codex"`            |                   | Harness that runs the session.                                                                                              |
-| `model`          | string                                                                                                                                                     | no       |                      |                   | Model; falls back to the loop default, then to the owner setting.                                                           |
-| `effort`         | `"minimal"` \| `"low"` \| `"medium"` \| `"high"` \| `"xhigh"` \| `"max"`                                                                                   | no       |                      |                   | Reasoning effort; falls back like the model. Catalog default effort is guidance only.                                       |
+| `model`          | string                                                                                                                                                     | no       |                      |                   | Model; inherits within this harness from loop, owner, then process defaults.                                                |
+| `effort`         | `"minimal"` \| `"low"` \| `"medium"` \| `"high"` \| `"xhigh"` \| `"max"`                                                                                   | no       |                      |                   | Reasoning effort; inherits within this harness like the model. Catalog effort is guidance only.                             |
 | `session`        | one of `"fresh"` \| `"resume-previous"` \| `"resume-named"` by `policy`                                                                                    | no       | `{"policy":"fresh"}` |                   | Start fresh, resume the previous session, or resume a named session.                                                        |
 | `prompt`         | { template }                                                                                                                                               | yes      |                      |                   | Liquid template rendered against the thread.                                                                                |
 | `input`          | array of (one of `"set"` \| `"delete"` \| `"append-message"` \| `"inject"` \| `"truncate"` \| `"drop"` \| `"replace"` \| `"redact"` \| `"coerce"` by `op`) | no       | `[]`                 | yes               | Mutations applied to the thread view the template sees.                                                                     |

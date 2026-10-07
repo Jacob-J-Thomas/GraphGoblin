@@ -700,7 +700,7 @@ test('P2-14: uncertain confidence is bounded and the actual expression applies t
       fs.readFileSync(new URL(`../${name}.loop.json`, import.meta.url)),
     ).loop;
     const expression = definition.nodes.find((node) => node.id === 'judgment-route').config
-      .expression.jsonata;
+      .evaluation.jsonata;
     for (const [confidence, expectedRoute] of [
       [0.79, 'blocked'],
       [0.8, route],
@@ -719,7 +719,7 @@ test('P3-15: only implemented human choices; policy refusal exits rather than re
   const definition = JSON.parse(
     fs.readFileSync(new URL('../pr-ci.loop.json', import.meta.url)),
   ).loop;
-  const expression = definition.nodes.find((node) => node.id === 'merge-route').config.expression
+  const expression = definition.nodes.find((node) => node.id === 'merge-route').config.evaluation
     .jsonata;
   assert.equal(
     await evaluateExpression(expression, { vars: { result: { status: 'blocked' } } }),

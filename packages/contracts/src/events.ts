@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { ClassifierModelIdSchema } from './classifiers.js';
+import { DecisionEvidenceSchema } from './evaluation.js';
 import {
   EffortSchema,
   HarnessIdSchema,
@@ -29,24 +30,6 @@ const Actor = z.strictObject({
   kind: z.enum(['user', 'api-key', 'mcp-client', 'system', 'run']),
   id: z.string().min(1).max(256),
 });
-
-export const StrategySkipSchema = z.strictObject({
-  strategy: z.enum(['jev', 'codex', 'expression']),
-  code: z.enum([
-    'CLASSIFIER_MODEL_NOT_FOUND',
-    'CLASSIFIER_PRIMITIVE_UNSUPPORTED',
-    'CLASSIFIER_MODEL_DISABLED',
-    'CLASSIFIER_SECRET_MISSING',
-    'CLASSIFIER_SECRET_UNREADABLE',
-    'PROVIDER_UNAVAILABLE',
-    'EXPRESSION_NOT_APPLICABLE',
-    'UNDECLARED_ROUTE',
-    'INVALID_CONFIDENCE',
-    'LOW_CONFIDENCE',
-  ]),
-  message: z.string().min(1).max(256),
-});
-export type StrategySkip = z.infer<typeof StrategySkipSchema>;
 
 export const ExitDiagnosticSchema = z.strictObject({
   code: z.enum([
@@ -272,18 +255,10 @@ export const RunEventSchema = z.discriminatedUnion('type', [
     nodeId: SlugSchema,
     usage: UsageSchema,
   }),
-  z.strictObject({
+  DecisionEvidenceSchema.safeExtend({
     ...Base,
     type: z.literal('decision.made'),
     nodeId: SlugSchema,
-    strategy: z.enum(['jev', 'codex', 'expression']),
-    classifierModel: ClassifierModelIdSchema.optional(),
-    route: SlugSchema,
-    confidence: z.number().min(0).max(1).optional(),
-    alternatives: z
-      .array(z.strictObject({ route: SlugSchema, confidence: z.number().min(0).max(1).optional() }))
-      .optional(),
-    skipped: z.array(StrategySkipSchema).max(3),
   }),
   z.strictObject({
     ...Base,

@@ -128,19 +128,29 @@ describe.skipIf(!live)('Codex live smoke', () => {
     300_000,
   );
 
-  it('makes a structured decision', async () => {
+  it('makes a canonical structured Choice with stable ids', async () => {
     const result = await decider.choose(
       {
-        question: 'A pull request only fixes a typo in a README and all checks pass. What next?',
+        model: 'gpt-6-luna',
+        effort: 'low',
+        question: 'Choose the option whose criterion exactly matches context.status.',
         options: [
-          { label: 'merge', description: 'the change is ready' },
-          { label: 'revise', description: 'the change needs more work' },
+          { id: 'ready', label: '1', criteria: 'The context status is exactly READY' },
+          { id: 'revise', label: '2', criteria: 'The context status is exactly NEEDS_WORK' },
         ],
-        context: {},
+        context: { status: 'READY' },
       },
       new AbortController().signal,
     );
-    console.warn('[live] choose', JSON.stringify(result));
-    expect(['merge', 'revise']).toContain(result.label);
+    expect(result).toMatchObject({ type: 'choice', optionId: 'ready', probabilities: null });
+    expect(Object.keys(result).sort()).toEqual(['confidence', 'optionId', 'probabilities', 'type']);
+    expect(typeof result.confidence).toBe('number');
+    expect(Number.isFinite(result.confidence)).toBe(true);
+    expect(result.confidence).toBeGreaterThanOrEqual(0);
+    expect(result.confidence).toBeLessThanOrEqual(1);
+    console.warn(
+      '[live] canonical Choice',
+      JSON.stringify({ model: 'gpt-6-luna', effort: 'low', answer: result }),
+    );
   }, 300_000);
 });

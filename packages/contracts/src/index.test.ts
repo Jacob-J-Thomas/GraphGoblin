@@ -3,6 +3,6 @@ import { CONTRACTS_SCHEMA_VERSION } from './index.js';
 
 describe('contracts package', () => {
   it('exposes the schema version', () => {
-    expect(CONTRACTS_SCHEMA_VERSION).toBe(1);
+    expect(CONTRACTS_SCHEMA_VERSION).toBe(2);
   });
 });

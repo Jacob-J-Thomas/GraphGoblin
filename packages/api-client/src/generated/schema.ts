@@ -2155,7 +2155,7 @@ export interface components {
         JsonValueInput: JsonValue;
         LoopDefinitionInput: {
             /** @constant */
-            schemaVersion: 1;
+            schemaVersion: 2;
             name: string;
             description?: string | undefined;
             /** @default {} */
@@ -2179,9 +2179,14 @@ export interface components {
                 }) | undefined;
                 /** @default {} */
                 defaults?: {
-                    model?: string | undefined;
-                    /** @enum {string} */
-                    effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                    /** @default {} */
+                    byHarness?: {
+                        [key: string]: {
+                            model?: string | undefined;
+                            /** @enum {string} */
+                            effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                        };
+                    } | undefined;
                 } | undefined;
                 /** @default 10 */
                 maxIterations?: number | undefined;
@@ -2312,39 +2317,69 @@ export interface components {
                 /** @constant */
                 kind: "decision";
                 config: {
-                    routes: {
-                        label: string;
-                        description: string;
-                    }[];
-                    question: string;
-                    /** @default {} */
-                    context?: {
-                        /** @default last */
-                        messages?: ("none" | "last" | "all" | number | {
-                            where: string;
-                        }) | undefined;
-                        vars?: string[] | undefined;
-                        /** @default true */
-                        includeLastOutput?: boolean | undefined;
-                    } | undefined;
-                    strategy: ("jev" | "codex" | "expression")[];
-                    jev?: {
-                        /**
-                         * @default choice
-                         * @constant
-                         */
-                        primitive?: "choice" | undefined;
-                        model?: string | undefined;
-                        minConfidence?: number | undefined;
-                    } | undefined;
-                    codex?: {
-                        model?: string | undefined;
-                        /** @enum {string} */
-                        effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
-                    } | undefined;
-                    expression?: {
+                    answer: {
+                        /** @constant */
+                        type: "choice";
+                        options: {
+                            id: string;
+                            label: string;
+                            criteria: string;
+                        }[];
+                    };
+                    evaluation: {
+                        /** @constant */
+                        kind: "expression";
                         jsonata: string;
-                    } | undefined;
+                    } | {
+                        /** @constant */
+                        kind: "classifier";
+                        model: string;
+                        question: string;
+                        /** @default {} */
+                        context?: {
+                            /** @default last */
+                            messages?: ("none" | "last" | "all" | number | {
+                                where: string;
+                            }) | undefined;
+                            vars?: string[] | undefined;
+                            /** @default true */
+                            includeLastOutput?: boolean | undefined;
+                        } | undefined;
+                        minConfidence?: number | undefined;
+                    } | {
+                        /** @constant */
+                        kind: "llm";
+                        /** @constant */
+                        harness: "codex";
+                        model: {
+                            /** @constant */
+                            mode: "inherit";
+                        } | {
+                            /** @constant */
+                            mode: "explicit";
+                            value: string;
+                        };
+                        effort: {
+                            /** @constant */
+                            mode: "inherit";
+                        } | {
+                            /** @constant */
+                            mode: "explicit";
+                            /** @enum {string} */
+                            value: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                        };
+                        question: string;
+                        /** @default {} */
+                        context?: {
+                            /** @default last */
+                            messages?: ("none" | "last" | "all" | number | {
+                                where: string;
+                            }) | undefined;
+                            vars?: string[] | undefined;
+                            /** @default true */
+                            includeLastOutput?: boolean | undefined;
+                        } | undefined;
+                    };
                     /** @default true */
                     recordAlternatives?: boolean | undefined;
                 };
@@ -3146,7 +3181,7 @@ export interface components {
             /** @constant */
             format: "graphgoblin-loop";
             /** @constant */
-            formatVersion: 1;
+            formatVersion: 2;
             /** Format: date-time */
             exportedAt: string;
             loop: components["schemas"]["LoopDefinitionInput"];
@@ -3179,7 +3214,7 @@ export interface components {
         RunStatusInput: "queued" | "running" | "waiting" | "paused" | "succeeded" | "failed" | "cancelled" | "exhausted";
         RunFailureInput: {
             /** @enum {string} */
-            code: "HARNESS_NOT_INSTALLED" | "HARNESS_NOT_AUTHENTICATED" | "HARNESS_QUOTA_EXHAUSTED" | "HARNESS_TURN_FAILED" | "WORKING_DIRECTORY_MISSING" | "SCRIPT_EXIT_CODE" | "SCRIPT_TIMEOUT" | "INFERENCE_TIMEOUT" | "OUTPUT_SCHEMA_MISMATCH" | "SUBLOOP_DEPTH_EXCEEDED" | "SUBLOOP_NOT_FOUND" | "DECISION_NO_ROUTE" | "DECIDER_UNAVAILABLE" | "SECRET_MISSING" | "TEMPLATE_ERROR" | "EXPRESSION_ERROR" | "WAIT_TIMEOUT" | "HEARTBEAT_EXHAUSTED" | "RETURN_DELIVERY_FAILED" | "MAX_ITERATIONS" | "INTERNAL_ERROR";
+            code: "HARNESS_NOT_INSTALLED" | "HARNESS_NOT_AUTHENTICATED" | "HARNESS_QUOTA_EXHAUSTED" | "HARNESS_TURN_FAILED" | "WORKING_DIRECTORY_MISSING" | "SCRIPT_EXIT_CODE" | "SCRIPT_TIMEOUT" | "INFERENCE_TIMEOUT" | "OUTPUT_SCHEMA_MISMATCH" | "SUBLOOP_DEPTH_EXCEEDED" | "SUBLOOP_NOT_FOUND" | "DECISION_NO_ROUTE" | "EVALUATION_UNAVAILABLE" | "EVALUATION_PROVIDER_FAILED" | "EVALUATION_INVALID_CONFIGURATION" | "EVALUATION_INVALID_RESPONSE" | "EVALUATION_RESULT_REJECTED" | "EVALUATION_EXPRESSION_FAILED" | "DECIDER_UNAVAILABLE" | "SECRET_MISSING" | "TEMPLATE_ERROR" | "EXPRESSION_ERROR" | "WAIT_TIMEOUT" | "HEARTBEAT_EXHAUSTED" | "RETURN_DELIVERY_FAILED" | "MAX_ITERATIONS" | "INTERNAL_ERROR";
             message: string;
             nodeId?: string | undefined;
             resumable: boolean;
@@ -3504,6 +3539,25 @@ export interface components {
                 reasoningOutputTokens?: number | undefined;
             };
         } | {
+            answer: {
+                /** @constant */
+                type: "choice";
+                optionId: string;
+                confidence: number | null;
+                probabilities: {
+                    [key: string]: number;
+                } | null;
+            };
+            portId: string;
+            provenance: {
+                /** @enum {string} */
+                kind: "expression" | "classifier" | "llm";
+                provider: string | null;
+                classifierId: string | null;
+                model: string | null;
+                effort: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | null;
+            };
+            diagnostics: components["schemas"]["EvaluationDiagnosticInput"][];
             runId: string;
             seq: number;
             /** Format: date-time */
@@ -3511,16 +3565,6 @@ export interface components {
             /** @constant */
             type: "decision.made";
             nodeId: string;
-            /** @enum {string} */
-            strategy: "jev" | "codex" | "expression";
-            classifierModel?: string | undefined;
-            route: string;
-            confidence?: number | undefined;
-            alternatives?: {
-                route: string;
-                confidence?: number | undefined;
-            }[] | undefined;
-            skipped: components["schemas"]["StrategySkipInput"][];
         } | {
             runId: string;
             seq: number;
@@ -3601,11 +3645,16 @@ export interface components {
             channel: components["schemas"]["ReturnChannelInput"];
             error: string;
         };
-        StrategySkipInput: {
-            /** @enum {string} */
-            strategy: "jev" | "codex" | "expression";
-            /** @enum {string} */
-            code: "CLASSIFIER_MODEL_NOT_FOUND" | "CLASSIFIER_PRIMITIVE_UNSUPPORTED" | "CLASSIFIER_MODEL_DISABLED" | "CLASSIFIER_SECRET_MISSING" | "CLASSIFIER_SECRET_UNREADABLE" | "PROVIDER_UNAVAILABLE" | "EXPRESSION_NOT_APPLICABLE" | "UNDECLARED_ROUTE" | "INVALID_CONFIDENCE" | "LOW_CONFIDENCE";
+        EvaluationDiagnosticInput: {
+            provenance: {
+                /** @enum {string} */
+                kind: "expression" | "classifier" | "llm";
+                provider: string | null;
+                classifierId: string | null;
+                model: string | null;
+                effort: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | null;
+            };
+            code: string;
             message: string;
         };
         ExitCriterionEvaluationInput: {
@@ -3828,7 +3877,7 @@ export interface components {
         JsonValue: JsonValue;
         LoopDefinition: {
             /** @constant */
-            schemaVersion: 1;
+            schemaVersion: 2;
             name: string;
             description?: string | undefined;
             settings: {
@@ -3850,9 +3899,14 @@ export interface components {
                     kind: "temp";
                 };
                 defaults: {
-                    model?: string | undefined;
-                    /** @enum {string} */
-                    effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                    /** @default {} */
+                    byHarness: {
+                        [key: string]: {
+                            model?: string | undefined;
+                            /** @enum {string} */
+                            effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                        };
+                    };
                 };
                 /** @default 10 */
                 maxIterations: number;
@@ -3982,38 +4036,67 @@ export interface components {
                 /** @constant */
                 kind: "decision";
                 config: {
-                    routes: {
-                        label: string;
-                        description: string;
-                    }[];
-                    question: string;
-                    context: {
-                        /** @default last */
-                        messages: "none" | "last" | "all" | number | {
-                            where: string;
-                        };
-                        vars?: string[] | undefined;
-                        /** @default true */
-                        includeLastOutput: boolean;
+                    answer: {
+                        /** @constant */
+                        type: "choice";
+                        options: {
+                            id: string;
+                            label: string;
+                            criteria: string;
+                        }[];
                     };
-                    strategy: ("jev" | "codex" | "expression")[];
-                    jev?: {
-                        /**
-                         * @default choice
-                         * @constant
-                         */
-                        primitive: "choice";
-                        model?: string | undefined;
-                        minConfidence?: number | undefined;
-                    } | undefined;
-                    codex?: {
-                        model?: string | undefined;
-                        /** @enum {string} */
-                        effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
-                    } | undefined;
-                    expression?: {
+                    evaluation: {
+                        /** @constant */
+                        kind: "expression";
                         jsonata: string;
-                    } | undefined;
+                    } | {
+                        /** @constant */
+                        kind: "classifier";
+                        model: string;
+                        question: string;
+                        context: {
+                            /** @default last */
+                            messages: "none" | "last" | "all" | number | {
+                                where: string;
+                            };
+                            vars?: string[] | undefined;
+                            /** @default true */
+                            includeLastOutput: boolean;
+                        };
+                        minConfidence?: number | undefined;
+                    } | {
+                        /** @constant */
+                        kind: "llm";
+                        /** @constant */
+                        harness: "codex";
+                        model: {
+                            /** @constant */
+                            mode: "inherit";
+                        } | {
+                            /** @constant */
+                            mode: "explicit";
+                            value: string;
+                        };
+                        effort: {
+                            /** @constant */
+                            mode: "inherit";
+                        } | {
+                            /** @constant */
+                            mode: "explicit";
+                            /** @enum {string} */
+                            value: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                        };
+                        question: string;
+                        context: {
+                            /** @default last */
+                            messages: "none" | "last" | "all" | number | {
+                                where: string;
+                            };
+                            vars?: string[] | undefined;
+                            /** @default true */
+                            includeLastOutput: boolean;
+                        };
+                    };
                     /** @default true */
                     recordAlternatives: boolean;
                 };
@@ -4805,7 +4888,7 @@ export interface components {
             /** @constant */
             format: "graphgoblin-loop";
             /** @constant */
-            formatVersion: 1;
+            formatVersion: 2;
             /** Format: date-time */
             exportedAt: string;
             loop: components["schemas"]["LoopDefinition"];
@@ -4838,7 +4921,7 @@ export interface components {
         RunStatus: "queued" | "running" | "waiting" | "paused" | "succeeded" | "failed" | "cancelled" | "exhausted";
         RunFailure: {
             /** @enum {string} */
-            code: "HARNESS_NOT_INSTALLED" | "HARNESS_NOT_AUTHENTICATED" | "HARNESS_QUOTA_EXHAUSTED" | "HARNESS_TURN_FAILED" | "WORKING_DIRECTORY_MISSING" | "SCRIPT_EXIT_CODE" | "SCRIPT_TIMEOUT" | "INFERENCE_TIMEOUT" | "OUTPUT_SCHEMA_MISMATCH" | "SUBLOOP_DEPTH_EXCEEDED" | "SUBLOOP_NOT_FOUND" | "DECISION_NO_ROUTE" | "DECIDER_UNAVAILABLE" | "SECRET_MISSING" | "TEMPLATE_ERROR" | "EXPRESSION_ERROR" | "WAIT_TIMEOUT" | "HEARTBEAT_EXHAUSTED" | "RETURN_DELIVERY_FAILED" | "MAX_ITERATIONS" | "INTERNAL_ERROR";
+            code: "HARNESS_NOT_INSTALLED" | "HARNESS_NOT_AUTHENTICATED" | "HARNESS_QUOTA_EXHAUSTED" | "HARNESS_TURN_FAILED" | "WORKING_DIRECTORY_MISSING" | "SCRIPT_EXIT_CODE" | "SCRIPT_TIMEOUT" | "INFERENCE_TIMEOUT" | "OUTPUT_SCHEMA_MISMATCH" | "SUBLOOP_DEPTH_EXCEEDED" | "SUBLOOP_NOT_FOUND" | "DECISION_NO_ROUTE" | "EVALUATION_UNAVAILABLE" | "EVALUATION_PROVIDER_FAILED" | "EVALUATION_INVALID_CONFIGURATION" | "EVALUATION_INVALID_RESPONSE" | "EVALUATION_RESULT_REJECTED" | "EVALUATION_EXPRESSION_FAILED" | "DECIDER_UNAVAILABLE" | "SECRET_MISSING" | "TEMPLATE_ERROR" | "EXPRESSION_ERROR" | "WAIT_TIMEOUT" | "HEARTBEAT_EXHAUSTED" | "RETURN_DELIVERY_FAILED" | "MAX_ITERATIONS" | "INTERNAL_ERROR";
             message: string;
             nodeId?: string | undefined;
             resumable: boolean;
@@ -5163,6 +5246,25 @@ export interface components {
                 reasoningOutputTokens: number;
             };
         } | {
+            answer: {
+                /** @constant */
+                type: "choice";
+                optionId: string;
+                confidence: number | null;
+                probabilities: {
+                    [key: string]: number;
+                } | null;
+            };
+            portId: string;
+            provenance: {
+                /** @enum {string} */
+                kind: "expression" | "classifier" | "llm";
+                provider: string | null;
+                classifierId: string | null;
+                model: string | null;
+                effort: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | null;
+            };
+            diagnostics: components["schemas"]["EvaluationDiagnostic"][];
             runId: string;
             seq: number;
             /** Format: date-time */
@@ -5170,16 +5272,6 @@ export interface components {
             /** @constant */
             type: "decision.made";
             nodeId: string;
-            /** @enum {string} */
-            strategy: "jev" | "codex" | "expression";
-            classifierModel?: string | undefined;
-            route: string;
-            confidence?: number | undefined;
-            alternatives?: {
-                route: string;
-                confidence?: number | undefined;
-            }[] | undefined;
-            skipped: components["schemas"]["StrategySkip"][];
         } | {
             runId: string;
             seq: number;
@@ -5260,11 +5352,16 @@ export interface components {
             channel: components["schemas"]["ReturnChannel"];
             error: string;
         };
-        StrategySkip: {
-            /** @enum {string} */
-            strategy: "jev" | "codex" | "expression";
-            /** @enum {string} */
-            code: "CLASSIFIER_MODEL_NOT_FOUND" | "CLASSIFIER_PRIMITIVE_UNSUPPORTED" | "CLASSIFIER_MODEL_DISABLED" | "CLASSIFIER_SECRET_MISSING" | "CLASSIFIER_SECRET_UNREADABLE" | "PROVIDER_UNAVAILABLE" | "EXPRESSION_NOT_APPLICABLE" | "UNDECLARED_ROUTE" | "INVALID_CONFIDENCE" | "LOW_CONFIDENCE";
+        EvaluationDiagnostic: {
+            provenance: {
+                /** @enum {string} */
+                kind: "expression" | "classifier" | "llm";
+                provider: string | null;
+                classifierId: string | null;
+                model: string | null;
+                effort: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | null;
+            };
+            code: string;
             message: string;
         };
         ExitCriterionEvaluation: {

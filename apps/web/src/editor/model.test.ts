@@ -55,9 +55,9 @@ describe('editor model', () => {
 
     const broken = (kind: NodeInput['kind'], config: unknown): NodeInput =>
       ({ id: 'n', kind, label: 'n', config }) as NodeInput;
-    expect(portsOf(broken('decision', { routes: [{ label: 'a' }, { label: '' }, 'x'] }))).toEqual([
-      'a',
-    ]);
+    expect(
+      portsOf(broken('decision', { answer: { options: [{ id: 'a' }, { id: '' }, 'x'] } })),
+    ).toEqual(['a']);
     expect(portsOf(broken('decision', {}))).toEqual([]);
     expect(
       portsOf(
@@ -116,13 +116,16 @@ describe('editor model', () => {
       id: 'd',
       kind: 'decision',
       label: 'd',
-      config: { routes: [], question: 'q', strategy: [] },
+      config: {
+        answer: { type: 'choice', options: [] },
+        evaluation: { kind: 'expression', jsonata: '"a"' },
+      },
     });
     schema.edges.push({ id: 'bad id!', from: { node: 'start', port: 'out' }, to: { node: 'd' } });
     schema.name = '';
     const invalid = validateDraft(schema);
     expect(invalid.schemaValid).toBe(false);
-    expect(invalid.issues.find((i) => i.nodeId === 'd')?.path).toBe('config.routes');
+    expect(invalid.issues.find((i) => i.nodeId === 'd')?.path).toBe('config.answer.options');
     expect(invalid.issues.find((i) => i.edgeId === 'bad id!')?.path).toBe('id');
     expect(invalid.issues.find((i) => i.path === 'name')).toBeDefined();
   });

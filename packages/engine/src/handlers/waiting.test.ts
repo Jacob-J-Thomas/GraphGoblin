@@ -243,7 +243,7 @@ describe('heartbeat node', () => {
 
 describe('subloop node', () => {
   const childDef: LoopDefinitionInput = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     name: 'child',
     nodes: [
       { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },
@@ -283,7 +283,7 @@ describe('subloop node', () => {
     childLoopId: string,
   ): LoopDefinitionInput {
     return {
-      schemaVersion: 1,
+      schemaVersion: 2,
       name: 'parent',
       nodes: [
         { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },

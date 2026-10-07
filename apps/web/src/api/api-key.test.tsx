@@ -44,7 +44,7 @@ describe('API key entry', () => {
     const api = new FakeApi();
     api.requiredKey = 'gg_good';
     api.addLoop({
-      schemaVersion: 1,
+      schemaVersion: 2,
       name: 'guarded loop',
       nodes: [
         { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },

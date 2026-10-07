@@ -90,12 +90,16 @@ const common =
   'Work alone, with a fresh session, only in the current scratch repository. No subagents, MCP, network, credential access, other repositories or private instance files. Never change AGENTS.md, aidlc-checklist.lock.json or .github/. Do not run Git mutations; the scripts own commits and pushes. Required checklist cannot be relaxed. Return only the forced JSON schema. ';
 function graph(name, description) {
   const loop = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     name: `aidlc-full-v1-${name}`,
     description,
     settings: {
       workingDirectory: { kind: 'template', template: '{{ trigger.payload.workspacePath }}' },
-      defaults: { model: cfg.roles.plannerB.model, effort: cfg.roles.plannerB.effort },
+      defaults: {
+        byHarness: {
+          codex: { model: cfg.roles.plannerB.model, effort: cfg.roles.plannerB.effort },
+        },
+      },
       maxIterations: cfg.bounds.maxTasks * (cfg.bounds.reviewCycles + cfg.bounds.qaReworks + 1) + 4,
       subloopDepthLimit: 2,
     },
@@ -146,28 +150,30 @@ function graph(name, description) {
   };
   const decision = (id, labels, expression) =>
     add(id, 'decision', {
-      routes: labels.map((label) => ({ label, description: `aidlc-${label}` })),
-      question: 'Check structured facts and child status.',
-      strategy: ['expression'],
-      expression: { jsonata: expression },
-      context: { messages: 'none', includeLastOutput: true },
+      answer: {
+        type: 'choice',
+        options: labels.map((id) => ({ id, label: id, criteria: `aidlc-${id}` })),
+      },
+      evaluation: { kind: 'expression', jsonata: expression },
     });
   const choice = (id, slots, descriptions, question) => {
     script(`${id}-budget`, 'reserve', ['jev', id]);
     add(id, 'decision', {
-      routes: [...slots, 'uncertain'].map((label, i) => ({
-        label,
-        description: descriptions[i] ?? 'Unclear, ambiguous, or requires soft judgement.',
-      })),
-      question,
-      strategy: ['jev', 'expression'],
-      jev: {
-        model: cfg.routing.classifierId,
-        primitive: 'choice',
-        minConfidence: cfg.routing.minConfidence,
+      answer: {
+        type: 'choice',
+        options: [...slots, 'uncertain'].map((id, i) => ({
+          id,
+          label: id,
+          criteria: descriptions[i] ?? 'Unclear, ambiguous, or requires soft judgement.',
+        })),
       },
-      expression: { jsonata: '"uncertain"' },
-      context: { messages: 'none', vars: ['config'], includeLastOutput: false },
+      evaluation: {
+        kind: 'classifier',
+        model: cfg.routing.classifierId,
+        question,
+        minConfidence: cfg.routing.minConfidence,
+        context: { messages: 'none', vars: ['config'], includeLastOutput: false },
+      },
     });
     edge(`${id}-budget`, id);
   };
@@ -577,7 +583,7 @@ for (const [name, loop] of outputs)
     JSON.stringify(
       {
         format: 'graphgoblin-loop',
-        formatVersion: 1,
+        formatVersion: 2,
         exportedAt: '2026-10-07T00:00:00.000Z',
         loop,
       },

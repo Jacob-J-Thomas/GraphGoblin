@@ -128,33 +128,42 @@ describe('classifier contracts', () => {
     ).toBe(false);
     expect(ClassifierModelPatchSchema.safeParse({}).success).toBe(false);
   });
-  it('round-trips optional selection and event provenance without materializing the default', () => {
+  it('requires an explicit classifier selection and preserves its canonical evidence', () => {
     const input = {
-      routes: [
-        { label: 'yes', description: '' },
-        { label: 'no', description: '' },
-      ],
-      question: 'Q',
-      strategy: ['jev'],
+      answer: {
+        type: 'choice',
+        options: [
+          { id: 'yes', label: 'Yes', criteria: 'Yes' },
+          { id: 'no', label: 'No', criteria: 'No' },
+        ],
+      },
+      evaluation: { kind: 'classifier', model: 'kev', question: 'Q' },
     };
-    expect(DecisionConfigSchema.parse(input)).not.toHaveProperty('jev');
-    const selected = DecisionConfigSchema.parse({ ...input, jev: { model: 'kev' } });
+    const selected = DecisionConfigSchema.parse(input);
     expect(DecisionConfigSchema.parse(JSON.parse(JSON.stringify(selected)))).toEqual(selected);
-    expect(selected.jev).toEqual({ primitive: 'choice', model: 'kev' });
+    expect(
+      DecisionConfigSchema.safeParse({
+        ...input,
+        evaluation: { kind: 'classifier', question: 'Q' },
+      }).success,
+    ).toBe(false);
     const event = {
       runId: fakeUlid('run'),
       seq: 1,
       ts: FIXTURE_TS,
       type: 'decision.made',
-      skipped: [],
       nodeId: 'choose',
-      strategy: 'jev',
-      route: 'yes',
+      answer: { type: 'choice', optionId: 'yes', confidence: 1, probabilities: { yes: 1, no: 0 } },
+      portId: 'yes',
+      provenance: {
+        kind: 'classifier',
+        provider: 'http',
+        classifierId: 'kev',
+        model: 'provider-kev',
+        effort: null,
+      },
+      diagnostics: [],
     };
     expect(RunEventSchema.parse(event)).toEqual(event);
-    expect(RunEventSchema.parse({ ...event, classifierModel: 'kev' })).toHaveProperty(
-      'classifierModel',
-      'kev',
-    );
   });
 });

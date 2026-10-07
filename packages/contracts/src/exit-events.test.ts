@@ -18,28 +18,42 @@ const exit = {
 describe('exit and decision evidence contracts', () => {
   it('round-trips the maximum configured model name in exit evidence', () => {
     const model = 'm'.repeat(MAX_MODEL_NAME_LENGTH);
-    const configured = LoopSettingsSchema.parse({ defaults: { model } }).defaults.model;
+    const configured = LoopSettingsSchema.parse({ defaults: { byHarness: { codex: { model } } } })
+      .defaults.byHarness.codex?.model;
     const event = {
       ...exit,
       criteria: [{ index: 0, strategy: 'codex', status: 'matched', model: configured }],
     };
     expect(RunEventSchema.parse(JSON.parse(JSON.stringify(event)))).toEqual(event);
     const oversized = `${model}m`;
-    expect(LoopSettingsSchema.safeParse({ defaults: { model: oversized } }).success).toBe(false);
+    expect(
+      LoopSettingsSchema.safeParse({ defaults: { byHarness: { codex: { model: oversized } } } })
+        .success,
+    ).toBe(false);
     const decision = {
-      routes: [
-        { label: 'yes', description: 'Yes' },
-        { label: 'no', description: 'No' },
-      ],
-      question: 'Done?',
-      strategy: ['codex'],
-      codex: { model },
+      answer: {
+        type: 'choice',
+        options: [
+          { id: 'yes', label: 'Yes', criteria: 'Yes' },
+          { id: 'no', label: 'No', criteria: 'No' },
+        ],
+      },
+      evaluation: {
+        kind: 'llm',
+        harness: 'codex',
+        model: { mode: 'explicit', value: model },
+        effort: { mode: 'inherit' },
+        question: 'Done?',
+      },
     };
     const inference = { prompt: { template: 'Hello' }, model };
     expect(DecisionConfigSchema.safeParse(decision).success).toBe(true);
     expect(InferenceConfigSchema.safeParse(inference).success).toBe(true);
     expect(
-      DecisionConfigSchema.safeParse({ ...decision, codex: { model: oversized } }).success,
+      DecisionConfigSchema.safeParse({
+        ...decision,
+        evaluation: { ...decision.evaluation, model: { mode: 'explicit', value: oversized } },
+      }).success,
     ).toBe(false);
     expect(InferenceConfigSchema.safeParse({ ...inference, model: oversized }).success).toBe(false);
     expect(
@@ -99,22 +113,39 @@ describe('exit and decision evidence contracts', () => {
     ])
       expect(RunEventSchema.safeParse({ ...exit, criteria: [entry] }).success).toBe(false);
   });
-  it('requires the decision skipped list and bounds its fixed messages', () => {
-    const decision = { ...base, type: 'decision.made', strategy: 'expression', route: 'yes' };
+  it('requires canonical decision diagnostics and bounds historical messages', () => {
+    const provenance = {
+      kind: 'expression',
+      provider: null,
+      classifierId: null,
+      model: null,
+      effort: null,
+    };
+    const decision = {
+      ...base,
+      type: 'decision.made',
+      answer: { type: 'choice', optionId: 'yes', confidence: null, probabilities: null },
+      portId: 'yes',
+      provenance,
+    };
     expect(RunEventSchema.safeParse(decision).success).toBe(false);
-    expect(RunEventSchema.safeParse({ ...decision, skipped: [] }).success).toBe(true);
+    expect(RunEventSchema.safeParse({ ...decision, diagnostics: [] }).success).toBe(true);
     expect(
       RunEventSchema.safeParse({
         ...decision,
-        skipped: [
-          { strategy: 'jev', code: 'CLASSIFIER_MODEL_DISABLED', message: 'Classifier disabled' },
+        diagnostics: [
+          {
+            provenance: { ...provenance, kind: 'classifier' },
+            code: 'CLASSIFIER_MODEL_DISABLED',
+            message: 'Classifier disabled',
+          },
         ],
       }).success,
     ).toBe(true);
     expect(
       RunEventSchema.safeParse({
         ...decision,
-        skipped: [{ strategy: 'jev', code: 'UNKNOWN', message: 'x'.repeat(257) }],
+        diagnostics: [{ provenance, code: 'UNKNOWN', message: 'x'.repeat(257) }],
       }).success,
     ).toBe(false);
   });

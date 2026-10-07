@@ -25,32 +25,50 @@ Invalid cron schedules produce `CRON_INVALID` issues with the trigger's nodeId a
 an expression issue in the editor opens the schedule's Advanced group and focuses
 the raw expression; a timezone issue focuses the time zone control.
 
-## Decision (Decided strategies, Draft config)
+## Decision (Decided, #98)
 
-Chooses one of several labelled routes.
+Evaluates exactly one selected method and follows the output port for its answer. Evaluation kind and answer type are separate. This release supports Choice answers with 2–64 options, subject to the selected provider's tighter limits.
 
 ```ts
 type DecisionConfig = {
-  routes: { label: string; description: string }[]; // at least two
-  question: string; // Liquid template rendered against the thread
-  context?: {
-    messages?: 'none' | 'last' | number | 'all';
-    vars?: string[];
-    includeLastOutput?: boolean;
+  answer: {
+    type: 'choice';
+    options: { id: string; label: string; criteria: string }[];
   };
-  strategy: ('jev' | 'codex' | 'expression')[]; // ordered fallback chain
-  jev?: { primitive: 'choice'; model?: string; minConfidence?: number }; // classifier catalog id
-  codex?: { model?: string; effort?: Effort }; // a Codex thread with an output schema of { route, reasoning }
-  expression?: { jsonata: string }; // must evaluate to one of the route labels
+  evaluation:
+    | { kind: 'expression'; jsonata: string }
+    | {
+        kind: 'classifier';
+        model: string;
+        question: string;
+        context?: DecisionContext;
+        minConfidence?: number;
+      }
+    | {
+        kind: 'llm';
+        harness: 'codex';
+        question: string;
+        context?: DecisionContext;
+        model: { mode: 'inherit' } | { mode: 'explicit'; value: string };
+        effort: { mode: 'inherit' } | { mode: 'explicit'; value: Effort };
+      };
   recordAlternatives: boolean;
 };
 ```
 
-Behaviour: strategies are tried in order. `jev.model` selects an exact owner-scoped classifier catalog id; omission defaults to built-in `jev` (provider model `jev-latest`). The registry resolves it at each decision, including resumed execution. An explicit selection never substitutes the built-in. Unknown ids (`CLASSIFIER_MODEL_NOT_FOUND`) and entries without Choice (`CLASSIFIER_PRIMITIVE_UNSUPPORTED`) block publication. Disabled models (`CLASSIFIER_MODEL_DISABLED`), missing or blank required secrets (`CLASSIFIER_SECRET_MISSING`), and unreadable secrets (`CLASSIFIER_SECRET_UNREADABLE`) warn at `config.jev.model`, naming the node, model, and Settings remedy. These unavailable strategies are skipped with the specific reason in `DECISION_NO_ROUTE`'s `tried` details. Without another strategy the decision cannot currently produce a route.
+An option's stable `id` is the provider key and output port. Its unique, nonblank `label` is display text; `criteria` explains when it should be selected. Renaming or reordering display labels keeps each connection attached to its option. Strategy arrays, inactive evaluator blocks and unsupported answer/kind combinations are rejected.
 
-If a classifier answers below `minConfidence`, the next strategy runs. Kev rescales confidence as `(p_max - 1/K) / (1 - 1/K)`, where `K` is the number of routes: two routes with selected probability 0.75 give confidence 0.5. See the [Kev research note](research/jev.md#kev-http-protocol-verification-2026-10-05) when choosing a threshold. An undeclared label from built-in Jev or Codex tries the next strategy, recording fixed text without the raw answer in the exhausted chain's `tried` details. HTTP classifiers instead reject undeclared choices with `DECIDER_INVALID_RESPONSE`. Malformed responses and provider errors fail the step and cancellation propagates; HTTP errors do not silently fall through. Decision failure details never contain the provider's raw answer. Jev probabilities must cover exactly the submitted labels. Only declared routes are retained in recorded alternatives, for every provider. The chosen route, confidence, and alternatives are written to `decision.made` and `lastOutput`; successful classifier events also carry `classifierModel`, the catalog id. `lastOutput` keeps its existing shape. Classification is Choice with categorical labels. Scorer-only entries can be listed but cannot execute a Choice decision.
+**Expression** returns a declared string option ID from JSONata. Values are not implicitly stringified. It invokes no provider. **Classifier** selects an explicit owner-scoped catalog ID with Choice capability. **LLM** selects an implemented harness, currently Codex, and requests a structured answer. Model and effort resolve within that harness from node selection, loop defaults, owner defaults, then process defaults; an invalid explicit value is never silently replaced.
 
-Ports: one output per route label.
+Unknown catalog entries, unsupported capabilities, and invalid model/effort combinations are admission errors. Disabled or unconfigured selections remain visible with draft diagnostics and block publication. Runtime rechecks the selected configuration; an unavailable evaluator fails rather than selecting another kind. An in-flight request retains its starting selection.
+
+Only classifiers accept `minConfidence`. A result below it fails with `EVALUATION_RESULT_REJECTED`; it does not choose another route or provider. LLM confidence is required, finite, and between zero and one. It is informational self-report, not a calibrated probability, and has no threshold. Expression confidence is null. Malformed answers, undeclared option IDs, and expression failures have typed nonresumable errors. Restorable unavailability and transient provider failures are resumable; cancellation remains cancellation. See [execution engine](05-execution-engine.md).
+
+Question templates and context selection retain their existing exposure while #38 awaits the human evaluation. Templates see the full thread; the provider's separately selected state contains trigger payload, role/content messages, variables, and optional last-output value. The selector does not restrict what a question template can expose. Option criteria are sent to the selected evaluator. This change adds no citation or evidence-selection contract.
+
+The recorded output is `{answer:{type:'choice',optionId,confidence,probabilities},portId,provenance:{kind,provider,classifierId,model,effort}}`. Nonapplicable and historically unknown values are null. Runtime events record actual resolved model/effort where applicable. Providers' raw errors and secrets never enter that output. Historical pre-cutover skip diagnostics are retained as event evidence; new decisions have no strategy chain.
+
+Old definitions, exports and persisted outputs require the offline conversion described in the CHANGELOG. Exit predicates retain their existing contract until #99.
 
 ## Inferencing (Decided)
 
@@ -213,7 +231,7 @@ Ports: `out`.
 
 Decides whether the loop is done, what it returns, where that goes, and whether to go around again.
 
-Exit predicates with strategy `jev` continue to use built-in Jev's Noul path and its current enable/secret availability. There is no exit classifier selector; custom HTTP classifiers execute Decision Choice only. Disabled, missing/blank-secret, and unreadable-secret states produce the same classifier warnings as decisions, at `config.criteria.<index>.strategy`. Enable Jev in Settings, Classifier models, or set `jev-api-key` in Settings, Secrets. These warnings allow publication; an unavailable Jev predicate fails with `DECIDER_UNAVAILABLE` when evaluated.
+Exit predicates with strategy `jev` continue to use built-in Jev's Noul path and its current enable/secret availability. There is no exit classifier selector; custom HTTP classifiers execute Decision Choice only. Disabled, missing/blank-secret, and unreadable-secret states produce the same classifier warnings as decisions, at `config.criteria.<index>.strategy`. Enable Jev in Settings, Classifier models, or set `jev-api-key` in Settings, Secrets. These warnings remain visible in drafts and block publication under the shared admission policy. An already published Jev predicate still fails with `DECIDER_UNAVAILABLE` if it becomes unavailable before evaluation. Exit evaluation fields and event semantics remain unchanged until #99.
 
 ```ts
 type ExitConfig = {

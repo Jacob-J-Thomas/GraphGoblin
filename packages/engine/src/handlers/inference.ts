@@ -190,7 +190,11 @@ export const inferenceHandler: NodeHandler<'inference'> = {
         { nodeId: ctx.node.id },
       );
     }
-    const { model, effort } = ctx.services.resolveModel(config.model, config.effort);
+    const { model, effort } = await ctx.services.resolveModel(
+      config.harness,
+      config.model,
+      config.effort,
+    );
     const workingDirectory = await ctx.services.workingDirectory();
 
     // Input transforms shape only the view the prompt sees; they are not persisted.

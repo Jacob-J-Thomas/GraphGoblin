@@ -69,8 +69,8 @@ export const useRunEventStore = create<RunEventStoreState>()(
         }),
     }),
     {
-      // New event contract: replay from the server instead of retaining old decision shapes.
-      name: 'graphgoblin-run-events-v2',
+      // Canonical decision evidence replaces the older v2 decision payload; replay these logs.
+      name: 'graphgoblin-run-events-v3',
       storage: createJSONStorage(() => quotaSafeSessionStorage),
       partialize: (state) => ({ runs: state.runs }),
     },

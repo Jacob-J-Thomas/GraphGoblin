@@ -50,11 +50,24 @@ it('round-trips large mixed evaluation pages and measures read validation overhe
               },
             }
           : {
-              strategy: 'expression',
-              route: 'yes',
-              skipped: [
+              answer: { type: 'choice', optionId: 'yes', confidence: null, probabilities: null },
+              portId: 'yes',
+              provenance: {
+                kind: 'expression',
+                provider: null,
+                classifierId: null,
+                model: null,
+                effort: null,
+              },
+              diagnostics: [
                 {
-                  strategy: 'jev',
+                  provenance: {
+                    kind: 'classifier',
+                    provider: null,
+                    classifierId: null,
+                    model: null,
+                    effort: null,
+                  },
                   code: 'CLASSIFIER_MODEL_DISABLED',
                   message: 'The selected classifier is disabled',
                 },

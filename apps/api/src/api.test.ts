@@ -16,7 +16,7 @@ afterEach(async () => {
 
 function waitLoop(name = 'wait'): LoopDefinitionInput {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     name,
     nodes: [
       { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },
@@ -384,7 +384,7 @@ describe('runs', () => {
       { finalText: 'hello from codex', items: [{ id: 'i1', type: 'message', summary: 'hello' }] },
     ]);
     const inferLoop: LoopDefinitionInput = {
-      schemaVersion: 1,
+      schemaVersion: 2,
       name: 'infer',
       nodes: [
         { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },
@@ -426,10 +426,13 @@ describe('settings, secrets, api keys, catalog, events', () => {
         await t.app.inject({
           method: 'PUT',
           url: '/settings',
-          payload: { defaultModel: 'gpt-6-luna', nested: { a: 1 } },
+          payload: {
+            defaults: { byHarness: { codex: { model: 'gpt-6-luna' } } },
+            nested: { a: 1 },
+          },
         })
       ).json(),
-    ).toEqual({ defaultModel: 'gpt-6-luna', nested: { a: 1 } });
+    ).toEqual({ defaults: { byHarness: { codex: { model: 'gpt-6-luna' } } }, nested: { a: 1 } });
     expect((await t.app.inject({ method: 'DELETE', url: '/settings/nested' })).statusCode).toBe(
       204,
     );

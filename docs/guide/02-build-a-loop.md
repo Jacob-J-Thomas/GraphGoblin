@@ -41,7 +41,7 @@ A saved model that is missing or disabled stays selected with **not in catalog**
 
 > After 1.0: Surface-aware start and input controls. Today `exposeTo` is recorded and described to MCP callers, but the web launcher and engine commands do not enforce it. Use API authentication for access control.
 
-**Decision (`decision`).** Define at least two `routes`, each with a unique `label` and `description`; route labels cannot be `in`. Set a Liquid `question` and ordered `strategy` list using `jev`, `codex`, or `expression`. An expression strategy needs `expression.jsonata` returning a route label. Limit context with `context.messages`, `context.vars`, and `context.includeLastOutput`; declare selected variables in loop settings. Set `jev.minConfidence` or `codex.model` and `codex.effort` when needed. Under **Jev → Model** the node editor offers built-in Jev, the default, and every enabled classifier with Choice from **Settings → Classifier models**; a selection that becomes unavailable stays selected with the reason ([Configure classifier models](06-settings-and-secrets.md#configure-classifier-models)). An unavailable decider, an unknown label, or a Jev answer below `minConfidence` falls through to the next strategy. When every strategy falls through, the run fails with `DECISION_NO_ROUTE`; an error raised by a decider fails the run at once. The chosen route is recorded as the node's output. Connect every route.
+**Decision (`decision`).** Choose an evaluation kind: **Expression**, **Classifier**, or **LLM**. Define at least two options with stable IDs, readable labels, and criteria explaining when to choose them. IDs name ports; changing a label or reordering options keeps its connections. Expression returns an option ID from JSONata without a provider call. Classifier selects a Choice-capable catalog entry and may set a minimum confidence. LLM selects a supported harness and inherits or explicitly selects its model and effort. Classifier/LLM questions render against the full thread; their separate context selector does not restrict template exposure. Unavailable configuration, malformed answers and rejected classifier confidence fail with typed diagnostics; no other evaluator runs. Connect every option. Results are under `lastOutput.value.answer`, with the chosen ID in `optionId` and execution details in `lastOutput.value.provenance`.
 
 **Inference (`inference`).** Set `prompt.template` for a Codex turn. Choose `model`, `effort`, and `session.policy`: `fresh`, `resume-previous`, or `resume-named` with a `key`. Set `harnessOptions.sandbox` to `read-only`, `workspace-write` (default), or `danger-full-access`; `approval` defaults to `never`, while network and web search are off unless enabled. Use `input` transformations, `contextFiles`, and `output.transforms` to shape context. Set `output.schema.jsonSchema` for structured output and configure its `repair` policy. `output.captureTranscript` defaults to `artifact`, `output.toMessages` to `final`; `timeoutSeconds` is optional. The output goes to `lastOutput.value` and the node follows `out`.
 
@@ -135,7 +135,7 @@ The body wraps your definition:
 ```json
 {
   "definition": {
-    "schemaVersion": 1,
+    "schemaVersion": 2,
     "name": "starter",
     "nodes": [
       { "id": "start", "kind": "trigger", "label": "Start", "config": { "subtype": "manual" } },
@@ -158,7 +158,7 @@ Save this bare definition as a JSON file and import it. It follows the contracts
 
 ```json
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "name": "first-summary",
   "description": "Ask Codex for a short explanation of a topic.",
   "settings": {

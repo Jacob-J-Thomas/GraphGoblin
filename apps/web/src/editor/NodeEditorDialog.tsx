@@ -18,6 +18,7 @@ import {
 } from '../components/ui/index.js';
 import { createDisclosureIdentities, type DisclosureStates } from '../forms/disclosures.js';
 import { SchemaForm } from '../forms/SchemaForm.js';
+import { DecisionKindPicker } from './DecisionKindPicker.js';
 import { CatalogWarningsContext } from '../forms/fields/model.js';
 import { canvasFocusTarget } from './canvas-focus.js';
 import { NODE_FIELD_CONTROLS } from './field-controls.js';
@@ -30,6 +31,9 @@ import { SubloopPicker } from './SubloopPicker.js';
 import { useEditorStore } from './store.js';
 
 /** Why `draft` cannot become the id of node `nodeId`, or undefined when it can (or is unchanged). */
+const DECISION_UNION_PICKERS = { evaluation: DecisionKindPicker };
+const DECISION_FIELD_ORDER = ['evaluation', 'answer'] as const;
+
 export function idProblem(
   draft: string,
   nodeId: string,
@@ -277,9 +281,11 @@ export function NodeEditorDialog({
             <SchemaForm
               key={`${node.kind}:${epoch}:${historyEpoch}`}
               schema={NodeConfigSchemas[node.kind]}
+              fieldOrder={node.kind === 'decision' ? DECISION_FIELD_ORDER : undefined}
               value={node.config}
               label={`${node.id} config`}
               controls={NODE_FIELD_CONTROLS}
+              unionPickers={node.kind === 'decision' ? DECISION_UNION_PICKERS : undefined}
               problems={configProblems}
               disclosures={disclosures}
               onChange={(config, change) => updateNode(node.id, { config }, change)}

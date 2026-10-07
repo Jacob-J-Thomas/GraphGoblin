@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { LoopDefinitionSchema } from '@graphgoblin/contracts';
 import { FIXTURE_TS, minimalLoop } from '@graphgoblin/contracts/testing';
-import { exportLoop, importLoop, LoopImportError } from './loop-io.js';
+import {
+  exportLoop,
+  importLoop,
+  LoopImportError,
+  LoopFormatUpgradeRequiredError,
+} from './loop-io.js';
 
 describe('exportLoop / importLoop', () => {
   it('carries manual edge routes (#44) through export and import unchanged', () => {
@@ -22,8 +27,8 @@ describe('exportLoop / importLoop', () => {
     ).toThrow(LoopImportError);
   });
 
-  it.each([undefined, 'kev.local'])(
-    'preserves classifier references and the omitted default on portable export/import (%s)',
+  it.each(['jev', 'kev.local'])(
+    'preserves explicit classifier IDs on portable export/import (%s)',
     (model) => {
       const base = minimalLoop();
       const definition = LoopDefinitionSchema.parse({
@@ -35,13 +40,14 @@ describe('exportLoop / importLoop', () => {
             kind: 'decision',
             label: 'Choose',
             config: {
-              routes: [
-                { label: 'yes', description: 'Yes' },
-                { label: 'no', description: 'No' },
-              ],
-              question: '?',
-              strategy: ['jev'],
-              ...(model ? { jev: { model } } : {}),
+              answer: {
+                type: 'choice',
+                options: [
+                  { id: 'yes', label: 'yes', criteria: 'Yes' },
+                  { id: 'no', label: 'no', criteria: 'No' },
+                ],
+              },
+              evaluation: { kind: 'classifier', model, question: '?', context: {} },
             },
           },
           base.nodes[1],
@@ -60,7 +66,7 @@ describe('exportLoop / importLoop', () => {
     (field) => {
       const input = {
         format: 'graphgoblin-loop',
-        formatVersion: 1,
+        formatVersion: 2,
         exportedAt: FIXTURE_TS,
         loop: minimalLoop(),
         [field]: null,
@@ -80,7 +86,7 @@ describe('exportLoop / importLoop', () => {
   it.each([false, true])('rejects removed loop defaults with the field path (%j)', (envelope) => {
     const definition = { ...minimalLoop(), settings: { defaults: { harness: 'codex' } } };
     const input = envelope
-      ? { format: 'graphgoblin-loop', formatVersion: 1, exportedAt: FIXTURE_TS, loop: definition }
+      ? { format: 'graphgoblin-loop', formatVersion: 2, exportedAt: FIXTURE_TS, loop: definition }
       : definition;
     try {
       importLoop(input);
@@ -121,4 +127,20 @@ describe('exportLoop / importLoop', () => {
       expect((error as LoopImportError).details).toMatchObject({ errors: expect.any(Array) });
     }
   });
+});
+
+it('requires the offline converter for explicit v1 exports and bare definitions, never parsing legacy at runtime', () => {
+  for (const input of [
+    { format: 'graphgoblin-loop', formatVersion: 1, exportedAt: 'old', loop: {} },
+    { schemaVersion: 1 },
+  ]) {
+    expect(() => importLoop(input)).toThrow(LoopFormatUpgradeRequiredError);
+    try {
+      importLoop(input);
+    } catch (error) {
+      expect(error).toMatchObject({ code: 'LOOP_FORMAT_UPGRADE_REQUIRED' });
+    }
+  }
+  for (const input of [{ format: 'other', formatVersion: 9 }, null])
+    expect(() => importLoop(input)).toThrow(LoopImportError);
 });

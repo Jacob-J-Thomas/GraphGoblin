@@ -15,7 +15,8 @@ import type {
   TriggerKind,
   WaitSpec,
 } from '@graphgoblin/contracts';
-import { ContextThreadSchema } from '@graphgoblin/contracts';
+import { resolveHarnessModel, validateHarnessDefaults } from '@graphgoblin/domain';
+import { ContextThreadSchema, DecisionEmissionSchema } from '@graphgoblin/contracts';
 import {
   applyPatch,
   evaluatePredicate,
@@ -992,12 +993,17 @@ export class RunManager {
     }
     const def = version.definition;
     // Owner defaults are read at every (re)start, so a change in settings applies to the next run.
-    const ownerDefaults = (await this.settings.ownerDefaults?.(run.ownerId)) ?? {};
+    const ownerDefaults = (await this.settings.ownerDefaults?.(run.ownerId)) ?? { byHarness: {} };
     // Read before any recovery marker is appended; a marker does not consume a wake either.
     const pendingWake = findPendingWake(events);
     let thread = await this.loadThread(run, events);
     /** Append drafts atomically and return the seq of the last one. */
     const appendAll = async (drafts: EventDraft[]): Promise<number> => {
+      for (const draft of drafts)
+        if (draft.type === 'decision.made') {
+          const { type: _type, nodeId: _nodeId, ...evidence } = draft;
+          DecisionEmissionSchema.parse(evidence);
+        }
       const stored = await this.ports.events.append(runId, drafts);
       events.push(...stored);
       return (stored.at(-1) as RunEvent).seq;
@@ -1048,15 +1054,44 @@ export class RunManager {
           ...extras,
         }),
       record: append,
-      resolveModel: (model, effort) => ({
-        model:
-          model ?? def.settings.defaults.model ?? ownerDefaults.model ?? this.settings.defaultModel,
-        effort:
-          effort ??
-          def.settings.defaults.effort ??
-          ownerDefaults.effort ??
-          this.settings.defaultEffort,
-      }),
+      resolveModel: async (harness, model, effort) => {
+        const catalog = await this.ports.modelCatalog.list();
+        const issues = validateHarnessDefaults({
+          loopDefaults: def.settings.defaults,
+          ownerDefaults,
+          processDefaults: this.settings.defaults,
+          catalog,
+        });
+        if (issues.length) {
+          const restorable = issues.every(
+            (issue) => issue.resolution.code === 'MODEL_NOT_IN_CATALOG',
+          );
+          throw new RunFailureError(
+            restorable ? 'EVALUATION_UNAVAILABLE' : 'EVALUATION_INVALID_CONFIGURATION',
+            issues[0]!.resolution.message,
+            { resumable: restorable, details: issues },
+          );
+        }
+        const resolution = resolveHarnessModel({
+          harness,
+          ...(model !== undefined ? { model } : {}),
+          ...(effort !== undefined ? { effort } : {}),
+          loopDefaults: def.settings.defaults,
+          ownerDefaults,
+          processDefaults: this.settings.defaults,
+          catalog,
+        });
+        if (resolution.status !== 'ready') {
+          const restorable =
+            resolution.status === 'unavailable' || resolution.code === 'MODEL_NOT_IN_CATALOG';
+          throw new RunFailureError(
+            restorable ? 'EVALUATION_UNAVAILABLE' : 'EVALUATION_INVALID_CONFIGURATION',
+            resolution.message,
+            { resumable: restorable, details: { code: resolution.code, path: resolution.path } },
+          );
+        }
+        return { model: resolution.model, effort: resolution.effort };
+      },
       startChild: (request) => this.startChild(run, request, pinnedSubloops(events)),
       childOutcome: (childRunId) => this.childOutcome(childRunId),
       events: () => Promise.resolve(events),

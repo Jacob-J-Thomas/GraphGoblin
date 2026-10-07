@@ -52,7 +52,7 @@ export class HttpChoiceClassifier implements ClassifierPort {
               type: 'choice',
               instructions: request.question,
               criteria: Object.fromEntries(
-                request.options.map((option) => [option.label, option.description]),
+                request.options.map((option) => [option.id, option.criteria]),
               ),
             },
           },
@@ -100,7 +100,7 @@ export class HttpChoiceClassifier implements ClassifierPort {
         'Classifier returned an invalid Choice response',
       );
     const { choice, confidence, probabilities } = parsed.data.answers.answer;
-    const labels = new Set(request.options.map((option) => option.label));
+    const labels = new Set(request.options.map((option) => option.id));
     if (
       Object.keys(probabilities).length !== labels.size ||
       [...labels].some((label) => !Object.hasOwn(probabilities, label))
@@ -117,13 +117,10 @@ export class HttpChoiceClassifier implements ClassifierPort {
       );
     }
     return {
-      label: choice,
-      // Exact label coverage and choice membership above guarantee a selected probability.
+      type: 'choice',
+      optionId: choice,
       confidence: confidence ?? probabilities[choice]!,
-      alternatives: Object.entries(probabilities)
-        .filter(([label]) => label !== choice)
-        .sort((a, b) => b[1] - a[1])
-        .map(([label, probability]) => ({ label, confidence: probability })),
+      probabilities,
     };
   }
 }

@@ -1,3 +1,5 @@
+import { HarnessDefaultsSchema } from '@graphgoblin/contracts';
+import { validateHarnessDefaults } from '@graphgoblin/domain';
 import {
   ApiKeySchema,
   ApiKeyListResponseSchema,
@@ -6,7 +8,6 @@ import {
   UlidSchema,
   ModelCatalogEntrySchema,
   ModelCatalogSourceSchema,
-  ModelNameSchema,
 } from '@graphgoblin/contracts';
 import { z } from 'zod';
 import type { Container } from '../container.js';
@@ -23,8 +24,7 @@ const ModelEntrySchema = ModelCatalogEntrySchema;
 
 /** Settings the engine reads (the run defaults); other keys are stored as given. */
 const KnownSettingsSchema = z.looseObject({
-  defaultModel: z.string().trim().pipe(ModelNameSchema).optional(),
-  defaultEffort: EffortSchema.optional(),
+  defaults: HarnessDefaultsSchema.optional(),
 });
 
 export function registerSettingsRoutes(app: ApiInstance, container: Container): void {
@@ -54,6 +54,13 @@ export function registerSettingsRoutes(app: ApiInstance, container: Container): 
       },
     },
     async (request, reply) => {
+      if ('defaultModel' in request.body || 'defaultEffort' in request.body)
+        return problem(
+          reply,
+          400,
+          'CONFIGURATION_UPGRADE_REQUIRED',
+          'Use defaults.byHarness instead of defaultModel/defaultEffort',
+        );
       const known = KnownSettingsSchema.safeParse(request.body);
       if (!known.success) {
         return problem(
@@ -63,6 +70,23 @@ export function registerSettingsRoutes(app: ApiInstance, container: Container): 
           'a known setting has an invalid value',
           known.error.issues.map((i) => ({ path: `/${i.path.join('/')}`, message: i.message })),
         );
+      }
+      if (known.data.defaults) {
+        const catalog = await repos.catalog.list();
+        const issues = validateHarnessDefaults({
+          loopDefaults: { byHarness: {} },
+          ownerDefaults: known.data.defaults,
+          processDefaults: container.config.defaults,
+          catalog,
+        });
+        if (issues.length)
+          return problem(
+            reply,
+            400,
+            'EVALUATION_INVALID_CONFIGURATION',
+            'invalid harness defaults',
+            issues,
+          );
       }
       for (const [key, value] of Object.entries(request.body))
         await repos.settings.set(request.auth.ownerId, key, value);

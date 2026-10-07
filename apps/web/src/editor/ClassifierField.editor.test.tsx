@@ -12,16 +12,16 @@ import { useEditorStore } from './store.js';
 const UNDO = '{Control>}z{/Control}';
 const store = () => useEditorStore.getState();
 const pick = () => store().definition!.nodes.find((n) => n.id === 'pick')!;
-/** The decision's `jev` block, as the editor holds it. */
-const jevOf = () => (pick().config as { jev?: Record<string, unknown> }).jev;
+const evaluationOf = () =>
+  (pick().config as { evaluation: { kind: string; model?: string } }).evaluation;
 const nodeBadge = (id: string) =>
   screen
     .getByTestId(`node-${id}`)
     .querySelector<HTMLButtonElement>(`button[aria-label$=" on ${id}"]`);
 
-function decisionLoop(jev?: Record<string, unknown>): LoopDefinitionInput {
+function decisionLoop(model = 'kev'): LoopDefinitionInput {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     name: 'classifier editor',
     nodes: [
       { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
@@ -30,14 +30,20 @@ function decisionLoop(jev?: Record<string, unknown>): LoopDefinitionInput {
         kind: 'decision',
         label: 'Pick',
         config: {
-          routes: [
-            { label: 'yes', description: 'Yes' },
-            { label: 'no', description: 'No' },
-          ],
-          question: 'Which?',
-          strategy: ['jev', 'expression'],
-          expression: { jsonata: '"yes"' },
-          ...(jev ? { jev } : {}),
+          answer: {
+            type: 'choice',
+            options: [
+              { id: 'yes', label: 'Yes', criteria: 'Yes' },
+              { id: 'no', label: 'No', criteria: 'No' },
+            ],
+          },
+          evaluation: {
+            kind: 'classifier',
+            model,
+            question: 'Which?',
+            context: { messages: 'last', includeLastOutput: true },
+          },
+          recordAlternatives: true,
         },
       },
       { id: 'done', kind: 'exit', label: 'Done', config: {} },
@@ -50,14 +56,14 @@ function decisionLoop(jev?: Record<string, unknown>): LoopDefinitionInput {
   };
 }
 
-function setup(jev?: Record<string, unknown>) {
+function setup(model = 'kev') {
   const api = new FakeApi();
   api.classifiers = [
     BUILTIN_JEV,
     customClassifier({ id: 'kev', displayName: 'Kev 4B' }),
     customClassifier({ id: 'other', displayName: 'Other' }),
   ];
-  const loop = api.addLoop(decisionLoop(jev));
+  const loop = api.addLoop(decisionLoop(model));
   const rendered = renderApp(`/loops/${loop.id}/edit`, api);
   return { ...rendered, loop };
 }
@@ -69,10 +75,8 @@ async function openPicker() {
   await loaded();
   act(() => store().openNode('pick'));
   const dialog = await screen.findByRole('dialog', { name: 'Edit decision pick' });
-  const picker = within(within(dialog).getByRole('group', { name: 'Jev' })).getByRole('combobox', {
-    name: 'Model',
-  });
-  await waitFor(() => expect(within(picker).getAllByRole('option')).toHaveLength(3));
+  const picker = within(dialog).getByRole('combobox', { name: 'Model' });
+  await waitFor(() => expect(within(picker).getAllByRole('option')).toHaveLength(4));
   return { dialog, picker };
 }
 
@@ -121,7 +125,7 @@ describe('API checks held across a catalog change (#43 re-review)', () => {
     const gate = holdFirstValidation(api);
     const { queryClient } = (() => {
       api.classifiers = [BUILTIN_JEV, customClassifier({ id: 'kev', displayName: 'Kev 4B' })];
-      const loop = api.addLoop(decisionLoop({ primitive: 'choice', model: 'kev' }));
+      const loop = api.addLoop(decisionLoop('kev'));
       return renderApp(`/loops/${loop.id}/edit`, api);
     })();
     await loaded();
@@ -149,7 +153,7 @@ describe('API checks held across a catalog change (#43 re-review)', () => {
     const api = new FakeApi();
     const gate = holdFirstValidation(api);
     api.classifiers = [BUILTIN_JEV, customClassifier({ id: 'kev', displayName: 'Kev 4B' })];
-    const loop = api.addLoop(decisionLoop({ primitive: 'choice', model: 'kev' }));
+    const loop = api.addLoop(decisionLoop('kev'));
     const { queryClient } = renderApp(`/loops/${loop.id}/edit`, api);
     await loaded();
     await gate.arrived;
@@ -176,7 +180,7 @@ describe('API checks held across a catalog change (#43 re-review)', () => {
       ]);
     });
     api.classifiers = [BUILTIN_JEV, customClassifier({ id: 'kev', displayName: 'Kev 4B' })];
-    const loop = api.addLoop(decisionLoop({ primitive: 'choice', model: 'kev' }));
+    const loop = api.addLoop(decisionLoop('kev'));
     const { queryClient } = renderApp(`/loops/${loop.id}/edit`, api);
     app.queryClient = queryClient;
     await loaded();
@@ -194,46 +198,38 @@ describe('API checks held across a catalog change (#43 re-review)', () => {
 describe('the classifier picker in the node editor', () => {
   beforeEach(() => localStorage.setItem(LOOP_PANEL_STORAGE_KEY, 'expanded'));
 
-  it('shows the built-in without a jev block, adds the block only for another choice, and keeps focus', async () => {
+  it('requires an explicit classifier, changes the saved model, and keeps focus', async () => {
     const user = userEvent.setup();
     setup();
     const { dialog, picker } = await openPicker();
-    expect(picker).toHaveValue('');
-    expect(picker.closest('[data-field]')).toHaveAttribute('data-field', 'jev.model');
-    // Drawing it adds nothing to the node.
-    expect(pick().config).not.toHaveProperty('jev');
-    expect(within(dialog).getByRole('button', { name: 'Add jev options' })).toBeInTheDocument();
-    await user.selectOptions(picker, 'kev');
-    expect(pick().config).toMatchObject({ jev: { model: 'kev' } });
+    expect(picker).toHaveValue('kev');
+    expect(picker.closest('[data-field]')).toHaveAttribute('data-field', 'evaluation.model');
+    await user.selectOptions(picker, 'other');
+    expect(evaluationOf()).toMatchObject({ kind: 'classifier', model: 'other' });
     // The same element, now inside the added block, still has focus.
     expect(picker).toBeInTheDocument();
     expect(picker).toHaveFocus();
-    expect(picker).toHaveValue('kev');
-    expect(within(dialog).getByRole('button', { name: 'Remove jev' })).toBeInTheDocument();
+    expect(picker).toHaveValue('other');
     expect(within(dialog).getByLabelText('Min confidence')).toBeInTheDocument();
-    // Back to the default: the model goes, the block (with any other settings) stays.
-    await user.selectOptions(picker, '');
-    expect(pick().config).toHaveProperty('jev');
-    expect(jevOf()).not.toHaveProperty('model');
   });
 
   it('makes each pick an undo step of its own, however quick', async () => {
     const user = userEvent.setup();
-    setup({ primitive: 'choice' });
+    setup('kev');
     const { picker } = await openPicker();
     await user.selectOptions(picker, 'kev');
     await user.selectOptions(picker, 'other');
-    expect(jevOf()).toMatchObject({ model: 'other' });
+    expect(evaluationOf()).toMatchObject({ model: 'other' });
     // Focus is on the select, which has no text undo: the keys undo the editor.
     expect(picker).toHaveFocus();
     await user.keyboard(UNDO);
-    expect(jevOf()).toMatchObject({ model: 'kev' });
+    expect(evaluationOf()).toMatchObject({ model: 'kev' });
     await user.keyboard(UNDO);
-    expect(jevOf()).not.toHaveProperty('model');
+    expect(evaluationOf()).toMatchObject({ model: 'kev' });
   });
 
   it('shows a classifier disabled elsewhere on the node badge without a draft edit', async () => {
-    const { api, queryClient } = setup({ primitive: 'choice', model: 'kev' });
+    const { api, queryClient } = setup('kev');
     await loaded();
     await screen.findByText('Ready to publish');
     expect(nodeBadge('pick')?.getAttribute('aria-label') ?? null).toBeNull();

@@ -135,10 +135,15 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
     case '/deciders/route':
       target.jev.choose = (request) => {
         target.jev.choices.push(request);
+        const optionId =
+          typeof body['optionId'] === 'string' ? body['optionId'] : request.options[0]!.id;
         return Promise.resolve({
-          label:
-            typeof body['label'] === 'string' ? body['label'] : (request.options[0]?.label ?? ''),
+          type: 'choice' as const,
+          optionId,
           confidence: 1,
+          probabilities: Object.fromEntries(
+            request.options.map((option) => [option.id, option.id === optionId ? 1 : 0]),
+          ),
         });
       };
       return { ok: true };
@@ -162,8 +167,9 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
           GG_DB_URL: ':memory:',
           GG_SWAGGER_UI: 'false',
           GG_MASTER_KEY: Buffer.alloc(32, 7).toString('base64'),
-          GG_DEFAULT_MODEL: 'gpt-6-luna',
-          GG_DEFAULT_EFFORT: 'low',
+          GG_DEFAULTS: JSON.stringify({
+            byHarness: { codex: { model: 'gpt-6-luna', effort: 'low' } },
+          }),
           GG_WEB_DIST: dist,
         }),
         { startTimers: false },

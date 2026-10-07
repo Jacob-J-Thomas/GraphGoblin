@@ -15,8 +15,7 @@ services:
       # Published on the host's loopback only. Widen it only together with GG_REQUIRE_API_KEY.
       - '127.0.0.1:4747:4747'
     environment:
-      GG_DEFAULT_MODEL: gpt-6-luna
-      GG_DEFAULT_EFFORT: low
+      GG_DEFAULTS: '{"byHarness":{"codex":{"model":"gpt-6-luna","effort":"low"}}}'
       # Seed the encrypted Jev secret from the host environment; an existing secret wins.
       # GG_JEV_API_KEY: ${GG_JEV_API_KEY-${JEV_API_KEY-}}
       # Require API keys for every non-public route; stop the API, create the first key, restart:

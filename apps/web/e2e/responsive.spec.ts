@@ -184,13 +184,15 @@ async function seedDialogs(request: Parameters<typeof publishLoop>[0]) {
     [
       'decision',
       {
-        routes: [
-          { label: 'yes', description: 'Continue' },
-          { label: 'no', description: 'Stop' },
-        ],
-        question: 'Continue?',
-        strategy: ['expression'],
-        expression: { jsonata: '"yes"' },
+        answer: {
+          type: 'choice',
+          options: [
+            { id: 'yes', label: 'Continue', criteria: 'Continue the work' },
+            { id: 'no', label: 'Stop', criteria: 'Stop the work' },
+          ],
+        },
+        evaluation: { kind: 'expression', jsonata: '"yes"' },
+        recordAlternatives: true,
       },
     ],
     ['inference', { prompt: { template: 'Summarise {{ lastMessage.content }}' } }],
@@ -204,7 +206,7 @@ async function seedDialogs(request: Parameters<typeof publishLoop>[0]) {
   const created = await request.post('/loops', {
     data: {
       definition: {
-        schemaVersion: 1,
+        schemaVersion: 2,
         name: 'responsive dialogs',
         nodes: configs.map(([kind, config], i) => ({
           id: kind,
@@ -876,14 +878,16 @@ for (const theme of ['dark', 'light'] as const) {
             kind: 'decision',
             label: 'Decide',
             config: {
-              question: 'Continue?',
-              strategy: ['expression'],
-              expression: { jsonata: '"yes"' },
-              routes: [
-                { label: 'yes', description: 'Continue' },
-                { label: 'no', description: 'Stop' },
-                { label: 'later', description: 'Wait' },
-              ],
+              answer: {
+                type: 'choice',
+                options: [
+                  { id: 'yes', label: 'Continue', criteria: 'Continue the work' },
+                  { id: 'no', label: 'Stop', criteria: 'Stop the work' },
+                  { id: 'later', label: 'Wait', criteria: 'Wait before continuing' },
+                ],
+              },
+              evaluation: { kind: 'expression', jsonata: '"yes"' },
+              recordAlternatives: true,
             },
             ui: { x: 0, y: 0 },
           },

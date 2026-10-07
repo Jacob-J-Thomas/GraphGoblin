@@ -236,7 +236,13 @@ describe('runPreflight', () => {
     const jevError = await runPreflight(sources({ jevKey: () => Promise.reject('bad key') }));
     expect(byId(jevError, 'jev')).toMatchObject({ status: 'warn', message: /bad key/ });
 
-    const unknown = await runPreflight(sources({ config: config({ defaultModel: 'gpt-nope' }) }));
+    const unknown = await runPreflight(
+      sources({
+        config: config({
+          defaults: { byHarness: { codex: { model: 'gpt-nope', effort: 'low' } } },
+        }),
+      }),
+    );
     expect(unknown.ok).toBe(false);
     expect(byId(unknown, 'default-model')?.message).toMatch(/gpt-nope/);
     expect(byId(unknown, 'default-model')?.message).toContain(

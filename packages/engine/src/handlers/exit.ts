@@ -18,6 +18,7 @@ async function askPredicate(
   ctx: NodeContext<'exit'>,
   criterion: Extract<ExitCriterion, { when: 'predicate' }>,
   question: string,
+  onResolvedModel: (model: string) => void,
 ): Promise<PredicateAnswer> {
   const decider = ctx.ports.deciders.find((d) => d.id === criterion.strategy && d.available());
   if (!decider) {
@@ -27,7 +28,9 @@ async function askPredicate(
       { nodeId: ctx.node.id },
     );
   }
-  const resolved = criterion.strategy === 'codex' ? ctx.services.resolveModel() : undefined;
+  const resolved =
+    criterion.strategy === 'codex' ? await ctx.services.resolveModel('codex') : undefined;
+  if (resolved) onResolvedModel(resolved.model);
   const context = toJson({
     trigger: ctx.thread.invocation.trigger.payload,
     vars: ctx.thread.vars,
@@ -74,6 +77,7 @@ export const exitHandler: NodeHandler<'exit'> = {
       ? Date.parse(ctx.run.startedAt)
       : Date.parse(ctx.run.createdAt);
     const criteria: ExitCriterionEvaluation[] = [];
+    const resolvedModels = new Map<ExitCriterion, string>();
     const record = async (result: ExitEvaluationOutcome) => {
       for (let index = criteria.length; index < ctx.config.criteria.length; index++) {
         const criterion = ctx.config.criteria[index]!;
@@ -107,14 +111,15 @@ export const exitHandler: NodeHandler<'exit'> = {
         iteration: ctx.run.iteration,
         maxIterations: ctx.definition.settings.maxIterations,
         elapsedMs: Math.max(0, Date.parse(ctx.services.now()) - startedAt),
-        askPredicate: (criterion, question) => askPredicate(ctx, criterion, question),
+        askPredicate: (criterion, question) =>
+          askPredicate(ctx, criterion, question, (model) => resolvedModels.set(criterion, model)),
         renderQuestion: (template) => ctx.services.render(template),
         onCriterion: (evaluation) =>
           criteria.push({
             ...evaluation,
             ...(evaluation.strategy === 'jev' ? { classifierModel: 'jev' } : {}),
-            ...(evaluation.strategy === 'codex'
-              ? { model: ctx.services.resolveModel().model }
+            ...(resolvedModels.has(ctx.config.criteria[evaluation.index]!)
+              ? { model: resolvedModels.get(ctx.config.criteria[evaluation.index]!)! }
               : {}),
           }),
       });

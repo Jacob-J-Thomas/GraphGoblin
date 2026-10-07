@@ -41,7 +41,7 @@ async function list() {
     .items;
 }
 
-function decisionLoop(model?: string, fallback = true): LoopDefinitionInput {
+function decisionLoop(model?: string, recordAlternatives = true): LoopDefinitionInput {
   const definition = minimalLoop();
   return {
     ...definition,
@@ -53,21 +53,22 @@ function decisionLoop(model?: string, fallback = true): LoopDefinitionInput {
         kind: 'decision',
         label: 'Choose team',
         config: {
-          routes: [
-            { label: 'yes', description: 'Approve' },
-            { label: 'no', description: 'Reject' },
-          ],
-          question: 'Which team?',
-          strategy: fallback ? ['jev', 'expression'] : ['jev'],
-          ...(model ? { jev: { model } } : {}),
-          ...(fallback ? { expression: { jsonata: '"no"' } } : {}),
+          recordAlternatives,
+          answer: {
+            type: 'choice',
+            options: [
+              { id: 'yes', label: 'Yes', criteria: 'Approve' },
+              { id: 'no', label: 'No', criteria: 'Reject' },
+            ],
+          },
+          evaluation: { kind: 'classifier', model: model ?? 'jev', question: 'Which team?' },
         },
       },
       {
         id: 'done',
         kind: 'exit',
         label: 'Done',
-        config: { return: { mapping: 'lastOutput.value.route' } },
+        config: { return: { mapping: 'lastOutput.value.answer.optionId' } },
       },
     ],
     edges: [
@@ -469,7 +470,7 @@ describe('classifier publish validation agreement', () => {
         url: '/loops/import',
         payload: {
           format: 'graphgoblin-loop',
-          formatVersion: 1,
+          formatVersion: 2,
           exportedAt: FIXTURE_TS,
           loop: definition,
         },
@@ -481,10 +482,18 @@ describe('classifier publish validation agreement', () => {
       });
       const published = await t.app.inject({ method: 'POST', url: `/loops/${loop.id}/publish` });
       for (const response of [saved, imported, validated, published]) {
-        expect(response.statusCode, response.body).toBe(response === imported ? 201 : 200);
-        expect(response.json().issues).toEqual(issues);
+        expect(response.statusCode, response.body).toBe(
+          response === imported
+            ? 201
+            : response === published && state !== 'configured'
+              ? 422
+              : 200,
+        );
+        expect(
+          response.json()[response === published && state !== 'configured' ? 'errors' : 'issues'],
+        ).toEqual(issues);
       }
-      expect(validated.json().publishable).toBe(true);
+      expect(validated.json().publishable).toBe(state === 'configured');
     },
   );
   it.each([
@@ -521,6 +530,31 @@ describe('classifier publish validation agreement', () => {
     }
     const definition = decisionLoop(model, state !== 'implicit-only');
     const created = await t.app.inject({ method: 'POST', url: '/loops', payload: { definition } });
+    if (state === 'missing' || state === 'no-choice') {
+      expect(created.statusCode).toBe(400);
+      expect(created.json().code).toBe('EVALUATION_INVALID_CONFIGURATION');
+      const baseId = await t.publishLoop(minimalLoop());
+      const save = await t.app.inject({
+        method: 'PUT',
+        url: '/loops/' + baseId + '/draft',
+        payload: { definition },
+      });
+      const imported = await t.app.inject({
+        method: 'POST',
+        url: '/loops/import',
+        payload: {
+          format: 'graphgoblin-loop',
+          formatVersion: 2,
+          exportedAt: FIXTURE_TS,
+          loop: definition,
+        },
+      });
+      for (const response of [save, imported]) {
+        expect(response.statusCode).toBe(400);
+        expect(response.json().code).toBe('EVALUATION_INVALID_CONFIGURATION');
+      }
+      return;
+    }
     expect(created.statusCode, created.body).toBe(201);
     const initial = created.json<{ loop: { id: string }; issues: LoopIssue[] }>();
     const id = initial.loop.id;
@@ -537,7 +571,7 @@ describe('classifier publish validation agreement', () => {
       url: '/loops/import',
       payload: {
         format: 'graphgoblin-loop',
-        formatVersion: 1,
+        formatVersion: 2,
         exportedAt: FIXTURE_TS,
         loop: definition,
       },
@@ -561,26 +595,32 @@ describe('classifier publish validation agreement', () => {
         expect.objectContaining({
           code: expected,
           nodeId: 'decide',
-          path: 'config.jev.model',
+          path: 'config.evaluation.model',
           message: expect.stringContaining('Choose team'),
         }),
       ]);
       if (state === 'implicit-only')
-        expect(initial.issues[0]?.message).toContain('cannot currently produce a route');
+        expect(initial.issues[0]?.message).toContain('publication is blocked');
     }
     const published = await t.app.inject({ method: 'POST', url: `/loops/${id}/publish` });
-    const errors = state === 'missing' || state === 'no-choice';
+    const errors = state !== 'configured';
     expect(validated.publishable).toBe(!errors);
     expect(published.statusCode).toBe(errors ? 422 : 200);
     expect(published.json()[errors ? 'errors' : 'issues']).toEqual(initial.issues);
   });
-  it('ignores stale classifier metadata when the Jev strategy is unused and preserves portable references', async () => {
+  it('exports and imports a clean expression evaluator without unused classifier metadata', async () => {
     const selected = LoopDefinitionSchema.parse(decisionLoop('absent'));
     const definition = {
       ...selected,
       nodes: selected.nodes.map((node) =>
         node.kind === 'decision'
-          ? { ...node, config: { ...node.config, strategy: ['expression'] } }
+          ? {
+              ...node,
+              config: {
+                ...node.config,
+                evaluation: { kind: 'expression' as const, jsonata: '"yes"' },
+              },
+            }
           : node,
       ),
     };
@@ -588,14 +628,17 @@ describe('classifier publish validation agreement', () => {
     expect(created.json().issues).toEqual([]);
     const id = created.json().loop.id as string;
     const exported = (await t.app.inject(`/loops/${id}/export?draft=true`)).json();
-    expect(exported.loop.nodes[1].config.jev.model).toBe('absent');
+    expect(exported.loop.nodes[1].config).not.toHaveProperty('jev');
     expect(exported).not.toHaveProperty('classifierModels');
     const imported = await t.app.inject({
       method: 'POST',
       url: '/loops/import',
       payload: exported,
     });
-    expect(imported.json().draft.definition.nodes[1].config.jev.model).toBe('absent');
+    expect(imported.json().draft.definition.nodes[1].config.evaluation).toEqual({
+      kind: 'expression',
+      jsonata: '"yes"',
+    });
   });
 });
 
@@ -630,7 +673,7 @@ describe('classifier runtime hot reload', () => {
     });
     await t.idle();
     const run = await safeFailureReads(started.json().run.id as string, marker);
-    expect(run.failure?.details).toEqual({ strategy: 'jev', code: 'DECIDER_INVALID_RESPONSE' });
+    expect(run.failure?.details).toBeUndefined();
   });
 
   it('keeps real Jev exit HTTP error bodies out of snapshots, events, streams and logs', async () => {
@@ -648,6 +691,7 @@ describe('classifier runtime hot reload', () => {
         ),
     });
     await decider.init();
+    await t.container.repos.secretsFor('local').set('jev-api-key', 'test-key');
     t.jev.judge = (request, signal) =>
       decider.judge(request, signal ?? new AbortController().signal);
     const definition = minimalLoop();
@@ -663,7 +707,7 @@ describe('classifier runtime hot reload', () => {
       payload: {},
     });
     await t.idle();
-    const run = await safeFailureReads(started.json().run.id as string, marker);
+    const run = await safeFailureReads(started.json().run.id as string, marker, true);
     expect(run.failure?.message).toBe('Decision provider request failed');
     expect(run.failure?.details).toEqual({ code: 'DECIDER_HTTP_ERROR', strategy: 'jev' });
     expect(JSON.stringify(t.logger.lines)).not.toContain(marker);
@@ -679,14 +723,18 @@ describe('classifier runtime hot reload', () => {
       }),
     );
   });
-  async function safeFailureReads(id: string, marker: string) {
+  async function safeFailureReads(id: string, marker: string, exit = false) {
     const reader = await t.container.repos.apiKeys.create('local', 'failure reader', ['runs:read']);
     const headers = { authorization: `Bearer ${reader.token}` };
     expect((await t.app.inject({ url: '/secrets', headers })).statusCode).toBe(403);
     const snapshot = await t.app.inject({ url: `/runs/${id}`, headers });
     expect(snapshot.json()).toMatchObject({
       status: 'failed',
-      failure: { code: 'INTERNAL_ERROR' },
+      failure: {
+        code: exit
+          ? 'INTERNAL_ERROR'
+          : expect.stringMatching(/^EVALUATION_(INVALID_RESPONSE|PROVIDER_FAILED)$/),
+      },
     });
     const events = await t.app.inject({ url: `/runs/${id}/events`, headers });
     expect(events.json().items).toEqual(
@@ -738,10 +786,9 @@ describe('classifier runtime hot reload', () => {
       const id = started.json().run.id as string;
       await t.idle();
       const run = await safeFailureReads(id, marker);
-      expect(run.failure?.details).toEqual({
-        strategy: 'jev',
-        code: status === 200 ? 'DECIDER_INVALID_RESPONSE' : 'DECIDER_HTTP_ERROR',
-      });
+      expect(run.failure?.details).toEqual(
+        status === 200 ? undefined : { code: 'DECIDER_HTTP_ERROR', status: 400 },
+      );
     },
   );
 
@@ -766,7 +813,14 @@ describe('classifier runtime hot reload', () => {
       decider.choose(request, signal ?? new AbortController().signal);
     const definition = decisionLoop();
     for (const node of definition.nodes)
-      if (node.kind === 'decision') node.config.strategy = ['codex'];
+      if (node.kind === 'decision')
+        node.config.evaluation = {
+          kind: 'llm',
+          harness: 'codex',
+          model: { mode: 'inherit' },
+          effort: { mode: 'inherit' },
+          question: 'Which team?',
+        };
     const loopId = await t.publishLoop(definition);
     const started = await t.app.inject({
       method: 'POST',
@@ -776,11 +830,11 @@ describe('classifier runtime hot reload', () => {
     const id = started.json().run.id as string;
     await t.idle();
     const run = await safeFailureReads(id, marker);
-    expect(run.failure?.details).toEqual({ strategy: 'codex' });
+    expect(run.failure?.details).toEqual({ code: 'DECIDER_HTTP_ERROR' });
   });
   it.each([true, false])(
-    'never exposes an echoed classifier bearer to runs:read (fallback %s)',
-    async (fallback) => {
+    'never exposes an echoed classifier bearer to runs:read (recordAlternatives %s)',
+    async (recordAlternatives) => {
       const fixture = await startFakeClassifierEndpoint();
       const bearer = 'gg-provider-bearer-private-regression';
       fixture.respondWith((request) => ({
@@ -802,7 +856,7 @@ describe('classifier runtime hot reload', () => {
           secretRef: 'classifier-key',
         });
         await toggle('kev', true);
-        const loopId = await t.publishLoop(decisionLoop('kev', fallback));
+        const loopId = await t.publishLoop(decisionLoop('kev', recordAlternatives));
         const started = await t.app.inject({
           method: 'POST',
           url: `/loops/${loopId}/runs`,
@@ -819,9 +873,8 @@ describe('classifier runtime hot reload', () => {
         expect(snapshot.json()).toMatchObject({
           status: 'failed',
           failure: {
-            code: 'INTERNAL_ERROR',
+            code: 'EVALUATION_INVALID_RESPONSE',
             message: 'Decision provider returned an invalid response',
-            details: { code: 'DECIDER_INVALID_RESPONSE' },
           },
         });
         const events = await t.app.inject({ url: `/runs/${id}/events`, headers });
@@ -831,7 +884,7 @@ describe('classifier runtime hot reload', () => {
             expect.objectContaining({
               type: 'run.failed',
               failure: expect.objectContaining({
-                details: expect.objectContaining({ code: 'DECIDER_INVALID_RESPONSE' }),
+                code: 'EVALUATION_INVALID_RESPONSE',
               }),
             }),
           ]),
@@ -871,8 +924,8 @@ describe('classifier runtime hot reload', () => {
       {
         question: 'Choose',
         options: [
-          { label: 'yes', description: 'Approve' },
-          { label: 'no', description: 'Reject' },
+          { id: 'yes', label: 'Yes', criteria: 'Approve' },
+          { id: 'no', label: 'No', criteria: 'Reject' },
         ],
         context: {},
       },
@@ -881,7 +934,7 @@ describe('classifier runtime hot reload', () => {
     expect(fetch).toHaveBeenCalledOnce();
     expect(t.logger.lines.some((entry) => entry.msg.startsWith('jev: '))).toBe(true);
   });
-  it('uses catalog/provider ids, updates secrets and metadata, preserves in-flight snapshots and falls through deleted/disabled published references', async () => {
+  it('uses catalog/provider ids, updates secrets and metadata, preserves in-flight snapshots and fails unavailable deleted/disabled published references', async () => {
     const fixture = await startFakeClassifierEndpoint();
     try {
       const put = (providerModel = 'native-one', secretRef: string | null = 'kev-key') =>
@@ -913,7 +966,10 @@ describe('classifier runtime hot reload', () => {
       expect((await t.container.repos.runs.get(run))?.result).toBe('yes');
       expect(
         (await t.container.repos.events.read(run)).find((event) => event.type === 'decision.made'),
-      ).toMatchObject({ classifierModel: 'kev', route: 'yes' });
+      ).toMatchObject({
+        provenance: { classifierId: 'kev', model: 'native-one' },
+        answer: { optionId: 'yes' },
+      });
       expect(fixture.requests[0]).toMatchObject({
         body: { model: 'native-one' },
         authorization: 'Bearer first-key',
@@ -966,19 +1022,27 @@ describe('classifier runtime hot reload', () => {
       await toggle('kev', false);
       const disabled = await start();
       await t.idle();
+      expect(await t.container.repos.runs.get(disabled)).toMatchObject({
+        status: 'failed',
+        failure: { code: 'EVALUATION_UNAVAILABLE', resumable: true },
+      });
       expect(
-        (await t.container.repos.events.read(disabled)).find(
+        (await t.container.repos.events.read(disabled)).some(
           (event) => event.type === 'decision.made',
         ),
-      ).toMatchObject({ strategy: 'expression', route: 'no' });
+      ).toBe(false);
       await t.app.inject({ method: 'DELETE', url: '/classifier-models/kev' });
       const deleted = await start();
       await t.idle();
+      expect(await t.container.repos.runs.get(deleted)).toMatchObject({
+        status: 'failed',
+        failure: { code: 'EVALUATION_UNAVAILABLE', resumable: true },
+      });
       expect(
-        (await t.container.repos.events.read(deleted)).find(
+        (await t.container.repos.events.read(deleted)).some(
           (event) => event.type === 'decision.made',
         ),
-      ).toMatchObject({ strategy: 'expression', route: 'no' });
+      ).toBe(false);
       expect(await t.container.repos.loops.getLatestPublished(loopId)).toEqual(before);
       expect(await t.container.repos.secretsFor('local').resolve('kev-key')).toBe('rotated-key');
     } finally {

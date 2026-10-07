@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import {
   ExpressionSchema,
+  ModelSelectionSchema,
+  EffortSelectionSchema,
+  HarnessModelDefaultsSchema,
   InferenceConfigSchema,
-  LoopSettingsSchema,
   MutationListSchema,
   NodeConfigSchemas,
   SubloopConfigSchema,
@@ -52,22 +54,16 @@ const shapeOf = (schema: unknown) =>
 describe('field metadata', () => {
   it('registers catalog model and effort controls without changing optional field values', () => {
     const inference = InferenceConfigSchema.shape;
-    const defaults = LoopSettingsSchema.shape.defaults.unwrap().shape;
-    const decision = NodeConfigSchemas.decision.shape.codex.unwrap().shape;
-    for (const fields of [inference, defaults, decision]) {
+    const defaults = HarnessModelDefaultsSchema.shape;
+    for (const fields of [inference, defaults]) {
       expect(fieldMeta(fields.model).control).toBe('model');
       expect(fieldMeta(fields.effort).control).toBe('effort');
       expect(fields.model.parse(undefined)).toBeUndefined();
       expect(fields.model.parse('unknown-model')).toBe('unknown-model');
       expect(fields.effort.parse('max')).toBe('max');
     }
-    const codex = z.toJSONSchema(NodeConfigSchemas.decision).properties?.codex;
-    expect(codex).toMatchObject({
-      properties: {
-        model: { control: 'model' },
-        effort: { control: 'effort' },
-      },
-    });
+    expect(fieldMeta(ModelSelectionSchema.options[1].shape.value).control).toBe('model');
+    expect(fieldMeta(EffortSelectionSchema.options[1].shape.value).control).toBe('effort');
   });
   it('builds metadata from a description and options', () => {
     expect(field('What it is.')).toEqual({ description: 'What it is.' });

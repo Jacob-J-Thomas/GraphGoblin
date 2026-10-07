@@ -19,10 +19,22 @@ function sibling(name: string, key: string): string {
   return `${parent}${key}`;
 }
 
-function useCatalogField(name: string) {
+function child(name: string, key: string): string {
+  return name ? `${name}.${key}` : key;
+}
+
+function useCatalogField(name: string, kind: 'model' | 'effort', value: unknown) {
   const scope = use(FormScopeContext)!;
-  const harness: unknown = useWatch({ name: sibling(name, 'harness') });
-  const model: unknown = useWatch({ name: sibling(name, 'model') });
+  const segments = name.split('.');
+  const selection =
+    segments.at(-1) === 'value' && ['model', 'effort'].includes(segments.at(-2) ?? '');
+  const selectionRoot = selection ? segments.slice(0, -2).join('.') : undefined;
+  const harness: unknown = useWatch({
+    name: selection ? child(selectionRoot ?? '', 'harness') : sibling(name, 'harness'),
+  });
+  const selectedModel: unknown = useWatch({
+    name: selection ? child(selectionRoot ?? '', 'model') : sibling(name, 'model'),
+  });
   const query = useModelCatalog();
   // Read the sibling schema's default even before RHF materializes a defaulted value.
   // Groups without a harness use the inference contract's Codex default.
@@ -41,7 +53,14 @@ function useCatalogField(name: string) {
         ? defaultHarness
         : InferenceConfigSchema.shape.harness.parse(undefined);
   const entries = query.data?.filter((entry) => entry.harness === harnessId) ?? [];
-  const current = typeof model === 'string' && !isUnset(model) ? model : undefined;
+  const model = selection ? (kind === 'model' ? value : selectedModel) : selectedModel;
+  const selected =
+    selection && kind === 'effort' && typeof model === 'object' && model !== null
+      ? (model as { mode?: unknown; value?: unknown }).mode === 'explicit'
+        ? (model as { value?: unknown }).value
+        : undefined
+      : model;
+  const current = typeof selected === 'string' && !isUnset(selected) ? selected : undefined;
   return {
     query,
     entries,
@@ -59,7 +78,7 @@ function CatalogField({
 }: FieldProps & { kind: 'model' | 'effort'; unsetLabel?: string }) {
   const field = useField(name, 'commit');
   const { help, required } = fieldMeta(schema);
-  const { query, entries, entry, catalogNoticeId } = useCatalogField(name);
+  const { query, entries, entry, catalogNoticeId } = useCatalogField(name, kind, field.value);
   const id = useId();
   const noticeId = kind === 'model' ? catalogNoticeId : `${id}-effort`;
   const value = typeof field.value === 'string' ? field.value : '';

@@ -15,3 +15,4 @@ export * from './secrets.js';
 export * from './settings.js';
 export * from './classifiers.js';
 export * from './triggers.js';
+export * from './upgrade.js';

@@ -203,10 +203,10 @@ describe('fakes', () => {
     const decider = new FakeDecider('jev');
     expect(
       await decider.choose(
-        { question: 'q', options: [{ label: 'x', description: '' }], context: null },
+        { question: 'q', options: [{ id: 'x', label: 'X', criteria: 'X' }], context: null },
         new AbortController().signal,
       ),
-    ).toMatchObject({ label: 'x' });
+    ).toMatchObject({ optionId: 'x' });
     expect(
       await decider.judge({ question: 'q', context: null }, new AbortController().signal),
     ).toMatchObject({ holds: true });
@@ -217,7 +217,7 @@ describe('fakes', () => {
           { question: 'q', options: [], context: null },
           new AbortController().signal,
         )
-      ).label,
+      ).optionId,
     ).toBe('');
 
     expect(
@@ -284,7 +284,7 @@ describe('run manager edge cases', () => {
   it('rejects loops without triggers and fails edges to unknown nodes', async () => {
     const engine = await createTestEngine();
     const noTrigger = engine.publish({
-      schemaVersion: 1,
+      schemaVersion: 2,
       name: 'nt',
       nodes: [{ id: 'done', kind: 'exit', label: 'D', config: {} }],
       edges: [],
@@ -470,81 +470,6 @@ describe('run manager edge cases', () => {
 });
 
 describe('handler edge cases', () => {
-  it('decision: non-string expression results, missing context vars, and recorded alternatives', async () => {
-    const engine = await createTestEngine();
-    engine.ports.deciders = [
-      Object.assign(engine.ports.jev, {
-        choose: () =>
-          Promise.resolve({
-            label: 'good',
-            confidence: 0.9,
-            alternatives: [{ label: 'bad', confidence: 0.1 }, { label: 'good' }],
-          }),
-      }),
-    ];
-    const loop: LoopDefinitionInput = {
-      schemaVersion: 1,
-      name: 'alts',
-      nodes: [
-        { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },
-        {
-          id: 'decide',
-          kind: 'decision',
-          label: 'D',
-          config: {
-            routes: [
-              { label: 'good', description: '' },
-              { label: 'bad', description: '' },
-              { label: 'true', description: 'boolean route' },
-            ],
-            question: 'q',
-            strategy: ['expression', 'jev'],
-            expression: { jsonata: 'trigger.payload = 1 ? true : trigger.payload' },
-            context: { vars: ['missing', 'topic'], messages: 'none' },
-            recordAlternatives: true,
-          },
-        },
-        { id: 'done', kind: 'exit', label: 'D', config: {} },
-      ],
-      edges: [
-        { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'decide' } },
-        { id: 'e2', from: { node: 'decide', port: 'good' }, to: { node: 'done' } },
-        { id: 'e3', from: { node: 'decide', port: 'bad' }, to: { node: 'done' } },
-        { id: 'e4', from: { node: 'decide', port: 'true' }, to: { node: 'done' } },
-      ],
-    };
-    const version = engine.publish(loop);
-    const boolean = await engine.runToIdle(version.loopId, 1);
-    expect(engine.events(boolean.id).find((e) => e.type === 'decision.made')).toMatchObject({
-      route: 'true',
-      strategy: 'expression',
-    });
-    const viaJev = await engine.runToIdle(version.loopId, 'unknown-route');
-    const decision = engine.events(viaJev.id).find((e) => e.type === 'decision.made');
-    expect(decision).toMatchObject({
-      strategy: 'jev',
-      alternatives: [{ route: 'bad', confidence: 0.1 }, { route: 'good' }],
-    });
-
-    const noAlts = engine.publish({
-      ...loop,
-      name: 'noalts',
-      nodes: loop.nodes.map((n) =>
-        n.id === 'decide' && n.kind === 'decision'
-          ? { ...n, config: { ...n.config, recordAlternatives: false } }
-          : n,
-      ),
-    });
-    const quiet = await engine.runToIdle(noAlts.loopId, 'x');
-    expect(
-      (
-        engine.events(quiet.id).find((e) => e.type === 'decision.made') as {
-          alternatives?: unknown;
-        }
-      ).alternatives,
-    ).toBeUndefined();
-  });
-
   it('exit: jev predicates and missing last output', async () => {
     const engine = await createTestEngine();
     const version = engine.publish(
@@ -730,7 +655,7 @@ describe('handler edge cases', () => {
   it('subloop: exclusions, fresh injections, default custom patches, and null results', async () => {
     const engine = await createTestEngine();
     const child = engine.publish({
-      schemaVersion: 1,
+      schemaVersion: 2,
       name: 'child',
       nodes: [
         { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },
@@ -744,7 +669,7 @@ describe('handler edge cases', () => {
       edges: [{ id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'done' } }],
     });
     const parent = (name: string, sub: Record<string, unknown>): LoopDefinitionInput => ({
-      schemaVersion: 1,
+      schemaVersion: 2,
       name,
       nodes: [
         { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },

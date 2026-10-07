@@ -30,8 +30,7 @@ describe.skipIf(!live)('API live smoke with the real Codex adapter', () => {
       GG_DB_URL: ':memory:',
       GG_SWAGGER_UI: 'false',
       GG_MASTER_KEY: Buffer.alloc(32, 5).toString('base64'),
-      GG_DEFAULT_MODEL: 'gpt-6-luna',
-      GG_DEFAULT_EFFORT: 'low',
+      GG_DEFAULTS: JSON.stringify({ byHarness: { codex: { model: 'gpt-6-luna', effort: 'low' } } }),
     });
     const container = await createContainer(config, { startTimers: false });
     await container.start();
@@ -39,7 +38,7 @@ describe.skipIf(!live)('API live smoke with the real Codex adapter', () => {
     await app.ready();
     try {
       const definition: LoopDefinitionInput = {
-        schemaVersion: 1,
+        schemaVersion: 2,
         name: 'live-smoke',
         settings: { workingDirectory: { kind: 'fixed', path: workDir } },
         nodes: [

@@ -41,6 +41,27 @@ export type FieldControl = ComponentType<FieldProps> & { drawsWithoutParent?: bo
 /** Registered controls by name. SchemaForm's `controls` prop provides them to every field. */
 export type FieldControls = Readonly<Record<string, FieldControl>>;
 
+export interface UnionPickerOption {
+  value: string;
+  label: string;
+}
+
+export interface UnionPickerProps {
+  name: string;
+  label: string;
+  options: readonly UnionPickerOption[];
+  value: string | undefined;
+  onChange: (value: string) => void;
+  required: boolean;
+  describedBy?: string | undefined;
+  invalid?: boolean | undefined;
+}
+
+export type UnionPicker = ComponentType<UnionPickerProps>;
+export type UnionPickers = Readonly<Record<string, UnionPicker>>;
+
+export const UnionPickersContext = createContext<UnionPickers>({});
+
 export const FieldControlsContext = createContext<FieldControls>({});
 
 /** The active form schema and a unique scope for controls that describe sibling fields. */

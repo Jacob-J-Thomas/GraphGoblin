@@ -26,12 +26,12 @@ Stored as JSON in `loop_versions.definition`, validated by `contracts`.
 
 ```ts
 type LoopDefinition = {
-  schemaVersion: 1;
+  schemaVersion: 2;
   name: string;
   description?: string;
   settings: {
     workingDirectory: WorkingDirectorySpec; // see 04 and 06
-    defaults: { model?: string; effort?: Effort };
+    defaults: { byHarness: { codex?: { model?: string; effort?: Effort } } };
     maxIterations: number; // hard ceiling on loop-backs and on fresh visits per node; exit nodes may set lower
     subloopDepthLimit: number; // default 8
   };
@@ -65,7 +65,7 @@ type NodeKind =
   | 'exit';
 ```
 
-An edge's `ui.route` is canvas layout, like a node's `ui`: the positions of the route's inner segments in canvas coordinates, alternating the x of a vertical segment and the y of a horizontal one (`x, y, ..., x`, so an odd count from 1 to 63). The first and last segments are horizontal and run from the ports' own heights, so the route stays attached when a card moves. The route lives on the edge it draws: deleting the edge deletes it, renaming a node keeps it, and versions pin it with the rest of the definition. The engine ignores it. Schema and export format versions stay 1; definitions without the field are unchanged.
+An edge's `ui.route` is canvas layout, like a node's `ui`: the positions of the route's inner segments in canvas coordinates, alternating the x of a vertical segment and the y of a horizontal one (`x, y, ..., x`, so an odd count from 1 to 63). The first and last segments are horizontal and run from the ports' own heights, so the route stays attached when a card moves. The route lives on the edge it draws: deleting the edge deletes it, renaming a node keeps it, and versions pin it with the rest of the definition. The engine ignores it. The route field itself does not change the format. Current definitions and exports use version 2; the offline upgrade preserves these routes.
 
 Validation rules enforced by `domain` before a version can be published:
 
@@ -79,7 +79,7 @@ Validation rules enforced by `domain` before a version can be published:
 Harness selection belongs to inference nodes (`config.harness`, default `codex`). Loop defaults
 provide only model and effort. Definitions containing `settings.defaults.harness` are rejected
 as unknown keys; imports and API clients must remove it. There is no compatibility parser.
-Schema and export format versions remain 1. See [ADR-0019](decisions/ADR-0019-inference-node-harness.md).
+Current definition and export format versions are 2. Existing format-1 data follows the [offline upgrade workflow](guide/08-offline-upgrade.md). Harness ownership was established in [ADR-0019](decisions/ADR-0019-inference-node-harness.md); the later format cutover is [ADR-0022](decisions/ADR-0022-explicit-decision-evaluation.md).
 
 ## Versioning (Decided)
 
@@ -193,7 +193,7 @@ Each event has `runId`, `seq`, `ts`, `type`, optional `nodeId`, and a typed `pay
 | `node.progress`                                                      | small structured progress from long nodes; harness items are summarised here |
 | `harness.session`                                                    | harness, sessionId, mode (`fresh` or `resumed`), model, effort               |
 | `harness.usage`                                                      | tokens as reported by the harness, informational                             |
-| `decision.made`                                                      | strategy, route, confidence, alternatives                                    |
+| `decision.made`                                                      | answer, portId, provenance, preserved historical diagnostics                 |
 | `signal.received`, `input.received`                                  | name, payload reference                                                      |
 | `heartbeat.beat`                                                     | beat number, probe result summary                                            |
 | `child_run.started`, `child_run.finished`                            | child run id, outcome                                                        |

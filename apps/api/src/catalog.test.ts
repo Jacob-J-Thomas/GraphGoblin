@@ -201,7 +201,10 @@ function modelLoop(
 ): LoopDefinitionInput {
   const definition = minimalLoop();
   if (place === 'default')
-    return { ...definition, settings: { defaults: { ...(model ? { model } : {}) } } };
+    return {
+      ...definition,
+      settings: { defaults: { byHarness: { codex: { ...(model ? { model } : {}) } } } },
+    };
   const node =
     place === 'inference'
       ? {
@@ -215,13 +218,22 @@ function modelLoop(
           kind: 'decision' as const,
           label: 'Decide',
           config: {
-            strategy: ['codex' as const],
-            question: 'Which?',
-            routes: [
-              { label: 'a', description: 'A' },
-              { label: 'b', description: 'B' },
-            ],
-            ...(model ? { codex: { model } } : {}),
+            answer: {
+              type: 'choice' as const,
+              options: [
+                { id: 'a', label: 'A', criteria: 'A' },
+                { id: 'b', label: 'B', criteria: 'B' },
+              ],
+            },
+            evaluation: {
+              kind: 'llm' as const,
+              harness: 'codex' as const,
+              question: 'Which?',
+              model: model
+                ? { mode: 'explicit' as const, value: model }
+                : { mode: 'inherit' as const },
+              effort: { mode: 'inherit' as const },
+            },
           },
         };
   return {
@@ -252,8 +264,7 @@ describe('advisory model validation', () => {
               ...node,
               config: {
                 ...node.config,
-                strategy: ['expression'],
-                expression: { jsonata: '"a"' },
+                evaluation: { kind: 'expression', jsonata: '"a"' },
               },
             }
           : node,
@@ -275,58 +286,47 @@ describe('advisory model validation', () => {
   });
 
   it.each(['inference', 'decision', 'default'] as const)(
-    'validate and publish report disabled/missing/present %s models without blocking',
+    'rejects explicit unknown/wrong-family %s models and blocks unavailable selected models',
     async (place) => {
-      for (const state of ['disabled', 'missing', 'present', 'implicit'] as const) {
-        await t.container.repos.catalog.setEnabled('codex', 'gpt-6-luna', state !== 'disabled');
-        // Same id under another harness must not satisfy a Codex catalog lookup.
-        await t.container.repos.catalog.upsert({
-          harness: 'other',
-          model: 'missing-model',
-          source: 'litellm',
-          displayName: 'Other',
-          efforts: ['low'],
-          defaultEffort: 'low',
-          enabled: true,
-        });
-        const definition = modelLoop(
-          place,
-          state === 'missing' ? 'missing-model' : state === 'implicit' ? undefined : 'gpt-6-luna',
-        );
-        const created = await t.app.inject({
+      const unknown = await t.app.inject({
+        method: 'POST',
+        url: '/loops',
+        payload: { definition: modelLoop(place, 'missing-model') },
+      });
+      expect(unknown.statusCode).toBe(400);
+      expect(unknown.json().code).toBe('EVALUATION_INVALID_CONFIGURATION');
+      await t.container.repos.catalog.setEnabled('codex', 'gpt-6-luna', false);
+      const definition = modelLoop(place, 'gpt-6-luna');
+      const created = await t.app.inject({
+        method: 'POST',
+        url: '/loops',
+        payload: { definition },
+      });
+      expect(created.statusCode).toBe(201);
+      const id = created.json<{ loop: { id: string } }>().loop.id;
+      const result = (
+        await t.app.inject({
           method: 'POST',
-          url: '/loops',
+          url: '/loops/' + id + '/validate',
           payload: { definition },
-        });
-        expect(created.statusCode).toBe(201);
-        const id = created.json<{ loop: { id: string } }>().loop.id;
-        const validated = await t.app.inject({
-          method: 'POST',
-          url: `/loops/${id}/validate`,
-          payload: { definition },
-        });
-        expect(validated.statusCode).toBe(200);
-        const result = validated.json<{ publishable: boolean; issues: LoopIssue[] }>();
-        const warnings = result.issues.filter((issue) => issue.code.startsWith('MODEL_'));
-        expect(result.publishable).toBe(true);
-        if (state === 'disabled' || state === 'missing') {
-          expect(warnings).toEqual([
-            expect.objectContaining({
-              code: state === 'disabled' ? 'MODEL_DISABLED' : 'MODEL_NOT_IN_CATALOG',
-              severity: 'warning',
-              path:
-                place === 'default'
-                  ? 'settings.defaults.model'
-                  : `config.${place === 'decision' ? 'codex.model' : 'model'}`,
-            }),
-          ]);
-          expect(warnings[0]?.nodeId).toBe(place === 'default' ? undefined : 'model-node');
-        } else expect(warnings).toEqual([]);
-        const published = await t.app.inject({ method: 'POST', url: `/loops/${id}/publish` });
-        expect(published.statusCode, published.body).toBe(200);
-        expect(published.json().issues).toEqual(result.issues);
-        expect(published.json().version.status).toBe('published');
-      }
+        })
+      ).json<{ publishable: boolean; issues: LoopIssue[] }>();
+      // A defaults-only graph has no evaluator to invoke; selection becomes unavailable only at use.
+      expect(result.publishable).toBe(place === 'default');
+      expect(result.issues.filter((issue) => issue.code === 'MODEL_DISABLED')).toHaveLength(
+        place === 'default' ? 0 : 1,
+      );
+      expect(
+        (await t.app.inject({ method: 'POST', url: '/loops/' + id + '/publish' })).statusCode,
+      ).toBe(place === 'default' ? 200 : 422);
+      await t.container.repos.catalog.setEnabled('codex', 'gpt-6-luna', true);
+      const ready = await t.app.inject({
+        method: 'POST',
+        url: '/loops',
+        payload: { definition: modelLoop(place) },
+      });
+      expect(ready.statusCode).toBe(201);
+      expect(ready.json().issues).toEqual([]);
     },
   );
 
@@ -340,5 +340,115 @@ describe('advisory model validation', () => {
         })
       ).statusCode,
     ).toBe(404);
+  });
+});
+
+describe('uniform strict evaluator admission', () => {
+  it.each(['disabled model', 'unavailable harness'] as const)(
+    'keeps existing exit predicates subject to publication admission for an %s',
+    async (unavailable) => {
+      const definition: LoopDefinitionInput = {
+        ...minimalLoop(),
+        nodes: minimalLoop().nodes.map((node) =>
+          node.kind === 'exit'
+            ? {
+                ...node,
+                config: {
+                  criteria: [
+                    {
+                      when: 'predicate',
+                      strategy: 'codex',
+                      question: 'Complete?',
+                      outcome: 'success',
+                    },
+                  ],
+                },
+              }
+            : node,
+        ),
+      };
+      if (unavailable === 'disabled model')
+        await t.container.repos.catalog.setEnabled('codex', 'gpt-6-luna', false);
+      else delete t.container.ports.harnesses.codex;
+      const code = unavailable === 'disabled model' ? 'MODEL_DISABLED' : 'HARNESS_UNAVAILABLE';
+      const created = await t.app.inject({
+        method: 'POST',
+        url: '/loops',
+        payload: { definition },
+      });
+      expect(created.statusCode).toBe(201);
+      expect(created.json().issues).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ code, severity: 'warning', nodeId: 'done' }),
+        ]),
+      );
+      const id = created.json<{ loop: { id: string } }>().loop.id;
+      const validated = await t.app.inject({
+        method: 'POST',
+        url: `/loops/${id}/validate`,
+        payload: { definition },
+      });
+      expect(validated.statusCode).toBe(200);
+      expect(validated.json().publishable).toBe(false);
+      expect((await t.app.inject({ method: 'POST', url: `/loops/${id}/publish` })).statusCode).toBe(
+        422,
+      );
+      if (unavailable === 'disabled model')
+        await t.container.repos.catalog.setEnabled('codex', 'gpt-6-luna', true);
+      else t.container.ports.harnesses.codex = t.harness;
+      expect((await t.app.inject({ method: 'POST', url: `/loops/${id}/publish` })).statusCode).toBe(
+        200,
+      );
+    },
+  );
+  it('reports explicit unknown model configuration even while its harness is unavailable', async () => {
+    delete t.container.ports.harnesses.codex;
+    const definition = modelLoop('decision', 'unknown-model');
+    const created = await t.app.inject({ method: 'POST', url: '/loops', payload: { definition } });
+    expect(created.statusCode).toBe(400);
+    expect(created.json().errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: 'MODEL_NOT_IN_CATALOG', severity: 'error' }),
+        expect.objectContaining({ code: 'HARNESS_UNAVAILABLE', severity: 'warning' }),
+      ]),
+    );
+    const baseId = await t.publishLoop(minimalLoop());
+    const validated = await t.app.inject({
+      method: 'POST',
+      url: '/loops/' + baseId + '/validate',
+      payload: { definition },
+    });
+    expect(validated.json().publishable).toBe(false);
+    for (const request of [
+      { method: 'PUT' as const, url: '/loops/' + baseId + '/draft', payload: { definition } },
+      {
+        method: 'POST' as const,
+        url: '/loops/import',
+        payload: {
+          format: 'graphgoblin-loop',
+          formatVersion: 2,
+          exportedAt: '2026-10-02T12:00:00.000Z',
+          loop: definition,
+        },
+      },
+    ])
+      expect((await t.app.inject(request)).statusCode).toBe(400);
+  });
+  it('returns a typed cutover refusal for old portable and bare definitions without saving them', async () => {
+    for (const payload of [
+      {
+        format: 'graphgoblin-loop',
+        formatVersion: 1,
+        loop: {},
+        exportedAt: '2026-10-02T12:00:00.000Z',
+      },
+      { ...minimalLoop(), schemaVersion: 1 },
+    ]) {
+      const response = await t.app.inject({ method: 'POST', url: '/loops/import', payload });
+      expect(response.statusCode).toBe(400);
+      expect(response.json().code).toBe('LOOP_FORMAT_UPGRADE_REQUIRED');
+      expect(response.body).toContain('graphgoblin-upgrade');
+    }
+    expect((await t.app.inject('/loops')).json().items).toEqual([]);
   });
 });

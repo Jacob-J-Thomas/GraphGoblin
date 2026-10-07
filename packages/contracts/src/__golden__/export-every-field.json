@@ -1,9 +1,9 @@
 {
   "format": "graphgoblin-loop",
-  "formatVersion": 1,
+  "formatVersion": 2,
   "exportedAt": "2026-10-02T12:00:00.000Z",
   "loop": {
-    "schemaVersion": 1,
+    "schemaVersion": 2,
     "name": "every-field",
     "description": "Every config field of every node kind, for parse checks.",
     "settings": {
@@ -12,8 +12,12 @@
         "template": "/work/{{ trigger.payload.repo }}"
       },
       "defaults": {
-        "model": "gpt-6-luna",
-        "effort": "medium"
+        "byHarness": {
+          "codex": {
+            "model": "gpt-6-luna",
+            "effort": "medium"
+          }
+        }
       },
       "maxIterations": 7,
       "subloopDepthLimit": 4
@@ -132,39 +136,40 @@
         },
         "kind": "decision",
         "config": {
-          "routes": [
-            {
-              "label": "good",
-              "description": "Looks good"
+          "answer": {
+            "type": "choice",
+            "options": [
+              {
+                "id": "good",
+                "label": "good",
+                "criteria": "Looks good"
+              },
+              {
+                "id": "bad",
+                "label": "bad",
+                "criteria": "Needs work"
+              }
+            ]
+          },
+          "evaluation": {
+            "kind": "llm",
+            "harness": "codex",
+            "model": {
+              "mode": "explicit",
+              "value": "gpt-6-sol"
             },
-            {
-              "label": "bad",
-              "description": "Needs work"
+            "effort": {
+              "mode": "explicit",
+              "value": "high"
+            },
+            "question": "Is {{ vars.topic }} done?",
+            "context": {
+              "messages": 3,
+              "vars": [
+                "topic"
+              ],
+              "includeLastOutput": false
             }
-          ],
-          "question": "Is {{ vars.topic }} done?",
-          "context": {
-            "messages": 3,
-            "vars": [
-              "topic"
-            ],
-            "includeLastOutput": false
-          },
-          "strategy": [
-            "jev",
-            "codex",
-            "expression"
-          ],
-          "jev": {
-            "primitive": "choice",
-            "minConfidence": 0.7
-          },
-          "codex": {
-            "model": "gpt-6-sol",
-            "effort": "high"
-          },
-          "expression": {
-            "jsonata": "\"good\""
           },
           "recordAlternatives": false
         }

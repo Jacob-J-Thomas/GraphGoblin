@@ -21,7 +21,7 @@ afterEach(async () => {
 /** start -> prep (sets vars.prepared from the input) -> ask (input) -> done. */
 function askLoop(): LoopDefinitionInput {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     name: 'ask',
     nodes: [
       { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },

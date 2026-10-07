@@ -27,10 +27,12 @@ function Harness({
   schema,
   initial,
   spy,
+  fieldOrder,
 }: {
   schema: Schema;
   initial: unknown;
   spy: (v: unknown) => void;
+  fieldOrder?: readonly string[] | undefined;
 }) {
   const [value, setValue] = useState(initial);
   return (
@@ -39,6 +41,7 @@ function Harness({
         schema={schema}
         value={value}
         label="form"
+        fieldOrder={fieldOrder}
         onChange={(v) => {
           setValue(v);
           spy(v);
@@ -54,6 +57,53 @@ function last(spy: ReturnType<typeof vi.fn>): Record<string, unknown> {
 }
 
 describe('SchemaForm', () => {
+  it('orders top-level fields without changing field paths or untouched values', async () => {
+    const user = userEvent.setup();
+    const spy = vi.fn();
+    const answer = {
+      type: 'choice' as const,
+      options: [
+        { id: 'ready', label: 'Ready', criteria: 'Choose ready' },
+        { id: 'blocked', label: 'Blocked', criteria: 'Choose blocked' },
+      ],
+    };
+    render(
+      <Harness
+        schema={NodeConfigSchemas.decision}
+        initial={{
+          answer,
+          evaluation: {
+            kind: 'llm',
+            harness: 'codex',
+            model: { mode: 'inherit' },
+            effort: { mode: 'inherit' },
+            question: 'Choose one',
+            context: {},
+          },
+          recordAlternatives: true,
+        }}
+        spy={spy}
+        fieldOrder={['evaluation', 'unknown-field', 'answer']}
+      />,
+    );
+    const form = screen.getByRole('form', { name: 'form' });
+    const evaluation = form.querySelector<HTMLElement>('[data-field="evaluation"]');
+    const answerField = form.querySelector<HTMLElement>('[data-field="answer"]');
+    if (!evaluation || !answerField) throw new Error('Decision fields were not rendered.');
+    expect(
+      evaluation.compareDocumentPosition(answerField) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).not.toBe(0);
+
+    const evaluatorKind = within(evaluation).getAllByLabelText('Kind')[0];
+    if (!evaluatorKind) throw new Error('Evaluation kind selector was not rendered.');
+    await user.selectOptions(evaluatorKind, '0');
+    await waitFor(() => expect(last(spy)['evaluation']).toMatchObject({ kind: 'expression' }));
+    expect(last(spy)).toMatchObject({
+      answer,
+      evaluation: { kind: 'expression' },
+    });
+  });
+
   it.each([
     [z.object({ entries: z.record(z.string(), z.string()) }), { entries: { first: 'text' } }],
     [z.object({ entries: VariableDeclarationsSchema }), { entries: { first: { type: 'string' } } }],
@@ -100,24 +150,41 @@ describe('SchemaForm', () => {
       <Harness
         schema={NodeConfigSchemas.decision}
         initial={{
-          routes: [
-            { label: 'yes', description: 'old' },
-            { label: 'no', description: 'no' },
-          ],
-          question: 'choose',
-          strategy: ['jev'],
+          answer: {
+            type: 'choice',
+            options: [
+              { id: 'yes', label: 'Yes', criteria: 'old criterion' },
+              { id: 'no', label: 'No', criteria: 'no criterion' },
+            ],
+          },
+          evaluation: {
+            kind: 'llm',
+            harness: 'codex',
+            model: { mode: 'inherit' },
+            effort: { mode: 'inherit' },
+            question: 'choose',
+            context: {},
+          },
         }}
         spy={spy}
       />,
     );
-    const routes = screen.getByRole('group', { name: 'Routes' });
-    const descriptions = within(routes).getAllByLabelText('Description');
-    await user.clear(descriptions[0]!);
-    await user.type(descriptions[0]!, 'edited');
-    await user.click(within(routes).getByRole('button', { name: 'Add routes' }));
-    expect((last(spy)['routes'] as unknown[])[0]).toEqual({ label: 'yes', description: 'edited' });
-    await user.click(within(routes).getByRole('button', { name: 'Remove routes 2' }));
-    expect((last(spy)['routes'] as unknown[])[0]).toEqual({ label: 'yes', description: 'edited' });
+    const options = screen.getByRole('group', { name: 'Options' });
+    const criteria = within(options).getAllByLabelText('Criteria');
+    await user.clear(criteria[0]!);
+    await user.type(criteria[0]!, 'edited criterion');
+    await user.click(within(options).getByRole('button', { name: 'Add options' }));
+    expect(((last(spy)['answer'] as Record<string, unknown>)['options'] as unknown[])[0]).toEqual({
+      id: 'yes',
+      label: 'Yes',
+      criteria: 'edited criterion',
+    });
+    await user.click(within(options).getByRole('button', { name: 'Remove options 2' }));
+    expect(((last(spy)['answer'] as Record<string, unknown>)['options'] as unknown[])[0]).toEqual({
+      id: 'yes',
+      label: 'Yes',
+      criteria: 'edited criterion',
+    });
   });
 
   it.each(['template', 'expression'] as const)(
@@ -251,13 +318,14 @@ describe('SchemaForm', () => {
     [
       NodeConfigSchemas.decision,
       {
-        routes: [
-          { label: 'yes', description: '' },
-          { label: 'no', description: '' },
-        ],
-        question: 'choose',
-        strategy: ['expression'],
-        expression: { jsonata: '' },
+        answer: {
+          type: 'choice',
+          options: [
+            { id: 'yes', label: 'Yes', criteria: 'Choose yes' },
+            { id: 'no', label: 'No', criteria: 'Choose no' },
+          ],
+        },
+        evaluation: { kind: 'expression', jsonata: '' },
       },
       'Jsonata',
     ],
@@ -360,60 +428,72 @@ describe('SchemaForm', () => {
     expect(last(spy)).toMatchObject({ subtype: 'cron', expression: '0 2 * * *', enabled: false });
   });
 
-  it('handles nested unions, optional objects, templates with preview, and issues', async () => {
+  it('handles the decision evaluation union, context unions, option editing, and previews', async () => {
     const user = userEvent.setup();
     const spy = vi.fn();
     render(
       <Harness
         schema={NodeConfigSchemas.decision}
         initial={{
-          routes: [
-            { label: 'yes', description: '' },
-            { label: 'no', description: '' },
-          ],
-          question: 'Is {{ vars.topic }} ok?',
-          strategy: ['expression'],
+          answer: {
+            type: 'choice',
+            options: [
+              { id: 'yes', label: 'Yes', criteria: 'Choose yes' },
+              { id: 'no', label: 'No', criteria: 'Choose no' },
+            ],
+          },
+          evaluation: {
+            kind: 'llm',
+            harness: 'codex',
+            model: { mode: 'inherit' },
+            effort: { mode: 'inherit' },
+            question: 'Is {{ vars.topic }} ok?',
+            context: { messages: 'last' },
+          },
+          recordAlternatives: true,
         }}
         spy={spy}
       />,
     );
-    // The superRefine issue is summarised.
-    expect(
-      await screen.findByText(/expression strategy requires an expression block/),
-    ).toBeInTheDocument();
     await waitFor(() =>
       expect(screen.getAllByTestId('preview')[0]).toHaveTextContent('Is hello ok?'),
     );
 
-    await user.click(screen.getByRole('button', { name: 'Add expression' }));
-    expect(last(spy)['expression']).toEqual({ jsonata: 'true' });
+    const evaluationGroup = screen.getByRole('group', { name: 'Evaluation' });
+    const evaluationKind = within(evaluationGroup).getAllByLabelText('Kind')[0]!;
+    await user.selectOptions(evaluationKind, '0');
+    expect(last(spy)['evaluation']).toMatchObject({ kind: 'expression' });
     setCode('Jsonata', 'vars.count + 1');
-    await waitFor(() => expect(screen.getAllByTestId('preview')[1]).toHaveTextContent('3'));
     await waitFor(() =>
-      expect(screen.queryByText(/expression strategy requires/)).not.toBeInTheDocument(),
+      expect(
+        within(screen.getByLabelText('Jsonata').closest('[data-field]') as HTMLElement).getByTestId(
+          'preview',
+        ),
+      ).toHaveTextContent('3'),
     );
-    await user.click(screen.getByRole('button', { name: 'Remove expression' }));
-    expect(last(spy)['expression']).toBeUndefined();
 
-    // Context messages: union of literals, a number, and an object, under Advanced.
-    openAdvanced();
+    await user.selectOptions(evaluationKind, '2');
+    // The context selector is a nested union with a literal, a number, and an object.
     const kind = within(screen.getByRole('group', { name: 'Messages' })).getByLabelText('Kind');
     await user.selectOptions(kind, '3');
-    expect((last(spy)['context'] as Record<string, unknown>)['messages']).toBe(1);
+    expect(
+      ((last(spy)['evaluation'] as Record<string, unknown>)['context'] as Record<string, unknown>)[
+        'messages'
+      ],
+    ).toBe(1);
     await user.selectOptions(kind, '4');
-    expect((last(spy)['context'] as Record<string, unknown>)['messages']).toEqual({
-      where: 'true',
-    });
+    expect(
+      ((last(spy)['evaluation'] as Record<string, unknown>)['context'] as Record<string, unknown>)[
+        'messages'
+      ],
+    ).toEqual({ where: 'true' });
 
-    // An optional enum of more than four options is a select that offers "Not set".
-    await user.click(screen.getByRole('button', { name: 'Add codex' }));
-    await user.selectOptions(screen.getByLabelText('Effort'), 'high');
-    expect(last(spy)['codex']).toEqual({ effort: 'high' });
-    await user.selectOptions(screen.getByLabelText('Effort'), '');
-    expect(last(spy)['codex']).toEqual({});
-
-    await user.click(screen.getByRole('button', { name: 'Add routes' }));
-    expect((last(spy)['routes'] as unknown[]).length).toBe(3);
+    // The required evaluation changes with its radio; declared options remain independently editable.
+    const options = screen.getByRole('group', { name: 'Options' });
+    await user.click(within(options).getByRole('button', { name: 'Add options' }));
+    expect(((last(spy)['answer'] as Record<string, unknown>)['options'] as unknown[]).length).toBe(
+      3,
+    );
   });
 
   it('edits JSON fields, optional unions, and tri-state booleans', async () => {

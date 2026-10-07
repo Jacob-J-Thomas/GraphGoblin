@@ -18,3 +18,6 @@ export * from './state-machine.js';
 export * from './loop-io.js';
 export * from './replay.js';
 export * from './regex-safety.js';
+export * from './model-resolution.js';
+export * from './upgrade.js';
+export * from './upgrade-history.js';

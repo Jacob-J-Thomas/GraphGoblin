@@ -1,0 +1,1556 @@
+{
+  "format": "graphgoblin-loop",
+  "formatVersion": 1,
+  "exportedAt": "2026-10-07T00:00:00.000Z",
+  "loop": {
+    "schemaVersion": 1,
+    "name": "aidlc-full-v1-implementation",
+    "description": "Jev UI classification, forced-schema uncertain judgement, configurable code/visual implementer, authoritative Git snapshot and script checks.",
+    "settings": {
+      "workingDirectory": {
+        "kind": "template",
+        "template": "{{ trigger.payload.workspacePath }}"
+      },
+      "defaults": {
+        "model": "gpt-6.1-sol",
+        "effort": "high"
+      },
+      "maxIterations": 19,
+      "subloopDepthLimit": 2
+    },
+    "variables": {
+      "config": {
+        "type": "object"
+      }
+    },
+    "nodes": [
+      {
+        "id": "start",
+        "label": "aidlc-start",
+        "kind": "trigger",
+        "config": {
+          "subtype": "manual",
+          "exposeTo": ["ui", "api", "mcp"],
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string",
+                "minLength": 1
+              },
+              "repository": {
+                "type": "string"
+              },
+              "workspacePath": {
+                "type": "string"
+              },
+              "issueNumber": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "checklist": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "system": {
+                      "type": "string"
+                    },
+                    "scenario": {
+                      "type": "string"
+                    },
+                    "polarity": {
+                      "type": "string",
+                      "enum": ["positive", "negative"]
+                    },
+                    "steps": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "expected": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["id", "system", "scenario", "polarity", "steps", "expected"],
+                  "additionalProperties": false
+                }
+              },
+              "bounds": {
+                "type": "object",
+                "properties": {
+                  "maxTasks": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 3
+                  },
+                  "reviewCycles": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 3
+                  },
+                  "qaReworks": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1
+                  }
+                },
+                "required": ["maxTasks", "reviewCycles", "qaReworks"],
+                "additionalProperties": false
+              },
+              "policy": {
+                "type": "object",
+                "properties": {
+                  "allowMerge": {
+                    "type": "boolean"
+                  },
+                  "allowClose": {
+                    "type": "boolean"
+                  }
+                },
+                "required": ["allowMerge", "allowClose"],
+                "additionalProperties": false
+              },
+              "task": {
+                "type": "object"
+              },
+              "plan": {
+                "type": "object",
+                "properties": {
+                  "schemaVersion": {
+                    "type": "integer",
+                    "enum": [1]
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": ["ready", "needs-input", "blocked"]
+                  },
+                  "planningSlot": {
+                    "type": "string",
+                    "enum": ["plannerA", "plannerB"]
+                  },
+                  "summary": {
+                    "type": "string"
+                  },
+                  "tasks": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "userVisibleUI": {
+                          "type": "boolean"
+                        },
+                        "acceptanceCriteria": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "dependsOn": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "description",
+                        "userVisibleUI",
+                        "acceptanceCriteria",
+                        "dependsOn"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "checklist": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "system": {
+                          "type": "string"
+                        },
+                        "scenario": {
+                          "type": "string"
+                        },
+                        "polarity": {
+                          "type": "string",
+                          "enum": ["positive", "negative"]
+                        },
+                        "steps": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "expected": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["id", "system", "scenario", "polarity", "steps", "expected"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "risks": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "questions": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "schemaVersion",
+                  "status",
+                  "planningSlot",
+                  "summary",
+                  "tasks",
+                  "checklist",
+                  "risks",
+                  "questions"
+                ],
+                "additionalProperties": false
+              },
+              "implementation": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "enum": ["complete", "blocked"]
+                      },
+                      "taskId": {
+                        "type": "string"
+                      },
+                      "baseSha": {
+                        "type": "string"
+                      },
+                      "headSha": {
+                        "type": "string"
+                      },
+                      "branch": {
+                        "type": "string"
+                      },
+                      "summary": {
+                        "type": "string"
+                      },
+                      "filesChanged": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "remainingWork": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": ["log", "screenshot", "trace", "diff", "report"]
+                            },
+                            "path": {
+                              "type": "string"
+                            },
+                            "sha256": {
+                              "type": "string"
+                            }
+                          },
+                          "required": ["kind", "path", "sha256"],
+                          "additionalProperties": false
+                        }
+                      },
+                      "implementer": {
+                        "type": "object",
+                        "properties": {
+                          "role": {
+                            "type": "string"
+                          },
+                          "harness": {
+                            "type": "string"
+                          },
+                          "model": {
+                            "type": "string"
+                          },
+                          "family": {
+                            "type": "string"
+                          }
+                        },
+                        "required": ["role", "harness", "model", "family"],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "status",
+                      "taskId",
+                      "baseSha",
+                      "headSha",
+                      "branch",
+                      "summary",
+                      "filesChanged",
+                      "remainingWork",
+                      "evidence",
+                      "implementer"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "review": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "verdict": {
+                        "type": "string",
+                        "enum": ["pass", "changes-required", "blocked"]
+                      },
+                      "reviewedHeadSha": {
+                        "type": "string"
+                      },
+                      "implementerFamily": {
+                        "type": "string"
+                      },
+                      "reviewerFamily": {
+                        "type": "string"
+                      },
+                      "acceptanceCoverage": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "criterion": {
+                              "type": "string",
+                              "pattern": "^[a-z0-9-]+$",
+                              "description": "Exact locked checklist id only; never a description or id followed by a colon."
+                            },
+                            "covered": {
+                              "type": "boolean"
+                            },
+                            "evidence": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "type": "string",
+                                    "enum": ["log", "screenshot", "trace", "diff", "report"]
+                                  },
+                                  "path": {
+                                    "type": "string"
+                                  },
+                                  "sha256": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": ["kind", "path", "sha256"],
+                                "additionalProperties": false
+                              }
+                            }
+                          },
+                          "required": ["criterion", "covered", "evidence"],
+                          "additionalProperties": false
+                        }
+                      },
+                      "findings": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "severity": {
+                              "type": "string",
+                              "enum": ["blocking", "nonblocking"]
+                            },
+                            "file": {
+                              "type": ["string", "null"]
+                            },
+                            "line": {
+                              "type": ["integer", "null"]
+                            },
+                            "problem": {
+                              "type": "string"
+                            },
+                            "requestedChange": {
+                              "type": "string"
+                            },
+                            "disposition": {
+                              "type": "string",
+                              "enum": ["fix-now", "wont-fix", "future-issue", "human"]
+                            },
+                            "rationale": {
+                              "type": "string"
+                            },
+                            "issueUrl": {
+                              "type": ["string", "null"]
+                            },
+                            "state": {
+                              "type": "string",
+                              "enum": ["open", "fixed", "accepted", "deferred"]
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "severity",
+                            "file",
+                            "line",
+                            "problem",
+                            "requestedChange",
+                            "disposition",
+                            "rationale",
+                            "issueUrl",
+                            "state"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "summary": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "verdict",
+                      "reviewedHeadSha",
+                      "implementerFamily",
+                      "reviewerFamily",
+                      "acceptanceCoverage",
+                      "findings",
+                      "summary"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "reviewRunId": {
+                "type": "string"
+              },
+              "recoveryParentRunId": {
+                "type": "string"
+              },
+              "feedback": {},
+              "prCi": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": ["ready", "fix-required", "pending", "merged", "blocked"]
+                  },
+                  "repository": {
+                    "type": "string"
+                  },
+                  "prNumber": {
+                    "type": ["integer", "null"]
+                  },
+                  "prUrl": {
+                    "type": ["string", "null"]
+                  },
+                  "headSha": {
+                    "type": "string"
+                  },
+                  "baseSha": {
+                    "type": "string"
+                  },
+                  "mergeSha": {
+                    "type": ["string", "null"]
+                  },
+                  "requiredChecks": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "sha": {
+                          "type": "string"
+                        },
+                        "state": {
+                          "type": "string",
+                          "enum": ["pending", "pass", "fail", "cancelled", "missing"]
+                        },
+                        "evidence": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "enum": ["log", "screenshot", "trace", "diff", "report"]
+                              },
+                              "path": {
+                                "type": "string"
+                              },
+                              "sha256": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["kind", "path", "sha256"],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": ["name", "sha", "state", "evidence"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "reviewerLogin": {
+                    "type": ["string", "null"]
+                  },
+                  "approvedHeadSha": {
+                    "type": ["string", "null"]
+                  },
+                  "blockingFindings": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "status",
+                  "repository",
+                  "prNumber",
+                  "prUrl",
+                  "headSha",
+                  "baseSha",
+                  "mergeSha",
+                  "requiredChecks",
+                  "reviewerLogin",
+                  "approvedHeadSha",
+                  "blockingFindings",
+                  "reason"
+                ],
+                "additionalProperties": false
+              },
+              "qa": {
+                "type": "object",
+                "properties": {
+                  "verdict": {
+                    "type": "string",
+                    "enum": ["pass", "fail", "blocked"]
+                  },
+                  "executionSha": {
+                    "type": "string"
+                  },
+                  "checklistHash": {
+                    "type": "string"
+                  },
+                  "depth": {
+                    "type": "string",
+                    "enum": ["standard", "full-regression"]
+                  },
+                  "results": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": ["pass", "fail", "blocked"]
+                        },
+                        "actual": {
+                          "type": "string"
+                        },
+                        "evidence": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "enum": ["log", "screenshot", "trace", "diff", "report"]
+                              },
+                              "path": {
+                                "type": "string"
+                              },
+                              "sha256": {
+                                "type": "string"
+                              },
+                              "executionSha": {
+                                "type": "string",
+                                "pattern": "^[a-f0-9]{40}$"
+                              },
+                              "qaRunId": {
+                                "type": "string"
+                              },
+                              "criterionId": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "path",
+                              "sha256",
+                              "executionSha",
+                              "qaRunId",
+                              "criterionId"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": ["id", "status", "actual", "evidence"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "proofComplete": {
+                    "type": "boolean"
+                  },
+                  "summary": {
+                    "type": "string"
+                  },
+                  "repository": {
+                    "type": "string"
+                  },
+                  "issueNumber": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "taskId": {
+                    "type": "string"
+                  },
+                  "qaRunId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "verdict",
+                  "executionSha",
+                  "checklistHash",
+                  "depth",
+                  "results",
+                  "proofComplete",
+                  "summary",
+                  "repository",
+                  "issueNumber",
+                  "taskId",
+                  "qaRunId"
+                ],
+                "additionalProperties": false
+              },
+              "qaRunId": {
+                "type": "string"
+              },
+              "proofLinks": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "remainingTaskIds": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "startedAt": {
+                "type": "string"
+              },
+              "reviewHints": {
+                "type": "string"
+              },
+              "acceptance": {
+                "type": "object",
+                "properties": {
+                  "round": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9-]+$"
+                  },
+                  "allowUnsandboxedChecks": {
+                    "type": "boolean"
+                  },
+                  "waitForCodexReview": {
+                    "type": "boolean"
+                  }
+                },
+                "required": ["round", "allowUnsandboxedChecks", "waitForCodexReview"],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "message",
+              "repository",
+              "workspacePath",
+              "issueNumber",
+              "checklist",
+              "bounds",
+              "policy"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "ui": {
+          "x": 0,
+          "y": 0
+        }
+      },
+      {
+        "id": "init",
+        "label": "aidlc-init",
+        "kind": "script",
+        "config": {
+          "command": "C:\\nvm4w\\nodejs\\node.exe",
+          "args": [
+            "C:\\Users\\98jak\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-aidlc-full-v1\\examples\\aidlc\\support\\runtime.mjs",
+            "init"
+          ],
+          "env": {
+            "AIDLC_SETTINGS_HASH": "3104e7161ca9579453bc2b81e5a6ffbe426b192eb9daef582bef276637d449ed",
+            "AIDLC_SUPPORT_HASH": "5b933f4cb90b72e93c438a5296773f8e675fc653a844f3e30b3879bb9dc6f1d7",
+            "AIDLC_REVIEW_LOOP_ID": "01M4A20AZ69E2FK2W23WGWJ23M",
+            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG",
+            "AIDLC_PR_CI_LOOP_ID": "01M4A20B05SZ4F1ZYGDVDVR8Z8"
+          },
+          "cwd": "workspace",
+          "stdin": "thread",
+          "stdout": "patch",
+          "timeoutSeconds": 60
+        },
+        "ui": {
+          "x": 170,
+          "y": 0
+        }
+      },
+      {
+        "id": "prepare",
+        "label": "aidlc-prepare",
+        "kind": "script",
+        "config": {
+          "command": "C:\\nvm4w\\nodejs\\node.exe",
+          "args": [
+            "C:\\Users\\98jak\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-aidlc-full-v1\\examples\\aidlc\\support\\runtime.mjs",
+            "prepare"
+          ],
+          "env": {
+            "AIDLC_SETTINGS_HASH": "3104e7161ca9579453bc2b81e5a6ffbe426b192eb9daef582bef276637d449ed",
+            "AIDLC_SUPPORT_HASH": "5b933f4cb90b72e93c438a5296773f8e675fc653a844f3e30b3879bb9dc6f1d7",
+            "AIDLC_REVIEW_LOOP_ID": "01M4A20AZ69E2FK2W23WGWJ23M",
+            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG",
+            "AIDLC_PR_CI_LOOP_ID": "01M4A20B05SZ4F1ZYGDVDVR8Z8"
+          },
+          "cwd": "workspace",
+          "stdin": "thread",
+          "stdout": "patch",
+          "timeoutSeconds": 60
+        },
+        "ui": {
+          "x": 340,
+          "y": 0
+        }
+      },
+      {
+        "id": "route-budget",
+        "label": "aidlc-route-budget",
+        "kind": "script",
+        "config": {
+          "command": "C:\\nvm4w\\nodejs\\node.exe",
+          "args": [
+            "C:\\Users\\98jak\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-aidlc-full-v1\\examples\\aidlc\\support\\runtime.mjs",
+            "reserve",
+            "jev",
+            "route"
+          ],
+          "env": {
+            "AIDLC_SETTINGS_HASH": "3104e7161ca9579453bc2b81e5a6ffbe426b192eb9daef582bef276637d449ed",
+            "AIDLC_SUPPORT_HASH": "5b933f4cb90b72e93c438a5296773f8e675fc653a844f3e30b3879bb9dc6f1d7",
+            "AIDLC_REVIEW_LOOP_ID": "01M4A20AZ69E2FK2W23WGWJ23M",
+            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG",
+            "AIDLC_PR_CI_LOOP_ID": "01M4A20B05SZ4F1ZYGDVDVR8Z8"
+          },
+          "cwd": "workspace",
+          "stdin": "thread",
+          "stdout": "patch",
+          "timeoutSeconds": 60
+        },
+        "ui": {
+          "x": 510,
+          "y": 0
+        }
+      },
+      {
+        "id": "route",
+        "label": "aidlc-route",
+        "kind": "decision",
+        "config": {
+          "routes": [
+            {
+              "label": "code",
+              "description": "Backend, module, tests or documentation without user-visible interface changes."
+            },
+            {
+              "label": "visual",
+              "description": "User-visible interface, layout, visual taste, interaction or accessibility work."
+            },
+            {
+              "label": "uncertain",
+              "description": "Unclear, ambiguous, or requires soft judgement."
+            }
+          ],
+          "question": "Classify the task, not the surrounding pipeline: {{ trigger.payload.task | json }}. Code criterion: {{ vars.config.routing.code }}. Visual criterion: {{ vars.config.routing.visual }}.",
+          "strategy": ["jev", "expression"],
+          "jev": {
+            "model": "jev",
+            "primitive": "choice",
+            "minConfidence": 0.8
+          },
+          "expression": {
+            "jsonata": "\"uncertain\""
+          },
+          "context": {
+            "messages": "none",
+            "vars": ["config"],
+            "includeLastOutput": false
+          }
+        },
+        "ui": {
+          "x": 680,
+          "y": 0
+        }
+      },
+      {
+        "id": "code-budget",
+        "label": "aidlc-code-budget",
+        "kind": "script",
+        "config": {
+          "command": "C:\\nvm4w\\nodejs\\node.exe",
+          "args": [
+            "C:\\Users\\98jak\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-aidlc-full-v1\\examples\\aidlc\\support\\runtime.mjs",
+            "reserve",
+            "worker",
+            "code",
+            "codeImplementer"
+          ],
+          "env": {
+            "AIDLC_SETTINGS_HASH": "3104e7161ca9579453bc2b81e5a6ffbe426b192eb9daef582bef276637d449ed",
+            "AIDLC_SUPPORT_HASH": "5b933f4cb90b72e93c438a5296773f8e675fc653a844f3e30b3879bb9dc6f1d7",
+            "AIDLC_REVIEW_LOOP_ID": "01M4A20AZ69E2FK2W23WGWJ23M",
+            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG",
+            "AIDLC_PR_CI_LOOP_ID": "01M4A20B05SZ4F1ZYGDVDVR8Z8"
+          },
+          "cwd": "workspace",
+          "stdin": "thread",
+          "stdout": "patch",
+          "timeoutSeconds": 60
+        },
+        "ui": {
+          "x": 850,
+          "y": 0
+        }
+      },
+      {
+        "id": "code",
+        "label": "aidlc-code",
+        "kind": "inference",
+        "config": {
+          "harness": "codex",
+          "model": "gpt-6.1-sol",
+          "effort": "high",
+          "session": {
+            "policy": "fresh"
+          },
+          "prompt": {
+            "template": "Work alone, with a fresh session, only in the current scratch repository. No subagents, MCP, network, credential access, other repositories or private instance files. Never change AGENTS.md, aidlc-checklist.lock.json or .github/. Do not run Git mutations; the scripts own commits and pushes. Required checklist cannot be relaxed. Return only the forced JSON schema. Implement the task: {{ trigger.payload.task | json }}. Original request: {{ trigger.payload.message }}. Prior head-bound review/QA feedback: {{ trigger.payload.feedback | json }}. Checklist: {{ trigger.payload.checklist | json }}. On a fix attempt address each fix-now finding at the specified prior head; report blocking uncertainty rather than waive it. Make code/test edits only. Return branch {{ vars.branch }}, baseSha {{ vars.baseSha }}, current headSha {{ vars.headSha }} (script commits after your return), taskId {{ trigger.payload.task.id }}, implementer {role:'codeImplementer',harness:'codex',model:'gpt-6.1-sol',family:'openai'}. You may use empty evidence (the check script supplies authoritative logs). Do not claim tests ran unless you ran them."
+          },
+          "harnessOptions": {
+            "sandbox": "workspace-write",
+            "approval": "never",
+            "networkAccess": false,
+            "webSearch": false,
+            "configOverrides": {
+              "features.multi_agent": false,
+              "mcp_servers.node_repl.enabled": false
+            }
+          },
+          "timeoutSeconds": 420,
+          "output": {
+            "captureTranscript": "artifact",
+            "toMessages": "final",
+            "schema": {
+              "jsonSchema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": ["complete", "blocked"]
+                  },
+                  "taskId": {
+                    "type": "string"
+                  },
+                  "baseSha": {
+                    "type": "string"
+                  },
+                  "headSha": {
+                    "type": "string"
+                  },
+                  "branch": {
+                    "type": "string"
+                  },
+                  "summary": {
+                    "type": "string"
+                  },
+                  "filesChanged": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "remainingWork": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "evidence": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "enum": ["log", "screenshot", "trace", "diff", "report"]
+                        },
+                        "path": {
+                          "type": "string"
+                        },
+                        "sha256": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["kind", "path", "sha256"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "implementer": {
+                    "type": "object",
+                    "properties": {
+                      "role": {
+                        "type": "string"
+                      },
+                      "harness": {
+                        "type": "string"
+                      },
+                      "model": {
+                        "type": "string"
+                      },
+                      "family": {
+                        "type": "string"
+                      }
+                    },
+                    "required": ["role", "harness", "model", "family"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "status",
+                  "taskId",
+                  "baseSha",
+                  "headSha",
+                  "branch",
+                  "summary",
+                  "filesChanged",
+                  "remainingWork",
+                  "evidence",
+                  "implementer"
+                ],
+                "additionalProperties": false
+              },
+              "native": true,
+              "repair": {
+                "enabled": false,
+                "maxAttempts": 0,
+                "onFailure": "fail-run"
+              }
+            }
+          }
+        },
+        "ui": {
+          "x": 1020,
+          "y": 0
+        }
+      },
+      {
+        "id": "visual-budget",
+        "label": "aidlc-visual-budget",
+        "kind": "script",
+        "config": {
+          "command": "C:\\nvm4w\\nodejs\\node.exe",
+          "args": [
+            "C:\\Users\\98jak\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-aidlc-full-v1\\examples\\aidlc\\support\\runtime.mjs",
+            "reserve",
+            "worker",
+            "visual",
+            "visualImplementer"
+          ],
+          "env": {
+            "AIDLC_SETTINGS_HASH": "3104e7161ca9579453bc2b81e5a6ffbe426b192eb9daef582bef276637d449ed",
+            "AIDLC_SUPPORT_HASH": "5b933f4cb90b72e93c438a5296773f8e675fc653a844f3e30b3879bb9dc6f1d7",
+            "AIDLC_REVIEW_LOOP_ID": "01M4A20AZ69E2FK2W23WGWJ23M",
+            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG",
+            "AIDLC_PR_CI_LOOP_ID": "01M4A20B05SZ4F1ZYGDVDVR8Z8"
+          },
+          "cwd": "workspace",
+          "stdin": "thread",
+          "stdout": "patch",
+          "timeoutSeconds": 60
+        },
+        "ui": {
+          "x": 1190,
+          "y": 0
+        }
+      },
+      {
+        "id": "visual",
+        "label": "aidlc-visual",
+        "kind": "inference",
+        "config": {
+          "harness": "codex",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "session": {
+            "policy": "fresh"
+          },
+          "prompt": {
+            "template": "Work alone, with a fresh session, only in the current scratch repository. No subagents, MCP, network, credential access, other repositories or private instance files. Never change AGENTS.md, aidlc-checklist.lock.json or .github/. Do not run Git mutations; the scripts own commits and pushes. Required checklist cannot be relaxed. Return only the forced JSON schema. Implement the task: {{ trigger.payload.task | json }}. Original request: {{ trigger.payload.message }}. Prior head-bound review/QA feedback: {{ trigger.payload.feedback | json }}. Checklist: {{ trigger.payload.checklist | json }}. On a fix attempt address each fix-now finding at the specified prior head; report blocking uncertainty rather than waive it. Make code/test edits only. Return branch {{ vars.branch }}, baseSha {{ vars.baseSha }}, current headSha {{ vars.headSha }} (script commits after your return), taskId {{ trigger.payload.task.id }}, implementer {role:'visualImplementer',harness:'codex',model:'gpt-6-astra',family:'openai'}. You may use empty evidence (the check script supplies authoritative logs). Do not claim tests ran unless you ran them."
+          },
+          "harnessOptions": {
+            "sandbox": "workspace-write",
+            "approval": "never",
+            "networkAccess": false,
+            "webSearch": false,
+            "configOverrides": {
+              "features.multi_agent": false,
+              "mcp_servers.node_repl.enabled": false
+            }
+          },
+          "timeoutSeconds": 420,
+          "output": {
+            "captureTranscript": "artifact",
+            "toMessages": "final",
+            "schema": {
+              "jsonSchema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": ["complete", "blocked"]
+                  },
+                  "taskId": {
+                    "type": "string"
+                  },
+                  "baseSha": {
+                    "type": "string"
+                  },
+                  "headSha": {
+                    "type": "string"
+                  },
+                  "branch": {
+                    "type": "string"
+                  },
+                  "summary": {
+                    "type": "string"
+                  },
+                  "filesChanged": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "remainingWork": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "evidence": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "enum": ["log", "screenshot", "trace", "diff", "report"]
+                        },
+                        "path": {
+                          "type": "string"
+                        },
+                        "sha256": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["kind", "path", "sha256"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "implementer": {
+                    "type": "object",
+                    "properties": {
+                      "role": {
+                        "type": "string"
+                      },
+                      "harness": {
+                        "type": "string"
+                      },
+                      "model": {
+                        "type": "string"
+                      },
+                      "family": {
+                        "type": "string"
+                      }
+                    },
+                    "required": ["role", "harness", "model", "family"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "status",
+                  "taskId",
+                  "baseSha",
+                  "headSha",
+                  "branch",
+                  "summary",
+                  "filesChanged",
+                  "remainingWork",
+                  "evidence",
+                  "implementer"
+                ],
+                "additionalProperties": false
+              },
+              "native": true,
+              "repair": {
+                "enabled": false,
+                "maxAttempts": 0,
+                "onFailure": "fail-run"
+              }
+            }
+          }
+        },
+        "ui": {
+          "x": 1360,
+          "y": 0
+        }
+      },
+      {
+        "id": "judgment-budget",
+        "label": "aidlc-judgment-budget",
+        "kind": "script",
+        "config": {
+          "command": "C:\\nvm4w\\nodejs\\node.exe",
+          "args": [
+            "C:\\Users\\98jak\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-aidlc-full-v1\\examples\\aidlc\\support\\runtime.mjs",
+            "reserve",
+            "worker",
+            "judgment",
+            "judgment"
+          ],
+          "env": {
+            "AIDLC_SETTINGS_HASH": "3104e7161ca9579453bc2b81e5a6ffbe426b192eb9daef582bef276637d449ed",
+            "AIDLC_SUPPORT_HASH": "5b933f4cb90b72e93c438a5296773f8e675fc653a844f3e30b3879bb9dc6f1d7",
+            "AIDLC_REVIEW_LOOP_ID": "01M4A20AZ69E2FK2W23WGWJ23M",
+            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG",
+            "AIDLC_PR_CI_LOOP_ID": "01M4A20B05SZ4F1ZYGDVDVR8Z8"
+          },
+          "cwd": "workspace",
+          "stdin": "thread",
+          "stdout": "patch",
+          "timeoutSeconds": 60
+        },
+        "ui": {
+          "x": 1530,
+          "y": 0
+        }
+      },
+      {
+        "id": "judgment",
+        "label": "aidlc-judgment",
+        "kind": "inference",
+        "config": {
+          "harness": "codex",
+          "model": "gpt-6.1-sol",
+          "effort": "medium",
+          "session": {
+            "policy": "fresh"
+          },
+          "prompt": {
+            "template": "Work alone, with a fresh session, only in the current scratch repository. No subagents, MCP, network, credential access, other repositories or private instance files. Never change AGENTS.md, aidlc-checklist.lock.json or .github/. Do not run Git mutations; the scripts own commits and pushes. Required checklist cannot be relaxed. Return only the forced JSON schema. Classify code versus visual work using soft judgement; human if unresolved. Task: {{ trigger.payload.task | json }}. Criteria: {{ vars.config.routing | json }}."
+          },
+          "harnessOptions": {
+            "sandbox": "read-only",
+            "approval": "never",
+            "networkAccess": false,
+            "webSearch": false,
+            "configOverrides": {
+              "features.multi_agent": false,
+              "mcp_servers.node_repl.enabled": false
+            }
+          },
+          "timeoutSeconds": 180,
+          "output": {
+            "captureTranscript": "artifact",
+            "toMessages": "final",
+            "schema": {
+              "jsonSchema": {
+                "type": "object",
+                "properties": {
+                  "route": {
+                    "type": "string",
+                    "enum": ["plannerA", "plannerB", "code", "visual", "human"]
+                  },
+                  "reason": {
+                    "type": "string"
+                  },
+                  "confidence": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  }
+                },
+                "required": ["route", "reason", "confidence"],
+                "additionalProperties": false
+              },
+              "native": true,
+              "repair": {
+                "enabled": false,
+                "maxAttempts": 0,
+                "onFailure": "fail-run"
+              }
+            }
+          }
+        },
+        "ui": {
+          "x": 1700,
+          "y": 0
+        }
+      },
+      {
+        "id": "judgment-route",
+        "label": "aidlc-judgment-route",
+        "kind": "decision",
+        "config": {
+          "routes": [
+            {
+              "label": "code",
+              "description": "aidlc-code"
+            },
+            {
+              "label": "visual",
+              "description": "aidlc-visual"
+            },
+            {
+              "label": "blocked",
+              "description": "aidlc-blocked"
+            }
+          ],
+          "question": "Check structured facts and child status.",
+          "strategy": ["expression"],
+          "expression": {
+            "jsonata": "lastOutput.value.confidence >= vars.config.routing.minConfidence and lastOutput.value.confidence <= 1 ? (lastOutput.value.route = \"code\" ? \"code\" : lastOutput.value.route = \"visual\" ? \"visual\" : \"blocked\") : \"blocked\""
+          },
+          "context": {
+            "messages": "none",
+            "includeLastOutput": true
+          }
+        },
+        "ui": {
+          "x": 1870,
+          "y": 0
+        }
+      },
+      {
+        "id": "blocked",
+        "label": "aidlc-blocked",
+        "kind": "exit",
+        "config": {
+          "default": "success",
+          "return": {
+            "mapping": "{\"status\":\"blocked\",\"taskId\":trigger.payload.task.id,\"baseSha\":vars.baseSha,\"headSha\":vars.headSha,\"branch\":vars.branch,\"summary\":\"UI route requires human judgement\",\"filesChanged\":[],\"remainingWork\":[\"Classify task\"],\"evidence\":[],\"implementer\":{\"role\":\"unselected\",\"harness\":\"codex\",\"model\":\"unselected\",\"family\":\"unselected\"}}",
+            "channels": [
+              {
+                "kind": "caller"
+              }
+            ]
+          }
+        },
+        "ui": {
+          "x": 2040,
+          "y": 0
+        }
+      },
+      {
+        "id": "snapshot",
+        "label": "aidlc-snapshot",
+        "kind": "script",
+        "config": {
+          "command": "C:\\nvm4w\\nodejs\\node.exe",
+          "args": [
+            "C:\\Users\\98jak\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-aidlc-full-v1\\examples\\aidlc\\support\\runtime.mjs",
+            "snapshot"
+          ],
+          "env": {
+            "AIDLC_SETTINGS_HASH": "3104e7161ca9579453bc2b81e5a6ffbe426b192eb9daef582bef276637d449ed",
+            "AIDLC_SUPPORT_HASH": "5b933f4cb90b72e93c438a5296773f8e675fc653a844f3e30b3879bb9dc6f1d7",
+            "AIDLC_REVIEW_LOOP_ID": "01M4A20AZ69E2FK2W23WGWJ23M",
+            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG",
+            "AIDLC_PR_CI_LOOP_ID": "01M4A20B05SZ4F1ZYGDVDVR8Z8"
+          },
+          "cwd": "workspace",
+          "stdin": "thread",
+          "stdout": "patch",
+          "timeoutSeconds": 60
+        },
+        "ui": {
+          "x": 2210,
+          "y": 0
+        }
+      },
+      {
+        "id": "done",
+        "label": "aidlc-done",
+        "kind": "exit",
+        "config": {
+          "default": "success",
+          "return": {
+            "mapping": "vars.result",
+            "channels": [
+              {
+                "kind": "caller"
+              }
+            ]
+          }
+        },
+        "ui": {
+          "x": 2380,
+          "y": 0
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "e-1",
+        "from": {
+          "node": "start",
+          "port": "out"
+        },
+        "to": {
+          "node": "init",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e-2",
+        "from": {
+          "node": "init",
+          "port": "out"
+        },
+        "to": {
+          "node": "prepare",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e-3",
+        "from": {
+          "node": "route-budget",
+          "port": "out"
+        },
+        "to": {
+          "node": "route",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e-4",
+        "from": {
+          "node": "prepare",
+          "port": "out"
+        },
+        "to": {
+          "node": "route-budget",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e-5",
+        "from": {
+          "node": "code-budget",
+          "port": "out"
+        },
+        "to": {
+          "node": "code",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e-6",
+        "from": {
+          "node": "route",
+          "port": "code"
+        },
+        "to": {
+          "node": "code-budget",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e-7",
+        "from": {
+          "node": "code",
+          "port": "out"
+        },
+        "to": {
+          "node": "snapshot",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e-8",
+        "from": {
+          "node": "visual-budget",
+          "port": "out"
+        },
+        "to": {
+          "node": "visual",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e-9",
+        "from": {
+          "node": "route",
+          "port": "visual"
+        },
+        "to": {
+          "node": "visual-budget",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e-10",
+        "from": {
+          "node": "visual",
+          "port": "out"
+        },
+        "to": {
+          "node": "snapshot",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e-11",
+        "from": {
+          "node": "judgment-budget",
+          "port": "out"
+        },
+        "to": {
+          "node": "judgment",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e-12",
+        "from": {
+          "node": "route",
+          "port": "uncertain"
+        },
+        "to": {
+          "node": "judgment-budget",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e-13",
+        "from": {
+          "node": "judgment",
+          "port": "out"
+        },
+        "to": {
+          "node": "judgment-route",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e-14",
+        "from": {
+          "node": "judgment-route",
+          "port": "code"
+        },
+        "to": {
+          "node": "code-budget",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e-15",
+        "from": {
+          "node": "judgment-route",
+          "port": "visual"
+        },
+        "to": {
+          "node": "visual-budget",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e-16",
+        "from": {
+          "node": "judgment-route",
+          "port": "blocked"
+        },
+        "to": {
+          "node": "blocked",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e-17",
+        "from": {
+          "node": "snapshot",
+          "port": "out"
+        },
+        "to": {
+          "node": "done",
+          "port": "in"
+        }
+      }
+    ]
+  }
+}

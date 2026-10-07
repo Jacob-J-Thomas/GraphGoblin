@@ -150,13 +150,14 @@ describe('run control', () => {
       kind: 'decision',
       label: 'Pick',
       config: {
-        routes: [
-          { label: 'again', description: 'loop' },
-          { label: 'stop', description: 'finish' },
-        ],
-        question: 'again?',
-        strategy: ['expression'],
-        expression: { jsonata: '"again"' },
+        answer: {
+          type: 'choice',
+          options: [
+            { id: 'again', label: 'again', criteria: 'loop' },
+            { id: 'stop', label: 'stop', criteria: 'finish' },
+          ],
+        },
+        evaluation: { kind: 'expression', jsonata: '"again"' },
       },
     });
     loop.edges.push(
@@ -688,13 +689,14 @@ describe('the per-node visit cap (maxIterations)', () => {
       kind: 'decision',
       label: 'Pick',
       config: {
-        routes: [
-          { label: 'again', description: 'loop' },
-          { label: 'stop', description: 'finish' },
-        ],
-        question: 'again?',
-        strategy: ['expression'],
-        expression: { jsonata },
+        answer: {
+          type: 'choice',
+          options: [
+            { id: 'again', label: 'again', criteria: 'loop' },
+            { id: 'stop', label: 'stop', criteria: 'finish' },
+          ],
+        },
+        evaluation: { kind: 'expression', jsonata: jsonata },
       },
     });
     loop.edges.push(
