@@ -6,6 +6,7 @@ import {
   UlidSchema,
   ModelCatalogEntrySchema,
   ModelCatalogSourceSchema,
+  ModelNameSchema,
 } from '@graphgoblin/contracts';
 import { z } from 'zod';
 import type { Container } from '../container.js';
@@ -22,7 +23,7 @@ const ModelEntrySchema = ModelCatalogEntrySchema;
 
 /** Settings the engine reads (the run defaults); other keys are stored as given. */
 const KnownSettingsSchema = z.looseObject({
-  defaultModel: z.string().trim().min(1).max(256).optional(),
+  defaultModel: z.string().trim().pipe(ModelNameSchema).optional(),
   defaultEffort: EffortSchema.optional(),
 });
 

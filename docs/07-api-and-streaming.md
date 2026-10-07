@@ -74,11 +74,36 @@ clients must remove the field before sending a definition (see the CHANGELOG upg
 
 - Endpoint: `GET /runs/{id}/events` with `Accept: text/event-stream`. The query parameter `after` or the `Last-Event-ID` header sets the starting sequence.
 - Each SSE message has `id: <seq>`, `event: <run event type>`, and `data: <JSON event>`.
+- `node.progress` is validated against the strict `RunEventSchema` payload contract. Inference item variants expose only the bounded summary and allowlisted command/status fields; script progress has its own `{ exitCode, stderr, stdoutBytes }` shape. Invalid progress fields are rejected by clients and are absent from the OpenAPI schema.
 - A `: heartbeat` comment is sent every 15 seconds so proxies and browsers keep the connection open.
 - The stream closes after `run.finished`, `run.failed`, or `run.cancelled` is delivered, whether that event is replayed or arrives live.
 - If the run is already terminal when the client subscribes and the cursor is at or past its terminal event, the response ends right after the replay (a `: connected` comment and no events), so a reconnect after the end never idles. Since WP-G the terminal event is persisted before terminal status (05), so a healthy current log needs no grace. If no terminal event is visible even after re-reading the log, the stream allows up to 2 seconds for late subscription delivery, then closes instead of idling forever. This is a defensive bound for incomplete legacy or inconsistent logs.
 - Reconnecting with the last seen `seq` replays everything missed, because the stream is a tail of the persisted log.
 - `GET /events/stream` (Draft) offers a multiplexed stream of run status changes across all runs for dashboards.
+
+## Evaluation events
+
+JSON event pages and SSE carry the same strict `RunEvent` contract, also advertised in
+`/openapi.json`. Both preserve execution evidence before the run's terminal event.
+
+| Event            | Evidence                                                                                                                                                                                                                                                                                                                                                                                               |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `exit.evaluated` | Node, iteration, hard ceiling, ordered criteria with zero-based indices, strategy, matched/not-matched verdict, predicate boolean and confidence, resolved Codex model or Jev classifier, bounded Codex reasoning, skipped reasons and safe errors. `result` names completion and its matching criterion, loop-back and its cause, a configured or hard limit and its value, failure, or cancellation. |
+| `decision.made`  | Winning strategy, route, optional confidence, classifier and alternatives, plus required `skipped: [{ strategy, code, message }]` describing each strategy bypassed before the winner. For decisions recorded after this change, an empty list means none were bypassed. Migrated historical rows carry an empty list without skip evidence.                                                           |
+
+Skip messages and failure diagnostics use fixed summaries and allowlisted codes; provider
+error bodies, credential values, and raw response payloads are excluded. Codex reasoning
+is its returned short justification, capped at 2,048 characters. Clients consuming the
+strict contract must upgrade with the server; migration `0007` supplies empty skip lists
+for historical decisions, whose missing evidence cannot be recovered.
+
+SQLite reads validate every stored row against `RunEventSchema`. A non-conforming row fails
+the entire requested page; it is neither repaired nor converted into a synthetic event.
+JSON and SSE replay return HTTP 500 Problem Details with code `STORED_EVENT_INVALID` and
+the run id, sequence, and event type in `detail`, without payloads or provider diagnostics.
+SSE validates its replay, including any terminal-status recheck, before sending headers or
+frames, and releases its subscription on failure. No event cursor advances for a rejected
+page. Migration `0007`, rather than the reader, repairs historical decisions missing `skipped`.
 
 ## Authentication (Decided for 1.0)
 
@@ -199,7 +224,7 @@ Codex installs a plugin by copying it into `~/.codex/plugins/cache/<marketplace>
 
 `packages/api-client` (`@graphgoblin/api-client`) is the one HTTP client for the web app and the MCP server. It depends only on `contracts` and `openapi-fetch`, and uses nothing but `fetch`, web streams, and `TextDecoderStream`, so it runs in browsers and Node 18+.
 
-- **Generated types.** `openapi.json` (the API's document) and `src/generated/schema.ts` (from `openapi-typescript`) are committed. `pnpm --filter @graphgoblin/api-client generate` re-emits both from the API's source; a test fails with that instruction when either drifts from the live API. The API emits large and recursive contract schemas (`JsonValue`, `LoopDefinition`, `RunRecord`, `RunEvent`, `ContextThread`, ...) as named components from a dedicated registry in `apps/api/src/openapi-registry.ts`; request-side components carry an `Input` suffix.
+- **Generated types.** `openapi.json` (the API's document) and `src/generated/schema.ts` (from `openapi-typescript`) are committed. `pnpm --filter @graphgoblin/api-client generate` re-emits both from the API's source; a test fails with that instruction when either drifts from the live API. The API emits large and recursive contract schemas (`JsonValue`, `LoopDefinition`, `RunRecord`, `RunEvent`, `ContextThread`, ...) as named components from a dedicated registry in `apps/api/src/openapi-registry.ts`; request-side components carry an `Input` suffix. `RunEvent` includes the discriminated strict progress variants, including inference item types and the script shape documented above.
 - **Factory.** `createGraphGoblinClient({ baseUrl, apiKey?, fetch?, client? })` returns a typed openapi-fetch client. `apiKey` becomes `authorization: Bearer ...`; `client: 'ui' | 'mcp'` becomes `x-graphgoblin-client`, which the API maps to the `manual.ui` or `manual.mcp` invocation source.
 - **Errors.** Non-2xx responses throw `GraphGoblinApiError` with the problem's `status`, `code`, `detail`, and `errors`; transport failures throw it with `status: 0` and `code: 'NETWORK_ERROR'`. `unwrap(result)` does the same for raw openapi-fetch calls.
 - **Resource wrappers.** `loops`, `runs`, `settings`, `secrets`, `apiKeys`, `modelCatalog`, `classifierModels`, `events`, and `system` take the client first and return the response body, for example `await runs.start(client, loopId, { input })` or `await runs.replay(client, runId, nodeId)`. Classifier helpers are `list(client)`, `upsert(client, id, metadata)`, `create(client, id, metadata)` (the same PUT with `If-None-Match: *`, refused with `CLASSIFIER_EXISTS` when the id exists), `setEnabled(client, id, enabled)`, and `remove(client, id)`; ids are encoded and API problems propagate unchanged.
@@ -237,7 +262,7 @@ PUT requires strict custom HTTP metadata, including provider `http`; it rejects 
 | `CLASSIFIER_MANAGED_BY_SYSTEM` | 409  | PUT or DELETE of built-in `jev`.                        |
 | `CLASSIFIER_EXISTS`            | 409  | Create-only PUT (`If-None-Match: *`) of an existing id. |
 
-Successful classifier decisions add `classifierModel` (the catalog id) to the `decision.made` payload while retaining strategy `jev`, route/confidence/alternatives, and the existing lastOutput shape. Expression and Codex decisions omit this field. It records selection separately from the native providerModel sent to the endpoint. Existing events without the optional field remain valid.
+Successful classifier decisions add `classifierModel` (the catalog id) to the `decision.made` payload while retaining strategy `jev`, route/confidence/alternatives, and the existing lastOutput shape. Expression and Codex decisions omit this field. It records selection separately from the native providerModel sent to the endpoint. Every decision event includes the skipped-strategy list described above.
 
 Decision and exit-predicate failure details in run snapshots, paged events, and streams never contain the provider's raw answer. Both paths share fixed failure summaries and retain the selected strategy and recognized `DECIDER_*` codes; unknown provider codes become `DECIDER_ERROR` at the exit and catch-all boundaries. Provider messages, names, stacks, error bodies, and arbitrary codes are not persisted. Engine provider warnings contain only an allowlisted error name, recognized code, numeric HTTP status when available, and strategy and node identifiers; Jev SDK logs use fixed summaries. Provider exceptions fail the step with `INTERNAL_ERROR`, and cancellation still propagates. HTTP classifiers reject undeclared choices; Jev also rejects probabilities that do not cover exactly the submitted labels. Built-in Jev and Codex unknown choices still try the next strategy, with fixed diagnostics naming only the strategy. Successful decision events retain only declared routes in alternatives. Invalid confidence diagnostics are fixed, and low-confidence diagnostics contain only validated numbers. Expression diagnostics retain the author's expression result to help identify route mismatches.
 

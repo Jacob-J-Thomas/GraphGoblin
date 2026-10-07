@@ -7,6 +7,7 @@ import type {
   JsonSchema,
   JsonValue,
   LoopVersionRecord,
+  ProgressItemStatus,
   RunEvent,
   RunRecord,
   RunStatus,
@@ -145,6 +146,12 @@ export interface HarnessItem {
   id: string;
   type: HarnessItemType;
   summary: string;
+  /** Bounded, one-line command text for safe progress display. */
+  commandPreview?: string;
+  /** Process exit code when the harness reports one. */
+  exitCode?: number;
+  /** Allowlisted harness item state when the SDK reports one. */
+  status?: ProgressItemStatus;
   detail?: JsonValue;
 }
 

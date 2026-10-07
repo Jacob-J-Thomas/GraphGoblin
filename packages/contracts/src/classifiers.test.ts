@@ -146,6 +146,7 @@ describe('classifier contracts', () => {
       seq: 1,
       ts: FIXTURE_TS,
       type: 'decision.made',
+      skipped: [],
       nodeId: 'choose',
       strategy: 'jev',
       route: 'yes',

@@ -33,10 +33,13 @@ const ALL: RunEvent[] = [
     durationMs: 3,
     route: 'good',
   }),
-  event(R, 11, 'node.progress', { nodeId: 'i', progress: 'p' }),
+  event(R, 11, 'node.progress', {
+    nodeId: 'i',
+    progress: { exitCode: 0, stderr: '', stdoutBytes: 0 },
+  }),
   event(R, 12, 'harness.session', { nodeId: 'i', harness: 'codex', sessionId: 's', mode: 'fresh' }),
   event(R, 13, 'harness.usage', { nodeId: 'i', usage }),
-  event(R, 14, 'decision.made', { nodeId: 'd', strategy: 'jev', route: 'good' }),
+  event(R, 14, 'decision.made', { nodeId: 'd', strategy: 'jev', route: 'good', skipped: [] }),
   event(R, 15, 'signal.received', { name: 'go' }),
   event(R, 16, 'input.received', { nodeId: 'w', payload: 1 }),
   event(R, 17, 'heartbeat.beat', { nodeId: 'h', beat: 1 }),
@@ -57,6 +60,151 @@ const ALL: RunEvent[] = [
 ];
 
 describe('run projections', () => {
+  it('ignores the old session cache and retains decisions replayed with the new contract', async () => {
+    useRunEventStore.setState({ runs: {} });
+    useRunEventStore.persist.clearStorage();
+    sessionStorage.setItem(
+      'graphgoblin-run-events',
+      JSON.stringify({
+        state: {
+          runs: {
+            [R]: {
+              events: [
+                {
+                  runId: R,
+                  seq: 1,
+                  type: 'decision.made',
+                  nodeId: 'd',
+                  strategy: 'jev',
+                  route: 'good',
+                },
+              ],
+              lastSeq: 1,
+            },
+          },
+        },
+        version: 0,
+      }),
+    );
+    await useRunEventStore.persist.rehydrate();
+    expect(useRunEventStore.getState().runs[R]).toBeUndefined();
+    const refreshed = event(R, 1, 'decision.made', {
+      nodeId: 'd',
+      strategy: 'jev',
+      route: 'good',
+      skipped: [],
+    });
+    useRunEventStore.getState().append(R, refreshed);
+    expect(useRunEventStore.getState().runs[R]?.events).toEqual([refreshed]);
+    expect(sessionStorage.getItem('graphgoblin-run-events-v2')).toContain('"skipped":[]');
+    useRunEventStore.setState({ runs: {} });
+  });
+  it('describes completion reasons and limits independently of optional criterion indices', () => {
+    for (const criterionIndex of [undefined, 0]) {
+      const index = criterionIndex === undefined ? {} : { criterionIndex };
+      const base = { nodeId: 'done', iteration: 2, maxIterations: 5, criteria: [] };
+      for (const outcome of ['success', 'failure', 'exhausted'] as const) {
+        for (const reason of ['criterion-matched', 'default-success'] as const) {
+          const entry = event(R, 1, 'exit.evaluated', {
+            ...base,
+            result: { kind: 'completed', reason, outcome, ...index },
+          });
+          expect(describeEvent(entry)).toBe(
+            reason === 'default-success'
+              ? `Exited: default ${outcome}, no criterion matched`
+              : `Exited: ${criterionIndex === undefined ? 'a criterion' : 'criterion 1'} matched (${outcome})`,
+          );
+        }
+      }
+      for (const limit of ['max-iterations', 'max-duration', 'iteration-ceiling'] as const) {
+        const entry = event(R, 1, 'exit.evaluated', {
+          ...base,
+          result: { kind: 'limit-reached', limit, value: 5, outcome: 'exhausted', ...index },
+        });
+        expect(describeEvent(entry)).toBe(
+          `Exited: ${limit === 'max-duration' ? 'duration limit of 5 seconds' : 'iteration limit of 5'} reached${limit === 'iteration-ceiling' ? ' (loop ceiling)' : ''}${criterionIndex === undefined ? '' : ' (criterion 1)'}`,
+        );
+      }
+    }
+    const entry = event(R, 1, 'exit.evaluated', {
+      nodeId: 'done',
+      iteration: 1,
+      maxIterations: 5,
+      criteria: [{ index: 0, strategy: 'expression', status: 'not-matched' }],
+      result: {
+        kind: 'completed',
+        reason: 'criterion-matched',
+        outcome: 'failure',
+        criterionIndex: 0,
+      },
+    });
+    expect(describeEvent(entry)).toBe('Exited: criterion 1 matched (failure)');
+    if (entry.type !== 'exit.evaluated') throw new Error('Expected an exit event fixture');
+    expect(
+      describeEvent({
+        ...entry,
+        criteria: [{ index: 0, strategy: 'expression', status: 'matched' }],
+        result: {
+          kind: 'completed',
+          reason: 'default-success',
+          outcome: 'failure',
+          criterionIndex: 0,
+        },
+      }),
+    ).toBe('Exited: default failure, no criterion matched');
+  });
+  it('describes every exit outcome and keeps exit activity grouped by node', () => {
+    const exit = (fields: Parameters<typeof event<'exit.evaluated'>>[3]) =>
+      event(R, 1, 'exit.evaluated', fields);
+    const base = { nodeId: 'done', iteration: 2, maxIterations: 5, criteria: [] };
+    for (const [result, expected] of [
+      [
+        { kind: 'completed', reason: 'default-success', outcome: 'success' },
+        'Exited: default success',
+      ],
+      [
+        { kind: 'looped-back', reason: 'no-criterion-matched', targetNodeId: 'prep' },
+        'Looped back: no criterion matched, iteration 2 of 5',
+      ],
+      [
+        {
+          kind: 'limit-reached',
+          limit: 'max-duration',
+          value: 10,
+          criterionIndex: 0,
+          outcome: 'exhausted',
+        },
+        'duration limit of 10 seconds reached (criterion 1)',
+      ],
+      [
+        { kind: 'limit-reached', limit: 'iteration-ceiling', value: 5, outcome: 'exhausted' },
+        'iteration limit of 5 reached (loop ceiling)',
+      ],
+      [
+        { kind: 'failed', diagnostic: { code: 'DECIDER_ERROR', message: 'Provider failed' } },
+        'Exit evaluation failed: Provider failed',
+      ],
+      [{ kind: 'cancelled' }, 'Exit evaluation cancelled'],
+    ] as const) {
+      const entry = exit({ ...base, result });
+      expect(describeEvent(entry)).toContain(expected);
+      expect(nodeActivity([entry]).get('done')).toEqual([entry]);
+    }
+    expect(
+      describeEvent(
+        exit({
+          ...base,
+          criteria: [{ index: 0, strategy: 'expression', status: 'matched' }],
+          result: {
+            kind: 'completed',
+            reason: 'criterion-matched',
+            outcome: 'failure',
+            criterionIndex: 0,
+          },
+        }),
+      ),
+    ).toBe('Exited: criterion 1 (expression) matched (failure)');
+  });
   it('describes every event type', () => {
     const lines = ALL.map(describeEvent);
     expect(lines).toContain('attempt 1');
@@ -110,7 +258,7 @@ describe('run projections', () => {
     expect(useRunEventStore.getState().runs['r1']).toBeUndefined();
     clear('bulk20');
     expect(useRunEventStore.getState().runs['bulk20']).toBeUndefined();
-    expect(sessionStorage.getItem('graphgoblin-run-events')).toContain('bulk19');
+    expect(sessionStorage.getItem('graphgoblin-run-events-v2')).toContain('bulk19');
   });
 });
 

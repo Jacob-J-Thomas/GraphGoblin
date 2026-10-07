@@ -136,7 +136,13 @@ export class CodexDecider implements DeciderPort {
       });
     }
     const confidence = clamp(answer.confidence);
-    return { holds: answer.holds, ...(confidence !== undefined ? { confidence } : {}) };
+    return {
+      holds: answer.holds,
+      ...(confidence !== undefined ? { confidence } : {}),
+      ...(typeof answer.reasoning === 'string'
+        ? { reasoning: answer.reasoning.slice(0, 2048) }
+        : {}),
+    };
   }
 }
 

@@ -85,7 +85,7 @@ describe('CodexDecider.judge', () => {
       { question: 'Done?', context: null, model: 'm', effort: 'high' },
       new AbortController().signal,
     );
-    expect(answer).toEqual({ holds: false, confidence: 0 });
+    expect(answer).toEqual({ holds: false, confidence: 0, reasoning: 'no' });
     expect(complete.mock.calls[0]?.[0].schema).toBe(JUDGE_SCHEMA);
     expect(complete.mock.calls[0]?.[0].prompt).toContain('Question: Done?');
   });
@@ -103,6 +103,18 @@ describe('CodexDecider.judge', () => {
         new AbortController().signal,
       ),
     ).rejects.toMatchObject({ code: 'DECIDER_INVALID_RESPONSE' });
+  });
+  it('retains only the bounded judge reasoning field', async () => {
+    const answer = await createCodexDecider(
+      structuredReturning({
+        holds: true,
+        confidence: 0.93,
+        reasoning: 'x'.repeat(3000),
+        payload: 'private-envelope',
+      }).port,
+    ).judge({ question: 'Done?', context: null }, new AbortController().signal);
+    expect(answer).toEqual({ holds: true, confidence: 0.93, reasoning: 'x'.repeat(2048) });
+    expect(JSON.stringify(answer)).not.toContain('private-envelope');
   });
 });
 

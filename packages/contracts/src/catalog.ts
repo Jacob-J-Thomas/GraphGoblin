@@ -1,11 +1,11 @@
 import { z } from 'zod';
-import { EffortSchema } from './common.js';
+import { EffortSchema, ModelNameSchema } from './common.js';
 
 /** Ownership of catalog metadata; enabled is always an owner preference. */
 export const ModelCatalogSourceSchema = z.enum(['harness', 'litellm']);
 export const ModelCatalogEntrySchema = z.object({
   harness: z.string(),
-  model: z.string(),
+  model: ModelNameSchema,
   source: ModelCatalogSourceSchema,
   displayName: z.string(),
   efforts: z.array(EffortSchema),

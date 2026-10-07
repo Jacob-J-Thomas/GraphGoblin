@@ -4,6 +4,7 @@ import {
   EffortSchema,
   ExpressionSchema,
   HarnessIdSchema,
+  ModelNameSchema,
   JsonSchemaSchema,
   RepairPolicySchema,
   SlugSchema,
@@ -210,16 +211,12 @@ export const DecisionConfigSchema = z
       ),
     codex: z
       .strictObject({
-        model: z
-          .string()
-          .min(1)
-          .optional()
-          .meta(
-            field(
-              'Model for the Codex decider; falls back to the loop default, then to the owner setting.',
-              { control: 'model' },
-            ),
+        model: ModelNameSchema.optional().meta(
+          field(
+            'Model for the Codex decider; falls back to the loop default, then to the owner setting.',
+            { control: 'model' },
           ),
+        ),
         effort: EffortSchema.optional().meta(
           field(
             'Reasoning effort; falls back like the model. The catalog default effort is guidance only.',
@@ -305,15 +302,11 @@ export type Capabilities = z.infer<typeof CapabilitiesSchema>;
 
 export const InferenceConfigSchema = z.strictObject({
   harness: HarnessIdSchema.default('codex').meta(field('Harness that runs the session.')),
-  model: z
-    .string()
-    .min(1)
-    .optional()
-    .meta(
-      field('Model; falls back to the loop default, then to the owner setting.', {
-        control: 'model',
-      }),
-    ),
+  model: ModelNameSchema.optional().meta(
+    field('Model; falls back to the loop default, then to the owner setting.', {
+      control: 'model',
+    }),
+  ),
   effort: EffortSchema.optional().meta(
     field('Reasoning effort; falls back like the model. Catalog default effort is guidance only.', {
       control: 'effort',
@@ -347,10 +340,13 @@ export const InferenceConfigSchema = z.strictObject({
     }),
   ),
   capabilities: CapabilitiesSchema.optional().meta(
-    field('MCP servers, plugins, and skills, resolved by the adapter.', {
-      advanced: true,
-      group: 'Harness options',
-    }),
+    field(
+      'MCP server, plugin, and skill slugs are recorded but not yet resolved; use raw harness config overrides to configure tools.',
+      {
+        advanced: true,
+        group: 'Harness options',
+      },
+    ),
   ),
   output: z
     .strictObject({

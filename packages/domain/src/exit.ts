@@ -1,4 +1,10 @@
-import type { ContextThread, ExitConfig, ExitCriterion, Outcome } from '@graphgoblin/contracts';
+import type {
+  ContextThread,
+  ExitConfig,
+  ExitCriterion,
+  ExitCriterionEvaluation,
+  Outcome,
+} from '@graphgoblin/contracts';
 import { evaluatePredicate } from './expression.js';
 import { validateJson } from './json-schema.js';
 import { threadView } from './thread-view.js';
@@ -6,6 +12,9 @@ import { threadView } from './thread-view.js';
 export interface PredicateAnswer {
   holds: boolean;
   confidence?: number;
+  reasoning?: string;
+  model?: string;
+  classifierModel?: string;
 }
 
 export interface ExitContext {
@@ -23,34 +32,37 @@ export interface ExitContext {
   ) => Promise<PredicateAnswer>;
   /** Renders the predicate question template. Provided by the engine (it owns templating context). */
   renderQuestion: (template: string) => Promise<string>;
+  /** Observes ordered evaluation evidence without changing exit semantics. */
+  onCriterion?: (evaluation: ExitCriterionEvaluation) => void;
 }
 
 export type ExitDecision =
   | { kind: 'finish'; outcome: Outcome; reason: string; criterionIndex?: number }
   | { kind: 'loop-back'; targetNodeId: string };
 
-async function criterionHolds(criterion: ExitCriterion, ctx: ExitContext): Promise<boolean> {
+async function criterionAnswer(
+  criterion: ExitCriterion,
+  ctx: ExitContext,
+): Promise<PredicateAnswer> {
   switch (criterion.when) {
     case 'max-iterations':
-      return ctx.iteration >= criterion.value;
+      return { holds: ctx.iteration >= criterion.value };
     case 'max-duration':
-      return ctx.elapsedMs >= criterion.seconds * 1000;
+      return { holds: ctx.elapsedMs >= criterion.seconds * 1000 };
     case 'last-output-matches':
-      return (
-        ctx.thread.lastOutput !== undefined &&
-        validateJson(criterion.jsonSchema, ctx.thread.lastOutput.value).ok
-      );
+      return {
+        holds:
+          ctx.thread.lastOutput !== undefined &&
+          validateJson(criterion.jsonSchema, ctx.thread.lastOutput.value).ok,
+      };
     case 'predicate': {
       if (criterion.strategy === 'expression') {
-        return evaluatePredicate(criterion.jsonata as string, threadView(ctx.thread));
+        return {
+          holds: await evaluatePredicate(criterion.jsonata as string, threadView(ctx.thread)),
+        };
       }
       const question = await ctx.renderQuestion(criterion.question as string);
-      const answer = await ctx.askPredicate(criterion, question);
-      if (!answer.holds) return false;
-      if (criterion.minConfidence !== undefined && answer.confidence !== undefined) {
-        return answer.confidence >= criterion.minConfidence;
-      }
-      return true;
+      return ctx.askPredicate(criterion, question);
     }
   }
 }
@@ -61,7 +73,39 @@ async function criterionHolds(criterion: ExitCriterion, ctx: ExitContext): Promi
  */
 export async function evaluateExit(config: ExitConfig, ctx: ExitContext): Promise<ExitDecision> {
   for (const [index, criterion] of config.criteria.entries()) {
-    if (await criterionHolds(criterion, ctx)) {
+    const strategy = criterion.when === 'predicate' ? criterion.strategy : criterion.when;
+    let answer: PredicateAnswer;
+    try {
+      answer = await criterionAnswer(criterion, ctx);
+    } catch (error) {
+      ctx.onCriterion?.({
+        index,
+        strategy,
+        status: 'error',
+        diagnostic: { code: 'CRITERION_ERROR', message: 'Exit criterion evaluation failed' },
+      });
+      throw error;
+    }
+    const minConfidence = criterion.when === 'predicate' ? criterion.minConfidence : undefined;
+    const matched =
+      answer.holds &&
+      (minConfidence === undefined ||
+        answer.confidence === undefined ||
+        answer.confidence >= minConfidence);
+    ctx.onCriterion?.({
+      index,
+      strategy,
+      status: matched ? 'matched' : 'not-matched',
+      holds: answer.holds,
+      ...(answer.confidence !== undefined ? { confidence: answer.confidence } : {}),
+      ...(minConfidence !== undefined ? { minConfidence } : {}),
+      ...(answer.model !== undefined ? { model: answer.model } : {}),
+      ...(answer.classifierModel !== undefined ? { classifierModel: answer.classifierModel } : {}),
+      ...(strategy === 'codex' && answer.reasoning !== undefined
+        ? { reasoning: answer.reasoning.slice(0, 2048) }
+        : {}),
+    });
+    if (matched) {
       return {
         kind: 'finish',
         outcome: criterion.outcome,

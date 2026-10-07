@@ -6,7 +6,7 @@ const TERMINAL_EVENTS = new Set<RunEvent['type']>(['run.finished', 'run.failed',
 
 export interface SseOptions {
   heartbeatMs?: number;
-  /** Whether the run is already in a terminal status. Checked once, after the replay. */
+  /** Whether the run is already in a terminal status. Checked once, after reading replay. */
   isTerminal?: () => Promise<boolean>;
   /**
    * Defensive timeout when a terminal status has no visible terminal event after re-reading the
@@ -24,15 +24,49 @@ export interface SseOptions {
  * after the replay instead of idling.
  */
 export async function streamRunEvents(
-  request: FastifyRequest,
+  _request: FastifyRequest,
   reply: FastifyReply,
   store: EventStorePort,
   runId: string,
   after: number,
   options: SseOptions = {},
 ): Promise<void> {
-  reply.hijack();
+  // Subscribe before reading to avoid losing concurrent appends. Validate the complete replay
+  // before committing SSE headers, so a corrupt page yields the same problem response as JSON.
+  const buffered: RunEvent[] = [];
+  let replaying = true;
+  const unsubscribe = store.subscribe(runId, (event) => {
+    if (replaying) buffered.push(event);
+    else write(event);
+  });
   const res = reply.raw;
+  let closed = false;
+  const disconnectDuringReplay = (): void => {
+    closed = true;
+    unsubscribe();
+  };
+  res.once('close', disconnectDuringReplay);
+  let replay: RunEvent[];
+  let terminal: boolean;
+  let log: RunEvent[];
+  try {
+    replay = await store.read(runId, after);
+    if (closed) return;
+    terminal = (await options.isTerminal?.()) ?? false;
+    if (closed) return;
+    log =
+      terminal && !replay.some((event) => TERMINAL_EVENTS.has(event.type))
+        ? await store.read(runId)
+        : [];
+  } catch (error) {
+    if (closed) return;
+    unsubscribe();
+    throw error;
+  } finally {
+    res.off('close', disconnectDuringReplay);
+  }
+  if (closed) return;
+  reply.hijack();
   res.writeHead(200, {
     'content-type': 'text/event-stream; charset=utf-8',
     'cache-control': 'no-cache, no-transform',
@@ -42,7 +76,6 @@ export async function streamRunEvents(
   res.write(': connected\n\n');
 
   let last = after;
-  let closed = false;
   const write = (event: RunEvent): void => {
     if (closed || event.seq <= last) return;
     last = event.seq;
@@ -52,7 +85,6 @@ export async function streamRunEvents(
   const heartbeat = setInterval(() => {
     if (!closed) res.write(': heartbeat\n\n');
   }, options.heartbeatMs ?? 15_000);
-  let unsubscribe: () => void = () => undefined;
   let grace: ReturnType<typeof setTimeout> | undefined;
   const end = (): void => {
     if (closed) return;
@@ -62,25 +94,16 @@ export async function streamRunEvents(
     unsubscribe();
     res.end();
   };
-  request.raw.on('close', end);
+  res.once('close', end);
 
-  // Subscribe first, then replay, so nothing appended in between is lost; `write` de-duplicates by seq.
-  const buffered: RunEvent[] = [];
-  let replaying = true;
-  unsubscribe = store.subscribe(runId, (event) => {
-    if (replaying) buffered.push(event);
-    else write(event);
-  });
-  for (const event of await store.read(runId, after)) write(event);
+  for (const event of replay) write(event);
   replaying = false;
   for (const event of buffered.sort((a, b) => a.seq - b.seq)) write(event);
 
-  if (closed || !options.isTerminal || !(await options.isTerminal())) return;
+  if (closed || !terminal) return;
   // Terminal, and the replay held no terminal event: check whether the cursor already consumed
   // it or a second read can supply it. Event-before-status ordering means a healthy current log
   // already contains it; the grace below bounds idling for incomplete or inconsistent logs.
-  const log = await store.read(runId);
-  if (closed) return;
   if (log.some((event) => event.seq <= last && TERMINAL_EVENTS.has(event.type))) {
     end();
     return;

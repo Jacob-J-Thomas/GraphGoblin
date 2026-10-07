@@ -93,11 +93,15 @@ describe('classifier selection through the executor', () => {
       e.ports.classifiers.unavailable.set('selected', {
         status: 'unavailable',
         reason,
-        message: 'Selected model cannot run',
+        message: 'private-selection-diagnostic',
       });
       const fallback = e.publish(loop('selected'));
       const run = await e.runToIdle(fallback.loopId);
       expect(run.result).toBe('no');
+      expect(e.events(run.id).find((event) => event.type === 'decision.made')).toMatchObject({
+        skipped: [{ strategy: 'jev', code: reason, message: expect.any(String) }],
+      });
+      expect(JSON.stringify(e.events(run.id))).not.toContain('private-selection-diagnostic');
       expect(e.ports.jev.choices).toEqual([]);
       expect(e.events(run.id).find((event) => event.type === 'decision.made')).not.toHaveProperty(
         'classifierModel',
@@ -167,5 +171,32 @@ describe('classifier selection through the executor', () => {
     await ready;
     await e.manager.cancel(run.id);
     expect((await e.settle(run.id)).status).toBe('cancelled');
+  });
+  it('records ordered expression and provider skips before the winner', async () => {
+    const e = await createTestEngine();
+    e.ports.jev.isAvailable = false;
+    const definition = loop();
+    const node = definition.nodes[1];
+    if (node?.kind !== 'decision') throw new Error('Expected decision fixture');
+    node.config.strategy = ['expression', 'jev', 'codex'];
+    node.config.expression = { jsonata: '"not-a-route"' };
+    const v = e.publish(definition);
+    const run = await e.runToIdle(v.loopId);
+    expect(e.events(run.id).find((event) => event.type === 'decision.made')).toMatchObject({
+      strategy: 'codex',
+      route: 'yes',
+      skipped: [
+        { strategy: 'expression', code: 'EXPRESSION_NOT_APPLICABLE' },
+        { strategy: 'jev', code: 'CLASSIFIER_SECRET_MISSING' },
+      ],
+    });
+    e.ports.codexDecider.isAvailable = false;
+    node.config.strategy = ['codex', 'expression'];
+    node.config.expression = { jsonata: '"no"' };
+    const unavailable = e.publish({ ...definition, name: 'codex-unavailable' });
+    const fallback = await e.runToIdle(unavailable.loopId);
+    expect(e.events(fallback.id).find((event) => event.type === 'decision.made')).toMatchObject({
+      skipped: [{ strategy: 'codex', code: 'PROVIDER_UNAVAILABLE' }],
+    });
   });
 });

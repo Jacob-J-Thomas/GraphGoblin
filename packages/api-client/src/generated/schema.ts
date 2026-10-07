@@ -3404,7 +3404,71 @@ export interface components {
             /** @constant */
             type: "node.progress";
             nodeId: string;
-            progress: components["schemas"]["JsonValueInput"];
+            progress: {
+                item: {
+                    id: string;
+                    summary: string;
+                    /** @constant */
+                    type: "command";
+                    commandPreview?: string | undefined;
+                    exitCode?: number | undefined;
+                    /** @enum {string} */
+                    status: "ok" | "failed" | "running";
+                } | {
+                    id: string;
+                    summary: string;
+                    /** @constant */
+                    type: "message";
+                    /** @enum {string} */
+                    status?: ("ok" | "failed" | "running") | undefined;
+                } | {
+                    id: string;
+                    summary: string;
+                    /** @constant */
+                    type: "reasoning";
+                    /** @enum {string} */
+                    status?: ("ok" | "failed" | "running") | undefined;
+                } | {
+                    id: string;
+                    summary: string;
+                    /** @constant */
+                    type: "file-change";
+                    /** @enum {string} */
+                    status?: ("ok" | "failed" | "running") | undefined;
+                } | {
+                    id: string;
+                    summary: string;
+                    /** @constant */
+                    type: "tool-call";
+                    /** @enum {string} */
+                    status?: ("ok" | "failed" | "running") | undefined;
+                } | {
+                    id: string;
+                    summary: string;
+                    /** @constant */
+                    type: "search";
+                    /** @enum {string} */
+                    status?: ("ok" | "failed" | "running") | undefined;
+                } | {
+                    id: string;
+                    summary: string;
+                    /** @constant */
+                    type: "error";
+                    /** @enum {string} */
+                    status?: ("ok" | "failed" | "running") | undefined;
+                } | {
+                    id: string;
+                    summary: string;
+                    /** @constant */
+                    type: "other";
+                    /** @enum {string} */
+                    status?: ("ok" | "failed" | "running") | undefined;
+                };
+            } | {
+                exitCode: number;
+                stderr: string;
+                stdoutBytes: number;
+            };
         } | {
             runId: string;
             seq: number;
@@ -3456,6 +3520,19 @@ export interface components {
                 route: string;
                 confidence?: number | undefined;
             }[] | undefined;
+            skipped: components["schemas"]["StrategySkipInput"][];
+        } | {
+            runId: string;
+            seq: number;
+            /** Format: date-time */
+            ts: string;
+            /** @constant */
+            type: "exit.evaluated";
+            nodeId: string;
+            iteration: number;
+            maxIterations: number;
+            criteria: components["schemas"]["ExitCriterionEvaluationInput"][];
+            result: components["schemas"]["ExitEvaluationOutcomeInput"];
         } | {
             runId: string;
             seq: number;
@@ -3523,6 +3600,89 @@ export interface components {
             type: "return.failed";
             channel: components["schemas"]["ReturnChannelInput"];
             error: string;
+        };
+        StrategySkipInput: {
+            /** @enum {string} */
+            strategy: "jev" | "codex" | "expression";
+            /** @enum {string} */
+            code: "CLASSIFIER_MODEL_NOT_FOUND" | "CLASSIFIER_PRIMITIVE_UNSUPPORTED" | "CLASSIFIER_MODEL_DISABLED" | "CLASSIFIER_SECRET_MISSING" | "CLASSIFIER_SECRET_UNREADABLE" | "PROVIDER_UNAVAILABLE" | "EXPRESSION_NOT_APPLICABLE" | "UNDECLARED_ROUTE" | "INVALID_CONFIDENCE" | "LOW_CONFIDENCE";
+            message: string;
+        };
+        ExitCriterionEvaluationInput: {
+            index: number;
+            /** @enum {string} */
+            strategy: "expression" | "jev" | "codex" | "max-iterations" | "max-duration" | "last-output-matches";
+            model?: string | undefined;
+            classifierModel?: string | undefined;
+            /** @enum {string} */
+            status: "matched" | "not-matched";
+            holds?: boolean | undefined;
+            confidence?: number | undefined;
+            minConfidence?: number | undefined;
+            reasoning?: string | undefined;
+        } | {
+            index: number;
+            /** @enum {string} */
+            strategy: "expression" | "jev" | "codex" | "max-iterations" | "max-duration" | "last-output-matches";
+            model?: string | undefined;
+            classifierModel?: string | undefined;
+            /** @constant */
+            status: "skipped";
+            reason: {
+                /** @enum {string} */
+                code: "EARLIER_CRITERION_MATCHED" | "EARLIER_CRITERION_FAILED";
+                message: string;
+            };
+        } | {
+            index: number;
+            /** @enum {string} */
+            strategy: "expression" | "jev" | "codex" | "max-iterations" | "max-duration" | "last-output-matches";
+            model?: string | undefined;
+            classifierModel?: string | undefined;
+            /** @constant */
+            status: "error";
+            diagnostic: {
+                /** @enum {string} */
+                code: "CRITERION_ERROR" | "RETURN_MAPPING_ERROR" | "DECIDER_UNAVAILABLE" | "DECIDER_NOT_AUTHENTICATED" | "DECIDER_RATE_LIMITED" | "DECIDER_HTTP_ERROR" | "DECIDER_UNREACHABLE" | "DECIDER_INVALID_RESPONSE" | "DECIDER_REDIRECT" | "DECIDER_TIMEOUT" | "DECIDER_ERROR";
+                message: string;
+                status?: number | undefined;
+            };
+        };
+        ExitEvaluationOutcomeInput: {
+            /** @constant */
+            kind: "completed";
+            /** @enum {string} */
+            outcome: "success" | "failure" | "exhausted";
+            /** @enum {string} */
+            reason: "criterion-matched" | "default-success";
+            criterionIndex?: number | undefined;
+        } | {
+            /** @constant */
+            kind: "looped-back";
+            /** @constant */
+            reason: "no-criterion-matched";
+            targetNodeId: string;
+        } | {
+            /** @constant */
+            kind: "limit-reached";
+            /** @enum {string} */
+            limit: "max-iterations" | "max-duration" | "iteration-ceiling";
+            value: number;
+            criterionIndex?: number | undefined;
+            /** @constant */
+            outcome: "exhausted";
+        } | {
+            /** @constant */
+            kind: "failed";
+            diagnostic: {
+                /** @enum {string} */
+                code: "CRITERION_ERROR" | "RETURN_MAPPING_ERROR" | "DECIDER_UNAVAILABLE" | "DECIDER_NOT_AUTHENTICATED" | "DECIDER_RATE_LIMITED" | "DECIDER_HTTP_ERROR" | "DECIDER_UNREACHABLE" | "DECIDER_INVALID_RESPONSE" | "DECIDER_REDIRECT" | "DECIDER_TIMEOUT" | "DECIDER_ERROR";
+                message: string;
+                status?: number | undefined;
+            };
+        } | {
+            /** @constant */
+            kind: "cancelled";
         };
         ReturnChannelInput: {
             /** @constant */
@@ -4903,7 +5063,71 @@ export interface components {
             /** @constant */
             type: "node.progress";
             nodeId: string;
-            progress: components["schemas"]["JsonValue"];
+            progress: {
+                item: {
+                    id: string;
+                    summary: string;
+                    /** @constant */
+                    type: "command";
+                    commandPreview?: string | undefined;
+                    exitCode?: number | undefined;
+                    /** @enum {string} */
+                    status: "ok" | "failed" | "running";
+                } | {
+                    id: string;
+                    summary: string;
+                    /** @constant */
+                    type: "message";
+                    /** @enum {string} */
+                    status?: ("ok" | "failed" | "running") | undefined;
+                } | {
+                    id: string;
+                    summary: string;
+                    /** @constant */
+                    type: "reasoning";
+                    /** @enum {string} */
+                    status?: ("ok" | "failed" | "running") | undefined;
+                } | {
+                    id: string;
+                    summary: string;
+                    /** @constant */
+                    type: "file-change";
+                    /** @enum {string} */
+                    status?: ("ok" | "failed" | "running") | undefined;
+                } | {
+                    id: string;
+                    summary: string;
+                    /** @constant */
+                    type: "tool-call";
+                    /** @enum {string} */
+                    status?: ("ok" | "failed" | "running") | undefined;
+                } | {
+                    id: string;
+                    summary: string;
+                    /** @constant */
+                    type: "search";
+                    /** @enum {string} */
+                    status?: ("ok" | "failed" | "running") | undefined;
+                } | {
+                    id: string;
+                    summary: string;
+                    /** @constant */
+                    type: "error";
+                    /** @enum {string} */
+                    status?: ("ok" | "failed" | "running") | undefined;
+                } | {
+                    id: string;
+                    summary: string;
+                    /** @constant */
+                    type: "other";
+                    /** @enum {string} */
+                    status?: ("ok" | "failed" | "running") | undefined;
+                };
+            } | {
+                exitCode: number;
+                stderr: string;
+                stdoutBytes: number;
+            };
         } | {
             runId: string;
             seq: number;
@@ -4955,6 +5179,19 @@ export interface components {
                 route: string;
                 confidence?: number | undefined;
             }[] | undefined;
+            skipped: components["schemas"]["StrategySkip"][];
+        } | {
+            runId: string;
+            seq: number;
+            /** Format: date-time */
+            ts: string;
+            /** @constant */
+            type: "exit.evaluated";
+            nodeId: string;
+            iteration: number;
+            maxIterations: number;
+            criteria: components["schemas"]["ExitCriterionEvaluation"][];
+            result: components["schemas"]["ExitEvaluationOutcome"];
         } | {
             runId: string;
             seq: number;
@@ -5022,6 +5259,89 @@ export interface components {
             type: "return.failed";
             channel: components["schemas"]["ReturnChannel"];
             error: string;
+        };
+        StrategySkip: {
+            /** @enum {string} */
+            strategy: "jev" | "codex" | "expression";
+            /** @enum {string} */
+            code: "CLASSIFIER_MODEL_NOT_FOUND" | "CLASSIFIER_PRIMITIVE_UNSUPPORTED" | "CLASSIFIER_MODEL_DISABLED" | "CLASSIFIER_SECRET_MISSING" | "CLASSIFIER_SECRET_UNREADABLE" | "PROVIDER_UNAVAILABLE" | "EXPRESSION_NOT_APPLICABLE" | "UNDECLARED_ROUTE" | "INVALID_CONFIDENCE" | "LOW_CONFIDENCE";
+            message: string;
+        };
+        ExitCriterionEvaluation: {
+            index: number;
+            /** @enum {string} */
+            strategy: "expression" | "jev" | "codex" | "max-iterations" | "max-duration" | "last-output-matches";
+            model?: string | undefined;
+            classifierModel?: string | undefined;
+            /** @enum {string} */
+            status: "matched" | "not-matched";
+            holds?: boolean | undefined;
+            confidence?: number | undefined;
+            minConfidence?: number | undefined;
+            reasoning?: string | undefined;
+        } | {
+            index: number;
+            /** @enum {string} */
+            strategy: "expression" | "jev" | "codex" | "max-iterations" | "max-duration" | "last-output-matches";
+            model?: string | undefined;
+            classifierModel?: string | undefined;
+            /** @constant */
+            status: "skipped";
+            reason: {
+                /** @enum {string} */
+                code: "EARLIER_CRITERION_MATCHED" | "EARLIER_CRITERION_FAILED";
+                message: string;
+            };
+        } | {
+            index: number;
+            /** @enum {string} */
+            strategy: "expression" | "jev" | "codex" | "max-iterations" | "max-duration" | "last-output-matches";
+            model?: string | undefined;
+            classifierModel?: string | undefined;
+            /** @constant */
+            status: "error";
+            diagnostic: {
+                /** @enum {string} */
+                code: "CRITERION_ERROR" | "RETURN_MAPPING_ERROR" | "DECIDER_UNAVAILABLE" | "DECIDER_NOT_AUTHENTICATED" | "DECIDER_RATE_LIMITED" | "DECIDER_HTTP_ERROR" | "DECIDER_UNREACHABLE" | "DECIDER_INVALID_RESPONSE" | "DECIDER_REDIRECT" | "DECIDER_TIMEOUT" | "DECIDER_ERROR";
+                message: string;
+                status?: number | undefined;
+            };
+        };
+        ExitEvaluationOutcome: {
+            /** @constant */
+            kind: "completed";
+            /** @enum {string} */
+            outcome: "success" | "failure" | "exhausted";
+            /** @enum {string} */
+            reason: "criterion-matched" | "default-success";
+            criterionIndex?: number | undefined;
+        } | {
+            /** @constant */
+            kind: "looped-back";
+            /** @constant */
+            reason: "no-criterion-matched";
+            targetNodeId: string;
+        } | {
+            /** @constant */
+            kind: "limit-reached";
+            /** @enum {string} */
+            limit: "max-iterations" | "max-duration" | "iteration-ceiling";
+            value: number;
+            criterionIndex?: number | undefined;
+            /** @constant */
+            outcome: "exhausted";
+        } | {
+            /** @constant */
+            kind: "failed";
+            diagnostic: {
+                /** @enum {string} */
+                code: "CRITERION_ERROR" | "RETURN_MAPPING_ERROR" | "DECIDER_UNAVAILABLE" | "DECIDER_NOT_AUTHENTICATED" | "DECIDER_RATE_LIMITED" | "DECIDER_HTTP_ERROR" | "DECIDER_UNREACHABLE" | "DECIDER_INVALID_RESPONSE" | "DECIDER_REDIRECT" | "DECIDER_TIMEOUT" | "DECIDER_ERROR";
+                message: string;
+                status?: number | undefined;
+            };
+        } | {
+            /** @constant */
+            kind: "cancelled";
         };
         ReturnChannel: {
             /** @constant */

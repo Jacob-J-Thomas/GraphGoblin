@@ -123,8 +123,11 @@ export function describeEvent(event: RunEvent): string {
     case 'child_run.started':
     case 'child_run.finished':
     case 'harness.session':
-    case 'decision.made':
       return 'nodeId' in event ? event.nodeId : '';
+    case 'decision.made':
+      return `${strategyName(event.strategy)} chose ${event.route}${event.confidence !== undefined ? ` with confidence ${event.confidence}` : ''}${event.skipped.map((skip) => `; Skipped ${strategyName(skip.strategy)}: ${skip.message}`).join('')}`;
+    case 'exit.evaluated':
+      return describeExit(event);
     case 'signal.received':
       return event.name;
     case 'return.delivered':
@@ -136,6 +139,38 @@ export function describeEvent(event: RunEvent): string {
   }
 }
 
+function describeExit(event: Extract<RunEvent, { type: 'exit.evaluated' }>): string {
+  const result = event.result;
+  switch (result.kind) {
+    case 'completed': {
+      if (result.reason === 'default-success')
+        return `Exited: default ${result.outcome}, no criterion matched`;
+      const criterion = event.criteria.find((c) => c.index === result.criterionIndex);
+      const label =
+        result.criterionIndex === undefined
+          ? 'a criterion'
+          : `criterion ${result.criterionIndex + 1}`;
+      const detail =
+        criterion?.status === 'matched'
+          ? ` (${strategyName(criterion.strategy)}) matched${criterion.confidence !== undefined ? ` with confidence ${criterion.confidence}` : ''}`
+          : ' matched';
+      return `Exited: ${label}${detail} (${result.outcome})`;
+    }
+    case 'looped-back':
+      return `Looped back: no criterion matched, iteration ${event.iteration} of ${event.maxIterations}`;
+    case 'limit-reached':
+      return `Exited: ${result.limit === 'max-duration' ? `duration limit of ${result.value} seconds` : `iteration limit of ${result.value}`} reached${result.limit === 'iteration-ceiling' ? ' (loop ceiling)' : ''}${result.criterionIndex !== undefined ? ` (criterion ${result.criterionIndex + 1})` : ''}`;
+    case 'failed':
+      return `Exit evaluation failed: ${result.diagnostic.message}`;
+    case 'cancelled':
+      return 'Exit evaluation cancelled';
+  }
+}
+
+export function strategyName(strategy: string): string {
+  return strategy === 'jev' ? 'Jev' : strategy === 'codex' ? 'Codex' : strategy;
+}
+
 /** Progress, session, and usage events grouped by node, for the progress drawer. */
 export function nodeActivity(events: readonly RunEvent[]): Map<string, RunEvent[]> {
   const byNode = new Map<string, RunEvent[]>();
@@ -145,6 +180,7 @@ export function nodeActivity(events: readonly RunEvent[]): Map<string, RunEvent[
       event.type === 'harness.session' ||
       event.type === 'harness.usage' ||
       event.type === 'decision.made' ||
+      event.type === 'exit.evaluated' ||
       event.type === 'heartbeat.beat'
     ) {
       const list = byNode.get(event.nodeId) ?? [];

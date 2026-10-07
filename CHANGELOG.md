@@ -6,6 +6,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ### Added
 
+- Runs explain why an exit completed, looped back, or reached a limit. Select `exit.evaluated` in the inspector to read each criterion's result and confidence, the model or classifier used, and the Codex judge's short reasoning. Successful decisions also explain why earlier strategies were skipped.
+
 - A **Go to Loops** link on the 404 page, with a "Page not found" heading and explanation (#41).
 - Settings → **Appearance → Font** lets you choose a typeface for this browser and preview each option: Geist is the default, with Space Grotesk, Chakra Petch, Atkinson Hyperlegible Next, OpenDyslexic, and Inter as alternatives. Your choice applies immediately, appears without a flash on the next visit, and works across tabs and offline; code remains in Geist Mono. Text size and spacing are unchanged. (#40)
 - Validation badges on nodes and beside Publish open popovers with issues and links to the fields that need attention. Checks rerun for saved drafts and after model catalog changes, so node badges reflect when a selected model becomes unavailable or disabled. (#15)
@@ -20,6 +22,7 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ### Changed
 
+- Inference progress shows a bounded command preview, exit code, and status while the node is running; failed tool calls and other SDK-reported item failures are also visible without provider diagnostics. Capability slugs are recorded but not yet resolved; use raw harness config overrides to configure tools.
 - Every screen works from 360 px to wide desktop without sideways scrolling or clipped controls, including at 200% zoom. Loops, Runs, and Events show stacked rows below 1024 px (Settings' tables below 768 px), with values under their column names. Forms become one column below 640 px and the header links fold into Menu. In the editor, the toolbar wraps instead of hiding Publish, while loop settings and the palette float over the canvas on smaller screens. Touch controls are at least 44 px in both dimensions. Canvas ports counter-scale their absolute hit boxes with fixed 44 px rows on coarse pointers; row-pitch and neighbouring-card caps make targets smaller when zoomed out, while card layout stays fixed. The node dialog's Connect form provides full-size connection controls. Loop update times stay under loop names, and run patch diffs stack on narrow screens. (#41)
 - The light theme keeps the page white and gives cards, panels, the editor toolbar, and dialogs warm brown fills, borders, and control edges. Titles and column headings use dark brown; the dark theme is unchanged. See Settings → Appearance. (#11)
 - Forms share switches, segmented controls, file pickers, fieldsets, required-field markers, help text, and per-field errors. Structured rows keep parse errors with their rows, reject duplicate keys, and preserve focus and announcements when rows change. (#8, #53)
@@ -29,6 +32,11 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 - Settings' Model catalog uses Enabled switches to turn entries on or off. If a refresh removes a row while its switch is saving, focus returns to the section heading, and the notice that the model is no longer available clears on the next toggle. (#24)
 
 ### Upgrade notes
+
+- Codex model names in node configuration and loop, owner, and process defaults are limited to 256 characters, matching recorded exit evidence. Shorten longer names in saved configuration before using it with this version.
+- Stored events are now validated on read. A non-conforming row rejects the entire event page; JSON and SSE replay return `STORED_EVENT_INVALID`, naming the run, sequence, and type. No event is silently repaired or skipped. Migration `0007` supplies historical decisions with `skipped: []`; these empty lists carry no evidence about earlier skips.
+
+- `decision.made` now requires `skipped`; rebuild generated-client consumers with the server. Migration `0007` adds `skipped: []` to stored decisions that lack the field. The inspector starts a fresh session event cache and replays from the server. Earlier skip reasons and exit evaluations cannot be reconstructed. New `exit.evaluated` events include zero-based criterion indices; the inspector displays them starting at 1. No old event-shape parsing path is retained.
 
 - Migration `0006` adds `classifier_models`; startup seeds managed Jev metadata before recovery while preserving enabled. The new table does not rewrite loop definitions, versions, runs, events, secrets, or LLM catalog data; earlier migrations still apply their intended changes. Omitted `jev.model` defaults to catalog `jev`. Rebuild generated-client consumers together; older strict readers may reject exports containing explicit classifier selection.
 
@@ -47,6 +55,7 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 ### Fixed
 
 - Decision routes are connectable immediately after editing, without reloading the loop. Connections stay with their own rows while labels are incomplete, whichever row you finish first. Renaming a route keeps its connection and line layout; removing a route removes its connection even while its label is invalid. Undo and Redo restore both together.
+- Exit explanations respect the recorded completion reason, outcome, and limit even when no criterion index was recorded. A failure match stays a failure, and a configured duration limit stays a duration limit.
 
 - The app probes API reachability and restores queries, event streams, and autosave when the API returns (#55).
 - The app checks for service worker updates when it regains focus (#56).

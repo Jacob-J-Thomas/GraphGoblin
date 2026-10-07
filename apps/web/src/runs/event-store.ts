@@ -69,7 +69,8 @@ export const useRunEventStore = create<RunEventStoreState>()(
         }),
     }),
     {
-      name: 'graphgoblin-run-events',
+      // New event contract: replay from the server instead of retaining old decision shapes.
+      name: 'graphgoblin-run-events-v2',
       storage: createJSONStorage(() => quotaSafeSessionStorage),
       partialize: (state) => ({ runs: state.runs }),
     },

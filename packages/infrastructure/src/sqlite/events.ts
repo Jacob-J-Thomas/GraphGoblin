@@ -1,22 +1,44 @@
 import { EventEmitter } from 'node:events';
-import type { RunEvent } from '@graphgoblin/contracts';
+import { RunEventSchema, type RunEvent } from '@graphgoblin/contracts';
 import { AppendConflictError } from '@graphgoblin/engine';
 import type { ClockPort, EventDraft, EventStorePort } from '@graphgoblin/engine';
 import { and, asc, eq, gt, sql } from 'drizzle-orm';
 import type { Database } from './db.js';
 import { runEvents, runs } from './schema.js';
 
-type Row = typeof runEvents.$inferSelect;
+type Row = Omit<typeof runEvents.$inferSelect, 'payload'> & { payload: string };
+
+/** A stored row violates the current contract. Reject the entire page without exposing payloads. */
+export class InvalidStoredRunEventError extends Error {
+  constructor(
+    readonly runId: string,
+    readonly seq: number,
+    readonly eventType: string,
+  ) {
+    super(`Stored run event does not conform: run ${runId}, seq ${seq}, type ${eventType}`);
+    this.name = 'InvalidStoredRunEventError';
+  }
+}
 
 function toEvent(row: Row): RunEvent {
-  return {
-    ...row.payload,
+  let payload: unknown;
+  try {
+    payload = JSON.parse(row.payload);
+  } catch {
+    throw new InvalidStoredRunEventError(row.runId, row.seq, row.type);
+  }
+  if (payload === null || typeof payload !== 'object' || Array.isArray(payload))
+    throw new InvalidStoredRunEventError(row.runId, row.seq, row.type);
+  const parsed = RunEventSchema.safeParse({
+    ...payload,
     runId: row.runId,
     seq: row.seq,
     ts: row.ts,
     type: row.type,
-    ...(row.nodeId ? { nodeId: row.nodeId } : {}),
-  } as RunEvent;
+    ...(row.nodeId !== null ? { nodeId: row.nodeId } : {}),
+  });
+  if (!parsed.success) throw new InvalidStoredRunEventError(row.runId, row.seq, row.type);
+  return parsed.data;
 }
 
 /**
@@ -86,7 +108,15 @@ export class SqliteEventStore implements EventStorePort {
 
   async read(runId: string, afterSeq = 0, limit?: number): Promise<RunEvent[]> {
     const base = this.db
-      .select()
+      .select({
+        runId: runEvents.runId,
+        seq: runEvents.seq,
+        ts: runEvents.ts,
+        type: runEvents.type,
+        nodeId: runEvents.nodeId,
+        // Read JSON as text so malformed JSON also reports the row's identity, safely.
+        payload: sql<string>`${runEvents.payload}`,
+      })
       .from(runEvents)
       .where(and(eq(runEvents.runId, runId), gt(runEvents.seq, afterSeq)))
       .orderBy(asc(runEvents.seq));

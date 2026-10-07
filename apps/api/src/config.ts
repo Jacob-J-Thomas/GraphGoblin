@@ -2,7 +2,7 @@ import { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { EffortSchema } from '@graphgoblin/contracts';
+import { EffortSchema, ModelNameSchema } from '@graphgoblin/contracts';
 import { z } from 'zod';
 
 const bool = z
@@ -20,7 +20,7 @@ const EnvSchema = z.object({
     .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
     .default('info'),
   GG_MAX_CONCURRENT_RUNS: z.coerce.number().int().min(1).max(64).default(4),
-  GG_DEFAULT_MODEL: z.string().default('gpt-6-luna'),
+  GG_DEFAULT_MODEL: ModelNameSchema.default('gpt-6-luna'),
   GG_DEFAULT_EFFORT: EffortSchema.default('low'),
   GG_TIMER_POLL_MS: z.coerce.number().int().min(50).max(60_000).default(1000),
   GG_HOOK_RATE_LIMIT: z.coerce.number().int().min(1).max(100_000).default(60),

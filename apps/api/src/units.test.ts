@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { FakeClock } from '@graphgoblin/engine/testing';
+import { MAX_MODEL_NAME_LENGTH } from '@graphgoblin/contracts';
 import { loadConfig } from './config.js';
 import { emitOpenApi } from './emit-openapi.js';
 import { InboundEventBus } from './event-bus.js';
@@ -17,6 +18,11 @@ afterEach(async () => {
 });
 
 describe('loadConfig', () => {
+  it('uses the contract model-name bound for process defaults', () => {
+    const model = 'm'.repeat(MAX_MODEL_NAME_LENGTH);
+    expect(loadConfig({ GG_DEFAULT_MODEL: model }).defaultModel).toBe(model);
+    expect(() => loadConfig({ GG_DEFAULT_MODEL: `${model}m` })).toThrow(/GG_DEFAULT_MODEL/);
+  });
   it('applies defaults and derives the database url from the data directory', () => {
     const config = loadConfig({});
     expect(config.host).toBe('127.0.0.1');

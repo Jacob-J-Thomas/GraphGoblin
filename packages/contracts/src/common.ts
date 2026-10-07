@@ -47,6 +47,10 @@ export type Effort = z.infer<typeof EffortSchema>;
 export const HarnessIdSchema = z.enum(['codex']);
 export type HarnessId = z.infer<typeof HarnessIdSchema>;
 
+/** Shared bound for configured model names and the execution evidence that records them. */
+export const MAX_MODEL_NAME_LENGTH = 256;
+export const ModelNameSchema = z.string().min(1).max(MAX_MODEL_NAME_LENGTH);
+
 /**
  * How a value that fails schema validation is repaired.
  * Used by inferencing-node output schemas and by the `coerce` mutation operation.

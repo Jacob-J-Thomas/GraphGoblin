@@ -1,5 +1,5 @@
 import type { FastifyError, FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import { LoopNotFoundError } from '@graphgoblin/infrastructure/sqlite';
+import { InvalidStoredRunEventError, LoopNotFoundError } from '@graphgoblin/infrastructure/sqlite';
 import { DomainError } from '@graphgoblin/domain';
 import { EngineRequestError } from '@graphgoblin/engine';
 import {
@@ -106,6 +106,9 @@ export function registerErrorHandler(app: FastifyInstance): void {
       }
       if (error instanceof EngineRequestError) {
         return problem(reply, ENGINE_STATUS[error.code], error.code, error.message, error.details);
+      }
+      if (error instanceof InvalidStoredRunEventError) {
+        return problem(reply, 500, 'STORED_EVENT_INVALID', error.message);
       }
       if (error instanceof LoopNotFoundError) {
         return problem(reply, 404, 'LOOP_NOT_FOUND', error.message);
