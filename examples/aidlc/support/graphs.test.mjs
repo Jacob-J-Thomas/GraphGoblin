@@ -1,5 +1,5 @@
 // Real engine, fake ports. These tests do not start Codex/Jev or contact GitHub.
-// Build contracts/domain/engine first; run node --experimental-import-meta-resolve --test this-file.
+// Build contracts/domain/engine first; run node --test this-file.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -7,11 +7,11 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '../../..');
-const entry = (pkg, sub = '') =>
-  import.meta.resolve(
-    `@graphgoblin/${pkg}${sub}`,
-    pathToFileURL(path.join(root, `packages/${pkg}/package.json`)).href,
-  );
+const entry = (pkg, sub = '') => {
+  const directory = path.join(root, `packages/${pkg}`);
+  const manifest = JSON.parse(fs.readFileSync(path.join(directory, 'package.json')));
+  return pathToFileURL(path.resolve(directory, manifest.exports[`.${sub}`].import)).href;
+};
 const { createTestEngine } = await import(entry('engine', '/testing'));
 const { validateLoop, validateJson } = await import(entry('domain'));
 const { LoopExportSchema } = await import(entry('contracts'));
@@ -94,11 +94,25 @@ const finding = (disposition = 'fix-now') => ({
 });
 const qa = (verdict = 'pass') => ({
   verdict,
+  repository: config.repository,
+  issueNumber: 1,
+  taskId: task.id,
+  qaRunId: '00000000000000000000000001',
   executionSha: 'c'.repeat(40),
   checklistHash: 'd'.repeat(64),
   depth: 'standard',
   results: [
-    { id: 'aidlc-required', status: verdict, actual: 'aidlc- simulated outcome', evidence },
+    {
+      id: 'aidlc-required',
+      status: verdict,
+      actual: 'aidlc- simulated outcome',
+      evidence: evidence.map((e) => ({
+        ...e,
+        executionSha: 'c'.repeat(40),
+        qaRunId: '00000000000000000000000001',
+        criterionId: 'aidlc-required',
+      })),
+    },
   ],
   proofComplete: true,
   summary: 'aidlc- simulated QA',
@@ -307,6 +321,26 @@ async function scenario(mode) {
       (e) => e.type === 'child_run.finished' && e.nodeId === 'review',
     );
     assert.equal(reviews.length, expectedCycles);
+    if (mode !== 'cap') {
+      const ciCalls = engine.ports.scripts.calls.filter((request) => request.args[1] === 'ci');
+      const ciPayload = JSON.parse(ciCalls.at(-1).stdin).invocation.trigger.payload;
+      assert.equal(
+        ciPayload.reviewRunId,
+        reviews.at(-1).childRunId,
+        'P1-4 parent hands off the authentic review run id',
+      );
+      const closeCall = engine.ports.scripts.calls.find((request) => request.args[1] === 'close');
+      const closePayload = JSON.parse(closeCall.stdin).invocation.trigger.payload;
+      const qaCalls = engine.ports.scripts.calls.filter(
+        (request) => request.args[1] === 'qa-prepare',
+      );
+      const qaPayload = JSON.parse(qaCalls.at(-1).stdin).invocation.trigger.payload;
+      assert.equal(
+        closePayload.task.id,
+        qaPayload.task.id,
+        'P1-5 parent binds closing to the delivered QA task',
+      );
+    }
     if (mode === 'fix-now') {
       const implementCalls = engine.ports.scripts.calls.filter((r) => r.args[1] === 'prepare');
       assert.equal(

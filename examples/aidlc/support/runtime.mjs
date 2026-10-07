@@ -12,8 +12,16 @@ import {
   exactChecks,
   validateReview,
   validateQa,
+  branchGuard,
+  remoteGuard,
+  rejectClosingKeywords,
+  implementationGuard,
+  checkPermission,
+  boundReview,
+  boundQa,
 } from './core.mjs';
 import { readAttempts } from './attempts.mjs';
+import { hashObjectArgs, proofParent } from './proof.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const templateRoot = path.resolve(here, '../../..');
@@ -85,6 +93,52 @@ function checklist() {
   );
   return original;
 }
+function pushDestination() {
+  remoteGuard(
+    git('remote', 'get-url', '--all', 'origin').split('\n'),
+    git('remote', 'get-url', '--push', '--all', 'origin').split('\n'),
+    config.repository,
+  );
+}
+function push(branch, head) {
+  branchGuard(branch, config);
+  assert(sha(head), 'PUSH_SHA_INVALID');
+  pushDestination();
+  git('push', '--', 'origin', `${head}:refs/heads/${branch}`);
+}
+async function instanceRun(id) {
+  assert(/^[A-Z0-9]{26}$/.test(id), 'RUN_ID_INVALID');
+  const get = async (suffix) => {
+    const response = await fetch(`http://127.0.0.1:4747/runs/${id}${suffix}`);
+    assert(response.ok, 'PROVENANCE_FETCH_FAILED');
+    return response.json();
+  };
+  return { run: await get(''), thread: await get('/thread') };
+}
+const context = (runId) => ({
+  runId,
+  repository: p.repository,
+  issueNumber: p.issueNumber,
+  taskId: p.task?.id,
+  checklist: p.checklist,
+});
+async function authenticatedReview() {
+  const source = await instanceRun(p.reviewRunId);
+  return boundReview(
+    source.run,
+    source.thread,
+    context(p.reviewRunId),
+    process.env.AIDLC_REVIEW_LOOP_ID,
+    p.implementation,
+    config,
+  );
+}
+const qaContext = (qaRunId, checkEvidence) => ({
+  ...context(qaRunId),
+  qaRunId,
+  checkEvidence,
+  allowUnsandboxedChecks: config.allowUnsandboxedChecks,
+});
 function admission() {
   repositoryGuard(p.repository, config.repository);
   assert(
@@ -102,14 +156,10 @@ function admission() {
     }
   };
   walk(root);
-  const remote = git('remote', 'get-url', 'origin');
-  assert(
-    [
-      `https://github.com/${config.repository}.git`,
-      `https://github.com/${config.repository}`,
-    ].includes(remote),
-    'REMOTE_NOT_AUTHORIZED',
-  );
+  pushDestination();
+  if (p.implementation) implementationGuard(p.implementation, config);
+  if (p.prCi)
+    assert(sha(p.prCi.headSha) && sha(p.prCi.mergeSha ?? p.prCi.headSha), 'PR_SHA_INVALID');
   assert(
     Number.isInteger(p.issueNumber) &&
       p.issueNumber > 0 &&
@@ -139,6 +189,7 @@ function checkDeadline() {
     );
 }
 function runChecks(head) {
+  checkPermission(config);
   assert(git('rev-parse', 'HEAD') === head, 'CHECK_HEAD_CHANGED');
   let pass = true;
   const reports = config.checks.map((check, index) => {
@@ -156,6 +207,7 @@ function runChecks(head) {
           program: check.program,
           args: check.args,
           sha: head,
+          sandbox: 'unsandboxed-explicit',
           exitCode: result.status,
           error: result.error?.message ?? null,
           stdout: result.stdout ?? '',
@@ -198,23 +250,26 @@ function comment(number, key, body) {
     : gh(endpoint(`issues/${number}/comments`), 'POST', payload);
 }
 function ensurePr(implementation, draft = true) {
+  implementationGuard(implementation, config);
   assert(git('rev-parse', 'HEAD') === implementation.headSha, 'PR_LOCAL_HEAD_CHANGED');
-  git('push', 'origin', `${implementation.headSha}:refs/heads/${implementation.branch}`);
+  const title = `${config.policy.prTitlePrefix} issue ${p.issueNumber}: ${p.task?.id ?? 'task'}`;
   const prs = gh(
     endpoint(
-      `pulls?state=all&head=Jacob-J-Thomas:${implementation.branch}&base=${config.baseBranch}`,
+      `pulls?${new URLSearchParams({ state: 'all', head: `${config.repository.split('/')[0]}:${implementation.branch}`, base: config.baseBranch })}`,
     ),
   );
   assert(prs.length <= 1, 'AMBIGUOUS_PR');
   const body = `${config.policy.linkage} #${p.issueNumber}\n\n## Summary\n${implementation.summary}\n\n## Changes\n${implementation.filesChanged.map((x) => `- ${x}`).join('\n')}\n\n## Tests and gates\n${implementation.evidence.map((x) => `${x.path} SHA-256 ${x.sha256}`).join('\n')}\n\n## Risks\nCodex-only independent fresh sessions; same-family relaxation. QA must pass before closure.\n\n<!-- aidlc-head:${implementation.headSha} -->`;
-  assert(!/\b(closes?|fix(es|ed)?|resolves?)\s+#\d+/i.test(body), 'AUTO_CLOSE_FORBIDDEN');
+  rejectClosingKeywords(title, body);
+  if (prs.length) assert(prs[0].state === 'open' && !prs[0].merged_at, 'PR_ALREADY_CLOSED');
+  push(implementation.branch, implementation.headSha);
   let pr;
   if (prs.length) {
     assert(prs[0].state === 'open' && !prs[0].merged_at, 'PR_ALREADY_CLOSED');
-    pr = gh(endpoint(`pulls/${prs[0].number}`), 'PATCH', { body });
+    pr = gh(endpoint(`pulls/${prs[0].number}`), 'PATCH', { title, body });
   } else
     pr = gh(endpoint('pulls'), 'POST', {
-      title: `${config.policy.prTitlePrefix} issue ${p.issueNumber}: ${p.task?.id ?? 'task'}`,
+      title,
       head: implementation.branch,
       base: config.baseBranch,
       body,
@@ -226,11 +281,27 @@ function ensurePr(implementation, draft = true) {
   return pr;
 }
 function remoteChecks(head) {
-  const checks = gh(endpoint(`commits/${head}/check-runs?per_page=100`));
+  assert(sha(head), 'CHECK_SHA_INVALID');
+  const pages = JSON.parse(
+    command('gh', [
+      'api',
+      endpoint(`commits/${head}/check-runs?filter=all&per_page=100`),
+      '--paginate',
+      '--slurp',
+    ]),
+  );
   const statuses = gh(endpoint(`commits/${head}/status`));
-  return exactChecks(head, config.requiredChecks, checks.check_runs, statuses.statuses);
+  return exactChecks(
+    head,
+    config.requiredChecks,
+    pages.flatMap((page) => page.check_runs),
+    statuses.statuses,
+  );
 }
 function publishProof(qa) {
+  const oldCommit = proofParent(config.policy.proofBranch, config, git, (args) =>
+    spawnSync('git', args, { cwd: root, encoding: 'utf8', windowsHide: true }),
+  );
   const evidence = [
     ...new Map(qa.results.flatMap((r) => r.evidence).map((e) => [e.path, e])).values(),
   ];
@@ -239,32 +310,26 @@ function publishProof(qa) {
   verifyProof(root, evidence);
   const index = path.join(proofDir, `aidlc-index-${t.run.id}`);
   const env = { ...process.env, GIT_INDEX_FILE: index };
-  command('git', ['read-tree', '--empty'], { env });
+  command('git', oldCommit ? ['read-tree', oldCommit] : ['read-tree', '--empty'], { env });
   for (const e of evidence) {
-    const object = git('hash-object', '-w', e.path);
-    command('git', ['update-index', '--add', '--cacheinfo', `100644,${object},${e.path}`], { env });
+    const object = git(...hashObjectArgs(e.path));
+    command('git', ['update-index', '--add', '--cacheinfo', '100644', object, e.path], { env });
   }
   const tree = command('git', ['write-tree'], { env });
   const ref = `refs/heads/${config.policy.proofBranch}`;
-  const existing = spawnSync('git', ['rev-parse', '--verify', ref], {
-    cwd: root,
-    encoding: 'utf8',
-    windowsHide: true,
-  });
   const args = [
     'commit-tree',
     tree,
     '-m',
     `aidlc- QA proof issue ${p.issueNumber} at ${qa.executionSha}`,
   ];
-  if (existing.status === 0) args.push('-p', existing.stdout.trim());
-  const oldCommit = existing.status === 0 ? existing.stdout.trim() : null;
+  if (oldCommit) args.push('-p', oldCommit);
   const commit =
-    oldCommit && git('rev-parse', `${oldCommit}^{tree}`) === tree
+    oldCommit && git('rev-parse', '--verify', '--end-of-options', `${oldCommit}^{tree}`) === tree
       ? oldCommit
       : command('git', args);
   git('update-ref', ref, commit);
-  git('push', 'origin', `${commit}:${ref}`);
+  push(config.policy.proofBranch, commit);
   return evidence.map((e) => `https://github.com/${config.repository}/blob/${commit}/${e.path}`);
 }
 
@@ -277,7 +342,7 @@ try {
   assert(
     process.env.AIDLC_SUPPORT_HASH ===
       hash(
-        ['runtime.mjs', 'core.mjs', 'attempts.mjs']
+        ['runtime.mjs', 'core.mjs', 'attempts.mjs', 'proof.mjs']
           .map((name) => fs.readFileSync(path.join(here, name), 'utf8'))
           .join('\n'),
       ),
@@ -316,15 +381,16 @@ try {
         throw new Error('ROLE_UNAVAILABLE');
       }
     }
-    const file = path.join(controlDir, 'aidlc-budget.json');
+    const file = path.join(controlDir, config.budgetFile);
     const budget = fs.existsSync(file)
       ? JSON.parse(fs.readFileSync(file, 'utf8'))
       : { workerReservations: 0, jevReservations: 0, entries: [] };
     const key = `${t.run.id}:${t.lastOutput?.nodeId ?? 'start'}:${process.argv[4]}:${t.counters.nodeVisits[process.argv[4]] ?? 0}`;
     if (!budget.entries.some((x) => x.key === key)) {
       if (kind === 'worker') {
-        assert(budget.workerReservations + 2 <= config.bounds.workerStarts, 'WORKER_BUDGET');
-        budget.workerReservations += 2;
+        const turns = 1 + config.maxSchemaRepairAttempts;
+        assert(budget.workerReservations + turns <= config.bounds.workerStarts, 'WORKER_BUDGET');
+        budget.workerReservations += turns;
       } else {
         assert(budget.jevReservations + 1 <= config.bounds.jevEvaluations, 'JEV_BUDGET');
         budget.jevReservations += 1;
@@ -389,18 +455,19 @@ try {
     put('review', null);
     put('qaReworks', 0);
   } else if (action === 'prepare') {
+    checkPermission(config);
     const branch = p.implementation?.branch ?? `aidlc-issue-${p.issueNumber}-${p.task.id}`;
-    assert(/^aidlc-[a-z0-9-]+$/.test(branch), 'BRANCH_INVALID');
+    branchGuard(branch, config);
     assert(!git('status', '--porcelain', '--untracked-files=no'), 'WORKSPACE_DIRTY');
-    const exists = spawnSync('git', ['show-ref', '--verify', `refs/heads/${branch}`], {
+    const exists = spawnSync('git', ['show-ref', '--verify', '--', `refs/heads/${branch}`], {
       cwd: root,
       encoding: 'utf8',
       windowsHide: true,
     });
-    if (exists.status === 0) git('checkout', branch);
+    if (exists.status === 0) git('checkout', '--no-guess', branch, '--');
     else {
-      git('fetch', 'origin', config.baseBranch);
-      git('checkout', '-b', branch, `origin/${config.baseBranch}`);
+      git('fetch', '--', 'origin', config.baseBranch);
+      git('checkout', '-b', branch, `origin/${config.baseBranch}`, '--');
     }
     if (p.feedback?.reviewedHeadSha)
       assert(git('rev-parse', 'HEAD') === p.feedback.reviewedHeadSha, 'FEEDBACK_STALE_HEAD');
@@ -493,7 +560,7 @@ try {
     );
   } else if (action === 'review') {
     const review = last();
-    validateReview(review, p.implementation, config);
+    validateReview(review, p.implementation, config, p.checklist);
     assert(git('rev-parse', 'HEAD') === review.reviewedHeadSha, 'REVIEW_LOCAL_HEAD_CHANGED');
     const coverageIds = review.acceptanceCoverage.map((x) => x.criterion);
     assert(
@@ -538,8 +605,7 @@ try {
     put('reviewCycle', v.reviewCycle + 1);
   } else if (action === 'ci') {
     const i = p.implementation;
-    const review = p.review;
-    validateReview(review, i, config);
+    const review = await authenticatedReview();
     assert(review.verdict === 'pass', 'REVIEW_NOT_PASSED');
     const local = runChecks(i.headSha);
     assert(local.pass, 'LOCAL_GATE_FAILED');
@@ -580,6 +646,7 @@ try {
         : 'Required checks failed, missing or timed out',
     });
   } else if (action === 'merge') {
+    const review = await authenticatedReview();
     const result = v.result;
     assert(result.status === 'ready', 'CI_NOT_READY');
     assert(
@@ -607,6 +674,9 @@ try {
     const verdict = {
       verdict: 'pass',
       reviewedHeadSha: result.headSha,
+      reviewRunId: p.reviewRunId,
+      reviewLoopId: process.env.AIDLC_REVIEW_LOOP_ID,
+      acceptanceCoverage: review.acceptanceCoverage,
       reviewerModel: config.roles.reviewer.model,
       reviewerFamily: config.roles.reviewer.family,
       approvalKind: 'comment-and-label',
@@ -623,7 +693,10 @@ try {
       p.policy.allowMerge &&
       config.policy.allowMerge &&
       (!config.policy.requireHumanBeforeMerge || v.humanApproved === result.headSha);
-    if (!canMerge) result.reason = 'Merge policy requires human authorization';
+    if (!p.policy.allowMerge || !config.policy.allowMerge) {
+      result.status = 'blocked';
+      result.reason = 'Merge disabled by policy; human input cannot override it';
+    } else if (!canMerge) result.reason = 'Merge policy requires human authorization';
     else {
       // Draft promotion needs GraphQL, but remains an explicit scratch-only gh operation.
       if (pr.draft) command('gh', ['pr', 'ready', String(pr.number), '--repo', config.repository]);
@@ -651,17 +724,21 @@ try {
   } else if (action === 'human') {
     const input = last();
     assert(
-      input.expectedHeadSha === v.result.headSha && input.decision === 'merge',
+      input.expectedHeadSha === v.result.headSha &&
+        input.decision === 'merge' &&
+        p.policy.allowMerge &&
+        config.policy.allowMerge,
       'HUMAN_MERGE_REFUSED',
     );
     put('humanApproved', input.expectedHeadSha);
   } else if (action === 'qa-prepare') {
+    checkPermission(config);
     assert(p.prCi.status === 'merged' && sha(p.prCi.mergeSha), 'QA_REQUIRES_MERGE');
     const remote = gh(endpoint(`pulls/${p.prCi.prNumber}`));
     assert(remote.merged && remote.merge_commit_sha === p.prCi.mergeSha, 'QA_MERGE_MISMATCH');
     assert(!git('status', '--porcelain', '--untracked-files=no'), 'QA_DIRTY_WORKSPACE');
-    git('fetch', 'origin', config.baseBranch);
-    git('checkout', '--detach', p.prCi.mergeSha);
+    git('fetch', '--', 'origin', config.baseBranch);
+    git('checkout', '--detach', p.prCi.mergeSha, '--');
     if (config.policy.requireStrictQaAudit) {
       comment(
         p.issueNumber,
@@ -671,12 +748,36 @@ try {
       put('auditBlocked', true);
     } else put('auditBlocked', false);
     const checks = runChecks(p.prCi.mergeSha);
-    put('checkEvidence', checks.reports);
+    const boundEvidence = p.checklist.flatMap((criterion) =>
+      checks.reports.map((report, index) => {
+        const log = JSON.parse(fs.readFileSync(path.join(root, report.path), 'utf8'));
+        const envelope = {
+          ...log,
+          repository: p.repository,
+          issueNumber: p.issueNumber,
+          taskId: p.task.id,
+          executionSha: p.prCi.mergeSha,
+          qaRunId: t.run.id,
+          criterionId: criterion.id,
+        };
+        return {
+          ...writeProof(
+            `${p.prCi.mergeSha}-${t.run.id}-${hash(criterion.id)}-${index}.json`,
+            JSON.stringify(envelope, null, 2),
+          ),
+          executionSha: p.prCi.mergeSha,
+          qaRunId: t.run.id,
+          criterionId: criterion.id,
+        };
+      }),
+    );
+    put('checkEvidence', boundEvidence);
+    put('qaRunId', t.run.id);
     put('checksPass', checks.pass);
     put('checklistHash', hash(JSON.stringify(p.checklist)));
   } else if (action === 'qa') {
     const qa = last();
-    validateQa(qa, p.prCi.mergeSha, p.checklist, root);
+    validateQa(qa, p.prCi.mergeSha, p.checklist, root, qaContext(t.run.id, v.checkEvidence));
     assert(
       git('rev-parse', 'HEAD') === qa.executionSha &&
         !git('status', '--porcelain', '--untracked-files=no'),
@@ -698,6 +799,10 @@ try {
   } else if (action === 'qa-blocked') {
     put('result', {
       verdict: 'blocked',
+      repository: p.repository,
+      issueNumber: p.issueNumber,
+      taskId: p.task.id,
+      qaRunId: t.run.id,
       executionSha: p.prCi.mergeSha,
       checklistHash: hash(JSON.stringify(p.checklist)),
       depth: config.policy.qaDepth,
@@ -731,8 +836,26 @@ try {
     put('qaRuns', [...v.qaRuns, t.outputs.qa.value.childRunId]);
     put('index', v.index + 1);
   } else if (action === 'close') {
-    const qa = p.qa;
-    validateQa(qa, p.prCi.mergeSha, p.checklist, root);
+    const source = await instanceRun(p.qaRunId);
+    const qa = boundQa(
+      source.run,
+      source.thread,
+      context(p.qaRunId),
+      process.env.AIDLC_QA_LOOP_ID,
+      p.prCi.mergeSha,
+    );
+    assert(
+      JSON.stringify(qa) === JSON.stringify(p.qa) &&
+        JSON.stringify(source.run.result.proofLinks) === JSON.stringify(p.proofLinks),
+      'CLOSURE_QA_PROVENANCE_FAILED',
+    );
+    validateQa(
+      qa,
+      p.prCi.mergeSha,
+      p.checklist,
+      root,
+      qaContext(p.qaRunId, source.thread.vars.checkEvidence),
+    );
     assert(
       qa.verdict === 'pass' && p.remainingTaskIds.length === 0 && p.proofLinks.length > 0,
       'CLOSURE_POLICY_FAILED',
@@ -744,14 +867,8 @@ try {
         !config.policy.requireStrictQaAudit,
       'CLOSURE_SIGNOFF_BLOCKED',
     );
-    const run = await fetch(`http://127.0.0.1:4747/runs/${p.qaRunId}`).then((r) => r.json());
-    assert(
-      run.status === 'succeeded' &&
-        JSON.stringify(run.result.qa) === JSON.stringify(qa) &&
-        JSON.stringify(run.result.proofLinks) === JSON.stringify(p.proofLinks),
-      'CLOSURE_QA_PROVENANCE_FAILED',
-    );
-    if (t.run.parentRunId) assert(run.parentRunId === t.run.parentRunId, 'CLOSURE_WRONG_PARENT');
+    if (t.run.parentRunId)
+      assert(source.run.parentRunId === t.run.parentRunId, 'CLOSURE_WRONG_PARENT');
     const remote = gh(endpoint(`pulls/${p.prCi.prNumber}`));
     assert(remote.merged && remote.merge_commit_sha === qa.executionSha, 'CLOSURE_MERGE_CHANGED');
     comment(

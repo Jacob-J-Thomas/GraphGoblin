@@ -4,7 +4,13 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const dir = path.resolve(here, '../../../.tmp/aidlc-control');
-const ledgerFile = path.join(dir, 'aidlc-live-ledger.json');
+const round = process.env.AIDLC_ROUND;
+if (round && !/^[a-z0-9-]+$/.test(round)) throw new Error('ROUND_INVALID');
+const ledgerFile = path.join(
+  dir,
+  round ? `aidlc-live-ledger-${round}.json` : 'aidlc-live-ledger.json',
+);
+const limits = round === 'safety' ? { workers: 12, jev: 10 } : { workers: 30, jev: 30 };
 const ledger = fs.existsSync(ledgerFile) ? JSON.parse(fs.readFileSync(ledgerFile)) : { roots: [] };
 async function api(route, method = 'GET', body) {
   const r = await fetch(`http://127.0.0.1:4747${route}`, {
@@ -70,7 +76,8 @@ if (process.argv[2] === 'start') {
     records.some((x) => !['succeeded', 'failed', 'cancelled', 'exhausted'].includes(x.run.status))
   )
     throw new Error('Previous acceptance run is active');
-  if (workers + repairs + 2 > 30 || jev + 1 > 30) throw new Error('Acceptance budget exhausted');
+  if (workers + repairs + 2 > limits.workers || jev + 1 > limits.jev)
+    throw new Error('Acceptance budget exhausted');
   const input = JSON.parse(fs.readFileSync(process.argv[4]));
   const loops = (await api('/loops')).items;
   const matches = loops.filter((x) => x.name === process.argv[3]);

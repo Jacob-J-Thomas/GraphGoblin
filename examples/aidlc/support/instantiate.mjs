@@ -15,7 +15,7 @@ const placeholder = '00000000000000000000000000';
 const runtime = path.join(here, 'runtime.mjs');
 const supportHash = createHash('sha256')
   .update(
-    ['runtime.mjs', 'core.mjs', 'attempts.mjs']
+    ['runtime.mjs', 'core.mjs', 'attempts.mjs', 'proof.mjs']
       .map((name) => fs.readFileSync(path.join(here, name), 'utf8'))
       .join('\n'),
   )
@@ -54,6 +54,7 @@ const payloadSchema = {
     plan: schemas.Plan,
     implementation: { anyOf: [schemas.Implementation, { type: 'null' }] },
     review: { anyOf: [schemas.Review, { type: 'null' }] },
+    reviewRunId: str,
     feedback: {},
     prCi: schemas.PrCi,
     qa: schemas.Qa,
@@ -111,7 +112,12 @@ function graph(name, description) {
     add(id, 'script', {
       command: process.execPath,
       args: [runtime, action, ...args],
-      env: { AIDLC_SETTINGS_HASH: settingsHash, AIDLC_SUPPORT_HASH: supportHash },
+      env: {
+        AIDLC_SETTINGS_HASH: settingsHash,
+        AIDLC_SUPPORT_HASH: supportHash,
+        AIDLC_REVIEW_LOOP_ID: ids.review ?? placeholder,
+        AIDLC_QA_LOOP_ID: ids.qa ?? placeholder,
+      },
       cwd: 'workspace',
       stdin: 'thread',
       stdout: 'patch',
@@ -176,7 +182,11 @@ function graph(name, description) {
         schema: {
           jsonSchema: schemas[schema],
           native: true,
-          repair: { enabled: true, maxAttempts: 1, onFailure: 'fail-run' },
+          repair: {
+            enabled: cfg.maxSchemaRepairAttempts > 0,
+            maxAttempts: cfg.maxSchemaRepairAttempts,
+            onFailure: 'fail-run',
+          },
         },
       },
     });
@@ -237,13 +247,13 @@ const outputs = [];
     'judgment',
     'judgment',
     'RouteJudgment',
-    'Choose plannerA for deep architecture or plannerB for routine clear work; use human for missing intent. Request: {{ trigger.payload.message }}. Criteria: {{ vars.config.routing | json }}.',
+    'Choose plannerA or plannerB using the configured criteria; use human for missing intent. Request: {{ trigger.payload.message }}. Criteria: {{ vars.config.routing | json }}.',
   );
   g.edge('route', 'judgment-budget', 'uncertain');
   g.decision(
     'judgment-route',
     ['plannerA', 'plannerB', 'blocked'],
-    'lastOutput.value.route = "plannerA" ? "plannerA" : lastOutput.value.route = "plannerB" ? "plannerB" : "blocked"',
+    'lastOutput.value.confidence >= vars.config.routing.minConfidence and lastOutput.value.confidence <= 1 ? (lastOutput.value.route = "plannerA" ? "plannerA" : lastOutput.value.route = "plannerB" ? "plannerB" : "blocked") : "blocked"',
   );
   g.edge('judgment', 'judgment-route');
   g.edge('judgment-route', 'plannera-budget', 'plannerA');
@@ -298,7 +308,7 @@ const outputs = [];
   g.decision(
     'judgment-route',
     ['code', 'visual', 'blocked'],
-    'lastOutput.value.route = "code" ? "code" : lastOutput.value.route = "visual" ? "visual" : "blocked"',
+    'lastOutput.value.confidence >= vars.config.routing.minConfidence and lastOutput.value.confidence <= 1 ? (lastOutput.value.route = "code" ? "code" : lastOutput.value.route = "visual" ? "visual" : "blocked") : "blocked"',
   );
   g.edge('judgment', 'judgment-route');
   g.edge('judgment-route', 'code-budget', 'code');
@@ -362,12 +372,13 @@ const outputs = [];
   g.edge('ci-route', 'blocked', 'blocked');
   g.decision(
     'merge-route',
-    ['merged', 'human'],
-    'vars.result.status = "merged" ? "merged" : "human"',
+    ['merged', 'human', 'blocked'],
+    'vars.result.status = "merged" ? "merged" : vars.result.status = "blocked" ? "blocked" : "human"',
   );
   g.edge('merge', 'merge-route');
   g.exit('done');
   g.edge('merge-route', 'done', 'merged');
+  g.edge('merge-route', 'blocked', 'blocked');
   g.add('human', 'wait', {
     mode: 'input',
     prompt:
@@ -404,7 +415,7 @@ const outputs = [];
     'qa',
     'qa',
     'Qa',
-    'Execute every locked checklist item at current verified merge SHA {{ trigger.payload.prCi.mergeSha }}. Checklist: {{ trigger.payload.checklist | json }}. Original request: {{ trigger.payload.message }}. Use the actual checks already run by the script plus your independent local verification. Script evidence: {{ vars.checkEvidence | json }}; checksPass {{ vars.checksPass }}. Report concrete actual outcomes for each required id. All evidence must exist and have real SHA-256, and each criterion must cite nonempty proof. You may reuse applicable script logs with their supplied hashes; do not create files or modify the merge. Return executionSha {{ trigger.payload.prCi.mergeSha }}, checklistHash {{ vars.checklistHash }}, depth {{ vars.config.policy.qaDepth }}, proofComplete true only when every required criterion has proof. Report fail/blocked honestly for missing acceptance. No adversarial evidence-only audit is claimed.',
+    'Execute every locked checklist item at current verified merge SHA {{ trigger.payload.prCi.mergeSha }}. Checklist: {{ trigger.payload.checklist | json }}. Original request: {{ trigger.payload.message }}. Use the actual checks already run by the script plus your independent local verification. Script evidence: {{ vars.checkEvidence | json }}; checksPass {{ vars.checksPass }}. Report concrete actual outcomes for each required id. Each criterion must cite only the supplied script evidence with its matching criterionId, executionSha and qaRunId; preserve the supplied hashes and all metadata. Do not create files or modify the merge. Return repository {{ trigger.payload.repository }}, issueNumber {{ trigger.payload.issueNumber }}, taskId {{ trigger.payload.task.id }}, qaRunId {{ vars.qaRunId }}, executionSha {{ trigger.payload.prCi.mergeSha }}, checklistHash {{ vars.checklistHash }}, depth {{ vars.config.policy.qaDepth }}, proofComplete true only when every required criterion has proof. Report fail/blocked honestly for missing acceptance. No adversarial evidence-only audit is claimed.',
   );
   g.edge('audit-route', 'qa-budget', 'run');
   g.script('verify-proof', 'qa');
@@ -472,7 +483,7 @@ const outputs = [];
     'pr-ci',
     'pr-ci',
     'prCi',
-    '{"task":vars.task,"implementation":vars.implementation,"review":vars.review}',
+    '{"task":vars.task,"implementation":vars.implementation,"review":vars.review,"reviewRunId":outputs.review.value.childRunId}',
   );
   g.edge('review-route', 'pr-ci', 'pass');
   g.decision(
@@ -507,7 +518,7 @@ const outputs = [];
     'closing',
     'closing',
     'closure',
-    '{"prCi":vars.prCi,"qa":vars.qa,"qaRunId":outputs.qa.value.childRunId,"proofLinks":vars.qaResult.proofLinks,"remainingTaskIds":[]}',
+    '{"task":vars.task,"prCi":vars.prCi,"qa":vars.qa,"qaRunId":outputs.qa.value.childRunId,"proofLinks":vars.qaResult.proofLinks,"remainingTaskIds":[]}',
   );
   g.edge('remaining', 'closing', 'close');
   g.decision(

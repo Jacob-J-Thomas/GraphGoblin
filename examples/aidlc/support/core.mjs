@@ -7,6 +7,91 @@ export const assert = (ok, reason) => {
   if (!ok) throw new Error(reason);
 };
 export const sha = (value) => /^[a-f0-9]{40}$/.test(value);
+export function checkPermission(config) {
+  assert(config.allowUnsandboxedChecks === true, 'SANDBOXED_CHECKS_UNAVAILABLE');
+}
+export function implementationGuard(implementation, config) {
+  branchGuard(implementation.branch, config);
+  assert(sha(implementation.headSha) && sha(implementation.baseSha), 'IMPLEMENTATION_SHA_INVALID');
+}
+export function branchGuard(branch, config) {
+  assert(
+    typeof branch === 'string' &&
+      /^[a-zA-Z0-9][a-zA-Z0-9._/-]*$/.test(branch) &&
+      !branch.includes('..') &&
+      new RegExp(config.branchPattern).test(branch) &&
+      branch !== config.baseBranch &&
+      !['main', 'master'].includes(branch),
+    'BRANCH_NOT_AUTHORIZED',
+  );
+  return branch;
+}
+export function remoteGuard(fetchUrls, pushUrls, repository) {
+  const allowed = [`https://github.com/${repository}`, `https://github.com/${repository}.git`];
+  assert(
+    fetchUrls.length > 0 &&
+      pushUrls.length > 0 &&
+      [...fetchUrls, ...pushUrls].every((url) => allowed.includes(url)),
+    'REMOTE_NOT_AUTHORIZED',
+  );
+}
+export function rejectClosingKeywords(...texts) {
+  const keyword =
+    /\b(?:close|closes|closed|fix|fixes|fixed|resolve|resolves|resolved)\b[\s\S]*?(?:#\d+|https?:\/\/github\.com\/[\w.-]+\/[\w.-]+\/issues\/\d+)/i;
+  assert(
+    texts.every((text) => typeof text === 'string' && !keyword.test(text)),
+    'AUTO_CLOSE_FORBIDDEN',
+  );
+}
+export function reviewCoverage(review, checklist) {
+  const coverage = review.acceptanceCoverage;
+  assert(
+    new Set(coverage.map((x) => x.criterion)).size === coverage.length &&
+      checklist.every((c) =>
+        coverage.some(
+          (x) =>
+            x.criterion === c.id &&
+            (review.verdict !== 'pass' || (x.covered && x.evidence.length > 0)),
+        ),
+      ),
+    'REVIEW_CHECKLIST_INCOMPLETE',
+  );
+}
+export function runProvenance(run, thread, expected, loopId) {
+  const p = thread.invocation.trigger.payload;
+  assert(
+    run.id === expected.runId &&
+      run.loopId === loopId &&
+      run.status === 'succeeded' &&
+      run.outcome === 'success' &&
+      p.repository === expected.repository &&
+      p.issueNumber === expected.issueNumber &&
+      p.task?.id === expected.taskId &&
+      JSON.stringify(p.checklist) === JSON.stringify(expected.checklist),
+    'RUN_PROVENANCE_MISMATCH',
+  );
+  return p;
+}
+export function boundReview(run, thread, expected, loopId, implementation, config) {
+  const payload = runProvenance(run, thread, expected, loopId);
+  assert(
+    JSON.stringify(payload.implementation) === JSON.stringify(implementation),
+    'REVIEW_IMPLEMENTATION_MISMATCH',
+  );
+  validateReview(run.result, implementation, config, expected.checklist);
+  assert(run.result.verdict === 'pass', 'REVIEW_NOT_PASSED');
+  return run.result;
+}
+export function boundQa(run, thread, expected, loopId, mergeSha) {
+  const payload = runProvenance(run, thread, expected, loopId);
+  assert(
+    payload.prCi?.mergeSha === mergeSha &&
+      run.result.qa.executionSha === mergeSha &&
+      run.result.qa.qaRunId === expected.runId,
+    'CLOSURE_QA_MERGE_OR_RUN_MISMATCH',
+  );
+  return run.result.qa;
+}
 export function repositoryGuard(repository, allowed) {
   assert(
     repository === allowed && repository === 'Jacob-J-Thomas/gg-aidlc-scratch',
@@ -54,28 +139,34 @@ export function validatePlan(plan, checklist, maxTasks) {
 export function exactChecks(head, required, checks, statuses = []) {
   return required.map((name) => {
     const matches = checks.filter((c) => c.name === name && c.head_sha === head);
-    matches.sort((a, b) => b.id - a.id);
-    const c = matches[0];
-    const s = statuses.find((x) => x.context === name && x.sha === head);
-    const state = c
-      ? c.status !== 'completed'
-        ? 'pending'
-        : c.conclusion === 'success'
-          ? 'pass'
-          : c.conclusion === 'cancelled'
-            ? 'cancelled'
-            : 'fail'
-      : s
-        ? s.state === 'success'
-          ? 'pass'
-          : s.state === 'pending'
-            ? 'pending'
-            : 'fail'
-        : 'missing';
+    const statusMatches = statuses.filter((x) => x.context === name && x.sha === head);
+    const states = [
+      ...matches.map((c) =>
+        c.status !== 'completed'
+          ? 'pending'
+          : c.conclusion === 'success'
+            ? 'pass'
+            : c.conclusion === 'cancelled'
+              ? 'cancelled'
+              : 'fail',
+      ),
+      ...statusMatches.map((s) =>
+        s.state === 'success' ? 'pass' : s.state === 'pending' ? 'pending' : 'fail',
+      ),
+    ];
+    const state = states.includes('fail')
+      ? 'fail'
+      : states.includes('cancelled')
+        ? 'cancelled'
+        : states.includes('pending')
+          ? 'pending'
+          : states.length > 1
+            ? 'fail'
+            : (states[0] ?? 'missing');
     return { name, sha: head, state, evidence: [] };
   });
 }
-export function validateReview(review, implementation, config) {
+export function validateReview(review, implementation, config, checklist) {
   assert(review.reviewedHeadSha === implementation.headSha, 'REVIEW_STALE_HEAD');
   const role = config.roles[config.familyMap[implementation.implementer.family]];
   assert(
@@ -117,15 +208,52 @@ export function validateReview(review, implementation, config) {
       'REVIEW_UNRESOLVED',
     );
   }
+  if (checklist) reviewCoverage(review, checklist);
 }
-export function validateQa(qa, mergeSha, checklist, root) {
+export function validateQa(qa, mergeSha, checklist, root, context) {
   assert(qa.executionSha === mergeSha && sha(mergeSha), 'QA_STALE_SHA');
+  assert(
+    context &&
+      qa.repository === context.repository &&
+      qa.issueNumber === context.issueNumber &&
+      qa.taskId === context.taskId &&
+      qa.qaRunId === context.qaRunId,
+    'QA_CONTEXT_MISMATCH',
+  );
   assert(qa.checklistHash === hash(JSON.stringify(checklist)), 'QA_CHECKLIST_MISMATCH');
   assert(new Set(qa.results.map((x) => x.id)).size === qa.results.length, 'QA_DUPLICATE_RESULT');
   for (const c of checklist) {
     const result = qa.results.find((x) => x.id === c.id);
     assert(result, 'QA_CRITERION_MISSING');
     verifyProof(root, result.evidence);
+    for (const evidence of result.evidence) {
+      assert(
+        evidence.executionSha === mergeSha &&
+          evidence.qaRunId === context.qaRunId &&
+          evidence.criterionId === c.id,
+        'QA_EVIDENCE_BINDING_MISMATCH',
+      );
+      assert(
+        context.checkEvidence?.some(
+          (trusted) => JSON.stringify(trusted) === JSON.stringify(evidence),
+        ),
+        'QA_ARTIFACT_NOT_FROM_CHECK_EXECUTION',
+      );
+      const actual = JSON.parse(fs.readFileSync(safeFile(root, evidence.path), 'utf8'));
+      assert(
+        actual.repository === context.repository &&
+          actual.issueNumber === context.issueNumber &&
+          actual.taskId === context.taskId &&
+          actual.executionSha === mergeSha &&
+          actual.qaRunId === context.qaRunId &&
+          actual.criterionId === c.id &&
+          actual.sandbox === 'unsandboxed-explicit' &&
+          context.allowUnsandboxedChecks === true &&
+          Number.isInteger(actual.exitCode),
+        'QA_ARTIFACT_PROVENANCE_MISMATCH',
+      );
+      if (qa.verdict === 'pass') assert(actual.exitCode === 0, 'QA_CHECK_COMMAND_FAILED');
+    }
     if (qa.verdict === 'pass') assert(result.status === 'pass', 'QA_FALSE_PASS');
   }
   assert(qa.proofComplete, 'QA_PROOF_INCOMPLETE');

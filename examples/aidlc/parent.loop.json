@@ -453,6 +453,9 @@
                   }
                 ]
               },
+              "reviewRunId": {
+                "type": "string"
+              },
               "feedback": {},
               "prCi": {
                 "type": "object",
@@ -597,9 +600,26 @@
                               },
                               "sha256": {
                                 "type": "string"
+                              },
+                              "executionSha": {
+                                "type": "string",
+                                "pattern": "^[a-f0-9]{40}$"
+                              },
+                              "qaRunId": {
+                                "type": "string"
+                              },
+                              "criterionId": {
+                                "type": "string"
                               }
                             },
-                            "required": ["kind", "path", "sha256"],
+                            "required": [
+                              "kind",
+                              "path",
+                              "sha256",
+                              "executionSha",
+                              "qaRunId",
+                              "criterionId"
+                            ],
                             "additionalProperties": false
                           }
                         }
@@ -613,6 +633,19 @@
                   },
                   "summary": {
                     "type": "string"
+                  },
+                  "repository": {
+                    "type": "string"
+                  },
+                  "issueNumber": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "taskId": {
+                    "type": "string"
+                  },
+                  "qaRunId": {
+                    "type": "string"
                   }
                 },
                 "required": [
@@ -622,7 +655,11 @@
                   "depth",
                   "results",
                   "proofComplete",
-                  "summary"
+                  "summary",
+                  "repository",
+                  "issueNumber",
+                  "taskId",
+                  "qaRunId"
                 ],
                 "additionalProperties": false
               },
@@ -676,8 +713,10 @@
             "init"
           ],
           "env": {
-            "AIDLC_SETTINGS_HASH": "1c8ce26fae5e8e4968b40e75d93f31bc8419a5c78c19d17fe89009703816a759",
-            "AIDLC_SUPPORT_HASH": "c8438b59d1461af24437e11758390b26d58832008a86a512c1d1355be40bbc63"
+            "AIDLC_SETTINGS_HASH": "83371862c93864fb2d8e43d23514e2d5dc47db87e28e0a46dff058398c02f549",
+            "AIDLC_SUPPORT_HASH": "4c65942dd4ea3529d3e184dae43e6cdb85270a4394aeb0e0c3faa89add55283d",
+            "AIDLC_REVIEW_LOOP_ID": "01M4A20AZ69E2FK2W23WGWJ23M",
+            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG"
           },
           "cwd": "workspace",
           "stdin": "thread",
@@ -700,8 +739,10 @@
             "claim"
           ],
           "env": {
-            "AIDLC_SETTINGS_HASH": "1c8ce26fae5e8e4968b40e75d93f31bc8419a5c78c19d17fe89009703816a759",
-            "AIDLC_SUPPORT_HASH": "c8438b59d1461af24437e11758390b26d58832008a86a512c1d1355be40bbc63"
+            "AIDLC_SETTINGS_HASH": "83371862c93864fb2d8e43d23514e2d5dc47db87e28e0a46dff058398c02f549",
+            "AIDLC_SUPPORT_HASH": "4c65942dd4ea3529d3e184dae43e6cdb85270a4394aeb0e0c3faa89add55283d",
+            "AIDLC_REVIEW_LOOP_ID": "01M4A20AZ69E2FK2W23WGWJ23M",
+            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG"
           },
           "cwd": "workspace",
           "stdin": "thread",
@@ -789,8 +830,10 @@
             "select"
           ],
           "env": {
-            "AIDLC_SETTINGS_HASH": "1c8ce26fae5e8e4968b40e75d93f31bc8419a5c78c19d17fe89009703816a759",
-            "AIDLC_SUPPORT_HASH": "c8438b59d1461af24437e11758390b26d58832008a86a512c1d1355be40bbc63"
+            "AIDLC_SETTINGS_HASH": "83371862c93864fb2d8e43d23514e2d5dc47db87e28e0a46dff058398c02f549",
+            "AIDLC_SUPPORT_HASH": "4c65942dd4ea3529d3e184dae43e6cdb85270a4394aeb0e0c3faa89add55283d",
+            "AIDLC_REVIEW_LOOP_ID": "01M4A20AZ69E2FK2W23WGWJ23M",
+            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG"
           },
           "cwd": "workspace",
           "stdin": "thread",
@@ -943,8 +986,10 @@
             "fix-feedback"
           ],
           "env": {
-            "AIDLC_SETTINGS_HASH": "1c8ce26fae5e8e4968b40e75d93f31bc8419a5c78c19d17fe89009703816a759",
-            "AIDLC_SUPPORT_HASH": "c8438b59d1461af24437e11758390b26d58832008a86a512c1d1355be40bbc63"
+            "AIDLC_SETTINGS_HASH": "83371862c93864fb2d8e43d23514e2d5dc47db87e28e0a46dff058398c02f549",
+            "AIDLC_SUPPORT_HASH": "4c65942dd4ea3529d3e184dae43e6cdb85270a4394aeb0e0c3faa89add55283d",
+            "AIDLC_REVIEW_LOOP_ID": "01M4A20AZ69E2FK2W23WGWJ23M",
+            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG"
           },
           "cwd": "workspace",
           "stdin": "thread",
@@ -970,7 +1015,7 @@
             "messages": "none",
             "artifacts": "none",
             "trigger": {
-              "payload": "$merge([vars.request, {\"task\":vars.task,\"implementation\":vars.implementation,\"review\":vars.review}])"
+              "payload": "$merge([vars.request, {\"task\":vars.task,\"implementation\":vars.implementation,\"review\":vars.review,\"reviewRunId\":outputs.review.value.childRunId}])"
             }
           },
           "output": {
@@ -1114,8 +1159,10 @@
             "qa-rework"
           ],
           "env": {
-            "AIDLC_SETTINGS_HASH": "1c8ce26fae5e8e4968b40e75d93f31bc8419a5c78c19d17fe89009703816a759",
-            "AIDLC_SUPPORT_HASH": "c8438b59d1461af24437e11758390b26d58832008a86a512c1d1355be40bbc63"
+            "AIDLC_SETTINGS_HASH": "83371862c93864fb2d8e43d23514e2d5dc47db87e28e0a46dff058398c02f549",
+            "AIDLC_SUPPORT_HASH": "4c65942dd4ea3529d3e184dae43e6cdb85270a4394aeb0e0c3faa89add55283d",
+            "AIDLC_REVIEW_LOOP_ID": "01M4A20AZ69E2FK2W23WGWJ23M",
+            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG"
           },
           "cwd": "workspace",
           "stdin": "thread",
@@ -1138,8 +1185,10 @@
             "complete-task"
           ],
           "env": {
-            "AIDLC_SETTINGS_HASH": "1c8ce26fae5e8e4968b40e75d93f31bc8419a5c78c19d17fe89009703816a759",
-            "AIDLC_SUPPORT_HASH": "c8438b59d1461af24437e11758390b26d58832008a86a512c1d1355be40bbc63"
+            "AIDLC_SETTINGS_HASH": "83371862c93864fb2d8e43d23514e2d5dc47db87e28e0a46dff058398c02f549",
+            "AIDLC_SUPPORT_HASH": "4c65942dd4ea3529d3e184dae43e6cdb85270a4394aeb0e0c3faa89add55283d",
+            "AIDLC_REVIEW_LOOP_ID": "01M4A20AZ69E2FK2W23WGWJ23M",
+            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG"
           },
           "cwd": "workspace",
           "stdin": "thread",
@@ -1195,7 +1244,7 @@
             "messages": "none",
             "artifacts": "none",
             "trigger": {
-              "payload": "$merge([vars.request, {\"prCi\":vars.prCi,\"qa\":vars.qa,\"qaRunId\":outputs.qa.value.childRunId,\"proofLinks\":vars.qaResult.proofLinks,\"remainingTaskIds\":[]}])"
+              "payload": "$merge([vars.request, {\"task\":vars.task,\"prCi\":vars.prCi,\"qa\":vars.qa,\"qaRunId\":outputs.qa.value.childRunId,\"proofLinks\":vars.qaResult.proofLinks,\"remainingTaskIds\":[]}])"
             }
           },
           "output": {
@@ -1254,8 +1303,10 @@
             "complete"
           ],
           "env": {
-            "AIDLC_SETTINGS_HASH": "1c8ce26fae5e8e4968b40e75d93f31bc8419a5c78c19d17fe89009703816a759",
-            "AIDLC_SUPPORT_HASH": "c8438b59d1461af24437e11758390b26d58832008a86a512c1d1355be40bbc63"
+            "AIDLC_SETTINGS_HASH": "83371862c93864fb2d8e43d23514e2d5dc47db87e28e0a46dff058398c02f549",
+            "AIDLC_SUPPORT_HASH": "4c65942dd4ea3529d3e184dae43e6cdb85270a4394aeb0e0c3faa89add55283d",
+            "AIDLC_REVIEW_LOOP_ID": "01M4A20AZ69E2FK2W23WGWJ23M",
+            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG"
           },
           "cwd": "workspace",
           "stdin": "thread",
@@ -1299,8 +1350,10 @@
             "blocked"
           ],
           "env": {
-            "AIDLC_SETTINGS_HASH": "1c8ce26fae5e8e4968b40e75d93f31bc8419a5c78c19d17fe89009703816a759",
-            "AIDLC_SUPPORT_HASH": "c8438b59d1461af24437e11758390b26d58832008a86a512c1d1355be40bbc63"
+            "AIDLC_SETTINGS_HASH": "83371862c93864fb2d8e43d23514e2d5dc47db87e28e0a46dff058398c02f549",
+            "AIDLC_SUPPORT_HASH": "4c65942dd4ea3529d3e184dae43e6cdb85270a4394aeb0e0c3faa89add55283d",
+            "AIDLC_REVIEW_LOOP_ID": "01M4A20AZ69E2FK2W23WGWJ23M",
+            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG"
           },
           "cwd": "workspace",
           "stdin": "thread",
@@ -1344,8 +1397,10 @@
             "needs-human"
           ],
           "env": {
-            "AIDLC_SETTINGS_HASH": "1c8ce26fae5e8e4968b40e75d93f31bc8419a5c78c19d17fe89009703816a759",
-            "AIDLC_SUPPORT_HASH": "c8438b59d1461af24437e11758390b26d58832008a86a512c1d1355be40bbc63"
+            "AIDLC_SETTINGS_HASH": "83371862c93864fb2d8e43d23514e2d5dc47db87e28e0a46dff058398c02f549",
+            "AIDLC_SUPPORT_HASH": "4c65942dd4ea3529d3e184dae43e6cdb85270a4394aeb0e0c3faa89add55283d",
+            "AIDLC_REVIEW_LOOP_ID": "01M4A20AZ69E2FK2W23WGWJ23M",
+            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG"
           },
           "cwd": "workspace",
           "stdin": "thread",

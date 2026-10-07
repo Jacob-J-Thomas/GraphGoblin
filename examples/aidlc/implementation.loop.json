@@ -453,6 +453,9 @@
                   }
                 ]
               },
+              "reviewRunId": {
+                "type": "string"
+              },
               "feedback": {},
               "prCi": {
                 "type": "object",
@@ -597,9 +600,26 @@
                               },
                               "sha256": {
                                 "type": "string"
+                              },
+                              "executionSha": {
+                                "type": "string",
+                                "pattern": "^[a-f0-9]{40}$"
+                              },
+                              "qaRunId": {
+                                "type": "string"
+                              },
+                              "criterionId": {
+                                "type": "string"
                               }
                             },
-                            "required": ["kind", "path", "sha256"],
+                            "required": [
+                              "kind",
+                              "path",
+                              "sha256",
+                              "executionSha",
+                              "qaRunId",
+                              "criterionId"
+                            ],
                             "additionalProperties": false
                           }
                         }
@@ -613,6 +633,19 @@
                   },
                   "summary": {
                     "type": "string"
+                  },
+                  "repository": {
+                    "type": "string"
+                  },
+                  "issueNumber": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "taskId": {
+                    "type": "string"
+                  },
+                  "qaRunId": {
+                    "type": "string"
                   }
                 },
                 "required": [
@@ -622,7 +655,11 @@
                   "depth",
                   "results",
                   "proofComplete",
-                  "summary"
+                  "summary",
+                  "repository",
+                  "issueNumber",
+                  "taskId",
+                  "qaRunId"
                 ],
                 "additionalProperties": false
               },
@@ -676,8 +713,10 @@
             "init"
           ],
           "env": {
-            "AIDLC_SETTINGS_HASH": "1c8ce26fae5e8e4968b40e75d93f31bc8419a5c78c19d17fe89009703816a759",
-            "AIDLC_SUPPORT_HASH": "c8438b59d1461af24437e11758390b26d58832008a86a512c1d1355be40bbc63"
+            "AIDLC_SETTINGS_HASH": "83371862c93864fb2d8e43d23514e2d5dc47db87e28e0a46dff058398c02f549",
+            "AIDLC_SUPPORT_HASH": "4c65942dd4ea3529d3e184dae43e6cdb85270a4394aeb0e0c3faa89add55283d",
+            "AIDLC_REVIEW_LOOP_ID": "01M4A20AZ69E2FK2W23WGWJ23M",
+            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG"
           },
           "cwd": "workspace",
           "stdin": "thread",
@@ -700,8 +739,10 @@
             "prepare"
           ],
           "env": {
-            "AIDLC_SETTINGS_HASH": "1c8ce26fae5e8e4968b40e75d93f31bc8419a5c78c19d17fe89009703816a759",
-            "AIDLC_SUPPORT_HASH": "c8438b59d1461af24437e11758390b26d58832008a86a512c1d1355be40bbc63"
+            "AIDLC_SETTINGS_HASH": "83371862c93864fb2d8e43d23514e2d5dc47db87e28e0a46dff058398c02f549",
+            "AIDLC_SUPPORT_HASH": "4c65942dd4ea3529d3e184dae43e6cdb85270a4394aeb0e0c3faa89add55283d",
+            "AIDLC_REVIEW_LOOP_ID": "01M4A20AZ69E2FK2W23WGWJ23M",
+            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG"
           },
           "cwd": "workspace",
           "stdin": "thread",
@@ -726,8 +767,10 @@
             "route"
           ],
           "env": {
-            "AIDLC_SETTINGS_HASH": "1c8ce26fae5e8e4968b40e75d93f31bc8419a5c78c19d17fe89009703816a759",
-            "AIDLC_SUPPORT_HASH": "c8438b59d1461af24437e11758390b26d58832008a86a512c1d1355be40bbc63"
+            "AIDLC_SETTINGS_HASH": "83371862c93864fb2d8e43d23514e2d5dc47db87e28e0a46dff058398c02f549",
+            "AIDLC_SUPPORT_HASH": "4c65942dd4ea3529d3e184dae43e6cdb85270a4394aeb0e0c3faa89add55283d",
+            "AIDLC_REVIEW_LOOP_ID": "01M4A20AZ69E2FK2W23WGWJ23M",
+            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG"
           },
           "cwd": "workspace",
           "stdin": "thread",
@@ -793,8 +836,10 @@
             "codeImplementer"
           ],
           "env": {
-            "AIDLC_SETTINGS_HASH": "1c8ce26fae5e8e4968b40e75d93f31bc8419a5c78c19d17fe89009703816a759",
-            "AIDLC_SUPPORT_HASH": "c8438b59d1461af24437e11758390b26d58832008a86a512c1d1355be40bbc63"
+            "AIDLC_SETTINGS_HASH": "83371862c93864fb2d8e43d23514e2d5dc47db87e28e0a46dff058398c02f549",
+            "AIDLC_SUPPORT_HASH": "4c65942dd4ea3529d3e184dae43e6cdb85270a4394aeb0e0c3faa89add55283d",
+            "AIDLC_REVIEW_LOOP_ID": "01M4A20AZ69E2FK2W23WGWJ23M",
+            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG"
           },
           "cwd": "workspace",
           "stdin": "thread",
@@ -925,8 +970,8 @@
               },
               "native": true,
               "repair": {
-                "enabled": true,
-                "maxAttempts": 1,
+                "enabled": false,
+                "maxAttempts": 0,
                 "onFailure": "fail-run"
               }
             }
@@ -951,8 +996,10 @@
             "visualImplementer"
           ],
           "env": {
-            "AIDLC_SETTINGS_HASH": "1c8ce26fae5e8e4968b40e75d93f31bc8419a5c78c19d17fe89009703816a759",
-            "AIDLC_SUPPORT_HASH": "c8438b59d1461af24437e11758390b26d58832008a86a512c1d1355be40bbc63"
+            "AIDLC_SETTINGS_HASH": "83371862c93864fb2d8e43d23514e2d5dc47db87e28e0a46dff058398c02f549",
+            "AIDLC_SUPPORT_HASH": "4c65942dd4ea3529d3e184dae43e6cdb85270a4394aeb0e0c3faa89add55283d",
+            "AIDLC_REVIEW_LOOP_ID": "01M4A20AZ69E2FK2W23WGWJ23M",
+            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG"
           },
           "cwd": "workspace",
           "stdin": "thread",
@@ -1083,8 +1130,8 @@
               },
               "native": true,
               "repair": {
-                "enabled": true,
-                "maxAttempts": 1,
+                "enabled": false,
+                "maxAttempts": 0,
                 "onFailure": "fail-run"
               }
             }
@@ -1109,8 +1156,10 @@
             "judgment"
           ],
           "env": {
-            "AIDLC_SETTINGS_HASH": "1c8ce26fae5e8e4968b40e75d93f31bc8419a5c78c19d17fe89009703816a759",
-            "AIDLC_SUPPORT_HASH": "c8438b59d1461af24437e11758390b26d58832008a86a512c1d1355be40bbc63"
+            "AIDLC_SETTINGS_HASH": "83371862c93864fb2d8e43d23514e2d5dc47db87e28e0a46dff058398c02f549",
+            "AIDLC_SUPPORT_HASH": "4c65942dd4ea3529d3e184dae43e6cdb85270a4394aeb0e0c3faa89add55283d",
+            "AIDLC_REVIEW_LOOP_ID": "01M4A20AZ69E2FK2W23WGWJ23M",
+            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG"
           },
           "cwd": "workspace",
           "stdin": "thread",
@@ -1162,7 +1211,9 @@
                     "type": "string"
                   },
                   "confidence": {
-                    "type": "number"
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
                   }
                 },
                 "required": ["route", "reason", "confidence"],
@@ -1170,8 +1221,8 @@
               },
               "native": true,
               "repair": {
-                "enabled": true,
-                "maxAttempts": 1,
+                "enabled": false,
+                "maxAttempts": 0,
                 "onFailure": "fail-run"
               }
             }
@@ -1204,7 +1255,7 @@
           "question": "Check structured facts and child status.",
           "strategy": ["expression"],
           "expression": {
-            "jsonata": "lastOutput.value.route = \"code\" ? \"code\" : lastOutput.value.route = \"visual\" ? \"visual\" : \"blocked\""
+            "jsonata": "lastOutput.value.confidence >= vars.config.routing.minConfidence and lastOutput.value.confidence <= 1 ? (lastOutput.value.route = \"code\" ? \"code\" : lastOutput.value.route = \"visual\" ? \"visual\" : \"blocked\") : \"blocked\""
           },
           "context": {
             "messages": "none",
@@ -1247,8 +1298,10 @@
             "snapshot"
           ],
           "env": {
-            "AIDLC_SETTINGS_HASH": "1c8ce26fae5e8e4968b40e75d93f31bc8419a5c78c19d17fe89009703816a759",
-            "AIDLC_SUPPORT_HASH": "c8438b59d1461af24437e11758390b26d58832008a86a512c1d1355be40bbc63"
+            "AIDLC_SETTINGS_HASH": "83371862c93864fb2d8e43d23514e2d5dc47db87e28e0a46dff058398c02f549",
+            "AIDLC_SUPPORT_HASH": "4c65942dd4ea3529d3e184dae43e6cdb85270a4394aeb0e0c3faa89add55283d",
+            "AIDLC_REVIEW_LOOP_ID": "01M4A20AZ69E2FK2W23WGWJ23M",
+            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG"
           },
           "cwd": "workspace",
           "stdin": "thread",

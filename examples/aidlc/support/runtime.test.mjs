@@ -50,6 +50,41 @@ test('actual helper refuses settings or support changed since publication', () =
   assert.equal(result.status, 1);
   assert.match(result.stderr, /SUPPORT_CHANGED_REINSTANTIATE/);
 });
+test('P1-1/P1-2/P1-4: real standalone helpers fail before checks, branch mutation or caller verdict use', () => {
+  const task = { id: 'aidlc-safety-test' };
+  const before = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: fixture, encoding: 'utf8' }).stdout;
+  const prepare = call('prepare', { ...input, task });
+  assert.equal(prepare.status, 1);
+  assert.match(prepare.stderr, /SANDBOXED_CHECKS_UNAVAILABLE/);
+  const implementation = {
+    branch: 'main',
+    headSha: 'a'.repeat(40),
+    baseSha: 'b'.repeat(40),
+    implementer: { family: 'openai' },
+  };
+  for (const action of ['prepare', 'review-prepare', 'ci']) {
+    const rejected = call(action, {
+      ...input,
+      task,
+      implementation,
+      policy: { allowMerge: false, allowClose: false },
+    });
+    assert.equal(rejected.status, 1);
+    assert.match(rejected.stderr, /BRANCH_NOT_AUTHORIZED/);
+  }
+  const forged = call('ci', {
+    ...input,
+    task,
+    implementation: { ...implementation, branch: 'aidlc-test' },
+    review: { verdict: 'pass' },
+  });
+  assert.equal(forged.status, 1);
+  assert.match(forged.stderr, /RUN_ID_INVALID/);
+  assert.equal(
+    spawnSync('git', ['rev-parse', 'HEAD'], { cwd: fixture, encoding: 'utf8' }).stdout,
+    before,
+  );
+});
 test('actual planning helper preserves ready, needs-input and blocked status', () => {
   const plan = {
     schemaVersion: 1,

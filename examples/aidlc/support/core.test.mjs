@@ -22,7 +22,7 @@ test('GitHub guard refuses owner product repository and unapproved destinations'
   );
   repositoryGuard('Jacob-J-Thomas/gg-aidlc-scratch', 'Jacob-J-Thomas/gg-aidlc-scratch');
 });
-test('required CI uses latest check on exact head, missing and skipped never pass', () => {
+test('required CI checks every run on the exact head; missing and skipped never pass', () => {
   const head = 'a'.repeat(40);
   const checks = [
     { id: 1, name: 'aidlc-test', head_sha: head, status: 'completed', conclusion: 'success' },
@@ -38,25 +38,59 @@ test('required CI uses latest check on exact head, missing and skipped never pas
 test('proof and QA reject changed bytes, traversal, wrong SHA, missing criterion and false pass', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'aidlc-proof-test-'));
   const file = path.join(root, 'aidlc-proof.txt');
-  fs.writeFileSync(file, 'actual evidence');
-  const evidence = [{ path: 'aidlc-proof.txt', sha256: hash('actual evidence'), kind: 'log' }];
+  const head = 'a'.repeat(40);
+  const context = {
+    repository: 'Jacob-J-Thomas/gg-aidlc-scratch',
+    issueNumber: 1,
+    taskId: 'aidlc-task',
+    qaRunId: 'aidlc-qa',
+    allowUnsandboxedChecks: true,
+  };
+  const contents = JSON.stringify({
+    ...context,
+    executionSha: head,
+    criterionId: 'required',
+    sandbox: 'unsandboxed-explicit',
+    exitCode: 0,
+  });
+  fs.writeFileSync(file, contents);
+  const evidence = [
+    {
+      path: 'aidlc-proof.txt',
+      sha256: hash(contents),
+      kind: 'log',
+      executionSha: head,
+      qaRunId: context.qaRunId,
+      criterionId: 'required',
+    },
+  ];
+  context.checkEvidence = evidence;
   verifyProof(root, evidence);
   assert.throws(() => safeFile(root, '../elsewhere'), /ESCAPE/);
   const checklist = [{ id: 'required' }];
-  const head = 'a'.repeat(40);
   const qa = {
+    ...context,
     verdict: 'pass',
     executionSha: head,
     checklistHash: hash(JSON.stringify(checklist)),
     results: [{ id: 'required', status: 'pass', evidence }],
     proofComplete: true,
   };
-  validateQa(qa, head, checklist, root);
-  assert.throws(() => validateQa(qa, 'b'.repeat(40), checklist, root), /STALE/);
-  assert.throws(() => validateQa({ ...qa, results: [] }, head, checklist, root), /MISSING/);
+  validateQa(qa, head, checklist, root, context);
+  assert.throws(() => validateQa(qa, 'b'.repeat(40), checklist, root, context), /STALE/);
+  assert.throws(
+    () => validateQa({ ...qa, results: [] }, head, checklist, root, context),
+    /MISSING/,
+  );
   assert.throws(
     () =>
-      validateQa({ ...qa, results: [{ ...qa.results[0], status: 'fail' }] }, head, checklist, root),
+      validateQa(
+        { ...qa, results: [{ ...qa.results[0], status: 'fail' }] },
+        head,
+        checklist,
+        root,
+        context,
+      ),
     /FALSE_PASS/,
   );
   fs.writeFileSync(file, 'changed');

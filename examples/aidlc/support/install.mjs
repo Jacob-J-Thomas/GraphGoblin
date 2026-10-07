@@ -21,6 +21,19 @@ async function request(route, method = 'GET', body) {
   return value;
 }
 const loops = (await request('/loops')).items;
+const names = ['planning', 'implementation', 'review', 'pr-ci', 'qa', 'closing', 'parent'];
+for (const name of names) {
+  const old = loops.filter((loop) => loop.name === `aidlc-full-v1-${name}`);
+  if (old.length > 1) throw new Error('Duplicate named loop');
+  if (old.length) ids[name] = old[0].id;
+}
+const idsPath = path.join(path.dirname(evidencePath), 'aidlc-loop-ids.json');
+fs.writeFileSync(idsPath, JSON.stringify(ids, null, 2));
+const compiled = spawnSync(process.execPath, [path.join(here, 'instantiate.mjs'), idsPath], {
+  encoding: 'utf8',
+  windowsHide: true,
+});
+if (compiled.status !== 0) throw new Error(compiled.stderr);
 for (const name of ['planning', 'implementation', 'review', 'pr-ci', 'qa', 'closing', 'parent']) {
   if (name === 'parent') {
     const idsPath = path.join(path.dirname(evidencePath), 'aidlc-loop-ids.json');

@@ -1,5 +1,5 @@
 // First run: make an independent physical Git fixture inside this worktree.
-// --remote: create private GitHub repository (if absent), push baseline and create one issue.
+// Historical local fixture/input builder. --remote is retired; owner setup already exists.
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -7,6 +7,8 @@ import { spawnSync } from 'node:child_process';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '../../../.tmp/aidlc-scratch');
 const repository = 'Jacob-J-Thomas/gg-aidlc-scratch';
+// Baseline publication was a one-off owner setup. Delivery helpers never push a base ref.
+if (process.argv.includes('--remote')) throw new Error('BASE_PUBLICATION_FORBIDDEN');
 const run = (program, args, options = {}) => {
   const result = spawnSync(program, args, {
     cwd: root,
@@ -81,8 +83,8 @@ if (!fs.existsSync(root)) {
   run('git', ['init', '-b', 'main']);
   run('git', ['config', 'user.name', 'Jacob-J-Thomas']);
   run('git', ['config', 'user.email', '92639671+Jacob-J-Thomas@users.noreply.github.com']);
-  run('git', ['remote', 'add', 'origin', `https://github.com/${repository}.git`]);
-  run('git', ['add', '.']);
+  run('git', ['remote', 'add', '--', 'origin', `https://github.com/${repository}.git`]);
+  run('git', ['add', '--', '.']);
   run('git', ['commit', '-m', 'aidlc- scratch baseline']);
   fs.chmodSync(path.join(root, 'aidlc-checklist.lock.json'), 0o444);
 }
@@ -96,56 +98,6 @@ const payload = {
   bounds: { maxTasks: 1, reviewCycles: 3, qaReworks: 1 },
   policy: { allowMerge: true, allowClose: true },
 };
-if (process.argv.includes('--remote')) {
-  const identity = JSON.parse(run('gh', ['api', 'user']));
-  if (identity.login !== 'Jacob-J-Thomas') throw new Error('Wrong GitHub identity');
-  const existing = spawnSync('gh', ['api', `repos/${repository}`], {
-    cwd: root,
-    encoding: 'utf8',
-    windowsHide: true,
-  });
-  if (existing.status !== 0) {
-    if (!existing.stderr.includes('404')) throw new Error(existing.stderr);
-    run('gh', ['api', 'user/repos', '--method', 'POST', '--input', '-'], {
-      input: JSON.stringify({
-        name: 'gg-aidlc-scratch',
-        private: true,
-        description: 'aidlc- GraphGoblin bounded template scratch tests',
-      }),
-    });
-  } else if (!JSON.parse(existing.stdout).private)
-    throw new Error('Scratch repository must be private');
-  run('git', ['push', '-u', 'origin', 'main']);
-  const settings = JSON.parse(fs.readFileSync(path.join(here, '../full-v1.settings.json'), 'utf8'));
-  const labels = JSON.parse(run('gh', ['api', `repos/${repository}/labels?per_page=100`]));
-  for (const name of Object.values(settings.labels)) {
-    if (!labels.some((x) => x.name === name))
-      run('gh', ['api', `repos/${repository}/labels`, '--method', 'POST', '--input', '-'], {
-        input: JSON.stringify({
-          name,
-          color: '5319e7',
-          description: 'aidlc- scratch lifecycle setting',
-        }),
-      });
-  }
-  const issues = JSON.parse(
-    run('gh', ['api', `repos/${repository}/issues?state=all&per_page=100`]),
-  );
-  const found = issues.filter((x) => x.title === 'aidlc- reject reversed clamp intervals');
-  if (found.length > 1) throw new Error('Ambiguous baseline issue');
-  const issue =
-    found[0] ??
-    JSON.parse(
-      run('gh', ['api', `repos/${repository}/issues`, '--method', 'POST', '--input', '-'], {
-        input: JSON.stringify({
-          title: 'aidlc- reject reversed clamp intervals',
-          body: `aidlc- tiny task\n\n${payload.message}\n\nAcceptance criteria:\n- [ ] Reversed intervals throw RangeError\n- [ ] Existing clamping remains correct\n- [ ] Regression test and saved QA proof\n\nLocked checklist: aidlc-checklist.lock.json. Keep open until post-merge QA passes.`,
-          labels: [settings.labels.trigger],
-        }),
-      }),
-    );
-  payload.issueNumber = issue.number;
-}
 const destination = path.resolve(here, '../../../.tmp/aidlc-control/aidlc-positive-input.json');
 fs.mkdirSync(path.dirname(destination), { recursive: true });
 fs.writeFileSync(destination, JSON.stringify(payload, null, 2));
