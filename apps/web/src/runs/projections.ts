@@ -143,15 +143,23 @@ function describeExit(event: Extract<RunEvent, { type: 'exit.evaluated' }>): str
   const result = event.result;
   switch (result.kind) {
     case 'completed': {
+      if (result.reason === 'default-success')
+        return `Exited: default ${result.outcome}, no criterion matched`;
       const criterion = event.criteria.find((c) => c.index === result.criterionIndex);
-      return criterion?.status === 'matched'
-        ? `Exited: criterion ${criterion.index + 1} (${strategyName(criterion.strategy)}) matched${criterion.confidence !== undefined ? ` with confidence ${criterion.confidence}` : ''} (${result.outcome})`
-        : 'Exited: default success, no criterion matched';
+      const label =
+        result.criterionIndex === undefined
+          ? 'a criterion'
+          : `criterion ${result.criterionIndex + 1}`;
+      const detail =
+        criterion?.status === 'matched'
+          ? ` (${strategyName(criterion.strategy)}) matched${criterion.confidence !== undefined ? ` with confidence ${criterion.confidence}` : ''}`
+          : ' matched';
+      return `Exited: ${label}${detail} (${result.outcome})`;
     }
     case 'looped-back':
       return `Looped back: no criterion matched, iteration ${event.iteration} of ${event.maxIterations}`;
     case 'limit-reached':
-      return `Exited: ${result.limit === 'max-duration' ? `duration limit of ${result.value} seconds` : `iteration limit of ${result.value}`} reached${result.criterionIndex !== undefined ? ` (criterion ${result.criterionIndex + 1})` : ' (loop ceiling)'}`;
+      return `Exited: ${result.limit === 'max-duration' ? `duration limit of ${result.value} seconds` : `iteration limit of ${result.value}`} reached${result.limit === 'iteration-ceiling' ? ' (loop ceiling)' : ''}${result.criterionIndex !== undefined ? ` (criterion ${result.criterionIndex + 1})` : ''}`;
     case 'failed':
       return `Exit evaluation failed: ${result.diagnostic.message}`;
     case 'cancelled':

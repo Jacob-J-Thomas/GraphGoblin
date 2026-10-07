@@ -50,6 +50,37 @@ function seedRun(api: FakeApi, overrides: Parameters<FakeApi['addRun']>[0] = {})
 }
 
 describe('RunInspectorPage', () => {
+  it.each([
+    {
+      result: { kind: 'completed', reason: 'criterion-matched', outcome: 'failure' },
+      expected: 'Exited: a criterion matched (failure)',
+    },
+    {
+      result: { kind: 'limit-reached', limit: 'max-duration', value: 10, outcome: 'exhausted' },
+      expected: 'Exited: duration limit of 10 seconds reached',
+    },
+  ] as const)(
+    'renders $expected without a criterion index in the timeline and run detail',
+    async ({ result, expected }) => {
+      const api = new FakeApi();
+      const run = api.addRun({ status: 'failed' });
+      api.pushEvent(
+        run.id,
+        event(run.id, 1, 'exit.evaluated', {
+          nodeId: 'done',
+          iteration: 2,
+          maxIterations: 5,
+          criteria: [],
+          result,
+        }),
+      );
+      renderApp(`/runs/${run.id}`, api);
+      const timeline = await screen.findByRole('list', { name: 'Timeline' });
+      expect(await within(timeline).findByText(expected)).toBeInTheDocument();
+      expect(await screen.findAllByText(expected)).toHaveLength(3);
+      expect(screen.queryByText(/default success|loop ceiling/)).not.toBeInTheDocument();
+    },
+  );
   it('explains exit criteria and skipped decision strategies in the timeline and selected detail', async () => {
     const api = new FakeApi();
     const run = api.addRun({ status: 'succeeded' });

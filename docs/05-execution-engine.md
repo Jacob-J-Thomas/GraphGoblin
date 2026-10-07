@@ -147,6 +147,11 @@ the required minimum when present. Jev names classifier `jev`; Codex names the r
 model and retains its returned reasoning, bounded to 2,048 characters. Questions, context,
 provider response envelopes, and provider error text are not copied into this event.
 
+Configured Codex model names (node, loop, owner, and process defaults) and recorded exit
+model names share the contracts' 256-character bound. A maximum-length configured name
+therefore fits the event contract. The inspector takes completion meaning from `reason`
+and `outcome`, and limit meaning from `limit`; an optional criterion index only adds detail.
+
 `result.kind` is `completed` (matching index or default success, plus the run outcome),
 `looped-back` (no criterion matched and the target), or `limit-reached` (configured
 `max-iterations`, `max-duration` in seconds, or the hard `iteration-ceiling`, plus its value).
@@ -154,6 +159,12 @@ Failed evaluations and return mappings record `failed` with fixed diagnostics; i
 predicates record `cancelled`. This evidence describes an evaluation attempt. If a crash
 occurs after it is appended but before `node.finished`, recovery may evaluate again; the
 surrounding `node.started` attempts identify those evaluations.
+
+SQLite event reads enforce the current contract. A non-conforming row rejects the whole
+read page with an error naming its run, sequence, and type, without exposing its payload.
+Recovery cannot consume a partial invalid page. JSON pages and SSE replay use this same
+reader; SSE validates replay before sending any frames (07). Stored data repairs belong
+to migrations, including `0007` for historical decisions without `skipped`.
 
 Successful `decision.made` events always include `skipped`, ordered before the winning
 strategy. Entries contain strategy, a reason code, and a fixed short message: missing or

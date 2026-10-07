@@ -1,8 +1,9 @@
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
-import { RunEventSchema } from '@graphgoblin/contracts';
 import { fakeUlid, FIXTURE_TS } from '@graphgoblin/contracts/testing';
+import { FakeClock } from '@graphgoblin/engine/testing';
 import { openDatabase } from './db.js';
+import { SqliteEventStore } from './events.js';
 
 describe('decision skipped evidence migration', () => {
   it('rewrites historical decisions once and preserves existing evidence and other events', async () => {
@@ -30,6 +31,13 @@ describe('decision skipped evidence migration', () => {
           ],
         });
       }
+      const store = new SqliteEventStore(handle.db, new FakeClock());
+      await expect(store.read(runId)).rejects.toMatchObject({
+        name: 'InvalidStoredRunEventError',
+        runId,
+        seq: 1,
+        eventType: 'decision.made',
+      });
       const sql = await readFile(
         new URL('../../drizzle/0007_decision_skipped.sql', import.meta.url),
         'utf8',
@@ -44,16 +52,19 @@ describe('decision skipped evidence migration', () => {
         return JSON.parse(payload) as unknown;
       });
       expect(payloads).toEqual([{ ...old, skipped: [] }, recorded, { attempt: 1 }]);
-      expect(
-        RunEventSchema.safeParse({
+      expect(await store.read(runId)).toEqual([
+        {
           runId,
           seq: 1,
           ts: FIXTURE_TS,
           type: 'decision.made',
           nodeId: 'done',
-          ...(payloads[0] as Record<string, unknown>),
-        }).success,
-      ).toBe(true);
+          ...old,
+          skipped: [],
+        },
+        { runId, seq: 2, ts: FIXTURE_TS, type: 'decision.made', nodeId: 'done', ...recorded },
+        { runId, seq: 3, ts: FIXTURE_TS, type: 'run.started', attempt: 1 },
+      ]);
     } finally {
       handle.close();
     }

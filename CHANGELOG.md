@@ -32,6 +32,9 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ### Upgrade notes
 
+- Codex model names in node configuration and loop, owner, and process defaults are limited to 256 characters, matching recorded exit evidence. Shorten longer names in saved configuration before using it with this version.
+- Stored events are now validated on read. A non-conforming row rejects the entire event page; JSON and SSE replay return `STORED_EVENT_INVALID`, naming the run, sequence, and type. No event is silently repaired or skipped. Migration `0007` supplies historical decisions with `skipped: []`; these empty lists carry no evidence about earlier skips.
+
 - `decision.made` now requires `skipped`; rebuild generated-client consumers with the server. Migration `0007` adds `skipped: []` to stored decisions that lack the field. The inspector starts a fresh session event cache and replays from the server. Earlier skip reasons and exit evaluations cannot be reconstructed. New `exit.evaluated` events include zero-based criterion indices; the inspector displays them starting at 1. No old event-shape parsing path is retained.
 
 - Migration `0006` adds `classifier_models`; startup seeds managed Jev metadata before recovery while preserving enabled. The new table does not rewrite loop definitions, versions, runs, events, secrets, or LLM catalog data; earlier migrations still apply their intended changes. Omitted `jev.model` defaults to catalog `jev`. Rebuild generated-client consumers together; older strict readers may reject exports containing explicit classifier selection.
@@ -49,6 +52,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 - Before upgrading, follow [Back up and restore](docs/guide/06-settings-and-secrets.md#back-up-and-restore). To roll back, stop the API and restore the pre-upgrade data-directory backup before running the previous release; there is no partial rollback.
 
 ### Fixed
+
+- Exit explanations respect the recorded completion reason, outcome, and limit even when no criterion index was recorded. A failure match stays a failure, and a configured duration limit stays a duration limit.
 
 - The app probes API reachability and restores queries, event streams, and autosave when the API returns (#55).
 - The app checks for service worker updates when it regains focus (#56).

@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { RunEventSchema } from './events.js';
+import { MAX_MODEL_NAME_LENGTH } from './common.js';
+import { LoopSettingsSchema } from './loop.js';
+import { DecisionConfigSchema, InferenceConfigSchema } from './nodes.js';
 import { fakeUlid, FIXTURE_TS } from './testing/index.js';
 
 const base = { runId: fakeUlid('run'), seq: 1, ts: FIXTURE_TS, nodeId: 'done' };
@@ -13,6 +16,37 @@ const exit = {
 };
 
 describe('exit and decision evidence contracts', () => {
+  it('round-trips the maximum configured model name in exit evidence', () => {
+    const model = 'm'.repeat(MAX_MODEL_NAME_LENGTH);
+    const configured = LoopSettingsSchema.parse({ defaults: { model } }).defaults.model;
+    const event = {
+      ...exit,
+      criteria: [{ index: 0, strategy: 'codex', status: 'matched', model: configured }],
+    };
+    expect(RunEventSchema.parse(JSON.parse(JSON.stringify(event)))).toEqual(event);
+    const oversized = `${model}m`;
+    expect(LoopSettingsSchema.safeParse({ defaults: { model: oversized } }).success).toBe(false);
+    const decision = {
+      routes: [
+        { label: 'yes', description: 'Yes' },
+        { label: 'no', description: 'No' },
+      ],
+      question: 'Done?',
+      strategy: ['codex'],
+      codex: { model },
+    };
+    const inference = { prompt: { template: 'Hello' }, model };
+    expect(DecisionConfigSchema.safeParse(decision).success).toBe(true);
+    expect(InferenceConfigSchema.safeParse(inference).success).toBe(true);
+    expect(
+      DecisionConfigSchema.safeParse({ ...decision, codex: { model: oversized } }).success,
+    ).toBe(false);
+    expect(InferenceConfigSchema.safeParse({ ...inference, model: oversized }).success).toBe(false);
+    expect(
+      RunEventSchema.safeParse({ ...event, criteria: [{ ...event.criteria[0], model: oversized }] })
+        .success,
+    ).toBe(false);
+  });
   it('accepts all exit outcomes and rejects raw diagnostics and unbounded reasoning', () => {
     for (const result of [
       exit.result,

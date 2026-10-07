@@ -88,13 +88,21 @@ JSON event pages and SSE carry the same strict `RunEvent` contract, also adverti
 | Event            | Evidence                                                                                                                                                                                                                                                                                                                                                                                               |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `exit.evaluated` | Node, iteration, hard ceiling, ordered criteria with zero-based indices, strategy, matched/not-matched verdict, predicate boolean and confidence, resolved Codex model or Jev classifier, bounded Codex reasoning, skipped reasons and safe errors. `result` names completion and its matching criterion, loop-back and its cause, a configured or hard limit and its value, failure, or cancellation. |
-| `decision.made`  | Winning strategy, route, optional confidence, classifier and alternatives, plus required `skipped: [{ strategy, code, message }]` describing each strategy bypassed before the winner. An empty list means none were bypassed.                                                                                                                                                                         |
+| `decision.made`  | Winning strategy, route, optional confidence, classifier and alternatives, plus required `skipped: [{ strategy, code, message }]` describing each strategy bypassed before the winner. For decisions recorded after this change, an empty list means none were bypassed. Migrated historical rows carry an empty list without skip evidence.                                                           |
 
 Skip messages and failure diagnostics use fixed summaries and allowlisted codes; provider
 error bodies, credential values, and raw response payloads are excluded. Codex reasoning
 is its returned short justification, capped at 2,048 characters. Clients consuming the
 strict contract must upgrade with the server; migration `0007` supplies empty skip lists
 for historical decisions, whose missing evidence cannot be recovered.
+
+SQLite reads validate every stored row against `RunEventSchema`. A non-conforming row fails
+the entire requested page; it is neither repaired nor converted into a synthetic event.
+JSON and SSE replay return HTTP 500 Problem Details with code `STORED_EVENT_INVALID` and
+the run id, sequence, and event type in `detail`, without payloads or provider diagnostics.
+SSE validates its replay, including any terminal-status recheck, before sending headers or
+frames, and releases its subscription on failure. No event cursor advances for a rejected
+page. Migration `0007`, rather than the reader, repairs historical decisions missing `skipped`.
 
 ## Authentication (Decided for 1.0)
 

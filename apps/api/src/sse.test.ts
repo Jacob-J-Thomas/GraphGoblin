@@ -1,11 +1,12 @@
 import type { AddressInfo } from 'node:net';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   RunEventSchema,
   type LoopDefinitionInput,
   type RunRecord,
   type RunEvent,
 } from '@graphgoblin/contracts';
+import { FIXTURE_TS } from '@graphgoblin/contracts/testing';
 import { createTestApp, type TestApp } from './testing/test-app.js';
 
 let t: TestApp;
@@ -71,6 +72,58 @@ async function readAll(response: Response): Promise<string> {
 }
 
 describe('SSE event stream', () => {
+  it.each(['replay', 'terminal-check'] as const)(
+    'rejects corrupt stored events before SSE headers during %s and releases its subscription',
+    async (phase) => {
+      const id = await t.publishLoop(waitLoop);
+      const { run } = (
+        await t.app.inject({ method: 'POST', url: `/loops/${id}/runs`, payload: {} })
+      ).json<{ run: RunRecord }>();
+      await t.idle();
+      await t.container.manager.provideInput(run.id, true);
+      await t.idle();
+      const good = await t.container.repos.events.read(run.id);
+      const seq = good.at(-1)!.seq + 1;
+      await t.container.handle.client.execute({
+        sql: 'INSERT INTO run_events (run_id, seq, ts, type, node_id, payload) VALUES (?, ?, ?, ?, ?, ?)',
+        args: [
+          run.id,
+          seq,
+          FIXTURE_TS,
+          'decision.made',
+          'choose',
+          JSON.stringify({ strategy: 'expression', route: 'yes' }),
+        ],
+      });
+      const store = t.container.repos.events;
+      const subscribe = store.subscribe.bind(store);
+      const released = vi.fn();
+      vi.spyOn(store, 'subscribe').mockImplementation((runId, listener) => {
+        const unsubscribe = subscribe(runId, listener);
+        return () => {
+          unsubscribe();
+          released();
+        };
+      });
+      const page = await t.app.inject(`/runs/${run.id}/events`);
+      expect(page.statusCode).toBe(500);
+      expect(page.json()).toMatchObject({
+        code: 'STORED_EVENT_INVALID',
+        detail: `Stored run event does not conform: run ${run.id}, seq ${seq}, type decision.made`,
+      });
+      const response = await fetch(
+        `${base}/runs/${run.id}/events?after=${phase === 'replay' ? 0 : seq}`,
+        { headers: { accept: 'text/event-stream' } },
+      );
+      expect(response.status).toBe(500);
+      expect(response.headers.get('content-type')).toContain('application/problem+json');
+      const body = await response.text();
+      expect(JSON.parse(body)).toEqual(page.json());
+      expect(body).not.toContain(': connected');
+      expect(body).not.toContain('id: ');
+      expect(released).toHaveBeenCalledOnce();
+    },
+  );
   it('streams and pages the same ordered decision skips and exit evidence, advertised in OpenAPI', async () => {
     t.jev.isAvailable = false;
     t.codex.judge = () =>

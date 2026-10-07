@@ -4,6 +4,7 @@ import {
   EffortSchema,
   HarnessIdSchema,
   JsonValueSchema,
+  ModelNameSchema,
   SlugSchema,
   TimestampSchema,
   UlidSchema,
@@ -76,7 +77,7 @@ const CriterionEvidence = {
     'max-duration',
     'last-output-matches',
   ]),
-  model: z.string().min(1).max(256).optional(),
+  model: ModelNameSchema.optional(),
   classifierModel: ClassifierModelIdSchema.optional(),
 };
 export const ExitCriterionEvaluationSchema = z.discriminatedUnion('status', [

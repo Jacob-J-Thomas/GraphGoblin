@@ -96,6 +96,60 @@ describe('run projections', () => {
     expect(sessionStorage.getItem('graphgoblin-run-events-v2')).toContain('"skipped":[]');
     useRunEventStore.setState({ runs: {} });
   });
+  it('describes completion reasons and limits independently of optional criterion indices', () => {
+    for (const criterionIndex of [undefined, 0]) {
+      const index = criterionIndex === undefined ? {} : { criterionIndex };
+      const base = { nodeId: 'done', iteration: 2, maxIterations: 5, criteria: [] };
+      for (const outcome of ['success', 'failure', 'exhausted'] as const) {
+        for (const reason of ['criterion-matched', 'default-success'] as const) {
+          const entry = event(R, 1, 'exit.evaluated', {
+            ...base,
+            result: { kind: 'completed', reason, outcome, ...index },
+          });
+          expect(describeEvent(entry)).toBe(
+            reason === 'default-success'
+              ? `Exited: default ${outcome}, no criterion matched`
+              : `Exited: ${criterionIndex === undefined ? 'a criterion' : 'criterion 1'} matched (${outcome})`,
+          );
+        }
+      }
+      for (const limit of ['max-iterations', 'max-duration', 'iteration-ceiling'] as const) {
+        const entry = event(R, 1, 'exit.evaluated', {
+          ...base,
+          result: { kind: 'limit-reached', limit, value: 5, outcome: 'exhausted', ...index },
+        });
+        expect(describeEvent(entry)).toBe(
+          `Exited: ${limit === 'max-duration' ? 'duration limit of 5 seconds' : 'iteration limit of 5'} reached${limit === 'iteration-ceiling' ? ' (loop ceiling)' : ''}${criterionIndex === undefined ? '' : ' (criterion 1)'}`,
+        );
+      }
+    }
+    const entry = event(R, 1, 'exit.evaluated', {
+      nodeId: 'done',
+      iteration: 1,
+      maxIterations: 5,
+      criteria: [{ index: 0, strategy: 'expression', status: 'not-matched' }],
+      result: {
+        kind: 'completed',
+        reason: 'criterion-matched',
+        outcome: 'failure',
+        criterionIndex: 0,
+      },
+    });
+    expect(describeEvent(entry)).toBe('Exited: criterion 1 matched (failure)');
+    if (entry.type !== 'exit.evaluated') throw new Error('Expected an exit event fixture');
+    expect(
+      describeEvent({
+        ...entry,
+        criteria: [{ index: 0, strategy: 'expression', status: 'matched' }],
+        result: {
+          kind: 'completed',
+          reason: 'default-success',
+          outcome: 'failure',
+          criterionIndex: 0,
+        },
+      }),
+    ).toBe('Exited: default failure, no criterion matched');
+  });
   it('describes every exit outcome and keeps exit activity grouped by node', () => {
     const exit = (fields: Parameters<typeof event<'exit.evaluated'>>[3]) =>
       event(R, 1, 'exit.evaluated', fields);

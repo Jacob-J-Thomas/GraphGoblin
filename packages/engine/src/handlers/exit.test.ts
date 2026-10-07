@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { RunEventSchema, type ExitConfig, type LoopDefinitionInput } from '@graphgoblin/contracts';
+import {
+  MAX_MODEL_NAME_LENGTH,
+  RunEventSchema,
+  type ExitConfig,
+  type LoopDefinitionInput,
+} from '@graphgoblin/contracts';
 import { createTestEngine, singleNodeLoop } from '@graphgoblin/engine/testing';
 
 function loop(config: Partial<ExitConfig>): LoopDefinitionInput {
@@ -16,6 +21,20 @@ function loop(config: Partial<ExitConfig>): LoopDefinitionInput {
 }
 
 describe('exit evaluation evidence', () => {
+  it('emits valid evidence for a Codex model at the configured maximum', async () => {
+    const e = await createTestEngine();
+    const model = 'm'.repeat(MAX_MODEL_NAME_LENGTH);
+    const definition = loop({
+      criteria: [{ when: 'predicate', strategy: 'codex', question: 'Done?', outcome: 'success' }],
+    });
+    definition.settings = { defaults: { model } };
+    const v = e.publish(definition);
+    const run = await e.runToIdle(v.loopId);
+    expect(run.status).toBe('succeeded');
+    const event = e.events(run.id).find((event) => event.type === 'exit.evaluated');
+    expect(event).toMatchObject({ criteria: [{ model }] });
+    expect(RunEventSchema.parse(JSON.parse(JSON.stringify(event)))).toEqual(event);
+  });
   it('identifies the expression following a false Jev predicate and skips later criteria', async () => {
     const e = await createTestEngine();
     e.ports.jev.judge = () => Promise.resolve({ holds: false, confidence: 0.93 });
