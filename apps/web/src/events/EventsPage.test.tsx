@@ -104,4 +104,100 @@ describe('EventsPage delivery dispositions', () => {
     const legacy = screen.getByRole('row', { name: /opened/ });
     expect(within(legacy).getByText('not tracked')).toBeVisible();
   });
+
+  it.each([
+    {
+      state: 'admitted' as const,
+      runIds: ['01ARZ3NDEKTSV4RRFFQ69G5FAV'],
+      terminalText: 'A run was admitted.',
+    },
+    {
+      state: 'failed' as const,
+      runIds: [],
+      terminalText: 'Admission ended with a safe failure code.',
+    },
+  ])('refreshes a pending receipt when it becomes $state and stops polling', async (terminal) => {
+    const api = new FakeApi();
+    const pending = {
+      id: 'receipt-1',
+      ownerId: 'local',
+      type: 'issues',
+      payload: { action: 'labeled' },
+      receivedAt: TS,
+      source: 'webhook:test',
+      runIds: [] as string[],
+      delivery: { state: 'pending' as const, attempts: 1 },
+    };
+    api.inbound = [pending];
+    const view = renderApp('/events', api);
+
+    try {
+      expect(
+        await screen.findByText('Accepted but not yet admitted as a run.', undefined, {
+          timeout: 5_000,
+        }),
+      ).toBeVisible();
+      expect(api.callsTo('GET', '/events')).toHaveLength(1);
+
+      api.inbound = [
+        {
+          ...pending,
+          runIds: terminal.runIds,
+          delivery:
+            terminal.state === 'admitted'
+              ? { state: 'admitted' as const, attempts: 1 }
+              : { state: 'failed' as const, attempts: 2, failureCode: 'ADMISSION_UNAVAILABLE' },
+        },
+      ];
+
+      expect(
+        await screen.findByText(terminal.terminalText, undefined, { timeout: 5_000 }),
+      ).toBeVisible();
+      if (terminal.state === 'admitted') {
+        expect(screen.getByRole('link', { name: '01ARZ3NDEKTSV4RRFFQ69G5FAV' })).toBeVisible();
+      } else {
+        expect(screen.getByText('ADMISSION_UNAVAILABLE')).toBeVisible();
+      }
+      expect(api.callsTo('GET', '/events')).toHaveLength(2);
+
+      await new Promise((resolve) => setTimeout(resolve, 2_200));
+      expect(api.callsTo('GET', '/events')).toHaveLength(2);
+    } finally {
+      view.unmount();
+      view.queryClient.clear();
+    }
+  });
+
+  it('stops pending refreshes when the Events page unmounts', async () => {
+    const api = new FakeApi();
+    api.inbound = [
+      {
+        id: 'receipt-1',
+        ownerId: 'local',
+        type: 'issues',
+        payload: { action: 'labeled' },
+        receivedAt: TS,
+        source: 'webhook:test',
+        runIds: [],
+        delivery: { state: 'pending', attempts: 1 },
+      },
+    ];
+    const view = renderApp('/events', api);
+
+    try {
+      expect(
+        await screen.findByText('Accepted but not yet admitted as a run.', undefined, {
+          timeout: 5_000,
+        }),
+      ).toBeVisible();
+      expect(api.callsTo('GET', '/events')).toHaveLength(1);
+
+      view.unmount();
+      await new Promise((resolve) => setTimeout(resolve, 2_200));
+      expect(api.callsTo('GET', '/events')).toHaveLength(1);
+    } finally {
+      view.unmount();
+      view.queryClient.clear();
+    }
+  });
 });

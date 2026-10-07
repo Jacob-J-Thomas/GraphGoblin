@@ -212,6 +212,7 @@ describe('TriggerPresets', () => {
     await user.type(screen.getByLabelText('Repository'), 'service');
     await user.type(screen.getByLabelText('Issue label'), 'ready for review');
     expect(screen.queryByLabelText('Signing secret name')).not.toBeInTheDocument();
+    expect(screen.getByText(/rejects output over 200 issues or 64 KiB/i)).toBeVisible();
     await user.click(screen.getByRole('button', { name: 'Apply GitHub preset' }));
 
     const config = onApply.mock.calls[0]?.[0] as Record<string, unknown>;

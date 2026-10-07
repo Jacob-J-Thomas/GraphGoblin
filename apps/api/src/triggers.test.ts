@@ -999,6 +999,150 @@ describe('body signing and durable admission', () => {
       },
     });
   }
+  it.each(
+    (['hmac-sha256', 'hmac-sha256-body'] as const).flatMap((scheme) =>
+      ['X-Hub-Signature-256', 'X-Custom-Signature'].flatMap((configuredHeader) =>
+        [configuredHeader.toLowerCase(), configuredHeader].map((presentedHeader) => ({
+          scheme,
+          configuredHeader,
+          presentedHeader,
+        })),
+      ),
+    ),
+  )(
+    'excludes the $scheme credential header $presentedHeader before authoring dedupe keys',
+    async ({ scheme, configuredHeader, presentedHeader }) => {
+      await setSecret();
+      const id = await t.publishLoop(
+        triggerLoop(
+          'credential-binding',
+          hookTrigger({
+            signature: { scheme, header: configuredHeader, secretRef: 'hook-secret' },
+            dedupeKey: '$lookup($headers, ' + JSON.stringify(presentedHeader) + ')',
+          }),
+        ),
+      );
+      const path = (await triggersOf(t, id)).webhooks[0]!.path;
+      const body = '{"id":1,"headerLikePayload":"authored application data"}';
+      const timestamp = t.clock.now().toISOString();
+      const signature =
+        scheme === 'hmac-sha256-body'
+          ? signRawBody('shh', Buffer.from(body))
+          : signPayload('shh', timestamp, body);
+      const result = await t.container.triggers.handleWebhook(
+        path.slice('/hooks/'.length),
+        Buffer.from(body),
+        {
+          [presentedHeader]: signature,
+          'x-graphgoblin-timestamp': timestamp,
+          'x-github-delivery': 'delivery-1',
+        },
+      );
+      expect(result).toMatchObject({
+        kind: 'accepted',
+        filtered: false,
+        event: { dedupeKey: expect.stringMatching(/^sig-hash:[a-f0-9]{64}$/) },
+      });
+      if (result.kind !== 'accepted' || !result.runId)
+        throw new Error('expected admitted delivery');
+      await t.idle();
+      const initialThread = await t.container.repos.runs.getInitialThread(result.runId);
+      expect(initialThread?.invocation.trigger.payload).toEqual(JSON.parse(body));
+      const persisted = JSON.stringify({
+        receipts: (await t.container.handle.client.execute('SELECT * FROM webhook_receipts')).rows,
+        inbound: await t.container.repos.inbound.list('local'),
+        initialThread,
+        snapshot: await t.container.repos.runs.getThread(result.runId),
+        events: await t.container.repos.events.read(result.runId),
+        listedEvents: (await t.app.inject('/events')).json(),
+        response: result,
+        diagnostics: t.logger.lines,
+      });
+      expect(persisted).not.toContain(signature);
+      expect(persisted).not.toContain(signature.slice(7));
+    },
+  );
+  it.each(['hmac-sha256', 'hmac-sha256-body'] as const)(
+    'shares credential-free $headers with the %s filter and retains delivery/timestamp metadata',
+    async (scheme) => {
+      await setSecret();
+      const id = await t.publishLoop(
+        triggerLoop(
+          'filter-credential-binding',
+          hookTrigger({
+            signature: { scheme, header: 'X-Custom-Signature', secretRef: 'hook-secret' },
+            dedupeKey: '$string($headers)',
+            filter:
+              '$not($exists($headers."x-custom-signature")) and $not($exists($headers."X-Custom-Signature")) and $headers."x-github-delivery" = "delivery-1" and $exists($headers."x-graphgoblin-timestamp")',
+          }),
+        ),
+      );
+      const path = (await triggersOf(t, id)).webhooks[0]!.path;
+      const body = '{"id":1}';
+      const timestamp = t.clock.now().toISOString();
+      const signature =
+        scheme === 'hmac-sha256-body'
+          ? signRawBody('shh', Buffer.from(body))
+          : signPayload('shh', timestamp, body);
+      const headers = {
+        'X-Custom-Signature': signature,
+        'x-graphgoblin-timestamp': timestamp,
+        'x-github-delivery': 'delivery-1',
+        'x-ordinary-list': ['first', 'second'],
+        'x-nonstring': 1,
+      };
+      const result = await t.container.triggers.handleWebhook(
+        path.slice('/hooks/'.length),
+        Buffer.from(body),
+        headers,
+      );
+      expect(result).toMatchObject({ kind: 'accepted', filtered: false });
+      if (result.kind !== 'accepted' || !result.runId)
+        throw new Error('expected admitted delivery');
+      expect(JSON.parse(result.event.dedupeKey!)).toEqual({
+        'x-graphgoblin-timestamp': timestamp,
+        'x-github-delivery': 'delivery-1',
+        'x-ordinary-list': 'first',
+      });
+      await t.idle();
+      const evidence = JSON.stringify({
+        result,
+        receipts: (await t.container.handle.client.execute('SELECT * FROM webhook_receipts')).rows,
+        thread: await t.container.repos.runs.getThread(result.runId),
+        events: await t.container.repos.events.read(result.runId),
+        diagnostics: t.logger.lines,
+      });
+      expect(evidence).not.toContain(signature);
+      expect(evidence).not.toContain(signature.slice(7));
+      expect(
+        (
+          await t.app.inject({
+            method: 'PUT',
+            url: '/loops/' + id + '/draft',
+            payload: {
+              definition: triggerLoop(
+                'filter-credential-binding',
+                hookTrigger({
+                  signature: { scheme, header: 'X-Custom-Signature', secretRef: 'hook-secret' },
+                  filter: '$error($string($headers))',
+                }),
+              ),
+            },
+          })
+        ).statusCode,
+      ).toBe(200);
+      expect(
+        (await t.app.inject({ method: 'POST', url: '/loops/' + id + '/publish' })).statusCode,
+      ).toBe(200);
+      const errorResult = await t.container.triggers.handleWebhook(
+        path.slice('/hooks/'.length),
+        Buffer.from(body),
+        headers,
+      );
+      expect(errorResult).toMatchObject({ kind: 'error', status: 422, code: 'EXPRESSION_FAILED' });
+      expect(JSON.stringify({ errorResult, diagnostics: t.logger.lines })).not.toContain(signature);
+    },
+  );
   it('rejects overlong body business keys before consuming content, preserves exact boundary keys and legacy timestamp truncation', async () => {
     await setSecret();
     const id = await t.publishLoop(triggerLoop('body-key-length', bodyHook({ dedupeKey: 'key' })));

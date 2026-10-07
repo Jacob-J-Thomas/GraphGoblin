@@ -85,7 +85,7 @@ With `GG_REQUIRE_API_KEY=true`, `POST /api-keys` needs a key, so the first one c
 
 ## Trigger credential boundaries (#29)
 
-Body-signature verification uses the exact raw bytes before decoding or parsing. Receipts and run invocations store content/signature hashes or authored business keys, never the raw signing header. Unsigned event and delivery headers cannot authorize a GitHub action: presets check the signed repository/object/action fields. HTTP probes remove authorization, cookie, set-cookie and API-key response headers before returning a result that may be persisted. Transport and process errors use safe diagnostic codes. This does not redact arbitrary application payload fields or make untrusted script execution safe.
+Body-signature verification uses the exact raw bytes before decoding or parsing. The configured signing header is excluded case-insensitively from the shared `$headers` binding before dedupe and filter expressions run. Receipts and run invocations store content/signature hashes or authored business keys, never that request credential. Unsigned event and delivery headers cannot authorize a GitHub action: presets check the signed repository/object/action fields. HTTP probes remove authorization, cookie, set-cookie and API-key response headers before returning a result that may be persisted. Transport and process errors use safe diagnostic codes. This does not redact arbitrary application payload fields or make untrusted script execution safe.
 
 ## Multi-tenant checklist for later (recorded)
 

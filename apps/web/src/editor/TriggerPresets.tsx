@@ -185,8 +185,8 @@ export function TriggerPresets({
         {preset === 'issues-poll' ? (
           <p className="rounded-md border border-default bg-surface px-3 py-2 text-xs text-muted">
             This read-only poll uses an already-installed, authenticated local <code>gh</code>
-            command. It selects at most 200 open issues and admits 5 unseen items per poll by
-            default; all bounds and expressions remain editable below.
+            command. It rejects output over 200 issues or 64 KiB, then admits up to 5 unseen items
+            per poll by default; all bounds and expressions remain editable below.
           </p>
         ) : null}
 

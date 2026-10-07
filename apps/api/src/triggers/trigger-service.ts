@@ -336,7 +336,7 @@ export class TriggerService {
     const payload = verified.payload;
     const node = await this.triggerNode(endpoint.versionId, endpoint.triggerNodeId, 'webhook');
     if (!node) return fail(404, 'HOOK_NOT_FOUND', 'unknown webhook');
-    const bindings = { headers: this.lowerHeaders(headers) };
+    const bindings = { headers: this.expressionHeaders(headers, endpoint.signatureHeader) };
     let dedupeKey: string;
     let authoredKey: string | undefined;
     let passes: boolean;
@@ -612,10 +612,14 @@ export class TriggerService {
     return node?.config.subtype === subtype ? (node.config as Config<S>) : undefined;
   }
 
-  /** Header values as strings, for the `$headers` binding. Node already lowercases names. */
-  private lowerHeaders(headers: Record<string, unknown>): Record<string, string> {
+  /** String header metadata for expressions; the configured signing credential stays private. */
+  private expressionHeaders(
+    headers: Record<string, unknown>,
+    signingHeader: string,
+  ): Record<string, string> {
     const out: Record<string, string> = {};
     for (const name of Object.keys(headers)) {
+      if (name.toLowerCase() === signingHeader.toLowerCase()) continue;
       const value = headers[name];
       const text =
         typeof value === 'string'
