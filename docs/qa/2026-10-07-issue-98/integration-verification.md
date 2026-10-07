@@ -51,3 +51,17 @@ Conversion preserves stable route IDs and unrelated user JSON, keeps original fa
 The PR must record and triage the independent Opus review and normal `@Codex review`, then obtain the owner's running-product acceptance before merging into the feature branch. Use “Part of #98”; do not close the issue on an agent's behalf.
 
 Issue 38 remains the actual human question/context session; this cutover preserves today's question/context behavior. Issue 33 is held behind that session, and issues 97/99, Claude support, GitHub triggers and templates are separate delivery slices. The final feature-to-main PR must remain unmerged.
+
+## Review-fix delta, 2026-10-07
+
+Codex review at `4689ba4` found that a database symlink could make a purported backup retain a reference to the database being upgraded. The fix refuses linked database/WAL/SHM paths and linked ancestors before backup or mutable SQLite access, checks physical backup-parent containment, and refuses linked data roots with actionable physical-path guidance. Ordinary non-database links remain preserved as links, without claiming their external content is snapshotted. Containment also rejects descendants whose names begin with two dots, such as `..backup`.
+
+Fresh-checkout CI exposed missing `.tmp` parents in two native fixtures; both now create the parent before `mkdtemp`. Upgrade acceptance after the fix: 11 cases, 9 passed, 2 explicit Windows file-symlink permission skips, no failures. Portable directory-junction cases passed; Linux file-symlink checks remain for CI.
+
+The decision dialog now displays Evaluation before Answer through a layout-only order hint. Its original schema/resolver and field paths remain unchanged. Focused keyboard/order/value-preservation checks, web typecheck and changed-file lint passed. Root inspected actual built-app screenshots at 1280 by 720 and 360 by 740: all three evaluator choices are visible on opening, and the narrow dialog remains within the viewport.
+
+`pnpm.cmd exec vitest run --coverage --maxWorkers=2` in `apps/web` passed all 1,037 tests across 94 files: statements 98.31%, branches 95.09%, functions 98.75%, lines 99.03%. A prior concurrent run passed 1,036 cases and timed out in the existing inference undo/focus case; this bounded rerun passed with unchanged assertions and timeout. The latest full build passed all 11 tasks.
+
+The focused Edge delta passed 16 of 17 cases. The remaining case completed the decision/run but exposed a pre-existing inspector refresh race: its timeline contained `run.finished succeeded` while the header retained an earlier `running` snapshot. Source comparison and the captured trace establish the event-before-status race predates this branch. It is deferred to [#116](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/116); the test remains unchanged and this run is not claimed fully green. Responsive, touch-target, eight-option keyboard, option-removal, evaluator-switch and form-control cases passed.
+
+The first Opus implementation review exhausted its 80-turn limit without a verdict. It is incomplete, not approval. A bounded recovery review is required, and owner running-product acceptance remains pending.

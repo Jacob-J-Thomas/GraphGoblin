@@ -27,10 +27,12 @@ function Harness({
   schema,
   initial,
   spy,
+  fieldOrder,
 }: {
   schema: Schema;
   initial: unknown;
   spy: (v: unknown) => void;
+  fieldOrder?: readonly string[] | undefined;
 }) {
   const [value, setValue] = useState(initial);
   return (
@@ -39,6 +41,7 @@ function Harness({
         schema={schema}
         value={value}
         label="form"
+        fieldOrder={fieldOrder}
         onChange={(v) => {
           setValue(v);
           spy(v);
@@ -54,6 +57,53 @@ function last(spy: ReturnType<typeof vi.fn>): Record<string, unknown> {
 }
 
 describe('SchemaForm', () => {
+  it('orders top-level fields without changing field paths or untouched values', async () => {
+    const user = userEvent.setup();
+    const spy = vi.fn();
+    const answer = {
+      type: 'choice' as const,
+      options: [
+        { id: 'ready', label: 'Ready', criteria: 'Choose ready' },
+        { id: 'blocked', label: 'Blocked', criteria: 'Choose blocked' },
+      ],
+    };
+    render(
+      <Harness
+        schema={NodeConfigSchemas.decision}
+        initial={{
+          answer,
+          evaluation: {
+            kind: 'llm',
+            harness: 'codex',
+            model: { mode: 'inherit' },
+            effort: { mode: 'inherit' },
+            question: 'Choose one',
+            context: {},
+          },
+          recordAlternatives: true,
+        }}
+        spy={spy}
+        fieldOrder={['evaluation', 'unknown-field', 'answer']}
+      />,
+    );
+    const form = screen.getByRole('form', { name: 'form' });
+    const evaluation = form.querySelector<HTMLElement>('[data-field="evaluation"]');
+    const answerField = form.querySelector<HTMLElement>('[data-field="answer"]');
+    if (!evaluation || !answerField) throw new Error('Decision fields were not rendered.');
+    expect(
+      evaluation.compareDocumentPosition(answerField) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).not.toBe(0);
+
+    const evaluatorKind = within(evaluation).getAllByLabelText('Kind')[0];
+    if (!evaluatorKind) throw new Error('Evaluation kind selector was not rendered.');
+    await user.selectOptions(evaluatorKind, '0');
+    await waitFor(() => expect(last(spy)['evaluation']).toMatchObject({ kind: 'expression' }));
+    expect(last(spy)).toMatchObject({
+      answer,
+      evaluation: { kind: 'expression' },
+    });
+  });
+
   it.each([
     [z.object({ entries: z.record(z.string(), z.string()) }), { entries: { first: 'text' } }],
     [z.object({ entries: VariableDeclarationsSchema }), { entries: { first: { type: 'string' } } }],

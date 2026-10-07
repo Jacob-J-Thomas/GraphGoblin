@@ -31,6 +31,7 @@ async function offlineUpgrade(handle: ReturnType<typeof openDatabase>, migration
 
 describe('inference-node harness data migration', () => {
   it('restores a full pre-upgrade backup after 0006 and reapplies every migration on re-upgrade', async () => {
+    await mkdir(fileURLToPath(new URL('../../../../.tmp/', import.meta.url)), { recursive: true });
     const root = await mkdtemp(
       fileURLToPath(new URL('../../../../.tmp/gg-backup-reupgrade-', import.meta.url)),
     );

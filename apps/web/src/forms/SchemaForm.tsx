@@ -49,6 +49,8 @@ export interface SchemaFormProps {
   onChange: (value: unknown, change: FormChange) => void;
   /** Accessible name for the form. */
   label: string;
+  /** Optional display order for top-level object fields; unspecified fields keep schema order. */
+  fieldOrder?: readonly string[] | undefined;
   /** Stored text that did not parse (JSON), by field path; fields show it again when remounted. */
   parseErrors?: Record<string, ParseError> | undefined;
   /**
@@ -107,14 +109,30 @@ function asValues(value: unknown): FieldValues {
   return typeof value === 'object' && value !== null && !Array.isArray(value) ? value : {};
 }
 
+/** Reorder only the rendered top-level object shape, leaving the schema and field paths intact. */
+function orderedShape(
+  shape: Record<string, Schema>,
+  fieldOrder: readonly string[] | undefined,
+): Record<string, Schema> {
+  if (!fieldOrder || fieldOrder.length === 0) return shape;
+  const ordered: Record<string, Schema> = {};
+  for (const key of [...fieldOrder, ...Object.keys(shape)]) {
+    if (Object.hasOwn(ordered, key) || !Object.hasOwn(shape, key)) continue;
+    const field = shape[key];
+    if (field !== undefined) ordered[key] = field;
+  }
+  return ordered;
+}
+
 /**
  * A form generated from a Zod schema with react-hook-form and the Zod resolver. Every change is
  * reported upward as-is so the caller (the editor store) never loses input; schema issues are shown
  * inline per field and as a summary. Remount with a `key` to load a different value.
  *
  * The contracts' field metadata places the fields (`formLayout`): the basic ones first, in schema
- * order, then the advanced ones under a collapsed Advanced disclosure, grouped under headings. The
- * disclosure's state is the caller's (`disclosures`), else the form's own, collapsed on each mount.
+ * order unless `fieldOrder` overrides the top-level object, then the advanced ones under a collapsed
+ * Advanced disclosure, grouped under headings. The disclosure's state is the caller's (`disclosures`),
+ * else the form's own, collapsed on each mount.
  */
 export function SchemaForm({
   schema,
@@ -127,6 +145,7 @@ export function SchemaForm({
   unionPickers,
   problems,
   disclosures,
+  fieldOrder,
 }: SchemaFormProps) {
   const shape = shapeOf(schema);
   const id = useId();
@@ -225,8 +244,10 @@ export function SchemaForm({
   const discriminator = shape.kind === 'union' ? shape.discriminator : undefined;
   const layout = useMemo(() => {
     const variant = shapeOf(variantSchema);
-    return variant.kind === 'object' ? formLayout(variant.shape, '', discriminator) : undefined;
-  }, [variantSchema, discriminator]);
+    return variant.kind === 'object'
+      ? formLayout(orderedShape(variant.shape, fieldOrder), '', discriminator)
+      : undefined;
+  }, [variantSchema, discriminator, fieldOrder]);
 
   // A choice: one undo step, with the unparsed text of the fields it replaces.
   const switchVariant = (index: number) =>

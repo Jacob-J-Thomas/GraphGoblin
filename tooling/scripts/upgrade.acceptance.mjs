@@ -3,6 +3,8 @@ import { test } from 'node:test';
 import {
   cp,
   copyFile,
+  lstat,
+  symlink,
   mkdir,
   mkdtemp,
   readFile,
@@ -77,6 +79,7 @@ const resolutions = {
   sources: { '/nodes/2/config/return/mapping': 'lastOutput.value.answer.optionId' },
 };
 async function temporary(fn) {
+  await mkdir(fileURLToPath(new URL('../../.tmp/', import.meta.url)), { recursive: true });
   const root = await mkdtemp(
     fileURLToPath(new URL('../../.tmp/upgrade-acceptance-', import.meta.url)),
   );
@@ -397,7 +400,8 @@ test('external database backup copies base/WAL/SHM exactly and refuses overlappi
       );
     const record = JSON.parse(await readFile(join(backup, 'backup.json'), 'utf8'));
     assert.equal(Object.keys(record.external).length, 3);
-    await assert.rejects(backupStoppedData(data, file, join(data, 'child')), /separate/);
+    for (const child of ['child', '..backup'])
+      await assert.rejects(backupStoppedData(data, file, join(data, child)), /separate/);
     await assert.rejects(backupStoppedData(data, file, backup), { code: 'EEXIST' });
     const second = join(root, 'second');
     await rm(file + '-wal');
@@ -497,4 +501,99 @@ test('actual committed external SQLite WAL survives backup restoration and a sec
     } finally {
       reader.close();
     }
+  }));
+
+async function fileLinkOrSkip(t, target, path) {
+  try {
+    await symlink(target, path, 'file');
+    return true;
+  } catch (error) {
+    if (process.platform === 'win32' && error?.code === 'EPERM') {
+      t.skip('Host does not permit file symlinks; directory-junction refusal is tested separately');
+      return false;
+    }
+    throw error;
+  }
+}
+test('internal database symlink and external linked sidecars refuse before a backup is created', (t) =>
+  temporary(async (root) => {
+    const data = join(root, 'data'),
+      target = join(root, 'target.db');
+    await mkdir(data);
+    await writeFile(target, 'unchanged target');
+    const linked = join(data, 'database.db');
+    if (!(await fileLinkOrSkip(t, target, linked))) return;
+    const first = join(root, 'internal-backup');
+    await assert.rejects(
+      backupStoppedData(data, linked, first),
+      /regular files without symbolic links/,
+    );
+    await assert.rejects(access(first), { code: 'ENOENT' });
+    assert.equal(await readFile(target, 'utf8'), 'unchanged target');
+    const external = join(root, 'external.db');
+    await writeFile(external, 'ordinary external database');
+    for (const suffix of ['-wal', '-shm']) {
+      await symlink(target, external + suffix, 'file');
+      const destination = join(root, 'sidecar-backup' + suffix);
+      await assert.rejects(
+        backupStoppedData(data, external, destination),
+        /regular files without symbolic links/,
+      );
+      await assert.rejects(access(destination), { code: 'ENOENT' });
+      await rm(external + suffix);
+    }
+    assert.equal(await readFile(external, 'utf8'), 'ordinary external database');
+    assert.equal(await readFile(target, 'utf8'), 'unchanged target');
+  }));
+test('linked database ancestors, data roots and physically overlapping backup parents refuse before copy', () =>
+  temporary(async (root) => {
+    const data = join(root, 'data'),
+      target = join(root, 'target');
+    await mkdir(data);
+    await mkdir(target);
+    const database = join(target, 'database.db');
+    await writeFile(database, 'unchanged database');
+    const kind = process.platform === 'win32' ? 'junction' : 'dir';
+    await symlink(target, join(data, 'linked-database'), kind);
+    const backup = join(root, 'linked-db-backup');
+    await assert.rejects(
+      backupStoppedData(data, join(data, 'linked-database', 'database.db'), backup),
+      /regular files without symbolic links/,
+    );
+    await assert.rejects(access(backup), { code: 'ENOENT' });
+    const rootAlias = join(root, 'data-alias');
+    await symlink(data, rootAlias, kind);
+    await assert.rejects(
+      backupStoppedData(rootAlias, database, join(root, 'root-alias-backup')),
+      /physical path/,
+    );
+    await assert.rejects(access(join(root, 'root-alias-backup')), { code: 'ENOENT' });
+    const aliasDestination = join(rootAlias, 'overlapping-backup');
+    await assert.rejects(
+      backupStoppedData(data, database, aliasDestination),
+      /separate from the data directory/,
+    );
+    await assert.rejects(access(join(data, 'overlapping-backup')), { code: 'ENOENT' });
+    // Existing destinations, including a link to the external DB's parent, cannot be reused.
+    const externalAlias = join(root, 'external-alias');
+    await symlink(target, externalAlias, kind);
+    await assert.rejects(backupStoppedData(data, database, externalAlias), { code: 'EEXIST' });
+    assert.equal(await readFile(database, 'utf8'), 'unchanged database');
+  }));
+test('ordinary non-database links remain preserved without claiming their external content is snapshotted', (t) =>
+  temporary(async (root) => {
+    const data = join(root, 'data'),
+      database = join(root, 'external.db'),
+      artifact = join(root, 'artifact.txt');
+    await mkdir(data);
+    await writeFile(database, 'database snapshot');
+    await writeFile(artifact, 'external artifact');
+    if (!(await fileLinkOrSkip(t, artifact, join(data, 'artifact-link')))) return;
+    const backup = join(root, 'backup');
+    await backupStoppedData(data, database, backup);
+    assert.equal((await lstat(join(backup, 'data', 'artifact-link'))).isSymbolicLink(), true);
+    const record = JSON.parse(await readFile(join(backup, 'backup.json'), 'utf8'));
+    assert.equal(record.files['artifact-link'].link, artifact);
+    assert.equal(Object.keys(record.external).length, 1);
+    assert.equal(await readFile(join(backup, 'database'), 'utf8'), 'database snapshot');
   }));

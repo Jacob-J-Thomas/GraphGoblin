@@ -1,4 +1,8 @@
-import type { LoopDefinitionInput, NodeInput } from '@graphgoblin/contracts';
+import {
+  DecisionConfigSchema,
+  type LoopDefinitionInput,
+  type NodeInput,
+} from '@graphgoblin/contracts';
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
@@ -42,6 +46,63 @@ async function openDialog(extra: NodeInput, name: string) {
 
 const advanced = (dialog: HTMLElement) =>
   within(dialog).getByRole('button', { name: /^Advanced\b/ });
+
+describe('NodeEditorDialog decision field order', () => {
+  it('shows the evaluator before answer options and preserves issue focus paths', async () => {
+    const user = userEvent.setup();
+    const dialog = await openDialog(
+      {
+        id: 'pick',
+        kind: 'decision',
+        label: 'Pick',
+        config: {
+          answer: {
+            type: 'choice',
+            options: [
+              { id: 'ready', label: 'Ready', criteria: 'Choose ready' },
+              { id: 'blocked', label: 'Blocked', criteria: 'Choose blocked' },
+            ],
+          },
+          evaluation: {
+            kind: 'llm',
+            harness: 'codex',
+            model: { mode: 'inherit' },
+            effort: { mode: 'inherit' },
+            question: 'Choose one',
+            context: {},
+          },
+          recordAlternatives: true,
+        },
+      },
+      'Edit decision pick',
+    );
+    const form = within(dialog).getByRole('form', { name: 'pick config' });
+    const evaluation = form.querySelector<HTMLElement>('[data-field="evaluation"]');
+    const answer = form.querySelector<HTMLElement>('[data-field="answer"]');
+    if (!evaluation || !answer) throw new Error('Decision fields were not rendered.');
+    expect(evaluation.compareDocumentPosition(answer) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(
+      0,
+    );
+    expect(within(evaluation).getByRole('radiogroup', { name: 'Evaluation method' })).toBeVisible();
+
+    const expression = within(evaluation).getByRole('radio', { name: 'Expression' });
+    expression.focus();
+    await user.keyboard(' ');
+    await waitFor(() => expect(expression).toBeChecked());
+
+    act(() => store().openNode('pick', { field: 'config.evaluation.jsonata' }));
+    await waitFor(() => expect(within(dialog).getByLabelText('Jsonata')).toHaveFocus());
+
+    const node = store().definition?.nodes.find((candidate) => candidate.id === 'pick');
+    if (node?.kind !== 'decision') throw new Error('Decision node is missing from the editor.');
+    const config = DecisionConfigSchema.parse(node.config);
+    expect(config.evaluation.kind).toBe('expression');
+    expect(config.answer.options).toEqual([
+      { id: 'ready', label: 'Ready', criteria: 'Choose ready' },
+      { id: 'blocked', label: 'Blocked', criteria: 'Choose blocked' },
+    ]);
+  });
+});
 
 describe('NodeEditorDialog disclosures across undo and redo', () => {
   beforeEach(() => localStorage.setItem(LOOP_PANEL_STORAGE_KEY, 'expanded'));

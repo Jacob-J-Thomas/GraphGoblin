@@ -1,7 +1,17 @@
 #!/usr/bin/env node
-import { cp, mkdir, readFile, readdir, readlink, stat, writeFile } from 'node:fs/promises';
+import {
+  cp,
+  lstat,
+  mkdir,
+  readFile,
+  readdir,
+  readlink,
+  realpath,
+  stat,
+  writeFile,
+} from 'node:fs/promises';
 import { createHash } from 'node:crypto';
-import { isAbsolute, join, relative, resolve } from 'node:path';
+import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { acquireDataDirLock } from '../../apps/api/dist/data-dir-lock.js';
 import {
@@ -25,7 +35,7 @@ async function output(path, value) {
 }
 function within(parent, child) {
   const rel = relative(parent, child);
-  return rel === '' || (!rel.startsWith('..') && !isAbsolute(rel));
+  return rel === '' || (rel !== '..' && !rel.startsWith('..' + sep) && !isAbsolute(rel));
 }
 async function tree(path, prefix = '') {
   const items = {};
@@ -42,12 +52,40 @@ async function tree(path, prefix = '') {
   }
   return Object.fromEntries(Object.entries(items).sort(([a], [b]) => a.localeCompare(b)));
 }
-/** Complete stopped data copy, external DB plus WAL/SHM when applicable, hash-verified before opening SQLite. */
+/** Database files must be regular paths: preserved links cannot serve as an independent database backup. */
+async function requireRegularDatabasePaths(dbFile) {
+  for (const suffix of ['', '-wal', '-shm']) {
+    const file = dbFile + suffix;
+    try {
+      const info = await lstat(file);
+      if (!info.isFile() || relative(file, await realpath(file)) !== '')
+        throw new Error(
+          'Database and sidecars must be regular files without symbolic links or linked ancestors',
+        );
+    } catch (error) {
+      if (suffix !== '' && error?.code === 'ENOENT') continue;
+      throw error;
+    }
+  }
+}
+/** Stopped data copy preserving ordinary links, independent DB/WAL/SHM bytes, verified before opening SQLite. */
 export async function backupStoppedData(dataDir, dbFile, backupDir) {
-  if (within(dataDir, backupDir) || within(backupDir, dataDir))
+  dataDir = resolve(dataDir);
+  dbFile = resolve(dbFile);
+  backupDir = resolve(backupDir);
+  const physicalDataDir = await realpath(dataDir);
+  backupDir = join(await realpath(dirname(backupDir)), basename(backupDir));
+  if (relative(dataDir, physicalDataDir) !== '')
+    throw new Error(
+      'Data directory must use its physical path without symbolic links or linked ancestors',
+    );
+  if (within(physicalDataDir, backupDir) || within(backupDir, physicalDataDir))
     throw new Error('Backup directory must be separate from the data directory');
-  await mkdir(backupDir, { recursive: false });
+  await requireRegularDatabasePaths(dbFile);
+  if (within(backupDir, dbFile))
+    throw new Error('Backup directory must be separate from the database');
   const before = await tree(dataDir);
+  await mkdir(backupDir, { recursive: false });
   await cp(dataDir, join(backupDir, 'data'), {
     recursive: true,
     force: false,

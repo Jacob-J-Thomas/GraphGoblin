@@ -32,6 +32,7 @@ import { useEditorStore } from './store.js';
 
 /** Why `draft` cannot become the id of node `nodeId`, or undefined when it can (or is unchanged). */
 const DECISION_UNION_PICKERS = { evaluation: DecisionKindPicker };
+const DECISION_FIELD_ORDER = ['evaluation', 'answer'] as const;
 
 export function idProblem(
   draft: string,
@@ -280,6 +281,7 @@ export function NodeEditorDialog({
             <SchemaForm
               key={`${node.kind}:${epoch}:${historyEpoch}`}
               schema={NodeConfigSchemas[node.kind]}
+              fieldOrder={node.kind === 'decision' ? DECISION_FIELD_ORDER : undefined}
               value={node.config}
               label={`${node.id} config`}
               controls={NODE_FIELD_CONTROLS}

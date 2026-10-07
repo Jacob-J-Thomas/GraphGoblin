@@ -40,7 +40,7 @@ Review and approve the **exact manifest** before applying it. If anything change
 
 ## Apply and inspect
 
-Choose a new backup directory outside the data directory. Apply first makes a complete stopped-data copy and, when needed, copies the external database plus its WAL/SHM files. It verifies file hashes before opening the database. Schema migrations, definitions, defaults, events, output patches, initial threads and snapshots are then converted in one transaction. Strict final parsing and replay comparison must pass before commit; a failure rolls back the transaction.
+Choose a new backup directory outside the data directory. Apply first makes a complete stopped-data copy and, when needed, copies the external database plus its WAL/SHM files. It verifies file hashes before opening the database. Supply the physical data-directory and database paths: linked data roots, database files, database sidecars, or linked database ancestors are refused before backup creation. Backup containment is checked against the physical parent directory, so an alias cannot place a backup inside the source. Ordinary non-database links in the data tree are preserved as links; their external target contents are not snapshotted. Preserve any such external content separately when it is needed for recovery. Schema migrations, definitions, defaults, events, output patches, initial threads and snapshots are then converted in one transaction. Strict final parsing and replay comparison must pass before commit; a failure rolls back the transaction.
 
 ```powershell
 pnpm.cmd graphgoblin-upgrade apply --data-dir C:/GraphGoblin/data --db-url file:C:/GraphGoblin/data/graphgoblin.db --manifest C:/GraphGoblin/upgrade/manifest.json --backup-dir C:/GraphGoblin/backups/before-format-2
