@@ -12,6 +12,8 @@ export default tseslint.config(
       '**/coverage/**',
       '**/node_modules/**',
       '**/.turbo/**',
+      // Playwright's trace staging captures built bundles. Other test-results content is linted.
+      'apps/web/test-results/.playwright-artifacts-*/traces/**',
       // Generated code (for example the OpenAPI types in packages/api-client) is not linted.
       '**/src/generated/**',
     ],

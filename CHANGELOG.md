@@ -54,6 +54,7 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ### Fixed
 
+- Decision routes are connectable immediately after editing, without reloading the loop. Connections stay with their own rows while labels are incomplete, whichever row you finish first. Renaming a route keeps its connection and line layout; removing a route removes its connection even while its label is invalid. Undo and Redo restore both together.
 - Exit explanations respect the recorded completion reason, outcome, and limit even when no criterion index was recorded. A failure match stays a failure, and a configured duration limit stays a duration limit.
 
 - The app probes API reachability and restores queries, event streams, and autosave when the API returns (#55).

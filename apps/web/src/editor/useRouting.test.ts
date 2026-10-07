@@ -1,24 +1,132 @@
 import { Position, type InternalNode } from '@xyflow/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { routingInput, simpleLoop } from '../__fixtures__/routing.js';
 import { createRoutingCache, ROUTING_MEASURE, createGeometrySelector } from './useRouting.js';
+import type { RoutingNode } from './routing.js';
+
+const geometryOf = (nodes: readonly RoutingNode[], preparationMs = 0) => ({
+  nodes,
+  preparationMs,
+  outputOrder: new Map(nodes.map((node) => [node.id, Object.keys(node.outputs)])),
+});
 
 describe('routing measurement and cache', () => {
+  it('keeps routing geometry and topology changes after measuring a numeric draft label', () => {
+    const node: InternalNode = {
+      id: 'pick',
+      data: {},
+      position: { x: 0, y: 0 },
+      measured: { width: 184, height: 140 },
+      internals: {
+        positionAbsolute: { x: 0, y: 0 },
+        z: 0,
+        userNode: { id: 'pick', data: {}, position: { x: 0, y: 0 } },
+        handleBounds: {
+          source: ['yes', '1'].map((id, i) => ({
+            id,
+            type: 'source',
+            nodeId: 'pick',
+            position: Position.Right,
+            x: 178,
+            y: 84 + i * 20,
+            width: 12,
+            height: 12,
+          })),
+          target: [
+            {
+              id: 'in',
+              type: 'target',
+              nodeId: 'pick',
+              position: Position.Left,
+              x: -6,
+              y: 60,
+              width: 12,
+              height: 12,
+            },
+          ],
+        },
+      },
+    };
+    const select = createGeometrySelector();
+    const state = { nodeLookup: new Map([['pick', node]]) };
+    const geometry = select(state);
+    expect(Object.keys(geometry.nodes[0]!.outputs)).toEqual(['1', 'yes']);
+    const expected = new Map([['pick', { ports: ['yes', '1'] }]]);
+    const route = createRoutingCache();
+    const edges = [{ id: 'self', source: 'pick', target: 'pick', port: 'yes' }];
+    const first = route(geometry, edges, expected);
+    node.internals.positionAbsolute = { x: 40, y: 20 };
+    const moved = select(state);
+    const next = route(moved, edges, expected);
+    expect(next).not.toBe(first);
+    expect(next.nodes[0]!.x).toBe(40);
+    const removed = route(moved, [], expected);
+    expect(removed.routes.size).toBe(0);
+    expect(route(moved, [], expected)).toBe(removed);
+  });
+
+  it('retains unrelated route identity across a decision rename and its subsequent handle measurement', () => {
+    const input = routingInput(simpleLoop());
+    const source = {
+      id: 'pick',
+      x: 3000,
+      y: 3000,
+      width: 184,
+      height: 140,
+      outputs: { yes: { x: 3190, y: 3100 }, no: { x: 3190, y: 3120 } },
+      input: { x: 2994, y: 3070 },
+    };
+    const target = {
+      id: 'target',
+      x: 2700,
+      y: 3000,
+      width: 184,
+      height: 120,
+      outputs: {},
+      input: { x: 2694, y: 3060 },
+    };
+    const nodes = [...input.nodes, source, target];
+    const edges = [...input.edges, { id: 'choice', source: 'pick', target: 'target', port: 'yes' }];
+    const geometry = geometryOf(nodes);
+    const route = createRoutingCache();
+    const measure = vi.spyOn(performance, 'measure');
+    const first = route(geometry, edges);
+    const initialMeasurements = measure.mock.calls.length;
+    const unrelated = first.routes.get('return');
+    const renamed = edges.map((edge) => (edge.id === 'choice' ? { ...edge, port: 'new' } : edge));
+    const expected = new Map([['pick', { ports: ['new', 'no'] }]]);
+    const awaitingHandles = route(geometry, renamed, expected);
+    expect(awaitingHandles).toBe(first);
+    expect(route(geometry, [...renamed], expected)).toBe(awaitingHandles);
+    expect(measure).toHaveBeenCalledTimes(initialMeasurements);
+    const measured = geometryOf([
+      ...input.nodes,
+      { ...source, outputs: { new: source.outputs.yes, no: source.outputs.no } },
+      target,
+    ]);
+    const final = route(measured, renamed, expected);
+    expect(final.routes.get('choice')).toBeDefined();
+    expect(final.routes.get('return')).toBe(unrelated);
+    expect(final.statistics.rerouted).toBe(1);
+    expect(route(measured, [...renamed], expected)).toBe(final);
+    expect(measure).toHaveBeenCalledTimes(initialMeasurements + 1);
+  });
+
   it('routes once per geometry/topology change, retains unchanged routes, and bounds the timeline', () => {
     const input = routingInput(simpleLoop());
     const route = createRoutingCache();
-    const geometry = { nodes: input.nodes, preparationMs: 0.5 };
+    const geometry = geometryOf(input.nodes, 0.5);
     const first = route(geometry, input.edges);
     expect(route(geometry, [...input.edges])).toBe(first);
     const changed = structuredClone(input.nodes);
     changed[0]!.y -= 20;
-    const next = route({ nodes: changed, preparationMs: 0.5 }, input.edges);
+    const next = route(geometryOf(changed, 0.5), input.edges);
     expect(next.routes.get('return')).toBe(first.routes.get('return'));
     // The trigger participates in candidate generation, even though the winning path is unchanged.
     expect(next.statistics.rerouted).toBe(1);
     const moved = structuredClone(changed);
     moved[3]!.outputs['loopBack']!.y += 10;
-    expect(route({ nodes: moved, preparationMs: 0 }, input.edges).routes.get('return')).not.toBe(
+    expect(route(geometryOf(moved), input.edges).routes.get('return')).not.toBe(
       first.routes.get('return'),
     );
     expect(route(geometry, []).routes.size).toBe(0);
@@ -30,7 +138,7 @@ describe('routing measurement and cache', () => {
   it('includes manual routes in the key: a changed route replans, an equal one reuses the plan', () => {
     const input = routingInput(simpleLoop());
     const route = createRoutingCache();
-    const geometry = { nodes: input.nodes, preparationMs: 0 };
+    const geometry = geometryOf(input.nodes);
     const automatic = route(geometry, input.edges);
     const routed = input.edges.map((e) =>
       e.id === 'return' ? { ...e, route: [1120, 420, 260] } : e,
