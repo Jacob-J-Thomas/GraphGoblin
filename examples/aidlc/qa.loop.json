@@ -1,0 +1,1082 @@
+{
+  "format": "graphgoblin-loop",
+  "formatVersion": 1,
+  "exportedAt": "2026-10-07T00:00:00.000Z",
+  "loop": {
+    "schemaVersion": 1,
+    "name": "aidlc-full-v1-qa",
+    "description": "Verify merge SHA, execute locked preconfigured checklist with QA role, hash-check evidence, persist proof branch and return pass/fail/blocked. Strict audit fails closed.",
+    "settings": {
+      "workingDirectory": {
+        "kind": "template",
+        "template": "{{ trigger.payload.workspacePath }}"
+      },
+      "defaults": {
+        "model": "gpt-6.1-sol",
+        "effort": "high"
+      },
+      "maxIterations": 19,
+      "subloopDepthLimit": 2
+    },
+    "variables": {
+      "config": {
+        "type": "object"
+      }
+    },
+    "nodes": [
+      {
+        "id": "start",
+        "label": "aidlc-start",
+        "kind": "trigger",
+        "config": {
+          "subtype": "manual",
+          "exposeTo": ["ui", "api", "mcp"],
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string",
+                "minLength": 1
+              },
+              "repository": {
+                "type": "string"
+              },
+              "workspacePath": {
+                "type": "string"
+              },
+              "issueNumber": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "checklist": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "system": {
+                      "type": "string"
+                    },
+                    "scenario": {
+                      "type": "string"
+                    },
+                    "polarity": {
+                      "type": "string",
+                      "enum": ["positive", "negative"]
+                    },
+                    "steps": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "expected": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["id", "system", "scenario", "polarity", "steps", "expected"],
+                  "additionalProperties": false
+                }
+              },
+              "bounds": {
+                "type": "object",
+                "properties": {
+                  "maxTasks": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 3
+                  },
+                  "reviewCycles": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 3
+                  },
+                  "qaReworks": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1
+                  }
+                },
+                "required": ["maxTasks", "reviewCycles", "qaReworks"],
+                "additionalProperties": false
+              },
+              "policy": {
+                "type": "object",
+                "properties": {
+                  "allowMerge": {
+                    "type": "boolean"
+                  },
+                  "allowClose": {
+                    "type": "boolean"
+                  }
+                },
+                "required": ["allowMerge", "allowClose"],
+                "additionalProperties": false
+              },
+              "task": {
+                "type": "object"
+              },
+              "plan": {
+                "type": "object",
+                "properties": {
+                  "schemaVersion": {
+                    "type": "integer",
+                    "enum": [1]
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": ["ready", "needs-input", "blocked"]
+                  },
+                  "planningSlot": {
+                    "type": "string",
+                    "enum": ["plannerA", "plannerB"]
+                  },
+                  "summary": {
+                    "type": "string"
+                  },
+                  "tasks": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "userVisibleUI": {
+                          "type": "boolean"
+                        },
+                        "acceptanceCriteria": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "dependsOn": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "description",
+                        "userVisibleUI",
+                        "acceptanceCriteria",
+                        "dependsOn"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "checklist": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "system": {
+                          "type": "string"
+                        },
+                        "scenario": {
+                          "type": "string"
+                        },
+                        "polarity": {
+                          "type": "string",
+                          "enum": ["positive", "negative"]
+                        },
+                        "steps": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "expected": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["id", "system", "scenario", "polarity", "steps", "expected"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "risks": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "questions": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "schemaVersion",
+                  "status",
+                  "planningSlot",
+                  "summary",
+                  "tasks",
+                  "checklist",
+                  "risks",
+                  "questions"
+                ],
+                "additionalProperties": false
+              },
+              "implementation": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "enum": ["complete", "blocked"]
+                      },
+                      "taskId": {
+                        "type": "string"
+                      },
+                      "baseSha": {
+                        "type": "string"
+                      },
+                      "headSha": {
+                        "type": "string"
+                      },
+                      "branch": {
+                        "type": "string"
+                      },
+                      "summary": {
+                        "type": "string"
+                      },
+                      "filesChanged": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "remainingWork": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": ["log", "screenshot", "trace", "diff", "report"]
+                            },
+                            "path": {
+                              "type": "string"
+                            },
+                            "sha256": {
+                              "type": "string"
+                            }
+                          },
+                          "required": ["kind", "path", "sha256"],
+                          "additionalProperties": false
+                        }
+                      },
+                      "implementer": {
+                        "type": "object",
+                        "properties": {
+                          "role": {
+                            "type": "string"
+                          },
+                          "harness": {
+                            "type": "string"
+                          },
+                          "model": {
+                            "type": "string"
+                          },
+                          "family": {
+                            "type": "string"
+                          }
+                        },
+                        "required": ["role", "harness", "model", "family"],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "status",
+                      "taskId",
+                      "baseSha",
+                      "headSha",
+                      "branch",
+                      "summary",
+                      "filesChanged",
+                      "remainingWork",
+                      "evidence",
+                      "implementer"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "review": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "verdict": {
+                        "type": "string",
+                        "enum": ["pass", "changes-required", "blocked"]
+                      },
+                      "reviewedHeadSha": {
+                        "type": "string"
+                      },
+                      "implementerFamily": {
+                        "type": "string"
+                      },
+                      "reviewerFamily": {
+                        "type": "string"
+                      },
+                      "acceptanceCoverage": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "criterion": {
+                              "type": "string"
+                            },
+                            "covered": {
+                              "type": "boolean"
+                            },
+                            "evidence": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "type": "string",
+                                    "enum": ["log", "screenshot", "trace", "diff", "report"]
+                                  },
+                                  "path": {
+                                    "type": "string"
+                                  },
+                                  "sha256": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": ["kind", "path", "sha256"],
+                                "additionalProperties": false
+                              }
+                            }
+                          },
+                          "required": ["criterion", "covered", "evidence"],
+                          "additionalProperties": false
+                        }
+                      },
+                      "findings": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "severity": {
+                              "type": "string",
+                              "enum": ["blocking", "nonblocking"]
+                            },
+                            "file": {
+                              "type": ["string", "null"]
+                            },
+                            "line": {
+                              "type": ["integer", "null"]
+                            },
+                            "problem": {
+                              "type": "string"
+                            },
+                            "requestedChange": {
+                              "type": "string"
+                            },
+                            "disposition": {
+                              "type": "string",
+                              "enum": ["fix-now", "wont-fix", "future-issue", "human"]
+                            },
+                            "rationale": {
+                              "type": "string"
+                            },
+                            "issueUrl": {
+                              "type": ["string", "null"]
+                            },
+                            "state": {
+                              "type": "string",
+                              "enum": ["open", "fixed", "accepted", "deferred"]
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "severity",
+                            "file",
+                            "line",
+                            "problem",
+                            "requestedChange",
+                            "disposition",
+                            "rationale",
+                            "issueUrl",
+                            "state"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "summary": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "verdict",
+                      "reviewedHeadSha",
+                      "implementerFamily",
+                      "reviewerFamily",
+                      "acceptanceCoverage",
+                      "findings",
+                      "summary"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "feedback": {},
+              "prCi": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": ["ready", "fix-required", "pending", "merged", "blocked"]
+                  },
+                  "repository": {
+                    "type": "string"
+                  },
+                  "prNumber": {
+                    "type": ["integer", "null"]
+                  },
+                  "prUrl": {
+                    "type": ["string", "null"]
+                  },
+                  "headSha": {
+                    "type": "string"
+                  },
+                  "baseSha": {
+                    "type": "string"
+                  },
+                  "mergeSha": {
+                    "type": ["string", "null"]
+                  },
+                  "requiredChecks": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "sha": {
+                          "type": "string"
+                        },
+                        "state": {
+                          "type": "string",
+                          "enum": ["pending", "pass", "fail", "cancelled", "missing"]
+                        },
+                        "evidence": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "enum": ["log", "screenshot", "trace", "diff", "report"]
+                              },
+                              "path": {
+                                "type": "string"
+                              },
+                              "sha256": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["kind", "path", "sha256"],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": ["name", "sha", "state", "evidence"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "reviewerLogin": {
+                    "type": ["string", "null"]
+                  },
+                  "approvedHeadSha": {
+                    "type": ["string", "null"]
+                  },
+                  "blockingFindings": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "status",
+                  "repository",
+                  "prNumber",
+                  "prUrl",
+                  "headSha",
+                  "baseSha",
+                  "mergeSha",
+                  "requiredChecks",
+                  "reviewerLogin",
+                  "approvedHeadSha",
+                  "blockingFindings",
+                  "reason"
+                ],
+                "additionalProperties": false
+              },
+              "qa": {
+                "type": "object",
+                "properties": {
+                  "verdict": {
+                    "type": "string",
+                    "enum": ["pass", "fail", "blocked"]
+                  },
+                  "executionSha": {
+                    "type": "string"
+                  },
+                  "checklistHash": {
+                    "type": "string"
+                  },
+                  "depth": {
+                    "type": "string",
+                    "enum": ["standard", "full-regression"]
+                  },
+                  "results": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": ["pass", "fail", "blocked"]
+                        },
+                        "actual": {
+                          "type": "string"
+                        },
+                        "evidence": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "enum": ["log", "screenshot", "trace", "diff", "report"]
+                              },
+                              "path": {
+                                "type": "string"
+                              },
+                              "sha256": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["kind", "path", "sha256"],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": ["id", "status", "actual", "evidence"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "proofComplete": {
+                    "type": "boolean"
+                  },
+                  "summary": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "verdict",
+                  "executionSha",
+                  "checklistHash",
+                  "depth",
+                  "results",
+                  "proofComplete",
+                  "summary"
+                ],
+                "additionalProperties": false
+              },
+              "qaRunId": {
+                "type": "string"
+              },
+              "proofLinks": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "remainingTaskIds": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "startedAt": {
+                "type": "string"
+              },
+              "reviewHints": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "message",
+              "repository",
+              "workspacePath",
+              "issueNumber",
+              "checklist",
+              "bounds",
+              "policy"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "ui": {
+          "x": 0,
+          "y": 0
+        }
+      },
+      {
+        "id": "init",
+        "label": "aidlc-init",
+        "kind": "script",
+        "config": {
+          "command": "C:\\nvm4w\\nodejs\\node.exe",
+          "args": [
+            "C:\\Users\\98jak\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-aidlc-full-v1\\examples\\aidlc\\support\\runtime.mjs",
+            "init"
+          ],
+          "env": {
+            "AIDLC_SETTINGS_HASH": "1c8ce26fae5e8e4968b40e75d93f31bc8419a5c78c19d17fe89009703816a759",
+            "AIDLC_SUPPORT_HASH": "c8438b59d1461af24437e11758390b26d58832008a86a512c1d1355be40bbc63"
+          },
+          "cwd": "workspace",
+          "stdin": "thread",
+          "stdout": "patch",
+          "timeoutSeconds": 60
+        },
+        "ui": {
+          "x": 170,
+          "y": 0
+        }
+      },
+      {
+        "id": "prepare",
+        "label": "aidlc-prepare",
+        "kind": "script",
+        "config": {
+          "command": "C:\\nvm4w\\nodejs\\node.exe",
+          "args": [
+            "C:\\Users\\98jak\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-aidlc-full-v1\\examples\\aidlc\\support\\runtime.mjs",
+            "qa-prepare"
+          ],
+          "env": {
+            "AIDLC_SETTINGS_HASH": "1c8ce26fae5e8e4968b40e75d93f31bc8419a5c78c19d17fe89009703816a759",
+            "AIDLC_SUPPORT_HASH": "c8438b59d1461af24437e11758390b26d58832008a86a512c1d1355be40bbc63"
+          },
+          "cwd": "workspace",
+          "stdin": "thread",
+          "stdout": "patch",
+          "timeoutSeconds": 60
+        },
+        "ui": {
+          "x": 340,
+          "y": 0
+        }
+      },
+      {
+        "id": "audit-route",
+        "label": "aidlc-audit-route",
+        "kind": "decision",
+        "config": {
+          "routes": [
+            {
+              "label": "run",
+              "description": "aidlc-run"
+            },
+            {
+              "label": "blocked",
+              "description": "aidlc-blocked"
+            }
+          ],
+          "question": "Check structured facts and child status.",
+          "strategy": ["expression"],
+          "expression": {
+            "jsonata": "vars.auditBlocked ? \"blocked\" : \"run\""
+          },
+          "context": {
+            "messages": "none",
+            "includeLastOutput": true
+          }
+        },
+        "ui": {
+          "x": 510,
+          "y": 0
+        }
+      },
+      {
+        "id": "qa-budget",
+        "label": "aidlc-qa-budget",
+        "kind": "script",
+        "config": {
+          "command": "C:\\nvm4w\\nodejs\\node.exe",
+          "args": [
+            "C:\\Users\\98jak\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-aidlc-full-v1\\examples\\aidlc\\support\\runtime.mjs",
+            "reserve",
+            "worker",
+            "qa",
+            "qa"
+          ],
+          "env": {
+            "AIDLC_SETTINGS_HASH": "1c8ce26fae5e8e4968b40e75d93f31bc8419a5c78c19d17fe89009703816a759",
+            "AIDLC_SUPPORT_HASH": "c8438b59d1461af24437e11758390b26d58832008a86a512c1d1355be40bbc63"
+          },
+          "cwd": "workspace",
+          "stdin": "thread",
+          "stdout": "patch",
+          "timeoutSeconds": 60
+        },
+        "ui": {
+          "x": 680,
+          "y": 0
+        }
+      },
+      {
+        "id": "qa",
+        "label": "aidlc-qa",
+        "kind": "inference",
+        "config": {
+          "harness": "codex",
+          "model": "gpt-6-luna",
+          "effort": "high",
+          "session": {
+            "policy": "fresh"
+          },
+          "prompt": {
+            "template": "Work alone, with a fresh session, only in the current scratch repository. No subagents, MCP, network, credential access, other repositories or private instance files. Never change AGENTS.md, aidlc-checklist.lock.json or .github/. Do not run Git mutations; the scripts own commits and pushes. Required checklist cannot be relaxed. Return only the forced JSON schema. Execute every locked checklist item at current verified merge SHA {{ trigger.payload.prCi.mergeSha }}. Checklist: {{ trigger.payload.checklist | json }}. Original request: {{ trigger.payload.message }}. Use the actual checks already run by the script plus your independent local verification. Script evidence: {{ vars.checkEvidence | json }}; checksPass {{ vars.checksPass }}. Report concrete actual outcomes for each required id. All evidence must exist and have real SHA-256, and each criterion must cite nonempty proof. You may reuse applicable script logs with their supplied hashes; do not create files or modify the merge. Return executionSha {{ trigger.payload.prCi.mergeSha }}, checklistHash {{ vars.checklistHash }}, depth {{ vars.config.policy.qaDepth }}, proofComplete true only when every required criterion has proof. Report fail/blocked honestly for missing acceptance. No adversarial evidence-only audit is claimed."
+          },
+          "harnessOptions": {
+            "sandbox": "read-only",
+            "approval": "never",
+            "networkAccess": false,
+            "webSearch": false,
+            "configOverrides": {
+              "features.multi_agent": false,
+              "mcp_servers.node_repl.enabled": false
+            }
+          },
+          "timeoutSeconds": 300,
+          "output": {
+            "captureTranscript": "artifact",
+            "toMessages": "final",
+            "schema": {
+              "jsonSchema": {
+                "type": "object",
+                "properties": {
+                  "verdict": {
+                    "type": "string",
+                    "enum": ["pass", "fail", "blocked"]
+                  },
+                  "executionSha": {
+                    "type": "string"
+                  },
+                  "checklistHash": {
+                    "type": "string"
+                  },
+                  "depth": {
+                    "type": "string",
+                    "enum": ["standard", "full-regression"]
+                  },
+                  "results": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": ["pass", "fail", "blocked"]
+                        },
+                        "actual": {
+                          "type": "string"
+                        },
+                        "evidence": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "enum": ["log", "screenshot", "trace", "diff", "report"]
+                              },
+                              "path": {
+                                "type": "string"
+                              },
+                              "sha256": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["kind", "path", "sha256"],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": ["id", "status", "actual", "evidence"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "proofComplete": {
+                    "type": "boolean"
+                  },
+                  "summary": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "verdict",
+                  "executionSha",
+                  "checklistHash",
+                  "depth",
+                  "results",
+                  "proofComplete",
+                  "summary"
+                ],
+                "additionalProperties": false
+              },
+              "native": true,
+              "repair": {
+                "enabled": true,
+                "maxAttempts": 1,
+                "onFailure": "fail-run"
+              }
+            }
+          }
+        },
+        "ui": {
+          "x": 850,
+          "y": 0
+        }
+      },
+      {
+        "id": "verify-proof",
+        "label": "aidlc-verify-proof",
+        "kind": "script",
+        "config": {
+          "command": "C:\\nvm4w\\nodejs\\node.exe",
+          "args": [
+            "C:\\Users\\98jak\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-aidlc-full-v1\\examples\\aidlc\\support\\runtime.mjs",
+            "qa"
+          ],
+          "env": {
+            "AIDLC_SETTINGS_HASH": "1c8ce26fae5e8e4968b40e75d93f31bc8419a5c78c19d17fe89009703816a759",
+            "AIDLC_SUPPORT_HASH": "c8438b59d1461af24437e11758390b26d58832008a86a512c1d1355be40bbc63"
+          },
+          "cwd": "workspace",
+          "stdin": "thread",
+          "stdout": "patch",
+          "timeoutSeconds": 60
+        },
+        "ui": {
+          "x": 1020,
+          "y": 0
+        }
+      },
+      {
+        "id": "done",
+        "label": "aidlc-done",
+        "kind": "exit",
+        "config": {
+          "default": "success",
+          "return": {
+            "mapping": "{\"qa\":vars.result,\"proofLinks\":vars.proofLinks}",
+            "channels": [
+              {
+                "kind": "caller"
+              }
+            ]
+          }
+        },
+        "ui": {
+          "x": 1190,
+          "y": 0
+        }
+      },
+      {
+        "id": "blocked",
+        "label": "aidlc-blocked",
+        "kind": "script",
+        "config": {
+          "command": "C:\\nvm4w\\nodejs\\node.exe",
+          "args": [
+            "C:\\Users\\98jak\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-aidlc-full-v1\\examples\\aidlc\\support\\runtime.mjs",
+            "qa-blocked"
+          ],
+          "env": {
+            "AIDLC_SETTINGS_HASH": "1c8ce26fae5e8e4968b40e75d93f31bc8419a5c78c19d17fe89009703816a759",
+            "AIDLC_SUPPORT_HASH": "c8438b59d1461af24437e11758390b26d58832008a86a512c1d1355be40bbc63"
+          },
+          "cwd": "workspace",
+          "stdin": "thread",
+          "stdout": "patch",
+          "timeoutSeconds": 60
+        },
+        "ui": {
+          "x": 1360,
+          "y": 0
+        }
+      },
+      {
+        "id": "blocked-done",
+        "label": "aidlc-blocked-done",
+        "kind": "exit",
+        "config": {
+          "default": "success",
+          "return": {
+            "mapping": "{\"qa\":vars.result,\"proofLinks\":[]}",
+            "channels": [
+              {
+                "kind": "caller"
+              }
+            ]
+          }
+        },
+        "ui": {
+          "x": 1530,
+          "y": 0
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "e-1",
+        "from": {
+          "node": "start",
+          "port": "out"
+        },
+        "to": {
+          "node": "init",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e-2",
+        "from": {
+          "node": "init",
+          "port": "out"
+        },
+        "to": {
+          "node": "prepare",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e-3",
+        "from": {
+          "node": "prepare",
+          "port": "out"
+        },
+        "to": {
+          "node": "audit-route",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e-4",
+        "from": {
+          "node": "qa-budget",
+          "port": "out"
+        },
+        "to": {
+          "node": "qa",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e-5",
+        "from": {
+          "node": "audit-route",
+          "port": "run"
+        },
+        "to": {
+          "node": "qa-budget",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e-6",
+        "from": {
+          "node": "qa",
+          "port": "out"
+        },
+        "to": {
+          "node": "verify-proof",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e-7",
+        "from": {
+          "node": "verify-proof",
+          "port": "out"
+        },
+        "to": {
+          "node": "done",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e-8",
+        "from": {
+          "node": "audit-route",
+          "port": "blocked"
+        },
+        "to": {
+          "node": "blocked",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e-9",
+        "from": {
+          "node": "blocked",
+          "port": "out"
+        },
+        "to": {
+          "node": "blocked-done",
+          "port": "in"
+        }
+      }
+    ]
+  }
+}
