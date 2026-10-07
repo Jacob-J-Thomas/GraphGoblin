@@ -1,3 +1,4 @@
+import { applyShippedSqlToHistoricalTestFixture } from './testing/shipped-migrations.js';
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -44,8 +45,9 @@ async function upgrade(check: (db: DatabaseHandle) => Promise<void>) {
   }
   const current = openDatabase({ url });
   try {
-    expect(await current.pendingMigrations()).toBe(5);
-    await current.migrate();
+    expect(await current.pendingMigrations()).toBe(6);
+    await expect(current.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
+    await applyShippedSqlToHistoricalTestFixture(current);
     await check(current);
     expect(await current.pendingMigrations()).toBe(0);
     const before = await current.client.execute('SELECT * FROM model_catalog');
@@ -208,11 +210,15 @@ describe('model catalog source migration and repository', () => {
       const rows = (await catalog.list()).map(({ source: _source, ...row }) => row);
       await handle.client.execute('ALTER TABLE model_catalog DROP COLUMN source');
       await handle.client.execute('DROP TABLE classifier_models');
+      // Roll back the new empty receipt structures along with their ledger entries.
+      await handle.client.execute('DROP TABLE webhook_receipts');
+      await handle.client.execute('DROP INDEX runs_trigger_dedupe_idx');
       await handle.client.execute(
         'DELETE FROM __drizzle_migrations WHERE created_at >= 1791136800000',
       );
-      expect(await handle.pendingMigrations()).toBe(4);
-      await handle.migrate();
+      expect(await handle.pendingMigrations()).toBe(5);
+      await expect(handle.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
+      await applyShippedSqlToHistoricalTestFixture(handle);
       expect(await catalog.list()).toEqual(rows.map((row) => ({ ...row, source: 'harness' })));
     } finally {
       handle.close();

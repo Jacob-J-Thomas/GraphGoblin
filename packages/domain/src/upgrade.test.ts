@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { DecisionConfigSchema } from '@graphgoblin/contracts';
+import { DecisionConfigSchema, LoopDefinitionSchema } from '@graphgoblin/contracts';
 import { FIXTURE_TS, minimalLoop, sampleThread, FIXTURE_IDS } from '@graphgoblin/contracts/testing';
 import {
   upgradeDefaultsV1,
@@ -585,5 +585,16 @@ describe('opaque subloop result references at offline cutover', () => {
     'parent.vars.task',
   ])('proves unchanged subloop metadata %s', (source) => {
     expect(upgradeLoopV1(parent(source)).ok).toBe(true);
+  });
+});
+
+describe('current v2 structural-upgrade passthrough', () => {
+  it('preserves canonical authoring without applying old evaluator resolutions', () => {
+    const current = LoopDefinitionSchema.parse(minimalLoop());
+    expect(upgradeLoopV1(current)).toEqual({ ok: true, value: current, notices: [] });
+    expect(upgradeLoopV1(current, { sources: { '/nodes/0/config/filter': 'true' } })).toMatchObject(
+      { ok: false, issues: [{ code: 'UPGRADE_RESOLUTION_INVALID' }] },
+    );
+    expect(upgradeLoopV1({ ...current, unknown: true })).toMatchObject({ ok: false });
   });
 });

@@ -18,7 +18,9 @@ import {
 } from '../components/ui/index.js';
 import { createDisclosureIdentities, type DisclosureStates } from '../forms/disclosures.js';
 import { SchemaForm } from '../forms/SchemaForm.js';
+import { nextChangeId } from '../forms/changes.js';
 import { DecisionKindPicker } from './DecisionKindPicker.js';
+import { TriggerPresets } from './TriggerPresets.js';
 import { CatalogWarningsContext } from '../forms/fields/model.js';
 import { canvasFocusTarget } from './canvas-focus.js';
 import { NODE_FIELD_CONTROLS } from './field-controls.js';
@@ -270,6 +272,15 @@ export function NodeEditorDialog({
         {/* Not keyed by the node id: a rename keeps the form (and focus) where it is. Issue paths
             `config.<path>` name its fields (focus-field.ts). */}
         <div data-field-scope="config" className="grid min-w-0">
+          {node.kind === 'trigger' ? (
+            <TriggerPresets
+              config={node.config}
+              onApply={(config) => {
+                updateNode(node.id, { config }, { path: '', kind: 'commit', id: nextChangeId() });
+                setEpoch((current) => current + 1);
+              }}
+            />
+          ) : null}
           <CatalogWarningsContext
             value={nodeIssues.map((issue) => ({
               ...issue,

@@ -1,3 +1,4 @@
+import type { TriggerAdmissionPort } from './admission.js';
 import type {
   ChoiceAnswer,
   ChoiceOption,
@@ -294,6 +295,8 @@ export interface ScriptRunRequest {
   env: Record<string, string>;
   stdin?: string;
   timeoutMs?: number;
+  /** Opt-in raw-byte stdout bound; callers must check stdoutOverflow before parsing. */
+  maxStdoutBytes?: number;
   signal: AbortSignal;
 }
 
@@ -302,6 +305,8 @@ export interface ScriptRunResult {
   stdout: string;
   stderr: string;
   timedOut: boolean;
+  /** Present whenever maxStdoutBytes was requested; true means stdout was truncated. */
+  stdoutOverflow?: boolean;
 }
 
 export interface ScriptPort {
@@ -384,6 +389,7 @@ export interface EnginePorts {
   logger: Logger;
   events: EventStorePort;
   runs: RunRepository;
+  admission: TriggerAdmissionPort;
   loops: LoopRepository;
   sessions: HarnessSessionRepository;
   harnesses: Partial<Record<HarnessId, HarnessPort>>;

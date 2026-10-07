@@ -102,8 +102,21 @@ export class SqliteEventStore implements EventStorePort {
       await tx.update(runs).set({ lastEventSeq: seq }).where(eq(runs.id, runId));
       return events;
     });
-    for (const event of stored) this.emitter.emit(runId, event);
+    this.notifyCommitted(stored);
     return stored;
+  }
+
+  /** Also used by atomic admission, always after its transaction committed. */
+  notifyCommitted(events: readonly RunEvent[]): void {
+    for (const event of events) {
+      for (const listener of this.emitter.listeners(event.runId)) {
+        try {
+          (listener as (event: RunEvent) => void)(event);
+        } catch {
+          /* Subscriber failures cannot roll back durable events. */
+        }
+      }
+    }
   }
 
   async read(runId: string, afterSeq = 0, limit?: number): Promise<RunEvent[]> {

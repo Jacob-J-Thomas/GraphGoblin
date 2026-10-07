@@ -14,7 +14,6 @@ import {
   type ValidationIssue,
 } from '@graphgoblin/domain';
 import type { ClockPort, IdPort, Logger, RunManager, SecretsPort } from '@graphgoblin/engine';
-import { TIMESTAMP_HEADER, verifySignature } from '@graphgoblin/infrastructure/http';
 import {
   CronScheduler,
   type CronFire,
@@ -34,6 +33,7 @@ import type {
 import type { InboundEvent, InboundEventBus } from '../event-bus.js';
 import type { PollTarget, PollTriggers } from './poll.js';
 import { FixedWindowRateLimiter } from './rate-limit.js';
+import { verifyWebhookBody } from './webhook-body.js';
 
 type TriggerNode = Extract<Node, { kind: 'trigger' }>;
 type Config<S extends TriggerNode['config']['subtype']> = Extract<
@@ -57,7 +57,7 @@ export interface TriggerServiceDeps {
   schedules: SqliteScheduleStore;
   endpoints: SqliteWebhookEndpoints;
   inbound: SqliteInboundEvents;
-  manager: Pick<RunManager, 'startRun'>;
+  manager: Pick<RunManager, 'startRun' | 'receiveWebhook'>;
   cron: CronScheduler;
   bus: InboundEventBus;
   secretsFor(ownerId: string): Pick<SecretsPort, 'resolve'>;
@@ -106,20 +106,10 @@ function describe(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
-function headerValue(headers: Record<string, unknown>, name: string): string | undefined {
-  const value = headers[name.toLowerCase()];
-  if (Array.isArray(value)) return typeof value[0] === 'string' ? value[0] : undefined;
-  return typeof value === 'string' ? value : undefined;
-}
-
-/** ISO 8601 (what GraphGoblin's own deliveries send) or Unix seconds. */
-function parseTimestamp(value: string): number {
-  return /^\d{1,12}$/.test(value) ? Number(value) * 1000 : Date.parse(value);
-}
-
-function stringKey(value: unknown): string | undefined {
+function stringKey(value: unknown, strict = false): string | undefined {
   if (value === undefined || value === null) return undefined;
   const key = typeof value === 'string' ? value : JSON.stringify(value);
+  if (strict && key.length > 512) throw new Error('Webhook business key exceeds 512 characters');
   return key.length > 0 ? key.slice(0, 512) : undefined;
 }
 
@@ -214,7 +204,8 @@ export class TriggerService {
           triggerNodeId: node.id,
           secretRef: config.signature.secretRef,
           signatureHeader: config.signature.header.toLowerCase(),
-          replayWindowSeconds: config.replayWindowSeconds,
+          signatureScheme: config.signature.scheme,
+          replayWindowSeconds: 'replayWindowSeconds' in config ? config.replayWindowSeconds : null,
         });
       }
     }
@@ -296,7 +287,7 @@ export class TriggerService {
    */
   async handleWebhook(
     token: string,
-    rawBody: string,
+    rawBody: Uint8Array,
     headers: Record<string, unknown>,
   ): Promise<WebhookOutcome> {
     const fail = (status: number, code: string, detail: string): WebhookOutcome => ({
@@ -320,48 +311,46 @@ export class TriggerService {
     }
 
     const now = this.deps.clock.now();
-    const timestamp = headerValue(headers, TIMESTAMP_HEADER);
-    const at = timestamp ? parseTimestamp(timestamp) : NaN;
-    if (!timestamp || Number.isNaN(at)) {
-      return fail(401, 'TIMESTAMP_MISSING', `the ${TIMESTAMP_HEADER} header is missing or invalid`);
-    }
-    if (Math.abs(now.getTime() - at) > endpoint.replayWindowSeconds * 1000) {
-      return fail(401, 'TIMESTAMP_OUT_OF_WINDOW', 'the delivery timestamp is outside the window');
-    }
-
     const secret = await this.deps.secretsFor(endpoint.ownerId).resolve(endpoint.secretRef);
-    if (secret === undefined) {
-      this.deps.logger.warn(
-        { endpointId: endpoint.id, secretRef: endpoint.secretRef },
-        'webhook secret is not set',
-      );
-      return fail(503, 'HOOK_NOT_READY', 'the endpoint has no signing secret configured');
+    const verified = verifyWebhookBody(
+      endpoint.signatureScheme === 'hmac-sha256-body'
+        ? { scheme: 'hmac-sha256-body', header: endpoint.signatureHeader }
+        : {
+            scheme: 'hmac-sha256',
+            header: endpoint.signatureHeader,
+            replayWindowSeconds: endpoint.replayWindowSeconds ?? 300,
+          },
+      rawBody,
+      headers,
+      now,
+      secret,
+    );
+    if (!verified.ok) {
+      if (verified.code === 'HOOK_NOT_READY')
+        this.deps.logger.warn(
+          { endpointId: endpoint.id, secretRef: endpoint.secretRef },
+          'webhook secret is not set',
+        );
+      return fail(verified.status, verified.code, verified.detail);
     }
-    const signature = headerValue(headers, endpoint.signatureHeader);
-    if (!signature || !verifySignature(secret, timestamp, rawBody, signature)) {
-      return fail(401, 'SIGNATURE_INVALID', 'the signature does not match');
-    }
-
-    let payload: JsonValue;
-    try {
-      payload = rawBody.trim().length === 0 ? null : (JSON.parse(rawBody) as JsonValue);
-    } catch {
-      return fail(400, 'BODY_INVALID', 'the body is not valid JSON');
-    }
-
+    const payload = verified.payload;
     const node = await this.triggerNode(endpoint.versionId, endpoint.triggerNodeId, 'webhook');
     if (!node) return fail(404, 'HOOK_NOT_FOUND', 'unknown webhook');
     const bindings = { headers: this.lowerHeaders(headers) };
     let dedupeKey: string;
+    let authoredKey: string | undefined;
     let passes: boolean;
     try {
-      dedupeKey =
-        (node.dedupeKey
-          ? stringKey(await evaluateExpression(node.dedupeKey, payload, { bindings }))
-          : undefined) ?? `sig:${signature}`;
+      authoredKey = node.dedupeKey
+        ? stringKey(
+            await evaluateExpression(node.dedupeKey, payload, { bindings }),
+            endpoint.signatureScheme === 'hmac-sha256-body',
+          )
+        : undefined;
+      dedupeKey = authoredKey ?? `sig-hash:${verified.signatureHash}`;
       passes = node.filter ? await evaluatePredicate(node.filter, payload, { bindings }) : true;
-    } catch (error) {
-      return fail(422, 'EXPRESSION_FAILED', describe(error));
+    } catch {
+      return fail(422, 'EXPRESSION_FAILED', 'the webhook filter or dedupe expression failed');
     }
 
     const source = `webhook:${endpoint.id}`;
@@ -375,11 +364,75 @@ export class TriggerService {
       receivedAt: now.toISOString(),
       runIds: [],
     };
+    const start = {
+      ownerId: endpoint.ownerId,
+      loopId: endpoint.loopId,
+      versionId: endpoint.versionId,
+      triggerNodeId: endpoint.triggerNodeId,
+      triggerKind: 'webhook' as const,
+      source: 'webhook' as const,
+      caller: { kind: 'system' as const, id: source },
+      payload,
+      dedupeKey,
+    };
+    if (endpoint.signatureScheme === 'hmac-sha256-body') {
+      try {
+        const outcome = await this.deps.manager.receiveWebhook(
+          {
+            id: this.deps.ids.next(),
+            ownerId: endpoint.ownerId,
+            loopId: endpoint.loopId,
+            triggerNodeId: endpoint.triggerNodeId,
+            contentHash: verified.contentHash,
+            ...(authoredKey ? { dedupeByKey: true as const } : {}),
+            inbound: record,
+          },
+          start,
+          !passes,
+        );
+        if (outcome.state === 'duplicate')
+          return fail(
+            409,
+            'REPLAYED',
+            'this content was already received; filtered content remains consumed',
+          );
+        if (outcome.state === 'deduplicated')
+          return fail(
+            409,
+            'DUPLICATE_KEY',
+            'this authored key was already consumed; inspect its Events entry',
+          );
+        if (outcome.state === 'failed')
+          return fail(
+            503,
+            outcome.receipt.failureCode ?? 'WEBHOOK_ADMISSION_FAILED',
+            'saved delivery cannot be admitted; inspect its Events entry',
+          );
+        if (outcome.state === 'pending')
+          return fail(
+            503,
+            'WEBHOOK_ADMISSION_RETRY',
+            'delivery saved; admission will be retried automatically',
+          );
+        return {
+          kind: 'accepted',
+          event: { ...record, runIds: outcome.run ? [outcome.run.id] : [] },
+          ...(outcome.run ? { runId: outcome.run.id } : {}),
+          filtered: outcome.state === 'filtered',
+        };
+      } catch {
+        return fail(
+          503,
+          'WEBHOOK_ADMISSION_FAILED',
+          'the delivery could not be admitted; retry later',
+        );
+      }
+    }
     const inserted = await this.deps.inbound.insertUnlessDuplicate(record, {
       ownerId: endpoint.ownerId,
       source,
       dedupeKey,
-      since: new Date(now.getTime() - endpoint.replayWindowSeconds * 1000).toISOString(),
+      since: new Date(now.getTime() - (endpoint.replayWindowSeconds ?? 300) * 1000).toISOString(),
     });
     if (inserted.duplicate) {
       return fail(409, 'REPLAYED', 'this delivery was already received');
@@ -563,7 +616,13 @@ export class TriggerService {
   private lowerHeaders(headers: Record<string, unknown>): Record<string, string> {
     const out: Record<string, string> = {};
     for (const name of Object.keys(headers)) {
-      const text = headerValue(headers, name);
+      const value = headers[name];
+      const text =
+        typeof value === 'string'
+          ? value
+          : Array.isArray(value) && typeof value[0] === 'string'
+            ? value[0]
+            : undefined;
       if (text !== undefined) out[name] = text;
     }
     return out;

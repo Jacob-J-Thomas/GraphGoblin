@@ -1944,6 +1944,13 @@ export interface paths {
                                 source: string;
                                 receivedAt: string;
                                 runIds: string[];
+                                delivery?: {
+                                    /** @enum {string} */
+                                    state: "filtered" | "deduplicated" | "pending" | "admitted" | "failed";
+                                    attempts: number;
+                                    nextAttemptAt?: string | undefined;
+                                    failureCode?: string | undefined;
+                                } | undefined;
                             }[];
                         };
                     };
@@ -1984,6 +1991,13 @@ export interface paths {
                             source: string;
                             receivedAt: string;
                             runIds: string[];
+                            delivery?: {
+                                /** @enum {string} */
+                                state: "filtered" | "deduplicated" | "pending" | "admitted" | "failed";
+                                attempts: number;
+                                nextAttemptAt?: string | undefined;
+                                failureCode?: string | undefined;
+                            } | undefined;
                             duplicate: boolean;
                         };
                     };
@@ -2046,7 +2060,9 @@ export interface paths {
                                 path: string;
                                 secretRef: string;
                                 signatureHeader: string;
-                                replayWindowSeconds: number;
+                                /** @enum {string} */
+                                signatureScheme: "hmac-sha256" | "hmac-sha256-body";
+                                replayWindowSeconds: number | null;
                                 enabled: boolean;
                                 createdAt: string;
                             }[];
@@ -2080,7 +2096,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Signed webhook receiver (public; HMAC, timestamp window, dedupe, rate limit) */
+        /** Signed webhook receiver (public; timestamp HMAC or exact body HMAC, durable body replay protection, rate limit) */
         post: {
             parameters: {
                 query?: never;
@@ -2108,6 +2124,13 @@ export interface paths {
                                 source: string;
                                 receivedAt: string;
                                 runIds: string[];
+                                delivery?: {
+                                    /** @enum {string} */
+                                    state: "filtered" | "deduplicated" | "pending" | "admitted" | "failed";
+                                    attempts: number;
+                                    nextAttemptAt?: string | undefined;
+                                    failureCode?: string | undefined;
+                                } | undefined;
                             };
                             runId?: string | undefined;
                             filtered: boolean;
@@ -2257,6 +2280,18 @@ export interface components {
                     filter?: string | undefined;
                 } | {
                     /** @constant */
+                    subtype: "webhook";
+                    signature: {
+                        /** @constant */
+                        scheme: "hmac-sha256-body";
+                        /** @default x-hub-signature-256 */
+                        header?: string | undefined;
+                        secretRef: string;
+                    };
+                    dedupeKey?: string | undefined;
+                    filter?: string | undefined;
+                } | {
+                    /** @constant */
                     subtype: "event";
                     eventType: string;
                     filter?: string | undefined;
@@ -2298,6 +2333,12 @@ export interface components {
                     };
                     fireWhen: string;
                     dedupeKey?: string | undefined;
+                    items?: {
+                        select: string;
+                        dedupeKey: string;
+                        /** @default 5 */
+                        maxRunsPerPoll?: number | undefined;
+                    } | undefined;
                     /** @default true */
                     enabled?: boolean | undefined;
                 };
@@ -3976,6 +4017,18 @@ export interface components {
                     filter?: string | undefined;
                 } | {
                     /** @constant */
+                    subtype: "webhook";
+                    signature: {
+                        /** @constant */
+                        scheme: "hmac-sha256-body";
+                        /** @default x-hub-signature-256 */
+                        header: string;
+                        secretRef: string;
+                    };
+                    dedupeKey?: string | undefined;
+                    filter?: string | undefined;
+                } | {
+                    /** @constant */
                     subtype: "event";
                     eventType: string;
                     filter?: string | undefined;
@@ -4017,6 +4070,12 @@ export interface components {
                     };
                     fireWhen: string;
                     dedupeKey?: string | undefined;
+                    items?: {
+                        select: string;
+                        dedupeKey: string;
+                        /** @default 5 */
+                        maxRunsPerPoll: number;
+                    } | undefined;
                     /** @default true */
                     enabled: boolean;
                 };

@@ -124,6 +124,53 @@
       }
     },
     {
+      "id": "github-hook",
+      "label": "GitHub hook",
+      "ui": {
+        "x": 0,
+        "y": 0
+      },
+      "kind": "trigger",
+      "config": {
+        "subtype": "webhook",
+        "signature": {
+          "scheme": "hmac-sha256-body",
+          "header": "x-hub-signature-256",
+          "secretRef": "github-secret"
+        },
+        "dedupeKey": "issue.number",
+        "filter": "action = \"opened\""
+      }
+    },
+    {
+      "id": "items-poller",
+      "label": "Items poller",
+      "ui": {
+        "x": 0,
+        "y": 0
+      },
+      "kind": "trigger",
+      "config": {
+        "subtype": "poll",
+        "intervalSeconds": 30,
+        "probe": {
+          "kind": "script",
+          "command": "gh",
+          "args": [
+            "api"
+          ],
+          "timeoutSeconds": 10
+        },
+        "fireWhen": "true",
+        "items": {
+          "select": "probe.json",
+          "dedupeKey": "$string(item.number)",
+          "maxRunsPerPoll": 5
+        },
+        "enabled": false
+      }
+    },
+    {
       "id": "decide",
       "label": "Decide",
       "ui": {

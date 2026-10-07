@@ -145,6 +145,12 @@ export class FakeApi {
     dedupeKey?: string;
     source: string;
     runIds: string[];
+    delivery?: {
+      state: 'filtered' | 'deduplicated' | 'pending' | 'admitted' | 'failed';
+      attempts: number;
+      nextAttemptAt?: string;
+      failureCode?: string;
+    };
   }[] = [];
   preflight = [
     { harness: 'codex', ok: true, version: '1.0', authenticated: true, problems: [] as string[] },

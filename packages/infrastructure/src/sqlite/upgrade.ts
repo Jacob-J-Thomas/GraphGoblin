@@ -1,3 +1,4 @@
+import { inspectTriggerUpgrade, rewriteWebhookThreadKey } from './trigger-upgrade.js';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import type { Client, Transaction } from '@libsql/client';
@@ -75,6 +76,75 @@ export async function guardDatabaseUpgrade(client: Executor): Promise<'fresh' | 
     throw new DatabaseUpgradeRequiredError(
       'The offline upgrade is incomplete; restore the backup or finish its approved manifest',
     );
+  const endpointColumns = names.includes('webhook_endpoints')
+    ? await rows(client, 'PRAGMA table_info(webhook_endpoints)')
+    : [];
+  const receiptColumns = names.includes('webhook_receipts')
+    ? await rows(client, 'PRAGMA table_info(webhook_receipts)')
+    : [];
+  const indexes = await rows(client, "SELECT name FROM sqlite_master WHERE type='index'");
+  if (
+    !endpointColumns.some((row) => row.name === 'signature_scheme' && row.notnull === 1) ||
+    !endpointColumns.some((row) => row.name === 'replay_window_seconds' && row.notnull === 0) ||
+    [
+      'id',
+      'owner_id',
+      'loop_id',
+      'trigger_node_id',
+      'content_hash',
+      'inbound_id',
+      'status',
+      'intent',
+      'attempts',
+      'next_attempt_at',
+      'failure_code',
+    ].some((name) => !receiptColumns.some((row) => row.name === name)) ||
+    [
+      'webhook_receipts_content_idx',
+      'webhook_receipts_inbound_idx',
+      'webhook_receipts_due_idx',
+      'runs_trigger_dedupe_idx',
+    ].some((name) => !indexes.some((row) => row.name === name))
+  )
+    throw new DatabaseUpgradeRequiredError(
+      'Stored v2 data requires the explicit offline trigger structural upgrade',
+    );
+  const ledger = names.includes('__drizzle_migrations')
+    ? await rows(client, 'SELECT created_at FROM __drizzle_migrations')
+    : [];
+  const receiptIndexes = await rows(client, 'PRAGMA index_list(webhook_receipts)');
+  if (
+    !ledger.some((row) => Number(row.created_at) >= 1791396000000) ||
+    ['webhook_receipts_content_idx', 'webhook_receipts_inbound_idx'].some(
+      (name) => !receiptIndexes.some((row) => row.name === name && row.unique === 1),
+    )
+  )
+    throw new DatabaseUpgradeRequiredError(
+      'The trigger structural migration and unique receipt indexes are incomplete',
+    );
+  const receiptDdl = (
+    await rows(
+      client,
+      "SELECT sql FROM sqlite_master WHERE type='table' AND name='webhook_receipts'",
+    )
+  )[0]?.sql;
+  const normalizedReceiptDdl =
+    typeof receiptDdl === 'string' ? receiptDdl.toLowerCase().replace(/[\s"`]/g, '') : '';
+  if (
+    !normalizedReceiptDdl.includes(
+      "constraintwebhook_receipt_status_checkcheck(statusin('filtered','deduplicated','pending','admitted','failed'))",
+    ) ||
+    !normalizedReceiptDdl.includes(
+      "constraintwebhook_receipt_intent_checkcheck((statusin('filtered','deduplicated')andintentisnull)or(statusnotin('filtered','deduplicated')andintentisnotnull))",
+    )
+  )
+    throw new DatabaseUpgradeRequiredError('Stored webhook receipt constraints are incomplete');
+  const malformed = await rows(
+    client,
+    "SELECT id FROM webhook_endpoints WHERE signature_scheme IS NULL OR signature_scheme NOT IN ('hmac-sha256','hmac-sha256-body') OR NOT ((signature_scheme='hmac-sha256' AND replay_window_seconds IS NOT NULL AND replay_window_seconds>0) OR (signature_scheme='hmac-sha256-body' AND replay_window_seconds IS NULL))",
+  );
+  if (malformed.length)
+    throw new DatabaseUpgradeRequiredError('Stored webhook signing fields are inconsistent');
   for (const row of names.includes('loop_versions')
     ? await rows(client, 'SELECT definition FROM loop_versions')
     : []) {
@@ -161,18 +231,22 @@ export async function inspectDatabaseUpgrade(client: Executor): Promise<Database
               .map((node: { id?: unknown }) => String(node.id))
           : [];
       if (
-        decisions.length ||
-        (typeof definition === 'object' &&
-          definition !== null &&
-          'nodes' in definition &&
-          Array.isArray(definition.nodes) &&
-          definition.nodes.some(
-            (node: unknown) =>
-              typeof node === 'object' &&
-              node !== null &&
-              'kind' in node &&
-              node.kind === 'subloop',
-          ))
+        typeof definition === 'object' &&
+        definition !== null &&
+        'schemaVersion' in definition &&
+        definition.schemaVersion === 1 &&
+        (decisions.length ||
+          (typeof definition === 'object' &&
+            definition !== null &&
+            'nodes' in definition &&
+            Array.isArray(definition.nodes) &&
+            definition.nodes.some(
+              (node: unknown) =>
+                typeof node === 'object' &&
+                node !== null &&
+                'kind' in node &&
+                node.kind === 'subloop',
+            )))
       )
         affected.add(String(row.id));
       versions.push({
@@ -204,7 +278,7 @@ export async function inspectDatabaseUpgrade(client: Executor): Promise<Database
       (run) =>
         run.status === 'failed' &&
         (affected.has(String(run.version_id)) ||
-          events.some((event) => event.run_id === run.id && event.type === 'decision.made')),
+          events.some((event) => event.run_id === run.id && legacyDecisionEvent(event))),
     )
     .map((run) => String(run.id));
   const blockedRuns = (stored.runs ?? [])
@@ -217,6 +291,7 @@ export async function inspectDatabaseUpgrade(client: Executor): Promise<Database
         path: '/run_events/' + String(event.run_id),
         message: 'events have no run/initial thread; explicit repair is required before upgrade',
       });
+  issues.push(...inspectTriggerUpgrade(stored).issues);
   return { sourceHash: hash(stored), tables: stored, versions, failedRuns, blockedRuns, issues };
 }
 
@@ -341,6 +416,15 @@ function eventOf(row: RawRow): RawRow {
     ...(row.node_id ? { nodeId: row.node_id } : {}),
   };
 }
+function legacyDecisionEvent(row: RawRow): boolean {
+  if (row.type !== 'decision.made') return false;
+  try {
+    const payload = json(row.payload);
+    return typeof payload !== 'object' || payload === null || !('answer' in payload);
+  } catch {
+    return true;
+  }
+}
 function recordOf(row: RawRow): RawRow {
   const record: RawRow = {};
   const scalar = {
@@ -395,6 +479,7 @@ export async function applyDatabaseUpgrade(
   try {
     const original = await inspectDatabaseUpgrade(tx);
     validateManifest(manifest, original);
+    const triggerFacts = inspectTriggerUpgrade(original.tables);
     const manifestHash = hash(manifest);
     await structuralMigrations(tx, options.migrationsFolder ?? MIGRATIONS);
     const inventory = await inspectDatabaseUpgrade(tx);
@@ -412,7 +497,17 @@ export async function applyDatabaseUpgrade(
     await tx.execute(ARCHIVE_SQL);
     await archive(tx, 'manifest', manifestHash, manifest, original.sourceHash, manifestHash);
     for (const [name, values] of Object.entries(original.tables))
-      if (['loop_versions', 'runs', 'run_events', 'settings'].includes(name))
+      if (
+        [
+          'loop_versions',
+          'runs',
+          'run_events',
+          'settings',
+          'webhook_endpoints',
+          'inbound_events',
+          'webhook_receipts',
+        ].includes(name)
+      )
         for (const row of values)
           await archive(
             tx,
@@ -432,6 +527,36 @@ export async function applyDatabaseUpgrade(
         sql: 'UPDATE loop_versions SET definition=? WHERE id=?',
         args: [JSON.stringify(definition), String(row.id)],
       });
+    }
+    for (const key of triggerFacts.keys) {
+      await tx.execute({
+        sql: 'UPDATE inbound_events SET dedupe_key=? WHERE id=?',
+        args: [key.next, key.inboundId],
+      });
+      for (const runId of key.runIds) {
+        const run = (inventory.tables.runs ?? []).find((row) => row.id === runId);
+        if (!run)
+          throw new DatabaseUpgradeRequiredError('Linked webhook run vanished during conversion');
+        run.initial_thread = JSON.stringify(
+          rewriteWebhookThreadKey(json(run.initial_thread), key.previous, key.next),
+        );
+        if (run.thread_snapshot !== null && run.thread_snapshot !== undefined)
+          run.thread_snapshot = JSON.stringify(
+            rewriteWebhookThreadKey(json(run.thread_snapshot), key.previous, key.next),
+          );
+        for (const event of inventory.tables.run_events ?? []) {
+          if (event.run_id !== runId || event.type !== 'run.queued') continue;
+          const payload = json(event.payload);
+          if (typeof payload === 'object' && payload !== null && 'initialThread' in payload) {
+            payload.initialThread = rewriteWebhookThreadKey(
+              payload.initialThread,
+              key.previous,
+              key.next,
+            );
+            event.payload = JSON.stringify(payload);
+          }
+        }
+      }
     }
     const storedEvents = inventory.tables.run_events ?? [];
     for (const run of inventory.tables.runs ?? []) {

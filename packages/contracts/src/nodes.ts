@@ -21,6 +21,11 @@ import {
   MutationListSchema,
 } from './mutations.js';
 import { ReturnChannelSchema } from './thread.js';
+import {
+  BodyWebhookConfigSchema,
+  PollItemsSchema,
+  TimestampWebhookConfigSchema,
+} from './trigger-integrations.js';
 
 export const NodeKindSchema = z.enum([
   'trigger',
@@ -78,7 +83,7 @@ const PayloadFilterSchema = ExpressionSchema.optional().meta(
   field('JSONata predicate; payloads that fail it are recorded and ignored.'),
 );
 
-export const TriggerConfigSchema = z.discriminatedUnion('subtype', [
+export const TriggerConfigSchema = z.union([
   z.strictObject({
     subtype: z.literal('manual'),
     inputSchema: JsonSchemaSchema.optional().meta(
@@ -107,47 +112,40 @@ export const TriggerConfigSchema = z.discriminatedUnion('subtype', [
       .meta(field('What to do with fires missed while the server was down.')),
     enabled: z.boolean().default(true).meta(field('Whether the schedule is armed.')),
   }),
-  z.strictObject({
-    subtype: z.literal('webhook'),
-    signature: z
-      .strictObject({
-        scheme: z.literal('hmac-sha256'),
-        header: z.string().min(1).max(128).default('x-graphgoblin-signature'),
-        secretRef: z.string().min(1).max(128),
-      })
-      .meta(
-        field(
-          'HMAC signing: scheme, the header carrying the signature, and the secret holding the key.',
-        ),
-      ),
-    replayWindowSeconds: z
-      .number()
-      .int()
-      .positive()
-      .max(86_400)
-      .default(300)
-      .meta(field('How far the signed timestamp may be from the server clock.')),
-    dedupeKey: DedupeKeySchema,
-    filter: PayloadFilterSchema,
-  }),
+  TimestampWebhookConfigSchema,
+  BodyWebhookConfigSchema,
   z.strictObject({
     subtype: z.literal('event'),
     eventType: SlugSchema.meta(field('Inbound event type that fires the trigger.')),
     filter: PayloadFilterSchema,
     dedupeKey: DedupeKeySchema,
   }),
-  z.strictObject({
-    subtype: z.literal('poll'),
-    intervalSeconds: z.number().int().min(5).max(86_400).meta(field('Seconds between probes.')),
-    probe: ProbeSchema.meta(
-      field('What to call on each poll: HTTP, a script, a signal count, or nothing.'),
-    ),
-    fireWhen: ExpressionSchema.meta(
-      field('JSONata over the probe result; a run starts when it is true.'),
-    ),
-    dedupeKey: DedupeKeySchema,
-    enabled: z.boolean().default(true).meta(field('Whether the poller is armed.')),
-  }),
+  z
+    .strictObject({
+      subtype: z.literal('poll'),
+      intervalSeconds: z.number().int().min(5).max(86_400).meta(field('Seconds between probes.')),
+      probe: ProbeSchema.meta(
+        field('What to call on each poll: HTTP, a script, a signal count, or nothing.'),
+      ),
+      fireWhen: ExpressionSchema.meta(
+        field('JSONata over the probe result; a run starts when it is true.'),
+      ),
+      dedupeKey: DedupeKeySchema,
+      items: PollItemsSchema.optional().meta(
+        field(
+          'Optional bounded item fanout; validate all per-item keys before dedupe lookup or admission.',
+        ),
+      ),
+      enabled: z.boolean().default(true).meta(field('Whether the poller is armed.')),
+    })
+    .superRefine((config, context) => {
+      if (config.items && config.dedupeKey !== undefined)
+        context.addIssue({
+          code: 'custom',
+          path: ['dedupeKey'],
+          message: 'Items mode uses items.dedupeKey; remove the single-result dedupeKey',
+        });
+    }),
 ]);
 export type TriggerConfig = z.infer<typeof TriggerConfigSchema>;
 

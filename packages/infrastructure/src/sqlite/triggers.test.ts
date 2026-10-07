@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RunRecord } from '@graphgoblin/contracts';
 import {
   FIXTURE_TS,
@@ -50,6 +50,7 @@ const hook = (triggerNodeId: string): WebhookEndpointDraft => ({
   triggerNodeId,
   secretRef: 'hook-secret',
   signatureHeader: 'x-graphgoblin-signature',
+  signatureScheme: 'hmac-sha256',
   replayWindowSeconds: 300,
 });
 
@@ -237,5 +238,22 @@ describe('trigger lookups on runs and loops', () => {
     expect(await runs.hasTriggerDedupe(a.loop.id, 'hook', 'delivery-1')).toBe(true);
     expect(await runs.hasTriggerDedupe(a.loop.id, 'hook', 'delivery-2')).toBe(false);
     expect(await runs.hasTriggerDedupe(a.loop.id, 'other', 'delivery-1')).toBe(false);
+    const select = vi.spyOn(handle.db, 'select');
+    expect(
+      await runs.findTriggerDedupeKeys(
+        a.loop.id,
+        'hook',
+        Array.from({ length: 200 }, (_, index) => `delivery-${index}`),
+      ),
+    ).toEqual(new Set(['delivery-1']));
+    expect(select).toHaveBeenCalledOnce();
+    select.mockClear();
+    expect(await runs.findTriggerDedupeKeys(a.loop.id, 'hook', [])).toEqual(new Set());
+    expect(select).not.toHaveBeenCalled();
+    expect(await runs.findTriggerDedupeKeys(a.loop.id, 'other', ['delivery-1'])).toEqual(new Set());
+    expect(
+      await runs.findTriggerDedupeKeys(fakeUlid('unrelated-loop'), 'hook', ['delivery-1']),
+    ).toEqual(new Set());
+    select.mockRestore();
   });
 });

@@ -6,6 +6,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ### Added
 
+- Generic body-signed webhooks accept GitHub payloads with durable content replay protection and recoverable atomic run admission. Optional poll items mode drains a bounded queue with per-item dedupe. GitHub presets remain editable generic trigger configurations. (#29)
+
 - Decision nodes choose one explicit Expression, Classifier or LLM evaluator, with Choice options whose stable IDs keep connections attached when display labels change. Inspectors record the selected kind, answer and resolved provider/model. There is no implicit fallback to another evaluator. (#98)
 
 - Runs explain why an exit completed, looped back, or reached a limit. Select `exit.evaluated` in the inspector to read each criterion's result and confidence, the model or classifier used, and the Codex judge's short reasoning. Converted historical decisions preserve recorded reasons why earlier strategies were skipped; new explicit-kind decisions have no fallback chain.
@@ -34,6 +36,10 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 - Settings' Model catalog uses Enabled switches to turn entries on or off. If a refresh removes a row while its switch is saving, focus returns to the section heading, and the notice that the model is no longer available clears on the next toggle. (#24)
 
 ### Upgrade notes
+
+- The trigger cutover extends the same stopped-instance format-2 converter. An earlier format-2 development database may still need endpoint/receipt structures; startup refuses it until inventory, resolution and verified-backup apply complete. Pending admissions and nonterminal runs must be resolved first. Proven default timestamp-signature keys become hashes; authored keys remain unchanged, and ambiguous provenance blocks the conversion. (#29)
+
+The current format-2 workflow supersedes the older pre-release upgrade notes below. Follow [Offline upgrade](docs/guide/08-offline-upgrade.md); do not apply an old field-deletion or draft-discard instruction instead of that workflow.
 
 - **#98 is an offline format cutover.** Loop definitions and exports use version 2. Stop the old service, back up the complete data directory, inventory it with the offline upgrade tool, review its resolution manifest, and convert before starting this build. Existing unconverted stores are refused before migrations, recovery or triggers. All nonterminal runs must be drained or explicitly cancelled with the old build. Mixed strategy chains, uncertain expression coercion, changed output references and affected failed-run resumability require explicit manifest decisions. Never upgrade the live instance merely by starting this build.
 - Decisions now use `answer.options[{id,label,criteria}]` and an `evaluation` kind. Output is `{answer:{type:'choice',optionId,confidence,probabilities},portId,provenance:{kind,provider,classifierId,model,effort}}`. Update clients and authored expressions/templates; the tool refuses ambiguous rewrites. Historical unknowns remain null, known skip evidence is retained, and original converted records are archived in the upgrade audit. Old exports require the offline tool named by `LOOP_FORMAT_UPGRADE_REQUIRED`.

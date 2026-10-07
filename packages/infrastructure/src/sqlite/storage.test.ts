@@ -1,3 +1,5 @@
+import { SqliteTriggerAdmission } from './admission.js';
+import { applyShippedSqlToHistoricalTestFixture } from './testing/shipped-migrations.js';
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -196,8 +198,9 @@ describe('SqliteRunRepository', () => {
     old.close();
     const current = openDatabase({ url });
     try {
-      expect(await current.pendingMigrations()).toBe(6);
-      await current.migrate();
+      expect(await current.pendingMigrations()).toBe(7);
+      await expect(current.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
+      await applyShippedSqlToHistoricalTestFixture(current);
       const repo = new SqliteRunRepository(current.db);
       expect(await repo.listUnfinalized()).toEqual([]);
       await repo.update(fakeUlid('old-wait'), { status: 'failed' });
@@ -678,8 +681,9 @@ describe('migration 0003 model catalog max effort', () => {
     }
     const current = openDatabase({ url });
     try {
-      expect(await current.pendingMigrations()).toBe(5);
-      await current.migrate();
+      expect(await current.pendingMigrations()).toBe(6);
+      await expect(current.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
+      await applyShippedSqlToHistoricalTestFixture(current);
       expect(await current.pendingMigrations()).toBe(0);
       await check(current);
     } finally {
@@ -896,6 +900,7 @@ describe('with the engine', () => {
       LoopDefinitionSchema.parse(kitchenSinkLoopReduced()),
     );
     await loops.publish(loop.id);
+    const events = new SqliteEventStore(handle.db, clock);
     const manager = new RunManager(
       {
         ...fakes,
@@ -903,7 +908,8 @@ describe('with the engine', () => {
         ids,
         runs,
         loops,
-        events: new SqliteEventStore(handle.db, clock),
+        events,
+        admission: new SqliteTriggerAdmission(handle.db, events),
         sessions: new SqliteSessionRepository(handle.db),
       },
       DEFAULT_TEST_SETTINGS,

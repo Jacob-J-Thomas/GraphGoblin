@@ -24,7 +24,7 @@
 ## Inbound exposure (Decided)
 
 - The API binds to localhost by default. Changing the bind address without API keys enabled logs a prominent warning.
-- Webhook endpoints need no API key; they are protected by HMAC signatures, replay windows, size limits, and rate limits (see 08). The other public routes are listed in [Public routes](07-api-and-streaming.md#public-routes-decided-by-implementation-2026-10-03).
+- Webhook endpoints need no API key; they are protected by HMAC signatures, size limits and rate limits. Timestamp signing uses a replay window; body signing consumes exact raw content indefinitely across versions, including filtered deliveries, and enforces authored business keys separately inside receipt admission (see 08). The other public routes are listed in [Public routes](07-api-and-streaming.md#public-routes-decided-by-implementation-2026-10-03).
 - Development tunnels are limited to the hooks prefix and must authenticate at the tunnel. Polling triggers are the recommended no-inbound alternative.
 
 ## Execution posture (Decided)
@@ -82,6 +82,10 @@ The lock lives on the data volume at `/data/graphgoblin.lock` and can survive an
 ## First API key (Decided, WP-F2, ADR-0015)
 
 With `GG_REQUIRE_API_KEY=true`, `POST /api-keys` needs a key, so the first one cannot come from the API. Stop any API using the data directory first. `graphgoblin-api --create-api-key <name> [--scopes a,b]` (`node apps/api/dist/main.js ...`) reads the same environment as the server, takes its data-directory lock, creates the database if needed and applies migrations (as a start would), inserts a key for the local owner, prints the token once to standard output, releases the lock, and exits without starting the HTTP server. A held lock exits 1 before any database work. Nothing is logged; only the SHA-256 hash is stored. Scopes default to `*` only when `--scopes` is absent: an unknown or repeated option, a stray argument, a missing value, or a malformed scope exits 2 with the usage before anything is written. The install scripts print the command; in the container use `docker compose run --rm` with the API stopped, as shown in the guide.
+
+## Trigger credential boundaries (#29)
+
+Body-signature verification uses the exact raw bytes before decoding or parsing. Receipts and run invocations store content/signature hashes or authored business keys, never the raw signing header. Unsigned event and delivery headers cannot authorize a GitHub action: presets check the signed repository/object/action fields. HTTP probes remove authorization, cookie, set-cookie and API-key response headers before returning a result that may be persisted. Transport and process errors use safe diagnostic codes. This does not redact arbitrary application payload fields or make untrusted script execution safe.
 
 ## Multi-tenant checklist for later (recorded)
 

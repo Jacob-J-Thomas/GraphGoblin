@@ -24,6 +24,23 @@ export function verifySignature(
   return expected.length === actual.length && timingSafeEqual(expected, actual);
 }
 
+/** HMAC-SHA256 over the original request bytes, without a timestamp prefix. */
+export function signRawBody(secret: string, body: Uint8Array): string {
+  return 'sha256=' + createHmac('sha256', secret).update(body).digest('hex');
+}
+
+/** Reject malformed digests before a constant-time comparison of all 32 digest bytes. */
+export function verifyRawBodySignature(
+  secret: string,
+  body: Uint8Array,
+  presented: string,
+): boolean {
+  if (!/^sha256=[0-9a-fA-F]{64}$/.test(presented)) return false;
+  const expected = createHmac('sha256', secret).update(body).digest();
+  const actual = Buffer.from(presented.slice(7), 'hex');
+  return timingSafeEqual(expected, actual);
+}
+
 export interface WebhookDeliveryOptions {
   timeoutMs?: number;
   fetchImpl?: FetchLike;

@@ -170,9 +170,11 @@ export function LiteralField({
   label: string;
   value: unknown;
 }) {
+  const field = useField(name, 'commit');
+  const actual = field.value === undefined ? value : field.value;
   return (
     <div className="text-xs text-muted" data-field={name}>
-      {label}: <code className="text-default">{String(value)}</code>
+      {label}: <code className="text-default">{String(actual)}</code>
     </div>
   );
 }

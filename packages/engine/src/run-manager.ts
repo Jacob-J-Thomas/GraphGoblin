@@ -1,3 +1,9 @@
+import {
+  AdmissionConflictError,
+  type RunAdmission,
+  type WebhookClaim,
+  type WebhookReceipt,
+} from './admission.js';
 import type {
   Caller,
   ContextThread,
@@ -289,6 +295,8 @@ export class RunManager {
   private idleWaiters: (() => void)[] = [];
   private unsubscribeTimers: (() => void) | undefined;
   private stopped = false;
+  private webhookSweep: ReturnType<typeof setInterval> | undefined;
+  private webhookRecovery: Promise<void> | undefined;
 
   constructor(
     private readonly ports: EnginePorts,
@@ -307,12 +315,21 @@ export class RunManager {
       }),
     );
     await this.recover();
+    await this.retryPendingWebhooks();
+    this.webhookSweep ??= setInterval(() => {
+      void this.retryPendingWebhooks().catch(() => {
+        this.ports.logger.error({ code: 'WEBHOOK_RECOVERY_FAILED' }, 'webhook recovery failed');
+      });
+    }, 15_000);
+    this.webhookSweep.unref();
     this.tick();
   }
 
   /** Stop picking up new work. Active nodes finish; runs stay recoverable. */
   stop(): void {
     this.stopped = true;
+    if (this.webhookSweep) clearInterval(this.webhookSweep);
+    this.webhookSweep = undefined;
     this.unsubscribeTimers?.();
     this.unsubscribeTimers = undefined;
   }
@@ -327,7 +344,9 @@ export class RunManager {
   // Commands
   // ---------------------------------------------------------------------------
 
-  async startRun(input: StartRunInput): Promise<RunRecord> {
+  private async prepareStart(
+    input: StartRunInput,
+  ): Promise<{ version: LoopVersionRecord; run: RunRecord; thread: ContextThread }> {
     const version = await this.resolveVersion(input);
     const def = version.definition;
     const trigger = this.resolveTrigger(def, input.triggerNodeId);
@@ -377,24 +396,172 @@ export class RunManager {
       createdAt: now,
       lastEventSeq: 0,
     };
-    // Pinning and recording the run are one critical section with loop deletion
-    // (`deleteLoopUnlessInUse`): a loop is either deleted before the run pins it (the run then
-    // fails at that subloop) or pinned before the deletion checks, which then refuses.
-    await this.withPinLock(async () => {
-      // The run's own version was resolved before the lock: a deletion may have won meanwhile.
+    return { version, run, thread };
+  }
+
+  async startRun(input: StartRunInput): Promise<RunRecord> {
+    const { version, run, thread } = await this.prepareStart(input);
+    const admitted = await this.withPinLock(async () => {
       await this.assertVersionPresent(version.id, input.loopId);
-      const subloopVersions = await this.pinSubloops(def, input.subloopVersions ?? {});
-      await this.ports.runs.create(run, thread);
-      await this.ports.events.append(runId, [
-        {
-          type: 'run.queued',
-          initialThread: thread,
-          ...(Object.keys(subloopVersions).length > 0 ? { subloopVersions } : {}),
-        },
-      ]);
+      const intent = await this.prepareAdmission(
+        version.definition,
+        run,
+        thread,
+        input.subloopVersions ?? {},
+      );
+      return this.ports.admission.create(intent);
     });
-    this.enqueue(runId);
+    this.enqueue(admitted.id);
+    return admitted;
+  }
+
+  /** Items-mode polls serialize committed and pending key admission with webhook claim/deletion. */
+  async startPollItem(input: StartRunInput): Promise<RunRecord | undefined> {
+    const prepared = await this.prepareStart(input);
+    const trigger = nodeById(
+      prepared.version.definition,
+      prepared.thread.invocation.trigger.nodeId,
+    );
+    if (trigger?.kind !== 'trigger' || trigger.config.subtype !== 'poll' || !trigger.config.items)
+      throw new EngineRequestError(
+        'INVALID_STATE',
+        'Atomic poll admission requires an items-mode trigger',
+      );
+    const run = await this.withPinLock(async () => {
+      await this.assertVersionPresent(prepared.version.id, input.loopId);
+      return this.ports.admission.createPollItem(
+        await this.prepareAdmission(prepared.version.definition, prepared.run, prepared.thread, {}),
+      );
+    });
+    if (run) this.enqueue(run.id);
     return run;
+  }
+
+  private async prepareAdmission(
+    def: LoopDefinition,
+    run: RunRecord,
+    initialThread: ContextThread,
+    inherited: Record<string, string>,
+  ): Promise<RunAdmission> {
+    const reached = new Set<string>([run.loopId]);
+    const subloopVersions = await this.pinSubloops(def, inherited, reached);
+    return {
+      run,
+      initialThread,
+      pinnedLoopIds: [...reached],
+      queued: {
+        type: 'run.queued',
+        initialThread,
+        ...(Object.keys(subloopVersions).length ? { subloopVersions } : {}),
+      },
+    };
+  }
+
+  /** Body-signature receipts serialize with deletion, retain the frozen start on dispatch failure. */
+  async receiveWebhook(
+    claim: WebhookClaim,
+    input: StartRunInput,
+    filtered: boolean,
+  ): Promise<{
+    state: 'duplicate' | 'deduplicated' | 'filtered' | 'admitted' | 'pending' | 'failed';
+    receipt: WebhookReceipt;
+    run?: RunRecord;
+  }> {
+    if (
+      claim.ownerId !== input.ownerId ||
+      claim.loopId !== input.loopId ||
+      claim.triggerNodeId !== input.triggerNodeId
+    )
+      throw new AdmissionConflictError();
+    const prepared = await this.prepareStart(input);
+    const result = await this.withPinLock(async () => {
+      await this.assertVersionPresent(prepared.version.id, input.loopId);
+      const intent = filtered
+        ? undefined
+        : await this.prepareAdmission(
+            prepared.version.definition,
+            prepared.run,
+            prepared.thread,
+            {},
+          );
+      const { receipt, duplicate } = await this.ports.admission.claim(claim, intent);
+      if (duplicate) return { state: 'duplicate' as const, receipt };
+      if (receipt.status === 'deduplicated') return { state: 'deduplicated' as const, receipt };
+      if (!intent) return { state: 'filtered' as const, receipt };
+      try {
+        const run = await this.ports.admission.create(intent, receipt.id);
+        return { state: 'admitted' as const, receipt, run };
+      } catch (error) {
+        // A lost commit acknowledgement may leave an admitted queued run. Reconcile its exact
+        // saved identity before reporting a retry; notification errors never undo a commit.
+        try {
+          const saved = await this.ports.admission.get(receipt.id);
+          if (saved?.status === 'admitted') {
+            const run = await this.ports.admission.create(intent, receipt.id);
+            return { state: 'admitted' as const, receipt: saved, run };
+          }
+        } catch {
+          /* Uncertain storage remains recoverable from the durable run/receipt. */
+        }
+        await this.recordWebhookFailure(receipt, error);
+        const saved = (await this.ports.admission.get(receipt.id)) ?? receipt;
+        return saved.status === 'failed'
+          ? { state: 'failed' as const, receipt: saved }
+          : { state: 'pending' as const, receipt: saved };
+      }
+    });
+    if (result.run) this.enqueue(result.run.id);
+    return result;
+  }
+
+  private async recordWebhookFailure(
+    receipt: Pick<WebhookReceipt, 'id' | 'attempts'>,
+    error: unknown,
+  ): Promise<void> {
+    if (error instanceof AdmissionConflictError) {
+      await this.ports.admission.failed(receipt.id, 'WEBHOOK_INTENT_CONFLICT');
+    } else if (error instanceof EngineRequestError && error.code === 'LOOP_NOT_FOUND') {
+      await this.ports.admission.failed(receipt.id, 'WEBHOOK_TARGET_REMOVED');
+    } else {
+      const delay = Math.min(300, 5 * 2 ** Math.min(receipt.attempts, 6));
+      await this.ports.admission.failed(
+        receipt.id,
+        'WEBHOOK_ADMISSION_RETRY',
+        new Date(this.ports.clock.now().getTime() + delay * 1000).toISOString(),
+      );
+    }
+  }
+
+  /** One bounded, non-overlapping sweep; boot and the 15-second timer call the same path. */
+  retryPendingWebhooks(): Promise<void> {
+    if (this.webhookRecovery) return this.webhookRecovery;
+    this.webhookRecovery = (async () => {
+      const due = await this.ports.admission.due(this.now(), 5);
+      for (const receipt of due) {
+        if (this.stopped) break;
+        const run = await this.withPinLock(async () => {
+          try {
+            const saved = await this.ports.admission.get(receipt.id);
+            if (!saved || saved.status !== 'pending') return undefined;
+            const intent = saved.intent;
+            if (!intent) throw new AdmissionConflictError();
+            await this.assertVersionPresent(intent.run.versionId, intent.run.loopId);
+            return await this.ports.admission.create(intent, receipt.id);
+          } catch (error) {
+            await this.recordWebhookFailure(receipt, error);
+            return undefined;
+          }
+        });
+        if (run && !this.stopped) this.enqueue(run.id);
+      }
+    })().finally(() => {
+      this.webhookRecovery = undefined;
+    });
+    return this.webhookRecovery;
+  }
+
+  async waitForWebhookRecovery(): Promise<void> {
+    await this.webhookRecovery;
   }
 
   /**
@@ -675,19 +842,21 @@ export class RunManager {
     // Admitted in the same critical section as run creation and loop deletion: a fork either
     // registers (and pins) before a deletion checks, which then refuses, or after it, when the
     // version it would run must still exist.
-    await this.withPinLock(async () => {
+    const admitted = await this.withPinLock(async () => {
       await this.assertVersionPresent(source.versionId, source.loopId);
-      await this.ports.runs.create(run, thread);
-      await this.ports.events.append(runId, [
-        {
+      return this.ports.admission.create({
+        run,
+        initialThread: thread,
+        pinnedLoopIds: [...new Set([source.loopId, ...Object.keys(subloopVersions)])],
+        queued: {
           type: 'run.queued',
           replayOf,
           ...(Object.keys(subloopVersions).length > 0 ? { subloopVersions } : {}),
         },
-      ]);
+      });
     });
     this.enqueue(runId);
-    return run;
+    return admitted;
   }
 
   /** Inside the pin lock: the version a new run will execute still exists. */
@@ -707,6 +876,7 @@ export class RunManager {
    * subloop references. Deleting the loop would make such a run fail, so the API refuses it.
    */
   async loopInUse(loopId: string): Promise<boolean> {
+    if (await this.ports.admission.hasPendingPin(loopId)) return true;
     for (const run of await this.ports.runs.listByStatus(ACTIVE_STATUSES)) {
       if (run.loopId === loopId) return true;
       // Pins are on run.queued, the first event: read that one, not the run's whole history.

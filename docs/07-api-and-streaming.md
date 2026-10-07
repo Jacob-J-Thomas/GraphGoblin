@@ -32,7 +32,7 @@ Runs
 
 Triggers and events
   POST   /triggers/cron/preview         next cron slots without saving or arming; loops:read
-  POST   /hooks/{endpointToken}         signed webhook receiver (public; HMAC, timestamp window, replay, 1 MB, rate limit; see 08)
+  POST   /hooks/{endpointToken}         signed webhook receiver (public; timestamp/body or raw-body HMAC, scheme-specific replay protection, 1 MiB, rate limit; see 08)
   GET    /loops/{id}/triggers           schedules, webhook endpoints (path only, never the secret), armed poll triggers
   POST   /events                        inbound event bus; body: { type, payload, dedupeKey? }; fires event triggers, returns runIds and duplicate
   GET    /events?type=&before=&limit=   stored inbound events (API, exit channels, webhooks), newest first
@@ -124,7 +124,7 @@ Public paths bypass API-key authentication. If no route handles a public path, t
 
 The `/docs` prefix is on the public list, but the Swagger UI is registered there only when `GG_SWAGGER_UI` is true (the default). With `GG_SWAGGER_UI=false`, nothing is registered under `/docs`, so `/docs` and every path beneath it return `404` without asking for a key; `/openapi.json` is always served.
 
-`/hooks/<token>` needs no API key because the HMAC signature is the credential; see [Webhook](08-triggers-and-integrations.md#webhook-decided-shipped-in-m6). `/app/`, `/`, and `/app` stay public because the web shell holds no data and every API call it makes is still authenticated.
+`/hooks/<token>` needs no API key because the HMAC signature is the credential; see [webhook signing](08-triggers-and-integrations.md). `/app/`, `/`, and `/app` stay public because the web shell holds no data and every API call it makes is still authenticated.
 
 Everything outside these public prefixes and exact paths is private. With `GG_REQUIRE_API_KEY=true`, it needs a bearer API key. When keys are not required, a request without a key runs in local trusted mode; a request that presents a key is still authenticated and limited to that key's scopes.
 

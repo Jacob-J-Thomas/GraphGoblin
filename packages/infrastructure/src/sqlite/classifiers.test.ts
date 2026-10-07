@@ -1,3 +1,4 @@
+import { applyShippedSqlToHistoricalTestFixture } from './testing/shipped-migrations.js';
 import { copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -144,8 +145,9 @@ describe('classifier repository', () => {
         const secretRows = (await handle.client.execute('SELECT * FROM secrets')).rows;
         const runs = (await handle.client.execute('SELECT * FROM runs')).rows;
         await writeFile(join(dir, 'meta/_journal.json'), JSON.stringify(journal));
-        expect(await handle.pendingMigrations()).toBe(8 - count);
-        await handle.migrate();
+        expect(await handle.pendingMigrations()).toBe(9 - count);
+        await expect(handle.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
+        await applyShippedSqlToHistoricalTestFixture(handle, dir);
         expect((await handle.client.execute('SELECT * FROM loop_versions')).rows).toEqual(versions);
         expect((await handle.client.execute('SELECT * FROM runs')).rows).toEqual(runs);
         expect((await handle.client.execute('SELECT * FROM secrets')).rows).toEqual(secretRows);

@@ -1,3 +1,5 @@
+import { admitPollItems } from './poll-items.js';
+import { itemsHttpProbe, itemsScriptProbe, PollProbeError } from './poll-probe.js';
 import type {
   JsonValue,
   LoopRecord,
@@ -7,6 +9,7 @@ import type {
   RunRecord,
 } from '@graphgoblin/contracts';
 import {
+  PollItemsError,
   evaluateExpression,
   evaluatePredicate,
   nodesOfKind,
@@ -33,19 +36,20 @@ interface Armed extends PollTarget {
 export interface PollTriggersDeps {
   probes: HttpProbePort;
   scripts: ScriptPort;
-  manager: Pick<RunManager, 'startRun'>;
+  manager: Pick<RunManager, 'startRun' | 'startPollItem'>;
   /** Whether this trigger node already started a run with this dedupe key. */
   hasDedupe(loopId: string, triggerNodeId: string, dedupeKey: string): Promise<boolean>;
+  findSeen(
+    loopId: string,
+    triggerNodeId: string,
+    keys: readonly string[],
+  ): Promise<ReadonlySet<string>>;
   clock: ClockPort;
   logger: Logger;
   /** Working directory for script probes. */
   scriptCwd: string;
   /** How often to look for due polls. Default 1000 ms. */
   tickMs?: number;
-}
-
-function describe(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
 }
 
 function jsonOrText(text: string): JsonValue {
@@ -126,8 +130,7 @@ export class PollTriggers {
       for (const target of [...this.armed.values()]) {
         if (new Date(target.nextPollAt).getTime() > now.getTime()) continue;
         target.nextPollAt = new Date(now.getTime() + target.intervalSeconds * 1000).toISOString();
-        const run = await this.check(target, now);
-        if (run) started.push(run);
+        started.push(...(await this.check(target, now)));
       }
     } finally {
       this.busy = false;
@@ -135,13 +138,36 @@ export class PollTriggers {
     return started;
   }
 
-  private async check(target: Armed, now: Date): Promise<RunRecord | undefined> {
+  private async check(target: Armed, now: Date): Promise<RunRecord[]> {
     const context = { loopId: target.loopId, nodeId: target.triggerNodeId };
     try {
       const base = { now: now.toISOString() };
-      const probe = await this.probe(target.config.probe, base);
+      const probe = await this.probe(target.config.probe, base, target.config.items !== undefined);
       const view = { ...base, probe };
-      if (!(await evaluatePredicate(target.config.fireWhen, view))) return undefined;
+      if (!(await evaluatePredicate(target.config.fireWhen, view))) return [];
+      if (target.config.items) {
+        const result = await admitPollItems(target.config.items, view, {
+          findSeen: (keys) => this.deps.findSeen(target.loopId, target.triggerNodeId, keys),
+          start: (candidate) =>
+            this.deps.manager.startPollItem({
+              ownerId: target.ownerId,
+              loopId: target.loopId,
+              versionId: target.versionId,
+              triggerNodeId: target.triggerNodeId,
+              triggerKind: 'poll',
+              source: 'poll',
+              caller: { kind: 'system', id: `poll:${target.loopId}/${target.triggerNodeId}` },
+              payload: candidate.item,
+              dedupeKey: candidate.dedupeKey,
+            }),
+        });
+        if (result.failedItemIndex !== undefined)
+          this.deps.logger.warn(
+            { ...context, code: 'POLL_ADMISSION_FAILED', itemIndex: result.failedItemIndex },
+            'poll items admission failed',
+          );
+        return result.runs;
+      }
       const value = target.config.dedupeKey
         ? await evaluateExpression(target.config.dedupeKey, view)
         : undefined;
@@ -153,9 +179,9 @@ export class PollTriggers {
         dedupeKey &&
         (await this.deps.hasDedupe(target.loopId, target.triggerNodeId, dedupeKey))
       ) {
-        return undefined;
+        return [];
       }
-      return await this.deps.manager.startRun({
+      const run = await this.deps.manager.startRun({
         ownerId: target.ownerId,
         loopId: target.loopId,
         versionId: target.versionId,
@@ -166,13 +192,30 @@ export class PollTriggers {
         payload: probe,
         ...(dedupeKey ? { dedupeKey } : {}),
       });
+      return [run];
     } catch (error) {
-      this.deps.logger.warn({ ...context, error: describe(error) }, 'poll trigger failed');
-      return undefined;
+      this.deps.logger.warn(
+        {
+          ...context,
+          code:
+            error instanceof PollProbeError || error instanceof PollItemsError
+              ? error.code
+              : 'POLL_TRIGGER_FAILED',
+          ...(error instanceof PollItemsError
+            ? { reason: error.reason, path: error.path, itemIndex: error.itemIndex }
+            : {}),
+        },
+        'poll trigger failed',
+      );
+      return [];
     }
   }
 
-  private async probe(spec: Probe, view: Record<string, unknown>): Promise<JsonValue> {
+  private async probe(
+    spec: Probe,
+    view: Record<string, unknown>,
+    itemsMode = false,
+  ): Promise<JsonValue> {
     switch (spec.kind) {
       case 'http': {
         const headers: Record<string, string> = {};
@@ -189,6 +232,7 @@ export class PollTriggers {
           },
           AbortSignal.timeout(spec.timeoutSeconds * 1000),
         );
+        if (itemsMode) return itemsHttpProbe(response);
         const body = response.body.slice(0, 65_536);
         return {
           status: response.status,
@@ -202,12 +246,14 @@ export class PollTriggers {
         for (const arg of spec.args) args.push(await renderTemplate(arg, view));
         const result = await this.deps.scripts.run({
           command: spec.command,
+          ...(itemsMode ? { maxStdoutBytes: 65_536 } : {}),
           args,
           cwd: this.deps.scriptCwd,
           env: {},
           timeoutMs: spec.timeoutSeconds * 1000,
           signal: AbortSignal.timeout(spec.timeoutSeconds * 1000 + 1000),
         });
+        if (itemsMode) return itemsScriptProbe(result);
         return {
           exitCode: result.exitCode,
           stdout: result.stdout.slice(0, 65_536),

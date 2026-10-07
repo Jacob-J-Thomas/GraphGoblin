@@ -416,16 +416,75 @@ describe('SchemaForm', () => {
     await user.click(screen.getByRole('checkbox', { name: 'mcp' }));
     expect(last(spy)['exposeTo']).toEqual(['ui', 'api', 'mcp']);
 
-    await user.selectOptions(screen.getByLabelText('Subtype'), 'webhook');
+    const subtype = screen.getByLabelText('Subtype');
+    await user.selectOptions(
+      subtype,
+      within(subtype).getByRole('option', { name: 'webhook (timestamp)' }).getAttribute('value')!,
+    );
     expect(last(spy)).toMatchObject({ subtype: 'webhook', signature: { scheme: 'hmac-sha256' } });
     expect(screen.getByText('hmac-sha256')).toBeInTheDocument();
     await user.type(screen.getByLabelText('Secret ref'), 'hook-secret');
     expect(last(spy)).toMatchObject({ signature: { secretRef: 'hook-secret' } });
 
-    await user.selectOptions(screen.getByLabelText('Subtype'), 'cron');
+    await user.selectOptions(
+      subtype,
+      within(subtype).getByRole('option', { name: 'cron' }).getAttribute('value')!,
+    );
     await user.type(screen.getByLabelText('Expression'), '0 2 * * *');
     await user.click(screen.getByLabelText('Enabled'));
     expect(last(spy)).toMatchObject({ subtype: 'cron', expression: '0 2 * * *', enabled: false });
+  });
+
+  it('retains the selected body-signature branch while its secret is incomplete', async () => {
+    const user = userEvent.setup();
+    const spy = vi.fn();
+    render(
+      <Harness
+        schema={NodeConfigSchemas.trigger}
+        initial={{
+          subtype: 'webhook',
+          signature: {
+            scheme: 'hmac-sha256-body',
+            header: 'x-hub-signature-256',
+            secretRef: '',
+          },
+          filter: 'true',
+        }}
+        spy={spy}
+      />,
+    );
+
+    const subtype = screen.getByLabelText('Subtype');
+    expect(subtype).toHaveDisplayValue('webhook (body)');
+    expect(screen.getByText('hmac-sha256-body')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Replay window seconds')).not.toBeInTheDocument();
+    await user.type(screen.getByLabelText('Secret ref'), 'github-key');
+    expect(last(spy)).toMatchObject({
+      subtype: 'webhook',
+      signature: { scheme: 'hmac-sha256-body', secretRef: 'github-key' },
+    });
+  });
+
+  it('keeps an unknown stored signing scheme visible in raw form data without coercing it', async () => {
+    const user = userEvent.setup();
+    const spy = vi.fn();
+    render(
+      <Harness
+        schema={NodeConfigSchemas.trigger}
+        initial={{
+          subtype: 'webhook',
+          signature: { scheme: 'custom-hmac', header: 'x-custom', secretRef: 'saved-secret' },
+        }}
+        spy={spy}
+      />,
+    );
+
+    expect(screen.getByTestId('value')).toHaveTextContent('"scheme":"custom-hmac"');
+    expect(spy).not.toHaveBeenCalled();
+    await user.type(screen.getByLabelText('Secret ref'), '-edited');
+    expect(last(spy)).toMatchObject({
+      signature: { scheme: 'custom-hmac', secretRef: 'saved-secret-edited' },
+    });
   });
 
   it('handles the decision evaluation union, context unions, option editing, and previews', async () => {

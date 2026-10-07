@@ -21,3 +21,5 @@ export * from './nodes.js';
 export * from './loop.js';
 export * from './run.js';
 export * from './events.js';
+
+export * from './trigger-integrations.js';
