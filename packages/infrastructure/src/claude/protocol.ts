@@ -396,6 +396,8 @@ export class ClaudeAccumulator {
       if (content.type !== 'tool_result') continue;
       if (typeof content.tool_use_id !== 'string' || !this.toolIds.has(content.tool_use_id))
         throw protocolError();
+      if (Object.hasOwn(content, 'is_error') && typeof content.is_error !== 'boolean')
+        throw protocolError();
       const tool = this.toolIds.get(content.tool_use_id)!;
       this.toolIds.delete(content.tool_use_id);
       const failed = content.is_error === true;

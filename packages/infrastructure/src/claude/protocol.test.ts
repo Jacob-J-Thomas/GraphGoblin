@@ -287,6 +287,124 @@ describe('Claude stream contract and honest execution evidence', () => {
 });
 
 describe('Claude transcript and error evidence limits', () => {
+  it.each([
+    { marker: {}, expected: 'ok' },
+    { marker: { is_error: false }, expected: 'ok' },
+    { marker: { is_error: true }, expected: 'failed' },
+  ])('maps the valid tool-result marker $marker to $expected evidence', ({ marker, expected }) => {
+    const acc = accumulator();
+    acc.push(init());
+    acc.push({
+      type: 'assistant',
+      message: { content: [{ type: 'tool_use', id: 'read-marker', name: 'Read', input: {} }] },
+    });
+    const output = expected === 'failed' ? 'PRIVATE_ERROR_BODY' : 'safe tool output';
+    const events = acc.push({
+      type: 'user',
+      message: {
+        content: [{ type: 'tool_result', tool_use_id: 'read-marker', content: output, ...marker }],
+      },
+    });
+    expect(events).toMatchObject([
+      {
+        type: 'item',
+        item: {
+          id: 'read-marker',
+          type: 'tool-call',
+          status: expected,
+          summary: expected === 'failed' ? 'Read failed' : 'Read completed',
+        },
+      },
+    ]);
+    acc.push(result());
+    const completed = acc.finish();
+    expect(
+      completed.items.filter((item) => item.id === 'read-marker').map((item) => item.status),
+    ).toEqual(['running', expected]);
+    if (expected === 'failed') {
+      expect(JSON.stringify(events)).not.toContain('PRIVATE_ERROR_BODY');
+      expect(JSON.stringify(completed)).not.toContain('PRIVATE_ERROR_BODY');
+    } else expect(events).toMatchObject([{ item: { detail: { output } } }]);
+  });
+
+  it.each([
+    { marker: 'true' },
+    { marker: 'false' },
+    { marker: null },
+    { marker: 0 },
+    { marker: 1 },
+    { marker: { marker: 'PRIVATE_MARKER' } },
+    { marker: ['PRIVATE_MARKER'] },
+  ])(
+    'refuses non-boolean tool-result is_error $marker without success evidence or private diagnostics',
+    ({ marker }) => {
+      const acc = accumulator();
+      acc.push(init());
+      acc.push({
+        type: 'assistant',
+        message: { content: [{ type: 'tool_use', id: 'read-marker', name: 'Read', input: {} }] },
+      });
+      const [malformed] = new JsonLines().push(
+        Buffer.from(
+          JSON.stringify({
+            type: 'user',
+            message: {
+              content: [
+                {
+                  type: 'tool_result',
+                  tool_use_id: 'read-marker',
+                  is_error: marker,
+                  content: 'PRIVATE_TOOL_BODY',
+                },
+              ],
+            },
+          }) + '\n',
+        ),
+      );
+      let emitted: ReturnType<ClaudeAccumulator['push']> = [];
+      let refusal: unknown;
+      try {
+        emitted = acc.push(malformed!);
+      } catch (error) {
+        refusal = error;
+      }
+      expect(refusal).toMatchObject({
+        code: 'HARNESS_PROTOCOL_ERROR',
+        retriable: false,
+        message: 'Claude stream protocol is invalid or incomplete',
+      });
+      expect(String(refusal)).not.toContain('PRIVATE');
+      expect(emitted).toEqual([]);
+      expect(() => acc.push(result())).toThrow(
+        expect.objectContaining({ code: 'HARNESS_PROTOCOL_ERROR' }),
+      );
+      expect(() => acc.finish()).toThrow(
+        expect.objectContaining({ code: 'HARNESS_PROTOCOL_ERROR' }),
+      );
+      // Inspect bookkeeping after refusal only; the production harness aborts when push throws.
+      // A malformed marker cannot settle a call or insert a false successful transcript item.
+      acc.push({
+        type: 'user',
+        message: {
+          content: [
+            {
+              type: 'tool_result',
+              tool_use_id: 'read-marker',
+              is_error: false,
+              content: 'valid replacement',
+            },
+          ],
+        },
+      });
+      acc.push(result());
+      const completed = acc.finish();
+      expect(
+        completed.items.filter((item) => item.id === 'read-marker').map((item) => item.status),
+      ).toEqual(['running', 'ok']);
+      expect(JSON.stringify(completed)).not.toContain('PRIVATE');
+    },
+  );
+
   it('allows non-execution status metadata after init and safely ignores unknown content block kinds', () => {
     const acc = accumulator();
     expect(() => acc.policyEvidence).toThrow();
