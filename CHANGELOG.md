@@ -46,6 +46,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ### Fixed
 
+- Decision routes are connectable immediately after editing, without reloading the loop. Renaming a route keeps its connection and line layout; removing a route removes its connection. Undo and Redo restore both together.
+
 - The app probes API reachability and restores queries, event streams, and autosave when the API returns (#55).
 - The app checks for service worker updates when it regains focus (#56).
 

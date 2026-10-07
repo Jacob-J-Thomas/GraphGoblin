@@ -9,6 +9,7 @@ import type { z } from 'zod';
 import { create } from 'zustand';
 import type { FormChange } from '../forms/changes.js';
 import type { ParseError, ParseErrorReason } from '../forms/parse-errors.js';
+import { decisionRouteEdges } from './decision-route-edges.js';
 import {
   historyClock,
   recordStep,
@@ -379,18 +380,25 @@ export const useEditorStore = create<EditorState>((set, get) => {
 
     updateNode: (nodeId, changes, change) =>
       edit(
-        (d) => ({
-          ...d,
-          nodes: d.nodes.map((n) =>
-            n.id === nodeId
-              ? ({
-                  ...n,
-                  ...(changes.label !== undefined ? { label: changes.label } : {}),
-                  ...(changes.config !== undefined ? { config: changes.config } : {}),
-                } as NodeInput)
-              : n,
-          ),
-        }),
+        (d) => {
+          const node = d.nodes.find((n) => n.id === nodeId);
+          return {
+            ...d,
+            edges:
+              node && changes.config !== undefined
+                ? decisionRouteEdges(node, changes.config, d.edges)
+                : d.edges,
+            nodes: d.nodes.map((n) =>
+              n.id === nodeId
+                ? ({
+                    ...n,
+                    ...(changes.label !== undefined ? { label: changes.label } : {}),
+                    ...(changes.config !== undefined ? { config: changes.config } : {}),
+                  } as NodeInput)
+                : n,
+            ),
+          };
+        },
         // Typing in one field is one step: the label, and each field of the config form.
         changes.config === undefined
           ? { label: `edit label of ${nodeId}`, coalesceKey: `label:${nodeId}` }

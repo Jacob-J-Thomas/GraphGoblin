@@ -132,6 +132,16 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
       target.jev.isAvailable = body['jev'] !== false;
       target.codex.isAvailable = body['codex'] !== false;
       return { ok: true };
+    case '/deciders/route':
+      target.jev.choose = (request) => {
+        target.jev.choices.push(request);
+        return Promise.resolve({
+          label:
+            typeof body['label'] === 'string' ? body['label'] : (request.options[0]?.label ?? ''),
+          confidence: 1,
+        });
+      };
+      return { ok: true };
     case '/structured': {
       const queue = [...((body['responses'] as unknown[] | undefined) ?? [])];
       target.structured.respondWith(() => (queue.length > 1 ? queue.shift() : queue[0]));

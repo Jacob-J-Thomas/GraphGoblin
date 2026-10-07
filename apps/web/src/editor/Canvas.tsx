@@ -408,7 +408,11 @@ export function Canvas({
       }),
     [definition.edges, routeDrag, nodeDrag, authoredCrossings],
   );
-  const plan = useRouting(routingEdges);
+  const decisionPorts = useMemo(
+    () => new Map([...cardData].filter(([, data]) => data.node.kind === 'decision')),
+    [cardData],
+  );
+  const plan = useRouting(routingEdges, decisionPorts);
   const { routes } = plan;
   // The route editor reads the latest card boxes when a drag ends or a nudge lands.
   const planRef = useRef(plan);

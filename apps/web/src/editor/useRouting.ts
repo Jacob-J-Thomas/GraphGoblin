@@ -16,6 +16,8 @@ export interface RoutingGeometry {
   preparationMs: number;
 }
 
+type ExpectedPorts = ReadonlyMap<string, { ports: readonly string[] }>;
+
 /** A stable value snapshot. An unmeasured new card cannot erase the measured graph. */
 export function createGeometrySelector() {
   let previous: RoutingGeometry = { nodes: [], preparationMs: 0 };
@@ -77,8 +79,28 @@ export function createRoutingCache() {
   let previousGeometry: RoutingGeometry | undefined;
   let previous: RoutingPlan | undefined;
   const workspace = new SearchWorkspace();
-  return (geometry: RoutingGeometry, edges: readonly RoutingEdge[]): RoutingPlan => {
+  return (
+    geometry: RoutingGeometry,
+    edges: readonly RoutingEdge[],
+    expected?: ExpectedPorts,
+  ): RoutingPlan => {
     const start = performance.now();
+    // A config edit and xyflow's handle measurement arrive separately. Keep the previous plan
+    // until the measured port ids/order match the committed cards, rather than remove/reinsert
+    // a renamed edge's reservations and route its neighbours twice. Initial unmeasured cards
+    // still follow the normal path below, so they never erase the measured graph.
+    if (
+      previous &&
+      expected &&
+      geometry.nodes.some((node) => {
+        const card = expected.get(node.id);
+        if (!card) return false;
+        const ports = [...new Set(card.ports)];
+        const measured = Object.keys(node.outputs);
+        return ports.length !== measured.length || ports.some((port, i) => port !== measured[i]);
+      })
+    )
+      return previous;
     if (
       geometry === previousGeometry &&
       previous &&
@@ -109,9 +131,9 @@ export function createRoutingCache() {
   };
 }
 
-export function useRouting(edges: readonly RoutingEdge[]): RoutingPlan {
+export function useRouting(edges: readonly RoutingEdge[], expected?: ExpectedPorts): RoutingPlan {
   const [selector] = useState(createGeometrySelector);
   const geometry = useStore(selector);
   const [route] = useState(createRoutingCache);
-  return route(geometry, edges);
+  return route(geometry, edges, expected);
 }

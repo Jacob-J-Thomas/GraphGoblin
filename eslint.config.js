@@ -12,6 +12,8 @@ export default tseslint.config(
       '**/coverage/**',
       '**/node_modules/**',
       '**/.turbo/**',
+      // Playwright traces contain copies of built bundles, not authored source.
+      '**/test-results/**',
       // Generated code (for example the OpenAPI types in packages/api-client) is not linted.
       '**/src/generated/**',
     ],

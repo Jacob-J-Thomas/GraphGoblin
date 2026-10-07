@@ -1,9 +1,59 @@
 import { Position, type InternalNode } from '@xyflow/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { routingInput, simpleLoop } from '../__fixtures__/routing.js';
 import { createRoutingCache, ROUTING_MEASURE, createGeometrySelector } from './useRouting.js';
 
 describe('routing measurement and cache', () => {
+  it('retains unrelated route identity across a decision rename and its subsequent handle measurement', () => {
+    const input = routingInput(simpleLoop());
+    const source = {
+      id: 'pick',
+      x: 3000,
+      y: 3000,
+      width: 184,
+      height: 140,
+      outputs: { yes: { x: 3190, y: 3100 }, no: { x: 3190, y: 3120 } },
+      input: { x: 2994, y: 3070 },
+    };
+    const target = {
+      id: 'target',
+      x: 2700,
+      y: 3000,
+      width: 184,
+      height: 120,
+      outputs: {},
+      input: { x: 2694, y: 3060 },
+    };
+    const nodes = [...input.nodes, source, target];
+    const edges = [...input.edges, { id: 'choice', source: 'pick', target: 'target', port: 'yes' }];
+    const geometry = { nodes, preparationMs: 0 };
+    const route = createRoutingCache();
+    const measure = vi.spyOn(performance, 'measure');
+    const first = route(geometry, edges);
+    const initialMeasurements = measure.mock.calls.length;
+    const unrelated = first.routes.get('return');
+    const renamed = edges.map((edge) => (edge.id === 'choice' ? { ...edge, port: 'new' } : edge));
+    const expected = new Map([['pick', { ports: ['new', 'no'] }]]);
+    const awaitingHandles = route(geometry, renamed, expected);
+    expect(awaitingHandles).toBe(first);
+    expect(route(geometry, [...renamed], expected)).toBe(awaitingHandles);
+    expect(measure).toHaveBeenCalledTimes(initialMeasurements);
+    const measured = {
+      nodes: [
+        ...input.nodes,
+        { ...source, outputs: { new: source.outputs.yes, no: source.outputs.no } },
+        target,
+      ],
+      preparationMs: 0,
+    };
+    const final = route(measured, renamed, expected);
+    expect(final.routes.get('choice')).toBeDefined();
+    expect(final.routes.get('return')).toBe(unrelated);
+    expect(final.statistics.rerouted).toBe(1);
+    expect(route(measured, [...renamed], expected)).toBe(final);
+    expect(measure).toHaveBeenCalledTimes(initialMeasurements + 1);
+  });
+
   it('routes once per geometry/topology change, retains unchanged routes, and bounds the timeline', () => {
     const input = routingInput(simpleLoop());
     const route = createRoutingCache();

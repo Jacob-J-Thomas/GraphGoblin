@@ -61,6 +61,8 @@ A saved model that is missing or disabled stays selected with **not in catalog**
 
 ## Connect and validate
 
+Decision outputs are ready to connect as soon as you add or rename a route, by dragging its handle or using **Connections** in the node dialog; no reload is needed. Renaming a connected route keeps its connection and any manual line layout. Removing a route removes its connection, and reordering keeps connections with their labels. **Undo** and **Redo** restore the route edit and its connection together. Blank or duplicate labels still need fixing before you can publish.
+
 Connect exactly one edge per output port. Multiple inputs may converge on a node, but each run follows one route at a time. Triggers have no input. Ordinary output ports are `out`, decision ports are route labels, script ports include exit-code labels, and exit ports are limited to `loopBack`. Edge targets use `in`.
 
 For a loop-back, connect the exit handle to a working node, such as inference or mutation. The canvas sets `loopBack.targetNodeId` for you; it cannot target a trigger or another exit. Only this exit transition increments the iteration. A cycle through other nodes does not consume the iteration limit.

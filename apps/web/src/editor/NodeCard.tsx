@@ -1,6 +1,6 @@
 import type { NodeInput } from '@graphgoblin/contracts';
-import { Handle, Position, type Node, type NodeProps } from '@xyflow/react';
-import { memo } from 'react';
+import { Handle, Position, useUpdateNodeInternals, type Node, type NodeProps } from '@xyflow/react';
+import { memo, useLayoutEffect, useRef } from 'react';
 import { cn } from '../lib/utils.js';
 import { canvasFocusTarget } from './canvas-focus.js';
 import { IssueBadge } from './IssueBadge.js';
@@ -25,6 +25,16 @@ export type FlowNode = Node<NodeCardData, 'gg'>;
  */
 export const NodeCard = memo(function NodeCard({ data, selected }: NodeProps<FlowNode>) {
   const { node, ports, issues } = data;
+  const updateNodeInternals = useUpdateNodeInternals();
+  const portKey = JSON.stringify(ports);
+  const measuredPortsRef = useRef(portKey);
+  useLayoutEffect(() => {
+    if (measuredPortsRef.current === portKey) return;
+    measuredPortsRef.current = portKey;
+    // xyflow caches ids and positions, even when the card's height stays the same. Measure the
+    // committed handles once per port-list change; labels, issues and unrelated edits do nothing.
+    updateNodeInternals(node.id);
+  }, [node.id, portKey, updateNodeInternals]);
   const info = KIND_INFO[node.kind];
   return (
     <div
