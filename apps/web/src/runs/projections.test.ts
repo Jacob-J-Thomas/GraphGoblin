@@ -33,7 +33,10 @@ const ALL: RunEvent[] = [
     durationMs: 3,
     route: 'good',
   }),
-  event(R, 11, 'node.progress', { nodeId: 'i', progress: 'p' }),
+  event(R, 11, 'node.progress', {
+    nodeId: 'i',
+    progress: { exitCode: 0, stderr: '', stdoutBytes: 0 },
+  }),
   event(R, 12, 'harness.session', { nodeId: 'i', harness: 'codex', sessionId: 's', mode: 'fresh' }),
   event(R, 13, 'harness.usage', { nodeId: 'i', usage }),
   event(R, 14, 'decision.made', { nodeId: 'd', strategy: 'jev', route: 'good', skipped: [] }),

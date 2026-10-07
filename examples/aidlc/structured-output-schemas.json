@@ -1,0 +1,836 @@
+{
+  "Plan": {
+    "type": "object",
+    "properties": {
+      "schemaVersion": {
+        "type": "integer",
+        "enum": [1]
+      },
+      "status": {
+        "type": "string",
+        "enum": ["ready", "needs-input", "blocked"]
+      },
+      "planningSlot": {
+        "type": "string",
+        "enum": ["plannerA", "plannerB"]
+      },
+      "summary": {
+        "type": "string"
+      },
+      "tasks": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            },
+            "userVisibleUI": {
+              "type": "boolean"
+            },
+            "acceptanceCriteria": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "dependsOn": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": ["id", "description", "userVisibleUI", "acceptanceCriteria", "dependsOn"],
+          "additionalProperties": false
+        }
+      },
+      "checklist": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "system": {
+              "type": "string"
+            },
+            "scenario": {
+              "type": "string"
+            },
+            "polarity": {
+              "type": "string",
+              "enum": ["positive", "negative"]
+            },
+            "steps": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "expected": {
+              "type": "string"
+            }
+          },
+          "required": ["id", "system", "scenario", "polarity", "steps", "expected"],
+          "additionalProperties": false
+        }
+      },
+      "risks": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "questions": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "required": [
+      "schemaVersion",
+      "status",
+      "planningSlot",
+      "summary",
+      "tasks",
+      "checklist",
+      "risks",
+      "questions"
+    ],
+    "additionalProperties": false
+  },
+  "Implementation": {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "enum": ["complete", "blocked"]
+      },
+      "taskId": {
+        "type": "string"
+      },
+      "baseSha": {
+        "type": "string"
+      },
+      "headSha": {
+        "type": "string"
+      },
+      "branch": {
+        "type": "string"
+      },
+      "summary": {
+        "type": "string"
+      },
+      "filesChanged": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "remainingWork": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "evidence": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": ["log", "screenshot", "trace", "diff", "report"]
+            },
+            "path": {
+              "type": "string"
+            },
+            "sha256": {
+              "type": "string"
+            }
+          },
+          "required": ["kind", "path", "sha256"],
+          "additionalProperties": false
+        }
+      },
+      "implementer": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string"
+          },
+          "harness": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "family": {
+            "type": "string"
+          }
+        },
+        "required": ["role", "harness", "model", "family"],
+        "additionalProperties": false
+      }
+    },
+    "required": [
+      "status",
+      "taskId",
+      "baseSha",
+      "headSha",
+      "branch",
+      "summary",
+      "filesChanged",
+      "remainingWork",
+      "evidence",
+      "implementer"
+    ],
+    "additionalProperties": false
+  },
+  "Review": {
+    "type": "object",
+    "properties": {
+      "verdict": {
+        "type": "string",
+        "enum": ["pass", "changes-required", "blocked"]
+      },
+      "reviewedHeadSha": {
+        "type": "string"
+      },
+      "implementerFamily": {
+        "type": "string"
+      },
+      "reviewerFamily": {
+        "type": "string"
+      },
+      "acceptanceCoverage": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "criterion": {
+              "type": "string"
+            },
+            "covered": {
+              "type": "boolean"
+            },
+            "evidence": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "enum": ["log", "screenshot", "trace", "diff", "report"]
+                  },
+                  "path": {
+                    "type": "string"
+                  },
+                  "sha256": {
+                    "type": "string"
+                  }
+                },
+                "required": ["kind", "path", "sha256"],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": ["criterion", "covered", "evidence"],
+          "additionalProperties": false
+        }
+      },
+      "findings": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "severity": {
+              "type": "string",
+              "enum": ["blocking", "nonblocking"]
+            },
+            "file": {
+              "type": ["string", "null"]
+            },
+            "line": {
+              "type": ["integer", "null"]
+            },
+            "problem": {
+              "type": "string"
+            },
+            "requestedChange": {
+              "type": "string"
+            },
+            "disposition": {
+              "type": "string",
+              "enum": ["fix-now", "wont-fix", "future-issue", "human"]
+            },
+            "rationale": {
+              "type": "string"
+            },
+            "issueUrl": {
+              "type": ["string", "null"]
+            },
+            "state": {
+              "type": "string",
+              "enum": ["open", "fixed", "accepted", "deferred"]
+            }
+          },
+          "required": [
+            "id",
+            "severity",
+            "file",
+            "line",
+            "problem",
+            "requestedChange",
+            "disposition",
+            "rationale",
+            "issueUrl",
+            "state"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "summary": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "verdict",
+      "reviewedHeadSha",
+      "implementerFamily",
+      "reviewerFamily",
+      "acceptanceCoverage",
+      "findings",
+      "summary"
+    ],
+    "additionalProperties": false
+  },
+  "FindingDisposition": {
+    "type": "object",
+    "properties": {
+      "reviewedHeadSha": {
+        "type": "string"
+      },
+      "findings": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "severity": {
+              "type": "string",
+              "enum": ["blocking", "nonblocking"]
+            },
+            "file": {
+              "type": ["string", "null"]
+            },
+            "line": {
+              "type": ["integer", "null"]
+            },
+            "problem": {
+              "type": "string"
+            },
+            "requestedChange": {
+              "type": "string"
+            },
+            "disposition": {
+              "type": "string",
+              "enum": ["fix-now", "wont-fix", "future-issue", "human"]
+            },
+            "rationale": {
+              "type": "string"
+            },
+            "issueUrl": {
+              "type": ["string", "null"]
+            },
+            "state": {
+              "type": "string",
+              "enum": ["open", "fixed", "accepted", "deferred"]
+            }
+          },
+          "required": [
+            "id",
+            "severity",
+            "file",
+            "line",
+            "problem",
+            "requestedChange",
+            "disposition",
+            "rationale",
+            "issueUrl",
+            "state"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "requiresHuman": {
+        "type": "boolean"
+      }
+    },
+    "required": ["reviewedHeadSha", "findings", "requiresHuman"],
+    "additionalProperties": false
+  },
+  "PrCi": {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "enum": ["ready", "fix-required", "pending", "merged", "blocked"]
+      },
+      "repository": {
+        "type": "string"
+      },
+      "prNumber": {
+        "type": ["integer", "null"]
+      },
+      "prUrl": {
+        "type": ["string", "null"]
+      },
+      "headSha": {
+        "type": "string"
+      },
+      "baseSha": {
+        "type": "string"
+      },
+      "mergeSha": {
+        "type": ["string", "null"]
+      },
+      "requiredChecks": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "sha": {
+              "type": "string"
+            },
+            "state": {
+              "type": "string",
+              "enum": ["pending", "pass", "fail", "cancelled", "missing"]
+            },
+            "evidence": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "enum": ["log", "screenshot", "trace", "diff", "report"]
+                  },
+                  "path": {
+                    "type": "string"
+                  },
+                  "sha256": {
+                    "type": "string"
+                  }
+                },
+                "required": ["kind", "path", "sha256"],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": ["name", "sha", "state", "evidence"],
+          "additionalProperties": false
+        }
+      },
+      "reviewerLogin": {
+        "type": ["string", "null"]
+      },
+      "approvedHeadSha": {
+        "type": ["string", "null"]
+      },
+      "blockingFindings": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "reason": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "status",
+      "repository",
+      "prNumber",
+      "prUrl",
+      "headSha",
+      "baseSha",
+      "mergeSha",
+      "requiredChecks",
+      "reviewerLogin",
+      "approvedHeadSha",
+      "blockingFindings",
+      "reason"
+    ],
+    "additionalProperties": false
+  },
+  "Qa": {
+    "type": "object",
+    "properties": {
+      "verdict": {
+        "type": "string",
+        "enum": ["pass", "fail", "blocked"]
+      },
+      "executionSha": {
+        "type": "string"
+      },
+      "checklistHash": {
+        "type": "string"
+      },
+      "depth": {
+        "type": "string",
+        "enum": ["standard", "full-regression"]
+      },
+      "results": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string",
+              "enum": ["pass", "fail", "blocked"]
+            },
+            "actual": {
+              "type": "string"
+            },
+            "evidence": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "enum": ["log", "screenshot", "trace", "diff", "report"]
+                  },
+                  "path": {
+                    "type": "string"
+                  },
+                  "sha256": {
+                    "type": "string"
+                  }
+                },
+                "required": ["kind", "path", "sha256"],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": ["id", "status", "actual", "evidence"],
+          "additionalProperties": false
+        }
+      },
+      "proofComplete": {
+        "type": "boolean"
+      },
+      "summary": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "verdict",
+      "executionSha",
+      "checklistHash",
+      "depth",
+      "results",
+      "proofComplete",
+      "summary"
+    ],
+    "additionalProperties": false
+  },
+  "QaAudit": {
+    "type": "object",
+    "properties": {
+      "sound": {
+        "type": "boolean"
+      },
+      "gaps": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "summary": {
+        "type": "string"
+      }
+    },
+    "required": ["sound", "gaps", "summary"],
+    "additionalProperties": false
+  },
+  "HumanInput": {
+    "type": "object",
+    "properties": {
+      "decision": {
+        "type": "string",
+        "enum": ["continue", "another-cycle", "merge", "close-pr", "stop"]
+      },
+      "expectedHeadSha": {
+        "type": ["string", "null"]
+      },
+      "note": {
+        "type": "string"
+      }
+    },
+    "required": ["decision", "expectedHeadSha", "note"],
+    "additionalProperties": false
+  },
+  "Closure": {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "enum": ["closed", "needs-human", "rework", "blocked"]
+      },
+      "issueUrl": {
+        "type": ["string", "null"]
+      },
+      "executionSha": {
+        "type": "string"
+      },
+      "checklistHash": {
+        "type": "string"
+      },
+      "qaRunId": {
+        "type": "string"
+      },
+      "proofLinks": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "remainingTaskIds": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "summary": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "status",
+      "issueUrl",
+      "executionSha",
+      "checklistHash",
+      "qaRunId",
+      "proofLinks",
+      "remainingTaskIds",
+      "summary"
+    ],
+    "additionalProperties": false
+  },
+  "ParentReport": {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "enum": ["continue", "needs-human", "complete", "blocked", "exhausted"]
+      },
+      "completedTaskIds": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "remainingTaskIds": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "prUrls": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "qaRunIds": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "summary": {
+        "type": "string"
+      }
+    },
+    "required": ["status", "completedTaskIds", "remainingTaskIds", "prUrls", "qaRunIds", "summary"],
+    "additionalProperties": false
+  },
+  "RouteJudgment": {
+    "type": "object",
+    "properties": {
+      "route": {
+        "type": "string",
+        "enum": ["plannerA", "plannerB", "code", "visual", "human"]
+      },
+      "reason": {
+        "type": "string"
+      },
+      "confidence": {
+        "type": "number"
+      }
+    },
+    "required": ["route", "reason", "confidence"],
+    "additionalProperties": false
+  },
+  "ChecklistProposal": {
+    "type": "object",
+    "properties": {
+      "additionalCriteria": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "system": {
+              "type": "string"
+            },
+            "scenario": {
+              "type": "string"
+            },
+            "polarity": {
+              "type": "string",
+              "enum": ["positive", "negative"]
+            },
+            "steps": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "expected": {
+              "type": "string"
+            }
+          },
+          "required": ["id", "system", "scenario", "polarity", "steps", "expected"],
+          "additionalProperties": false
+        }
+      }
+    },
+    "required": ["additionalCriteria"],
+    "additionalProperties": false
+  },
+  "LocalImplementation": {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "enum": ["complete", "blocked"]
+      },
+      "summary": {
+        "type": "string"
+      },
+      "filesChanged": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "required": ["status", "summary", "filesChanged"],
+    "additionalProperties": false
+  },
+  "LocalReview": {
+    "type": "object",
+    "properties": {
+      "verdict": {
+        "type": "string",
+        "enum": ["pass", "changes-required", "blocked"]
+      },
+      "candidateHash": {
+        "type": "string"
+      },
+      "summary": {
+        "type": "string"
+      },
+      "findings": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "required": ["verdict", "candidateHash", "summary", "findings"],
+    "additionalProperties": false
+  },
+  "CandidateQa": {
+    "type": "object",
+    "properties": {
+      "verdict": {
+        "type": "string",
+        "enum": ["pass", "fail", "blocked"]
+      },
+      "candidateHash": {
+        "type": "string"
+      },
+      "checklistHash": {
+        "type": "string"
+      },
+      "results": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string",
+              "enum": ["pass", "fail", "blocked"]
+            },
+            "actual": {
+              "type": "string"
+            },
+            "evidence": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "enum": ["log", "screenshot", "trace", "diff", "report"]
+                  },
+                  "path": {
+                    "type": "string"
+                  },
+                  "sha256": {
+                    "type": "string"
+                  }
+                },
+                "required": ["kind", "path", "sha256"],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": ["id", "status", "actual", "evidence"],
+          "additionalProperties": false
+        }
+      },
+      "summary": {
+        "type": "string"
+      }
+    },
+    "required": ["verdict", "candidateHash", "checklistHash", "results", "summary"],
+    "additionalProperties": false
+  }
+}

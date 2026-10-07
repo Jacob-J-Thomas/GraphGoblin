@@ -1,4 +1,9 @@
-import type { JsonValue, Usage } from '@graphgoblin/contracts';
+import {
+  COMMAND_PREVIEW_MAX,
+  type JsonValue,
+  type ProgressItemStatus,
+  type Usage,
+} from '@graphgoblin/contracts';
 import type { HarnessEvent, HarnessItem, HarnessItemType } from '@graphgoblin/engine';
 import type { ThreadEvent, ThreadItem } from '@openai/codex-sdk';
 
@@ -74,6 +79,34 @@ function summarize(item: LooseItem): string {
   }
 }
 
+/** Preserve allowlisted SDK state and keep command progress fields independent of the summary. */
+function itemMetadata(
+  item: LooseItem,
+): Pick<HarnessItem, 'commandPreview' | 'exitCode' | 'status'> {
+  const raw = item as Record<string, unknown>;
+  const command = typeof raw.command === 'string' ? raw.command : '';
+  const isCommand = item.type === 'command_execution';
+  const exitCode =
+    isCommand && typeof raw.exit_code === 'number' && Number.isInteger(raw.exit_code)
+      ? raw.exit_code
+      : undefined;
+  const status: ProgressItemStatus | undefined =
+    raw.status === 'failed' || (exitCode !== undefined && exitCode !== 0)
+      ? 'failed'
+      : raw.status === 'completed' || exitCode === 0
+        ? 'ok'
+        : raw.status === 'in_progress' || raw.status === 'running'
+          ? 'running'
+          : isCommand
+            ? 'running'
+            : undefined;
+  return {
+    ...(isCommand ? { commandPreview: oneLine(command, COMMAND_PREVIEW_MAX) } : {}),
+    ...(exitCode !== undefined ? { exitCode } : {}),
+    ...(status !== undefined ? { status } : {}),
+  };
+}
+
 /** Convert a value to JSON, dropping anything that does not survive a round trip. */
 function toJson(value: unknown): JsonValue {
   return JSON.parse(JSON.stringify(value ?? null)) as JsonValue;
@@ -89,6 +122,7 @@ export function normalizeItem(item: LooseItem): HarnessItem {
     id: item.id,
     type: ITEM_TYPES[item.type] ?? 'other',
     summary: summarize(item),
+    ...itemMetadata(item),
     detail: toJson(raw),
   };
 }

@@ -1,0 +1,972 @@
+{
+  "format": "graphgoblin-loop",
+  "formatVersion": 1,
+  "exportedAt": "2026-10-07T01:36:50.537Z",
+  "loop": {
+    "schemaVersion": 1,
+    "name": "aidlc-trial-codex-first",
+    "description": "A bounded real-worker scratch trial: plan, implement, fresh same-family review, local tests, candidate QA and evidence verification. No GitHub, merge or issue closure. Pre-existing scratch workspace only; external admission must validate path, model availability and confinement. Admission enforces temp/gg-aidlc-trial isolation and the locked checklist.",
+    "settings": {
+      "workingDirectory": {
+        "kind": "template",
+        "template": "{{ trigger.payload.workspacePath }}"
+      },
+      "defaults": {
+        "model": "gpt-6.1-sol",
+        "effort": "high"
+      },
+      "maxIterations": 2,
+      "subloopDepthLimit": 1
+    },
+    "variables": {},
+    "nodes": [
+      {
+        "id": "start",
+        "label": "aidlc-trial-start",
+        "kind": "trigger",
+        "config": {
+          "subtype": "manual",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string",
+                "minLength": 1
+              },
+              "workspacePath": {
+                "type": "string",
+                "minLength": 1
+              },
+              "checklist": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "system": {
+                      "type": "string"
+                    },
+                    "scenario": {
+                      "type": "string"
+                    },
+                    "polarity": {
+                      "type": "string",
+                      "enum": ["positive", "negative"]
+                    },
+                    "steps": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "expected": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["id", "system", "scenario", "polarity", "steps", "expected"],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": ["message", "workspacePath", "checklist"],
+            "additionalProperties": false
+          }
+        },
+        "ui": {
+          "x": 0,
+          "y": 0
+        }
+      },
+      {
+        "id": "admit",
+        "label": "aidlc-trial-admit",
+        "kind": "script",
+        "config": {
+          "command": "node",
+          "args": [
+            "-e",
+            "let input='';process.stdin.setEncoding('utf8');process.stdin.on('data',c=>input+=c);process.stdin.on('end',()=>{const t=JSON.parse(input),fs=require('node:fs'),path=require('node:path'),os=require('node:os');const root=fs.realpathSync(process.cwd()),allowed=fs.realpathSync(path.join(os.tmpdir(),'gg-aidlc-trial'));if(!root.startsWith(allowed+path.sep)||root!==fs.realpathSync(t.invocation.trigger.payload.workspacePath))throw Error('Scratch workspace admission failed');if(!fs.lstatSync(path.join(root,'.git')).isDirectory())throw Error('Independent scratch Git directory required');function scan(dir){for(const e of fs.readdirSync(dir,{withFileTypes:true})){const p=path.join(dir,e.name);if(fs.lstatSync(p).isSymbolicLink())throw Error('Links forbidden');if(e.name!=='.git'&&e.isDirectory())scan(p);}}scan(root);const c=t.invocation.trigger.payload.checklist;if(!Array.isArray(c)||!c.length||new Set(c.map(x=>x.id)).size!==c.length||JSON.stringify(c)!==JSON.stringify(JSON.parse(fs.readFileSync(path.join(root,'aidlc-trial-checklist.lock.json'),'utf8'))))throw Error('Locked checklist admission failed');console.log(JSON.stringify({ok:true,workspacePath:root,criteria:c.map(x=>x.id)}));});"
+          ],
+          "stdin": "thread",
+          "stdout": "last-output",
+          "timeoutSeconds": 30
+        },
+        "ui": {
+          "x": 120,
+          "y": -200
+        }
+      },
+      {
+        "id": "plan",
+        "label": "aidlc-trial-plan",
+        "kind": "inference",
+        "config": {
+          "harness": "codex",
+          "model": "gpt-6.1-sol",
+          "effort": "high",
+          "session": {
+            "policy": "fresh"
+          },
+          "prompt": {
+            "template": "Plan one bounded scratch-repository task only. Request: {{ trigger.payload.message }}. Locked checklist: {{ trigger.payload.checklist | json }}. Do not change files, run Git mutations, call remote services or spawn workers. Preserve all required checklist ids. Use plannerA as planningSlot; return the Plan schema. If input is unclear use needs-input or blocked. Operate only inside the current scratch directory. Do not read any other repository, private data, global instructions or credentials. The file aidlc-trial-checklist.lock.json is immutable. Use only local shell/file tools; no MCP or subagents."
+          },
+          "harnessOptions": {
+            "sandbox": "read-only",
+            "approval": "never",
+            "networkAccess": false,
+            "webSearch": false,
+            "configOverrides": {
+              "features.multi_agent": false,
+              "mcp_servers.node_repl.enabled": false
+            }
+          },
+          "output": {
+            "captureTranscript": "artifact",
+            "toMessages": "final",
+            "schema": {
+              "jsonSchema": {
+                "type": "object",
+                "properties": {
+                  "schemaVersion": {
+                    "type": "integer",
+                    "enum": [1]
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": ["ready", "needs-input", "blocked"]
+                  },
+                  "planningSlot": {
+                    "type": "string",
+                    "enum": ["plannerA", "plannerB"]
+                  },
+                  "summary": {
+                    "type": "string"
+                  },
+                  "tasks": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "userVisibleUI": {
+                          "type": "boolean"
+                        },
+                        "acceptanceCriteria": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "dependsOn": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "description",
+                        "userVisibleUI",
+                        "acceptanceCriteria",
+                        "dependsOn"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "checklist": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "system": {
+                          "type": "string"
+                        },
+                        "scenario": {
+                          "type": "string"
+                        },
+                        "polarity": {
+                          "type": "string",
+                          "enum": ["positive", "negative"]
+                        },
+                        "steps": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "expected": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["id", "system", "scenario", "polarity", "steps", "expected"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "risks": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "questions": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "schemaVersion",
+                  "status",
+                  "planningSlot",
+                  "summary",
+                  "tasks",
+                  "checklist",
+                  "risks",
+                  "questions"
+                ],
+                "additionalProperties": false
+              },
+              "native": true,
+              "repair": {
+                "enabled": true,
+                "maxAttempts": 1,
+                "onFailure": "fail-run"
+              }
+            }
+          },
+          "timeoutSeconds": 600
+        },
+        "ui": {
+          "x": 240,
+          "y": 0
+        }
+      },
+      {
+        "id": "plan-route",
+        "label": "aidlc-trial-plan-route",
+        "kind": "decision",
+        "config": {
+          "routes": [
+            {
+              "label": "pass",
+              "description": "Accepted and ready for the next step"
+            },
+            {
+              "label": "fix",
+              "description": "Changes required within the attempt cap"
+            },
+            {
+              "label": "blocked",
+              "description": "Stop with a failure report"
+            }
+          ],
+          "question": "Route verified structured state",
+          "strategy": ["expression"],
+          "expression": {
+            "jsonata": "outputs.plan.value.status = \"ready\" and $count(outputs.plan.value.tasks) = 1 ? \"pass\" : \"blocked\""
+          },
+          "context": {
+            "messages": "none",
+            "includeLastOutput": false
+          }
+        },
+        "ui": {
+          "x": 480,
+          "y": 0
+        }
+      },
+      {
+        "id": "implement",
+        "label": "aidlc-trial-implement",
+        "kind": "inference",
+        "config": {
+          "harness": "codex",
+          "model": "gpt-6.1-sol",
+          "effort": "high",
+          "session": {
+            "policy": "fresh"
+          },
+          "prompt": {
+            "template": "Implement exactly the one planned task in this pre-existing disposable scratch directory. Request: {{ trigger.payload.message }}. Plan: {{ outputs.plan.value | json }}. Prior review: {{ outputs.review.value | json }}. Prior gate output: {{ outputs.gate.value | json }}. Prior QA verification: {{ outputs.verify.value | json }}. Edit source/tests needed for the task, run local checks. Do not stage, commit, push, merge, change branches, delete directories, create links, access another repository or spawn workers. No remote tools. Return the Implementation summary. Keep proof files under .graphgoblin-trial/; those files are excluded from the candidate fingerprint. Operate only inside the current scratch directory. Do not read any other repository, private data, global instructions or credentials. The file aidlc-trial-checklist.lock.json is immutable. Use only local shell/file tools; no MCP or subagents."
+          },
+          "harnessOptions": {
+            "sandbox": "workspace-write",
+            "approval": "never",
+            "networkAccess": false,
+            "webSearch": false,
+            "configOverrides": {
+              "features.multi_agent": false,
+              "mcp_servers.node_repl.enabled": false
+            }
+          },
+          "output": {
+            "captureTranscript": "artifact",
+            "toMessages": "final",
+            "schema": {
+              "jsonSchema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": ["complete", "blocked"]
+                  },
+                  "summary": {
+                    "type": "string"
+                  },
+                  "filesChanged": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": ["status", "summary", "filesChanged"],
+                "additionalProperties": false
+              },
+              "native": true,
+              "repair": {
+                "enabled": true,
+                "maxAttempts": 1,
+                "onFailure": "fail-run"
+              }
+            }
+          },
+          "timeoutSeconds": 600
+        },
+        "ui": {
+          "x": 720,
+          "y": 0
+        }
+      },
+      {
+        "id": "impl-route",
+        "label": "aidlc-trial-impl-route",
+        "kind": "decision",
+        "config": {
+          "routes": [
+            {
+              "label": "pass",
+              "description": "Accepted and ready for the next step"
+            },
+            {
+              "label": "fix",
+              "description": "Changes required within the attempt cap"
+            },
+            {
+              "label": "blocked",
+              "description": "Stop with a failure report"
+            }
+          ],
+          "question": "Route verified structured state",
+          "strategy": ["expression"],
+          "expression": {
+            "jsonata": "outputs.implement.value.status = \"complete\" ? \"pass\" : \"blocked\""
+          },
+          "context": {
+            "messages": "none",
+            "includeLastOutput": false
+          }
+        },
+        "ui": {
+          "x": 960,
+          "y": 0
+        }
+      },
+      {
+        "id": "snapshot",
+        "label": "aidlc-trial-snapshot",
+        "kind": "script",
+        "config": {
+          "command": "node",
+          "args": [
+            "-e",
+            "let input='';process.stdin.setEncoding('utf8');process.stdin.on('data',c=>input+=c);process.stdin.on('end',()=>{const t=JSON.parse(input);const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');const root=fs.realpathSync(process.cwd());const files=[];function scan(dir){for(const e of fs.readdirSync(dir,{withFileTypes:true})){if(['.git','node_modules','.graphgoblin-trial'].includes(e.name))continue;const p=path.join(dir,e.name);if(e.isSymbolicLink())throw Error('Links are excluded from this trial');if(e.isDirectory())scan(p);else if(e.isFile())files.push(path.relative(root,p).split(path.sep).join('/'));}}scan(root);files.sort();if(!files.some(p=>/\\.test\\.(mjs|cjs|js)$/.test(p)))throw Error(\"A real Node test file is required\");const h=crypto.createHash('sha256');for(const p of files){h.update(p);h.update('\\0');h.update(fs.readFileSync(path.join(root,p)));h.update('\\0');}const candidateHash=h.digest('hex');const checklist=t.invocation.trigger.payload.checklist;if(JSON.stringify(JSON.parse(fs.readFileSync(path.join(root,'aidlc-trial-checklist.lock.json'),'utf8')))!==JSON.stringify(checklist))throw Error('Locked checklist mismatch');if(!Array.isArray(checklist)||!checklist.length||new Set(checklist.map(x=>x.id)).size!==checklist.length)throw Error('Nonempty unique checklist required');if(JSON.stringify(t.outputs.plan.value.checklist)!==JSON.stringify(checklist))throw Error('Planner changed locked checklist');const checklistHash=crypto.createHash('sha256').update(JSON.stringify(checklist)).digest('hex');console.log(JSON.stringify({candidateHash,checklistHash,files}));});"
+          ],
+          "stdin": "thread",
+          "stdout": "last-output",
+          "timeoutSeconds": 30
+        },
+        "ui": {
+          "x": 1200,
+          "y": 0
+        }
+      },
+      {
+        "id": "review",
+        "label": "aidlc-trial-review",
+        "kind": "inference",
+        "config": {
+          "harness": "codex",
+          "model": "gpt-6-astra",
+          "effort": "high",
+          "session": {
+            "policy": "fresh"
+          },
+          "prompt": {
+            "template": "Independently review the actual scratch files and task without changing files. Request: {{ trigger.payload.message }}. Plan: {{ outputs.plan.value | json }}. Candidate fingerprint: {{ outputs.snapshot.value | json }}. Inspect the diff/files and judge every locked criterion: {{ trigger.payload.checklist | json }}. Do not stage, commit, push, merge, use remote tools, spawn workers or write any file. Return exact candidateHash from the fingerprint and a strict verdict with findings. This is fresh same-family review, not cross-family approval. Operate only inside the current scratch directory. Do not read any other repository, private data, global instructions or credentials. The file aidlc-trial-checklist.lock.json is immutable. Use only local shell/file tools; no MCP or subagents."
+          },
+          "harnessOptions": {
+            "sandbox": "read-only",
+            "approval": "never",
+            "networkAccess": false,
+            "webSearch": false,
+            "configOverrides": {
+              "features.multi_agent": false,
+              "mcp_servers.node_repl.enabled": false
+            }
+          },
+          "output": {
+            "captureTranscript": "artifact",
+            "toMessages": "final",
+            "schema": {
+              "jsonSchema": {
+                "type": "object",
+                "properties": {
+                  "verdict": {
+                    "type": "string",
+                    "enum": ["pass", "changes-required", "blocked"]
+                  },
+                  "candidateHash": {
+                    "type": "string"
+                  },
+                  "summary": {
+                    "type": "string"
+                  },
+                  "findings": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": ["verdict", "candidateHash", "summary", "findings"],
+                "additionalProperties": false
+              },
+              "native": true,
+              "repair": {
+                "enabled": true,
+                "maxAttempts": 1,
+                "onFailure": "fail-run"
+              }
+            }
+          },
+          "timeoutSeconds": 600
+        },
+        "ui": {
+          "x": 1440,
+          "y": 0
+        }
+      },
+      {
+        "id": "review-route",
+        "label": "aidlc-trial-review-route",
+        "kind": "decision",
+        "config": {
+          "routes": [
+            {
+              "label": "pass",
+              "description": "Accepted and ready for the next step"
+            },
+            {
+              "label": "fix",
+              "description": "Changes required within the attempt cap"
+            },
+            {
+              "label": "blocked",
+              "description": "Stop with a failure report"
+            }
+          ],
+          "question": "Route verified structured state",
+          "strategy": ["expression"],
+          "expression": {
+            "jsonata": "outputs.review.value.verdict = \"pass\" ? \"pass\" : (outputs.review.value.verdict = \"changes-required\" ? \"fix\" : \"blocked\")"
+          },
+          "context": {
+            "messages": "none",
+            "includeLastOutput": false
+          }
+        },
+        "ui": {
+          "x": 1680,
+          "y": 0
+        }
+      },
+      {
+        "id": "gate",
+        "label": "aidlc-trial-gate",
+        "kind": "script",
+        "config": {
+          "command": "node",
+          "args": ["--test"],
+          "stdin": "none",
+          "stdout": "last-output",
+          "exitCodeRoutes": {
+            "1": "needs-fix"
+          },
+          "timeoutSeconds": 120
+        },
+        "ui": {
+          "x": 1920,
+          "y": 0
+        }
+      },
+      {
+        "id": "qa",
+        "label": "aidlc-trial-qa",
+        "kind": "inference",
+        "config": {
+          "harness": "codex",
+          "model": "gpt-6-luna",
+          "effort": "high",
+          "session": {
+            "policy": "fresh"
+          },
+          "prompt": {
+            "template": "Run candidate QA on the scratch directory. Required checklist: {{ trigger.payload.checklist | json }}. Candidate/hash manifest: {{ outputs.snapshot.value | json }}. Real node --test output after a passing exit code: {{ outputs.gate.value | json }}. Execute every checklist criterion, including negative cases. Record actual results; do not remove/relax ids. Save nonempty proof files only under .graphgoblin-trial/, record workspace-relative paths and actual SHA-256 hashes. Do not edit source/tests, mutate Git, use remote tools, delete directories, create links or spawn workers. Return exact candidateHash/checklistHash from the manifest and one result per checklist id. A missing/blocked result is fail or blocked. This is candidate QA, not post-merge QA. Operate only inside the current scratch directory. Do not read any other repository, private data, global instructions or credentials. The file aidlc-trial-checklist.lock.json is immutable. Use only local shell/file tools; no MCP or subagents."
+          },
+          "harnessOptions": {
+            "sandbox": "workspace-write",
+            "approval": "never",
+            "networkAccess": false,
+            "webSearch": false,
+            "configOverrides": {
+              "features.multi_agent": false,
+              "mcp_servers.node_repl.enabled": false
+            }
+          },
+          "output": {
+            "captureTranscript": "artifact",
+            "toMessages": "final",
+            "schema": {
+              "jsonSchema": {
+                "type": "object",
+                "properties": {
+                  "verdict": {
+                    "type": "string",
+                    "enum": ["pass", "fail", "blocked"]
+                  },
+                  "candidateHash": {
+                    "type": "string"
+                  },
+                  "checklistHash": {
+                    "type": "string"
+                  },
+                  "results": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": ["pass", "fail", "blocked"]
+                        },
+                        "actual": {
+                          "type": "string"
+                        },
+                        "evidence": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "enum": ["log", "screenshot", "trace", "diff", "report"]
+                              },
+                              "path": {
+                                "type": "string"
+                              },
+                              "sha256": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["kind", "path", "sha256"],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": ["id", "status", "actual", "evidence"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "summary": {
+                    "type": "string"
+                  }
+                },
+                "required": ["verdict", "candidateHash", "checklistHash", "results", "summary"],
+                "additionalProperties": false
+              },
+              "native": true,
+              "repair": {
+                "enabled": true,
+                "maxAttempts": 1,
+                "onFailure": "fail-run"
+              }
+            }
+          },
+          "timeoutSeconds": 600
+        },
+        "ui": {
+          "x": 2160,
+          "y": 0
+        }
+      },
+      {
+        "id": "verify",
+        "label": "aidlc-trial-verify",
+        "kind": "script",
+        "config": {
+          "command": "node",
+          "args": [
+            "-e",
+            "let input='';process.stdin.setEncoding('utf8');process.stdin.on('data',c=>input+=c);process.stdin.on('end',()=>{try{const t=JSON.parse(input);const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');const root=fs.realpathSync(process.cwd());const files=[];function scan(dir){for(const e of fs.readdirSync(dir,{withFileTypes:true})){if(['.git','node_modules','.graphgoblin-trial'].includes(e.name))continue;const p=path.join(dir,e.name);if(e.isSymbolicLink())throw Error('Links are excluded from this trial');if(e.isDirectory())scan(p);else if(e.isFile())files.push(path.relative(root,p).split(path.sep).join('/'));}}scan(root);files.sort();if(!files.some(p=>/\\.test\\.(mjs|cjs|js)$/.test(p)))throw Error(\"A real Node test file is required\");const h=crypto.createHash('sha256');for(const p of files){h.update(p);h.update('\\0');h.update(fs.readFileSync(path.join(root,p)));h.update('\\0');}const candidateHash=h.digest('hex');const snap=t.outputs.snapshot.value,q=t.outputs.qa.value,review=t.outputs.review.value;const checklist=t.invocation.trigger.payload.checklist;if(JSON.stringify(JSON.parse(fs.readFileSync(path.join(root,'aidlc-trial-checklist.lock.json'),'utf8')))!==JSON.stringify(checklist))throw Error('Locked checklist mismatch');const checklistHash=crypto.createHash('sha256').update(JSON.stringify(checklist)).digest('hex');if(candidateHash!==snap.candidateHash||q.candidateHash!==candidateHash||review.candidateHash!==candidateHash)throw Error('Candidate changed or wrong candidate reviewed');if(q.checklistHash!==checklistHash||snap.checklistHash!==checklistHash)throw Error('Checklist mismatch');if(review.verdict!=='pass'||q.verdict!=='pass')throw Error('Review and QA must pass');if(q.results.length!==checklist.length||new Set(q.results.map(x=>x.id)).size!==checklist.length)throw Error('Checklist coverage mismatch');for(const item of checklist){const r=q.results.find(x=>x.id===item.id);if(!r||r.status!=='pass'||!r.evidence.length)throw Error('Missing passing criterion or evidence');for(const e of r.evidence){if(!e.path||path.isAbsolute(e.path))throw Error('Evidence path must be relative');const lexical=path.resolve(root,e.path);if(!lexical.startsWith(root+path.sep))throw Error('Evidence escaped workspace');const real=fs.realpathSync(lexical);if(!real.startsWith(root+path.sep))throw Error('Evidence escaped workspace');const bytes=fs.readFileSync(real);if(!bytes.length)throw Error('Empty evidence');const hash=crypto.createHash('sha256').update(bytes).digest('hex');if(hash!==e.sha256)throw Error('Evidence hash mismatch');}}console.log(JSON.stringify({ok:true,candidateHash,checklistHash,verifiedCriteria:checklist.map(x=>x.id)}));}catch(e){console.log(JSON.stringify({ok:false,reason:e.message}));process.exitCode=1;}});"
+          ],
+          "stdin": "thread",
+          "stdout": "last-output",
+          "exitCodeRoutes": {
+            "1": "needs-fix"
+          },
+          "timeoutSeconds": 30
+        },
+        "ui": {
+          "x": 2400,
+          "y": 0
+        }
+      },
+      {
+        "id": "retry",
+        "label": "aidlc-trial-retry",
+        "kind": "exit",
+        "config": {
+          "criteria": [
+            {
+              "when": "max-iterations",
+              "value": 2,
+              "outcome": "exhausted"
+            }
+          ],
+          "default": "loop-back",
+          "loopBack": {
+            "targetNodeId": "implement"
+          },
+          "return": {
+            "mapping": "{\"status\":\"exhausted\",\"scope\":\"local-candidate-only\",\"review\":outputs.review.value,\"verification\":outputs.verify.value,\"gate\":outputs.gate.value}",
+            "channels": [
+              {
+                "kind": "caller"
+              }
+            ]
+          }
+        },
+        "ui": {
+          "x": 1680,
+          "y": 240
+        }
+      },
+      {
+        "id": "blocked",
+        "label": "aidlc-trial-blocked",
+        "kind": "exit",
+        "config": {
+          "criteria": [
+            {
+              "when": "predicate",
+              "strategy": "expression",
+              "jsonata": "true",
+              "outcome": "failure"
+            }
+          ],
+          "default": "success",
+          "return": {
+            "mapping": "{\"status\":\"blocked\",\"scope\":\"local-candidate-only\",\"plan\":outputs.plan.value,\"implementation\":outputs.implement.value,\"review\":outputs.review.value}",
+            "channels": [
+              {
+                "kind": "caller"
+              }
+            ]
+          }
+        },
+        "ui": {
+          "x": 720,
+          "y": 480
+        }
+      },
+      {
+        "id": "done",
+        "label": "aidlc-trial-done",
+        "kind": "exit",
+        "config": {
+          "criteria": [
+            {
+              "when": "predicate",
+              "strategy": "expression",
+              "jsonata": "outputs.verify.value.ok != true",
+              "outcome": "failure"
+            }
+          ],
+          "default": "success",
+          "return": {
+            "mapping": "{\"status\":\"candidate-qa-passed\",\"scope\":\"local-candidate-only\",\"verification\":outputs.verify.value,\"review\":outputs.review.value,\"qa\":outputs.qa.value}",
+            "channels": [
+              {
+                "kind": "caller"
+              }
+            ]
+          }
+        },
+        "ui": {
+          "x": 2640,
+          "y": 0
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "e1",
+        "from": {
+          "node": "start",
+          "port": "out"
+        },
+        "to": {
+          "node": "admit",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e2",
+        "from": {
+          "node": "plan",
+          "port": "out"
+        },
+        "to": {
+          "node": "plan-route",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e3",
+        "from": {
+          "node": "plan-route",
+          "port": "pass"
+        },
+        "to": {
+          "node": "implement",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e4",
+        "from": {
+          "node": "plan-route",
+          "port": "fix"
+        },
+        "to": {
+          "node": "retry",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e5",
+        "from": {
+          "node": "plan-route",
+          "port": "blocked"
+        },
+        "to": {
+          "node": "blocked",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e6",
+        "from": {
+          "node": "impl-route",
+          "port": "pass"
+        },
+        "to": {
+          "node": "snapshot",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e7",
+        "from": {
+          "node": "impl-route",
+          "port": "fix"
+        },
+        "to": {
+          "node": "retry",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e8",
+        "from": {
+          "node": "impl-route",
+          "port": "blocked"
+        },
+        "to": {
+          "node": "blocked",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e9",
+        "from": {
+          "node": "implement",
+          "port": "out"
+        },
+        "to": {
+          "node": "impl-route",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e10",
+        "from": {
+          "node": "snapshot",
+          "port": "out"
+        },
+        "to": {
+          "node": "review",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e11",
+        "from": {
+          "node": "review",
+          "port": "out"
+        },
+        "to": {
+          "node": "review-route",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e12",
+        "from": {
+          "node": "review-route",
+          "port": "pass"
+        },
+        "to": {
+          "node": "gate",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e13",
+        "from": {
+          "node": "review-route",
+          "port": "fix"
+        },
+        "to": {
+          "node": "retry",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e14",
+        "from": {
+          "node": "review-route",
+          "port": "blocked"
+        },
+        "to": {
+          "node": "blocked",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e15",
+        "from": {
+          "node": "gate",
+          "port": "out"
+        },
+        "to": {
+          "node": "qa",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e16",
+        "from": {
+          "node": "gate",
+          "port": "needs-fix"
+        },
+        "to": {
+          "node": "retry",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e17",
+        "from": {
+          "node": "qa",
+          "port": "out"
+        },
+        "to": {
+          "node": "verify",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e18",
+        "from": {
+          "node": "verify",
+          "port": "out"
+        },
+        "to": {
+          "node": "done",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e19",
+        "from": {
+          "node": "verify",
+          "port": "needs-fix"
+        },
+        "to": {
+          "node": "retry",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e20",
+        "from": {
+          "node": "retry",
+          "port": "loopBack"
+        },
+        "to": {
+          "node": "implement",
+          "port": "in"
+        }
+      },
+      {
+        "id": "aidlc-trial-admit-plan",
+        "from": {
+          "node": "admit",
+          "port": "out"
+        },
+        "to": {
+          "node": "plan",
+          "port": "in"
+        }
+      }
+    ]
+  }
+}
