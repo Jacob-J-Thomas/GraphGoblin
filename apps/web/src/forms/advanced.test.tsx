@@ -200,9 +200,18 @@ describe('basic fields first, advanced ones behind a disclosure', () => {
     ],
     [
       'decision',
-      ['routes', 'question', 'strategy', 'jev', 'codex', 'expression'],
-      ['context.messages', 'context.vars', 'context.includeLastOutput', 'recordAlternatives'],
-      ['Context', 'Recording'],
+      [
+        'answer.options',
+        'evaluation',
+        'evaluation.question',
+        'evaluation.model',
+        'evaluation.effort',
+        'evaluation.context.messages',
+        'evaluation.context.vars',
+        'evaluation.context.includeLastOutput',
+      ],
+      ['recordAlternatives'],
+      ['Recording'],
     ],
     [
       'script',
@@ -389,27 +398,28 @@ describe('basic fields first, advanced ones behind a disclosure', () => {
     expect(within(block).getByRole('alert')).toHaveTextContent(/bogus/i);
   });
 
-  it("flags an object's own problem when all its fields are advanced, and shows it there", async () => {
+  it('flags a problem on an advanced decision field and shows it there', async () => {
     render(
       <Harness
         schema={NodeConfigSchemas.decision}
         initial={{
-          routes: [
-            { label: 'a', description: '' },
-            { label: 'b', description: '' },
-          ],
-          question: 'q',
-          strategy: ['codex'],
-          context: { bogus: 1 },
+          answer: {
+            type: 'choice',
+            options: [
+              { id: 'a', label: 'a', criteria: 'a' },
+              { id: 'b', label: 'b', criteria: 'b' },
+            ],
+          },
+          evaluation: { kind: 'expression', jsonata: '"a"' },
+          recordAlternatives: 'invalid',
         }}
       />,
     );
-    // Its fields are placed one by one, so the unknown key is a problem, not a value set.
-    await waitFor(() => expect(toggle()).toHaveAccessibleName('Advanced 1 error'));
+    await waitFor(() => expect(toggle()).toHaveAccessibleName('Advanced 1 set 1 error'));
     openAdvanced();
-    const block = fieldAt('context')!;
-    expect(block.closest('[hidden]')).toBeNull();
-    expect(within(block).getByRole('alert')).toHaveTextContent(/bogus/i);
+    const recording = fieldAt('recordAlternatives')!;
+    expect(recording.closest('[hidden]')).toBeNull();
+    expect(within(recording).getByRole('alert')).toBeInTheDocument();
   });
 
   it('counts errors found outside the form, such as an expression that does not compile', () => {

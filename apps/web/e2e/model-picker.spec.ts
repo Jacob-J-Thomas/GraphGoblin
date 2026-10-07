@@ -91,15 +91,29 @@ for (const theme of ['dark', 'light']) {
   });
 }
 
-test('an unknown model in an imported loop stays selected without repeating the matching API warning', async ({
+test('a saved model removed from the catalog stays selected and explicit unknown import is rejected', async ({
   page,
   request,
 }) => {
-  const imported = await request.post('/loops/import', {
-    data: inferenceLoop('imported unknown picker', 'imported-unknown-model'),
+  await control(request, '/catalog/upsert', {
+    harness: 'codex',
+    model: 'imported-unknown-model',
+    displayName: 'Imported unknown picker',
+    efforts: ['low'],
+    defaultEffort: 'low',
+    enabled: true,
+    source: 'litellm',
   });
-  expect(imported.status()).toBe(201);
-  const { loop } = (await imported.json()) as { loop: { id: string } };
+  const created = await request.post('/loops', {
+    data: { definition: inferenceLoop('imported unknown picker', 'imported-unknown-model') },
+  });
+  expect(created.status()).toBe(201);
+  const { loop } = (await created.json()) as { loop: { id: string } };
+  expect((await request.delete('/model-catalog/codex/imported-unknown-model')).status()).toBe(204);
+  const rejectedImport = await request.post('/loops/import', {
+    data: inferenceLoop('explicit unknown import', 'imported-unknown-model'),
+  });
+  expect(rejectedImport.status()).toBe(400);
   await page.goto(`/app/loops/${loop.id}/edit`);
   const dialog = await openNode(page, 'infer');
   const model = dialog.getByLabel('Model', { exact: true });
@@ -166,16 +180,19 @@ test('catalog failure preserves the current values until retry and loop defaults
   await closeNode(page);
   await showLoopPanel(page);
   const settings = page.getByRole('form', { name: 'Loop settings form' });
-  await settings.getByLabel('Model', { exact: true }).selectOption(chosen.model);
-  await expect(settings.getByLabel('Effort', { exact: true }).locator('option')).toHaveCount(
+  const defaults = settings.locator('[data-field="defaults.byHarness"]');
+  await defaults.getByRole('button', { name: 'Add entry', exact: true }).click();
+  await defaults.getByRole('textbox', { name: 'By harness key 1' }).fill('codex');
+  const codexDefaults = settings.locator('[data-field="defaults.byHarness.codex"]');
+  const defaultModel = codexDefaults.getByLabel('Model', { exact: true });
+  await expect(defaultModel.locator('option').first()).toHaveText('(owner default)');
+  await defaultModel.selectOption(chosen.model);
+  await expect(codexDefaults.getByLabel('Effort', { exact: true }).locator('option')).toHaveCount(
     chosen.efforts.length + 1,
-  );
-  await expect(settings.getByLabel('Model', { exact: true }).locator('option').first()).toHaveText(
-    '(owner default)',
   );
 });
 
-test('the decision Codex group uses catalog models and keeps unsupported efforts', async ({
+test('the decision LLM uses an explicit harness model and rejects unsupported effort on admission', async ({
   page,
   request,
 }) => {
@@ -189,46 +206,58 @@ test('the decision Codex group uses catalog models and keeps unsupported efforts
     source: 'harness',
   });
   const source = inferenceLoop('decision picker');
-  const created = await request.post('/loops', {
+  const withDecision = (effort: string) => ({
+    ...source,
+    nodes: source.nodes.map((node) =>
+      node.id === 'infer'
+        ? {
+            ...node,
+            kind: 'decision',
+            config: {
+              answer: {
+                type: 'choice',
+                options: [
+                  { id: 'yes', label: 'Yes', criteria: 'Choose yes' },
+                  { id: 'no', label: 'No', criteria: 'Choose no' },
+                ],
+              },
+              evaluation: {
+                kind: 'llm',
+                harness: 'codex',
+                model: { mode: 'explicit', value: 'picker-decision' },
+                effort: { mode: 'explicit', value: effort },
+                question: 'q',
+                context: {},
+              },
+              recordAlternatives: true,
+            },
+          }
+        : node,
+    ),
+    edges: [
+      source.edges[0],
+      { id: 'yes', from: { node: 'infer', port: 'yes' }, to: { node: 'done' } },
+      { id: 'no', from: { node: 'infer', port: 'no' }, to: { node: 'done' } },
+    ],
+  });
+  const invalid = await request.post('/loops', {
     data: {
-      definition: {
-        ...source,
-        nodes: source.nodes.map((node) =>
-          node.id === 'infer'
-            ? {
-                ...node,
-                kind: 'decision',
-                config: {
-                  routes: [
-                    { label: 'yes', description: '' },
-                    { label: 'no', description: '' },
-                  ],
-                  question: 'q',
-                  strategy: ['codex'],
-                  codex: { model: 'picker-decision', effort: 'max' },
-                },
-              }
-            : node,
-        ),
-        edges: [
-          source.edges[0],
-          { id: 'yes', from: { node: 'infer', port: 'yes' }, to: { node: 'done' } },
-          { id: 'no', from: { node: 'infer', port: 'no' }, to: { node: 'done' } },
-        ],
-      },
+      definition: withDecision('max'),
     },
   });
+  expect(invalid.status()).toBe(400);
+  const created = await request.post('/loops', { data: { definition: withDecision('high') } });
   expect(created.status()).toBe(201);
   const { loop } = (await created.json()) as { loop: { id: string } };
   await page.goto(`/app/loops/${loop.id}/edit`);
   const dialog = await openNode(page, 'infer');
-  const group = dialog.getByRole('group', { name: 'Codex', exact: true });
-  const model = group.getByLabel('Model', { exact: true });
-  const effort = group.getByLabel('Effort', { exact: true });
+  const evaluation = dialog.getByRole('group', { name: 'Evaluation', exact: true });
+  const modelGroup = evaluation.getByRole('group', { name: 'Model', exact: true });
+  const effortGroup = evaluation.getByRole('group', { name: 'Effort', exact: true });
+  const model = modelGroup.getByLabel('Value', { exact: true });
+  const effort = effortGroup.getByLabel('Value', { exact: true });
   await expect(model).toHaveValue('picker-decision');
-  await expect(effort).toHaveValue('max');
-  await expect(effort).toHaveAccessibleDescription(/not supported/);
-  await effort.selectOption('high');
+  await expect(effort).toHaveValue('high');
   await closeNode(page);
   await page.getByRole('button', { name: 'Publish', exact: true }).click();
   await expect(page.getByText('Published version 1.')).toBeVisible();
@@ -237,18 +266,34 @@ test('the decision Codex group uses catalog models and keeps unsupported efforts
   expect(
     LoopDefinitionSchema.parse(stored.current.definition).nodes.find((node) => node.id === 'infer')
       ?.config,
-  ).toMatchObject({ codex: { model: 'picker-decision', effort: 'high' } });
+  ).toMatchObject({
+    evaluation: {
+      kind: 'llm',
+      model: { mode: 'explicit', value: 'picker-decision' },
+      effort: { mode: 'explicit', value: 'high' },
+    },
+  });
 });
 
 test('following a model issue keeps focus through a delayed catalog and a failed cached refresh', async ({
   page,
   request,
 }) => {
-  const imported = await request.post('/loops/import', {
-    data: inferenceLoop('delayed catalog focus', 'focus-unknown-model'),
+  await control(request, '/catalog/upsert', {
+    harness: 'codex',
+    model: 'focus-unknown-model',
+    displayName: 'Focus unknown picker',
+    efforts: ['low'],
+    defaultEffort: 'low',
+    enabled: true,
+    source: 'litellm',
   });
-  expect(imported.status()).toBe(201);
-  const { loop } = (await imported.json()) as { loop: { id: string } };
+  const created = await request.post('/loops', {
+    data: { definition: inferenceLoop('delayed catalog focus', 'focus-unknown-model') },
+  });
+  expect(created.status()).toBe(201);
+  const { loop } = (await created.json()) as { loop: { id: string } };
+  expect((await request.delete('/model-catalog/codex/focus-unknown-model')).status()).toBe(204);
   let release: (() => void) | undefined;
   const held = new Promise<void>((resolve) => {
     release = resolve;
@@ -268,7 +313,7 @@ test('following a model issue keeps focus through a delayed catalog and a failed
     .click();
   await page
     .getByRole('dialog', { name: 'Issues on infer' })
-    .getByRole('button', { name: /^Warning MODEL_NOT_IN_CATALOG/ })
+    .getByRole('button', { name: /^Error MODEL_NOT_IN_CATALOG/ })
     .click();
   const dialog = page.getByRole('dialog', { name: /^Edit inference/ });
   const model = dialog.getByLabel('Model', { exact: true });

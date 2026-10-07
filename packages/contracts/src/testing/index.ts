@@ -99,7 +99,7 @@ export function sampleThread(overrides: Partial<ContextThread> = {}): ContextThr
 /** The smallest valid loop: a manual trigger wired to an exit. */
 export function minimalLoop(): LoopDefinitionInput {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     name: 'minimal',
     nodes: [
       { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
@@ -122,12 +122,12 @@ export function everyFieldLoop(): LoopDefinitionInput {
     onFailure: 'continue-raw',
   };
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     name: 'every-field',
     description: 'Every config field of every node kind, for parse checks.',
     settings: {
       workingDirectory: { kind: 'template', template: '/work/{{ trigger.payload.repo }}' },
-      defaults: { model: 'gpt-6-luna', effort: 'medium' },
+      defaults: { byHarness: { codex: { model: 'gpt-6-luna', effort: 'medium' } } },
       maxIterations: 7,
       subloopDepthLimit: 4,
     },
@@ -200,16 +200,21 @@ export function everyFieldLoop(): LoopDefinitionInput {
         kind: 'decision',
         label: 'Decide',
         config: {
-          routes: [
-            { label: 'good', description: 'Looks good' },
-            { label: 'bad', description: 'Needs work' },
-          ],
-          question: 'Is {{ vars.topic }} done?',
-          context: { messages: 3, vars: ['topic'], includeLastOutput: false },
-          strategy: ['jev', 'codex', 'expression'],
-          jev: { primitive: 'choice', minConfidence: 0.7 },
-          codex: { model: 'gpt-6-sol', effort: 'high' },
-          expression: { jsonata: '"good"' },
+          answer: {
+            type: 'choice',
+            options: [
+              { id: 'good', label: 'good', criteria: 'Looks good' },
+              { id: 'bad', label: 'bad', criteria: 'Needs work' },
+            ],
+          },
+          evaluation: {
+            kind: 'llm',
+            harness: 'codex',
+            model: { mode: 'explicit', value: 'gpt-6-sol' },
+            effort: { mode: 'explicit', value: 'high' },
+            question: 'Is {{ vars.topic }} done?',
+            context: { messages: 3, vars: ['topic'], includeLastOutput: false },
+          },
           recordAlternatives: false,
         },
       },
@@ -434,12 +439,12 @@ export function everyFieldLoop(): LoopDefinitionInput {
 /** A loop using every node kind once, with a decision and an exit loop-back. */
 export function kitchenSinkLoop(): LoopDefinitionInput {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     name: 'kitchen-sink',
     description: 'Every node kind, for tests.',
     settings: {
       workingDirectory: { kind: 'fixed', path: '/tmp/work' },
-      defaults: { model: 'gpt-6-luna', effort: 'low' },
+      defaults: { byHarness: { codex: { model: 'gpt-6-luna', effort: 'low' } } },
       maxIterations: 3,
     },
     variables: { topic: { type: 'string' } },
@@ -491,13 +496,14 @@ export function kitchenSinkLoop(): LoopDefinitionInput {
         kind: 'decision',
         label: 'Decide',
         config: {
-          routes: [
-            { label: 'good', description: 'Looks good' },
-            { label: 'bad', description: 'Needs work' },
-          ],
-          question: 'Is the output acceptable?',
-          strategy: ['expression'],
-          expression: { jsonata: 'lastOutput.value.ok ? "good" : "bad"' },
+          answer: {
+            type: 'choice',
+            options: [
+              { id: 'good', label: 'good', criteria: 'Looks good' },
+              { id: 'bad', label: 'bad', criteria: 'Needs work' },
+            ],
+          },
+          evaluation: { kind: 'expression', jsonata: 'lastOutput.value.ok ? "good" : "bad"' },
         },
       },
       {

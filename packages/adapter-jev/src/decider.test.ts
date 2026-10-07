@@ -40,9 +40,9 @@ async function ready(
 const choiceRequest = {
   question: 'Is the change ready?',
   options: [
-    { label: 'ship', description: 'ready to merge' },
-    { label: 'fix', description: 'needs work' },
-    { label: 'drop', description: 'abandon it' },
+    { id: 'ship', label: 'ship', criteria: 'ready to merge' },
+    { id: 'fix', label: 'fix', criteria: 'needs work' },
+    { id: 'drop', label: 'drop', criteria: 'abandon it' },
   ],
   context: { diff: 'x' },
 };
@@ -141,12 +141,10 @@ describe('choose', () => {
     const decider = await ready({ fetch, baseUrl: 'https://jev.example/', model: 'jev-2' });
     const result = await decider.choose(choiceRequest, signal());
     expect(result).toEqual({
-      label: 'ship',
+      type: 'choice',
+      optionId: 'ship',
       confidence: 0.81,
-      alternatives: [
-        { label: 'drop', confidence: 0.15 },
-        { label: 'fix', confidence: 0.04 },
-      ],
+      probabilities: { ship: 0.81, fix: 0.04, drop: 0.15 },
     });
     const [url, init] = calls[0]!;
     expect(url).toBe('https://jev.example/v1/systemone');
@@ -182,14 +180,14 @@ describe('choose', () => {
     const result = await decider.choose({ ...choiceRequest, context: 7 }, signal());
     // Without a reported confidence, the chosen label's probability is used.
     expect(result.confidence).toBe(0.4);
-    expect(result.alternatives?.map((a) => a.label)).toEqual(['ship', 'drop']);
+    expect(result.probabilities).toEqual({ ship: 0.35, fix: 0.4, drop: 0.25 });
     expect(calls[0]![0]).toBe(`${DEFAULT_BASE_URL}/v1/systemone`);
     const body = JSON.parse(calls[0]![1]?.body as string);
     expect(body.state).toEqual({ value: 7 });
     expect(body.model).toBe('jev-latest');
   });
 
-  it('keeps unknown choices for engine fallback when probabilities cover every submitted label', async () => {
+  it('rejects unknown choices even with a complete probability map', async () => {
     const { fetch } = stubFetch(
       json(200, {
         answers: {
@@ -201,15 +199,8 @@ describe('choose', () => {
         },
       }),
     );
-    const decider = await ready({ fetch });
-    expect(await decider.choose(choiceRequest, signal())).toEqual({
-      label: 'unknown',
-      confidence: 0,
-      alternatives: [
-        { label: 'ship', confidence: 0.8 },
-        { label: 'fix', confidence: 0.1 },
-        { label: 'drop', confidence: 0.1 },
-      ],
+    await expect((await ready({ fetch })).choose(choiceRequest, signal())).rejects.toMatchObject({
+      code: 'DECIDER_INVALID_RESPONSE',
     });
   });
 

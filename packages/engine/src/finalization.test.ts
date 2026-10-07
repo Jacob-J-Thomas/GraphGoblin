@@ -121,15 +121,17 @@ for (const source of [
         kind: 'decision',
         label: 'D',
         config: {
-          question: '?',
-          strategy: ['jev'],
-          routes: [
-            { label: 'yes', description: 'Y' },
-            { label: 'no', description: 'N' },
-          ],
+          answer: {
+            type: 'choice',
+            options: [
+              { id: 'yes', label: 'yes', criteria: 'Y' },
+              { id: 'no', label: 'no', criteria: 'N' },
+            ],
+          },
+          evaluation: { kind: 'classifier', model: 'jev', question: '?', context: {} },
         },
       });
-      code = 'DECISION_NO_ROUTE';
+      code = 'EVALUATION_UNAVAILABLE';
     }
     if (source === 'heartbeat-cap') {
       def = singleNodeLoop(source, {
@@ -163,7 +165,7 @@ for (const source of [
       e.settings.ownerDefaults = vi
         .fn()
         .mockRejectedValueOnce(new Error('owner store failed'))
-        .mockResolvedValue({});
+        .mockResolvedValue({ byHarness: {} });
       code = 'INTERNAL_ERROR';
     }
     if (source === 'subloop-missing') {

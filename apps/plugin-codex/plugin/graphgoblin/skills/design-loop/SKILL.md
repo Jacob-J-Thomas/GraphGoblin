@@ -15,10 +15,13 @@ Ask only what you cannot infer: how the loop starts (manual, schedule, webhook, 
 
 ```json
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "name": "review-until-green",
   "description": "One sentence on what the loop does.",
-  "settings": { "maxIterations": 5, "defaults": { "model": "gpt-6-luna", "effort": "low" } },
+  "settings": {
+    "maxIterations": 5,
+    "defaults": { "byHarness": { "codex": { "model": "gpt-6-luna", "effort": "low" } } }
+  },
   "variables": { "topic": { "type": "string" } },
   "nodes": [
     { "id": "start", "kind": "trigger", "label": "Start", "config": { "subtype": "manual" } },
@@ -32,19 +35,19 @@ Rules: node and edge ids are lowercase slugs and unique; every node has a `label
 
 ### Node catalog (the nine kinds)
 
-Decision strategy `jev` optionally selects a classifier catalog id with `jev.model`; omission means the built-in `jev`. The `jev` block also supports `primitive: "choice"` and `minConfidence`. Inspect `/classifier-models` through REST when choosing an enabled entry supporting Choice; no classifier MCP tool is added. Explicit selections never substitute the built-in. Unknown ids or entries without Choice block publication. Disabled entries and missing/blank or unreadable required secrets warn that this strategy will be skipped; configure the model in Settings and its secret in Settings, Secrets, or add a later strategy. Low confidence also tries the next strategy. Exit predicates retain the built-in Jev Noul path and have no model selector.
+Decision nodes use one explicit `evaluation.kind`: `expression`, `classifier` or `llm`. Their `answer` is `{type:"choice",options:[{id,label,criteria}]}` with at least two options. IDs name provider keys and output ports; labels are display text. Expression `evaluation.jsonata` must return an option ID as a string. Classifier evaluation requires `model`, `question` and optional context/minConfidence; choose an enabled Choice-capable entry from `/classifier-models`. LLM evaluation requires harness `codex`, question/context, and model/effort selections `{mode:"inherit"}` or `{mode:"explicit",value:...}`. No strategy array or inactive blocks are accepted. Unavailable, invalid and low-confidence classifier results fail with typed diagnostics and never fall through. Exit predicates retain their existing schema until #99.
 
-Jev Exit predicates receive the same enable/secret warnings at `config.criteria.<index>.strategy`; an unavailable predicate fails with `DECIDER_UNAVAILABLE` when evaluated. Classifier ids are lowercase. Registering an HTTP classifier with `secretRef` needs both `settings:write` and `secrets:write`; authenticated remote endpoints require HTTPS.
+Jev Exit predicates receive the same publication-blocking enable/secret warnings at `config.criteria.<index>.strategy`; an already published predicate that becomes unavailable fails with `DECIDER_UNAVAILABLE` when evaluated. Classifier ids are lowercase. Registering an HTTP classifier with `secretRef` needs both `settings:write` and `secrets:write`; authenticated remote endpoints require HTTPS.
 
 Select the harness on each inference node with `config.harness` (default `codex`, the only
-supported harness). Loop `settings.defaults` contains only optional model and effort.
-Do not put a harness in loop defaults. Model and effort inherit from loop and owner defaults
+supported harness). Loop `settings.defaults.byHarness` holds optional model and effort for each implemented harness.
+It does not select a node harness. Model and effort inherit within that harness from loop and owner defaults
 when omitted on the node; decision strategies and structured repair keep their own Codex ports.
 
 | Kind        | Purpose                                          | Key config                                                                                                                                                                                                                     |
 | ----------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `trigger`   | Starts a run; a loop may have several            | `subtype`: `manual` (`inputSchema?`, `exposeTo` of `ui`/`api`/`mcp`), `cron` (`expression`, `timezone`, `missedFirePolicy`), `webhook` (`signature.secretRef`, `filter?`), `event` (`eventType`, `filter?`), `poll` (stretch)  |
-| `decision`  | Chooses one of several labelled routes           | `routes` (at least two `{ label, description }`), `question` template, `strategy` ordered from `jev`, `codex`, `expression` (`expression.jsonata` must return a route label), `context`                                        |
+| `decision`  | Chooses a stable option ID with one evaluator    | `answer.type: "choice"`, `answer.options: [{id,label,criteria}]`, `evaluation.kind` and its applicable fields; see above                                                                                                       |
 | `inference` | Hands work to the Codex harness                  | `prompt.template` (required), `model?`, `effort?`, `session.policy` (`fresh`, `resume-previous`, `resume-named` with `key`), `harnessOptions.sandbox`, `output.schema.jsonSchema` for structured output, `timeoutSeconds?`     |
 | `script`    | Runs a command                                   | `command`, `args` templates, `cwd`, `stdin` (`thread`, `last-output`, `none`), `stdout` (`patch`, `last-output`, `ignore`), `exitCodeRoutes` (exit code to route label)                                                        |
 | `mutate`    | Edits the context thread without an LLM          | `operations` (at least one): `set`, `delete`, `append-message`, `inject`, `truncate`, `drop`, `replace`, `redact`, `coerce`                                                                                                    |

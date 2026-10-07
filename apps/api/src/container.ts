@@ -1,3 +1,5 @@
+import { existsSync } from 'node:fs';
+import { validateHarnessDefaults } from '@graphgoblin/domain';
 import { mkdir } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import { createCodexAdapters } from '@graphgoblin/adapter-codex';
@@ -11,6 +13,9 @@ import {
 import { ProcessScripts } from '@graphgoblin/infrastructure/process';
 import { CronScheduler, TimerService } from '@graphgoblin/infrastructure/scheduler';
 import {
+  DEFAULT_MODEL_CATALOG,
+  openReadOnlyDatabaseClient,
+  databaseView,
   SqliteApiKeys,
   SqliteEventStore,
   SqliteLoopRepository,
@@ -26,9 +31,14 @@ import {
   SqliteWebhookEndpoints,
   databaseFilePath,
   openDatabase,
+  guardDatabaseUpgrade,
   type DatabaseHandle,
 } from '@graphgoblin/infrastructure/sqlite';
-import { EffortSchema, ModelNameSchema, type Effort, type HarnessId } from '@graphgoblin/contracts';
+import {
+  HarnessDefaultsSchema,
+  type HarnessDefaults,
+  type HarnessId,
+} from '@graphgoblin/contracts';
 import {
   RunManager,
   type ClockPort,
@@ -114,20 +124,13 @@ export interface Container {
   stop(): Promise<void>;
 }
 
-/** The owner settings `defaultModel` and `defaultEffort`; empty or invalid values are ignored. */
+/** Strict harness-scoped owner defaults; invalid persisted configuration is never silently ignored. */
 export async function readOwnerDefaults(
   settings: Pick<SqliteSettings, 'get'>,
   ownerId: string,
-): Promise<{ model?: string; effort?: Effort }> {
-  const storedModel = await settings.get(ownerId, 'defaultModel');
-  const model = ModelNameSchema.safeParse(
-    typeof storedModel === 'string' ? storedModel.trim() : storedModel,
-  );
-  const effort = EffortSchema.safeParse(await settings.get(ownerId, 'defaultEffort'));
-  return {
-    ...(model.success ? { model: model.data } : {}),
-    ...(effort.success ? { effort: effort.data } : {}),
-  };
+): Promise<HarnessDefaults> {
+  const value = await settings.get(ownerId, 'defaults');
+  return HarnessDefaultsSchema.parse(value ?? { byHarness: {} });
 }
 
 const silentLogger: Logger = {
@@ -154,16 +157,50 @@ export async function createContainer(
     }
     // GG_DB_URL may point outside the data directory; create the database file's directory too.
     const dbFile = databaseFilePath(config.dbUrl);
+    // Validate catalog semantics without a mutable SQLite connection or any startup writes.
+    let startupCatalog = DEFAULT_MODEL_CATALOG;
+    if (dbFile && existsSync(dbFile)) {
+      const readonlyClient = openReadOnlyDatabaseClient(dbFile);
+      try {
+        const state = await guardDatabaseUpgrade(readonlyClient);
+        if (state === 'current') {
+          const stored = await new SqliteModelCatalog(databaseView(readonlyClient)).list();
+          startupCatalog = [
+            ...stored,
+            ...DEFAULT_MODEL_CATALOG.filter(
+              (seed) =>
+                !stored.some(
+                  (entry) => entry.harness === seed.harness && entry.model === seed.model,
+                ),
+            ),
+          ];
+        }
+      } finally {
+        readonlyClient.close();
+      }
+    }
+    const configurationIssues = validateHarnessDefaults({
+      loopDefaults: { byHarness: {} },
+      ownerDefaults: { byHarness: {} },
+      processDefaults: config.defaults,
+      catalog: startupCatalog,
+    });
+    if (configurationIssues.length)
+      throw new Error(
+        'Invalid GG_DEFAULTS: ' +
+          configurationIssues.map((issue) => issue.resolution.message).join('; '),
+      );
     if (dbFile) await mkdir(dirname(dbFile), { recursive: true });
+    const handle = openDatabase({ url: config.dbUrl });
+    opened = handle;
+    const { db } = handle;
+    await guardDatabaseUpgrade(handle.client);
     const masterKey =
       overrides.masterKey ??
       (await loadMasterKey({
         dataDir: config.dataDir,
         ...(config.masterKey ? { masterKey: config.masterKey } : {}),
       }));
-    const handle = openDatabase({ url: config.dbUrl });
-    opened = handle;
-    const { db } = handle;
 
     const runs = new SqliteRunRepository(db);
     const loops = new SqliteLoopRepository(db, clock, ids);
@@ -193,8 +230,12 @@ export async function createContainer(
     // a decision runs.
     const codex = createCodexAdapters({
       logger,
-      model: config.defaultModel,
-      effort: config.defaultEffort,
+      ...(config.defaults.byHarness.codex?.model !== undefined
+        ? { model: config.defaults.byHarness.codex.model }
+        : {}),
+      ...(config.defaults.byHarness.codex?.effort !== undefined
+        ? { effort: config.defaults.byHarness.codex.effort }
+        : {}),
       ...(config.codexBinary ? { codexBinary: config.codexBinary } : {}),
     });
     // Jev resolves its key as soon as it is built, before `start()` has migrated the database; until
@@ -234,6 +275,7 @@ export async function createContainer(
       loops,
       sessions,
       harnesses: overrides.harnesses ?? { codex: codex.harness },
+      modelCatalog: catalog,
       // Codex Choice and built-in Noul exits; classifier Choice uses the registry.
       deciders: overrides.deciders ?? [exitJev, codex.decider],
       classifiers: overrides.classifiers ?? classifierRegistry,
@@ -258,11 +300,10 @@ export async function createContainer(
       secrets: ownerSecrets,
     };
     const settings: EngineSettings = {
-      defaultModel: config.defaultModel,
-      defaultEffort: config.defaultEffort,
+      defaults: config.defaults,
       maxConcurrentRuns: config.maxConcurrentRuns,
       structuredTimeoutMs: 120_000,
-      // Settings → Defaults, read at run start; GG_DEFAULT_MODEL and GG_DEFAULT_EFFORT are the fallback.
+      // Harness-scoped Settings defaults are read at run start; GG_DEFAULTS are the fallback.
       ownerDefaults: (ownerId) => readOwnerDefaults(settingsRepo, ownerId),
     };
     const manager = new RunManager(ports, settings);

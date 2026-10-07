@@ -279,7 +279,11 @@ test('Settings catalog preserves a disabled saved default until the owner change
   const instance = await control(request, '/apps');
   const url = String(instance['url']);
   expect(
-    (await request.put(`${url}/settings`, { data: { defaultModel: 'gpt-6-luna' } })).status(),
+    (
+      await request.put(`${url}/settings`, {
+        data: { defaults: { byHarness: { codex: { model: 'gpt-6-luna' } } } },
+      })
+    ).status(),
   ).toBe(200);
   await page.goto(`${url}/app/settings`);
   const enabled = page.getByRole('switch', { name: 'Enable GPT-6 Luna', exact: true });
@@ -290,10 +294,10 @@ test('Settings catalog preserves a disabled saved default until the owner change
   await expect(defaults).toHaveValue('gpt-6-luna');
   await expect(defaults.locator('option:checked')).toHaveText('GPT-6 Luna (disabled)');
   await expect(defaults).toHaveAccessibleDescription(
-    'Runs keep using this model until you choose another model or (server default).',
+    'This saved model is unavailable. Choose an enabled catalog model or (server default) before publishing or running.',
   );
   expect(await (await request.get(`${url}/settings`)).json()).toMatchObject({
-    defaultModel: 'gpt-6-luna',
+    defaults: { byHarness: { codex: { model: 'gpt-6-luna' } } },
   });
   // The truthful selection makes choosing the preceding server-default option fire a change.
   await defaults.press('ArrowUp');
@@ -304,8 +308,8 @@ test('Settings catalog preserves a disabled saved default until the owner change
       const values: unknown = await (await request.get(`${url}/settings`)).json();
       return values;
     })
-    .not.toHaveProperty('defaultModel');
-  await expect(page.getByText(/Runs keep using this model/)).toHaveCount(0);
+    .not.toHaveProperty('defaults');
+  await expect(page.getByText(/This saved model is unavailable/)).toHaveCount(0);
 });
 
 test('Settings catalog refreshes a vanished toggle and announces the reason at the heading', async ({

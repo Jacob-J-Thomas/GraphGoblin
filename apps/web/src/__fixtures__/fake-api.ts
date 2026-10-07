@@ -21,6 +21,7 @@ import { fakeUlid, sampleThread } from '@graphgoblin/contracts/testing';
 import {
   exportLoop,
   importLoop,
+  LoopFormatUpgradeRequiredError,
   LoopImportError,
   stableHash,
   validateLoop,
@@ -269,20 +270,19 @@ export class FakeApi {
   }
 
   /**
-   * The API's classifier checks, in part: a decision whose strategy includes Jev and whose model
-   * (default `jev`) is missing from the catalog or disabled. Secret checks are left out, so the
-   * built-in without `jev-api-key` raises nothing here.
+   * The API's classifier checks, in part: a decision explicitly using a classifier whose model
+   * is missing from the catalog or disabled. Secret checks are left out here.
    */
   classifierIssues(definition: LoopDefinition): LoopIssue[] {
     return definition.nodes.flatMap((node): LoopIssue[] => {
-      if (node.kind !== 'decision' || !node.config.strategy.includes('jev')) return [];
-      const id = node.config.jev?.model ?? 'jev';
+      if (node.kind !== 'decision' || node.config.evaluation.kind !== 'classifier') return [];
+      const id = node.config.evaluation.model;
       const entry = this.classifiers.find((c) => c.id === id);
       const issue = (code: string, severity: 'error' | 'warning', message: string): LoopIssue => ({
         code,
         severity,
         nodeId: node.id,
-        path: 'config.jev.model',
+        path: 'config.evaluation.model',
         message: `Decision '${node.label}' (${node.id}), classifier '${entry?.displayName ?? id}' (${id}): ${message}`,
       });
       if (!entry) return [issue('CLASSIFIER_MODEL_NOT_FOUND', 'error', 'model not found.')];
@@ -396,6 +396,8 @@ export class FakeApi {
             201,
           );
         } catch (error) {
+          if (error instanceof LoopFormatUpgradeRequiredError)
+            return problem(400, error.code, error.message);
           if (!(error instanceof LoopImportError)) throw error;
           return problem(400, error.code, error.message, error.details);
         }

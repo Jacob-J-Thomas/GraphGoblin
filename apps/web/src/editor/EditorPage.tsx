@@ -18,7 +18,14 @@ import { ErrorState } from '../components/status.js';
 import { Alert, Button, useSidePanelState } from '../components/ui/index.js';
 import { deviceStorageProblem } from '../drafts/local-drafts.js';
 import { focusFallback } from '../lib/focus.js';
-import { errorMessage, formatDateTime, isOfflineError, problemIssues } from '../lib/utils.js';
+import {
+  downloadJson,
+  errorMessage,
+  fileSlug,
+  formatDateTime,
+  isOfflineError,
+  problemIssues,
+} from '../lib/utils.js';
 import { Canvas } from './Canvas.js';
 import { ConflictNotice } from './ConflictNotice.js';
 import { EditorToolbar, OpenInRuns } from './EditorToolbar.js';
@@ -34,7 +41,7 @@ import { deviceCopyOf, deviceNotice, saveNotice, useDeviceStorageProblem } from 
 import { LOOP_PANEL_STORAGE_KEY, LoopPanel, loopPanelDefault } from './LoopPanel.js';
 import { PALETTE_STORAGE_KEY, Palette, palettePanelDefault } from './Palette.js';
 import { useEditorStore, type EditorState } from './store.js';
-import { useAutosave } from './useAutosave.js';
+import { AUTOSAVE_DELAY_MS, useAutosave } from './useAutosave.js';
 import { useLoadEditor } from './useLoadEditor.js';
 import { useResolveConflict } from './useResolveConflict.js';
 import { useUndoShortcuts } from './useUndoShortcuts.js';
@@ -57,8 +64,17 @@ export function EditorPage() {
   const { loopId = '' } = useParams();
   const client = useApi();
   const queryClient = useQueryClient();
-  const { query, restoredGeneration, ready, setAside, restoreSetAside, discardSetAside } =
-    useLoadEditor(loopId);
+  const {
+    query,
+    restoredGeneration,
+    ready,
+    setAside,
+    rawCopies,
+    preservationBlocked,
+    restoreSetAside,
+    discardSetAside,
+    discardRawCopy,
+  } = useLoadEditor(loopId);
   const definition = useEditorStore((s) => s.definition);
   const saveState = useEditorStore((s) => s.saveState);
   const saveMessage = useEditorStore((s) => s.saveMessage);
@@ -75,7 +91,7 @@ export function EditorPage() {
     PALETTE_STORAGE_KEY,
     palettePanelDefault,
   );
-  const flush = useAutosave(client);
+  const flush = useAutosave(client, AUTOSAVE_DELAY_MS, ready && !preservationBlocked);
   useUndoShortcuts();
   const conflict = useEditorStore((s) => s.conflict);
   const resolve = useResolveConflict(loopId, flush);
@@ -197,6 +213,36 @@ export function EditorPage() {
   const [dismissalAnnouncement, setDismissalAnnouncement] = useState(0);
   const noticeContainerRef = useRef<HTMLDivElement>(null);
   const saveStatusRef = useRef<HTMLSpanElement>(null);
+  const exportRawCopy = (copy: (typeof rawCopies)[number]) => {
+    const { migrationIssues: _migrationIssues, source: _source, ...original } = copy;
+    downloadJson(`${fileSlug(loopId)}-original-device-copy.json`, original);
+  };
+  const rawCopyWarnings = rawCopies.map((copy, index) => (
+    <Alert
+      key={`${copy.source}-${copy.savedAt}-${index}`}
+      tone="warn"
+      title="This device copy could not be migrated safely"
+    >
+      Its original contents remain available on this device. The editor will not load it because
+      conversion found unresolved legacy data. Export the original JSON before deleting the device
+      copy if you need to recover it elsewhere.
+      <ul className="mt-2 list-disc pl-5">
+        {copy.migrationIssues.slice(0, 3).map((issue, issueIndex) => (
+          <li key={`${issue.code}-${issueIndex}`}>
+            <code>{issue.path || '/'}</code>: {issue.message}
+          </li>
+        ))}
+      </ul>
+      <span className="mt-2 flex flex-wrap gap-2">
+        <Button size="sm" variant="outline" onClick={() => exportRawCopy(copy)}>
+          {index === 0 ? 'Export original device copy' : `Export original device copy ${index + 1}`}
+        </Button>
+        <Button size="sm" variant="ghost" onClick={() => void discardRawCopy(copy)}>
+          Discard this device copy
+        </Button>
+      </span>
+    </Alert>
+  ));
 
   // Pending and saving are transient parts of an edit. Keep a dismissal until saving settles on
   // a different state/message or a new editor load starts.
@@ -222,7 +268,29 @@ export function EditorPage() {
     if (query.isError) return <ErrorState error={query.error} what="The editor" />;
     return <p className="p-page text-sm text-muted">Loading loop…</p>;
   }
-  const def = definition as LoopDefinitionInput;
+  if (preservationBlocked) {
+    return (
+      <main className="grid gap-3 p-page">
+        <Alert tone="bad" title="Device copy preservation failed">
+          Editing and autosave are paused because the original device copy could not be safely
+          archived. Export it or discard the blocked copy, then reload the editor.
+        </Alert>
+        {rawCopyWarnings}
+      </main>
+    );
+  }
+  if (!definition) {
+    return (
+      <main className="grid gap-3 p-page">
+        {rawCopyWarnings.length > 0 ? (
+          rawCopyWarnings
+        ) : (
+          <p className="text-sm text-muted">No loop definition is available to edit.</p>
+        )}
+      </main>
+    );
+  }
+  const def = definition;
   const published = query.data?.current?.definition;
   const errors = validation.issues.filter((i) => i.severity === 'error').length;
   const editing = nodeDialogOpen ? def.nodes.find((n) => n.id === selectedNodeId) : undefined;
@@ -250,6 +318,7 @@ export function EditorPage() {
   };
 
   const notices = [
+    ...rawCopyWarnings,
     showRestoredNotice ? (
       <Alert
         key="restored"

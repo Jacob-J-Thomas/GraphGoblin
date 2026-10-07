@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { CodexHarness } from '@graphgoblin/adapter-codex';
 import { JevDecider } from '@graphgoblin/adapter-jev';
+import { openDatabase } from '@graphgoblin/infrastructure/sqlite';
 import type { DeciderPort } from '@graphgoblin/engine';
 import { CapturingLogger } from '@graphgoblin/engine/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -123,9 +124,12 @@ describe('default adapters', () => {
     const judge = vi
       .spyOn(JevDecider.prototype, 'judge')
       .mockResolvedValue({ holds: true, confidence: 1 });
-    const choose = vi
-      .spyOn(JevDecider.prototype, 'choose')
-      .mockResolvedValue({ label: 'yes', confidence: 1 });
+    const choose = vi.spyOn(JevDecider.prototype, 'choose').mockResolvedValue({
+      type: 'choice',
+      optionId: 'yes',
+      confidence: 1,
+      probabilities: { yes: 1 },
+    });
     try {
       expect(
         await jevOf(container).judge(
@@ -134,7 +138,7 @@ describe('default adapters', () => {
         ),
       ).toEqual({ holds: true, confidence: 1 });
       await jevOf(container).choose(
-        { question: '?', context: {}, options: [{ label: 'yes', description: '' }] },
+        { question: '?', context: {}, options: [{ id: 'yes', label: 'Yes', criteria: 'Approve' }] },
         new AbortController().signal,
       );
       expect(judge).toHaveBeenCalledOnce();
@@ -388,5 +392,80 @@ describe('container directory ownership', () => {
     await expect(access(join(dataDir, 'graphgoblin.lock'))).rejects.toMatchObject({
       code: 'ENOENT',
     });
+  });
+});
+
+describe('configuration admission before startup writes', () => {
+  it('does not create SQLite/master-key files for an unknown process default', async () => {
+    const invalid = config({
+      GG_DEFAULTS: JSON.stringify({
+        byHarness: { codex: { model: 'not-in-catalog', effort: 'low' } },
+      }),
+    });
+    await expect(createContainer(invalid, { startTimers: false })).rejects.toThrow(
+      /Invalid GG_DEFAULTS/,
+    );
+    for (const name of ['gg.db', 'master.key', 'graphgoblin.lock'])
+      await expect(access(join(dataDir, name))).rejects.toThrow();
+  });
+  it('reads existing manual catalog entries without changing database bytes or rows on invalid effort', async () => {
+    const valid = config();
+    const first = await createContainer(valid, { startTimers: false });
+    await first.start();
+    await first.repos.catalog.upsert({
+      harness: 'codex',
+      model: 'manual-model',
+      source: 'litellm',
+      displayName: 'Manual',
+      enabled: true,
+      efforts: ['low'],
+      defaultEffort: 'low',
+    });
+    await first.handle.client.execute('PRAGMA journal_mode=DELETE');
+    await first.stop();
+    const file = join(dataDir, 'gg.db');
+    const before = await readFile(file);
+    await expect(
+      createContainer(
+        config({
+          GG_DEFAULTS: JSON.stringify({
+            byHarness: { codex: { model: 'manual-model', effort: 'high' } },
+          }),
+        }),
+        { startTimers: false },
+      ),
+    ).rejects.toThrow(/Invalid GG_DEFAULTS/);
+    expect(await readFile(file)).toEqual(before);
+    const second = await createContainer(
+      config({
+        GG_DEFAULTS: JSON.stringify({
+          byHarness: { codex: { model: 'manual-model', effort: 'low' } },
+        }),
+      }),
+      { startTimers: false },
+    );
+    await second.stop();
+    expect(await readFile(file)).toEqual(before);
+  });
+  it('refuses an old store before creating a master key or applying migrations', async () => {
+    const handle = openDatabase({ url: config().dbUrl });
+    await handle.client.execute('CREATE TABLE old_data(id TEXT)');
+    handle.close();
+    await expect(createContainer(config(), { startTimers: false })).rejects.toMatchObject({
+      code: 'DATA_UPGRADE_REQUIRED',
+    });
+    await expect(access(join(dataDir, 'master.key'))).rejects.toThrow();
+    const inspection = openDatabase({ url: config().dbUrl });
+    try {
+      expect(
+        (
+          await inspection.client.execute(
+            "SELECT name FROM sqlite_master WHERE name='__drizzle_migrations'",
+          )
+        ).rows,
+      ).toEqual([]);
+    } finally {
+      inspection.close();
+    }
   });
 });

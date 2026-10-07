@@ -1,9 +1,9 @@
 {
   "format": "graphgoblin-loop",
-  "formatVersion": 1,
+  "formatVersion": 2,
   "exportedAt": "2026-10-07T00:00:00.000Z",
   "loop": {
-    "schemaVersion": 1,
+    "schemaVersion": 2,
     "name": "aidlc-full-v1-review",
     "description": "Fresh reviewer derived from actual implementer family, exact-head findings, draft PR comments and idempotent future issues. Parent owns three-cycle fix cap.",
     "settings": {
@@ -12,8 +12,12 @@
         "template": "{{ trigger.payload.workspacePath }}"
       },
       "defaults": {
-        "model": "gpt-6.1-sol",
-        "effort": "high"
+        "byHarness": {
+          "codex": {
+            "model": "gpt-6.1-sol",
+            "effort": "high"
+          }
+        }
       },
       "maxIterations": 19,
       "subloopDepthLimit": 2
@@ -731,15 +735,15 @@
         "config": {
           "command": "C:\\nvm4w\\nodejs\\node.exe",
           "args": [
-            "C:\\Users\\98jak\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-aidlc-full-v1\\examples\\aidlc\\support\\runtime.mjs",
+            "C:\\Users\\98jak\\.codex\\worktrees\\decision-kinds-98\\GraphGoblin\\examples\\aidlc\\support\\runtime.mjs",
             "init"
           ],
           "env": {
             "AIDLC_SETTINGS_HASH": "3104e7161ca9579453bc2b81e5a6ffbe426b192eb9daef582bef276637d449ed",
             "AIDLC_SUPPORT_HASH": "5b933f4cb90b72e93c438a5296773f8e675fc653a844f3e30b3879bb9dc6f1d7",
-            "AIDLC_REVIEW_LOOP_ID": "01M4A20AZ69E2FK2W23WGWJ23M",
-            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG",
-            "AIDLC_PR_CI_LOOP_ID": "01M4A20B05SZ4F1ZYGDVDVR8Z8"
+            "AIDLC_REVIEW_LOOP_ID": "00000000000000000000000000",
+            "AIDLC_QA_LOOP_ID": "00000000000000000000000000",
+            "AIDLC_PR_CI_LOOP_ID": "00000000000000000000000000"
           },
           "cwd": "workspace",
           "stdin": "thread",
@@ -758,15 +762,15 @@
         "config": {
           "command": "C:\\nvm4w\\nodejs\\node.exe",
           "args": [
-            "C:\\Users\\98jak\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-aidlc-full-v1\\examples\\aidlc\\support\\runtime.mjs",
+            "C:\\Users\\98jak\\.codex\\worktrees\\decision-kinds-98\\GraphGoblin\\examples\\aidlc\\support\\runtime.mjs",
             "review-prepare"
           ],
           "env": {
             "AIDLC_SETTINGS_HASH": "3104e7161ca9579453bc2b81e5a6ffbe426b192eb9daef582bef276637d449ed",
             "AIDLC_SUPPORT_HASH": "5b933f4cb90b72e93c438a5296773f8e675fc653a844f3e30b3879bb9dc6f1d7",
-            "AIDLC_REVIEW_LOOP_ID": "01M4A20AZ69E2FK2W23WGWJ23M",
-            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG",
-            "AIDLC_PR_CI_LOOP_ID": "01M4A20B05SZ4F1ZYGDVDVR8Z8"
+            "AIDLC_REVIEW_LOOP_ID": "00000000000000000000000000",
+            "AIDLC_QA_LOOP_ID": "00000000000000000000000000",
+            "AIDLC_PR_CI_LOOP_ID": "00000000000000000000000000"
           },
           "cwd": "workspace",
           "stdin": "thread",
@@ -785,7 +789,7 @@
         "config": {
           "command": "C:\\nvm4w\\nodejs\\node.exe",
           "args": [
-            "C:\\Users\\98jak\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-aidlc-full-v1\\examples\\aidlc\\support\\runtime.mjs",
+            "C:\\Users\\98jak\\.codex\\worktrees\\decision-kinds-98\\GraphGoblin\\examples\\aidlc\\support\\runtime.mjs",
             "reserve",
             "worker",
             "reviewer",
@@ -794,9 +798,9 @@
           "env": {
             "AIDLC_SETTINGS_HASH": "3104e7161ca9579453bc2b81e5a6ffbe426b192eb9daef582bef276637d449ed",
             "AIDLC_SUPPORT_HASH": "5b933f4cb90b72e93c438a5296773f8e675fc653a844f3e30b3879bb9dc6f1d7",
-            "AIDLC_REVIEW_LOOP_ID": "01M4A20AZ69E2FK2W23WGWJ23M",
-            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG",
-            "AIDLC_PR_CI_LOOP_ID": "01M4A20B05SZ4F1ZYGDVDVR8Z8"
+            "AIDLC_REVIEW_LOOP_ID": "00000000000000000000000000",
+            "AIDLC_QA_LOOP_ID": "00000000000000000000000000",
+            "AIDLC_PR_CI_LOOP_ID": "00000000000000000000000000"
           },
           "cwd": "workspace",
           "stdin": "thread",
@@ -981,15 +985,15 @@
         "config": {
           "command": "C:\\nvm4w\\nodejs\\node.exe",
           "args": [
-            "C:\\Users\\98jak\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-aidlc-full-v1\\examples\\aidlc\\support\\runtime.mjs",
+            "C:\\Users\\98jak\\.codex\\worktrees\\decision-kinds-98\\GraphGoblin\\examples\\aidlc\\support\\runtime.mjs",
             "review"
           ],
           "env": {
             "AIDLC_SETTINGS_HASH": "3104e7161ca9579453bc2b81e5a6ffbe426b192eb9daef582bef276637d449ed",
             "AIDLC_SUPPORT_HASH": "5b933f4cb90b72e93c438a5296773f8e675fc653a844f3e30b3879bb9dc6f1d7",
-            "AIDLC_REVIEW_LOOP_ID": "01M4A20AZ69E2FK2W23WGWJ23M",
-            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG",
-            "AIDLC_PR_CI_LOOP_ID": "01M4A20B05SZ4F1ZYGDVDVR8Z8"
+            "AIDLC_REVIEW_LOOP_ID": "00000000000000000000000000",
+            "AIDLC_QA_LOOP_ID": "00000000000000000000000000",
+            "AIDLC_PR_CI_LOOP_ID": "00000000000000000000000000"
           },
           "cwd": "workspace",
           "stdin": "thread",
@@ -1006,36 +1010,39 @@
         "label": "aidlc-route",
         "kind": "decision",
         "config": {
-          "routes": [
-            {
-              "label": "pass",
-              "description": "aidlc-pass"
-            },
-            {
-              "label": "fix-now",
-              "description": "aidlc-fix-now"
-            },
-            {
-              "label": "wont-fix",
-              "description": "aidlc-wont-fix"
-            },
-            {
-              "label": "future-issue",
-              "description": "aidlc-future-issue"
-            },
-            {
-              "label": "blocked",
-              "description": "aidlc-blocked"
-            }
-          ],
-          "question": "Check structured facts and child status.",
-          "strategy": ["expression"],
-          "expression": {
-            "jsonata": "vars.result.verdict = \"blocked\" ? \"blocked\" : $count(vars.result.findings[disposition = \"fix-now\" and state != \"fixed\"]) > 0 ? \"fix-now\" : vars.result.verdict != \"pass\" ? \"blocked\" : $count(vars.result.findings[disposition = \"future-issue\"]) > 0 ? \"future-issue\" : $count(vars.result.findings[disposition = \"wont-fix\"]) > 0 ? \"wont-fix\" : \"pass\""
+          "answer": {
+            "type": "choice",
+            "options": [
+              {
+                "id": "pass",
+                "label": "pass",
+                "criteria": "aidlc-pass"
+              },
+              {
+                "id": "fix-now",
+                "label": "fix-now",
+                "criteria": "aidlc-fix-now"
+              },
+              {
+                "id": "wont-fix",
+                "label": "wont-fix",
+                "criteria": "aidlc-wont-fix"
+              },
+              {
+                "id": "future-issue",
+                "label": "future-issue",
+                "criteria": "aidlc-future-issue"
+              },
+              {
+                "id": "blocked",
+                "label": "blocked",
+                "criteria": "aidlc-blocked"
+              }
+            ]
           },
-          "context": {
-            "messages": "none",
-            "includeLastOutput": true
+          "evaluation": {
+            "kind": "expression",
+            "jsonata": "vars.result.verdict = \"blocked\" ? \"blocked\" : $count(vars.result.findings[disposition = \"fix-now\" and state != \"fixed\"]) > 0 ? \"fix-now\" : vars.result.verdict != \"pass\" ? \"blocked\" : $count(vars.result.findings[disposition = \"future-issue\"]) > 0 ? \"future-issue\" : $count(vars.result.findings[disposition = \"wont-fix\"]) > 0 ? \"wont-fix\" : \"pass\""
           }
         },
         "ui": {

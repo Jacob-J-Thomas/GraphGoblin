@@ -2,7 +2,7 @@ import type { LoopDefinitionInput, NodeInput } from '@graphgoblin/contracts';
 import { useState } from 'react';
 import { Icon } from '../components/icons/index.js';
 import { Button, FieldGroup, FieldRow, HelpText, Label, Select } from '../components/ui/index.js';
-import { canvasPorts } from './model.js';
+import { canvasPortLabels, canvasPorts } from './model.js';
 import { useEditorStore } from './store.js';
 
 /**
@@ -22,6 +22,7 @@ function ConnectForm({
     definition.edges.filter((e) => e.from.node === node.id).map((e) => e.from.port),
   );
   const ports = canvasPorts(node).filter((p) => !used.has(p));
+  const portLabels = canvasPortLabels(node);
   const targets = definition.nodes.filter((n) => n.kind !== 'trigger');
   const [port, setPort] = useState(ports[0] ?? '');
   const [target, setTarget] = useState(targets.find((n) => n.id !== node.id)?.id ?? '');
@@ -46,7 +47,11 @@ function ConnectForm({
           <Label htmlFor="connect-port">Output</Label>
           <Select id="connect-port" value={chosenPort} onChange={(e) => setPort(e.target.value)}>
             {ports.map((p) => (
-              <option key={p}>{p}</option>
+              <option key={p} value={p}>
+                {portLabels[p] && portLabels[p] !== p
+                  ? `${portLabels[p]} (${p})`
+                  : (portLabels[p] ?? p)}
+              </option>
             ))}
           </Select>
         </FieldGroup>
@@ -92,6 +97,7 @@ export function NodeConnections({
   onChange: (port: string) => void;
 }) {
   const outgoing = definition.edges.filter((e) => e.from.node === node.id);
+  const portLabels = canvasPortLabels(node);
   return (
     <section aria-label="Connections" className="grid gap-2">
       <h3 className="text-sm font-semibold">Connections</h3>
@@ -105,7 +111,11 @@ export function NodeConnections({
               className="flex items-center justify-between gap-2 rounded-md border border-default py-1 pr-1 pl-3 text-sm"
             >
               <span>
-                <code>{edge.from.port}</code> → <code>{edge.to.node}</code>
+                {portLabels[edge.from.port] ?? edge.from.port}{' '}
+                {portLabels[edge.from.port] && portLabels[edge.from.port] !== edge.from.port ? (
+                  <code>({edge.from.port})</code>
+                ) : null}{' '}
+                → <code>{edge.to.node}</code>
               </span>
               <Button
                 size="icon"

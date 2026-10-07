@@ -8,24 +8,36 @@
     ]
   },
   "decision": {
-    "routes": [
-      {
-        "label": "a",
-        "description": ""
-      },
-      {
-        "label": "b",
-        "description": ""
-      }
-    ],
-    "question": "",
-    "context": {
-      "messages": "last",
-      "includeLastOutput": true
+    "answer": {
+      "type": "choice",
+      "options": [
+        {
+          "id": "a",
+          "label": "A",
+          "criteria": "A"
+        },
+        {
+          "id": "b",
+          "label": "B",
+          "criteria": "B"
+        }
+      ]
     },
-    "strategy": [
-      "codex"
-    ],
+    "evaluation": {
+      "kind": "llm",
+      "harness": "codex",
+      "model": {
+        "mode": "inherit"
+      },
+      "effort": {
+        "mode": "inherit"
+      },
+      "question": "",
+      "context": {
+        "messages": "last",
+        "includeLastOutput": true
+      }
+    },
     "recordAlternatives": true
   },
   "inference": {

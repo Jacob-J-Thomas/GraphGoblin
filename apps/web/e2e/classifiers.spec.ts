@@ -70,11 +70,11 @@ const start = {
 
 /**
  * A manual trigger, a decision `pick` between `yes` and `no`, and an exit per route. With `lone`,
- * `no` leads instead to a second decision whose only strategy is the built-in Jev.
+ * `no` leads to a second expression decision.
  */
 function decisionLoop(name: string, config: Record<string, unknown>, lone = false) {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     name,
     nodes: [
       start,
@@ -83,12 +83,15 @@ function decisionLoop(name: string, config: Record<string, unknown>, lone = fals
         kind: 'decision',
         label: 'Pick',
         config: {
-          routes: [
-            { label: 'yes', description: 'The work is done' },
-            { label: 'no', description: 'More work is needed' },
-          ],
-          question: 'Is the work done?',
-          ...config,
+          answer: {
+            type: 'choice',
+            options: [
+              { id: 'yes', label: 'Yes', criteria: 'The work is done' },
+              { id: 'no', label: 'No', criteria: 'More work is needed' },
+            ],
+          },
+          evaluation: config,
+          recordAlternatives: true,
         },
         ui: { x: 260, y: 80 },
       },
@@ -101,12 +104,15 @@ function decisionLoop(name: string, config: Record<string, unknown>, lone = fals
               kind: 'decision',
               label: 'Lone',
               config: {
-                routes: [
-                  { label: 'a', description: 'A' },
-                  { label: 'b', description: 'B' },
-                ],
-                question: 'Which?',
-                strategy: ['jev'],
+                answer: {
+                  type: 'choice',
+                  options: [
+                    { id: 'a', label: 'A', criteria: 'A' },
+                    { id: 'b', label: 'B', criteria: 'B' },
+                  ],
+                },
+                evaluation: { kind: 'expression', jsonata: '"a"' },
+                recordAlternatives: true,
               },
               ui: { x: 260, y: 300 },
             },
@@ -310,22 +316,17 @@ test('a decision selects the classifier, publishes, and runs against its endpoin
     request,
     target.url,
     decisionLoop('classifier run', {
-      strategy: ['jev', 'expression'],
-      expression: { jsonata: '"no"' },
+      kind: 'classifier',
+      model: 'jev',
+      question: 'Is the work done?',
+      context: { messages: 'last', includeLastOutput: true },
     }),
   );
   await page.goto(`${target.url}/app/loops/${loopId}/edit`);
-  // The decision has no jev block: the picker shows the built-in default all the same.
   const editor = await openNode(page, 'pick');
-  const picker = editor
-    .getByRole('group', { name: 'Jev' })
-    .getByRole('combobox', { name: 'Model' });
-  await expect(editor.getByRole('button', { name: 'Add jev options' })).toBeVisible();
-  await expect(picker.locator('option:checked')).toHaveText('Jev (jev), the default (needs a key)');
-  await expect(picker.getByRole('option')).toHaveText([
-    'Jev (jev), the default (needs a key)',
-    'Kev 4B (kev)',
-  ]);
+  const picker = editor.getByRole('combobox', { name: 'Model' });
+  await expect(picker).toHaveValue('jev');
+  await expect(picker.getByRole('option')).toContainText(['Jev (jev)', 'Kev 4B (kev)']);
   const saved = page.waitForRequest(
     (r) =>
       r.method() === 'PUT' &&
@@ -334,10 +335,11 @@ test('a decision selects the classifier, publishes, and runs against its endpoin
   );
   await picker.selectOption('kev');
   const draft = (await saved).postDataJSON() as {
-    definition: { nodes: { id: string; config: { jev?: unknown } }[] };
+    definition: { nodes: { id: string; config: { evaluation?: unknown } }[] };
   };
   // The primitive keeps its default (Choice), which the form leaves for the contract to fill in.
-  expect(draft.definition.nodes.find((n) => n.id === 'pick')!.config.jev).toMatchObject({
+  expect(draft.definition.nodes.find((n) => n.id === 'pick')!.config.evaluation).toMatchObject({
+    kind: 'classifier',
     model: 'kev',
   });
   await page.keyboard.press('Escape');
@@ -351,7 +353,11 @@ test('a decision selects the classifier, publishes, and runs against its endpoin
   const { status, events } = await run(request, target.url, loopId);
   expect(status).toBe('succeeded');
   const made = events.find((e) => e.type === 'decision.made');
-  expect(made).toMatchObject({ strategy: 'jev', classifierModel: 'kev', route: 'yes' });
+  expect(made).toMatchObject({
+    answer: { optionId: 'yes' },
+    portId: 'yes',
+    provenance: { kind: 'classifier', classifierId: 'kev' },
+  });
   expect(await endpointRequests(request, target.endpoint)).toEqual([
     {
       method: 'POST',
@@ -363,131 +369,45 @@ test('a decision selects the classifier, publishes, and runs against its endpoin
   ]);
 });
 
-test('missing-key, disabled, and deleted classifiers warn or block, and runs fall back', async ({
+test('an unavailable explicit classifier fails without switching evaluator', async ({
   page,
   request,
-}, testInfo) => {
+}) => {
   const target = await instance(request);
   await registerKev(request, target);
   const loopId = await createLoop(
     request,
     target.url,
-    decisionLoop(
-      'classifier diagnostics',
-      {
-        strategy: ['jev', 'expression'],
-        jev: { primitive: 'choice', model: 'kev' },
-        // The fallback answers yes, which ends the run; `no` would reach the lone decision.
-        expression: { jsonata: '"yes"' },
-      },
-      true,
-    ),
+    decisionLoop('explicit classifier', {
+      kind: 'classifier',
+      model: 'kev',
+      question: 'Is the work done?',
+      context: { messages: 'last', includeLastOutput: true },
+    }),
   );
   expect((await request.post(`${target.url}/loops/${loopId}/publish`)).status()).toBe(200);
 
-  // Disabled: a warning on the node, the picker keeps the selection, the run falls back.
   expect(
     (
       await request.patch(`${target.url}/classifier-models/kev`, { data: { enabled: false } })
     ).status(),
   ).toBe(200);
   await page.goto(`${target.url}/app/loops/${loopId}/edit`);
-  const pick = badge(page, 'pick');
-  await expect(pick).toHaveAccessibleName('1 issue on pick');
-  await pick.click();
-  const issues = page.getByRole('dialog', { name: 'Issues on pick' });
-  const disabled = issues.getByRole('button', { name: /^Warning CLASSIFIER_MODEL_DISABLED/ });
-  await expect(disabled).toContainText(
-    "Decision 'Pick' (pick), classifier 'Kev 4B' (kev): model is disabled. Enable it in Settings, Classifier models. This strategy will be skipped.",
-  );
-  await expect(disabled).toContainText('config.jev.model');
-  await disabled.click();
-  const editor = page.getByRole('dialog', { name: 'Edit decision pick' });
-  const picker = editor
-    .getByRole('group', { name: 'Jev' })
-    .getByRole('combobox', { name: 'Model' });
-  await expect(picker).toBeFocused();
-  await expect(picker.locator('option:checked')).toHaveText('Kev 4B (kev) (disabled)');
-  await expect(picker).toHaveAccessibleDescription(
-    /Kev 4B \(kev\) is disabled, so this decision skips its Jev strategy/,
-  );
-  await page.keyboard.press('Escape');
-  let result = await run(request, target.url, loopId);
-  expect(result.status).toBe('succeeded');
-  expect(
-    result.events.find((e) => e.type === 'decision.made' && e.nodeId === 'pick'),
-  ).toMatchObject({
-    strategy: 'expression',
-    route: 'yes',
-  });
-  expect(await endpointRequests(request, target.endpoint)).toEqual([]);
-
-  // Missing key, with no later strategy: the popover explains the decision cannot route.
-  const lone = badge(page, 'lone');
-  await lone.click();
-  const loneIssues = page.getByRole('dialog', { name: 'Issues on lone' });
-  const missing = loneIssues.getByRole('button', { name: /^Warning CLASSIFIER_SECRET_MISSING/ });
-  await expect(missing).toContainText(
-    "Decision 'Lone' (lone), classifier 'Jev' (jev): Missing or blank secret 'jev-api-key'. Set it in Settings, Secrets. This strategy will be skipped and the decision cannot currently produce a route.",
-  );
-  await loneIssues.screenshot({ path: testInfo.outputPath('classifier-issue-popover-dark.png') });
-  await missing.click();
-  // No jev block: focus lands on the picker, which shows the built-in default and its problem.
-  const loneEditor = page.getByRole('dialog', { name: 'Edit decision lone' });
-  const lonePicker = loneEditor
-    .getByRole('group', { name: 'Jev' })
-    .getByRole('combobox', { name: 'Model' });
-  await expect(lonePicker).toBeFocused();
-  await expect(lonePicker.locator('option:checked')).toHaveText(
-    'Jev (jev), the default (needs a key)',
-  );
-  await expect(lonePicker).toHaveAccessibleDescription(/Jev \(jev\) needs a key/);
-  await page.keyboard.press('Escape');
-
-  // Deleted while a published loop refers to it: an error blocks publishing the draft, the
-  // picker keeps the id, and the published version still runs through the fallback.
-  expect((await request.delete(`${target.url}/classifier-models/kev`)).status()).toBe(204);
-  await page.reload();
   await expect(badge(page, 'pick')).toHaveAccessibleName('1 issue on pick');
-  await badge(page, 'pick').click();
-  await expect(
-    page
-      .getByRole('dialog', { name: 'Issues on pick' })
-      .getByRole('button', { name: /^Error CLASSIFIER_MODEL_NOT_FOUND/ }),
-  ).toContainText(
-    'model not found. Register it in Settings, Classifier models, or select an existing model.',
-  );
+  const editor = await openNode(page, 'pick');
+  const picker = editor.getByRole('combobox', { name: 'Model' });
+  await expect(picker).toHaveValue('kev');
+  await expect(picker).toHaveAccessibleDescription(/Kev 4B \(kev\) is disabled/);
   await page.keyboard.press('Escape');
-  await openNode(page, 'pick');
-  await expect(
-    page
-      .getByRole('dialog', { name: 'Edit decision pick' })
-      .getByRole('group', { name: 'Jev' })
-      .getByRole('combobox', { name: 'Model' })
-      .locator('option:checked'),
-  ).toHaveText('kev (not in catalog)');
-  await page.keyboard.press('Escape');
-  const validate = await request.post(`${target.url}/loops/${loopId}/validate`, {
-    data: {
-      definition: (
-        (await (await request.get(`${target.url}/loops/${loopId}`)).json()) as {
-          current: { definition: unknown };
-        }
-      ).current.definition,
-    },
-  });
-  expect(((await validate.json()) as { publishable: boolean }).publishable).toBe(false);
-  result = await run(request, target.url, loopId);
-  expect(result.status).toBe('succeeded');
-  expect(
-    result.events.find((e) => e.type === 'decision.made' && e.nodeId === 'pick'),
-  ).toMatchObject({
-    strategy: 'expression',
-    route: 'yes',
+
+  const result = await run(request, target.url, loopId);
+  expect(result.status).toBe('failed');
+  expect(result.events.some((event) => event.type === 'decision.made')).toBe(false);
+  expect(result.events.find((event) => event.type === 'run.failed')).toMatchObject({
+    failure: { code: 'EVALUATION_UNAVAILABLE' },
   });
   expect(await endpointRequests(request, target.endpoint)).toEqual([]);
 });
-
 for (const theme of ['dark', 'light'] as const) {
   test(`Settings and the picker in ${theme}, at 768 px: empty, with a custom entry, a missing secret`, async ({
     page,
@@ -568,43 +488,58 @@ for (const theme of ['dark', 'light'] as const) {
       request,
       target.url,
       decisionLoop('classifier picker', {
-        strategy: ['jev', 'expression'],
-        jev: { primitive: 'choice', model: 'kev', minConfidence: 0.5 },
-        expression: { jsonata: '"no"' },
+        kind: 'classifier',
+        model: 'kev',
+        minConfidence: 0.5,
+        question: 'Which option?',
+        context: { messages: 'last', includeLastOutput: true },
       }),
     );
     await page.goto(`${target.url}/app/loops/${loopId}/edit`);
     const editor = await openNode(page, 'pick');
-    const jev = editor.getByRole('group', { name: 'Jev' });
-    const picker = jev.getByRole('combobox', { name: 'Model' });
+    const method = editor.getByRole('radiogroup', { name: 'Evaluation method' });
+    await expect(method.getByRole('radio', { name: 'Classifier' })).toBeChecked();
+    const picker = editor.getByRole('combobox', { name: 'Model' });
     await expect(picker).toHaveValue('kev');
     await picker.focus();
-    await jev.screenshot({ path: testInfo.outputPath(`classifier-picker-${theme}.png`) });
+    await editor.screenshot({ path: testInfo.outputPath(`classifier-picker-${theme}.png`) });
 
     // A disabled selection stays selected, with the reason under the field.
     await request.patch(`${target.url}/classifier-models/kev`, { data: { enabled: false } });
     await page.reload();
-    const reopened = (await openNode(page, 'pick')).getByRole('group', { name: 'Jev' });
+    const reopened = await openNode(page, 'pick');
     await expect(
       reopened.getByRole('combobox', { name: 'Model' }).locator('option:checked'),
     ).toHaveText('Kev 4B (kev) (disabled)');
+    await expect(
+      reopened.getByText(
+        'Kev 4B (kev) is disabled. Enable it in Settings or choose another classifier.',
+      ),
+    ).toBeVisible();
     await reopened.screenshot({
       path: testInfo.outputPath(`classifier-picker-disabled-${theme}.png`),
     });
 
-    // A decision without Jev settings: the picker shows the built-in default above Add jev options.
+    // Selecting the classifier evaluator never invents a classifier model or selects a fallback.
     const plainId = await createLoop(
       request,
       target.url,
       decisionLoop('classifier picker default', {
-        strategy: ['jev', 'expression'],
-        expression: { jsonata: '"no"' },
+        kind: 'expression',
+        jsonata: '"no"',
       }),
     );
     await page.goto(`${target.url}/app/loops/${plainId}/edit`);
-    const plain = (await openNode(page, 'pick')).getByRole('group', { name: 'Jev' });
+    const plain = await openNode(page, 'pick');
+    const methodPicker = plain.getByRole('radiogroup', { name: 'Evaluation method' });
+    const classifierChoice = methodPicker.getByRole('radio', { name: 'Classifier' });
+    await classifierChoice.focus();
+    await page.keyboard.press('Space');
+    await expect(classifierChoice).toBeChecked();
     await expect(plain.getByRole('combobox', { name: 'Model' })).toHaveValue('');
-    await expect(plain.getByRole('button', { name: 'Add jev options' })).toBeVisible();
+    await expect(
+      plain.getByText('Choose an enabled classifier that supports Choice.'),
+    ).toBeVisible();
     await plain.screenshot({ path: testInfo.outputPath(`classifier-picker-default-${theme}.png`) });
   });
 }

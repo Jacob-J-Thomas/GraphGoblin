@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { ClassifierModelIdSchema } from './classifiers.js';
+import { DecisionConfigSchema } from './evaluation.js';
+export { DecisionConfigSchema, type DecisionConfig } from './evaluation.js';
 import {
   EffortSchema,
   ExpressionSchema,
@@ -157,107 +158,6 @@ export type TriggerConfig = z.infer<typeof TriggerConfigSchema>;
 export const DecisionStrategySchema = z.enum(['jev', 'codex', 'expression']);
 export type DecisionStrategy = z.infer<typeof DecisionStrategySchema>;
 
-export const DecisionConfigSchema = z
-  .strictObject({
-    routes: z
-      .array(z.strictObject({ label: RouteLabelSchema, description: z.string().max(2000) }))
-      .min(2)
-      .max(64)
-      .meta(field('At least two labelled routes, each with a description the decider reads.')),
-    question: TemplateSchema.meta(
-      field('Liquid template rendered against the thread; the question the decider answers.'),
-    ),
-    context: z
-      .strictObject({
-        messages: MessageSelectionSchema.default('last').meta(
-          field('Which messages the decider reads: none, the last, a number of them, or all.', {
-            advanced: true,
-          }),
-        ),
-        vars: z
-          .array(SlugSchema)
-          .optional()
-          .meta(field('Variables the decider reads.', { advanced: true })),
-        includeLastOutput: z
-          .boolean()
-          .default(true)
-          .meta(field('Show the decider the last output.', { advanced: true })),
-      })
-      .prefault({})
-      .meta(
-        field('How much of the thread the decider sees: messages, vars, the last output.', {
-          advanced: true,
-          group: 'Context',
-        }),
-      ),
-    strategy: z
-      .array(DecisionStrategySchema)
-      .min(1)
-      .max(3)
-      .meta(field('Ordered fallback chain of strategies.')),
-    jev: z
-      .strictObject({
-        primitive: z.literal('choice').default('choice'),
-        model: ClassifierModelIdSchema.optional().meta(
-          field('Classifier catalog id; built-in `jev` when omitted.', { control: 'classifier' }),
-        ),
-        minConfidence: z.number().min(0).max(1).optional(),
-      })
-      .optional()
-      .meta(
-        field(
-          'Choice classifier options: optional `model` is a catalog id (default `jev`); unavailable configuration or a choice below `minConfidence` falls through to the next strategy.',
-        ),
-      ),
-    codex: z
-      .strictObject({
-        model: ModelNameSchema.optional().meta(
-          field(
-            'Model for the Codex decider; falls back to the loop default, then to the owner setting.',
-            { control: 'model' },
-          ),
-        ),
-        effort: EffortSchema.optional().meta(
-          field(
-            'Reasoning effort; falls back like the model. The catalog default effort is guidance only.',
-            { control: 'effort' },
-          ),
-        ),
-      })
-      .optional()
-      .meta(field('Model and effort for the Codex decider.')),
-    expression: z
-      .strictObject({ jsonata: ExpressionSchema })
-      .optional()
-      .meta(field('JSONata that must evaluate to a route label.')),
-    recordAlternatives: z
-      .boolean()
-      .default(true)
-      .meta(
-        field('Record the routes not taken, with confidences, on `decision.made`.', {
-          advanced: true,
-          group: 'Recording',
-        }),
-      ),
-  })
-  .superRefine((cfg, ctx) => {
-    const labels = cfg.routes.map((r) => r.label);
-    if (new Set(labels).size !== labels.length) {
-      ctx.addIssue({ code: 'custom', message: 'route labels must be unique', path: ['routes'] });
-    }
-    if (new Set(cfg.strategy).size !== cfg.strategy.length) {
-      ctx.addIssue({ code: 'custom', message: 'strategies must be unique', path: ['strategy'] });
-    }
-    if (cfg.strategy.includes('expression') && !cfg.expression) {
-      ctx.addIssue({
-        code: 'custom',
-        message: 'expression strategy requires an expression block',
-        path: ['expression'],
-      });
-    }
-  });
-export type DecisionConfig = z.infer<typeof DecisionConfigSchema>;
-
 // ---------------------------------------------------------------------------
 // Inference
 // ---------------------------------------------------------------------------
@@ -303,14 +203,17 @@ export type Capabilities = z.infer<typeof CapabilitiesSchema>;
 export const InferenceConfigSchema = z.strictObject({
   harness: HarnessIdSchema.default('codex').meta(field('Harness that runs the session.')),
   model: ModelNameSchema.optional().meta(
-    field('Model; falls back to the loop default, then to the owner setting.', {
+    field('Model; inherits within this harness from loop, owner, then process defaults.', {
       control: 'model',
     }),
   ),
   effort: EffortSchema.optional().meta(
-    field('Reasoning effort; falls back like the model. Catalog default effort is guidance only.', {
-      control: 'effort',
-    }),
+    field(
+      'Reasoning effort; inherits within this harness like the model. Catalog effort is guidance only.',
+      {
+        control: 'effort',
+      },
+    ),
   ),
   session: SessionPolicySchema.default({ policy: 'fresh' }).meta(
     field('Start fresh, resume the previous session, or resume a named session.'),

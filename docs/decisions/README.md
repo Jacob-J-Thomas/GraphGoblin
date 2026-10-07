@@ -25,3 +25,4 @@ One file per decision. Status is Accepted unless stated. Supersede by adding a n
 | [0019](ADR-0019-inference-node-harness.md)               | Harness is chosen on inference nodes only                                                      |
 | [0020](ADR-0020-clean-design-until-release.md)           | Clean design over backward compatibility until release                                         |
 | [0021](ADR-0021-classifier-model-catalog.md)             | Separate owner classifier catalog, HTTP Choice protocol, and runtime registry                  |
+| [0022](ADR-0022-explicit-decision-evaluation.md)         | Explicit decision kinds, harness-scoped defaults and offline format conversion                 |

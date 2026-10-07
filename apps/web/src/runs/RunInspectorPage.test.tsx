@@ -84,7 +84,7 @@ describe('RunInspectorPage', () => {
       expect(screen.queryByText(/default success|loop ceiling/)).not.toBeInTheDocument();
     },
   );
-  it('explains exit criteria and skipped decision strategies in the timeline and selected detail', async () => {
+  it('explains exit criteria and decision diagnostics in the timeline and selected detail', async () => {
     const api = new FakeApi();
     const run = api.addRun({ status: 'succeeded' });
     api.pushEvent(run.id, event(run.id, 1, 'run.queued', {}));
@@ -92,11 +92,24 @@ describe('RunInspectorPage', () => {
       run.id,
       event(run.id, 2, 'decision.made', {
         nodeId: 'choose',
-        strategy: 'expression',
-        route: 'yes',
-        skipped: [
+        answer: { type: 'choice', optionId: 'yes', confidence: null, probabilities: null },
+        portId: 'yes',
+        provenance: {
+          kind: 'expression',
+          provider: null,
+          classifierId: null,
+          model: null,
+          effort: null,
+        },
+        diagnostics: [
           {
-            strategy: 'jev',
+            provenance: {
+              kind: 'classifier',
+              provider: 'jev',
+              classifierId: 'kev',
+              model: 'kev-model',
+              effort: null,
+            },
             code: 'CLASSIFIER_MODEL_DISABLED',
             message: 'The selected classifier is disabled',
           },
@@ -151,7 +164,7 @@ describe('RunInspectorPage', () => {
       ),
     ).toBeInTheDocument();
     expect(
-      within(timeline).getByText(/Skipped Jev: The selected classifier is disabled/),
+      within(timeline).getByText(/CLASSIFIER_MODEL_DISABLED: The selected classifier is disabled/),
     ).toBeInTheDocument();
     const criteria = await screen.findByRole('list', { name: 'Exit criteria' });
     expect(criteria).toHaveTextContent(
@@ -163,8 +176,8 @@ describe('RunInspectorPage', () => {
       'Criterion 3 (expression): skipped: An earlier criterion matched',
     );
     await userEvent.click(within(timeline).getByRole('button', { name: /decision.made/ }));
-    expect(screen.getByRole('list', { name: 'Skipped strategies' })).toHaveTextContent(
-      'Skipped Jev: The selected classifier is disabled',
+    expect(screen.getByRole('list', { name: 'Evaluation diagnostics' })).toHaveTextContent(
+      'CLASSIFIER_MODEL_DISABLED: The selected classifier is disabled',
     );
   });
   it('streams the timeline, replays the thread at any event, and shows the patch diff', async () => {
@@ -201,10 +214,17 @@ describe('RunInspectorPage', () => {
       api.pushEvent(
         run.id,
         event(run.id, 7, 'decision.made', {
-          skipped: [],
           nodeId: 'decide',
-          strategy: 'expression',
-          route: 'good',
+          answer: { type: 'choice', optionId: 'good', confidence: null, probabilities: null },
+          portId: 'good',
+          provenance: {
+            kind: 'expression',
+            provider: null,
+            classifierId: null,
+            model: null,
+            effort: null,
+          },
+          diagnostics: [],
         }),
       ),
     );

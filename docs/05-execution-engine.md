@@ -166,12 +166,11 @@ Recovery cannot consume a partial invalid page. JSON pages and SSE replay use th
 reader; SSE validates replay before sending any frames (07). Stored data repairs belong
 to migrations, including `0007` for historical decisions without `skipped`.
 
-Successful `decision.made` events always include `skipped`, ordered before the winning
-strategy. Entries contain strategy, a reason code, and a fixed short message: missing or
-disabled classifier, unsupported Choice, missing or unreadable key, unavailable provider,
-expression not selecting a declared route, undeclared provider route, invalid confidence,
-or confidence below the threshold. Provider exceptions still fail the node; recording
-fallback evidence does not introduce a new retry or fallback policy.
+Every new `decision.made` event contains the canonical Choice answer, stable port ID and resolved evaluator provenance. Fresh events pass per-kind emission validation before append. Expression confidence/probabilities and nonapplicable provenance are null; classifier/LLM events identify their actual provider and model, and LLM events identify resolved effort. New decisions evaluate one kind and emit no skipped-strategy chain. The bounded event-only `diagnostics` list preserves factual pre-cutover skips during offline conversion. Unknown historical values remain null, and the upgrade audit retains original records.
+
+### Explicit decision failures (#98)
+
+A decision never substitutes another evaluator. `EVALUATION_UNAVAILABLE` is resumable when selected configuration or credentials can be restored. `EVALUATION_PROVIDER_FAILED` is resumable for connection/timeout failures, HTTP 429/5xx and restorable authentication failures; deterministic protocol/request failures are not. `EVALUATION_INVALID_CONFIGURATION`, `EVALUATION_INVALID_RESPONSE`, `EVALUATION_RESULT_REJECTED` and `EVALUATION_EXPRESSION_FAILED` are nonresumable: correct the configuration/input and replay or start a new run. Cancellation remains cancellation. Classifier confidence rejection is not a hidden uncertainty port; LLM self-reported confidence is never thresholded.
 
 ## Subloops as child runs (Decided)
 
@@ -262,7 +261,7 @@ Because every node input is reconstructible, the API offers "re-run this node wi
 
 ## Implementation notes from WP-D2 (Decided by implementation, 2026-10-03)
 
-- **Model and effort resolve node, then loop defaults, then owner settings, then configuration.** `EngineSettings.ownerDefaults(ownerId)` is read every time a run starts or resumes; the API reads the owner settings `defaultModel` and `defaultEffort` there, so a change in Settings applies to the next run without a restart. `GG_DEFAULT_MODEL` and `GG_DEFAULT_EFFORT` remain the last fallback.
+- **Model and effort resolve within the selected harness: node, loop, owner, process.** Loop and owner defaults use `defaults.byHarness`; the process supplies the same shape through `GG_DEFAULTS`. A decision LLM explicitly selects inheritance or a value. Unknown catalog models, wrong-harness models and unsupported effective effort are errors; invalid explicit selections are never bypassed. Disabled or unconfigured selections block publication and are checked again at execution. In-flight provider calls retain their starting selection. Old `GG_DEFAULT_MODEL` and `GG_DEFAULT_EFFORT` variables are rejected with upgrade guidance.
 - **The executor yields to the event loop between nodes** (one `setTimeout(0)` per node). With fast ports every await settles as a microtask, and a graph cycle (a decision routing back to itself) used to starve timers, API requests, and the cancel request that could stop it. Such a cycle is now bounded by the per-node visit cap under `maxIterations` (see "Iterations and loop-back"; WP-F2).
 
 ## Implementation notes from WP-G (Decided by implementation, 2026-10-03)

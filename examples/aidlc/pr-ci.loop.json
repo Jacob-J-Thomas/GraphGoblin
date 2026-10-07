@@ -1,9 +1,9 @@
 {
   "format": "graphgoblin-loop",
-  "formatVersion": 1,
+  "formatVersion": 2,
   "exportedAt": "2026-10-07T00:00:00.000Z",
   "loop": {
-    "schemaVersion": 1,
+    "schemaVersion": 2,
     "name": "aidlc-full-v1-pr-ci",
     "description": "Reconcile PR, bounded exact-head CI poll, reviewer verdict comment and label, policy-authorized merge observation. Single-identity mode never claims API approval.",
     "settings": {
@@ -12,8 +12,12 @@
         "template": "{{ trigger.payload.workspacePath }}"
       },
       "defaults": {
-        "model": "gpt-6.1-sol",
-        "effort": "high"
+        "byHarness": {
+          "codex": {
+            "model": "gpt-6.1-sol",
+            "effort": "high"
+          }
+        }
       },
       "maxIterations": 19,
       "subloopDepthLimit": 2
@@ -731,15 +735,15 @@
         "config": {
           "command": "C:\\nvm4w\\nodejs\\node.exe",
           "args": [
-            "C:\\Users\\98jak\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-aidlc-full-v1\\examples\\aidlc\\support\\runtime.mjs",
+            "C:\\Users\\98jak\\.codex\\worktrees\\decision-kinds-98\\GraphGoblin\\examples\\aidlc\\support\\runtime.mjs",
             "init"
           ],
           "env": {
             "AIDLC_SETTINGS_HASH": "3104e7161ca9579453bc2b81e5a6ffbe426b192eb9daef582bef276637d449ed",
             "AIDLC_SUPPORT_HASH": "5b933f4cb90b72e93c438a5296773f8e675fc653a844f3e30b3879bb9dc6f1d7",
-            "AIDLC_REVIEW_LOOP_ID": "01M4A20AZ69E2FK2W23WGWJ23M",
-            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG",
-            "AIDLC_PR_CI_LOOP_ID": "01M4A20B05SZ4F1ZYGDVDVR8Z8"
+            "AIDLC_REVIEW_LOOP_ID": "00000000000000000000000000",
+            "AIDLC_QA_LOOP_ID": "00000000000000000000000000",
+            "AIDLC_PR_CI_LOOP_ID": "00000000000000000000000000"
           },
           "cwd": "workspace",
           "stdin": "thread",
@@ -758,15 +762,15 @@
         "config": {
           "command": "C:\\nvm4w\\nodejs\\node.exe",
           "args": [
-            "C:\\Users\\98jak\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-aidlc-full-v1\\examples\\aidlc\\support\\runtime.mjs",
+            "C:\\Users\\98jak\\.codex\\worktrees\\decision-kinds-98\\GraphGoblin\\examples\\aidlc\\support\\runtime.mjs",
             "ci"
           ],
           "env": {
             "AIDLC_SETTINGS_HASH": "3104e7161ca9579453bc2b81e5a6ffbe426b192eb9daef582bef276637d449ed",
             "AIDLC_SUPPORT_HASH": "5b933f4cb90b72e93c438a5296773f8e675fc653a844f3e30b3879bb9dc6f1d7",
-            "AIDLC_REVIEW_LOOP_ID": "01M4A20AZ69E2FK2W23WGWJ23M",
-            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG",
-            "AIDLC_PR_CI_LOOP_ID": "01M4A20B05SZ4F1ZYGDVDVR8Z8"
+            "AIDLC_REVIEW_LOOP_ID": "00000000000000000000000000",
+            "AIDLC_QA_LOOP_ID": "00000000000000000000000000",
+            "AIDLC_PR_CI_LOOP_ID": "00000000000000000000000000"
           },
           "cwd": "workspace",
           "stdin": "thread",
@@ -783,24 +787,24 @@
         "label": "aidlc-ci-route",
         "kind": "decision",
         "config": {
-          "routes": [
-            {
-              "label": "ready",
-              "description": "aidlc-ready"
-            },
-            {
-              "label": "blocked",
-              "description": "aidlc-blocked"
-            }
-          ],
-          "question": "Check structured facts and child status.",
-          "strategy": ["expression"],
-          "expression": {
-            "jsonata": "vars.result.status = \"ready\" ? \"ready\" : \"blocked\""
+          "answer": {
+            "type": "choice",
+            "options": [
+              {
+                "id": "ready",
+                "label": "ready",
+                "criteria": "aidlc-ready"
+              },
+              {
+                "id": "blocked",
+                "label": "blocked",
+                "criteria": "aidlc-blocked"
+              }
+            ]
           },
-          "context": {
-            "messages": "none",
-            "includeLastOutput": true
+          "evaluation": {
+            "kind": "expression",
+            "jsonata": "vars.result.status = \"ready\" ? \"ready\" : \"blocked\""
           }
         },
         "ui": {
@@ -815,15 +819,15 @@
         "config": {
           "command": "C:\\nvm4w\\nodejs\\node.exe",
           "args": [
-            "C:\\Users\\98jak\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-aidlc-full-v1\\examples\\aidlc\\support\\runtime.mjs",
+            "C:\\Users\\98jak\\.codex\\worktrees\\decision-kinds-98\\GraphGoblin\\examples\\aidlc\\support\\runtime.mjs",
             "merge"
           ],
           "env": {
             "AIDLC_SETTINGS_HASH": "3104e7161ca9579453bc2b81e5a6ffbe426b192eb9daef582bef276637d449ed",
             "AIDLC_SUPPORT_HASH": "5b933f4cb90b72e93c438a5296773f8e675fc653a844f3e30b3879bb9dc6f1d7",
-            "AIDLC_REVIEW_LOOP_ID": "01M4A20AZ69E2FK2W23WGWJ23M",
-            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG",
-            "AIDLC_PR_CI_LOOP_ID": "01M4A20B05SZ4F1ZYGDVDVR8Z8"
+            "AIDLC_REVIEW_LOOP_ID": "00000000000000000000000000",
+            "AIDLC_QA_LOOP_ID": "00000000000000000000000000",
+            "AIDLC_PR_CI_LOOP_ID": "00000000000000000000000000"
           },
           "cwd": "workspace",
           "stdin": "thread",
@@ -860,28 +864,29 @@
         "label": "aidlc-merge-route",
         "kind": "decision",
         "config": {
-          "routes": [
-            {
-              "label": "merged",
-              "description": "aidlc-merged"
-            },
-            {
-              "label": "human",
-              "description": "aidlc-human"
-            },
-            {
-              "label": "blocked",
-              "description": "aidlc-blocked"
-            }
-          ],
-          "question": "Check structured facts and child status.",
-          "strategy": ["expression"],
-          "expression": {
-            "jsonata": "vars.result.status = \"merged\" ? \"merged\" : vars.result.status = \"blocked\" ? \"blocked\" : \"human\""
+          "answer": {
+            "type": "choice",
+            "options": [
+              {
+                "id": "merged",
+                "label": "merged",
+                "criteria": "aidlc-merged"
+              },
+              {
+                "id": "human",
+                "label": "human",
+                "criteria": "aidlc-human"
+              },
+              {
+                "id": "blocked",
+                "label": "blocked",
+                "criteria": "aidlc-blocked"
+              }
+            ]
           },
-          "context": {
-            "messages": "none",
-            "includeLastOutput": true
+          "evaluation": {
+            "kind": "expression",
+            "jsonata": "vars.result.status = \"merged\" ? \"merged\" : vars.result.status = \"blocked\" ? \"blocked\" : \"human\""
           }
         },
         "ui": {
@@ -947,24 +952,24 @@
         "label": "aidlc-human-route",
         "kind": "decision",
         "config": {
-          "routes": [
-            {
-              "label": "merge",
-              "description": "aidlc-merge"
-            },
-            {
-              "label": "stop",
-              "description": "aidlc-stop"
-            }
-          ],
-          "question": "Check structured facts and child status.",
-          "strategy": ["expression"],
-          "expression": {
-            "jsonata": "lastOutput.value.decision = \"merge\" ? \"merge\" : \"stop\""
+          "answer": {
+            "type": "choice",
+            "options": [
+              {
+                "id": "merge",
+                "label": "merge",
+                "criteria": "aidlc-merge"
+              },
+              {
+                "id": "stop",
+                "label": "stop",
+                "criteria": "aidlc-stop"
+              }
+            ]
           },
-          "context": {
-            "messages": "none",
-            "includeLastOutput": true
+          "evaluation": {
+            "kind": "expression",
+            "jsonata": "lastOutput.value.decision = \"merge\" ? \"merge\" : \"stop\""
           }
         },
         "ui": {
@@ -979,15 +984,15 @@
         "config": {
           "command": "C:\\nvm4w\\nodejs\\node.exe",
           "args": [
-            "C:\\Users\\98jak\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-aidlc-full-v1\\examples\\aidlc\\support\\runtime.mjs",
+            "C:\\Users\\98jak\\.codex\\worktrees\\decision-kinds-98\\GraphGoblin\\examples\\aidlc\\support\\runtime.mjs",
             "human"
           ],
           "env": {
             "AIDLC_SETTINGS_HASH": "3104e7161ca9579453bc2b81e5a6ffbe426b192eb9daef582bef276637d449ed",
             "AIDLC_SUPPORT_HASH": "5b933f4cb90b72e93c438a5296773f8e675fc653a844f3e30b3879bb9dc6f1d7",
-            "AIDLC_REVIEW_LOOP_ID": "01M4A20AZ69E2FK2W23WGWJ23M",
-            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG",
-            "AIDLC_PR_CI_LOOP_ID": "01M4A20B05SZ4F1ZYGDVDVR8Z8"
+            "AIDLC_REVIEW_LOOP_ID": "00000000000000000000000000",
+            "AIDLC_QA_LOOP_ID": "00000000000000000000000000",
+            "AIDLC_PR_CI_LOOP_ID": "00000000000000000000000000"
           },
           "cwd": "workspace",
           "stdin": "thread",

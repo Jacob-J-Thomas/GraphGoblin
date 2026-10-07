@@ -1,4 +1,8 @@
 import type {
+  ChoiceAnswer,
+  ChoiceOption,
+  HarnessDefaults,
+  ModelCatalogEntry,
   ContextThread,
   Effort,
   HarnessId,
@@ -215,16 +219,16 @@ export interface HarnessPort {
 
 export interface ChoiceRequest {
   question: string;
-  options: { label: string; description: string }[];
+  options: ChoiceOption[];
   context: JsonValue;
   model?: string;
   effort?: Effort;
 }
 
-export interface ChoiceResult {
-  label: string;
-  confidence?: number;
-  alternatives?: { label: string; confidence?: number }[];
+export type ChoiceResult = ChoiceAnswer;
+
+export interface ModelCatalogPort {
+  list(): Promise<ModelCatalogEntry[]>;
 }
 
 export interface YesNoRequest {
@@ -254,7 +258,11 @@ export type ClassifierUnavailableReason =
   | 'CLASSIFIER_SECRET_UNREADABLE';
 
 export type ClassifierResolution =
-  | { status: 'ready'; classifier: ClassifierPort }
+  | {
+      status: 'ready';
+      classifier: ClassifierPort;
+      provenance: { provider: string; classifierId: string; model: string };
+    }
   | { status: 'unavailable'; reason: ClassifierUnavailableReason; message: string };
 
 export interface ClassifierRegistryPort {
@@ -359,13 +367,12 @@ export interface SecretsPort {
 
 export interface EngineSettings {
   /** Last-resort model and effort, below node, loop, and owner defaults. */
-  defaultModel: string;
-  defaultEffort: Effort;
+  defaults: HarnessDefaults;
   /**
    * The owner's default model and effort (Settings), read when a run starts or resumes. Either may
    * be absent; the configured defaults above then apply.
    */
-  ownerDefaults?: (ownerId: string) => Promise<{ model?: string; effort?: Effort }>;
+  ownerDefaults?: (ownerId: string) => Promise<HarnessDefaults>;
   maxConcurrentRuns: number;
   /** Max wall-clock for a single structured completion used in decisions and repair. */
   structuredTimeoutMs: number;
@@ -382,6 +389,7 @@ export interface EnginePorts {
   harnesses: Partial<Record<HarnessId, HarnessPort>>;
   deciders: DeciderPort[];
   classifiers: ClassifierRegistryPort;
+  modelCatalog: ModelCatalogPort;
   structured?: StructuredPort;
   scripts: ScriptPort;
   workspace: WorkspacePort;

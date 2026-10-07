@@ -29,9 +29,13 @@ it('refreshes committed handle ids and order once, including same-height changes
         id: 'pick',
         kind: 'decision',
         label: 'Pick',
-        config: { routes: [], question: 'Choose', strategy: ['jev'] },
+        config: {
+          answer: { type: 'choice', options: [] },
+          evaluation: { kind: 'expression', jsonata: '"yes"' },
+        },
       },
       ports: ['yes', 'no'],
+      portLabels: { yes: 'Yes', no: 'No' },
       issues: [],
     },
   };
@@ -51,7 +55,10 @@ it('refreshes committed handle ids and order once, including same-height changes
     const count = update.mock.calls.length;
     update.mockImplementationOnce(() => {
       // The refresh runs after React commits the new handles, not while rendering stale rows.
-      for (const port of ports) expect(screen.getByLabelText(`pick ${port}`)).toBeInTheDocument();
+      for (const port of ports)
+        expect(
+          screen.getByLabelText(`pick output ${props.data.portLabels[port] ?? port} (${port})`),
+        ).toBeInTheDocument();
     });
     props.data = { ...props.data, ports };
     view.rerender(card());
@@ -61,6 +68,7 @@ it('refreshes committed handle ids and order once, including same-height changes
   props.data = {
     ...props.data,
     ports: [...props.data.ports],
+    portLabels: { ...props.data.portLabels },
     node: { ...props.data.node, label: 'Choose' },
   };
   props.selected = true;

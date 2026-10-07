@@ -7,10 +7,15 @@
  */
 export {
   FieldControlsContext,
+  UnionPickersContext,
   joinPath,
   useField,
   type FieldControl,
   type FieldControls,
   type FieldProps,
+  type UnionPicker,
+  type UnionPickerOption,
+  type UnionPickerProps,
+  type UnionPickers,
 } from './fields/shared.js';
 export { DefaultField, Field, itemSummary } from './fields/structure.js';

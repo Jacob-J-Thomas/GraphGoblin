@@ -23,7 +23,7 @@ afterEach(async () => {
 });
 
 const waitLoop: LoopDefinitionInput = {
-  schemaVersion: 1,
+  schemaVersion: 2,
   name: 'sse',
   nodes: [
     { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },
@@ -124,12 +124,12 @@ describe('SSE event stream', () => {
       expect(released).toHaveBeenCalledOnce();
     },
   );
-  it('streams and pages the same ordered decision skips and exit evidence, advertised in OpenAPI', async () => {
+  it('streams and pages the same decision evidence and exit evidence, advertised in OpenAPI', async () => {
     t.jev.isAvailable = false;
     t.codex.judge = () =>
       Promise.resolve({ holds: false, confidence: 0.93, reasoning: 'More work is needed' });
     const definition: LoopDefinitionInput = {
-      schemaVersion: 1,
+      schemaVersion: 2,
       name: 'evaluation-stream',
       nodes: [
         { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
@@ -139,13 +139,14 @@ describe('SSE event stream', () => {
           kind: 'decision',
           label: 'Choose',
           config: {
-            question: 'Which?',
-            strategy: ['jev', 'expression'],
-            expression: { jsonata: '"yes"' },
-            routes: [
-              { label: 'yes', description: 'Continue' },
-              { label: 'no', description: 'Stop' },
-            ],
+            answer: {
+              type: 'choice',
+              options: [
+                { id: 'yes', label: 'Yes', criteria: 'Continue' },
+                { id: 'no', label: 'No', criteria: 'Stop' },
+              ],
+            },
+            evaluation: { kind: 'expression', jsonata: '"yes"' },
           },
         },
         {
@@ -167,6 +168,7 @@ describe('SSE event stream', () => {
         { id: 'd', from: { node: 'decide', port: 'no' }, to: { node: 'done' } },
       ],
     };
+    await t.container.repos.secretsFor('local').set('jev-api-key', 'synthetic-key');
     const id = await t.publishLoop(definition);
     const { run } = (
       await t.app.inject({ method: 'POST', url: `/loops/${id}/runs`, payload: {} })
@@ -183,13 +185,7 @@ describe('SSE event stream', () => {
     const page = (await t.app.inject(`/runs/${run.id}/events`)).json<{ items: RunEvent[] }>();
     expect(streamed).toEqual(page.items);
     expect(streamed.find((event) => event.type === 'decision.made')).toMatchObject({
-      skipped: [
-        {
-          strategy: 'jev',
-          code: 'CLASSIFIER_SECRET_MISSING',
-          message: 'The classifier key is not configured',
-        },
-      ],
+      diagnostics: [],
     });
     expect(streamed.find((event) => event.type === 'exit.evaluated')).toMatchObject({
       criteria: [
@@ -208,7 +204,7 @@ describe('SSE event stream', () => {
     const schema = (await t.app.inject('/openapi.json')).body;
     expect(schema).toContain('exit.evaluated');
     expect(schema).toContain('ExitCriterionEvaluation');
-    expect(schema).toContain('StrategySkip');
+    expect(schema).toContain('EvaluationDiagnostic');
   });
 
   it('persists safe exit diagnostics in pages and replayed SSE before run.failed', async () => {
@@ -231,6 +227,7 @@ describe('SSE event stream', () => {
           : node,
       ),
     };
+    await t.container.repos.secretsFor('local').set('jev-api-key', 'synthetic-key');
     const id = await t.publishLoop(definition);
     const { run } = (
       await t.app.inject({ method: 'POST', url: `/loops/${id}/runs`, payload: {} })

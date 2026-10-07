@@ -26,12 +26,12 @@ Stored as JSON in `loop_versions.definition`, validated by `contracts`.
 
 ```ts
 type LoopDefinition = {
-  schemaVersion: 1;
+  schemaVersion: 2;
   name: string;
   description?: string;
   settings: {
     workingDirectory: WorkingDirectorySpec; // see 04 and 06
-    defaults: { model?: string; effort?: Effort };
+    defaults: { byHarness: { codex?: { model?: string; effort?: Effort } } };
     maxIterations: number; // hard ceiling on loop-backs and on fresh visits per node; exit nodes may set lower
     subloopDepthLimit: number; // default 8
   };
@@ -193,7 +193,7 @@ Each event has `runId`, `seq`, `ts`, `type`, optional `nodeId`, and a typed `pay
 | `node.progress`                                                      | small structured progress from long nodes; harness items are summarised here |
 | `harness.session`                                                    | harness, sessionId, mode (`fresh` or `resumed`), model, effort               |
 | `harness.usage`                                                      | tokens as reported by the harness, informational                             |
-| `decision.made`                                                      | strategy, route, confidence, alternatives                                    |
+| `decision.made`                                                      | answer, portId, provenance, preserved historical diagnostics                 |
 | `signal.received`, `input.received`                                  | name, payload reference                                                      |
 | `heartbeat.beat`                                                     | beat number, probe result summary                                            |
 | `child_run.started`, `child_run.finished`                            | child run id, outcome                                                        |

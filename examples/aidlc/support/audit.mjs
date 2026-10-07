@@ -33,7 +33,7 @@ const sessions = records.flatMap((x) => x.events.filter((e) => e.type === 'harne
 const actualFresh = sessions.filter((e) => e.mode === 'fresh').length;
 const actualRepairs = sessions.length - actualFresh;
 const actualJev = records.flatMap((x) =>
-  x.events.filter((e) => e.type === 'decision.made' && e.strategy === 'jev'),
+  x.events.filter((e) => e.type === 'decision.made' && e.provenance.kind === 'classifier'),
 ).length;
 if (
   actualFresh !== ledger.counts.workerStarts ||

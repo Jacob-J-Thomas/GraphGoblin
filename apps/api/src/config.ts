@@ -2,7 +2,7 @@ import { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { EffortSchema, ModelNameSchema } from '@graphgoblin/contracts';
+import { HarnessDefaultsSchema, type HarnessDefaults } from '@graphgoblin/contracts';
 import { z } from 'zod';
 
 const bool = z
@@ -20,8 +20,7 @@ const EnvSchema = z.object({
     .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
     .default('info'),
   GG_MAX_CONCURRENT_RUNS: z.coerce.number().int().min(1).max(64).default(4),
-  GG_DEFAULT_MODEL: ModelNameSchema.default('gpt-6-luna'),
-  GG_DEFAULT_EFFORT: EffortSchema.default('low'),
+  GG_DEFAULTS: z.string().optional(),
   GG_TIMER_POLL_MS: z.coerce.number().int().min(50).max(60_000).default(1000),
   GG_HOOK_RATE_LIMIT: z.coerce.number().int().min(1).max(100_000).default(60),
   GG_SWAGGER_UI: bool.default(true),
@@ -44,8 +43,7 @@ export interface ApiConfig {
   masterKey?: string;
   logLevel: z.infer<typeof EnvSchema>['GG_LOG_LEVEL'];
   maxConcurrentRuns: number;
-  defaultModel: string;
-  defaultEffort: z.infer<typeof EffortSchema>;
+  defaults: HarnessDefaults;
   timerPollMs: number;
   /** Webhook deliveries accepted per endpoint per minute. */
   hookRateLimitPerMinute: number;
@@ -57,6 +55,16 @@ export interface ApiConfig {
   webDist?: string;
   /** Seeds the local owner's Jev secret at startup only when it is absent. */
   jevApiKey?: string;
+}
+
+export class ConfigurationUpgradeRequiredError extends Error {
+  readonly code = 'CONFIGURATION_UPGRADE_REQUIRED';
+  constructor() {
+    super(
+      'Replace GG_DEFAULT_MODEL/GG_DEFAULT_EFFORT with GG_DEFAULTS JSON using {byHarness:{codex:{model,effort}}}',
+    );
+    this.name = 'ConfigurationUpgradeRequiredError';
+  }
 }
 
 /** The default data directory: `~/.graphgoblin`. */
@@ -84,6 +92,14 @@ export function loadConfig(
   env: NodeJS.ProcessEnv = process.env,
   options: LoadConfigOptions = {},
 ): ApiConfig {
+  if (env.GG_DEFAULT_MODEL !== undefined || env.GG_DEFAULT_EFFORT !== undefined) {
+    throw new ConfigurationUpgradeRequiredError();
+  }
+  const rawDefaults =
+    env.GG_DEFAULTS === undefined
+      ? { byHarness: { codex: { model: 'gpt-6-luna', effort: 'low' } } }
+      : (JSON.parse(env.GG_DEFAULTS) as unknown);
+  const defaults = HarnessDefaultsSchema.parse(rawDefaults);
   const parsed = EnvSchema.safeParse(env);
   if (!parsed.success) {
     const issues = parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ');
@@ -102,8 +118,7 @@ export function loadConfig(
     ...(e.GG_MASTER_KEY ? { masterKey: e.GG_MASTER_KEY } : {}),
     logLevel: e.GG_LOG_LEVEL,
     maxConcurrentRuns: e.GG_MAX_CONCURRENT_RUNS,
-    defaultModel: e.GG_DEFAULT_MODEL,
-    defaultEffort: e.GG_DEFAULT_EFFORT,
+    defaults,
     timerPollMs: e.GG_TIMER_POLL_MS,
     hookRateLimitPerMinute: e.GG_HOOK_RATE_LIMIT,
     swaggerUi: e.GG_SWAGGER_UI,

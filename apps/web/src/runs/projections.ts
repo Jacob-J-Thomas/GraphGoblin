@@ -125,7 +125,7 @@ export function describeEvent(event: RunEvent): string {
     case 'harness.session':
       return 'nodeId' in event ? event.nodeId : '';
     case 'decision.made':
-      return `${strategyName(event.strategy)} chose ${event.route}${event.confidence !== undefined ? ` with confidence ${event.confidence}` : ''}${event.skipped.map((skip) => `; Skipped ${strategyName(skip.strategy)}: ${skip.message}`).join('')}`;
+      return `Chose ${event.answer.optionId} with ${event.provenance.kind}${event.provenance.provider ? ` via ${event.provenance.provider}` : ''}${event.provenance.model ? ` (${event.provenance.model})` : ''}${event.answer.confidence !== null ? ` with confidence ${event.answer.confidence}` : ''}${event.diagnostics.map((item) => `; ${item.code}: ${item.message}`).join('')}`;
     case 'exit.evaluated':
       return describeExit(event);
     case 'signal.received':

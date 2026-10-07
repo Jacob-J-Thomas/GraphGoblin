@@ -289,40 +289,39 @@ describe('form controls in the schema-driven form', () => {
       <Harness
         schema={NodeConfigSchemas.decision}
         initial={{
-          routes: [
-            { label: 'yes', description: '' },
-            { label: 'no', description: '' },
-          ],
-          question: 'q',
-          strategy: ['jev'],
+          answer: {
+            type: 'choice',
+            options: [
+              { id: 'yes', label: 'Yes', criteria: 'Choose yes' },
+              { id: 'no', label: 'No', criteria: 'Choose no' },
+            ],
+          },
+          evaluation: {
+            kind: 'llm',
+            harness: 'codex',
+            model: { mode: 'inherit' },
+            effort: { mode: 'inherit' },
+            question: 'q',
+            context: { vars: ['topic'] },
+          },
         }}
         spy={vi.fn()}
       />,
     );
-    const strategy = screen.getByRole('group', { name: 'Strategy' });
-    expect(within(strategy).getByText('*')).toHaveAttribute('aria-hidden', 'true');
-    // The rule, then the help from the field's metadata.
-    expect(strategy).toHaveAccessibleDescription(
-      'Choose at least 1. Ordered fallback chain of strategies.',
+    const options = screen.getByRole('group', { name: 'Options' });
+    expect(options.querySelector(':scope > legend span[aria-hidden="true"]')).not.toBeNull();
+    expect(options).toHaveAccessibleDescription(
+      'At least 2 items. Two to sixty-four uniquely labelled options, each with a stable id and a nonblank criterion.',
     );
-    for (const box of within(strategy).getAllByRole('checkbox')) expect(box).not.toBeRequired();
-    // Unchecking every strategy: the group is described by its rule and the error.
-    await user.click(within(strategy).getByRole('checkbox', { name: 'jev' }));
-    await waitFor(() =>
-      expect(strategy).toHaveAccessibleDescription(
-        /^Choose at least 1\. Ordered fallback chain of strategies\. .*>=1 items/,
-      ),
-    );
-    expect(within(strategy).getByRole('alert')).toBeInTheDocument();
-    const routes = screen.getByRole('group', { name: 'Routes' });
-    expect(routes).toHaveAccessibleDescription(
-      'At least 2 items. At least two labelled routes, each with a description the decider reads.',
-    );
-    // Optional collections carry no marker and no rule, only their help.
-    openAdvanced();
+    await user.click(within(options).getByRole('button', { name: 'Remove options 1' }));
+    await waitFor(() => expect(within(options).getByRole('alert')).toHaveTextContent(/>=2 items/));
+    expect(options).toHaveAccessibleDescription(/At least 2 items\..*>=2 items/);
+    // Optional context variables carry no marker or collection rule, only their help.
     const vars = screen.getByRole('group', { name: 'Vars' });
-    expect(within(vars).queryByText('*')).toBeNull();
-    expect(vars).toHaveAccessibleDescription('Variables the decider reads.');
+    expect(vars.querySelector(':scope > legend span[aria-hidden="true"]')).toBeNull();
+    expect(vars).toHaveAccessibleDescription(
+      'Variable names included in provider state; omission includes all variables and does not restrict the question template.',
+    );
   });
 
   it('keeps Row usable with plain children and no control id', () => {

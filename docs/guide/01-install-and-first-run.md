@@ -94,15 +94,15 @@ With no configuration the API listens on `127.0.0.1:4747`, keeps its data in `~/
 
 ```powershell
 $env:GG_DATA_DIR = 'D:\graphgoblin-data'
-$env:GG_DEFAULT_MODEL = 'gpt-6-luna'
-$env:GG_DEFAULT_EFFORT = 'low'
+$env:GG_DEFAULTS = '{"byHarness":{"codex":{"model":"gpt-6-luna","effort":"low"}}}'
 pnpm.cmd start
 ```
 
 In Bash:
 
 ```bash
-export GG_DATA_DIR="$HOME/graphgoblin-data" GG_DEFAULT_MODEL=gpt-6-luna GG_DEFAULT_EFFORT=low
+export GG_DATA_DIR="$HOME/graphgoblin-data"
+export GG_DEFAULTS='{"byHarness":{"codex":{"model":"gpt-6-luna","effort":"low"}}}'
 pnpm start
 ```
 
@@ -130,8 +130,7 @@ node apps/api/dist/main.js
 | `GG_WEB_DIST`            | Unset: the checkout's `apps/web/dist` when it has been built. Point it at another built web directory, or set it empty to serve no UI.                                                                                    |
 | `GG_REQUIRE_API_KEY`     | `false`. Set `true` to require a key on [every non-public route][public-routes]; the web app then asks for one. See [the first key](06-settings-and-secrets.md#create-api-keys).                                          |
 | `GG_MASTER_KEY`          | Unset. Base64 of 32 bytes; otherwise the key lives in `<data-directory>/master.key`. See [Preserve the master key](06-settings-and-secrets.md#preserve-the-master-key).                                                   |
-| `GG_DEFAULT_MODEL`       | `gpt-6-luna`. Use a model available to your Codex account.                                                                                                                                                                |
-| `GG_DEFAULT_EFFORT`      | `low`. Node and loop settings can override it.                                                                                                                                                                            |
+| `GG_DEFAULTS`            | JSON harness-keyed defaults, e.g. `{"byHarness":{"codex":{"model":"gpt-6-luna","effort":"low"}}}`. Old default-model/effort environment variables are rejected with upgrade guidance.                                     |
 | `GG_CODEX_BINARY`        | Unset, so the SDK uses its bundled Codex binary. Set an absolute native executable path to override it.                                                                                                                   |
 | `GG_MAX_CONCURRENT_RUNS` | `4`, range 1 to 64. Runs executing at once; parked runs do not count.                                                                                                                                                     |
 | `GG_TIMER_POLL_MS`       | `1000`. How often timers, cron schedules, and poll triggers are checked.                                                                                                                                                  |

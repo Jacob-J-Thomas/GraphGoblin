@@ -13,6 +13,8 @@ export interface LocalDraft {
   synced: boolean;
   /** The server draft token this copy is based on, sent as `If-Match` when it is saved. */
   baseToken?: string;
+  /** Present only when a legacy local copy was preserved because safe conversion was impossible. */
+  migrationIssues?: { code: string; path: string; message: string }[];
 }
 
 /**
@@ -197,7 +199,13 @@ export async function clearLocalDraft(loopId: string): Promise<void> {
   await run(async (store) => {
     await del(loopId, store);
     await del(setAsideKey(loopId), store);
+    await del(archiveKey(loopId), store);
   });
+}
+
+/** Remove only the live mirror after a legacy copy has been durably set aside. */
+export async function clearActiveLocalDraft(loopId: string): Promise<void> {
+  await run((store) => del(loopId, store));
 }
 
 /**
@@ -218,4 +226,55 @@ export async function loadSetAsideDraft(loopId: string): Promise<LocalDraft | un
 
 export async function clearSetAsideDraft(loopId: string): Promise<void> {
   await run((store) => del(setAsideKey(loopId), store));
+}
+
+/** Raw device copies that could not be converted safely, kept outside the live autosave key. */
+function archiveKey(loopId: string): string {
+  return `${loopId}:raw-archive`;
+}
+
+export async function loadArchivedDrafts(loopId: string): Promise<LocalDraft[]> {
+  return (await loadDrafts(archiveKey(loopId))) ?? [];
+}
+
+async function loadDrafts(key: string): Promise<LocalDraft[] | undefined> {
+  try {
+    return await run((store) => get<LocalDraft[]>(key, store));
+  } catch (error) {
+    if (error instanceof DraftStoreBlockedError) return undefined;
+    throw error;
+  }
+}
+
+export async function saveArchivedDraft(draft: LocalDraft): Promise<void> {
+  await run((store) =>
+    update<LocalDraft[]>(
+      archiveKey(draft.loopId),
+      (copies) => {
+        const current = copies ?? [];
+        const duplicate = current.some(
+          (copy) =>
+            copy.savedAt === draft.savedAt &&
+            JSON.stringify(copy.definition) === JSON.stringify(draft.definition),
+        );
+        return duplicate ? current : [...current, draft];
+      },
+      store,
+    ),
+  );
+}
+
+export async function clearArchivedDraft(loopId: string, draft: LocalDraft): Promise<void> {
+  await run((store) =>
+    update<LocalDraft[]>(
+      archiveKey(loopId),
+      (copies) =>
+        (copies ?? []).filter(
+          (copy) =>
+            copy.savedAt !== draft.savedAt ||
+            JSON.stringify(copy.definition) !== JSON.stringify(draft.definition),
+        ),
+      store,
+    ),
+  );
 }

@@ -4,56 +4,64 @@ import {
   type LoopDefinitionInput,
 } from '@graphgoblin/contracts';
 import type { APIRequestContext, Page } from '@playwright/test';
-import { closeNode, control, expect, openNode, test } from './fixtures.js';
+import { closeNode, expect, openNode, test } from './fixtures.js';
 
 const handle = (page: Page, node: string, port: string) =>
   page.locator(`.react-flow__handle[data-nodeid="${node}"][data-handleid="${port}"]`);
 const edge = (page: Page, id: string) => page.locator(`.react-flow__edge[data-id="${id}"]`);
 
-function decisionLoop(): LoopDefinitionInput {
-  return {
-    schemaVersion: 1,
-    name: 'Dynamic decision routes',
-    nodes: [
-      {
-        id: 'start',
-        kind: 'trigger',
-        label: 'Start',
-        config: { subtype: 'manual' },
-        ui: { x: 0, y: 80 },
+function decisionLoop(optionCount = 2): LoopDefinitionInput {
+  const ids = Array.from({ length: optionCount }, (_, index) =>
+    index < 2 ? ['yes', 'no'][index]! : `route-${index + 1}`,
+  );
+  const options = ids.map((id, index) => ({
+    id,
+    label:
+      index === 0
+        ? 'Yes'
+        : index === 1
+          ? 'No'
+          : index === optionCount - 1
+            ? String(optionCount)
+            : `Option ${index + 1}`,
+    criteria: `Criterion ${index + 1}`,
+  }));
+  const nodes: LoopDefinitionInput['nodes'] = [
+    {
+      id: 'start',
+      kind: 'trigger',
+      label: 'Start',
+      config: { subtype: 'manual' },
+      ui: { x: 0, y: 80 },
+    },
+    {
+      id: 'pick',
+      kind: 'decision',
+      label: 'Pick',
+      config: {
+        answer: { type: 'choice', options },
+        evaluation: { kind: 'expression', jsonata: `"${ids[0]}"` },
+        recordAlternatives: true,
       },
-      {
-        id: 'pick',
-        kind: 'decision',
-        label: 'Pick',
-        config: {
-          routes: [
-            { label: 'yes', description: 'First' },
-            { label: 'no', description: 'Second' },
-          ],
-          question: 'Which branch?',
-          strategy: ['jev'],
-        },
-        ui: { x: 260, y: 80 },
-      },
-      {
-        id: 'branch',
-        kind: 'mutate',
-        label: 'Third branch',
-        config: {
-          operations: [{ op: 'append-message', role: 'assistant', content: 'Third branch ran' }],
-        },
-        ui: { x: 520, y: 260 },
-      },
-      { id: 'done', kind: 'exit', label: 'Done', config: {}, ui: { x: 800, y: 80 } },
-    ],
-    edges: [
-      { id: 'start-pick', from: { node: 'start', port: 'out' }, to: { node: 'pick' } },
-      { id: 'yes-edge', from: { node: 'pick', port: 'yes' }, to: { node: 'done' } },
-      { id: 'no-edge', from: { node: 'pick', port: 'no' }, to: { node: 'done' } },
-      { id: 'branch-edge', from: { node: 'branch', port: 'out' }, to: { node: 'done' } },
-    ],
-  };
+      ui: { x: 260, y: 80 },
+    },
+    {
+      id: 'branch',
+      kind: 'mutate',
+      label: 'Branch',
+      config: { operations: [{ op: 'append-message', role: 'assistant', content: 'Branch ran' }] },
+      ui: { x: 520, y: 260 },
+    },
+    { id: 'done', kind: 'exit', label: 'Done', config: {}, ui: { x: 800, y: 80 } },
+  ];
+  const edges: LoopDefinitionInput['edges'] = [
+    { id: 'start-pick', from: { node: 'start', port: 'out' }, to: { node: 'pick' } },
+    ...ids
+      .slice(0, 2)
+      .map((id) => ({ id: `${id}-edge`, from: { node: 'pick', port: id }, to: { node: 'done' } })),
+    { id: 'branch-done', from: { node: 'branch', port: 'out' }, to: { node: 'done' } },
+  ];
+  return { schemaVersion: 2, name: `Decision with ${optionCount} options`, nodes, edges };
 }
 
 async function openLoop(page: Page, request: APIRequestContext, definition = decisionLoop()) {
@@ -79,169 +87,143 @@ async function savedDraft(page: Page, request: APIRequestContext, loopId: string
   return LoopDefinitionSchema.parse(body.draft.definition);
 }
 
-test('add, drag-connect, rename, remove, publish and run the new decision branch without reloading', async ({
+test('option IDs stay connected when numeric display labels change, save, and reload', async ({
   page,
   request,
 }) => {
   const loopId = await openLoop(page, request);
   let dialog = await openNode(page, 'pick');
-  await dialog.getByRole('button', { name: 'Add routes', exact: true }).click();
-  await dialog.locator('[data-field="routes.2.label"]').getByRole('textbox').fill('third');
-  await dialog.locator('[data-field="routes.2.description"]').getByRole('textbox').fill('Third');
-  // The new output is offered by Connections while the dialog is still open.
-  await expect(
-    dialog.getByLabel('Output').getByRole('option', { name: 'third', exact: true }),
-  ).toBeAttached();
+  const method = dialog.getByRole('radiogroup', { name: 'Evaluation method' });
+  const classifier = method.getByRole('radio', { name: 'Classifier' });
+  await classifier.focus();
+  await page.keyboard.press('Space');
+  await expect(classifier).toBeChecked();
+  const expression = method.getByRole('radio', { name: 'Expression' });
+  await expression.focus();
+  await page.keyboard.press('Space');
+  await expect(expression).toBeChecked();
+  const jsonata = dialog.locator('[data-field="evaluation.jsonata"] [role="textbox"]');
+  await jsonata.fill('"yes"');
+
+  await dialog.getByRole('button', { name: 'Add options', exact: true }).click();
+  await dialog.locator('[data-field="answer.options.2.id"] input').fill('route-3');
+  await dialog.locator('[data-field="answer.options.2.label"] input').fill('7');
+  await dialog
+    .locator('[data-field="answer.options.2.criteria"] input')
+    .fill('A numeric display label does not become a route port');
+  await expect(handle(page, 'pick', 'route-3')).toBeVisible();
+  const output = dialog.getByLabel('Output', { exact: true });
+  await output.selectOption('route-3');
+  await dialog.getByLabel('To', { exact: true }).selectOption('branch');
+  await dialog.getByRole('button', { name: 'Connect', exact: true }).click();
+  const connections = dialog.getByRole('region', { name: 'Connections' });
+  await expect(connections).toContainText('7 (route-3)');
+
+  // A blank in-progress ID keeps ownership on the last valid port. Repairing the same row moves
+  // that edge with it, and restoring the ID does not create or transfer another connection.
+  const thirdId = dialog.locator('[data-field="answer.options.2.id"] input');
+  await thirdId.fill('');
+  await expect(connections).toContainText('route-3');
+  await thirdId.fill('route-4');
+  await expect(connections).toContainText('7 (route-4)');
+  await expect(handle(page, 'pick', 'route-4')).toBeVisible();
+  await thirdId.fill('route-3');
+  await expect(connections).toContainText('7 (route-3)');
   await closeNode(page);
-  await handle(page, 'pick', 'third').dragTo(handle(page, 'branch', 'in'));
+
   const connected = (await savedDraft(page, request, loopId)).edges.find(
-    (e) => e.from.node === 'pick' && e.from.port === 'third',
+    (item) => item.from.port === 'route-3',
   )!;
   expect(connected.to.node).toBe('branch');
+  await page.reload();
+  await expect(handle(page, 'pick', 'route-3')).toBeVisible();
+  await expect(page.getByTestId('node-pick')).toContainText('7');
 
   dialog = await openNode(page, 'pick');
-  await dialog.locator('[data-field="routes.2.label"]').getByRole('textbox').fill('other');
-  await expect(dialog.getByRole('region', { name: 'Connections' })).toContainText('other');
+  await dialog.locator('[data-field="answer.options.2.label"] input').fill('Reviewed');
   await closeNode(page);
-  await expect(edge(page, connected.id)).toHaveAttribute('aria-label', 'pick other to branch');
-  expect(
-    (await savedDraft(page, request, loopId)).edges.find((e) => e.id === connected.id)?.from.port,
-  ).toBe('other');
+  const afterLabelEdit = await savedDraft(page, request, loopId);
+  expect(afterLabelEdit.edges.find((item) => item.id === connected.id)?.from.port).toBe('route-3');
+  const decisionNode = afterLabelEdit.nodes.find((node) => node.id === 'pick');
+  if (decisionNode?.kind !== 'decision') throw new Error('The saved decision node is missing.');
+  expect(decisionNode.config.evaluation).toEqual({
+    kind: 'expression',
+    jsonata: '"yes"',
+  });
+  await expect(edge(page, connected.id)).toHaveAttribute(
+    'aria-label',
+    'pick Reviewed (route-3) to branch',
+  );
 
-  dialog = await openNode(page, 'pick');
-  await dialog.getByRole('button', { name: 'Remove routes 1', exact: true }).click();
-  await expect(dialog.getByRole('button', { name: 'Remove edge yes-edge' })).toHaveCount(0);
-  await closeNode(page);
-  await expect(edge(page, 'yes-edge')).toHaveCount(0);
+  // Expression evaluation selects the stable ID and the route follows the matching edge.
   await page.getByRole('button', { name: 'Publish', exact: true }).click();
   await expect(page.getByText('Published version 1.')).toBeVisible();
-  await control(request, '/deciders/route', { label: 'other' });
-  try {
-    await page.getByRole('link', { name: 'Open in Runs' }).first().click();
-    await page.getByRole('button', { name: 'Start run' }).click();
-    await expect(page.locator('[data-status="succeeded"]').first()).toBeVisible();
-    await expect(page.getByLabel('Messages')).toContainText('Third branch ran');
-    const runId = page.url().split('/').at(-1)!;
-    const events = (await (await request.get(`/runs/${runId}/events`)).json()) as {
-      items: unknown;
-    };
-    const parsed = RunEventSchema.array().parse(events.items);
-    expect(parsed.find((e) => e.type === 'decision.made')).toMatchObject({
-      route: 'other',
-      strategy: 'jev',
-    });
-    expect(parsed.some((e) => e.type === 'node.finished' && e.nodeId === 'branch')).toBe(true);
-  } finally {
-    await control(request, '/deciders/route');
-  }
+  await page.getByRole('link', { name: 'Open in Runs' }).first().click();
+  await page.getByRole('button', { name: 'Start run' }).click();
+  await expect(page.locator('[data-status="succeeded"]').first()).toBeVisible();
+  const runId = page.url().split('/').at(-1)!;
+  const events = (await (await request.get(`/runs/${runId}/events`)).json()) as { items: unknown };
+  const parsed = RunEventSchema.array().parse(events.items);
+  expect(parsed.find((item) => item.type === 'decision.made')).toMatchObject({
+    answer: { optionId: 'yes' },
+    portId: 'yes',
+    provenance: { kind: 'expression' },
+  });
 });
 
-test('a same-height free route rename is drag-connectable immediately and through Connections', async ({
+test('keyboard connection reaches the eighth option by its ID while showing its numeric label', async ({
   page,
   request,
 }) => {
-  const definition = decisionLoop();
-  definition.edges = definition.edges.filter((e) => e.id !== 'no-edge');
-  const loopId = await openLoop(page, request, definition);
-  const before = await page.getByTestId('node-pick').boundingBox();
-  let dialog = await openNode(page, 'pick');
-  await dialog.locator('[data-field="routes.1.label"]').getByRole('textbox').fill('go');
-  await closeNode(page);
-  expect((await page.getByTestId('node-pick').boundingBox())!.height).toBe(before!.height);
-  await handle(page, 'pick', 'go').dragTo(handle(page, 'branch', 'in'));
-  const connected = (await savedDraft(page, request, loopId)).edges.find(
-    (e) => e.from.port === 'go',
-  );
-  expect(connected?.to.node).toBe('branch');
-  dialog = await openNode(page, 'pick');
-  await dialog.getByRole('button', { name: `Remove edge ${connected!.id}` }).click();
-  await dialog.locator('[data-field="routes.1.label"]').getByRole('textbox').fill('on');
-  await dialog.getByLabel('Output', { exact: true }).selectOption('on');
-  await dialog.getByLabel('To', { exact: true }).selectOption('branch');
-  await dialog.getByRole('button', { name: 'Connect', exact: true }).click();
+  const loopId = await openLoop(page, request, decisionLoop(8));
+  await expect(
+    page.locator('.react-flow__handle[data-nodeid="pick"]:not([data-handleid="in"])'),
+  ).toHaveCount(8);
+  const dialog = await openNode(page, 'pick');
+  const output = dialog.getByLabel('Output', { exact: true });
+  await output.focus();
+  for (let step = 0; step < 5; step += 1) await output.press('ArrowDown');
+  await output.press('Enter');
+  await expect(output).toHaveValue('route-8');
+  await expect(output.getByRole('option', { selected: true })).toHaveText('8 (route-8)');
+  const target = dialog.getByLabel('To', { exact: true });
+  await target.focus();
+  await target.press('Enter');
+  await expect(target).toHaveValue('branch');
+  const connect = dialog.getByRole('button', { name: 'Connect', exact: true });
+  await connect.focus();
+  await connect.press('Enter');
+  await expect(dialog.getByRole('region', { name: 'Connections' })).toContainText('8 (route-8)');
   await closeNode(page);
   expect(
-    (await savedDraft(page, request, loopId)).edges.find((e) => e.from.port === 'on')?.to.node,
+    (await savedDraft(page, request, loopId)).edges.find((item) => item.from.port === 'route-8')?.to
+      .node,
   ).toBe('branch');
 });
 
-test('removing a connected route removes its edge in the same undo step', async ({
+test('removing a connected option removes its edge in the same undo step', async ({
   page,
   request,
 }) => {
-  const definition = decisionLoop();
-  const pick = definition.nodes.find((n) => n.kind === 'decision')!;
-  pick.config.routes.push({ label: 'third', description: 'Third' });
+  const definition = decisionLoop(3);
+  const pick = definition.nodes.find((node) => node.kind === 'decision')!;
+  pick.config.answer.options[2]!.label = 'Third';
   definition.edges.push({
-    id: 'third-branch',
-    from: { node: 'pick', port: 'third' },
+    id: 'third-edge',
+    from: { node: 'pick', port: 'route-3' },
     to: { node: 'branch' },
   });
   const loopId = await openLoop(page, request, definition);
   const dialog = await openNode(page, 'pick');
-  await dialog.getByRole('button', { name: 'Remove routes 1', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Remove options 1', exact: true }).click();
   await closeNode(page);
   await expect(edge(page, 'yes-edge')).toHaveCount(0);
-  expect((await savedDraft(page, request, loopId)).edges.some((e) => e.id === 'yes-edge')).toBe(
-    false,
-  );
+  expect(
+    (await savedDraft(page, request, loopId)).edges.some((item) => item.id === 'yes-edge'),
+  ).toBe(false);
   await page.getByRole('button', { name: /^Undo / }).click();
   await expect(edge(page, 'yes-edge')).toHaveCount(1);
   await expect(handle(page, 'pick', 'yes')).toBeVisible();
   await page.getByRole('button', { name: /^Redo / }).click();
   await expect(edge(page, 'yes-edge')).toHaveCount(0);
 });
-
-for (const first of [1, 2]) {
-  test(`incomplete route ownership survives completion starting with row ${first} and removal`, async ({
-    page,
-    request,
-  }) => {
-    const definition = decisionLoop();
-    const pick = definition.nodes.find((node) => node.kind === 'decision')!;
-    pick.config.routes.push({ label: 'third', description: 'Third' });
-    definition.edges = definition.edges.filter((connection) => connection.id !== 'no-edge');
-    definition.edges.push({
-      id: 'third-branch',
-      from: { node: 'pick', port: 'third' },
-      to: { node: 'branch' },
-    });
-    const loopId = await openLoop(page, request, definition);
-    let dialog = await openNode(page, 'pick');
-    const label = (index: number) =>
-      dialog.locator(`[data-field="routes.${index}.label"]`).getByRole('textbox');
-    await label(1).fill('');
-    await label(2).fill('');
-    await label(first).fill(first === 1 ? 'free' : 'other');
-    if (first === 2)
-      await expect(edge(page, 'third-branch')).toHaveAttribute(
-        'aria-label',
-        'pick other to branch',
-      );
-    await label(3 - first).fill(first === 1 ? 'other' : 'free');
-    await closeNode(page);
-    const completed = await savedDraft(page, request, loopId);
-    expect(completed.edges.find((connection) => connection.id === 'third-branch')?.from.port).toBe(
-      'other',
-    );
-    expect(completed.edges.some((connection) => connection.from.port === 'free')).toBe(false);
-    dialog = await openNode(page, 'pick');
-    await label(2).fill('');
-    await dialog.getByRole('button', { name: 'Remove routes 3', exact: true }).click();
-    await closeNode(page);
-    expect(
-      (await savedDraft(page, request, loopId)).edges.some(
-        (connection) => connection.id === 'third-branch',
-      ),
-    ).toBe(false);
-    await page.getByRole('button', { name: /^Undo / }).click();
-    dialog = await openNode(page, 'pick');
-    await label(2).fill('final');
-    await closeNode(page);
-    expect(
-      (await savedDraft(page, request, loopId)).edges.find(
-        (connection) => connection.id === 'third-branch',
-      )?.from.port,
-    ).toBe('final');
-  });
-}

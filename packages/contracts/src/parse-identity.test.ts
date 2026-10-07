@@ -60,7 +60,7 @@ describe('parsing is unchanged', () => {
   it('parses an export envelope to the golden value', async () => {
     const envelope = {
       format: 'graphgoblin-loop',
-      formatVersion: 1,
+      formatVersion: 2,
       exportedAt: FIXTURE_TS,
       loop: everyFieldLoop(),
     };
@@ -73,12 +73,20 @@ describe('parsing is unchanged', () => {
     const empty: Record<string, unknown> = {
       trigger: { subtype: 'manual' },
       decision: {
-        routes: [
-          { label: 'a', description: '' },
-          { label: 'b', description: '' },
-        ],
-        question: '',
-        strategy: ['codex'],
+        answer: {
+          type: 'choice',
+          options: [
+            { id: 'a', label: 'A', criteria: 'A' },
+            { id: 'b', label: 'B', criteria: 'B' },
+          ],
+        },
+        evaluation: {
+          kind: 'llm',
+          harness: 'codex',
+          model: { mode: 'inherit' },
+          effort: { mode: 'inherit' },
+          question: '',
+        },
       },
       inference: { prompt: { template: '' } },
       script: { command: 'true' },

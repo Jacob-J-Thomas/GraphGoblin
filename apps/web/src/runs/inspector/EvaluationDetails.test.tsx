@@ -54,4 +54,30 @@ describe('EvaluationDetails', () => {
     rerender(<EvaluationDetails event={event('run', 1, 'run.cancelled', {})} />);
     expect(container).toBeEmptyDOMElement();
   });
+
+  it('labels LLM confidence as self-reported and marks missing historical settings', () => {
+    render(
+      <EvaluationDetails
+        event={event('run', 1, 'decision.made', {
+          nodeId: 'pick',
+          answer: { type: 'choice', optionId: 'yes', confidence: 0.7, probabilities: null },
+          portId: 'yes',
+          provenance: {
+            kind: 'llm',
+            provider: null,
+            classifierId: null,
+            model: null,
+            effort: null,
+          },
+          diagnostics: [],
+        })}
+      />,
+    );
+    expect(screen.getByText('Self-reported confidence')).toBeInTheDocument();
+    expect(
+      screen.getByText(/reported by the evaluator; not a calibrated classifier score/),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText('Not recorded')).toHaveLength(2);
+    expect(screen.getByText('0.7')).toBeInTheDocument();
+  });
 });

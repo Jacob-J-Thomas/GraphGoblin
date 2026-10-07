@@ -64,7 +64,7 @@ describe('LoopsPage', () => {
     const input = await screen.findByLabelText('Import an exported loop (JSON)');
     const exported = {
       format: 'graphgoblin-loop',
-      formatVersion: 1,
+      formatVersion: 2,
       exportedAt: TS,
       loop: kitchenSinkLoop(),
     };
@@ -100,7 +100,7 @@ describe('LoopsPage', () => {
     fireEvent.change(input, { target: { files: [] } });
   });
 
-  it('lists the field paths when importing an outdated export', async () => {
+  it('directs a v1 export to the offline upgrade command', async () => {
     const user = userEvent.setup();
     renderApp('/loops', new FakeApi());
     const document = {
@@ -114,13 +114,8 @@ describe('LoopsPage', () => {
       new File([JSON.stringify(document)], 'old-loop.json', { type: 'application/json' }),
     );
     const alert = await screen.findByRole('alert');
-    expect(alert).toHaveTextContent('LOOP_IMPORT_ERROR');
-    const details = within(alert).getAllByRole('listitem');
-    expect(details).toHaveLength(2);
-    expect(details.map((item) => item.textContent)).toEqual([
-      expect.stringContaining('loop.settings.defaults.harness:'),
-      expect.stringContaining('loop.settings.defaults.extra:'),
-    ]);
+    expect(alert).toHaveTextContent('LOOP_FORMAT_UPGRADE_REQUIRED');
+    expect(alert).toHaveTextContent('Use the offline graphgoblin-upgrade export command');
   });
 
   it('exports the published version or the draft as a download', async () => {

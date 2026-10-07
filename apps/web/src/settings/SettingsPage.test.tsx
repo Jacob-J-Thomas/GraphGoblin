@@ -467,7 +467,7 @@ describe('SettingsPage', () => {
     'shows the saved %s default truthfully until another model is chosen',
     async (state) => {
       const api = seeded();
-      api.settingsValues = { defaultModel: 'gpt-6-luna' };
+      api.settingsValues = { defaults: { byHarness: { codex: { model: 'gpt-6-luna' } } } };
       renderApp('/settings', api);
       const user = userEvent.setup();
       const enabled = await screen.findByRole('switch', { name: 'Enable Luna' });
@@ -482,39 +482,51 @@ describe('SettingsPage', () => {
       const name = state === 'disabled' ? 'Luna (disabled)' : 'gpt-6-luna (not in catalog)';
       await waitFor(() => expect(within(model).getByRole('option', { name })).toBeInTheDocument());
       expect(model).toHaveValue('gpt-6-luna');
-      expect(api.settingsValues['defaultModel']).toBe('gpt-6-luna');
+      expect(api.settingsValues['defaults']).toEqual({
+        byHarness: { codex: { model: 'gpt-6-luna' } },
+      });
       expect(model).toHaveAccessibleDescription(
-        'Runs keep using this model until you choose another model or (server default).',
+        'This saved model is unavailable. Choose an enabled catalog model or (server default) before publishing or running.',
       );
       if (state === 'disabled') {
         await user.click(enabled);
         await waitFor(() =>
           expect(within(model).getByRole('option', { name: 'Luna' })).toBeInTheDocument(),
         );
-        expect(screen.queryByText(/Runs keep using this model/)).not.toBeInTheDocument();
+        expect(screen.queryByText(/This saved model is unavailable/)).not.toBeInTheDocument();
       }
       await user.selectOptions(model, '');
-      await waitFor(() => expect(api.settingsValues).not.toHaveProperty('defaultModel'));
+      await waitFor(() => expect(api.settingsValues).not.toHaveProperty('defaults'));
       await waitFor(() => expect(model).toHaveValue(''));
-      expect(screen.queryByText(/Runs keep using this model/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/This saved model is unavailable/)).not.toBeInTheDocument();
     },
   );
 
   it('saves default model and effort', async () => {
     const user = userEvent.setup();
     const api = seeded();
-    api.settingsValues = { defaultModel: 'gpt-6-luna' };
+    api.settingsValues = { defaults: { byHarness: { codex: { model: 'gpt-6-luna' } } } };
     renderApp('/settings', api);
     const model = await screen.findByLabelText('Default model');
     await waitFor(() => expect(model).toHaveValue('gpt-6-luna'));
     expect(within(model).queryByText('Sol')).not.toBeInTheDocument();
     await user.selectOptions(screen.getByLabelText('Default effort'), 'high');
-    await waitFor(() => expect(api.settingsValues).toMatchObject({ defaultEffort: 'high' }));
+    await waitFor(() =>
+      expect(api.settingsValues).toMatchObject({
+        defaults: { byHarness: { codex: { model: 'gpt-6-luna', effort: 'high' } } },
+      }),
+    );
     await waitFor(() => expect(screen.getByLabelText('Default effort')).toHaveValue('high'));
-    // "(server default)" removes the setting instead of storing an empty model.
+    // Choosing the server default for model keeps the independently selected effort.
     await user.selectOptions(model, '');
-    await waitFor(() => expect(api.settingsValues).not.toHaveProperty('defaultModel'));
+    await waitFor(() =>
+      expect(api.settingsValues).toMatchObject({
+        defaults: { byHarness: { codex: { effort: 'high' } } },
+      }),
+    );
     await waitFor(() => expect(model).toHaveValue(''));
+    await user.selectOptions(screen.getByLabelText('Default effort'), '');
+    await waitFor(() => expect(api.settingsValues).not.toHaveProperty('defaults'));
   });
 
   it('sets and deletes secrets without ever showing values', async () => {

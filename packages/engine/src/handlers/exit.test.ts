@@ -21,13 +21,36 @@ function loop(config: Partial<ExitConfig>): LoopDefinitionInput {
 }
 
 describe('exit evaluation evidence', () => {
+  it('retains the actual resolved Codex model when the judge call fails', async () => {
+    const e = await createTestEngine();
+    e.ports.codexDecider.judge = () =>
+      Promise.reject(
+        Object.assign(new Error('private judge error'), {
+          code: 'DECIDER_HTTP_ERROR',
+          status: 503,
+        }),
+      );
+    const v = e.publish(
+      loop({
+        criteria: [{ when: 'predicate', strategy: 'codex', question: 'Done?', outcome: 'success' }],
+      }),
+    );
+    const r = await e.runToIdle(v.loopId);
+    expect(e.events(r.id).find((event) => event.type === 'exit.evaluated')).toMatchObject({
+      criteria: [
+        { status: 'error', model: 'gpt-6-luna', diagnostic: { code: 'DECIDER_HTTP_ERROR' } },
+      ],
+    });
+  });
+
   it('emits valid evidence for a Codex model at the configured maximum', async () => {
     const e = await createTestEngine();
     const model = 'm'.repeat(MAX_MODEL_NAME_LENGTH);
+    e.ports.modelCatalog.entries.push({ ...e.ports.modelCatalog.entries[0]!, model });
     const definition = loop({
       criteria: [{ when: 'predicate', strategy: 'codex', question: 'Done?', outcome: 'success' }],
     });
-    definition.settings = { defaults: { model } };
+    definition.settings = { defaults: { byHarness: { codex: { model } } } };
     const v = e.publish(definition);
     const run = await e.runToIdle(v.loopId);
     expect(run.status).toBe('succeeded');

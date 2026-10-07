@@ -1,5 +1,7 @@
 # ADR-0019 - Harness is chosen on inference nodes only
 
+Partially superseded by [ADR-0022](ADR-0022-explicit-decision-evaluation.md) for decision fallback, model admission and harness-scoped defaults; other decisions remain in force.
+
 Date: 2026-10-04. Status: Accepted.
 
 ## Context

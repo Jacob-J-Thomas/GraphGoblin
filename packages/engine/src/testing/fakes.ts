@@ -5,6 +5,7 @@
 import type {
   ContextThread,
   HarnessId,
+  ModelCatalogEntry,
   JsonValue,
   LoopDefinition,
   LoopVersionRecord,
@@ -494,8 +495,11 @@ export class FakeDecider implements DeciderPort {
   constructor(
     readonly id: 'jev' | 'codex',
     private readonly chooser: (request: ChoiceRequest) => ChoiceResult = (r) => ({
-      label: r.options[0]?.label ?? '',
+      type: 'choice',
+      optionId: r.options[0]?.id ?? '',
       confidence: 1,
+      probabilities:
+        id === 'jev' ? Object.fromEntries(r.options.map((o, i) => [o.id, i === 0 ? 1 : 0])) : null,
     }),
     private readonly judge_: (request: YesNoRequest) => PredicateAnswer = () => ({
       holds: true,
@@ -677,8 +681,7 @@ export class InMemorySecrets implements SecretsPort {
 }
 
 export const DEFAULT_TEST_SETTINGS: EngineSettings = {
-  defaultModel: 'gpt-6-luna',
-  defaultEffort: 'low',
+  defaults: { byHarness: { codex: { model: 'gpt-6-luna', effort: 'low' } } },
   maxConcurrentRuns: 4,
   structuredTimeoutMs: 5000,
 };
@@ -710,11 +713,35 @@ export class FakeClassifierRegistry implements ClassifierRegistryPort {
         reason: 'CLASSIFIER_SECRET_MISSING',
         message: `Classifier '${modelId}' is unconfigured`,
       });
-    return Promise.resolve({ status: 'ready', classifier });
+    return Promise.resolve({
+      status: 'ready',
+      classifier,
+      provenance: {
+        provider: modelId === 'jev' ? 'typesafe' : 'http',
+        classifierId: modelId,
+        model: modelId === 'jev' ? 'jev-latest' : modelId,
+      },
+    });
+  }
+}
+
+export class FakeModelCatalog {
+  entries: ModelCatalogEntry[] = ['gpt-6-luna', 'gpt-6-sol', 'gpt-6-astra'].map((model) => ({
+    harness: 'codex',
+    model,
+    source: 'harness',
+    displayName: model,
+    efforts: ['minimal', 'low', 'medium', 'high', 'xhigh', 'max'],
+    defaultEffort: 'low',
+    enabled: true,
+  }));
+  list(): Promise<ModelCatalogEntry[]> {
+    return Promise.resolve(this.entries);
   }
 }
 
 export interface FakePorts extends EnginePorts {
+  modelCatalog: FakeModelCatalog;
   classifiers: FakeClassifierRegistry;
   clock: FakeClock;
   ids: FakeIds;
@@ -756,6 +783,7 @@ export function createFakePorts(options: { secrets?: Record<string, string> } = 
     harness,
     deciders: [jev, codexDecider],
     classifiers: new FakeClassifierRegistry(jev),
+    modelCatalog: new FakeModelCatalog(),
     jev,
     codexDecider,
     structured: structuredFake,

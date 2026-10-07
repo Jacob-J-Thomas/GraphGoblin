@@ -140,7 +140,15 @@ export class ClassifierRegistry implements ClassifierRegistryPort {
     const signature = JSON.stringify(entry);
     const cached = this.clients.get(key);
     if (cached?.signature === signature && cached.secret === state.secret)
-      return { status: 'ready', classifier: cached.classifier };
+      return {
+        status: 'ready',
+        classifier: cached.classifier,
+        provenance: {
+          provider: entry.provider,
+          classifierId: entry.id,
+          model: entry.providerModel,
+        },
+      };
     let classifier: ClassifierPort;
     if (entry.provider === 'typesafe') {
       // The adapter resolves this immutable snapshot rather than sharing the mutable exit client.
@@ -167,6 +175,10 @@ export class ClassifierRegistry implements ClassifierRegistryPort {
       classifier,
       ...(state.secret !== undefined ? { secret: state.secret } : {}),
     });
-    return { status: 'ready', classifier };
+    return {
+      status: 'ready',
+      classifier,
+      provenance: { provider: entry.provider, classifierId: entry.id, model: entry.providerModel },
+    };
   }
 }

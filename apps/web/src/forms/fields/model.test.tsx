@@ -174,13 +174,21 @@ describe('catalog field controls', () => {
       <SchemaForm
         schema={NodeConfigSchemas.decision}
         value={{
-          routes: [
-            { label: 'yes', description: '' },
-            { label: 'no', description: '' },
-          ],
-          question: 'q',
-          strategy: ['codex'],
-          codex: { model: 'alpha', effort: 'max' },
+          answer: {
+            type: 'choice',
+            options: [
+              { id: 'yes', label: 'Yes', criteria: 'Choose yes' },
+              { id: 'no', label: 'No', criteria: 'Choose no' },
+            ],
+          },
+          evaluation: {
+            kind: 'llm',
+            harness: 'codex',
+            model: { mode: 'explicit', value: 'alpha' },
+            effort: { mode: 'explicit', value: 'max' },
+            question: 'q',
+            context: {},
+          },
         }}
         label="Decision"
         onChange={change}
@@ -189,21 +197,26 @@ describe('catalog field controls', () => {
       '/',
       api,
     );
-    const group = screen.getByRole('group', { name: 'Codex' });
-    // Scoped: the decision also shows its Jev classifier picker, labelled Model too (#43).
-    await waitFor(() =>
-      expect(within(group).getByLabelText('Model')).not.toHaveAttribute('aria-readonly'),
-    );
-    const model = within(group).getByLabelText('Model');
-    const effort = within(group).getByLabelText('Effort');
+    const group = screen.getByRole('group', { name: 'Evaluation' });
+    // Explicit selections are controls nested within the active model and effort unions.
+    const modelGroup = within(group).getByRole('group', { name: 'Model' });
+    const effortGroup = within(group).getByRole('group', { name: 'Effort' });
+    const model = within(modelGroup).getByLabelText('Value');
+    const effort = within(effortGroup).getByLabelText('Value');
+    await waitFor(() => expect(model).not.toHaveAttribute('aria-readonly'));
     expect(model).toHaveValue('alpha');
     expect(within(model).getAllByRole('option')).toHaveLength(2);
     expect(effort).toHaveValue('max');
     expect(effort).toHaveAccessibleDescription(/not supported/);
     await userEvent.setup().selectOptions(effort, 'low');
     expect(change).toHaveBeenLastCalledWith(
-      expect.objectContaining({ codex: { model: 'alpha', effort: 'low' } }),
-      expect.objectContaining({ path: 'codex.effort', kind: 'commit' }),
+      expect.objectContaining({
+        evaluation: expect.objectContaining({
+          model: { mode: 'explicit', value: 'alpha' },
+          effort: { mode: 'explicit', value: 'low' },
+        }),
+      }),
+      expect.objectContaining({ path: 'evaluation.effort.value', kind: 'commit' }),
     );
   });
   it('shows an empty catalog with only the inherited choice and a Settings link', async () => {
@@ -454,7 +467,7 @@ describe('catalog field controls', () => {
     renderWith(
       <SchemaForm
         schema={LoopSettingsSchema}
-        value={{ defaults: { model: 'alpha' } }}
+        value={{ defaults: { byHarness: { codex: { model: 'alpha' } } } }}
         label="Settings"
         onChange={change}
         controls={LOOP_FIELD_CONTROLS}
@@ -466,7 +479,9 @@ describe('catalog field controls', () => {
     expect(within(model()).getByRole('option', { name: '(owner default)' })).toBeInTheDocument();
     expect(within(model()).getAllByRole('option')).toHaveLength(2);
     await userEvent.setup().selectOptions(model(), '');
-    expect(change.mock.lastCall?.[0]).toMatchObject({ defaults: {} });
+    expect(change.mock.lastCall?.[0]).toMatchObject({
+      defaults: { byHarness: { codex: {} } },
+    });
     expect(within(effort()).getAllByRole('option')).toHaveLength(7);
   });
 });

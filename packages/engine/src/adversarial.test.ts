@@ -607,12 +607,14 @@ describe('adversarial engine invariants', () => {
       kind: 'decision',
       label: 'Choose',
       config: {
-        question: '?',
-        strategy: ['jev'],
-        routes: [
-          { label: 'yes', description: 'Yes' },
-          { label: 'other', description: 'Other' },
-        ],
+        answer: {
+          type: 'choice',
+          options: [
+            { id: 'yes', label: 'yes', criteria: 'Yes' },
+            { id: 'other', label: 'other', criteria: 'Other' },
+          ],
+        },
+        evaluation: { kind: 'classifier', model: 'jev', question: '?', context: {} },
       },
     });
     def.edges.push({ id: 'yes', from: { node: 'choose', port: 'yes' }, to: { node: 'done' } });
@@ -622,21 +624,38 @@ describe('adversarial engine invariants', () => {
     '7: decider %s fails without hanging',
     async (bad) => {
       const e = await createTestEngine();
-      if (bad === 'unknown') vi.spyOn(e.ports.jev, 'choose').mockResolvedValue({ label: 'no' });
+      if (bad === 'unknown')
+        vi.spyOn(e.ports.jev, 'choose').mockResolvedValue({
+          type: 'choice',
+          optionId: 'no',
+          confidence: 1,
+          probabilities: { yes: 1, other: 0 },
+        });
       if (bad === 'unavailable') e.ports.jev.isAvailable = false;
       if (bad === 'throw') vi.spyOn(e.ports.jev, 'choose').mockRejectedValue(new Error('offline'));
       const r = await e.runToIdle(e.publish(decisionLoop()).loopId);
       expect(r.status).toBe('failed');
-      expect(r.failure?.code).toBe(bad === 'throw' ? 'INTERNAL_ERROR' : 'DECISION_NO_ROUTE');
+      expect(r.failure?.code).toBe(
+        bad === 'throw'
+          ? 'EVALUATION_PROVIDER_FAILED'
+          : bad === 'unavailable'
+            ? 'EVALUATION_UNAVAILABLE'
+            : 'EVALUATION_INVALID_RESPONSE',
+      );
     },
   );
   it.each([NaN, -1, 1.01, Infinity])(
-    'ADV-005: invalid decider confidence %s fails with DECISION_NO_ROUTE',
+    'ADV-005: invalid decider confidence %s fails with EVALUATION_INVALID_RESPONSE',
     async (confidence) => {
       const e = await createTestEngine();
-      vi.spyOn(e.ports.jev, 'choose').mockResolvedValue({ label: 'yes', confidence });
+      vi.spyOn(e.ports.jev, 'choose').mockResolvedValue({
+        type: 'choice',
+        optionId: 'yes',
+        confidence,
+        probabilities: { yes: 1, other: 0 },
+      });
       const r = await e.runToIdle(e.publish(decisionLoop()).loopId);
-      expect(r.failure?.code).toBe('DECISION_NO_ROUTE');
+      expect(r.failure?.code).toBe('EVALUATION_INVALID_RESPONSE');
     },
   );
 

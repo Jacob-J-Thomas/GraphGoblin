@@ -15,8 +15,8 @@ afterEach(async () => {
 const request: ChoiceRequest = {
   question: 'Route this',
   options: [
-    { label: 'yes', description: 'approved' },
-    { label: 'no', description: 'rejected' },
+    { id: 'yes', label: 'yes', criteria: 'approved' },
+    { id: 'no', label: 'no', criteria: 'rejected' },
   ],
   context: { value: 1 },
 };
@@ -65,9 +65,10 @@ describe('HTTP Choice classifier', () => {
         ...(bearer ? { bearer } : {}),
       });
       expect(await client.choose(request, new AbortController().signal)).toEqual({
-        label: 'yes',
+        type: 'choice',
+        optionId: 'yes',
         confidence: 0.8,
-        alternatives: [{ label: 'no', confidence: 0.2 }],
+        probabilities: { yes: 0.8, no: 0.2 },
       });
       expect(fixture.calls).toEqual([
         {
@@ -105,16 +106,17 @@ describe('HTTP Choice classifier', () => {
       endpoint: fixture.url,
       providerModel: 'kev',
     }).choose(
-      { ...request, options: [...request.options, { label: 'maybe', description: 'uncertain' }] },
+      {
+        ...request,
+        options: [...request.options, { id: 'maybe', label: 'maybe', criteria: 'uncertain' }],
+      },
       new AbortController().signal,
     );
     expect(result).toEqual({
-      label: 'yes',
+      type: 'choice',
+      optionId: 'yes',
       confidence: 0.9,
-      alternatives: [
-        { label: 'maybe', confidence: 0.3 },
-        { label: 'no', confidence: 0.1 },
-      ],
+      probabilities: { yes: 0.6, no: 0.1, maybe: 0.3 },
     });
   });
   it.each([

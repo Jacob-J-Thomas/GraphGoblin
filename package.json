@@ -25,7 +25,9 @@
     "check:contrast": "node tooling/scripts/design-contrast.mjs --check",
     "check": "pnpm typecheck && pnpm lint && pnpm check:layers && pnpm check:tokens && pnpm check:deps && pnpm test:coverage && pnpm check:licenses && pnpm check:docs && pnpm check:contrast",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "graphgoblin-upgrade": "node tooling/scripts/upgrade.mjs",
+    "test:upgrade": "node --test tooling/scripts/upgrade.acceptance.mjs"
   },
   "devDependencies": {
     "@eslint-react/eslint-plugin": "^5.23.3",

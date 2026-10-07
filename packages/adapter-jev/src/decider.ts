@@ -130,8 +130,8 @@ export class JevDecider implements DeciderPort {
    * `available()` must be synchronous and cheap, but the key lives behind the async `SecretsPort`.
    * The decider therefore resolves the key once at construction (in the background) and caches a
    * client; `init()` awaits that first resolution, and `refresh()` re-reads the secret after it
-   * changes. Until the first resolution finishes, `available()` is false and the engine falls
-   * through to the next strategy, which is the correct behaviour for a missing key.
+   * changes. Until the first resolution finishes, `available()` is false and the engine reports
+   * unavailable; the selected evaluation does not fall back to another method.
    */
   constructor(private readonly options: JevDeciderOptions) {
     this.ready = this.refresh().catch(() => undefined);
@@ -194,7 +194,7 @@ export class JevDecider implements DeciderPort {
 
   async choose(request: ChoiceRequest, signal: AbortSignal): Promise<ChoiceResult> {
     const client = this.requireClient();
-    const criteria = Object.fromEntries(request.options.map((o) => [o.label, o.description]));
+    const criteria = Object.fromEntries(request.options.map((o) => [o.id, o.criteria]));
     let body: unknown;
     try {
       body = await client.systemOne(
@@ -212,22 +212,20 @@ export class JevDecider implements DeciderPort {
       throw new JevError('DECIDER_INVALID_RESPONSE', 'Unexpected Jev choice response');
     }
     const { choice: label, confidence, probabilities } = parsed.data.answers.answer;
-    const labels = new Set(request.options.map((option) => option.label));
+    const labels = new Set(request.options.map((option) => option.id));
     const probabilityLabels = Object.keys(probabilities);
     if (
+      !labels.has(label) ||
       probabilityLabels.length !== labels.size ||
       probabilityLabels.some((key) => !labels.has(key))
     ) {
       throw new JevError('DECIDER_INVALID_RESPONSE', 'Unexpected Jev choice response');
     }
-    const alternatives = Object.entries(probabilities)
-      .filter(([other]) => other !== label)
-      .sort((a, b) => b[1] - a[1])
-      .map(([other, p]) => ({ label: other, confidence: p }));
     return {
-      label,
-      confidence: confidence ?? probabilities[label] ?? 0,
-      alternatives,
+      type: 'choice',
+      optionId: label,
+      confidence: confidence ?? probabilities[label]!,
+      probabilities,
     };
   }
 

@@ -199,7 +199,7 @@ async function checkHarnesses(
 }
 
 function checkDefaultModel(
-  model: string,
+  model: string | undefined,
   catalog: ModelCatalogEntry[],
   seeded: boolean,
 ): PreflightCheck {
@@ -210,7 +210,7 @@ function checkDefaultModel(
       'default-model',
       'Default model',
       'fail',
-      `GG_DEFAULT_MODEL "${model}" is not in ${where}; pick a listed harness model and enable it in Settings`,
+      `GG_DEFAULTS.byHarness.codex.model "${model}" is not in ${where}; pick a listed harness model and enable it in Settings`,
     );
   }
   if (!entry.enabled) {
@@ -291,7 +291,7 @@ export async function runPreflight(sources: PreflightSources): Promise<Preflight
 
   try {
     const catalog = migrated ? await sources.catalog() : DEFAULT_MODEL_CATALOG;
-    checks.push(checkDefaultModel(config.defaultModel, catalog, migrated));
+    checks.push(checkDefaultModel(config.defaults.byHarness.codex?.model, catalog, migrated));
   } catch (error) {
     checks.push(
       check('default-model', 'Default model', 'fail', `cannot read the catalog: ${message(error)}`),
@@ -392,8 +392,12 @@ export async function configPreflightSources(
   const { key } = await readMasterKey(config);
   const harnesses = options.harnesses ?? {
     codex: createCodexAdapters({
-      model: config.defaultModel,
-      effort: config.defaultEffort,
+      ...(config.defaults.byHarness.codex?.model !== undefined
+        ? { model: config.defaults.byHarness.codex.model }
+        : {}),
+      ...(config.defaults.byHarness.codex?.effort !== undefined
+        ? { effort: config.defaults.byHarness.codex.effort }
+        : {}),
       ...(config.codexBinary ? { codexBinary: config.codexBinary } : {}),
     }).harness,
   };

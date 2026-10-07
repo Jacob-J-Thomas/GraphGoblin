@@ -6,7 +6,7 @@ import { createTestEngine, singleNodeLoop } from './testing/scenario.js';
 /** start -> a (sets vars.a) -> b (sets vars.b) -> done, returning vars. */
 function linearLoop(): LoopDefinitionInput {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     name: 'linear',
     nodes: [
       { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
@@ -230,7 +230,7 @@ describe('replay-at-node', () => {
 
 function minimalChild(): LoopDefinitionInput {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     name: 'child',
     nodes: [
       { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },

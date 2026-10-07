@@ -112,11 +112,7 @@ model or classifier, short Codex judge reasoning, and reasons later criteria wer
 Limit exits name the configured limit or loop ceiling. A failed predicate shows a safe error
 summary and stops evaluation. The displayed criterion numbers start at 1; API indices start at 0.
 
-`decision.made` names the winning route and explains earlier skipped strategies, for example
-**Skipped Jev: The selected classifier is disabled**. Select it for the skipped list. This is
-the configuration encountered during execution, which may differ from publish-time warnings.
-Historical decisions upgraded from older versions have an empty skipped list because those
-reasons were not recorded; historical exits have no evaluation event.
+`decision.made` identifies the evaluator kind, selected option ID, confidence where applicable, and actual resolved provider/model/effort. The option ID is also its output port. LLM confidence is self-reported information, not a calibrated probability. Converted historical events preserve known skip diagnostics; unknown old values display as unknown rather than invented settings. New decisions never try another evaluator.
 
 When **Input requested** appears, answer the prompt using the generated form and click **Submit input**. Signal waits show **Send signal**. Timers, heartbeats, and child waits show the reason and any wake time.
 
@@ -231,28 +227,31 @@ A handler failure looks like this inside the run snapshot's `failure` field:
 
 Read `code`, `message`, `nodeId`, `resumable`, and any `details`. After fixing an external cause, resume when the failure is marked resumable. Publish and start a new run when the correction changes the pinned definition. The contract lists every code below; some are reserved and current lower-level exceptions can appear as `INTERNAL_ERROR` instead.
 
-| `RunErrorCode`              | Action                                                                                                                                                                     |
-| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `HARNESS_NOT_INSTALLED`     | Install Codex or correct the executable setting; check harness preflight. Missing executable errors during a turn can also appear as `HARNESS_TURN_FAILED`.                |
-| `HARNESS_NOT_AUTHENTICATED` | Log into Codex as the API process user, then resume.                                                                                                                       |
-| `HARNESS_QUOTA_EXHAUSTED`   | Wait for quota or rate-limit recovery, or resolve account access, then resume.                                                                                             |
-| `HARNESS_TURN_FAILED`       | Read the harness message and progress; check model availability, sandbox, CLI, and provider connectivity.                                                                  |
-| `WORKING_DIRECTORY_MISSING` | Check the workspace path and permissions. The current filesystem adapter creates missing directories; filesystem failures can instead report `INTERNAL_ERROR`.             |
-| `SCRIPT_EXIT_CODE`          | Fix the program or its patch output; add a route in a new version for an expected nonzero outcome.                                                                         |
-| `SCRIPT_TIMEOUT`            | Resolve the slow program, or increase its timeout in a new version.                                                                                                        |
-| `INFERENCE_TIMEOUT`         | Resolve slow harness work, or increase the node timeout in a new version.                                                                                                  |
-| `OUTPUT_SCHEMA_MISMATCH`    | Inspect raw output and repair attempts; correct the prompt, schema, or repair policy in a new version.                                                                     |
-| `SUBLOOP_DEPTH_EXCEEDED`    | Reduce nesting or revise the depth setting in a new version.                                                                                                               |
-| `SUBLOOP_NOT_FOUND`         | Publish the referenced child or correct its loop/version reference, then start an appropriate version.                                                                     |
-| `DECISION_NO_ROUTE`         | Make the expression or decider return a declared label; check strategy availability and confidence settings.                                                               |
-| `DECIDER_UNAVAILABLE`       | Configure Jev's key or use an available strategy in a new version; exit predicates need their selected decider.                                                            |
-| `SECRET_MISSING`            | Create the named secret on the server, then resume.                                                                                                                        |
-| `TEMPLATE_ERROR`            | Correct Liquid syntax and referenced values; timestamp templates must render valid dates.                                                                                  |
-| `EXPRESSION_ERROR`          | Correct JSONata, its input assumptions, or the patch produced by a mapping.                                                                                                |
-| `WAIT_TIMEOUT`              | Arrange the required input or signal sooner, or revise timeout behaviour in a new version.                                                                                 |
-| `HEARTBEAT_EXHAUSTED`       | Check the probe and condition; revise beat/deadline limits or exhaustion behaviour if needed.                                                                              |
-| `MAX_ITERATIONS`            | A node was about to start more often than the loop's `maxIterations`, usually a decision routing back into a cycle without an exit. Fix the routing or raise the limit.    |
-| `RETURN_DELIVERY_FAILED`    | Check the destination and signing secret. Current delivery failures use `return.failed` events, rather than this reserved run-failure code; arrange redelivery explicitly. |
-| `INTERNAL_ERROR`            | Preserve the run ID, log, and failure details; investigate or report the defect before retrying side effects.                                                              |
+| `RunErrorCode`                                                      | Action                                                                                                                                                                     |
+| ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `HARNESS_NOT_INSTALLED`                                             | Install Codex or correct the executable setting; check harness preflight. Missing executable errors during a turn can also appear as `HARNESS_TURN_FAILED`.                |
+| `HARNESS_NOT_AUTHENTICATED`                                         | Log into Codex as the API process user, then resume.                                                                                                                       |
+| `HARNESS_QUOTA_EXHAUSTED`                                           | Wait for quota or rate-limit recovery, or resolve account access, then resume.                                                                                             |
+| `HARNESS_TURN_FAILED`                                               | Read the harness message and progress; check model availability, sandbox, CLI, and provider connectivity.                                                                  |
+| `WORKING_DIRECTORY_MISSING`                                         | Check the workspace path and permissions. The current filesystem adapter creates missing directories; filesystem failures can instead report `INTERNAL_ERROR`.             |
+| `SCRIPT_EXIT_CODE`                                                  | Fix the program or its patch output; add a route in a new version for an expected nonzero outcome.                                                                         |
+| `SCRIPT_TIMEOUT`                                                    | Resolve the slow program, or increase its timeout in a new version.                                                                                                        |
+| `INFERENCE_TIMEOUT`                                                 | Resolve slow harness work, or increase the node timeout in a new version.                                                                                                  |
+| `OUTPUT_SCHEMA_MISMATCH`                                            | Inspect raw output and repair attempts; correct the prompt, schema, or repair policy in a new version.                                                                     |
+| `SUBLOOP_DEPTH_EXCEEDED`                                            | Reduce nesting or revise the depth setting in a new version.                                                                                                               |
+| `SUBLOOP_NOT_FOUND`                                                 | Publish the referenced child or correct its loop/version reference, then start an appropriate version.                                                                     |
+| `EVALUATION_INVALID_RESPONSE` / `EVALUATION_RESULT_REJECTED`        | Correct the provider response, declared option IDs or classifier threshold, then replay or start a new run; no other kind is tried.                                        |
+| `EVALUATION_UNAVAILABLE`                                            | Restore the selected model or credentials before resuming.                                                                                                                 |
+| `EVALUATION_EXPRESSION_FAILED` / `EVALUATION_INVALID_CONFIGURATION` | Correct the expression or configuration and start a replay/new run.                                                                                                        |
+| `EVALUATION_PROVIDER_FAILED`                                        | Restore transient service/network/authentication failures and resume when allowed; deterministic request errors require a corrected new run.                               |
+| `DECIDER_UNAVAILABLE`                                               | Configure Jev's key or use an available strategy in a new version; exit predicates need their selected decider.                                                            |
+| `SECRET_MISSING`                                                    | Create the named secret on the server, then resume.                                                                                                                        |
+| `TEMPLATE_ERROR`                                                    | Correct Liquid syntax and referenced values; timestamp templates must render valid dates.                                                                                  |
+| `EXPRESSION_ERROR`                                                  | Correct JSONata, its input assumptions, or the patch produced by a mapping.                                                                                                |
+| `WAIT_TIMEOUT`                                                      | Arrange the required input or signal sooner, or revise timeout behaviour in a new version.                                                                                 |
+| `HEARTBEAT_EXHAUSTED`                                               | Check the probe and condition; revise beat/deadline limits or exhaustion behaviour if needed.                                                                              |
+| `MAX_ITERATIONS`                                                    | A node was about to start more often than the loop's `maxIterations`, usually a decision routing back into a cycle without an exit. Fix the routing or raise the limit.    |
+| `RETURN_DELIVERY_FAILED`                                            | Check the destination and signing secret. Current delivery failures use `return.failed` events, rather than this reserved run-failure code; arrange redelivery explicitly. |
+| `INTERNAL_ERROR`                                                    | Preserve the run ID, log, and failure details; investigate or report the defect before retrying side effects.                                                              |
 
 Use [Troubleshooting](07-troubleshooting.md) for concrete checks. See [Execution engine](../05-execution-engine.md) and [API, streaming, and MCP](../07-api-and-streaming.md) for design context.

@@ -92,12 +92,15 @@ test('a switch toggles with Space and Enter, and an optional boolean can go back
   await expect.poll(async () => (await savedConfig(request, id))?.['effort']).toBe('minimal');
 
   const decisionId = await createLoop(request, 'decision', {
-    routes: [
-      { label: 'yes', description: '' },
-      { label: 'no', description: '' },
-    ],
-    question: 'q',
-    strategy: ['jev'],
+    answer: {
+      type: 'choice',
+      options: [
+        { id: 'yes', label: 'yes', criteria: 'Choose yes' },
+        { id: 'no', label: 'no', criteria: 'Choose no' },
+      ],
+    },
+    evaluation: { kind: 'expression', jsonata: '"yes"' },
+    recordAlternatives: true,
   });
   await page.goto(`/app/loops/${decisionId}/edit`);
   const decision = await openNode(page, 'approve');

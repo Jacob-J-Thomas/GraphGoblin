@@ -19,7 +19,7 @@ const ITEMS = 1_000;
 const PARALLEL = 10;
 
 const loop: LoopDefinitionInput = {
-  schemaVersion: 1,
+  schemaVersion: 2,
   name: 'perf',
   nodes: [
     { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },
