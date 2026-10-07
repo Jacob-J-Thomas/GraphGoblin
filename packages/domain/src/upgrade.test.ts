@@ -140,6 +140,30 @@ describe('offline v1 authoring conversion', () => {
     };
     expect(upgradeLoopV1(unchanged).ok).toBe(true);
   });
+  it.each(['/nodes/1/config/question', '/nodes/1/config/expression/jsonata'])(
+    'rejects an owner source replacement superseded by a complete decision replacement: %s',
+    (path) => {
+      const original = oldLoop(['codex', 'expression']);
+      const before = JSON.stringify(original);
+      expect(
+        upgradeLoopV1(original, {
+          decisions: { decide: chosen },
+          sources: { [path]: '"owner replacement"' },
+        }),
+      ).toMatchObject({
+        ok: false,
+        issues: [
+          {
+            code: 'UPGRADE_RESOLUTION_INVALID',
+            path,
+            message: 'source replacement overlaps a complete decision replacement',
+          },
+        ],
+      });
+      expect(upgradeLoopV1(original, { decisions: { decide: chosen } }).ok).toBe(true);
+      expect(JSON.stringify(original)).toBe(before);
+    },
+  );
   it('refuses opaque script stdin until the exact version manifest approves its reviewed consumer', () => {
     const old = oldLoop();
     const withScript = {

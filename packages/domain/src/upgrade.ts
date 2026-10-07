@@ -493,8 +493,17 @@ export function upgradeLoopV1(
     if (
       sourceNodeIndex !== undefined &&
       resolutions.decisions?.[String(nodes[Number(sourceNodeIndex)]?.id)] !== undefined
-    )
+    ) {
+      if (resolutions.sources?.[source.path] !== undefined)
+        issues.push(
+          issue(
+            'UPGRADE_RESOLUTION_INVALID',
+            source.path,
+            'source replacement overlaps a complete decision replacement',
+          ),
+        );
       continue;
+    }
     const replacement = resolutions.sources?.[source.path];
     const selected = replacement ?? source.source;
     const problem =

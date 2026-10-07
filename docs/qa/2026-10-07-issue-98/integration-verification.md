@@ -65,3 +65,11 @@ The decision dialog now displays Evaluation before Answer through a layout-only 
 The focused Edge delta passed 16 of 17 cases. The remaining case completed the decision/run but exposed a pre-existing inspector refresh race: its timeline contained `run.finished succeeded` while the header retained an earlier `running` snapshot. Source comparison and the captured trace establish the event-before-status race predates this branch. It is deferred to [#116](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/116); the test remains unchanged and this run is not claimed fully green. Responsive, touch-target, eight-option keyboard, option-removal, evaluator-switch and form-control cases passed.
 
 The first Opus implementation review exhausted its 80-turn limit without a verdict. It is incomplete, not approval. A bounded recovery review is required, and owner running-product acceptance remains pending.
+
+### Independent review and final validation delta
+
+Codex's targeted review of `faad5bd` completed with no major issues. The bounded Opus 5.5 xhigh recovery review completed successfully at that same immutable head after 31 turns. It found no blocking defect in the inspected source and explicitly listed uninspected areas; this is not exhaustive certification or owner product acceptance.
+
+Opus identified one non-blocking manifest ambiguity: an owner source replacement inside a fully replaced decision was silently ignored. Root reproduced it in two failing regression cases, then changed conversion to refuse the overlapping instruction at its exact source path. The complete replacement alone still succeeds, and the input remains unchanged. Domain coverage passed all 255 tests: statements 96.80%, branches 93.33%, functions 96.17%, lines 98.14%. The guide now explains the rule.
+
+Linux CI at `faad5bd` passed build, all offline upgrade acceptance cases, typecheck, lint, formatting, layer/token/dependency checks and routing. Its coverage step hit 5-second timeouts in two conversion tests while multiple package worker pools ran concurrently. CI now runs the same coverage tasks one package at a time, matching the already successful local gate execution; assertions, package worker configuration, timeouts and coverage thresholds are unchanged. Final CI at the subsequent commit remains required.

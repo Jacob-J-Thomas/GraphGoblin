@@ -52,7 +52,8 @@ jobs:
         run: pnpm check:deps
 
       - name: Unit tests with coverage thresholds
-        run: pnpm test:coverage
+        # Each Vitest package owns its worker pool; avoid multiplying pools on the CI host.
+        run: pnpm exec turbo run test:coverage --concurrency=1
 
       - name: Licence allowlist
         run: pnpm check:licenses
