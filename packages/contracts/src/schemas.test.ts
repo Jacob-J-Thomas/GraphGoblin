@@ -393,6 +393,7 @@ describe('thread, run, and events', () => {
       {
         ...base,
         type: 'decision.made',
+        skipped: [],
         nodeId: 'd',
         strategy: 'jev',
         route: 'good',

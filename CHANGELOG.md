@@ -6,6 +6,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ### Added
 
+- Runs explain why an exit completed, looped back, or reached a limit. Select `exit.evaluated` in the inspector to read each criterion's result and confidence, the model or classifier used, and the Codex judge's short reasoning. Successful decisions also explain why earlier strategies were skipped.
+
 - A **Go to Loops** link on the 404 page, with a "Page not found" heading and explanation (#41).
 - Settings → **Appearance → Font** lets you choose a typeface for this browser and preview each option: Geist is the default, with Space Grotesk, Chakra Petch, Atkinson Hyperlegible Next, OpenDyslexic, and Inter as alternatives. Your choice applies immediately, appears without a flash on the next visit, and works across tabs and offline; code remains in Geist Mono. Text size and spacing are unchanged. (#40)
 - Validation badges on nodes and beside Publish open popovers with issues and links to the fields that need attention. Checks rerun for saved drafts and after model catalog changes, so node badges reflect when a selected model becomes unavailable or disabled. (#15)
@@ -31,6 +33,11 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ### Upgrade notes
 
+- Codex model names in node configuration and loop, owner, and process defaults are limited to 256 characters, matching recorded exit evidence. Shorten longer names in saved configuration before using it with this version.
+- Stored events are now validated on read. A non-conforming row rejects the entire event page; JSON and SSE replay return `STORED_EVENT_INVALID`, naming the run, sequence, and type. No event is silently repaired or skipped. Migration `0007` supplies historical decisions with `skipped: []`; these empty lists carry no evidence about earlier skips.
+
+- `decision.made` now requires `skipped`; rebuild generated-client consumers with the server. Migration `0007` adds `skipped: []` to stored decisions that lack the field. The inspector starts a fresh session event cache and replays from the server. Earlier skip reasons and exit evaluations cannot be reconstructed. New `exit.evaluated` events include zero-based criterion indices; the inspector displays them starting at 1. No old event-shape parsing path is retained.
+
 - Migration `0006` adds `classifier_models`; startup seeds managed Jev metadata before recovery while preserving enabled. The new table does not rewrite loop definitions, versions, runs, events, secrets, or LLM catalog data; earlier migrations still apply their intended changes. Omitted `jev.model` defaults to catalog `jev`. Rebuild generated-client consumers together; older strict readers may reject exports containing explicit classifier selection.
 
 - Harness is chosen on inference nodes only. Loop `settings.defaults` now contains model and effort; `settings.defaults.harness` is gone. (#19)
@@ -46,6 +53,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 - Before upgrading, follow [Back up and restore](docs/guide/06-settings-and-secrets.md#back-up-and-restore). To roll back, stop the API and restore the pre-upgrade data-directory backup before running the previous release; there is no partial rollback.
 
 ### Fixed
+
+- Exit explanations respect the recorded completion reason, outcome, and limit even when no criterion index was recorded. A failure match stays a failure, and a configured duration limit stays a duration limit.
 
 - The app probes API reachability and restores queries, event streams, and autosave when the API returns (#55).
 - The app checks for service worker updates when it regains focus (#56).

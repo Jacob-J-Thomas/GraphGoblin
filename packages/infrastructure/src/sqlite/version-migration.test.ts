@@ -70,7 +70,7 @@ describe('inference-node harness data migration', () => {
       await handle.migrate();
       expect(await stored()).toEqual(canonical);
       expect((await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows).toHaveLength(
-        7,
+        8,
       );
       await stopDatabase();
 
@@ -84,12 +84,12 @@ describe('inference-node harness data migration', () => {
       );
       await stopDatabase();
       handle = openDatabase({ url: databaseUrl(restored) });
-      expect(await handle.pendingMigrations()).toBe(4);
+      expect(await handle.pendingMigrations()).toBe(5);
       await handle.migrate();
       expect(LoopDefinitionSchema.parse(await stored())).toEqual(canonical);
       expect(await handle.pendingMigrations()).toBe(0);
       expect((await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows).toHaveLength(
-        7,
+        8,
       );
       expect((await handle.client.execute('SELECT * FROM classifier_models')).rows).toEqual([]);
     } finally {

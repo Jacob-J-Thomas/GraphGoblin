@@ -15,6 +15,7 @@ import { CronScheduler, type CronFire } from './scheduler/cron-scheduler.js';
 import { TimerService } from './scheduler/timer-service.js';
 import { MemoryTimerStore } from './scheduler/memory-timer-store.js';
 import { ProcessScripts } from './process/scripts.js';
+import { fakeUlid } from '@graphgoblin/contracts/testing';
 
 let db: DatabaseHandle;
 beforeEach(async () => {
@@ -27,15 +28,16 @@ afterEach(() => {
 describe('adversarial infrastructure invariants (forks pool)', () => {
   it('3: concurrent SQLite batches have no sequence gaps', async () => {
     const events = new SqliteEventStore(db.db, new FakeClock());
+    const runId = fakeUlid('concurrent-events');
     await Promise.all(
       Array.from({ length: 100 }, () =>
-        events.append('run', [
+        events.append(runId, [
           { type: 'signal.received', name: 'a', payload: null },
           { type: 'signal.received', name: 'b', payload: null },
         ]),
       ),
     );
-    expect((await events.read('run')).map((x) => x.seq)).toEqual(
+    expect((await events.read(runId)).map((x) => x.seq)).toEqual(
       Array.from({ length: 200 }, (_, i) => i + 1),
     );
   });

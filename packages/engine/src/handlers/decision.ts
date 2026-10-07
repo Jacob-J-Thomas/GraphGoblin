@@ -1,10 +1,18 @@
-import type { JsonValue } from '@graphgoblin/contracts';
+import type { JsonValue, StrategySkip } from '@graphgoblin/contracts';
 import { evaluateExpression, threadView } from '@graphgoblin/domain';
 import { summarizeDeciderError } from '../decider-errors.js';
 import { isAbortError, RunFailureError } from '../errors.js';
 import type { NodeContext, NodeHandler } from '../handler.js';
-import type { ClassifierPort, ChoiceResult } from '../ports.js';
+import type { ClassifierPort, ClassifierUnavailableReason, ChoiceResult } from '../ports.js';
 import { outputPatch, selectMessages, toJson } from './common.js';
+
+const CLASSIFIER_SKIP_MESSAGES: Record<ClassifierUnavailableReason, string> = {
+  CLASSIFIER_MODEL_NOT_FOUND: 'The selected classifier is not in the catalog',
+  CLASSIFIER_PRIMITIVE_UNSUPPORTED: 'The selected classifier does not support Choice',
+  CLASSIFIER_MODEL_DISABLED: 'The selected classifier is disabled',
+  CLASSIFIER_SECRET_MISSING: 'The classifier key is not configured',
+  CLASSIFIER_SECRET_UNREADABLE: 'The classifier key cannot be read',
+};
 
 async function decisionContext(ctx: NodeContext<'decision'>): Promise<JsonValue> {
   const view = threadView(ctx.thread) as unknown as Record<string, unknown>;
@@ -32,6 +40,7 @@ export const decisionHandler: NodeHandler<'decision'> = {
     const question = await ctx.services.render(config.question);
     const context = await decisionContext(ctx);
     const tried: string[] = [];
+    const skipped: StrategySkip[] = [];
 
     for (const strategy of config.strategy) {
       if (strategy === 'expression') {
@@ -40,8 +49,13 @@ export const decisionHandler: NodeHandler<'decision'> = {
           threadView(ctx.thread),
         );
         const label = typeof value === 'string' ? value : String(value);
-        if (labels.has(label)) return decide(ctx, strategy, { label });
+        if (labels.has(label)) return decide(ctx, strategy, { label }, skipped);
         tried.push(`expression returned "${label}"`);
+        skipped.push({
+          strategy,
+          code: 'EXPRESSION_NOT_APPLICABLE',
+          message: 'The expression did not select a declared route',
+        });
         continue;
       }
       let decider: ClassifierPort | undefined;
@@ -49,7 +63,9 @@ export const decisionHandler: NodeHandler<'decision'> = {
       if (classifierModel !== undefined) {
         const selection = await ctx.ports.classifiers.resolve(ctx.run.ownerId, classifierModel);
         if (selection.status === 'unavailable') {
-          tried.push(`jev unavailable: ${selection.reason}: ${selection.message}`);
+          const message = CLASSIFIER_SKIP_MESSAGES[selection.reason];
+          tried.push(`jev unavailable: ${selection.reason}: ${message}`);
+          skipped.push({ strategy, code: selection.reason, message });
           continue;
         }
         decider = selection.classifier;
@@ -58,6 +74,11 @@ export const decisionHandler: NodeHandler<'decision'> = {
       }
       if (!decider) {
         tried.push(`${strategy} unavailable`);
+        skipped.push({
+          strategy,
+          code: 'PROVIDER_UNAVAILABLE',
+          message: 'The decision provider is unavailable',
+        });
         continue;
       }
       const resolved =
@@ -89,6 +110,11 @@ export const decisionHandler: NodeHandler<'decision'> = {
       }
       if (!labels.has(result.label)) {
         tried.push(`${strategy} chose a route that is not declared on this node`);
+        skipped.push({
+          strategy,
+          code: 'UNDECLARED_ROUTE',
+          message: 'The provider did not select a declared route',
+        });
         continue;
       }
       if (
@@ -96,6 +122,11 @@ export const decisionHandler: NodeHandler<'decision'> = {
         (!Number.isFinite(result.confidence) || result.confidence < 0 || result.confidence > 1)
       ) {
         tried.push(`${strategy} returned invalid confidence`);
+        skipped.push({
+          strategy,
+          code: 'INVALID_CONFIDENCE',
+          message: 'The provider returned invalid confidence',
+        });
         continue;
       }
       const minConfidence = strategy === 'jev' ? config.jev?.minConfidence : undefined;
@@ -105,9 +136,14 @@ export const decisionHandler: NodeHandler<'decision'> = {
         result.confidence < minConfidence
       ) {
         tried.push(`${strategy} confidence ${result.confidence} below ${minConfidence}`);
+        skipped.push({
+          strategy,
+          code: 'LOW_CONFIDENCE',
+          message: `Confidence ${result.confidence} is below the required ${minConfidence}`,
+        });
         continue;
       }
-      return decide(ctx, strategy, result, classifierModel);
+      return decide(ctx, strategy, result, skipped, classifierModel);
     }
 
     throw new RunFailureError(
@@ -125,12 +161,14 @@ async function decide(
   ctx: NodeContext<'decision'>,
   strategy: 'jev' | 'codex' | 'expression',
   result: ChoiceResult,
+  skipped: StrategySkip[],
   classifierModel?: string,
 ) {
   await ctx.services.record({
     type: 'decision.made',
     nodeId: ctx.node.id,
     strategy,
+    skipped,
     ...(classifierModel !== undefined ? { classifierModel } : {}),
     route: result.label,
     ...(result.confidence !== undefined ? { confidence: result.confidence } : {}),

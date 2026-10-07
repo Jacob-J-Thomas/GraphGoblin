@@ -443,7 +443,7 @@ describe('adversarial API invariants', () => {
     expect((await t.container.manager.getThread(r.id))?.outputs['wait']?.value).toBe('original');
   });
 
-  it('16: disconnect during replay unsubscribes the live tail', async () => {
+  it('16: disconnect during replay validation unsubscribes before headers are sent', async () => {
     const t = await app();
     const r = await start(t, await t.publishLoop(minimalLoop()));
     let release!: () => void;
@@ -467,12 +467,24 @@ describe('adversarial API invariants', () => {
     const base = await t.app.listen({ port: 0, host: '127.0.0.1' });
     const controller = new AbortController();
     try {
-      const response = await fetch(`${base}/runs/${r.id}/events`, {
+      let settled = false;
+      const pending = fetch(`${base}/runs/${r.id}/events`, {
         headers: { accept: 'text/event-stream' },
         signal: controller.signal,
-      });
-      expect(response.status).toBe(200);
+      }).then(
+        (response) => {
+          settled = true;
+          return response;
+        },
+        (error: unknown) => {
+          settled = true;
+          return error;
+        },
+      );
+      await vi.waitFor(() => expect(t.container.ports.events.subscribe).toHaveBeenCalledOnce());
+      expect(settled).toBe(false);
       controller.abort();
+      expect(await pending).toMatchObject({ name: 'AbortError' });
       await vi.waitFor(() => expect(unsubscribe).toHaveBeenCalledTimes(1));
     } finally {
       controller.abort();

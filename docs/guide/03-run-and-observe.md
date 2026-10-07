@@ -102,7 +102,21 @@ The last four statuses are terminal for streaming and waiting. A failed run can 
 
 ## Use the inspector
 
-Select an event in **Timeline** to reconstruct the thread at that sequence. Select a `node.finished` event to see its patch with before/after values. Expand **Node progress** for harness progress, usage, decisions, and heartbeat events. Read **Result** or the failure banner at the top.
+Select an event in **Timeline** to reconstruct the thread at that sequence. Select a `node.finished` event to see its patch with before/after values. Expand **Node progress** for harness progress, usage, decisions, exit evaluations, and heartbeat events. Read **Result** or the failure banner at the top.
+
+`exit.evaluated` explains each exit visit in plain words, such as **Exited: criterion 2 (Jev)
+matched with confidence 0.93** or **Looped back: no criterion matched, iteration 2 of 5**.
+The latest explanation also appears in **Exit evaluation** near the top of the run.
+Select it to open **Evaluation details**: the ordered predicate results, confidence thresholds,
+model or classifier, short Codex judge reasoning, and reasons later criteria were skipped.
+Limit exits name the configured limit or loop ceiling. A failed predicate shows a safe error
+summary and stops evaluation. The displayed criterion numbers start at 1; API indices start at 0.
+
+`decision.made` names the winning route and explains earlier skipped strategies, for example
+**Skipped Jev: The selected classifier is disabled**. Select it for the skipped list. This is
+the configuration encountered during execution, which may differ from publish-time warnings.
+Historical decisions upgraded from older versions have an empty skipped list because those
+reasons were not recorded; historical exits have no evaluation event.
 
 When **Input requested** appears, answer the prompt using the generated form and click **Submit input**. Signal waits show **Send signal**. Timers, heartbeats, and child waits show the reason and any wake time.
 

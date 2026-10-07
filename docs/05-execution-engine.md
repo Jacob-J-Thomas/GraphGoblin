@@ -127,6 +127,52 @@ keeps its child. Its timers are re-armed and a child that finished meanwhile is 
 - `settings.maxIterations` also caps visits per node (ADR-0015). A visit is a fresh entry into a node, a `node.started` with `attempt` 1; re-executions of the same visit after a wake, a recovery, or a resume have a higher attempt and do not count. When any node would start for the (`maxIterations` + 1)th time, the run fails with `MAX_ITERATIONS` (`resumable: false`, `nodeId` and the message name the node, `details.maxIterations`) before `node.started` is recorded. Nodes inside an exit loop-back are entered once per iteration, so the iteration ceiling (`exhausted`) is always reached first for them; the cap bounds cycles that never pass through an exit, such as a decision routing back to itself.
 - Harness-level turn limits are not a GraphGoblin concept. The loop's iteration limit is the only loop limit.
 
+## Exit evaluation evidence
+
+Exit criteria are evaluated in configuration order. The first match decides the outcome;
+later criteria are skipped, rather than called. A predicate's boolean verdict and confidence
+are separate evidence: a true verdict below `minConfidence` does not match. An unavailable
+or failing predicate fails the node; it does not fall through to the next criterion. If no
+criterion matches, the configured default completes successfully or loops back. The loop's
+hard iteration ceiling prevents that loop-back and finishes exhausted. Configured iteration
+and duration criteria also finish exhausted. The per-node visit cap remains a `run.failed`
+with `MAX_ITERATIONS` before any new node execution, including an exit, starts.
+
+Each exit execution records `exit.evaluated` before `node.finished` or the terminal failure.
+It carries `nodeId`, `iteration`, `maxIterations`, ordered `criteria`, and `result`. Criterion
+indices are zero-based. Each entry names its strategy (`expression`, `jev`, `codex`, or the
+non-predicate criterion kind) and status: `matched`, `not-matched`, `skipped` with a fixed
+reason, or `error` with safe diagnostics. Predicate entries retain `holds`, confidence and
+the required minimum when present. Jev names classifier `jev`; Codex names the resolved
+model and retains its returned reasoning, bounded to 2,048 characters. Questions, context,
+provider response envelopes, and provider error text are not copied into this event.
+
+Configured Codex model names (node, loop, owner, and process defaults) and recorded exit
+model names share the contracts' 256-character bound. A maximum-length configured name
+therefore fits the event contract. The inspector takes completion meaning from `reason`
+and `outcome`, and limit meaning from `limit`; an optional criterion index only adds detail.
+
+`result.kind` is `completed` (matching index or default success, plus the run outcome),
+`looped-back` (no criterion matched and the target), or `limit-reached` (configured
+`max-iterations`, `max-duration` in seconds, or the hard `iteration-ceiling`, plus its value).
+Failed evaluations and return mappings record `failed` with fixed diagnostics; interrupted
+predicates record `cancelled`. This evidence describes an evaluation attempt. If a crash
+occurs after it is appended but before `node.finished`, recovery may evaluate again; the
+surrounding `node.started` attempts identify those evaluations.
+
+SQLite event reads enforce the current contract. A non-conforming row rejects the whole
+read page with an error naming its run, sequence, and type, without exposing its payload.
+Recovery cannot consume a partial invalid page. JSON pages and SSE replay use this same
+reader; SSE validates replay before sending any frames (07). Stored data repairs belong
+to migrations, including `0007` for historical decisions without `skipped`.
+
+Successful `decision.made` events always include `skipped`, ordered before the winning
+strategy. Entries contain strategy, a reason code, and a fixed short message: missing or
+disabled classifier, unsupported Choice, missing or unreadable key, unavailable provider,
+expression not selecting a declared route, undeclared provider route, invalid confidence,
+or confidence below the threshold. Provider exceptions still fail the node; recording
+fallback evidence does not introduce a new retry or fallback policy.
+
 ## Subloops as child runs (Decided)
 
 A subloop node creates a child run with the mapped input thread and parks the parent with wait kind `child`. The child is a normal run: it has its own event log, pins its own version, can itself contain subloops up to the depth limit, and is visible in the run list with a parent link. When it finishes, the parent is woken with the child's outcome and return payload, and the subloop handler applies the output mapping. Cancelling a parent cancels its children. Cancelling a child alone wakes the parent with outcome `cancelled`.

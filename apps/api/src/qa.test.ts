@@ -2,7 +2,11 @@
  * Regression tests for defects found by the WP-D2 adversarial QA pass (docs/qa/2026-10-03-wp-d2.md).
  */
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import type { LoopDefinitionInput, RunEvent } from '@graphgoblin/contracts';
+import {
+  MAX_MODEL_NAME_LENGTH,
+  type LoopDefinitionInput,
+  type RunEvent,
+} from '@graphgoblin/contracts';
 import { minimalLoop } from '@graphgoblin/contracts/testing';
 import { readOwnerDefaults } from './container.js';
 import { createTestApp, type TestApp } from './testing/test-app.js';
@@ -72,10 +76,16 @@ describe('owner defaults (Settings) reach the engine at run start', () => {
   });
 
   it('refuses invalid values for the known keys and ignores bad stored values', async () => {
+    const model = 'm'.repeat(MAX_MODEL_NAME_LENGTH);
+    expect(
+      (await t.app.inject({ method: 'PUT', url: '/settings', payload: { defaultModel: model } }))
+        .statusCode,
+    ).toBe(200);
     for (const payload of [
       { defaultEffort: 'ultra' },
       { defaultModel: '  ' },
       { defaultModel: 7 },
+      { defaultModel: `${model}m` },
     ]) {
       const res = await t.app.inject({ method: 'PUT', url: '/settings', payload });
       expect(res.statusCode, JSON.stringify(payload)).toBe(400);
@@ -87,6 +97,8 @@ describe('owner defaults (Settings) reach the engine at run start', () => {
     expect(
       await readOwnerDefaults({ get: (_o, k) => Promise.resolve(stored[k] as never) }, 'x'),
     ).toEqual({});
+    await t.container.repos.settings.set('local', 'defaultModel', `${model}m`);
+    expect(await readOwnerDefaults(t.container.repos.settings, 'local')).toEqual({});
   });
 });
 

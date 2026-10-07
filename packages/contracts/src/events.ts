@@ -4,6 +4,7 @@ import {
   EffortSchema,
   HarnessIdSchema,
   JsonValueSchema,
+  ModelNameSchema,
   SlugSchema,
   TimestampSchema,
   UlidSchema,
@@ -29,6 +30,105 @@ const Actor = z.strictObject({
   id: z.string().min(1).max(256),
 });
 
+export const StrategySkipSchema = z.strictObject({
+  strategy: z.enum(['jev', 'codex', 'expression']),
+  code: z.enum([
+    'CLASSIFIER_MODEL_NOT_FOUND',
+    'CLASSIFIER_PRIMITIVE_UNSUPPORTED',
+    'CLASSIFIER_MODEL_DISABLED',
+    'CLASSIFIER_SECRET_MISSING',
+    'CLASSIFIER_SECRET_UNREADABLE',
+    'PROVIDER_UNAVAILABLE',
+    'EXPRESSION_NOT_APPLICABLE',
+    'UNDECLARED_ROUTE',
+    'INVALID_CONFIDENCE',
+    'LOW_CONFIDENCE',
+  ]),
+  message: z.string().min(1).max(256),
+});
+export type StrategySkip = z.infer<typeof StrategySkipSchema>;
+
+export const ExitDiagnosticSchema = z.strictObject({
+  code: z.enum([
+    'CRITERION_ERROR',
+    'RETURN_MAPPING_ERROR',
+    'DECIDER_UNAVAILABLE',
+    'DECIDER_NOT_AUTHENTICATED',
+    'DECIDER_RATE_LIMITED',
+    'DECIDER_HTTP_ERROR',
+    'DECIDER_UNREACHABLE',
+    'DECIDER_INVALID_RESPONSE',
+    'DECIDER_REDIRECT',
+    'DECIDER_TIMEOUT',
+    'DECIDER_ERROR',
+  ]),
+  message: z.string().min(1).max(256),
+  status: z.number().int().min(100).max(599).optional(),
+});
+
+const CriterionEvidence = {
+  /** Zero-based position in the exit configuration. The inspector displays index + 1. */
+  index: z.number().int().min(0).max(31),
+  strategy: z.enum([
+    'expression',
+    'jev',
+    'codex',
+    'max-iterations',
+    'max-duration',
+    'last-output-matches',
+  ]),
+  model: ModelNameSchema.optional(),
+  classifierModel: ClassifierModelIdSchema.optional(),
+};
+export const ExitCriterionEvaluationSchema = z.discriminatedUnion('status', [
+  z.strictObject({
+    ...CriterionEvidence,
+    status: z.enum(['matched', 'not-matched']),
+    holds: z.boolean().optional(),
+    confidence: z.number().min(0).max(1).optional(),
+    minConfidence: z.number().min(0).max(1).optional(),
+    /** The Codex judge's short justification, never the provider response envelope. */
+    reasoning: z.string().max(2048).optional(),
+  }),
+  z.strictObject({
+    ...CriterionEvidence,
+    status: z.literal('skipped'),
+    reason: z.strictObject({
+      code: z.enum(['EARLIER_CRITERION_MATCHED', 'EARLIER_CRITERION_FAILED']),
+      message: z.string().min(1).max(256),
+    }),
+  }),
+  z.strictObject({
+    ...CriterionEvidence,
+    status: z.literal('error'),
+    diagnostic: ExitDiagnosticSchema,
+  }),
+]);
+export type ExitCriterionEvaluation = z.infer<typeof ExitCriterionEvaluationSchema>;
+
+export const ExitEvaluationOutcomeSchema = z.discriminatedUnion('kind', [
+  z.strictObject({
+    kind: z.literal('completed'),
+    outcome: OutcomeSchema,
+    reason: z.enum(['criterion-matched', 'default-success']),
+    criterionIndex: z.number().int().min(0).max(31).optional(),
+  }),
+  z.strictObject({
+    kind: z.literal('looped-back'),
+    reason: z.literal('no-criterion-matched'),
+    targetNodeId: SlugSchema,
+  }),
+  z.strictObject({
+    kind: z.literal('limit-reached'),
+    limit: z.enum(['max-iterations', 'max-duration', 'iteration-ceiling']),
+    value: z.number().positive(),
+    criterionIndex: z.number().int().min(0).max(31).optional(),
+    outcome: z.literal('exhausted'),
+  }),
+  z.strictObject({ kind: z.literal('failed'), diagnostic: ExitDiagnosticSchema }),
+  z.strictObject({ kind: z.literal('cancelled') }),
+]);
+export type ExitEvaluationOutcome = z.infer<typeof ExitEvaluationOutcomeSchema>;
 export const PROGRESS_SUMMARY_MAX = 2000;
 export const COMMAND_PREVIEW_MAX = 160;
 export const SCRIPT_PROGRESS_STDERR_MAX = 2000;
@@ -183,6 +283,16 @@ export const RunEventSchema = z.discriminatedUnion('type', [
     alternatives: z
       .array(z.strictObject({ route: SlugSchema, confidence: z.number().min(0).max(1).optional() }))
       .optional(),
+    skipped: z.array(StrategySkipSchema).max(3),
+  }),
+  z.strictObject({
+    ...Base,
+    type: z.literal('exit.evaluated'),
+    nodeId: SlugSchema,
+    iteration: z.number().int().positive(),
+    maxIterations: z.number().int().positive(),
+    criteria: z.array(ExitCriterionEvaluationSchema).max(32),
+    result: ExitEvaluationOutcomeSchema,
   }),
   z.strictObject({
     ...Base,

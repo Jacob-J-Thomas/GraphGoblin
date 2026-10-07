@@ -87,7 +87,7 @@ async function seedVersion(status: 'draft' | 'published', definition = inference
     'DELETE FROM __drizzle_migrations WHERE created_at > 1791136800000',
   );
   await t.container.handle.client.execute('DROP TABLE classifier_models');
-  expect(await t.container.handle.pendingMigrations()).toBe(2);
+  expect(await t.container.handle.pendingMigrations()).toBe(3);
   await t.container.handle.migrate();
   return { loopId, versionId, raw };
 }

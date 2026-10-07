@@ -53,6 +53,120 @@ function seedRun(api: FakeApi, overrides: Parameters<FakeApi['addRun']>[0] = {})
 }
 
 describe('RunInspectorPage', () => {
+  it.each([
+    {
+      result: { kind: 'completed', reason: 'criterion-matched', outcome: 'failure' },
+      expected: 'Exited: a criterion matched (failure)',
+    },
+    {
+      result: { kind: 'limit-reached', limit: 'max-duration', value: 10, outcome: 'exhausted' },
+      expected: 'Exited: duration limit of 10 seconds reached',
+    },
+  ] as const)(
+    'renders $expected without a criterion index in the timeline and run detail',
+    async ({ result, expected }) => {
+      const api = new FakeApi();
+      const run = api.addRun({ status: 'failed' });
+      api.pushEvent(
+        run.id,
+        event(run.id, 1, 'exit.evaluated', {
+          nodeId: 'done',
+          iteration: 2,
+          maxIterations: 5,
+          criteria: [],
+          result,
+        }),
+      );
+      renderApp(`/runs/${run.id}`, api);
+      const timeline = await screen.findByRole('list', { name: 'Timeline' });
+      expect(await within(timeline).findByText(expected)).toBeInTheDocument();
+      expect(await screen.findAllByText(expected)).toHaveLength(3);
+      expect(screen.queryByText(/default success|loop ceiling/)).not.toBeInTheDocument();
+    },
+  );
+  it('explains exit criteria and skipped decision strategies in the timeline and selected detail', async () => {
+    const api = new FakeApi();
+    const run = api.addRun({ status: 'succeeded' });
+    api.pushEvent(run.id, event(run.id, 1, 'run.queued', {}));
+    api.pushEvent(
+      run.id,
+      event(run.id, 2, 'decision.made', {
+        nodeId: 'choose',
+        strategy: 'expression',
+        route: 'yes',
+        skipped: [
+          {
+            strategy: 'jev',
+            code: 'CLASSIFIER_MODEL_DISABLED',
+            message: 'The selected classifier is disabled',
+          },
+        ],
+      }),
+    );
+    api.pushEvent(
+      run.id,
+      event(run.id, 3, 'exit.evaluated', {
+        nodeId: 'done',
+        iteration: 2,
+        maxIterations: 5,
+        criteria: [
+          {
+            index: 0,
+            strategy: 'jev',
+            status: 'not-matched',
+            holds: false,
+            confidence: 0.9,
+            classifierModel: 'jev',
+          },
+          {
+            index: 1,
+            strategy: 'codex',
+            status: 'matched',
+            holds: true,
+            confidence: 0.93,
+            minConfidence: 0.8,
+            model: 'judge-model',
+            reasoning: 'All checks passed',
+          },
+          {
+            index: 2,
+            strategy: 'expression',
+            status: 'skipped',
+            reason: { code: 'EARLIER_CRITERION_MATCHED', message: 'An earlier criterion matched' },
+          },
+        ],
+        result: {
+          kind: 'completed',
+          outcome: 'success',
+          reason: 'criterion-matched',
+          criterionIndex: 1,
+        },
+      }),
+    );
+    renderApp(`/runs/${run.id}`, api);
+    const timeline = await screen.findByRole('list', { name: 'Timeline' });
+    expect(
+      await within(timeline).findByText(
+        /Exited: criterion 2 \(Codex\) matched with confidence 0.93/,
+      ),
+    ).toBeInTheDocument();
+    expect(
+      within(timeline).getByText(/Skipped Jev: The selected classifier is disabled/),
+    ).toBeInTheDocument();
+    const criteria = await screen.findByRole('list', { name: 'Exit criteria' });
+    expect(criteria).toHaveTextContent(
+      'Criterion 1 (Jev): did not match; predicate false; confidence 0.9; classifier jev',
+    );
+    expect(criteria).toHaveTextContent('model judge-model');
+    expect(criteria).toHaveTextContent('Judge reasoning: All checks passed');
+    expect(criteria).toHaveTextContent(
+      'Criterion 3 (expression): skipped: An earlier criterion matched',
+    );
+    await userEvent.click(within(timeline).getByRole('button', { name: /decision.made/ }));
+    expect(screen.getByRole('list', { name: 'Skipped strategies' })).toHaveTextContent(
+      'Skipped Jev: The selected classifier is disabled',
+    );
+  });
   it('streams the timeline, replays the thread at any event, and shows the patch diff', async () => {
     const user = userEvent.setup();
     const api = new FakeApi();
@@ -87,6 +201,7 @@ describe('RunInspectorPage', () => {
       api.pushEvent(
         run.id,
         event(run.id, 7, 'decision.made', {
+          skipped: [],
           nodeId: 'decide',
           strategy: 'expression',
           route: 'good',

@@ -68,6 +68,7 @@ describe('a minimal run', () => {
       'node.started',
       'node.finished',
       'node.started',
+      'exit.evaluated',
       'node.finished',
       'run.finished',
     ]);

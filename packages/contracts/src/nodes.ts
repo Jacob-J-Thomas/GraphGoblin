@@ -4,6 +4,7 @@ import {
   EffortSchema,
   ExpressionSchema,
   HarnessIdSchema,
+  ModelNameSchema,
   JsonSchemaSchema,
   RepairPolicySchema,
   SlugSchema,
@@ -210,16 +211,12 @@ export const DecisionConfigSchema = z
       ),
     codex: z
       .strictObject({
-        model: z
-          .string()
-          .min(1)
-          .optional()
-          .meta(
-            field(
-              'Model for the Codex decider; falls back to the loop default, then to the owner setting.',
-              { control: 'model' },
-            ),
+        model: ModelNameSchema.optional().meta(
+          field(
+            'Model for the Codex decider; falls back to the loop default, then to the owner setting.',
+            { control: 'model' },
           ),
+        ),
         effort: EffortSchema.optional().meta(
           field(
             'Reasoning effort; falls back like the model. The catalog default effort is guidance only.',
@@ -305,15 +302,11 @@ export type Capabilities = z.infer<typeof CapabilitiesSchema>;
 
 export const InferenceConfigSchema = z.strictObject({
   harness: HarnessIdSchema.default('codex').meta(field('Harness that runs the session.')),
-  model: z
-    .string()
-    .min(1)
-    .optional()
-    .meta(
-      field('Model; falls back to the loop default, then to the owner setting.', {
-        control: 'model',
-      }),
-    ),
+  model: ModelNameSchema.optional().meta(
+    field('Model; falls back to the loop default, then to the owner setting.', {
+      control: 'model',
+    }),
+  ),
   effort: EffortSchema.optional().meta(
     field('Reasoning effort; falls back like the model. Catalog default effort is guidance only.', {
       control: 'effort',

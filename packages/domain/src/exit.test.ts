@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { ExitConfigSchema } from '@graphgoblin/contracts';
+import { ExitConfigSchema, type ExitCriterionEvaluation } from '@graphgoblin/contracts';
 import { sampleThread } from '@graphgoblin/contracts/testing';
 import { evaluateExit, type ExitContext } from './exit.js';
 
@@ -16,6 +16,85 @@ function ctx(overrides: Partial<ExitContext> = {}): ExitContext {
 }
 
 describe('evaluateExit', () => {
+  it('reports ordered verdicts, confidence filtering, provenance and bounded Codex reasoning', async () => {
+    const evidence: ExitCriterionEvaluation[] = [];
+    const askPredicate = vi
+      .fn()
+      .mockResolvedValueOnce({ holds: true, confidence: 0.4, classifierModel: 'jev' })
+      .mockResolvedValueOnce({
+        holds: true,
+        confidence: 0.93,
+        model: 'judge',
+        reasoning: 'x'.repeat(3000),
+      });
+    const decision = await evaluateExit(
+      ExitConfigSchema.parse({
+        criteria: [
+          {
+            when: 'predicate',
+            strategy: 'jev',
+            question: 'Done?',
+            minConfidence: 0.8,
+            outcome: 'success',
+          },
+          { when: 'predicate', strategy: 'codex', question: 'Done?', outcome: 'success' },
+          { when: 'predicate', strategy: 'expression', jsonata: 'true', outcome: 'failure' },
+        ],
+      }),
+      ctx({ askPredicate, onCriterion: (entry) => evidence.push(entry) }),
+    );
+    expect(decision).toMatchObject({ criterionIndex: 1, outcome: 'success' });
+    expect(evidence).toEqual([
+      {
+        index: 0,
+        strategy: 'jev',
+        status: 'not-matched',
+        holds: true,
+        confidence: 0.4,
+        minConfidence: 0.8,
+        classifierModel: 'jev',
+      },
+      {
+        index: 1,
+        strategy: 'codex',
+        status: 'matched',
+        holds: true,
+        confidence: 0.93,
+        model: 'judge',
+        reasoning: 'x'.repeat(2048),
+      },
+    ]);
+    expect(askPredicate).toHaveBeenCalledTimes(2);
+  });
+
+  it('observes false predicates and safe error evidence before propagating errors', async () => {
+    const evidence: ExitCriterionEvaluation[] = [];
+    const marker = new Error('private provider payload');
+    await expect(
+      evaluateExit(
+        ExitConfigSchema.parse({
+          criteria: [
+            { when: 'predicate', strategy: 'expression', jsonata: 'false', outcome: 'success' },
+            { when: 'predicate', strategy: 'jev', question: 'Done?', outcome: 'success' },
+          ],
+        }),
+        ctx({
+          askPredicate: () => Promise.reject(marker),
+          onCriterion: (entry) => evidence.push(entry),
+        }),
+      ),
+    ).rejects.toBe(marker);
+    expect(evidence).toEqual([
+      { index: 0, strategy: 'expression', status: 'not-matched', holds: false },
+      {
+        index: 1,
+        strategy: 'jev',
+        status: 'error',
+        diagnostic: { code: 'CRITERION_ERROR', message: 'Exit criterion evaluation failed' },
+      },
+    ]);
+    expect(JSON.stringify(evidence)).not.toContain(marker.message);
+  });
   it('defaults to success with no criteria', async () => {
     const decision = await evaluateExit(ExitConfigSchema.parse({}), ctx());
     expect(decision).toEqual({ kind: 'finish', outcome: 'success', reason: 'default' });

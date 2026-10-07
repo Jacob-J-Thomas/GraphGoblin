@@ -1,5 +1,12 @@
 import { z } from 'zod';
-import { EffortSchema, SlugSchema, TemplateSchema, TimestampSchema, UlidSchema } from './common.js';
+import {
+  EffortSchema,
+  ModelNameSchema,
+  SlugSchema,
+  TemplateSchema,
+  TimestampSchema,
+  UlidSchema,
+} from './common.js';
 import { NodeSchema } from './nodes.js';
 import { field } from './meta.js';
 import { VariableDeclarationsSchema } from './thread.js';
@@ -16,15 +23,11 @@ export const LoopSettingsSchema = z.strictObject({
   workingDirectory: WorkingDirectorySpecSchema.default({ kind: 'temp' }),
   defaults: z
     .strictObject({
-      model: z
-        .string()
-        .min(1)
-        .optional()
-        .meta(
-          field('Default Codex model; falls back to the owner setting, then the process default.', {
-            control: 'model',
-          }),
-        ),
+      model: ModelNameSchema.optional().meta(
+        field('Default Codex model; falls back to the owner setting, then the process default.', {
+          control: 'model',
+        }),
+      ),
       effort: EffortSchema.optional().meta(
         field(
           'Default effort; falls back to the owner setting, then the process default. Catalog default effort is guidance only.',

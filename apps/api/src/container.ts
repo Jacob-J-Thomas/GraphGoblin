@@ -28,7 +28,7 @@ import {
   openDatabase,
   type DatabaseHandle,
 } from '@graphgoblin/infrastructure/sqlite';
-import { EffortSchema, type Effort, type HarnessId } from '@graphgoblin/contracts';
+import { EffortSchema, ModelNameSchema, type Effort, type HarnessId } from '@graphgoblin/contracts';
 import {
   RunManager,
   type ClockPort,
@@ -119,10 +119,13 @@ export async function readOwnerDefaults(
   settings: Pick<SqliteSettings, 'get'>,
   ownerId: string,
 ): Promise<{ model?: string; effort?: Effort }> {
-  const model = await settings.get(ownerId, 'defaultModel');
+  const storedModel = await settings.get(ownerId, 'defaultModel');
+  const model = ModelNameSchema.safeParse(
+    typeof storedModel === 'string' ? storedModel.trim() : storedModel,
+  );
   const effort = EffortSchema.safeParse(await settings.get(ownerId, 'defaultEffort'));
   return {
-    ...(typeof model === 'string' && model.trim() ? { model: model.trim() } : {}),
+    ...(model.success ? { model: model.data } : {}),
     ...(effort.success ? { effort: effort.data } : {}),
   };
 }
