@@ -1,130 +1,181 @@
-# First local AIDLC trial
+# AIDLC: first seven-loop set
 
-[codex-first.loop.json](codex-first.loop.json) is a portable loop export tested against the owner's running instance. It performs one task in an independent disposable Node repository:
+Seven ordinary GraphGoblin exports and plain Node support scripts, with no product-code changes. **The hardened set defaults to refusing local checks and delivery. It is not ready for real-repository use.** The earlier v3 lifecycle passed before adversarial review; its evidence remains historical. The reports separate historical v3, safety stops, and hardened acceptance with the owner-authorized checks opt-in. The hardened lifecycle completed after explicit post-merge recovery; its fix-now repair also completed. See [hardened-acceptance-evidence.json](hardened-acceptance-evidence.json), [full-v1-report.md](full-v1-report.md), [safety-round-evidence.json](safety-round-evidence.json) and the historical [full-v1-evidence.json](full-v1-evidence.json).
 
-```mermaid
-flowchart LR
-  start[Manual input] --> admit[Scratch admission]
-  admit --> plan[Structured Plan]
-  plan --> implement[Implement]
-  implement --> snapshot[Candidate fingerprint]
-  snapshot --> review[Fresh structured review]
-  review --> verdict{Expression verdict}
-  verdict -- pass --> gate[node --test]
-  gate -- pass --> qa[Candidate checklist QA]
-  qa --> verify[Hash and evidence verification]
-  verify -- pass --> done[Caller result]
-  verdict -- changes-required --> retry[Bounded repair exit]
-  gate -- exit 1 --> retry
-  verify -- exit 1 --> retry
-  retry -- attempt remains --> implement
-  retry -- attempt 2 used --> exhausted[Exhausted]
+The separately delivered trial remains in [codex-first.loop.json](codex-first.loop.json), [trial-README.md](trial-README.md), [trial-report.md](trial-report.md) and [trial-evidence.json](trial-evidence.json). Its earlier counts do not count toward this set. [structured-output-schemas.json](structured-output-schemas.json) retains the trial/research contracts.
+
+## The set
+
+| Export                                               | Behavior and return                                                                                                                                                                                                                                        |
+| ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [planning.loop.json](planning.loop.json)             | Jev Choice selects configurable plannerA/plannerB criteria. Uncertainty gets forced-schema LLM judgement. Returns `Plan` including needs-input/blocked.                                                                                                    |
+| [implementation.loop.json](implementation.loop.json) | Jev UI classification, uncertain judgement, code/visual implementer slots. Scripts own branch preparation, commits, configured checks, authoritative SHA/files/proof and actual UI-file verification. Returns `Implementation`.                            |
+| [review.loop.json](review.loop.json)                 | Fresh reviewer derived from actual implementer family. Exact-head acceptance/findings, draft PR and comments, authorized WONT FIX rationale, linked nonblocking future issues with acceptance criteria. Returns `Review`; parent owns fix cycles.          |
+| [pr-ci.loop.json](pr-ci.loop.json)                   | Local gates and bounded remote CI poll on exact head. Structured verdict comment and configured label; policy-authorized exact-SHA merge and observation. Returns `PrCi`; bounded input wait for gated merge.                                              |
+| [qa.loop.json](qa.loop.json)                         | Checkout verified merge SHA; execute locked checklist with QA slot; hash-verify proof and persist dedicated proof branch. Returns `{qa: Qa, proofLinks}`. Fail keeps/reopens issue and requests rework; strict audit mode blocks before an audit worker.   |
+| [closing.loop.json](closing.loop.json)               | Verify merge/checklist/proof, succeeded QA run and sibling-parent provenance, no remaining tasks and closure policy. Close issue and return `Closure`.                                                                                                     |
+| [parent.loop.json](parent.loop.json)                 | Manual admission/claim; planning followed by sequential delivery children. Expressions inspect child status **and outcome** before results. Three review cycles and one QA rework per task; close after every planned task passes. Returns `ParentReport`. |
+
+The parent invokes workers sequentially; direct concurrent UI/API starts are not globally serialized. No native fan-out. The parent orchestrates with data checks. At the review cap it returns `needs-human`, reports the pending task and stops; #31's extra-cycle/reminder service is not implemented. Gates, stale heads, wrong UI routes and unaccepted blocking findings block delivery. Blocking findings cannot be deferred.
+
+## Settings and bounds
+
+[full-v1.settings.json](full-v1.settings.json) is the instantiation source. Application settings live in declared `vars.config`; generic product `LoopSettings` is unchanged. Literal role/classifier bindings are compiled into nodes. Every script pins hashes of settings and runtime dependencies, so edits require regeneration and publication.
+
+| Setting                                      | Default / contract                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `roles.plannerA`                             | Codex `gpt-6-astra/high`; deep reasoning slot intended for **Opus 5.5** after #26 provides a verified Claude binding.                                                                                                                                                                                                                                                                                                                    |
+| `roles.plannerB`                             | Codex `gpt-6.1-sol/high`; routine slot intended for **Fable 5.1** once executable provider/model/family metadata is verified. #26 alone does not establish Fable's identity.                                                                                                                                                                                                                                                             |
+| `roles.codeImplementer`, `visualImplementer` | Codex Sol/high and Astra/high. Separate configurable slots.                                                                                                                                                                                                                                                                                                                                                                              |
+| `roles.reviewer`, `familyMap`                | Fresh Astra/high mapped from OpenAI implementers. Full mode refuses same-family; Codex-only mode records the relaxation. Unsupported map routes fail before a worker.                                                                                                                                                                                                                                                                    |
+| `roles.qa`, `judgment`                       | Luna/high QA and Sol/medium soft routing. Every inference forces native JSON Schema, uses configurable `maxSchemaRepairAttempts` (currently 0), then fail-run.                                                                                                                                                                                                                                                                           |
+| `routing`                                    | Jev `jev`, Choice, threshold 0.8; planner/UI criteria and actual UI-file pattern. Unavailable/low-confidence routes to judgement; provider exceptions fail per current product contract.                                                                                                                                                                                                                                                 |
+| `labels`                                     | Configurable trigger, in-progress, PR-open, blocked, needs-human, verdict and future names, all prefixed `aidlc-`.                                                                                                                                                                                                                                                                                                                       |
+| `checks`, `requiredChecks`                   | Explicit programs/argument arrays/deadlines; `node --test` and remote `aidlc-test`. Missing/skipped/cancelled/failed checks cannot pass. Every same-name check run on the exact SHA is considered; duplicate successes are ambiguous and refused. Use unique required job names and one trigger for each required check.                                                                                                                 |
+| `bounds`                                     | 3 tasks, 3 review cycles/task, 1 QA rework/task, 24 CI polls at 5 seconds, 2,400-second deadline, finite graph visit cap. Inputs can reduce these limits.                                                                                                                                                                                                                                                                                |
+| Budget                                       | `budgetFile`: `.tmp/aidlc-control/aidlc-safety-budget.json`, 12 worker turns and 10 Jev evaluations in the committed settings. Acceptance overrides select a separate round ledger. Each inference reserves `1 + maxSchemaRepairAttempts`; each Jev node reserves one evaluation. Actual counts come from events. Historical ledgers are preserved. Never overlap live invocations; reservations are not a global concurrent-start lock. |
+| `policy`                                     | Merge/closure authorization, approval mode, human gate, QA depth, strict audit gate, allowed WONT FIX ids, deferral permission, proof branch, non-closing linkage and title prefix. Inputs can reduce authorization.                                                                                                                                                                                                                     |
+| `allowUnsandboxedChecks`                     | **false**. Implementation preparation, PR/CI checks and QA refuse with `SANDBOXED_CHECKS_UNAVAILABLE`. `true` is an explicit owner-privilege opt-in, not a sandbox; the safety round kept it off; the separately authorized hardened acceptance enables it only in its trigger input.                                                                                                                                                    |
+| `branchPattern`                              | `^aidlc-[a-z0-9-]+$`; every supplied implementation and push must match, cannot use the base or `main`/`master`, and cannot introduce Git options. Fetch and resolved push URLs must match the scratch repository immediately before each push.                                                                                                                                                                                          |
+| Checklist                                    | Input must equal immutable `aidlc-checklist.lock.json`. Unique ids; each requires a result and nonempty hash-verified proof bound to repository, issue, task, merge SHA, QA run and criterion. Proof must equal a check artefact recorded in that QA run before inference. Full-regression requires an owner-supplied complete checklist; supplemental criteria generation is future work.                                               |
+
+Helpers deliberately refuse every GitHub mutation destination except `Jacob-J-Thomas/gg-aidlc-scratch`. This is a trial allowlist, not product semantics. Workspaces must be independent physical repositories under **this worktree's `.tmp/`**, named `aidlc-*`, with no links and the exact allowed origin. Workers cannot change checklist, scratch instructions, ignore rules or CI. Use separate physical workspaces and serialized invocations for separate issues. Prompt/read-only/network restrictions are not demonstrated hostile-worker confinement.
+
+Approval means **a head-bound structured verdict comment plus configured label**, not an approving GitHub review. `PrCi.approvedHeadSha` stays null. A second eligible identity/App is required for actual approval. A changed head invalidates prior verdict/review/CI. PR linkage is `Part of #N` so GitHub does not close before QA.
+
+## Setup and import order
+
+Dependencies must already exist in this worktree. Support uses Node built-ins, git and authenticated gh; no new dependencies or links. The helpers never restart the owner instance or open its private data directory. Remote setup and workspace creation must run as the **API owner's Windows identity**. Sandbox gh credentials do not determine whether owner-process script nodes can authenticate; never recreate an API-owned workspace from the sandbox.
+
+```powershell
+# The owner-provisioned scratch baseline already exists.
+# scratch.mjs --remote now refuses BASE_PUBLICATION_FORBIDDEN.
+# Create new isolated issue fixtures through the owner-process acceptance helper.
+pnpm.cmd exec prettier --write examples/aidlc/support examples/aidlc/full-v1.settings.json
+node examples/aidlc/support/instantiate.mjs
+node examples/aidlc/support/install.mjs
 ```
 
-Plan and implementation status decisions also stop blocked work. The retry handoff renders the original Plan, latest review, gate output and evidence-check feedback explicitly; each worker has a fresh session. The full definition includes every route.
+The owner created the private scratch repository, baseline, labels and first issue before this follow-up. Base publication is now retired from `scratch.mjs --remote`, which refuses before any mutation. New acceptance workspaces and issues are created by owner-process fixture actions. The hardened acceptance setup uses the GitHub Contents API with the observed blob SHA to change the scratch workflow from push plus pull_request to push only, then clones the updated baseline. This trusted CI setup is separate from worker delivery; delivery scripts never push a base ref. Provisioning a different repository remains outside this scratch-only set.
 
-## Workspace and input
+Order: **planning, implementation, review, PR/CI, QA, closing, parent**. `install.mjs` imports/updates only the seven exact named loops, validates/publishes children, then regenerates the parent with returned child ids. Existing review/QA ids are also compiled into every child script for provenance checks. Evidence/ids are retained under `.tmp/aidlc-control`. Raw exports contain this worktree's Node/helper paths and installed child ids; another location/instance requires re-instantiation/rebinding. #28's gallery/helper installer is future work.
 
-Workers operate only in a physical scratch repository below the API process's temp directory, `gg-aidlc-trial/<timestamp>/`. Create separate directories for positive and negative experiments. No dependencies are required. Before starting, provide:
+## Trigger contracts
 
-- `package.json` with `type: "module"` and `scripts.test: "node --test"`.
-- `clamp.js`, initially exporting `clamp(value, min, max)` as `Math.min(max, Math.max(min, value))`.
-- `clamp.test.js` using `node:test` and `node:assert/strict`, covering valid ranges and equal bounds.
-- `aidlc-trial-checklist.lock.json`, containing exactly the checklist array below, marked read-only after creation.
-- A local `AGENTS.md` restricting work to this scratch directory, forbidding remote tools, subagents, Git mutations and checklist changes, and allowing QA writes only under `.graphgoblin-trial/`.
-- An independent `git init` and one baseline commit. Do not use a linked worktree, symlinks, junctions or dependencies from another checkout.
-
-The admission script checks the real workspace path, independent `.git` directory, absence of links, nonempty unique checklist ids and equality with the locked file before a worker starts. It does not create the directory. Candidate fingerprints include source, tests and the locked file; they exclude `.git`, `node_modules` and `.graphgoblin-trial`. The snapshot also verifies that the planner preserved the checklist. The final check requires an unchanged candidate, matching checklist and review hashes, a passing result for every required id, and nonempty workspace-local proof whose SHA-256 matches the QA output.
-
-Use this run body, substituting the actual scratch directory:
+Use the complete positive input generated at `.tmp/aidlc-control/aidlc-positive-input.json`. Common required fields are `message`, `repository`, `workspacePath`, `issueNumber`, locked `checklist`, `bounds` and `policy`.
 
 ```json
 {
-  "triggerNodeId": "start",
-  "input": {
-    "message": "Implement one task: clamp must throw RangeError with exact message min must not exceed max when min > max. Add a regression test, preserve valid ranges and equal bounds, and run node --test.",
-    "workspacePath": "C:\\Users\\OWNER\\AppData\\Local\\Temp\\gg-aidlc-trial\\TIMESTAMP\\aidlc-trial-positive",
-    "checklist": [
-      {
-        "id": "aidlc-trial-valid",
-        "system": "clamp",
-        "scenario": "Values inside and outside a valid range",
-        "polarity": "positive",
-        "steps": [
-          "node --test",
-          "Check clamp(5, 0, 10) = 5, clamp(-2, 0, 10) = 0 and clamp(12, 0, 10) = 10"
-        ],
-        "expected": "Valid ranges retain ordinary clamping behavior"
-      },
-      {
-        "id": "aidlc-trial-invalid",
-        "system": "clamp",
-        "scenario": "Reversed range is rejected",
-        "polarity": "negative",
-        "steps": [
-          "node --test",
-          "Check clamp(5, 10, 0) throws RangeError with message min must not exceed max"
-        ],
-        "expected": "RangeError with exact message min must not exceed max"
-      },
-      {
-        "id": "aidlc-trial-equal",
-        "system": "clamp",
-        "scenario": "Equal bounds",
-        "polarity": "positive",
-        "steps": ["node --test", "Check clamp(5, 3, 3) = 3"],
-        "expected": "Equal bounds are valid and return the bound"
-      }
-    ]
+  "message": "Reject reversed clamp intervals, preserve valid clamping and add a regression test.",
+  "repository": "Jacob-J-Thomas/gg-aidlc-scratch",
+  "workspacePath": "<absolute worktree path>/.tmp/aidlc-scratch",
+  "issueNumber": 1,
+  "checklist": [
+    {
+      "id": "aidlc-required",
+      "system": "clamp",
+      "scenario": "Reject a reversed interval",
+      "polarity": "negative",
+      "steps": ["Assert clamp(5, 10, 0) throws RangeError"],
+      "expected": "RangeError"
+    }
+  ],
+  "bounds": { "maxTasks": 1, "reviewCycles": 3, "qaReworks": 1 },
+  "policy": { "allowMerge": true, "allowClose": true }
+}
+```
+
+The compact example explains the fields; the generated input has **all three** actual locked criteria and must use the returned real issue number. Parent admission requires the issue open with the trigger label. Named claim/rework outputs in the run event log are authoritative; the reader uses `GET /runs` and per-run events, never inbound events/comments. An exclusive local file guards the interval before claim persistence. This manual version refuses repeated independent claims; QA rework stays inside the existing parent, rather than admitting a new top-level attempt after termination.
+
+## Live acceptance through REST
+
+The owner authorized REST for every start and observation: `POST /loops/{id}/runs` with `{ "triggerNodeId": "start", "input": payload }`, then `GET /runs/{id}` and `/runs/{id}/events`. The MCP tool's separate approval restriction does not govern these REST calls. `support/live.mjs` serializes acceptance starts, counts fresh/repair sessions and Jev attempts from events, and saves run/thread/transcript API evidence under `.tmp/aidlc-control`. Do not reset its ledger or the helpers' conservative reservation ledger during acceptance.
+
+```powershell
+node examples/aidlc/support/live.mjs start aidlc-full-v1-parent .tmp/aidlc-control/aidlc-positive-input.json positive
+node examples/aidlc/support/live.mjs collect
+```
+
+The two negative experiments use standalone implementation/review invocations with explicit result handoffs, rather than repeating the parent's merge/QA/closure path. `acceptance-control.mjs install` publishes the temporary `aidlc-acceptance-support` script-only loop; its `fixtures` action clones isolated workspaces and creates experiment issues **inside the owner process**. Its `inventory` action records every scratch issue, PR, comment, label, review, check and branch SHA for owner verification. `acceptance-control.mjs cleanup` deletes that throwaway loop after evidence collection; the seven finished loops remain.
+
+Historical v3 instance counts were 10 fresh Codex starts, no repair/resume turns, and 5 Jev evaluations; maximum acceptance-worker concurrency was 1. The scratch repository's existing Codex GitHub integration also auto-reviewed PR #2 when marked ready, outside the instance ledger and overlapping QA. The report records that one external review activity separately; global serialization across that integration is not established. Negative PRs stayed draft. `verify-live.mjs` asserts the three captured outcomes, and `audit.mjs` reconciles counts, worker intervals, published exports and owner-process inventory.
+
+For fix-now, a real implementer deliberately removes the guard/regression as fault injection; three retained tests pass, but the locked checklist stays unchanged. Fresh review must reject it. `handoff.mjs fix` preserves the candidate and binds findings to its head; a fresh implementer restores the guard/test, followed by another fresh review. For future-issue, a real implementer adds finite-input documentation; fresh review may defer the optional non-finite policy/tests with rationale and concrete acceptance criteria. Both experiments prohibit merging and closing, and retain their draft PRs/open issues as evidence. These controlled hints test routing and side effects; they do not measure unbiased discovery rates or the live parent cycle cap.
+
+| Child          | Additional payload fields                                                                                                                       |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Planning       | None.                                                                                                                                           |
+| Implementation | `task`, optional `plan`, previous `implementation`, head-bound `feedback`.                                                                      |
+| Review         | `task`, `implementation`, optional `reviewHints`.                                                                                               |
+| PR/CI          | `task`, `implementation`, `reviewRunId`. Supplied `review` is informational; authority is fetched from the pinned review loop run via API.      |
+| QA             | Observed merged `prCi`, required `task`.                                                                                                        |
+| Closing        | `task`, `prCi`, `qa`, `qaRunId`, `proofLinks`, `remainingTaskIds`; canonical QA and its check evidence are fetched from the pinned QA loop run. |
+
+Children get explicit project mappings and resolve their own workspaces. Each task must preserve the global checklist; combine jointly dependent acceptance changes into one task. To execute, describe/start the published parent through GraphGoblin run tools, then wait/read events to terminal. REST starts are explicitly authorized for these trials; the MCP tool has its own approval rule. A stopped parent reports pending ids and labels/comments the scratch issue where remote access permits. Proof uses immutable commit URLs on the configured proof branch.
+
+## Checks and future changes
+
+```powershell
+pnpm.cmd --filter @graphgoblin/contracts build
+pnpm.cmd --filter @graphgoblin/domain build
+pnpm.cmd --filter @graphgoblin/engine build
+node --test examples/aidlc/support/*.test.mjs
+pnpm.cmd format:check
+pnpm.cmd check:docs
+```
+
+Tests resolve built package entry points from their export maps without creating links or needing resolver flags. Tests cover real helper admission, changed hashes/checklists, exact-head CI, missing/tampered proof, family/exception policy, graph syntax/schema, and real-engine/fake-port pass, fix-now, future issue, review cap and QA rework.
+
+- **#26:** verified Claude/Fable role ids and family bindings, compiled reviewer routes for every actual implementer family and opposite-family session evidence. Do not enable full mode with current same-family settings.
+- **#33:** opt the fixer into per-node continuity after the contract exists; preserve fresh review/QA sessions and head-bound handoffs. Current visits are all fresh.
+- **#29:** add signed webhook/poll entry adapters and dedupe using the same payloads. Parent is manual; QA is synchronous after merge observation today.
+- **#28/#31/#32:** gallery/prerequisite UX, independently admitted future attempts, extra human cycles/reminders, supplemental QA criteria and canary-tested evidence-only audit remain open. Strict audit mode fails closed; input filtering/read-only mode does not substitute for isolation.
+
+## Safety-round limitations
+
+The three owner-process canaries used the installed Codex CLI 0.160.0 with the built-in workspace profile, an explicit named workspace-write/network-disabled profile, and elevated Windows sandbox mode. All denied writes outside the workspace, but all connected to the owner API at `127.0.0.1:4747`. Therefore a direct command sandbox did not meet the required network-off boundary. A fixed-instruction inference gate uses the same Windows command backend and would not establish the missing boundary or independent exit-code attestation. This round selects **option 3** from the brief: refuse by default and retain only an explicit `allowUnsandboxedChecks` opt-in. `sandbox-checks.mjs` and `sandbox-canary.mjs` are diagnostic programs, never the delivery check executor. No owner-process generated tests ran in the safety round. The later hardened acceptance explicitly accepts owner-privilege command execution in its input; the committed default remains false. Hostile-worker confinement and the strict evidence-only audit remain unproven.
+
+The safety-round positive parent stopped before an implementation worker at the disabled gate. A trusted script fixture supplies the negative candidate without executing it; a fresh reviewer exercises fix-now, and the subsequent implementation refuses the same gate. This is not a completed positive lifecycle or a completed repair acceptance. Previous v3 success does not demonstrate safety of these revised paths.
+
+Review authority requires a succeeded review run from the compiled loop id, matching issue/repository/task/checklist and the whole candidate handoff. Merge re-fetches it before attributing a verdict. Closing requires the compiled QA loop, exact run/issue/repository/task/merge SHA and matching canonical result/proof links. A correctly hashed README or old log cannot replace the script-created criterion evidence. This deterministic provenance does not prove a model interpreted every criterion correctly; standard QA uses the configured command outputs plus the model assessment, not a sound adversarial audit.
+
+The following findings remain open, using the reviewer's wording. They stop safe crash recovery or broader concurrent/general deployment; do not use these templates concurrently or against a real repository.
+
+> 8. **P2 — Claim and snapshot mutations are not recoverable across their crash windows.**
+>    Claim removes the trigger label before its completion is persisted. Retrying then fails `ISSUE_NOT_ADMITTED` before reconciling its own claim. Likewise, a crash after staging or committing but before writing the snapshot receipt makes recovery reject its own index/HEAD changes as worker mutations. These paths stop safely but are not idempotent recovery.
+
+> 9. **P2 — Worker serialization and reservation budgets race across invocations.**
+>    The budget uses an unlocked read-modify-write. Two runs can reserve against the same balance, overwrite one reservation, and both launch workers. `live.mjs` also checks and starts without a lock; direct UI/API starts bypass it. Per-issue claim files do not serialize different issues or standalone children. Concurrent comment lookup/create can duplicate comments, and label GET/PUT can overwrite intervening label changes.
+
+> 13. **P2 — Configuration cannot generalize several advertised settings.**
+>     Changing settings alone cannot change the repository, use labels without `aidlc-`, or map a family to any reviewer role except literal `reviewer`. Other hard-coded deployment/policy values include `Jacob-J-Thomas` in PR searches, localhost port 4747, `.tmp/aidlc-*` workspace admission, the locked-checklist filename, merge method, and the 600-second human wait. Planner fallback instructions also hard-code A as architectural and B as routine despite configurable criteria. These are documented trial constraints, but they prevent the requested general-purpose configuration.
+
+Finding 13 is partially improved: PR search derives the configured owner and planner judgement reads configured criteria. The scratch repository allowlist, `aidlc-` label prefix, literal reviewer slot, localhost port, workspace/checklist paths, merge method and human timeout remain deployment constraints. Settings alone cannot make this a general-purpose repository template.
+
+Finding 15 is fixed: the only human decisions are `merge` and `stop`; a false `allowMerge` policy exits blocked and human input cannot override it. Extra cycles and reminders still await #31. Bounds remain script-enforced rather than expression/exit duration criteria. QA rework resets the three-review counter, so the default permits up to six reviews per original task across one rework. Per-task branches exist; multi-task live delivery has not been demonstrated.
+
+Use `$env:AIDLC_ROUND = 'safety'` with `support/live.mjs` to preserve the historical ledger and count this round independently. Never reset either ledger. The owner must verify the recorded scratch GitHub objects, since sandbox credentials are unavailable. The new trigger and `Qa` schema fields require regeneration; old caller-only review and QA handoffs are refused.
+
+## Hardened acceptance invocation
+
+The owner accepts unsandboxed checks for their own scratch acceptance, because their Codex workers already run repository tests on this machine. This is an explicit risk acceptance, not evidence of a working network-off sandbox. The committed settings still have `allowUnsandboxedChecks:false`. Optional common payload field:
+
+```json
+{
+  "acceptance": {
+    "round": "hardened-acceptance",
+    "allowUnsandboxedChecks": true,
+    "waitForCodexReview": true
   }
 }
 ```
 
-The task and checklist are caller inputs. Roles are node configuration, with literal model ids and efforts verified against `/model-catalog`; GraphGoblin itself gains no AIDLC-specific behavior. The schema collection preserves the full-design schemas and adds `LocalImplementation`, `LocalReview` and `CandidateQa` for the smaller trial outputs. `Plan` is the full-design Plan schema. These are shape checks; scripts verify the associated local facts.
+The override is invocation-local and carried to every child, including QA and closing. Only these three acceptance fields are accepted; it cannot override merge/closure policy. The round slug selects a separate `aidlc-<round>-budget.json` reservation ledger without resetting prior budgets. Run `support/live.mjs` with `$env:AIDLC_ROUND = 'hardened-acceptance'` for the separately bounded 12-worker/10-Jev observation ledger. The actual positive retry/recovery and reused-negative input files are retained under `.tmp/aidlc-control` as evidence. New acceptance needs a fresh issue/workspace; closed or already claimed issues cannot be started again. The unused new negative fixture issue #12 remains open.
 
-## Import, publish and run
+For this scratch repository, `waitForCodexReview:true` waits after draft promotion for the existing Codex integration summary to report completed review at the candidate head before merge and QA. Missing, stale, ambiguous or incomplete summaries time out and refuse continuation. The marker/status format and seven-character commit display are integration-specific; this is not a global worker lock or a GitHub approval. The fixed bound uses configured CI poll limits, and merge has a 180-second script deadline. Negative PRs remain draft with the barrier disabled. QA proof equality ignores JSON member order but still requires every field, hash and execution binding to equal recorded script evidence.
 
-From this repository in PowerShell, with an already running API:
+The review schema now requires lowercase slug IDs in `acceptanceCoverage[].criterion`, with no appended descriptions. Every locked ID still must be covered exactly, with evidence; extra explanations belong in the summary. The failed annotated-ID handoff is a regression fixture. Proof hashing uses command-scoped `git -c core.longpaths=true hash-object -w -- <path>` for Windows paths longer than 260 characters, without changing global or repository Git configuration.
 
-```powershell
-$base = 'http://127.0.0.1:4747'
-Invoke-RestMethod "$base/system/preflight"
-Invoke-RestMethod "$base/harness/preflight"
-Invoke-RestMethod "$base/model-catalog"
-$export = Get-Content examples/aidlc/codex-first.loop.json -Raw
-$created = Invoke-RestMethod "$base/loops/import" -Method Post -ContentType 'application/json' -Body $export
-$loopId = $created.loop.id
-$definition = ($export | ConvertFrom-Json).loop
-$validation = Invoke-RestMethod "$base/loops/$loopId/validate" -Method Post -ContentType 'application/json' -Body (@{definition=$definition} | ConvertTo-Json -Depth 100)
-$created.issues
-$validation
-Invoke-RestMethod "$base/loops/$loopId"
-Invoke-RestMethod "$base/loops/$loopId/publish" -Method Post -ContentType 'application/json' -Body '{}'
-# Save the complete run body above as aidlc-trial-input.json, with your real path.
-$started = Invoke-RestMethod "$base/loops/$loopId/runs" -Method Post -ContentType 'application/json' -Body (Get-Content aidlc-trial-input.json -Raw)
-$runId = $started.run.id
-Invoke-RestMethod "$base/runs/$runId"
-Invoke-RestMethod "$base/runs/$runId/events?after=0&limit=1000"
-Invoke-RestMethod "$base/runs/$runId/thread"
-Invoke-RestMethod "$base/runs/$runId/sessions"
-# Transcript artifacts are listed in thread.artifacts:
-# GET /runs/{runId}/artifacts/{artifactId}
-```
+Optional parent input `recoveryParentRunId` supports one explicit recovery of a blocked, single-task parent that already recorded a successful merged PR/CI child. The script fetches both runs from this instance, requires the same loop, repository, issue, workspace, message, checklist, bounds, policy and acceptance settings, verifies the remote merge, rejects previous recovery or another recovery claim, and retains the original deadline/budget. It reuses canonical task/PR state and calls fresh QA, closing and report only. It does not resume an immutable old version or repair claim/snapshot crash windows. QA and closing remain siblings of the new parent and retain full provenance checks. The owner must intentionally request this recovery; an ordinary trigger never takes it.
 
-Resolve every error before publishing or running; inspect warnings rather than assuming catalog membership is enforced at execution. Importing again creates another loop, so use the existing loop's draft route when updating it. This local example uses no API key. Authenticated installations require a bearer header without logging its value. The validation route is `/loops/{id}/validate`, not `/loops/validate`.
-
-## Bounds and outcomes
-
-The first-trial bounds remain: one task, one manually started run at a time, one worker at a time within that run, two implementation attempts (`maxIterations: 2`), one schema-repair turn per inference with `onFailure: "fail-run"`, ten-minute inference deadlines, a two-minute gate and thirty-second helper scripts. QA may rerun once through the second implementation attempt. No automatic triggers or children are configured. Global/per-loop concurrency and subscription budgets are not enforced by this definition: the operator must keep invocations sequential and count starts, including schema repair turns.
-
-Planner/implementer use `gpt-6.1-sol/high`, reviewer `gpt-6-astra/high`, and QA `gpt-6-luna/high`. Planner/reviewer are read-only; implementer/QA use workspace-write. Every node uses approval never, network and web search false. Raw config overrides disable `features.multi_agent` and the currently configured `mcp_servers.node_repl`; another installation must disable its own MCP servers explicitly. Capability names do not currently establish a tool isolation profile. Admission is a path guard, not a general enforced read boundary for hostile workers.
-
-Successful work returns `candidate-qa-passed` with scope `local-candidate-only`. Blocked work exits with failure. Repeated changes-required, gate exit 1 or failed evidence verification reaches `exhausted` after attempt 2, with the latest available feedback; no third implementation starts. Unexpected script failures or exhausted schema repair fail the run under the engine's typed failure rules.
-
-For the negative experiment, seed the reversed-range regression in the baseline so `node --test` fails. Request only a comment change, explicitly prohibit executable/test changes in both attempts, ask the planner for that one ready experimental task and require honest review against the locked checklist. This deliberately leaves the defect present. The reviewer should return changes-required twice; the second retry exit should exhaust. Do not claim that exhaustion repaired the task.
-
-## What comes next
-
-This proves local structured handoffs, fresh same-family review, deterministic gates, candidate checklist evidence and bounded repair. It has no GitHub operations, PR approval, merge, post-merge QA or issue closure. The opposite-family rule is explicitly relaxed; two fresh Codex models are the same provider family.
-
-The research design splits the full lifecycle into parent orchestration, planning/routing, implementation, review/dispositions, PR/CI, QA and closing/rework loops. Progress toward that design requires generic settings expansion, admission/claim helpers, supported alternate harnesses and verified model-family bindings, eligible separate GitHub identities, exact-head CI/approval checks, bounded merge observation, immutable merge/checklist proof and QA-before-closure. Test those stages in an explicitly authorized disposable remote repository. Strict evidence-only auditing requires a demonstrated read boundary. See [trial-report.md](trial-report.md) for the actual trial evidence and remaining gaps.
+PR readback after a push now polls `bounds.prHeadPolls` (12) with `prHeadIntervalMs` (1,000), requiring the exact head and an open PR. A persistent stale/closed head still stops delivery. The final negative publication needed one script-only REST resume after GitHub propagation; it started no model. The later polling revision has unit/validation coverage, without another paid acceptance. Current totals are 11 instance workers plus one automatic GitHub review activity (conservative 12), 5 Jev evaluations, zero model repair/resume turns; current publications are children v8 and parent v9. The full report lists the initial stops and explicit recovery, rather than treating them as one uninterrupted parent success.

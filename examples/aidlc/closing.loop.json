@@ -1,0 +1,838 @@
+{
+  "format": "graphgoblin-loop",
+  "formatVersion": 1,
+  "exportedAt": "2026-10-07T00:00:00.000Z",
+  "loop": {
+    "schemaVersion": 1,
+    "name": "aidlc-full-v1-closing",
+    "description": "QA-before-closure policy, merge/checklist/proof provenance, no remaining tasks and authorized issue closure.",
+    "settings": {
+      "workingDirectory": {
+        "kind": "template",
+        "template": "{{ trigger.payload.workspacePath }}"
+      },
+      "defaults": {
+        "model": "gpt-6.1-sol",
+        "effort": "high"
+      },
+      "maxIterations": 19,
+      "subloopDepthLimit": 2
+    },
+    "variables": {
+      "config": {
+        "type": "object"
+      }
+    },
+    "nodes": [
+      {
+        "id": "start",
+        "label": "aidlc-start",
+        "kind": "trigger",
+        "config": {
+          "subtype": "manual",
+          "exposeTo": ["ui", "api", "mcp"],
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string",
+                "minLength": 1
+              },
+              "repository": {
+                "type": "string"
+              },
+              "workspacePath": {
+                "type": "string"
+              },
+              "issueNumber": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "checklist": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "system": {
+                      "type": "string"
+                    },
+                    "scenario": {
+                      "type": "string"
+                    },
+                    "polarity": {
+                      "type": "string",
+                      "enum": ["positive", "negative"]
+                    },
+                    "steps": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "expected": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["id", "system", "scenario", "polarity", "steps", "expected"],
+                  "additionalProperties": false
+                }
+              },
+              "bounds": {
+                "type": "object",
+                "properties": {
+                  "maxTasks": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 3
+                  },
+                  "reviewCycles": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 3
+                  },
+                  "qaReworks": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1
+                  }
+                },
+                "required": ["maxTasks", "reviewCycles", "qaReworks"],
+                "additionalProperties": false
+              },
+              "policy": {
+                "type": "object",
+                "properties": {
+                  "allowMerge": {
+                    "type": "boolean"
+                  },
+                  "allowClose": {
+                    "type": "boolean"
+                  }
+                },
+                "required": ["allowMerge", "allowClose"],
+                "additionalProperties": false
+              },
+              "task": {
+                "type": "object"
+              },
+              "plan": {
+                "type": "object",
+                "properties": {
+                  "schemaVersion": {
+                    "type": "integer",
+                    "enum": [1]
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": ["ready", "needs-input", "blocked"]
+                  },
+                  "planningSlot": {
+                    "type": "string",
+                    "enum": ["plannerA", "plannerB"]
+                  },
+                  "summary": {
+                    "type": "string"
+                  },
+                  "tasks": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "userVisibleUI": {
+                          "type": "boolean"
+                        },
+                        "acceptanceCriteria": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "dependsOn": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "description",
+                        "userVisibleUI",
+                        "acceptanceCriteria",
+                        "dependsOn"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "checklist": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "system": {
+                          "type": "string"
+                        },
+                        "scenario": {
+                          "type": "string"
+                        },
+                        "polarity": {
+                          "type": "string",
+                          "enum": ["positive", "negative"]
+                        },
+                        "steps": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "expected": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["id", "system", "scenario", "polarity", "steps", "expected"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "risks": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "questions": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "schemaVersion",
+                  "status",
+                  "planningSlot",
+                  "summary",
+                  "tasks",
+                  "checklist",
+                  "risks",
+                  "questions"
+                ],
+                "additionalProperties": false
+              },
+              "implementation": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "enum": ["complete", "blocked"]
+                      },
+                      "taskId": {
+                        "type": "string"
+                      },
+                      "baseSha": {
+                        "type": "string"
+                      },
+                      "headSha": {
+                        "type": "string"
+                      },
+                      "branch": {
+                        "type": "string"
+                      },
+                      "summary": {
+                        "type": "string"
+                      },
+                      "filesChanged": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "remainingWork": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "evidence": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": ["log", "screenshot", "trace", "diff", "report"]
+                            },
+                            "path": {
+                              "type": "string"
+                            },
+                            "sha256": {
+                              "type": "string"
+                            }
+                          },
+                          "required": ["kind", "path", "sha256"],
+                          "additionalProperties": false
+                        }
+                      },
+                      "implementer": {
+                        "type": "object",
+                        "properties": {
+                          "role": {
+                            "type": "string"
+                          },
+                          "harness": {
+                            "type": "string"
+                          },
+                          "model": {
+                            "type": "string"
+                          },
+                          "family": {
+                            "type": "string"
+                          }
+                        },
+                        "required": ["role", "harness", "model", "family"],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "status",
+                      "taskId",
+                      "baseSha",
+                      "headSha",
+                      "branch",
+                      "summary",
+                      "filesChanged",
+                      "remainingWork",
+                      "evidence",
+                      "implementer"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "review": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "verdict": {
+                        "type": "string",
+                        "enum": ["pass", "changes-required", "blocked"]
+                      },
+                      "reviewedHeadSha": {
+                        "type": "string"
+                      },
+                      "implementerFamily": {
+                        "type": "string"
+                      },
+                      "reviewerFamily": {
+                        "type": "string"
+                      },
+                      "acceptanceCoverage": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "criterion": {
+                              "type": "string",
+                              "pattern": "^[a-z0-9-]+$",
+                              "description": "Exact locked checklist id only; never a description or id followed by a colon."
+                            },
+                            "covered": {
+                              "type": "boolean"
+                            },
+                            "evidence": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "type": "string",
+                                    "enum": ["log", "screenshot", "trace", "diff", "report"]
+                                  },
+                                  "path": {
+                                    "type": "string"
+                                  },
+                                  "sha256": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": ["kind", "path", "sha256"],
+                                "additionalProperties": false
+                              }
+                            }
+                          },
+                          "required": ["criterion", "covered", "evidence"],
+                          "additionalProperties": false
+                        }
+                      },
+                      "findings": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "severity": {
+                              "type": "string",
+                              "enum": ["blocking", "nonblocking"]
+                            },
+                            "file": {
+                              "type": ["string", "null"]
+                            },
+                            "line": {
+                              "type": ["integer", "null"]
+                            },
+                            "problem": {
+                              "type": "string"
+                            },
+                            "requestedChange": {
+                              "type": "string"
+                            },
+                            "disposition": {
+                              "type": "string",
+                              "enum": ["fix-now", "wont-fix", "future-issue", "human"]
+                            },
+                            "rationale": {
+                              "type": "string"
+                            },
+                            "issueUrl": {
+                              "type": ["string", "null"]
+                            },
+                            "state": {
+                              "type": "string",
+                              "enum": ["open", "fixed", "accepted", "deferred"]
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "severity",
+                            "file",
+                            "line",
+                            "problem",
+                            "requestedChange",
+                            "disposition",
+                            "rationale",
+                            "issueUrl",
+                            "state"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "summary": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "verdict",
+                      "reviewedHeadSha",
+                      "implementerFamily",
+                      "reviewerFamily",
+                      "acceptanceCoverage",
+                      "findings",
+                      "summary"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "reviewRunId": {
+                "type": "string"
+              },
+              "recoveryParentRunId": {
+                "type": "string"
+              },
+              "feedback": {},
+              "prCi": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": ["ready", "fix-required", "pending", "merged", "blocked"]
+                  },
+                  "repository": {
+                    "type": "string"
+                  },
+                  "prNumber": {
+                    "type": ["integer", "null"]
+                  },
+                  "prUrl": {
+                    "type": ["string", "null"]
+                  },
+                  "headSha": {
+                    "type": "string"
+                  },
+                  "baseSha": {
+                    "type": "string"
+                  },
+                  "mergeSha": {
+                    "type": ["string", "null"]
+                  },
+                  "requiredChecks": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "sha": {
+                          "type": "string"
+                        },
+                        "state": {
+                          "type": "string",
+                          "enum": ["pending", "pass", "fail", "cancelled", "missing"]
+                        },
+                        "evidence": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "enum": ["log", "screenshot", "trace", "diff", "report"]
+                              },
+                              "path": {
+                                "type": "string"
+                              },
+                              "sha256": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["kind", "path", "sha256"],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": ["name", "sha", "state", "evidence"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "reviewerLogin": {
+                    "type": ["string", "null"]
+                  },
+                  "approvedHeadSha": {
+                    "type": ["string", "null"]
+                  },
+                  "blockingFindings": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "status",
+                  "repository",
+                  "prNumber",
+                  "prUrl",
+                  "headSha",
+                  "baseSha",
+                  "mergeSha",
+                  "requiredChecks",
+                  "reviewerLogin",
+                  "approvedHeadSha",
+                  "blockingFindings",
+                  "reason"
+                ],
+                "additionalProperties": false
+              },
+              "qa": {
+                "type": "object",
+                "properties": {
+                  "verdict": {
+                    "type": "string",
+                    "enum": ["pass", "fail", "blocked"]
+                  },
+                  "executionSha": {
+                    "type": "string"
+                  },
+                  "checklistHash": {
+                    "type": "string"
+                  },
+                  "depth": {
+                    "type": "string",
+                    "enum": ["standard", "full-regression"]
+                  },
+                  "results": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": ["pass", "fail", "blocked"]
+                        },
+                        "actual": {
+                          "type": "string"
+                        },
+                        "evidence": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "enum": ["log", "screenshot", "trace", "diff", "report"]
+                              },
+                              "path": {
+                                "type": "string"
+                              },
+                              "sha256": {
+                                "type": "string"
+                              },
+                              "executionSha": {
+                                "type": "string",
+                                "pattern": "^[a-f0-9]{40}$"
+                              },
+                              "qaRunId": {
+                                "type": "string"
+                              },
+                              "criterionId": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "path",
+                              "sha256",
+                              "executionSha",
+                              "qaRunId",
+                              "criterionId"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": ["id", "status", "actual", "evidence"],
+                      "additionalProperties": false
+                    }
+                  },
+                  "proofComplete": {
+                    "type": "boolean"
+                  },
+                  "summary": {
+                    "type": "string"
+                  },
+                  "repository": {
+                    "type": "string"
+                  },
+                  "issueNumber": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "taskId": {
+                    "type": "string"
+                  },
+                  "qaRunId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "verdict",
+                  "executionSha",
+                  "checklistHash",
+                  "depth",
+                  "results",
+                  "proofComplete",
+                  "summary",
+                  "repository",
+                  "issueNumber",
+                  "taskId",
+                  "qaRunId"
+                ],
+                "additionalProperties": false
+              },
+              "qaRunId": {
+                "type": "string"
+              },
+              "proofLinks": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "remainingTaskIds": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "startedAt": {
+                "type": "string"
+              },
+              "reviewHints": {
+                "type": "string"
+              },
+              "acceptance": {
+                "type": "object",
+                "properties": {
+                  "round": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9-]+$"
+                  },
+                  "allowUnsandboxedChecks": {
+                    "type": "boolean"
+                  },
+                  "waitForCodexReview": {
+                    "type": "boolean"
+                  }
+                },
+                "required": ["round", "allowUnsandboxedChecks", "waitForCodexReview"],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "message",
+              "repository",
+              "workspacePath",
+              "issueNumber",
+              "checklist",
+              "bounds",
+              "policy"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "ui": {
+          "x": 0,
+          "y": 0
+        }
+      },
+      {
+        "id": "init",
+        "label": "aidlc-init",
+        "kind": "script",
+        "config": {
+          "command": "C:\\nvm4w\\nodejs\\node.exe",
+          "args": [
+            "C:\\Users\\98jak\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-aidlc-full-v1\\examples\\aidlc\\support\\runtime.mjs",
+            "init"
+          ],
+          "env": {
+            "AIDLC_SETTINGS_HASH": "3104e7161ca9579453bc2b81e5a6ffbe426b192eb9daef582bef276637d449ed",
+            "AIDLC_SUPPORT_HASH": "5b933f4cb90b72e93c438a5296773f8e675fc653a844f3e30b3879bb9dc6f1d7",
+            "AIDLC_REVIEW_LOOP_ID": "01M4A20AZ69E2FK2W23WGWJ23M",
+            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG",
+            "AIDLC_PR_CI_LOOP_ID": "01M4A20B05SZ4F1ZYGDVDVR8Z8"
+          },
+          "cwd": "workspace",
+          "stdin": "thread",
+          "stdout": "patch",
+          "timeoutSeconds": 60
+        },
+        "ui": {
+          "x": 170,
+          "y": 0
+        }
+      },
+      {
+        "id": "close",
+        "label": "aidlc-close",
+        "kind": "script",
+        "config": {
+          "command": "C:\\nvm4w\\nodejs\\node.exe",
+          "args": [
+            "C:\\Users\\98jak\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-aidlc-full-v1\\examples\\aidlc\\support\\runtime.mjs",
+            "close"
+          ],
+          "env": {
+            "AIDLC_SETTINGS_HASH": "3104e7161ca9579453bc2b81e5a6ffbe426b192eb9daef582bef276637d449ed",
+            "AIDLC_SUPPORT_HASH": "5b933f4cb90b72e93c438a5296773f8e675fc653a844f3e30b3879bb9dc6f1d7",
+            "AIDLC_REVIEW_LOOP_ID": "01M4A20AZ69E2FK2W23WGWJ23M",
+            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG",
+            "AIDLC_PR_CI_LOOP_ID": "01M4A20B05SZ4F1ZYGDVDVR8Z8"
+          },
+          "cwd": "workspace",
+          "stdin": "thread",
+          "stdout": "patch",
+          "timeoutSeconds": 60
+        },
+        "ui": {
+          "x": 340,
+          "y": 0
+        }
+      },
+      {
+        "id": "done",
+        "label": "aidlc-done",
+        "kind": "exit",
+        "config": {
+          "default": "success",
+          "return": {
+            "mapping": "vars.result",
+            "channels": [
+              {
+                "kind": "caller"
+              }
+            ]
+          }
+        },
+        "ui": {
+          "x": 510,
+          "y": 0
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "e-1",
+        "from": {
+          "node": "start",
+          "port": "out"
+        },
+        "to": {
+          "node": "init",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e-2",
+        "from": {
+          "node": "init",
+          "port": "out"
+        },
+        "to": {
+          "node": "close",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e-3",
+        "from": {
+          "node": "close",
+          "port": "out"
+        },
+        "to": {
+          "node": "done",
+          "port": "in"
+        }
+      }
+    ]
+  }
+}

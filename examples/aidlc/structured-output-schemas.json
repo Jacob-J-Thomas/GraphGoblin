@@ -215,7 +215,9 @@
           "type": "object",
           "properties": {
             "criterion": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^[a-z0-9-]+$",
+              "description": "Exact locked checklist id only; never a description or id followed by a colon."
             },
             "covered": {
               "type": "boolean"
@@ -524,9 +526,19 @@
                   },
                   "sha256": {
                     "type": "string"
+                  },
+                  "executionSha": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{40}$"
+                  },
+                  "qaRunId": {
+                    "type": "string"
+                  },
+                  "criterionId": {
+                    "type": "string"
                   }
                 },
-                "required": ["kind", "path", "sha256"],
+                "required": ["kind", "path", "sha256", "executionSha", "qaRunId", "criterionId"],
                 "additionalProperties": false
               }
             }
@@ -540,6 +552,19 @@
       },
       "summary": {
         "type": "string"
+      },
+      "repository": {
+        "type": "string"
+      },
+      "issueNumber": {
+        "type": "integer",
+        "minimum": 1
+      },
+      "taskId": {
+        "type": "string"
+      },
+      "qaRunId": {
+        "type": "string"
       }
     },
     "required": [
@@ -549,7 +574,11 @@
       "depth",
       "results",
       "proofComplete",
-      "summary"
+      "summary",
+      "repository",
+      "issueNumber",
+      "taskId",
+      "qaRunId"
     ],
     "additionalProperties": false
   },
@@ -577,7 +606,7 @@
     "properties": {
       "decision": {
         "type": "string",
-        "enum": ["continue", "another-cycle", "merge", "close-pr", "stop"]
+        "enum": ["merge", "stop"]
       },
       "expectedHeadSha": {
         "type": ["string", "null"]
@@ -685,7 +714,9 @@
         "type": "string"
       },
       "confidence": {
-        "type": "number"
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
       }
     },
     "required": ["route", "reason", "confidence"],

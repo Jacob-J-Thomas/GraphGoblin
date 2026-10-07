@@ -1,0 +1,114 @@
+{
+  "repository": "Jacob-J-Thomas/gg-aidlc-scratch",
+  "baseBranch": "main",
+  "mode": "codex-only",
+  "roles": {
+    "plannerA": {
+      "harness": "codex",
+      "model": "gpt-6-astra",
+      "family": "openai",
+      "effort": "high",
+      "timeoutSeconds": 300
+    },
+    "plannerB": {
+      "harness": "codex",
+      "model": "gpt-6.1-sol",
+      "family": "openai",
+      "effort": "high",
+      "timeoutSeconds": 300
+    },
+    "codeImplementer": {
+      "harness": "codex",
+      "model": "gpt-6.1-sol",
+      "family": "openai",
+      "effort": "high",
+      "timeoutSeconds": 420
+    },
+    "visualImplementer": {
+      "harness": "codex",
+      "model": "gpt-6-astra",
+      "family": "openai",
+      "effort": "high",
+      "timeoutSeconds": 420
+    },
+    "reviewer": {
+      "harness": "codex",
+      "model": "gpt-6-astra",
+      "family": "openai",
+      "effort": "high",
+      "timeoutSeconds": 300
+    },
+    "qa": {
+      "harness": "codex",
+      "model": "gpt-6-luna",
+      "family": "openai",
+      "effort": "high",
+      "timeoutSeconds": 300
+    },
+    "judgment": {
+      "harness": "codex",
+      "model": "gpt-6.1-sol",
+      "family": "openai",
+      "effort": "medium",
+      "timeoutSeconds": 180
+    }
+  },
+  "familyMap": {
+    "openai": "reviewer"
+  },
+  "routing": {
+    "classifierId": "jev",
+    "minConfidence": 0.8,
+    "plannerA": "Needs deep architectural reasoning, cross-system design, security or difficult tradeoffs.",
+    "plannerB": "Routine small change with clear acceptance criteria and no architecture change.",
+    "visual": "User-visible interface, layout, visual taste, interaction or accessibility work.",
+    "code": "Backend, module, tests or documentation without user-visible interface changes.",
+    "uiFilePattern": "\\.(tsx|jsx|css|html)$"
+  },
+  "labels": {
+    "trigger": "aidlc-ready",
+    "inProgress": "aidlc-in-progress",
+    "prOpen": "aidlc-pr-open",
+    "blocked": "aidlc-blocked",
+    "needsHuman": "aidlc-needs-human",
+    "verdict": "aidlc-review-pass",
+    "future": "aidlc-future"
+  },
+  "bounds": {
+    "maxTasks": 3,
+    "reviewCycles": 3,
+    "qaReworks": 1,
+    "ciPolls": 24,
+    "ciIntervalMs": 5000,
+    "deadlineSeconds": 2400,
+    "workerStarts": 12,
+    "jevEvaluations": 10,
+    "prHeadPolls": 12,
+    "prHeadIntervalMs": 1000
+  },
+  "checks": [
+    {
+      "program": "node",
+      "args": ["--test"],
+      "timeoutMs": 30000
+    }
+  ],
+  "requiredChecks": ["aidlc-test"],
+  "policy": {
+    "allowMerge": true,
+    "allowClose": true,
+    "approvalMode": "verdict-comment-label",
+    "requireHumanBeforeMerge": false,
+    "requireStrictQaAudit": false,
+    "qaDepth": "standard",
+    "allowedWontFixIds": [],
+    "allowNonblockingFutureIssues": true,
+    "proofBranch": "aidlc-proof",
+    "linkage": "Part of",
+    "prTitlePrefix": "aidlc-"
+  },
+  "branchPattern": "^aidlc-[a-z0-9-]+$",
+  "allowUnsandboxedChecks": false,
+  "maxSchemaRepairAttempts": 0,
+  "budgetFile": "aidlc-safety-budget.json"
+}
