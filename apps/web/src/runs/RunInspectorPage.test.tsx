@@ -98,6 +98,32 @@ describe('RunInspectorPage', () => {
     expect(screen.getAllByText(/outputTokens/).length).toBeGreaterThan(0);
   });
 
+  it('shows a failed command in progress while the run is still running', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const run = seedRun(api, { status: 'running' });
+    api.pushEvent(
+      run.id,
+      event(run.id, 7, 'node.progress', {
+        nodeId: 'infer',
+        progress: {
+          item: {
+            id: 'command-1',
+            type: 'command',
+            summary: 'npm test (exit -1)',
+            commandPreview: 'npm test',
+            exitCode: -1,
+            status: 'failed',
+          },
+        },
+      }),
+    );
+    renderApp(`/runs/${run.id}`, api);
+
+    await user.click(await screen.findByText(/Node progress/));
+    expect(await screen.findByText('Command failed: npm test (exit -1)')).toBeInTheDocument();
+  });
+
   it('replays a child run from its seeded first event and reports logs that do not replay', async () => {
     const api = new FakeApi();
     const seeded = api.addRun({ parentRunId: '01ARZ3NDEKTSV4RRFFQ69G5FAZ' });

@@ -34,6 +34,15 @@ const ZERO_USAGE: Usage = {
 const CONTINUATION_PROMPT =
   'The previous turn was interrupted before GraphGoblin recorded its result. Continue the task from where you left off and finish it.';
 
+function progressSummary(item: HarnessItem): string {
+  if (item.type === 'error') return 'Harness reported an error';
+  if (item.type === 'tool-call') {
+    const diagnostic = item.summary.indexOf(' failed: ');
+    if (diagnostic >= 0) return `${item.summary.slice(0, diagnostic)} failed`.slice(0, 2000);
+  }
+  return item.summary.slice(0, 2000);
+}
+
 /** Consume a session: record progress and usage, resolve the result, map failures to run failures. */
 async function consume(
   ctx: NodeContext<'inference'>,
@@ -66,7 +75,26 @@ async function consume(
             item: {
               id: event.item.id,
               type: event.item.type,
-              summary: event.item.summary.slice(0, 2000),
+              summary: progressSummary(event.item),
+              ...(event.item.type === 'command'
+                ? {
+                    commandPreview: (event.item.commandPreview ?? event.item.summary)
+                      .replace(/\s+/g, ' ')
+                      .trim()
+                      .slice(0, 160),
+                    ...(typeof event.item.exitCode === 'number' &&
+                    Number.isInteger(event.item.exitCode)
+                      ? { exitCode: event.item.exitCode }
+                      : {}),
+                    status:
+                      event.item.status === 'failed' ||
+                      (typeof event.item.exitCode === 'number' && event.item.exitCode !== 0)
+                        ? 'failed'
+                        : event.item.status === 'ok' || event.item.exitCode === 0
+                          ? 'ok'
+                          : 'running',
+                  }
+                : {}),
             },
           }),
         });

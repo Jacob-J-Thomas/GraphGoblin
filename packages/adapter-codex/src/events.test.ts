@@ -89,6 +89,12 @@ describe('normalizeItem', () => {
       expect(item.summary).toBe(summary);
       expect(item.id).toBe(raw.id);
       expect(item.detail).toMatchObject({ id: raw.id });
+      if (raw.type === 'command_execution' && raw.id === 'c') {
+        expect(item).toMatchObject({ commandPreview: 'ls -la', exitCode: 2, status: 'failed' });
+      }
+      if (raw.type === 'command_execution' && raw.id === 'c2') {
+        expect(item).toMatchObject({ commandPreview: 'sleep', status: 'running' });
+      }
     }
   });
 
@@ -98,10 +104,15 @@ describe('normalizeItem', () => {
       type: 'command_execution',
       command: 'y'.repeat(500),
       aggregated_output: 'z'.repeat(20_000),
-      status: 'completed',
+      exit_code: -1,
+      status: 'failed',
     });
     expect(item.summary).toHaveLength(200);
     expect(item.summary.endsWith('...')).toBe(true);
+    expect(item.commandPreview).toHaveLength(160);
+    expect(item.commandPreview?.endsWith('...')).toBe(true);
+    expect(item.exitCode).toBe(-1);
+    expect(item.status).toBe('failed');
     const detail = item.detail as { aggregated_output: string };
     expect(detail.aggregated_output.length).toBeLessThan(17_000);
     expect(detail.aggregated_output.endsWith('[truncated]')).toBe(true);
@@ -202,7 +213,9 @@ describe('TurnAccumulator', () => {
     const out = loadFixture('command-and-file-change').events.flatMap((e) => acc.push(e));
     const items = out.flatMap((e) => (e.type === 'item' ? [e.item] : []));
     expect(items.map((i) => i.type)).toEqual(['error', 'command', 'file-change', 'message']);
+    expect(items[1]).toMatchObject({ exitCode: 0, status: 'ok' });
     expect(items[1]?.summary).toContain('Get-ChildItem -Name');
+    expect(items[1]?.commandPreview).toContain('Get-ChildItem -Name');
     expect(items[1]?.summary).toContain('(exit 0)');
     expect(items[2]?.summary).toBe('add <WORKDIR>\\notes.txt');
     expect(acc.finish().finalText).toBe('DONE');

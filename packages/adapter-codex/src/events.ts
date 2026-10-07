@@ -1,5 +1,10 @@
 import type { JsonValue, Usage } from '@graphgoblin/contracts';
-import type { HarnessEvent, HarnessItem, HarnessItemType } from '@graphgoblin/engine';
+import type {
+  HarnessCommandStatus,
+  HarnessEvent,
+  HarnessItem,
+  HarnessItemType,
+} from '@graphgoblin/engine';
 import type { ThreadEvent, ThreadItem } from '@openai/codex-sdk';
 
 /**
@@ -9,6 +14,7 @@ import type { ThreadEvent, ThreadItem } from '@openai/codex-sdk';
  */
 
 const SUMMARY_MAX = 200;
+const COMMAND_PREVIEW_MAX = 160;
 /** Command output kept in an item's `detail`; transcripts store items, so cap what they carry. */
 const OUTPUT_MAX = 16 * 1024;
 
@@ -74,6 +80,29 @@ function summarize(item: LooseItem): string {
   }
 }
 
+/** Keep command progress fields small and independent of the summary's length. */
+function commandMetadata(
+  item: LooseItem,
+): Pick<HarnessItem, 'commandPreview' | 'exitCode' | 'status'> {
+  const raw = item as Record<string, unknown>;
+  const command = typeof raw.command === 'string' ? raw.command : '';
+  const exitCode =
+    typeof raw.exit_code === 'number' && Number.isInteger(raw.exit_code)
+      ? raw.exit_code
+      : undefined;
+  const status: HarnessCommandStatus =
+    raw.status === 'failed' || (exitCode !== undefined && exitCode !== 0)
+      ? 'failed'
+      : raw.status === 'completed' || exitCode === 0
+        ? 'ok'
+        : 'running';
+  return {
+    commandPreview: oneLine(command, COMMAND_PREVIEW_MAX),
+    ...(exitCode !== undefined ? { exitCode } : {}),
+    status,
+  };
+}
+
 /** Convert a value to JSON, dropping anything that does not survive a round trip. */
 function toJson(value: unknown): JsonValue {
   return JSON.parse(JSON.stringify(value ?? null)) as JsonValue;
@@ -89,6 +118,7 @@ export function normalizeItem(item: LooseItem): HarnessItem {
     id: item.id,
     type: ITEM_TYPES[item.type] ?? 'other',
     summary: summarize(item),
+    ...(item.type === 'command_execution' ? commandMetadata(item) : {}),
     detail: toJson(raw),
   };
 }
