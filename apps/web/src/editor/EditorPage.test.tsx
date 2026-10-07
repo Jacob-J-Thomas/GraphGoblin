@@ -47,14 +47,18 @@ describe('EditorPage', () => {
   // loop settings in it, so they start with it expanded (the setup clears storage after each).
   beforeEach(() => localStorage.setItem(LOOP_PANEL_STORAGE_KEY, 'expanded'));
 
-  it('shows Harness only in the inference dialog', async () => {
+  it('shows Harness in inference but not in the decision or loop settings', async () => {
     const api = new FakeApi();
     const loop = api.addLoop(kitchenSinkLoop());
     renderApp(`/loops/${loop.id}/edit`, api);
     await screen.findByRole('form', { name: 'Loop settings form' });
     expect(screen.queryByLabelText('Harness')).not.toBeInTheDocument();
+    act(() => useEditorStore.getState().openNode('decide'));
+    expect(
+      within(screen.getByRole('dialog')).queryByRole('radiogroup', { name: 'Harness' }),
+    ).not.toBeInTheDocument();
     act(() => useEditorStore.getState().openNode('infer'));
-    expect(within(screen.getByRole('dialog')).getByLabelText('Harness')).toHaveValue('codex');
+    expect(within(screen.getByRole('dialog')).getByRole('radio', { name: 'codex' })).toBeChecked();
   });
 
   it('collapses and expands the loop panel from its own controls and remembers it', async () => {

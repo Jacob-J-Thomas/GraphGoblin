@@ -2,6 +2,7 @@ import {
   COMMAND_PREVIEW_MAX,
   PROGRESS_SUMMARY_MAX,
   type ContextThread,
+  type HarnessId,
   type JsonValue,
   type NodeProgress,
   type PatchOperation,
@@ -102,8 +103,23 @@ async function consume(
   session: HarnessSession,
   row: HarnessSessionRecord,
 ): Promise<HarnessResult> {
-  let lastError: { code: string; message: string } | undefined;
-  for await (const event of session.events) {
+  let lastError: { code: string; message: string; retriable: boolean } | undefined;
+  const rethrow = (error: unknown): never => {
+    if (error instanceof RunFailureError || error instanceof RunCancelledError) throw error;
+    const failure = mapHarnessFailure(error, lastError, ctx.node.id, ctx.config.harness);
+    if (failure.code === 'HARNESS_TERMINATION_UNCONFIRMED') throw failure;
+    if (isAbortError(error) || ctx.signal.aborted) throw new RunCancelledError();
+    throw failure;
+  };
+  // Only iterator-origin failures are provider failures. Persistence in the consumer stays outside.
+  async function* events() {
+    try {
+      yield* session.events;
+    } catch (error) {
+      rethrow(error);
+    }
+  }
+  for await (const event of events()) {
     switch (event.type) {
       case 'session':
         row.sessionId = event.sessionId;
@@ -135,7 +151,7 @@ async function consume(
         });
         break;
       case 'error':
-        lastError = { code: event.code, message: event.message };
+        lastError = { code: event.code, message: event.message, retriable: event.retriable };
         break;
       case 'turn-complete':
         break;
@@ -144,25 +160,55 @@ async function consume(
   try {
     return await session.result;
   } catch (error) {
-    if (isAbortError(error) || ctx.signal.aborted) throw new RunCancelledError();
-    const code = classifyHarnessError(lastError?.code ?? (error as { code?: string }).code);
-    throw new RunFailureError(
-      code,
-      `harness turn failed: ${lastError?.message ?? describeError(error)}`,
-      { nodeId: ctx.node.id, details: lastError },
-    );
+    return rethrow(error);
   }
 }
 
-function classifyHarnessError(
-  code: string | undefined,
-): 'HARNESS_QUOTA_EXHAUSTED' | 'HARNESS_NOT_AUTHENTICATED' | 'HARNESS_TURN_FAILED' {
-  const c = (code ?? '').toLowerCase();
-  if (c.includes('quota') || c.includes('rate') || c.includes('usage_limit'))
-    return 'HARNESS_QUOTA_EXHAUSTED';
-  if (c.includes('auth') || c.includes('401') || c.includes('unauthorized'))
-    return 'HARNESS_NOT_AUTHENTICATED';
-  return 'HARNESS_TURN_FAILED';
+/** An explicitly returned native candidate stays authoritative, including undefined or null. */
+function outputCandidate(result: HarnessResult): unknown {
+  return Object.hasOwn(result, 'structured') ? result.structured : jsonOrText(result.finalText);
+}
+
+function mapHarnessFailure(
+  error: unknown,
+  lastError: { code: string; message: string; retriable: boolean } | undefined,
+  nodeId: string,
+  harness: HarnessId,
+): RunFailureError {
+  const info = typeof error === 'object' && error !== null ? error : {};
+  const reportedCode =
+    lastError?.code ?? ('code' in info && typeof info.code === 'string' ? info.code : undefined);
+  const reportedRetriable =
+    lastError?.retriable ?? ('retriable' in info && info.retriable === true);
+  const code = (reportedCode ?? '').toLowerCase();
+  const message = lastError?.message ?? describeError(error);
+  if (code === 'harness_termination_unconfirmed')
+    return new RunFailureError('HARNESS_TERMINATION_UNCONFIRMED', message, {
+      nodeId,
+      resumable: false,
+      details: { adapterCode: reportedCode },
+    });
+  if (
+    [
+      'harness_quota_exhausted',
+      'usage_limit_reached',
+      'insufficient_quota',
+      'rate_limit_exceeded',
+    ].includes(code)
+  )
+    return new RunFailureError('HARNESS_QUOTA_EXHAUSTED', message, { nodeId, resumable: true });
+  if (['harness_not_authenticated', 'unauthorized', '401', 'not_authenticated'].includes(code))
+    return new RunFailureError('HARNESS_NOT_AUTHENTICATED', message, { nodeId, resumable: true });
+  if (code === 'harness_not_installed')
+    return new RunFailureError('HARNESS_NOT_INSTALLED', message, { nodeId, resumable: true });
+  if (code === 'harness_timeout')
+    return new RunFailureError('INFERENCE_TIMEOUT', message, { nodeId, resumable: true });
+  return new RunFailureError('HARNESS_TURN_FAILED', 'harness turn failed: ' + message, {
+    nodeId,
+    // Keep Codex's current fallback; Claude emits strict documented retry evidence.
+    resumable: harness === 'claude' ? reportedRetriable : true,
+    details: { adapterCode: reportedCode ?? null },
+  });
 }
 
 function noteFor(item: HarnessItem): string | undefined {
@@ -216,15 +262,29 @@ export const inferenceHandler: NodeHandler<'inference'> = {
     let resumeId: string | undefined;
     let prompt: string;
     if (ctx.attempt > 1 && existing?.sessionId && existing.status !== 'finished') {
+      if (existing.harness !== config.harness)
+        throw new RunFailureError(
+          'HARNESS_TURN_FAILED',
+          'Interrupted session belongs to another harness family',
+          {
+            nodeId: ctx.node.id,
+            resumable: false,
+            details: { adapterCode: 'HARNESS_SESSION_FAMILY_MISMATCH' },
+          },
+        );
       resumeId = existing.sessionId;
       prompt = CONTINUATION_PROMPT;
     } else {
       prompt = await renderTemplate(config.prompt.template, view);
       if (config.session.policy === 'resume-previous') {
-        resumeId = (await ctx.ports.sessions.latestWithSession(ctx.run.id))?.sessionId;
+        resumeId = (await ctx.ports.sessions.latestWithSession(ctx.run.id, config.harness))
+          ?.sessionId;
       } else if (config.session.policy === 'resume-named') {
         resumeId = (
-          await ctx.ports.sessions.byScopeKey(`${ctx.thread.run.loopId}:${config.session.key}`)
+          await ctx.ports.sessions.byScopeKey(
+            `${ctx.thread.run.loopId}:${config.session.key}`,
+            config.harness,
+          )
         )?.sessionId;
       }
     }
@@ -265,31 +325,19 @@ export const inferenceHandler: NodeHandler<'inference'> = {
     );
 
     let result: HarnessResult;
+    let session: HarnessSession | undefined;
     let usage: Usage = ZERO_USAGE;
     try {
-      const session = resumeId
+      session = resumeId
         ? harness.resume(resumeId, sessionRequest(turn), timeout.signal)
         : harness.start(sessionRequest(turn), timeout.signal);
-      try {
-        result = await consume(ctx, session, row);
-      } catch (error) {
-        if (timeout.timedOut()) {
-          await session.cancel();
-          throw new RunFailureError(
-            'INFERENCE_TIMEOUT',
-            `inference exceeded ${config.timeoutSeconds ?? 0}s`,
-            { nodeId: ctx.node.id },
-          );
-        }
-        if (error instanceof RunCancelledError) await session.cancel();
-        throw error;
-      }
+      result = await consume(ctx, session, row);
       usage = addUsage(usage, result.usage);
 
       // Structured output: validate, then repair on the same session as the policy allows.
-      let structured: JsonValue | undefined;
+      let output: JsonValue;
       if (schema) {
-        let candidate: unknown = result.structured ?? jsonOrText(result.finalText);
+        let candidate: unknown = outputCandidate(result);
         let validation = validateJson(schema.jsonSchema, candidate);
         let attempts = 0;
         while (!validation.ok && schema.repair.enabled && attempts < schema.repair.maxAttempts) {
@@ -303,25 +351,25 @@ export const inferenceHandler: NodeHandler<'inference'> = {
             errors: validation.errors,
             attempt: attempts,
           });
-          const repairSession = harness.resume(
+          session = harness.resume(
             sessionId,
             sessionRequest({ prompt: repairPrompt, outputSchema: schema.jsonSchema }),
             timeout.signal,
           );
-          const repairResult = await consume(ctx, repairSession, row);
+          const repairResult = await consume(ctx, session, row);
           usage = addUsage(usage, repairResult.usage);
           result = {
             ...result,
             items: [...result.items, ...repairResult.items],
             finalText: repairResult.finalText,
           };
-          candidate = repairResult.structured ?? jsonOrText(repairResult.finalText);
+          candidate = outputCandidate(repairResult);
           validation = validateJson(schema.jsonSchema, candidate);
         }
         if (validation.ok) {
-          structured = toJson(candidate);
+          output = toJson(candidate);
         } else if (schema.repair.onFailure === 'continue-raw') {
-          structured = toJson(candidate);
+          output = toJson(candidate);
         } else {
           throw new RunFailureError(
             'OUTPUT_SCHEMA_MISMATCH',
@@ -332,6 +380,8 @@ export const inferenceHandler: NodeHandler<'inference'> = {
             },
           );
         }
+      } else {
+        output = jsonOrText(result.finalText);
       }
 
       // Build the patch: transcript artifact, messages, output, usage.
@@ -361,14 +411,7 @@ export const inferenceHandler: NodeHandler<'inference'> = {
         }
         patch.push(messagePatch(makeMessage(ctx, 'assistant', result.finalText)));
       }
-      patch.push(
-        ...outputPatch(
-          working,
-          ctx.node.id,
-          structured ?? jsonOrText(result.finalText),
-          ctx.services.now(),
-        ),
-      );
+      patch.push(...outputPatch(working, ctx.node.id, output, ctx.services.now()));
       patch.push(...usagePatch(working, usage));
       working = applyPatch(working, patch);
 
@@ -382,12 +425,50 @@ export const inferenceHandler: NodeHandler<'inference'> = {
       await ctx.ports.sessions.upsert({ ...row });
       return { kind: 'done', patch, route: 'out' };
     } catch (error) {
-      if (!(error instanceof RunCancelledError)) {
+      let failure = error;
+      const unconfirmed = (value: unknown): boolean =>
+        value instanceof RunFailureError && value.code === 'HARNESS_TERMINATION_UNCONFIRMED';
+      if (session && !unconfirmed(failure)) {
+        try {
+          await session.cancel();
+        } catch (cancelError) {
+          const cleanup = mapHarnessFailure(
+            cancelError,
+            undefined,
+            ctx.node.id,
+            ctx.config.harness,
+          );
+          if (unconfirmed(cleanup)) failure = cleanup;
+          else {
+            // Native Codex cancellation resolves; Claude rejects only for unconfirmed termination.
+            // An unrelated cleanup fault cannot replace the primary engine or provider cause.
+            ctx.ports.logger.warn(
+              { nodeId: ctx.node.id, code: cleanup.code },
+              'harness cleanup failed',
+            );
+          }
+        }
+      }
+      if (!unconfirmed(failure) && timeout.timedOut())
+        failure = new RunFailureError(
+          'INFERENCE_TIMEOUT',
+          'inference exceeded ' + (config.timeoutSeconds ?? 0) + 's',
+          { nodeId: ctx.node.id },
+        );
+      if (!(failure instanceof RunCancelledError)) {
         row.status = 'failed';
         row.updatedAt = ctx.services.now();
-        await ctx.ports.sessions.upsert({ ...row });
+        try {
+          await ctx.ports.sessions.upsert({ ...row });
+        } catch {
+          // The primary failure, especially unconfirmed termination, remains actionable.
+          ctx.ports.logger.warn(
+            { nodeId: ctx.node.id },
+            'failed harness status could not be persisted',
+          );
+        }
       }
-      throw error;
+      throw failure;
     } finally {
       timeout.dispose();
     }

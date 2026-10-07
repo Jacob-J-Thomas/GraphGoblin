@@ -16,8 +16,13 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildApp, createContainer, loadConfig } from '@graphgoblin/api';
 import { createTestApp, startFakeClassifierEndpoint, type TestApp } from '@graphgoblin/api/testing';
-import type { ScriptedTurn } from '@graphgoblin/engine/testing';
-import { ModelCatalogEntrySchema } from '@graphgoblin/contracts';
+import type { HarnessEvent, HarnessStartRequest, HarnessSession } from '@graphgoblin/engine';
+import { FakeHarness, type ScriptedTurn } from '@graphgoblin/engine/testing';
+import {
+  HarnessPreflightSchema,
+  ModelCatalogEntrySchema,
+  type HarnessPreflight,
+} from '@graphgoblin/contracts';
 import { originalWorker as cleanWorker } from '../src/e2e-support/worker.js';
 
 const dist = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'dist');
@@ -28,26 +33,147 @@ if (!existsSync(join(dist, 'index.html'))) {
   process.exit(1);
 }
 
+interface E2eInstance {
+  id: string;
+  app: TestApp;
+  url: string;
+  harnesses: Partial<Record<'codex' | 'claude', FakeHarness>>;
+}
+
+class E2eControlError extends Error {
+  readonly statusCode = 400;
+}
+
 const apps: TestApp[] = [];
+const instances = new Map<string, E2eInstance>();
 const closers: (() => Promise<void>)[] = [];
+let nextInstanceId = 1;
 /** Loopback Choice endpoints started for classifier specs, by their API root. */
 const classifiers = new Map<string, Awaited<ReturnType<typeof startFakeClassifierEndpoint>>>();
+const claudeEfforts = ['low', 'medium', 'high', 'xhigh', 'max'] as const;
+const readyClaudePreflight = HarnessPreflightSchema.parse({
+  ok: true,
+  version: '2.1.285 (E2E fake)',
+  authenticated: true,
+  problems: [],
+  authMethod: 'claude.ai',
+  billingMode: 'claude.ai-account',
+  billingStatus: 'account-dependent',
+  supportedPolicies: [
+    {
+      sandbox: 'read-only',
+      approval: 'never',
+      permissionMode: 'dontAsk',
+      tools: ['Read', 'Glob', 'Grep'],
+      authMethod: 'claude.ai',
+      billingMode: 'claude.ai-account',
+      billingStatus: 'account-dependent',
+      boundary: 'builtin-tools',
+      network: 'unconfined',
+    },
+    {
+      sandbox: 'danger-full-access',
+      approval: 'never',
+      permissionMode: 'dontAsk',
+      tools: ['Read', 'Glob', 'Grep', 'Edit', 'Write', 'Bash'],
+      authMethod: 'claude.ai',
+      billingMode: 'claude.ai-account',
+      billingStatus: 'account-dependent',
+      boundary: 'unconfined',
+      network: 'unconfined',
+    },
+  ],
+  models: [
+    {
+      model: 'claude-opus-5-5',
+      efforts: claudeEfforts,
+      admission: 'supported',
+      reasonCode: null,
+      billingStatus: 'account-dependent',
+    },
+    {
+      model: 'claude-fable-5-1',
+      efforts: claudeEfforts,
+      admission: 'blocked',
+      reasonCode: 'BILLING_UNVERIFIED',
+      billingStatus: 'unverified',
+    },
+  ],
+});
+const notReadyClaudePreflight: HarnessPreflight = {
+  ...readyClaudePreflight,
+  ok: false,
+  authenticated: false,
+  problems: ['Claude CLI is not signed in.'],
+  supportedPolicies: [],
+};
+
+class E2eClaudeHarness extends FakeHarness {
+  termination: 'confirmed' | 'unconfirmed' = 'confirmed';
+  private terminationSession = 0;
+
+  constructor() {
+    super([], 'claude');
+    this.preflightResult = readyClaudePreflight;
+  }
+
+  override start(request: HarnessStartRequest, signal: AbortSignal): HarnessSession {
+    if (this.termination === 'confirmed') return super.start(request, signal);
+    this.started.push(request);
+    this.terminationSession += 1;
+    const sessionId = 'fake-claude-unconfirmed-' + this.terminationSession;
+    const error = Object.assign(
+      new Error('Termination not confirmed; stop the E2E fake before retrying.'),
+      { code: 'HARNESS_TERMINATION_UNCONFIRMED', retriable: false },
+    );
+    const result: HarnessSession['result'] = new Promise((_, reject) => {
+      if (signal.aborted) reject(error);
+      else signal.addEventListener('abort', () => reject(error), { once: true });
+    });
+    result.catch(() => undefined);
+    const events = async function* (): AsyncGenerator<HarnessEvent> {
+      yield { type: 'session', sessionId, mode: 'fresh' };
+      await result.catch(() => undefined);
+      yield {
+        type: 'error',
+        code: error.code,
+        message: error.message,
+        retriable: false,
+      };
+    };
+    return {
+      sessionId: Promise.resolve(sessionId),
+      events: events(),
+      result,
+      cancel: () => Promise.reject(error),
+    };
+  }
+}
+
 async function startApp(
   env: Record<string, string> = {},
   requireApiKey = false,
   realClassifiers = false,
+  options: { claude?: boolean; id?: string } = {},
 ) {
+  const id = options.id ?? 'e2e-instance-' + nextInstanceId++;
+  const codex = new FakeHarness([], 'codex');
+  const claude = options.claude ? new E2eClaudeHarness() : undefined;
+  const harnesses = { codex, ...(claude ? { claude } : {}) };
   const app = await createTestApp({
     env: { GG_WEB_DIST: dist, ...env },
     requireApiKey,
     realClassifiers,
+    harnesses,
   });
   apps.push(app);
   const url = await app.app.listen({ host: '127.0.0.1', port: 0 });
-  return { app, url };
+  const instance: E2eInstance = { id, app, url, harnesses };
+  instances.set(id, instance);
+  return instance;
 }
 
-const main = await startApp();
+const main = await startApp({}, false, false, { id: 'main' });
 const mainPort = Number(new URL(main.url).port);
 const workerPath = join(dist, 'sw.js');
 const originalWorker = cleanWorker(await readFile(workerPath, 'utf8'));
@@ -109,6 +235,30 @@ async function readJson(request: IncomingMessage): Promise<Record<string, unknow
   return body ? (JSON.parse(body) as Record<string, unknown>) : {};
 }
 
+function selectedInstance(body: Record<string, unknown>): E2eInstance {
+  const id = typeof body['instanceId'] === 'string' ? body['instanceId'] : 'main';
+  const instance = instances.get(id);
+  if (!instance) throw new E2eControlError("unknown E2E instance '" + id + "'");
+  return instance;
+}
+
+function selectedHarness(
+  instance: E2eInstance,
+  body: Record<string, unknown>,
+): { harness: 'codex' | 'claude'; fake: FakeHarness } {
+  const requested = body['harness'] === undefined ? 'codex' : body['harness'];
+  if (requested !== 'codex' && requested !== 'claude') {
+    const label = typeof requested === 'string' ? requested : typeof requested;
+    throw new E2eControlError("unknown E2E harness '" + label + "'");
+  }
+  const fake = instance.harnesses[requested];
+  if (!fake)
+    throw new E2eControlError(
+      "harness '" + requested + "' is not enabled for E2E instance '" + instance.id + "'",
+    );
+  return { harness: requested, fake };
+}
+
 async function control(request: IncomingMessage, response: ServerResponse): Promise<unknown> {
   const body = await readJson(request);
   const target = main.app;
@@ -124,10 +274,44 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
       await writeFile(workerPath, originalWorker);
       return { ok: true };
     case '/harness/script':
-      target.harness.script(((body['turns'] as TurnSpec[] | undefined) ?? []).map(toTurn));
+      selectedHarness(selectedInstance(body), body).fake.script(
+        ((body['turns'] as TurnSpec[] | undefined) ?? []).map(toTurn),
+      );
       return { ok: true };
-    case '/harness/requests':
-      return { started: target.harness.started.map((r) => ({ model: r.model, effort: r.effort })) };
+    case '/harness/requests': {
+      const instance = selectedInstance(body);
+      const { harness, fake } = selectedHarness(instance, body);
+      const detailed = body['instanceId'] !== undefined || body['harness'] !== undefined;
+      return {
+        started: fake.started.map((r) => ({
+          model: r.model,
+          effort: r.effort,
+          ...(detailed ? { harness, options: r.options } : {}),
+        })),
+      };
+    }
+    case '/harness/preflight': {
+      const instance = selectedInstance(body);
+      const { harness, fake } = selectedHarness(instance, body);
+      if (harness !== 'claude' || !(fake instanceof E2eClaudeHarness))
+        throw new E2eControlError('preflight controls are available only for the Claude E2E fake');
+      if (body['state'] === 'ready') fake.preflightResult = readyClaudePreflight;
+      else if (body['state'] === 'not-ready') fake.preflightResult = notReadyClaudePreflight;
+      else throw new E2eControlError("preflight state must be 'ready' or 'not-ready'");
+      return { ok: true };
+    }
+    case '/harness/termination': {
+      const instance = selectedInstance(body);
+      const { harness, fake } = selectedHarness(instance, body);
+      if (harness !== 'claude' || !(fake instanceof E2eClaudeHarness))
+        throw new E2eControlError(
+          'termination controls are available only for the Claude E2E fake',
+        );
+      if (body['mode'] !== 'confirmed' && body['mode'] !== 'unconfirmed')
+        throw new E2eControlError("termination mode must be 'confirmed' or 'unconfirmed'");
+      fake.termination = body['mode'];
+      return { ok: true };
+    }
     case '/deciders':
       target.jev.isAvailable = body['jev'] !== false;
       target.codex.isAvailable = body['codex'] !== false;
@@ -209,10 +393,11 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
         body['requireApiKey'] === true,
         // The real catalog, secret resolution, and HTTP transport for classifiers (#43).
         body['realClassifiers'] === true,
+        { claude: body['claude'] === true },
       );
       // A key minted directly in the store: with GG_REQUIRE_API_KEY even POST /api-keys needs one.
       const { token } = await extra.app.container.repos.apiKeys.create('local', 'e2e', ['*']);
-      return { url: extra.url, token };
+      return { instanceId: extra.id, url: extra.url, token };
     }
     default:
       response.statusCode = 404;
@@ -227,7 +412,7 @@ const controlServer = createServer((request, response) => {
       response.end(JSON.stringify(result));
     },
     (error: unknown) => {
-      response.statusCode = 500;
+      response.statusCode = error instanceof E2eControlError ? error.statusCode : 500;
       response.end(JSON.stringify({ error: String(error) }));
     },
   );

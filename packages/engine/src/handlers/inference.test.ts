@@ -333,7 +333,10 @@ describe('inference node', () => {
     );
 
     engine.ports.harness.script([{ error: { code: 'weird', message: 'something else' } }]);
-    expect((await engine.runToIdle(missing.loopId)).failure?.code).toBe('HARNESS_TURN_FAILED');
+    expect((await engine.runToIdle(missing.loopId)).failure).toMatchObject({
+      code: 'HARNESS_TURN_FAILED',
+      resumable: true,
+    });
   });
 
   it('cancels a session mid-turn and marks the run cancelled', async () => {

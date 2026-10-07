@@ -158,11 +158,45 @@ export interface paths {
                     content: {
                         "application/json": {
                             items: {
-                                harness: string;
                                 ok: boolean;
                                 version?: string | undefined;
                                 authenticated: boolean;
                                 problems: string[];
+                                authMethod?: ("claude.ai" | null) | undefined;
+                                /** @enum {string} */
+                                billingMode?: "claude.ai-account" | undefined;
+                                /** @enum {string} */
+                                billingStatus?: "account-dependent" | undefined;
+                                supportedPolicies?: {
+                                    /** @enum {string} */
+                                    sandbox: "read-only" | "danger-full-access";
+                                    /** @enum {string} */
+                                    approval: "never";
+                                    /** @enum {string} */
+                                    permissionMode: "dontAsk";
+                                    readonly tools: string[];
+                                    /** @enum {string} */
+                                    authMethod: "claude.ai";
+                                    /** @enum {string} */
+                                    billingMode: "claude.ai-account";
+                                    /** @enum {string} */
+                                    billingStatus: "account-dependent";
+                                    /** @enum {string} */
+                                    boundary: "builtin-tools" | "unconfined";
+                                    /** @enum {string} */
+                                    network: "unconfined";
+                                }[] | undefined;
+                                models?: {
+                                    model: string;
+                                    efforts: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max")[];
+                                    /** @enum {string} */
+                                    admission: "supported" | "blocked";
+                                    reasonCode: "BILLING_UNVERIFIED" | null;
+                                    /** @enum {string} */
+                                    billingStatus: "account-dependent" | "unverified";
+                                }[] | undefined;
+                                /** @enum {string} */
+                                harness: "codex" | "claude";
                             }[];
                         };
                     };
@@ -2403,7 +2437,7 @@ export interface components {
                      * @default codex
                      * @enum {string}
                      */
-                    harness?: "codex" | undefined;
+                    harness?: ("codex" | "claude") | undefined;
                     model?: string | undefined;
                     /** @enum {string} */
                     effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
@@ -3214,7 +3248,7 @@ export interface components {
         RunStatusInput: "queued" | "running" | "waiting" | "paused" | "succeeded" | "failed" | "cancelled" | "exhausted";
         RunFailureInput: {
             /** @enum {string} */
-            code: "HARNESS_NOT_INSTALLED" | "HARNESS_NOT_AUTHENTICATED" | "HARNESS_QUOTA_EXHAUSTED" | "HARNESS_TURN_FAILED" | "WORKING_DIRECTORY_MISSING" | "SCRIPT_EXIT_CODE" | "SCRIPT_TIMEOUT" | "INFERENCE_TIMEOUT" | "OUTPUT_SCHEMA_MISMATCH" | "SUBLOOP_DEPTH_EXCEEDED" | "SUBLOOP_NOT_FOUND" | "DECISION_NO_ROUTE" | "EVALUATION_UNAVAILABLE" | "EVALUATION_PROVIDER_FAILED" | "EVALUATION_INVALID_CONFIGURATION" | "EVALUATION_INVALID_RESPONSE" | "EVALUATION_RESULT_REJECTED" | "EVALUATION_EXPRESSION_FAILED" | "DECIDER_UNAVAILABLE" | "SECRET_MISSING" | "TEMPLATE_ERROR" | "EXPRESSION_ERROR" | "WAIT_TIMEOUT" | "HEARTBEAT_EXHAUSTED" | "RETURN_DELIVERY_FAILED" | "MAX_ITERATIONS" | "INTERNAL_ERROR";
+            code: "HARNESS_NOT_INSTALLED" | "HARNESS_NOT_AUTHENTICATED" | "HARNESS_QUOTA_EXHAUSTED" | "HARNESS_TURN_FAILED" | "HARNESS_TERMINATION_UNCONFIRMED" | "WORKING_DIRECTORY_MISSING" | "SCRIPT_EXIT_CODE" | "SCRIPT_TIMEOUT" | "INFERENCE_TIMEOUT" | "OUTPUT_SCHEMA_MISMATCH" | "SUBLOOP_DEPTH_EXCEEDED" | "SUBLOOP_NOT_FOUND" | "DECISION_NO_ROUTE" | "EVALUATION_UNAVAILABLE" | "EVALUATION_PROVIDER_FAILED" | "EVALUATION_INVALID_CONFIGURATION" | "EVALUATION_INVALID_RESPONSE" | "EVALUATION_RESULT_REJECTED" | "EVALUATION_EXPRESSION_FAILED" | "DECIDER_UNAVAILABLE" | "SECRET_MISSING" | "TEMPLATE_ERROR" | "EXPRESSION_ERROR" | "WAIT_TIMEOUT" | "HEARTBEAT_EXHAUSTED" | "RETURN_DELIVERY_FAILED" | "MAX_ITERATIONS" | "INTERNAL_ERROR";
             message: string;
             nodeId?: string | undefined;
             resumable: boolean;
@@ -3513,7 +3547,7 @@ export interface components {
             type: "harness.session";
             nodeId: string;
             /** @enum {string} */
-            harness: "codex";
+            harness: "codex" | "claude";
             sessionId: string;
             /** @enum {string} */
             mode: "fresh" | "resumed";
@@ -4120,7 +4154,7 @@ export interface components {
                      * @default codex
                      * @enum {string}
                      */
-                    harness: "codex";
+                    harness: "codex" | "claude";
                     model?: string | undefined;
                     /** @enum {string} */
                     effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
@@ -4921,7 +4955,7 @@ export interface components {
         RunStatus: "queued" | "running" | "waiting" | "paused" | "succeeded" | "failed" | "cancelled" | "exhausted";
         RunFailure: {
             /** @enum {string} */
-            code: "HARNESS_NOT_INSTALLED" | "HARNESS_NOT_AUTHENTICATED" | "HARNESS_QUOTA_EXHAUSTED" | "HARNESS_TURN_FAILED" | "WORKING_DIRECTORY_MISSING" | "SCRIPT_EXIT_CODE" | "SCRIPT_TIMEOUT" | "INFERENCE_TIMEOUT" | "OUTPUT_SCHEMA_MISMATCH" | "SUBLOOP_DEPTH_EXCEEDED" | "SUBLOOP_NOT_FOUND" | "DECISION_NO_ROUTE" | "EVALUATION_UNAVAILABLE" | "EVALUATION_PROVIDER_FAILED" | "EVALUATION_INVALID_CONFIGURATION" | "EVALUATION_INVALID_RESPONSE" | "EVALUATION_RESULT_REJECTED" | "EVALUATION_EXPRESSION_FAILED" | "DECIDER_UNAVAILABLE" | "SECRET_MISSING" | "TEMPLATE_ERROR" | "EXPRESSION_ERROR" | "WAIT_TIMEOUT" | "HEARTBEAT_EXHAUSTED" | "RETURN_DELIVERY_FAILED" | "MAX_ITERATIONS" | "INTERNAL_ERROR";
+            code: "HARNESS_NOT_INSTALLED" | "HARNESS_NOT_AUTHENTICATED" | "HARNESS_QUOTA_EXHAUSTED" | "HARNESS_TURN_FAILED" | "HARNESS_TERMINATION_UNCONFIRMED" | "WORKING_DIRECTORY_MISSING" | "SCRIPT_EXIT_CODE" | "SCRIPT_TIMEOUT" | "INFERENCE_TIMEOUT" | "OUTPUT_SCHEMA_MISMATCH" | "SUBLOOP_DEPTH_EXCEEDED" | "SUBLOOP_NOT_FOUND" | "DECISION_NO_ROUTE" | "EVALUATION_UNAVAILABLE" | "EVALUATION_PROVIDER_FAILED" | "EVALUATION_INVALID_CONFIGURATION" | "EVALUATION_INVALID_RESPONSE" | "EVALUATION_RESULT_REJECTED" | "EVALUATION_EXPRESSION_FAILED" | "DECIDER_UNAVAILABLE" | "SECRET_MISSING" | "TEMPLATE_ERROR" | "EXPRESSION_ERROR" | "WAIT_TIMEOUT" | "HEARTBEAT_EXHAUSTED" | "RETURN_DELIVERY_FAILED" | "MAX_ITERATIONS" | "INTERNAL_ERROR";
             message: string;
             nodeId?: string | undefined;
             resumable: boolean;
@@ -5220,7 +5254,7 @@ export interface components {
             type: "harness.session";
             nodeId: string;
             /** @enum {string} */
-            harness: "codex";
+            harness: "codex" | "claude";
             sessionId: string;
             /** @enum {string} */
             mode: "fresh" | "resumed";

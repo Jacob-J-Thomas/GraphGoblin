@@ -50,6 +50,15 @@ function describeStatusProgress(value: unknown): string | undefined {
   return `${noun} ${label}${preview ? `: ${preview}` : ''}${exitCode}`;
 }
 
+function describeSession(event: Extract<RunEvent, { type: 'harness.session' }>): string {
+  const model = event.model ?? 'not recorded';
+  const effort = event.effort
+    ? `requested effort ${event.effort}`
+    : 'requested effort not recorded';
+  const effective = event.harness === 'claude' ? '; effective effort not reported' : '';
+  return `${event.harness} session ${event.mode}; model ${model}; ${effort}${effective}`;
+}
+
 /** Per node: harness progress, sessions, usage, decisions, and heartbeats as they arrive. */
 export function ProgressDrawer({ events }: { events: RunEvent[] }) {
   const activity = nodeActivity(events);
@@ -70,7 +79,9 @@ export function ProgressDrawer({ events }: { events: RunEvent[] }) {
                   ? (describeStatusProgress(e.progress) ?? prettyJson(e.progress))
                   : 'usage' in e
                     ? prettyJson(e.usage)
-                    : prettyJson(describeEvent(e))}
+                    : e.type === 'harness.session'
+                      ? describeSession(e)
+                      : prettyJson(describeEvent(e))}
               </li>
             ))}
           </ul>

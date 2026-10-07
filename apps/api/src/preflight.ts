@@ -1,6 +1,11 @@
 import { randomUUID } from 'node:crypto';
 import { open, readFile, stat, unlink } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
+import {
+  ClaudeHarness,
+  claudeModelBlocked,
+  CLAUDE_BILLING_UNVERIFIED_MESSAGE,
+} from '@graphgoblin/infrastructure/claude';
 import { createCodexAdapters } from '@graphgoblin/adapter-codex';
 import type { HarnessId } from '@graphgoblin/contracts';
 import type { HarnessPort } from '@graphgoblin/engine';
@@ -171,10 +176,13 @@ export async function readMasterKey(
 
 async function checkHarnesses(
   harnesses: Partial<Record<HarnessId, HarnessPort>>,
+  config: ApiConfig,
 ): Promise<PreflightCheck[]> {
   const checks: PreflightCheck[] = [];
   for (const [id, harness] of Object.entries(harnesses)) {
     const label = `Harness ${id}`;
+    const unavailableStatus =
+      id === 'claude' && !config.defaults.byHarness.claude ? ('warn' as const) : ('fail' as const);
     try {
       const result = await harness.preflight();
       const version = result.version ? ` ${result.version}` : '';
@@ -184,12 +192,19 @@ async function checkHarnesses(
           : check(
               `harness.${id}`,
               label,
-              'fail',
+              unavailableStatus,
               result.problems.join('; ') || `${id} is not ready`,
             ),
       );
     } catch (error) {
-      checks.push(check(`harness.${id}`, label, 'fail', message(error)));
+      checks.push(
+        check(
+          `harness.${id}`,
+          label,
+          unavailableStatus,
+          id === 'claude' ? 'Claude preflight failed' : message(error),
+        ),
+      );
     }
   }
   if (checks.length === 0) {
@@ -203,7 +218,7 @@ function checkDefaultModel(
   catalog: ModelCatalogEntry[],
   seeded: boolean,
 ): PreflightCheck {
-  const entry = catalog.find((e) => e.model === model);
+  const entry = catalog.find((e) => e.harness === 'codex' && e.model === model);
   const where = seeded ? 'the model catalog' : 'the default catalog seeded on first start';
   if (!entry) {
     return check(
@@ -260,7 +275,7 @@ export async function runPreflight(sources: PreflightSources): Promise<Preflight
     checks.push(check('database', 'Database', 'fail', `not reachable: ${message(error)}`));
   }
 
-  checks.push(...(await checkHarnesses(sources.harnesses)));
+  checks.push(...(await checkHarnesses(sources.harnesses, config)));
 
   if (!migrated) {
     checks.push(
@@ -292,6 +307,36 @@ export async function runPreflight(sources: PreflightSources): Promise<Preflight
   try {
     const catalog = migrated ? await sources.catalog() : DEFAULT_MODEL_CATALOG;
     checks.push(checkDefaultModel(config.defaults.byHarness.codex?.model, catalog, migrated));
+    const defaults = config.defaults.byHarness.claude;
+    if (defaults) {
+      const entry = catalog.find((row) => row.harness === 'claude' && row.model === defaults.model);
+      const problem = claudeModelBlocked(defaults.model)
+        ? CLAUDE_BILLING_UNVERIFIED_MESSAGE
+        : !entry
+          ? 'The configured Claude model is not in the catalog'
+          : !defaults.effort || !entry.efforts.includes(defaults.effort)
+            ? 'Configure an explicit supported Claude reasoning effort'
+            : !entry.enabled
+              ? 'The configured Claude model is disabled'
+              : undefined;
+      checks.push(
+        check(
+          'default-model.claude',
+          'Claude default model',
+          problem ? 'fail' : 'ok',
+          problem ?? 'Exact Claude model and effort are configured',
+        ),
+      );
+      if (!sources.harnesses.claude)
+        checks.push(
+          check(
+            'harness.claude',
+            'Harness claude',
+            'fail',
+            'The configured Claude harness is unavailable',
+          ),
+        );
+    }
   } catch (error) {
     checks.push(
       check('default-model', 'Default model', 'fail', `cannot read the catalog: ${message(error)}`),
@@ -400,6 +445,7 @@ export async function configPreflightSources(
         : {}),
       ...(config.codexBinary ? { codexBinary: config.codexBinary } : {}),
     }).harness,
+    claude: new ClaudeHarness({ ...(config.claudeBinary ? { binary: config.claudeBinary } : {}) }),
   };
   const base = {
     config,

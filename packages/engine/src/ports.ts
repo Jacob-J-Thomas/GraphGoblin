@@ -2,6 +2,7 @@ import type {
   ChoiceAnswer,
   ChoiceOption,
   HarnessDefaults,
+  HarnessPreflight as ContractHarnessPreflight,
   ModelCatalogEntry,
   ContextThread,
   Effort,
@@ -135,8 +136,8 @@ export interface HarnessSessionRecord {
 export interface HarnessSessionRepository {
   upsert(row: HarnessSessionRecord): Promise<void>;
   forNode(runId: string, nodeId: string): Promise<HarnessSessionRecord | undefined>;
-  latestWithSession(runId: string): Promise<HarnessSessionRecord | undefined>;
-  byScopeKey(scopeKey: string): Promise<HarnessSessionRecord | undefined>;
+  latestWithSession(runId: string, harness: HarnessId): Promise<HarnessSessionRecord | undefined>;
+  byScopeKey(scopeKey: string, harness: HarnessId): Promise<HarnessSessionRecord | undefined>;
 }
 
 // ---------------------------------------------------------------------------
@@ -194,12 +195,7 @@ export interface HarnessSession {
   cancel(): Promise<void>;
 }
 
-export interface HarnessPreflight {
-  ok: boolean;
-  version?: string;
-  authenticated: boolean;
-  problems: string[];
-}
+export type HarnessPreflight = ContractHarnessPreflight;
 
 export interface HarnessPort {
   readonly id: HarnessId;

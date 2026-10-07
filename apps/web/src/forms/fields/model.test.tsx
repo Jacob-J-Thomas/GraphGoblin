@@ -49,6 +49,312 @@ async function ready() {
 }
 
 describe('catalog field controls', () => {
+  it.each(['pending', 'failed', 'not-ready', 'signed-out'] as const)(
+    'keeps a saved inherited Claude effort unverified and read-only while readiness is %s',
+    async (state) => {
+      const api = new FakeApi();
+      api.catalog = [{ ...entry('claude-opus-5-5', true, 'claude'), efforts: ['low', 'xhigh'] }];
+      api.preflight = [
+        {
+          harness: 'claude',
+          ok: state !== 'not-ready',
+          authenticated: state !== 'signed-out',
+          problems: [],
+          models: [
+            {
+              model: 'claude-opus-5-5',
+              efforts: ['low', 'xhigh'],
+              admission: 'supported',
+              reasonCode: null,
+              billingStatus: 'account-dependent',
+            },
+          ],
+        },
+      ];
+      if (state === 'pending')
+        api.override('GET /harness/preflight', () => new Promise<Response>(() => undefined));
+      if (state === 'failed')
+        api.override('GET /harness/preflight', () =>
+          problem(503, 'FAILED', 'preflight unavailable'),
+        );
+      const change = vi.fn();
+      renderWith(
+        <SchemaForm
+          schema={InferenceConfigSchema}
+          value={{ harness: 'claude', effort: 'xhigh', prompt: { template: 'hello' } }}
+          label="Inference"
+          onChange={change}
+          controls={NODE_FIELD_CONTROLS}
+        />,
+        '/',
+        api,
+      );
+      const notice =
+        state === 'pending'
+          ? /Checking Claude model availability/
+          : state === 'failed'
+            ? /availability could not be checked/
+            : /CLI preflight is not ready/;
+      await waitFor(() => expect(model()).toHaveAccessibleDescription(notice));
+      expect(effort()).toHaveValue('xhigh');
+      expect(effort()).toHaveAttribute('aria-readonly', 'true');
+      expect(effort()).toHaveAccessibleDescription(notice);
+      expect(within(effort()).getByRole('option', { name: /^xhigh$/ })).toBeInTheDocument();
+      expect(effort()).not.toHaveAccessibleDescription(/not supported/);
+      expect(screen.queryByText(/This effort is not supported/)).toBeNull();
+      fireEvent.change(effort(), { target: { value: '' } });
+      expect(effort()).toHaveValue('xhigh');
+      expect(change).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([undefined, 'minimal'])(
+    'bounds inherited Claude effort choices and preserves the saved value %s',
+    async (savedEffort) => {
+      const api = new FakeApi();
+      api.settingsValues = {
+        defaults: { byHarness: { claude: { model: 'claude-opus-5-5', effort: 'xhigh' } } },
+      };
+      const supportedEfforts = ['low', 'medium', 'high', 'xhigh', 'max'] as const;
+      api.catalog = [
+        { ...entry('claude-opus-5-5', true, 'claude'), efforts: [...supportedEfforts] },
+        { ...entry('claude-fable-5-1', true, 'claude'), efforts: ['minimal', 'low'] },
+        { ...entry('alpha'), efforts: ['minimal', 'low'] },
+      ];
+      api.preflight = [
+        {
+          harness: 'claude',
+          ok: true,
+          authenticated: true,
+          authMethod: 'claude.ai',
+          billingMode: 'claude.ai-account',
+          billingStatus: 'account-dependent',
+          problems: [],
+          models: [
+            {
+              model: 'claude-opus-5-5',
+              efforts: [...supportedEfforts],
+              admission: 'supported',
+              reasonCode: null,
+              billingStatus: 'account-dependent',
+            },
+            {
+              model: 'claude-fable-5-1',
+              efforts: ['minimal', 'low'],
+              admission: 'blocked',
+              reasonCode: 'BILLING_UNVERIFIED',
+              billingStatus: 'unverified',
+            },
+          ],
+        },
+      ];
+      const change = vi.fn();
+      const user = userEvent.setup();
+      renderWith(
+        <SchemaForm
+          schema={InferenceConfigSchema}
+          value={{
+            harness: 'claude',
+            prompt: { template: 'hello' },
+            ...(savedEffort === undefined ? {} : { effort: savedEffort }),
+          }}
+          label="Inference"
+          onChange={change}
+          controls={NODE_FIELD_CONTROLS}
+        />,
+        '/',
+        api,
+      );
+      await ready();
+      expect(model()).toHaveValue('');
+      expect(effort()).toHaveValue(savedEffort ?? '');
+      const options = within(effort()).getAllByRole<HTMLOptionElement>('option');
+      expect(options.filter((option) => !option.disabled).map((option) => option.value)).toEqual([
+        '',
+        ...supportedEfforts,
+      ]);
+      if (savedEffort === 'minimal') {
+        expect(
+          within(effort()).getByRole('option', { name: /minimal.*not supported/ }),
+        ).toBeDisabled();
+        expect(effort()).toHaveAccessibleDescription(/saved value is kept/);
+      } else {
+        expect(within(effort()).queryByRole('option', { name: /^minimal$/ })).toBeNull();
+      }
+      expect(change).not.toHaveBeenCalled();
+      await user.selectOptions(effort(), 'xhigh');
+      await waitFor(() =>
+        expect(change).toHaveBeenLastCalledWith(
+          expect.objectContaining({ harness: 'claude', effort: 'xhigh' }),
+          expect.objectContaining({ path: 'effort', kind: 'commit' }),
+        ),
+      );
+      expect(change.mock.lastCall?.[0]).not.toHaveProperty('model');
+    },
+  );
+  it('keeps an explicitly saved Fable choice unavailable and offers only the supported Claude model', async () => {
+    const api = new FakeApi();
+    api.catalog = [
+      entry('claude-opus-5-5', true, 'claude'),
+      entry('claude-fable-5-1', true, 'claude'),
+    ];
+    api.preflight = [
+      {
+        harness: 'claude',
+        ok: true,
+        authenticated: true,
+        authMethod: 'claude.ai',
+        billingMode: 'claude.ai-account',
+        billingStatus: 'account-dependent',
+        problems: [],
+        models: [
+          {
+            model: 'claude-opus-5-5',
+            efforts: ['low', 'high'],
+            admission: 'supported',
+            reasonCode: null,
+            billingStatus: 'account-dependent',
+          },
+          {
+            model: 'claude-fable-5-1',
+            efforts: ['low', 'high'],
+            admission: 'blocked',
+            reasonCode: 'BILLING_UNVERIFIED',
+            billingStatus: 'unverified',
+          },
+        ],
+      },
+    ];
+    let latest: unknown;
+    const user = userEvent.setup();
+    renderWith(
+      <SchemaForm
+        schema={InferenceConfigSchema}
+        value={{
+          harness: 'claude',
+          model: 'claude-fable-5-1',
+          prompt: { template: 'hello' },
+        }}
+        label="Inference"
+        onChange={(value) => {
+          latest = value;
+        }}
+        controls={NODE_FIELD_CONTROLS}
+      />,
+      '/',
+      api,
+    );
+
+    await waitFor(() => expect(model()).not.toHaveAttribute('aria-readonly'));
+    expect(model()).toHaveValue('claude-fable-5-1');
+    expect(model()).toHaveAccessibleDescription(/billing status is unverified/);
+    expect(within(model()).getByRole('option', { name: /claude-fable-5-1/ })).toBeDisabled();
+    expect(within(model()).getByRole('option', { name: /claude-opus-5-5/ })).toBeEnabled();
+
+    await user.selectOptions(model(), 'claude-opus-5-5');
+    await waitFor(() =>
+      expect(latest).toMatchObject({ harness: 'claude', model: 'claude-opus-5-5' }),
+    );
+  });
+
+  it('changes Claude sandbox and approval only after an explicit supported policy selection', async () => {
+    const api = new FakeApi();
+    api.preflight = [
+      {
+        harness: 'claude',
+        ok: true,
+        authenticated: true,
+        authMethod: 'claude.ai',
+        billingMode: 'claude.ai-account',
+        billingStatus: 'account-dependent',
+        problems: [],
+        supportedPolicies: [
+          {
+            sandbox: 'read-only',
+            approval: 'never',
+            permissionMode: 'dontAsk',
+            tools: ['Read', 'Glob', 'Grep'],
+            authMethod: 'claude.ai',
+            billingMode: 'claude.ai-account',
+            billingStatus: 'account-dependent',
+            boundary: 'builtin-tools',
+            network: 'unconfined',
+          },
+          {
+            sandbox: 'danger-full-access',
+            approval: 'never',
+            permissionMode: 'dontAsk',
+            tools: ['Read', 'Glob', 'Grep', 'Edit', 'Write', 'Bash'],
+            authMethod: 'claude.ai',
+            billingMode: 'claude.ai-account',
+            billingStatus: 'account-dependent',
+            boundary: 'unconfined',
+            network: 'unconfined',
+          },
+        ],
+      },
+    ];
+    let latest: unknown;
+    const user = userEvent.setup();
+    renderWith(
+      <SchemaForm
+        schema={InferenceConfigSchema}
+        value={{
+          harness: 'claude',
+          prompt: { template: 'hello' },
+          capabilities: { skills: ['keep'] },
+          harnessOptions: {
+            sandbox: 'workspace-write',
+            approval: 'on-request',
+            networkAccess: true,
+            webSearch: false,
+            configOverrides: { region: 'keep' },
+          },
+        }}
+        label="Inference"
+        onChange={(value) => {
+          latest = value;
+        }}
+        controls={NODE_FIELD_CONTROLS}
+      />,
+      '/',
+      api,
+    );
+
+    const policy = screen.getByLabelText('Sandbox and approval policy');
+    await waitFor(() => expect(policy).not.toHaveAttribute('aria-readonly'));
+    expect(policy).toHaveValue('unsupported');
+    expect(within(policy).getAllByRole('option')).toHaveLength(3);
+    expect(
+      within(policy).getByRole('option', { name: /workspace-write.*unsupported; saved/ }),
+    ).toBeDisabled();
+    expect(latest).toBeUndefined();
+
+    await user.click(screen.getByRole('button', { name: /^Advanced/ }));
+    const approval = screen.getByLabelText('Approval');
+    expect(approval).toBeDisabled();
+    expect(approval).toHaveValue('on-request');
+    expect(
+      within(approval).getByRole('option', { name: /on-request.*unsupported; saved/ }),
+    ).toBeInTheDocument();
+
+    await user.selectOptions(policy, '0');
+    await waitFor(() =>
+      expect(latest).toMatchObject({
+        harness: 'claude',
+        capabilities: { skills: ['keep'] },
+        harnessOptions: {
+          sandbox: 'read-only',
+          approval: 'never',
+          networkAccess: true,
+          webSearch: false,
+          configOverrides: { region: 'keep' },
+        },
+      }),
+    );
+    expect(approval).toHaveValue('never');
+  });
+
   it('retains the same focused select while a pending catalog loads without writing values', async () => {
     const api = new FakeApi();
     api.catalog = [entry('alpha')];
@@ -91,11 +397,27 @@ describe('catalog field controls', () => {
 
   it('derives an omitted harness from the sibling schema default', async () => {
     const api = new FakeApi();
-    api.catalog = [entry('alpha'), entry('other', true, 'another')];
+    api.catalog = [entry('alpha', true, 'claude')];
+    api.preflight.push({
+      harness: 'claude',
+      ok: true,
+      authenticated: true,
+      problems: [],
+      models: [
+        {
+          model: 'alpha',
+          efforts: ['low', 'high'],
+          admission: 'supported',
+          reasonCode: null,
+          billingStatus: 'account-dependent',
+        },
+      ],
+    });
     renderWith(
       <SchemaForm
-        schema={InferenceConfigSchema.extend({
-          harness: z.enum(['codex', 'another']).default('another'),
+        schema={z.strictObject({
+          ...InferenceConfigSchema.shape,
+          harness: z.literal('claude').default('claude'),
         })}
         value={{ prompt: { template: 'hi' } }}
         label="Inference"
@@ -110,7 +432,7 @@ describe('catalog field controls', () => {
       within(model())
         .getAllByRole('option')
         .map((option) => option.getAttribute('value')),
-    ).toEqual(['', 'other']);
+    ).toEqual(['', 'alpha']);
   });
 
   it.each([
@@ -264,21 +586,30 @@ describe('catalog field controls', () => {
   });
 
   it('filters many entries by the sibling harness and enabled state, watching harness changes', async () => {
-    // The contract currently permits only Codex; this form exercises the renderer's sibling binding.
-    const schema = InferenceConfigSchema.extend({
-      harness: z.enum(['codex', 'another']).default('codex'),
-    });
     const api = new FakeApi();
     api.catalog = [
       entry('alpha'),
       entry('beta'),
       entry('hidden', false),
-      entry('alpha', true, 'another'),
-      entry('other', true, 'another'),
+      entry('alpha', true, 'claude'),
+      entry('other', true, 'claude'),
     ];
+    api.preflight.push({
+      harness: 'claude',
+      ok: true,
+      authenticated: true,
+      problems: [],
+      models: ['alpha', 'other'].map((model) => ({
+        model,
+        efforts: ['low', 'high'],
+        admission: 'supported' as const,
+        reasonCode: null,
+        billingStatus: 'account-dependent' as const,
+      })),
+    });
     renderWith(
       <SchemaForm
-        schema={schema}
+        schema={InferenceConfigSchema}
         value={{ harness: 'codex', model: 'beta', prompt: { template: 'hi' } }}
         label="Inference"
         onChange={vi.fn()}
@@ -294,7 +625,8 @@ describe('catalog field controls', () => {
         .map((o) => o.getAttribute('value')),
     ).toEqual(['', 'alpha', 'beta']);
     const user = userEvent.setup();
-    await user.click(screen.getByRole('radio', { name: 'another' }));
+    await user.click(screen.getByRole('radio', { name: 'claude' }));
+    await waitFor(() => expect(model()).not.toHaveAttribute('aria-readonly'));
     expect(model()).toHaveValue('beta');
     expect(model()).toHaveAccessibleDescription(/not in the catalog/);
     expect(
@@ -483,5 +815,116 @@ describe('catalog field controls', () => {
       defaults: { byHarness: { codex: {} } },
     });
     expect(within(effort()).getAllByRole('option')).toHaveLength(7);
+  });
+
+  it('uses the validated byHarness record key for mixed loop default model and effort choices', async () => {
+    const api = new FakeApi();
+    api.catalog = [
+      entry('alpha'),
+      {
+        ...entry('claude-opus-5-5', true, 'claude'),
+        efforts: ['low', 'high', 'xhigh', 'max'],
+      },
+    ];
+    api.preflight = [
+      { harness: 'codex', ok: true, authenticated: true, problems: [] },
+      {
+        harness: 'claude',
+        ok: true,
+        version: '2.1.285',
+        authenticated: true,
+        authMethod: 'claude.ai',
+        billingMode: 'claude.ai-account',
+        billingStatus: 'account-dependent',
+        problems: [],
+        supportedPolicies: [],
+        models: [
+          {
+            model: 'claude-opus-5-5',
+            efforts: ['low', 'high', 'xhigh', 'max'],
+            admission: 'supported',
+            reasonCode: null,
+            billingStatus: 'account-dependent',
+          },
+        ],
+      },
+    ];
+    const change = vi.fn();
+    const { container } = renderWith(
+      <SchemaForm
+        schema={LoopSettingsSchema}
+        value={{
+          defaults: {
+            byHarness: {
+              codex: { model: 'alpha' },
+              claude: { model: 'claude-opus-5-5' },
+            },
+          },
+        }}
+        label="Settings"
+        onChange={change}
+        controls={LOOP_FIELD_CONTROLS}
+      />,
+      '/',
+      api,
+    );
+    const claudeModel = container.querySelector<HTMLSelectElement>(
+      '[data-field="defaults.byHarness.claude.model"] select',
+    )!;
+    const codexModel = container.querySelector<HTMLSelectElement>(
+      '[data-field="defaults.byHarness.codex.model"] select',
+    )!;
+    const claudeEffort = container.querySelector<HTMLSelectElement>(
+      '[data-field="defaults.byHarness.claude.effort"] select',
+    )!;
+    const codexEffort = container.querySelector<HTMLSelectElement>(
+      '[data-field="defaults.byHarness.codex.effort"] select',
+    )!;
+    await waitFor(() => expect(claudeModel).not.toHaveAttribute('aria-readonly'));
+    expect(claudeModel).toHaveValue('claude-opus-5-5');
+    expect(within(claudeModel).getByRole('option', { name: /claude-opus-5-5/ })).toBeEnabled();
+    expect(within(claudeModel).queryByRole('option', { name: /alpha/ })).toBeNull();
+    expect(within(codexModel).getByRole('option', { name: /alpha/ })).toBeEnabled();
+    expect(within(codexModel).queryByRole('option', { name: /claude-opus-5-5/ })).toBeNull();
+    expect(within(claudeEffort).getByRole('option', { name: 'xhigh' })).toBeInTheDocument();
+    expect(within(codexEffort).queryByRole('option', { name: 'xhigh' })).toBeNull();
+    expect(change).not.toHaveBeenCalled();
+  });
+
+  it('does not offer Claude model choices from static capabilities when CLI preflight is not ready', async () => {
+    const api = new FakeApi();
+    api.catalog = [entry('claude-opus-5-5', true, 'claude')];
+    api.preflight = [
+      {
+        harness: 'claude',
+        ok: false,
+        version: '2.1.285',
+        authenticated: false,
+        problems: ['Claude CLI is not signed in.'],
+        models: [
+          {
+            model: 'claude-opus-5-5',
+            efforts: ['low', 'high'],
+            admission: 'supported',
+            reasonCode: null,
+            billingStatus: 'account-dependent',
+          },
+        ],
+      },
+    ];
+    renderWith(
+      <SchemaForm
+        schema={InferenceConfigSchema}
+        value={{ harness: 'claude', prompt: { template: 'hello' } }}
+        label="Inference"
+        onChange={vi.fn()}
+        controls={NODE_FIELD_CONTROLS}
+      />,
+      '/',
+      api,
+    );
+    await waitFor(() => expect(model()).toHaveAttribute('aria-readonly', 'true'));
+    expect(model()).toHaveAccessibleDescription(/Claude CLI preflight is not ready/);
+    expect(within(model()).queryByRole('option', { name: /claude-opus-5-5/ })).toBeNull();
   });
 });
