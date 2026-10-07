@@ -349,7 +349,9 @@
                           "type": "object",
                           "properties": {
                             "criterion": {
-                              "type": "string"
+                              "type": "string",
+                              "pattern": "^[a-z0-9-]+$",
+                              "description": "Exact locked checklist id only; never a description or id followed by a colon."
                             },
                             "covered": {
                               "type": "boolean"
@@ -454,6 +456,9 @@
                 ]
               },
               "reviewRunId": {
+                "type": "string"
+              },
+              "recoveryParentRunId": {
                 "type": "string"
               },
               "feedback": {},
@@ -683,6 +688,23 @@
               },
               "reviewHints": {
                 "type": "string"
+              },
+              "acceptance": {
+                "type": "object",
+                "properties": {
+                  "round": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9-]+$"
+                  },
+                  "allowUnsandboxedChecks": {
+                    "type": "boolean"
+                  },
+                  "waitForCodexReview": {
+                    "type": "boolean"
+                  }
+                },
+                "required": ["round", "allowUnsandboxedChecks", "waitForCodexReview"],
+                "additionalProperties": false
               }
             },
             "required": [
@@ -713,10 +735,11 @@
             "init"
           ],
           "env": {
-            "AIDLC_SETTINGS_HASH": "83371862c93864fb2d8e43d23514e2d5dc47db87e28e0a46dff058398c02f549",
-            "AIDLC_SUPPORT_HASH": "4c65942dd4ea3529d3e184dae43e6cdb85270a4394aeb0e0c3faa89add55283d",
+            "AIDLC_SETTINGS_HASH": "3104e7161ca9579453bc2b81e5a6ffbe426b192eb9daef582bef276637d449ed",
+            "AIDLC_SUPPORT_HASH": "5b933f4cb90b72e93c438a5296773f8e675fc653a844f3e30b3879bb9dc6f1d7",
             "AIDLC_REVIEW_LOOP_ID": "01M4A20AZ69E2FK2W23WGWJ23M",
-            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG"
+            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG",
+            "AIDLC_PR_CI_LOOP_ID": "01M4A20B05SZ4F1ZYGDVDVR8Z8"
           },
           "cwd": "workspace",
           "stdin": "thread",
@@ -739,10 +762,11 @@
             "qa-prepare"
           ],
           "env": {
-            "AIDLC_SETTINGS_HASH": "83371862c93864fb2d8e43d23514e2d5dc47db87e28e0a46dff058398c02f549",
-            "AIDLC_SUPPORT_HASH": "4c65942dd4ea3529d3e184dae43e6cdb85270a4394aeb0e0c3faa89add55283d",
+            "AIDLC_SETTINGS_HASH": "3104e7161ca9579453bc2b81e5a6ffbe426b192eb9daef582bef276637d449ed",
+            "AIDLC_SUPPORT_HASH": "5b933f4cb90b72e93c438a5296773f8e675fc653a844f3e30b3879bb9dc6f1d7",
             "AIDLC_REVIEW_LOOP_ID": "01M4A20AZ69E2FK2W23WGWJ23M",
-            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG"
+            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG",
+            "AIDLC_PR_CI_LOOP_ID": "01M4A20B05SZ4F1ZYGDVDVR8Z8"
           },
           "cwd": "workspace",
           "stdin": "thread",
@@ -798,10 +822,11 @@
             "qa"
           ],
           "env": {
-            "AIDLC_SETTINGS_HASH": "83371862c93864fb2d8e43d23514e2d5dc47db87e28e0a46dff058398c02f549",
-            "AIDLC_SUPPORT_HASH": "4c65942dd4ea3529d3e184dae43e6cdb85270a4394aeb0e0c3faa89add55283d",
+            "AIDLC_SETTINGS_HASH": "3104e7161ca9579453bc2b81e5a6ffbe426b192eb9daef582bef276637d449ed",
+            "AIDLC_SUPPORT_HASH": "5b933f4cb90b72e93c438a5296773f8e675fc653a844f3e30b3879bb9dc6f1d7",
             "AIDLC_REVIEW_LOOP_ID": "01M4A20AZ69E2FK2W23WGWJ23M",
-            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG"
+            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG",
+            "AIDLC_PR_CI_LOOP_ID": "01M4A20B05SZ4F1ZYGDVDVR8Z8"
           },
           "cwd": "workspace",
           "stdin": "thread",
@@ -976,10 +1001,11 @@
             "qa"
           ],
           "env": {
-            "AIDLC_SETTINGS_HASH": "83371862c93864fb2d8e43d23514e2d5dc47db87e28e0a46dff058398c02f549",
-            "AIDLC_SUPPORT_HASH": "4c65942dd4ea3529d3e184dae43e6cdb85270a4394aeb0e0c3faa89add55283d",
+            "AIDLC_SETTINGS_HASH": "3104e7161ca9579453bc2b81e5a6ffbe426b192eb9daef582bef276637d449ed",
+            "AIDLC_SUPPORT_HASH": "5b933f4cb90b72e93c438a5296773f8e675fc653a844f3e30b3879bb9dc6f1d7",
             "AIDLC_REVIEW_LOOP_ID": "01M4A20AZ69E2FK2W23WGWJ23M",
-            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG"
+            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG",
+            "AIDLC_PR_CI_LOOP_ID": "01M4A20B05SZ4F1ZYGDVDVR8Z8"
           },
           "cwd": "workspace",
           "stdin": "thread",
@@ -1022,10 +1048,11 @@
             "qa-blocked"
           ],
           "env": {
-            "AIDLC_SETTINGS_HASH": "83371862c93864fb2d8e43d23514e2d5dc47db87e28e0a46dff058398c02f549",
-            "AIDLC_SUPPORT_HASH": "4c65942dd4ea3529d3e184dae43e6cdb85270a4394aeb0e0c3faa89add55283d",
+            "AIDLC_SETTINGS_HASH": "3104e7161ca9579453bc2b81e5a6ffbe426b192eb9daef582bef276637d449ed",
+            "AIDLC_SUPPORT_HASH": "5b933f4cb90b72e93c438a5296773f8e675fc653a844f3e30b3879bb9dc6f1d7",
             "AIDLC_REVIEW_LOOP_ID": "01M4A20AZ69E2FK2W23WGWJ23M",
-            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG"
+            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG",
+            "AIDLC_PR_CI_LOOP_ID": "01M4A20B05SZ4F1ZYGDVDVR8Z8"
           },
           "cwd": "workspace",
           "stdin": "thread",

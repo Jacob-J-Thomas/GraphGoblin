@@ -39,7 +39,14 @@ if (process.argv[2] === 'cleanup') {
       workspacePath: { type: 'string' },
       action: {
         type: 'string',
-        enum: ['fixtures', 'inventory', 'sandbox-probe', 'safety-fixtures'],
+        enum: [
+          'fixtures',
+          'inventory',
+          'sandbox-probe',
+          'safety-fixtures',
+          'hardened-fixtures',
+          'hardened-retry-fixture',
+        ],
       },
       positiveInput: { type: 'object' },
     },
@@ -98,7 +105,14 @@ if (process.argv[2] === 'cleanup') {
   const positiveInput = JSON.parse(
     fs.readFileSync(path.join(control, 'aidlc-positive-input.json')),
   );
-  for (const action of ['fixtures', 'inventory', 'sandbox-probe', 'safety-fixtures'])
+  for (const action of [
+    'fixtures',
+    'inventory',
+    'sandbox-probe',
+    'safety-fixtures',
+    'hardened-fixtures',
+    'hardened-retry-fixture',
+  ])
     fs.writeFileSync(
       path.join(control, `aidlc-support-${action}-input.json`),
       JSON.stringify(
@@ -106,7 +120,9 @@ if (process.argv[2] === 'cleanup') {
           repository: positiveInput.repository,
           workspacePath: positiveInput.workspacePath,
           action,
-          ...(['fixtures', 'safety-fixtures'].includes(action) ? { positiveInput } : {}),
+          ...(['fixtures', 'safety-fixtures', 'hardened-fixtures'].includes(action)
+            ? { positiveInput }
+            : {}),
         },
         null,
         2,

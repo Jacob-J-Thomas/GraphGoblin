@@ -14,10 +14,12 @@ import {
   rejectClosingKeywords,
   boundReview,
   boundQa,
+  externalReviewComplete,
   runProvenance,
   exactChecks,
   hash,
   validateQa,
+  postMergeRecovery,
 } from './core.mjs';
 import { proofParent, hashObjectArgs } from './proof.mjs';
 
@@ -256,6 +258,16 @@ test('P2-10: correctly hashed unrelated/rebound evidence cannot establish QA pro
     results: [{ id: 'required', status: 'pass', evidence: [evidence] }],
   };
   validateQa(qa, head, checklist, root, context);
+  // JSON object member order is not provenance. Native schema output often
+  // orders metadata differently from the script's insertion order.
+  const reordered = Object.fromEntries(Object.entries(evidence).reverse());
+  validateQa(
+    { ...qa, results: [{ ...qa.results[0], evidence: [reordered] }] },
+    head,
+    checklist,
+    root,
+    context,
+  );
   for (const changed of [
     { executionSha: 'b'.repeat(40) },
     { qaRunId: 'other' },
@@ -288,6 +300,21 @@ test('P2-10: correctly hashed unrelated/rebound evidence cannot establish QA pro
     () => validateQa({ ...qa, issueNumber: 2 }, head, checklist, root, context),
     /CONTEXT_MISMATCH/,
   );
+});
+test('external review barrier requires a completed summary at the exact candidate head', () => {
+  const marker = '<!-- codex-pull-request-review-summary -->';
+  const done = {
+    body: `${marker}\n| 📝 **Code Review** | ✅ **Completed** | \`${head.slice(0, 7)}\` | Draft marked ready |`,
+  };
+  assert.equal(externalReviewComplete([done], head), true);
+  for (const comments of [
+    [],
+    [done, done],
+    [{ body: done.body.replace('✅ **Completed**', 'In progress') }],
+    [{ body: done.body.replace(head.slice(0, 7), 'bbbbbbb') }],
+    [{ body: `${done.body}\n| Code Review | In progress | \`${head.slice(0, 7)}\` | Ready |` }],
+  ])
+    assert.equal(externalReviewComplete(comments, head), false);
 });
 test('P2-12: a newer success cannot hide failures/pending or ambiguous duplicate successes', () => {
   const check = { name: 'aidlc-test', head_sha: head, status: 'completed', conclusion: 'success' };
@@ -362,6 +389,107 @@ test('P2-7/P2-11: fresh clone extends remote proof history; --stdin is a filenam
   fresh('push', '--', 'origin', `${next}:refs/heads/aidlc-proof`);
   fresh('merge-base', '--is-ancestor', parent, next);
 });
+test('Windows proof publication hashes long paths without changing repository config', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'aidlc-long-proof-'));
+  const git = runner(root);
+  git('init');
+  git('config', 'core.longpaths', 'false');
+  const relative = `${'aidlc-proof-directory/'.repeat(8)}aidlc-${'a'.repeat(145)}.json`;
+  fs.mkdirSync(path.dirname(path.join(root, relative)), { recursive: true });
+  fs.writeFileSync(path.join(root, relative), 'aidlc- long proof');
+  assert.ok(path.join(root, relative).length > 260);
+  const object = git(...hashObjectArgs(relative));
+  assert.equal(git('cat-file', '-p', object), 'aidlc- long proof');
+  assert.equal(git('config', '--get', 'core.longpaths'), 'false');
+});
+test('post-merge parent recovery authenticates the prior parent, payload and canonical CI child', () => {
+  const request = {
+    ...payload,
+    workspacePath: 'aidlc-workspace',
+    message: 'aidlc-request',
+    bounds: { maxTasks: 1 },
+    policy: { allowMerge: true, allowClose: true },
+    recoveryParentRunId: source.id,
+  };
+  const prior = { ...request };
+  delete prior.recoveryParentRunId;
+  const prCi = { status: 'merged', mergeSha: head };
+  const ci = {
+    ...source,
+    id: 'aidlc-ci-run',
+    loopId: 'aidlc-ci-loop',
+    parentRunId: source.id,
+    result: prCi,
+  };
+  const parent = { ...source, result: { status: 'blocked' } };
+  const priorThread = {
+    invocation: { trigger: { payload: prior } },
+    vars: {
+      plan: { status: 'ready', tasks: [{ id: 'aidlc-task' }] },
+      task: { id: 'aidlc-task' },
+      index: 0,
+      completed: [],
+      prCi,
+    },
+    outputs: { 'pr-ci': { value: { childRunId: ci.id } } },
+  };
+  assert.equal(
+    postMergeRecovery(parent, priorThread, request, parent.loopId, ci, ci.loopId),
+    priorThread.vars,
+  );
+  for (const changed of [
+    { issueNumber: 2 },
+    { workspacePath: 'another' },
+    { checklist: [] },
+    { policy: { allowMerge: false, allowClose: true } },
+    { acceptance: { allowUnsandboxedChecks: true } },
+  ])
+    assert.throws(
+      () =>
+        postMergeRecovery(
+          parent,
+          priorThread,
+          { ...request, ...changed },
+          parent.loopId,
+          ci,
+          ci.loopId,
+        ),
+      /PARENT_MISMATCH/,
+    );
+  for (const changed of [
+    { loopId: 'untrusted' },
+    { parentRunId: 'another' },
+    { status: 'failed' },
+    { result: { ...prCi, mergeSha: 'b'.repeat(40) } },
+  ])
+    assert.throws(
+      () =>
+        postMergeRecovery(
+          parent,
+          priorThread,
+          request,
+          parent.loopId,
+          { ...ci, ...changed },
+          ci.loopId,
+        ),
+      /NOT_VERIFIED_POST_MERGE/,
+    );
+  assert.throws(
+    () =>
+      postMergeRecovery(
+        parent,
+        {
+          ...priorThread,
+          invocation: { trigger: { payload: { ...prior, recoveryParentRunId: 'earlier' } } },
+        },
+        request,
+        parent.loopId,
+        ci,
+        ci.loopId,
+      ),
+    /PARENT_MISMATCH/,
+  );
+});
 
 // Import the actual exported package entry point, without resolver flags or new links.
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -423,6 +551,17 @@ test('P2-13: configured planner criteria and PR owner replace the old hard-coded
 const schemas = JSON.parse(
   fs.readFileSync(new URL('../structured-output-schemas.json', import.meta.url)),
 );
+test('review native schema refuses descriptive coverage keys from the failed live handoff', () => {
+  const schema = schemas.Review.properties.acceptanceCoverage.items.properties.criterion;
+  for (const criterion of [
+    'aidlc-in-range: clamp(5, 0, 10) === 5.',
+    'Reject all nine combinations of non-finite inputs',
+    'aidlc-reversed: preserve RangeError',
+  ])
+    assert.equal(validateJson(schema, criterion).ok, false);
+  for (const criterion of ['aidlc-in-range', 'aidlc-bounds', 'aidlc-reversed'])
+    assert.equal(validateJson(schema, criterion).ok, true);
+});
 test('P1-2/P1-3: the actual PR reconciler refuses hostile handoffs before any push', () => {
   const runtime = fs.readFileSync(new URL('./runtime.mjs', import.meta.url), 'utf8');
   const functionText = runtime.slice(
@@ -495,6 +634,57 @@ test('P1-6: the actual push wrapper rechecks resolved destinations immediately b
     /REMOTE_NOT_AUTHORIZED/,
   );
   assert.equal(calls.filter((args) => args[0] === 'push').length, 1);
+});
+test('PR reconciliation waits for GitHub head propagation and still refuses a persistent stale head', () => {
+  const source = fs.readFileSync(new URL('./runtime.mjs', import.meta.url), 'utf8');
+  const fn = source.slice(
+    source.indexOf('function ensurePr('),
+    source.indexOf('function remoteChecks('),
+  );
+  for (const succeeds of [true, false]) {
+    let polls = 0,
+      pushes = 0;
+    const pr = { number: 1, state: 'open', merged: false, head: { sha: 'b'.repeat(40) } };
+    const environment = {
+      candidate: {
+        ...implementation,
+        summary: 'aidlc-change',
+        filesChanged: ['clamp.js'],
+        evidence: [],
+      },
+      config: {
+        ...config,
+        repository,
+        policy: { linkage: 'Part of', prTitlePrefix: 'aidlc-' },
+        labels: {},
+        bounds: { prHeadPolls: 2, prHeadIntervalMs: 1 },
+      },
+      p: { issueNumber: 1, task: { id: 'aidlc-task' } },
+      git: () => head,
+      push: () => pushes++,
+      implementationGuard,
+      assert: (ok, message) => assert.ok(ok, message),
+      rejectClosingKeywords,
+      endpoint: (x) => x,
+      URLSearchParams,
+      labels: () => {},
+      Atomics: { wait: () => {} },
+      gh: (route, method) => {
+        if (route.startsWith('pulls?')) return [pr];
+        if (method === 'PATCH') return pr;
+        polls++;
+        return { ...pr, head: { sha: succeeds && polls === 2 ? head : pr.head.sha } };
+      },
+    };
+    if (succeeds) vm.runInNewContext(`${fn}\nensurePr(candidate);`, environment);
+    else
+      assert.throws(
+        () => vm.runInNewContext(`${fn}\nensurePr(candidate);`, environment),
+        /PR_REMOTE_HEAD_CHANGED/,
+      );
+    assert.equal(polls, 2);
+    assert.equal(pushes, 1);
+  }
 });
 test('P2-14: uncertain confidence is bounded and the actual expression applies the configured threshold', async () => {
   for (const confidence of [-1, 1.1])

@@ -349,7 +349,9 @@
                           "type": "object",
                           "properties": {
                             "criterion": {
-                              "type": "string"
+                              "type": "string",
+                              "pattern": "^[a-z0-9-]+$",
+                              "description": "Exact locked checklist id only; never a description or id followed by a colon."
                             },
                             "covered": {
                               "type": "boolean"
@@ -454,6 +456,9 @@
                 ]
               },
               "reviewRunId": {
+                "type": "string"
+              },
+              "recoveryParentRunId": {
                 "type": "string"
               },
               "feedback": {},
@@ -683,6 +688,23 @@
               },
               "reviewHints": {
                 "type": "string"
+              },
+              "acceptance": {
+                "type": "object",
+                "properties": {
+                  "round": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9-]+$"
+                  },
+                  "allowUnsandboxedChecks": {
+                    "type": "boolean"
+                  },
+                  "waitForCodexReview": {
+                    "type": "boolean"
+                  }
+                },
+                "required": ["round", "allowUnsandboxedChecks", "waitForCodexReview"],
+                "additionalProperties": false
               }
             },
             "required": [
@@ -713,10 +735,11 @@
             "init"
           ],
           "env": {
-            "AIDLC_SETTINGS_HASH": "83371862c93864fb2d8e43d23514e2d5dc47db87e28e0a46dff058398c02f549",
-            "AIDLC_SUPPORT_HASH": "4c65942dd4ea3529d3e184dae43e6cdb85270a4394aeb0e0c3faa89add55283d",
+            "AIDLC_SETTINGS_HASH": "3104e7161ca9579453bc2b81e5a6ffbe426b192eb9daef582bef276637d449ed",
+            "AIDLC_SUPPORT_HASH": "5b933f4cb90b72e93c438a5296773f8e675fc653a844f3e30b3879bb9dc6f1d7",
             "AIDLC_REVIEW_LOOP_ID": "01M4A20AZ69E2FK2W23WGWJ23M",
-            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG"
+            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG",
+            "AIDLC_PR_CI_LOOP_ID": "01M4A20B05SZ4F1ZYGDVDVR8Z8"
           },
           "cwd": "workspace",
           "stdin": "thread",
@@ -739,10 +762,11 @@
             "claim"
           ],
           "env": {
-            "AIDLC_SETTINGS_HASH": "83371862c93864fb2d8e43d23514e2d5dc47db87e28e0a46dff058398c02f549",
-            "AIDLC_SUPPORT_HASH": "4c65942dd4ea3529d3e184dae43e6cdb85270a4394aeb0e0c3faa89add55283d",
+            "AIDLC_SETTINGS_HASH": "3104e7161ca9579453bc2b81e5a6ffbe426b192eb9daef582bef276637d449ed",
+            "AIDLC_SUPPORT_HASH": "5b933f4cb90b72e93c438a5296773f8e675fc653a844f3e30b3879bb9dc6f1d7",
             "AIDLC_REVIEW_LOOP_ID": "01M4A20AZ69E2FK2W23WGWJ23M",
-            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG"
+            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG",
+            "AIDLC_PR_CI_LOOP_ID": "01M4A20B05SZ4F1ZYGDVDVR8Z8"
           },
           "cwd": "workspace",
           "stdin": "thread",
@@ -751,6 +775,63 @@
         },
         "ui": {
           "x": 340,
+          "y": 0
+        }
+      },
+      {
+        "id": "entry",
+        "label": "aidlc-entry",
+        "kind": "decision",
+        "config": {
+          "routes": [
+            {
+              "label": "claim",
+              "description": "aidlc-claim"
+            },
+            {
+              "label": "recover",
+              "description": "aidlc-recover"
+            }
+          ],
+          "question": "Check structured facts and child status.",
+          "strategy": ["expression"],
+          "expression": {
+            "jsonata": "$exists(trigger.payload.recoveryParentRunId) ? \"recover\" : \"claim\""
+          },
+          "context": {
+            "messages": "none",
+            "includeLastOutput": true
+          }
+        },
+        "ui": {
+          "x": 510,
+          "y": 0
+        }
+      },
+      {
+        "id": "recover",
+        "label": "aidlc-recover",
+        "kind": "script",
+        "config": {
+          "command": "C:\\nvm4w\\nodejs\\node.exe",
+          "args": [
+            "C:\\Users\\98jak\\source\\repos\\GraphGoblin\\.claude\\worktrees\\codex-aidlc-full-v1\\examples\\aidlc\\support\\runtime.mjs",
+            "recover"
+          ],
+          "env": {
+            "AIDLC_SETTINGS_HASH": "3104e7161ca9579453bc2b81e5a6ffbe426b192eb9daef582bef276637d449ed",
+            "AIDLC_SUPPORT_HASH": "5b933f4cb90b72e93c438a5296773f8e675fc653a844f3e30b3879bb9dc6f1d7",
+            "AIDLC_REVIEW_LOOP_ID": "01M4A20AZ69E2FK2W23WGWJ23M",
+            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG",
+            "AIDLC_PR_CI_LOOP_ID": "01M4A20B05SZ4F1ZYGDVDVR8Z8"
+          },
+          "cwd": "workspace",
+          "stdin": "thread",
+          "stdout": "patch",
+          "timeoutSeconds": 60
+        },
+        "ui": {
+          "x": 680,
           "y": 0
         }
       },
@@ -781,7 +862,7 @@
           }
         },
         "ui": {
-          "x": 510,
+          "x": 850,
           "y": 0
         }
       },
@@ -815,7 +896,7 @@
           }
         },
         "ui": {
-          "x": 680,
+          "x": 1020,
           "y": 0
         }
       },
@@ -830,10 +911,11 @@
             "select"
           ],
           "env": {
-            "AIDLC_SETTINGS_HASH": "83371862c93864fb2d8e43d23514e2d5dc47db87e28e0a46dff058398c02f549",
-            "AIDLC_SUPPORT_HASH": "4c65942dd4ea3529d3e184dae43e6cdb85270a4394aeb0e0c3faa89add55283d",
+            "AIDLC_SETTINGS_HASH": "3104e7161ca9579453bc2b81e5a6ffbe426b192eb9daef582bef276637d449ed",
+            "AIDLC_SUPPORT_HASH": "5b933f4cb90b72e93c438a5296773f8e675fc653a844f3e30b3879bb9dc6f1d7",
             "AIDLC_REVIEW_LOOP_ID": "01M4A20AZ69E2FK2W23WGWJ23M",
-            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG"
+            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG",
+            "AIDLC_PR_CI_LOOP_ID": "01M4A20B05SZ4F1ZYGDVDVR8Z8"
           },
           "cwd": "workspace",
           "stdin": "thread",
@@ -841,7 +923,7 @@
           "timeoutSeconds": 60
         },
         "ui": {
-          "x": 850,
+          "x": 1190,
           "y": 0
         }
       },
@@ -872,7 +954,7 @@
           }
         },
         "ui": {
-          "x": 1020,
+          "x": 1360,
           "y": 0
         }
       },
@@ -902,7 +984,7 @@
           }
         },
         "ui": {
-          "x": 1190,
+          "x": 1530,
           "y": 0
         }
       },
@@ -933,7 +1015,7 @@
           }
         },
         "ui": {
-          "x": 1360,
+          "x": 1700,
           "y": 0
         }
       },
@@ -971,7 +1053,7 @@
           }
         },
         "ui": {
-          "x": 1530,
+          "x": 1870,
           "y": 0
         }
       },
@@ -986,10 +1068,11 @@
             "fix-feedback"
           ],
           "env": {
-            "AIDLC_SETTINGS_HASH": "83371862c93864fb2d8e43d23514e2d5dc47db87e28e0a46dff058398c02f549",
-            "AIDLC_SUPPORT_HASH": "4c65942dd4ea3529d3e184dae43e6cdb85270a4394aeb0e0c3faa89add55283d",
+            "AIDLC_SETTINGS_HASH": "3104e7161ca9579453bc2b81e5a6ffbe426b192eb9daef582bef276637d449ed",
+            "AIDLC_SUPPORT_HASH": "5b933f4cb90b72e93c438a5296773f8e675fc653a844f3e30b3879bb9dc6f1d7",
             "AIDLC_REVIEW_LOOP_ID": "01M4A20AZ69E2FK2W23WGWJ23M",
-            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG"
+            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG",
+            "AIDLC_PR_CI_LOOP_ID": "01M4A20B05SZ4F1ZYGDVDVR8Z8"
           },
           "cwd": "workspace",
           "stdin": "thread",
@@ -997,7 +1080,7 @@
           "timeoutSeconds": 60
         },
         "ui": {
-          "x": 1700,
+          "x": 2040,
           "y": 0
         }
       },
@@ -1028,7 +1111,7 @@
           }
         },
         "ui": {
-          "x": 1870,
+          "x": 2210,
           "y": 0
         }
       },
@@ -1058,7 +1141,7 @@
           }
         },
         "ui": {
-          "x": 2040,
+          "x": 2380,
           "y": 0
         }
       },
@@ -1089,7 +1172,7 @@
           }
         },
         "ui": {
-          "x": 2210,
+          "x": 2550,
           "y": 0
         }
       },
@@ -1110,7 +1193,7 @@
           ]
         },
         "ui": {
-          "x": 2380,
+          "x": 2720,
           "y": 0
         }
       },
@@ -1144,7 +1227,7 @@
           }
         },
         "ui": {
-          "x": 2550,
+          "x": 2890,
           "y": 0
         }
       },
@@ -1159,10 +1242,11 @@
             "qa-rework"
           ],
           "env": {
-            "AIDLC_SETTINGS_HASH": "83371862c93864fb2d8e43d23514e2d5dc47db87e28e0a46dff058398c02f549",
-            "AIDLC_SUPPORT_HASH": "4c65942dd4ea3529d3e184dae43e6cdb85270a4394aeb0e0c3faa89add55283d",
+            "AIDLC_SETTINGS_HASH": "3104e7161ca9579453bc2b81e5a6ffbe426b192eb9daef582bef276637d449ed",
+            "AIDLC_SUPPORT_HASH": "5b933f4cb90b72e93c438a5296773f8e675fc653a844f3e30b3879bb9dc6f1d7",
             "AIDLC_REVIEW_LOOP_ID": "01M4A20AZ69E2FK2W23WGWJ23M",
-            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG"
+            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG",
+            "AIDLC_PR_CI_LOOP_ID": "01M4A20B05SZ4F1ZYGDVDVR8Z8"
           },
           "cwd": "workspace",
           "stdin": "thread",
@@ -1170,7 +1254,7 @@
           "timeoutSeconds": 60
         },
         "ui": {
-          "x": 2720,
+          "x": 3060,
           "y": 0
         }
       },
@@ -1185,10 +1269,11 @@
             "complete-task"
           ],
           "env": {
-            "AIDLC_SETTINGS_HASH": "83371862c93864fb2d8e43d23514e2d5dc47db87e28e0a46dff058398c02f549",
-            "AIDLC_SUPPORT_HASH": "4c65942dd4ea3529d3e184dae43e6cdb85270a4394aeb0e0c3faa89add55283d",
+            "AIDLC_SETTINGS_HASH": "3104e7161ca9579453bc2b81e5a6ffbe426b192eb9daef582bef276637d449ed",
+            "AIDLC_SUPPORT_HASH": "5b933f4cb90b72e93c438a5296773f8e675fc653a844f3e30b3879bb9dc6f1d7",
             "AIDLC_REVIEW_LOOP_ID": "01M4A20AZ69E2FK2W23WGWJ23M",
-            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG"
+            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG",
+            "AIDLC_PR_CI_LOOP_ID": "01M4A20B05SZ4F1ZYGDVDVR8Z8"
           },
           "cwd": "workspace",
           "stdin": "thread",
@@ -1196,7 +1281,7 @@
           "timeoutSeconds": 60
         },
         "ui": {
-          "x": 2890,
+          "x": 3230,
           "y": 0
         }
       },
@@ -1226,7 +1311,7 @@
           }
         },
         "ui": {
-          "x": 3060,
+          "x": 3400,
           "y": 0
         }
       },
@@ -1257,7 +1342,7 @@
           }
         },
         "ui": {
-          "x": 3230,
+          "x": 3570,
           "y": 0
         }
       },
@@ -1287,7 +1372,7 @@
           }
         },
         "ui": {
-          "x": 3400,
+          "x": 3740,
           "y": 0
         }
       },
@@ -1303,10 +1388,11 @@
             "complete"
           ],
           "env": {
-            "AIDLC_SETTINGS_HASH": "83371862c93864fb2d8e43d23514e2d5dc47db87e28e0a46dff058398c02f549",
-            "AIDLC_SUPPORT_HASH": "4c65942dd4ea3529d3e184dae43e6cdb85270a4394aeb0e0c3faa89add55283d",
+            "AIDLC_SETTINGS_HASH": "3104e7161ca9579453bc2b81e5a6ffbe426b192eb9daef582bef276637d449ed",
+            "AIDLC_SUPPORT_HASH": "5b933f4cb90b72e93c438a5296773f8e675fc653a844f3e30b3879bb9dc6f1d7",
             "AIDLC_REVIEW_LOOP_ID": "01M4A20AZ69E2FK2W23WGWJ23M",
-            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG"
+            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG",
+            "AIDLC_PR_CI_LOOP_ID": "01M4A20B05SZ4F1ZYGDVDVR8Z8"
           },
           "cwd": "workspace",
           "stdin": "thread",
@@ -1314,7 +1400,7 @@
           "timeoutSeconds": 60
         },
         "ui": {
-          "x": 3570,
+          "x": 3910,
           "y": 0
         }
       },
@@ -1334,7 +1420,7 @@
           }
         },
         "ui": {
-          "x": 3740,
+          "x": 4080,
           "y": 0
         }
       },
@@ -1350,10 +1436,11 @@
             "blocked"
           ],
           "env": {
-            "AIDLC_SETTINGS_HASH": "83371862c93864fb2d8e43d23514e2d5dc47db87e28e0a46dff058398c02f549",
-            "AIDLC_SUPPORT_HASH": "4c65942dd4ea3529d3e184dae43e6cdb85270a4394aeb0e0c3faa89add55283d",
+            "AIDLC_SETTINGS_HASH": "3104e7161ca9579453bc2b81e5a6ffbe426b192eb9daef582bef276637d449ed",
+            "AIDLC_SUPPORT_HASH": "5b933f4cb90b72e93c438a5296773f8e675fc653a844f3e30b3879bb9dc6f1d7",
             "AIDLC_REVIEW_LOOP_ID": "01M4A20AZ69E2FK2W23WGWJ23M",
-            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG"
+            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG",
+            "AIDLC_PR_CI_LOOP_ID": "01M4A20B05SZ4F1ZYGDVDVR8Z8"
           },
           "cwd": "workspace",
           "stdin": "thread",
@@ -1361,7 +1448,7 @@
           "timeoutSeconds": 60
         },
         "ui": {
-          "x": 3910,
+          "x": 4250,
           "y": 0
         }
       },
@@ -1381,7 +1468,7 @@
           }
         },
         "ui": {
-          "x": 4080,
+          "x": 4420,
           "y": 0
         }
       },
@@ -1397,10 +1484,11 @@
             "needs-human"
           ],
           "env": {
-            "AIDLC_SETTINGS_HASH": "83371862c93864fb2d8e43d23514e2d5dc47db87e28e0a46dff058398c02f549",
-            "AIDLC_SUPPORT_HASH": "4c65942dd4ea3529d3e184dae43e6cdb85270a4394aeb0e0c3faa89add55283d",
+            "AIDLC_SETTINGS_HASH": "3104e7161ca9579453bc2b81e5a6ffbe426b192eb9daef582bef276637d449ed",
+            "AIDLC_SUPPORT_HASH": "5b933f4cb90b72e93c438a5296773f8e675fc653a844f3e30b3879bb9dc6f1d7",
             "AIDLC_REVIEW_LOOP_ID": "01M4A20AZ69E2FK2W23WGWJ23M",
-            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG"
+            "AIDLC_QA_LOOP_ID": "01M4A20B0Y7K7V6WS1FMJEQTTG",
+            "AIDLC_PR_CI_LOOP_ID": "01M4A20B05SZ4F1ZYGDVDVR8Z8"
           },
           "cwd": "workspace",
           "stdin": "thread",
@@ -1408,7 +1496,7 @@
           "timeoutSeconds": 60
         },
         "ui": {
-          "x": 4250,
+          "x": 4590,
           "y": 0
         }
       },
@@ -1428,7 +1516,7 @@
           }
         },
         "ui": {
-          "x": 4420,
+          "x": 4760,
           "y": 0
         }
       }
@@ -1452,12 +1540,34 @@
           "port": "out"
         },
         "to": {
-          "node": "claim",
+          "node": "entry",
           "port": "in"
         }
       },
       {
         "id": "e-3",
+        "from": {
+          "node": "entry",
+          "port": "claim"
+        },
+        "to": {
+          "node": "claim",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e-4",
+        "from": {
+          "node": "entry",
+          "port": "recover"
+        },
+        "to": {
+          "node": "recover",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e-5",
         "from": {
           "node": "claim",
           "port": "out"
@@ -1468,7 +1578,7 @@
         }
       },
       {
-        "id": "e-4",
+        "id": "e-6",
         "from": {
           "node": "planning",
           "port": "out"
@@ -1479,7 +1589,7 @@
         }
       },
       {
-        "id": "e-5",
+        "id": "e-7",
         "from": {
           "node": "plan-route",
           "port": "ready"
@@ -1490,7 +1600,7 @@
         }
       },
       {
-        "id": "e-6",
+        "id": "e-8",
         "from": {
           "node": "select",
           "port": "out"
@@ -1501,7 +1611,7 @@
         }
       },
       {
-        "id": "e-7",
+        "id": "e-9",
         "from": {
           "node": "implementation",
           "port": "out"
@@ -1512,7 +1622,7 @@
         }
       },
       {
-        "id": "e-8",
+        "id": "e-10",
         "from": {
           "node": "implementation-route",
           "port": "ready"
@@ -1523,7 +1633,7 @@
         }
       },
       {
-        "id": "e-9",
+        "id": "e-11",
         "from": {
           "node": "review",
           "port": "out"
@@ -1534,7 +1644,7 @@
         }
       },
       {
-        "id": "e-10",
+        "id": "e-12",
         "from": {
           "node": "review-route",
           "port": "fix"
@@ -1545,7 +1655,7 @@
         }
       },
       {
-        "id": "e-11",
+        "id": "e-13",
         "from": {
           "node": "fix-feedback",
           "port": "out"
@@ -1556,7 +1666,7 @@
         }
       },
       {
-        "id": "e-12",
+        "id": "e-14",
         "from": {
           "node": "review-route",
           "port": "pass"
@@ -1567,7 +1677,7 @@
         }
       },
       {
-        "id": "e-13",
+        "id": "e-15",
         "from": {
           "node": "pr-ci",
           "port": "out"
@@ -1578,7 +1688,7 @@
         }
       },
       {
-        "id": "e-14",
+        "id": "e-16",
         "from": {
           "node": "pr-route",
           "port": "merged"
@@ -1589,7 +1699,18 @@
         }
       },
       {
-        "id": "e-15",
+        "id": "e-17",
+        "from": {
+          "node": "recover",
+          "port": "out"
+        },
+        "to": {
+          "node": "qa",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e-18",
         "from": {
           "node": "qa",
           "port": "out"
@@ -1600,7 +1721,7 @@
         }
       },
       {
-        "id": "e-16",
+        "id": "e-19",
         "from": {
           "node": "qa-result",
           "port": "out"
@@ -1611,7 +1732,7 @@
         }
       },
       {
-        "id": "e-17",
+        "id": "e-20",
         "from": {
           "node": "qa-route",
           "port": "rework"
@@ -1622,7 +1743,7 @@
         }
       },
       {
-        "id": "e-18",
+        "id": "e-21",
         "from": {
           "node": "qa-rework",
           "port": "out"
@@ -1633,7 +1754,7 @@
         }
       },
       {
-        "id": "e-19",
+        "id": "e-22",
         "from": {
           "node": "qa-route",
           "port": "pass"
@@ -1644,7 +1765,7 @@
         }
       },
       {
-        "id": "e-20",
+        "id": "e-23",
         "from": {
           "node": "complete-task",
           "port": "out"
@@ -1655,7 +1776,7 @@
         }
       },
       {
-        "id": "e-21",
+        "id": "e-24",
         "from": {
           "node": "remaining",
           "port": "next"
@@ -1666,7 +1787,7 @@
         }
       },
       {
-        "id": "e-22",
+        "id": "e-25",
         "from": {
           "node": "remaining",
           "port": "close"
@@ -1677,7 +1798,7 @@
         }
       },
       {
-        "id": "e-23",
+        "id": "e-26",
         "from": {
           "node": "closing",
           "port": "out"
@@ -1688,7 +1809,7 @@
         }
       },
       {
-        "id": "e-24",
+        "id": "e-27",
         "from": {
           "node": "complete-report",
           "port": "out"
@@ -1699,7 +1820,7 @@
         }
       },
       {
-        "id": "e-25",
+        "id": "e-28",
         "from": {
           "node": "blocked-report",
           "port": "out"
@@ -1710,7 +1831,7 @@
         }
       },
       {
-        "id": "e-26",
+        "id": "e-29",
         "from": {
           "node": "human-report",
           "port": "out"
@@ -1721,7 +1842,7 @@
         }
       },
       {
-        "id": "e-27",
+        "id": "e-30",
         "from": {
           "node": "closure-route",
           "port": "complete"
@@ -1732,64 +1853,31 @@
         }
       },
       {
-        "id": "e-28",
+        "id": "e-31",
         "from": {
           "node": "review-route",
           "port": "human"
         },
         "to": {
           "node": "human-report",
-          "port": "in"
-        }
-      },
-      {
-        "id": "e-29",
-        "from": {
-          "node": "plan-route",
-          "port": "human"
-        },
-        "to": {
-          "node": "human-report",
-          "port": "in"
-        }
-      },
-      {
-        "id": "e-30",
-        "from": {
-          "node": "plan-route",
-          "port": "blocked"
-        },
-        "to": {
-          "node": "blocked-report",
-          "port": "in"
-        }
-      },
-      {
-        "id": "e-31",
-        "from": {
-          "node": "implementation-route",
-          "port": "blocked"
-        },
-        "to": {
-          "node": "blocked-report",
           "port": "in"
         }
       },
       {
         "id": "e-32",
         "from": {
-          "node": "review-route",
-          "port": "blocked"
+          "node": "plan-route",
+          "port": "human"
         },
         "to": {
-          "node": "blocked-report",
+          "node": "human-report",
           "port": "in"
         }
       },
       {
         "id": "e-33",
         "from": {
-          "node": "pr-route",
+          "node": "plan-route",
           "port": "blocked"
         },
         "to": {
@@ -1800,7 +1888,7 @@
       {
         "id": "e-34",
         "from": {
-          "node": "qa-route",
+          "node": "implementation-route",
           "port": "blocked"
         },
         "to": {
@@ -1810,6 +1898,39 @@
       },
       {
         "id": "e-35",
+        "from": {
+          "node": "review-route",
+          "port": "blocked"
+        },
+        "to": {
+          "node": "blocked-report",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e-36",
+        "from": {
+          "node": "pr-route",
+          "port": "blocked"
+        },
+        "to": {
+          "node": "blocked-report",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e-37",
+        "from": {
+          "node": "qa-route",
+          "port": "blocked"
+        },
+        "to": {
+          "node": "blocked-report",
+          "port": "in"
+        }
+      },
+      {
+        "id": "e-38",
         "from": {
           "node": "closure-route",
           "port": "blocked"

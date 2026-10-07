@@ -55,6 +55,7 @@ const payloadSchema = {
     implementation: { anyOf: [schemas.Implementation, { type: 'null' }] },
     review: { anyOf: [schemas.Review, { type: 'null' }] },
     reviewRunId: str,
+    recoveryParentRunId: str,
     feedback: {},
     prCi: schemas.PrCi,
     qa: schemas.Qa,
@@ -63,6 +64,16 @@ const payloadSchema = {
     remainingTaskIds: { type: 'array', items: str },
     startedAt: str,
     reviewHints: str,
+    acceptance: {
+      type: 'object',
+      properties: {
+        round: { type: 'string', pattern: '^[a-z0-9-]+$' },
+        allowUnsandboxedChecks: { type: 'boolean' },
+        waitForCodexReview: { type: 'boolean' },
+      },
+      required: ['round', 'allowUnsandboxedChecks', 'waitForCodexReview'],
+      additionalProperties: false,
+    },
   },
   required: [
     'message',
@@ -117,6 +128,7 @@ function graph(name, description) {
         AIDLC_SUPPORT_HASH: supportHash,
         AIDLC_REVIEW_LOOP_ID: ids.review ?? placeholder,
         AIDLC_QA_LOOP_ID: ids.qa ?? placeholder,
+        AIDLC_PR_CI_LOOP_ID: ids['pr-ci'] ?? placeholder,
       },
       cwd: 'workspace',
       stdin: 'thread',
@@ -335,7 +347,7 @@ const outputs = [];
     'reviewer',
     'reviewer',
     'Review',
-    'Review actual diff from {{ trigger.payload.implementation.baseSha }} to {{ trigger.payload.implementation.headSha }} and test acceptance independently. Original request: {{ trigger.payload.message }}. Task: {{ trigger.payload.task | json }}. Locked checklist: {{ trigger.payload.checklist | json }}. Candidate: {{ trigger.payload.implementation | json }}. Review hints: {{ trigger.payload.reviewHints }}. Return reviewedHeadSha equal to candidate head, implementerFamily equal to candidate family and reviewerFamily {{ vars.config.roles.reviewer.family }}. Include each checklist id in acceptanceCoverage. Findings use fix-now for required defects, future-issue for optional nonblocking scope with concrete requestedChange acceptance criteria and rationale, wont-fix only for configured authorized ids {{ vars.config.policy.allowedWontFixIds | json }}, human for unaccepted exceptions. Use state open until helper records accepted/deferred. Required missing acceptance is blocking and changes-required. Never turn a blocking issue into future-issue. Separate fresh same-family review is explicitly relaxed: {{ vars.relaxation }}.',
+    'Review actual diff from {{ trigger.payload.implementation.baseSha }} to {{ trigger.payload.implementation.headSha }} and test acceptance independently. Original request: {{ trigger.payload.message }}. Task: {{ trigger.payload.task | json }}. Locked checklist: {{ trigger.payload.checklist | json }}. Candidate: {{ trigger.payload.implementation | json }}. Review hints: {{ trigger.payload.reviewHints }}. Return reviewedHeadSha equal to candidate head, implementerFamily equal to candidate family and reviewerFamily {{ vars.config.roles.reviewer.family }}. Include every locked checklist item in acceptanceCoverage. The criterion field MUST be ONLY its exact id (for example "aidlc-in-range"), never a sentence, colon or appended description; put explanations in summary. Findings use fix-now for required defects, future-issue for optional nonblocking scope with concrete requestedChange acceptance criteria and rationale, wont-fix only for configured authorized ids {{ vars.config.policy.allowedWontFixIds | json }}, human for unaccepted exceptions. Use state open until helper records accepted/deferred. Required missing acceptance is blocking and changes-required. Never turn a blocking issue into future-issue. Separate fresh same-family review is explicitly relaxed: {{ vars.relaxation }}.',
   );
   g.edge('prepare', 'reviewer-budget');
   g.script('dispositions', 'review');
@@ -366,7 +378,7 @@ const outputs = [];
     'vars.result.status = "ready" ? "ready" : "blocked"',
   );
   g.edge('ci', 'ci-route');
-  g.script('merge', 'merge');
+  g.script('merge', 'merge', [], 180);
   g.edge('ci-route', 'merge', 'ready');
   g.exit('blocked');
   g.edge('ci-route', 'blocked', 'blocked');
@@ -447,7 +459,15 @@ const outputs = [];
   );
   g.start();
   g.script('claim', 'claim');
-  g.edge('init', 'claim');
+  g.decision(
+    'entry',
+    ['claim', 'recover'],
+    '$exists(trigger.payload.recoveryParentRunId) ? "recover" : "claim"',
+  );
+  g.edge('init', 'entry');
+  g.edge('entry', 'claim', 'claim');
+  g.script('recover', 'recover');
+  g.edge('entry', 'recover', 'recover');
   g.child('planning', 'planning', 'plan');
   g.edge('claim', 'planning');
   g.decision(
@@ -494,6 +514,7 @@ const outputs = [];
   g.edge('pr-ci', 'pr-route');
   g.child('qa', 'qa', 'qaResult', '{"task":vars.task,"prCi":vars.prCi}');
   g.edge('pr-route', 'qa', 'merged');
+  g.edge('recover', 'qa');
   g.set('qa-result', { qa: 'vars.qaResult.qa' });
   g.edge('qa', 'qa-result');
   g.decision(

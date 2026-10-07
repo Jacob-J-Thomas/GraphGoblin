@@ -19,18 +19,22 @@ import {
   checkPermission,
   boundReview,
   boundQa,
+  invocationConfig,
+  externalReviewComplete,
+  postMergeRecovery,
 } from './core.mjs';
 import { readAttempts } from './attempts.mjs';
 import { hashObjectArgs, proofParent } from './proof.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const templateRoot = path.resolve(here, '../../..');
-const config = JSON.parse(fs.readFileSync(path.join(here, '../full-v1.settings.json'), 'utf8'));
+const defaults = JSON.parse(fs.readFileSync(path.join(here, '../full-v1.settings.json'), 'utf8'));
 const action = process.argv[2];
 let input = '';
 for await (const chunk of process.stdin) input += chunk;
 const t = JSON.parse(input);
 const p = t.invocation.trigger.payload;
+const config = invocationConfig(defaults, p.acceptance);
 const v = t.vars;
 const root = fs.realpathSync(process.cwd());
 const patch = [];
@@ -275,6 +279,13 @@ function ensurePr(implementation, draft = true) {
       body,
       draft,
     });
+  // GitHub's pull response can briefly lag the newly pushed branch ref.
+  // Wait for that exact head, without accepting or merging a stale response.
+  for (let n = 0; pr.head.sha !== implementation.headSha && n < config.bounds.prHeadPolls; n++) {
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, config.bounds.prHeadIntervalMs);
+    pr = gh(endpoint(`pulls/${pr.number}`));
+    assert(pr.state === 'open' && !pr.merged, 'PR_ALREADY_CLOSED');
+  }
   assert(pr.head.sha === implementation.headSha, 'PR_REMOTE_HEAD_CHANGED');
   labels(pr.number, [], [config.labels.verdict]);
   labels(p.issueNumber, [config.labels.prOpen], [config.labels.inProgress]);
@@ -355,6 +366,63 @@ try {
   if (action === 'init') {
     put('config', config);
     put('request', p);
+  } else if (action === 'recover') {
+    const source = await instanceRun(p.recoveryParentRunId);
+    const ci = await instanceRun(source.thread.outputs['pr-ci']?.value.childRunId);
+    const previous = postMergeRecovery(
+      source.run,
+      source.thread,
+      p,
+      t.run.loopId,
+      ci.run,
+      process.env.AIDLC_PR_CI_LOOP_ID,
+    );
+    const attempts = await readAttempts(
+      'http://127.0.0.1:4747',
+      t.run.loopId,
+      p.repository,
+      p.issueNumber,
+    );
+    assert(
+      attempts.every((x) => x.runId === source.run.id || x.runId === t.run.id),
+      'RECOVERY_ALREADY_CLAIMED',
+    );
+    const remote = gh(endpoint(`pulls/${previous.prCi.prNumber}`));
+    assert(
+      remote.merged && remote.merge_commit_sha === previous.prCi.mergeSha,
+      'RECOVERY_REMOTE_MERGE_CHANGED',
+    );
+    assert(gh(endpoint(`issues/${p.issueNumber}`)).state === 'open', 'RECOVERY_ISSUE_CLOSED');
+    for (const key of [
+      'plan',
+      'task',
+      'implementation',
+      'review',
+      'prCi',
+      'completed',
+      'prs',
+      'qaRuns',
+      'index',
+      'reviewCycle',
+      'qaReworks',
+      'feedback',
+    ])
+      put(key, previous[key]);
+    put('request', { ...p, startedAt: previous.request.startedAt });
+    const attempt = {
+      repository: p.repository,
+      issueNumber: p.issueNumber,
+      attempt: 1,
+      runId: t.run.id,
+      reason: 'post-merge-recovery',
+      priorRunId: source.run.id,
+    };
+    record('attempt-record', attempt);
+    comment(
+      p.issueNumber,
+      `recovery-${t.run.id}`,
+      `aidlc- authenticated post-merge recovery from parent ${source.run.id}; PR ${previous.prCi.prUrl}, merge ${previous.prCi.mergeSha}. Re-run QA and closing only; no repeated planning, implementation, review or merge.`,
+    );
   } else if (action === 'reserve') {
     const kind = process.argv[3];
     if (kind === 'worker') {
@@ -700,6 +768,25 @@ try {
     else {
       // Draft promotion needs GraphQL, but remains an explicit scratch-only gh operation.
       if (pr.draft) command('gh', ['pr', 'ready', String(pr.number), '--repo', config.repository]);
+      if (p.acceptance?.waitForCodexReview) {
+        let completed = false;
+        for (let n = 0; n < config.bounds.ciPolls; n++) {
+          const comments = JSON.parse(
+            command('gh', [
+              'api',
+              endpoint(`issues/${pr.number}/comments?per_page=100`),
+              '--paginate',
+              '--slurp',
+            ]),
+          ).flat();
+          if (externalReviewComplete(comments, result.headSha)) {
+            completed = true;
+            break;
+          }
+          await new Promise((resolve) => setTimeout(resolve, config.bounds.ciIntervalMs));
+        }
+        assert(completed, 'EXTERNAL_REVIEW_BARRIER_TIMEOUT');
+      }
       const fresh = gh(endpoint(`pulls/${pr.number}`));
       assert(
         fresh.head.sha === result.headSha &&

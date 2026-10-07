@@ -10,7 +10,9 @@ const ledgerFile = path.join(
   dir,
   round ? `aidlc-live-ledger-${round}.json` : 'aidlc-live-ledger.json',
 );
-const limits = round === 'safety' ? { workers: 12, jev: 10 } : { workers: 30, jev: 30 };
+const limits = ['safety', 'hardened-acceptance'].includes(round)
+  ? { workers: 12, jev: 10 }
+  : { workers: 30, jev: 30 };
 const ledger = fs.existsSync(ledgerFile) ? JSON.parse(fs.readFileSync(ledgerFile)) : { roots: [] };
 async function api(route, method = 'GET', body) {
   const r = await fetch(`http://127.0.0.1:4747${route}`, {

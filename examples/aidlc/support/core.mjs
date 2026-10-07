@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import { isDeepStrictEqual } from 'node:util';
 
 export const hash = (value) => createHash('sha256').update(value).digest('hex');
 export const assert = (ok, reason) => {
@@ -9,6 +10,37 @@ export const assert = (ok, reason) => {
 export const sha = (value) => /^[a-f0-9]{40}$/.test(value);
 export function checkPermission(config) {
   assert(config.allowUnsandboxedChecks === true, 'SANDBOXED_CHECKS_UNAVAILABLE');
+}
+export function invocationConfig(defaults, acceptance) {
+  if (acceptance === undefined) return defaults;
+  assert(
+    acceptance &&
+      Object.keys(acceptance).every((key) =>
+        ['round', 'allowUnsandboxedChecks', 'waitForCodexReview'].includes(key),
+      ) &&
+      /^[a-z0-9-]+$/.test(acceptance.round) &&
+      typeof acceptance.allowUnsandboxedChecks === 'boolean' &&
+      typeof acceptance.waitForCodexReview === 'boolean',
+    'ACCEPTANCE_SETTINGS_INVALID',
+  );
+  return {
+    ...defaults,
+    allowUnsandboxedChecks: acceptance.allowUnsandboxedChecks,
+    budgetFile: `aidlc-${acceptance.round}-budget.json`,
+  };
+}
+export function externalReviewComplete(comments, head) {
+  const summaries = comments.filter((c) =>
+    c.body.includes('<!-- codex-pull-request-review-summary -->'),
+  );
+  if (summaries.length !== 1) return false;
+  const rows = summaries[0].body
+    .split('\n')
+    .filter((line) => line.startsWith('|') && /Code Review/.test(line));
+  return (
+    rows.length > 0 &&
+    rows.every((row) => row.includes(`\`${head.slice(0, 7)}\``) && row.includes('✅ **Completed**'))
+  );
 }
 export function implementationGuard(implementation, config) {
   branchGuard(implementation.branch, config);
@@ -91,6 +123,47 @@ export function boundQa(run, thread, expected, loopId, mergeSha) {
     'CLOSURE_QA_MERGE_OR_RUN_MISMATCH',
   );
   return run.result.qa;
+}
+export function postMergeRecovery(run, thread, request, loopId, ciRun, ciLoopId) {
+  const prior = thread.invocation.trigger.payload;
+  const vars = thread.vars;
+  assert(
+    run.id === request.recoveryParentRunId &&
+      run.loopId === loopId &&
+      !run.parentRunId &&
+      run.status === 'succeeded' &&
+      run.outcome === 'success' &&
+      run.result?.status === 'blocked' &&
+      !prior.recoveryParentRunId &&
+      [
+        'repository',
+        'issueNumber',
+        'workspacePath',
+        'message',
+        'checklist',
+        'bounds',
+        'policy',
+        'acceptance',
+      ].every((key) => isDeepStrictEqual(prior[key], request[key])),
+    'RECOVERY_PARENT_MISMATCH',
+  );
+  assert(
+    vars.plan?.status === 'ready' &&
+      vars.plan.tasks.length === 1 &&
+      vars.index === 0 &&
+      vars.completed.length === 0 &&
+      vars.task.id === vars.plan.tasks[0].id &&
+      vars.prCi?.status === 'merged' &&
+      sha(vars.prCi.mergeSha) &&
+      ciRun.id === thread.outputs['pr-ci']?.value.childRunId &&
+      ciRun.loopId === ciLoopId &&
+      ciRun.parentRunId === run.id &&
+      ciRun.status === 'succeeded' &&
+      ciRun.outcome === 'success' &&
+      isDeepStrictEqual(ciRun.result, vars.prCi),
+    'RECOVERY_NOT_VERIFIED_POST_MERGE',
+  );
+  return vars;
 }
 export function repositoryGuard(repository, allowed) {
   assert(
@@ -234,9 +307,7 @@ export function validateQa(qa, mergeSha, checklist, root, context) {
         'QA_EVIDENCE_BINDING_MISMATCH',
       );
       assert(
-        context.checkEvidence?.some(
-          (trusted) => JSON.stringify(trusted) === JSON.stringify(evidence),
-        ),
+        context.checkEvidence?.some((trusted) => isDeepStrictEqual(trusted, evidence)),
         'QA_ARTIFACT_NOT_FROM_CHECK_EXECUTION',
       );
       const actual = JSON.parse(fs.readFileSync(safeFile(root, evidence.path), 'utf8'));

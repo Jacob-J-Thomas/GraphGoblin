@@ -50,6 +50,31 @@ test('actual helper refuses settings or support changed since publication', () =
   assert.equal(result.status, 1);
   assert.match(result.stderr, /SUPPORT_CHANGED_REINSTANTIATE/);
 });
+test('acceptance opt-in is invocation-local, propagated, and cannot override policy', () => {
+  const acceptance = {
+    round: 'hardened-acceptance',
+    allowUnsandboxedChecks: true,
+    waitForCodexReview: true,
+  };
+  const enabled = call('init', { ...input, acceptance });
+  assert.equal(enabled.status, 0, enabled.stderr);
+  const patch = JSON.parse(enabled.stdout);
+  const cfg = patch.find((x) => x.path === '/vars/config').value;
+  assert.equal(cfg.allowUnsandboxedChecks, true);
+  assert.equal(cfg.budgetFile, 'aidlc-hardened-acceptance-budget.json');
+  assert.deepEqual(patch.find((x) => x.path === '/vars/request').value.acceptance, acceptance);
+  const defaulted = JSON.parse(call('init').stdout).find((x) => x.path === '/vars/config').value;
+  assert.equal(defaulted.allowUnsandboxedChecks, false);
+  for (const bad of [
+    { ...acceptance, policy: { allowMerge: true } },
+    { ...acceptance, round: '../escape' },
+    { ...acceptance, allowUnsandboxedChecks: 'true' },
+  ]) {
+    const rejected = call('init', { ...input, acceptance: bad });
+    assert.equal(rejected.status, 1);
+    assert.match(rejected.stderr, /ACCEPTANCE_SETTINGS_INVALID/);
+  }
+});
 test('P1-1/P1-2/P1-4: real standalone helpers fail before checks, branch mutation or caller verdict use', () => {
   const task = { id: 'aidlc-safety-test' };
   const before = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: fixture, encoding: 'utf8' }).stdout;

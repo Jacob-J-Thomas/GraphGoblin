@@ -1,6 +1,13 @@
 import { assert, branchGuard, sha } from './core.mjs';
 
-export const hashObjectArgs = (file) => ['hash-object', '-w', '--', file];
+export const hashObjectArgs = (file) => [
+  '-c',
+  'core.longpaths=true',
+  'hash-object',
+  '-w',
+  '--',
+  file,
+];
 
 // Always refresh the tracking ref: a new clone must extend the published history.
 export function proofParent(branch, config, git, optionalGit) {

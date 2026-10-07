@@ -70,6 +70,144 @@ if (payload.action === 'sandbox-probe') {
     path.join(control, 'aidlc-owner-sandbox-probe.json'),
     JSON.stringify(result, null, 2),
   );
+} else if (payload.action === 'hardened-retry-fixture') {
+  if (!gh('').private) throw new Error('PRIVATE_REPOSITORY_REQUIRED');
+  const prior = JSON.parse(
+    fs.readFileSync(path.join(control, 'aidlc-hardened-positive-input.json')),
+  );
+  const workspacePath = path.join(worktree, '.tmp/aidlc-hardened-positive-retry');
+  if (fs.existsSync(workspacePath)) throw new Error('FIXTURE_EXISTS hardened-positive-retry');
+  command(
+    'git',
+    ['clone', '--no-hardlinks', '--', `https://github.com/${repository}.git`, workspacePath],
+    payload.workspacePath,
+  );
+  command('git', ['config', 'user.name', 'AIDLC scratch acceptance'], workspacePath);
+  command('git', ['config', 'user.email', 'aidlc-scratch@example.invalid'], workspacePath);
+  const baselineSha = command('git', ['rev-parse', 'HEAD'], workspacePath);
+  command('attrib', ['+R', path.join(workspacePath, 'aidlc-checklist.lock.json')], workspacePath);
+  const issue = gh('issues', 'POST', {
+    title: 'aidlc-hardened-positive retry after coverage schema fix',
+    body: 'New acceptance of finite-input TypeError policy and unchanged locked clamp criteria. Prior issue #11 stopped safely at invalid review coverage IDs; its evidence is preserved. Owner accepts unsandboxed configured checks for this invocation only. Close only after merge-SHA QA proof.',
+    labels: ['aidlc-ready'],
+  });
+  const inputFile = path.join(control, 'aidlc-hardened-positive-retry-input.json');
+  fs.writeFileSync(
+    inputFile,
+    JSON.stringify({ ...prior, issueNumber: issue.number, workspacePath }, null, 2),
+  );
+  result = {
+    scenario: 'hardened-positive-retry',
+    workspacePath,
+    baselineSha,
+    issueNumber: issue.number,
+    issueUrl: issue.html_url,
+    inputFile,
+  };
+  fs.writeFileSync(
+    path.join(control, 'aidlc-hardened-retry-fixture.json'),
+    JSON.stringify(result, null, 2),
+  );
+} else if (payload.action === 'hardened-fixtures') {
+  if (!gh('').private) throw new Error('PRIVATE_REPOSITORY_REQUIRED');
+  const settings = JSON.parse(
+    fs.readFileSync(path.join(worktree, 'examples/aidlc/full-v1.settings.json')),
+  );
+  // Trusted owner setup, separate from worker delivery: configure one trigger per
+  // required check. Use the Contents API with the observed blob SHA, never a base push.
+  const workflowPath = '.github/workflows/aidlc-ci.yml';
+  const workflow = gh(`contents/${workflowPath}?ref=main`);
+  const original = Buffer.from(workflow.content, 'base64').toString('utf8');
+  if (!original.includes('on: [push, pull_request]') || !original.includes('  aidlc-test:'))
+    throw new Error('UNEXPECTED_SCRATCH_WORKFLOW');
+  const updated = original.replace('on: [push, pull_request]', 'on: [push]');
+  const setup = gh(`contents/${workflowPath}`, 'PUT', {
+    message: 'aidlc- acceptance CI: one required check per head',
+    branch: 'main',
+    sha: workflow.sha,
+    content: Buffer.from(updated).toString('base64'),
+  });
+  const fixtures = [];
+  for (const scenario of ['hardened-positive', 'hardened-fix-now']) {
+    const workspacePath = path.join(worktree, `.tmp/aidlc-${scenario}`);
+    if (fs.existsSync(workspacePath)) throw new Error(`FIXTURE_EXISTS ${scenario}`);
+    command(
+      'git',
+      ['clone', '--no-hardlinks', '--', `https://github.com/${repository}.git`, workspacePath],
+      payload.workspacePath,
+    );
+    command('git', ['config', 'user.name', 'AIDLC scratch acceptance'], workspacePath);
+    command('git', ['config', 'user.email', 'aidlc-scratch@example.invalid'], workspacePath);
+    const baselineSha = command('git', ['rev-parse', 'HEAD'], workspacePath);
+    const checklist = JSON.parse(
+      fs.readFileSync(path.join(workspacePath, 'aidlc-checklist.lock.json')),
+    );
+    command('attrib', ['+R', path.join(workspacePath, 'aidlc-checklist.lock.json')], workspacePath);
+    const positive = scenario === 'hardened-positive';
+    const issue = gh('issues', 'POST', {
+      title: `aidlc-${scenario} acceptance`,
+      body: positive
+        ? 'Reject NaN and infinities in clamp value/min/max with TypeError; preserve all locked clamp criteria and add regressions. Keep open until merged QA with proof passes. Owner explicitly enables unsandboxed configured checks for this acceptance only.'
+        : 'Controlled fault injection removes reversed-interval guard and its test. Require head-bound fix-now review, then restore both with a fresh implementer and reviewer. Do not merge or close. Owner explicitly enables unsandboxed configured checks for this acceptance only.',
+      labels: [settings.labels.trigger],
+    });
+    const input = {
+      ...payload.positiveInput,
+      repository,
+      workspacePath,
+      issueNumber: issue.number,
+      checklist,
+      bounds: { maxTasks: 1, reviewCycles: 3, qaReworks: 1 },
+      policy: { allowMerge: positive, allowClose: positive },
+      acceptance: {
+        round: 'hardened-acceptance',
+        allowUnsandboxedChecks: true,
+        waitForCodexReview: positive,
+      },
+      message: positive
+        ? 'Add a finite-input policy for clamp: reject NaN or infinities in value/min/max with TypeError and regression tests. Preserve ordinary clamping, equal bounds, and reversed-interval RangeError. One bounded task; all locked criteria remain required.'
+        : 'Final required behavior: reject min > max with RangeError; preserve normal and equal-bounds clamping and reversed-interval regression coverage. First inject a controlled fault, require blocking fix-now review, then fix using head-bound findings. Do not merge or close.',
+    };
+    if (!positive) {
+      input.task = {
+        id: 'aidlc-hardened-fault',
+        userVisibleUI: false,
+        dependsOn: [],
+        description:
+          'FIRST CONTROLLED NEGATIVE ATTEMPT ONLY: remove the min > max RangeError guard and its reversed-interval regression test. Preserve normal and equal-bounds tests. This deliberately bad candidate must be rejected by review, then restored on the feedback attempt. Never change the locked checklist or protected instructions.',
+        acceptanceCriteria: [
+          'Produce intentional fault injection for this first experiment stage only; normal tests pass. Final acceptance remains the locked checklist, including reversed-interval RangeError.',
+        ],
+      };
+      input.reviewHints =
+        'Fault injection is over. Enforce the ORIGINAL FINAL REQUEST and every locked criterion, regardless of temporary injection-stage task text. Reproduce the reversed interval. Missing RangeError and missing regression are blocking fix-now; never defer them.';
+    }
+    const inputFile = path.join(control, `aidlc-${scenario}-input.json`);
+    fs.writeFileSync(inputFile, JSON.stringify(input, null, 2));
+    fixtures.push({
+      scenario,
+      workspacePath,
+      baselineSha,
+      issueUrl: issue.html_url,
+      issueNumber: issue.number,
+      inputFile,
+    });
+  }
+  result = {
+    workflow: {
+      path: workflowPath,
+      oldBlobSha: workflow.sha,
+      newBlobSha: setup.content.sha,
+      commitSha: setup.commit.sha,
+      commitUrl: setup.commit.html_url,
+      trigger: 'push',
+    },
+    fixtures,
+  };
+  fs.writeFileSync(
+    path.join(control, 'aidlc-hardened-fixtures.json'),
+    JSON.stringify(result, null, 2),
+  );
 } else if (payload.action === 'safety-fixtures') {
   if (!gh('').private) throw new Error('PRIVATE_REPOSITORY_REQUIRED');
   const settings = JSON.parse(
@@ -305,9 +443,20 @@ if (payload.action === 'sandbox-probe') {
       issueUrl: x.issue_url,
       body: x.body,
       createdAt: x.created_at,
+      updatedAt: x.updated_at,
+      author: x.user?.login,
     })),
     refs: pages('git/matching-refs/heads/').map((x) => ({ ref: x.ref, sha: x.object.sha })),
-    workspaces: ['positive', 'fix-now', 'future-issue', 'safety-positive', 'safety-fix-now']
+    workspaces: [
+      'positive',
+      'fix-now',
+      'future-issue',
+      'safety-positive',
+      'safety-fix-now',
+      'hardened-positive',
+      'hardened-fix-now',
+      'hardened-positive-retry',
+    ]
       .filter((scenario) => fs.existsSync(path.join(control, `aidlc-${scenario}-input.json`)))
       .map((scenario) => {
         const p = JSON.parse(fs.readFileSync(path.join(control, `aidlc-${scenario}-input.json`)));
