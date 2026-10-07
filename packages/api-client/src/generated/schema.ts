@@ -3404,7 +3404,71 @@ export interface components {
             /** @constant */
             type: "node.progress";
             nodeId: string;
-            progress: components["schemas"]["JsonValueInput"];
+            progress: {
+                item: {
+                    id: string;
+                    summary: string;
+                    /** @constant */
+                    type: "command";
+                    commandPreview?: string | undefined;
+                    exitCode?: number | undefined;
+                    /** @enum {string} */
+                    status: "ok" | "failed" | "running";
+                } | {
+                    id: string;
+                    summary: string;
+                    /** @constant */
+                    type: "message";
+                    /** @enum {string} */
+                    status?: ("ok" | "failed" | "running") | undefined;
+                } | {
+                    id: string;
+                    summary: string;
+                    /** @constant */
+                    type: "reasoning";
+                    /** @enum {string} */
+                    status?: ("ok" | "failed" | "running") | undefined;
+                } | {
+                    id: string;
+                    summary: string;
+                    /** @constant */
+                    type: "file-change";
+                    /** @enum {string} */
+                    status?: ("ok" | "failed" | "running") | undefined;
+                } | {
+                    id: string;
+                    summary: string;
+                    /** @constant */
+                    type: "tool-call";
+                    /** @enum {string} */
+                    status?: ("ok" | "failed" | "running") | undefined;
+                } | {
+                    id: string;
+                    summary: string;
+                    /** @constant */
+                    type: "search";
+                    /** @enum {string} */
+                    status?: ("ok" | "failed" | "running") | undefined;
+                } | {
+                    id: string;
+                    summary: string;
+                    /** @constant */
+                    type: "error";
+                    /** @enum {string} */
+                    status?: ("ok" | "failed" | "running") | undefined;
+                } | {
+                    id: string;
+                    summary: string;
+                    /** @constant */
+                    type: "other";
+                    /** @enum {string} */
+                    status?: ("ok" | "failed" | "running") | undefined;
+                };
+            } | {
+                exitCode: number;
+                stderr: string;
+                stdoutBytes: number;
+            };
         } | {
             runId: string;
             seq: number;
@@ -4903,7 +4967,71 @@ export interface components {
             /** @constant */
             type: "node.progress";
             nodeId: string;
-            progress: components["schemas"]["JsonValue"];
+            progress: {
+                item: {
+                    id: string;
+                    summary: string;
+                    /** @constant */
+                    type: "command";
+                    commandPreview?: string | undefined;
+                    exitCode?: number | undefined;
+                    /** @enum {string} */
+                    status: "ok" | "failed" | "running";
+                } | {
+                    id: string;
+                    summary: string;
+                    /** @constant */
+                    type: "message";
+                    /** @enum {string} */
+                    status?: ("ok" | "failed" | "running") | undefined;
+                } | {
+                    id: string;
+                    summary: string;
+                    /** @constant */
+                    type: "reasoning";
+                    /** @enum {string} */
+                    status?: ("ok" | "failed" | "running") | undefined;
+                } | {
+                    id: string;
+                    summary: string;
+                    /** @constant */
+                    type: "file-change";
+                    /** @enum {string} */
+                    status?: ("ok" | "failed" | "running") | undefined;
+                } | {
+                    id: string;
+                    summary: string;
+                    /** @constant */
+                    type: "tool-call";
+                    /** @enum {string} */
+                    status?: ("ok" | "failed" | "running") | undefined;
+                } | {
+                    id: string;
+                    summary: string;
+                    /** @constant */
+                    type: "search";
+                    /** @enum {string} */
+                    status?: ("ok" | "failed" | "running") | undefined;
+                } | {
+                    id: string;
+                    summary: string;
+                    /** @constant */
+                    type: "error";
+                    /** @enum {string} */
+                    status?: ("ok" | "failed" | "running") | undefined;
+                } | {
+                    id: string;
+                    summary: string;
+                    /** @constant */
+                    type: "other";
+                    /** @enum {string} */
+                    status?: ("ok" | "failed" | "running") | undefined;
+                };
+            } | {
+                exitCode: number;
+                stderr: string;
+                stdoutBytes: number;
+            };
         } | {
             runId: string;
             seq: number;

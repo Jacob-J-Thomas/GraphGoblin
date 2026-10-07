@@ -1,9 +1,9 @@
 import type { PatchOperation } from '@graphgoblin/contracts';
-import { JsonPatchSchema } from '@graphgoblin/contracts';
+import { JsonPatchSchema, SCRIPT_PROGRESS_STDERR_MAX } from '@graphgoblin/contracts';
 import { MUTABLE_REGIONS, pointerStartsWith, threadView } from '@graphgoblin/domain';
 import { RunCancelledError, RunFailureError } from '../errors.js';
 import type { NodeHandler } from '../handler.js';
-import { jsonOrText, outputPatch, toJson, withTimeout } from './common.js';
+import { jsonOrText, outputPatch, withTimeout } from './common.js';
 import { renderTemplate } from '@graphgoblin/domain';
 
 const SECRET_PREFIX = 'secret:';
@@ -76,11 +76,11 @@ export const scriptHandler: NodeHandler<'script'> = {
     await ctx.services.record({
       type: 'node.progress',
       nodeId: ctx.node.id,
-      progress: toJson({
+      progress: {
         exitCode,
-        stderr: result.stderr.slice(-2000),
+        stderr: result.stderr.slice(-SCRIPT_PROGRESS_STDERR_MAX),
         stdoutBytes: result.stdout.length,
-      }),
+      },
     });
     if (!route) {
       throw new RunFailureError('SCRIPT_EXIT_CODE', `script exited with code ${exitCode}`, {

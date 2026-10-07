@@ -17,9 +17,18 @@ describe('inference node', () => {
     engine.ports.harness.script([
       {
         items: [
-          { id: 'i1', type: 'command', summary: 'npm test' },
+          {
+            id: 'i1',
+            type: 'command',
+            summary: 'npm test (exit -1)',
+            commandPreview: 'npm test',
+            exitCode: -1,
+            status: 'failed',
+            detail: { aggregated_output: 'private command output' },
+          },
           { id: 'i2', type: 'file-change', summary: 'src/a.ts' },
           { id: 'i3', type: 'message', summary: 'done' },
+          { id: 'i4', type: 'error', summary: 'provider diagnostic must stay private' },
         ],
         finalText: 'All done.',
         usage: { inputTokens: 100, outputTokens: 20 },
@@ -40,12 +49,33 @@ describe('inference node', () => {
 
     const types = engine.eventTypes(run.id);
     expect(types).toContain('harness.session');
-    expect(types.filter((t) => t === 'node.progress')).toHaveLength(3);
+    expect(types.filter((t) => t === 'node.progress')).toHaveLength(4);
     expect(types).toContain('harness.usage');
+    const progress = engine.events(run.id).find((event) => event.type === 'node.progress');
+    expect(progress).toMatchObject({
+      type: 'node.progress',
+      progress: {
+        item: {
+          id: 'i1',
+          type: 'command',
+          summary: 'npm test (exit -1)',
+          commandPreview: 'npm test',
+          exitCode: -1,
+          status: 'failed',
+        },
+      },
+    });
+    expect(JSON.stringify(progress)).not.toContain('private command output');
+    const progressEvents = engine.events(run.id).filter((event) => event.type === 'node.progress');
+    expect(JSON.stringify(progressEvents)).not.toContain('provider diagnostic must stay private');
+    expect(progressEvents.at(-1)).toMatchObject({
+      type: 'node.progress',
+      progress: { item: { id: 'i4', summary: 'Harness reported an error' } },
+    });
 
     const thread = await engine.manager.getThread(run.id);
     expect(thread?.messages.map((m) => [m.role, m.content])).toEqual([
-      ['note', 'Ran: npm test'],
+      ['note', 'Ran: npm test (exit -1)'],
       ['note', 'Changed: src/a.ts'],
       ['assistant', 'All done.'],
     ]);
@@ -88,6 +118,40 @@ describe('inference node', () => {
     expect(thread?.artifacts).toEqual([]);
     expect(thread?.vars['name']).toBeUndefined(); // input transforms are not persisted
     expect(thread?.lastOutput?.value).toEqual({ ok: true }); // JSON final text is parsed
+  });
+
+  it('preserves a failed tool-call status in progress without provider diagnostics', async () => {
+    const engine = await createTestEngine();
+    engine.ports.harness.script([
+      {
+        items: [
+          {
+            id: 'tool-1',
+            type: 'tool-call',
+            summary: 'browser.search failed: private provider detail',
+            status: 'failed',
+            detail: { error: 'private provider detail' },
+          },
+        ],
+        finalText: 'Finished.',
+      },
+    ]);
+    const version = engine.publish(inferenceLoop('tool-failure', {}));
+    const run = await engine.runToIdle(version.loopId);
+    const progress = engine.events(run.id).find((event) => event.type === 'node.progress');
+
+    expect(progress).toMatchObject({
+      type: 'node.progress',
+      progress: {
+        item: {
+          id: 'tool-1',
+          type: 'tool-call',
+          summary: 'browser.search failed',
+          status: 'failed',
+        },
+      },
+    });
+    expect(JSON.stringify(progress)).not.toContain('private provider detail');
   });
 
   it('uses loop-level defaults when the node sets none', async () => {

@@ -4830,7 +4830,312 @@
                 "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
               },
               "progress": {
-                "$ref": "#/components/schemas/JsonValueInput"
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "item": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 256
+                              },
+                              "summary": {
+                                "type": "string",
+                                "maxLength": 2000
+                              },
+                              "type": {
+                                "type": "string",
+                                "const": "command"
+                              },
+                              "commandPreview": {
+                                "type": "string",
+                                "maxLength": 160
+                              },
+                              "exitCode": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "ok",
+                                  "failed",
+                                  "running"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "summary",
+                              "type",
+                              "status"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 256
+                              },
+                              "summary": {
+                                "type": "string",
+                                "maxLength": 2000
+                              },
+                              "type": {
+                                "type": "string",
+                                "const": "message"
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "ok",
+                                  "failed",
+                                  "running"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "summary",
+                              "type"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 256
+                              },
+                              "summary": {
+                                "type": "string",
+                                "maxLength": 2000
+                              },
+                              "type": {
+                                "type": "string",
+                                "const": "reasoning"
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "ok",
+                                  "failed",
+                                  "running"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "summary",
+                              "type"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 256
+                              },
+                              "summary": {
+                                "type": "string",
+                                "maxLength": 2000
+                              },
+                              "type": {
+                                "type": "string",
+                                "const": "file-change"
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "ok",
+                                  "failed",
+                                  "running"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "summary",
+                              "type"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 256
+                              },
+                              "summary": {
+                                "type": "string",
+                                "maxLength": 2000
+                              },
+                              "type": {
+                                "type": "string",
+                                "const": "tool-call"
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "ok",
+                                  "failed",
+                                  "running"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "summary",
+                              "type"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 256
+                              },
+                              "summary": {
+                                "type": "string",
+                                "maxLength": 2000
+                              },
+                              "type": {
+                                "type": "string",
+                                "const": "search"
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "ok",
+                                  "failed",
+                                  "running"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "summary",
+                              "type"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 256
+                              },
+                              "summary": {
+                                "type": "string",
+                                "maxLength": 2000
+                              },
+                              "type": {
+                                "type": "string",
+                                "const": "error"
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "ok",
+                                  "failed",
+                                  "running"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "summary",
+                              "type"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 256
+                              },
+                              "summary": {
+                                "type": "string",
+                                "maxLength": 2000
+                              },
+                              "type": {
+                                "type": "string",
+                                "const": "other"
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "ok",
+                                  "failed",
+                                  "running"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "summary",
+                              "type"
+                            ],
+                            "additionalProperties": false
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "item"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "exitCode": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      "stderr": {
+                        "type": "string",
+                        "maxLength": 2000
+                      },
+                      "stdoutBytes": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "required": [
+                      "exitCode",
+                      "stderr",
+                      "stdoutBytes"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
               }
             },
             "required": [
@@ -10780,7 +11085,312 @@
                 "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
               },
               "progress": {
-                "$ref": "#/components/schemas/JsonValue"
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "item": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 256
+                              },
+                              "summary": {
+                                "type": "string",
+                                "maxLength": 2000
+                              },
+                              "type": {
+                                "type": "string",
+                                "const": "command"
+                              },
+                              "commandPreview": {
+                                "type": "string",
+                                "maxLength": 160
+                              },
+                              "exitCode": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "ok",
+                                  "failed",
+                                  "running"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "summary",
+                              "type",
+                              "status"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 256
+                              },
+                              "summary": {
+                                "type": "string",
+                                "maxLength": 2000
+                              },
+                              "type": {
+                                "type": "string",
+                                "const": "message"
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "ok",
+                                  "failed",
+                                  "running"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "summary",
+                              "type"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 256
+                              },
+                              "summary": {
+                                "type": "string",
+                                "maxLength": 2000
+                              },
+                              "type": {
+                                "type": "string",
+                                "const": "reasoning"
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "ok",
+                                  "failed",
+                                  "running"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "summary",
+                              "type"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 256
+                              },
+                              "summary": {
+                                "type": "string",
+                                "maxLength": 2000
+                              },
+                              "type": {
+                                "type": "string",
+                                "const": "file-change"
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "ok",
+                                  "failed",
+                                  "running"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "summary",
+                              "type"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 256
+                              },
+                              "summary": {
+                                "type": "string",
+                                "maxLength": 2000
+                              },
+                              "type": {
+                                "type": "string",
+                                "const": "tool-call"
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "ok",
+                                  "failed",
+                                  "running"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "summary",
+                              "type"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 256
+                              },
+                              "summary": {
+                                "type": "string",
+                                "maxLength": 2000
+                              },
+                              "type": {
+                                "type": "string",
+                                "const": "search"
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "ok",
+                                  "failed",
+                                  "running"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "summary",
+                              "type"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 256
+                              },
+                              "summary": {
+                                "type": "string",
+                                "maxLength": 2000
+                              },
+                              "type": {
+                                "type": "string",
+                                "const": "error"
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "ok",
+                                  "failed",
+                                  "running"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "summary",
+                              "type"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 256
+                              },
+                              "summary": {
+                                "type": "string",
+                                "maxLength": 2000
+                              },
+                              "type": {
+                                "type": "string",
+                                "const": "other"
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "ok",
+                                  "failed",
+                                  "running"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "summary",
+                              "type"
+                            ],
+                            "additionalProperties": false
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "item"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "exitCode": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      "stderr": {
+                        "type": "string",
+                        "maxLength": 2000
+                      },
+                      "stdoutBytes": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "required": [
+                      "exitCode",
+                      "stderr",
+                      "stdoutBytes"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
               }
             },
             "required": [
