@@ -1,10 +1,10 @@
-import type { JsonValue, Usage } from '@graphgoblin/contracts';
-import type {
-  HarnessCommandStatus,
-  HarnessEvent,
-  HarnessItem,
-  HarnessItemType,
-} from '@graphgoblin/engine';
+import {
+  COMMAND_PREVIEW_MAX,
+  type JsonValue,
+  type ProgressItemStatus,
+  type Usage,
+} from '@graphgoblin/contracts';
+import type { HarnessEvent, HarnessItem, HarnessItemType } from '@graphgoblin/engine';
 import type { ThreadEvent, ThreadItem } from '@openai/codex-sdk';
 
 /**
@@ -14,7 +14,6 @@ import type { ThreadEvent, ThreadItem } from '@openai/codex-sdk';
  */
 
 const SUMMARY_MAX = 200;
-const COMMAND_PREVIEW_MAX = 160;
 /** Command output kept in an item's `detail`; transcripts store items, so cap what they carry. */
 const OUTPUT_MAX = 16 * 1024;
 
@@ -80,26 +79,31 @@ function summarize(item: LooseItem): string {
   }
 }
 
-/** Keep command progress fields small and independent of the summary's length. */
-function commandMetadata(
+/** Preserve allowlisted SDK state and keep command progress fields independent of the summary. */
+function itemMetadata(
   item: LooseItem,
 ): Pick<HarnessItem, 'commandPreview' | 'exitCode' | 'status'> {
   const raw = item as Record<string, unknown>;
   const command = typeof raw.command === 'string' ? raw.command : '';
+  const isCommand = item.type === 'command_execution';
   const exitCode =
-    typeof raw.exit_code === 'number' && Number.isInteger(raw.exit_code)
+    isCommand && typeof raw.exit_code === 'number' && Number.isInteger(raw.exit_code)
       ? raw.exit_code
       : undefined;
-  const status: HarnessCommandStatus =
+  const status: ProgressItemStatus | undefined =
     raw.status === 'failed' || (exitCode !== undefined && exitCode !== 0)
       ? 'failed'
       : raw.status === 'completed' || exitCode === 0
         ? 'ok'
-        : 'running';
+        : raw.status === 'in_progress' || raw.status === 'running'
+          ? 'running'
+          : isCommand
+            ? 'running'
+            : undefined;
   return {
-    commandPreview: oneLine(command, COMMAND_PREVIEW_MAX),
+    ...(isCommand ? { commandPreview: oneLine(command, COMMAND_PREVIEW_MAX) } : {}),
     ...(exitCode !== undefined ? { exitCode } : {}),
-    status,
+    ...(status !== undefined ? { status } : {}),
   };
 }
 
@@ -118,7 +122,7 @@ export function normalizeItem(item: LooseItem): HarnessItem {
     id: item.id,
     type: ITEM_TYPES[item.type] ?? 'other',
     summary: summarize(item),
-    ...(item.type === 'command_execution' ? commandMetadata(item) : {}),
+    ...itemMetadata(item),
     detail: toJson(raw),
   };
 }

@@ -1,4 +1,13 @@
-import type { ContextThread, JsonValue, PatchOperation, Usage } from '@graphgoblin/contracts';
+import {
+  COMMAND_PREVIEW_MAX,
+  PROGRESS_SUMMARY_MAX,
+  type ContextThread,
+  type JsonValue,
+  type NodeProgress,
+  type PatchOperation,
+  type ProgressItemStatus,
+  type Usage,
+} from '@graphgoblin/contracts';
 import { applyPatch, renderTemplate, threadView, validateJson } from '@graphgoblin/domain';
 import { RunCancelledError, RunFailureError, describeError, isAbortError } from '../errors.js';
 import type { NodeContext, NodeHandler } from '../handler.js';
@@ -38,9 +47,53 @@ function progressSummary(item: HarnessItem): string {
   if (item.type === 'error') return 'Harness reported an error';
   if (item.type === 'tool-call') {
     const diagnostic = item.summary.indexOf(' failed: ');
-    if (diagnostic >= 0) return `${item.summary.slice(0, diagnostic)} failed`.slice(0, 2000);
+    if (diagnostic >= 0)
+      return `${item.summary.slice(0, diagnostic)} failed`.slice(0, PROGRESS_SUMMARY_MAX);
   }
-  return item.summary.slice(0, 2000);
+  return item.summary.slice(0, PROGRESS_SUMMARY_MAX);
+}
+
+function safeStatus(status: HarnessItem['status']): ProgressItemStatus | undefined {
+  return status === 'ok' || status === 'failed' || status === 'running' ? status : undefined;
+}
+
+function progressFor(item: HarnessItem): NodeProgress {
+  const reportedStatus = safeStatus(item.status);
+  if (item.type !== 'command') {
+    return {
+      item: {
+        id: item.id,
+        type: item.type,
+        summary: progressSummary(item),
+        ...(reportedStatus ? { status: reportedStatus } : {}),
+      },
+    };
+  }
+
+  const candidateExitCode = item.exitCode;
+  const exitCode =
+    typeof candidateExitCode === 'number' && Number.isInteger(candidateExitCode)
+      ? candidateExitCode
+      : undefined;
+  const status: ProgressItemStatus =
+    reportedStatus === 'failed' || (exitCode !== undefined && exitCode !== 0)
+      ? 'failed'
+      : reportedStatus === 'ok' || exitCode === 0
+        ? 'ok'
+        : 'running';
+  return {
+    item: {
+      id: item.id,
+      type: item.type,
+      summary: progressSummary(item),
+      commandPreview: (item.commandPreview ?? item.summary)
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, COMMAND_PREVIEW_MAX),
+      ...(exitCode !== undefined ? { exitCode } : {}),
+      status,
+    },
+  };
 }
 
 /** Consume a session: record progress and usage, resolve the result, map failures to run failures. */
@@ -71,32 +124,7 @@ async function consume(
         await ctx.services.record({
           type: 'node.progress',
           nodeId: ctx.node.id,
-          progress: toJson({
-            item: {
-              id: event.item.id,
-              type: event.item.type,
-              summary: progressSummary(event.item),
-              ...(event.item.type === 'command'
-                ? {
-                    commandPreview: (event.item.commandPreview ?? event.item.summary)
-                      .replace(/\s+/g, ' ')
-                      .trim()
-                      .slice(0, 160),
-                    ...(typeof event.item.exitCode === 'number' &&
-                    Number.isInteger(event.item.exitCode)
-                      ? { exitCode: event.item.exitCode }
-                      : {}),
-                    status:
-                      event.item.status === 'failed' ||
-                      (typeof event.item.exitCode === 'number' && event.item.exitCode !== 0)
-                        ? 'failed'
-                        : event.item.status === 'ok' || event.item.exitCode === 0
-                          ? 'ok'
-                          : 'running',
-                  }
-                : {}),
-            },
-          }),
+          progress: progressFor(event.item),
         });
         break;
       case 'usage':

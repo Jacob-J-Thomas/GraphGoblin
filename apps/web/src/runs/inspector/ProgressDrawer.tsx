@@ -1,30 +1,53 @@
-import type { RunEvent } from '@graphgoblin/contracts';
+import { COMMAND_PREVIEW_MAX, type RunEvent } from '@graphgoblin/contracts';
 import { Disclosure } from '../../components/ui/index.js';
 import { prettyJson } from '../../lib/utils.js';
 import { describeEvent, nodeActivity } from '../projections.js';
 
-function describeCommandProgress(value: unknown): string | undefined {
+function describeStatusProgress(value: unknown): string | undefined {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
   const item = (value as Record<string, unknown>)['item'];
   if (!item || typeof item !== 'object' || Array.isArray(item)) return undefined;
-  const command = item as Record<string, unknown>;
+  const progressItem = item as Record<string, unknown>;
   if (
-    command['type'] !== 'command' ||
-    (command['status'] !== 'ok' &&
-      command['status'] !== 'failed' &&
-      command['status'] !== 'running')
+    typeof progressItem['type'] !== 'string' ||
+    (progressItem['status'] !== 'ok' &&
+      progressItem['status'] !== 'failed' &&
+      progressItem['status'] !== 'running')
   ) {
     return undefined;
   }
 
-  const label = command['status'] === 'ok' ? 'succeeded' : command['status'];
+  const type = progressItem['type'];
+  const label = progressItem['status'] === 'ok' ? 'succeeded' : progressItem['status'];
+  const noun =
+    type === 'command'
+      ? 'Command'
+      : type === 'tool-call'
+        ? 'Tool call'
+        : type === 'file-change'
+          ? 'File change'
+          : 'Harness item';
+  let summary = typeof progressItem['summary'] === 'string' ? progressItem['summary'] : '';
+  if (type === 'error') summary = 'Harness reported an error';
+  if (type === 'tool-call') {
+    const diagnostic = summary.indexOf(' failed: ');
+    if (diagnostic >= 0) summary = summary.slice(0, diagnostic);
+    else if (progressItem['status'] === 'failed' && summary.endsWith(' failed')) {
+      summary = summary.slice(0, -' failed'.length);
+    }
+  }
+  if (type === 'file-change') summary = summary.replace(/ \(failed\)$/, '');
   const preview =
-    typeof command['commandPreview'] === 'string' ? command['commandPreview'].slice(0, 160) : '';
+    type === 'command' && typeof progressItem['commandPreview'] === 'string'
+      ? progressItem['commandPreview'].slice(0, COMMAND_PREVIEW_MAX)
+      : summary;
   const exitCode =
-    typeof command['exitCode'] === 'number' && Number.isInteger(command['exitCode'])
-      ? ` (exit ${command['exitCode']})`
+    type === 'command' &&
+    typeof progressItem['exitCode'] === 'number' &&
+    Number.isInteger(progressItem['exitCode'])
+      ? ` (exit ${progressItem['exitCode']})`
       : '';
-  return `Command ${label}${preview ? `: ${preview}` : ''}${exitCode}`;
+  return `${noun} ${label}${preview ? `: ${preview}` : ''}${exitCode}`;
 }
 
 /** Per node: harness progress, sessions, usage, decisions, and heartbeats as they arrive. */
@@ -44,7 +67,7 @@ export function ProgressDrawer({ events }: { events: RunEvent[] }) {
               <li key={e.seq} className="break-words">
                 <code className="text-default">{e.type}</code>{' '}
                 {'progress' in e
-                  ? (describeCommandProgress(e.progress) ?? prettyJson(e.progress))
+                  ? (describeStatusProgress(e.progress) ?? prettyJson(e.progress))
                   : 'usage' in e
                     ? prettyJson(e.usage)
                     : prettyJson(describeEvent(e))}

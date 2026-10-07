@@ -120,6 +120,40 @@ describe('inference node', () => {
     expect(thread?.lastOutput?.value).toEqual({ ok: true }); // JSON final text is parsed
   });
 
+  it('preserves a failed tool-call status in progress without provider diagnostics', async () => {
+    const engine = await createTestEngine();
+    engine.ports.harness.script([
+      {
+        items: [
+          {
+            id: 'tool-1',
+            type: 'tool-call',
+            summary: 'browser.search failed: private provider detail',
+            status: 'failed',
+            detail: { error: 'private provider detail' },
+          },
+        ],
+        finalText: 'Finished.',
+      },
+    ]);
+    const version = engine.publish(inferenceLoop('tool-failure', {}));
+    const run = await engine.runToIdle(version.loopId);
+    const progress = engine.events(run.id).find((event) => event.type === 'node.progress');
+
+    expect(progress).toMatchObject({
+      type: 'node.progress',
+      progress: {
+        item: {
+          id: 'tool-1',
+          type: 'tool-call',
+          summary: 'browser.search failed',
+          status: 'failed',
+        },
+      },
+    });
+    expect(JSON.stringify(progress)).not.toContain('private provider detail');
+  });
+
   it('uses loop-level defaults when the node sets none', async () => {
     const engine = await createTestEngine();
     const loop = inferenceLoop('inf', {});

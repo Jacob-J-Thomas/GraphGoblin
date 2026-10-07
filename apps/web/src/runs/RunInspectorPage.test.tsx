@@ -37,7 +37,10 @@ function seedRun(api: FakeApi, overrides: Parameters<FakeApi['addRun']>[0] = {})
   );
   api.pushEvent(
     r,
-    event(r, 5, 'node.progress', { nodeId: 'infer', progress: { item: 'thinking' } }),
+    event(r, 5, 'node.progress', {
+      nodeId: 'infer',
+      progress: { item: { id: 'reasoning-1', type: 'reasoning', summary: 'thinking' } },
+    }),
   );
   api.pushEvent(
     r,
@@ -122,6 +125,31 @@ describe('RunInspectorPage', () => {
 
     await user.click(await screen.findByText(/Node progress/));
     expect(await screen.findByText('Command failed: npm test (exit -1)')).toBeInTheDocument();
+  });
+
+  it('shows a failed tool call without its provider diagnostics', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const run = seedRun(api, { status: 'running' });
+    api.pushEvent(
+      run.id,
+      event(run.id, 7, 'node.progress', {
+        nodeId: 'infer',
+        progress: {
+          item: {
+            id: 'tool-1',
+            type: 'tool-call',
+            summary: 'browser.search failed: private provider detail',
+            status: 'failed',
+          },
+        },
+      }),
+    );
+    renderApp(`/runs/${run.id}`, api);
+
+    await user.click(await screen.findByText(/Node progress/));
+    expect(await screen.findByText('Tool call failed: browser.search')).toBeInTheDocument();
+    expect(screen.queryByText(/private provider detail/)).not.toBeInTheDocument();
   });
 
   it('replays a child run from its seeded first event and reports logs that do not replay', async () => {

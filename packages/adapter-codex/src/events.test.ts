@@ -65,6 +65,11 @@ describe('normalizeItem', () => {
         'tool-call',
         'gh.search failed: boom',
       ],
+      [
+        { id: 'e3', type: 'mcp_tool_call', server: 'gh', tool: 'search', status: 'failed' },
+        'tool-call',
+        'gh.search',
+      ],
       [{ id: 'f', type: 'web_search', query: 'codex sdk' }, 'search', 'codex sdk'],
       [{ id: 'g', type: 'error', message: 'deprecated key' }, 'error', 'deprecated key'],
       [
@@ -95,6 +100,8 @@ describe('normalizeItem', () => {
       if (raw.type === 'command_execution' && raw.id === 'c2') {
         expect(item).toMatchObject({ commandPreview: 'sleep', status: 'running' });
       }
+      if (raw.id === 'e3') expect(item).toMatchObject({ status: 'failed' });
+      if (raw.id === 'd2') expect(item).toMatchObject({ status: 'failed' });
     }
   });
 

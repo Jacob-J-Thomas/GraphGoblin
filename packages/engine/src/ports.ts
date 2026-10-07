@@ -7,6 +7,7 @@ import type {
   JsonSchema,
   JsonValue,
   LoopVersionRecord,
+  ProgressItemStatus,
   RunEvent,
   RunRecord,
   RunStatus,
@@ -141,8 +142,6 @@ export interface HarnessSessionRepository {
 export type HarnessItemType =
   'message' | 'reasoning' | 'command' | 'file-change' | 'tool-call' | 'search' | 'error' | 'other';
 
-export type HarnessCommandStatus = 'ok' | 'failed' | 'running';
-
 export interface HarnessItem {
   id: string;
   type: HarnessItemType;
@@ -151,8 +150,8 @@ export interface HarnessItem {
   commandPreview?: string;
   /** Process exit code when the harness reports one. */
   exitCode?: number;
-  /** Allowlisted command state; only present on command items. */
-  status?: HarnessCommandStatus;
+  /** Allowlisted harness item state when the SDK reports one. */
+  status?: ProgressItemStatus;
   detail?: JsonValue;
 }
 
