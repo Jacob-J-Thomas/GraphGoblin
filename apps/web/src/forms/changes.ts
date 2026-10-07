@@ -22,6 +22,8 @@ export interface FormChange {
    * text it moves or drops) carries the same id, so they are one undo step.
    */
   id: number;
+  /** Which array row was removed; labels and row contents cannot identify identical rows. */
+  collection?: { type: 'remove'; index: number };
 }
 
 /**

@@ -109,10 +109,11 @@ describe('decision route edits in editor history', () => {
   it('does not transfer a connection between two rows with colliding labels', () => {
     const edges = store().definition!.edges;
     store().updateNode('pick', { config: config(['yes', 'no', 'no']) });
-    store().updateNode('pick', { config: config(['yes', 'other', 'no']) });
     expect(store().definition!.edges).toBe(edges);
-    expect(validateDraft(store().definition!).issues.length).toBeGreaterThan(0);
-    // Restoring the refused edit resolves the ambiguity; a subsequent rename works normally.
+    store().updateNode('pick', { config: config(['yes', 'other', 'no']) });
+    expect(store().definition!.edges.find((edge) => edge.id === 'no')!.from.port).toBe('other');
+    expect(store().definition!.edges.find((edge) => edge.id === 'third')!.from.port).toBe('no');
+    expect(validateDraft(store().definition!).issues).toEqual([]);
     store().updateNode('pick', { config: config() });
     store().updateNode('pick', { config: config(['yes', 'no', 'other']) });
     expect(store().definition!.edges[3]!.from.port).toBe('other');
@@ -147,6 +148,108 @@ describe('decision route edits in editor history', () => {
     } finally {
       clock.mockRestore();
     }
+  });
+
+  it.each([1, 2])(
+    "keeps the third row's edge in completion order starting with row %i",
+    (first) => {
+      const definition = fixture();
+      definition.edges = definition.edges.filter((edge) => edge.id !== 'no');
+      store().load('L1', definition);
+      store().updateNode('pick', { config: config(['yes', '', '']) });
+      const labels = ['yes', '', ''];
+      labels[first] = first === 1 ? 'free' : 'other';
+      store().updateNode('pick', { config: config(labels) });
+      expect(store().definition!.edges.find((edge) => edge.id === 'third')!.from.port).toBe(
+        first === 2 ? 'other' : 'third',
+      );
+      labels[3 - first] = first === 1 ? 'other' : 'free';
+      store().updateNode('pick', { config: config(labels) });
+      expect(store().definition!.edges.find((edge) => edge.id === 'third')!.from.port).toBe(
+        'other',
+      );
+      expect(store().definition!.edges.some((edge) => edge.from.port === 'free')).toBe(false);
+      store().undo();
+      store().redo();
+      store().updateNode('pick', { config: config(['yes', 'free', 'final']) });
+      expect(store().definition!.edges.find((edge) => edge.id === 'third')!.from.port).toBe(
+        'final',
+      );
+    },
+  );
+
+  it('deletes an edge owned by a temporarily blank row, and restores ownership on undo', () => {
+    store().updateNode('pick', { config: config(['yes', 'no', '']) });
+    const incomplete = store().definition!;
+    store().updateNode('pick', { config: config(['yes', 'no']) });
+    const removed = store().definition!;
+    expect(removed.edges.some((edge) => edge.id === 'third')).toBe(false);
+    expect(validateDraft(removed).issues).toEqual([]);
+    store().undo();
+    expect(store().definition).toEqual(incomplete);
+    store().redo();
+    expect(store().definition).toEqual(removed);
+    store().undo();
+    store().updateNode('pick', { config: config(['yes', 'no', 'other']) });
+    expect(store().definition!.edges.find((edge) => edge.id === 'third')!.from.port).toBe('other');
+  });
+
+  it.each([1, 2])(
+    'removes the owned edges of blank row %i while an identical row survives',
+    (index) => {
+      store().updateNode('pick', { config: config(['yes', '', '']) });
+      const before = store().decisionRoutes['pick']!;
+      store().updateNode(
+        'pick',
+        { config: config(['yes', '']) },
+        {
+          path: 'routes',
+          kind: 'commit',
+          id: 1,
+          collection: { type: 'remove', index },
+        },
+      );
+      expect(store().definition!.edges.map((edge) => edge.id)).toEqual([
+        'e1',
+        'yes',
+        index === 1 ? 'third' : 'no',
+      ]);
+      expect(store().decisionRoutes['pick']!.rows[1]!.key).toBe(before.rows[3 - index]!.key);
+      store().undo();
+      expect(store().decisionRoutes['pick']).toBe(before);
+      store().redo();
+      store().updateNode('pick', { config: config(['yes', 'other']) });
+      expect(store().definition!.edges.at(-1)!.from.port).toBe('other');
+    },
+  );
+
+  it('acquires a new connection, keeps ownership through node rename and discards it on a new load', () => {
+    const definition = fixture();
+    definition.edges = definition.edges.filter((edge) => edge.id !== 'third');
+    store().load('L1', definition);
+    expect(store().connect({ source: 'pick', sourceHandle: 'third', target: 'done' })).toBeNull();
+    store().updateNode('pick', { config: config(['yes', 'no', '']) });
+    store().renameNode('pick', 'choice');
+    store().updateNode('choice', { config: config(['yes', 'no', 'other']) });
+    expect(store().definition!.edges.at(-1)!.from).toEqual({ node: 'choice', port: 'other' });
+    expect(store().decisionRoutes['pick']).toBeUndefined();
+    store().removeEdge(store().definition!.edges.at(-1)!.id);
+    expect(store().decisionRoutes['choice']!.rows[2]!.edgeIds).toEqual([]);
+    store().load('L2', fixture());
+    expect(store().decisionRoutes['choice']).toBeUndefined();
+    store().removeNode('pick');
+    expect(store().decisionRoutes).toEqual({});
+  });
+
+  it('owns a new connection made on a unique numeric draft label when that row is completed', () => {
+    const definition = fixture();
+    definition.edges = definition.edges.filter((edge) => edge.id !== 'third');
+    store().load('L1', definition);
+    store().updateNode('pick', { config: config(['yes', 'no', '1']) });
+    expect(store().connect({ source: 'pick', sourceHandle: '1', target: 'done' })).toBeNull();
+    store().updateNode('pick', { config: config(['yes', 'no', 'other']) });
+    expect(store().definition!.edges.at(-1)!.from.port).toBe('other');
+    expect(validateDraft(store().definition!).issues).toEqual([]);
   });
 
   it('retains connections when a raw config has no route array, and ignores other node kinds', () => {

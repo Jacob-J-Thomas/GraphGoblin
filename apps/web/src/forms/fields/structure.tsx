@@ -307,7 +307,7 @@ function ArrayField({
       ...(offset === 0 ? {} : { to: joinPath(name, index + offset - 1) }),
     }));
     // One step: the row, and the unparsed text of the rows after it.
-    change({ path: name, kind: 'commit' }, () => {
+    change({ path: name, kind: 'commit', collection: { type: 'remove', index } }, () => {
       identities.remove(name, index);
       repathParseErrors(parseErrors, moves);
       field.onChange(current.filter((_, i) => i !== index));

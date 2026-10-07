@@ -12,7 +12,11 @@ import {
 import { newLoopDefinition } from './model.js';
 
 /** A snapshot of a loop named `name`, with no unparsed text. */
-const at = (name: string): Snapshot => ({ definition: newLoopDefinition(name), fieldErrors: {} });
+const at = (name: string): Snapshot => ({
+  definition: newLoopDefinition(name),
+  fieldErrors: {},
+  decisionRoutes: {},
+});
 
 describe('sameValue', () => {
   it('compares JSON-like values deeply, with undefined properties counted as absent', () => {

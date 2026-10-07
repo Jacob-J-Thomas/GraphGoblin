@@ -9,7 +9,7 @@ import type { z } from 'zod';
 import { create } from 'zustand';
 import type { FormChange } from '../forms/changes.js';
 import type { ParseError, ParseErrorReason } from '../forms/parse-errors.js';
-import { decisionRouteEdges } from './decision-route-edges.js';
+import { decisionRouteEdges, type DecisionRoutes } from './decision-route-edges.js';
 import {
   historyClock,
   recordStep,
@@ -38,6 +38,8 @@ export type SaveState =
 export interface EditorState {
   loopId: string | undefined;
   definition: LoopDefinitionInput | undefined;
+  /** Stable decision rows and owned edge ids, including while their labels are invalid. */
+  decisionRoutes: DecisionRoutes;
   selectedNodeId: string | undefined;
   /**
    * Whether the node editor dialog is open for the selected node. Selecting alone does not open
@@ -191,6 +193,7 @@ function config(node: NodeInput): Record<string, unknown> {
 const INITIAL = {
   loopId: undefined,
   definition: undefined,
+  decisionRoutes: {} as DecisionRoutes,
   selectedNodeId: undefined,
   nodeDialogOpen: false,
   nodeDialogSession: 0,
@@ -270,21 +273,31 @@ export const useEditorStore = create<EditorState>((set, get) => {
    * Apply an edit to the definition: bump the revision and record the step for undo. Every change
    * of the definition goes through here. An edit that changes nothing is not one.
    */
-  const edit = (fn: (def: LoopDefinitionInput) => LoopDefinitionInput, step: HistoryStep) => {
+  const edit = (
+    fn: (def: LoopDefinitionInput) => LoopDefinitionInput,
+    step: HistoryStep,
+    change?: FormChange,
+  ) => {
     const s = get();
     const def = s.definition;
     if (!def) return;
-    const definition = fn(def);
+    const { definition, decisionRoutes } = decisionRouteEdges(
+      fn(def),
+      s.decisionRoutes,
+      change,
+      step.renamed,
+    );
     if (sameValue(definition, def)) return;
     const { fieldErrors } = s;
     set({
       definition,
+      decisionRoutes,
       revision: s.revision + 1,
       saveState: 'pending',
       ...recordStep(
         historyOf(s),
-        { definition: def, fieldErrors },
-        { definition, fieldErrors },
+        { definition: def, fieldErrors, decisionRoutes: s.decisionRoutes },
+        { definition, fieldErrors, decisionRoutes },
         step,
         historyClock.now(),
       ),
@@ -295,7 +308,11 @@ export const useEditorStore = create<EditorState>((set, get) => {
   const travelTo = (direction: 'undo' | 'redo') => {
     const s = get();
     if (!s.definition) return;
-    const current: Snapshot = { definition: s.definition, fieldErrors: s.fieldErrors };
+    const current: Snapshot = {
+      definition: s.definition,
+      fieldErrors: s.fieldErrors,
+      decisionRoutes: s.decisionRoutes,
+    };
     const moved = travel(historyOf(s), current, direction);
     if (!moved) return;
     const { history, entry } = moved;
@@ -309,6 +326,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
     set({
       ...history,
       definition: entry.definition,
+      decisionRoutes: entry.decisionRoutes,
       fieldErrors: entry.fieldErrors,
       historyEpoch: s.historyEpoch + 1,
       // Only unparsed text changed: nothing for autosave to send.
@@ -328,6 +346,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
         ...INITIAL,
         loopId,
         definition,
+        decisionRoutes: decisionRouteEdges(definition, {}).decisionRoutes,
         revision: options.dirty ? 1 : 0,
         saveState: options.dirty ? 'pending' : 'saved',
         baseToken: options.baseToken,
@@ -381,13 +400,8 @@ export const useEditorStore = create<EditorState>((set, get) => {
     updateNode: (nodeId, changes, change) =>
       edit(
         (d) => {
-          const node = d.nodes.find((n) => n.id === nodeId);
           return {
             ...d,
-            edges:
-              node && changes.config !== undefined
-                ? decisionRouteEdges(node, changes.config, d.edges)
-                : d.edges,
             nodes: d.nodes.map((n) =>
               n.id === nodeId
                 ? ({
@@ -405,6 +419,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
           : changes.label === undefined
             ? configStep(nodeId, change)
             : { label: `edit ${nodeId}`, coalesceKey: `node:${nodeId}` },
+        change,
       ),
 
     renameNode: (nodeId, nextId) => {
@@ -606,8 +621,8 @@ export const useEditorStore = create<EditorState>((set, get) => {
         ...(definition
           ? recordStep(
               historyOf(s),
-              { definition, fieldErrors: s.fieldErrors },
-              { definition, fieldErrors },
+              { definition, fieldErrors: s.fieldErrors, decisionRoutes: s.decisionRoutes },
+              { definition, fieldErrors, decisionRoutes: s.decisionRoutes },
               fieldErrorStep(scope, path, reason, change),
               historyClock.now(),
             )

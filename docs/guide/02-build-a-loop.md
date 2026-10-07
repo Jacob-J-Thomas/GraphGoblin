@@ -61,7 +61,7 @@ A saved model that is missing or disabled stays selected with **not in catalog**
 
 ## Connect and validate
 
-Decision outputs are ready to connect as soon as you add or rename a route, by dragging its handle or using **Connections** in the node dialog; no reload is needed. Renaming a connected route keeps its connection and any manual line layout. Removing a route removes its connection, and reordering keeps connections with their labels. **Undo** and **Redo** restore the route edit and its connection together. Blank or duplicate labels still need fixing before you can publish.
+Decision outputs are ready to connect as soon as you add or rename a route, by dragging its handle or using **Connections** in the node dialog; no reload is needed. Renaming a connected route keeps its connection and any manual line layout. While editing incomplete labels, each connection stays with its own row, whichever row you finish first. Removing a route removes its connection even if its label is temporarily blank or invalid, and reordering keeps connections with their labels. **Undo** and **Redo** restore the route edit and its connection together. Blank or duplicate labels still need fixing before you can publish.
 
 Connect exactly one edge per output port. Multiple inputs may converge on a node, but each run follows one route at a time. Triggers have no input. Ordinary output ports are `out`, decision ports are route labels, script ports include exit-code labels, and exit ports are limited to `loopBack`. Edge targets use `in`.
 

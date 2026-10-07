@@ -14,17 +14,23 @@ export const ROUTING_MEASURE = 'gg:backward-routing';
 export interface RoutingGeometry {
   nodes: readonly RoutingNode[];
   preparationMs: number;
+  /** Source handle ids in DOM order; object keys reorder integer-like draft labels. */
+  outputOrder: ReadonlyMap<string, readonly string[]>;
 }
 
 type ExpectedPorts = ReadonlyMap<string, { ports: readonly string[] }>;
 
 /** A stable value snapshot. An unmeasured new card cannot erase the measured graph. */
 export function createGeometrySelector() {
-  let previous: RoutingGeometry = { nodes: [], preparationMs: 0 };
-  const measured = new Map<string, { node: RoutingNode; handles: unknown }>();
+  let previous: RoutingGeometry = { nodes: [], preparationMs: 0, outputOrder: new Map() };
+  const measured = new Map<
+    string,
+    { node: RoutingNode; handles: unknown; ports: readonly string[] }
+  >();
   return ({ nodeLookup }: Pick<ReactFlowState, 'nodeLookup'>): RoutingGeometry => {
     const start = performance.now();
     const nodes: RoutingNode[] = [];
+    const outputOrder = new Map<string, readonly string[]>();
     for (const node of nodeLookup.values()) {
       const { width, height } = node.measured;
       const { handleBounds, positionAbsolute: position } = node.internals;
@@ -39,6 +45,7 @@ export function createGeometrySelector() {
         cached.handles === handleBounds
       ) {
         nodes.push(cached.node);
+        outputOrder.set(node.id, cached.ports);
         continue;
       }
       const input = handleBounds.target?.find((handle) => handle.id === 'in');
@@ -61,15 +68,29 @@ export function createGeometrySelector() {
           : {}),
       };
       const before = cached?.node;
+      const ports = (handleBounds.source ?? []).map((handle) => handle.id ?? 'out');
+      const order =
+        cached &&
+        ports.length === cached.ports.length &&
+        ports.every((port, i) => port === cached.ports[i])
+          ? cached.ports
+          : ports;
       const next = before && sameNode(before, value) ? before : value;
-      measured.set(node.id, { node: next, handles: handleBounds });
+      measured.set(node.id, { node: next, handles: handleBounds, ports: order });
       nodes.push(next);
+      outputOrder.set(node.id, order);
     }
     if (measured.size > nodeLookup.size)
       for (const id of measured.keys()) if (!nodeLookup.has(id)) measured.delete(id);
-    if (nodes.length === previous.nodes.length && nodes.every((n, i) => n === previous.nodes[i]))
+    if (
+      nodes.length === previous.nodes.length &&
+      nodes.every(
+        (n, i) =>
+          n === previous.nodes[i] && outputOrder.get(n.id) === previous.outputOrder.get(n.id),
+      )
+    )
       return previous;
-    previous = { nodes, preparationMs: performance.now() - start };
+    previous = { nodes, preparationMs: performance.now() - start, outputOrder };
     return previous;
   };
 }
@@ -95,8 +116,8 @@ export function createRoutingCache() {
       geometry.nodes.some((node) => {
         const card = expected.get(node.id);
         if (!card) return false;
-        const ports = [...new Set(card.ports)];
-        const measured = Object.keys(node.outputs);
+        const ports = card.ports;
+        const measured = geometry.outputOrder.get(node.id)!;
         return ports.length !== measured.length || ports.some((port, i) => port !== measured[i]);
       })
     )

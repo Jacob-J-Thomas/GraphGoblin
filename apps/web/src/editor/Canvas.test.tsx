@@ -13,10 +13,16 @@ import { useEditorStore } from './store.js';
 import { decisionBackRoute, routingInput, simpleLoop } from '../__fixtures__/routing.js';
 import { OrthogonalEdge, type OrthogonalEdgeData } from './OrthogonalEdge.js';
 import type { RoutingGeometry } from './useRouting.js';
+import type { RoutingNode } from './routing.js';
 import { drawnPoints, crossesCards, moveSegment, normalize } from './manual-route.js';
 
 let props: ReactFlowProps<FlowNode> | undefined;
-let geometry: RoutingGeometry = { nodes: [], preparationMs: 0 };
+const geometryOf = (nodes: readonly RoutingNode[]): RoutingGeometry => ({
+  nodes,
+  preparationMs: 0,
+  outputOrder: new Map(nodes.map((node) => [node.id, Object.keys(node.outputs)])),
+});
+let geometry: RoutingGeometry = geometryOf([]);
 /** Render the orthogonal edges too (the real component, in a stand-in wrapper), for #44. */
 let drawEdges = false;
 
@@ -74,7 +80,7 @@ const flow = () => props as ReactFlowProps<FlowNode>;
 
 describe('Canvas handlers', () => {
   beforeEach(() => {
-    geometry = { nodes: [], preparationMs: 0 };
+    geometry = geometryOf([]);
     store().load('L1', kitchenSinkLoop());
   });
 
@@ -102,7 +108,7 @@ describe('Canvas handlers', () => {
 
   it('uses routed geometry only for backward edges and deletes loopBack with its config', () => {
     const definition = simpleLoop();
-    geometry = { nodes: routingInput(definition).nodes, preparationMs: 0 };
+    geometry = geometryOf(routingInput(definition).nodes);
     store().load('L1', definition);
     const view = renderCanvas([]);
     const back = flow().edges!.find((e) => e.id === 'return')!;
@@ -118,7 +124,7 @@ describe('Canvas handlers', () => {
     const previousPath = channel.getSnapshot();
     const measured = structuredClone(geometry.nodes);
     measured[3]!.outputs['loopBack']!.y += 10;
-    geometry = { nodes: measured, preparationMs: 0 };
+    geometry = geometryOf(measured);
     const previousEdges = flow().edges;
     view.rerender(<Canvas definition={store().definition!} issues={[]} />);
     expect(channel.getSnapshot()).not.toBe(previousPath);
@@ -149,7 +155,7 @@ describe('Canvas handlers', () => {
     const definition = simpleLoop();
     const { nodes } = routingInput(definition);
     nodes.push({ ...nodes[0]!, id: 'cover', x: 1000 });
-    geometry = { nodes, preparationMs: 0 };
+    geometry = geometryOf(nodes);
     store().load('L1', definition);
     renderCanvas([]);
     expect(flow().edges!.find((e) => e.id === 'return')!.ariaLabel).toContain(
@@ -489,7 +495,7 @@ describe('manual edge routes (#44)', () => {
     clock = 0;
     vi.spyOn(historyClock, 'now').mockImplementation(() => clock);
     const definition = simpleLoop();
-    geometry = { nodes: routingInput(definition).nodes, preparationMs: 0 };
+    geometry = geometryOf(routingInput(definition).nodes);
     store().load('L1', definition);
   });
   afterEach(() => {
@@ -523,6 +529,7 @@ describe('manual edge routes (#44)', () => {
         };
       }),
       preparationMs: 0,
+      outputOrder: geometry.outputOrder,
     };
   };
 
@@ -647,6 +654,7 @@ describe('manual edge routes (#44)', () => {
       definition.edges.find((e) => e.id === 'start-work')!.ui = { route: stored };
       geometry = {
         preparationMs: 0,
+        outputOrder: new Map(definition.nodes.map((node) => [node.id, ['out', 'loopBack']])),
         nodes: definition.nodes.map((n) => ({
           id: n.id,
           ...n.ui!,
@@ -720,6 +728,12 @@ describe('manual edge routes (#44)', () => {
         n.id === 'wall' ? { ...n, width: 20, outputs: {} } : n,
       ),
       preparationMs: 0,
+      outputOrder: new Map(
+        routingInput(definition).nodes.map((node) => [
+          node.id,
+          node.id === 'wall' ? [] : Object.keys(node.outputs),
+        ]),
+      ),
     };
     store().load('L1', definition);
     render(<Live />);

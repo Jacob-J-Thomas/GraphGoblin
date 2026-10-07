@@ -1,10 +1,11 @@
 import type { LoopDefinitionInput } from '@graphgoblin/contracts';
 import type { ParseError } from '../forms/parse-errors.js';
+import type { DecisionRoutes } from './decision-route-edges.js';
 
 /**
  * The editor's undo history (#17). Every change of the draft is a step: the store's `edit` records
  * the state before it, and undo and redo move between those states. A step covers both the
- * definition and the unparsed field text (`fieldErrors`), so text that does not parse follows undo
+ * definition, decision-row ownership, and unparsed field text (`fieldErrors`), so connections and text follow undo
  * and redo with the field it belongs to. Selection, the open dialog, and save state are not part of
  * a step. The history lives in memory only: a load, a reload of the server draft, or leaving the
  * editor starts it afresh.
@@ -30,6 +31,7 @@ export type FieldErrors = Record<string, Record<string, ParseError>>;
 export interface Snapshot {
   definition: LoopDefinitionInput;
   fieldErrors: FieldErrors;
+  decisionRoutes: DecisionRoutes;
 }
 
 /**
@@ -83,7 +85,11 @@ export function sameValue(a: unknown, b: unknown): boolean {
 }
 
 function sameSnapshot(a: Snapshot, b: Snapshot): boolean {
-  return sameValue(a.definition, b.definition) && sameValue(a.fieldErrors, b.fieldErrors);
+  return (
+    sameValue(a.definition, b.definition) &&
+    sameValue(a.fieldErrors, b.fieldErrors) &&
+    sameValue(a.decisionRoutes, b.decisionRoutes)
+  );
 }
 
 /**

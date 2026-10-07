@@ -191,3 +191,57 @@ test('removing a connected route removes its edge in the same undo step', async 
   await page.getByRole('button', { name: /^Redo / }).click();
   await expect(edge(page, 'yes-edge')).toHaveCount(0);
 });
+
+for (const first of [1, 2]) {
+  test(`incomplete route ownership survives completion starting with row ${first} and removal`, async ({
+    page,
+    request,
+  }) => {
+    const definition = decisionLoop();
+    const pick = definition.nodes.find((node) => node.kind === 'decision')!;
+    pick.config.routes.push({ label: 'third', description: 'Third' });
+    definition.edges = definition.edges.filter((connection) => connection.id !== 'no-edge');
+    definition.edges.push({
+      id: 'third-branch',
+      from: { node: 'pick', port: 'third' },
+      to: { node: 'branch' },
+    });
+    const loopId = await openLoop(page, request, definition);
+    let dialog = await openNode(page, 'pick');
+    const label = (index: number) =>
+      dialog.locator(`[data-field="routes.${index}.label"]`).getByRole('textbox');
+    await label(1).fill('');
+    await label(2).fill('');
+    await label(first).fill(first === 1 ? 'free' : 'other');
+    if (first === 2)
+      await expect(edge(page, 'third-branch')).toHaveAttribute(
+        'aria-label',
+        'pick other to branch',
+      );
+    await label(3 - first).fill(first === 1 ? 'other' : 'free');
+    await closeNode(page);
+    const completed = await savedDraft(page, request, loopId);
+    expect(completed.edges.find((connection) => connection.id === 'third-branch')?.from.port).toBe(
+      'other',
+    );
+    expect(completed.edges.some((connection) => connection.from.port === 'free')).toBe(false);
+    dialog = await openNode(page, 'pick');
+    await label(2).fill('');
+    await dialog.getByRole('button', { name: 'Remove routes 3', exact: true }).click();
+    await closeNode(page);
+    expect(
+      (await savedDraft(page, request, loopId)).edges.some(
+        (connection) => connection.id === 'third-branch',
+      ),
+    ).toBe(false);
+    await page.getByRole('button', { name: /^Undo / }).click();
+    dialog = await openNode(page, 'pick');
+    await label(2).fill('final');
+    await closeNode(page);
+    expect(
+      (await savedDraft(page, request, loopId)).edges.find(
+        (connection) => connection.id === 'third-branch',
+      )?.from.port,
+    ).toBe('final');
+  });
+}
