@@ -65,6 +65,7 @@ import {
   useProblemCount,
   type FieldControl,
   type FieldControls,
+  type FieldOverrides,
   type FieldProps,
 } from './shared.js';
 import { NumberField, StringControl, StringField } from './text.js';
@@ -88,7 +89,7 @@ export function Field(props: FieldProps) {
   return createElement(Control ?? DefaultField, displayed);
 }
 
-function fieldOverrideFor(name: string, overrides: FieldControls): FieldControl | undefined {
+function fieldOverrideFor(name: string, overrides: FieldOverrides): FieldControl | undefined {
   if (Object.hasOwn(overrides, name)) return overrides[name];
   const path = name.split('.');
   return Object.entries(overrides)

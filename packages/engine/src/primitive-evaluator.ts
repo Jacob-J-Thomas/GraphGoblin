@@ -124,7 +124,11 @@ export async function evaluatePrimitive(
     evaluation.truthThreshold !== undefined &&
     answer.type !== 'noul'
   )
-    fail(request, 'EVALUATION_INVALID_CONFIGURATION', 'truthThreshold applies only to Noul');
+    fail(
+      request,
+      'EVALUATION_INVALID_CONFIGURATION',
+      'truthThreshold applies only to classifier Noul',
+    );
   const noul =
     answer.type === 'noul' && evaluation.kind !== 'expression'
       ? NoulSpecSchema.safeParse(

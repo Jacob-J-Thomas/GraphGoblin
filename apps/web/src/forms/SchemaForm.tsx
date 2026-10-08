@@ -72,7 +72,7 @@ export interface SchemaFormProps {
    * gives in `control` (`FieldControl`); a field naming no registered control is drawn as usual.
    */
   controls?: FieldControls | undefined;
-  /** Exact or wildcard dotted paths whose complete field rendering is specialized by the caller. */
+  /** Whole-field renderers selected by exact or wildcard dotted paths relative to this form. */
   fieldOverrides?: FieldOverrides | undefined;
   /** Custom discriminated-union pickers by relative dotted field path. */
   unionPickers?: UnionPickers | undefined;

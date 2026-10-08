@@ -29,6 +29,36 @@ function request(): PrimitiveEvaluationRequest {
   };
 }
 describe('context-independent primitive evaluator boundary', () => {
+  it.each(['choice', 'score'] as const)(
+    'rejects a Noul threshold on %s before resolving a provider',
+    async (primitive) => {
+      const input = request();
+      input.answer =
+        primitive === 'score'
+          ? score
+          : {
+              type: 'choice',
+              options: [
+                { id: 'ready', label: 'Ready', criteria: 'Ready' },
+                { id: 'fix', label: 'Fix', criteria: 'Fix' },
+              ],
+            };
+      input.evaluation = EvaluationSchema.parse({
+        kind: 'classifier',
+        model: 'jev',
+        question: 'Unused',
+        truthThreshold: 0.8,
+      });
+      const resolve = vi.spyOn(input.ports.classifiers, 'resolve');
+      await expect(evaluatePrimitive(input)).rejects.toMatchObject({
+        code: 'EVALUATION_INVALID_CONFIGURATION',
+        options: { resumable: false },
+      });
+      expect(resolve).not.toHaveBeenCalled();
+      expect(input.resolveModel).not.toHaveBeenCalled();
+    },
+  );
+
   it.each([null, undefined, {}, [], { type: 'noul', trueProbability: '0.5' }])(
     'rejects malformed Noul response %s without a provider failure',
     async (raw) => {

@@ -1,7 +1,11 @@
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { ExitConfigSchema, type LoopDefinitionInput } from '@graphgoblin/contracts';
+import {
+  ExitConfigSchema,
+  LoopDefinitionSchema,
+  type LoopDefinitionInput,
+} from '@graphgoblin/contracts';
 import { event, FakeApi } from '../__fixtures__/fake-api.js';
 import { renderApp } from '../__fixtures__/render.js';
 import { newLoopDefinition } from '../editor/model.js';
@@ -83,6 +87,72 @@ function seedRun(api: FakeApi, overrides: Parameters<FakeApi['addRun']>[0] = {})
 }
 
 describe('RunInspectorPage', () => {
+  it('loads the run’s pinned version to show its authored Noul threshold', async () => {
+    const api = new FakeApi();
+    const definition = (truthThreshold: number) =>
+      LoopDefinitionSchema.parse({
+        schemaVersion: 3,
+        name: 'Pinned threshold',
+        nodes: [
+          {
+            id: 'check',
+            kind: 'decision',
+            label: 'Check',
+            config: {
+              answer: {
+                type: 'noul',
+                true: { id: 'true', label: 'True', criteria: 'The check passes' },
+                false: { id: 'false', label: 'False', criteria: 'The check fails' },
+              },
+              evaluation: {
+                kind: 'classifier',
+                model: 'jev',
+                question: 'Check the evidence.',
+                truthThreshold,
+              },
+            },
+          },
+        ],
+        edges: [],
+      });
+    const loop = api.addLoop(definition(0.2), { published: true });
+    const pinned = api.loops.get(loop.id)?.current;
+    if (!pinned) throw new Error('Expected the initial published version.');
+    api.publishVersion(loop.id, definition(0.9));
+    const run = api.addRun({ loopId: loop.id, versionId: pinned.id, status: 'succeeded' });
+    api.pushEvent(
+      run.id,
+      event(run.id, 1, 'decision.made', {
+        nodeId: 'check',
+        answer: {
+          type: 'noul',
+          kind: 'classifier',
+          holds: true,
+          trueProbability: 0.6,
+          confidence: 0.91,
+        },
+        portId: 'true',
+        provenance: {
+          kind: 'classifier',
+          provider: 'typesafe',
+          classifierId: 'jev',
+          model: 'jev-latest',
+          effort: null,
+        },
+        diagnostics: [],
+      }),
+    );
+    renderApp(`/runs/${run.id}`, api);
+
+    expect(await screen.findByText('True-probability threshold')).toBeInTheDocument();
+    expect(screen.getByText('True-probability threshold').parentElement).toHaveTextContent('0.2');
+    expect(
+      api.calls.some(
+        (call) => call.method === 'GET' && call.path === `/loops/${loop.id}/versions/${pinned.id}`,
+      ),
+    ).toBe(true);
+  });
+
   it('shows Claude requested effort and states that effective effort is not reported', async () => {
     const user = userEvent.setup();
     const api = new FakeApi();
