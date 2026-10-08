@@ -6,6 +6,7 @@
  */
 import {
   ExpressionSchema,
+  fieldMeta,
   JsonSchemaSchema,
   sameSchema,
   TemplateSchema,
@@ -116,6 +117,25 @@ export type FieldShape =
   | { kind: 'union'; options: Schema[]; discriminator?: string }
   | { kind: 'json' };
 
+/** A plain union of objects still has a useful tag when each option shares one literal field. */
+function sharedLiteralDiscriminator(options: Schema[]): string | undefined {
+  const first = options[0] ? shapeOf(options[0]) : undefined;
+  if (!first || first.kind !== 'object') return undefined;
+  for (const [key, candidate] of Object.entries(first.shape)) {
+    if (shapeOf(candidate).kind !== 'literal') continue;
+    if (
+      options.every((option) => {
+        const shape = shapeOf(option);
+        if (shape.kind !== 'object') return false;
+        const field = shape.shape[key];
+        return field !== undefined && shapeOf(field).kind === 'literal';
+      })
+    )
+      return key;
+  }
+  return undefined;
+}
+
 function checks(def: Def): CheckDef[] {
   return (def.checks ?? []).map((c) => c._zod.def);
 }
@@ -183,12 +203,14 @@ export function shapeOf(schema: Schema): FieldShape {
     }
     case 'record':
       return { kind: 'record', key: def.keyType as Schema, value: def.valueType as Schema };
-    case 'union':
+    case 'union': {
+      const discriminator = def.discriminator ?? sharedLiteralDiscriminator(def.options ?? []);
       return {
         kind: 'union',
         options: def.options ?? [],
-        ...(def.discriminator ? { discriminator: def.discriminator } : {}),
+        ...(discriminator ? { discriminator } : {}),
       };
+    }
     default:
       return { kind: 'json' };
   }
@@ -246,6 +268,8 @@ export function discriminatorValue(option: Schema, discriminator: string): strin
 
 /** A short label for a union option, used in the variant picker. */
 export function optionLabel(option: Schema, discriminator?: string): string {
+  const title = fieldMeta(option).title;
+  if (title) return title;
   if (discriminator) return discriminatorValue(option, discriminator);
   const shape = shapeOf(option);
   switch (shape.kind) {
@@ -260,6 +284,45 @@ export function optionLabel(option: Schema, discriminator?: string): string {
   }
 }
 
+/**
+ * Literal fields are the useful discriminator for a partially authored object union. Compare only
+ * values that are present, so an incomplete branch stays selected while required text is edited.
+ * `undefined` means a present literal contradicts this option.
+ */
+function partialLiteralScore(schema: Schema, value: unknown): number | undefined {
+  const shape = shapeOf(schema);
+  if (shape.kind === 'literal') return Object.is(shape.value, value) ? 1 : undefined;
+  if (shape.kind === 'union') {
+    const scores = shape.options
+      .map((option) => partialLiteralScore(option, value))
+      .filter((score): score is number => score !== undefined);
+    return scores.length > 0 ? Math.max(...scores) : undefined;
+  }
+  if (
+    shape.kind !== 'object' ||
+    typeof value !== 'object' ||
+    value === null ||
+    Array.isArray(value)
+  )
+    return 0;
+
+  let score = 0;
+  for (const [key, child] of Object.entries(shape.shape)) {
+    if (!Object.hasOwn(value, key)) continue;
+    const childShape = shapeOf(child);
+    if (
+      childShape.kind !== 'literal' &&
+      childShape.kind !== 'object' &&
+      childShape.kind !== 'union'
+    )
+      continue;
+    const childScore = partialLiteralScore(child, (value as Record<string, unknown>)[key]);
+    if (childScore === undefined) return undefined;
+    score += childScore;
+  }
+  return score;
+}
+
 /** Which option of a union the current value belongs to. Defaults to the first. */
 export function matchOption(options: Schema[], value: unknown, discriminator?: string): number {
   if (discriminator) {
@@ -267,11 +330,29 @@ export function matchOption(options: Schema[], value: unknown, discriminator?: s
       typeof value === 'object' && value !== null
         ? (value as Record<string, unknown>)[discriminator]
         : undefined;
-    const index = options.findIndex((o) => discriminatorValue(o, discriminator) === tag);
-    return Math.max(index, 0);
+    const tagged = options
+      .map((option, index) => ({ option, index }))
+      .filter(({ option }) => discriminatorValue(option, discriminator) === tag);
+    const exact = tagged.find(({ option }) => option.safeParse(value).success);
+    if (exact) return exact.index;
+    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+      const partial = tagged
+        .map(({ option, index }) => ({ index, score: partialLiteralScore(option, value) }))
+        .filter(({ score }) => score !== undefined && score > 0)
+        .sort((a, b) => b.score! - a.score!);
+      if (partial[0]) return partial[0].index;
+    }
+    return tagged[0]?.index ?? 0;
   }
   const exact = options.findIndex((o) => o.safeParse(value).success);
   if (exact >= 0) return exact;
+  if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+    const partial = options
+      .map((option, index) => ({ index, score: partialLiteralScore(option, value) }))
+      .filter(({ score }) => score !== undefined && score > 0)
+      .sort((a, b) => b.score! - a.score!);
+    if (partial[0]) return partial[0].index;
+  }
   // Loose match by JavaScript type, so a half-typed value keeps its variant.
   const loose = options.findIndex((o) => {
     const shape = shapeOf(o);

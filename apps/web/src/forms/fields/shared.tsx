@@ -64,6 +64,9 @@ export const UnionPickersContext = createContext<UnionPickers>({});
 
 export const FieldControlsContext = createContext<FieldControls>({});
 
+/** Exact field-path labels supplied by a form's presentation context; values and schema stay intact. */
+export const FieldLabelsContext = createContext<Readonly<Record<string, string>>>({});
+
 /** The active form schema and a unique scope for controls that describe sibling fields. */
 export const FormScopeContext = createContext<{ schema: Schema; id: string } | undefined>(
   undefined,

@@ -1,13 +1,13 @@
 import type { JsonValue } from '@graphgoblin/contracts';
 import type { ClockPort, IdPort } from '@graphgoblin/engine';
-import { and, asc, desc, eq, gte, lt, lte, ne, sql, type SQL } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, inArray, lt, lte, ne, sql, type SQL } from 'drizzle-orm';
 import type {
   ScheduleAdvance,
   ScheduleRecord,
   ScheduleStore,
 } from '../scheduler/schedule-store.js';
 import type { Database } from './db.js';
-import { inboundEvents, schedules, webhookEndpoints } from './schema.js';
+import { inboundEvents, schedules, webhookEndpoints, webhookReceipts } from './schema.js';
 
 // -----------------------------------------------------------------------------
 // Schedules
@@ -149,7 +149,8 @@ export interface WebhookEndpointRecord {
   token: string;
   secretRef: string;
   signatureHeader: string;
-  replayWindowSeconds: number;
+  signatureScheme: 'hmac-sha256' | 'hmac-sha256-body';
+  replayWindowSeconds: number | null;
   enabled: boolean;
   createdAt: string;
 }
@@ -159,7 +160,8 @@ export interface WebhookEndpointDraft {
   triggerNodeId: string;
   secretRef: string;
   signatureHeader: string;
-  replayWindowSeconds: number;
+  signatureScheme: 'hmac-sha256' | 'hmac-sha256-body';
+  replayWindowSeconds: number | null;
 }
 
 type EndpointRow = typeof webhookEndpoints.$inferSelect;
@@ -217,6 +219,7 @@ export class SqliteWebhookEndpoints {
           token: tokens.get(d.triggerNodeId) ?? newToken(),
           secretRef: d.secretRef,
           signatureHeader: d.signatureHeader,
+          signatureScheme: d.signatureScheme,
           replayWindowSeconds: d.replayWindowSeconds,
           enabled: true,
           createdAt: now,
@@ -273,6 +276,12 @@ export interface InboundEventRecord {
   receivedAt: string;
   /** Runs this event started; empty when it was filtered out or matched nothing. */
   runIds: string[];
+  delivery?: {
+    state: 'filtered' | 'deduplicated' | 'pending' | 'admitted' | 'failed';
+    attempts: number;
+    nextAttemptAt?: string;
+    failureCode?: string;
+  };
 }
 
 export interface InboundEventDedupeQuery {
@@ -330,7 +339,8 @@ export class SqliteInboundEvents {
 
   async get(id: string): Promise<InboundEventRecord | undefined> {
     const row = await this.db.query.inboundEvents.findFirst({ where: eq(inboundEvents.id, id) });
-    return row ? toInboundEvent(row) : undefined;
+    if (!row) return undefined;
+    return (await this.withDelivery([toInboundEvent(row)]))[0];
   }
 
   /** Newest first, owner-scoped. `before` pages by `receivedAt`. */
@@ -347,7 +357,34 @@ export class SqliteInboundEvents {
       .where(and(...filters))
       .orderBy(desc(inboundEvents.receivedAt), desc(sql`rowid`))
       .limit(options.limit ?? 100);
-    return rows.map(toInboundEvent);
+    return this.withDelivery(rows.map(toInboundEvent));
+  }
+
+  private async withDelivery(records: InboundEventRecord[]): Promise<InboundEventRecord[]> {
+    if (!records.length) return records;
+    const receipts = await this.db
+      .select()
+      .from(webhookReceipts)
+      .where(
+        inArray(
+          webhookReceipts.inboundId,
+          records.map((r) => r.id),
+        ),
+      );
+    return records.map((record) => {
+      const receipt = receipts.find((r) => r.inboundId === record.id);
+      return receipt
+        ? {
+            ...record,
+            delivery: {
+              state: receipt.status,
+              attempts: receipt.attempts,
+              ...(receipt.nextAttemptAt ? { nextAttemptAt: receipt.nextAttemptAt } : {}),
+              ...(receipt.failureCode ? { failureCode: receipt.failureCode } : {}),
+            },
+          }
+        : record;
+    });
   }
 
   /** The most recent event with the same dedupe key in the given scope. */

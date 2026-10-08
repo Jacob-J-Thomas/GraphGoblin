@@ -7,6 +7,7 @@ import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { FakeApi } from '../__fixtures__/fake-api.js';
+import { getCode, setCode } from '../__fixtures__/codemirror.js';
 import { renderApp } from '../__fixtures__/render.js';
 import { LOOP_PANEL_STORAGE_KEY } from './LoopPanel.js';
 import { newLoopDefinition } from './model.js';
@@ -101,6 +102,102 @@ describe('NodeEditorDialog decision field order', () => {
       { id: 'ready', label: 'Ready', criteria: 'Choose ready' },
       { id: 'blocked', label: 'Blocked', criteria: 'Choose blocked' },
     ]);
+  });
+});
+
+describe('NodeEditorDialog GitHub trigger presets', () => {
+  it('applies an editable body-signed preset as one undoable config change', async () => {
+    const user = userEvent.setup();
+    const dialog = await openDialog(
+      {
+        id: 'github',
+        kind: 'trigger',
+        label: 'GitHub',
+        config: { subtype: 'manual' },
+      },
+      'Edit trigger github',
+    );
+
+    await user.selectOptions(within(dialog).getByLabelText('Preset'), 'issues-labeled');
+    await user.type(within(dialog).getByLabelText('Repository owner'), 'octo-team');
+    await user.type(within(dialog).getByLabelText('Repository'), 'service');
+    await user.type(within(dialog).getByLabelText('Issue label'), 'ready');
+    await user.type(within(dialog).getByLabelText('Signing secret name'), 'issue-hook');
+    await user.click(within(dialog).getByRole('button', { name: 'Apply GitHub preset' }));
+
+    const node = () => store().definition?.nodes.find((candidate) => candidate.id === 'github');
+    expect(node()?.config).toMatchObject({
+      subtype: 'webhook',
+      signature: {
+        scheme: 'hmac-sha256-body',
+        header: 'x-hub-signature-256',
+        secretRef: 'issue-hook',
+      },
+      dedupeKey: '$headers."x-github-delivery"',
+      filter: expect.stringContaining('repository.full_name = "octo-team/service"'),
+    });
+    expect(store().past).toHaveLength(1);
+    expect(within(dialog).getByLabelText('Subtype')).toHaveDisplayValue('webhook (body)');
+    expect(within(dialog).queryByLabelText('Replay window seconds')).not.toBeInTheDocument();
+    expect(within(dialog).getByLabelText('Secret ref')).toHaveValue('issue-hook');
+    expect(getCode('Dedupe key')).toBe('$headers."x-github-delivery"');
+    expect(within(dialog).queryByLabelText('Per-item dedupe key')).not.toBeInTheDocument();
+
+    await user.clear(within(dialog).getByLabelText('Secret ref'));
+    await user.type(within(dialog).getByLabelText('Secret ref'), 'renamed-hook');
+    expect(node()?.config).toMatchObject({ signature: { secretRef: 'renamed-hook' } });
+
+    act(() => store().undo());
+    expect(node()?.config).toMatchObject({
+      subtype: 'webhook',
+      signature: { secretRef: 'issue-hook' },
+    });
+    act(() => store().undo());
+    expect(node()?.config).toEqual({ subtype: 'manual', exposeTo: ['ui', 'api', 'mcp'] });
+  });
+
+  it('shows bounded item controls for the GitHub poll preset', async () => {
+    const user = userEvent.setup();
+    const dialog = await openDialog(
+      {
+        id: 'backlog',
+        kind: 'trigger',
+        label: 'Backlog',
+        config: { subtype: 'manual' },
+      },
+      'Edit trigger backlog',
+    );
+    await user.selectOptions(within(dialog).getByLabelText('Preset'), 'issues-poll');
+    await user.type(within(dialog).getByLabelText('Repository owner'), 'octo');
+    await user.type(within(dialog).getByLabelText('Repository'), 'service');
+    await user.type(within(dialog).getByLabelText('Issue label'), 'ready');
+    await user.click(within(dialog).getByRole('button', { name: 'Apply GitHub preset' }));
+
+    expect(within(dialog).getByLabelText('Max runs per poll')).toHaveValue(5);
+    expect(within(dialog).getByLabelText('Max runs per poll')).toHaveAttribute('max', '25');
+    expect(getCode('Select')).toBe('probe.json');
+    expect(getCode('Whole-probe dedupe key (single-result only)')).toBe('');
+    expect(getCode('Per-item dedupe key')).toBe('"octo/service:issue:" & $string(item.number)');
+    setCode('Per-item dedupe key', '$string(item.number)');
+    await waitFor(() =>
+      expect(store().definition?.nodes.find((node) => node.id === 'backlog')?.config).toMatchObject(
+        {
+          items: { dedupeKey: '$string(item.number)' },
+        },
+      ),
+    );
+    expect(
+      store().definition?.nodes.find((node) => node.id === 'backlog')?.config,
+    ).not.toHaveProperty('dedupeKey');
+    await user.selectOptions(
+      within(dialog).getByLabelText('Subtype'),
+      within(dialog).getByRole('option', { name: 'webhook (body)' }),
+    );
+    await waitFor(() => expect(getCode('Dedupe key')).toBe(''));
+    expect(within(dialog).queryByLabelText('Per-item dedupe key')).not.toBeInTheDocument();
+    expect(
+      within(dialog).queryByLabelText('Whole-probe dedupe key (single-result only)'),
+    ).not.toBeInTheDocument();
   });
 });
 

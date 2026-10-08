@@ -359,7 +359,7 @@
                       "const": "trigger"
                     },
                     "config": {
-                      "oneOf": [
+                      "anyOf": [
                         {
                           "type": "object",
                           "properties": {
@@ -472,6 +472,56 @@
                               "type": "integer",
                               "exclusiveMinimum": 0,
                               "maximum": 86400
+                            },
+                            "dedupeKey": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 100000
+                            },
+                            "filter": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 100000
+                            }
+                          },
+                          "required": [
+                            "subtype",
+                            "signature"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "subtype": {
+                              "type": "string",
+                              "const": "webhook"
+                            },
+                            "signature": {
+                              "type": "object",
+                              "properties": {
+                                "scheme": {
+                                  "type": "string",
+                                  "const": "hmac-sha256-body"
+                                },
+                                "header": {
+                                  "default": "x-hub-signature-256",
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 128,
+                                  "pattern": "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$"
+                                },
+                                "secretRef": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 128
+                                }
+                              },
+                              "required": [
+                                "scheme",
+                                "secretRef"
+                              ],
+                              "additionalProperties": false
                             },
                             "dedupeKey": {
                               "type": "string",
@@ -653,6 +703,32 @@
                               "type": "string",
                               "minLength": 1,
                               "maxLength": 100000
+                            },
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "select": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 100000
+                                },
+                                "dedupeKey": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 100000
+                                },
+                                "maxRunsPerPoll": {
+                                  "default": 5,
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 25
+                                }
+                              },
+                              "required": [
+                                "select",
+                                "dedupeKey"
+                              ],
+                              "additionalProperties": false
                             },
                             "enabled": {
                               "default": true,
@@ -7296,7 +7372,7 @@
                       "const": "trigger"
                     },
                     "config": {
-                      "oneOf": [
+                      "anyOf": [
                         {
                           "type": "object",
                           "properties": {
@@ -7430,6 +7506,57 @@
                             "subtype",
                             "signature",
                             "replayWindowSeconds"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "subtype": {
+                              "type": "string",
+                              "const": "webhook"
+                            },
+                            "signature": {
+                              "type": "object",
+                              "properties": {
+                                "scheme": {
+                                  "type": "string",
+                                  "const": "hmac-sha256-body"
+                                },
+                                "header": {
+                                  "default": "x-hub-signature-256",
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 128,
+                                  "pattern": "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$"
+                                },
+                                "secretRef": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 128
+                                }
+                              },
+                              "required": [
+                                "scheme",
+                                "header",
+                                "secretRef"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "dedupeKey": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 100000
+                            },
+                            "filter": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 100000
+                            }
+                          },
+                          "required": [
+                            "subtype",
+                            "signature"
                           ],
                           "additionalProperties": false
                         },
@@ -7600,6 +7727,33 @@
                               "type": "string",
                               "minLength": 1,
                               "maxLength": 100000
+                            },
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "select": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 100000
+                                },
+                                "dedupeKey": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 100000
+                                },
+                                "maxRunsPerPoll": {
+                                  "default": 5,
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 25
+                                }
+                              },
+                              "required": [
+                                "select",
+                                "dedupeKey",
+                                "maxRunsPerPoll"
+                              ],
+                              "additionalProperties": false
                             },
                             "enabled": {
                               "default": true,
@@ -16817,6 +16971,37 @@
                         "type": "string"
                       }
                     },
+                    "delivery": {
+                      "type": "object",
+                      "properties": {
+                        "state": {
+                          "type": "string",
+                          "enum": [
+                            "filtered",
+                            "deduplicated",
+                            "pending",
+                            "admitted",
+                            "failed"
+                          ]
+                        },
+                        "attempts": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "nextAttemptAt": {
+                          "type": "string"
+                        },
+                        "failureCode": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "state",
+                        "attempts"
+                      ],
+                      "additionalProperties": false
+                    },
                     "duplicate": {
                       "type": "boolean"
                     }
@@ -16911,6 +17096,37 @@
                             "items": {
                               "type": "string"
                             }
+                          },
+                          "delivery": {
+                            "type": "object",
+                            "properties": {
+                              "state": {
+                                "type": "string",
+                                "enum": [
+                                  "filtered",
+                                  "deduplicated",
+                                  "pending",
+                                  "admitted",
+                                  "failed"
+                                ]
+                              },
+                              "attempts": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991
+                              },
+                              "nextAttemptAt": {
+                                "type": "string"
+                              },
+                              "failureCode": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "state",
+                              "attempts"
+                            ],
+                            "additionalProperties": false
                           }
                         },
                         "required": [
@@ -17053,10 +17269,24 @@
                           "signatureHeader": {
                             "type": "string"
                           },
+                          "signatureScheme": {
+                            "type": "string",
+                            "enum": [
+                              "hmac-sha256",
+                              "hmac-sha256-body"
+                            ]
+                          },
                           "replayWindowSeconds": {
-                            "type": "integer",
-                            "minimum": -9007199254740991,
-                            "maximum": 9007199254740991
+                            "anyOf": [
+                              {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           },
                           "enabled": {
                             "type": "boolean"
@@ -17074,6 +17304,7 @@
                           "path",
                           "secretRef",
                           "signatureHeader",
+                          "signatureScheme",
                           "replayWindowSeconds",
                           "enabled",
                           "createdAt"
@@ -17134,7 +17365,7 @@
     },
     "/hooks/{token}": {
       "post": {
-        "summary": "Signed webhook receiver (public; HMAC, timestamp window, dedupe, rate limit)",
+        "summary": "Signed webhook receiver (public; timestamp HMAC or exact body HMAC, durable body replay protection, rate limit)",
         "tags": [
           "triggers"
         ],
@@ -17188,6 +17419,37 @@
                           "items": {
                             "type": "string"
                           }
+                        },
+                        "delivery": {
+                          "type": "object",
+                          "properties": {
+                            "state": {
+                              "type": "string",
+                              "enum": [
+                                "filtered",
+                                "deduplicated",
+                                "pending",
+                                "admitted",
+                                "failed"
+                              ]
+                            },
+                            "attempts": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "nextAttemptAt": {
+                              "type": "string"
+                            },
+                            "failureCode": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "state",
+                            "attempts"
+                          ],
+                          "additionalProperties": false
                         }
                       },
                       "required": [

@@ -7,6 +7,7 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 ### Added
 
 - Claude Code inference harness for the owner's native Windows CLI, pinned to 2.1.285. It uses only Claude.ai account authentication, adds no Anthropic SDK dependency, admits exact model `claude-opus-5-5`, and reports account-dependent billing without promising subscription inclusion. Only explicit `read-only`/`never` and `danger-full-access`/`never` policies are supported; Fable remains blocked while billing is unverified. Requested effort is recorded; effective effort is not reported. (#26)
+- Generic body-signed webhooks accept GitHub payloads with durable content replay protection and recoverable atomic run admission. Optional poll items mode drains a bounded queue with per-item dedupe. GitHub presets remain editable generic trigger configurations. (#29)
 
 - Decision nodes choose one explicit Expression, Classifier or LLM evaluator, with Choice options whose stable IDs keep connections attached when display labels change. Inspectors record the selected kind, answer and resolved provider/model. There is no implicit fallback to another evaluator. (#98)
 
@@ -36,6 +37,10 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 - Settings' Model catalog uses Enabled switches to turn entries on or off. If a refresh removes a row while its switch is saving, focus returns to the section heading, and the notice that the model is no longer available clears on the next toggle. (#24)
 
 ### Upgrade notes
+
+- The trigger cutover extends the same stopped-instance format-2 converter. An earlier format-2 development database may still need endpoint/receipt structures; startup refuses it until inventory, resolution and verified-backup apply complete. Pending admissions and nonterminal runs must be resolved first. Proven default timestamp-signature keys become hashes; authored keys remain unchanged, and ambiguous provenance blocks the conversion. (#29)
+
+The current format-2 workflow supersedes the older pre-release upgrade notes below. Follow [Offline upgrade](docs/guide/08-offline-upgrade.md); do not apply an old field-deletion or draft-discard instruction instead of that workflow.
 
 - **#98 is an offline format cutover.** Loop definitions and exports use version 2. Stop the old service, back up the complete data directory, inventory it with the offline upgrade tool, review its resolution manifest, and convert before starting this build. Existing unconverted stores are refused before migrations, recovery or triggers. All nonterminal runs must be drained or explicitly cancelled with the old build. Mixed strategy chains, uncertain expression coercion, changed output references and affected failed-run resumability require explicit manifest decisions. Never upgrade the live instance merely by starting this build.
 - Inference nodes may now select Claude Code on supported native Windows hosts. Install and authenticate the exact owner-managed CLI separately; existing Codex nodes and defaults are unchanged. Claude API-provider support is not included and remains tracked by #100.

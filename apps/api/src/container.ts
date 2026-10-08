@@ -18,6 +18,7 @@ import {
   databaseView,
   SqliteApiKeys,
   SqliteEventStore,
+  SqliteTriggerAdmission,
   SqliteLoopRepository,
   SqliteModelCatalog,
   SqliteClassifierModels,
@@ -279,6 +280,7 @@ export async function createContainer(
       logger,
       events,
       runs,
+      admission: new SqliteTriggerAdmission(handle.db, events),
       loops,
       sessions,
       harnesses: overrides.harnesses ?? {
@@ -324,6 +326,7 @@ export async function createContainer(
       scripts: ports.scripts,
       manager,
       hasDedupe: (loopId, nodeId, key) => runs.hasTriggerDedupe(loopId, nodeId, key),
+      findSeen: (loopId, nodeId, keys) => runs.findTriggerDedupeKeys(loopId, nodeId, keys),
       clock,
       logger,
       scriptCwd: config.dataDir,
@@ -356,6 +359,7 @@ export async function createContainer(
         triggers.stop();
         timers.stop();
         manager.stop();
+        await manager.waitForWebhookRecovery();
         await manager.waitForIdle();
         try {
           handle.close();

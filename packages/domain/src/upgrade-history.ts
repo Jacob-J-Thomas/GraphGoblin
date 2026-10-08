@@ -146,12 +146,13 @@ export function upgradeRunHistoryV1(
     let lastSeq = 0;
     for (const raw of input.events) {
       const valid = validateJson(LEGACY_V1_SCHEMA.event, raw);
-      if (!valid.ok || !object(raw)) throw new Error('invalid v1 event');
+      const current = RunEventSchema.safeParse(raw);
+      if ((!valid.ok && !current.success) || !object(raw)) throw new Error('invalid stored event');
       if (typeof raw.seq !== 'number' || raw.seq <= lastSeq)
         throw new Error('event order is not strictly increasing');
       lastSeq = raw.seq;
       const next: Obj = clone(raw);
-      if (raw.type === 'decision.made') {
+      if (raw.type === 'decision.made' && !current.success) {
         if (typeof raw.nodeId !== 'string' || !decisions.has(raw.nodeId))
           throw new Error('unresolved recorded decision origin');
         const skipped = Array.isArray(raw.skipped) ? raw.skipped : [];

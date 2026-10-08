@@ -1,3 +1,4 @@
+import { SqliteTriggerAdmission } from './sqlite/admission.js';
 import { spawn, type ChildProcess, type SpawnOptions } from 'node:child_process';
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -399,7 +400,12 @@ describe('finalization on SQLite (review of WP-G, fourth round)', () => {
     e.manager.stop();
     const runs = new SqliteRunRepository(db.db);
     const events = new SqliteEventStore(db.db, e.ports.clock);
-    const ports = { ...e.ports, runs, events };
+    const ports = {
+      ...e.ports,
+      runs,
+      events,
+      admission: new SqliteTriggerAdmission(db.db, events),
+    };
     const manager = new RunManager(ports, e.settings);
     await manager.start();
     e.ports.harness.script([{ error: { code: 'transient', message: 'retry me' } }]);
@@ -446,7 +452,12 @@ describe('finalization on SQLite (review of WP-G, fourth round)', () => {
       e.manager.stop();
       const runs = new SqliteRunRepository(db.db);
       const events = new SqliteEventStore(db.db, e.ports.clock);
-      const ports = { ...e.ports, runs, events };
+      const ports = {
+        ...e.ports,
+        runs,
+        events,
+        admission: new SqliteTriggerAdmission(db.db, events),
+      };
       const manager = new RunManager(ports, e.settings);
       await manager.start();
       e.ports.harness.script([{ error: { code: 'transient', message: 'retry me' } }]);
@@ -523,7 +534,10 @@ describe('finalization on SQLite (review of WP-G, fourth round)', () => {
       e.manager.stop();
       const runs = new SqliteRunRepository(db.db);
       const events = new SqliteEventStore(db.db, e.ports.clock);
-      const manager = new RunManager({ ...e.ports, runs, events }, e.settings);
+      const manager = new RunManager(
+        { ...e.ports, runs, events, admission: new SqliteTriggerAdmission(db.db, events) },
+        e.settings,
+      );
       await manager.start();
       e.ports.harness.script([{ error: { code: 'transient', message: 'retry me' } }]);
       const exitFailure = scenario === 'newer non-resumable failure';

@@ -196,6 +196,34 @@ export function everyFieldLoop(): LoopDefinitionInput {
         },
       },
       {
+        id: 'github-hook',
+        kind: 'trigger',
+        label: 'GitHub hook',
+        config: {
+          subtype: 'webhook',
+          signature: {
+            scheme: 'hmac-sha256-body',
+            header: 'x-hub-signature-256',
+            secretRef: 'github-secret',
+          },
+          dedupeKey: 'issue.number',
+          filter: 'action = "opened"',
+        },
+      },
+      {
+        id: 'items-poller',
+        kind: 'trigger',
+        label: 'Items poller',
+        config: {
+          subtype: 'poll',
+          intervalSeconds: 30,
+          probe: { kind: 'script', command: 'gh', args: ['api'], timeoutSeconds: 10 },
+          fireWhen: 'true',
+          items: { select: 'probe.json', dedupeKey: '$string(item.number)', maxRunsPerPoll: 5 },
+          enabled: false,
+        },
+      },
+      {
         id: 'decide',
         kind: 'decision',
         label: 'Decide',

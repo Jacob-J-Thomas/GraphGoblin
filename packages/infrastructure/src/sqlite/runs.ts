@@ -7,7 +7,7 @@ import { runs } from './schema.js';
 
 type Row = typeof runs.$inferSelect;
 
-function toRecord(row: Row): RunRecord {
+export function runRecordFromRow(row: Row): RunRecord {
   return {
     id: row.id,
     ownerId: row.ownerId,
@@ -61,6 +61,32 @@ function toColumns(changes: RunRecordChanges): Partial<typeof runs.$inferInsert>
   return out;
 }
 
+export function runInsert(run: RunRecord, initialThread: ContextThread): typeof runs.$inferInsert {
+  return {
+    id: run.id,
+    ownerId: run.ownerId,
+    loopId: run.loopId,
+    versionId: run.versionId,
+    parentRunId: run.parentRunId ?? null,
+    invocationId: run.invocationId,
+    status: run.status,
+    currentNodeId: run.currentNodeId ?? null,
+    iteration: run.iteration,
+    waiting: run.waiting ?? null,
+    cancelRequestedAt: run.cancelRequestedAt ?? null,
+    pausedAt: run.pausedAt ?? null,
+    failure: run.failure ?? null,
+    outcome: run.outcome ?? null,
+    result: run.result ?? null,
+    createdAt: run.createdAt,
+    startedAt: run.startedAt ?? null,
+    finishedAt: run.finishedAt ?? null,
+    lastEventSeq: run.lastEventSeq,
+    initialThread,
+    threadSnapshot: initialThread,
+  };
+}
+
 export interface RunListFilter {
   ownerId?: string;
   loopId?: string;
@@ -75,34 +101,12 @@ export class SqliteRunRepository implements RunRepository {
   constructor(private readonly db: Database) {}
 
   async create(run: RunRecord, initialThread: ContextThread): Promise<void> {
-    await this.db.insert(runs).values({
-      id: run.id,
-      ownerId: run.ownerId,
-      loopId: run.loopId,
-      versionId: run.versionId,
-      parentRunId: run.parentRunId ?? null,
-      invocationId: run.invocationId,
-      status: run.status,
-      currentNodeId: run.currentNodeId ?? null,
-      iteration: run.iteration,
-      waiting: run.waiting ?? null,
-      cancelRequestedAt: run.cancelRequestedAt ?? null,
-      pausedAt: run.pausedAt ?? null,
-      failure: run.failure ?? null,
-      outcome: run.outcome ?? null,
-      result: run.result ?? null,
-      createdAt: run.createdAt,
-      startedAt: run.startedAt ?? null,
-      finishedAt: run.finishedAt ?? null,
-      lastEventSeq: run.lastEventSeq,
-      initialThread,
-      threadSnapshot: initialThread,
-    });
+    await this.db.insert(runs).values(runInsert(run, initialThread));
   }
 
   async get(runId: string): Promise<RunRecord | undefined> {
     const row = await this.db.query.runs.findFirst({ where: eq(runs.id, runId) });
-    return row ? toRecord(row) : undefined;
+    return row ? runRecordFromRow(row) : undefined;
   }
 
   async update(runId: string, changes: RunRecordChanges): Promise<RunRecord> {
@@ -115,7 +119,7 @@ export class SqliteRunRepository implements RunRepository {
     const updated = await this.db.update(runs).set(columns).where(eq(runs.id, runId)).returning();
     const row = updated[0];
     if (!row) throw new Error(`run ${runId} not found`);
-    return toRecord(row);
+    return runRecordFromRow(row);
   }
 
   async transition(
@@ -135,7 +139,7 @@ export class SqliteRunRepository implements RunRepository {
       .where(and(eq(runs.id, runId), inArray(runs.status, [...from])))
       .returning();
     const row = updated[0];
-    if (row) return toRecord(row);
+    if (row) return runRecordFromRow(row);
     const exists = await this.db.query.runs.findFirst({
       where: eq(runs.id, runId),
       columns: { id: true },
@@ -157,7 +161,7 @@ export class SqliteRunRepository implements RunRepository {
       )
       .returning();
     const row = updated[0];
-    return row ? toRecord(row) : undefined;
+    return row ? runRecordFromRow(row) : undefined;
   }
 
   async markFinalized(runId: string): Promise<void> {
@@ -177,7 +181,7 @@ export class SqliteRunRepository implements RunRepository {
       .from(runs)
       .where(and(isNull(runs.finalizedAt), inArray(runs.status, [...TERMINAL_RUN_STATUSES])))
       .orderBy(runs.createdAt);
-    return rows.map(toRecord);
+    return rows.map(runRecordFromRow);
   }
 
   async listByStatus(statuses: readonly RunStatus[]): Promise<RunRecord[]> {
@@ -187,7 +191,7 @@ export class SqliteRunRepository implements RunRepository {
       .from(runs)
       .where(inArray(runs.status, [...statuses]))
       .orderBy(runs.createdAt);
-    return rows.map(toRecord);
+    return rows.map(runRecordFromRow);
   }
 
   async listChildren(parentRunId: string): Promise<RunRecord[]> {
@@ -196,7 +200,7 @@ export class SqliteRunRepository implements RunRepository {
       .from(runs)
       .where(eq(runs.parentRunId, parentRunId))
       .orderBy(runs.createdAt);
-    return rows.map(toRecord);
+    return rows.map(runRecordFromRow);
   }
 
   async list(filter: RunListFilter = {}): Promise<RunRecord[]> {
@@ -213,7 +217,7 @@ export class SqliteRunRepository implements RunRepository {
       .where(conditions.length ? and(...conditions) : undefined)
       .orderBy(desc(runs.createdAt), desc(runs.id))
       .limit(Math.min(filter.limit ?? 50, 500));
-    return (await query).map(toRecord);
+    return (await query).map(runRecordFromRow);
   }
 
   async getInitialThread(runId: string): Promise<ContextThread | undefined> {
@@ -274,6 +278,26 @@ export class SqliteRunRepository implements RunRepository {
     return row !== undefined;
   }
 
+  /** Batched owner-loop/trigger dedupe for the complete validated poll candidate set. */
+  async findTriggerDedupeKeys(
+    loopId: string,
+    triggerNodeId: string,
+    keys: readonly string[],
+  ): Promise<Set<string>> {
+    if (keys.length === 0) return new Set();
+    const key = sql<string>`json_extract(${runs.initialThread}, '$.invocation.trigger.dedupeKey')`;
+    const found = await this.db
+      .select({ key })
+      .from(runs)
+      .where(
+        and(
+          eq(runs.loopId, loopId),
+          sql`json_extract(${runs.initialThread}, '$.invocation.trigger.nodeId') = ${triggerNodeId}`,
+          inArray(key, [...keys]),
+        ),
+      );
+    return new Set(found.map((row) => row.key));
+  }
   /** Test and maintenance helper: drop the snapshot so the thread is rebuilt from the log. */
   async clearThreadSnapshot(runId: string): Promise<void> {
     await this.db

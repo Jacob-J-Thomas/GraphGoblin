@@ -14,7 +14,7 @@ type TriggerEnvelope = {
 };
 ```
 
-Nothing in the core knows about GitHub, CI systems, or error trackers. Provider-specific behaviour, when it arrives post-1.0, is a preset that fills in signature settings, filters, and dedupe keys for a generic webhook.
+Nothing in the core knows about GitHub, CI systems, or error trackers. Provider-specific behavior is expressed through presets that fill in signature settings, filters, and dedupe keys for a generic webhook.
 
 ## Manual (Decided)
 
@@ -43,7 +43,7 @@ The `run-each` catch-up cap does not change `run-once` semantics. Even after an
 outage longer than 100 slots, `run-once` uses the latest missed slot at or before
 the recovery clock.
 
-## Webhook (Decided, shipped in M6)
+## Timestamp-signed webhook
 
 - Each webhook trigger node gets an endpoint token: 32 random bytes, base64url, in the path `/hooks/<token>`. The token stays the same across published versions for the same trigger node id, so publishing does not break a sender's configuration; to rotate it, rename or replace the node. The signing secret is the owner's secret named by the node's `signature.secretRef`, resolved from the secret store on every delivery.
 - `/hooks/` needs no API key because the HMAC signature is the credential. See [Public routes](07-api-and-streaming.md#public-routes-decided-by-implementation-2026-10-03) for the full list.
@@ -61,7 +61,7 @@ the recovery clock.
   | `dedupeKey` and `filter` expressions evaluate                                                                                                           | 422 `EXPRESSION_FAILED`                              |
   | `(endpoint, dedupeKey)` not seen within the replay window                                                                                               | 409 `REPLAYED`                                       |
 
-- Expressions are JSONata over the parsed body, with request headers bound as `$headers` (lower-case names). Without a `dedupeKey` expression the dedupe key is the signature, which rejects a byte-for-byte replay inside the window.
+- Expressions are JSONata over the parsed body, with request headers bound as `$headers` (lower-case names), excluding the configured signing header case-insensitively for both `dedupeKey` and `filter`. Without a `dedupeKey` expression the dedupe key is a SHA-256 hash of the signature digest (`sig-hash:`), which rejects a byte-for-byte replay inside the window without persisting the signature.
 - Every accepted delivery is recorded in `inbound_events` (`type: 'webhook'`, `source: 'webhook:<endpointId>'`). When the `filter` rejects it the response is 202 with `filtered: true` and no run; otherwise the run starts with `source: 'webhook'`, `triggerKind: 'webhook'`, the parsed body as payload, and the dedupe key, and the response is 202 with the event and `runId`. The run is queued, not finished, when the response is sent.
 - Rate limit: 60 deliveries per endpoint per minute by default (`GG_HOOK_RATE_LIMIT`), a fixed one-minute window counted in memory. It is a guard against a misbehaving sender, not a security boundary: counts reset on restart, a burst at a window edge can reach twice the limit, and the check runs before the signature so an attacker with the token can exhaust it.
 
@@ -82,6 +82,18 @@ curl -sS -X POST "http://127.0.0.1:4747/hooks/$TOKEN" \
 
 Sign exactly the bytes you send (`--data-binary`, not `-d`, which strips newlines). GraphGoblin's own outbound webhook return channel signs the same way, so one GraphGoblin can trigger another.
 
+## Body-signed webhook and durable admission (#29)
+
+Select `signature.scheme: hmac-sha256-body` for GitHub-compatible signing. The default header is `x-hub-signature-256`. The digest is `sha256=<hex HMAC-SHA256(secret, exact raw body)>`; no timestamp header is required, and `replayWindowSeconds` is rejected for this branch. Signature validation precedes strict UTF-8 decoding and JSON parsing. The same 1 MiB body limit, enabled-endpoint check and rate limit apply.
+
+A durable receipt consumes `(ownerId, loopId, triggerNodeId, SHA256(raw body))` across published versions, without expiry. The GitHub delivery header is only a business dedupe hint; changing it, the signature's hex case, the signing secret or a filter cannot bypass raw-content replay suppression. Filtered deliveries return 202 and permanently consume their content. A completed repeat returns 409 `REPLAYED`. Correct a filter for future deliveries; resending identical captured bytes will not re-evaluate it.
+
+An authored nonempty `dedupeKey` also suppresses distinct bodies with the same business identity. In body mode, a key longer than 512 characters returns 422 `EXPRESSION_FAILED` before consuming a receipt; it is never truncated into a permanent collision. The claim transaction checks previous body receipts in every state and admitted runs, scoped to the same owner/loop/trigger across versions, without expiry. This includes an older timestamp-signed run with the same authored key. The new body is consumed as `deduplicated`, starts no run, and returns 409 `DUPLICATE_KEY`; repeating its exact bytes returns `REPLAYED`. The timestamp receiver still uses its existing replay window.
+
+A matching delivery freezes a run ID, invocation, initial thread and subloop pins. Receipt claim and pending pins share the engine's deletion lock. Run admission commits that state together with the sequence-1 queued event and receipt link, and publishes notifications only after commit. A transient dispatch failure returns 503 while retaining the pending intent. Permanent identity or target failures are saved as failed with a safe code. Startup recovery and a non-overlapping 15-second sweep retry at most five due intents, with persisted backoff capped at five minutes. Recovery reuses only the allocated run ID after immutable identity checks. Pending pins prevent deletion; permanent failures remain visible rather than silently allocating another run.
+
+`GET /events` can include `delivery: {state, attempts, nextAttemptAt?, failureCode?}`. This exposes disposition without raw signatures, secret headers or the internal frozen intent. Schemes are listed on armed endpoints, with a null replay window for body signing. See [ADR-0024](decisions/ADR-0024-github-trigger-admission.md) and the [GitHub setup guide](guide/04-triggers.md#github-body-signatures).
+
 ## Inbound event bus (Decided, shipped in M6)
 
 - `POST /events` accepts `{ type, payload, dedupeKey? }` from any client with the `events:write` scope. The event is stored in `inbound_events` (`source: 'api'`) and fires every `event` trigger node of the owner's published loops whose `eventType` matches and whose `filter` passes. The response is the stored event with `runIds` and `duplicate`.
@@ -101,6 +113,16 @@ Skipped triggers are logged as warnings; the event itself is still recorded. Eve
 ## Polling trigger (Shipped in M6 as the stretch)
 
 A `poll` trigger runs a probe every `intervalSeconds` and starts a run when `fireWhen` holds and, if the node has a `dedupeKey`, the key is new for that trigger node. It shares the `Probe` model with the heartbeat node: an HTTP request with templated URL, headers, and body, or a script run in the data directory. Expressions and templates see `{ now, probe }`, where `probe` is `{ status, headers, body, json }` or `{ exitCode, stdout, stderr, json, timedOut }`; the run's payload is the probe result. `signal-count` and `none` probes produce `null`. Poll targets are armed in memory with the version (the first probe is one interval after arming or boot); seen dedupe keys live in the runs they started. Runs carry `triggerKind: 'poll'` and `source: 'poll'`. This is the trigger to recommend when a laptop should not accept inbound connections at all.
+
+### Bounded items mode
+
+A poll may add `items: {select, dedupeKey, maxRunsPerPoll}`. `select` evaluates over `{now,probe}` and returns at most 200 curated items. The per-item key evaluates over `{now,probe,item,index}` and must be a unique nonblank string of at most 512 characters. Every candidate and key is validated before one indexed dedupe lookup or any admission. Single-result `dedupeKey` and items mode cannot be combined.
+
+`maxRunsPerPoll` is an integer from 1 to 25, default 5. Each run receives the selected item itself as its trigger payload, not the whole probe envelope. Seen keys do not consume that cap. Unseen items are admitted sequentially; after an admission failure, the failed item and later items remain for a future poll. Runs retain their dedupe keys, so restart does not forget successfully admitted items. A single serialized sweep prevents overlapping probes from consuming the cap twice. Each items-mode admission also checks run keys and pending allocated webhook intents atomically for the same owner/loop/trigger node. This closes the race when a node is republished from webhook to poll while an old delivery awaits recovery. A skipped key does not consume the cap or reuse the earlier run. A pending reservation ends only after admission or permanent failure; an admitted run key remains durable.
+
+Items mode alone rejects non-successful, timed-out or malformed-JSON probes. Script stdout is captured at a strict 65,536-byte bound, and overflow refuses the whole candidate batch before dispatch. Legacy single-result scripts retain their existing truncation and text/exit-code behavior. Partition larger queries by repository, label or time range. Polling observes current state and cannot reconstruct every transition between polls.
+
+HTTP probe results omit authorization, cookie, set-cookie and API-key response headers. Safe error codes replace raw transport/process diagnostics; application payload fields are not blanket-redacted.
 
 ## Exposing a laptop to webhooks (Decided posture)
 

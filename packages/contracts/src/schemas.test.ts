@@ -273,7 +273,9 @@ describe('node config schemas', () => {
       subtype: 'webhook',
       signature: { scheme: 'hmac-sha256', secretRef: 'hook-secret' },
     });
-    expect(hook.subtype === 'webhook' && hook.replayWindowSeconds).toBe(300);
+    expect(
+      hook.subtype === 'webhook' && 'replayWindowSeconds' in hook && hook.replayWindowSeconds,
+    ).toBe(300);
     expect(TriggerConfigSchema.parse({ subtype: 'event', eventType: 'issue-ready' }).subtype).toBe(
       'event',
     );

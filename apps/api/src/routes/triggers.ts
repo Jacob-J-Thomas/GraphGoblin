@@ -22,6 +22,14 @@ export const InboundEventSchema = z.object({
   source: z.string(),
   receivedAt: z.string(),
   runIds: z.array(z.string()),
+  delivery: z
+    .object({
+      state: z.enum(['filtered', 'deduplicated', 'pending', 'admitted', 'failed']),
+      attempts: z.number().int(),
+      nextAttemptAt: z.string().optional(),
+      failureCode: z.string().optional(),
+    })
+    .optional(),
 });
 
 const ScheduleSchema = z.object({
@@ -49,7 +57,8 @@ const WebhookEndpointSchema = z.object({
   path: z.string(),
   secretRef: z.string(),
   signatureHeader: z.string(),
-  replayWindowSeconds: z.number().int(),
+  signatureScheme: z.enum(['hmac-sha256', 'hmac-sha256-body']),
+  replayWindowSeconds: z.number().int().nullable(),
   enabled: z.boolean(),
   createdAt: z.string(),
 });
@@ -99,7 +108,7 @@ export function registerTriggerRoutes(app: ApiInstance, container: Container): v
   // The body is read raw, because the signature covers the exact bytes the sender produced.
   void app.register((scope, _options, done) => {
     scope.removeAllContentTypeParsers();
-    scope.addContentTypeParser('*', { parseAs: 'string' }, (_request, body, next) => {
+    scope.addContentTypeParser('*', { parseAs: 'buffer' }, (_request, body, next) => {
       next(null, body);
     });
     scope.withTypeProvider<ZodTypeProvider>().post(
@@ -108,7 +117,8 @@ export function registerTriggerRoutes(app: ApiInstance, container: Container): v
         bodyLimit: WEBHOOK_BODY_LIMIT,
         schema: {
           tags: ['triggers'],
-          summary: 'Signed webhook receiver (public; HMAC, timestamp window, dedupe, rate limit)',
+          summary:
+            'Signed webhook receiver (public; timestamp HMAC or exact body HMAC, durable body replay protection, rate limit)',
           security: [],
           params: z.object({ token: z.string().min(1).max(256) }),
           response: {
@@ -121,7 +131,7 @@ export function registerTriggerRoutes(app: ApiInstance, container: Container): v
         },
       },
       async (request, reply) => {
-        const raw = typeof request.body === 'string' ? request.body : '';
+        const raw = request.body instanceof Uint8Array ? request.body : Buffer.alloc(0);
         const outcome = await triggers.handleWebhook(request.params.token, raw, request.headers);
         if (outcome.kind === 'error') {
           if (outcome.retryAfterSeconds !== undefined) {

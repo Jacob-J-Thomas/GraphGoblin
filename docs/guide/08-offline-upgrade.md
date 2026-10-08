@@ -64,3 +64,9 @@ This converter remains available through the cutover release. It can be retired 
 ## Verify the converter
 
 After `pnpm build`, run `pnpm test:upgrade` for the offline command acceptance checks. CI runs these checks after the build. They use disposable stores to verify refusal, original-file preservation, stopped-instance locking, complete backups, rollback, restoration, and re-upgrade. They do not read or convert your installed instance.
+
+## Structural readiness of format-2 development stores
+
+The GitHub-trigger cutover extends this same converter with endpoint signing schemes, durable webhook receipts and an indexed trigger dedupe lookup. A store already converted to definition format 2 by an earlier feature-branch build may still lack those structures. Stop that instance and run the inventory, resolution, verified-backup and apply workflow above; changing the version marker or allowing ordinary startup migrations is not a substitute. Normal startup checks structure before migrations, recovery or arming triggers.
+
+The inventory refuses every nonterminal run and pending webhook admission. Existing canonical decision history is preserved. Old default timestamp-signature dedupe keys are converted only when endpoint, version, node and signing configuration prove their origin and no authored dedupe expression overrides the default. Custom keys remain unchanged; missing or ambiguous provenance stops conversion. Disabled endpoints left by ordinary loop deletion may remain unchanged only when the loop, its versions and runs are absent and every retained delivery has an empty, well-formed run-link list. Their keys are not inferred or rewritten. Enabled endpoints, surviving execution references and inconsistent live-loop provenance still refuse conversion. The manifest transaction applies structural and fact changes together, retaining its source audit.

@@ -1,3 +1,5 @@
+import { sql } from 'drizzle-orm';
+import type { RunAdmission, WebhookFailureCode } from '@graphgoblin/engine';
 import type {
   ClassifierModelEntry,
   ContextThread,
@@ -7,7 +9,15 @@ import type {
   RunFailure,
   WaitSpec,
 } from '@graphgoblin/contracts';
-import { index, integer, primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import {
+  check,
+  index,
+  integer,
+  primaryKey,
+  sqliteTable,
+  text,
+  uniqueIndex,
+} from 'drizzle-orm/sqlite-core';
 
 /**
  * Drizzle schema. Every owner-scoped table carries owner_id (docs/03). JSON columns are stored as
@@ -76,6 +86,12 @@ export const runs = sqliteTable(
   (t) => [
     index('runs_owner_status_idx').on(t.ownerId, t.status),
     index('runs_loop_idx').on(t.loopId, t.createdAt),
+    // Drizzle Kit 0.31 renders SQLite expression indexes incorrectly; 0008 supplies exact SQL.
+    index('runs_trigger_dedupe_idx').on(
+      t.loopId,
+      sql`json_extract(${t.initialThread}, '$.invocation.trigger.nodeId')`,
+      sql`json_extract(${t.initialThread}, '$.invocation.trigger.dedupeKey')`,
+    ),
     index('runs_parent_idx').on(t.parentRunId),
   ],
 );
@@ -234,13 +250,20 @@ export const webhookEndpoints = sqliteTable(
     /** Secret name in the owner's secret store; the value is resolved at verification time. */
     secretRef: text('secret_ref').notNull(),
     signatureHeader: text('signature_header').notNull(),
-    replayWindowSeconds: integer('replay_window_seconds').notNull(),
+    signatureScheme: text('signature_scheme', {
+      enum: ['hmac-sha256', 'hmac-sha256-body'],
+    }).notNull(),
+    replayWindowSeconds: integer('replay_window_seconds'),
     enabled: integer('enabled', { mode: 'boolean' }).notNull(),
     createdAt: text('created_at').notNull(),
   },
   (t) => [
     index('webhook_endpoints_token_idx').on(t.token),
     index('webhook_endpoints_loop_idx').on(t.loopId, t.versionId),
+    check(
+      'webhook_endpoint_signing_check',
+      sql`(${t.signatureScheme} = 'hmac-sha256' AND ${t.replayWindowSeconds} > 0 AND ${t.replayWindowSeconds} IS NOT NULL) OR (${t.signatureScheme} = 'hmac-sha256-body' AND ${t.replayWindowSeconds} IS NULL)`,
+    ),
   ],
 );
 
@@ -265,7 +288,45 @@ export const inboundEvents = sqliteTable(
   ],
 );
 
+export const webhookReceipts = sqliteTable(
+  'webhook_receipts',
+  {
+    id: text('id').primaryKey(),
+    ownerId: text('owner_id').notNull(),
+    loopId: text('loop_id').notNull(),
+    triggerNodeId: text('trigger_node_id').notNull(),
+    contentHash: text('content_hash').notNull(),
+    inboundId: text('inbound_id').notNull(),
+    status: text('status', {
+      enum: ['filtered', 'deduplicated', 'pending', 'admitted', 'failed'],
+    }).notNull(),
+    intent: text('intent', { mode: 'json' }).$type<RunAdmission>(),
+    attempts: integer('attempts').notNull().default(0),
+    nextAttemptAt: text('next_attempt_at'),
+    failureCode: text('failure_code').$type<WebhookFailureCode>(),
+  },
+  (t) => [
+    uniqueIndex('webhook_receipts_content_idx').on(
+      t.ownerId,
+      t.loopId,
+      t.triggerNodeId,
+      t.contentHash,
+    ),
+    uniqueIndex('webhook_receipts_inbound_idx').on(t.inboundId),
+    index('webhook_receipts_due_idx').on(t.status, t.nextAttemptAt),
+    check(
+      'webhook_receipt_status_check',
+      sql`${t.status} IN ('filtered','deduplicated','pending','admitted','failed')`,
+    ),
+    check(
+      'webhook_receipt_intent_check',
+      sql`(${t.status} IN ('filtered','deduplicated') AND ${t.intent} IS NULL) OR (${t.status} NOT IN ('filtered','deduplicated') AND ${t.intent} IS NOT NULL)`,
+    ),
+  ],
+);
+
 export const schema = {
+  webhookReceipts,
   classifierModels,
   loops,
   loopVersions,

@@ -68,6 +68,46 @@
     ]
   },
   {
+    "node": "github-hook",
+    "sources": [
+      {
+        "kind": "expression",
+        "source": "issue.number",
+        "path": "dedupeKey"
+      },
+      {
+        "kind": "expression",
+        "source": "action = \"opened\"",
+        "path": "filter"
+      }
+    ]
+  },
+  {
+    "node": "items-poller",
+    "sources": [
+      {
+        "kind": "template",
+        "source": "api",
+        "path": "probe.args.0"
+      },
+      {
+        "kind": "expression",
+        "source": "true",
+        "path": "fireWhen"
+      },
+      {
+        "kind": "expression",
+        "source": "probe.json",
+        "path": "items.select"
+      },
+      {
+        "kind": "expression",
+        "source": "$string(item.number)",
+        "path": "items.dedupeKey"
+      }
+    ]
+  },
+  {
     "node": "decide",
     "sources": [
       {

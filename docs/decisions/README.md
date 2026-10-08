@@ -27,3 +27,4 @@ One file per decision. Status is Accepted unless stated. Supersede by adding a n
 | [0021](ADR-0021-classifier-model-catalog.md)             | Separate owner classifier catalog, HTTP Choice protocol, and runtime registry                  |
 | [0022](ADR-0022-explicit-decision-evaluation.md)         | Explicit decision kinds, harness-scoped defaults and offline format conversion                 |
 | [0023](ADR-0023-installed-claude-code.md)                | Owner-installed Claude Code CLI as a native-Windows inference harness                          |
+| [0024](ADR-0024-github-trigger-admission.md)             | Body-signed webhooks, durable admission and bounded poll items                                 |

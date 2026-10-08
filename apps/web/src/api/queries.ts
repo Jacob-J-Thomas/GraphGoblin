@@ -221,9 +221,18 @@ export function usePreflight() {
   });
 }
 
+const PENDING_EVENT_REFRESH_MS = 2_000;
+
 export function useInboundEvents() {
   const client = useApi();
-  return useQuery({ queryKey: keys.events, queryFn: () => events.list(client) });
+  return useQuery({
+    queryKey: keys.events,
+    queryFn: () => events.list(client),
+    refetchInterval: (query) =>
+      query.state.data?.some((event) => event.delivery?.state === 'pending')
+        ? PENDING_EVENT_REFRESH_MS
+        : false,
+  });
 }
 
 /** The control enables this only once its expression and zone have stopped changing. */

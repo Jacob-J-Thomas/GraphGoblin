@@ -18,7 +18,10 @@ import {
 } from '../components/ui/index.js';
 import { createDisclosureIdentities, type DisclosureStates } from '../forms/disclosures.js';
 import { SchemaForm } from '../forms/SchemaForm.js';
+import { FieldLabelsContext } from '../forms/fields/shared.js';
+import { nextChangeId } from '../forms/changes.js';
 import { DecisionKindPicker } from './DecisionKindPicker.js';
+import { TriggerPresets } from './TriggerPresets.js';
 import { CatalogWarningsContext } from '../forms/fields/model.js';
 import { canvasFocusTarget } from './canvas-focus.js';
 import { NODE_FIELD_CONTROLS } from './field-controls.js';
@@ -33,6 +36,11 @@ import { useEditorStore } from './store.js';
 /** Why `draft` cannot become the id of node `nodeId`, or undefined when it can (or is unchanged). */
 const DECISION_UNION_PICKERS = { evaluation: DecisionKindPicker };
 const DECISION_FIELD_ORDER = ['evaluation', 'answer'] as const;
+const POLL_FIELD_LABELS = {
+  dedupeKey: 'Whole-probe dedupe key (single-result only)',
+  'items.dedupeKey': 'Per-item dedupe key',
+};
+const DEFAULT_FIELD_LABELS = {};
 
 export function idProblem(
   draft: string,
@@ -270,6 +278,20 @@ export function NodeEditorDialog({
         {/* Not keyed by the node id: a rename keeps the form (and focus) where it is. Issue paths
             `config.<path>` name its fields (focus-field.ts). */}
         <div data-field-scope="config" className="grid min-w-0">
+          {node.kind === 'trigger' ? (
+            <TriggerPresets
+              config={node.config}
+              onApply={(config) => {
+                updateNode(node.id, { config }, { path: '', kind: 'commit', id: nextChangeId() });
+                setEpoch((current) => current + 1);
+              }}
+            />
+          ) : null}
+          {node.kind === 'trigger' && node.config?.subtype === 'poll' ? (
+            <HelpText>
+              With Items configured, leave Whole-probe dedupe key empty and use Per-item dedupe key.
+            </HelpText>
+          ) : null}
           <CatalogWarningsContext
             value={nodeIssues.map((issue) => ({
               ...issue,
@@ -278,22 +300,30 @@ export function NodeEditorDialog({
                 : issue.path,
             }))}
           >
-            <SchemaForm
-              key={`${node.kind}:${epoch}:${historyEpoch}`}
-              schema={NodeConfigSchemas[node.kind]}
-              fieldOrder={node.kind === 'decision' ? DECISION_FIELD_ORDER : undefined}
-              value={node.config}
-              label={`${node.id} config`}
-              controls={NODE_FIELD_CONTROLS}
-              unionPickers={node.kind === 'decision' ? DECISION_UNION_PICKERS : undefined}
-              problems={configProblems}
-              disclosures={disclosures}
-              onChange={(config, change) => updateNode(node.id, { config }, change)}
-              parseErrors={fieldErrors[`node:${node.id}`]}
-              onParseError={(path, error, reason, change) =>
-                setFieldError(`node:${node.id}`, path, error, reason, change)
+            <FieldLabelsContext
+              value={
+                node.kind === 'trigger' && node.config?.subtype === 'poll'
+                  ? POLL_FIELD_LABELS
+                  : DEFAULT_FIELD_LABELS
               }
-            />
+            >
+              <SchemaForm
+                key={`${node.kind}:${epoch}:${historyEpoch}`}
+                schema={NodeConfigSchemas[node.kind]}
+                fieldOrder={node.kind === 'decision' ? DECISION_FIELD_ORDER : undefined}
+                value={node.config}
+                label={`${node.id} config`}
+                controls={NODE_FIELD_CONTROLS}
+                unionPickers={node.kind === 'decision' ? DECISION_UNION_PICKERS : undefined}
+                problems={configProblems}
+                disclosures={disclosures}
+                onChange={(config, change) => updateNode(node.id, { config }, change)}
+                parseErrors={fieldErrors[`node:${node.id}`]}
+                onParseError={(path, error, reason, change) =>
+                  setFieldError(`node:${node.id}`, path, error, reason, change)
+                }
+              />
+            </FieldLabelsContext>
           </CatalogWarningsContext>
         </div>
         <NodeConnections

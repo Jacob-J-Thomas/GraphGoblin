@@ -30,12 +30,20 @@ Ports: `out`.
 
 ### `subtype: "webhook"`
 
-| Field                 | Type                           | Required | Default | Description                                                                              |
-| --------------------- | ------------------------------ | -------- | ------- | ---------------------------------------------------------------------------------------- |
-| `signature`           | { scheme, header?, secretRef } | yes      |         | HMAC signing: scheme, the header carrying the signature, and the secret holding the key. |
-| `replayWindowSeconds` | integer                        | no       | `300`   | How far the signed timestamp may be from the server clock.                               |
-| `dedupeKey`           | string                         | no       |         | JSONata producing a key; a repeated key does not start another run.                      |
-| `filter`              | string                         | no       |         | JSONata predicate; payloads that fail it are recorded and ignored.                       |
+| Field                 | Type                           | Required | Default | Description                                                         |
+| --------------------- | ------------------------------ | -------- | ------- | ------------------------------------------------------------------- |
+| `signature`           | { scheme, header?, secretRef } | yes      |         | HMAC of the timestamp and body using the selected secret.           |
+| `replayWindowSeconds` | integer                        | no       | `300`   | How far the signed timestamp may be from the server clock.          |
+| `dedupeKey`           | string                         | no       |         | JSONata producing a key; a repeated key does not start another run. |
+| `filter`              | string                         | no       |         | JSONata predicate; payloads that fail it are recorded and ignored.  |
+
+### `subtype: "webhook"`
+
+| Field       | Type                           | Required | Default | Description                                                         |
+| ----------- | ------------------------------ | -------- | ------- | ------------------------------------------------------------------- |
+| `signature` | { scheme, header?, secretRef } | yes      |         | HMAC of the exact raw request body using the selected secret.       |
+| `dedupeKey` | string                         | no       |         | JSONata producing a key; a repeated key does not start another run. |
+| `filter`    | string                         | no       |         | JSONata predicate; payloads that fail it are recorded and ignored.  |
 
 ### `subtype: "event"`
 
@@ -47,13 +55,14 @@ Ports: `out`.
 
 ### `subtype: "poll"`
 
-| Field             | Type                                                                    | Required | Default | Description                                                            |
-| ----------------- | ----------------------------------------------------------------------- | -------- | ------- | ---------------------------------------------------------------------- |
-| `intervalSeconds` | integer                                                                 | yes      |         | Seconds between probes.                                                |
-| `probe`           | one of `"http"` \| `"script"` \| `"signal-count"` \| `"none"` by `kind` | yes      |         | What to call on each poll: HTTP, a script, a signal count, or nothing. |
-| `fireWhen`        | string                                                                  | yes      |         | JSONata over the probe result; a run starts when it is true.           |
-| `dedupeKey`       | string                                                                  | no       |         | JSONata producing a key; a repeated key does not start another run.    |
-| `enabled`         | boolean                                                                 | no       | `true`  | Whether the poller is armed.                                           |
+| Field             | Type                                                                    | Required | Default | Description                                                                                 |
+| ----------------- | ----------------------------------------------------------------------- | -------- | ------- | ------------------------------------------------------------------------------------------- |
+| `intervalSeconds` | integer                                                                 | yes      |         | Seconds between probes.                                                                     |
+| `probe`           | one of `"http"` \| `"script"` \| `"signal-count"` \| `"none"` by `kind` | yes      |         | What to call on each poll: HTTP, a script, a signal count, or nothing.                      |
+| `fireWhen`        | string                                                                  | yes      |         | JSONata over the probe result; a run starts when it is true.                                |
+| `dedupeKey`       | string                                                                  | no       |         | JSONata producing a key; a repeated key does not start another run.                         |
+| `items`           | { select, dedupeKey, maxRunsPerPoll? }                                  | no       |         | Optional bounded item fanout; validate all per-item keys before dedupe lookup or admission. |
+| `enabled`         | boolean                                                                 | no       | `true`  | Whether the poller is armed.                                                                |
 
 ## Decision (`decision`)
 

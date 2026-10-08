@@ -408,6 +408,42 @@ export function upgradeLoopV1(
 ): UpgradeResult<LoopDefinition> {
   const resolutionIssues = validateUpgradeResolutions(resolutions);
   if (resolutionIssues.length) return { ok: false, issues: resolutionIssues };
+  if (object(input) && input.schemaVersion === 2) {
+    if (
+      [resolutions.decisions, resolutions.sources, resolutions.opaqueConsumers].some(
+        (value) => value && Object.keys(value).length,
+      )
+    )
+      return {
+        ok: false,
+        issues: [
+          issue(
+            'UPGRADE_RESOLUTION_INVALID',
+            '/',
+            'current v2 definitions require no legacy resolutions',
+          ),
+        ],
+      };
+    const current = LoopDefinitionSchema.safeParse(input);
+    if (!current.success)
+      return {
+        ok: false,
+        issues: current.error.issues.map((error) =>
+          issue(
+            'UPGRADE_V2_INVALID',
+            '/' + error.path.map(String).map(escape).join('/'),
+            error.message,
+          ),
+        ),
+      };
+    const syntax = syntaxIssues(current.data);
+    if (syntax.length)
+      return {
+        ok: false,
+        issues: syntax.map((error) => issue('UPGRADE_SOURCE_INVALID', error.path, error.message)),
+      };
+    return { ok: true, value: current.data, notices: [] };
+  }
   const legacy = validateJson(LEGACY_V1_SCHEMA.definition, input);
   if (!legacy.ok || !JsonValueSchema.safeParse(input).success)
     return {

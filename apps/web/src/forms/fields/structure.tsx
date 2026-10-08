@@ -50,6 +50,7 @@ import { useCollectionFocus } from './collection.js';
 import { JsonControl, JsonField } from './json.js';
 import {
   FieldControlsContext,
+  FieldLabelsContext,
   UnionPickersContext,
   FieldError,
   FieldHelp,
@@ -73,10 +74,13 @@ import { stripUnset } from '../unset.js';
  */
 export function Field(props: FieldProps) {
   const controls = use(FieldControlsContext);
+  const labels = use(FieldLabelsContext);
+  const label = Object.hasOwn(labels, props.name) ? labels[props.name] : undefined;
+  const displayed = label === undefined ? props : { ...props, label };
   const name = fieldMeta(props.schema).control;
   // Only the registry's own entries: a name such as `toString` is not a registered control.
   const Control = name !== undefined && Object.hasOwn(controls, name) ? controls[name] : undefined;
-  return Control ? <Control {...props} /> : <DefaultField {...props} />;
+  return Control ? <Control {...displayed} /> : <DefaultField {...displayed} />;
 }
 
 /** The control registered under the field's metadata `control` name, if any (as `Field` finds it). */
