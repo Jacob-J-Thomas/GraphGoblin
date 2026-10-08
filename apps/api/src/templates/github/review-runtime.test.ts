@@ -392,6 +392,26 @@ function fixture(human = false, issue: number | null = 42) {
   };
 }
 describe('authenticated review support state machine', () => {
+  it.each(['😀'.repeat(20000), '\\n'.repeat(33000)])(
+    'bounds the exact serialized workspace output before journal or worktree effects',
+    async (body) => {
+      const f = fixture();
+      f.pr.body = body;
+      const pathsBefore = [...f.paths];
+      expect(await f.act('prepare')).toMatchObject({
+        type: 'SupportBlocked',
+        code: 'SUPPORT_OUTPUT_TOO_LARGE',
+      });
+      expect([...f.paths]).toEqual(pathsBefore);
+      expect(f.filesMap.size).toBe(0);
+      expect(
+        f.calls.some(
+          (call) => call.args.slice(7)[0] === 'worktree' || call.args.slice(7)[0] === 'fetch',
+        ),
+      ).toBe(false);
+      expect(f.effects).toEqual([]);
+    },
+  );
   it('approves and merges exact gated head, with standalone nullable issue and restart-safe merge intent', async () => {
     const f = fixture(false, null);
     await f.prepare();

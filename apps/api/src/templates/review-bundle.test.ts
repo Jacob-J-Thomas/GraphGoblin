@@ -658,7 +658,9 @@ describe('review graph execution over fake ports', () => {
     async (blockAction) => {
       const s = await scenario({ blockAction });
       expect(s.run.status).toBe('failed');
-      expect(s.actions.at(-1)).toBe('block');
+      expect(s.actions.at(-1)).toBe(
+        typeof blockAction !== 'undefined' && blockAction === 'claim' ? 'claim' : 'block',
+      );
       expect(s.effects).toEqual([]);
     },
   );
@@ -667,7 +669,7 @@ describe('review graph execution over fake ports', () => {
     async (malformedAction) => {
       const s = await scenario({ malformedAction });
       expect(s.run.status).toBe('failed');
-      expect(s.actions.at(-1)).toBe('block');
+      expect(s.actions.at(-1)).toBe(malformedAction === 'claim' ? 'claim' : 'block');
       expect(s.effects).toEqual([]);
     },
   );

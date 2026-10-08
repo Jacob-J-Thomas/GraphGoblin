@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { supportBlocked } from '../support-result.js';
 import {
   ContextThreadSchema,
   JsonValueSchema,
@@ -124,9 +125,5 @@ export const ReviewIdentitySchema = z.strictObject({
 });
 export type ReviewIdentity = z.infer<typeof ReviewIdentitySchema>;
 export function reviewBlocked(code: string) {
-  return {
-    type: 'SupportBlocked' as const,
-    code,
-    message: 'Review stopped safely; inspect the recorded support code.',
-  };
+  return supportBlocked(code);
 }

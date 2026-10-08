@@ -25,6 +25,7 @@ import {
   type ReviewJournal,
 } from './review-storage.js';
 import { SupportFailure, fail } from './protocol.js';
+import { boundedSupportOutput } from './support-output.js';
 
 export interface ReviewDependencies {
   github: ReviewGithubPort;
@@ -48,7 +49,7 @@ export async function nativeReviewDependencies(
     files,
     git: await nativeExecutable('git'),
     github: new CliReviewGithub(commands, await nativeExecutable('gh'), settings.repository.path),
-    gate: gateCommand,
+    gate: (program, args) => gateCommand(program, args, process.env, settings.repository.path),
     now: Date.now,
     sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
   };
@@ -57,9 +58,11 @@ export class ReviewSupport {
   constructor(readonly deps: ReviewDependencies) {}
   async execute(actionInput: string, envelopeInput: unknown): Promise<unknown> {
     try {
-      return await this.act(
-        ReviewActionSchema.parse(actionInput),
-        ReviewEnvelopeSchema.parse(envelopeInput),
+      return boundedSupportOutput(
+        await this.act(
+          ReviewActionSchema.parse(actionInput),
+          ReviewEnvelopeSchema.parse(envelopeInput),
+        ),
       );
     } catch (error) {
       return reviewBlocked(error instanceof SupportFailure ? error.code : 'REVIEW_INVALID_INPUT');
@@ -155,6 +158,18 @@ export class ReviewSupport {
         ref: current.pr.head.ref,
         humanRequired: current.humanRequired,
       });
+      boundedSupportOutput({
+        type: 'ReviewWorkspace',
+        repository,
+        pullRequest,
+        issue: subject.issue,
+        attempt: subject.attempt,
+        head: state.head,
+        cwd: state.cwd,
+        title: current.pr.title,
+        body: current.pr.body ?? '',
+        humanRequired: state.humanRequired,
+      });
       await repo.initialize();
       await journal.save(path, state);
     }
@@ -192,7 +207,7 @@ export class ReviewSupport {
       value: unknown,
       notice?: { body: string; issue: boolean },
     ): Promise<JsonValue> => {
-      const parsed = JsonValueSchema.parse(value);
+      const parsed = boundedSupportOutput(JsonValueSchema.parse(value));
       state.results[key] = parsed;
       if (notice) state.notices[key] = { ...notice, prDone: false, issueDone: false };
       await save();
@@ -200,6 +215,18 @@ export class ReviewSupport {
       return parsed;
     };
     if (action === 'prepare') {
+      boundedSupportOutput({
+        type: 'ReviewWorkspace',
+        repository,
+        pullRequest,
+        issue: subject.issue,
+        attempt: subject.attempt,
+        head: state.head,
+        cwd: state.cwd,
+        title: current.pr.title,
+        body: current.pr.body ?? '',
+        humanRequired: state.humanRequired,
+      });
       await repo.git(['fetch', '--no-tags', 'origin', state.ref]);
       if ((await repo.git(['rev-parse', 'FETCH_HEAD'])) !== state.head) fail('PR_HEAD_CHANGED');
       await repo.ensureWorkspace(state.branch, state.cwd, state.head);
@@ -326,10 +353,11 @@ export class ReviewSupport {
           save,
         );
         if (head === state.head) fail('FIX_NO_CHANGE');
-        state.push = { parent: state.head, head, ref: state.ref };
+        state.push = { parent: state.head, head, ref: state.ref, visit: envelope.visit };
         await save();
       }
       const intent = state.push;
+      if (intent.visit !== envelope.visit) fail('PUSH_VISIT_CHANGED');
       if (
         (await repo.head(state.cwd)) !== intent.head ||
         (await repo.git(['status', '--porcelain', '--untracked-files=all'], state.cwd))

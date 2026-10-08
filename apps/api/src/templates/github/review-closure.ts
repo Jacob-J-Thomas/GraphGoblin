@@ -9,6 +9,8 @@ export const REVIEW_SUPPORT_MODULES = [
   'binding',
   'errors',
   'subjects',
+  'support-result',
+  'github/support-output',
   'github/client',
   'github/process',
   'github/protocol',

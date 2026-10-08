@@ -241,6 +241,7 @@ describe('review GitHub command boundary', () => {
     expect(runner.calls).toEqual([
       {
         program: 'fixture-gh.exe',
+        credentialContext: true,
         args: [
           'api',
           '--method',
@@ -418,7 +419,17 @@ describe('review GitHub command boundary', () => {
     const pnpm = join(root, 'node_modules', 'pnpm', 'bin', 'pnpm.cjs');
     await mkdir(dirname(pnpm), { recursive: true });
     await writeFile(pnpm, 'fixture only');
-    const launched = await gateCommand('pnpm', ['check', 'test:coverage'], { PATH: root });
+    await writeFile(join(root, 'package.json'), JSON.stringify({ packageManager: 'pnpm@12.8.1' }));
+    await writeFile(
+      join(dirname(dirname(pnpm)), 'package.json'),
+      JSON.stringify({ name: 'pnpm', version: '12.8.1', bin: { pnpm: 'bin/pnpm.cjs' } }),
+    );
+    const launched = await gateCommand(
+      'pnpm',
+      ['check', 'test:coverage'],
+      { PATH: root, COREPACK_HOME: join(root, 'absent-cache') },
+      root,
+    );
     expect(launched).toEqual({
       program: await realpath(process.execPath),
       args: [await realpath(pnpm), 'check', 'test:coverage'],
@@ -481,6 +492,31 @@ describe('review GitHub command boundary', () => {
 });
 
 describe('trusted pull-request identity boundary', () => {
+  it('accepts an explicitly allowlisted GitHub App bot without treating its suffix as permission', async () => {
+    const bot = new ReviewPortStub();
+    bot.current.user.login = 'dependabot[bot]';
+    bot.permissionValue = 'read';
+    const configured = ReviewTemplateSettingsSchema.parse({
+      ...settings,
+      trustedAuthors: ['DEPENDABOT[bot]'],
+    });
+    expect((await trustedReviewPr(bot, configured, 42)).issue).toBeNull();
+    expect(bot.calls.some((call) => call.startsWith('permission:'))).toBe(false);
+    await expect(trustedReviewPr(bot, settings, 42)).rejects.toMatchObject({
+      code: 'PR_AUTHOR_UNTRUSTED',
+    });
+  });
+  it('encodes a bounded bot login in one literal permission endpoint argument', async () => {
+    const runner = new InertRunner([jsonResult({ permission: 'write' })]);
+    const github = new CliReviewGithub(runner, 'fixture-gh.exe', settings.repository.path);
+    expect(await github.permission('example/repo', 'dependabot[bot]')).toBe('write');
+    expect(runner.calls[0]?.args).toEqual([
+      'api',
+      'repos/example/repo/collaborators/dependabot%5Bbot%5D/permission',
+    ]);
+    await expect(github.permission('example/repo', 'dependabot[bot]/../owner')).rejects.toThrow();
+    expect(runner.calls).toHaveLength(1);
+  });
   it('uses authenticated exact identity, current author permission, and issue labels', async () => {
     const github = new ReviewPortStub();
     github.links = [{ repository: 'example/repo', number: 9 }];
@@ -629,7 +665,9 @@ describe('review protocol and packaged support closure', () => {
       'github/review-storage',
       'github/storage',
       'github/support-input',
+      'github/support-output',
       'subjects',
+      'support-result',
     ];
     expect(REVIEW_SUPPORT_ENTRY).toBe('dist/templates/github/review-entry.js');
     expect([...REVIEW_SUPPORT_MODULES]).toEqual(expectedModules);

@@ -34,7 +34,7 @@ export class ReviewReporter implements TemplateFailureReporter {
     );
   }
   async terminal(run: RunRecord) {
-    if (run.status !== 'failed' && run.outcome !== 'failure') return;
+    if (run.status !== 'failed' && run.status !== 'cancelled' && run.outcome !== 'failure') return;
     const stored = await this.instances.store.bindingForLoop(run.ownerId, run.loopId);
     if (!stored) return;
     const binding = TemplateBindingSchema.parse(stored.binding);
