@@ -276,7 +276,24 @@ export class TemplateRuntime {
             'The selected poll candidate no longer matches the authenticated implementation attempt.',
           );
       }
-    } else await assertSubjectSource(store, binding, subject);
+    } else {
+      await assertSubjectSource(store, binding, subject);
+      if (pollItem && subject.kind === 'review') {
+        const payload = input.initialThread.invocation.trigger.payload;
+        const expected = String(subject.pullRequest) + ':' + subject.head;
+        if (
+          !payload ||
+          typeof payload !== 'object' ||
+          Array.isArray(payload) ||
+          payload['id'] !== subject.pullRequest ||
+          input.initialThread.invocation.trigger.dedupeKey !== expected
+        )
+          throw new TemplateError(
+            'TEMPLATE_AUTHORITY_REFUSED',
+            'The selected review poll candidate no longer matches the authenticated PR head.',
+          );
+      }
+    }
     const rows = await store.subjectRuns({
       ownerId: input.run.ownerId,
       repository: subject.repository,

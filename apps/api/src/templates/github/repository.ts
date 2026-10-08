@@ -15,13 +15,14 @@ export class ImplementationRepository {
   readonly worktrees: string;
   readonly hooks: string;
   constructor(
-    readonly settings: ImplementationTemplateSettings,
+    readonly settings: Pick<ImplementationTemplateSettings, 'repository'>,
     private readonly runner: CommandRunner,
-    private readonly storage: SupportStorage,
+    private readonly storage: Pick<SupportStorage, 'canonical' | 'directory' | 'exists'>,
     private readonly program: string,
+    private readonly purpose: 'implementation' | 'review' = 'implementation',
   ) {
     this.root = resolve(settings.repository.path);
-    this.metadata = join(this.root, '.git', 'graphgoblin', 'implementation');
+    this.metadata = join(this.root, '.git', 'graphgoblin', purpose);
     this.worktrees = join(this.root, '.graphgoblin-worktrees');
     this.hooks = join(this.metadata, 'empty-hooks');
   }
@@ -94,7 +95,11 @@ export class ImplementationRepository {
     return join(this.metadata, runId + '.json');
   }
   workspace(runId: string, task?: number): string {
-    return join(this.worktrees, runId, task === undefined ? 'issue' : 'task-' + task);
+    return join(
+      this.worktrees,
+      runId,
+      task === undefined ? (this.purpose === 'review' ? 'review' : 'issue') : 'task-' + task,
+    );
   }
   async remoteHead(branch: string): Promise<string | undefined> {
     const value = await this.git(['ls-remote', '--refs', 'origin', 'refs/heads/' + branch]);
@@ -132,7 +137,7 @@ export class ImplementationRepository {
     return ShaSchema.parse(await this.git(['rev-parse', 'HEAD'], cwd));
   }
   async commit(
-    state: Journal,
+    state: Pick<Journal, 'commit'>,
     cwd: string,
     message: string,
     save: () => Promise<void>,

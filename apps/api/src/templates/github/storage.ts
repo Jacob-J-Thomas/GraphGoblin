@@ -139,12 +139,17 @@ export class DiskSupportStorage implements SupportStorage {
       throw error;
     }
   }
-  async load(path: string): Promise<Journal | undefined> {
+  async read(path: string): Promise<string | undefined> {
     if (!(await this.exists(path))) return undefined;
     const stat = await lstat(path);
     if (!stat.isFile() || stat.size > 1048576) fail('JOURNAL_INVALID');
+    return readFile(path, 'utf8');
+  }
+  async load(path: string): Promise<Journal | undefined> {
+    const content = await this.read(path);
+    if (content === undefined) return undefined;
     const identity = this.journalIdentity();
-    const input: unknown = JSON.parse(await readFile(path, 'utf8'));
+    const input: unknown = JSON.parse(content);
     const signed = SignedJournalSchema.parse(input);
     if (JSON.stringify(identity) !== JSON.stringify(signed.identity))
       fail('JOURNAL_IDENTITY_CONFLICT');
