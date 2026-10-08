@@ -8,6 +8,7 @@ import type {
   ClassifierModelEntry,
   ClassifierModelSummary,
   ContextThread,
+  HarnessPreflight,
   LoopDefinition,
   LoopDefinitionInput,
   LoopIssue,
@@ -152,8 +153,8 @@ export class FakeApi {
       failureCode?: string;
     };
   }[] = [];
-  preflight = [
-    { harness: 'codex', ok: true, version: '1.0', authenticated: true, problems: [] as string[] },
+  preflight: ({ harness: string } & HarnessPreflight)[] = [
+    { harness: 'codex', ok: true, version: '1.0', authenticated: true, problems: [] },
   ];
   calls: RecordedCall[] = [];
   /** When true every request fails like a dropped network. */

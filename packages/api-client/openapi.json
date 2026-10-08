@@ -256,7 +256,8 @@
                     "propertyNames": {
                       "type": "string",
                       "enum": [
-                        "codex"
+                        "codex",
+                        "claude"
                       ]
                     },
                     "additionalProperties": {
@@ -1161,7 +1162,8 @@
                           "default": "codex",
                           "type": "string",
                           "enum": [
-                            "codex"
+                            "codex",
+                            "claude"
                           ]
                         },
                         "model": {
@@ -4098,6 +4100,7 @@
               "HARNESS_NOT_AUTHENTICATED",
               "HARNESS_QUOTA_EXHAUSTED",
               "HARNESS_TURN_FAILED",
+              "HARNESS_TERMINATION_UNCONFIRMED",
               "WORKING_DIRECTORY_MISSING",
               "SCRIPT_EXIT_CODE",
               "SCRIPT_TIMEOUT",
@@ -5432,7 +5435,8 @@
               "harness": {
                 "type": "string",
                 "enum": [
-                  "codex"
+                  "codex",
+                  "claude"
                 ]
               },
               "sessionId": {
@@ -7257,7 +7261,8 @@
                     "propertyNames": {
                       "type": "string",
                       "enum": [
-                        "codex"
+                        "codex",
+                        "claude"
                       ]
                     },
                     "additionalProperties": {
@@ -8194,7 +8199,8 @@
                           "default": "codex",
                           "type": "string",
                           "enum": [
-                            "codex"
+                            "codex",
+                            "claude"
                           ]
                         },
                         "model": {
@@ -11231,6 +11237,7 @@
               "HARNESS_NOT_AUTHENTICATED",
               "HARNESS_QUOTA_EXHAUSTED",
               "HARNESS_TURN_FAILED",
+              "HARNESS_TERMINATION_UNCONFIRMED",
               "WORKING_DIRECTORY_MISSING",
               "SCRIPT_EXIT_CODE",
               "SCRIPT_TIMEOUT",
@@ -12565,7 +12572,8 @@
               "harness": {
                 "type": "string",
                 "enum": [
-                  "codex"
+                  "codex",
+                  "claude"
                 ]
               },
               "sessionId": {
@@ -14311,9 +14319,6 @@
                       "items": {
                         "type": "object",
                         "properties": {
-                          "harness": {
-                            "type": "string"
-                          },
                           "ok": {
                             "type": "boolean"
                           },
@@ -14328,13 +14333,189 @@
                             "items": {
                               "type": "string"
                             }
+                          },
+                          "authMethod": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "claude.ai"
+                                ]
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "billingMode": {
+                            "type": "string",
+                            "enum": [
+                              "claude.ai-account"
+                            ]
+                          },
+                          "billingStatus": {
+                            "type": "string",
+                            "enum": [
+                              "account-dependent"
+                            ]
+                          },
+                          "supportedPolicies": {
+                            "maxItems": 2,
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "sandbox": {
+                                  "type": "string",
+                                  "enum": [
+                                    "read-only",
+                                    "danger-full-access"
+                                  ]
+                                },
+                                "approval": {
+                                  "type": "string",
+                                  "enum": [
+                                    "never"
+                                  ]
+                                },
+                                "permissionMode": {
+                                  "type": "string",
+                                  "enum": [
+                                    "dontAsk"
+                                  ]
+                                },
+                                "tools": {
+                                  "readOnly": true,
+                                  "maxItems": 6,
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  }
+                                },
+                                "authMethod": {
+                                  "type": "string",
+                                  "enum": [
+                                    "claude.ai"
+                                  ]
+                                },
+                                "billingMode": {
+                                  "type": "string",
+                                  "enum": [
+                                    "claude.ai-account"
+                                  ]
+                                },
+                                "billingStatus": {
+                                  "type": "string",
+                                  "enum": [
+                                    "account-dependent"
+                                  ]
+                                },
+                                "boundary": {
+                                  "type": "string",
+                                  "enum": [
+                                    "builtin-tools",
+                                    "unconfined"
+                                  ]
+                                },
+                                "network": {
+                                  "type": "string",
+                                  "enum": [
+                                    "unconfined"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "sandbox",
+                                "approval",
+                                "permissionMode",
+                                "tools",
+                                "authMethod",
+                                "billingMode",
+                                "billingStatus",
+                                "boundary",
+                                "network"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "models": {
+                            "maxItems": 16,
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "model": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 256
+                                },
+                                "efforts": {
+                                  "minItems": 1,
+                                  "maxItems": 6,
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "enum": [
+                                      "minimal",
+                                      "low",
+                                      "medium",
+                                      "high",
+                                      "xhigh",
+                                      "max"
+                                    ]
+                                  }
+                                },
+                                "admission": {
+                                  "type": "string",
+                                  "enum": [
+                                    "supported",
+                                    "blocked"
+                                  ]
+                                },
+                                "reasonCode": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string",
+                                      "enum": [
+                                        "BILLING_UNVERIFIED"
+                                      ]
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "billingStatus": {
+                                  "type": "string",
+                                  "enum": [
+                                    "account-dependent",
+                                    "unverified"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "model",
+                                "efforts",
+                                "admission",
+                                "reasonCode",
+                                "billingStatus"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "harness": {
+                            "type": "string",
+                            "enum": [
+                              "codex",
+                              "claude"
+                            ]
                           }
                         },
                         "required": [
-                          "harness",
                           "ok",
                           "authenticated",
-                          "problems"
+                          "problems",
+                          "harness"
                         ],
                         "additionalProperties": false
                       }

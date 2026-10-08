@@ -1,4 +1,5 @@
 import { createHash, randomBytes } from 'node:crypto';
+import { claudeModelCapabilities, CLAUDE_MODEL } from '../claude/models.js';
 import type { Effort, JsonValue, ModelCatalogEntry } from '@graphgoblin/contracts';
 import type { ClockPort, IdPort } from '@graphgoblin/engine';
 import { and, eq, isNull } from 'drizzle-orm';
@@ -223,6 +224,15 @@ export const DEFAULT_MODEL_CATALOG: ModelCatalogEntry[] = [
     defaultEffort: 'medium',
     enabled: true,
   },
+  ...claudeModelCapabilities().map((entry) => ({
+    harness: 'claude',
+    source: 'harness' as const,
+    model: entry.model,
+    displayName: entry.model === CLAUDE_MODEL ? 'Claude Opus 5.5' : 'Claude Fable 5.1',
+    efforts: entry.efforts,
+    defaultEffort: 'high' as const,
+    enabled: entry.admission === 'supported',
+  })),
 ];
 
 export class SqliteModelCatalog {

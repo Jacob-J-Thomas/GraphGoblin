@@ -26,6 +26,7 @@ const EnvSchema = z.object({
   GG_SWAGGER_UI: bool.default(true),
   GG_PUBLIC_URL: z.string().optional(),
   GG_CODEX_BINARY: z.string().optional(),
+  GG_CLAUDE_BINARY: z.string().min(1).optional(),
   /**
    * Directory of the built web app (apps/web/dist), served at /app/. Unset: the checkout's
    * `apps/web/dist` when it has been built (see `bundledWebDist`). Empty: no web app.
@@ -51,6 +52,8 @@ export interface ApiConfig {
   publicUrl?: string;
   /** Path to a `codex` executable. Default: the CLI bundled with `@openai/codex-sdk`. */
   codexBinary?: string;
+  /** Explicit owner-installed native Claude Code executable; never downloaded or substituted. */
+  claudeBinary?: string;
   /** Absolute path of the built web app to serve under /app/, if configured. */
   webDist?: string;
   /** Seeds the local owner's Jev secret at startup only when it is absent. */
@@ -124,6 +127,7 @@ export function loadConfig(
     swaggerUi: e.GG_SWAGGER_UI,
     ...(e.GG_PUBLIC_URL ? { publicUrl: e.GG_PUBLIC_URL } : {}),
     ...(e.GG_CODEX_BINARY ? { codexBinary: e.GG_CODEX_BINARY } : {}),
+    ...(e.GG_CLAUDE_BINARY ? { claudeBinary: e.GG_CLAUDE_BINARY } : {}),
     ...(webDist ? { webDist: resolve(webDist) } : {}),
     ...(jevApiKey ? { jevApiKey } : {}),
   };

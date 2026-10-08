@@ -10,6 +10,7 @@ export * from './common.js';
 export * from './meta.js';
 export * from './api-keys.js';
 export * from './catalog.js';
+export * from './harness.js';
 export * from './classifiers.js';
 export * from './evaluation.js';
 export * from './cron.js';

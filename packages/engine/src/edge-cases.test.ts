@@ -197,8 +197,8 @@ describe('fakes', () => {
       updatedAt: '2026-01-01T00:00:02.000Z',
       scopeKey: 'k',
     });
-    expect((await sessions.latestWithSession('r'))?.sessionId).toBe('s2');
-    expect((await sessions.byScopeKey('k'))?.sessionId).toBe('s2');
+    expect((await sessions.latestWithSession('r', 'codex'))?.sessionId).toBe('s2');
+    expect((await sessions.byScopeKey('k', 'codex'))?.sessionId).toBe('s2');
 
     const decider = new FakeDecider('jev');
     expect(

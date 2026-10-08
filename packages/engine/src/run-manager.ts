@@ -1348,7 +1348,9 @@ export class RunManager {
         };
         result = await (handler as { execute(c: NodeContext): Promise<NodeResult> }).execute(ctx);
       } catch (error) {
-        if (isAbortError(error) || controller.signal.aborted) {
+        const terminationUnconfirmed =
+          error instanceof RunFailureError && error.code === 'HARNESS_TERMINATION_UNCONFIRMED';
+        if (!terminationUnconfirmed && (isAbortError(error) || controller.signal.aborted)) {
           await this.finalizeCancel(runId);
           return;
         }

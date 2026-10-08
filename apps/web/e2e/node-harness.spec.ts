@@ -22,5 +22,7 @@ test('shows Harness on inference nodes only', async ({ page, request }) => {
   await expect(form).toBeVisible();
   await expect(form.getByLabel('Harness', { exact: true })).toHaveCount(0);
   const dialog = await openNode(page, 'infer');
-  await expect(dialog.getByLabel('Harness', { exact: true })).toHaveValue('codex');
+  await expect(
+    dialog.getByRole('radiogroup', { name: 'Harness' }).getByRole('radio', { name: 'codex' }),
+  ).toBeChecked();
 });

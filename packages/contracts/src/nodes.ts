@@ -171,11 +171,21 @@ export const HarnessOptionsSchema = z.strictObject({
   sandbox: z
     .enum(['read-only', 'workspace-write', 'danger-full-access'])
     .default('workspace-write')
-    .meta(field('What the session may change: nothing, the working directory, or anything.')),
+    .meta(
+      field(
+        'Sandbox or tool policy. Claude requires an explicit supported policy and provides no OS/read-path confinement.',
+        { control: 'claude-policy' },
+      ),
+    ),
   approval: z
     .enum(['never', 'on-request'])
     .default('never')
-    .meta(field('Whether the harness may stop to ask before acting.', { advanced: true })),
+    .meta(
+      field('Whether the harness may stop to ask before acting.', {
+        advanced: true,
+        control: 'claude-approval',
+      }),
+    ),
   networkAccess: z
     .boolean()
     .optional()
@@ -198,100 +208,135 @@ export const CapabilitiesSchema = z.strictObject({
 });
 export type Capabilities = z.infer<typeof CapabilitiesSchema>;
 
-export const InferenceConfigSchema = z.strictObject({
-  harness: HarnessIdSchema.default('codex').meta(field('Harness that runs the session.')),
-  model: ModelNameSchema.optional().meta(
-    field('Model; inherits within this harness from loop, owner, then process defaults.', {
-      control: 'model',
-    }),
-  ),
-  effort: EffortSchema.optional().meta(
-    field(
-      'Reasoning effort; inherits within this harness like the model. Catalog effort is guidance only.',
-      {
-        control: 'effort',
-      },
+/** Static native Claude policy validation, shared by authored contracts and the adapter boundary. */
+export function claudePolicyIssues(
+  options: HarnessOptions,
+  capabilities?: Capabilities,
+): { path: string[]; message: string }[] {
+  const issues: { path: string[]; message: string }[] = [];
+  const add = (name: string, message: string) =>
+    issues.push({ path: ['harnessOptions', name], message });
+  if (options.approval !== 'never') add('approval', 'Claude on-request approval is unsupported');
+  if (options.sandbox !== 'read-only' && options.sandbox !== 'danger-full-access')
+    add(
+      'sandbox',
+      'Claude workspace-write cannot enforce the requested boundary; choose an explicit supported policy',
+    );
+  if (options.networkAccess === false)
+    add('networkAccess', 'Claude command network isolation is unsupported');
+  if (options.webSearch === true) add('webSearch', 'Claude web search is unsupported');
+  if (options.configOverrides && Object.keys(options.configOverrides).length)
+    add('configOverrides', 'Claude raw configuration overrides are unsupported');
+  if (capabilities)
+    for (const [name, values] of Object.entries(capabilities))
+      if (values?.length)
+        issues.push({
+          path: ['capabilities', name],
+          message: 'Claude custom capabilities are unsupported',
+        });
+  return issues;
+}
+
+export const InferenceConfigSchema = z
+  .strictObject({
+    harness: HarnessIdSchema.default('codex').meta(field('Harness that runs the session.')),
+    model: ModelNameSchema.optional().meta(
+      field('Model; inherits within this harness from loop, owner, then process defaults.', {
+        control: 'model',
+      }),
     ),
-  ),
-  session: SessionPolicySchema.default({ policy: 'fresh' }).meta(
-    field('Start fresh, resume the previous session, or resume a named session.'),
-  ),
-  prompt: z
-    .strictObject({ template: TemplateSchema })
-    .meta(field('Liquid template rendered against the thread.')),
-  input: MutationListSchema.default([]).meta(
-    field('Mutations applied to the thread view the template sees.', {
-      advanced: true,
-      group: 'Context',
-    }),
-  ),
-  contextFiles: z
-    .array(z.strictObject({ path: z.string().min(1).max(1024), template: TemplateSchema }))
-    .max(32)
-    .optional()
-    .meta(
-      field('Files written under the working directory before the session starts.', {
+    effort: EffortSchema.optional().meta(
+      field(
+        'Reasoning effort; inherits within this harness like the model. Catalog effort is guidance only.',
+        {
+          control: 'effort',
+        },
+      ),
+    ),
+    session: SessionPolicySchema.default({ policy: 'fresh' }).meta(
+      field('Start fresh, resume the previous session, or resume a named session.'),
+    ),
+    prompt: z
+      .strictObject({ template: TemplateSchema })
+      .meta(field('Liquid template rendered against the thread.')),
+    input: MutationListSchema.default([]).meta(
+      field('Mutations applied to the thread view the template sees.', {
         advanced: true,
         group: 'Context',
       }),
     ),
-  harnessOptions: HarnessOptionsSchema.prefault({}).meta(
-    field('Sandbox, approval, network, web search, and raw config overrides.', {
-      group: 'Harness options',
-    }),
-  ),
-  capabilities: CapabilitiesSchema.optional().meta(
-    field(
-      'MCP server, plugin, and skill slugs are recorded but not yet resolved; use raw harness config overrides to configure tools.',
-      {
-        advanced: true,
+    contextFiles: z
+      .array(z.strictObject({ path: z.string().min(1).max(1024), template: TemplateSchema }))
+      .max(32)
+      .optional()
+      .meta(
+        field('Files written under the working directory before the session starts.', {
+          advanced: true,
+          group: 'Context',
+        }),
+      ),
+    harnessOptions: HarnessOptionsSchema.prefault({}).meta(
+      field('Sandbox, approval, network, web search, and raw config overrides.', {
         group: 'Harness options',
-      },
+      }),
     ),
-  ),
-  output: z
-    .strictObject({
-      captureTranscript: z
-        .enum(['artifact', 'none'])
-        .default('artifact')
-        .meta(field('Keep the session transcript as an artifact, or not.', { advanced: true })),
-      toMessages: z
-        .enum(['final', 'final-and-notes', 'none'])
-        .default('final')
-        .meta(field("What the answer adds to the thread's messages.", { advanced: true })),
-      transforms: MutationListSchema.default([]).meta(
-        field('Mutations applied to the answer before it lands.', { advanced: true }),
-      ),
-      schema: z
-        .strictObject({
-          jsonSchema: JsonSchemaSchema,
-          native: z.boolean().default(true),
-          repair: RepairPolicySchema.prefault({}),
-        })
-        .optional()
-        .meta(
-          field('JSON Schema the answer must satisfy, with repair turns when it does not.', {
-            advanced: true,
-          }),
-        ),
-    })
-    .prefault({})
-    .meta(
+    capabilities: CapabilitiesSchema.optional().meta(
       field(
-        'Transcript capture, how the answer lands in messages, transforms, and an optional output schema with repair.',
-        { advanced: true, group: 'Output' },
+        'MCP server, plugin, and skill slugs are recorded but not yet resolved; use raw harness config overrides to configure tools.',
+        {
+          advanced: true,
+          group: 'Harness options',
+        },
       ),
     ),
-  timeoutSeconds: z
-    .number()
-    .int()
-    .positive()
-    .max(86_400)
-    .optional()
-    .meta(
-      field('Optional watchdog; a timeout fails the run.', { advanced: true, group: 'Limits' }),
-    ),
-});
+    output: z
+      .strictObject({
+        captureTranscript: z
+          .enum(['artifact', 'none'])
+          .default('artifact')
+          .meta(field('Keep the session transcript as an artifact, or not.', { advanced: true })),
+        toMessages: z
+          .enum(['final', 'final-and-notes', 'none'])
+          .default('final')
+          .meta(field("What the answer adds to the thread's messages.", { advanced: true })),
+        transforms: MutationListSchema.default([]).meta(
+          field('Mutations applied to the answer before it lands.', { advanced: true }),
+        ),
+        schema: z
+          .strictObject({
+            jsonSchema: JsonSchemaSchema,
+            native: z.boolean().default(true),
+            repair: RepairPolicySchema.prefault({}),
+          })
+          .optional()
+          .meta(
+            field('JSON Schema the answer must satisfy, with repair turns when it does not.', {
+              advanced: true,
+            }),
+          ),
+      })
+      .prefault({})
+      .meta(
+        field(
+          'Transcript capture, how the answer lands in messages, transforms, and an optional output schema with repair.',
+          { advanced: true, group: 'Output' },
+        ),
+      ),
+    timeoutSeconds: z
+      .number()
+      .int()
+      .positive()
+      .max(86_400)
+      .optional()
+      .meta(
+        field('Optional watchdog; a timeout fails the run.', { advanced: true, group: 'Limits' }),
+      ),
+  })
+  .superRefine((config, ctx) => {
+    if (config.harness === 'claude')
+      for (const issue of claudePolicyIssues(config.harnessOptions, config.capabilities))
+        ctx.addIssue({ code: 'custom', ...issue });
+  });
 export type InferenceConfig = z.infer<typeof InferenceConfigSchema>;
 
 // ---------------------------------------------------------------------------

@@ -529,6 +529,356 @@ describe('SettingsPage', () => {
     await waitFor(() => expect(api.settingsValues).not.toHaveProperty('defaults'));
   });
 
+  it.each([undefined, 'minimal'])(
+    'bounds inherited Claude default efforts without materializing a model, preserving saved %s',
+    async (savedEffort) => {
+      const api = seeded();
+      api.catalog.push(
+        {
+          harness: 'claude',
+          source: 'harness',
+          model: 'opus',
+          displayName: 'Opus',
+          efforts: ['minimal', 'low', 'high', 'xhigh'],
+          defaultEffort: 'high',
+          enabled: true,
+        },
+        {
+          harness: 'claude',
+          source: 'harness',
+          model: 'sonnet',
+          displayName: 'Sonnet',
+          efforts: ['low', 'high', 'max'],
+          defaultEffort: 'high',
+          enabled: true,
+        },
+        {
+          harness: 'claude',
+          source: 'harness',
+          model: 'disabled',
+          displayName: 'Disabled',
+          efforts: ['minimal'],
+          defaultEffort: 'minimal',
+          enabled: false,
+        },
+        {
+          harness: 'claude',
+          source: 'harness',
+          model: 'blocked',
+          displayName: 'Blocked',
+          efforts: ['minimal'],
+          defaultEffort: 'minimal',
+          enabled: true,
+        },
+      );
+      api.preflight.push({
+        harness: 'claude',
+        ok: true,
+        authenticated: true,
+        problems: [],
+        models: [
+          {
+            model: 'opus',
+            efforts: ['low', 'high', 'xhigh'],
+            admission: 'supported',
+            reasonCode: null,
+            billingStatus: 'account-dependent',
+          },
+          {
+            model: 'sonnet',
+            efforts: ['low', 'high', 'max'],
+            admission: 'supported',
+            reasonCode: null,
+            billingStatus: 'account-dependent',
+          },
+          {
+            model: 'disabled',
+            efforts: ['minimal'],
+            admission: 'supported',
+            reasonCode: null,
+            billingStatus: 'account-dependent',
+          },
+          {
+            model: 'blocked',
+            efforts: ['minimal'],
+            admission: 'blocked',
+            reasonCode: 'BILLING_UNVERIFIED',
+            billingStatus: 'unverified',
+          },
+        ],
+      });
+      api.settingsValues = {
+        defaults: {
+          byHarness: {
+            codex: { model: 'gpt-6-luna', effort: 'low' },
+            ...(savedEffort === undefined ? {} : { claude: { effort: savedEffort } }),
+          },
+        },
+      };
+      renderApp('/settings', api);
+      const model = await screen.findByLabelText('Default model (claude)');
+      await waitFor(() =>
+        expect(within(model).getByRole('option', { name: 'Opus' })).toBeInTheDocument(),
+      );
+      const effort = screen.getByLabelText('Default effort (claude)');
+      expect(model).toHaveValue('');
+      expect(effort).toHaveValue(savedEffort ?? '');
+      const options = within(effort).getAllByRole<HTMLOptionElement>('option');
+      expect(options.filter((option) => !option.disabled).map((option) => option.value)).toEqual([
+        '',
+        'low',
+        'high',
+      ]);
+      if (savedEffort)
+        expect(within(effort).getByRole('option', { name: /minimal/ })).toBeDisabled();
+      else expect(within(effort).queryByRole('option', { name: /^minimal$/ })).toBeNull();
+      expect(
+        api.calls.filter((call) => call.method === 'PUT' && call.path === '/settings'),
+      ).toEqual([]);
+      await userEvent.setup().selectOptions(effort, 'high');
+      await waitFor(() =>
+        expect(api.settingsValues).toEqual({
+          defaults: {
+            byHarness: {
+              codex: { model: 'gpt-6-luna', effort: 'low' },
+              claude: { effort: 'high' },
+            },
+          },
+        }),
+      );
+      expect(model).toHaveValue('');
+    },
+  );
+
+  it('keeps Claude defaults per harness and states account-dependent model access precisely', async () => {
+    const user = userEvent.setup();
+    const api = seeded();
+    api.catalog.push(
+      {
+        harness: 'claude',
+        source: 'harness',
+        model: 'claude-opus-5-5',
+        displayName: 'Claude Opus 5.5',
+        efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+        defaultEffort: 'high',
+        enabled: true,
+      },
+      {
+        harness: 'claude',
+        source: 'harness',
+        model: 'claude-fable-5-1',
+        displayName: 'Fable 5.1',
+        efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+        defaultEffort: 'high',
+        enabled: false,
+      },
+    );
+    api.preflight = [
+      { harness: 'codex', ok: true, authenticated: true, problems: [] },
+      {
+        harness: 'claude',
+        ok: true,
+        version: '2.1.285',
+        authenticated: true,
+        authMethod: 'claude.ai',
+        billingMode: 'claude.ai-account',
+        billingStatus: 'account-dependent',
+        problems: [],
+        supportedPolicies: [],
+        models: [
+          {
+            model: 'claude-opus-5-5',
+            efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+            admission: 'supported',
+            reasonCode: null,
+            billingStatus: 'account-dependent',
+          },
+          {
+            model: 'claude-fable-5-1',
+            efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+            admission: 'blocked',
+            reasonCode: 'BILLING_UNVERIFIED',
+            billingStatus: 'unverified',
+          },
+        ],
+      },
+    ];
+    api.settingsValues = {
+      defaults: { byHarness: { codex: { model: 'gpt-6-luna', effort: 'low' } } },
+    };
+    renderApp('/settings', api);
+
+    expect(
+      await screen.findByText(
+        'Claude account billing; model availability and usage limits depend on account settings. This does not guarantee that a model is included.',
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText('Billing is unverified for this model.')).toHaveLength(2);
+    expect(screen.queryByText(/included in Max/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('switch', { name: 'Enable Fable 5.1' })).not.toBeInTheDocument();
+
+    const model = await screen.findByLabelText('Default model (claude)');
+    await user.selectOptions(model, 'claude-opus-5-5');
+    await waitFor(() =>
+      expect(api.settingsValues).toMatchObject({
+        defaults: {
+          byHarness: {
+            codex: { model: 'gpt-6-luna', effort: 'low' },
+            claude: { model: 'claude-opus-5-5' },
+          },
+        },
+      }),
+    );
+    await user.selectOptions(screen.getByLabelText('Default effort (claude)'), 'xhigh');
+    await waitFor(() =>
+      expect(api.settingsValues).toMatchObject({
+        defaults: {
+          byHarness: {
+            codex: { model: 'gpt-6-luna', effort: 'low' },
+            claude: { model: 'claude-opus-5-5', effort: 'xhigh' },
+          },
+        },
+      }),
+    );
+    expect(screen.getByLabelText('Default effort (claude)')).toHaveAccessibleDescription(
+      /requested effort.*does not report the effective effort/i,
+    );
+  });
+
+  it('keeps every harness default while a settings refresh is held between saves', async () => {
+    const user = userEvent.setup();
+    const api = seeded();
+    api.catalog.push({
+      harness: 'claude',
+      source: 'harness',
+      model: 'claude-opus-5-5',
+      displayName: 'Claude Opus 5.5',
+      efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+      defaultEffort: 'high',
+      enabled: true,
+    });
+    api.preflight.push({
+      harness: 'claude',
+      ok: true,
+      version: '2.1.285',
+      authenticated: true,
+      authMethod: 'claude.ai',
+      billingMode: 'claude.ai-account',
+      billingStatus: 'account-dependent',
+      problems: [],
+      supportedPolicies: [],
+      models: [
+        {
+          model: 'claude-opus-5-5',
+          efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+          admission: 'supported',
+          reasonCode: null,
+          billingStatus: 'account-dependent',
+        },
+      ],
+    });
+    api.settingsValues = {
+      defaults: { byHarness: { codex: { model: 'gpt-6-luna', effort: 'low' } } },
+    };
+    let reads = 0;
+    let releaseRefresh!: () => void;
+    let refreshStarted!: () => void;
+    const held = new Promise<void>((resolve) => {
+      releaseRefresh = resolve;
+    });
+    const refreshed = new Promise<void>((resolve) => {
+      refreshStarted = resolve;
+    });
+    api.override('GET /settings', async (call) => {
+      reads += 1;
+      if (reads === 2) {
+        refreshStarted();
+        await held;
+      }
+      return api.builtIn(call);
+    });
+    renderApp('/settings', api);
+
+    const claudeModel = await screen.findByLabelText('Default model (claude)');
+    const codexEffort = await screen.findByLabelText('Default effort');
+    try {
+      await user.selectOptions(claudeModel, 'claude-opus-5-5');
+      await refreshed;
+      await waitFor(() => expect(codexEffort).toBeDisabled());
+      expect(api.callsTo('PUT', '/settings')).toHaveLength(1);
+      expect(api.callsTo('PUT', '/settings')[0]!.body).toMatchObject({
+        defaults: {
+          byHarness: {
+            codex: { model: 'gpt-6-luna', effort: 'low' },
+            claude: { model: 'claude-opus-5-5' },
+          },
+        },
+      });
+    } finally {
+      releaseRefresh();
+    }
+
+    await waitFor(() => expect(codexEffort).toBeEnabled());
+    await user.selectOptions(codexEffort, 'high');
+    await waitFor(() => expect(api.callsTo('PUT', '/settings')).toHaveLength(2));
+    expect(api.callsTo('PUT', '/settings')[1]!.body).toMatchObject({
+      defaults: {
+        byHarness: {
+          codex: { model: 'gpt-6-luna', effort: 'high' },
+          claude: { model: 'claude-opus-5-5' },
+        },
+      },
+    });
+    expect(api.settingsValues['defaults']).toMatchObject({
+      byHarness: {
+        codex: { model: 'gpt-6-luna', effort: 'high' },
+        claude: { model: 'claude-opus-5-5' },
+      },
+    });
+  });
+
+  it('shows adapter support separately from a failed Claude CLI preflight', async () => {
+    const api = seeded();
+    api.catalog.push({
+      harness: 'claude',
+      source: 'harness',
+      model: 'claude-opus-5-5',
+      displayName: 'Claude Opus 5.5',
+      efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+      defaultEffort: 'high',
+      enabled: true,
+    });
+    api.preflight.push({
+      harness: 'claude',
+      ok: false,
+      version: '2.1.285',
+      authenticated: false,
+      problems: ['Claude CLI is not signed in.'],
+      models: [
+        {
+          model: 'claude-opus-5-5',
+          efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+          admission: 'supported',
+          reasonCode: null,
+          billingStatus: 'account-dependent',
+        },
+      ],
+    });
+    renderApp('/settings', api);
+
+    const preflight = await screen.findByRole('region', { name: 'Harness preflight' });
+    expect(await within(preflight).findByText('Claude CLI is not signed in.')).toBeInTheDocument();
+    const claudePreflight = within(preflight).getByText('claude').closest('li')!;
+    expect(await within(claudePreflight).findByText('not ready')).toBeInTheDocument();
+    const support = within(preflight).getByRole('list', { name: 'Claude model support' });
+    expect(within(support).getByText('supported by adapter')).toBeInTheDocument();
+    expect(within(support).queryByText('available')).toBeNull();
+
+    const model = await screen.findByLabelText('Default model (claude)');
+    expect(model).toHaveValue('');
+    expect(within(model).queryByRole('option', { name: /claude-opus-5-5/ })).toBeNull();
+  });
+
   it('sets and deletes secrets without ever showing values', async () => {
     const user = userEvent.setup();
     const api = seeded();

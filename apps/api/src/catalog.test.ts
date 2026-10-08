@@ -17,7 +17,10 @@ describe('catalog ownership and toggle routes', () => {
   it('returns source and enabled, refuses harness edit/delete/create and source spoofing', async () => {
     const before = (await t.app.inject('/model-catalog')).json<{ items: ModelCatalogEntry[] }>()
       .items;
-    expect(before.every((entry) => entry.source === 'harness' && entry.enabled)).toBe(true);
+    expect(before.every((entry) => entry.source === 'harness')).toBe(true);
+    expect(
+      before.filter((entry) => !entry.enabled).map((entry) => [entry.harness, entry.model]),
+    ).toEqual([['claude', 'claude-fable-5-1']]);
     for (const request of [
       { method: 'PUT' as const, url, payload: body },
       { method: 'PUT' as const, url, payload: { ...body, source: 'litellm' } },

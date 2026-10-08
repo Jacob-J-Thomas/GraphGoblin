@@ -1,6 +1,6 @@
 # GraphGoblin Documentation
 
-Last full revision: 2026-10-02. These are living documents. Update them as decisions change, and record each material change as an ADR under `decisions/`.
+Last full revision: 2026-10-07. These are living documents. Update them as decisions change, and record each material change as an ADR under `decisions/`.
 
 GraphGoblin is a progressive web application plus a gateway backend for designing, running, and observing agent **loops**. A loop is a graph of nodes. Triggers start it. Decision nodes route it. Inferencing nodes hand work to an agent harness. Script and context-mutation nodes shape the shared **context thread**. Wait and heartbeat nodes park it. Subloops nest it. An exit node decides when it is done, what it returns, and where the result goes.
 
@@ -16,7 +16,7 @@ GraphGoblin is built for AI engineers. AI-driven development lifecycle (AIDLC) p
 | 03  | [Domain model](03-domain-model.md)                           | Loops, versions, nodes, runs, events, invocations, the context thread                        |
 | 04  | [Node catalog](04-node-catalog.md)                           | Every node type: purpose, configuration, ports, engine behaviour                             |
 | 05  | [Execution engine](05-execution-engine.md)                   | Executor semantics, event sourcing, run lifecycle, resiliency model                          |
-| 06  | [Harness integration](06-harness-integration.md)             | The harness port, the Codex adapter for 1.0, post-1.0 adapters                               |
+| 06  | [Harness integration](06-harness-integration.md)             | The harness port, Codex and Claude Code adapters, and later integrations                     |
 | 07  | [API, streaming, and MCP](07-api-and-streaming.md)           | REST surface, SSE, OpenAPI, auth, MCP server, Codex plugin                                   |
 | 08  | [Triggers and integrations](08-triggers-and-integrations.md) | Manual, cron, webhook, inbound event, polling; security of inbound paths                     |
 | 09  | [Frontend and PWA](09-frontend-and-pwa.md)                   | Editor, run inspector, settings, service-worker update flow                                  |

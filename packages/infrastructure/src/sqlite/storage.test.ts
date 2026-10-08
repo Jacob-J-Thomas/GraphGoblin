@@ -485,9 +485,9 @@ describe('SqliteSessionRepository', () => {
     expect((await repo.forNode(runId, 'a'))?.attempt).toBe(2);
     expect((await repo.forNode(runId, 'a'))?.model).toBeUndefined();
     expect(await repo.forNode(runId, 'zzz')).toBeUndefined();
-    expect((await repo.latestWithSession(runId))?.sessionId).toBe('s2');
-    expect((await repo.byScopeKey('loop:shared'))?.sessionId).toBe('s1');
-    expect(await repo.byScopeKey('nope')).toBeUndefined();
+    expect((await repo.latestWithSession(runId, 'codex'))?.sessionId).toBe('s2');
+    expect((await repo.byScopeKey('loop:shared', 'codex'))?.sessionId).toBe('s1');
+    expect(await repo.byScopeKey('nope', 'codex')).toBeUndefined();
     expect(await repo.listForRun(runId)).toHaveLength(3);
   });
 });

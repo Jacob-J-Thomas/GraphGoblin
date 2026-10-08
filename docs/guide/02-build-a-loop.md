@@ -29,11 +29,11 @@ Every save tells the server which copy the edit started from. If another tab, de
 
 ## Choose nodes
 
-Choose **Harness** in each inference node's dialog. It defaults to **Codex** when omitted.
-Loop settings offer model and effort defaults. Remove `settings.defaults.harness` from older files before importing them.
+Choose **Harness** in each inference node's dialog. It defaults to **Codex** when omitted; the current choices are **Codex** and **Claude**.
+Loop settings offer model and effort defaults under **Defaults → By harness**. Remove `settings.defaults.harness` from older files before importing them.
 If import is refused, the alert lists each invalid field's path and reason, including this removed field.
 
-**Model** is a native dropdown of enabled catalog entries for the inference node's **Harness**, showing each display name and model id. **(loop default)** leaves the node's model unset; the loop's **Defaults → Model** uses Codex entries and **(owner default)** leaves the loop default unset. The decision node's **Codex → Model** and **Effort** use the same catalog controls with Codex entries. Use **Model catalog in Settings** below the picker to enable a model. There is no free-text option. Tab reaches the dropdown, then the Settings link; arrow keys change the selection and typing a name finds a matching entry. **Effort** offers the chosen model's efforts, or all six efforts when no catalog model is selected. The unset choice says **(inherited; the catalog suggests low)** when the catalog suggests low. This is guidance: the effective inherited effort may differ, because unset effort still inherits the loop, owner, and process defaults.
+**Model** is a native dropdown of enabled catalog entries for the inference node's **Harness**, showing each display name and model id. **(loop default)** leaves the node's model unset; loop and owner defaults are scoped to each harness. The decision node's **Codex → Model** and **Effort** remain Codex-only. Claude currently supports exact model `claude-opus-5-5`; Fable remains visible but blocked while its billing is unverified. Use **Model catalog in Settings** below the picker to enable an eligible model. There is no free-text option. Tab reaches the dropdown, then the Settings link; arrow keys change the selection and typing a name finds a matching entry. **Effort** offers the selected model's efforts: Claude supports `low`, `medium`, `high`, `xhigh`, and `max` (not `minimal`); Codex has its own catalog choices. The unset choice gives catalog guidance only; actual model and effort inherit in node, loop, owner, then process order within the selected harness.
 
 A saved model that is missing or disabled stays selected with **not in catalog** or **disabled in the catalog** and a warning. An effort the selected model does not support stays selected and flagged too. Changing the model never changes effort silently. Catalog validation warnings appear beside the model field when they add information and do not block publishing. If the catalog cannot load, the current values remain in read-only dropdowns with one message and **Retry model catalog** beside Model; the pickers recover without changing saved values or dropping keyboard focus. A failed refresh keeps cached choices editable and warns that the catalog may be out of date.
 
@@ -41,11 +41,11 @@ A saved model that is missing or disabled stays selected with **not in catalog**
 
 > After 1.0: Surface-aware start and input controls. Today `exposeTo` is recorded and described to MCP callers, but the web launcher and engine commands do not enforce it. Use API authentication for access control.
 
-**Decision (`decision`).** Choose an evaluation kind: **Expression**, **Classifier**, or **LLM**. Define at least two options with stable IDs, readable labels, and criteria explaining when to choose them. IDs name ports; changing a label or reordering options keeps its connections. Expression returns an option ID from JSONata without a provider call. Classifier selects a Choice-capable catalog entry and may set a minimum confidence. LLM selects a supported harness and inherits or explicitly selects its model and effort. Classifier/LLM questions render against the full thread; their separate context selector does not restrict template exposure. Unavailable configuration, malformed answers and rejected classifier confidence fail with typed diagnostics; no other evaluator runs. Connect every option. Results are under `lastOutput.value.answer`, with the chosen ID in `optionId` and execution details in `lastOutput.value.provenance`.
+**Decision (`decision`).** Choose an evaluation kind: **Expression**, **Classifier**, or **LLM**. Define at least two options with stable IDs, readable labels, and criteria explaining when to choose them. IDs name ports; changing a label or reordering options keeps its connections. Expression returns an option ID from JSONata without a provider call. Classifier selects a Choice-capable catalog entry and may set a minimum confidence. LLM currently selects Codex and inherits or explicitly selects its model and effort. Classifier/LLM questions render against the full thread; their separate context selector does not restrict template exposure. Unavailable configuration, malformed answers and rejected classifier confidence fail with typed diagnostics; no other evaluator runs. Connect every option. Results are under `lastOutput.value.answer`, with the chosen ID in `optionId` and execution details in `lastOutput.value.provenance`.
 
-**Inference (`inference`).** Set `prompt.template` for a Codex turn. Choose `model`, `effort`, and `session.policy`: `fresh`, `resume-previous`, or `resume-named` with a `key`. Set `harnessOptions.sandbox` to `read-only`, `workspace-write` (default), or `danger-full-access`; `approval` defaults to `never`, while network and web search are off unless enabled. Use `input` transformations, `contextFiles`, and `output.transforms` to shape context. Set `output.schema.jsonSchema` for structured output and configure its `repair` policy. `output.captureTranscript` defaults to `artifact`, `output.toMessages` to `final`; `timeoutSeconds` is optional. The output goes to `lastOutput.value` and the node follows `out`.
+**Inference (`inference`).** Set `prompt.template` for a Codex or Claude turn. Choose `model`, `effort`, and `session.policy`: `fresh`, `resume-previous`, or `resume-named` with a `key`. Codex supports `read-only`, `workspace-write` (default), and `danger-full-access`. Claude requires native Windows CLI 2.1.285 and an explicit supported `read-only`/`never` or `danger-full-access`/`never` policy. Read-only restricts built-in tools but does not confine filesystem reads or the operating system; full access leaves commands and network unconfined under the API user's account. Claude refuses unsupported pairs, `networkAccess: false`, `webSearch: true`, custom capabilities, and nonempty raw configuration overrides. Its billing is account-dependent; no subscription inclusion is promised. Use `input` transformations, `contextFiles`, and `output.transforms` to shape context. Set `output.schema.jsonSchema` for structured output and configure its `repair` policy. `output.captureTranscript` defaults to `artifact`, `output.toMessages` to `final`; `timeoutSeconds` is optional. The output goes to `lastOutput.value` and the node follows `out`.
 
-> After 1.0: Resolution of inference `capabilities.mcpServers`, `capabilities.plugins`, and `capabilities.skills` profiles. The current Codex adapter ignores these names; use explicit `harnessOptions.configOverrides` for Codex configuration today.
+> Capability profiles for `capabilities.mcpServers`, `capabilities.plugins`, and `capabilities.skills` remain unresolved for Codex; its adapter accepts `harnessOptions.configOverrides`. Claude refuses nonempty capabilities and nonempty raw overrides under its launch policy.
 
 **Script (`script`).** Set an executable `command`, templated `args`, `cwd` (default `workspace`), and optional `env` and `timeoutSeconds`. Commands execute as the API's operating-system user, without a shell wrapper; invoke a shell explicitly if your program needs one. `stdin` accepts `thread`, `last-output`, or `none`; `stdout` accepts `last-output`, `patch` (RFC 6902), or `ignore`. In `env`, use the secret-reference syntax in [Settings and secrets](06-settings-and-secrets.md#store-secrets). Map expected nonzero codes through `exitCodeRoutes`; an unmapped nonzero code fails the run. Connect `out` and every additional route. Make scripts safe to execute again after interruption.
 
@@ -79,19 +79,19 @@ Fix errors before publishing: missing trigger or exit, unconnected or doubly con
 
 ## Set workspace and limits
 
-| Setting             | Configure it                                                                                                                                                    |
-| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `maxIterations`     | Default 10, range 1 to 10,000. It limits exit loop-backs (the run ends `exhausted`) and fresh visits per node (the run fails `MAX_ITERATIONS`).                 |
-| `workingDirectory`  | `temp` (default), `fixed` with `path`, or `template` with a Liquid `template`. The filesystem adapter creates the resolved directory if needed.                 |
-| `subloopDepthLimit` | Default 8, range 1 to 64. A subloop node can replace it with `depthLimitOverride`.                                                                              |
-| `defaults`          | Set optional `model` and `effort`. Node values override loop defaults, which override owner and API-process defaults. Harness is chosen on each inference node. |
+| Setting             | Configure it                                                                                                                                                                                                   |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `maxIterations`     | Default 10, range 1 to 10,000. It limits exit loop-backs (the run ends `exhausted`) and fresh visits per node (the run fails `MAX_ITERATIONS`).                                                                |
+| `workingDirectory`  | `temp` (default), `fixed` with `path`, or `template` with a Liquid `template`. The filesystem adapter creates the resolved directory if needed.                                                                |
+| `subloopDepthLimit` | Default 8, range 1 to 64. A subloop node can replace it with `depthLimitOverride`.                                                                                                                             |
+| `defaults`          | Set optional model and effort under `byHarness.codex` or `byHarness.claude`. Node values override that harness's loop defaults, then owner and API-process defaults. Harness is chosen on each inference node. |
 
 For a repository workspace, use an absolute path. For a temporary workspace, use:
 
 ```json
 {
   "workingDirectory": { "kind": "temp" },
-  "defaults": { "model": "gpt-6-luna", "effort": "low" },
+  "defaults": { "byHarness": { "codex": { "model": "gpt-6-luna", "effort": "low" } } },
   "maxIterations": 3,
   "subloopDepthLimit": 8
 }
@@ -163,7 +163,7 @@ Save this bare definition as a JSON file and import it. It follows the contracts
   "description": "Ask Codex for a short explanation of a topic.",
   "settings": {
     "workingDirectory": { "kind": "temp" },
-    "defaults": { "model": "gpt-6-luna", "effort": "low" },
+    "defaults": { "byHarness": { "codex": { "model": "gpt-6-luna", "effort": "low" } } },
     "maxIterations": 3,
     "subloopDepthLimit": 8
   },

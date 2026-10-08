@@ -16,8 +16,13 @@ import type {
   LoopDefinitionInput,
   ModelCatalogEntry,
 } from '@graphgoblin/contracts';
+import { HarnessPreflightSchema } from '@graphgoblin/contracts';
 import { useQuery, type QueryClient } from '@tanstack/react-query';
+import { z } from 'zod';
 import { useApi } from './context.js';
+
+const HarnessPreflightItemSchema = HarnessPreflightSchema.extend({ harness: z.string() });
+export type HarnessPreflightItem = z.infer<typeof HarnessPreflightItemSchema>;
 
 /** Query keys, so mutations can invalidate exactly what they change. */
 export const keys = {
@@ -209,7 +214,11 @@ export function useApiKeys() {
 
 export function usePreflight() {
   const client = useApi();
-  return useQuery({ queryKey: keys.preflight, queryFn: () => system.preflight(client) });
+  return useQuery({
+    queryKey: keys.preflight,
+    queryFn: async () =>
+      (await system.preflight(client)).map((item) => HarnessPreflightItemSchema.parse(item)),
+  });
 }
 
 const PENDING_EVENT_REFRESH_MS = 2_000;

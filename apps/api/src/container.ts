@@ -58,6 +58,11 @@ import {
 import type { ApiConfig } from './config.js';
 import { BUILTIN_CLASSIFIER, ClassifierRegistry } from './classifier-registry.js';
 import { acquireDataDirLock } from './data-dir-lock.js';
+import {
+  ClaudeHarness,
+  claudeModelBlocked,
+  CLAUDE_BILLING_UNVERIFIED_MESSAGE,
+} from '@graphgoblin/infrastructure/claude';
 import { InboundEventBus } from './event-bus.js';
 import { UlidIds } from './ids.js';
 import { loadMasterKey } from './master-key.js';
@@ -186,6 +191,8 @@ export async function createContainer(
       processDefaults: config.defaults,
       catalog: startupCatalog,
     });
+    if (claudeModelBlocked(config.defaults.byHarness.claude?.model))
+      throw new Error('Invalid GG_DEFAULTS: ' + CLAUDE_BILLING_UNVERIFIED_MESSAGE);
     if (configurationIssues.length)
       throw new Error(
         'Invalid GG_DEFAULTS: ' +
@@ -276,7 +283,12 @@ export async function createContainer(
       admission: new SqliteTriggerAdmission(handle.db, events),
       loops,
       sessions,
-      harnesses: overrides.harnesses ?? { codex: codex.harness },
+      harnesses: overrides.harnesses ?? {
+        codex: codex.harness,
+        claude: new ClaudeHarness({
+          ...(config.claudeBinary ? { binary: config.claudeBinary } : {}),
+        }),
+      },
       modelCatalog: catalog,
       // Codex Choice and built-in Noul exits; classifier Choice uses the registry.
       deciders: overrides.deciders ?? [exitJev, codex.decider],
