@@ -227,7 +227,7 @@ test('GitHub issue poll preset keeps bounded item settings editable and reloadab
   await expect(items.getByLabel('Max runs per poll')).toHaveValue('5');
   await expect(items.getByLabel('Max runs per poll')).toHaveAttribute('min', '1');
   await expect(items.getByLabel('Max runs per poll')).toHaveAttribute('max', '25');
-  await expect(items.getByLabel('Dedupe key')).toHaveText(
+  await expect(items.getByLabel('Per-item dedupe key')).toHaveText(
     '"octo-team/fixture-repo:issue:" & $string(item.number)',
   );
   await items.getByLabel('Max runs per poll').fill('25');
@@ -251,7 +251,7 @@ test('GitHub issue poll preset keeps bounded item settings editable and reloadab
   const restored = await openNode(page, 'start');
   const restoredItems = restored.locator('[data-field="items"]');
   await expect(restoredItems.getByLabel('Max runs per poll')).toHaveValue('25');
-  await expect(restoredItems.getByLabel('Dedupe key')).toHaveText(
+  await expect(restoredItems.getByLabel('Per-item dedupe key')).toHaveText(
     '"octo-team/fixture-repo:issue:" & $string(item.number)',
   );
   await expect(restored.getByText('does not call GitHub from this editor')).toBeVisible();
@@ -315,7 +315,7 @@ test('Events exposes safe labels for all five webhook delivery dispositions', as
 
   const row = (id: string) => page.getByRole('row').filter({ hasText: id });
   await expect(row('pending-event')).toContainText('Pending admission');
-  await expect(row('pending-event')).toContainText('Attempts: 2');
+  await expect(row('pending-event')).toContainText('Admission failures: 2');
   await expect(row('pending-event')).toContainText('Retry at');
   await expect(row('failed-event')).toContainText('Failure: ADMISSION_UNAVAILABLE');
   await expect(row('failed-event')).toContainText('Admission ended with a safe failure code.');

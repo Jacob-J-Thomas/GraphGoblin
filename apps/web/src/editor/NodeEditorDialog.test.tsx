@@ -7,7 +7,7 @@ import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { FakeApi } from '../__fixtures__/fake-api.js';
-import { getCode } from '../__fixtures__/codemirror.js';
+import { getCode, setCode } from '../__fixtures__/codemirror.js';
 import { renderApp } from '../__fixtures__/render.js';
 import { LOOP_PANEL_STORAGE_KEY } from './LoopPanel.js';
 import { newLoopDefinition } from './model.js';
@@ -140,6 +140,8 @@ describe('NodeEditorDialog GitHub trigger presets', () => {
     expect(within(dialog).getByLabelText('Subtype')).toHaveDisplayValue('webhook (body)');
     expect(within(dialog).queryByLabelText('Replay window seconds')).not.toBeInTheDocument();
     expect(within(dialog).getByLabelText('Secret ref')).toHaveValue('issue-hook');
+    expect(getCode('Dedupe key')).toBe('$headers."x-github-delivery"');
+    expect(within(dialog).queryByLabelText('Per-item dedupe key')).not.toBeInTheDocument();
 
     await user.clear(within(dialog).getByLabelText('Secret ref'));
     await user.type(within(dialog).getByLabelText('Secret ref'), 'renamed-hook');
@@ -174,8 +176,28 @@ describe('NodeEditorDialog GitHub trigger presets', () => {
     expect(within(dialog).getByLabelText('Max runs per poll')).toHaveValue(5);
     expect(within(dialog).getByLabelText('Max runs per poll')).toHaveAttribute('max', '25');
     expect(getCode('Select')).toBe('probe.json');
-    // The poll also exposes a top-level key for single-result mode; item mode is the second editor.
-    expect(getCode('Dedupe key', 1)).toBe('"octo/service:issue:" & $string(item.number)');
+    expect(getCode('Whole-probe dedupe key (single-result only)')).toBe('');
+    expect(getCode('Per-item dedupe key')).toBe('"octo/service:issue:" & $string(item.number)');
+    setCode('Per-item dedupe key', '$string(item.number)');
+    await waitFor(() =>
+      expect(store().definition?.nodes.find((node) => node.id === 'backlog')?.config).toMatchObject(
+        {
+          items: { dedupeKey: '$string(item.number)' },
+        },
+      ),
+    );
+    expect(
+      store().definition?.nodes.find((node) => node.id === 'backlog')?.config,
+    ).not.toHaveProperty('dedupeKey');
+    await user.selectOptions(
+      within(dialog).getByLabelText('Subtype'),
+      within(dialog).getByRole('option', { name: 'webhook (body)' }),
+    );
+    await waitFor(() => expect(getCode('Dedupe key')).toBe(''));
+    expect(within(dialog).queryByLabelText('Per-item dedupe key')).not.toBeInTheDocument();
+    expect(
+      within(dialog).queryByLabelText('Whole-probe dedupe key (single-result only)'),
+    ).not.toBeInTheDocument();
   });
 });
 

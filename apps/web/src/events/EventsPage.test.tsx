@@ -87,7 +87,7 @@ describe('EventsPage delivery dispositions', () => {
 
     const pending = screen.getByRole('row', { name: /Pending admission/ });
     expect(within(pending).getByText('Accepted but not yet admitted as a run.')).toBeVisible();
-    expect(within(pending).getByText('Attempts: 3')).toBeVisible();
+    expect(within(pending).getByText('Admission failures: 3')).toBeVisible();
     expect(within(pending).getByText(/Retry at/)).toBeVisible();
     expect(within(pending).getByText('none')).toBeVisible();
 

@@ -135,7 +135,11 @@ export function TriggerPresets({
                   onChange={(event) => update('label', event.target.value)}
                   placeholder="ready"
                 />
-                <HelpText>The label name is encoded safely in the filter or `gh` query.</HelpText>
+                <HelpText>
+                  {preset === 'issues-poll'
+                    ? 'The label name is encoded safely in the gh query.'
+                    : 'The label name is encoded safely in the webhook filter.'}
+                </HelpText>
               </FieldGroup>
             ) : null}
 
@@ -184,7 +188,7 @@ export function TriggerPresets({
         ) : null}
         {preset === 'issues-poll' ? (
           <p className="rounded-md border border-default bg-surface px-3 py-2 text-xs text-muted">
-            This read-only poll uses an already-installed, authenticated local <code>gh</code>
+            This read-only poll uses an already-installed, authenticated local <code>gh</code>{' '}
             command. It rejects output over 200 issues or 64 KiB, then admits up to 5 unseen items
             per poll by default; all bounds and expressions remain editable below.
           </p>

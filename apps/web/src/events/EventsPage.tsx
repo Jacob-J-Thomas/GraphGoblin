@@ -44,7 +44,7 @@ function Delivery({ delivery }: { delivery: InboundEvent['delivery'] }) {
         {info.label}
       </Badge>
       <span className="text-muted">{info.explanation}</span>
-      <span>Attempts: {delivery.attempts}</span>
+      <span>Admission failures: {delivery.attempts}</span>
       {delivery.state === 'pending' && delivery.nextAttemptAt ? (
         <span>Retry at {formatDateTime(delivery.nextAttemptAt)}</span>
       ) : null}
