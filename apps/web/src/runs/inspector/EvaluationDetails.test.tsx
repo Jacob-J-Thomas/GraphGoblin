@@ -117,7 +117,7 @@ describe('EvaluationDetails', () => {
             score: 1.25,
             confidence: 0.92,
             legend: { '2': 'Fully meets', '0': 'Does not meet', '1': 'Partly meets' },
-            probabilities: { middle: 0.92 },
+            probabilities: { '1': 0.92 },
           },
           portId: 'middle',
           provenance: {
@@ -139,8 +139,8 @@ describe('EvaluationDetails', () => {
       'Anchor 1: Partly meets',
       'Anchor 2: Fully meets',
     ]);
-    expect(screen.getByRole('list', { name: 'Band probabilities' })).toHaveTextContent(
-      'middle: 0.92',
+    expect(screen.getByRole('list', { name: 'Rubric index probabilities' })).toHaveTextContent(
+      '1: 0.92',
     );
   });
 

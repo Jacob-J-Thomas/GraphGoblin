@@ -229,7 +229,9 @@ export function EvaluationDetails({ event }: { event: RunEvent | undefined }) {
           {event.answer.type !== 'noul' && event.answer.probabilities ? (
             <ul
               aria-label={
-                event.answer.type === 'score' ? 'Band probabilities' : 'Alternative probabilities'
+                event.answer.type === 'score'
+                  ? 'Rubric index probabilities'
+                  : 'Alternative probabilities'
               }
               className="mt-2 grid gap-1 text-sm"
             >

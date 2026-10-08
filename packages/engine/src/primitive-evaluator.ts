@@ -110,6 +110,16 @@ export async function evaluatePrimitive(
   request: PrimitiveEvaluationRequest,
 ): Promise<PrimitiveEvaluationResult> {
   const { evaluation, answer } = request;
+  if (
+    evaluation.kind === 'classifier' &&
+    evaluation.truthThreshold !== undefined &&
+    answer.type !== 'noul'
+  )
+    fail(
+      request,
+      'EVALUATION_INVALID_CONFIGURATION',
+      'truthThreshold applies only to classifier Noul',
+    );
   let result: PrimitiveAnswer;
   let provenance: EvaluationProvenance;
   if (evaluation.kind === 'expression') {

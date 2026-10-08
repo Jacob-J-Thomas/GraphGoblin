@@ -10,7 +10,7 @@ import { FakeApi } from '../__fixtures__/fake-api.js';
 import { getCode, setCode } from '../__fixtures__/codemirror.js';
 import { renderApp } from '../__fixtures__/render.js';
 import { LOOP_PANEL_STORAGE_KEY } from './LoopPanel.js';
-import { newLoopDefinition } from './model.js';
+import { newLoopDefinition, validateDraft } from './model.js';
 import { useEditorStore } from './store.js';
 
 const UNDO = '{Control>}z{/Control}';
@@ -214,6 +214,65 @@ describe('NodeEditorDialog decision field order', () => {
       });
     });
   });
+
+  it.each([
+    { type: 'noul' as const, label: 'Noul' },
+    { type: 'score' as const, label: 'Score' },
+  ])(
+    'preserves an unfinished classifier when switching Choice to $label',
+    async ({ type, label }) => {
+      const user = userEvent.setup();
+      const dialog = await openDialog(
+        {
+          id: 'pick',
+          kind: 'decision',
+          label: 'Pick',
+          config: {
+            answer: {
+              type: 'choice',
+              options: [
+                { id: 'yes', label: 'Yes', criteria: 'The answer is yes' },
+                { id: 'no', label: 'No', criteria: 'The answer is no' },
+              ],
+            },
+            evaluation: {
+              kind: 'classifier',
+              model: 'jev',
+              question: 'Check the authored notes for support.',
+              context: { messages: 4, includeLastOutput: false },
+            },
+          },
+        },
+        'Edit decision pick',
+      );
+
+      await user.selectOptions(within(dialog).getByRole('combobox', { name: 'Model' }), '');
+      setCode('Question', 'Use the last four notes and keep this question.');
+      const answerPicker = within(dialog).getByRole('radiogroup', { name: 'Answer type' });
+      await user.click(within(answerPicker).getByRole('radio', { name: label }));
+
+      await waitFor(() => {
+        const definition = store().definition;
+        if (!definition) throw new Error('The editor definition is missing.');
+        const node = definition.nodes.find((candidate) => candidate.id === 'pick');
+        if (node?.kind !== 'decision') throw new Error('Decision node is missing.');
+        expect(node.config).toMatchObject({
+          answer: { type },
+          evaluation: {
+            kind: 'classifier',
+            question: 'Use the last four notes and keep this question.',
+            context: { messages: 4, includeLastOutput: false },
+          },
+        });
+        expect(validateDraft(definition).schemaValid).toBe(false);
+        expect(validateDraft(definition).issues).toContainEqual(
+          expect.objectContaining({ nodeId: 'pick', path: 'config.evaluation.model' }),
+        );
+      });
+      const methodPicker = within(dialog).getByRole('radiogroup', { name: 'Evaluation method' });
+      expect(within(methodPicker).getByRole('radio', { name: 'Classifier' })).toBeChecked();
+    },
+  );
 });
 
 describe('NodeEditorDialog GitHub trigger presets', () => {

@@ -1,10 +1,8 @@
 import {
-  DecisionEvaluationSchema,
   NodeConfigSchemas,
   SlugSchema,
   type LoopDefinitionInput,
   type DecisionAnswer,
-  type DecisionEvaluation,
   type NodeInput,
 } from '@graphgoblin/contracts';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
@@ -113,36 +111,34 @@ function decisionVariantChange(next: unknown, previous: unknown): unknown {
   if (!nextType || nextType === oldType) return next;
 
   const answer = ANSWER_DEFAULTS[nextType];
-  const parsed = DecisionEvaluationSchema.safeParse(nextConfig['evaluation']);
-  let evaluation: DecisionEvaluation;
-  if (nextType === 'score' && (!parsed.success || parsed.data.kind !== 'classifier')) {
-    const question =
-      parsed.success && parsed.data.kind === 'llm'
-        ? parsed.data.question
-        : 'Score the input against the ordered rubric.';
-    const context =
-      parsed.success && parsed.data.kind !== 'expression'
-        ? parsed.data.context
-        : { messages: 'last' as const, includeLastOutput: true };
+  const rawEvaluation = record(nextConfig['evaluation']);
+  const kind = rawEvaluation['kind'];
+  let evaluation: unknown = nextConfig['evaluation'];
+  if (kind === 'classifier') {
+    const classifier = { ...rawEvaluation };
+    if (nextType !== 'noul') delete classifier['truthThreshold'];
+    evaluation = classifier;
+  } else if (kind === 'llm' && nextType === 'score') {
     evaluation = {
       kind: 'classifier',
       model: 'jev',
-      question,
-      context,
+      question: Object.hasOwn(rawEvaluation, 'question')
+        ? rawEvaluation['question']
+        : 'Score the input against the ordered rubric.',
+      context: Object.hasOwn(rawEvaluation, 'context')
+        ? rawEvaluation['context']
+        : { messages: 'last', includeLastOutput: true },
     };
-  } else if (parsed.success && parsed.data.kind === 'classifier') {
-    const { truthThreshold: _truthThreshold, ...classifier } = parsed.data;
-    evaluation = nextType === 'noul' ? parsed.data : classifier;
-  } else if (parsed.success && parsed.data.kind === 'expression') {
+  } else if (kind === 'expression' && nextType === 'score') {
     evaluation = {
-      ...parsed.data,
-      jsonata: nextType === 'noul' ? 'true' : '"yes"',
+      kind: 'classifier',
+      model: 'jev',
+      question: 'Score the input against the ordered rubric.',
+      context: { messages: 'last', includeLastOutput: true },
     };
-  } else if (parsed.success) {
-    evaluation = parsed.data;
-  } else {
+  } else if (kind === 'expression') {
     evaluation = {
-      kind: 'expression',
+      ...rawEvaluation,
       jsonata: nextType === 'noul' ? 'true' : '"yes"',
     };
   }

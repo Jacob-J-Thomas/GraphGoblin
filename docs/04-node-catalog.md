@@ -221,7 +221,7 @@ Ports: `out`.
 
 Decides whether the loop is done, what it returns, where that goes, and whether to go around again.
 
-Exit predicates with strategy `jev` continue to use built-in Jev's Noul path and its current enable/secret availability. There is no exit classifier selector; custom HTTP classifiers execute Decision Choice only. Disabled, missing/blank-secret, and unreadable-secret states produce the same classifier warnings as decisions, at `config.criteria.<index>.strategy`. Enable Jev in Settings, Classifier models, or set `jev-api-key` in Settings, Secrets. These warnings remain visible in drafts and block publication under the shared admission policy. An already published Jev predicate still fails with `DECIDER_UNAVAILABLE` if it becomes unavailable before evaluation. Exit evaluation fields and event semantics remain unchanged until #99.
+Exit predicates with strategy `jev` continue to use built-in Jev's Noul path and its current enable/secret availability. There is no exit classifier selector; custom HTTP classifiers execute Decision Choice, Noul and Score, while exits remain tied to built-in Jev. Disabled, missing/blank-secret, and unreadable-secret states produce the same classifier warnings as decisions, at `config.criteria.<index>.strategy`. Enable Jev in Settings, Classifier models, or set `jev-api-key` in Settings, Secrets. These warnings remain visible in drafts and block publication under the shared admission policy. An already published Jev predicate still fails with `DECIDER_UNAVAILABLE` if it becomes unavailable before evaluation. Exit evaluation fields and event semantics remain unchanged until #99.
 
 ```ts
 type ExitConfig = {

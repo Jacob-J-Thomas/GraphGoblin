@@ -108,7 +108,7 @@ describe('run projections', () => {
             score: 1.25,
             confidence: 0.91,
             legend: { '0': 'Low', '1': 'Middle', '2': 'High' },
-            probabilities: { middle: 0.91 },
+            probabilities: { '1': 0.91 },
           },
           portId: 'middle',
           provenance: classifier,
