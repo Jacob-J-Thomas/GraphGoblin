@@ -114,7 +114,9 @@ describe('Choice authoring contract', () => {
       },
       evaluation: expression,
     });
-    expect(parsed.answer.options[0]).toMatchObject({ label: 'Pass', criteria: 'Criterion' });
+    expect(parsed.answer).toMatchObject({
+      options: [{ label: 'Pass', criteria: 'Criterion' }, options[1]],
+    });
   });
 });
 describe('canonical evidence and fresh emission', () => {

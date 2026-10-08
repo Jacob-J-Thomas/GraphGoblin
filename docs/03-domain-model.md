@@ -79,7 +79,7 @@ Validation rules enforced by `domain` before a version can be published:
 Harness selection belongs to inference nodes (`config.harness`, default `codex`). Loop defaults
 provide only model and effort. Definitions containing `settings.defaults.harness` are rejected
 as unknown keys; imports and API clients must remove it. There is no compatibility parser.
-Current definition and export format versions are 2. Existing format-1 data follows the [offline upgrade workflow](guide/08-offline-upgrade.md). Harness ownership was established in [ADR-0019](decisions/ADR-0019-inference-node-harness.md); the later format cutover is [ADR-0022](decisions/ADR-0022-explicit-decision-evaluation.md).
+Current definition and export format versions are 2. Decision answers include Noul, Choice and Score; the output records the raw answer, stable selected port and evaluator provenance. [ADR-0025](decisions/ADR-0025-answer-primitives.md) adds the new primitives without changing existing Choice evidence or context serialization. Existing format-1 data follows the [offline upgrade workflow](guide/08-offline-upgrade.md). Harness ownership was established in [ADR-0019](decisions/ADR-0019-inference-node-harness.md); the later format cutover is [ADR-0022](decisions/ADR-0022-explicit-decision-evaluation.md).
 
 ## Versioning (Decided)
 

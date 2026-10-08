@@ -49,7 +49,7 @@ const advanced = (dialog: HTMLElement) =>
   within(dialog).getByRole('button', { name: /^Advanced\b/ });
 
 describe('NodeEditorDialog decision field order', () => {
-  it('shows the evaluator before answer options and preserves issue focus paths', async () => {
+  it('shows answer type before evaluation and preserves issue focus paths', async () => {
     const user = userEvent.setup();
     const dialog = await openDialog(
       {
@@ -81,7 +81,7 @@ describe('NodeEditorDialog decision field order', () => {
     const evaluation = form.querySelector<HTMLElement>('[data-field="evaluation"]');
     const answer = form.querySelector<HTMLElement>('[data-field="answer"]');
     if (!evaluation || !answer) throw new Error('Decision fields were not rendered.');
-    expect(evaluation.compareDocumentPosition(answer) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(
+    expect(answer.compareDocumentPosition(evaluation) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(
       0,
     );
     expect(within(evaluation).getByRole('radiogroup', { name: 'Evaluation method' })).toBeVisible();
@@ -98,10 +98,121 @@ describe('NodeEditorDialog decision field order', () => {
     if (node?.kind !== 'decision') throw new Error('Decision node is missing from the editor.');
     const config = DecisionConfigSchema.parse(node.config);
     expect(config.evaluation.kind).toBe('expression');
+    if (config.answer.type !== 'choice')
+      throw new Error('Expected the Choice answer to remain selected.');
     expect(config.answer.options).toEqual([
       { id: 'ready', label: 'Ready', criteria: 'Choose ready' },
       { id: 'blocked', label: 'Blocked', criteria: 'Choose blocked' },
     ]);
+  });
+
+  it('switches answer primitives with useful defaults and a classifier-only Score method', async () => {
+    const user = userEvent.setup();
+    const dialog = await openDialog(
+      {
+        id: 'pick',
+        kind: 'decision',
+        label: 'Pick',
+        config: {
+          answer: {
+            type: 'choice',
+            options: [
+              { id: 'yes', label: 'Yes', criteria: 'The answer is yes' },
+              { id: 'no', label: 'No', criteria: 'The answer is no' },
+            ],
+          },
+          evaluation: { kind: 'expression', jsonata: '"yes"' },
+        },
+      },
+      'Edit decision pick',
+    );
+    const answerPicker = within(dialog).getByRole('radiogroup', { name: 'Answer type' });
+    await user.click(within(answerPicker).getByRole('radio', { name: 'Noul' }));
+    await waitFor(() => {
+      const node = store().definition?.nodes.find((candidate) => candidate.id === 'pick');
+      if (node?.kind !== 'decision') throw new Error('Decision node is missing.');
+      const config = DecisionConfigSchema.parse(node.config);
+      expect(config.answer).toEqual({
+        type: 'noul',
+        true: { id: 'true', label: 'True', criteria: 'The statement is true' },
+        false: { id: 'false', label: 'False', criteria: 'The statement is false' },
+      });
+      expect(config.evaluation).toEqual({ kind: 'expression', jsonata: 'true' });
+    });
+    expect(within(dialog).getByRole('radio', { name: 'Noul' })).toBeChecked();
+    expect(within(dialog).getByRole('radiogroup', { name: 'Evaluation method' })).toHaveTextContent(
+      'must return a boolean true or false',
+    );
+
+    await user.click(within(dialog).getByRole('radio', { name: 'Score' }));
+    await waitFor(() => {
+      const node = store().definition?.nodes.find((candidate) => candidate.id === 'pick');
+      if (node?.kind !== 'decision') throw new Error('Decision node is missing.');
+      const config = DecisionConfigSchema.parse(node.config);
+      expect(config.answer).toEqual({
+        type: 'score',
+        anchors: ['Does not meet the rubric', 'Partly meets the rubric', 'Fully meets the rubric'],
+        bands: [
+          { id: 'low', label: 'Low', min: 0, max: 0.5 },
+          { id: 'mid', label: 'Middle', min: 0.5, max: 1.5 },
+          { id: 'high', label: 'High', min: 1.5, max: 2 },
+        ],
+      });
+      expect(config.evaluation.kind).toBe('classifier');
+    });
+    const methodPicker = within(dialog).getByRole('radiogroup', { name: 'Evaluation method' });
+    expect(within(methodPicker).getByRole('radio', { name: 'Classifier' })).toBeChecked();
+    expect(
+      within(methodPicker).queryByRole('radio', { name: 'Expression' }),
+    ).not.toBeInTheDocument();
+    expect(within(dialog).getByRole('radio', { name: 'Score' })).toHaveAccessibleDescription(
+      /scores can fall between anchors.*stops just before.*never rounded/i,
+    );
+    expect(store().past).toHaveLength(2);
+    act(() => store().undo());
+    await waitFor(() => expect(within(dialog).getByRole('radio', { name: 'Noul' })).toBeChecked());
+  });
+
+  it('keeps the authored question and context when switching a provider-backed Choice to Score', async () => {
+    const user = userEvent.setup();
+    const dialog = await openDialog(
+      {
+        id: 'pick',
+        kind: 'decision',
+        label: 'Pick',
+        config: {
+          answer: {
+            type: 'choice',
+            options: [
+              { id: 'yes', label: 'Yes', criteria: 'The answer is yes' },
+              { id: 'no', label: 'No', criteria: 'The answer is no' },
+            ],
+          },
+          evaluation: {
+            kind: 'llm',
+            harness: 'codex',
+            model: { mode: 'inherit' },
+            effort: { mode: 'inherit' },
+            question: 'Use the complete statement and attached notes.',
+            context: { messages: 4, includeLastOutput: false },
+          },
+        },
+      },
+      'Edit decision pick',
+    );
+
+    await user.click(within(dialog).getByRole('radio', { name: 'Score' }));
+    await waitFor(() => {
+      const node = store().definition?.nodes.find((candidate) => candidate.id === 'pick');
+      if (node?.kind !== 'decision') throw new Error('Decision node is missing.');
+      const config = DecisionConfigSchema.parse(node.config);
+      expect(config.evaluation).toMatchObject({
+        kind: 'classifier',
+        model: 'jev',
+        question: 'Use the complete statement and attached notes.',
+        context: { messages: 4, includeLastOutput: false },
+      });
+    });
   });
 });
 

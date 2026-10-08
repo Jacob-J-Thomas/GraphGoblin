@@ -2,6 +2,8 @@ import type { TriggerAdmissionPort } from './admission.js';
 import type {
   ChoiceAnswer,
   ChoiceOption,
+  ClassifierPrimitive,
+  ScoreAnswer,
   HarnessDefaults,
   HarnessPreflight as ContractHarnessPreflight,
   ModelCatalogEntry,
@@ -235,16 +237,38 @@ export interface YesNoRequest {
   effort?: Effort;
 }
 
+export interface NoulRequest extends YesNoRequest {
+  criteria: { true: string; false: string };
+}
+export interface ClassifierNoulResult {
+  type: 'noul';
+  trueProbability: number;
+}
+export interface LlmNoulResult {
+  type: 'noul';
+  holds: boolean;
+  confidence: number;
+  reasoning: string;
+}
+export interface ScoreRequest extends YesNoRequest {
+  anchors: string[];
+}
+export type ScoreResult = ScoreAnswer;
+
 export interface DeciderPort {
   readonly id: 'jev' | 'codex';
   available(): boolean;
   choose(request: ChoiceRequest, signal: AbortSignal): Promise<ChoiceResult>;
   judge(request: YesNoRequest, signal: AbortSignal): Promise<PredicateAnswer>;
+  /** Strict boolean Noul capability, distinct from the legacy exit judge. */
+  noul?(request: NoulRequest, signal: AbortSignal): Promise<LlmNoulResult>;
 }
 
-/** Choice-only provider snapshot; an in-flight request retains its resolved configuration. */
+/** Primitive-specific provider snapshot; an in-flight request retains its resolved configuration. */
 export interface ClassifierPort {
   choose(request: ChoiceRequest, signal: AbortSignal): Promise<ChoiceResult>;
+  classifyNoul(request: NoulRequest, signal: AbortSignal): Promise<ClassifierNoulResult>;
+  score(request: ScoreRequest, signal: AbortSignal): Promise<ScoreResult>;
 }
 
 export type ClassifierUnavailableReason =
@@ -263,7 +287,11 @@ export type ClassifierResolution =
   | { status: 'unavailable'; reason: ClassifierUnavailableReason; message: string };
 
 export interface ClassifierRegistryPort {
-  resolve(ownerId: string, modelId: string): Promise<ClassifierResolution>;
+  resolve(
+    ownerId: string,
+    modelId: string,
+    primitive: ClassifierPrimitive,
+  ): Promise<ClassifierResolution>;
 }
 
 /** A single structured completion: prompt in, schema-shaped value out. Used for repair and Codex decisions. */

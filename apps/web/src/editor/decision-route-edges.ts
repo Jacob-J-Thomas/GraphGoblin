@@ -1,28 +1,69 @@
-import { DecisionConfigSchema, type LoopDefinitionInput } from '@graphgoblin/contracts';
+import { ChoiceOptionIdSchema, type LoopDefinitionInput } from '@graphgoblin/contracts';
 import type { FormChange } from '../forms/changes.js';
 
-interface OptionRow {
+interface RouteRow {
   key: number;
   id: string | undefined;
   edgeIds: readonly string[];
 }
-interface OptionRows {
+interface RouteRows {
   nextKey: number;
-  rows: readonly OptionRow[];
+  rows: readonly RouteRow[];
 }
-/** Editor-only option ownership; restored with the definition by undo/redo, never saved in config. */
-export type DecisionRoutes = Readonly<Record<string, OptionRows>>;
-const optionIdSchema = DecisionConfigSchema.shape.answer.shape.options.element.shape.id;
+/** Editor-only answer-port ownership; restored with the definition by undo/redo, never saved. */
+export type DecisionRoutes = Readonly<Record<string, RouteRows>>;
 
-function ids(config: unknown): (string | undefined)[] | undefined {
-  const answer = (config as { answer?: { options?: unknown } } | null)?.answer;
-  if (!Array.isArray(answer?.options)) return undefined;
-  return answer.options.map((option: unknown) => {
-    const id = (option as { id?: unknown } | null)?.id;
-    return typeof id === 'string' ? id : undefined;
-  });
+function record(value: unknown): Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
 }
-function sameRows(a: OptionRows, b: OptionRows): boolean {
+
+interface AnswerRows {
+  collectionPath: string | undefined;
+  rows: { id: string | undefined }[];
+}
+
+/** The stable route IDs, in the answer's authored order, even while other fields are incomplete. */
+function answerRows(config: unknown): AnswerRows | undefined {
+  const answer = record(record(config)['answer']);
+  const type = answer['type'];
+  if (type === 'choice' || type === 'score') {
+    const path = type === 'choice' ? 'answer.options' : 'answer.bands';
+    const rows = answer[type === 'choice' ? 'options' : 'bands'];
+    if (!Array.isArray(rows)) return undefined;
+    return {
+      collectionPath: path,
+      rows: rows.map((value) => {
+        const id = record(value)['id'];
+        return { id: typeof id === 'string' ? id : undefined };
+      }),
+    };
+  }
+  if (type === 'noul') {
+    const trueSide = answer['true'];
+    const falseSide = answer['false'];
+    if (!trueSide || !falseSide) return undefined;
+    return {
+      collectionPath: undefined,
+      rows: [trueSide, falseSide].map((value) => {
+        const id = record(value)['id'];
+        return { id: typeof id === 'string' ? id : undefined };
+      }),
+    };
+  }
+  return undefined;
+}
+
+/** The edited stable-ID row, including the fixed true/false slots of Noul. */
+function editedIndex(path: string | undefined): number | undefined {
+  const collection = /^answer\.(?:options|bands)\.(\d+)\.id$/.exec(path ?? '');
+  if (collection) return Number(collection[1]);
+  const side = /^answer\.(true|false)\.id$/.exec(path ?? '')?.[1];
+  return side === 'true' ? 0 : side === 'false' ? 1 : undefined;
+}
+
+function sameRows(a: RouteRows, b: RouteRows): boolean {
   return (
     a.nextKey === b.nextKey &&
     a.rows.length === b.rows.length &&
@@ -45,7 +86,7 @@ export function decisionRouteEdges(
   change?: FormChange,
   renamed?: { from: string; to: string },
 ): { definition: LoopDefinitionInput; decisionRoutes: DecisionRoutes } {
-  const decisionRoutes: Record<string, OptionRows> = {};
+  const decisionRoutes: Record<string, RouteRows> = {};
   const removed = new Set<string>();
   const ports = new Map<string, string>();
   for (const node of definition.nodes) {
@@ -55,21 +96,23 @@ export function decisionRouteEdges(
       nextKey: 0,
       rows: [],
     };
-    const after = ids(node.config);
+    const answer = answerRows(node.config);
+    const after = answer?.rows.map((row) => row.id);
     let nextKey = before.nextKey;
     let rows = before.rows;
     if (after) {
-      let retained: (OptionRow | undefined)[] = [...before.rows];
+      let retained: (RouteRow | undefined)[] = [...before.rows];
+      const collection = change?.collection;
       if (
-        change?.path === 'answer.options' &&
-        change.collection?.type === 'remove' &&
+        answer !== undefined &&
+        change !== undefined &&
+        change.path === answer.collectionPath &&
+        answer.collectionPath !== undefined &&
+        collection?.type === 'remove' &&
         after.length === before.rows.length - 1
       ) {
-        retained.splice(change.collection.index, 1);
-      } else if (
-        /^answer\.options\.\d+\.id$/.test(change?.path ?? '') &&
-        after.length === before.rows.length
-      ) {
+        retained.splice(collection.index, 1);
+      } else if (editedIndex(change?.path) !== undefined && after.length === before.rows.length) {
         // The field path identifies the edited row even while its replacement ID is incomplete.
         retained = [...before.rows];
       } else {
@@ -102,7 +145,7 @@ export function decisionRouteEdges(
     rows = rows.map((row) => {
       const unique =
         row.id !== undefined && rows.filter((other) => other.id === row.id).length === 1;
-      const valid = unique && optionIdSchema.safeParse(row.id).success;
+      const valid = unique && ChoiceOptionIdSchema.safeParse(row.id).success;
       const edgeIds = outgoing
         .filter(
           (edge) =>

@@ -1,7 +1,7 @@
 import { createServer, type IncomingMessage, type ServerResponse, type Server } from 'node:http';
 import { afterEach, describe, expect, it } from 'vitest';
 import type { ChoiceRequest } from '@graphgoblin/engine';
-import { HttpChoiceClassifier } from './classifier.js';
+import { HttpClassifier } from './classifier.js';
 
 let server: Server | undefined;
 afterEach(async () => {
@@ -22,6 +22,23 @@ const request: ChoiceRequest = {
 };
 const valid = {
   answers: { answer: { type: 'choice', choice: 'yes', probabilities: { yes: 0.8, no: 0.2 } } },
+};
+const noulRequest = {
+  question: 'Ready?',
+  context: { checks: 'passed' },
+  criteria: { true: 'All checks pass', false: 'Any check fails' },
+};
+const scoreRequest = {
+  question: 'Severity?',
+  context: { incident: 'partial outage' },
+  anchors: ['Low', 'Medium', 'High', 'Critical'],
+};
+const scoreAnswer = {
+  type: 'score',
+  score: 1.25,
+  confidence: 0.75,
+  legend: { '0': 'Low', '1': 'Medium', '2': 'High', '3': 'Critical' },
+  probabilities: { '0': 0, '1': 0.75, '2': 0.25, '3': 0 },
 };
 async function endpoint(body: unknown = valid, status = 200, delay = false) {
   const calls: {
@@ -59,7 +76,7 @@ describe('HTTP Choice classifier', () => {
     'sends the exact protocol, provider id, state, and optional bearer (%s)',
     async (bearer) => {
       const fixture = await endpoint();
-      const client = new HttpChoiceClassifier({
+      const client = new HttpClassifier({
         endpoint: fixture.url,
         providerModel: 'kev-native',
         ...(bearer ? { bearer } : {}),
@@ -102,7 +119,7 @@ describe('HTTP Choice classifier', () => {
         },
       },
     });
-    const result = await new HttpChoiceClassifier({
+    const result = await new HttpClassifier({
       endpoint: fixture.url,
       providerModel: 'kev',
     }).choose(
@@ -136,7 +153,7 @@ describe('HTTP Choice classifier', () => {
   ])('rejects malformed Choice response %j', async (body) => {
     const fixture = await endpoint(body);
     await expect(
-      new HttpChoiceClassifier({ endpoint: fixture.url, providerModel: 'kev' }).choose(
+      new HttpClassifier({ endpoint: fixture.url, providerModel: 'kev' }).choose(
         request,
         new AbortController().signal,
       ),
@@ -155,7 +172,7 @@ describe('HTTP Choice classifier', () => {
           },
         },
       });
-      const answer = await new HttpChoiceClassifier({
+      const answer = await new HttpClassifier({
         endpoint: fixture.url,
         providerModel: 'kev',
         bearer,
@@ -175,7 +192,7 @@ describe('HTTP Choice classifier', () => {
     async (choice) => {
       const fixture = await endpoint({ answers: { answer: { ...valid.answers.answer, choice } } });
       await expect(
-        new HttpChoiceClassifier({ endpoint: fixture.url, providerModel: 'kev' }).choose(
+        new HttpClassifier({ endpoint: fixture.url, providerModel: 'kev' }).choose(
           request,
           new AbortController().signal,
         ),
@@ -189,7 +206,7 @@ describe('HTTP Choice classifier', () => {
     'reports HTTP %i redirects without following or echoing the bearer',
     async (status) => {
       const fixture = await endpoint('private-test-key', status);
-      const error: unknown = await new HttpChoiceClassifier({
+      const error: unknown = await new HttpClassifier({
         endpoint: fixture.url,
         providerModel: 'kev',
         bearer: 'private-test-key',
@@ -213,7 +230,7 @@ describe('HTTP Choice classifier', () => {
     [503, 'DECIDER_HTTP_ERROR'],
   ])('maps HTTP %i without echoing credentials', async (status, code) => {
     const fixture = await endpoint('private-test-key', Number(status));
-    const client = new HttpChoiceClassifier({
+    const client = new HttpClassifier({
       endpoint: fixture.url,
       providerModel: 'kev',
       bearer: 'private-test-key',
@@ -227,14 +244,14 @@ describe('HTTP Choice classifier', () => {
   it('times out and preserves caller cancellation', async () => {
     const fixture = await endpoint(valid, 200, true);
     await expect(
-      new HttpChoiceClassifier({
+      new HttpClassifier({
         endpoint: fixture.url,
         providerModel: 'kev',
         timeoutMs: 20,
       }).choose(request, new AbortController().signal),
     ).rejects.toMatchObject({ code: 'DECIDER_TIMEOUT' });
     const abort = new AbortController();
-    const pending = new HttpChoiceClassifier({
+    const pending = new HttpClassifier({
       endpoint: fixture.url,
       providerModel: 'kev',
     }).choose(request, abort.signal);
@@ -245,12 +262,12 @@ describe('HTTP Choice classifier', () => {
     const fixture = await endpoint();
     await new Promise<void>((resolve) => server!.close(() => resolve()));
     await expect(
-      new HttpChoiceClassifier({ endpoint: fixture.url, providerModel: 'kev' }).choose(
+      new HttpClassifier({ endpoint: fixture.url, providerModel: 'kev' }).choose(
         request,
         new AbortController().signal,
       ),
     ).rejects.toMatchObject({ code: 'DECIDER_UNREACHABLE' });
-    const client = new HttpChoiceClassifier({
+    const client = new HttpClassifier({
       endpoint: fixture.url,
       providerModel: 'kev',
       fetch: () => Promise.reject(new Error('private-test-key')),
@@ -271,7 +288,7 @@ describe('HTTP Choice classifier', () => {
           }),
       } as Response);
     await expect(
-      new HttpChoiceClassifier({
+      new HttpClassifier({
         endpoint: 'http://localhost',
         providerModel: 'kev',
         timeoutMs: 20,
@@ -279,4 +296,104 @@ describe('HTTP Choice classifier', () => {
       }).choose(request, new AbortController().signal),
     ).rejects.toMatchObject({ code: 'DECIDER_TIMEOUT' });
   });
+});
+
+describe('HTTP Noul and Score classifier', () => {
+  it('sends both authored Noul criteria and returns its raw true probability', async () => {
+    const fixture = await endpoint({ answers: { answer: { type: 'noul', noul: 0.7 } } });
+    const client = new HttpClassifier({
+      endpoint: fixture.url,
+      providerModel: 'native-noul',
+      bearer: 'test-key',
+    });
+    expect(await client.classifyNoul(noulRequest, new AbortController().signal)).toEqual({
+      type: 'noul',
+      trueProbability: 0.7,
+    });
+    expect(fixture.calls).toEqual([
+      {
+        url: '/api/v1/systemone',
+        method: 'POST',
+        auth: 'Bearer test-key',
+        body: {
+          model: 'native-noul',
+          state: noulRequest.context,
+          questions: {
+            answer: { type: 'noul', instructions: 'Ready?', criteria: noulRequest.criteria },
+          },
+        },
+      },
+    ]);
+  });
+  it('sends the ordered rubric and retains fractional Score evidence', async () => {
+    const fixture = await endpoint({ answers: { answer: scoreAnswer } });
+    const client = new HttpClassifier({ endpoint: fixture.url, providerModel: 'native-score' });
+    expect(await client.score(scoreRequest, new AbortController().signal)).toEqual(scoreAnswer);
+    expect(fixture.calls).toHaveLength(1);
+    expect(fixture.calls[0]?.body).toEqual({
+      model: 'native-score',
+      state: scoreRequest.context,
+      questions: {
+        answer: { type: 'score', instructions: 'Severity?', criteria: scoreRequest.anchors },
+      },
+    });
+  });
+  it('retains honest absent Score confidence/probabilities', async () => {
+    const { confidence: _confidence, probabilities: _probabilities, ...answer } = scoreAnswer;
+    const fixture = await endpoint({ answers: { answer } });
+    expect(
+      await new HttpClassifier({ endpoint: fixture.url, providerModel: 'score' }).score(
+        scoreRequest,
+        new AbortController().signal,
+      ),
+    ).toEqual({ ...answer, confidence: null, probabilities: null });
+  });
+  it.each([
+    { ...scoreAnswer, score: 3.1 },
+    { ...scoreAnswer, confidence: -0.1 },
+    { ...scoreAnswer, legend: { '0': 'Low' } },
+    { ...scoreAnswer, probabilities: { '0': 1 } },
+    { type: 'noul', noul: 0.5 },
+  ])('rejects invalid Score once %j', async (answer) => {
+    const fixture = await endpoint({ answers: { answer } });
+    await expect(
+      new HttpClassifier({ endpoint: fixture.url, providerModel: 'score' }).score(
+        scoreRequest,
+        new AbortController().signal,
+      ),
+    ).rejects.toMatchObject({ code: 'DECIDER_INVALID_RESPONSE' });
+    expect(fixture.calls).toHaveLength(1);
+  });
+  it('rejects invalid Noul and insufficient rubrics before a Score call', async () => {
+    const fixture = await endpoint({ answers: { answer: { type: 'noul', noul: 'yes' } } });
+    const client = new HttpClassifier({ endpoint: fixture.url, providerModel: 'native' });
+    await expect(
+      client.classifyNoul(noulRequest, new AbortController().signal),
+    ).rejects.toMatchObject({ code: 'DECIDER_INVALID_RESPONSE' });
+    await expect(
+      client.score({ ...scoreRequest, anchors: ['Only'] }, new AbortController().signal),
+    ).rejects.toMatchObject({ code: 'DECIDER_INVALID_CONFIGURATION' });
+    expect(fixture.calls).toHaveLength(1);
+  });
+  it.each(['classifyNoul', 'score'] as const)(
+    'preserves sanitized errors and cancellation for %s',
+    async (method) => {
+      const fixture = await endpoint({ private: 'hidden' }, 503);
+      const client = new HttpClassifier({ endpoint: fixture.url, providerModel: 'native' });
+      const invoke = (signal: AbortSignal) =>
+        method === 'classifyNoul'
+          ? client.classifyNoul(noulRequest, signal)
+          : client.score(scoreRequest, signal);
+      await expect(invoke(new AbortController().signal)).rejects.toMatchObject({
+        code: 'DECIDER_HTTP_ERROR',
+        status: 503,
+        message: 'Classifier request failed (HTTP 503)',
+      });
+      expect(fixture.calls).toHaveLength(1);
+      const controller = new AbortController();
+      controller.abort();
+      await expect(invoke(controller.signal)).rejects.toMatchObject({ name: 'AbortError' });
+      expect(fixture.calls).toHaveLength(1);
+    },
+  );
 });

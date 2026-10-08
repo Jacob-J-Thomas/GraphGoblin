@@ -4,6 +4,7 @@ import { z } from 'zod';
 export const ClassifierModelIdSchema = z.string().regex(/^[a-z][a-z0-9_.-]{0,63}$/);
 export const ClassifierSecretRefSchema = z.string().regex(/^[A-Za-z][A-Za-z0-9_.-]{0,127}$/);
 export const ClassifierPrimitiveSchema = z.enum(['choice', 'noul', 'score']);
+export type ClassifierPrimitive = z.infer<typeof ClassifierPrimitiveSchema>;
 export const ClassifierPrimitivesSchema = z
   .array(ClassifierPrimitiveSchema)
   .min(1)
@@ -94,6 +95,27 @@ export const ClassifierChoiceResponseSchema = z.object({
       choice: z.string(),
       confidence: z.number().min(0).max(1).optional(),
       probabilities: z.record(z.string(), z.number().min(0).max(1)),
+    }),
+  }),
+});
+
+export const ClassifierNoulResponseSchema = z.object({
+  model: z.string().optional(),
+  usage: z.unknown().optional(),
+  answers: z.object({
+    answer: z.object({ type: z.literal('noul'), noul: z.number().min(0).max(1) }),
+  }),
+});
+export const ClassifierScoreResponseSchema = z.object({
+  model: z.string().optional(),
+  usage: z.unknown().optional(),
+  answers: z.object({
+    answer: z.object({
+      type: z.literal('score'),
+      score: z.number().min(0),
+      confidence: z.number().min(0).max(1).optional(),
+      legend: z.record(z.string(), z.string()),
+      probabilities: z.record(z.string(), z.number().min(0).max(1)).optional(),
     }),
   }),
 });

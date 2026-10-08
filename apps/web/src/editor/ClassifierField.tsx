@@ -1,5 +1,6 @@
 import type { ClassifierModelSummary } from '@graphgoblin/contracts';
 import { useId } from 'react';
+import { useWatch } from 'react-hook-form';
 import { useClassifierModels } from '../api/queries.js';
 import { Icon } from '../components/icons/index.js';
 import { HelpText, Select } from '../components/ui/index.js';
@@ -10,19 +11,22 @@ function named(entry: ClassifierModelSummary): string {
   return `${entry.displayName} (${entry.id})`;
 }
 
-function canChoose(entry: ClassifierModelSummary): boolean {
-  return entry.enabled && entry.primitives.includes('choice');
+function canChoose(entry: ClassifierModelSummary, primitive: 'choice' | 'noul' | 'score'): boolean {
+  return entry.enabled && entry.primitives.includes(primitive);
 }
 
-/** Required explicit Choice-capable classifier selection for a decision. */
+/** Required explicit primitive-capable classifier selection for a decision. */
 export function ClassifierField({ schema, name, label }: FieldProps) {
   const field = useField(name, 'commit');
   const query = useClassifierModels();
+  const answerType = useWatch({ name: 'answer.type' }) as unknown;
   const id = useId();
   const { required, help } = fieldMeta(schema);
   const value = typeof field.value === 'string' ? field.value : '';
+  const primitive = answerType === 'noul' || answerType === 'score' ? answerType : 'choice';
+  const primitiveName = primitive === 'noul' ? 'Noul' : primitive === 'score' ? 'Score' : 'Choice';
   const entries = query.data ?? [];
-  const options = entries.filter(canChoose);
+  const options = entries.filter((entry) => canChoose(entry, primitive));
   const current = entries.find((entry) => entry.id === value);
   const stale = value !== '' && !options.some((entry) => entry.id === value);
   const status = query.isPending
@@ -30,11 +34,11 @@ export function ClassifierField({ schema, name, label }: FieldProps) {
     : query.isError
       ? `Classifier models could not be loaded: ${errorMessage(query.error)}. The saved choice is kept.`
       : value === ''
-        ? 'Choose an enabled classifier that supports Choice.'
+        ? `Choose an enabled classifier that supports ${primitiveName}.`
         : !current
           ? `${value} is no longer in the classifier catalog. Choose an available classifier.`
-          : !current.primitives.includes('choice')
-            ? `${named(current)} cannot answer Choice decisions. Choose a Choice-capable classifier.`
+          : !current.primitives.includes(primitive)
+            ? `${named(current)} cannot answer ${primitiveName} decisions. Choose a ${primitiveName}-capable classifier.`
             : !current.enabled
               ? `${named(current)} is disabled. Enable it in Settings or choose another classifier.`
               : !current.configured
@@ -64,7 +68,7 @@ export function ClassifierField({ schema, name, label }: FieldProps) {
                   ? ' (not in catalog)'
                   : !current.enabled
                     ? ' (disabled)'
-                    : ' (not Choice-capable)'}
+                    : ` (not ${primitiveName}-capable)`}
               </option>
             ) : null}
             {options.map((entry) => (

@@ -1,5 +1,6 @@
 import type { Edge, LoopDefinition, Node, NodeKind } from '@graphgoblin/contracts';
 import { syntaxIssues } from './syntax.js';
+import { answerPortIds } from './answers.js';
 
 export interface ValidationIssue {
   code: string;
@@ -26,7 +27,7 @@ export function outputPorts(node: Node): string[] {
     case 'heartbeat':
       return ['out'];
     case 'decision':
-      return node.config.answer.options.map((option) => option.id);
+      return answerPortIds(node.config.answer);
     case 'script': {
       const extra = Object.values(node.config.exitCodeRoutes ?? {}).filter(
         (label) => label !== 'out',

@@ -15,7 +15,7 @@ export async function classifierIssues(
         ? [
             {
               id: node.config.evaluation.model,
-              primitive: 'choice' as const,
+              primitive: node.config.answer.type,
               path: 'config.evaluation.model',
               kind: 'Decision',
               unavailable: 'This evaluation is unavailable; publication is blocked.',
@@ -64,7 +64,7 @@ export async function classifierIssues(
         add(
           'CLASSIFIER_PRIMITIVE_UNSUPPORTED',
           'error',
-          (primitive === 'choice' ? 'Choice' : 'Noul') +
+          (primitive === 'choice' ? 'Choice' : primitive === 'noul' ? 'Noul' : 'Score') +
             ' is not supported. Select a compatible classifier or edit its capabilities in Settings, Classifier models.',
         );
         continue;

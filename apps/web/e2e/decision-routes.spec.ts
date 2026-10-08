@@ -1,10 +1,12 @@
 import {
+  DecisionConfigSchema,
   LoopDefinitionSchema,
   RunEventSchema,
+  type DecisionConfig,
   type LoopDefinitionInput,
 } from '@graphgoblin/contracts';
 import type { APIRequestContext, Page } from '@playwright/test';
-import { closeNode, expect, openNode, test } from './fixtures.js';
+import { closeNode, control, expect, openNode, test } from './fixtures.js';
 
 const handle = (page: Page, node: string, port: string) =>
   page.locator(`.react-flow__handle[data-nodeid="${node}"][data-handleid="${port}"]`);
@@ -62,6 +64,46 @@ function decisionLoop(optionCount = 2): LoopDefinitionInput {
     { id: 'branch-done', from: { node: 'branch', port: 'out' }, to: { node: 'done' } },
   ];
   return { schemaVersion: 2, name: `Decision with ${optionCount} options`, nodes, edges };
+}
+
+function primitiveLoop(
+  name: string,
+  config: DecisionConfig,
+  routes: { id: string; label: string; target: string }[],
+): LoopDefinitionInput {
+  return {
+    schemaVersion: 2,
+    name,
+    nodes: [
+      {
+        id: 'start',
+        kind: 'trigger',
+        label: 'Start',
+        config: { subtype: 'manual' },
+        ui: { x: 0, y: 80 },
+      },
+      { id: 'pick', kind: 'decision', label: 'Pick', config, ui: { x: 260, y: 80 } },
+      {
+        id: 'branch',
+        kind: 'mutate',
+        label: 'Branch',
+        config: {
+          operations: [{ op: 'append-message', role: 'assistant', content: 'Branch ran' }],
+        },
+        ui: { x: 520, y: 260 },
+      },
+      { id: 'done', kind: 'exit', label: 'Done', config: {}, ui: { x: 800, y: 80 } },
+    ],
+    edges: [
+      { id: 'start-pick', from: { node: 'start', port: 'out' }, to: { node: 'pick' } },
+      ...routes.map((route) => ({
+        id: `${route.id}-edge`,
+        from: { node: 'pick', port: route.id },
+        to: { node: route.target },
+      })),
+      { id: 'branch-done', from: { node: 'branch', port: 'out' }, to: { node: 'done' } },
+    ],
+  };
 }
 
 async function openLoop(page: Page, request: APIRequestContext, definition = decisionLoop()) {
@@ -201,12 +243,154 @@ test('keyboard connection reaches the eighth option by its ID while showing its 
   ).toBe('branch');
 });
 
+test('switching Choice to Noul preserves side edges, then saves and runs the edited true route', async ({
+  page,
+  request,
+}) => {
+  const config = DecisionConfigSchema.parse({
+    answer: {
+      type: 'choice',
+      options: [
+        { id: 'true', label: 'True', criteria: 'The statement is true' },
+        { id: 'false', label: 'False', criteria: 'The statement is false' },
+      ],
+    },
+    evaluation: { kind: 'expression', jsonata: '"true"' },
+    recordAlternatives: true,
+  });
+  const loopId = await openLoop(
+    page,
+    request,
+    primitiveLoop('Noul routes', config, [
+      { id: 'true', label: 'True', target: 'branch' },
+      { id: 'false', label: 'False', target: 'done' },
+    ]),
+  );
+  let dialog = await openNode(page, 'pick');
+  await dialog
+    .getByRole('radiogroup', { name: 'Answer type' })
+    .getByText('Noul', { exact: true })
+    .click();
+  await expect(handle(page, 'pick', 'true')).toBeVisible();
+  await expect(handle(page, 'pick', 'false')).toBeVisible();
+  const trueId = dialog.locator('[data-field="answer.true.id"] input');
+  await trueId.fill('affirm');
+  await dialog.locator('[data-field="answer.true.label"] input').fill('Affirmative');
+  await expect(handle(page, 'pick', 'affirm')).toBeVisible();
+  await expect(dialog.getByRole('region', { name: 'Connections' })).toContainText(
+    'Affirmative (affirm)',
+  );
+  await closeNode(page);
+
+  const saved = await savedDraft(page, request, loopId);
+  expect(saved.edges.find((item) => item.id === 'true-edge')?.from.port).toBe('affirm');
+  expect(saved.edges.find((item) => item.id === 'true-edge')?.to.node).toBe('branch');
+  await page.reload();
+  await expect(handle(page, 'pick', 'affirm')).toBeVisible();
+  await expect(page.getByTestId('node-pick')).toContainText('Affirmative');
+  dialog = await openNode(page, 'pick');
+  await expect(dialog.getByRole('radio', { name: 'Noul' })).toBeChecked();
+  await expect(dialog.locator('[data-field="evaluation.jsonata"] [role="textbox"]')).toHaveText(
+    'true',
+  );
+  await closeNode(page);
+
+  await page.getByRole('button', { name: 'Publish', exact: true }).click();
+  await expect(page.getByText('Published version 1.')).toBeVisible();
+  await page.getByRole('link', { name: 'Open in Runs' }).first().click();
+  await page.getByRole('button', { name: 'Start run' }).click();
+  await expect(page.locator('[data-status="succeeded"]').first()).toBeVisible();
+  const runId = page.url().split('/').at(-1)!;
+  const body = (await (await request.get(`/runs/${runId}/events`)).json()) as { items: unknown };
+  const events = RunEventSchema.array().parse(body.items);
+  expect(events.find((item) => item.type === 'decision.made')).toMatchObject({
+    answer: { type: 'noul', kind: 'expression', holds: true, confidence: null },
+    portId: 'affirm',
+    provenance: { kind: 'expression' },
+  });
+  const timeline = page.getByRole('list', { name: 'Timeline' });
+  await timeline.getByRole('button', { name: /decision\.made/ }).click();
+  await expect(page.getByRole('heading', { name: 'Evaluation details' })).toBeVisible();
+  await expect(page.getByText('Side port').locator('xpath=following-sibling::dd[1]')).toHaveText(
+    'affirm',
+  );
+});
+
+test('Score bands expose fractional boundaries, validate malformed coverage, and connect by keyboard', async ({
+  page,
+  request,
+}) => {
+  const config = DecisionConfigSchema.parse({
+    answer: {
+      type: 'score',
+      anchors: ['Does not meet', 'Partly meets', 'Fully meets'],
+      bands: [
+        { id: 'low', label: 'Low', min: 0, max: 0.5 },
+        { id: 'middle', label: 'Middle', min: 0.5, max: 1.5 },
+        { id: 'high', label: 'High', min: 1.5, max: 2 },
+      ],
+    },
+    evaluation: {
+      kind: 'classifier',
+      model: 'jev',
+      question: 'Score the input against the rubric.',
+      context: { messages: 'last', includeLastOutput: true },
+    },
+    recordAlternatives: true,
+  });
+  const loopId = await openLoop(
+    page,
+    request,
+    primitiveLoop('Score bands', config, [{ id: 'low', label: 'Low', target: 'branch' }]),
+  );
+  const dialog = await openNode(page, 'pick');
+  const score = dialog.getByRole('radio', { name: 'Score' });
+  await expect(score).toBeChecked();
+  await expect(score).toHaveAccessibleDescription(
+    /scores can fall between anchors.*stops just before.*never rounded/i,
+  );
+  const highLabel = dialog.locator('[data-field="answer.bands.2.label"] input');
+  await highLabel.fill('Top score');
+  await dialog.locator('[data-field="answer.bands.0.label"] input').fill('Minimum');
+  const middleMax = dialog.locator('[data-field="answer.bands.1.max"] input');
+  const malformedBandsError = dialog
+    .getByRole('alert')
+    .filter({ hasText: /bands must form nonempty contiguous intervals/ });
+  await middleMax.fill('1.75');
+  await expect(malformedBandsError).toBeVisible();
+  await middleMax.fill('1.5');
+  await expect(malformedBandsError).toHaveCount(0);
+
+  const connections = dialog.getByRole('region', { name: 'Connections' });
+  const output = dialog.getByLabel('Output', { exact: true });
+  await output.focus();
+  await expect(output.getByRole('option', { selected: true })).toHaveText('Middle (middle)');
+  await page.keyboard.press('ArrowDown');
+  await expect(output.getByRole('option', { selected: true })).toHaveText('Top score (high)');
+  await page.keyboard.press('Enter');
+  await dialog.getByRole('button', { name: 'Connect', exact: true }).click();
+  await expect(connections).toContainText('Top score (high)');
+  await closeNode(page);
+  const saved = await savedDraft(page, request, loopId);
+  expect(saved.edges.find((item) => item.id === 'low-edge')).toMatchObject({
+    from: { node: 'pick', port: 'low' },
+    to: { node: 'branch' },
+  });
+  expect(saved.edges.find((item) => item.from.port === 'high')?.to.node).toBe('branch');
+  await page.reload();
+  await expect(page.getByTestId('node-pick')).toContainText('Top score');
+  await expect(page.getByTestId('node-pick')).toContainText('Minimum');
+  await expect(handle(page, 'pick', 'high')).toBeVisible();
+});
+
 test('removing a connected option removes its edge in the same undo step', async ({
   page,
   request,
 }) => {
   const definition = decisionLoop(3);
   const pick = definition.nodes.find((node) => node.kind === 'decision')!;
+  if (pick.kind !== 'decision' || pick.config.answer.type !== 'choice')
+    throw new Error('Expected the Choice fixture.');
   pick.config.answer.options[2]!.label = 'Third';
   definition.edges.push({
     id: 'third-edge',
@@ -226,4 +410,167 @@ test('removing a connected option removes its edge in the same undo step', async
   await expect(handle(page, 'pick', 'yes')).toBeVisible();
   await page.getByRole('button', { name: /^Redo / }).click();
   await expect(edge(page, 'yes-edge')).toHaveCount(0);
+});
+
+test('the primitive-aware classifier picker preserves but marks an incompatible saved model', async ({
+  page,
+  request,
+}) => {
+  const app = await control(request, '/apps', { realClassifiers: true });
+  const url = String(app['url']);
+  const registered = await request.put(`${url}/classifier-models/choice-only`, {
+    data: {
+      displayName: 'Choice Only',
+      providerModel: 'choice-only',
+      endpoint: 'http://127.0.0.1:8008',
+      primitives: ['noul'],
+      provider: 'http',
+    },
+  });
+  expect(registered.status()).toBe(200);
+  expect(
+    (
+      await request.patch(`${url}/classifier-models/choice-only`, { data: { enabled: true } })
+    ).status(),
+  ).toBe(200);
+  const config = DecisionConfigSchema.parse({
+    answer: {
+      type: 'noul',
+      true: { id: 'true', label: 'True', criteria: 'True' },
+      false: { id: 'false', label: 'False', criteria: 'False' },
+    },
+    evaluation: {
+      kind: 'classifier',
+      model: 'choice-only',
+      question: 'Does it hold?',
+      context: { messages: 'last', includeLastOutput: true },
+    },
+    recordAlternatives: true,
+  });
+  const created = await request.post(`${url}/loops`, {
+    data: {
+      definition: primitiveLoop('Noul classifier capability', config, [
+        { id: 'true', label: 'True', target: 'branch' },
+        { id: 'false', label: 'False', target: 'done' },
+      ]),
+    },
+  });
+  expect(created.status()).toBe(201);
+  const { loop } = (await created.json()) as { loop: { id: string } };
+  const loopId = loop.id;
+  const changed = await request.put(`${url}/classifier-models/choice-only`, {
+    data: {
+      displayName: 'Choice Only',
+      providerModel: 'choice-only',
+      endpoint: 'http://127.0.0.1:8008',
+      primitives: ['choice'],
+      provider: 'http',
+    },
+  });
+  expect(changed.status(), await changed.text()).toBe(200);
+  await page.goto(`${url}/app/loops/${loopId}/edit`);
+  const editor = await openNode(page, 'pick');
+  const picker = editor.getByRole('combobox', { name: 'Model' });
+  await expect(picker).toHaveValue('choice-only');
+  await expect(picker).toHaveAccessibleDescription(/cannot answer Noul decisions/);
+  await expect(
+    picker.getByRole('option', { name: /Choice Only.*not Noul-capable/ }),
+  ).toBeAttached();
+  await expect(picker.getByRole('option', { name: /Jev \(jev\)/ })).toBeAttached();
+  await expect(picker.getByRole('option', { name: /Choice Only/ })).toHaveCount(1);
+});
+
+test('a rejected Noul confidence result stays raw and visible without selecting a route', async ({
+  page,
+  request,
+}) => {
+  const app = await control(request, '/apps', { realClassifiers: true });
+  const url = String(app['url']);
+  const fake = await control(request, '/classifier/start');
+  const endpoint = String(fake['endpoint']);
+  const registered = await request.put(`${url}/classifier-models/noul-check`, {
+    data: {
+      displayName: 'Noul Check',
+      providerModel: 'noul-check-latest',
+      endpoint,
+      primitives: ['noul'],
+      provider: 'http',
+    },
+  });
+  expect(registered.status()).toBe(200);
+  expect(
+    (
+      await request.patch(`${url}/classifier-models/noul-check`, { data: { enabled: true } })
+    ).status(),
+  ).toBe(200);
+  await control(request, '/classifier/respond-noul', { endpoint, trueProbability: 0.6 });
+  const config = DecisionConfigSchema.parse({
+    answer: {
+      type: 'noul',
+      true: { id: 'true', label: 'True', criteria: 'It holds' },
+      false: { id: 'false', label: 'False', criteria: 'It does not hold' },
+    },
+    evaluation: {
+      kind: 'classifier',
+      model: 'noul-check',
+      question: 'Does the claim hold?',
+      minConfidence: 0.8,
+      truthThreshold: 0.5,
+      context: { messages: 'last', includeLastOutput: true },
+    },
+    recordAlternatives: true,
+  });
+  const created = await request.post(`${url}/loops`, {
+    data: {
+      definition: primitiveLoop('Noul confidence gate', config, [
+        { id: 'true', label: 'True', target: 'branch' },
+        { id: 'false', label: 'False', target: 'done' },
+      ]),
+    },
+  });
+  expect(created.status()).toBe(201);
+  const { loop } = (await created.json()) as { loop: { id: string } };
+  const published = await request.post(`${url}/loops/${loop.id}/publish`);
+  expect(published.status(), await published.text()).toBe(200);
+  const started = await request.post(`${url}/loops/${loop.id}/runs`, { data: {} });
+  expect(started.status()).toBe(202);
+  const { run } = (await started.json()) as { run: { id: string } };
+  await expect
+    .poll(
+      async () =>
+        ((await (await request.get(`${url}/runs/${run.id}`)).json()) as { status: string }).status,
+    )
+    .toBe('failed');
+  const body = (await (await request.get(`${url}/runs/${run.id}/events`)).json()) as {
+    items: unknown;
+  };
+  const events = RunEventSchema.array().parse(body.items);
+  expect(events.some((item) => item.type === 'decision.made')).toBe(false);
+  const failed = events.find((item) => item.type === 'run.failed');
+  expect(failed).toMatchObject({
+    failure: {
+      code: 'EVALUATION_RESULT_REJECTED',
+      details: {
+        answer: {
+          type: 'noul',
+          kind: 'classifier',
+          holds: true,
+          trueProbability: 0.6,
+          confidence: 0.6,
+        },
+        acceptance: { status: 'rejected', minConfidence: 0.8 },
+      },
+    },
+  });
+
+  await page.goto(`${url}/app/runs/${run.id}`);
+  const timeline = page.getByRole('list', { name: 'Timeline' });
+  await timeline.getByRole('button', { name: /run\.failed/ }).click();
+  const rejection = page.getByRole('region', { name: 'Rejected classifier evaluation' });
+  await expect(rejection).toContainText('No decision was accepted and no route was selected.');
+  await expect(rejection).toContainText('Noul true');
+  await expect(rejection).toContainText('True probability');
+  await expect(rejection).toContainText('0.6');
+  await expect(rejection).toContainText('Minimum confidence');
+  await expect(rejection).toContainText('0.8');
 });

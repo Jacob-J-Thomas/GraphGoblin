@@ -1,7 +1,10 @@
 import {
+  DecisionEvaluationSchema,
   NodeConfigSchemas,
   SlugSchema,
   type LoopDefinitionInput,
+  type DecisionAnswer,
+  type DecisionEvaluation,
   type NodeInput,
 } from '@graphgoblin/contracts';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
@@ -21,6 +24,7 @@ import { SchemaForm } from '../forms/SchemaForm.js';
 import { FieldLabelsContext } from '../forms/fields/shared.js';
 import { nextChangeId } from '../forms/changes.js';
 import { DecisionKindPicker } from './DecisionKindPicker.js';
+import { DecisionAnswerPicker } from './DecisionAnswerPicker.js';
 import { TriggerPresets } from './TriggerPresets.js';
 import { CatalogWarningsContext } from '../forms/fields/model.js';
 import { canvasFocusTarget } from './canvas-focus.js';
@@ -34,8 +38,15 @@ import { SubloopPicker } from './SubloopPicker.js';
 import { useEditorStore } from './store.js';
 
 /** Why `draft` cannot become the id of node `nodeId`, or undefined when it can (or is unchanged). */
-const DECISION_UNION_PICKERS = { evaluation: DecisionKindPicker };
-const DECISION_FIELD_ORDER = ['evaluation', 'answer'] as const;
+const DECISION_UNION_PICKERS = {
+  answer: DecisionAnswerPicker,
+  evaluation: DecisionKindPicker,
+};
+const DECISION_FIELD_ORDER = ['answer', 'evaluation'] as const;
+const DECISION_FIELD_LABELS = {
+  'evaluation.minConfidence': 'Min confidence',
+  'evaluation.truthThreshold': 'Noul true-probability threshold',
+};
 const POLL_FIELD_LABELS = {
   dedupeKey: 'Whole-probe dedupe key (single-result only)',
   'items.dedupeKey': 'Per-item dedupe key',
@@ -57,6 +68,85 @@ export function idProblem(
 function subloopId(config: unknown): string {
   const ref = (config as { loopRef?: { loopId?: unknown } } | undefined)?.loopRef;
   return typeof ref?.loopId === 'string' ? ref.loopId : '';
+}
+
+function record(value: unknown): Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function answerType(config: unknown): DecisionAnswer['type'] | undefined {
+  const type = record(record(config)['answer'])['type'];
+  return type === 'choice' || type === 'noul' || type === 'score' ? type : undefined;
+}
+
+const ANSWER_DEFAULTS = {
+  choice: {
+    type: 'choice',
+    options: [
+      { id: 'yes', label: 'Yes', criteria: 'The answer is yes' },
+      { id: 'no', label: 'No', criteria: 'The answer is no' },
+    ],
+  },
+  noul: {
+    type: 'noul',
+    true: { id: 'true', label: 'True', criteria: 'The statement is true' },
+    false: { id: 'false', label: 'False', criteria: 'The statement is false' },
+  },
+  score: {
+    type: 'score',
+    anchors: ['Does not meet the rubric', 'Partly meets the rubric', 'Fully meets the rubric'],
+    bands: [
+      { id: 'low', label: 'Low', min: 0, max: 0.5 },
+      { id: 'mid', label: 'Middle', min: 0.5, max: 1.5 },
+      { id: 'high', label: 'High', min: 1.5, max: 2 },
+    ],
+  },
+} satisfies Record<DecisionAnswer['type'], DecisionAnswer>;
+
+/** Keep a newly selected primitive usable before the user fills its route-specific fields. */
+function decisionVariantChange(next: unknown, previous: unknown): unknown {
+  const nextConfig = record(next);
+  const oldType = answerType(previous);
+  const nextType = answerType(next);
+  if (!nextType || nextType === oldType) return next;
+
+  const answer = ANSWER_DEFAULTS[nextType];
+  const parsed = DecisionEvaluationSchema.safeParse(nextConfig['evaluation']);
+  let evaluation: DecisionEvaluation;
+  if (nextType === 'score' && (!parsed.success || parsed.data.kind !== 'classifier')) {
+    const question =
+      parsed.success && parsed.data.kind === 'llm'
+        ? parsed.data.question
+        : 'Score the input against the ordered rubric.';
+    const context =
+      parsed.success && parsed.data.kind !== 'expression'
+        ? parsed.data.context
+        : { messages: 'last' as const, includeLastOutput: true };
+    evaluation = {
+      kind: 'classifier',
+      model: 'jev',
+      question,
+      context,
+    };
+  } else if (parsed.success && parsed.data.kind === 'classifier') {
+    const { truthThreshold: _truthThreshold, ...classifier } = parsed.data;
+    evaluation = nextType === 'noul' ? parsed.data : classifier;
+  } else if (parsed.success && parsed.data.kind === 'expression') {
+    evaluation = {
+      ...parsed.data,
+      jsonata: nextType === 'noul' ? 'true' : '"yes"',
+    };
+  } else if (parsed.success) {
+    evaluation = parsed.data;
+  } else {
+    evaluation = {
+      kind: 'expression',
+      jsonata: nextType === 'noul' ? 'true' : '"yes"',
+    };
+  }
+  return { ...nextConfig, answer, evaluation };
 }
 
 /** The heading of the dialog `from` sits in (it names the dialog). */
@@ -166,6 +256,16 @@ export function NodeEditorDialog({
     const error = idProblem(id.value, node.id, definition);
     setIdState({ ...id, error });
     if (!error && id.value !== node.id) renameNode(node.id, id.value);
+  };
+
+  const handleConfigChange = (config: unknown, change: Parameters<typeof updateNode>[2]) => {
+    if (node.kind === 'decision' && change?.path === 'answer') {
+      const normalized = decisionVariantChange(config, node.config);
+      if (normalized !== config) setEpoch((current) => current + 1);
+      updateNode(node.id, { config: normalized }, change);
+      return;
+    }
+    updateNode(node.id, { config }, change);
   };
 
   const requestClose = (reason: DialogCloseReason) => {
@@ -304,7 +404,9 @@ export function NodeEditorDialog({
               value={
                 node.kind === 'trigger' && node.config?.subtype === 'poll'
                   ? POLL_FIELD_LABELS
-                  : DEFAULT_FIELD_LABELS
+                  : node.kind === 'decision'
+                    ? DECISION_FIELD_LABELS
+                    : DEFAULT_FIELD_LABELS
               }
             >
               <SchemaForm
@@ -317,7 +419,7 @@ export function NodeEditorDialog({
                 unionPickers={node.kind === 'decision' ? DECISION_UNION_PICKERS : undefined}
                 problems={configProblems}
                 disclosures={disclosures}
-                onChange={(config, change) => updateNode(node.id, { config }, change)}
+                onChange={handleConfigChange}
                 parseErrors={fieldErrors[`node:${node.id}`]}
                 onParseError={(path, error, reason, change) =>
                   setFieldError(`node:${node.id}`, path, error, reason, change)

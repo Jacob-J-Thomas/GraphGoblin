@@ -387,6 +387,24 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
         })),
       };
     }
+    case '/classifier/respond-noul': {
+      const fake = classifiers.get(String(body['endpoint']));
+      const trueProbability = body['trueProbability'];
+      if (!fake) throw new Error(`no fake classifier at ${String(body['endpoint'])}`);
+      if (typeof trueProbability !== 'number' || trueProbability < 0 || trueProbability > 1)
+        throw new E2eControlError('trueProbability must be between 0 and 1');
+      fake.respondWith((request) => {
+        if (request.body.questions.answer.type !== 'noul')
+          return { status: 400, body: { error: 'This E2E response is for Noul only.' } };
+        return {
+          body: {
+            model: request.body.model,
+            answers: { answer: { type: 'noul', noul: trueProbability } },
+          },
+        };
+      });
+      return { configured: true };
+    }
     case '/apps': {
       const extra = await startApp(
         (body['env'] as Record<string, string> | undefined) ?? {},

@@ -25,50 +25,33 @@ Invalid cron schedules produce `CRON_INVALID` issues with the trigger's nodeId a
 an expression issue in the editor opens the schedule's Advanced group and focuses
 the raw expression; a timezone issue focuses the time zone control.
 
-## Decision (Decided, #98)
+## Decision (Decided, #98 and #97)
 
-Evaluates exactly one selected method and follows the output port for its answer. Evaluation kind and answer type are separate. This release supports Choice answers with 2–64 options, subject to the selected provider's tighter limits.
+Evaluates one selected method and follows the stable output port for its answer. Choose the answer type independently from the evaluation kind:
 
-```ts
-type DecisionConfig = {
-  answer: {
-    type: 'choice';
-    options: { id: string; label: string; criteria: string }[];
-  };
-  evaluation:
-    | { kind: 'expression'; jsonata: string }
-    | {
-        kind: 'classifier';
-        model: string;
-        question: string;
-        context?: DecisionContext;
-        minConfidence?: number;
-      }
-    | {
-        kind: 'llm';
-        harness: 'codex';
-        question: string;
-        context?: DecisionContext;
-        model: { mode: 'inherit' } | { mode: 'explicit'; value: string };
-        effort: { mode: 'inherit' } | { mode: 'explicit'; value: Effort };
-      };
-  recordAlternatives: boolean;
-};
-```
+| Answer | Expression                  | Classifier              | LLM (Codex)          |
+| ------ | --------------------------- | ----------------------- | -------------------- |
+| Choice | A declared string option ID | Choice probabilities    | Structured option ID |
+| Noul   | A strict boolean            | True probability        | Structured boolean   |
+| Score  | Unsupported                 | Fractional rubric index | Unsupported          |
 
-An option's stable `id` is the provider key and output port. Its unique, nonblank `label` is display text; `criteria` explains when it should be selected. Renaming or reordering display labels keeps each connection attached to its option. Strategy arrays, inactive evaluator blocks and unsupported answer/kind combinations are rejected.
+**Choice** declares two to sixty-four options, subject to actual provider limits. Each has a stable id, a unique readable label and a nonblank criterion. Renaming or reordering a label keeps the connection attached to its ID. Expressions must return one declared string ID; values are not implicitly stringified.
 
-**Expression** returns a declared string option ID from JSONata. Values are not implicitly stringified. It invokes no provider. **Classifier** selects an explicit owner-scoped catalog ID with Choice capability. **LLM** selects an implemented harness, currently Codex, and requests a structured answer. Model and effort resolve within that harness from node selection, loop defaults, owner defaults, then process defaults; an invalid explicit value is never silently replaced.
+**Noul** declares true and false sides, each with a stable port ID, label and criterion. The classifier receives both criteria and returns the raw probability of true. A probability at or above the truth threshold selects true; the default is 0.5. Chosen-side confidence is that probability for true and one minus it for false. The separate minimum confidence controls whether the answer is accepted. Expressions return an actual boolean; Codex returns a boolean with informational confidence. Neither uses a classifier truth threshold.
 
-Unknown catalog entries, unsupported capabilities, and invalid model/effort combinations are admission errors. Disabled or unconfigured selections remain visible with draft diagnostics and block publication. Runtime rechecks the selected configuration; an unavailable evaluator fails rather than selecting another kind. An in-flight request retains its starting selection.
+**Score** declares ordered anchors indexed from zero to N-1. Scores may be fractional: three anchors define a scale from 0 through 2, not three categorical labels. Stable named bands cover that entire range without gaps or overlap. Each includes its lower endpoint and excludes its upper endpoint; the final band also includes the scale maximum. A score exactly on an interior boundary enters the next band. The engine never rounds or rescales it.
 
-Only classifiers accept `minConfidence`. A result below it fails with `EVALUATION_RESULT_REJECTED`; it does not choose another route or provider. LLM confidence is required, finite, and between zero and one. It is informational self-report, not a calibrated probability, and has no threshold. Expression confidence is null. Malformed answers, undeclared option IDs, and expression failures have typed nonresumable errors. Restorable unavailability and transient provider failures are resumable; cancellation remains cancellation. See [execution engine](05-execution-engine.md).
+Select one Expression, Classifier or LLM evaluator. Classifiers name an explicit owner-scoped catalog ID supporting the declared primitive. LLM currently uses Codex, with model and effort resolved within that harness from node, loop, owner and process defaults. Invalid explicit values never fall through to another selection. Score refuses Expression/LLM before a provider call.
 
-Question templates and context selection retain their existing exposure while #38 awaits the human evaluation. Templates see the full thread; the provider's separately selected state contains trigger payload, role/content messages, variables, and optional last-output value. The selector does not restrict what a question template can expose. Option criteria are sent to the selected evaluator. This change adds no citation or evidence-selection contract.
+Unknown catalog entries, incompatible capabilities and invalid model/effort combinations are admission errors. Disabled or unconfigured selections remain visible in drafts and block publication. Runtime rechecks availability; an in-flight request keeps its initial configuration. No failure invokes a different evaluator.
 
-The recorded output is `{answer:{type:'choice',optionId,confidence,probabilities},portId,provenance:{kind,provider,classifierId,model,effort}}`. Nonapplicable and historically unknown values are null. Runtime events record actual resolved model/effort where applicable. Providers' raw errors and secrets never enter that output. Historical pre-cutover skip diagnostics are retained as event evidence; new decisions have no strategy chain.
+Only classifiers accept a minimum confidence. A value below it fails with EVALUATION_RESULT_REJECTED; equality passes. A valid rejected answer may be retained as canonical failure evidence, but it produces no selected route or decision output. LLM confidence must be finite and in [0,1], is informational and has no decision threshold. Expression confidence is null. Invalid answers and expression failures have typed nonresumable errors; restorable unavailability/transient provider failures remain resumable, and cancellation remains cancellation.
 
-Old definitions, exports and persisted outputs require the offline conversion described in the CHANGELOG. Exit predicates retain their existing contract until #99.
+Current context behavior is unchanged while #38 is deferred. Questions render against the full thread. The separate provider state contains trigger payload, selected role/content messages, selected variables and optional bare last-output value. The selector does not restrict the question template. Side/option criteria and Score anchors describe the answer requested from the evaluator; no input-preview or new evidence-selection contract is added.
+
+The output retains the raw typed answer, selected port and resolved provider/model provenance. Choice keeps its existing optionId/confidence/probabilities shape. New Noul and Score evidence records their applicable probability, threshold or rubric facts; a bounded LLM explanation is labelled as a reasoning excerpt. Provider error bodies and credentials are excluded. Existing historical skip diagnostics remain event evidence; new decisions have no strategy chain. The generated [node reference](reference/nodes.md) gives the exact fields.
+
+#97 adds answer variants within format 2; existing Choice definitions/results need no rewrite for these additions. The earlier #98 offline upgrade still applies to format-1 data. Exit predicates retain their current contract until #99.
 
 ## Inferencing (Decided)
 

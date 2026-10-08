@@ -124,7 +124,9 @@ describe('decision node', () => {
       value: 7,
     });
     expect(r.result).toBe('good');
-    expect(e.ports.classifiers.requests).toEqual([{ ownerId: 'local', modelId: 'jev' }]);
+    expect(e.ports.classifiers.requests).toEqual([
+      { ownerId: 'local', modelId: 'jev', primitive: 'choice' },
+    ]);
     expect(e.events(r.id).find((ev) => ev.type === 'decision.made')).toMatchObject({
       answer: answer(),
       portId: 'good',
@@ -214,6 +216,27 @@ describe('decision node', () => {
     expect(r.failure).toMatchObject({ code: 'EVALUATION_RESULT_REJECTED', resumable: false });
     expect(e.ports.codexDecider.choices).toEqual([]);
     expect(e.eventTypes(r.id)).not.toContain('decision.made');
+  });
+  it('omits rejected Choice alternatives while retaining selected answer, confidence and gate', async () => {
+    const e = await createTestEngine();
+    e.ports.jev.choose = () => Promise.resolve(answer('bad', 0.3, { good: 0.7, bad: 0.3 }));
+    const r = await e.runToIdle(
+      e.publish(
+        decisionLoop('low-without-alternatives', { ...classifier, minConfidence: 0.5 }, false),
+      ).loopId,
+    );
+    expect(r.failure).toMatchObject({
+      code: 'EVALUATION_RESULT_REJECTED',
+      details: {
+        answer: { type: 'choice', optionId: 'bad', confidence: 0.3, probabilities: null },
+        provenance: { kind: 'classifier', classifierId: 'jev' },
+        acceptance: { status: 'rejected', minConfidence: 0.5 },
+      },
+    });
+    expect(e.eventTypes(r.id)).not.toContain('decision.made');
+    expect((await e.manager.getThread(r.id))?.outputs['decide']).toBeUndefined();
+    const failed = e.events(r.id).find((event) => event.type === 'run.failed');
+    expect(failed).toMatchObject({ failure: { details: { answer: { probabilities: null } } } });
   });
   it.each([
     answer('unknown'),
@@ -345,7 +368,8 @@ describe('decision node', () => {
               : llm,
         );
         const node = definition.nodes[1];
-        if (node?.kind !== 'decision') throw new Error('Expected decision');
+        if (node?.kind !== 'decision' || node.config.answer.type !== 'choice')
+          throw new Error('Expected Choice decision');
         node.config.answer.options = reverse ? [...options].reverse() : options;
         definition.edges = definition.edges.filter((edge) => edge.from.node !== 'decide');
         definition.edges.push(
