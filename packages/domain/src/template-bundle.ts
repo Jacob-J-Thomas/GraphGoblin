@@ -243,6 +243,20 @@ export function prepareTemplateBundle(
     const definition = LoopDefinitionSchema.parse(bundle.loops[key]);
     definition.name = allocations[key]!.name;
     if ('maxIterations' in settings) definition.settings.maxIterations = settings.maxIterations;
+    else if (settings.kind === 'review') {
+      definition.settings.maxIterations =
+        settings.limits.automaticCycles +
+        settings.limits.extraCycles +
+        settings.limits.reminders +
+        2;
+      for (const node of definition.nodes)
+        if (
+          node.kind === 'wait' &&
+          node.config.mode === 'input' &&
+          (node.id === 'human-wait' || node.id === 'human-wait-capped')
+        )
+          node.config.timeoutSeconds = settings.limits.waitHours * 3600;
+    }
     for (const mapping of descriptor.roleNodes) {
       const node = definition.nodes.find(
         (candidate): candidate is Extract<Node, { kind: 'inference' }> =>
