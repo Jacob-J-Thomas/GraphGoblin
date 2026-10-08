@@ -11,7 +11,7 @@ import {
 } from '@graphgoblin/contracts';
 import { z } from 'zod';
 import type { APIRequestContext, Locator, Page } from '@playwright/test';
-import { closeNode, control, expect, openItem, openNode, test } from './fixtures.js';
+import { closeNode, control, expect, openNode, test } from './fixtures.js';
 
 const LOCAL_MODEL = 'exit-local';
 const CHOICE_MODEL = 'exit-choice-only';
@@ -218,7 +218,11 @@ function exitLoop(
     ],
     edges: [
       { id: 'start-prepare', from: { node: 'start', port: 'out' }, to: { node: 'prepare' } },
-      { id: 'prepare-done', from: { node: 'prepare', port: 'out' }, to: { node: 'done' } },
+      {
+        id: 'prepare-alternate',
+        from: { node: 'prepare', port: 'out' },
+        to: { node: 'alternate' },
+      },
       { id: 'alternate-done', from: { node: 'alternate', port: 'out' }, to: { node: 'done' } },
       { id: 'exit-loopback', from: { node: 'done', port: 'loopBack' }, to: { node: 'prepare' } },
     ],
@@ -262,7 +266,14 @@ async function createLoop(
   const response = await request.post(url + '/loops', { data: { definition } });
   expect(response.status(), await response.text()).toBe(201);
   const body = (await response.json()) as { loop: { id: string } };
+  const validation = await request.post(url + '/loops/' + body.loop.id + '/validate', {
+    data: { definition },
+  });
+  expect(validation.status()).toBe(200);
+  expect(await validation.json()).toEqual({ publishable: true, issues: [] });
   await openEditor(page, url, body.loop.id);
+  await expect(page.getByText('Ready to publish', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Publish', exact: true })).toBeEnabled();
   return body.loop.id;
 }
 
@@ -279,7 +290,17 @@ async function savedDraft(page: Page, request: APIRequestContext, url: string, l
 async function criterionEditor(page: Page, index = 0): Promise<Locator> {
   const dialog = await openNode(page, 'done');
   await expect(dialog).toHaveAccessibleName('Edit exit done');
-  await openItem(dialog, 'Criteria ' + (index + 1));
+  const row = dialog.locator('[data-row-path="criteria.' + index + '"]');
+  await expect(row).toBeVisible();
+  const name = 'Criteria ' + (index + 1);
+  const disclosure = row.getByRole('button', { name: new RegExp('^' + name + '\\b') });
+  if (await disclosure.count()) {
+    await expect(disclosure).toHaveCount(1);
+    if ((await disclosure.getAttribute('aria-expanded')) === 'false') await disclosure.click();
+    await expect(disclosure).toHaveAttribute('aria-expanded', 'true');
+  } else {
+    await expect(row.getByRole('group', { name, exact: true })).toBeVisible();
+  }
   return dialog;
 }
 
@@ -300,7 +321,11 @@ async function assertOnlyLoopBack(page: Page) {
 }
 
 async function publish(page: Page, version: number) {
-  await page.getByRole('button', { name: 'Publish', exact: true }).click();
+  await expect(page.getByTestId('save-state')).toHaveText('All changes saved');
+  await expect(page.getByText('Ready to publish', { exact: true })).toBeVisible();
+  const button = page.getByRole('button', { name: 'Publish', exact: true });
+  await expect(button).toBeEnabled();
+  await button.click();
   await expect(page.getByText('Published version ' + version + '.')).toBeVisible();
 }
 
@@ -453,7 +478,9 @@ exitTest(
     await page.reload();
     dialog = await criterionEditor(page);
     await expect(dialog.getByRole('checkbox', { name: /Reviewed.*ready/ })).toBeChecked();
-    await expect(dialog.getByLabel('Classifier', { exact: true })).toHaveValue(CHOICE_MODEL);
+    await expect(dialog.getByRole('combobox', { name: 'Classifier', exact: true })).toHaveValue(
+      CHOICE_MODEL,
+    );
     await closeNode(page);
     await publish(page, 1);
     const events = await runLoop(page, request, url, loopId, 'succeeded');
@@ -470,7 +497,7 @@ exitTest(
     await openEditor(page, url, loopId);
     dialog = await criterionEditor(page);
     await chooseAnswer(page, dialog, 'Score');
-    const picker = dialog.getByLabel('Classifier', { exact: true });
+    const picker = dialog.getByRole('combobox', { name: 'Classifier', exact: true });
     await expect(picker).toHaveValue(CHOICE_MODEL);
     await expect(picker.getByRole('option', { selected: true })).toContainText('not Score-capable');
     await expect(dialog).toContainText('Choose a Score-capable classifier');
@@ -487,7 +514,9 @@ exitTest(
     await page.reload();
     dialog = await criterionEditor(page);
     await expect(dialog.getByRole('radio', { name: 'Score', exact: true })).toBeChecked();
-    await expect(dialog.getByLabel('Classifier', { exact: true })).toHaveValue(LOCAL_MODEL);
+    await expect(dialog.getByRole('combobox', { name: 'Classifier', exact: true })).toHaveValue(
+      LOCAL_MODEL,
+    );
     await expect(dialog.getByLabel('Rubric index', { exact: true })).toHaveValue('1.25');
     await expect(dialog.getByRole('radio', { name: 'Codex LLM', exact: true })).toHaveCount(0);
     await closeNode(page);
@@ -697,7 +726,9 @@ exitTest(
     });
     await page.reload();
     dialog = await criterionEditor(page);
-    await expect(dialog.getByLabel('Classifier', { exact: true })).toHaveValue(LOCAL_MODEL);
+    await expect(dialog.getByRole('combobox', { name: 'Classifier', exact: true })).toHaveValue(
+      LOCAL_MODEL,
+    );
     await expect(
       dialog.getByRole('switch', { name: 'Match when the answer is true' }),
     ).not.toBeChecked();
