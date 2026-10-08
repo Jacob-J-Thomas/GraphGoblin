@@ -61,7 +61,7 @@ Restoring the pre-upgrade backup discards every edit and run created after that 
 
 ## Browser drafts and converter lifetime
 
-On opening the new app, the same pure converter upgrades unambiguous device drafts. Ambiguous or incomplete drafts are set aside with their original JSON available for export; resolve them through the offline export command. The editor does not silently select an evaluator. The run-event cache is versioned so old decision events are fetched again from the upgraded server.
+On opening the new app, the same pure converter upgrades unambiguous device drafts. Ambiguous or incomplete drafts in an older format are set aside with their original JSON available for export; resolve them through the offline export command. The editor does not silently select an evaluator. The run-event cache is versioned so old decision events are fetched again from the upgraded server.
 
 This converter remains available through the cutover release. It can be retired no earlier than the next incompatible release with an upgrade notice. Old exports after retirement require the appropriate older converter/build; runtime parsing does not keep a legacy decision executor.
 
