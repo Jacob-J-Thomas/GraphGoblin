@@ -209,6 +209,54 @@ describe('editable starter execution', () => {
       await app!.container.repos.runs.get(newer.json<{ run: { id: string } }>().run.id),
     ).toMatchObject({ status: 'succeeded' });
   });
+  it('resumes an ordinary starter inference failure and rechecks repaired readiness before retrying', async () => {
+    const { instance } = await editedStarter();
+    app!.harness.script([
+      { error: { code: 'harness_quota_exhausted', message: 'quota exhausted' } },
+    ]);
+    const started = await app!.app.inject({
+      method: 'POST',
+      url: '/loops/' + instance.parentLoopId + '/runs',
+      payload: {},
+    });
+    expect(started.statusCode, started.body).toBe(202);
+    await app!.idle();
+    const id = started.json<{ run: { id: string } }>().run.id;
+    expect(await app!.container.repos.runs.get(id)).toMatchObject({
+      status: 'failed',
+      failure: { code: 'HARNESS_QUOTA_EXHAUSTED', resumable: true },
+    });
+    expect(app!.harness.started).toHaveLength(1);
+    app!.harness.preflightResult = { ok: false, authenticated: false, problems: ['fixture'] };
+    const unavailable = await app!.app.inject({
+      method: 'POST',
+      url: '/runs/' + id + '/resume',
+      payload: {},
+    });
+    expect(unavailable.statusCode, unavailable.body).toBe(200);
+    await app!.idle();
+    expect(await app!.container.repos.runs.get(id)).toMatchObject({
+      status: 'failed',
+      failure: { code: 'TEMPLATE_PREREQUISITE_UNAVAILABLE', resumable: true },
+    });
+    expect(app!.harness.started).toHaveLength(1);
+    expect(app!.harness.resumed).toHaveLength(0);
+    app!.harness.preflightResult = { ok: true, authenticated: true, problems: [] };
+    app!.harness.script([{ finalText: 'Recovered starter output' }]);
+    const resumed = await app!.app.inject({
+      method: 'POST',
+      url: '/runs/' + id + '/resume',
+      payload: {},
+    });
+    expect(resumed.statusCode, resumed.body).toBe(200);
+    await app!.idle();
+    expect(await app!.container.repos.runs.get(id)).toMatchObject({ id, status: 'succeeded' });
+    expect(app!.harness.started).toHaveLength(1);
+    expect(app!.harness.resumed).toHaveLength(1);
+    expect(
+      (await app!.container.repos.events.read(id)).filter((event) => event.type === 'run.resumed'),
+    ).toHaveLength(2);
+  });
   it('refuses the actual current harness account before any node or provider turn', async () => {
     const { instance } = await editedStarter();
     app!.harness.preflightResult = { ok: false, authenticated: false, problems: ['fixture'] };

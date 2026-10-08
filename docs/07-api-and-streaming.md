@@ -322,3 +322,5 @@ issue-label or rework authority. QA requires one unambiguous linked issue.
 Linked external originals start at attempt one. The API derives and persists
 these identities during admission; authored run input cannot assert them.
 Repository recipes remain unregistered in this foundation release.
+
+Starter templates keep the ordinary engine resume behavior for resumable inference failures. Every resumed execution rechecks the actual pinned role configuration before another node can run. Repository recipes restrict resume to their original, allowlisted pre-execution prerequisite failure. If a restarted repository run already has a `node.started` event, lost prerequisites or authority require manual recovery; the failure does not claim that earlier effects were absent and no pre-execution explanatory comment is posted.

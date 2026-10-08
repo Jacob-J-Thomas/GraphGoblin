@@ -44,7 +44,7 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ### Upgrade notes
 
-- #28 adds optional API-owned `templateSubject` metadata to run snapshots/list items and required nullable `nextCursor` to the run-list response. Regenerate strict API clients. Existing engine `RunRecord` and context/session behavior stay unchanged. The starter catalog creates drafts only; repository recipes are not yet registered.
+- #28 adds optional API-owned `templateSubject` metadata to run snapshots/list items and required nullable `nextCursor` to the run-list response. The default list page grows from 50 to 100 items; pass an explicit `limit` when relying on a page size. Regenerate strict API clients. Existing engine `RunRecord` and context/session behavior stay unchanged. The starter catalog creates drafts only; repository recipes are not yet registered.
 
 - **#99 advances current definitions and exports to format 3.** Exit predicates now declare `answer`, `evaluation` and `match`, using the shared Noul/Choice/Score evaluator with existing context unchanged. Every legacy provider predicate needs explicit true/false criteria in the conversion manifest; coercing expressions need a reviewed boolean rewrite. The offline tool composes frozen format 1-to-2 conversion with 2-to-3, preserving raw history and refusing unresolved or nonterminal stores. Rebuild clients and review replay-only dispositions for affected failed runs. Back up the complete stopped data directory and rehearse conversion/restoration first. Restoring the old backup discards post-upgrade edits and runs.
 
