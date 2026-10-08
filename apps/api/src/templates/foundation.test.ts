@@ -742,7 +742,7 @@ describe('trusted authority provenance and lifecycle', () => {
       ),
     ).toThrow();
   });
-  it('atomically consumes an issue attempt, skips a new poll key, and isolates unrelated subjects', async () => {
+  it('atomically consumes an issue attempt, refuses a forged poll key, and isolates unrelated subjects', async () => {
     const f = await foundation();
     const first = f.intent('first');
     const second = f.intent('second');
@@ -757,7 +757,11 @@ describe('trusted authority provenance and lifecycle', () => {
       status: 'failed',
       failure: { code: 'INTERNAL_ERROR', message: 'effect failed', resumable: true },
     });
-    expect(await f.admission.createPollItem(f.intent('new-key', true))).toBeUndefined();
+    const forged = f.intent('new-key', true);
+    await expect(f.admission.createPollItem(forged)).rejects.toMatchObject({
+      code: 'TEMPLATE_AUTHORITY_REFUSED',
+    });
+    expect(await f.runs.get(forged.run.id)).toBeUndefined();
     const candidate = f.intent('manual-again');
     await expect(f.admission.create(candidate)).rejects.toMatchObject({
       code: 'TEMPLATE_SUBJECT_CONSUMED',

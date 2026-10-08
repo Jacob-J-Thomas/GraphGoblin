@@ -92,3 +92,13 @@ Body-signature verification uses the exact raw bytes before decoding or parsing.
 ## Multi-tenant checklist for later (recorded)
 
 Owner scoping enforced in every repository method, auth provider with OIDC, per-user secret keys, remote runners with isolation, Postgres, scheduler lease and run-execution lease (1.0 supports one API process, with one run manager and one scheduler, per data directory: a second process over the same database would execute queued and recovered runs twice and fire schedules twice), rate limits per owner, audit log of control actions.
+
+## Repository template support (#30)
+
+Implementation support receives its admitted identity and an owner-scoped API key with exactly runs:read through private standard input. Credentials are excluded from arguments, inherited gate environments and persisted outputs. The API checks the immutable template binding, original node visit and authenticated claim before launching support. The installed entry and its local executable dependencies are hashed together; a changed support package requires a newly instantiated binding.
+
+Support journals use an HMAC bound to the owner, parent run, repository, issue and attempt. The same revocable support credential authenticates these local effect intents; it is not written into the journal. Rotate the credential while no attempt is active or awaiting recovery. Revocation or replacement during an attempt can prevent journal authentication and requires manual reconciliation. Permanent attempt reservations in the run store are not cleared.
+
+Git effects verify canonical roots and the configured origin, use literal argument arrays with hooks and fsmonitor disabled, and reconcile commits, pushes and PR creation against saved intent. Windows pnpm gates use a resolved Node executable and installed pnpm.cjs; batch launchers are refused. Gate launch intent and its count are saved before execution. A timeout with unconfirmed descendant termination quarantines the workspace rather than permitting cleanup or another gate.
+
+These checks do not provide operating-system confinement. Gates and supported Claude execution policies run with the API account's filesystem access. A clean environment and a contained support worktree do not prevent code from reading other files that account can access. The separate QA recipe's enforced evidence-only isolation remains unavailable; this implementation workflow does not satisfy that requirement.
