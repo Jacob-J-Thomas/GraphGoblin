@@ -278,7 +278,7 @@ custom capabilities, and nonempty `configOverrides` are refused during validatio
 runtime. These settings cannot be silently dropped or reinterpreted. The launch explicitly
 restricts tool lists, permission prompts, settings sources, and MCP configuration; it checks
 the effective model, authentication source, tools, MCP servers, plugins, and skills reported by
-the CLI before accepting the session policy. Managed policy remains in force. The two hostile-project policy canaries passed for the tested restrictions; their limits and remaining native adapter verification are recorded in the [#26 QA report](qa/2026-10-07-issue-26.md).
+the CLI before accepting the session policy. Managed policy remains in force. The two hostile-project policy canaries passed for the tested restrictions; their limits and bounded native fresh/resume evidence are recorded in the [#26 QA report](qa/2026-10-07-issue-26.md).
 
 When an inference turn requests an output schema, the pinned CLI init must advertise exactly
 the allowed execution tools plus one `StructuredOutput` carrier. Without a schema, that carrier
@@ -289,7 +289,7 @@ file, command, input, or result body. Duplicate advertised tools, other unexpect
 unmatched IDs, and non-boolean error markers fail closed. The final native
 `result.structured_output` remains the sole candidate for engine validation and repair; carrier
 input or final text cannot replace it. This exact carrier name/set was observed in CLI
-`2.1.285` init; its complete native call/result stream remains to be verified in the
+`2.1.285` init. Bounded native fresh and same-session resume schema turns at source `3349212` verified correlated carrier calls/settlements, final structured candidates, and exact Opus 5.5 model usage. The resume returned the exact remembered synthetic nonce without that nonce in its prompt. This establishes the tested fresh/resume path, not general recall or prompt-delivery acknowledgment; safe evidence and remaining acceptance are in the
 [#26 QA report](qa/2026-10-07-issue-26.md). The official
 [CLI reference](https://code.claude.com/docs/en/cli-reference) documents `--json-schema`, and
 [structured-output documentation](https://code.claude.com/docs/en/agent-sdk/structured-outputs)
