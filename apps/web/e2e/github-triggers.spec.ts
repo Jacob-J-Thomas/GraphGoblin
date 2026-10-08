@@ -26,7 +26,7 @@ interface DeliveryEvent {
 
 function triggerLoop(name: string) {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     name,
     nodes: [
       {

@@ -29,3 +29,4 @@ One file per decision. Status is Accepted unless stated. Supersede by adding a n
 | [0023](ADR-0023-installed-claude-code.md)                | Owner-installed Claude Code CLI as a native-Windows inference harness                          |
 | [0024](ADR-0024-github-trigger-admission.md)             | Body-signed webhooks, durable admission and bounded poll items                                 |
 | [0025](ADR-0025-answer-primitives.md)                    | Noul, Choice and Score answers with existing context preserved                                 |
+| [0026](ADR-0026-exit-primitives-and-format-three.md)     | Shared exit answer primitives and one offline format-3 cutover                                 |

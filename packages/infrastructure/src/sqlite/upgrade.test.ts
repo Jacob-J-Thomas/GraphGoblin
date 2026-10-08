@@ -5,9 +5,12 @@ import {
   LoopDefinitionSchema,
   RunEventSchema,
   type RunStatus,
+  V2NodeConfigSchemas,
 } from '@graphgoblin/contracts';
 import { openMemoryDatabase, openDatabase, type DatabaseHandle } from './db.js';
 import { SqliteRunRepository } from './runs.js';
+import { upgradeLoopV1 } from '@graphgoblin/domain';
+import { fakeUlid } from '@graphgoblin/contracts/testing';
 import {
   applyDatabaseUpgrade,
   guardDatabaseUpgrade,
@@ -23,6 +26,301 @@ const storedText = (value: unknown): string => {
 const handles: DatabaseHandle[] = [];
 afterEach(() => {
   for (const handle of handles.splice(0)) handle.close();
+});
+
+describe('format-3 exit cutover', () => {
+  const sides = {
+    type: 'noul' as const,
+    true: { label: 'Done', criteria: 'All work is complete' },
+    false: { label: 'Pending', criteria: 'Required work remains' },
+  };
+  async function v2(handle: DatabaseHandle, criteria: unknown[]) {
+    const frozen = upgradeLoopV1(definition());
+    if (!frozen.ok) throw new Error('fixture conversion failed');
+    const value = structuredClone(frozen.value);
+    const exit = value.nodes.find((node) => node.kind === 'exit');
+    if (!exit || exit.kind !== 'exit') throw new Error('fixture exit missing');
+    // Deliberately write an old-format source; current repository methods must not admit it.
+    const raw = {
+      ...value,
+      nodes: value.nodes.map((node) =>
+        node.id === exit.id ? { ...node, config: { ...exit.config, criteria } } : node,
+      ),
+    };
+    await handle.client.execute({
+      sql: 'UPDATE loop_versions SET definition=? WHERE id=?',
+      args: [JSON.stringify(raw), FIXTURE_IDS.version],
+    });
+    return raw;
+  }
+  it('refuses unresolved provider intent atomically, then converts exact factual evidence and preserves prior audit/session rows', async () => {
+    const handle = await legacy('failed');
+    const original = await v2(handle, [
+      {
+        when: 'predicate',
+        strategy: 'jev',
+        question: 'Done?',
+        minConfidence: 0.8,
+        outcome: 'success',
+      },
+      {
+        when: 'predicate',
+        strategy: 'codex',
+        question: 'Ready?',
+        minConfidence: 0.7,
+        outcome: 'failure',
+      },
+    ]);
+    await handle.client.execute(
+      'CREATE TABLE gg_upgrade_state (id INTEGER PRIMARY KEY, format_version INTEGER NOT NULL,status TEXT NOT NULL,source_hash TEXT NOT NULL,manifest_hash TEXT NOT NULL)',
+    );
+    await handle.client.execute("INSERT INTO gg_upgrade_state VALUES (1,2,'complete','old','old')");
+    await handle.client.execute(
+      'CREATE TABLE gg_upgrade_archive (kind TEXT NOT NULL,identity TEXT NOT NULL,source_hash TEXT NOT NULL,manifest_hash TEXT NOT NULL,payload TEXT NOT NULL,PRIMARY KEY(kind,identity,manifest_hash))',
+    );
+    await handle.client.execute(
+      "INSERT INTO gg_upgrade_archive VALUES ('previous','retained','old','old','{\"retained\":true}')",
+    );
+    const oldFact = {
+      iteration: 1,
+      maxIterations: 10,
+      criteria: [
+        {
+          index: 0,
+          strategy: 'jev',
+          status: 'not-matched',
+          holds: false,
+          confidence: 0.6,
+          minConfidence: 0.8,
+        },
+        { index: 1, strategy: 'codex', status: 'matched' },
+      ],
+      result: {
+        kind: 'completed',
+        outcome: 'failure',
+        reason: 'criterion-matched',
+        criterionIndex: 1,
+      },
+    };
+    await handle.client.execute({
+      sql: "INSERT INTO run_events (run_id,seq,ts,type,node_id,payload) VALUES (?,4,?,'exit.evaluated','done',?)",
+      args: [FIXTURE_IDS.run, FIXTURE_TS, JSON.stringify(oldFact)],
+    });
+    await expect(guardDatabaseUpgrade(handle.client)).rejects.toMatchObject({
+      code: 'DATA_UPGRADE_REQUIRED',
+    });
+    const sessions = (await handle.client.execute('SELECT * FROM harness_sessions')).rows;
+    const inventory = await inspectDatabaseUpgrade(handle.client);
+    expect(inventory.versions[0]?.predicates).toEqual([
+      '/nodes/2/config/criteria/0',
+      '/nodes/2/config/criteria/1',
+    ]);
+    expect(inventory.versions[0]?.issues).toMatchObject([
+      { code: 'UPGRADE_EXIT_CRITERIA_REQUIRED' },
+      { code: 'UPGRADE_EXIT_CRITERIA_REQUIRED' },
+    ]);
+    const selected = await manifest(handle);
+    await expect(applyDatabaseUpgrade(handle.client, selected)).rejects.toMatchObject({
+      code: 'DATA_UPGRADE_REQUIRED',
+    });
+    expect((await inspectDatabaseUpgrade(handle.client)).sourceHash).toBe(inventory.sourceHash);
+    expect(
+      (await handle.client.execute('SELECT format_version FROM gg_upgrade_state')).rows[0]
+        ?.format_version,
+    ).toBe(2);
+    selected.versions[FIXTURE_IDS.version]!.resolutions = {
+      predicates: {
+        '/nodes/2/config/criteria/0': { answer: sides },
+        '/nodes/2/config/criteria/1': { answer: sides },
+      },
+    };
+    await applyDatabaseUpgrade(handle.client, selected);
+    expect(await guardDatabaseUpgrade(handle.client)).toBe('current');
+    const converted = JSON.parse(
+      storedText(
+        (await handle.client.execute("SELECT payload FROM run_events WHERE type='exit.evaluated'"))
+          .rows[0]?.payload,
+      ),
+    );
+    expect(converted.criteria[0]).toMatchObject({
+      answer: { holds: false, confidence: 0.6, trueProbability: null },
+      acceptance: null,
+      configuredMinConfidence: 0.8,
+    });
+    expect(converted.criteria[1]).toMatchObject({
+      answer: { holds: null, confidence: null, reasoning: null },
+      acceptance: null,
+    });
+    expect(
+      (await handle.client.execute("SELECT payload FROM gg_upgrade_archive WHERE kind='previous'"))
+        .rows[0]?.payload,
+    ).toBe('{"retained":true}');
+    const archived = (
+      await handle.client.execute(
+        "SELECT payload FROM gg_upgrade_archive WHERE kind='run_events' AND identity LIKE '%:4'",
+      )
+    ).rows[0]?.payload;
+    expect(JSON.parse(String(JSON.parse(storedText(archived)).payload))).toEqual(oldFact);
+    expect((await handle.client.execute('SELECT * FROM harness_sessions')).rows).toEqual(sessions);
+    const stored = JSON.parse(
+      storedText(
+        (await handle.client.execute('SELECT definition FROM loop_versions')).rows[0]?.definition,
+      ),
+    );
+    expect(stored.edges).toEqual(original.edges);
+    expect(stored.nodes[2].config.return).toEqual(
+      original.nodes[2]?.kind === 'exit' && original.nodes[2].config.return,
+    );
+  });
+  it('requires an affected failed parent disposition when only a reachable child has a legacy exit', async () => {
+    const handle = await legacy('failed');
+    const parent = await v2(handle, []);
+    const childLoop = fakeUlid('exit-child-loop'),
+      childVersion = fakeUlid('exit-child-version');
+    parent.nodes.push({
+      id: 'child',
+      kind: 'subloop',
+      label: 'Child',
+      ui: { x: 0, y: 0 },
+      config: V2NodeConfigSchemas.subloop.parse({
+        loopRef: { loopId: childLoop, version: 'latest' },
+      }),
+    });
+    await handle.client.execute({
+      sql: 'UPDATE loop_versions SET definition=? WHERE id=?',
+      args: [JSON.stringify(parent), FIXTURE_IDS.version],
+    });
+    const child = {
+      ...minimalLoop(),
+      schemaVersion: 2,
+      nodes: [
+        minimalLoop().nodes[0],
+        {
+          id: 'done',
+          kind: 'exit',
+          label: 'Done',
+          config: {
+            criteria: [
+              { when: 'predicate', strategy: 'expression', jsonata: 'true', outcome: 'success' },
+            ],
+          },
+        },
+      ],
+    };
+    await handle.client.execute({
+      sql: 'INSERT INTO loop_versions (id,loop_id,version,status,definition,created_at) VALUES (?,?,1,?,?,?)',
+      args: [childVersion, childLoop, 'published', JSON.stringify(child), FIXTURE_TS],
+    });
+    const inventory = await inspectDatabaseUpgrade(handle.client);
+    expect(inventory.failedRuns).toContain(FIXTURE_IDS.run);
+    const approved = await manifest(handle);
+    approved.failedRuns = {};
+    await expect(applyDatabaseUpgrade(handle.client, approved)).rejects.toThrow(
+      /affected failed run/,
+    );
+  });
+  it('requires an affected recorded child disposition even after the parent definition drops that reference', async () => {
+    const handle = await legacy('failed');
+    await v2(handle, []);
+    const childVersion = fakeUlid('recorded-exit-child'),
+      childLoop = fakeUlid('recorded-exit-loop');
+    const child = {
+      ...minimalLoop(),
+      schemaVersion: 2,
+      nodes: [
+        minimalLoop().nodes[0],
+        {
+          id: 'done',
+          kind: 'exit',
+          label: 'Done',
+          config: {
+            criteria: [
+              { when: 'predicate', strategy: 'expression', jsonata: 'true', outcome: 'success' },
+            ],
+          },
+        },
+      ],
+    };
+    await handle.client.execute({
+      sql: 'INSERT INTO loop_versions (id,loop_id,version,status,definition,created_at) VALUES (?,?,1,?,?,?)',
+      args: [childVersion, childLoop, 'published', JSON.stringify(child), FIXTURE_TS],
+    });
+    await handle.client.execute({
+      sql: "INSERT INTO run_events (run_id,seq,ts,type,payload) VALUES (?,4,?,'run.queued',?)",
+      args: [
+        FIXTURE_IDS.run,
+        FIXTURE_TS,
+        JSON.stringify({ subloopVersions: { [childLoop]: childVersion } }),
+      ],
+    });
+    expect((await inspectDatabaseUpgrade(handle.client)).failedRuns).toContain(FIXTURE_IDS.run);
+  });
+  it.each(['true[false]', '(vars.count > 0)[false]', 'true{"x": true}'])(
+    'atomically refuses output-modified boolean %s until its exact rewrite is approved',
+    async (source) => {
+      const handle = await legacy();
+      const original = await v2(handle, [
+        { when: 'predicate', strategy: 'expression', jsonata: source, outcome: 'success' },
+      ]);
+      const before = (await inspectDatabaseUpgrade(handle.client)).sourceHash;
+      const approved = await manifest(handle);
+      await expect(applyDatabaseUpgrade(handle.client, approved)).rejects.toMatchObject({
+        code: 'DATA_UPGRADE_REQUIRED',
+      });
+      expect((await inspectDatabaseUpgrade(handle.client)).sourceHash).toBe(before);
+      expect(
+        JSON.parse(
+          storedText(
+            (
+              await handle.client.execute({
+                sql: 'SELECT definition FROM loop_versions WHERE id=?',
+                args: [FIXTURE_IDS.version],
+              })
+            ).rows[0]!.definition,
+          ),
+        ),
+      ).toEqual(original);
+      approved.versions[FIXTURE_IDS.version]!.resolutions = {
+        predicates: { '/nodes/2/config/criteria/0': { jsonata: '(vars.count > 0) = true' } },
+      };
+      await applyDatabaseUpgrade(handle.client, approved);
+      expect(await guardDatabaseUpgrade(handle.client)).toBe('current');
+      const stored = JSON.parse(
+        storedText(
+          (
+            await handle.client.execute({
+              sql: 'SELECT definition FROM loop_versions WHERE id=?',
+              args: [FIXTURE_IDS.version],
+            })
+          ).rows[0]!.definition,
+        ),
+      );
+      expect(stored).toHaveProperty(
+        'nodes.2.config.criteria.0.evaluation.jsonata',
+        '(vars.count > 0) = true',
+      );
+    },
+  );
+  it('refuses stale predicate keys and ambiguous expressions without changing any source rows', async () => {
+    const handle = await legacy();
+    await v2(handle, [
+      { when: 'predicate', strategy: 'expression', jsonata: 'vars.done', outcome: 'success' },
+    ]);
+    const before = (await inspectDatabaseUpgrade(handle.client)).sourceHash;
+    const approved = await manifest(handle);
+    approved.versions[FIXTURE_IDS.version]!.resolutions = {
+      predicates: { '/nodes/2/config/criteria/1': { jsonata: 'vars.done = true' } },
+    };
+    await expect(applyDatabaseUpgrade(handle.client, approved)).rejects.toMatchObject({
+      code: 'DATA_UPGRADE_REQUIRED',
+    });
+    expect((await inspectDatabaseUpgrade(handle.client)).sourceHash).toBe(before);
+    approved.versions[FIXTURE_IDS.version]!.resolutions = {
+      predicates: { '/nodes/2/config/criteria/0': { jsonata: 'vars.done = true' } },
+    };
+    await applyDatabaseUpgrade(handle.client, approved);
+    expect(await guardDatabaseUpgrade(handle.client)).toBe('current');
+  });
 });
 const definition = () => ({
   ...minimalLoop(),
@@ -160,7 +458,7 @@ async function manifest(handle: DatabaseHandle): Promise<DatabaseUpgradeManifest
   const inventory = await inspectDatabaseUpgrade(handle.client);
   return {
     format: 'graphgoblin-upgrade-manifest',
-    targetVersion: 2,
+    targetVersion: 3,
     sourceHash: inventory.sourceHash,
     approvedBy: 'owner',
     approvedAt: FIXTURE_TS,
@@ -219,7 +517,7 @@ describe('offline database upgrade boundary', () => {
     expect(await guardDatabaseUpgrade(handle.client)).toBe('current');
     const row = (await handle.client.execute('SELECT definition FROM loop_versions')).rows[0]!;
     expect(LoopDefinitionSchema.parse(JSON.parse(storedText(row.definition))).schemaVersion).toBe(
-      2,
+      3,
     );
     const event = (
       await handle.client.execute("SELECT payload FROM run_events WHERE type='decision.made'")

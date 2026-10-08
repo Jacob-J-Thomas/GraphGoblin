@@ -2212,7 +2212,7 @@ export interface components {
         JsonValueInput: JsonValue;
         LoopDefinitionInput: {
             /** @constant */
-            schemaVersion: 2;
+            schemaVersion: 3;
             name: string;
             description?: string | undefined;
             /** @default {} */
@@ -3215,11 +3215,86 @@ export interface components {
                     } | {
                         /** @constant */
                         when: "predicate";
-                        /** @enum {string} */
-                        strategy: "jev" | "codex" | "expression";
-                        question?: string | undefined;
-                        jsonata?: string | undefined;
-                        minConfidence?: number | undefined;
+                        answer: ({
+                            /** @constant */
+                            type: "choice";
+                            options: {
+                                id: string;
+                                label: string;
+                                criteria: string;
+                            }[];
+                        } | {
+                            /** @constant */
+                            type: "noul";
+                            true: {
+                                label: string;
+                                criteria: string;
+                            };
+                            false: {
+                                label: string;
+                                criteria: string;
+                            };
+                        } | {
+                            /** @constant */
+                            type: "score";
+                            anchors: string[];
+                        }) | {
+                            /** @constant */
+                            type: "noul";
+                        };
+                        evaluation: {
+                            /** @constant */
+                            kind: "expression";
+                            jsonata: string;
+                        } | {
+                            /** @constant */
+                            kind: "classifier";
+                            model: string;
+                            question: string;
+                            minConfidence?: number | undefined;
+                            truthThreshold?: number | undefined;
+                        } | {
+                            /** @constant */
+                            kind: "llm";
+                            /** @constant */
+                            harness: "codex";
+                            model: {
+                                /** @constant */
+                                mode: "inherit";
+                            } | {
+                                /** @constant */
+                                mode: "explicit";
+                                value: string;
+                            };
+                            effort: {
+                                /** @constant */
+                                mode: "inherit";
+                            } | {
+                                /** @constant */
+                                mode: "explicit";
+                                /** @enum {string} */
+                                value: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                            };
+                            question: string;
+                        };
+                        match: {
+                            /** @constant */
+                            type: "noul";
+                            /** @default true */
+                            value?: boolean | undefined;
+                            minReportedConfidence?: number | undefined;
+                        } | {
+                            /** @constant */
+                            type: "choice";
+                            optionIds: string[];
+                            minReportedConfidence?: number | undefined;
+                        } | {
+                            /** @constant */
+                            type: "score";
+                            /** @enum {string} */
+                            operator: "lt" | "lte" | "eq" | "gte" | "gt";
+                            value: number;
+                        };
                         /** @enum {string} */
                         outcome: "success" | "failure";
                     } | {
@@ -3280,7 +3355,7 @@ export interface components {
             /** @constant */
             format: "graphgoblin-loop";
             /** @constant */
-            formatVersion: 2;
+            formatVersion: 3;
             /** Format: date-time */
             exportedAt: string;
             loop: components["schemas"]["LoopDefinitionInput"];
@@ -3651,24 +3726,24 @@ export interface components {
                 type: "noul";
                 /** @constant */
                 kind: "expression";
-                holds: boolean;
+                holds: boolean | null;
                 confidence: null;
             } | {
                 /** @constant */
                 type: "noul";
                 /** @constant */
                 kind: "classifier";
-                holds: boolean;
-                trueProbability: number;
-                confidence: number;
+                holds: boolean | null;
+                trueProbability: number | null;
+                confidence: number | null;
             } | {
                 /** @constant */
                 type: "noul";
                 /** @constant */
                 kind: "llm";
-                holds: boolean;
-                confidence: number;
-                reasoning: string;
+                holds: boolean | null;
+                confidence: number | null;
+                reasoning: string | null;
             }) | {
                 /** @constant */
                 type: "score";
@@ -3793,21 +3868,106 @@ export interface components {
         ExitCriterionEvaluationInput: {
             index: number;
             /** @enum {string} */
-            strategy: "expression" | "jev" | "codex" | "max-iterations" | "max-duration" | "last-output-matches";
-            model?: string | undefined;
-            classifierModel?: string | undefined;
+            strategy: "expression" | "classifier" | "llm";
             /** @enum {string} */
             status: "matched" | "not-matched";
-            holds?: boolean | undefined;
-            confidence?: number | undefined;
-            minConfidence?: number | undefined;
-            reasoning?: string | undefined;
+            answer: {
+                /** @constant */
+                type: "choice";
+                optionId: string;
+                confidence: number | null;
+                probabilities: {
+                    [key: string]: number;
+                } | null;
+            } | ({
+                /** @constant */
+                type: "noul";
+                /** @constant */
+                kind: "expression";
+                holds: boolean | null;
+                confidence: null;
+            } | {
+                /** @constant */
+                type: "noul";
+                /** @constant */
+                kind: "classifier";
+                holds: boolean | null;
+                trueProbability: number | null;
+                confidence: number | null;
+            } | {
+                /** @constant */
+                type: "noul";
+                /** @constant */
+                kind: "llm";
+                holds: boolean | null;
+                confidence: number | null;
+                reasoning: string | null;
+            }) | {
+                /** @constant */
+                type: "score";
+                score: number;
+                confidence: number | null;
+                legend: {
+                    [key: string]: string;
+                };
+                probabilities: {
+                    [key: string]: number;
+                } | null;
+            };
+            provenance: {
+                /** @enum {string} */
+                kind: "expression" | "classifier" | "llm";
+                provider: string | null;
+                classifierId: string | null;
+                model: string | null;
+                effort: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | null;
+            };
+            acceptance: ({
+                /** @constant */
+                status: "accepted";
+            } | {
+                /** @constant */
+                status: "rejected";
+                /** @constant */
+                code: "EVALUATION_RESULT_REJECTED";
+                minConfidence: number;
+            }) | null;
+            match: {
+                /** @constant */
+                type: "noul";
+                /** @default true */
+                value?: boolean | undefined;
+                minReportedConfidence?: number | undefined;
+            } | {
+                /** @constant */
+                type: "choice";
+                optionIds: string[];
+                minReportedConfidence?: number | undefined;
+            } | {
+                /** @constant */
+                type: "score";
+                /** @enum {string} */
+                operator: "lt" | "lte" | "eq" | "gte" | "gt";
+                value: number;
+            };
+            configuredMinConfidence?: number | undefined;
+            rejection?: {
+                /** @enum {string} */
+                kind: "classifier-confidence" | "llm-reported-confidence";
+                minimum: number;
+                confidence: number | null;
+            } | undefined;
         } | {
             index: number;
             /** @enum {string} */
-            strategy: "expression" | "jev" | "codex" | "max-iterations" | "max-duration" | "last-output-matches";
-            model?: string | undefined;
-            classifierModel?: string | undefined;
+            strategy: "max-iterations" | "max-duration" | "last-output-matches";
+            /** @enum {string} */
+            status: "matched" | "not-matched";
+            holds: boolean | null;
+        } | {
+            index: number;
+            /** @enum {string} */
+            strategy: "expression" | "classifier" | "llm" | "max-iterations" | "max-duration" | "last-output-matches";
             /** @constant */
             status: "skipped";
             reason: {
@@ -3818,17 +3978,23 @@ export interface components {
         } | {
             index: number;
             /** @enum {string} */
-            strategy: "expression" | "jev" | "codex" | "max-iterations" | "max-duration" | "last-output-matches";
-            model?: string | undefined;
-            classifierModel?: string | undefined;
+            strategy: "expression" | "classifier" | "llm" | "max-iterations" | "max-duration" | "last-output-matches";
             /** @constant */
             status: "error";
             diagnostic: {
                 /** @enum {string} */
-                code: "CRITERION_ERROR" | "RETURN_MAPPING_ERROR" | "DECIDER_UNAVAILABLE" | "DECIDER_NOT_AUTHENTICATED" | "DECIDER_RATE_LIMITED" | "DECIDER_HTTP_ERROR" | "DECIDER_UNREACHABLE" | "DECIDER_INVALID_RESPONSE" | "DECIDER_REDIRECT" | "DECIDER_TIMEOUT" | "DECIDER_ERROR";
+                code: "CRITERION_ERROR" | "RETURN_MAPPING_ERROR" | "DECIDER_UNAVAILABLE" | "DECIDER_NOT_AUTHENTICATED" | "DECIDER_RATE_LIMITED" | "DECIDER_HTTP_ERROR" | "DECIDER_UNREACHABLE" | "DECIDER_INVALID_RESPONSE" | "DECIDER_REDIRECT" | "DECIDER_TIMEOUT" | "DECIDER_ERROR" | "EVALUATION_UNAVAILABLE" | "EVALUATION_PROVIDER_FAILED" | "EVALUATION_INVALID_CONFIGURATION" | "EVALUATION_INVALID_RESPONSE" | "EVALUATION_RESULT_REJECTED" | "EVALUATION_EXPRESSION_FAILED";
                 message: string;
                 status?: number | undefined;
             };
+            provenance?: {
+                /** @enum {string} */
+                kind: "expression" | "classifier" | "llm";
+                provider: string | null;
+                classifierId: string | null;
+                model: string | null;
+                effort: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | null;
+            } | undefined;
         };
         ExitEvaluationOutcomeInput: {
             /** @constant */
@@ -3858,7 +4024,7 @@ export interface components {
             kind: "failed";
             diagnostic: {
                 /** @enum {string} */
-                code: "CRITERION_ERROR" | "RETURN_MAPPING_ERROR" | "DECIDER_UNAVAILABLE" | "DECIDER_NOT_AUTHENTICATED" | "DECIDER_RATE_LIMITED" | "DECIDER_HTTP_ERROR" | "DECIDER_UNREACHABLE" | "DECIDER_INVALID_RESPONSE" | "DECIDER_REDIRECT" | "DECIDER_TIMEOUT" | "DECIDER_ERROR";
+                code: "CRITERION_ERROR" | "RETURN_MAPPING_ERROR" | "DECIDER_UNAVAILABLE" | "DECIDER_NOT_AUTHENTICATED" | "DECIDER_RATE_LIMITED" | "DECIDER_HTTP_ERROR" | "DECIDER_UNREACHABLE" | "DECIDER_INVALID_RESPONSE" | "DECIDER_REDIRECT" | "DECIDER_TIMEOUT" | "DECIDER_ERROR" | "EVALUATION_UNAVAILABLE" | "EVALUATION_PROVIDER_FAILED" | "EVALUATION_INVALID_CONFIGURATION" | "EVALUATION_INVALID_RESPONSE" | "EVALUATION_RESULT_REJECTED" | "EVALUATION_EXPRESSION_FAILED";
                 message: string;
                 status?: number | undefined;
             };
@@ -4010,7 +4176,7 @@ export interface components {
         JsonValue: JsonValue;
         LoopDefinition: {
             /** @constant */
-            schemaVersion: 2;
+            schemaVersion: 3;
             name: string;
             description?: string | undefined;
             settings: {
@@ -4999,11 +5165,86 @@ export interface components {
                     } | {
                         /** @constant */
                         when: "predicate";
-                        /** @enum {string} */
-                        strategy: "jev" | "codex" | "expression";
-                        question?: string | undefined;
-                        jsonata?: string | undefined;
-                        minConfidence?: number | undefined;
+                        answer: ({
+                            /** @constant */
+                            type: "choice";
+                            options: {
+                                id: string;
+                                label: string;
+                                criteria: string;
+                            }[];
+                        } | {
+                            /** @constant */
+                            type: "noul";
+                            true: {
+                                label: string;
+                                criteria: string;
+                            };
+                            false: {
+                                label: string;
+                                criteria: string;
+                            };
+                        } | {
+                            /** @constant */
+                            type: "score";
+                            anchors: string[];
+                        }) | {
+                            /** @constant */
+                            type: "noul";
+                        };
+                        evaluation: {
+                            /** @constant */
+                            kind: "expression";
+                            jsonata: string;
+                        } | {
+                            /** @constant */
+                            kind: "classifier";
+                            model: string;
+                            question: string;
+                            minConfidence?: number | undefined;
+                            truthThreshold?: number | undefined;
+                        } | {
+                            /** @constant */
+                            kind: "llm";
+                            /** @constant */
+                            harness: "codex";
+                            model: {
+                                /** @constant */
+                                mode: "inherit";
+                            } | {
+                                /** @constant */
+                                mode: "explicit";
+                                value: string;
+                            };
+                            effort: {
+                                /** @constant */
+                                mode: "inherit";
+                            } | {
+                                /** @constant */
+                                mode: "explicit";
+                                /** @enum {string} */
+                                value: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                            };
+                            question: string;
+                        };
+                        match: {
+                            /** @constant */
+                            type: "noul";
+                            /** @default true */
+                            value: boolean;
+                            minReportedConfidence?: number | undefined;
+                        } | {
+                            /** @constant */
+                            type: "choice";
+                            optionIds: string[];
+                            minReportedConfidence?: number | undefined;
+                        } | {
+                            /** @constant */
+                            type: "score";
+                            /** @enum {string} */
+                            operator: "lt" | "lte" | "eq" | "gte" | "gt";
+                            value: number;
+                        };
                         /** @enum {string} */
                         outcome: "success" | "failure";
                     } | {
@@ -5063,7 +5304,7 @@ export interface components {
             /** @constant */
             format: "graphgoblin-loop";
             /** @constant */
-            formatVersion: 2;
+            formatVersion: 3;
             /** Format: date-time */
             exportedAt: string;
             loop: components["schemas"]["LoopDefinition"];
@@ -5434,24 +5675,24 @@ export interface components {
                 type: "noul";
                 /** @constant */
                 kind: "expression";
-                holds: boolean;
+                holds: boolean | null;
                 confidence: null;
             } | {
                 /** @constant */
                 type: "noul";
                 /** @constant */
                 kind: "classifier";
-                holds: boolean;
-                trueProbability: number;
-                confidence: number;
+                holds: boolean | null;
+                trueProbability: number | null;
+                confidence: number | null;
             } | {
                 /** @constant */
                 type: "noul";
                 /** @constant */
                 kind: "llm";
-                holds: boolean;
-                confidence: number;
-                reasoning: string;
+                holds: boolean | null;
+                confidence: number | null;
+                reasoning: string | null;
             }) | {
                 /** @constant */
                 type: "score";
@@ -5576,21 +5817,106 @@ export interface components {
         ExitCriterionEvaluation: {
             index: number;
             /** @enum {string} */
-            strategy: "expression" | "jev" | "codex" | "max-iterations" | "max-duration" | "last-output-matches";
-            model?: string | undefined;
-            classifierModel?: string | undefined;
+            strategy: "expression" | "classifier" | "llm";
             /** @enum {string} */
             status: "matched" | "not-matched";
-            holds?: boolean | undefined;
-            confidence?: number | undefined;
-            minConfidence?: number | undefined;
-            reasoning?: string | undefined;
+            answer: {
+                /** @constant */
+                type: "choice";
+                optionId: string;
+                confidence: number | null;
+                probabilities: {
+                    [key: string]: number;
+                } | null;
+            } | ({
+                /** @constant */
+                type: "noul";
+                /** @constant */
+                kind: "expression";
+                holds: boolean | null;
+                confidence: null;
+            } | {
+                /** @constant */
+                type: "noul";
+                /** @constant */
+                kind: "classifier";
+                holds: boolean | null;
+                trueProbability: number | null;
+                confidence: number | null;
+            } | {
+                /** @constant */
+                type: "noul";
+                /** @constant */
+                kind: "llm";
+                holds: boolean | null;
+                confidence: number | null;
+                reasoning: string | null;
+            }) | {
+                /** @constant */
+                type: "score";
+                score: number;
+                confidence: number | null;
+                legend: {
+                    [key: string]: string;
+                };
+                probabilities: {
+                    [key: string]: number;
+                } | null;
+            };
+            provenance: {
+                /** @enum {string} */
+                kind: "expression" | "classifier" | "llm";
+                provider: string | null;
+                classifierId: string | null;
+                model: string | null;
+                effort: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | null;
+            };
+            acceptance: ({
+                /** @constant */
+                status: "accepted";
+            } | {
+                /** @constant */
+                status: "rejected";
+                /** @constant */
+                code: "EVALUATION_RESULT_REJECTED";
+                minConfidence: number;
+            }) | null;
+            match: {
+                /** @constant */
+                type: "noul";
+                /** @default true */
+                value: boolean;
+                minReportedConfidence?: number | undefined;
+            } | {
+                /** @constant */
+                type: "choice";
+                optionIds: string[];
+                minReportedConfidence?: number | undefined;
+            } | {
+                /** @constant */
+                type: "score";
+                /** @enum {string} */
+                operator: "lt" | "lte" | "eq" | "gte" | "gt";
+                value: number;
+            };
+            configuredMinConfidence?: number | undefined;
+            rejection?: {
+                /** @enum {string} */
+                kind: "classifier-confidence" | "llm-reported-confidence";
+                minimum: number;
+                confidence: number | null;
+            } | undefined;
         } | {
             index: number;
             /** @enum {string} */
-            strategy: "expression" | "jev" | "codex" | "max-iterations" | "max-duration" | "last-output-matches";
-            model?: string | undefined;
-            classifierModel?: string | undefined;
+            strategy: "max-iterations" | "max-duration" | "last-output-matches";
+            /** @enum {string} */
+            status: "matched" | "not-matched";
+            holds: boolean | null;
+        } | {
+            index: number;
+            /** @enum {string} */
+            strategy: "expression" | "classifier" | "llm" | "max-iterations" | "max-duration" | "last-output-matches";
             /** @constant */
             status: "skipped";
             reason: {
@@ -5601,17 +5927,23 @@ export interface components {
         } | {
             index: number;
             /** @enum {string} */
-            strategy: "expression" | "jev" | "codex" | "max-iterations" | "max-duration" | "last-output-matches";
-            model?: string | undefined;
-            classifierModel?: string | undefined;
+            strategy: "expression" | "classifier" | "llm" | "max-iterations" | "max-duration" | "last-output-matches";
             /** @constant */
             status: "error";
             diagnostic: {
                 /** @enum {string} */
-                code: "CRITERION_ERROR" | "RETURN_MAPPING_ERROR" | "DECIDER_UNAVAILABLE" | "DECIDER_NOT_AUTHENTICATED" | "DECIDER_RATE_LIMITED" | "DECIDER_HTTP_ERROR" | "DECIDER_UNREACHABLE" | "DECIDER_INVALID_RESPONSE" | "DECIDER_REDIRECT" | "DECIDER_TIMEOUT" | "DECIDER_ERROR";
+                code: "CRITERION_ERROR" | "RETURN_MAPPING_ERROR" | "DECIDER_UNAVAILABLE" | "DECIDER_NOT_AUTHENTICATED" | "DECIDER_RATE_LIMITED" | "DECIDER_HTTP_ERROR" | "DECIDER_UNREACHABLE" | "DECIDER_INVALID_RESPONSE" | "DECIDER_REDIRECT" | "DECIDER_TIMEOUT" | "DECIDER_ERROR" | "EVALUATION_UNAVAILABLE" | "EVALUATION_PROVIDER_FAILED" | "EVALUATION_INVALID_CONFIGURATION" | "EVALUATION_INVALID_RESPONSE" | "EVALUATION_RESULT_REJECTED" | "EVALUATION_EXPRESSION_FAILED";
                 message: string;
                 status?: number | undefined;
             };
+            provenance?: {
+                /** @enum {string} */
+                kind: "expression" | "classifier" | "llm";
+                provider: string | null;
+                classifierId: string | null;
+                model: string | null;
+                effort: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | null;
+            } | undefined;
         };
         ExitEvaluationOutcome: {
             /** @constant */
@@ -5641,7 +5973,7 @@ export interface components {
             kind: "failed";
             diagnostic: {
                 /** @enum {string} */
-                code: "CRITERION_ERROR" | "RETURN_MAPPING_ERROR" | "DECIDER_UNAVAILABLE" | "DECIDER_NOT_AUTHENTICATED" | "DECIDER_RATE_LIMITED" | "DECIDER_HTTP_ERROR" | "DECIDER_UNREACHABLE" | "DECIDER_INVALID_RESPONSE" | "DECIDER_REDIRECT" | "DECIDER_TIMEOUT" | "DECIDER_ERROR";
+                code: "CRITERION_ERROR" | "RETURN_MAPPING_ERROR" | "DECIDER_UNAVAILABLE" | "DECIDER_NOT_AUTHENTICATED" | "DECIDER_RATE_LIMITED" | "DECIDER_HTTP_ERROR" | "DECIDER_UNREACHABLE" | "DECIDER_INVALID_RESPONSE" | "DECIDER_REDIRECT" | "DECIDER_TIMEOUT" | "DECIDER_ERROR" | "EVALUATION_UNAVAILABLE" | "EVALUATION_PROVIDER_FAILED" | "EVALUATION_INVALID_CONFIGURATION" | "EVALUATION_INVALID_RESPONSE" | "EVALUATION_RESULT_REJECTED" | "EVALUATION_EXPRESSION_FAILED";
                 message: string;
                 status?: number | undefined;
             };

@@ -1,4 +1,4 @@
-import type { LoopDefinitionInput } from '@graphgoblin/contracts';
+import { LoopDefinitionSchema, type LoopDefinitionInput } from '@graphgoblin/contracts';
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
@@ -70,6 +70,50 @@ describe('restoring a set-aside copy', () => {
     };
   }
 
+  it('restores unfinished current JSONata into the editor instead of archiving it as an upgrade failure', async () => {
+    const api = new FakeApi();
+    const loop = api.addLoop(newLoopDefinition('server copy'));
+    const definition: LoopDefinitionInput = {
+      ...newLoopDefinition('unfinished local expression'),
+      nodes: [
+        { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
+        {
+          id: 'done',
+          kind: 'exit',
+          label: 'Done',
+          config: {
+            criteria: [
+              {
+                when: 'predicate',
+                answer: { type: 'noul' },
+                evaluation: { kind: 'expression', jsonata: '(' },
+                match: { type: 'noul', value: false },
+                outcome: 'success',
+              },
+            ],
+          },
+        },
+      ],
+    };
+    await drafts.saveLocalDraft({
+      loopId: loop.id,
+      definition,
+      savedAt: '2999-01-01T00:00:00.000Z',
+      synced: false,
+    });
+    renderApp(`/loops/${loop.id}/edit`, api);
+    expect(
+      await screen.findByRole('heading', { name: 'unfinished local expression' }),
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByText('Restored unsaved changes from this device.'),
+    ).toBeInTheDocument();
+    expect(useEditorStore.getState().definition).toEqual(definition);
+    expect(screen.queryByText('This device copy could not be migrated safely')).toBeNull();
+    expect(await drafts.loadArchivedDrafts(loop.id)).toEqual([]);
+    expect((await drafts.loadLocalDraft(loop.id))?.definition).toEqual(definition);
+  });
+
   it('converts an unambiguous v1 device draft before loading it into the editor', async () => {
     const api = new FakeApi();
     const loop = api.addLoop(newLoopDefinition('server copy'));
@@ -85,7 +129,7 @@ describe('restoring a set-aside copy', () => {
     expect(await screen.findByRole('heading', { name: 'legacy device copy' })).toBeInTheDocument();
     await waitFor(async () => {
       const saved = await drafts.loadLocalDraft(loop.id);
-      expect(saved?.definition.schemaVersion).toBe(2);
+      expect(saved?.definition.schemaVersion).toBe(3);
       expect(saved?.definition.settings?.defaults).toEqual({
         byHarness: { codex: { model: 'gpt-6-luna', effort: 'low' } },
       });
@@ -148,7 +192,7 @@ describe('restoring a set-aside copy', () => {
     const loop = api.addLoop(newLoopDefinition('server copy'));
     const active = {
       loopId: loop.id,
-      definition: newLoopDefinition('older valid active copy'),
+      definition: LoopDefinitionSchema.parse(newLoopDefinition('older valid active copy')),
       savedAt: '1900-01-01T00:00:00.000Z',
       synced: false,
     };

@@ -74,7 +74,7 @@ const start = {
  */
 function decisionLoop(name: string, config: Record<string, unknown>, lone = false) {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     name,
     nodes: [
       start,

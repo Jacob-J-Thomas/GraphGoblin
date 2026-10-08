@@ -1,17 +1,31 @@
 import {
-  ContextThreadSchema,
-  DecisionPayloadSchema,
-  RunEventSchema,
-  type ContextThread,
-  type DecisionPayload,
+  V2ContextThreadSchema as ContextThreadSchema,
+  V2DecisionPayloadSchema as DecisionPayloadSchema,
+  V2RunEventSchema as RunEventSchema,
+  type V2ContextThread as ContextThread,
+  type V2DecisionPayload as DecisionPayload,
   type EvaluationProvenance,
   type JsonValue,
-  type RunEvent,
+  type V2RunEvent as RunEvent,
 } from '@graphgoblin/contracts';
 import { replayStateAt, replayThread } from './replay.js';
 import { stableStringify, validateJson } from './json-schema.js';
 import { LEGACY_V1_SCHEMA } from './upgrade-v1-schema.js';
 import type { UpgradeIssue, UpgradeResult } from './upgrade.js';
+
+/** Replay reads only these unchanged event fields, never the versioned decision/exit evidence. */
+const replayEvents = (events: readonly RunEvent[]) =>
+  events.filter(
+    (
+      event,
+    ): event is Extract<
+      RunEvent,
+      { type: 'node.started' | 'node.finished' | 'iteration.incremented' }
+    > =>
+      event.type === 'node.started' ||
+      event.type === 'node.finished' ||
+      event.type === 'iteration.incremented',
+  );
 
 type Obj = Record<string, unknown>;
 const object = (value: unknown): value is Obj =>
@@ -182,7 +196,12 @@ export function upgradeRunHistoryV1(
       if (!parsed.success) throw new Error('converted event violates v2 at seq ' + String(raw.seq));
       events.push(parsed.data);
       // The frozen validator establishes the legacy event shape; replay touches only unchanged patch fields.
-      oldThread = replayThread(oldThread, [raw as unknown as RunEvent], undefined, oldState);
+      oldThread = replayThread(
+        oldThread,
+        replayEvents([raw as unknown as RunEvent]),
+        undefined,
+        oldState,
+      );
       if (raw.type === 'node.started') oldState = { strict: true, openNodeId: String(raw.nodeId) };
       else if (
         raw.type === 'node.finished' &&
@@ -190,7 +209,7 @@ export function upgradeRunHistoryV1(
       )
         oldState = { ...oldState, openNodeId: undefined };
     }
-    const finalThread = replayThread(initialThread, events);
+    const finalThread = replayThread(initialThread, replayEvents(events));
     const convertedOldFinal = ContextThreadSchema.parse(convertThread(oldThread, decisions));
     if (stableStringify(finalThread) !== stableStringify(convertedOldFinal))
       throw new Error('converted full replay does not equal transformed historical replay');
@@ -208,15 +227,15 @@ export function upgradeRunHistoryV1(
         throw new Error('snapshot has no recorded checkpoint sequence');
       snapshot = ContextThreadSchema.parse(convertThread(input.snapshot, decisions));
       {
-        const expected = replayThread(initialThread, events, checkpointSeq);
+        const expected = replayThread(initialThread, replayEvents(events), checkpointSeq);
         if (stableStringify(snapshot) !== stableStringify(expected))
           throw new Error('snapshot is not the recorded checkpoint');
         const tail = events.filter((event) => event.seq > checkpointSeq);
         const resumed = replayThread(
           snapshot,
-          tail,
+          replayEvents(tail),
           undefined,
-          replayStateAt(events, checkpointSeq),
+          replayStateAt(replayEvents(events), checkpointSeq),
         );
         if (stableStringify(resumed) !== stableStringify(finalThread))
           throw new Error('checkpoint replay differs from full replay');
@@ -242,7 +261,7 @@ export function upgradeRunHistoryV1(
 /** JSON-preserving change to the approved failed-run disposition; the old failure is archived. */
 export function upgradedFailure(
   value: unknown,
-  approval: { approvedAt: string; reason: string },
+  approval: { approvedAt: string; reason: string; version?: 2 | 3 },
 ): JsonValue {
   if (!object(value)) throw new Error('failed run has no failure record');
   return {
@@ -251,7 +270,7 @@ export function upgradedFailure(
     details: {
       original: (value.details ?? null) as JsonValue,
       upgrade: {
-        version: 2,
+        version: approval.version ?? 2,
         disposition: 'nonresumable-replay',
         approvedAt: approval.approvedAt,
         reason: approval.reason,

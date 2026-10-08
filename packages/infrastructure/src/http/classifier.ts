@@ -13,7 +13,7 @@ import type {
   ClassifierNoulResult,
   ScoreRequest,
   ScoreResult,
-  YesNoRequest,
+  PrimitiveRequest,
 } from '@graphgoblin/engine';
 import type { FetchLike } from './probes.js';
 
@@ -45,7 +45,7 @@ export class HttpClassifier implements ClassifierPort {
   }
 
   private async ask(
-    request: YesNoRequest,
+    request: PrimitiveRequest,
     question: Record<string, unknown>,
     signal: AbortSignal,
   ): Promise<unknown> {

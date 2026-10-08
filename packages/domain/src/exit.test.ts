@@ -1,202 +1,316 @@
 import { describe, expect, it, vi } from 'vitest';
-import { ExitConfigSchema, type ExitCriterionEvaluation } from '@graphgoblin/contracts';
+import {
+  ExitConfigSchema,
+  type ExitCriterionEvaluation,
+  type PrimitiveEvaluation,
+  type PrimitiveAnswer,
+} from '@graphgoblin/contracts';
 import { sampleThread } from '@graphgoblin/contracts/testing';
 import { evaluateExit, type ExitContext } from './exit.js';
 
+const sides = {
+  type: 'noul',
+  true: { label: 'Ready', criteria: 'Ready' },
+  false: { label: 'Continue', criteria: 'Continue' },
+};
+function result(
+  answer: PrimitiveAnswer,
+  kind: 'expression' | 'classifier' | 'llm' = 'expression',
+  rejected = false,
+): PrimitiveEvaluation {
+  return {
+    answer,
+    provenance: {
+      kind,
+      provider: kind === 'classifier' ? 'typesafe' : kind === 'llm' ? 'codex' : null,
+      classifierId: kind === 'classifier' ? 'jev' : null,
+      model: kind === 'expression' ? null : 'selected-model',
+      effort: kind === 'llm' ? 'low' : null,
+    },
+    acceptance: rejected
+      ? { status: 'rejected', code: 'EVALUATION_RESULT_REJECTED', minConfidence: 0.8 }
+      : { status: 'accepted' },
+  };
+}
 function ctx(overrides: Partial<ExitContext> = {}): ExitContext {
   return {
     thread: sampleThread(),
     iteration: 1,
     maxIterations: 5,
     elapsedMs: 0,
-    askPredicate: vi.fn().mockResolvedValue({ holds: true, confidence: 0.9 }),
-    renderQuestion: vi.fn((t: string) => Promise.resolve(`Q:${t}`)),
+    evaluatePredicate: vi
+      .fn()
+      .mockResolvedValue(
+        result({ type: 'noul', kind: 'expression', holds: true, confidence: null }),
+      ),
     ...overrides,
   };
 }
-
-describe('evaluateExit', () => {
-  it('reports ordered verdicts, confidence filtering, provenance and bounded Codex reasoning', async () => {
-    const evidence: ExitCriterionEvaluation[] = [];
-    const askPredicate = vi
-      .fn()
-      .mockResolvedValueOnce({ holds: true, confidence: 0.4, classifierModel: 'jev' })
-      .mockResolvedValueOnce({
-        holds: true,
-        confidence: 0.93,
-        model: 'judge',
-        reasoning: 'x'.repeat(3000),
-      });
-    const decision = await evaluateExit(
-      ExitConfigSchema.parse({
-        criteria: [
-          {
-            when: 'predicate',
-            strategy: 'jev',
-            question: 'Done?',
-            minConfidence: 0.8,
-            outcome: 'success',
-          },
-          { when: 'predicate', strategy: 'codex', question: 'Done?', outcome: 'success' },
-          { when: 'predicate', strategy: 'expression', jsonata: 'true', outcome: 'failure' },
-        ],
-      }),
-      ctx({ askPredicate, onCriterion: (entry) => evidence.push(entry) }),
-    );
-    expect(decision).toMatchObject({ criterionIndex: 1, outcome: 'success' });
-    expect(evidence).toEqual([
+function config(kind: 'expression' | 'classifier' | 'llm', value = true, gate = false) {
+  return ExitConfigSchema.parse({
+    criteria: [
       {
-        index: 0,
-        strategy: 'jev',
-        status: 'not-matched',
-        holds: true,
-        confidence: 0.4,
-        minConfidence: 0.8,
-        classifierModel: 'jev',
+        when: 'predicate',
+        answer: kind === 'expression' ? { type: 'noul' } : sides,
+        evaluation:
+          kind === 'expression'
+            ? { kind, jsonata: 'true' }
+            : kind === 'classifier'
+              ? { kind, model: 'jev', question: '?', ...(gate ? { minConfidence: 0.8 } : {}) }
+              : {
+                  kind,
+                  harness: 'codex',
+                  model: { mode: 'inherit' },
+                  effort: { mode: 'inherit' },
+                  question: '?',
+                },
+        match: {
+          type: 'noul',
+          value,
+          ...(gate && kind === 'llm' ? { minReportedConfidence: 0.8 } : {}),
+        },
+        outcome: 'failure',
       },
-      {
-        index: 1,
-        strategy: 'codex',
-        status: 'matched',
-        holds: true,
-        confidence: 0.93,
-        model: 'judge',
-        reasoning: 'x'.repeat(2048),
-      },
-    ]);
-    expect(askPredicate).toHaveBeenCalledTimes(2);
+    ],
+    default: 'loop-back',
+    loopBack: { targetNodeId: 'prep' },
   });
+}
 
-  it('observes false predicates and safe error evidence before propagating errors', async () => {
+describe('evaluateExit explicit primitive matching', () => {
+  for (const kind of ['classifier', 'llm'] as const) {
+    for (const holds of [false, true])
+      for (const value of [false, true])
+        for (const confidence of [0.799, 0.8, 0.801]) {
+          it(`${kind} holds=${holds} match=${value} confidence=${confidence} gates before matching`, async () => {
+            const answer: PrimitiveAnswer =
+              kind === 'classifier'
+                ? {
+                    type: 'noul',
+                    kind,
+                    holds,
+                    trueProbability: holds ? confidence : 1 - confidence,
+                    confidence,
+                  }
+                : { type: 'noul', kind, holds, confidence, reasoning: 'Reviewed' };
+            const raw = result(answer, kind, kind === 'classifier' && confidence < 0.8);
+            const evidence: ExitCriterionEvaluation[] = [];
+            const decision = await evaluateExit(
+              config(kind, value, true),
+              ctx({
+                evaluatePredicate: () => Promise.resolve(raw),
+                onCriterion: (e) => evidence.push(e),
+              }),
+            );
+            const matched = holds === value && confidence >= 0.8;
+            expect(decision.kind).toBe(matched ? 'finish' : 'loop-back');
+            expect(evidence[0]).toMatchObject({
+              status: matched ? 'matched' : 'not-matched',
+              answer,
+              acceptance: raw.acceptance,
+            });
+            if (confidence < 0.8)
+              expect(evidence[0]).toMatchObject({
+                rejection: {
+                  kind: kind === 'classifier' ? 'classifier-confidence' : 'llm-reported-confidence',
+                  minimum: 0.8,
+                  confidence,
+                },
+              });
+            else expect(evidence[0]).not.toHaveProperty('rejection');
+          });
+        }
+    it.each([false, true])(`${kind} has no implicit confidence gate for %s`, async (holds) => {
+      const answer: PrimitiveAnswer =
+        kind === 'classifier'
+          ? { type: 'noul', kind, holds, trueProbability: 0.5, confidence: 0.5 }
+          : { type: 'noul', kind, holds, confidence: 0.01, reasoning: 'Reviewed' };
+      expect(
+        await evaluateExit(
+          config(kind, holds),
+          ctx({ evaluatePredicate: () => Promise.resolve(result(answer, kind)) }),
+        ),
+      ).toMatchObject({ outcome: 'failure' });
+    });
+  }
+  it.each([false, true])('matches expression booleans explicitly, including %s', async (holds) => {
+    expect(
+      await evaluateExit(
+        config('expression', holds),
+        ctx({
+          evaluatePredicate: () =>
+            Promise.resolve(result({ type: 'noul', kind: 'expression', holds, confidence: null })),
+        }),
+      ),
+    ).toMatchObject({ outcome: 'failure' });
+  });
+  it.each(['a', 'b', 'c'])('matches Choice membership for %s', async (optionId) => {
+    const authored = ExitConfigSchema.parse({
+      criteria: [
+        {
+          when: 'predicate',
+          answer: {
+            type: 'choice',
+            options: ['a', 'b', 'c'].map((id) => ({ id, label: id, criteria: id })),
+          },
+          evaluation: { kind: 'classifier', model: 'jev', question: '?' },
+          match: { type: 'choice', optionIds: ['a', 'c'] },
+          outcome: 'failure',
+        },
+      ],
+      default: 'loop-back',
+      loopBack: { targetNodeId: 'prep' },
+    });
+    const decision = await evaluateExit(
+      authored,
+      ctx({
+        evaluatePredicate: () =>
+          Promise.resolve(
+            result(
+              {
+                type: 'choice',
+                optionId,
+                confidence: 1,
+                probabilities: {
+                  a: optionId === 'a' ? 1 : 0,
+                  b: optionId === 'b' ? 1 : 0,
+                  c: optionId === 'c' ? 1 : 0,
+                },
+              },
+              'classifier',
+            ),
+          ),
+      }),
+    );
+    expect(decision.kind).toBe(optionId === 'b' ? 'loop-back' : 'finish');
+  });
+  for (const operator of ['lt', 'lte', 'eq', 'gte', 'gt'] as const)
+    for (const score of [0.999, 1, 1.001]) {
+      it(`compares unrounded Score ${score} using ${operator}`, async () => {
+        const authored = ExitConfigSchema.parse({
+          criteria: [
+            {
+              when: 'predicate',
+              answer: { type: 'score', anchors: ['low', 'middle', 'high'] },
+              evaluation: { kind: 'classifier', model: 'jev', question: '?' },
+              match: { type: 'score', operator, value: 1 },
+              outcome: 'failure',
+            },
+          ],
+          default: 'loop-back',
+          loopBack: { targetNodeId: 'prep' },
+        });
+        const expected = {
+          lt: score < 1,
+          lte: score <= 1,
+          eq: score === 1,
+          gte: score >= 1,
+          gt: score > 1,
+        }[operator];
+        const decision = await evaluateExit(
+          authored,
+          ctx({
+            evaluatePredicate: () =>
+              Promise.resolve(
+                result(
+                  {
+                    type: 'score',
+                    score,
+                    confidence: null,
+                    legend: { 0: 'low', 1: 'middle', 2: 'high' },
+                    probabilities: null,
+                  },
+                  'classifier',
+                ),
+              ),
+          }),
+        );
+        expect(decision.kind).toBe(expected ? 'finish' : 'loop-back');
+      });
+    }
+  it('observes ordered nonmatches then first match, without evaluating a later predicate', async () => {
+    const raw = result({ type: 'noul', kind: 'expression', holds: false, confidence: null });
+    const evaluatePredicate = vi
+      .fn()
+      .mockResolvedValueOnce(raw)
+      .mockResolvedValueOnce({ ...raw, answer: { ...raw.answer, holds: true } });
+    const authored = config('expression');
+    authored.criteria.push(authored.criteria[0]!, authored.criteria[0]!);
     const evidence: ExitCriterionEvaluation[] = [];
+    expect(
+      await evaluateExit(
+        authored,
+        ctx({ evaluatePredicate, onCriterion: (e) => evidence.push(e) }),
+      ),
+    ).toMatchObject({ criterionIndex: 1 });
+    expect(evaluatePredicate).toHaveBeenCalledTimes(2);
+    expect(evidence.map((e) => e.status)).toEqual(['not-matched', 'matched']);
+  });
+  it('records safe criterion error then propagates it before the ceiling', async () => {
     const marker = new Error('private provider payload');
+    const evidence: ExitCriterionEvaluation[] = [];
     await expect(
       evaluateExit(
-        ExitConfigSchema.parse({
-          criteria: [
-            { when: 'predicate', strategy: 'expression', jsonata: 'false', outcome: 'success' },
-            { when: 'predicate', strategy: 'jev', question: 'Done?', outcome: 'success' },
-          ],
-        }),
+        config('expression'),
         ctx({
-          askPredicate: () => Promise.reject(marker),
-          onCriterion: (entry) => evidence.push(entry),
+          iteration: 5,
+          evaluatePredicate: () => Promise.reject(marker),
+          onCriterion: (e) => evidence.push(e),
         }),
       ),
     ).rejects.toBe(marker);
     expect(evidence).toEqual([
-      { index: 0, strategy: 'expression', status: 'not-matched', holds: false },
       {
-        index: 1,
-        strategy: 'jev',
+        index: 0,
+        strategy: 'expression',
         status: 'error',
         diagnostic: { code: 'CRITERION_ERROR', message: 'Exit criterion evaluation failed' },
       },
     ]);
     expect(JSON.stringify(evidence)).not.toContain(marker.message);
   });
-  it('defaults to success with no criteria', async () => {
-    const decision = await evaluateExit(ExitConfigSchema.parse({}), ctx());
-    expect(decision).toEqual({ kind: 'finish', outcome: 'success', reason: 'default' });
-  });
-
-  it('loops back until the criterion or ceiling is reached', async () => {
-    const config = ExitConfigSchema.parse({
-      criteria: [{ when: 'max-iterations', value: 3 }],
-      default: 'loop-back',
-      loopBack: { targetNodeId: 'prep' },
+  it('evaluates a final-iteration match before the implicit ceiling; only a no-match exhausts', async () => {
+    expect(await evaluateExit(config('expression'), ctx({ iteration: 5 }))).toMatchObject({
+      outcome: 'failure',
+      criterionIndex: 0,
     });
-    expect(await evaluateExit(config, ctx({ iteration: 1 }))).toEqual({
-      kind: 'loop-back',
-      targetNodeId: 'prep',
+    expect(await evaluateExit(config('expression', false), ctx({ iteration: 5 }))).toMatchObject({
+      outcome: 'exhausted',
     });
-    const atLimit = await evaluateExit(config, ctx({ iteration: 3 }));
-    expect(atLimit.kind === 'finish' && atLimit.outcome).toBe('exhausted');
-    const ceiling = await evaluateExit(config, ctx({ iteration: 2, maxIterations: 2 }));
-    expect(ceiling).toMatchObject({ kind: 'finish', outcome: 'exhausted' });
-    expect(ceiling.kind === 'finish' && ceiling.reason).toMatch(/ceiling/);
   });
-
-  it('evaluates duration and last-output criteria', async () => {
-    const config = ExitConfigSchema.parse({
+  it('defaults to success without criteria', async () =>
+    expect(await evaluateExit(ExitConfigSchema.parse({}), ctx())).toEqual({
+      kind: 'finish',
+      outcome: 'success',
+      reason: 'default',
+    }));
+  it('keeps explicit limits ordered and supports schema matching of last output', async () => {
+    const authored = ExitConfigSchema.parse({
       criteria: [
+        { when: 'max-iterations', value: 3 },
         { when: 'max-duration', seconds: 10 },
         { when: 'last-output-matches', jsonSchema: { type: 'object', required: ['done'] } },
       ],
       default: 'loop-back',
       loopBack: { targetNodeId: 'prep' },
     });
-    expect(await evaluateExit(config, ctx({ elapsedMs: 10_000 }))).toMatchObject({
-      kind: 'finish',
-      outcome: 'exhausted',
+    expect(await evaluateExit(authored, ctx({ iteration: 3, elapsedMs: 10000 }))).toMatchObject({
       criterionIndex: 0,
+      outcome: 'exhausted',
     });
-    expect(await evaluateExit(config, ctx({ elapsedMs: 1 }))).toEqual({
+    expect(await evaluateExit(authored, ctx({ elapsedMs: 10000 }))).toMatchObject({
+      criterionIndex: 1,
+      outcome: 'exhausted',
+    });
+    expect(await evaluateExit(authored, ctx())).toEqual({
       kind: 'loop-back',
       targetNodeId: 'prep',
     });
-    const withOutput = ctx({
-      thread: sampleThread({
-        lastOutput: { nodeId: 'infer', value: { done: true }, at: '2026-10-02T12:00:00.000Z' },
-      }),
+    const thread = sampleThread({
+      lastOutput: { nodeId: 'infer', value: { done: true }, at: '2026-10-02T12:00:00.000Z' },
     });
-    expect(await evaluateExit(config, withOutput)).toMatchObject({
-      kind: 'finish',
-      outcome: 'success',
-      criterionIndex: 1,
-    });
-  });
-
-  it('evaluates expression predicates against the thread view', async () => {
-    const config = ExitConfigSchema.parse({
-      criteria: [
-        {
-          when: 'predicate',
-          strategy: 'expression',
-          jsonata: 'vars.count = 2',
-          outcome: 'failure',
-        },
-      ],
-    });
-    expect(await evaluateExit(config, ctx())).toMatchObject({ kind: 'finish', outcome: 'failure' });
-  });
-
-  it('asks the engine for jev and codex predicates and honours confidence', async () => {
-    const config = ExitConfigSchema.parse({
-      criteria: [
-        {
-          when: 'predicate',
-          strategy: 'jev',
-          question: 'Done {{ vars.topic }}?',
-          minConfidence: 0.8,
-          outcome: 'success',
-        },
-      ],
-      default: 'loop-back',
-      loopBack: { targetNodeId: 'prep' },
-    });
-    const confident = ctx();
-    expect(await evaluateExit(config, confident)).toMatchObject({
-      kind: 'finish',
-      outcome: 'success',
-    });
-    expect(confident.renderQuestion).toHaveBeenCalledWith('Done {{ vars.topic }}?');
-    expect(confident.askPredicate).toHaveBeenCalledWith(
-      expect.objectContaining({ strategy: 'jev' }),
-      'Q:Done {{ vars.topic }}?',
-    );
-
-    const unsure = ctx({
-      askPredicate: vi.fn().mockResolvedValue({ holds: true, confidence: 0.5 }),
-    });
-    expect(await evaluateExit(config, unsure)).toEqual({ kind: 'loop-back', targetNodeId: 'prep' });
-
-    const no = ctx({ askPredicate: vi.fn().mockResolvedValue({ holds: false }) });
-    expect(await evaluateExit(config, no)).toEqual({ kind: 'loop-back', targetNodeId: 'prep' });
-
-    const noConfidence = ctx({ askPredicate: vi.fn().mockResolvedValue({ holds: true }) });
-    expect(await evaluateExit(config, noConfidence)).toMatchObject({
-      kind: 'finish',
+    expect(await evaluateExit(authored, ctx({ thread }))).toMatchObject({
+      criterionIndex: 2,
       outcome: 'success',
     });
   });

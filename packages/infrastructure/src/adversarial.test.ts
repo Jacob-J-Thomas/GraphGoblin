@@ -550,8 +550,9 @@ describe('finalization on SQLite (review of WP-G, fourth round)', () => {
                 criteria: [
                   {
                     when: 'predicate',
-                    strategy: 'expression',
-                    jsonata: 'true',
+                    answer: { type: 'noul' },
+                    evaluation: { kind: 'expression', jsonata: 'true' },
+                    match: { type: 'noul', value: true },
                     outcome: 'failure',
                   },
                 ],

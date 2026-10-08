@@ -22,7 +22,7 @@ function decisionLoop(
   recordAlternatives = true,
 ): LoopDefinitionInput {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     name,
     nodes: [
       { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
@@ -629,7 +629,7 @@ describe('script node', () => {
   it('routes by exit code, ignores stdout when told, and fails on unmapped codes, timeouts, and missing secrets', async () => {
     const engine = await createTestEngine();
     const loop: LoopDefinitionInput = {
-      schemaVersion: 2,
+      schemaVersion: 3,
       name: 'codes',
       nodes: [
         { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },
@@ -713,7 +713,7 @@ describe('exit node and return channels', () => {
       const engine = await createTestEngine();
       const decider = strategy === 'jev' ? engine.ports.jev : engine.ports.codexDecider;
       const marker = 'gg-private-predicate-error-regression';
-      decider.judge = () =>
+      decider[strategy === 'jev' ? 'classifyNoul' : 'noul'] = (): Promise<never> =>
         Promise.reject(
           Object.assign(new Error(marker), {
             code: 'DECIDER_HTTP_ERROR',
@@ -731,15 +731,39 @@ describe('exit node and return channels', () => {
             config: { operations: [{ op: 'delete', path: '/vars/x' }] },
           },
           {
-            criteria: [{ when: 'predicate', strategy, question: 'Done?', outcome: 'success' }],
+            criteria: [
+              {
+                when: 'predicate',
+                answer: {
+                  type: 'noul',
+                  true: { label: 'Ready', criteria: 'Done' },
+                  false: { label: 'Continue', criteria: 'Not done' },
+                },
+                evaluation:
+                  strategy === 'jev'
+                    ? { kind: 'classifier', model: 'jev', question: 'Done?' }
+                    : {
+                        kind: 'llm',
+                        harness: 'codex',
+                        model: { mode: 'inherit' },
+                        effort: { mode: 'inherit' },
+                        question: 'Done?',
+                      },
+                match: { type: 'noul', value: true },
+                outcome: 'success',
+              },
+            ],
           },
         ),
       );
       const run = await engine.runToIdle(version.loopId);
       expect(run.failure).toMatchObject({
-        code: 'INTERNAL_ERROR',
+        code: 'EVALUATION_PROVIDER_FAILED',
         message: 'Decision provider request failed',
-        details: { code: 'DECIDER_HTTP_ERROR', strategy },
+        details: {
+          code: 'DECIDER_HTTP_ERROR',
+          provenance: { kind: strategy === 'jev' ? 'classifier' : 'llm' },
+        },
       });
       expect(JSON.stringify([run, engine.events(run.id), engine.ports.logger.lines])).not.toContain(
         marker,
@@ -751,18 +775,19 @@ describe('exit node and return channels', () => {
             name: 'JevError',
             code: 'DECIDER_HTTP_ERROR',
             status: 400,
-            strategy,
+            kind: strategy === 'jev' ? 'classifier' : 'llm',
           }),
         }),
       );
-      decider.judge = () => Promise.reject(new DOMException('aborted', 'AbortError'));
+      decider[strategy === 'jev' ? 'classifyNoul' : 'noul'] = (): Promise<never> =>
+        Promise.reject(new DOMException('aborted', 'AbortError'));
       expect((await engine.runToIdle(version.loopId)).status).toBe('cancelled');
     },
   );
   it('loops back until exhausted and reports the iteration count', async () => {
     const engine = await createTestEngine();
     const loop: LoopDefinitionInput = {
-      schemaVersion: 2,
+      schemaVersion: 3,
       name: 'loop',
       settings: { maxIterations: 3 },
       nodes: [
@@ -829,8 +854,9 @@ describe('exit node and return channels', () => {
           criteria: [
             {
               when: 'predicate',
-              strategy: 'expression',
-              jsonata: 'vars.answer = 42',
+              answer: { type: 'noul' },
+              evaluation: { kind: 'expression', jsonata: 'vars.answer = 42' },
+              match: { type: 'noul', value: true },
               outcome: 'success',
             },
           ],
@@ -931,8 +957,19 @@ describe('exit node and return channels', () => {
           criteria: [
             {
               when: 'predicate',
-              strategy: 'codex',
-              question: 'Done with {{ trigger.payload }}?',
+              answer: {
+                type: 'noul',
+                true: { label: 'Ready', criteria: 'Done' },
+                false: { label: 'Continue', criteria: 'Not done' },
+              },
+              evaluation: {
+                kind: 'llm',
+                harness: 'codex',
+                model: { mode: 'inherit' },
+                effort: { mode: 'inherit' },
+                question: 'Done with {{ trigger.payload }}?',
+              },
+              match: { type: 'noul', value: true },
               outcome: 'failure',
             },
           ],
@@ -942,7 +979,7 @@ describe('exit node and return channels', () => {
     const run = await engine.runToIdle(version.loopId, 'task');
     expect(run.status).toBe('failed');
     expect(run.outcome).toBe('failure');
-    expect(engine.ports.codexDecider.judgements[0]).toMatchObject({
+    expect(engine.ports.codexDecider.nouls[0]).toMatchObject({
       question: 'Done with task?',
       model: 'gpt-6-luna',
       effort: 'low',
@@ -950,6 +987,6 @@ describe('exit node and return channels', () => {
 
     engine.ports.deciders = [];
     const none = await engine.runToIdle(version.loopId, 'task');
-    expect(none.failure?.code).toBe('DECIDER_UNAVAILABLE');
+    expect(none.failure?.code).toBe('EVALUATION_UNAVAILABLE');
   });
 });

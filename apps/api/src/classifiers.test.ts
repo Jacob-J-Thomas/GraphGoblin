@@ -17,8 +17,15 @@ import {
 import { BUILTIN_CLASSIFIER } from './classifier-registry.js';
 import { createTestApp, startFakeClassifierEndpoint, type TestApp } from './testing/test-app.js';
 
+const localFetch = globalThis.fetch;
 let t: TestApp;
 beforeEach(async () => {
+  vi.stubGlobal('fetch', (input: string | URL | Request, init?: RequestInit) => {
+    const url = new URL(input instanceof Request ? input.url : String(input));
+    if (!['127.0.0.1', 'localhost', '[::1]'].includes(url.hostname))
+      throw new Error('This deterministic API suite forbids external provider requests');
+    return localFetch(input, init);
+  });
   t = await createTestApp({ realClassifiers: true });
 });
 afterEach(async () => {
@@ -418,11 +425,22 @@ describe('classifier publish validation agreement', () => {
                   criteria: [
                     {
                       when: 'predicate',
-                      strategy: 'expression',
-                      jsonata: 'false',
+                      answer: { type: 'noul' },
+                      evaluation: { kind: 'expression', jsonata: 'false' },
+                      match: { type: 'noul', value: true },
                       outcome: 'success',
                     },
-                    { when: 'predicate', strategy: 'jev', question: 'Done?', outcome: 'success' },
+                    {
+                      when: 'predicate',
+                      answer: {
+                        type: 'noul',
+                        true: { label: 'Ready', criteria: 'Task is done' },
+                        false: { label: 'Continue', criteria: 'Task is not done' },
+                      },
+                      evaluation: { kind: 'classifier', model: 'jev', question: 'Done?' },
+                      match: { type: 'noul', value: true },
+                      outcome: 'success',
+                    },
                   ],
                 },
               }
@@ -448,12 +466,12 @@ describe('classifier publish validation agreement', () => {
                   : 'CLASSIFIER_SECRET_MISSING',
             severity: 'warning',
             nodeId: 'done',
-            path: 'config.criteria.1.strategy',
+            path: 'config.criteria.1.evaluation.model',
             message: expect.stringContaining("Exit 'Done' (done), classifier 'Jev' (jev)"),
           }),
         ]);
       if (issues.length) {
-        expect(issues[0]?.message).toContain('DECIDER_UNAVAILABLE');
+        expect(issues[0]?.message).toContain('publication is blocked');
         expect(issues[0]?.message).toContain(
           state === 'disabled'
             ? 'Enable it in Settings, Classifier models.'
@@ -470,7 +488,7 @@ describe('classifier publish validation agreement', () => {
         url: '/loops/import',
         payload: {
           format: 'graphgoblin-loop',
-          formatVersion: 2,
+          formatVersion: 3,
           exportedAt: FIXTURE_TS,
           loop: definition,
         },
@@ -544,7 +562,7 @@ describe('classifier publish validation agreement', () => {
         url: '/loops/import',
         payload: {
           format: 'graphgoblin-loop',
-          formatVersion: 2,
+          formatVersion: 3,
           exportedAt: FIXTURE_TS,
           loop: definition,
         },
@@ -571,7 +589,7 @@ describe('classifier publish validation agreement', () => {
       url: '/loops/import',
       payload: {
         format: 'graphgoblin-loop',
-        formatVersion: 2,
+        formatVersion: 3,
         exportedAt: FIXTURE_TS,
         loop: definition,
       },
@@ -673,7 +691,15 @@ describe('classifier runtime hot reload', () => {
     });
     await t.idle();
     const run = await safeFailureReads(started.json().run.id as string, marker);
-    expect(run.failure?.details).toBeUndefined();
+    expect(run.failure?.details).toEqual({
+      provenance: {
+        kind: 'classifier',
+        provider: 'typesafe',
+        classifierId: 'jev',
+        model: 'jev-latest',
+        effort: null,
+      },
+    });
   });
 
   it('keeps real Jev exit HTTP error bodies out of snapshots, events, streams and logs', async () => {
@@ -692,13 +718,31 @@ describe('classifier runtime hot reload', () => {
     });
     await decider.init();
     await t.container.repos.secretsFor('local').set('jev-api-key', 'test-key');
-    t.jev.judge = (request, signal) =>
-      decider.judge(request, signal ?? new AbortController().signal);
+    t.container.ports.classifiers = {
+      resolve: () =>
+        Promise.resolve({
+          status: 'ready',
+          classifier: decider,
+          provenance: { provider: 'typesafe', classifierId: 'jev', model: 'jev-latest' },
+        }),
+    };
     const definition = minimalLoop();
     for (const node of definition.nodes)
       if (node.kind === 'exit')
         node.config = {
-          criteria: [{ when: 'predicate', strategy: 'jev', question: 'Done?', outcome: 'success' }],
+          criteria: [
+            {
+              when: 'predicate',
+              answer: {
+                type: 'noul',
+                true: { label: 'Ready', criteria: 'Task is done' },
+                false: { label: 'Continue', criteria: 'Task is not done' },
+              },
+              evaluation: { kind: 'classifier', model: 'jev', question: 'Done?' },
+              match: { type: 'noul', value: true },
+              outcome: 'success',
+            },
+          ],
         };
     const loopId = await t.publishLoop(definition);
     const started = await t.app.inject({
@@ -707,9 +751,13 @@ describe('classifier runtime hot reload', () => {
       payload: {},
     });
     await t.idle();
-    const run = await safeFailureReads(started.json().run.id as string, marker, true);
+    const run = await safeFailureReads(started.json().run.id as string, marker);
     expect(run.failure?.message).toBe('Decision provider request failed');
-    expect(run.failure?.details).toEqual({ code: 'DECIDER_HTTP_ERROR', strategy: 'jev' });
+    expect(run.failure?.details).toMatchObject({
+      code: 'DECIDER_HTTP_ERROR',
+      status: 400,
+      provenance: { kind: 'classifier', classifierId: 'jev' },
+    });
     expect(JSON.stringify(t.logger.lines)).not.toContain(marker);
     expect(t.logger.lines).toContainEqual(
       expect.objectContaining({
@@ -718,12 +766,12 @@ describe('classifier runtime hot reload', () => {
           name: 'JevError',
           code: 'DECIDER_HTTP_ERROR',
           status: 400,
-          strategy: 'jev',
+          kind: 'classifier',
         }),
       }),
     );
   });
-  async function safeFailureReads(id: string, marker: string, exit = false) {
+  async function safeFailureReads(id: string, marker: string) {
     const reader = await t.container.repos.apiKeys.create('local', 'failure reader', ['runs:read']);
     const headers = { authorization: `Bearer ${reader.token}` };
     expect((await t.app.inject({ url: '/secrets', headers })).statusCode).toBe(403);
@@ -731,9 +779,7 @@ describe('classifier runtime hot reload', () => {
     expect(snapshot.json()).toMatchObject({
       status: 'failed',
       failure: {
-        code: exit
-          ? 'INTERNAL_ERROR'
-          : expect.stringMatching(/^EVALUATION_(INVALID_RESPONSE|PROVIDER_FAILED)$/),
+        code: expect.stringMatching(/^EVALUATION_(INVALID_RESPONSE|PROVIDER_FAILED)$/),
       },
     });
     const events = await t.app.inject({ url: `/runs/${id}/events`, headers });
@@ -786,9 +832,16 @@ describe('classifier runtime hot reload', () => {
       const id = started.json().run.id as string;
       await t.idle();
       const run = await safeFailureReads(id, marker);
-      expect(run.failure?.details).toEqual(
-        status === 200 ? undefined : { code: 'DECIDER_HTTP_ERROR', status: 400 },
-      );
+      expect(run.failure?.details).toEqual({
+        provenance: {
+          kind: 'classifier',
+          provider: 'typesafe',
+          classifierId: 'jev',
+          model: 'jev-latest',
+          effort: null,
+        },
+        ...(status === 200 ? {} : { code: 'DECIDER_HTTP_ERROR', status: 400 }),
+      });
     },
   );
 
@@ -830,7 +883,10 @@ describe('classifier runtime hot reload', () => {
     const id = started.json().run.id as string;
     await t.idle();
     const run = await safeFailureReads(id, marker);
-    expect(run.failure?.details).toEqual({ code: 'DECIDER_HTTP_ERROR' });
+    expect(run.failure?.details).toMatchObject({
+      code: 'DECIDER_HTTP_ERROR',
+      provenance: { kind: 'llm', model: 'gpt-6-luna' },
+    });
   });
   it.each([true, false])(
     'never exposes an echoed classifier bearer to runs:read (recordAlternatives %s)',

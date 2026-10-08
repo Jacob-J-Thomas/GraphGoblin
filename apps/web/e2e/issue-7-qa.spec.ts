@@ -17,7 +17,7 @@ const done = { id: 'done', kind: 'exit', label: 'Done', config: {} };
 /** A loop whose one inference turn takes as long as the harness script says. */
 function slowLoop(name: string, prompt: string) {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     name,
     nodes: [
       start,

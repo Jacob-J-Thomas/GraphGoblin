@@ -1,10 +1,43 @@
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { LoopDefinitionSchema } from '@graphgoblin/contracts';
+import {
+  ExitConfigSchema,
+  LoopDefinitionSchema,
+  type LoopDefinitionInput,
+} from '@graphgoblin/contracts';
 import { event, FakeApi } from '../__fixtures__/fake-api.js';
 import { renderApp } from '../__fixtures__/render.js';
+import { newLoopDefinition } from '../editor/model.js';
 import { useRunEventStore } from './event-store.js';
+
+function loopWithThreshold(value: number): LoopDefinitionInput {
+  const base = newLoopDefinition('pinned-evidence');
+  const config = ExitConfigSchema.parse({
+    criteria: [
+      {
+        when: 'predicate',
+        answer: {
+          type: 'noul',
+          true: { label: 'True', criteria: 'The answer is true' },
+          false: { label: 'False', criteria: 'The answer is false' },
+        },
+        evaluation: {
+          kind: 'classifier',
+          model: 'jev',
+          question: 'Does the input support the statement?',
+          truthThreshold: value,
+        },
+        match: { type: 'noul', value: true },
+        outcome: 'success',
+      },
+    ],
+  });
+  return {
+    ...base,
+    nodes: base.nodes.map((node) => (node.kind === 'exit' ? { ...node, config } : node)),
+  };
+}
 
 function seedRun(api: FakeApi, overrides: Parameters<FakeApi['addRun']>[0] = {}) {
   const run = api.addRun(overrides);
@@ -58,7 +91,7 @@ describe('RunInspectorPage', () => {
     const api = new FakeApi();
     const definition = (truthThreshold: number) =>
       LoopDefinitionSchema.parse({
-        schemaVersion: 2,
+        schemaVersion: 3,
         name: 'Pinned threshold',
         nodes: [
           {
@@ -217,21 +250,51 @@ describe('RunInspectorPage', () => {
         criteria: [
           {
             index: 0,
-            strategy: 'jev',
+            strategy: 'classifier',
             status: 'not-matched',
-            holds: false,
-            confidence: 0.9,
-            classifierModel: 'jev',
+            answer: {
+              type: 'noul',
+              kind: 'classifier',
+              holds: false,
+              trueProbability: 0.2,
+              confidence: 0.4,
+            },
+            provenance: {
+              kind: 'classifier',
+              provider: 'typesafe',
+              classifierId: 'jev',
+              model: 'jev-latest',
+              effort: null,
+            },
+            acceptance: {
+              status: 'rejected',
+              code: 'EVALUATION_RESULT_REJECTED',
+              minConfidence: 0.8,
+            },
+            match: { type: 'noul', value: false },
+            configuredMinConfidence: 0.8,
+            rejection: { kind: 'classifier-confidence', minimum: 0.8, confidence: 0.4 },
           },
           {
             index: 1,
-            strategy: 'codex',
+            strategy: 'llm',
             status: 'matched',
-            holds: true,
-            confidence: 0.93,
-            minConfidence: 0.8,
-            model: 'judge-model',
-            reasoning: 'All checks passed',
+            answer: {
+              type: 'noul',
+              kind: 'llm',
+              holds: true,
+              confidence: 0.93,
+              reasoning: 'All checks passed',
+            },
+            provenance: {
+              kind: 'llm',
+              provider: 'codex',
+              classifierId: null,
+              model: 'judge-model',
+              effort: 'low',
+            },
+            acceptance: { status: 'accepted' },
+            match: { type: 'noul', value: true, minReportedConfidence: 0.8 },
           },
           {
             index: 2,
@@ -251,26 +314,72 @@ describe('RunInspectorPage', () => {
     renderApp(`/runs/${run.id}`, api);
     const timeline = await screen.findByRole('list', { name: 'Timeline' });
     expect(
-      await within(timeline).findByText(
-        /Exited: criterion 2 \(Codex\) matched with confidence 0.93/,
-      ),
+      await within(timeline).findByText(/Exited: criterion 2 \(Codex\) matched: Noul true/),
     ).toBeInTheDocument();
     expect(
       within(timeline).getByText(/CLASSIFIER_MODEL_DISABLED: The selected classifier is disabled/),
     ).toBeInTheDocument();
     const criteria = await screen.findByRole('list', { name: 'Exit criteria' });
+    expect(criteria).toHaveTextContent('Criterion 1 (Classifier): did not match');
+    expect(criteria).toHaveTextContent('Noul false');
+    expect(criteria).toHaveTextContent('Noul is false');
+    expect(criteria).toHaveTextContent('treated as a nonmatch');
+    expect(criteria).toHaveTextContent('judge-model');
+    expect(criteria).toHaveTextContent('Reasoning excerpt: All checks passed');
     expect(criteria).toHaveTextContent(
-      'Criterion 1 (Jev): did not match; predicate false; confidence 0.9; classifier jev',
-    );
-    expect(criteria).toHaveTextContent('model judge-model');
-    expect(criteria).toHaveTextContent('Judge reasoning: All checks passed');
-    expect(criteria).toHaveTextContent(
-      'Criterion 3 (expression): skipped: An earlier criterion matched',
+      'Criterion 3 (Expression): skipped: An earlier criterion matched',
     );
     await userEvent.click(within(timeline).getByRole('button', { name: /decision.made/ }));
     expect(screen.getByRole('list', { name: 'Evaluation diagnostics' })).toHaveTextContent(
       'CLASSIFIER_MODEL_DISABLED: The selected classifier is disabled',
     );
+  });
+
+  it('loads evidence settings from the run-pinned loop version, not the current version', async () => {
+    const api = new FakeApi();
+    const loop = api.addLoop(loopWithThreshold(0.2), { published: true, draft: false });
+    const pinned = api.loops.get(loop.id)?.current;
+    if (!pinned) throw new Error('The initial published version is missing.');
+    api.publishVersion(loop.id, loopWithThreshold(0.9));
+
+    const run = api.addRun({ loopId: loop.id, versionId: pinned.id, status: 'succeeded' });
+    api.pushEvent(
+      run.id,
+      event(run.id, 1, 'exit.evaluated', {
+        nodeId: 'done',
+        iteration: 2,
+        maxIterations: 5,
+        criteria: [
+          {
+            index: 0,
+            strategy: 'classifier',
+            status: 'not-matched',
+            answer: {
+              type: 'noul',
+              kind: 'classifier',
+              holds: false,
+              trueProbability: 0.2,
+              confidence: 0.9,
+            },
+            provenance: {
+              kind: 'classifier',
+              provider: 'typesafe',
+              classifierId: 'jev',
+              model: 'jev-latest',
+              effort: null,
+            },
+            acceptance: { status: 'accepted' },
+            match: { type: 'noul', value: true },
+          },
+        ],
+        result: { kind: 'completed', reason: 'default-success', outcome: 'success' },
+      }),
+    );
+
+    renderApp(`/runs/${run.id}`, api);
+    const threshold = await screen.findByText('True-probability threshold');
+    expect(threshold.nextElementSibling).toHaveTextContent('0.2');
+    expect(api.callsTo('GET', `/loops/${loop.id}/versions/${pinned.id}`)).toHaveLength(1);
   });
   it('streams the timeline, replays the thread at any event, and shows the patch diff', async () => {
     const user = userEvent.setup();

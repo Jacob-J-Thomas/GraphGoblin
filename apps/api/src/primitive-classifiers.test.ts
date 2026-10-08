@@ -17,7 +17,7 @@ afterEach(async () => {
 
 function definition(type: 'noul' | 'score', model = 'local-primitive'): LoopDefinitionInput {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     name: type,
     nodes: [
       { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },

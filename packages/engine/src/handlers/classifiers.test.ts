@@ -4,7 +4,7 @@ import type { ClassifierUnavailableReason } from '../ports.js';
 import { FakeClassifierRegistry, FakeDecider, createTestEngine } from '../testing/index.js';
 function loop(model = 'jev'): LoopDefinitionInput {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     name: 'classifier-' + model,
     nodes: [
       { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },

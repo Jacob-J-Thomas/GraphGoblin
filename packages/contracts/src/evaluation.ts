@@ -112,6 +112,9 @@ const NoulFields = {
 };
 export const NoulSpecSchema = z.strictObject(NoulFields);
 export type NoulSpec = z.infer<typeof NoulSpecSchema>;
+/** Expressions need no provider criteria; provider Noul still uses the complete NoulSpec. */
+export const NoulBaseSpecSchema = z.strictObject({ type: z.literal('noul') });
+export type NoulBaseSpec = z.infer<typeof NoulBaseSpecSchema>;
 export const NoulConfigSchema = z
   .strictObject({ ...NoulFields, true: ChoiceOptionSchema, false: ChoiceOptionSchema })
   .superRefine((answer, ctx) => {
@@ -193,6 +196,8 @@ export const EvaluationAnswerSpecSchema = z.discriminatedUnion('type', [
   ScoreSpecSchema,
 ]);
 export type EvaluationAnswerSpec = z.infer<typeof EvaluationAnswerSpecSchema>;
+export const PrimitiveAnswerSpecSchema = z.union([EvaluationAnswerSpecSchema, NoulBaseSpecSchema]);
+export type PrimitiveAnswerSpec = z.infer<typeof PrimitiveAnswerSpecSchema>;
 export const DecisionAnswerSchema = z.discriminatedUnion('type', [
   ChoiceConfigSchema,
   NoulConfigSchema,
@@ -283,6 +288,32 @@ export const EvaluationSchema = z.discriminatedUnion('kind', [
   LlmEvaluationSchema,
 ]);
 export type Evaluation = z.infer<typeof EvaluationSchema>;
+/** Authored primitive/evaluator pairs. Missing provider sides are configuration errors. */
+export const PrimitiveEvaluationConfigSchema = z
+  .union([
+    z.strictObject({
+      answer: z.union([ChoiceConfigSchema, NoulBaseSpecSchema]),
+      evaluation: ExpressionEvaluationSchema,
+    }),
+    z.strictObject({ answer: EvaluationAnswerSpecSchema, evaluation: ClassifierEvaluationSchema }),
+    z.strictObject({
+      answer: z.union([ChoiceConfigSchema, NoulSpecSchema]),
+      evaluation: LlmEvaluationSchema,
+    }),
+  ])
+  .superRefine((config, ctx) => {
+    if (
+      config.evaluation.kind === 'classifier' &&
+      config.evaluation.truthThreshold !== undefined &&
+      config.answer.type !== 'noul'
+    )
+      ctx.addIssue({
+        code: 'custom',
+        path: ['evaluation', 'truthThreshold'],
+        message: 'truthThreshold applies only to classifier Noul',
+      });
+  });
+export type PrimitiveEvaluationConfig = z.infer<typeof PrimitiveEvaluationConfigSchema>;
 export const DecisionEvaluationSchema = z.discriminatedUnion('kind', [
   ExpressionEvaluationSchema,
   ClassifierEvaluationSchema.extend(ContextFields),
@@ -335,22 +366,22 @@ export const NoulAnswerSchema = z.discriminatedUnion('kind', [
   z.strictObject({
     type: z.literal('noul'),
     kind: z.literal('expression'),
-    holds: z.boolean(),
+    holds: z.boolean().nullable(),
     confidence: z.null(),
   }),
   z.strictObject({
     type: z.literal('noul'),
     kind: z.literal('classifier'),
-    holds: z.boolean(),
-    trueProbability: ProbabilitySchema,
-    confidence: ProbabilitySchema,
+    holds: z.boolean().nullable(),
+    trueProbability: ProbabilitySchema.nullable(),
+    confidence: ProbabilitySchema.nullable(),
   }),
   z.strictObject({
     type: z.literal('noul'),
     kind: z.literal('llm'),
-    holds: z.boolean(),
-    confidence: ProbabilitySchema,
-    reasoning: z.string().max(2048),
+    holds: z.boolean().nullable(),
+    confidence: ProbabilitySchema.nullable(),
+    reasoning: z.string().max(2048).nullable(),
   }),
 ]);
 export type NoulAnswer = z.infer<typeof NoulAnswerSchema>;
@@ -368,6 +399,30 @@ export const PrimitiveAnswerSchema = z.discriminatedUnion('type', [
   ScoreAnswerSchema,
 ]);
 export type PrimitiveAnswer = z.infer<typeof PrimitiveAnswerSchema>;
+/** Fresh results cannot contain the honest unknowns allowed in converted historical facts. */
+export const PrimitiveAnswerEmissionSchema = PrimitiveAnswerSchema.superRefine((answer, ctx) => {
+  if (answer.type !== 'noul') return;
+  if (answer.holds === null)
+    ctx.addIssue({ code: 'custom', path: ['holds'], message: 'fresh Noul requires a boolean' });
+  if (answer.kind === 'classifier' && answer.trueProbability === null)
+    ctx.addIssue({
+      code: 'custom',
+      path: ['trueProbability'],
+      message: 'fresh classifier Noul requires true probability',
+    });
+  if (answer.kind !== 'expression' && answer.confidence === null)
+    ctx.addIssue({
+      code: 'custom',
+      path: ['confidence'],
+      message: 'fresh provider Noul requires confidence',
+    });
+  if (answer.kind === 'llm' && answer.reasoning === null)
+    ctx.addIssue({
+      code: 'custom',
+      path: ['reasoning'],
+      message: 'fresh LLM Noul requires a reasoning excerpt',
+    });
+});
 export const EvaluationProvenanceSchema = z.strictObject({
   kind: z.enum(['expression', 'classifier', 'llm']),
   provider: z.string().min(1).max(64).nullable(),
@@ -376,6 +431,21 @@ export const EvaluationProvenanceSchema = z.strictObject({
   effort: EffortSchema.nullable(),
 });
 export type EvaluationProvenance = z.infer<typeof EvaluationProvenanceSchema>;
+export const EvaluationAcceptanceSchema = z.discriminatedUnion('status', [
+  z.strictObject({ status: z.literal('accepted') }),
+  z.strictObject({
+    status: z.literal('rejected'),
+    code: z.literal('EVALUATION_RESULT_REJECTED'),
+    minConfidence: ProbabilitySchema,
+  }),
+]);
+export type EvaluationAcceptance = z.infer<typeof EvaluationAcceptanceSchema>;
+export const PrimitiveEvaluationSchema = z.strictObject({
+  answer: PrimitiveAnswerSchema,
+  provenance: EvaluationProvenanceSchema,
+  acceptance: EvaluationAcceptanceSchema,
+});
+export type PrimitiveEvaluation = z.infer<typeof PrimitiveEvaluationSchema>;
 export const DecisionPayloadSchema = z
   .strictObject({
     answer: PrimitiveAnswerSchema,
@@ -416,6 +486,10 @@ export type DecisionEvidence = z.infer<typeof DecisionEvidenceSchema>;
 /** Enforced at fresh emission, never applied to offline-converted factual history. */
 export const DecisionEmissionSchema = DecisionEvidenceSchema.superRefine((payload, ctx) => {
   const { answer, provenance } = payload;
+  const fresh = PrimitiveAnswerEmissionSchema.safeParse(answer);
+  if (!fresh.success)
+    for (const issue of fresh.error.issues)
+      ctx.addIssue({ ...issue, path: ['answer', ...issue.path] });
   const require = (condition: boolean, path: string[], message: string) => {
     if (!condition) ctx.addIssue({ code: 'custom', path, message });
   };

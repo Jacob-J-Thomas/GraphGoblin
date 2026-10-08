@@ -2,7 +2,7 @@
  * Read-only projections of a run's event log for the inspector. Thread reconstruction uses
  * `replayThread` from `domain`, the same function the engine uses for consistency checks.
  */
-import type { ContextThread, JsonPatch, RunEvent } from '@graphgoblin/contracts';
+import type { ContextThread, JsonPatch, PrimitiveAnswer, RunEvent } from '@graphgoblin/contracts';
 import { getAtPointer, replayThread } from '@graphgoblin/domain';
 
 /**
@@ -129,13 +129,19 @@ export function describeEvent(event: RunEvent): string {
         event.answer.type === 'choice'
           ? `Chose ${event.answer.optionId}`
           : event.answer.type === 'noul'
-            ? `Answered ${event.answer.holds ? 'true' : 'false'}`
+            ? `Answered ${event.answer.holds === null ? 'unknown (not recorded)' : event.answer.holds ? 'true' : 'false'}`
             : `Scored ${event.answer.score} to band ${event.portId}`;
       const trueProbability =
         event.answer.type === 'noul' && event.answer.kind === 'classifier'
-          ? ` (true probability ${event.answer.trueProbability})`
+          ? ` (true probability ${event.answer.trueProbability ?? 'not recorded'})`
           : '';
-      return `${answer}${trueProbability} with ${event.provenance.kind}${event.provenance.provider ? ` via ${event.provenance.provider}` : ''}${event.provenance.model ? ` (${event.provenance.model})` : ''}${event.answer.confidence !== null ? ` with confidence ${event.answer.confidence}` : ''}${event.diagnostics.map((item) => `; ${item.code}: ${item.message}`).join('')}`;
+      const confidence =
+        event.answer.confidence !== null
+          ? ` with confidence ${event.answer.confidence}`
+          : event.answer.type === 'noul' && event.answer.kind !== 'expression'
+            ? ' with confidence not recorded'
+            : '';
+      return `${answer}${trueProbability} with ${event.provenance.kind}${event.provenance.provider ? ` via ${event.provenance.provider}` : ''}${event.provenance.model ? ` (${event.provenance.model})` : ''}${confidence}${event.diagnostics.map((item) => `; ${item.code}: ${item.message}`).join('')}`;
     }
     case 'exit.evaluated':
       return describeExit(event);
@@ -163,7 +169,7 @@ function describeExit(event: Extract<RunEvent, { type: 'exit.evaluated' }>): str
           : `criterion ${result.criterionIndex + 1}`;
       const detail =
         criterion?.status === 'matched'
-          ? ` (${strategyName(criterion.strategy)}) matched${criterion.confidence !== undefined ? ` with confidence ${criterion.confidence}` : ''}`
+          ? ` (${strategyName(criterion.strategy)}) matched${'answer' in criterion ? `: ${answerDescription(criterion.answer)}` : ''}`
           : ' matched';
       return `Exited: ${label}${detail} (${result.outcome})`;
     }
@@ -179,7 +185,24 @@ function describeExit(event: Extract<RunEvent, { type: 'exit.evaluated' }>): str
 }
 
 export function strategyName(strategy: string): string {
-  return strategy === 'jev' ? 'Jev' : strategy === 'codex' ? 'Codex' : strategy;
+  return strategy === 'classifier'
+    ? 'Classifier'
+    : strategy === 'llm'
+      ? 'Codex'
+      : strategy === 'expression'
+        ? 'Expression'
+        : strategy;
+}
+
+export function answerDescription(answer: PrimitiveAnswer): string {
+  switch (answer.type) {
+    case 'choice':
+      return `Choice ${answer.optionId}`;
+    case 'noul':
+      return `Noul ${answer.holds === null ? 'unknown (not recorded)' : answer.holds ? 'true' : 'false'}`;
+    case 'score':
+      return `Score ${answer.score}`;
+  }
 }
 
 /** Progress, session, and usage events grouped by node, for the progress drawer. */

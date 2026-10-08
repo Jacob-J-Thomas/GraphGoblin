@@ -143,7 +143,7 @@ describe('loop definition', () => {
   it('round-trips through the export format', () => {
     const exported = LoopExportSchema.parse({
       format: 'graphgoblin-loop',
-      formatVersion: 2,
+      formatVersion: 3,
       exportedAt: FIXTURE_TS,
       loop: minimalLoop(),
     });
@@ -255,7 +255,17 @@ describe('node config schemas', () => {
     ).toBe(false);
     const cfg = ExitConfigSchema.parse({
       criteria: [
-        { when: 'predicate', strategy: 'jev', question: 'Done?', outcome: 'success' },
+        {
+          when: 'predicate',
+          answer: {
+            type: 'noul',
+            true: { label: 'Done', criteria: 'Complete' },
+            false: { label: 'Pending', criteria: 'Incomplete' },
+          },
+          evaluation: { kind: 'classifier', model: 'jev', question: 'Done?' },
+          match: { type: 'noul', value: true },
+          outcome: 'success',
+        },
         { when: 'max-duration', seconds: 60 },
         { when: 'last-output-matches', jsonSchema: { type: 'object' } },
       ],

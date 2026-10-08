@@ -22,7 +22,7 @@ function crossingLoop(name = 'Manual routes'): LoopDefinitionInput {
     operations: [{ op: 'append-message' as const, role: 'note' as const, content: 'Note' }],
   };
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     name,
     nodes: [
       {

@@ -23,7 +23,7 @@ afterEach(async () => {
 });
 
 const waitLoop: LoopDefinitionInput = {
-  schemaVersion: 2,
+  schemaVersion: 3,
   name: 'sse',
   nodes: [
     { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },
@@ -126,10 +126,15 @@ describe('SSE event stream', () => {
   );
   it('streams and pages the same decision evidence and exit evidence, advertised in OpenAPI', async () => {
     t.jev.isAvailable = false;
-    t.codex.judge = () =>
-      Promise.resolve({ holds: false, confidence: 0.93, reasoning: 'More work is needed' });
+    t.codex.noul = () =>
+      Promise.resolve({
+        type: 'noul',
+        holds: false,
+        confidence: 0.93,
+        reasoning: 'More work is needed',
+      });
     const definition: LoopDefinitionInput = {
-      schemaVersion: 2,
+      schemaVersion: 3,
       name: 'evaluation-stream',
       nodes: [
         { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
@@ -155,8 +160,30 @@ describe('SSE event stream', () => {
           label: 'Done',
           config: {
             criteria: [
-              { when: 'predicate', strategy: 'codex', question: 'Done?', outcome: 'success' },
-              { when: 'predicate', strategy: 'expression', jsonata: 'true', outcome: 'success' },
+              {
+                when: 'predicate',
+                answer: {
+                  type: 'noul',
+                  true: { label: 'Ready', criteria: 'Task is done' },
+                  false: { label: 'Continue', criteria: 'Task is not done' },
+                },
+                evaluation: {
+                  kind: 'llm',
+                  harness: 'codex',
+                  model: { mode: 'inherit' },
+                  effort: { mode: 'inherit' },
+                  question: 'Done?',
+                },
+                match: { type: 'noul', value: true },
+                outcome: 'success',
+              },
+              {
+                when: 'predicate',
+                answer: { type: 'noul' },
+                evaluation: { kind: 'expression', jsonata: 'true' },
+                match: { type: 'noul', value: true },
+                outcome: 'success',
+              },
             ],
           },
         },
@@ -191,11 +218,9 @@ describe('SSE event stream', () => {
       criteria: [
         {
           index: 0,
-          strategy: 'codex',
-          holds: false,
-          confidence: 0.93,
-          model: 'gpt-6-luna',
-          reasoning: 'More work is needed',
+          strategy: 'llm',
+          answer: { holds: false, confidence: 0.93, reasoning: 'More work is needed' },
+          provenance: { model: 'gpt-6-luna' },
         },
         { index: 1, strategy: 'expression', status: 'matched' },
       ],
@@ -209,7 +234,7 @@ describe('SSE event stream', () => {
 
   it('persists safe exit diagnostics in pages and replayed SSE before run.failed', async () => {
     const marker = 'private-provider-response';
-    t.jev.judge = () =>
+    t.jev.classifyNoul = () =>
       Promise.reject(Object.assign(new Error(marker), { code: 'DECIDER_HTTP_ERROR', status: 503 }));
     const definition: LoopDefinitionInput = {
       ...waitLoop,
@@ -220,7 +245,17 @@ describe('SSE event stream', () => {
               ...node,
               config: {
                 criteria: [
-                  { when: 'predicate', strategy: 'jev', question: 'Done?', outcome: 'success' },
+                  {
+                    when: 'predicate',
+                    answer: {
+                      type: 'noul',
+                      true: { label: 'Ready', criteria: 'Task is done' },
+                      false: { label: 'Continue', criteria: 'Task is not done' },
+                    },
+                    evaluation: { kind: 'classifier', model: 'jev', question: 'Done?' },
+                    match: { type: 'noul', value: true },
+                    outcome: 'success',
+                  },
                 ],
               },
             }
@@ -248,7 +283,7 @@ describe('SSE event stream', () => {
       result: {
         kind: 'failed',
         diagnostic: {
-          code: 'DECIDER_HTTP_ERROR',
+          code: 'EVALUATION_PROVIDER_FAILED',
           message: 'Decision provider request failed',
           status: 503,
         },

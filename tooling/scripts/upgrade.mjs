@@ -21,7 +21,7 @@ import {
   inspectDatabaseUpgrade,
   applyDatabaseUpgrade,
 } from '../../packages/infrastructure/dist/sqlite/index.js';
-import { upgradeExportV1, upgradeLoopV1 } from '../../packages/domain/dist/index.js';
+import { upgradeExportCurrent, upgradeLoopCurrent } from '../../packages/domain/dist/index.js';
 
 const hash = (value) => createHash('sha256').update(value).digest('hex');
 async function json(path) {
@@ -164,8 +164,8 @@ export async function runUpgrade(argv) {
     const resolutions = options.resolutions ? await json(options.resolutions) : {};
     const result =
       original?.format === 'graphgoblin-loop'
-        ? upgradeExportV1(original, resolutions)
-        : upgradeLoopV1(original, resolutions);
+        ? upgradeExportCurrent(original, resolutions)
+        : upgradeLoopCurrent(original, resolutions);
     if (!result.ok) {
       await output(options.out, { format: 'graphgoblin-upgrade-refusals', issues: result.issues });
       return { ok: false, command, refusals: result.issues.length };
@@ -193,14 +193,14 @@ export async function runUpgrade(argv) {
       const inventory = await inspectDatabaseUpgrade(handle.client);
       await output(options.out, {
         format: 'graphgoblin-upgrade-inventory',
-        targetVersion: 2,
+        targetVersion: 3,
         sourceHash: inventory.sourceHash,
         versions: inventory.versions,
         blockedRuns: inventory.blockedRuns,
         issues: inventory.issues,
         manifest: {
           format: 'graphgoblin-upgrade-manifest',
-          targetVersion: 2,
+          targetVersion: 3,
           sourceHash: inventory.sourceHash,
           approvedBy: '',
           approvedAt: '',

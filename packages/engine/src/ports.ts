@@ -22,7 +22,6 @@ import type {
   Usage,
   WorkingDirectorySpec,
 } from '@graphgoblin/contracts';
-import type { PredicateAnswer } from '@graphgoblin/domain';
 
 /**
  * Ports the engine depends on. Adapters implement them; `@graphgoblin/engine/testing` ships
@@ -230,14 +229,14 @@ export interface ModelCatalogPort {
   list(): Promise<ModelCatalogEntry[]>;
 }
 
-export interface YesNoRequest {
+export interface PrimitiveRequest {
   question: string;
   context: JsonValue;
   model?: string;
   effort?: Effort;
 }
 
-export interface NoulRequest extends YesNoRequest {
+export interface NoulRequest extends PrimitiveRequest {
   criteria: { true: string; false: string };
 }
 export interface ClassifierNoulResult {
@@ -250,7 +249,7 @@ export interface LlmNoulResult {
   confidence: number;
   reasoning: string;
 }
-export interface ScoreRequest extends YesNoRequest {
+export interface ScoreRequest extends PrimitiveRequest {
   anchors: string[];
 }
 export type ScoreResult = ScoreAnswer;
@@ -259,9 +258,8 @@ export interface DeciderPort {
   readonly id: 'jev' | 'codex';
   available(): boolean;
   choose(request: ChoiceRequest, signal: AbortSignal): Promise<ChoiceResult>;
-  judge(request: YesNoRequest, signal: AbortSignal): Promise<PredicateAnswer>;
-  /** Strict boolean Noul capability, distinct from the legacy exit judge. */
-  noul?(request: NoulRequest, signal: AbortSignal): Promise<LlmNoulResult>;
+  /** Strict boolean Noul capability. */
+  noul(request: NoulRequest, signal: AbortSignal): Promise<LlmNoulResult>;
 }
 
 /** Primitive-specific provider snapshot; an in-flight request retains its resolved configuration. */

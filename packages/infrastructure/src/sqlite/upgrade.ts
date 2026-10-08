@@ -14,17 +14,49 @@ import {
 } from '@graphgoblin/contracts';
 import {
   stableStringify,
-  upgradeLoopV1,
-  upgradeRunHistoryV1,
+  upgradeLoopCurrent,
+  upgradeRunHistoryCurrent,
   upgradedFailure,
   upgradeDefaultsV1,
-  validateUpgradeResolutions,
+  validateUpgradeCurrentResolutions,
   type UpgradeIssue,
-  type UpgradeResolutions,
+  type UpgradeCurrentResolutions,
 } from '@graphgoblin/domain';
 
 type Executor = Pick<Client, 'execute'>;
 type RawRow = Record<string, unknown>;
+const object = (value: unknown): value is RawRow =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+function legacyPredicatePaths(value: unknown): string[] {
+  if (!object(value) || !Array.isArray(value.nodes)) return [];
+  return value.nodes.flatMap((node: unknown, index: number) => {
+    if (
+      !object(node) ||
+      node.kind !== 'exit' ||
+      !object(node.config) ||
+      !Array.isArray(node.config.criteria)
+    )
+      return [];
+    return node.config.criteria.flatMap((criterion: unknown, criterionIndex: number) =>
+      object(criterion) && criterion.when === 'predicate' && 'strategy' in criterion
+        ? [`/nodes/${index}/config/criteria/${criterionIndex}`]
+        : [],
+    );
+  });
+}
+function recordedAffectedChild(row: RawRow, affected: Set<string>): boolean {
+  if (row.type !== 'run.queued') return false;
+  try {
+    const payload = json(row.payload);
+    return (
+      object(payload) &&
+      object(payload.subloopVersions) &&
+      Object.values(payload.subloopVersions).some((id) => affected.has(String(id)))
+    );
+  } catch {
+    return false;
+  }
+}
 const MIGRATIONS = fileURLToPath(new URL('../../drizzle', import.meta.url));
 const NONTERMINAL = new Set(['queued', 'running', 'waiting', 'paused']);
 const hash = (value: unknown) => createHash('sha256').update(stableStringify(value)).digest('hex');
@@ -72,7 +104,7 @@ export async function guardDatabaseUpgrade(client: Executor): Promise<'fresh' | 
   }
   if (!names.includes('gg_upgrade_state')) throw new DatabaseUpgradeRequiredError();
   const states = await rows(client, 'SELECT * FROM gg_upgrade_state');
-  if (states.length !== 1 || states[0]?.format_version !== 2 || states[0]?.status !== 'complete')
+  if (states.length !== 1 || states[0]?.format_version !== 3 || states[0]?.status !== 'complete')
     throw new DatabaseUpgradeRequiredError(
       'The offline upgrade is incomplete; restore the backup or finish its approved manifest',
     );
@@ -151,7 +183,7 @@ export async function guardDatabaseUpgrade(client: Executor): Promise<'fresh' | 
     try {
       LoopDefinitionSchema.parse(json(row.definition));
     } catch {
-      throw new DatabaseUpgradeRequiredError('A stored loop version is not strict v2');
+      throw new DatabaseUpgradeRequiredError('A stored loop version is not strict v3');
     }
   }
   if (names.includes('settings')) {
@@ -176,7 +208,7 @@ const ARCHIVE_SQL =
 export async function stampFreshDatabase(client: Executor): Promise<void> {
   await client.execute(STATE_SQL);
   await client.execute(
-    "INSERT INTO gg_upgrade_state (id,format_version,status,source_hash,manifest_hash) VALUES (1,2,'complete','fresh','fresh')",
+    "INSERT INTO gg_upgrade_state (id,format_version,status,source_hash,manifest_hash) VALUES (1,3,'complete','fresh','fresh')",
   );
 }
 
@@ -189,6 +221,7 @@ export interface DatabaseUpgradeInventory {
     definitionHash: string;
     issues: UpgradeIssue[];
     decisions: string[];
+    predicates: string[];
   }[];
   failedRuns: string[];
   blockedRuns: { id: string; status: string }[];
@@ -214,7 +247,8 @@ export async function inspectDatabaseUpgrade(client: Executor): Promise<Database
   for (const row of stored.loop_versions ?? []) {
     try {
       const definition = json(row.definition);
-      const result = upgradeLoopV1(definition);
+      const result = upgradeLoopCurrent(definition);
+      const predicates = legacyPredicatePaths(definition);
       const decisions =
         typeof definition === 'object' &&
         definition !== null &&
@@ -231,22 +265,23 @@ export async function inspectDatabaseUpgrade(client: Executor): Promise<Database
               .map((node: { id?: unknown }) => String(node.id))
           : [];
       if (
-        typeof definition === 'object' &&
-        definition !== null &&
-        'schemaVersion' in definition &&
-        definition.schemaVersion === 1 &&
-        (decisions.length ||
-          (typeof definition === 'object' &&
-            definition !== null &&
-            'nodes' in definition &&
-            Array.isArray(definition.nodes) &&
-            definition.nodes.some(
-              (node: unknown) =>
-                typeof node === 'object' &&
-                node !== null &&
-                'kind' in node &&
-                node.kind === 'subloop',
-            )))
+        predicates.length ||
+        (typeof definition === 'object' &&
+          definition !== null &&
+          'schemaVersion' in definition &&
+          definition.schemaVersion === 1 &&
+          (decisions.length ||
+            (typeof definition === 'object' &&
+              definition !== null &&
+              'nodes' in definition &&
+              Array.isArray(definition.nodes) &&
+              definition.nodes.some(
+                (node: unknown) =>
+                  typeof node === 'object' &&
+                  node !== null &&
+                  'kind' in node &&
+                  node.kind === 'subloop',
+              ))))
       )
         affected.add(String(row.id));
       versions.push({
@@ -255,6 +290,7 @@ export async function inspectDatabaseUpgrade(client: Executor): Promise<Database
         definitionHash: hash(definition),
         issues: result.ok ? [] : result.issues,
         decisions,
+        predicates,
       });
     } catch {
       issues.push({
@@ -262,6 +298,42 @@ export async function inspectDatabaseUpgrade(client: Executor): Promise<Database
         path: '/loop_versions/' + String(row.id),
         message: 'definition cannot be inventoried',
       });
+    }
+  }
+  // A failed parent can replay into an affected child even when the parent's own exit is unchanged.
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const row of stored.loop_versions ?? []) {
+      if (affected.has(String(row.id))) continue;
+      try {
+        const definition = json(row.definition);
+        if (!object(definition) || !Array.isArray(definition.nodes)) continue;
+        const reachesAffected = definition.nodes.some((node: unknown) => {
+          if (
+            !object(node) ||
+            node.kind !== 'subloop' ||
+            !object(node.config) ||
+            !object(node.config.loopRef)
+          )
+            return false;
+          const ref = node.config.loopRef;
+          return (stored.loop_versions ?? []).some(
+            (child) =>
+              child.loop_id === ref.loopId &&
+              (ref.version === 'latest'
+                ? child.status === 'published'
+                : child.version === ref.version) &&
+              affected.has(String(child.id)),
+          );
+        });
+        if (reachesAffected) {
+          affected.add(String(row.id));
+          changed = true;
+        }
+      } catch {
+        /* malformed definitions already have an inventory refusal */
+      }
     }
   }
   for (const run of stored.runs ?? [])
@@ -278,7 +350,11 @@ export async function inspectDatabaseUpgrade(client: Executor): Promise<Database
       (run) =>
         run.status === 'failed' &&
         (affected.has(String(run.version_id)) ||
-          events.some((event) => event.run_id === run.id && legacyDecisionEvent(event))),
+          events.some(
+            (event) =>
+              event.run_id === run.id &&
+              (legacyDecisionEvent(event) || recordedAffectedChild(event, affected)),
+          )),
     )
     .map((run) => String(run.id));
   const blockedRuns = (stored.runs ?? [])
@@ -297,11 +373,11 @@ export async function inspectDatabaseUpgrade(client: Executor): Promise<Database
 
 export interface DatabaseUpgradeManifest {
   format: 'graphgoblin-upgrade-manifest';
-  targetVersion: 2;
+  targetVersion: 3;
   sourceHash: string;
   approvedBy: string;
   approvedAt: string;
-  versions: Record<string, { definitionHash: string; resolutions: UpgradeResolutions }>;
+  versions: Record<string, { definitionHash: string; resolutions: UpgradeCurrentResolutions }>;
   failedRuns: Record<string, { disposition: 'nonresumable-replay'; reason: string }>;
 }
 function validateManifest(
@@ -333,7 +409,7 @@ function validateManifest(
         !object(version) ||
         Object.keys(version).some((key) => !['definitionHash', 'resolutions'].includes(key)) ||
         typeof version.definitionHash !== 'string' ||
-        validateUpgradeResolutions(version.resolutions).length > 0,
+        validateUpgradeCurrentResolutions(version.resolutions).length > 0,
     ) ||
     Object.values(raw.failedRuns).some(
       (run) =>
@@ -347,7 +423,7 @@ function validateManifest(
     );
   if (
     manifest.format !== 'graphgoblin-upgrade-manifest' ||
-    manifest.targetVersion !== 2 ||
+    manifest.targetVersion !== 3 ||
     manifest.sourceHash !== inventory.sourceHash ||
     !manifest.approvedBy.trim() ||
     !TimestampSchema.safeParse(manifest.approvedAt).success
@@ -485,7 +561,7 @@ export async function applyDatabaseUpgrade(
     const inventory = await inspectDatabaseUpgrade(tx);
     const converted = new Map<string, LoopDefinition>();
     for (const row of inventory.tables.loop_versions ?? []) {
-      const result = upgradeLoopV1(
+      const result = upgradeLoopCurrent(
         json(row.definition),
         manifest.versions[String(row.id)]?.resolutions ?? {},
       );
@@ -573,7 +649,13 @@ export async function applyDatabaseUpgrade(
       for (const event of rawEvents)
         if (event.type === 'decision.made' && typeof event.nodeId === 'string')
           decisionNodeIds.add(event.nodeId);
-      const history = upgradeRunHistoryV1({
+      const history = upgradeRunHistoryCurrent({
+        sourceVersion: (
+          json(
+            (inventory.tables.loop_versions ?? []).find((version) => version.id === run.version_id)!
+              .definition,
+          ) as { schemaVersion: 1 | 2 | 3 }
+        ).schemaVersion,
         initialThread: json(run.initial_thread),
         events: rawEvents,
         decisionNodeIds: [...decisionNodeIds],
@@ -594,6 +676,7 @@ export async function applyDatabaseUpgrade(
           upgradedFailure(json(run.failure), {
             approvedAt: manifest.approvedAt,
             reason: manifest.failedRuns[runId].reason,
+            version: 3,
           }),
         );
       await tx.execute({
@@ -618,6 +701,7 @@ export async function applyDatabaseUpgrade(
           payload.failure = upgradedFailure(event.failure, {
             approvedAt: manifest.approvedAt,
             reason: manifest.failedRuns[runId].reason,
+            version: 3,
           });
         await tx.execute({
           sql: 'UPDATE run_events SET payload=? WHERE run_id=? AND seq=?',
@@ -650,7 +734,7 @@ export async function applyDatabaseUpgrade(
       });
     }
     await tx.execute({
-      sql: "INSERT OR REPLACE INTO gg_upgrade_state (id,format_version,status,source_hash,manifest_hash) VALUES (1,2,'complete',?,?)",
+      sql: "INSERT OR REPLACE INTO gg_upgrade_state (id,format_version,status,source_hash,manifest_hash) VALUES (1,3,'complete',?,?)",
       args: [original.sourceHash, manifestHash],
     });
     await guardDatabaseUpgrade(tx);

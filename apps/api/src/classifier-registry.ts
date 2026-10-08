@@ -159,7 +159,7 @@ export class ClassifierRegistry implements ClassifierRegistryPort {
       };
     let classifier: ClassifierPort;
     if (entry.provider === 'typesafe') {
-      // The adapter resolves this immutable snapshot rather than sharing the mutable exit client.
+      // Each cached classifier uses an immutable owner-scoped credential snapshot.
       const jev = createJevDecider({
         secrets: { resolve: () => Promise.resolve(state.secret) },
         ...(entry.secretRef !== undefined ? { secretName: entry.secretRef } : {}),

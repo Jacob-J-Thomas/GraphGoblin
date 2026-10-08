@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   MAX_MODEL_NAME_LENGTH,
+  ExitPredicateSchema,
   RunEventSchema,
   type ExitConfig,
   type LoopDefinitionInput,
@@ -23,7 +24,7 @@ function loop(config: Partial<ExitConfig>): LoopDefinitionInput {
 describe('exit evaluation evidence', () => {
   it('retains the actual resolved Codex model when the judge call fails', async () => {
     const e = await createTestEngine();
-    e.ports.codexDecider.judge = () =>
+    e.ports.codexDecider.noul = () =>
       Promise.reject(
         Object.assign(new Error('private judge error'), {
           code: 'DECIDER_HTTP_ERROR',
@@ -32,13 +33,35 @@ describe('exit evaluation evidence', () => {
       );
     const v = e.publish(
       loop({
-        criteria: [{ when: 'predicate', strategy: 'codex', question: 'Done?', outcome: 'success' }],
+        criteria: [
+          {
+            when: 'predicate',
+            answer: {
+              type: 'noul',
+              true: { label: 'Ready', criteria: 'Task is done' },
+              false: { label: 'Continue', criteria: 'Task is not done' },
+            },
+            evaluation: {
+              kind: 'llm',
+              harness: 'codex',
+              model: { mode: 'inherit' },
+              effort: { mode: 'inherit' },
+              question: 'Done?',
+            },
+            match: { type: 'noul', value: true },
+            outcome: 'success',
+          },
+        ],
       }),
     );
     const r = await e.runToIdle(v.loopId);
     expect(e.events(r.id).find((event) => event.type === 'exit.evaluated')).toMatchObject({
       criteria: [
-        { status: 'error', model: 'gpt-6-luna', diagnostic: { code: 'DECIDER_HTTP_ERROR' } },
+        {
+          status: 'error',
+          provenance: { model: 'gpt-6-luna' },
+          diagnostic: { code: 'EVALUATION_PROVIDER_FAILED' },
+        },
       ],
     });
   });
@@ -48,25 +71,75 @@ describe('exit evaluation evidence', () => {
     const model = 'm'.repeat(MAX_MODEL_NAME_LENGTH);
     e.ports.modelCatalog.entries.push({ ...e.ports.modelCatalog.entries[0]!, model });
     const definition = loop({
-      criteria: [{ when: 'predicate', strategy: 'codex', question: 'Done?', outcome: 'success' }],
+      criteria: [
+        {
+          when: 'predicate',
+          answer: {
+            type: 'noul',
+            true: { label: 'Ready', criteria: 'Task is done' },
+            false: { label: 'Continue', criteria: 'Task is not done' },
+          },
+          evaluation: {
+            kind: 'llm',
+            harness: 'codex',
+            model: { mode: 'inherit' },
+            effort: { mode: 'inherit' },
+            question: 'Done?',
+          },
+          match: { type: 'noul', value: true },
+          outcome: 'success',
+        },
+      ],
     });
     definition.settings = { defaults: { byHarness: { codex: { model } } } };
     const v = e.publish(definition);
     const run = await e.runToIdle(v.loopId);
     expect(run.status).toBe('succeeded');
     const event = e.events(run.id).find((event) => event.type === 'exit.evaluated');
-    expect(event).toMatchObject({ criteria: [{ model }] });
+    expect(event).toMatchObject({ criteria: [{ provenance: { model } }] });
     expect(RunEventSchema.parse(JSON.parse(JSON.stringify(event)))).toEqual(event);
   });
   it('identifies the expression following a false Jev predicate and skips later criteria', async () => {
     const e = await createTestEngine();
-    e.ports.jev.judge = () => Promise.resolve({ holds: false, confidence: 0.93 });
+    e.ports.jev.classifyNoul = () => Promise.resolve({ type: 'noul', trueProbability: 0.07 });
     const v = e.publish(
       loop({
         criteria: [
-          { when: 'predicate', strategy: 'jev', question: 'Done?', outcome: 'success' },
-          { when: 'predicate', strategy: 'expression', jsonata: 'true', outcome: 'success' },
-          { when: 'predicate', strategy: 'codex', question: 'Done?', outcome: 'failure' },
+          {
+            when: 'predicate',
+            answer: {
+              type: 'noul',
+              true: { label: 'Ready', criteria: 'Task is done' },
+              false: { label: 'Continue', criteria: 'Task is not done' },
+            },
+            evaluation: { kind: 'classifier', model: 'jev', question: 'Done?' },
+            match: { type: 'noul', value: true },
+            outcome: 'success',
+          },
+          {
+            when: 'predicate',
+            answer: { type: 'noul' },
+            evaluation: { kind: 'expression', jsonata: 'true' },
+            match: { type: 'noul', value: true },
+            outcome: 'success',
+          },
+          {
+            when: 'predicate',
+            answer: {
+              type: 'noul',
+              true: { label: 'Ready', criteria: 'Task is done' },
+              false: { label: 'Continue', criteria: 'Task is not done' },
+            },
+            evaluation: {
+              kind: 'llm',
+              harness: 'codex',
+              model: { mode: 'inherit' },
+              effort: { mode: 'inherit' },
+              question: 'Done?',
+            },
+            match: { type: 'noul', value: true },
+            outcome: 'failure',
+          },
         ],
       }),
     );
@@ -78,16 +151,15 @@ describe('exit evaluation evidence', () => {
       criteria: [
         {
           index: 0,
-          strategy: 'jev',
+          strategy: 'classifier',
           status: 'not-matched',
-          holds: false,
-          confidence: 0.93,
-          classifierModel: 'jev',
+          answer: { holds: false, confidence: 1 - 0.07, trueProbability: 0.07 },
+          provenance: { classifierId: 'jev' },
         },
-        { index: 1, strategy: 'expression', status: 'matched', holds: true },
+        { index: 1, strategy: 'expression', status: 'matched', answer: { holds: true } },
         {
           index: 2,
-          strategy: 'codex',
+          strategy: 'llm',
           status: 'skipped',
           reason: { code: 'EARLIER_CRITERION_MATCHED' },
         },
@@ -95,29 +167,39 @@ describe('exit evaluation evidence', () => {
       result: { kind: 'completed', criterionIndex: 1, outcome: 'success' },
     });
     expect(RunEventSchema.safeParse(event).success).toBe(true);
-    expect(e.ports.codexDecider.judgements).toHaveLength(0);
+    expect(e.ports.codexDecider.nouls).toHaveLength(0);
     expect(e.eventTypes(run.id).indexOf('exit.evaluated')).toBeLessThan(
       e.eventTypes(run.id).lastIndexOf('node.finished'),
     );
   });
   it('records Codex model, bounded reasoning and a positive verdict below the confidence threshold', async () => {
     const e = await createTestEngine();
-    e.ports.codexDecider.judge = () =>
+    e.ports.codexDecider.noul = () =>
       Promise.resolve({
+        type: 'noul',
         holds: true,
         confidence: 0.4,
-        reasoning: 'x'.repeat(3000),
-        model: 'untrusted-envelope-field',
+        reasoning: 'Reviewed',
       });
     const v = e.publish(
       loop({
         criteria: [
           {
             when: 'predicate',
-            strategy: 'codex',
-            question: 'Done?',
+            answer: {
+              type: 'noul',
+              true: { label: 'Ready', criteria: 'Task is done' },
+              false: { label: 'Continue', criteria: 'Task is not done' },
+            },
+            evaluation: {
+              kind: 'llm',
+              harness: 'codex',
+              model: { mode: 'inherit' },
+              effort: { mode: 'inherit' },
+              question: 'Done?',
+            },
+            match: { type: 'noul', value: true, minReportedConfidence: 0.8 },
             outcome: 'success',
-            minConfidence: 0.8,
           },
         ],
       }),
@@ -127,11 +209,10 @@ describe('exit evaluation evidence', () => {
       criteria: [
         {
           status: 'not-matched',
-          holds: true,
-          confidence: 0.4,
-          minConfidence: 0.8,
-          model: 'gpt-6-luna',
-          reasoning: 'x'.repeat(2048),
+          answer: { holds: true, confidence: 0.4, reasoning: 'Reviewed' },
+          rejection: { kind: 'llm-reported-confidence', minimum: 0.8, confidence: 0.4 },
+          acceptance: { status: 'accepted' },
+          provenance: { model: 'gpt-6-luna' },
         },
       ],
       result: { kind: 'completed', reason: 'default-success' },
@@ -144,7 +225,13 @@ describe('exit evaluation evidence', () => {
       default: 'loop-back',
       loopBack: { targetNodeId: 'prep' },
       criteria: [
-        { when: 'predicate', strategy: 'expression', jsonata: 'false', outcome: 'success' },
+        {
+          when: 'predicate',
+          answer: { type: 'noul' },
+          evaluation: { kind: 'expression', jsonata: 'false' },
+          match: { type: 'noul', value: true },
+          outcome: 'success',
+        },
       ],
     });
     definition.settings = { maxIterations: 3 };
@@ -206,28 +293,35 @@ describe('exit evaluation evidence', () => {
     async (failure) => {
       const e = await createTestEngine();
       const marker = 'private-provider-token';
-      if (failure === 'unavailable') e.ports.deciders = [];
+      if (failure === 'unavailable') e.ports.classifiers.models.clear();
       if (failure === 'provider-error')
-        e.ports.jev.judge = () =>
+        e.ports.jev.classifyNoul = () =>
           Promise.reject(
             Object.assign(new Error(marker), { code: 'DECIDER_HTTP_ERROR', status: 503 }),
           );
       if (failure === 'invalid-confidence')
-        e.ports.jev.judge = () => Promise.resolve({ holds: true, confidence: NaN });
-      const first =
+        e.ports.jev.classifyNoul = () => Promise.resolve({ type: 'noul', trueProbability: NaN });
+      const first = ExitPredicateSchema.parse(
         failure === 'expression-error'
           ? {
-              when: 'predicate' as const,
-              strategy: 'expression' as const,
-              jsonata: '$error("private-provider-token")',
-              outcome: 'success' as const,
+              when: 'predicate',
+              answer: { type: 'noul' },
+              evaluation: { kind: 'expression', jsonata: '$error("private-provider-token")' },
+              match: { type: 'noul', value: true },
+              outcome: 'success',
             }
           : {
-              when: 'predicate' as const,
-              strategy: 'jev' as const,
-              question: 'Done?',
-              outcome: 'success' as const,
-            };
+              when: 'predicate',
+              answer: {
+                type: 'noul',
+                true: { label: 'Ready', criteria: 'Task is done' },
+                false: { label: 'Continue', criteria: 'Task is not done' },
+              },
+              evaluation: { kind: 'classifier', model: 'jev', question: 'Done?' },
+              match: { type: 'noul', value: true },
+              outcome: 'success',
+            },
+      );
       const v = e.publish(
         loop({ criteria: [first, { when: 'max-iterations', value: 1, outcome: 'exhausted' }] }),
       );
@@ -245,7 +339,7 @@ describe('exit evaluation evidence', () => {
       expect(JSON.stringify(event)).not.toContain(marker);
       if (failure === 'provider-error')
         expect(event).toMatchObject({
-          result: { diagnostic: { code: 'DECIDER_HTTP_ERROR', status: 503 } },
+          result: { diagnostic: { code: 'EVALUATION_PROVIDER_FAILED', status: 503 } },
         });
     },
   );
@@ -255,7 +349,7 @@ describe('exit evaluation evidence', () => {
     const started = new Promise<void>((resolve) => {
       ready = resolve;
     });
-    e.ports.jev.judge = (_request, signal) =>
+    e.ports.jev.classifyNoul = (_request, signal) =>
       new Promise((_resolve, reject) => {
         ready();
         signal!.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')), {
@@ -264,7 +358,19 @@ describe('exit evaluation evidence', () => {
       });
     const v = e.publish(
       loop({
-        criteria: [{ when: 'predicate', strategy: 'jev', question: 'Done?', outcome: 'success' }],
+        criteria: [
+          {
+            when: 'predicate',
+            answer: {
+              type: 'noul',
+              true: { label: 'Ready', criteria: 'Task is done' },
+              false: { label: 'Continue', criteria: 'Task is not done' },
+            },
+            evaluation: { kind: 'classifier', model: 'jev', question: 'Done?' },
+            match: { type: 'noul', value: true },
+            outcome: 'success',
+          },
+        ],
       }),
     );
     const run = await e.start(v.loopId);
@@ -280,7 +386,13 @@ describe('exit evaluation evidence', () => {
     const v = e.publish(
       loop({
         criteria: [
-          { when: 'predicate', strategy: 'expression', jsonata: 'true', outcome: 'success' },
+          {
+            when: 'predicate',
+            answer: { type: 'noul' },
+            evaluation: { kind: 'expression', jsonata: 'true' },
+            match: { type: 'noul', value: true },
+            outcome: 'success',
+          },
           { when: 'max-iterations', value: 1, outcome: 'exhausted' },
         ],
         return: { mapping: '$error("private-mapping-error")', channels: [] },

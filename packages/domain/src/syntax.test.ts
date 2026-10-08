@@ -10,7 +10,7 @@ import { findAuthoredSources, syntaxIssues } from './syntax.js';
 
 function loop(nodes: LoopDefinitionInput['nodes'], settings?: LoopDefinitionInput['settings']) {
   return LoopDefinitionSchema.parse({
-    schemaVersion: 2,
+    schemaVersion: 3,
     name: 'syntax',
     nodes: [
       { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },

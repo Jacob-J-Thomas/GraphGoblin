@@ -128,13 +128,19 @@ export async function modelIssues(
         'config.evaluation',
       );
     }
-    if (
-      node.kind === 'exit' &&
-      node.config.criteria.some(
-        (criterion) => criterion.when === 'predicate' && criterion.strategy === 'codex',
-      )
-    )
-      await check('codex', undefined, undefined, node.id, 'config.criteria');
+    if (node.kind === 'exit') {
+      for (const [index, criterion] of node.config.criteria.entries()) {
+        if (criterion.when !== 'predicate' || criterion.evaluation.kind !== 'llm') continue;
+        const evaluation = criterion.evaluation;
+        await check(
+          evaluation.harness,
+          evaluation.model.mode === 'explicit' ? evaluation.model.value : undefined,
+          evaluation.effort.mode === 'explicit' ? evaluation.effort.value : undefined,
+          node.id,
+          'config.criteria.' + index + '.evaluation',
+        );
+      }
+    }
   }
   return issues;
 }

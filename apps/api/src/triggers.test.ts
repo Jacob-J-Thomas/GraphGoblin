@@ -43,7 +43,7 @@ function triggerLoop(
 ): LoopDefinitionInput {
   const triggerId = options.triggerId ?? 'trig';
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     name,
     nodes: [
       { id: triggerId, kind: 'trigger', label: 'T', config: trigger as never },

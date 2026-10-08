@@ -17,7 +17,7 @@ export class LoopFormatUpgradeRequiredError extends DomainError {
   constructor() {
     super(
       'LOOP_FORMAT_UPGRADE_REQUIRED',
-      'Use the offline graphgoblin-upgrade export command to convert this v1 document',
+      'Use the offline graphgoblin-upgrade export command and resolve any authored criteria to convert this document to format 3',
     );
   }
 }
@@ -26,7 +26,7 @@ export class LoopFormatUpgradeRequiredError extends DomainError {
 export function exportLoop(def: LoopDefinition, exportedAt: string): LoopExport {
   return {
     format: 'graphgoblin-loop',
-    formatVersion: 2,
+    formatVersion: 3,
     exportedAt,
     loop: def,
   };
@@ -43,8 +43,8 @@ export function importLoop(input: unknown): {
   if (
     typeof input === 'object' &&
     input !== null &&
-    (('formatVersion' in input && input.formatVersion === 1) ||
-      ('schemaVersion' in input && input.schemaVersion === 1))
+    (('formatVersion' in input && [1, 2].includes(Number(input.formatVersion))) ||
+      ('schemaVersion' in input && [1, 2].includes(Number(input.schemaVersion))))
   )
     throw new LoopFormatUpgradeRequiredError();
   const envelope =

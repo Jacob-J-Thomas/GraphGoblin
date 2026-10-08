@@ -27,7 +27,7 @@ import {
 } from './index.js';
 
 const waitLoop: ContractLoopDefinition = {
-  schemaVersion: 2,
+  schemaVersion: 3,
   name: 'wait-for-input',
   nodes: [
     { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },

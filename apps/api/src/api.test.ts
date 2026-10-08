@@ -16,7 +16,7 @@ afterEach(async () => {
 
 function waitLoop(name = 'wait'): LoopDefinitionInput {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     name,
     nodes: [
       { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },
@@ -384,7 +384,7 @@ describe('runs', () => {
       { finalText: 'hello from codex', items: [{ id: 'i1', type: 'message', summary: 'hello' }] },
     ]);
     const inferLoop: LoopDefinitionInput = {
-      schemaVersion: 2,
+      schemaVersion: 3,
       name: 'infer',
       nodes: [
         { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },

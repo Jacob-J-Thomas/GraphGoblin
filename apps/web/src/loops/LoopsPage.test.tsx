@@ -64,7 +64,7 @@ describe('LoopsPage', () => {
     const input = await screen.findByLabelText('Import an exported loop (JSON)');
     const exported = {
       format: 'graphgoblin-loop',
-      formatVersion: 2,
+      formatVersion: 3,
       exportedAt: TS,
       loop: kitchenSinkLoop(),
     };

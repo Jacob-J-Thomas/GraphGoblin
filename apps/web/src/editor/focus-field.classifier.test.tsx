@@ -72,18 +72,30 @@ describe('classifier issue paths', () => {
     expect(method).toHaveFocus();
   });
 
-  it('config.criteria.N.strategy focuses that exit criterion’s chosen strategy', () => {
+  it('config.criteria.N.evaluation.model focuses that exit criterion’s classifier picker', () => {
     const root = body('exit', {
       criteria: [
         { when: 'max-iterations', value: 3 },
-        { when: 'predicate', strategy: 'jev', question: 'Done?', outcome: 'success' },
+        {
+          when: 'predicate',
+          answer: {
+            type: 'noul',
+            true: { label: 'Done', criteria: 'The task is complete' },
+            false: { label: 'Pending', criteria: 'Work remains' },
+          },
+          evaluation: { kind: 'classifier', model: 'missing', question: 'Done?' },
+          match: { type: 'noul', value: true },
+          outcome: 'success',
+        },
       ],
     });
-    expect(focusIssuePath(root, 'config.criteria.1.strategy')).toBe(true);
+    expect(focusIssuePath(root, 'config.criteria.1.evaluation.model')).toBe(true);
     const focused = document.activeElement as HTMLInputElement;
-    expect(focused).toHaveAttribute('type', 'radio');
-    expect(focused).toBeChecked();
-    expect(focused.value).toBe('jev');
-    expect(focused.closest('[data-field]')).toHaveAttribute('data-field', 'criteria.1.strategy');
+    expect(focused.tagName).toBe('SELECT');
+    expect(focused).toHaveValue('missing');
+    expect(focused.closest('[data-field]')).toHaveAttribute(
+      'data-field',
+      'criteria.1.evaluation.model',
+    );
   });
 });

@@ -66,7 +66,7 @@ describe('exportLoop / importLoop', () => {
     (field) => {
       const input = {
         format: 'graphgoblin-loop',
-        formatVersion: 2,
+        formatVersion: 3,
         exportedAt: FIXTURE_TS,
         loop: minimalLoop(),
         [field]: null,
@@ -86,7 +86,7 @@ describe('exportLoop / importLoop', () => {
   it.each([false, true])('rejects removed loop defaults with the field path (%j)', (envelope) => {
     const definition = { ...minimalLoop(), settings: { defaults: { harness: 'codex' } } };
     const input = envelope
-      ? { format: 'graphgoblin-loop', formatVersion: 2, exportedAt: FIXTURE_TS, loop: definition }
+      ? { format: 'graphgoblin-loop', formatVersion: 3, exportedAt: FIXTURE_TS, loop: definition }
       : definition;
     try {
       importLoop(input);

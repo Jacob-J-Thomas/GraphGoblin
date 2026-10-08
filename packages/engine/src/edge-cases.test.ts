@@ -208,7 +208,10 @@ describe('fakes', () => {
       ),
     ).toMatchObject({ optionId: 'x' });
     expect(
-      await decider.judge({ question: 'q', context: null }, new AbortController().signal),
+      await decider.noul(
+        { question: 'q', context: null, criteria: { true: 'Ready', false: 'Continue' } },
+        new AbortController().signal,
+      ),
     ).toMatchObject({ holds: true });
     const emptyDecider = new FakeDecider('codex');
     expect(
@@ -284,7 +287,7 @@ describe('run manager edge cases', () => {
   it('rejects loops without triggers and fails edges to unknown nodes', async () => {
     const engine = await createTestEngine();
     const noTrigger = engine.publish({
-      schemaVersion: 2,
+      schemaVersion: 3,
       name: 'nt',
       nodes: [{ id: 'done', kind: 'exit', label: 'D', config: {} }],
       edges: [],
@@ -482,14 +485,26 @@ describe('handler edge cases', () => {
           config: { operations: [{ op: 'delete', path: '/vars/x' }] },
         },
         {
-          criteria: [{ when: 'predicate', strategy: 'jev', question: 'done?', outcome: 'success' }],
+          criteria: [
+            {
+              when: 'predicate',
+              answer: {
+                type: 'noul',
+                true: { label: 'Ready', criteria: 'Task is done' },
+                false: { label: 'Continue', criteria: 'Task is not done' },
+              },
+              evaluation: { kind: 'classifier', model: 'jev', question: 'done?' },
+              match: { type: 'noul', value: true },
+              outcome: 'success',
+            },
+          ],
         },
       ),
     );
     const run = await engine.runToIdle(version.loopId);
     expect(run.status).toBe('succeeded');
-    expect(engine.ports.jev.judgements[0]?.context).toMatchObject({ lastOutput: null });
-    expect(engine.ports.jev.judgements[0]).not.toHaveProperty('model');
+    expect(engine.ports.jev.classifierNouls[0]?.context).toMatchObject({ lastOutput: null });
+    expect(engine.ports.jev.classifierNouls[0]).not.toHaveProperty('model');
   });
 
   it('heartbeat: POST probes render headers and bodies', async () => {
@@ -655,7 +670,7 @@ describe('handler edge cases', () => {
   it('subloop: exclusions, fresh injections, default custom patches, and null results', async () => {
     const engine = await createTestEngine();
     const child = engine.publish({
-      schemaVersion: 2,
+      schemaVersion: 3,
       name: 'child',
       nodes: [
         { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },
@@ -669,7 +684,7 @@ describe('handler edge cases', () => {
       edges: [{ id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'done' } }],
     });
     const parent = (name: string, sub: Record<string, unknown>): LoopDefinitionInput => ({
-      schemaVersion: 2,
+      schemaVersion: 3,
       name,
       nodes: [
         { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },

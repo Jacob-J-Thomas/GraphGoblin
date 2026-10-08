@@ -64,7 +64,7 @@ export async function createTestApp(options: TestAppOptions = {}): Promise<TestA
   const clock = new FakeClock();
   const container = await createContainer(config, {
     harnesses: options.harnesses ?? { codex: harness },
-    deciders: [jev, codex],
+    deciders: [codex],
     ...(!options.realClassifiers ? { classifiers: new FakeClassifierRegistry(jev) } : {}),
     structured,
     startTimers: false,

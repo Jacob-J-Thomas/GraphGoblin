@@ -234,3 +234,11 @@ Save this bare definition as a JSON file and import it. It follows the contracts
 ```
 
 Read [Node catalog](../04-node-catalog.md) for design context. Continue with [Run and observe](03-run-and-observe.md).
+
+## Match an exit answer
+
+An exit criterion can evaluate a Noul, Choice or Score answer and compare it with an explicit rule. Choose true or false for Noul, one or more declared IDs for Choice, or a rubric-index comparison for Score. Provider Noul also needs criteria for each side. Score preserves fractional values; exits do not need routing bands.
+
+Choose a classifier that supports the answer type, or Codex LLM for Noul/Choice. Expressions produce strict boolean Noul. A classifier confidence minimum and the optional LLM self-reported confidence minimum can reject an answer before matching. A rejected answer never matches, even if the rule asks for false. Inspect the raw answer, gate and rule separately in the run timeline.
+
+Criteria run from top to bottom. A match on the final permitted iteration still completes; if none matches, the default either succeeds or takes the single loop-back, subject to the iteration ceiling. Keep explicit duration/iteration criteria in the intended order. Existing question context is unchanged; no new session controls are required.

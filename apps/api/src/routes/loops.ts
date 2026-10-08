@@ -216,14 +216,14 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
         if (
           typeof body === 'object' &&
           body !== null &&
-          (('formatVersion' in body && body.formatVersion === 1) ||
-            ('schemaVersion' in body && body.schemaVersion === 1))
+          (('formatVersion' in body && [1, 2].includes(Number(body.formatVersion))) ||
+            ('schemaVersion' in body && [1, 2].includes(Number(body.schemaVersion))))
         )
           return problem(
             reply,
             400,
             'LOOP_FORMAT_UPGRADE_REQUIRED',
-            'Use the offline graphgoblin-upgrade export command to convert this v1 document',
+            'Use the offline graphgoblin-upgrade export command and resolve any authored criteria to convert this document to format 3',
           );
       },
       schema: {

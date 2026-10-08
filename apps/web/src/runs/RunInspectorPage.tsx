@@ -37,7 +37,9 @@ export function RunInspectorPage() {
   const seq = selectedSeq ?? log.lastSeq;
   const selectedEvent = log.events.find((event) => event.seq === seq);
   const needsPinnedDefinition =
-    selectedEvent?.type === 'decision.made' || selectedEvent?.type === 'run.failed';
+    selectedEvent?.type === 'exit.evaluated' ||
+    selectedEvent?.type === 'decision.made' ||
+    selectedEvent?.type === 'run.failed';
   const versionQuery = useLoopVersion(
     runQuery.data?.loopId ?? '',
     runQuery.data?.versionId ?? '',

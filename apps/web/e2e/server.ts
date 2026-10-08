@@ -9,6 +9,7 @@
  * instances with other configuration (for example `GG_REQUIRE_API_KEY=true`).
  */
 import { existsSync } from 'node:fs';
+import { z } from 'zod';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
@@ -48,8 +49,21 @@ const apps: TestApp[] = [];
 const instances = new Map<string, E2eInstance>();
 const closers: (() => Promise<void>)[] = [];
 let nextInstanceId = 1;
-/** Loopback Choice endpoints started for classifier specs, by their API root. */
+/** Loopback primitive endpoints started for classifier specs, by their API root. */
 const classifiers = new Map<string, Awaited<ReturnType<typeof startFakeClassifierEndpoint>>>();
+const ClassifierReplySchema = z.discriminatedUnion('type', [
+  z.strictObject({
+    type: z.literal('noul'),
+    trueProbability: z.number().min(0).max(1),
+  }),
+  z.strictObject({
+    type: z.literal('score'),
+    score: z.number().min(0),
+    confidence: z.number().min(0).max(1),
+    probabilities: z.record(z.string(), z.number().min(0).max(1)),
+  }),
+]);
+const classifierReplies = new Map<string, z.infer<typeof ClassifierReplySchema>[]>();
 const claudeEfforts = ['low', 'medium', 'high', 'xhigh', 'max'] as const;
 const readyClaudePreflight = HarnessPreflightSchema.parse({
   ok: true,
@@ -368,10 +382,13 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
       return { url: await live.listen({ host: '127.0.0.1', port: 0 }) };
     }
     case '/classifier/start': {
-      // A Choice endpoint answering the first route with probability 1, as `kev.serve` would.
+      // Defaults answer the first Choice route, true Noul, or Score index zero.
       const fake = await startFakeClassifierEndpoint();
       classifiers.set(fake.endpoint, fake);
-      closers.push(fake.close);
+      closers.push(async () => {
+        if (classifiers.delete(fake.endpoint)) await fake.close();
+        classifierReplies.delete(fake.endpoint);
+      });
       return { endpoint: fake.endpoint };
     }
     case '/classifier/requests': {
@@ -382,10 +399,64 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
           method: r.method,
           url: r.url,
           model: r.body.model,
+          type: r.body.questions.answer.type,
           bearer: r.authorization !== undefined,
           labels: Object.keys(r.body.questions.answer.criteria),
         })),
+        remainingReplies: classifierReplies.get(fake.endpoint)?.length ?? null,
       };
+    }
+    case '/classifier/stop': {
+      const endpoint = String(body['endpoint']);
+      const fake = classifiers.get(endpoint);
+      if (!fake) throw new E2eControlError('No fake classifier at ' + endpoint);
+      classifiers.delete(endpoint);
+      classifierReplies.delete(endpoint);
+      await fake.close();
+      return { closed: true };
+    }
+    case '/classifier/replies': {
+      const endpoint = String(body['endpoint']);
+      const fake = classifiers.get(endpoint);
+      if (!fake) throw new E2eControlError('No fake classifier at ' + endpoint);
+      const parsed = ClassifierReplySchema.array().min(1).max(16).safeParse(body['replies']);
+      if (!parsed.success) throw new E2eControlError('Expected 1–16 valid Noul or Score replies.');
+      classifierReplies.set(endpoint, parsed.data);
+      fake.respondWith((call) => {
+        const question = call.body.questions.answer;
+        const next = classifierReplies.get(endpoint)?.shift();
+        if (!next || next.type !== question.type)
+          return {
+            status: 400,
+            body: { error: 'Unexpected primitive request or reply queue exhausted.' },
+          };
+        if (next.type === 'noul')
+          return {
+            body: {
+              model: call.body.model,
+              answers: { answer: { type: 'noul', noul: next.trueProbability } },
+            },
+          };
+        if (question.type !== 'score' || next.score > question.criteria.length - 1)
+          return { status: 400, body: { error: 'Score reply is outside the declared rubric.' } };
+        return {
+          body: {
+            model: call.body.model,
+            answers: {
+              answer: {
+                type: 'score',
+                score: next.score,
+                confidence: next.confidence,
+                legend: Object.fromEntries(
+                  question.criteria.map((anchor, index) => [String(index), anchor]),
+                ),
+                probabilities: next.probabilities,
+              },
+            },
+          },
+        };
+      });
+      return { configured: true, queued: parsed.data.length };
     }
     case '/classifier/respond-noul': {
       const fake = classifiers.get(String(body['endpoint']));

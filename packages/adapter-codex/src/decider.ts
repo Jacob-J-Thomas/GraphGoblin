@@ -1,4 +1,3 @@
-import type { PredicateAnswer } from '@graphgoblin/domain';
 import type {
   ChoiceRequest,
   ChoiceResult,
@@ -6,19 +5,14 @@ import type {
   LlmNoulResult,
   NoulRequest,
   StructuredPort,
-  YesNoRequest,
+  PrimitiveRequest,
 } from '@graphgoblin/engine';
 
 /**
  * `DeciderPort` (`id: 'codex'`) over a structured Codex completion. Schemas follow OpenAI's strict
  * structured-output rules (every property required, `additionalProperties: false`), so numeric
- * bounds are validated locally for Choice. Exit judging retains its existing behavior.
+ * bounds are validated locally for Choice and Noul.
  */
-
-function clamp(value: unknown): number | undefined {
-  if (typeof value !== 'number' || !Number.isFinite(value)) return undefined;
-  return Math.min(1, Math.max(0, value));
-}
 
 /** Convert trusted harness error categories at the Choice boundary; never retain provider text. */
 function choiceFailure(error: unknown, primitive = 'Choice'): unknown {
@@ -63,7 +57,7 @@ export function choicePrompt(request: ChoiceRequest): string {
   ].join('\n');
 }
 
-export function judgePrompt(request: YesNoRequest): string {
+function verificationPrompt(request: PrimitiveRequest): string {
   return [
     'You are a verification step of an automated workflow. Answer the yes-or-no question.',
     '',
@@ -78,7 +72,7 @@ export function judgePrompt(request: YesNoRequest): string {
 
 export function noulPrompt(request: NoulRequest): string {
   return [
-    judgePrompt(request),
+    verificationPrompt(request),
     '',
     'Authored sides:',
     `- true: ${request.criteria.true}`,
@@ -99,7 +93,7 @@ export function choiceSchema(labels: string[]): Record<string, unknown> {
   };
 }
 
-export const JUDGE_SCHEMA: Record<string, unknown> = {
+export const NOUL_SCHEMA: Record<string, unknown> = {
   type: 'object',
   properties: {
     holds: { type: 'boolean' },
@@ -168,39 +162,13 @@ export class CodexDecider implements DeciderPort {
     };
   }
 
-  async judge(request: YesNoRequest, signal: AbortSignal): Promise<PredicateAnswer> {
-    const { value } = await this.structured.complete(
-      {
-        prompt: judgePrompt(request),
-        schema: JUDGE_SCHEMA,
-        ...(request.model ? { model: request.model } : {}),
-        ...(request.effort ? { effort: request.effort } : {}),
-      },
-      signal,
-    );
-    const answer = asRecord(value, 'yes/no');
-    if (typeof answer.holds !== 'boolean') {
-      throw Object.assign(new Error('Codex yes/no answer has no boolean "holds"'), {
-        code: 'DECIDER_INVALID_RESPONSE',
-      });
-    }
-    const confidence = clamp(answer.confidence);
-    return {
-      holds: answer.holds,
-      ...(confidence !== undefined ? { confidence } : {}),
-      ...(typeof answer.reasoning === 'string'
-        ? { reasoning: answer.reasoning.slice(0, 2048) }
-        : {}),
-    };
-  }
-
   async noul(request: NoulRequest, signal: AbortSignal): Promise<LlmNoulResult> {
     signal.throwIfAborted();
     const { value } = await this.structured
       .complete(
         {
           prompt: noulPrompt(request),
-          schema: JUDGE_SCHEMA,
+          schema: NOUL_SCHEMA,
           ...(request.model ? { model: request.model } : {}),
           ...(request.effort ? { effort: request.effort } : {}),
         },

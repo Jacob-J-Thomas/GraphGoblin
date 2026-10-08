@@ -4,6 +4,7 @@
  * imported, never the other way round.
  */
 import {
+  createElement,
   use,
   useEffect,
   useId,
@@ -64,6 +65,7 @@ import {
   useProblemCount,
   type FieldControl,
   type FieldControls,
+  type FieldOverrides,
   type FieldProps,
 } from './shared.js';
 import { NumberField, StringControl, StringField } from './text.js';
@@ -79,12 +81,29 @@ export function Field(props: FieldProps) {
   const labels = use(FieldLabelsContext);
   const label = Object.hasOwn(labels, props.name) ? labels[props.name] : undefined;
   const displayed = label === undefined ? props : { ...props, label };
+  const Override = fieldOverrideFor(props.name, overrides);
+  if (Override) return createElement(Override, displayed);
   const name = fieldMeta(props.schema).control;
-  const override = Object.hasOwn(overrides, props.name) ? overrides[props.name] : undefined;
   // Only the registry's own entries: a name such as `toString` is not a registered control.
-  const Control =
-    override ?? (name !== undefined && Object.hasOwn(controls, name) ? controls[name] : undefined);
-  return Control ? <Control {...displayed} /> : <DefaultField {...displayed} />;
+  const Control = name !== undefined && Object.hasOwn(controls, name) ? controls[name] : undefined;
+  return createElement(Control ?? DefaultField, displayed);
+}
+
+function fieldOverrideFor(name: string, overrides: FieldOverrides): FieldControl | undefined {
+  if (Object.hasOwn(overrides, name)) return overrides[name];
+  const path = name.split('.');
+  return Object.entries(overrides)
+    .filter(([pattern]) => {
+      const parts = pattern.split('.');
+      return (
+        parts.length === path.length &&
+        parts.every((part, index) => part === '*' || part === path[index])
+      );
+    })
+    .sort(([left], [right]) => {
+      const fixed = (pattern: string) => pattern.split('.').filter((part) => part !== '*').length;
+      return fixed(right) - fixed(left);
+    })[0]?.[1];
 }
 
 /** The control registered under the field's metadata `control` name, if any (as `Field` finds it). */

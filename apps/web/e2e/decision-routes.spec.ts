@@ -63,7 +63,7 @@ function decisionLoop(optionCount = 2): LoopDefinitionInput {
       .map((id) => ({ id: `${id}-edge`, from: { node: 'pick', port: id }, to: { node: 'done' } })),
     { id: 'branch-done', from: { node: 'branch', port: 'out' }, to: { node: 'done' } },
   ];
-  return { schemaVersion: 2, name: `Decision with ${optionCount} options`, nodes, edges };
+  return { schemaVersion: 3, name: `Decision with ${optionCount} options`, nodes, edges };
 }
 
 function primitiveLoop(
@@ -72,7 +72,7 @@ function primitiveLoop(
   routes: { id: string; label: string; target: string }[],
 ): LoopDefinitionInput {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     name,
     nodes: [
       {

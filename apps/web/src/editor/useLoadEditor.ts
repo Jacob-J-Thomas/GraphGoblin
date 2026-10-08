@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { upgradeLoopV1, type UpgradeIssue } from '@graphgoblin/domain';
+import { upgradeLoopCurrent, type UpgradeIssue } from '@graphgoblin/domain';
 import { useLoop } from '../api/queries.js';
 import {
   clearArchivedDraft,
@@ -25,37 +25,23 @@ export interface RawDeviceCopy extends LocalDraft {
   source: 'active' | 'set-aside' | 'archive';
 }
 
-/** Convert only unambiguous v1 local copies; every other old shape stays untouched and inert. */
+/** Current editor drafts may be incomplete; only older formats need the explicit cutover. */
 function readDeviceDraft(draft: LocalDraft | undefined): DeviceDraftRead {
   if (!draft) return {};
   const definition = draft.definition as unknown;
-  const version =
-    typeof definition === 'object' && definition !== null && !Array.isArray(definition)
-      ? (definition as { schemaVersion?: unknown }).schemaVersion
-      : undefined;
-  if (version === 2) {
-    const current = { ...draft };
-    delete current.migrationIssues;
-    return { draft: current };
-  }
-  if (version !== 1) {
-    return {
-      unconvertible: {
-        ...draft,
-        migrationIssues: [
-          {
-            code: 'UPGRADE_VERSION_UNSUPPORTED',
-            path: '/schemaVersion',
-            message: 'This device copy uses an unsupported loop format.',
-          },
-        ],
-      },
-    };
-  }
-  const result = upgradeLoopV1(definition);
-  if (!result.ok) return { unconvertible: { ...draft, migrationIssues: result.issues } };
   const current = { ...draft };
   delete current.migrationIssues;
+  // Device persistence keeps work in progress, including invalid fields and unfinished syntax.
+  // Validation still blocks server saves and publication; it must not block reopening an edit.
+  if (
+    typeof definition === 'object' &&
+    definition !== null &&
+    'schemaVersion' in definition &&
+    definition.schemaVersion === 3
+  )
+    return { draft: current };
+  const result = upgradeLoopCurrent(definition);
+  if (!result.ok) return { unconvertible: { ...draft, migrationIssues: result.issues } };
   return { draft: { ...current, definition: result.value } };
 }
 

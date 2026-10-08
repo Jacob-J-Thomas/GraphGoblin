@@ -21,8 +21,10 @@ import { createDisclosureIdentities, type DisclosureStates } from '../forms/disc
 import { SchemaForm } from '../forms/SchemaForm.js';
 import { FieldLabelsContext } from '../forms/fields/shared.js';
 import { nextChangeId } from '../forms/changes.js';
+import { isUnset } from '../forms/unset.js';
 import { DecisionKindPicker } from './DecisionKindPicker.js';
 import { DecisionAnswerPicker } from './DecisionAnswerPicker.js';
+import { EXIT_PREDICATE_FIELD_OVERRIDES } from './ExitPredicateFields.js';
 import { TriggerPresets } from './TriggerPresets.js';
 import { CatalogWarningsContext } from '../forms/fields/model.js';
 import { canvasFocusTarget } from './canvas-focus.js';
@@ -77,6 +79,173 @@ function record(value: unknown): Record<string, unknown> {
 function answerType(config: unknown): DecisionAnswer['type'] | undefined {
   const type = record(record(config)['answer'])['type'];
   return type === 'choice' || type === 'noul' || type === 'score' ? type : undefined;
+}
+
+const EXIT_ANSWER_DEFAULTS = {
+  choice: {
+    type: 'choice',
+    options: [
+      { id: 'yes', label: 'Yes', criteria: 'The predicate matches' },
+      { id: 'no', label: 'No', criteria: 'The predicate does not match' },
+    ],
+  },
+  noul: {
+    type: 'noul',
+    true: { label: 'True', criteria: 'The predicate is true' },
+    false: { label: 'False', criteria: 'The predicate is false' },
+  },
+  score: {
+    type: 'score',
+    anchors: ['Does not meet the rubric', 'Partly meets the rubric', 'Fully meets the rubric'],
+  },
+} as const;
+
+function answerPrimitive(value: unknown): 'choice' | 'noul' | 'score' | undefined {
+  const type = record(value)['type'];
+  return type === 'choice' || type === 'noul' || type === 'score' ? type : undefined;
+}
+
+function exitMatchDefault(answer: Record<string, unknown>) {
+  const type = answerPrimitive(answer);
+  if (type === 'choice') {
+    const options = Array.isArray(answer['options']) ? answer['options'].map(record) : [];
+    const first = options.find(
+      (option) => typeof option['id'] === 'string' && option['id'] !== '',
+    )?.['id'];
+    return {
+      type,
+      optionIds: typeof first === 'string' ? [first] : [],
+    };
+  }
+  if (type === 'score') return { type, operator: 'gte', value: 0 };
+  return {
+    type: 'noul',
+    value: true,
+  };
+}
+
+/** Keep an exit predicate's answer, evaluator and match variants in a usable combination. */
+function exitPredicateVariantChange(config: unknown, previous: unknown, path?: string): unknown {
+  const changed = /^criteria\.(\d+)(?:\.(answer|evaluation))?$/.exec(path ?? '');
+  if (!changed) return config;
+  const index = Number(changed[1]);
+  const section = changed[2];
+  const currentConfig = record(config);
+  const previousConfig = record(previous);
+  const criteria: unknown[] = Array.isArray(currentConfig['criteria'])
+    ? currentConfig['criteria']
+    : [];
+  const oldCriteria: unknown[] = Array.isArray(previousConfig['criteria'])
+    ? previousConfig['criteria']
+    : [];
+  const row = record(criteria[index]);
+  if (row['when'] !== 'predicate') return config;
+  const oldRow = record(oldCriteria[index]);
+  let answer = { ...record(row['answer']) };
+  let evaluation = { ...record(row['evaluation']) };
+  const oldAnswerType = answerPrimitive(oldRow['answer']);
+  let answerTypeNow = answerPrimitive(answer);
+  const oldEvaluationKind = record(oldRow['evaluation'])['kind'];
+  let evaluationKindNow = evaluation['kind'];
+  let changedRow = { ...row };
+  const newPredicate = section === undefined && oldRow['when'] !== 'predicate';
+  const answerChanged =
+    section === 'answer' && oldAnswerType !== answerTypeNow && answerTypeNow !== undefined;
+  const evaluationChanged =
+    section === 'evaluation' &&
+    oldEvaluationKind !== evaluationKindNow &&
+    (evaluationKindNow === 'expression' ||
+      evaluationKindNow === 'classifier' ||
+      evaluationKindNow === 'llm');
+  if (!newPredicate && !answerChanged && !evaluationChanged) return config;
+
+  if (newPredicate) {
+    // Expression exit predicates are Noul-only, so start with the coherent boolean form.
+    answer = { type: 'noul' };
+    answerTypeNow = 'noul';
+    evaluation = { kind: 'expression', jsonata: 'true' };
+    evaluationKindNow = 'expression';
+  }
+
+  if (answerChanged) {
+    if (answerTypeNow === 'noul') {
+      Object.assign(
+        answer,
+        evaluationKindNow === 'expression' ? { type: 'noul' } : EXIT_ANSWER_DEFAULTS.noul,
+      );
+    } else if (answerTypeNow === 'choice' && !Array.isArray(answer['options'])) {
+      Object.assign(answer, EXIT_ANSWER_DEFAULTS.choice);
+    }
+    if (answerTypeNow === 'score' && evaluationKindNow !== 'classifier') {
+      const question =
+        typeof evaluation['question'] === 'string'
+          ? evaluation['question']
+          : 'Evaluate the current input against the ordered rubric.';
+      evaluation = { kind: 'classifier', model: '', question };
+      evaluationKindNow = 'classifier';
+    } else if (evaluationKindNow === 'expression' && answerTypeNow === 'choice') {
+      evaluation = {
+        kind: 'classifier',
+        model: '',
+        question: 'Evaluate the current input against the declared Choice options.',
+      };
+      evaluationKindNow = 'classifier';
+    } else if (evaluationKindNow === 'expression') {
+      const first = Array.isArray(answer['options'])
+        ? record(answer['options'][0])['id']
+        : undefined;
+      evaluation = {
+        ...evaluation,
+        jsonata:
+          answerTypeNow === 'noul'
+            ? 'true'
+            : JSON.stringify(typeof first === 'string' ? first : 'yes'),
+      };
+    }
+  }
+
+  if (evaluationChanged) {
+    if (answerTypeNow === 'noul') {
+      if (evaluationKindNow === 'expression') answer = { type: 'noul' };
+      else if (!('true' in answer) || !('false' in answer))
+        Object.assign(answer, EXIT_ANSWER_DEFAULTS.noul);
+    }
+  }
+
+  if (
+    (answerChanged || evaluationChanged) &&
+    answerTypeNow === 'score' &&
+    evaluationKindNow !== 'classifier'
+  ) {
+    // Score cannot be authored with expression or Codex. Keep the question when converting LLM.
+    const question =
+      typeof evaluation['question'] === 'string'
+        ? evaluation['question']
+        : 'Evaluate the current input against the ordered rubric.';
+    evaluation = { kind: 'classifier', model: '', question };
+  }
+
+  const priorMatch = record(row['match']);
+  let match = priorMatch;
+  if (newPredicate) {
+    match = { type: 'noul', value: true };
+  } else if (answerChanged && priorMatch['type'] !== answerTypeNow) {
+    const nextMatch = exitMatchDefault(answer);
+    const preserveReportedMinimum =
+      evaluationKindNow === 'llm' &&
+      (oldAnswerType === 'noul' || oldAnswerType === 'choice') &&
+      (answerTypeNow === 'noul' || answerTypeNow === 'choice') &&
+      Object.hasOwn(priorMatch, 'minReportedConfidence') &&
+      !isUnset(priorMatch['minReportedConfidence']);
+    match = preserveReportedMinimum
+      ? { ...nextMatch, minReportedConfidence: priorMatch['minReportedConfidence'] }
+      : nextMatch;
+  }
+  changedRow = { ...row, answer, evaluation, match };
+  const nextCriteria = criteria.map((criterion, rowIndex) =>
+    rowIndex === index ? changedRow : criterion,
+  );
+  return { ...currentConfig, criteria: nextCriteria };
 }
 
 const ANSWER_DEFAULTS = {
@@ -304,6 +473,14 @@ export function NodeEditorDialog({
       updateNode(node.id, { config: normalized }, change);
       return;
     }
+    if (node.kind === 'exit') {
+      updateNode(
+        node.id,
+        { config: exitPredicateVariantChange(config, node.config, change?.path) },
+        change,
+      );
+      return;
+    }
     updateNode(node.id, { config }, change);
   };
 
@@ -431,6 +608,13 @@ export function NodeEditorDialog({
               With Items configured, leave Whole-probe dedupe key empty and use Per-item dedupe key.
             </HelpText>
           ) : null}
+          {node.kind === 'exit' ? (
+            <HelpText>
+              Exit predicates run in order. Evaluation produces a typed answer; Match declares which
+              answer exits the loop. A classifier or self-reported confidence gate rejection is
+              always a nonmatch, and the run inspector keeps the raw answer and gate separate.
+            </HelpText>
+          ) : null}
           <CatalogWarningsContext
             value={nodeIssues.map((issue) => ({
               ...issue,
@@ -455,8 +639,14 @@ export function NodeEditorDialog({
                 value={node.config}
                 label={`${node.id} config`}
                 controls={NODE_FIELD_CONTROLS}
-                fieldOverrides={node.kind === 'decision' ? DECISION_FIELD_OVERRIDES : undefined}
                 unionPickers={node.kind === 'decision' ? DECISION_UNION_PICKERS : undefined}
+                fieldOverrides={
+                  node.kind === 'decision'
+                    ? DECISION_FIELD_OVERRIDES
+                    : node.kind === 'exit'
+                      ? EXIT_PREDICATE_FIELD_OVERRIDES
+                      : undefined
+                }
                 problems={configProblems}
                 disclosures={disclosures}
                 onChange={handleConfigChange}

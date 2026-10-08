@@ -98,7 +98,7 @@ async function seedVersion(status: 'draft' | 'published', definition = inference
   const inventory = await inspectDatabaseUpgrade(t.container.handle.client);
   await applyDatabaseUpgrade(t.container.handle.client, {
     format: 'graphgoblin-upgrade-manifest',
-    targetVersion: 2,
+    targetVersion: 3,
     sourceHash: inventory.sourceHash,
     approvedBy: 'test-owner',
     approvedAt: FIXTURE_TS,

@@ -51,7 +51,7 @@ Current context behavior is unchanged while #38 is deferred. Questions render ag
 
 The output retains the raw typed answer, selected port and resolved provider/model provenance. Choice keeps its existing optionId/confidence/probabilities shape. New Noul and Score evidence records their applicable probability, threshold or rubric facts; a bounded LLM explanation is labelled as a reasoning excerpt. Provider error bodies and credentials are excluded. Existing historical skip diagnostics remain event evidence; new decisions have no strategy chain. The generated [node reference](reference/nodes.md) gives the exact fields.
 
-#97 adds answer variants within format 2; existing Choice definitions/results need no rewrite for these additions. The earlier #98 offline upgrade still applies to format-1 data. Exit predicates retain their current contract until #99.
+#97 adds answer variants within format 2; existing Choice definitions/results need no rewrite for these additions. The earlier #98 offline upgrade still applies to format-1 data. The subsequent #99 format-3 cutover applies these evaluator kinds to exit predicates with explicit matching rules.
 
 ## Inferencing (Decided)
 
@@ -217,34 +217,40 @@ Two readings of "heartbeat" fit this node. The first is "poll until a condition 
 
 Ports: `out`.
 
-## Exit (Decided semantics, Draft config)
+## Exit (Decided, #99)
 
-Decides whether the loop is done, what it returns, where that goes, and whether to go around again.
+Decides whether the loop is done, what it returns, where that goes, and whether to go around again. Criteria run in their authored order; the first match decides the outcome.
 
-Exit predicates with strategy `jev` continue to use built-in Jev's Noul path and its current enable/secret availability. There is no exit classifier selector; custom HTTP classifiers execute Decision Choice, Noul and Score, while exits remain tied to built-in Jev. Disabled, missing/blank-secret, and unreadable-secret states produce the same classifier warnings as decisions, at `config.criteria.<index>.strategy`. Enable Jev in Settings, Classifier models, or set `jev-api-key` in Settings, Secrets. These warnings remain visible in drafts and block publication under the shared admission policy. An already published Jev predicate still fails with `DECIDER_UNAVAILABLE` if it becomes unavailable before evaluation. Exit evaluation fields and event semantics remain unchanged until #99.
+A predicate declares its answer primitive, evaluator and matching rule. **Noul** matches true or false (default true); expression Noul is strictly boolean. Provider Noul also requires true/false labels and criteria. **Choice** matches any ID in an explicit nonempty set of declared stable options. **Score** compares the exact fractional rubric-index value using `lt`, `lte`, `eq`, `gte` or `gt`. Exit answers do not create ports or Score bands.
+
+Classifier evaluation requires a catalog model supporting the requested primitive. Disabled, missing or unusable-secret selections block publication and fail at runtime if availability changes. Custom HTTP classifiers and built-in Jev use the same registry. LLM evaluation uses Codex with inherited or explicit model/effort. Expressions support Noul; LLM supports Noul and Choice; Score is classifier-only.
+
+Classifier `minConfidence` and optional LLM `match.minReportedConfidence` are separate acceptance gates. Equality passes. A valid rejected answer is retained as evidence but cannot match, including a false answer with match=false. LLM confidence is self-reported. Invalid responses, provider errors, unavailable configuration and cancellation fail evaluation rather than falling through. There is no fallback.
+
+Questions still render against the full thread. Provider state is the existing trigger payload, all variables, bare last output or null, last message content or null, and iteration. No exit context selector or new session behavior is introduced.
 
 ```ts
+// Example predicate; see the generated reference for the complete union.
+const criterion = {
+  when: 'predicate',
+  answer: { type: 'noul' },
+  evaluation: { kind: 'expression', jsonata: 'vars.done = true' },
+  match: { type: 'noul', value: true },
+  outcome: 'success',
+};
+
 type ExitConfig = {
-  criteria: ExitCriterion[]; // evaluated in order; the first that matches decides
-  default: 'success' | 'loop-back'; // what happens when no criterion matches
-  loopBack?: { targetNodeId: string }; // rendered as an explicit edge on the canvas
+  criteria: ExitCriterion[];
+  default: 'success' | 'loop-back';
+  loopBack?: { targetNodeId: string };
   return: {
-    mapping: string | 'none'; // JSONata over the thread producing the return payload
-    channels: ReturnChannel[]; // at least one unless mapping is 'none'
+    mapping: string | 'none';
+    channels: ReturnChannel[];
   };
 };
 
-type ExitCriterion =
-  | { when: 'max-iterations'; value: number; outcome: 'exhausted' }
-  | { when: 'max-duration'; seconds: number; outcome: 'exhausted' }
-  | {
-      when: 'predicate';
-      strategy: 'expression' | 'jev' | 'codex';
-      question?: string;
-      jsonata?: string;
-      outcome: 'success' | 'failure';
-    }
-  | { when: 'last-output-matches'; jsonSchema: JsonSchema; outcome: 'success' };
+// Other criteria retain their existing max-iterations, max-duration and
+// last-output-matches shapes and their authored positions.
 
 type ReturnChannel =
   | { kind: 'caller' } // run result, MCP tool result, parent subloop output
@@ -254,7 +260,7 @@ type ReturnChannel =
   | { kind: 'log' };
 ```
 
-Behaviour: the engine evaluates criteria. A `success` or `failure` outcome, or `exhausted`, finishes the run, renders the return mapping, and delivers it to each channel, recording `return.delivered` or `return.failed` per channel. A loop-back increments `run.iteration` and `counters.nodeVisits`, emits `iteration.incremented`, and moves the token to the target node. The loop's `settings.maxIterations` is a hard ceiling the exit node cannot exceed. It also caps fresh visits per node: a node that would start for the (`maxIterations` + 1)th time fails the run with `MAX_ITERATIONS`, which bounds cycles outside an exit loop-back, such as a decision routing back to itself (see 05).
+Behaviour: the engine evaluates criteria. A `success` or `failure` outcome, or `exhausted`, finishes the run, renders the return mapping, and delivers it to each channel, recording `return.delivered` or `return.failed` per channel. A loop-back increments `run.iteration` and `counters.nodeVisits`, emits `iteration.incremented`, and moves the token to the target node. Predicates are evaluated before the implicit ceiling: a match at the final iteration may complete, and a provider can still fail there. Only a no-match default loop-back checks the loop's `settings.maxIterations` ceiling and finishes exhausted. It also caps fresh visits per node: a node that would start for the (`maxIterations` + 1)th time fails the run with `MAX_ITERATIONS`, which bounds cycles outside an exit loop-back, such as a decision routing back to itself (see 05).
 
 The caller is whatever created the invocation: a UI session, an API client, an MCP client such as a Codex session that used a skill or tool, a cron schedule, or a parent run. The `caller` channel resolves to the right delivery automatically: the run's `result` field for everyone, the MCP tool result for MCP callers, and the subloop output mapping for parent runs.
 

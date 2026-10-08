@@ -356,7 +356,7 @@ export function sameIssues(a: readonly EditorIssue[], b: readonly EditorIssue[])
 /** A new loop: a manual trigger wired to an exit. */
 export function newLoopDefinition(name: string): LoopDefinitionInput {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     name,
     nodes: [
       {

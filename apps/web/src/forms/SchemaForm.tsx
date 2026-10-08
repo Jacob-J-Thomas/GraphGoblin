@@ -72,7 +72,7 @@ export interface SchemaFormProps {
    * gives in `control` (`FieldControl`); a field naming no registered control is drawn as usual.
    */
   controls?: FieldControls | undefined;
-  /** Field controls selected by relative path for presentation rules not encoded in the schema. */
+  /** Whole-field renderers selected by exact or wildcard dotted paths relative to this form. */
   fieldOverrides?: FieldOverrides | undefined;
   /** Custom discriminated-union pickers by relative dotted field path. */
   unionPickers?: UnionPickers | undefined;
@@ -269,13 +269,13 @@ export function SchemaForm({
     });
 
   return (
-    <FieldOverridesContext value={fieldOverrides ?? NO_FIELD_OVERRIDES}>
-      <FormChangeContext value={changeScope}>
-        <CollectionIdentitiesContext value={collections}>
-          <DisclosureStoreContext value={disclosureStore}>
-            <ParseErrorContext value={parseErrorChannel}>
-              <FieldIssuesContext value={issuesByPath}>
-                <FieldControlsContext value={controls ?? NO_CONTROLS}>
+    <FormChangeContext value={changeScope}>
+      <CollectionIdentitiesContext value={collections}>
+        <DisclosureStoreContext value={disclosureStore}>
+          <ParseErrorContext value={parseErrorChannel}>
+            <FieldIssuesContext value={issuesByPath}>
+              <FieldControlsContext value={controls ?? NO_CONTROLS}>
+                <FieldOverridesContext value={fieldOverrides ?? NO_FIELD_OVERRIDES}>
                   <UnionPickersContext value={unionPickers ?? NO_UNION_PICKERS}>
                     <ProblemPathsContext value={problems ?? NO_PROBLEMS}>
                       <FormScopeContext value={{ schema: variantSchema, id }}>
@@ -335,12 +335,12 @@ export function SchemaForm({
                       </FormScopeContext>
                     </ProblemPathsContext>
                   </UnionPickersContext>
-                </FieldControlsContext>
-              </FieldIssuesContext>
-            </ParseErrorContext>
-          </DisclosureStoreContext>
-        </CollectionIdentitiesContext>
-      </FormChangeContext>
-    </FieldOverridesContext>
+                </FieldOverridesContext>
+              </FieldControlsContext>
+            </FieldIssuesContext>
+          </ParseErrorContext>
+        </DisclosureStoreContext>
+      </CollectionIdentitiesContext>
+    </FormChangeContext>
   );
 }
