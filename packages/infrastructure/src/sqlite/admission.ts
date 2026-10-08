@@ -1,4 +1,9 @@
-import { ContextThreadSchema, RunEventSchema, RunRecordSchema } from '@graphgoblin/contracts';
+import {
+  ContextThreadSchema,
+  RunEventSchema,
+  RunRecordSchema,
+  type RunRecord,
+} from '@graphgoblin/contracts';
 import { stableStringify } from '@graphgoblin/domain';
 import {
   AdmissionConflictError,
@@ -18,6 +23,14 @@ import type { Database } from './db.js';
 import { inboundEvents, runEvents, runs, webhookReceipts } from './schema.js';
 import { runInsert, runRecordFromRow } from './runs.js';
 import type { SqliteEventStore } from './events.js';
+import { TemplateTransaction } from './templates.js';
+export type AdmissionPolicyResult =
+  { action: 'keep' } | { action: 'skip' } | { action: 'replace'; run: RunRecord };
+export type AfterRunStaged = (
+  store: TemplateTransaction,
+  input: RunAdmission,
+  pollItem: boolean,
+) => Promise<AdmissionPolicyResult>;
 
 function runKeyScope(ownerId: string, loopId: string, nodeId: string, key: string) {
   return and(
@@ -48,6 +61,7 @@ export class SqliteTriggerAdmission implements TriggerAdmissionPort {
   constructor(
     private readonly db: Database,
     private readonly events: SqliteEventStore,
+    private readonly afterRunStaged?: AfterRunStaged,
   ) {}
   async create(authored: RunAdmission, receiptId?: string) {
     const run = await this.commit(authored, receiptId);
@@ -135,6 +149,24 @@ export class SqliteTriggerAdmission implements TriggerAdmissionPort {
         await tx.insert(runs).values(runInsert(run, input.initialThread));
         const { runId, seq, ts, type, ...payload } = event;
         await tx.insert(runEvents).values({ runId, seq, ts, type, payload });
+      }
+      const policy = await this.afterRunStaged?.(new TemplateTransaction(tx), input, pollItem);
+      if (policy && policy.action !== 'keep') {
+        if (prior) throw new AdmissionConflictError();
+        await tx.delete(runEvents).where(eq(runEvents.runId, input.run.id));
+        await tx.delete(runs).where(eq(runs.id, input.run.id));
+        event = undefined;
+        if (policy.action === 'skip') return { run: undefined, event: undefined };
+        const replacement = RunRecordSchema.parse(policy.run);
+        if (
+          replacement.ownerId !== input.run.ownerId ||
+          replacement.loopId !== input.run.loopId ||
+          replacement.versionId !== input.run.versionId ||
+          !input.run.parentRunId ||
+          replacement.parentRunId !== input.run.parentRunId
+        )
+          throw new AdmissionConflictError();
+        run = replacement;
       }
       if (receiptId) {
         const [receipt] = await tx

@@ -51,6 +51,9 @@ jobs:
       - name: Dependency graph rules
         run: pnpm check:deps
 
+      - name: Shipped templates and deliberate-invalid refusal
+        run: pnpm check:templates
+
       - name: Unit tests with coverage thresholds
         # Each Vitest package owns its worker pool; avoid multiplying pools on the CI host.
         run: pnpm exec turbo run test:coverage --concurrency=1
@@ -76,3 +79,28 @@ jobs:
             packages/*/coverage/coverage-summary.json
             apps/*/coverage/coverage-summary.json
           if-no-files-found: ignore
+
+  template-image:
+    name: Template image
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the distributed image
+        run: docker build --tag graphgoblin-template-check .
+
+      - name: Load installed templates without network or writable storage
+        run: |
+          docker run --rm -i --network none --read-only --cap-drop ALL --security-opt no-new-privileges --entrypoint node graphgoblin-template-check --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import { TemplateCatalog } from '/app/apps/api/dist/templates/catalog.js';
+          const entries = await new TemplateCatalog('/app/apps/api/dist/catalog', '/app/apps/api').list();
+          assert.ok(entries.length > 0, 'The runtime image must contain its template catalog');
+          assert.ok(entries.some(({ bundle }) => bundle.manifest.id === 'starter'));
+          for (const { bundle, support } of entries) {
+            assert.ok(Object.keys(bundle.loops).length > 0);
+            console.log(JSON.stringify({ template: bundle.manifest.id, version: bundle.manifest.version,
+              loops: Object.keys(bundle.loops), supportPackaged: support !== undefined }));
+          }
+          JS

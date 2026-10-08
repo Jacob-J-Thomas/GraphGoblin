@@ -51,6 +51,19 @@ export const scriptHandler: NodeHandler<'script'> = {
     let result;
     try {
       result = await ctx.ports.scripts.run({
+        ...(ctx.startedSeq !== undefined
+          ? {
+              executionIdentity: {
+                kind: 'node' as const,
+                ownerId: ctx.run.ownerId,
+                loopId: ctx.run.loopId,
+                versionId: ctx.run.versionId,
+                nodeId: ctx.node.id,
+                runId: ctx.run.id,
+                startedSeq: ctx.startedSeq,
+              },
+            }
+          : {}),
         command: config.command,
         args,
         cwd,

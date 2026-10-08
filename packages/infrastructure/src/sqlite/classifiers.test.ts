@@ -143,13 +143,21 @@ describe('classifier repository', () => {
         await secrets.set('kev-key', 'retained');
         const versions = (await handle.client.execute('SELECT * FROM loop_versions')).rows;
         const secretRows = (await handle.client.execute('SELECT * FROM secrets')).rows;
-        const runs = (await handle.client.execute('SELECT * FROM runs')).rows;
+        const runs = await handle.client.execute('SELECT * FROM runs');
+        const originalRunColumns = runs.columns
+          .map((column) => `"${column.replaceAll('"', '""')}"`)
+          .join(',');
         await writeFile(join(dir, 'meta/_journal.json'), JSON.stringify(journal));
-        expect(await handle.pendingMigrations()).toBe(9 - count);
+        expect(await handle.pendingMigrations()).toBe(10 - count);
         await expect(handle.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
         await applyShippedSqlToHistoricalTestFixture(handle, dir);
         expect((await handle.client.execute('SELECT * FROM loop_versions')).rows).toEqual(versions);
-        expect((await handle.client.execute('SELECT * FROM runs')).rows).toEqual(runs);
+        expect(
+          (await handle.client.execute(`SELECT ${originalRunColumns} FROM runs`)).rows,
+        ).toEqual(runs.rows);
+        expect((await handle.client.execute('SELECT template_subject FROM runs')).rows).toEqual([
+          expect.objectContaining({ template_subject: null }),
+        ]);
         expect((await handle.client.execute('SELECT * FROM secrets')).rows).toEqual(secretRows);
         expect((await handle.client.execute('SELECT * FROM model_catalog')).rows[0]).toMatchObject({
           model: 'local-only',

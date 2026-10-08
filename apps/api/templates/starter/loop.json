@@ -1,0 +1,107 @@
+{
+  "format": "graphgoblin-loop",
+  "formatVersion": 3,
+  "exportedAt": "2026-10-08T00:00:00.000Z",
+  "loop": {
+    "schemaVersion": 3,
+    "name": "Starter assistant",
+    "description": "Summarize an input and suggest a next step.",
+    "settings": {
+      "maxIterations": 10
+    },
+    "nodes": [
+      {
+        "id": "start",
+        "kind": "trigger",
+        "label": "Input",
+        "config": {
+          "subtype": "manual",
+          "exposeTo": ["ui", "api", "mcp"]
+        }
+      },
+      {
+        "id": "settings",
+        "kind": "mutate",
+        "label": "Template settings",
+        "config": {
+          "operations": [
+            {
+              "op": "set",
+              "path": "/vars/templateSettings",
+              "value": {
+                "kind": "literal",
+                "value": {}
+              }
+            }
+          ]
+        }
+      },
+      {
+        "id": "assistant",
+        "kind": "inference",
+        "label": "Assistant",
+        "config": {
+          "harness": "codex",
+          "prompt": {
+            "template": "{{ vars.templateSettings.instruction }}\n\nInput:\n{{ invocation.trigger.payload | json }}"
+          },
+          "session": {
+            "policy": "fresh"
+          }
+        }
+      },
+      {
+        "id": "done",
+        "kind": "exit",
+        "label": "Result",
+        "config": {
+          "criteria": [],
+          "default": "success",
+          "return": {
+            "mapping": "last-output",
+            "channels": [
+              {
+                "kind": "caller"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "begin",
+        "from": {
+          "node": "start",
+          "port": "out"
+        },
+        "to": {
+          "node": "settings",
+          "port": "in"
+        }
+      },
+      {
+        "id": "infer",
+        "from": {
+          "node": "settings",
+          "port": "out"
+        },
+        "to": {
+          "node": "assistant",
+          "port": "in"
+        }
+      },
+      {
+        "id": "finish",
+        "from": {
+          "node": "assistant",
+          "port": "out"
+        },
+        "to": {
+          "node": "done",
+          "port": "in"
+        }
+      }
+    ]
+  }
+}

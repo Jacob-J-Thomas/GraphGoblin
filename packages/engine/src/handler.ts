@@ -74,6 +74,8 @@ export interface NodeContext<K extends NodeKind = NodeKind> {
   thread: Readonly<ContextThread>;
   run: Readonly<RunRecord>;
   attempt: number;
+  /** Trusted event sequence of this execution; direct handler fixtures may omit it. */
+  startedSeq?: number;
   /** Set when this execution resumes a parked node. */
   wake?: WakeInfo;
   /** The wait spec recorded when this node parked, if it did. */

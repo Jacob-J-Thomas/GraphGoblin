@@ -198,7 +198,7 @@ describe('SqliteRunRepository', () => {
     old.close();
     const current = openDatabase({ url });
     try {
-      expect(await current.pendingMigrations()).toBe(7);
+      expect(await current.pendingMigrations()).toBe(8);
       await expect(current.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
       await applyShippedSqlToHistoricalTestFixture(current);
       const repo = new SqliteRunRepository(current.db);
@@ -681,7 +681,7 @@ describe('migration 0003 model catalog max effort', () => {
     }
     const current = openDatabase({ url });
     try {
-      expect(await current.pendingMigrations()).toBe(6);
+      expect(await current.pendingMigrations()).toBe(7);
       await expect(current.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
       await applyShippedSqlToHistoricalTestFixture(current);
       expect(await current.pendingMigrations()).toBe(0);

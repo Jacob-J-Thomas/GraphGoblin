@@ -21,7 +21,7 @@ Loops
 
 Runs
   POST   /loops/{id}/runs               start a run from a manual trigger; body: { triggerNodeId, input?, return?: ReturnChannel[] }
-  GET    /runs                          list with filters: loop, status, parent
+  GET    /runs                          owner-scoped list with run/template filters and a stable nextCursor
   GET    /runs/{id}                     snapshot: status, current node, iteration, waiting spec, result, failure
   GET    /runs/{id}/thread              current context thread projection
   GET    /runs/{id}/events?after=N      page of events; with Accept: text/event-stream, a live tail
@@ -285,3 +285,42 @@ A draft has a version token, `draftToken`: a hash of the definition the next dra
 `PUT /loops/{id}/draft` with `If-Match: "<draftToken>"` saves only when the server copy still has that token; otherwise it answers 409 `DRAFT_CONFLICT` with the server's current token as the problem's `draftToken` extension member, and saves nothing. `*`, weak tags (`W/"…"`), and lists are accepted. Draft saves and publishes of one loop are serialized in the API process, so of two different saves with the same token exactly one wins; a stale save whose definition already equals the server draft is a no-op 200 rather than a conflict. Storage also refuses to modify a version row that is no longer a draft: a save racing a publish creates a new draft, and a published version never changes. A save without `If-Match` stays unconditional (last write wins), for scripts and the MCP `design-loop` flow. In the client, `loops.saveDraft(client, loopId, definition, { ifMatch })` sends the header and a conflict surfaces as `GraphGoblinApiError` with `code: 'DRAFT_CONFLICT'` and `problem.draftToken`.
 
 `PUT /settings` validates the shared `defaults` value (`{byHarness:{codex:{model?,effort?}}}`). Catalog metadata default effort remains guidance, not a hidden resolver layer. Old owner `defaultModel` and `defaultEffort` values are converted offline. Deleting the `defaults` setting restores process defaults.
+
+## Template catalog and instances (#28)
+
+The owner-scoped API exposes `GET /templates`, `GET /templates/{id}`, `POST /templates/{id}/prerequisites`, `POST /templates/{id}/instantiate` and `GET /template-instances/{id}`. Catalog entries contain a manifest, settings schema, current defaults and a structured prerequisite report. Each failed check includes remediation and states whether it blocks authoring or runtime. Reports do not grant authority; instantiation repeats the checks using the submitted settings.
+
+Instantiation returns `{instance, prerequisites}`. The instance records the installed template ID/version, owner, settings and allocated loop/version map. A single storage transaction creates the complete bundle and its immutable binding. Dependencies are published first; the parent remains a draft and does not start or arm its triggers. All declared subloops are remapped to their allocated child IDs and pinned versions. Separate creations have separate IDs. Settings fill declared literal data slots and role fields, never executable source strings. The generated client exposes `templates.list/get/prerequisites/instantiate/instance`.
+
+The initial production catalog registers only the verified starter template. Repository recipe eligibility and effect authorization belong to the API integration, not the generic engine or domain bundle validator. Unregistered recipes cannot be created by guessing their IDs.
+
+### Template subjects and run pagination
+
+`GET /runs` returns `{items, nextCursor}` in descending creation-time and run-ID order.
+Reuse the returned opaque `cursor` with the same filters; `nextCursor: null` ends the
+listing. Equal creation timestamps do not skip runs. The default page size is 100,
+with `limit` from 1 to 500. A malformed cursor receives `400 INVALID_CURSOR`.
+The timestamp-only `before` filter is still available, but cannot accompany `cursor`.
+
+Alongside `loopId`, comma-separated `status`, and `parent` (a run ID or `none`),
+filters include lowercase `repository` (`owner/repository`), positive `issue` and
+`pullRequest` numbers, exact 40-character lowercase `head` and `mergeSha`, and
+`templateInstanceId`. Reads always remain scoped to the authenticated owner.
+Both the typed client's `GET('/runs')` and the generated OpenAPI contract expose
+the complete page; the convenience `runs.list` wrapper returns its items only.
+
+Run-list items and `GET /runs/{id}` may include `templateSubject`. This API-owned
+metadata describes a repository workflow's role, template instance/version,
+repository, issue/attempt and relevant PR/head/merge SHA. A worker also names its
+parent run, mapped subloop node and visit. Ordinary runs omit it. The generic
+engine `RunRecord` and context thread do not acquire GitHub-specific fields.
+
+The source is either `{kind: 'implementation', runId}` for an authenticated
+implementation attempt or `{kind: 'external'}` for a trusted standalone PR.
+A standalone review may have both issue and attempt set to null; it then has no
+issue-label or rework authority. QA requires one unambiguous linked issue.
+Linked external originals start at attempt one. The API derives and persists
+these identities during admission; authored run input cannot assert them.
+Repository recipes remain unregistered in this foundation release.
+
+Starter templates keep the ordinary engine resume behavior for resumable inference failures. Every resumed execution rechecks the actual pinned role configuration before another node can run. Repository recipes restrict resume to their original, allowlisted pre-execution prerequisite failure. If a restarted repository run already has a `node.started` event, lost prerequisites or authority require manual recovery; the failure does not claim that earlier effects were absent and no pre-execution explanatory comment is posted.

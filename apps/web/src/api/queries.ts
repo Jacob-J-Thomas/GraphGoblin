@@ -9,15 +9,17 @@ import {
   secrets,
   settings,
   system,
+  templates,
   type ListRunsQuery,
 } from '@graphgoblin/api-client';
 import type {
   ClassifierModelSummary,
   LoopDefinitionInput,
   ModelCatalogEntry,
+  TemplateSettings,
 } from '@graphgoblin/contracts';
 import { HarnessPreflightSchema } from '@graphgoblin/contracts';
-import { useQuery, type QueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, type QueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 import { useApi } from './context.js';
 
@@ -27,6 +29,9 @@ export type HarnessPreflightItem = z.infer<typeof HarnessPreflightItemSchema>;
 /** Query keys, so mutations can invalidate exactly what they change. */
 export const keys = {
   loops: ['loops'] as const,
+  templates: ['templates'] as const,
+  template: (id: string) => ['templates', id] as const,
+  templateInstance: (id: string) => ['template-instances', id] as const,
   loop: (id: string) => ['loops', id] as const,
   /** Under the loop's key, so invalidating the loop (after a publish) refetches them too. */
   versions: (id: string) => ['loops', id, 'versions'] as const,
@@ -56,6 +61,45 @@ export const keys = {
 export function useLoops() {
   const client = useApi();
   return useQuery({ queryKey: keys.loops, queryFn: () => loops.list(client) });
+}
+
+export function useTemplates() {
+  const client = useApi();
+  return useQuery({ queryKey: keys.templates, queryFn: () => templates.list(client) });
+}
+
+export function useTemplate(id: string) {
+  const client = useApi();
+  return useQuery({
+    queryKey: keys.template(id),
+    queryFn: () => templates.get(client, id),
+    enabled: id.length > 0,
+  });
+}
+
+export function useTemplateInstance(id: string) {
+  const client = useApi();
+  return useQuery({
+    queryKey: keys.templateInstance(id),
+    queryFn: () => templates.instance(client, id),
+    enabled: id.length > 0,
+  });
+}
+
+export function useCheckTemplatePrerequisites() {
+  const client = useApi();
+  return useMutation({
+    mutationFn: ({ templateId, settings }: { templateId: string; settings: TemplateSettings }) =>
+      templates.prerequisites(client, templateId, { settings }),
+  });
+}
+
+export function useInstantiateTemplate() {
+  const client = useApi();
+  return useMutation({
+    mutationFn: ({ templateId, settings }: { templateId: string; settings: TemplateSettings }) =>
+      templates.instantiate(client, templateId, { settings }),
+  });
 }
 
 export function useLoop(id: string) {
