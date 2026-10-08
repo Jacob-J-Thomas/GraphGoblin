@@ -1,5 +1,7 @@
 import { spawn, type ChildProcess, type SpawnOptions } from 'node:child_process';
-import { lstat, realpath } from 'node:fs/promises';
+import { lstat, realpath, readFile, open } from 'node:fs/promises';
+import { homedir } from 'node:os';
+import { basename } from 'node:path';
 import { delimiter, dirname, isAbsolute, join } from 'node:path';
 import { fail } from './protocol.js';
 
@@ -11,6 +13,8 @@ export interface CommandRequest {
   stdin?: string;
   timeoutMs: number;
   maxBytes?: number;
+  /** Only deterministic native Git/GitHub requests may inherit credential-location context. */
+  credentialContext?: boolean;
 }
 export interface CommandResult {
   exitCode: number;
@@ -24,7 +28,10 @@ export interface CommandRunner {
   run(request: CommandRequest): Promise<CommandResult>;
 }
 type Spawn = (program: string, args: readonly string[], options: SpawnOptions) => ChildProcess;
-export function safeEnvironment(environment: NodeJS.ProcessEnv): Record<string, string> {
+export function safeEnvironment(
+  environment: NodeJS.ProcessEnv,
+  credentialContext = false,
+): Record<string, string> {
   const allowed = new Set([
     'PATH',
     'PATHEXT',
@@ -38,6 +45,15 @@ export function safeEnvironment(environment: NodeJS.ProcessEnv): Record<string, 
     'LOCALAPPDATA',
     'LANG',
   ]);
+  if (credentialContext)
+    for (const name of [
+      'SSH_AUTH_SOCK',
+      'DBUS_SESSION_BUS_ADDRESS',
+      'XDG_RUNTIME_DIR',
+      'XDG_CONFIG_HOME',
+      'GH_CONFIG_DIR',
+    ])
+      allowed.add(name);
   return Object.fromEntries(
     Object.entries(environment).filter(
       (entry): entry is [string, string] =>
@@ -79,7 +95,19 @@ export class NativeCommands implements CommandRunner {
       try {
         child = this.spawnProcess(request.program, [...request.args], {
           cwd: request.cwd,
-          env: { ...safeEnvironment(this.environment), ...request.env },
+          env: {
+            ...safeEnvironment(this.environment, request.credentialContext),
+            ...Object.fromEntries(
+              Object.entries(request.env ?? {}).filter(
+                ([name]) =>
+                  !/^(GH_TOKEN|GITHUB_TOKEN|GG_API_KEY)$/i.test(name) &&
+                  (request.credentialContext ||
+                    !/^(SSH_AUTH_SOCK|DBUS_SESSION_BUS_ADDRESS|XDG_RUNTIME_DIR|XDG_CONFIG_HOME|GH_CONFIG_DIR)$/i.test(
+                      name,
+                    )),
+              ),
+            ),
+          },
           shell: false,
           windowsHide: true,
           detached: this.platform !== 'win32',
@@ -227,25 +255,144 @@ export async function nativeExecutable(
   }
   return fail('NATIVE_PROGRAM_UNAVAILABLE');
 }
+/** Inspect only a bounded executable header; installed shell/Node shims are never run. */
+async function isNativePnpm(path: string, platform: NodeJS.Platform): Promise<boolean> {
+  const file = await open(path, 'r');
+  try {
+    const header = Buffer.alloc(64);
+    const { bytesRead } = await file.read(header, 0, header.length, 0);
+    if (platform === 'win32') {
+      if (bytesRead < 64 || header.toString('ascii', 0, 2) !== 'MZ') return false;
+      const offset = header.readUInt32LE(60);
+      if (offset < 64 || offset > 1048576) return false;
+      const signature = Buffer.alloc(4);
+      const read = await file.read(signature, 0, 4, offset);
+      return read.bytesRead === 4 && signature.equals(Buffer.from([80, 69, 0, 0]));
+    }
+    if (((await file.stat()).mode & 0o111) === 0) return false;
+    if (platform === 'darwin')
+      return (
+        bytesRead >= 4 &&
+        ['feedface', 'cefaedfe', 'feedfacf', 'cffaedfe', 'cafebabe', 'bebafeca'].includes(
+          header.subarray(0, 4).toString('hex'),
+        )
+      );
+    return (
+      bytesRead >= 16 &&
+      header.subarray(0, 4).equals(Buffer.from([127, 69, 76, 70])) &&
+      [1, 2].includes(header[4] ?? 0) &&
+      [1, 2].includes(header[5] ?? 0) &&
+      header[6] === 1
+    );
+  } finally {
+    await file.close();
+  }
+}
 export async function gateCommand(
   program: string,
   args: readonly string[],
   environment: NodeJS.ProcessEnv = process.env,
+  directory = process.cwd(),
+  platform: NodeJS.Platform = process.platform,
 ) {
   if (program !== 'pnpm')
     return { program: await nativeExecutable(program, environment), args: [...args] };
-  const folders = (environment.PATH ?? environment.Path ?? '').split(delimiter);
+  const folders = [
+    ...new Set([
+      ...(environment.PATH ?? environment.Path ?? '').split(delimiter),
+      ...(environment.PNPM_HOME ? [environment.PNPM_HOME] : []),
+    ]),
+  ].filter(Boolean);
+  const packageCandidates = (root: string) =>
+    ['bin/pnpm.cjs', 'pnpm.exe', 'pnpm'].map((bin) => join(root, bin));
   const candidates = folders.flatMap((folder) => [
-    join(folder, 'node_modules/pnpm/bin/pnpm.cjs'),
-    join(folder, 'pnpm/bin/pnpm.cjs'),
-    join(dirname(folder), 'node_modules/pnpm/bin/pnpm.cjs'),
+    ...packageCandidates(join(folder, 'node_modules/pnpm')),
+    ...packageCandidates(join(folder, 'pnpm')),
+    ...packageCandidates(join(dirname(folder), 'node_modules/pnpm')),
+    ...packageCandidates(join(dirname(folder), 'lib/node_modules/pnpm')),
+    join(folder, 'pnpm'),
   ]);
+  const cache =
+    environment.COREPACK_HOME ??
+    join(
+      platform === 'win32'
+        ? (environment.LOCALAPPDATA ?? homedir())
+        : (environment.XDG_CACHE_HOME ?? join(environment.HOME ?? homedir(), '.cache')),
+      'node',
+      'corepack',
+    );
+  let version: string | undefined;
+  try {
+    const project: unknown = JSON.parse(await readFile(join(directory, 'package.json'), 'utf8'));
+    if (
+      project &&
+      typeof project === 'object' &&
+      'packageManager' in project &&
+      typeof project.packageManager === 'string'
+    )
+      version = project.packageManager.startsWith('pnpm@')
+        ? project.packageManager.slice(5)
+        : undefined;
+  } catch {
+    /* A non-project invocation may use the installed Corepack default. */
+  }
+  if (version === undefined) {
+    try {
+      const defaults: unknown = JSON.parse(
+        await readFile(join(cache, 'lastKnownGood.json'), 'utf8'),
+      );
+      if (
+        defaults &&
+        typeof defaults === 'object' &&
+        'pnpm' in defaults &&
+        typeof defaults.pnpm === 'string'
+      )
+        version = defaults.pnpm;
+    } catch {
+      /* No cache means no Corepack fallback or network download. */
+    }
+  }
+  if (version !== undefined) {
+    const pinned = /^(\d+\.\d+\.\d+(?:-[A-Za-z0-9.-]+)?)(?:\+sha(?:224|512)\.[A-Za-z0-9]+)?$/.exec(
+      version,
+    )?.[1];
+    if (!pinned) return fail('PNPM_LAUNCHER_UNAVAILABLE');
+    candidates.push(...packageCandidates(join(cache, 'v1', 'pnpm', pinned)));
+  }
   for (const path of candidates) {
     try {
-      if ((await lstat(path)).isFile())
-        return { program: await realpath(process.execPath), args: [await realpath(path), ...args] };
+      // Resolve an installed link; never interpret a shell/Corepack wrapper or launch Corepack.
+      const resolved = await realpath(path);
+      if (!(await lstat(resolved)).isFile()) continue;
+      const cjs = basename(resolved) === 'pnpm.cjs' && basename(dirname(resolved)) === 'bin';
+      if (!cjs && !['pnpm', 'pnpm.exe'].includes(basename(resolved))) continue;
+      const packageRoot = cjs ? dirname(dirname(resolved)) : dirname(resolved);
+      const declaredBin = cjs ? 'bin/pnpm.cjs' : basename(resolved);
+      const metadataPath = join(packageRoot, 'package.json'),
+        metadataFile = await lstat(metadataPath);
+      if (!metadataFile.isFile() || metadataFile.size > 65536) continue;
+      const metadata: unknown = JSON.parse(await readFile(metadataPath, 'utf8'));
+      const pinned = version?.split('+')[0];
+      if (
+        !metadata ||
+        typeof metadata !== 'object' ||
+        !('name' in metadata) ||
+        metadata.name !== 'pnpm' ||
+        !('version' in metadata) ||
+        typeof metadata.version !== 'string' ||
+        !/^\d+\.\d+\.\d+(?:-[A-Za-z0-9.-]+)?$/.test(metadata.version) ||
+        (pinned !== undefined && metadata.version !== pinned) ||
+        !('bin' in metadata) ||
+        !metadata.bin ||
+        typeof metadata.bin !== 'object' ||
+        !('pnpm' in metadata.bin) ||
+        metadata.bin.pnpm !== declaredBin
+      )
+        continue;
+      if (cjs) return { program: await realpath(process.execPath), args: [resolved, ...args] };
+      if (await isNativePnpm(resolved, platform)) return { program: resolved, args: [...args] };
     } catch {
-      /* try next installed candidate */
+      /* try the next installed candidate */
     }
   }
   return fail('PNPM_LAUNCHER_UNAVAILABLE');

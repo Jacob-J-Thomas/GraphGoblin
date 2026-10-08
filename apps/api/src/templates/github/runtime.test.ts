@@ -25,6 +25,7 @@ import type { CommandRequest, CommandResult, CommandRunner } from './process.js'
 import type { GithubIssue, GithubPort, GithubPullRequest } from './client.js';
 import { implementationSupportClosure } from './support-closure.js';
 import { ImplementationAuthority } from './authority-source.js';
+import { assertIssueOutput, boundedSupportOutput } from './support-output.js';
 import type { TemplateInstances } from '../instances.js';
 import { TemplateBindingSchema } from '../binding.js';
 
@@ -940,6 +941,7 @@ describe('canonical disk journal and packaged closure', () => {
       'binding',
       'errors',
       'subjects',
+      'support-result',
       'github/client',
       'github/entry',
       'github/implementation',
@@ -947,6 +949,7 @@ describe('canonical disk journal and packaged closure', () => {
       'github/protocol',
       'github/repository',
       'github/storage',
+      'github/support-output',
     ];
     for (const module of modules) {
       const path = join(root, 'src', 'templates', module + '.ts');
@@ -969,6 +972,72 @@ describe('canonical disk journal and packaged closure', () => {
     expect((await implementationSupportClosure(root, '1.0.0', false)).path).toBe(
       join(root, 'dist', 'templates', 'github', 'entry.js'),
     );
+  });
+});
+describe('serialized support output admission', () => {
+  it.each(['multibyte', 'escaped', 'repeated'] as const)(
+    'rejects oversized %s criteria before claim/prepare mutations',
+    async (kind) => {
+      const f = fixture();
+      f.github.current.body =
+        kind === 'multibyte'
+          ? '🧪'.repeat(20000)
+          : kind === 'escaped'
+            ? String.fromCharCode(0).repeat(12000)
+            : 'acceptance '.repeat(10000);
+      for (const action of ['claim', 'prepare']) {
+        expect(await f.action(action)).toMatchObject({
+          type: 'SupportBlocked',
+          code: 'SUPPORT_OUTPUT_TOO_LARGE',
+        });
+        expect(f.github.effects).toEqual([]);
+        expect(f.commands.worktrees.size).toBe(0);
+        expect(f.storage.files.size).toBe(0);
+        expect(f.storage.paths.size).toBe(2);
+      }
+    },
+  );
+  it('accepts exact UTF-8 transport boundary without truncating acceptance text and refuses one extra byte', async () => {
+    const f = fixture();
+    let low = 1,
+      high = 65536;
+    while (low < high) {
+      const middle = Math.ceil((low + high) / 2);
+      try {
+        assertIssueOutput(settings, { ...f.github.current, body: 'x'.repeat(middle) });
+        low = middle;
+      } catch {
+        high = middle - 1;
+      }
+    }
+    f.github.current.body = 'x'.repeat(low);
+    const output = await f.action('prepare');
+    expect(output).toMatchObject({ type: 'ImplementationWorkspace', body: f.github.current.body });
+    expect(Buffer.byteLength(JSON.stringify(output) + '\n')).toBe(65536);
+    expect(() =>
+      assertIssueOutput(settings, { ...f.github.current, body: 'x'.repeat(low + 1) }),
+    ).toThrow();
+    expect(() => boundedSupportOutput({ value: String.fromCharCode(0).repeat(12000) })).toThrow();
+  });
+  it('bounds repeated split tasks and escaped direct instructions before changing the durable plan', async () => {
+    for (const plan of [
+      { mode: 'direct', instructions: String.fromCharCode(0).repeat(12000) },
+      {
+        mode: 'split',
+        tasks: Array.from({ length: 32 }, (_, index) => ({
+          id: 'task-' + index,
+          title: 'Task',
+          instructions: 'x'.repeat(12000),
+        })),
+      },
+    ]) {
+      const f = fixture();
+      f.env.settings.limits.maxTasks = 32;
+      await f.prepare();
+      expect(await f.action('plan', plan)).toMatchObject({ code: 'SUPPORT_OUTPUT_TOO_LARGE' });
+      expect((await f.state())?.mode).toBeUndefined();
+      expect(f.commands.worktrees.size).toBe(1);
+    }
   });
 });
 describe('trusted implementation selection', () => {

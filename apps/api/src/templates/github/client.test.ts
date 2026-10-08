@@ -64,6 +64,7 @@ describe('bounded GitHub command client', () => {
         cwd: 'C:/fixture/repo',
         timeoutMs: 20000,
         maxBytes: 524288,
+        credentialContext: true,
       },
     ]);
   });

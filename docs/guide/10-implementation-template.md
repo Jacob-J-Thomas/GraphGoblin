@@ -4,7 +4,7 @@ This template watches one GitHub repository for open, labeled issues. It runs bo
 
 ## Prepare the repository and credentials
 
-Use a dedicated local clone of the target GitHub.com repository that the GraphGoblin API process can access. The configured owner and repository name must match the clone's origin. The base branch must exist on that origin; GraphGoblin checks it when it prepares the first issue workspace.
+Use a dedicated local clone of the target GitHub.com repository that the GraphGoblin API process can access. The configured owner and repository name must match the clone's origin. The base branch must exist on that origin; GraphGoblin checks remote access before admitting an issue and checks again before claiming it.
 
 ```powershell
 gh auth login
@@ -14,6 +14,8 @@ git -C <checkout-path> remote get-url origin
 ```
 
 Run the authentication check as the Windows account that runs the API. An interactive terminal may use a different GitHub CLI configuration from the service. The requirements check confirms that GitHub CLI authentication and repository discovery work; it does not prove permission for every later label, comment, push, or pull-request operation.
+
+On Unix, the API account must also have access to its SSH agent, credential keyring, or configured GitHub CLI directory. Trusted Git and GitHub commands inherit the relevant credential-location environment variables. Gate commands do not inherit those variables or GitHub tokens.
 
 The template uses four repository labels to select work and record its progress. The defaults are:
 
@@ -35,7 +37,7 @@ On **Loops**, choose **New from template**, then **Use GitHub issue implementati
 | Setting                             | What to enter                                                                                                                                                                                  |
 | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Checkout path                       | Absolute path to the existing canonical clone. GraphGoblin checks the repository root and origin, then keeps its journals and support worktrees within the clone.                              |
-| Repository owner, name, base branch | Exact GitHub owner and repository matching the clone. The base branch must exist on origin; its existence is checked when a labeled issue is prepared.                                         |
+| Repository owner, name, base branch | Exact GitHub owner and repository matching the clone. The base branch must exist on origin and be reachable before issue admission.                                                            |
 | Support credential key name         | **supportReadKey**, referring to the saved secret. Do not enter the token itself.                                                                                                              |
 | Implementer model and effort        | A currently enabled selection admitted by harness preflight.                                                                                                                                   |
 | Program and arguments               | Defaults are **pnpm** and one argument, **check**. Enter each argument separately, one per line. Arguments are passed literally; shell operators and command-line quoting are not interpreted. |
@@ -45,7 +47,7 @@ On **Loops**, choose **New from template**, then **Use GitHub issue implementati
 | Gate fixes                          | Additional gate-fix cycles after the initial gate run; default 2, range 0–10.                                                                                                                  |
 | Maximum iterations                  | Parent-loop limit; default 100, range 1–10,000.                                                                                                                                                |
 
-On Windows, keep the default program as **pnpm** unless you have a verified native alternative. The packaged support resolves it through the API's Node executable and an installed **pnpm.cjs** launcher. Generic **.cmd** and **.bat** programs are refused. A gate runs as a native process in the prepared issue worktree with the configured argument array and timeout.
+Keep the default program as **pnpm** unless you have a verified native alternative. The packaged support resolves an installed **pnpm.cjs** launcher through the API's Node executable, or an installed native pnpm binary. The installed package must match the checkout's package-manager version when one is specified. Resolution does not run a shell wrapper or download a package manager. Generic **.cmd** and **.bat** programs are refused. A gate runs in the prepared issue worktree with the configured argument array and timeout.
 
 Choose **Check requirements** after filling the form. It checks the selected role and harness, repository root and origin, GitHub CLI authentication and repository discovery, the secret's owner and exact scope, and the installed support entry. It does not check label existence, base-branch existence, or every write permission that later GitHub operations require. Editing a setting makes the report stale; check again before **Create draft**. The API repeats the checks during creation and before a run.
 

@@ -9,6 +9,7 @@ const modules = [
   'binding',
   'errors',
   'subjects',
+  'support-result',
   'github/client',
   'github/entry',
   'github/implementation',
@@ -16,6 +17,7 @@ const modules = [
   'github/protocol',
   'github/repository',
   'github/storage',
+  'github/support-output',
 ].sort();
 export const IMPLEMENTATION_SUPPORT_ENTRY = 'dist/templates/github/entry.js';
 /** Explicit development/build selection. Every executable delegate is included in a sorted closure. */

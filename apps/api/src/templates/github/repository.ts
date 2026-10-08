@@ -32,6 +32,7 @@ export class ImplementationRepository {
   ): Promise<string> {
     const result = await this.runner.run({
       program: this.program,
+      credentialContext: true,
       args: [
         '--no-optional-locks',
         '-c',

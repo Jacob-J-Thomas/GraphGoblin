@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { SupportBlockedSchema } from '../support-result.js';
 import { NodeOutputSchema, type LoopDefinition, type RunEvent } from '@graphgoblin/contracts';
 import type { TemplateBinding } from '../binding.js';
 import { TemplateError } from '../errors.js';
@@ -53,12 +54,7 @@ export function readImplementationIntent(
     // A refused intent is not a license to create or report a remote effect.
     const intent = PrIntentSchema.safeParse(output.value);
     if (intent.success) intents.push(intent.data);
-    else if (!(
-      output.value &&
-      typeof output.value === 'object' &&
-      !Array.isArray(output.value) &&
-      output.value['type'] === 'SupportBlocked'
-    ))
+    else if (!SupportBlockedSchema.safeParse(output.value).success)
       throw new TemplateError('AUTHORITY_CONFLICT', 'PR intent output is invalid.');
   }
   if (intents.length > 1)

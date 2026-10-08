@@ -25,13 +25,24 @@ Five native Windows process checks passed: literal argument preservation and cre
 
 The first version-only pnpm smoke ran inside the product repository's ancestor package-manager pin and reached its five-second deadline. That failed receipt is retained. Moving only that version probe to the system temporary directory returned the installed pnpm11.25.0 in733ms and allowed the complete local smoke to pass. This was a fixture correction, not a production code repair or evidence about dependency installation.
 
-The built archive contained all24 source/runtime catalog assets byte-for-byte. A production deploy loaded Starter and Implementation from the installed catalog and executed the installed support entry, which reported version1.0.0 matching the manifest. The image CI gate also executes each packaged support entry with --version in a read-only, network-disabled container; its current PR run is still pending.
+The built archive contained all24 source/runtime catalog assets byte-for-byte. A production deploy loaded Starter and Implementation from the installed catalog and executed the installed support entry, which reported version1.0.0 matching the manifest. On the published first head257f55b, CI37853873447 passed Gates and the image check, including each packaged support entry's --version in a read-only, network-disabled container.
+
+## Browser and independent review
+
+Installed Opus5.5 completed the actual browser QA using Claude.ai authentication and requested xhigh effort: six accepted inspections, each with a screenshot and successful paired HTTP response. The isolated preview created two instances during preflight and two during Opus QA, with eight loops total, draft parents and pinned published workers. No run or native model turn started. The preview was then stopped. The original preflight failed on an unsupported browser locator before any creation; its failed evidence is retained, and the corrected helper did not replenish the four-instance budget.
+
+The root supplement verified21 Tab steps through every field and the action buttons, including focus wrapping within the dialog. At390px, all13 lower fields and the footer were reachable and visible without horizontal overflow. No mutation was permitted during this supplement. Evidence: opus30-browser-v2-20261008T223634.576Z.report.md and preview30-navigation-supplement-v2.evidence.json in the private delivery directory.
+
+Canvas crowding and layout persistence are already parked in issues124/125. Prerequisite wording and early raw validation messages are deferred to issues136/137. Restoring the exact previously checked configuration can reuse its settings-bound report; this is not evidence of a new requirements check.
+
+The first stable Codex review and installed Opus code review found five accepted repair roots: Unix pnpm launcher discovery, terminal reporting for cancelled progressed runs, byte limits before output-dependent effects, strict typed refusal handling in authority history, and Unix credential context with remote checks before admission. These are one batched repair, followed by a targeted review of that delta. A composed RunManager test exposed a sixth root: fixed numeric child versions must be verified against immutable template bindings, without requiring the engine to emit synthetic latest-version pins. The API now checks child references, stored versions, hashes and supplied dynamic pins; the generic engine contract is unchanged. The Opus review used Read/Glob/Grep only; its initial packet was outside the allowed worktree, so the result does not claim inspection of every file. The targeted packet is stored inside the worktree.
+
+The combined repair suite passes857 tests with four existing or platform skips: statements94.94%, branches91.09%, functions96.51%, lines96.43%. Twenty fixed-child authority cases include a real parent-to-child run plus missing and inconsistent provenance refusals. Full typecheck20 tasks, lint11 tasks and formatting pass, as do layers, Node22 dependency checks,225-package license allowlist, generated docs and template validation. The build passes11 tasks. The first combined coverage attempt fell below the90% branch threshold; added behavioral process tests raised it without changing thresholds. A later full run reached an unchanged20-second route-test deadline during concurrent heavy checks. Those nine parameterized cases passed in isolation, then the complete suite passed with two workers and the same deadlines.
 
 ## Remaining gates
 
-- Actual browser preflight and Opus QA for the implementation settings, failure remediation, child pinning and draft handoff.
 - Bounded real workflows against the separate private scratch repository; no #30 model turns, issues or PRs have been created there yet.
-- Stable full Codex and installed Opus code review, triage/targeted repair as needed, and current-head CI.
+- Targeted Codex and installed Opus review of the completed repair, native launcher delta check, and current-head CI.
 - Only after those pass: merge this child into the feature branch. The final feature-to-main PR remains unmerged pending the owner's final product validation.
 
 The native #26 Claude fresh/resume, #29 incoming webhook and #97 Jev call budgets were already consumed and are not repeated. The owner's installation and data remain unchanged.
