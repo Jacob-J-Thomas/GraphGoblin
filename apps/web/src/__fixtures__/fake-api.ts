@@ -23,6 +23,7 @@ import type {
 } from '@graphgoblin/contracts';
 import {
   ClassifierModelPutSchema,
+  ImplementationTemplateSettingsSchema,
   LoopDefinitionSchema,
   StarterTemplateSettingsSchema,
   TemplateCatalogEntrySchema,
@@ -162,6 +163,109 @@ export function starterTemplateEntry(): TemplateCatalogEntry {
       kind: 'starter',
       roles: { assistant: { harness: 'codex', model: 'test-codex', effort: 'low' } },
     }),
+    prerequisites,
+  });
+}
+
+/** A current-contract repository template with no prefilled checkout identity or role model. */
+export function implementationTemplateEntry(): TemplateCatalogEntry {
+  const prerequisites: TemplatePrerequisiteReport = {
+    checks: [
+      {
+        id: 'implementer-model',
+        label: 'Implementer model',
+        status: 'ok',
+        blocking: 'authoring',
+        message: 'An enabled implementation model is available.',
+      },
+      {
+        id: 'repository',
+        label: 'Repository',
+        status: 'ok',
+        blocking: 'authoring',
+        message: 'The repository is available.',
+      },
+      {
+        id: 'github',
+        label: 'GitHub',
+        status: 'ok',
+        blocking: 'authoring',
+        message: 'GitHub is available.',
+      },
+      {
+        id: 'support-key',
+        label: 'Revocable runs:read support key',
+        status: 'ok',
+        blocking: 'authoring',
+        message: 'The support key is configured.',
+      },
+      {
+        id: 'support',
+        label: 'Verified packaged support entry',
+        status: 'ok',
+        blocking: 'authoring',
+        message: 'The support loops are available.',
+      },
+    ],
+    canInstantiate: true,
+    canRun: true,
+  };
+  return TemplateCatalogEntrySchema.parse({
+    manifest: {
+      id: 'implementation-workflow',
+      version: '1.0.0',
+      kind: 'implementation',
+      title: 'Implementation workflow',
+      description: 'Plan and complete bounded repository work.',
+      tags: ['implementation', 'repository'],
+      roles: [{ id: 'implementer', label: 'Implementer', access: 'write' }],
+      prerequisites: [
+        { id: 'repository', label: 'Repository', kind: 'repository', blocking: 'authoring' },
+        { id: 'github', label: 'GitHub', kind: 'github', blocking: 'authoring' },
+        {
+          id: 'support-key',
+          label: 'Revocable runs:read support key',
+          kind: 'secret',
+          blocking: 'authoring',
+          secretKey: 'supportReadKey',
+        },
+        {
+          id: 'implementer-model',
+          label: 'Implementer model',
+          kind: 'role',
+          blocking: 'authoring',
+          role: 'implementer',
+        },
+        {
+          id: 'support',
+          label: 'Verified packaged support entry',
+          kind: 'support',
+          blocking: 'authoring',
+        },
+      ],
+      requiredSecrets: [{ key: 'supportReadKey', scopes: ['runs:read'] }],
+      parentKey: 'parent',
+      loops: [
+        {
+          key: 'worker',
+          file: 'worker.json',
+          dependsOn: [],
+          roleNodes: [],
+          settingsNodes: [],
+          subloops: [],
+        },
+        {
+          key: 'parent',
+          file: 'parent.json',
+          dependsOn: ['worker'],
+          roleNodes: [],
+          settingsNodes: [],
+          subloops: [],
+        },
+      ],
+    },
+    settingsSchema: z.toJSONSchema(ImplementationTemplateSettingsSchema, { io: 'input' }),
+    defaultSettings: null,
     prerequisites,
   });
 }

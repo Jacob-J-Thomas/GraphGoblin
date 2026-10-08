@@ -243,6 +243,8 @@ export function prepareTemplateBundle(
     const definition = LoopDefinitionSchema.parse(bundle.loops[key]);
     definition.name = allocations[key]!.name;
     if ('maxIterations' in settings) definition.settings.maxIterations = settings.maxIterations;
+    else if (settings.kind === 'implementation')
+      definition.settings.maxIterations = settings.limits.maxIterations;
     for (const mapping of descriptor.roleNodes) {
       const node = definition.nodes.find(
         (candidate): candidate is Extract<Node, { kind: 'inference' }> =>

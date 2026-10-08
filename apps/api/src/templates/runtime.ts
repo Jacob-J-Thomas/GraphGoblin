@@ -259,9 +259,24 @@ export class TemplateRuntime {
         throw new TemplateError('AUTHORITY_CONFLICT', 'The saved subject has changed.');
       return { action: 'keep' };
     }
-    if (subject.kind === 'implementation')
+    if (subject.kind === 'implementation') {
       subject = { ...subject, attempt: await nextAttempt(store, binding, subject) };
-    else await assertSubjectSource(store, binding, subject);
+      if (pollItem) {
+        const expected = subject.repository + '#' + subject.issue + '@' + subject.attempt;
+        const payload = input.initialThread.invocation.trigger.payload;
+        if (
+          !payload ||
+          typeof payload !== 'object' ||
+          Array.isArray(payload) ||
+          payload['id'] !== expected ||
+          input.initialThread.invocation.trigger.dedupeKey !== expected
+        )
+          throw new TemplateError(
+            'TEMPLATE_AUTHORITY_REFUSED',
+            'The selected poll candidate no longer matches the authenticated implementation attempt.',
+          );
+      }
+    } else await assertSubjectSource(store, binding, subject);
     const rows = await store.subjectRuns({
       ownerId: input.run.ownerId,
       repository: subject.repository,

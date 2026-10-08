@@ -6,6 +6,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ### Added
 
+- GitHub issue implementation template with configurable repository, labels, native gate and role selection. It polls eligible issues, reserves each attempt, runs fresh workers sequentially, verifies gates on an unchanged commit, and opens a closing PR without merging it. Attempt-aware deduplication permits only authenticated QA rework; relabeling does not reset consumed attempts. (#30)
+
 - A template gallery creates independent Starter assistant drafts with current model choices, editable settings and fresh prerequisite checks. Bundles remap and pin children atomically while leaving the parent unpublished. Repository recipes remain outside the initial catalog until separately verified. (#28)
 
 - Decisions offer Noul true/false answers and fractional Score rubrics alongside Choice. Primitive-aware classifier selection, separate Noul truth/confidence thresholds and stable Score bands make routing explicit. Existing Choice and context behavior remain unchanged. (#97)

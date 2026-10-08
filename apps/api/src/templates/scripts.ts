@@ -8,7 +8,10 @@ import {
 } from '@graphgoblin/engine';
 import type { SqliteApiKeys } from '@graphgoblin/infrastructure/sqlite';
 import { TemplateBindingSchema, assertBoundVersion } from './binding.js';
-import { checkedEvents } from './authority.js';
+import { checkedEvents, readAuthority, ClaimRecordSchema } from './authority.js';
+import type { TemplateSubject } from './subjects.js';
+import { createRequire } from 'node:module';
+import { implementationPollKeys } from './github/poll.js';
 import { parseSubject } from './subjects.js';
 import type { TemplateInstances } from './instances.js';
 
@@ -33,7 +36,7 @@ export function sanitizeSupport(value: JsonValue, credential: string): JsonValue
   return value;
 }
 export interface PrivateSupportDeps {
-  instances: TemplateInstances;
+  instances: Pick<TemplateInstances, 'store' | 'catalog'>;
   raw: ScriptPort;
   apiKeys: Pick<SqliteApiKeys, 'authenticate'>;
   secretsFor(ownerId: string): SecretsPort;
@@ -83,6 +86,9 @@ export class PrivateTemplateScripts implements ScriptPort {
     const node = version.definition.nodes.find((item) => item.id === identity.nodeId);
     if (!node) refuse();
     let args: readonly string[];
+    let trustedSubject: TemplateSubject | null = null;
+    let claim: ReturnType<typeof ClaimRecordSchema.parse> | null = null;
+    let visit: number | null = null;
     if (identity.kind === 'poll') {
       if (
         version.status !== 'published' ||
@@ -115,6 +121,7 @@ export class PrivateTemplateScripts implements ScriptPort {
       )
         refuse();
       const subject = parseSubject(row.subject);
+      trustedSubject = subject;
       if (
         subject.instanceId !== binding.instanceId ||
         subject.templateVersion !== binding.manifest.version
@@ -134,7 +141,10 @@ export class PrivateTemplateScripts implements ScriptPort {
       let latest: number | undefined;
       for (const event of events) {
         if (!('nodeId' in event) || event.nodeId !== identity.nodeId) continue;
-        if (event.type === 'node.finished') latest = undefined;
+        if (event.type === 'node.finished') {
+          latest = undefined;
+          visit = null;
+        }
         if (event.type === 'node.started') {
           if (
             event.kind !== 'script' ||
@@ -142,9 +152,23 @@ export class PrivateTemplateScripts implements ScriptPort {
           )
             refuse();
           latest = event.seq;
+          visit ??= event.seq;
         }
       }
       if (latest !== identity.startedSeq) refuse();
+      const source = await readAuthority(
+        this.deps.instances.store,
+        binding,
+        subject.role === 'worker' ? subject.parentRunId : identity.runId,
+      );
+      if (
+        subject.role === 'worker' &&
+        !['running', 'waiting', 'paused'].includes(source.run.status)
+      )
+        refuse();
+      const claims = source.facts.filter((fact) => fact.type === 'ClaimRecord');
+      if (claims.length > 1 || (args[0] !== 'claim' && claims.length !== 1)) refuse();
+      if (claims[0]) claim = ClaimRecordSchema.parse(claims[0]);
     }
     if (
       stableHash(args) !== stableHash(request.args) ||
@@ -182,11 +206,25 @@ export class PrivateTemplateScripts implements ScriptPort {
         env[name] = value;
     const result = await this.deps.raw.run({
       command: process.execPath,
-      args: [binding.support.path, ...request.args],
+      args: [
+        ...(binding.support.path.endsWith('.ts')
+          ? [createRequire(import.meta.url).resolve('tsx/cli')]
+          : []),
+        binding.support.path,
+        ...request.args,
+      ],
       cwd: binding.settings.repository.path,
       env,
       inheritEnv: false,
-      stdin: JSON.stringify({ settings: binding.settings, input, credential }),
+      stdin: JSON.stringify({
+        settings: binding.settings,
+        input,
+        credential,
+        identity,
+        subject: trustedSubject,
+        claim,
+        visit,
+      }),
       timeoutMs: request.timeoutMs ?? 60_000,
       maxStdoutBytes: 65_536,
       maxStderrBytes: 8192,
@@ -202,7 +240,12 @@ export class PrivateTemplateScripts implements ScriptPort {
     )
       refuse();
     const parsed = JsonValueSchema.parse(JSON.parse(result.stdout));
-    const stdout = JSON.stringify(sanitizeSupport(parsed, credential));
+    const safe = sanitizeSupport(parsed, credential);
+    const output =
+      identity.kind === 'poll'
+        ? await implementationPollKeys(this.deps.instances.store, binding, safe)
+        : safe;
+    const stdout = JSON.stringify(output);
     if (Buffer.byteLength(stdout) > 65_536) refuse();
     return {
       exitCode: 0,

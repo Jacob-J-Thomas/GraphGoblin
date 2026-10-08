@@ -203,7 +203,7 @@ export function assertClaim(facts: readonly AuthorityFact[], subject: TemplateSu
 export async function nextAttempt(
   store: TemplateTransaction,
   binding: TemplateBinding,
-  candidate: z.infer<typeof ParentSubjectSchema>,
+  candidate: Pick<z.infer<typeof ParentSubjectSchema>, 'repository' | 'issue'>,
 ): Promise<number> {
   const rows = await store.subjectRuns({
     ownerId: binding.ownerId,

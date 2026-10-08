@@ -1,0 +1,98 @@
+{
+  "id": "implementation",
+  "version": "1.0.0",
+  "kind": "implementation",
+  "title": "GitHub issue implementation",
+  "description": "Poll ready issues, reserve each attempt, implement direct or sequential split tasks with fresh workers, pass bounded gates and open a closing PR.",
+  "tags": ["github", "implementation", "issues"],
+  "roles": [
+    {
+      "id": "implementer",
+      "label": "Implementer",
+      "access": "write"
+    }
+  ],
+  "prerequisites": [
+    {
+      "id": "implementer",
+      "label": "Implementation model and harness",
+      "kind": "role",
+      "blocking": "authoring",
+      "role": "implementer"
+    },
+    {
+      "id": "repository",
+      "label": "Canonical repository and matching origin",
+      "kind": "repository",
+      "blocking": "authoring"
+    },
+    {
+      "id": "github",
+      "label": "Authenticated GitHub access",
+      "kind": "github",
+      "blocking": "authoring"
+    },
+    {
+      "id": "support-key",
+      "label": "Revocable runs:read support key",
+      "kind": "secret",
+      "blocking": "authoring",
+      "secretKey": "supportReadKey"
+    },
+    {
+      "id": "support",
+      "label": "Verified packaged support entry",
+      "kind": "support",
+      "blocking": "authoring"
+    }
+  ],
+  "requiredSecrets": [
+    {
+      "key": "supportReadKey",
+      "scopes": ["runs:read"]
+    }
+  ],
+  "parentKey": "parent",
+  "loops": [
+    {
+      "key": "worker",
+      "file": "worker.json",
+      "dependsOn": [],
+      "roleNodes": [
+        {
+          "role": "implementer",
+          "nodeId": "implementer"
+        }
+      ],
+      "settingsNodes": ["settings"],
+      "subloops": []
+    },
+    {
+      "key": "parent",
+      "file": "parent.json",
+      "dependsOn": ["worker"],
+      "roleNodes": [
+        {
+          "role": "implementer",
+          "nodeId": "planner"
+        },
+        {
+          "role": "implementer",
+          "nodeId": "pr-writer"
+        }
+      ],
+      "settingsNodes": ["settings"],
+      "subloops": [
+        {
+          "nodeId": "worker",
+          "loopKey": "worker"
+        },
+        {
+          "nodeId": "gate-fixer",
+          "loopKey": "worker"
+        }
+      ]
+    }
+  ],
+  "supportEntry": "dist/templates/github/entry.js"
+}
