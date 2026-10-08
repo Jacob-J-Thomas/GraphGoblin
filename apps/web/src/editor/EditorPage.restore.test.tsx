@@ -70,6 +70,50 @@ describe('restoring a set-aside copy', () => {
     };
   }
 
+  it('restores unfinished current JSONata into the editor instead of archiving it as an upgrade failure', async () => {
+    const api = new FakeApi();
+    const loop = api.addLoop(newLoopDefinition('server copy'));
+    const definition: LoopDefinitionInput = {
+      ...newLoopDefinition('unfinished local expression'),
+      nodes: [
+        { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
+        {
+          id: 'done',
+          kind: 'exit',
+          label: 'Done',
+          config: {
+            criteria: [
+              {
+                when: 'predicate',
+                answer: { type: 'noul' },
+                evaluation: { kind: 'expression', jsonata: '(' },
+                match: { type: 'noul', value: false },
+                outcome: 'success',
+              },
+            ],
+          },
+        },
+      ],
+    };
+    await drafts.saveLocalDraft({
+      loopId: loop.id,
+      definition,
+      savedAt: '2999-01-01T00:00:00.000Z',
+      synced: false,
+    });
+    renderApp(`/loops/${loop.id}/edit`, api);
+    expect(
+      await screen.findByRole('heading', { name: 'unfinished local expression' }),
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByText('Restored unsaved changes from this device.'),
+    ).toBeInTheDocument();
+    expect(useEditorStore.getState().definition).toEqual(definition);
+    expect(screen.queryByText('This device copy could not be migrated safely')).toBeNull();
+    expect(await drafts.loadArchivedDrafts(loop.id)).toEqual([]);
+    expect((await drafts.loadLocalDraft(loop.id))?.definition).toEqual(definition);
+  });
+
   it('converts an unambiguous v1 device draft before loading it into the editor', async () => {
     const api = new FakeApi();
     const loop = api.addLoop(newLoopDefinition('server copy'));

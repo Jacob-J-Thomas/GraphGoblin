@@ -8,6 +8,7 @@ import {
 } from '@graphgoblin/contracts';
 import { useId } from 'react';
 import { useWatch } from 'react-hook-form';
+import { z } from 'zod';
 import {
   Button,
   Checkbox,
@@ -60,6 +61,18 @@ const DEFAULT_ANSWERS: Record<Primitive, Record<string, unknown>> = {
     anchors: ['Does not meet the rubric', 'Partly meets the rubric', 'Fully meets the rubric'],
   },
 };
+
+const ChoiceOptionSchema = ChoiceConfigSchema.shape.options.element;
+const EXIT_CHOICE_OPTIONS_SCHEMA = z
+  .array(
+    ChoiceOptionSchema.extend({
+      id: ChoiceOptionSchema.shape.id.describe(
+        'Stable Choice option ID used by this exit match. Exit nodes can only follow their loopBack connection.',
+      ),
+    }),
+  )
+  .min(2)
+  .max(64);
 
 function evaluationSchema(kind: EvaluationKind): Record<string, Schema> | undefined {
   const shape = shapeOf(EvaluationSchema);
@@ -210,7 +223,7 @@ function ExitPredicateAnswerField({ name, label }: FieldProps) {
       />
       {selected === 'choice' ? (
         <Field
-          schema={ChoiceConfigSchema.shape.options}
+          schema={EXIT_CHOICE_OPTIONS_SCHEMA}
           name={`${name}.options`}
           label="Choice options"
         />
@@ -249,13 +262,17 @@ function ExitPredicateEvaluationField({ name, label }: FieldProps) {
     Object.hasOwn(evaluation, 'truthThreshold') && !isUnset(evaluation['truthThreshold']);
   const choose = (next: EvaluationKind) => {
     if (next === kind) return;
+    const preservedQuestion =
+      (kind === 'classifier' || kind === 'llm') && typeof evaluation['question'] === 'string'
+        ? evaluation['question']
+        : undefined;
     if (next === 'expression') {
       field.onChange({ kind: next, jsonata: primitiveType === 'noul' ? 'true' : '"yes"' });
     } else if (next === 'classifier') {
       field.onChange({
         kind: next,
         model: '',
-        question: 'Evaluate the current input against the declared answer.',
+        question: preservedQuestion ?? 'Evaluate the current input against the declared answer.',
       });
     } else {
       field.onChange({
@@ -263,7 +280,7 @@ function ExitPredicateEvaluationField({ name, label }: FieldProps) {
         harness: 'codex',
         model: { mode: 'inherit' },
         effort: { mode: 'inherit' },
-        question: '',
+        question: preservedQuestion ?? '',
       });
     }
   };
@@ -344,6 +361,7 @@ function ExitPredicateMatchField({ schema, name, label }: FieldProps) {
   const answerType = primitive(useWatch({ name: sibling(name, 'answer') }));
   const answer = record(useWatch({ name: sibling(name, 'answer') }));
   const evaluationKind: unknown = useWatch({ name: sibling(name, 'evaluation.kind') });
+  const noulMatchValue: unknown = useWatch({ name: `${name}.value` });
   const kind = answerType ?? 'noul';
   const variant = matchSchema(schema, kind);
   const valueSchema = variant?.['value'];
@@ -398,7 +416,9 @@ function ExitPredicateMatchField({ schema, name, label }: FieldProps) {
         <>
           {valueSchema ? (
             <Field
-              schema={valueSchema}
+              schema={valueSchema.describe(
+                `Matching answer: ${noulMatchValue === false ? 'False' : 'True'}.`,
+              )}
               name={`${name}.value`}
               label="Match when the answer is true"
             />

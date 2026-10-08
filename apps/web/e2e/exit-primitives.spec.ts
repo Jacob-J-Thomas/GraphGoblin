@@ -369,6 +369,44 @@ async function inspectLastExit(page: Page) {
 }
 
 exitTest(
+  'unfinished current exit expression survives device-only reload and remains editable',
+  async ({ page, request, synthetic }) => {
+    const { url, classifier } = synthetic;
+    const loopId = await createLoop(
+      page,
+      request,
+      url,
+      exitLoop('Unfinished exit draft', [expression('true')]),
+    );
+    let dialog = await criterionEditor(page);
+    let editor = dialog.locator('[data-field="criteria.0.evaluation.jsonata"] [role="textbox"]');
+    await editor.fill('');
+    await expect(page.getByTestId('save-state')).toHaveText('Saved on this device only');
+    const serverBefore = await request.get(url + '/loops/' + loopId);
+    expect(serverBefore.status()).toBe(200);
+    await page.reload();
+    await expect(
+      page.getByText('Restored unsaved changes from this device.', { exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByText('This device copy could not be migrated safely', { exact: true }),
+    ).toHaveCount(0);
+    dialog = await criterionEditor(page);
+    editor = dialog.locator('[data-field="criteria.0.evaluation.jsonata"] [role="textbox"]');
+    await expect(editor).toHaveText('');
+    await expect(page.getByTestId('save-state')).toHaveText('Saved on this device only');
+    const serverAfter = await request.get(url + '/loops/' + loopId);
+    expect(serverAfter.status()).toBe(200);
+    expect(await serverAfter.json()).toEqual(await serverBefore.json());
+    await editor.fill('false');
+    await closeNode(page);
+    const repaired = await savedDraft(page, request, url, loopId);
+    expect(exitConfig(repaired).criteria).toEqual([expression('false')]);
+    expect(await classifier.requests()).toEqual([]);
+  },
+);
+
+exitTest(
   'expression Noul false matches false after authoring, saving, reloading, publishing and running',
   async ({ page, request, synthetic }) => {
     const { url, classifier } = synthetic;
@@ -593,7 +631,7 @@ exitTest(
     });
     details = await inspectLastExit(page);
     await expect(details).toContainText('Score 1.25');
-    await expect(details).toContainText('Rejected at classifier confidence 0.8');
+    await expect(details).toContainText('Rejected below configured classifier minimum 0.8');
     await expect(details).toContainText('treated as a nonmatch');
 
     await openEditor(page, url, loopId);
