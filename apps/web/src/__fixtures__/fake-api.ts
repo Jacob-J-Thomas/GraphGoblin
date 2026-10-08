@@ -503,6 +503,19 @@ export class FakeApi {
       },
     ],
     [
+      'GET /loops/:id/versions/:versionId',
+      (_call, [loopId, versionId]) => {
+        const entry = this.loops.get(loopId!);
+        if (!entry) return problem(404, 'LOOP_NOT_FOUND', 'loop not found');
+        const version = [...entry.history, ...(entry.draft ? [entry.draft] : [])].find(
+          (candidate) => candidate.id === versionId,
+        );
+        return version
+          ? json(version)
+          : problem(404, 'VERSION_NOT_FOUND', `version ${versionId} not found`);
+      },
+    ],
+    [
       'GET /loops/:id/export',
       (call, [loopId]) => {
         const entry = this.loops.get(loopId!);

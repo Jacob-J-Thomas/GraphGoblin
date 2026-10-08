@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
-import { keys, useRun, useRunThread } from '../api/queries.js';
+import { keys, useLoopVersion, useRun, useRunThread } from '../api/queries.js';
 import { Page } from '../components/layout/index.js';
 import { QueryState, RunStatusBadge } from '../components/status.js';
 import { Alert, Card } from '../components/ui/index.js';
@@ -35,6 +35,14 @@ export function RunInspectorPage() {
   });
   const [selectedSeq, setSelectedSeq] = useState<number | undefined>();
   const seq = selectedSeq ?? log.lastSeq;
+  const selectedEvent = log.events.find((event) => event.seq === seq);
+  const needsPinnedDefinition =
+    selectedEvent?.type === 'decision.made' || selectedEvent?.type === 'run.failed';
+  const versionQuery = useLoopVersion(
+    runQuery.data?.loopId ?? '',
+    runQuery.data?.versionId ?? '',
+    needsPinnedDefinition,
+  );
   const latestExit = log.events.filter((event) => event.type === 'exit.evaluated').at(-1);
 
   return (
@@ -107,7 +115,7 @@ export function RunInspectorPage() {
           onSelect={setSelectedSeq}
         />
         <div className="grid min-w-0 gap-section">
-          <EvaluationDetails event={log.events.find((event) => event.seq === seq)} />
+          <EvaluationDetails event={selectedEvent} definition={versionQuery.data?.definition} />
           {threadQuery.data ? (
             <ThreadViewer current={threadQuery.data} events={log.events} seq={seq} />
           ) : (

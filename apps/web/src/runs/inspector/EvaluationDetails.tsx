@@ -2,6 +2,7 @@ import {
   EvaluationProvenanceSchema,
   PrimitiveAnswerSchema,
   type EvaluationProvenance,
+  type LoopDefinition,
   type PrimitiveAnswer,
   type RunEvent,
 } from '@graphgoblin/contracts';
@@ -54,8 +55,26 @@ function evidenceAnswer(answer: PrimitiveAnswer): string {
   }
 }
 
+function noulTruthThreshold(definition: LoopDefinition | undefined, nodeId: string | undefined) {
+  if (!definition || !nodeId) return undefined;
+  const node = definition.nodes.find((candidate) => candidate.id === nodeId);
+  if (
+    node?.kind !== 'decision' ||
+    node.config.answer.type !== 'noul' ||
+    node.config.evaluation.kind !== 'classifier'
+  )
+    return undefined;
+  return node.config.evaluation.truthThreshold ?? 0.5;
+}
+
 /** The selected evaluation's cause and ordered evidence in owner-facing words. */
-export function EvaluationDetails({ event }: { event: RunEvent | undefined }) {
+export function EvaluationDetails({
+  event,
+  definition,
+}: {
+  event: RunEvent | undefined;
+  definition?: LoopDefinition | undefined;
+}) {
   if (
     event?.type !== 'exit.evaluated' &&
     event?.type !== 'decision.made' &&
@@ -89,32 +108,76 @@ export function EvaluationDetails({ event }: { event: RunEvent | undefined }) {
         </ol>
       ) : event.type === 'run.failed' ? (
         rejection ? (
-          <section aria-label="Rejected classifier evaluation" className="mt-2 grid gap-2 text-sm">
-            <p>
-              Classifier result rejected by the confidence gate. No decision was accepted and no
-              route was selected.
-            </p>
-            <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
-              <dt>Proposed answer</dt>
-              <dd>{evidenceAnswer(rejection.answer)}</dd>
-              {rejection.answer.type === 'noul' && rejection.answer.kind === 'classifier' ? (
-                <>
-                  <dt>True probability</dt>
-                  <dd>{rejection.answer.trueProbability}</dd>
-                </>
-              ) : null}
-              {rejection.answer.confidence !== null ? (
-                <>
-                  <dt>Confidence</dt>
-                  <dd>{rejection.answer.confidence}</dd>
-                </>
-              ) : null}
-              <dt>Minimum confidence</dt>
-              <dd>{rejection.minConfidence}</dd>
-              <dt>Evaluator</dt>
-              <dd>{rejection.provenance.kind}</dd>
-            </dl>
-          </section>
+          <>
+            <section
+              aria-label="Rejected classifier evaluation"
+              className="mt-2 grid gap-2 text-sm"
+            >
+              <p>
+                Classifier result rejected by the confidence gate. No decision was accepted and no
+                route was selected.
+              </p>
+              <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+                <dt>Proposed answer</dt>
+                <dd>{evidenceAnswer(rejection.answer)}</dd>
+                {rejection.answer.type === 'noul' && rejection.answer.kind === 'classifier' ? (
+                  <>
+                    <dt>True probability</dt>
+                    <dd>{rejection.answer.trueProbability}</dd>
+                    {noulTruthThreshold(definition, event.failure.nodeId) !== undefined ? (
+                      <>
+                        <dt>True-probability threshold</dt>
+                        <dd>{noulTruthThreshold(definition, event.failure.nodeId)}</dd>
+                      </>
+                    ) : null}
+                  </>
+                ) : null}
+                {rejection.answer.confidence !== null ? (
+                  <>
+                    <dt>Confidence</dt>
+                    <dd>{rejection.answer.confidence}</dd>
+                  </>
+                ) : null}
+                <dt>Minimum confidence</dt>
+                <dd>{rejection.minConfidence}</dd>
+                <dt>Evaluator</dt>
+                <dd>{rejection.provenance.kind}</dd>
+                {rejection.provenance.provider ? (
+                  <>
+                    <dt>Provider</dt>
+                    <dd>{rejection.provenance.provider}</dd>
+                  </>
+                ) : null}
+                {rejection.provenance.classifierId ? (
+                  <>
+                    <dt>Classifier</dt>
+                    <dd>
+                      <code>{rejection.provenance.classifierId}</code>
+                    </dd>
+                  </>
+                ) : null}
+                {rejection.provenance.model ? (
+                  <>
+                    <dt>Model</dt>
+                    <dd>
+                      <code>{rejection.provenance.model}</code>
+                    </dd>
+                  </>
+                ) : null}
+              </dl>
+            </section>
+            {rejection.answer.type === 'score' ? (
+              <ul aria-label="Rubric anchors" className="mt-2 grid gap-1 text-sm">
+                {Object.entries(rejection.answer.legend)
+                  .sort(([a], [b]) => Number(a) - Number(b))
+                  .map(([index, label]) => (
+                    <li key={index}>
+                      Anchor <code>{index}</code>: {label}
+                    </li>
+                  ))}
+              </ul>
+            ) : null}
+          </>
         ) : null
       ) : (
         <>
@@ -138,6 +201,12 @@ export function EvaluationDetails({ event }: { event: RunEvent | undefined }) {
                   <>
                     <dt>True probability</dt>
                     <dd>{event.answer.trueProbability}</dd>
+                    {noulTruthThreshold(definition, event.nodeId) !== undefined ? (
+                      <>
+                        <dt>True-probability threshold</dt>
+                        <dd>{noulTruthThreshold(definition, event.nodeId)}</dd>
+                      </>
+                    ) : null}
                   </>
                 ) : null}
                 {event.answer.kind === 'llm' ? (

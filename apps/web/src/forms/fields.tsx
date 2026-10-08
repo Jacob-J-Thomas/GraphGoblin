@@ -7,11 +7,13 @@
  */
 export {
   FieldControlsContext,
+  FieldOverridesContext,
   UnionPickersContext,
   joinPath,
   useField,
   type FieldControl,
   type FieldControls,
+  type FieldOverrides,
   type FieldProps,
   type UnionPicker,
   type UnionPickerOption,

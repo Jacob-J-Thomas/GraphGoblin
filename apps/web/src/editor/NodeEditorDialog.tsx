@@ -5,7 +5,7 @@ import {
   type DecisionAnswer,
   type NodeInput,
 } from '@graphgoblin/contracts';
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Icon } from '../components/icons/index.js';
 import {
   Button,
@@ -26,7 +26,7 @@ import { DecisionAnswerPicker } from './DecisionAnswerPicker.js';
 import { TriggerPresets } from './TriggerPresets.js';
 import { CatalogWarningsContext } from '../forms/fields/model.js';
 import { canvasFocusTarget } from './canvas-focus.js';
-import { NODE_FIELD_CONTROLS } from './field-controls.js';
+import { DECISION_FIELD_OVERRIDES, NODE_FIELD_CONTROLS } from './field-controls.js';
 import { focusIssuePath } from './focus-field.js';
 import { IssueBadge } from './IssueBadge.js';
 import { KindChip } from './KindChip.js';
@@ -175,6 +175,13 @@ interface IdDraft {
   warned?: string | undefined;
 }
 
+interface PendingAnswerFocus {
+  nodeId: string;
+  answerType: DecisionAnswer['type'];
+  epoch: number;
+  historyEpoch: number;
+}
+
 /**
  * The editor of one node, in a modal dialog named "Edit <kind> <id>": the node's issue badge beside
  * the title (choosing an issue focuses its field), id, label, the subloop picker, the config form
@@ -203,6 +210,7 @@ export function NodeEditorDialog({
   // Bumped by undo and redo: the config form remounts with the restored values.
   const historyEpoch = useEditorStore((s) => s.historyEpoch);
   const bodyRef = useRef<HTMLElement>(null);
+  const pendingAnswerFocusRef = useRef<PendingAnswerFocus | undefined>(undefined);
   const [epoch, setEpoch] = useState(0);
   // Which of the config form's disclosures are open (Advanced, collapsed list items). Kept here,
   // not in the form, so the remounts below (undo and redo, a subloop pick) keep what the user
@@ -248,6 +256,27 @@ export function NodeEditorDialog({
     return () => clearTimeout(timer);
   }, [nodeFocus, node.id]);
 
+  useLayoutEffect(() => {
+    const pending = pendingAnswerFocusRef.current;
+    if (!pending) return;
+    pendingAnswerFocusRef.current = undefined;
+    if (
+      pending.nodeId !== node.id ||
+      pending.epoch !== epoch ||
+      pending.historyEpoch !== historyEpoch
+    )
+      return;
+    const dialog = bodyRef.current?.closest('dialog');
+    if (document.activeElement !== document.body && document.activeElement !== dialog) return;
+    const radios = bodyRef.current?.querySelectorAll<HTMLInputElement>(
+      'input[type="radio"][name="answer"]',
+    );
+    const selected = radios
+      ? Array.from(radios).find((radio) => radio.value === pending.answerType)
+      : undefined;
+    selected?.focus();
+  }, [epoch, historyEpoch, node.id]);
+
   const commitId = () => {
     const error = idProblem(id.value, node.id, definition);
     setIdState({ ...id, error });
@@ -257,7 +286,21 @@ export function NodeEditorDialog({
   const handleConfigChange = (config: unknown, change: Parameters<typeof updateNode>[2]) => {
     if (node.kind === 'decision' && change?.path === 'answer') {
       const normalized = decisionVariantChange(config, node.config);
-      if (normalized !== config) setEpoch((current) => current + 1);
+      if (normalized !== config) {
+        const active = document.activeElement;
+        const radioHadFocus =
+          active instanceof HTMLInputElement && active.type === 'radio' && active.name === 'answer';
+        const selected = answerType(normalized);
+        if (radioHadFocus && selected) {
+          pendingAnswerFocusRef.current = {
+            nodeId: node.id,
+            answerType: selected,
+            epoch: epoch + 1,
+            historyEpoch,
+          };
+        }
+        setEpoch((current) => current + 1);
+      }
       updateNode(node.id, { config: normalized }, change);
       return;
     }
@@ -412,6 +455,7 @@ export function NodeEditorDialog({
                 value={node.config}
                 label={`${node.id} config`}
                 controls={NODE_FIELD_CONTROLS}
+                fieldOverrides={node.kind === 'decision' ? DECISION_FIELD_OVERRIDES : undefined}
                 unionPickers={node.kind === 'decision' ? DECISION_UNION_PICKERS : undefined}
                 problems={configProblems}
                 disclosures={disclosures}

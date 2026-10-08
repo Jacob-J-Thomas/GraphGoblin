@@ -23,7 +23,11 @@ function loopWith(extra: NodeInput): LoopDefinitionInput {
   return { ...definition, nodes: [...definition.nodes, extra] };
 }
 
-async function openDialog(extra: NodeInput, name: string) {
+async function openDialog(
+  extra: NodeInput,
+  name: string,
+  prepare?: (api: FakeApi, loopId: string) => void,
+) {
   const api = new FakeApi();
   api.catalog = [
     {
@@ -37,6 +41,7 @@ async function openDialog(extra: NodeInput, name: string) {
     },
   ];
   const loop = api.addLoop(loopWith(extra));
+  prepare?.(api, loop.id);
   renderApp(`/loops/${loop.id}/edit`, api);
   await screen.findByRole('heading', { name: 'dialog' });
   act(() => store().openNode(extra.id));
@@ -127,7 +132,14 @@ describe('NodeEditorDialog decision field order', () => {
       'Edit decision pick',
     );
     const answerPicker = within(dialog).getByRole('radiogroup', { name: 'Answer type' });
+    expect(
+      within(dialog).queryByLabelText('Noul true-probability threshold'),
+    ).not.toBeInTheDocument();
     await user.click(within(answerPicker).getByRole('radio', { name: 'Noul' }));
+    expect(within(dialog).getByRole('radio', { name: 'Noul' })).toHaveFocus();
+    expect(
+      within(dialog).queryByLabelText('Noul true-probability threshold'),
+    ).not.toBeInTheDocument();
     await waitFor(() => {
       const node = store().definition?.nodes.find((candidate) => candidate.id === 'pick');
       if (node?.kind !== 'decision') throw new Error('Decision node is missing.');
@@ -145,6 +157,10 @@ describe('NodeEditorDialog decision field order', () => {
     );
 
     await user.click(within(dialog).getByRole('radio', { name: 'Score' }));
+    expect(within(dialog).getByRole('radio', { name: 'Score' })).toHaveFocus();
+    expect(
+      within(dialog).queryByLabelText('Noul true-probability threshold'),
+    ).not.toBeInTheDocument();
     await waitFor(() => {
       const node = store().definition?.nodes.find((candidate) => candidate.id === 'pick');
       if (node?.kind !== 'decision') throw new Error('Decision node is missing.');
@@ -171,6 +187,118 @@ describe('NodeEditorDialog decision field order', () => {
     expect(store().past).toHaveLength(2);
     act(() => store().undo());
     await waitFor(() => expect(within(dialog).getByRole('radio', { name: 'Noul' })).toBeChecked());
+  });
+
+  it('shows the Noul threshold only for classifier Noul evaluation', async () => {
+    const user = userEvent.setup();
+    const dialog = await openDialog(
+      {
+        id: 'pick',
+        kind: 'decision',
+        label: 'Pick',
+        config: {
+          answer: {
+            type: 'noul',
+            true: { id: 'true', label: 'True', criteria: 'The statement is true' },
+            false: { id: 'false', label: 'False', criteria: 'The statement is false' },
+          },
+          evaluation: {
+            kind: 'classifier',
+            model: 'jev',
+            question: 'Check the statement.',
+            context: { messages: 'last', includeLastOutput: true },
+          },
+        },
+      },
+      'Edit decision pick',
+    );
+    expect(
+      await within(dialog).findByLabelText('Noul true-probability threshold'),
+    ).toBeInTheDocument();
+
+    await user.click(within(dialog).getByRole('radio', { name: 'Choice' }));
+    expect(within(dialog).getByRole('radio', { name: 'Choice' })).toHaveFocus();
+    await waitFor(() => {
+      expect(
+        within(dialog).queryByLabelText('Noul true-probability threshold'),
+      ).not.toBeInTheDocument();
+    });
+  });
+
+  it('keeps keyboard focus on the selected answer after the choice variant remounts', async () => {
+    const user = userEvent.setup();
+    const dialog = await openDialog(
+      {
+        id: 'pick',
+        kind: 'decision',
+        label: 'Pick',
+        config: {
+          answer: {
+            type: 'choice',
+            options: [
+              { id: 'yes', label: 'Yes', criteria: 'The answer is yes' },
+              { id: 'no', label: 'No', criteria: 'The answer is no' },
+            ],
+          },
+          evaluation: { kind: 'expression', jsonata: '"yes"' },
+        },
+      },
+      'Edit decision pick',
+    );
+    const choice = within(dialog).getByRole('radio', { name: 'Choice' });
+    choice.focus();
+    await user.keyboard('{ArrowRight}');
+
+    await waitFor(() => {
+      const noul = within(dialog).getByRole('radio', { name: 'Noul' });
+      expect(noul).toBeChecked();
+      expect(noul).toHaveFocus();
+    });
+  });
+
+  it('keeps an inapplicable authored threshold visible until the user clears it', async () => {
+    const user = userEvent.setup();
+    const dialog = await openDialog(
+      {
+        id: 'pick',
+        kind: 'decision',
+        label: 'Pick',
+        config: {
+          answer: {
+            type: 'choice',
+            options: [
+              { id: 'yes', label: 'Yes', criteria: 'The answer is yes' },
+              { id: 'no', label: 'No', criteria: 'The answer is no' },
+            ],
+          },
+          evaluation: {
+            kind: 'classifier',
+            model: 'jev',
+            question: 'Check the evidence.',
+            context: { messages: 'last', includeLastOutput: true },
+          },
+        },
+      },
+      'Edit decision pick',
+      (api, loopId) => {
+        const entry = api.loops.get(loopId);
+        const node = entry?.draft?.definition.nodes.find((candidate) => candidate.id === 'pick');
+        if (node?.kind !== 'decision' || node.config.evaluation.kind !== 'classifier')
+          throw new Error('Expected a classifier decision draft.');
+        node.config.evaluation.truthThreshold = 0.2;
+      },
+    );
+    const threshold = within(dialog).getByLabelText('Noul true-probability threshold');
+    expect(threshold).toHaveValue(0.2);
+    expect(validateDraft(store().definition!).schemaValid).toBe(false);
+
+    await user.clear(threshold);
+    await waitFor(() => {
+      expect(
+        within(dialog).queryByLabelText('Noul true-probability threshold'),
+      ).not.toBeInTheDocument();
+      expect(validateDraft(store().definition!).schemaValid).toBe(true);
+    });
   });
 
   it('keeps the authored question and context when switching a provider-backed Choice to Score', async () => {

@@ -41,6 +41,9 @@ export type FieldControl = ComponentType<FieldProps> & { drawsWithoutParent?: bo
 /** Registered controls by name. SchemaForm's `controls` prop provides them to every field. */
 export type FieldControls = Readonly<Record<string, FieldControl>>;
 
+/** Field controls selected by the field's form-relative path instead of schema metadata. */
+export type FieldOverrides = Readonly<Record<string, FieldControl>>;
+
 export interface UnionPickerOption {
   value: string;
   label: string;
@@ -63,6 +66,8 @@ export type UnionPickers = Readonly<Record<string, UnionPicker>>;
 export const UnionPickersContext = createContext<UnionPickers>({});
 
 export const FieldControlsContext = createContext<FieldControls>({});
+
+export const FieldOverridesContext = createContext<FieldOverrides>({});
 
 /** Exact field-path labels supplied by a form's presentation context; values and schema stay intact. */
 export const FieldLabelsContext = createContext<Readonly<Record<string, string>>>({});
