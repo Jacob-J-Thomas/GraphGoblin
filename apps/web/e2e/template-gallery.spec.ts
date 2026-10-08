@@ -3,7 +3,7 @@ import { expect, test } from './fixtures.js';
 test('opens the starter gallery with the keyboard and creates an unpublished parent draft', async ({
   page,
 }) => {
-  await page.goto('/loops');
+  await page.goto('/app/loops');
   const galleryButton = page.getByRole('button', { name: 'New from template' });
   await galleryButton.focus();
   await page.keyboard.press('Enter');
@@ -49,7 +49,7 @@ test('opens the starter gallery with the keyboard and creates an unpublished par
 });
 
 test('rechecks edited starter settings before creating the draft', async ({ page }) => {
-  await page.goto('/loops');
+  await page.goto('/app/loops');
   await page.getByRole('button', { name: 'New from template' }).click();
   await page.getByRole('button', { name: /^Use / }).first().click();
   const dialog = page.getByRole('dialog');
