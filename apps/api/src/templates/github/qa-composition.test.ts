@@ -1565,11 +1565,13 @@ describe('strict QA private transport and shipped closure', () => {
     }
     const first = await qaSupportClosure(root, '1.0.0', true);
     expect(first.path).toBe(join(root, 'src', 'templates', 'github', 'qa-entry.ts'));
-    await writeFile(
-      join(root, 'src', 'templates', 'github', 'qa-envelope.ts'),
-      'export const value = 2;',
-    );
-    expect((await qaSupportClosure(root, '1.0.0', true)).hash).not.toBe(first.hash);
+    for (const module of ['github/qa-envelope', 'support-result', 'github/support-output']) {
+      const path = join(root, 'src', 'templates', module + '.ts');
+      await writeFile(path, 'export const value = 2;');
+      expect((await qaSupportClosure(root, '1.0.0', true)).hash).not.toBe(first.hash);
+      await writeFile(path, 'export const value = 1;');
+      expect((await qaSupportClosure(root, '1.0.0', true)).hash).toBe(first.hash);
+    }
     await expect(qaSupportClosure(root, 'other', true)).rejects.toThrow();
     await expect(qaSupportClosure(root, '1.0.0', false)).rejects.toThrow();
     await writeFile(join(root, 'src', 'templates', 'authority.ts'), 'x'.repeat(1048576));
