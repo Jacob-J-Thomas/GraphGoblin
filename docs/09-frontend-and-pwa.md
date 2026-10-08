@@ -415,7 +415,7 @@ The inspector displays the raw Choice, Noul or Score answer separately from the 
 
 ## Exit predicate authoring and evidence (#99)
 
-Exit criteria expose the answer primitive, compatible evaluation method and explicit matching rule. Classifier/model choices use the same catalog controls as decisions; exits retain their fixed context. Noul matches true or false, Choice selects declared IDs, and Score chooses a comparison on its rubric scale. Confidence gates explain when an otherwise matching raw answer is rejected; LLM minimum confidence is labelled self-reported. The inspector shows answer, provenance, gate and match separately. Criterion order and the single loop-back connection remain visible without creating answer ports. Format-3 device drafts use the explicit converter; unresolved originals remain inert and exportable for resolution.
+Exit criteria expose the answer primitive, compatible evaluation method and explicit matching rule. Classifier/model choices use the same catalog controls as decisions; exits retain their fixed context. Noul matches true or false, Choice selects declared IDs, and Score chooses a comparison on its rubric scale. Confidence gates explain when an otherwise matching raw answer is rejected; LLM minimum confidence is labelled self-reported. The inspector shows answer, provenance, gate and match separately. Criterion order and the single loop-back connection remain visible without creating answer ports. Current-format device drafts reopen for continued editing even when fields or expressions are incomplete; server saves and publication still validate them. Older device drafts use the explicit converter, and unresolved legacy originals remain inert and exportable for resolution.
 
 ## Template gallery (#28)
 

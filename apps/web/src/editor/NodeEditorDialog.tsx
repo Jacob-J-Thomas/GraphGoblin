@@ -21,6 +21,7 @@ import { createDisclosureIdentities, type DisclosureStates } from '../forms/disc
 import { SchemaForm } from '../forms/SchemaForm.js';
 import { FieldLabelsContext } from '../forms/fields/shared.js';
 import { nextChangeId } from '../forms/changes.js';
+import { isUnset } from '../forms/unset.js';
 import { DecisionKindPicker } from './DecisionKindPicker.js';
 import { DecisionAnswerPicker } from './DecisionAnswerPicker.js';
 import { EXIT_PREDICATE_FIELD_OVERRIDES } from './ExitPredicateFields.js';
@@ -229,7 +230,16 @@ function exitPredicateVariantChange(config: unknown, previous: unknown, path?: s
   if (newPredicate) {
     match = { type: 'noul', value: true };
   } else if (answerChanged && priorMatch['type'] !== answerTypeNow) {
-    match = exitMatchDefault(answer);
+    const nextMatch = exitMatchDefault(answer);
+    const preserveReportedMinimum =
+      evaluationKindNow === 'llm' &&
+      (oldAnswerType === 'noul' || oldAnswerType === 'choice') &&
+      (answerTypeNow === 'noul' || answerTypeNow === 'choice') &&
+      Object.hasOwn(priorMatch, 'minReportedConfidence') &&
+      !isUnset(priorMatch['minReportedConfidence']);
+    match = preserveReportedMinimum
+      ? { ...nextMatch, minReportedConfidence: priorMatch['minReportedConfidence'] }
+      : nextMatch;
   }
   changedRow = { ...row, answer, evaluation, match };
   const nextCriteria = criteria.map((criterion, rowIndex) =>

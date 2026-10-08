@@ -135,7 +135,7 @@ describe('EvaluationDetails', () => {
     expect(screen.getByRole('list', { name: 'Exit criteria' })).toHaveTextContent('Noul true');
     expect(screen.getByRole('list', { name: 'Exit criteria' })).toHaveTextContent('Noul is false');
     expect(screen.getByRole('list', { name: 'Exit criteria' })).toHaveTextContent(
-      'Rejected at classifier confidence 0.8',
+      'Rejected below configured classifier minimum 0.8',
     );
     expect(screen.getByRole('list', { name: 'Exit criteria' })).toHaveTextContent(
       'Classifier confidence gate rejected 0.42 below 0.8',
@@ -143,6 +143,7 @@ describe('EvaluationDetails', () => {
     expect(screen.getByRole('list', { name: 'Exit criteria' })).toHaveTextContent(
       'Self-reported LLM confidence gate rejected 0.61 (reported by Codex) below 0.8',
     );
+    expect(screen.getByText('Raw answer acceptance').parentElement).toHaveTextContent('Accepted');
     expect(screen.getByRole('list', { name: 'Exit criteria' })).toHaveTextContent(
       'Reasoning excerpt: The evidence was not sufficient.',
     );
@@ -369,7 +370,8 @@ describe('EvaluationDetails', () => {
             effort: null,
           },
           acceptance: null,
-          match: { type: 'noul', value: true },
+          match: { type: 'noul', value: true, minReportedConfidence: 0.8 },
+          rejection: { kind: 'llm-reported-confidence', minimum: 0.8, confidence: null },
         },
       ],
       result: {
@@ -385,6 +387,9 @@ describe('EvaluationDetails', () => {
     expect(within(criteria).getByText('Unknown (not recorded)')).toBeInTheDocument();
     expect(within(criteria).getByText('Not recorded')).toBeInTheDocument();
     expect(criteria).toHaveTextContent('Reasoning excerpt: Not recorded');
+    expect(criteria).toHaveTextContent(
+      'Self-reported LLM confidence gate rejected; confidence was not reported; required minimum 0.8; treated as a nonmatch.',
+    );
 
     rerender(
       <EvaluationDetails

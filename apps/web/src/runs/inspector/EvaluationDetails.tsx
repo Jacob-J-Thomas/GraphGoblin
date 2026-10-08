@@ -175,13 +175,15 @@ function ExitCriterionDetail({
             <dd>{answerDescription(criterion.answer)}</dd>
             <dt>Match rule</dt>
             <dd>{matchDescription(criterion)}</dd>
-            <dt>Acceptance gate</dt>
+            <dt>
+              {criterion.provenance.kind === 'llm' ? 'Raw answer acceptance' : 'Acceptance gate'}
+            </dt>
             <dd>
               {criterion.acceptance === null
                 ? 'Unknown (not recorded)'
                 : criterion.acceptance.status === 'accepted'
                   ? 'Accepted'
-                  : `Rejected at classifier confidence ${criterion.acceptance.minConfidence}`}
+                  : `Rejected below configured classifier minimum ${criterion.acceptance.minConfidence}`}
             </dd>
             <dt>Evaluator</dt>
             <dd>{criterion.provenance.kind}</dd>
@@ -253,12 +255,12 @@ function ExitCriterionDetail({
                   {criterion.rejection.kind === 'classifier-confidence'
                     ? 'Classifier confidence'
                     : 'Self-reported LLM confidence'}{' '}
-                  gate rejected{' '}
-                  {confidenceText(
-                    criterion.rejection.confidence,
-                    criterion.rejection.kind === 'llm-reported-confidence',
-                  )}{' '}
-                  below {criterion.rejection.minimum}; treated as a nonmatch.
+                  {criterion.rejection.confidence === null
+                    ? `gate rejected; confidence was not reported; required minimum ${criterion.rejection.minimum}; treated as a nonmatch.`
+                    : `gate rejected ${confidenceText(
+                        criterion.rejection.confidence,
+                        criterion.rejection.kind === 'llm-reported-confidence',
+                      )} below ${criterion.rejection.minimum}; treated as a nonmatch.`}
                 </dd>
               </>
             ) : null}
