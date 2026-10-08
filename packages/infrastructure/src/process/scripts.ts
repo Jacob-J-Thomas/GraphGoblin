@@ -56,10 +56,14 @@ export class ProcessScripts implements ScriptPort {
       request.maxStdoutBytes === undefined
         ? undefined
         : new BoundedOutputCapture(request.maxStdoutBytes);
+    const boundedStderr =
+      request.maxStderrBytes === undefined
+        ? undefined
+        : new BoundedOutputCapture(request.maxStderrBytes);
     return new Promise((resolve) => {
       const child = this.spawnImpl(request.command, request.args, {
         cwd: request.cwd,
-        env: { ...this.baseEnv, ...request.env },
+        env: { ...(request.inheritEnv === false ? {} : this.baseEnv), ...request.env },
         stdio: ['pipe', 'pipe', 'pipe'],
         windowsHide: true,
         detached: this.platform !== 'win32',
@@ -79,7 +83,8 @@ export class ProcessScripts implements ScriptPort {
         else stdout = collect(stdout, chunk);
       });
       child.stderr?.on('data', (chunk: Buffer) => {
-        stderr = collect(stderr, chunk);
+        if (boundedStderr) boundedStderr.append(chunk);
+        else stderr = collect(stderr, chunk);
       });
 
       const kill = (): void => killTree(child, this.platform, this.spawnImpl);
@@ -102,6 +107,8 @@ export class ProcessScripts implements ScriptPort {
         resolve({
           ...result,
           stdout: bounded?.text() ?? result.stdout,
+          stderr: boundedStderr?.text() ?? result.stderr,
+          ...(boundedStderr ? { stderrOverflow: boundedStderr.overflow } : {}),
           ...(bounded ? { stdoutOverflow: bounded.overflow } : {}),
         });
       };

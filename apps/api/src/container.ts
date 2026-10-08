@@ -1,6 +1,7 @@
 import { existsSync } from 'node:fs';
 import { validateHarnessDefaults } from '@graphgoblin/domain';
 import { mkdir } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
 import { dirname } from 'node:path';
 import { createCodexAdapters } from '@graphgoblin/adapter-codex';
 import { FsArtifactStore, FsWorkspace } from '@graphgoblin/infrastructure/fs';
@@ -16,6 +17,7 @@ import {
   openReadOnlyDatabaseClient,
   databaseView,
   SqliteApiKeys,
+  SqliteTemplateInstances,
   SqliteEventStore,
   SqliteTriggerAdmission,
   SqliteLoopRepository,
@@ -66,6 +68,16 @@ import { UlidIds } from './ids.js';
 import { loadMasterKey } from './master-key.js';
 import { PollTriggers } from './triggers/poll.js';
 import { TriggerService } from './triggers/trigger-service.js';
+import { TemplateCatalog } from './templates/catalog.js';
+import { TemplatePrerequisites } from './templates/prerequisites.js';
+import { TemplateInstances } from './templates/instances.js';
+import {
+  TemplateRuntime,
+  templateAdmission,
+  type TemplateAuthoritySource,
+  type TemplateFailureReporter,
+} from './templates/runtime.js';
+import { PrivateTemplateScripts } from './templates/scripts.js';
 
 /** The single owner of a 1.0 installation. Every table carries it so multi-tenancy is a data change, not a schema change. */
 export const LOCAL_OWNER = 'local';
@@ -77,6 +89,9 @@ export const JEV_SECRET = 'jev-api-key';
 export type SecretChangeHook = (ownerId: string, name: string) => Promise<void>;
 
 export interface ContainerOverrides {
+  templateCatalogRoot?: string;
+  templateAuthority?: TemplateAuthoritySource;
+  templateFailureReporter?: TemplateFailureReporter;
   clock?: ClockPort;
   ids?: IdPort;
   logger?: Logger;
@@ -94,6 +109,7 @@ export interface ContainerOverrides {
 }
 
 export interface Container {
+  templates: TemplateInstances;
   config: ApiConfig;
   handle: DatabaseHandle;
   ports: EnginePorts;
@@ -208,7 +224,9 @@ export async function createContainer(
         ...(config.masterKey ? { masterKey: config.masterKey } : {}),
       }));
 
-    const runs = new SqliteRunRepository(db);
+    const runs = new SqliteRunRepository(db, (store, run, changes) =>
+      templateRuntime.beforeTransition(store, run, changes),
+    );
     const loops = new SqliteLoopRepository(db, clock, ids);
     const sessions = new SqliteSessionRepository(db);
     const events = new SqliteEventStore(db, clock);
@@ -261,7 +279,9 @@ export async function createContainer(
       logger,
       events,
       runs,
-      admission: new SqliteTriggerAdmission(handle.db, events),
+      admission: new SqliteTriggerAdmission(handle.db, events, (store, input, pollItem) =>
+        templateRuntime.afterRunStaged(store, input, pollItem),
+      ),
       loops,
       sessions,
       harnesses: overrides.harnesses ?? {
@@ -294,7 +314,50 @@ export async function createContainer(
       artifacts: new FsArtifactStore(config.dataDir),
       secrets: ownerSecrets,
     };
+    const templateCatalog = new TemplateCatalog(
+      overrides.templateCatalogRoot ??
+        fileURLToPath(
+          new URL(import.meta.url.endsWith('.ts') ? '../templates' : './catalog', import.meta.url),
+        ),
+      fileURLToPath(new URL('..', import.meta.url)),
+    );
+    const templateStore = new SqliteTemplateInstances(db);
+    const templatePrerequisites = new TemplatePrerequisites({
+      catalog,
+      harnesses: ports.harnesses,
+      scripts: ports.scripts,
+      apiKeys,
+      secretsFor,
+      defaults: config.defaults,
+      ownerDefaults: (ownerId) => readOwnerDefaults(settingsRepo, ownerId),
+      supportAvailable: async (manifest) => {
+        const installed = await templateCatalog.get(manifest.id);
+        return (
+          installed.bundle.manifest.version === manifest.version && installed.support !== undefined
+        );
+      },
+    });
+    const templates = new TemplateInstances(
+      templateCatalog,
+      templatePrerequisites,
+      templateStore,
+      ids,
+      clock,
+    );
+    const templateRuntime = new TemplateRuntime(
+      templates,
+      overrides.templateAuthority,
+      overrides.templateFailureReporter,
+    );
+    ports.admission = templateAdmission(ports.admission, templateRuntime);
+    ports.scripts = new PrivateTemplateScripts({
+      instances: templates,
+      raw: ports.scripts,
+      apiKeys,
+      secretsFor,
+    });
     const settings: EngineSettings = {
+      ...templateRuntime.hooks,
       defaults: config.defaults,
       maxConcurrentRuns: config.maxConcurrentRuns,
       structuredTimeoutMs: 120_000,
@@ -361,6 +424,7 @@ export async function createContainer(
     };
 
     return {
+      templates,
       config,
       handle,
       ports,

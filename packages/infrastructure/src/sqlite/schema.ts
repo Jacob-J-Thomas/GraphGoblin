@@ -5,6 +5,7 @@ import type {
   ContextThread,
   Effort,
   JsonValue,
+  TemplateInstance,
   LoopDefinition,
   RunFailure,
   WaitSpec,
@@ -76,6 +77,7 @@ export const runs = sqliteTable(
     startedAt: text('started_at'),
     finishedAt: text('finished_at'),
     lastEventSeq: integer('last_event_seq').notNull().default(0),
+    templateSubject: text('template_subject', { mode: 'json' }).$type<JsonValue>(),
     initialThread: text('initial_thread', { mode: 'json' }).$type<ContextThread>().notNull(),
     threadSnapshot: text('thread_snapshot', { mode: 'json' }).$type<ContextThread>(),
     /** The last event seq the snapshot reflects, when it is a verified checkpoint. */
@@ -325,7 +327,19 @@ export const webhookReceipts = sqliteTable(
   ],
 );
 
+export const templateInstances = sqliteTable(
+  'template_instances',
+  {
+    id: text('id').primaryKey(),
+    ownerId: text('owner_id').notNull(),
+    instance: text('instance', { mode: 'json' }).$type<TemplateInstance>().notNull(),
+    binding: text('binding', { mode: 'json' }).$type<JsonValue>().notNull(),
+  },
+  (t) => [index('template_instances_owner_idx').on(t.ownerId)],
+);
+
 export const schema = {
+  templateInstances,
   webhookReceipts,
   classifierModels,
   loops,

@@ -85,13 +85,23 @@ async function seedVersion(status: 'draft' | 'published', definition = inference
     ],
     'write',
   );
-  await t.container.handle.client.execute(
-    'DELETE FROM __drizzle_migrations WHERE created_at > 1791136800000',
-  );
+  // Reconstruct the historical schema before clearing its migration ledger. This database was
+  // created with all current migrations by createTestApp, so remove later structural additions.
   await t.container.handle.client.execute('DROP TABLE classifier_models');
   await t.container.handle.client.execute('DROP TABLE webhook_receipts');
   await t.container.handle.client.execute('DROP INDEX runs_trigger_dedupe_idx');
-  expect(await t.container.handle.pendingMigrations()).toBe(4);
+  await t.container.handle.client.execute('DROP INDEX template_instances_owner_idx');
+  await t.container.handle.client.execute('DROP INDEX template_issue_attempt_idx');
+  await t.container.handle.client.execute('DROP INDEX template_qa_merge_idx');
+  await t.container.handle.client.execute('DROP INDEX template_pr_head_idx');
+  await t.container.handle.client.execute('DROP INDEX template_active_pr_idx');
+  await t.container.handle.client.execute('DROP INDEX template_child_visit_idx');
+  await t.container.handle.client.execute('DROP TABLE template_instances');
+  await t.container.handle.client.execute('ALTER TABLE runs DROP COLUMN template_subject');
+  await t.container.handle.client.execute(
+    'DELETE FROM __drizzle_migrations WHERE created_at > 1791136800000',
+  );
+  expect(await t.container.handle.pendingMigrations()).toBe(5);
   await expect(t.container.handle.migrate()).rejects.toMatchObject({
     code: 'DATA_UPGRADE_REQUIRED',
   });

@@ -70,6 +70,24 @@ async function previousStructure(custom = false) {
   await new SqliteEventStore(handle.db, new FakeClock()).append(runId, [
     { type: 'run.queued', initialThread },
   ]);
+  // Remove later template structures as well as their ledger entries to reconstruct v2.
+  for (const statement of [
+    'DROP INDEX template_issue_attempt_idx',
+    'DROP INDEX template_qa_merge_idx',
+    'DROP INDEX template_pr_head_idx',
+    'DROP INDEX template_active_pr_idx',
+    'DROP INDEX template_child_visit_idx',
+    'ALTER TABLE runs DROP COLUMN template_subject',
+    'DROP TABLE template_instances',
+  ])
+    await handle.client.execute(statement);
+  expect(
+    (await handle.client.execute("SELECT name FROM sqlite_master WHERE name LIKE 'template_%'"))
+      .rows,
+  ).toEqual([]);
+  expect(
+    (await handle.client.execute('PRAGMA table_info(runs)')).rows.map((row) => row.name),
+  ).not.toContain('template_subject');
   await handle.client.execute('DROP TABLE webhook_receipts');
   await handle.client.execute('DROP INDEX runs_trigger_dedupe_idx');
   await handle.client.execute('DROP TABLE webhook_endpoints');
@@ -276,7 +294,11 @@ it('keeps canonical v2 failed decision history resumable during structural-only 
     message: 'restore selected evaluator',
     resumable: true,
   };
-  await new SqliteRunRepository(handle.db).update(runId, { status: 'failed', failure });
+  // Seed the historical schema without the current repository's later-column projection.
+  await handle.client.execute({
+    sql: 'UPDATE runs SET status=?,failure=? WHERE id=?',
+    args: ['failed', JSON.stringify(failure), runId],
+  });
   const fact = {
     answer: { type: 'choice' as const, optionId: 'yes', confidence: null, probabilities: null },
     portId: 'yes',
@@ -343,5 +365,5 @@ it('refuses an incomplete intermediate receipt layout before migration or recove
     'CREATE INDEX webhook_receipts_due_idx ON webhook_receipts(status,next_attempt_at)',
   );
   await expect(handle.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
-  expect((await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows).toHaveLength(9);
+  expect((await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows).toHaveLength(10);
 });

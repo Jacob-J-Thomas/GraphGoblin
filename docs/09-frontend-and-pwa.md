@@ -416,3 +416,9 @@ The inspector displays the raw Choice, Noul or Score answer separately from the 
 ## Exit predicate authoring and evidence (#99)
 
 Exit criteria expose the answer primitive, compatible evaluation method and explicit matching rule. Classifier/model choices use the same catalog controls as decisions; exits retain their fixed context. Noul matches true or false, Choice selects declared IDs, and Score chooses a comparison on its rubric scale. Confidence gates explain when an otherwise matching raw answer is rejected; LLM minimum confidence is labelled self-reported. The inspector shows answer, provenance, gate and match separately. Criterion order and the single loop-back connection remain visible without creating answer ports. Format-3 device drafts use the explicit converter; unresolved originals remain inert and exportable for resolution.
+
+## Template gallery (#28)
+
+The Loops page's **New from template** action opens the installed catalog. A settings dialog uses labelled controls for the starter instruction, model, effort and iteration limit. Choices reflect the enabled catalog and the selected harness's supported capabilities; unavailable selections remain visible for repair. Editing settings invalidates their previous prerequisite result. A runtime-only prerequisite warns without blocking draft creation, while an authoring prerequisite prevents creation.
+
+Creation locks controls and dismissal until the request completes. A navigation failure after successful creation retains the created loop ID and offers an editor link instead of suggesting another creation. The parent opens in the normal editor as a draft, with existing undo, autosave, validation and publication behavior. Gallery loading/error states use the existing page patterns and keyboard-accessible dialogs. Default canvas spacing and layout persistence follow their separate backlog issues #124/#125.

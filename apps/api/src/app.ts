@@ -14,6 +14,7 @@ import { registerAuth } from './plugins/auth.js';
 import { registerErrorHandler } from './plugins/errors.js';
 import { registerStatic } from './plugins/static.js';
 import { registerLoopRoutes } from './routes/loops.js';
+import { registerTemplateRoutes } from './routes/templates.js';
 import { registerRunRoutes } from './routes/runs.js';
 import { registerSettingsRoutes } from './routes/settings.js';
 import { registerClassifierRoutes } from './routes/classifiers.js';
@@ -56,6 +57,7 @@ export async function buildApp(
       components: { securitySchemes: { bearerAuth: { type: 'http', scheme: 'bearer' } } },
       security: [{ bearerAuth: [] }],
       tags: [
+        { name: 'templates', description: 'Packaged workflow templates and instances' },
         { name: 'loops', description: 'Loop definitions, drafts, versions' },
         { name: 'runs', description: 'Starting, observing, and controlling runs' },
         { name: 'settings', description: 'Owner settings and the model catalog' },
@@ -82,6 +84,7 @@ export async function buildApp(
   registerSystemRoutes(app, container);
   registerLoopRoutes(app, container);
   registerRunRoutes(app, container);
+  registerTemplateRoutes(app, container);
   registerSettingsRoutes(app, container);
   registerClassifierRoutes(app, container);
   registerTriggerRoutes(app, container);

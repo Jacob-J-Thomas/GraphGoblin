@@ -12,6 +12,8 @@ export const API_PREFIXES = [
   '/secrets',
   '/settings',
   '/system',
+  '/template-instances',
+  '/templates',
   '/triggers',
   '/version',
 ] as const;

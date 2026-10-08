@@ -45,7 +45,7 @@ async function upgrade(check: (db: DatabaseHandle) => Promise<void>) {
   }
   const current = openDatabase({ url });
   try {
-    expect(await current.pendingMigrations()).toBe(6);
+    expect(await current.pendingMigrations()).toBe(7);
     await expect(current.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
     await applyShippedSqlToHistoricalTestFixture(current);
     await check(current);
@@ -210,13 +210,30 @@ describe('model catalog source migration and repository', () => {
       const rows = (await catalog.list()).map(({ source: _source, ...row }) => row);
       await handle.client.execute('ALTER TABLE model_catalog DROP COLUMN source');
       await handle.client.execute('DROP TABLE classifier_models');
-      // Roll back the new empty receipt structures along with their ledger entries.
+      // Reconstruct the older schema before resetting its migration ledger.
+      for (const statement of [
+        'DROP INDEX template_issue_attempt_idx',
+        'DROP INDEX template_qa_merge_idx',
+        'DROP INDEX template_pr_head_idx',
+        'DROP INDEX template_active_pr_idx',
+        'DROP INDEX template_child_visit_idx',
+        'ALTER TABLE runs DROP COLUMN template_subject',
+        'DROP TABLE template_instances',
+      ])
+        await handle.client.execute(statement);
+      expect(
+        (await handle.client.execute("SELECT name FROM sqlite_master WHERE name LIKE 'template_%'"))
+          .rows,
+      ).toEqual([]);
+      expect(
+        (await handle.client.execute('PRAGMA table_info(runs)')).rows.map((row) => row.name),
+      ).not.toContain('template_subject');
       await handle.client.execute('DROP TABLE webhook_receipts');
       await handle.client.execute('DROP INDEX runs_trigger_dedupe_idx');
       await handle.client.execute(
         'DELETE FROM __drizzle_migrations WHERE created_at >= 1791136800000',
       );
-      expect(await handle.pendingMigrations()).toBe(5);
+      expect(await handle.pendingMigrations()).toBe(6);
       await expect(handle.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
       await applyShippedSqlToHistoricalTestFixture(handle);
       expect(await catalog.list()).toEqual(rows.map((row) => ({ ...row, source: 'harness' })));

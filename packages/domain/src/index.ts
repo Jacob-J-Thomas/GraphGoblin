@@ -7,6 +7,7 @@ export * from './errors.js';
 export * from './pointer.js';
 export * from './patch.js';
 export * from './template.js';
+export * from './template-bundle.js';
 export * from './expression.js';
 export * from './thread-view.js';
 export * from './json-schema.js';

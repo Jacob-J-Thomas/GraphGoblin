@@ -683,6 +683,10 @@ export class RunManager {
         ) {
           return undefined;
         }
+        await this.settings.beforeResume?.({
+          run: current,
+          events: await this.ports.events.read(runId),
+        });
         await this.ports.runs.clearFinalized(runId);
         await this.ports.events.append(runId, [{ type: 'run.resumed', actor }]);
         return this.completeResume(runId);
@@ -1162,6 +1166,21 @@ export class RunManager {
       return;
     }
     const def = version.definition;
+    try {
+      await this.settings.beforeExecute?.({ run, definition: def, events });
+    } catch (error) {
+      await this.failRun(
+        runId,
+        error instanceof RunFailureError
+          ? error.toFailure()
+          : {
+              code: 'INTERNAL_ERROR',
+              message: 'The pre-execution policy refused this run.',
+              resumable: false,
+            },
+      );
+      return;
+    }
     // Owner defaults are read at every (re)start, so a change in settings applies to the next run.
     const ownerDefaults = (await this.settings.ownerDefaults?.(run.ownerId)) ?? { byHarness: {} };
     // Read before any recovery marker is appended; a marker does not consume a wake either.
@@ -1339,6 +1358,7 @@ export class RunManager {
           thread,
           run,
           attempt,
+          startedSeq,
           ...(wake ? { wake } : {}),
           ...(previousWait ? { previousWait } : {}),
           signal: controller.signal,

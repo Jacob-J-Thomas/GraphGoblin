@@ -16,9 +16,19 @@ import type {
   LoopVersionRecord,
   RunEvent,
   RunRecord,
+  TemplateCatalogEntry,
+  TemplateInstance,
+  TemplateInstantiateRequest,
+  TemplatePrerequisiteReport,
 } from '@graphgoblin/contracts';
-import { ClassifierModelPutSchema, LoopDefinitionSchema } from '@graphgoblin/contracts';
-import { fakeUlid, sampleThread } from '@graphgoblin/contracts/testing';
+import {
+  ClassifierModelPutSchema,
+  LoopDefinitionSchema,
+  StarterTemplateSettingsSchema,
+  TemplateCatalogEntrySchema,
+} from '@graphgoblin/contracts';
+import { fakeUlid, minimalLoop, sampleThread } from '@graphgoblin/contracts/testing';
+import { z } from 'zod';
 import {
   exportLoop,
   importLoop,
@@ -109,7 +119,58 @@ export function customClassifier(
   };
 }
 
+/** A current-contract, non-GitHub starter entry for gallery tests. */
+export function starterTemplateEntry(): TemplateCatalogEntry {
+  const prerequisites: TemplatePrerequisiteReport = {
+    checks: [
+      {
+        id: 'assistant-model',
+        label: 'Assistant model',
+        status: 'ok',
+        blocking: 'authoring',
+        message: 'An enabled assistant model is available.',
+      },
+    ],
+    canInstantiate: true,
+    canRun: true,
+  };
+  return TemplateCatalogEntrySchema.parse({
+    manifest: {
+      id: 'quick-start',
+      version: '1.0.0',
+      kind: 'starter',
+      title: 'Quick start',
+      description: 'A small loop to try the editor and a first run.',
+      tags: ['starter', 'beginner'],
+      roles: [{ id: 'assistant', label: 'Assistant', access: 'read-only' }],
+      prerequisites: [],
+      requiredSecrets: [],
+      parentKey: 'starter',
+      loops: [
+        {
+          key: 'starter',
+          file: 'starter.json',
+          dependsOn: [],
+          roleNodes: [],
+          settingsNodes: [],
+          subloops: [],
+        },
+      ],
+    },
+    settingsSchema: z.toJSONSchema(StarterTemplateSettingsSchema, { io: 'input' }),
+    defaultSettings: StarterTemplateSettingsSchema.parse({
+      kind: 'starter',
+      roles: { assistant: { harness: 'codex', model: 'test-codex', effort: 'low' } },
+    }),
+    prerequisites,
+  });
+}
+
 export class FakeApi {
+  templates: TemplateCatalogEntry[] = [];
+  templateInstances = new Map<string, TemplateInstance>();
+  /** Static per-template report for focused settings checks; tests may override the route. */
+  templatePrerequisiteReports = new Map<string, TemplatePrerequisiteReport>();
   loops = new Map<
     string,
     {
@@ -375,6 +436,69 @@ export class FakeApi {
   }
 
   private routes: [string, Handler][] = [
+    ['GET /templates', () => json({ items: this.templates })],
+    [
+      'GET /templates/:id',
+      (_call, [templateId]) => {
+        const entry = this.templates.find((item) => item.manifest.id === templateId);
+        return entry ? json(entry) : problem(404, 'TEMPLATE_NOT_FOUND', 'template not found');
+      },
+    ],
+    [
+      'POST /templates/:id/prerequisites',
+      (_call, [templateId]) => {
+        const entry = this.templates.find((item) => item.manifest.id === templateId);
+        if (!entry) return problem(404, 'TEMPLATE_NOT_FOUND', 'template not found');
+        return json(this.templatePrerequisiteReports.get(templateId!) ?? entry.prerequisites);
+      },
+    ],
+    [
+      'POST /templates/:id/instantiate',
+      (call, [templateId]) => {
+        const entry = this.templates.find((item) => item.manifest.id === templateId);
+        if (!entry) return problem(404, 'TEMPLATE_NOT_FOUND', 'template not found');
+        const report = this.templatePrerequisiteReports.get(templateId!) ?? entry.prerequisites;
+        if (!report.canInstantiate)
+          return problem(
+            409,
+            'TEMPLATE_PREREQUISITES_FAILED',
+            'creation requirements are not ready',
+          );
+        const request = call.body as TemplateInstantiateRequest;
+        const loop = this.addLoop({
+          ...minimalLoop(),
+          name: request.name ?? entry.manifest.title,
+        });
+        const draft = this.loops.get(loop.id)!.draft!;
+        const instance: TemplateInstance = {
+          id: id('template-instance'),
+          ownerId: 'local',
+          templateId: templateId!,
+          templateVersion: entry.manifest.version,
+          createdAt: TS,
+          parentLoopId: loop.id,
+          loops: [
+            {
+              key: entry.manifest.parentKey,
+              loopId: loop.id,
+              versionId: draft.id,
+              version: draft.version,
+              status: 'draft',
+            },
+          ],
+          settings: request.settings,
+        };
+        this.templateInstances.set(instance.id, instance);
+        return json({ instance, prerequisites: report }, 201);
+      },
+    ],
+    [
+      'GET /template-instances/:id',
+      (_call, [instanceId]) => {
+        const instance = this.templateInstances.get(instanceId!);
+        return instance ? json(instance) : problem(404, 'TEMPLATE_INSTANCE_NOT_FOUND');
+      },
+    ],
     ['GET /loops', () => json({ items: [...this.loops.values()].map((l) => l.loop) })],
     [
       'POST /loops',
