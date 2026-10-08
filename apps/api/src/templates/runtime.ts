@@ -382,7 +382,7 @@ export class TemplateRuntime {
     const bound = await this.bound(run.ownerId, run.loopId, run.versionId, store);
     if (!bound || bound.binding.manifest.kind === 'starter') return;
     const events = checkedEvents(await store.events(run.id));
-    assertPinnedBundle(bound.binding, run.loopId, events);
+    await assertPinnedBundle(store, bound.binding, run.loopId, events);
     const failureEvent = events.filter((event) => event.type === 'run.failed').at(-1);
     const details = run.failure?.details;
     const declaration =
@@ -478,7 +478,8 @@ export class TemplateRuntime {
         });
       }
       if (bound.binding.manifest.kind !== 'starter') {
-        assertPinnedBundle(
+        await assertPinnedBundle(
+          this.instances.store,
           bound.binding,
           run.loopId,
           checkedEvents(await this.instances.store.events(run.id)),

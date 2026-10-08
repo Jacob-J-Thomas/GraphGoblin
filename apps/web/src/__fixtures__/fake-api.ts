@@ -26,6 +26,7 @@ import {
   ImplementationTemplateSettingsSchema,
   LoopDefinitionSchema,
   ReviewTemplateSettingsSchema,
+  QaTemplateSettingsSchema,
   StarterTemplateSettingsSchema,
   TemplateCatalogEntrySchema,
 } from '@graphgoblin/contracts';
@@ -380,6 +381,139 @@ export function reviewTemplateEntry(): TemplateCatalogEntry {
       supportEntry: 'dist/templates/github/review-entry.js',
     },
     settingsSchema: z.toJSONSchema(ReviewTemplateSettingsSchema, { io: 'input' }),
+    defaultSettings: null,
+    prerequisites,
+  });
+}
+
+/** A current-contract QA template: authoring is allowed, but run-time isolation is unavailable. */
+export function qaTemplateEntry(): TemplateCatalogEntry {
+  const prerequisites: TemplatePrerequisiteReport = {
+    checks: [
+      {
+        id: 'qa-model',
+        label: 'QA model and harness',
+        status: 'ok',
+        blocking: 'authoring',
+        message: 'A current QA model is available.',
+      },
+      {
+        id: 'adversary-model',
+        label: 'Evidence-only adversary model and harness',
+        status: 'ok',
+        blocking: 'authoring',
+        message: 'A current adversary model is available.',
+      },
+      {
+        id: 'repository',
+        label: 'Repository',
+        status: 'ok',
+        blocking: 'authoring',
+        message: 'The repository is available.',
+      },
+      {
+        id: 'github',
+        label: 'Authenticated configured repository',
+        status: 'ok',
+        blocking: 'authoring',
+        message: 'The configured repository is available.',
+      },
+      {
+        id: 'support-key',
+        label: 'Revocable runs:read support key',
+        status: 'ok',
+        blocking: 'authoring',
+        message: 'The support key is configured.',
+      },
+      {
+        id: 'support',
+        label: 'Verified packaged QA support entry',
+        status: 'ok',
+        blocking: 'authoring',
+        message: 'The QA support entry is available.',
+      },
+      {
+        id: 'isolation',
+        label: 'Enforced evidence-only isolation',
+        status: 'unavailable',
+        blocking: 'runtime',
+        message: 'Enforced evidence-only isolation is unavailable; QA work remains blocked.',
+        remediation: 'Wait for an enforced isolation runtime before starting QA work.',
+      },
+    ],
+    canInstantiate: true,
+    canRun: false,
+  };
+  return TemplateCatalogEntrySchema.parse({
+    manifest: {
+      id: 'qa',
+      version: '1.0.0',
+      kind: 'qa',
+      title: 'Post-merge QA',
+      description: 'Draftable QA recipe with saved proof and bounded rework.',
+      tags: ['github', 'qa', 'proof'],
+      roles: [
+        { id: 'qa', label: 'QA', access: 'write' },
+        { id: 'adversary', label: 'Evidence-only adversary', access: 'read-only' },
+      ],
+      prerequisites: [
+        { id: 'qa-model', label: 'QA model', kind: 'role', blocking: 'authoring', role: 'qa' },
+        {
+          id: 'adversary-model',
+          label: 'Evidence-only adversary model',
+          kind: 'role',
+          blocking: 'authoring',
+          role: 'adversary',
+        },
+        { id: 'repository', label: 'Repository', kind: 'repository', blocking: 'authoring' },
+        { id: 'github', label: 'GitHub', kind: 'github', blocking: 'authoring' },
+        {
+          id: 'support-key',
+          label: 'Revocable runs:read support key',
+          kind: 'secret',
+          blocking: 'authoring',
+          secretKey: 'supportReadKey',
+        },
+        { id: 'support', label: 'QA support entry', kind: 'support', blocking: 'authoring' },
+        {
+          id: 'isolation',
+          label: 'Enforced evidence-only isolation is unavailable',
+          kind: 'isolation',
+          blocking: 'runtime',
+          role: 'adversary',
+        },
+      ],
+      requiredSecrets: [{ key: 'supportReadKey', scopes: ['runs:read'] }],
+      parentKey: 'parent',
+      loops: [
+        {
+          key: 'qa-worker',
+          file: 'qa-worker.json',
+          dependsOn: ['adversary'],
+          roleNodes: [{ role: 'qa', nodeId: 'qa' }],
+          settingsNodes: [],
+          subloops: [{ nodeId: 'adversary-call', loopKey: 'adversary' }],
+        },
+        {
+          key: 'adversary',
+          file: 'adversary.json',
+          dependsOn: [],
+          roleNodes: [{ role: 'adversary', nodeId: 'adversary' }],
+          settingsNodes: [],
+          subloops: [],
+        },
+        {
+          key: 'parent',
+          file: 'parent.json',
+          dependsOn: ['qa-worker'],
+          roleNodes: [],
+          settingsNodes: ['settings'],
+          subloops: [{ nodeId: 'qa-call', loopKey: 'qa-worker' }],
+        },
+      ],
+      supportEntry: 'dist/templates/github/qa-entry.js',
+    },
+    settingsSchema: z.toJSONSchema(QaTemplateSettingsSchema, { io: 'input' }),
     defaultSettings: null,
     prerequisites,
   });

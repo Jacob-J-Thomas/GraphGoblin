@@ -81,6 +81,10 @@ import { PrivateTemplateScripts } from './templates/scripts.js';
 import { ReviewAuthority } from './templates/github/review-authority.js';
 import { ReviewReporter } from './templates/github/review-reporter.js';
 import type { ReviewDependenciesFactory } from './templates/github/review.js';
+import { QaAuthority } from './templates/github/qa-authority.js';
+import { QaReporter } from './templates/github/qa-reporter.js';
+import { QaHistory } from './templates/github/qa-history.js';
+import type { QaMetadataFactory } from './templates/github/qa-native.js';
 import {
   ImplementationAuthority,
   type SupportDependencies,
@@ -106,6 +110,7 @@ export interface ContainerOverrides {
   /** Inject deterministic boundaries for repository-template tests; never an authored setting. */
   implementationDependencies?: SupportDependencies;
   reviewDependencies?: ReviewDependenciesFactory;
+  qaMetadata?: QaMetadataFactory;
   clock?: ClockPort;
   ids?: IdPort;
   logger?: Logger;
@@ -367,6 +372,29 @@ export async function createContainer(
       overrides.implementationDependencies,
     );
     const reviewReporter = new ReviewReporter(templates, overrides.reviewDependencies);
+    const qaAuthority = new QaAuthority(templates, overrides.qaMetadata);
+    const qaReporter = new QaReporter(templates, qaAuthority, overrides.qaMetadata);
+    const qaHistory = new QaHistory(
+      templates,
+      async (binding) => {
+        if (!('supportReadKey' in binding.settings))
+          throw new Error('Private QA credential unavailable.');
+        const credential = await secretsFor(binding.ownerId).resolve(
+          binding.settings.supportReadKey,
+        );
+        const key = credential ? await apiKeys.authenticate(credential) : undefined;
+        if (
+          !credential ||
+          !key ||
+          key.ownerId !== binding.ownerId ||
+          key.scopes.length !== 1 ||
+          key.scopes[0] !== 'runs:read'
+        )
+          throw new Error('Private QA credential unavailable.');
+        return credential;
+      },
+      overrides.qaMetadata,
+    );
     const reviewAuthority = new ReviewAuthority(
       templates,
       overrides.reviewDependencies,
@@ -392,19 +420,25 @@ export async function createContainer(
       templates,
       overrides.templateAuthority ?? {
         resolve: (binding, payload) =>
-          binding.manifest.kind === 'review'
-            ? reviewAuthority.resolve(binding, payload)
-            : implementationAuthority.resolve(binding, payload),
+          binding.manifest.kind === 'qa'
+            ? qaAuthority.resolve(binding, payload)
+            : binding.manifest.kind === 'review'
+              ? reviewAuthority.resolve(binding, payload)
+              : implementationAuthority.resolve(binding, payload),
         recheck: (binding, subject) =>
-          binding.manifest.kind === 'review'
-            ? reviewAuthority.recheck(binding, subject)
-            : implementationAuthority.recheck(binding, subject),
+          binding.manifest.kind === 'qa'
+            ? qaAuthority.recheck(binding, subject)
+            : binding.manifest.kind === 'review'
+              ? reviewAuthority.recheck(binding, subject)
+              : implementationAuthority.recheck(binding, subject),
       },
       overrides.templateFailureReporter ?? {
         report: (binding, run, subject, code) =>
-          binding.manifest.kind === 'review'
-            ? reviewReporter.report(binding, run, subject, code)
-            : implementationReporter.report(binding, run, subject, code),
+          binding.manifest.kind === 'qa'
+            ? qaReporter.report(binding, run, subject, code)
+            : binding.manifest.kind === 'review'
+              ? reviewReporter.report(binding, run, subject, code)
+              : implementationReporter.report(binding, run, subject, code),
       },
     );
     // Reporting is reconciled before finalization. Failure leaves the durable terminal run
@@ -413,6 +447,7 @@ export async function createContainer(
       terminal: async (run) => {
         await implementationReporter.terminal(run);
         await reviewReporter.terminal(run);
+        await qaReporter.terminal(run);
       },
     });
     ports.admission = templateAdmission(ports.admission, templateRuntime);
@@ -421,6 +456,8 @@ export async function createContainer(
       raw: ports.scripts,
       apiKeys,
       secretsFor,
+      qaAuthority,
+      qaHistory,
     });
     const settings: EngineSettings = {
       ...templateRuntime.hooks,

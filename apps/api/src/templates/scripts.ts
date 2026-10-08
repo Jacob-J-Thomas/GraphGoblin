@@ -16,6 +16,9 @@ import { readReviewWake } from './github/review-wake.js';
 import type { ReviewWake } from './github/review-protocol.js';
 import { parseSubject } from './subjects.js';
 import type { TemplateInstances } from './instances.js';
+import { qaPollKeys } from './github/qa-authority.js';
+import type { QaHistory } from './github/qa-history.js';
+import type { TemplateAuthoritySource } from './runtime.js';
 
 function refuse(): never {
   throw new RunFailureError(
@@ -43,6 +46,8 @@ export interface PrivateSupportDeps {
   apiKeys: Pick<SqliteApiKeys, 'authenticate'>;
   secretsFor(ownerId: string): SecretsPort;
   environment?: NodeJS.ProcessEnv;
+  qaAuthority?: TemplateAuthoritySource;
+  qaHistory?: Pick<QaHistory, 'snapshot'>;
 }
 /** All raw output is consumed here. Nothing reaches normal script progress until whole-output validation. */
 export class PrivateTemplateScripts implements ScriptPort {
@@ -199,6 +204,10 @@ export class PrivateTemplateScripts implements ScriptPort {
       refuse();
     let input: JsonValue = null;
     if (request.stdin !== undefined) input = JsonValueSchema.parse(JSON.parse(request.stdin));
+    const history =
+      binding.manifest.kind === 'qa' && identity.kind === 'node'
+        ? await (this.deps.qaHistory ?? refuse()).snapshot(binding, identity.runId)
+        : null;
     const env: Record<string, string> = {};
     const allowed = new Set([
       'PATH',
@@ -235,6 +244,7 @@ export class PrivateTemplateScripts implements ScriptPort {
         claim,
         visit,
         ...(binding.manifest.kind === 'review' ? { wake } : {}),
+        ...(binding.manifest.kind === 'qa' ? { history } : {}),
       }),
       timeoutMs: request.timeoutMs ?? 60_000,
       maxStdoutBytes: 65_536,
@@ -254,7 +264,9 @@ export class PrivateTemplateScripts implements ScriptPort {
     const safe = sanitizeSupport(parsed, credential);
     const output =
       identity.kind === 'poll'
-        ? await implementationPollKeys(this.deps.instances.store, binding, safe)
+        ? binding.manifest.kind === 'qa'
+          ? await qaPollKeys(binding, safe, this.deps.qaAuthority ?? refuse())
+          : await implementationPollKeys(this.deps.instances.store, binding, safe)
         : safe;
     const stdout = JSON.stringify(output);
     if (Buffer.byteLength(stdout) > 65_536) refuse();

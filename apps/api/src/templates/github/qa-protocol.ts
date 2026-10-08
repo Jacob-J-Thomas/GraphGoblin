@@ -235,8 +235,8 @@ export const QaOutputSchema = z.union([
   z.strictObject({ type: z.literal('QaBlocked'), code: Text.max(80), message: Text.max(1000) }),
   z.strictObject({
     type: z.literal('SupportBlocked'),
-    code: Text.max(80),
-    message: Text.max(1000),
+    code: z.string().regex(/^[A-Z][A-Z0-9_]{0,79}$/),
+    message: z.literal('Support stopped safely; inspect the recorded support code.'),
   }),
 ]);
 export type QaOutput = z.infer<typeof QaOutputSchema>;
@@ -252,7 +252,7 @@ export function qaBlocked(code: string): QaOutput {
   return {
     type: 'SupportBlocked',
     code,
-    message: 'QA stopped safely; inspect the recorded support code.',
+    message: 'Support stopped safely; inspect the recorded support code.',
   };
 }
 export function qaScan(value: unknown, secrets: readonly string[]): void {
