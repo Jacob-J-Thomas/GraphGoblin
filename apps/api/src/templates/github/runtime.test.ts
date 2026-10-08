@@ -947,6 +947,7 @@ describe('canonical disk journal and packaged closure', () => {
       'github/protocol',
       'github/repository',
       'github/storage',
+      'github/support-input',
     ];
     for (const module of modules) {
       const path = join(root, 'src', 'templates', module + '.ts');

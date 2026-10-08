@@ -1,5 +1,6 @@
 import {
   ImplementationTemplateSettingsSchema,
+  ReviewTemplateSettingsSchema,
   TemplateInstantiateResponseSchema,
   type ModelCatalogEntry,
   type TemplateSettings,
@@ -11,6 +12,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   id,
   implementationTemplateEntry,
+  reviewTemplateEntry,
   starterTemplateEntry,
   TS,
 } from '../__fixtures__/fake-api.js';
@@ -46,6 +48,34 @@ function implementationResponse(
           key: entry.manifest.parentKey,
           loopId: parentLoopId,
           versionId: id('implementation-draft'),
+          version: 1,
+          status: 'draft',
+        },
+      ],
+      settings,
+    },
+    prerequisites: entry.prerequisites,
+  });
+}
+
+function reviewResponse(
+  entry: ReturnType<typeof reviewTemplateEntry>,
+  settings: Extract<TemplateSettings, { kind: 'review' }>,
+  parentLoopId = id('review-parent'),
+) {
+  return TemplateInstantiateResponseSchema.parse({
+    instance: {
+      id: id('review-instance'),
+      ownerId: 'local',
+      templateId: entry.manifest.id,
+      templateVersion: entry.manifest.version,
+      createdAt: TS,
+      parentLoopId,
+      loops: [
+        {
+          key: entry.manifest.parentKey,
+          loopId: parentLoopId,
+          versionId: id('review-draft'),
           version: 1,
           status: 'draft',
         },
@@ -130,6 +160,183 @@ function LocationProbe() {
 }
 
 describe('TemplateGallery', () => {
+  it('authors typed review settings, rechecks changed settings, then creates the draft', async () => {
+    const user = userEvent.setup();
+    const entry = reviewTemplateEntry();
+    const reviewerModel: ModelCatalogEntry = {
+      ...model,
+      model: 'catalog-reviewer',
+      displayName: 'Catalog reviewer',
+      efforts: ['low', 'high'],
+      defaultEffort: 'high',
+    };
+    const fixerModel: ModelCatalogEntry = {
+      ...model,
+      model: 'catalog-fixer',
+      displayName: 'Catalog fixer',
+      efforts: ['low', 'high'],
+      defaultEffort: 'low',
+    };
+    const onCheckPrerequisites = vi.fn((_id: string, _settings: TemplateSettings) =>
+      Promise.resolve(entry.prerequisites),
+    );
+    const createdParentId = id('review-parent');
+    const onInstantiate = vi.fn((_id: string, settings: TemplateSettings) =>
+      Promise.resolve(
+        reviewResponse(entry, ReviewTemplateSettingsSchema.parse(settings), createdParentId),
+      ),
+    );
+    const onCreated = vi.fn();
+
+    render(
+      <MemoryRouter initialEntries={['/loops']}>
+        <TemplateGallery
+          templates={[entry]}
+          models={[reviewerModel, fixerModel]}
+          preflight={readyCodex}
+          onCheckPrerequisites={onCheckPrerequisites}
+          onInstantiate={onInstantiate}
+          onCreated={onCreated}
+        />
+        <LocationProbe />
+      </MemoryRouter>,
+    );
+    await user.click(screen.getByRole('button', { name: 'New from template' }));
+    await user.click(screen.getByRole('button', { name: 'Use GitHub PR review' }));
+
+    expect(screen.getByLabelText('Checkout path')).toHaveValue('');
+    expect(screen.getByLabelText('Support credential key name')).toHaveValue('supportReadKey');
+    expect(screen.getByLabelText('Support credential key name')).toHaveAttribute('readonly');
+    expect(screen.getByRole('group', { name: 'Reviewer model' })).toHaveTextContent(
+      'Catalog reviewer',
+    );
+    expect(screen.getByRole('group', { name: 'Fixer model' })).toHaveTextContent('Catalog fixer');
+    expect(
+      screen.getByRole('checkbox', { name: 'Require a human choice before every merge' }),
+    ).not.toBeChecked();
+    expect(screen.getByLabelText('Needs-human label')).toHaveValue('needs-human');
+    expect(screen.getByLabelText('Merge method')).toHaveValue('squash');
+    expect(screen.getByLabelText('Required checks')).toHaveValue('protection');
+    expect(screen.getByRole('spinbutton', { name: 'Automatic review cycles' })).toHaveValue(3);
+
+    await user.type(screen.getByRole('textbox', { name: 'Checkout path' }), 'C:/repos/graphgoblin');
+    await user.type(screen.getByRole('textbox', { name: 'Repository owner' }), 'GraphGoblinOrg');
+    await user.type(screen.getByRole('textbox', { name: 'Repository name' }), 'GraphGoblin');
+    await user.type(screen.getByRole('textbox', { name: 'Base branch' }), 'main');
+    await user.click(
+      screen.getByRole('checkbox', { name: 'Require a human choice before every merge' }),
+    );
+    await user.type(
+      screen.getByRole('textbox', { name: 'Labels that require human review' }),
+      'needs-human{Enter}security-review',
+    );
+    await user.clear(screen.getByRole('textbox', { name: 'Needs-human label' }));
+    await user.type(screen.getByRole('textbox', { name: 'Needs-human label' }), 'reviewer-needed');
+    await user.type(
+      screen.getByRole('textbox', { name: 'Additional trusted authors' }),
+      'trusted-bot',
+    );
+    await user.selectOptions(screen.getByLabelText('Required checks'), 'explicit');
+    expect(
+      screen.getByText(/An empty list explicitly requires no named CI checks/i),
+    ).toBeInTheDocument();
+    await user.type(
+      screen.getByRole('textbox', { name: 'Required check names, one per line' }),
+      'lint{Enter}unit',
+    );
+    await user.selectOptions(screen.getByLabelText('Merge method'), 'rebase');
+    await user.clear(screen.getByRole('spinbutton', { name: 'Automatic review cycles' }));
+    await user.type(screen.getByRole('spinbutton', { name: 'Automatic review cycles' }), '2');
+    await user.clear(screen.getByRole('spinbutton', { name: 'Additional human-requested cycles' }));
+    await user.type(
+      screen.getByRole('spinbutton', { name: 'Additional human-requested cycles' }),
+      '1',
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Check requirements' }));
+    expect(await screen.findByText('Checked for these settings.')).toBeInTheDocument();
+    expect(onCheckPrerequisites).toHaveBeenNthCalledWith(
+      1,
+      'review',
+      expect.objectContaining({
+        kind: 'review',
+        repository: {
+          path: 'C:/repos/graphgoblin',
+          owner: 'GraphGoblinOrg',
+          name: 'GraphGoblin',
+          baseBranch: 'main',
+        },
+        supportReadKey: 'supportReadKey',
+        roles: {
+          reviewer: { harness: 'codex', model: 'catalog-reviewer', effort: 'high' },
+          fixer: { harness: 'codex', model: 'catalog-fixer', effort: 'low' },
+        },
+        requireHumanBeforeMerge: true,
+        humanReviewLabels: ['needs-human', 'security-review'],
+        needsHumanLabel: 'reviewer-needed',
+        trustedAuthors: ['trusted-bot'],
+        requiredChecks: { source: 'explicit', names: ['lint', 'unit'] },
+        mergeMethod: 'rebase',
+        limits: expect.objectContaining({ automaticCycles: 2, extraCycles: 1 }),
+      }),
+    );
+
+    const requiredCheckNames = screen.getByRole('textbox', {
+      name: 'Required check names, one per line',
+    });
+    await user.clear(requiredCheckNames);
+    expect(
+      screen.getByText(/An empty list explicitly requires no named CI checks/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Check the current settings before creating a draft.'),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Create draft' })).toBeDisabled();
+
+    await user.click(screen.getByRole('button', { name: 'Check requirements' }));
+    expect(await screen.findByText('Checked for these settings.')).toBeInTheDocument();
+    expect(onCheckPrerequisites).toHaveBeenNthCalledWith(
+      2,
+      'review',
+      expect.objectContaining({ requiredChecks: { source: 'explicit', names: [] } }),
+    );
+    expect(screen.getByRole('button', { name: 'Create draft' })).toBeEnabled();
+    await user.click(screen.getByRole('button', { name: 'Create draft' }));
+
+    expect(onInstantiate).toHaveBeenCalledTimes(1);
+    expect(onInstantiate).toHaveBeenCalledWith(
+      'review',
+      expect.objectContaining({ requiredChecks: { source: 'explicit', names: [] } }),
+    );
+    expect(onCreated).toHaveBeenCalledWith(createdParentId);
+    expect(screen.getByTestId('location')).toHaveTextContent('/loops');
+  });
+
+  it('keeps creation blocked when either review role is not ready in current preflight', async () => {
+    const user = userEvent.setup();
+    const entry = reviewTemplateEntry();
+    render(
+      <MemoryRouter initialEntries={['/loops']}>
+        <TemplateGallery
+          templates={[entry]}
+          models={[model]}
+          preflight={[
+            { harness: 'codex', ok: false, authenticated: false, problems: ['login required'] },
+          ]}
+          onCheckPrerequisites={() => Promise.resolve(entry.prerequisites)}
+          onInstantiate={() => Promise.reject(new Error('must not instantiate'))}
+          onCreated={() => undefined}
+        />
+      </MemoryRouter>,
+    );
+    await user.click(screen.getByRole('button', { name: 'New from template' }));
+    await user.click(screen.getByRole('button', { name: 'Use GitHub PR review' }));
+
+    expect(screen.getAllByText(/This harness is not ready yet/)).toHaveLength(2);
+    expect(screen.getByRole('button', { name: 'Check requirements' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Create draft' })).toBeDisabled();
+  });
+
   it('authors implementation settings, rechecks requirements, and creates with the literal values', async () => {
     const user = userEvent.setup();
     const entry = implementationTemplateEntry();

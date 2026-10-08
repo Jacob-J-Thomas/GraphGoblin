@@ -51,7 +51,7 @@ export class CliGithub implements GithubPort {
     private readonly program: string,
     private readonly cwd: string,
   ) {}
-  private async run(args: string[], stdin?: string): Promise<string> {
+  protected async run(args: string[], stdin?: string): Promise<string> {
     const result = await this.runner.run({
       program: this.program,
       args,

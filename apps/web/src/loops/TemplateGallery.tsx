@@ -5,6 +5,7 @@ import type {
   TemplateInstantiateResponse,
   TemplatePrerequisiteReport,
   ImplementationTemplateSettings,
+  ReviewTemplateSettings,
   TemplateRepository,
   TemplateRoleSelection,
   TemplateSettings,
@@ -13,6 +14,7 @@ import {
   EffortSchema,
   HarnessIdSchema,
   ImplementationTemplateSettingsSchema,
+  ReviewTemplateSettingsSchema,
   TemplateSettingsSchema,
 } from '@graphgoblin/contracts';
 import { useId, useState, type FormEvent } from 'react';
@@ -178,19 +180,25 @@ function settingsRoleAvailable(
   models: readonly ModelCatalogEntry[],
   preflight: readonly TemplateRolePreflight[],
 ): boolean {
-  const role =
+  const roles =
     settings?.kind === 'starter'
-      ? settings.roles.assistant
+      ? [settings.roles.assistant]
       : settings?.kind === 'implementation'
-        ? settings.roles.implementer
-        : undefined;
-  if (!role) return false;
-  const readiness = preflight.find((item) => item.harness === role.harness);
-  if (readiness?.ok !== true || !readiness.authenticated) return false;
-  const selected = catalogModels(models, preflight, role.harness).find(
-    (model) => model.model === role.model,
+        ? [settings.roles.implementer]
+        : settings?.kind === 'review'
+          ? [settings.roles.reviewer, settings.roles.fixer]
+          : [];
+  return (
+    roles.length > 0 &&
+    roles.every((role) => {
+      const readiness = preflight.find((item) => item.harness === role.harness);
+      if (readiness?.ok !== true || !readiness.authenticated) return false;
+      const selected = catalogModels(models, preflight, role.harness).find(
+        (model) => model.model === role.model,
+      );
+      return selected !== undefined && modelEfforts(selected, preflight).includes(role.effort);
+    })
   );
-  return selected !== undefined && modelEfforts(selected, preflight).includes(role.effort);
 }
 
 function schemaStringDefault(schema: Record<string, unknown>, fallback: string): string {
@@ -199,6 +207,10 @@ function schemaStringDefault(schema: Record<string, unknown>, fallback: string):
 
 function schemaNumberDefault(schema: Record<string, unknown>, fallback: number): number {
   return typeof schema['default'] === 'number' ? schema['default'] : fallback;
+}
+
+function schemaBooleanDefault(schema: Record<string, unknown>, fallback: boolean): boolean {
+  return typeof schema['default'] === 'boolean' ? schema['default'] : fallback;
 }
 
 function schemaStringArrayDefault(
@@ -211,21 +223,23 @@ function schemaStringArrayDefault(
     : [...fallback];
 }
 
-function implementationRoleDefault(
+function templateRoleDefault(
   schema: Record<string, unknown>,
   models: readonly ModelCatalogEntry[],
   preflight: readonly TemplateRolePreflight[],
+  roleKey: string,
+  preferredModel?: string,
 ): TemplateRoleSelection {
   const codexModels = catalogModels(models, preflight, 'codex');
-  const selected = codexModels
-    .map((model) => {
-      const efforts = modelEfforts(model, preflight);
-      const effort = efforts.includes(model.defaultEffort) ? model.defaultEffort : efforts[0];
-      const parsedEffort = EffortSchema.safeParse(effort);
-      return parsedEffort.success ? { model, effort: parsedEffort.data } : undefined;
-    })
-    .find((candidate) => candidate !== undefined);
-  const effortSchema = schemaProperty(schema, 'roles', 'implementer', 'effort');
+  const candidates = codexModels.flatMap((model) => {
+    const efforts = modelEfforts(model, preflight);
+    const effort = efforts.includes(model.defaultEffort) ? model.defaultEffort : efforts[0];
+    const parsedEffort = EffortSchema.safeParse(effort);
+    return parsedEffort.success ? [{ model, effort: parsedEffort.data }] : [];
+  });
+  const selected =
+    candidates.find((candidate) => candidate.model.model === preferredModel) ?? candidates[0];
+  const effortSchema = schemaProperty(schema, 'roles', roleKey, 'effort');
   const schemaEffort = Array.isArray(effortSchema['enum'])
     ? effortSchema['enum'].find((value): value is string => typeof value === 'string')
     : undefined;
@@ -256,7 +270,7 @@ function implementationSettingsDraft(
       args: schemaStringArrayDefault(schemaProperty(schema, 'gate', 'args'), ['check']),
       timeoutSeconds: schemaNumberDefault(schemaProperty(schema, 'gate', 'timeoutSeconds'), 600),
     },
-    roles: { implementer: implementationRoleDefault(schema, models, preflight) },
+    roles: { implementer: templateRoleDefault(schema, models, preflight, 'implementer') },
     labels: {
       trigger: schemaStringDefault(
         schemaProperty(schema, 'labels', 'trigger'),
@@ -277,6 +291,71 @@ function implementationSettingsDraft(
   };
 }
 
+function requiredChecksDefault(
+  schema: Record<string, unknown>,
+): ReviewTemplateSettings['requiredChecks'] {
+  const configured = record(schemaProperty(schema, 'requiredChecks')['default']);
+  const configuredNames = configured?.['names'];
+  if (configured?.['source'] === 'explicit' && Array.isArray(configuredNames)) {
+    const names = configuredNames.filter((name): name is string => typeof name === 'string');
+    if (names.length === configuredNames.length) return { source: 'explicit', names };
+  }
+  return { source: 'protection' };
+}
+
+function reviewMergeMethodDefault(
+  schema: Record<string, unknown>,
+): ReviewTemplateSettings['mergeMethod'] {
+  const value = schemaStringDefault(schemaProperty(schema, 'mergeMethod'), 'squash');
+  return value === 'merge' || value === 'squash' || value === 'rebase' ? value : 'squash';
+}
+
+function reviewSettingsDraft(
+  entry: TemplateCatalogEntry,
+  models: readonly ModelCatalogEntry[],
+  preflight: readonly TemplateRolePreflight[],
+): ReviewTemplateSettings {
+  const schema = entry.settingsSchema;
+  const secretKey =
+    entry.manifest.requiredSecrets[0]?.key ??
+    entry.manifest.prerequisites.find((item) => item.kind === 'secret')?.secretKey ??
+    '';
+  const reviewer = templateRoleDefault(schema, models, preflight, 'reviewer');
+  const nextCodexModel = catalogModels(models, preflight, 'codex').find(
+    (model) => model.model !== reviewer.model,
+  )?.model;
+  return {
+    kind: 'review',
+    repository: { path: '', owner: '', name: '', baseBranch: '' },
+    supportReadKey: secretKey,
+    gate: {
+      program: schemaStringDefault(schemaProperty(schema, 'gate', 'program'), 'pnpm'),
+      args: schemaStringArrayDefault(schemaProperty(schema, 'gate', 'args'), ['check']),
+      timeoutSeconds: schemaNumberDefault(schemaProperty(schema, 'gate', 'timeoutSeconds'), 600),
+    },
+    roles: {
+      reviewer,
+      fixer: templateRoleDefault(schema, models, preflight, 'fixer', nextCodexModel),
+    },
+    requireHumanBeforeMerge: schemaBooleanDefault(
+      schemaProperty(schema, 'requireHumanBeforeMerge'),
+      false,
+    ),
+    humanReviewLabels: schemaStringArrayDefault(schemaProperty(schema, 'humanReviewLabels'), []),
+    needsHumanLabel: schemaStringDefault(schemaProperty(schema, 'needsHumanLabel'), 'needs-human'),
+    trustedAuthors: schemaStringArrayDefault(schemaProperty(schema, 'trustedAuthors'), []),
+    requiredChecks: requiredChecksDefault(schema),
+    mergeMethod: reviewMergeMethodDefault(schema),
+    limits: {
+      automaticCycles: schemaNumberDefault(schemaProperty(schema, 'limits', 'automaticCycles'), 3),
+      extraCycles: schemaNumberDefault(schemaProperty(schema, 'limits', 'extraCycles'), 3),
+      reminders: schemaNumberDefault(schemaProperty(schema, 'limits', 'reminders'), 3),
+      waitHours: schemaNumberDefault(schemaProperty(schema, 'limits', 'waitHours'), 24),
+      ciWaitMinutes: schemaNumberDefault(schemaProperty(schema, 'limits', 'ciWaitMinutes'), 30),
+    },
+  };
+}
+
 function initialTemplateSettings(
   entry: TemplateCatalogEntry,
   models: readonly ModelCatalogEntry[],
@@ -285,6 +364,9 @@ function initialTemplateSettings(
   if (entry.defaultSettings) return entry.defaultSettings;
   if (entry.manifest.kind === 'implementation') {
     return implementationSettingsDraft(entry, models, preflight);
+  }
+  if (entry.manifest.kind === 'review') {
+    return reviewSettingsDraft(entry, models, preflight);
   }
   return null;
 }
@@ -306,7 +388,7 @@ function TemplateRoleFields({
   schema: Record<string, unknown>;
   models: readonly ModelCatalogEntry[];
   preflight: readonly TemplateRolePreflight[];
-  roleKey: 'assistant' | 'implementer';
+  roleKey: 'assistant' | 'implementer' | 'reviewer' | 'fixer';
   title: string;
   onChange: (next: TemplateRoleSelection) => void;
 }) {
@@ -864,6 +946,487 @@ function ImplementationSettingsFields({
   );
 }
 
+function ReviewSettingsFields({
+  entry,
+  settings,
+  models,
+  preflight,
+  onChange,
+}: {
+  entry: TemplateCatalogEntry;
+  settings: ReviewTemplateSettings;
+  models: readonly ModelCatalogEntry[];
+  preflight: readonly TemplateRolePreflight[];
+  onChange: (next: ReviewTemplateSettings) => void;
+}) {
+  const id = useId();
+  const parsed = ReviewTemplateSettingsSchema.safeParse(settings);
+  const issues = (path: string) => {
+    if (parsed.success) return [];
+    return parsed.error.issues
+      .filter((issue) => {
+        const issuePath = issue.path.map(String).join('.');
+        return issuePath === path || issuePath.startsWith(`${path}.`);
+      })
+      .map((issue) => issue.message);
+  };
+  const describedBy = (helpId: string, path: string) =>
+    issues(path).length > 0 ? `${helpId} ${helpId}-error` : helpId;
+  const invalid = (path: string) => (issues(path).length > 0 ? true : undefined);
+  const showIssues = (helpId: string, path: string) => {
+    const messages = issues(path);
+    return messages.length > 0 ? (
+      <HelpText id={`${helpId}-error`} tone="bad">
+        {messages.join(' ')}
+      </HelpText>
+    ) : null;
+  };
+  const updateRepository = <K extends keyof TemplateRepository>(
+    key: K,
+    value: TemplateRepository[K],
+  ) => onChange({ ...settings, repository: { ...settings.repository, [key]: value } });
+  const updateGate = <K extends keyof ReviewTemplateSettings['gate']>(
+    key: K,
+    value: ReviewTemplateSettings['gate'][K],
+  ) => onChange({ ...settings, gate: { ...settings.gate, [key]: value } });
+  const updateLimits = <K extends keyof ReviewTemplateSettings['limits']>(
+    key: K,
+    value: ReviewTemplateSettings['limits'][K],
+  ) => onChange({ ...settings, limits: { ...settings.limits, [key]: value } });
+  const updateRole = (key: 'reviewer' | 'fixer', role: TemplateRoleSelection) =>
+    onChange({ ...settings, roles: { ...settings.roles, [key]: role } });
+  const secretKey =
+    entry.manifest.requiredSecrets[0]?.key ??
+    entry.manifest.prerequisites.find((item) => item.kind === 'secret')?.secretKey;
+  const schema = entry.settingsSchema;
+  const gateTimeoutSchema = schemaProperty(schema, 'gate', 'timeoutSeconds');
+  const gateProgramSchema = schemaProperty(schema, 'gate', 'program');
+  const gateArgsSchema = schemaProperty(schema, 'gate', 'args');
+  const gateArgs = settings.gate.args.join('\n');
+  const labels = [{ key: 'needsHumanLabel' as const, label: 'Needs-human label' }];
+  const limitFields: { key: keyof ReviewTemplateSettings['limits']; label: string }[] = [
+    { key: 'automaticCycles', label: 'Automatic review cycles' },
+    { key: 'extraCycles', label: 'Additional human-requested cycles' },
+    { key: 'reminders', label: 'Human reminders' },
+    { key: 'waitHours', label: 'Hours before a reminder' },
+    { key: 'ciWaitMinutes', label: 'Minutes to wait for checks' },
+  ];
+
+  return (
+    <div className="grid gap-5">
+      <fieldset className="grid gap-3 rounded-md border border-default p-4">
+        <legend className="px-1 text-sm font-semibold">Repository</legend>
+        <p className="text-sm text-muted">
+          Review only trusted pull requests from this configured repository and base branch. These
+          values are checked again before a draft is created.
+        </p>
+        <FieldGroup>
+          <Label htmlFor={`${id}-repository-path`} required>
+            Checkout path
+          </Label>
+          <Input
+            id={`${id}-repository-path`}
+            required
+            autoComplete="off"
+            value={settings.repository.path}
+            aria-invalid={invalid('repository.path')}
+            aria-describedby={describedBy(`${id}-repository-path-help`, 'repository.path')}
+            onChange={(event) => updateRepository('path', event.currentTarget.value)}
+          />
+          <HelpText id={`${id}-repository-path-help`}>
+            Use the existing checkout that matches the repository's canonical origin.
+          </HelpText>
+          {showIssues(`${id}-repository-path-help`, 'repository.path')}
+        </FieldGroup>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <FieldGroup>
+            <Label htmlFor={`${id}-repository-owner`} required>
+              Repository owner
+            </Label>
+            <Input
+              id={`${id}-repository-owner`}
+              required
+              autoComplete="off"
+              value={settings.repository.owner}
+              aria-invalid={invalid('repository.owner')}
+              aria-describedby={describedBy(`${id}-repository-owner-help`, 'repository.owner')}
+              onChange={(event) => updateRepository('owner', event.currentTarget.value)}
+            />
+            <HelpText id={`${id}-repository-owner-help`}>
+              The GitHub account or organization.
+            </HelpText>
+            {showIssues(`${id}-repository-owner-help`, 'repository.owner')}
+          </FieldGroup>
+          <FieldGroup>
+            <Label htmlFor={`${id}-repository-name`} required>
+              Repository name
+            </Label>
+            <Input
+              id={`${id}-repository-name`}
+              required
+              autoComplete="off"
+              value={settings.repository.name}
+              aria-invalid={invalid('repository.name')}
+              aria-describedby={describedBy(`${id}-repository-name-help`, 'repository.name')}
+              onChange={(event) => updateRepository('name', event.currentTarget.value)}
+            />
+            <HelpText id={`${id}-repository-name-help`}>The repository slug.</HelpText>
+            {showIssues(`${id}-repository-name-help`, 'repository.name')}
+          </FieldGroup>
+        </div>
+        <FieldGroup>
+          <Label htmlFor={`${id}-base-branch`} required>
+            Base branch
+          </Label>
+          <Input
+            id={`${id}-base-branch`}
+            required
+            autoComplete="off"
+            value={settings.repository.baseBranch}
+            aria-invalid={invalid('repository.baseBranch')}
+            aria-describedby={describedBy(`${id}-base-branch-help`, 'repository.baseBranch')}
+            onChange={(event) => updateRepository('baseBranch', event.currentTarget.value)}
+          />
+          <HelpText id={`${id}-base-branch-help`}>
+            Only pull requests targeting this branch are reviewed.
+          </HelpText>
+          {showIssues(`${id}-base-branch-help`, 'repository.baseBranch')}
+        </FieldGroup>
+        <FieldGroup>
+          <Label htmlFor={`${id}-support-key`} required>
+            Support credential key name
+          </Label>
+          <Input
+            id={`${id}-support-key`}
+            required
+            autoComplete="off"
+            readOnly={secretKey !== undefined}
+            value={settings.supportReadKey}
+            aria-invalid={invalid('supportReadKey')}
+            aria-describedby={describedBy(`${id}-support-key-help`, 'supportReadKey')}
+            onChange={(event) =>
+              onChange({ ...settings, supportReadKey: event.currentTarget.value })
+            }
+          />
+          <HelpText id={`${id}-support-key-help`}>
+            Enter the configured key name only. Never paste a token or secret value.
+            {secretKey ? ` This template requires the key “${secretKey}”.` : ''}
+          </HelpText>
+          {showIssues(`${id}-support-key-help`, 'supportReadKey')}
+        </FieldGroup>
+      </fieldset>
+
+      <fieldset className="grid gap-3 rounded-md border border-default p-4">
+        <legend className="px-1 text-sm font-semibold">Review and fixing roles</legend>
+        <p className="text-sm text-muted">
+          The reviewer is read-only. Fixing uses a separate fresh session; both roles are checked
+          against the current model catalog and harness preflight.
+        </p>
+        <TemplateRoleFields
+          settings={settings.roles.reviewer}
+          schema={schema}
+          models={models}
+          preflight={preflight}
+          roleKey="reviewer"
+          title="Reviewer model"
+          onChange={(role) => updateRole('reviewer', role)}
+        />
+        <TemplateRoleFields
+          settings={settings.roles.fixer}
+          schema={schema}
+          models={models}
+          preflight={preflight}
+          roleKey="fixer"
+          title="Fixer model"
+          onChange={(role) => updateRole('fixer', role)}
+        />
+      </fieldset>
+
+      <fieldset className="grid gap-3 rounded-md border border-default p-4">
+        <legend className="px-1 text-sm font-semibold">Check command</legend>
+        <p className="text-sm text-muted">
+          The program and arguments are passed separately. Shell syntax is not interpreted.
+        </p>
+        <FieldGroup>
+          <Label htmlFor={`${id}-gate-program`} required>
+            Program
+          </Label>
+          <Input
+            id={`${id}-gate-program`}
+            required
+            autoComplete="off"
+            maxLength={stringConstraint(gateProgramSchema, 'maxLength')}
+            value={settings.gate.program}
+            aria-invalid={invalid('gate.program')}
+            aria-describedby={describedBy(`${id}-gate-program-help`, 'gate.program')}
+            onChange={(event) => updateGate('program', event.currentTarget.value)}
+          />
+          <HelpText id={`${id}-gate-program-help`}>
+            Choose a native program available in the checkout.
+          </HelpText>
+          {showIssues(`${id}-gate-program-help`, 'gate.program')}
+        </FieldGroup>
+        <FieldGroup>
+          <Label htmlFor={`${id}-gate-args`}>Arguments, one per line</Label>
+          <Textarea
+            id={`${id}-gate-args`}
+            rows={4}
+            value={gateArgs}
+            aria-invalid={invalid('gate.args')}
+            aria-describedby={describedBy(`${id}-gate-args-help`, 'gate.args')}
+            onChange={(event) => {
+              const raw = event.currentTarget.value;
+              updateGate('args', raw === '' ? [] : raw.split(/\r?\n/));
+            }}
+          />
+          <HelpText id={`${id}-gate-args-help`}>
+            Each line is one argument. Use at most{' '}
+            {typeof gateArgsSchema['maxItems'] === 'number' ? gateArgsSchema['maxItems'] : 64}{' '}
+            arguments; do not include shell operators.
+          </HelpText>
+          {showIssues(`${id}-gate-args-help`, 'gate.args')}
+        </FieldGroup>
+        <FieldGroup>
+          <Label htmlFor={`${id}-gate-timeout`} required>
+            Timeout in seconds
+          </Label>
+          <Input
+            id={`${id}-gate-timeout`}
+            type="number"
+            step={1}
+            min={numberConstraint(gateTimeoutSchema, 'minimum')}
+            max={numberConstraint(gateTimeoutSchema, 'maximum')}
+            required
+            value={
+              Number.isFinite(settings.gate.timeoutSeconds) ? settings.gate.timeoutSeconds : ''
+            }
+            aria-invalid={invalid('gate.timeoutSeconds')}
+            aria-describedby={describedBy(`${id}-gate-timeout-help`, 'gate.timeoutSeconds')}
+            onChange={(event) => {
+              const raw = event.currentTarget.value;
+              updateGate('timeoutSeconds', raw === '' ? Number.NaN : Number(raw));
+            }}
+          />
+          <HelpText id={`${id}-gate-timeout-help`}>
+            Bounds: {numberConstraint(gateTimeoutSchema, 'minimum') ?? 1} to{' '}
+            {numberConstraint(gateTimeoutSchema, 'maximum') ?? 86_400} seconds.
+          </HelpText>
+          {showIssues(`${id}-gate-timeout-help`, 'gate.timeoutSeconds')}
+        </FieldGroup>
+      </fieldset>
+
+      <fieldset className="grid gap-3 rounded-md border border-default p-4">
+        <legend className="px-1 text-sm font-semibold">Human review and merge</legend>
+        <FieldGroup>
+          <div className="flex items-center gap-2">
+            <Input
+              id={`${id}-require-human`}
+              type="checkbox"
+              checked={settings.requireHumanBeforeMerge}
+              aria-invalid={invalid('requireHumanBeforeMerge')}
+              aria-describedby={describedBy(`${id}-require-human-help`, 'requireHumanBeforeMerge')}
+              onChange={(event) =>
+                onChange({ ...settings, requireHumanBeforeMerge: event.currentTarget.checked })
+              }
+            />
+            <Label htmlFor={`${id}-require-human`}>Require a human choice before every merge</Label>
+          </div>
+          <HelpText id={`${id}-require-human-help`}>
+            A human must answer the run's review wait. A reviewer verdict is not a GitHub approving
+            review.
+          </HelpText>
+          {showIssues(`${id}-require-human-help`, 'requireHumanBeforeMerge')}
+        </FieldGroup>
+        <FieldGroup>
+          <Label htmlFor={`${id}-human-review-labels`}>Labels that require human review</Label>
+          <Textarea
+            id={`${id}-human-review-labels`}
+            rows={3}
+            value={settings.humanReviewLabels.join('\n')}
+            aria-invalid={invalid('humanReviewLabels')}
+            aria-describedby={describedBy(`${id}-human-review-labels-help`, 'humanReviewLabels')}
+            onChange={(event) => {
+              const raw = event.currentTarget.value;
+              onChange({ ...settings, humanReviewLabels: raw === '' ? [] : raw.split(/\r?\n/) });
+            }}
+          />
+          <HelpText id={`${id}-human-review-labels-help`}>
+            One issue label per line. A matching linked-issue label requires the human wait; if a PR
+            has no linked issue, issue-label checks are skipped.
+          </HelpText>
+          {showIssues(`${id}-human-review-labels-help`, 'humanReviewLabels')}
+        </FieldGroup>
+        {labels.map(({ key, label }) => {
+          const helpId = `${id}-${key}-help`;
+          return (
+            <FieldGroup key={key}>
+              <Label htmlFor={`${id}-${key}`} required>
+                {label}
+              </Label>
+              <Input
+                id={`${id}-${key}`}
+                required
+                maxLength={stringConstraint(schemaProperty(schema, key), 'maxLength')}
+                value={settings[key]}
+                aria-invalid={invalid(key)}
+                aria-describedby={describedBy(helpId, key)}
+                onChange={(event) => onChange({ ...settings, [key]: event.currentTarget.value })}
+              />
+              <HelpText id={helpId}>
+                Applied to a linked issue when the review times out or the person closes without
+                merging. Standalone PR reviews have no issue to label.
+              </HelpText>
+              {showIssues(helpId, key)}
+            </FieldGroup>
+          );
+        })}
+        <FieldGroup>
+          <Label htmlFor={`${id}-trusted-authors`}>Additional trusted authors</Label>
+          <Textarea
+            id={`${id}-trusted-authors`}
+            rows={3}
+            value={settings.trustedAuthors.join('\n')}
+            aria-invalid={invalid('trustedAuthors')}
+            aria-describedby={describedBy(`${id}-trusted-authors-help`, 'trustedAuthors')}
+            onChange={(event) => {
+              const raw = event.currentTarget.value;
+              onChange({ ...settings, trustedAuthors: raw === '' ? [] : raw.split(/\r?\n/) });
+            }}
+          />
+          <HelpText id={`${id}-trusted-authors-help`}>
+            One GitHub login per line. Leave empty to rely on the repository's authenticated write,
+            maintain, or admin access check.
+          </HelpText>
+          {showIssues(`${id}-trusted-authors-help`, 'trustedAuthors')}
+        </FieldGroup>
+        <FieldGroup>
+          <Label htmlFor={`${id}-required-checks-source`}>Required checks</Label>
+          <Select
+            id={`${id}-required-checks-source`}
+            value={settings.requiredChecks.source}
+            aria-invalid={invalid('requiredChecks')}
+            aria-describedby={describedBy(`${id}-required-checks-help`, 'requiredChecks')}
+            onChange={(event) => {
+              const source = event.currentTarget.value;
+              if (source === 'protection') onChange({ ...settings, requiredChecks: { source } });
+              else if (source === 'explicit') {
+                const names =
+                  settings.requiredChecks.source === 'explicit'
+                    ? settings.requiredChecks.names
+                    : [];
+                onChange({ ...settings, requiredChecks: { source, names } });
+              }
+            }}
+          >
+            <option value="protection">Use repository protection rules</option>
+            <option value="explicit">Use explicit check names</option>
+          </Select>
+          <HelpText id={`${id}-required-checks-help`}>
+            Merge still uses ordinary GitHub protection. The review workflow cannot bypass
+            repository rules.
+          </HelpText>
+          {settings.requiredChecks.source === 'explicit' ? (
+            <>
+              <Label htmlFor={`${id}-required-check-names`}>
+                Required check names, one per line
+              </Label>
+              <Textarea
+                id={`${id}-required-check-names`}
+                rows={3}
+                value={settings.requiredChecks.names.join('\n')}
+                aria-invalid={invalid('requiredChecks.names')}
+                aria-describedby={describedBy(
+                  `${id}-required-check-names-help`,
+                  'requiredChecks.names',
+                )}
+                onChange={(event) => {
+                  const raw = event.currentTarget.value;
+                  onChange({
+                    ...settings,
+                    requiredChecks: {
+                      source: 'explicit',
+                      names: raw === '' ? [] : raw.split(/\r?\n/),
+                    },
+                  });
+                }}
+              />
+              <HelpText id={`${id}-required-check-names-help`}>
+                An empty list explicitly requires no named CI checks. Missing checks are never used
+                to guess names.
+              </HelpText>
+              {showIssues(`${id}-required-check-names-help`, 'requiredChecks.names')}
+            </>
+          ) : null}
+          {showIssues(`${id}-required-checks-help`, 'requiredChecks')}
+        </FieldGroup>
+        <FieldGroup>
+          <Label htmlFor={`${id}-merge-method`}>Merge method</Label>
+          <Select
+            id={`${id}-merge-method`}
+            value={settings.mergeMethod}
+            aria-invalid={invalid('mergeMethod')}
+            aria-describedby={describedBy(`${id}-merge-method-help`, 'mergeMethod')}
+            onChange={(event) => {
+              const value = event.currentTarget.value;
+              if (value === 'merge' || value === 'squash' || value === 'rebase')
+                onChange({ ...settings, mergeMethod: value });
+            }}
+          >
+            <option value="merge">Merge commit</option>
+            <option value="squash">Squash merge</option>
+            <option value="rebase">Rebase</option>
+          </Select>
+          <HelpText id={`${id}-merge-method-help`}>
+            GitHub permissions, current head, required checks, and protection rules still control
+            whether GitHub accepts a merge.
+          </HelpText>
+          {showIssues(`${id}-merge-method-help`, 'mergeMethod')}
+        </FieldGroup>
+      </fieldset>
+
+      <fieldset className="grid gap-3 rounded-md border border-default p-4">
+        <legend className="px-1 text-sm font-semibold">Review limits</legend>
+        <p className="text-sm text-muted">
+          Automatic cycles, human-requested extra cycles, and reminders all have finite limits. A
+          timeout never merges the pull request.
+        </p>
+        {limitFields.map(({ key, label }) => {
+          const path = `limits.${key}`;
+          const fieldSchema = schemaProperty(schema, 'limits', key);
+          const helpId = `${id}-limit-${key}-help`;
+          return (
+            <FieldGroup key={key}>
+              <Label htmlFor={`${id}-limit-${key}`} required>
+                {label}
+              </Label>
+              <Input
+                id={`${id}-limit-${key}`}
+                type="number"
+                step={1}
+                min={numberConstraint(fieldSchema, 'minimum')}
+                max={numberConstraint(fieldSchema, 'maximum')}
+                required
+                value={Number.isFinite(settings.limits[key]) ? settings.limits[key] : ''}
+                aria-invalid={invalid(path)}
+                aria-describedby={describedBy(helpId, path)}
+                onChange={(event) => {
+                  const raw = event.currentTarget.value;
+                  updateLimits(key, raw === '' ? Number.NaN : Number(raw));
+                }}
+              />
+              <HelpText id={helpId}>
+                Whole number from {numberConstraint(fieldSchema, 'minimum') ?? 0} to{' '}
+                {numberConstraint(fieldSchema, 'maximum') ?? 10_000}.
+              </HelpText>
+              {showIssues(helpId, path)}
+            </FieldGroup>
+          );
+        })}
+      </fieldset>
+    </div>
+  );
+}
+
 function SettingsFields({
   entry,
   settings,
@@ -891,6 +1454,17 @@ function SettingsFields({
   if (entry.manifest.kind === 'implementation' && settings.kind === 'implementation') {
     return (
       <ImplementationSettingsFields
+        entry={entry}
+        settings={settings}
+        models={models}
+        preflight={preflight}
+        onChange={onChange}
+      />
+    );
+  }
+  if (entry.manifest.kind === 'review' && settings.kind === 'review') {
+    return (
+      <ReviewSettingsFields
         entry={entry}
         settings={settings}
         models={models}
@@ -946,7 +1520,8 @@ function TemplateSetup({
   const roleAvailable = settingsRoleAvailable(settings, models, preflight);
   const supported =
     ((entry.manifest.kind === 'starter' && settings?.kind === 'starter') ||
-      (entry.manifest.kind === 'implementation' && settings?.kind === 'implementation')) &&
+      (entry.manifest.kind === 'implementation' && settings?.kind === 'implementation') ||
+      (entry.manifest.kind === 'review' && settings?.kind === 'review')) &&
     settingsValid;
   const readyToInstantiate = Boolean(
     !createdLoopId && settingsValid && roleAvailable && report?.canInstantiate && supported,
@@ -1039,6 +1614,20 @@ function TemplateSetup({
             Configure the repository workflow below. Helper loops are published first; the parent
             opens as a draft for you to review.
           </p>
+        ) : null}
+        {entry.manifest.kind === 'review' ? (
+          <div className="grid gap-2 text-sm text-muted">
+            <p>
+              Publishing this parent activates its configured pull-request review. The reviewer is
+              read-only and each fixing pass uses a separate fresh session. A standalone pull
+              request without a linked issue can be reviewed; issue-only label actions are skipped.
+            </p>
+            <p>
+              A structured reviewer approval is not a GitHub approving review. Merges use the
+              selected ordinary merge method and remain subject to current GitHub permissions,
+              required checks, and repository protection. This workflow cannot bypass them.
+            </p>
+          </div>
         ) : null}
         {settings ? (
           <fieldset disabled={creating} className="grid gap-6 border-0 p-0">

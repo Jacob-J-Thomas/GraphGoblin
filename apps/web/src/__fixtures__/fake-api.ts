@@ -25,6 +25,7 @@ import {
   ClassifierModelPutSchema,
   ImplementationTemplateSettingsSchema,
   LoopDefinitionSchema,
+  ReviewTemplateSettingsSchema,
   StarterTemplateSettingsSchema,
   TemplateCatalogEntrySchema,
 } from '@graphgoblin/contracts';
@@ -265,6 +266,120 @@ export function implementationTemplateEntry(): TemplateCatalogEntry {
       ],
     },
     settingsSchema: z.toJSONSchema(ImplementationTemplateSettingsSchema, { io: 'input' }),
+    defaultSettings: null,
+    prerequisites,
+  });
+}
+
+/** A current-contract review template with explicit review and fixer roles. */
+export function reviewTemplateEntry(): TemplateCatalogEntry {
+  const prerequisites: TemplatePrerequisiteReport = {
+    checks: [
+      {
+        id: 'reviewer-model',
+        label: 'Read-only reviewer model and harness',
+        status: 'ok',
+        blocking: 'authoring',
+        message: 'A current reviewer model is available.',
+      },
+      {
+        id: 'fixer-model',
+        label: 'Independent fixer model and harness',
+        status: 'ok',
+        blocking: 'authoring',
+        message: 'A current fixer model is available.',
+      },
+      {
+        id: 'repository',
+        label: 'Repository',
+        status: 'ok',
+        blocking: 'authoring',
+        message: 'The repository is available.',
+      },
+      {
+        id: 'github',
+        label: 'GitHub',
+        status: 'ok',
+        blocking: 'authoring',
+        message: 'GitHub is available.',
+      },
+      {
+        id: 'support-key',
+        label: 'Revocable runs:read support key',
+        status: 'ok',
+        blocking: 'authoring',
+        message: 'The support key is configured.',
+      },
+      {
+        id: 'support',
+        label: 'Verified packaged support entry',
+        status: 'ok',
+        blocking: 'authoring',
+        message: 'The review support entry is available.',
+      },
+    ],
+    canInstantiate: true,
+    canRun: true,
+  };
+  return TemplateCatalogEntrySchema.parse({
+    manifest: {
+      id: 'review',
+      version: '1.0.0',
+      kind: 'review',
+      title: 'GitHub PR review',
+      description:
+        'Review trusted pull request heads with separate fresh reviewer and fixer sessions.',
+      tags: ['github', 'review', 'human'],
+      roles: [
+        { id: 'reviewer', label: 'Reviewer', access: 'read-only' },
+        { id: 'fixer', label: 'Fixer', access: 'write' },
+      ],
+      prerequisites: [
+        {
+          id: 'reviewer-model',
+          label: 'Reviewer model',
+          kind: 'role',
+          blocking: 'authoring',
+          role: 'reviewer',
+        },
+        {
+          id: 'fixer-model',
+          label: 'Fixer model',
+          kind: 'role',
+          blocking: 'authoring',
+          role: 'fixer',
+        },
+        { id: 'repository', label: 'Repository', kind: 'repository', blocking: 'authoring' },
+        { id: 'github', label: 'GitHub', kind: 'github', blocking: 'authoring' },
+        {
+          id: 'support-key',
+          label: 'Revocable runs:read support key',
+          kind: 'secret',
+          blocking: 'authoring',
+          secretKey: 'supportReadKey',
+        },
+        {
+          id: 'support',
+          label: 'Verified packaged support entry',
+          kind: 'support',
+          blocking: 'authoring',
+        },
+      ],
+      requiredSecrets: [{ key: 'supportReadKey', scopes: ['runs:read'] }],
+      parentKey: 'parent',
+      loops: [
+        {
+          key: 'parent',
+          file: 'parent.json',
+          dependsOn: [],
+          roleNodes: [],
+          settingsNodes: ['settings'],
+          subloops: [],
+        },
+      ],
+      supportEntry: 'dist/templates/github/review-entry.js',
+    },
+    settingsSchema: z.toJSONSchema(ReviewTemplateSettingsSchema, { io: 'input' }),
     defaultSettings: null,
     prerequisites,
   });

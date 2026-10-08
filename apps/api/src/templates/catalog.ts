@@ -1,4 +1,5 @@
 import { installedFile } from './assets.js';
+import { REVIEW_SUPPORT_ENTRY, reviewSupportClosure } from './github/review-closure.js';
 export { installedFile } from './assets.js';
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
@@ -53,6 +54,12 @@ export class TemplateCatalog {
             );
           if (manifest.supportEntry === IMPLEMENTATION_SUPPORT_ENTRY)
             support = await implementationSupportClosure(
+              this.packageRoot,
+              manifest.version,
+              this.sourceSupport,
+            );
+          else if (manifest.supportEntry === REVIEW_SUPPORT_ENTRY)
+            support = await reviewSupportClosure(
               this.packageRoot,
               manifest.version,
               this.sourceSupport,
