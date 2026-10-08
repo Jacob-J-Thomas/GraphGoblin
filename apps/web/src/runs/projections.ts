@@ -124,8 +124,19 @@ export function describeEvent(event: RunEvent): string {
     case 'child_run.finished':
     case 'harness.session':
       return 'nodeId' in event ? event.nodeId : '';
-    case 'decision.made':
-      return `Chose ${event.answer.optionId} with ${event.provenance.kind}${event.provenance.provider ? ` via ${event.provenance.provider}` : ''}${event.provenance.model ? ` (${event.provenance.model})` : ''}${event.answer.confidence !== null ? ` with confidence ${event.answer.confidence}` : ''}${event.diagnostics.map((item) => `; ${item.code}: ${item.message}`).join('')}`;
+    case 'decision.made': {
+      const answer =
+        event.answer.type === 'choice'
+          ? `Chose ${event.answer.optionId}`
+          : event.answer.type === 'noul'
+            ? `Answered ${event.answer.holds ? 'true' : 'false'}`
+            : `Scored ${event.answer.score} to band ${event.portId}`;
+      const trueProbability =
+        event.answer.type === 'noul' && event.answer.kind === 'classifier'
+          ? ` (true probability ${event.answer.trueProbability})`
+          : '';
+      return `${answer}${trueProbability} with ${event.provenance.kind}${event.provenance.provider ? ` via ${event.provenance.provider}` : ''}${event.provenance.model ? ` (${event.provenance.model})` : ''}${event.answer.confidence !== null ? ` with confidence ${event.answer.confidence}` : ''}${event.diagnostics.map((item) => `; ${item.code}: ${item.message}`).join('')}`;
+    }
     case 'exit.evaluated':
       return describeExit(event);
     case 'signal.received':

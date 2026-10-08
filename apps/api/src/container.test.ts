@@ -107,17 +107,17 @@ describe('default adapters', () => {
       url: `/secrets/${JEV_SECRET}`,
       payload: { value: 'first-key' },
     });
-    const first = await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev');
+    const first = await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev', 'choice');
     expect(first.status).toBe('ready');
     if (first.status !== 'ready') throw new Error('expected configured Jev');
     expect(first.classifier).toBeInstanceOf(JevDecider);
-    expect(await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev')).toEqual(first);
+    expect(await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev', 'choice')).toEqual(first);
     await app.inject({
       method: 'PUT',
       url: `/secrets/${JEV_SECRET}`,
       payload: { value: 'second-key' },
     });
-    const next = await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev');
+    const next = await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev', 'choice');
     expect(next.status).toBe('ready');
     if (next.status !== 'ready') throw new Error('expected configured Jev');
     expect(next.classifier).not.toBe(first.classifier);
@@ -153,7 +153,7 @@ describe('default adapters', () => {
       payload: { enabled: false },
     });
     expect(jevOf(container).available()).toBe(false);
-    expect(await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev')).toMatchObject({
+    expect(await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev', 'choice')).toMatchObject({
       reason: 'CLASSIFIER_MODEL_DISABLED',
     });
     await app.inject({
@@ -164,7 +164,7 @@ describe('default adapters', () => {
     expect(jevOf(container).available()).toBe(true);
     await app.inject({ method: 'DELETE', url: `/secrets/${JEV_SECRET}` });
     expect(jevOf(container).available()).toBe(false);
-    expect(await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev')).toMatchObject({
+    expect(await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev', 'choice')).toMatchObject({
       reason: 'CLASSIFIER_SECRET_MISSING',
     });
   });

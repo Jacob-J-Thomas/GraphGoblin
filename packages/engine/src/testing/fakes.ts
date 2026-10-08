@@ -4,6 +4,7 @@
  */
 import type {
   ContextThread,
+  ClassifierPrimitive,
   HarnessId,
   ModelCatalogEntry,
   JsonValue,
@@ -20,6 +21,11 @@ import type {
   ArtifactStorePort,
   ChoiceRequest,
   ChoiceResult,
+  ClassifierNoulResult,
+  LlmNoulResult,
+  NoulRequest,
+  ScoreRequest,
+  ScoreResult,
   ClassifierPort,
   ClassifierRegistryPort,
   ClassifierResolution,
@@ -538,6 +544,9 @@ export class FakeHarness implements HarnessPort {
 export class FakeDecider implements DeciderPort {
   readonly choices: ChoiceRequest[] = [];
   readonly judgements: YesNoRequest[] = [];
+  readonly nouls: NoulRequest[] = [];
+  readonly classifierNouls: NoulRequest[] = [];
+  readonly scores: ScoreRequest[] = [];
   isAvailable = true;
   constructor(
     readonly id: 'jev' | 'codex',
@@ -563,6 +572,26 @@ export class FakeDecider implements DeciderPort {
   judge(request: YesNoRequest, _signal?: AbortSignal): Promise<PredicateAnswer> {
     this.judgements.push(request);
     return Promise.resolve(this.judge_(request));
+  }
+  noul(request: NoulRequest, _signal?: AbortSignal): Promise<LlmNoulResult> {
+    this.nouls.push(request);
+    return Promise.resolve({ type: 'noul', holds: true, confidence: 1, reasoning: 'Verified' });
+  }
+  classifyNoul(request: NoulRequest, _signal?: AbortSignal): Promise<ClassifierNoulResult> {
+    this.classifierNouls.push(request);
+    return Promise.resolve({ type: 'noul', trueProbability: 1 });
+  }
+  score(request: ScoreRequest, _signal?: AbortSignal): Promise<ScoreResult> {
+    this.scores.push(request);
+    return Promise.resolve({
+      type: 'score',
+      score: 0,
+      confidence: 1,
+      legend: Object.fromEntries(request.anchors.map((anchor, index) => [String(index), anchor])),
+      probabilities: Object.fromEntries(
+        request.anchors.map((_anchor, index) => [String(index), index === 0 ? 1 : 0]),
+      ),
+    });
   }
 }
 
@@ -734,7 +763,7 @@ export const DEFAULT_TEST_SETTINGS: EngineSettings = {
 };
 
 export class FakeClassifierRegistry implements ClassifierRegistryPort {
-  readonly requests: { ownerId: string; modelId: string }[] = [];
+  readonly requests: { ownerId: string; modelId: string; primitive: ClassifierPrimitive }[] = [];
   readonly models = new Map<string, ClassifierPort & Partial<Pick<DeciderPort, 'available'>>>();
   readonly unavailable = new Map<
     string,
@@ -743,8 +772,12 @@ export class FakeClassifierRegistry implements ClassifierRegistryPort {
   constructor(builtin?: ClassifierPort & Partial<Pick<DeciderPort, 'available'>>) {
     if (builtin) this.models.set('jev', builtin);
   }
-  resolve(ownerId: string, modelId: string): Promise<ClassifierResolution> {
-    this.requests.push({ ownerId, modelId });
+  resolve(
+    ownerId: string,
+    modelId: string,
+    primitive: ClassifierPrimitive,
+  ): Promise<ClassifierResolution> {
+    this.requests.push({ ownerId, modelId, primitive });
     const unavailable = this.unavailable.get(modelId);
     if (unavailable) return Promise.resolve(unavailable);
     const classifier = this.models.get(modelId);

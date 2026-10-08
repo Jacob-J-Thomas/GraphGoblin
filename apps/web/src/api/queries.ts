@@ -30,6 +30,7 @@ export const keys = {
   loop: (id: string) => ['loops', id] as const,
   /** Under the loop's key, so invalidating the loop (after a publish) refetches them too. */
   versions: (id: string) => ['loops', id, 'versions'] as const,
+  version: (loopId: string, versionId: string) => ['loops', loopId, 'version', versionId] as const,
   /**
    * The API's checks of a saved draft (`POST /loops/{id}/validate`), keyed by what they read: the
    * draft (its server draft token, a hash of its content, or `draftContentKey` when there is no
@@ -65,6 +66,16 @@ export function useLoop(id: string) {
 export function useLoopVersions(id: string) {
   const client = useApi();
   return useQuery({ queryKey: keys.versions(id), queryFn: () => loops.versions(client, id) });
+}
+
+/** The immutable version a run actually used; an unavailable version stays unavailable. */
+export function useLoopVersion(loopId: string, versionId: string, enabled = true) {
+  const client = useApi();
+  return useQuery({
+    queryKey: keys.version(loopId, versionId),
+    queryFn: () => loops.version(client, loopId, versionId),
+    enabled: enabled && loopId !== '' && versionId !== '',
+  });
 }
 
 export function useRuns(query: ListRunsQuery = {}, refetchInterval: number | false = false) {

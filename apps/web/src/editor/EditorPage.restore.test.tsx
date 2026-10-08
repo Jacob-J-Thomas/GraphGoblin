@@ -91,7 +91,7 @@ describe('restoring a set-aside copy', () => {
       });
       const decision = saved?.definition.nodes.find((node) => node.kind === 'decision');
       expect(
-        decision?.kind === 'decision'
+        decision?.kind === 'decision' && decision.config.answer.type === 'choice'
           ? decision.config.answer.options.map((option) => option.id)
           : [],
       ).toEqual(['yes', 'no']);

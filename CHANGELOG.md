@@ -6,6 +6,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ### Added
 
+- Decisions offer Noul true/false answers and fractional Score rubrics alongside Choice. Primitive-aware classifier selection, separate Noul truth/confidence thresholds and stable Score bands make routing explicit. Existing Choice and context behavior remain unchanged. (#97)
+
 - Claude Code inference harness for the owner's native Windows CLI, pinned to 2.1.285. It uses only Claude.ai account authentication, adds no Anthropic SDK dependency, admits exact model `claude-opus-5-5`, and reports account-dependent billing without promising subscription inclusion. Only explicit `read-only`/`never` and `danger-full-access`/`never` policies are supported; Fable remains blocked while billing is unverified. Requested effort is recorded; effective effort is not reported. (#26)
 - Generic body-signed webhooks accept GitHub payloads with durable content replay protection and recoverable atomic run admission. Optional poll items mode drains a bounded queue with per-item dedupe. GitHub presets remain editable generic trigger configurations. (#29)
 
@@ -37,6 +39,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 - Settings' Model catalog uses Enabled switches to turn entries on or off. If a refresh removes a row while its switch is saving, focus returns to the section heading, and the notice that the model is no longer available clears on the next toggle. (#24)
 
 ### Upgrade notes
+
+- #97 extends the existing format-2 decision contract with Noul and Score; existing Choice definitions and evidence need no rewrite. Custom engine clients must pass the requested primitive to `ClassifierRegistryPort.resolve(ownerId, modelId, primitive)` and implement `classifyNoul`/`score` on classifier ports. The HTTP adapter export is now `HttpClassifier` (replacing `HttpChoiceClassifier`). Regenerate API clients for the new answer variants. Context and session behavior are unchanged.
 
 - The trigger cutover extends the same stopped-instance format-2 converter. An earlier format-2 development database may still need endpoint/receipt structures; startup refuses it until inventory, resolution and verified-backup apply complete. Pending admissions and nonterminal runs must be resolved first. Proven default timestamp-signature keys become hashes; authored keys remain unchanged, and ambiguous provenance blocks the conversion. (#29)
 

@@ -190,6 +190,7 @@ describe('decision option edits in editor history', () => {
   it('uses readable labels while retaining IDs as the actual route ports', () => {
     const node = fixture().nodes.find((item) => item.id === 'pick')!;
     if (node.kind !== 'decision') throw new Error('fixture decision missing');
+    if (node.config.answer.type !== 'choice') throw new Error('fixture Choice answer missing');
     node.config.answer.options[2]!.label = '7';
     expect(canvasPortLabels(node)).toEqual({ yes: 'Label 1', no: 'Label 2', third: '7' });
   });
@@ -205,5 +206,125 @@ describe('decision option edits in editor history', () => {
     store().updateNode('missing', { config: config() });
     store().updateNode('pick', { label: 'Choose' });
     expect(store().definition!.edges).toBe(edges);
+  });
+
+  it('keeps Noul side connections attached through ID edits, labels, undo, and redo', () => {
+    const definition = newLoopDefinition('noul routes');
+    definition.nodes.push({
+      id: 'check',
+      kind: 'decision',
+      label: 'Check',
+      config: {
+        answer: {
+          type: 'noul',
+          true: { id: 'holds', label: 'Holds', criteria: 'The statement is true' },
+          false: { id: 'fails', label: 'Fails', criteria: 'The statement is false' },
+        },
+        evaluation: { kind: 'expression', jsonata: 'true' },
+      },
+    });
+    definition.edges[0]!.to.node = 'check';
+    definition.edges.push(
+      { id: 'true-edge', from: { node: 'check', port: 'holds' }, to: { node: 'done' } },
+      { id: 'false-edge', from: { node: 'check', port: 'fails' }, to: { node: 'start' } },
+    );
+    store().load('L1', definition);
+    const before = store().definition!;
+    const changed = {
+      answer: {
+        type: 'noul' as const,
+        true: { id: 'affirm', label: 'Holds', criteria: 'The statement is true' },
+        false: { id: 'fails', label: 'Not true', criteria: 'The statement is false' },
+      },
+      evaluation: { kind: 'expression' as const, jsonata: 'true' },
+      recordAlternatives: true,
+    };
+    store().updateNode(
+      'check',
+      { config: changed },
+      { path: 'answer.true.id', kind: 'typing', id: 1 },
+    );
+    const after = store().definition!;
+    expect(after.edges.find((edge) => edge.id === 'true-edge')?.from.port).toBe('affirm');
+    expect(after.edges.find((edge) => edge.id === 'false-edge')?.from.port).toBe('fails');
+    const node = after.nodes.find((item) => item.id === 'check')!;
+    if (node.kind !== 'decision') throw new Error('Noul decision fixture is missing.');
+    expect(canvasPortLabels(node)).toEqual({ affirm: 'Holds', fails: 'Not true' });
+    expect(validateDraft(after).schemaValid).toBe(true);
+    store().undo();
+    expect(store().definition).toEqual(before);
+    store().redo();
+    expect(store().definition).toEqual(after);
+  });
+
+  it('moves Score band edges by stable ID and removes only a deleted band route', () => {
+    const definition = newLoopDefinition('score routes');
+    definition.nodes.push({
+      id: 'grade',
+      kind: 'decision',
+      label: 'Grade',
+      config: {
+        answer: {
+          type: 'score',
+          anchors: ['Low', 'Middle', 'High'],
+          bands: [
+            { id: 'low', label: 'Low', min: 0, max: 0.5 },
+            { id: 'middle', label: 'Middle', min: 0.5, max: 1.5 },
+            { id: 'high', label: 'High', min: 1.5, max: 2 },
+          ],
+        },
+        evaluation: { kind: 'classifier', model: 'jev', question: 'Score it' },
+      },
+    });
+    definition.edges[0]!.to.node = 'grade';
+    definition.edges.push(
+      { id: 'low-edge', from: { node: 'grade', port: 'low' }, to: { node: 'done' } },
+      { id: 'middle-edge', from: { node: 'grade', port: 'middle' }, to: { node: 'start' } },
+      { id: 'high-edge', from: { node: 'grade', port: 'high' }, to: { node: 'done' } },
+    );
+    store().load('L1', definition);
+    const changed = {
+      answer: {
+        type: 'score' as const,
+        anchors: ['Low', 'Middle', 'High'],
+        bands: [
+          { id: 'low', label: 'Low', min: 0, max: 0.5 },
+          { id: 'review', label: 'Review', min: 0.5, max: 1.5 },
+          { id: 'high', label: 'High', min: 1.5, max: 2 },
+        ],
+      },
+      evaluation: { kind: 'classifier' as const, model: 'jev', question: 'Score it' },
+      recordAlternatives: true,
+    };
+    store().updateNode(
+      'grade',
+      { config: changed },
+      { path: 'answer.bands.1.id', kind: 'typing', id: 1 },
+    );
+    expect(store().definition!.edges.find((edge) => edge.id === 'middle-edge')?.from.port).toBe(
+      'review',
+    );
+    const grade = store().definition!.nodes.find((item) => item.id === 'grade')!;
+    if (grade.kind !== 'decision') throw new Error('Score decision fixture is missing.');
+    expect(canvasPortLabels(grade)).toEqual({ low: 'Low', review: 'Review', high: 'High' });
+    const removed = {
+      ...changed,
+      answer: { ...changed.answer, bands: [changed.answer.bands[0]!, changed.answer.bands[2]!] },
+    };
+    store().updateNode(
+      'grade',
+      { config: removed },
+      {
+        path: 'answer.bands',
+        kind: 'commit',
+        id: 2,
+        collection: { type: 'remove', index: 1 },
+      },
+    );
+    expect(store().definition!.edges.some((edge) => edge.id === 'middle-edge')).toBe(false);
+    store().undo();
+    expect(store().definition!.edges.find((edge) => edge.id === 'middle-edge')?.from.port).toBe(
+      'review',
+    );
   });
 });

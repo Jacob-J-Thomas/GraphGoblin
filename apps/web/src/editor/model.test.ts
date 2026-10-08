@@ -3,6 +3,7 @@ import type { LoopDefinitionInput, NodeInput } from '@graphgoblin/contracts';
 import { NodeConfigSchemas } from '@graphgoblin/contracts';
 import { describe, expect, it } from 'vitest';
 import {
+  canvasPortLabels,
   canvasPorts,
   connectionProblem,
   countsLabel,
@@ -58,6 +59,30 @@ describe('editor model', () => {
     expect(
       portsOf(broken('decision', { answer: { options: [{ id: 'a' }, { id: '' }, 'x'] } })),
     ).toEqual(['a']);
+    expect(
+      portsOf(
+        broken('decision', {
+          answer: {
+            type: 'noul',
+            true: { id: 'holds', label: 'Holds' },
+            false: { id: 'fails', label: 'Does not hold' },
+          },
+        }),
+      ),
+    ).toEqual(['holds', 'fails']);
+    expect(
+      portsOf(
+        broken('decision', {
+          answer: {
+            type: 'score',
+            bands: [
+              { id: 'low', label: 'Low' },
+              { id: 'high', label: 'High' },
+            ],
+          },
+        }),
+      ),
+    ).toEqual(['low', 'high']);
     expect(portsOf(broken('decision', {}))).toEqual([]);
     expect(
       portsOf(
@@ -100,6 +125,42 @@ describe('editor model', () => {
     expect(
       connectionProblem(def, { source: 'done', sourceHandle: 'loopBack', target: 'mid' }),
     ).toBeNull();
+  });
+
+  it('labels Noul sides and Score bands while keeping their stable IDs as ports', () => {
+    const noul: NodeInput = {
+      id: 'noul',
+      kind: 'decision',
+      label: 'Check',
+      config: {
+        answer: {
+          type: 'noul',
+          true: { id: 'holds', label: 'Holds', criteria: 'It holds' },
+          false: { id: 'fails', label: 'Fails', criteria: 'It does not hold' },
+        },
+        evaluation: { kind: 'expression', jsonata: 'true' },
+      },
+    };
+    const score: NodeInput = {
+      id: 'score',
+      kind: 'decision',
+      label: 'Grade',
+      config: {
+        answer: {
+          type: 'score',
+          anchors: ['Low', 'Middle', 'High'],
+          bands: [
+            { id: 'low', label: 'Low', min: 0, max: 0.5 },
+            { id: 'high', label: 'High', min: 0.5, max: 2 },
+          ],
+        },
+        evaluation: { kind: 'classifier', model: 'jev', question: 'Score it' },
+      },
+    };
+    expect(portsOf(noul)).toEqual(['holds', 'fails']);
+    expect(canvasPortLabels(noul)).toEqual({ holds: 'Holds', fails: 'Fails' });
+    expect(portsOf(score)).toEqual(['low', 'high']);
+    expect(canvasPortLabels(score)).toEqual({ low: 'Low', high: 'High' });
   });
 
   it('validates drafts with schema issues first, then structural rules', () => {

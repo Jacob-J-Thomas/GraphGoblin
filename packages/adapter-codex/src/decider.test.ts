@@ -6,6 +6,7 @@ import {
   choiceSchema,
   createCodexDecider,
   judgePrompt,
+  noulPrompt,
 } from './decider.js';
 
 function structuredReturning(value: unknown) {
@@ -167,5 +168,83 @@ describe('prompts', () => {
   it('render the question and context', () => {
     expect(choicePrompt({ ...choice, context: undefined as never })).toContain('null');
     expect(judgePrompt({ question: 'q?', context: [1] })).toContain('[\n  1\n]');
+  });
+});
+
+describe('CodexDecider.noul', () => {
+  const request = {
+    question: 'Ready?',
+    context: { checks: 'passed' },
+    criteria: { true: 'All checks pass', false: 'Any check fails' },
+  };
+  it('uses one strict boolean completion with both criteria and bounded reasoning excerpt', async () => {
+    const { port, complete } = structuredReturning({
+      holds: false,
+      confidence: 0.9,
+      reasoning: 'r'.repeat(2049),
+    });
+    expect(
+      await createCodexDecider(port).noul(
+        { ...request, model: 'gpt-6-luna', effort: 'low' },
+        new AbortController().signal,
+      ),
+    ).toEqual({ type: 'noul', holds: false, confidence: 0.9, reasoning: 'r'.repeat(2048) });
+    expect(complete).toHaveBeenCalledTimes(1);
+    expect(complete.mock.calls[0]?.[0]).toMatchObject({
+      model: 'gpt-6-luna',
+      effort: 'low',
+      schema: JUDGE_SCHEMA,
+      prompt: noulPrompt(request),
+    });
+    expect(noulPrompt(request)).toContain('- true: All checks pass');
+    expect(noulPrompt(request)).toContain('- false: Any check fails');
+  });
+  it('does not inject unresolved model/effort selections and retains the exact 2048-character boundary', async () => {
+    const { port, complete } = structuredReturning({
+      holds: true,
+      confidence: 1,
+      reasoning: 'r'.repeat(2048),
+    });
+    expect(
+      (await createCodexDecider(port).noul(request, new AbortController().signal)).reasoning,
+    ).toHaveLength(2048);
+    expect(complete.mock.calls[0]?.[0]).not.toHaveProperty('model');
+    expect(complete.mock.calls[0]?.[0]).not.toHaveProperty('effort');
+  });
+  it.each([
+    null,
+    [],
+    { holds: true },
+    { holds: 'yes', confidence: 1, reasoning: 'Q' },
+    { holds: true, confidence: -1, reasoning: 'Q' },
+    { holds: true, confidence: 2, reasoning: 'Q' },
+    { holds: true, confidence: NaN, reasoning: 'Q' },
+    { holds: true, confidence: Infinity, reasoning: 'Q' },
+    { holds: true, confidence: 'high', reasoning: 'Q' },
+    { holds: true, confidence: 1, reasoning: 7 },
+    { holds: true, confidence: 1, reasoning: 'Q', trueProbability: 0.9 },
+  ])('rejects malformed Noul without clamping or retry %j', async (value) => {
+    const { port, complete } = structuredReturning(value);
+    await expect(
+      createCodexDecider(port).noul(request, new AbortController().signal),
+    ).rejects.toMatchObject({ code: 'DECIDER_INVALID_RESPONSE' });
+    expect(complete).toHaveBeenCalledTimes(1);
+  });
+  it('sanitizes recognized native failure categories and preserves cancellation', async () => {
+    const { port, complete } = structuredReturning({});
+    complete.mockRejectedValueOnce(
+      Object.assign(new Error('private-native-message'), { code: 'HARNESS_QUOTA_EXHAUSTED' }),
+    );
+    await expect(
+      createCodexDecider(port).noul(request, new AbortController().signal),
+    ).rejects.toMatchObject({
+      code: 'DECIDER_RATE_LIMITED',
+      message: 'Codex Noul completion failed',
+    });
+    const cancelled = new DOMException('Cancelled', 'AbortError');
+    complete.mockRejectedValueOnce(cancelled);
+    await expect(createCodexDecider(port).noul(request, new AbortController().signal)).rejects.toBe(
+      cancelled,
+    );
   });
 });

@@ -1,12 +1,20 @@
-import type { JsonValue } from '@graphgoblin/contracts';
-import type { PredicateAnswer } from '@graphgoblin/domain';
+import {
+  ClassifierNoulResponseSchema,
+  ClassifierScoreResponseSchema,
+  type JsonValue,
+} from '@graphgoblin/contracts';
+import { validatePrimitiveAnswer, type PredicateAnswer } from '@graphgoblin/domain';
 import {
   describeError,
   type ChoiceRequest,
   type ChoiceResult,
+  type ClassifierNoulResult,
   type DeciderPort,
   type Logger,
   type SecretsPort,
+  type NoulRequest,
+  type ScoreRequest,
+  type ScoreResult,
   type YesNoRequest,
 } from '@graphgoblin/engine';
 import {
@@ -16,6 +24,7 @@ import {
   TypeSafeClient,
   choice,
   noul,
+  score,
   type EntryType,
   type Fetch,
   type RetryPolicy,
@@ -80,6 +89,7 @@ export class JevError extends Error {
       | 'DECIDER_RATE_LIMITED'
       | 'DECIDER_HTTP_ERROR'
       | 'DECIDER_UNREACHABLE'
+      | 'DECIDER_INVALID_CONFIGURATION'
       | 'DECIDER_INVALID_RESPONSE',
     message: string,
     readonly status?: number,
@@ -247,6 +257,62 @@ export class JevDecider implements DeciderPort {
     const yes = parsed.data.answers.answer.noul;
     const holds = yes >= 0.5;
     return { holds, confidence: holds ? yes : 1 - yes };
+  }
+
+  async classifyNoul(request: NoulRequest, signal: AbortSignal): Promise<ClassifierNoulResult> {
+    signal.throwIfAborted();
+    const client = this.requireClient();
+    let body: unknown;
+    try {
+      body = await client.systemOne(
+        {
+          state: toState(request.context),
+          questions: { answer: noul(request.question, request.criteria) },
+        },
+        { signal, retry: { maxRetries: 0 } },
+      );
+    } catch (error) {
+      throw mapError(error);
+    }
+    const parsed = ClassifierNoulResponseSchema.safeParse(body);
+    if (!parsed.success)
+      throw new JevError('DECIDER_INVALID_RESPONSE', 'Unexpected Jev Noul response');
+    return { type: 'noul', trueProbability: parsed.data.answers.answer.noul };
+  }
+
+  async score(request: ScoreRequest, signal: AbortSignal): Promise<ScoreResult> {
+    signal.throwIfAborted();
+    const [first, second, ...rest] = request.anchors;
+    if (first === undefined || second === undefined)
+      throw new JevError(
+        'DECIDER_INVALID_CONFIGURATION',
+        'Score requires at least two rubric anchors',
+      );
+    const client = this.requireClient();
+    let body: unknown;
+    try {
+      body = await client.systemOne(
+        {
+          state: toState(request.context),
+          questions: { answer: score(request.question, [first, second, ...rest]) },
+        },
+        { signal, retry: { maxRetries: 0 } },
+      );
+    } catch (error) {
+      throw mapError(error);
+    }
+    const parsed = ClassifierScoreResponseSchema.safeParse(body);
+    if (!parsed.success)
+      throw new JevError('DECIDER_INVALID_RESPONSE', 'Unexpected Jev Score response');
+    const answer = parsed.data.answers.answer;
+    const result: ScoreResult = {
+      ...answer,
+      confidence: answer.confidence ?? null,
+      probabilities: answer.probabilities ?? null,
+    };
+    const invalid = validatePrimitiveAnswer({ type: 'score', anchors: request.anchors }, result);
+    if (invalid !== null) throw new JevError('DECIDER_INVALID_RESPONSE', invalid);
+    return result;
   }
 }
 

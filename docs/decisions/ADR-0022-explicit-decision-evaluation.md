@@ -10,7 +10,7 @@ This partially supersedes ADR-0018's advisory-only model validation, ADR-0019's 
 
 ## Decision
 
-A decision has an `answer` and an `evaluation`. Initially only `answer.type: choice` is supported. Every option has a stable port/provider ID, a unique readable label and authored criteria. The evaluation is a strict union of expression, classifier or LLM. It accepts only the fields applicable to that kind.
+A decision has an `answer` and an `evaluation`. Initially only `answer.type: choice` was supported; [ADR-0025](ADR-0025-answer-primitives.md) adds Noul and Score without changing this ADR's context behavior. Every option has a stable port/provider ID, a unique readable label and authored criteria. The evaluation is a strict union of expression, classifier or LLM. It accepts only the fields applicable to that kind.
 
 Expressions return a declared string option ID with no implicit stringification. Classifiers name an explicit Choice-capable catalog entry. LLM evaluation names an implemented harness (Codex initially) and explicit model/effort inheritance or selection. Only classifiers have `minConfidence`; rejection fails with a typed error. LLM confidence must be finite and in range, is informational, and is not treated as a calibrated probability. There is no evaluator fallback or decision schema-repair loop.
 

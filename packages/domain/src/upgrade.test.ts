@@ -73,7 +73,10 @@ describe('offline v1 authoring conversion', () => {
         byHarness: { codex: { model: 'gpt-6-luna', effort: 'low' } },
       });
       const node = result.value.nodes.find((node) => node.kind === 'decision');
-      expect(node?.config.answer.options.map((option) => option.id)).toEqual(['yes', 'no']);
+      expect(
+        node?.config.answer.type === 'choice' &&
+          node.config.answer.options.map((option) => option.id),
+      ).toEqual(['yes', 'no']);
       expect(JSON.stringify(original)).toBe(before);
     },
   );
@@ -437,6 +440,26 @@ describe('adversarial offline source and history boundaries', () => {
       },
       evaluation: { kind: 'expression' as const, jsonata: '"ready"' },
     };
+    expect(
+      upgradeLoopV1(oldLoop(['codex', 'expression']), { decisions: { decide: replacement } }),
+    ).toMatchObject({ ok: false, issues: [{ code: 'UPGRADE_RESOLUTION_INVALID' }] });
+  });
+  it.each([
+    {
+      type: 'noul',
+      true: { id: 'yes', label: 'Yes', criteria: 'Ready' },
+      false: { id: 'no', label: 'No', criteria: 'Needs work' },
+    },
+    {
+      type: 'score',
+      anchors: ['Low', 'High'],
+      bands: [{ id: 'yes', label: 'All', min: 0, max: 1 }],
+    },
+  ])('refuses reinterpretation of a v1 Choice as another primitive %j', (answer) => {
+    const replacement = DecisionConfigSchema.parse({
+      answer,
+      evaluation: { kind: 'classifier', model: 'jev', question: 'Q' },
+    });
     expect(
       upgradeLoopV1(oldLoop(['codex', 'expression']), { decisions: { decide: replacement } }),
     ).toMatchObject({ ok: false, issues: [{ code: 'UPGRADE_RESOLUTION_INVALID' }] });

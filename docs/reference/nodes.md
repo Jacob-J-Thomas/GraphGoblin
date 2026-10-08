@@ -72,7 +72,7 @@ Ports: One output per stable option id; labels are display text.
 
 | Field                | Type                                                         | Required | Default | Advanced | Description                                            |
 | -------------------- | ------------------------------------------------------------ | -------- | ------- | -------- | ------------------------------------------------------ |
-| `answer`             | { type, options }                                            | yes      |         |          | Declared Choice options and stable route identifiers.  |
+| `answer`             | one of `"choice"` \| `"noul"` \| `"score"` by `type`         | yes      |         |          | Declared answer and stable route identifiers.          |
 | `evaluation`         | one of `"expression"` \| `"classifier"` \| `"llm"` by `kind` | yes      |         |          | Exactly one evaluation method.                         |
 | `recordAlternatives` | boolean                                                      | no       | `true`  | yes      | Retain classifier probabilities in execution evidence. |
 

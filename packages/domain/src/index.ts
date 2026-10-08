@@ -12,6 +12,7 @@ export * from './thread-view.js';
 export * from './json-schema.js';
 export * from './mutations.js';
 export * from './graph.js';
+export * from './answers.js';
 export * from './syntax.js';
 export * from './exit.js';
 export * from './state-machine.js';

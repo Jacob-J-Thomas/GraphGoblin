@@ -1,5 +1,5 @@
 import { NodeConfigSchemas } from '@graphgoblin/contracts';
-import { screen, waitFor, within } from '@testing-library/react';
+import { cleanup, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { describe, expect, it } from 'vitest';
@@ -31,6 +31,7 @@ function api(): FakeApi {
     customClassifier({ id: 'kev', displayName: 'Kev 4B' }),
     customClassifier({ id: 'keyed', displayName: 'Keyed', secretRef: 'keyed-key' }),
     customClassifier({ id: 'off', displayName: 'Off', enabled: false }),
+    customClassifier({ id: 'noul-only', displayName: 'Boolean Judge', primitives: ['noul'] }),
     customClassifier({ id: 'scorer', displayName: 'Scorer', primitives: ['score'] }),
   ];
   fake.secretList = [];
@@ -113,5 +114,37 @@ describe('ClassifierField', () => {
     expect(picker()).toHaveAccessibleDescription(
       /Keyed \(keyed\) needs a key\. Configure it in Settings, Secrets\./,
     );
+  });
+
+  it('filters enabled classifiers by Noul and Score while retaining the Choice filter', async () => {
+    const noul = {
+      ...decision(''),
+      answer: {
+        type: 'noul',
+        true: { id: 'true', label: 'True', criteria: 'True' },
+        false: { id: 'false', label: 'False', criteria: 'False' },
+      },
+    };
+    const noulPicker = setup(noul).picker();
+    await waitFor(() => expect(noulPicker).toHaveValue(''));
+    expect(within(noulPicker).getByRole('option', { name: /Boolean Judge/ })).toBeInTheDocument();
+    expect(within(noulPicker).queryByRole('option', { name: /Scorer/ })).not.toBeInTheDocument();
+    cleanup();
+
+    const score = {
+      ...decision(''),
+      answer: {
+        type: 'score',
+        anchors: ['Low', 'High'],
+        bands: [
+          { id: 'low', label: 'Low', min: 0, max: 0.5 },
+          { id: 'high', label: 'High', min: 0.5, max: 1 },
+        ],
+      },
+    };
+    const scorePicker = setup(score).picker();
+    await waitFor(() => expect(scorePicker).toHaveValue(''));
+    expect(within(scorePicker).getByRole('option', { name: /Scorer/ })).toBeInTheDocument();
+    expect(within(scorePicker).queryByRole('option', { name: /Kev 4B/ })).not.toBeInTheDocument();
   });
 });

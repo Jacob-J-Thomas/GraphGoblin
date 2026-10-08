@@ -69,8 +69,8 @@ describe('classifier selection through the executor', () => {
       });
     }
     expect(e.ports.classifiers.requests).toEqual([
-      { ownerId: 'local', modelId: 'a' },
-      { ownerId: 'local', modelId: 'b' },
+      { ownerId: 'local', modelId: 'a', primitive: 'choice' },
+      { ownerId: 'local', modelId: 'b', primitive: 'choice' },
     ]);
   });
   it.each([
@@ -102,7 +102,7 @@ describe('classifier selection through the executor', () => {
     },
   );
   it('covers unknown fake registrations and unconfigured providers', async () => {
-    expect(await new FakeClassifierRegistry().resolve('local', 'missing')).toMatchObject({
+    expect(await new FakeClassifierRegistry().resolve('local', 'missing', 'choice')).toMatchObject({
       reason: 'CLASSIFIER_MODEL_NOT_FOUND',
     });
     const e = await createTestEngine();
@@ -127,6 +127,8 @@ describe('classifier selection through the executor', () => {
       started = resolve;
     });
     e.ports.classifiers.models.set('blocking', {
+      classifyNoul: (...args) => e.ports.jev.classifyNoul(...args),
+      score: (...args) => e.ports.jev.score(...args),
       choose: (_request, signal) =>
         new Promise((_resolve, reject) => {
           started();

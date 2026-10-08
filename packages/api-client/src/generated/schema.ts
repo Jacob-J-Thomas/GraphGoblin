@@ -2400,6 +2400,29 @@ export interface components {
                             label: string;
                             criteria: string;
                         }[];
+                    } | {
+                        /** @constant */
+                        type: "noul";
+                        true: {
+                            id: string;
+                            label: string;
+                            criteria: string;
+                        };
+                        false: {
+                            id: string;
+                            label: string;
+                            criteria: string;
+                        };
+                    } | {
+                        /** @constant */
+                        type: "score";
+                        anchors: string[];
+                        bands: {
+                            id: string;
+                            label: string;
+                            min: number;
+                            max: number;
+                        }[];
                     };
                     evaluation: {
                         /** @constant */
@@ -2410,6 +2433,8 @@ export interface components {
                         kind: "classifier";
                         model: string;
                         question: string;
+                        minConfidence?: number | undefined;
+                        truthThreshold?: number | undefined;
                         /** @default {} */
                         context?: {
                             /** @default last */
@@ -2420,7 +2445,6 @@ export interface components {
                             /** @default true */
                             includeLastOutput?: boolean | undefined;
                         } | undefined;
-                        minConfidence?: number | undefined;
                     } | {
                         /** @constant */
                         kind: "llm";
@@ -3622,6 +3646,40 @@ export interface components {
                 probabilities: {
                     [key: string]: number;
                 } | null;
+            } | ({
+                /** @constant */
+                type: "noul";
+                /** @constant */
+                kind: "expression";
+                holds: boolean;
+                confidence: null;
+            } | {
+                /** @constant */
+                type: "noul";
+                /** @constant */
+                kind: "classifier";
+                holds: boolean;
+                trueProbability: number;
+                confidence: number;
+            } | {
+                /** @constant */
+                type: "noul";
+                /** @constant */
+                kind: "llm";
+                holds: boolean;
+                confidence: number;
+                reasoning: string;
+            }) | {
+                /** @constant */
+                type: "score";
+                score: number;
+                confidence: number | null;
+                legend: {
+                    [key: string]: string;
+                };
+                probabilities: {
+                    [key: string]: number;
+                } | null;
             };
             portId: string;
             provenance: {
@@ -4137,6 +4195,29 @@ export interface components {
                             label: string;
                             criteria: string;
                         }[];
+                    } | {
+                        /** @constant */
+                        type: "noul";
+                        true: {
+                            id: string;
+                            label: string;
+                            criteria: string;
+                        };
+                        false: {
+                            id: string;
+                            label: string;
+                            criteria: string;
+                        };
+                    } | {
+                        /** @constant */
+                        type: "score";
+                        anchors: string[];
+                        bands: {
+                            id: string;
+                            label: string;
+                            min: number;
+                            max: number;
+                        }[];
                     };
                     evaluation: {
                         /** @constant */
@@ -4147,6 +4228,8 @@ export interface components {
                         kind: "classifier";
                         model: string;
                         question: string;
+                        minConfidence?: number | undefined;
+                        truthThreshold?: number | undefined;
                         context: {
                             /** @default last */
                             messages: "none" | "last" | "all" | number | {
@@ -4156,7 +4239,6 @@ export interface components {
                             /** @default true */
                             includeLastOutput: boolean;
                         };
-                        minConfidence?: number | undefined;
                     } | {
                         /** @constant */
                         kind: "llm";
@@ -5344,6 +5426,40 @@ export interface components {
                 type: "choice";
                 optionId: string;
                 confidence: number | null;
+                probabilities: {
+                    [key: string]: number;
+                } | null;
+            } | ({
+                /** @constant */
+                type: "noul";
+                /** @constant */
+                kind: "expression";
+                holds: boolean;
+                confidence: null;
+            } | {
+                /** @constant */
+                type: "noul";
+                /** @constant */
+                kind: "classifier";
+                holds: boolean;
+                trueProbability: number;
+                confidence: number;
+            } | {
+                /** @constant */
+                type: "noul";
+                /** @constant */
+                kind: "llm";
+                holds: boolean;
+                confidence: number;
+                reasoning: string;
+            }) | {
+                /** @constant */
+                type: "score";
+                score: number;
+                confidence: number | null;
+                legend: {
+                    [key: string]: string;
+                };
                 probabilities: {
                     [key: string]: number;
                 } | null;

@@ -81,13 +81,13 @@ The editor's Model dropdowns use this same catalog: inference nodes filter by th
 
 ## Configure classifier models
 
-**Settings → Classifier models**, below the model catalog, lists the models an explicit Classifier decision can use to choose an option: the built-in **Jev** first, then the ones you register. Each row shows the provider and the model name it sends, what it can answer (**Choice / classification**, **Noul**, **Score**; decisions use Choice), whether it is configured, and an **Enabled** switch. Configured and enabled are separate: **Needs a key** means the secret the classifier sends is missing, blank, or unreadable, with the reason and an **Open Secrets** link that takes you to [Store secrets](#store-secrets); **Configured** only means its settings are complete, not that the endpoint answers.
+**Settings → Classifier models**, below the model catalog, lists the models an explicit Classifier decision can use to choose an option: the built-in **Jev** first, then the ones you register. Each row shows the provider and the model name it sends, what it can answer (**Choice / classification**, **Noul**, **Score**), whether it is configured, and an **Enabled** switch. Configured and enabled are separate: **Needs a key** means the secret the classifier sends is missing, blank, or unreadable, with the reason and an **Open Secrets** link that takes you to [Store secrets](#store-secrets); **Configured** only means its settings are complete, not that the endpoint answers.
 
 Built-in Jev uses the alias `jev-latest` and the secret `jev-api-key` (see [Store secrets](#store-secrets)). It can only be enabled or disabled. Disabling it also stops Exit predicates that use Jev: they fail with `DECIDER_UNAVAILABLE` when evaluated.
 
 ### Register a classifier you host
 
-An open-source classifier registers as an HTTP endpoint that speaks the Jev-compatible Choice protocol, `POST <endpoint>/v1/systemone` ([the contract](../06-harness-integration.md#http-classifier-endpoint-contract-decided-adr-0021)). GraphGoblin does not install or run models. For Kev, start its owner's server as [the Kev research note](../research/jev.md#kev-http-protocol-verification-2026-10-05) describes; it listens on port 8008 by default. Then choose **Add classifier** and fill in:
+An open-source classifier registers as an HTTP endpoint that speaks the Jev-compatible primitive protocol, `POST <endpoint>/v1/systemone` ([the contract](../06-harness-integration.md#http-classifier-endpoint-contract-decided-adr-0021)). GraphGoblin does not install or run models. For Kev, start its owner's server as [the Kev research note](../research/jev.md#kev-http-protocol-verification-2026-10-05) describes; it listens on port 8008 by default. Then choose **Add classifier** and fill in:
 
 | Field             | Kev                                                                |
 | ----------------- | ------------------------------------------------------------------ |
@@ -106,13 +106,13 @@ If the server wants a bearer key (Kev does when `KEV_API_KEY` is set), store the
 
 ### Choose a classifier in a decision
 
-Select **Classifier** as the decision kind, then choose its explicit catalog model. Options have stable IDs, display labels and authored criteria. The provider receives those criteria, the rendered question and selected context. The question template can still reference the full thread; the context selector does not limit that template.
+Choose the decision answer type, select **Classifier** as its evaluator, then choose a model supporting that primitive. Choice options and Noul sides have stable IDs, display labels and authored criteria; Score uses ordered anchors with named routing bands. The provider receives the answer criteria, rendered question and existing selected context. The question template can still reference the full thread; the context selector does not limit that template.
 
-Only Classifier decisions have a minimum confidence. Below-threshold results stop with `EVALUATION_RESULT_REJECTED`; they do not select an uncertainty route or another provider. Kev reports a rescaled confidence, `(p - 1/K) / (1 - 1/K)`, so a threshold is distinct from its chosen option's raw probability. LLM confidence is informational and has no threshold.
+Only Classifier decisions have a minimum confidence. Below-threshold results stop with `EVALUATION_RESULT_REJECTED`; they do not select an uncertainty route or another provider. Kev reports a rescaled confidence, `(p - 1/K) / (1 - 1/K)`, so a threshold is distinct from its chosen option's raw probability. For Noul, the truth threshold chooses true or false; minimum confidence separately accepts or rejects that side. LLM confidence is informational and has no decision threshold.
 
 ### When a selected classifier is unavailable
 
-The editor keeps the selected ID and shows the problem. Disabled entries and missing or unreadable keys block publication until corrected. Unknown IDs and models without Choice are errors. A published run rechecks availability and fails with `EVALUATION_UNAVAILABLE` when it can be restored; it never substitutes a different model or kind. Restore the selection or key before resuming, or edit the loop and start a new run.
+The editor keeps the selected ID and shows the problem. Disabled entries and missing or unreadable keys block publication until corrected. Unknown IDs and models without the selected answer capability are errors. A published run rechecks availability and fails with `EVALUATION_UNAVAILABLE` when it can be restored; it never substitutes a different model or kind. Restore the selection or key before resuming, or edit the loop and start a new run.
 
 Exit Jev predicates retain their existing contract until #99; see the node reference for their distinct availability behavior.
 

@@ -3,6 +3,8 @@ import type {
   ChoiceRequest,
   ChoiceResult,
   DeciderPort,
+  LlmNoulResult,
+  NoulRequest,
   StructuredPort,
   YesNoRequest,
 } from '@graphgoblin/engine';
@@ -19,7 +21,7 @@ function clamp(value: unknown): number | undefined {
 }
 
 /** Convert trusted harness error categories at the Choice boundary; never retain provider text. */
-function choiceFailure(error: unknown): unknown {
+function choiceFailure(error: unknown, primitive = 'Choice'): unknown {
   if (typeof error !== 'object' || error === null || !('code' in error)) return error;
   const code = error.code;
   const mapping: Record<string, string> = {
@@ -36,7 +38,7 @@ function choiceFailure(error: unknown): unknown {
           : 'DECIDER_HTTP_ERROR'
         : undefined;
   return selected
-    ? Object.assign(new Error('Codex Choice completion failed'), { code: selected })
+    ? Object.assign(new Error(`Codex ${primitive} completion failed`), { code: selected })
     : error;
 }
 
@@ -71,6 +73,16 @@ export function judgePrompt(request: YesNoRequest): string {
     contextBlock(request.context),
     '',
     'Do not run commands or change files. Answer with holds (true for yes, false for no), your confidence between 0 and 1, and one or two sentences of reasoning.',
+  ].join('\n');
+}
+
+export function noulPrompt(request: NoulRequest): string {
+  return [
+    judgePrompt(request),
+    '',
+    'Authored sides:',
+    `- true: ${request.criteria.true}`,
+    `- false: ${request.criteria.false}`,
   ].join('\n');
 }
 
@@ -179,6 +191,43 @@ export class CodexDecider implements DeciderPort {
       ...(typeof answer.reasoning === 'string'
         ? { reasoning: answer.reasoning.slice(0, 2048) }
         : {}),
+    };
+  }
+
+  async noul(request: NoulRequest, signal: AbortSignal): Promise<LlmNoulResult> {
+    signal.throwIfAborted();
+    const { value } = await this.structured
+      .complete(
+        {
+          prompt: noulPrompt(request),
+          schema: JUDGE_SCHEMA,
+          ...(request.model ? { model: request.model } : {}),
+          ...(request.effort ? { effort: request.effort } : {}),
+        },
+        signal,
+      )
+      .catch((error: unknown) => {
+        throw choiceFailure(error, 'Noul');
+      });
+    const answer = asRecord(value, 'Noul');
+    if (
+      Object.keys(answer).length !== 3 ||
+      !Object.keys(answer).every((key) => ['holds', 'confidence', 'reasoning'].includes(key)) ||
+      typeof answer.holds !== 'boolean' ||
+      typeof answer.confidence !== 'number' ||
+      !Number.isFinite(answer.confidence) ||
+      answer.confidence < 0 ||
+      answer.confidence > 1 ||
+      typeof answer.reasoning !== 'string'
+    )
+      throw Object.assign(new Error('Codex Noul returned an invalid structured answer'), {
+        code: 'DECIDER_INVALID_RESPONSE',
+      });
+    return {
+      type: 'noul',
+      holds: answer.holds,
+      confidence: answer.confidence,
+      reasoning: answer.reasoning.slice(0, 2048),
     };
   }
 }

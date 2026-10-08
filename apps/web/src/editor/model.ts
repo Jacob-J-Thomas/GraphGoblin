@@ -113,6 +113,24 @@ function record(value: unknown): Record<string, unknown> {
   return typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : {};
 }
 
+function decisionRows(config: unknown): unknown[] | undefined {
+  const answer = record(record(config)['answer']);
+  if (answer['type'] === undefined && Array.isArray(answer['options']))
+    return answer['options'] as unknown[];
+  switch (answer['type']) {
+    case 'choice':
+      return Array.isArray(answer['options']) ? (answer['options'] as unknown[]) : undefined;
+    case 'noul':
+      return [answer['true'], answer['false']].filter(
+        (side) => typeof side === 'object' && side !== null,
+      );
+    case 'score':
+      return Array.isArray(answer['bands']) ? (answer['bands'] as unknown[]) : undefined;
+    default:
+      return undefined;
+  }
+}
+
 /**
  * Output ports of a node. Uses `domain`'s `outputPorts` when the node parses; otherwise derives
  * them from the raw config so a half-edited node keeps its handles on the canvas.
@@ -123,9 +141,7 @@ export function portsOf(node: NodeInput): string[] {
   const config = record(node.config);
   switch (node.kind) {
     case 'decision': {
-      const answer = record(config['answer']);
-      const options = Array.isArray(answer['options']) ? (answer['options'] as unknown[]) : [];
-      return options
+      return (decisionRows(node.config) ?? [])
         .map((option) => record(option)['id'])
         .filter((id): id is string => typeof id === 'string' && id !== '');
     }
@@ -151,10 +167,10 @@ export function canvasPorts(node: NodeInput): string[] {
 /** Display labels for the handles; decision IDs remain the actual connection ports. */
 export function canvasPortLabels(node: NodeInput): Readonly<Record<string, string>> {
   if (node.kind !== 'decision') return {};
-  const options = record(record(node.config).answer)['options'];
-  if (!Array.isArray(options)) return {};
+  const rows = decisionRows(node.config);
+  if (!rows) return {};
   return Object.fromEntries(
-    options.flatMap((option) => {
+    rows.flatMap((option) => {
       const row = record(option);
       return typeof row['id'] === 'string' && typeof row['label'] === 'string'
         ? [[row['id'], row['label']]]

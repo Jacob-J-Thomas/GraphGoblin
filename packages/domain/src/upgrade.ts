@@ -289,8 +289,9 @@ function convertDecision(
     const oldIds = (config.routes as Obj[]).map((route) => String(route.label)).sort();
     if (
       parsed.success &&
-      JSON.stringify(parsed.data.answer.options.map((option) => option.id).sort()) !==
-        JSON.stringify(oldIds)
+      (parsed.data.answer.type !== 'choice' ||
+        JSON.stringify(parsed.data.answer.options.map((option) => option.id).sort()) !==
+          JSON.stringify(oldIds))
     )
       return {
         ok: false,
@@ -298,7 +299,7 @@ function convertDecision(
           issue(
             'UPGRADE_RESOLUTION_INVALID',
             path,
-            'replacement must preserve every original stable option/edge port id',
+            'replacement must remain Choice and preserve every original stable option/edge port id',
           ),
         ],
       };

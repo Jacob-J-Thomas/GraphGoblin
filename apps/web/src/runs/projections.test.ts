@@ -72,6 +72,54 @@ const ALL: RunEvent[] = [
 ];
 
 describe('run projections', () => {
+  it('describes Noul truth probability and fractional Score output separately', () => {
+    const classifier = {
+      kind: 'classifier' as const,
+      provider: 'typesafe',
+      classifierId: 'jev',
+      model: 'jev-latest',
+      effort: null,
+    };
+    expect(
+      describeEvent(
+        event(R, 30, 'decision.made', {
+          nodeId: 'noul',
+          answer: {
+            type: 'noul',
+            kind: 'classifier',
+            holds: true,
+            trueProbability: 0.72,
+            confidence: 0.83,
+          },
+          portId: 'true',
+          provenance: classifier,
+          diagnostics: [],
+        }),
+      ),
+    ).toBe(
+      'Answered true (true probability 0.72) with classifier via typesafe (jev-latest) with confidence 0.83',
+    );
+    expect(
+      describeEvent(
+        event(R, 31, 'decision.made', {
+          nodeId: 'score',
+          answer: {
+            type: 'score',
+            score: 1.25,
+            confidence: 0.91,
+            legend: { '0': 'Low', '1': 'Middle', '2': 'High' },
+            probabilities: { '1': 0.91 },
+          },
+          portId: 'middle',
+          provenance: classifier,
+          diagnostics: [],
+        }),
+      ),
+    ).toBe(
+      'Scored 1.25 to band middle with classifier via typesafe (jev-latest) with confidence 0.91',
+    );
+  });
+
   it('ignores the v2 event cache and retains decisions replayed with the canonical contract', async () => {
     useRunEventStore.setState({ runs: {} });
     useRunEventStore.persist.clearStorage();

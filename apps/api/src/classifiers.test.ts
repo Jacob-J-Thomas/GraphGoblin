@@ -917,7 +917,7 @@ describe('classifier runtime hot reload', () => {
     );
     vi.stubGlobal('fetch', fetch);
     await t.container.repos.secretsFor('local').set('jev-api-key', 'dummy-key');
-    const resolved = await t.container.classifierRegistry.resolve('local', 'jev');
+    const resolved = await t.container.classifierRegistry.resolve('local', 'jev', 'choice');
     expect(resolved.status).toBe('ready');
     if (resolved.status !== 'ready') throw new Error('expected configured Jev');
     await resolved.classifier.choose(
