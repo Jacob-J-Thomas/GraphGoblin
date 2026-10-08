@@ -129,23 +129,11 @@ keeps its child. Its timers are re-armed and a child that finished meanwhile is 
 
 ## Exit evaluation evidence
 
-Exit criteria are evaluated in configuration order. The first match decides the outcome;
-later criteria are skipped, rather than called. A predicate's boolean verdict and confidence
-are separate evidence: a true verdict below `minConfidence` does not match. An unavailable
-or failing predicate fails the node; it does not fall through to the next criterion. If no
-criterion matches, the configured default completes successfully or loops back. The loop's
-hard iteration ceiling prevents that loop-back and finishes exhausted. Configured iteration
-and duration criteria also finish exhausted. The per-node visit cap remains a `run.failed`
-with `MAX_ITERATIONS` before any new node execution, including an exit, starts.
+Exit criteria are evaluated in configuration order. The first match decides the outcome; later criteria are skipped. Predicates share the context-free evaluator with decisions, but their caller preserves the existing fixed state and full-thread question rendering. Noul matches an authored boolean, Choice matches declared IDs, and Score compares its exact fractional value. Neither truthiness nor rounding is used.
 
-Each exit execution records `exit.evaluated` before `node.finished` or the terminal failure.
-It carries `nodeId`, `iteration`, `maxIterations`, ordered `criteria`, and `result`. Criterion
-indices are zero-based. Each entry names its strategy (`expression`, `jev`, `codex`, or the
-non-predicate criterion kind) and status: `matched`, `not-matched`, `skipped` with a fixed
-reason, or `error` with safe diagnostics. Predicate entries retain `holds`, confidence and
-the required minimum when present. Jev names classifier `jev`; Codex names the resolved
-model and retains its returned reasoning, bounded to 2,048 characters. Questions, context,
-provider response envelopes, and provider error text are not copied into this event.
+Confidence acceptance and matching are separate. A failed classifier minimum or exit-only LLM reported-confidence gate is always a nonmatch, even with match=false. A validated raw answer remains in evidence. Invalid answers, unavailable configuration, provider failures and cancellation fail the node without falling through. Predicates run before the implicit loop-back ceiling: a final-iteration match succeeds, while a final-iteration provider error still fails. Explicit duration/iteration criteria retain their order. A no-match default completes successfully or loops back once; the implicit ceiling prevents that continuation and finishes exhausted. The separate per-node visit cap remains `MAX_ITERATIONS` before a new node starts.
+
+Each execution records `exit.evaluated` before completion or terminal failure. It carries node/iteration limits, ordered zero-based criterion entries and a result. Predicate entries identify expression, classifier or LLM evaluation, raw canonical answer, safe resolved provenance, confidence acceptance, matching rule, optional gate rejection and matched/not-matched status. Skipped and error entries carry fixed reasons or safe diagnostics. LLM reasoning is bounded to 2,048 characters. Questions, context, provider envelopes and raw provider error text are not copied. Non-predicate entries retain their factual condition evidence. Historical unknown fields remain null after offline conversion.
 
 Configured Codex model names (node, loop, owner, and process defaults) and recorded exit
 model names share the contracts' 256-character bound. A maximum-length configured name

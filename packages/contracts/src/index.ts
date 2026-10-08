@@ -4,7 +4,7 @@
  * Schemas and types shared by every layer. This package depends on zod only.
  * Everything exported here is the source of truth for the API, the editor, and the engine.
  */
-export const CONTRACTS_SCHEMA_VERSION = 2 as const;
+export const CONTRACTS_SCHEMA_VERSION = 3 as const;
 
 export * from './common.js';
 export * from './meta.js';
@@ -24,3 +24,4 @@ export * from './run.js';
 export * from './events.js';
 
 export * from './trigger-integrations.js';
+export * from './upgrade-v2.js';

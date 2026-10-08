@@ -62,7 +62,15 @@ for (const source of [
         config: {
           criteria:
             source === 'exit-failure'
-              ? [{ when: 'predicate', strategy: 'expression', jsonata: 'true', outcome: 'failure' }]
+              ? [
+                  {
+                    when: 'predicate',
+                    answer: { type: 'noul' },
+                    evaluation: { kind: 'expression', jsonata: 'true' },
+                    match: { type: 'noul', value: true },
+                    outcome: 'failure',
+                  },
+                ]
               : source === 'exit-exhausted'
                 ? [{ when: 'max-iterations', value: 1 }]
                 : [],
@@ -107,11 +115,27 @@ for (const source of [
         label: 'D',
         config: {
           criteria: [
-            { when: 'predicate', strategy: 'codex', question: 'done?', outcome: 'success' },
+            {
+              when: 'predicate',
+              answer: {
+                type: 'noul',
+                true: { label: 'Ready', criteria: 'Task is done' },
+                false: { label: 'Continue', criteria: 'Task is not done' },
+              },
+              evaluation: {
+                kind: 'llm',
+                harness: 'codex',
+                model: { mode: 'inherit' },
+                effort: { mode: 'inherit' },
+                question: 'done?',
+              },
+              match: { type: 'noul', value: true },
+              outcome: 'success',
+            },
           ],
         },
       };
-      code = 'DECIDER_UNAVAILABLE';
+      code = 'EVALUATION_UNAVAILABLE';
     }
     if (source === 'decision') {
       e.ports.deciders = [];
@@ -642,7 +666,13 @@ it.each(['same failure', 'newer non-resumable failure'] as const)(
         ...(exitFailure
           ? {
               criteria: [
-                { when: 'predicate', strategy: 'expression', jsonata: 'true', outcome: 'failure' },
+                {
+                  when: 'predicate',
+                  answer: { type: 'noul' },
+                  evaluation: { kind: 'expression', jsonata: 'true' },
+                  match: { type: 'noul', value: true },
+                  outcome: 'failure',
+                },
               ],
             }
           : {}),

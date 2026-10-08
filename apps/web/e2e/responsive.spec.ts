@@ -206,7 +206,7 @@ async function seedDialogs(request: Parameters<typeof publishLoop>[0]) {
   const created = await request.post('/loops', {
     data: {
       definition: {
-        schemaVersion: 2,
+        schemaVersion: 3,
         name: 'responsive dialogs',
         nodes: configs.map(([kind, config], i) => ({
           id: kind,

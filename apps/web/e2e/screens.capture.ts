@@ -100,7 +100,7 @@ function chain(name: string, description: string, middle: Record<string, unknown
     from: { node: nodes[i]!['id'], port: 'out' },
     to: { node: node['id'] },
   }));
-  return { schemaVersion: 2, name, description, nodes, edges };
+  return { schemaVersion: 3, name, description, nodes, edges };
 }
 
 const ask = (id: string, label: string, template: string) => ({
@@ -120,7 +120,7 @@ function nightlyTriage(childLoopId: string) {
     ui: at(x, y),
   });
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     name: 'nightly-triage',
     description: 'Triages new issues every night and opens a fix when one is needed',
     nodes: [

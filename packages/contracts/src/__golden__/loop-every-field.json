@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "name": "every-field",
   "description": "Every config field of every node kind, for parse checks.",
   "settings": {
@@ -634,15 +634,42 @@
           },
           {
             "when": "predicate",
-            "strategy": "jev",
-            "question": "Done?",
-            "minConfidence": 0.5,
+            "answer": {
+              "type": "noul",
+              "true": {
+                "label": "Done",
+                "criteria": "Complete"
+              },
+              "false": {
+                "label": "Pending",
+                "criteria": "Incomplete"
+              }
+            },
+            "evaluation": {
+              "kind": "classifier",
+              "model": "jev",
+              "question": "Done?",
+              "minConfidence": 0.5
+            },
+            "match": {
+              "type": "noul",
+              "value": true
+            },
             "outcome": "success"
           },
           {
             "when": "predicate",
-            "strategy": "expression",
-            "jsonata": "false",
+            "answer": {
+              "type": "noul"
+            },
+            "evaluation": {
+              "kind": "expression",
+              "jsonata": "false"
+            },
+            "match": {
+              "type": "noul",
+              "value": true
+            },
             "outcome": "failure"
           },
           {

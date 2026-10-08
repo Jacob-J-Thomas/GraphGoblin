@@ -35,7 +35,7 @@ function loop(
   evaluation: DecisionInput['evaluation'],
 ): LoopDefinitionInput {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     name: 'primitive',
     nodes: [
       { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
@@ -136,7 +136,7 @@ describe('decision primitive execution', () => {
       { ownerId: 'local', modelId: 'jev', primitive: 'noul' },
     ]);
     expect(e.ports.jev.choices).toEqual([]);
-    expect(e.ports.jev.judgements).toEqual([]);
+    expect(e.ports.jev.nouls).toEqual([]);
   });
 
   it('retains the raw rejected classifier answer and does not route it', async () => {
@@ -197,7 +197,7 @@ describe('decision primitive execution', () => {
         effort: 'low',
       },
     ]);
-    expect(e.ports.codexDecider.judgements).toEqual([]);
+    expect(e.ports.codexDecider.classifierNouls).toEqual([]);
     expect(e.ports.classifiers.requests).toEqual([]);
   });
 

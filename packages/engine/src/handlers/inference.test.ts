@@ -272,7 +272,7 @@ describe('inference node', () => {
       { finalText: 'third' },
     ]);
     const loop: LoopDefinitionInput = {
-      schemaVersion: 2,
+      schemaVersion: 3,
       name: 'chain',
       nodes: [
         { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },

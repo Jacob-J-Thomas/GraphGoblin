@@ -99,7 +99,7 @@ export function sampleThread(overrides: Partial<ContextThread> = {}): ContextThr
 /** The smallest valid loop: a manual trigger wired to an exit. */
 export function minimalLoop(): LoopDefinitionInput {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     name: 'minimal',
     nodes: [
       { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
@@ -122,7 +122,7 @@ export function everyFieldLoop(): LoopDefinitionInput {
     onFailure: 'continue-raw',
   };
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     name: 'every-field',
     description: 'Every config field of every node kind, for parse checks.',
     settings: {
@@ -430,12 +430,27 @@ export function everyFieldLoop(): LoopDefinitionInput {
             { when: 'max-duration', seconds: 3600 },
             {
               when: 'predicate',
-              strategy: 'jev',
-              question: 'Done?',
-              minConfidence: 0.5,
+              answer: {
+                type: 'noul',
+                true: { label: 'Done', criteria: 'Complete' },
+                false: { label: 'Pending', criteria: 'Incomplete' },
+              },
+              evaluation: {
+                kind: 'classifier',
+                model: 'jev',
+                question: 'Done?',
+                minConfidence: 0.5,
+              },
+              match: { type: 'noul', value: true },
               outcome: 'success',
             },
-            { when: 'predicate', strategy: 'expression', jsonata: 'false', outcome: 'failure' },
+            {
+              when: 'predicate',
+              answer: { type: 'noul' },
+              evaluation: { kind: 'expression', jsonata: 'false' },
+              match: { type: 'noul', value: true },
+              outcome: 'failure',
+            },
             { when: 'last-output-matches', jsonSchema: { type: 'object' } },
           ],
           default: 'loop-back',
@@ -467,7 +482,7 @@ export function everyFieldLoop(): LoopDefinitionInput {
 /** A loop using every node kind once, with a decision and an exit loop-back. */
 export function kitchenSinkLoop(): LoopDefinitionInput {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     name: 'kitchen-sink',
     description: 'Every node kind, for tests.',
     settings: {

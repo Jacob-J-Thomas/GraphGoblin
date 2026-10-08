@@ -60,7 +60,7 @@ describe('parsing is unchanged', () => {
   it('parses an export envelope to the golden value', async () => {
     const envelope = {
       format: 'graphgoblin-loop',
-      formatVersion: 2,
+      formatVersion: 3,
       exportedAt: FIXTURE_TS,
       loop: everyFieldLoop(),
     };

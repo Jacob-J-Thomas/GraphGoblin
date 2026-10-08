@@ -1,7 +1,7 @@
 import {
-  PrimitiveAnswerSchema,
+  PrimitiveAnswerEmissionSchema,
   type DecisionAnswer,
-  type EvaluationAnswerSpec,
+  type PrimitiveAnswerSpec,
   type PrimitiveAnswer,
 } from '@graphgoblin/contracts';
 import { DomainError } from './errors.js';
@@ -20,10 +20,10 @@ export function answerPortIds(answer: DecisionAnswer): string[] {
 
 /** Validate raw facts against the submitted primitive, without confidence acceptance policy. */
 export function validatePrimitiveAnswer(
-  spec: EvaluationAnswerSpec,
+  spec: PrimitiveAnswerSpec,
   result: PrimitiveAnswer,
 ): string | null {
-  if (!PrimitiveAnswerSchema.safeParse(result).success)
+  if (!PrimitiveAnswerEmissionSchema.safeParse(result).success)
     return 'The evaluator returned a malformed primitive answer';
   if (spec.type !== result.type) return 'The evaluator returned a different answer primitive';
   if (spec.type === 'choice' && result.type === 'choice') {
@@ -36,6 +36,7 @@ export function validatePrimitiveAnswer(
     }
   }
   if (result.type === 'noul' && result.kind === 'classifier') {
+    if (result.trueProbability === null) return 'Classifier Noul requires true probability';
     const confidence = result.holds ? result.trueProbability : 1 - result.trueProbability;
     if (result.confidence !== confidence)
       return 'Noul confidence must describe the selected boolean side';

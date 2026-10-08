@@ -3,19 +3,18 @@ import {
   ClassifierScoreResponseSchema,
   type JsonValue,
 } from '@graphgoblin/contracts';
-import { validatePrimitiveAnswer, type PredicateAnswer } from '@graphgoblin/domain';
+import { validatePrimitiveAnswer } from '@graphgoblin/domain';
 import {
   describeError,
   type ChoiceRequest,
   type ChoiceResult,
   type ClassifierNoulResult,
-  type DeciderPort,
+  type ClassifierPort,
   type Logger,
   type SecretsPort,
   type NoulRequest,
   type ScoreRequest,
   type ScoreResult,
-  type YesNoRequest,
 } from '@graphgoblin/engine';
 import {
   APIConnectionError,
@@ -32,12 +31,13 @@ import {
 import { z } from 'zod';
 
 /**
- * `DeciderPort` (`id: 'jev'`) over TypeSafe's hosted Jev model through `@typesafe-ai/sdk`
- * (MIT, no dependencies). Both primitives go through `POST /v1/systemone`:
+ * `ClassifierPort` (`id: 'jev'`) over TypeSafe's hosted Jev model through `@typesafe-ai/sdk`
+ * (MIT, no dependencies). All primitives go through `POST /v1/systemone`:
  *
  * - `choose` asks one `choice` question whose criteria are the route labels and descriptions, and
  *   returns the chosen label, its confidence, and every other label with its probability.
- * - `judge` asks one `noul` (yes/no) question; `noul` is the probability of yes.
+ * - `classifyNoul` returns raw true probability for explicitly authored sides.
+ * - `score` returns a fractional rubric index and actual provider evidence.
  *
  * See docs/research/jev.md for the verified request and response shapes.
  */
@@ -69,16 +69,10 @@ const ChoiceAnswerSchema = z.object({
   probabilities: z.record(z.string(), z.number().min(0).max(1)),
 });
 
-const NoulAnswerSchema = z.object({
-  type: z.literal('noul'),
-  noul: z.number().min(0).max(1),
-});
-
 const resultSchema = <T extends z.ZodType>(answer: T) =>
   z.object({ model: z.string().optional(), answers: z.object({ answer }) });
 
 const ChoiceResultSchema = resultSchema(ChoiceAnswerSchema);
-const NoulResultSchema = resultSchema(NoulAnswerSchema);
 
 /** An error carrying a code the engine and logs can key off. */
 export class JevError extends Error {
@@ -131,7 +125,7 @@ function mapError(error: unknown): Error {
   return new JevError('DECIDER_HTTP_ERROR', 'Jev request failed');
 }
 
-export class JevDecider implements DeciderPort {
+export class JevDecider implements ClassifierPort {
   readonly id = 'jev' as const;
   private client: TypeSafeClient | undefined;
   private readonly ready: Promise<void>;
@@ -237,26 +231,6 @@ export class JevDecider implements DeciderPort {
       confidence: confidence ?? probabilities[label]!,
       probabilities,
     };
-  }
-
-  async judge(request: YesNoRequest, signal: AbortSignal): Promise<PredicateAnswer> {
-    const client = this.requireClient();
-    let body: unknown;
-    try {
-      body = await client.systemOne(
-        { state: toState(request.context), questions: { answer: noul(request.question) } },
-        { signal },
-      );
-    } catch (error) {
-      throw mapError(error);
-    }
-    const parsed = NoulResultSchema.safeParse(body);
-    if (!parsed.success) {
-      throw new JevError('DECIDER_INVALID_RESPONSE', 'Unexpected Jev yes/no response');
-    }
-    const yes = parsed.data.answers.answer.noul;
-    const holds = yes >= 0.5;
-    return { holds, confidence: holds ? yes : 1 - yes };
   }
 
   async classifyNoul(request: NoulRequest, signal: AbortSignal): Promise<ClassifierNoulResult> {

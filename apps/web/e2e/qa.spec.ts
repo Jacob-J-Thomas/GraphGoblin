@@ -19,7 +19,7 @@ const start = { id: 'start', kind: 'trigger', label: 'Start', config: { subtype:
 const done = { id: 'done', kind: 'exit', label: 'Done', config: {} };
 function chain(name: string, middle: Record<string, unknown> & { id: string }) {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     name,
     nodes: [start, middle, done],
     edges: [
@@ -158,7 +158,7 @@ test('failure reasons are typed and visible: harness failure and decider unavail
   await control(request, '/deciders', { jev: true, codex: true });
   try {
     const decide = {
-      schemaVersion: 2,
+      schemaVersion: 3,
       name: 'qa decider',
       nodes: [
         start,

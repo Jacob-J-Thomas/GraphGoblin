@@ -15,11 +15,18 @@ function canChoose(entry: ClassifierModelSummary, primitive: 'choice' | 'noul' |
   return entry.enabled && entry.primitives.includes(primitive);
 }
 
+function answerTypePath(name: string): string {
+  const segments = name.split('.');
+  const evaluation = segments.lastIndexOf('evaluation');
+  if (evaluation >= 0) return [...segments.slice(0, evaluation), 'answer', 'type'].join('.');
+  return 'answer.type';
+}
+
 /** Required explicit primitive-capable classifier selection for a decision. */
 export function ClassifierField({ schema, name, label }: FieldProps) {
   const field = useField(name, 'commit');
   const query = useClassifierModels();
-  const answerType = useWatch({ name: 'answer.type' }) as unknown;
+  const answerType = useWatch({ name: answerTypePath(name) }) as unknown;
   const id = useId();
   const { required, help } = fieldMeta(schema);
   const value = typeof field.value === 'string' ? field.value : '';

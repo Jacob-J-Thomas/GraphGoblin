@@ -1,7 +1,9 @@
 import {
-  PrimitiveAnswerSchema,
+  NoulSpecSchema,
+  PrimitiveAnswerEmissionSchema,
   type Evaluation,
-  type EvaluationAnswerSpec,
+  type PrimitiveAnswerSpec,
+  type PrimitiveEvaluation,
   type EvaluationProvenance,
   type JsonValue,
   type PrimitiveAnswer,
@@ -17,7 +19,7 @@ export interface PrimitiveEvaluationRequest {
   nodeId: string;
   ownerId: string;
   evaluation: Evaluation;
-  answer: EvaluationAnswerSpec;
+  answer: PrimitiveAnswerSpec;
   expressionView: unknown;
   question?: string;
   context?: JsonValue;
@@ -26,13 +28,7 @@ export interface PrimitiveEvaluationRequest {
   resolveModel: HandlerServices['resolveModel'];
 }
 
-export interface PrimitiveEvaluationResult {
-  answer: PrimitiveAnswer;
-  provenance: EvaluationProvenance;
-  acceptance:
-    | { status: 'accepted' }
-    | { status: 'rejected'; code: 'EVALUATION_RESULT_REJECTED'; minConfidence: number };
-}
+export type PrimitiveEvaluationResult = PrimitiveEvaluation;
 
 const CLASSIFIER_MESSAGES: Record<ClassifierUnavailableReason, string> = {
   CLASSIFIER_MODEL_NOT_FOUND: 'The selected classifier is not in the catalog',
@@ -56,7 +52,11 @@ function fail(
   });
 }
 
-function providerFailure(request: PrimitiveEvaluationRequest, error: unknown): never {
+function providerFailure(
+  request: PrimitiveEvaluationRequest,
+  error: unknown,
+  provenance: EvaluationProvenance,
+): never {
   if (isAbortError(error) || request.signal.aborted) throw error;
   const diagnostic = summarizeDeciderError(error);
   request.ports.logger.warn(
@@ -70,7 +70,7 @@ function providerFailure(request: PrimitiveEvaluationRequest, error: unknown): n
     'evaluation provider failed',
   );
   if (diagnostic.code === 'DECIDER_INVALID_RESPONSE')
-    fail(request, 'EVALUATION_INVALID_RESPONSE', diagnostic.message);
+    fail(request, 'EVALUATION_INVALID_RESPONSE', diagnostic.message, false, { provenance });
   const resumable =
     diagnostic.code === 'DECIDER_UNAVAILABLE' ||
     diagnostic.code === 'DECIDER_NOT_AUTHENTICATED' ||
@@ -86,22 +86,29 @@ function providerFailure(request: PrimitiveEvaluationRequest, error: unknown): n
     diagnostic.message,
     resumable,
     {
+      provenance,
       ...(diagnostic.code ? { code: diagnostic.code } : {}),
       ...(diagnostic.status !== undefined ? { status: diagnostic.status } : {}),
     },
   );
 }
 
-function validated(request: PrimitiveEvaluationRequest, value: unknown): PrimitiveAnswer {
-  const parsed = PrimitiveAnswerSchema.safeParse(value);
+function validated(
+  request: PrimitiveEvaluationRequest,
+  value: unknown,
+  provenance: EvaluationProvenance,
+): PrimitiveAnswer {
+  const parsed = PrimitiveAnswerEmissionSchema.safeParse(value);
   if (!parsed.success)
     fail(
       request,
       'EVALUATION_INVALID_RESPONSE',
       'The evaluator returned an invalid primitive answer',
+      false,
+      { provenance },
     );
   const problem = validatePrimitiveAnswer(request.answer, parsed.data);
-  if (problem) fail(request, 'EVALUATION_INVALID_RESPONSE', problem);
+  if (problem) fail(request, 'EVALUATION_INVALID_RESPONSE', problem, false, { provenance });
   return parsed.data;
 }
 
@@ -110,6 +117,35 @@ export async function evaluatePrimitive(
   request: PrimitiveEvaluationRequest,
 ): Promise<PrimitiveEvaluationResult> {
   const { evaluation, answer } = request;
+  if (answer.type === 'score' && evaluation.kind !== 'classifier')
+    fail(request, 'EVALUATION_INVALID_CONFIGURATION', 'Score requires a classifier evaluator');
+  if (
+    evaluation.kind === 'classifier' &&
+    evaluation.truthThreshold !== undefined &&
+    answer.type !== 'noul'
+  )
+    fail(request, 'EVALUATION_INVALID_CONFIGURATION', 'truthThreshold applies only to Noul');
+  const noul =
+    answer.type === 'noul' && evaluation.kind !== 'expression'
+      ? NoulSpecSchema.safeParse(
+          'true' in answer && 'false' in answer
+            ? {
+                type: 'noul',
+                true: { label: answer.true.label, criteria: answer.true.criteria },
+                false: { label: answer.false.label, criteria: answer.false.criteria },
+              }
+            : answer,
+        )
+      : undefined;
+  if (noul && !noul.success)
+    fail(
+      request,
+      'EVALUATION_INVALID_CONFIGURATION',
+      'Provider Noul requires both authored side criteria',
+    );
+  const criteria = noul?.success
+    ? { true: noul.data.true.criteria, false: noul.data.false.criteria }
+    : undefined;
   let result: PrimitiveAnswer;
   let provenance: EvaluationProvenance;
   if (evaluation.kind === 'expression') {
@@ -170,6 +206,7 @@ export async function evaluatePrimitive(
           { reason: selection.reason },
         );
       }
+      provenance = { kind: 'classifier', ...selection.provenance, effort: null };
       try {
         if (answer.type === 'choice') {
           result = await selection.classifier.choose(
@@ -178,7 +215,7 @@ export async function evaluatePrimitive(
           );
         } else if (answer.type === 'noul') {
           const raw: unknown = await selection.classifier.classifyNoul(
-            { ...prepared, criteria: { true: answer.true.criteria, false: answer.false.criteria } },
+            { ...prepared, criteria: criteria! },
             request.signal,
           );
           if (
@@ -197,6 +234,8 @@ export async function evaluatePrimitive(
               request,
               'EVALUATION_INVALID_RESPONSE',
               'The classifier returned an invalid Noul probability',
+              false,
+              { provenance },
             );
           const holds = raw.trueProbability >= (evaluation.truthThreshold ?? 0.5);
           result = {
@@ -214,28 +253,33 @@ export async function evaluatePrimitive(
         }
       } catch (error) {
         if (error instanceof RunFailureError) throw error;
-        providerFailure(request, error);
+        providerFailure(request, error, provenance);
       }
-      result = validated(request, result);
+      result = validated(request, result, provenance);
       if (result.type === 'choice' && (result.confidence === null || result.probabilities === null))
         fail(
           request,
           'EVALUATION_INVALID_RESPONSE',
           'The classifier must return confidence and option probabilities',
+          false,
+          { provenance },
         );
       if (result.type === 'noul' && result.kind !== 'classifier')
         fail(
           request,
           'EVALUATION_INVALID_RESPONSE',
           'The classifier must return its true probability',
+          false,
+          { provenance },
         );
-      provenance = { kind: 'classifier', ...selection.provenance, effort: null };
       if (evaluation.minConfidence !== undefined) {
         if (result.confidence === null)
           fail(
             request,
             'EVALUATION_INVALID_RESPONSE',
             'The classifier must return confidence for the authored minimum',
+            false,
+            { provenance },
           );
         if (result.confidence < evaluation.minConfidence)
           return {
@@ -267,6 +311,7 @@ export async function evaluatePrimitive(
         evaluation.model.mode === 'explicit' ? evaluation.model.value : undefined,
         evaluation.effort.mode === 'explicit' ? evaluation.effort.value : undefined,
       );
+      provenance = { kind: 'llm', provider: evaluation.harness, classifierId: null, ...resolved };
       try {
         if (answer.type === 'choice') {
           result = await decider.choose(
@@ -274,10 +319,10 @@ export async function evaluatePrimitive(
             request.signal,
           );
         } else {
-          const raw = await decider.noul!(
+          const raw = await decider.noul(
             {
               ...prepared,
-              criteria: { true: answer.true.criteria, false: answer.false.criteria },
+              criteria: criteria!,
               ...resolved,
             },
             request.signal,
@@ -285,9 +330,9 @@ export async function evaluatePrimitive(
           result = { ...raw, kind: 'llm' };
         }
       } catch (error) {
-        providerFailure(request, error);
+        providerFailure(request, error, provenance);
       }
-      result = validated(request, result);
+      result = validated(request, result, provenance);
       if (
         result.confidence === null ||
         (result.type === 'choice' && result.probabilities !== null) ||
@@ -297,8 +342,9 @@ export async function evaluatePrimitive(
           request,
           'EVALUATION_INVALID_RESPONSE',
           'LLM answers require informational confidence without classifier probabilities',
+          false,
+          { provenance },
         );
-      provenance = { kind: 'llm', provider: evaluation.harness, classifierId: null, ...resolved };
     }
   }
   return { answer: result, provenance, acceptance: { status: 'accepted' } };

@@ -48,7 +48,7 @@ export const EdgeSchema = z.strictObject({
 export type Edge = z.infer<typeof EdgeSchema>;
 
 export const LoopDefinitionSchema = z.strictObject({
-  schemaVersion: z.literal(2),
+  schemaVersion: z.literal(3),
   name: z.string().min(1).max(120),
   description: z.string().max(4000).optional(),
   settings: LoopSettingsSchema.prefault({}),
@@ -62,7 +62,7 @@ export type LoopDefinitionInput = z.input<typeof LoopDefinitionSchema>;
 /** Portable file format for committing loops to a repository. */
 export const LoopExportSchema = z.strictObject({
   format: z.literal('graphgoblin-loop'),
-  formatVersion: z.literal(2),
+  formatVersion: z.literal(3),
   exportedAt: TimestampSchema,
   loop: LoopDefinitionSchema,
 });

@@ -16,7 +16,7 @@ import type {
   Usage,
   WorkingDirectorySpec,
 } from '@graphgoblin/contracts';
-import { isTerminal, type PredicateAnswer } from '@graphgoblin/domain';
+import { isTerminal } from '@graphgoblin/domain';
 import type {
   ArtifactStorePort,
   ChoiceRequest,
@@ -61,7 +61,6 @@ import type {
   StructuredPort,
   TimerPort,
   WorkspacePort,
-  YesNoRequest,
 } from '../ports.js';
 import { AppendConflictError } from '../errors.js';
 import {
@@ -543,7 +542,6 @@ export class FakeHarness implements HarnessPort {
 
 export class FakeDecider implements DeciderPort {
   readonly choices: ChoiceRequest[] = [];
-  readonly judgements: YesNoRequest[] = [];
   readonly nouls: NoulRequest[] = [];
   readonly classifierNouls: NoulRequest[] = [];
   readonly scores: ScoreRequest[] = [];
@@ -557,10 +555,6 @@ export class FakeDecider implements DeciderPort {
       probabilities:
         id === 'jev' ? Object.fromEntries(r.options.map((o, i) => [o.id, i === 0 ? 1 : 0])) : null,
     }),
-    private readonly judge_: (request: YesNoRequest) => PredicateAnswer = () => ({
-      holds: true,
-      confidence: 1,
-    }),
   ) {}
   available(): boolean {
     return this.isAvailable;
@@ -568,10 +562,6 @@ export class FakeDecider implements DeciderPort {
   choose(request: ChoiceRequest, _signal?: AbortSignal): Promise<ChoiceResult> {
     this.choices.push(request);
     return Promise.resolve(this.chooser(request));
-  }
-  judge(request: YesNoRequest, _signal?: AbortSignal): Promise<PredicateAnswer> {
-    this.judgements.push(request);
-    return Promise.resolve(this.judge_(request));
   }
   noul(request: NoulRequest, _signal?: AbortSignal): Promise<LlmNoulResult> {
     this.nouls.push(request);
@@ -1005,7 +995,7 @@ export function createFakePorts(options: { secrets?: Record<string, string> } = 
     sessions: new InMemorySessionRepository(),
     harnesses: { codex: harness },
     harness,
-    deciders: [jev, codexDecider],
+    deciders: [codexDecider],
     classifiers: new FakeClassifierRegistry(jev),
     modelCatalog: new FakeModelCatalog(),
     jev,

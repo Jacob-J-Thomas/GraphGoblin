@@ -62,7 +62,7 @@ describe('mixed native harness families', () => {
       { id: 'done', kind: 'exit' as const, label: 'Done', config: {} },
     ];
     const loop: LoopDefinitionInput = {
-      schemaVersion: 2,
+      schemaVersion: 3,
       name: 'mixed',
       nodes,
       edges: nodes.slice(0, -1).map((node, i) => ({
@@ -100,7 +100,7 @@ describe('mixed native harness families', () => {
       { id: 'done', kind: 'exit' as const, label: 'D', config: {} },
     ];
     const loop: LoopDefinitionInput = {
-      schemaVersion: 2,
+      schemaVersion: 3,
       name: 'named-families',
       nodes,
       edges: nodes.slice(0, -1).map((node, i) => ({

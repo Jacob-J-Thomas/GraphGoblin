@@ -3,7 +3,6 @@ import { validateHarnessDefaults } from '@graphgoblin/domain';
 import { mkdir } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import { createCodexAdapters } from '@graphgoblin/adapter-codex';
-import { createJevDecider } from '@graphgoblin/adapter-jev';
 import { FsArtifactStore, FsWorkspace } from '@graphgoblin/infrastructure/fs';
 import {
   HttpProbes,
@@ -52,7 +51,6 @@ import {
   type IdPort,
   type Logger,
   type ScriptPort,
-  type SecretsPort,
   type StructuredPort,
 } from '@graphgoblin/engine';
 import type { ApiConfig } from './config.js';
@@ -246,29 +244,12 @@ export async function createContainer(
         : {}),
       ...(config.codexBinary ? { codexBinary: config.codexBinary } : {}),
     });
-    // Jev resolves its key as soon as it is built, before `start()` has migrated the database; until
-    // then it sees no secret, and `start()` refreshes it once the tables exist.
-    let migrated = false;
     const ownerSecrets = secretsFor(LOCAL_OWNER);
-    const jevSecrets: SecretsPort = {
-      resolve: (name) => (migrated ? ownerSecrets.resolve(name) : Promise.resolve(undefined)),
-    };
-    const jev = createJevDecider({ secrets: jevSecrets, logger, secretName: JEV_SECRET });
     const classifierRegistry = new ClassifierRegistry(classifiers, secretsFor, logger);
-    let builtinEnabled = false;
-    const refreshBuiltin = async (): Promise<void> => {
-      builtinEnabled = (await classifiers.findOne(LOCAL_OWNER, 'jev'))?.enabled ?? false;
-    };
-    const exitJev: DeciderPort = {
-      id: 'jev',
-      available: () => builtinEnabled && jev.available(),
-      choose: (request, signal) => jev.choose(request, signal),
-      judge: (request, signal) => jev.judge(request, signal),
-    };
     const secretHooks: SecretChangeHook[] = [
-      async (ownerId, name) => {
+      (ownerId, name) => {
         classifierRegistry.secretChanged(ownerId, name);
-        if (ownerId === LOCAL_OWNER && name === JEV_SECRET) await jev.refresh();
+        return Promise.resolve();
       },
       ...(overrides.secretHooks ?? []),
     ];
@@ -290,8 +271,8 @@ export async function createContainer(
         }),
       },
       modelCatalog: catalog,
-      // Codex Choice and built-in Noul exits; classifier Choice uses the registry.
-      deciders: overrides.deciders ?? [exitJev, codex.decider],
+      // LLM evaluation uses Codex; all classifier primitives use the owner registry.
+      deciders: overrides.deciders ?? [codex.decider],
       classifiers: overrides.classifiers ?? classifierRegistry,
       structured,
       scripts: overrides.scripts ?? new ProcessScripts(),
@@ -409,24 +390,20 @@ export async function createContainer(
       async onSecretChanged(ownerId, name) {
         for (const hook of secretHooks) await hook(ownerId, name);
       },
-      async onClassifierChanged(ownerId, id) {
+      onClassifierChanged(ownerId, id) {
         classifierRegistry.invalidate(ownerId, id);
-        if (ownerId === LOCAL_OWNER && id === 'jev') await refreshBuiltin();
+        return Promise.resolve();
       },
       start() {
         if (stopping) return Promise.reject(new Error('container has been stopped'));
         starting ??= (async () => {
           try {
             await handle.migrate();
-            migrated = true;
             await classifiers.seedBuiltin(LOCAL_OWNER, BUILTIN_CLASSIFIER);
-            await refreshBuiltin();
             if (config.jevApiKey && (await ownerSecrets.resolve(JEV_SECRET)) === undefined) {
               await ownerSecrets.set(JEV_SECRET, config.jevApiKey);
               logger.info({}, 'seeded jev-api-key from GG_JEV_API_KEY');
             }
-            await jev.init();
-            await jev.refresh();
             await catalog.seed();
             await manager.start();
             triggers.start();

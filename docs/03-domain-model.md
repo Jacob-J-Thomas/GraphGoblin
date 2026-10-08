@@ -26,7 +26,7 @@ Stored as JSON in `loop_versions.definition`, validated by `contracts`.
 
 ```ts
 type LoopDefinition = {
-  schemaVersion: 2;
+  schemaVersion: 3;
   name: string;
   description?: string;
   settings: {
@@ -65,7 +65,7 @@ type NodeKind =
   | 'exit';
 ```
 
-An edge's `ui.route` is canvas layout, like a node's `ui`: the positions of the route's inner segments in canvas coordinates, alternating the x of a vertical segment and the y of a horizontal one (`x, y, ..., x`, so an odd count from 1 to 63). The first and last segments are horizontal and run from the ports' own heights, so the route stays attached when a card moves. The route lives on the edge it draws: deleting the edge deletes it, renaming a node keeps it, and versions pin it with the rest of the definition. The engine ignores it. The route field itself does not change the format. Current definitions and exports use version 2; the offline upgrade preserves these routes.
+An edge's `ui.route` is canvas layout, like a node's `ui`: the positions of the route's inner segments in canvas coordinates, alternating the x of a vertical segment and the y of a horizontal one (`x, y, ..., x`, so an odd count from 1 to 63). The first and last segments are horizontal and run from the ports' own heights, so the route stays attached when a card moves. The route lives on the edge it draws: deleting the edge deletes it, renaming a node keeps it, and versions pin it with the rest of the definition. The engine ignores it. The route field itself does not change the format. Current definitions and exports use version 3; the offline upgrade preserves these routes.
 
 Validation rules enforced by `domain` before a version can be published:
 
@@ -79,7 +79,7 @@ Validation rules enforced by `domain` before a version can be published:
 Harness selection belongs to inference nodes (`config.harness`, default `codex`). Loop defaults
 provide only model and effort. Definitions containing `settings.defaults.harness` are rejected
 as unknown keys; imports and API clients must remove it. There is no compatibility parser.
-Current definition and export format versions are 2. Decision answers include Noul, Choice and Score; the output records the raw answer, stable selected port and evaluator provenance. [ADR-0025](decisions/ADR-0025-answer-primitives.md) adds the new primitives without changing existing Choice evidence or context serialization. Existing format-1 data follows the [offline upgrade workflow](guide/08-offline-upgrade.md). Harness ownership was established in [ADR-0019](decisions/ADR-0019-inference-node-harness.md); the later format cutover is [ADR-0022](decisions/ADR-0022-explicit-decision-evaluation.md).
+Current definition and export format versions are 3. Exit predicates declare an answer, evaluator and matching rule, sharing the primitive evaluator without changing their existing context. [ADR-0026](decisions/ADR-0026-exit-primitives-and-format-three.md) owns the stopped-instance exit cutover. Decision answers include Noul, Choice and Score; the output records the raw answer, stable selected port and evaluator provenance. [ADR-0025](decisions/ADR-0025-answer-primitives.md) adds the new primitives without changing existing Choice evidence or context serialization. Existing format-1 data follows the [offline upgrade workflow](guide/08-offline-upgrade.md). Harness ownership was established in [ADR-0019](decisions/ADR-0019-inference-node-harness.md); the later format cutover is [ADR-0022](decisions/ADR-0022-explicit-decision-evaluation.md).
 
 ## Versioning (Decided)
 

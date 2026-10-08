@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { upgradeLoopV1, type UpgradeIssue } from '@graphgoblin/domain';
+import { upgradeLoopCurrent, type UpgradeIssue } from '@graphgoblin/domain';
 import { useLoop } from '../api/queries.js';
 import {
   clearArchivedDraft,
@@ -25,34 +25,11 @@ export interface RawDeviceCopy extends LocalDraft {
   source: 'active' | 'set-aside' | 'archive';
 }
 
-/** Convert only unambiguous v1 local copies; every other old shape stays untouched and inert. */
+/** Convert device copies only through the current explicit one-off upgrade; unresolved stays inert. */
 function readDeviceDraft(draft: LocalDraft | undefined): DeviceDraftRead {
   if (!draft) return {};
   const definition = draft.definition as unknown;
-  const version =
-    typeof definition === 'object' && definition !== null && !Array.isArray(definition)
-      ? (definition as { schemaVersion?: unknown }).schemaVersion
-      : undefined;
-  if (version === 2) {
-    const current = { ...draft };
-    delete current.migrationIssues;
-    return { draft: current };
-  }
-  if (version !== 1) {
-    return {
-      unconvertible: {
-        ...draft,
-        migrationIssues: [
-          {
-            code: 'UPGRADE_VERSION_UNSUPPORTED',
-            path: '/schemaVersion',
-            message: 'This device copy uses an unsupported loop format.',
-          },
-        ],
-      },
-    };
-  }
-  const result = upgradeLoopV1(definition);
+  const result = upgradeLoopCurrent(definition);
   if (!result.ok) return { unconvertible: { ...draft, migrationIssues: result.issues } };
   const current = { ...draft };
   delete current.migrationIssues;

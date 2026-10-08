@@ -38,7 +38,7 @@ describe.skipIf(!live)('API live smoke with the real Codex adapter', () => {
     await app.ready();
     try {
       const definition: LoopDefinitionInput = {
-        schemaVersion: 2,
+        schemaVersion: 3,
         name: 'live-smoke',
         settings: { workingDirectory: { kind: 'fixed', path: workDir } },
         nodes: [

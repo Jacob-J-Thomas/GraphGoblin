@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { EvaluationSchema, type EvaluationAnswerSpec } from '@graphgoblin/contracts';
 import { evaluatePrimitive, type PrimitiveEvaluationRequest } from './primitive-evaluator.js';
-import type { ClassifierNoulResult } from './ports.js';
+import type { ClassifierNoulResult, DeciderPort } from './ports.js';
 import { createFakePorts } from './testing/index.js';
 
 const noul: EvaluationAnswerSpec = {
@@ -104,14 +104,60 @@ describe('context-independent primitive evaluator boundary', () => {
       question: 'Unused',
     });
     const choose = vi.fn();
-    const judge = vi.fn();
-    input.ports.deciders = [{ id: 'codex', available: () => true, choose, judge }];
+    input.ports.deciders = [
+      { id: 'codex', available: () => true, choose } as unknown as DeciderPort,
+    ];
     await expect(evaluatePrimitive(input)).rejects.toMatchObject({
       code: 'EVALUATION_INVALID_CONFIGURATION',
       options: { resumable: false },
     });
     expect(choose).not.toHaveBeenCalled();
-    expect(judge).not.toHaveBeenCalled();
     expect(input.resolveModel).not.toHaveBeenCalled();
   });
+  it.each(['choice', 'score'] as const)(
+    'rejects direct %s truthThreshold configuration before selection',
+    async (type) => {
+      const input = request();
+      input.answer =
+        type === 'score'
+          ? score
+          : { type: 'choice', options: [{ id: 'ready', label: 'Ready', criteria: 'Ready' }] };
+      input.evaluation = EvaluationSchema.parse({
+        kind: 'classifier',
+        model: 'jev',
+        question: '?',
+        truthThreshold: 0.6,
+      });
+      const resolve = vi.spyOn(input.ports.classifiers, 'resolve');
+      await expect(evaluatePrimitive(input)).rejects.toMatchObject({
+        code: 'EVALUATION_INVALID_CONFIGURATION',
+      });
+      expect(resolve).not.toHaveBeenCalled();
+      expect(input.resolveModel).not.toHaveBeenCalled();
+    },
+  );
+  it.each(['classifier', 'llm'] as const)(
+    'requires authored provider Noul criteria before %s selection',
+    async (kind) => {
+      const input = request();
+      input.answer = { type: 'noul' };
+      input.evaluation = EvaluationSchema.parse(
+        kind === 'classifier'
+          ? { kind, model: 'jev', question: '?' }
+          : {
+              kind,
+              harness: 'codex',
+              model: { mode: 'inherit' },
+              effort: { mode: 'inherit' },
+              question: '?',
+            },
+      );
+      const resolve = vi.spyOn(input.ports.classifiers, 'resolve');
+      await expect(evaluatePrimitive(input)).rejects.toMatchObject({
+        code: 'EVALUATION_INVALID_CONFIGURATION',
+      });
+      expect(resolve).not.toHaveBeenCalled();
+      expect(input.resolveModel).not.toHaveBeenCalled();
+    },
+  );
 });

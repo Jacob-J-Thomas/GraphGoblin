@@ -1,4 +1,4 @@
-import type { LoopDefinitionInput } from '@graphgoblin/contracts';
+import { LoopDefinitionSchema, type LoopDefinitionInput } from '@graphgoblin/contracts';
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
@@ -85,7 +85,7 @@ describe('restoring a set-aside copy', () => {
     expect(await screen.findByRole('heading', { name: 'legacy device copy' })).toBeInTheDocument();
     await waitFor(async () => {
       const saved = await drafts.loadLocalDraft(loop.id);
-      expect(saved?.definition.schemaVersion).toBe(2);
+      expect(saved?.definition.schemaVersion).toBe(3);
       expect(saved?.definition.settings?.defaults).toEqual({
         byHarness: { codex: { model: 'gpt-6-luna', effort: 'low' } },
       });
@@ -148,7 +148,7 @@ describe('restoring a set-aside copy', () => {
     const loop = api.addLoop(newLoopDefinition('server copy'));
     const active = {
       loopId: loop.id,
-      definition: newLoopDefinition('older valid active copy'),
+      definition: LoopDefinitionSchema.parse(newLoopDefinition('older valid active copy')),
       savedAt: '1900-01-01T00:00:00.000Z',
       synced: false,
     };

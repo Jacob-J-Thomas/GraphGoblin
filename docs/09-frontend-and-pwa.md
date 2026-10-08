@@ -412,3 +412,7 @@ The owner's request of 2026-10-04: undo and redo for the editor, with Ctrl+Z and
 ## Primitive decision evidence (#97)
 
 The inspector displays the raw Choice, Noul or Score answer separately from the selected stable route. Classifier Noul shows its true probability and chosen-side confidence; expression Noul has no confidence; LLM Noul shows self-reported confidence and a reasoning excerpt. Score retains its fractional rubric index, legend and available probabilities. A confidence-rejected decision shows the validated raw answer and failed gate in the run failure details, without claiming a chosen route. Existing full-thread question rendering and provider context selectors remain unchanged; #38 and #33 are deferred.
+
+## Exit predicate authoring and evidence (#99)
+
+Exit criteria expose the answer primitive, compatible evaluation method and explicit matching rule. Classifier/model choices use the same catalog controls as decisions; exits retain their fixed context. Noul matches true or false, Choice selects declared IDs, and Score chooses a comparison on its rubric scale. Confidence gates explain when an otherwise matching raw answer is rejected; LLM minimum confidence is labelled self-reported. The inspector shows answer, provenance, gate and match separately. Criterion order and the single loop-back connection remain visible without creating answer ports. Format-3 device drafts use the explicit converter; unresolved originals remain inert and exportable for resolution.

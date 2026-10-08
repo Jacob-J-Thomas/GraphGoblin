@@ -19,7 +19,7 @@ const start = { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'ma
 const done = { id: 'done', kind: 'exit', label: 'D', config: {} } as const;
 function chain(name: string, middle: LoopDefinitionInput['nodes'][number]): LoopDefinitionInput {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     name,
     nodes: [start, middle, done],
     edges: [
@@ -257,7 +257,7 @@ describe('validate, draft saves, and publish agree', () => {
       url: '/loops/import',
       payload: {
         format: 'graphgoblin-loop',
-        formatVersion: 2,
+        formatVersion: 3,
         exportedAt: '2026-10-03T00:00:00.000Z',
         loop: definition,
       },
@@ -273,7 +273,7 @@ describe('validate, draft saves, and publish agree', () => {
       url: '/loops/import',
       payload: {
         format: 'graphgoblin-loop',
-        formatVersion: 2,
+        formatVersion: 3,
         exportedAt: '2026-10-03T00:00:00.000Z',
         loop: chain('imported', subloop('01ARZ3NDEKTSV4RRFFQ69G5FAV')),
       },

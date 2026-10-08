@@ -169,33 +169,28 @@ it.skipIf(process.env.LIVE !== '1')(
         key,
       );
 
-      const judged = await decider.judge(
+      const judged = await decider.classifyNoul(
         {
           question: 'Are all tests passing and all issues resolved so the loop can exit?',
           context,
+          criteria: {
+            true: 'All tests pass and every issue is resolved',
+            false: 'A test fails or an issue remains',
+          },
         },
         new AbortController().signal,
       );
       const rawNoul = documented(noulSchema, responses[1], 'Noul');
       const yes = rawNoul.answers.answer.noul;
-      expect(typeof judged.holds, 'Noul.holds must be boolean (docs/research/jev.md)').toBe(
-        'boolean',
-      );
-      documented(probability, judged.confidence, 'Noul.confidence');
-      expect(judged.holds, 'Noul.holds must reflect answers.answer.noul >= 0.5').toBe(yes >= 0.5);
-      expect(
-        judged.confidence,
-        'Noul.confidence must be the probability of the returned boolean',
-      ).toBe(judged.holds ? yes : 1 - yes);
+      documented(probability, judged.trueProbability, 'Noul.trueProbability');
+      expect(judged.trueProbability).toBe(yes);
       report(
         'Noul',
         {
           model: rawNoul.model,
           usage: rawNoul.usage,
           noul: yes,
-          holds: judged.holds,
-          confidence: judged.confidence,
-          chosenProbability: judged.holds ? yes : 1 - yes,
+          trueProbability: judged.trueProbability,
           response: responses[1],
         },
         key,

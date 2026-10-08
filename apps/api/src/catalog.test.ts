@@ -360,8 +360,19 @@ describe('uniform strict evaluator admission', () => {
                   criteria: [
                     {
                       when: 'predicate',
-                      strategy: 'codex',
-                      question: 'Complete?',
+                      answer: {
+                        type: 'noul',
+                        true: { label: 'Ready', criteria: 'Task is done' },
+                        false: { label: 'Continue', criteria: 'Task is not done' },
+                      },
+                      evaluation: {
+                        kind: 'llm',
+                        harness: 'codex',
+                        model: { mode: 'inherit' },
+                        effort: { mode: 'inherit' },
+                        question: 'Complete?',
+                      },
+                      match: { type: 'noul', value: true },
                       outcome: 'success',
                     },
                   ],
@@ -429,7 +440,7 @@ describe('uniform strict evaluator admission', () => {
         url: '/loops/import',
         payload: {
           format: 'graphgoblin-loop',
-          formatVersion: 2,
+          formatVersion: 3,
           exportedAt: '2026-10-02T12:00:00.000Z',
           loop: definition,
         },

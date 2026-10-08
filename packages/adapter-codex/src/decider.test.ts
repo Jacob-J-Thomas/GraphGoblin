@@ -1,11 +1,10 @@
 import type { StructuredPort } from '@graphgoblin/engine';
 import { describe, expect, it, vi } from 'vitest';
 import {
-  JUDGE_SCHEMA,
+  NOUL_SCHEMA,
   choicePrompt,
   choiceSchema,
   createCodexDecider,
-  judgePrompt,
   noulPrompt,
 } from './decider.js';
 
@@ -120,54 +119,12 @@ describe('CodexDecider.choose', () => {
   );
 });
 
-describe('CodexDecider.judge', () => {
-  it('asks a yes/no question and returns holds with confidence', async () => {
-    const { port, complete } = structuredReturning({
-      holds: false,
-      confidence: -0.5,
-      reasoning: 'no',
-    });
-    const answer = await createCodexDecider(port).judge(
-      { question: 'Done?', context: null, model: 'm', effort: 'high' },
-      new AbortController().signal,
-    );
-    expect(answer).toEqual({ holds: false, confidence: 0, reasoning: 'no' });
-    expect(complete.mock.calls[0]?.[0].schema).toBe(JUDGE_SCHEMA);
-    expect(complete.mock.calls[0]?.[0].prompt).toContain('Question: Done?');
-  });
-
-  it('accepts a missing confidence and rejects a missing verdict', async () => {
-    expect(
-      await createCodexDecider(structuredReturning({ holds: true }).port).judge(
-        { question: 'q', context: {} },
-        new AbortController().signal,
-      ),
-    ).toEqual({ holds: true });
-    await expect(
-      createCodexDecider(structuredReturning({ holds: 'yes' }).port).judge(
-        { question: 'q', context: {} },
-        new AbortController().signal,
-      ),
-    ).rejects.toMatchObject({ code: 'DECIDER_INVALID_RESPONSE' });
-  });
-  it('retains only the bounded judge reasoning field', async () => {
-    const answer = await createCodexDecider(
-      structuredReturning({
-        holds: true,
-        confidence: 0.93,
-        reasoning: 'x'.repeat(3000),
-        payload: 'private-envelope',
-      }).port,
-    ).judge({ question: 'Done?', context: null }, new AbortController().signal);
-    expect(answer).toEqual({ holds: true, confidence: 0.93, reasoning: 'x'.repeat(2048) });
-    expect(JSON.stringify(answer)).not.toContain('private-envelope');
-  });
-});
-
 describe('prompts', () => {
   it('render the question and context', () => {
     expect(choicePrompt({ ...choice, context: undefined as never })).toContain('null');
-    expect(judgePrompt({ question: 'q?', context: [1] })).toContain('[\n  1\n]');
+    expect(
+      noulPrompt({ question: 'q?', context: [1], criteria: { true: 'Yes', false: 'No' } }),
+    ).toContain('[\n  1\n]');
   });
 });
 
@@ -193,7 +150,7 @@ describe('CodexDecider.noul', () => {
     expect(complete.mock.calls[0]?.[0]).toMatchObject({
       model: 'gpt-6-luna',
       effort: 'low',
-      schema: JUDGE_SCHEMA,
+      schema: NOUL_SCHEMA,
       prompt: noulPrompt(request),
     });
     expect(noulPrompt(request)).toContain('- true: All checks pass');

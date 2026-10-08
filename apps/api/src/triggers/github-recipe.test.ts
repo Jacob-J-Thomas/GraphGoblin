@@ -51,7 +51,7 @@ function definition(
   config: Extract<ReturnType<typeof TriggerConfigSchema.parse>, { subtype: 'poll' }>,
 ): LoopDefinitionInput {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     name: 'offline-gh-recipe',
     nodes: [
       { id: 'issues', kind: 'trigger', label: 'GitHub issues', config },

@@ -8,6 +8,7 @@ import { FakeApi, problem } from '../__fixtures__/fake-api.js';
 import { renderApp, renderWith } from '../__fixtures__/render.js';
 import { App } from '../app/App.js';
 import {
+  loadArchivedDrafts,
   loadLocalDraft,
   loadSetAsideDraft,
   saveLocalDraft,
@@ -335,7 +336,7 @@ describe('EditorPage', () => {
     await waitFor(() => expect(advanced()).toHaveAccessibleName('Advanced 1 set 1 error'));
   });
 
-  it('keeps schema-invalid drafts on the device and explains why', async () => {
+  it('retains a schema-invalid current draft as an exportable raw copy on reload', async () => {
     const user = userEvent.setup();
     const api = new FakeApi();
     const loop = api.addLoop(newLoopDefinition('invalid'));
@@ -363,16 +364,16 @@ describe('EditorPage', () => {
 
     view.unmount();
     renderApp(`/loops/${loop.id}/edit`, api);
+    expect(await screen.findByRole('heading', { name: 'invalid' })).toBeInTheDocument();
     expect(
-      await screen.findByText('Restored unsaved changes from this device.'),
+      await screen.findByText('This device copy could not be migrated safely'),
     ).toBeInTheDocument();
-    await waitFor(
-      () => expect(screen.getByTestId('save-state')).toHaveTextContent('Saved on this device only'),
-      SAVE_WAIT,
-    );
-    expect((await loadLocalDraft(loop.id))?.definition.nodes.map((node) => node.id)).toContain(
-      'subloop',
-    );
+    expect(screen.queryByText('Restored unsaved changes from this device.')).toBeNull();
+    expect(
+      await screen.findByRole('button', { name: 'Export original device copy' }),
+    ).toBeInTheDocument();
+    await waitFor(async () => expect(await loadArchivedDrafts(loop.id)).toEqual([local]));
+    expect(await loadLocalDraft(loop.id)).toBeUndefined();
     expect(api.callsTo('PUT', `/loops/${loop.id}/draft`)).toHaveLength(0);
   });
 

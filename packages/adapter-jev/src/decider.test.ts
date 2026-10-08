@@ -65,9 +65,12 @@ describe('availability', () => {
     await expect(missing.choose(choiceRequest, signal())).rejects.toMatchObject({
       code: 'DECIDER_UNAVAILABLE',
     });
-    await expect(missing.judge({ question: 'q', context: null }, signal())).rejects.toBeInstanceOf(
-      JevError,
-    );
+    await expect(
+      missing.classifyNoul(
+        { question: 'q', context: null, criteria: { true: 'Complete', false: 'Incomplete' } },
+        signal(),
+      ),
+    ).rejects.toBeInstanceOf(JevError);
 
     const blank = createJevDecider({ secrets: secrets({ 'jev-api-key': '   ' }) });
     await blank.init();
@@ -222,35 +225,6 @@ describe('choose', () => {
   });
 });
 
-describe('judge', () => {
-  it('sends a noul question and maps the probability of yes', async () => {
-    const { fetch, calls } = stubFetch(
-      json(200, { answers: { answer: { type: 'noul', noul: 0.9 } } }),
-      json(200, { answers: { answer: { type: 'noul', noul: 0.2 } } }),
-    );
-    const decider = await ready({ fetch });
-    expect(await decider.judge({ question: 'Done?', context: 'all tests pass' }, signal())).toEqual(
-      { holds: true, confidence: 0.9 },
-    );
-    expect(await decider.judge({ question: 'Done?', context: null }, signal())).toEqual({
-      holds: false,
-      confidence: 0.8,
-    });
-    expect(JSON.parse(calls[0]![1]?.body as string)).toMatchObject({
-      state: 'all tests pass',
-      questions: { answer: { type: 'noul', instructions: 'Done?' } },
-    });
-  });
-
-  it('rejects a malformed yes/no response', async () => {
-    const { fetch } = stubFetch(json(200, { answers: { answer: { type: 'noul', noul: 'yes' } } }));
-    const decider = await ready({ fetch });
-    await expect(decider.judge({ question: 'q', context: [] }, signal())).rejects.toMatchObject({
-      code: 'DECIDER_INVALID_RESPONSE',
-    });
-  });
-});
-
 describe('native Noul and Score primitives', () => {
   const noulRequest = {
     question: 'Ready?',
@@ -357,7 +331,7 @@ describe('native Noul and Score primitives', () => {
 });
 
 describe('errors', () => {
-  it.each(['choose', 'judge'] as const)(
+  it.each(['choose', 'classifyNoul'] as const)(
     'never reflects an HTTP error body from %s',
     async (method) => {
       const marker = 'gg-private-exit-error-regression';
@@ -366,7 +340,14 @@ describe('errors', () => {
       const request =
         method === 'choose'
           ? decider.choose(choiceRequest, signal())
-          : decider.judge({ question: 'Done?', context: null }, signal());
+          : decider.classifyNoul(
+              {
+                question: 'Done?',
+                context: null,
+                criteria: { true: 'Complete', false: 'Incomplete' },
+              },
+              signal(),
+            );
       await expect(request).rejects.toMatchObject({
         code: 'DECIDER_HTTP_ERROR',
         status: 400,
@@ -402,26 +383,43 @@ describe('errors', () => {
   it('maps connection failures and aborts', async () => {
     const { fetch } = stubFetch(new TypeError('fetch failed'), new TypeError('fetch failed'));
     const decider = await ready({ fetch });
-    await expect(decider.judge({ question: 'q', context: {} }, signal())).rejects.toMatchObject({
+    await expect(
+      decider.classifyNoul(
+        { question: 'q', context: {}, criteria: { true: 'Complete', false: 'Incomplete' } },
+        signal(),
+      ),
+    ).rejects.toMatchObject({
       code: 'DECIDER_UNREACHABLE',
     });
     const controller = new AbortController();
     controller.abort();
     await expect(
-      decider.judge({ question: 'q', context: {} }, controller.signal),
+      decider.classifyNoul(
+        { question: 'q', context: {}, criteria: { true: 'Complete', false: 'Incomplete' } },
+        controller.signal,
+      ),
     ).rejects.toMatchObject({ name: 'AbortError' });
   });
 
   it('retries transient failures through the SDK when retries are enabled', async () => {
     const { fetch } = stubFetch(
       json(503, { error: 'busy' }),
-      json(200, { answers: { answer: { type: 'noul', noul: 0.7 } } }),
+      json(200, {
+        answers: {
+          answer: {
+            type: 'choice',
+            choice: 'ship',
+            confidence: 0.7,
+            probabilities: { ship: 0.7, fix: 0.2, drop: 0.1 },
+          },
+        },
+      }),
     );
     const decider = await ready({
       fetch,
       retry: { maxRetries: 1, backoffInitialMs: 0, backoffMaxMs: 0 },
     });
-    expect((await decider.judge({ question: 'q', context: {} }, signal())).holds).toBe(true);
+    expect((await decider.choose(choiceRequest, signal())).optionId).toBe('ship');
     expect(fetch).toHaveBeenCalledTimes(2);
   });
 
@@ -441,7 +439,10 @@ describe('errors', () => {
     const log = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };
     const { fetch } = stubFetch(json(200, { answers: { answer: { type: 'noul', noul: 0.5 } } }));
     const decider = await ready({ fetch, logger: log });
-    await decider.judge({ question: 'q', context: {} }, signal());
+    await decider.classifyNoul(
+      { question: 'q', context: {}, criteria: { true: 'Complete', false: 'Incomplete' } },
+      signal(),
+    );
     expect(log.debug).toHaveBeenCalledWith({}, expect.stringMatching(/^jev: /));
     const sdkLogger = (
       decider as unknown as { client: { logger: Record<'warn' | 'error', (m: string) => void> } }

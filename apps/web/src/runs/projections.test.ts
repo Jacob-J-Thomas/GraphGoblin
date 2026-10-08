@@ -101,6 +101,25 @@ describe('run projections', () => {
     );
     expect(
       describeEvent(
+        event(R, 32, 'decision.made', {
+          nodeId: 'archived-noul',
+          answer: {
+            type: 'noul',
+            kind: 'classifier',
+            holds: null,
+            trueProbability: null,
+            confidence: null,
+          },
+          portId: 'true',
+          provenance: classifier,
+          diagnostics: [],
+        }),
+      ),
+    ).toBe(
+      'Answered unknown (not recorded) (true probability not recorded) with classifier via typesafe (jev-latest) with confidence not recorded',
+    );
+    expect(
+      describeEvent(
         event(R, 31, 'decision.made', {
           nodeId: 'score',
           answer: {
@@ -108,7 +127,7 @@ describe('run projections', () => {
             score: 1.25,
             confidence: 0.91,
             legend: { '0': 'Low', '1': 'Middle', '2': 'High' },
-            probabilities: { middle: 0.91 },
+            probabilities: { '1': 0.91 },
           },
           portId: 'middle',
           provenance: classifier,
@@ -185,7 +204,23 @@ describe('run projections', () => {
       nodeId: 'done',
       iteration: 1,
       maxIterations: 5,
-      criteria: [{ index: 0, strategy: 'expression', status: 'not-matched' }],
+      criteria: [
+        {
+          index: 0,
+          strategy: 'expression',
+          status: 'matched',
+          answer: { type: 'noul', kind: 'expression', holds: true, confidence: null },
+          provenance: {
+            kind: 'expression',
+            provider: null,
+            classifierId: null,
+            model: null,
+            effort: null,
+          },
+          acceptance: { status: 'accepted' },
+          match: { type: 'noul', value: true },
+        },
+      ],
       result: {
         kind: 'completed',
         reason: 'criterion-matched',
@@ -193,12 +228,30 @@ describe('run projections', () => {
         criterionIndex: 0,
       },
     });
-    expect(describeEvent(entry)).toBe('Exited: criterion 1 matched (failure)');
+    expect(describeEvent(entry)).toBe(
+      'Exited: criterion 1 (Expression) matched: Noul true (failure)',
+    );
     if (entry.type !== 'exit.evaluated') throw new Error('Expected an exit event fixture');
     expect(
       describeEvent({
         ...entry,
-        criteria: [{ index: 0, strategy: 'expression', status: 'matched' }],
+        criteria: [
+          {
+            index: 0,
+            strategy: 'expression',
+            status: 'matched',
+            answer: { type: 'noul', kind: 'expression', holds: true, confidence: null },
+            provenance: {
+              kind: 'expression',
+              provider: null,
+              classifierId: null,
+              model: null,
+              effort: null,
+            },
+            acceptance: { status: 'accepted' },
+            match: { type: 'noul', value: true },
+          },
+        ],
         result: {
           kind: 'completed',
           reason: 'default-success',
@@ -249,7 +302,23 @@ describe('run projections', () => {
       describeEvent(
         exit({
           ...base,
-          criteria: [{ index: 0, strategy: 'expression', status: 'matched' }],
+          criteria: [
+            {
+              index: 0,
+              strategy: 'expression',
+              status: 'matched',
+              answer: { type: 'noul', kind: 'expression', holds: true, confidence: null },
+              provenance: {
+                kind: 'expression',
+                provider: null,
+                classifierId: null,
+                model: null,
+                effort: null,
+              },
+              acceptance: { status: 'accepted' },
+              match: { type: 'noul', value: true },
+            },
+          ],
           result: {
             kind: 'completed',
             reason: 'criterion-matched',
@@ -258,7 +327,7 @@ describe('run projections', () => {
           },
         }),
       ),
-    ).toBe('Exited: criterion 1 (expression) matched (failure)');
+    ).toBe('Exited: criterion 1 (Expression) matched: Noul true (failure)');
   });
   it('describes every event type', () => {
     const lines = ALL.map(describeEvent);

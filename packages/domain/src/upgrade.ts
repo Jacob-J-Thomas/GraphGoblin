@@ -1,14 +1,18 @@
 import {
-  DecisionConfigSchema,
-  HarnessDefaultsSchema,
+  V2DecisionConfigSchema as DecisionConfigSchema,
+  V2HarnessDefaultsSchema as HarnessDefaultsSchema,
   JsonValueSchema,
-  LoopDefinitionSchema,
-  LoopExportSchema,
-  type DecisionConfig,
-  type HarnessDefaults,
+  V2LoopDefinitionSchema as LoopDefinitionSchema,
+  V2LoopExportSchema as LoopExportSchema,
+  V2LoopSettingsSchema,
+  V2NodeConfigSchemas,
+  V2TemplateSchema,
+  V2ExpressionSchema,
+  type V2DecisionConfig as DecisionConfig,
+  type V2HarnessDefaults as HarnessDefaults,
   type JsonSchema,
-  type LoopDefinition,
-  type LoopExport,
+  type V2LoopDefinition as LoopDefinition,
+  type V2LoopExport as LoopExport,
 } from '@graphgoblin/contracts';
 import jsonata from 'jsonata';
 import { Liquid, TokenKind } from 'liquidjs';
@@ -17,6 +21,13 @@ import { checkTemplate } from './template.js';
 import { validateJson } from './json-schema.js';
 import { syntaxIssues } from './syntax.js';
 import { LEGACY_V1_SCHEMA } from './upgrade-v1-schema.js';
+
+const frozenSyntax = {
+  settings: V2LoopSettingsSchema,
+  nodes: V2NodeConfigSchemas,
+  template: V2TemplateSchema,
+  expression: V2ExpressionSchema,
+};
 
 export interface UpgradeIssue {
   code: string;
@@ -437,7 +448,7 @@ export function upgradeLoopV1(
           ),
         ),
       };
-    const syntax = syntaxIssues(current.data);
+    const syntax = syntaxIssues(current.data, frozenSyntax);
     if (syntax.length)
       return {
         ok: false,
@@ -600,7 +611,7 @@ export function upgradeLoopV1(
         ),
       ),
     };
-  const syntax = syntaxIssues(parsed.data);
+  const syntax = syntaxIssues(parsed.data, frozenSyntax);
   if (syntax.length)
     return {
       ok: false,

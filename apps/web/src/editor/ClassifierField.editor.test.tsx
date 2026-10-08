@@ -21,7 +21,7 @@ const nodeBadge = (id: string) =>
 
 function decisionLoop(model = 'kev'): LoopDefinitionInput {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     name: 'classifier editor',
     nodes: [
       { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },

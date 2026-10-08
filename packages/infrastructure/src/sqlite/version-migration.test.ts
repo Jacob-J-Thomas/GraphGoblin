@@ -13,7 +13,7 @@ async function offlineUpgrade(handle: ReturnType<typeof openDatabase>, migration
     handle.client,
     {
       format: 'graphgoblin-upgrade-manifest',
-      targetVersion: 2,
+      targetVersion: 3,
       sourceHash: inventory.sourceHash,
       approvedBy: 'test-owner',
       approvedAt: FIXTURE_TS,

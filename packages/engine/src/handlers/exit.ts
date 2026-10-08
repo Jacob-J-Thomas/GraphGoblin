@@ -1,73 +1,42 @@
-import type {
-  ExitCriterion,
-  ExitCriterionEvaluation,
-  ExitEvaluationOutcome,
-} from '@graphgoblin/contracts';
 import {
-  evaluateExit,
-  evaluateExpression,
-  threadView,
-  type PredicateAnswer,
-} from '@graphgoblin/domain';
-import { DeciderFailureError, deciderFailure } from '../decider-errors.js';
+  ExitCriterionEmissionSchema,
+  ExitDiagnosticSchema,
+  EvaluationProvenanceSchema,
+  type ExitCriterionEvaluation,
+  type ExitEvaluationOutcome,
+} from '@graphgoblin/contracts';
+import { evaluateExit, evaluateExpression, threadView } from '@graphgoblin/domain';
 import { isAbortError, RunFailureError } from '../errors.js';
-import type { NodeContext, NodeHandler } from '../handler.js';
+import type { NodeHandler } from '../handler.js';
+import { evaluatePrimitive } from '../primitive-evaluator.js';
 import { toJson } from './common.js';
 
-async function askPredicate(
-  ctx: NodeContext<'exit'>,
-  criterion: Extract<ExitCriterion, { when: 'predicate' }>,
-  question: string,
-  onResolvedModel: (model: string) => void,
-): Promise<PredicateAnswer> {
-  const decider = ctx.ports.deciders.find((d) => d.id === criterion.strategy && d.available());
-  if (!decider) {
-    throw new RunFailureError(
-      'DECIDER_UNAVAILABLE',
-      `exit criterion needs the "${criterion.strategy}" decider, which is not available`,
-      { nodeId: ctx.node.id },
+function failureEvidence(error: unknown) {
+  if (error instanceof RunFailureError) {
+    const details = error.options.details;
+    const status =
+      typeof details === 'object' && details !== null && 'status' in details
+        ? details.status
+        : undefined;
+    const diagnostic = ExitDiagnosticSchema.safeParse({
+      code: error.code,
+      message: error.message,
+      ...(status !== undefined ? { status } : {}),
+    });
+    const provenance = EvaluationProvenanceSchema.safeParse(
+      typeof details === 'object' && details !== null && 'provenance' in details
+        ? details.provenance
+        : undefined,
     );
+    if (diagnostic.success)
+      return {
+        diagnostic: diagnostic.data,
+        ...(provenance.success ? { provenance: provenance.data } : {}),
+      };
   }
-  const resolved =
-    criterion.strategy === 'codex' ? await ctx.services.resolveModel('codex') : undefined;
-  if (resolved) onResolvedModel(resolved.model);
-  const context = toJson({
-    trigger: ctx.thread.invocation.trigger.payload,
-    vars: ctx.thread.vars,
-    lastOutput: ctx.thread.lastOutput?.value ?? null,
-    lastMessage: ctx.thread.messages.at(-1)?.content ?? null,
-    iteration: ctx.run.iteration,
-  });
-  try {
-    const answer = await decider.judge(
-      {
-        question,
-        context,
-        ...(resolved ? { model: resolved.model, effort: resolved.effort } : {}),
-      },
-      ctx.signal,
-    );
-    if (
-      typeof answer.holds !== 'boolean' ||
-      (answer.confidence !== undefined &&
-        (!Number.isFinite(answer.confidence) || answer.confidence < 0 || answer.confidence > 1))
-    ) {
-      throw Object.assign(new Error('Invalid predicate result'), {
-        code: 'DECIDER_INVALID_RESPONSE',
-      });
-    }
-    return {
-      holds: answer.holds,
-      ...(answer.confidence !== undefined ? { confidence: answer.confidence } : {}),
-      ...(resolved ? { model: resolved.model } : { classifierModel: 'jev' }),
-      ...(criterion.strategy === 'codex' && typeof answer.reasoning === 'string'
-        ? { reasoning: answer.reasoning.slice(0, 2048) }
-        : {}),
-    };
-  } catch (error) {
-    if (isAbortError(error) || ctx.signal.aborted) throw error;
-    throw new DeciderFailureError(error, decider.id);
-  }
+  return {
+    diagnostic: { code: 'CRITERION_ERROR' as const, message: 'Exit criterion evaluation failed' },
+  };
 }
 
 export const exitHandler: NodeHandler<'exit'> = {
@@ -77,13 +46,12 @@ export const exitHandler: NodeHandler<'exit'> = {
       ? Date.parse(ctx.run.startedAt)
       : Date.parse(ctx.run.createdAt);
     const criteria: ExitCriterionEvaluation[] = [];
-    const resolvedModels = new Map<ExitCriterion, string>();
     const record = async (result: ExitEvaluationOutcome) => {
       for (let index = criteria.length; index < ctx.config.criteria.length; index++) {
         const criterion = ctx.config.criteria[index]!;
         criteria.push({
           index,
-          strategy: criterion.when === 'predicate' ? criterion.strategy : criterion.when,
+          strategy: criterion.when === 'predicate' ? criterion.evaluation.kind : criterion.when,
           status: 'skipped',
           reason:
             !criteria.some((entry) => entry.status === 'matched') &&
@@ -100,7 +68,7 @@ export const exitHandler: NodeHandler<'exit'> = {
         nodeId: ctx.node.id,
         iteration: ctx.run.iteration,
         maxIterations: ctx.definition.settings.maxIterations,
-        criteria,
+        criteria: criteria.map((entry) => ExitCriterionEmissionSchema.parse(entry)),
         result,
       });
     };
@@ -111,36 +79,38 @@ export const exitHandler: NodeHandler<'exit'> = {
         iteration: ctx.run.iteration,
         maxIterations: ctx.definition.settings.maxIterations,
         elapsedMs: Math.max(0, Date.parse(ctx.services.now()) - startedAt),
-        askPredicate: (criterion, question) =>
-          askPredicate(ctx, criterion, question, (model) => resolvedModels.set(criterion, model)),
-        renderQuestion: (template) => ctx.services.render(template),
-        onCriterion: (evaluation) =>
-          criteria.push({
-            ...evaluation,
-            ...(evaluation.strategy === 'jev' ? { classifierModel: 'jev' } : {}),
-            ...(resolvedModels.has(ctx.config.criteria[evaluation.index]!)
-              ? { model: resolvedModels.get(ctx.config.criteria[evaluation.index]!)! }
+        evaluatePredicate: async (criterion) =>
+          evaluatePrimitive({
+            nodeId: ctx.node.id,
+            ownerId: ctx.run.ownerId,
+            evaluation: criterion.evaluation,
+            answer: criterion.answer,
+            expressionView: threadView(ctx.thread),
+            ...(criterion.evaluation.kind !== 'expression'
+              ? {
+                  question: await ctx.services.render(criterion.evaluation.question),
+                  context: toJson({
+                    trigger: ctx.thread.invocation.trigger.payload,
+                    vars: ctx.thread.vars,
+                    lastOutput: ctx.thread.lastOutput?.value ?? null,
+                    lastMessage: ctx.thread.messages.at(-1)?.content ?? null,
+                    iteration: ctx.run.iteration,
+                  }),
+                }
               : {}),
+            signal: ctx.signal,
+            ports: ctx.ports,
+            resolveModel: (...args) => ctx.services.resolveModel(...args),
           }),
+        onCriterion: (evaluation) => criteria.push(evaluation),
       });
     } catch (error) {
       if (isAbortError(error) || ctx.signal.aborted) {
         await record({ kind: 'cancelled' });
       } else {
-        const diagnostic =
-          error instanceof DeciderFailureError
-            ? {
-                code: error.code,
-                message: error.message,
-                ...(error.diagnostic.status !== undefined
-                  ? { status: error.diagnostic.status }
-                  : {}),
-              }
-            : error instanceof RunFailureError && error.code === 'DECIDER_UNAVAILABLE'
-              ? { code: 'DECIDER_UNAVAILABLE' as const, message: deciderFailure(error).message }
-              : { code: 'CRITERION_ERROR' as const, message: 'Exit criterion evaluation failed' };
+        const { diagnostic, ...details } = failureEvidence(error);
         const last = criteria.at(-1);
-        if (last?.status === 'error') last.diagnostic = diagnostic;
+        if (last?.status === 'error') Object.assign(last, { diagnostic, ...details });
         await record({ kind: 'failed', diagnostic });
       }
       throw error;

@@ -34,7 +34,7 @@ const TOOLS = [
 ];
 
 const inputLoop: LoopDefinitionInput = {
-  schemaVersion: 2,
+  schemaVersion: 3,
   name: 'Ask Me',
   description: 'Asks a question and returns the answer.',
   nodes: [
@@ -67,7 +67,7 @@ const inputLoop: LoopDefinitionInput = {
 };
 
 const signalLoop: LoopDefinitionInput = {
-  schemaVersion: 2,
+  schemaVersion: 3,
   name: 'signal-wait',
   nodes: [
     { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual', exposeTo: ['ui'] } },
@@ -81,7 +81,7 @@ const signalLoop: LoopDefinitionInput = {
 };
 
 const slowLoop: LoopDefinitionInput = {
-  schemaVersion: 2,
+  schemaVersion: 3,
   name: 'slow-inference',
   nodes: [
     { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },

@@ -102,7 +102,7 @@ Every behaviour-affecting setting is passed as a per-thread option on every sess
 
 `HarnessPort.resume` receives the same `HarnessStartRequest` as `start`: the node's model, effort, harness options, capabilities, and working directory, plus the turn. The engine sends it for `resume-previous` and `resume-named` turns, schema-repair turns, and crash-recovery continuations, so `resumeThread(id, options)` gets exactly the thread options `startThread` would, including after a restart. The adapter keeps no per-session memory.
 
-Composition: `apps/api` builds the Codex adapters from the Codex entry of the harness-keyed process defaults (`GG_DEFAULTS`) and `GG_CODEX_BINARY`, and registers the harness, structured port, exit deciders and primitive-aware classifier registry. It also registers the Claude harness on supported native Windows hosts using `GG_CLAUDE_BINARY` or the owner-installed CLI path described below. `GG_CODEX_BINARY` remains an optional executable or JavaScript launcher; otherwise the SDK bundled CLI is used. Constructing adapters starts no model session. Old process-default variables are rejected with migration guidance.
+Composition: `apps/api` builds the Codex adapters from the Codex entry of the harness-keyed process defaults (`GG_DEFAULTS`) and `GG_CODEX_BINARY`, and registers the harness, structured port, Codex structured evaluator and primitive-aware classifier registry. It also registers the Claude harness on supported native Windows hosts using `GG_CLAUDE_BINARY` or the owner-installed CLI path described below. `GG_CODEX_BINARY` remains an optional executable or JavaScript launcher; otherwise the SDK bundled CLI is used. Constructing adapters starts no model session. Old process-default variables are rejected with migration guidance.
 
 ### Event normalisation (Decided)
 
@@ -144,7 +144,7 @@ await jev.init();
 // ports: harnesses: { codex: codex.harness }, structured: codex.structured, deciders: [jev, codex.decider]
 ```
 
-The API additionally supplies `ports.classifiers: ClassifierRegistryPort`. Classifier decisions use `resolve(ownerId, catalogId, primitive)` and check the requested capability before dispatch; `deciders` continues to supply Codex decisions and the built-in Noul exit facade. The facade gates `available()` on the built-in catalog's enabled state and calls `jev.refresh()` after `jev-api-key` changes. The registry creates SDK or HTTP clients from immutable configuration snapshots, invalidates them on catalog/referenced-secret writes and deletes, and rechecks metadata and usable secrets on every resolution. An in-flight request keeps its snapshot; subsequent decisions see the edit.
+The API additionally supplies `ports.classifiers: ClassifierRegistryPort`. Classifier decisions and exit predicates use `resolve(ownerId, catalogId, primitive)` and check the requested capability before dispatch. Codex supplies the structured LLM evaluator; the separate exit judge facade is removed. The registry creates SDK or HTTP clients from immutable configuration snapshots, invalidates them on catalog/referenced-secret writes and deletes, and rechecks metadata and usable secrets on every resolution. An in-flight request keeps its snapshot; subsequent decisions see the edit.
 
 ### Context injection (Decided)
 
@@ -194,7 +194,7 @@ Decision nodes with evaluation kind `llm` and harness `codex`, the `coerce` oper
 
 ## Jev decider (Decided, M4)
 
-Classifier decisions require an explicit `evaluation.model` catalog id; choose `jev` for the built-in. Startup seeds that built-in before run recovery and refreshes its managed metadata without resetting enabled. Its fixed provider remains the pinned TypeSafe SDK, `jev-latest`, `https://api.typesafe.ai`, and `jev-api-key`. Exit Noul continues through this built-in alone. Configuration status is a local usable-secret check, with no provider request; it does not establish reachability or valid provider authentication.
+Classifier decisions and exit predicates require an explicit `evaluation.model` catalog id; choose `jev` for the built-in. Startup seeds that built-in before run recovery and refreshes its managed metadata without resetting enabled. Its fixed provider remains the pinned TypeSafe SDK, `jev-latest`, `https://api.typesafe.ai`, and `jev-api-key`. Exit predicates may select any enabled classifier supporting their declared primitive. Configuration status is a local usable-secret check, with no provider request; it does not establish reachability or valid provider authentication.
 
 `packages/adapter-jev` implements `DeciderPort` (`id: 'jev'`) over `@typesafe-ai/sdk` 0.6.0 (MIT, no dependencies). Choice, Noul and Score call `POST https://api.typesafe.ai/v1/systemone` with a bearer key from the secret `jev-api-key`:
 

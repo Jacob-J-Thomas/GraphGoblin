@@ -70,14 +70,14 @@ describe('validateLoop', () => {
 
   it('requires a trigger and an exit', () => {
     const noTrigger = parse({
-      schemaVersion: 2,
+      schemaVersion: 3,
       name: 'x',
       nodes: [{ id: 'done', kind: 'exit', label: 'Done', config: {} }],
       edges: [],
     });
     expect(codes(noTrigger)).toContain('NO_TRIGGER');
     const noExit = parse({
-      schemaVersion: 2,
+      schemaVersion: 3,
       name: 'x',
       nodes: [{ id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } }],
       edges: [],

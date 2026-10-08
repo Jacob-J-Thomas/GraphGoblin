@@ -23,15 +23,14 @@ export async function classifierIssues(
           ]
         : node.kind === 'exit'
           ? node.config.criteria.flatMap((criterion, index) =>
-              criterion.when === 'predicate' && criterion.strategy === 'jev'
+              criterion.when === 'predicate' && criterion.evaluation.kind === 'classifier'
                 ? [
                     {
-                      id: 'jev',
-                      primitive: 'noul' as const,
-                      path: 'config.criteria.' + index + '.strategy',
+                      id: criterion.evaluation.model,
+                      primitive: criterion.answer.type,
+                      path: 'config.criteria.' + index + '.evaluation.model',
                       kind: 'Exit',
-                      unavailable:
-                        'This predicate cannot run; the exit will fail with DECIDER_UNAVAILABLE when it is evaluated.',
+                      unavailable: 'This evaluation is unavailable; publication is blocked.',
                     },
                   ]
                 : [],

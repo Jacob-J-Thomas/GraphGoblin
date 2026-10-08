@@ -171,7 +171,7 @@ test('portable refusal, explicit resolutions, new output and complete original p
         .ok,
       true,
     );
-    assert.equal(JSON.parse(await readFile(converted, 'utf8')).formatVersion, 2);
+    assert.equal(JSON.parse(await readFile(converted, 'utf8')).formatVersion, 3);
     assert.equal(await readFile(input, 'utf8'), bytes);
     await assert.rejects(
       runUpgrade(['export', '--input', input, '--out', converted, '--resolutions', choices]),
@@ -226,6 +226,93 @@ test('real frozen AIDLC artifact requires explicit choices and preserves every o
     fixture.loop.edges.map((edge) => ({ ...edge, to: { port: 'in', ...edge.to } })),
   );
 });
+test('format-2 provider exit exports refuse without authored sides and convert only the explicit resolution', () =>
+  temporary(async (root) => {
+    const input = join(root, 'exit-v2.json'),
+      refused = join(root, 'exit-refused.json'),
+      output = join(root, 'exit-v3.json'),
+      resolution = join(root, 'exit-resolution.json');
+    const old = {
+      format: 'graphgoblin-loop',
+      formatVersion: 2,
+      exportedAt: FIXTURE_TS,
+      loop: {
+        schemaVersion: 2,
+        name: 'exit-cutover',
+        nodes: [
+          { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
+          {
+            id: 'done',
+            kind: 'exit',
+            label: 'Done',
+            config: {
+              criteria: [
+                {
+                  when: 'predicate',
+                  strategy: 'codex',
+                  question: 'Is the task complete?',
+                  minConfidence: 0.8,
+                  outcome: 'success',
+                },
+              ],
+              return: { mapping: 'vars.result', channels: [{ kind: 'caller' }] },
+            },
+          },
+        ],
+        edges: [
+          {
+            id: 'edge',
+            from: { node: 'start', port: 'out' },
+            to: { node: 'done', port: 'in' },
+            ui: { route: [12, 20, 30] },
+          },
+        ],
+      },
+    };
+    const bytes = JSON.stringify(old);
+    await writeFile(input, bytes);
+    assert.equal((await runUpgrade(['export', '--input', input, '--out', refused])).ok, false);
+    assert.equal(
+      JSON.parse(await readFile(refused, 'utf8')).issues[0].code,
+      'UPGRADE_EXIT_CRITERIA_REQUIRED',
+    );
+    await writeFile(
+      resolution,
+      JSON.stringify({
+        predicates: {
+          '/nodes/1/config/criteria/0': {
+            answer: {
+              type: 'noul',
+              true: { label: 'Complete', criteria: 'All required work is complete' },
+              false: { label: 'Pending', criteria: 'Required work remains' },
+            },
+          },
+        },
+      }),
+    );
+    assert.equal(
+      (await runUpgrade(['export', '--input', input, '--out', output, '--resolutions', resolution]))
+        .ok,
+      true,
+    );
+    const converted = JSON.parse(await readFile(output, 'utf8'));
+    assert.equal(converted.formatVersion, 3);
+    assert.deepEqual(converted.loop.edges, old.loop.edges);
+    assert.deepEqual(converted.loop.nodes[1].config.return, old.loop.nodes[1].config.return);
+    assert.deepEqual(converted.loop.nodes[1].config.criteria[0].evaluation, {
+      kind: 'llm',
+      harness: 'codex',
+      model: { mode: 'inherit' },
+      effort: { mode: 'inherit' },
+      question: 'Is the task complete?',
+    });
+    assert.deepEqual(converted.loop.nodes[1].config.criteria[0].match, {
+      type: 'noul',
+      value: true,
+      minReportedConfidence: 0.8,
+    });
+    assert.equal(await readFile(input, 'utf8'), bytes);
+  }));
 test('native read-only client cannot create a missing file or write existing rows', () =>
   temporary(async (root) => {
     const missing = join(root, 'missing.db');

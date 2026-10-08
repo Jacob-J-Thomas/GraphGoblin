@@ -112,7 +112,7 @@ async function approval(handle: DatabaseHandle): Promise<DatabaseUpgradeManifest
   const inventory = await inspectDatabaseUpgrade(handle.client);
   return {
     format: 'graphgoblin-upgrade-manifest',
-    targetVersion: 2,
+    targetVersion: 3,
     sourceHash: inventory.sourceHash,
     approvedBy: 'owner',
     approvedAt: FIXTURE_TS,

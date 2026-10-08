@@ -1,6 +1,6 @@
-# Upgrade stored decisions to format 2
+# Upgrade stored loops to format 3
 
-Format 2 replaces decision strategy chains with one explicit evaluator, introduces stable option IDs and canonical decision evidence, and moves model defaults under their harness. The normal API accepts only the current format. An old portable export returns `LOOP_FORMAT_UPGRADE_REQUIRED`; an old database stops startup with `DATA_UPGRADE_REQUIRED` before migrations, recovery or triggers run. A genuinely empty database is initialized normally. Context-thread schema version remains 1.
+The retained format-2 stage replaces decision strategy chains with one explicit evaluator, introduces stable option IDs and canonical decision evidence, and moves model defaults under their harness. The normal API accepts only the current format. An old portable export returns `LOOP_FORMAT_UPGRADE_REQUIRED`; an old database stops startup with `DATA_UPGRADE_REQUIRED` before migrations, recovery or triggers run. A genuinely empty database is initialized normally. Context-thread schema version remains 1.
 
 Use the one-off `graphgoblin-upgrade` command from this checkout after `pnpm.cmd build`. It never guesses which evaluator should replace a mixed chain. Keep the old build, original data, and exports until the upgraded copy has passed your acceptance checks. Architecture approval is separate from approval of the actual conversion manifest.
 
@@ -12,13 +12,17 @@ Choose a new output path; the tool refuses to overwrite an existing file:
 pnpm.cmd graphgoblin-upgrade export --input .\old-loop.json --out .\converted-loop.json
 ```
 
-A successful result is a format-2 export (or a version-2 definition when the input was a bare definition). Exit code 2 means the output is a refusal report, not an importable loop. Resolve every reported ambiguity in a separate JSON resolutions file, then retry to a different new output path with `--resolutions .\resolutions.json`.
+A successful result is a format-3 export (or a version-3 definition when the input was a bare definition). Format-1 input first passes through a frozen format-2 conversion; both stages must resolve before any output is accepted. Exit code 2 means the output is a refusal report, not an importable loop. Resolve every reported ambiguity in a separate JSON resolutions file, then retry to a different new output path with `--resolutions .\resolutions.json`.
 
-The resolutions object has three optional fields:
+The resolutions object has four optional fields:
 
 - `decisions`: a map from node ID to the complete new decision configuration, including its answer and evaluator. Replacement option IDs must preserve the original route-ID set and edge ports; invalid original IDs need a separately reviewed repair. Mixed chains, invalid old option labels/criteria, and expressions whose string result cannot be proven need an explicit choice.
 - `sources`: a map from a reported JSON pointer to the reviewed replacement Liquid or JSONata source. For a decision output, the old `lastOutput.value.route` becomes `lastOutput.value.answer.optionId`; use the source-specific path from the report. An inference result may independently contain `route` or `confidence`, so inspect its producer rather than replacing every matching string. Whole output values, indirect lookups and dynamic consumers need review too, including subloop return values and captured result variables. Replacements must parse, and final definitions must satisfy the clean contract. Do not also provide a source replacement inside a node covered by a complete `decisions` replacement: overlapping instructions are refused; put that source in the complete replacement instead.
 - `opaqueConsumers`: a map from script node ID to `{reason:"..."}`, recording why the external command receiving the thread or last output works with the new shape. Review and update the script itself first; a reason is an approval record, not an automatic script rewrite.
+
+- `predicates`: a map from an exact exit criterion pointer such as `/nodes/2/config/criteria/0` to a reviewed resolution. Every legacy Jev or Codex predicate needs `answer: {type: "noul", true: {label: "Yes", criteria: "..."}, false: {label: "No", criteria: "..."}}` with criteria describing the actual question. Do not invent them from old judgments. Ambiguous/coercing expressions instead need `jsonata: "..."` whose result is provably boolean. Use the actual per-version pointer from inventory. Unused, overlapping or incompatible resolutions are refused.
+
+Format 3 replaces legacy exit strategies with explicit answer/evaluation/match contracts. Jev retains its truth threshold of 0.5 and configured confidence minimum; Codex retains inherited defaults and its optional self-reported confidence gate. A failed gate always prevents a match. Added side criteria and stricter malformed-response checks may change future native judgments. Historical answers, confidence and provenance remain factual; missing facts are null. Thread schema 1 and session rows are unchanged. #33 and #38 remain deferred.
 
 Conversion is deliberately conservative. Review the complete loop and any external consumers, not just the reported lines. The converter cannot establish arbitrary program behavior. The [decision reference](../04-node-catalog.md#decision) describes the new contract.
 
@@ -43,7 +47,7 @@ Review and approve the **exact manifest** before applying it. If anything change
 Choose a new backup directory outside the data directory. Apply first makes a complete stopped-data copy and, when needed, copies the external database plus its WAL/SHM files. It verifies file hashes before opening the database. Supply the physical data-directory and database paths: linked data roots, database files, database sidecars, or linked database ancestors are refused before backup creation. Backup containment is checked against the physical parent directory, so an alias cannot place a backup inside the source. Ordinary non-database links in the data tree are preserved as links; their external target contents are not snapshotted. Preserve any such external content separately when it is needed for recovery. Schema migrations, definitions, defaults, events, output patches, initial threads and snapshots are then converted in one transaction. Strict final parsing and replay comparison must pass before commit; a failure rolls back the transaction.
 
 ```powershell
-pnpm.cmd graphgoblin-upgrade apply --data-dir C:/GraphGoblin/data --db-url file:C:/GraphGoblin/data/graphgoblin.db --manifest C:/GraphGoblin/upgrade/manifest.json --backup-dir C:/GraphGoblin/backups/before-format-2
+pnpm.cmd graphgoblin-upgrade apply --data-dir C:/GraphGoblin/data --db-url file:C:/GraphGoblin/data/graphgoblin.db --manifest C:/GraphGoblin/upgrade/manifest.json --backup-dir C:/GraphGoblin/backups/before-format-3
 pnpm.cmd graphgoblin-upgrade audit --data-dir C:/GraphGoblin/data --db-url file:C:/GraphGoblin/data/graphgoblin.db --out C:/GraphGoblin/upgrade/audit.json
 ```
 
@@ -53,7 +57,7 @@ Before restarting, replace `GG_DEFAULT_MODEL` and `GG_DEFAULT_EFFORT` with `GG_D
 
 Test the result in an isolated instance before replacing your working installation. Keep cron, poll and hook triggers disarmed and bind every writable workspace to an independent disposable clone: copying the database does not isolate the paths or external destinations in its loops. Inspect converted drafts and completed/failed run histories, compare full replay with stored checkpoints, then run a bounded example against safe destinations. Do not overwrite the original instance or enable copied triggers as part of this check.
 
-To roll back, stop the new instance and restore the **complete** stopped-data backup and any external database files to a separate recovery location using the old build. Preserve the failed upgrade copy for diagnosis. Never run the old build on a partially restored or converted database. Re-inventory and approve a new attempt after correcting the cause.
+Restoring the pre-upgrade backup discards every edit and run created after that backup. To roll back, stop the new instance and restore the **complete** stopped-data backup and any external database files to a separate recovery location using the old build. Preserve the failed upgrade copy for diagnosis. Never run the old build on a partially restored or converted database. Re-inventory and approve a new attempt after correcting the cause.
 
 ## Browser drafts and converter lifetime
 
@@ -65,7 +69,7 @@ This converter remains available through the cutover release. It can be retired 
 
 After `pnpm build`, run `pnpm test:upgrade` for the offline command acceptance checks. CI runs these checks after the build. They use disposable stores to verify refusal, original-file preservation, stopped-instance locking, complete backups, rollback, restoration, and re-upgrade. They do not read or convert your installed instance.
 
-## Structural readiness of format-2 development stores
+## Structural readiness of earlier development stores
 
 The GitHub-trigger cutover extends this same converter with endpoint signing schemes, durable webhook receipts and an indexed trigger dedupe lookup. A store already converted to definition format 2 by an earlier feature-branch build may still lack those structures. Stop that instance and run the inventory, resolution, verified-backup and apply workflow above; changing the version marker or allowing ordinary startup migrations is not a substitute. Normal startup checks structure before migrations, recovery or arming triggers.
 

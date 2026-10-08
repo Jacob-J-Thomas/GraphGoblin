@@ -22,7 +22,7 @@ export { expect };
 /** A manual trigger, a wait-for-input node, and an exit. */
 export function approvalLoop(name: string) {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     name,
     nodes: [
       {

@@ -9,7 +9,7 @@ import { createMcpServer, toolError } from './index.js';
 
 function definition(model?: string): LoopDefinitionInput {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     name: `MCP classifier ${model ?? 'default'}`,
     nodes: [
       { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
