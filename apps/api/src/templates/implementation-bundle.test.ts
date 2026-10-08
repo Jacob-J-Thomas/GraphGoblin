@@ -514,6 +514,14 @@ describe('authored implementation template bundle', () => {
     },
   );
 
+  it('returns the original refused claim without prepare, block or any model turn', async () => {
+    const { engine, run, actions } = await execute({ blockedAt: 'claim' });
+    expect(run.status).toBe('failed');
+    expect(run.outcome).toBe('failure');
+    expect(run.result).toMatchObject({ type: 'SupportBlocked', code: 'FIXTURE_REFUSAL' });
+    expect(actions).toEqual(['claim']);
+    expect(engine.ports.harness.started).toEqual([]);
+  });
   it('refuses unexpected support output before launching any model', async () => {
     const { engine, run, actions } = await execute({ malformedAt: 'prepare' });
     expect(run.status).toBe('failed');

@@ -210,6 +210,14 @@ export class PrivateTemplateScripts implements ScriptPort {
       'HOME',
       'APPDATA',
       'LOCALAPPDATA',
+      'SSH_AUTH_SOCK',
+      'DBUS_SESSION_BUS_ADDRESS',
+      'XDG_RUNTIME_DIR',
+      'XDG_CONFIG_HOME',
+      'GH_CONFIG_DIR',
+      'COREPACK_HOME',
+      'PNPM_HOME',
+      'XDG_CACHE_HOME',
     ]);
     for (const [name, value] of Object.entries(this.deps.environment ?? process.env))
       if (allowed.has(name.toUpperCase()) && value !== undefined && !value.includes(credential))

@@ -1324,9 +1324,13 @@ describe('repository attempt and produced-head authority', () => {
       pullRequest: 12,
       head: 'c'.repeat(40),
     });
-    expect(
-      await reused.admission.createPollItem(recipeIntent(review, 'poll-reused', true)),
-    ).toBeUndefined();
+    const reusedPoll = recipeIntent(review, 'poll-reused', true);
+    reusedPoll.initialThread.invocation.trigger.payload = {
+      id: 12,
+      payload: { pullRequest: 12, head: 'c'.repeat(40) },
+    };
+    reusedPoll.initialThread.invocation.trigger.dedupeKey = '12:' + 'c'.repeat(40);
+    expect(await reused.admission.createPollItem(reusedPoll)).toBeUndefined();
     await expect(
       reused.admission.create(recipeIntent(review, 'manual-reused')),
     ).rejects.toMatchObject({ code: 'TEMPLATE_SUBJECT_CONSUMED' });
@@ -1506,7 +1510,16 @@ describe('trusted original child visits', () => {
       const queued = recipeIntent(r, 'parent').queued;
       await f.handle.client.execute({
         sql: 'UPDATE run_events SET payload = ? WHERE run_id = ? AND seq = 1',
-        args: [JSON.stringify({ ...queued, subloopVersions: {} }), parent.id],
+        args: [
+          JSON.stringify({
+            ...queued,
+            subloopVersions: {
+              [r.pinned.definition.nodes.find((item) => item.kind === 'subloop')!.config.loopRef
+                .loopId]: fakeUlid('wrong-pinned-child-version'),
+            },
+          }),
+          parent.id,
+        ],
       });
     }
     const { admission } = runtimeAdmission(f, r, { kind: 'implementation', attempt: 1 });
