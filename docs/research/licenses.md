@@ -101,20 +101,21 @@ Full commits: google/fonts `2861cb7b12f90c0a294a12ed666e381e2211872f`, `c011968d
 
 ## Recorded alternatives and their licences
 
-| Option                                               | Licence                    | Why noted                                                                               |
-| ---------------------------------------------------- | -------------------------- | --------------------------------------------------------------------------------------- |
-| LangGraph.js, @langchain/langgraph-checkpoint-sqlite | MIT                        | Executor alternative; LangGraph Platform, Studio, and the CLI dev server are commercial |
-| PGlite                                               | Apache-2.0                 | Database alternative                                                                    |
-| DBOS Transact                                        | MIT                        | Durable execution alternative                                                           |
-| Temporal TypeScript SDK                              | MIT                        | Durable execution alternative; server is also MIT                                       |
-| Hatchet                                              | MIT                        | Task queue alternative                                                                  |
-| @anthropic-ai/claude-agent-sdk, Claude Code          | Anthropic Commercial Terms | Post-1.0 harness; optional, user-installed, never vendored                              |
-| @anthropic-ai/sdk                                    | MIT                        | Would be used by a direct Claude API decider post-1.0                                   |
-| NestJS, Hono                                         | MIT                        | HTTP framework alternatives                                                             |
-| SvelteKit, Svelte Flow                               | MIT                        | Frontend alternative                                                                    |
-| Monaco editor                                        | MIT                        | Rejected for bundle size, not licence                                                   |
-| Michroma, Orbitron (fonts)                           | OFL-1.1                    | #40 display candidates, rejected on width and legibility; Orbitron has an RFN           |
-| IBM Plex Sans (font)                                 | OFL-1.1                    | #40 neutral candidate; its RFN "Plex" rules out a subset under the name, so Inter       |
+| Option                                               | Licence                    | Why noted                                                                                                                        |
+| ---------------------------------------------------- | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| LangGraph.js, @langchain/langgraph-checkpoint-sqlite | MIT                        | Executor alternative; LangGraph Platform, Studio, and the CLI dev server are commercial                                          |
+| PGlite                                               | Apache-2.0                 | Database alternative                                                                                                             |
+| DBOS Transact                                        | MIT                        | Durable execution alternative                                                                                                    |
+| Temporal TypeScript SDK                              | MIT                        | Durable execution alternative; server is also MIT                                                                                |
+| Hatchet                                              | MIT                        | Task queue alternative                                                                                                           |
+| Claude Code CLI                                      | Anthropic Commercial Terms | #26 invokes the owner's separately installed native-Windows CLI; never bundled. No SDK or Anthropic runtime dependency is added. |
+| @anthropic-ai/claude-agent-sdk                       | Anthropic Commercial Terms | Recorded alternative; not used by the #26 CLI adapter                                                                            |
+| @anthropic-ai/sdk                                    | MIT                        | Would be used by a direct Claude API decider post-1.0                                                                            |
+| NestJS, Hono                                         | MIT                        | HTTP framework alternatives                                                                                                      |
+| SvelteKit, Svelte Flow                               | MIT                        | Frontend alternative                                                                                                             |
+| Monaco editor                                        | MIT                        | Rejected for bundle size, not licence                                                                                            |
+| Michroma, Orbitron (fonts)                           | OFL-1.1                    | #40 display candidates, rejected on width and legibility; Orbitron has an RFN                                                    |
+| IBM Plex Sans (font)                                 | OFL-1.1                    | #40 neutral candidate; its RFN "Plex" rules out a subset under the name, so Inter                                                |
 
 ## Rejected for licence reasons
 

@@ -27,7 +27,7 @@ function ClassifierUsers({ names }: { names: string[] }) {
   return (
     <p>
       Classifier models using it as their bearer secret ({names.join(', ')}) will need a key:
-      decisions that select them skip their Jev strategy until it is set again.
+      decisions using them fail with EVALUATION_UNAVAILABLE until the secret is restored.
     </p>
   );
 }

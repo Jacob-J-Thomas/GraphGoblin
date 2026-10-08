@@ -1,6 +1,10 @@
 import { HarnessDefaultsSchema } from '@graphgoblin/contracts';
 import { validateHarnessDefaults } from '@graphgoblin/domain';
 import {
+  claudeModelBlocked,
+  CLAUDE_BILLING_UNVERIFIED_MESSAGE,
+} from '@graphgoblin/infrastructure/claude';
+import {
   ApiKeySchema,
   ApiKeyListResponseSchema,
   EffortSchema,
@@ -72,6 +76,8 @@ export function registerSettingsRoutes(app: ApiInstance, container: Container): 
         );
       }
       if (known.data.defaults) {
+        if (claudeModelBlocked(known.data.defaults.byHarness.claude?.model))
+          return problem(reply, 409, 'HARNESS_MODEL_UNVERIFIED', CLAUDE_BILLING_UNVERIFIED_MESSAGE);
         const catalog = await repos.catalog.list();
         const issues = validateHarnessDefaults({
           loopDefaults: { byHarness: {} },
@@ -342,6 +348,12 @@ export function registerSettingsRoutes(app: ApiInstance, container: Container): 
       },
     },
     async (request, reply) => {
+      if (
+        request.params.harness === 'claude' &&
+        request.body.enabled &&
+        claudeModelBlocked(request.params.model)
+      )
+        return problem(reply, 409, 'HARNESS_MODEL_UNVERIFIED', CLAUDE_BILLING_UNVERIFIED_MESSAGE);
       const entry = await repos.catalog.setEnabled(
         request.params.harness,
         request.params.model,

@@ -177,9 +177,9 @@ export function ClassifierModelsSection() {
     >
       <div className="grid gap-1 border-b border-default px-5 py-3">
         <HelpText>
-          Classifiers answer a decision's Jev strategy by choosing a route. Jev is built in;
-          register a classifier you host, such as Kev at http://127.0.0.1:8008, with Add classifier.
-          See the Settings guide, Configure classifier models.
+          Classifier evaluators choose one option for a Choice decision. Jev is built in; register a
+          classifier you host, such as Kev at http://127.0.0.1:8008, with Add classifier. See the
+          Settings guide, Configure classifier models.
         </HelpText>
         <div
           role="status"
@@ -304,11 +304,10 @@ export function ClassifierModelsSection() {
                                       Classifier: “{entry.displayName}” ({entry.id}).
                                     </p>
                                     <p>
-                                      Decision nodes that select {entry.id} keep the id. Their Jev
-                                      strategy is skipped, so they fall to a later strategy, or fail
-                                      with DECISION_NO_ROUTE when it is their only one, until you
-                                      choose another model; drafts that still select it cannot be
-                                      published.
+                                      Decision nodes that select {entry.id} keep the id. Their
+                                      classifier evaluation fails with EVALUATION_UNAVAILABLE until
+                                      you restore it or choose another classifier; drafts that still
+                                      select it cannot be published.
                                     </p>
                                     {entry.secretRef ? (
                                       <p>Its secret {entry.secretRef} stays in Secrets.</p>

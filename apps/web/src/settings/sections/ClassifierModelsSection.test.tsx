@@ -548,7 +548,7 @@ describe('ClassifierModelsSection', () => {
     const dialog = screen.getByRole('alertdialog');
     expect(dialog).toHaveTextContent('Classifier: “Kev 4B” (kev).');
     expect(dialog).toHaveTextContent(
-      'Decision nodes that select kev keep the id. Their Jev strategy is skipped, so they fall to a later strategy, or fail with DECISION_NO_ROUTE when it is their only one',
+      'Decision nodes that select kev keep the id. Their classifier evaluation fails with EVALUATION_UNAVAILABLE until you restore it or choose another classifier',
     );
     expect(dialog).toHaveTextContent('Its secret kev-key stays in Secrets.');
     await user.click(within(dialog).getByRole('button', { name: 'Keep' }));

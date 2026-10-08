@@ -73,13 +73,14 @@ Old definitions, exports and persisted outputs require the offline conversion de
 ## Inferencing (Decided)
 
 Hands a request to a harness session. Choose the harness on each inference node with
-`config.harness`; omission defaults to `codex`. Loop defaults provide model and effort;
-`settings.defaults.harness` is an unknown field and is rejected.
-Codex is the only harness in 1.0. Full adapter detail is in 06.
+`config.harness`; omission defaults to `codex`. The current built-ins are Codex and, on supported
+native Windows installations, Claude Code. Loop defaults provide model and effort under
+`defaults.byHarness`; `settings.defaults.harness` is an unknown field and is rejected. Full
+adapter detail is in 06 and the accepted Claude architecture is in ADR-0023.
 
 ```ts
 type InferenceConfig = {
-  harness: 'codex';
+  harness: 'codex' | 'claude';
   model?: string;
   effort?: Effort;
   session: { policy: 'fresh' | 'resume-previous' | 'resume-named'; key?: string };
@@ -87,13 +88,13 @@ type InferenceConfig = {
   input: InputTransform[]; // applied to the thread view the template sees
   contextFiles?: { path: string; template: string }[]; // written under the working directory before the session starts
   harnessOptions: {
-    sandbox: 'read-only' | 'workspace-write' | 'danger-full-access';
+    sandbox: 'read-only' | 'workspace-write' | 'danger-full-access'; // Claude supports only explicit read-only or danger-full-access
     approval: 'never' | 'on-request';
     networkAccess?: boolean;
     webSearch?: boolean;
-    configOverrides?: Record<string, unknown>;
+    configOverrides?: Record<string, unknown>; // Codex only; Claude rejects nonempty overrides
   };
-  capabilities?: { mcpServers?: string[]; plugins?: string[]; skills?: string[] }; // names resolved by the adapter
+  capabilities?: { mcpServers?: string[]; plugins?: string[]; skills?: string[] }; // Claude rejects nonempty capabilities
   output: {
     captureTranscript: 'artifact' | 'none';
     toMessages: 'final' | 'final-and-notes' | 'none';
@@ -112,6 +113,12 @@ type RepairPolicy = {
 ```
 
 Behaviour: the engine writes the harness session row, renders the prompt and context files, starts or resumes the session, streams events into `node.progress`, stores the transcript as an artifact, applies output transforms, validates against the schema if present, runs the configurable repair turns on the same session if validation fails, then patches `messages`, `lastOutput`, and `counters.usage`.
+
+Claude Code accepts only the explicit `read-only`/`never` or `danger-full-access`/`never` policy
+pairs. `workspace-write`, `on-request`, explicit `networkAccess: false`, `webSearch: true`,
+nonempty `capabilities`, and nonempty raw overrides are rejected during validation and again at
+runtime. Its read-only policy limits built-in tools; it does not confine filesystem reads or the
+operating system. See [Claude Code](06-harness-integration.md#claude-code-adapter-26).
 
 Ports: `out`.
 

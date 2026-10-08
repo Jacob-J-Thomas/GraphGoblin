@@ -53,6 +53,31 @@ function seedRun(api: FakeApi, overrides: Parameters<FakeApi['addRun']>[0] = {})
 }
 
 describe('RunInspectorPage', () => {
+  it('shows Claude requested effort and states that effective effort is not reported', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const run = seedRun(api, { status: 'running' });
+    api.pushEvent(
+      run.id,
+      event(run.id, 7, 'harness.session', {
+        nodeId: 'infer',
+        harness: 'claude',
+        sessionId: 'native-session',
+        mode: 'fresh',
+        model: 'claude-opus-5-5',
+        effort: 'xhigh',
+      }),
+    );
+    renderApp(`/runs/${run.id}`, api);
+
+    await user.click(await screen.findByText(/Node progress/));
+    expect(
+      await screen.findByText(
+        'claude session fresh; model claude-opus-5-5; requested effort xhigh; effective effort not reported',
+      ),
+    ).toBeInTheDocument();
+  });
+
   it.each([
     {
       result: { kind: 'completed', reason: 'criterion-matched', outcome: 'failure' },

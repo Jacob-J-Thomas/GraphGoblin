@@ -328,15 +328,15 @@ export class InMemorySessionRepository implements HarnessSessionRepository {
       .sort((a, b) => b.attempt - a.attempt);
     return Promise.resolve(rows[0]);
   }
-  latestWithSession(runId: string): Promise<HarnessSessionRecord | undefined> {
+  latestWithSession(runId: string, harness: HarnessId): Promise<HarnessSessionRecord | undefined> {
     const rows = this.rows
-      .filter((r) => r.runId === runId && r.sessionId)
+      .filter((r) => r.runId === runId && r.harness === harness && r.sessionId)
       .sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1));
     return Promise.resolve(rows[0]);
   }
-  byScopeKey(scopeKey: string): Promise<HarnessSessionRecord | undefined> {
+  byScopeKey(scopeKey: string, harness: HarnessId): Promise<HarnessSessionRecord | undefined> {
     const rows = this.rows
-      .filter((r) => r.scopeKey === scopeKey && r.sessionId)
+      .filter((r) => r.scopeKey === scopeKey && r.harness === harness && r.sessionId)
       .sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1));
     return Promise.resolve(rows[0]);
   }
@@ -367,7 +367,6 @@ const ZERO_USAGE: Usage = {
 };
 
 export class FakeHarness implements HarnessPort {
-  readonly id: HarnessId = 'codex';
   readonly started: HarnessStartRequest[] = [];
   readonly resumed: { sessionId: string; request: HarnessStartRequest }[] = [];
   readonly cancelled: string[] = [];
@@ -379,7 +378,10 @@ export class FakeHarness implements HarnessPort {
   };
   private sessionCounter = 0;
 
-  constructor(private turns: ScriptedTurn[] = []) {}
+  constructor(
+    private turns: ScriptedTurn[] = [],
+    readonly id: HarnessId = 'codex',
+  ) {}
 
   /** Replace the script. Turns are consumed in order unless they carry a matcher. */
   script(turns: ScriptedTurn[]): void {
@@ -393,7 +395,10 @@ export class FakeHarness implements HarnessPort {
   start(request: HarnessStartRequest, signal: AbortSignal): HarnessSession {
     this.started.push(request);
     this.sessionCounter += 1;
-    const sessionId = `fake-session-${this.sessionCounter}`;
+    const sessionId =
+      this.id === 'codex'
+        ? `fake-session-${this.sessionCounter}`
+        : `fake-${this.id}-session-${this.sessionCounter}`;
     return this.session(sessionId, 'fresh', request.turn, signal);
   }
 

@@ -143,3 +143,105 @@ describe('every authored harness default', () => {
     ]);
   });
 });
+
+const opus: ModelCatalogEntry = {
+  harness: 'claude',
+  model: 'claude-opus-5-5',
+  source: 'harness',
+  displayName: 'Claude Opus 5.5',
+  efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+  defaultEffort: 'high',
+  enabled: true,
+};
+const claudeBase: HarnessModelResolutionInput = {
+  ...base,
+  harness: 'claude',
+  catalog: [...catalog, opus],
+  processDefaults: {
+    byHarness: {
+      codex: { model: 'codex-model', effort: 'low' },
+      claude: { model: opus.model, effort: 'xhigh' },
+    },
+  },
+};
+describe('independent Claude model defaults', () => {
+  it('uses exact family settings and never catalog guidance or another family fallback', () => {
+    expect(resolveHarnessModel(claudeBase)).toEqual({
+      status: 'ready',
+      model: opus.model,
+      effort: 'xhigh',
+    });
+    expect(
+      resolveHarnessModel({ ...claudeBase, processDefaults: base.processDefaults }),
+    ).toMatchObject({ code: 'MODEL_UNRESOLVED' });
+    expect(
+      resolveHarnessModel({
+        ...claudeBase,
+        model: opus.model,
+        processDefaults: base.processDefaults,
+      }),
+    ).toMatchObject({ code: 'EFFORT_UNRESOLVED' });
+    expect(resolveHarnessModel({ ...claudeBase, model: 'codex-model' })).toMatchObject({
+      code: 'MODEL_HARNESS_MISMATCH',
+    });
+    expect(
+      resolveHarnessModel({ ...base, catalog: claudeBase.catalog, model: opus.model }),
+    ).toMatchObject({ code: 'MODEL_HARNESS_MISMATCH' });
+    expect(resolveHarnessModel({ ...claudeBase, model: 'opus' })).toMatchObject({
+      code: 'MODEL_NOT_IN_CATALOG',
+    });
+    expect(resolveHarnessModel({ ...claudeBase, effort: 'minimal' })).toMatchObject({
+      code: 'EFFORT_UNSUPPORTED',
+    });
+    expect(
+      resolveHarnessModel({ ...claudeBase, catalog: [{ ...opus, enabled: false }] }),
+    ).toMatchObject({ code: 'MODEL_DISABLED' });
+  });
+  it.each(['loopDefaults', 'ownerDefaults', 'processDefaults'] as const)(
+    'validates explicit values at %s even when overridden',
+    (level) => {
+      const defaults = {
+        ...claudeBase,
+        loopDefaults: { byHarness: { claude: { model: opus.model, effort: 'low' as const } } },
+        [level]: { byHarness: { claude: { model: 'codex-model', effort: 'minimal' } } },
+      };
+      expect(validateHarnessDefaults(defaults)).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            harness: 'claude',
+            resolution: expect.objectContaining({ code: 'MODEL_HARNESS_MISMATCH' }),
+          }),
+        ]),
+      );
+      const effortDefaults = {
+        ...claudeBase,
+        [level]: { byHarness: { claude: { model: opus.model, effort: 'minimal' as const } } },
+      };
+      expect(validateHarnessDefaults(effortDefaults)).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            harness: 'claude',
+            resolution: expect.objectContaining({ code: 'EFFORT_UNSUPPORTED' }),
+          }),
+        ]),
+      );
+    },
+  );
+  it('independently resolves node and partial layered fields within Claude', () => {
+    expect(
+      resolveHarnessModel({
+        ...claudeBase,
+        effort: 'max',
+        loopDefaults: { byHarness: { claude: { model: opus.model } } },
+        ownerDefaults: { byHarness: { claude: { effort: 'medium' } } },
+      }),
+    ).toMatchObject({ status: 'ready', model: opus.model, effort: 'max' });
+    expect(
+      resolveHarnessModel({
+        ...claudeBase,
+        loopDefaults: { byHarness: { claude: { model: opus.model } } },
+        ownerDefaults: { byHarness: { claude: { effort: 'medium' } } },
+      }),
+    ).toMatchObject({ status: 'ready', effort: 'medium' });
+  });
+});

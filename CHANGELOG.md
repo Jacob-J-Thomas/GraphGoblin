@@ -6,6 +6,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ### Added
 
+- Claude Code inference harness for the owner's native Windows CLI, pinned to 2.1.285. It uses only Claude.ai account authentication, adds no Anthropic SDK dependency, admits exact model `claude-opus-5-5`, and reports account-dependent billing without promising subscription inclusion. Only explicit `read-only`/`never` and `danger-full-access`/`never` policies are supported; Fable remains blocked while billing is unverified. Requested effort is recorded; effective effort is not reported. (#26)
+
 - Decision nodes choose one explicit Expression, Classifier or LLM evaluator, with Choice options whose stable IDs keep connections attached when display labels change. Inspectors record the selected kind, answer and resolved provider/model. There is no implicit fallback to another evaluator. (#98)
 
 - Runs explain why an exit completed, looped back, or reached a limit. Select `exit.evaluated` in the inspector to read each criterion's result and confidence, the model or classifier used, and the Codex judge's short reasoning. Converted historical decisions preserve recorded reasons why earlier strategies were skipped; new explicit-kind decisions have no fallback chain.
@@ -24,7 +26,7 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ### Changed
 
-- Inference progress shows a bounded command preview, exit code, and status while the node is running; failed tool calls and other SDK-reported item failures are also visible without provider diagnostics. Capability slugs are recorded but not yet resolved; use raw harness config overrides to configure tools.
+- Inference progress shows a bounded command preview, exit code, and status while the node is running; failed tool calls and other harness-reported item failures are also visible without provider diagnostics. Codex capability slugs are recorded but not yet resolved; Codex-only raw harness config overrides remain available. Claude rejects nonempty custom capabilities and raw overrides under its launch policy.
 - Every screen works from 360 px to wide desktop without sideways scrolling or clipped controls, including at 200% zoom. Loops, Runs, and Events show stacked rows below 1024 px (Settings' tables below 768 px), with values under their column names. Forms become one column below 640 px and the header links fold into Menu. In the editor, the toolbar wraps instead of hiding Publish, while loop settings and the palette float over the canvas on smaller screens. Touch controls are at least 44 px in both dimensions. Canvas ports counter-scale their absolute hit boxes with fixed 44 px rows on coarse pointers; row-pitch and neighbouring-card caps make targets smaller when zoomed out, while card layout stays fixed. The node dialog's Connect form provides full-size connection controls. Loop update times stay under loop names, and run patch diffs stack on narrow screens. (#41)
 - The light theme keeps the page white and gives cards, panels, the editor toolbar, and dialogs warm brown fills, borders, and control edges. Titles and column headings use dark brown; the dark theme is unchanged. See Settings → Appearance. (#11)
 - Forms share switches, segmented controls, file pickers, fieldsets, required-field markers, help text, and per-field errors. Structured rows keep parse errors with their rows, reject duplicate keys, and preserve focus and announcements when rows change. (#8, #53)
@@ -36,6 +38,7 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 ### Upgrade notes
 
 - **#98 is an offline format cutover.** Loop definitions and exports use version 2. Stop the old service, back up the complete data directory, inventory it with the offline upgrade tool, review its resolution manifest, and convert before starting this build. Existing unconverted stores are refused before migrations, recovery or triggers. All nonterminal runs must be drained or explicitly cancelled with the old build. Mixed strategy chains, uncertain expression coercion, changed output references and affected failed-run resumability require explicit manifest decisions. Never upgrade the live instance merely by starting this build.
+- Inference nodes may now select Claude Code on supported native Windows hosts. Install and authenticate the exact owner-managed CLI separately; existing Codex nodes and defaults are unchanged. Claude API-provider support is not included and remains tracked by #100.
 - Decisions now use `answer.options[{id,label,criteria}]` and an `evaluation` kind. Output is `{answer:{type:'choice',optionId,confidence,probabilities},portId,provenance:{kind,provider,classifierId,model,effort}}`. Update clients and authored expressions/templates; the tool refuses ambiguous rewrites. Historical unknowns remain null, known skip evidence is retained, and original converted records are archived in the upgrade audit. Old exports require the offline tool named by `LOOP_FORMAT_UPGRADE_REQUIRED`.
 - Loop and owner defaults use `defaults.byHarness`; owner Settings stores one `defaults` value. Process defaults use `GG_DEFAULTS` with the same JSON shape. Old `GG_DEFAULT_MODEL` and `GG_DEFAULT_EFFORT` variables are rejected. Catalog membership and effective effort are enforced, and unavailable selections block publication. This supersedes older advisory-only defaults/catalog notes below.
 - Device drafts use the same pure converter; ambiguous raw drafts remain available through the existing set-aside/export flow. Reload clients after the server upgrade so their cached event schema matches. No per-node session policy or new question/context contract is introduced; #33 waits for #38.
@@ -93,7 +96,8 @@ The first release: design, run, and observe agent loops on your own machine, wit
 ### Harnesses and deciders
 
 - Codex through `@openai/codex-sdk` 0.160.0 using the machine's `codex login`: session policies, sandbox and approval settings, structured output with a repair policy, transcripts as artifacts, and cancellation.
-- Decisions by JSONata expression, Jev (with a confidence threshold), or Codex, as an ordered fallback list.
+- Claude through the owner-installed native Windows Claude Code CLI 2.1.285 using Claude.ai account auth. This is inference-only; billing is account-dependent, and effective effort is not reported.
+- Decisions by explicit JSONata expression, Jev classifier, or Codex LLM evaluator; a failed evaluator never falls back to another kind.
 - Scripts run as the API's user without a shell wrapper, with exit-code routes, patch output, and Windows process-tree kill.
 - The Jev API key can be seeded from the environment: when no `jev-api-key` secret exists, the API stores `GG_JEV_API_KEY` (or `JEV_API_KEY`) in the encrypted secret store at first start; a stored secret always wins and the value is never logged.
 

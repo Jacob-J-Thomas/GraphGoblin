@@ -1,6 +1,10 @@
 import type { Effort, HarnessId, LoopDefinition, LoopIssue } from '@graphgoblin/contracts';
 import { resolveHarnessModel, validateHarnessDefaults } from '@graphgoblin/domain';
 import type { Container } from './container.js';
+import {
+  claudeModelBlocked,
+  CLAUDE_BILLING_UNVERIFIED_MESSAGE,
+} from '@graphgoblin/infrastructure/claude';
 import { readOwnerDefaults } from './container.js';
 
 /** One catalog snapshot and the same resolver as execution, for all authoring admission endpoints. */
@@ -30,7 +34,23 @@ export async function modelIssues(
         resolution.path,
     }),
   );
-  function check(
+  for (const [level, defaults] of [
+    ['loop', shared.loopDefaults],
+    ['owner', ownerDefaults],
+    ['process', shared.processDefaults],
+  ] as const)
+    if (claudeModelBlocked(defaults.byHarness.claude?.model))
+      issues.push({
+        code: 'HARNESS_MODEL_UNVERIFIED',
+        severity: 'warning',
+        path:
+          (level === 'loop' ? 'settings.defaults' : level + '.defaults') +
+          '.byHarness.claude.model',
+        message: CLAUDE_BILLING_UNVERIFIED_MESSAGE,
+      });
+  let claudePreflight:
+    ReturnType<NonNullable<typeof container.ports.harnesses.claude>['preflight']> | undefined;
+  async function check(
     harness: HarnessId,
     model: string | undefined,
     effort: Effort | undefined,
@@ -52,6 +72,40 @@ export async function modelIssues(
       ...(model !== undefined ? { model } : {}),
       ...(effort !== undefined ? { effort } : {}),
     });
+    if (harness === 'claude' && resolution.status === 'ready') {
+      if (claudeModelBlocked(resolution.model))
+        issues.push({
+          code: 'HARNESS_MODEL_UNVERIFIED',
+          severity: 'warning',
+          nodeId,
+          path: path + '.model',
+          message: CLAUDE_BILLING_UNVERIFIED_MESSAGE,
+        });
+      else if (container.ports.harnesses.claude) {
+        try {
+          claudePreflight ??= container.ports.harnesses.claude.preflight();
+          const preflight = await claudePreflight;
+          if (!preflight.ok)
+            issues.push({
+              code: 'HARNESS_UNAVAILABLE',
+              severity: 'warning',
+              nodeId,
+              path: path + '.harness',
+              message:
+                preflight.problems.join('; ') ||
+                'Claude installation or account login is unavailable',
+            });
+        } catch {
+          issues.push({
+            code: 'HARNESS_UNAVAILABLE',
+            severity: 'warning',
+            nodeId,
+            path: path + '.harness',
+            message: 'Claude preflight is unavailable',
+          });
+        }
+      }
+    }
     if (resolution.status !== 'ready')
       issues.push({
         code: resolution.code,
@@ -63,10 +117,10 @@ export async function modelIssues(
   }
   for (const node of definition.nodes) {
     if (node.kind === 'inference')
-      check(node.config.harness, node.config.model, node.config.effort, node.id, 'config');
+      await check(node.config.harness, node.config.model, node.config.effort, node.id, 'config');
     if (node.kind === 'decision' && node.config.evaluation.kind === 'llm') {
       const evaluation = node.config.evaluation;
-      check(
+      await check(
         evaluation.harness,
         evaluation.model.mode === 'explicit' ? evaluation.model.value : undefined,
         evaluation.effort.mode === 'explicit' ? evaluation.effort.value : undefined,
@@ -80,7 +134,7 @@ export async function modelIssues(
         (criterion) => criterion.when === 'predicate' && criterion.strategy === 'codex',
       )
     )
-      check('codex', undefined, undefined, node.id, 'config.criteria');
+      await check('codex', undefined, undefined, node.id, 'config.criteria');
   }
   return issues;
 }
@@ -90,6 +144,7 @@ export function blocksPublication(issue: LoopIssue): boolean {
     [
       'MODEL_DISABLED',
       'HARNESS_UNAVAILABLE',
+      'HARNESS_MODEL_UNVERIFIED',
       'CLASSIFIER_MODEL_DISABLED',
       'CLASSIFIER_SECRET_MISSING',
       'CLASSIFIER_SECRET_UNREADABLE',
