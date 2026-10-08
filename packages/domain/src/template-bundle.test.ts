@@ -120,6 +120,31 @@ function allocations(keys = ['main']): Record<string, TemplateLoopAllocation> {
 type BrokenCase = [string, (input: TemplateBundle) => void];
 
 describe('bundle preparation', () => {
+  it('applies the implementation visit limit to every immutable loop without changing source', () => {
+    const authored = splitBundle();
+    authored.manifest.kind = 'implementation';
+    authored.manifest.roles = [{ id: 'implementer', label: 'Implementer', access: 'write' }];
+    authored.manifest.requiredSecrets = [{ key: 'supportReadKey', scopes: ['runs:read'] }];
+    for (const loop of authored.manifest.loops)
+      loop.roleNodes = loop.roleNodes.map((mapping) => ({ ...mapping, role: 'implementer' }));
+    const original = structuredClone(authored);
+    const prepared = prepareTemplateBundle(
+      authored,
+      {
+        kind: 'implementation',
+        repository: { path: 'C:/fixture/repo', owner: 'Fixture', name: 'repo', baseBranch: 'main' },
+        supportReadKey: 'reader',
+        roles: { implementer: role },
+        limits: { maxIterations: 3 },
+      },
+      allocations(['main', 'child']),
+    );
+    expect(prepared.loops.map((loop) => loop.definition.settings.maxIterations)).toEqual([3, 3]);
+    expect(prepared.settings).toMatchObject({
+      limits: { maxTasks: 8, gateFixes: 2, maxIterations: 3 },
+    });
+    expect(authored).toEqual(original);
+  });
   it('copies settings as JSON and explicit role fields without editing authored source', () => {
     const authored = bundle();
     const original = structuredClone(authored);
@@ -252,7 +277,7 @@ describe('bundle preparation', () => {
       allocations(),
     );
     expect(result.settings.kind).toBe('implementation');
-    expect(result.loops[0]?.definition.settings.maxIterations).toBe(10);
+    expect(result.loops[0]?.definition.settings.maxIterations).toBe(100);
     authored.manifest.requiredSecrets.push({ key: 'missingKey', scopes: ['runs:read'] });
     expect(() => prepareTemplateBundle(authored, result.settings, allocations())).toThrow(
       'required secret reference',

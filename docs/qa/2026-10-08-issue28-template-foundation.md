@@ -1,6 +1,6 @@
-# Issue #28: Template foundation QA ledger â€” 2026-10-08
+# Issue #28: Template foundation QA ledger — 2026-10-08
 
-Scope: [Issue #28](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/28), the starter-only template catalog and gallery foundation. The catalog registers only the small starter assistant. The gallery uses typed, literal settings and current model choices; contracts and domain validation reject malformed manifests, settings, exports, graph dependencies and bindings. Template instantiation creates owner-scoped instances with distinct loop identities and a draft parent; infrastructure tests cover transactional rollback and persistence across reopen. Prerequisite checks return typed, actionable reports. Protected instance bindings and private support-command seams are staged for [#30](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/30)â€“[#32](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/32).
+Scope: [Issue #28](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/28), the starter-only template catalog and gallery foundation. The catalog registers only the small starter assistant. The gallery uses typed, literal settings and current model choices; contracts and domain validation reject malformed manifests, settings, exports, graph dependencies and bindings. Template instantiation creates owner-scoped instances with distinct loop identities and a draft parent; infrastructure tests cover transactional rollback and persistence across reopen. Prerequisite checks return typed, actionable reports. Protected instance bindings and private support-command seams are staged for [#30](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/30)–[#32](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/32).
 
 Repository workflow authority remains unavailable until the later support recipes are verified. The foundation does not register repository recipes or claim their authority is ready. The real starter has no isolation prerequisite and can run when its assistant is ready; no QA-only isolation override was added. A negative unit fixture covers an unavailable runtime-only prerequisite as a separate report case.
 
@@ -45,7 +45,7 @@ Installed Claude Code used exact `claude-opus-5-5`, Claude.ai authentication and
 | Run-list default size missing from upgrade notes                       | FIX-IN-PR documentation: explicit 50-to-100 change and `limit` guidance.                                                                                                                                                                                                            |
 | Possible worker-admission failure classification                       | NO-CHANGE: reviewer marked this unverified; repository authority is unavailable here. Concrete recipe paths remain part of #30 verification.                                                                                                                                        |
 
-The normal Codex review [5462875302](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/130#pullrequestreview-5462875302) independently found the first root. Both accepted roots are batched for targeted re-review; no new full review is requested for the repair.
+The normal Codex review [5462875302](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/130#pullrequestreview-5462875302) independently found the first root. Both accepted roots were fixed in `9f56ed9b6dbdf6fa1c0aca972fd3165f4be70e87`. Targeted Codex review5463136186 and the installed Opus review completed on 2026-10-08 at 21:36 UTC, confirming the code repair. Both found the same documentation encoding regression: four arrows, an ellipsis and two dashes. Restoring those exact seven character sequences from the prior UTF-8 bytes passed independent GPT-6 Luna verification; no source changed. Opus explicitly required no further code review after that text repair. No third manual review was requested.
 
 Actual Opus browser QA completed on 2026-10-08 at 21:17 UTC against the isolated built API/web app. Six successful paired tool/HTTP receipts and screenshots cover current defaults, draft/editor handoff, repeated distinct drafts, blocked prerequisite remediation, desktop keyboard activation/focus, and a 390×844 layout. Every receipt reported HTTP200, zero console errors and zero blocked requests. The fake harness and deciders made no provider calls. Source/build/helper fingerprint: `15d2e7000dbf9d01ed5f3853eaf787b5bae6f4a2bd733b4f3a1737a2e52a34f0`.
 
@@ -53,7 +53,7 @@ The QA app intentionally retained three preflight drafts; Opus created three mor
 
 ## Remaining delivery gates
 
-- Targeted Codex and Opus inspection of the recovery repair, then final-head CI before feature-branch integration.
+- Final-head CI and routing before feature-branch integration; all review findings have a recorded disposition and the accepted code/text fixes are verified.
 - Repository recipes #30–32 need separate bounded workflow and installed-support checks; none were included or claimed in this starter-only PR.
 - The final feature-to-main PR stays unmerged for the owner's validation of the updated local instance.
 

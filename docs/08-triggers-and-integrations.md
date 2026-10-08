@@ -136,3 +136,9 @@ The most secure default for a single-user laptop is to accept nothing inbound an
 ## Concurrency (Decided)
 
 Every firing starts a run. A per-loop policy, `parallel`, `queue`, `skip`, or `replace`, is post-1.0 and will live in loop settings.
+
+## Bundled implementation workflow (#30)
+
+The [GitHub issue implementation template](guide/10-implementation-template.md) uses the generic poll-items trigger every 60 seconds and admits at most one eligible issue per poll. Its private support command discovers open issues carrying the configured trigger label. Before generic deduplication, the API derives a stable repository/issue/attempt key from authenticated template run history. Transactional admission independently recomputes that attempt and rejects stale or forged selections. Restarting, relabeling or creating another template instance does not reset a consumed attempt.
+
+Publishing the parent enables polling; creating its draft does not. Support checks the issue, labels, repository identity and origin before effects, records a durable claim, then prepares local worktrees and labels the issue in progress. Direct work uses one fresh child; split tasks run sequentially in separate child worktrees and merge into the issue branch. The configured native gate must pass on an unchanged, clean commit before support can publish its exact PR intent. Successful completion leaves the PR open for review. Failed progressed attempts retain their state for manual reconciliation; only the documented pre-execution prerequisite failures can resume the same run.

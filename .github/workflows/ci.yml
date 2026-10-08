@@ -94,12 +94,22 @@ jobs:
         run: |
           docker run --rm -i --network none --read-only --cap-drop ALL --security-opt no-new-privileges --entrypoint node graphgoblin-template-check --input-type=module <<'JS'
           import assert from 'node:assert/strict';
+          import { spawnSync } from 'node:child_process';
           import { TemplateCatalog } from '/app/apps/api/dist/templates/catalog.js';
           const entries = await new TemplateCatalog('/app/apps/api/dist/catalog', '/app/apps/api').list();
           assert.ok(entries.length > 0, 'The runtime image must contain its template catalog');
           assert.ok(entries.some(({ bundle }) => bundle.manifest.id === 'starter'));
           for (const { bundle, support } of entries) {
             assert.ok(Object.keys(bundle.loops).length > 0);
+            if (support) {
+              const result = spawnSync(process.execPath, [support.path, '--version'], {
+                shell: false, timeout: 5000, maxBuffer: 4096, encoding: 'utf8',
+                stdio: ['ignore', 'pipe', 'pipe'],
+              });
+              assert.ifError(result.error);
+              assert.equal(result.status, 0, 'Installed support must execute without external services');
+              assert.equal(JSON.parse(result.stdout).version, bundle.manifest.version);
+            }
             console.log(JSON.stringify({ template: bundle.manifest.id, version: bundle.manifest.version,
               loops: Object.keys(bundle.loops), supportPackaged: support !== undefined }));
           }
