@@ -5,6 +5,7 @@ import { TemplateBindingSchema, assertBoundVersion, type TemplateBinding } from 
 import { parseSubject, sameSubject, type ParentSubject } from './subjects.js';
 import { TemplateError } from './errors.js';
 import type { TemplateFailureReporter } from './runtime.js';
+import { checkedEvents } from './authority.js';
 
 export interface TemplateReportPort {
   comments(repository: string, issue: number, limit: number): Promise<readonly { body: string }[]>;
@@ -14,7 +15,7 @@ const fixedCodes = new Set(['TEMPLATE_PREREQUISITE_UNAVAILABLE', 'TEMPLATE_ISOLA
 function refused(): never {
   throw new TemplateError(
     'TEMPLATE_REPORT_UNAVAILABLE',
-    'The trusted prerequisite report is unavailable; no workflow effects ran.',
+    'The trusted pre-execution prerequisite report is unavailable.',
   );
 }
 /** Reconciliation precedes the sole explanatory effect. It never resets a consumed subject. */
@@ -44,6 +45,12 @@ export class ReconciledTemplateFailureReporter implements TemplateFailureReporte
       !version ||
       !['queued', 'running', 'waiting', 'paused'].includes(current.run.status) ||
       stableHash(TemplateBindingSchema.parse(stored.binding)) !== stableHash(binding)
+    )
+      refused();
+    if (
+      checkedEvents(await this.instances.store.events(run.id)).some(
+        (event) => event.type === 'node.started',
+      )
     )
       refused();
     assertBoundVersion(binding, run.loopId, run.versionId, version.definition);

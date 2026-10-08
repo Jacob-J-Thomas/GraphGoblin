@@ -14,11 +14,18 @@ import {
 import { fakeUlid, FIXTURE_TS } from '@graphgoblin/contracts/testing';
 import {
   createInitialThread,
+  RunManager,
   type RunAdmission,
   type ScriptPort,
   type ScriptRunRequest,
 } from '@graphgoblin/engine';
-import { FakeClock, FakeHarness, InMemorySecrets } from '@graphgoblin/engine/testing';
+import {
+  FakeClock,
+  FakeHarness,
+  InMemorySecrets,
+  createFakePorts,
+  DEFAULT_TEST_SETTINGS,
+} from '@graphgoblin/engine/testing';
 import {
   openMemoryDatabase,
   SqliteApiKeys,
@@ -1747,6 +1754,70 @@ describe('private probe and output refusal boundaries', () => {
   });
 });
 describe('pre-execution authority and trusted reporting', () => {
+  it.each(['prerequisite', 'authority'] as const)(
+    'recovers a progressed repository run with lost %s as manual recovery without another effect',
+    async (reason) => {
+      const f = await foundation();
+      const { run } = await f.executing('interrupted');
+      const ports = createFakePorts();
+      ports.loops.add({
+        id: f.pinned.id,
+        loopId: run.loopId,
+        version: f.pinned.version,
+        status: 'published',
+        definition: f.pinned.definition,
+        createdAt: f.pinned.createdAt,
+        publishedAt: FIXTURE_TS,
+      });
+      let reported = 0;
+      const runtime = new TemplateRuntime(f.instances, f.authority, {
+        report: () => {
+          reported++;
+          return Promise.resolve();
+        },
+      });
+      if (reason === 'prerequisite') f.harness.preflightResult.ok = false;
+      else f.authority.recheck = () => Promise.reject(new Error('private source failure'));
+      const manager = new RunManager(
+        {
+          ...ports,
+          runs: f.runs,
+          events: f.events,
+          admission: f.admission,
+          harnesses: { codex: f.harness },
+        },
+        { ...DEFAULT_TEST_SETTINGS, ...runtime.hooks },
+      );
+      try {
+        await manager.start();
+        await manager.waitForIdle();
+        const failed = await f.runs.get(run.id);
+        expect(failed).toMatchObject({
+          status: 'failed',
+          failure: {
+            code:
+              reason === 'prerequisite'
+                ? 'TEMPLATE_PREREQUISITE_UNAVAILABLE'
+                : 'TEMPLATE_AUTHORITY_REFUSED',
+            resumable: false,
+          },
+        });
+        expect(failed?.failure?.message).toContain('Earlier effects may have occurred');
+        expect(failed?.failure?.message).not.toContain('no workflow effects ran');
+        expect(reported).toBe(0);
+        expect(
+          (await f.events.read(run.id)).filter((event) => event.type === 'node.started'),
+        ).toHaveLength(1);
+        expect(f.harness.started).toHaveLength(0);
+        expect(ports.scripts.calls).toHaveLength(0);
+        await expect(manager.resume(run.id)).rejects.toMatchObject({ code: 'INVALID_STATE' });
+      } finally {
+        manager.stop();
+        await manager.waitForIdle();
+      }
+    },
+  );
+
   it('rechecks the actual parent before effects and fails closed on lost eligibility or missing admission', async () => {
     const f = await foundation();
     const input = f.intent('ready');
@@ -1981,43 +2052,58 @@ describe('bounded authenticated rework and proof refusal', () => {
   });
 });
 describe('fixed report reconciliation refusal', () => {
-  it.each(['duplicate', 'overflow', 'terminal', 'wrong-owner', 'wrong-subject', 'post-failure'])(
-    'refuses %s without an extra explanatory effect',
-    async (caseName) => {
-      const f = await foundation();
-      const input = f.intent('report');
-      const run = await f.admission.create(input);
-      const subject = parseSubject((await f.instances.store.run(run.id))!.subject);
-      if (subject.role !== 'parent') throw new Error('fixture');
-      const comments: { body: string }[] = [];
-      let posts = 0;
-      const reporter = new ReconciledTemplateFailureReporter(f.instances, {
-        comments: () => Promise.resolve(comments),
-        post: (_repo, _issue, body) => {
-          posts++;
-          if (caseName === 'post-failure') return Promise.reject(new Error('synthetic'));
-          comments.push({ body });
-          return Promise.resolve();
+  it.each([
+    'duplicate',
+    'overflow',
+    'terminal',
+    'wrong-owner',
+    'wrong-subject',
+    'post-failure',
+    'progressed',
+  ])('refuses %s without an extra explanatory effect', async (caseName) => {
+    const f = await foundation();
+    const input = f.intent('report');
+    const run = await f.admission.create(input);
+    const subject = parseSubject((await f.instances.store.run(run.id))!.subject);
+    if (subject.role !== 'parent') throw new Error('fixture');
+    const comments: { body: string }[] = [];
+    let posts = 0;
+    const reporter = new ReconciledTemplateFailureReporter(f.instances, {
+      comments: () => Promise.resolve(comments),
+      post: (_repo, _issue, body) => {
+        posts++;
+        if (caseName === 'post-failure') return Promise.reject(new Error('synthetic'));
+        comments.push({ body });
+        return Promise.resolve();
+      },
+    });
+    if (caseName === 'duplicate') {
+      await reporter.report(f.binding, run, subject, 'TEMPLATE_PREREQUISITE_UNAVAILABLE');
+      comments.push({ ...comments[0]! });
+      posts = 0;
+    }
+    if (caseName === 'overflow')
+      comments.push(...Array.from({ length: 101 }, () => ({ body: 'existing' })));
+    if (caseName === 'terminal') await f.runs.update(run.id, { status: 'succeeded' });
+    if (caseName === 'progressed')
+      await f.events.append(run.id, [
+        {
+          type: 'node.started',
+          nodeId: 'claim',
+          kind: 'script',
+          attempt: 1,
+          configHash: f.binding.loops[0]!.nodes['claim']!.configHash,
         },
-      });
-      if (caseName === 'duplicate') {
-        await reporter.report(f.binding, run, subject, 'TEMPLATE_PREREQUISITE_UNAVAILABLE');
-        comments.push({ ...comments[0]! });
-        posts = 0;
-      }
-      if (caseName === 'overflow')
-        comments.push(...Array.from({ length: 101 }, () => ({ body: 'existing' })));
-      if (caseName === 'terminal') await f.runs.update(run.id, { status: 'succeeded' });
-      const actualRun = caseName === 'wrong-owner' ? { ...run, ownerId: 'other' } : run;
-      const actualSubject = caseName === 'wrong-subject' ? { ...subject, issue: 8 } : subject;
-      await expect(
-        reporter.report(f.binding, actualRun, actualSubject, 'TEMPLATE_PREREQUISITE_UNAVAILABLE'),
-      ).rejects.toBeDefined();
-      expect(posts).toBe(caseName === 'post-failure' ? 1 : 0);
-      expect(f.requests).toHaveLength(0);
-      expect(f.harness.started).toHaveLength(0);
-    },
-  );
+      ]);
+    const actualRun = caseName === 'wrong-owner' ? { ...run, ownerId: 'other' } : run;
+    const actualSubject = caseName === 'wrong-subject' ? { ...subject, issue: 8 } : subject;
+    await expect(
+      reporter.report(f.binding, actualRun, actualSubject, 'TEMPLATE_PREREQUISITE_UNAVAILABLE'),
+    ).rejects.toBeDefined();
+    expect(posts).toBe(caseName === 'post-failure' ? 1 : 0);
+    expect(f.requests).toHaveLength(0);
+    expect(f.harness.started).toHaveLength(0);
+  });
 });
 
 describe('pinned evaluation role admission', () => {

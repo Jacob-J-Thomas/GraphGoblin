@@ -333,10 +333,9 @@ export class TemplateRuntime {
     store: TemplateTransaction = this.instances.store,
   ): Promise<void> {
     const bound = await this.bound(run.ownerId, run.loopId, run.versionId, store);
-    if (!bound) return;
+    if (!bound || bound.binding.manifest.kind === 'starter') return;
     const events = checkedEvents(await store.events(run.id));
-    if (bound.binding.manifest.kind !== 'starter')
-      assertPinnedBundle(bound.binding, run.loopId, events);
+    assertPinnedBundle(bound.binding, run.loopId, events);
     const failureEvent = events.filter((event) => event.type === 'run.failed').at(-1);
     const details = run.failure?.details;
     const declaration =
@@ -360,15 +359,12 @@ export class TemplateRuntime {
         'This template failure requires manual recovery; resume cannot grant another attempt.',
       );
     const row = await store.run(run.id);
-    if (
-      bound.binding.manifest.kind !== 'starter' &&
-      (!row?.subject || parseSubject(row.subject).role !== 'parent')
-    )
+    if (!row?.subject || parseSubject(row.subject).role !== 'parent')
       throw new EngineRequestError('INVALID_STATE', 'The immutable parent subject is missing.');
   }
   readonly hooks: Pick<EngineSettings, 'beforeExecute' | 'beforeResume'> = {
     beforeResume: async ({ run }) => this.assertResume(run),
-    beforeExecute: async ({ run }) => {
+    beforeExecute: async ({ run, events }) => {
       let bound;
       try {
         bound = await this.bound(run.ownerId, run.loopId, run.versionId);
@@ -380,6 +376,7 @@ export class TemplateRuntime {
         );
       }
       if (!bound) return;
+      const progressed = events.some((event) => event.type === 'node.started');
       const report =
         bound.binding.manifest.kind === 'starter'
           ? await this.instances.prerequisites.checkCurrentRoles(
@@ -403,6 +400,12 @@ export class TemplateRuntime {
           kind === 'isolation'
             ? 'TEMPLATE_ISOLATION_UNAVAILABLE'
             : 'TEMPLATE_PREREQUISITE_UNAVAILABLE';
+        if (progressed && bound.binding.manifest.kind !== 'starter')
+          throw new RunFailureError(
+            code,
+            'A prerequisite is unavailable after workflow execution began. Earlier effects may have occurred; manual recovery is required.',
+            { resumable: false, details: { prerequisite: missing.id, kind } },
+          );
         const row = await this.instances.store.run(run.id);
         if (bound.binding.manifest.kind !== 'starter') {
           const subject = row?.subject ? parseSubject(row.subject) : undefined;
@@ -467,7 +470,9 @@ export class TemplateRuntime {
         } catch {
           throw new RunFailureError(
             'TEMPLATE_AUTHORITY_REFUSED',
-            'The repository subject is no longer eligible; no workflow effects ran.',
+            progressed
+              ? 'The repository subject is no longer eligible after workflow execution began. Earlier effects may have occurred; manual recovery is required.'
+              : 'The repository subject is no longer eligible; no workflow effects ran.',
             { resumable: false },
           );
         }

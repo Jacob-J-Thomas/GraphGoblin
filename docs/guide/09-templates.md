@@ -11,3 +11,5 @@ Creating a template does not start a run. Review the graph, publish it when read
 A requirement can block creation or only execution. If execution is blocked, its message explains the missing capability and remedy; creating a draft does not bypass it. The initial catalog contains the starter assistant. Repository implementation, PR review and QA recipes are added only after their separate verification; they are not silently included as untested examples. Current production QA isolation is unavailable, so a future QA recipe cannot run by selecting an override.
 
 Templates use the existing context and session behavior. Per-node session continuity and question-context redesign remain deferred.
+
+If a starter run fails with a resumable model error, repair the reported problem and use **Resume** on that run. Its current pinned model and account readiness are checked again before a retry. Repository workflow attempts use stricter recovery rules because earlier actions may already have changed the repository; follow the recorded failure instead of relabelling an issue to create a second attempt.
