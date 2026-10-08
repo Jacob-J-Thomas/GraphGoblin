@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { supportBlocked } from '../support-result.js';
 import {
   ContextThreadSchema,
   ImplementationTemplateSettingsSchema,
@@ -122,9 +123,5 @@ export function fail(code: string): never {
   throw new SupportFailure(code);
 }
 export function blocked(code: string) {
-  return {
-    type: 'SupportBlocked' as const,
-    code,
-    message: 'Implementation stopped safely; inspect the recorded support code.',
-  };
+  return supportBlocked(code);
 }

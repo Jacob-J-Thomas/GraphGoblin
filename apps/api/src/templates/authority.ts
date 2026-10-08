@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { SupportBlockedSchema } from './support-result.js';
 import {
   NodeOutputSchema,
   RunEventSchema,
@@ -142,6 +143,7 @@ export function authorityFacts(
     if (!output || !('value' in output)) conflict();
     const value = NodeOutputSchema.safeParse(output.value);
     if (!value.success || value.data.nodeId !== event.nodeId) conflict();
+    if (SupportBlockedSchema.safeParse(value.data.value).success) continue;
     const parsed = AuthorityFactSchema.safeParse(value.data.value);
     if (!parsed.success) conflict();
     const fact = parsed.data;

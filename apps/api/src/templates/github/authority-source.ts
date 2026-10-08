@@ -43,7 +43,10 @@ export class ImplementationAuthority implements TemplateAuthoritySource {
     const issue = 'payload' in selector.data ? selector.data.payload.issue : selector.data.issue;
     try {
       const deps = await this.dependencies(settings);
-      await new ImplementationRepository(settings, deps.commands, deps.storage, deps.git).assert();
+      const repo = new ImplementationRepository(settings, deps.commands, deps.storage, deps.git);
+      await repo.assert();
+      if (!(await repo.remoteHead(settings.repository.baseBranch)))
+        throw new SupportFailure('BASE_BRANCH_MISSING');
       await eligibleIssue(deps.github, settings, issue);
       return {
         kind: 'implementation' as const,

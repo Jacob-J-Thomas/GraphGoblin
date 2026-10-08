@@ -82,7 +82,7 @@ export class ImplementationReporter implements TemplateFailureReporter {
     }
   }
   private async terminalReport(run: RunRecord): Promise<void> {
-    if (run.status !== 'failed' && run.outcome !== 'failure') return;
+    if (run.status !== 'failed' && run.status !== 'cancelled' && run.outcome !== 'failure') return;
     const stored = await this.instances.store.bindingForLoop(run.ownerId, run.loopId);
     if (!stored) return;
     const binding = TemplateBindingSchema.parse(stored.binding);
@@ -111,6 +111,7 @@ export class ImplementationReporter implements TemplateFailureReporter {
       authority.events,
     );
     let pullRequest = authority.facts.find((fact) => fact.type === 'PrCreated')?.pullRequest;
+    let openPr = false;
     if (intent) {
       const prs = await deps.github.pullRequests(authority.subject.repository, intent.branch);
       if (prs.length > 1)
@@ -138,6 +139,7 @@ export class ImplementationReporter implements TemplateFailureReporter {
         if (pullRequest && pullRequest !== pr.number)
           throw new TemplateError('AUTHORITY_CONFLICT', 'PR history conflicts.');
         pullRequest = pr.number;
+        openPr = pr.state === 'open';
       } else if (pullRequest)
         throw new TemplateError(
           'TEMPLATE_REPORT_UNAVAILABLE',
@@ -145,6 +147,25 @@ export class ImplementationReporter implements TemplateFailureReporter {
         );
     } else if (pullRequest)
       throw new TemplateError('AUTHORITY_CONFLICT', 'The recorded PR has no authenticated intent.');
+    const creationNode = version.definition.nodes.find(
+      (node) =>
+        node.kind === 'script' &&
+        node.config.command === 'graphgoblin-template-support' &&
+        node.config.args.length === 1 &&
+        node.config.args[0] === 'pr-created',
+    );
+    const creationStarted =
+      !!intent &&
+      !!creationNode &&
+      authority.events.some(
+        (event) =>
+          event.type === 'node.started' &&
+          event.nodeId === creationNode.id &&
+          event.kind === 'script' &&
+          event.configHash ===
+            binding.loops.find((loop) => loop.loopId === run.loopId)?.nodes[creationNode.id]
+              ?.configHash,
+      );
     await this.explain(
       binding,
       run,
@@ -154,9 +175,20 @@ export class ImplementationReporter implements TemplateFailureReporter {
         ? 'GraphGoblin stopped after pull request #' +
             pullRequest +
             ' was created. This consumed run requires manual completion reconciliation; no second PR will be created.'
-        : 'GraphGoblin stopped this implementation attempt. No pull request was created. The permanent attempt remains consumed; inspect the recorded fixed failure code and recover manually.',
+        : creationStarted
+          ? 'GraphGoblin stopped during pull request creation. The bounded lookup has not established completion. This consumed run requires manual PR reconciliation; no second PR will be created.'
+          : 'GraphGoblin stopped this implementation attempt. No pull request was created. The permanent attempt remains consumed; inspect the recorded fixed failure code and recover manually.',
       !pullRequest,
     );
+    if (pullRequest && openPr) {
+      const settings = ImplementationTemplateSettingsSchema.parse(binding.settings);
+      await deps.github.label(
+        authority.subject.repository,
+        authority.subject.issue!,
+        [settings.labels.prOpen],
+        [settings.labels.inProgress, settings.labels.trigger],
+      );
+    }
   }
   private async verify(binding: TemplateBinding, run: RunRecord, subject: ParentSubject) {
     if (binding.manifest.id !== 'implementation' || binding.manifest.kind !== 'implementation')

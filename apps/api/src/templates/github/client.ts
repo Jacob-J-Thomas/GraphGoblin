@@ -2,6 +2,7 @@ import { z } from 'zod';
 import type { ImplementationTemplateSettings } from '@graphgoblin/contracts';
 import type { CommandRunner } from './process.js';
 import { fail, ShaSchema } from './protocol.js';
+import { assertIssueOutput } from './support-output.js';
 
 export const IssueSchema = z.object({
   number: z.number().int().positive(),
@@ -54,6 +55,7 @@ export class CliGithub implements GithubPort {
   protected async run(args: string[], stdin?: string): Promise<string> {
     const result = await this.runner.run({
       program: this.program,
+      credentialContext: true,
       args,
       cwd: this.cwd,
       ...(stdin === undefined ? {} : { stdin }),
@@ -218,6 +220,7 @@ export async function eligibleIssue(
     fail('REQUIRED_LABEL_MISSING');
   if (current.state !== 'open' || !current.title.trim() || !current.body?.trim())
     fail('ISSUE_NOT_ELIGIBLE');
+  assertIssueOutput(settings, current);
   const actual = current.labels.map((label) => label.name);
   if (!actual.includes(claimed ? settings.labels.inProgress : settings.labels.trigger))
     fail('TRIGGER_LABEL_REMOVED');

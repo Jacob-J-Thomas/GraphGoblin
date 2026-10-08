@@ -1,4 +1,5 @@
 import { join, resolve } from 'node:path';
+import { assertIssueOutput, boundedSupportOutput } from './support-output.js';
 import { stableHash } from '@graphgoblin/domain';
 import { ClaimRecordSchema, PrCreatedSchema } from '../authority.js';
 import { CliGithub, eligibleIssue, type GithubPort, type GithubPullRequest } from './client.js';
@@ -33,7 +34,7 @@ export async function nativeSupportDependencies(
     storage: new DiskSupportStorage(),
     github: new CliGithub(commands, await nativeExecutable('gh'), settings.repository.path),
     git: await nativeExecutable('git'),
-    gate: gateCommand,
+    gate: (program, args) => gateCommand(program, args, process.env, settings.repository.path),
   };
 }
 export async function nativeSupport(
@@ -62,7 +63,7 @@ export class ImplementationSupport {
     try {
       envelope = SupportEnvelopeSchema.parse(envelopeInput);
       const action = SupportActionSchema.parse(actionInput);
-      return await this.perform(action, envelope);
+      return boundedSupportOutput(await this.perform(action, envelope));
     } catch (error) {
       const code = error instanceof SupportFailure ? error.code : 'SUPPORT_INVALID_INPUT';
       // Never report caller input or subprocess errors. Graph routing decides the blocked exit.
@@ -113,6 +114,14 @@ export class ImplementationSupport {
       )
         fail('CLAIM_IDENTITY_REFUSED');
       await eligibleIssue(this.deps.github, settings, issue);
+      const claimRepo = new ImplementationRepository(
+        settings,
+        this.deps.commands,
+        this.deps.storage,
+        this.deps.git,
+      );
+      if (!(await claimRepo.remoteHead(settings.repository.baseBranch)))
+        fail('BASE_BRANCH_MISSING');
       return ClaimRecordSchema.parse({ type: 'ClaimRecord', repository, issue, attempt });
     }
     if (!envelope.claim) fail('CLAIM_REQUIRED');
@@ -127,7 +136,7 @@ export class ImplementationSupport {
           })
         : this.deps.storage;
     const repo = new ImplementationRepository(settings, this.deps.commands, storage, this.deps.git);
-    await repo.initialize();
+    await repo.assert();
     const path = repo.journal(parentRunId);
     let state = await storage.load(path);
     if (
@@ -179,6 +188,8 @@ export class ImplementationSupport {
         )
       )
         fail('ISSUE_NOT_ELIGIBLE');
+      assertIssueOutput(settings, current);
+      await repo.initialize();
       if (!state) {
         const base = await repo.remoteHead(settings.repository.baseBranch);
         if (!base) fail('BASE_BRANCH_MISSING');
@@ -316,6 +327,7 @@ export class ImplementationSupport {
           ? [{ id: 'direct', title: 'Implement issue ' + issue, instructions: plan.instructions }]
           : plan.tasks;
       if (tasks.length > settings.limits.maxTasks || state.mode) fail('PLAN_LIMIT_OR_CONFLICT');
+      boundedSupportOutput({ type: 'ImplementationPlan', mode: plan.mode, tasks, taskIndex: 0 });
       state.mode = plan.mode;
       state.tasks = tasks;
       result = { type: 'ImplementationPlan', mode: plan.mode, tasks, taskIndex: 0 };
@@ -326,6 +338,7 @@ export class ImplementationSupport {
         state.mode === 'direct' ? state.cwd : repo.workspace(parentRunId, state.taskIndex);
       const branch =
         state.mode === 'direct' ? state.branch : state.branch + '-task-' + (state.taskIndex + 1);
+      boundedSupportOutput({ type: 'ImplementationTask', ...task, cwd, index: state.taskIndex });
       state.task ??= {
         index: state.taskIndex,
         id: task.id,
@@ -435,6 +448,13 @@ export class ImplementationSupport {
         proposal.risks.map((item) => '- ' + item).join('\n') +
         '\n';
       if (!closingIssue(body, repository, issue)) fail('PR_CLOSING_LINK_REFUSED');
+      boundedSupportOutput({
+        type: 'PrIntent',
+        head,
+        branch: state.branch,
+        title: proposal.title,
+        body,
+      });
       state.intent = { head, branch: state.branch, title: proposal.title, body, pushed: false };
       result = { type: 'PrIntent', head, branch: state.branch, title: proposal.title, body };
     } else if (action === 'pr-created') {

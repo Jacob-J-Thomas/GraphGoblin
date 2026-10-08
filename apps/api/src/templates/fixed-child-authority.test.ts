@@ -4,7 +4,7 @@ import {
   LoopExportSchema,
   TemplateManifestSchema,
   ImplementationTemplateSettingsSchema,
-  NodeSchema,
+  SubloopConfigSchema,
   type RunEvent,
 } from '@graphgoblin/contracts';
 import { FIXTURE_TS, fakeUlid } from '@graphgoblin/contracts/testing';
@@ -157,6 +157,38 @@ describe('template fixed-child authority', () => {
       assertPinnedBundle(f.store, f.binding, f.parent.loopId, [queued]),
     ).rejects.toThrow();
   });
+  it.each([
+    'no-queued-event',
+    'unbound-parent',
+    'missing-parent-descriptor',
+    'missing-child-descriptor',
+    'missing-parent-version',
+    'foreign-parent-version',
+    'undeclared-child-reference',
+    'unreferenced-dependency',
+  ] as const)('refuses incomplete or inconsistent bundle provenance: %s', async (mode) => {
+    const f = await fixedBundle();
+    let loopId = f.parent.loopId;
+    let events = [f.queued];
+    if (mode === 'no-queued-event') events = [];
+    if (mode === 'unbound-parent') loopId = fakeUlid('unbound-parent');
+    if (mode === 'missing-parent-descriptor')
+      f.binding.manifest.loops = f.binding.manifest.loops.filter((loop) => loop.key !== 'parent');
+    if (mode === 'missing-child-descriptor')
+      f.binding.manifest.loops = f.binding.manifest.loops.filter(
+        (loop) => loop.key !== f.child.key,
+      );
+    if (mode === 'missing-parent-version') f.versions.delete(f.parent.versionId);
+    if (mode === 'foreign-parent-version')
+      f.versions.get(f.parent.versionId)!.loopId = fakeUlid('foreign-parent');
+    if (mode === 'undeclared-child-reference')
+      f.binding.manifest.loops.find((loop) => loop.key === 'parent')!.dependsOn = [];
+    if (mode === 'unreferenced-dependency')
+      f.binding.manifest.loops
+        .find((loop) => loop.key === 'parent')!
+        .dependsOn.push('unreferenced');
+    await expect(assertPinnedBundle(f.store, f.binding, loopId, events)).rejects.toThrow();
+  });
   it('requires actual dynamic latest pins when a bound definition contains latest', async () => {
     const f = await fixedBundle();
     for (const node of f.parent.definition.nodes)
@@ -186,16 +218,15 @@ describe('template fixed-child authority', () => {
     const descriptor = f.binding.manifest.loops.find((loop) => loop.key === f.child.key)!;
     descriptor.dependsOn = ['leaf'];
     f.binding.manifest.loops.push({ ...structuredClone(descriptor), key: 'leaf', dependsOn: [] });
-    child.definition.nodes.push(
-      NodeSchema.parse({
-        id: 'nested',
-        label: 'Nested',
-        kind: 'subloop',
-        config: {
-          loopRef: { loopId: leaf.loopId, version: leaf.version },
-        },
+    child.definition.nodes.push({
+      id: 'nested',
+      label: 'Nested',
+      kind: 'subloop',
+      ui: { x: 0, y: 0 },
+      config: SubloopConfigSchema.parse({
+        loopRef: { loopId: leaf.loopId, version: leaf.version },
       }),
-    );
+    });
     f.binding.loops.find((loop) => loop.key === f.child.key)!.hash = executionHash(
       child.definition,
     );
