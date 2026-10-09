@@ -1,4 +1,6 @@
-# Use the GitHub issue implementation template
+# Configure GitHub issue implementation automation
+
+**Use GitHub issue implementation** creates an editable task workflow immediately. Supply task and repository context at run time or customize it in the editor. This guide covers the optional **Configure automation** action for watching a specific GitHub repository. See [Start from a template](09-templates.md) for the default flow.
 
 This template watches one GitHub repository for open, labeled issues. It runs bounded implementation work in a worktree, executes the configured gate, and can open a pull request. Publishing the parent enables polling and authorizes repository changes, so configure a repository you are prepared to let it modify.
 
@@ -32,7 +34,7 @@ The API checks the selected role's enabled model and effort against the current 
 
 ## Configure and create the workflow
 
-On **Loops**, choose **New from template**, then **Use GitHub issue implementation**. Fill the fields:
+On **Loops**, choose **New from template**, then **Configure automation** on the GitHub issue implementation card. Fill the fields:
 
 | Setting                             | What to enter                                                                                                                                                                                  |
 | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

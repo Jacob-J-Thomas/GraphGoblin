@@ -1,4 +1,6 @@
-# Use the GitHub pull-request review template
+# Configure GitHub pull-request review automation
+
+**Use GitHub PR review** creates an editable review-and-fix workflow immediately. Supply the review subject in the run input or customize its instructions in the editor. This guide covers the optional **Configure automation** action for polling and acting on pull requests in a specific repository. See [Start from a template](09-templates.md).
 
 The GitHub pull-request review template watches one configured repository and base branch for eligible pull requests. It runs the configured gate on the exact pull-request head, asks a read-only reviewer for a structured verdict, and may request bounded fixes. Depending on the settings and linked issue labels, the workflow either uses the ordinary merge path after its checks or pauses for a real human choice.
 
@@ -19,7 +21,7 @@ The reviewer and fixer role menus use current enabled models and harness preflig
 
 ## Configure and create the review workflow
 
-On **Loops**, choose **New from template**, then **Use GitHub PR review**. The repository identity is blank so you can enter the exact target. The support key name is supplied by the manifest and is read-only in the form.
+On **Loops**, choose **New from template**, then **Configure automation** on the GitHub PR review card. The repository identity is blank so you can enter the exact target. The support key name is supplied by the manifest and is read-only in the form.
 
 | Setting                                           | Default and effect                                                                                                                                                                                                                                                                                                      |
 | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

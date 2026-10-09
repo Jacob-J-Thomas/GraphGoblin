@@ -8,13 +8,14 @@ GraphGoblin API 0.1.0. Concepts, SSE, authentication, and error shapes are in [0
 
 Packaged workflow templates and instances.
 
-| Method | Path                            | Summary                                             | Parameters                    | Request body          | Responses |
-| ------ | ------------------------------- | --------------------------------------------------- | ----------------------------- | --------------------- | --------- |
-| GET    | `/templates`                    | List installed workflow templates                   | -                             | -                     | 200       |
-| GET    | `/templates/{id}`               | Read an installed workflow template                 | `id`: string (path, required) | -                     | 200       |
-| POST   | `/templates/{id}/prerequisites` | Check template prerequisites without creating loops | `id`: string (path, required) | `{ settings }`        | 200       |
-| POST   | `/templates/{id}/instantiate`   | Create an owner-bound template bundle               | `id`: string (path, required) | `{ settings, name? }` | 201       |
-| GET    | `/template-instances/{id}`      | Read an owner-bound template instance               | `id`: string (path, required) | -                     | 200       |
+| Method | Path                            | Summary                                              | Parameters                    | Request body          | Responses |
+| ------ | ------------------------------- | ---------------------------------------------------- | ----------------------------- | --------------------- | --------- |
+| POST   | `/templates/{id}/draft`         | Create an editable manual loop draft from a template | `id`: string (path, required) | `{ name? }`           | 201       |
+| GET    | `/templates`                    | List installed workflow templates                    | -                             | -                     | 200       |
+| GET    | `/templates/{id}`               | Read an installed workflow template                  | `id`: string (path, required) | -                     | 200       |
+| POST   | `/templates/{id}/prerequisites` | Check template prerequisites without creating loops  | `id`: string (path, required) | `{ settings }`        | 200       |
+| POST   | `/templates/{id}/instantiate`   | Create an owner-bound template bundle                | `id`: string (path, required) | `{ settings, name? }` | 201       |
+| GET    | `/template-instances/{id}`      | Read an owner-bound template instance                | `id`: string (path, required) | -                     | 200       |
 
 ## loops
 

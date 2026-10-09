@@ -31,3 +31,4 @@ One file per decision. Status is Accepted unless stated. Supersede by adding a n
 | [0025](ADR-0025-answer-primitives.md)                    | Noul, Choice and Score answers with existing context preserved                                 |
 | [0026](ADR-0026-exit-primitives-and-format-three.md)     | Shared exit answer primitives and one offline format-3 cutover                                 |
 | [0027](ADR-0027-bundled-template-instances.md)           | Bundled templates, atomic draft instances and API-owned integration authority                  |
+| [0028](ADR-0028-editable-template-starting-points.md)    | Editable starting-point drafts with optional configured repository automation                  |

@@ -171,3 +171,27 @@ export function rejectsAdmission(issue: LoopIssue): boolean {
     ].includes(issue.code)
   );
 }
+
+/** Missing inherited readiness can be fixed after authoring; explicit invalid choices cannot. */
+export function rejectsDraftAdmission(definition: LoopDefinition, issue: LoopIssue): boolean {
+  if (!rejectsAdmission(issue)) return false;
+  if (issue.path?.startsWith('owner.defaults.') || issue.path?.startsWith('process.defaults.'))
+    return false;
+  const field = issue.path?.endsWith('.model')
+    ? 'model'
+    : issue.path?.endsWith('.effort')
+      ? 'effort'
+      : undefined;
+  const node = definition.nodes.find((candidate) => candidate.id === issue.nodeId);
+  if (!node || !field) return true;
+  if (node.kind === 'inference') return node.config[field] !== undefined;
+  if (node.kind === 'decision' && node.config.evaluation.kind === 'llm')
+    return node.config.evaluation[field].mode === 'explicit';
+  if (node.kind === 'exit') {
+    const index = /^config\.criteria\.(\d+)\.evaluation\./.exec(issue.path ?? '')?.[1];
+    const criterion = index === undefined ? undefined : node.config.criteria[Number(index)];
+    if (criterion?.when === 'predicate' && criterion.evaluation.kind === 'llm')
+      return criterion.evaluation[field].mode === 'explicit';
+  }
+  return true;
+}

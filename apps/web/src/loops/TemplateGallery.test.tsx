@@ -2,11 +2,16 @@ import {
   ImplementationTemplateSettingsSchema,
   QaTemplateSettingsSchema,
   ReviewTemplateSettingsSchema,
+  LoopDefinitionSchema,
+  TemplateDraftResponseSchema,
   TemplateInstantiateResponseSchema,
   type ModelCatalogEntry,
+  type TemplateCatalogEntry,
+  type TemplateDraftResponse,
   type TemplateSettings,
 } from '@graphgoblin/contracts';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { minimalLoop } from '@graphgoblin/contracts/testing';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, useLocation } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
@@ -31,6 +36,34 @@ const model: ModelCatalogEntry = {
 };
 
 const readyCodex = [{ harness: 'codex', ok: true, authenticated: true, problems: [] }];
+
+function editableDraft(entry: TemplateCatalogEntry): TemplateDraftResponse {
+  const loopId = id(`${entry.manifest.id}-draft`);
+  const draftId = id(`${entry.manifest.id}-version`);
+  const definition = LoopDefinitionSchema.parse({
+    ...minimalLoop(),
+    name: entry.manifest.title,
+  });
+  return TemplateDraftResponseSchema.parse({
+    loop: {
+      id: loopId,
+      ownerId: 'local',
+      name: entry.manifest.title,
+      draftVersionId: draftId,
+      createdAt: TS,
+      updatedAt: TS,
+    },
+    draft: {
+      id: draftId,
+      loopId,
+      version: 1,
+      status: 'draft',
+      definition,
+      createdAt: TS,
+    },
+    issues: [],
+  });
+}
 
 function implementationResponse(
   entry: ReturnType<typeof implementationTemplateEntry>,
@@ -139,13 +172,14 @@ async function openQaTemplate(
         preflight={preflight}
         onCheckPrerequisites={onCheckPrerequisites}
         onInstantiate={onInstantiate}
+        onCreateDraft={() => Promise.resolve(editableDraft(entry))}
         onCreated={onCreated}
       />
       <LocationProbe />
     </MemoryRouter>,
   );
   await user.click(screen.getByRole('button', { name: 'New from template' }));
-  await user.click(screen.getByRole('button', { name: 'Use Post-merge QA' }));
+  await user.click(screen.getByRole('button', { name: 'Configure automation for Post-merge QA' }));
   return user;
 }
 
@@ -258,13 +292,16 @@ async function openImplementationTemplate(
         preflight={preflight}
         onCheckPrerequisites={onCheckPrerequisites}
         onInstantiate={onInstantiate}
+        onCreateDraft={() => Promise.resolve(editableDraft(entry))}
         onCreated={() => undefined}
       />
       <LocationProbe />
     </MemoryRouter>,
   );
   await user.click(screen.getByRole('button', { name: 'New from template' }));
-  await user.click(screen.getByRole('button', { name: 'Use Implementation workflow' }));
+  await user.click(
+    screen.getByRole('button', { name: 'Configure automation for Implementation workflow' }),
+  );
   return entry;
 }
 
@@ -356,7 +393,7 @@ describe('TemplateGallery', () => {
     await user.click(screen.getByRole('button', { name: 'Check requirements' }));
     expect(await screen.findByText('Checked for these settings.')).toBeInTheDocument();
     expect(screen.getAllByText('unavailable')).toHaveLength(2);
-    expect(screen.getAllByText('Runs not ready')).toHaveLength(2);
+    expect(screen.getAllByText('Runs not ready')).toHaveLength(1);
     expect(onCheckPrerequisites).toHaveBeenCalledWith(
       'qa',
       expect.objectContaining({
@@ -499,13 +536,16 @@ describe('TemplateGallery', () => {
           preflight={readyCodex}
           onCheckPrerequisites={onCheckPrerequisites}
           onInstantiate={onInstantiate}
+          onCreateDraft={() => Promise.resolve(editableDraft(entry))}
           onCreated={onCreated}
         />
         <LocationProbe />
       </MemoryRouter>,
     );
     await user.click(screen.getByRole('button', { name: 'New from template' }));
-    await user.click(screen.getByRole('button', { name: 'Use GitHub PR review' }));
+    await user.click(
+      screen.getByRole('button', { name: 'Configure automation for GitHub PR review' }),
+    );
 
     expect(screen.getByLabelText('Checkout path')).toHaveValue('');
     expect(screen.getByLabelText('Support credential key name')).toHaveValue('supportReadKey');
@@ -628,12 +668,15 @@ describe('TemplateGallery', () => {
           ]}
           onCheckPrerequisites={() => Promise.resolve(entry.prerequisites)}
           onInstantiate={() => Promise.reject(new Error('must not instantiate'))}
+          onCreateDraft={() => Promise.resolve(editableDraft(entry))}
           onCreated={() => undefined}
         />
       </MemoryRouter>,
     );
     await user.click(screen.getByRole('button', { name: 'New from template' }));
-    await user.click(screen.getByRole('button', { name: 'Use GitHub PR review' }));
+    await user.click(
+      screen.getByRole('button', { name: 'Configure automation for GitHub PR review' }),
+    );
 
     expect(screen.getAllByText(/This harness is not ready yet/)).toHaveLength(2);
     expect(screen.getByRole('button', { name: 'Check requirements' })).toBeDisabled();
@@ -780,44 +823,160 @@ describe('TemplateGallery', () => {
     expect(screen.getByLabelText('Effort')).toHaveValue('high');
   });
 
-  it('keeps a committed draft available when opening the editor fails', async () => {
+  it('creates directly without settings or readiness and guards repeated cross-card activation', async () => {
     const user = userEvent.setup();
     const entry = starterTemplateEntry();
-    const settings = entry.defaultSettings;
-    if (!settings) throw new Error('starter fixture must include typed defaults');
-    const parentLoopId = id('created-parent');
-    const response = TemplateInstantiateResponseSchema.parse({
-      instance: {
-        id: id('template-instance'),
-        ownerId: 'local',
-        templateId: entry.manifest.id,
-        templateVersion: entry.manifest.version,
-        createdAt: TS,
-        parentLoopId,
-        loops: [
-          {
-            key: entry.manifest.parentKey,
-            loopId: parentLoopId,
-            versionId: id('draft-version'),
-            version: 1,
-            status: 'draft',
-          },
-        ],
-        settings,
+    const implementation = implementationTemplateEntry();
+    entry.defaultSettings = null;
+    entry.prerequisites.canInstantiate = false;
+    entry.prerequisites.canRun = false;
+    implementation.defaultSettings = null;
+    implementation.prerequisites.canInstantiate = false;
+    implementation.prerequisites.canRun = false;
+    implementation.prerequisites.checks = [
+      {
+        id: 'settings',
+        label: 'Settings',
+        status: 'missing',
+        blocking: 'authoring',
+        message: 'Complete valid settings for this template.',
+        remediation: 'Choose all required roles and correct the settings fields.',
       },
-      prerequisites: entry.prerequisites,
+    ];
+    let finishCreate!: (response: TemplateDraftResponse) => void;
+    let finishHandoff!: () => void;
+    const pendingCreate = new Promise<TemplateDraftResponse>((resolve) => {
+      finishCreate = resolve;
     });
-    const onInstantiate = vi.fn(() => Promise.resolve(response));
-    const onCreated = vi.fn(() => Promise.reject(new Error('Editor navigation failed.')));
+    const pendingHandoff = new Promise<void>((resolve) => {
+      finishHandoff = resolve;
+    });
+    const onCheckPrerequisites = vi.fn(() => Promise.reject(new Error('must not preflight')));
+    const onInstantiate = vi.fn(() => Promise.reject(new Error('must not instantiate')));
+    const onCreateDraft = vi.fn(() => pendingCreate);
+    const onCreated = vi.fn(() => pendingHandoff);
+
+    render(
+      <MemoryRouter initialEntries={['/loops']}>
+        <TemplateGallery
+          templates={[entry, implementation]}
+          models={[]}
+          preflight={[]}
+          onCheckPrerequisites={onCheckPrerequisites}
+          onInstantiate={onInstantiate}
+          onCreateDraft={onCreateDraft}
+          onCreated={onCreated}
+        />
+        <LocationProbe />
+      </MemoryRouter>,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'New from template' }));
+    const create = screen.getByRole('button', { name: 'Use Quick start' });
+    const otherCreate = screen.getByRole('button', { name: 'Use Implementation workflow' });
+    expect(create).toBeEnabled();
+    expect(screen.getByRole('region', { name: 'Quick start run requirements' })).toBeVisible();
+    expect(
+      screen.getByRole('region', { name: 'Implementation workflow automation requirements' }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole('heading', { name: 'Optional automation requirements', level: 4 }),
+    ).toBeVisible();
+    expect(screen.getByText('Run setup needed')).toBeVisible();
+    expect(screen.getByText('Automation setup needed').parentElement).toHaveClass(
+      'bg-status-warn-bg',
+    );
+    expect(screen.getByText('missing').parentElement).toHaveClass('bg-status-warn-bg');
+    expect(
+      screen.getByText('Repository settings are needed only for optional automation.'),
+    ).toBeVisible();
+    const configureAutomation = screen.getByRole('button', {
+      name: 'Configure automation for Implementation workflow',
+    });
+    expect(otherCreate.parentElement).toBe(configureAutomation.parentElement);
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+
+    act(() => {
+      fireEvent.click(create);
+      fireEvent.click(create);
+      fireEvent.click(otherCreate);
+    });
+    expect(onCreateDraft).toHaveBeenCalledTimes(1);
+    expect(onCreateDraft).toHaveBeenCalledWith('quick-start');
+    expect(create).toHaveAttribute('aria-disabled', 'true');
+    expect(create).not.toBeDisabled();
+    expect(otherCreate).toHaveAttribute('aria-disabled', 'true');
+    expect(onCheckPrerequisites).not.toHaveBeenCalled();
+    expect(onInstantiate).not.toHaveBeenCalled();
+
+    const response = editableDraft(entry);
+    await act(async () => {
+      finishCreate(response);
+      await pendingCreate;
+    });
+    expect(await screen.findByRole('button', { name: 'Opening draft…' })).toBeInTheDocument();
+    fireEvent.click(otherCreate);
+    expect(onCreateDraft).toHaveBeenCalledTimes(1);
+    expect(onCreated).toHaveBeenCalledWith(response.loop.id);
+
+    await act(async () => {
+      finishHandoff();
+      await pendingHandoff;
+    });
+    expect(screen.getByRole('button', { name: 'Open draft' })).toBeEnabled();
+  });
+
+  it('reports create failures without automatically retrying the mutation', async () => {
+    const user = userEvent.setup();
+    const entry = starterTemplateEntry();
+    const onCreateDraft = vi.fn(() => Promise.reject(new Error('Draft service unavailable.')));
+    const onCreateFailed = vi.fn();
 
     render(
       <MemoryRouter initialEntries={['/loops']}>
         <TemplateGallery
           templates={[entry]}
-          models={[model]}
-          preflight={[{ harness: 'codex', ok: true, authenticated: true, problems: [] }]}
+          models={[]}
+          preflight={[]}
           onCheckPrerequisites={() => Promise.resolve(entry.prerequisites)}
-          onInstantiate={onInstantiate}
+          onInstantiate={() => Promise.reject(new Error('must not instantiate'))}
+          onCreateDraft={onCreateDraft}
+          onCreated={() => undefined}
+          onCreateFailed={onCreateFailed}
+        />
+      </MemoryRouter>,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'New from template' }));
+    await user.click(screen.getByRole('button', { name: 'Use Quick start' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Could not create the Quick start draft',
+    );
+    expect(screen.getByRole('alert')).toHaveTextContent('Draft service unavailable.');
+    expect(screen.getByRole('alert')).toHaveTextContent('check the loop list');
+    expect(onCreateDraft).toHaveBeenCalledTimes(1);
+    expect(onCreateFailed).toHaveBeenCalledTimes(1);
+  });
+
+  it('retains the created id and retries editor opening without creating another draft', async () => {
+    const user = userEvent.setup();
+    const entry = starterTemplateEntry();
+    const response = editableDraft(entry);
+    const onCreateDraft = vi.fn(() => Promise.resolve(response));
+    const onCreated = vi
+      .fn<(_: string) => void | Promise<void>>()
+      .mockRejectedValueOnce(new Error('Editor navigation failed.'))
+      .mockResolvedValueOnce(undefined);
+
+    render(
+      <MemoryRouter initialEntries={['/loops']}>
+        <TemplateGallery
+          templates={[entry]}
+          models={[]}
+          preflight={[]}
+          onCheckPrerequisites={() => Promise.resolve(entry.prerequisites)}
+          onInstantiate={() => Promise.reject(new Error('must not instantiate'))}
+          onCreateDraft={onCreateDraft}
           onCreated={onCreated}
         />
         <LocationProbe />
@@ -826,21 +985,22 @@ describe('TemplateGallery', () => {
 
     await user.click(screen.getByRole('button', { name: 'New from template' }));
     await user.click(screen.getByRole('button', { name: 'Use Quick start' }));
-    await user.click(screen.getByRole('button', { name: 'Create draft' }));
-
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Draft created, but the editor could not be opened',
+      'Quick start draft created, but the editor could not be opened',
     );
     expect(screen.getByRole('alert')).toHaveTextContent('Editor navigation failed.');
     expect(screen.getByRole('link', { name: 'Open the created draft' })).toHaveAttribute(
       'href',
-      `/loops/${parentLoopId}/edit`,
+      `/loops/${response.loop.id}/edit`,
     );
-    expect(screen.getByRole('button', { name: 'Create draft' })).toBeDisabled();
-    expect(onInstantiate).toHaveBeenCalledTimes(1);
-    expect(onCreated).toHaveBeenCalledWith(parentLoopId);
+    expect(screen.getByRole('button', { name: 'Retry opening draft' })).toBeEnabled();
+    expect(onCreateDraft).toHaveBeenCalledTimes(1);
+    expect(onCreated).toHaveBeenCalledTimes(1);
 
-    await user.click(screen.getByRole('link', { name: 'Open the created draft' }));
-    expect(screen.getByTestId('location')).toHaveTextContent(`/loops/${parentLoopId}/edit`);
+    await user.click(screen.getByRole('button', { name: 'Retry opening draft' }));
+    await waitFor(() => expect(onCreated).toHaveBeenCalledTimes(2));
+    expect(onCreated).toHaveBeenLastCalledWith(response.loop.id);
+    expect(onCreateDraft).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('button', { name: 'Open draft' })).toBeEnabled();
   });
 });

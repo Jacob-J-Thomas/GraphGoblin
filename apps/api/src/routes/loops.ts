@@ -1,4 +1,4 @@
-import { modelIssues, blocksPublication, rejectsAdmission } from '../model-issues.js';
+import { blocksPublication, rejectsDraftAdmission } from '../model-issues.js';
 import {
   LoopDefinitionSchema,
   LoopExportSchema,
@@ -10,19 +10,12 @@ import {
   type LoopDefinition,
   type LoopRecord,
 } from '@graphgoblin/contracts';
-import {
-  exportLoop,
-  importLoop,
-  nodesOfKind,
-  stableHash,
-  validateLoop,
-  type ValidationIssue,
-} from '@graphgoblin/domain';
+import { exportLoop, importLoop, stableHash } from '@graphgoblin/domain';
 import { EngineRequestError } from '@graphgoblin/engine';
 import type { FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import type { Container } from '../container.js';
-import { classifierIssues } from '../classifier-issues.js';
+import { loopPublicationIssues } from '../loop-issues.js';
 import { problem } from '../plugins/errors.js';
 import type { ApiInstance } from '../types.js';
 
@@ -93,74 +86,12 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
     return loop;
   }
 
-  /** The version number the loop's draft has, or would get: what publishing creates. */
-  async function draftVersionNumber(loopId: string): Promise<number> {
-    const versions = await loops.listVersions(loopId);
-    const draft = versions.find((v) => v.status === 'draft');
-    return draft?.version ?? Math.max(0, ...versions.map((v) => v.version)) + 1;
-  }
-
-  /**
-   * A subloop reference must resolve to a published version of a loop of this owner (docs/03).
-   * A loop may reference itself, through `latest` or the number its draft publishes as.
-   */
-  async function subloopIssues(
-    ownerId: string,
-    def: LoopDefinition,
-    selfId?: string,
-  ): Promise<ValidationIssue[]> {
-    const issues: ValidationIssue[] = [];
-    let selfVersion: number | undefined;
-    for (const node of nodesOfKind(def, 'subloop')) {
-      const { loopId, version } = node.config.loopRef;
-      if (loopId === selfId) {
-        // A self-reference resolves to the version being published: `latest`, or the number the
-        // draft will publish as. Any other number must be a version that is already published.
-        if (version === 'latest') continue;
-        selfVersion ??= await draftVersionNumber(loopId);
-        if (version === selfVersion) continue;
-      }
-      const target = await loops.getLoop(loopId);
-      if (!target || target.ownerId !== ownerId) {
-        issues.push({
-          code: 'SUBLOOP_NOT_FOUND',
-          severity: 'error',
-          message: `subloop "${node.id}" references loop ${loopId}, which does not exist`,
-          nodeId: node.id,
-        });
-        continue;
-      }
-      const published =
-        version === 'latest'
-          ? await loops.getLatestPublished(loopId)
-          : await loops.getPublished(loopId, version);
-      if (!published) {
-        issues.push({
-          code: 'SUBLOOP_NOT_PUBLISHED',
-          severity: 'error',
-          message: `subloop "${node.id}" references "${target.name}", which has no published ${
-            version === 'latest' ? 'version' : `version ${version}`
-          }`,
-          nodeId: node.id,
-        });
-      }
-    }
-    return issues;
-  }
-
-  /** All publish checks, also reported by create/import, draft saves, and validate. */
   async function publishIssues(
     ownerId: string,
     def: LoopDefinition,
     selfId?: string,
   ): Promise<LoopIssue[]> {
-    return [
-      ...validateLoop(def),
-      ...container.triggers.checkDefinition(def),
-      ...(await subloopIssues(ownerId, def, selfId)),
-      ...(await modelIssues(container, ownerId, def)),
-      ...(await classifierIssues(container, ownerId, def)),
-    ];
+    return loopPublicationIssues(container, ownerId, def, selfId);
   }
 
   app.get(
@@ -195,7 +126,7 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
     },
     async (request, reply) => {
       const admission = await publishIssues(request.auth.ownerId, request.body.definition);
-      if (admission.some(rejectsAdmission))
+      if (admission.some((issue) => rejectsDraftAdmission(request.body.definition, issue)))
         return problem(
           reply,
           400,
@@ -246,7 +177,7 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
     async (request, reply) => {
       const imported = importLoop(request.body);
       const admission = await publishIssues(request.auth.ownerId, imported.definition);
-      if (admission.some(rejectsAdmission))
+      if (admission.some((issue) => rejectsDraftAdmission(imported.definition, issue)))
         return problem(
           reply,
           400,
@@ -322,7 +253,7 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
     async (request, reply) => {
       const loopId = request.params.id;
       const admission = await publishIssues(request.auth.ownerId, request.body.definition, loopId);
-      if (admission.some(rejectsAdmission))
+      if (admission.some((issue) => rejectsDraftAdmission(request.body.definition, issue)))
         return problem(
           reply,
           400,

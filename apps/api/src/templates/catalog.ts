@@ -11,8 +11,9 @@ import {
   TemplateManifestSchema,
   TemplateRelativePathSchema,
   type TemplateBundle,
+  type LoopDefinition,
 } from '@graphgoblin/contracts';
-import { validateTemplateBundle } from '@graphgoblin/domain';
+import { validateTemplateBundle, validateTemplateDraft } from '@graphgoblin/domain';
 import { TemplateError } from './errors.js';
 import {
   IMPLEMENTATION_SUPPORT_ENTRY,
@@ -21,6 +22,7 @@ import {
 
 export interface CatalogBundle {
   bundle: TemplateBundle;
+  draft?: LoopDefinition;
   support?: { path: string; hash: string };
 }
 const IndexSchema = z.array(TemplateRelativePathSchema).max(100);
@@ -46,6 +48,11 @@ export class TemplateCatalog {
           definitions[loop.key] = exported.loop;
         }
         const { bundle } = validateTemplateBundle({ manifest, loops: definitions });
+        const draft = manifest.draftFile
+          ? validateTemplateDraft(
+              LoopExportSchema.parse(await json(this.root, join(folder, manifest.draftFile))).loop,
+            )
+          : undefined;
         let support: CatalogBundle['support'];
         if (manifest.supportEntry) {
           if (!/^(dist|templates)\//.test(manifest.supportEntry))
@@ -81,7 +88,7 @@ export class TemplateCatalog {
             };
           }
         }
-        entries.push({ bundle, ...(support ? { support } : {}) });
+        entries.push({ bundle, ...(draft ? { draft } : {}), ...(support ? { support } : {}) });
       }
       if (new Set(entries.map((entry) => entry.bundle.manifest.id)).size !== entries.length)
         throw new Error('duplicate catalog IDs');
@@ -100,5 +107,14 @@ export class TemplateCatalog {
     if (!entry)
       throw new TemplateError('TEMPLATE_NOT_FOUND', 'This template is not registered.', 404);
     return entry;
+  }
+  async draft(id: string): Promise<LoopDefinition> {
+    const entry = await this.get(id);
+    if (!entry.draft)
+      throw new TemplateError(
+        'TEMPLATE_DRAFT_UNAVAILABLE',
+        'This template does not provide an editable starting point.',
+      );
+    return entry.draft;
   }
 }

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { JsonSchemaSchema, SlugSchema, TimestampSchema, UlidSchema } from './common.js';
-import { LoopDefinitionSchema } from './loop.js';
+import { LoopDefinitionSchema, LoopRecordSchema, LoopVersionRecordSchema } from './loop.js';
+import { LoopIssueSchema } from './issues.js';
 import {
   TemplateKindSchema,
   TemplateRoleIdSchema,
@@ -77,6 +78,11 @@ export const TemplateManifestSchema = z.strictObject({
   parentKey: SlugSchema,
   loops: z.array(TemplateLoopManifestSchema).min(1).max(32),
   supportEntry: TemplateRelativePathSchema.optional(),
+  /** Optional editable manual workflow, separate from the configured automation bundle. */
+  draftFile: TemplateRelativePathSchema.refine(
+    (value) => value.endsWith('.json'),
+    'must name a JSON export',
+  ).optional(),
 });
 export type TemplateManifest = z.infer<typeof TemplateManifestSchema>;
 export const TemplateBundleSchema = z.strictObject({
@@ -195,6 +201,22 @@ export const TemplateListResponseSchema = z.strictObject({
   items: z.array(TemplateCatalogEntrySchema).max(100),
 });
 export type TemplateListResponse = z.infer<typeof TemplateListResponseSchema>;
+export const TemplateDraftRequestSchema = z.strictObject({
+  name: z
+    .string()
+    .min(1)
+    .max(120)
+    .refine((value) => value.trim().length > 0, 'must not be blank')
+    .optional(),
+});
+export type TemplateDraftRequest = z.infer<typeof TemplateDraftRequestSchema>;
+/** An ordinary editable loop draft, without template execution authority. */
+export const TemplateDraftResponseSchema = z.strictObject({
+  loop: LoopRecordSchema,
+  draft: LoopVersionRecordSchema,
+  issues: z.array(LoopIssueSchema),
+});
+export type TemplateDraftResponse = z.infer<typeof TemplateDraftResponseSchema>;
 export const TemplatePrerequisiteRequestSchema = z.strictObject({
   settings: TemplateSettingsSchema,
 });

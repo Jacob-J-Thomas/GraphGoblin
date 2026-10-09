@@ -19209,6 +19209,106 @@
         }
       }
     },
+    "/templates/{id}/draft": {
+      "post": {
+        "operationId": "createTemplateDraft",
+        "summary": "Create an editable manual loop draft from a template",
+        "tags": [
+          "templates"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "loop": {
+                      "$ref": "#/components/schemas/LoopRecord"
+                    },
+                    "draft": {
+                      "$ref": "#/components/schemas/LoopVersionRecord"
+                    },
+                    "issues": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "type": "string"
+                          },
+                          "severity": {
+                            "type": "string",
+                            "enum": [
+                              "error",
+                              "warning"
+                            ]
+                          },
+                          "message": {
+                            "type": "string"
+                          },
+                          "nodeId": {
+                            "type": "string"
+                          },
+                          "edgeId": {
+                            "type": "string"
+                          },
+                          "path": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "code",
+                          "severity",
+                          "message"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "loop",
+                    "draft",
+                    "issues"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/templates": {
       "get": {
         "operationId": "listTemplates",
@@ -19500,6 +19600,12 @@
                                 }
                               },
                               "supportEntry": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 512,
+                                "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]*$"
+                              },
+                              "draftFile": {
                                 "type": "string",
                                 "minLength": 1,
                                 "maxLength": 512,
@@ -20743,6 +20849,12 @@
                           }
                         },
                         "supportEntry": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 512,
+                          "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]*$"
+                        },
+                        "draftFile": {
                           "type": "string",
                           "minLength": 1,
                           "maxLength": 512,

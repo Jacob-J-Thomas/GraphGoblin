@@ -2,6 +2,7 @@ import type {
   HarnessPreflight,
   ModelCatalogEntry,
   TemplateCatalogEntry,
+  TemplateDraftResponse,
   TemplateInstantiateResponse,
   TemplatePrerequisiteReport,
   ImplementationTemplateSettings,
@@ -50,45 +51,101 @@ export interface TemplateGalleryProps {
     templateId: string,
     settings: TemplateSettings,
   ) => Promise<TemplateInstantiateResponse>;
+  onCreateDraft: (templateId: string) => Promise<TemplateDraftResponse>;
   onCreated: (parentLoopId: string) => void | Promise<void>;
+  onCreateFailed?: () => void | Promise<void>;
 }
 
-function statusTone(status: 'ok' | 'missing' | 'unavailable') {
-  return status === 'ok' ? 'good' : status === 'missing' ? 'bad' : 'warn';
+function galleryRequirements(entry: TemplateCatalogEntry): TemplatePrerequisiteReport {
+  return {
+    ...entry.prerequisites,
+    checks: entry.prerequisites.checks.map((check) => {
+      if (check.id !== 'settings' || check.status === 'ok') return check;
+      return entry.manifest.kind === 'starter'
+        ? {
+            ...check,
+            message: 'Choose model defaults in Settings or edit the draft before running.',
+            remediation: 'Set model defaults before running this draft.',
+          }
+        : {
+            ...check,
+            message: 'Repository settings are needed only for optional automation.',
+            remediation: 'Use Configure automation to set the repository and roles.',
+          };
+    }),
+  };
+}
+
+function statusTone(status: 'ok' | 'missing' | 'unavailable', optional = false) {
+  if (status === 'ok') return 'good';
+  if (status === 'missing' && optional) return 'warn';
+  return status === 'missing' ? 'bad' : 'warn';
 }
 
 function RequirementReport({
   report,
   title,
+  ariaLabel,
   note,
+  context = 'setup',
+  compact = false,
+  headingLevel = 3,
 }: {
   report: TemplatePrerequisiteReport;
   title: string;
+  ariaLabel?: string;
   note?: string;
+  context?: 'setup' | 'run' | 'automation';
+  compact?: boolean;
+  headingLevel?: 3 | 4;
 }) {
+  const ready = context === 'setup' ? report.canInstantiate : report.canRun;
+  const checks = compact ? report.checks.filter((check) => check.status !== 'ok') : report.checks;
+  const Heading = headingLevel === 4 ? 'h4' : 'h3';
   return (
-    <section className="grid gap-3" aria-label={title}>
+    <section
+      className={
+        compact ? 'grid gap-3 md:row-span-2 md:grid md:grid-rows-subgrid md:gap-y-3' : 'grid gap-3'
+      }
+      aria-label={ariaLabel ?? title}
+    >
       <div className="flex flex-wrap items-center gap-2">
-        <h3 className="text-sm font-semibold">{title}</h3>
-        {report.canInstantiate ? (
-          <Badge tone="good">Ready to create draft</Badge>
+        <Heading className="text-sm font-semibold">{title}</Heading>
+        {ready ? (
+          <Badge tone="good">
+            {context === 'setup'
+              ? 'Ready to create draft'
+              : context === 'run'
+                ? 'Ready to run'
+                : 'Ready to run automation'}
+          </Badge>
         ) : (
-          <Badge tone="bad">Needs setup before creating</Badge>
+          <Badge tone={context === 'automation' ? 'warn' : 'bad'}>
+            {context === 'setup'
+              ? 'Needs setup before creating'
+              : context === 'run'
+                ? 'Run setup needed'
+                : 'Automation setup needed'}
+          </Badge>
         )}
-        {!report.canRun ? <Badge tone="warn">Runs not ready</Badge> : null}
+        {context === 'setup' && !report.canRun ? <Badge tone="warn">Runs not ready</Badge> : null}
       </div>
       {note ? <p className="text-xs text-muted">{note}</p> : null}
-      {!report.canRun && report.canInstantiate ? (
+      {!compact && context === 'setup' && !report.canRun && report.canInstantiate ? (
         <Alert tone="warn" title="You can create this draft, but runs will stay blocked.">
           Every run remains blocked until the run-time requirements below are ready. Creating a
           draft does not enable those runs.
         </Alert>
       ) : null}
-      {report.checks.length === 0 ? (
-        <p className="text-sm text-muted">No setup requirements are needed for this template.</p>
+      {checks.length === 0 ? (
+        <p className="text-sm text-muted">
+          {compact
+            ? 'All requirements met.'
+            : 'No setup requirements are needed for this template.'}
+        </p>
       ) : (
         <ul className="grid gap-2">
-          {report.checks.map((check) => (
+          {checks.map((check) => (
             <li
               key={check.id}
               data-prerequisite-id={check.id}
@@ -96,9 +153,17 @@ function RequirementReport({
             >
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-sm font-medium">{check.label}</span>
-                <Badge tone={statusTone(check.status)}>{check.status}</Badge>
+                <Badge tone={statusTone(check.status, context === 'automation')}>
+                  {check.status}
+                </Badge>
                 <Badge tone="neutral">
-                  {check.blocking === 'runtime' ? 'Run-time requirement' : 'Creation requirement'}
+                  {context === 'run'
+                    ? 'Run requirement'
+                    : context === 'automation'
+                      ? 'Automation requirement'
+                      : check.blocking === 'runtime'
+                        ? 'Run-time requirement'
+                        : 'Creation requirement'}
                 </Badge>
               </div>
               <p className="mt-1 text-sm text-muted">{check.message}</p>
@@ -2226,13 +2291,66 @@ export function TemplateGallery({
   preflight,
   onCheckPrerequisites,
   onInstantiate,
+  onCreateDraft,
   onCreated,
+  onCreateFailed,
 }: TemplateGalleryProps) {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<TemplateCatalogEntry>();
+  const [pendingTemplateId, setPendingTemplateId] = useState<string>();
+  const actionInFlightRef = useRef(false);
+  const [createdDrafts, setCreatedDrafts] = useState<Record<string, string>>({});
+  const [draftErrors, setDraftErrors] = useState<Record<string, string>>({});
+  const [handoffErrors, setHandoffErrors] = useState<Record<string, string>>({});
   const openerId = useId();
   const openTemplate = (entry: TemplateCatalogEntry) => setSelected(entry);
   const closeTemplate = () => setSelected(undefined);
+
+  const openCreatedDraft = async (templateId: string, loopId: string) => {
+    if (actionInFlightRef.current) return;
+    actionInFlightRef.current = true;
+    setPendingTemplateId(templateId);
+    setHandoffErrors((current) => ({ ...current, [templateId]: '' }));
+    try {
+      await onCreated(loopId);
+    } catch (error) {
+      setHandoffErrors((current) => ({ ...current, [templateId]: errorMessage(error) }));
+    } finally {
+      actionInFlightRef.current = false;
+      setPendingTemplateId(undefined);
+    }
+  };
+
+  const createDraft = async (entry: TemplateCatalogEntry) => {
+    const templateId = entry.manifest.id;
+    if (actionInFlightRef.current || createdDrafts[templateId]) return;
+    actionInFlightRef.current = true;
+    setPendingTemplateId(templateId);
+    setDraftErrors((current) => ({ ...current, [templateId]: '' }));
+    setHandoffErrors((current) => ({ ...current, [templateId]: '' }));
+    try {
+      const result = await onCreateDraft(templateId);
+      const loopId = result.loop.id;
+      setCreatedDrafts((current) => ({ ...current, [templateId]: loopId }));
+      try {
+        await onCreated(loopId);
+      } catch (error) {
+        setHandoffErrors((current) => ({ ...current, [templateId]: errorMessage(error) }));
+      }
+    } catch (error) {
+      setDraftErrors((current) => ({ ...current, [templateId]: errorMessage(error) }));
+      try {
+        // Reconcile the visible loop list after a failed or interrupted response. Never retry the
+        // creation mutation automatically; a timed-out request may already have committed.
+        await onCreateFailed?.();
+      } catch {
+        // Preserve the original creation error if the list refresh also fails.
+      }
+    } finally {
+      actionInFlightRef.current = false;
+      setPendingTemplateId(undefined);
+    }
+  };
 
   return (
     <div className="grid gap-4">
@@ -2257,7 +2375,9 @@ export function TemplateGallery({
               Choose a template
             </h2>
             <p className="mt-1 text-sm text-muted">
-              Start with a prepared loop, review its requirements, and open the parent as a draft.
+              Drafts use their model defaults and the input or context you provide when running.
+              Repository requirements below apply only to optional automation; use Configure
+              automation for repository triggers and pull-request actions.
             </p>
           </div>
           {templates.length === 0 ? (
@@ -2268,22 +2388,107 @@ export function TemplateGallery({
                 <Card
                   key={`${entry.manifest.id}:${entry.manifest.version}`}
                   title={entry.manifest.title}
-                  className="flex flex-col [&>div]:flex [&>div]:flex-1 [&>div]:flex-col"
+                  titleLevel={3}
+                  className="md:row-span-6 md:grid md:grid-rows-subgrid md:gap-y-3"
+                  bodyClassName="grid gap-3 md:row-span-5 md:grid-rows-subgrid md:gap-y-3"
                 >
-                  <p className="text-sm text-muted">{entry.manifest.description}</p>
+                  <div className="text-sm text-muted">
+                    <p>{entry.manifest.description}</p>
+                  </div>
                   <div
-                    className="mt-3 flex flex-wrap gap-2"
+                    className="flex flex-wrap content-start gap-2"
                     aria-label={`${entry.manifest.title} tags`}
                   >
                     {entry.manifest.tags.map((tag) => (
                       <Badge key={tag}>{tag}</Badge>
                     ))}
                   </div>
-                  <div className="mt-4 flex flex-1 flex-col gap-3">
-                    <RequirementReport report={entry.prerequisites} title="Requirements" />
-                    <Button type="button" className="mt-auto" onClick={() => openTemplate(entry)}>
-                      Use {entry.manifest.title}
-                    </Button>
+                  <RequirementReport
+                    report={galleryRequirements(entry)}
+                    title={
+                      entry.manifest.kind === 'starter'
+                        ? 'Run requirements'
+                        : 'Optional automation requirements'
+                    }
+                    ariaLabel={`${entry.manifest.title} ${entry.manifest.kind === 'starter' ? 'run' : 'automation'} requirements`}
+                    context={entry.manifest.kind === 'starter' ? 'run' : 'automation'}
+                    compact
+                    headingLevel={4}
+                  />
+                  <div className="grid content-start gap-2">
+                    <div className="flex flex-col items-stretch gap-2">
+                      {entry.manifest.draftFile ? (
+                        <Button
+                          type="button"
+                          onClick={() => {
+                            if (actionInFlightRef.current) return;
+                            const createdLoopId = createdDrafts[entry.manifest.id];
+                            if (createdLoopId) {
+                              void openCreatedDraft(entry.manifest.id, createdLoopId);
+                            } else {
+                              void createDraft(entry);
+                            }
+                          }}
+                          aria-disabled={pendingTemplateId !== undefined || undefined}
+                          aria-busy={pendingTemplateId === entry.manifest.id || undefined}
+                        >
+                          {pendingTemplateId === entry.manifest.id
+                            ? createdDrafts[entry.manifest.id]
+                              ? 'Opening draft…'
+                              : 'Creating draft…'
+                            : createdDrafts[entry.manifest.id]
+                              ? handoffErrors[entry.manifest.id]
+                                ? 'Retry opening draft'
+                                : 'Open draft'
+                              : `Use ${entry.manifest.title}`}
+                        </Button>
+                      ) : (
+                        <p className="text-sm text-muted">
+                          An editable starting point is not available for this template.
+                        </p>
+                      )}
+                      {entry.manifest.kind !== 'starter' ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="self-start"
+                          aria-label={`Configure automation for ${entry.manifest.title}`}
+                          onClick={() => {
+                            if (!actionInFlightRef.current) openTemplate(entry);
+                          }}
+                          aria-disabled={pendingTemplateId !== undefined || undefined}
+                        >
+                          Configure automation
+                        </Button>
+                      ) : null}
+                    </div>
+                    {pendingTemplateId === entry.manifest.id ? (
+                      <p role="status" aria-live="polite" className="text-sm text-muted">
+                        {createdDrafts[entry.manifest.id] ? 'Opening draft…' : 'Creating draft…'}
+                      </p>
+                    ) : null}
+                    {draftErrors[entry.manifest.id] ? (
+                      <Alert title={`Could not create the ${entry.manifest.title} draft`}>
+                        <p>{draftErrors[entry.manifest.id]}</p>
+                        <p className="mt-2">
+                          If the request timed out, check the loop list for a draft before trying
+                          again.
+                        </p>
+                      </Alert>
+                    ) : null}
+                    {handoffErrors[entry.manifest.id] && createdDrafts[entry.manifest.id] ? (
+                      <Alert
+                        title={`${entry.manifest.title} draft created, but the editor could not be opened`}
+                      >
+                        <p>{handoffErrors[entry.manifest.id]}</p>
+                        <Link
+                          className="mt-2 inline-block underline"
+                          to={`/loops/${encodeURIComponent(createdDrafts[entry.manifest.id]!)}/edit`}
+                        >
+                          Open the created draft
+                        </Link>
+                      </Alert>
+                    ) : null}
                   </div>
                 </Card>
               ))}

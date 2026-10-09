@@ -16,6 +16,27 @@ async function setup(): Promise<GraphGoblinClient> {
   });
 }
 
+it('creates an ordinary editable draft with the generated client before automation setup', async () => {
+  const client = await setup();
+  app!.harness.preflightResult = { ok: false, authenticated: false, problems: ['not configured'] };
+  const first = await templates.createDraft(client, 'review');
+  const second = await templates.createDraft(client, 'review', { name: 'My editable review' });
+  expect(first.loop.id).not.toBe(second.loop.id);
+  expect(second.loop.name).toBe('My editable review');
+  const detail = await loops.get(client, first.loop.id);
+  expect(detail.current).toBeUndefined();
+  expect(detail.draft?.status).toBe('draft');
+  expect(detail.templateInstanceId).toBeUndefined();
+  expect(detail.draft?.definition.nodes.filter((node) => node.kind === 'inference')).toHaveLength(
+    2,
+  );
+  await expect(templates.createDraft(client, 'absent-template')).rejects.toMatchObject({
+    code: 'TEMPLATE_NOT_FOUND',
+    status: 404,
+  });
+  expect(app!.harness.started).toHaveLength(0);
+});
+
 it('instantiates independent starter drafts through the generated API and retains settings as data', async () => {
   const client = await setup();
   const entries = await templates.list(client);
