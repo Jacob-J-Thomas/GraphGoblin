@@ -62,6 +62,7 @@ describe('installed template catalog boundaries', () => {
       'starter',
       'implementation',
       'review',
+      'qa',
     ]);
     const starter = await catalog.get('starter');
     expect(starter.bundle.manifest.kind).toBe('starter');

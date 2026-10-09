@@ -552,7 +552,8 @@ describe('SQLite template subject storage', () => {
       nodeId: 'qa',
       visit: 1,
     });
-    await insertSubject('new-merge', { ...qa, mergeSha: 'd'.repeat(40) });
+    // A new merge must also belong to a distinct authenticated issue attempt.
+    await insertSubject('new-merge', { ...qa, attempt: 2, mergeSha: 'd'.repeat(40) });
   });
 
   it.each<RunStatus>(['queued', 'running', 'waiting', 'paused'])(
@@ -907,5 +908,56 @@ describe('SQLite template transition policy transaction', () => {
       repository.transition(fakeUlid('absent-run'), ['failed'], { status: 'queued' }),
     ).rejects.toThrow('not found');
     expect(await store.run(failed.id)).toEqual({ run: failed, subject: subject() });
+  });
+});
+
+describe('permanent QA issue-attempt ownership', () => {
+  it.each([
+    'queued',
+    'running',
+    'waiting',
+    'paused',
+    'succeeded',
+    'failed',
+    'cancelled',
+    'exhausted',
+  ] as const)(
+    'rejects another merge or instance for the same issue attempt after %s',
+    async (status) => {
+      await insertSubject('qa-first', subject({ kind: 'qa', mergeSha: 'a'.repeat(40) }), {
+        status,
+      });
+      await expect(
+        insertSubject(
+          'qa-second',
+          subject({ kind: 'qa', mergeSha: 'b'.repeat(40), instanceId: fakeUlid('other-instance') }),
+        ),
+      ).rejects.toThrow();
+      expect(
+        await store.subjectRuns({
+          ownerId: 'local',
+          repository: 'example/project',
+          issue: 7,
+          limit: 10,
+        }),
+      ).toHaveLength(1);
+    },
+  );
+  it('keeps distinct attempts, issues, repositories and owners independent', async () => {
+    await insertSubject('qa-a', subject({ kind: 'qa', mergeSha: 'a'.repeat(40) }));
+    await insertSubject(
+      'qa-attempt',
+      subject({ kind: 'qa', attempt: 2, mergeSha: 'b'.repeat(40) }),
+    );
+    await insertSubject('qa-issue', subject({ kind: 'qa', issue: 8, mergeSha: 'c'.repeat(40) }));
+    await insertSubject(
+      'qa-repository',
+      subject({ kind: 'qa', repository: 'example/another', mergeSha: 'a'.repeat(40) }),
+    );
+    await insertSubject('qa-owner', subject({ kind: 'qa', mergeSha: 'a'.repeat(40) }), {
+      ownerId: 'another',
+    });
+    await insertSubject('implementation', subject());
+    expect(await handle.db.select().from(runs)).toHaveLength(6);
   });
 });

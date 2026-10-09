@@ -310,20 +310,35 @@ export class TemplateRuntime {
           : { mergeSha: subject.mergeSha! }),
       limit: 65,
     });
-    if (rows.length > 64)
+    // The admitted QA parent owns this attempt even if another merge or instance arrives.
+    // This is permanent ownership, not a renewable lock or a new rework write API.
+    const issueRows =
+      subject.kind === 'qa'
+        ? await store.subjectRuns({
+            ownerId: input.run.ownerId,
+            repository: subject.repository,
+            issue: subject.issue!,
+            limit: 65,
+          })
+        : [];
+    if (rows.length > 64 || issueRows.length > 64)
       throw new TemplateError(
         'AUTHORITY_CONFLICT',
         'The selected subject history exceeds its bound.',
       );
+    const history = new Map([...rows, ...issueRows].map((row) => [row.run.id, row]));
     let consumed = false;
-    for (const row of rows) {
+    for (const row of history.values()) {
       if (!row.subject || row.run.id === input.run.id) continue;
       const old = parseSubject(row.subject);
       if (old.role !== 'parent') continue;
       if (subject.kind === 'implementation')
         consumed ||= old.kind === 'implementation' && old.attempt === subject.attempt;
       else if (subject.kind === 'qa')
-        consumed ||= old.kind === 'qa' && old.mergeSha === subject.mergeSha;
+        consumed ||=
+          old.kind === 'qa' &&
+          (old.mergeSha === subject.mergeSha ||
+            (old.issue === subject.issue && old.attempt === subject.attempt));
       else if (old.kind === 'review') {
         consumed ||= old.head === subject.head || active.has(row.run.status);
         const stored = await store.bindingForLoop(binding.ownerId, row.run.loopId);

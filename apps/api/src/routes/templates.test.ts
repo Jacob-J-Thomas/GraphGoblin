@@ -19,6 +19,7 @@ describe('template catalog and instances', () => {
       'starter',
       'implementation',
       'review',
+      'qa',
     ]);
     const settings = items[0]?.defaultSettings;
     expect(settings).not.toBeNull();

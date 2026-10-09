@@ -13,6 +13,7 @@ import {
   keys,
   useClassifierModels,
   useModelCatalog,
+  useTemplateInstance,
 } from '../api/queries.js';
 import { ErrorState } from '../components/status.js';
 import { Alert, Button, useSidePanelState } from '../components/ui/index.js';
@@ -75,6 +76,12 @@ export function EditorPage() {
     discardSetAside,
     discardRawCopy,
   } = useLoadEditor(loopId);
+  const templateInstance = useTemplateInstance(query.data?.templateInstanceId ?? '');
+  const qaParent =
+    templateInstance.data?.settings.kind === 'qa' &&
+    templateInstance.data.id === query.data?.templateInstanceId &&
+    templateInstance.data.ownerId === query.data?.loop.ownerId &&
+    templateInstance.data.parentLoopId === loopId;
   const definition = useEditorStore((s) => s.definition);
   const saveState = useEditorStore((s) => s.saveState);
   const saveMessage = useEditorStore((s) => s.saveMessage);
@@ -318,6 +325,13 @@ export function EditorPage() {
   };
 
   const notices = [
+    qaParent ? (
+      <Alert key="qa-isolation" tone="warn" title="QA execution is blocked">
+        Enforced evidence-only isolation is unavailable. Publishing this parent starts polling;
+        selected merges permanently consume merge and linked-issue attempts, even though runs stop
+        before checkout or a model turn. Keep it unpublished until enforced isolation is available.
+      </Alert>
+    ) : null,
     ...rawCopyWarnings,
     showRestoredNotice ? (
       <Alert
@@ -415,6 +429,7 @@ export function EditorPage() {
           <ValidationIndicator
             issues={validation.issues}
             definition={def}
+            {...(qaParent ? { readyLabel: 'Graph ready to publish; QA execution blocked' } : {})}
             check={
               serverCheck.isError || (!catalogsResolved && (models.isError || classifiers.isError))
                 ? 'error'

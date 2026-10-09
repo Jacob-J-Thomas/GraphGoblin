@@ -93,6 +93,7 @@ async function seedVersion(status: 'draft' | 'published', definition = inference
   await t.container.handle.client.execute('DROP INDEX template_instances_owner_idx');
   await t.container.handle.client.execute('DROP INDEX template_issue_attempt_idx');
   await t.container.handle.client.execute('DROP INDEX template_qa_merge_idx');
+  await t.container.handle.client.execute('DROP INDEX template_qa_issue_attempt_idx');
   await t.container.handle.client.execute('DROP INDEX template_pr_head_idx');
   await t.container.handle.client.execute('DROP INDEX template_active_pr_idx');
   await t.container.handle.client.execute('DROP INDEX template_child_visit_idx');
@@ -101,7 +102,7 @@ async function seedVersion(status: 'draft' | 'published', definition = inference
   await t.container.handle.client.execute(
     'DELETE FROM __drizzle_migrations WHERE created_at > 1791136800000',
   );
-  expect(await t.container.handle.pendingMigrations()).toBe(5);
+  expect(await t.container.handle.pendingMigrations()).toBe(6);
   await expect(t.container.handle.migrate()).rejects.toMatchObject({
     code: 'DATA_UPGRADE_REQUIRED',
   });

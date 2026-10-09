@@ -1,0 +1,133 @@
+{
+  "format": "graphgoblin-loop",
+  "formatVersion": 3,
+  "exportedAt": "2026-10-08T00:00:00.000Z",
+  "loop": {
+    "schemaVersion": 3,
+    "name": "Evidence-only QA adversary",
+    "description": "Fresh evidence packet only; requires separately verified enforcing isolation before launch.",
+    "settings": {
+      "workingDirectory": {
+        "kind": "template",
+        "template": "{{ invocation.trigger.payload.workspace }}"
+      },
+      "maxIterations": 1
+    },
+    "nodes": [
+      {
+        "id": "start",
+        "kind": "trigger",
+        "label": "start",
+        "config": {
+          "subtype": "manual"
+        }
+      },
+      {
+        "id": "adversary",
+        "kind": "inference",
+        "label": "adversary",
+        "config": {
+          "session": {
+            "policy": "fresh"
+          },
+          "prompt": {
+            "template": "Evidence-only QA adversary\n\nJudge whether the assessment is sound, appropriate and useful from only the original issue, the QA criteria/results and the provided proof artifacts. You have a fresh session in a new read-only evidence directory. Do not request the repository, diff, PR body, parent thread, credentials, network or web search; none belongs in this packet. Do not perform private support or GitHub effects. Return only sound, summary and bounded gaps (criterionId or null, message). Sound requires no unresolved gaps; identify missing proof, incomplete issue coverage, weak cases or unsupported claims. A sound failing assessment is distinct from an unsound assessment. Do not infer implementation success merely from a successful QA turn. Prompt shaping and a read-only option do not establish enforced isolation: production support must refuse before this turn until actual canaries verify an enforcing runtime.\n\nOriginal issue and QA evidence packet:\n{{ invocation.trigger.payload.packet | json }}\n"
+          },
+          "output": {
+            "toMessages": "none",
+            "captureTranscript": "artifact",
+            "schema": {
+              "jsonSchema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["sound", "summary", "gaps"],
+                "properties": {
+                  "sound": {
+                    "type": "boolean"
+                  },
+                  "summary": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 4000,
+                    "pattern": "\\S"
+                  },
+                  "gaps": {
+                    "type": "array",
+                    "minItems": 0,
+                    "maxItems": 32,
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["criterionId", "message"],
+                      "properties": {
+                        "criterionId": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "pattern": "^[a-z][a-z0-9-]{0,39}$"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "message": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 2000,
+                          "pattern": "\\S"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "native": true,
+              "repair": {
+                "enabled": true,
+                "maxAttempts": 1,
+                "onFailure": "fail-run"
+              }
+            }
+          },
+          "timeoutSeconds": 1800
+        }
+      },
+      {
+        "id": "done",
+        "kind": "exit",
+        "label": "done",
+        "config": {
+          "return": {
+            "mapping": "outputs.adversary.value",
+            "channels": []
+          }
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-1",
+        "from": {
+          "node": "start",
+          "port": "out"
+        },
+        "to": {
+          "node": "adversary",
+          "port": "in"
+        }
+      },
+      {
+        "id": "edge-2",
+        "from": {
+          "node": "adversary",
+          "port": "out"
+        },
+        "to": {
+          "node": "done",
+          "port": "in"
+        }
+      }
+    ]
+  }
+}

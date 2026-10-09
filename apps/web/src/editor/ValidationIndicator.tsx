@@ -41,10 +41,12 @@ export function ValidationIndicator({
   issues,
   definition,
   check = 'done',
+  readyLabel,
 }: {
   issues: readonly EditorIssue[];
   definition: LoopDefinitionInput;
   check?: ServerCheck;
+  readyLabel?: string;
 }) {
   const loopGroupId = useId();
   const nodeGroupId = useId();
@@ -67,7 +69,7 @@ export function ValidationIndicator({
         )}
       >
         <Icon name={status.icon} />
-        {status.text}
+        {check === 'done' && readyLabel ? readyLabel : status.text}
       </span>
     );
   }

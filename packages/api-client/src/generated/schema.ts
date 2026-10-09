@@ -371,6 +371,7 @@ export interface paths {
                             current?: components["schemas"]["LoopVersionRecord"] | undefined;
                             draft?: components["schemas"]["LoopVersionRecord"] | undefined;
                             draftToken?: string | undefined;
+                            templateInstanceId?: string | undefined;
                         };
                     };
                 };

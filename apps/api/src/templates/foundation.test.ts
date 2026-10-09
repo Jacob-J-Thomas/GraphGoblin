@@ -2252,3 +2252,55 @@ describe('actual poll support callsite', () => {
     expect(f.harness.started).toHaveLength(0);
   });
 });
+
+describe('QA admission owns a permanent issue attempt across merge SHAs', () => {
+  it('allows one winner across concurrent instances and rejects a later merge after termination and runtime reconstruction', async () => {
+    const f = await foundation();
+    const first = await recipe(f, 'qa', ['qa-rework']);
+    const second = await recipe(f, 'qa', ['qa-rework']);
+    const buildAdmission = (mergeSha: string, issue = 7) => {
+      const source: TemplateAuthoritySource = {
+        resolve: () =>
+          Promise.resolve({
+            kind: 'qa',
+            repository: 'example/project',
+            issue,
+            attempt: 1,
+            source: { kind: 'external' },
+            pullRequest: 12,
+            mergeSha,
+          }),
+        recheck: () => Promise.resolve(),
+      };
+      const runtime = new TemplateRuntime(f.instances, source);
+      return templateAdmission(
+        new SqliteTriggerAdmission(f.handle.db, f.events, (store, input, poll) =>
+          runtime.afterRunStaged(store, input, poll),
+        ),
+        runtime,
+      );
+    };
+    const a = recipeIntent(first, 'qa-race-a');
+    const b = recipeIntent(second, 'qa-race-b');
+    const outcomes = await Promise.allSettled([
+      buildAdmission('a'.repeat(40)).create(a),
+      buildAdmission('b'.repeat(40)).create(b),
+    ]);
+    expect(outcomes.filter((outcome) => outcome.status === 'fulfilled')).toHaveLength(1);
+    const rejected = outcomes.find((outcome) => outcome.status === 'rejected');
+    expect(rejected).toMatchObject({ reason: { code: 'TEMPLATE_SUBJECT_CONSUMED' } });
+    const winner = outcomes.find((outcome) => outcome.status === 'fulfilled');
+    if (winner?.status !== 'fulfilled') throw new Error('missing winner');
+    await f.runs.update(winner.value.id, { status: 'failed' });
+    const later = recipeIntent(second, 'qa-later-merge');
+    await expect(buildAdmission('c'.repeat(40)).create(later)).rejects.toMatchObject({
+      code: 'TEMPLATE_SUBJECT_CONSUMED',
+    });
+    expect(await f.runs.get(later.run.id)).toBeUndefined();
+    expect(await f.events.read(later.run.id)).toEqual([]);
+    const otherIssue = recipeIntent(second, 'qa-independent-issue');
+    expect((await buildAdmission('d'.repeat(40), 8).create(otherIssue)).id).toBe(otherIssue.run.id);
+    expect(f.requests).toHaveLength(0);
+    expect(f.harness.started).toHaveLength(0);
+  });
+});

@@ -1,22 +1,24 @@
 import {
   ImplementationTemplateSettingsSchema,
+  QaTemplateSettingsSchema,
   ReviewTemplateSettingsSchema,
   TemplateInstantiateResponseSchema,
   type ModelCatalogEntry,
   type TemplateSettings,
 } from '@graphgoblin/contracts';
-import { render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, useLocation } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
 import {
   id,
   implementationTemplateEntry,
+  qaTemplateEntry,
   reviewTemplateEntry,
   starterTemplateEntry,
   TS,
 } from '../__fixtures__/fake-api.js';
-import { TemplateGallery } from './TemplateGallery.js';
+import { TemplateGallery, type TemplateRolePreflight } from './TemplateGallery.js';
 
 const model: ModelCatalogEntry = {
   harness: 'codex',
@@ -85,6 +87,145 @@ function reviewResponse(
     prerequisites: entry.prerequisites,
   });
 }
+
+function qaResponse(
+  entry: ReturnType<typeof qaTemplateEntry>,
+  settings: Extract<TemplateSettings, { kind: 'qa' }>,
+) {
+  const parentLoopId = id('qa-parent');
+  return TemplateInstantiateResponseSchema.parse({
+    instance: {
+      id: id('qa-instance'),
+      ownerId: 'local',
+      templateId: entry.manifest.id,
+      templateVersion: entry.manifest.version,
+      createdAt: TS,
+      parentLoopId,
+      loops: entry.manifest.loops.map((loop) => ({
+        key: loop.key,
+        loopId: loop.key === entry.manifest.parentKey ? parentLoopId : id(`qa-${loop.key}`),
+        versionId: id(`qa-${loop.key}-version`),
+        version: 1,
+        status: loop.key === entry.manifest.parentKey ? 'draft' : 'published',
+      })),
+      settings,
+    },
+    prerequisites: entry.prerequisites,
+  });
+}
+
+async function openQaTemplate(
+  entry: ReturnType<typeof qaTemplateEntry>,
+  models: readonly ModelCatalogEntry[] = [model],
+  preflight: readonly TemplateRolePreflight[] = readyCodex,
+  onCheckPrerequisites: (
+    templateId: string,
+    settings: TemplateSettings,
+  ) => Promise<ReturnType<typeof qaTemplateEntry>['prerequisites']> = () =>
+    Promise.resolve(entry.prerequisites),
+  onInstantiate: (
+    templateId: string,
+    settings: TemplateSettings,
+  ) => Promise<ReturnType<typeof qaResponse>> = (_templateId, settings) =>
+    Promise.resolve(qaResponse(entry, QaTemplateSettingsSchema.parse(settings))),
+  onCreated: (parentLoopId: string) => void | Promise<void> = () => undefined,
+) {
+  const user = userEvent.setup();
+  render(
+    <MemoryRouter initialEntries={['/loops']}>
+      <TemplateGallery
+        templates={[entry]}
+        models={models}
+        preflight={preflight}
+        onCheckPrerequisites={onCheckPrerequisites}
+        onInstantiate={onInstantiate}
+        onCreated={onCreated}
+      />
+      <LocationProbe />
+    </MemoryRouter>,
+  );
+  await user.click(screen.getByRole('button', { name: 'New from template' }));
+  await user.click(screen.getByRole('button', { name: 'Use Post-merge QA' }));
+  return user;
+}
+
+async function fillQaRepository(user: ReturnType<typeof userEvent.setup>) {
+  await user.type(screen.getByRole('textbox', { name: 'Checkout path' }), 'C:/repos/qa-project');
+  await user.type(screen.getByRole('textbox', { name: 'Repository owner' }), 'ExampleOrg');
+  await user.type(screen.getByRole('textbox', { name: 'Repository name' }), 'qa-project');
+  await user.type(screen.getByRole('textbox', { name: 'Base branch' }), 'main');
+}
+
+describe('requirements-check keyboard focus', () => {
+  it.each(['success', 'failure'] as const)(
+    'keeps focus inside the setup dialog through a %s check and refuses duplicate activation',
+    async (outcome) => {
+      const entry = qaTemplateEntry();
+      let resolve!: (value: typeof entry.prerequisites) => void;
+      let reject!: (error: Error) => void;
+      const pending = new Promise<typeof entry.prerequisites>((yes, no) => {
+        resolve = yes;
+        reject = no;
+      });
+      const onCheck = vi.fn(() => pending);
+      const user = await openQaTemplate(entry, [model], readyCodex, onCheck);
+      await fillQaRepository(user);
+      const button = screen.getByRole('button', { name: 'Check requirements' });
+      button.focus();
+      await user.keyboard('{Enter}');
+      expect(button).toHaveFocus();
+      expect(button).toBeEnabled();
+      expect(button).toHaveAttribute('aria-disabled', 'true');
+      expect(button).toHaveAttribute('aria-busy', 'true');
+      expect(screen.getByRole('button', { name: 'Create draft' })).toBeDisabled();
+      await user.keyboard('{Enter}');
+      fireEvent.click(button);
+      expect(onCheck).toHaveBeenCalledTimes(1);
+      await act(async () => {
+        if (outcome === 'success') resolve(entry.prerequisites);
+        else reject(new Error('The requirements service is unavailable.'));
+        await pending.catch(() => undefined);
+      });
+      expect(button).toHaveFocus();
+      expect(screen.getByRole('dialog').contains(document.activeElement)).toBe(true);
+      expect(button).not.toHaveAttribute('aria-disabled');
+      expect(button).not.toHaveAttribute('aria-busy');
+      expect(
+        screen.getByText(
+          outcome === 'success'
+            ? 'Checked for these settings.'
+            : 'The requirements service is unavailable.',
+        ),
+      ).toBeVisible();
+    },
+  );
+
+  it('guards immediate repeated activation and preserves a deliberate focus move while pending', async () => {
+    const entry = qaTemplateEntry();
+    let resolve!: (value: typeof entry.prerequisites) => void;
+    const pending = new Promise<typeof entry.prerequisites>((yes) => {
+      resolve = yes;
+    });
+    const onCheck = vi.fn(() => pending);
+    const user = await openQaTemplate(entry, [model], readyCodex, onCheck);
+    await fillQaRepository(user);
+    const button = screen.getByRole('button', { name: 'Check requirements' });
+    button.focus();
+    act(() => {
+      fireEvent.click(button);
+      fireEvent.click(button);
+    });
+    expect(onCheck).toHaveBeenCalledTimes(1);
+    await user.tab();
+    const cancel = screen.getByRole('button', { name: 'Cancel' });
+    expect(cancel).toHaveFocus();
+    await act(async () => {
+      resolve(entry.prerequisites);
+      await pending;
+    });
+    expect(cancel).toHaveFocus();
+  });
+});
 
 async function openImplementationTemplate(
   user: ReturnType<typeof userEvent.setup>,
@@ -160,6 +301,168 @@ function LocationProbe() {
 }
 
 describe('TemplateGallery', () => {
+  it('checks typed QA settings and allows a draft while unavailable isolation keeps runs blocked', async () => {
+    const entry = qaTemplateEntry();
+    const adversaryModel: ModelCatalogEntry = {
+      ...model,
+      model: 'test-adversary',
+      displayName: 'Test adversary',
+    };
+    const onCheckPrerequisites = vi.fn((_id: string, _settings: TemplateSettings) =>
+      Promise.resolve(entry.prerequisites),
+    );
+    const onInstantiate = vi.fn((_id: string, settings: TemplateSettings) =>
+      Promise.resolve(qaResponse(entry, QaTemplateSettingsSchema.parse(settings))),
+    );
+    const onCreated = vi.fn();
+    const user = await openQaTemplate(
+      entry,
+      [model, adversaryModel],
+      readyCodex,
+      onCheckPrerequisites,
+      onInstantiate,
+      onCreated,
+    );
+
+    expect(screen.getByText(/every QA run remains blocked/i)).toBeInTheDocument();
+    expect(screen.getByLabelText('Support credential key name')).toHaveValue('supportReadKey');
+    expect(screen.getByLabelText('Support credential key name')).toHaveAttribute('readonly');
+    expect(screen.getAllByLabelText('Model')[0]).toHaveValue('test-codex');
+    expect(screen.getAllByLabelText('Model')[1]).toHaveValue('test-adversary');
+    expect(screen.queryByDisplayValue(/secret-value|token-value/i)).not.toBeInTheDocument();
+
+    await fillQaRepository(user);
+    await user.selectOptions(screen.getByLabelText('Depth'), 'full-regression');
+    await user.type(screen.getByLabelText('Full-regression issue label'), 'full-regression');
+    await user.clear(screen.getByLabelText('Implementation trigger label'));
+    await user.type(screen.getByLabelText('Implementation trigger label'), 'qa-ready');
+    await user.clear(screen.getByLabelText('Dedicated proof branch'));
+    await user.type(screen.getByLabelText('Dedicated proof branch'), 'qa/proof-run');
+    await user.clear(screen.getByLabelText('Program'));
+    await user.type(screen.getByLabelText('Program'), 'node');
+    await user.clear(screen.getByLabelText('Arguments, one per line'));
+    await user.type(screen.getByLabelText('Arguments, one per line'), '--test');
+    await user.clear(screen.getByLabelText('Timeout in seconds'));
+    await user.type(screen.getByLabelText('Timeout in seconds'), '90');
+    await user.clear(screen.getByLabelText('Unsound-evidence reruns'));
+    await user.type(screen.getByLabelText('Unsound-evidence reruns'), '0');
+    await user.clear(screen.getByLabelText('Rework requests'));
+    await user.type(screen.getByLabelText('Rework requests'), '1');
+    await user.clear(screen.getByLabelText('Issue reopenings'));
+    await user.type(screen.getByLabelText('Issue reopenings'), '0');
+    await user.clear(screen.getByLabelText('Proof push retries'));
+    await user.type(screen.getByLabelText('Proof push retries'), '2');
+
+    await user.click(screen.getByRole('button', { name: 'Check requirements' }));
+    expect(await screen.findByText('Checked for these settings.')).toBeInTheDocument();
+    expect(screen.getAllByText('unavailable')).toHaveLength(2);
+    expect(screen.getAllByText('Runs not ready')).toHaveLength(2);
+    expect(onCheckPrerequisites).toHaveBeenCalledWith(
+      'qa',
+      expect.objectContaining({
+        kind: 'qa',
+        repository: {
+          path: 'C:/repos/qa-project',
+          owner: 'ExampleOrg',
+          name: 'qa-project',
+          baseBranch: 'main',
+        },
+        supportReadKey: 'supportReadKey',
+        roles: {
+          qa: { harness: 'codex', model: 'test-codex', effort: 'low' },
+          adversary: { harness: 'codex', model: 'test-adversary', effort: 'low' },
+        },
+        depth: 'full-regression',
+        fullRegressionLabel: 'full-regression',
+        triggerLabel: 'qa-ready',
+        proofBranch: 'qa/proof-run',
+        gate: { program: 'node', args: ['--test'], timeoutSeconds: 90 },
+        limits: { unsoundReruns: 0, reworkRequests: 1, reopenings: 0, proofPushRetries: 2 },
+      }),
+    );
+    expect(screen.getByRole('button', { name: 'Create draft' })).toBeEnabled();
+    await user.click(screen.getByRole('button', { name: 'Create draft' }));
+    expect(onInstantiate).toHaveBeenCalledTimes(1);
+    expect(onCreated).toHaveBeenCalledWith(expect.any(String));
+    expect(screen.getByRole('button', { name: 'Create draft' })).toBeDisabled();
+  });
+
+  it('removes an optional full-regression label when cleared and preserves explicit role selection', async () => {
+    const entry = qaTemplateEntry();
+    const claudeModel: ModelCatalogEntry = {
+      ...model,
+      harness: 'claude',
+      model: 'catalog-claude-qa',
+      displayName: 'Catalog Claude QA',
+      efforts: ['low', 'high'],
+      defaultEffort: 'low',
+    };
+    const preflight = [
+      ...readyCodex,
+      {
+        harness: 'claude',
+        ok: true,
+        authenticated: true,
+        problems: [],
+        models: [
+          {
+            model: 'catalog-claude-qa',
+            admission: 'supported' as const,
+            efforts: ['high' as const],
+            reasonCode: null,
+            billingStatus: 'account-dependent' as const,
+          },
+        ],
+      },
+    ];
+    const onCheckPrerequisites = vi.fn((_id: string, _settings: TemplateSettings) =>
+      Promise.resolve(entry.prerequisites),
+    );
+    const user = await openQaTemplate(entry, [model, claudeModel], preflight, onCheckPrerequisites);
+    const harnesses = screen.getAllByLabelText('Harness');
+    await user.selectOptions(harnesses[1]!, 'claude');
+    const models = screen.getAllByLabelText('Model');
+    await user.selectOptions(models[1]!, 'catalog-claude-qa');
+    const efforts = screen.getAllByLabelText('Effort');
+    expect(efforts[1]).toHaveValue('low');
+    expect(screen.getByRole('option', { name: 'high' })).toBeInTheDocument();
+    await user.selectOptions(efforts[1]!, 'high');
+    await user.type(screen.getByLabelText('Full-regression issue label'), 'regression');
+    await user.clear(screen.getByLabelText('Full-regression issue label'));
+    await fillQaRepository(user);
+
+    await user.click(screen.getByRole('button', { name: 'Check requirements' }));
+    expect(await screen.findByText('Checked for these settings.')).toBeInTheDocument();
+    const checked = onCheckPrerequisites.mock.calls[0]?.[1];
+    expect(checked?.kind).toBe('qa');
+    if (checked?.kind !== 'qa') throw new Error('QA settings were not sent');
+    expect(Object.hasOwn(checked, 'fullRegressionLabel')).toBe(false);
+    expect(checked.roles.adversary).toEqual({
+      harness: 'claude',
+      model: 'catalog-claude-qa',
+      effort: 'high',
+    });
+    expect(checked.roles.qa.model).toBe('test-codex');
+    expect(checked.depth).toBe('standard');
+  });
+
+  it('keeps QA counts within authored bounds and offers no isolation override', async () => {
+    const entry = qaTemplateEntry();
+    const onCheckPrerequisites = vi.fn();
+    const user = await openQaTemplate(entry, [model], readyCodex, onCheckPrerequisites);
+    const reruns = screen.getByRole('spinbutton', { name: 'Unsound-evidence reruns' });
+    expect(reruns).toHaveAttribute('min', '0');
+    expect(reruns).toHaveAttribute('max', '1');
+    await user.clear(reruns);
+    await user.type(reruns, '2');
+
+    expect(reruns).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByRole('button', { name: 'Check requirements' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Create draft' })).toBeDisabled();
+    expect(screen.queryByRole('checkbox', { name: /isolation/i })).not.toBeInTheDocument();
+    expect(onCheckPrerequisites).not.toHaveBeenCalled();
+  });
+
   it('authors typed review settings, rechecks changed settings, then creates the draft', async () => {
     const user = userEvent.setup();
     const entry = reviewTemplateEntry();

@@ -5,6 +5,7 @@ import type {
   TemplateInstantiateResponse,
   TemplatePrerequisiteReport,
   ImplementationTemplateSettings,
+  QaTemplateSettings,
   ReviewTemplateSettings,
   TemplateRepository,
   TemplateRoleSelection,
@@ -14,10 +15,11 @@ import {
   EffortSchema,
   HarnessIdSchema,
   ImplementationTemplateSettingsSchema,
+  QaTemplateSettingsSchema,
   ReviewTemplateSettingsSchema,
   TemplateSettingsSchema,
 } from '@graphgoblin/contracts';
-import { useId, useState, type FormEvent } from 'react';
+import { useId, useRef, useState, type FormEvent } from 'react';
 import { Link } from 'react-router';
 import {
   Alert,
@@ -187,7 +189,9 @@ function settingsRoleAvailable(
         ? [settings.roles.implementer]
         : settings?.kind === 'review'
           ? [settings.roles.reviewer, settings.roles.fixer]
-          : [];
+          : settings?.kind === 'qa'
+            ? [settings.roles.qa, settings.roles.adversary]
+            : [];
   return (
     roles.length > 0 &&
     roles.every((role) => {
@@ -356,6 +360,62 @@ function reviewSettingsDraft(
   };
 }
 
+function qaSettingsDraft(
+  entry: TemplateCatalogEntry,
+  models: readonly ModelCatalogEntry[],
+  preflight: readonly TemplateRolePreflight[],
+): QaTemplateSettings {
+  const schema = entry.settingsSchema;
+  const secretKey =
+    entry.manifest.requiredSecrets[0]?.key ??
+    entry.manifest.prerequisites.find((item) => item.kind === 'secret')?.secretKey ??
+    '';
+  const qa = templateRoleDefault(schema, models, preflight, 'qa');
+  const distinctCodexModel = catalogModels(models, preflight, 'codex').find(
+    (model) => model.model !== qa.model,
+  )?.model;
+  return {
+    kind: 'qa',
+    repository: { path: '', owner: '', name: '', baseBranch: '' },
+    supportReadKey: secretKey,
+    gate: {
+      program: schemaStringDefault(schemaProperty(schema, 'gate', 'program'), 'pnpm'),
+      args: schemaStringArrayDefault(schemaProperty(schema, 'gate', 'args'), ['check']),
+      timeoutSeconds: schemaNumberDefault(schemaProperty(schema, 'gate', 'timeoutSeconds'), 600),
+    },
+    roles: {
+      qa,
+      adversary: templateRoleDefault(schema, models, preflight, 'adversary', distinctCodexModel),
+    },
+    depth:
+      schemaStringDefault(schemaProperty(schema, 'depth'), 'standard') === 'full-regression'
+        ? 'full-regression'
+        : 'standard',
+    ...(typeof schemaProperty(schema, 'fullRegressionLabel')['default'] === 'string'
+      ? {
+          fullRegressionLabel: schemaStringDefault(
+            schemaProperty(schema, 'fullRegressionLabel'),
+            '',
+          ),
+        }
+      : {}),
+    triggerLabel: schemaStringDefault(
+      schemaProperty(schema, 'triggerLabel'),
+      'ready-for-implementation',
+    ),
+    proofBranch: schemaStringDefault(schemaProperty(schema, 'proofBranch'), 'graphgoblin-proof'),
+    limits: {
+      unsoundReruns: schemaNumberDefault(schemaProperty(schema, 'limits', 'unsoundReruns'), 1),
+      reworkRequests: schemaNumberDefault(schemaProperty(schema, 'limits', 'reworkRequests'), 2),
+      reopenings: schemaNumberDefault(schemaProperty(schema, 'limits', 'reopenings'), 2),
+      proofPushRetries: schemaNumberDefault(
+        schemaProperty(schema, 'limits', 'proofPushRetries'),
+        3,
+      ),
+    },
+  };
+}
+
 function initialTemplateSettings(
   entry: TemplateCatalogEntry,
   models: readonly ModelCatalogEntry[],
@@ -367,6 +427,9 @@ function initialTemplateSettings(
   }
   if (entry.manifest.kind === 'review') {
     return reviewSettingsDraft(entry, models, preflight);
+  }
+  if (entry.manifest.kind === 'qa') {
+    return qaSettingsDraft(entry, models, preflight);
   }
   return null;
 }
@@ -388,7 +451,7 @@ function TemplateRoleFields({
   schema: Record<string, unknown>;
   models: readonly ModelCatalogEntry[];
   preflight: readonly TemplateRolePreflight[];
-  roleKey: 'assistant' | 'implementer' | 'reviewer' | 'fixer';
+  roleKey: 'assistant' | 'implementer' | 'reviewer' | 'fixer' | 'qa' | 'adversary';
   title: string;
   onChange: (next: TemplateRoleSelection) => void;
 }) {
@@ -1427,6 +1490,440 @@ function ReviewSettingsFields({
   );
 }
 
+function QaSettingsFields({
+  entry,
+  settings,
+  models,
+  preflight,
+  onChange,
+}: {
+  entry: TemplateCatalogEntry;
+  settings: QaTemplateSettings;
+  models: readonly ModelCatalogEntry[];
+  preflight: readonly TemplateRolePreflight[];
+  onChange: (next: QaTemplateSettings) => void;
+}) {
+  const id = useId();
+  const parsed = QaTemplateSettingsSchema.safeParse(settings);
+  const issues = (path: string) => {
+    if (parsed.success) return [];
+    return parsed.error.issues
+      .filter((issue) => {
+        const issuePath = issue.path.map(String).join('.');
+        return issuePath === path || issuePath.startsWith(`${path}.`);
+      })
+      .map((issue) => issue.message);
+  };
+  const describedBy = (helpId: string, path: string) =>
+    issues(path).length > 0 ? `${helpId} ${helpId}-error` : helpId;
+  const invalid = (path: string) => (issues(path).length > 0 ? true : undefined);
+  const showIssues = (helpId: string, path: string) => {
+    const messages = issues(path);
+    return messages.length > 0 ? (
+      <HelpText id={`${helpId}-error`} tone="bad">
+        {messages.join(' ')}
+      </HelpText>
+    ) : null;
+  };
+  const updateRepository = <K extends keyof TemplateRepository>(
+    key: K,
+    value: TemplateRepository[K],
+  ) => onChange({ ...settings, repository: { ...settings.repository, [key]: value } });
+  const updateGate = <K extends keyof QaTemplateSettings['gate']>(
+    key: K,
+    value: QaTemplateSettings['gate'][K],
+  ) => onChange({ ...settings, gate: { ...settings.gate, [key]: value } });
+  const updateLimit = <K extends keyof QaTemplateSettings['limits']>(
+    key: K,
+    value: QaTemplateSettings['limits'][K],
+  ) => onChange({ ...settings, limits: { ...settings.limits, [key]: value } });
+  const updateRole = (key: 'qa' | 'adversary', role: TemplateRoleSelection) =>
+    onChange({ ...settings, roles: { ...settings.roles, [key]: role } });
+  const secretKey =
+    entry.manifest.requiredSecrets[0]?.key ??
+    entry.manifest.prerequisites.find((item) => item.kind === 'secret')?.secretKey;
+  const schema = entry.settingsSchema;
+  const gateProgramSchema = schemaProperty(schema, 'gate', 'program');
+  const gateArgsSchema = schemaProperty(schema, 'gate', 'args');
+  const gateTimeoutSchema = schemaProperty(schema, 'gate', 'timeoutSeconds');
+  const gateArgs = settings.gate.args.join('\n');
+  const limitFields: {
+    key: keyof QaTemplateSettings['limits'];
+    label: string;
+    purpose: string;
+  }[] = [
+    {
+      key: 'unsoundReruns',
+      label: 'Unsound-evidence reruns',
+      purpose: 'How many fresh QA attempts may follow evidence judged unsound.',
+    },
+    {
+      key: 'reworkRequests',
+      label: 'Rework requests',
+      purpose: 'How many bounded requests to fix identified issues may be made.',
+    },
+    {
+      key: 'reopenings',
+      label: 'Issue reopenings',
+      purpose: 'How many times the linked issue may be reopened for bounded rework.',
+    },
+    {
+      key: 'proofPushRetries',
+      label: 'Proof push retries',
+      purpose: 'How many retries are allowed when saving the proof branch fails.',
+    },
+  ];
+
+  return (
+    <div className="grid gap-5">
+      <Alert tone="warn" title="Enforced evidence-only isolation is unavailable">
+        Publishing starts the poll and may select older eligible merged pull requests, one per poll;
+        there is no initial cutoff. While isolation is unavailable, each selected pull request
+        creates a failed attempt before checkout or a model turn, permanently consumes its merge and
+        issue attempt, and may add one fixed explanation to the linked issue. Keep this template
+        unpublished until enforced isolation is available. Every QA run remains blocked; no setting
+        in this form can override that requirement.
+      </Alert>
+
+      <fieldset className="grid gap-3 rounded-md border border-default p-4">
+        <legend className="px-1 text-sm font-semibold">Repository</legend>
+        <p className="text-sm text-muted">
+          Enter the existing checkout and the exact repository and base branch for this QA recipe.
+          The API checks the checkout and matching origin before creating a draft.
+        </p>
+        <FieldGroup>
+          <Label htmlFor={`${id}-repository-path`} required>
+            Checkout path
+          </Label>
+          <Input
+            id={`${id}-repository-path`}
+            required
+            autoComplete="off"
+            value={settings.repository.path}
+            aria-invalid={invalid('repository.path')}
+            aria-describedby={describedBy(`${id}-repository-path-help`, 'repository.path')}
+            onChange={(event) => updateRepository('path', event.currentTarget.value)}
+          />
+          <HelpText id={`${id}-repository-path-help`}>
+            Use an absolute local path without parent-directory segments.
+          </HelpText>
+          {showIssues(`${id}-repository-path-help`, 'repository.path')}
+        </FieldGroup>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <FieldGroup>
+            <Label htmlFor={`${id}-repository-owner`} required>
+              Repository owner
+            </Label>
+            <Input
+              id={`${id}-repository-owner`}
+              required
+              autoComplete="off"
+              value={settings.repository.owner}
+              aria-invalid={invalid('repository.owner')}
+              aria-describedby={describedBy(`${id}-repository-owner-help`, 'repository.owner')}
+              onChange={(event) => updateRepository('owner', event.currentTarget.value)}
+            />
+            <HelpText id={`${id}-repository-owner-help`}>
+              The GitHub account or organization.
+            </HelpText>
+            {showIssues(`${id}-repository-owner-help`, 'repository.owner')}
+          </FieldGroup>
+          <FieldGroup>
+            <Label htmlFor={`${id}-repository-name`} required>
+              Repository name
+            </Label>
+            <Input
+              id={`${id}-repository-name`}
+              required
+              autoComplete="off"
+              value={settings.repository.name}
+              aria-invalid={invalid('repository.name')}
+              aria-describedby={describedBy(`${id}-repository-name-help`, 'repository.name')}
+              onChange={(event) => updateRepository('name', event.currentTarget.value)}
+            />
+            <HelpText id={`${id}-repository-name-help`}>The repository slug.</HelpText>
+            {showIssues(`${id}-repository-name-help`, 'repository.name')}
+          </FieldGroup>
+        </div>
+        <FieldGroup>
+          <Label htmlFor={`${id}-base-branch`} required>
+            Base branch
+          </Label>
+          <Input
+            id={`${id}-base-branch`}
+            required
+            autoComplete="off"
+            value={settings.repository.baseBranch}
+            aria-invalid={invalid('repository.baseBranch')}
+            aria-describedby={describedBy(`${id}-base-branch-help`, 'repository.baseBranch')}
+            onChange={(event) => updateRepository('baseBranch', event.currentTarget.value)}
+          />
+          <HelpText id={`${id}-base-branch-help`}>
+            The branch used as the work starting point.
+          </HelpText>
+          {showIssues(`${id}-base-branch-help`, 'repository.baseBranch')}
+        </FieldGroup>
+        <FieldGroup>
+          <Label htmlFor={`${id}-support-key`} required>
+            Support credential key name
+          </Label>
+          <Input
+            id={`${id}-support-key`}
+            required
+            autoComplete="off"
+            readOnly={secretKey !== undefined}
+            value={settings.supportReadKey}
+            aria-invalid={invalid('supportReadKey')}
+            aria-describedby={describedBy(`${id}-support-key-help`, 'supportReadKey')}
+            onChange={(event) =>
+              onChange({ ...settings, supportReadKey: event.currentTarget.value })
+            }
+          />
+          <HelpText id={`${id}-support-key-help`}>
+            Enter the configured key name only. Never paste a token or secret value here.
+            {secretKey ? ` This template requires the key “${secretKey}”.` : ''}
+          </HelpText>
+          {showIssues(`${id}-support-key-help`, 'supportReadKey')}
+        </FieldGroup>
+      </fieldset>
+
+      <TemplateRoleFields
+        settings={settings.roles.qa}
+        schema={schema}
+        models={models}
+        preflight={preflight}
+        roleKey="qa"
+        title="QA model"
+        onChange={(role) => updateRole('qa', role)}
+      />
+      <TemplateRoleFields
+        settings={settings.roles.adversary}
+        schema={schema}
+        models={models}
+        preflight={preflight}
+        roleKey="adversary"
+        title="Evidence-only adversary model"
+        onChange={(role) => updateRole('adversary', role)}
+      />
+      <p className="text-sm text-muted">
+        When available, choose a different model or harness for the evidence-only adversary to
+        reduce shared blind spots. This does not enable the unavailable isolation requirement.
+      </p>
+
+      <fieldset className="grid gap-3 rounded-md border border-default p-4">
+        <legend className="px-1 text-sm font-semibold">QA depth</legend>
+        <FieldGroup>
+          <Label htmlFor={`${id}-depth`} required>
+            Depth
+          </Label>
+          <Select
+            id={`${id}-depth`}
+            value={settings.depth}
+            onChange={(event) => {
+              const value = event.currentTarget.value;
+              if (value === 'standard' || value === 'full-regression') {
+                onChange({ ...settings, depth: value });
+              }
+            }}
+          >
+            <option value="standard">Standard</option>
+            <option value="full-regression">Full regression</option>
+          </Select>
+          <HelpText id={`${id}-depth-help`}>
+            This is the default depth. If the optional label below is present on the linked issue,
+            that issue uses full-regression depth. Neither setting guarantees an accepted proof.
+          </HelpText>
+        </FieldGroup>
+        <FieldGroup>
+          <Label htmlFor={`${id}-full-regression-label`}>Full-regression issue label</Label>
+          <Input
+            id={`${id}-full-regression-label`}
+            autoComplete="off"
+            value={settings.fullRegressionLabel ?? ''}
+            aria-invalid={invalid('fullRegressionLabel')}
+            aria-describedby={describedBy(
+              `${id}-full-regression-label-help`,
+              'fullRegressionLabel',
+            )}
+            onChange={(event) => {
+              const raw = event.currentTarget.value;
+              if (raw === '') {
+                const next = { ...settings };
+                delete next.fullRegressionLabel;
+                onChange(next);
+              } else {
+                onChange({ ...settings, fullRegressionLabel: raw });
+              }
+            }}
+          />
+          <HelpText id={`${id}-full-regression-label-help`}>
+            Optional. When this label is present on the linked issue, use full-regression depth.
+            Leave blank to rely on the Depth setting above.
+          </HelpText>
+          {showIssues(`${id}-full-regression-label-help`, 'fullRegressionLabel')}
+        </FieldGroup>
+      </fieldset>
+
+      <fieldset className="grid gap-3 rounded-md border border-default p-4">
+        <legend className="px-1 text-sm font-semibold">Issue and proof branch</legend>
+        <FieldGroup>
+          <Label htmlFor={`${id}-trigger-label`} required>
+            Implementation trigger label
+          </Label>
+          <Input
+            id={`${id}-trigger-label`}
+            required
+            autoComplete="off"
+            maxLength={stringConstraint(schemaProperty(schema, 'triggerLabel'), 'maxLength')}
+            value={settings.triggerLabel}
+            aria-invalid={invalid('triggerLabel')}
+            aria-describedby={describedBy(`${id}-trigger-label-help`, 'triggerLabel')}
+            onChange={(event) => onChange({ ...settings, triggerLabel: event.currentTarget.value })}
+          />
+          <HelpText id={`${id}-trigger-label-help`}>
+            The existing label used to select implementation issues. It must match the repository's
+            label exactly.
+          </HelpText>
+          {showIssues(`${id}-trigger-label-help`, 'triggerLabel')}
+        </FieldGroup>
+        <FieldGroup>
+          <Label htmlFor={`${id}-proof-branch`} required>
+            Dedicated proof branch
+          </Label>
+          <Input
+            id={`${id}-proof-branch`}
+            required
+            autoComplete="off"
+            maxLength={stringConstraint(schemaProperty(schema, 'proofBranch'), 'maxLength')}
+            value={settings.proofBranch}
+            aria-invalid={invalid('proofBranch')}
+            aria-describedby={describedBy(`${id}-proof-branch-help`, 'proofBranch')}
+            onChange={(event) => onChange({ ...settings, proofBranch: event.currentTarget.value })}
+          />
+          <HelpText id={`${id}-proof-branch-help`}>
+            Use a branch reserved for saved QA evidence.
+          </HelpText>
+          {showIssues(`${id}-proof-branch-help`, 'proofBranch')}
+        </FieldGroup>
+      </fieldset>
+
+      <fieldset className="grid gap-3 rounded-md border border-default p-4">
+        <legend className="px-1 text-sm font-semibold">QA command</legend>
+        <p className="text-sm text-muted">
+          The program and arguments are passed as separate literal values. Shell syntax is not
+          interpreted.
+        </p>
+        <FieldGroup>
+          <Label htmlFor={`${id}-gate-program`} required>
+            Program
+          </Label>
+          <Input
+            id={`${id}-gate-program`}
+            required
+            autoComplete="off"
+            maxLength={stringConstraint(gateProgramSchema, 'maxLength')}
+            value={settings.gate.program}
+            aria-invalid={invalid('gate.program')}
+            aria-describedby={describedBy(`${id}-gate-program-help`, 'gate.program')}
+            onChange={(event) => updateGate('program', event.currentTarget.value)}
+          />
+          <HelpText id={`${id}-gate-program-help`}>
+            Choose a native program available in the checkout.
+          </HelpText>
+          {showIssues(`${id}-gate-program-help`, 'gate.program')}
+        </FieldGroup>
+        <FieldGroup>
+          <Label htmlFor={`${id}-gate-args`}>Arguments, one per line</Label>
+          <Textarea
+            id={`${id}-gate-args`}
+            rows={4}
+            value={gateArgs}
+            aria-invalid={invalid('gate.args')}
+            aria-describedby={describedBy(`${id}-gate-args-help`, 'gate.args')}
+            onChange={(event) => {
+              const raw = event.currentTarget.value;
+              updateGate('args', raw === '' ? [] : raw.split(/\r?\n/));
+            }}
+          />
+          <HelpText id={`${id}-gate-args-help`}>
+            Each line is one argument. Use at most{' '}
+            {typeof gateArgsSchema['maxItems'] === 'number' ? gateArgsSchema['maxItems'] : 64}{' '}
+            arguments; do not include shell operators.
+          </HelpText>
+          {showIssues(`${id}-gate-args-help`, 'gate.args')}
+        </FieldGroup>
+        <FieldGroup>
+          <Label htmlFor={`${id}-gate-timeout`} required>
+            Timeout in seconds
+          </Label>
+          <Input
+            id={`${id}-gate-timeout`}
+            type="number"
+            step={1}
+            min={numberConstraint(gateTimeoutSchema, 'minimum')}
+            max={numberConstraint(gateTimeoutSchema, 'maximum')}
+            required
+            value={
+              Number.isFinite(settings.gate.timeoutSeconds) ? settings.gate.timeoutSeconds : ''
+            }
+            aria-invalid={invalid('gate.timeoutSeconds')}
+            aria-describedby={describedBy(`${id}-gate-timeout-help`, 'gate.timeoutSeconds')}
+            onChange={(event) => {
+              const raw = event.currentTarget.value;
+              updateGate('timeoutSeconds', raw === '' ? Number.NaN : Number(raw));
+            }}
+          />
+          <HelpText id={`${id}-gate-timeout-help`}>
+            Bounds: {numberConstraint(gateTimeoutSchema, 'minimum') ?? 1} to{' '}
+            {numberConstraint(gateTimeoutSchema, 'maximum') ?? 86_400} seconds.
+          </HelpText>
+          {showIssues(`${id}-gate-timeout-help`, 'gate.timeoutSeconds')}
+        </FieldGroup>
+      </fieldset>
+
+      <fieldset className="grid gap-3 rounded-md border border-default p-4">
+        <legend className="px-1 text-sm font-semibold">Attempt limits</legend>
+        <p className="text-sm text-muted">
+          Each count is finite. The workflow does not automatically replenish an exhausted per-issue
+          attempt budget.
+        </p>
+        {limitFields.map(({ key, label, purpose }) => {
+          const path = `limits.${key}`;
+          const fieldSchema = schemaProperty(schema, 'limits', key);
+          const helpId = `${id}-limit-${key}-help`;
+          return (
+            <FieldGroup key={key}>
+              <Label htmlFor={`${id}-limit-${key}`} required>
+                {label}
+              </Label>
+              <Input
+                id={`${id}-limit-${key}`}
+                type="number"
+                step={1}
+                min={numberConstraint(fieldSchema, 'minimum')}
+                max={numberConstraint(fieldSchema, 'maximum')}
+                required
+                value={Number.isFinite(settings.limits[key]) ? settings.limits[key] : ''}
+                aria-invalid={invalid(path)}
+                aria-describedby={describedBy(helpId, path)}
+                onChange={(event) => {
+                  const raw = event.currentTarget.value;
+                  updateLimit(key, raw === '' ? Number.NaN : Number(raw));
+                }}
+              />
+              <HelpText id={helpId}>
+                {purpose} Allowed range: {numberConstraint(fieldSchema, 'minimum') ?? 0} to{' '}
+                {numberConstraint(fieldSchema, 'maximum') ?? 10_000}.
+              </HelpText>
+              {showIssues(helpId, path)}
+            </FieldGroup>
+          );
+        })}
+      </fieldset>
+    </div>
+  );
+}
+
 function SettingsFields({
   entry,
   settings,
@@ -1473,6 +1970,17 @@ function SettingsFields({
       />
     );
   }
+  if (entry.manifest.kind === 'qa' && settings.kind === 'qa') {
+    return (
+      <QaSettingsFields
+        entry={entry}
+        settings={settings}
+        models={models}
+        preflight={preflight}
+        onChange={onChange}
+      />
+    );
+  }
   return (
     <Alert title="These template settings are not available in this gallery yet.">
       No JSON editor is provided for unsupported settings. Choose another template or contact the
@@ -1505,6 +2013,7 @@ function TemplateSetup({
     { settingsKey: string; report: TemplatePrerequisiteReport } | undefined
   >();
   const [checking, setChecking] = useState(false);
+  const checkInFlightRef = useRef(false);
   const [checkError, setCheckError] = useState<string>();
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string>();
@@ -1521,7 +2030,8 @@ function TemplateSetup({
   const supported =
     ((entry.manifest.kind === 'starter' && settings?.kind === 'starter') ||
       (entry.manifest.kind === 'implementation' && settings?.kind === 'implementation') ||
-      (entry.manifest.kind === 'review' && settings?.kind === 'review')) &&
+      (entry.manifest.kind === 'review' && settings?.kind === 'review') ||
+      (entry.manifest.kind === 'qa' && settings?.kind === 'qa')) &&
     settingsValid;
   const readyToInstantiate = Boolean(
     !createdLoopId && settingsValid && roleAvailable && report?.canInstantiate && supported,
@@ -1534,7 +2044,8 @@ function TemplateSetup({
   };
 
   const check = async () => {
-    if (!settings || !settingsValid || !supported) return;
+    if (!settings || !settingsValid || !supported || checkInFlightRef.current) return;
+    checkInFlightRef.current = true;
     setChecking(true);
     setCheckError(undefined);
     try {
@@ -1543,6 +2054,7 @@ function TemplateSetup({
     } catch (error) {
       setCheckError(errorMessage(error));
     } finally {
+      checkInFlightRef.current = false;
       setChecking(false);
     }
   };
@@ -1629,6 +2141,19 @@ function TemplateSetup({
             </p>
           </div>
         ) : null}
+        {entry.manifest.kind === 'qa' ? (
+          <div className="grid gap-2 text-sm text-muted">
+            <p>
+              This recipe can be saved as a draft when its authoring requirements pass. Enforced
+              evidence-only isolation is unavailable, so QA work remains blocked before checkout or
+              any model turn.
+            </p>
+            <p>
+              A saved proof is not available yet. No setting here can override the unavailable
+              isolation requirement or make a run produce accepted QA evidence.
+            </p>
+          </div>
+        ) : null}
         {settings ? (
           <fieldset disabled={creating} className="grid gap-6 border-0 p-0">
             <SettingsFields
@@ -1675,7 +2200,9 @@ function TemplateSetup({
             type="button"
             variant="outline"
             onClick={() => void check()}
-            disabled={!settingsValid || !supported || checking || creating}
+            disabled={!settingsValid || !supported || creating}
+            aria-disabled={checking || undefined}
+            aria-busy={checking || undefined}
           >
             {checking ? 'Checking…' : 'Check requirements'}
           </Button>
