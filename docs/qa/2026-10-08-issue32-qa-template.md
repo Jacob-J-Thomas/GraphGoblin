@@ -6,13 +6,17 @@
 
 The run path is metadata-only and blocked before repository checkout or any QA/adversary model turn. No proof is created or pushed; no issue is reopened or relabeled. The only repository effect permitted by the design is one fixed, idempotent explanatory comment on the original linked issue; this behavior has not yet received native GitHub acceptance in this delivery. No isolation override exists. Positive proof production and rework behavior are covered only by injected unit tests, not by an actual isolated run. There is no native QA pass to claim.
 
+Publishing the parent starts its poll; without an initial cutoff it may admit older eligible merged pull requests, one per poll. While isolation is unavailable, each admitted candidate creates a failed no-turn attempt, permanently consumes its merge and linked-issue attempt, and may post the fixed explanation. Keep the parent unpublished until enforced isolation is available.
+
 ## Verification recorded so far
 
 - **API coverage:** 1,293 passed, 4 skipped; statements 94.06%, branches 90.65%, functions 96.05%, lines 95.76%. The local receipt is `.tmp/aidlc-delivery-2026-10-06/issue32-final-integrated-api-coverage.log`.
 - **Web tests:** 1,123 passed; all four coverage metrics exceed 90%. The full web run completed in 403.86 seconds; lines 98.40% and branches 93.04%.
 - **Build, typecheck, lint, template checks, and generated-doc checks:** passed on integrated source `362cc2652276179693b4904d387b84ac18012bd6`. Receipts are `issue32-final-integrated-{build,typecheck,lint,templates,docs}.log` in the same local evidence directory.
 - **Formatting, layers, dependency boundaries, licences, design tokens, and contrast:** passed. Formatting required working-tree line-ending normalization of two files with no semantic diff. Dependency checks used Node 22 and retained the existing non-error Drizzle orphan warning. These results are package gates, not final release acceptance.
-- **Native, browser, Codex, and Opus verification:** pending. No final integrated browser or native QA acceptance is recorded here.
+- **Opus code review:** report `opus32-code-full-80c21b9-review.md` found one P2 disclosure finding. The gallery and guide now disclose older-merge polling, attempt consumption, and the possible comment; this is a copy-only fix for root review, not a runtime cutoff. F2 extends #140's poll-starvation scope; F3 and F4 are deferred for root triage. No Opus re-review is recorded yet.
+- **Browser preflight:** failed before any template creation because the preview helper could not resolve a required asset path. No gallery workflow or instance creation occurred, so there is no browser acceptance result.
+- **Native and Codex verification:** pending. No final integrated native QA acceptance is recorded here.
 
 These are implementation and package checks; they do not demonstrate enforced isolation or a successful QA run.
 

@@ -1577,8 +1577,12 @@ function QaSettingsFields({
   return (
     <div className="grid gap-5">
       <Alert tone="warn" title="Enforced evidence-only isolation is unavailable">
-        You can create a draft when the authoring requirements pass, but every QA run remains
-        blocked. No setting in this form can override that run-time requirement.
+        Publishing starts the poll and may select older eligible merged pull requests, one per poll;
+        there is no initial cutoff. While isolation is unavailable, each selected pull request
+        creates a failed attempt before checkout or a model turn, permanently consumes its merge and
+        issue attempt, and may add one fixed explanation to the linked issue. Keep this template
+        unpublished until enforced isolation is available. Every QA run remains blocked; no setting
+        in this form can override that requirement.
       </Alert>
 
       <fieldset className="grid gap-3 rounded-md border border-default p-4">
