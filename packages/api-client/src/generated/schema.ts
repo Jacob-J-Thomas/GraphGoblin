@@ -1395,6 +1395,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/templates/{id}/draft": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create an editable manual loop draft from a template */
+        post: operations["createTemplateDraft"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/templates": {
         parameters: {
             query?: never;
@@ -6343,6 +6360,46 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    createTemplateDraft: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    name?: string | undefined;
+                };
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        loop: components["schemas"]["LoopRecord"];
+                        draft: components["schemas"]["LoopVersionRecord"];
+                        issues: {
+                            code: string;
+                            /** @enum {string} */
+                            severity: "error" | "warning";
+                            message: string;
+                            nodeId?: string | undefined;
+                            edgeId?: string | undefined;
+                            path?: string | undefined;
+                        }[];
+                    };
+                };
+            };
+        };
+    };
     listTemplates: {
         parameters: {
             query?: never;
@@ -6414,6 +6471,7 @@ export interface operations {
                                     }[];
                                 }[];
                                 supportEntry?: string | undefined;
+                                draftFile?: string | undefined;
                             };
                             settingsSchema: {
                                 [key: string]: unknown;
@@ -6710,6 +6768,7 @@ export interface operations {
                                 }[];
                             }[];
                             supportEntry?: string | undefined;
+                            draftFile?: string | undefined;
                         };
                         settingsSchema: {
                             [key: string]: unknown;

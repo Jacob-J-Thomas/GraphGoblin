@@ -2,7 +2,12 @@ import { kitchenSinkLoop, minimalLoop } from '@graphgoblin/contracts/testing';
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { FakeApi, problem, starterTemplateEntry, TS } from '../__fixtures__/fake-api.js';
+import {
+  FakeApi,
+  problem,
+  starterTemplateEntry,
+  TS,
+} from '../__fixtures__/fake-api.js';
 import { renderApp } from '../__fixtures__/render.js';
 
 describe('LoopsPage', () => {
@@ -47,98 +52,42 @@ describe('LoopsPage', () => {
     expect(api.callsTo('POST', '/loops')[0]!.headers.get('x-graphgoblin-client')).toBe('ui');
   });
 
-  it('checks changed starter settings and opens the created parent as a draft', async () => {
+  it('creates an editable template draft without setup, defaults, or readiness', async () => {
     const user = userEvent.setup();
     const api = new FakeApi();
-    api.templates = [starterTemplateEntry()];
-    api.catalog = [
-      {
-        harness: 'codex',
-        model: 'test-codex',
-        source: 'harness',
-        displayName: 'Test Codex',
-        efforts: ['low', 'medium'],
-        defaultEffort: 'low',
-        enabled: false,
-      },
-      {
-        harness: 'codex',
-        model: 'available-codex',
-        source: 'harness',
-        displayName: 'Available Codex',
-        efforts: ['low', 'high'],
-        defaultEffort: 'low',
-        enabled: true,
-      },
-    ];
+    const entry = starterTemplateEntry();
+    entry.defaultSettings = null;
+    entry.prerequisites.canInstantiate = false;
+    entry.prerequisites.canRun = false;
+    api.templates = [entry];
     renderApp('/loops', api);
 
     await user.click(await screen.findByRole('button', { name: 'New from template' }));
     expect(await screen.findByRole('heading', { name: 'Choose a template' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Quick start' })).toBeInTheDocument();
+    expect(screen.getByText(/Drafts are ready to edit/)).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Use Quick start' }));
-
-    const dialog = screen.getByRole('dialog', { name: 'New from Quick start' });
-    expect(dialog).toHaveTextContent('does not need GitHub or a repository checkout');
-    expect(screen.getByLabelText('Model')).toHaveAccessibleDescription(/not currently available/);
-    expect(screen.getByRole('button', { name: 'Create draft' })).toBeDisabled();
-
-    await user.clear(screen.getByLabelText('Instruction'));
-    await user.type(
-      screen.getByLabelText('Instruction'),
-      'Summarize this request and give one next step.',
-    );
-    await user.selectOptions(screen.getByLabelText('Model'), 'available-codex');
-    await user.selectOptions(screen.getByLabelText('Effort'), 'high');
-    await user.clear(screen.getByLabelText('Maximum iterations'));
-    await user.type(screen.getByLabelText('Maximum iterations'), '7');
-    const create = screen.getByRole('button', { name: 'Create draft' });
-    expect(create).toBeDisabled();
-    await user.click(screen.getByRole('button', { name: 'Check requirements' }));
-
-    const check = await waitFor(() => {
-      const calls = api.callsTo('POST', '/templates/quick-start/prerequisites');
-      expect(calls).toHaveLength(1);
-      return calls[0]!;
-    });
-    expect(check.body).toMatchObject({
-      settings: {
-        instruction: 'Summarize this request and give one next step.',
-        roles: { assistant: { harness: 'codex', model: 'available-codex', effort: 'high' } },
-        maxIterations: 7,
-      },
-    });
-    await user.click(await screen.findByRole('button', { name: 'Create draft' }));
 
     await waitFor(() =>
       expect(screen.getByTestId('location')).toHaveTextContent(/^\/loops\/.+\/edit$/),
     );
-    const instantiate = api.callsTo('POST', '/templates/quick-start/instantiate')[0]!;
-    expect(instantiate.body).toEqual(check.body);
-    const [instance] = [...api.templateInstances.values()];
-    expect(instance).toBeDefined();
-    expect(instance!.loops.map((loop) => loop.status)).toEqual(['draft']);
-    expect(api.loops.get(instance!.parentLoopId)?.loop.currentVersionId).toBeUndefined();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    const [createCall] = api.callsTo('POST', '/templates/quick-start/draft');
+    expect(createCall?.body).toEqual({});
+    const [created] = [...api.loops.values()];
+    expect(created?.loop.draftVersionId).toBeTruthy();
+    expect(created?.loop.currentVersionId).toBeUndefined();
+    expect(api.callsTo('POST', '/templates/quick-start/prerequisites')).toHaveLength(0);
+    expect(api.callsTo('POST', '/templates/quick-start/instantiate')).toHaveLength(0);
   });
 
-  it('keeps settings and the dialog locked while draft creation is in flight', async () => {
+  it('keeps all gallery actions guarded while creating and opening a draft', async () => {
     const user = userEvent.setup();
     const api = new FakeApi();
     api.templates = [starterTemplateEntry()];
-    api.catalog = [
-      {
-        harness: 'codex',
-        model: 'test-codex',
-        source: 'harness',
-        displayName: 'Test Codex',
-        efforts: ['low'],
-        defaultEffort: 'low',
-        enabled: true,
-      },
-    ];
     let finish!: (response: Response) => void;
     api.override(
-      'POST /templates/:id/instantiate',
+      'POST /templates/:id/draft',
       () =>
         new Promise<Response>((resolve) => {
           finish = resolve;
@@ -147,30 +96,27 @@ describe('LoopsPage', () => {
     renderApp('/loops', api);
 
     await user.click(await screen.findByRole('button', { name: 'New from template' }));
-    await user.click(await screen.findByRole('button', { name: 'Use Quick start' }));
-    await user.click(screen.getByRole('button', { name: 'Create draft' }));
+    const create = await screen.findByRole('button', { name: 'Use Quick start' });
+    await user.click(create);
     const createCall = await waitFor(() => {
-      const calls = api.callsTo('POST', '/templates/quick-start/instantiate');
+      const calls = api.callsTo('POST', '/templates/quick-start/draft');
       expect(calls).toHaveLength(1);
       return calls[0]!;
     });
 
-    expect(screen.getByLabelText('Instruction')).toBeDisabled();
-    expect(screen.getByLabelText('Maximum iterations')).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Creating draft…' })).toBeDisabled();
-    await user.keyboard('{Escape}');
-    await user.click(screen.getByRole('button', { name: 'Close template setup' }));
-    expect(screen.getByRole('dialog', { name: 'New from Quick start' })).toBeInTheDocument();
-    expect(api.callsTo('POST', '/templates/quick-start/instantiate')).toHaveLength(1);
+    expect(create).toHaveAttribute('aria-disabled', 'true');
+    expect(create).not.toBeDisabled();
+    fireEvent.click(create);
+    expect(api.callsTo('POST', '/templates/quick-start/draft')).toHaveLength(1);
 
     await act(async () => finish(await api.builtIn(createCall)));
     await waitFor(() =>
       expect(screen.getByTestId('location')).toHaveTextContent(/^\/loops\/.+\/edit$/),
     );
-    expect(api.callsTo('POST', '/templates/quick-start/instantiate')).toHaveLength(1);
+    expect(api.callsTo('POST', '/templates/quick-start/draft')).toHaveLength(1);
   });
 
-  it('shows actionable authoring blockers without exposing secret values', async () => {
+  it('shows readiness blockers without letting them block the editable starting draft', async () => {
     const user = userEvent.setup();
     const api = new FakeApi();
     const entry = starterTemplateEntry();
@@ -205,12 +151,16 @@ describe('LoopsPage', () => {
     expect(screen.getByText(/Enable an available model in Settings\./)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Use Quick start' })).toBeEnabled();
     await user.click(screen.getByRole('button', { name: 'Use Quick start' }));
-    expect(screen.getByRole('button', { name: 'Create draft' })).toBeDisabled();
-    expect(screen.getByRole('dialog')).not.toHaveTextContent('jev-api-key');
+    await waitFor(() =>
+      expect(screen.getByTestId('location')).toHaveTextContent(/^\/loops\/.+\/edit$/),
+    );
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(api.callsTo('POST', '/templates/quick-start/draft')).toHaveLength(1);
+    expect(api.callsTo('POST', '/templates/quick-start/prerequisites')).toHaveLength(0);
     expect(api.callsTo('POST', '/templates/quick-start/instantiate')).toHaveLength(0);
   });
 
-  it('explains a runtime-only blocker while still allowing the draft to be created', async () => {
+  it('shows runtime blockers as run requirements while allowing draft creation', async () => {
     const user = userEvent.setup();
     const api = new FakeApi();
     const entry = starterTemplateEntry();
@@ -243,158 +193,34 @@ describe('LoopsPage', () => {
     renderApp('/loops', api);
 
     await user.click(await screen.findByRole('button', { name: 'New from template' }));
+    expect(screen.getByText('Run setup needed')).toBeInTheDocument();
+    expect(screen.getByText('Run requirement')).toBeInTheDocument();
+    expect(screen.getByText(/Drafts are ready to edit/)).toBeInTheDocument();
     await user.click(await screen.findByRole('button', { name: 'Use Quick start' }));
-    const dialog = screen.getByRole('dialog', { name: 'New from Quick start' });
-    expect(dialog).toHaveTextContent('runs will stay blocked');
-    expect(dialog).toHaveTextContent('evidence-only isolation yet');
-    expect(screen.getByRole('button', { name: 'Create draft' })).toBeEnabled();
-
-    await user.click(screen.getByRole('button', { name: 'Create draft' }));
     await waitFor(() =>
       expect(screen.getByTestId('location')).toHaveTextContent(/^\/loops\/.+\/edit$/),
     );
-    expect(api.callsTo('POST', '/templates/quick-start/instantiate')).toHaveLength(1);
+    expect(api.callsTo('POST', '/templates/quick-start/draft')).toHaveLength(1);
   });
 
-  it('keeps unready harnesses out of model choices and blocks draft creation', async () => {
+  it('reports a failed draft request and never retries it automatically', async () => {
     const user = userEvent.setup();
     const api = new FakeApi();
     api.templates = [starterTemplateEntry()];
-    api.catalog = [
-      {
-        harness: 'codex',
-        model: 'test-codex',
-        source: 'harness',
-        displayName: 'Test Codex',
-        efforts: ['low'],
-        defaultEffort: 'low',
-        enabled: true,
-      },
-      {
-        harness: 'claude',
-        model: 'blocked-claude',
-        source: 'harness',
-        displayName: 'Blocked Claude',
-        efforts: ['low'],
-        defaultEffort: 'low',
-        enabled: true,
-      },
-    ];
-    api.preflight = [
-      { harness: 'codex', ok: false, authenticated: false, problems: ['not ready'] },
-      {
-        harness: 'claude',
-        ok: true,
-        authenticated: true,
-        problems: [],
-        models: [
-          {
-            model: 'blocked-claude',
-            efforts: ['low'],
-            admission: 'blocked',
-            reasonCode: 'BILLING_UNVERIFIED',
-            billingStatus: 'unverified',
-          },
-        ],
-      },
-    ];
+    api.override('POST /templates/:id/draft', () =>
+      problem(503, 'DRAFT_UNAVAILABLE', 'The template draft could not be created.'),
+    );
     renderApp('/loops', api);
     await user.click(await screen.findByRole('button', { name: 'New from template' }));
     await user.click(await screen.findByRole('button', { name: 'Use Quick start' }));
-
-    const harness = screen.getByLabelText('Harness');
-    expect([...harness.querySelectorAll('option')].map((option) => option.value)).toEqual([
-      'codex',
-    ]);
-    expect(screen.getByText(/This harness is not ready yet/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Create draft' })).toBeDisabled();
+    expect(await screen.findByText(/The template draft could not be created\./)).toBeInTheDocument();
+    expect(screen.getByText(/check the loop list/)).toBeInTheDocument();
+    expect(api.callsTo('POST', '/templates/quick-start/draft')).toHaveLength(1);
+    expect(api.callsTo('POST', '/templates/quick-start/prerequisites')).toHaveLength(0);
     expect(api.callsTo('POST', '/templates/quick-start/instantiate')).toHaveLength(0);
   });
 
-  it('limits Claude effort choices to the current supported preflight capability', async () => {
-    const user = userEvent.setup();
-    const api = new FakeApi();
-    api.templates = [starterTemplateEntry()];
-    api.catalog = [
-      {
-        harness: 'claude',
-        model: 'safe-claude',
-        source: 'harness',
-        displayName: 'Safe Claude',
-        efforts: ['low', 'high'],
-        defaultEffort: 'low',
-        enabled: true,
-      },
-    ];
-    api.preflight = [
-      {
-        harness: 'claude',
-        ok: true,
-        authenticated: true,
-        problems: [],
-        models: [
-          {
-            model: 'safe-claude',
-            efforts: ['low'],
-            admission: 'supported',
-            reasonCode: null,
-            billingStatus: 'account-dependent',
-          },
-        ],
-      },
-    ];
-    renderApp('/loops', api);
-
-    await user.click(await screen.findByRole('button', { name: 'New from template' }));
-    await user.click(await screen.findByRole('button', { name: 'Use Quick start' }));
-    await user.selectOptions(screen.getByLabelText('Harness'), 'claude');
-    await user.selectOptions(screen.getByLabelText('Model'), 'safe-claude');
-    await user.click(screen.getByRole('button', { name: 'Check requirements' }));
-
-    expect(
-      [...screen.getByLabelText('Effort').querySelectorAll('option')].map((o) => o.value),
-    ).toEqual(['low']);
-    expect(screen.getByRole('button', { name: 'Create draft' })).toBeEnabled();
-  });
-
-  it('reports failed prerequisite checks and instantiation errors', async () => {
-    const user = userEvent.setup();
-    const api = new FakeApi();
-    api.templates = [starterTemplateEntry()];
-    api.catalog = [
-      {
-        harness: 'codex',
-        model: 'test-codex',
-        source: 'harness',
-        displayName: 'Test Codex',
-        efforts: ['low'],
-        defaultEffort: 'low',
-        enabled: true,
-      },
-    ];
-    api.override('POST /templates/:id/prerequisites', () =>
-      problem(503, 'PREFLIGHT_UNAVAILABLE', 'Could not check the current harness.'),
-    );
-    renderApp('/loops', api);
-    await user.click(await screen.findByRole('button', { name: 'New from template' }));
-    await user.click(await screen.findByRole('button', { name: 'Use Quick start' }));
-    await user.click(screen.getByRole('button', { name: 'Check requirements' }));
-    expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Could not check the current harness.',
-    );
-
-    api.override('POST /templates/:id/prerequisites', (call) => api.builtIn(call));
-    api.override('POST /templates/:id/instantiate', () =>
-      problem(409, 'TEMPLATE_PREREQUISITES_FAILED', 'The role changed before creation.'),
-    );
-    await user.click(screen.getByRole('button', { name: 'Check requirements' }));
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Create draft' })).toBeEnabled());
-    await user.click(screen.getByRole('button', { name: 'Create draft' }));
-    expect(await screen.findByText(/The role changed before creation\./)).toBeInTheDocument();
-    expect(api.callsTo('POST', '/templates/quick-start/instantiate')).toHaveLength(1);
-  });
-
-  it('shows an empty gallery and refuses templates without typed defaults', async () => {
+  it('shows an empty gallery and still creates a template draft without typed settings defaults', async () => {
     const user = userEvent.setup();
     const api = new FakeApi();
     const emptyGallery = renderApp('/loops', api);
@@ -405,12 +231,17 @@ describe('LoopsPage', () => {
     const withNoDefaults = new FakeApi();
     const entry = starterTemplateEntry();
     entry.defaultSettings = null;
+    entry.prerequisites.canInstantiate = false;
+    entry.prerequisites.canRun = false;
     withNoDefaults.templates = [entry];
     renderApp('/loops', withNoDefaults);
     await user.click(await screen.findByRole('button', { name: 'New from template' }));
     await user.click(await screen.findByRole('button', { name: 'Use Quick start' }));
-    expect(await screen.findByText('This template has no default settings.')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Create draft' })).toBeDisabled();
+    await waitFor(() =>
+      expect(screen.getByTestId('location')).toHaveTextContent(/^\/loops\/.+\/edit$/),
+    );
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(withNoDefaults.callsTo('POST', '/templates/quick-start/draft')).toHaveLength(1);
   });
 
   it('reports a failed create', async () => {

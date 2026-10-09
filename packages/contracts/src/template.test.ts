@@ -19,6 +19,7 @@ import {
   TemplateManifestSchema,
   TemplatePrerequisiteReportSchema,
   TemplatePrerequisiteRequestSchema,
+  TemplateDraftRequestSchema,
 } from './template-manifest.js';
 
 const role = { harness: 'codex', model: 'catalog-model', effort: 'high' } as const;
@@ -65,6 +66,23 @@ const instance = {
   loops: [child, parent],
   settings: starter,
 };
+
+describe('editable draft requests and manifest capability', () => {
+  it('accepts an empty request and a literal optional name without execution settings', () => {
+    expect(TemplateDraftRequestSchema.parse({})).toEqual({});
+    expect(TemplateDraftRequestSchema.parse({ name: 'My draft' })).toEqual({ name: 'My draft' });
+    expect(TemplateDraftRequestSchema.safeParse({ name: ' ' }).success).toBe(false);
+    expect(TemplateDraftRequestSchema.safeParse({ settings: starter }).success).toBe(false);
+  });
+  it('declares an optional current-format JSON draft asset using bounded package paths', () => {
+    expect(TemplateManifestSchema.parse(manifest).draftFile).toBeUndefined();
+    expect(TemplateManifestSchema.parse({ ...manifest, draftFile: 'draft.json' }).draftFile).toBe(
+      'draft.json',
+    );
+    for (const draftFile of ['draft.md', '../draft.json', '/draft.json'])
+      expect(TemplateManifestSchema.safeParse({ ...manifest, draftFile }).success).toBe(false);
+  });
+});
 
 describe('review trusted bot authors', () => {
   const input = { kind: 'review', ...common, roles: { reviewer: role, fixer: role } };

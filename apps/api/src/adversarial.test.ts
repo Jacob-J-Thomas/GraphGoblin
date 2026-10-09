@@ -160,6 +160,7 @@ describe('adversarial API invariants', () => {
     'DELETE /classifier-models/{id}': 'settings:write',
     'GET /templates': 'loops:read',
     'GET /templates/{id}': 'loops:read',
+    'POST /templates/{id}/draft': 'loops:write',
     'POST /templates/{id}/prerequisites': 'loops:read',
     'POST /templates/{id}/instantiate': 'loops:write',
     'GET /template-instances/{id}': 'loops:read',

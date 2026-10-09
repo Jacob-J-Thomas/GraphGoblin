@@ -1,6 +1,6 @@
 import { expect, test } from './fixtures.js';
 
-test('opens the starter gallery with the keyboard and creates an unpublished parent draft', async ({
+test('opens the starter gallery with the keyboard and creates an editable draft directly', async ({
   page,
 }) => {
   await page.goto('/app/loops');
@@ -11,74 +11,54 @@ test('opens the starter gallery with the keyboard and creates an unpublished par
 
   const useTemplate = page.getByRole('button', { name: /^Use / }).first();
   await useTemplate.focus();
-  await page.keyboard.press('Enter');
-  const dialog = page.getByRole('dialog');
-  await expect(dialog).toContainText('does not need GitHub or a repository checkout');
-  await expect(dialog).toContainText('The parent opens as a draft');
-  await expect(dialog).toContainText('Assistant model');
-
   const responsePromise = page.waitForResponse(
     (response) =>
       response.request().method() === 'POST' &&
-      /\/templates\/[^/]+\/instantiate$/.test(new URL(response.url()).pathname),
+      /\/templates\/[^/]+\/draft$/.test(new URL(response.url()).pathname),
   );
-  await dialog.getByRole('button', { name: 'Create draft' }).click();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
   const response = await responsePromise;
   expect(response.ok()).toBe(true);
   const result = (await response.json()) as {
-    instance: {
-      parentLoopId: string;
-      settings: { kind: string; instruction: string; maxIterations: number };
-      loops: { loopId: string; status: string }[];
-    };
+    loop: { id: string; draftVersionId?: string; currentVersionId?: string };
+    draft: { definition: { name: string; nodes: { id: string; kind: string }[] } };
+    issues: { severity: string }[];
   };
-  expect(result.instance.settings).toMatchObject({ kind: 'starter' });
-  expect(result.instance.settings.instruction.trim().length).toBeGreaterThan(0);
-  expect(result.instance.settings.maxIterations).toBeGreaterThan(0);
-  expect(result.instance.loops.every((loop) => loop.status === 'draft')).toBe(true);
+  expect(result.loop.id).toBeTruthy();
+  expect(result.draft.definition.name).toBe('Starter assistant');
+  expect(result.draft.definition.nodes.map((node) => node.kind)).toEqual([
+    'trigger',
+    'mutate',
+    'inference',
+    'exit',
+  ]);
+  expect(result.issues.filter((issue) => issue.severity === 'error')).toHaveLength(0);
+  expect(result.loop.currentVersionId).toBeUndefined();
+  expect(result.loop.draftVersionId).toBeTruthy();
 
-  await expect(page).toHaveURL(new RegExp(`/loops/${result.instance.parentLoopId}/edit$`));
+  await expect(page).toHaveURL(new RegExp(`/loops/${result.loop.id}/edit$`));
   const loopsResponse = await page.request.get('/loops');
   expect(loopsResponse.ok()).toBe(true);
   const loops = (await loopsResponse.json()) as {
     items: { id: string; currentVersionId?: string; draftVersionId?: string }[];
   };
-  const parent = loops.items.find((loop) => loop.id === result.instance.parentLoopId);
-  expect(parent?.currentVersionId).toBeUndefined();
-  expect(parent?.draftVersionId).toBeTruthy();
+  const created = loops.items.find((loop) => loop.id === result.loop.id);
+  expect(created?.currentVersionId).toBeUndefined();
+  expect(created?.draftVersionId).toBeTruthy();
 });
 
-test('rechecks edited starter settings before creating the draft', async ({ page }) => {
+test('keeps repository automation setup as an optional, separate action', async ({ page }) => {
   await page.goto('/app/loops');
   await page.getByRole('button', { name: 'New from template' }).click();
-  await page.getByRole('button', { name: /^Use / }).first().click();
-  const dialog = page.getByRole('dialog');
-  await dialog.getByLabel(/instruction/i).fill('Summarize this request and suggest one next step.');
-  await dialog.getByLabel(/maximum iterations/i).fill('4');
-  const create = dialog.getByRole('button', { name: 'Create draft' });
-  await expect(create).toBeDisabled();
-
-  const checkResponse = page.waitForResponse(
-    (response) =>
-      response.request().method() === 'POST' &&
-      /\/templates\/[^/]+\/prerequisites$/.test(new URL(response.url()).pathname),
-  );
-  await dialog.getByRole('button', { name: 'Check requirements' }).click();
-  expect((await checkResponse).ok()).toBe(true);
-  await expect(create).toBeEnabled();
-
-  const instantiateResponse = page.waitForResponse(
-    (response) =>
-      response.request().method() === 'POST' &&
-      /\/templates\/[^/]+\/instantiate$/.test(new URL(response.url()).pathname),
-  );
-  await create.click();
-  const payload = (await (await instantiateResponse).json()) as {
-    instance: { settings: { instruction: string; maxIterations: number } };
-  };
-  expect(payload.instance.settings).toMatchObject({
-    instruction: 'Summarize this request and suggest one next step.',
-    maxIterations: 4,
+  const configure = page.getByRole('button', {
+    name: 'Configure automation for Implementation workflow',
   });
-  await expect(page).toHaveURL(/\/loops\/[^/]+\/edit$/);
+  await expect(configure).toBeVisible();
+  await configure.click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toContainText('Checkout path');
+  await expect(dialog).toContainText('Repository owner');
+  await expect(page.getByRole('button', { name: 'Use Implementation workflow' })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Create draft' })).toBeDisabled();
 });

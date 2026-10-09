@@ -94,6 +94,14 @@ export function useCheckTemplatePrerequisites() {
   });
 }
 
+export function useCreateTemplateDraft() {
+  const client = useApi();
+  return useMutation({
+    mutationFn: ({ templateId, name }: { templateId: string; name?: string }) =>
+      templates.createDraft(client, templateId, name ? { name } : {}),
+  });
+}
+
 export function useInstantiateTemplate() {
   const client = useApi();
   return useMutation({

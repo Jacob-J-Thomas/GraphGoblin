@@ -1,4 +1,6 @@
-# Use the post-merge QA template
+# Configure post-merge QA automation
+
+**Use Post-merge QA** creates an editable assessment workflow immediately. Its prompts use supplied context and evidence; it does not authenticate GitHub proof, reopen issues or enable the repository automation described below. This guide covers the optional **Configure automation** action. See [Start from a template](09-templates.md).
 
 The post-merge QA template can be configured and saved as a draft. Its required evidence-only isolation is unavailable in the current runtime. Every QA run is stopped before repository checkout or a model turn, so this template cannot currently produce accepted QA evidence. No setting, label, or manual choice in the form overrides that block.
 
@@ -19,7 +21,7 @@ The QA and evidence-only adversary roles use models and efforts from the current
 
 ## Configure and create a draft
 
-On **Loops**, choose **New from template**, then **Use Post-merge QA**. Repository fields start blank. The support credential field contains the manifest's required name and is read-only; enter credentials only in Settings.
+On **Loops**, choose **New from template**, then **Configure automation** on the Post-merge QA card. Repository fields start blank. The support credential field contains the manifest's required name and is read-only; enter credentials only in Settings.
 
 | Setting                                       | Default and effect                                                                                                                                                                                |
 | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

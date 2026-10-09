@@ -35,6 +35,7 @@ async function fixture() {
   await mkdir(join(root, 'recipe'), { recursive: true });
   await mkdir(packageRoot);
   const manifest = { ...structuredClone(source.bundle.manifest), id: 'recipe' };
+  delete manifest.draftFile; // This fixture exercises the optional automation-only capability.
   const exported = {
     format: 'graphgoblin-loop',
     formatVersion: 3,
@@ -55,6 +56,48 @@ async function fixture() {
 }
 
 describe('installed template catalog boundaries', () => {
+  it('loads declared editable assets and refuses an automation-only template without a fallback', async () => {
+    const f = await fixture();
+    await expect(f.catalog.draft('recipe')).rejects.toMatchObject({
+      code: 'TEMPLATE_DRAFT_UNAVAILABLE',
+    });
+    await writeFile(
+      join(f.root, 'recipe', 'manifest.json'),
+      JSON.stringify({ ...f.manifest, draftFile: 'draft.json' }),
+    );
+    await writeFile(join(f.root, 'recipe', 'draft.json'), JSON.stringify(f.exported));
+    expect(await f.catalog.draft('recipe')).toEqual(f.exported.loop);
+    const source = new TemplateCatalog(sourceRoot, sourcePackage);
+    for (const entry of await source.list()) expect(entry.draft).toBeDefined();
+  });
+
+  it('applies package bounds, format and graph validation to declared draft files', async () => {
+    const f = await fixture();
+    const path = join(f.root, 'recipe', 'draft.json');
+    await writeFile(
+      join(f.root, 'recipe', 'manifest.json'),
+      JSON.stringify({ ...f.manifest, draftFile: 'draft.json' }),
+    );
+    await expect(f.catalog.list()).rejects.toMatchObject({ code: 'TEMPLATE_PACKAGE_INVALID' });
+    for (const content of [
+      Buffer.alloc(1_048_577),
+      '{private-draft-content',
+      JSON.stringify({ ...f.exported, formatVersion: 2 }),
+    ]) {
+      await writeFile(path, content);
+      await expect(f.catalog.list()).rejects.toMatchObject({ code: 'TEMPLATE_PACKAGE_INVALID' });
+    }
+    const invalid = structuredClone(f.exported);
+    invalid.loop.edges[0]!.to.node = 'missing-target';
+    await writeFile(path, JSON.stringify(invalid));
+    await expect(f.catalog.list()).rejects.toMatchObject({ code: 'TEMPLATE_PACKAGE_INVALID' });
+    await writeFile(
+      join(f.root, 'recipe', 'manifest.json'),
+      JSON.stringify({ ...f.manifest, draftFile: '../outside.json' }),
+    );
+    await expect(f.catalog.list()).rejects.toMatchObject({ code: 'TEMPLATE_PACKAGE_INVALID' });
+  });
+
   it('loads the actual source-only starter with current graph format and no repository support', async () => {
     const catalog = new TemplateCatalog(sourceRoot, sourcePackage);
     const entries = await catalog.list();

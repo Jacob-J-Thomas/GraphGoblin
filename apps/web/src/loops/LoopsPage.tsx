@@ -7,6 +7,7 @@ import { useApi } from '../api/context.js';
 import {
   keys,
   useCheckTemplatePrerequisites,
+  useCreateTemplateDraft,
   useInstantiateTemplate,
   useLoops,
   useModelCatalog,
@@ -245,6 +246,7 @@ export function LoopsPage() {
   const modelsQuery = useModelCatalog();
   const preflightQuery = usePreflight();
   const checkTemplate = useCheckTemplatePrerequisites();
+  const createTemplateDraft = useCreateTemplateDraft();
   const instantiateTemplate = useInstantiateTemplate();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -285,10 +287,16 @@ export function LoopsPage() {
                     onInstantiate={(templateId, settings) =>
                       instantiateTemplate.mutateAsync({ templateId, settings })
                     }
+                    onCreateDraft={(templateId) =>
+                      createTemplateDraft.mutateAsync({ templateId })
+                    }
                     onCreated={async (parentLoopId) => {
                       await queryClient.invalidateQueries({ queryKey: keys.loops });
                       await navigate(`/loops/${parentLoopId}/edit`);
                     }}
+                    onCreateFailed={() =>
+                      queryClient.invalidateQueries({ queryKey: keys.loops })
+                    }
                   />
                 </div>
               )}

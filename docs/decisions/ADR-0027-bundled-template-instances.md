@@ -2,6 +2,8 @@
 
 Status: Accepted for construction under the owner-authorized #28 plan (2026-10-08)
 
+The gallery's default creation flow is superseded by [ADR-0028](ADR-0028-editable-template-starting-points.md). This decision continues to govern the explicit configured-automation path.
+
 ## Context
 
 Reusable loops need installation-aware requirements and safe child remapping. Copying a JSON graph alone cannot pin a fresh child bundle or establish repository workflow authority. GraphGoblin's engine remains general purpose; GitHub lifecycle rules do not belong in its run or admission contracts.

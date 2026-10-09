@@ -17,6 +17,7 @@ import type {
   RunEvent,
   RunRecord,
   TemplateCatalogEntry,
+  TemplateDraftRequest,
   TemplateInstance,
   TemplateInstantiateRequest,
   TemplatePrerequisiteReport,
@@ -149,6 +150,7 @@ export function starterTemplateEntry(): TemplateCatalogEntry {
       prerequisites: [],
       requiredSecrets: [],
       parentKey: 'starter',
+      draftFile: 'draft.json',
       loops: [
         {
           key: 'starter',
@@ -247,6 +249,7 @@ export function implementationTemplateEntry(): TemplateCatalogEntry {
       ],
       requiredSecrets: [{ key: 'supportReadKey', scopes: ['runs:read'] }],
       parentKey: 'parent',
+      draftFile: 'draft.json',
       loops: [
         {
           key: 'worker',
@@ -368,6 +371,7 @@ export function reviewTemplateEntry(): TemplateCatalogEntry {
       ],
       requiredSecrets: [{ key: 'supportReadKey', scopes: ['runs:read'] }],
       parentKey: 'parent',
+      draftFile: 'draft.json',
       loops: [
         {
           key: 'parent',
@@ -485,6 +489,7 @@ export function qaTemplateEntry(): TemplateCatalogEntry {
       ],
       requiredSecrets: [{ key: 'supportReadKey', scopes: ['runs:read'] }],
       parentKey: 'parent',
+      draftFile: 'draft.json',
       loops: [
         {
           key: 'qa-worker',
@@ -803,6 +808,22 @@ export class FakeApi {
         const entry = this.templates.find((item) => item.manifest.id === templateId);
         if (!entry) return problem(404, 'TEMPLATE_NOT_FOUND', 'template not found');
         return json(this.templatePrerequisiteReports.get(templateId!) ?? entry.prerequisites);
+      },
+    ],
+    [
+      'POST /templates/:id/draft',
+      (call, [templateId]) => {
+        const entry = this.templates.find((item) => item.manifest.id === templateId);
+        if (!entry) return problem(404, 'TEMPLATE_NOT_FOUND', 'template not found');
+        if (!entry.manifest.draftFile)
+          return problem(409, 'TEMPLATE_DRAFT_UNAVAILABLE', 'editable draft not available');
+        const request = call.body as TemplateDraftRequest;
+        const loop = this.addLoop({
+          ...minimalLoop(),
+          name: request.name ?? entry.manifest.title,
+        });
+        const draft = this.loops.get(loop.id)!.draft!;
+        return json({ loop, draft, issues: validateLoop(draft.definition) }, 201);
       },
     ],
     [

@@ -64,6 +64,7 @@ async function foundation(kind: TemplateKind = 'implementation', action = 'claim
     fileURLToPath(new URL('../..', import.meta.url)),
   ).get('starter');
   const bundle = structuredClone(original.bundle);
+  delete bundle.manifest.draftFile; // Synthetic repository bindings have no starting-point asset.
   bundle.manifest.id = 'recipe';
   bundle.manifest.kind = kind;
   const roles =
@@ -829,6 +830,7 @@ describe('trusted authority provenance and lifecycle', () => {
     const immutable = await f.instances.store.get('local', f.binding.instanceId);
     if (!immutable) throw new Error('missing binding');
     const original = await f.instances.catalog.get('recipe');
+    delete original.bundle.manifest.draftFile; // Synthetic automation-only package.
     original.bundle.manifest.prerequisites.push({
       id: 'isolation',
       label: 'Isolation',
@@ -946,6 +948,7 @@ async function recipe(
     fileURLToPath(new URL('../..', import.meta.url)),
   ).get('starter');
   const bundle = structuredClone(original.bundle);
+  delete bundle.manifest.draftFile; // Synthetic repository bindings have no starting-point asset.
   const key =
     (kind + '-' + actions.join('-') + (child ? '-child' : '')).slice(0, 50) +
     '-' +

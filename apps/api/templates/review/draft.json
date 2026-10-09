@@ -1,0 +1,342 @@
+{
+  "format": "graphgoblin-loop",
+  "formatVersion": 3,
+  "exportedAt": "2026-10-09T00:00:00.000Z",
+  "loop": {
+    "schemaVersion": 3,
+    "name": "Review and fix starting point",
+    "description": "Review supplied code or change context, propose or apply focused fixes, and review again with a finite iteration limit. This workflow does not grant merge authority.",
+    "settings": {
+      "workingDirectory": {
+        "kind": "temp"
+      },
+      "maxIterations": 3
+    },
+    "nodes": [
+      {
+        "id": "start",
+        "kind": "trigger",
+        "label": "Run input and context",
+        "ui": {
+          "x": 0,
+          "y": 0
+        },
+        "config": {
+          "subtype": "manual",
+          "exposeTo": ["ui", "api", "mcp"]
+        }
+      },
+      {
+        "id": "instructions",
+        "kind": "mutate",
+        "label": "Workflow instructions",
+        "ui": {
+          "x": 270,
+          "y": 0
+        },
+        "config": {
+          "operations": [
+            {
+              "op": "set",
+              "path": "/vars/instruction",
+              "value": {
+                "kind": "literal",
+                "value": "Review the supplied change for correctness, regressions, maintainability, and focused verification. Fix actionable findings within the supplied scope."
+              }
+            }
+          ]
+        }
+      },
+      {
+        "id": "reviewer",
+        "kind": "inference",
+        "label": "Review the change",
+        "ui": {
+          "x": 540,
+          "y": 0
+        },
+        "config": {
+          "harness": "codex",
+          "session": {
+            "policy": "fresh"
+          },
+          "prompt": {
+            "template": "Instructions:\n{{ vars.instruction }}\n\nRun input and any supplied repository/task context:\n{{ invocation.trigger.payload | json }}\n\nUse only the supplied context and accessible working directory. Missing repository URLs, issue/PR numbers, credentials, or ownership are unknown; do not invent them. This is a manual editable workflow. Do not commit, push, merge, create or close issues/PRs, change labels, or contact external services.\n\n{% if outputs.fixer %}Latest fix and evidence:\n{{ outputs.fixer.value | json }}\n{% endif %}\nReview supplied source/change context and accessible files. Return approved only when this review found no remaining actionable findings and its scope has enough evidence. Missing source or indispensable verification means blocked. Return changes-needed for actionable findings. This approval is a review opinion, not authenticated GitHub approval, CI proof, or permission to merge. Return the required JSON status, summary, and findings array.\n"
+          },
+          "harnessOptions": {
+            "sandbox": "read-only",
+            "approval": "never",
+            "networkAccess": false,
+            "webSearch": false
+          },
+          "timeoutSeconds": 300,
+          "output": {
+            "toMessages": "final",
+            "schema": {
+              "jsonSchema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["status", "summary", "findings"],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": ["approved", "changes-needed", "blocked"]
+                  },
+                  "summary": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "findings": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "maxItems": 32
+                  }
+                }
+              },
+              "native": true,
+              "repair": {
+                "enabled": true,
+                "maxAttempts": 1,
+                "onFailure": "fail-run"
+              }
+            }
+          }
+        }
+      },
+      {
+        "id": "verdict",
+        "kind": "decision",
+        "label": "Review outcome",
+        "ui": {
+          "x": 810,
+          "y": 0
+        },
+        "config": {
+          "answer": {
+            "type": "choice",
+            "options": [
+              {
+                "id": "approved",
+                "label": "approved",
+                "criteria": "approved"
+              },
+              {
+                "id": "changes-needed",
+                "label": "changes-needed",
+                "criteria": "changes-needed"
+              },
+              {
+                "id": "blocked",
+                "label": "blocked",
+                "criteria": "blocked"
+              }
+            ]
+          },
+          "evaluation": {
+            "kind": "expression",
+            "jsonata": "outputs.reviewer.value.status"
+          }
+        }
+      },
+      {
+        "id": "fixer",
+        "kind": "inference",
+        "label": "Fix or propose focused repairs",
+        "ui": {
+          "x": 810,
+          "y": 300
+        },
+        "config": {
+          "harness": "codex",
+          "session": {
+            "policy": "fresh"
+          },
+          "prompt": {
+            "template": "Instructions:\n{{ vars.instruction }}\n\nRun input and any supplied repository/task context:\n{{ invocation.trigger.payload | json }}\n\nUse only the supplied context and accessible working directory. Missing repository URLs, issue/PR numbers, credentials, or ownership are unknown; do not invent them. This is a manual editable workflow. Do not commit, push, merge, create or close issues/PRs, change labels, or contact external services.\n\nReview findings:\n{{ outputs.reviewer.value | json }}\n\nAddress only these actionable findings. Edit accessible source in the configured working directory, or provide a concrete proposed patch when source is supplied as input. Explain what changed and which checks actually ran. Do not invent missing repository details or claim unperformed checks passed.\n"
+          },
+          "harnessOptions": {
+            "sandbox": "workspace-write",
+            "approval": "never",
+            "networkAccess": false,
+            "webSearch": false
+          },
+          "timeoutSeconds": 900
+        }
+      },
+      {
+        "id": "retry",
+        "kind": "exit",
+        "label": "Review again within the limit",
+        "ui": {
+          "x": 540,
+          "y": 300
+        },
+        "config": {
+          "criteria": [],
+          "default": "loop-back",
+          "return": {
+            "mapping": "outputs.reviewer.value",
+            "channels": [
+              {
+                "kind": "caller"
+              }
+            ]
+          },
+          "loopBack": {
+            "targetNodeId": "reviewer"
+          }
+        }
+      },
+      {
+        "id": "done",
+        "kind": "exit",
+        "label": "Review opinion ready",
+        "ui": {
+          "x": 1080,
+          "y": -160
+        },
+        "config": {
+          "criteria": [],
+          "default": "success",
+          "return": {
+            "mapping": "outputs.reviewer.value",
+            "channels": [
+              {
+                "kind": "caller"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "blocked",
+        "kind": "exit",
+        "label": "Review blocked",
+        "ui": {
+          "x": 1080,
+          "y": 160
+        },
+        "config": {
+          "criteria": [
+            {
+              "when": "predicate",
+              "answer": {
+                "type": "noul"
+              },
+              "evaluation": {
+                "kind": "expression",
+                "jsonata": "true"
+              },
+              "match": {
+                "type": "noul",
+                "value": true
+              },
+              "outcome": "failure"
+            }
+          ],
+          "default": "success",
+          "return": {
+            "mapping": "outputs.reviewer.value",
+            "channels": [
+              {
+                "kind": "caller"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "start-out-instructions",
+        "from": {
+          "node": "start",
+          "port": "out"
+        },
+        "to": {
+          "node": "instructions",
+          "port": "in"
+        }
+      },
+      {
+        "id": "instructions-out-reviewer",
+        "from": {
+          "node": "instructions",
+          "port": "out"
+        },
+        "to": {
+          "node": "reviewer",
+          "port": "in"
+        }
+      },
+      {
+        "id": "reviewer-out-verdict",
+        "from": {
+          "node": "reviewer",
+          "port": "out"
+        },
+        "to": {
+          "node": "verdict",
+          "port": "in"
+        }
+      },
+      {
+        "id": "verdict-approved-done",
+        "from": {
+          "node": "verdict",
+          "port": "approved"
+        },
+        "to": {
+          "node": "done",
+          "port": "in"
+        }
+      },
+      {
+        "id": "verdict-blocked-blocked",
+        "from": {
+          "node": "verdict",
+          "port": "blocked"
+        },
+        "to": {
+          "node": "blocked",
+          "port": "in"
+        }
+      },
+      {
+        "id": "verdict-changes-needed-fixer",
+        "from": {
+          "node": "verdict",
+          "port": "changes-needed"
+        },
+        "to": {
+          "node": "fixer",
+          "port": "in"
+        }
+      },
+      {
+        "id": "fixer-out-retry",
+        "from": {
+          "node": "fixer",
+          "port": "out"
+        },
+        "to": {
+          "node": "retry",
+          "port": "in"
+        }
+      },
+      {
+        "id": "retry-loop-back",
+        "from": {
+          "node": "retry",
+          "port": "loopBack"
+        },
+        "to": {
+          "node": "reviewer",
+          "port": "in"
+        }
+      }
+    ]
+  }
+}
