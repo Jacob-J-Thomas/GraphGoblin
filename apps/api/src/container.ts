@@ -431,6 +431,10 @@ export async function createContainer(
             : binding.manifest.kind === 'review'
               ? reviewAuthority.recheck(binding, subject)
               : implementationAuthority.recheck(binding, subject),
+        consumesReviewHead: (binding, history, head) =>
+          binding.manifest.kind === 'review'
+            ? reviewAuthority.consumesReviewHead(binding, history, head)
+            : Promise.resolve(false),
       },
       overrides.templateFailureReporter ?? {
         report: (binding, run, subject, code) =>

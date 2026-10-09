@@ -990,7 +990,7 @@
           ],
           "default": "success",
           "return": {
-            "mapping": "vars.finalResult",
+            "mapping": "$exists(vars.finalResult) ? vars.finalResult : outputs.claim.value",
             "channels": [
               {
                 "kind": "caller"
@@ -1727,7 +1727,7 @@
           "port": "blocked"
         },
         "to": {
-          "node": "block",
+          "node": "failed",
           "port": "in"
         }
       }

@@ -43,6 +43,12 @@ export interface TemplateAuthoritySource {
   /** Trusted repository eligibility; authored payload is only a selector, never authority. */
   resolve(binding: TemplateBinding, payload: unknown): Promise<TemplateAuthoritySelection>;
   recheck(binding: TemplateBinding, subject: ParentSubject): Promise<void>;
+  /** API-private authenticated review artifact proof supplements recorded fixer facts at admission. */
+  consumesReviewHead?(
+    binding: TemplateBinding,
+    history: Awaited<ReturnType<typeof readAuthority>>,
+    head: string,
+  ): Promise<boolean>;
 }
 export interface TemplateFailureReporter {
   report(
@@ -355,6 +361,12 @@ export class TemplateRuntime {
             );
           consumed ||= fact.head === subject.head;
         }
+        if (!consumed && this.authority.consumesReviewHead)
+          consumed = await this.authority.consumesReviewHead(
+            TemplateBindingSchema.parse(stored.binding),
+            source,
+            subject.head!,
+          );
       }
     }
     if (consumed) {

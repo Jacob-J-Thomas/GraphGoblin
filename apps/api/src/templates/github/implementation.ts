@@ -7,7 +7,7 @@ import { ImplementationRepository } from './repository.js';
 import { DiskSupportStorage, JournalSchema, type SupportStorage } from './storage.js';
 import { NativeCommands, nativeExecutable, gateCommand, type CommandRunner } from './process.js';
 import {
-  ImplementationPlanSchema,
+  ImplementationPlanEnvelopeSchema,
   PrProposalSchema,
   WorkerResultSchema,
   SupportEnvelopeSchema,
@@ -321,7 +321,7 @@ export class ImplementationSupport {
       fail('ISSUE_BRANCH_CHANGED');
     let result: unknown;
     if (action === 'plan') {
-      const plan = ImplementationPlanSchema.parse(envelope.input?.lastOutput?.value);
+      const { plan } = ImplementationPlanEnvelopeSchema.parse(envelope.input?.lastOutput?.value);
       const tasks =
         plan.mode === 'direct'
           ? [{ id: 'direct', title: 'Implement issue ' + issue, instructions: plan.instructions }]

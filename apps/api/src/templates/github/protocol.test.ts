@@ -4,6 +4,7 @@ import { fakeUlid, sampleThread } from '@graphgoblin/contracts/testing';
 import { readSupportInput, supportEntry } from './entry.js';
 import {
   ImplementationPlanSchema,
+  ImplementationPlanEnvelopeSchema,
   PrProposalSchema,
   SupportActionSchema,
   SupportEnvelopeSchema,
@@ -162,6 +163,30 @@ describe('private support authority envelope', () => {
 });
 
 describe('structured implementation proposals', () => {
+  it('unwraps only the strict provider object envelope for either plan branch', () => {
+    expect(
+      ImplementationPlanEnvelopeSchema.parse({
+        plan: { mode: 'direct', instructions: '  Bounded task.  ' },
+      }),
+    ).toEqual({ plan: { mode: 'direct', instructions: 'Bounded task.' } });
+    expect(
+      ImplementationPlanEnvelopeSchema.parse({
+        plan: { mode: 'split', tasks: [planTask, { ...planTask, id: 'second' }] },
+      }).plan.mode,
+    ).toBe('split');
+  });
+  it.each([
+    {},
+    { unknown: { mode: 'direct', instructions: 'Bounded' } },
+    { plan: { mode: 'direct', instructions: 'Bounded' }, extra: true },
+    { mode: 'direct', instructions: 'Bounded' },
+    { plan: null },
+    { plan: { mode: 'unknown', instructions: 'Bounded' } },
+    { plan: { mode: 'direct', instructions: 'Bounded', tasks: [planTask] } },
+    { plan: { mode: 'split', tasks: [planTask, planTask] } },
+  ])('refuses missing/extra/bare/ambiguous provider envelopes (case %#)', (input) => {
+    expect(ImplementationPlanEnvelopeSchema.safeParse(input).success).toBe(false);
+  });
   it('normalizes nonblank direct instructions and accepts a genuine multi-task split', () => {
     expect(
       ImplementationPlanSchema.parse({ mode: 'direct', instructions: '  Bounded task.  ' }),

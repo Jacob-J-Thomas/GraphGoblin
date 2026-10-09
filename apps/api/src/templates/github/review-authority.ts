@@ -1,16 +1,15 @@
 import { z } from 'zod';
 import { ReviewTemplateSettingsSchema } from '@graphgoblin/contracts';
-import { stableHash } from '@graphgoblin/domain';
 import type { TemplateBinding } from '../binding.js';
 import { TemplateBindingSchema } from '../binding.js';
-import { checkedEvents, readAuthority } from '../authority.js';
+import { assertClaim, FixerHeadSchema, checkedEvents, readAuthority } from '../authority.js';
 import { parseSubject, sameSubject, type ParentSubject } from '../subjects.js';
 import type { TemplateInstances } from '../instances.js';
 import { TemplateError } from '../errors.js';
 import { unavailableTemplateAuthority, type TemplateAuthoritySource } from '../runtime.js';
 import { trustedReviewPr } from './review-client.js';
 import { ImplementationRepository } from './repository.js';
-import { SignedReviewJournal } from './review-storage.js';
+import { SignedReviewJournal, type ReviewJournal } from './review-storage.js';
 import { nativeReviewDependencies, type ReviewDependenciesFactory } from './review.js';
 
 const refuse = (): never => {
@@ -97,6 +96,108 @@ export class ReviewAuthority implements TemplateAuthoritySource {
         ? { kind: 'implementation' as const, runId: original.runId }
         : { kind: 'external' as const },
     };
+  }
+  private journalHeads(
+    binding: TemplateBinding,
+    history: Awaited<ReturnType<typeof readAuthority>>,
+    state: ReviewJournal,
+  ): Set<string> {
+    const subject = history.subject;
+    if (
+      history.run.ownerId !== binding.ownerId ||
+      subject.role !== 'parent' ||
+      subject.kind !== 'review' ||
+      subject.instanceId !== binding.instanceId ||
+      !subject.head ||
+      !subject.pullRequest
+    )
+      return refuse();
+    assertClaim(history.facts, subject);
+    const mapped = binding.loops.find((loop) => loop.loopId === history.run.loopId)?.nodes[
+      'fixer-head'
+    ];
+    const visit = (seq: number) =>
+      history.events.some(
+        (event) =>
+          event.type === 'node.started' &&
+          event.seq === seq &&
+          event.nodeId === 'fixer-head' &&
+          event.kind === 'script' &&
+          mapped?.kind === 'script' &&
+          event.configHash === mapped.configHash,
+      );
+    const heads = new Set([subject.head]);
+    for (const [key, value] of Object.entries(state.results)) {
+      if (!key.startsWith('fixer-head:')) continue;
+      const seq = /^fixer-head:([1-9][0-9]*)$/.exec(key)?.[1],
+        fact = FixerHeadSchema.safeParse(value);
+      if (
+        !seq ||
+        !visit(Number(seq)) ||
+        !fact.success ||
+        fact.data.repository !== subject.repository ||
+        fact.data.pullRequest !== subject.pullRequest ||
+        fact.data.issue !== subject.issue ||
+        fact.data.attempt !== subject.attempt
+      )
+        return refuse();
+      heads.add(fact.data.head);
+    }
+    if (!heads.has(state.head)) return refuse();
+    if (state.push) {
+      if (
+        !visit(state.push.visit) ||
+        state.push.parent !== state.head ||
+        state.push.ref !== state.ref ||
+        state.push.head === state.push.parent
+      )
+        return refuse();
+      heads.add(state.push.head);
+    }
+    return heads;
+  }
+  async consumesReviewHead(
+    binding: TemplateBinding,
+    history: Awaited<ReturnType<typeof readAuthority>>,
+    head: string,
+  ): Promise<boolean> {
+    if (
+      binding.manifest.id !== 'review' ||
+      binding.manifest.kind !== 'review' ||
+      history.subject.role !== 'parent' ||
+      history.subject.kind !== 'review'
+    )
+      return refuse();
+    if (
+      !history.events.some(
+        (event) => event.type === 'node.started' && event.nodeId === 'fixer-head',
+      )
+    )
+      return false;
+    const settings = ReviewTemplateSettingsSchema.parse(binding.settings),
+      deps = await this.dependencies(settings),
+      repo = new ImplementationRepository(settings, deps.commands, deps.files, deps.git, 'review'),
+      subject = history.subject;
+    try {
+      const state = await new SignedReviewJournal(deps.files, await this.credential(binding), {
+        ownerId: binding.ownerId,
+        runId: history.run.id,
+        repository: subject.repository,
+        pullRequest: subject.pullRequest!,
+        originalHead: subject.head!,
+        issue: subject.issue,
+        attempt: subject.attempt,
+      }).load(repo.journal(history.run.id));
+      if (
+        !state ||
+        state.cwd !== repo.workspace(history.run.id) ||
+        state.branch !== 'graphgoblin/review-' + subject.pullRequest + '-' + history.run.id
+      )
+        return refuse();
+      return this.journalHeads(binding, history, state).has(head);
+    } catch {
+      return refuse();
+    }
   }
   async recheck(binding: TemplateBinding, subject: ParentSubject): Promise<void> {
     if (binding.manifest.id !== 'review' || binding.manifest.kind !== 'review')
@@ -203,7 +304,14 @@ export class ReviewAuthority implements TemplateAuthoritySource {
     // tied to the installed deterministic action, permits its same-run reconciliation.
     if (
       state.push &&
-      started('fixer-head') &&
+      events.some(
+        (event) =>
+          event.type === 'node.started' &&
+          event.seq === state.push?.visit &&
+          event.nodeId === 'fixer-head' &&
+          event.kind === 'script' &&
+          event.configHash === mapped?.nodes['fixer-head']?.configHash,
+      ) &&
       current.pr.head.sha === state.push.head &&
       state.push.parent === state.head &&
       (await repo.head(state.cwd)) === state.push.head &&
@@ -214,19 +322,7 @@ export class ReviewAuthority implements TemplateAuthoritySource {
     // An authenticated result saved before node.finished also closes the commit/link gap.
     if (
       state.head === current.pr.head.sha &&
-      started('fixer-head') &&
-      Object.values(state.results).some(
-        (result) =>
-          result &&
-          typeof result === 'object' &&
-          !Array.isArray(result) &&
-          result['type'] === 'FixerHead' &&
-          result['pullRequest'] === subject.pullRequest &&
-          result['head'] === current.pr.head.sha &&
-          result['issue'] === subject.issue &&
-          result['attempt'] === subject.attempt &&
-          stableHash(result['repository']) === stableHash(subject.repository),
-      )
+      this.journalHeads(binding, authority, state).has(current.pr.head.sha)
     )
       return;
     return refuse();

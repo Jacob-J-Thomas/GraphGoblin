@@ -66,6 +66,34 @@ const instance = {
   settings: starter,
 };
 
+describe('review trusted bot authors', () => {
+  const input = { kind: 'review', ...common, roles: { reviewer: role, fixer: role } };
+  it.each(['dependabot[bot]', 'github-actions[bot]', 'Writer', 'a'.repeat(39) + '[bot]'])(
+    'accepts bounded explicit author %s without changing repository owner validation',
+    (login) => {
+      expect(
+        ReviewTemplateSettingsSchema.parse({ ...input, trustedAuthors: [login] }).trustedAuthors,
+      ).toEqual([login]);
+      expect(
+        TemplateRepositorySchema.safeParse({ ...repository, owner: 'dependabot[bot]' }).success,
+      ).toBe(false);
+    },
+  );
+  it.each([
+    'a'.repeat(40) + '[bot]',
+    'bot[bot][bot]',
+    'bad/bot[bot]',
+    'bot [bot]',
+    'bot;gh',
+    'bot%00',
+    'bot[BOT]',
+    '🤖[bot]',
+  ])('refuses unsafe or unbounded author %s', (login) => {
+    expect(
+      ReviewTemplateSettingsSchema.safeParse({ ...input, trustedAuthors: [login] }).success,
+    ).toBe(false);
+  });
+});
 describe('template typed settings', () => {
   it('provides a starter with data-only instructions and actual selected role', () => {
     const value = StarterTemplateSettingsSchema.parse(starter);

@@ -8,7 +8,7 @@ export const ReviewPullRequestSchema = PullRequestSchema.extend({
   draft: z.boolean(),
   merged: z.boolean(),
   merge_commit_sha: ShaSchema.nullable(),
-  user: z.object({ login: z.string().regex(/^[A-Za-z0-9-]{1,39}$/) }),
+  user: z.object({ login: z.string().regex(/^[A-Za-z0-9-]{1,39}(?:\[bot\])?$/) }),
 });
 export type ReviewPullRequest = z.infer<typeof ReviewPullRequestSchema>;
 export const ReviewCandidateSchema = PullRequestSchema.extend({
@@ -62,7 +62,7 @@ export interface ReviewGithubPort {
   ): Promise<void>;
   close(repository: string, number: number): Promise<void>;
 }
-const Login = z.string().regex(/^[A-Za-z0-9-]{1,39}$/);
+const Login = z.string().regex(/^[A-Za-z0-9-]{1,39}(?:\[bot\])?$/);
 const CheckRun = z.object({
   name: z.string(),
   head_sha: ShaSchema,
@@ -110,7 +110,11 @@ export class CliReviewGithub extends CliGithub implements ReviewGithubPort {
         JSON.parse(
           await this.run([
             'api',
-            'repos/' + repository + '/collaborators/' + Login.parse(login) + '/permission',
+            'repos/' +
+              repository +
+              '/collaborators/' +
+              encodeURIComponent(Login.parse(login)) +
+              '/permission',
           ]),
         ),
       ).permission;

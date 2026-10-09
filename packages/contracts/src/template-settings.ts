@@ -123,7 +123,7 @@ export const ReviewTemplateSettingsSchema = z.strictObject({
   humanReviewLabels: z.array(TemplateLabelSchema).max(32).default([]),
   needsHumanLabel: TemplateLabelSchema.default('needs-human'),
   trustedAuthors: z
-    .array(z.string().regex(/^[A-Za-z0-9-]{1,39}$/))
+    .array(z.string().regex(/^[A-Za-z0-9-]{1,39}(?:\[bot\])?$/))
     .max(100)
     .default([]),
   requiredChecks: z

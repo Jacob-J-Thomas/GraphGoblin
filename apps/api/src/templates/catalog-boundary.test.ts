@@ -61,6 +61,7 @@ describe('installed template catalog boundaries', () => {
     expect(entries.map((entry) => entry.bundle.manifest.id)).toEqual([
       'starter',
       'implementation',
+      'review',
       'qa',
     ]);
     const starter = await catalog.get('starter');

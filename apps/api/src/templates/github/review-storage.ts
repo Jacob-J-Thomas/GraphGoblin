@@ -2,7 +2,7 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 import { dirname } from 'node:path';
 import { z } from 'zod';
 import { JsonValueSchema } from '@graphgoblin/contracts';
-import { DiskSupportStorage } from './storage.js';
+import type { DiskSupportStorage } from './storage.js';
 import { ShaSchema, fail } from './protocol.js';
 import {
   ReviewIdentitySchema,
@@ -43,7 +43,14 @@ export const ReviewJournalSchema = z.strictObject({
     .optional(),
   verdict: z.strictObject({ head: ShaSchema, proposal: ReviewProposalSchema }).optional(),
   commit: Commit.optional(),
-  push: z.strictObject({ parent: ShaSchema, head: ShaSchema, ref: z.string() }).optional(),
+  push: z
+    .strictObject({
+      parent: ShaSchema,
+      head: ShaSchema,
+      ref: z.string(),
+      visit: z.number().int().positive(),
+    })
+    .optional(),
   authorization: z
     .strictObject({
       kind: z.enum(['automatic', 'human', 'close']),
