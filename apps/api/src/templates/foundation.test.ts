@@ -917,9 +917,18 @@ describe('trusted authority provenance and lifecycle', () => {
       reporter.report(TemplateBindingSchema.parse(stored.binding), qa.run, subject, 'invented'),
     ).rejects.toMatchObject({ code: 'TEMPLATE_REPORT_UNAVAILABLE' });
     expect(() =>
-      checkedEvents([
-        { runId: run.id, seq: 2, ts: FIXTURE_TS, type: 'run.queued', nodeId: null, payload: {} },
-      ]),
+      checkedEvents({
+        runId: run.id,
+        lastEventSeq: 2,
+        total: 1,
+        firstSeq: 2,
+        lastSeq: 2,
+        invalidSeqs: 0,
+        relevantCount: 1,
+        rows: [
+          { runId: run.id, seq: 2, ts: FIXTURE_TS, type: 'run.queued', nodeId: null, payload: {} },
+        ],
+      }),
     ).toThrow();
   });
 });
@@ -2055,8 +2064,15 @@ describe('bounded authenticated rework and proof refusal', () => {
       ]),
     ).toEqual([]);
     expect(() =>
-      checkedEvents(
-        Array.from({ length: 1001 }, () => ({
+      checkedEvents({
+        runId: fakeUlid('oversize'),
+        lastEventSeq: 1001,
+        total: 1001,
+        firstSeq: 1,
+        lastSeq: 1001,
+        invalidSeqs: 0,
+        relevantCount: 1001,
+        rows: Array.from({ length: 1001 }, () => ({
           runId: fakeUlid('oversize'),
           seq: 1,
           ts: FIXTURE_TS,
@@ -2064,7 +2080,7 @@ describe('bounded authenticated rework and proof refusal', () => {
           nodeId: null,
           payload: {},
         })),
-      ),
+      }),
     ).toThrow();
   });
 });

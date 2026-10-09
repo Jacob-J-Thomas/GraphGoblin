@@ -34,7 +34,7 @@ import {
 } from '@graphgoblin/infrastructure/sqlite';
 import { bindingJson, executionHash, TemplateBindingSchema } from '../binding.js';
 import { subjectJson, type ParentSubject } from '../subjects.js';
-import { checkedEvents, assertSubjectSource } from '../authority.js';
+import { checkedEvents, assertSubjectSource, readAuthority } from '../authority.js';
 import { TemplateRuntime, templateAdmission } from '../runtime.js';
 import { TemplateInstances } from '../instances.js';
 import { TemplatePrerequisites } from '../prerequisites.js';
@@ -47,7 +47,8 @@ import { ReviewEnvelopeSchema } from './review-protocol.js';
 import { SignedReviewJournal, ReviewJournalSchema, type ArtifactFiles } from './review-storage.js';
 import { ImplementationRepository } from './repository.js';
 import { ReviewPullRequestSchema, type ReviewGithubPort } from './review-client.js';
-import type { ReviewDependencies } from './review.js';
+import { ReviewSupport, type ReviewDependencies } from './review.js';
+import { installImplementationFinalization } from './reporter.js';
 const handles: DatabaseHandle[] = [];
 afterEach(() => {
   for (const handle of handles.splice(0)) handle.close();
@@ -333,7 +334,7 @@ async function fixture(issue: number | null = 42) {
     ]);
     return started(reason === 'input' ? 'human' : 'reminder');
   }
-  async function privateScripts() {
+  async function privateScripts(reply?: (request: ScriptRunRequest) => Promise<string>) {
     const apiKeys = new SqliteApiKeys(handle.db, clock, ids),
       key = await apiKeys.create('local', 'review reader', ['runs:read']),
       secrets = new InMemorySecrets({ reader: key.token }),
@@ -353,7 +354,7 @@ async function fixture(issue: number | null = 42) {
           requests.push(request);
           return {
             exitCode: 0,
-            stdout: '{}',
+            stdout: reply ? await reply(request) : '{}',
             stderr: '',
             timedOut: false,
             stdoutOverflow: false,
@@ -1067,6 +1068,230 @@ describe('trusted review discovery and same-run recovery', () => {
     ).rejects.toMatchObject({ code: 'TEMPLATE_AUTHORITY_UNAVAILABLE' });
   });
 });
+describe('long review authority history', () => {
+  it('runs private fixer-head after 1200 progress events and reconciles terminal reporting before durable finalization', async () => {
+    const f = await fixture();
+    await f.claim();
+    await f.started('fixer');
+    await f.events.append(
+      f.run.id,
+      Array.from({ length: 1200 }, (_, index) => ({
+        type: 'node.progress' as const,
+        nodeId: 'fixer',
+        progress: {
+          item: { type: 'message' as const, id: String(index), summary: 'bounded progress' },
+        },
+      })),
+    );
+    const summary = { summary: 'Applied the required correction.' };
+    await f.events.append(f.run.id, [
+      {
+        type: 'node.finished',
+        nodeId: 'fixer',
+        durationMs: 0,
+        patch: [
+          {
+            op: 'add',
+            path: '/outputs/fixer',
+            value: { nodeId: 'fixer', at: FIXTURE_TS, value: summary },
+          },
+        ],
+      },
+    ]);
+    f.thread.lastOutput = { nodeId: 'fixer', at: FIXTURE_TS, value: summary };
+    const visit = await f.started('fixer-head');
+    const commands = f.deps.commands.run.bind(f.deps.commands);
+    f.deps.commands.run = async (request) => {
+      const result = await commands(request);
+      return JSON.stringify(request.args.slice(7)) ===
+        JSON.stringify(['rev-parse', '--abbrev-ref', 'HEAD'])
+        ? { ...result, stdout: 'graphgoblin/review-7-' + f.run.id }
+        : result;
+    };
+    const controller = new ReviewSupport(f.deps);
+    const p = await f.privateScripts(async (request) =>
+      JSON.stringify(await controller.execute('fixer-head', JSON.parse(request.stdin!))),
+    );
+    const journal = new SignedReviewJournal(f.files, p.key.token, {
+      ownerId: 'local',
+      runId: f.run.id,
+      repository: f.subject.repository,
+      pullRequest: 7,
+      originalHead: original,
+      issue: 42,
+      attempt: 1,
+    });
+    await journal.save(
+      f.repo.journal(f.run.id),
+      ReviewJournalSchema.parse({
+        version: 1,
+        head: original,
+        cwd: f.repo.workspace(f.run.id),
+        branch: 'graphgoblin/review-7-' + f.run.id,
+        ref: 'topic',
+        humanRequired: false,
+        fixPending: true,
+        push: { parent: original, head: next, ref: 'topic', visit },
+      }),
+    );
+    f.setLocal(next);
+    f.pr.head.sha = next;
+    const result = await p.scripts.run(await p.request('fixer-head', visit));
+    expect(result.exitCode).toBe(0);
+    const fact = {
+      type: 'FixerHead',
+      repository: 'example/repo',
+      issue: 42,
+      attempt: 1,
+      pullRequest: 7,
+      head: next,
+    };
+    expect(JSON.parse(result.stdout)).toEqual(fact);
+    expect(ReviewEnvelopeSchema.parse(JSON.parse(p.requests[0]!.stdin!)).visit).toBe(visit);
+    await f.events.append(f.run.id, [
+      {
+        type: 'node.finished',
+        nodeId: 'fixer-head',
+        durationMs: 0,
+        patch: [
+          {
+            op: 'add',
+            path: '/outputs/fixer-head',
+            value: { nodeId: 'fixer-head', at: FIXTURE_TS, value: fact },
+          },
+        ],
+      },
+    ]);
+    expect((await readAuthority(f.store, f.binding, f.run.id)).facts).toContainEqual(fact);
+    const failure = {
+      code: 'HARNESS_TURN_FAILED' as const,
+      message: 'Fixed test failure after progress.',
+      resumable: false,
+    };
+    await f.events.append(f.run.id, [{ type: 'run.failed', failure }]);
+    await f.runs.update(f.run.id, { status: 'failed', failure });
+    installImplementationFinalization(f.runs, f.reporter);
+    await f.runs.markFinalized(f.run.id);
+    await f.runs.markFinalized(f.run.id);
+    expect(await f.runs.listUnfinalized()).toEqual([]);
+    expect(
+      (
+        await f.handle.client.execute({
+          sql: 'SELECT finalized_at FROM runs WHERE id = ?',
+          args: [f.run.id],
+        })
+      ).rows[0]?.finalized_at,
+    ).toEqual(expect.any(String));
+    expect(f.comments.get(7)).toHaveLength(1);
+    expect(f.comments.get(42)).toHaveLength(1);
+    expect(f.comments.get(7)![0]!.body).toContain('Earlier effects may have occurred');
+    expect(f.effects.filter((effect) => effect === 'post')).toHaveLength(2);
+  });
+
+  it.each([
+    'missing-meaningful',
+    'missing-telemetry',
+    'tail-mismatch',
+    'fractional-telemetry',
+    'tampered-meaningful',
+    'reordered-meaningful',
+  ] as const)(
+    'refuses %s history before private effects or terminal finalization',
+    async (mode) => {
+      const f = await fixture();
+      await f.claim();
+      await f.started('fixer');
+      await f.events.append(f.run.id, [
+        {
+          type: 'node.progress',
+          nodeId: 'fixer',
+          progress: { item: { type: 'message', id: 'progress', summary: 'progress' } },
+        },
+      ]);
+      const visit = await f.started('fixer-head'),
+        p = await f.privateScripts();
+      const request = await p.request('fixer-head', visit);
+      if (mode === 'missing-meaningful' || mode === 'missing-telemetry')
+        await f.handle.client.execute({
+          sql: 'DELETE FROM run_events WHERE run_id = ? AND seq = ?',
+          args: [f.run.id, mode === 'missing-meaningful' ? 2 : 5],
+        });
+      if (mode === 'tail-mismatch') await f.runs.update(f.run.id, { lastEventSeq: visit + 1 });
+      if (mode === 'fractional-telemetry')
+        await f.handle.client.execute({
+          sql: 'UPDATE run_events SET seq = 4.5 WHERE run_id = ? AND seq = 5',
+          args: [f.run.id],
+        });
+      if (mode === 'tampered-meaningful')
+        await f.handle.client.execute({
+          sql: "UPDATE run_events SET payload = '{}' WHERE run_id = ? AND seq = 2",
+          args: [f.run.id],
+        });
+      if (mode === 'reordered-meaningful') {
+        await f.handle.client.execute({
+          sql: 'UPDATE run_events SET seq = 100 WHERE run_id = ? AND seq = 2',
+          args: [f.run.id],
+        });
+        await f.handle.client.execute({
+          sql: 'UPDATE run_events SET seq = 2 WHERE run_id = ? AND seq = 3',
+          args: [f.run.id],
+        });
+        await f.handle.client.execute({
+          sql: 'UPDATE run_events SET seq = 3 WHERE run_id = ? AND seq = 100',
+          args: [f.run.id],
+        });
+      }
+      await expect(p.scripts.run(request)).rejects.toMatchObject({
+        code: 'TEMPLATE_AUTHORITY_REFUSED',
+      });
+      expect(p.requests).toEqual([]);
+      await f.runs.update(f.run.id, { status: 'failed' });
+      installImplementationFinalization(f.runs, f.reporter);
+      if (mode !== 'reordered-meaningful') {
+        await expect(f.runs.markFinalized(f.run.id)).rejects.toThrow();
+        expect((await f.runs.listUnfinalized()).map((run) => run.id)).toContain(f.run.id);
+      }
+      expect(f.effects).toEqual([]);
+    },
+  );
+
+  it('refuses incomplete or reordered projected rows even when the full-log proof is valid', async () => {
+    const f = await fixture();
+    await f.claim();
+    const history = await f.store.events(f.run.id);
+    expect(() => checkedEvents({ ...history, rows: history.rows.slice(1) })).toThrow();
+    expect(() => checkedEvents({ ...history, rows: [...history.rows].reverse() })).toThrow();
+    expect(() => checkedEvents({ ...history, runId: fakeUlid('foreign-history') })).toThrow();
+    expect(() =>
+      checkedEvents({
+        ...history,
+        rows: history.rows.map((row, index) =>
+          index === 1 ? { ...row, seq: history.total + 1 } : row,
+        ),
+      }),
+    ).toThrow();
+    expect(() => checkedEvents({ ...history, total: -1 })).toThrow();
+    expect(() => checkedEvents({ ...history, relevantCount: -1 })).toThrow();
+    expect(() => checkedEvents({ ...history, relevantCount: 1001 })).toThrow(
+      /meaningful authority history bound/,
+    );
+    expect(() =>
+      checkedEvents({ ...history, total: 0, lastEventSeq: 0, relevantCount: 0, rows: [] }),
+    ).toThrow();
+    expect(
+      checkedEvents({
+        ...history,
+        total: 0,
+        lastEventSeq: 0,
+        firstSeq: null,
+        lastSeq: null,
+        relevantCount: 0,
+        rows: [],
+      }),
+    ).toEqual([]);
+  });
+});
+
 describe('review failure reporting', () => {
   it.each([null, 42])(
     'reconciles progressed cancellation for linkage %s with honest permanent consumption',

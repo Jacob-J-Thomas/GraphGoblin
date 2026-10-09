@@ -1,4 +1,4 @@
-import { and, asc, eq, sql } from 'drizzle-orm';
+import { and, asc, eq, notInArray, sql } from 'drizzle-orm';
 import {
   TemplateInstanceSchema,
   type RunStatus,
@@ -41,6 +41,17 @@ export interface TemplateSubjectFilter {
   limit: number;
 }
 
+export interface TemplateEventHistory {
+  runId: string;
+  lastEventSeq: number | null;
+  total: number;
+  firstSeq: number | null;
+  lastSeq: number | null;
+  invalidSeqs: number;
+  relevantCount: number;
+  rows: (typeof runEvents.$inferSelect)[];
+}
+
 /** This facade stays inside the caller's transaction; API policies never acquire the outer DB lock. */
 export class TemplateTransaction {
   constructor(private readonly db: Database | SqliteTransaction) {}
@@ -74,13 +85,69 @@ export class TemplateTransaction {
     const [row] = await this.db.select().from(runs).where(eq(runs.id, runId)).limit(1);
     return row ? { run: runRecordFromRow(row), subject: row.templateSubject } : undefined;
   }
-  async events(runId: string, limit = 1001) {
-    return this.db
-      .select()
-      .from(runEvents)
-      .where(eq(runEvents.runId, runId))
-      .orderBy(asc(runEvents.seq))
-      .limit(limit);
+  async events(runId: string): Promise<TemplateEventHistory> {
+    const telemetry = ['node.progress', 'harness.usage', 'harness.session'];
+    // The proof and bounded projection share one SQLite statement/snapshot, including when
+    // called outside an admission transaction. No telemetry payloads cross this boundary.
+    const integrity = this.db.$with('template_event_integrity').as(
+      this.db
+        .select({
+          total: sql<number>`count(*)`.as('total'),
+          firstSeq: sql<number | null>`min(${runEvents.seq})`.as('first_seq'),
+          lastSeq: sql<number | null>`max(${runEvents.seq})`.as('last_seq'),
+          invalidSeqs:
+            sql<number>`coalesce(sum(case when typeof(${runEvents.seq}) != 'integer' or ${runEvents.seq} < 1 then 1 else 0 end), 0)`.as(
+              'invalid_seqs',
+            ),
+          relevantCount:
+            sql<number>`coalesce(sum(case when ${notInArray(runEvents.type, telemetry)} then 1 else 0 end), 0)`.as(
+              'relevant_count',
+            ),
+        })
+        .from(runEvents)
+        .where(eq(runEvents.runId, runId)),
+    );
+    const projection = this.db.$with('template_authority_events').as(
+      this.db
+        .select()
+        .from(runEvents)
+        .where(and(eq(runEvents.runId, runId), notInArray(runEvents.type, telemetry)))
+        .orderBy(asc(runEvents.seq))
+        .limit(1001),
+    );
+    const result = await this.db
+      .with(integrity, projection)
+      .select({
+        total: integrity.total,
+        firstSeq: integrity.firstSeq,
+        lastSeq: integrity.lastSeq,
+        invalidSeqs: integrity.invalidSeqs,
+        relevantCount: integrity.relevantCount,
+        lastEventSeq: runs.lastEventSeq,
+        event: {
+          runId: projection.runId,
+          seq: projection.seq,
+          ts: projection.ts,
+          type: projection.type,
+          nodeId: projection.nodeId,
+          payload: projection.payload,
+        },
+      })
+      .from(integrity)
+      .leftJoin(runs, eq(runs.id, runId))
+      .leftJoin(projection, sql`true`)
+      .orderBy(asc(projection.seq));
+    const proof = result[0]!;
+    return {
+      runId,
+      lastEventSeq: proof.lastEventSeq,
+      total: proof.total,
+      firstSeq: proof.firstSeq,
+      lastSeq: proof.lastSeq,
+      invalidSeqs: proof.invalidSeqs,
+      relevantCount: proof.relevantCount,
+      rows: result.flatMap((row) => (row.event ? [row.event] : [])),
+    };
   }
   async setSubject(runId: string, subject: JsonValue): Promise<void> {
     await this.db.update(runs).set({ templateSubject: subject }).where(eq(runs.id, runId));

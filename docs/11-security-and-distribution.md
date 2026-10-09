@@ -21,6 +21,7 @@
 - Values are encrypted directly with the 32-byte master key using AES-256-GCM, with a fresh random IV and authentication tag for each value. The master key comes from `GG_MASTER_KEY` (base64) or `<dataDir>/master.key`, generated on first start with owner-only permissions. There are no per-secret data keys or envelope wrapping, and no `@napi-rs/keyring` dependency in 1.0. An OS-keyring master-key source and per-secret envelope keys are post-1.0 work (12, "Product gaps known at 1.0").
 - Secrets are referenced from configs by name, for example `secret:jev-api-key`, and resolved only inside the process at execution time. They never appear in events, logs, exports, or API responses.
 - The `redact` mutation operation exists partly so that values that reach the thread from scripts or harness output can be masked before they go anywhere else.
+- Template authority reads retain every non-telemetry event, bounded to 1,000 meaningful events. Progress, harness usage and session telemetry do not consume that bound and their payloads are not authority evidence. One SQLite statement checks the complete log's sequence count/range against the run's durable last sequence before validating the retained projection, so missing events, invalid sequences, truncated projections or malformed meaningful records still fail closed. Telemetry remains available through the ordinary event log and its validation path.
 
 ## Inbound exposure (Decided)
 

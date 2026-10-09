@@ -76,10 +76,31 @@ function conflict(): never {
   );
 }
 export function checkedEvents(
-  rows: Awaited<ReturnType<TemplateTransaction['events']>>,
+  history: Awaited<ReturnType<TemplateTransaction['events']>>,
 ): RunEvent[] {
-  if (rows.length > 1000) conflict();
-  return rows.map((row, index) => {
+  const { rows, total, firstSeq, lastSeq, lastEventSeq, relevantCount, invalidSeqs } = history;
+  if (relevantCount > 1000)
+    throw new TemplateError(
+      'AUTHORITY_CONFLICT',
+      'The selected subject exceeds the 1000-event meaningful authority history bound; telemetry does not count.',
+    );
+  // The immutable (run_id,seq) primary key plus these same-snapshot aggregates prove
+  // contiguity of the entire log, including telemetry omitted from the bounded projection.
+  if (
+    !Number.isSafeInteger(total) ||
+    total < 0 ||
+    !Number.isSafeInteger(lastEventSeq) ||
+    lastEventSeq !== total ||
+    invalidSeqs !== 0 ||
+    (total === 0 ? firstSeq !== null || lastSeq !== null : firstSeq !== 1 || lastSeq !== total) ||
+    !Number.isSafeInteger(relevantCount) ||
+    relevantCount < 0 ||
+    relevantCount > total ||
+    rows.length !== relevantCount
+  )
+    conflict();
+  let previousSeq = 0;
+  return rows.map((row) => {
     const parsed = RunEventSchema.safeParse({
       ...row.payload,
       type: row.type,
@@ -88,7 +109,15 @@ export function checkedEvents(
       ts: row.ts,
       ...(row.nodeId ? { nodeId: row.nodeId } : {}),
     });
-    if (!parsed.success || parsed.data.seq !== index + 1) conflict();
+    if (
+      !parsed.success ||
+      parsed.data.runId !== history.runId ||
+      parsed.data.seq <= previousSeq ||
+      parsed.data.seq > total ||
+      ['node.progress', 'harness.usage', 'harness.session'].includes(parsed.data.type)
+    )
+      conflict();
+    previousSeq = parsed.data.seq;
     return parsed.data;
   });
 }

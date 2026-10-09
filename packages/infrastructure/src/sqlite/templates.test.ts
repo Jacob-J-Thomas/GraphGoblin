@@ -459,16 +459,16 @@ describe('SQLite template subject storage', () => {
           nodeId: 'claim',
           payload: { kind: 'script', configHash: 'a'.repeat(64) },
         });
-        expect(await scoped.events(run.id)).toHaveLength(1);
+        expect((await scoped.events(run.id)).rows).toHaveLength(1);
         throw new Error('refuse staged admission');
       }),
     ).rejects.toThrow('refuse staged admission');
     expect(await store.run(run.id)).toEqual({ run, subject: null });
-    expect(await store.events(run.id)).toEqual([]);
+    expect((await store.events(run.id)).rows).toEqual([]);
     expect(await store.run(fakeUlid('missing-run'))).toBeUndefined();
   });
 
-  it('reads only the requested run in sequence order and provides a bounded overflow sentinel', async () => {
+  it('bounds meaningful history and returns full-log integrity for only the requested run', async () => {
     const run = await insertSubject('bounded-events', subject());
     const other = await insertSubject('other-events', subject({ issue: 8 }));
     await handle.db.insert(runEvents).values(
@@ -485,11 +485,118 @@ describe('SQLite template subject storage', () => {
       .insert(runEvents)
       .values({ runId: other.id, seq: 1, ts: FIXTURE_TS, type: 'node.finished', payload: {} });
     const bounded = await store.events(run.id);
-    expect(bounded).toHaveLength(1001);
-    expect(bounded.every((event) => event.runId === run.id)).toBe(true);
-    expect(bounded[0]?.seq).toBe(1);
-    expect(bounded.at(-1)?.seq).toBe(1001);
-    expect((await store.events(run.id, 2)).map((event) => event.seq)).toEqual([1, 2]);
+    expect(bounded).toMatchObject({ total: 1002, firstSeq: 1, lastSeq: 1002, relevantCount: 1002 });
+    expect(bounded.rows).toHaveLength(1001);
+    expect(bounded.rows.every((event) => event.runId === run.id)).toBe(true);
+    expect(bounded.rows[0]?.seq).toBe(1);
+    expect(bounded.rows.at(-1)?.seq).toBe(1001);
+  });
+
+  it('counts every telemetry sequence without loading its payload and retains all meaningful rows', async () => {
+    const run = await insertSubject('telemetry', subject());
+    const other = await insertSubject('telemetry-other', subject({ issue: 8 }));
+    await handle.db.insert(runEvents).values([
+      ...Array.from({ length: 1200 }, (_, index) => ({
+        runId: run.id,
+        seq: index + 1,
+        ts: FIXTURE_TS,
+        type: ['node.progress', 'harness.usage', 'harness.session'][index % 3]!,
+        nodeId: 'fixer',
+        payload: {},
+      })),
+      {
+        runId: run.id,
+        seq: 1201,
+        ts: FIXTURE_TS,
+        type: 'node.started',
+        nodeId: 'fixer-head',
+        payload: {},
+      },
+      {
+        runId: other.id,
+        seq: 1,
+        ts: FIXTURE_TS,
+        type: 'node.started',
+        nodeId: 'claim',
+        payload: {},
+      },
+    ]);
+    // Telemetry JSON is intentionally outside the authority parser and must never be decoded.
+    await handle.client.execute({
+      sql: "UPDATE run_events SET payload = 'not-json' WHERE run_id = ? AND seq = 1",
+      args: [run.id],
+    });
+    await handle.client.execute({
+      sql: 'UPDATE runs SET last_event_seq = 1201 WHERE id = ?',
+      args: [run.id],
+    });
+    expect(await store.events(run.id)).toMatchObject({
+      runId: run.id,
+      lastEventSeq: 1201,
+      total: 1201,
+      firstSeq: 1,
+      lastSeq: 1201,
+      invalidSeqs: 0,
+      relevantCount: 1,
+      rows: [{ runId: run.id, seq: 1201, type: 'node.started' }],
+    });
+    expect(await store.events(fakeUlid('missing-history'))).toEqual({
+      runId: fakeUlid('missing-history'),
+      lastEventSeq: null,
+      total: 0,
+      firstSeq: null,
+      lastSeq: null,
+      invalidSeqs: 0,
+      relevantCount: 0,
+      rows: [],
+    });
+    await handle.client.execute({
+      sql: 'DELETE FROM run_events WHERE run_id = ? AND seq = 500',
+      args: [run.id],
+    });
+    expect(await store.events(run.id)).toMatchObject({
+      lastEventSeq: 1201,
+      total: 1200,
+      firstSeq: 1,
+      lastSeq: 1201,
+      relevantCount: 1,
+    });
+  });
+
+  it('keeps an empty existing run and a telemetry-only log as empty meaningful projections', async () => {
+    const run = await insertSubject('empty-projection', subject());
+    expect(await store.events(run.id)).toEqual({
+      runId: run.id,
+      lastEventSeq: 0,
+      total: 0,
+      firstSeq: null,
+      lastSeq: null,
+      invalidSeqs: 0,
+      relevantCount: 0,
+      rows: [],
+    });
+    await handle.db.insert(runEvents).values({
+      runId: run.id,
+      seq: 1,
+      ts: FIXTURE_TS,
+      type: 'node.progress',
+      nodeId: 'fixer',
+      payload: {},
+    });
+    await handle.client.execute({
+      sql: 'UPDATE runs SET last_event_seq = 1 WHERE id = ?',
+      args: [run.id],
+    });
+    expect(await store.events(run.id)).toEqual({
+      runId: run.id,
+      lastEventSeq: 1,
+      total: 1,
+      firstSeq: 1,
+      lastSeq: 1,
+      invalidSeqs: 0,
+      relevantCount: 0,
+      rows: [],
+    });
   });
 
   it.each<RunStatus>(['succeeded', 'failed', 'cancelled', 'exhausted'])(
@@ -637,7 +744,7 @@ describe('SQLite template admission policy transaction', () => {
     expect((await admission.get(receipt.receipt.id))?.status).toBe('pending');
     expect(await admission.hasPendingPin(input.run.loopId)).toBe(true);
     expect(await store.run(input.run.id)).toBeUndefined();
-    expect(await store.events(input.run.id)).toEqual([]);
+    expect((await store.events(input.run.id)).rows).toEqual([]);
     expect(
       (await handle.client.execute('SELECT run_ids FROM inbound_events')).rows[0]?.['run_ids'],
     ).toBe('[]');
@@ -676,7 +783,7 @@ describe('SQLite template admission policy transaction', () => {
     });
     await expect(admission.create(input)).rejects.toThrow(AdmissionConflictError);
     expect(await handle.db.select().from(runs)).toHaveLength(1);
-    expect(await store.events(input.run.id)).toHaveLength(1);
+    expect((await store.events(input.run.id)).rows).toHaveLength(1);
   });
 
   it('serializes competing manual admissions across instances before either can become visible', async () => {
@@ -738,7 +845,7 @@ describe('SQLite template admission policy transaction', () => {
       async (tx, authored, pollItem) => {
         expect(pollItem).toBe(false);
         expect((await tx.run(authored.run.id))?.run.lastEventSeq).toBe(1);
-        expect((await tx.events(authored.run.id)).map((event) => event.type)).toEqual([
+        expect((await tx.events(authored.run.id)).rows.map((event) => event.type)).toEqual([
           'run.queued',
         ]);
         await tx.setSubject(authored.run.id, subject());
@@ -747,7 +854,7 @@ describe('SQLite template admission policy transaction', () => {
     );
     await expect(admission.create(input)).rejects.toThrow('trusted prerequisite refusal');
     expect(await store.run(input.run.id)).toBeUndefined();
-    expect(await store.events(input.run.id)).toEqual([]);
+    expect((await store.events(input.run.id)).rows).toEqual([]);
     expect(notified).toEqual([]);
   });
 
@@ -816,7 +923,7 @@ describe('SQLite template admission policy transaction', () => {
     expect(recovered).toEqual({ ...original, status: 'running' });
     expect(await store.originalChild(parent.id, 'work', 4)).toEqual(recovered);
     expect(await store.run(candidate.run.id)).toBeUndefined();
-    expect(await store.events(candidate.run.id)).toEqual([]);
+    expect((await store.events(candidate.run.id)).rows).toEqual([]);
     expect(await events.read(parent.id)).toEqual([]);
     expect(notified).toEqual([original.id]);
     expect(await handle.db.select().from(runs)).toHaveLength(2);
@@ -834,7 +941,7 @@ describe('SQLite template admission policy transaction', () => {
       });
       await expect(admission.create(input)).rejects.toThrow(AdmissionConflictError);
       expect(await store.run(input.run.id)).toBeUndefined();
-      expect(await store.events(input.run.id)).toEqual([]);
+      expect((await store.events(input.run.id)).rows).toEqual([]);
     },
   );
 });
