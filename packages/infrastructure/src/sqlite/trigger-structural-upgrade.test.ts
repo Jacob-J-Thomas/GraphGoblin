@@ -72,6 +72,7 @@ async function previousStructure(custom = false) {
   ]);
   // Remove later template structures as well as their ledger entries to reconstruct v2.
   for (const statement of [
+    'DROP INDEX template_qa_issue_attempt_idx',
     'DROP INDEX template_issue_attempt_idx',
     'DROP INDEX template_qa_merge_idx',
     'DROP INDEX template_pr_head_idx',
@@ -365,5 +366,5 @@ it('refuses an incomplete intermediate receipt layout before migration or recove
     'CREATE INDEX webhook_receipts_due_idx ON webhook_receipts(status,next_attempt_at)',
   );
   await expect(handle.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
-  expect((await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows).toHaveLength(10);
+  expect((await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows).toHaveLength(11);
 });

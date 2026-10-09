@@ -45,7 +45,8 @@ async function upgrade(check: (db: DatabaseHandle) => Promise<void>) {
   }
   const current = openDatabase({ url });
   try {
-    expect(await current.pendingMigrations()).toBe(7);
+    // Includes 0010_qa_issue_attempt after the three historical catalog migrations.
+    expect(await current.pendingMigrations()).toBe(8);
     await expect(current.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
     await applyShippedSqlToHistoricalTestFixture(current);
     await check(current);
@@ -212,6 +213,7 @@ describe('model catalog source migration and repository', () => {
       await handle.client.execute('DROP TABLE classifier_models');
       // Reconstruct the older schema before resetting its migration ledger.
       for (const statement of [
+        'DROP INDEX template_qa_issue_attempt_idx',
         'DROP INDEX template_issue_attempt_idx',
         'DROP INDEX template_qa_merge_idx',
         'DROP INDEX template_pr_head_idx',
@@ -233,7 +235,7 @@ describe('model catalog source migration and repository', () => {
       await handle.client.execute(
         'DELETE FROM __drizzle_migrations WHERE created_at >= 1791136800000',
       );
-      expect(await handle.pendingMigrations()).toBe(6);
+      expect(await handle.pendingMigrations()).toBe(7);
       await expect(handle.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
       await applyShippedSqlToHistoricalTestFixture(handle);
       expect(await catalog.list()).toEqual(rows.map((row) => ({ ...row, source: 'harness' })));

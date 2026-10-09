@@ -148,7 +148,8 @@ describe('classifier repository', () => {
           .map((column) => `"${column.replaceAll('"', '""')}"`)
           .join(',');
         await writeFile(join(dir, 'meta/_journal.json'), JSON.stringify(journal));
-        expect(await handle.pendingMigrations()).toBe(10 - count);
+        // The current catalog includes 0010_qa_issue_attempt as its eleventh entry.
+        expect(await handle.pendingMigrations()).toBe(11 - count);
         await expect(handle.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
         await applyShippedSqlToHistoricalTestFixture(handle, dir);
         expect((await handle.client.execute('SELECT * FROM loop_versions')).rows).toEqual(versions);
