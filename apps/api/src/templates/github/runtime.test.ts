@@ -347,9 +347,8 @@ function fixture() {
   async function tasks(split = false) {
     await prepare();
     expect(
-      await action(
-        'plan',
-        split
+      await action('plan', {
+        plan: split
           ? {
               mode: 'split',
               tasks: [
@@ -358,7 +357,7 @@ function fixture() {
               ],
             }
           : { mode: 'direct', instructions: 'Implement behavior.' },
-      ),
+      }),
     ).toMatchObject({ type: 'ImplementationPlan' });
     for (let index = 0; index < (split ? 2 : 1); index++) {
       const task = (await action('task-prepare')) as { cwd: string };
@@ -579,7 +578,7 @@ describe('implementation deterministic support', () => {
   it('rechecks label removal mid-run before committing worker changes', async () => {
     const f = fixture();
     await f.prepare();
-    await f.action('plan', { mode: 'direct', instructions: 'Work' });
+    await f.action('plan', { plan: { mode: 'direct', instructions: 'Work' } });
     await f.action('task-prepare');
     f.github.current.labels = [];
     expect(await f.action('task-complete')).toMatchObject({ code: 'TRIGGER_LABEL_REMOVED' });
@@ -592,23 +591,44 @@ describe('implementation deterministic support', () => {
       { mode: 'split', tasks: [{ id: 'one', title: 'One', instructions: 'One' }] },
       { mode: 'direct', instructions: ' ', extra: true },
     ])
-      expect(await f.action('plan', proposal)).toMatchObject({ type: 'SupportBlocked' });
+      expect(await f.action('plan', { plan: proposal })).toMatchObject({ type: 'SupportBlocked' });
     const tasks = Array.from({ length: 9 }, (_, index) => ({
       id: 'task-' + index,
       title: 'Task',
       instructions: 'Implement',
     }));
-    expect(await f.action('plan', { mode: 'split', tasks })).toMatchObject({
+    expect(await f.action('plan', { plan: { mode: 'split', tasks } })).toMatchObject({
       code: 'PLAN_LIMIT_OR_CONFLICT',
     });
-    await f.action('plan', { mode: 'direct', instructions: 'Work' });
+    await f.action('plan', { plan: { mode: 'direct', instructions: 'Work' } });
     await f.action('task-prepare');
     f.env.input!.vars['workerResult'] = { summary: 'Work', authority: true };
     expect(await f.action('task-complete')).toMatchObject({ type: 'SupportBlocked' });
-    expect(await f.action('plan', { mode: 'direct', instructions: 'Work' })).toMatchObject({
+    expect(
+      await f.action('plan', { plan: { mode: 'direct', instructions: 'Work' } }),
+    ).toMatchObject({
       code: 'PLAN_LIMIT_OR_CONFLICT',
     });
   });
+  it.each([
+    { mode: 'direct', instructions: 'Work' },
+    {},
+    { unknown: { mode: 'direct', instructions: 'Work' } },
+    { plan: { mode: 'direct', instructions: 'Work' }, extra: true },
+    { plan: { mode: 'unknown', instructions: 'Work' } },
+  ])(
+    'refuses bare/missing/unknown/extra planner envelopes before durable plan changes (case %#)',
+    async (input) => {
+      const f = fixture();
+      await f.prepare();
+      const before = await f.state();
+      const effects = structuredClone(f.github.effects);
+      expect(await f.action('plan', input)).toMatchObject({ type: 'SupportBlocked' });
+      expect(await f.state()).toEqual(before);
+      expect(f.github.effects).toEqual(effects);
+      expect(f.commands.worktrees.size).toBe(1);
+    },
+  );
   it.each([
     'Closes #99',
     'Fixes Other/Repo#42',
@@ -708,7 +728,9 @@ describe('implementation deterministic support', () => {
     expect(f.github.commentRows.filter((row) => row.body.includes('No pull request'))).toHaveLength(
       1,
     );
-    expect(await f.action('plan', { mode: 'direct', instructions: 'Work' })).toMatchObject({
+    expect(
+      await f.action('plan', { plan: { mode: 'direct', instructions: 'Work' } }),
+    ).toMatchObject({
       code: 'ATTEMPT_BLOCKED',
     });
   });
@@ -718,11 +740,15 @@ describe('implementation deterministic support', () => {
     const state = (await f.state())!;
     state.issue = 99;
     await f.storage.save(f.repo.journal(runId), state);
-    expect(await f.action('plan', { mode: 'direct', instructions: 'Work' })).toMatchObject({
+    expect(
+      await f.action('plan', { plan: { mode: 'direct', instructions: 'Work' } }),
+    ).toMatchObject({
       code: 'JOURNAL_IDENTITY_CONFLICT',
     });
     const other = fixture();
-    expect(await other.action('plan', { mode: 'direct', instructions: 'Work' })).toMatchObject({
+    expect(
+      await other.action('plan', { plan: { mode: 'direct', instructions: 'Work' } }),
+    ).toMatchObject({
       code: 'WORKSPACE_REQUIRED',
     });
   });
@@ -738,7 +764,9 @@ describe('implementation deterministic support', () => {
         state.task = { index: 0, id: 'forged', branch: 'main', cwd: state.cwd, start: base };
       await f.storage.save(f.repo.journal(runId), state);
       const effects = f.commands.calls.length;
-      expect(await f.action('plan', { mode: 'direct', instructions: 'Work' })).toMatchObject({
+      expect(
+        await f.action('plan', { plan: { mode: 'direct', instructions: 'Work' } }),
+      ).toMatchObject({
         type: 'SupportBlocked',
       });
       expect(
@@ -1034,7 +1062,7 @@ describe('serialized support output admission', () => {
       const f = fixture();
       f.env.settings.limits.maxTasks = 32;
       await f.prepare();
-      expect(await f.action('plan', plan)).toMatchObject({ code: 'SUPPORT_OUTPUT_TOO_LARGE' });
+      expect(await f.action('plan', { plan })).toMatchObject({ code: 'SUPPORT_OUTPUT_TOO_LARGE' });
       expect((await f.state())?.mode).toBeUndefined();
       expect(f.commands.worktrees.size).toBe(1);
     }

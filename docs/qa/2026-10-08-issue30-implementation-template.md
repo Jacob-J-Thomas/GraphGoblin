@@ -39,10 +39,20 @@ The first stable Codex review and installed Opus code review found five accepted
 
 The combined repair suite passes857 tests with four existing or platform skips: statements94.94%, branches91.09%, functions96.51%, lines96.43%. Twenty fixed-child authority cases include a real parent-to-child run plus missing and inconsistent provenance refusals. Full typecheck20 tasks, lint11 tasks and formatting pass, as do layers, Node22 dependency checks,225-package license allowlist, generated docs and template validation. The build passes11 tasks. The first combined coverage attempt fell below the90% branch threshold; added behavioral process tests raised it without changing thresholds. A later full run reached an unchanged20-second route-test deadline during concurrent heavy checks. Those nine parameterized cases passed in isolation, then the complete suite passed with two workers and the same deadlines.
 
+## Targeted repair disposition and native acceptance
+
+Installed Opus5.5 completed the targeted repair review on b23d649 using Claude.ai authentication and requested xhigh effort: 24 source inspections, 25 turns, 494449 ms, READY for all six repair roots. The remaining P2 poll-starvation case is tracked in [#140](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/140). Targeted Codex findings are tracked as conditional standalone pnpm support in [#138](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/138) and early-cancellation label consistency in [#139](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/139). All five Codex threads have evidence-based fix or deferral replies. CI37860187014 passes Gates and the production image.
+
+The three-case native repair probe passed against the installed pinned pnpm12 native package: actual version execution, trusted credential-location context, and gates receiving neither credential-location context nor tokens. Receipt: native-process-repair-2026-10-08T233456644Z/receipt.json.
+
+The first real scratch workflow reached its planner, then Codex rejected the root-oneOf response schema because native structured output requires an object root. This consumed one of the eight reserved native starts and produced no PR. The original failed run, issue, workspace and durable attempt remain intact; the issue has one admission comment, one truthful terminal no-PR comment and only the blocked label. This is failed acceptance, not a successful implementation demonstration.
+
+The repair wraps the provider response as a strict object containing plan, with the direct/split union nested under that property. Support validates and unwraps the envelope exactly once; internal task records, bounds and authority remain unchanged. Bare or extra-field envelopes remain invalid. An independent GPT 6 Luna source review accepted this narrow delta. The repaired API suite passes 876 tests with four existing/platform skips; coverage is 94.94% statements, 91.09% branches, 96.51% functions and 96.43% lines. Full build, typecheck, lint, template validation, generated docs and formatting pass. The repaired native workflow is still pending. The official [Structured Outputs schema requirements](https://developers.openai.com/api/docs/guides/structured-outputs) support an object root and nested anyOf.
+
 ## Remaining gates
 
-- Bounded real workflows against the separate private scratch repository; no #30 model turns, issues or PRs have been created there yet.
-- Targeted Codex and installed Opus review of the completed repair, native launcher delta check, and current-head CI.
+- Bounded repaired-source native workflow verification against the private scratch repository, preserving the failed first attempt and the original eight-start cap.
+- Current-head gates and Codex review of the planner transport correction. Final feature Opus review includes this correction.
 - Only after those pass: merge this child into the feature branch. The final feature-to-main PR remains unmerged pending the owner's final product validation.
 
 The native #26 Claude fresh/resume, #29 incoming webhook and #97 Jev call budgets were already consumed and are not repeated. The owner's installation and data remain unchanged.

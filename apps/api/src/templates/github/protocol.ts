@@ -100,6 +100,7 @@ export const ImplementationPlanSchema = z.discriminatedUnion('mode', [
       ),
   }),
 ]);
+export const ImplementationPlanEnvelopeSchema = z.strictObject({ plan: ImplementationPlanSchema });
 export const WorkerResultSchema = z.strictObject({ summary: Text.max(4000) });
 export const PrProposalSchema = z.strictObject({
   title: z

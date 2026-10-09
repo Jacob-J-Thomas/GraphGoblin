@@ -19,6 +19,7 @@ import {
 import { createTestEngine, type ScriptedTurn } from '@graphgoblin/engine/testing';
 import {
   ImplementationPlanSchema,
+  ImplementationPlanEnvelopeSchema,
   PrProposalSchema,
   SupportActionSchema,
   WorkerResultSchema,
@@ -115,7 +116,7 @@ async function execute(options: Scenario = {}) {
   const fixCount = gateResults.length - 1;
   engine.ports.harness.script(
     options.turns ?? [
-      { structured: plan },
+      { structured: { plan } },
       ...Array.from({ length: workerCount + fixCount }, (_, index) => ({
         structured: { summary: `Completed fixture worker ${index + 1}.` },
       })),
@@ -161,19 +162,25 @@ async function execute(options: Scenario = {}) {
           value = workspace;
           break;
         case 'plan': {
-          const parsed = ImplementationPlanSchema.safeParse(thread.lastOutput?.value);
+          const parsed = ImplementationPlanEnvelopeSchema.safeParse(thread.lastOutput?.value);
           if (!parsed.success) value = blocked;
           else {
             taskList =
-              parsed.data.mode === 'direct'
-                ? [{ id: 'direct', title: workspace.title, instructions: parsed.data.instructions }]
-                : parsed.data.tasks;
+              parsed.data.plan.mode === 'direct'
+                ? [
+                    {
+                      id: 'direct',
+                      title: workspace.title,
+                      instructions: parsed.data.plan.instructions,
+                    },
+                  ]
+                : parsed.data.plan.tasks;
             value =
               taskList.length > settings.limits.maxTasks
                 ? blocked
                 : {
                     type: 'ImplementationPlan',
-                    mode: parsed.data.mode,
+                    mode: parsed.data.plan.mode,
                     tasks: taskList,
                     taskIndex: 0,
                   };
@@ -326,11 +333,15 @@ describe('authored implementation template bundle', () => {
   });
 
   it.each([
-    ['plan.schema.json', directPlan, true],
-    ['plan.schema.json', splitPlan, true],
-    ['plan.schema.json', { mode: 'split', tasks: splitPlan.tasks.slice(0, 1) }, false],
-    ['plan.schema.json', { mode: 'direct', instructions: '   ' }, false],
-    ['plan.schema.json', { ...directPlan, command: 'untrusted' }, false],
+    ['plan.schema.json', { plan: directPlan }, true],
+    ['plan.schema.json', { plan: splitPlan }, true],
+    ['plan.schema.json', { plan: { mode: 'split', tasks: splitPlan.tasks.slice(0, 1) } }, false],
+    ['plan.schema.json', { plan: { mode: 'direct', instructions: '   ' } }, false],
+    ['plan.schema.json', { plan: { ...directPlan, command: 'untrusted' } }, false],
+    ['plan.schema.json', directPlan, false],
+    ['plan.schema.json', {}, false],
+    ['plan.schema.json', { unknown: directPlan }, false],
+    ['plan.schema.json', { plan: directPlan, unknown: true }, false],
     ['worker.schema.json', { summary: 'Actual work and checks.' }, true],
     ['worker.schema.json', { summary: '', head: sha }, false],
     ['pr.schema.json', prProposal, true],
@@ -342,6 +353,44 @@ describe('authored implementation template bundle', () => {
     ['pr.schema.json', { ...prProposal, body: 'Closes #999' }, false],
   ] as const)('validates bounded structured output %s (%j)', async (file, value, ok) => {
     expect(validateJson(JsonSchemaSchema.parse(await jsonFile(file)), value).ok).toBe(ok);
+  });
+
+  it('keeps the native planner schema in the root-object subset with a nested typed union', async () => {
+    const schema = JsonSchemaSchema.parse(await jsonFile('plan.schema.json'));
+    expect(schema).toMatchObject({
+      type: 'object',
+      additionalProperties: false,
+      required: ['plan'],
+      properties: {
+        plan: {
+          anyOf: [
+            { properties: { mode: { type: 'string', enum: ['direct'] } } },
+            { properties: { mode: { type: 'string', enum: ['split'] } } },
+          ],
+        },
+      },
+    });
+    expect(schema).not.toHaveProperty('anyOf');
+    const inspect = (value: unknown): void => {
+      if (Array.isArray(value)) {
+        for (const item of value) inspect(item);
+        return;
+      }
+      if (value === null || typeof value !== 'object') return;
+      expect(value).not.toHaveProperty('oneOf');
+      if ('properties' in value) {
+        const properties = value.properties;
+        if (properties === null || typeof properties !== 'object' || Array.isArray(properties))
+          throw new Error('Expected native object properties.');
+        expect(value).toHaveProperty('type', 'object');
+        expect(value).toHaveProperty('additionalProperties', false);
+        if (!('required' in value) || !Array.isArray(value.required))
+          throw new Error('Expected every native object property to be required.');
+        expect([...value.required].sort()).toEqual(Object.keys(properties).sort());
+      }
+      for (const child of Object.values(value)) inspect(child);
+    };
+    inspect(schema);
   });
 
   it('runs one direct fresh task after claim and gates before PR effects', async () => {
@@ -532,7 +581,7 @@ describe('authored implementation template bundle', () => {
   it('routes a failed child into block and never commits its task or creates a PR', async () => {
     const { run, actions } = await execute({
       turns: [
-        { structured: directPlan },
+        { structured: { plan: directPlan } },
         { error: { code: 'WORKER_REFUSED', message: 'Fixture worker refused.' } },
       ],
     });
@@ -542,7 +591,10 @@ describe('authored implementation template bundle', () => {
 
   it('bounds malformed plan repair and never reaches task or PR effects', async () => {
     const { engine, run, actions } = await execute({
-      turns: [{ structured: { mode: 'unknown' } }, { structured: { mode: 'unknown' } }],
+      turns: [
+        { structured: { plan: { mode: 'unknown' } } },
+        { structured: { plan: { mode: 'unknown' } } },
+      ],
     });
     expect(run.failure?.code).toBe('OUTPUT_SCHEMA_MISMATCH');
     expect(engine.ports.harness.started).toHaveLength(1);
