@@ -419,7 +419,7 @@ Exit criteria expose the answer primitive, compatible evaluation method and expl
 
 ## Template gallery (#28)
 
-The Loops page's **New from template** action opens the installed catalog. A settings dialog uses labelled controls for the starter instruction, model, effort and iteration limit. Choices reflect the enabled catalog and the selected harness's supported capabilities; unavailable selections remain visible for repair. Editing settings invalidates their previous prerequisite result. A runtime-only prerequisite warns without blocking draft creation, while an authoring prerequisite prevents creation.
+The Loops page's **New from template** action opens the installed catalog. Cards align their use-template buttons at the bottom of each row, even when descriptions and requirement reports differ in length. A settings dialog uses labelled controls for the starter instruction, model, effort and iteration limit. Choices reflect the enabled catalog and the selected harness's supported capabilities; unavailable selections remain visible for repair. Editing settings invalidates their previous prerequisite result. A runtime-only prerequisite warns without blocking draft creation, while an authoring prerequisite prevents creation.
 
 Creation locks controls and dismissal until the request completes. A navigation failure after successful creation retains the created loop ID and offers an editor link instead of suggesting another creation. The parent opens in the normal editor as a draft, with existing undo, autosave, validation and publication behavior. Gallery loading/error states use the existing page patterns and keyboard-accessible dialogs. Default canvas spacing and layout persistence follow their separate backlog issues #124/#125.
 

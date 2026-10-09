@@ -2268,6 +2268,7 @@ export function TemplateGallery({
                 <Card
                   key={`${entry.manifest.id}:${entry.manifest.version}`}
                   title={entry.manifest.title}
+                  className="flex flex-col [&>div]:flex [&>div]:flex-1 [&>div]:flex-col"
                 >
                   <p className="text-sm text-muted">{entry.manifest.description}</p>
                   <div
@@ -2278,9 +2279,9 @@ export function TemplateGallery({
                       <Badge key={tag}>{tag}</Badge>
                     ))}
                   </div>
-                  <div className="mt-4 grid gap-3">
+                  <div className="mt-4 flex flex-1 flex-col gap-3">
                     <RequirementReport report={entry.prerequisites} title="Requirements" />
-                    <Button type="button" onClick={() => openTemplate(entry)}>
+                    <Button type="button" className="mt-auto" onClick={() => openTemplate(entry)}>
                       Use {entry.manifest.title}
                     </Button>
                   </div>
