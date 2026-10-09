@@ -61,7 +61,7 @@ async function fixture(capped = false) {
       fixer: { harness: 'codex', model: 'gpt-6-luna', effort: 'low' },
     },
     requireHumanBeforeMerge: true,
-    limits: { extraCycles: capped ? 0 : 3, waitHours: 1, reminders: 1 },
+    limits: { extraCycles: capped ? 0 : 3, waitHours: 1, reminders: 1, ciWaitMinutes: 1 },
   });
   const pr = ReviewPullRequestSchema.parse({
     number: 7,
@@ -82,6 +82,8 @@ async function fixture(capped = false) {
     envelopes: ReviewEnvelope[] = [];
   const work = { head: original, branch: '' };
   let claimMoves = false,
+    requiredChecksReady = true,
+    nativeReviewsSatisfied = true,
     serial = 0;
   const files: ArtifactFiles = {
     canonical: async (path) => resolve(path),
@@ -103,13 +105,21 @@ async function fixture(capped = false) {
     issue: async () => {
       throw new Error('No linked issue must mean no issue calls.');
     },
-    requiredChecks: async () => [],
-    checks: async () => [],
+    requiredChecks: async () => [{ name: 'Gates', appId: 9 }],
+    checks: async () => [
+      {
+        name: 'Gates',
+        appId: 9,
+        head: pr.head.sha,
+        passed: requiredChecksReady,
+        pending: !requiredChecksReady,
+      },
+    ],
     readiness: async () => ({
       head: pr.head.sha,
       mergeable: true,
       clean: true,
-      reviewsSatisfied: true,
+      reviewsSatisfied: nativeReviewsSatisfied,
     }),
     comments: async (_repo, n) => comments.get(n) ?? [],
     post: async (_repo, n, body) => {
@@ -316,6 +326,10 @@ async function fixture(capped = false) {
     container: () => container,
     app: () => app,
     headers,
+    setReadiness: (checks: boolean, nativeReviews: boolean) => {
+      requiredChecksReady = checks;
+      nativeReviewsSatisfied = nativeReviews;
+    },
     moveClaim: () => {
       claimMoves = true;
     },
@@ -463,6 +477,30 @@ describe('composed review runs, polls and API human authority', () => {
     expect(
       f.logger.lines.filter((entry) => JSON.stringify(entry).includes('AUTHORITY_CONFLICT')),
     ).toEqual([]);
+  });
+  it('rechecks recovered CI readiness for an actual authenticated REST human merge after a timed-out gate', async () => {
+    const f = await fixture(true);
+    f.setReadiness(false, true);
+    const run = await f.start();
+    expect(run.status, JSON.stringify(run.failure)).toBe('waiting');
+    expect(run.waiting?.nodeId).toBe('human-wait-capped');
+    expect(f.harness.started).toHaveLength(0);
+    expect(f.effects.filter((effect) => effect === 'gate')).toHaveLength(1);
+    await f.restart();
+    f.setReadiness(true, true);
+    expect((await f.answer(run.id, { decision: 'merge' })).statusCode).toBe(200);
+    await f.idle();
+    expect((await f.view(run.id)).status).toBe('succeeded');
+    expect(f.effects.filter((effect) => effect === 'merge')).toHaveLength(1);
+    expect(f.harness.started).toHaveLength(0);
+    expect(f.effects.filter((effect) => effect === 'gate')).toHaveLength(1);
+    const events = checkedEvents(await f.container().templates.store.events(run.id));
+    const input = events.find((event) => event.type === 'input.received');
+    const human = f.envelopes.find(
+      (env) => env.identity.kind === 'node' && env.identity.nodeId === 'human',
+    );
+    expect(input).toBeDefined();
+    expect(human?.wake).toMatchObject({ reason: 'input', payload: { decision: 'merge' } });
   });
   it('dedupes PR plus exact head through actual PollTriggers, RunManager and restart', async () => {
     const f = await fixture();

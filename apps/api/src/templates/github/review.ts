@@ -200,7 +200,7 @@ export class ReviewSupport {
       extraCycles: state.extraCycles,
       reminders: state.reminders,
       canExtra: state.extraCycles < settings.limits.extraCycles,
-      mergeAllowed: !!state.gate?.passed && !!state.gate.checks && state.gate.head === state.head,
+      mergeAllowed: !!state.gate?.passed && state.gate.head === state.head,
       summary,
     });
     const result = async (
@@ -289,7 +289,7 @@ export class ReviewSupport {
           ? 'Local gates failed; merge is unavailable.'
           : checks
             ? 'Local gates and required CI checks passed on the exact head.'
-            : 'Required CI/protection did not become ready within the deadline; merge is unavailable.',
+            : 'Required CI checks did not pass within the deadline; a human merge will recheck them.',
       };
       return result({
         type: 'ReviewGate',
@@ -396,14 +396,13 @@ export class ReviewSupport {
         (subject.issue === null ? 'No linked issue; issue-only actions are unavailable. ' : '') +
         'Answer from the run inspector, POST /runs/' +
         runId +
-        '/input, or MCP provide_input. Merge requires unchanged passing gates and native protection.';
+        '/input, or MCP provide_input. Merge requires an unchanged passing local gate and fresh required CI checks and native protection.';
       return result(
         {
           type: 'ReviewWait',
           head: state.head,
           canExtra: state.extraCycles < settings.limits.extraCycles,
-          mergeAllowed:
-            !!state.gate?.passed && !!state.gate.checks && state.gate.head === state.head,
+          mergeAllowed: !!state.gate?.passed && state.gate.head === state.head,
           summary,
         },
         {
@@ -486,7 +485,6 @@ export class ReviewSupport {
         (state.authorization.kind === 'automatic' &&
           (state.humanRequired || state.verdict?.proposal.verdict !== 'approved')) ||
         !state.gate?.passed ||
-        !state.gate.checks ||
         state.gate.head !== state.head ||
         (await repo.head(state.cwd)) !== state.head ||
         (await repo.git(['status', '--porcelain', '--untracked-files=all'], state.cwd))
@@ -581,7 +579,7 @@ export class ReviewSupport {
         .join('')
     );
   }
-  private async ready(envelope: ReviewEnvelope, state: ReviewJournal): Promise<boolean> {
+  private async checksReady(envelope: ReviewEnvelope, state: ReviewJournal): Promise<boolean> {
     const { settings } = envelope,
       repository = envelope.subject!.repository,
       number = envelope.subject!.pullRequest!;
@@ -603,15 +601,22 @@ export class ReviewSupport {
         candidates.every((check) => check.head === state.head && check.passed && !check.pending)
       );
     });
-    const native = await this.deps.github.readiness(repository, number);
+    return complete;
+  }
+  private async ready(envelope: ReviewEnvelope, state: ReviewJournal): Promise<boolean> {
+    if (!(await this.checksReady(envelope, state))) return false;
+    const native = await this.deps.github.readiness(
+      envelope.subject!.repository,
+      envelope.subject!.pullRequest!,
+    );
     if (native.head !== state.head) fail('PR_HEAD_CHANGED');
-    return complete && native.mergeable && native.clean && native.reviewsSatisfied;
+    return native.mergeable && native.clean && native.reviewsSatisfied;
   }
   private async waitChecks(envelope: ReviewEnvelope, state: ReviewJournal) {
     const deadline = this.deps.now() + envelope.settings.limits.ciWaitMinutes * 60000;
     const maxReads = Math.ceil((envelope.settings.limits.ciWaitMinutes * 60000) / 5000) + 1;
     for (let read = 0; read < maxReads; read++) {
-      if (await this.ready(envelope, state)) return true;
+      if (await this.checksReady(envelope, state)) return true;
       if (this.deps.now() >= deadline) return false;
       await this.deps.sleep(Math.min(5000, deadline - this.deps.now()));
     }
