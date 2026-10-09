@@ -977,6 +977,7 @@ describe('canonical disk journal and packaged closure', () => {
       'github/protocol',
       'github/repository',
       'github/storage',
+      'github/support-input',
       'github/support-output',
     ];
     for (const module of modules) {

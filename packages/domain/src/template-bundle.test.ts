@@ -3,6 +3,7 @@ import {
   LoopDefinitionSchema,
   SubloopConfigSchema,
   TemplateBundleSchema,
+  WaitConfigSchema,
   type TemplateBundle,
 } from '@graphgoblin/contracts';
 import { fakeUlid } from '@graphgoblin/contracts/testing';
@@ -282,6 +283,87 @@ describe('bundle preparation', () => {
       'required secret reference',
     );
   });
+  it.each([
+    [{}, 11, 86_400],
+    [{ automaticCycles: 1, extraCycles: 0, reminders: 0, waitHours: 1 }, 3, 3_600],
+    [{ automaticCycles: 3, extraCycles: 3, reminders: 3, waitHours: 168 }, 11, 604_800],
+  ])(
+    'prepares bounded review iterations and both authored human waits (%j)',
+    (limits, iterations, seconds) => {
+      const authored = bundle();
+      authored.manifest.kind = 'review';
+      authored.manifest.roles = [
+        { id: 'reviewer', label: 'Reviewer', access: 'read-only' },
+        { id: 'fixer', label: 'Fixer', access: 'write' },
+      ];
+      authored.manifest.loops[0]!.roleNodes = [
+        { role: 'reviewer', nodeId: 'work' },
+        { role: 'fixer', nodeId: 'fixer' },
+      ];
+      const loop = authored.loops.main!;
+      const inference = loop.nodes.find((node) => node.kind === 'inference')!;
+      loop.nodes.push({ ...structuredClone(inference), id: 'fixer' });
+      for (const id of ['human-wait', 'human-wait-capped', 'unrelated-input'])
+        loop.nodes.push({
+          id,
+          kind: 'wait',
+          label: id,
+          ui: { x: 0, y: 0 },
+          config: WaitConfigSchema.parse({
+            mode: 'input',
+            prompt: 'Choose',
+            timeoutSeconds: 7,
+            onTimeout: 'continue',
+          }),
+        });
+      loop.edges.find((edge) => edge.id === 'c')!.to.node = 'fixer';
+      const sequence = ['fixer', 'human-wait', 'human-wait-capped', 'unrelated-input', 'done'];
+      for (let index = 0; index < sequence.length - 1; index++)
+        loop.edges.push({
+          id: `review-${index}`,
+          from: { node: sequence[index]!, port: 'out' },
+          to: { node: sequence[index + 1]!, port: 'in' },
+        });
+      const original = structuredClone(authored);
+      const prepared = prepareTemplateBundle(
+        authored,
+        {
+          kind: 'review',
+          repository: {
+            path: '/repos/example',
+            owner: 'owner',
+            name: 'example',
+            baseBranch: 'main',
+          },
+          supportReadKey: 'reader-key',
+          roles: { reviewer: role, fixer: role },
+          limits,
+        },
+        allocations(),
+      );
+      const definition = prepared.loops[0]!.definition;
+      expect(definition.settings.maxIterations).toBe(iterations);
+      expect(
+        definition.nodes
+          .filter((node) => node.kind === 'wait')
+          .map((node) => [node.id, node.config.timeoutSeconds]),
+      ).toEqual([
+        ['human-wait', seconds],
+        ['human-wait-capped', seconds],
+        ['unrelated-input', 7],
+      ]);
+      expect(authored).toEqual(original);
+      expect(
+        definition.nodes.find((node) => node.id === 'work' && node.kind === 'inference')?.config,
+      ).toMatchObject({ session: { policy: 'fresh' }, harnessOptions: { sandbox: 'read-only' } });
+      expect(
+        definition.nodes.find((node) => node.id === 'fixer' && node.kind === 'inference')?.config,
+      ).toMatchObject({
+        session: { policy: 'fresh' },
+        harnessOptions: { sandbox: 'workspace-write' },
+      });
+    },
+  );
 });
 
 describe('bundle integrity refusal before persistence', () => {

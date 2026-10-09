@@ -78,6 +78,9 @@ import {
   type TemplateFailureReporter,
 } from './templates/runtime.js';
 import { PrivateTemplateScripts } from './templates/scripts.js';
+import { ReviewAuthority } from './templates/github/review-authority.js';
+import { ReviewReporter } from './templates/github/review-reporter.js';
+import type { ReviewDependenciesFactory } from './templates/github/review.js';
 import {
   ImplementationAuthority,
   type SupportDependencies,
@@ -102,6 +105,7 @@ export interface ContainerOverrides {
   templateFailureReporter?: TemplateFailureReporter;
   /** Inject deterministic boundaries for repository-template tests; never an authored setting. */
   implementationDependencies?: SupportDependencies;
+  reviewDependencies?: ReviewDependenciesFactory;
   clock?: ClockPort;
   ids?: IdPort;
   logger?: Logger;
@@ -358,15 +362,63 @@ export async function createContainer(
       templates,
       overrides.implementationDependencies,
     );
+    const implementationAuthority = new ImplementationAuthority(
+      templates,
+      overrides.implementationDependencies,
+    );
+    const reviewReporter = new ReviewReporter(templates, overrides.reviewDependencies);
+    const reviewAuthority = new ReviewAuthority(
+      templates,
+      overrides.reviewDependencies,
+      async (binding) => {
+        if (!('supportReadKey' in binding.settings))
+          throw new Error('Private review credential unavailable.');
+        const credential = await secretsFor(binding.ownerId).resolve(
+          binding.settings.supportReadKey,
+        );
+        const key = credential ? await apiKeys.authenticate(credential) : undefined;
+        if (
+          !credential ||
+          !key ||
+          key.ownerId !== binding.ownerId ||
+          key.scopes.length !== 1 ||
+          key.scopes[0] !== 'runs:read'
+        )
+          throw new Error('Private review credential unavailable.');
+        return credential;
+      },
+    );
     const templateRuntime = new TemplateRuntime(
       templates,
-      overrides.templateAuthority ??
-        new ImplementationAuthority(templates, overrides.implementationDependencies),
-      overrides.templateFailureReporter ?? implementationReporter,
+      overrides.templateAuthority ?? {
+        resolve: (binding, payload) =>
+          binding.manifest.kind === 'review'
+            ? reviewAuthority.resolve(binding, payload)
+            : implementationAuthority.resolve(binding, payload),
+        recheck: (binding, subject) =>
+          binding.manifest.kind === 'review'
+            ? reviewAuthority.recheck(binding, subject)
+            : implementationAuthority.recheck(binding, subject),
+        consumesReviewHead: (binding, history, head) =>
+          binding.manifest.kind === 'review'
+            ? reviewAuthority.consumesReviewHead(binding, history, head)
+            : Promise.resolve(false),
+      },
+      overrides.templateFailureReporter ?? {
+        report: (binding, run, subject, code) =>
+          binding.manifest.kind === 'review'
+            ? reviewReporter.report(binding, run, subject, code)
+            : implementationReporter.report(binding, run, subject, code),
+      },
     );
     // Reporting is reconciled before finalization. Failure leaves the durable terminal run
     // unfinalized, so startup retries the fixed report instead of losing it.
-    installImplementationFinalization(runs, implementationReporter);
+    installImplementationFinalization(runs, {
+      terminal: async (run) => {
+        await implementationReporter.terminal(run);
+        await reviewReporter.terminal(run);
+      },
+    });
     ports.admission = templateAdmission(ports.admission, templateRuntime);
     ports.scripts = new PrivateTemplateScripts({
       instances: templates,

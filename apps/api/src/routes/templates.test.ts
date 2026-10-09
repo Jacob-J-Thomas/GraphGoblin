@@ -15,7 +15,11 @@ describe('template catalog and instances', () => {
     const listed = await app.app.inject({ method: 'GET', url: '/templates' });
     expect(listed.statusCode, listed.body).toBe(200);
     const { items } = TemplateListResponseSchema.parse(listed.json());
-    expect(items.map((entry) => entry.manifest.id)).toEqual(['starter', 'implementation']);
+    expect(items.map((entry) => entry.manifest.id)).toEqual([
+      'starter',
+      'implementation',
+      'review',
+    ]);
     const settings = items[0]?.defaultSettings;
     expect(settings).not.toBeNull();
     const created = await app.app.inject({

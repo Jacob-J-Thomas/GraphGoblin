@@ -12,6 +12,8 @@ import { checkedEvents, readAuthority, ClaimRecordSchema } from './authority.js'
 import type { TemplateSubject } from './subjects.js';
 import { createRequire } from 'node:module';
 import { implementationPollKeys } from './github/poll.js';
+import { readReviewWake } from './github/review-wake.js';
+import type { ReviewWake } from './github/review-protocol.js';
 import { parseSubject } from './subjects.js';
 import type { TemplateInstances } from './instances.js';
 
@@ -89,6 +91,7 @@ export class PrivateTemplateScripts implements ScriptPort {
     let trustedSubject: TemplateSubject | null = null;
     let claim: ReturnType<typeof ClaimRecordSchema.parse> | null = null;
     let visit: number | null = null;
+    let wake: ReviewWake | null = null;
     if (identity.kind === 'poll') {
       if (
         version.status !== 'published' ||
@@ -156,6 +159,13 @@ export class PrivateTemplateScripts implements ScriptPort {
         }
       }
       if (latest !== identity.startedSeq) refuse();
+      wake = readReviewWake(
+        binding,
+        identity.loopId,
+        version.definition,
+        events,
+        identity.startedSeq,
+      );
       const source = await readAuthority(
         this.deps.instances.store,
         binding,
@@ -232,6 +242,7 @@ export class PrivateTemplateScripts implements ScriptPort {
         subject: trustedSubject,
         claim,
         visit,
+        ...(binding.manifest.kind === 'review' ? { wake } : {}),
       }),
       timeoutMs: request.timeoutMs ?? 60_000,
       maxStdoutBytes: 65_536,

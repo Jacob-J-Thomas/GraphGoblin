@@ -43,6 +43,12 @@ export interface TemplateAuthoritySource {
   /** Trusted repository eligibility; authored payload is only a selector, never authority. */
   resolve(binding: TemplateBinding, payload: unknown): Promise<TemplateAuthoritySelection>;
   recheck(binding: TemplateBinding, subject: ParentSubject): Promise<void>;
+  /** API-private authenticated review artifact proof supplements recorded fixer facts at admission. */
+  consumesReviewHead?(
+    binding: TemplateBinding,
+    history: Awaited<ReturnType<typeof readAuthority>>,
+    head: string,
+  ): Promise<boolean>;
 }
 export interface TemplateFailureReporter {
   report(
@@ -276,7 +282,24 @@ export class TemplateRuntime {
             'The selected poll candidate no longer matches the authenticated implementation attempt.',
           );
       }
-    } else await assertSubjectSource(store, binding, subject);
+    } else {
+      await assertSubjectSource(store, binding, subject);
+      if (pollItem && subject.kind === 'review') {
+        const payload = input.initialThread.invocation.trigger.payload;
+        const expected = String(subject.pullRequest) + ':' + subject.head;
+        if (
+          !payload ||
+          typeof payload !== 'object' ||
+          Array.isArray(payload) ||
+          payload['id'] !== subject.pullRequest ||
+          input.initialThread.invocation.trigger.dedupeKey !== expected
+        )
+          throw new TemplateError(
+            'TEMPLATE_AUTHORITY_REFUSED',
+            'The selected review poll candidate no longer matches the authenticated PR head.',
+          );
+      }
+    }
     const rows = await store.subjectRuns({
       ownerId: input.run.ownerId,
       repository: subject.repository,
@@ -323,6 +346,12 @@ export class TemplateRuntime {
             );
           consumed ||= fact.head === subject.head;
         }
+        if (!consumed && this.authority.consumesReviewHead)
+          consumed = await this.authority.consumesReviewHead(
+            TemplateBindingSchema.parse(stored.binding),
+            source,
+            subject.head!,
+          );
       }
     }
     if (consumed) {
