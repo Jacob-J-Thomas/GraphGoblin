@@ -104,6 +104,7 @@ function fixture(human = false, issue: number | null = 42) {
       { name: 'Gates', head: original, appId: 9, passed: true, pending: false },
     ],
     ready = true,
+    reviewsSatisfied = true,
     auth = true,
     links = issue === null ? [] : [{ repository: 'example/repo', number: issue }];
   const commands: CommandRunner = {
@@ -195,7 +196,7 @@ function fixture(human = false, issue: number | null = 42) {
       head: pr.head.sha,
       mergeable: ready,
       clean: ready,
-      reviewsSatisfied: ready,
+      reviewsSatisfied: ready && reviewsSatisfied,
     }),
     comments: async (_repo, number) => comments.get(number) ?? [],
     post: async (_repo, number, body) => {
@@ -372,6 +373,7 @@ function fixture(human = false, issue: number | null = 42) {
       permission?: string;
       checks?: CheckFact[];
       ready?: boolean;
+      reviewsSatisfied?: boolean;
       auth?: boolean;
       links?: typeof links;
     }) => {
@@ -386,6 +388,7 @@ function fixture(human = false, issue: number | null = 42) {
       if (options.permission !== undefined) permission = options.permission;
       if (options.checks !== undefined) checks = options.checks;
       if (options.ready !== undefined) ready = options.ready;
+      if (options.reviewsSatisfied !== undefined) reviewsSatisfied = options.reviewsSatisfied;
       if (options.auth !== undefined) auth = options.auth;
       if (options.links !== undefined) links = options.links;
     },
@@ -493,6 +496,83 @@ describe('authenticated review support state machine', () => {
     f.pr.head.sha = 'e'.repeat(40);
     expect(await f.act('merge')).toMatchObject({ code: 'PR_HEAD_CHANGED' });
   });
+  it('reviews approval-required heads before native approval, then rechecks that approval at human merge', async () => {
+    const f = fixture(true);
+    f.set({ reviewsSatisfied: false });
+    await f.prepare();
+    await f.gate();
+    expect(await f.act('verdict', approved)).toMatchObject({ route: 'wait', automaticCycles: 1 });
+    await f.act('summary');
+    f.wake('merge');
+    expect(await f.act('human')).toMatchObject({ route: 'merge' });
+    expect(await f.act('merge', undefined, 30)).toMatchObject({
+      code: 'MERGE_PROTECTION_UNAVAILABLE',
+    });
+    expect(f.effects).not.toContain('merge');
+    f.restart();
+    f.set({ reviewsSatisfied: true });
+    expect(await f.act('merge', undefined, 30)).toMatchObject({
+      type: 'ReviewMerged',
+      head: original,
+    });
+    expect(f.effects.filter((effect) => effect === 'merge')).toHaveLength(1);
+  });
+  it('does not require native mergeability or a clean GitHub readiness snapshot before AI review', async () => {
+    const f = fixture();
+    f.set({ ready: false });
+    await f.prepare();
+    await f.gate();
+    expect(await f.act('verdict', approved)).toMatchObject({ route: 'merge' });
+    expect(await f.act('merge')).toMatchObject({ code: 'MERGE_PROTECTION_UNAVAILABLE' });
+    expect(f.effects).not.toContain('merge');
+  });
+  it('permits genuine human merge after timed-out CI becomes ready without another gate or model cycle', async () => {
+    const f = fixture(true);
+    await f.prepare();
+    f.set({ checks: [{ name: 'Gates', head: original, appId: 9, passed: false, pending: true }] });
+    expect(await f.act('gate')).toMatchObject({ passed: false });
+    expect((await f.state())?.gate).toMatchObject({ passed: true, checks: false, head: original });
+    expect(await f.act('verdict', approved)).toMatchObject({ code: 'GATES_REQUIRED' });
+    expect(await f.act('summary')).toMatchObject({ mergeAllowed: true });
+    f.wake('merge');
+    expect(await f.act('human')).toMatchObject({ route: 'merge' });
+    f.restart();
+    f.set({ checks: [{ name: 'Gates', head: original, appId: 9, passed: true, pending: false }] });
+    expect(await f.act('merge')).toMatchObject({ type: 'ReviewMerged' });
+    expect(f.effects.filter((effect) => effect === 'gate')).toHaveLength(1);
+    expect((await f.state())?.automaticCycles).toBe(0);
+  });
+  it.each(['ci', 'local', 'head'] as const)(
+    'refuses authentic human merge when the current %s invariant is unsatisfied',
+    async (mode) => {
+      const f = fixture(true);
+      await f.prepare();
+      f.set({
+        checks: [{ name: 'Gates', head: original, appId: 9, passed: false, pending: true }],
+      });
+      if (mode === 'local') f.gates.push({ ...good(), exitCode: 1 });
+      expect(await f.act('gate')).toMatchObject({ passed: false });
+      await f.act('summary');
+      f.wake('merge');
+      await f.act('human');
+      f.restart();
+      if (mode !== 'ci')
+        f.set({
+          checks: [{ name: 'Gates', head: original, appId: 9, passed: true, pending: false }],
+        });
+      if (mode === 'head') f.pr.head.sha = 'e'.repeat(40);
+      expect(await f.act('merge')).toMatchObject({
+        type: 'SupportBlocked',
+        code:
+          mode === 'ci'
+            ? 'MERGE_PROTECTION_UNAVAILABLE'
+            : mode === 'local'
+              ? 'MERGE_NOT_AUTHORIZED'
+              : 'PR_HEAD_CHANGED',
+      });
+      expect(f.effects).not.toContain('merge');
+    },
+  );
   it('records reminders before effects, never merges on timeout and retains exactly the finite bound across restart', async () => {
     const f = fixture(true);
     await f.prepare();
@@ -553,31 +633,27 @@ describe('authenticated review support state machine', () => {
       expect(f.effects).not.toContain('merge');
     },
   );
-  it.each(['missing', 'pending', 'wrong-app', 'wrong-sha', 'native'] as const)(
+  it.each(['missing', 'pending', 'wrong-app', 'wrong-sha'] as const)(
     'cannot approve or merge %s checks',
     async (mode) => {
       const f = fixture();
       await f.prepare();
       const check = { name: 'Gates', head: original, appId: 9, passed: true, pending: false };
-      f.set(
-        mode === 'native'
-          ? { ready: false }
-          : {
-              checks:
-                mode === 'missing'
-                  ? []
-                  : [
-                      {
-                        ...check,
-                        ...(mode === 'pending'
-                          ? { passed: false, pending: true }
-                          : mode === 'wrong-app'
-                            ? { appId: 10 }
-                            : { head: 'e'.repeat(40) }),
-                      },
-                    ],
-            },
-      );
+      f.set({
+        checks:
+          mode === 'missing'
+            ? []
+            : [
+                {
+                  ...check,
+                  ...(mode === 'pending'
+                    ? { passed: false, pending: true }
+                    : mode === 'wrong-app'
+                      ? { appId: 10 }
+                      : { head: 'e'.repeat(40) }),
+                },
+              ],
+      });
       expect(await f.act('gate')).toMatchObject({ type: 'ReviewGate', passed: false });
       expect(await f.act('verdict', approved)).toMatchObject({ code: 'GATES_REQUIRED' });
       expect(f.effects).not.toContain('merge');

@@ -10,6 +10,12 @@ The focused168-case suite includes six composed tests using actual API routes, R
 
 Additional boundary tests verify authentic implementation lineage at attempts2/3, permanently consumed fixer-pushed heads across a missing node.finished record, mapped started-visit/config and signed-journal matching, strict original claim refusal and explicit bot author allowlisting. Both newly imported shared helpers are included in the support closure hash; changing either invalidates the binding. No generic engine, session-continuity or new public-route framework was added.
 
+## Scoped source-review repair F1
+
+The pre-review gate now waits only for required CI checks on the exact head. Native GitHub approvals, mergeability and clean readiness remain fresh merge-time requirements. A timed-out CI snapshot cannot permanently veto an authentic human merge after CI becomes ready; the recorded local gate must still have passed, the workspace must remain clean on the same head, and current authorization and ordinary protection checks still apply.
+
+New inert regressions cover approval-required AI review before native approval, native readiness refusal at merge, same-head human merge after a CI timeout and restart, and continued refusal for incomplete CI, failed local gates and changed heads. A composed case uses actual REST input, RunManager, SQLite, private support stdin and restart to merge after CI recovers with zero model turns and one local gate. Source syntax/type/lint and focused verification are recorded in the repair receipt; root owns combined gates and native acceptance.
+
 ## Remaining gates
 
 - Integrate the repaired #30 planner output schema and verify the resulting source and build.
