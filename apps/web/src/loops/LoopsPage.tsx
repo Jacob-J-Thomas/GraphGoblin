@@ -287,16 +287,12 @@ export function LoopsPage() {
                     onInstantiate={(templateId, settings) =>
                       instantiateTemplate.mutateAsync({ templateId, settings })
                     }
-                    onCreateDraft={(templateId) =>
-                      createTemplateDraft.mutateAsync({ templateId })
-                    }
+                    onCreateDraft={(templateId) => createTemplateDraft.mutateAsync({ templateId })}
                     onCreated={async (parentLoopId) => {
                       await queryClient.invalidateQueries({ queryKey: keys.loops });
                       await navigate(`/loops/${parentLoopId}/edit`);
                     }}
-                    onCreateFailed={() =>
-                      queryClient.invalidateQueries({ queryKey: keys.loops })
-                    }
+                    onCreateFailed={() => queryClient.invalidateQueries({ queryKey: keys.loops })}
                   />
                 </div>
               )}

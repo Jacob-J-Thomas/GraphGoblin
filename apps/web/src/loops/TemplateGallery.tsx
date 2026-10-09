@@ -56,21 +56,30 @@ export interface TemplateGalleryProps {
   onCreateFailed?: () => void | Promise<void>;
 }
 
-function statusTone(status: 'ok' | 'missing' | 'unavailable') {
-  return status === 'ok' ? 'good' : status === 'missing' ? 'bad' : 'warn';
-}
-
 function galleryRequirements(entry: TemplateCatalogEntry): TemplatePrerequisiteReport {
-  const remediation =
-    entry.manifest.kind === 'starter'
-      ? 'Choose a model in Settings or edit the draft before running.'
-      : 'Use Configure automation to set the repository and roles.';
   return {
     ...entry.prerequisites,
-    checks: entry.prerequisites.checks.map((check) =>
-      check.id === 'settings' && check.status !== 'ok' ? { ...check, remediation } : check,
-    ),
+    checks: entry.prerequisites.checks.map((check) => {
+      if (check.id !== 'settings' || check.status === 'ok') return check;
+      return entry.manifest.kind === 'starter'
+        ? {
+            ...check,
+            message: 'Choose model defaults in Settings or edit the draft before running.',
+            remediation: 'Set model defaults before running this draft.',
+          }
+        : {
+            ...check,
+            message: 'Repository settings are needed only for optional automation.',
+            remediation: 'Use Configure automation to set the repository and roles.',
+          };
+    }),
   };
+}
+
+function statusTone(status: 'ok' | 'missing' | 'unavailable', optional = false) {
+  if (status === 'ok') return 'good';
+  if (status === 'missing' && optional) return 'warn';
+  return status === 'missing' ? 'bad' : 'warn';
 }
 
 function RequirementReport({
@@ -80,6 +89,7 @@ function RequirementReport({
   note,
   context = 'setup',
   compact = false,
+  headingLevel = 3,
 }: {
   report: TemplatePrerequisiteReport;
   title: string;
@@ -87,16 +97,20 @@ function RequirementReport({
   note?: string;
   context?: 'setup' | 'run' | 'automation';
   compact?: boolean;
+  headingLevel?: 3 | 4;
 }) {
   const ready = context === 'setup' ? report.canInstantiate : report.canRun;
   const checks = compact ? report.checks.filter((check) => check.status !== 'ok') : report.checks;
+  const Heading = headingLevel === 4 ? 'h4' : 'h3';
   return (
     <section
-      className={compact ? 'grid gap-3 md:row-span-2 md:grid md:grid-rows-subgrid md:gap-y-3' : 'grid gap-3'}
+      className={
+        compact ? 'grid gap-3 md:row-span-2 md:grid md:grid-rows-subgrid md:gap-y-3' : 'grid gap-3'
+      }
       aria-label={ariaLabel ?? title}
     >
       <div className="flex flex-wrap items-center gap-2">
-        <h3 className="text-sm font-semibold">{title}</h3>
+        <Heading className="text-sm font-semibold">{title}</Heading>
         {ready ? (
           <Badge tone="good">
             {context === 'setup'
@@ -106,7 +120,7 @@ function RequirementReport({
                 : 'Ready to run automation'}
           </Badge>
         ) : (
-          <Badge tone="bad">
+          <Badge tone={context === 'automation' ? 'warn' : 'bad'}>
             {context === 'setup'
               ? 'Needs setup before creating'
               : context === 'run'
@@ -114,9 +128,7 @@ function RequirementReport({
                 : 'Automation setup needed'}
           </Badge>
         )}
-        {context === 'setup' && !report.canRun ? (
-          <Badge tone="warn">Runs not ready</Badge>
-        ) : null}
+        {context === 'setup' && !report.canRun ? <Badge tone="warn">Runs not ready</Badge> : null}
       </div>
       {note ? <p className="text-xs text-muted">{note}</p> : null}
       {!compact && context === 'setup' && !report.canRun && report.canInstantiate ? (
@@ -127,7 +139,9 @@ function RequirementReport({
       ) : null}
       {checks.length === 0 ? (
         <p className="text-sm text-muted">
-          {compact ? 'All requirements met.' : 'No setup requirements are needed for this template.'}
+          {compact
+            ? 'All requirements met.'
+            : 'No setup requirements are needed for this template.'}
         </p>
       ) : (
         <ul className="grid gap-2">
@@ -139,7 +153,9 @@ function RequirementReport({
             >
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-sm font-medium">{check.label}</span>
-                <Badge tone={statusTone(check.status)}>{check.status}</Badge>
+                <Badge tone={statusTone(check.status, context === 'automation')}>
+                  {check.status}
+                </Badge>
                 <Badge tone="neutral">
                   {context === 'run'
                     ? 'Run requirement'
@@ -2359,8 +2375,9 @@ export function TemplateGallery({
               Choose a template
             </h2>
             <p className="mt-1 text-sm text-muted">
-              Drafts are ready to edit; requirements below apply when you run the draft. For
-              repository triggers and pull-request actions, use Configure automation.
+              Drafts use their model defaults and the input or context you provide when running.
+              Repository requirements below apply only to optional automation; use Configure
+              automation for repository triggers and pull-request actions.
             </p>
           </div>
           {templates.length === 0 ? (
@@ -2372,8 +2389,8 @@ export function TemplateGallery({
                   key={`${entry.manifest.id}:${entry.manifest.version}`}
                   title={entry.manifest.title}
                   titleLevel={3}
-                  className="md:row-span-7 md:grid md:grid-rows-subgrid md:gap-y-3"
-                  bodyClassName="grid gap-3 md:row-span-6 md:grid-rows-subgrid md:gap-y-3"
+                  className="md:row-span-6 md:grid md:grid-rows-subgrid md:gap-y-3"
+                  bodyClassName="grid gap-3 md:row-span-5 md:grid-rows-subgrid md:gap-y-3"
                 >
                   <div className="text-sm text-muted">
                     <p>{entry.manifest.description}</p>
@@ -2388,42 +2405,63 @@ export function TemplateGallery({
                   </div>
                   <RequirementReport
                     report={galleryRequirements(entry)}
-                    title={entry.manifest.kind === 'starter' ? 'Run requirements' : 'Automation requirements'}
+                    title={
+                      entry.manifest.kind === 'starter'
+                        ? 'Run requirements'
+                        : 'Optional automation requirements'
+                    }
                     ariaLabel={`${entry.manifest.title} ${entry.manifest.kind === 'starter' ? 'run' : 'automation'} requirements`}
                     context={entry.manifest.kind === 'starter' ? 'run' : 'automation'}
                     compact
+                    headingLevel={4}
                   />
-                  <div className="flex flex-col gap-2">
-                    {entry.manifest.draftFile ? (
-                      <Button
-                        type="button"
-                        onClick={() => {
-                          if (actionInFlightRef.current) return;
-                          const createdLoopId = createdDrafts[entry.manifest.id];
-                          if (createdLoopId) {
-                            void openCreatedDraft(entry.manifest.id, createdLoopId);
-                          } else {
-                            void createDraft(entry);
-                          }
-                        }}
-                        aria-disabled={pendingTemplateId !== undefined || undefined}
-                        aria-busy={pendingTemplateId === entry.manifest.id || undefined}
-                      >
-                        {pendingTemplateId === entry.manifest.id
-                          ? createdDrafts[entry.manifest.id]
-                            ? 'Opening draft…'
-                            : 'Creating draft…'
-                          : createdDrafts[entry.manifest.id]
-                            ? handoffErrors[entry.manifest.id]
-                              ? 'Retry opening draft'
-                              : 'Open draft'
-                            : `Use ${entry.manifest.title}`}
-                      </Button>
-                    ) : (
-                      <p className="text-sm text-muted">
-                        An editable starting point is not available for this template.
-                      </p>
-                    )}
+                  <div className="grid content-start gap-2">
+                    <div className="flex flex-col items-stretch gap-2">
+                      {entry.manifest.draftFile ? (
+                        <Button
+                          type="button"
+                          onClick={() => {
+                            if (actionInFlightRef.current) return;
+                            const createdLoopId = createdDrafts[entry.manifest.id];
+                            if (createdLoopId) {
+                              void openCreatedDraft(entry.manifest.id, createdLoopId);
+                            } else {
+                              void createDraft(entry);
+                            }
+                          }}
+                          aria-disabled={pendingTemplateId !== undefined || undefined}
+                          aria-busy={pendingTemplateId === entry.manifest.id || undefined}
+                        >
+                          {pendingTemplateId === entry.manifest.id
+                            ? createdDrafts[entry.manifest.id]
+                              ? 'Opening draft…'
+                              : 'Creating draft…'
+                            : createdDrafts[entry.manifest.id]
+                              ? handoffErrors[entry.manifest.id]
+                                ? 'Retry opening draft'
+                                : 'Open draft'
+                              : `Use ${entry.manifest.title}`}
+                        </Button>
+                      ) : (
+                        <p className="text-sm text-muted">
+                          An editable starting point is not available for this template.
+                        </p>
+                      )}
+                      {entry.manifest.kind !== 'starter' ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="self-start"
+                          aria-label={`Configure automation for ${entry.manifest.title}`}
+                          onClick={() => {
+                            if (!actionInFlightRef.current) openTemplate(entry);
+                          }}
+                          aria-disabled={pendingTemplateId !== undefined || undefined}
+                        >
+                          Configure automation
+                        </Button>
+                      ) : null}
+                    </div>
                     {pendingTemplateId === entry.manifest.id ? (
                       <p role="status" aria-live="polite" className="text-sm text-muted">
                         {createdDrafts[entry.manifest.id] ? 'Opening draft…' : 'Creating draft…'}
@@ -2439,7 +2477,9 @@ export function TemplateGallery({
                       </Alert>
                     ) : null}
                     {handoffErrors[entry.manifest.id] && createdDrafts[entry.manifest.id] ? (
-                      <Alert title={`${entry.manifest.title} draft created, but the editor could not be opened`}>
+                      <Alert
+                        title={`${entry.manifest.title} draft created, but the editor could not be opened`}
+                      >
                         <p>{handoffErrors[entry.manifest.id]}</p>
                         <Link
                           className="mt-2 inline-block underline"
@@ -2448,21 +2488,6 @@ export function TemplateGallery({
                           Open the created draft
                         </Link>
                       </Alert>
-                    ) : null}
-                  </div>
-                  <div>
-                    {entry.manifest.kind !== 'starter' ? (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        aria-label={`Configure automation for ${entry.manifest.title}`}
-                        onClick={() => {
-                          if (!actionInFlightRef.current) openTemplate(entry);
-                        }}
-                        aria-disabled={pendingTemplateId !== undefined || undefined}
-                      >
-                        Configure automation
-                      </Button>
                     ) : null}
                   </div>
                 </Card>

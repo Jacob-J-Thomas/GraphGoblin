@@ -299,7 +299,9 @@ async function openImplementationTemplate(
     </MemoryRouter>,
   );
   await user.click(screen.getByRole('button', { name: 'New from template' }));
-  await user.click(screen.getByRole('button', { name: 'Configure automation for Implementation workflow' }));
+  await user.click(
+    screen.getByRole('button', { name: 'Configure automation for Implementation workflow' }),
+  );
   return entry;
 }
 
@@ -541,7 +543,9 @@ describe('TemplateGallery', () => {
       </MemoryRouter>,
     );
     await user.click(screen.getByRole('button', { name: 'New from template' }));
-    await user.click(screen.getByRole('button', { name: 'Configure automation for GitHub PR review' }));
+    await user.click(
+      screen.getByRole('button', { name: 'Configure automation for GitHub PR review' }),
+    );
 
     expect(screen.getByLabelText('Checkout path')).toHaveValue('');
     expect(screen.getByLabelText('Support credential key name')).toHaveValue('supportReadKey');
@@ -670,7 +674,9 @@ describe('TemplateGallery', () => {
       </MemoryRouter>,
     );
     await user.click(screen.getByRole('button', { name: 'New from template' }));
-    await user.click(screen.getByRole('button', { name: 'Configure automation for GitHub PR review' }));
+    await user.click(
+      screen.getByRole('button', { name: 'Configure automation for GitHub PR review' }),
+    );
 
     expect(screen.getAllByText(/This harness is not ready yet/)).toHaveLength(2);
     expect(screen.getByRole('button', { name: 'Check requirements' })).toBeDisabled();
@@ -827,6 +833,16 @@ describe('TemplateGallery', () => {
     implementation.defaultSettings = null;
     implementation.prerequisites.canInstantiate = false;
     implementation.prerequisites.canRun = false;
+    implementation.prerequisites.checks = [
+      {
+        id: 'settings',
+        label: 'Settings',
+        status: 'missing',
+        blocking: 'authoring',
+        message: 'Complete valid settings for this template.',
+        remediation: 'Choose all required roles and correct the settings fields.',
+      },
+    ];
     let finishCreate!: (response: TemplateDraftResponse) => void;
     let finishHandoff!: () => void;
     const pendingCreate = new Promise<TemplateDraftResponse>((resolve) => {
@@ -860,8 +876,24 @@ describe('TemplateGallery', () => {
     const otherCreate = screen.getByRole('button', { name: 'Use Implementation workflow' });
     expect(create).toBeEnabled();
     expect(screen.getByRole('region', { name: 'Quick start run requirements' })).toBeVisible();
-    expect(screen.getByRole('region', { name: 'Implementation workflow automation requirements' })).toBeVisible();
+    expect(
+      screen.getByRole('region', { name: 'Implementation workflow automation requirements' }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole('heading', { name: 'Optional automation requirements', level: 4 }),
+    ).toBeVisible();
     expect(screen.getByText('Run setup needed')).toBeVisible();
+    expect(screen.getByText('Automation setup needed').parentElement).toHaveClass(
+      'bg-status-warn-bg',
+    );
+    expect(screen.getByText('missing').parentElement).toHaveClass('bg-status-warn-bg');
+    expect(
+      screen.getByText('Repository settings are needed only for optional automation.'),
+    ).toBeVisible();
+    const configureAutomation = screen.getByRole('button', {
+      name: 'Configure automation for Implementation workflow',
+    });
+    expect(otherCreate.parentElement).toBe(configureAutomation.parentElement);
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
 
     act(() => {
@@ -917,7 +949,9 @@ describe('TemplateGallery', () => {
 
     await user.click(screen.getByRole('button', { name: 'New from template' }));
     await user.click(screen.getByRole('button', { name: 'Use Quick start' }));
-    expect(await screen.findByRole('alert')).toHaveTextContent('Could not create the Quick start draft');
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Could not create the Quick start draft',
+    );
     expect(screen.getByRole('alert')).toHaveTextContent('Draft service unavailable.');
     expect(screen.getByRole('alert')).toHaveTextContent('check the loop list');
     expect(onCreateDraft).toHaveBeenCalledTimes(1);

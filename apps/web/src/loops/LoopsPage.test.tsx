@@ -2,12 +2,7 @@ import { kitchenSinkLoop, minimalLoop } from '@graphgoblin/contracts/testing';
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import {
-  FakeApi,
-  problem,
-  starterTemplateEntry,
-  TS,
-} from '../__fixtures__/fake-api.js';
+import { FakeApi, problem, starterTemplateEntry, TS } from '../__fixtures__/fake-api.js';
 import { renderApp } from '../__fixtures__/render.js';
 
 describe('LoopsPage', () => {
@@ -65,7 +60,7 @@ describe('LoopsPage', () => {
     await user.click(await screen.findByRole('button', { name: 'New from template' }));
     expect(await screen.findByRole('heading', { name: 'Choose a template' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Quick start' })).toBeInTheDocument();
-    expect(screen.getByText(/Drafts are ready to edit/)).toBeInTheDocument();
+    expect(screen.getByText(/Drafts use their model defaults/)).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Use Quick start' }));
 
     await waitFor(() =>
@@ -195,7 +190,7 @@ describe('LoopsPage', () => {
     await user.click(await screen.findByRole('button', { name: 'New from template' }));
     expect(screen.getByText('Run setup needed')).toBeInTheDocument();
     expect(screen.getByText('Run requirement')).toBeInTheDocument();
-    expect(screen.getByText(/Drafts are ready to edit/)).toBeInTheDocument();
+    expect(screen.getByText(/Drafts use their model defaults/)).toBeInTheDocument();
     await user.click(await screen.findByRole('button', { name: 'Use Quick start' }));
     await waitFor(() =>
       expect(screen.getByTestId('location')).toHaveTextContent(/^\/loops\/.+\/edit$/),
@@ -213,7 +208,9 @@ describe('LoopsPage', () => {
     renderApp('/loops', api);
     await user.click(await screen.findByRole('button', { name: 'New from template' }));
     await user.click(await screen.findByRole('button', { name: 'Use Quick start' }));
-    expect(await screen.findByText(/The template draft could not be created\./)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/The template draft could not be created\./),
+    ).toBeInTheDocument();
     expect(screen.getByText(/check the loop list/)).toBeInTheDocument();
     expect(api.callsTo('POST', '/templates/quick-start/draft')).toHaveLength(1);
     expect(api.callsTo('POST', '/templates/quick-start/prerequisites')).toHaveLength(0);
