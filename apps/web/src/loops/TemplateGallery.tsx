@@ -19,7 +19,7 @@ import {
   ReviewTemplateSettingsSchema,
   TemplateSettingsSchema,
 } from '@graphgoblin/contracts';
-import { useId, useState, type FormEvent } from 'react';
+import { useId, useRef, useState, type FormEvent } from 'react';
 import { Link } from 'react-router';
 import {
   Alert,
@@ -2013,6 +2013,7 @@ function TemplateSetup({
     { settingsKey: string; report: TemplatePrerequisiteReport } | undefined
   >();
   const [checking, setChecking] = useState(false);
+  const checkInFlightRef = useRef(false);
   const [checkError, setCheckError] = useState<string>();
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string>();
@@ -2043,7 +2044,8 @@ function TemplateSetup({
   };
 
   const check = async () => {
-    if (!settings || !settingsValid || !supported) return;
+    if (!settings || !settingsValid || !supported || checkInFlightRef.current) return;
+    checkInFlightRef.current = true;
     setChecking(true);
     setCheckError(undefined);
     try {
@@ -2052,6 +2054,7 @@ function TemplateSetup({
     } catch (error) {
       setCheckError(errorMessage(error));
     } finally {
+      checkInFlightRef.current = false;
       setChecking(false);
     }
   };
@@ -2197,7 +2200,9 @@ function TemplateSetup({
             type="button"
             variant="outline"
             onClick={() => void check()}
-            disabled={!settingsValid || !supported || checking || creating}
+            disabled={!settingsValid || !supported || creating}
+            aria-disabled={checking || undefined}
+            aria-busy={checking || undefined}
           >
             {checking ? 'Checking…' : 'Check requirements'}
           </Button>

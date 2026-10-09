@@ -6,7 +6,7 @@ import {
   type ModelCatalogEntry,
   type TemplateSettings,
 } from '@graphgoblin/contracts';
-import { render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, useLocation } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
@@ -155,6 +155,77 @@ async function fillQaRepository(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByRole('textbox', { name: 'Repository name' }), 'qa-project');
   await user.type(screen.getByRole('textbox', { name: 'Base branch' }), 'main');
 }
+
+describe('requirements-check keyboard focus', () => {
+  it.each(['success', 'failure'] as const)(
+    'keeps focus inside the setup dialog through a %s check and refuses duplicate activation',
+    async (outcome) => {
+      const entry = qaTemplateEntry();
+      let resolve!: (value: typeof entry.prerequisites) => void;
+      let reject!: (error: Error) => void;
+      const pending = new Promise<typeof entry.prerequisites>((yes, no) => {
+        resolve = yes;
+        reject = no;
+      });
+      const onCheck = vi.fn(() => pending);
+      const user = await openQaTemplate(entry, [model], readyCodex, onCheck);
+      await fillQaRepository(user);
+      const button = screen.getByRole('button', { name: 'Check requirements' });
+      button.focus();
+      await user.keyboard('{Enter}');
+      expect(button).toHaveFocus();
+      expect(button).toBeEnabled();
+      expect(button).toHaveAttribute('aria-disabled', 'true');
+      expect(button).toHaveAttribute('aria-busy', 'true');
+      expect(screen.getByRole('button', { name: 'Create draft' })).toBeDisabled();
+      await user.keyboard('{Enter}');
+      fireEvent.click(button);
+      expect(onCheck).toHaveBeenCalledTimes(1);
+      await act(async () => {
+        if (outcome === 'success') resolve(entry.prerequisites);
+        else reject(new Error('The requirements service is unavailable.'));
+        await pending.catch(() => undefined);
+      });
+      expect(button).toHaveFocus();
+      expect(screen.getByRole('dialog').contains(document.activeElement)).toBe(true);
+      expect(button).not.toHaveAttribute('aria-disabled');
+      expect(button).not.toHaveAttribute('aria-busy');
+      expect(
+        screen.getByText(
+          outcome === 'success'
+            ? 'Checked for these settings.'
+            : 'The requirements service is unavailable.',
+        ),
+      ).toBeVisible();
+    },
+  );
+
+  it('guards immediate repeated activation and preserves a deliberate focus move while pending', async () => {
+    const entry = qaTemplateEntry();
+    let resolve!: (value: typeof entry.prerequisites) => void;
+    const pending = new Promise<typeof entry.prerequisites>((yes) => {
+      resolve = yes;
+    });
+    const onCheck = vi.fn(() => pending);
+    const user = await openQaTemplate(entry, [model], readyCodex, onCheck);
+    await fillQaRepository(user);
+    const button = screen.getByRole('button', { name: 'Check requirements' });
+    button.focus();
+    act(() => {
+      fireEvent.click(button);
+      fireEvent.click(button);
+    });
+    expect(onCheck).toHaveBeenCalledTimes(1);
+    await user.tab();
+    const cancel = screen.getByRole('button', { name: 'Cancel' });
+    expect(cancel).toHaveFocus();
+    await act(async () => {
+      resolve(entry.prerequisites);
+      await pending;
+    });
+    expect(cancel).toHaveFocus();
+  });
+});
 
 async function openImplementationTemplate(
   user: ReturnType<typeof userEvent.setup>,

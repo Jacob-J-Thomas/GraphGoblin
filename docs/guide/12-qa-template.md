@@ -40,6 +40,8 @@ Choose **Check requirements** after entering the repository. The report checks t
 
 **Create draft** creates a new instance. Supporting loops are published for the parent to reference; the parent stays a draft and is not polled until you review and publish it. Publishing starts the poll, which can select older eligible merged pull requests as well as new ones, at most one per poll; there is no initial cutoff. While isolation remains unavailable, each selected pull request creates a failed attempt before checkout or a model turn and permanently consumes its merge and linked-issue attempt. The workflow may also post one fixed explanation to the original linked issue. Keep the parent unpublished until an enforced isolation runtime is available. That comment is not a QA result, proof, or accepted pass.
 
+The saved parent editor repeats this warning when reopened. A clean graph says **Graph ready to publish; QA execution blocked**: its validation does not establish runtime readiness. Publish remains available for a valid graph, so read the isolation and attempt-consumption warning before publishing. **Check requirements** keeps keyboard focus in the setup dialog while pending and after either success or failure; repeated activation cannot start another check while one is in flight.
+
 ## Understand the run and evidence boundary
 
 An admitted QA attempt is tied to the configured repository, an exact merged pull request and merge commit, and exactly one linked issue in that repository. A generic requirements check cannot confirm those run-specific facts. The issue and merge identity remain authoritative throughout the attempt.
