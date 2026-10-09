@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { SupportBlockedSchema } from './support-result.js';
 import {
   NodeOutputSchema,
   RunEventSchema,
@@ -142,6 +143,7 @@ export function authorityFacts(
     if (!output || !('value' in output)) conflict();
     const value = NodeOutputSchema.safeParse(output.value);
     if (!value.success || value.data.nodeId !== event.nodeId) conflict();
+    if (SupportBlockedSchema.safeParse(value.data.value).success) continue;
     const parsed = AuthorityFactSchema.safeParse(value.data.value);
     if (!parsed.success) conflict();
     const fact = parsed.data;
@@ -175,7 +177,7 @@ export async function readAuthority(
   const version = await store.version(row.run.versionId);
   if (!version) conflict();
   const events = checkedEvents(await store.events(runId));
-  assertPinnedBundle(binding, row.run.loopId, events);
+  await assertPinnedBundle(store, binding, row.run.loopId, events);
   return {
     run: row.run,
     subject,
@@ -203,7 +205,7 @@ export function assertClaim(facts: readonly AuthorityFact[], subject: TemplateSu
 export async function nextAttempt(
   store: TemplateTransaction,
   binding: TemplateBinding,
-  candidate: z.infer<typeof ParentSubjectSchema>,
+  candidate: Pick<z.infer<typeof ParentSubjectSchema>, 'repository' | 'issue'>,
 ): Promise<number> {
   const rows = await store.subjectRuns({
     ownerId: binding.ownerId,
@@ -352,32 +354,50 @@ export async function assertSubjectSource(
     );
 }
 
-export function assertPinnedBundle(
+export async function assertPinnedBundle(
+  store: Pick<TemplateTransaction, 'version'>,
   binding: TemplateBinding,
   loopId: string,
   events: readonly RunEvent[],
-): void {
+): Promise<void> {
   const queued = events.find((event) => event.type === 'run.queued');
   if (!queued || queued.type !== 'run.queued') conflict();
   const root = binding.loops.find((loop) => loop.loopId === loopId);
   if (!root) conflict();
-  const expected: Record<string, string> = {};
-  function visit(key: string): void {
-    const descriptor = binding.manifest.loops.find((loop) => loop.key === key);
-    if (!descriptor) conflict();
-    for (const dependency of descriptor.dependsOn) {
-      const target = binding.loops.find((loop) => loop.key === dependency);
-      if (!target) conflict();
-      if (expected[target.loopId]) continue;
-      expected[target.loopId] = target.versionId;
-      visit(dependency);
-    }
-  }
-  visit(root.key);
+  const allowed: Record<string, string> = {};
+  const required: Record<string, string> = {};
+  const visited = new Set<string>();
   const actual = queued.subloopVersions ?? {};
+  async function visit(key: string): Promise<void> {
+    if (visited.has(key)) return;
+    visited.add(key);
+    const descriptor = binding.manifest.loops.find((loop) => loop.key === key);
+    const bound = binding.loops.find((loop) => loop.key === key);
+    if (!descriptor || !bound) conflict();
+    const version = await store.version(bound.versionId);
+    if (!version || version.loopId !== bound.loopId) conflict();
+    assertBoundVersion(binding, bound.loopId, bound.versionId, version.definition);
+    const referenced = new Set<string>();
+    for (const node of version.definition.nodes) {
+      if (node.kind !== 'subloop') continue;
+      const target = binding.loops.find((loop) => loop.loopId === node.config.loopRef.loopId);
+      if (!target || !descriptor.dependsOn.includes(target.key)) conflict();
+      const child = await store.version(target.versionId);
+      if (!child || child.loopId !== target.loopId || child.status !== 'published') conflict();
+      if (node.config.loopRef.version === 'latest') required[target.loopId] = target.versionId;
+      else if (node.config.loopRef.version !== child.version) conflict();
+      allowed[target.loopId] = target.versionId;
+      referenced.add(target.key);
+      await visit(target.key);
+    }
+    if (descriptor.dependsOn.some((dependency) => !referenced.has(dependency))) conflict();
+  }
+  await visit(root.key);
+  // The engine records only dynamically resolved latest pins. Numeric child references
+  // are proven by their immutable version records; a synthetic pin is never required.
   if (
-    Object.keys(actual).length !== Object.keys(expected).length ||
-    Object.entries(expected).some(([id, versionId]) => actual[id] !== versionId)
+    Object.entries(actual).some(([id, versionId]) => allowed[id] !== versionId) ||
+    Object.entries(required).some(([id, versionId]) => actual[id] !== versionId)
   )
     conflict();
 }

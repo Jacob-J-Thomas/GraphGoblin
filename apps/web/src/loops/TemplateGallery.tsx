@@ -4,10 +4,17 @@ import type {
   TemplateCatalogEntry,
   TemplateInstantiateResponse,
   TemplatePrerequisiteReport,
+  ImplementationTemplateSettings,
+  TemplateRepository,
   TemplateRoleSelection,
   TemplateSettings,
 } from '@graphgoblin/contracts';
-import { EffortSchema, HarnessIdSchema, TemplateSettingsSchema } from '@graphgoblin/contracts';
+import {
+  EffortSchema,
+  HarnessIdSchema,
+  ImplementationTemplateSettingsSchema,
+  TemplateSettingsSchema,
+} from '@graphgoblin/contracts';
 import { useId, useState, type FormEvent } from 'react';
 import { Link } from 'react-router';
 import {
@@ -171,8 +178,13 @@ function settingsRoleAvailable(
   models: readonly ModelCatalogEntry[],
   preflight: readonly TemplateRolePreflight[],
 ): boolean {
-  if (!settings || settings.kind !== 'starter') return false;
-  const role = settings.roles.assistant;
+  const role =
+    settings?.kind === 'starter'
+      ? settings.roles.assistant
+      : settings?.kind === 'implementation'
+        ? settings.roles.implementer
+        : undefined;
+  if (!role) return false;
   const readiness = preflight.find((item) => item.harness === role.harness);
   if (readiness?.ok !== true || !readiness.authenticated) return false;
   const selected = catalogModels(models, preflight, role.harness).find(
@@ -181,21 +193,121 @@ function settingsRoleAvailable(
   return selected !== undefined && modelEfforts(selected, preflight).includes(role.effort);
 }
 
+function schemaStringDefault(schema: Record<string, unknown>, fallback: string): string {
+  return typeof schema['default'] === 'string' ? schema['default'] : fallback;
+}
+
+function schemaNumberDefault(schema: Record<string, unknown>, fallback: number): number {
+  return typeof schema['default'] === 'number' ? schema['default'] : fallback;
+}
+
+function schemaStringArrayDefault(
+  schema: Record<string, unknown>,
+  fallback: readonly string[],
+): string[] {
+  const value = schema['default'];
+  return Array.isArray(value) && value.every((item) => typeof item === 'string')
+    ? value
+    : [...fallback];
+}
+
+function implementationRoleDefault(
+  schema: Record<string, unknown>,
+  models: readonly ModelCatalogEntry[],
+  preflight: readonly TemplateRolePreflight[],
+): TemplateRoleSelection {
+  const codexModels = catalogModels(models, preflight, 'codex');
+  const selected = codexModels
+    .map((model) => {
+      const efforts = modelEfforts(model, preflight);
+      const effort = efforts.includes(model.defaultEffort) ? model.defaultEffort : efforts[0];
+      const parsedEffort = EffortSchema.safeParse(effort);
+      return parsedEffort.success ? { model, effort: parsedEffort.data } : undefined;
+    })
+    .find((candidate) => candidate !== undefined);
+  const effortSchema = schemaProperty(schema, 'roles', 'implementer', 'effort');
+  const schemaEffort = Array.isArray(effortSchema['enum'])
+    ? effortSchema['enum'].find((value): value is string => typeof value === 'string')
+    : undefined;
+  const fallbackEffort = EffortSchema.safeParse(schemaEffort);
+  return {
+    harness: 'codex',
+    model: selected?.model.model ?? '',
+    effort: selected?.effort ?? (fallbackEffort.success ? fallbackEffort.data : 'low'),
+  };
+}
+
+function implementationSettingsDraft(
+  entry: TemplateCatalogEntry,
+  models: readonly ModelCatalogEntry[],
+  preflight: readonly TemplateRolePreflight[],
+): ImplementationTemplateSettings {
+  const schema = entry.settingsSchema;
+  const secretKey =
+    entry.manifest.requiredSecrets[0]?.key ??
+    entry.manifest.prerequisites.find((item) => item.kind === 'secret')?.secretKey ??
+    '';
+  return {
+    kind: 'implementation',
+    repository: { path: '', owner: '', name: '', baseBranch: '' },
+    supportReadKey: secretKey,
+    gate: {
+      program: schemaStringDefault(schemaProperty(schema, 'gate', 'program'), 'pnpm'),
+      args: schemaStringArrayDefault(schemaProperty(schema, 'gate', 'args'), ['check']),
+      timeoutSeconds: schemaNumberDefault(schemaProperty(schema, 'gate', 'timeoutSeconds'), 600),
+    },
+    roles: { implementer: implementationRoleDefault(schema, models, preflight) },
+    labels: {
+      trigger: schemaStringDefault(
+        schemaProperty(schema, 'labels', 'trigger'),
+        'ready-for-implementation',
+      ),
+      inProgress: schemaStringDefault(
+        schemaProperty(schema, 'labels', 'inProgress'),
+        'in-progress',
+      ),
+      prOpen: schemaStringDefault(schemaProperty(schema, 'labels', 'prOpen'), 'pr-open'),
+      blocked: schemaStringDefault(schemaProperty(schema, 'labels', 'blocked'), 'blocked'),
+    },
+    limits: {
+      maxTasks: schemaNumberDefault(schemaProperty(schema, 'limits', 'maxTasks'), 8),
+      gateFixes: schemaNumberDefault(schemaProperty(schema, 'limits', 'gateFixes'), 2),
+      maxIterations: schemaNumberDefault(schemaProperty(schema, 'limits', 'maxIterations'), 100),
+    },
+  };
+}
+
+function initialTemplateSettings(
+  entry: TemplateCatalogEntry,
+  models: readonly ModelCatalogEntry[],
+  preflight: readonly TemplateRolePreflight[],
+): TemplateSettings | null {
+  if (entry.defaultSettings) return entry.defaultSettings;
+  if (entry.manifest.kind === 'implementation') {
+    return implementationSettingsDraft(entry, models, preflight);
+  }
+  return null;
+}
+
 function displayModel(entry: ModelCatalogEntry) {
   return entry.displayName === entry.model ? entry.model : `${entry.displayName} (${entry.model})`;
 }
 
-function AssistantRoleFields({
+function TemplateRoleFields({
   settings,
   schema,
   models,
   preflight,
+  roleKey,
+  title,
   onChange,
 }: {
   settings: TemplateRoleSelection;
   schema: Record<string, unknown>;
   models: readonly ModelCatalogEntry[];
   preflight: readonly TemplateRolePreflight[];
+  roleKey: 'assistant' | 'implementer';
+  title: string;
   onChange: (next: TemplateRoleSelection) => void;
 }) {
   const id = useId();
@@ -214,9 +326,9 @@ function AssistantRoleFields({
   const modelIsAvailable = listedModels.some((model) => model.model === settings.model);
   const effortOptions = modelEfforts(selectedModel, preflight);
   const effortIsAvailable = effortOptions.includes(settings.effort);
-  const harnessSchema = schemaProperty(schema, 'roles', 'assistant', 'harness');
-  const modelSchema = schemaProperty(schema, 'roles', 'assistant', 'model');
-  const effortSchema = schemaProperty(schema, 'roles', 'assistant', 'effort');
+  const harnessSchema = schemaProperty(schema, 'roles', roleKey, 'harness');
+  const modelSchema = schemaProperty(schema, 'roles', roleKey, 'model');
+  const effortSchema = schemaProperty(schema, 'roles', roleKey, 'effort');
   const selectedPreflight = preflight.find((item) => item.harness === settings.harness);
 
   const update = (patch: Partial<TemplateRoleSelection>) => {
@@ -237,7 +349,7 @@ function AssistantRoleFields({
 
   return (
     <fieldset className="grid gap-3 rounded-md border border-default p-4">
-      <legend className="px-1 text-sm font-semibold">Assistant model</legend>
+      <legend className="px-1 text-sm font-semibold">{title}</legend>
       <FieldGroup>
         <Label htmlFor={`${id}-harness`}>{defaultLabel(harnessSchema) ?? 'Harness'}</Label>
         <Select
@@ -280,8 +392,9 @@ function AssistantRoleFields({
         </Select>
         {!modelIsAvailable ? (
           <HelpText id={`${id}-model-help`} tone="bad">
-            This saved model is not currently available in the enabled catalog. Choose an enabled
-            model or update the catalog in Settings.
+            {settings.model
+              ? 'This saved model is not currently available in the enabled catalog. Choose an enabled model or update the catalog in Settings.'
+              : 'No current model is selected. Choose a listed model or enable a supported Codex model in Settings.'}
           </HelpText>
         ) : null}
         {selectedPreflight?.ok !== true || !selectedPreflight.authenticated ? (
@@ -377,11 +490,13 @@ function StarterSettingsFields({
           </HelpText>
         ) : null}
       </FieldGroup>
-      <AssistantRoleFields
+      <TemplateRoleFields
         settings={settings.roles.assistant}
         schema={entry.settingsSchema}
         models={models}
         preflight={preflight}
+        roleKey="assistant"
+        title="Assistant model"
         onChange={updateAssistant}
       />
       <FieldGroup>
@@ -417,6 +532,338 @@ function StarterSettingsFields({
   );
 }
 
+function ImplementationSettingsFields({
+  entry,
+  settings,
+  models,
+  preflight,
+  onChange,
+}: {
+  entry: TemplateCatalogEntry;
+  settings: ImplementationTemplateSettings;
+  models: readonly ModelCatalogEntry[];
+  preflight: readonly TemplateRolePreflight[];
+  onChange: (next: ImplementationTemplateSettings) => void;
+}) {
+  const id = useId();
+  const parsed = ImplementationTemplateSettingsSchema.safeParse(settings);
+  const issues = (path: string) => {
+    if (parsed.success) return [];
+    return parsed.error.issues
+      .filter((issue) => {
+        const issuePath = issue.path.map(String).join('.');
+        return issuePath === path || issuePath.startsWith(`${path}.`);
+      })
+      .map((issue) => issue.message);
+  };
+  const describedBy = (helpId: string, path: string) =>
+    issues(path).length > 0 ? `${helpId} ${helpId}-error` : helpId;
+  const invalid = (path: string) => (issues(path).length > 0 ? true : undefined);
+  const showIssues = (helpId: string, path: string) => {
+    const messages = issues(path);
+    return messages.length > 0 ? (
+      <HelpText id={`${helpId}-error`} tone="bad">
+        {messages.join(' ')}
+      </HelpText>
+    ) : null;
+  };
+  const updateRepository = <K extends keyof TemplateRepository>(
+    key: K,
+    value: TemplateRepository[K],
+  ) => onChange({ ...settings, repository: { ...settings.repository, [key]: value } });
+  const updateGate = <K extends keyof ImplementationTemplateSettings['gate']>(
+    key: K,
+    value: ImplementationTemplateSettings['gate'][K],
+  ) => onChange({ ...settings, gate: { ...settings.gate, [key]: value } });
+  const updateLabel = (key: keyof ImplementationTemplateSettings['labels'], value: string) =>
+    onChange({ ...settings, labels: { ...settings.labels, [key]: value } });
+  const updateLimit = (key: keyof ImplementationTemplateSettings['limits'], value: number) =>
+    onChange({ ...settings, limits: { ...settings.limits, [key]: value } });
+  const updateImplementer = (implementer: TemplateRoleSelection) =>
+    onChange({ ...settings, roles: { implementer } });
+  const secretKey =
+    entry.manifest.requiredSecrets[0]?.key ??
+    entry.manifest.prerequisites.find((item) => item.kind === 'secret')?.secretKey;
+  const schema = entry.settingsSchema;
+  const gateTimeoutSchema = schemaProperty(schema, 'gate', 'timeoutSeconds');
+  const gateProgramSchema = schemaProperty(schema, 'gate', 'program');
+  const gateArgsSchema = schemaProperty(schema, 'gate', 'args');
+  const gateArgs = settings.gate.args.join('\n');
+  const labelFields: {
+    key: keyof ImplementationTemplateSettings['labels'];
+    label: string;
+  }[] = [
+    { key: 'trigger', label: 'Trigger label' },
+    { key: 'inProgress', label: 'In-progress label' },
+    { key: 'prOpen', label: 'Pull request open label' },
+    { key: 'blocked', label: 'Blocked label' },
+  ];
+  const limitFields: {
+    key: keyof ImplementationTemplateSettings['limits'];
+    label: string;
+  }[] = [
+    { key: 'maxTasks', label: 'Maximum tasks' },
+    { key: 'gateFixes', label: 'Gate fixes' },
+    { key: 'maxIterations', label: 'Maximum iterations' },
+  ];
+
+  return (
+    <div className="grid gap-5">
+      <fieldset className="grid gap-3 rounded-md border border-default p-4">
+        <legend className="px-1 text-sm font-semibold">Repository</legend>
+        <p className="text-sm text-muted">
+          Enter the existing checkout and repository identity this workflow may use. These values
+          are checked again before a draft is created.
+        </p>
+        <FieldGroup>
+          <Label htmlFor={`${id}-repository-path`} required>
+            Checkout path
+          </Label>
+          <Input
+            id={`${id}-repository-path`}
+            required
+            autoComplete="off"
+            value={settings.repository.path}
+            aria-invalid={invalid('repository.path')}
+            aria-describedby={describedBy(`${id}-repository-path-help`, 'repository.path')}
+            onChange={(event) => updateRepository('path', event.currentTarget.value)}
+          />
+          <HelpText id={`${id}-repository-path-help`}>
+            Use an absolute local path without parent-directory segments.
+          </HelpText>
+          {showIssues(`${id}-repository-path-help`, 'repository.path')}
+        </FieldGroup>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <FieldGroup>
+            <Label htmlFor={`${id}-repository-owner`} required>
+              Repository owner
+            </Label>
+            <Input
+              id={`${id}-repository-owner`}
+              required
+              autoComplete="off"
+              value={settings.repository.owner}
+              aria-invalid={invalid('repository.owner')}
+              aria-describedby={describedBy(`${id}-repository-owner-help`, 'repository.owner')}
+              onChange={(event) => updateRepository('owner', event.currentTarget.value)}
+            />
+            <HelpText id={`${id}-repository-owner-help`}>
+              The GitHub account or organization.
+            </HelpText>
+            {showIssues(`${id}-repository-owner-help`, 'repository.owner')}
+          </FieldGroup>
+          <FieldGroup>
+            <Label htmlFor={`${id}-repository-name`} required>
+              Repository name
+            </Label>
+            <Input
+              id={`${id}-repository-name`}
+              required
+              autoComplete="off"
+              value={settings.repository.name}
+              aria-invalid={invalid('repository.name')}
+              aria-describedby={describedBy(`${id}-repository-name-help`, 'repository.name')}
+              onChange={(event) => updateRepository('name', event.currentTarget.value)}
+            />
+            <HelpText id={`${id}-repository-name-help`}>The repository slug.</HelpText>
+            {showIssues(`${id}-repository-name-help`, 'repository.name')}
+          </FieldGroup>
+        </div>
+        <FieldGroup>
+          <Label htmlFor={`${id}-base-branch`} required>
+            Base branch
+          </Label>
+          <Input
+            id={`${id}-base-branch`}
+            required
+            autoComplete="off"
+            value={settings.repository.baseBranch}
+            aria-invalid={invalid('repository.baseBranch')}
+            aria-describedby={describedBy(`${id}-base-branch-help`, 'repository.baseBranch')}
+            onChange={(event) => updateRepository('baseBranch', event.currentTarget.value)}
+          />
+          <HelpText id={`${id}-base-branch-help`}>
+            The branch used as the work starting point.
+          </HelpText>
+          {showIssues(`${id}-base-branch-help`, 'repository.baseBranch')}
+        </FieldGroup>
+        <FieldGroup>
+          <Label htmlFor={`${id}-support-key`} required>
+            Support credential key name
+          </Label>
+          <Input
+            id={`${id}-support-key`}
+            required
+            autoComplete="off"
+            readOnly={secretKey !== undefined}
+            value={settings.supportReadKey}
+            aria-invalid={invalid('supportReadKey')}
+            aria-describedby={describedBy(`${id}-support-key-help`, 'supportReadKey')}
+            onChange={(event) =>
+              onChange({ ...settings, supportReadKey: event.currentTarget.value })
+            }
+          />
+          <HelpText id={`${id}-support-key-help`}>
+            Enter the configured key name only. Never paste a token or secret value here.
+            {secretKey ? ` This template requires the key “${secretKey}”.` : ''}
+          </HelpText>
+          {showIssues(`${id}-support-key-help`, 'supportReadKey')}
+        </FieldGroup>
+      </fieldset>
+
+      <TemplateRoleFields
+        settings={settings.roles.implementer}
+        schema={schema}
+        models={models}
+        preflight={preflight}
+        roleKey="implementer"
+        title="Implementer model"
+        onChange={updateImplementer}
+      />
+
+      <fieldset className="grid gap-3 rounded-md border border-default p-4">
+        <legend className="px-1 text-sm font-semibold">Check command</legend>
+        <p className="text-sm text-muted">
+          The program and arguments are passed as separate values. Shell syntax is not interpreted.
+        </p>
+        <FieldGroup>
+          <Label htmlFor={`${id}-gate-program`} required>
+            Program
+          </Label>
+          <Input
+            id={`${id}-gate-program`}
+            required
+            autoComplete="off"
+            maxLength={stringConstraint(gateProgramSchema, 'maxLength')}
+            value={settings.gate.program}
+            aria-invalid={invalid('gate.program')}
+            aria-describedby={describedBy(`${id}-gate-program-help`, 'gate.program')}
+            onChange={(event) => updateGate('program', event.currentTarget.value)}
+          />
+          <HelpText id={`${id}-gate-program-help`}>
+            Choose a native program available in the checkout.
+          </HelpText>
+          {showIssues(`${id}-gate-program-help`, 'gate.program')}
+        </FieldGroup>
+        <FieldGroup>
+          <Label htmlFor={`${id}-gate-args`}>Arguments, one per line</Label>
+          <Textarea
+            id={`${id}-gate-args`}
+            rows={4}
+            value={gateArgs}
+            aria-invalid={invalid('gate.args')}
+            aria-describedby={describedBy(`${id}-gate-args-help`, 'gate.args')}
+            onChange={(event) => {
+              const raw = event.currentTarget.value;
+              updateGate('args', raw === '' ? [] : raw.split(/\r?\n/));
+            }}
+          />
+          <HelpText id={`${id}-gate-args-help`}>
+            Each line is one argument. Use at most{' '}
+            {typeof gateArgsSchema['maxItems'] === 'number' ? gateArgsSchema['maxItems'] : 64}{' '}
+            arguments; do not include shell operators.
+          </HelpText>
+          {showIssues(`${id}-gate-args-help`, 'gate.args')}
+        </FieldGroup>
+        <FieldGroup>
+          <Label htmlFor={`${id}-gate-timeout`} required>
+            Timeout in seconds
+          </Label>
+          <Input
+            id={`${id}-gate-timeout`}
+            type="number"
+            step={1}
+            min={numberConstraint(gateTimeoutSchema, 'minimum')}
+            max={numberConstraint(gateTimeoutSchema, 'maximum')}
+            required
+            value={
+              Number.isFinite(settings.gate.timeoutSeconds) ? settings.gate.timeoutSeconds : ''
+            }
+            aria-invalid={invalid('gate.timeoutSeconds')}
+            aria-describedby={describedBy(`${id}-gate-timeout-help`, 'gate.timeoutSeconds')}
+            onChange={(event) => {
+              const raw = event.currentTarget.value;
+              updateGate('timeoutSeconds', raw === '' ? Number.NaN : Number(raw));
+            }}
+          />
+          <HelpText id={`${id}-gate-timeout-help`}>
+            Bounds: {numberConstraint(gateTimeoutSchema, 'minimum') ?? 1} to{' '}
+            {numberConstraint(gateTimeoutSchema, 'maximum') ?? 86_400} seconds.
+          </HelpText>
+          {showIssues(`${id}-gate-timeout-help`, 'gate.timeoutSeconds')}
+        </FieldGroup>
+      </fieldset>
+
+      <fieldset className="grid gap-3 rounded-md border border-default p-4">
+        <legend className="px-1 text-sm font-semibold">Repository labels</legend>
+        <p className="text-sm text-muted">
+          These labels are used to track implementation work. Choose values that match your
+          repository workflow.
+        </p>
+        {labelFields.map(({ key, label }) => {
+          const path = `labels.${key}`;
+          const helpId = `${id}-label-${key}-help`;
+          return (
+            <FieldGroup key={key}>
+              <Label htmlFor={`${id}-label-${key}`} required>
+                {label}
+              </Label>
+              <Input
+                id={`${id}-label-${key}`}
+                required
+                maxLength={stringConstraint(schemaProperty(schema, 'labels', key), 'maxLength')}
+                value={settings.labels[key]}
+                aria-invalid={invalid(path)}
+                aria-describedby={describedBy(helpId, path)}
+                onChange={(event) => updateLabel(key, event.currentTarget.value)}
+              />
+              <HelpText id={helpId}>A single label name.</HelpText>
+              {showIssues(helpId, path)}
+            </FieldGroup>
+          );
+        })}
+      </fieldset>
+
+      <fieldset className="grid gap-3 rounded-md border border-default p-4">
+        <legend className="px-1 text-sm font-semibold">Work limits</legend>
+        <p className="text-sm text-muted">Keep the amount of automated work within clear bounds.</p>
+        {limitFields.map(({ key, label }) => {
+          const path = `limits.${key}`;
+          const fieldSchema = schemaProperty(schema, 'limits', key);
+          const helpId = `${id}-limit-${key}-help`;
+          return (
+            <FieldGroup key={key}>
+              <Label htmlFor={`${id}-limit-${key}`} required>
+                {label}
+              </Label>
+              <Input
+                id={`${id}-limit-${key}`}
+                type="number"
+                step={1}
+                min={numberConstraint(fieldSchema, 'minimum')}
+                max={numberConstraint(fieldSchema, 'maximum')}
+                required
+                value={Number.isFinite(settings.limits[key]) ? settings.limits[key] : ''}
+                aria-invalid={invalid(path)}
+                aria-describedby={describedBy(helpId, path)}
+                onChange={(event) => {
+                  const raw = event.currentTarget.value;
+                  updateLimit(key, raw === '' ? Number.NaN : Number(raw));
+                }}
+              />
+              <HelpText id={helpId}>
+                Whole number from {numberConstraint(fieldSchema, 'minimum') ?? 0} to{' '}
+                {numberConstraint(fieldSchema, 'maximum') ?? 10_000}.
+              </HelpText>
+              {showIssues(helpId, path)}
+            </FieldGroup>
+          );
+        })}
+      </fieldset>
+    </div>
+  );
+}
+
 function SettingsFields({
   entry,
   settings,
@@ -433,6 +880,17 @@ function SettingsFields({
   if (entry.manifest.kind === 'starter' && settings.kind === 'starter') {
     return (
       <StarterSettingsFields
+        entry={entry}
+        settings={settings}
+        models={models}
+        preflight={preflight}
+        onChange={onChange}
+      />
+    );
+  }
+  if (entry.manifest.kind === 'implementation' && settings.kind === 'implementation') {
+    return (
+      <ImplementationSettingsFields
         entry={entry}
         settings={settings}
         models={models}
@@ -466,7 +924,9 @@ function TemplateSetup({
   onCreated: TemplateGalleryProps['onCreated'];
   onClose: () => void;
 }) {
-  const [settings, setSettings] = useState<TemplateSettings | null>(entry.defaultSettings);
+  const [settings, setSettings] = useState<TemplateSettings | null>(() =>
+    initialTemplateSettings(entry, models, preflight),
+  );
   const [checked, setChecked] = useState<
     { settingsKey: string; report: TemplatePrerequisiteReport } | undefined
   >();
@@ -485,7 +945,9 @@ function TemplateSetup({
   const settingsValid = settings !== null && TemplateSettingsSchema.safeParse(settings).success;
   const roleAvailable = settingsRoleAvailable(settings, models, preflight);
   const supported =
-    entry.manifest.kind === 'starter' && settings?.kind === 'starter' && settingsValid;
+    ((entry.manifest.kind === 'starter' && settings?.kind === 'starter') ||
+      (entry.manifest.kind === 'implementation' && settings?.kind === 'implementation')) &&
+    settingsValid;
   const readyToInstantiate = Boolean(
     !createdLoopId && settingsValid && roleAvailable && report?.canInstantiate && supported,
   );
@@ -570,6 +1032,12 @@ function TemplateSetup({
           <p className="text-sm text-muted">
             This starter does not need GitHub or a repository checkout. The parent opens as a draft;
             any supporting loops are published automatically so the parent can reference them.
+          </p>
+        ) : null}
+        {entry.manifest.kind === 'implementation' ? (
+          <p className="text-sm text-muted">
+            Configure the repository workflow below. Helper loops are published first; the parent
+            opens as a draft for you to review.
           </p>
         ) : null}
         {settings ? (

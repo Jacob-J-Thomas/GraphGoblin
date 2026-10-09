@@ -78,6 +78,14 @@ import {
   type TemplateFailureReporter,
 } from './templates/runtime.js';
 import { PrivateTemplateScripts } from './templates/scripts.js';
+import {
+  ImplementationAuthority,
+  type SupportDependencies,
+} from './templates/github/authority-source.js';
+import {
+  ImplementationReporter,
+  installImplementationFinalization,
+} from './templates/github/reporter.js';
 
 /** The single owner of a 1.0 installation. Every table carries it so multi-tenancy is a data change, not a schema change. */
 export const LOCAL_OWNER = 'local';
@@ -92,6 +100,8 @@ export interface ContainerOverrides {
   templateCatalogRoot?: string;
   templateAuthority?: TemplateAuthoritySource;
   templateFailureReporter?: TemplateFailureReporter;
+  /** Inject deterministic boundaries for repository-template tests; never an authored setting. */
+  implementationDependencies?: SupportDependencies;
   clock?: ClockPort;
   ids?: IdPort;
   logger?: Logger;
@@ -344,11 +354,19 @@ export async function createContainer(
       ids,
       clock,
     );
+    const implementationReporter = new ImplementationReporter(
+      templates,
+      overrides.implementationDependencies,
+    );
     const templateRuntime = new TemplateRuntime(
       templates,
-      overrides.templateAuthority,
-      overrides.templateFailureReporter,
+      overrides.templateAuthority ??
+        new ImplementationAuthority(templates, overrides.implementationDependencies),
+      overrides.templateFailureReporter ?? implementationReporter,
     );
+    // Reporting is reconciled before finalization. Failure leaves the durable terminal run
+    // unfinalized, so startup retries the fixed report instead of losing it.
+    installImplementationFinalization(runs, implementationReporter);
     ports.admission = templateAdmission(ports.admission, templateRuntime);
     ports.scripts = new PrivateTemplateScripts({
       instances: templates,

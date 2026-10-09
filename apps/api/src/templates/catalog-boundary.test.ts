@@ -58,7 +58,7 @@ describe('installed template catalog boundaries', () => {
   it('loads the actual source-only starter with current graph format and no repository support', async () => {
     const catalog = new TemplateCatalog(sourceRoot, sourcePackage);
     const entries = await catalog.list();
-    expect(entries.map((entry) => entry.bundle.manifest.id)).toEqual(['starter']);
+    expect(entries.map((entry) => entry.bundle.manifest.id)).toEqual(['starter', 'implementation']);
     const starter = await catalog.get('starter');
     expect(starter.bundle.manifest.kind).toBe('starter');
     expect(starter.bundle.manifest.requiredSecrets).toEqual([]);

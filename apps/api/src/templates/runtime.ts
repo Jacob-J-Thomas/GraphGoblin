@@ -259,9 +259,24 @@ export class TemplateRuntime {
         throw new TemplateError('AUTHORITY_CONFLICT', 'The saved subject has changed.');
       return { action: 'keep' };
     }
-    if (subject.kind === 'implementation')
+    if (subject.kind === 'implementation') {
       subject = { ...subject, attempt: await nextAttempt(store, binding, subject) };
-    else await assertSubjectSource(store, binding, subject);
+      if (pollItem) {
+        const expected = subject.repository + '#' + subject.issue + '@' + subject.attempt;
+        const payload = input.initialThread.invocation.trigger.payload;
+        if (
+          !payload ||
+          typeof payload !== 'object' ||
+          Array.isArray(payload) ||
+          payload['id'] !== expected ||
+          input.initialThread.invocation.trigger.dedupeKey !== expected
+        )
+          throw new TemplateError(
+            'TEMPLATE_AUTHORITY_REFUSED',
+            'The selected poll candidate no longer matches the authenticated implementation attempt.',
+          );
+      }
+    } else await assertSubjectSource(store, binding, subject);
     const rows = await store.subjectRuns({
       ownerId: input.run.ownerId,
       repository: subject.repository,
@@ -335,7 +350,7 @@ export class TemplateRuntime {
     const bound = await this.bound(run.ownerId, run.loopId, run.versionId, store);
     if (!bound || bound.binding.manifest.kind === 'starter') return;
     const events = checkedEvents(await store.events(run.id));
-    assertPinnedBundle(bound.binding, run.loopId, events);
+    await assertPinnedBundle(store, bound.binding, run.loopId, events);
     const failureEvent = events.filter((event) => event.type === 'run.failed').at(-1);
     const details = run.failure?.details;
     const declaration =
@@ -431,7 +446,8 @@ export class TemplateRuntime {
         });
       }
       if (bound.binding.manifest.kind !== 'starter') {
-        assertPinnedBundle(
+        await assertPinnedBundle(
+          this.instances.store,
           bound.binding,
           run.loopId,
           checkedEvents(await this.instances.store.events(run.id)),
