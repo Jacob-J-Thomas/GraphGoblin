@@ -4,6 +4,7 @@ import {
   V2RunEventSchema as RunEventSchema,
   type V2ContextThread as ContextThread,
   type V2DecisionPayload as DecisionPayload,
+  PROGRESS_SUMMARY_MAX,
   type EvaluationProvenance,
   type JsonValue,
   type V2RunEvent as RunEvent,
@@ -36,6 +37,17 @@ const problem = (code: string, path: string, message: string): UpgradeIssue => (
   path,
   message,
 });
+
+/** Frozen from engine handlers/inference.ts progressSummary; keep historical redaction identical. */
+function historicalProgressSummary(item: { type: unknown; summary: string }): string {
+  if (item.type === 'error') return 'Harness reported an error';
+  if (item.type === 'tool-call') {
+    const diagnostic = item.summary.indexOf(' failed: ');
+    if (diagnostic >= 0)
+      return `${item.summary.slice(0, diagnostic)} failed`.slice(0, PROGRESS_SUMMARY_MAX);
+  }
+  return item.summary.slice(0, PROGRESS_SUMMARY_MAX);
+}
 
 function provenance(strategy: unknown, classifierId: unknown = null): EvaluationProvenance {
   if (!['jev', 'codex', 'expression'].includes(String(strategy)))
@@ -169,6 +181,7 @@ export function upgradeRunHistoryV1(
       if (raw.type === 'decision.made' && !current.success) {
         if (typeof raw.nodeId !== 'string' || !decisions.has(raw.nodeId))
           throw new Error('unresolved recorded decision origin');
+        // An empty diagnostics list means no skips were recorded, not proof none occurred.
         const skipped = Array.isArray(raw.skipped) ? raw.skipped : [];
         const diagnostics = skipped.map((entry) => {
           if (!object(entry)) throw new Error('invalid skipped-strategy evidence');
@@ -189,6 +202,25 @@ export function upgradeRunHistoryV1(
         ])
           delete next[key];
         Object.assign(next, converted, { diagnostics });
+      } else if (
+        raw.type === 'node.progress' &&
+        object(raw.progress) &&
+        object(raw.progress.item)
+      ) {
+        const item = raw.progress.item;
+        // The frozen/current validators establish the string summary and allowlisted item fields.
+        // Current commands require a lifecycle status; generic items can honestly omit it.
+        // The audit preserves original command classification and provider diagnostics.
+        next.progress = {
+          item: {
+            ...item,
+            ...(item.type === 'command' && !('status' in item) ? { type: 'other' } : {}),
+            summary: historicalProgressSummary({
+              type: item.type,
+              summary: item.summary as string,
+            }),
+          },
+        };
       } else if (raw.type === 'node.finished') next.patch = convertPatch(raw, decisions, oldThread);
       else if (raw.type === 'run.queued' && raw.initialThread !== undefined)
         next.initialThread = convertThread(raw.initialThread, decisions);

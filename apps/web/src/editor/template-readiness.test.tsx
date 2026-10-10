@@ -5,8 +5,9 @@ import {
 } from '@graphgoblin/contracts';
 import { minimalLoop } from '@graphgoblin/contracts/testing';
 import { screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { FakeApi, id, problem, TS } from '../__fixtures__/fake-api.js';
+import { FakeApi, id, problem, qaTemplateEntry, TS } from '../__fixtures__/fake-api.js';
 import { renderApp } from '../__fixtures__/render.js';
 
 function qaInstance(api: FakeApi) {
@@ -53,6 +54,21 @@ function qaInstance(api: FakeApi) {
 }
 
 describe('saved QA parent runtime readiness', () => {
+  it('opens a gallery QA copy without an instance binding or configured-parent warning', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    qaInstance(api);
+    api.templates = [qaTemplateEntry()];
+    renderApp('/loops', api);
+    await user.click(await screen.findByRole('button', { name: 'New from template' }));
+    await user.click(screen.getByRole('button', { name: 'Use Post-merge QA' }));
+    expect(await screen.findByText('Ready to publish')).toBeVisible();
+    expect(api.callsTo('POST', '/templates/qa/draft')).toHaveLength(1);
+    expect(api.callsTo('GET', /template-instances/)).toHaveLength(0);
+    expect(screen.queryByText('QA execution is blocked')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Publish' })).toBeEnabled();
+  });
+
   it('shows the persisted parent warning after reopening, while preserving Publish', async () => {
     const api = new FakeApi();
     const { parent, instance } = qaInstance(api);

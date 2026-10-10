@@ -559,6 +559,96 @@ describe('offline database upgrade boundary', () => {
       nodeId: 'decide',
     });
   });
+  it('converts pre-#103/#104 history in a fully migrated store, retaining exact originals in audit', async () => {
+    // Fully migrate before inserting old events: migration 0007 would otherwise backfill skipped: [].
+    const handle = await legacy();
+    const oldDecision = { strategy: 'expression', route: 'yes' };
+    const oldProgress = {
+      progress: { item: { id: 'item-1', type: 'command', summary: 'Command completed' } },
+    };
+    await handle.client.execute({
+      sql: 'UPDATE run_events SET payload=? WHERE run_id=? AND seq=2',
+      args: [JSON.stringify(oldDecision), FIXTURE_IDS.run],
+    });
+    await handle.client.execute({
+      sql: 'INSERT INTO run_events (run_id,seq,ts,type,node_id,payload) VALUES (?,4,?,?,?,?)',
+      args: [FIXTURE_IDS.run, FIXTURE_TS, 'node.progress', 'worker', JSON.stringify(oldProgress)],
+    });
+    const oldError = {
+      progress: {
+        item: {
+          id: 'error-1',
+          type: 'error',
+          summary: 'Private harness error: provider-private-value',
+        },
+      },
+    };
+    const oldTool = {
+      progress: {
+        item: {
+          id: 'tool-1',
+          type: 'tool-call',
+          summary: 'browser.search failed: provider-private-value',
+        },
+      },
+    };
+    for (const [seq, payload] of [
+      [5, oldError],
+      [6, oldTool],
+    ] as const)
+      await handle.client.execute({
+        sql: 'INSERT INTO run_events (run_id,seq,ts,type,node_id,payload) VALUES (?,?,?,?,?,?)',
+        args: [
+          FIXTURE_IDS.run,
+          seq,
+          FIXTURE_TS,
+          'node.progress',
+          'worker',
+          JSON.stringify(payload),
+        ],
+      });
+    const result = await applyDatabaseUpgrade(handle.client, await manifest(handle));
+    expect(result).toMatchObject({ versions: 1, runs: 1 });
+    const rows = (await handle.client.execute('SELECT * FROM run_events ORDER BY seq')).rows;
+    for (const row of rows)
+      RunEventSchema.parse({
+        ...JSON.parse(storedText(row.payload)),
+        runId: row.run_id,
+        seq: row.seq,
+        ts: row.ts,
+        type: row.type,
+        nodeId: row.node_id,
+      });
+    expect(JSON.parse(storedText(rows[1]!.payload))).toMatchObject({
+      answer: { optionId: 'yes', confidence: null, probabilities: null },
+      diagnostics: [],
+    });
+    expect(JSON.parse(storedText(rows[3]!.payload))).toEqual({
+      progress: { item: { id: 'item-1', type: 'other', summary: 'Command completed' } },
+    });
+    expect(JSON.parse(storedText(rows[4]!.payload))).toEqual({
+      progress: { item: { id: 'error-1', type: 'error', summary: 'Harness reported an error' } },
+    });
+    expect(JSON.parse(storedText(rows[5]!.payload))).toEqual({
+      progress: { item: { id: 'tool-1', type: 'tool-call', summary: 'browser.search failed' } },
+    });
+    expect(JSON.stringify(rows)).not.toContain('provider-private-value');
+    const archived = (
+      await handle.client.execute(
+        "SELECT identity,payload FROM gg_upgrade_archive WHERE kind='run_events'",
+      )
+    ).rows;
+    for (const [seq, original] of [
+      [2, oldDecision],
+      [4, oldProgress],
+      [5, oldError],
+      [6, oldTool],
+    ] as const) {
+      const row = archived.find((row) => row.identity === FIXTURE_IDS.run + ':' + seq)!;
+      expect(JSON.parse(String(JSON.parse(storedText(row.payload)).payload))).toEqual(original);
+    }
+    expect(await guardDatabaseUpgrade(handle.client)).toBe('current');
+  });
   it.each(['queued', 'running', 'waiting', 'paused'] as const)(
     'refuses %s without cancelling or mutating',
     async (status) => {

@@ -1,4 +1,5 @@
-// Frozen from 2f98219fb43620b56d6ae4473db85a35f34d1d16. Offline upgrade only.
+// Frozen from 2f98219fb43620b56d6ae4473db85a35f34d1d16, with the earlier
+// statusless command projection and decisions without skip evidence. Offline upgrade only.
 import type { JsonSchema } from '@graphgoblin/contracts';
 export const LEGACY_V1_SCHEMA: Record<'definition' | 'event', JsonSchema> = {
   definition: {
@@ -2874,6 +2875,17 @@ export const LEGACY_V1_SCHEMA: Record<'definition' | 'event', JsonSchema> = {
                 properties: {
                   item: {
                     oneOf: [
+                      // Pre-strict-progress Codex projection: no lifecycle or exit facts were recorded.
+                      {
+                        type: 'object',
+                        properties: {
+                          id: { type: 'string', minLength: 1, maxLength: 256 },
+                          summary: { type: 'string', maxLength: 2000 },
+                          type: { type: 'string', const: 'command' },
+                        },
+                        required: ['id', 'summary', 'type'],
+                        additionalProperties: false,
+                      },
                       {
                         type: 'object',
                         properties: {
@@ -3111,7 +3123,8 @@ export const LEGACY_V1_SCHEMA: Record<'definition' | 'event', JsonSchema> = {
             },
           },
         },
-        required: ['runId', 'seq', 'ts', 'type', 'nodeId', 'strategy', 'route', 'skipped'],
+        // Earlier builds recorded no skipped-strategy list. Present evidence is still validated.
+        required: ['runId', 'seq', 'ts', 'type', 'nodeId', 'strategy', 'route'],
         additionalProperties: false,
       },
       {

@@ -4,17 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { useApi } from '../api/context.js';
-import {
-  keys,
-  useCheckTemplatePrerequisites,
-  useCreateTemplateDraft,
-  useInstantiateTemplate,
-  useLoops,
-  useModelCatalog,
-  usePreflight,
-  useRuns,
-  useTemplates,
-} from '../api/queries.js';
+import { keys, useCreateTemplateDraft, useLoops, useRuns, useTemplates } from '../api/queries.js';
 import { Icon } from '../components/icons/index.js';
 import { Page, PageHeader } from '../components/layout/index.js';
 import { QueryState, RunStatusBadge } from '../components/status.js';
@@ -243,11 +233,7 @@ export function LoopsPage() {
   const loopsQuery = useLoops();
   const runsQuery = useRuns({ limit: 500 }, 5000);
   const templatesQuery = useTemplates();
-  const modelsQuery = useModelCatalog();
-  const preflightQuery = usePreflight();
-  const checkTemplate = useCheckTemplatePrerequisites();
   const createTemplateDraft = useCreateTemplateDraft();
-  const instantiateTemplate = useInstantiateTemplate();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const latest = latestRuns(runsQuery.data ?? []);
@@ -266,35 +252,15 @@ export function LoopsPage() {
           isOfflineError(templatesQuery.error) ? null : (
             <QueryState query={templatesQuery} what="Templates">
               {(items) => (
-                <div className="grid gap-3">
-                  {modelsQuery.isError ? (
-                    <Alert title="Could not load model choices">
-                      {errorMessage(modelsQuery.error)}
-                    </Alert>
-                  ) : null}
-                  {preflightQuery.isError ? (
-                    <Alert title="Could not check harness readiness">
-                      {errorMessage(preflightQuery.error)}
-                    </Alert>
-                  ) : null}
-                  <TemplateGallery
-                    templates={items}
-                    models={modelsQuery.data ?? []}
-                    preflight={preflightQuery.data ?? []}
-                    onCheckPrerequisites={(templateId, settings) =>
-                      checkTemplate.mutateAsync({ templateId, settings })
-                    }
-                    onInstantiate={(templateId, settings) =>
-                      instantiateTemplate.mutateAsync({ templateId, settings })
-                    }
-                    onCreateDraft={(templateId) => createTemplateDraft.mutateAsync({ templateId })}
-                    onCreated={async (parentLoopId) => {
-                      await queryClient.invalidateQueries({ queryKey: keys.loops });
-                      await navigate(`/loops/${parentLoopId}/edit`);
-                    }}
-                    onCreateFailed={() => queryClient.invalidateQueries({ queryKey: keys.loops })}
-                  />
-                </div>
+                <TemplateGallery
+                  templates={items}
+                  onCreateDraft={(templateId) => createTemplateDraft.mutateAsync({ templateId })}
+                  onCreated={async (loopId) => {
+                    await queryClient.invalidateQueries({ queryKey: keys.loops });
+                    await navigate(`/loops/${loopId}/edit`);
+                  }}
+                  onCreateFailed={() => queryClient.invalidateQueries({ queryKey: keys.loops })}
+                />
               )}
             </QueryState>
           )}
