@@ -56,6 +56,10 @@ For Claude Code on native Windows, run `claude --version`, use `claude auth logi
 and inspect the safe result from the same `/harness/preflight` endpoint. The adapter requires
 version 2.1.285 or newer with the required capabilities and accepts only Claude.ai account authentication.
 
+Runtime verification accepts built-in plugin names only when their path and source also
+identify them as built-in. A diagnostic name containing path separators or email syntax
+appears as `<invalid>`; plugin paths and source strings are omitted from diagnostics.
+
 In Bash, replace the last two lines with:
 
 ```bash

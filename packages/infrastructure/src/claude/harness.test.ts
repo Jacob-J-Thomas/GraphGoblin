@@ -408,6 +408,27 @@ describe('Claude existing harness contract', () => {
         code: 'HARNESS_UNSUPPORTED_POLICY',
         identity: 'cc-plugin-hostile',
       },
+      {
+        records: [
+          {
+            ...init,
+            plugins: [
+              {
+                name: 'cc-plugin-agents-md',
+                path: 'C:/Users/alice/secret.txt',
+                source: 'cc-plugin-agents-md@builtin',
+              },
+            ],
+          },
+        ],
+        code: 'HARNESS_UNSUPPORTED_POLICY',
+        identity: 'cc-plugin-agents-md',
+      },
+      {
+        records: [{ type: 'system', subtype: 'alice@example.com' }],
+        code: 'HARNESS_PROTOCOL_ERROR',
+        identity: '<invalid>',
+      },
     ]) {
       const { harness } = fixture({ version: '2.1.287', records });
       const session = harness.start(request, new AbortController().signal);
@@ -428,6 +449,7 @@ describe('Claude existing harness contract', () => {
         }),
       );
       expect(JSON.stringify(events)).not.toContain('PRIVATE_BODY');
+      expect(JSON.stringify(events)).not.toContain('alice');
     }
   });
   it('aborts during auth without starting a model and makes cancel idempotent', async () => {

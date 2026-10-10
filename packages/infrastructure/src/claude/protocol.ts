@@ -331,6 +331,10 @@ export class ClaudeAccumulator {
         throw policyError(
           `Claude advertised an unexpected plugin: ${claudeDiagnosticName(plugin.name)}`,
         );
+      if (plugin.path !== 'builtin' || plugin.source !== plugin.name + '@builtin')
+        throw policyError(
+          `Claude advertised a plugin without built-in provenance: ${claudeDiagnosticName(plugin.name)}`,
+        );
     }
     if (!Array.isArray(skills)) throw policyError('Claude skill policy metadata is invalid');
     for (const skill of skills) {

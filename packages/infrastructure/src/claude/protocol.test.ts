@@ -24,7 +24,9 @@ const init = (extra: Record<string, unknown> = {}) => ({
   model: 'claude-opus-5-5',
   apiKeySource: 'none',
   mcp_servers: [],
-  plugins: [{ name: 'cc-plugin-agents-md' }],
+  plugins: [
+    { name: 'cc-plugin-agents-md', path: 'builtin', source: 'cc-plugin-agents-md@builtin' },
+  ],
   skills: ['verify'],
   ...extra,
 });
@@ -741,6 +743,14 @@ describe('Claude CLI 2.1.287 captured stream', () => {
     expect(() => acc.policyEvidence).toThrow();
     expect(() => acc.finish()).toThrow();
     const announced = acc.push(records[1]!);
+    expect(records[1]!.plugins).toEqual([
+      { name: 'cc-plugin-agents-md', path: 'builtin', source: 'cc-plugin-agents-md@builtin' },
+      {
+        name: 'cc-plugin-plugin-authoring',
+        path: 'builtin',
+        source: 'cc-plugin-plugin-authoring@builtin',
+      },
+    ]);
     expect(announced).toMatchObject([
       { type: 'session', sessionId: id, mode: 'fresh' },
       { type: 'item', item: { detail: { requestedModel: 'claude-opus-5-5' } } },
@@ -854,6 +864,25 @@ describe('Claude CLI 2.1.287 captured stream', () => {
         message: expect.not.stringContaining('PRIVATE_BODY'),
       }),
     );
+  });
+  it.each([
+    { path: 'C:/Users/alice/private-plugin', source: 'cc-plugin-agents-md@builtin' },
+    { path: 'builtin', source: 'alice@example.com' },
+    { path: 'builtin', source: 'cc-plugin-plugin-authoring@builtin' },
+    { path: undefined, source: 'cc-plugin-agents-md@builtin' },
+    { path: 'builtin', source: undefined },
+  ])('refuses an allowlisted plugin with unverified provenance %j', (provenance) => {
+    const acc = accumulator();
+    expect(() =>
+      acc.push(init({ plugins: [{ name: 'cc-plugin-agents-md', ...provenance }] })),
+    ).toThrow(
+      expect.objectContaining({
+        code: 'HARNESS_UNSUPPORTED_POLICY',
+        message: `Claude advertised a plugin without built-in provenance: cc-plugin-agents-md. ${CLAUDE_RECOVERY_HINT}`,
+      }),
+    );
+    expect(() => acc.policyEvidence).toThrow();
+    expect(() => acc.finish()).toThrow();
   });
   it('names unknown pre-init records and redacts invalid record names', () => {
     for (const { record, identity } of [

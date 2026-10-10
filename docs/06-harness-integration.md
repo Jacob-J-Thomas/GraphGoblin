@@ -285,7 +285,9 @@ the CLI before accepting the session policy. Managed policy remains in force. Th
 
 The plugin allowlist contains exactly the CLI-bundled `cc-plugin-agents-md` and
 `cc-plugin-plugin-authoring`; the explicit built-in skill allowlist includes `plugin-authoring`.
-Names are checked individually, without prefix wildcards. `--safe-mode`, empty setting sources
+Names are checked individually, without prefix wildcards. Each advertised plugin must also
+report `path: "builtin"` and `source: "<name>@builtin"`; a local plugin reusing a built-in name
+is refused. `--safe-mode`, empty setting sources
 and strict MCP configuration suppress user customizations; an unknown plugin, skill or tool
 still fails with `HARNESS_UNSUPPORTED_POLICY` before session evidence is accepted.
 
@@ -338,7 +340,9 @@ native structured-candidate selection, tool correlation or native error checks.
 Protocol refusals keep `HARNESS_PROTOCOL_ERROR` and identify an unrecognised pre-init record's `type`
 and optional `subtype`; policy refusals name the unexpected plugin, skill or tool. Diagnostics
 include the detected CLI version and a hint to update GraphGoblin or report that version.
-Only bounded name-shaped metadata is included, never prompt, response, tool, account or
+Diagnostic names contain only letters, digits, `-`, `_` and `.`, with a maximum of 100
+characters; other values appear as `<invalid>`. Plugin paths and source strings are never
+included. Only bounded name-shaped metadata is included, never prompt, response, tool, account or
 rate-limit bodies. A green preflight verifies prerequisites; it does not run a model turn or
 guarantee that a future CLI stream will pass runtime verification.
 

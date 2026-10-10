@@ -24,7 +24,7 @@ export class ClaudeHarnessError extends Error {
 export const CLAUDE_RECOVERY_HINT = 'Update GraphGoblin or report this Claude CLI version.';
 /** Only name-shaped metadata can appear in diagnostics; malformed values never get serialized. */
 export function claudeDiagnosticName(value: unknown): string {
-  return typeof value === 'string' && /^[a-zA-Z0-9][a-zA-Z0-9_.:@/-]{0,99}$/.test(value)
+  return typeof value === 'string' && /^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,99}$/.test(value)
     ? value
     : '<invalid>';
 }
