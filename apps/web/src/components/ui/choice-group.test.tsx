@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
@@ -23,7 +23,13 @@ const SHARED = [
 const PLANETS = ['Mercury', 'Venus', 'Earth', 'Mars', 'Jupiter'];
 
 /** Five described options in the grid layout, each marking its option with data-planet. */
-function Planets({ disabled = false }: { disabled?: boolean }) {
+function Planets({
+  disabled = false,
+  descriptionTooltips = false,
+}: {
+  disabled?: boolean;
+  descriptionTooltips?: boolean;
+}) {
   const [value, setValue] = useState('Earth');
   const choices: Choice[] = PLANETS.map((planet) => ({
     key: planet,
@@ -42,6 +48,7 @@ function Planets({ disabled = false }: { disabled?: boolean }) {
         choices={choices}
         describedBy="planet-help"
         disabled={disabled}
+        descriptionTooltips={descriptionTooltips}
       />
       <p id="planet-help">Pick one.</p>
       <output data-testid="planet">{value}</output>
@@ -50,6 +57,83 @@ function Planets({ disabled = false }: { disabled?: boolean }) {
 }
 
 describe('ChoiceGroup', () => {
+  it('opts into compact labels with persistent accessible descriptions and separate help buttons', () => {
+    render(<Planets descriptionTooltips />);
+    for (const planet of PLANETS) {
+      const radio = screen.getByRole('radio', { name: planet });
+      expect(radio).toHaveAccessibleDescription(`${planet} is a planet.`);
+      const description = document.getElementById(radio.getAttribute('aria-describedby')!);
+      expect(description).toHaveClass('sr-only');
+      const help = screen.getByRole('button', { name: `${planet} help` });
+      expect(help.closest('label')).toBeNull();
+      expect(help).toHaveAccessibleDescription(`${planet} is a planet.`);
+    }
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('shows help on hover, keeps it under the pointer and closes after leaving', async () => {
+    const user = userEvent.setup();
+    render(<Planets descriptionTooltips />);
+    const help = screen.getByRole('button', { name: 'Mars help' });
+    await user.hover(help);
+    const popup = await screen.findByRole('dialog', { name: 'Option help' });
+    expect(popup).toHaveTextContent('Mars is a planet.');
+    await user.hover(popup);
+    expect(popup).toBeVisible();
+    await user.unhover(popup);
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(screen.getByRole('radio', { name: 'Earth' })).toBeChecked();
+  });
+
+  it('opens on keyboard focus and Escape closes without changing selection or losing focus', async () => {
+    const user = userEvent.setup();
+    render(<Planets descriptionTooltips />);
+    await user.tab();
+    expect(screen.getByRole('button', { name: 'Mercury help' })).toHaveFocus();
+    expect(screen.getByRole('dialog', { name: 'Option help' })).toHaveTextContent(
+      'Mercury is a planet.',
+    );
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Mercury help' })).toHaveFocus();
+    expect(screen.getByRole('radio', { name: 'Earth' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: 'Mercury' })).toHaveAccessibleDescription(
+      'Mercury is a planet.',
+    );
+  });
+
+  it('opens on touch tap without selecting the option and a second tap dismisses it', async () => {
+    const user = userEvent.setup();
+    render(<Planets descriptionTooltips />);
+    const help = screen.getByRole('button', { name: 'Mars help' });
+    await user.pointer([
+      { keys: '[TouchA>]', target: help },
+      { keys: '[/TouchA]', target: help },
+    ]);
+    expect(screen.getByRole('dialog', { name: 'Option help' })).toHaveTextContent(
+      'Mars is a planet.',
+    );
+    expect(screen.getByRole('radio', { name: 'Earth' })).toBeChecked();
+    await user.pointer([
+      { keys: '[TouchA>]', target: help },
+      { keys: '[/TouchA]', target: help },
+    ]);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Earth' })).toBeChecked();
+  });
+
+  it('keeps native arrow selection with help enabled and disables both radios and help', async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(<Planets descriptionTooltips />);
+    screen.getByRole('radio', { name: 'Earth' }).focus();
+    await user.keyboard('{ArrowRight}');
+    expect(screen.getByRole('radio', { name: 'Mars' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: 'Mars' })).toHaveFocus();
+    rerender(<Planets descriptionTooltips disabled />);
+    for (const control of [...screen.getAllByRole('radio'), ...screen.getAllByRole('button')])
+      expect(control).toBeDisabled();
+  });
+
   it('in the grid layout, names each radio by its label and describes it by its description', () => {
     render(<Planets />);
     const group = screen.getByRole('radiogroup', { name: 'Planet' });
@@ -66,11 +150,15 @@ describe('ChoiceGroup', () => {
       expect(radio.closest('label')).toHaveClass('grid', 'min-w-0');
       expect(radio.nextElementSibling).toHaveClass(...SHARED, 'content-start');
       expect(radio.nextElementSibling).not.toHaveAttribute('title');
+      expect(document.getElementById(radio.getAttribute('aria-describedby')!)).not.toHaveClass(
+        'sr-only',
+      );
     }
     // One name for the group, generated when none is given.
     expect(new Set(radios.map((radio) => radio.getAttribute('name'))).size).toBe(1);
     expect(group.lastElementChild).toHaveClass('grid', 'sm:grid-cols-2', 'lg:grid-cols-3');
     expect(screen.getByRole('radio', { name: 'Earth' })).toBeChecked();
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 
   it('keeps native radio keyboard behaviour in the grid', async () => {
@@ -126,6 +214,7 @@ describe('ChoiceGroup', () => {
       <ChoiceGroup
         legend="Size"
         layout="grid"
+        descriptionTooltips
         choices={[
           { key: 's', value: 's', checked: false, onSelect: vi.fn(), label: 'Small' },
           { key: 'l', value: 'l', checked: true, onSelect: vi.fn(), label: 'Large' },

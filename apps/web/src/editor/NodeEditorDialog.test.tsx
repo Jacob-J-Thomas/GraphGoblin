@@ -53,6 +53,70 @@ async function openDialog(
 const advanced = (dialog: HTMLElement) =>
   within(dialog).getByRole('button', { name: /^Advanced\b/ });
 
+describe('NodeEditorDialog answer help', () => {
+  const nodes: NodeInput[] = [
+    {
+      id: 'pick',
+      kind: 'decision',
+      label: 'Pick',
+      config: {
+        answer: {
+          type: 'choice',
+          options: [
+            { id: 'yes', label: 'Yes', criteria: 'Matches' },
+            { id: 'no', label: 'No', criteria: 'Does not match' },
+          ],
+        },
+        evaluation: { kind: 'expression', jsonata: '"yes"' },
+      },
+    },
+    {
+      id: 'finish',
+      kind: 'exit',
+      label: 'Finish',
+      config: {
+        criteria: [
+          {
+            when: 'predicate',
+            answer: { type: 'noul' },
+            evaluation: { kind: 'expression', jsonata: 'true' },
+            match: { type: 'noul', value: true },
+            outcome: 'success',
+          },
+        ],
+      },
+    },
+  ];
+
+  it.each(nodes)(
+    'keeps $kind answer descriptions in help without editing the node',
+    async (node) => {
+      const user = userEvent.setup();
+      const dialog = await openDialog(node, `Edit ${node.kind} ${node.id}`);
+      const group = within(dialog).getByRole('radiogroup', { name: 'Answer type' });
+      const before = store().definition;
+      const history = store().past.length;
+      for (const label of ['Choice', 'Noul', 'Score']) {
+        const radio = within(group).getByRole('radio', { name: label });
+        const description = document.getElementById(radio.getAttribute('aria-describedby')!);
+        expect(description).toHaveClass('sr-only');
+        expect(radio).toHaveAccessibleDescription(description?.textContent ?? '');
+        const help = within(group).getByRole('button', { name: `${label} help` });
+        await user.click(help);
+        const popup = screen.getByRole('dialog', { name: 'Option help' });
+        expect(popup).toHaveTextContent(description?.textContent ?? '');
+        await user.keyboard('{Escape}');
+        expect(screen.queryByRole('dialog', { name: 'Option help' })).not.toBeInTheDocument();
+        expect(dialog).toBeVisible();
+        expect(help).toHaveFocus();
+        expect(radio).toHaveAccessibleDescription(description?.textContent ?? '');
+      }
+      expect(store().definition).toBe(before);
+      expect(store().past).toHaveLength(history);
+    },
+  );
+});
+
 describe('NodeEditorDialog decision field order', () => {
   it('shows answer type before evaluation and preserves issue focus paths', async () => {
     const user = userEvent.setup();

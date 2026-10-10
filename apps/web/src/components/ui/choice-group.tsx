@@ -1,8 +1,11 @@
 import { useId, type ReactNode } from 'react';
 import { cn } from '../../lib/utils.js';
+import { Icon } from '../icons/index.js';
+import { Button } from './button.js';
 import { ellipsize } from './ellipsis.js';
 import { RequiredMarker } from './field.js';
 import { Legend } from './fieldset.js';
+import { Popover } from './popover.js';
 
 /** One radio of a `ChoiceGroup`. */
 export interface Choice {
@@ -14,7 +17,7 @@ export interface Choice {
   onSelect: () => void;
   /** The visible name, and the radio's accessible name. */
   label: ReactNode;
-  /** A line under the name that describes the radio (the grid layout). */
+  /** Text that describes the radio, shown inline unless `descriptionTooltips` is enabled. */
   description?: ReactNode;
   /** `data-*` attributes for the option, such as `data-font` to preview a face inside it. */
   data?: Readonly<Record<`data-${string}`, string>>;
@@ -30,6 +33,8 @@ export interface ChoiceGroupProps {
    * 1024 px, two from 640 px, one below), for more choices than a row holds.
    */
   layout?: 'row' | 'grid' | undefined;
+  /** Move descriptions into hover/focus/tap help popovers, keeping them as radio descriptions. */
+  descriptionTooltips?: boolean | undefined;
   /** The radios' shared `name`; one is generated when absent. */
   name?: string | undefined;
   required?: boolean | undefined;
@@ -86,6 +91,7 @@ export function ChoiceGroup({
   legend,
   choices,
   layout = 'row',
+  descriptionTooltips = false,
   name,
   required = false,
   disabled = false,
@@ -122,9 +128,11 @@ export function ChoiceGroup({
           // With a description the name and the description are separate runs of text: the radio is
           // named by the first and described by the second. Otherwise the label names it.
           const described = choice.description !== undefined;
+          const tooltip = descriptionTooltips && described;
           const nameId = `${groupId}-${index}-name`;
           const descriptionId = `${groupId}-${index}-description`;
-          return (
+          const helpId = `${groupId}-${index}-help`;
+          const option = (
             <label key={choice.key} className={styles.option} {...choice.data}>
               <input
                 type="radio"
@@ -138,9 +146,15 @@ export function ChoiceGroup({
               />
               <span
                 title={
-                  layout === 'row' && typeof choice.label === 'string' ? choice.label : undefined
+                  !tooltip && layout === 'row' && typeof choice.label === 'string'
+                    ? choice.label
+                    : undefined
                 }
-                className={cn(styles.face, OPTION_STATES)}
+                className={cn(
+                  styles.face,
+                  OPTION_STATES,
+                  tooltip && 'min-h-8 content-center pointer-coarse:min-h-11',
+                )}
               >
                 {described ? (
                   // Grid wrappers, so the caller's own text spans set their line height alone.
@@ -148,7 +162,7 @@ export function ChoiceGroup({
                     <span id={nameId} className="grid min-w-0">
                       {choice.label}
                     </span>
-                    <span id={descriptionId} className="grid min-w-0">
+                    <span id={descriptionId} className={tooltip ? 'sr-only' : 'grid min-w-0'}>
                       {choice.description}
                     </span>
                   </>
@@ -159,6 +173,35 @@ export function ChoiceGroup({
                 )}
               </span>
             </label>
+          );
+          return tooltip ? (
+            <div
+              key={choice.key}
+              className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center"
+            >
+              {option}
+              <Popover
+                label="Option help"
+                trigger={(props) => (
+                  <Button
+                    {...props}
+                    variant="ghost"
+                    size="icon"
+                    aria-labelledby={`${nameId} ${helpId}`}
+                    aria-describedby={descriptionId}
+                  >
+                    <Icon name="info" />
+                    <span id={helpId} className="sr-only">
+                      help
+                    </span>
+                  </Button>
+                )}
+              >
+                {choice.description}
+              </Popover>
+            </div>
+          ) : (
+            option
           );
         })}
       </div>

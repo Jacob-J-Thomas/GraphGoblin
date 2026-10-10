@@ -42,7 +42,7 @@ Whatever model family implements the change, the other family reviews it: OpenAI
 
 Every issue has one type: `type:bug`, `type:feature`, `type:ui-polish`, `type:architecture`, `type:chore`, `type:research`, or `type:epic`. Area labels locate the affected part of the product: `area:web`, `area:editor`, `area:settings`, `area:api`, `area:engine`, `area:contracts`, `area:design-system`, `area:templates`, `area:integrations`, `area:installer`, or `area:harness`.
 
-Milestones are `v1.1` for editor usability and polish and catalogue fixes, `v1.2` for visual identity, dark mode, templates, and GitHub integration, and `Later` for distribution, LiteLLM, and mobile.
+Milestones are `Pre-merge #151` for work that must land before the feature PR merges, `After merge: evaluate and stabilise` for product evaluation, the architecture sweep and the cutovers they require (this milestone blocks further feature work), and `Later` for queued and long-term work, with most items parked under `backlog`.
 
 Epics carry `type:epic` and area labels only; pipelines ignore them. Each child issue starts its body with `Part of #<epic-number>`, and the epic lists its child issues.
 

@@ -12,6 +12,7 @@ import {
 import { z } from 'zod';
 import type { APIRequestContext, Locator, Page } from '@playwright/test';
 import { closeNode, control, expect, openNode, test } from './fixtures.js';
+import { checkAnswerTypeHelp } from './answer-type-help.js';
 
 const LOCAL_MODEL = 'exit-local';
 const CHOICE_MODEL = 'exit-choice-only';
@@ -91,6 +92,37 @@ const exitTest = test.extend<{ synthetic: Synthetic }>({
 
 // A failed acceptance must remain available for diagnosis, including in CI.
 exitTest.describe.configure({ retries: 0 });
+
+exitTest.describe('exit answer help', () => {
+  exitTest.use({ hasTouch: true });
+  for (const theme of ['dark', 'light']) {
+    exitTest(
+      `compact help works in ${theme} at desktop and narrow widths`,
+      async ({ page, request, synthetic }) => {
+        await page.addInitScript(
+          (theme) => localStorage.setItem('graphgoblin-theme', theme),
+          theme,
+        );
+        await createLoop(page, request, synthetic.url, exitLoop('Exit answer help', [score()]));
+        const dialog = await openNode(page, 'done');
+        await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+        for (const width of [1440, 360]) {
+          await page.setViewportSize({ width, height: 900 });
+          await checkAnswerTypeHelp(
+            page,
+            dialog,
+            exitTest.info().outputPath(`exit-help-${theme}-${width}.png`),
+          );
+        }
+        const group = dialog.getByRole('radiogroup', { name: 'Answer type' });
+        await group.getByRole('radio', { name: 'Score', exact: true }).focus();
+        await page.keyboard.press('ArrowLeft');
+        await expect(group.getByRole('radio', { name: 'Noul', exact: true })).toBeChecked();
+        await expect(group.getByRole('radio', { name: 'Noul', exact: true })).toBeFocused();
+      },
+    );
+  }
+});
 
 async function classifierCatalog(request: APIRequestContext, url: string) {
   const response = await request.get(url + '/classifier-models');

@@ -193,6 +193,7 @@ function ExitPredicateAnswerField({ name, label }: FieldProps) {
         legend="Answer type"
         name={`${name}-type`}
         layout="grid"
+        descriptionTooltips
         choices={[
           {
             key: 'choice',

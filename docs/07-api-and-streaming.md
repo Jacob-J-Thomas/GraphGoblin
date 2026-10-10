@@ -66,7 +66,7 @@ with its field path, regardless of its value.
 and portable export envelopes. Envelope errors retain paths such as
 `loop.settings.defaults.harness`, `formatVersion`, or `exportedAt`, under `LOOP_IMPORT_ERROR`.
 Ordinary bodies use `VALIDATION_FAILED`. Responses and exports use the canonical, encodable
-schemas. The current definition and export formats are version 2. Historical migration `0005` removed loop-level harness selection; the later decision/default cutover requires the stopped-instance [offline upgrade](guide/08-offline-upgrade.md). Old-format imports receive `LOOP_FORMAT_UPGRADE_REQUIRED`, and unconverted stores stop before ordinary migrations or recovery. There is no tolerant runtime read path. See the CHANGELOG upgrade notes.
+schemas. The current definition and export formats are version 3. Historical migration `0005` removed loop-level harness selection; the later decision/default cutover requires the stopped-instance [offline upgrade](guide/08-offline-upgrade.md). Old-format imports receive `LOOP_FORMAT_UPGRADE_REQUIRED`, and unconverted stores stop before ordinary migrations or recovery. There is no tolerant runtime read path. See the CHANGELOG upgrade notes.
 
 ## SSE protocol (Decided)
 
