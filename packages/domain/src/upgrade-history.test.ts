@@ -5,10 +5,14 @@ import { FIXTURE_IDS, FIXTURE_TS, sampleThread } from '@graphgoblin/contracts/te
 import { upgradeRunHistoryCurrent } from './upgrade-history-current.js';
 import { upgradeRunHistoryV1 } from './upgrade-history.js';
 
-// Exact payload keys from the stopped-store rehearsal; IDs and text are sanitised.
+// Sanitised stopped-store payloads plus Codex/provider-error shapes from the historical emitter.
 const fixtures = JSON.parse(
   readFileSync(new URL('./upgrade-fixtures/pre-cutover-events.json', import.meta.url), 'utf8'),
-) as { progress: Record<string, unknown>[]; decisions: Record<string, unknown>[] };
+) as {
+  progress: Record<string, unknown>[];
+  decisions: Record<string, unknown>[];
+  providerProgress: { item: { id: string; type: string; summary: string } }[];
+};
 const event = (seq: number, type: string, payload: Record<string, unknown>) => ({
   runId: FIXTURE_IDS.run,
   ts: FIXTURE_TS,
@@ -107,6 +111,116 @@ describe('pre-cutover recorded history', () => {
       diagnostics: [],
     });
   });
+  it('converts a legacy Codex decision without skips and still requires canonical diagnostics at runtime', () => {
+    const result = convert([event(1, 'decision.made', fixtures.decisions[2]!)]);
+    if (!result.ok) throw new Error('Codex fixture refused');
+    const made = result.value.events[0]!;
+    expect(made).toEqual(
+      event(1, 'decision.made', {
+        answer: { type: 'choice', optionId: 'yes', confidence: 0.8, probabilities: null },
+        portId: 'yes',
+        provenance: {
+          kind: 'llm',
+          provider: 'codex',
+          classifierId: null,
+          model: null,
+          effort: null,
+        },
+        diagnostics: [],
+      }),
+    );
+    if (made.type !== 'decision.made') throw new Error('decision fixture missing');
+    const { diagnostics, ...withoutDiagnostics } = made;
+    expect(diagnostics).toEqual([]);
+    expect(RunEventSchema.safeParse(made).success).toBe(true);
+    // All other canonical fields are identical; removing only the converted field is refused.
+    expect(RunEventSchema.safeParse(withoutDiagnostics).success).toBe(false);
+    expect(V2RunEventSchema.safeParse(withoutDiagnostics).success).toBe(false);
+  });
+  it.each([1, 2] as const)(
+    'redacts historical provider summaries in format %i without changing replay or facts',
+    (sourceVersion) => {
+      const initialThread = sampleThread();
+      const events = fixtures.providerProgress.map((progress, index) =>
+        event(index + 1, 'node.progress', { progress }),
+      );
+      const originals = structuredClone(events);
+      const result = upgradeRunHistoryCurrent({
+        sourceVersion,
+        initialThread,
+        events,
+        decisionNodeIds: [],
+        snapshot: initialThread,
+        snapshotSeq: 2,
+      });
+      if (!result.ok) throw new Error(JSON.stringify(result.issues));
+      expect(result.value.events).toEqual([
+        event(1, 'node.progress', {
+          progress: {
+            item: { id: 'error-1', type: 'error', summary: 'Harness reported an error' },
+          },
+        }),
+        event(2, 'node.progress', {
+          progress: { item: { id: 'tool-1', type: 'tool-call', summary: 'browser.search failed' } },
+        }),
+      ]);
+      expect(JSON.stringify(result.value)).not.toContain('provider-private-value');
+      expect(result.value.finalThread).toEqual(initialThread);
+      expect(result.value.snapshot).toEqual(initialThread);
+      expect(events).toEqual(originals);
+      const current = upgradeRunHistoryCurrent({
+        sourceVersion: 3,
+        initialThread,
+        events: result.value.events,
+        decisionNodeIds: [],
+      });
+      if (!current.ok) throw new Error('canonical redaction fixture refused');
+      expect(current.value.events).toEqual(result.value.events);
+    },
+  );
+  it('keeps recorded statuses while removing tool diagnostics and replacing error text', () => {
+    const events = fixtures.providerProgress.map((progress, index) =>
+      event(index + 1, 'node.progress', {
+        progress: { item: { ...progress.item, status: 'failed' } },
+      }),
+    );
+    const result = convert(events);
+    if (!result.ok) throw new Error('status fixture refused');
+    expect(result.value.events).toEqual([
+      event(1, 'node.progress', {
+        progress: {
+          item: {
+            id: 'error-1',
+            type: 'error',
+            summary: 'Harness reported an error',
+            status: 'failed',
+          },
+        },
+      }),
+      event(2, 'node.progress', {
+        progress: {
+          item: {
+            id: 'tool-1',
+            type: 'tool-call',
+            summary: 'browser.search failed',
+            status: 'failed',
+          },
+        },
+      }),
+    ]);
+  });
+  it.each(['message', 'file-change', 'reasoning', 'tool-call', 'search', 'error', 'other'])(
+    'preserves already safe statusless %s progress exactly',
+    (type) => {
+      const summary = type === 'error' ? 'Harness reported an error' : 'Recorded summary';
+      const raw = event(1, 'node.progress', {
+        progress: { item: { id: 'safe-item', type, summary } },
+      });
+      const result = convert([raw]);
+      if (!result.ok) throw new Error('safe item fixture refused');
+      expect(result.value.events).toEqual([raw]);
+    },
+  );
   it('keeps recorded skip diagnostics and strict command lifecycle facts', () => {
     const progress = {
       item: {
