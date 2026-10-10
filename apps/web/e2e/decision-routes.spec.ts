@@ -7,6 +7,7 @@ import {
 } from '@graphgoblin/contracts';
 import type { APIRequestContext, Page } from '@playwright/test';
 import { closeNode, control, expect, openNode, test } from './fixtures.js';
+import { checkAnswerTypeHelp } from './answer-type-help.js';
 
 const handle = (page: Page, node: string, port: string) =>
   page.locator(`.react-flow__handle[data-nodeid="${node}"][data-handleid="${port}"]`);
@@ -127,6 +128,40 @@ async function savedDraft(page: Page, request: APIRequestContext, loopId: string
     draft: { definition: unknown };
   };
   return LoopDefinitionSchema.parse(body.draft.definition);
+}
+
+for (const hasTouch of [true, false]) {
+  test.describe(`decision answer help with ${hasTouch ? 'touch' : 'mouse'}`, () => {
+    test.use({ hasTouch });
+    for (const theme of ['dark', 'light']) {
+      test(`compact help works in ${theme} at desktop and narrow widths`, async ({
+        page,
+        request,
+      }) => {
+        await page.addInitScript(
+          (theme) => localStorage.setItem('graphgoblin-theme', theme),
+          theme,
+        );
+        await openLoop(page, request);
+        const dialog = await openNode(page, 'pick');
+        await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+        for (const width of hasTouch ? [1440, 360] : [1440]) {
+          await page.setViewportSize({ width, height: 900 });
+          await checkAnswerTypeHelp(
+            page,
+            dialog,
+            test.info().outputPath(`decision-help-${theme}-${width}.png`),
+            hasTouch,
+          );
+        }
+        const group = dialog.getByRole('radiogroup', { name: 'Answer type' });
+        await group.getByRole('radio', { name: 'Choice', exact: true }).focus();
+        await page.keyboard.press('ArrowRight');
+        await expect(group.getByRole('radio', { name: 'Noul', exact: true })).toBeChecked();
+        await expect(group.getByRole('radio', { name: 'Noul', exact: true })).toBeFocused();
+      });
+    }
+  });
 }
 
 test('option IDs stay connected when numeric display labels change, save, and reload', async ({

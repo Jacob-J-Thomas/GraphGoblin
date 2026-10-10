@@ -33,6 +33,7 @@ export function DecisionAnswerPicker({
       legend={label + ' type'}
       name={name}
       layout="grid"
+      descriptionTooltips
       required={required}
       describedBy={describedBy}
       invalid={invalid}
