@@ -93,7 +93,7 @@ Skip messages and failure diagnostics use fixed summaries and allowlisted codes;
 error bodies, credential values, and raw response payloads are excluded. Codex reasoning
 is its returned short justification, capped at 2,048 characters. Clients consuming the
 strict contract must upgrade with the server; migration `0007` supplies empty skip lists
-for historical decisions, whose missing evidence cannot be recovered.
+for historical decisions, whose missing evidence cannot be recovered. The offline converter also gives decisions recorded without skip evidence empty diagnostics, which means none were recorded.
 
 SQLite reads validate every stored row against `RunEventSchema`. A non-conforming row fails
 the entire requested page; it is neither repaired nor converted into a synthetic event.

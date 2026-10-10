@@ -497,7 +497,9 @@ describe('QA authored bundle boundary', () => {
     expect(
       authored.manifest.prerequisites.find((check) => check.kind === 'isolation'),
     ).toMatchObject({ blocking: 'runtime', role: 'adversary' });
-    expect(authored.manifest.description).toContain('unavailable');
+    expect(authored.manifest.description).toContain('assess evidence');
+    expect(authored.manifest.description).not.toContain('unavailable');
+    expect(authored.manifest.tags).toEqual(['qa', 'evidence', 'adversarial']);
     expect(authored).toEqual(original);
   });
   it('keeps prompts/schemas mirrored, role model names selected only by typed settings, and private argv static', async () => {

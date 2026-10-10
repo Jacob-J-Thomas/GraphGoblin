@@ -2,6 +2,8 @@
 
 Status: Accepted from the owner's direct product instruction (2026-10-09)
 
+The **Configure automation** paragraph and the retained configured-instance path below are superseded by [ADR-0030](ADR-0030-templates-are-starting-points.md). The editable independent-draft decision remains in force; backend retirement is tracked in #165.
+
 ## Context
 
 The gallery required users to complete repository settings before they could copy a template. That reverses the intended workflow: a template should provide a useful graph to explore and customize immediately. The configured instances from ADR-0027 pin child versions and integration authority; their execution binding deliberately rejects substantive edits. Removing only the form or weakening that binding would not produce an editable starting point.
