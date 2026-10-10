@@ -9,7 +9,6 @@ describe('approved native Windows Claude policy', () => {
     expect(policy).toMatchObject({
       sandbox: 'read-only',
       approval: 'never',
-      billingMode: 'claude.ai-account',
       authMethod: 'claude.ai',
       boundary: 'builtin-tools',
       tools: ['Read', 'Glob', 'Grep'],

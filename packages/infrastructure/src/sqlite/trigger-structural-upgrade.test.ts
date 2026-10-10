@@ -366,5 +366,5 @@ it('refuses an incomplete intermediate receipt layout before migration or recove
     'CREATE INDEX webhook_receipts_due_idx ON webhook_receipts(status,next_attempt_at)',
   );
   await expect(handle.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
-  expect((await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows).toHaveLength(11);
+  expect((await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows).toHaveLength(12);
 });

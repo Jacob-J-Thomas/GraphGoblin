@@ -13,7 +13,6 @@ import {
   type LoopDefinition,
   type HarnessDefaults,
 } from '@graphgoblin/contracts';
-import { claudeModelBlocked } from '@graphgoblin/infrastructure/claude';
 import type { HarnessPort, ModelCatalogPort, ScriptPort, SecretsPort } from '@graphgoblin/engine';
 import type { SqliteApiKeys } from '@graphgoblin/infrastructure/sqlite';
 
@@ -34,22 +33,16 @@ export class TemplatePrerequisites {
     access: 'read-only' | 'write',
   ): Promise<boolean> {
     const harness = this.deps.harnesses[role.harness];
-    if (!harness || claudeModelBlocked(role.harness === 'claude' ? role.model : undefined))
-      return false;
+    if (!harness) return false;
     try {
       const preflight = await harness.preflight();
       if (!preflight.ok || !preflight.authenticated) return false;
       const capability = preflight.models?.find((model) => model.model === role.model);
-      if (
-        preflight.models &&
-        (!capability ||
-          capability.admission !== 'supported' ||
-          !capability.efforts.includes(role.effort))
-      )
+      if (preflight.models && (!capability || !capability.efforts.includes(role.effort)))
         return false;
       if (role.harness !== 'claude') return true;
       return (
-        capability?.admission === 'supported' &&
+        capability !== undefined &&
         capability.efforts.includes(role.effort) &&
         !!preflight.supportedPolicies?.some(
           (policy) =>

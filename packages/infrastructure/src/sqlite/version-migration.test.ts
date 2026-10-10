@@ -97,7 +97,7 @@ describe('inference-node harness data migration', () => {
       await offlineUpgrade(handle);
       expect(await stored()).toEqual(canonical);
       expect((await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows).toHaveLength(
-        11,
+        12,
       );
       await stopDatabase();
 
@@ -111,13 +111,13 @@ describe('inference-node harness data migration', () => {
       );
       await stopDatabase();
       handle = openDatabase({ url: databaseUrl(restored) });
-      // The restored three-entry ledger must replay all eight remaining migrations.
-      expect(await handle.pendingMigrations()).toBe(8);
+      // The restored three-entry ledger must replay all nine remaining migrations.
+      expect(await handle.pendingMigrations()).toBe(9);
       await offlineUpgrade(handle);
       expect(LoopDefinitionSchema.parse(await stored())).toEqual(canonical);
       expect(await handle.pendingMigrations()).toBe(0);
       expect((await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows).toHaveLength(
-        11,
+        12,
       );
       expect((await handle.client.execute('SELECT * FROM classifier_models')).rows).toEqual([]);
     } finally {

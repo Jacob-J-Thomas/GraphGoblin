@@ -444,10 +444,7 @@ describe('TemplateGallery', () => {
         models: [
           {
             model: 'catalog-claude-qa',
-            admission: 'supported' as const,
             efforts: ['high' as const],
-            reasonCode: null,
-            billingStatus: 'account-dependent' as const,
           },
         ],
       },
@@ -807,7 +804,6 @@ describe('TemplateGallery', () => {
         models: [
           {
             model: 'catalog-claude',
-            admission: 'supported' as const,
             efforts: ['high' as const],
           },
         ],

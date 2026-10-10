@@ -31,23 +31,42 @@ const REQUIRED_FLAGS = [
   '--effort',
   '--json-schema',
   '--output-format',
+  '--input-format',
+  '--model',
+  '--verbose',
+  '--print',
   '--no-session-persistence',
   '--resume',
 ];
-/** Refuse an unverified CLI upgrade rather than silently changing its launch policy. */
+export const MINIMUM_CLAUDE_VERSION = '2.1.285';
+/** Only retain the numeric identity, never arbitrary executable output in public diagnostics. */
+export function installedClaudeVersion(text: string): string | undefined {
+  return /^(\d{1,6}\.\d{1,6}\.\d{1,6})(?:\s|$)/.exec(text.trim())?.[1];
+}
+/** Newer releases must still advertise every capability required by the launch policy. */
 export function verifyInstalledCapabilities(versionText: string, helpText: string): string {
-  if (!/^2\.1\.285(?:\s|$)/.test(versionText.trim()))
+  const version = installedClaudeVersion(versionText);
+  if (!version)
     throw new ClaudeHarnessError(
       'HARNESS_UNSUPPORTED_POLICY',
-      'Claude CLI version is not verified; this adapter requires 2.1.285',
+      'Claude CLI version unknown: required capability version identification is unavailable',
+    );
+  const parts = version.split('.').map(Number);
+  const minimum = MINIMUM_CLAUDE_VERSION.split('.').map(Number);
+  const difference = parts.map((part, index) => part - minimum[index]!).find((part) => part !== 0);
+  if (difference !== undefined && difference < 0)
+    throw new ClaudeHarnessError(
+      'HARNESS_UNSUPPORTED_POLICY',
+      `Claude CLI ${version}: required capability minimum version ${MINIMUM_CLAUDE_VERSION} is unavailable`,
     );
   const advertisedFlags = helpText.split(/\s+/).map((token) => token.replace(/,$/, ''));
-  if (REQUIRED_FLAGS.some((flag) => !advertisedFlags.includes(flag)))
+  const missing = REQUIRED_FLAGS.filter((flag) => !advertisedFlags.includes(flag));
+  if (missing.length)
     throw new ClaudeHarnessError(
       'HARNESS_UNSUPPORTED_POLICY',
-      'Claude CLI policy capabilities are unavailable',
+      `Claude CLI ${version}: required capabilities unavailable: ${missing.join(', ')}`,
     );
-  return '2.1.285';
+  return version;
 }
 /** Bounded UTF-8 JSONL; parsing never retains invalid source text in an error. */
 export class JsonLines {
@@ -292,7 +311,7 @@ export class ClaudeAccumulator {
       id: 'claude-policy',
       type: 'other',
       summary:
-        'Claude account login; billing follows account settings; ' +
+        'Claude account login; ' +
         (this.options.policy.boundary === 'builtin-tools'
           ? 'read-only built-in tools; no OS sandbox'
           : 'full access; commands unconfined'),
@@ -303,8 +322,6 @@ export class ClaudeAccumulator {
         tools: [...this.evidence.tools],
         structuredOutputCarrier: this.options.schema === undefined ? null : 'StructuredOutput',
         authMethod: this.evidence.authMethod,
-        billingMode: this.evidence.billingMode,
-        billingStatus: this.evidence.billingStatus,
         inputTransport: 'text',
         promptDeliveryProof: 'unsupported',
         requestedModel: this.options.model,

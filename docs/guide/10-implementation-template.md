@@ -30,7 +30,7 @@ You can change these names in the form. The **Check requirements** report does n
 
 Create a revocable GraphGoblin API key with exactly the **runs:read** scope. Store its value in **Settings → Secrets** and set the template's secret reference to the exact name **supportReadKey**. The form asks for the name, never the token value. This key is separate from GitHub CLI authentication. See [Settings and secrets](06-settings-and-secrets.md) for key and secret management. Never put a token in an issue, prompt, gate argument, or evidence note.
 
-The API checks the selected role's enabled model and effort against the current catalog and harness preflight. It selects a supported Codex default when one is available. Claude is offered only when its installed harness, authentication, model, effort, and required execution policy pass preflight. The form does not install a harness or choose a billing plan.
+The API checks the selected role's enabled model and effort against the current catalog and harness preflight. It selects a supported Codex default when one is available. Claude is offered only when its installed harness, authentication, model, effort, and required execution policy pass preflight. Install and authenticate the harness separately before configuring these roles.
 
 ## Configure and create the workflow
 

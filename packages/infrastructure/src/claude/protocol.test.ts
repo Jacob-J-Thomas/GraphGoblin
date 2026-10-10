@@ -67,7 +67,7 @@ describe('strict Claude auth/capability parsing', () => {
       expect(authCategory(JSON.stringify({ authMethod: method }))).toBeNull();
     for (const value of ['bad', 'null', '{}', '[]']) expect(authCategory(value)).toBeNull();
   });
-  it('requires the verified installed version and every policy flag', () => {
+  it('requires the minimum installed version and every policy flag', () => {
     const flags = [
       '--safe-mode',
       '--restricted',
@@ -80,6 +80,10 @@ describe('strict Claude auth/capability parsing', () => {
       '--effort',
       '--json-schema',
       '--output-format',
+      '--input-format',
+      '--model',
+      '--verbose',
+      '--print',
       '--no-session-persistence',
       '--resume',
     ];
@@ -92,16 +96,25 @@ describe('strict Claude auth/capability parsing', () => {
           .join(' '),
       ),
     ).toBe('2.1.285');
-    expect(() => verifyInstalledCapabilities('2.1.286 (Claude Code)', flags.join(' '))).toThrow(
-      /version/,
-    );
+    for (const version of ['2.1.286', '2.1.287', '2.2.0', '3.0.0'])
+      expect(verifyInstalledCapabilities(version + ' (Claude Code)', flags.join(' '))).toBe(
+        version,
+      );
+    for (const version of ['1.9.999', '2.0.999', '2.1.284'])
+      expect(() => verifyInstalledCapabilities(version, flags.join(' '))).toThrow(
+        new RegExp(`${version.replaceAll('.', '\\.')}.*minimum version 2\\.1\\.285`),
+      );
+    for (const text of ['PRIVATE', '2.1', '2.1.287-beta', '9999999.1.1'])
+      expect(() => verifyInstalledCapabilities(text, flags.join(' '))).toThrow(
+        /version unknown.*version identification/,
+      );
     for (const removed of flags)
       expect(() =>
         verifyInstalledCapabilities(
           '2.1.285 (Claude Code)',
           flags.filter((flag) => flag !== removed).join(' '),
         ),
-      ).toThrow(/capabilit/);
+      ).toThrow(new RegExp(`2\\.1\\.285.*capabilities unavailable: ${removed}`));
   });
 });
 describe('bounded JSONL parser', () => {
@@ -133,7 +146,7 @@ describe('Claude stream contract and honest execution evidence', () => {
         type: 'item',
         item: expect.objectContaining({
           type: 'other',
-          summary: expect.stringContaining('billing follows account settings'),
+          summary: expect.stringContaining('Claude account login'),
           detail: expect.objectContaining({
             inputTransport: 'text',
             promptDeliveryProof: 'unsupported',
@@ -277,7 +290,6 @@ describe('Claude stream contract and honest execution evidence', () => {
     acc.push(init());
     expect(acc.finish.bind(acc)).toThrow();
     expect(acc.policyEvidence).toMatchObject({
-      billingMode: 'claude.ai-account',
       authMethod: 'claude.ai',
       advertisedPluginCount: 1,
       advertisedSkillCount: 1,

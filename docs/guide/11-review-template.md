@@ -17,7 +17,7 @@ git -C <checkout-path> remote get-url origin
 
 Create a revocable GraphGoblin API key with exactly the **runs:read** scope. Save its value in **Settings → Secrets** under the name **supportReadKey**. The template asks for the secret name only; never paste the key value into the form, a prompt, a pull request, or a run note. This key is separate from GitHub CLI authentication. See [Settings and secrets](06-settings-and-secrets.md).
 
-The reviewer and fixer role menus use current enabled models and harness preflight. The gallery chooses an enabled Codex model and supported effort when available; Claude choices appear only when the installed harness, login, model, effort, and required execution policy are supported. The reviewer uses read-only access. A fixing pass uses a separate fresh session with write access. These settings do not install a harness or change its billing account.
+The reviewer and fixer role menus use current enabled models and harness preflight. The gallery chooses an enabled Codex model and supported effort when available; Claude choices appear only when the installed harness, login, model, effort, and required execution policy are supported. The reviewer uses read-only access. A fixing pass uses a separate fresh session with write access. Install and authenticate the harness separately before configuring these roles.
 
 ## Configure and create the review workflow
 

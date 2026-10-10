@@ -223,9 +223,7 @@ function catalogModels(
     return (
       ready?.ok === true &&
       ready.authenticated &&
-      ready.models?.some(
-        (capability) => capability.model === entry.model && capability.admission === 'supported',
-      ) === true
+      ready.models?.some((capability) => capability.model === entry.model) === true
     );
   });
 }
@@ -238,7 +236,7 @@ function modelEfforts(
   if (model.harness !== 'claude') return model.efforts;
   const capability = preflight
     .find((item) => item.harness === model.harness)
-    ?.models?.find((item) => item.model === model.model && item.admission === 'supported');
+    ?.models?.find((item) => item.model === model.model);
   return capability ? model.efforts.filter((effort) => capability.efforts.includes(effort)) : [];
 }
 

@@ -226,7 +226,6 @@ describe('unconfirmed native cancellation', () => {
     ['HARNESS_UNSUPPORTED_POLICY', 'HARNESS_TURN_FAILED', false],
     ['HARNESS_OUTPUT_LIMIT', 'HARNESS_TURN_FAILED', false],
     ['HARNESS_INVALID_CONFIGURATION', 'HARNESS_TURN_FAILED', false],
-    ['HARNESS_MODEL_UNVERIFIED', 'HARNESS_TURN_FAILED', false],
     ['HARNESS_TURN_FAILED', 'HARNESS_TURN_FAILED', false],
   ])('maps fixed %s without substring inference', async (code, expected, resumable) => {
     const { engine, claude } = await engineWithClaude();

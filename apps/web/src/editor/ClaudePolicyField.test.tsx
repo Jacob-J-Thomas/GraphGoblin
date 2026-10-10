@@ -14,8 +14,6 @@ const readOnly: ClaudePolicy = {
   permissionMode: 'dontAsk',
   tools: ['Read'],
   authMethod: 'claude.ai',
-  billingMode: 'claude.ai-account',
-  billingStatus: 'account-dependent',
   boundary: 'builtin-tools',
   network: 'unconfined',
 };

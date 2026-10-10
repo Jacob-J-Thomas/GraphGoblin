@@ -18,12 +18,12 @@ PowerShell blocks in this guide call `pnpm.cmd`, because Windows PowerShell's de
 Run the API as the same operating-system user who logged into Codex. GraphGoblin uses that login and stores no Codex credentials.
 
 To use Claude Code, install and sign in to the native Windows CLI as the same operating-system
-user who runs the API. The adapter accepts version `2.1.285` only and fails closed on other
-versions or platforms. It looks for `%USERPROFILE%\.local\bin\claude.exe`; set `GG_CLAUDE_BINARY`
+user who runs the API. The adapter accepts version `2.1.285` or newer with the required capabilities and fails closed on
+older versions, missing capabilities or unsupported platforms. It looks for `%USERPROFILE%\.local\bin\claude.exe`; set `GG_CLAUDE_BINARY`
 to the owner-installed executable when it is elsewhere. Run `claude auth login`, then confirm
 **Harness preflight** in Settings. GraphGoblin reports the safe authentication category only; do
-not share raw CLI authentication output. Claude billing follows the account's settings, and model
-availability does not promise subscription inclusion. See [Claude Code in harness integration](../06-harness-integration.md#claude-code-adapter-26).
+not share raw CLI authentication output. CLI capability and login checks are reported independently.
+Opus 5.5 and Fable 5.1 follow the same technical readiness checks. See [Claude Code in harness integration](../06-harness-integration.md#claude-code-adapter-26).
 
 There are three ways to install: the install script (recommended), the container image, or the manual steps the script performs. All of them start from a clone. Replace the repository URL placeholder with the clone URL from your repository host:
 

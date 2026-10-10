@@ -564,8 +564,8 @@ describe('SettingsPage', () => {
         {
           harness: 'claude',
           source: 'harness',
-          model: 'blocked',
-          displayName: 'Blocked',
+          model: 'unverified',
+          displayName: 'Unverified',
           efforts: ['minimal'],
           defaultEffort: 'minimal',
           enabled: true,
@@ -580,30 +580,18 @@ describe('SettingsPage', () => {
           {
             model: 'opus',
             efforts: ['low', 'high', 'xhigh'],
-            admission: 'supported',
-            reasonCode: null,
-            billingStatus: 'account-dependent',
           },
           {
             model: 'sonnet',
             efforts: ['low', 'high', 'max'],
-            admission: 'supported',
-            reasonCode: null,
-            billingStatus: 'account-dependent',
           },
           {
             model: 'disabled',
             efforts: ['minimal'],
-            admission: 'supported',
-            reasonCode: null,
-            billingStatus: 'account-dependent',
           },
           {
-            model: 'blocked',
+            model: 'unreported',
             efforts: ['minimal'],
-            admission: 'blocked',
-            reasonCode: 'BILLING_UNVERIFIED',
-            billingStatus: 'unverified',
           },
         ],
       });
@@ -650,7 +638,7 @@ describe('SettingsPage', () => {
     },
   );
 
-  it('keeps Claude defaults per harness and states account-dependent model access precisely', async () => {
+  it('keeps Claude defaults per harness and enables Fable through the catalog', async () => {
     const user = userEvent.setup();
     const api = seeded();
     api.catalog.push(
@@ -681,24 +669,16 @@ describe('SettingsPage', () => {
         version: '2.1.285',
         authenticated: true,
         authMethod: 'claude.ai',
-        billingMode: 'claude.ai-account',
-        billingStatus: 'account-dependent',
         problems: [],
         supportedPolicies: [],
         models: [
           {
             model: 'claude-opus-5-5',
             efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
-            admission: 'supported',
-            reasonCode: null,
-            billingStatus: 'account-dependent',
           },
           {
             model: 'claude-fable-5-1',
             efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
-            admission: 'blocked',
-            reasonCode: 'BILLING_UNVERIFIED',
-            billingStatus: 'unverified',
           },
         ],
       },
@@ -708,23 +688,19 @@ describe('SettingsPage', () => {
     };
     renderApp('/settings', api);
 
-    expect(
-      await screen.findByText(
-        'Claude account billing; model availability and usage limits depend on account settings. This does not guarantee that a model is included.',
-      ),
-    ).toBeInTheDocument();
-    expect(screen.getAllByText('Billing is unverified for this model.')).toHaveLength(2);
-    expect(screen.queryByText(/included in Max/i)).not.toBeInTheDocument();
-    expect(screen.queryByRole('switch', { name: 'Enable Fable 5.1' })).not.toBeInTheDocument();
+    const fableSwitch = await screen.findByRole('switch', { name: 'Enable Fable 5.1' });
+    expect(fableSwitch).not.toBeChecked();
+    await user.click(fableSwitch);
+    await waitFor(() => expect(fableSwitch).toBeChecked());
 
     const model = await screen.findByLabelText('Default model (claude)');
-    await user.selectOptions(model, 'claude-opus-5-5');
+    await user.selectOptions(model, 'claude-fable-5-1');
     await waitFor(() =>
       expect(api.settingsValues).toMatchObject({
         defaults: {
           byHarness: {
             codex: { model: 'gpt-6-luna', effort: 'low' },
-            claude: { model: 'claude-opus-5-5' },
+            claude: { model: 'claude-fable-5-1' },
           },
         },
       }),
@@ -735,7 +711,7 @@ describe('SettingsPage', () => {
         defaults: {
           byHarness: {
             codex: { model: 'gpt-6-luna', effort: 'low' },
-            claude: { model: 'claude-opus-5-5', effort: 'xhigh' },
+            claude: { model: 'claude-fable-5-1', effort: 'xhigh' },
           },
         },
       }),
@@ -763,17 +739,12 @@ describe('SettingsPage', () => {
       version: '2.1.285',
       authenticated: true,
       authMethod: 'claude.ai',
-      billingMode: 'claude.ai-account',
-      billingStatus: 'account-dependent',
       problems: [],
       supportedPolicies: [],
       models: [
         {
           model: 'claude-opus-5-5',
           efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
-          admission: 'supported',
-          reasonCode: null,
-          billingStatus: 'account-dependent',
         },
       ],
     });
@@ -858,9 +829,6 @@ describe('SettingsPage', () => {
         {
           model: 'claude-opus-5-5',
           efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
-          admission: 'supported',
-          reasonCode: null,
-          billingStatus: 'account-dependent',
         },
       ],
     });
@@ -1016,4 +984,43 @@ describe('SettingsPage', () => {
     );
     await user.click(screen.getByRole('button', { name: 'Keep' }));
   });
+});
+
+describe('Claude catalog enablement and readiness', () => {
+  it.each([true, false])(
+    'keeps owner enable switches usable with failed readiness and login %s',
+    async (authenticated) => {
+      const api = seeded();
+      api.catalog.push({
+        harness: 'claude',
+        source: 'harness',
+        model: 'claude-fable-5-1',
+        displayName: 'Fable 5.1',
+        efforts: ['high'],
+        defaultEffort: 'high',
+        enabled: true,
+      });
+      api.preflight.push({
+        harness: 'claude',
+        ok: false,
+        version: '2.1.287',
+        authenticated,
+        authMethod: authenticated ? 'claude.ai' : null,
+        problems: ['Claude CLI 2.1.287: required capabilities unavailable: --restricted'],
+        models: [{ model: 'claude-fable-5-1', efforts: ['high'] }],
+      });
+      renderApp('/settings', api);
+      expect(
+        await screen.findByText(/Enabled in catalog; Claude harness not ready/),
+      ).toBeInTheDocument();
+      const toggle = await screen.findByRole('switch', { name: 'Enable Fable 5.1' });
+      expect(toggle).toBeChecked();
+      expect(toggle).not.toHaveAttribute('aria-disabled', 'true');
+      if (authenticated) expect(screen.getByText('Signed in with Claude.ai.')).toBeInTheDocument();
+      else expect(screen.queryByText('Signed in with Claude.ai.')).not.toBeInTheDocument();
+      await userEvent.setup().click(toggle);
+      await waitFor(() => expect(toggle).not.toBeChecked());
+      expect(screen.getByText(/Disabled in catalog; Claude harness not ready/)).toBeInTheDocument();
+    },
+  );
 });

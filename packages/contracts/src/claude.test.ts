@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   DecisionEvaluationSchema,
+  HarnessPreflightSchema,
+  ClaudeModelCapabilitySchema,
   HarnessDefaultsSchema,
   HarnessIdSchema,
   InferenceConfigSchema,
@@ -85,5 +87,27 @@ describe('Claude inference contract', () => {
     expect(DecisionEvaluationSchema.safeParse({ kind: 'llm', harness: 'claude' }).success).toBe(
       false,
     );
+  });
+});
+
+describe('Claude public readiness contracts', () => {
+  it('exposes technical model capabilities and rejects removed fields on current responses', () => {
+    const model = { model: 'claude-fable-5-1', efforts: ['high'] };
+    expect(ClaudeModelCapabilitySchema.parse(model)).toEqual(model);
+    const preflight = {
+      ok: false,
+      version: '2.1.287',
+      authenticated: true,
+      problems: ['Missing --restricted'],
+      authMethod: 'claude.ai',
+      models: [model],
+    };
+    expect(HarnessPreflightSchema.parse(preflight)).toEqual(preflight);
+    expect(
+      ClaudeModelCapabilitySchema.safeParse({ ...model, admission: 'supported' }).success,
+    ).toBe(false);
+    expect(
+      HarnessPreflightSchema.safeParse({ ...preflight, billingMode: 'claude.ai-account' }).success,
+    ).toBe(false);
   });
 });

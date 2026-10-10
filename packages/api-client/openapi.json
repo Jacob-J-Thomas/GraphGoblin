@@ -16899,18 +16899,6 @@
                               }
                             ]
                           },
-                          "billingMode": {
-                            "type": "string",
-                            "enum": [
-                              "claude.ai-account"
-                            ]
-                          },
-                          "billingStatus": {
-                            "type": "string",
-                            "enum": [
-                              "account-dependent"
-                            ]
-                          },
                           "supportedPolicies": {
                             "maxItems": 2,
                             "type": "array",
@@ -16950,18 +16938,6 @@
                                     "claude.ai"
                                   ]
                                 },
-                                "billingMode": {
-                                  "type": "string",
-                                  "enum": [
-                                    "claude.ai-account"
-                                  ]
-                                },
-                                "billingStatus": {
-                                  "type": "string",
-                                  "enum": [
-                                    "account-dependent"
-                                  ]
-                                },
                                 "boundary": {
                                   "type": "string",
                                   "enum": [
@@ -16982,8 +16958,6 @@
                                 "permissionMode",
                                 "tools",
                                 "authMethod",
-                                "billingMode",
-                                "billingStatus",
                                 "boundary",
                                 "network"
                               ],
@@ -17016,41 +16990,11 @@
                                       "max"
                                     ]
                                   }
-                                },
-                                "admission": {
-                                  "type": "string",
-                                  "enum": [
-                                    "supported",
-                                    "blocked"
-                                  ]
-                                },
-                                "reasonCode": {
-                                  "anyOf": [
-                                    {
-                                      "type": "string",
-                                      "enum": [
-                                        "BILLING_UNVERIFIED"
-                                      ]
-                                    },
-                                    {
-                                      "type": "null"
-                                    }
-                                  ]
-                                },
-                                "billingStatus": {
-                                  "type": "string",
-                                  "enum": [
-                                    "account-dependent",
-                                    "unverified"
-                                  ]
                                 }
                               },
                               "required": [
                                 "model",
-                                "efforts",
-                                "admission",
-                                "reasonCode",
-                                "billingStatus"
+                                "efforts"
                               ],
                               "additionalProperties": false
                             }

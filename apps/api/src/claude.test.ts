@@ -35,8 +35,6 @@ beforeEach(async () => {
     authenticated: true,
     problems: [],
     authMethod: 'claude.ai',
-    billingMode: 'claude.ai-account',
-    billingStatus: 'account-dependent',
     supportedPolicies: [
       claudePolicy({ sandbox: 'read-only', approval: 'never' }, undefined, 'win32'),
     ],
@@ -48,7 +46,7 @@ afterEach(async () => {
   await t.close();
 });
 describe('Claude public integration', () => {
-  it('keeps safe policy/model/billing facts in the public typed preflight response', async () => {
+  it('keeps safe policy/model facts in the public typed preflight response', async () => {
     const response = await t.app.inject({ method: 'GET', url: '/harness/preflight' });
     expect(response.statusCode).toBe(200);
     const item = response
@@ -57,13 +55,9 @@ describe('Claude public integration', () => {
     expect(item).toMatchObject({
       authenticated: true,
       authMethod: 'claude.ai',
-      billingStatus: 'account-dependent',
       models: expect.arrayContaining([
         expect.objectContaining({
           model: CLAUDE_FABLE_MODEL,
-          admission: 'blocked',
-          billingStatus: 'unverified',
-          reasonCode: 'BILLING_UNVERIFIED',
         }),
       ]),
     });
@@ -80,30 +74,33 @@ describe('Claude public integration', () => {
       ]),
     });
   });
-  it('runs exact Claude inference and preserves normal output/usage', async () => {
-    claude.script([
-      {
-        structured: { ok: true },
-        finalText: 'Synthetic result.',
-        usage: { inputTokens: 2, outputTokens: 3 },
-      },
-    ]);
-    const loopId = await t.publishLoop(definition());
-    const started = await t.app.inject({
-      method: 'POST',
-      url: '/loops/' + loopId + '/runs',
-      payload: { input: null },
-    });
-    expect(started.statusCode, started.body).toBe(202);
-    await t.idle();
-    const run = await t.container.repos.runs.get(started.json<{ run: { id: string } }>().run.id);
-    expect(run?.status).toBe('succeeded');
-    expect(claude.started[0]).toMatchObject({
-      model: 'claude-opus-5-5',
-      effort: 'xhigh',
-      options: { sandbox: 'read-only', approval: 'never' },
-    });
-  });
+  it.each(['claude-opus-5-5', CLAUDE_FABLE_MODEL])(
+    'runs exact %s inference and preserves normal output/usage',
+    async (model) => {
+      claude.script([
+        {
+          structured: { ok: true },
+          finalText: 'Synthetic result.',
+          usage: { inputTokens: 2, outputTokens: 3 },
+        },
+      ]);
+      const loopId = await t.publishLoop(definition(model));
+      const started = await t.app.inject({
+        method: 'POST',
+        url: '/loops/' + loopId + '/runs',
+        payload: { input: null },
+      });
+      expect(started.statusCode, started.body).toBe(202);
+      await t.idle();
+      const run = await t.container.repos.runs.get(started.json<{ run: { id: string } }>().run.id);
+      expect(run?.status).toBe('succeeded');
+      expect(claude.started[0]).toMatchObject({
+        model,
+        effort: 'xhigh',
+        options: { sandbox: 'read-only', approval: 'never' },
+      });
+    },
+  );
   it('rejects static unsupported policy consistently across authoring endpoints', async () => {
     const loopId = await t.publishLoop(definition());
     const bad = definition('claude-opus-5-5', {
@@ -149,54 +146,48 @@ describe('Claude public integration', () => {
     ).toBe(422);
     expect(claude.started).toEqual([]);
   });
-  it('blocks Fable enable/default/publication even when catalog enabled was manually changed', async () => {
+  it('seeds Fable enabled, admits owner defaults and respects later owner disablement', async () => {
     expect(await t.container.repos.catalog.findOne('claude', CLAUDE_FABLE_MODEL)).toMatchObject({
-      enabled: false,
+      enabled: true,
       source: 'harness',
+    });
+    const settings = await t.app.inject({
+      method: 'PUT',
+      url: '/settings',
+      payload: {
+        defaults: { byHarness: { claude: { model: CLAUDE_FABLE_MODEL, effort: 'xhigh' } } },
+      },
+    });
+    expect(settings.statusCode, settings.body).toBe(200);
+    const loopId = await t.publishLoop(definition(CLAUDE_FABLE_MODEL));
+    const disabled = await t.app.inject({
+      method: 'PATCH',
+      url: '/model-catalog/claude/' + CLAUDE_FABLE_MODEL,
+      payload: { enabled: false },
+    });
+    expect(disabled.statusCode).toBe(200);
+    const validation = await t.app.inject({
+      method: 'POST',
+      url: '/loops/' + loopId + '/validate',
+      payload: { definition: definition(CLAUDE_FABLE_MODEL) },
+    });
+    expect(validation.json()).toMatchObject({
+      publishable: false,
+      issues: expect.arrayContaining([expect.objectContaining({ code: 'MODEL_DISABLED' })]),
     });
     const enabled = await t.app.inject({
       method: 'PATCH',
       url: '/model-catalog/claude/' + CLAUDE_FABLE_MODEL,
       payload: { enabled: true },
     });
-    expect(enabled.statusCode).toBe(409);
-    expect(enabled.json()).toMatchObject({ code: 'HARNESS_MODEL_UNVERIFIED' });
-    expect(
-      (
-        await t.app.inject({
-          method: 'PATCH',
-          url: '/model-catalog/claude/' + CLAUDE_FABLE_MODEL,
-          payload: { enabled: false },
-        })
-      ).statusCode,
-    ).toBe(200);
-    expect(
-      (
-        await t.app.inject({
-          method: 'PUT',
-          url: '/settings',
-          payload: {
-            defaults: { byHarness: { claude: { model: CLAUDE_FABLE_MODEL, effort: 'xhigh' } } },
-          },
-        })
-      ).statusCode,
-    ).toBe(409);
-    await t.container.repos.catalog.setEnabled('claude', CLAUDE_FABLE_MODEL, true);
-    const created = await t.app.inject({
+    expect(enabled.statusCode).toBe(200);
+    const corrected = await t.app.inject({
       method: 'POST',
-      url: '/loops',
+      url: '/loops/' + loopId + '/validate',
       payload: { definition: definition(CLAUDE_FABLE_MODEL) },
     });
-    expect(created.statusCode).toBe(201);
-    expect(created.json()).toMatchObject({
-      issues: expect.arrayContaining([
-        expect.objectContaining({ code: 'HARNESS_MODEL_UNVERIFIED' }),
-      ]),
-    });
-    const id = created.json<{ loop: { id: string } }>().loop.id;
-    expect(
-      (await t.app.inject({ method: 'POST', url: '/loops/' + id + '/publish' })).statusCode,
-    ).toBe(422);
+    expect(corrected.statusCode, corrected.body).toBe(200);
+    expect(corrected.json()).toMatchObject({ publishable: true });
   });
   it('parses only explicit owner executable configuration without installation fallback', () => {
     expect(loadConfig({ GG_CLAUDE_BINARY: 'C:/owned/claude.exe' }).claudeBinary).toBe(
@@ -222,6 +213,10 @@ describe('Claude public integration', () => {
     };
     const optional = await runPreflight(base);
     expect(optional.ok).toBe(true);
+    expect(optional.checks.find((c) => c.id === 'jev')?.message).toContain(
+      'classifier is unavailable',
+    );
+    expect(optional.checks.find((c) => c.id === 'jev')?.message).not.toContain('fall back');
     expect(optional.checks.find((c) => c.id === 'harness.claude')?.status).toBe('warn');
     const required = await runPreflight({
       ...base,

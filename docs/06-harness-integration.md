@@ -17,8 +17,6 @@ interface HarnessPort {
     authenticated: boolean;
     problems: string[];
     authMethod?: 'claude.ai' | null;
-    billingMode?: 'claude.ai-account';
-    billingStatus?: 'account-dependent';
     supportedPolicies?: ClaudePolicy[];
     models?: ClaudeModelCapability[];
   }>;
@@ -190,7 +188,7 @@ Adapter tests replay recorded JSONL event streams captured from real sessions, s
 
 LLM Choice and Noul answers must include finite confidence in `[0,1]`; omission or an invalid value produces `EVALUATION_INVALID_RESPONSE`. Decision LLM confidence is informational and never thresholded. Noul requires an actual boolean, sends both authored side criteria, and retains the first 2,048 characters of its reasoning as an excerpt. Classifier confidence below its configured threshold produces `EVALUATION_RESULT_REJECTED`. Neither failure selects another kind.
 
-Decision nodes with evaluation kind `llm` and harness `codex`, the `coerce` operation's repair, and inferencing-node repair all use short Codex threads with an output schema. These Codex calls use the installed account login; provider billing follows its account configuration. These threads run with a read-only sandbox and no file changes. Implemented by `CodexStructured` and `CodexDecider` in `packages/adapter-codex`.
+Decision nodes with evaluation kind `llm` and harness `codex`, the `coerce` operation's repair, and inferencing-node repair all use short Codex threads with an output schema. These Codex calls use the installed account login; provider authentication and quota failures are reported normally. These threads run with a read-only sandbox and no file changes. Implemented by `CodexStructured` and `CodexDecider` in `packages/adapter-codex`.
 
 ## Jev decider (Decided, M4)
 
@@ -252,21 +250,20 @@ Kev-4B's owner recommends `kev.serve` on CUDA or Apple Silicon MLX; the protocol
 
 GraphGoblin calls the owner's installed Claude Code CLI directly. It adds no Anthropic SDK or
 other Anthropic runtime dependency and never installs, downloads, or bundles the CLI. This
-adapter currently supports native Windows only and requires the pinned CLI version `2.1.285`;
-other operating systems and CLI versions fail closed. `GG_CLAUDE_BINARY` selects an explicit
+adapter currently supports native Windows only and requires CLI `2.1.285` or newer with all required policy and protocol flags;
+older versions, missing capabilities and other operating systems fail closed. `GG_CLAUDE_BINARY` selects an explicit
 executable. Otherwise the adapter uses `%USERPROFILE%\.local\bin\claude.exe`.
 
-### Authentication and model billing
+### Authentication and supported models
 
 Preflight and each new or resumed CLI turn run `claude auth status --json` with the adapter's
 restricted child environment. Only the `claude.ai` authentication category is accepted. The
 response exposes that category, never raw login output, account identity, or credentials. No
-GraphGoblin secret stores Claude credentials. `billingMode` is `claude.ai-account` and
-`billingStatus` is `account-dependent`; this does not promise that a model is included in any
-subscription or that a turn will avoid account-based usage charges.
+GraphGoblin secret stores Claude credentials. Preflight reports the detected CLI version and
+missing capabilities, and checks authentication independently even if those checks fail.
 
-The exact supported model is `claude-opus-5-5`. `claude-fable-5-1` remains visible but is blocked
-because its billing is unverified; enabling a catalog preference cannot override that block.
+The exact supported models are `claude-opus-5-5` and `claude-fable-5-1`. Both use the same
+technical readiness, model identity, effort and owner catalog enablement checks (ADR-0029).
 Supported requested efforts are `low`, `medium`, `high`, `xhigh`, and `max`. `minimal` is not
 accepted. The CLI does not report the effective effort, so GraphGoblin records and displays the
 requested effort and keeps `effectiveEffort` null.
@@ -286,7 +283,7 @@ restricts tool lists, permission prompts, settings sources, and MCP configuratio
 the effective model, authentication source, tools, MCP servers, plugins, and skills reported by
 the CLI before accepting the session policy. Managed policy remains in force. The two hostile-project policy canaries passed for the tested restrictions; their limits and bounded native fresh/resume evidence are recorded in the [#26 QA report](qa/2026-10-07-issue-26.md).
 
-When an inference turn requests an output schema, the pinned CLI init must advertise exactly
+When an inference turn requests an output schema, the supported CLI init must advertise exactly
 the allowed execution tools plus one `StructuredOutput` carrier. Without a schema, that carrier
 is refused. It is virtual output transport, so the CLI `--tools` list and execution-policy
 `tools` evidence remain unchanged; separate policy evidence names the carrier. A correlated

@@ -71,8 +71,6 @@ const readyClaudePreflight = HarnessPreflightSchema.parse({
   authenticated: true,
   problems: [],
   authMethod: 'claude.ai',
-  billingMode: 'claude.ai-account',
-  billingStatus: 'account-dependent',
   supportedPolicies: [
     {
       sandbox: 'read-only',
@@ -80,8 +78,6 @@ const readyClaudePreflight = HarnessPreflightSchema.parse({
       permissionMode: 'dontAsk',
       tools: ['Read', 'Glob', 'Grep'],
       authMethod: 'claude.ai',
-      billingMode: 'claude.ai-account',
-      billingStatus: 'account-dependent',
       boundary: 'builtin-tools',
       network: 'unconfined',
     },
@@ -91,8 +87,6 @@ const readyClaudePreflight = HarnessPreflightSchema.parse({
       permissionMode: 'dontAsk',
       tools: ['Read', 'Glob', 'Grep', 'Edit', 'Write', 'Bash'],
       authMethod: 'claude.ai',
-      billingMode: 'claude.ai-account',
-      billingStatus: 'account-dependent',
       boundary: 'unconfined',
       network: 'unconfined',
     },
@@ -101,16 +95,10 @@ const readyClaudePreflight = HarnessPreflightSchema.parse({
     {
       model: 'claude-opus-5-5',
       efforts: claudeEfforts,
-      admission: 'supported',
-      reasonCode: null,
-      billingStatus: 'account-dependent',
     },
     {
       model: 'claude-fable-5-1',
       efforts: claudeEfforts,
-      admission: 'blocked',
-      reasonCode: 'BILLING_UNVERIFIED',
-      billingStatus: 'unverified',
     },
   ],
 });

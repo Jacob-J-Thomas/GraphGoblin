@@ -20,7 +20,7 @@ describe('catalog ownership and toggle routes', () => {
     expect(before.every((entry) => entry.source === 'harness')).toBe(true);
     expect(
       before.filter((entry) => !entry.enabled).map((entry) => [entry.harness, entry.model]),
-    ).toEqual([['claude', 'claude-fable-5-1']]);
+    ).toEqual([]);
     for (const request of [
       { method: 'PUT' as const, url, payload: body },
       { method: 'PUT' as const, url, payload: { ...body, source: 'litellm' } },

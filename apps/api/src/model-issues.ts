@@ -1,10 +1,6 @@
 import type { Effort, HarnessId, LoopDefinition, LoopIssue } from '@graphgoblin/contracts';
 import { resolveHarnessModel, validateHarnessDefaults } from '@graphgoblin/domain';
 import type { Container } from './container.js';
-import {
-  claudeModelBlocked,
-  CLAUDE_BILLING_UNVERIFIED_MESSAGE,
-} from '@graphgoblin/infrastructure/claude';
 import { readOwnerDefaults } from './container.js';
 
 /** One catalog snapshot and the same resolver as execution, for all authoring admission endpoints. */
@@ -34,20 +30,6 @@ export async function modelIssues(
         resolution.path,
     }),
   );
-  for (const [level, defaults] of [
-    ['loop', shared.loopDefaults],
-    ['owner', ownerDefaults],
-    ['process', shared.processDefaults],
-  ] as const)
-    if (claudeModelBlocked(defaults.byHarness.claude?.model))
-      issues.push({
-        code: 'HARNESS_MODEL_UNVERIFIED',
-        severity: 'warning',
-        path:
-          (level === 'loop' ? 'settings.defaults' : level + '.defaults') +
-          '.byHarness.claude.model',
-        message: CLAUDE_BILLING_UNVERIFIED_MESSAGE,
-      });
   let claudePreflight:
     ReturnType<NonNullable<typeof container.ports.harnesses.claude>['preflight']> | undefined;
   async function check(
@@ -73,15 +55,7 @@ export async function modelIssues(
       ...(effort !== undefined ? { effort } : {}),
     });
     if (harness === 'claude' && resolution.status === 'ready') {
-      if (claudeModelBlocked(resolution.model))
-        issues.push({
-          code: 'HARNESS_MODEL_UNVERIFIED',
-          severity: 'warning',
-          nodeId,
-          path: path + '.model',
-          message: CLAUDE_BILLING_UNVERIFIED_MESSAGE,
-        });
-      else if (container.ports.harnesses.claude) {
+      if (container.ports.harnesses.claude) {
         try {
           claudePreflight ??= container.ports.harnesses.claude.preflight();
           const preflight = await claudePreflight;
@@ -150,7 +124,6 @@ export function blocksPublication(issue: LoopIssue): boolean {
     [
       'MODEL_DISABLED',
       'HARNESS_UNAVAILABLE',
-      'HARNESS_MODEL_UNVERIFIED',
       'CLASSIFIER_MODEL_DISABLED',
       'CLASSIFIER_SECRET_MISSING',
       'CLASSIFIER_SECRET_UNREADABLE',

@@ -230,7 +230,10 @@ describe('runPreflight', () => {
     });
     const noJev = await runPreflight(sources({ jevKey: () => Promise.resolve('  ') }));
     expect(noJev.ok).toBe(true);
-    expect(byId(noJev, 'jev')).toMatchObject({ status: 'warn', message: /optional/ });
+    expect(byId(noJev, 'jev')).toMatchObject({
+      status: 'warn',
+      message: /Jev is optional; its classifier is unavailable/,
+    });
     // A non-Error rejection still yields a readable message.
     // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
     const jevError = await runPreflight(sources({ jevKey: () => Promise.reject('bad key') }));
