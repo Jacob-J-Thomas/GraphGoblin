@@ -60,7 +60,7 @@ describe('LoopsPage', () => {
     await user.click(await screen.findByRole('button', { name: 'New from template' }));
     expect(await screen.findByRole('heading', { name: 'Choose a template' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Quick start' })).toBeInTheDocument();
-    expect(screen.getByText(/Drafts use their model defaults/)).toBeInTheDocument();
+    expect(screen.getByText(/Use a template to create an independent loop/)).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Use Quick start' }));
 
     await waitFor(() =>
@@ -111,7 +111,7 @@ describe('LoopsPage', () => {
     expect(api.callsTo('POST', '/templates/quick-start/draft')).toHaveLength(1);
   });
 
-  it('shows readiness blockers without letting them block the editable starting draft', async () => {
+  it('omits setup readiness and setup-only queries while allowing a copy', async () => {
     const user = userEvent.setup();
     const api = new FakeApi();
     const entry = starterTemplateEntry();
@@ -142,8 +142,11 @@ describe('LoopsPage', () => {
     renderApp('/loops', api);
 
     await user.click(await screen.findByRole('button', { name: 'New from template' }));
-    expect(await screen.findByText('No enabled assistant model is available.')).toBeInTheDocument();
-    expect(screen.getByText(/Enable an available model in Settings\./)).toBeInTheDocument();
+    expect(screen.queryByText('No enabled assistant model is available.')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Enable an available model in Settings\./)).not.toBeInTheDocument();
+    expect(api.callsTo('GET', /model-catalog|system\/preflight|template-instances/)).toHaveLength(
+      0,
+    );
     expect(screen.getByRole('button', { name: 'Use Quick start' })).toBeEnabled();
     await user.click(screen.getByRole('button', { name: 'Use Quick start' }));
     await waitFor(() =>
@@ -153,49 +156,6 @@ describe('LoopsPage', () => {
     expect(api.callsTo('POST', '/templates/quick-start/draft')).toHaveLength(1);
     expect(api.callsTo('POST', '/templates/quick-start/prerequisites')).toHaveLength(0);
     expect(api.callsTo('POST', '/templates/quick-start/instantiate')).toHaveLength(0);
-  });
-
-  it('shows runtime blockers as run requirements while allowing draft creation', async () => {
-    const user = userEvent.setup();
-    const api = new FakeApi();
-    const entry = starterTemplateEntry();
-    entry.prerequisites = {
-      checks: [
-        {
-          id: 'run-isolation',
-          label: 'Run isolation',
-          status: 'unavailable',
-          blocking: 'runtime',
-          message: 'This installation cannot enforce evidence-only isolation yet.',
-          remediation: 'Wait for an enforced isolation runner before starting runs.',
-        },
-      ],
-      canInstantiate: true,
-      canRun: false,
-    };
-    api.templates = [entry];
-    api.catalog = [
-      {
-        harness: 'codex',
-        model: 'test-codex',
-        source: 'harness',
-        displayName: 'Test Codex',
-        efforts: ['low'],
-        defaultEffort: 'low',
-        enabled: true,
-      },
-    ];
-    renderApp('/loops', api);
-
-    await user.click(await screen.findByRole('button', { name: 'New from template' }));
-    expect(screen.getByText('Run setup needed')).toBeInTheDocument();
-    expect(screen.getByText('Run requirement')).toBeInTheDocument();
-    expect(screen.getByText(/Drafts use their model defaults/)).toBeInTheDocument();
-    await user.click(await screen.findByRole('button', { name: 'Use Quick start' }));
-    await waitFor(() =>
-      expect(screen.getByTestId('location')).toHaveTextContent(/^\/loops\/.+\/edit$/),
-    );
-    expect(api.callsTo('POST', '/templates/quick-start/draft')).toHaveLength(1);
   });
 
   it('reports a failed draft request and never retries it automatically', async () => {
