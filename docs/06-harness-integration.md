@@ -283,6 +283,14 @@ restricts tool lists, permission prompts, settings sources, and MCP configuratio
 the effective model, authentication source, tools, MCP servers, plugins, and skills reported by
 the CLI before accepting the session policy. Managed policy remains in force. The two hostile-project policy canaries passed for the tested restrictions; their limits and bounded native fresh/resume evidence are recorded in the [#26 QA report](qa/2026-10-07-issue-26.md).
 
+The plugin allowlist contains exactly the CLI-bundled `cc-plugin-agents-md` and
+`cc-plugin-plugin-authoring`; the explicit built-in skill allowlist includes `plugin-authoring`.
+Names are checked individually, without prefix wildcards. Each advertised plugin must also
+report `path: "builtin"` and `source: "<name>@builtin"`; a local plugin reusing a built-in name
+is refused. `--safe-mode`, empty setting sources
+and strict MCP configuration suppress user customizations; an unknown plugin, skill or tool
+still fails with `HARNESS_UNSUPPORTED_POLICY` before session evidence is accepted.
+
 When an inference turn requests an output schema, the supported CLI init must advertise exactly
 the allowed execution tools plus one `StructuredOutput` carrier. Without a schema, that carrier
 is refused. It is virtual output transport, so the CLI `--tools` list and execution-policy
@@ -314,6 +322,29 @@ cannot be confirmed, the run fails with `HARNESS_TERMINATION_UNCONFIRMED` and is
 cancelled. Engine and persistence failures retain their original cause and stop the active initial or repair session; unconfirmed cleanup takes precedence. Claude is not a decision evaluator: decision evaluation, exit configuration, and
 the separate Codex structured port remain unchanged. Inference schema validation uses the authored repair and failure policy for either harness, preserving the native candidate (including null or a missing candidate) rather than substituting final text. API-provider support remains future work tracked by
 [#100](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/100).
+
+`system/commands_changed` and `system/ui_invalidate` can precede or follow init. UI invalidation
+requires a nonempty string `event` of at most 100 characters and valid UUID-shaped `uuid` and
+`session_id`. Both metadata records must use the same session as each other and init. They emit
+no progress, session, prompt-delivery or execution evidence. Verified init alone announces the
+session. Status, partial-message and rate-limit metadata also carry no execution evidence.
+Before init, only init and the two validated metadata records are accepted. After init,
+unrecognised record types and system subtypes emit no events or stored evidence. The system
+subtypes `hook_started`, `hook_response`, `hook_progress` and `plugin_install` remain refused
+at any time. No record may follow the final result.
+The sanitised CLI `2.1.287` capture replays all five records through the JSONL parser and
+accumulator, including assistant timestamps/request IDs and result timing/terminal/subagent
+fields. These additional fields do not alter exact init/result model identity, integer usage,
+native structured-candidate selection, tool correlation or native error checks.
+
+Protocol refusals keep `HARNESS_PROTOCOL_ERROR` and identify an unrecognised pre-init record's `type`
+and optional `subtype`; policy refusals name the unexpected plugin, skill or tool. Diagnostics
+include the detected CLI version and a hint to update GraphGoblin or report that version.
+Diagnostic names contain only letters, digits, `-`, `_` and `.`, with a maximum of 100
+characters; other values appear as `<invalid>`. Plugin paths and source strings are never
+included. Only bounded name-shaped metadata is included, never prompt, response, tool, account or
+rate-limit bodies. A green preflight verifies prerequisites; it does not run a model turn or
+guarantee that a future CLI stream will pass runtime verification.
 
 Prompt delivery proof is unsupported for the current text-input transport. Session init and stdin delivery do not acknowledge a particular prompt; no proof event is emitted. The context and recovery decisions remain with #38/#33.
 

@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
 import { HarnessOptionsSchema } from '@graphgoblin/contracts';
 import { claudePolicy } from './policy.js';
+import { CLAUDE_RECOVERY_HINT } from './errors.js';
 import {
   ClaudeAccumulator,
   JsonLines,
@@ -22,7 +24,9 @@ const init = (extra: Record<string, unknown> = {}) => ({
   model: 'claude-opus-5-5',
   apiKeySource: 'none',
   mcp_servers: [],
-  plugins: [{ name: 'cc-plugin-agents-md' }],
+  plugins: [
+    { name: 'cc-plugin-agents-md', path: 'builtin', source: 'cc-plugin-agents-md@builtin' },
+  ],
   skills: ['verify'],
   ...extra,
 });
@@ -49,6 +53,15 @@ const accumulator = (schema?: Record<string, unknown>, resumeId?: string) =>
     ...(schema ? { schema } : {}),
     ...(resumeId ? { resumeId } : {}),
   });
+// Derived from the exact restricted adapter environment capture. Identities, host paths,
+// timestamp and account rate-limit values are synthetic; every original field is retained.
+const capturedRecords = () => {
+  const parser = new JsonLines();
+  return [
+    ...parser.push(readFileSync(new URL('./fixtures/cli-2.1.287.jsonl', import.meta.url))),
+    ...parser.finish(),
+  ];
+};
 describe('strict Claude auth/capability parsing', () => {
   it('retains only the accepted auth category', () => {
     expect(
@@ -212,7 +225,11 @@ describe('Claude stream contract and honest execution evidence', () => {
       { plugins: [{ name: 'project-plugin' }] },
       { session_id: 'bad' },
     ])
-      expect(() => accumulator().push(init(changed))).toThrow(/policy|protocol/);
+      expect(() => accumulator().push(init(changed))).toThrow(
+        expect.objectContaining({
+          code: changed.session_id ? 'HARNESS_PROTOCOL_ERROR' : 'HARNESS_UNSUPPORTED_POLICY',
+        }),
+      );
   });
   it('rejects out-of-order, duplicate init/result, unexpected tools and mismatched sessions', () => {
     expect(() => accumulator().push(result())).toThrow(/protocol/);
@@ -545,7 +562,7 @@ describe('Claude transcript and error evidence limits', () => {
       expect(refusal).toMatchObject({
         code: 'HARNESS_PROTOCOL_ERROR',
         retriable: false,
-        message: 'Claude stream protocol is invalid or incomplete',
+        message: `Claude stream protocol is invalid or incomplete. ${CLAUDE_RECOVERY_HINT}`,
       });
       expect(String(refusal)).not.toContain('PRIVATE');
       expect(emitted).toEqual([]);
@@ -699,6 +716,252 @@ describe('Claude transcript and error evidence limits', () => {
     expect(() =>
       many.push({ type: 'assistant', message: { content: [{ type: 'text', text: 'x' }] } }),
     ).toThrow(/item limit/);
+  });
+});
+
+describe('Claude CLI 2.1.287 captured stream', () => {
+  const metadata = (extra: Record<string, unknown> = {}) => ({
+    type: 'system',
+    subtype: 'ui_invalidate',
+    event: 'ui.render',
+    uuid: id,
+    session_id: id,
+    ...extra,
+  });
+  const otherId = '22222222-2222-4222-8222-222222222222';
+  it('replays every captured record with exact result, model and aggregate usage', () => {
+    const acc = accumulator();
+    const records = capturedRecords();
+    expect(records.map((record) => [record.type, record.subtype])).toEqual([
+      ['system', 'ui_invalidate'],
+      ['system', 'init'],
+      ['assistant', undefined],
+      ['rate_limit_event', undefined],
+      ['result', 'success'],
+    ]);
+    expect(acc.push(records[0]!)).toEqual([]);
+    expect(() => acc.policyEvidence).toThrow();
+    expect(() => acc.finish()).toThrow();
+    const announced = acc.push(records[1]!);
+    expect(records[1]!.plugins).toEqual([
+      { name: 'cc-plugin-agents-md', path: 'builtin', source: 'cc-plugin-agents-md@builtin' },
+      {
+        name: 'cc-plugin-plugin-authoring',
+        path: 'builtin',
+        source: 'cc-plugin-plugin-authoring@builtin',
+      },
+    ]);
+    expect(announced).toMatchObject([
+      { type: 'session', sessionId: id, mode: 'fresh' },
+      { type: 'item', item: { detail: { requestedModel: 'claude-opus-5-5' } } },
+    ]);
+    expect(acc.push(records[2]!)).toMatchObject([
+      { type: 'item', item: { type: 'message', summary: 'QA_OK' } },
+    ]);
+    expect(acc.push(records[3]!)).toEqual([]);
+    expect(acc.push(records[4]!)).toMatchObject([{ type: 'usage' }, { type: 'turn-complete' }]);
+    expect(acc.policyEvidence).toMatchObject({
+      advertisedPluginCount: 2,
+      advertisedSkillCount: 17,
+    });
+    expect(acc.finish()).toMatchObject({
+      finalText: 'QA_OK',
+      usage: {
+        inputTokens: 4365,
+        outputTokens: 7,
+        cachedInputTokens: 2893,
+        reasoningOutputTokens: 0,
+      },
+    });
+    expect(acc.finish().items).toHaveLength(2);
+    expect(JSON.stringify(acc.finish())).not.toMatch(/ui.render|rate_limit_info|req_synthetic/);
+  });
+  it('accepts bounded UI metadata before and after init without execution evidence', () => {
+    const acc = accumulator();
+    expect(acc.push(metadata({ event: 'x'.repeat(100) }))).toEqual([]);
+    acc.push(init());
+    expect(acc.push(metadata())).toEqual([]);
+    acc.push(result());
+    expect(acc.finish().items).toHaveLength(1);
+    expect(JSON.stringify(acc.finish())).not.toContain('ui.render');
+  });
+  it.each([
+    { event: undefined },
+    { event: null },
+    { event: 1 },
+    { event: '' },
+    { event: 'x'.repeat(101) },
+    { uuid: 'bad' },
+    { uuid: undefined },
+    { session_id: 'bad' },
+    { session_id: undefined },
+  ])('refuses malformed UI metadata %j with safe record diagnostics', (extra) => {
+    for (const initialized of [false, true]) {
+      const acc = accumulator();
+      if (initialized) acc.push(init());
+      expect(() => acc.push(metadata({ ...extra, private: 'PRIVATE_BODY' }))).toThrow(
+        expect.objectContaining({
+          code: 'HARNESS_PROTOCOL_ERROR',
+          message: expect.stringContaining(`record system/ui_invalidate). ${CLAUDE_RECOVERY_HINT}`),
+        }),
+      );
+      expect(() => acc.finish()).toThrow();
+    }
+  });
+  it('binds UI, command-cache and init metadata to the same session before and after init', () => {
+    for (const first of [
+      metadata(),
+      { type: 'system', subtype: 'commands_changed', session_id: id, uuid: id, commands: [] },
+      init(),
+    ]) {
+      const acc = accumulator();
+      acc.push(first);
+      expect(() => acc.push(metadata({ session_id: otherId }))).toThrow(
+        expect.objectContaining({ code: 'HARNESS_PROTOCOL_ERROR' }),
+      );
+    }
+    const acc = accumulator();
+    acc.push(metadata());
+    expect(() => acc.push(init({ session_id: otherId }))).toThrow(/record system\/init/);
+    expect(() =>
+      acc.push({
+        type: 'system',
+        subtype: 'commands_changed',
+        session_id: otherId,
+        uuid: id,
+        commands: [],
+      }),
+    ).toThrow(/protocol/);
+  });
+  it.each([
+    { plugins: [{ name: 'cc-plugin-hostile' }], name: 'cc-plugin-hostile', kind: 'plugin' },
+    { skills: ['plugin-authoring-hostile'], name: 'plugin-authoring-hostile', kind: 'skill' },
+    { tools: [...policy.tools, 'UnexpectedTool'], name: 'UnexpectedTool', kind: 'tool' },
+  ])('names the unexpected $kind without exposing record bodies', ({ name, kind, ...extra }) => {
+    const acc = accumulator();
+    expect(() => acc.push(init({ ...extra, private: 'PRIVATE_BODY' }))).toThrow(
+      expect.objectContaining({
+        code: 'HARNESS_UNSUPPORTED_POLICY',
+        message: `Claude advertised an unexpected ${kind}: ${name}. ${CLAUDE_RECOVERY_HINT}`,
+      }),
+    );
+    expect(() => acc.policyEvidence).toThrow();
+    expect(() => acc.finish()).toThrow();
+  });
+  it.each([
+    { tools: null },
+    { tools: [null] },
+    { plugins: null },
+    { plugins: [null] },
+    { plugins: [{ name: null }] },
+    { skills: null },
+    { skills: [null] },
+    { plugins: [{ name: 'unsafe\nPRIVATE_BODY' }] },
+  ])('refuses malformed policy metadata %j without serializing it', (extra) => {
+    expect(() => accumulator().push(init(extra))).toThrow(
+      expect.objectContaining({
+        code: 'HARNESS_UNSUPPORTED_POLICY',
+        message: expect.not.stringContaining('PRIVATE_BODY'),
+      }),
+    );
+  });
+  it.each([
+    { path: 'C:/Users/alice/private-plugin', source: 'cc-plugin-agents-md@builtin' },
+    { path: 'builtin', source: 'alice@example.com' },
+    { path: 'builtin', source: 'cc-plugin-plugin-authoring@builtin' },
+    { path: undefined, source: 'cc-plugin-agents-md@builtin' },
+    { path: 'builtin', source: undefined },
+  ])('refuses an allowlisted plugin with unverified provenance %j', (provenance) => {
+    const acc = accumulator();
+    expect(() =>
+      acc.push(init({ plugins: [{ name: 'cc-plugin-agents-md', ...provenance }] })),
+    ).toThrow(
+      expect.objectContaining({
+        code: 'HARNESS_UNSUPPORTED_POLICY',
+        message: `Claude advertised a plugin without built-in provenance: cc-plugin-agents-md. ${CLAUDE_RECOVERY_HINT}`,
+      }),
+    );
+    expect(() => acc.policyEvidence).toThrow();
+    expect(() => acc.finish()).toThrow();
+  });
+  it('names unknown pre-init records and redacts invalid record names', () => {
+    for (const { record, identity } of [
+      {
+        record: { type: 'system', subtype: 'future_metadata', body: 'PRIVATE_BODY' },
+        identity: 'system/future_metadata',
+      },
+      { record: { type: 'future_record', body: 'PRIVATE_BODY' }, identity: 'future_record' },
+      {
+        record: { type: 'bad\nPRIVATE_BODY', subtype: {}, body: 'PRIVATE_BODY' },
+        identity: '<invalid>/<invalid>',
+      },
+    ]) {
+      expect(() => accumulator().push(record)).toThrow(
+        expect.objectContaining({
+          code: 'HARNESS_PROTOCOL_ERROR',
+          message: `Claude stream protocol is invalid or incomplete (record ${identity}). ${CLAUDE_RECOVERY_HINT}`,
+        }),
+      );
+    }
+  });
+  it('ignores unknown post-init records without evidence, but refuses every record after result', () => {
+    const records = [
+      { type: 'system', subtype: 'future_metadata', body: 'PRIVATE_BODY' },
+      { type: 'future_record', body: 'PRIVATE_BODY' },
+      { type: 'rate_limit_event', body: 'PRIVATE_BODY' },
+      { type: 'stream_event', body: 'PRIVATE_BODY' },
+      { type: 'system', subtype: 'status', body: 'PRIVATE_BODY' },
+    ];
+    const acc = accumulator();
+    acc.push(init());
+    for (const record of records) expect(acc.push(record)).toEqual([]);
+    acc.push(result());
+    expect(acc.finish().items).toHaveLength(1);
+    expect(JSON.stringify(acc.finish())).not.toContain('PRIVATE_BODY');
+    for (const record of [...records, { type: 'system', subtype: 'hook_started' }])
+      expect(() => acc.push(record)).toThrow(
+        expect.objectContaining({ code: 'HARNESS_PROTOCOL_ERROR' }),
+      );
+  });
+  it('keeps model, usage, native structured candidate and error checks despite new fields', () => {
+    for (const extra of [
+      { modelUsage: { 'claude-fable-5-1': {} } },
+      { usage: { input_tokens: -1, output_tokens: 7 } },
+      { usage: { input_tokens: 2, output_tokens: '7' } },
+    ]) {
+      const acc = accumulator();
+      const records = capturedRecords();
+      for (const record of records.slice(0, -1)) acc.push(record);
+      expect(() => acc.push({ ...records[4], ...extra })).toThrow();
+      expect(() => acc.finish()).toThrow();
+    }
+    const records = capturedRecords();
+    const acc = accumulator({ type: 'object' });
+    for (const record of records.slice(0, -1))
+      acc.push(
+        record.subtype === 'init'
+          ? { ...record, tools: [...policy.tools, 'StructuredOutput'] }
+          : record,
+      );
+    acc.push({ ...records[4], result: '{"ok":true}' });
+    expect(acc.finish()).toHaveProperty('structured', undefined);
+    const failed = accumulator();
+    for (const record of records.slice(0, -1)) failed.push(record);
+    expect(() =>
+      failed.push({
+        ...records[4],
+        is_error: true,
+        subtype: 'error_during_execution',
+        api_error_status: 429,
+        result: 'PRIVATE_BODY',
+      }),
+    ).toThrow(expect.objectContaining({ code: 'HARNESS_QUOTA_EXHAUSTED', retriable: true }));
+    const assistantFailure = accumulator();
+    assistantFailure.push(records[0]!);
+    assistantFailure.push(records[1]!);
+    expect(() => assistantFailure.push({ ...records[2], error: 'authentication_failed' })).toThrow(
+      expect.objectContaining({ code: 'HARNESS_NOT_AUTHENTICATED' }),
+    );
   });
 });
 

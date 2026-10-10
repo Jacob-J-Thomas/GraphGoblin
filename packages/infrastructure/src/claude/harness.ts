@@ -311,7 +311,8 @@ export class ClaudeHarness implements HarnessPort {
                 ? error.code === 'HARNESS_PROTOCOL_ERROR' && detectedVersion !== undefined
                   ? new ClaudeHarnessError(
                       error.code,
-                      `Claude CLI ${detectedVersion}: required capability stream-json protocol is invalid or incomplete`,
+                      `Claude CLI ${detectedVersion}: required capability stream-json protocol verification failed: ${error.message}`,
+                      error.retriable,
                     )
                   : error.code === 'HARNESS_UNSUPPORTED_POLICY' && detectedVersion !== undefined
                     ? new ClaudeHarnessError(
