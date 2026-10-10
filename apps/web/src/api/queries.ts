@@ -16,7 +16,6 @@ import type {
   ClassifierModelSummary,
   LoopDefinitionInput,
   ModelCatalogEntry,
-  TemplateSettings,
 } from '@graphgoblin/contracts';
 import { HarnessPreflightSchema } from '@graphgoblin/contracts';
 import { useMutation, useQuery, type QueryClient } from '@tanstack/react-query';
@@ -30,7 +29,6 @@ export type HarnessPreflightItem = z.infer<typeof HarnessPreflightItemSchema>;
 export const keys = {
   loops: ['loops'] as const,
   templates: ['templates'] as const,
-  template: (id: string) => ['templates', id] as const,
   templateInstance: (id: string) => ['template-instances', id] as const,
   loop: (id: string) => ['loops', id] as const,
   /** Under the loop's key, so invalidating the loop (after a publish) refetches them too. */
@@ -68,15 +66,6 @@ export function useTemplates() {
   return useQuery({ queryKey: keys.templates, queryFn: () => templates.list(client) });
 }
 
-export function useTemplate(id: string) {
-  const client = useApi();
-  return useQuery({
-    queryKey: keys.template(id),
-    queryFn: () => templates.get(client, id),
-    enabled: id.length > 0,
-  });
-}
-
 export function useTemplateInstance(id: string) {
   const client = useApi();
   return useQuery({
@@ -86,27 +75,11 @@ export function useTemplateInstance(id: string) {
   });
 }
 
-export function useCheckTemplatePrerequisites() {
-  const client = useApi();
-  return useMutation({
-    mutationFn: ({ templateId, settings }: { templateId: string; settings: TemplateSettings }) =>
-      templates.prerequisites(client, templateId, { settings }),
-  });
-}
-
 export function useCreateTemplateDraft() {
   const client = useApi();
   return useMutation({
     mutationFn: ({ templateId, name }: { templateId: string; name?: string }) =>
       templates.createDraft(client, templateId, name ? { name } : {}),
-  });
-}
-
-export function useInstantiateTemplate() {
-  const client = useApi();
-  return useMutation({
-    mutationFn: ({ templateId, settings }: { templateId: string; settings: TemplateSettings }) =>
-      templates.instantiate(client, templateId, { settings }),
   });
 }
 
