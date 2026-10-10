@@ -93,36 +93,39 @@ const exitTest = test.extend<{ synthetic: Synthetic }>({
 // A failed acceptance must remain available for diagnosis, including in CI.
 exitTest.describe.configure({ retries: 0 });
 
-exitTest.describe('exit answer help', () => {
-  exitTest.use({ hasTouch: true });
-  for (const theme of ['dark', 'light']) {
-    exitTest(
-      `compact help works in ${theme} at desktop and narrow widths`,
-      async ({ page, request, synthetic }) => {
-        await page.addInitScript(
-          (theme) => localStorage.setItem('graphgoblin-theme', theme),
-          theme,
-        );
-        await createLoop(page, request, synthetic.url, exitLoop('Exit answer help', [score()]));
-        const dialog = await openNode(page, 'done');
-        await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
-        for (const width of [1440, 360]) {
-          await page.setViewportSize({ width, height: 900 });
-          await checkAnswerTypeHelp(
-            page,
-            dialog,
-            exitTest.info().outputPath(`exit-help-${theme}-${width}.png`),
+for (const hasTouch of [true, false]) {
+  exitTest.describe(`exit answer help with ${hasTouch ? 'touch' : 'mouse'}`, () => {
+    exitTest.use({ hasTouch });
+    for (const theme of ['dark', 'light']) {
+      exitTest(
+        `compact help works in ${theme} at desktop and narrow widths`,
+        async ({ page, request, synthetic }) => {
+          await page.addInitScript(
+            (theme) => localStorage.setItem('graphgoblin-theme', theme),
+            theme,
           );
-        }
-        const group = dialog.getByRole('radiogroup', { name: 'Answer type' });
-        await group.getByRole('radio', { name: 'Score', exact: true }).focus();
-        await page.keyboard.press('ArrowLeft');
-        await expect(group.getByRole('radio', { name: 'Noul', exact: true })).toBeChecked();
-        await expect(group.getByRole('radio', { name: 'Noul', exact: true })).toBeFocused();
-      },
-    );
-  }
-});
+          await createLoop(page, request, synthetic.url, exitLoop('Exit answer help', [score()]));
+          const dialog = await openNode(page, 'done');
+          await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+          for (const width of hasTouch ? [1440, 360] : [1440]) {
+            await page.setViewportSize({ width, height: 900 });
+            await checkAnswerTypeHelp(
+              page,
+              dialog,
+              exitTest.info().outputPath(`exit-help-${theme}-${width}.png`),
+              hasTouch,
+            );
+          }
+          const group = dialog.getByRole('radiogroup', { name: 'Answer type' });
+          await group.getByRole('radio', { name: 'Score', exact: true }).focus();
+          await page.keyboard.press('ArrowLeft');
+          await expect(group.getByRole('radio', { name: 'Noul', exact: true })).toBeChecked();
+          await expect(group.getByRole('radio', { name: 'Noul', exact: true })).toBeFocused();
+        },
+      );
+    }
+  });
+}
 
 async function classifierCatalog(request: APIRequestContext, url: string) {
   const response = await request.get(url + '/classifier-models');
@@ -320,7 +323,8 @@ async function savedDraft(page: Page, request: APIRequestContext, url: string, l
 }
 
 async function criterionEditor(page: Page, index = 0): Promise<Locator> {
-  const dialog = await openNode(page, 'done');
+  await openNode(page, 'done');
+  const dialog = page.getByRole('dialog', { name: 'Edit exit done', exact: true });
   await expect(dialog).toHaveAccessibleName('Edit exit done');
   const row = dialog.locator('[data-row-path="criteria.' + index + '"]');
   await expect(row).toBeVisible();

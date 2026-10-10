@@ -237,7 +237,7 @@ Read [Node catalog](../04-node-catalog.md) for design context. Continue with [Ru
 
 ## Match an exit answer
 
-Decision and exit **Answer type** cards keep their labels short. Hover, focus or tap the help button beside Choice, Noul or Score to read its explanation. Press Escape or tap the button again to close pinned help without changing the answer. Screen readers can read each option's explanation even while the help is closed.
+Decision and exit **Answer type** cards keep their labels short. Tab reaches the chosen answer once; use the arrow keys to change it. A focused radio shows its explanation without moving focus, and leaving the option or pressing Escape closes it. Hover or tap the help button beside Choice, Noul or Score to read the same explanation; these buttons are outside the Tab order. Tap again to close pinned help without changing the answer. Screen readers can read each option's explanation even while the help is closed.
 
 An exit criterion can evaluate a Noul, Choice or Score answer and compare it with an explicit rule. Choose true or false for Noul, one or more declared IDs for Choice, or a rubric-index comparison for Score. Provider Noul also needs criteria for each side. Score preserves fractional values; exits do not need routing bands.
 

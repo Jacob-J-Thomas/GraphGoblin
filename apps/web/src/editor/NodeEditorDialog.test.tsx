@@ -111,10 +111,30 @@ describe('NodeEditorDialog answer help', () => {
         expect(help).toHaveFocus();
         expect(radio).toHaveAccessibleDescription(description?.textContent ?? '');
       }
+      const selected = within(group)
+        .getAllByRole('radio')
+        .find((radio) => (radio as HTMLInputElement).checked)!;
+      act(() => selected.focus());
+      expect(screen.getByRole('dialog', { name: 'Option help' })).toBeVisible();
+      await user.keyboard('{Escape}');
+      expect(selected).toHaveFocus();
+      expect(screen.queryByRole('dialog', { name: 'Option help' })).not.toBeInTheDocument();
       expect(store().definition).toBe(before);
       expect(store().past).toHaveLength(history);
     },
   );
+
+  it('focuses Add criteria after undoing an added criterion without opening surviving help', async () => {
+    const user = userEvent.setup();
+    const dialog = await openDialog(nodes[1]!, 'Edit exit finish');
+    await user.click(within(dialog).getByRole('button', { name: 'Add criteria' }));
+    const added = within(dialog).getAllByRole('combobox', { name: 'When' })[1]!;
+    await waitFor(() => expect(added).toHaveFocus());
+    await user.keyboard(UNDO);
+    expect(within(dialog).getAllByRole('combobox', { name: 'When' })).toHaveLength(1);
+    expect(within(dialog).getByRole('button', { name: 'Add criteria' })).toHaveFocus();
+    expect(screen.queryByRole('dialog', { name: 'Option help' })).not.toBeInTheDocument();
+  });
 });
 
 describe('NodeEditorDialog decision field order', () => {

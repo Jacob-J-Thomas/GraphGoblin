@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { flushSync } from 'react-dom';
-import { revealDisclosures } from '../components/ui/index.js';
+import { DISCLOSURE_PANEL_SELECTOR, revealDisclosures } from '../components/ui/index.js';
 import { canvasFocusTarget } from './canvas-focus.js';
 import { focusableIn, focusField, groupFocus } from './focus-field.js';
 import { useEditorStore } from './store.js';
@@ -157,7 +157,13 @@ function focusCollection(root: Element, path: string | undefined, index: number)
   );
   const nearest = rows[Math.min(index, rows.length - 1)];
   const toggle = nearest
-    ? focusableIn(nearest).find((el) => el.matches('button[aria-expanded]'))
+    ? focusableIn(nearest).find(
+        (el) =>
+          el.matches('button[aria-expanded][aria-controls]') &&
+          document
+            .getElementById(el.getAttribute('aria-controls')!)
+            ?.matches(DISCLOSURE_PANEL_SELECTOR),
+      )
     : undefined;
   const add = focusableIn(collection).find(
     (el) =>

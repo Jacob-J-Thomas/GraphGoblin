@@ -105,7 +105,10 @@ export interface PopoverControls {
 export interface PopoverProps {
   /** The popover's accessible name (it is a non-modal dialog). */
   label: string;
-  /** Renders the trigger button from the props it must carry. */
+  /**
+   * Renders the trigger button from the props it must carry. Related controls may share `onFocus`
+   * and `onPointerDown` to show the same explanation; the ref stays on the button for placement.
+   */
   trigger: (props: PopoverTriggerProps) => ReactNode;
   /** The content; a function receives `close`, for actions that close the popover. */
   children: ReactNode | ((controls: PopoverControls) => ReactNode);
@@ -313,7 +316,7 @@ export function Popover({ label, trigger, children, className }: PopoverProps) {
       // Only the popover closes: not a dialog it sits in, and nothing on the canvas.
       event.preventDefault();
       event.stopPropagation();
-      close({ returnFocus: isInside(document.activeElement) });
+      close({ returnFocus: popoverRef.current?.contains(document.activeElement) ?? false });
     };
     // Something around it scrolled (not its own list): follow the trigger.
     const onScroll = (event: Event) => {
@@ -465,7 +468,7 @@ export function Popover({ label, trigger, children, className }: PopoverProps) {
   const onFocusIn = (event: FocusEvent<HTMLDivElement>) => {
     // The focus a press on the trigger brings (Chrome focuses a clicked button) does not hold a
     // popover open: the pointer does that. Keyboard focus, and focus inside the popover, do.
-    const pressed = pressRef.current && (event.target as Node) === triggerRef.current;
+    const pressed = pressRef.current && !popoverRef.current?.contains(event.target);
     pointerFocusRef.current = pressed;
     focusWithinRef.current = !pressed;
   };

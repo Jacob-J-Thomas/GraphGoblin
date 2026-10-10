@@ -5,7 +5,7 @@ import { Button } from './button.js';
 import { ellipsize } from './ellipsis.js';
 import { RequiredMarker } from './field.js';
 import { Legend } from './fieldset.js';
-import { Popover } from './popover.js';
+import { Popover, type PopoverTriggerProps } from './popover.js';
 
 /** One radio of a `ChoiceGroup`. */
 export interface Choice {
@@ -23,18 +23,10 @@ export interface Choice {
   data?: Readonly<Record<`data-${string}`, string>>;
 }
 
-export interface ChoiceGroupProps {
+interface ChoiceGroupBaseProps {
   /** The group's name, shown as its legend (the label of the choice). */
   legend: ReactNode;
   choices: readonly Choice[];
-  /**
-   * `row`: one-line segments on a track that wraps, each label ending in an ellipsis when cut short
-   * (the segmented control). `grid`: options of a name and a description in columns (three from
-   * 1024 px, two from 640 px, one below), for more choices than a row holds.
-   */
-  layout?: 'row' | 'grid' | undefined;
-  /** Move descriptions into hover/focus/tap help popovers, keeping them as radio descriptions. */
-  descriptionTooltips?: boolean | undefined;
   /** The radios' shared `name`; one is generated when absent. */
   name?: string | undefined;
   required?: boolean | undefined;
@@ -44,6 +36,21 @@ export interface ChoiceGroupProps {
   invalid?: boolean | undefined;
   className?: string | undefined;
 }
+
+export type ChoiceGroupProps = ChoiceGroupBaseProps &
+  (
+    | {
+        /** Options in columns: three from 1024 px, two from 640 px, one below. */
+        layout: 'grid';
+        /** Move descriptions into help popovers, keeping them as radio descriptions. */
+        descriptionTooltips?: boolean | undefined;
+      }
+    | {
+        /** One-line segments on a wrapping track, with ellipsized labels. */
+        layout?: 'row' | undefined;
+        descriptionTooltips?: never;
+      }
+  );
 
 /**
  * The states every option shares, whatever its layout: hover, the chosen option in the accent's
@@ -76,7 +83,7 @@ const LAYOUTS = {
   grid: {
     track: 'grid sm:grid-cols-2 lg:grid-cols-3',
     option: 'relative grid min-w-0',
-    face: 'grid min-w-0 content-start gap-0.5 px-3 py-2',
+    face: 'grid min-w-0 gap-0.5 px-3 py-2',
   },
 } as const;
 
@@ -86,6 +93,11 @@ const LAYOUTS = {
  * option (or the first when none is chosen) and the arrow keys move the choice. The radio
  * semantics, the track, and the option states live here once; the segmented control (`row`) and
  * the Settings font control (`grid`) render through it.
+ *
+ * `descriptionTooltips` opts grid cards into compact labels. Keyboard focus on a radio shows its
+ * explanation without moving focus; leaving the option or pressing Escape dismisses it. Help
+ * buttons open the same popover on hover or tap and have `tabIndex={-1}`, so Tab still reaches the
+ * group only once. Each radio keeps its explanation as its accessible description while closed.
  */
 export function ChoiceGroup({
   legend,
@@ -132,7 +144,7 @@ export function ChoiceGroup({
           const nameId = `${groupId}-${index}-name`;
           const descriptionId = `${groupId}-${index}-description`;
           const helpId = `${groupId}-${index}-help`;
-          const option = (
+          const option = (focusProps?: Pick<PopoverTriggerProps, 'onFocus' | 'onPointerDown'>) => (
             <label key={choice.key} className={styles.option} {...choice.data}>
               <input
                 type="radio"
@@ -140,20 +152,21 @@ export function ChoiceGroup({
                 value={choice.value}
                 checked={choice.checked}
                 onChange={choice.onSelect}
+                onFocus={focusProps?.onFocus}
+                onPointerDown={focusProps?.onPointerDown}
                 aria-labelledby={described ? nameId : undefined}
                 aria-describedby={described ? descriptionId : undefined}
                 className="peer sr-only"
               />
               <span
                 title={
-                  !tooltip && layout === 'row' && typeof choice.label === 'string'
-                    ? choice.label
-                    : undefined
+                  layout === 'row' && typeof choice.label === 'string' ? choice.label : undefined
                 }
                 className={cn(
                   styles.face,
                   OPTION_STATES,
-                  tooltip && 'min-h-8 content-center pointer-coarse:min-h-11',
+                  layout === 'grid' &&
+                    (tooltip ? 'content-center pointer-coarse:min-h-11' : 'content-start'),
                 )}
               >
                 {described ? (
@@ -175,18 +188,17 @@ export function ChoiceGroup({
             </label>
           );
           return tooltip ? (
-            <div
+            <Popover
               key={choice.key}
-              className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center"
-            >
-              {option}
-              <Popover
-                label="Option help"
-                trigger={(props) => (
+              label="Option help"
+              trigger={(props) => (
+                <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center">
+                  {option(props)}
                   <Button
                     {...props}
                     variant="ghost"
                     size="icon"
+                    tabIndex={-1}
                     aria-labelledby={`${nameId} ${helpId}`}
                     aria-describedby={descriptionId}
                   >
@@ -195,13 +207,13 @@ export function ChoiceGroup({
                       help
                     </span>
                   </Button>
-                )}
-              >
-                {choice.description}
-              </Popover>
-            </div>
+                </div>
+              )}
+            >
+              {choice.description}
+            </Popover>
           ) : (
-            option
+            option()
           );
         })}
       </div>

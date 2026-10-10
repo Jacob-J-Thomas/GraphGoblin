@@ -66,7 +66,10 @@ describe('ChoiceGroup', () => {
       expect(description).toHaveClass('sr-only');
       const help = screen.getByRole('button', { name: `${planet} help` });
       expect(help.closest('label')).toBeNull();
+      expect(help).toHaveAttribute('tabindex', '-1');
       expect(help).toHaveAccessibleDescription(`${planet} is a planet.`);
+      expect(radio.nextElementSibling).toHaveClass('content-center', 'pointer-coarse:min-h-11');
+      expect(radio.nextElementSibling).not.toHaveClass('content-start', 'min-h-8');
     }
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
@@ -85,21 +88,36 @@ describe('ChoiceGroup', () => {
     expect(screen.getByRole('radio', { name: 'Earth' })).toBeChecked();
   });
 
-  it('opens on keyboard focus and Escape closes without changing selection or losing focus', async () => {
+  it('has one Tab stop, showing radio focus help and closing on blur or Escape without moving focus', async () => {
     const user = userEvent.setup();
     render(<Planets descriptionTooltips />);
+    const earth = screen.getByRole('radio', { name: 'Earth' });
     await user.tab();
-    expect(screen.getByRole('button', { name: 'Mercury help' })).toHaveFocus();
+    expect(earth).toHaveFocus();
     expect(screen.getByRole('dialog', { name: 'Option help' })).toHaveTextContent(
-      'Mercury is a planet.',
+      'Earth is a planet.',
     );
     await user.keyboard('{Escape}');
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Mercury help' })).toHaveFocus();
-    expect(screen.getByRole('radio', { name: 'Earth' })).toBeChecked();
-    expect(screen.getByRole('radio', { name: 'Mercury' })).toHaveAccessibleDescription(
-      'Mercury is a planet.',
-    );
+    expect(earth).toHaveFocus();
+    expect(earth).toBeChecked();
+    expect(earth).toHaveAccessibleDescription('Earth is a planet.');
+    await user.tab();
+    expect(document.body).toHaveFocus();
+    await user.tab({ shift: true });
+    expect(earth).toHaveFocus();
+    expect(screen.getByRole('dialog', { name: 'Option help' })).toBeVisible();
+    await user.tab();
+    expect(document.body).toHaveFocus();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('selects with a pointer without opening focus help', async () => {
+    const user = userEvent.setup();
+    render(<Planets descriptionTooltips />);
+    await user.click(screen.getByRole('radio', { name: 'Mars' }));
+    expect(screen.getByRole('radio', { name: 'Mars' })).toBeChecked();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   it('opens on touch tap without selecting the option and a second tap dismisses it', async () => {
@@ -129,6 +147,9 @@ describe('ChoiceGroup', () => {
     await user.keyboard('{ArrowRight}');
     expect(screen.getByRole('radio', { name: 'Mars' })).toBeChecked();
     expect(screen.getByRole('radio', { name: 'Mars' })).toHaveFocus();
+    expect(screen.getByRole('dialog', { name: 'Option help' })).toHaveTextContent(
+      'Mars is a planet.',
+    );
     rerender(<Planets descriptionTooltips disabled />);
     for (const control of [...screen.getAllByRole('radio'), ...screen.getAllByRole('button')])
       expect(control).toBeDisabled();
@@ -226,5 +247,7 @@ describe('ChoiceGroup', () => {
     expect(large).not.toHaveAttribute('aria-describedby');
     expect(large.nextElementSibling).toHaveTextContent('Large');
     expect(large.nextElementSibling?.querySelector('.text-ellipsis')).toBeNull();
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { hidden: true })).not.toBeInTheDocument();
   });
 });
