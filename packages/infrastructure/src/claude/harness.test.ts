@@ -65,6 +65,7 @@ const request: HarnessStartRequest = {
 };
 function fixture(
   options: {
+    version?: string;
     auth?: string;
     records?: unknown[];
     turns?: unknown[][];
@@ -77,7 +78,8 @@ function fixture(
   const runner: ClaudeCliRunner = async (command, onStdout) => {
     await Promise.resolve();
     calls.push(command);
-    if (command.args.includes('--version')) return outcome('2.1.285 (Claude Code)');
+    if (command.args.includes('--version'))
+      return outcome(`${options.version ?? '2.1.285'} (Claude Code)`);
     if (command.args.includes('--help')) return outcome(help);
     if (command.args.includes('auth'))
       return outcome(options.auth ?? JSON.stringify({ authMethod: 'claude.ai', email: 'PRIVATE' }));
@@ -393,6 +395,40 @@ describe('Claude existing harness contract', () => {
       message: 'Claude turn failed',
     });
     expect(JSON.stringify(await drain(session.events))).not.toContain('PRIVATE_PROVIDER_BODY');
+  });
+  it('preserves the CLI version, safe refusal name and recovery hint in result and error events', async () => {
+    for (const { records, code, identity } of [
+      {
+        records: [{ type: 'system', subtype: 'future_metadata', body: 'PRIVATE_BODY' }],
+        code: 'HARNESS_PROTOCOL_ERROR',
+        identity: 'system/future_metadata',
+      },
+      {
+        records: [{ ...init, plugins: [{ name: 'cc-plugin-hostile', body: 'PRIVATE_BODY' }] }],
+        code: 'HARNESS_UNSUPPORTED_POLICY',
+        identity: 'cc-plugin-hostile',
+      },
+    ]) {
+      const { harness } = fixture({ version: '2.1.287', records });
+      const session = harness.start(request, new AbortController().signal);
+      await expect(session.result).rejects.toMatchObject({
+        code,
+        message: expect.stringMatching(
+          new RegExp(
+            `Claude CLI 2\\.1\\.287.*${identity}.*Update GraphGoblin or report this Claude CLI version`,
+          ),
+        ),
+      });
+      const events = await drain(session.events);
+      expect(events).toContainEqual(
+        expect.objectContaining({
+          type: 'error',
+          code,
+          message: expect.stringContaining(identity),
+        }),
+      );
+      expect(JSON.stringify(events)).not.toContain('PRIVATE_BODY');
+    }
   });
   it('aborts during auth without starting a model and makes cancel idempotent', async () => {
     const calls: ClaudeProcessRequest[] = [];

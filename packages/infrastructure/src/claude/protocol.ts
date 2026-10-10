@@ -2,7 +2,12 @@ import { StringDecoder } from 'node:string_decoder';
 import type { Effort, JsonSchema, Usage } from '@graphgoblin/contracts';
 import { COMMAND_PREVIEW_MAX } from '@graphgoblin/contracts';
 import type { HarnessEvent, HarnessItem, HarnessResult } from '@graphgoblin/engine';
-import { ClaudeHarnessError, protocolError } from './errors.js';
+import {
+  CLAUDE_RECOVERY_HINT,
+  ClaudeHarnessError,
+  claudeDiagnosticName,
+  protocolError,
+} from './errors.js';
 import type { ClaudePolicy } from './policy.js';
 type ObjectValue = Record<string, unknown>;
 const object = (value: unknown): value is ObjectValue =>
@@ -116,6 +121,7 @@ export class JsonLines {
     }
   }
 }
+const BUILTIN_PLUGINS = new Set(['cc-plugin-agents-md', 'cc-plugin-plugin-authoring']);
 const BUILTIN_SKILLS = new Set([
   'deep-research',
   'dataviz',
@@ -133,7 +139,10 @@ const BUILTIN_SKILLS = new Set([
   'workflow-authoring',
   'run',
   'run-skill-generator',
+  'plugin-authoring',
 ]);
+const policyError = (message: string): ClaudeHarnessError =>
+  new ClaudeHarnessError('HARNESS_UNSUPPORTED_POLICY', `${message}. ${CLAUDE_RECOVERY_HINT}`);
 const bounded = (text: string, max = 200) => text.replace(/\s+/g, ' ').trim().slice(0, max);
 const outputText = (value: unknown): string => {
   if (typeof value !== 'string') throw protocolError();
@@ -203,31 +212,47 @@ export class ClaudeAccumulator {
     return this.evidence;
   }
   push(record: ObjectValue): HarnessEvent[] {
-    if (this.completed) throw protocolError();
+    if (this.completed) throw protocolError(record);
     if (record.type === 'system' && record.subtype === 'init') return this.initialize(record);
     if (
       record.type === 'system' &&
       typeof record.subtype === 'string' &&
       ['hook_started', 'hook_response', 'hook_progress', 'plugin_install'].includes(record.subtype)
     )
-      throw new ClaudeHarnessError(
-        'HARNESS_UNSUPPORTED_POLICY',
-        'Claude hooks and plugin installation cannot run under this launch policy',
+      throw policyError(
+        `Claude hooks and plugin installation cannot run under this launch policy (record system/${claudeDiagnosticName(record.subtype)})`,
       );
     if (record.type === 'system' && record.subtype === 'commands_changed')
       return this.commandsChanged(record);
-    if (!this.id) throw protocolError();
+    if (record.type === 'system' && record.subtype === 'ui_invalidate')
+      return this.uiInvalidate(record);
+    if (!this.id) throw protocolError(record);
     if (record.type === 'assistant' && record.error !== undefined)
       throw nativeFailure(record.error);
     if (record.type === 'assistant') return this.assistant(record);
     if (record.type === 'user') return this.toolResults(record);
     if (record.type === 'result') return this.complete(record);
-    // Non-execution status/partial-message events carry no stored evidence.
+    // Other post-init records carry no stored execution evidence, including future status events.
     return [];
   }
   finish(): HarnessResult {
     if (!this.completed) throw protocolError();
     return this.completed;
+  }
+  /** UI cache invalidation is metadata, never session, prompt-delivery or execution evidence. */
+  private uiInvalidate(record: ObjectValue): HarnessEvent[] {
+    if (
+      typeof record.event !== 'string' ||
+      !record.event ||
+      record.event.length > 100 ||
+      !validClaudeSessionId(record.uuid) ||
+      !validClaudeSessionId(record.session_id)
+    )
+      throw protocolError(record);
+    const expected = this.id ?? this.bootstrapId;
+    if (expected !== undefined && expected !== record.session_id) throw protocolError(record);
+    if (!this.id) this.bootstrapId = record.session_id;
+    return [];
   }
   /** Documented command-cache metadata carries no execution evidence and may precede native init. */
   private commandsChanged(record: ObjectValue): HarnessEvent[] {
@@ -256,23 +281,22 @@ export class ClaudeAccumulator {
       )
         throw protocolError();
       if (command.builtin !== true)
-        throw new ClaudeHarnessError(
-          'HARNESS_UNSUPPORTED_POLICY',
-          'Claude command metadata includes an unverified customization',
+        throw policyError(
+          `Claude command metadata includes an unverified customization: ${claudeDiagnosticName(command.name)}`,
         );
     }
     if (!this.id) this.bootstrapId = record.session_id;
     return [];
   }
   private initialize(record: ObjectValue): HarnessEvent[] {
-    if (this.id) throw protocolError();
-    if (!validClaudeSessionId(record.session_id)) throw protocolError();
+    if (this.id) throw protocolError(record);
+    if (!validClaudeSessionId(record.session_id)) throw protocolError(record);
     if (this.bootstrapId !== undefined && this.bootstrapId !== record.session_id)
-      throw protocolError();
+      throw protocolError(record);
     if (this.options.resumeId !== undefined && record.session_id !== this.options.resumeId)
       throw new ClaudeHarnessError(
         'HARNESS_PROTOCOL_ERROR',
-        'Claude resumed session does not match the requested session',
+        `Claude resumed session does not match the requested session. ${CLAUDE_RECOVERY_HINT}`,
       );
     const expectedTools =
       this.options.schema === undefined
@@ -286,21 +310,34 @@ export class ClaudeAccumulator {
       record.model !== this.options.model ||
       record.permissionMode !== 'dontAsk' ||
       record.apiKeySource !== 'none' ||
-      !Array.isArray(tools) ||
-      tools.length !== expectedTools.length ||
-      new Set(tools).size !== tools.length ||
-      tools.some((tool) => typeof tool !== 'string' || !expectedTools.includes(tool)) ||
       !Array.isArray(mcp) ||
-      mcp.length ||
-      !Array.isArray(plugins) ||
-      plugins.some((plugin) => !object(plugin) || plugin.name !== 'cc-plugin-agents-md') ||
-      !Array.isArray(skills) ||
-      skills.some((skill) => typeof skill !== 'string' || !BUILTIN_SKILLS.has(skill))
+      mcp.length
     )
-      throw new ClaudeHarnessError(
-        'HARNESS_UNSUPPORTED_POLICY',
+      throw policyError(
         'Claude effective model/auth/tool/customization policy differs from the requested policy',
       );
+    if (!Array.isArray(tools) || !tools.every((tool): tool is string => typeof tool === 'string'))
+      throw policyError('Claude tool policy metadata is invalid');
+    for (const tool of tools)
+      if (!expectedTools.includes(tool))
+        throw policyError(`Claude advertised an unexpected tool: ${claudeDiagnosticName(tool)}`);
+    if (tools.length !== expectedTools.length || new Set(tools).size !== tools.length)
+      throw policyError('Claude advertised tool set differs from the requested policy');
+    if (!Array.isArray(plugins)) throw policyError('Claude plugin policy metadata is invalid');
+    for (const plugin of plugins) {
+      if (!object(plugin) || typeof plugin.name !== 'string')
+        throw policyError('Claude plugin policy metadata is invalid');
+      if (!BUILTIN_PLUGINS.has(plugin.name))
+        throw policyError(
+          `Claude advertised an unexpected plugin: ${claudeDiagnosticName(plugin.name)}`,
+        );
+    }
+    if (!Array.isArray(skills)) throw policyError('Claude skill policy metadata is invalid');
+    for (const skill of skills) {
+      if (typeof skill !== 'string') throw policyError('Claude skill policy metadata is invalid');
+      if (!BUILTIN_SKILLS.has(skill))
+        throw policyError(`Claude advertised an unexpected skill: ${claudeDiagnosticName(skill)}`);
+    }
     this.id = record.session_id;
     this.evidence = {
       ...this.options.policy,
@@ -372,9 +409,8 @@ export class ClaudeAccumulator {
           typeof content.name !== 'string' ||
           (!this.options.policy.tools.includes(content.name) && !this.isOutputCarrier(content.name))
         )
-          throw new ClaudeHarnessError(
-            'HARNESS_UNSUPPORTED_POLICY',
-            'Claude attempted an unavailable tool',
+          throw policyError(
+            `Claude attempted an unavailable tool: ${claudeDiagnosticName(content.name)}`,
           );
         if (
           typeof content.id !== 'string' ||
@@ -486,7 +522,7 @@ export class ClaudeAccumulator {
     if (record.session_id !== this.id)
       throw new ClaudeHarnessError(
         'HARNESS_PROTOCOL_ERROR',
-        'Claude result session does not match the announced session',
+        `Claude result session does not match the announced session. ${CLAUDE_RECOVERY_HINT}`,
       );
     if (record.is_error !== false || record.subtype !== 'success') {
       throw nativeFailure(undefined, record.api_error_status);
@@ -497,10 +533,7 @@ export class ClaudeAccumulator {
       Object.keys(record.modelUsage).length !== 1 ||
       !Object.hasOwn(record.modelUsage, this.options.model)
     )
-      throw new ClaudeHarnessError(
-        'HARNESS_UNSUPPORTED_POLICY',
-        'Claude actual model differs from the requested model',
-      );
+      throw policyError('Claude actual model differs from the requested model');
     const finalText = outputText(record.result),
       usage = usageFrom(record.usage);
     // The engine owns schema validation and the authored repair policy. A missing native field
