@@ -86,6 +86,21 @@ export async function checkAnswerTypeHelp(
     expect(await group.locator('input:checked').inputValue()).toBe(selectedValue);
     await expect(radio).toHaveAccessibleDescription(description.text);
   }
+  // Hit the visible label, as users do: the hidden input receives focus only after the click.
+  // Every selection changes the answer; neither mouse clicks nor touch taps open its help.
+  for (const label of ['Noul', 'Choice', 'Score']) {
+    const previousValue = await group.locator('input:checked').inputValue();
+    const radio = group.getByRole('radio', { name: label, exact: true });
+    await expect(radio).not.toBeChecked();
+    const face = radio.locator('..').getByText(label, { exact: true });
+    if (hasTouch) await face.tap();
+    else await face.click();
+    await expect(radio).toBeChecked();
+    await expect(radio).toBeFocused();
+    expect(await radio.inputValue()).not.toBe(previousValue);
+    await expect(popup).toHaveCount(0);
+    await expect(dialog).toBeVisible();
+  }
   expect(await dialog.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,

@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
@@ -26,11 +26,13 @@ const PLANETS = ['Mercury', 'Venus', 'Earth', 'Mars', 'Jupiter'];
 function Planets({
   disabled = false,
   descriptionTooltips = false,
+  initialValue = 'Earth',
 }: {
   disabled?: boolean;
   descriptionTooltips?: boolean;
+  initialValue?: string;
 }) {
-  const [value, setValue] = useState('Earth');
+  const [value, setValue] = useState(initialValue);
   const choices: Choice[] = PLANETS.map((planet) => ({
     key: planet,
     value: planet.toLowerCase(),
@@ -112,12 +114,65 @@ describe('ChoiceGroup', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
-  it('selects with a pointer without opening focus help', async () => {
+  it.each(['mouse', 'touch'])(
+    'selects the visible card with %s without opening focus help',
+    async (pointer) => {
+      const user = userEvent.setup();
+      render(<Planets descriptionTooltips />);
+      const label = screen.getByText('Mars', { exact: true });
+      if (pointer === 'mouse') await user.click(label);
+      else
+        await user.pointer([
+          { keys: '[TouchA>]', target: label },
+          { keys: '[/TouchA]', target: label },
+        ]);
+      const mars = screen.getByRole('radio', { name: 'Mars' });
+      expect(mars).toBeChecked();
+      expect(mars).toHaveFocus();
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      await user.keyboard('{ArrowLeft}');
+      expect(screen.getByRole('radio', { name: 'Earth' })).toBeChecked();
+      expect(screen.getByRole('dialog', { name: 'Option help' })).toHaveTextContent(
+        'Earth is a planet.',
+      );
+    },
+  );
+
+  it('shows keyboard focus help after a cancelled label press', async () => {
     const user = userEvent.setup();
     render(<Planets descriptionTooltips />);
-    await user.click(screen.getByRole('radio', { name: 'Mars' }));
+    const label = within(screen.getByRole('radiogroup', { name: 'Planet' })).getByText('Earth', {
+      exact: true,
+    });
+    fireEvent.pointerDown(label);
+    fireEvent.pointerCancel(label);
+    await user.tab();
+    expect(screen.getByRole('radio', { name: 'Earth' })).toHaveFocus();
+    expect(screen.getByRole('dialog', { name: 'Option help' })).toHaveTextContent(
+      'Earth is a planet.',
+    );
+  });
+
+  it('keeps focus quiet when card selection remounts the picker and restores focus', async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(<Planets descriptionTooltips />);
+    const label = screen.getByText('Mars', { exact: true });
+    // The editor remounts its form within the click, before the browser's next task.
+    fireEvent.pointerDown(label);
+    fireEvent.pointerUp(label);
+    fireEvent.click(label);
     expect(screen.getByRole('radio', { name: 'Mars' })).toBeChecked();
+    rerender(<Planets key="remounted" descriptionTooltips initialValue="Mars" />);
+    const mars = screen.getByRole('radio', { name: 'Mars' });
+    mars.focus();
+    expect(mars).toHaveFocus();
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    await user.tab();
+    await user.tab({ shift: true });
+    expect(mars).toHaveFocus();
+    expect(screen.getByRole('dialog', { name: 'Option help' })).toHaveTextContent(
+      'Mars is a planet.',
+    );
   });
 
   it('opens on touch tap without selecting the option and a second tap dismisses it', async () => {

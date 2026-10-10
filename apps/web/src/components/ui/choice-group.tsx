@@ -1,4 +1,4 @@
-import { useId, type ReactNode } from 'react';
+import { useEffect, useId, type ReactNode } from 'react';
 import { cn } from '../../lib/utils.js';
 import { Icon } from '../icons/index.js';
 import { Button } from './button.js';
@@ -87,6 +87,11 @@ const LAYOUTS = {
   },
 } as const;
 
+// Card selection can remount the form and restore radio focus before the click finishes.
+// The press therefore outlives a picker instance, ending after the click's default action.
+let pointerPress = false;
+let releaseTimer: ReturnType<typeof setTimeout> | undefined;
+
 /**
  * A choice among options: a fieldset (role `radiogroup`, named by its legend) of native radios
  * drawn as options on a sunken track. Native radios keep the keyboard: Tab reaches the chosen
@@ -97,7 +102,8 @@ const LAYOUTS = {
  * `descriptionTooltips` opts grid cards into compact labels. Keyboard focus on a radio shows its
  * explanation without moving focus; leaving the option or pressing Escape dismisses it. Help
  * buttons open the same popover on hover or tap and have `tabIndex={-1}`, so Tab still reaches the
- * group only once. Each radio keeps its explanation as its accessible description while closed.
+ * group only once. Clicking or tapping a card selects it without opening help. Each radio keeps
+ * its explanation as its accessible description while closed.
  */
 export function ChoiceGroup({
   legend,
@@ -115,6 +121,20 @@ export function ChoiceGroup({
   const legendId = `${groupId}-legend`;
   const group = name ?? groupId;
   const styles = LAYOUTS[layout];
+  useEffect(() => {
+    if (!descriptionTooltips) return;
+    const release = () => {
+      clearTimeout(releaseTimer);
+      pointerPress = false;
+    };
+    // A cancelled press must not suppress the next keyboard focus, including Tab from outside.
+    document.addEventListener('keydown', release, true);
+    document.addEventListener('pointercancel', release, true);
+    return () => {
+      document.removeEventListener('keydown', release, true);
+      document.removeEventListener('pointercancel', release, true);
+    };
+  }, [descriptionTooltips]);
   return (
     <fieldset
       role="radiogroup"
@@ -145,14 +165,44 @@ export function ChoiceGroup({
           const descriptionId = `${groupId}-${index}-description`;
           const helpId = `${groupId}-${index}-help`;
           const option = (focusProps?: Pick<PopoverTriggerProps, 'onFocus' | 'onPointerDown'>) => (
-            <label key={choice.key} className={styles.option} {...choice.data}>
+            <label
+              key={choice.key}
+              className={styles.option}
+              {...choice.data}
+              onPointerDown={
+                focusProps
+                  ? () => {
+                      clearTimeout(releaseTimer);
+                      pointerPress = true;
+                    }
+                  : undefined
+              }
+              onClick={
+                focusProps
+                  ? () => {
+                      // A visible label focuses its sr-only radio as the click's default action,
+                      // after pointerup. Retain the press until that action has finished.
+                      clearTimeout(releaseTimer);
+                      releaseTimer = setTimeout(() => {
+                        pointerPress = false;
+                      }, 0);
+                    }
+                  : undefined
+              }
+            >
               <input
                 type="radio"
                 name={group}
                 value={choice.value}
                 checked={choice.checked}
                 onChange={choice.onSelect}
-                onFocus={focusProps?.onFocus}
+                onFocus={
+                  focusProps
+                    ? () => {
+                        if (!pointerPress) focusProps.onFocus();
+                      }
+                    : undefined
+                }
                 onPointerDown={focusProps?.onPointerDown}
                 aria-labelledby={described ? nameId : undefined}
                 aria-describedby={described ? descriptionId : undefined}
