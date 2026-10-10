@@ -83,6 +83,8 @@ The current format-3 workflow supersedes the older pre-release upgrade notes bel
 
 ### Fixed
 
+- The offline upgrade now converts historical decisions without recorded skip lists and statusless Codex command progress. Missing facts stay unrecorded; historical error progress and tool-call diagnostics are redacted to current safe summaries. Original events remain in the audit archive. Runtime event validation remains strict. (#174)
+
 - Decision routes are connectable immediately after editing, without reloading the loop. Connections stay with their own rows while labels are incomplete, whichever row you finish first. Renaming a route keeps its connection and line layout; removing a route removes its connection even while its label is invalid. Undo and Redo restore both together.
 - Exit explanations respect the recorded completion reason, outcome, and limit even when no criterion index was recorded. A failure match stays a failure, and a configured duration limit stays a duration limit.
 
