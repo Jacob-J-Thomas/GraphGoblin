@@ -13,11 +13,20 @@ export class LoopImportError extends DomainError {
   }
 }
 
+export class LoopFormatUpgradeRequiredError extends DomainError {
+  constructor() {
+    super(
+      'LOOP_FORMAT_UPGRADE_REQUIRED',
+      'Use the offline graphgoblin-upgrade export command and resolve any authored criteria to convert this document to format 3',
+    );
+  }
+}
+
 /** Wrap a definition in the portable export envelope. */
 export function exportLoop(def: LoopDefinition, exportedAt: string): LoopExport {
   return {
     format: 'graphgoblin-loop',
-    formatVersion: 1,
+    formatVersion: 3,
     exportedAt,
     loop: def,
   };
@@ -31,6 +40,13 @@ export function importLoop(input: unknown): {
   definition: LoopDefinition;
   issues: ValidationIssue[];
 } {
+  if (
+    typeof input === 'object' &&
+    input !== null &&
+    (('formatVersion' in input && [1, 2].includes(Number(input.formatVersion))) ||
+      ('schemaVersion' in input && [1, 2].includes(Number(input.schemaVersion))))
+  )
+    throw new LoopFormatUpgradeRequiredError();
   const envelope =
     typeof input === 'object' &&
     input !== null &&

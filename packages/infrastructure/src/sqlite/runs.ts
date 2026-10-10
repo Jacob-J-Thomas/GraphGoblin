@@ -4,32 +4,15 @@ import type { RunRecordChanges, RunRepository } from '@graphgoblin/engine';
 import { and, desc, eq, inArray, isNull, lt, sql, type SQL } from 'drizzle-orm';
 import type { Database } from './db.js';
 import { runs } from './schema.js';
+import { TemplateTransaction } from './templates.js';
+export type BeforeRunTransition = (
+  store: TemplateTransaction,
+  current: RunRecord,
+  changes: RunRecordChanges,
+) => Promise<void>;
 
-type Row = typeof runs.$inferSelect;
-
-function toRecord(row: Row): RunRecord {
-  return {
-    id: row.id,
-    ownerId: row.ownerId,
-    loopId: row.loopId,
-    versionId: row.versionId,
-    ...(row.parentRunId ? { parentRunId: row.parentRunId } : {}),
-    invocationId: row.invocationId,
-    status: row.status as RunStatus,
-    ...(row.currentNodeId ? { currentNodeId: row.currentNodeId } : {}),
-    iteration: row.iteration,
-    ...(row.waiting ? { waiting: row.waiting } : {}),
-    ...(row.cancelRequestedAt ? { cancelRequestedAt: row.cancelRequestedAt } : {}),
-    ...(row.pausedAt ? { pausedAt: row.pausedAt } : {}),
-    ...(row.failure ? { failure: row.failure } : {}),
-    ...(row.outcome ? { outcome: row.outcome as RunRecord['outcome'] } : {}),
-    ...(row.result !== null && row.result !== undefined ? { result: row.result } : {}),
-    createdAt: row.createdAt,
-    ...(row.startedAt ? { startedAt: row.startedAt } : {}),
-    ...(row.finishedAt ? { finishedAt: row.finishedAt } : {}),
-    lastEventSeq: row.lastEventSeq,
-  };
-}
+import { runRecordFromRow } from './run-row.js';
+export { runRecordFromRow } from './run-row.js';
 
 /** Map record changes onto column values; `undefined` becomes NULL so fields can be cleared. */
 function toColumns(changes: RunRecordChanges): Partial<typeof runs.$inferInsert> {
@@ -61,6 +44,32 @@ function toColumns(changes: RunRecordChanges): Partial<typeof runs.$inferInsert>
   return out;
 }
 
+export function runInsert(run: RunRecord, initialThread: ContextThread): typeof runs.$inferInsert {
+  return {
+    id: run.id,
+    ownerId: run.ownerId,
+    loopId: run.loopId,
+    versionId: run.versionId,
+    parentRunId: run.parentRunId ?? null,
+    invocationId: run.invocationId,
+    status: run.status,
+    currentNodeId: run.currentNodeId ?? null,
+    iteration: run.iteration,
+    waiting: run.waiting ?? null,
+    cancelRequestedAt: run.cancelRequestedAt ?? null,
+    pausedAt: run.pausedAt ?? null,
+    failure: run.failure ?? null,
+    outcome: run.outcome ?? null,
+    result: run.result ?? null,
+    createdAt: run.createdAt,
+    startedAt: run.startedAt ?? null,
+    finishedAt: run.finishedAt ?? null,
+    lastEventSeq: run.lastEventSeq,
+    initialThread,
+    threadSnapshot: initialThread,
+  };
+}
+
 export interface RunListFilter {
   ownerId?: string;
   loopId?: string;
@@ -72,37 +81,18 @@ export interface RunListFilter {
 }
 
 export class SqliteRunRepository implements RunRepository {
-  constructor(private readonly db: Database) {}
+  constructor(
+    private readonly db: Database,
+    private readonly beforeTransition?: BeforeRunTransition,
+  ) {}
 
   async create(run: RunRecord, initialThread: ContextThread): Promise<void> {
-    await this.db.insert(runs).values({
-      id: run.id,
-      ownerId: run.ownerId,
-      loopId: run.loopId,
-      versionId: run.versionId,
-      parentRunId: run.parentRunId ?? null,
-      invocationId: run.invocationId,
-      status: run.status,
-      currentNodeId: run.currentNodeId ?? null,
-      iteration: run.iteration,
-      waiting: run.waiting ?? null,
-      cancelRequestedAt: run.cancelRequestedAt ?? null,
-      pausedAt: run.pausedAt ?? null,
-      failure: run.failure ?? null,
-      outcome: run.outcome ?? null,
-      result: run.result ?? null,
-      createdAt: run.createdAt,
-      startedAt: run.startedAt ?? null,
-      finishedAt: run.finishedAt ?? null,
-      lastEventSeq: run.lastEventSeq,
-      initialThread,
-      threadSnapshot: initialThread,
-    });
+    await this.db.insert(runs).values(runInsert(run, initialThread));
   }
 
   async get(runId: string): Promise<RunRecord | undefined> {
     const row = await this.db.query.runs.findFirst({ where: eq(runs.id, runId) });
-    return row ? toRecord(row) : undefined;
+    return row ? runRecordFromRow(row) : undefined;
   }
 
   async update(runId: string, changes: RunRecordChanges): Promise<RunRecord> {
@@ -115,7 +105,7 @@ export class SqliteRunRepository implements RunRepository {
     const updated = await this.db.update(runs).set(columns).where(eq(runs.id, runId)).returning();
     const row = updated[0];
     if (!row) throw new Error(`run ${runId} not found`);
-    return toRecord(row);
+    return runRecordFromRow(row);
   }
 
   async transition(
@@ -123,25 +113,21 @@ export class SqliteRunRepository implements RunRepository {
     from: readonly RunStatus[],
     changes: RunRecordChanges,
   ): Promise<RunRecord | undefined> {
-    const columns = toColumns(changes);
-    if (Object.keys(columns).length === 0) {
-      const current = await this.get(runId);
-      if (!current) throw new Error(`run ${runId} not found`);
-      return from.includes(current.status) ? current : undefined;
-    }
-    const updated = await this.db
-      .update(runs)
-      .set(columns)
-      .where(and(eq(runs.id, runId), inArray(runs.status, [...from])))
-      .returning();
-    const row = updated[0];
-    if (row) return toRecord(row);
-    const exists = await this.db.query.runs.findFirst({
-      where: eq(runs.id, runId),
-      columns: { id: true },
+    return this.db.transaction(async (tx) => {
+      const [row] = await tx.select().from(runs).where(eq(runs.id, runId)).limit(1);
+      if (!row) throw new Error(`run ${runId} not found`);
+      const current = runRecordFromRow(row);
+      if (!from.includes(current.status)) return undefined;
+      const columns = toColumns(changes);
+      if (Object.keys(columns).length === 0) return current;
+      await this.beforeTransition?.(new TemplateTransaction(tx), current, changes);
+      const [updated] = await tx
+        .update(runs)
+        .set(columns)
+        .where(and(eq(runs.id, runId), inArray(runs.status, [...from])))
+        .returning();
+      return updated ? runRecordFromRow(updated) : undefined;
     });
-    if (!exists) throw new Error(`run ${runId} not found`);
-    return undefined;
   }
 
   async claimCancel(
@@ -157,7 +143,7 @@ export class SqliteRunRepository implements RunRepository {
       )
       .returning();
     const row = updated[0];
-    return row ? toRecord(row) : undefined;
+    return row ? runRecordFromRow(row) : undefined;
   }
 
   async markFinalized(runId: string): Promise<void> {
@@ -177,7 +163,7 @@ export class SqliteRunRepository implements RunRepository {
       .from(runs)
       .where(and(isNull(runs.finalizedAt), inArray(runs.status, [...TERMINAL_RUN_STATUSES])))
       .orderBy(runs.createdAt);
-    return rows.map(toRecord);
+    return rows.map(runRecordFromRow);
   }
 
   async listByStatus(statuses: readonly RunStatus[]): Promise<RunRecord[]> {
@@ -187,7 +173,7 @@ export class SqliteRunRepository implements RunRepository {
       .from(runs)
       .where(inArray(runs.status, [...statuses]))
       .orderBy(runs.createdAt);
-    return rows.map(toRecord);
+    return rows.map(runRecordFromRow);
   }
 
   async listChildren(parentRunId: string): Promise<RunRecord[]> {
@@ -196,7 +182,7 @@ export class SqliteRunRepository implements RunRepository {
       .from(runs)
       .where(eq(runs.parentRunId, parentRunId))
       .orderBy(runs.createdAt);
-    return rows.map(toRecord);
+    return rows.map(runRecordFromRow);
   }
 
   async list(filter: RunListFilter = {}): Promise<RunRecord[]> {
@@ -213,7 +199,7 @@ export class SqliteRunRepository implements RunRepository {
       .where(conditions.length ? and(...conditions) : undefined)
       .orderBy(desc(runs.createdAt), desc(runs.id))
       .limit(Math.min(filter.limit ?? 50, 500));
-    return (await query).map(toRecord);
+    return (await query).map(runRecordFromRow);
   }
 
   async getInitialThread(runId: string): Promise<ContextThread | undefined> {
@@ -274,6 +260,26 @@ export class SqliteRunRepository implements RunRepository {
     return row !== undefined;
   }
 
+  /** Batched owner-loop/trigger dedupe for the complete validated poll candidate set. */
+  async findTriggerDedupeKeys(
+    loopId: string,
+    triggerNodeId: string,
+    keys: readonly string[],
+  ): Promise<Set<string>> {
+    if (keys.length === 0) return new Set();
+    const key = sql<string>`json_extract(${runs.initialThread}, '$.invocation.trigger.dedupeKey')`;
+    const found = await this.db
+      .select({ key })
+      .from(runs)
+      .where(
+        and(
+          eq(runs.loopId, loopId),
+          sql`json_extract(${runs.initialThread}, '$.invocation.trigger.nodeId') = ${triggerNodeId}`,
+          inArray(key, [...keys]),
+        ),
+      );
+    return new Set(found.map((row) => row.key));
+  }
   /** Test and maintenance helper: drop the snapshot so the thread is rebuilt from the log. */
   async clearThreadSnapshot(runId: string): Promise<void> {
     await this.db

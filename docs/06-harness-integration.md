@@ -1,19 +1,24 @@
 # 06 - Harness integration
 
 Each inference node selects its harness through `config.harness`, defaulting to `codex`.
-Loop settings supply model and effort only; loop-level harness input is rejected.
-Decision strategies and structured repair still use their own Codex ports. See [ADR-0019](decisions/ADR-0019-inference-node-harness.md).
+Loop settings supply per-harness model and effort defaults; loop-level harness input is rejected.
+Decision evaluation and structured repair still use their existing Codex ports. See
+[ADR-0019](decisions/ADR-0019-inference-node-harness.md) and
+[ADR-0023](decisions/ADR-0023-installed-claude-code.md).
 
 ## The harness port (Decided)
 
 ```ts
 interface HarnessPort {
-  id: 'codex'; // 'claude' and 'litellm' post-1.0
+  id: 'codex' | 'claude'; // LiteLLM is a recorded later adapter idea
   preflight(): Promise<{
     ok: boolean;
     version?: string;
     authenticated: boolean;
     problems: string[];
+    authMethod?: 'claude.ai' | null;
+    supportedPolicies?: ClaudePolicy[];
+    models?: ClaudeModelCapability[];
   }>;
   start(req: HarnessStartRequest, signal: AbortSignal): HarnessSession;
   resume(sessionId: string, req: HarnessStartRequest, signal: AbortSignal): HarnessSession;
@@ -77,25 +82,25 @@ GraphGoblin uses the machine's existing Codex login, which may be a ChatGPT subs
 
 Every behaviour-affecting setting is passed as a per-thread option on every session, so the machine's `config.toml` defaults (on the owner's machine: model `gpt-6.1-sol`, effort `xhigh`, sandbox `danger-full-access`, approval `never`) never leak into a loop. Thread options become CLI arguments that come after any `config` overrides, so they also win over `configOverrides`.
 
-| Inference config                               | SDK mechanism (`@openai/codex-sdk` 0.160.0)                                                                                                                                                                              |
-| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `model`                                        | thread option `model` (`--model`); default from the engine's model resolution, else the adapter's `model` option (`gpt-6-luna`)                                                                                          |
-| `effort`                                       | thread option `modelReasoningEffort` (`model_reasoning_effort`); `minimal`, `low`, `medium`, `high`, `xhigh` pass through, `max` maps to `xhigh`                                                                         |
-| `harnessOptions.sandbox`                       | thread option `sandboxMode` (`--sandbox`): `read-only`, `workspace-write`, `danger-full-access`                                                                                                                          |
-| `harnessOptions.approval`                      | thread option `approvalPolicy` (`approval_policy`): `never` or `on-request`                                                                                                                                              |
-| `harnessOptions.networkAccess`                 | thread option `networkAccessEnabled` (`sandbox_workspace_write.network_access`), always set, default `false`                                                                                                             |
-| `harnessOptions.webSearch`                     | thread option `webSearchMode` (`web_search`): `live` when true, otherwise `disabled`                                                                                                                                     |
-| `harnessOptions.configOverrides`               | client `config` (dotted `--config` keys); values that cannot be TOML (null, non-finite numbers, functions) are dropped                                                                                                   |
-| `capabilities.mcpServers`, `plugins`, `skills` | Not yet resolved: the port receives slugs only and there is no capability profile store. The adapter logs and ignores them; use `configOverrides` (for example `mcp_servers.<name>.*`) until profiles land               |
-| `workingDirectory`                             | thread options `workingDirectory` (`--cd`) and `skipGitRepoCheck: true`                                                                                                                                                  |
-| `session.policy`                               | `fresh` starts a thread; `resume-previous` resumes the session id recorded by the previous inferencing node in this run; `resume-named` resumes the session id stored under `(loopId, key)` or `(workingDirectory, key)` |
-| `prompt.template`                              | Rendered with Liquid, passed as the turn prompt                                                                                                                                                                          |
-| `output.schema` with `native: true`            | `outputSchema` on the turn; the final message is parsed as JSON into `structured`, and the engine validates it                                                                                                           |
-| cancellation                                   | abort the SDK call's signal; see "Cancellation" below                                                                                                                                                                    |
+| Inference config                               | SDK mechanism (`@openai/codex-sdk` 0.160.0)                                                                                                                                                                                                                          |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `model`                                        | thread option `model` (`--model`); default from the engine's model resolution, else the adapter's `model` option (`gpt-6-luna`)                                                                                                                                      |
+| `effort`                                       | thread option `modelReasoningEffort` (`model_reasoning_effort`); `minimal`, `low`, `medium`, `high`, `xhigh` pass through, `max` maps to `xhigh`                                                                                                                     |
+| `harnessOptions.sandbox`                       | thread option `sandboxMode` (`--sandbox`): `read-only`, `workspace-write`, `danger-full-access`                                                                                                                                                                      |
+| `harnessOptions.approval`                      | thread option `approvalPolicy` (`approval_policy`): `never` or `on-request`                                                                                                                                                                                          |
+| `harnessOptions.networkAccess`                 | thread option `networkAccessEnabled` (`sandbox_workspace_write.network_access`), always set, default `false`                                                                                                                                                         |
+| `harnessOptions.webSearch`                     | thread option `webSearchMode` (`web_search`): `live` when true, otherwise `disabled`                                                                                                                                                                                 |
+| `harnessOptions.configOverrides`               | client `config` (dotted `--config` keys); values that cannot be TOML (null, non-finite numbers, functions) are dropped                                                                                                                                               |
+| `capabilities.mcpServers`, `plugins`, `skills` | Not yet resolved for Codex: the port receives slugs only and there is no capability profile store. Codex logs and ignores them; use Codex-only `configOverrides` (for example `mcp_servers.<name>.*`) until profiles land. Claude rejects nonempty capability lists. |
+| `workingDirectory`                             | thread options `workingDirectory` (`--cd`) and `skipGitRepoCheck: true`                                                                                                                                                                                              |
+| `session.policy`                               | `fresh` starts a thread; `resume-previous` resumes the session id recorded by the previous inferencing node in this run; `resume-named` resumes the session id stored under `(loopId, key)` or `(workingDirectory, key)`                                             |
+| `prompt.template`                              | Rendered with Liquid, passed as the turn prompt                                                                                                                                                                                                                      |
+| `output.schema` with `native: true`            | `outputSchema` on the turn; the final message is parsed as JSON into `structured`, and the engine validates it                                                                                                                                                       |
+| cancellation                                   | abort the SDK call's signal; see "Cancellation" below                                                                                                                                                                                                                |
 
 `HarnessPort.resume` receives the same `HarnessStartRequest` as `start`: the node's model, effort, harness options, capabilities, and working directory, plus the turn. The engine sends it for `resume-previous` and `resume-named` turns, schema-repair turns, and crash-recovery continuations, so `resumeThread(id, options)` gets exactly the thread options `startThread` would, including after a restart. The adapter keeps no per-session memory.
 
-Composition: `apps/api` builds `createCodexAdapters({ logger, model: GG_DEFAULT_MODEL, effort: GG_DEFAULT_EFFORT, codexBinary: GG_CODEX_BINARY })` and registers harness `codex`, the structured port, deciders for Codex and built-in Jev Noul, and the classifier registry for Decision Choice. `GG_CODEX_BINARY` is optional: a path to a `codex` executable or `.js` launcher; unset, the SDK's bundled CLI is used. Building the adapters spawns nothing; the CLI starts only with a session or a preflight.
+Composition: `apps/api` builds the Codex adapters from the Codex entry of the harness-keyed process defaults (`GG_DEFAULTS`) and `GG_CODEX_BINARY`, and registers the harness, structured port, Codex structured evaluator and primitive-aware classifier registry. It also registers the Claude harness on supported native Windows hosts using `GG_CLAUDE_BINARY` or the owner-installed CLI path described below. `GG_CODEX_BINARY` remains an optional executable or JavaScript launcher; otherwise the SDK bundled CLI is used. Constructing adapters starts no model session. Old process-default variables are rejected with migration guidance.
 
 ### Event normalisation (Decided)
 
@@ -111,7 +116,7 @@ Composition: `apps/api` builds `createCodexAdapters({ logger, model: GG_DEFAULT_
 
 An `error` item, such as a configuration deprecation warning, is an ordinary item and never fails a turn. A top-level `error` event only counts if the turn then fails. Codes: `HARNESS_QUOTA_EXHAUSTED` (HTTP 429, usage limit, quota; retriable only for plain rate limits), `HARNESS_NOT_AUTHENTICATED` (401, 403, not logged in), `HARNESS_NOT_INSTALLED` (binary not found), and `HARNESS_TURN_FAILED` (everything else; retriable for 5xx and stream disconnects). The engine's `classifyHarnessError` maps the first two by substring.
 
-Inference `node.progress` uses a strict item variant for each normalized type (`message`, `reasoning`, `command`, `file-change`, `tool-call`, `search`, `error`, and `other`): each has an id, summary (max 2,000 chars), and only allowlisted fields. Commands include a required `status` (`ok`, `failed`, or `running`), optional bounded `commandPreview` (max `COMMAND_PREVIEW_MAX`, currently 160 chars), and optional integer `exitCode`. Other item types may include the normalized status when the SDK supplies one. Error summaries are replaced with a fixed label, tool-call diagnostics are omitted, and progress never includes `detail` or command output. Script progress is a separate strict shape: integer `exitCode`, `stderr` capped at 2,000 chars, and nonnegative integer `stdoutBytes`.
+Inference `node.progress` uses a strict item variant for each normalized type (`message`, `reasoning`, `command`, `file-change`, `tool-call`, `search`, `error`, and `other`): each has an id, summary (max 2,000 chars), and only allowlisted fields. Commands include a required `status` (`ok`, `failed`, or `running`), optional bounded `commandPreview` (max `COMMAND_PREVIEW_MAX`, currently 160 chars), and optional integer `exitCode`. Other item types may include the normalized status when the SDK supplies one. Error summaries are replaced with a fixed label, tool-call diagnostics are omitted, and progress never includes `detail` or command output. Script progress is a separate strict shape: integer `exitCode`, `stderr` capped at 2,000 chars, and nonnegative integer `stdoutBytes`. Command items recorded before the strict progress contract, which have no status, appear after the offline upgrade as `other` items with their original id and summary, and the original event is kept in the upgrade audit.
 
 ### Cancellation (Decided, verified on Windows)
 
@@ -119,7 +124,7 @@ Inference `node.progress` uses a strict item variant for each normalized type (`
 
 ### Codex structured completions and decider
 
-`CodexStructured` (`StructuredPort`) starts one fresh thread per call with the schema, sandbox `read-only`, approval `never`, no network, no web search, in the request's working directory or an empty temporary directory it removes afterwards. It returns the parsed JSON (or the raw text if the reply is not JSON) for the engine to validate. `CodexDecider` (`DeciderPort`, `id: 'codex'`) asks `{ route: enum of labels, confidence, reasoning }` for choices and `{ holds, confidence, reasoning }` for yes/no questions; schemas follow OpenAI's strict structured-output rules, so confidence bounds are enforced by clamping, not in the schema. It is always `available()`; harness health is reported by `preflight`.
+`CodexStructured` (`StructuredPort`) starts one fresh thread per call with the schema, sandbox `read-only`, approval `never`, no network, no web search, in the request's working directory or an empty temporary directory it removes afterwards. It returns the parsed JSON (or the raw text if the reply is not JSON) for the engine to validate. `CodexDecider` (`DeciderPort`, `id: 'codex'`) asks `{ route: enum of labels, confidence, reasoning }` for choices and `{ holds, confidence, reasoning }` for yes/no questions; schemas follow OpenAI's strict structured-output rules, so Choice confidence bounds are enforced by complete local validation, without clamping or coercion. The exit yes/no contract remains unchanged pending #99. It is always `available()`; harness health is reported by `preflight`.
 
 ### Wiring
 
@@ -129,15 +134,15 @@ import { createJevDecider } from '@graphgoblin/adapter-jev';
 
 const codex = createCodexAdapters({
   logger,
-  model: settings.defaultModel,
-  effort: settings.defaultEffort,
+  model: settings.defaults.byHarness.codex?.model,
+  effort: settings.defaults.byHarness.codex?.effort,
 });
 const jev = createJevDecider({ secrets, logger }); // resolves `jev-api-key` in the background
 await jev.init();
 // ports: harnesses: { codex: codex.harness }, structured: codex.structured, deciders: [jev, codex.decider]
 ```
 
-The API additionally supplies `ports.classifiers: ClassifierRegistryPort`. Choice decisions use `resolve(ownerId, catalogId)`; `deciders` continues to supply Codex decisions and the built-in Noul exit facade. The facade gates `available()` on the built-in catalog's enabled state and calls `jev.refresh()` after `jev-api-key` changes. The registry creates SDK or HTTP clients from immutable configuration snapshots, invalidates them on catalog/referenced-secret writes and deletes, and rechecks metadata and usable secrets on every resolution. An in-flight request keeps its snapshot; subsequent decisions see the edit.
+The API additionally supplies `ports.classifiers: ClassifierRegistryPort`. Classifier decisions and exit predicates use `resolve(ownerId, catalogId, primitive)` and check the requested capability before dispatch. Codex supplies the structured LLM evaluator; the separate exit judge facade is removed. The registry creates SDK or HTTP clients from immutable configuration snapshots, invalidates them on catalog/referenced-secret writes and deletes, and rechecks metadata and usable secrets on every resolution. An in-flight request keeps its snapshot; subsequent decisions see the edit.
 
 ### Context injection (Decided)
 
@@ -169,7 +174,7 @@ The `model_catalog` table carries `source: 'harness' | 'litellm'` and `enabled`.
 
 Migration `0004` adds source with a harness default, preserving every legacy row. User-edited seeded rows become harness-owned and their metadata re-syncs on the next startup, while enabled stays as chosen. Hand-added legacy rows also become harness-owned: they keep their values and can be toggled, but are frozen for PUT/DELETE. Existing LiteLLM rows can be edited/deleted and are never refreshed by the harness seed. Creating LiteLLM entries returns `LITELLM_NOT_CONFIGURED` until the provider work ships; no new key convention is defined.
 
-The catalog is advisory. API validate and publish report `MODEL_DISABLED` or `MODEL_NOT_IN_CATALOG` warnings for explicit inference models, decision Codex models when the strategy includes Codex, and loop-default models under the inference default harness (`codex`). Node warnings use node-relative field paths alongside nodeId. These warnings never block publication, and runtime execution does not enforce membership or efforts. Preflight still checks the default model by model id without filtering harness. See [ADR-0018](decisions/ADR-0018-model-catalog-source.md) for migration/rollback and ownership alternatives.
+The model catalog is authoritative for selected and effective models. Shared admission checks reject unknown/wrong-harness models and unsupported effort, including inherited defaults; disabled or unconfigured selections remain visible in draft diagnostics and block publication. Runtime checks the chosen model again without substituting another harness or provider. Defaults share `{byHarness:{codex?:{model?,effort?},claude?:{model?,effort?}}}` across loop, owner and process layers. Owner Settings stores this value under `defaults`; `GG_DEFAULTS` supplies the process layer. The Claude model entry is exact and its effort is recorded as requested because the native CLI does not expose effective effort.
 
 ### Windows notes
 
@@ -181,26 +186,26 @@ Adapter tests replay recorded JSONL event streams captured from real sessions, s
 
 ## Codex as a decider and a repair engine (Decided)
 
-A decider's supplied confidence must be finite and in `[0, 1]`. An invalid
-confidence rejects that strategy's result and tries the next configured strategy;
-if none succeeds, the run fails with `DECISION_NO_ROUTE`.
+LLM Choice and Noul answers must include finite confidence in `[0,1]`; omission or an invalid value produces `EVALUATION_INVALID_RESPONSE`. Decision LLM confidence is informational and never thresholded. Noul requires an actual boolean, sends both authored side criteria, and retains the first 2,048 characters of its reasoning as an excerpt. Classifier confidence below its configured threshold produces `EVALUATION_RESULT_REJECTED`. Neither failure selects another kind.
 
-Decision nodes with strategy `codex`, the `coerce` operation's repair, and inferencing-node repair all use short Codex threads with an output schema. This keeps every model call in 1.0 on the subscription. These threads run with a read-only sandbox and no file changes. Implemented by `CodexStructured` and `CodexDecider` in `packages/adapter-codex`.
+Decision nodes with evaluation kind `llm` and harness `codex`, the `coerce` operation's repair, and inferencing-node repair all use short Codex threads with an output schema. These Codex calls use the installed account login; provider authentication and quota failures are reported normally. These threads run with a read-only sandbox and no file changes. Implemented by `CodexStructured` and `CodexDecider` in `packages/adapter-codex`.
 
 ## Jev decider (Decided, M4)
 
-Decision `jev.model` is an optional classifier catalog id, defaulting to `jev`. Startup seeds that built-in before run recovery and refreshes its managed metadata without resetting enabled. Its fixed provider remains the pinned TypeSafe SDK, `jev-latest`, `https://api.typesafe.ai`, and `jev-api-key`. Exit Noul continues through this built-in alone. Configuration status is a local usable-secret check, with no provider request; it does not establish reachability or valid provider authentication.
+Classifier decisions and exit predicates require an explicit `evaluation.model` catalog id; choose `jev` for the built-in. Startup seeds that built-in before run recovery and refreshes its managed metadata without resetting enabled. Its fixed provider remains the pinned TypeSafe SDK, `jev-latest`, `https://api.typesafe.ai`, and `jev-api-key`. Exit predicates may select any enabled classifier supporting their declared primitive. Configuration status is a local usable-secret check, with no provider request; it does not establish reachability or valid provider authentication.
 
-`packages/adapter-jev` implements `DeciderPort` (`id: 'jev'`) over `@typesafe-ai/sdk` 0.6.0 (MIT, no dependencies). Both primitives call `POST https://api.typesafe.ai/v1/systemone` with a bearer key from the secret `jev-api-key`:
+`packages/adapter-jev` implements `DeciderPort` (`id: 'jev'`) over `@typesafe-ai/sdk` 0.6.0 (MIT, no dependencies). Choice, Noul and Score call `POST https://api.typesafe.ai/v1/systemone` with a bearer key from the secret `jev-api-key`:
 
-- `choose` sends the decision context as `state` and one `choice` question whose criteria map each route label to its description. It returns the chosen label, the reported confidence (or the label's probability), and every other label with its probability as `alternatives`, highest first. The engine compares the confidence with `jev.minConfidence` and falls through to the next strategy below it.
-- `judge` sends one `noul` (yes/no) question; `holds` is `noul >= 0.5` and `confidence` is the probability of the answer given.
+- `choose` sends the decision context as `state` and one `choice` question whose criteria map each stable option ID to its authored criterion. It returns the chosen stable option ID, the reported confidence (or that option's probability), and a probability map covering exactly the submitted option IDs. The engine compares classifier confidence with `evaluation.minConfidence` and rejects a below-threshold answer with `EVALUATION_RESULT_REJECTED`, without fallback.
+- `classifyNoul` sends a `noul` question with explicit `true` and `false` criteria and returns its true probability. The engine applies the authored truth threshold (default 0.5), then independently checks confidence in the selected side. Threshold equality passes.
+- `score` sends an ordered array of rubric descriptions and preserves the fractional index, exact legend and available confidence/probabilities. The engine selects a stable authored band without rounding. Missing Score confidence is null; an authored minimum then fails with EVALUATION_INVALID_RESPONSE because its gate cannot be evaluated.
+- The existing exit-only `judge` path remains unchanged until #99: `holds` is `noul >= 0.5` and confidence is the probability of that side.
 
-`available()` is synchronous: the decider resolves the key in the background at construction and caches a client; `init()` awaits that, and `refresh()` re-reads the secret. Without a key it is unavailable and the engine skips it. Failures carry codes: `DECIDER_UNAVAILABLE`, `DECIDER_NOT_AUTHENTICATED` (401, 403), `DECIDER_RATE_LIMITED` (429), `DECIDER_HTTP_ERROR`, `DECIDER_UNREACHABLE`, and `DECIDER_INVALID_RESPONSE` (the response is validated with Zod). Jev Choice probabilities must cover exactly the submitted labels; an unknown choice with otherwise valid probabilities still reaches the engine's next-strategy fallback. Jev errors use fixed messages with only numeric HTTP status, and SDK logs use fixed summaries without provider text or response headers. Decision and exit-predicate failures share the engine's safe summaries; snapshots, paged events, and streams never retain provider error bodies or stacks. Engine provider warnings carry only safe name, code, status, and strategy metadata. The SDK retries 408, 429, and 5xx twice by default with a 10 s per-attempt timeout; aborts surface as `AbortError`. The base URL and model are explicit options (`baseUrl`, default `https://api.typesafe.ai`; `model`, default `jev-latest`), never read from `TYPESAFE_*` environment variables.
+`available()` is synchronous: the decider resolves the key in the background at construction and caches a client; `init()` awaits that, and `refresh()` re-reads the secret. Without a key the chosen evaluator is unavailable and execution fails with restoration guidance. Failures carry codes: `DECIDER_UNAVAILABLE`, `DECIDER_NOT_AUTHENTICATED` (401, 403), `DECIDER_RATE_LIMITED` (429), `DECIDER_HTTP_ERROR`, `DECIDER_UNREACHABLE`, and `DECIDER_INVALID_RESPONSE` (the response is validated with Zod). Jev Choice probabilities must cover exactly the submitted stable option IDs; unknown choices are invalid responses. Jev errors use fixed messages with only numeric HTTP status, and SDK logs use fixed summaries without provider text or response headers. Decision and exit-predicate failures share the engine's safe summaries; snapshots, paged events, and streams never retain provider error bodies or stacks. Engine provider warnings carry only safe name, code, status, and strategy metadata. Existing Choice and exit `judge` calls retain SDK retries (twice for 408, 429 and 5xx by default). New Noul/Score calls explicitly disable retries and check cancellation before dispatch. The per-attempt timeout is 10 seconds; aborts surface as `AbortError`. The base URL and model are explicit options (`baseUrl`, default `https://api.typesafe.ai`; `model`, default `jev-latest`), never read from `TYPESAFE_*` environment variables.
 
 ## HTTP classifier endpoint contract (Decided, ADR-0021)
 
-Register a custom entry with provider `http`, displayName, providerModel, nonempty unique primitives, an HTTP(S) API root without embedded credentials/query/fragment, and optional secretRef. Roots must not include the `/v1/systemone` request path, port 0, or whitespace (including encoded whitespace). When secretRef is supplied, HTTPS is required except for loopback hosts (`localhost`, `127.0.0.0/8`, or `[::1]`). New entries are disabled; metadata edits preserve enabled. The secret reference uses the Secrets name syntax and contains no credential value. Capability listing may include Noul/Score, but HTTP execution in this change implements Choice only.
+Register a custom entry with provider `http`, displayName, providerModel, nonempty unique primitives, an HTTP(S) API root without embedded credentials/query/fragment, and optional secretRef. Roots must not include the `/v1/systemone` request path, port 0, or whitespace (including encoded whitespace). When secretRef is supplied, HTTPS is required except for loopback hosts (`localhost`, `127.0.0.0/8`, or `[::1]`). New entries are disabled; metadata edits preserve enabled. The secret reference uses the Secrets name syntax and contains no credential value. HTTP execution supports Choice, Noul and Score; catalog capabilities filter editor choices and are rechecked at admission and dispatch.
 
 The infrastructure HTTP client sends `POST {endpoint}/v1/systemone`, `Content-Type: application/json`, and `Authorization: Bearer <resolved secret>` only when secretRef is set:
 
@@ -233,15 +238,120 @@ Minimum response:
 }
 ```
 
-Probabilities must cover exactly every submitted label, and all probability/confidence values must be finite and in `[0,1]`. The selected choice must be one of the submitted labels; an undeclared choice produces `DECIDER_INVALID_RESPONSE` with fixed text that does not include the value. Omitted confidence uses the selected probability. Provider model/usage and additional provider metadata may accompany the response. Requests have a 10-second deadline and respect executor cancellation. Redirects are not followed: a 3xx produces `DECIDER_REDIRECT` with "Classifier redirects are not followed". Malformed JSON or invalid answers produce `DECIDER_INVALID_RESPONSE`; 401/403 (`DECIDER_NOT_AUTHENTICATED`), 429 (`DECIDER_RATE_LIMITED`), other HTTP errors (`DECIDER_HTTP_ERROR`), connection failures (`DECIDER_UNREACHABLE`), and timeouts (`DECIDER_TIMEOUT`) have fixed diagnostics, with no credential or untrusted provider body in them. Provider errors fail the run with `INTERNAL_ERROR` and retain the transport code in `failure.details.code`; cancellation retains its existing behaviour. Unavailable configuration and low confidence fall through the strategy chain. Built-in Jev and Codex unknown selections also fall through with fixed text naming the strategy, without retaining the answer. Decision failure details in snapshots and events never contain the provider's raw answer. The registry passes the engine logger to decision-time Jev SDK clients so SDK retries and errors retain fixed log summaries without raw provider text.
+Probabilities must cover exactly every submitted label, and all probability/confidence values must be finite and in `[0,1]`. The selected choice must be one of the submitted labels; an undeclared choice produces `DECIDER_INVALID_RESPONSE` with fixed text that does not include the value. Omitted confidence uses the selected probability. Provider model/usage and additional provider metadata may accompany the response. Requests have a 10-second deadline and respect executor cancellation. Redirects are not followed: a 3xx produces `DECIDER_REDIRECT` with "Classifier redirects are not followed". Malformed JSON or invalid answers produce `DECIDER_INVALID_RESPONSE`; 401/403 (`DECIDER_NOT_AUTHENTICATED`), 429 (`DECIDER_RATE_LIMITED`), other HTTP errors (`DECIDER_HTTP_ERROR`), connection failures (`DECIDER_UNREACHABLE`), and timeouts (`DECIDER_TIMEOUT`) have fixed diagnostics, with no credential or untrusted provider body in them. Decision provider failures use typed `EVALUATION_*` failures and retain only safe transport diagnostics; cancellation retains its existing behaviour. Unavailable configuration, rejected classifier confidence and unknown selections produce the explicit typed decision failures described in docs/05; they never invoke a different evaluator. Malformed provider answers and transport text are not retained. A valid answer rejected only by confidence retains its validated canonical primitive facts, evaluator provenance and acceptance gate in failure details; it emits no `decision.made` event and selects no route. The registry passes the engine logger to decision-time Jev SDK clients so SDK retries and errors retain fixed log summaries without raw provider text.
+
+Noul uses the same envelope with `questions.answer = { "type": "noul", "instructions": "Is it ready?", "criteria": { "true": "All checks pass", "false": "At least one check fails" } }`. Its response is `answers.answer = { "type": "noul", "noul": 0.8 }`, where `noul` is the true probability, not selected-side confidence.
+
+Score sends `questions.answer = { "type": "score", "instructions": "Rate the result", "criteria": ["Incomplete", "Adequate", "Excellent"] }`. Its response is `answers.answer = { "type": "score", "score": 1.6, "legend": { "0": "Incomplete", "1": "Adequate", "2": "Excellent" } }`, optionally with finite confidence in `[0,1]` and probabilities keyed by every rubric index. The legend must exactly match the submitted rubric; the score must be finite and within `[0,N-1]`. Missing confidence/probabilities remain null. No alternate evaluator is called.
 
 Kev-4B's owner recommends `kev.serve` on CUDA or Apple Silicon MLX; the protocol and Apache-2.0 licence were inspected in owner source, with evidence in [research/jev.md](research/jev.md#kev-http-protocol-verification-2026-10-05). GraphGoblin registers an existing service; it does not install or serve models. A different native protocol needs a bridge exposing this contract. Ordinary LiteLLM chat-completion routing does not supply Choice probabilities, so it is outside this classifier path.
 
-## Post-1.0 adapters (recorded)
+## Claude Code adapter (#26)
 
-### Claude Code
+GraphGoblin calls the owner's installed Claude Code CLI directly. It adds no Anthropic SDK or
+other Anthropic runtime dependency and never installs, downloads, or bundles the CLI. This
+adapter currently supports native Windows only and requires CLI `2.1.285` or newer with all required policy and protocol flags;
+older versions, missing capabilities and other operating systems fail closed. `GG_CLAUDE_BINARY` selects an explicit
+executable. Otherwise the adapter uses `%USERPROFILE%\.local\bin\claude.exe`.
 
-Research preserved in `research/claude-code-agent-sdk.md`. Summary of what matters for the port: the Agent SDK is under Anthropic's Commercial Terms and wraps the Claude Code binary; subscription login cannot be offered inside third-party products, so the hosted version needs API keys; the SDK has `resume`, `model`, `effort` (`low` to `max`), `mcpServers`, `permissionMode`, `maxTurns`, `abortController`, `settingSources`, and hooks; structured output exists only on the CLI through a JSON-schema flag; compaction is not controllable. The adapter will need a CLI escape hatch for schema enforcement or rely on GraphGoblin's own validation and repair.
+### Authentication and supported models
+
+Preflight and each new or resumed CLI turn run `claude auth status --json` with the adapter's
+restricted child environment. Only the `claude.ai` authentication category is accepted. The
+response exposes that category, never raw login output, account identity, or credentials. No
+GraphGoblin secret stores Claude credentials. Preflight reports the detected CLI version and
+missing capabilities, and checks authentication independently even if those checks fail.
+
+The exact supported models are `claude-opus-5-5` and `claude-fable-5-1`. Both use the same
+technical readiness, model identity, effort and owner catalog enablement checks (ADR-0029).
+Supported requested efforts are `low`, `medium`, `high`, `xhigh`, and `max`. `minimal` is not
+accepted. The CLI does not report the effective effort, so GraphGoblin records and displays the
+requested effort and keeps `effectiveEffort` null.
+
+### Native Windows policy
+
+The supported pairs are `read-only`/`never` and `danger-full-access`/`never`. Read-only enables
+the built-in `Read`, `Glob`, and `Grep` tools under the CLI's restricted mode. This is a tool
+restriction, not filesystem-read-path or operating-system confinement. Danger-full-access adds
+`Edit`, `Write`, and `Bash`; commands and network access are unconfined under the API user's
+Windows account. The adapter never promotes another policy to this pair.
+
+`workspace-write`, `on-request`, explicit `networkAccess: false`, `webSearch: true`, nonempty
+custom capabilities, and nonempty `configOverrides` are refused during validation and again at
+runtime. These settings cannot be silently dropped or reinterpreted. The launch explicitly
+restricts tool lists, permission prompts, settings sources, and MCP configuration; it checks
+the effective model, authentication source, tools, MCP servers, plugins, and skills reported by
+the CLI before accepting the session policy. Managed policy remains in force. The two hostile-project policy canaries passed for the tested restrictions; their limits and bounded native fresh/resume evidence are recorded in the [#26 QA report](qa/2026-10-07-issue-26.md).
+
+The plugin allowlist contains exactly the CLI-bundled `cc-plugin-agents-md` and
+`cc-plugin-plugin-authoring`; the explicit built-in skill allowlist includes `plugin-authoring`.
+Names are checked individually, without prefix wildcards. Each advertised plugin must also
+report `path: "builtin"` and `source: "<name>@builtin"`; a local plugin reusing a built-in name
+is refused. `--safe-mode`, empty setting sources
+and strict MCP configuration suppress user customizations; an unknown plugin, skill or tool
+still fails with `HARNESS_UNSUPPORTED_POLICY` before session evidence is accepted.
+
+When an inference turn requests an output schema, the supported CLI init must advertise exactly
+the allowed execution tools plus one `StructuredOutput` carrier. Without a schema, that carrier
+is refused. It is virtual output transport, so the CLI `--tools` list and execution-policy
+`tools` evidence remain unchanged; separate policy evidence names the carrier. A correlated
+carrier call/result records only bounded `other` progress with its name and status, never a
+file, command, input, or result body. Duplicate advertised tools, other unexpected tools,
+unmatched IDs, and non-boolean error markers fail closed. The final native
+`result.structured_output` remains the sole candidate for engine validation and repair; carrier
+input or final text cannot replace it. This exact carrier name/set was observed in CLI
+`2.1.285` init. Bounded native fresh and same-session resume schema turns at source `3349212` verified correlated carrier calls/settlements, final structured candidates, and exact Opus 5.5 model usage. The resume returned the exact remembered synthetic nonce without that nonce in its prompt. This establishes the tested fresh/resume path, not general recall or prompt-delivery acknowledgment; safe evidence and remaining acceptance are in the
+[#26 QA report](qa/2026-10-07-issue-26.md). The official
+[CLI reference](https://code.claude.com/docs/en/cli-reference) documents `--json-schema`, and
+[structured-output documentation](https://code.claude.com/docs/en/agent-sdk/structured-outputs)
+describes the final `structured_output` field; neither establishes this internal carrier name.
+
+### Turns, defaults, and failures
+
+Model and effort resolve only within the selected harness: node, loop, owner Settings, then
+`GG_DEFAULTS`. Claude defaults use `defaults.byHarness.claude`; explicit wrong-family or unknown
+catalog values fail rather than falling through. Fresh, `resume-previous`, and `resume-named`
+policies keep their existing meanings. Session lookup filters by harness before selecting the
+newest matching session, so a Codex session is never passed to Claude or vice versa. The same
+resolved request is used for normal and structured-output repair turns. Version, help, and authentication probes run in a fresh empty temporary directory; only the actual turn uses the authored working directory.
+
+The CLI streams JSON lines. GraphGoblin records bounded progress, usage, the transcript artifact,
+and a policy-evidence item when transcript capture is enabled. Provider response bodies and raw
+stderr are not included in diagnostics. Cancellation owns the CLI process tree; if termination
+cannot be confirmed, the run fails with `HARNESS_TERMINATION_UNCONFIRMED` and is not reported as
+cancelled. Engine and persistence failures retain their original cause and stop the active initial or repair session; unconfirmed cleanup takes precedence. Claude is not a decision evaluator: decision evaluation, exit configuration, and
+the separate Codex structured port remain unchanged. Inference schema validation uses the authored repair and failure policy for either harness, preserving the native candidate (including null or a missing candidate) rather than substituting final text. API-provider support remains future work tracked by
+[#100](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/100).
+
+`system/commands_changed` and `system/ui_invalidate` can precede or follow init. UI invalidation
+requires a nonempty string `event` of at most 100 characters and valid UUID-shaped `uuid` and
+`session_id`. Both metadata records must use the same session as each other and init. They emit
+no progress, session, prompt-delivery or execution evidence. Verified init alone announces the
+session. Status, partial-message and rate-limit metadata also carry no execution evidence.
+Before init, only init and the two validated metadata records are accepted. After init,
+unrecognised record types and system subtypes emit no events or stored evidence. The system
+subtypes `hook_started`, `hook_response`, `hook_progress` and `plugin_install` remain refused
+at any time. No record may follow the final result.
+The sanitised CLI `2.1.287` capture replays all five records through the JSONL parser and
+accumulator, including assistant timestamps/request IDs and result timing/terminal/subagent
+fields. These additional fields do not alter exact init/result model identity, integer usage,
+native structured-candidate selection, tool correlation or native error checks.
+
+Protocol refusals keep `HARNESS_PROTOCOL_ERROR` and identify an unrecognised pre-init record's `type`
+and optional `subtype`; policy refusals name the unexpected plugin, skill or tool. Diagnostics
+include the detected CLI version and a hint to update GraphGoblin or report that version.
+Diagnostic names contain only letters, digits, `-`, `_` and `.`, with a maximum of 100
+characters; other values appear as `<invalid>`. Plugin paths and source strings are never
+included. Only bounded name-shaped metadata is included, never prompt, response, tool, account or
+rate-limit bodies. A green preflight verifies prerequisites; it does not run a model turn or
+guarantee that a future CLI stream will pass runtime verification.
+
+Prompt delivery proof is unsupported for the current text-input transport. Session init and stdin delivery do not acknowledge a particular prompt; no proof event is emitted. The context and recovery decisions remain with #38/#33.
+
+The earlier [Claude Agent SDK research](research/claude-code-agent-sdk.md) records an alternative
+that this adapter does not use.
+
+## Later adapters (recorded)
 
 ### LiteLLM
 

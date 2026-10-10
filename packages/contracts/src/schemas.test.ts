@@ -143,7 +143,7 @@ describe('loop definition', () => {
   it('round-trips through the export format', () => {
     const exported = LoopExportSchema.parse({
       format: 'graphgoblin-loop',
-      formatVersion: 1,
+      formatVersion: 3,
       exportedAt: FIXTURE_TS,
       loop: minimalLoop(),
     });
@@ -156,44 +156,37 @@ describe('loop definition', () => {
 });
 
 describe('node config schemas', () => {
-  it('decision requires unique routes and an expression block when used', () => {
-    const base = {
-      routes: [
-        { label: 'a', description: 'A' },
-        { label: 'a', description: 'A again' },
+  it('decision admits exactly one Choice evaluation and rejects legacy strategy chains', () => {
+    const answer = {
+      type: 'choice',
+      options: [
+        { id: 'a', label: 'A', criteria: 'A criterion' },
+        { id: 'b', label: 'B', criteria: 'B criterion' },
       ],
-      question: 'q',
-      strategy: ['expression'],
-      expression: { jsonata: '"a"' },
     };
-    expect(DecisionConfigSchema.safeParse(base).success).toBe(false);
-    const dup = {
-      ...base,
-      routes: [
-        { label: 'a', description: 'A' },
-        { label: 'b', description: 'B' },
-      ],
-      strategy: ['jev', 'jev'],
-    };
-    expect(DecisionConfigSchema.safeParse(dup).success).toBe(false);
-    const missingExpr = { ...dup, strategy: ['expression'], expression: undefined };
-    expect(DecisionConfigSchema.safeParse(missingExpr).success).toBe(false);
-    const ok = { ...dup, strategy: ['jev', 'codex'] };
-    const parsed = DecisionConfigSchema.parse(ok);
-    expect(parsed.context.messages).toBe('last');
+    const valid = { answer, evaluation: { kind: 'classifier', model: 'jev', question: 'Q' } };
+    const parsed = DecisionConfigSchema.parse(valid);
+    if (parsed.evaluation.kind !== 'classifier') throw new Error('Expected classifier');
+    expect(parsed.evaluation.context.messages).toBe('last');
     expect(parsed.recordAlternatives).toBe(true);
-  });
-
-  it('decision rejects a route named "in"', () => {
+    expect(DecisionConfigSchema.safeParse({ ...valid, strategy: ['jev'] }).success).toBe(false);
     expect(
       DecisionConfigSchema.safeParse({
-        routes: [
-          { label: 'in', description: 'x' },
-          { label: 'b', description: 'y' },
-        ],
-        question: 'q',
-        strategy: ['jev'],
+        ...valid,
+        answer: { ...answer, options: [answer.options[0], answer.options[0]] },
       }).success,
+    ).toBe(false);
+    expect(
+      DecisionConfigSchema.safeParse({
+        ...valid,
+        answer: {
+          ...answer,
+          options: [{ id: 'in', label: 'In', criteria: 'In' }, answer.options[1]],
+        },
+      }).success,
+    ).toBe(false);
+    expect(
+      DecisionConfigSchema.safeParse({ ...valid, evaluation: { kind: 'expression' } }).success,
     ).toBe(false);
   });
 
@@ -262,7 +255,17 @@ describe('node config schemas', () => {
     ).toBe(false);
     const cfg = ExitConfigSchema.parse({
       criteria: [
-        { when: 'predicate', strategy: 'jev', question: 'Done?', outcome: 'success' },
+        {
+          when: 'predicate',
+          answer: {
+            type: 'noul',
+            true: { label: 'Done', criteria: 'Complete' },
+            false: { label: 'Pending', criteria: 'Incomplete' },
+          },
+          evaluation: { kind: 'classifier', model: 'jev', question: 'Done?' },
+          match: { type: 'noul', value: true },
+          outcome: 'success',
+        },
         { when: 'max-duration', seconds: 60 },
         { when: 'last-output-matches', jsonSchema: { type: 'object' } },
       ],
@@ -280,7 +283,9 @@ describe('node config schemas', () => {
       subtype: 'webhook',
       signature: { scheme: 'hmac-sha256', secretRef: 'hook-secret' },
     });
-    expect(hook.subtype === 'webhook' && hook.replayWindowSeconds).toBe(300);
+    expect(
+      hook.subtype === 'webhook' && 'replayWindowSeconds' in hook && hook.replayWindowSeconds,
+    ).toBe(300);
     expect(TriggerConfigSchema.parse({ subtype: 'event', eventType: 'issue-ready' }).subtype).toBe(
       'event',
     );
@@ -393,11 +398,22 @@ describe('thread, run, and events', () => {
       {
         ...base,
         type: 'decision.made',
-        skipped: [],
         nodeId: 'd',
-        strategy: 'jev',
-        route: 'good',
-        confidence: 0.9,
+        answer: {
+          type: 'choice',
+          optionId: 'good',
+          confidence: 0.9,
+          probabilities: { good: 0.9, bad: 0.1 },
+        },
+        portId: 'good',
+        provenance: {
+          kind: 'classifier',
+          provider: 'typesafe',
+          classifierId: 'jev',
+          model: 'jev-latest',
+          effort: null,
+        },
+        diagnostics: [],
       },
       {
         ...base,

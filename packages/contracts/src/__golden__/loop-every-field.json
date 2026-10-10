@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 3,
   "name": "every-field",
   "description": "Every config field of every node kind, for parse checks.",
   "settings": {
@@ -8,8 +8,12 @@
       "template": "/work/{{ trigger.payload.repo }}"
     },
     "defaults": {
-      "model": "gpt-6-luna",
-      "effort": "medium"
+      "byHarness": {
+        "codex": {
+          "model": "gpt-6-luna",
+          "effort": "medium"
+        }
+      }
     },
     "maxIterations": 7,
     "subloopDepthLimit": 4
@@ -120,6 +124,53 @@
       }
     },
     {
+      "id": "github-hook",
+      "label": "GitHub hook",
+      "ui": {
+        "x": 0,
+        "y": 0
+      },
+      "kind": "trigger",
+      "config": {
+        "subtype": "webhook",
+        "signature": {
+          "scheme": "hmac-sha256-body",
+          "header": "x-hub-signature-256",
+          "secretRef": "github-secret"
+        },
+        "dedupeKey": "issue.number",
+        "filter": "action = \"opened\""
+      }
+    },
+    {
+      "id": "items-poller",
+      "label": "Items poller",
+      "ui": {
+        "x": 0,
+        "y": 0
+      },
+      "kind": "trigger",
+      "config": {
+        "subtype": "poll",
+        "intervalSeconds": 30,
+        "probe": {
+          "kind": "script",
+          "command": "gh",
+          "args": [
+            "api"
+          ],
+          "timeoutSeconds": 10
+        },
+        "fireWhen": "true",
+        "items": {
+          "select": "probe.json",
+          "dedupeKey": "$string(item.number)",
+          "maxRunsPerPoll": 5
+        },
+        "enabled": false
+      }
+    },
+    {
       "id": "decide",
       "label": "Decide",
       "ui": {
@@ -128,39 +179,40 @@
       },
       "kind": "decision",
       "config": {
-        "routes": [
-          {
-            "label": "good",
-            "description": "Looks good"
+        "answer": {
+          "type": "choice",
+          "options": [
+            {
+              "id": "good",
+              "label": "good",
+              "criteria": "Looks good"
+            },
+            {
+              "id": "bad",
+              "label": "bad",
+              "criteria": "Needs work"
+            }
+          ]
+        },
+        "evaluation": {
+          "kind": "llm",
+          "harness": "codex",
+          "model": {
+            "mode": "explicit",
+            "value": "gpt-6-sol"
           },
-          {
-            "label": "bad",
-            "description": "Needs work"
+          "effort": {
+            "mode": "explicit",
+            "value": "high"
+          },
+          "question": "Is {{ vars.topic }} done?",
+          "context": {
+            "messages": 3,
+            "vars": [
+              "topic"
+            ],
+            "includeLastOutput": false
           }
-        ],
-        "question": "Is {{ vars.topic }} done?",
-        "context": {
-          "messages": 3,
-          "vars": [
-            "topic"
-          ],
-          "includeLastOutput": false
-        },
-        "strategy": [
-          "jev",
-          "codex",
-          "expression"
-        ],
-        "jev": {
-          "primitive": "choice",
-          "minConfidence": 0.7
-        },
-        "codex": {
-          "model": "gpt-6-sol",
-          "effort": "high"
-        },
-        "expression": {
-          "jsonata": "\"good\""
         },
         "recordAlternatives": false
       }
@@ -582,15 +634,42 @@
           },
           {
             "when": "predicate",
-            "strategy": "jev",
-            "question": "Done?",
-            "minConfidence": 0.5,
+            "answer": {
+              "type": "noul",
+              "true": {
+                "label": "Done",
+                "criteria": "Complete"
+              },
+              "false": {
+                "label": "Pending",
+                "criteria": "Incomplete"
+              }
+            },
+            "evaluation": {
+              "kind": "classifier",
+              "model": "jev",
+              "question": "Done?",
+              "minConfidence": 0.5
+            },
+            "match": {
+              "type": "noul",
+              "value": true
+            },
             "outcome": "success"
           },
           {
             "when": "predicate",
-            "strategy": "expression",
-            "jsonata": "false",
+            "answer": {
+              "type": "noul"
+            },
+            "evaluation": {
+              "kind": "expression",
+              "jsonata": "false"
+            },
+            "match": {
+              "type": "noul",
+              "value": true
+            },
             "outcome": "failure"
           },
           {

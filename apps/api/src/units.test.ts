@@ -20,8 +20,13 @@ afterEach(async () => {
 describe('loadConfig', () => {
   it('uses the contract model-name bound for process defaults', () => {
     const model = 'm'.repeat(MAX_MODEL_NAME_LENGTH);
-    expect(loadConfig({ GG_DEFAULT_MODEL: model }).defaultModel).toBe(model);
-    expect(() => loadConfig({ GG_DEFAULT_MODEL: `${model}m` })).toThrow(/GG_DEFAULT_MODEL/);
+    expect(
+      loadConfig({ GG_DEFAULTS: JSON.stringify({ byHarness: { codex: { model } } }) }).defaults
+        .byHarness.codex?.model,
+    ).toBe(model);
+    expect(() =>
+      loadConfig({ GG_DEFAULTS: JSON.stringify({ byHarness: { codex: { model: model + 'm' } } }) }),
+    ).toThrow(/model/);
   });
   it('applies defaults and derives the database url from the data directory', () => {
     const config = loadConfig({});
@@ -29,7 +34,7 @@ describe('loadConfig', () => {
     expect(config.port).toBe(4747);
     expect(config.dbUrl).toMatch(/^file:.*graphgoblin\.db$/);
     expect(config.requireApiKey).toBe(false);
-    expect(config.defaultModel).toBe('gpt-6-luna');
+    expect(config.defaults.byHarness.codex?.model).toBe('gpt-6-luna');
     expect(config.masterKey).toBeUndefined();
     expect(config.publicUrl).toBeUndefined();
     expect(config.jevApiKey).toBeUndefined();
@@ -42,7 +47,9 @@ describe('loadConfig', () => {
       GG_DB_URL: ':memory:',
       GG_MASTER_KEY: 'abc',
       GG_PUBLIC_URL: 'https://gg.test',
-      GG_DEFAULT_EFFORT: 'high',
+      GG_DEFAULTS: JSON.stringify({
+        byHarness: { codex: { model: 'gpt-6-luna', effort: 'high' } },
+      }),
     });
     expect(config).toMatchObject({
       port: 8080,
@@ -50,7 +57,7 @@ describe('loadConfig', () => {
       dbUrl: ':memory:',
       masterKey: 'abc',
       publicUrl: 'https://gg.test',
-      defaultEffort: 'high',
+      defaults: { byHarness: { codex: { model: 'gpt-6-luna', effort: 'high' } } },
     });
     expect(() => loadConfig({ GG_PORT: 'nope' })).toThrow(/invalid configuration/);
     expect(() => loadConfig({ GG_DEFAULT_EFFORT: 'turbo' })).toThrow(/GG_DEFAULT_EFFORT/);

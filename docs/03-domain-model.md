@@ -26,12 +26,12 @@ Stored as JSON in `loop_versions.definition`, validated by `contracts`.
 
 ```ts
 type LoopDefinition = {
-  schemaVersion: 1;
+  schemaVersion: 3;
   name: string;
   description?: string;
   settings: {
     workingDirectory: WorkingDirectorySpec; // see 04 and 06
-    defaults: { model?: string; effort?: Effort };
+    defaults: { byHarness: { codex?: { model?: string; effort?: Effort } } };
     maxIterations: number; // hard ceiling on loop-backs and on fresh visits per node; exit nodes may set lower
     subloopDepthLimit: number; // default 8
   };
@@ -65,7 +65,7 @@ type NodeKind =
   | 'exit';
 ```
 
-An edge's `ui.route` is canvas layout, like a node's `ui`: the positions of the route's inner segments in canvas coordinates, alternating the x of a vertical segment and the y of a horizontal one (`x, y, ..., x`, so an odd count from 1 to 63). The first and last segments are horizontal and run from the ports' own heights, so the route stays attached when a card moves. The route lives on the edge it draws: deleting the edge deletes it, renaming a node keeps it, and versions pin it with the rest of the definition. The engine ignores it. Schema and export format versions stay 1; definitions without the field are unchanged.
+An edge's `ui.route` is canvas layout, like a node's `ui`: the positions of the route's inner segments in canvas coordinates, alternating the x of a vertical segment and the y of a horizontal one (`x, y, ..., x`, so an odd count from 1 to 63). The first and last segments are horizontal and run from the ports' own heights, so the route stays attached when a card moves. The route lives on the edge it draws: deleting the edge deletes it, renaming a node keeps it, and versions pin it with the rest of the definition. The engine ignores it. The route field itself does not change the format. Current definitions and exports use version 3; the offline upgrade preserves these routes.
 
 Validation rules enforced by `domain` before a version can be published:
 
@@ -79,7 +79,7 @@ Validation rules enforced by `domain` before a version can be published:
 Harness selection belongs to inference nodes (`config.harness`, default `codex`). Loop defaults
 provide only model and effort. Definitions containing `settings.defaults.harness` are rejected
 as unknown keys; imports and API clients must remove it. There is no compatibility parser.
-Schema and export format versions remain 1. See [ADR-0019](decisions/ADR-0019-inference-node-harness.md).
+Current definition and export format versions are 3. Exit predicates declare an answer, evaluator and matching rule, sharing the primitive evaluator without changing their existing context. [ADR-0026](decisions/ADR-0026-exit-primitives-and-format-three.md) owns the stopped-instance exit cutover. Decision answers include Noul, Choice and Score; the output records the raw answer, stable selected port and evaluator provenance. [ADR-0025](decisions/ADR-0025-answer-primitives.md) adds the new primitives without changing existing Choice evidence or context serialization. Existing format-1 data follows the [offline upgrade workflow](guide/08-offline-upgrade.md). Harness ownership was established in [ADR-0019](decisions/ADR-0019-inference-node-harness.md); the later format cutover is [ADR-0022](decisions/ADR-0022-explicit-decision-evaluation.md).
 
 ## Versioning (Decided)
 
@@ -193,7 +193,7 @@ Each event has `runId`, `seq`, `ts`, `type`, optional `nodeId`, and a typed `pay
 | `node.progress`                                                      | small structured progress from long nodes; harness items are summarised here |
 | `harness.session`                                                    | harness, sessionId, mode (`fresh` or `resumed`), model, effort               |
 | `harness.usage`                                                      | tokens as reported by the harness, informational                             |
-| `decision.made`                                                      | strategy, route, confidence, alternatives                                    |
+| `decision.made`                                                      | answer, portId, provenance, preserved historical diagnostics                 |
 | `signal.received`, `input.received`                                  | name, payload reference                                                      |
 | `heartbeat.beat`                                                     | beat number, probe result summary                                            |
 | `child_run.started`, `child_run.finished`                            | child run id, outcome                                                        |
@@ -201,16 +201,18 @@ Each event has `runId`, `seq`, `ts`, `type`, optional `nodeId`, and a typed `pay
 
 ## Other entities (Decided)
 
-| Entity              | Purpose                                                                                                                                                                                                                                                                |
-| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `harness_sessions`  | `(runId, nodeId, attempt)` to harness session id, status, model, effort. Written before the subprocess starts.                                                                                                                                                         |
-| `schedules`         | One per cron trigger node per published version: loop, version, and trigger node ids, expression, timezone, missed-fire policy, enabled, `next_fire_at`, `last_fired_at`. Rows of earlier versions are disabled, not deleted.                                          |
-| `webhook_endpoints` | One per webhook trigger node per published version: loop, version, and trigger node ids, path token (kept across versions for the same node), `secret_ref` naming the signing secret in `secrets`, signature header, replay window, enabled.                           |
-| `inbound_events`    | Every event from `POST /events`, exit-node `event` channels, and webhook deliveries: type, JSON payload, dedupe key, source (`api`, `run:<runId>`, `webhook:<endpointId>`), received time, and the ids of the runs it started.                                         |
-| `timers`            | Persisted wake-ups for wait and heartbeat nodes. Keyed by run and `<name>@<startedSeq>` (the wait that armed it). Delivered at least once: a row is removed only after the wake is handled, and recovery re-arms both deadlines from the waiting run's wait spec (05). |
-| `secrets`           | Name, ciphertext, key id, owner.                                                                                                                                                                                                                                       |
-| `model_catalog`     | Harness, model id, display name, allowed efforts, default effort, enabled.                                                                                                                                                                                             |
-| `api_keys`          | Hashed keys with labels and scopes.                                                                                                                                                                                                                                    |
-| `settings`          | Owner-level defaults.                                                                                                                                                                                                                                                  |
+| Entity              | Purpose                                                                                                                                                                                                                                                                                  |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `harness_sessions`  | `(runId, nodeId, attempt)` to harness session id, status, model, effort. Written before the subprocess starts.                                                                                                                                                                           |
+| `schedules`         | One per cron trigger node per published version: loop, version, and trigger node ids, expression, timezone, missed-fire policy, enabled, `next_fire_at`, `last_fired_at`. Rows of earlier versions are disabled, not deleted.                                                            |
+| `webhook_endpoints` | One per webhook trigger node per published version: loop, version, and trigger node ids, path token (kept across versions for the same node), `secret_ref` naming the signing secret in `secrets`, signature header and scheme, nullable replay window (null for body signing), enabled. |
+| `inbound_events`    | Every event from `POST /events`, exit-node `event` channels, and webhook deliveries: type, JSON payload, dedupe key, source (`api`, `run:<runId>`, `webhook:<endpointId>`), received time, and the ids of the runs it started.                                                           |
+| `timers`            | Persisted wake-ups for wait and heartbeat nodes. Keyed by run and `<name>@<startedSeq>` (the wait that armed it). Delivered at least once: a row is removed only after the wake is handled, and recovery re-arms both deadlines from the waiting run's wait spec (05).                   |
+| `secrets`           | Name, ciphertext, key id, owner.                                                                                                                                                                                                                                                         |
+| `model_catalog`     | Harness, model id, display name, allowed efforts, default effort, enabled.                                                                                                                                                                                                               |
+| `api_keys`          | Hashed keys with labels and scopes.                                                                                                                                                                                                                                                      |
+| `settings`          | Owner-level defaults.                                                                                                                                                                                                                                                                    |
+
+Body-signed webhooks also keep `webhook_receipts`: a unique owner/loop/trigger/content hash, inbound-event link, filtered/deduplicated/pending/admitted/failed state, frozen admission intent, attempts, next-attempt time and safe failure code. Pending admissions retain target pins. The admission port commits run identity, initial thread, subloop pins, queued event and receipt link together; notifications follow commit. See [ADR-0024](decisions/ADR-0024-github-trigger-admission.md).
 
 Every table carries `ownerId`. 1.0 has one owner, `local`.

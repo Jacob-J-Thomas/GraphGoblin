@@ -98,6 +98,7 @@ export const CONFLICT_MESSAGE =
 export function useAutosave(
   client: GraphGoblinClient,
   delayMs = AUTOSAVE_DELAY_MS,
+  enabled = true,
 ): () => Promise<boolean> {
   const queryClient = useQueryClient();
   const recoveryRead = useRef<{ generation: number; revision: number } | undefined>(undefined);
@@ -115,18 +116,22 @@ export function useAutosave(
   const inConflict = useEditorStore((s) => s.conflict !== undefined);
   const latest = useRef({ inConflict });
   latest.current = { inConflict };
+  const enabledRef = useRef(enabled);
+  enabledRef.current = enabled;
   useEffect(() => {
     const { loopId } = useEditorStore.getState();
     if (loopId && baseToken) latestTokens.set(loopId, baseToken);
   }, [baseToken, loadGeneration]);
 
   const save = useCallback(async (): Promise<boolean> => {
+    if (!enabledRef.current) return false;
     clearTimeout(timer.current);
     timer.current = undefined;
     const { loopId, generation } = useEditorStore.getState();
     if (!loopId) return false;
     return serializeSave(loopId, async () => {
       for (;;) {
+        if (!enabledRef.current) return false;
         const state = useEditorStore.getState();
         if (state.loopId !== loopId || state.generation !== generation || !state.definition)
           return false;
@@ -194,6 +199,11 @@ export function useAutosave(
   }, [client, queryClient]);
 
   useEffect(() => {
+    if (!enabled) {
+      clearTimeout(timer.current);
+      timer.current = undefined;
+      return;
+    }
     const { loopId, definition, savedRevision } = useEditorStore.getState();
     if (revision === savedRevision || !loopId || !definition) return;
     // Mirror the edit to this device at once: navigating away or closing the tab inside the
@@ -202,24 +212,25 @@ export function useAutosave(
     mirror();
     clearTimeout(timer.current);
     timer.current = setTimeout(() => void save(), delayMs);
-  }, [revision, loadGeneration, save, delayMs]);
+  }, [revision, loadGeneration, save, delayMs, enabled]);
 
   // Device storage that refused the mirror (blocked by another window) works again: put the edits
   // that are only in this window on the device now, rather than on the next edit.
-  useEffect(
-    () =>
-      subscribeDeviceStorage(() => {
-        if (deviceStorageProblem()) return;
-        const { loopId, revision: rev, savedRevision, deviceRevision } = useEditorStore.getState();
-        if (loopId && rev !== savedRevision && deviceRevision !== rev) mirror();
-      }),
-    [],
-  );
+  useEffect(() => {
+    if (!enabled) return;
+    return subscribeDeviceStorage(() => {
+      if (!enabledRef.current) return;
+      if (deviceStorageProblem()) return;
+      const { loopId, revision: rev, savedRevision, deviceRevision } = useEditorStore.getState();
+      if (loopId && rev !== savedRevision && deviceRevision !== rev) mirror();
+    });
+  }, [enabled]);
 
   useEffect(
     () => () => {
       // Leaving the editor with an unsaved edit: send it now, behind any save in flight, best
       // effort. The local copy above already holds it and wins on the next load if this fails.
+      if (!enabledRef.current) return;
       const last = pending.current;
       if (!last || timer.current === undefined) return;
       clearTimeout(timer.current);
@@ -239,6 +250,7 @@ export function useAutosave(
   );
 
   useEffect(() => {
+    if (!enabled) return;
     // Both browser reconnect and confirmed API recovery use the same serialized save path.
     const retry = () => void save();
     const unsubscribeRecovery = subscribeApiRecovery(retry);
@@ -248,7 +260,7 @@ export function useAutosave(
       window.removeEventListener('online', retry);
       clearTimeout(timer.current);
     };
-  }, [save]);
+  }, [save, enabled]);
 
   return save;
 }

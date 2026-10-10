@@ -27,7 +27,7 @@ import {
 } from './index.js';
 
 const waitLoop: ContractLoopDefinition = {
-  schemaVersion: 1,
+  schemaVersion: 3,
   name: 'wait-for-input',
   nodes: [
     { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },
@@ -237,23 +237,25 @@ describe('against the in-process API (local trusted mode)', () => {
     expect(attempts).toBe(0);
   });
 
-  it('preserves catalog warning paths when validation and publication succeed', async () => {
-    const definition = { ...minimalLoop(), settings: { defaults: { model: 'not-in-catalog' } } };
-    const { loop } = await loops.create(client, definition);
-    const validated = await loops.validate(client, loop.id, definition);
-    expect(validated.publishable).toBe(true);
-    expect(validated.issues).toEqual([
-      expect.objectContaining({
-        code: 'MODEL_NOT_IN_CATALOG',
-        severity: 'warning',
-        path: 'settings.defaults.model',
-      }),
-    ]);
-    const published = await client.POST('/loops/{id}/publish', {
-      params: { path: { id: loop.id } },
+  it('preserves catalog error paths when invalid defaults reject admission and publication', async () => {
+    const definition = {
+      ...minimalLoop(),
+      settings: { defaults: { byHarness: { codex: { model: 'not-in-catalog' } } } },
+    };
+    const issue = {
+      code: 'MODEL_NOT_IN_CATALOG',
+      severity: 'error',
+      path: 'settings.defaults.byHarness.codex.model',
+    };
+    await expect(loops.create(client, definition)).rejects.toMatchObject({
+      status: 400,
+      code: 'EVALUATION_INVALID_CONFIGURATION',
+      errors: [expect.objectContaining(issue)],
     });
-    expect(published.response.status).toBe(200);
-    expect(published.data?.issues).toEqual(validated.issues);
+    const { loop } = await loops.create(client, minimalLoop());
+    const validated = await loops.validate(client, loop.id, definition);
+    expect(validated.publishable).toBe(false);
+    expect(validated.issues).toEqual([expect.objectContaining(issue)]);
   });
 
   it('covers settings, secrets, API keys, the model catalog, and inbound events', async () => {

@@ -139,8 +139,40 @@ test('seven complete exports validate graph, syntax, roles and forced schemas', 
   }
 });
 
+function seedRoleCatalog(engine) {
+  for (const role of Object.values(config.roles)) {
+    if (
+      engine.ports.modelCatalog.entries.some(
+        (entry) => entry.harness === role.harness && entry.model === role.model,
+      )
+    )
+      continue;
+    engine.ports.modelCatalog.entries.push({
+      harness: role.harness,
+      model: role.model,
+      source: 'harness',
+      displayName: role.model,
+      efforts: ['low', 'medium', 'high', 'xhigh'],
+      defaultEffort: role.effort,
+      enabled: true,
+    });
+  }
+}
+
 async function scenario(mode) {
   const engine = await createTestEngine({ maxConcurrentRuns: 1 });
+  seedRoleCatalog(engine);
+  if (mode === 'uncertain')
+    engine.ports.classifiers.models.set(config.routing.classifierId, {
+      choose: async (request) => ({
+        type: 'choice',
+        optionId: 'uncertain',
+        confidence: 0.9,
+        probabilities: Object.fromEntries(
+          request.options.map((option) => [option.id, option.id === 'uncertain' ? 0.9 : 0.05]),
+        ),
+      }),
+    });
   const loopIds = Object.fromEntries(
     names.map((name) => [name, engine.loopId(exported[name].loop.name)]),
   );
@@ -152,7 +184,9 @@ async function scenario(mode) {
   }
   let cycles = 0;
   let qaVisits = 0;
-  const turns = [{ structured: plan, finalText: JSON.stringify(plan) }];
+  const judgment = (route) => ({ route, confidence: 0.95, reason: 'Explicit simulated judgment' });
+  const turn = (value) => ({ structured: value, finalText: JSON.stringify(value) });
+  const turns = [...(mode === 'uncertain' ? [turn(judgment('plannerA'))] : []), turn(plan)];
   const expectedCycles = ['fix-now', 'qa-rework'].includes(mode) ? 2 : mode === 'cap' ? 3 : 1;
   for (let n = 1; n <= expectedCycles; n++) {
     const i = implementation(n);
@@ -162,6 +196,7 @@ async function scenario(mode) {
         : mode === 'future-issue'
           ? review(i.headSha, 'pass', [finding('future-issue')])
           : review(i.headSha);
+    if (mode === 'uncertain') turns.push(turn(judgment('code')));
     turns.push(
       { structured: i, finalText: JSON.stringify(i) },
       { structured: r, finalText: JSON.stringify(r) },
@@ -310,7 +345,26 @@ async function scenario(mode) {
   });
   try {
     const run = await engine.runToIdle(loopIds.parent, input);
-    assert.equal(run.status, 'succeeded', JSON.stringify(run.failure));
+    assert.equal(
+      run.status,
+      'succeeded',
+      JSON.stringify(
+        [...engine.ports.runs.runs.values()].map((item) => ({
+          id: item.id,
+          failure: item.failure,
+        })),
+      ),
+    );
+    for (const item of engine.ports.runs.runs.values())
+      for (const event of engine.events(item.id)) {
+        if (event.type !== 'decision.made') continue;
+        assert.equal(event.answer.type, 'choice');
+        assert.equal(event.portId, event.answer.optionId);
+        assert.deepEqual(event.diagnostics, []);
+        assert.equal(Object.hasOwn(event, 'strategy'), false);
+        if (event.provenance.kind === 'expression') assert.equal(event.answer.confidence, null);
+        else assert.equal(event.provenance.classifierId, config.routing.classifierId);
+      }
     assert.equal(run.result.status, mode === 'cap' ? 'needs-human' : 'complete');
     assert.equal(cycles, expectedCycles);
     assert.equal(qaVisits, mode === 'cap' ? 0 : mode === 'qa-rework' ? 2 : 1);
@@ -358,5 +412,45 @@ async function scenario(mode) {
     engine.manager.stop();
   }
 }
-for (const mode of ['pass', 'fix-now', 'future-issue', 'cap', 'qa-rework'])
+for (const mode of ['pass', 'fix-now', 'future-issue', 'cap', 'qa-rework', 'uncertain'])
   test(`real engine / fake ports: ${mode}`, () => scenario(mode));
+
+test('classifier rejection stops the planning graph without entering its explicit judgment route', async () => {
+  const engine = await createTestEngine();
+  seedRoleCatalog(engine);
+  engine.publish(exported.planning.loop);
+  engine.ports.classifiers.models.set(config.routing.classifierId, {
+    choose: async (request) => ({
+      type: 'choice',
+      optionId: 'plannerA',
+      confidence: 0.4,
+      probabilities: Object.fromEntries(
+        request.options.map((option) => [option.id, option.id === 'plannerA' ? 0.4 : 0.3]),
+      ),
+    }),
+  });
+  engine.ports.scripts.respondWith((request) => ({
+    exitCode: 0,
+    stderr: '',
+    timedOut: false,
+    stdout: JSON.stringify(
+      request.args[1] === 'init' ? [{ op: 'add', path: '/vars/config', value: config }] : [],
+    ),
+  }));
+  try {
+    const run = await engine.runToIdle(engine.loopId(exported.planning.loop.name), input);
+    assert.equal(run.status, 'failed');
+    assert.equal(run.failure.code, 'EVALUATION_RESULT_REJECTED');
+    assert.equal(run.failure.resumable, false);
+    assert.equal(engine.ports.classifiers.requests.length, 1);
+    assert.equal(engine.ports.harness.started.length, 0);
+    assert.equal(
+      engine
+        .events(run.id)
+        .some((event) => event.type === 'node.started' && event.nodeId === 'judgment'),
+      false,
+    );
+  } finally {
+    engine.manager.stop();
+  }
+});

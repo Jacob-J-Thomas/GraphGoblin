@@ -26,7 +26,7 @@ afterEach(async () => {
 });
 
 const inferLoop: LoopDefinitionInput = {
-  schemaVersion: 1,
+  schemaVersion: 3,
   name: 'infer',
   nodes: [
     { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },
@@ -40,7 +40,7 @@ const inferLoop: LoopDefinitionInput = {
 };
 
 const returnLoop: LoopDefinitionInput = {
-  schemaVersion: 1,
+  schemaVersion: 3,
   name: 'returns',
   nodes: [
     { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },

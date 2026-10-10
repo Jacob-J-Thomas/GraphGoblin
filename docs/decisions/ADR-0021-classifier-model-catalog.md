@@ -1,5 +1,7 @@
 # ADR-0021 - Separate owner classifier catalog and Choice registry
 
+Partially superseded by [ADR-0022](ADR-0022-explicit-decision-evaluation.md) for decision fallback, model admission and harness-scoped defaults; other decisions remain in force.
+
 Date: 2026-10-05. Status: Accepted (#43 approved plan).
 
 ## Context

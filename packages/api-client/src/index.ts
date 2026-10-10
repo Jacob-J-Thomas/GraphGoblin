@@ -33,6 +33,7 @@ export {
   secrets,
   settings,
   system,
+  templates,
   type ListRunsQuery,
   type LoopDefinitionBody,
   type QueryParams,

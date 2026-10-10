@@ -1,15 +1,10 @@
 import { z } from 'zod';
+import { HarnessPreflightSchema, HarnessIdSchema } from '@graphgoblin/contracts';
 import type { Container } from '../container.js';
 import { PreflightReportSchema, containerPreflightSources, runPreflight } from '../preflight.js';
 import { API_VERSION, type ApiInstance } from '../types.js';
 
-const PreflightSchema = z.object({
-  harness: z.string(),
-  ok: z.boolean(),
-  version: z.string().optional(),
-  authenticated: z.boolean(),
-  problems: z.array(z.string()),
-});
+const PreflightSchema = HarnessPreflightSchema.extend({ harness: HarnessIdSchema });
 
 export function registerSystemRoutes(app: ApiInstance, container: Container): void {
   app.get(
@@ -59,18 +54,25 @@ export function registerSystemRoutes(app: ApiInstance, container: Container): vo
       },
     },
     async () => {
-      const items = [];
+      const items: z.infer<typeof PreflightSchema>[] = [];
       for (const [id, harness] of Object.entries(container.ports.harnesses)) {
         if (!harness) continue;
+        const harnessId = HarnessIdSchema.parse(id);
         try {
           const result = await harness.preflight();
-          items.push({ harness: id, ...result });
+          items.push({ harness: harnessId, ...result });
         } catch (error) {
           items.push({
-            harness: id,
+            harness: harnessId,
             ok: false,
             authenticated: false,
-            problems: [error instanceof Error ? error.message : String(error)],
+            problems: [
+              id === 'claude'
+                ? 'Claude preflight failed'
+                : error instanceof Error
+                  ? error.message
+                  : String(error),
+            ],
           });
         }
       }

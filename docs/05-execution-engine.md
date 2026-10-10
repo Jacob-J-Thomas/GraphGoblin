@@ -129,23 +129,11 @@ keeps its child. Its timers are re-armed and a child that finished meanwhile is 
 
 ## Exit evaluation evidence
 
-Exit criteria are evaluated in configuration order. The first match decides the outcome;
-later criteria are skipped, rather than called. A predicate's boolean verdict and confidence
-are separate evidence: a true verdict below `minConfidence` does not match. An unavailable
-or failing predicate fails the node; it does not fall through to the next criterion. If no
-criterion matches, the configured default completes successfully or loops back. The loop's
-hard iteration ceiling prevents that loop-back and finishes exhausted. Configured iteration
-and duration criteria also finish exhausted. The per-node visit cap remains a `run.failed`
-with `MAX_ITERATIONS` before any new node execution, including an exit, starts.
+Exit criteria are evaluated in configuration order. The first match decides the outcome; later criteria are skipped. Predicates share the context-free evaluator with decisions, but their caller preserves the existing fixed state and full-thread question rendering. Noul matches an authored boolean, Choice matches declared IDs, and Score compares its exact fractional value. Neither truthiness nor rounding is used.
 
-Each exit execution records `exit.evaluated` before `node.finished` or the terminal failure.
-It carries `nodeId`, `iteration`, `maxIterations`, ordered `criteria`, and `result`. Criterion
-indices are zero-based. Each entry names its strategy (`expression`, `jev`, `codex`, or the
-non-predicate criterion kind) and status: `matched`, `not-matched`, `skipped` with a fixed
-reason, or `error` with safe diagnostics. Predicate entries retain `holds`, confidence and
-the required minimum when present. Jev names classifier `jev`; Codex names the resolved
-model and retains its returned reasoning, bounded to 2,048 characters. Questions, context,
-provider response envelopes, and provider error text are not copied into this event.
+Confidence acceptance and matching are separate. A failed classifier minimum or exit-only LLM reported-confidence gate is always a nonmatch, even with match=false. A validated raw answer remains in evidence. Invalid answers, unavailable configuration, provider failures and cancellation fail the node without falling through. Predicates run before the implicit loop-back ceiling: a final-iteration match succeeds, while a final-iteration provider error still fails. Explicit duration/iteration criteria retain their order. A no-match default completes successfully or loops back once; the implicit ceiling prevents that continuation and finishes exhausted. The separate per-node visit cap remains `MAX_ITERATIONS` before a new node starts.
+
+Each execution records `exit.evaluated` before completion or terminal failure. It carries node/iteration limits, ordered zero-based criterion entries and a result. Predicate entries identify expression, classifier or LLM evaluation, raw canonical answer, safe resolved provenance, confidence acceptance, matching rule, optional gate rejection and matched/not-matched status. Skipped and error entries carry fixed reasons or safe diagnostics. LLM reasoning is bounded to 2,048 characters. Questions, context, provider envelopes and raw provider error text are not copied. Non-predicate entries retain their factual condition evidence. Historical unknown fields remain null after offline conversion.
 
 Configured Codex model names (node, loop, owner, and process defaults) and recorded exit
 model names share the contracts' 256-character bound. A maximum-length configured name
@@ -166,12 +154,11 @@ Recovery cannot consume a partial invalid page. JSON pages and SSE replay use th
 reader; SSE validates replay before sending any frames (07). Stored data repairs belong
 to migrations, including `0007` for historical decisions without `skipped`.
 
-Successful `decision.made` events always include `skipped`, ordered before the winning
-strategy. Entries contain strategy, a reason code, and a fixed short message: missing or
-disabled classifier, unsupported Choice, missing or unreadable key, unavailable provider,
-expression not selecting a declared route, undeclared provider route, invalid confidence,
-or confidence below the threshold. Provider exceptions still fail the node; recording
-fallback evidence does not introduce a new retry or fallback policy.
+Every new `decision.made` event contains the canonical Choice, Noul or Score answer, stable port ID and resolved evaluator provenance. Fresh events pass per-kind emission validation before append. Expression confidence/probabilities and nonapplicable provenance are null; classifier/LLM events identify their actual provider and model, and LLM events identify resolved effort. New decisions evaluate one kind and emit no skipped-strategy chain. The bounded event-only `diagnostics` list preserves factual pre-cutover skips during offline conversion. Unknown historical values remain null, and the upgrade audit retains original records.
+
+### Explicit decision failures (#98)
+
+A decision never substitutes another evaluator. `EVALUATION_UNAVAILABLE` is resumable when selected configuration or credentials can be restored. `EVALUATION_PROVIDER_FAILED` is resumable for connection/timeout failures, HTTP 429/5xx and restorable authentication failures; deterministic protocol/request failures are not. `EVALUATION_INVALID_CONFIGURATION`, `EVALUATION_INVALID_RESPONSE`, `EVALUATION_RESULT_REJECTED` and `EVALUATION_EXPRESSION_FAILED` are nonresumable: correct the configuration/input and replay or start a new run. Cancellation remains cancellation. Classifier confidence rejection retains the validated raw primitive answer, provenance and failed acceptance gate in safe failure details, but emits no decision or output patch. It is not a hidden uncertainty port. Decision LLM self-reported confidence is never thresholded. The shared primitive evaluator accepts caller-prepared question/state or the expression view; it does not render questions or select context.
 
 ## Subloops as child runs (Decided)
 
@@ -262,7 +249,7 @@ Because every node input is reconstructible, the API offers "re-run this node wi
 
 ## Implementation notes from WP-D2 (Decided by implementation, 2026-10-03)
 
-- **Model and effort resolve node, then loop defaults, then owner settings, then configuration.** `EngineSettings.ownerDefaults(ownerId)` is read every time a run starts or resumes; the API reads the owner settings `defaultModel` and `defaultEffort` there, so a change in Settings applies to the next run without a restart. `GG_DEFAULT_MODEL` and `GG_DEFAULT_EFFORT` remain the last fallback.
+- **Model and effort resolve within the selected harness: node, loop, owner, process.** Loop and owner defaults use `defaults.byHarness`; the process supplies the same shape through `GG_DEFAULTS`. A decision LLM explicitly selects inheritance or a value. Unknown catalog models, wrong-harness models and unsupported effective effort are errors; invalid explicit selections are never bypassed. Disabled or unconfigured selections block publication and are checked again at execution. In-flight provider calls retain their starting selection. Old `GG_DEFAULT_MODEL` and `GG_DEFAULT_EFFORT` variables are rejected with upgrade guidance.
 - **The executor yields to the event loop between nodes** (one `setTimeout(0)` per node). With fast ports every await settles as a microtask, and a graph cycle (a decision routing back to itself) used to starve timers, API requests, and the cancel request that could stop it. Such a cycle is now bounded by the per-node visit cap under `maxIterations` (see "Iterations and loop-back"; WP-F2).
 
 ## Implementation notes from WP-G (Decided by implementation, 2026-10-03)

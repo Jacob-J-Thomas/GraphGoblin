@@ -2,11 +2,7 @@
  * Regression tests for defects found by the WP-D2 adversarial QA pass (docs/qa/2026-10-03-wp-d2.md).
  */
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import {
-  MAX_MODEL_NAME_LENGTH,
-  type LoopDefinitionInput,
-  type RunEvent,
-} from '@graphgoblin/contracts';
+import { type LoopDefinitionInput, type RunEvent } from '@graphgoblin/contracts';
 import { minimalLoop } from '@graphgoblin/contracts/testing';
 import { readOwnerDefaults } from './container.js';
 import { createTestApp, type TestApp } from './testing/test-app.js';
@@ -23,7 +19,7 @@ const start = { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'ma
 const done = { id: 'done', kind: 'exit', label: 'D', config: {} } as const;
 function chain(name: string, middle: LoopDefinitionInput['nodes'][number]): LoopDefinitionInput {
   return {
-    schemaVersion: 1,
+    schemaVersion: 3,
     name,
     nodes: [start, middle, done],
     edges: [
@@ -66,39 +62,58 @@ describe('owner defaults (Settings) reach the engine at run start', () => {
     const put = await t.app.inject({
       method: 'PUT',
       url: '/settings',
-      payload: { defaultModel: 'gpt-6-sol', defaultEffort: 'high' },
+      payload: { defaults: { byHarness: { codex: { model: 'gpt-6-sol', effort: 'high' } } } },
     });
     expect(put.statusCode).toBe(200);
     expect(await run()).toMatchObject({ model: 'gpt-6-sol', effort: 'high' });
 
-    await t.app.inject({ method: 'DELETE', url: '/settings/defaultModel' });
-    expect(await run()).toMatchObject({ model: 'gpt-6-luna', effort: 'high' });
+    await t.app.inject({ method: 'DELETE', url: '/settings/defaults' });
+    expect(await run()).toMatchObject({ model: 'gpt-6-luna', effort: 'low' });
   });
 
-  it('refuses invalid values for the known keys and ignores bad stored values', async () => {
-    const model = 'm'.repeat(MAX_MODEL_NAME_LENGTH);
-    expect(
-      (await t.app.inject({ method: 'PUT', url: '/settings', payload: { defaultModel: model } }))
-        .statusCode,
-    ).toBe(200);
-    for (const payload of [
-      { defaultEffort: 'ultra' },
-      { defaultModel: '  ' },
-      { defaultModel: 7 },
-      { defaultModel: `${model}m` },
-    ]) {
-      const res = await t.app.inject({ method: 'PUT', url: '/settings', payload });
-      expect(res.statusCode, JSON.stringify(payload)).toBe(400);
-      expect(res.json<{ code: string }>().code).toBe('VALIDATION_FAILED');
+  it('rejects old reserved keys, invalid defaults, and invalid persisted configuration', async () => {
+    for (const key of ['defaultModel', 'defaultEffort']) {
+      const response = await t.app.inject({
+        method: 'PUT',
+        url: '/settings',
+        payload: { [key]: 'old' },
+      });
+      expect(response.statusCode).toBe(400);
+      expect(response.json().code).toBe('CONFIGURATION_UPGRADE_REQUIRED');
+      expect(response.body).toContain('defaults.byHarness');
     }
-    const other = await t.app.inject({ method: 'PUT', url: '/settings', payload: { theme: 1 } });
-    expect(other.statusCode).toBe(200);
-    const stored = { defaultModel: '', defaultEffort: 'ultra' } as Record<string, unknown>;
+    for (const defaults of [
+      { model: 'gpt-6-luna' },
+      { byHarness: { codex: { model: '' } } },
+      { byHarness: { codex: { effort: 'turbo' } } },
+    ]) {
+      const response = await t.app.inject({
+        method: 'PUT',
+        url: '/settings',
+        payload: { defaults },
+      });
+      expect(response.statusCode).toBe(400);
+      expect(response.json().code).toBe('VALIDATION_FAILED');
+    }
+    const unknown = await t.app.inject({
+      method: 'PUT',
+      url: '/settings',
+      payload: { defaults: { byHarness: { codex: { model: 'missing' } } } },
+    });
+    expect(unknown.statusCode).toBe(400);
+    expect(unknown.json().code).toBe('EVALUATION_INVALID_CONFIGURATION');
     expect(
-      await readOwnerDefaults({ get: (_o, k) => Promise.resolve(stored[k] as never) }, 'x'),
-    ).toEqual({});
-    await t.container.repos.settings.set('local', 'defaultModel', `${model}m`);
-    expect(await readOwnerDefaults(t.container.repos.settings, 'local')).toEqual({});
+      (await t.app.inject({ method: 'PUT', url: '/settings', payload: { theme: 1 } })).statusCode,
+    ).toBe(200);
+    await expect(
+      readOwnerDefaults(
+        { get: () => Promise.resolve({ byHarness: { codex: { effort: 'turbo' } } }) },
+        'x',
+      ),
+    ).rejects.toThrow();
+    expect(await readOwnerDefaults({ get: () => Promise.resolve(undefined) }, 'x')).toEqual({
+      byHarness: {},
+    });
   });
 });
 
@@ -242,7 +257,7 @@ describe('validate, draft saves, and publish agree', () => {
       url: '/loops/import',
       payload: {
         format: 'graphgoblin-loop',
-        formatVersion: 1,
+        formatVersion: 3,
         exportedAt: '2026-10-03T00:00:00.000Z',
         loop: definition,
       },
@@ -258,7 +273,7 @@ describe('validate, draft saves, and publish agree', () => {
       url: '/loops/import',
       payload: {
         format: 'graphgoblin-loop',
-        formatVersion: 1,
+        formatVersion: 3,
         exportedAt: '2026-10-03T00:00:00.000Z',
         loop: chain('imported', subloop('01ARZ3NDEKTSV4RRFFQ69G5FAV')),
       },

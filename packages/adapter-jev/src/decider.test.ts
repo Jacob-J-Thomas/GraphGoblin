@@ -40,9 +40,9 @@ async function ready(
 const choiceRequest = {
   question: 'Is the change ready?',
   options: [
-    { label: 'ship', description: 'ready to merge' },
-    { label: 'fix', description: 'needs work' },
-    { label: 'drop', description: 'abandon it' },
+    { id: 'ship', label: 'ship', criteria: 'ready to merge' },
+    { id: 'fix', label: 'fix', criteria: 'needs work' },
+    { id: 'drop', label: 'drop', criteria: 'abandon it' },
   ],
   context: { diff: 'x' },
 };
@@ -65,9 +65,12 @@ describe('availability', () => {
     await expect(missing.choose(choiceRequest, signal())).rejects.toMatchObject({
       code: 'DECIDER_UNAVAILABLE',
     });
-    await expect(missing.judge({ question: 'q', context: null }, signal())).rejects.toBeInstanceOf(
-      JevError,
-    );
+    await expect(
+      missing.classifyNoul(
+        { question: 'q', context: null, criteria: { true: 'Complete', false: 'Incomplete' } },
+        signal(),
+      ),
+    ).rejects.toBeInstanceOf(JevError);
 
     const blank = createJevDecider({ secrets: secrets({ 'jev-api-key': '   ' }) });
     await blank.init();
@@ -141,12 +144,10 @@ describe('choose', () => {
     const decider = await ready({ fetch, baseUrl: 'https://jev.example/', model: 'jev-2' });
     const result = await decider.choose(choiceRequest, signal());
     expect(result).toEqual({
-      label: 'ship',
+      type: 'choice',
+      optionId: 'ship',
       confidence: 0.81,
-      alternatives: [
-        { label: 'drop', confidence: 0.15 },
-        { label: 'fix', confidence: 0.04 },
-      ],
+      probabilities: { ship: 0.81, fix: 0.04, drop: 0.15 },
     });
     const [url, init] = calls[0]!;
     expect(url).toBe('https://jev.example/v1/systemone');
@@ -182,14 +183,14 @@ describe('choose', () => {
     const result = await decider.choose({ ...choiceRequest, context: 7 }, signal());
     // Without a reported confidence, the chosen label's probability is used.
     expect(result.confidence).toBe(0.4);
-    expect(result.alternatives?.map((a) => a.label)).toEqual(['ship', 'drop']);
+    expect(result.probabilities).toEqual({ ship: 0.35, fix: 0.4, drop: 0.25 });
     expect(calls[0]![0]).toBe(`${DEFAULT_BASE_URL}/v1/systemone`);
     const body = JSON.parse(calls[0]![1]?.body as string);
     expect(body.state).toEqual({ value: 7 });
     expect(body.model).toBe('jev-latest');
   });
 
-  it('keeps unknown choices for engine fallback when probabilities cover every submitted label', async () => {
+  it('rejects unknown choices even with a complete probability map', async () => {
     const { fetch } = stubFetch(
       json(200, {
         answers: {
@@ -201,15 +202,8 @@ describe('choose', () => {
         },
       }),
     );
-    const decider = await ready({ fetch });
-    expect(await decider.choose(choiceRequest, signal())).toEqual({
-      label: 'unknown',
-      confidence: 0,
-      alternatives: [
-        { label: 'ship', confidence: 0.8 },
-        { label: 'fix', confidence: 0.1 },
-        { label: 'drop', confidence: 0.1 },
-      ],
+    await expect((await ready({ fetch })).choose(choiceRequest, signal())).rejects.toMatchObject({
+      code: 'DECIDER_INVALID_RESPONSE',
     });
   });
 
@@ -231,37 +225,113 @@ describe('choose', () => {
   });
 });
 
-describe('judge', () => {
-  it('sends a noul question and maps the probability of yes', async () => {
+describe('native Noul and Score primitives', () => {
+  const noulRequest = {
+    question: 'Ready?',
+    context: { facts: ['checks pass'] },
+    criteria: { true: 'All checks pass', false: 'Any check fails' },
+  };
+  const scoreRequest = {
+    question: 'Severity?',
+    context: { incident: 'partial outage' },
+    anchors: ['Low', 'Medium', 'High', 'Critical'],
+  };
+  const scoreAnswer = {
+    type: 'score',
+    score: 1.25,
+    confidence: 0.75,
+    legend: { '0': 'Low', '1': 'Medium', '2': 'High', '3': 'Critical' },
+    probabilities: { '0': 0, '1': 0.75, '2': 0.25, '3': 0 },
+  };
+  it('sends both authored Noul criteria and returns the unthresholded true probability', async () => {
     const { fetch, calls } = stubFetch(
-      json(200, { answers: { answer: { type: 'noul', noul: 0.9 } } }),
-      json(200, { answers: { answer: { type: 'noul', noul: 0.2 } } }),
+      json(200, { answers: { answer: { type: 'noul', noul: 0.7 } } }),
     );
-    const decider = await ready({ fetch });
-    expect(await decider.judge({ question: 'Done?', context: 'all tests pass' }, signal())).toEqual(
-      { holds: true, confidence: 0.9 },
-    );
-    expect(await decider.judge({ question: 'Done?', context: null }, signal())).toEqual({
-      holds: false,
-      confidence: 0.8,
+    expect(await (await ready({ fetch })).classifyNoul(noulRequest, signal())).toEqual({
+      type: 'noul',
+      trueProbability: 0.7,
     });
     expect(JSON.parse(calls[0]![1]?.body as string)).toMatchObject({
-      state: 'all tests pass',
-      questions: { answer: { type: 'noul', instructions: 'Done?' } },
+      state: noulRequest.context,
+      questions: {
+        answer: { type: 'noul', instructions: 'Ready?', criteria: noulRequest.criteria },
+      },
+    });
+    expect(calls).toHaveLength(1);
+  });
+  it('sends ordered Score anchors and retains fractional score and native evidence', async () => {
+    const { fetch, calls } = stubFetch(json(200, { answers: { answer: scoreAnswer } }));
+    expect(await (await ready({ fetch })).score(scoreRequest, signal())).toEqual(scoreAnswer);
+    expect(JSON.parse(calls[0]![1]?.body as string)).toMatchObject({
+      state: scoreRequest.context,
+      questions: {
+        answer: { type: 'score', instructions: 'Severity?', criteria: scoreRequest.anchors },
+      },
+    });
+    expect(calls).toHaveLength(1);
+  });
+  it('does not fabricate absent Score confidence or probabilities', async () => {
+    const { confidence: _confidence, probabilities: _probabilities, ...answer } = scoreAnswer;
+    const { fetch } = stubFetch(json(200, { answers: { answer } }));
+    expect(await (await ready({ fetch })).score(scoreRequest, signal())).toEqual({
+      ...answer,
+      confidence: null,
+      probabilities: null,
     });
   });
-
-  it('rejects a malformed yes/no response', async () => {
-    const { fetch } = stubFetch(json(200, { answers: { answer: { type: 'noul', noul: 'yes' } } }));
-    const decider = await ready({ fetch });
-    await expect(decider.judge({ question: 'q', context: [] }, signal())).rejects.toMatchObject({
+  it.each([
+    { type: 'score', score: -1, legend: scoreAnswer.legend },
+    { ...scoreAnswer, score: 3.1 },
+    { ...scoreAnswer, confidence: 1.1 },
+    { ...scoreAnswer, legend: { ...scoreAnswer.legend, '0': 'Wrong' } },
+    { ...scoreAnswer, probabilities: { '0': 1 } },
+    { type: 'noul', noul: 0.7 },
+  ])('rejects invalid Score evidence once %j', async (answer) => {
+    const { fetch, calls } = stubFetch(json(200, { answers: { answer } }));
+    await expect((await ready({ fetch })).score(scoreRequest, signal())).rejects.toMatchObject({
       code: 'DECIDER_INVALID_RESPONSE',
     });
+    expect(calls).toHaveLength(1);
   });
+  it.each([undefined, -0.1, 1.1, 'yes'])('rejects malformed Noul probability %j', async (noul) => {
+    const { fetch, calls } = stubFetch(json(200, { answers: { answer: { type: 'noul', noul } } }));
+    await expect(
+      (await ready({ fetch })).classifyNoul(noulRequest, signal()),
+    ).rejects.toMatchObject({ code: 'DECIDER_INVALID_RESPONSE' });
+    expect(calls).toHaveLength(1);
+  });
+  it('enforces the SDK minimum rubric size before dispatch', async () => {
+    const { fetch, calls } = stubFetch();
+    await expect(
+      (await ready({ fetch })).score({ ...scoreRequest, anchors: ['Only'] }, signal()),
+    ).rejects.toMatchObject({ code: 'DECIDER_INVALID_CONFIGURATION' });
+    expect(calls).toHaveLength(0);
+  });
+  it.each(['classifyNoul', 'score'] as const)(
+    'does not retry new %s provider calls and preserves caller cancellation',
+    async (method) => {
+      const { fetch, calls } = stubFetch(json(503, { private: 'hidden' }));
+      const decider = await ready({ fetch, retry: { maxRetries: 2 } });
+      const invoke = (callSignal: AbortSignal) =>
+        method === 'classifyNoul'
+          ? decider.classifyNoul(noulRequest, callSignal)
+          : decider.score(scoreRequest, callSignal);
+      await expect(invoke(signal())).rejects.toMatchObject({
+        code: 'DECIDER_HTTP_ERROR',
+        status: 503,
+        message: 'Jev request failed (503)',
+      });
+      expect(calls).toHaveLength(1);
+      const controller = new AbortController();
+      controller.abort();
+      await expect(invoke(controller.signal)).rejects.toMatchObject({ name: 'AbortError' });
+      expect(calls).toHaveLength(1);
+    },
+  );
 });
 
 describe('errors', () => {
-  it.each(['choose', 'judge'] as const)(
+  it.each(['choose', 'classifyNoul'] as const)(
     'never reflects an HTTP error body from %s',
     async (method) => {
       const marker = 'gg-private-exit-error-regression';
@@ -270,7 +340,14 @@ describe('errors', () => {
       const request =
         method === 'choose'
           ? decider.choose(choiceRequest, signal())
-          : decider.judge({ question: 'Done?', context: null }, signal());
+          : decider.classifyNoul(
+              {
+                question: 'Done?',
+                context: null,
+                criteria: { true: 'Complete', false: 'Incomplete' },
+              },
+              signal(),
+            );
       await expect(request).rejects.toMatchObject({
         code: 'DECIDER_HTTP_ERROR',
         status: 400,
@@ -306,26 +383,43 @@ describe('errors', () => {
   it('maps connection failures and aborts', async () => {
     const { fetch } = stubFetch(new TypeError('fetch failed'), new TypeError('fetch failed'));
     const decider = await ready({ fetch });
-    await expect(decider.judge({ question: 'q', context: {} }, signal())).rejects.toMatchObject({
+    await expect(
+      decider.classifyNoul(
+        { question: 'q', context: {}, criteria: { true: 'Complete', false: 'Incomplete' } },
+        signal(),
+      ),
+    ).rejects.toMatchObject({
       code: 'DECIDER_UNREACHABLE',
     });
     const controller = new AbortController();
     controller.abort();
     await expect(
-      decider.judge({ question: 'q', context: {} }, controller.signal),
+      decider.classifyNoul(
+        { question: 'q', context: {}, criteria: { true: 'Complete', false: 'Incomplete' } },
+        controller.signal,
+      ),
     ).rejects.toMatchObject({ name: 'AbortError' });
   });
 
   it('retries transient failures through the SDK when retries are enabled', async () => {
     const { fetch } = stubFetch(
       json(503, { error: 'busy' }),
-      json(200, { answers: { answer: { type: 'noul', noul: 0.7 } } }),
+      json(200, {
+        answers: {
+          answer: {
+            type: 'choice',
+            choice: 'ship',
+            confidence: 0.7,
+            probabilities: { ship: 0.7, fix: 0.2, drop: 0.1 },
+          },
+        },
+      }),
     );
     const decider = await ready({
       fetch,
       retry: { maxRetries: 1, backoffInitialMs: 0, backoffMaxMs: 0 },
     });
-    expect((await decider.judge({ question: 'q', context: {} }, signal())).holds).toBe(true);
+    expect((await decider.choose(choiceRequest, signal())).optionId).toBe('ship');
     expect(fetch).toHaveBeenCalledTimes(2);
   });
 
@@ -345,7 +439,10 @@ describe('errors', () => {
     const log = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };
     const { fetch } = stubFetch(json(200, { answers: { answer: { type: 'noul', noul: 0.5 } } }));
     const decider = await ready({ fetch, logger: log });
-    await decider.judge({ question: 'q', context: {} }, signal());
+    await decider.classifyNoul(
+      { question: 'q', context: {}, criteria: { true: 'Complete', false: 'Incomplete' } },
+      signal(),
+    );
     expect(log.debug).toHaveBeenCalledWith({}, expect.stringMatching(/^jev: /));
     const sdkLogger = (
       decider as unknown as { client: { logger: Record<'warn' | 'error', (m: string) => void> } }

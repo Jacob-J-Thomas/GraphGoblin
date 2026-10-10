@@ -1,5 +1,6 @@
 import { spawn, type ChildProcess } from 'node:child_process';
 import type { ScriptPort, ScriptRunRequest, ScriptRunResult } from '@graphgoblin/engine';
+import { BoundedOutputCapture } from './output-capture.js';
 
 export interface ProcessScriptsOptions {
   /** Cap on captured stdout and stderr, each. Default 10 MiB. */
@@ -51,10 +52,18 @@ export class ProcessScripts implements ScriptPort {
   }
 
   run(request: ScriptRunRequest): Promise<ScriptRunResult> {
+    const bounded =
+      request.maxStdoutBytes === undefined
+        ? undefined
+        : new BoundedOutputCapture(request.maxStdoutBytes);
+    const boundedStderr =
+      request.maxStderrBytes === undefined
+        ? undefined
+        : new BoundedOutputCapture(request.maxStderrBytes);
     return new Promise((resolve) => {
       const child = this.spawnImpl(request.command, request.args, {
         cwd: request.cwd,
-        env: { ...this.baseEnv, ...request.env },
+        env: { ...(request.inheritEnv === false ? {} : this.baseEnv), ...request.env },
         stdio: ['pipe', 'pipe', 'pipe'],
         windowsHide: true,
         detached: this.platform !== 'win32',
@@ -70,10 +79,12 @@ export class ProcessScripts implements ScriptPort {
         return (current + chunk.toString('utf8')).slice(0, this.maxOutputBytes);
       };
       child.stdout?.on('data', (chunk: Buffer) => {
-        stdout = collect(stdout, chunk);
+        if (bounded) bounded.append(chunk);
+        else stdout = collect(stdout, chunk);
       });
       child.stderr?.on('data', (chunk: Buffer) => {
-        stderr = collect(stderr, chunk);
+        if (boundedStderr) boundedStderr.append(chunk);
+        else stderr = collect(stderr, chunk);
       });
 
       const kill = (): void => killTree(child, this.platform, this.spawnImpl);
@@ -93,14 +104,20 @@ export class ProcessScripts implements ScriptPort {
         settled = true;
         if (timer) clearTimeout(timer);
         request.signal.removeEventListener('abort', onAbort);
-        resolve(result);
+        resolve({
+          ...result,
+          stdout: bounded?.text() ?? result.stdout,
+          stderr: boundedStderr?.text() ?? result.stderr,
+          ...(boundedStderr ? { stderrOverflow: boundedStderr.overflow } : {}),
+          ...(bounded ? { stdoutOverflow: bounded.overflow } : {}),
+        });
       };
 
-      child.on('error', (error) => {
+      child.on('error', () => {
         finish({
           exitCode: null,
           stdout,
-          stderr: `${stderr}${stderr ? '\n' : ''}spawn failed: ${error.message}`,
+          stderr: `${stderr}${stderr ? '\n' : ''}spawn failed: PROCESS_START_FAILED`,
           timedOut,
         });
       });

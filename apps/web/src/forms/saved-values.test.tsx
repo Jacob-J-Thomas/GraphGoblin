@@ -119,26 +119,38 @@ describe('the same edits save the same config', () => {
   });
 
   it('decision', async () => {
-    const routes = [
-      { label: 'yes', description: 'Yes' },
-      { label: 'no', description: 'No' },
-    ];
+    const answer = {
+      type: 'choice',
+      options: [
+        { id: 'yes', label: 'Yes', criteria: 'Choose yes' },
+        { id: 'no', label: 'No', criteria: 'Choose no' },
+      ],
+    };
+    const evaluation = {
+      kind: 'classifier',
+      model: 'jev',
+      question: 'q',
+      context: {},
+    };
     await expectSaved(
       'decision',
-      { routes, question: 'q', strategy: ['jev'] },
+      { answer, evaluation, recordAlternatives: true },
       async (user) => {
         await user.click(within(fieldAt('recordAlternatives')).getByRole('switch'));
-        await user.click(within(fieldAt('context.includeLastOutput')).getByRole('switch'));
-        await user.click(within(fieldAt('context.vars')).getByRole('button', { name: 'Add vars' }));
+        await user.click(
+          within(fieldAt('evaluation.context.includeLastOutput')).getByRole('switch'),
+        );
+        await user.click(
+          within(fieldAt('evaluation.context.vars')).getByRole('button', { name: 'Add vars' }),
+        );
         await user.type(screen.getByLabelText('Vars 1'), 'topic');
-        await user.click(within(fieldAt('jev')).getByRole('button', { name: 'Add jev' }));
       },
       {
-        routes,
-        question: 'q',
-        strategy: ['jev'],
-        jev: {},
-        context: { vars: ['topic'], includeLastOutput: false },
+        answer,
+        evaluation: {
+          ...evaluation,
+          context: { vars: ['topic'], includeLastOutput: false },
+        },
         recordAlternatives: false,
       },
     );

@@ -98,6 +98,39 @@ describe('ProcessScripts', () => {
     expect(result.stdout).toHaveLength(100);
     expect(result.exitCode).toBe(0);
   });
+
+  it('bounds opted-in stdout by raw bytes and reports overflow without changing legacy capture', async () => {
+    const scripts = new ProcessScripts();
+    const args = ['-e', 'process.stdout.write("é".repeat(32769))'];
+    const bounded = await scripts.run(request({ args, maxStdoutBytes: 65_536 }));
+    expect(bounded.exitCode).toBe(0);
+    expect(bounded.stdoutOverflow).toBe(true);
+    expect(Buffer.byteLength(bounded.stdout)).toBe(65_536);
+    expect(bounded.stdout).toBe('é'.repeat(32768));
+    const legacy = await scripts.run(request({ args }));
+    expect(legacy.stdoutOverflow).toBeUndefined();
+    expect(legacy.stdout).toBe('é'.repeat(32769));
+  });
+
+  it('reports exact-cap output as complete and does not emit a cap-split UTF8 suffix', async () => {
+    const scripts = new ProcessScripts();
+    const complete = await scripts.run(
+      request({ args: ['-e', 'process.stdout.write("abc")'], maxStdoutBytes: 3 }),
+    );
+    expect(complete).toMatchObject({ stdout: 'abc', stdoutOverflow: false, exitCode: 0 });
+    const split = await scripts.run(
+      request({ args: ['-e', 'process.stdout.write("é")'], maxStdoutBytes: 1 }),
+    );
+    expect(split).toMatchObject({ stdout: '', stdoutOverflow: true, exitCode: 0 });
+    expect(() => scripts.run(request({ maxStdoutBytes: -1 }))).toThrow(RangeError);
+  });
+
+  it('uses fixed spawn diagnostics without echoing a credential-bearing command', async () => {
+    const scripts = new ProcessScripts();
+    const result = await scripts.run(request({ command: 'missing-command-with-secret-token-gg' }));
+    expect(result.stderr).toBe('spawn failed: PROCESS_START_FAILED');
+    expect(result.stderr).not.toContain('secret-token');
+  });
 });
 
 describe('killTree', () => {

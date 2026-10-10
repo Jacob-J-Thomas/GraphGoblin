@@ -5,6 +5,7 @@ import { readMigrationFiles } from 'drizzle-orm/migrator';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { schema, type Schema } from './schema.js';
+import { guardDatabaseUpgrade, stampFreshDatabase } from './upgrade.js';
 
 export type Database = LibSQLDatabase<Schema>;
 
@@ -19,6 +20,20 @@ export interface DatabaseHandle {
    */
   pendingMigrations(): Promise<number>;
   close(): void;
+}
+
+/** A file-only SQLite connection opened in the native engine's read-only URI mode.
+ * The outer URL encodes the complete SQLite URI so libsql's URL parser leaves mode=ro intact.
+ * Writes fail with SQLITE_READONLY and a missing file cannot be created.
+ */
+export function openReadOnlyDatabaseClient(file: string): Client {
+  const uri = 'file:' + resolve(file).replaceAll('\\', '/') + '?mode=ro';
+  return createClient({ url: 'file:' + encodeURIComponent(uri), concurrency: 1 });
+}
+
+/** Repository view over an existing client; this does not migrate or configure SQLite. */
+export function databaseView(client: Client): Database {
+  return drizzle(client, { schema });
 }
 
 export interface DatabaseOptions {
@@ -180,9 +195,11 @@ export function openDatabase(options: DatabaseOptions): DatabaseHandle {
     client,
     db,
     async migrate() {
+      const upgradeState = await guardDatabaseUpgrade(client);
       await client.execute('PRAGMA journal_mode = WAL').catch(() => undefined);
       await client.execute('PRAGMA busy_timeout = 5000').catch(() => undefined);
       await migrate(db, { migrationsFolder });
+      if (upgradeState === 'fresh') await stampFreshDatabase(client);
     },
     async pendingMigrations() {
       const shipped = readMigrationFiles({ migrationsFolder });

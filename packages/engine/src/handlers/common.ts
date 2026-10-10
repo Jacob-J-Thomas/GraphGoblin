@@ -208,7 +208,7 @@ export async function repairValue<K extends NodeKind>(
         { nodeId: ctx.node.id },
       );
     }
-    const { model, effort } = ctx.services.resolveModel(input.model, input.effort);
+    const { model, effort } = await ctx.services.resolveModel('codex', input.model, input.effort);
     for (let attempt = 1; attempt <= repair.maxAttempts; attempt += 1) {
       const prompt = await renderTemplate(repair.prompt ?? DEFAULT_REPAIR_PROMPT, {
         ...threadView(ctx.thread),

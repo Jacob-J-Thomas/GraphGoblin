@@ -4,10 +4,11 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { useApi } from '../api/context.js';
-import { keys, useLoops, useRuns } from '../api/queries.js';
+import { keys, useCreateTemplateDraft, useLoops, useRuns, useTemplates } from '../api/queries.js';
 import { Icon } from '../components/icons/index.js';
 import { Page, PageHeader } from '../components/layout/index.js';
 import { QueryState, RunStatusBadge } from '../components/status.js';
+import { TemplateGallery } from './TemplateGallery.js';
 import {
   Alert,
   Badge,
@@ -34,6 +35,7 @@ import {
   errorMessage,
   fileSlug,
   formatDateTime,
+  isOfflineError,
   parseJson,
   problemIssues,
 } from '../lib/utils.js';
@@ -230,6 +232,10 @@ function LoopActions({ loop }: { loop: LoopRecord }) {
 export function LoopsPage() {
   const loopsQuery = useLoops();
   const runsQuery = useRuns({ limit: 500 }, 5000);
+  const templatesQuery = useTemplates();
+  const createTemplateDraft = useCreateTemplateDraft();
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const latest = latestRuns(runsQuery.data ?? []);
   return (
     <Page>
@@ -238,6 +244,26 @@ export function LoopsPage() {
         <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-5">
           <CreateLoop />
           <ImportLoop />
+        </div>
+        <div className="mt-5 border-t border-default pt-5">
+          {loopsQuery.isError &&
+          templatesQuery.isError &&
+          isOfflineError(loopsQuery.error) &&
+          isOfflineError(templatesQuery.error) ? null : (
+            <QueryState query={templatesQuery} what="Templates">
+              {(items) => (
+                <TemplateGallery
+                  templates={items}
+                  onCreateDraft={(templateId) => createTemplateDraft.mutateAsync({ templateId })}
+                  onCreated={async (loopId) => {
+                    await queryClient.invalidateQueries({ queryKey: keys.loops });
+                    await navigate(`/loops/${loopId}/edit`);
+                  }}
+                  onCreateFailed={() => queryClient.invalidateQueries({ queryKey: keys.loops })}
+                />
+              )}
+            </QueryState>
+          )}
         </div>
       </Card>
       <QueryState query={loopsQuery} what="Loops">

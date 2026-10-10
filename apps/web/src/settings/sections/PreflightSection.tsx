@@ -1,7 +1,27 @@
 import { usePreflight } from '../../api/queries.js';
+import type { HarnessPreflightItem } from '../../api/queries.js';
 import { Icon } from '../../components/icons/index.js';
 import { QueryState } from '../../components/status.js';
 import { Badge, Card } from '../../components/ui/index.js';
+
+function ClaudePreflight({ item }: { item: HarnessPreflightItem }) {
+  return (
+    <div className="mt-2 grid gap-2 text-xs text-muted">
+      {item.authMethod === 'claude.ai' && item.authenticated ? (
+        <p>Signed in with Claude.ai.</p>
+      ) : null}
+      {item.models?.length ? (
+        <ul aria-label="Claude model support" className="grid gap-1">
+          {item.models.map((model) => (
+            <li key={model.model}>
+              <code>{model.model}</code> <Badge tone="good">supported by adapter</Badge>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
 
 /** Is each configured harness installed and signed in? */
 export function PreflightSection() {
@@ -27,6 +47,7 @@ export function PreflightSection() {
                       ))}
                     </ul>
                   ) : null}
+                  {p.harness === 'claude' ? <ClaudePreflight item={p} /> : null}
                 </li>
               );
             })}

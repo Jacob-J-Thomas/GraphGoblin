@@ -19,7 +19,7 @@ const start = { id: 'start', kind: 'trigger', label: 'Start', config: { subtype:
 const done = { id: 'done', kind: 'exit', label: 'Done', config: {} };
 function chain(name: string, middle: Record<string, unknown> & { id: string }) {
   return {
-    schemaVersion: 1,
+    schemaVersion: 3,
     name,
     nodes: [start, middle, done],
     edges: [
@@ -56,6 +56,10 @@ test('a subloop child run opens in the inspector and replays from its seeded thr
 }) => {
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
+  // Define this test's turn explicitly; the control server's harness is shared across specs.
+  await control(request, '/harness/script', {
+    turns: [{ matchPrompt: 'child turn', finalText: 'OK' }],
+  });
   const childId = await publishLoop(request, chain('qa child', ask('child turn')));
   const parentId = await publishLoop(request, {
     ...chain('qa parent', {
@@ -101,12 +105,22 @@ test('streams 1,200 harness items into the inspector without gaps, duplicates, o
   const runId = await startRun(request, loopId);
   const started = Date.now();
   await page.goto(`/app/runs/${runId}`);
-  await expect(page.getByText(/Timeline \(1211 events, complete\)/)).toBeVisible({
+  await expect(page.getByText(/Timeline \(1212 events, complete\)/)).toBeVisible({
     timeout: 30_000,
   });
   const live = Date.now() - started;
+  // Twelve lifecycle/evidence facts include the persisted exit evaluation; all 1,200 items remain.
+  const timeline = page.getByRole('list', { name: 'Timeline' });
+  await expect(timeline.getByRole('button', { name: /^#\d+ node\.progress ask$/ })).toHaveCount(
+    1200,
+  );
+  await expect(timeline.getByRole('button', { name: /^#\d+ harness\.session ask$/ })).toHaveCount(
+    1,
+  );
+  await expect(timeline.getByRole('button', { name: /^#\d+ harness\.usage ask$/ })).toHaveCount(1);
+  await expect(timeline.getByRole('button').filter({ hasText: /exit.evaluated/ })).toHaveCount(1);
   const seqs = await timelineSeqs(page);
-  expect(seqs).toEqual(Array.from({ length: 1211 }, (_, i) => i + 1));
+  expect(seqs).toEqual(Array.from({ length: 1212 }, (_, i) => i + 1));
   // The inspector refetches per 100 ms event batch. Load can stretch the stream beyond five
   // seconds, so budget for elapsed time plus initial/final reads, still rejecting one per item.
   const liveRunGets = runGets;
@@ -117,14 +131,14 @@ test('streams 1,200 harness items into the inspector without gaps, duplicates, o
   await page.evaluate(() => sessionStorage.clear());
   const fresh = Date.now();
   await page.reload();
-  await expect(page.getByText(/Timeline \(1211 events, complete\)/)).toBeVisible();
+  await expect(page.getByText(/Timeline \(1212 events, complete\)/)).toBeVisible();
   const freshMs = Date.now() - fresh;
   const click = Date.now();
   await page.getByRole('list', { name: 'Timeline' }).getByRole('button').nth(600).click();
   await expect(page.getByText('Thread at event 601')).toBeVisible();
   const clickMs = Date.now() - click;
   console.log(
-    `1,211-event run: live to complete ${live} ms (1,500 ms scripted turn), fresh open ${freshMs} ms, select event ${clickMs} ms, ${liveRunGets} live run fetches`,
+    `1,212-event run: live to complete ${live} ms (1,500 ms scripted turn), fresh open ${freshMs} ms, select event ${clickMs} ms, ${liveRunGets} live run fetches`,
   );
   expect(freshMs).toBeLessThan(5_000);
   expect(clickMs).toBeLessThan(2_000);
@@ -141,10 +155,10 @@ test('failure reasons are typed and visible: harness failure and decider unavail
   await page.goto(`/app/runs/${await startRun(request, failing)}`);
   await expect(page.getByText('Failed: HARNESS_TURN_FAILED')).toBeVisible();
 
-  await control(request, '/deciders', { jev: false, codex: false });
+  await control(request, '/deciders', { jev: true, codex: true });
   try {
     const decide = {
-      schemaVersion: 1,
+      schemaVersion: 3,
       name: 'qa decider',
       nodes: [
         start,
@@ -153,12 +167,20 @@ test('failure reasons are typed and visible: harness failure and decider unavail
           kind: 'decision',
           label: 'Pick',
           config: {
-            routes: [
-              { label: 'a', description: 'A' },
-              { label: 'b', description: 'B' },
-            ],
-            question: 'which?',
-            strategy: ['jev'],
+            answer: {
+              type: 'choice',
+              options: [
+                { id: 'a', label: 'A', criteria: 'Choose A' },
+                { id: 'b', label: 'B', criteria: 'Choose B' },
+              ],
+            },
+            evaluation: {
+              kind: 'llm',
+              harness: 'codex',
+              model: { mode: 'inherit' },
+              effort: { mode: 'inherit' },
+              question: 'which?',
+            },
           },
         },
         done,
@@ -170,8 +192,10 @@ test('failure reasons are typed and visible: harness failure and decider unavail
       ],
     };
     const loopId = await publishLoop(request, decide);
+    // Publication admits a ready evaluator; losing it later is a typed runtime failure.
+    await control(request, '/deciders', { jev: true, codex: false });
     await page.goto(`/app/runs/${await startRun(request, loopId)}`);
-    await expect(page.getByText('Failed: DECISION_NO_ROUTE')).toBeVisible();
+    await expect(page.getByText('Failed: EVALUATION_UNAVAILABLE')).toBeVisible();
   } finally {
     await control(request, '/deciders', { jev: true, codex: true });
   }
@@ -356,13 +380,14 @@ test('Settings defaults reach the next run without a restart', async ({ page, re
     async (response) =>
       response.request().method() === 'GET' &&
       response.url().endsWith('/settings') &&
-      ((await response.json()) as Record<string, unknown>)['defaultEffort'] === 'high',
+      ((await response.json()) as { defaults?: { byHarness?: { codex?: { effort?: string } } } })
+        .defaults?.byHarness?.codex?.effort === 'high',
   );
-  await page.getByLabel('Default effort').selectOption('high');
+  await page.getByLabel('Default effort', { exact: true }).selectOption('high');
   expect((await saved).status()).toBe(200);
   // Observe the UI's refetch rather than repeatedly reading Settings while its save is pending.
   await refreshed;
-  await expect(page.getByLabel('Default effort')).toHaveValue('high');
+  await expect(page.getByLabel('Default effort', { exact: true })).toHaveValue('high');
   const previous = (await control(request, '/harness/requests')) as { started: unknown[] };
   const previousTurns = previous.started.length;
   await startRun(request, loopId);
@@ -379,12 +404,11 @@ test('Settings defaults reach the next run without a restart', async ({ page, re
     .toBe('high');
   const removed = page.waitForResponse(
     (response) =>
-      response.request().method() === 'DELETE' &&
-      response.url().endsWith('/settings/defaultEffort'),
+      response.request().method() === 'DELETE' && response.url().endsWith('/settings/defaults'),
   );
-  await page.getByLabel('Default effort').selectOption('');
+  await page.getByLabel('Default effort', { exact: true }).selectOption('');
   expect((await removed).status()).toBe(204);
-  expect(await (await request.get('/settings')).json()).not.toHaveProperty('defaultEffort');
+  expect(await (await request.get('/settings')).json()).not.toHaveProperty('defaults');
 });
 
 test('with GG_REQUIRE_API_KEY the shell loads, asks for a key, and uses it', async ({

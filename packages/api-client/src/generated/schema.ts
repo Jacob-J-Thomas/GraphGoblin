@@ -158,11 +158,32 @@ export interface paths {
                     content: {
                         "application/json": {
                             items: {
-                                harness: string;
                                 ok: boolean;
                                 version?: string | undefined;
                                 authenticated: boolean;
                                 problems: string[];
+                                authMethod?: ("claude.ai" | null) | undefined;
+                                supportedPolicies?: {
+                                    /** @enum {string} */
+                                    sandbox: "read-only" | "danger-full-access";
+                                    /** @enum {string} */
+                                    approval: "never";
+                                    /** @enum {string} */
+                                    permissionMode: "dontAsk";
+                                    readonly tools: string[];
+                                    /** @enum {string} */
+                                    authMethod: "claude.ai";
+                                    /** @enum {string} */
+                                    boundary: "builtin-tools" | "unconfined";
+                                    /** @enum {string} */
+                                    network: "unconfined";
+                                }[] | undefined;
+                                models?: {
+                                    model: string;
+                                    efforts: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max")[];
+                                }[] | undefined;
+                                /** @enum {string} */
+                                harness: "codex" | "claude";
                             }[];
                         };
                     };
@@ -337,6 +358,7 @@ export interface paths {
                             current?: components["schemas"]["LoopVersionRecord"] | undefined;
                             draft?: components["schemas"]["LoopVersionRecord"] | undefined;
                             draftToken?: string | undefined;
+                            templateInstanceId?: string | undefined;
                         };
                     };
                 };
@@ -711,7 +733,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List runs, newest first, filtered by loop, status, or parent */
+        /** List runs with template subjects, filters, and stable newest-first paging */
         get: {
             parameters: {
                 query?: {
@@ -719,6 +741,13 @@ export interface paths {
                     status?: string;
                     parent?: string;
                     before?: string;
+                    cursor?: string;
+                    repository?: string;
+                    issue?: number;
+                    pullRequest?: number;
+                    head?: string;
+                    mergeSha?: string;
+                    templateInstanceId?: string;
                     limit?: number;
                 };
                 header?: never;
@@ -734,7 +763,80 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            items: components["schemas"]["RunRecord"][];
+                            items: {
+                                id: string;
+                                ownerId: string;
+                                loopId: string;
+                                versionId: string;
+                                parentRunId?: string | undefined;
+                                invocationId: string;
+                                status: components["schemas"]["RunStatus"];
+                                currentNodeId?: string | undefined;
+                                iteration: number;
+                                waiting?: components["schemas"]["WaitSpec"] | undefined;
+                                /** Format: date-time */
+                                cancelRequestedAt?: string | undefined;
+                                /** Format: date-time */
+                                pausedAt?: string | undefined;
+                                failure?: components["schemas"]["RunFailure"] | undefined;
+                                /** @enum {string} */
+                                outcome?: ("success" | "failure" | "exhausted") | undefined;
+                                result?: components["schemas"]["JsonValue"] | undefined;
+                                /** Format: date-time */
+                                createdAt: string;
+                                /** Format: date-time */
+                                startedAt?: string | undefined;
+                                /** Format: date-time */
+                                finishedAt?: string | undefined;
+                                lastEventSeq: number;
+                                templateSubject?: ({
+                                    /** @enum {string} */
+                                    kind: "implementation" | "review" | "qa";
+                                    instanceId: string;
+                                    templateVersion: string;
+                                    repository: string;
+                                    issue: number | null;
+                                    attempt: number | null;
+                                    source: {
+                                        /** @enum {string} */
+                                        kind: "implementation";
+                                        runId: string;
+                                    } | {
+                                        /** @enum {string} */
+                                        kind: "external";
+                                    };
+                                    pullRequest?: number | undefined;
+                                    head?: string | undefined;
+                                    mergeSha?: string | undefined;
+                                    /** @enum {string} */
+                                    role: "parent";
+                                } | {
+                                    /** @enum {string} */
+                                    kind: "implementation" | "review" | "qa";
+                                    instanceId: string;
+                                    templateVersion: string;
+                                    repository: string;
+                                    issue: number | null;
+                                    attempt: number | null;
+                                    source: {
+                                        /** @enum {string} */
+                                        kind: "implementation";
+                                        runId: string;
+                                    } | {
+                                        /** @enum {string} */
+                                        kind: "external";
+                                    };
+                                    pullRequest?: number | undefined;
+                                    head?: string | undefined;
+                                    mergeSha?: string | undefined;
+                                    /** @enum {string} */
+                                    role: "worker";
+                                    parentRunId: string;
+                                    nodeId: string;
+                                    visit: number;
+                                }) | undefined;
+                            }[];
+                            nextCursor: string | null;
                         };
                     };
                 };
@@ -773,7 +875,79 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["RunRecord"];
+                        "application/json": {
+                            id: string;
+                            ownerId: string;
+                            loopId: string;
+                            versionId: string;
+                            parentRunId?: string | undefined;
+                            invocationId: string;
+                            status: components["schemas"]["RunStatus"];
+                            currentNodeId?: string | undefined;
+                            iteration: number;
+                            waiting?: components["schemas"]["WaitSpec"] | undefined;
+                            /** Format: date-time */
+                            cancelRequestedAt?: string | undefined;
+                            /** Format: date-time */
+                            pausedAt?: string | undefined;
+                            failure?: components["schemas"]["RunFailure"] | undefined;
+                            /** @enum {string} */
+                            outcome?: ("success" | "failure" | "exhausted") | undefined;
+                            result?: components["schemas"]["JsonValue"] | undefined;
+                            /** Format: date-time */
+                            createdAt: string;
+                            /** Format: date-time */
+                            startedAt?: string | undefined;
+                            /** Format: date-time */
+                            finishedAt?: string | undefined;
+                            lastEventSeq: number;
+                            templateSubject?: ({
+                                /** @enum {string} */
+                                kind: "implementation" | "review" | "qa";
+                                instanceId: string;
+                                templateVersion: string;
+                                repository: string;
+                                issue: number | null;
+                                attempt: number | null;
+                                source: {
+                                    /** @enum {string} */
+                                    kind: "implementation";
+                                    runId: string;
+                                } | {
+                                    /** @enum {string} */
+                                    kind: "external";
+                                };
+                                pullRequest?: number | undefined;
+                                head?: string | undefined;
+                                mergeSha?: string | undefined;
+                                /** @enum {string} */
+                                role: "parent";
+                            } | {
+                                /** @enum {string} */
+                                kind: "implementation" | "review" | "qa";
+                                instanceId: string;
+                                templateVersion: string;
+                                repository: string;
+                                issue: number | null;
+                                attempt: number | null;
+                                source: {
+                                    /** @enum {string} */
+                                    kind: "implementation";
+                                    runId: string;
+                                } | {
+                                    /** @enum {string} */
+                                    kind: "external";
+                                };
+                                pullRequest?: number | undefined;
+                                head?: string | undefined;
+                                mergeSha?: string | undefined;
+                                /** @enum {string} */
+                                role: "worker";
+                                parentRunId: string;
+                                nodeId: string;
+                                visit: number;
+                            }) | undefined;
+                        };
                     };
                 };
             };
@@ -1200,6 +1374,108 @@ export interface paths {
                 };
             };
         };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/templates/{id}/draft": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create an editable manual loop draft from a template */
+        post: operations["createTemplateDraft"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List installed workflow templates */
+        get: operations["listTemplates"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/templates/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read an installed workflow template */
+        get: operations["getTemplate"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/templates/{id}/prerequisites": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Check template prerequisites without creating loops */
+        post: operations["checkTemplatePrerequisites"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/templates/{id}/instantiate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create an owner-bound template bundle */
+        post: operations["instantiateTemplate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/template-instances/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read an owner-bound template instance */
+        get: operations["getTemplateInstance"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1944,6 +2220,13 @@ export interface paths {
                                 source: string;
                                 receivedAt: string;
                                 runIds: string[];
+                                delivery?: {
+                                    /** @enum {string} */
+                                    state: "filtered" | "deduplicated" | "pending" | "admitted" | "failed";
+                                    attempts: number;
+                                    nextAttemptAt?: string | undefined;
+                                    failureCode?: string | undefined;
+                                } | undefined;
                             }[];
                         };
                     };
@@ -1984,6 +2267,13 @@ export interface paths {
                             source: string;
                             receivedAt: string;
                             runIds: string[];
+                            delivery?: {
+                                /** @enum {string} */
+                                state: "filtered" | "deduplicated" | "pending" | "admitted" | "failed";
+                                attempts: number;
+                                nextAttemptAt?: string | undefined;
+                                failureCode?: string | undefined;
+                            } | undefined;
                             duplicate: boolean;
                         };
                     };
@@ -2046,7 +2336,9 @@ export interface paths {
                                 path: string;
                                 secretRef: string;
                                 signatureHeader: string;
-                                replayWindowSeconds: number;
+                                /** @enum {string} */
+                                signatureScheme: "hmac-sha256" | "hmac-sha256-body";
+                                replayWindowSeconds: number | null;
                                 enabled: boolean;
                                 createdAt: string;
                             }[];
@@ -2080,7 +2372,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Signed webhook receiver (public; HMAC, timestamp window, dedupe, rate limit) */
+        /** Signed webhook receiver (public; timestamp HMAC or exact body HMAC, durable body replay protection, rate limit) */
         post: {
             parameters: {
                 query?: never;
@@ -2108,6 +2400,13 @@ export interface paths {
                                 source: string;
                                 receivedAt: string;
                                 runIds: string[];
+                                delivery?: {
+                                    /** @enum {string} */
+                                    state: "filtered" | "deduplicated" | "pending" | "admitted" | "failed";
+                                    attempts: number;
+                                    nextAttemptAt?: string | undefined;
+                                    failureCode?: string | undefined;
+                                } | undefined;
                             };
                             runId?: string | undefined;
                             filtered: boolean;
@@ -2155,7 +2454,7 @@ export interface components {
         JsonValueInput: JsonValue;
         LoopDefinitionInput: {
             /** @constant */
-            schemaVersion: 1;
+            schemaVersion: 3;
             name: string;
             description?: string | undefined;
             /** @default {} */
@@ -2179,9 +2478,14 @@ export interface components {
                 }) | undefined;
                 /** @default {} */
                 defaults?: {
-                    model?: string | undefined;
-                    /** @enum {string} */
-                    effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                    /** @default {} */
+                    byHarness?: {
+                        [key: string]: {
+                            model?: string | undefined;
+                            /** @enum {string} */
+                            effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                        };
+                    } | undefined;
                 } | undefined;
                 /** @default 10 */
                 maxIterations?: number | undefined;
@@ -2252,6 +2556,18 @@ export interface components {
                     filter?: string | undefined;
                 } | {
                     /** @constant */
+                    subtype: "webhook";
+                    signature: {
+                        /** @constant */
+                        scheme: "hmac-sha256-body";
+                        /** @default x-hub-signature-256 */
+                        header?: string | undefined;
+                        secretRef: string;
+                    };
+                    dedupeKey?: string | undefined;
+                    filter?: string | undefined;
+                } | {
+                    /** @constant */
                     subtype: "event";
                     eventType: string;
                     filter?: string | undefined;
@@ -2293,6 +2609,12 @@ export interface components {
                     };
                     fireWhen: string;
                     dedupeKey?: string | undefined;
+                    items?: {
+                        select: string;
+                        dedupeKey: string;
+                        /** @default 5 */
+                        maxRunsPerPoll?: number | undefined;
+                    } | undefined;
                     /** @default true */
                     enabled?: boolean | undefined;
                 };
@@ -2312,39 +2634,93 @@ export interface components {
                 /** @constant */
                 kind: "decision";
                 config: {
-                    routes: {
-                        label: string;
-                        description: string;
-                    }[];
-                    question: string;
-                    /** @default {} */
-                    context?: {
-                        /** @default last */
-                        messages?: ("none" | "last" | "all" | number | {
-                            where: string;
-                        }) | undefined;
-                        vars?: string[] | undefined;
-                        /** @default true */
-                        includeLastOutput?: boolean | undefined;
-                    } | undefined;
-                    strategy: ("jev" | "codex" | "expression")[];
-                    jev?: {
-                        /**
-                         * @default choice
-                         * @constant
-                         */
-                        primitive?: "choice" | undefined;
-                        model?: string | undefined;
-                        minConfidence?: number | undefined;
-                    } | undefined;
-                    codex?: {
-                        model?: string | undefined;
-                        /** @enum {string} */
-                        effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
-                    } | undefined;
-                    expression?: {
+                    answer: {
+                        /** @constant */
+                        type: "choice";
+                        options: {
+                            id: string;
+                            label: string;
+                            criteria: string;
+                        }[];
+                    } | {
+                        /** @constant */
+                        type: "noul";
+                        true: {
+                            id: string;
+                            label: string;
+                            criteria: string;
+                        };
+                        false: {
+                            id: string;
+                            label: string;
+                            criteria: string;
+                        };
+                    } | {
+                        /** @constant */
+                        type: "score";
+                        anchors: string[];
+                        bands: {
+                            id: string;
+                            label: string;
+                            min: number;
+                            max: number;
+                        }[];
+                    };
+                    evaluation: {
+                        /** @constant */
+                        kind: "expression";
                         jsonata: string;
-                    } | undefined;
+                    } | {
+                        /** @constant */
+                        kind: "classifier";
+                        model: string;
+                        question: string;
+                        minConfidence?: number | undefined;
+                        truthThreshold?: number | undefined;
+                        /** @default {} */
+                        context?: {
+                            /** @default last */
+                            messages?: ("none" | "last" | "all" | number | {
+                                where: string;
+                            }) | undefined;
+                            vars?: string[] | undefined;
+                            /** @default true */
+                            includeLastOutput?: boolean | undefined;
+                        } | undefined;
+                    } | {
+                        /** @constant */
+                        kind: "llm";
+                        /** @constant */
+                        harness: "codex";
+                        model: {
+                            /** @constant */
+                            mode: "inherit";
+                        } | {
+                            /** @constant */
+                            mode: "explicit";
+                            value: string;
+                        };
+                        effort: {
+                            /** @constant */
+                            mode: "inherit";
+                        } | {
+                            /** @constant */
+                            mode: "explicit";
+                            /** @enum {string} */
+                            value: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                        };
+                        question: string;
+                        /** @default {} */
+                        context?: {
+                            /** @default last */
+                            messages?: ("none" | "last" | "all" | number | {
+                                where: string;
+                            }) | undefined;
+                            vars?: string[] | undefined;
+                            /** @default true */
+                            includeLastOutput?: boolean | undefined;
+                        } | undefined;
+                    };
                     /** @default true */
                     recordAlternatives?: boolean | undefined;
                 };
@@ -2368,7 +2744,7 @@ export interface components {
                      * @default codex
                      * @enum {string}
                      */
-                    harness?: "codex" | undefined;
+                    harness?: ("codex" | "claude") | undefined;
                     model?: string | undefined;
                     /** @enum {string} */
                     effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
@@ -3081,11 +3457,86 @@ export interface components {
                     } | {
                         /** @constant */
                         when: "predicate";
-                        /** @enum {string} */
-                        strategy: "jev" | "codex" | "expression";
-                        question?: string | undefined;
-                        jsonata?: string | undefined;
-                        minConfidence?: number | undefined;
+                        answer: ({
+                            /** @constant */
+                            type: "choice";
+                            options: {
+                                id: string;
+                                label: string;
+                                criteria: string;
+                            }[];
+                        } | {
+                            /** @constant */
+                            type: "noul";
+                            true: {
+                                label: string;
+                                criteria: string;
+                            };
+                            false: {
+                                label: string;
+                                criteria: string;
+                            };
+                        } | {
+                            /** @constant */
+                            type: "score";
+                            anchors: string[];
+                        }) | {
+                            /** @constant */
+                            type: "noul";
+                        };
+                        evaluation: {
+                            /** @constant */
+                            kind: "expression";
+                            jsonata: string;
+                        } | {
+                            /** @constant */
+                            kind: "classifier";
+                            model: string;
+                            question: string;
+                            minConfidence?: number | undefined;
+                            truthThreshold?: number | undefined;
+                        } | {
+                            /** @constant */
+                            kind: "llm";
+                            /** @constant */
+                            harness: "codex";
+                            model: {
+                                /** @constant */
+                                mode: "inherit";
+                            } | {
+                                /** @constant */
+                                mode: "explicit";
+                                value: string;
+                            };
+                            effort: {
+                                /** @constant */
+                                mode: "inherit";
+                            } | {
+                                /** @constant */
+                                mode: "explicit";
+                                /** @enum {string} */
+                                value: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                            };
+                            question: string;
+                        };
+                        match: {
+                            /** @constant */
+                            type: "noul";
+                            /** @default true */
+                            value?: boolean | undefined;
+                            minReportedConfidence?: number | undefined;
+                        } | {
+                            /** @constant */
+                            type: "choice";
+                            optionIds: string[];
+                            minReportedConfidence?: number | undefined;
+                        } | {
+                            /** @constant */
+                            type: "score";
+                            /** @enum {string} */
+                            operator: "lt" | "lte" | "eq" | "gte" | "gt";
+                            value: number;
+                        };
                         /** @enum {string} */
                         outcome: "success" | "failure";
                     } | {
@@ -3146,7 +3597,7 @@ export interface components {
             /** @constant */
             format: "graphgoblin-loop";
             /** @constant */
-            formatVersion: 1;
+            formatVersion: 3;
             /** Format: date-time */
             exportedAt: string;
             loop: components["schemas"]["LoopDefinitionInput"];
@@ -3179,7 +3630,7 @@ export interface components {
         RunStatusInput: "queued" | "running" | "waiting" | "paused" | "succeeded" | "failed" | "cancelled" | "exhausted";
         RunFailureInput: {
             /** @enum {string} */
-            code: "HARNESS_NOT_INSTALLED" | "HARNESS_NOT_AUTHENTICATED" | "HARNESS_QUOTA_EXHAUSTED" | "HARNESS_TURN_FAILED" | "WORKING_DIRECTORY_MISSING" | "SCRIPT_EXIT_CODE" | "SCRIPT_TIMEOUT" | "INFERENCE_TIMEOUT" | "OUTPUT_SCHEMA_MISMATCH" | "SUBLOOP_DEPTH_EXCEEDED" | "SUBLOOP_NOT_FOUND" | "DECISION_NO_ROUTE" | "DECIDER_UNAVAILABLE" | "SECRET_MISSING" | "TEMPLATE_ERROR" | "EXPRESSION_ERROR" | "WAIT_TIMEOUT" | "HEARTBEAT_EXHAUSTED" | "RETURN_DELIVERY_FAILED" | "MAX_ITERATIONS" | "INTERNAL_ERROR";
+            code: "HARNESS_NOT_INSTALLED" | "HARNESS_NOT_AUTHENTICATED" | "HARNESS_QUOTA_EXHAUSTED" | "HARNESS_TURN_FAILED" | "HARNESS_TERMINATION_UNCONFIRMED" | "WORKING_DIRECTORY_MISSING" | "SCRIPT_EXIT_CODE" | "SCRIPT_TIMEOUT" | "INFERENCE_TIMEOUT" | "OUTPUT_SCHEMA_MISMATCH" | "SUBLOOP_DEPTH_EXCEEDED" | "SUBLOOP_NOT_FOUND" | "DECISION_NO_ROUTE" | "EVALUATION_UNAVAILABLE" | "EVALUATION_PROVIDER_FAILED" | "EVALUATION_INVALID_CONFIGURATION" | "EVALUATION_INVALID_RESPONSE" | "EVALUATION_RESULT_REJECTED" | "EVALUATION_EXPRESSION_FAILED" | "DECIDER_UNAVAILABLE" | "SECRET_MISSING" | "TEMPLATE_ERROR" | "TEMPLATE_PREREQUISITE_UNAVAILABLE" | "TEMPLATE_ISOLATION_UNAVAILABLE" | "TEMPLATE_REPORT_UNAVAILABLE" | "TEMPLATE_AUTHORITY_REFUSED" | "TEMPLATE_BINDING_CHANGED" | "EXPRESSION_ERROR" | "WAIT_TIMEOUT" | "HEARTBEAT_EXHAUSTED" | "RETURN_DELIVERY_FAILED" | "MAX_ITERATIONS" | "INTERNAL_ERROR";
             message: string;
             nodeId?: string | undefined;
             resumable: boolean;
@@ -3478,7 +3929,7 @@ export interface components {
             type: "harness.session";
             nodeId: string;
             /** @enum {string} */
-            harness: "codex";
+            harness: "codex" | "claude";
             sessionId: string;
             /** @enum {string} */
             mode: "fresh" | "resumed";
@@ -3504,6 +3955,59 @@ export interface components {
                 reasoningOutputTokens?: number | undefined;
             };
         } | {
+            answer: {
+                /** @constant */
+                type: "choice";
+                optionId: string;
+                confidence: number | null;
+                probabilities: {
+                    [key: string]: number;
+                } | null;
+            } | ({
+                /** @constant */
+                type: "noul";
+                /** @constant */
+                kind: "expression";
+                holds: boolean | null;
+                confidence: null;
+            } | {
+                /** @constant */
+                type: "noul";
+                /** @constant */
+                kind: "classifier";
+                holds: boolean | null;
+                trueProbability: number | null;
+                confidence: number | null;
+            } | {
+                /** @constant */
+                type: "noul";
+                /** @constant */
+                kind: "llm";
+                holds: boolean | null;
+                confidence: number | null;
+                reasoning: string | null;
+            }) | {
+                /** @constant */
+                type: "score";
+                score: number;
+                confidence: number | null;
+                legend: {
+                    [key: string]: string;
+                };
+                probabilities: {
+                    [key: string]: number;
+                } | null;
+            };
+            portId: string;
+            provenance: {
+                /** @enum {string} */
+                kind: "expression" | "classifier" | "llm";
+                provider: string | null;
+                classifierId: string | null;
+                model: string | null;
+                effort: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | null;
+            };
+            diagnostics: components["schemas"]["EvaluationDiagnosticInput"][];
             runId: string;
             seq: number;
             /** Format: date-time */
@@ -3511,16 +4015,6 @@ export interface components {
             /** @constant */
             type: "decision.made";
             nodeId: string;
-            /** @enum {string} */
-            strategy: "jev" | "codex" | "expression";
-            classifierModel?: string | undefined;
-            route: string;
-            confidence?: number | undefined;
-            alternatives?: {
-                route: string;
-                confidence?: number | undefined;
-            }[] | undefined;
-            skipped: components["schemas"]["StrategySkipInput"][];
         } | {
             runId: string;
             seq: number;
@@ -3601,31 +4095,121 @@ export interface components {
             channel: components["schemas"]["ReturnChannelInput"];
             error: string;
         };
-        StrategySkipInput: {
-            /** @enum {string} */
-            strategy: "jev" | "codex" | "expression";
-            /** @enum {string} */
-            code: "CLASSIFIER_MODEL_NOT_FOUND" | "CLASSIFIER_PRIMITIVE_UNSUPPORTED" | "CLASSIFIER_MODEL_DISABLED" | "CLASSIFIER_SECRET_MISSING" | "CLASSIFIER_SECRET_UNREADABLE" | "PROVIDER_UNAVAILABLE" | "EXPRESSION_NOT_APPLICABLE" | "UNDECLARED_ROUTE" | "INVALID_CONFIDENCE" | "LOW_CONFIDENCE";
+        EvaluationDiagnosticInput: {
+            provenance: {
+                /** @enum {string} */
+                kind: "expression" | "classifier" | "llm";
+                provider: string | null;
+                classifierId: string | null;
+                model: string | null;
+                effort: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | null;
+            };
+            code: string;
             message: string;
         };
         ExitCriterionEvaluationInput: {
             index: number;
             /** @enum {string} */
-            strategy: "expression" | "jev" | "codex" | "max-iterations" | "max-duration" | "last-output-matches";
-            model?: string | undefined;
-            classifierModel?: string | undefined;
+            strategy: "expression" | "classifier" | "llm";
             /** @enum {string} */
             status: "matched" | "not-matched";
-            holds?: boolean | undefined;
-            confidence?: number | undefined;
-            minConfidence?: number | undefined;
-            reasoning?: string | undefined;
+            answer: {
+                /** @constant */
+                type: "choice";
+                optionId: string;
+                confidence: number | null;
+                probabilities: {
+                    [key: string]: number;
+                } | null;
+            } | ({
+                /** @constant */
+                type: "noul";
+                /** @constant */
+                kind: "expression";
+                holds: boolean | null;
+                confidence: null;
+            } | {
+                /** @constant */
+                type: "noul";
+                /** @constant */
+                kind: "classifier";
+                holds: boolean | null;
+                trueProbability: number | null;
+                confidence: number | null;
+            } | {
+                /** @constant */
+                type: "noul";
+                /** @constant */
+                kind: "llm";
+                holds: boolean | null;
+                confidence: number | null;
+                reasoning: string | null;
+            }) | {
+                /** @constant */
+                type: "score";
+                score: number;
+                confidence: number | null;
+                legend: {
+                    [key: string]: string;
+                };
+                probabilities: {
+                    [key: string]: number;
+                } | null;
+            };
+            provenance: {
+                /** @enum {string} */
+                kind: "expression" | "classifier" | "llm";
+                provider: string | null;
+                classifierId: string | null;
+                model: string | null;
+                effort: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | null;
+            };
+            acceptance: ({
+                /** @constant */
+                status: "accepted";
+            } | {
+                /** @constant */
+                status: "rejected";
+                /** @constant */
+                code: "EVALUATION_RESULT_REJECTED";
+                minConfidence: number;
+            }) | null;
+            match: {
+                /** @constant */
+                type: "noul";
+                /** @default true */
+                value?: boolean | undefined;
+                minReportedConfidence?: number | undefined;
+            } | {
+                /** @constant */
+                type: "choice";
+                optionIds: string[];
+                minReportedConfidence?: number | undefined;
+            } | {
+                /** @constant */
+                type: "score";
+                /** @enum {string} */
+                operator: "lt" | "lte" | "eq" | "gte" | "gt";
+                value: number;
+            };
+            configuredMinConfidence?: number | undefined;
+            rejection?: {
+                /** @enum {string} */
+                kind: "classifier-confidence" | "llm-reported-confidence";
+                minimum: number;
+                confidence: number | null;
+            } | undefined;
         } | {
             index: number;
             /** @enum {string} */
-            strategy: "expression" | "jev" | "codex" | "max-iterations" | "max-duration" | "last-output-matches";
-            model?: string | undefined;
-            classifierModel?: string | undefined;
+            strategy: "max-iterations" | "max-duration" | "last-output-matches";
+            /** @enum {string} */
+            status: "matched" | "not-matched";
+            holds: boolean | null;
+        } | {
+            index: number;
+            /** @enum {string} */
+            strategy: "expression" | "classifier" | "llm" | "max-iterations" | "max-duration" | "last-output-matches";
             /** @constant */
             status: "skipped";
             reason: {
@@ -3636,17 +4220,23 @@ export interface components {
         } | {
             index: number;
             /** @enum {string} */
-            strategy: "expression" | "jev" | "codex" | "max-iterations" | "max-duration" | "last-output-matches";
-            model?: string | undefined;
-            classifierModel?: string | undefined;
+            strategy: "expression" | "classifier" | "llm" | "max-iterations" | "max-duration" | "last-output-matches";
             /** @constant */
             status: "error";
             diagnostic: {
                 /** @enum {string} */
-                code: "CRITERION_ERROR" | "RETURN_MAPPING_ERROR" | "DECIDER_UNAVAILABLE" | "DECIDER_NOT_AUTHENTICATED" | "DECIDER_RATE_LIMITED" | "DECIDER_HTTP_ERROR" | "DECIDER_UNREACHABLE" | "DECIDER_INVALID_RESPONSE" | "DECIDER_REDIRECT" | "DECIDER_TIMEOUT" | "DECIDER_ERROR";
+                code: "CRITERION_ERROR" | "RETURN_MAPPING_ERROR" | "DECIDER_UNAVAILABLE" | "DECIDER_NOT_AUTHENTICATED" | "DECIDER_RATE_LIMITED" | "DECIDER_HTTP_ERROR" | "DECIDER_UNREACHABLE" | "DECIDER_INVALID_RESPONSE" | "DECIDER_REDIRECT" | "DECIDER_TIMEOUT" | "DECIDER_ERROR" | "EVALUATION_UNAVAILABLE" | "EVALUATION_PROVIDER_FAILED" | "EVALUATION_INVALID_CONFIGURATION" | "EVALUATION_INVALID_RESPONSE" | "EVALUATION_RESULT_REJECTED" | "EVALUATION_EXPRESSION_FAILED";
                 message: string;
                 status?: number | undefined;
             };
+            provenance?: {
+                /** @enum {string} */
+                kind: "expression" | "classifier" | "llm";
+                provider: string | null;
+                classifierId: string | null;
+                model: string | null;
+                effort: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | null;
+            } | undefined;
         };
         ExitEvaluationOutcomeInput: {
             /** @constant */
@@ -3676,7 +4266,7 @@ export interface components {
             kind: "failed";
             diagnostic: {
                 /** @enum {string} */
-                code: "CRITERION_ERROR" | "RETURN_MAPPING_ERROR" | "DECIDER_UNAVAILABLE" | "DECIDER_NOT_AUTHENTICATED" | "DECIDER_RATE_LIMITED" | "DECIDER_HTTP_ERROR" | "DECIDER_UNREACHABLE" | "DECIDER_INVALID_RESPONSE" | "DECIDER_REDIRECT" | "DECIDER_TIMEOUT" | "DECIDER_ERROR";
+                code: "CRITERION_ERROR" | "RETURN_MAPPING_ERROR" | "DECIDER_UNAVAILABLE" | "DECIDER_NOT_AUTHENTICATED" | "DECIDER_RATE_LIMITED" | "DECIDER_HTTP_ERROR" | "DECIDER_UNREACHABLE" | "DECIDER_INVALID_RESPONSE" | "DECIDER_REDIRECT" | "DECIDER_TIMEOUT" | "DECIDER_ERROR" | "EVALUATION_UNAVAILABLE" | "EVALUATION_PROVIDER_FAILED" | "EVALUATION_INVALID_CONFIGURATION" | "EVALUATION_INVALID_RESPONSE" | "EVALUATION_RESULT_REJECTED" | "EVALUATION_EXPRESSION_FAILED";
                 message: string;
                 status?: number | undefined;
             };
@@ -3828,7 +4418,7 @@ export interface components {
         JsonValue: JsonValue;
         LoopDefinition: {
             /** @constant */
-            schemaVersion: 1;
+            schemaVersion: 3;
             name: string;
             description?: string | undefined;
             settings: {
@@ -3850,9 +4440,14 @@ export interface components {
                     kind: "temp";
                 };
                 defaults: {
-                    model?: string | undefined;
-                    /** @enum {string} */
-                    effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                    /** @default {} */
+                    byHarness: {
+                        [key: string]: {
+                            model?: string | undefined;
+                            /** @enum {string} */
+                            effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
+                        };
+                    };
                 };
                 /** @default 10 */
                 maxIterations: number;
@@ -3922,6 +4517,18 @@ export interface components {
                     filter?: string | undefined;
                 } | {
                     /** @constant */
+                    subtype: "webhook";
+                    signature: {
+                        /** @constant */
+                        scheme: "hmac-sha256-body";
+                        /** @default x-hub-signature-256 */
+                        header: string;
+                        secretRef: string;
+                    };
+                    dedupeKey?: string | undefined;
+                    filter?: string | undefined;
+                } | {
+                    /** @constant */
                     subtype: "event";
                     eventType: string;
                     filter?: string | undefined;
@@ -3963,6 +4570,12 @@ export interface components {
                     };
                     fireWhen: string;
                     dedupeKey?: string | undefined;
+                    items?: {
+                        select: string;
+                        dedupeKey: string;
+                        /** @default 5 */
+                        maxRunsPerPoll: number;
+                    } | undefined;
                     /** @default true */
                     enabled: boolean;
                 };
@@ -3982,38 +4595,91 @@ export interface components {
                 /** @constant */
                 kind: "decision";
                 config: {
-                    routes: {
-                        label: string;
-                        description: string;
-                    }[];
-                    question: string;
-                    context: {
-                        /** @default last */
-                        messages: "none" | "last" | "all" | number | {
-                            where: string;
+                    answer: {
+                        /** @constant */
+                        type: "choice";
+                        options: {
+                            id: string;
+                            label: string;
+                            criteria: string;
+                        }[];
+                    } | {
+                        /** @constant */
+                        type: "noul";
+                        true: {
+                            id: string;
+                            label: string;
+                            criteria: string;
                         };
-                        vars?: string[] | undefined;
-                        /** @default true */
-                        includeLastOutput: boolean;
+                        false: {
+                            id: string;
+                            label: string;
+                            criteria: string;
+                        };
+                    } | {
+                        /** @constant */
+                        type: "score";
+                        anchors: string[];
+                        bands: {
+                            id: string;
+                            label: string;
+                            min: number;
+                            max: number;
+                        }[];
                     };
-                    strategy: ("jev" | "codex" | "expression")[];
-                    jev?: {
-                        /**
-                         * @default choice
-                         * @constant
-                         */
-                        primitive: "choice";
-                        model?: string | undefined;
-                        minConfidence?: number | undefined;
-                    } | undefined;
-                    codex?: {
-                        model?: string | undefined;
-                        /** @enum {string} */
-                        effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
-                    } | undefined;
-                    expression?: {
+                    evaluation: {
+                        /** @constant */
+                        kind: "expression";
                         jsonata: string;
-                    } | undefined;
+                    } | {
+                        /** @constant */
+                        kind: "classifier";
+                        model: string;
+                        question: string;
+                        minConfidence?: number | undefined;
+                        truthThreshold?: number | undefined;
+                        context: {
+                            /** @default last */
+                            messages: "none" | "last" | "all" | number | {
+                                where: string;
+                            };
+                            vars?: string[] | undefined;
+                            /** @default true */
+                            includeLastOutput: boolean;
+                        };
+                    } | {
+                        /** @constant */
+                        kind: "llm";
+                        /** @constant */
+                        harness: "codex";
+                        model: {
+                            /** @constant */
+                            mode: "inherit";
+                        } | {
+                            /** @constant */
+                            mode: "explicit";
+                            value: string;
+                        };
+                        effort: {
+                            /** @constant */
+                            mode: "inherit";
+                        } | {
+                            /** @constant */
+                            mode: "explicit";
+                            /** @enum {string} */
+                            value: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                        };
+                        question: string;
+                        context: {
+                            /** @default last */
+                            messages: "none" | "last" | "all" | number | {
+                                where: string;
+                            };
+                            vars?: string[] | undefined;
+                            /** @default true */
+                            includeLastOutput: boolean;
+                        };
+                    };
                     /** @default true */
                     recordAlternatives: boolean;
                 };
@@ -4037,7 +4703,7 @@ export interface components {
                      * @default codex
                      * @enum {string}
                      */
-                    harness: "codex";
+                    harness: "codex" | "claude";
                     model?: string | undefined;
                     /** @enum {string} */
                     effort?: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | undefined;
@@ -4741,11 +5407,86 @@ export interface components {
                     } | {
                         /** @constant */
                         when: "predicate";
-                        /** @enum {string} */
-                        strategy: "jev" | "codex" | "expression";
-                        question?: string | undefined;
-                        jsonata?: string | undefined;
-                        minConfidence?: number | undefined;
+                        answer: ({
+                            /** @constant */
+                            type: "choice";
+                            options: {
+                                id: string;
+                                label: string;
+                                criteria: string;
+                            }[];
+                        } | {
+                            /** @constant */
+                            type: "noul";
+                            true: {
+                                label: string;
+                                criteria: string;
+                            };
+                            false: {
+                                label: string;
+                                criteria: string;
+                            };
+                        } | {
+                            /** @constant */
+                            type: "score";
+                            anchors: string[];
+                        }) | {
+                            /** @constant */
+                            type: "noul";
+                        };
+                        evaluation: {
+                            /** @constant */
+                            kind: "expression";
+                            jsonata: string;
+                        } | {
+                            /** @constant */
+                            kind: "classifier";
+                            model: string;
+                            question: string;
+                            minConfidence?: number | undefined;
+                            truthThreshold?: number | undefined;
+                        } | {
+                            /** @constant */
+                            kind: "llm";
+                            /** @constant */
+                            harness: "codex";
+                            model: {
+                                /** @constant */
+                                mode: "inherit";
+                            } | {
+                                /** @constant */
+                                mode: "explicit";
+                                value: string;
+                            };
+                            effort: {
+                                /** @constant */
+                                mode: "inherit";
+                            } | {
+                                /** @constant */
+                                mode: "explicit";
+                                /** @enum {string} */
+                                value: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                            };
+                            question: string;
+                        };
+                        match: {
+                            /** @constant */
+                            type: "noul";
+                            /** @default true */
+                            value: boolean;
+                            minReportedConfidence?: number | undefined;
+                        } | {
+                            /** @constant */
+                            type: "choice";
+                            optionIds: string[];
+                            minReportedConfidence?: number | undefined;
+                        } | {
+                            /** @constant */
+                            type: "score";
+                            /** @enum {string} */
+                            operator: "lt" | "lte" | "eq" | "gte" | "gt";
+                            value: number;
+                        };
                         /** @enum {string} */
                         outcome: "success" | "failure";
                     } | {
@@ -4805,7 +5546,7 @@ export interface components {
             /** @constant */
             format: "graphgoblin-loop";
             /** @constant */
-            formatVersion: 1;
+            formatVersion: 3;
             /** Format: date-time */
             exportedAt: string;
             loop: components["schemas"]["LoopDefinition"];
@@ -4838,7 +5579,7 @@ export interface components {
         RunStatus: "queued" | "running" | "waiting" | "paused" | "succeeded" | "failed" | "cancelled" | "exhausted";
         RunFailure: {
             /** @enum {string} */
-            code: "HARNESS_NOT_INSTALLED" | "HARNESS_NOT_AUTHENTICATED" | "HARNESS_QUOTA_EXHAUSTED" | "HARNESS_TURN_FAILED" | "WORKING_DIRECTORY_MISSING" | "SCRIPT_EXIT_CODE" | "SCRIPT_TIMEOUT" | "INFERENCE_TIMEOUT" | "OUTPUT_SCHEMA_MISMATCH" | "SUBLOOP_DEPTH_EXCEEDED" | "SUBLOOP_NOT_FOUND" | "DECISION_NO_ROUTE" | "DECIDER_UNAVAILABLE" | "SECRET_MISSING" | "TEMPLATE_ERROR" | "EXPRESSION_ERROR" | "WAIT_TIMEOUT" | "HEARTBEAT_EXHAUSTED" | "RETURN_DELIVERY_FAILED" | "MAX_ITERATIONS" | "INTERNAL_ERROR";
+            code: "HARNESS_NOT_INSTALLED" | "HARNESS_NOT_AUTHENTICATED" | "HARNESS_QUOTA_EXHAUSTED" | "HARNESS_TURN_FAILED" | "HARNESS_TERMINATION_UNCONFIRMED" | "WORKING_DIRECTORY_MISSING" | "SCRIPT_EXIT_CODE" | "SCRIPT_TIMEOUT" | "INFERENCE_TIMEOUT" | "OUTPUT_SCHEMA_MISMATCH" | "SUBLOOP_DEPTH_EXCEEDED" | "SUBLOOP_NOT_FOUND" | "DECISION_NO_ROUTE" | "EVALUATION_UNAVAILABLE" | "EVALUATION_PROVIDER_FAILED" | "EVALUATION_INVALID_CONFIGURATION" | "EVALUATION_INVALID_RESPONSE" | "EVALUATION_RESULT_REJECTED" | "EVALUATION_EXPRESSION_FAILED" | "DECIDER_UNAVAILABLE" | "SECRET_MISSING" | "TEMPLATE_ERROR" | "TEMPLATE_PREREQUISITE_UNAVAILABLE" | "TEMPLATE_ISOLATION_UNAVAILABLE" | "TEMPLATE_REPORT_UNAVAILABLE" | "TEMPLATE_AUTHORITY_REFUSED" | "TEMPLATE_BINDING_CHANGED" | "EXPRESSION_ERROR" | "WAIT_TIMEOUT" | "HEARTBEAT_EXHAUSTED" | "RETURN_DELIVERY_FAILED" | "MAX_ITERATIONS" | "INTERNAL_ERROR";
             message: string;
             nodeId?: string | undefined;
             resumable: boolean;
@@ -5137,7 +5878,7 @@ export interface components {
             type: "harness.session";
             nodeId: string;
             /** @enum {string} */
-            harness: "codex";
+            harness: "codex" | "claude";
             sessionId: string;
             /** @enum {string} */
             mode: "fresh" | "resumed";
@@ -5163,6 +5904,59 @@ export interface components {
                 reasoningOutputTokens: number;
             };
         } | {
+            answer: {
+                /** @constant */
+                type: "choice";
+                optionId: string;
+                confidence: number | null;
+                probabilities: {
+                    [key: string]: number;
+                } | null;
+            } | ({
+                /** @constant */
+                type: "noul";
+                /** @constant */
+                kind: "expression";
+                holds: boolean | null;
+                confidence: null;
+            } | {
+                /** @constant */
+                type: "noul";
+                /** @constant */
+                kind: "classifier";
+                holds: boolean | null;
+                trueProbability: number | null;
+                confidence: number | null;
+            } | {
+                /** @constant */
+                type: "noul";
+                /** @constant */
+                kind: "llm";
+                holds: boolean | null;
+                confidence: number | null;
+                reasoning: string | null;
+            }) | {
+                /** @constant */
+                type: "score";
+                score: number;
+                confidence: number | null;
+                legend: {
+                    [key: string]: string;
+                };
+                probabilities: {
+                    [key: string]: number;
+                } | null;
+            };
+            portId: string;
+            provenance: {
+                /** @enum {string} */
+                kind: "expression" | "classifier" | "llm";
+                provider: string | null;
+                classifierId: string | null;
+                model: string | null;
+                effort: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | null;
+            };
+            diagnostics: components["schemas"]["EvaluationDiagnostic"][];
             runId: string;
             seq: number;
             /** Format: date-time */
@@ -5170,16 +5964,6 @@ export interface components {
             /** @constant */
             type: "decision.made";
             nodeId: string;
-            /** @enum {string} */
-            strategy: "jev" | "codex" | "expression";
-            classifierModel?: string | undefined;
-            route: string;
-            confidence?: number | undefined;
-            alternatives?: {
-                route: string;
-                confidence?: number | undefined;
-            }[] | undefined;
-            skipped: components["schemas"]["StrategySkip"][];
         } | {
             runId: string;
             seq: number;
@@ -5260,31 +6044,121 @@ export interface components {
             channel: components["schemas"]["ReturnChannel"];
             error: string;
         };
-        StrategySkip: {
-            /** @enum {string} */
-            strategy: "jev" | "codex" | "expression";
-            /** @enum {string} */
-            code: "CLASSIFIER_MODEL_NOT_FOUND" | "CLASSIFIER_PRIMITIVE_UNSUPPORTED" | "CLASSIFIER_MODEL_DISABLED" | "CLASSIFIER_SECRET_MISSING" | "CLASSIFIER_SECRET_UNREADABLE" | "PROVIDER_UNAVAILABLE" | "EXPRESSION_NOT_APPLICABLE" | "UNDECLARED_ROUTE" | "INVALID_CONFIDENCE" | "LOW_CONFIDENCE";
+        EvaluationDiagnostic: {
+            provenance: {
+                /** @enum {string} */
+                kind: "expression" | "classifier" | "llm";
+                provider: string | null;
+                classifierId: string | null;
+                model: string | null;
+                effort: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | null;
+            };
+            code: string;
             message: string;
         };
         ExitCriterionEvaluation: {
             index: number;
             /** @enum {string} */
-            strategy: "expression" | "jev" | "codex" | "max-iterations" | "max-duration" | "last-output-matches";
-            model?: string | undefined;
-            classifierModel?: string | undefined;
+            strategy: "expression" | "classifier" | "llm";
             /** @enum {string} */
             status: "matched" | "not-matched";
-            holds?: boolean | undefined;
-            confidence?: number | undefined;
-            minConfidence?: number | undefined;
-            reasoning?: string | undefined;
+            answer: {
+                /** @constant */
+                type: "choice";
+                optionId: string;
+                confidence: number | null;
+                probabilities: {
+                    [key: string]: number;
+                } | null;
+            } | ({
+                /** @constant */
+                type: "noul";
+                /** @constant */
+                kind: "expression";
+                holds: boolean | null;
+                confidence: null;
+            } | {
+                /** @constant */
+                type: "noul";
+                /** @constant */
+                kind: "classifier";
+                holds: boolean | null;
+                trueProbability: number | null;
+                confidence: number | null;
+            } | {
+                /** @constant */
+                type: "noul";
+                /** @constant */
+                kind: "llm";
+                holds: boolean | null;
+                confidence: number | null;
+                reasoning: string | null;
+            }) | {
+                /** @constant */
+                type: "score";
+                score: number;
+                confidence: number | null;
+                legend: {
+                    [key: string]: string;
+                };
+                probabilities: {
+                    [key: string]: number;
+                } | null;
+            };
+            provenance: {
+                /** @enum {string} */
+                kind: "expression" | "classifier" | "llm";
+                provider: string | null;
+                classifierId: string | null;
+                model: string | null;
+                effort: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | null;
+            };
+            acceptance: ({
+                /** @constant */
+                status: "accepted";
+            } | {
+                /** @constant */
+                status: "rejected";
+                /** @constant */
+                code: "EVALUATION_RESULT_REJECTED";
+                minConfidence: number;
+            }) | null;
+            match: {
+                /** @constant */
+                type: "noul";
+                /** @default true */
+                value: boolean;
+                minReportedConfidence?: number | undefined;
+            } | {
+                /** @constant */
+                type: "choice";
+                optionIds: string[];
+                minReportedConfidence?: number | undefined;
+            } | {
+                /** @constant */
+                type: "score";
+                /** @enum {string} */
+                operator: "lt" | "lte" | "eq" | "gte" | "gt";
+                value: number;
+            };
+            configuredMinConfidence?: number | undefined;
+            rejection?: {
+                /** @enum {string} */
+                kind: "classifier-confidence" | "llm-reported-confidence";
+                minimum: number;
+                confidence: number | null;
+            } | undefined;
         } | {
             index: number;
             /** @enum {string} */
-            strategy: "expression" | "jev" | "codex" | "max-iterations" | "max-duration" | "last-output-matches";
-            model?: string | undefined;
-            classifierModel?: string | undefined;
+            strategy: "max-iterations" | "max-duration" | "last-output-matches";
+            /** @enum {string} */
+            status: "matched" | "not-matched";
+            holds: boolean | null;
+        } | {
+            index: number;
+            /** @enum {string} */
+            strategy: "expression" | "classifier" | "llm" | "max-iterations" | "max-duration" | "last-output-matches";
             /** @constant */
             status: "skipped";
             reason: {
@@ -5295,17 +6169,23 @@ export interface components {
         } | {
             index: number;
             /** @enum {string} */
-            strategy: "expression" | "jev" | "codex" | "max-iterations" | "max-duration" | "last-output-matches";
-            model?: string | undefined;
-            classifierModel?: string | undefined;
+            strategy: "expression" | "classifier" | "llm" | "max-iterations" | "max-duration" | "last-output-matches";
             /** @constant */
             status: "error";
             diagnostic: {
                 /** @enum {string} */
-                code: "CRITERION_ERROR" | "RETURN_MAPPING_ERROR" | "DECIDER_UNAVAILABLE" | "DECIDER_NOT_AUTHENTICATED" | "DECIDER_RATE_LIMITED" | "DECIDER_HTTP_ERROR" | "DECIDER_UNREACHABLE" | "DECIDER_INVALID_RESPONSE" | "DECIDER_REDIRECT" | "DECIDER_TIMEOUT" | "DECIDER_ERROR";
+                code: "CRITERION_ERROR" | "RETURN_MAPPING_ERROR" | "DECIDER_UNAVAILABLE" | "DECIDER_NOT_AUTHENTICATED" | "DECIDER_RATE_LIMITED" | "DECIDER_HTTP_ERROR" | "DECIDER_UNREACHABLE" | "DECIDER_INVALID_RESPONSE" | "DECIDER_REDIRECT" | "DECIDER_TIMEOUT" | "DECIDER_ERROR" | "EVALUATION_UNAVAILABLE" | "EVALUATION_PROVIDER_FAILED" | "EVALUATION_INVALID_CONFIGURATION" | "EVALUATION_INVALID_RESPONSE" | "EVALUATION_RESULT_REJECTED" | "EVALUATION_EXPRESSION_FAILED";
                 message: string;
                 status?: number | undefined;
             };
+            provenance?: {
+                /** @enum {string} */
+                kind: "expression" | "classifier" | "llm";
+                provider: string | null;
+                classifierId: string | null;
+                model: string | null;
+                effort: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | null;
+            } | undefined;
         };
         ExitEvaluationOutcome: {
             /** @constant */
@@ -5335,7 +6215,7 @@ export interface components {
             kind: "failed";
             diagnostic: {
                 /** @enum {string} */
-                code: "CRITERION_ERROR" | "RETURN_MAPPING_ERROR" | "DECIDER_UNAVAILABLE" | "DECIDER_NOT_AUTHENTICATED" | "DECIDER_RATE_LIMITED" | "DECIDER_HTTP_ERROR" | "DECIDER_UNREACHABLE" | "DECIDER_INVALID_RESPONSE" | "DECIDER_REDIRECT" | "DECIDER_TIMEOUT" | "DECIDER_ERROR";
+                code: "CRITERION_ERROR" | "RETURN_MAPPING_ERROR" | "DECIDER_UNAVAILABLE" | "DECIDER_NOT_AUTHENTICATED" | "DECIDER_RATE_LIMITED" | "DECIDER_HTTP_ERROR" | "DECIDER_UNREACHABLE" | "DECIDER_INVALID_RESPONSE" | "DECIDER_REDIRECT" | "DECIDER_TIMEOUT" | "DECIDER_ERROR" | "EVALUATION_UNAVAILABLE" | "EVALUATION_PROVIDER_FAILED" | "EVALUATION_INVALID_CONFIGURATION" | "EVALUATION_INVALID_RESPONSE" | "EVALUATION_RESULT_REJECTED" | "EVALUATION_EXPRESSION_FAILED";
                 message: string;
                 status?: number | undefined;
             };
@@ -5466,4 +6346,1589 @@ export interface components {
     pathItems: never;
 }
 export type $defs = Record<string, never>;
-export type operations = Record<string, never>;
+export interface operations {
+    createTemplateDraft: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    name?: string | undefined;
+                };
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        loop: components["schemas"]["LoopRecord"];
+                        draft: components["schemas"]["LoopVersionRecord"];
+                        issues: {
+                            code: string;
+                            /** @enum {string} */
+                            severity: "error" | "warning";
+                            message: string;
+                            nodeId?: string | undefined;
+                            edgeId?: string | undefined;
+                            path?: string | undefined;
+                        }[];
+                    };
+                };
+            };
+        };
+    };
+    listTemplates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            manifest: {
+                                id: string;
+                                version: string;
+                                /** @enum {string} */
+                                kind: "starter" | "implementation" | "review" | "qa";
+                                title: string;
+                                description: string;
+                                /** @default [] */
+                                tags: string[];
+                                roles: {
+                                    /** @enum {string} */
+                                    id: "assistant" | "implementer" | "reviewer" | "fixer" | "qa" | "adversary";
+                                    label: string;
+                                    /** @enum {string} */
+                                    access: "read-only" | "write";
+                                }[];
+                                /** @default [] */
+                                prerequisites: {
+                                    id: string;
+                                    label: string;
+                                    /** @enum {string} */
+                                    kind: "repository" | "github" | "secret" | "role" | "isolation" | "support";
+                                    /** @enum {string} */
+                                    blocking: "authoring" | "runtime";
+                                    /** @enum {string} */
+                                    role?: ("assistant" | "implementer" | "reviewer" | "fixer" | "qa" | "adversary") | undefined;
+                                    secretKey?: string | undefined;
+                                }[];
+                                /** @default [] */
+                                requiredSecrets: {
+                                    key: string;
+                                    scopes: string[];
+                                }[];
+                                parentKey: string;
+                                loops: {
+                                    key: string;
+                                    file: string;
+                                    /** @default [] */
+                                    dependsOn: string[];
+                                    /** @default [] */
+                                    roleNodes: {
+                                        /** @enum {string} */
+                                        role: "assistant" | "implementer" | "reviewer" | "fixer" | "qa" | "adversary";
+                                        nodeId: string;
+                                    }[];
+                                    /** @default [] */
+                                    settingsNodes: string[];
+                                    /** @default [] */
+                                    subloops: {
+                                        nodeId: string;
+                                        loopKey: string;
+                                    }[];
+                                }[];
+                                supportEntry?: string | undefined;
+                                draftFile?: string | undefined;
+                            };
+                            settingsSchema: {
+                                [key: string]: unknown;
+                            };
+                            defaultSettings: ({
+                                /** @enum {string} */
+                                kind: "starter";
+                                /** @default Summarize the input and suggest a next step. */
+                                instruction: string;
+                                roles: {
+                                    assistant: {
+                                        /** @enum {string} */
+                                        harness: "codex" | "claude";
+                                        model: string;
+                                        /** @enum {string} */
+                                        effort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                                    };
+                                };
+                                /** @default 10 */
+                                maxIterations: number;
+                            } | {
+                                /** @enum {string} */
+                                kind: "implementation";
+                                repository: {
+                                    path: string;
+                                    owner: string;
+                                    name: string;
+                                    baseBranch: string;
+                                };
+                                supportReadKey: string;
+                                gate: {
+                                    /** @default pnpm */
+                                    program: string;
+                                    /**
+                                     * @default [
+                                     *       "check"
+                                     *     ]
+                                     */
+                                    args: string[];
+                                    /** @default 600 */
+                                    timeoutSeconds: number;
+                                };
+                                roles: {
+                                    implementer: {
+                                        /** @enum {string} */
+                                        harness: "codex" | "claude";
+                                        model: string;
+                                        /** @enum {string} */
+                                        effort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                                    };
+                                };
+                                labels: {
+                                    /** @default ready-for-implementation */
+                                    trigger: string;
+                                    /** @default in-progress */
+                                    inProgress: string;
+                                    /** @default pr-open */
+                                    prOpen: string;
+                                    /** @default blocked */
+                                    blocked: string;
+                                };
+                                limits: {
+                                    /** @default 8 */
+                                    maxTasks: number;
+                                    /** @default 2 */
+                                    gateFixes: number;
+                                    /** @default 100 */
+                                    maxIterations: number;
+                                };
+                            } | {
+                                /** @enum {string} */
+                                kind: "review";
+                                repository: {
+                                    path: string;
+                                    owner: string;
+                                    name: string;
+                                    baseBranch: string;
+                                };
+                                supportReadKey: string;
+                                gate: {
+                                    /** @default pnpm */
+                                    program: string;
+                                    /**
+                                     * @default [
+                                     *       "check"
+                                     *     ]
+                                     */
+                                    args: string[];
+                                    /** @default 600 */
+                                    timeoutSeconds: number;
+                                };
+                                roles: {
+                                    reviewer: {
+                                        /** @enum {string} */
+                                        harness: "codex" | "claude";
+                                        model: string;
+                                        /** @enum {string} */
+                                        effort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                                    };
+                                    fixer: {
+                                        /** @enum {string} */
+                                        harness: "codex" | "claude";
+                                        model: string;
+                                        /** @enum {string} */
+                                        effort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                                    };
+                                };
+                                /** @default false */
+                                requireHumanBeforeMerge: boolean;
+                                /** @default [] */
+                                humanReviewLabels: string[];
+                                /** @default needs-human */
+                                needsHumanLabel: string;
+                                /** @default [] */
+                                trustedAuthors: string[];
+                                /**
+                                 * @default {
+                                 *       "source": "protection"
+                                 *     }
+                                 */
+                                requiredChecks: {
+                                    /** @enum {string} */
+                                    source: "protection";
+                                } | {
+                                    /** @enum {string} */
+                                    source: "explicit";
+                                    names: string[];
+                                };
+                                /**
+                                 * @default squash
+                                 * @enum {string}
+                                 */
+                                mergeMethod: "merge" | "squash" | "rebase";
+                                limits: {
+                                    /** @default 3 */
+                                    automaticCycles: number;
+                                    /** @default 3 */
+                                    extraCycles: number;
+                                    /** @default 3 */
+                                    reminders: number;
+                                    /** @default 24 */
+                                    waitHours: number;
+                                    /** @default 30 */
+                                    ciWaitMinutes: number;
+                                };
+                            } | {
+                                /** @enum {string} */
+                                kind: "qa";
+                                repository: {
+                                    path: string;
+                                    owner: string;
+                                    name: string;
+                                    baseBranch: string;
+                                };
+                                supportReadKey: string;
+                                gate: {
+                                    /** @default pnpm */
+                                    program: string;
+                                    /**
+                                     * @default [
+                                     *       "check"
+                                     *     ]
+                                     */
+                                    args: string[];
+                                    /** @default 600 */
+                                    timeoutSeconds: number;
+                                };
+                                roles: {
+                                    qa: {
+                                        /** @enum {string} */
+                                        harness: "codex" | "claude";
+                                        model: string;
+                                        /** @enum {string} */
+                                        effort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                                    };
+                                    adversary: {
+                                        /** @enum {string} */
+                                        harness: "codex" | "claude";
+                                        model: string;
+                                        /** @enum {string} */
+                                        effort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                                    };
+                                };
+                                /**
+                                 * @default standard
+                                 * @enum {string}
+                                 */
+                                depth: "standard" | "full-regression";
+                                fullRegressionLabel?: string | undefined;
+                                /** @default ready-for-implementation */
+                                triggerLabel: string;
+                                /** @default graphgoblin-proof */
+                                proofBranch: string;
+                                limits: {
+                                    /** @default 1 */
+                                    unsoundReruns: number;
+                                    /** @default 2 */
+                                    reworkRequests: number;
+                                    /** @default 2 */
+                                    reopenings: number;
+                                    /** @default 3 */
+                                    proofPushRetries: number;
+                                };
+                            }) | null;
+                            prerequisites: {
+                                checks: {
+                                    id: string;
+                                    label: string;
+                                    /** @enum {string} */
+                                    status: "ok" | "missing" | "unavailable";
+                                    /** @enum {string} */
+                                    blocking: "authoring" | "runtime";
+                                    message: string;
+                                    remediation?: string | undefined;
+                                }[];
+                                canInstantiate: boolean;
+                                canRun: boolean;
+                            };
+                        }[];
+                    };
+                };
+            };
+        };
+    };
+    getTemplate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        manifest: {
+                            id: string;
+                            version: string;
+                            /** @enum {string} */
+                            kind: "starter" | "implementation" | "review" | "qa";
+                            title: string;
+                            description: string;
+                            /** @default [] */
+                            tags: string[];
+                            roles: {
+                                /** @enum {string} */
+                                id: "assistant" | "implementer" | "reviewer" | "fixer" | "qa" | "adversary";
+                                label: string;
+                                /** @enum {string} */
+                                access: "read-only" | "write";
+                            }[];
+                            /** @default [] */
+                            prerequisites: {
+                                id: string;
+                                label: string;
+                                /** @enum {string} */
+                                kind: "repository" | "github" | "secret" | "role" | "isolation" | "support";
+                                /** @enum {string} */
+                                blocking: "authoring" | "runtime";
+                                /** @enum {string} */
+                                role?: ("assistant" | "implementer" | "reviewer" | "fixer" | "qa" | "adversary") | undefined;
+                                secretKey?: string | undefined;
+                            }[];
+                            /** @default [] */
+                            requiredSecrets: {
+                                key: string;
+                                scopes: string[];
+                            }[];
+                            parentKey: string;
+                            loops: {
+                                key: string;
+                                file: string;
+                                /** @default [] */
+                                dependsOn: string[];
+                                /** @default [] */
+                                roleNodes: {
+                                    /** @enum {string} */
+                                    role: "assistant" | "implementer" | "reviewer" | "fixer" | "qa" | "adversary";
+                                    nodeId: string;
+                                }[];
+                                /** @default [] */
+                                settingsNodes: string[];
+                                /** @default [] */
+                                subloops: {
+                                    nodeId: string;
+                                    loopKey: string;
+                                }[];
+                            }[];
+                            supportEntry?: string | undefined;
+                            draftFile?: string | undefined;
+                        };
+                        settingsSchema: {
+                            [key: string]: unknown;
+                        };
+                        defaultSettings: ({
+                            /** @enum {string} */
+                            kind: "starter";
+                            /** @default Summarize the input and suggest a next step. */
+                            instruction: string;
+                            roles: {
+                                assistant: {
+                                    /** @enum {string} */
+                                    harness: "codex" | "claude";
+                                    model: string;
+                                    /** @enum {string} */
+                                    effort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                                };
+                            };
+                            /** @default 10 */
+                            maxIterations: number;
+                        } | {
+                            /** @enum {string} */
+                            kind: "implementation";
+                            repository: {
+                                path: string;
+                                owner: string;
+                                name: string;
+                                baseBranch: string;
+                            };
+                            supportReadKey: string;
+                            gate: {
+                                /** @default pnpm */
+                                program: string;
+                                /**
+                                 * @default [
+                                 *       "check"
+                                 *     ]
+                                 */
+                                args: string[];
+                                /** @default 600 */
+                                timeoutSeconds: number;
+                            };
+                            roles: {
+                                implementer: {
+                                    /** @enum {string} */
+                                    harness: "codex" | "claude";
+                                    model: string;
+                                    /** @enum {string} */
+                                    effort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                                };
+                            };
+                            labels: {
+                                /** @default ready-for-implementation */
+                                trigger: string;
+                                /** @default in-progress */
+                                inProgress: string;
+                                /** @default pr-open */
+                                prOpen: string;
+                                /** @default blocked */
+                                blocked: string;
+                            };
+                            limits: {
+                                /** @default 8 */
+                                maxTasks: number;
+                                /** @default 2 */
+                                gateFixes: number;
+                                /** @default 100 */
+                                maxIterations: number;
+                            };
+                        } | {
+                            /** @enum {string} */
+                            kind: "review";
+                            repository: {
+                                path: string;
+                                owner: string;
+                                name: string;
+                                baseBranch: string;
+                            };
+                            supportReadKey: string;
+                            gate: {
+                                /** @default pnpm */
+                                program: string;
+                                /**
+                                 * @default [
+                                 *       "check"
+                                 *     ]
+                                 */
+                                args: string[];
+                                /** @default 600 */
+                                timeoutSeconds: number;
+                            };
+                            roles: {
+                                reviewer: {
+                                    /** @enum {string} */
+                                    harness: "codex" | "claude";
+                                    model: string;
+                                    /** @enum {string} */
+                                    effort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                                };
+                                fixer: {
+                                    /** @enum {string} */
+                                    harness: "codex" | "claude";
+                                    model: string;
+                                    /** @enum {string} */
+                                    effort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                                };
+                            };
+                            /** @default false */
+                            requireHumanBeforeMerge: boolean;
+                            /** @default [] */
+                            humanReviewLabels: string[];
+                            /** @default needs-human */
+                            needsHumanLabel: string;
+                            /** @default [] */
+                            trustedAuthors: string[];
+                            /**
+                             * @default {
+                             *       "source": "protection"
+                             *     }
+                             */
+                            requiredChecks: {
+                                /** @enum {string} */
+                                source: "protection";
+                            } | {
+                                /** @enum {string} */
+                                source: "explicit";
+                                names: string[];
+                            };
+                            /**
+                             * @default squash
+                             * @enum {string}
+                             */
+                            mergeMethod: "merge" | "squash" | "rebase";
+                            limits: {
+                                /** @default 3 */
+                                automaticCycles: number;
+                                /** @default 3 */
+                                extraCycles: number;
+                                /** @default 3 */
+                                reminders: number;
+                                /** @default 24 */
+                                waitHours: number;
+                                /** @default 30 */
+                                ciWaitMinutes: number;
+                            };
+                        } | {
+                            /** @enum {string} */
+                            kind: "qa";
+                            repository: {
+                                path: string;
+                                owner: string;
+                                name: string;
+                                baseBranch: string;
+                            };
+                            supportReadKey: string;
+                            gate: {
+                                /** @default pnpm */
+                                program: string;
+                                /**
+                                 * @default [
+                                 *       "check"
+                                 *     ]
+                                 */
+                                args: string[];
+                                /** @default 600 */
+                                timeoutSeconds: number;
+                            };
+                            roles: {
+                                qa: {
+                                    /** @enum {string} */
+                                    harness: "codex" | "claude";
+                                    model: string;
+                                    /** @enum {string} */
+                                    effort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                                };
+                                adversary: {
+                                    /** @enum {string} */
+                                    harness: "codex" | "claude";
+                                    model: string;
+                                    /** @enum {string} */
+                                    effort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                                };
+                            };
+                            /**
+                             * @default standard
+                             * @enum {string}
+                             */
+                            depth: "standard" | "full-regression";
+                            fullRegressionLabel?: string | undefined;
+                            /** @default ready-for-implementation */
+                            triggerLabel: string;
+                            /** @default graphgoblin-proof */
+                            proofBranch: string;
+                            limits: {
+                                /** @default 1 */
+                                unsoundReruns: number;
+                                /** @default 2 */
+                                reworkRequests: number;
+                                /** @default 2 */
+                                reopenings: number;
+                                /** @default 3 */
+                                proofPushRetries: number;
+                            };
+                        }) | null;
+                        prerequisites: {
+                            checks: {
+                                id: string;
+                                label: string;
+                                /** @enum {string} */
+                                status: "ok" | "missing" | "unavailable";
+                                /** @enum {string} */
+                                blocking: "authoring" | "runtime";
+                                message: string;
+                                remediation?: string | undefined;
+                            }[];
+                            canInstantiate: boolean;
+                            canRun: boolean;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    checkTemplatePrerequisites: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    settings: {
+                        /** @enum {string} */
+                        kind: "starter";
+                        /** @default Summarize the input and suggest a next step. */
+                        instruction?: string | undefined;
+                        roles: {
+                            assistant: {
+                                /** @enum {string} */
+                                harness: "codex" | "claude";
+                                model: string;
+                                /** @enum {string} */
+                                effort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                            };
+                        };
+                        /** @default 10 */
+                        maxIterations?: number | undefined;
+                    } | {
+                        /** @enum {string} */
+                        kind: "implementation";
+                        repository: {
+                            path: string;
+                            owner: string;
+                            name: string;
+                            baseBranch: string;
+                        };
+                        supportReadKey: string;
+                        /** @default {} */
+                        gate?: {
+                            /** @default pnpm */
+                            program?: string | undefined;
+                            /**
+                             * @default [
+                             *       "check"
+                             *     ]
+                             */
+                            args?: string[] | undefined;
+                            /** @default 600 */
+                            timeoutSeconds?: number | undefined;
+                        } | undefined;
+                        roles: {
+                            implementer: {
+                                /** @enum {string} */
+                                harness: "codex" | "claude";
+                                model: string;
+                                /** @enum {string} */
+                                effort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                            };
+                        };
+                        /** @default {} */
+                        labels?: {
+                            /** @default ready-for-implementation */
+                            trigger?: string | undefined;
+                            /** @default in-progress */
+                            inProgress?: string | undefined;
+                            /** @default pr-open */
+                            prOpen?: string | undefined;
+                            /** @default blocked */
+                            blocked?: string | undefined;
+                        } | undefined;
+                        /** @default {} */
+                        limits?: {
+                            /** @default 8 */
+                            maxTasks?: number | undefined;
+                            /** @default 2 */
+                            gateFixes?: number | undefined;
+                            /** @default 100 */
+                            maxIterations?: number | undefined;
+                        } | undefined;
+                    } | {
+                        /** @enum {string} */
+                        kind: "review";
+                        repository: {
+                            path: string;
+                            owner: string;
+                            name: string;
+                            baseBranch: string;
+                        };
+                        supportReadKey: string;
+                        /** @default {} */
+                        gate?: {
+                            /** @default pnpm */
+                            program?: string | undefined;
+                            /**
+                             * @default [
+                             *       "check"
+                             *     ]
+                             */
+                            args?: string[] | undefined;
+                            /** @default 600 */
+                            timeoutSeconds?: number | undefined;
+                        } | undefined;
+                        roles: {
+                            reviewer: {
+                                /** @enum {string} */
+                                harness: "codex" | "claude";
+                                model: string;
+                                /** @enum {string} */
+                                effort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                            };
+                            fixer: {
+                                /** @enum {string} */
+                                harness: "codex" | "claude";
+                                model: string;
+                                /** @enum {string} */
+                                effort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                            };
+                        };
+                        /** @default false */
+                        requireHumanBeforeMerge?: boolean | undefined;
+                        /** @default [] */
+                        humanReviewLabels?: string[] | undefined;
+                        /** @default needs-human */
+                        needsHumanLabel?: string | undefined;
+                        /** @default [] */
+                        trustedAuthors?: string[] | undefined;
+                        /**
+                         * @default {
+                         *       "source": "protection"
+                         *     }
+                         */
+                        requiredChecks?: ({
+                            /** @enum {string} */
+                            source: "protection";
+                        } | {
+                            /** @enum {string} */
+                            source: "explicit";
+                            names: string[];
+                        }) | undefined;
+                        /**
+                         * @default squash
+                         * @enum {string}
+                         */
+                        mergeMethod?: ("merge" | "squash" | "rebase") | undefined;
+                        /** @default {} */
+                        limits?: {
+                            /** @default 3 */
+                            automaticCycles?: number | undefined;
+                            /** @default 3 */
+                            extraCycles?: number | undefined;
+                            /** @default 3 */
+                            reminders?: number | undefined;
+                            /** @default 24 */
+                            waitHours?: number | undefined;
+                            /** @default 30 */
+                            ciWaitMinutes?: number | undefined;
+                        } | undefined;
+                    } | {
+                        /** @enum {string} */
+                        kind: "qa";
+                        repository: {
+                            path: string;
+                            owner: string;
+                            name: string;
+                            baseBranch: string;
+                        };
+                        supportReadKey: string;
+                        /** @default {} */
+                        gate?: {
+                            /** @default pnpm */
+                            program?: string | undefined;
+                            /**
+                             * @default [
+                             *       "check"
+                             *     ]
+                             */
+                            args?: string[] | undefined;
+                            /** @default 600 */
+                            timeoutSeconds?: number | undefined;
+                        } | undefined;
+                        roles: {
+                            qa: {
+                                /** @enum {string} */
+                                harness: "codex" | "claude";
+                                model: string;
+                                /** @enum {string} */
+                                effort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                            };
+                            adversary: {
+                                /** @enum {string} */
+                                harness: "codex" | "claude";
+                                model: string;
+                                /** @enum {string} */
+                                effort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                            };
+                        };
+                        /**
+                         * @default standard
+                         * @enum {string}
+                         */
+                        depth?: ("standard" | "full-regression") | undefined;
+                        fullRegressionLabel?: string | undefined;
+                        /** @default ready-for-implementation */
+                        triggerLabel?: string | undefined;
+                        /** @default graphgoblin-proof */
+                        proofBranch?: string | undefined;
+                        /** @default {} */
+                        limits?: {
+                            /** @default 1 */
+                            unsoundReruns?: number | undefined;
+                            /** @default 2 */
+                            reworkRequests?: number | undefined;
+                            /** @default 2 */
+                            reopenings?: number | undefined;
+                            /** @default 3 */
+                            proofPushRetries?: number | undefined;
+                        } | undefined;
+                    };
+                };
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        checks: {
+                            id: string;
+                            label: string;
+                            /** @enum {string} */
+                            status: "ok" | "missing" | "unavailable";
+                            /** @enum {string} */
+                            blocking: "authoring" | "runtime";
+                            message: string;
+                            remediation?: string | undefined;
+                        }[];
+                        canInstantiate: boolean;
+                        canRun: boolean;
+                    };
+                };
+            };
+        };
+    };
+    instantiateTemplate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    settings: {
+                        /** @enum {string} */
+                        kind: "starter";
+                        /** @default Summarize the input and suggest a next step. */
+                        instruction?: string | undefined;
+                        roles: {
+                            assistant: {
+                                /** @enum {string} */
+                                harness: "codex" | "claude";
+                                model: string;
+                                /** @enum {string} */
+                                effort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                            };
+                        };
+                        /** @default 10 */
+                        maxIterations?: number | undefined;
+                    } | {
+                        /** @enum {string} */
+                        kind: "implementation";
+                        repository: {
+                            path: string;
+                            owner: string;
+                            name: string;
+                            baseBranch: string;
+                        };
+                        supportReadKey: string;
+                        /** @default {} */
+                        gate?: {
+                            /** @default pnpm */
+                            program?: string | undefined;
+                            /**
+                             * @default [
+                             *       "check"
+                             *     ]
+                             */
+                            args?: string[] | undefined;
+                            /** @default 600 */
+                            timeoutSeconds?: number | undefined;
+                        } | undefined;
+                        roles: {
+                            implementer: {
+                                /** @enum {string} */
+                                harness: "codex" | "claude";
+                                model: string;
+                                /** @enum {string} */
+                                effort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                            };
+                        };
+                        /** @default {} */
+                        labels?: {
+                            /** @default ready-for-implementation */
+                            trigger?: string | undefined;
+                            /** @default in-progress */
+                            inProgress?: string | undefined;
+                            /** @default pr-open */
+                            prOpen?: string | undefined;
+                            /** @default blocked */
+                            blocked?: string | undefined;
+                        } | undefined;
+                        /** @default {} */
+                        limits?: {
+                            /** @default 8 */
+                            maxTasks?: number | undefined;
+                            /** @default 2 */
+                            gateFixes?: number | undefined;
+                            /** @default 100 */
+                            maxIterations?: number | undefined;
+                        } | undefined;
+                    } | {
+                        /** @enum {string} */
+                        kind: "review";
+                        repository: {
+                            path: string;
+                            owner: string;
+                            name: string;
+                            baseBranch: string;
+                        };
+                        supportReadKey: string;
+                        /** @default {} */
+                        gate?: {
+                            /** @default pnpm */
+                            program?: string | undefined;
+                            /**
+                             * @default [
+                             *       "check"
+                             *     ]
+                             */
+                            args?: string[] | undefined;
+                            /** @default 600 */
+                            timeoutSeconds?: number | undefined;
+                        } | undefined;
+                        roles: {
+                            reviewer: {
+                                /** @enum {string} */
+                                harness: "codex" | "claude";
+                                model: string;
+                                /** @enum {string} */
+                                effort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                            };
+                            fixer: {
+                                /** @enum {string} */
+                                harness: "codex" | "claude";
+                                model: string;
+                                /** @enum {string} */
+                                effort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                            };
+                        };
+                        /** @default false */
+                        requireHumanBeforeMerge?: boolean | undefined;
+                        /** @default [] */
+                        humanReviewLabels?: string[] | undefined;
+                        /** @default needs-human */
+                        needsHumanLabel?: string | undefined;
+                        /** @default [] */
+                        trustedAuthors?: string[] | undefined;
+                        /**
+                         * @default {
+                         *       "source": "protection"
+                         *     }
+                         */
+                        requiredChecks?: ({
+                            /** @enum {string} */
+                            source: "protection";
+                        } | {
+                            /** @enum {string} */
+                            source: "explicit";
+                            names: string[];
+                        }) | undefined;
+                        /**
+                         * @default squash
+                         * @enum {string}
+                         */
+                        mergeMethod?: ("merge" | "squash" | "rebase") | undefined;
+                        /** @default {} */
+                        limits?: {
+                            /** @default 3 */
+                            automaticCycles?: number | undefined;
+                            /** @default 3 */
+                            extraCycles?: number | undefined;
+                            /** @default 3 */
+                            reminders?: number | undefined;
+                            /** @default 24 */
+                            waitHours?: number | undefined;
+                            /** @default 30 */
+                            ciWaitMinutes?: number | undefined;
+                        } | undefined;
+                    } | {
+                        /** @enum {string} */
+                        kind: "qa";
+                        repository: {
+                            path: string;
+                            owner: string;
+                            name: string;
+                            baseBranch: string;
+                        };
+                        supportReadKey: string;
+                        /** @default {} */
+                        gate?: {
+                            /** @default pnpm */
+                            program?: string | undefined;
+                            /**
+                             * @default [
+                             *       "check"
+                             *     ]
+                             */
+                            args?: string[] | undefined;
+                            /** @default 600 */
+                            timeoutSeconds?: number | undefined;
+                        } | undefined;
+                        roles: {
+                            qa: {
+                                /** @enum {string} */
+                                harness: "codex" | "claude";
+                                model: string;
+                                /** @enum {string} */
+                                effort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                            };
+                            adversary: {
+                                /** @enum {string} */
+                                harness: "codex" | "claude";
+                                model: string;
+                                /** @enum {string} */
+                                effort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                            };
+                        };
+                        /**
+                         * @default standard
+                         * @enum {string}
+                         */
+                        depth?: ("standard" | "full-regression") | undefined;
+                        fullRegressionLabel?: string | undefined;
+                        /** @default ready-for-implementation */
+                        triggerLabel?: string | undefined;
+                        /** @default graphgoblin-proof */
+                        proofBranch?: string | undefined;
+                        /** @default {} */
+                        limits?: {
+                            /** @default 1 */
+                            unsoundReruns?: number | undefined;
+                            /** @default 2 */
+                            reworkRequests?: number | undefined;
+                            /** @default 2 */
+                            reopenings?: number | undefined;
+                            /** @default 3 */
+                            proofPushRetries?: number | undefined;
+                        } | undefined;
+                    };
+                    name?: string | undefined;
+                };
+            };
+        };
+        responses: {
+            /** @description Default Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        instance: {
+                            id: string;
+                            ownerId: string;
+                            templateId: string;
+                            templateVersion: string;
+                            /** Format: date-time */
+                            createdAt: string;
+                            parentLoopId: string;
+                            loops: {
+                                key: string;
+                                loopId: string;
+                                versionId: string;
+                                version: number;
+                                /** @enum {string} */
+                                status: "draft" | "published";
+                            }[];
+                            settings: {
+                                /** @enum {string} */
+                                kind: "starter";
+                                /** @default Summarize the input and suggest a next step. */
+                                instruction: string;
+                                roles: {
+                                    assistant: {
+                                        /** @enum {string} */
+                                        harness: "codex" | "claude";
+                                        model: string;
+                                        /** @enum {string} */
+                                        effort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                                    };
+                                };
+                                /** @default 10 */
+                                maxIterations: number;
+                            } | {
+                                /** @enum {string} */
+                                kind: "implementation";
+                                repository: {
+                                    path: string;
+                                    owner: string;
+                                    name: string;
+                                    baseBranch: string;
+                                };
+                                supportReadKey: string;
+                                gate: {
+                                    /** @default pnpm */
+                                    program: string;
+                                    /**
+                                     * @default [
+                                     *       "check"
+                                     *     ]
+                                     */
+                                    args: string[];
+                                    /** @default 600 */
+                                    timeoutSeconds: number;
+                                };
+                                roles: {
+                                    implementer: {
+                                        /** @enum {string} */
+                                        harness: "codex" | "claude";
+                                        model: string;
+                                        /** @enum {string} */
+                                        effort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                                    };
+                                };
+                                labels: {
+                                    /** @default ready-for-implementation */
+                                    trigger: string;
+                                    /** @default in-progress */
+                                    inProgress: string;
+                                    /** @default pr-open */
+                                    prOpen: string;
+                                    /** @default blocked */
+                                    blocked: string;
+                                };
+                                limits: {
+                                    /** @default 8 */
+                                    maxTasks: number;
+                                    /** @default 2 */
+                                    gateFixes: number;
+                                    /** @default 100 */
+                                    maxIterations: number;
+                                };
+                            } | {
+                                /** @enum {string} */
+                                kind: "review";
+                                repository: {
+                                    path: string;
+                                    owner: string;
+                                    name: string;
+                                    baseBranch: string;
+                                };
+                                supportReadKey: string;
+                                gate: {
+                                    /** @default pnpm */
+                                    program: string;
+                                    /**
+                                     * @default [
+                                     *       "check"
+                                     *     ]
+                                     */
+                                    args: string[];
+                                    /** @default 600 */
+                                    timeoutSeconds: number;
+                                };
+                                roles: {
+                                    reviewer: {
+                                        /** @enum {string} */
+                                        harness: "codex" | "claude";
+                                        model: string;
+                                        /** @enum {string} */
+                                        effort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                                    };
+                                    fixer: {
+                                        /** @enum {string} */
+                                        harness: "codex" | "claude";
+                                        model: string;
+                                        /** @enum {string} */
+                                        effort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                                    };
+                                };
+                                /** @default false */
+                                requireHumanBeforeMerge: boolean;
+                                /** @default [] */
+                                humanReviewLabels: string[];
+                                /** @default needs-human */
+                                needsHumanLabel: string;
+                                /** @default [] */
+                                trustedAuthors: string[];
+                                /**
+                                 * @default {
+                                 *       "source": "protection"
+                                 *     }
+                                 */
+                                requiredChecks: {
+                                    /** @enum {string} */
+                                    source: "protection";
+                                } | {
+                                    /** @enum {string} */
+                                    source: "explicit";
+                                    names: string[];
+                                };
+                                /**
+                                 * @default squash
+                                 * @enum {string}
+                                 */
+                                mergeMethod: "merge" | "squash" | "rebase";
+                                limits: {
+                                    /** @default 3 */
+                                    automaticCycles: number;
+                                    /** @default 3 */
+                                    extraCycles: number;
+                                    /** @default 3 */
+                                    reminders: number;
+                                    /** @default 24 */
+                                    waitHours: number;
+                                    /** @default 30 */
+                                    ciWaitMinutes: number;
+                                };
+                            } | {
+                                /** @enum {string} */
+                                kind: "qa";
+                                repository: {
+                                    path: string;
+                                    owner: string;
+                                    name: string;
+                                    baseBranch: string;
+                                };
+                                supportReadKey: string;
+                                gate: {
+                                    /** @default pnpm */
+                                    program: string;
+                                    /**
+                                     * @default [
+                                     *       "check"
+                                     *     ]
+                                     */
+                                    args: string[];
+                                    /** @default 600 */
+                                    timeoutSeconds: number;
+                                };
+                                roles: {
+                                    qa: {
+                                        /** @enum {string} */
+                                        harness: "codex" | "claude";
+                                        model: string;
+                                        /** @enum {string} */
+                                        effort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                                    };
+                                    adversary: {
+                                        /** @enum {string} */
+                                        harness: "codex" | "claude";
+                                        model: string;
+                                        /** @enum {string} */
+                                        effort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                                    };
+                                };
+                                /**
+                                 * @default standard
+                                 * @enum {string}
+                                 */
+                                depth: "standard" | "full-regression";
+                                fullRegressionLabel?: string | undefined;
+                                /** @default ready-for-implementation */
+                                triggerLabel: string;
+                                /** @default graphgoblin-proof */
+                                proofBranch: string;
+                                limits: {
+                                    /** @default 1 */
+                                    unsoundReruns: number;
+                                    /** @default 2 */
+                                    reworkRequests: number;
+                                    /** @default 2 */
+                                    reopenings: number;
+                                    /** @default 3 */
+                                    proofPushRetries: number;
+                                };
+                            };
+                        };
+                        prerequisites: {
+                            checks: {
+                                id: string;
+                                label: string;
+                                /** @enum {string} */
+                                status: "ok" | "missing" | "unavailable";
+                                /** @enum {string} */
+                                blocking: "authoring" | "runtime";
+                                message: string;
+                                remediation?: string | undefined;
+                            }[];
+                            canInstantiate: boolean;
+                            canRun: boolean;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    getTemplateInstance: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        ownerId: string;
+                        templateId: string;
+                        templateVersion: string;
+                        /** Format: date-time */
+                        createdAt: string;
+                        parentLoopId: string;
+                        loops: {
+                            key: string;
+                            loopId: string;
+                            versionId: string;
+                            version: number;
+                            /** @enum {string} */
+                            status: "draft" | "published";
+                        }[];
+                        settings: {
+                            /** @enum {string} */
+                            kind: "starter";
+                            /** @default Summarize the input and suggest a next step. */
+                            instruction: string;
+                            roles: {
+                                assistant: {
+                                    /** @enum {string} */
+                                    harness: "codex" | "claude";
+                                    model: string;
+                                    /** @enum {string} */
+                                    effort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                                };
+                            };
+                            /** @default 10 */
+                            maxIterations: number;
+                        } | {
+                            /** @enum {string} */
+                            kind: "implementation";
+                            repository: {
+                                path: string;
+                                owner: string;
+                                name: string;
+                                baseBranch: string;
+                            };
+                            supportReadKey: string;
+                            gate: {
+                                /** @default pnpm */
+                                program: string;
+                                /**
+                                 * @default [
+                                 *       "check"
+                                 *     ]
+                                 */
+                                args: string[];
+                                /** @default 600 */
+                                timeoutSeconds: number;
+                            };
+                            roles: {
+                                implementer: {
+                                    /** @enum {string} */
+                                    harness: "codex" | "claude";
+                                    model: string;
+                                    /** @enum {string} */
+                                    effort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                                };
+                            };
+                            labels: {
+                                /** @default ready-for-implementation */
+                                trigger: string;
+                                /** @default in-progress */
+                                inProgress: string;
+                                /** @default pr-open */
+                                prOpen: string;
+                                /** @default blocked */
+                                blocked: string;
+                            };
+                            limits: {
+                                /** @default 8 */
+                                maxTasks: number;
+                                /** @default 2 */
+                                gateFixes: number;
+                                /** @default 100 */
+                                maxIterations: number;
+                            };
+                        } | {
+                            /** @enum {string} */
+                            kind: "review";
+                            repository: {
+                                path: string;
+                                owner: string;
+                                name: string;
+                                baseBranch: string;
+                            };
+                            supportReadKey: string;
+                            gate: {
+                                /** @default pnpm */
+                                program: string;
+                                /**
+                                 * @default [
+                                 *       "check"
+                                 *     ]
+                                 */
+                                args: string[];
+                                /** @default 600 */
+                                timeoutSeconds: number;
+                            };
+                            roles: {
+                                reviewer: {
+                                    /** @enum {string} */
+                                    harness: "codex" | "claude";
+                                    model: string;
+                                    /** @enum {string} */
+                                    effort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                                };
+                                fixer: {
+                                    /** @enum {string} */
+                                    harness: "codex" | "claude";
+                                    model: string;
+                                    /** @enum {string} */
+                                    effort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                                };
+                            };
+                            /** @default false */
+                            requireHumanBeforeMerge: boolean;
+                            /** @default [] */
+                            humanReviewLabels: string[];
+                            /** @default needs-human */
+                            needsHumanLabel: string;
+                            /** @default [] */
+                            trustedAuthors: string[];
+                            /**
+                             * @default {
+                             *       "source": "protection"
+                             *     }
+                             */
+                            requiredChecks: {
+                                /** @enum {string} */
+                                source: "protection";
+                            } | {
+                                /** @enum {string} */
+                                source: "explicit";
+                                names: string[];
+                            };
+                            /**
+                             * @default squash
+                             * @enum {string}
+                             */
+                            mergeMethod: "merge" | "squash" | "rebase";
+                            limits: {
+                                /** @default 3 */
+                                automaticCycles: number;
+                                /** @default 3 */
+                                extraCycles: number;
+                                /** @default 3 */
+                                reminders: number;
+                                /** @default 24 */
+                                waitHours: number;
+                                /** @default 30 */
+                                ciWaitMinutes: number;
+                            };
+                        } | {
+                            /** @enum {string} */
+                            kind: "qa";
+                            repository: {
+                                path: string;
+                                owner: string;
+                                name: string;
+                                baseBranch: string;
+                            };
+                            supportReadKey: string;
+                            gate: {
+                                /** @default pnpm */
+                                program: string;
+                                /**
+                                 * @default [
+                                 *       "check"
+                                 *     ]
+                                 */
+                                args: string[];
+                                /** @default 600 */
+                                timeoutSeconds: number;
+                            };
+                            roles: {
+                                qa: {
+                                    /** @enum {string} */
+                                    harness: "codex" | "claude";
+                                    model: string;
+                                    /** @enum {string} */
+                                    effort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                                };
+                                adversary: {
+                                    /** @enum {string} */
+                                    harness: "codex" | "claude";
+                                    model: string;
+                                    /** @enum {string} */
+                                    effort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                                };
+                            };
+                            /**
+                             * @default standard
+                             * @enum {string}
+                             */
+                            depth: "standard" | "full-regression";
+                            fullRegressionLabel?: string | undefined;
+                            /** @default ready-for-implementation */
+                            triggerLabel: string;
+                            /** @default graphgoblin-proof */
+                            proofBranch: string;
+                            limits: {
+                                /** @default 1 */
+                                unsoundReruns: number;
+                                /** @default 2 */
+                                reworkRequests: number;
+                                /** @default 2 */
+                                reopenings: number;
+                                /** @default 3 */
+                                proofPushRetries: number;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+    };
+}

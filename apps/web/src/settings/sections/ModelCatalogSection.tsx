@@ -3,7 +3,7 @@ import type { Effort } from '@graphgoblin/contracts';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRef, useState, type FormEvent } from 'react';
 import { useApi } from '../../api/context.js';
-import { keys, refreshCatalogState, useModelCatalog } from '../../api/queries.js';
+import { keys, refreshCatalogState, useModelCatalog, usePreflight } from '../../api/queries.js';
 import { Icon } from '../../components/icons/index.js';
 import { QueryState } from '../../components/status.js';
 import {
@@ -140,6 +140,7 @@ export function ModelCatalogSection() {
   const client = useApi();
   const queryClient = useQueryClient();
   const query = useModelCatalog();
+  const preflightQuery = usePreflight();
   const [editing, setEditing] = useState<string | undefined>();
   const [notice, setNotice] = useState('');
   const headingRef = useRef<HTMLSpanElement>(null);
@@ -188,96 +189,112 @@ export function ModelCatalogSection() {
                 </tr>
               </thead>
               <tbody>
-                {items.map((entry) => (
-                  <tr key={`${entry.harness}/${entry.model}`}>
-                    <Td>
-                      {entry.source === 'litellm' &&
-                      editing === `${entry.harness}/${entry.model}` ? (
-                        <ModelForm initial={entry} onDone={() => setEditing(undefined)} />
-                      ) : (
-                        <>
-                          <span className="font-semibold">{entry.displayName}</span>{' '}
-                          <code className="text-xs text-muted">
-                            {entry.harness}/{entry.model}
-                          </code>
-                        </>
-                      )}
-                    </Td>
-                    <Td label="Efforts" className="text-sm text-muted">
-                      {entry.efforts.join(', ')} (default {entry.defaultEffort})
-                    </Td>
-                    <Td label="Enabled">
-                      <EnableSwitch
-                        name={entry.displayName}
-                        enabled={entry.enabled}
-                        messages={CATALOG_MESSAGES}
-                        onToggle={async (enabled) => {
-                          // A new toggle replaces the previous vanished-model notice.
-                          setNotice('');
-                          const updated = await modelCatalog.setEnabled(
-                            client,
-                            entry.harness,
-                            entry.model,
-                            enabled,
-                          );
-                          queryClient.setQueryData<CatalogEntry[]>(keys.catalog, (items) =>
-                            items?.map((item) =>
-                              item.harness === updated.harness && item.model === updated.model
-                                ? updated
-                                : item,
-                            ),
-                          );
-                          await refreshCatalogState(queryClient);
-                        }}
-                        onError={async (error, failure) => {
-                          if (!(error instanceof GraphGoblinApiError) || error.status !== 404)
-                            return;
-                          setNotice(`${entry.displayName}: ${CATALOG_MESSAGES['MODEL_NOT_FOUND']}`);
-                          const refresh = refreshCatalogState(queryClient);
-                          restoreVanishedToggleFocus(
-                            failure,
-                            headingRef.current?.closest('h2') ?? null,
-                            refresh,
-                          );
-                          await refresh;
-                        }}
-                      />
-                    </Td>
-                    {hasLocalModels ? (
-                      <Td className="text-right whitespace-nowrap">
-                        {entry.source === 'litellm' ? (
+                {items.map((entry) => {
+                  const preflight = preflightQuery.data?.find(
+                    (item) => item.harness === entry.harness,
+                  );
+                  const claudeNotReady =
+                    entry.harness === 'claude' &&
+                    (preflight?.ok !== true || !preflight.authenticated);
+                  return (
+                    <tr key={`${entry.harness}/${entry.model}`}>
+                      <Td>
+                        {entry.source === 'litellm' &&
+                        editing === `${entry.harness}/${entry.model}` ? (
+                          <ModelForm initial={entry} onDone={() => setEditing(undefined)} />
+                        ) : (
                           <>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => setEditing(`${entry.harness}/${entry.model}`)}
-                              aria-label={`Edit ${entry.model}`}
-                            >
-                              Edit
-                            </Button>
-                            <ConfirmAction
-                              name={entry.model}
-                              onDismiss={(error) => {
-                                if (error instanceof GraphGoblinApiError && error.status === 404)
-                                  return refreshCatalogState(queryClient);
-                              }}
-                              consequences={
-                                <p>
-                                  Model: “{entry.displayName}” ({entry.harness}/{entry.model}).
-                                  Removing a LiteLLM model leaves its loops referencing it.
-                                </p>
-                              }
-                              onConfirm={async () => {
-                                await modelCatalog.remove(client, entry.harness, entry.model);
-                                await refreshCatalogState(queryClient);
-                              }}
-                            />
+                            <span className="font-semibold">{entry.displayName}</span>{' '}
+                            <code className="text-xs text-muted">
+                              {entry.harness}/{entry.model}
+                            </code>
                           </>
+                        )}
+                      </Td>
+                      <Td label="Efforts" className="text-sm text-muted">
+                        {entry.efforts.join(', ')} (default {entry.defaultEffort})
+                      </Td>
+                      <Td label="Enabled">
+                        <EnableSwitch
+                          name={entry.displayName}
+                          enabled={entry.enabled}
+                          messages={CATALOG_MESSAGES}
+                          onToggle={async (enabled) => {
+                            // A new toggle replaces the previous vanished-model notice.
+                            setNotice('');
+                            const updated = await modelCatalog.setEnabled(
+                              client,
+                              entry.harness,
+                              entry.model,
+                              enabled,
+                            );
+                            queryClient.setQueryData<CatalogEntry[]>(keys.catalog, (items) =>
+                              items?.map((item) =>
+                                item.harness === updated.harness && item.model === updated.model
+                                  ? updated
+                                  : item,
+                              ),
+                            );
+                            await refreshCatalogState(queryClient);
+                          }}
+                          onError={async (error, failure) => {
+                            if (!(error instanceof GraphGoblinApiError) || error.status !== 404)
+                              return;
+                            setNotice(
+                              `${entry.displayName}: ${CATALOG_MESSAGES['MODEL_NOT_FOUND']}`,
+                            );
+                            const refresh = refreshCatalogState(queryClient);
+                            restoreVanishedToggleFocus(
+                              failure,
+                              headingRef.current?.closest('h2') ?? null,
+                              refresh,
+                            );
+                            await refresh;
+                          }}
+                        />
+                        {claudeNotReady ? (
+                          <p className="mt-1 max-w-[30ch] text-xs text-muted">
+                            {entry.enabled ? 'Enabled' : 'Disabled'} in catalog; Claude harness not
+                            ready. Check Harness preflight below.
+                          </p>
                         ) : null}
                       </Td>
-                    ) : null}
-                  </tr>
-                ))}
+                      {hasLocalModels ? (
+                        <Td className="text-right whitespace-nowrap">
+                          {entry.source === 'litellm' ? (
+                            <>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => setEditing(`${entry.harness}/${entry.model}`)}
+                                aria-label={`Edit ${entry.model}`}
+                              >
+                                Edit
+                              </Button>
+                              <ConfirmAction
+                                name={entry.model}
+                                onDismiss={(error) => {
+                                  if (error instanceof GraphGoblinApiError && error.status === 404)
+                                    return refreshCatalogState(queryClient);
+                                }}
+                                consequences={
+                                  <p>
+                                    Model: “{entry.displayName}” ({entry.harness}/{entry.model}).
+                                    Removing a LiteLLM model leaves its loops referencing it.
+                                  </p>
+                                }
+                                onConfirm={async () => {
+                                  await modelCatalog.remove(client, entry.harness, entry.model);
+                                  await refreshCatalogState(queryClient);
+                                }}
+                              />
+                            </>
+                          ) : null}
+                        </Td>
+                      ) : null}
+                    </tr>
+                  );
+                })}
               </tbody>
             </Table>
           )}

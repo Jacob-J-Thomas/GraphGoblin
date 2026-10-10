@@ -117,7 +117,7 @@ export function singleNodeLoop(
       ? []
       : [{ id: 'e2', from: { node: node.id, port: 'out' }, to: { node: 'done' } }];
   return {
-    schemaVersion: 1,
+    schemaVersion: 3,
     name,
     nodes: [
       { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },

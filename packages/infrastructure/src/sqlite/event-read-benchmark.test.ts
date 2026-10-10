@@ -26,20 +26,45 @@ it('round-trips large mixed evaluation pages and measures read validation overhe
               criteria: [
                 {
                   index: 0,
-                  strategy: 'jev',
+                  strategy: 'classifier',
                   status: 'not-matched',
-                  holds: false,
-                  confidence: 0.8,
-                  classifierModel: 'jev',
+                  answer: {
+                    type: 'noul',
+                    kind: 'classifier',
+                    holds: false,
+                    trueProbability: 0.2,
+                    confidence: 0.8,
+                  },
+                  provenance: {
+                    kind: 'classifier',
+                    provider: 'typesafe',
+                    classifierId: 'jev',
+                    model: 'jev-latest',
+                    effort: null,
+                  },
+                  acceptance: { status: 'accepted' },
+                  match: { type: 'noul', value: true },
                 },
                 {
                   index: 1,
-                  strategy: 'codex',
+                  strategy: 'llm',
                   status: 'matched',
-                  holds: true,
-                  confidence: 0.93,
-                  model: 'gpt-6-luna',
-                  reasoning: 'Done. '.repeat(100),
+                  answer: {
+                    type: 'noul',
+                    kind: 'llm',
+                    holds: true,
+                    confidence: 0.93,
+                    reasoning: 'Done. '.repeat(100),
+                  },
+                  provenance: {
+                    kind: 'llm',
+                    provider: 'codex',
+                    classifierId: null,
+                    model: 'gpt-6-luna',
+                    effort: 'medium',
+                  },
+                  acceptance: { status: 'accepted' },
+                  match: { type: 'noul', value: true },
                 },
               ],
               result: {
@@ -50,11 +75,24 @@ it('round-trips large mixed evaluation pages and measures read validation overhe
               },
             }
           : {
-              strategy: 'expression',
-              route: 'yes',
-              skipped: [
+              answer: { type: 'choice', optionId: 'yes', confidence: null, probabilities: null },
+              portId: 'yes',
+              provenance: {
+                kind: 'expression',
+                provider: null,
+                classifierId: null,
+                model: null,
+                effort: null,
+              },
+              diagnostics: [
                 {
-                  strategy: 'jev',
+                  provenance: {
+                    kind: 'classifier',
+                    provider: null,
+                    classifierId: null,
+                    model: null,
+                    effort: null,
+                  },
                   code: 'CLASSIFIER_MODEL_DISABLED',
                   message: 'The selected classifier is disabled',
                 },

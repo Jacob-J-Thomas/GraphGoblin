@@ -11,6 +11,7 @@ import {
   type RunRecord,
 } from '@graphgoblin/contracts';
 import { fakeUlid, FIXTURE_TS, minimalLoop } from '@graphgoblin/contracts/testing';
+import { inspectDatabaseUpgrade, applyDatabaseUpgrade } from '@graphgoblin/infrastructure/sqlite';
 import { createTestApp, type TestApp } from './testing/test-app.js';
 
 let t: TestApp;
@@ -50,9 +51,10 @@ async function seedVersion(status: 'draft' | 'published', definition = inference
   const versionId = fakeUlid(`legacy-version-${status}`);
   const raw = JSON.stringify({
     ...definition,
+    schemaVersion: 1,
     settings: {
       ...definition.settings,
-      defaults: { ...definition.settings.defaults, harness: 'codex' },
+      defaults: { harness: 'codex' },
     },
   });
   await t.container.handle.client.batch(
@@ -83,12 +85,42 @@ async function seedVersion(status: 'draft' | 'published', definition = inference
     ],
     'write',
   );
+  // Reconstruct the historical schema before clearing its migration ledger. This database was
+  // created with all current migrations by createTestApp, so remove later structural additions.
+  await t.container.handle.client.execute('DROP TABLE classifier_models');
+  await t.container.handle.client.execute('DROP TABLE webhook_receipts');
+  await t.container.handle.client.execute('DROP INDEX runs_trigger_dedupe_idx');
+  await t.container.handle.client.execute('DROP INDEX template_instances_owner_idx');
+  await t.container.handle.client.execute('DROP INDEX template_issue_attempt_idx');
+  await t.container.handle.client.execute('DROP INDEX template_qa_merge_idx');
+  await t.container.handle.client.execute('DROP INDEX template_qa_issue_attempt_idx');
+  await t.container.handle.client.execute('DROP INDEX template_pr_head_idx');
+  await t.container.handle.client.execute('DROP INDEX template_active_pr_idx');
+  await t.container.handle.client.execute('DROP INDEX template_child_visit_idx');
+  await t.container.handle.client.execute('DROP TABLE template_instances');
+  await t.container.handle.client.execute('ALTER TABLE runs DROP COLUMN template_subject');
   await t.container.handle.client.execute(
     'DELETE FROM __drizzle_migrations WHERE created_at > 1791136800000',
   );
-  await t.container.handle.client.execute('DROP TABLE classifier_models');
-  expect(await t.container.handle.pendingMigrations()).toBe(3);
-  await t.container.handle.migrate();
+  expect(await t.container.handle.pendingMigrations()).toBe(7);
+  await expect(t.container.handle.migrate()).rejects.toMatchObject({
+    code: 'DATA_UPGRADE_REQUIRED',
+  });
+  const inventory = await inspectDatabaseUpgrade(t.container.handle.client);
+  await applyDatabaseUpgrade(t.container.handle.client, {
+    format: 'graphgoblin-upgrade-manifest',
+    targetVersion: 3,
+    sourceHash: inventory.sourceHash,
+    approvedBy: 'test-owner',
+    approvedAt: FIXTURE_TS,
+    versions: Object.fromEntries(
+      inventory.versions.map((version) => [
+        version.id,
+        { definitionHash: version.definitionHash, resolutions: {} },
+      ]),
+    ),
+    failedRuns: {},
+  });
   return { loopId, versionId, raw };
 }
 
@@ -211,7 +243,7 @@ describe('migrated SQLite versions through the API', () => {
     expect(t.harness.started).toHaveLength(2);
   });
 
-  it('migrates and recovers a pinned run across a restart mid-run', async () => {
+  it('recovers a current-format pinned run across restart mid-run without migration', async () => {
     await t.app.close();
     await t.container.stop();
     // Run file-backed libsql in a child so Windows releases every native file handle before
@@ -243,10 +275,8 @@ describe('migrated SQLite versions through the API', () => {
       try {
         await first.handle.client.batch([
           { sql: 'INSERT INTO loops (id, owner_id, name, current_version_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)', args: [loopId, 'local', 'legacy', versionId, '${FIXTURE_TS}', '${FIXTURE_TS}'] },
-          { sql: 'INSERT INTO loop_versions (id, loop_id, version, status, definition, created_at, published_at) VALUES (?, ?, 1, ?, ?, ?, ?)', args: [versionId, loopId, 'published', JSON.stringify({ ...definition, settings: { ...definition.settings, defaults: { ...definition.settings.defaults, harness: 'codex' } } }), '${FIXTURE_TS}', '${FIXTURE_TS}'] },
+          { sql: 'INSERT INTO loop_versions (id, loop_id, version, status, definition, created_at, published_at) VALUES (?, ?, 1, ?, ?, ?, ?)', args: [versionId, loopId, 'published', JSON.stringify(definition), '${FIXTURE_TS}', '${FIXTURE_TS}'] },
         ], 'write');
-        await first.handle.client.execute('DELETE FROM __drizzle_migrations WHERE created_at > 1791136800000');
-        await first.handle.client.execute('DROP TABLE classifier_models');
         const started = await app.inject({ method: 'POST', url: '/loops/' + loopId + '/runs', payload: {} });
         assert.equal(started.statusCode, 202, started.body);
         runId = started.json().run.id;

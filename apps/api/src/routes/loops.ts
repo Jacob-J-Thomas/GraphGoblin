@@ -1,3 +1,4 @@
+import { blocksPublication, rejectsDraftAdmission } from '../model-issues.js';
 import {
   LoopDefinitionSchema,
   LoopExportSchema,
@@ -9,19 +10,12 @@ import {
   type LoopDefinition,
   type LoopRecord,
 } from '@graphgoblin/contracts';
-import {
-  exportLoop,
-  importLoop,
-  nodesOfKind,
-  stableHash,
-  validateLoop,
-  type ValidationIssue,
-} from '@graphgoblin/domain';
+import { exportLoop, importLoop, stableHash } from '@graphgoblin/domain';
 import { EngineRequestError } from '@graphgoblin/engine';
 import type { FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import type { Container } from '../container.js';
-import { classifierIssues } from '../classifier-issues.js';
+import { loopPublicationIssues } from '../loop-issues.js';
 import { problem } from '../plugins/errors.js';
 import type { ApiInstance } from '../types.js';
 
@@ -37,6 +31,10 @@ const LoopDetailSchema = z.object({
   current: LoopVersionRecordSchema.optional(),
   draft: LoopVersionRecordSchema.optional(),
   draftToken: DraftTokenSchema.optional(),
+  templateInstanceId: UlidSchema.optional().meta({
+    description:
+      'The owner-scoped template instance that originally created this loop, when present.',
+  }),
 });
 
 /**
@@ -88,107 +86,12 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
     return loop;
   }
 
-  /** The version number the loop's draft has, or would get: what publishing creates. */
-  async function draftVersionNumber(loopId: string): Promise<number> {
-    const versions = await loops.listVersions(loopId);
-    const draft = versions.find((v) => v.status === 'draft');
-    return draft?.version ?? Math.max(0, ...versions.map((v) => v.version)) + 1;
-  }
-
-  /**
-   * A subloop reference must resolve to a published version of a loop of this owner (docs/03).
-   * A loop may reference itself, through `latest` or the number its draft publishes as.
-   */
-  async function subloopIssues(
-    ownerId: string,
-    def: LoopDefinition,
-    selfId?: string,
-  ): Promise<ValidationIssue[]> {
-    const issues: ValidationIssue[] = [];
-    let selfVersion: number | undefined;
-    for (const node of nodesOfKind(def, 'subloop')) {
-      const { loopId, version } = node.config.loopRef;
-      if (loopId === selfId) {
-        // A self-reference resolves to the version being published: `latest`, or the number the
-        // draft will publish as. Any other number must be a version that is already published.
-        if (version === 'latest') continue;
-        selfVersion ??= await draftVersionNumber(loopId);
-        if (version === selfVersion) continue;
-      }
-      const target = await loops.getLoop(loopId);
-      if (!target || target.ownerId !== ownerId) {
-        issues.push({
-          code: 'SUBLOOP_NOT_FOUND',
-          severity: 'error',
-          message: `subloop "${node.id}" references loop ${loopId}, which does not exist`,
-          nodeId: node.id,
-        });
-        continue;
-      }
-      const published =
-        version === 'latest'
-          ? await loops.getLatestPublished(loopId)
-          : await loops.getPublished(loopId, version);
-      if (!published) {
-        issues.push({
-          code: 'SUBLOOP_NOT_PUBLISHED',
-          severity: 'error',
-          message: `subloop "${node.id}" references "${target.name}", which has no published ${
-            version === 'latest' ? 'version' : `version ${version}`
-          }`,
-          nodeId: node.id,
-        });
-      }
-    }
-    return issues;
-  }
-
-  /** Advisory catalog checks stay here because the domain has no catalog I/O. */
-  async function catalogIssues(def: LoopDefinition): Promise<LoopIssue[]> {
-    const catalog = await container.repos.catalog.list();
-    const issues: LoopIssue[] = [];
-    function check(
-      harness: string,
-      model: string | undefined,
-      path: string,
-      nodeId?: string,
-    ): void {
-      if (model === undefined) return;
-      const entry = catalog.find((row) => row.harness === harness && row.model === model);
-      if (entry?.enabled) return;
-      issues.push({
-        code: entry ? 'MODEL_DISABLED' : 'MODEL_NOT_IN_CATALOG',
-        severity: 'warning',
-        message: entry
-          ? `model ${model} is disabled for ${harness}`
-          : `model ${model} is not in the catalog for ${harness}`,
-        path,
-        ...(nodeId ? { nodeId } : {}),
-      });
-    }
-    check('codex', def.settings.defaults.model, 'settings.defaults.model');
-    def.nodes.forEach((node) => {
-      if (node.kind === 'inference')
-        check(node.config.harness, node.config.model, 'config.model', node.id);
-      if (node.kind === 'decision' && node.config.strategy.includes('codex'))
-        check('codex', node.config.codex?.model, 'config.codex.model', node.id);
-    });
-    return issues;
-  }
-
-  /** All publish checks, also reported by create/import, draft saves, and validate. */
   async function publishIssues(
     ownerId: string,
     def: LoopDefinition,
     selfId?: string,
   ): Promise<LoopIssue[]> {
-    return [
-      ...validateLoop(def),
-      ...container.triggers.checkDefinition(def),
-      ...(await subloopIssues(ownerId, def, selfId)),
-      ...(await catalogIssues(def)),
-      ...(await classifierIssues(container, ownerId, def)),
-    ];
+    return loopPublicationIssues(container, ownerId, def, selfId);
   }
 
   app.get(
@@ -222,6 +125,15 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
       },
     },
     async (request, reply) => {
+      const admission = await publishIssues(request.auth.ownerId, request.body.definition);
+      if (admission.some((issue) => rejectsDraftAdmission(request.body.definition, issue)))
+        return problem(
+          reply,
+          400,
+          'EVALUATION_INVALID_CONFIGURATION',
+          'invalid evaluator or model configuration',
+          admission,
+        );
       const created = await loops.create(request.auth.ownerId, request.body.definition);
       reply.status(201);
       return {
@@ -234,6 +146,21 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
   app.post(
     '/loops/import',
     {
+      preValidation: async (request, reply) => {
+        const body: unknown = request.body;
+        if (
+          typeof body === 'object' &&
+          body !== null &&
+          (('formatVersion' in body && [1, 2].includes(Number(body.formatVersion))) ||
+            ('schemaVersion' in body && [1, 2].includes(Number(body.schemaVersion))))
+        )
+          return problem(
+            reply,
+            400,
+            'LOOP_FORMAT_UPGRADE_REQUIRED',
+            'Use the offline graphgoblin-upgrade export command and resolve any authored criteria to convert this document to format 3',
+          );
+      },
       schema: {
         tags: ['loops'],
         summary: 'Create or update a loop from exported JSON',
@@ -249,6 +176,15 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
     },
     async (request, reply) => {
       const imported = importLoop(request.body);
+      const admission = await publishIssues(request.auth.ownerId, imported.definition);
+      if (admission.some((issue) => rejectsDraftAdmission(imported.definition, issue)))
+        return problem(
+          reply,
+          400,
+          'EVALUATION_INVALID_CONFIGURATION',
+          'invalid evaluator or model configuration',
+          admission,
+        );
       const created = await loops.create(request.auth.ownerId, imported.definition);
       reply.status(201);
       // The same list as create, validate, draft saves, and publish (importLoop's own issues are
@@ -274,6 +210,10 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
     },
     async (request, reply) => {
       const loop = await ownedLoop(request, request.params.id);
+      const template = await container.templates.store.bindingForLoop(
+        request.auth.ownerId,
+        loop.id,
+      );
       const current = loop.currentVersionId
         ? await loops.getVersion(loop.currentVersionId)
         : undefined;
@@ -285,6 +225,7 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
         ...(current ? { current } : {}),
         ...(draft ? { draft } : {}),
         ...(draftToken ? { draftToken } : {}),
+        ...(template ? { templateInstanceId: template.instance.id } : {}),
       };
     },
   );
@@ -311,6 +252,15 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
     },
     async (request, reply) => {
       const loopId = request.params.id;
+      const admission = await publishIssues(request.auth.ownerId, request.body.definition, loopId);
+      if (admission.some((issue) => rejectsDraftAdmission(request.body.definition, issue)))
+        return problem(
+          reply,
+          400,
+          'EVALUATION_INVALID_CONFIGURATION',
+          'invalid evaluator or model configuration',
+          admission,
+        );
       const ifMatch = request.headers['if-match'];
       const saved = await serializeDraftSave(loopId, async () => {
         const loop = await ownedLoop(request, loopId);
@@ -367,7 +317,7 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
         request.body.definition,
         request.params.id,
       );
-      return { issues, publishable: !issues.some((i) => i.severity === 'error') };
+      return { issues, publishable: !issues.some(blocksPublication) };
     },
   );
 
@@ -393,7 +343,7 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
         const issues = draft
           ? await publishIssues(request.auth.ownerId, draft.definition, loop.id)
           : [];
-        if (issues.some((i) => i.severity === 'error')) return { kind: 'invalid' as const, issues };
+        if (issues.some(blocksPublication)) return { kind: 'invalid' as const, issues };
         const version = await loops.publish(loop.id);
         if (!version) return { kind: 'no-draft' as const };
         // Schedules and webhook endpoints follow the published version (ADR-0008).

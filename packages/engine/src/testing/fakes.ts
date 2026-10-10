@@ -4,7 +4,9 @@
  */
 import type {
   ContextThread,
+  ClassifierPrimitive,
   HarnessId,
+  ModelCatalogEntry,
   JsonValue,
   LoopDefinition,
   LoopVersionRecord,
@@ -14,11 +16,16 @@ import type {
   Usage,
   WorkingDirectorySpec,
 } from '@graphgoblin/contracts';
-import { isTerminal, type PredicateAnswer } from '@graphgoblin/domain';
+import { isTerminal } from '@graphgoblin/domain';
 import type {
   ArtifactStorePort,
   ChoiceRequest,
   ChoiceResult,
+  ClassifierNoulResult,
+  LlmNoulResult,
+  NoulRequest,
+  ScoreRequest,
+  ScoreResult,
   ClassifierPort,
   ClassifierRegistryPort,
   ClassifierResolution,
@@ -54,9 +61,21 @@ import type {
   StructuredPort,
   TimerPort,
   WorkspacePort,
-  YesNoRequest,
 } from '../ports.js';
 import { AppendConflictError } from '../errors.js';
+import {
+  AdmissionConflictError,
+  assertAdmissionIdentity,
+  assertWebhookClaim,
+  parseRunAdmission,
+  pollAdmissionIdentity,
+  queuedEvent,
+  type RunAdmission,
+  type TriggerAdmissionPort,
+  type WebhookClaim,
+  type WebhookReceipt,
+  type WebhookFailureCode,
+} from '../admission.js';
 
 const ULID_ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 
@@ -165,6 +184,20 @@ export class InMemoryEventStore implements EventStorePort {
     };
   }
 
+  /** Admission installs the complete transaction before notifying subscribers. */
+  commitQueued(event: RunEvent): void {
+    this.logs.set(event.runId, [event]);
+  }
+  notifyCommitted(event: RunEvent): void {
+    for (const listener of this.listeners.get(event.runId) ?? []) {
+      try {
+        listener(event);
+      } catch {
+        /* A subscriber cannot undo a committed transaction. */
+      }
+    }
+  }
+
   /** Test helper: synchronous read. */
   all(runId: string): RunEvent[] {
     return [...(this.logs.get(runId) ?? [])];
@@ -179,10 +212,25 @@ export class InMemoryRunRepository implements RunRepository {
   private readonly finalized = new Set<string>();
 
   create(run: RunRecord, initialThread: ContextThread): Promise<void> {
+    this.commitCreated(run, initialThread);
+    return Promise.resolve();
+  }
+  commitCreated(run: RunRecord, initialThread: ContextThread): void {
     this.runs.set(run.id, run);
     this.initial.set(run.id, initialThread);
     this.threads.set(run.id, initialThread);
-    return Promise.resolve();
+  }
+  hasTriggerKey(ownerId: string, loopId: string, nodeId: string, key: string): boolean {
+    return [...this.runs.values()].some((run) => {
+      const invocation = this.initial.get(run.id)?.invocation;
+      return (
+        run.ownerId === ownerId &&
+        run.loopId === loopId &&
+        invocation !== undefined &&
+        invocation.trigger.nodeId === nodeId &&
+        invocation.trigger.dedupeKey === key
+      );
+    });
   }
   get(runId: string): Promise<RunRecord | undefined> {
     return Promise.resolve(this.runs.get(runId));
@@ -327,15 +375,15 @@ export class InMemorySessionRepository implements HarnessSessionRepository {
       .sort((a, b) => b.attempt - a.attempt);
     return Promise.resolve(rows[0]);
   }
-  latestWithSession(runId: string): Promise<HarnessSessionRecord | undefined> {
+  latestWithSession(runId: string, harness: HarnessId): Promise<HarnessSessionRecord | undefined> {
     const rows = this.rows
-      .filter((r) => r.runId === runId && r.sessionId)
+      .filter((r) => r.runId === runId && r.harness === harness && r.sessionId)
       .sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1));
     return Promise.resolve(rows[0]);
   }
-  byScopeKey(scopeKey: string): Promise<HarnessSessionRecord | undefined> {
+  byScopeKey(scopeKey: string, harness: HarnessId): Promise<HarnessSessionRecord | undefined> {
     const rows = this.rows
-      .filter((r) => r.scopeKey === scopeKey && r.sessionId)
+      .filter((r) => r.scopeKey === scopeKey && r.harness === harness && r.sessionId)
       .sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1));
     return Promise.resolve(rows[0]);
   }
@@ -366,7 +414,6 @@ const ZERO_USAGE: Usage = {
 };
 
 export class FakeHarness implements HarnessPort {
-  readonly id: HarnessId = 'codex';
   readonly started: HarnessStartRequest[] = [];
   readonly resumed: { sessionId: string; request: HarnessStartRequest }[] = [];
   readonly cancelled: string[] = [];
@@ -378,7 +425,10 @@ export class FakeHarness implements HarnessPort {
   };
   private sessionCounter = 0;
 
-  constructor(private turns: ScriptedTurn[] = []) {}
+  constructor(
+    private turns: ScriptedTurn[] = [],
+    readonly id: HarnessId = 'codex',
+  ) {}
 
   /** Replace the script. Turns are consumed in order unless they carry a matcher. */
   script(turns: ScriptedTurn[]): void {
@@ -392,7 +442,10 @@ export class FakeHarness implements HarnessPort {
   start(request: HarnessStartRequest, signal: AbortSignal): HarnessSession {
     this.started.push(request);
     this.sessionCounter += 1;
-    const sessionId = `fake-session-${this.sessionCounter}`;
+    const sessionId =
+      this.id === 'codex'
+        ? `fake-session-${this.sessionCounter}`
+        : `fake-${this.id}-session-${this.sessionCounter}`;
     return this.session(sessionId, 'fresh', request.turn, signal);
   }
 
@@ -489,17 +542,18 @@ export class FakeHarness implements HarnessPort {
 
 export class FakeDecider implements DeciderPort {
   readonly choices: ChoiceRequest[] = [];
-  readonly judgements: YesNoRequest[] = [];
+  readonly nouls: NoulRequest[] = [];
+  readonly classifierNouls: NoulRequest[] = [];
+  readonly scores: ScoreRequest[] = [];
   isAvailable = true;
   constructor(
     readonly id: 'jev' | 'codex',
     private readonly chooser: (request: ChoiceRequest) => ChoiceResult = (r) => ({
-      label: r.options[0]?.label ?? '',
+      type: 'choice',
+      optionId: r.options[0]?.id ?? '',
       confidence: 1,
-    }),
-    private readonly judge_: (request: YesNoRequest) => PredicateAnswer = () => ({
-      holds: true,
-      confidence: 1,
+      probabilities:
+        id === 'jev' ? Object.fromEntries(r.options.map((o, i) => [o.id, i === 0 ? 1 : 0])) : null,
     }),
   ) {}
   available(): boolean {
@@ -509,9 +563,25 @@ export class FakeDecider implements DeciderPort {
     this.choices.push(request);
     return Promise.resolve(this.chooser(request));
   }
-  judge(request: YesNoRequest, _signal?: AbortSignal): Promise<PredicateAnswer> {
-    this.judgements.push(request);
-    return Promise.resolve(this.judge_(request));
+  noul(request: NoulRequest, _signal?: AbortSignal): Promise<LlmNoulResult> {
+    this.nouls.push(request);
+    return Promise.resolve({ type: 'noul', holds: true, confidence: 1, reasoning: 'Verified' });
+  }
+  classifyNoul(request: NoulRequest, _signal?: AbortSignal): Promise<ClassifierNoulResult> {
+    this.classifierNouls.push(request);
+    return Promise.resolve({ type: 'noul', trueProbability: 1 });
+  }
+  score(request: ScoreRequest, _signal?: AbortSignal): Promise<ScoreResult> {
+    this.scores.push(request);
+    return Promise.resolve({
+      type: 'score',
+      score: 0,
+      confidence: 1,
+      legend: Object.fromEntries(request.anchors.map((anchor, index) => [String(index), anchor])),
+      probabilities: Object.fromEntries(
+        request.anchors.map((_anchor, index) => [String(index), index === 0 ? 1 : 0]),
+      ),
+    });
   }
 }
 
@@ -677,14 +747,13 @@ export class InMemorySecrets implements SecretsPort {
 }
 
 export const DEFAULT_TEST_SETTINGS: EngineSettings = {
-  defaultModel: 'gpt-6-luna',
-  defaultEffort: 'low',
+  defaults: { byHarness: { codex: { model: 'gpt-6-luna', effort: 'low' } } },
   maxConcurrentRuns: 4,
   structuredTimeoutMs: 5000,
 };
 
 export class FakeClassifierRegistry implements ClassifierRegistryPort {
-  readonly requests: { ownerId: string; modelId: string }[] = [];
+  readonly requests: { ownerId: string; modelId: string; primitive: ClassifierPrimitive }[] = [];
   readonly models = new Map<string, ClassifierPort & Partial<Pick<DeciderPort, 'available'>>>();
   readonly unavailable = new Map<
     string,
@@ -693,8 +762,12 @@ export class FakeClassifierRegistry implements ClassifierRegistryPort {
   constructor(builtin?: ClassifierPort & Partial<Pick<DeciderPort, 'available'>>) {
     if (builtin) this.models.set('jev', builtin);
   }
-  resolve(ownerId: string, modelId: string): Promise<ClassifierResolution> {
-    this.requests.push({ ownerId, modelId });
+  resolve(
+    ownerId: string,
+    modelId: string,
+    primitive: ClassifierPrimitive,
+  ): Promise<ClassifierResolution> {
+    this.requests.push({ ownerId, modelId, primitive });
     const unavailable = this.unavailable.get(modelId);
     if (unavailable) return Promise.resolve(unavailable);
     const classifier = this.models.get(modelId);
@@ -710,11 +783,175 @@ export class FakeClassifierRegistry implements ClassifierRegistryPort {
         reason: 'CLASSIFIER_SECRET_MISSING',
         message: `Classifier '${modelId}' is unconfigured`,
       });
-    return Promise.resolve({ status: 'ready', classifier });
+    return Promise.resolve({
+      status: 'ready',
+      classifier,
+      provenance: {
+        provider: modelId === 'jev' ? 'typesafe' : 'http',
+        classifierId: modelId,
+        model: modelId === 'jev' ? 'jev-latest' : modelId,
+      },
+    });
+  }
+}
+
+export class FakeModelCatalog {
+  entries: ModelCatalogEntry[] = ['gpt-6-luna', 'gpt-6-sol', 'gpt-6-astra'].map((model) => ({
+    harness: 'codex',
+    model,
+    source: 'harness',
+    displayName: model,
+    efforts: ['minimal', 'low', 'medium', 'high', 'xhigh', 'max'],
+    defaultEffort: 'low',
+    enabled: true,
+  }));
+  list(): Promise<ModelCatalogEntry[]> {
+    return Promise.resolve(this.entries);
+  }
+}
+
+export class InMemoryTriggerAdmission implements TriggerAdmissionPort {
+  readonly receipts = new Map<string, WebhookReceipt>();
+  readonly inbound = new Map<string, WebhookClaim['inbound']>();
+  constructor(
+    private readonly runs: InMemoryRunRepository,
+    private readonly events: InMemoryEventStore,
+  ) {}
+  async create(authored: RunAdmission, receiptId?: string): Promise<RunRecord> {
+    const input = parseRunAdmission(authored);
+    const receipt = receiptId ? this.receipts.get(receiptId) : undefined;
+    if (
+      receiptId &&
+      (!receipt?.intent ||
+        !['pending', 'admitted'].includes(receipt.status) ||
+        JSON.stringify(receipt.intent) !== JSON.stringify(input))
+    )
+      throw new AdmissionConflictError();
+    if (receipt && !this.inbound.has(receipt.inboundId)) throw new AdmissionConflictError();
+    let run = this.runs.runs.get(input.run.id);
+    const created = !run;
+    if (run) {
+      const thread = await this.runs.getInitialThread(run.id);
+      if (!thread) throw new AdmissionConflictError();
+      assertAdmissionIdentity(input, run, thread, this.events.all(run.id)[0]);
+    } else {
+      if (this.events.all(input.run.id).length) throw new AdmissionConflictError();
+      run = { ...input.run, lastEventSeq: 1 };
+      this.runs.commitCreated(run, input.initialThread);
+      this.events.commitQueued(queuedEvent(input));
+    }
+    if (receipt) {
+      receipt.status = 'admitted';
+      delete receipt.nextAttemptAt;
+      delete receipt.failureCode;
+      const inbound = this.inbound.get(receipt.inboundId);
+      if (!inbound) throw new AdmissionConflictError();
+      inbound.runIds = [run.id];
+    }
+    if (created) this.events.notifyCommitted(queuedEvent(input));
+    return run;
+  }
+  async createPollItem(authored: RunAdmission): Promise<RunRecord | undefined> {
+    const input = parseRunAdmission(authored);
+    const { nodeId, dedupeKey } = pollAdmissionIdentity(input);
+    const reserved = [...this.receipts.values()].some(
+      (receipt) =>
+        receipt.status === 'pending' &&
+        receipt.ownerId === input.run.ownerId &&
+        receipt.loopId === input.run.loopId &&
+        receipt.triggerNodeId === nodeId &&
+        receipt.intent?.initialThread.invocation.trigger.dedupeKey === dedupeKey,
+    );
+    if (reserved || this.runs.hasTriggerKey(input.run.ownerId, input.run.loopId, nodeId, dedupeKey))
+      return undefined;
+    return this.create(input);
+  }
+  claim(
+    input: WebhookClaim,
+    intent?: RunAdmission,
+  ): Promise<{ receipt: WebhookReceipt; duplicate: boolean }> {
+    assertWebhookClaim(input, intent);
+    const prior = [...this.receipts.values()].find(
+      (r) =>
+        r.ownerId === input.ownerId &&
+        r.loopId === input.loopId &&
+        r.triggerNodeId === input.triggerNodeId &&
+        r.contentHash === input.contentHash,
+    );
+    if (prior) return Promise.resolve({ receipt: prior, duplicate: true });
+    const keySeen =
+      !!input.dedupeByKey &&
+      !!input.inbound.dedupeKey &&
+      ([...this.receipts.values()].some(
+        (receipt) =>
+          receipt.ownerId === input.ownerId &&
+          receipt.loopId === input.loopId &&
+          receipt.triggerNodeId === input.triggerNodeId &&
+          this.inbound.get(receipt.inboundId)?.dedupeKey === input.inbound.dedupeKey,
+      ) ||
+        this.runs.hasTriggerKey(
+          input.ownerId,
+          input.loopId,
+          input.triggerNodeId,
+          input.inbound.dedupeKey,
+        ));
+    const receipt: WebhookReceipt = {
+      id: input.id,
+      ownerId: input.ownerId,
+      loopId: input.loopId,
+      triggerNodeId: input.triggerNodeId,
+      contentHash: input.contentHash,
+      inboundId: input.inbound.id,
+      status: keySeen ? 'deduplicated' : intent ? 'pending' : 'filtered',
+      attempts: 0,
+      ...(!keySeen && intent
+        ? {
+            intent: structuredClone(parseRunAdmission(intent)),
+            nextAttemptAt: input.inbound.receivedAt,
+          }
+        : {}),
+    };
+    this.receipts.set(receipt.id, receipt);
+    this.inbound.set(input.inbound.id, structuredClone(input.inbound));
+    return Promise.resolve({ receipt, duplicate: false });
+  }
+  get(id: string): Promise<WebhookReceipt | undefined> {
+    return Promise.resolve(this.receipts.get(id));
+  }
+  due(now: string, limit: number): Promise<WebhookReceipt[]> {
+    return Promise.resolve(
+      [...this.receipts.values()]
+        .filter(
+          (r) => r.status === 'pending' && r.nextAttemptAt !== undefined && r.nextAttemptAt <= now,
+        )
+        .sort((a, b) => (a.nextAttemptAt ?? '').localeCompare(b.nextAttemptAt ?? ''))
+        .slice(0, Math.min(5, limit)),
+    );
+  }
+  failed(id: string, code: WebhookFailureCode, nextAttemptAt?: string): Promise<void> {
+    const receipt = this.receipts.get(id);
+    if (!receipt || receipt.status !== 'pending') return Promise.resolve();
+    receipt.attempts += 1;
+    receipt.failureCode = code;
+    if (nextAttemptAt) receipt.nextAttemptAt = nextAttemptAt;
+    else {
+      receipt.status = 'failed';
+      delete receipt.nextAttemptAt;
+    }
+    return Promise.resolve();
+  }
+  hasPendingPin(loopId: string): Promise<boolean> {
+    return Promise.resolve(
+      [...this.receipts.values()].some(
+        (r) => r.status === 'pending' && r.intent?.pinnedLoopIds.includes(loopId),
+      ),
+    );
   }
 }
 
 export interface FakePorts extends EnginePorts {
+  admission: InMemoryTriggerAdmission;
+  modelCatalog: FakeModelCatalog;
   classifiers: FakeClassifierRegistry;
   clock: FakeClock;
   ids: FakeIds;
@@ -739,6 +976,9 @@ export interface FakePorts extends EnginePorts {
 /** Build a complete set of fake ports wired together. */
 export function createFakePorts(options: { secrets?: Record<string, string> } = {}): FakePorts {
   const clock = new FakeClock();
+  const events = new InMemoryEventStore(clock);
+  const runs = new InMemoryRunRepository();
+  const admission = new InMemoryTriggerAdmission(runs, events);
   const harness = new FakeHarness();
   const jev = new FakeDecider('jev');
   const codexDecider = new FakeDecider('codex');
@@ -748,14 +988,16 @@ export function createFakePorts(options: { secrets?: Record<string, string> } = 
     clock,
     ids: new FakeIds(),
     logger: new CapturingLogger(),
-    events: new InMemoryEventStore(clock),
-    runs: new InMemoryRunRepository(),
+    events,
+    runs,
+    admission,
     loops: new InMemoryLoopRepository(),
     sessions: new InMemorySessionRepository(),
     harnesses: { codex: harness },
     harness,
-    deciders: [jev, codexDecider],
+    deciders: [codexDecider],
     classifiers: new FakeClassifierRegistry(jev),
+    modelCatalog: new FakeModelCatalog(),
     jev,
     codexDecider,
     structured: structuredFake,

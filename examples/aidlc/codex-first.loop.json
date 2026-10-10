@@ -1,9 +1,9 @@
 {
   "format": "graphgoblin-loop",
-  "formatVersion": 1,
+  "formatVersion": 2,
   "exportedAt": "2026-10-07T01:36:50.537Z",
   "loop": {
-    "schemaVersion": 1,
+    "schemaVersion": 2,
     "name": "aidlc-trial-codex-first",
     "description": "A bounded real-worker scratch trial: plan, implement, fresh same-family review, local tests, candidate QA and evidence verification. No GitHub, merge or issue closure. Pre-existing scratch workspace only; external admission must validate path, model availability and confinement. Admission enforces temp/gg-aidlc-trial isolation and the locked checklist.",
     "settings": {
@@ -12,8 +12,12 @@
         "template": "{{ trigger.payload.workspacePath }}"
       },
       "defaults": {
-        "model": "gpt-6.1-sol",
-        "effort": "high"
+        "byHarness": {
+          "codex": {
+            "model": "gpt-6.1-sol",
+            "effort": "high"
+          }
+        }
       },
       "maxIterations": 2,
       "subloopDepthLimit": 1
@@ -259,28 +263,29 @@
         "label": "aidlc-trial-plan-route",
         "kind": "decision",
         "config": {
-          "routes": [
-            {
-              "label": "pass",
-              "description": "Accepted and ready for the next step"
-            },
-            {
-              "label": "fix",
-              "description": "Changes required within the attempt cap"
-            },
-            {
-              "label": "blocked",
-              "description": "Stop with a failure report"
-            }
-          ],
-          "question": "Route verified structured state",
-          "strategy": ["expression"],
-          "expression": {
-            "jsonata": "outputs.plan.value.status = \"ready\" and $count(outputs.plan.value.tasks) = 1 ? \"pass\" : \"blocked\""
+          "answer": {
+            "type": "choice",
+            "options": [
+              {
+                "id": "pass",
+                "label": "pass",
+                "criteria": "Accepted and ready for the next step"
+              },
+              {
+                "id": "fix",
+                "label": "fix",
+                "criteria": "Changes required within the attempt cap"
+              },
+              {
+                "id": "blocked",
+                "label": "blocked",
+                "criteria": "Stop with a failure report"
+              }
+            ]
           },
-          "context": {
-            "messages": "none",
-            "includeLastOutput": false
+          "evaluation": {
+            "kind": "expression",
+            "jsonata": "outputs.plan.value.status = \"ready\" and $count(outputs.plan.value.tasks) = 1 ? \"pass\" : \"blocked\""
           }
         },
         "ui": {
@@ -356,28 +361,29 @@
         "label": "aidlc-trial-impl-route",
         "kind": "decision",
         "config": {
-          "routes": [
-            {
-              "label": "pass",
-              "description": "Accepted and ready for the next step"
-            },
-            {
-              "label": "fix",
-              "description": "Changes required within the attempt cap"
-            },
-            {
-              "label": "blocked",
-              "description": "Stop with a failure report"
-            }
-          ],
-          "question": "Route verified structured state",
-          "strategy": ["expression"],
-          "expression": {
-            "jsonata": "outputs.implement.value.status = \"complete\" ? \"pass\" : \"blocked\""
+          "answer": {
+            "type": "choice",
+            "options": [
+              {
+                "id": "pass",
+                "label": "pass",
+                "criteria": "Accepted and ready for the next step"
+              },
+              {
+                "id": "fix",
+                "label": "fix",
+                "criteria": "Changes required within the attempt cap"
+              },
+              {
+                "id": "blocked",
+                "label": "blocked",
+                "criteria": "Stop with a failure report"
+              }
+            ]
           },
-          "context": {
-            "messages": "none",
-            "includeLastOutput": false
+          "evaluation": {
+            "kind": "expression",
+            "jsonata": "outputs.implement.value.status = \"complete\" ? \"pass\" : \"blocked\""
           }
         },
         "ui": {
@@ -475,28 +481,29 @@
         "label": "aidlc-trial-review-route",
         "kind": "decision",
         "config": {
-          "routes": [
-            {
-              "label": "pass",
-              "description": "Accepted and ready for the next step"
-            },
-            {
-              "label": "fix",
-              "description": "Changes required within the attempt cap"
-            },
-            {
-              "label": "blocked",
-              "description": "Stop with a failure report"
-            }
-          ],
-          "question": "Route verified structured state",
-          "strategy": ["expression"],
-          "expression": {
-            "jsonata": "outputs.review.value.verdict = \"pass\" ? \"pass\" : (outputs.review.value.verdict = \"changes-required\" ? \"fix\" : \"blocked\")"
+          "answer": {
+            "type": "choice",
+            "options": [
+              {
+                "id": "pass",
+                "label": "pass",
+                "criteria": "Accepted and ready for the next step"
+              },
+              {
+                "id": "fix",
+                "label": "fix",
+                "criteria": "Changes required within the attempt cap"
+              },
+              {
+                "id": "blocked",
+                "label": "blocked",
+                "criteria": "Stop with a failure report"
+              }
+            ]
           },
-          "context": {
-            "messages": "none",
-            "includeLastOutput": false
+          "evaluation": {
+            "kind": "expression",
+            "jsonata": "outputs.review.value.verdict = \"pass\" ? \"pass\" : (outputs.review.value.verdict = \"changes-required\" ? \"fix\" : \"blocked\")"
           }
         },
         "ui": {

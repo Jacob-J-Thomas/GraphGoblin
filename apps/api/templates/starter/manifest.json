@@ -1,0 +1,42 @@
+{
+  "id": "starter",
+  "version": "1.0.0",
+  "kind": "starter",
+  "title": "Starter assistant",
+  "description": "Summarize your input and suggest a next step with your selected harness.",
+  "tags": ["starter", "assistant"],
+  "roles": [
+    {
+      "id": "assistant",
+      "label": "Assistant",
+      "access": "read-only"
+    }
+  ],
+  "prerequisites": [
+    {
+      "id": "assistant",
+      "label": "Assistant model and harness",
+      "kind": "role",
+      "blocking": "authoring",
+      "role": "assistant"
+    }
+  ],
+  "requiredSecrets": [],
+  "parentKey": "parent",
+  "loops": [
+    {
+      "key": "parent",
+      "file": "loop.json",
+      "dependsOn": [],
+      "roleNodes": [
+        {
+          "role": "assistant",
+          "nodeId": "assistant"
+        }
+      ],
+      "settingsNodes": ["settings"],
+      "subloops": []
+    }
+  ],
+  "draftFile": "draft.json"
+}

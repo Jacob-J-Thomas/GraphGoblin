@@ -230,13 +230,22 @@ describe('runPreflight', () => {
     });
     const noJev = await runPreflight(sources({ jevKey: () => Promise.resolve('  ') }));
     expect(noJev.ok).toBe(true);
-    expect(byId(noJev, 'jev')).toMatchObject({ status: 'warn', message: /optional/ });
+    expect(byId(noJev, 'jev')).toMatchObject({
+      status: 'warn',
+      message: /Jev is optional; its classifier is unavailable/,
+    });
     // A non-Error rejection still yields a readable message.
     // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
     const jevError = await runPreflight(sources({ jevKey: () => Promise.reject('bad key') }));
     expect(byId(jevError, 'jev')).toMatchObject({ status: 'warn', message: /bad key/ });
 
-    const unknown = await runPreflight(sources({ config: config({ defaultModel: 'gpt-nope' }) }));
+    const unknown = await runPreflight(
+      sources({
+        config: config({
+          defaults: { byHarness: { codex: { model: 'gpt-nope', effort: 'low' } } },
+        }),
+      }),
+    );
     expect(unknown.ok).toBe(false);
     expect(byId(unknown, 'default-model')?.message).toMatch(/gpt-nope/);
     expect(byId(unknown, 'default-model')?.message).toContain(

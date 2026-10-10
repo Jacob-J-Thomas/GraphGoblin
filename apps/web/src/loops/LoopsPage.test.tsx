@@ -2,7 +2,7 @@ import { kitchenSinkLoop, minimalLoop } from '@graphgoblin/contracts/testing';
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { FakeApi, problem, TS } from '../__fixtures__/fake-api.js';
+import { FakeApi, problem, starterTemplateEntry, TS } from '../__fixtures__/fake-api.js';
 import { renderApp } from '../__fixtures__/render.js';
 
 describe('LoopsPage', () => {
@@ -47,6 +47,160 @@ describe('LoopsPage', () => {
     expect(api.callsTo('POST', '/loops')[0]!.headers.get('x-graphgoblin-client')).toBe('ui');
   });
 
+  it('creates an editable template draft without setup, defaults, or readiness', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const entry = starterTemplateEntry();
+    entry.defaultSettings = null;
+    entry.prerequisites.canInstantiate = false;
+    entry.prerequisites.canRun = false;
+    api.templates = [entry];
+    renderApp('/loops', api);
+
+    await user.click(await screen.findByRole('button', { name: 'New from template' }));
+    expect(await screen.findByRole('heading', { name: 'Choose a template' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Quick start' })).toBeInTheDocument();
+    expect(screen.getByText(/Use a template to create an independent loop/)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Use Quick start' }));
+
+    await waitFor(() =>
+      expect(screen.getByTestId('location')).toHaveTextContent(/^\/loops\/.+\/edit$/),
+    );
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    const [createCall] = api.callsTo('POST', '/templates/quick-start/draft');
+    expect(createCall?.body).toEqual({});
+    const [created] = [...api.loops.values()];
+    expect(created?.loop.draftVersionId).toBeTruthy();
+    expect(created?.loop.currentVersionId).toBeUndefined();
+    expect(api.callsTo('POST', '/templates/quick-start/prerequisites')).toHaveLength(0);
+    expect(api.callsTo('POST', '/templates/quick-start/instantiate')).toHaveLength(0);
+  });
+
+  it('keeps all gallery actions guarded while creating and opening a draft', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    api.templates = [starterTemplateEntry()];
+    let finish!: (response: Response) => void;
+    api.override(
+      'POST /templates/:id/draft',
+      () =>
+        new Promise<Response>((resolve) => {
+          finish = resolve;
+        }),
+    );
+    renderApp('/loops', api);
+
+    await user.click(await screen.findByRole('button', { name: 'New from template' }));
+    const create = await screen.findByRole('button', { name: 'Use Quick start' });
+    await user.click(create);
+    const createCall = await waitFor(() => {
+      const calls = api.callsTo('POST', '/templates/quick-start/draft');
+      expect(calls).toHaveLength(1);
+      return calls[0]!;
+    });
+
+    expect(create).toHaveAttribute('aria-disabled', 'true');
+    expect(create).not.toBeDisabled();
+    fireEvent.click(create);
+    expect(api.callsTo('POST', '/templates/quick-start/draft')).toHaveLength(1);
+
+    await act(async () => finish(await api.builtIn(createCall)));
+    await waitFor(() =>
+      expect(screen.getByTestId('location')).toHaveTextContent(/^\/loops\/.+\/edit$/),
+    );
+    expect(api.callsTo('POST', '/templates/quick-start/draft')).toHaveLength(1);
+  });
+
+  it('omits setup readiness and setup-only queries while allowing a copy', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const entry = starterTemplateEntry();
+    const report = {
+      checks: [
+        {
+          id: 'assistant-model',
+          label: 'Assistant model',
+          status: 'missing' as const,
+          blocking: 'authoring' as const,
+          message: 'No enabled assistant model is available.',
+          remediation: 'Enable an available model in Settings.',
+        },
+        {
+          id: 'run-isolation',
+          label: 'Run isolation',
+          status: 'unavailable' as const,
+          blocking: 'runtime' as const,
+          message: 'This installation cannot enforce evidence-only isolation yet.',
+          remediation: 'Wait for an enforced isolation runner before starting runs.',
+        },
+      ],
+      canInstantiate: false,
+      canRun: false,
+    };
+    entry.prerequisites = report;
+    api.templates = [entry];
+    renderApp('/loops', api);
+
+    await user.click(await screen.findByRole('button', { name: 'New from template' }));
+    expect(screen.queryByText('No enabled assistant model is available.')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Enable an available model in Settings\./)).not.toBeInTheDocument();
+    expect(api.callsTo('GET', /model-catalog|system\/preflight|template-instances/)).toHaveLength(
+      0,
+    );
+    expect(screen.getByRole('button', { name: 'Use Quick start' })).toBeEnabled();
+    await user.click(screen.getByRole('button', { name: 'Use Quick start' }));
+    await waitFor(() =>
+      expect(screen.getByTestId('location')).toHaveTextContent(/^\/loops\/.+\/edit$/),
+    );
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(api.callsTo('POST', '/templates/quick-start/draft')).toHaveLength(1);
+    expect(api.callsTo('POST', '/templates/quick-start/prerequisites')).toHaveLength(0);
+    expect(api.callsTo('POST', '/templates/quick-start/instantiate')).toHaveLength(0);
+  });
+
+  it('reports a failed draft request and never retries it automatically', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    api.templates = [starterTemplateEntry()];
+    api.override('POST /templates/:id/draft', () =>
+      problem(503, 'DRAFT_UNAVAILABLE', 'The template draft could not be created.'),
+    );
+    renderApp('/loops', api);
+    await user.click(await screen.findByRole('button', { name: 'New from template' }));
+    await user.click(await screen.findByRole('button', { name: 'Use Quick start' }));
+    expect(
+      await screen.findByText(/The template draft could not be created\./),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/check the loop list/)).toBeInTheDocument();
+    expect(api.callsTo('POST', '/templates/quick-start/draft')).toHaveLength(1);
+    expect(api.callsTo('POST', '/templates/quick-start/prerequisites')).toHaveLength(0);
+    expect(api.callsTo('POST', '/templates/quick-start/instantiate')).toHaveLength(0);
+  });
+
+  it('shows an empty gallery and still creates a template draft without typed settings defaults', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const emptyGallery = renderApp('/loops', api);
+    await user.click(await screen.findByRole('button', { name: 'New from template' }));
+    expect(await screen.findByText('No templates are available right now.')).toBeInTheDocument();
+    emptyGallery.unmount();
+
+    const withNoDefaults = new FakeApi();
+    const entry = starterTemplateEntry();
+    entry.defaultSettings = null;
+    entry.prerequisites.canInstantiate = false;
+    entry.prerequisites.canRun = false;
+    withNoDefaults.templates = [entry];
+    renderApp('/loops', withNoDefaults);
+    await user.click(await screen.findByRole('button', { name: 'New from template' }));
+    await user.click(await screen.findByRole('button', { name: 'Use Quick start' }));
+    await waitFor(() =>
+      expect(screen.getByTestId('location')).toHaveTextContent(/^\/loops\/.+\/edit$/),
+    );
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(withNoDefaults.callsTo('POST', '/templates/quick-start/draft')).toHaveLength(1);
+  });
+
   it('reports a failed create', async () => {
     const user = userEvent.setup();
     const api = new FakeApi();
@@ -64,7 +218,7 @@ describe('LoopsPage', () => {
     const input = await screen.findByLabelText('Import an exported loop (JSON)');
     const exported = {
       format: 'graphgoblin-loop',
-      formatVersion: 1,
+      formatVersion: 3,
       exportedAt: TS,
       loop: kitchenSinkLoop(),
     };
@@ -100,7 +254,7 @@ describe('LoopsPage', () => {
     fireEvent.change(input, { target: { files: [] } });
   });
 
-  it('lists the field paths when importing an outdated export', async () => {
+  it('directs a v1 export to the offline upgrade command', async () => {
     const user = userEvent.setup();
     renderApp('/loops', new FakeApi());
     const document = {
@@ -114,13 +268,8 @@ describe('LoopsPage', () => {
       new File([JSON.stringify(document)], 'old-loop.json', { type: 'application/json' }),
     );
     const alert = await screen.findByRole('alert');
-    expect(alert).toHaveTextContent('LOOP_IMPORT_ERROR');
-    const details = within(alert).getAllByRole('listitem');
-    expect(details).toHaveLength(2);
-    expect(details.map((item) => item.textContent)).toEqual([
-      expect.stringContaining('loop.settings.defaults.harness:'),
-      expect.stringContaining('loop.settings.defaults.extra:'),
-    ]);
+    expect(alert).toHaveTextContent('LOOP_FORMAT_UPGRADE_REQUIRED');
+    expect(alert).toHaveTextContent('Use the offline graphgoblin-upgrade export command');
   });
 
   it('exports the published version or the draft as a download', async () => {

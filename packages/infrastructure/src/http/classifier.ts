@@ -1,5 +1,20 @@
-import { ClassifierChoiceResponseSchema, ClassifierEndpointSchema } from '@graphgoblin/contracts';
-import type { ClassifierPort, ChoiceRequest, ChoiceResult } from '@graphgoblin/engine';
+import {
+  ClassifierChoiceResponseSchema,
+  ClassifierEndpointSchema,
+  ClassifierNoulResponseSchema,
+  ClassifierScoreResponseSchema,
+} from '@graphgoblin/contracts';
+import { validatePrimitiveAnswer } from '@graphgoblin/domain';
+import type {
+  ClassifierPort,
+  ChoiceRequest,
+  ChoiceResult,
+  NoulRequest,
+  ClassifierNoulResult,
+  ScoreRequest,
+  ScoreResult,
+  PrimitiveRequest,
+} from '@graphgoblin/engine';
 import type { FetchLike } from './probes.js';
 
 /** Fixed diagnostics intentionally omit provider bodies, headers, URLs, and transport messages. */
@@ -23,13 +38,17 @@ export interface HttpClassifierOptions {
   fetch?: FetchLike;
 }
 
-export class HttpChoiceClassifier implements ClassifierPort {
+export class HttpClassifier implements ClassifierPort {
   private readonly url: string;
   constructor(private readonly options: HttpClassifierOptions) {
     this.url = `${ClassifierEndpointSchema.parse(options.endpoint).replace(/\/+$/, '')}/v1/systemone`;
   }
 
-  async choose(request: ChoiceRequest, signal: AbortSignal): Promise<ChoiceResult> {
+  private async ask(
+    request: PrimitiveRequest,
+    question: Record<string, unknown>,
+    signal: AbortSignal,
+  ): Promise<unknown> {
     const timeout = AbortSignal.timeout(this.options.timeoutMs ?? 10_000);
     const combined = AbortSignal.any([signal, timeout]);
     let body: unknown;
@@ -48,13 +67,7 @@ export class HttpChoiceClassifier implements ClassifierPort {
           model: this.options.providerModel,
           state: request.context,
           questions: {
-            answer: {
-              type: 'choice',
-              instructions: request.question,
-              criteria: Object.fromEntries(
-                request.options.map((option) => [option.label, option.description]),
-              ),
-            },
+            answer: question,
           },
         }),
       });
@@ -93,6 +106,19 @@ export class HttpChoiceClassifier implements ClassifierPort {
       if (error instanceof HttpClassifierError) throw error;
       throw new HttpClassifierError('DECIDER_UNREACHABLE', 'Classifier endpoint is unreachable');
     }
+    return body;
+  }
+
+  async choose(request: ChoiceRequest, signal: AbortSignal): Promise<ChoiceResult> {
+    const body = await this.ask(
+      request,
+      {
+        type: 'choice',
+        instructions: request.question,
+        criteria: Object.fromEntries(request.options.map((option) => [option.id, option.criteria])),
+      },
+      signal,
+    );
     const parsed = ClassifierChoiceResponseSchema.safeParse(body);
     if (!parsed.success)
       throw new HttpClassifierError(
@@ -100,7 +126,7 @@ export class HttpChoiceClassifier implements ClassifierPort {
         'Classifier returned an invalid Choice response',
       );
     const { choice, confidence, probabilities } = parsed.data.answers.answer;
-    const labels = new Set(request.options.map((option) => option.label));
+    const labels = new Set(request.options.map((option) => option.id));
     if (
       Object.keys(probabilities).length !== labels.size ||
       [...labels].some((label) => !Object.hasOwn(probabilities, label))
@@ -117,13 +143,55 @@ export class HttpChoiceClassifier implements ClassifierPort {
       );
     }
     return {
-      label: choice,
-      // Exact label coverage and choice membership above guarantee a selected probability.
+      type: 'choice',
+      optionId: choice,
       confidence: confidence ?? probabilities[choice]!,
-      alternatives: Object.entries(probabilities)
-        .filter(([label]) => label !== choice)
-        .sort((a, b) => b[1] - a[1])
-        .map(([label, probability]) => ({ label, confidence: probability })),
+      probabilities,
     };
+  }
+
+  async classifyNoul(request: NoulRequest, signal: AbortSignal): Promise<ClassifierNoulResult> {
+    signal.throwIfAborted();
+    const body = await this.ask(
+      request,
+      { type: 'noul', instructions: request.question, criteria: request.criteria },
+      signal,
+    );
+    const parsed = ClassifierNoulResponseSchema.safeParse(body);
+    if (!parsed.success)
+      throw new HttpClassifierError(
+        'DECIDER_INVALID_RESPONSE',
+        'Classifier returned an invalid Noul response',
+      );
+    return { type: 'noul', trueProbability: parsed.data.answers.answer.noul };
+  }
+
+  async score(request: ScoreRequest, signal: AbortSignal): Promise<ScoreResult> {
+    signal.throwIfAborted();
+    if (request.anchors.length < 2)
+      throw new HttpClassifierError(
+        'DECIDER_INVALID_CONFIGURATION',
+        'Score requires at least two rubric anchors',
+      );
+    const body = await this.ask(
+      request,
+      { type: 'score', instructions: request.question, criteria: request.anchors },
+      signal,
+    );
+    const parsed = ClassifierScoreResponseSchema.safeParse(body);
+    if (!parsed.success)
+      throw new HttpClassifierError(
+        'DECIDER_INVALID_RESPONSE',
+        'Classifier returned an invalid Score response',
+      );
+    const answer = parsed.data.answers.answer;
+    const result: ScoreResult = {
+      ...answer,
+      confidence: answer.confidence ?? null,
+      probabilities: answer.probabilities ?? null,
+    };
+    const invalid = validatePrimitiveAnswer({ type: 'score', anchors: request.anchors }, result);
+    if (invalid !== null) throw new HttpClassifierError('DECIDER_INVALID_RESPONSE', invalid);
+    return result;
   }
 }

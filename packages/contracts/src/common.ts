@@ -43,8 +43,8 @@ export type JsonPointer = z.infer<typeof JsonPointerSchema>;
 export const EffortSchema = z.enum(['minimal', 'low', 'medium', 'high', 'xhigh', 'max']);
 export type Effort = z.infer<typeof EffortSchema>;
 
-/** Harness identifiers. Only Codex ships in 1.0; the others are reserved so loops can declare them later. */
-export const HarnessIdSchema = z.enum(['codex']);
+/** Harness families; models and native session ids remain scoped to the selected family. */
+export const HarnessIdSchema = z.enum(['codex', 'claude']);
 export type HarnessId = z.infer<typeof HarnessIdSchema>;
 
 /** Shared bound for configured model names and the execution evidence that records them. */

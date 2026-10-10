@@ -57,13 +57,13 @@ const classificationSchema = responseSchema.extend({
   answers: z.object({
     answer: z.object({
       type: z.literal('choice'),
-      choice: z.enum(['billing', 'bug', 'feature request', 'account', 'other']),
+      choice: z.enum(['billing', 'bug', 'feature-request', 'account', 'other']),
       confidence: probability,
       probabilities: z
         .object({
           billing: probability,
           bug: probability,
-          'feature request': probability,
+          'feature-request': probability,
           account: probability,
           other: probability,
         })
@@ -132,9 +132,9 @@ it.skipIf(process.env.LIVE !== '1')(
       expect(decider.available(), 'Jev decider should be available after init()').toBe(true);
 
       const options = [
-        { label: 'ship', description: 'The change is ready to release' },
-        { label: 'fix', description: 'The change needs corrections' },
-        { label: 'drop', description: 'The change should be abandoned' },
+        { id: 'ship', label: 'ship', criteria: 'The change is ready to release' },
+        { id: 'fix', label: 'fix', criteria: 'The change needs corrections' },
+        { id: 'drop', label: 'drop', criteria: 'The change should be abandoned' },
       ];
       const context = { change: 'Fix a README typo', testsPassed: true, unresolvedIssues: 0 };
       const chosen = await decider.choose(
@@ -144,31 +144,18 @@ it.skipIf(process.env.LIVE !== '1')(
       const rawChoice = documented(choiceSchema, responses[0], 'Choice');
       const answer = rawChoice.answers.answer;
       expect(
-        options.some((option) => option.label === chosen.label),
+        options.some((option) => option.id === chosen.optionId),
         'Choice.label must be a declared route (docs/research/jev.md)',
       ).toBe(true);
       documented(probability, chosen.confidence, 'Choice.confidence');
-      expect(chosen.label, 'Choice.label must match answers.answer.choice').toBe(answer.choice);
+      expect(chosen.optionId, 'Choice.label must match answers.answer.choice').toBe(answer.choice);
       expect(chosen.confidence, 'Choice.confidence must preserve answers.answer.confidence').toBe(
         answer.confidence,
       );
-      const alternatives = chosen.alternatives ?? [];
-      expect(
-        alternatives.map((alternative) => alternative.label).sort(),
-        'Choice.alternatives must cover exactly the other route labels (docs/research/jev.md)',
-      ).toEqual(
-        options
-          .map((option) => option.label)
-          .filter((label) => label !== chosen.label)
-          .sort(),
+      expect(chosen.probabilities).toEqual(answer.probabilities);
+      expect(Object.keys(chosen.probabilities ?? {}).sort()).toEqual(
+        options.map((option) => option.id).sort(),
       );
-      for (const alternative of alternatives) {
-        documented(probability, alternative.confidence, `Choice.alternatives.${alternative.label}`);
-        expect(
-          alternative.confidence,
-          `Choice.alternatives.${alternative.label}.confidence must equal its raw probability`,
-        ).toBe(answer.probabilities[alternative.label as keyof typeof answer.probabilities]);
-      }
       report(
         'Choice',
         {
@@ -182,33 +169,28 @@ it.skipIf(process.env.LIVE !== '1')(
         key,
       );
 
-      const judged = await decider.judge(
+      const judged = await decider.classifyNoul(
         {
           question: 'Are all tests passing and all issues resolved so the loop can exit?',
           context,
+          criteria: {
+            true: 'All tests pass and every issue is resolved',
+            false: 'A test fails or an issue remains',
+          },
         },
         new AbortController().signal,
       );
       const rawNoul = documented(noulSchema, responses[1], 'Noul');
       const yes = rawNoul.answers.answer.noul;
-      expect(typeof judged.holds, 'Noul.holds must be boolean (docs/research/jev.md)').toBe(
-        'boolean',
-      );
-      documented(probability, judged.confidence, 'Noul.confidence');
-      expect(judged.holds, 'Noul.holds must reflect answers.answer.noul >= 0.5').toBe(yes >= 0.5);
-      expect(
-        judged.confidence,
-        'Noul.confidence must be the probability of the returned boolean',
-      ).toBe(judged.holds ? yes : 1 - yes);
+      documented(probability, judged.trueProbability, 'Noul.trueProbability');
+      expect(judged.trueProbability).toBe(yes);
       report(
         'Noul',
         {
           model: rawNoul.model,
           usage: rawNoul.usage,
           noul: yes,
-          holds: judged.holds,
-          confidence: judged.confidence,
-          chosenProbability: judged.holds ? yes : 1 - yes,
+          trueProbability: judged.trueProbability,
           response: responses[1],
         },
         key,
@@ -249,11 +231,19 @@ it.skipIf(process.env.LIVE !== '1')(
       });
       await decider.init();
       const options = [
-        { label: 'billing', description: 'Invoices, payments, charges, or refunds' },
-        { label: 'bug', description: 'Broken product functionality or software errors' },
-        { label: 'feature request', description: 'A request for new product functionality' },
-        { label: 'account', description: 'Login, password, or account access problems' },
-        { label: 'other', description: 'Any message outside these categories' },
+        { id: 'billing', label: 'billing', criteria: 'Invoices, payments, charges, or refunds' },
+        { id: 'bug', label: 'bug', criteria: 'Broken product functionality or software errors' },
+        {
+          id: 'feature-request',
+          label: 'feature request',
+          criteria: 'A request for new product functionality',
+        },
+        {
+          id: 'account',
+          label: 'account',
+          criteria: 'Login, password, or account access problems',
+        },
+        { id: 'other', label: 'other', criteria: 'Any message outside these categories' },
       ];
       const chosen = await decider.choose(
         {
@@ -268,8 +258,8 @@ it.skipIf(process.env.LIVE !== '1')(
       );
       const raw = documented(classificationSchema, body, 'Classification');
       const answer = raw.answers.answer;
-      expect(chosen.label, 'Classification must choose billing').toBe('billing');
-      expect(chosen.label, 'Classification must preserve the raw choice').toBe(answer.choice);
+      expect(chosen.optionId, 'Classification must choose billing').toBe('billing');
+      expect(chosen.optionId, 'Classification must preserve the raw choice').toBe(answer.choice);
       documented(probability, chosen.confidence, 'Classification.confidence');
       expect(chosen.confidence, 'Classification must preserve reported confidence').toBe(
         answer.confidence,
@@ -277,18 +267,8 @@ it.skipIf(process.env.LIVE !== '1')(
       expect(
         Object.keys(answer.probabilities).sort(),
         'Probabilities must cover all five labels',
-      ).toEqual(options.map((option) => option.label).sort());
-      expect(chosen.alternatives?.map((alternative) => alternative.label).sort()).toEqual(
-        options
-          .map((option) => option.label)
-          .filter((label) => label !== chosen.label)
-          .sort(),
-      );
-      for (const alternative of chosen.alternatives ?? []) {
-        expect(alternative.confidence).toBe(
-          answer.probabilities[alternative.label as keyof typeof answer.probabilities],
-        );
-      }
+      ).toEqual(options.map((option) => option.id).sort());
+      expect(chosen.probabilities).toEqual(answer.probabilities);
       report(
         'Classification',
         {
@@ -356,6 +336,56 @@ it.skipIf(process.env.LIVE !== '1')(
         6,
       );
       expect(calls, 'Score must make exactly one request').toBe(1);
+    });
+  },
+);
+
+it.skipIf(process.env.LIVE !== '1')(
+  'verifies one canonical Choice with stable ids against TypeSafe',
+  { timeout: 60_000, retry: 0 },
+  async () => {
+    const key = (process.env.GG_JEV_API_KEY ?? process.env.JEV_API_KEY)?.trim();
+    if (!key)
+      throw new Error(
+        'No existing GG_JEV_API_KEY or JEV_API_KEY is available for the requested live Choice check',
+      );
+    await safely(key, async () => {
+      let calls = 0;
+      const decider = createJevDecider({
+        secrets: { resolve: () => Promise.resolve(key) },
+        timeoutMs: 30_000,
+        retry: { maxRetries: 0 },
+        fetch: async (url, init) => {
+          calls += 1;
+          if (calls > 1) throw new Error('Live Choice exceeded its one-call budget');
+          return globalThis.fetch(url, init);
+        },
+      });
+      await decider.init();
+      expect(decider.available()).toBe(true);
+      const result = await decider.choose(
+        {
+          question: 'Choose the option whose criterion exactly matches context.status.',
+          options: [
+            { id: 'ready', label: '1', criteria: 'The context status is exactly READY' },
+            { id: 'revise', label: '2', criteria: 'The context status is exactly NEEDS_WORK' },
+            { id: 'discard', label: '3', criteria: 'The context status is exactly DISCARD' },
+          ],
+          context: { status: 'READY' },
+        },
+        new AbortController().signal,
+      );
+      expect(result).toMatchObject({ type: 'choice', optionId: 'ready' });
+      expect(Object.keys(result.probabilities ?? {}).sort()).toEqual([
+        'discard',
+        'ready',
+        'revise',
+      ]);
+      documented(probability, result.confidence, 'Choice.confidence');
+      for (const value of Object.values(result.probabilities ?? {}))
+        documented(probability, value, 'Choice.probability');
+      expect(calls).toBe(1);
+      report('canonical Choice', { calls, model: DEFAULT_MODEL, answer: result }, key);
     });
   },
 );

@@ -103,7 +103,9 @@ Tasks:
 
 Acceptance: a loop that triggers manually, asks Codex to change a file in a working directory, validates a structured result, decides with Jev, loops back once, and returns a payload through the `file` channel; runs on the owner's Windows machine; coverage above threshold.
 
-M4 wiring notes (WP-I): `apps/api` composes the real adapters when no override is given: harness `codex`, the Codex structured port, and deciders `[jev, codex]` (see "Composition" in 06). `GG_CODEX_BINARY` optionally points at a `codex` executable. Jev reads `jev-api-key` from the local owner's secrets after migrations run at `start()`, and `PUT`/`DELETE /secrets/jev-api-key` refresh it through `Container.onSecretChanged`, so a new key needs no restart. `HarnessPort.resume` now takes the full `HarnessStartRequest`, so resumed, repair, and crash-recovery turns keep the node's model, effort, sandbox, and working directory. The SSE stream ends right after the replay when the run is already terminal (07). A `LIVE=1` smoke in `apps/api/src/live.test.ts` runs trigger, inference (`gpt-6-luna`, `low`, read-only), and exit through the API and the real Codex CLI; it passed on 2026-10-03. Jev was verified live on 2026-10-03 with Choice, five-label classification, Noul, direct SDK Score, and a published API loop that succeeded via the Jev route (see `research/jev.md`).
+M4 wiring notes (WP-I): `apps/api` composes the Codex and Claude harnesses when no override is given, plus the Codex structured port and deciders `[jev, codex]` (see "Composition" in 06). Claude is available only on supported native Windows setups. `GG_CODEX_BINARY` optionally points at a `codex` executable. Jev reads `jev-api-key` from the local owner's secrets after migrations run at `start()`, and `PUT`/`DELETE /secrets/jev-api-key` refresh it through `Container.onSecretChanged`, so a new key needs no restart. `HarnessPort.resume` takes the full `HarnessStartRequest`, so resumed, repair, and crash-recovery turns keep the node's model, effort, sandbox, and working directory. Session lookup is filtered by harness before selecting the newest eligible session. The SSE stream ends right after the replay when the run is already terminal (07). A `LIVE=1` smoke in `apps/api/src/live.test.ts` runs trigger, Codex inference (`gpt-6-luna`, `low`, read-only), and exit through the API and the real Codex CLI; it passed on 2026-10-03. Jev was verified live on 2026-10-03 with Choice, five-label classification, Noul, direct SDK Score, and a published API loop that succeeded via the Jev route (see `research/jev.md`).
+
+M4 extension (#26): the API also registers the owner-installed Claude Code CLI adapter on native Windows. It requires CLI 2.1.285 or newer, required capabilities and `claude.ai` login, uses no Anthropic SDK dependency, and admits the exact supported `claude-opus-5-5` and `claude-fable-5-1` models. Claude-specific defaults use `defaults.byHarness.claude`. The accepted policy pairs are read-only/never and explicitly selected danger-full-access/never; this read-only mode is tool-restricted, not OS or filesystem-read confinement. Both models use ordinary technical admission and owner enable switches (ADR-0029). The adapter implementation and focused web gates are recorded in [the #26 QA report](qa/2026-10-07-issue-26.md); full coverage, Edge E2E, the live hostile-config canary, live fresh/resume, and review remain pending.
 
 ## M5 - Web editor and PWA (L)
 
@@ -122,6 +124,8 @@ Tasks:
 7. Adversarial QA pass per 10.
 
 Acceptance: the M4 acceptance loop can be built and run entirely in the UI; the update toast appears on a new build and updates only after confirmation; coverage above threshold in `apps/web`; QA defects closed.
+
+Current defaults note (#98): the engine reads owner `defaults.byHarness` as well as loop and process defaults. `GG_DEFAULTS` replaces the old environment variables, and model/effort admission is enforced. The first-pass limitations below are historical.
 
 M5 notes (first pass, WP-D): `apps/web` ships tasks 1 to 6; task 7 (adversarial QA) is next. The app is served by the API under `/app/` (`GG_WEB_DIST`), so client routes never collide with API paths. Unit tests run in jsdom against the real api-client over an in-memory fake API (`src/__fixtures__/fake-api.ts`) rather than MSW. Playwright E2E (`pnpm --filter @graphgoblin/web test:e2e`, after `pnpm build`) starts `createTestApp` with the fake harness on an ephemeral port; on Windows it drives the installed Microsoft Edge (`channel: 'msedge'`, override with `GG_E2E_BROWSER_CHANNEL`) because the development machine has too little disk for Playwright's Chromium download. Known gaps: with `GG_REQUIRE_API_KEY=true` the auth hook also guards `/app/*` and the UI has no API-key entry, so the web app targets local trusted mode only; the default model and effort in Settings are stored as owner settings (`defaultModel`, `defaultEffort`) that the engine does not read yet (it uses `GG_DEFAULT_MODEL` and `GG_DEFAULT_EFFORT`); the inspector's thread reconstruction starts child runs from an empty thread because the subloop seed is not in the event log.
 
@@ -212,7 +216,7 @@ Acceptance status: the install path is the script plus `pnpm start`, or `docker 
 
 Ordered backlog, carried from the plan:
 
-1. Claude Code adapter.
+1. Claude API-provider support, tracked separately by [#100](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/100).
 2. LiteLLM adapter and the summarise operation.
 3. Per-loop concurrency policy.
 4. Multi-tenant: auth provider, remote runner, Postgres adapter and dialect matrix, scheduler lease, owner scoping audit.
@@ -225,7 +229,7 @@ Product gaps known at 1.0 (each marked "After 1.0" in the guide or recorded in a
 
 - Run inspector: no replay button; replay is `POST /runs/{id}/replay` and the MCP tool `replay_run`.
 - `exposeTo` on manual triggers is recorded and described to MCP callers but not enforced.
-- Inference `capabilities` (MCP servers, plugins, skills) are not resolved; use `harnessOptions.configOverrides`.
+- Inference `capabilities` (MCP servers, plugins, skills) remain unresolved for Codex; its raw `harnessOptions.configOverrides` are Codex-only. Claude refuses nonempty capabilities and raw overrides under its native Windows policy.
 - Secrets: no OS-keyring master-key source and no per-secret envelope keys.
 - Settings has no scheduler status card, and the API no scheduler status endpoint (WP-D2 gap).
 - The Events screen does not list webhook endpoints; they are on `GET /loops/{id}/triggers` (WP-D2 gap).

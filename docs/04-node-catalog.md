@@ -8,13 +8,13 @@ There are **no error ports** in 1.0. Failures are handled by the engine's resili
 
 Starts a run. A loop may have several trigger nodes; each is an entry point that produces the same trigger envelope shape.
 
-| Subtype                 | Config                                                                                                                              | Notes                                                                                                    |
-| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `manual`                | `inputSchema?`, `exposeTo: ('ui' \| 'api' \| 'mcp')[]`                                                                              | Button in the UI, REST call, or MCP tool. Optional input validated against the schema.                   |
-| `cron`                  | `expression`, `timezone`, `missedFirePolicy: 'skip' \| 'run-once' \| 'run-each'`, `enabled`                                         | Persisted schedule, re-armed at boot. Missed-fire policy is a per-trigger setting.                       |
-| `webhook`               | `signature: { scheme: 'hmac-sha256'; header: string; secretRef }`, `replayWindowSeconds`, `dedupeKey?: JSONata`, `filter?: JSONata` | Generic signed endpoint. A payload that fails the filter is recorded and ignored.                        |
-| `event`                 | `eventType`, `filter?: JSONata`, `dedupeKey?: JSONata`                                                                              | Fires on GraphGoblin's own inbound-event bus. Other loops can emit to it through an exit return channel. |
-| `poll` (Draft, stretch) | `intervalSeconds`, `probe: Probe`, `fireWhen: JSONata`, `dedupeKey?`                                                                | A trigger-side heartbeat. Needs no inbound connectivity. Shares the probe model with the heartbeat node. |
+| Subtype   | Config                                                                                                                                                                 | Notes                                                                                                                           |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `manual`  | `inputSchema?`, `exposeTo: ('ui' \| 'api' \| 'mcp')[]`                                                                                                                 | Button in the UI, REST call, or MCP tool. Optional input validated against the schema.                                          |
+| `cron`    | `expression`, `timezone`, `missedFirePolicy: 'skip' \| 'run-once' \| 'run-each'`, `enabled`                                                                            | Persisted schedule, re-armed at boot. Missed-fire policy is a per-trigger setting.                                              |
+| `webhook` | Timestamp signature (`hmac-sha256`) with `replayWindowSeconds`, or raw-body signature (`hmac-sha256-body`) without a window; `dedupeKey?: JSONata`, `filter?: JSONata` | Generic signed endpoint. Body mode durably consumes authenticated content, including filtered deliveries.                       |
+| `event`   | `eventType`, `filter?: JSONata`, `dedupeKey?: JSONata`                                                                                                                 | Fires on GraphGoblin's own inbound-event bus. Other loops can emit to it through an exit return channel.                        |
+| `poll`    | `intervalSeconds`, `probe: Probe`, `fireWhen: JSONata`, `dedupeKey?`, optional `items: { select, dedupeKey, maxRunsPerPoll? }`                                         | Needs no inbound connectivity. Items mode validates a bounded candidate array and admits unseen items up to the configured cap. |
 
 Concurrency: every firing starts a new run, in parallel with any already running. A per-loop policy is post-1.0.
 
@@ -25,43 +25,45 @@ Invalid cron schedules produce `CRON_INVALID` issues with the trigger's nodeId a
 an expression issue in the editor opens the schedule's Advanced group and focuses
 the raw expression; a timezone issue focuses the time zone control.
 
-## Decision (Decided strategies, Draft config)
+## Decision (Decided, #98 and #97)
 
-Chooses one of several labelled routes.
+Evaluates one selected method and follows the stable output port for its answer. Choose the answer type independently from the evaluation kind:
 
-```ts
-type DecisionConfig = {
-  routes: { label: string; description: string }[]; // at least two
-  question: string; // Liquid template rendered against the thread
-  context?: {
-    messages?: 'none' | 'last' | number | 'all';
-    vars?: string[];
-    includeLastOutput?: boolean;
-  };
-  strategy: ('jev' | 'codex' | 'expression')[]; // ordered fallback chain
-  jev?: { primitive: 'choice'; model?: string; minConfidence?: number }; // classifier catalog id
-  codex?: { model?: string; effort?: Effort }; // a Codex thread with an output schema of { route, reasoning }
-  expression?: { jsonata: string }; // must evaluate to one of the route labels
-  recordAlternatives: boolean;
-};
-```
+| Answer | Expression                  | Classifier              | LLM (Codex)          |
+| ------ | --------------------------- | ----------------------- | -------------------- |
+| Choice | A declared string option ID | Choice probabilities    | Structured option ID |
+| Noul   | A strict boolean            | True probability        | Structured boolean   |
+| Score  | Unsupported                 | Fractional rubric index | Unsupported          |
 
-Behaviour: strategies are tried in order. `jev.model` selects an exact owner-scoped classifier catalog id; omission defaults to built-in `jev` (provider model `jev-latest`). The registry resolves it at each decision, including resumed execution. An explicit selection never substitutes the built-in. Unknown ids (`CLASSIFIER_MODEL_NOT_FOUND`) and entries without Choice (`CLASSIFIER_PRIMITIVE_UNSUPPORTED`) block publication. Disabled models (`CLASSIFIER_MODEL_DISABLED`), missing or blank required secrets (`CLASSIFIER_SECRET_MISSING`), and unreadable secrets (`CLASSIFIER_SECRET_UNREADABLE`) warn at `config.jev.model`, naming the node, model, and Settings remedy. These unavailable strategies are skipped with the specific reason in `DECISION_NO_ROUTE`'s `tried` details. Without another strategy the decision cannot currently produce a route.
+**Choice** declares two to sixty-four options, subject to actual provider limits. Each has a stable id, a unique readable label and a nonblank criterion. Renaming or reordering a label keeps the connection attached to its ID. Expressions must return one declared string ID; values are not implicitly stringified.
 
-If a classifier answers below `minConfidence`, the next strategy runs. Kev rescales confidence as `(p_max - 1/K) / (1 - 1/K)`, where `K` is the number of routes: two routes with selected probability 0.75 give confidence 0.5. See the [Kev research note](research/jev.md#kev-http-protocol-verification-2026-10-05) when choosing a threshold. An undeclared label from built-in Jev or Codex tries the next strategy, recording fixed text without the raw answer in the exhausted chain's `tried` details. HTTP classifiers instead reject undeclared choices with `DECIDER_INVALID_RESPONSE`. Malformed responses and provider errors fail the step and cancellation propagates; HTTP errors do not silently fall through. Decision failure details never contain the provider's raw answer. Jev probabilities must cover exactly the submitted labels. Only declared routes are retained in recorded alternatives, for every provider. The chosen route, confidence, and alternatives are written to `decision.made` and `lastOutput`; successful classifier events also carry `classifierModel`, the catalog id. `lastOutput` keeps its existing shape. Classification is Choice with categorical labels. Scorer-only entries can be listed but cannot execute a Choice decision.
+**Noul** declares true and false sides, each with a stable port ID, label and criterion. The classifier receives both criteria and returns the raw probability of true. A probability at or above the truth threshold selects true; the default is 0.5. Chosen-side confidence is that probability for true and one minus it for false. The separate minimum confidence controls whether the answer is accepted. Expressions return an actual boolean; Codex returns a boolean with informational confidence. Neither uses a classifier truth threshold.
 
-Ports: one output per route label.
+**Score** declares ordered anchors indexed from zero to N-1. Scores may be fractional: three anchors define a scale from 0 through 2, not three categorical labels. Stable named bands cover that entire range without gaps or overlap. Each includes its lower endpoint and excludes its upper endpoint; the final band also includes the scale maximum. A score exactly on an interior boundary enters the next band. The engine never rounds or rescales it.
+
+Select one Expression, Classifier or LLM evaluator. Classifiers name an explicit owner-scoped catalog ID supporting the declared primitive. LLM currently uses Codex, with model and effort resolved within that harness from node, loop, owner and process defaults. Invalid explicit values never fall through to another selection. Score refuses Expression/LLM before a provider call.
+
+Unknown catalog entries, incompatible capabilities and invalid model/effort combinations are admission errors. Disabled or unconfigured selections remain visible in drafts and block publication. Runtime rechecks availability; an in-flight request keeps its initial configuration. No failure invokes a different evaluator.
+
+Only classifiers accept a minimum confidence. A value below it fails with EVALUATION_RESULT_REJECTED; equality passes. A valid rejected answer may be retained as canonical failure evidence, but it produces no selected route or decision output. LLM confidence must be finite and in [0,1], is informational and has no decision threshold. Expression confidence is null. Invalid answers and expression failures have typed nonresumable errors; restorable unavailability/transient provider failures remain resumable, and cancellation remains cancellation.
+
+Current context behavior is unchanged while #38 is deferred. Questions render against the full thread. The separate provider state contains trigger payload, selected role/content messages, selected variables and optional bare last-output value. The selector does not restrict the question template. Side/option criteria and Score anchors describe the answer requested from the evaluator; no input-preview or new evidence-selection contract is added.
+
+The output retains the raw typed answer, selected port and resolved provider/model provenance. Choice keeps its existing optionId/confidence/probabilities shape. New Noul and Score evidence records their applicable probability, threshold or rubric facts; a bounded LLM explanation is labelled as a reasoning excerpt. Provider error bodies and credentials are excluded. Existing historical skip diagnostics remain event evidence; new decisions have no strategy chain. The generated [node reference](reference/nodes.md) gives the exact fields.
+
+#97 adds answer variants within format 2; existing Choice definitions/results need no rewrite for these additions. The earlier #98 offline upgrade still applies to format-1 data. The subsequent #99 format-3 cutover applies these evaluator kinds to exit predicates with explicit matching rules.
 
 ## Inferencing (Decided)
 
 Hands a request to a harness session. Choose the harness on each inference node with
-`config.harness`; omission defaults to `codex`. Loop defaults provide model and effort;
-`settings.defaults.harness` is an unknown field and is rejected.
-Codex is the only harness in 1.0. Full adapter detail is in 06.
+`config.harness`; omission defaults to `codex`. The current built-ins are Codex and, on supported
+native Windows installations, Claude Code. Loop defaults provide model and effort under
+`defaults.byHarness`; `settings.defaults.harness` is an unknown field and is rejected. Full
+adapter detail is in 06 and the accepted Claude architecture is in ADR-0023.
 
 ```ts
 type InferenceConfig = {
-  harness: 'codex';
+  harness: 'codex' | 'claude';
   model?: string;
   effort?: Effort;
   session: { policy: 'fresh' | 'resume-previous' | 'resume-named'; key?: string };
@@ -69,13 +71,13 @@ type InferenceConfig = {
   input: InputTransform[]; // applied to the thread view the template sees
   contextFiles?: { path: string; template: string }[]; // written under the working directory before the session starts
   harnessOptions: {
-    sandbox: 'read-only' | 'workspace-write' | 'danger-full-access';
+    sandbox: 'read-only' | 'workspace-write' | 'danger-full-access'; // Claude supports only explicit read-only or danger-full-access
     approval: 'never' | 'on-request';
     networkAccess?: boolean;
     webSearch?: boolean;
-    configOverrides?: Record<string, unknown>;
+    configOverrides?: Record<string, unknown>; // Codex only; Claude rejects nonempty overrides
   };
-  capabilities?: { mcpServers?: string[]; plugins?: string[]; skills?: string[] }; // names resolved by the adapter
+  capabilities?: { mcpServers?: string[]; plugins?: string[]; skills?: string[] }; // Claude rejects nonempty capabilities
   output: {
     captureTranscript: 'artifact' | 'none';
     toMessages: 'final' | 'final-and-notes' | 'none';
@@ -94,6 +96,12 @@ type RepairPolicy = {
 ```
 
 Behaviour: the engine writes the harness session row, renders the prompt and context files, starts or resumes the session, streams events into `node.progress`, stores the transcript as an artifact, applies output transforms, validates against the schema if present, runs the configurable repair turns on the same session if validation fails, then patches `messages`, `lastOutput`, and `counters.usage`.
+
+Claude Code accepts only the explicit `read-only`/`never` or `danger-full-access`/`never` policy
+pairs. `workspace-write`, `on-request`, explicit `networkAccess: false`, `webSearch: true`,
+nonempty `capabilities`, and nonempty raw overrides are rejected during validation and again at
+runtime. Its read-only policy limits built-in tools; it does not confine filesystem reads or the
+operating system. See [Claude Code](06-harness-integration.md#claude-code-adapter-26).
 
 Ports: `out`.
 
@@ -209,34 +217,40 @@ Two readings of "heartbeat" fit this node. The first is "poll until a condition 
 
 Ports: `out`.
 
-## Exit (Decided semantics, Draft config)
+## Exit (Decided, #99)
 
-Decides whether the loop is done, what it returns, where that goes, and whether to go around again.
+Decides whether the loop is done, what it returns, where that goes, and whether to go around again. Criteria run in their authored order; the first match decides the outcome.
 
-Exit predicates with strategy `jev` continue to use built-in Jev's Noul path and its current enable/secret availability. There is no exit classifier selector; custom HTTP classifiers execute Decision Choice only. Disabled, missing/blank-secret, and unreadable-secret states produce the same classifier warnings as decisions, at `config.criteria.<index>.strategy`. Enable Jev in Settings, Classifier models, or set `jev-api-key` in Settings, Secrets. These warnings allow publication; an unavailable Jev predicate fails with `DECIDER_UNAVAILABLE` when evaluated.
+A predicate declares its answer primitive, evaluator and matching rule. **Noul** matches true or false (default true); expression Noul is strictly boolean. Provider Noul also requires true/false labels and criteria. **Choice** matches any ID in an explicit nonempty set of declared stable options. **Score** compares the exact fractional rubric-index value using `lt`, `lte`, `eq`, `gte` or `gt`. Exit answers do not create ports or Score bands.
+
+Classifier evaluation requires a catalog model supporting the requested primitive. Disabled, missing or unusable-secret selections block publication and fail at runtime if availability changes. Custom HTTP classifiers and built-in Jev use the same registry. LLM evaluation uses Codex with inherited or explicit model/effort. Expressions support Noul; LLM supports Noul and Choice; Score is classifier-only.
+
+Classifier `minConfidence` and optional LLM `match.minReportedConfidence` are separate acceptance gates. Equality passes. A valid rejected answer is retained as evidence but cannot match, including a false answer with match=false. LLM confidence is self-reported. Invalid responses, provider errors, unavailable configuration and cancellation fail evaluation rather than falling through. There is no fallback.
+
+Questions still render against the full thread. Provider state is the existing trigger payload, all variables, bare last output or null, last message content or null, and iteration. No exit context selector or new session behavior is introduced.
 
 ```ts
+// Example predicate; see the generated reference for the complete union.
+const criterion = {
+  when: 'predicate',
+  answer: { type: 'noul' },
+  evaluation: { kind: 'expression', jsonata: 'vars.done = true' },
+  match: { type: 'noul', value: true },
+  outcome: 'success',
+};
+
 type ExitConfig = {
-  criteria: ExitCriterion[]; // evaluated in order; the first that matches decides
-  default: 'success' | 'loop-back'; // what happens when no criterion matches
-  loopBack?: { targetNodeId: string }; // rendered as an explicit edge on the canvas
+  criteria: ExitCriterion[];
+  default: 'success' | 'loop-back';
+  loopBack?: { targetNodeId: string };
   return: {
-    mapping: string | 'none'; // JSONata over the thread producing the return payload
-    channels: ReturnChannel[]; // at least one unless mapping is 'none'
+    mapping: string | 'none';
+    channels: ReturnChannel[];
   };
 };
 
-type ExitCriterion =
-  | { when: 'max-iterations'; value: number; outcome: 'exhausted' }
-  | { when: 'max-duration'; seconds: number; outcome: 'exhausted' }
-  | {
-      when: 'predicate';
-      strategy: 'expression' | 'jev' | 'codex';
-      question?: string;
-      jsonata?: string;
-      outcome: 'success' | 'failure';
-    }
-  | { when: 'last-output-matches'; jsonSchema: JsonSchema; outcome: 'success' };
+// Other criteria retain their existing max-iterations, max-duration and
+// last-output-matches shapes and their authored positions.
 
 type ReturnChannel =
   | { kind: 'caller' } // run result, MCP tool result, parent subloop output
@@ -246,7 +260,7 @@ type ReturnChannel =
   | { kind: 'log' };
 ```
 
-Behaviour: the engine evaluates criteria. A `success` or `failure` outcome, or `exhausted`, finishes the run, renders the return mapping, and delivers it to each channel, recording `return.delivered` or `return.failed` per channel. A loop-back increments `run.iteration` and `counters.nodeVisits`, emits `iteration.incremented`, and moves the token to the target node. The loop's `settings.maxIterations` is a hard ceiling the exit node cannot exceed. It also caps fresh visits per node: a node that would start for the (`maxIterations` + 1)th time fails the run with `MAX_ITERATIONS`, which bounds cycles outside an exit loop-back, such as a decision routing back to itself (see 05).
+Behaviour: the engine evaluates criteria. A `success` or `failure` outcome, or `exhausted`, finishes the run, renders the return mapping, and delivers it to each channel, recording `return.delivered` or `return.failed` per channel. A loop-back increments `run.iteration` and `counters.nodeVisits`, emits `iteration.incremented`, and moves the token to the target node. Predicates are evaluated before the implicit ceiling: a match at the final iteration may complete, and a provider can still fail there. Only a no-match default loop-back checks the loop's `settings.maxIterations` ceiling and finishes exhausted. It also caps fresh visits per node: a node that would start for the (`maxIterations` + 1)th time fails the run with `MAX_ITERATIONS`, which bounds cycles outside an exit loop-back, such as a decision routing back to itself (see 05).
 
 The caller is whatever created the invocation: a UI session, an API client, an MCP client such as a Codex session that used a skill or tool, a cron schedule, or a parent run. The `caller` channel resolves to the right delivery automatically: the run's `result` field for everyone, the MCP tool result for MCP callers, and the subloop output mapping for parent runs.
 

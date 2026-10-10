@@ -1,3 +1,4 @@
+import { applyShippedSqlToHistoricalTestFixture } from './testing/shipped-migrations.js';
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -44,8 +45,10 @@ async function upgrade(check: (db: DatabaseHandle) => Promise<void>) {
   }
   const current = openDatabase({ url });
   try {
-    expect(await current.pendingMigrations()).toBe(5);
-    await current.migrate();
+    // Includes 0011_enable_claude_fable after the three historical catalog migrations.
+    expect(await current.pendingMigrations()).toBe(9);
+    await expect(current.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
+    await applyShippedSqlToHistoricalTestFixture(current);
     await check(current);
     expect(await current.pendingMigrations()).toBe(0);
     const before = await current.client.execute('SELECT * FROM model_catalog');
@@ -61,6 +64,45 @@ async function upgrade(check: (db: DatabaseHandle) => Promise<void>) {
 }
 
 describe('model catalog source migration and repository', () => {
+  it('enables previously blocked Fable once, then preserves owner switches and every other row', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'gg-fable-migration-'));
+    const url = `file:${join(dir, 'catalog.db').replaceAll('\\', '/')}`;
+    const old = openDatabase({ url, migrationsFolder: previousMigrations(dir, 11) });
+    try {
+      await old.migrate();
+      const catalog = new SqliteModelCatalog(old.db);
+      await catalog.seed();
+      await catalog.setEnabled('claude', 'claude-fable-5-1', false);
+      await catalog.setEnabled('claude', 'claude-opus-5-5', false);
+      await catalog.setEnabled('codex', 'gpt-6-luna', false);
+    } finally {
+      old.close();
+    }
+    const current = openDatabase({ url });
+    try {
+      const catalog = new SqliteModelCatalog(current.db);
+      const before = await catalog.list();
+      expect(await current.pendingMigrations()).toBe(1);
+      await current.migrate();
+      expect(await catalog.list()).toEqual(
+        before.map((entry) =>
+          entry.harness === 'claude' && entry.model === 'claude-fable-5-1'
+            ? { ...entry, enabled: true }
+            : entry,
+        ),
+      );
+      await catalog.setEnabled('claude', 'claude-fable-5-1', false);
+      await current.migrate();
+      await catalog.seed();
+      expect(await catalog.findOne('claude', 'claude-fable-5-1')).toMatchObject({ enabled: false });
+      expect(await current.pendingMigrations()).toBe(0);
+    } finally {
+      current.close();
+      await rm(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 }).catch(
+        () => undefined,
+      );
+    }
+  });
   it('adds source on a fresh database and defaults direct legacy inserts to harness', async () => {
     const handle = await openMemoryDatabase();
     try {
@@ -72,6 +114,7 @@ describe('model catalog source migration and repository', () => {
       const catalog = new SqliteModelCatalog(handle.db);
       expect(await catalog.seed()).toBe(DEFAULT_MODEL_CATALOG.length);
       expect((await catalog.list()).every((row) => row.source === 'harness')).toBe(true);
+      expect(await catalog.findOne('claude', 'claude-fable-5-1')).toMatchObject({ enabled: true });
       expect(await catalog.findOne('codex', 'missing')).toBeUndefined();
       expect(await catalog.setEnabled('codex', 'missing', true)).toBeUndefined();
       const before = (await catalog.findOne('codex', 'gpt-6-luna'))!;
@@ -208,11 +251,33 @@ describe('model catalog source migration and repository', () => {
       const rows = (await catalog.list()).map(({ source: _source, ...row }) => row);
       await handle.client.execute('ALTER TABLE model_catalog DROP COLUMN source');
       await handle.client.execute('DROP TABLE classifier_models');
+      // Reconstruct the older schema before resetting its migration ledger.
+      for (const statement of [
+        'DROP INDEX template_qa_issue_attempt_idx',
+        'DROP INDEX template_issue_attempt_idx',
+        'DROP INDEX template_qa_merge_idx',
+        'DROP INDEX template_pr_head_idx',
+        'DROP INDEX template_active_pr_idx',
+        'DROP INDEX template_child_visit_idx',
+        'ALTER TABLE runs DROP COLUMN template_subject',
+        'DROP TABLE template_instances',
+      ])
+        await handle.client.execute(statement);
+      expect(
+        (await handle.client.execute("SELECT name FROM sqlite_master WHERE name LIKE 'template_%'"))
+          .rows,
+      ).toEqual([]);
+      expect(
+        (await handle.client.execute('PRAGMA table_info(runs)')).rows.map((row) => row.name),
+      ).not.toContain('template_subject');
+      await handle.client.execute('DROP TABLE webhook_receipts');
+      await handle.client.execute('DROP INDEX runs_trigger_dedupe_idx');
       await handle.client.execute(
         'DELETE FROM __drizzle_migrations WHERE created_at >= 1791136800000',
       );
-      expect(await handle.pendingMigrations()).toBe(4);
-      await handle.migrate();
+      expect(await handle.pendingMigrations()).toBe(8);
+      await expect(handle.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
+      await applyShippedSqlToHistoricalTestFixture(handle);
       expect(await catalog.list()).toEqual(rows.map((row) => ({ ...row, source: 'harness' })));
     } finally {
       handle.close();

@@ -26,7 +26,7 @@ function exit(id: string, x: number, target: string, y = 100): NodeInput {
 
 export function simpleLoop(): LoopDefinitionInput {
   return {
-    schemaVersion: 1,
+    schemaVersion: 3,
     name: 'Simple loop',
     nodes: [
       node('start', 'trigger', 0),
@@ -45,7 +45,7 @@ export function simpleLoop(): LoopDefinitionInput {
 
 export function nestedLoops(): LoopDefinitionInput {
   return {
-    schemaVersion: 1,
+    schemaVersion: 3,
     name: 'Nested loops',
     nodes: [
       node('start', 'trigger', 0),
@@ -57,13 +57,15 @@ export function nestedLoops(): LoopDefinitionInput {
         ...node('choose', 'decision', 600, -160),
         kind: 'decision',
         config: {
-          routes: [
-            { label: 'repeat', description: 'repeat' },
-            { label: 'finish', description: 'finish' },
-          ],
-          question: 'Which route?',
-          strategy: ['expression'],
-          expression: { jsonata: '"finish"' },
+          answer: {
+            type: 'choice',
+            options: [
+              { id: 'repeat', label: 'Repeat', criteria: 'repeat' },
+              { id: 'finish', label: 'Finish', criteria: 'finish' },
+            ],
+          },
+          evaluation: { kind: 'expression', jsonata: '"finish"' },
+          recordAlternatives: true,
         },
       },
     ],
@@ -81,7 +83,7 @@ export function nestedLoops(): LoopDefinitionInput {
 
 export function decisionBackRoute(): LoopDefinitionInput {
   return {
-    schemaVersion: 1,
+    schemaVersion: 3,
     name: 'Decision back-route',
     nodes: [
       node('start', 'trigger', 0),
@@ -90,14 +92,16 @@ export function decisionBackRoute(): LoopDefinitionInput {
         ...node('decide', 'decision', 600),
         kind: 'decision',
         config: {
-          routes: [
-            { label: 'retry', description: 'retry' },
-            { label: 'again', description: 'again' },
-            { label: 'done', description: 'done' },
-          ],
-          question: 'Which route?',
-          strategy: ['expression'],
-          expression: { jsonata: '"done"' },
+          answer: {
+            type: 'choice',
+            options: [
+              { id: 'retry', label: 'Retry', criteria: 'retry' },
+              { id: 'again', label: 'Again', criteria: 'again' },
+              { id: 'done', label: 'Done', criteria: 'done' },
+            ],
+          },
+          evaluation: { kind: 'expression', jsonata: '"done"' },
+          recordAlternatives: true,
         },
       },
       node('done', 'exit', 900),
@@ -115,7 +119,7 @@ export function decisionBackRoute(): LoopDefinitionInput {
 export function sixReturnDecision(): LoopDefinitionInput {
   const labels = Array.from({ length: 6 }, (_, i) => `return-${i + 1}`);
   return {
-    schemaVersion: 1,
+    schemaVersion: 3,
     name: 'Six decision returns',
     nodes: [
       node('start', 'trigger', 0),
@@ -124,10 +128,12 @@ export function sixReturnDecision(): LoopDefinitionInput {
         ...node('decide', 'decision', 650),
         kind: 'decision',
         config: {
-          routes: [...labels, 'finish'].map((label) => ({ label, description: label })),
-          question: 'Choose a return',
-          strategy: ['expression'],
-          expression: { jsonata: '"finish"' },
+          answer: {
+            type: 'choice',
+            options: [...labels, 'finish'].map((id) => ({ id, label: id, criteria: id })),
+          },
+          evaluation: { kind: 'expression', jsonata: '"finish"' },
+          recordAlternatives: true,
         },
       },
       node('done', 'exit', 1000),
@@ -152,7 +158,7 @@ export function tightGap(): LoopDefinitionInput {
 /** An exit can point right: the clear Z path has no middle horizontal after stub simplification. */
 export function forwardLoopBack(): LoopDefinitionInput {
   return {
-    schemaVersion: 1,
+    schemaVersion: 3,
     name: 'Forward loop-back detour',
     nodes: [
       node('start', 'trigger', -300, 0),
@@ -176,10 +182,9 @@ export function denseGraph(count = 100): LoopDefinitionInput {
       ...node(`n${i}`, 'decision', (i % 10) * 320, Math.floor(i / 10) * 270),
       kind: 'decision',
       config: {
-        routes: labels.map((label) => ({ label, description: label })),
-        question: 'Which route?',
-        strategy: ['expression'],
-        expression: { jsonata: '"next"' },
+        answer: { type: 'choice', options: labels.map((id) => ({ id, label: id, criteria: id })) },
+        evaluation: { kind: 'expression', jsonata: '"next"' },
+        recordAlternatives: true,
       },
     });
     edges.push(edge(`next-${i}`, `n${i}`, i === count - 2 ? 'done' : `n${i + 1}`, 'next'));
@@ -189,7 +194,7 @@ export function denseGraph(count = 100): LoopDefinitionInput {
   nodes.push(exit('done', 9 * 320, 'n1', Math.floor((count - 1) / 10) * 270));
   edges.push(edge('return', 'done', 'n1', 'loopBack'));
   return {
-    schemaVersion: 1,
+    schemaVersion: 3,
     name: `Dense graph: ${count} nodes, ${count * 2} edges`,
     nodes,
     edges,

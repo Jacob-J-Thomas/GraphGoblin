@@ -12,17 +12,21 @@ import { cn } from '../../lib/utils.js';
 export function Card({
   id,
   title,
+  titleLevel = 2,
   actions,
   flush = false,
   className,
+  bodyClassName,
   children,
 }: {
   /** The section's id, for a link to it (Settings → Secrets, say). */
   id?: string;
   title?: ReactNode;
+  titleLevel?: 2 | 3;
   actions?: ReactNode;
   flush?: boolean;
   className?: string;
+  bodyClassName?: string;
   children: ReactNode;
 }) {
   const titleId = useId();
@@ -39,16 +43,30 @@ export function Card({
       {title || actions ? (
         <header className="flex min-h-13 flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-t-[inherit] border-b border-default bg-surface-head px-5 py-3">
           {title ? (
-            <h2 id={titleId} className="flex items-center gap-2 text-md font-semibold text-heading">
-              {title}
-            </h2>
+            titleLevel === 3 ? (
+              <h3
+                id={titleId}
+                className="flex items-center gap-2 text-md font-semibold text-heading"
+              >
+                {title}
+              </h3>
+            ) : (
+              <h2
+                id={titleId}
+                className="flex items-center gap-2 text-md font-semibold text-heading"
+              >
+                {title}
+              </h2>
+            )
           ) : (
             <span />
           )}
           {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
         </header>
       ) : null}
-      <div className={flush ? 'scroll-shadow-x overflow-x-auto' : 'p-5'}>{children}</div>
+      <div className={cn(flush ? 'scroll-shadow-x overflow-x-auto' : 'p-5', bodyClassName)}>
+        {children}
+      </div>
     </section>
   );
 }

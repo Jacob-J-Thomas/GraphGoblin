@@ -66,13 +66,15 @@ export function defaultConfig(kind: NodeKind): Record<string, unknown> {
       return { subtype: 'manual' };
     case 'decision':
       return {
-        routes: [
-          { label: 'yes', description: 'The answer is yes' },
-          { label: 'no', description: 'The answer is no' },
-        ],
-        question: 'Should we continue?',
-        strategy: ['expression'],
-        expression: { jsonata: '"yes"' },
+        answer: {
+          type: 'choice',
+          options: [
+            { id: 'yes', label: 'Yes', criteria: 'The answer is yes' },
+            { id: 'no', label: 'No', criteria: 'The answer is no' },
+          ],
+        },
+        evaluation: { kind: 'expression', jsonata: '"yes"' },
+        recordAlternatives: true,
       };
     case 'inference':
       return { prompt: { template: 'Summarise: {{ lastMessage.content }}' } };
@@ -111,6 +113,24 @@ function record(value: unknown): Record<string, unknown> {
   return typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : {};
 }
 
+function decisionRows(config: unknown): unknown[] | undefined {
+  const answer = record(record(config)['answer']);
+  if (answer['type'] === undefined && Array.isArray(answer['options']))
+    return answer['options'] as unknown[];
+  switch (answer['type']) {
+    case 'choice':
+      return Array.isArray(answer['options']) ? (answer['options'] as unknown[]) : undefined;
+    case 'noul':
+      return [answer['true'], answer['false']].filter(
+        (side) => typeof side === 'object' && side !== null,
+      );
+    case 'score':
+      return Array.isArray(answer['bands']) ? (answer['bands'] as unknown[]) : undefined;
+    default:
+      return undefined;
+  }
+}
+
 /**
  * Output ports of a node. Uses `domain`'s `outputPorts` when the node parses; otherwise derives
  * them from the raw config so a half-edited node keeps its handles on the canvas.
@@ -121,10 +141,9 @@ export function portsOf(node: NodeInput): string[] {
   const config = record(node.config);
   switch (node.kind) {
     case 'decision': {
-      const routes = Array.isArray(config['routes']) ? (config['routes'] as unknown[]) : [];
-      return routes
-        .map((r) => record(r)['label'])
-        .filter((label): label is string => typeof label === 'string' && label !== '');
+      return (decisionRows(node.config) ?? [])
+        .map((option) => record(option)['id'])
+        .filter((id): id is string => typeof id === 'string' && id !== '');
     }
     case 'script': {
       const labels = Object.values(record(config['exitCodeRoutes'])).filter(
@@ -143,6 +162,21 @@ export function portsOf(node: NodeInput): string[] {
 export function canvasPorts(node: NodeInput): string[] {
   const ports = portsOf(node);
   return node.kind === 'exit' && !ports.includes('loopBack') ? [...ports, 'loopBack'] : ports;
+}
+
+/** Display labels for the handles; decision IDs remain the actual connection ports. */
+export function canvasPortLabels(node: NodeInput): Readonly<Record<string, string>> {
+  if (node.kind !== 'decision') return {};
+  const rows = decisionRows(node.config);
+  if (!rows) return {};
+  return Object.fromEntries(
+    rows.flatMap((option) => {
+      const row = record(option);
+      return typeof row['id'] === 'string' && typeof row['label'] === 'string'
+        ? [[row['id'], row['label']]]
+        : [];
+    }),
+  );
 }
 
 export interface ConnectionRequest {
@@ -322,7 +356,7 @@ export function sameIssues(a: readonly EditorIssue[], b: readonly EditorIssue[])
 /** A new loop: a manual trigger wired to an exit. */
 export function newLoopDefinition(name: string): LoopDefinitionInput {
   return {
-    schemaVersion: 1,
+    schemaVersion: 3,
     name,
     nodes: [
       {

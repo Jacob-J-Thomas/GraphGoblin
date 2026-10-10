@@ -9,6 +9,7 @@ import {
   secrets,
   settings,
   system,
+  templates,
   type ListRunsQuery,
 } from '@graphgoblin/api-client';
 import type {
@@ -16,15 +17,23 @@ import type {
   LoopDefinitionInput,
   ModelCatalogEntry,
 } from '@graphgoblin/contracts';
-import { useQuery, type QueryClient } from '@tanstack/react-query';
+import { HarnessPreflightSchema } from '@graphgoblin/contracts';
+import { useMutation, useQuery, type QueryClient } from '@tanstack/react-query';
+import { z } from 'zod';
 import { useApi } from './context.js';
+
+const HarnessPreflightItemSchema = HarnessPreflightSchema.extend({ harness: z.string() });
+export type HarnessPreflightItem = z.infer<typeof HarnessPreflightItemSchema>;
 
 /** Query keys, so mutations can invalidate exactly what they change. */
 export const keys = {
   loops: ['loops'] as const,
+  templates: ['templates'] as const,
+  templateInstance: (id: string) => ['template-instances', id] as const,
   loop: (id: string) => ['loops', id] as const,
   /** Under the loop's key, so invalidating the loop (after a publish) refetches them too. */
   versions: (id: string) => ['loops', id, 'versions'] as const,
+  version: (loopId: string, versionId: string) => ['loops', loopId, 'version', versionId] as const,
   /**
    * The API's checks of a saved draft (`POST /loops/{id}/validate`), keyed by what they read: the
    * draft (its server draft token, a hash of its content, or `draftContentKey` when there is no
@@ -52,6 +61,28 @@ export function useLoops() {
   return useQuery({ queryKey: keys.loops, queryFn: () => loops.list(client) });
 }
 
+export function useTemplates() {
+  const client = useApi();
+  return useQuery({ queryKey: keys.templates, queryFn: () => templates.list(client) });
+}
+
+export function useTemplateInstance(id: string) {
+  const client = useApi();
+  return useQuery({
+    queryKey: keys.templateInstance(id),
+    queryFn: () => templates.instance(client, id),
+    enabled: id.length > 0,
+  });
+}
+
+export function useCreateTemplateDraft() {
+  const client = useApi();
+  return useMutation({
+    mutationFn: ({ templateId, name }: { templateId: string; name?: string }) =>
+      templates.createDraft(client, templateId, name ? { name } : {}),
+  });
+}
+
 export function useLoop(id: string) {
   const client = useApi();
   return useQuery({ queryKey: keys.loop(id), queryFn: () => loops.get(client, id) });
@@ -60,6 +91,16 @@ export function useLoop(id: string) {
 export function useLoopVersions(id: string) {
   const client = useApi();
   return useQuery({ queryKey: keys.versions(id), queryFn: () => loops.versions(client, id) });
+}
+
+/** The immutable version a run actually used; an unavailable version stays unavailable. */
+export function useLoopVersion(loopId: string, versionId: string, enabled = true) {
+  const client = useApi();
+  return useQuery({
+    queryKey: keys.version(loopId, versionId),
+    queryFn: () => loops.version(client, loopId, versionId),
+    enabled: enabled && loopId !== '' && versionId !== '',
+  });
 }
 
 export function useRuns(query: ListRunsQuery = {}, refetchInterval: number | false = false) {
@@ -209,12 +250,25 @@ export function useApiKeys() {
 
 export function usePreflight() {
   const client = useApi();
-  return useQuery({ queryKey: keys.preflight, queryFn: () => system.preflight(client) });
+  return useQuery({
+    queryKey: keys.preflight,
+    queryFn: async () =>
+      (await system.preflight(client)).map((item) => HarnessPreflightItemSchema.parse(item)),
+  });
 }
+
+const PENDING_EVENT_REFRESH_MS = 2_000;
 
 export function useInboundEvents() {
   const client = useApi();
-  return useQuery({ queryKey: keys.events, queryFn: () => events.list(client) });
+  return useQuery({
+    queryKey: keys.events,
+    queryFn: () => events.list(client),
+    refetchInterval: (query) =>
+      query.state.data?.some((event) => event.delivery?.state === 'pending')
+        ? PENDING_EVENT_REFRESH_MS
+        : false,
+  });
 }
 
 /** The control enables this only once its expression and zone have stopped changing. */

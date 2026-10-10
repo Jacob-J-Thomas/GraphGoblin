@@ -1,0 +1,89 @@
+{
+  "id": "review",
+  "version": "1.0.0",
+  "kind": "review",
+  "title": "GitHub PR review",
+  "description": "Review a supplied change, apply focused fixes, and review again within a bounded cycle.",
+  "tags": ["github", "review", "human"],
+  "roles": [
+    {
+      "id": "reviewer",
+      "label": "Reviewer",
+      "access": "read-only"
+    },
+    {
+      "id": "fixer",
+      "label": "Fixer",
+      "access": "write"
+    }
+  ],
+  "prerequisites": [
+    {
+      "id": "reviewer",
+      "label": "Read-only reviewer model and harness",
+      "kind": "role",
+      "blocking": "authoring",
+      "role": "reviewer"
+    },
+    {
+      "id": "fixer",
+      "label": "Independent fixer model and harness",
+      "kind": "role",
+      "blocking": "authoring",
+      "role": "fixer"
+    },
+    {
+      "id": "repository",
+      "label": "Canonical repository and matching origin",
+      "kind": "repository",
+      "blocking": "authoring"
+    },
+    {
+      "id": "github",
+      "label": "Authenticated trusted same-repository PR access",
+      "kind": "github",
+      "blocking": "authoring"
+    },
+    {
+      "id": "support-key",
+      "label": "Revocable runs:read support key",
+      "kind": "secret",
+      "blocking": "authoring",
+      "secretKey": "supportReadKey"
+    },
+    {
+      "id": "support",
+      "label": "Verified packaged review support entry",
+      "kind": "support",
+      "blocking": "authoring"
+    }
+  ],
+  "requiredSecrets": [
+    {
+      "key": "supportReadKey",
+      "scopes": ["runs:read"]
+    }
+  ],
+  "parentKey": "parent",
+  "loops": [
+    {
+      "key": "parent",
+      "file": "parent.json",
+      "dependsOn": [],
+      "roleNodes": [
+        {
+          "role": "reviewer",
+          "nodeId": "reviewer"
+        },
+        {
+          "role": "fixer",
+          "nodeId": "fixer"
+        }
+      ],
+      "settingsNodes": ["settings"],
+      "subloops": []
+    }
+  ],
+  "supportEntry": "dist/templates/github/review-entry.js",
+  "draftFile": "draft.json"
+}

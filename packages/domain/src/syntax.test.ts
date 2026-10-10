@@ -10,7 +10,7 @@ import { findAuthoredSources, syntaxIssues } from './syntax.js';
 
 function loop(nodes: LoopDefinitionInput['nodes'], settings?: LoopDefinitionInput['settings']) {
   return LoopDefinitionSchema.parse({
-    schemaVersion: 1,
+    schemaVersion: 3,
     name: 'syntax',
     nodes: [
       { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
@@ -114,17 +114,33 @@ describe('syntax checks', () => {
           config: { prompt: { template: 'Hi {% if x %}' } },
         },
         {
+          id: 'pick-question',
+          kind: 'decision',
+          label: 'Question',
+          config: {
+            answer: {
+              type: 'choice',
+              options: [
+                { id: 'a', label: 'A', criteria: 'A' },
+                { id: 'b', label: 'B', criteria: 'B' },
+              ],
+            },
+            evaluation: { kind: 'classifier', model: 'jev', question: '{{ broken' },
+          },
+        },
+        {
           id: 'pick',
           kind: 'decision',
           label: 'Pick',
           config: {
-            routes: [
-              { label: 'a', description: 'A' },
-              { label: 'b', description: 'B' },
-            ],
-            question: 'q {{ x | nosuchfilter }}',
-            strategy: ['expression'],
-            expression: { jsonata: '1 +' },
+            answer: {
+              type: 'choice',
+              options: [
+                { id: 'a', label: 'a', criteria: 'A' },
+                { id: 'b', label: 'b', criteria: 'B' },
+              ],
+            },
+            evaluation: { kind: 'expression', jsonata: '1 +' },
           },
         },
         {
@@ -155,7 +171,7 @@ describe('syntax checks', () => {
     expect(issues.map((i) => [i.code, i.nodeId])).toEqual([
       ['TEMPLATE_INVALID', undefined],
       ['TEMPLATE_INVALID', 'ask'],
-      ['TEMPLATE_INVALID', 'pick'],
+      ['TEMPLATE_INVALID', 'pick-question'],
       ['EXPRESSION_INVALID', 'pick'],
       ['TEMPLATE_INVALID', 'run'],
       ['EXPRESSION_INVALID', 'sub'],
@@ -166,8 +182,8 @@ describe('syntax checks', () => {
     expect(issues.map((i) => i.path)).toEqual([
       'settings.workingDirectory.template',
       'config.prompt.template',
-      'config.question',
-      'config.expression.jsonata',
+      'config.evaluation.question',
+      'config.evaluation.jsonata',
       'config.args.1',
       'config.input.vars.a',
       'config.operations.0.content',

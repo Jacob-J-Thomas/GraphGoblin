@@ -65,7 +65,7 @@ for (const item of records) {
     fs.writeFileSync(versionFile, JSON.stringify(version, null, 2));
   const choiceNodes = new Set(
     version.definition.nodes
-      .filter((n) => n.kind === 'decision' && n.config.strategy.includes('jev'))
+      .filter((n) => n.kind === 'decision' && n.config.evaluation.kind === 'classifier')
       .map((n) => n.id),
   );
   jev += item.events.filter((e) => e.type === 'node.started' && choiceNodes.has(e.nodeId)).length;

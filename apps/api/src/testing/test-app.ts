@@ -1,7 +1,8 @@
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import type { LoopDefinitionInput } from '@graphgoblin/contracts';
+import type { HarnessId, LoopDefinitionInput } from '@graphgoblin/contracts';
+import type { HarnessPort } from '@graphgoblin/engine';
 import {
   CapturingLogger,
   FakeClock,
@@ -37,6 +38,7 @@ export interface TestApp {
 }
 
 export interface TestAppOptions {
+  harnesses?: Partial<Record<HarnessId, HarnessPort>>;
   requireApiKey?: boolean;
   env?: Record<string, string>;
   /** Exercise real catalog/secret resolution and HTTP transport, retaining fake Codex. */
@@ -61,8 +63,8 @@ export async function createTestApp(options: TestAppOptions = {}): Promise<TestA
   const logger = new CapturingLogger();
   const clock = new FakeClock();
   const container = await createContainer(config, {
-    harnesses: { codex: harness },
-    deciders: [jev, codex],
+    harnesses: options.harnesses ?? { codex: harness },
+    deciders: [codex],
     ...(!options.realClassifiers ? { classifiers: new FakeClassifierRegistry(jev) } : {}),
     structured,
     startTimers: false,

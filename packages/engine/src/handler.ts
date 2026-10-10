@@ -11,6 +11,7 @@ import type {
   RunRecord,
   WaitSpec,
   Effort,
+  HarnessId,
   RunEvent,
 } from '@graphgoblin/contracts';
 import type { EnginePorts, EventDraft, EngineSettings } from './ports.js';
@@ -46,7 +47,11 @@ export interface HandlerServices {
   /** Append events to the run log right away (progress, decisions, usage). */
   record(draft: EventDraft): Promise<void>;
   /** Resolve the model and effort for an inferencing or decision step. */
-  resolveModel(model?: string, effort?: Effort): { model: string; effort: Effort };
+  resolveModel(
+    harness: HarnessId,
+    model?: string,
+    effort?: Effort,
+  ): Promise<{ model: string; effort: Effort }>;
   /** Start a child run and return its id. The parent then parks on it. */
   startChild(request: ChildStartRequest): Promise<string>;
   /** Read a finished child's outcome and final thread. */
@@ -69,6 +74,8 @@ export interface NodeContext<K extends NodeKind = NodeKind> {
   thread: Readonly<ContextThread>;
   run: Readonly<RunRecord>;
   attempt: number;
+  /** Trusted event sequence of this execution; direct handler fixtures may omit it. */
+  startedSeq?: number;
   /** Set when this execution resumes a parked node. */
   wake?: WakeInfo;
   /** The wait spec recorded when this node parked, if it did. */

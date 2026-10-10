@@ -9,7 +9,7 @@ import { createMcpServer, toolError } from './index.js';
 
 function definition(model?: string): LoopDefinitionInput {
   return {
-    schemaVersion: 1,
+    schemaVersion: 3,
     name: `MCP classifier ${model ?? 'default'}`,
     nodes: [
       { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
@@ -18,21 +18,23 @@ function definition(model?: string): LoopDefinitionInput {
         kind: 'decision',
         label: 'Choose',
         config: {
-          question: 'Choose a route',
-          routes: [
-            { label: 'yes', description: 'Ready' },
-            { label: 'no', description: 'Wait' },
-          ],
-          strategy: ['jev', 'expression'],
-          expression: { jsonata: '"no"' },
-          ...(model ? { jev: { model } } : {}),
+          answer: {
+            type: 'choice',
+            options: [
+              { id: 'yes', label: 'Yes', criteria: 'Ready' },
+              { id: 'no', label: 'No', criteria: 'Wait' },
+            ],
+          },
+          evaluation: model
+            ? { kind: 'classifier', model, question: 'Choose a route' }
+            : { kind: 'expression', jsonata: '"no"' },
         },
       },
       {
         id: 'done',
         kind: 'exit',
         label: 'Done',
-        config: { return: { mapping: 'lastOutput.value.route' } },
+        config: { return: { mapping: 'lastOutput.value.answer.optionId' } },
       },
     ],
     edges: [
@@ -74,7 +76,7 @@ describe('MCP classifier consumer regression', () => {
     await app.close();
     await endpoint.close();
   });
-  it('runs and inspects omitted and explicit selections without adding tools', async () => {
+  it('runs and inspects explicit expression and classifier kinds without adding tools', async () => {
     await classifierModels.upsert(api, 'mcp-kev', {
       displayName: 'Kev',
       provider: 'http',
@@ -102,9 +104,11 @@ describe('MCP classifier consumer regression', () => {
         await mcp.callTool({ name: 'read_run_events', arguments: { runId: started.runId } }),
       );
       const chosen = events.items.find((event) => event.type === 'decision.made');
-      expect(chosen).toMatchObject({ strategy: model ? 'jev' : 'expression' });
-      if (model) expect(chosen).toHaveProperty('classifierModel', model);
-      else expect(chosen).not.toHaveProperty('classifierModel');
+      expect(chosen).toMatchObject({
+        answer: { type: 'choice', optionId: model ? 'yes' : 'no' },
+        portId: model ? 'yes' : 'no',
+        provenance: { kind: model ? 'classifier' : 'expression', classifierId: model ?? null },
+      });
       expect(
         output<{ lastOutput: unknown }>(
           await mcp.callTool({ name: 'get_run_thread', arguments: { runId: started.runId } }),
@@ -117,10 +121,9 @@ describe('MCP classifier consumer regression', () => {
     );
   });
   it('preserves classifier validation messages through API-client and MCP errors', async () => {
-    const created = await loops.create(api, definition('deleted-classifier'));
     try {
-      await loops.publish(api, created.loop.id);
-      throw new Error('Expected publish rejection');
+      await loops.create(api, definition('deleted-classifier'));
+      throw new Error('Expected admission rejection');
     } catch (error) {
       const result = toolError(error);
       expect(result.isError).toBe(true);
@@ -130,7 +133,7 @@ describe('MCP classifier consumer regression', () => {
           text: expect.stringContaining('CLASSIFIER_MODEL_NOT_FOUND'),
         }),
       ]);
-      expect(JSON.stringify(result.content)).toContain('config.jev.model');
+      expect(JSON.stringify(result.content)).toContain('config.evaluation.model');
       expect(JSON.stringify(result.content)).toContain('Settings, Classifier models');
     }
   });

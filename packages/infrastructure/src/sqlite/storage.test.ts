@@ -1,3 +1,5 @@
+import { SqliteTriggerAdmission } from './admission.js';
+import { applyShippedSqlToHistoricalTestFixture } from './testing/shipped-migrations.js';
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -196,8 +198,10 @@ describe('SqliteRunRepository', () => {
     old.close();
     const current = openDatabase({ url });
     try {
-      expect(await current.pendingMigrations()).toBe(6);
-      await current.migrate();
+      // Twelve shipped migrations minus this fixture's two historical ledger entries.
+      expect(await current.pendingMigrations()).toBe(10);
+      await expect(current.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
+      await applyShippedSqlToHistoricalTestFixture(current);
       const repo = new SqliteRunRepository(current.db);
       expect(await repo.listUnfinalized()).toEqual([]);
       await repo.update(fakeUlid('old-wait'), { status: 'failed' });
@@ -482,9 +486,9 @@ describe('SqliteSessionRepository', () => {
     expect((await repo.forNode(runId, 'a'))?.attempt).toBe(2);
     expect((await repo.forNode(runId, 'a'))?.model).toBeUndefined();
     expect(await repo.forNode(runId, 'zzz')).toBeUndefined();
-    expect((await repo.latestWithSession(runId))?.sessionId).toBe('s2');
-    expect((await repo.byScopeKey('loop:shared'))?.sessionId).toBe('s1');
-    expect(await repo.byScopeKey('nope')).toBeUndefined();
+    expect((await repo.latestWithSession(runId, 'codex'))?.sessionId).toBe('s2');
+    expect((await repo.byScopeKey('loop:shared', 'codex'))?.sessionId).toBe('s1');
+    expect(await repo.byScopeKey('nope', 'codex')).toBeUndefined();
     expect(await repo.listForRun(runId)).toHaveLength(3);
   });
 });
@@ -678,8 +682,10 @@ describe('migration 0003 model catalog max effort', () => {
     }
     const current = openDatabase({ url });
     try {
-      expect(await current.pendingMigrations()).toBe(5);
-      await current.migrate();
+      // Includes 0011_enable_claude_fable after the three historical catalog migrations.
+      expect(await current.pendingMigrations()).toBe(9);
+      await expect(current.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
+      await applyShippedSqlToHistoricalTestFixture(current);
       expect(await current.pendingMigrations()).toBe(0);
       await check(current);
     } finally {
@@ -896,6 +902,7 @@ describe('with the engine', () => {
       LoopDefinitionSchema.parse(kitchenSinkLoopReduced()),
     );
     await loops.publish(loop.id);
+    const events = new SqliteEventStore(handle.db, clock);
     const manager = new RunManager(
       {
         ...fakes,
@@ -903,7 +910,8 @@ describe('with the engine', () => {
         ids,
         runs,
         loops,
-        events: new SqliteEventStore(handle.db, clock),
+        events,
+        admission: new SqliteTriggerAdmission(handle.db, events),
         sessions: new SqliteSessionRepository(handle.db),
       },
       DEFAULT_TEST_SETTINGS,

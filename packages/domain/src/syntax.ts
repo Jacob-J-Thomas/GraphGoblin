@@ -11,7 +11,7 @@ import {
   NodeConfigSchemas,
   TemplateSchema,
   sameSchema,
-  type LoopDefinition,
+  type NodeKind,
 } from '@graphgoblin/contracts';
 import { checkExpression } from './expression.js';
 import { checkTemplate } from './template.js';
@@ -33,6 +33,11 @@ interface SchemaLike {
 }
 
 type Found = { kind: 'template' | 'expression'; source: string; path: string };
+interface SourceSchemas {
+  template: unknown;
+  expression: unknown;
+}
+const currentSources = { template: TemplateSchema, expression: ExpressionSchema };
 
 const WRAPPERS = new Set([
   'optional',
@@ -44,10 +49,16 @@ const WRAPPERS = new Set([
   'catch',
 ]);
 
-function walk(schema: SchemaLike, value: unknown, path: string, found: Found[]): void {
+function walk(
+  schema: SchemaLike,
+  value: unknown,
+  path: string,
+  found: Found[],
+  markers: SourceSchemas,
+): void {
   if (value === undefined || value === null) return;
-  const template = sameSchema(schema, TemplateSchema);
-  if (template || sameSchema(schema, ExpressionSchema)) {
+  const template = sameSchema(schema, markers.template as SchemaLike);
+  if (template || sameSchema(schema, markers.expression as SchemaLike)) {
     if (typeof value === 'string') {
       const kind = template ? 'template' : 'expression';
       found.push({ kind, source: value, path });
@@ -56,30 +67,40 @@ function walk(schema: SchemaLike, value: unknown, path: string, found: Found[]):
   }
   const def = schema._zod.def;
   if (WRAPPERS.has(def.type)) {
-    walk(def['innerType'] as SchemaLike, value, path, found);
+    walk(def['innerType'] as SchemaLike, value, path, found, markers);
   } else if (def.type === 'object' && typeof value === 'object') {
     const shape = def['shape'] as Record<string, SchemaLike>;
     for (const [key, child] of Object.entries(shape)) {
-      walk(child, (value as Record<string, unknown>)[key], path ? `${path}.${key}` : key, found);
+      walk(
+        child,
+        (value as Record<string, unknown>)[key],
+        path ? `${path}.${key}` : key,
+        found,
+        markers,
+      );
     }
   } else if (def.type === 'array' && Array.isArray(value)) {
     value.forEach((item, index) =>
-      walk(def['element'] as SchemaLike, item, `${path}.${index}`, found),
+      walk(def['element'] as SchemaLike, item, `${path}.${index}`, found, markers),
     );
   } else if (def.type === 'record' && typeof value === 'object') {
     for (const [key, item] of Object.entries(value as Record<string, unknown>)) {
-      walk(def['valueType'] as SchemaLike, item, `${path}.${key}`, found);
+      walk(def['valueType'] as SchemaLike, item, `${path}.${key}`, found, markers);
     }
   } else if (def.type === 'union') {
     const option = (def['options'] as SchemaLike[]).find((o) => o.safeParse(value).success);
-    if (option) walk(option, value, path, found);
+    if (option) walk(option, value, path, found, markers);
   }
 }
 
 /** Every template and expression in `value` as described by `schema`, with its dotted path. */
-export function findAuthoredSources(schema: unknown, value: unknown): Found[] {
+export function findAuthoredSources(
+  schema: unknown,
+  value: unknown,
+  markers: SourceSchemas = currentSources,
+): Found[] {
   const found: Found[] = [];
-  walk(schema as SchemaLike, value, '', found);
+  walk(schema as SchemaLike, value, '', found, markers);
   return found;
 }
 
@@ -87,7 +108,14 @@ export function findAuthoredSources(schema: unknown, value: unknown): Found[] {
  * One error per template that does not parse and per expression that does not compile. Runs would
  * otherwise fail on them only when the node executes.
  */
-export function syntaxIssues(def: LoopDefinition): SyntaxIssue[] {
+export function syntaxIssues(
+  def: { settings: unknown; nodes: readonly { id: string; kind: NodeKind; config: unknown }[] },
+  schemas: SourceSchemas & { settings: unknown; nodes: Record<NodeKind, unknown> } = {
+    ...currentSources,
+    settings: LoopSettingsSchema,
+    nodes: NodeConfigSchemas,
+  },
+): SyntaxIssue[] {
   const issues: SyntaxIssue[] = [];
   const report = (item: Found, nodeId?: string) => {
     const problem =
@@ -106,9 +134,9 @@ export function syntaxIssues(def: LoopDefinition): SyntaxIssue[] {
       path: [nodeId ? 'config' : 'settings', item.path].filter(Boolean).join('.'),
     });
   };
-  for (const item of findAuthoredSources(LoopSettingsSchema, def.settings)) report(item);
+  for (const item of findAuthoredSources(schemas.settings, def.settings, schemas)) report(item);
   for (const node of def.nodes) {
-    for (const item of findAuthoredSources(NodeConfigSchemas[node.kind], node.config)) {
+    for (const item of findAuthoredSources(schemas.nodes[node.kind], node.config, schemas)) {
       report(item, node.id);
     }
   }

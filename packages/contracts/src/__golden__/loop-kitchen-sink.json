@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 3,
   "name": "kitchen-sink",
   "description": "Every node kind, for tests.",
   "settings": {
@@ -8,8 +8,12 @@
       "path": "/tmp/work"
     },
     "defaults": {
-      "model": "gpt-6-luna",
-      "effort": "low"
+      "byHarness": {
+        "codex": {
+          "model": "gpt-6-luna",
+          "effort": "low"
+        }
+      }
     },
     "maxIterations": 3,
     "subloopDepthLimit": 8
@@ -152,25 +156,23 @@
       },
       "kind": "decision",
       "config": {
-        "routes": [
-          {
-            "label": "good",
-            "description": "Looks good"
-          },
-          {
-            "label": "bad",
-            "description": "Needs work"
-          }
-        ],
-        "question": "Is the output acceptable?",
-        "context": {
-          "messages": "last",
-          "includeLastOutput": true
+        "answer": {
+          "type": "choice",
+          "options": [
+            {
+              "id": "good",
+              "label": "good",
+              "criteria": "Looks good"
+            },
+            {
+              "id": "bad",
+              "label": "bad",
+              "criteria": "Needs work"
+            }
+          ]
         },
-        "strategy": [
-          "expression"
-        ],
-        "expression": {
+        "evaluation": {
+          "kind": "expression",
           "jsonata": "lastOutput.value.ok ? \"good\" : \"bad\""
         },
         "recordAlternatives": true

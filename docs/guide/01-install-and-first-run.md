@@ -2,7 +2,7 @@
 
 ## Check prerequisites
 
-Install Git, Node 22 or newer, pnpm, and the Codex CLI. The repository pins pnpm 12.8.1 and the Codex SDK to 0.160.0. The API runs turns through the CLI bundled with that SDK; you need your own Codex CLI to log in and, for the [Codex plugin](05-mcp-and-codex-plugin.md), version 0.117.0 or newer (verified with 0.160.0). Check them in PowerShell or Bash:
+Install Git, Node 22 or newer, pnpm, and the Codex CLI. The repository pins pnpm 12.8.1 and the Codex SDK to 0.160.0. The API runs Codex turns through the CLI bundled with that SDK; you need your own Codex CLI to log in and, for the [Codex plugin](05-mcp-and-codex-plugin.md), version 0.117.0 or newer (verified with 0.160.0). Claude Code is an optional, separately installed harness for native Windows only; GraphGoblin does not install or bundle its CLI. Check the standard prerequisites in PowerShell or Bash:
 
 ```powershell
 git --version
@@ -16,6 +16,14 @@ codex login status
 PowerShell blocks in this guide call `pnpm.cmd`, because Windows PowerShell's default execution policy blocks the `pnpm.ps1` shim. If it blocks `codex.ps1` too, call `codex.cmd`. Bash blocks use `pnpm` and `codex`.
 
 Run the API as the same operating-system user who logged into Codex. GraphGoblin uses that login and stores no Codex credentials.
+
+To use Claude Code, install and sign in to the native Windows CLI as the same operating-system
+user who runs the API. The adapter accepts version `2.1.285` or newer with the required capabilities and fails closed on
+older versions, missing capabilities or unsupported platforms. It looks for `%USERPROFILE%\.local\bin\claude.exe`; set `GG_CLAUDE_BINARY`
+to the owner-installed executable when it is elsewhere. Run `claude auth login`, then confirm
+**Harness preflight** in Settings. GraphGoblin reports the safe authentication category only; do
+not share raw CLI authentication output. CLI capability and login checks are reported independently.
+Opus 5.5 and Fable 5.1 follow the same technical readiness checks. See [Claude Code in harness integration](../06-harness-integration.md#claude-code-adapter-26).
 
 There are three ways to install: the install script (recommended), the container image, or the manual steps the script performs. All of them start from a clone. Replace the repository URL placeholder with the clone URL from your repository host:
 
@@ -38,7 +46,7 @@ In Bash (Linux, macOS, or Git Bash on Windows):
 bash scripts/install.sh
 ```
 
-The data directory is `~/.graphgoblin` unless `GG_DATA_DIR` is set when you run the script (and when you start the API). A missing or logged-out Codex CLI is reported as a warning by the script and as a failed harness check by the preflight; run `codex login` and run the script again.
+The data directory is `~/.graphgoblin` unless `GG_DATA_DIR` is set when you run the script (and when you start the API). A missing or logged-out Codex CLI fails its harness check. A missing or logged-out Claude CLI is a warning while no Claude defaults are configured; it fails preflight if you configure a Claude default. Run the relevant login command as the API user and check **Harness preflight** again.
 
 Then start the API from the repository root and open the address it printed:
 
@@ -54,7 +62,7 @@ The image holds the API, the web app, and the Codex CLI, for one user on a trust
 docker compose up -d --build
 ```
 
-The compose file publishes port 4747 on the host's loopback only, keeps the data directory in the `graphgoblin-data` volume (`/data` in the container), and mounts your Codex login (`~/.codex`) into the container, so run `codex login` on the host first. To use an OpenAI API key instead, set `OPENAI_API_KEY` in the compose file's `environment`. Check readiness while the server runs; stop it before creating a key with a one-off container using the same volume, then restart:
+The compose file publishes port 4747 on the host's loopback only, keeps the data directory in the `graphgoblin-data` volume (`/data` in the container), and mounts your Codex login (`~/.codex`) into the container, so run `codex login` on the host first. The image does not contain Claude Code; its native-Windows adapter refuses the container platform. To use an OpenAI API key instead, set `OPENAI_API_KEY` in the compose file's `environment`. Check readiness while the server runs; stop it before creating a key with a one-off container using the same volume, then restart:
 
 ```bash
 docker compose exec graphgoblin node apps/api/dist/main.js --preflight
@@ -94,15 +102,15 @@ With no configuration the API listens on `127.0.0.1:4747`, keeps its data in `~/
 
 ```powershell
 $env:GG_DATA_DIR = 'D:\graphgoblin-data'
-$env:GG_DEFAULT_MODEL = 'gpt-6-luna'
-$env:GG_DEFAULT_EFFORT = 'low'
+$env:GG_DEFAULTS = '{"byHarness":{"codex":{"model":"gpt-6-luna","effort":"low"}}}'
 pnpm.cmd start
 ```
 
 In Bash:
 
 ```bash
-export GG_DATA_DIR="$HOME/graphgoblin-data" GG_DEFAULT_MODEL=gpt-6-luna GG_DEFAULT_EFFORT=low
+export GG_DATA_DIR="$HOME/graphgoblin-data"
+export GG_DEFAULTS='{"byHarness":{"codex":{"model":"gpt-6-luna","effort":"low"}}}'
 pnpm start
 ```
 
@@ -130,8 +138,7 @@ node apps/api/dist/main.js
 | `GG_WEB_DIST`            | Unset: the checkout's `apps/web/dist` when it has been built. Point it at another built web directory, or set it empty to serve no UI.                                                                                    |
 | `GG_REQUIRE_API_KEY`     | `false`. Set `true` to require a key on [every non-public route][public-routes]; the web app then asks for one. See [the first key](06-settings-and-secrets.md#create-api-keys).                                          |
 | `GG_MASTER_KEY`          | Unset. Base64 of 32 bytes; otherwise the key lives in `<data-directory>/master.key`. See [Preserve the master key](06-settings-and-secrets.md#preserve-the-master-key).                                                   |
-| `GG_DEFAULT_MODEL`       | `gpt-6-luna`. Use a model available to your Codex account.                                                                                                                                                                |
-| `GG_DEFAULT_EFFORT`      | `low`. Node and loop settings can override it.                                                                                                                                                                            |
+| `GG_DEFAULTS`            | JSON harness-keyed defaults, e.g. `{"byHarness":{"codex":{"model":"gpt-6-luna","effort":"low"}}}`. Old default-model/effort environment variables are rejected with upgrade guidance.                                     |
 | `GG_CODEX_BINARY`        | Unset, so the SDK uses its bundled Codex binary. Set an absolute native executable path to override it.                                                                                                                   |
 | `GG_MAX_CONCURRENT_RUNS` | `4`, range 1 to 64. Runs executing at once; parked runs do not count.                                                                                                                                                     |
 | `GG_TIMER_POLL_MS`       | `1000`. How often timers, cron schedules, and poll triggers are checked.                                                                                                                                                  |

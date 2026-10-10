@@ -2,7 +2,7 @@ import { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { EffortSchema, ModelNameSchema } from '@graphgoblin/contracts';
+import { HarnessDefaultsSchema, type HarnessDefaults } from '@graphgoblin/contracts';
 import { z } from 'zod';
 
 const bool = z
@@ -20,13 +20,13 @@ const EnvSchema = z.object({
     .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
     .default('info'),
   GG_MAX_CONCURRENT_RUNS: z.coerce.number().int().min(1).max(64).default(4),
-  GG_DEFAULT_MODEL: ModelNameSchema.default('gpt-6-luna'),
-  GG_DEFAULT_EFFORT: EffortSchema.default('low'),
+  GG_DEFAULTS: z.string().optional(),
   GG_TIMER_POLL_MS: z.coerce.number().int().min(50).max(60_000).default(1000),
   GG_HOOK_RATE_LIMIT: z.coerce.number().int().min(1).max(100_000).default(60),
   GG_SWAGGER_UI: bool.default(true),
   GG_PUBLIC_URL: z.string().optional(),
   GG_CODEX_BINARY: z.string().optional(),
+  GG_CLAUDE_BINARY: z.string().min(1).optional(),
   /**
    * Directory of the built web app (apps/web/dist), served at /app/. Unset: the checkout's
    * `apps/web/dist` when it has been built (see `bundledWebDist`). Empty: no web app.
@@ -44,8 +44,7 @@ export interface ApiConfig {
   masterKey?: string;
   logLevel: z.infer<typeof EnvSchema>['GG_LOG_LEVEL'];
   maxConcurrentRuns: number;
-  defaultModel: string;
-  defaultEffort: z.infer<typeof EffortSchema>;
+  defaults: HarnessDefaults;
   timerPollMs: number;
   /** Webhook deliveries accepted per endpoint per minute. */
   hookRateLimitPerMinute: number;
@@ -53,10 +52,22 @@ export interface ApiConfig {
   publicUrl?: string;
   /** Path to a `codex` executable. Default: the CLI bundled with `@openai/codex-sdk`. */
   codexBinary?: string;
+  /** Explicit owner-installed native Claude Code executable; never downloaded or substituted. */
+  claudeBinary?: string;
   /** Absolute path of the built web app to serve under /app/, if configured. */
   webDist?: string;
   /** Seeds the local owner's Jev secret at startup only when it is absent. */
   jevApiKey?: string;
+}
+
+export class ConfigurationUpgradeRequiredError extends Error {
+  readonly code = 'CONFIGURATION_UPGRADE_REQUIRED';
+  constructor() {
+    super(
+      'Replace GG_DEFAULT_MODEL/GG_DEFAULT_EFFORT with GG_DEFAULTS JSON using {byHarness:{codex:{model,effort}}}',
+    );
+    this.name = 'ConfigurationUpgradeRequiredError';
+  }
 }
 
 /** The default data directory: `~/.graphgoblin`. */
@@ -84,6 +95,14 @@ export function loadConfig(
   env: NodeJS.ProcessEnv = process.env,
   options: LoadConfigOptions = {},
 ): ApiConfig {
+  if (env.GG_DEFAULT_MODEL !== undefined || env.GG_DEFAULT_EFFORT !== undefined) {
+    throw new ConfigurationUpgradeRequiredError();
+  }
+  const rawDefaults =
+    env.GG_DEFAULTS === undefined
+      ? { byHarness: { codex: { model: 'gpt-6-luna', effort: 'low' } } }
+      : (JSON.parse(env.GG_DEFAULTS) as unknown);
+  const defaults = HarnessDefaultsSchema.parse(rawDefaults);
   const parsed = EnvSchema.safeParse(env);
   if (!parsed.success) {
     const issues = parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ');
@@ -102,13 +121,13 @@ export function loadConfig(
     ...(e.GG_MASTER_KEY ? { masterKey: e.GG_MASTER_KEY } : {}),
     logLevel: e.GG_LOG_LEVEL,
     maxConcurrentRuns: e.GG_MAX_CONCURRENT_RUNS,
-    defaultModel: e.GG_DEFAULT_MODEL,
-    defaultEffort: e.GG_DEFAULT_EFFORT,
+    defaults,
     timerPollMs: e.GG_TIMER_POLL_MS,
     hookRateLimitPerMinute: e.GG_HOOK_RATE_LIMIT,
     swaggerUi: e.GG_SWAGGER_UI,
     ...(e.GG_PUBLIC_URL ? { publicUrl: e.GG_PUBLIC_URL } : {}),
     ...(e.GG_CODEX_BINARY ? { codexBinary: e.GG_CODEX_BINARY } : {}),
+    ...(e.GG_CLAUDE_BINARY ? { claudeBinary: e.GG_CLAUDE_BINARY } : {}),
     ...(webDist ? { webDist: resolve(webDist) } : {}),
     ...(jevApiKey ? { jevApiKey } : {}),
   };

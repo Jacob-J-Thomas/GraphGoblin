@@ -467,7 +467,7 @@ describe('SettingsPage', () => {
     'shows the saved %s default truthfully until another model is chosen',
     async (state) => {
       const api = seeded();
-      api.settingsValues = { defaultModel: 'gpt-6-luna' };
+      api.settingsValues = { defaults: { byHarness: { codex: { model: 'gpt-6-luna' } } } };
       renderApp('/settings', api);
       const user = userEvent.setup();
       const enabled = await screen.findByRole('switch', { name: 'Enable Luna' });
@@ -482,39 +482,369 @@ describe('SettingsPage', () => {
       const name = state === 'disabled' ? 'Luna (disabled)' : 'gpt-6-luna (not in catalog)';
       await waitFor(() => expect(within(model).getByRole('option', { name })).toBeInTheDocument());
       expect(model).toHaveValue('gpt-6-luna');
-      expect(api.settingsValues['defaultModel']).toBe('gpt-6-luna');
+      expect(api.settingsValues['defaults']).toEqual({
+        byHarness: { codex: { model: 'gpt-6-luna' } },
+      });
       expect(model).toHaveAccessibleDescription(
-        'Runs keep using this model until you choose another model or (server default).',
+        'This saved model is unavailable. Choose an enabled catalog model or (server default) before publishing or running.',
       );
       if (state === 'disabled') {
         await user.click(enabled);
         await waitFor(() =>
           expect(within(model).getByRole('option', { name: 'Luna' })).toBeInTheDocument(),
         );
-        expect(screen.queryByText(/Runs keep using this model/)).not.toBeInTheDocument();
+        expect(screen.queryByText(/This saved model is unavailable/)).not.toBeInTheDocument();
       }
       await user.selectOptions(model, '');
-      await waitFor(() => expect(api.settingsValues).not.toHaveProperty('defaultModel'));
+      await waitFor(() => expect(api.settingsValues).not.toHaveProperty('defaults'));
       await waitFor(() => expect(model).toHaveValue(''));
-      expect(screen.queryByText(/Runs keep using this model/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/This saved model is unavailable/)).not.toBeInTheDocument();
     },
   );
 
   it('saves default model and effort', async () => {
     const user = userEvent.setup();
     const api = seeded();
-    api.settingsValues = { defaultModel: 'gpt-6-luna' };
+    api.settingsValues = { defaults: { byHarness: { codex: { model: 'gpt-6-luna' } } } };
     renderApp('/settings', api);
     const model = await screen.findByLabelText('Default model');
     await waitFor(() => expect(model).toHaveValue('gpt-6-luna'));
     expect(within(model).queryByText('Sol')).not.toBeInTheDocument();
     await user.selectOptions(screen.getByLabelText('Default effort'), 'high');
-    await waitFor(() => expect(api.settingsValues).toMatchObject({ defaultEffort: 'high' }));
+    await waitFor(() =>
+      expect(api.settingsValues).toMatchObject({
+        defaults: { byHarness: { codex: { model: 'gpt-6-luna', effort: 'high' } } },
+      }),
+    );
     await waitFor(() => expect(screen.getByLabelText('Default effort')).toHaveValue('high'));
-    // "(server default)" removes the setting instead of storing an empty model.
+    // Choosing the server default for model keeps the independently selected effort.
     await user.selectOptions(model, '');
-    await waitFor(() => expect(api.settingsValues).not.toHaveProperty('defaultModel'));
+    await waitFor(() =>
+      expect(api.settingsValues).toMatchObject({
+        defaults: { byHarness: { codex: { effort: 'high' } } },
+      }),
+    );
     await waitFor(() => expect(model).toHaveValue(''));
+    await user.selectOptions(screen.getByLabelText('Default effort'), '');
+    await waitFor(() => expect(api.settingsValues).not.toHaveProperty('defaults'));
+  });
+
+  it.each([undefined, 'minimal'])(
+    'bounds inherited Claude default efforts without materializing a model, preserving saved %s',
+    async (savedEffort) => {
+      const api = seeded();
+      api.catalog.push(
+        {
+          harness: 'claude',
+          source: 'harness',
+          model: 'opus',
+          displayName: 'Opus',
+          efforts: ['minimal', 'low', 'high', 'xhigh'],
+          defaultEffort: 'high',
+          enabled: true,
+        },
+        {
+          harness: 'claude',
+          source: 'harness',
+          model: 'sonnet',
+          displayName: 'Sonnet',
+          efforts: ['low', 'high', 'max'],
+          defaultEffort: 'high',
+          enabled: true,
+        },
+        {
+          harness: 'claude',
+          source: 'harness',
+          model: 'disabled',
+          displayName: 'Disabled',
+          efforts: ['minimal'],
+          defaultEffort: 'minimal',
+          enabled: false,
+        },
+        {
+          harness: 'claude',
+          source: 'harness',
+          model: 'unverified',
+          displayName: 'Unverified',
+          efforts: ['minimal'],
+          defaultEffort: 'minimal',
+          enabled: true,
+        },
+      );
+      api.preflight.push({
+        harness: 'claude',
+        ok: true,
+        authenticated: true,
+        problems: [],
+        models: [
+          {
+            model: 'opus',
+            efforts: ['low', 'high', 'xhigh'],
+          },
+          {
+            model: 'sonnet',
+            efforts: ['low', 'high', 'max'],
+          },
+          {
+            model: 'disabled',
+            efforts: ['minimal'],
+          },
+          {
+            model: 'unreported',
+            efforts: ['minimal'],
+          },
+        ],
+      });
+      api.settingsValues = {
+        defaults: {
+          byHarness: {
+            codex: { model: 'gpt-6-luna', effort: 'low' },
+            ...(savedEffort === undefined ? {} : { claude: { effort: savedEffort } }),
+          },
+        },
+      };
+      renderApp('/settings', api);
+      const model = await screen.findByLabelText('Default model (claude)');
+      await waitFor(() =>
+        expect(within(model).getByRole('option', { name: 'Opus' })).toBeInTheDocument(),
+      );
+      const effort = screen.getByLabelText('Default effort (claude)');
+      expect(model).toHaveValue('');
+      expect(effort).toHaveValue(savedEffort ?? '');
+      const options = within(effort).getAllByRole<HTMLOptionElement>('option');
+      expect(options.filter((option) => !option.disabled).map((option) => option.value)).toEqual([
+        '',
+        'low',
+        'high',
+      ]);
+      if (savedEffort)
+        expect(within(effort).getByRole('option', { name: /minimal/ })).toBeDisabled();
+      else expect(within(effort).queryByRole('option', { name: /^minimal$/ })).toBeNull();
+      expect(
+        api.calls.filter((call) => call.method === 'PUT' && call.path === '/settings'),
+      ).toEqual([]);
+      await userEvent.setup().selectOptions(effort, 'high');
+      await waitFor(() =>
+        expect(api.settingsValues).toEqual({
+          defaults: {
+            byHarness: {
+              codex: { model: 'gpt-6-luna', effort: 'low' },
+              claude: { effort: 'high' },
+            },
+          },
+        }),
+      );
+      expect(model).toHaveValue('');
+    },
+  );
+
+  it('keeps Claude defaults per harness and enables Fable through the catalog', async () => {
+    const user = userEvent.setup();
+    const api = seeded();
+    api.catalog.push(
+      {
+        harness: 'claude',
+        source: 'harness',
+        model: 'claude-opus-5-5',
+        displayName: 'Claude Opus 5.5',
+        efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+        defaultEffort: 'high',
+        enabled: true,
+      },
+      {
+        harness: 'claude',
+        source: 'harness',
+        model: 'claude-fable-5-1',
+        displayName: 'Fable 5.1',
+        efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+        defaultEffort: 'high',
+        enabled: false,
+      },
+    );
+    api.preflight = [
+      { harness: 'codex', ok: true, authenticated: true, problems: [] },
+      {
+        harness: 'claude',
+        ok: true,
+        version: '2.1.285',
+        authenticated: true,
+        authMethod: 'claude.ai',
+        problems: [],
+        supportedPolicies: [],
+        models: [
+          {
+            model: 'claude-opus-5-5',
+            efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+          },
+          {
+            model: 'claude-fable-5-1',
+            efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+          },
+        ],
+      },
+    ];
+    api.settingsValues = {
+      defaults: { byHarness: { codex: { model: 'gpt-6-luna', effort: 'low' } } },
+    };
+    renderApp('/settings', api);
+
+    const fableSwitch = await screen.findByRole('switch', { name: 'Enable Fable 5.1' });
+    expect(fableSwitch).not.toBeChecked();
+    await user.click(fableSwitch);
+    await waitFor(() => expect(fableSwitch).toBeChecked());
+
+    const model = await screen.findByLabelText('Default model (claude)');
+    await user.selectOptions(model, 'claude-fable-5-1');
+    await waitFor(() =>
+      expect(api.settingsValues).toMatchObject({
+        defaults: {
+          byHarness: {
+            codex: { model: 'gpt-6-luna', effort: 'low' },
+            claude: { model: 'claude-fable-5-1' },
+          },
+        },
+      }),
+    );
+    await user.selectOptions(screen.getByLabelText('Default effort (claude)'), 'xhigh');
+    await waitFor(() =>
+      expect(api.settingsValues).toMatchObject({
+        defaults: {
+          byHarness: {
+            codex: { model: 'gpt-6-luna', effort: 'low' },
+            claude: { model: 'claude-fable-5-1', effort: 'xhigh' },
+          },
+        },
+      }),
+    );
+    expect(screen.getByLabelText('Default effort (claude)')).toHaveAccessibleDescription(
+      /requested effort.*does not report the effective effort/i,
+    );
+  });
+
+  it('keeps every harness default while a settings refresh is held between saves', async () => {
+    const user = userEvent.setup();
+    const api = seeded();
+    api.catalog.push({
+      harness: 'claude',
+      source: 'harness',
+      model: 'claude-opus-5-5',
+      displayName: 'Claude Opus 5.5',
+      efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+      defaultEffort: 'high',
+      enabled: true,
+    });
+    api.preflight.push({
+      harness: 'claude',
+      ok: true,
+      version: '2.1.285',
+      authenticated: true,
+      authMethod: 'claude.ai',
+      problems: [],
+      supportedPolicies: [],
+      models: [
+        {
+          model: 'claude-opus-5-5',
+          efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+        },
+      ],
+    });
+    api.settingsValues = {
+      defaults: { byHarness: { codex: { model: 'gpt-6-luna', effort: 'low' } } },
+    };
+    let reads = 0;
+    let releaseRefresh!: () => void;
+    let refreshStarted!: () => void;
+    const held = new Promise<void>((resolve) => {
+      releaseRefresh = resolve;
+    });
+    const refreshed = new Promise<void>((resolve) => {
+      refreshStarted = resolve;
+    });
+    api.override('GET /settings', async (call) => {
+      reads += 1;
+      if (reads === 2) {
+        refreshStarted();
+        await held;
+      }
+      return api.builtIn(call);
+    });
+    renderApp('/settings', api);
+
+    const claudeModel = await screen.findByLabelText('Default model (claude)');
+    const codexEffort = await screen.findByLabelText('Default effort');
+    try {
+      await user.selectOptions(claudeModel, 'claude-opus-5-5');
+      await refreshed;
+      await waitFor(() => expect(codexEffort).toBeDisabled());
+      expect(api.callsTo('PUT', '/settings')).toHaveLength(1);
+      expect(api.callsTo('PUT', '/settings')[0]!.body).toMatchObject({
+        defaults: {
+          byHarness: {
+            codex: { model: 'gpt-6-luna', effort: 'low' },
+            claude: { model: 'claude-opus-5-5' },
+          },
+        },
+      });
+    } finally {
+      releaseRefresh();
+    }
+
+    await waitFor(() => expect(codexEffort).toBeEnabled());
+    await user.selectOptions(codexEffort, 'high');
+    await waitFor(() => expect(api.callsTo('PUT', '/settings')).toHaveLength(2));
+    expect(api.callsTo('PUT', '/settings')[1]!.body).toMatchObject({
+      defaults: {
+        byHarness: {
+          codex: { model: 'gpt-6-luna', effort: 'high' },
+          claude: { model: 'claude-opus-5-5' },
+        },
+      },
+    });
+    expect(api.settingsValues['defaults']).toMatchObject({
+      byHarness: {
+        codex: { model: 'gpt-6-luna', effort: 'high' },
+        claude: { model: 'claude-opus-5-5' },
+      },
+    });
+  });
+
+  it('shows adapter support separately from a failed Claude CLI preflight', async () => {
+    const api = seeded();
+    api.catalog.push({
+      harness: 'claude',
+      source: 'harness',
+      model: 'claude-opus-5-5',
+      displayName: 'Claude Opus 5.5',
+      efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+      defaultEffort: 'high',
+      enabled: true,
+    });
+    api.preflight.push({
+      harness: 'claude',
+      ok: false,
+      version: '2.1.285',
+      authenticated: false,
+      problems: ['Claude CLI is not signed in.'],
+      models: [
+        {
+          model: 'claude-opus-5-5',
+          efforts: ['low', 'medium', 'high', 'xhigh', 'max'],
+        },
+      ],
+    });
+    renderApp('/settings', api);
+
+    const preflight = await screen.findByRole('region', { name: 'Harness preflight' });
+    expect(await within(preflight).findByText('Claude CLI is not signed in.')).toBeInTheDocument();
+    const claudePreflight = within(preflight).getByText('claude').closest('li')!;
+    expect(await within(claudePreflight).findByText('not ready')).toBeInTheDocument();
+    const support = within(preflight).getByRole('list', { name: 'Claude model support' });
+    expect(within(support).getByText('supported by adapter')).toBeInTheDocument();
+    expect(within(support).queryByText('available')).toBeNull();
+
+    const model = await screen.findByLabelText('Default model (claude)');
+    expect(model).toHaveValue('');
+    expect(within(model).queryByRole('option', { name: /claude-opus-5-5/ })).toBeNull();
   });
 
   it('sets and deletes secrets without ever showing values', async () => {
@@ -654,4 +984,43 @@ describe('SettingsPage', () => {
     );
     await user.click(screen.getByRole('button', { name: 'Keep' }));
   });
+});
+
+describe('Claude catalog enablement and readiness', () => {
+  it.each([true, false])(
+    'keeps owner enable switches usable with failed readiness and login %s',
+    async (authenticated) => {
+      const api = seeded();
+      api.catalog.push({
+        harness: 'claude',
+        source: 'harness',
+        model: 'claude-fable-5-1',
+        displayName: 'Fable 5.1',
+        efforts: ['high'],
+        defaultEffort: 'high',
+        enabled: true,
+      });
+      api.preflight.push({
+        harness: 'claude',
+        ok: false,
+        version: '2.1.287',
+        authenticated,
+        authMethod: authenticated ? 'claude.ai' : null,
+        problems: ['Claude CLI 2.1.287: required capabilities unavailable: --restricted'],
+        models: [{ model: 'claude-fable-5-1', efforts: ['high'] }],
+      });
+      renderApp('/settings', api);
+      expect(
+        await screen.findByText(/Enabled in catalog; Claude harness not ready/),
+      ).toBeInTheDocument();
+      const toggle = await screen.findByRole('switch', { name: 'Enable Fable 5.1' });
+      expect(toggle).toBeChecked();
+      expect(toggle).not.toHaveAttribute('aria-disabled', 'true');
+      if (authenticated) expect(screen.getByText('Signed in with Claude.ai.')).toBeInTheDocument();
+      else expect(screen.queryByText('Signed in with Claude.ai.')).not.toBeInTheDocument();
+      await userEvent.setup().click(toggle);
+      await waitFor(() => expect(toggle).not.toBeChecked());
+      expect(screen.getByText(/Disabled in catalog; Claude harness not ready/)).toBeInTheDocument();
+    },
+  );
 });

@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { CodexHarness } from '@graphgoblin/adapter-codex';
 import { JevDecider } from '@graphgoblin/adapter-jev';
-import type { DeciderPort } from '@graphgoblin/engine';
+import { openDatabase } from '@graphgoblin/infrastructure/sqlite';
 import { CapturingLogger } from '@graphgoblin/engine/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildApp } from './app.js';
@@ -31,10 +31,10 @@ function config(env: Record<string, string> = {}) {
   });
 }
 
-function jevOf(container: Container): DeciderPort {
-  const jev = container.ports.deciders.find((d) => d.id === 'jev');
-  expect(jev).toBeDefined();
-  return jev!;
+async function jevAvailable(container: Container): Promise<boolean> {
+  return (
+    (await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev', 'noul')).status === 'ready'
+  );
 }
 
 describe('default adapters', () => {
@@ -57,31 +57,30 @@ describe('default adapters', () => {
     await container.stop();
   });
 
-  it('registers the Codex harness, structured completions, and the jev and codex deciders', () => {
+  it('registers the Codex harness, structured completions, and the Codex evaluator and classifier registry', () => {
     expect(container.ports.harnesses.codex).toBeInstanceOf(CodexHarness);
     expect(container.ports.structured).toBeDefined();
-    expect(container.ports.deciders.map((d) => d.id)).toEqual(['jev', 'codex']);
-    expect(container.ports.deciders[1]?.available()).toBe(true);
+    expect(container.ports.deciders.map((d) => d.id)).toEqual(['codex']);
+    expect(container.ports.deciders[0]?.available()).toBe(true);
   });
 
-  it('starts without a Jev key and leaves Jev unavailable', () => {
-    expect(jevOf(container).available()).toBe(false);
+  it('starts without a Jev key and leaves Jev unavailable', async () => {
+    expect(await jevAvailable(container)).toBe(false);
   });
 
   it('refreshes Jev when its key secret is set or deleted through the API', async () => {
-    const jev = jevOf(container);
     const set = await app.inject({
       method: 'PUT',
       url: `/secrets/${JEV_SECRET}`,
       payload: { value: 'test-key' },
     });
     expect(set.statusCode).toBe(200);
-    expect(jev.available()).toBe(true);
+    expect(await jevAvailable(container)).toBe(true);
     expect(hook).toHaveBeenCalledWith(LOCAL_OWNER, JEV_SECRET);
 
     const deleted = await app.inject({ method: 'DELETE', url: `/secrets/${JEV_SECRET}` });
     expect(deleted.statusCode).toBe(204);
-    expect(jev.available()).toBe(false);
+    expect(await jevAvailable(container)).toBe(false);
     expect(hook).toHaveBeenCalledTimes(2);
   });
 
@@ -100,47 +99,50 @@ describe('default adapters', () => {
     expect(hook).not.toHaveBeenCalled();
   });
 
-  it('keeps exit Noul on built-in Jev, with enable and secret refresh, while Choice snapshots are cached independently', async () => {
+  it('shares configured Noul and Choice classifier snapshots and invalidates them after key and enable changes', async () => {
     await app.inject({
       method: 'PUT',
       url: `/secrets/${JEV_SECRET}`,
       payload: { value: 'first-key' },
     });
-    const first = await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev');
+    const first = await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev', 'choice');
     expect(first.status).toBe('ready');
     if (first.status !== 'ready') throw new Error('expected configured Jev');
     expect(first.classifier).toBeInstanceOf(JevDecider);
-    expect(await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev')).toEqual(first);
+    expect(await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev', 'choice')).toEqual(first);
     await app.inject({
       method: 'PUT',
       url: `/secrets/${JEV_SECRET}`,
       payload: { value: 'second-key' },
     });
-    const next = await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev');
+    const next = await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev', 'choice');
     expect(next.status).toBe('ready');
     if (next.status !== 'ready') throw new Error('expected configured Jev');
     expect(next.classifier).not.toBe(first.classifier);
-    const judge = vi
-      .spyOn(JevDecider.prototype, 'judge')
-      .mockResolvedValue({ holds: true, confidence: 1 });
-    const choose = vi
-      .spyOn(JevDecider.prototype, 'choose')
-      .mockResolvedValue({ label: 'yes', confidence: 1 });
+    const noul = vi
+      .spyOn(JevDecider.prototype, 'classifyNoul')
+      .mockResolvedValue({ type: 'noul', trueProbability: 1 });
+    const choose = vi.spyOn(JevDecider.prototype, 'choose').mockResolvedValue({
+      type: 'choice',
+      optionId: 'yes',
+      confidence: 1,
+      probabilities: { yes: 1 },
+    });
     try {
       expect(
-        await jevOf(container).judge(
-          { question: 'Done?', context: {} },
+        await next.classifier.classifyNoul(
+          { question: 'Done?', context: {}, criteria: { true: 'Ready', false: 'Continue' } },
           new AbortController().signal,
         ),
-      ).toEqual({ holds: true, confidence: 1 });
-      await jevOf(container).choose(
-        { question: '?', context: {}, options: [{ label: 'yes', description: '' }] },
+      ).toEqual({ type: 'noul', trueProbability: 1 });
+      await next.classifier.choose(
+        { question: '?', context: {}, options: [{ id: 'yes', label: 'Yes', criteria: 'Approve' }] },
         new AbortController().signal,
       );
-      expect(judge).toHaveBeenCalledOnce();
+      expect(noul).toHaveBeenCalledOnce();
       expect(choose).toHaveBeenCalledOnce();
     } finally {
-      judge.mockRestore();
+      noul.mockRestore();
       choose.mockRestore();
     }
     await app.inject({
@@ -148,8 +150,8 @@ describe('default adapters', () => {
       url: '/classifier-models/jev',
       payload: { enabled: false },
     });
-    expect(jevOf(container).available()).toBe(false);
-    expect(await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev')).toMatchObject({
+    expect(await jevAvailable(container)).toBe(false);
+    expect(await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev', 'choice')).toMatchObject({
       reason: 'CLASSIFIER_MODEL_DISABLED',
     });
     await app.inject({
@@ -157,10 +159,10 @@ describe('default adapters', () => {
       url: '/classifier-models/jev',
       payload: { enabled: true },
     });
-    expect(jevOf(container).available()).toBe(true);
+    expect(await jevAvailable(container)).toBe(true);
     await app.inject({ method: 'DELETE', url: `/secrets/${JEV_SECRET}` });
-    expect(jevOf(container).available()).toBe(false);
-    expect(await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev')).toMatchObject({
+    expect(await jevAvailable(container)).toBe(false);
+    expect(await container.classifierRegistry.resolve(LOCAL_OWNER, 'jev', 'choice')).toMatchObject({
       reason: 'CLASSIFIER_SECRET_MISSING',
     });
   });
@@ -185,7 +187,7 @@ describe('Jev key at boot', () => {
     try {
       await second.start();
       expect(recover).toHaveBeenCalledOnce();
-      expect(jevOf(second).available()).toBe(false);
+      expect(await jevAvailable(second)).toBe(false);
     } finally {
       await second.stop();
     }
@@ -202,7 +204,7 @@ describe('Jev key at boot', () => {
       await first.start();
       expect(await first.repos.secretsFor(LOCAL_OWNER).resolve(JEV_SECRET)).toBe(key);
       expect(await first.repos.secretsFor('other-owner').resolve(JEV_SECRET)).toBeUndefined();
-      expect(jevOf(first).available()).toBe(true);
+      expect(await jevAvailable(first)).toBe(true);
       const rows = await first.handle.db.query.secrets.findMany();
       expect(rows).toHaveLength(1);
       expect(rows[0]?.ciphertext).not.toContain(key);
@@ -219,7 +221,7 @@ describe('Jev key at boot', () => {
     try {
       await second.start();
       expect(await second.repos.secretsFor(LOCAL_OWNER).resolve(JEV_SECRET)).toBe(key);
-      expect(jevOf(second).available()).toBe(true);
+      expect(await jevAvailable(second)).toBe(true);
       expect(logger.lines).toEqual([]);
     } finally {
       await second.stop();
@@ -268,7 +270,7 @@ describe('Jev key at boot', () => {
     try {
       await container.start();
       expect(await container.repos.secretsFor(LOCAL_OWNER).list()).toEqual([]);
-      expect(jevOf(container).available()).toBe(false);
+      expect(await jevAvailable(container)).toBe(false);
       expect(logger.lines).toEqual([]);
     } finally {
       await container.stop();
@@ -290,7 +292,7 @@ describe('Jev key at boot', () => {
       expect(await container.repos.secretsFor('other-owner').resolve(JEV_SECRET)).toBe(
         'other-owner-key',
       );
-      expect(jevOf(container).available()).toBe(true);
+      expect(await jevAvailable(container)).toBe(true);
       expect(logger.lines.filter((line) => line.level === 'info')).toEqual([
         { level: 'info', obj: {}, msg: 'seeded jev-api-key from GG_JEV_API_KEY' },
       ]);
@@ -312,7 +314,7 @@ describe('Jev key at boot', () => {
     expect(second.config.codexBinary).toBe('C:/tools/codex.exe');
     await second.start();
     try {
-      expect(jevOf(second).available()).toBe(true);
+      expect(await jevAvailable(second)).toBe(true);
     } finally {
       await second.stop();
     }
@@ -388,5 +390,80 @@ describe('container directory ownership', () => {
     await expect(access(join(dataDir, 'graphgoblin.lock'))).rejects.toMatchObject({
       code: 'ENOENT',
     });
+  });
+});
+
+describe('configuration admission before startup writes', () => {
+  it('does not create SQLite/master-key files for an unknown process default', async () => {
+    const invalid = config({
+      GG_DEFAULTS: JSON.stringify({
+        byHarness: { codex: { model: 'not-in-catalog', effort: 'low' } },
+      }),
+    });
+    await expect(createContainer(invalid, { startTimers: false })).rejects.toThrow(
+      /Invalid GG_DEFAULTS/,
+    );
+    for (const name of ['gg.db', 'master.key', 'graphgoblin.lock'])
+      await expect(access(join(dataDir, name))).rejects.toThrow();
+  });
+  it('reads existing manual catalog entries without changing database bytes or rows on invalid effort', async () => {
+    const valid = config();
+    const first = await createContainer(valid, { startTimers: false });
+    await first.start();
+    await first.repos.catalog.upsert({
+      harness: 'codex',
+      model: 'manual-model',
+      source: 'litellm',
+      displayName: 'Manual',
+      enabled: true,
+      efforts: ['low'],
+      defaultEffort: 'low',
+    });
+    await first.handle.client.execute('PRAGMA journal_mode=DELETE');
+    await first.stop();
+    const file = join(dataDir, 'gg.db');
+    const before = await readFile(file);
+    await expect(
+      createContainer(
+        config({
+          GG_DEFAULTS: JSON.stringify({
+            byHarness: { codex: { model: 'manual-model', effort: 'high' } },
+          }),
+        }),
+        { startTimers: false },
+      ),
+    ).rejects.toThrow(/Invalid GG_DEFAULTS/);
+    expect(await readFile(file)).toEqual(before);
+    const second = await createContainer(
+      config({
+        GG_DEFAULTS: JSON.stringify({
+          byHarness: { codex: { model: 'manual-model', effort: 'low' } },
+        }),
+      }),
+      { startTimers: false },
+    );
+    await second.stop();
+    expect(await readFile(file)).toEqual(before);
+  });
+  it('refuses an old store before creating a master key or applying migrations', async () => {
+    const handle = openDatabase({ url: config().dbUrl });
+    await handle.client.execute('CREATE TABLE old_data(id TEXT)');
+    handle.close();
+    await expect(createContainer(config(), { startTimers: false })).rejects.toMatchObject({
+      code: 'DATA_UPGRADE_REQUIRED',
+    });
+    await expect(access(join(dataDir, 'master.key'))).rejects.toThrow();
+    const inspection = openDatabase({ url: config().dbUrl });
+    try {
+      expect(
+        (
+          await inspection.client.execute(
+            "SELECT name FROM sqlite_master WHERE name='__drizzle_migrations'",
+          )
+        ).rows,
+      ).toEqual([]);
+    } finally {
+      inspection.close();
+    }
   });
 });

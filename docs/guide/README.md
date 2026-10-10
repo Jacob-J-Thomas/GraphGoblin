@@ -4,7 +4,7 @@ GraphGoblin is a local web app and API for composing agent work, scripts, decisi
 A loop is a graph of nodes connected through named ports.
 A run executes a particular loop version and records an event log that you can inspect and stream.
 Codex is the harness that performs agent work using your machine's existing login.
-A decider uses Jev or Codex to choose a route, or a decision node evaluates a JSONata expression.
+Each decision selects one evaluator: a local JSONata expression, a Choice classifier such as Jev, or a structured Codex completion.
 
 ## Use the mental model
 
@@ -26,5 +26,10 @@ The context thread holds messages, variables, artifacts, per-node outputs, and u
 5. [Use MCP and the Codex plugin](05-mcp-and-codex-plugin.md)
 6. [Manage settings and secrets](06-settings-and-secrets.md)
 7. [Troubleshoot](07-troubleshooting.md)
+8. [Upgrade stored loops to format 3](08-offline-upgrade.md)
+9. [Start from a template](09-templates.md)
+10. [Use the GitHub issue implementation template](10-implementation-template.md)
+11. [Use the GitHub pull-request review template](11-review-template.md)
+12. [Use the post-merge QA template](12-qa-template.md)
 
 This guide describes the current implementation. Callouts starting "After 1.0" mark planned features that this release does not have. For design context, read [Vision and scope](../01-vision-and-scope.md), [Architecture](../02-architecture.md), and the [Implementation plan](../12-implementation-plan.md).

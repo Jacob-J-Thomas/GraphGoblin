@@ -61,12 +61,14 @@ describe('cursor boundaries, recovered twice', () => {
       const configs: Record<string, unknown> = {
         inference: { prompt: { template: 'hello' } },
         decision: {
-          question: '?',
-          strategy: ['jev'],
-          routes: [
-            { label: 'yes', description: 'Y' },
-            { label: 'no', description: 'N' },
-          ],
+          answer: {
+            type: 'choice',
+            options: [
+              { id: 'yes', label: 'Yes', criteria: 'Yes' },
+              { id: 'no', label: 'No', criteria: 'No' },
+            ],
+          },
+          evaluation: { kind: 'classifier', model: 'jev', question: 'Which?' },
         },
         mutate: {
           operations: [
@@ -95,7 +97,15 @@ describe('cursor boundaries, recovered twice', () => {
             to: { node: 'done' },
           })),
         );
-        vi.spyOn(e.ports.jev, 'choose').mockResolvedValue({ label: kind.slice(9) });
+        vi.spyOn(e.ports.jev, 'choose').mockResolvedValue({
+          type: 'choice',
+          optionId: kind.slice(9),
+          confidence: 1,
+          probabilities: {
+            yes: kind.slice(9) === 'yes' ? 1 : 0,
+            no: kind.slice(9) === 'no' ? 1 : 0,
+          },
+        });
       }
       if (nodeKind === 'exit') def.edges = def.edges.filter((edge) => edge.from.node !== 'target');
       let blocked = false;

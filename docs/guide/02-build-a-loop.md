@@ -29,11 +29,11 @@ Every save tells the server which copy the edit started from. If another tab, de
 
 ## Choose nodes
 
-Choose **Harness** in each inference node's dialog. It defaults to **Codex** when omitted.
-Loop settings offer model and effort defaults. Remove `settings.defaults.harness` from older files before importing them.
+Choose **Harness** in each inference node's dialog. It defaults to **Codex** when omitted; the current choices are **Codex** and **Claude**.
+Loop settings offer model and effort defaults under **Defaults → By harness**. Remove `settings.defaults.harness` from older files before importing them.
 If import is refused, the alert lists each invalid field's path and reason, including this removed field.
 
-**Model** is a native dropdown of enabled catalog entries for the inference node's **Harness**, showing each display name and model id. **(loop default)** leaves the node's model unset; the loop's **Defaults → Model** uses Codex entries and **(owner default)** leaves the loop default unset. The decision node's **Codex → Model** and **Effort** use the same catalog controls with Codex entries. Use **Model catalog in Settings** below the picker to enable a model. There is no free-text option. Tab reaches the dropdown, then the Settings link; arrow keys change the selection and typing a name finds a matching entry. **Effort** offers the chosen model's efforts, or all six efforts when no catalog model is selected. The unset choice says **(inherited; the catalog suggests low)** when the catalog suggests low. This is guidance: the effective inherited effort may differ, because unset effort still inherits the loop, owner, and process defaults.
+**Model** is a native dropdown of enabled catalog entries for the inference node's **Harness**, showing each display name and model id. **(loop default)** leaves the node's model unset; loop and owner defaults are scoped to each harness. The decision node's **Codex → Model** and **Effort** remain Codex-only. Claude supports exact models `claude-opus-5-5` and `claude-fable-5-1`. Use **Model catalog in Settings** below the picker to enable an eligible model. A saved model from another harness is kept as a disabled entry labelled with its harness; choose a valid model once preflight passes, or select an inherited default. Switching to Claude resets the sandbox and approval policy to `read-only`/`never`; full access requires a separate explicit choice. Other authored harness options are preserved, with unsupported Claude settings reported for correction. There is no free-text option. Tab reaches the dropdown, then the Settings link; arrow keys change the selection and typing a name finds a matching entry. **Effort** offers the selected model's efforts: Claude supports `low`, `medium`, `high`, `xhigh`, and `max` (not `minimal`); Codex has its own catalog choices. The unset choice gives catalog guidance only; actual model and effort inherit in node, loop, owner, then process order within the selected harness.
 
 A saved model that is missing or disabled stays selected with **not in catalog** or **disabled in the catalog** and a warning. An effort the selected model does not support stays selected and flagged too. Changing the model never changes effort silently. Catalog validation warnings appear beside the model field when they add information and do not block publishing. If the catalog cannot load, the current values remain in read-only dropdowns with one message and **Retry model catalog** beside Model; the pickers recover without changing saved values or dropping keyboard focus. A failed refresh keeps cached choices editable and warns that the catalog may be out of date.
 
@@ -41,11 +41,15 @@ A saved model that is missing or disabled stays selected with **not in catalog**
 
 > After 1.0: Surface-aware start and input controls. Today `exposeTo` is recorded and described to MCP callers, but the web launcher and engine commands do not enforce it. Use API authentication for access control.
 
-**Decision (`decision`).** Define at least two `routes`, each with a unique `label` and `description`; route labels cannot be `in`. Set a Liquid `question` and ordered `strategy` list using `jev`, `codex`, or `expression`. An expression strategy needs `expression.jsonata` returning a route label. Limit context with `context.messages`, `context.vars`, and `context.includeLastOutput`; declare selected variables in loop settings. Set `jev.minConfidence` or `codex.model` and `codex.effort` when needed. Under **Jev → Model** the node editor offers built-in Jev, the default, and every enabled classifier with Choice from **Settings → Classifier models**; a selection that becomes unavailable stays selected with the reason ([Configure classifier models](06-settings-and-secrets.md#configure-classifier-models)). An unavailable decider, an unknown label, or a Jev answer below `minConfidence` falls through to the next strategy. When every strategy falls through, the run fails with `DECISION_NO_ROUTE`; an error raised by a decider fails the run at once. The chosen route is recorded as the node's output. Connect every route.
+**Decision (`decision`).** Choose an answer: **Noul** for true/false, **Choice** for named options, or **Score** for a position on an ordered rubric. Noul gives both sides criteria and labelled ports; Choice gives each option criteria and a stable ID; Score gives the anchors and complete routing bands. Labels and order can change without moving a connection. Connect every declared route.
 
-**Inference (`inference`).** Set `prompt.template` for a Codex turn. Choose `model`, `effort`, and `session.policy`: `fresh`, `resume-previous`, or `resume-named` with a `key`. Set `harnessOptions.sandbox` to `read-only`, `workspace-write` (default), or `danger-full-access`; `approval` defaults to `never`, while network and web search are off unless enabled. Use `input` transformations, `contextFiles`, and `output.transforms` to shape context. Set `output.schema.jsonSchema` for structured output and configure its `repair` policy. `output.captureTranscript` defaults to `artifact`, `output.toMessages` to `final`; `timeoutSeconds` is optional. The output goes to `lastOutput.value` and the node follows `out`.
+Choose **Expression**, **Classifier**, or **LLM** to evaluate it. Expression returns a strict boolean for Noul or a declared ID for Choice. LLM uses Codex for those two answers. Score requires a Score-capable classifier and retains fractional values. Classifier Noul separates **Truth threshold** (which side) from **Minimum confidence** (whether to accept the selected side). Score bands include their lower boundary; only the last band includes its upper boundary. Results are under `lastOutput.value.answer`, the selected route is `lastOutput.value.portId`, and provider details are in `lastOutput.value.provenance`.
 
-> After 1.0: Resolution of inference `capabilities.mcpServers`, `capabilities.plugins`, and `capabilities.skills` profiles. The current Codex adapter ignores these names; use explicit `harnessOptions.configOverrides` for Codex configuration today.
+Questions still render against the full thread; the separate context selector keeps its existing behavior and does not limit template exposure. Unsupported capabilities, unavailable configuration, malformed answers and rejected classifier confidence have precise diagnostics. No other evaluator runs as fallback.
+
+**Inference (`inference`).** Set `prompt.template` for a Codex or Claude turn. Choose `model`, `effort`, and `session.policy`: `fresh`, `resume-previous`, or `resume-named` with a `key`. Codex supports `read-only`, `workspace-write` (default), and `danger-full-access`. Claude requires native Windows CLI 2.1.285 or newer with required capabilities and an explicit supported `read-only`/`never` or `danger-full-access`/`never` policy. Read-only restricts built-in tools but does not confine filesystem reads or the operating system; full access leaves commands and network unconfined under the API user's account. Claude refuses unsupported pairs, `networkAccess: false`, `webSearch: true`, custom capabilities, and nonempty raw configuration overrides. Use `input` transformations, `contextFiles`, and `output.transforms` to shape context. Set `output.schema.jsonSchema` for structured output and configure its `repair` policy. `output.captureTranscript` defaults to `artifact`, `output.toMessages` to `final`; `timeoutSeconds` is optional. The output goes to `lastOutput.value` and the node follows `out`.
+
+> Capability profiles for `capabilities.mcpServers`, `capabilities.plugins`, and `capabilities.skills` remain unresolved for Codex; its adapter accepts `harnessOptions.configOverrides`. Claude refuses nonempty capabilities and nonempty raw overrides under its launch policy.
 
 **Script (`script`).** Set an executable `command`, templated `args`, `cwd` (default `workspace`), and optional `env` and `timeoutSeconds`. Commands execute as the API's operating-system user, without a shell wrapper; invoke a shell explicitly if your program needs one. `stdin` accepts `thread`, `last-output`, or `none`; `stdout` accepts `last-output`, `patch` (RFC 6902), or `ignore`. In `env`, use the secret-reference syntax in [Settings and secrets](06-settings-and-secrets.md#store-secrets). Map expected nonzero codes through `exitCodeRoutes`; an unmapped nonzero code fails the run. Connect `out` and every additional route. Make scripts safe to execute again after interruption.
 
@@ -79,19 +83,19 @@ Fix errors before publishing: missing trigger or exit, unconnected or doubly con
 
 ## Set workspace and limits
 
-| Setting             | Configure it                                                                                                                                                    |
-| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `maxIterations`     | Default 10, range 1 to 10,000. It limits exit loop-backs (the run ends `exhausted`) and fresh visits per node (the run fails `MAX_ITERATIONS`).                 |
-| `workingDirectory`  | `temp` (default), `fixed` with `path`, or `template` with a Liquid `template`. The filesystem adapter creates the resolved directory if needed.                 |
-| `subloopDepthLimit` | Default 8, range 1 to 64. A subloop node can replace it with `depthLimitOverride`.                                                                              |
-| `defaults`          | Set optional `model` and `effort`. Node values override loop defaults, which override owner and API-process defaults. Harness is chosen on each inference node. |
+| Setting             | Configure it                                                                                                                                                                                                   |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `maxIterations`     | Default 10, range 1 to 10,000. It limits exit loop-backs (the run ends `exhausted`) and fresh visits per node (the run fails `MAX_ITERATIONS`).                                                                |
+| `workingDirectory`  | `temp` (default), `fixed` with `path`, or `template` with a Liquid `template`. The filesystem adapter creates the resolved directory if needed.                                                                |
+| `subloopDepthLimit` | Default 8, range 1 to 64. A subloop node can replace it with `depthLimitOverride`.                                                                                                                             |
+| `defaults`          | Set optional model and effort under `byHarness.codex` or `byHarness.claude`. Node values override that harness's loop defaults, then owner and API-process defaults. Harness is chosen on each inference node. |
 
 For a repository workspace, use an absolute path. For a temporary workspace, use:
 
 ```json
 {
   "workingDirectory": { "kind": "temp" },
-  "defaults": { "model": "gpt-6-luna", "effort": "low" },
+  "defaults": { "byHarness": { "codex": { "model": "gpt-6-luna", "effort": "low" } } },
   "maxIterations": 3,
   "subloopDepthLimit": 8
 }
@@ -135,7 +139,7 @@ The body wraps your definition:
 ```json
 {
   "definition": {
-    "schemaVersion": 1,
+    "schemaVersion": 2,
     "name": "starter",
     "nodes": [
       { "id": "start", "kind": "trigger", "label": "Start", "config": { "subtype": "manual" } },
@@ -158,12 +162,12 @@ Save this bare definition as a JSON file and import it. It follows the contracts
 
 ```json
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "name": "first-summary",
   "description": "Ask Codex for a short explanation of a topic.",
   "settings": {
     "workingDirectory": { "kind": "temp" },
-    "defaults": { "model": "gpt-6-luna", "effort": "low" },
+    "defaults": { "byHarness": { "codex": { "model": "gpt-6-luna", "effort": "low" } } },
     "maxIterations": 3,
     "subloopDepthLimit": 8
   },
@@ -230,3 +234,13 @@ Save this bare definition as a JSON file and import it. It follows the contracts
 ```
 
 Read [Node catalog](../04-node-catalog.md) for design context. Continue with [Run and observe](03-run-and-observe.md).
+
+## Match an exit answer
+
+Decision and exit **Answer type** cards keep their labels short. Tab reaches the chosen answer once; use the arrow keys to change it. Keyboard focus on a radio shows its explanation without moving focus, and leaving the option or pressing Escape closes it. Clicking or tapping a card selects it without opening help. Hover or tap the help button beside Choice, Noul or Score to read the same explanation; these buttons are outside the Tab order. Tap again to close pinned help without changing the answer. Screen readers can read each option's explanation even while the help is closed.
+
+An exit criterion can evaluate a Noul, Choice or Score answer and compare it with an explicit rule. Choose true or false for Noul, one or more declared IDs for Choice, or a rubric-index comparison for Score. Provider Noul also needs criteria for each side. Score preserves fractional values; exits do not need routing bands.
+
+Choose a classifier that supports the answer type, or Codex LLM for Noul/Choice. Expressions produce strict boolean Noul. A classifier confidence minimum and the optional LLM self-reported confidence minimum can reject an answer before matching. A rejected answer never matches, even if the rule asks for false. Inspect the raw answer, gate and rule separately in the run timeline.
+
+Criteria run from top to bottom. A match on the final permitted iteration still completes; if none matches, the default either succeeds or takes the single loop-back, subject to the iteration ceiling. Keep explicit duration/iteration criteria in the intended order. Existing question context is unchanged; no new session controls are required.

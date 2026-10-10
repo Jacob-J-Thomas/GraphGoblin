@@ -21,7 +21,7 @@ Loops
 
 Runs
   POST   /loops/{id}/runs               start a run from a manual trigger; body: { triggerNodeId, input?, return?: ReturnChannel[] }
-  GET    /runs                          list with filters: loop, status, parent
+  GET    /runs                          owner-scoped list with run/template filters and a stable nextCursor
   GET    /runs/{id}                     snapshot: status, current node, iteration, waiting spec, result, failure
   GET    /runs/{id}/thread              current context thread projection
   GET    /runs/{id}/events?after=N      page of events; with Accept: text/event-stream, a live tail
@@ -32,7 +32,7 @@ Runs
 
 Triggers and events
   POST   /triggers/cron/preview         next cron slots without saving or arming; loops:read
-  POST   /hooks/{endpointToken}         signed webhook receiver (public; HMAC, timestamp window, replay, 1 MB, rate limit; see 08)
+  POST   /hooks/{endpointToken}         signed webhook receiver (public; timestamp/body or raw-body HMAC, scheme-specific replay protection, 1 MiB, rate limit; see 08)
   GET    /loops/{id}/triggers           schedules, webhook endpoints (path only, never the secret), armed poll triggers
   POST   /events                        inbound event bus; body: { type, payload, dedupeKey? }; fires event triggers, returns runIds and duplicate
   GET    /events?type=&before=&limit=   stored inbound events (API, exit channels, webhooks), newest first
@@ -66,9 +66,7 @@ with its field path, regardless of its value.
 and portable export envelopes. Envelope errors retain paths such as
 `loop.settings.defaults.harness`, `formatVersion`, or `exportedAt`, under `LOOP_IMPORT_ERROR`.
 Ordinary bodies use `VALIDATION_FAILED`. Responses and exports use the canonical, encodable
-schemas. Startup migration `0005` removes the obsolete field from stored version definitions
-once; there is no tolerant read path. Schema and format versions stay 1. Older files and API
-clients must remove the field before sending a definition (see the CHANGELOG upgrade notes).
+schemas. The current definition and export formats are version 3. Historical migration `0005` removed loop-level harness selection; the later decision/default cutover requires the stopped-instance [offline upgrade](guide/08-offline-upgrade.md). Old-format imports receive `LOOP_FORMAT_UPGRADE_REQUIRED`, and unconverted stores stop before ordinary migrations or recovery. There is no tolerant runtime read path. See the CHANGELOG upgrade notes.
 
 ## SSE protocol (Decided)
 
@@ -89,13 +87,13 @@ JSON event pages and SSE carry the same strict `RunEvent` contract, also adverti
 | Event            | Evidence                                                                                                                                                                                                                                                                                                                                                                                               |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `exit.evaluated` | Node, iteration, hard ceiling, ordered criteria with zero-based indices, strategy, matched/not-matched verdict, predicate boolean and confidence, resolved Codex model or Jev classifier, bounded Codex reasoning, skipped reasons and safe errors. `result` names completion and its matching criterion, loop-back and its cause, a configured or hard limit and its value, failure, or cancellation. |
-| `decision.made`  | Winning strategy, route, optional confidence, classifier and alternatives, plus required `skipped: [{ strategy, code, message }]` describing each strategy bypassed before the winner. For decisions recorded after this change, an empty list means none were bypassed. Migrated historical rows carry an empty list without skip evidence.                                                           |
+| `decision.made`  | Canonical `answer`, stable `portId`, resolved `provenance`, and bounded `diagnostics` preserving historical pre-cutover skips. Unknown historical facts are null. New decisions evaluate exactly one kind.                                                                                                                                                                                             |
 
 Skip messages and failure diagnostics use fixed summaries and allowlisted codes; provider
 error bodies, credential values, and raw response payloads are excluded. Codex reasoning
 is its returned short justification, capped at 2,048 characters. Clients consuming the
 strict contract must upgrade with the server; migration `0007` supplies empty skip lists
-for historical decisions, whose missing evidence cannot be recovered.
+for historical decisions, whose missing evidence cannot be recovered. The offline converter also gives decisions recorded without skip evidence empty diagnostics, which means none were recorded.
 
 SQLite reads validate every stored row against `RunEventSchema`. A non-conforming row fails
 the entire requested page; it is neither repaired nor converted into a synthetic event.
@@ -126,7 +124,7 @@ Public paths bypass API-key authentication. If no route handles a public path, t
 
 The `/docs` prefix is on the public list, but the Swagger UI is registered there only when `GG_SWAGGER_UI` is true (the default). With `GG_SWAGGER_UI=false`, nothing is registered under `/docs`, so `/docs` and every path beneath it return `404` without asking for a key; `/openapi.json` is always served.
 
-`/hooks/<token>` needs no API key because the HMAC signature is the credential; see [Webhook](08-triggers-and-integrations.md#webhook-decided-shipped-in-m6). `/app/`, `/`, and `/app` stay public because the web shell holds no data and every API call it makes is still authenticated.
+`/hooks/<token>` needs no API key because the HMAC signature is the credential; see [webhook signing](08-triggers-and-integrations.md). `/app/`, `/`, and `/app` stay public because the web shell holds no data and every API call it makes is still authenticated.
 
 Everything outside these public prefixes and exact paths is private. With `GG_REQUIRE_API_KEY=true`, it needs a bearer API key. When keys are not required, a request without a key runs in local trusted mode; a request that presents a key is still authenticated and limited to that key's scopes.
 
@@ -262,23 +260,23 @@ PUT requires strict custom HTTP metadata, including provider `http`; it rejects 
 | `CLASSIFIER_MANAGED_BY_SYSTEM` | 409  | PUT or DELETE of built-in `jev`.                        |
 | `CLASSIFIER_EXISTS`            | 409  | Create-only PUT (`If-None-Match: *`) of an existing id. |
 
-Successful classifier decisions add `classifierModel` (the catalog id) to the `decision.made` payload while retaining strategy `jev`, route/confidence/alternatives, and the existing lastOutput shape. Expression and Codex decisions omit this field. It records selection separately from the native providerModel sent to the endpoint. Every decision event includes the skipped-strategy list described above.
+Decision events and output now use `{answer:{type:"choice",optionId,confidence,probabilities},portId,provenance:{kind,provider,classifierId,model,effort}}`. Every key is present; inapplicable or unknown historical values are null. The event additionally has `diagnostics`, limited to three entries for preserved pre-cutover skips. Fresh emissions undergo strict per-kind validation. This is a breaking contract; regenerate clients and use the offline upgrade tool for old exports and stored records.
 
-Decision and exit-predicate failure details in run snapshots, paged events, and streams never contain the provider's raw answer. Both paths share fixed failure summaries and retain the selected strategy and recognized `DECIDER_*` codes; unknown provider codes become `DECIDER_ERROR` at the exit and catch-all boundaries. Provider messages, names, stacks, error bodies, and arbitrary codes are not persisted. Engine provider warnings contain only an allowlisted error name, recognized code, numeric HTTP status when available, and strategy and node identifiers; Jev SDK logs use fixed summaries. Provider exceptions fail the step with `INTERNAL_ERROR`, and cancellation still propagates. HTTP classifiers reject undeclared choices; Jev also rejects probabilities that do not cover exactly the submitted labels. Built-in Jev and Codex unknown choices still try the next strategy, with fixed diagnostics naming only the strategy. Successful decision events retain only declared routes in alternatives. Invalid confidence diagnostics are fixed, and low-confidence diagnostics contain only validated numbers. Expression diagnostics retain the author's expression result to help identify route mismatches.
+Decision and exit-predicate failures never retain provider raw answers, messages, stacks or secret-bearing error bodies. Decisions use typed `EVALUATION_*` failures with explicit resumability; exit predicates retain their existing failure contract pending #99. Classifier probabilities must cover exactly the submitted stable option IDs. Unknown choices and malformed confidence are invalid responses, not reasons to try another evaluator. Persisted diagnostics contain only fixed safe text and validated identifiers/numbers.
 
 ## Validation agreement (Decided, WP-D2)
 
-Classifier validation also joins the same shared issue collection for create, import, draft save, validate, and publish. It applies only to decisions whose strategy includes `jev`, resolving `config.jev.model` or the default `jev` for the request owner. Unknown models and unsupported Choice produce error-severity `CLASSIFIER_MODEL_NOT_FOUND` and `CLASSIFIER_PRIMITIVE_UNSUPPORTED`. Disabled, missing/blank-secret, and unreadable-secret states produce warnings `CLASSIFIER_MODEL_DISABLED`, `CLASSIFIER_SECRET_MISSING`, and `CLASSIFIER_SECRET_UNREADABLE`. Issues name the node/model and Settings remedy, use node-relative `config.jev.model` plus nodeId, and explain skipped strategies (including inability to route with no later strategy). Warnings allow publication; errors make validate's publishable false and publish return 422 `LOOP_INVALID` with the same issues. Published references remain intact after catalog deletion and use runtime fall-through or `DECISION_NO_ROUTE` until corrected.
+Classifier validation joins the same issue collection for create, import, draft save, validate and publish. It applies to `evaluation.kind: classifier` and its explicit `config.evaluation.model`, requiring Choice capability. Unknown models and unsupported capability are admission errors. Disabled, missing/blank-secret and unreadable-secret selections remain visible as diagnostics and block publication. Runtime rechecks the chosen entry and fails without fallback if it is unavailable.
 
 `POST /loops`, `POST /loops/import`, `PUT /loops/{id}/draft`, `POST /loops/{id}/validate`, and `POST /loops/{id}/publish` report the same issue list: the `domain` rules (`validateLoop`, which includes Liquid and JSONata syntax checks), trigger checks such as cron syntax, and subloop references, which must name a loop of the same owner with a published version (`SUBLOOP_NOT_FOUND`, `SUBLOOP_NOT_PUBLISHED`; a loop may reference itself). `publishable` from validate is true exactly when publish would accept the draft. The editor runs the `domain` rules locally and adds the API-only issues from validate.
 
-The API reads the catalog once per issue collection, next to subloop checks, and adds warning-severity `MODEL_DISABLED` or `MODEL_NOT_IN_CATALOG` for explicit inference `config.model` (the node's harness), decision `config.codex.model` (Codex, only when strategy includes `codex`), and `settings.defaults.model` (the inference default harness, `codex`). Node warnings include nodeId and node-relative paths `config.model` or `config.codex.model`; loop-default warnings use `settings.defaults.model` without nodeId. Unspecified models and unused decision Codex settings add no catalog warning. Publishing succeeds when only warnings exist and returns `{ version, issues }`; warnings do not enforce the catalog at runtime. The shared contracts issue schema supports optional paths, and the editor already shows warnings and their node identity.
+The API validates explicit and inherited model/effort selections within the selected harness. Unknown or wrong-harness models and unsupported effective effort are errors. Disabled or unconfigured models block publication. Loop and owner defaults use `defaults.byHarness`; process defaults use the same shape through `GG_DEFAULTS`. Precise node-relative paths identify decision `evaluation` selections and inference fields; loop diagnostics identify the selected harness entry. Draft creation and saving allow unresolved inherited model or effort defaults, returning the readiness issues for later repair. Explicit invalid node or loop selections still fail admission. Publication and runtime keep enforcing the full resolution policy.
 
 Known limitation: loop-default model warnings always check the Codex catalog, the only supported
 inference harness. Revisit this check when a second harness exists so a model inherited by nodes
 using different harnesses can be checked against each relevant catalog.
 
-Exit predicates whose strategy is `jev` check built-in Jev in the same five admission endpoints. They report `CLASSIFIER_MODEL_DISABLED`, `CLASSIFIER_SECRET_MISSING`, or `CLASSIFIER_SECRET_UNREADABLE` warnings at node-relative `config.criteria.<index>.strategy`, naming the exit, model, and Settings remedy. Warnings allow publication; if that unavailable predicate is evaluated, the exit fails with `DECIDER_UNAVAILABLE` rather than skipping it.
+Exit predicates whose strategy is `jev` check built-in Jev in the same five admission endpoints. They report `CLASSIFIER_MODEL_DISABLED`, `CLASSIFIER_SECRET_MISSING`, or `CLASSIFIER_SECRET_UNREADABLE` warnings at node-relative `config.criteria.<index>.strategy`, naming the exit, model, and Settings remedy. These warnings block publication, as they do for other selected evaluators. If an already published predicate becomes unavailable and is evaluated, the exit fails with `DECIDER_UNAVAILABLE`. Codex exit predicates also validate their effective inherited model/effort and block publication when the selected model or harness is unavailable; the exit evaluation contract itself is unchanged.
 
 ## Draft conflicts (Decided, WP-F2, ADR-0015)
 
@@ -286,4 +284,47 @@ A draft has a version token, `draftToken`: a hash of the definition the next dra
 
 `PUT /loops/{id}/draft` with `If-Match: "<draftToken>"` saves only when the server copy still has that token; otherwise it answers 409 `DRAFT_CONFLICT` with the server's current token as the problem's `draftToken` extension member, and saves nothing. `*`, weak tags (`W/"…"`), and lists are accepted. Draft saves and publishes of one loop are serialized in the API process, so of two different saves with the same token exactly one wins; a stale save whose definition already equals the server draft is a no-op 200 rather than a conflict. Storage also refuses to modify a version row that is no longer a draft: a save racing a publish creates a new draft, and a published version never changes. A save without `If-Match` stays unconditional (last write wins), for scripts and the MCP `design-loop` flow. In the client, `loops.saveDraft(client, loopId, definition, { ifMatch })` sends the header and a conflict surfaces as `GraphGoblinApiError` with `code: 'DRAFT_CONFLICT'` and `problem.draftToken`.
 
-`PUT /settings` checks the keys the engine reads: `defaultModel` must be a non-empty string and `defaultEffort` an effort level. Other keys are stored as given. `DELETE /settings/{key}` returns a key to the server default.
+`PUT /settings` validates the shared `defaults` value (`{byHarness:{codex:{model?,effort?}}}`). Catalog metadata default effort remains guidance, not a hidden resolver layer. Old owner `defaultModel` and `defaultEffort` values are converted offline. Deleting the `defaults` setting restores process defaults.
+
+## Template catalog and instances (#28)
+
+The owner-scoped API exposes `GET /templates`, `GET /templates/{id}`, `POST /templates/{id}/draft`, `POST /templates/{id}/prerequisites`, `POST /templates/{id}/instantiate` and `GET /template-instances/{id}`. Catalog entries contain a manifest, settings schema, current defaults and a structured prerequisite report. Each failed check includes remediation and states whether it blocks authoring or runtime. Reports do not grant authority; instantiation repeats the checks using the submitted settings.
+
+`POST /templates/{id}/draft` accepts an optional name and creates one ordinary editable draft from the installed starting-point asset. It returns `{loop, draft, issues}`, requires `loops:write`, and does not publish, start a run, create children or establish an immutable integration binding. Missing repository configuration or model credentials do not prevent saving the starting point; normal validation and runtime admission still apply.
+
+`GET /loops/{id}` also returns optional `templateInstanceId` for a loop created by a template instance belonging to the requesting owner. Ordinary loops omit it. It identifies the existing `GET /template-instances/{id}` resource under `loops:read`; it grants no runtime authority. Another owner's loop or instance remains unavailable.
+
+Instantiation returns `{instance, prerequisites}`. The instance records the installed template ID/version, owner, settings and allocated loop/version map. A single storage transaction creates the complete bundle and its immutable binding. Dependencies are published first; the parent remains a draft and does not start or arm its triggers. All declared subloops are remapped to their allocated child IDs and pinned versions. Separate creations have separate IDs. Settings fill declared literal data slots and role fields, never executable source strings. The generated client exposes `templates.list/get/createDraft/prerequisites/instantiate/instance`.
+
+The production catalog contains starter, implementation, review and QA entries. The gallery uses their editable starting points by default; configured repository automation is a separate explicit action. Repository recipe eligibility and effect authorization belong to the API integration, not the generic engine or domain bundle validator. Unregistered recipes cannot be created by guessing their IDs.
+
+### Template subjects and run pagination
+
+`GET /runs` returns `{items, nextCursor}` in descending creation-time and run-ID order.
+Reuse the returned opaque `cursor` with the same filters; `nextCursor: null` ends the
+listing. Equal creation timestamps do not skip runs. The default page size is 100,
+with `limit` from 1 to 500. A malformed cursor receives `400 INVALID_CURSOR`.
+The timestamp-only `before` filter is still available, but cannot accompany `cursor`.
+
+Alongside `loopId`, comma-separated `status`, and `parent` (a run ID or `none`),
+filters include lowercase `repository` (`owner/repository`), positive `issue` and
+`pullRequest` numbers, exact 40-character lowercase `head` and `mergeSha`, and
+`templateInstanceId`. Reads always remain scoped to the authenticated owner.
+Both the typed client's `GET('/runs')` and the generated OpenAPI contract expose
+the complete page; the convenience `runs.list` wrapper returns its items only.
+
+Run-list items and `GET /runs/{id}` may include `templateSubject`. This API-owned
+metadata describes a repository workflow's role, template instance/version,
+repository, issue/attempt and relevant PR/head/merge SHA. A worker also names its
+parent run, mapped subloop node and visit. Ordinary runs omit it. The generic
+engine `RunRecord` and context thread do not acquire GitHub-specific fields.
+
+The source is either `{kind: 'implementation', runId}` for an authenticated
+implementation attempt or `{kind: 'external'}` for a trusted standalone PR.
+A standalone review may have both issue and attempt set to null; it then has no
+issue-label or rework authority. QA requires one unambiguous linked issue.
+Linked external originals start at attempt one. The API derives and persists
+these identities during admission; authored run input cannot assert them.
+Repository recipes remain unregistered in this foundation release.
+
+Starter templates keep the ordinary engine resume behavior for resumable inference failures. Every resumed execution rechecks the actual pinned role configuration before another node can run. Repository recipes restrict resume to their original, allowlisted pre-execution prerequisite failure. If a restarted repository run already has a `node.started` event, lost prerequisites or authority require manual recovery; the failure does not claim that earlier effects were absent and no pre-execution explanatory comment is posted.

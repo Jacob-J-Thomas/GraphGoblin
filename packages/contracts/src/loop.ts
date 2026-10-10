@@ -1,14 +1,7 @@
 import { z } from 'zod';
-import {
-  EffortSchema,
-  ModelNameSchema,
-  SlugSchema,
-  TemplateSchema,
-  TimestampSchema,
-  UlidSchema,
-} from './common.js';
+import { SlugSchema, TemplateSchema, TimestampSchema, UlidSchema } from './common.js';
 import { NodeSchema } from './nodes.js';
-import { field } from './meta.js';
+import { HarnessDefaultsSchema } from './evaluation.js';
 import { VariableDeclarationsSchema } from './thread.js';
 
 /** Where a run works. Fixed path, templated from the trigger, or a fresh temporary directory. */
@@ -21,21 +14,7 @@ export type WorkingDirectorySpec = z.infer<typeof WorkingDirectorySpecSchema>;
 
 export const LoopSettingsSchema = z.strictObject({
   workingDirectory: WorkingDirectorySpecSchema.default({ kind: 'temp' }),
-  defaults: z
-    .strictObject({
-      model: ModelNameSchema.optional().meta(
-        field('Default Codex model; falls back to the owner setting, then the process default.', {
-          control: 'model',
-        }),
-      ),
-      effort: EffortSchema.optional().meta(
-        field(
-          'Default effort; falls back to the owner setting, then the process default. Catalog default effort is guidance only.',
-          { control: 'effort' },
-        ),
-      ),
-    })
-    .prefault({}),
+  defaults: HarnessDefaultsSchema.prefault({}),
   maxIterations: z.number().int().positive().max(10_000).default(10),
   subloopDepthLimit: z.number().int().positive().max(64).default(8),
 });
@@ -69,7 +48,7 @@ export const EdgeSchema = z.strictObject({
 export type Edge = z.infer<typeof EdgeSchema>;
 
 export const LoopDefinitionSchema = z.strictObject({
-  schemaVersion: z.literal(1),
+  schemaVersion: z.literal(3),
   name: z.string().min(1).max(120),
   description: z.string().max(4000).optional(),
   settings: LoopSettingsSchema.prefault({}),
@@ -83,7 +62,7 @@ export type LoopDefinitionInput = z.input<typeof LoopDefinitionSchema>;
 /** Portable file format for committing loops to a repository. */
 export const LoopExportSchema = z.strictObject({
   format: z.literal('graphgoblin-loop'),
-  formatVersion: z.literal(1),
+  formatVersion: z.literal(3),
   exportedAt: TimestampSchema,
   loop: LoopDefinitionSchema,
 });

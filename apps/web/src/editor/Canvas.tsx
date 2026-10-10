@@ -43,6 +43,7 @@ import { OrthogonalEdge, type OrthogonalEdgeData } from './OrthogonalEdge.js';
 import { RouteEditingContext, type RouteEditing } from './route-editing.js';
 import {
   canvasPorts,
+  canvasPortLabels,
   connectionProblem,
   issuesByNode,
   KIND_INFO,
@@ -145,7 +146,7 @@ export function buildCardData(
       node.id,
       before && before.node === node && sameIssues(before.issues, list)
         ? before
-        : { node, ports: canvasPorts(node), issues: list },
+        : { node, ports: canvasPorts(node), portLabels: canvasPortLabels(node), issues: list },
     );
   }
   return next;
@@ -209,6 +210,7 @@ function buildEdges(
     // routes while an unrelated card awaits measurement.
     const from = positions.get(edge.from.node);
     const to = positions.get(edge.to.node);
+    const portLabel = from?.data.portLabels[edge.from.port] ?? edge.from.port;
     const pendingDirection =
       !!from &&
       !!to &&
@@ -239,7 +241,8 @@ function buildEdges(
       : suspended
         ? ', manual route set aside under a moving card'
         : '';
-    const ariaLabel = `${edge.from.node} ${edge.from.port} to ${edge.to.node}${status}${manual}`;
+    const portId = portLabel === edge.from.port ? '' : ` (${edge.from.port})`;
+    const ariaLabel = `${edge.from.node} ${portLabel}${portId} to ${edge.to.node}${status}${manual}`;
     // xyflow subscribes each edge to its object identity. Keep untouched edges asleep during a
     // drag, even though another path or selection changed in the same graph.
     if (
@@ -266,7 +269,7 @@ function buildEdges(
       ...(data ? { data } : {}),
       ariaLabel,
       ...(edge.from.port !== 'out'
-        ? { label: edge.from.port, labelBgPadding: [8, 3], labelBgBorderRadius: 9 }
+        ? { label: portLabel, labelBgPadding: [8, 3], labelBgBorderRadius: 9 }
         : {}),
       ...(edge.from.port === 'loopBack' ? { animated: true, className: 'gg-edge-loop' } : {}),
     };

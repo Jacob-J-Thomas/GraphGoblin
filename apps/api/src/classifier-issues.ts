@@ -10,55 +10,47 @@ export async function classifierIssues(
   const entries = await container.repos.classifiers.list(ownerId);
   const issues: LoopIssue[] = [];
   for (const node of definition.nodes) {
-    const selections: {
-      id: string;
-      primitive: 'choice' | 'noul';
-      path: string;
-      kind: string;
-      unavailable: string;
-    }[] =
-      node.kind === 'decision' && node.config.strategy.includes('jev')
+    const selections =
+      node.kind === 'decision' && node.config.evaluation.kind === 'classifier'
         ? [
             {
-              id: node.config.jev?.model ?? 'jev',
-              primitive: 'choice',
-              path: 'config.jev.model',
+              id: node.config.evaluation.model,
+              primitive: node.config.answer.type,
+              path: 'config.evaluation.model',
               kind: 'Decision',
-              unavailable:
-                node.config.strategy.length === 1
-                  ? 'This strategy will be skipped and the decision cannot currently produce a route.'
-                  : 'This strategy will be skipped.',
+              unavailable: 'This evaluation is unavailable; publication is blocked.',
             },
           ]
         : node.kind === 'exit'
           ? node.config.criteria.flatMap((criterion, index) =>
-              criterion.when === 'predicate' && criterion.strategy === 'jev'
+              criterion.when === 'predicate' && criterion.evaluation.kind === 'classifier'
                 ? [
                     {
-                      id: 'jev',
-                      primitive: 'noul',
-                      path: `config.criteria.${index}.strategy`,
+                      id: criterion.evaluation.model,
+                      primitive: criterion.answer.type,
+                      path: 'config.criteria.' + index + '.evaluation.model',
                       kind: 'Exit',
-                      unavailable:
-                        'This predicate cannot run; the exit will fail with DECIDER_UNAVAILABLE when it is evaluated.',
+                      unavailable: 'This evaluation is unavailable; publication is blocked.',
                     },
                   ]
                 : [],
             )
           : [];
-    for (const selection of selections) {
-      const { id, path, kind, primitive, unavailable } = selection;
+    for (const { id, primitive, path, kind, unavailable } of selections) {
       const entry = entries.find((model) => model.id === id);
-      const prefix = `${kind} '${node.label}' (${node.id}), classifier '${entry?.displayName ?? id}' (${id})`;
-      const add = (code: string, severity: 'error' | 'warning', message: string) => {
-        issues.push({
-          code,
-          severity,
-          nodeId: node.id,
-          path,
-          message: `${prefix}: ${message}`,
-        });
-      };
+      const prefix =
+        kind +
+        " '" +
+        node.label +
+        "' (" +
+        node.id +
+        "), classifier '" +
+        (entry?.displayName ?? id) +
+        "' (" +
+        id +
+        ')';
+      const add = (code: string, severity: 'error' | 'warning', message: string) =>
+        issues.push({ code, severity, nodeId: node.id, path, message: prefix + ': ' + message });
       if (!entry) {
         add(
           'CLASSIFIER_MODEL_NOT_FOUND',
@@ -71,7 +63,8 @@ export async function classifierIssues(
         add(
           'CLASSIFIER_PRIMITIVE_UNSUPPORTED',
           'error',
-          `${primitive === 'choice' ? 'Choice' : 'Noul'} is not supported. Select a compatible classifier or edit its capabilities in Settings, Classifier models.`,
+          (primitive === 'choice' ? 'Choice' : primitive === 'noul' ? 'Noul' : 'Score') +
+            ' is not supported. Select a compatible classifier or edit its capabilities in Settings, Classifier models.',
         );
         continue;
       }
@@ -79,10 +72,17 @@ export async function classifierIssues(
         add(
           'CLASSIFIER_MODEL_DISABLED',
           'warning',
-          `model is disabled. Enable it in Settings, Classifier models. ${unavailable}`,
+          'model is disabled. Enable it in Settings, Classifier models. ' + unavailable,
         );
       const { summary, issue } = await container.classifierRegistry.inspect(ownerId, entry);
-      if (issue) add(issue, 'warning', `${summary.configurationReason} ${unavailable}`);
+      if (issue)
+        add(
+          issue,
+          'warning',
+          summary.configurationReason +
+            ' Configure its key in Settings, Classifier models. ' +
+            unavailable,
+        );
     }
   }
   return issues;

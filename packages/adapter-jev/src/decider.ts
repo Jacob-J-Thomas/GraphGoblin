@@ -1,13 +1,20 @@
-import type { JsonValue } from '@graphgoblin/contracts';
-import type { PredicateAnswer } from '@graphgoblin/domain';
+import {
+  ClassifierNoulResponseSchema,
+  ClassifierScoreResponseSchema,
+  type JsonValue,
+} from '@graphgoblin/contracts';
+import { validatePrimitiveAnswer } from '@graphgoblin/domain';
 import {
   describeError,
   type ChoiceRequest,
   type ChoiceResult,
-  type DeciderPort,
+  type ClassifierNoulResult,
+  type ClassifierPort,
   type Logger,
   type SecretsPort,
-  type YesNoRequest,
+  type NoulRequest,
+  type ScoreRequest,
+  type ScoreResult,
 } from '@graphgoblin/engine';
 import {
   APIConnectionError,
@@ -16,6 +23,7 @@ import {
   TypeSafeClient,
   choice,
   noul,
+  score,
   type EntryType,
   type Fetch,
   type RetryPolicy,
@@ -23,12 +31,13 @@ import {
 import { z } from 'zod';
 
 /**
- * `DeciderPort` (`id: 'jev'`) over TypeSafe's hosted Jev model through `@typesafe-ai/sdk`
- * (MIT, no dependencies). Both primitives go through `POST /v1/systemone`:
+ * `ClassifierPort` (`id: 'jev'`) over TypeSafe's hosted Jev model through `@typesafe-ai/sdk`
+ * (MIT, no dependencies). All primitives go through `POST /v1/systemone`:
  *
  * - `choose` asks one `choice` question whose criteria are the route labels and descriptions, and
  *   returns the chosen label, its confidence, and every other label with its probability.
- * - `judge` asks one `noul` (yes/no) question; `noul` is the probability of yes.
+ * - `classifyNoul` returns raw true probability for explicitly authored sides.
+ * - `score` returns a fractional rubric index and actual provider evidence.
  *
  * See docs/research/jev.md for the verified request and response shapes.
  */
@@ -60,16 +69,10 @@ const ChoiceAnswerSchema = z.object({
   probabilities: z.record(z.string(), z.number().min(0).max(1)),
 });
 
-const NoulAnswerSchema = z.object({
-  type: z.literal('noul'),
-  noul: z.number().min(0).max(1),
-});
-
 const resultSchema = <T extends z.ZodType>(answer: T) =>
   z.object({ model: z.string().optional(), answers: z.object({ answer }) });
 
 const ChoiceResultSchema = resultSchema(ChoiceAnswerSchema);
-const NoulResultSchema = resultSchema(NoulAnswerSchema);
 
 /** An error carrying a code the engine and logs can key off. */
 export class JevError extends Error {
@@ -80,6 +83,7 @@ export class JevError extends Error {
       | 'DECIDER_RATE_LIMITED'
       | 'DECIDER_HTTP_ERROR'
       | 'DECIDER_UNREACHABLE'
+      | 'DECIDER_INVALID_CONFIGURATION'
       | 'DECIDER_INVALID_RESPONSE',
     message: string,
     readonly status?: number,
@@ -121,7 +125,7 @@ function mapError(error: unknown): Error {
   return new JevError('DECIDER_HTTP_ERROR', 'Jev request failed');
 }
 
-export class JevDecider implements DeciderPort {
+export class JevDecider implements ClassifierPort {
   readonly id = 'jev' as const;
   private client: TypeSafeClient | undefined;
   private readonly ready: Promise<void>;
@@ -130,8 +134,8 @@ export class JevDecider implements DeciderPort {
    * `available()` must be synchronous and cheap, but the key lives behind the async `SecretsPort`.
    * The decider therefore resolves the key once at construction (in the background) and caches a
    * client; `init()` awaits that first resolution, and `refresh()` re-reads the secret after it
-   * changes. Until the first resolution finishes, `available()` is false and the engine falls
-   * through to the next strategy, which is the correct behaviour for a missing key.
+   * changes. Until the first resolution finishes, `available()` is false and the engine reports
+   * unavailable; the selected evaluation does not fall back to another method.
    */
   constructor(private readonly options: JevDeciderOptions) {
     this.ready = this.refresh().catch(() => undefined);
@@ -194,7 +198,7 @@ export class JevDecider implements DeciderPort {
 
   async choose(request: ChoiceRequest, signal: AbortSignal): Promise<ChoiceResult> {
     const client = this.requireClient();
-    const criteria = Object.fromEntries(request.options.map((o) => [o.label, o.description]));
+    const criteria = Object.fromEntries(request.options.map((o) => [o.id, o.criteria]));
     let body: unknown;
     try {
       body = await client.systemOne(
@@ -212,43 +216,77 @@ export class JevDecider implements DeciderPort {
       throw new JevError('DECIDER_INVALID_RESPONSE', 'Unexpected Jev choice response');
     }
     const { choice: label, confidence, probabilities } = parsed.data.answers.answer;
-    const labels = new Set(request.options.map((option) => option.label));
+    const labels = new Set(request.options.map((option) => option.id));
     const probabilityLabels = Object.keys(probabilities);
     if (
+      !labels.has(label) ||
       probabilityLabels.length !== labels.size ||
       probabilityLabels.some((key) => !labels.has(key))
     ) {
       throw new JevError('DECIDER_INVALID_RESPONSE', 'Unexpected Jev choice response');
     }
-    const alternatives = Object.entries(probabilities)
-      .filter(([other]) => other !== label)
-      .sort((a, b) => b[1] - a[1])
-      .map(([other, p]) => ({ label: other, confidence: p }));
     return {
-      label,
-      confidence: confidence ?? probabilities[label] ?? 0,
-      alternatives,
+      type: 'choice',
+      optionId: label,
+      confidence: confidence ?? probabilities[label]!,
+      probabilities,
     };
   }
 
-  async judge(request: YesNoRequest, signal: AbortSignal): Promise<PredicateAnswer> {
+  async classifyNoul(request: NoulRequest, signal: AbortSignal): Promise<ClassifierNoulResult> {
+    signal.throwIfAborted();
     const client = this.requireClient();
     let body: unknown;
     try {
       body = await client.systemOne(
-        { state: toState(request.context), questions: { answer: noul(request.question) } },
-        { signal },
+        {
+          state: toState(request.context),
+          questions: { answer: noul(request.question, request.criteria) },
+        },
+        { signal, retry: { maxRetries: 0 } },
       );
     } catch (error) {
       throw mapError(error);
     }
-    const parsed = NoulResultSchema.safeParse(body);
-    if (!parsed.success) {
-      throw new JevError('DECIDER_INVALID_RESPONSE', 'Unexpected Jev yes/no response');
+    const parsed = ClassifierNoulResponseSchema.safeParse(body);
+    if (!parsed.success)
+      throw new JevError('DECIDER_INVALID_RESPONSE', 'Unexpected Jev Noul response');
+    return { type: 'noul', trueProbability: parsed.data.answers.answer.noul };
+  }
+
+  async score(request: ScoreRequest, signal: AbortSignal): Promise<ScoreResult> {
+    signal.throwIfAborted();
+    const [first, second, ...rest] = request.anchors;
+    if (first === undefined || second === undefined)
+      throw new JevError(
+        'DECIDER_INVALID_CONFIGURATION',
+        'Score requires at least two rubric anchors',
+      );
+    const client = this.requireClient();
+    let body: unknown;
+    try {
+      body = await client.systemOne(
+        {
+          state: toState(request.context),
+          questions: { answer: score(request.question, [first, second, ...rest]) },
+        },
+        { signal, retry: { maxRetries: 0 } },
+      );
+    } catch (error) {
+      throw mapError(error);
     }
-    const yes = parsed.data.answers.answer.noul;
-    const holds = yes >= 0.5;
-    return { holds, confidence: holds ? yes : 1 - yes };
+    const parsed = ClassifierScoreResponseSchema.safeParse(body);
+    if (!parsed.success)
+      throw new JevError('DECIDER_INVALID_RESPONSE', 'Unexpected Jev Score response');
+    const answer = parsed.data.answers.answer;
+    const result: ScoreResult = {
+      ...answer,
+      confidence: answer.confidence ?? null,
+      probabilities: answer.probabilities ?? null,
+    };
+    const invalid = validatePrimitiveAnswer({ type: 'score', anchors: request.anchors }, result);
+    if (invalid !== null) throw new JevError('DECIDER_INVALID_RESPONSE', invalid);
+    return result;
   }
 }
 

@@ -77,7 +77,7 @@ describe('canonical loop definition inputs', () => {
         payload: envelope
           ? {
               format: 'graphgoblin-loop',
-              formatVersion: 1,
+              formatVersion: 3,
               exportedAt: FIXTURE_TS,
               loop: definition,
             }
@@ -121,7 +121,7 @@ describe('canonical loop definition inputs', () => {
           payload: envelope
             ? {
                 format: 'graphgoblin-loop',
-                formatVersion: 1,
+                formatVersion: 3,
                 exportedAt: FIXTURE_TS,
                 loop: definition,
               }

@@ -16,6 +16,18 @@ const R = '01ARZ3NDEKTSV4RRFFQ69G5FAV';
 const actor = { kind: 'user' as const, id: 'local' };
 const channel = { kind: 'log' as const };
 const usage = { inputTokens: 1, outputTokens: 2, cachedInputTokens: 0, reasoningOutputTokens: 0 };
+const expressionEvidence = (optionId: string) => ({
+  answer: { type: 'choice' as const, optionId, confidence: null, probabilities: null },
+  portId: optionId,
+  provenance: {
+    kind: 'expression' as const,
+    provider: null,
+    classifierId: null,
+    model: null,
+    effort: null,
+  },
+  diagnostics: [],
+});
 
 const ALL: RunEvent[] = [
   event(R, 1, 'run.queued', {}),
@@ -39,7 +51,7 @@ const ALL: RunEvent[] = [
   }),
   event(R, 12, 'harness.session', { nodeId: 'i', harness: 'codex', sessionId: 's', mode: 'fresh' }),
   event(R, 13, 'harness.usage', { nodeId: 'i', usage }),
-  event(R, 14, 'decision.made', { nodeId: 'd', strategy: 'jev', route: 'good', skipped: [] }),
+  event(R, 14, 'decision.made', { nodeId: 'd', ...expressionEvidence('good') }),
   event(R, 15, 'signal.received', { name: 'go' }),
   event(R, 16, 'input.received', { nodeId: 'w', payload: 1 }),
   event(R, 17, 'heartbeat.beat', { nodeId: 'h', beat: 1 }),
@@ -60,11 +72,78 @@ const ALL: RunEvent[] = [
 ];
 
 describe('run projections', () => {
-  it('ignores the old session cache and retains decisions replayed with the new contract', async () => {
+  it('describes Noul truth probability and fractional Score output separately', () => {
+    const classifier = {
+      kind: 'classifier' as const,
+      provider: 'typesafe',
+      classifierId: 'jev',
+      model: 'jev-latest',
+      effort: null,
+    };
+    expect(
+      describeEvent(
+        event(R, 30, 'decision.made', {
+          nodeId: 'noul',
+          answer: {
+            type: 'noul',
+            kind: 'classifier',
+            holds: true,
+            trueProbability: 0.72,
+            confidence: 0.83,
+          },
+          portId: 'true',
+          provenance: classifier,
+          diagnostics: [],
+        }),
+      ),
+    ).toBe(
+      'Answered true (true probability 0.72) with classifier via typesafe (jev-latest) with confidence 0.83',
+    );
+    expect(
+      describeEvent(
+        event(R, 32, 'decision.made', {
+          nodeId: 'archived-noul',
+          answer: {
+            type: 'noul',
+            kind: 'classifier',
+            holds: null,
+            trueProbability: null,
+            confidence: null,
+          },
+          portId: 'true',
+          provenance: classifier,
+          diagnostics: [],
+        }),
+      ),
+    ).toBe(
+      'Answered unknown (not recorded) (true probability not recorded) with classifier via typesafe (jev-latest) with confidence not recorded',
+    );
+    expect(
+      describeEvent(
+        event(R, 31, 'decision.made', {
+          nodeId: 'score',
+          answer: {
+            type: 'score',
+            score: 1.25,
+            confidence: 0.91,
+            legend: { '0': 'Low', '1': 'Middle', '2': 'High' },
+            probabilities: { '1': 0.91 },
+          },
+          portId: 'middle',
+          provenance: classifier,
+          diagnostics: [],
+        }),
+      ),
+    ).toBe(
+      'Scored 1.25 to band middle with classifier via typesafe (jev-latest) with confidence 0.91',
+    );
+  });
+
+  it('ignores the v2 event cache and retains decisions replayed with the canonical contract', async () => {
     useRunEventStore.setState({ runs: {} });
     useRunEventStore.persist.clearStorage();
     sessionStorage.setItem(
-      'graphgoblin-run-events',
+      'graphgoblin-run-events-v2',
       JSON.stringify({
         state: {
           runs: {
@@ -88,15 +167,10 @@ describe('run projections', () => {
     );
     await useRunEventStore.persist.rehydrate();
     expect(useRunEventStore.getState().runs[R]).toBeUndefined();
-    const refreshed = event(R, 1, 'decision.made', {
-      nodeId: 'd',
-      strategy: 'jev',
-      route: 'good',
-      skipped: [],
-    });
+    const refreshed = event(R, 1, 'decision.made', { nodeId: 'd', ...expressionEvidence('good') });
     useRunEventStore.getState().append(R, refreshed);
     expect(useRunEventStore.getState().runs[R]?.events).toEqual([refreshed]);
-    expect(sessionStorage.getItem('graphgoblin-run-events-v2')).toContain('"skipped":[]');
+    expect(sessionStorage.getItem('graphgoblin-run-events-v3')).toContain('"portId":"good"');
     useRunEventStore.setState({ runs: {} });
   });
   it('describes completion reasons and limits independently of optional criterion indices', () => {
@@ -130,7 +204,23 @@ describe('run projections', () => {
       nodeId: 'done',
       iteration: 1,
       maxIterations: 5,
-      criteria: [{ index: 0, strategy: 'expression', status: 'not-matched' }],
+      criteria: [
+        {
+          index: 0,
+          strategy: 'expression',
+          status: 'matched',
+          answer: { type: 'noul', kind: 'expression', holds: true, confidence: null },
+          provenance: {
+            kind: 'expression',
+            provider: null,
+            classifierId: null,
+            model: null,
+            effort: null,
+          },
+          acceptance: { status: 'accepted' },
+          match: { type: 'noul', value: true },
+        },
+      ],
       result: {
         kind: 'completed',
         reason: 'criterion-matched',
@@ -138,12 +228,30 @@ describe('run projections', () => {
         criterionIndex: 0,
       },
     });
-    expect(describeEvent(entry)).toBe('Exited: criterion 1 matched (failure)');
+    expect(describeEvent(entry)).toBe(
+      'Exited: criterion 1 (Expression) matched: Noul true (failure)',
+    );
     if (entry.type !== 'exit.evaluated') throw new Error('Expected an exit event fixture');
     expect(
       describeEvent({
         ...entry,
-        criteria: [{ index: 0, strategy: 'expression', status: 'matched' }],
+        criteria: [
+          {
+            index: 0,
+            strategy: 'expression',
+            status: 'matched',
+            answer: { type: 'noul', kind: 'expression', holds: true, confidence: null },
+            provenance: {
+              kind: 'expression',
+              provider: null,
+              classifierId: null,
+              model: null,
+              effort: null,
+            },
+            acceptance: { status: 'accepted' },
+            match: { type: 'noul', value: true },
+          },
+        ],
         result: {
           kind: 'completed',
           reason: 'default-success',
@@ -194,7 +302,23 @@ describe('run projections', () => {
       describeEvent(
         exit({
           ...base,
-          criteria: [{ index: 0, strategy: 'expression', status: 'matched' }],
+          criteria: [
+            {
+              index: 0,
+              strategy: 'expression',
+              status: 'matched',
+              answer: { type: 'noul', kind: 'expression', holds: true, confidence: null },
+              provenance: {
+                kind: 'expression',
+                provider: null,
+                classifierId: null,
+                model: null,
+                effort: null,
+              },
+              acceptance: { status: 'accepted' },
+              match: { type: 'noul', value: true },
+            },
+          ],
           result: {
             kind: 'completed',
             reason: 'criterion-matched',
@@ -203,7 +327,7 @@ describe('run projections', () => {
           },
         }),
       ),
-    ).toBe('Exited: criterion 1 (expression) matched (failure)');
+    ).toBe('Exited: criterion 1 (Expression) matched: Noul true (failure)');
   });
   it('describes every event type', () => {
     const lines = ALL.map(describeEvent);
@@ -258,7 +382,7 @@ describe('run projections', () => {
     expect(useRunEventStore.getState().runs['r1']).toBeUndefined();
     clear('bulk20');
     expect(useRunEventStore.getState().runs['bulk20']).toBeUndefined();
-    expect(sessionStorage.getItem('graphgoblin-run-events-v2')).toContain('bulk19');
+    expect(sessionStorage.getItem('graphgoblin-run-events-v3')).toContain('bulk19');
   });
 });
 

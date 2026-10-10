@@ -1,5 +1,12 @@
 import { z } from 'zod';
-import { ClassifierModelIdSchema } from './classifiers.js';
+import {
+  DecisionConfigSchema,
+  EvaluationSchema,
+  PrimitiveAnswerSpecSchema,
+  PrimitiveEvaluationConfigSchema,
+  ChoiceOptionIdSchema,
+} from './evaluation.js';
+export { DecisionConfigSchema, type DecisionConfig } from './evaluation.js';
 import {
   EffortSchema,
   ExpressionSchema,
@@ -20,6 +27,11 @@ import {
   MutationListSchema,
 } from './mutations.js';
 import { ReturnChannelSchema } from './thread.js';
+import {
+  BodyWebhookConfigSchema,
+  PollItemsSchema,
+  TimestampWebhookConfigSchema,
+} from './trigger-integrations.js';
 
 export const NodeKindSchema = z.enum([
   'trigger',
@@ -77,7 +89,7 @@ const PayloadFilterSchema = ExpressionSchema.optional().meta(
   field('JSONata predicate; payloads that fail it are recorded and ignored.'),
 );
 
-export const TriggerConfigSchema = z.discriminatedUnion('subtype', [
+export const TriggerConfigSchema = z.union([
   z.strictObject({
     subtype: z.literal('manual'),
     inputSchema: JsonSchemaSchema.optional().meta(
@@ -106,47 +118,40 @@ export const TriggerConfigSchema = z.discriminatedUnion('subtype', [
       .meta(field('What to do with fires missed while the server was down.')),
     enabled: z.boolean().default(true).meta(field('Whether the schedule is armed.')),
   }),
-  z.strictObject({
-    subtype: z.literal('webhook'),
-    signature: z
-      .strictObject({
-        scheme: z.literal('hmac-sha256'),
-        header: z.string().min(1).max(128).default('x-graphgoblin-signature'),
-        secretRef: z.string().min(1).max(128),
-      })
-      .meta(
-        field(
-          'HMAC signing: scheme, the header carrying the signature, and the secret holding the key.',
-        ),
-      ),
-    replayWindowSeconds: z
-      .number()
-      .int()
-      .positive()
-      .max(86_400)
-      .default(300)
-      .meta(field('How far the signed timestamp may be from the server clock.')),
-    dedupeKey: DedupeKeySchema,
-    filter: PayloadFilterSchema,
-  }),
+  TimestampWebhookConfigSchema,
+  BodyWebhookConfigSchema,
   z.strictObject({
     subtype: z.literal('event'),
     eventType: SlugSchema.meta(field('Inbound event type that fires the trigger.')),
     filter: PayloadFilterSchema,
     dedupeKey: DedupeKeySchema,
   }),
-  z.strictObject({
-    subtype: z.literal('poll'),
-    intervalSeconds: z.number().int().min(5).max(86_400).meta(field('Seconds between probes.')),
-    probe: ProbeSchema.meta(
-      field('What to call on each poll: HTTP, a script, a signal count, or nothing.'),
-    ),
-    fireWhen: ExpressionSchema.meta(
-      field('JSONata over the probe result; a run starts when it is true.'),
-    ),
-    dedupeKey: DedupeKeySchema,
-    enabled: z.boolean().default(true).meta(field('Whether the poller is armed.')),
-  }),
+  z
+    .strictObject({
+      subtype: z.literal('poll'),
+      intervalSeconds: z.number().int().min(5).max(86_400).meta(field('Seconds between probes.')),
+      probe: ProbeSchema.meta(
+        field('What to call on each poll: HTTP, a script, a signal count, or nothing.'),
+      ),
+      fireWhen: ExpressionSchema.meta(
+        field('JSONata over the probe result; a run starts when it is true.'),
+      ),
+      dedupeKey: DedupeKeySchema,
+      items: PollItemsSchema.optional().meta(
+        field(
+          'Optional bounded item fanout; validate all per-item keys before dedupe lookup or admission.',
+        ),
+      ),
+      enabled: z.boolean().default(true).meta(field('Whether the poller is armed.')),
+    })
+    .superRefine((config, context) => {
+      if (config.items && config.dedupeKey !== undefined)
+        context.addIssue({
+          code: 'custom',
+          path: ['dedupeKey'],
+          message: 'Items mode uses items.dedupeKey; remove the single-result dedupeKey',
+        });
+    }),
 ]);
 export type TriggerConfig = z.infer<typeof TriggerConfigSchema>;
 
@@ -156,107 +161,6 @@ export type TriggerConfig = z.infer<typeof TriggerConfigSchema>;
 
 export const DecisionStrategySchema = z.enum(['jev', 'codex', 'expression']);
 export type DecisionStrategy = z.infer<typeof DecisionStrategySchema>;
-
-export const DecisionConfigSchema = z
-  .strictObject({
-    routes: z
-      .array(z.strictObject({ label: RouteLabelSchema, description: z.string().max(2000) }))
-      .min(2)
-      .max(64)
-      .meta(field('At least two labelled routes, each with a description the decider reads.')),
-    question: TemplateSchema.meta(
-      field('Liquid template rendered against the thread; the question the decider answers.'),
-    ),
-    context: z
-      .strictObject({
-        messages: MessageSelectionSchema.default('last').meta(
-          field('Which messages the decider reads: none, the last, a number of them, or all.', {
-            advanced: true,
-          }),
-        ),
-        vars: z
-          .array(SlugSchema)
-          .optional()
-          .meta(field('Variables the decider reads.', { advanced: true })),
-        includeLastOutput: z
-          .boolean()
-          .default(true)
-          .meta(field('Show the decider the last output.', { advanced: true })),
-      })
-      .prefault({})
-      .meta(
-        field('How much of the thread the decider sees: messages, vars, the last output.', {
-          advanced: true,
-          group: 'Context',
-        }),
-      ),
-    strategy: z
-      .array(DecisionStrategySchema)
-      .min(1)
-      .max(3)
-      .meta(field('Ordered fallback chain of strategies.')),
-    jev: z
-      .strictObject({
-        primitive: z.literal('choice').default('choice'),
-        model: ClassifierModelIdSchema.optional().meta(
-          field('Classifier catalog id; built-in `jev` when omitted.', { control: 'classifier' }),
-        ),
-        minConfidence: z.number().min(0).max(1).optional(),
-      })
-      .optional()
-      .meta(
-        field(
-          'Choice classifier options: optional `model` is a catalog id (default `jev`); unavailable configuration or a choice below `minConfidence` falls through to the next strategy.',
-        ),
-      ),
-    codex: z
-      .strictObject({
-        model: ModelNameSchema.optional().meta(
-          field(
-            'Model for the Codex decider; falls back to the loop default, then to the owner setting.',
-            { control: 'model' },
-          ),
-        ),
-        effort: EffortSchema.optional().meta(
-          field(
-            'Reasoning effort; falls back like the model. The catalog default effort is guidance only.',
-            { control: 'effort' },
-          ),
-        ),
-      })
-      .optional()
-      .meta(field('Model and effort for the Codex decider.')),
-    expression: z
-      .strictObject({ jsonata: ExpressionSchema })
-      .optional()
-      .meta(field('JSONata that must evaluate to a route label.')),
-    recordAlternatives: z
-      .boolean()
-      .default(true)
-      .meta(
-        field('Record the routes not taken, with confidences, on `decision.made`.', {
-          advanced: true,
-          group: 'Recording',
-        }),
-      ),
-  })
-  .superRefine((cfg, ctx) => {
-    const labels = cfg.routes.map((r) => r.label);
-    if (new Set(labels).size !== labels.length) {
-      ctx.addIssue({ code: 'custom', message: 'route labels must be unique', path: ['routes'] });
-    }
-    if (new Set(cfg.strategy).size !== cfg.strategy.length) {
-      ctx.addIssue({ code: 'custom', message: 'strategies must be unique', path: ['strategy'] });
-    }
-    if (cfg.strategy.includes('expression') && !cfg.expression) {
-      ctx.addIssue({
-        code: 'custom',
-        message: 'expression strategy requires an expression block',
-        path: ['expression'],
-      });
-    }
-  });
-export type DecisionConfig = z.infer<typeof DecisionConfigSchema>;
 
 // ---------------------------------------------------------------------------
 // Inference
@@ -273,11 +177,21 @@ export const HarnessOptionsSchema = z.strictObject({
   sandbox: z
     .enum(['read-only', 'workspace-write', 'danger-full-access'])
     .default('workspace-write')
-    .meta(field('What the session may change: nothing, the working directory, or anything.')),
+    .meta(
+      field(
+        'Sandbox or tool policy. Claude requires an explicit supported policy and provides no OS/read-path confinement.',
+        { control: 'claude-policy' },
+      ),
+    ),
   approval: z
     .enum(['never', 'on-request'])
     .default('never')
-    .meta(field('Whether the harness may stop to ask before acting.', { advanced: true })),
+    .meta(
+      field('Whether the harness may stop to ask before acting.', {
+        advanced: true,
+        control: 'claude-approval',
+      }),
+    ),
   networkAccess: z
     .boolean()
     .optional()
@@ -300,97 +214,135 @@ export const CapabilitiesSchema = z.strictObject({
 });
 export type Capabilities = z.infer<typeof CapabilitiesSchema>;
 
-export const InferenceConfigSchema = z.strictObject({
-  harness: HarnessIdSchema.default('codex').meta(field('Harness that runs the session.')),
-  model: ModelNameSchema.optional().meta(
-    field('Model; falls back to the loop default, then to the owner setting.', {
-      control: 'model',
-    }),
-  ),
-  effort: EffortSchema.optional().meta(
-    field('Reasoning effort; falls back like the model. Catalog default effort is guidance only.', {
-      control: 'effort',
-    }),
-  ),
-  session: SessionPolicySchema.default({ policy: 'fresh' }).meta(
-    field('Start fresh, resume the previous session, or resume a named session.'),
-  ),
-  prompt: z
-    .strictObject({ template: TemplateSchema })
-    .meta(field('Liquid template rendered against the thread.')),
-  input: MutationListSchema.default([]).meta(
-    field('Mutations applied to the thread view the template sees.', {
-      advanced: true,
-      group: 'Context',
-    }),
-  ),
-  contextFiles: z
-    .array(z.strictObject({ path: z.string().min(1).max(1024), template: TemplateSchema }))
-    .max(32)
-    .optional()
-    .meta(
-      field('Files written under the working directory before the session starts.', {
+/** Static native Claude policy validation, shared by authored contracts and the adapter boundary. */
+export function claudePolicyIssues(
+  options: HarnessOptions,
+  capabilities?: Capabilities,
+): { path: string[]; message: string }[] {
+  const issues: { path: string[]; message: string }[] = [];
+  const add = (name: string, message: string) =>
+    issues.push({ path: ['harnessOptions', name], message });
+  if (options.approval !== 'never') add('approval', 'Claude on-request approval is unsupported');
+  if (options.sandbox !== 'read-only' && options.sandbox !== 'danger-full-access')
+    add(
+      'sandbox',
+      'Claude workspace-write cannot enforce the requested boundary; choose an explicit supported policy',
+    );
+  if (options.networkAccess === false)
+    add('networkAccess', 'Claude command network isolation is unsupported');
+  if (options.webSearch === true) add('webSearch', 'Claude web search is unsupported');
+  if (options.configOverrides && Object.keys(options.configOverrides).length)
+    add('configOverrides', 'Claude raw configuration overrides are unsupported');
+  if (capabilities)
+    for (const [name, values] of Object.entries(capabilities))
+      if (values?.length)
+        issues.push({
+          path: ['capabilities', name],
+          message: 'Claude custom capabilities are unsupported',
+        });
+  return issues;
+}
+
+export const InferenceConfigSchema = z
+  .strictObject({
+    harness: HarnessIdSchema.default('codex').meta(field('Harness that runs the session.')),
+    model: ModelNameSchema.optional().meta(
+      field('Model; inherits within this harness from loop, owner, then process defaults.', {
+        control: 'model',
+      }),
+    ),
+    effort: EffortSchema.optional().meta(
+      field(
+        'Reasoning effort; inherits within this harness like the model. Catalog effort is guidance only.',
+        {
+          control: 'effort',
+        },
+      ),
+    ),
+    session: SessionPolicySchema.default({ policy: 'fresh' }).meta(
+      field('Start fresh, resume the previous session, or resume a named session.'),
+    ),
+    prompt: z
+      .strictObject({ template: TemplateSchema })
+      .meta(field('Liquid template rendered against the thread.')),
+    input: MutationListSchema.default([]).meta(
+      field('Mutations applied to the thread view the template sees.', {
         advanced: true,
         group: 'Context',
       }),
     ),
-  harnessOptions: HarnessOptionsSchema.prefault({}).meta(
-    field('Sandbox, approval, network, web search, and raw config overrides.', {
-      group: 'Harness options',
-    }),
-  ),
-  capabilities: CapabilitiesSchema.optional().meta(
-    field(
-      'MCP server, plugin, and skill slugs are recorded but not yet resolved; use raw harness config overrides to configure tools.',
-      {
-        advanced: true,
+    contextFiles: z
+      .array(z.strictObject({ path: z.string().min(1).max(1024), template: TemplateSchema }))
+      .max(32)
+      .optional()
+      .meta(
+        field('Files written under the working directory before the session starts.', {
+          advanced: true,
+          group: 'Context',
+        }),
+      ),
+    harnessOptions: HarnessOptionsSchema.prefault({}).meta(
+      field('Sandbox, approval, network, web search, and raw config overrides.', {
         group: 'Harness options',
-      },
+      }),
     ),
-  ),
-  output: z
-    .strictObject({
-      captureTranscript: z
-        .enum(['artifact', 'none'])
-        .default('artifact')
-        .meta(field('Keep the session transcript as an artifact, or not.', { advanced: true })),
-      toMessages: z
-        .enum(['final', 'final-and-notes', 'none'])
-        .default('final')
-        .meta(field("What the answer adds to the thread's messages.", { advanced: true })),
-      transforms: MutationListSchema.default([]).meta(
-        field('Mutations applied to the answer before it lands.', { advanced: true }),
-      ),
-      schema: z
-        .strictObject({
-          jsonSchema: JsonSchemaSchema,
-          native: z.boolean().default(true),
-          repair: RepairPolicySchema.prefault({}),
-        })
-        .optional()
-        .meta(
-          field('JSON Schema the answer must satisfy, with repair turns when it does not.', {
-            advanced: true,
-          }),
-        ),
-    })
-    .prefault({})
-    .meta(
+    capabilities: CapabilitiesSchema.optional().meta(
       field(
-        'Transcript capture, how the answer lands in messages, transforms, and an optional output schema with repair.',
-        { advanced: true, group: 'Output' },
+        'MCP server, plugin, and skill slugs are recorded but not yet resolved; use raw harness config overrides to configure tools.',
+        {
+          advanced: true,
+          group: 'Harness options',
+        },
       ),
     ),
-  timeoutSeconds: z
-    .number()
-    .int()
-    .positive()
-    .max(86_400)
-    .optional()
-    .meta(
-      field('Optional watchdog; a timeout fails the run.', { advanced: true, group: 'Limits' }),
-    ),
-});
+    output: z
+      .strictObject({
+        captureTranscript: z
+          .enum(['artifact', 'none'])
+          .default('artifact')
+          .meta(field('Keep the session transcript as an artifact, or not.', { advanced: true })),
+        toMessages: z
+          .enum(['final', 'final-and-notes', 'none'])
+          .default('final')
+          .meta(field("What the answer adds to the thread's messages.", { advanced: true })),
+        transforms: MutationListSchema.default([]).meta(
+          field('Mutations applied to the answer before it lands.', { advanced: true }),
+        ),
+        schema: z
+          .strictObject({
+            jsonSchema: JsonSchemaSchema,
+            native: z.boolean().default(true),
+            repair: RepairPolicySchema.prefault({}),
+          })
+          .optional()
+          .meta(
+            field('JSON Schema the answer must satisfy, with repair turns when it does not.', {
+              advanced: true,
+            }),
+          ),
+      })
+      .prefault({})
+      .meta(
+        field(
+          'Transcript capture, how the answer lands in messages, transforms, and an optional output schema with repair.',
+          { advanced: true, group: 'Output' },
+        ),
+      ),
+    timeoutSeconds: z
+      .number()
+      .int()
+      .positive()
+      .max(86_400)
+      .optional()
+      .meta(
+        field('Optional watchdog; a timeout fails the run.', { advanced: true, group: 'Limits' }),
+      ),
+  })
+  .superRefine((config, ctx) => {
+    if (config.harness === 'claude')
+      for (const issue of claudePolicyIssues(config.harnessOptions, config.capabilities))
+        ctx.addIssue({ code: 'custom', ...issue });
+  });
 export type InferenceConfig = z.infer<typeof InferenceConfigSchema>;
 
 // ---------------------------------------------------------------------------
@@ -694,6 +646,85 @@ export type HeartbeatConfig = z.infer<typeof HeartbeatConfigSchema>;
 export const OutcomeSchema = z.enum(['success', 'failure', 'exhausted']);
 export type Outcome = z.infer<typeof OutcomeSchema>;
 
+export const ExitPredicateMatchSchema = z.discriminatedUnion('type', [
+  z.strictObject({
+    type: z.literal('noul'),
+    value: z.boolean().default(true),
+    minReportedConfidence: z.number().min(0).max(1).optional(),
+  }),
+  z.strictObject({
+    type: z.literal('choice'),
+    optionIds: z.array(ChoiceOptionIdSchema).min(1).max(64),
+    minReportedConfidence: z.number().min(0).max(1).optional(),
+  }),
+  z.strictObject({
+    type: z.literal('score'),
+    operator: z.enum(['lt', 'lte', 'eq', 'gte', 'gt']),
+    value: z.number().min(0),
+  }),
+]);
+export type ExitPredicateMatch = z.infer<typeof ExitPredicateMatchSchema>;
+export const ExitPredicateSchema = z
+  .strictObject({
+    when: z.literal('predicate'),
+    answer: PrimitiveAnswerSpecSchema,
+    evaluation: EvaluationSchema,
+    match: ExitPredicateMatchSchema,
+    outcome: z.enum(['success', 'failure']),
+  })
+  .superRefine((criterion, ctx) => {
+    const pair = PrimitiveEvaluationConfigSchema.safeParse({
+      answer: criterion.answer,
+      evaluation: criterion.evaluation,
+    });
+    if (!pair.success) for (const issue of pair.error.issues) ctx.addIssue({ ...issue });
+    if (criterion.evaluation.kind === 'expression' && criterion.answer.type !== 'noul')
+      ctx.addIssue({
+        code: 'custom',
+        path: ['evaluation', 'kind'],
+        message: 'exit expressions require Noul',
+      });
+    if (criterion.answer.type !== criterion.match.type)
+      ctx.addIssue({
+        code: 'custom',
+        path: ['match', 'type'],
+        message: 'match must use the declared primitive',
+      });
+    if (
+      'minReportedConfidence' in criterion.match &&
+      criterion.match.minReportedConfidence !== undefined &&
+      criterion.evaluation.kind !== 'llm'
+    )
+      ctx.addIssue({
+        code: 'custom',
+        path: ['match', 'minReportedConfidence'],
+        message: 'reported confidence applies only to LLM predicates',
+      });
+    if (criterion.answer.type === 'choice' && criterion.match.type === 'choice') {
+      const ids = new Set(criterion.answer.options.map((option) => option.id));
+      if (
+        new Set(criterion.match.optionIds).size !== criterion.match.optionIds.length ||
+        criterion.match.optionIds.some((id) => !ids.has(id))
+      )
+        ctx.addIssue({
+          code: 'custom',
+          path: ['match', 'optionIds'],
+          message: 'match requires unique declared Choice option ids',
+        });
+    }
+    if (
+      criterion.answer.type === 'score' &&
+      criterion.match.type === 'score' &&
+      criterion.match.value > criterion.answer.anchors.length - 1
+    )
+      ctx.addIssue({
+        code: 'custom',
+        path: ['match', 'value'],
+        message: 'comparison must lie on the rubric index scale',
+      });
+  });
+export type ExitPredicate = z.infer<typeof ExitPredicateSchema>;
+
 export const ExitCriterionSchema = z.discriminatedUnion('when', [
   z.strictObject({
     when: z.literal('max-iterations'),
@@ -705,14 +736,7 @@ export const ExitCriterionSchema = z.discriminatedUnion('when', [
     seconds: z.number().int().positive(),
     outcome: z.literal('exhausted').default('exhausted'),
   }),
-  z.strictObject({
-    when: z.literal('predicate'),
-    strategy: DecisionStrategySchema,
-    question: TemplateSchema.optional(),
-    jsonata: ExpressionSchema.optional(),
-    minConfidence: z.number().min(0).max(1).optional(),
-    outcome: z.enum(['success', 'failure']),
-  }),
+  ExitPredicateSchema,
   z.strictObject({
     when: z.literal('last-output-matches'),
     jsonSchema: JsonSchemaSchema,
@@ -754,24 +778,6 @@ export const ExitConfigSchema = z
         message: 'default "loop-back" requires a loopBack target',
         path: ['loopBack'],
       });
-    }
-    for (const [i, c] of cfg.criteria.entries()) {
-      if (c.when === 'predicate') {
-        if (c.strategy === 'expression' && !c.jsonata) {
-          ctx.addIssue({
-            code: 'custom',
-            message: 'expression predicate requires jsonata',
-            path: ['criteria', i, 'jsonata'],
-          });
-        }
-        if (c.strategy !== 'expression' && !c.question) {
-          ctx.addIssue({
-            code: 'custom',
-            message: `${c.strategy} predicate requires a question`,
-            path: ['criteria', i, 'question'],
-          });
-        }
-      }
     }
   });
 export type ExitConfig = z.infer<typeof ExitConfigSchema>;

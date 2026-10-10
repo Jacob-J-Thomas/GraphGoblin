@@ -18,33 +18,70 @@ const exit = {
 describe('exit and decision evidence contracts', () => {
   it('round-trips the maximum configured model name in exit evidence', () => {
     const model = 'm'.repeat(MAX_MODEL_NAME_LENGTH);
-    const configured = LoopSettingsSchema.parse({ defaults: { model } }).defaults.model;
+    const configured = LoopSettingsSchema.parse({ defaults: { byHarness: { codex: { model } } } })
+      .defaults.byHarness.codex?.model;
     const event = {
       ...exit,
-      criteria: [{ index: 0, strategy: 'codex', status: 'matched', model: configured }],
+      criteria: [
+        {
+          index: 0,
+          strategy: 'llm',
+          status: 'matched',
+          answer: { type: 'noul', kind: 'llm', holds: true, confidence: 0.9, reasoning: 'Done' },
+          provenance: {
+            kind: 'llm',
+            provider: 'codex',
+            classifierId: null,
+            model: configured,
+            effort: 'high',
+          },
+          acceptance: { status: 'accepted' },
+          match: { type: 'noul', value: true },
+        },
+      ],
     };
     expect(RunEventSchema.parse(JSON.parse(JSON.stringify(event)))).toEqual(event);
     const oversized = `${model}m`;
-    expect(LoopSettingsSchema.safeParse({ defaults: { model: oversized } }).success).toBe(false);
+    expect(
+      LoopSettingsSchema.safeParse({ defaults: { byHarness: { codex: { model: oversized } } } })
+        .success,
+    ).toBe(false);
     const decision = {
-      routes: [
-        { label: 'yes', description: 'Yes' },
-        { label: 'no', description: 'No' },
-      ],
-      question: 'Done?',
-      strategy: ['codex'],
-      codex: { model },
+      answer: {
+        type: 'choice',
+        options: [
+          { id: 'yes', label: 'Yes', criteria: 'Yes' },
+          { id: 'no', label: 'No', criteria: 'No' },
+        ],
+      },
+      evaluation: {
+        kind: 'llm',
+        harness: 'codex',
+        model: { mode: 'explicit', value: model },
+        effort: { mode: 'inherit' },
+        question: 'Done?',
+      },
     };
     const inference = { prompt: { template: 'Hello' }, model };
     expect(DecisionConfigSchema.safeParse(decision).success).toBe(true);
     expect(InferenceConfigSchema.safeParse(inference).success).toBe(true);
     expect(
-      DecisionConfigSchema.safeParse({ ...decision, codex: { model: oversized } }).success,
+      DecisionConfigSchema.safeParse({
+        ...decision,
+        evaluation: { ...decision.evaluation, model: { mode: 'explicit', value: oversized } },
+      }).success,
     ).toBe(false);
     expect(InferenceConfigSchema.safeParse({ ...inference, model: oversized }).success).toBe(false);
     expect(
-      RunEventSchema.safeParse({ ...event, criteria: [{ ...event.criteria[0], model: oversized }] })
-        .success,
+      RunEventSchema.safeParse({
+        ...event,
+        criteria: [
+          {
+            ...event.criteria[0],
+            provenance: { ...event.criteria[0]?.provenance, model: oversized },
+          },
+        ],
+      }).success,
     ).toBe(false);
   });
   it('accepts all exit outcomes and rejects raw diagnostics and unbounded reasoning', () => {
@@ -63,19 +100,39 @@ describe('exit and decision evidence contracts', () => {
     const criteria = [
       {
         index: 0,
-        strategy: 'jev',
+        strategy: 'classifier',
         status: 'not-matched',
-        holds: false,
-        confidence: 0.8,
-        classifierModel: 'jev',
+        answer: {
+          type: 'noul',
+          kind: 'classifier',
+          holds: false,
+          trueProbability: 0.2,
+          confidence: 0.8,
+        },
+        provenance: {
+          kind: 'classifier',
+          provider: 'typesafe',
+          classifierId: 'jev',
+          model: 'jev-latest',
+          effort: null,
+        },
+        acceptance: { status: 'accepted' },
+        match: { type: 'noul', value: true },
       },
       {
         index: 1,
-        strategy: 'codex',
+        strategy: 'llm',
         status: 'matched',
-        holds: true,
-        model: 'judge',
-        reasoning: 'Done',
+        answer: { type: 'noul', kind: 'llm', holds: true, confidence: 0.9, reasoning: 'Done' },
+        provenance: {
+          kind: 'llm',
+          provider: 'codex',
+          classifierId: null,
+          model: 'judge',
+          effort: 'high',
+        },
+        acceptance: { status: 'accepted' },
+        match: { type: 'noul', value: true },
       },
       {
         index: 2,
@@ -85,36 +142,53 @@ describe('exit and decision evidence contracts', () => {
       },
       {
         index: 3,
-        strategy: 'jev',
+        strategy: 'classifier',
         status: 'error',
         diagnostic: { code: 'DECIDER_INVALID_RESPONSE', message: 'Invalid response' },
       },
     ];
     expect(RunEventSchema.safeParse({ ...exit, criteria }).success).toBe(true);
     for (const entry of [
-      { ...criteria[1], reasoning: 'x'.repeat(2049) },
-      { ...criteria[0], confidence: 2 },
+      { ...criteria[1], answer: { ...criteria[1]?.answer, reasoning: 'x'.repeat(2049) } },
+      { ...criteria[0], answer: { ...criteria[0]?.answer, confidence: 2 } },
       { ...criteria[3], diagnostic: { code: 'RAW_PROVIDER_CODE', message: 'Raw' } },
       { ...criteria[3], raw: { token: 'private' } },
     ])
       expect(RunEventSchema.safeParse({ ...exit, criteria: [entry] }).success).toBe(false);
   });
-  it('requires the decision skipped list and bounds its fixed messages', () => {
-    const decision = { ...base, type: 'decision.made', strategy: 'expression', route: 'yes' };
+  it('requires canonical decision diagnostics and bounds historical messages', () => {
+    const provenance = {
+      kind: 'expression',
+      provider: null,
+      classifierId: null,
+      model: null,
+      effort: null,
+    };
+    const decision = {
+      ...base,
+      type: 'decision.made',
+      answer: { type: 'choice', optionId: 'yes', confidence: null, probabilities: null },
+      portId: 'yes',
+      provenance,
+    };
     expect(RunEventSchema.safeParse(decision).success).toBe(false);
-    expect(RunEventSchema.safeParse({ ...decision, skipped: [] }).success).toBe(true);
+    expect(RunEventSchema.safeParse({ ...decision, diagnostics: [] }).success).toBe(true);
     expect(
       RunEventSchema.safeParse({
         ...decision,
-        skipped: [
-          { strategy: 'jev', code: 'CLASSIFIER_MODEL_DISABLED', message: 'Classifier disabled' },
+        diagnostics: [
+          {
+            provenance: { ...provenance, kind: 'classifier' },
+            code: 'CLASSIFIER_MODEL_DISABLED',
+            message: 'Classifier disabled',
+          },
         ],
       }).success,
     ).toBe(true);
     expect(
       RunEventSchema.safeParse({
         ...decision,
-        skipped: [{ strategy: 'jev', code: 'UNKNOWN', message: 'x'.repeat(257) }],
+        diagnostics: [{ provenance, code: 'UNKNOWN', message: 'x'.repeat(257) }],
       }).success,
     ).toBe(false);
   });

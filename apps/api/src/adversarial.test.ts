@@ -158,6 +158,12 @@ describe('adversarial API invariants', () => {
     'PUT /classifier-models/{id}': 'settings:write',
     'PATCH /classifier-models/{id}': 'settings:write',
     'DELETE /classifier-models/{id}': 'settings:write',
+    'GET /templates': 'loops:read',
+    'GET /templates/{id}': 'loops:read',
+    'POST /templates/{id}/draft': 'loops:write',
+    'POST /templates/{id}/prerequisites': 'loops:read',
+    'POST /templates/{id}/instantiate': 'loops:write',
+    'GET /template-instances/{id}': 'loops:read',
     'PUT /model-catalog/{harness}/{model}': 'settings:write',
     'PATCH /model-catalog/{harness}/{model}': 'settings:write',
     'DELETE /model-catalog/{harness}/{model}': 'settings:write',
@@ -195,7 +201,11 @@ describe('adversarial API invariants', () => {
       const [method, path] = route.split(' ') as ['GET', string];
       // An unknown id gets past authorization (404, 400, 409, or success) without touching data.
       const url = path.replace(/\{([^}]+)\}/g, (_, name: string) =>
-        ['id', 'versionId'].includes(name) ? fakeUlid('scope-table') : 'scope-table',
+        path.startsWith('/templates/') && name === 'id'
+          ? 'starter'
+          : ['id', 'versionId'].includes(name)
+            ? fakeUlid('scope-table')
+            : 'scope-table',
       );
       for (const scope of [...scopes, '*']) {
         const [resource, action] = scope.split(':');
@@ -693,8 +703,14 @@ describe('adversarial API invariants', () => {
     const t = await app();
     let checked = 0;
     for (const [path, methods] of Object.entries(t.app.swagger().paths!)) {
-      // Classifier catalog ids are URL-safe names, rather than entity ULIDs.
-      if (!path.includes('{id}') || path.startsWith('/classifier-models/')) continue;
+      // Classifier and template catalog ids are slugs, rather than entity ULIDs. Template instance
+      // ids remain ULIDs and are covered below.
+      if (
+        !path.includes('{id}') ||
+        path.startsWith('/classifier-models/') ||
+        path.startsWith('/templates/')
+      )
+        continue;
       for (const method of Object.keys(methods)) {
         if (!['get', 'post', 'put', 'delete'].includes(method)) continue;
         const response = await t.app.inject({

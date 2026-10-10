@@ -1,22 +1,20 @@
-import type { JsonValue, StrategySkip } from '@graphgoblin/contracts';
-import { evaluateExpression, threadView } from '@graphgoblin/domain';
-import { summarizeDeciderError } from '../decider-errors.js';
-import { isAbortError, RunFailureError } from '../errors.js';
+import {
+  DecisionEmissionSchema,
+  type DecisionContext,
+  type DecisionPayload,
+  type JsonValue,
+} from '@graphgoblin/contracts';
+import { decisionPortId, threadView } from '@graphgoblin/domain';
+import { RunFailureError } from '../errors.js';
 import type { NodeContext, NodeHandler } from '../handler.js';
-import type { ClassifierPort, ClassifierUnavailableReason, ChoiceResult } from '../ports.js';
+import { evaluatePrimitive } from '../primitive-evaluator.js';
 import { outputPatch, selectMessages, toJson } from './common.js';
 
-const CLASSIFIER_SKIP_MESSAGES: Record<ClassifierUnavailableReason, string> = {
-  CLASSIFIER_MODEL_NOT_FOUND: 'The selected classifier is not in the catalog',
-  CLASSIFIER_PRIMITIVE_UNSUPPORTED: 'The selected classifier does not support Choice',
-  CLASSIFIER_MODEL_DISABLED: 'The selected classifier is disabled',
-  CLASSIFIER_SECRET_MISSING: 'The classifier key is not configured',
-  CLASSIFIER_SECRET_UNREADABLE: 'The classifier key cannot be read',
-};
-
-async function decisionContext(ctx: NodeContext<'decision'>): Promise<JsonValue> {
+async function decisionContext(
+  ctx: NodeContext<'decision'>,
+  context: DecisionContext,
+): Promise<JsonValue> {
   const view = threadView(ctx.thread) as unknown as Record<string, unknown>;
-  const { context } = ctx.config;
   const messages = await selectMessages(ctx.thread.messages, context.messages, view);
   const vars: Record<string, JsonValue> = {};
   for (const name of context.vars ?? Object.keys(ctx.thread.vars)) {
@@ -35,158 +33,65 @@ async function decisionContext(ctx: NodeContext<'decision'>): Promise<JsonValue>
 export const decisionHandler: NodeHandler<'decision'> = {
   kind: 'decision',
   async execute(ctx) {
-    const { config } = ctx;
-    const labels = new Set(config.routes.map((r) => r.label));
-    const question = await ctx.services.render(config.question);
-    const context = await decisionContext(ctx);
-    const tried: string[] = [];
-    const skipped: StrategySkip[] = [];
-
-    for (const strategy of config.strategy) {
-      if (strategy === 'expression') {
-        const value = await evaluateExpression(
-          config.expression?.jsonata ?? '',
-          threadView(ctx.thread),
-        );
-        const label = typeof value === 'string' ? value : String(value);
-        if (labels.has(label)) return decide(ctx, strategy, { label }, skipped);
-        tried.push(`expression returned "${label}"`);
-        skipped.push({
-          strategy,
-          code: 'EXPRESSION_NOT_APPLICABLE',
-          message: 'The expression did not select a declared route',
-        });
-        continue;
-      }
-      let decider: ClassifierPort | undefined;
-      const classifierModel = strategy === 'jev' ? (config.jev?.model ?? 'jev') : undefined;
-      if (classifierModel !== undefined) {
-        const selection = await ctx.ports.classifiers.resolve(ctx.run.ownerId, classifierModel);
-        if (selection.status === 'unavailable') {
-          const message = CLASSIFIER_SKIP_MESSAGES[selection.reason];
-          tried.push(`jev unavailable: ${selection.reason}: ${message}`);
-          skipped.push({ strategy, code: selection.reason, message });
-          continue;
-        }
-        decider = selection.classifier;
-      } else {
-        decider = ctx.ports.deciders.find((d) => d.id === strategy && d.available());
-      }
-      if (!decider) {
-        tried.push(`${strategy} unavailable`);
-        skipped.push({
-          strategy,
-          code: 'PROVIDER_UNAVAILABLE',
-          message: 'The decision provider is unavailable',
-        });
-        continue;
-      }
-      const resolved =
-        strategy === 'codex'
-          ? ctx.services.resolveModel(config.codex?.model, config.codex?.effort)
-          : undefined;
-      let result: ChoiceResult;
-      try {
-        result = await decider.choose(
-          {
-            question,
-            options: config.routes.map((r) => ({ label: r.label, description: r.description })),
-            context,
-            ...(resolved ? { model: resolved.model, effort: resolved.effort } : {}),
-          },
-          ctx.signal,
-        );
-      } catch (error) {
-        if (isAbortError(error) || ctx.signal.aborted) throw error;
-        const { message, ...diagnostic } = summarizeDeciderError(error);
-        ctx.ports.logger.warn(
-          { nodeId: ctx.node.id, strategy, ...diagnostic },
-          'decision provider failed',
-        );
-        throw new RunFailureError('INTERNAL_ERROR', message, {
+    const evaluation = ctx.config.evaluation;
+    // The full-thread question and separately selected provider state remain caller-owned.
+    const prepared =
+      evaluation.kind === 'expression'
+        ? {}
+        : {
+            question: await ctx.services.render(evaluation.question),
+            context: await decisionContext(ctx, evaluation.context),
+          };
+    const result = await evaluatePrimitive({
+      nodeId: ctx.node.id,
+      ownerId: ctx.run.ownerId,
+      evaluation,
+      answer: ctx.config.answer,
+      expressionView: threadView(ctx.thread),
+      ...prepared,
+      signal: ctx.signal,
+      ports: ctx.ports,
+      resolveModel: (...args) => ctx.services.resolveModel(...args),
+    });
+    const rawAnswer = result.answer;
+    const answer =
+      rawAnswer.type === 'choice' || rawAnswer.type === 'score'
+        ? {
+            ...rawAnswer,
+            probabilities: ctx.config.recordAlternatives ? rawAnswer.probabilities : null,
+          }
+        : rawAnswer;
+    if (result.acceptance.status === 'rejected')
+      throw new RunFailureError(
+        result.acceptance.code,
+        'Classifier confidence is below the authored minimum',
+        {
           nodeId: ctx.node.id,
-          details: { strategy, ...(diagnostic.code ? { code: diagnostic.code } : {}) },
-        });
-      }
-      if (!labels.has(result.label)) {
-        tried.push(`${strategy} chose a route that is not declared on this node`);
-        skipped.push({
-          strategy,
-          code: 'UNDECLARED_ROUTE',
-          message: 'The provider did not select a declared route',
-        });
-        continue;
-      }
-      if (
-        result.confidence !== undefined &&
-        (!Number.isFinite(result.confidence) || result.confidence < 0 || result.confidence > 1)
-      ) {
-        tried.push(`${strategy} returned invalid confidence`);
-        skipped.push({
-          strategy,
-          code: 'INVALID_CONFIDENCE',
-          message: 'The provider returned invalid confidence',
-        });
-        continue;
-      }
-      const minConfidence = strategy === 'jev' ? config.jev?.minConfidence : undefined;
-      if (
-        minConfidence !== undefined &&
-        result.confidence !== undefined &&
-        result.confidence < minConfidence
-      ) {
-        tried.push(`${strategy} confidence ${result.confidence} below ${minConfidence}`);
-        skipped.push({
-          strategy,
-          code: 'LOW_CONFIDENCE',
-          message: `Confidence ${result.confidence} is below the required ${minConfidence}`,
-        });
-        continue;
-      }
-      return decide(ctx, strategy, result, skipped, classifierModel);
-    }
-
-    throw new RunFailureError(
-      'DECISION_NO_ROUTE',
-      `no strategy produced a route: ${tried.join('; ')}`,
-      {
-        nodeId: ctx.node.id,
-        details: { tried },
-      },
-    );
+          resumable: false,
+          details: {
+            answer,
+            provenance: result.provenance,
+            acceptance: result.acceptance,
+          },
+        },
+      );
+    const payload: DecisionPayload = {
+      answer,
+      portId: decisionPortId(ctx.config.answer, answer),
+      provenance: result.provenance,
+    };
+    const evidence = DecisionEmissionSchema.safeParse({ ...payload, diagnostics: [] });
+    if (!evidence.success)
+      throw new RunFailureError(
+        'EVALUATION_INVALID_RESPONSE',
+        'The evaluator returned evidence inconsistent with its kind',
+        { nodeId: ctx.node.id, resumable: false },
+      );
+    await ctx.services.record({ type: 'decision.made', nodeId: ctx.node.id, ...evidence.data });
+    return {
+      kind: 'done',
+      patch: outputPatch(ctx.thread, ctx.node.id, toJson(payload), ctx.services.now()),
+      route: payload.portId,
+    };
   },
 };
-
-async function decide(
-  ctx: NodeContext<'decision'>,
-  strategy: 'jev' | 'codex' | 'expression',
-  result: ChoiceResult,
-  skipped: StrategySkip[],
-  classifierModel?: string,
-) {
-  await ctx.services.record({
-    type: 'decision.made',
-    nodeId: ctx.node.id,
-    strategy,
-    skipped,
-    ...(classifierModel !== undefined ? { classifierModel } : {}),
-    route: result.label,
-    ...(result.confidence !== undefined ? { confidence: result.confidence } : {}),
-    ...(ctx.config.recordAlternatives && result.alternatives
-      ? {
-          alternatives: result.alternatives
-            .filter((a) => ctx.config.routes.some((route) => route.label === a.label))
-            .map((a) => ({
-              route: a.label,
-              ...(a.confidence !== undefined ? { confidence: a.confidence } : {}),
-            })),
-        }
-      : {}),
-  });
-  const value = toJson({ route: result.label, strategy, confidence: result.confidence ?? null });
-  return {
-    kind: 'done' as const,
-    patch: outputPatch(ctx.thread, ctx.node.id, value, ctx.services.now()),
-    route: result.label,
-  };
-}

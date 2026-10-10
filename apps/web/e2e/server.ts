@@ -9,6 +9,7 @@
  * instances with other configuration (for example `GG_REQUIRE_API_KEY=true`).
  */
 import { existsSync } from 'node:fs';
+import { z } from 'zod';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
@@ -16,8 +17,13 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildApp, createContainer, loadConfig } from '@graphgoblin/api';
 import { createTestApp, startFakeClassifierEndpoint, type TestApp } from '@graphgoblin/api/testing';
-import type { ScriptedTurn } from '@graphgoblin/engine/testing';
-import { ModelCatalogEntrySchema } from '@graphgoblin/contracts';
+import type { HarnessEvent, HarnessStartRequest, HarnessSession } from '@graphgoblin/engine';
+import { FakeHarness, type ScriptedTurn } from '@graphgoblin/engine/testing';
+import {
+  HarnessPreflightSchema,
+  ModelCatalogEntrySchema,
+  type HarnessPreflight,
+} from '@graphgoblin/contracts';
 import { originalWorker as cleanWorker } from '../src/e2e-support/worker.js';
 
 const dist = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'dist');
@@ -28,26 +34,148 @@ if (!existsSync(join(dist, 'index.html'))) {
   process.exit(1);
 }
 
+interface E2eInstance {
+  id: string;
+  app: TestApp;
+  url: string;
+  harnesses: Partial<Record<'codex' | 'claude', FakeHarness>>;
+}
+
+class E2eControlError extends Error {
+  readonly statusCode = 400;
+}
+
 const apps: TestApp[] = [];
+const instances = new Map<string, E2eInstance>();
 const closers: (() => Promise<void>)[] = [];
-/** Loopback Choice endpoints started for classifier specs, by their API root. */
+let nextInstanceId = 1;
+/** Loopback primitive endpoints started for classifier specs, by their API root. */
 const classifiers = new Map<string, Awaited<ReturnType<typeof startFakeClassifierEndpoint>>>();
+const ClassifierReplySchema = z.discriminatedUnion('type', [
+  z.strictObject({
+    type: z.literal('noul'),
+    trueProbability: z.number().min(0).max(1),
+  }),
+  z.strictObject({
+    type: z.literal('score'),
+    score: z.number().min(0),
+    confidence: z.number().min(0).max(1),
+    probabilities: z.record(z.string(), z.number().min(0).max(1)),
+  }),
+]);
+const classifierReplies = new Map<string, z.infer<typeof ClassifierReplySchema>[]>();
+const claudeEfforts = ['low', 'medium', 'high', 'xhigh', 'max'] as const;
+const readyClaudePreflight = HarnessPreflightSchema.parse({
+  ok: true,
+  version: '2.1.285 (E2E fake)',
+  authenticated: true,
+  problems: [],
+  authMethod: 'claude.ai',
+  supportedPolicies: [
+    {
+      sandbox: 'read-only',
+      approval: 'never',
+      permissionMode: 'dontAsk',
+      tools: ['Read', 'Glob', 'Grep'],
+      authMethod: 'claude.ai',
+      boundary: 'builtin-tools',
+      network: 'unconfined',
+    },
+    {
+      sandbox: 'danger-full-access',
+      approval: 'never',
+      permissionMode: 'dontAsk',
+      tools: ['Read', 'Glob', 'Grep', 'Edit', 'Write', 'Bash'],
+      authMethod: 'claude.ai',
+      boundary: 'unconfined',
+      network: 'unconfined',
+    },
+  ],
+  models: [
+    {
+      model: 'claude-opus-5-5',
+      efforts: claudeEfforts,
+    },
+    {
+      model: 'claude-fable-5-1',
+      efforts: claudeEfforts,
+    },
+  ],
+});
+const notReadyClaudePreflight: HarnessPreflight = {
+  ...readyClaudePreflight,
+  ok: false,
+  authenticated: false,
+  problems: ['Claude CLI is not signed in.'],
+  supportedPolicies: [],
+};
+
+class E2eClaudeHarness extends FakeHarness {
+  termination: 'confirmed' | 'unconfirmed' = 'confirmed';
+  private terminationSession = 0;
+
+  constructor() {
+    super([], 'claude');
+    this.preflightResult = readyClaudePreflight;
+  }
+
+  override start(request: HarnessStartRequest, signal: AbortSignal): HarnessSession {
+    if (this.termination === 'confirmed') return super.start(request, signal);
+    this.started.push(request);
+    this.terminationSession += 1;
+    const sessionId = 'fake-claude-unconfirmed-' + this.terminationSession;
+    const error = Object.assign(
+      new Error('Termination not confirmed; stop the E2E fake before retrying.'),
+      { code: 'HARNESS_TERMINATION_UNCONFIRMED', retriable: false },
+    );
+    const result: HarnessSession['result'] = new Promise((_, reject) => {
+      if (signal.aborted) reject(error);
+      else signal.addEventListener('abort', () => reject(error), { once: true });
+    });
+    result.catch(() => undefined);
+    const events = async function* (): AsyncGenerator<HarnessEvent> {
+      yield { type: 'session', sessionId, mode: 'fresh' };
+      await result.catch(() => undefined);
+      yield {
+        type: 'error',
+        code: error.code,
+        message: error.message,
+        retriable: false,
+      };
+    };
+    return {
+      sessionId: Promise.resolve(sessionId),
+      events: events(),
+      result,
+      cancel: () => Promise.reject(error),
+    };
+  }
+}
+
 async function startApp(
   env: Record<string, string> = {},
   requireApiKey = false,
   realClassifiers = false,
+  options: { claude?: boolean; id?: string } = {},
 ) {
+  const id = options.id ?? 'e2e-instance-' + nextInstanceId++;
+  const codex = new FakeHarness([], 'codex');
+  const claude = options.claude ? new E2eClaudeHarness() : undefined;
+  const harnesses = { codex, ...(claude ? { claude } : {}) };
   const app = await createTestApp({
     env: { GG_WEB_DIST: dist, ...env },
     requireApiKey,
     realClassifiers,
+    harnesses,
   });
   apps.push(app);
   const url = await app.app.listen({ host: '127.0.0.1', port: 0 });
-  return { app, url };
+  const instance: E2eInstance = { id, app, url, harnesses };
+  instances.set(id, instance);
+  return instance;
 }
 
-const main = await startApp();
+const main = await startApp({}, false, false, { id: 'main' });
 const mainPort = Number(new URL(main.url).port);
 const workerPath = join(dist, 'sw.js');
 const originalWorker = cleanWorker(await readFile(workerPath, 'utf8'));
@@ -109,6 +237,30 @@ async function readJson(request: IncomingMessage): Promise<Record<string, unknow
   return body ? (JSON.parse(body) as Record<string, unknown>) : {};
 }
 
+function selectedInstance(body: Record<string, unknown>): E2eInstance {
+  const id = typeof body['instanceId'] === 'string' ? body['instanceId'] : 'main';
+  const instance = instances.get(id);
+  if (!instance) throw new E2eControlError("unknown E2E instance '" + id + "'");
+  return instance;
+}
+
+function selectedHarness(
+  instance: E2eInstance,
+  body: Record<string, unknown>,
+): { harness: 'codex' | 'claude'; fake: FakeHarness } {
+  const requested = body['harness'] === undefined ? 'codex' : body['harness'];
+  if (requested !== 'codex' && requested !== 'claude') {
+    const label = typeof requested === 'string' ? requested : typeof requested;
+    throw new E2eControlError("unknown E2E harness '" + label + "'");
+  }
+  const fake = instance.harnesses[requested];
+  if (!fake)
+    throw new E2eControlError(
+      "harness '" + requested + "' is not enabled for E2E instance '" + instance.id + "'",
+    );
+  return { harness: requested, fake };
+}
+
 async function control(request: IncomingMessage, response: ServerResponse): Promise<unknown> {
   const body = await readJson(request);
   const target = main.app;
@@ -124,10 +276,44 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
       await writeFile(workerPath, originalWorker);
       return { ok: true };
     case '/harness/script':
-      target.harness.script(((body['turns'] as TurnSpec[] | undefined) ?? []).map(toTurn));
+      selectedHarness(selectedInstance(body), body).fake.script(
+        ((body['turns'] as TurnSpec[] | undefined) ?? []).map(toTurn),
+      );
       return { ok: true };
-    case '/harness/requests':
-      return { started: target.harness.started.map((r) => ({ model: r.model, effort: r.effort })) };
+    case '/harness/requests': {
+      const instance = selectedInstance(body);
+      const { harness, fake } = selectedHarness(instance, body);
+      const detailed = body['instanceId'] !== undefined || body['harness'] !== undefined;
+      return {
+        started: fake.started.map((r) => ({
+          model: r.model,
+          effort: r.effort,
+          ...(detailed ? { harness, options: r.options } : {}),
+        })),
+      };
+    }
+    case '/harness/preflight': {
+      const instance = selectedInstance(body);
+      const { harness, fake } = selectedHarness(instance, body);
+      if (harness !== 'claude' || !(fake instanceof E2eClaudeHarness))
+        throw new E2eControlError('preflight controls are available only for the Claude E2E fake');
+      if (body['state'] === 'ready') fake.preflightResult = readyClaudePreflight;
+      else if (body['state'] === 'not-ready') fake.preflightResult = notReadyClaudePreflight;
+      else throw new E2eControlError("preflight state must be 'ready' or 'not-ready'");
+      return { ok: true };
+    }
+    case '/harness/termination': {
+      const instance = selectedInstance(body);
+      const { harness, fake } = selectedHarness(instance, body);
+      if (harness !== 'claude' || !(fake instanceof E2eClaudeHarness))
+        throw new E2eControlError(
+          'termination controls are available only for the Claude E2E fake',
+        );
+      if (body['mode'] !== 'confirmed' && body['mode'] !== 'unconfirmed')
+        throw new E2eControlError("termination mode must be 'confirmed' or 'unconfirmed'");
+      fake.termination = body['mode'];
+      return { ok: true };
+    }
     case '/deciders':
       target.jev.isAvailable = body['jev'] !== false;
       target.codex.isAvailable = body['codex'] !== false;
@@ -135,10 +321,15 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
     case '/deciders/route':
       target.jev.choose = (request) => {
         target.jev.choices.push(request);
+        const optionId =
+          typeof body['optionId'] === 'string' ? body['optionId'] : request.options[0]!.id;
         return Promise.resolve({
-          label:
-            typeof body['label'] === 'string' ? body['label'] : (request.options[0]?.label ?? ''),
+          type: 'choice' as const,
+          optionId,
           confidence: 1,
+          probabilities: Object.fromEntries(
+            request.options.map((option) => [option.id, option.id === optionId ? 1 : 0]),
+          ),
         });
       };
       return { ok: true };
@@ -162,8 +353,9 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
           GG_DB_URL: ':memory:',
           GG_SWAGGER_UI: 'false',
           GG_MASTER_KEY: Buffer.alloc(32, 7).toString('base64'),
-          GG_DEFAULT_MODEL: 'gpt-6-luna',
-          GG_DEFAULT_EFFORT: 'low',
+          GG_DEFAULTS: JSON.stringify({
+            byHarness: { codex: { model: 'gpt-6-luna', effort: 'low' } },
+          }),
           GG_WEB_DIST: dist,
         }),
         { startTimers: false },
@@ -178,10 +370,13 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
       return { url: await live.listen({ host: '127.0.0.1', port: 0 }) };
     }
     case '/classifier/start': {
-      // A Choice endpoint answering the first route with probability 1, as `kev.serve` would.
+      // Defaults answer the first Choice route, true Noul, or Score index zero.
       const fake = await startFakeClassifierEndpoint();
       classifiers.set(fake.endpoint, fake);
-      closers.push(fake.close);
+      closers.push(async () => {
+        if (classifiers.delete(fake.endpoint)) await fake.close();
+        classifierReplies.delete(fake.endpoint);
+      });
       return { endpoint: fake.endpoint };
     }
     case '/classifier/requests': {
@@ -192,10 +387,82 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
           method: r.method,
           url: r.url,
           model: r.body.model,
+          type: r.body.questions.answer.type,
           bearer: r.authorization !== undefined,
           labels: Object.keys(r.body.questions.answer.criteria),
         })),
+        remainingReplies: classifierReplies.get(fake.endpoint)?.length ?? null,
       };
+    }
+    case '/classifier/stop': {
+      const endpoint = String(body['endpoint']);
+      const fake = classifiers.get(endpoint);
+      if (!fake) throw new E2eControlError('No fake classifier at ' + endpoint);
+      classifiers.delete(endpoint);
+      classifierReplies.delete(endpoint);
+      await fake.close();
+      return { closed: true };
+    }
+    case '/classifier/replies': {
+      const endpoint = String(body['endpoint']);
+      const fake = classifiers.get(endpoint);
+      if (!fake) throw new E2eControlError('No fake classifier at ' + endpoint);
+      const parsed = ClassifierReplySchema.array().min(1).max(16).safeParse(body['replies']);
+      if (!parsed.success) throw new E2eControlError('Expected 1–16 valid Noul or Score replies.');
+      classifierReplies.set(endpoint, parsed.data);
+      fake.respondWith((call) => {
+        const question = call.body.questions.answer;
+        const next = classifierReplies.get(endpoint)?.shift();
+        if (!next || next.type !== question.type)
+          return {
+            status: 400,
+            body: { error: 'Unexpected primitive request or reply queue exhausted.' },
+          };
+        if (next.type === 'noul')
+          return {
+            body: {
+              model: call.body.model,
+              answers: { answer: { type: 'noul', noul: next.trueProbability } },
+            },
+          };
+        if (question.type !== 'score' || next.score > question.criteria.length - 1)
+          return { status: 400, body: { error: 'Score reply is outside the declared rubric.' } };
+        return {
+          body: {
+            model: call.body.model,
+            answers: {
+              answer: {
+                type: 'score',
+                score: next.score,
+                confidence: next.confidence,
+                legend: Object.fromEntries(
+                  question.criteria.map((anchor, index) => [String(index), anchor]),
+                ),
+                probabilities: next.probabilities,
+              },
+            },
+          },
+        };
+      });
+      return { configured: true, queued: parsed.data.length };
+    }
+    case '/classifier/respond-noul': {
+      const fake = classifiers.get(String(body['endpoint']));
+      const trueProbability = body['trueProbability'];
+      if (!fake) throw new Error(`no fake classifier at ${String(body['endpoint'])}`);
+      if (typeof trueProbability !== 'number' || trueProbability < 0 || trueProbability > 1)
+        throw new E2eControlError('trueProbability must be between 0 and 1');
+      fake.respondWith((request) => {
+        if (request.body.questions.answer.type !== 'noul')
+          return { status: 400, body: { error: 'This E2E response is for Noul only.' } };
+        return {
+          body: {
+            model: request.body.model,
+            answers: { answer: { type: 'noul', noul: trueProbability } },
+          },
+        };
+      });
+      return { configured: true };
     }
     case '/apps': {
       const extra = await startApp(
@@ -203,10 +470,11 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
         body['requireApiKey'] === true,
         // The real catalog, secret resolution, and HTTP transport for classifiers (#43).
         body['realClassifiers'] === true,
+        { claude: body['claude'] === true },
       );
       // A key minted directly in the store: with GG_REQUIRE_API_KEY even POST /api-keys needs one.
       const { token } = await extra.app.container.repos.apiKeys.create('local', 'e2e', ['*']);
-      return { url: extra.url, token };
+      return { instanceId: extra.id, url: extra.url, token };
     }
     default:
       response.statusCode = 404;
@@ -221,7 +489,7 @@ const controlServer = createServer((request, response) => {
       response.end(JSON.stringify(result));
     },
     (error: unknown) => {
-      response.statusCode = 500;
+      response.statusCode = error instanceof E2eControlError ? error.statusCode : 500;
       response.end(JSON.stringify({ error: String(error) }));
     },
   );

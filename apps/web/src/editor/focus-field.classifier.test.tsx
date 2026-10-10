@@ -11,7 +11,7 @@ import { focusIssuePath } from './focus-field.js';
  * The paths the API's classifier issues carry (docs/07, Validation agreement), followed in a real
  * config form inside the node editor's config scope, as choosing the issue in a badge does.
  */
-function body(kind: NodeKind, value: unknown) {
+function body(kind: NodeKind, value: unknown, api = new FakeApi()) {
   renderWith(
     <section data-testid="body">
       <div data-field-scope="config">
@@ -25,58 +25,77 @@ function body(kind: NodeKind, value: unknown) {
       </div>
     </section>,
     '/',
-    new FakeApi(),
+    api,
   );
   return screen.getByTestId('body');
 }
 
-const decision = (jev?: object) => ({
-  routes: [
-    { label: 'yes', description: 'Yes' },
-    { label: 'no', description: 'No' },
-  ],
-  question: 'Which?',
-  strategy: ['jev'],
-  ...(jev ? { jev } : {}),
+const decision = (model: string) => ({
+  answer: {
+    type: 'choice',
+    options: [
+      { id: 'yes', label: 'Yes', criteria: 'Choose yes' },
+      { id: 'no', label: 'No', criteria: 'Choose no' },
+    ],
+  },
+  evaluation: { kind: 'classifier', model, question: 'Which?', context: {} },
+  recordAlternatives: true,
 });
 
 describe('classifier issue paths', () => {
-  it('config.jev.model focuses the classifier picker', async () => {
-    const root = body('decision', decision({ primitive: 'choice', model: 'gone' }));
-    const picker = within(screen.getByRole('group', { name: 'Jev' })).getByRole('combobox', {
+  it('config.evaluation.model focuses the classifier picker', async () => {
+    const root = body('decision', decision('gone'));
+    const picker = within(screen.getByRole('group', { name: 'Evaluation' })).getByRole('combobox', {
       name: 'Model',
     });
     await waitFor(() => expect(within(picker).getAllByRole('option')).toHaveLength(2));
-    expect(focusIssuePath(root, 'config.jev.model')).toBe(true);
+    expect(focusIssuePath(root, 'config.evaluation.model')).toBe(true);
     expect(picker).toHaveFocus();
   });
 
-  it('config.jev.model without Jev options focuses the picker, which shows the default', () => {
-    const root = body('decision', decision());
-    expect(focusIssuePath(root, 'config.jev.model')).toBe(true);
-    const picker = within(screen.getByRole('group', { name: 'Jev' })).getByRole('combobox', {
+  it('config.evaluation.model with an empty catalog focuses the picker', () => {
+    const api = new FakeApi();
+    api.classifiers = [];
+    const root = body('decision', decision('missing'), api);
+    expect(focusIssuePath(root, 'config.evaluation.model')).toBe(true);
+    const picker = within(screen.getByRole('group', { name: 'Evaluation' })).getByRole('combobox', {
       name: 'Model',
     });
     expect(picker).toHaveFocus();
-    expect(picker).toHaveValue('');
-    // The block's own path finds the picker first too.
+    expect(picker).toHaveValue('missing');
+    // Without the node editor's custom picker, the whole union path names its method selector.
     picker.blur();
-    expect(focusIssuePath(root, 'config.jev')).toBe(true);
-    expect(picker).toHaveFocus();
+    expect(focusIssuePath(root, 'config.evaluation')).toBe(true);
+    const evaluation = screen.getByRole('group', { name: 'Evaluation' });
+    const method = evaluation.querySelector<HTMLSelectElement>(':scope > div select');
+    expect(method).toBeInTheDocument();
+    expect(method).toHaveFocus();
   });
 
-  it('config.criteria.N.strategy focuses that exit criterion’s chosen strategy', () => {
+  it('config.criteria.N.evaluation.model focuses that exit criterion’s classifier picker', () => {
     const root = body('exit', {
       criteria: [
         { when: 'max-iterations', value: 3 },
-        { when: 'predicate', strategy: 'jev', question: 'Done?', outcome: 'success' },
+        {
+          when: 'predicate',
+          answer: {
+            type: 'noul',
+            true: { label: 'Done', criteria: 'The task is complete' },
+            false: { label: 'Pending', criteria: 'Work remains' },
+          },
+          evaluation: { kind: 'classifier', model: 'missing', question: 'Done?' },
+          match: { type: 'noul', value: true },
+          outcome: 'success',
+        },
       ],
     });
-    expect(focusIssuePath(root, 'config.criteria.1.strategy')).toBe(true);
+    expect(focusIssuePath(root, 'config.criteria.1.evaluation.model')).toBe(true);
     const focused = document.activeElement as HTMLInputElement;
-    expect(focused).toHaveAttribute('type', 'radio');
-    expect(focused).toBeChecked();
-    expect(focused.value).toBe('jev');
-    expect(focused.closest('[data-field]')).toHaveAttribute('data-field', 'criteria.1.strategy');
+    expect(focused.tagName).toBe('SELECT');
+    expect(focused).toHaveValue('missing');
+    expect(focused.closest('[data-field]')).toHaveAttribute(
+      'data-field',
+      'criteria.1.evaluation.model',
+    );
   });
 });

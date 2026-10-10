@@ -167,7 +167,7 @@ describe('describe helpers', () => {
 
   it('reports wait nodes without an input schema and loops without versions', () => {
     const definition = LoopDefinitionSchema.parse({
-      schemaVersion: 1,
+      schemaVersion: 3,
       name: 'w',
       nodes: [
         { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },

@@ -1,5 +1,6 @@
 import type { Edge, LoopDefinition, Node, NodeKind } from '@graphgoblin/contracts';
 import { syntaxIssues } from './syntax.js';
+import { answerPortIds } from './answers.js';
 
 export interface ValidationIssue {
   code: string;
@@ -26,7 +27,7 @@ export function outputPorts(node: Node): string[] {
     case 'heartbeat':
       return ['out'];
     case 'decision':
-      return node.config.routes.map((r) => r.label);
+      return answerPortIds(node.config.answer);
     case 'script': {
       const extra = Object.values(node.config.exitCodeRoutes ?? {}).filter(
         (label) => label !== 'out',
@@ -216,7 +217,9 @@ export function validateLoop(def: LoopDefinition): ValidationIssue[] {
 
   // Decision context variables must be declared.
   for (const decision of nodesOfKind(def, 'decision')) {
-    for (const v of decision.config.context.vars ?? []) {
+    for (const v of decision.config.evaluation.kind === 'expression'
+      ? []
+      : (decision.config.evaluation.context.vars ?? [])) {
       if (!(v in def.variables)) {
         issues.push({
           code: 'UNDECLARED_VARIABLE',

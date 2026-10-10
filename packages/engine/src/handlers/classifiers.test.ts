@@ -2,11 +2,10 @@ import { describe, expect, it } from 'vitest';
 import type { LoopDefinitionInput } from '@graphgoblin/contracts';
 import type { ClassifierUnavailableReason } from '../ports.js';
 import { FakeClassifierRegistry, FakeDecider, createTestEngine } from '../testing/index.js';
-
-function loop(model?: string, fallback = true): LoopDefinitionInput {
+function loop(model = 'jev'): LoopDefinitionInput {
   return {
-    schemaVersion: 1,
-    name: `classifier-${model ?? 'default'}`,
+    schemaVersion: 3,
+    name: 'classifier-' + model,
     nodes: [
       { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
       {
@@ -14,14 +13,14 @@ function loop(model?: string, fallback = true): LoopDefinitionInput {
         kind: 'decision',
         label: 'Choose',
         config: {
-          question: 'Which?',
-          routes: [
-            { label: 'yes', description: 'Yes' },
-            { label: 'no', description: 'No' },
-          ],
-          strategy: fallback ? ['jev', 'expression'] : ['jev'],
-          jev: { ...(model ? { model } : {}), minConfidence: 0.5 },
-          ...(fallback ? { expression: { jsonata: '"no"' } } : {}),
+          answer: {
+            type: 'choice',
+            options: [
+              { id: 'yes', label: 'Yes', criteria: 'Yes criterion' },
+              { id: 'no', label: 'No', criteria: 'No criterion' },
+            ],
+          },
+          evaluation: { kind: 'classifier', model, question: 'Which?', minConfidence: 0.5 },
         },
       },
       { id: 'yes', kind: 'exit', label: 'Yes', config: { return: { mapping: '"yes"' } } },
@@ -29,56 +28,50 @@ function loop(model?: string, fallback = true): LoopDefinitionInput {
     ],
     edges: [
       { id: 'start-decide', from: { node: 'start', port: 'out' }, to: { node: 'decide' } },
-      { id: 'route-yes', from: { node: 'decide', port: 'yes' }, to: { node: 'yes' } },
-      { id: 'route-no', from: { node: 'decide', port: 'no' }, to: { node: 'no' } },
+      { id: 'yes-route', from: { node: 'decide', port: 'yes' }, to: { node: 'yes' } },
+      { id: 'no-route', from: { node: 'decide', port: 'no' }, to: { node: 'no' } },
     ],
   };
 }
 describe('classifier selection through the executor', () => {
-  it('routes two registered classifiers distinctly and records catalog provenance and owner', async () => {
+  it('routes registered classifiers distinctly with current catalog provenance and owner', async () => {
     const e = await createTestEngine();
-    const a = new FakeDecider('jev', () => ({ label: 'yes', confidence: 1 }));
-    const b = new FakeDecider('jev', () => ({ label: 'no', confidence: 1 }));
-    e.ports.classifiers.models.set('a', a);
-    e.ports.classifiers.models.set('b', b);
-    for (const [id, route] of [
+    for (const [id, optionId] of [
       ['a', 'yes'],
       ['b', 'no'],
     ] as const) {
-      const v = e.publish(loop(id));
-      const run = await e.runToIdle(v.loopId);
-      expect(run.result).toBe(route);
-      expect(e.events(run.id).find((event) => event.type === 'decision.made')).toMatchObject({
-        strategy: 'jev',
-        classifierModel: id,
-        route,
+      const d = new FakeDecider('jev', () => ({
+        type: 'choice',
+        optionId,
+        confidence: 1,
+        probabilities: { yes: optionId === 'yes' ? 1 : 0, no: optionId === 'no' ? 1 : 0 },
+      }));
+      e.ports.classifiers.models.set(id, d);
+      const r = await e.runToIdle(e.publish(loop(id)).loopId);
+      expect(r.result).toBe(optionId);
+      expect(e.events(r.id).find((ev) => ev.type === 'decision.made')).toMatchObject({
+        answer: { optionId },
+        portId: optionId,
+        provenance: {
+          kind: 'classifier',
+          provider: 'http',
+          classifierId: id,
+          model: id,
+          effort: null,
+        },
+      });
+      expect(d.choices[0]).toMatchObject({
+        question: 'Which?',
+        options: [
+          { id: 'yes', label: 'Yes', criteria: 'Yes criterion' },
+          { id: 'no', label: 'No', criteria: 'No criterion' },
+        ],
       });
     }
     expect(e.ports.classifiers.requests).toEqual([
-      { ownerId: 'local', modelId: 'a' },
-      { ownerId: 'local', modelId: 'b' },
+      { ownerId: 'local', modelId: 'a', primitive: 'choice' },
+      { ownerId: 'local', modelId: 'b', primitive: 'choice' },
     ]);
-    expect(a.choices[0]).toMatchObject({
-      question: 'Which?',
-      options: [
-        { label: 'yes', description: 'Yes' },
-        { label: 'no', description: 'No' },
-      ],
-    });
-    expect(b.choices).toHaveLength(1);
-  });
-  it('uses built-in jev for omitted selection without adding configuration to the loop', async () => {
-    const e = await createTestEngine();
-    const v = e.publish(loop());
-    expect(v.definition.nodes[1]).toMatchObject({
-      config: { jev: { primitive: 'choice', minConfidence: 0.5 } },
-    });
-    const run = await e.runToIdle(v.loopId);
-    expect(run.result).toBe('yes');
-    expect(e.events(run.id).find((event) => event.type === 'decision.made')).toHaveProperty(
-      'classifierModel',
-      'jev',
-    );
   });
   it.each([
     'CLASSIFIER_MODEL_NOT_FOUND',
@@ -87,67 +80,45 @@ describe('classifier selection through the executor', () => {
     'CLASSIFIER_SECRET_MISSING',
     'CLASSIFIER_SECRET_UNREADABLE',
   ] satisfies ClassifierUnavailableReason[])(
-    'skips %s, never substitutes built-in, and explains exhaustion',
+    'reports %s without selecting another evaluator',
     async (reason) => {
       const e = await createTestEngine();
       e.ports.classifiers.unavailable.set('selected', {
         status: 'unavailable',
         reason,
-        message: 'private-selection-diagnostic',
+        message: 'private diagnostic',
       });
-      const fallback = e.publish(loop('selected'));
-      const run = await e.runToIdle(fallback.loopId);
-      expect(run.result).toBe('no');
-      expect(e.events(run.id).find((event) => event.type === 'decision.made')).toMatchObject({
-        skipped: [{ strategy: 'jev', code: reason, message: expect.any(String) }],
+      const r = await e.runToIdle(e.publish(loop('selected')).loopId);
+      const invalid = reason === 'CLASSIFIER_PRIMITIVE_UNSUPPORTED';
+      expect(r.failure).toMatchObject({
+        code: invalid ? 'EVALUATION_INVALID_CONFIGURATION' : 'EVALUATION_UNAVAILABLE',
+        resumable: !invalid,
+        details: { reason },
       });
-      expect(JSON.stringify(e.events(run.id))).not.toContain('private-selection-diagnostic');
+      expect(JSON.stringify(e.events(r.id))).not.toContain('private diagnostic');
       expect(e.ports.jev.choices).toEqual([]);
-      expect(e.events(run.id).find((event) => event.type === 'decision.made')).not.toHaveProperty(
-        'classifierModel',
-      );
-      const only = e.publish({ ...loop('selected', false), name: 'only' });
-      const exhausted = await e.runToIdle(only.loopId);
-      expect(exhausted.failure).toMatchObject({
-        code: 'DECISION_NO_ROUTE',
-        details: { tried: [expect.stringContaining(reason)] },
-      });
+      expect(e.ports.codexDecider.choices).toEqual([]);
+      expect(e.eventTypes(r.id)).not.toContain('decision.made');
     },
   );
-  it('covers unknown fake registrations, unconfigured fake providers, and low confidence fallback', async () => {
-    const fake = new FakeClassifierRegistry();
-    expect(await fake.resolve('local', 'missing')).toMatchObject({
+  it('covers unknown fake registrations and unconfigured providers', async () => {
+    expect(await new FakeClassifierRegistry().resolve('local', 'missing', 'choice')).toMatchObject({
       reason: 'CLASSIFIER_MODEL_NOT_FOUND',
     });
     const e = await createTestEngine();
     e.ports.jev.isAvailable = false;
-    const v = e.publish(loop());
-    expect((await e.runToIdle(v.loopId)).result).toBe('no');
-    e.ports.classifiers.models.set(
-      'low',
-      new FakeDecider('jev', () => ({ label: 'yes', confidence: 0.1 })),
-    );
-    const low = e.publish(loop('low'));
-    expect((await e.runToIdle(low.loopId)).result).toBe('no');
+    const r = await e.runToIdle(e.publish(loop()).loopId);
+    expect(r.failure).toMatchObject({ code: 'EVALUATION_UNAVAILABLE', resumable: true });
   });
-  it('resolves the current selection again on resumed execution and propagates provider errors', async () => {
+  it('resolves the selected classifier again after restoring its configuration', async () => {
     const e = await createTestEngine();
-    const v = e.publish(loop('missing', false));
-    const run = await e.runToIdle(v.loopId);
-    expect(run.failure?.code).toBe('DECISION_NO_ROUTE');
-    e.ports.classifiers.models.set('missing', new FakeDecider('jev'));
-    await e.manager.resume(run.id);
-    expect((await e.settle(run.id)).result).toBe('yes');
-    e.ports.classifiers.models.set('throws', {
-      choose: () =>
-        Promise.reject(Object.assign(new Error('provider failed'), { code: 'DECIDER_HTTP_ERROR' })),
-    });
-    const throws = e.publish(loop('throws'));
-    expect((await e.runToIdle(throws.loopId)).failure).toMatchObject({
-      code: 'INTERNAL_ERROR',
-      message: 'Decision provider request failed',
-      details: { code: 'DECIDER_HTTP_ERROR', strategy: 'jev' },
-    });
+    e.ports.jev.isAvailable = false;
+    const r = await e.runToIdle(e.publish(loop()).loopId);
+    expect(r.failure?.resumable).toBe(true);
+    e.ports.jev.isAvailable = true;
+    await e.manager.resume(r.id);
+    expect((await e.settle(r.id)).result).toBe('yes');
+    expect(e.ports.classifiers.requests).toHaveLength(2);
   });
   it('passes executor cancellation to the selected provider', async () => {
     const e = await createTestEngine();
@@ -156,6 +127,8 @@ describe('classifier selection through the executor', () => {
       started = resolve;
     });
     e.ports.classifiers.models.set('blocking', {
+      classifyNoul: (...args) => e.ports.jev.classifyNoul(...args),
+      score: (...args) => e.ports.jev.score(...args),
       choose: (_request, signal) =>
         new Promise((_resolve, reject) => {
           started();
@@ -166,37 +139,10 @@ describe('classifier selection through the executor', () => {
           );
         }),
     });
-    const v = e.publish(loop('blocking'));
-    const run = await e.start(v.loopId);
+    const r = await e.start(e.publish(loop('blocking')).loopId);
     await ready;
-    await e.manager.cancel(run.id);
-    expect((await e.settle(run.id)).status).toBe('cancelled');
-  });
-  it('records ordered expression and provider skips before the winner', async () => {
-    const e = await createTestEngine();
-    e.ports.jev.isAvailable = false;
-    const definition = loop();
-    const node = definition.nodes[1];
-    if (node?.kind !== 'decision') throw new Error('Expected decision fixture');
-    node.config.strategy = ['expression', 'jev', 'codex'];
-    node.config.expression = { jsonata: '"not-a-route"' };
-    const v = e.publish(definition);
-    const run = await e.runToIdle(v.loopId);
-    expect(e.events(run.id).find((event) => event.type === 'decision.made')).toMatchObject({
-      strategy: 'codex',
-      route: 'yes',
-      skipped: [
-        { strategy: 'expression', code: 'EXPRESSION_NOT_APPLICABLE' },
-        { strategy: 'jev', code: 'CLASSIFIER_SECRET_MISSING' },
-      ],
-    });
-    e.ports.codexDecider.isAvailable = false;
-    node.config.strategy = ['codex', 'expression'];
-    node.config.expression = { jsonata: '"no"' };
-    const unavailable = e.publish({ ...definition, name: 'codex-unavailable' });
-    const fallback = await e.runToIdle(unavailable.loopId);
-    expect(e.events(fallback.id).find((event) => event.type === 'decision.made')).toMatchObject({
-      skipped: [{ strategy: 'codex', code: 'PROVIDER_UNAVAILABLE' }],
-    });
+    await e.manager.cancel(r.id);
+    expect((await e.settle(r.id)).status).toBe('cancelled');
+    expect(e.eventTypes(r.id)).not.toContain('decision.made');
   });
 });

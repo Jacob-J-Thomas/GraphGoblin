@@ -52,19 +52,11 @@ describe('decision skipped evidence migration', () => {
         return JSON.parse(payload) as unknown;
       });
       expect(payloads).toEqual([{ ...old, skipped: [] }, recorded, { attempt: 1 }]);
-      expect(await store.read(runId)).toEqual([
-        {
-          runId,
-          seq: 1,
-          ts: FIXTURE_TS,
-          type: 'decision.made',
-          nodeId: 'done',
-          ...old,
-          skipped: [],
-        },
-        { runId, seq: 2, ts: FIXTURE_TS, type: 'decision.made', nodeId: 'done', ...recorded },
-        { runId, seq: 3, ts: FIXTURE_TS, type: 'run.started', attempt: 1 },
-      ]);
+      // This historical SQL migration preserves old facts but does not make them current events.
+      await expect(store.read(runId)).rejects.toMatchObject({
+        name: 'InvalidStoredRunEventError',
+        seq: 1,
+      });
     } finally {
       handle.close();
     }

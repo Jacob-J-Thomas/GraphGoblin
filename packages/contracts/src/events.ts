@@ -1,15 +1,20 @@
 import { z } from 'zod';
-import { ClassifierModelIdSchema } from './classifiers.js';
+import {
+  DecisionEvidenceSchema,
+  DecisionEmissionSchema,
+  PrimitiveAnswerSchema,
+  EvaluationProvenanceSchema,
+  EvaluationAcceptanceSchema,
+} from './evaluation.js';
 import {
   EffortSchema,
   HarnessIdSchema,
   JsonValueSchema,
-  ModelNameSchema,
   SlugSchema,
   TimestampSchema,
   UlidSchema,
 } from './common.js';
-import { OutcomeSchema } from './nodes.js';
+import { OutcomeSchema, ExitPredicateMatchSchema } from './nodes.js';
 import { JsonPatchSchema } from './patch.js';
 import { RunFailureSchema, RunStatusSchema, WaitSpecSchema } from './run.js';
 import {
@@ -30,24 +35,6 @@ const Actor = z.strictObject({
   id: z.string().min(1).max(256),
 });
 
-export const StrategySkipSchema = z.strictObject({
-  strategy: z.enum(['jev', 'codex', 'expression']),
-  code: z.enum([
-    'CLASSIFIER_MODEL_NOT_FOUND',
-    'CLASSIFIER_PRIMITIVE_UNSUPPORTED',
-    'CLASSIFIER_MODEL_DISABLED',
-    'CLASSIFIER_SECRET_MISSING',
-    'CLASSIFIER_SECRET_UNREADABLE',
-    'PROVIDER_UNAVAILABLE',
-    'EXPRESSION_NOT_APPLICABLE',
-    'UNDECLARED_ROUTE',
-    'INVALID_CONFIDENCE',
-    'LOW_CONFIDENCE',
-  ]),
-  message: z.string().min(1).max(256),
-});
-export type StrategySkip = z.infer<typeof StrategySkipSchema>;
-
 export const ExitDiagnosticSchema = z.strictObject({
   code: z.enum([
     'CRITERION_ERROR',
@@ -61,6 +48,12 @@ export const ExitDiagnosticSchema = z.strictObject({
     'DECIDER_REDIRECT',
     'DECIDER_TIMEOUT',
     'DECIDER_ERROR',
+    'EVALUATION_UNAVAILABLE',
+    'EVALUATION_PROVIDER_FAILED',
+    'EVALUATION_INVALID_CONFIGURATION',
+    'EVALUATION_INVALID_RESPONSE',
+    'EVALUATION_RESULT_REJECTED',
+    'EVALUATION_EXPRESSION_FAILED',
   ]),
   message: z.string().min(1).max(256),
   status: z.number().int().min(100).max(599).optional(),
@@ -71,24 +64,37 @@ const CriterionEvidence = {
   index: z.number().int().min(0).max(31),
   strategy: z.enum([
     'expression',
-    'jev',
-    'codex',
+    'classifier',
+    'llm',
     'max-iterations',
     'max-duration',
     'last-output-matches',
   ]),
-  model: ModelNameSchema.optional(),
-  classifierModel: ClassifierModelIdSchema.optional(),
 };
-export const ExitCriterionEvaluationSchema = z.discriminatedUnion('status', [
+export const ExitCriterionEvaluationSchema = z.union([
   z.strictObject({
     ...CriterionEvidence,
+    strategy: z.enum(['expression', 'classifier', 'llm']),
     status: z.enum(['matched', 'not-matched']),
-    holds: z.boolean().optional(),
-    confidence: z.number().min(0).max(1).optional(),
-    minConfidence: z.number().min(0).max(1).optional(),
-    /** The Codex judge's short justification, never the provider response envelope. */
-    reasoning: z.string().max(2048).optional(),
+    answer: PrimitiveAnswerSchema,
+    provenance: EvaluationProvenanceSchema,
+    /** Null means the archived evidence did not establish the acceptance gate. */
+    acceptance: EvaluationAcceptanceSchema.nullable(),
+    match: ExitPredicateMatchSchema,
+    configuredMinConfidence: z.number().min(0).max(1).optional(),
+    rejection: z
+      .strictObject({
+        kind: z.enum(['classifier-confidence', 'llm-reported-confidence']),
+        minimum: z.number().min(0).max(1),
+        confidence: z.number().min(0).max(1).nullable(),
+      })
+      .optional(),
+  }),
+  z.strictObject({
+    ...CriterionEvidence,
+    strategy: z.enum(['max-iterations', 'max-duration', 'last-output-matches']),
+    status: z.enum(['matched', 'not-matched']),
+    holds: z.boolean().nullable(),
   }),
   z.strictObject({
     ...CriterionEvidence,
@@ -102,9 +108,55 @@ export const ExitCriterionEvaluationSchema = z.discriminatedUnion('status', [
     ...CriterionEvidence,
     status: z.literal('error'),
     diagnostic: ExitDiagnosticSchema,
+    provenance: EvaluationProvenanceSchema.optional(),
   }),
 ]);
 export type ExitCriterionEvaluation = z.infer<typeof ExitCriterionEvaluationSchema>;
+/** Fresh predicate evidence is complete; converted history uses the canonical schema above. */
+export const ExitCriterionEmissionSchema = ExitCriterionEvaluationSchema.superRefine(
+  (evidence, ctx) => {
+    if (!('answer' in evidence)) {
+      if ('holds' in evidence && evidence.holds === null)
+        ctx.addIssue({
+          code: 'custom',
+          path: ['holds'],
+          message: 'fresh criterion evidence requires a boolean',
+        });
+      return;
+    }
+    const fresh = DecisionEmissionSchema.safeParse({
+      answer: evidence.answer,
+      provenance: evidence.provenance,
+      portId: evidence.answer.type === 'choice' ? evidence.answer.optionId : 'answer',
+      diagnostics: [],
+    });
+    if (!fresh.success) for (const issue of fresh.error.issues) ctx.addIssue({ ...issue });
+    if (evidence.acceptance === null)
+      ctx.addIssue({
+        code: 'custom',
+        path: ['acceptance'],
+        message: 'fresh evidence requires acceptance',
+      });
+    if (evidence.provenance.kind !== evidence.strategy)
+      ctx.addIssue({
+        code: 'custom',
+        path: ['strategy'],
+        message: 'evidence strategy must match provenance',
+      });
+    if (evidence.status === 'matched' && evidence.rejection)
+      ctx.addIssue({
+        code: 'custom',
+        path: ['rejection'],
+        message: 'a rejected predicate cannot match',
+      });
+    if (evidence.status === 'matched' && evidence.acceptance?.status === 'rejected')
+      ctx.addIssue({
+        code: 'custom',
+        path: ['acceptance'],
+        message: 'a rejected evaluation cannot match',
+      });
+  },
+);
 
 export const ExitEvaluationOutcomeSchema = z.discriminatedUnion('kind', [
   z.strictObject({
@@ -272,18 +324,10 @@ export const RunEventSchema = z.discriminatedUnion('type', [
     nodeId: SlugSchema,
     usage: UsageSchema,
   }),
-  z.strictObject({
+  DecisionEvidenceSchema.safeExtend({
     ...Base,
     type: z.literal('decision.made'),
     nodeId: SlugSchema,
-    strategy: z.enum(['jev', 'codex', 'expression']),
-    classifierModel: ClassifierModelIdSchema.optional(),
-    route: SlugSchema,
-    confidence: z.number().min(0).max(1).optional(),
-    alternatives: z
-      .array(z.strictObject({ route: SlugSchema, confidence: z.number().min(0).max(1).optional() }))
-      .optional(),
-    skipped: z.array(StrategySkipSchema).max(3),
   }),
   z.strictObject({
     ...Base,

@@ -47,14 +47,18 @@ describe('EditorPage', () => {
   // loop settings in it, so they start with it expanded (the setup clears storage after each).
   beforeEach(() => localStorage.setItem(LOOP_PANEL_STORAGE_KEY, 'expanded'));
 
-  it('shows Harness only in the inference dialog', async () => {
+  it('shows Harness in inference but not in the decision or loop settings', async () => {
     const api = new FakeApi();
     const loop = api.addLoop(kitchenSinkLoop());
     renderApp(`/loops/${loop.id}/edit`, api);
     await screen.findByRole('form', { name: 'Loop settings form' });
     expect(screen.queryByLabelText('Harness')).not.toBeInTheDocument();
+    act(() => useEditorStore.getState().openNode('decide'));
+    expect(
+      within(screen.getByRole('dialog')).queryByRole('radiogroup', { name: 'Harness' }),
+    ).not.toBeInTheDocument();
     act(() => useEditorStore.getState().openNode('infer'));
-    expect(within(screen.getByRole('dialog')).getByLabelText('Harness')).toHaveValue('codex');
+    expect(within(screen.getByRole('dialog')).getByRole('radio', { name: 'codex' })).toBeChecked();
   });
 
   it('collapses and expands the loop panel from its own controls and remembers it', async () => {
@@ -739,22 +743,30 @@ describe('EditorPage', () => {
     const api = new FakeApi();
     const def = newLoopDefinition('fields');
     const decision = {
-      routes: [
-        { label: 'a', description: 'first' },
-        { label: 'b', description: 'second' },
-      ],
-      question: 'Which?',
-      strategy: ['expression' as const],
-      expression: { jsonata: '"b"' },
+      answer: {
+        type: 'choice' as const,
+        options: [
+          { id: 'a', label: 'First', criteria: 'first' },
+          { id: 'b', label: 'Second', criteria: 'second' },
+        ],
+      },
+      evaluation: { kind: 'expression' as const, jsonata: '"b"' },
+      recordAlternatives: true,
     };
     def.nodes.push({ id: 'pick', kind: 'decision', label: 'Pick', config: decision });
     const loop = api.addLoop(def);
     renderApp(`/loops/${loop.id}/edit`, api);
     await screen.findByRole('heading', { name: 'fields' });
-    // The first route loses its label: a schema issue at config.routes.0.label.
+    // The first option loses its display label: a schema issue at config.answer.options.0.label.
     act(() =>
       useEditorStore.getState().updateNode('pick', {
-        config: { ...decision, routes: [{ label: '', description: 'first' }, decision.routes[1]] },
+        config: {
+          ...decision,
+          answer: {
+            ...decision.answer,
+            options: [{ ...decision.answer.options[0]!, label: '' }, decision.answer.options[1]!],
+          },
+        },
       }),
     );
     const badge = nodeBadge('pick')!;
@@ -762,10 +774,10 @@ describe('EditorPage', () => {
     await user.click(badge);
     expect(useEditorStore.getState().nodeDialogOpen).toBe(false);
     expect(popoverOf(badge)).toHaveAttribute('aria-label', 'Issues on pick');
-    await user.click(popoverButtons(badge, /config\.routes\.0\.label/)[0]!);
+    await user.click(popoverButtons(badge, /config\.answer\.options\.0\.label/)[0]!);
     const dialog = screen.getByRole('dialog', { name: 'Edit decision pick' });
-    const routeLabel = dialog.querySelector('[data-field="routes.0.label"] input');
-    expect(routeLabel).toHaveFocus();
+    const optionLabel = dialog.querySelector('[data-field="answer.options.0.label"] input');
+    expect(optionLabel).toHaveFocus();
     await waitFor(() => expect(useEditorStore.getState().nodeFocus).toBeUndefined());
 
     // In the open editor, the badge beside the title focuses fields without reopening anything.
@@ -774,10 +786,10 @@ describe('EditorPage', () => {
     await user.click(header);
     await user.click(
       within(screen.getByRole('dialog', { name: 'Issues on pick' })).getByRole('button', {
-        name: /config\.routes\.0\.label/,
+        name: /config\.answer\.options\.0\.label/,
       }),
     );
-    expect(routeLabel).toHaveFocus();
+    expect(optionLabel).toHaveFocus();
     expect(screen.getByRole('dialog', { name: 'Edit decision pick' })).toBe(dialog);
     await user.keyboard('{Escape}');
     expect(screen.queryByRole('dialog')).toBeNull();
@@ -786,10 +798,10 @@ describe('EditorPage', () => {
     act(() => badge.focus());
     expect(badge).toHaveAttribute('aria-expanded', 'true');
     await user.keyboard('{ArrowDown}');
-    expect(document.activeElement).toHaveTextContent(/config\.routes\.0\.label/);
+    expect(document.activeElement).toHaveTextContent(/config\.answer\.options\.0\.label/);
     await user.keyboard('{Enter}');
     const reopened = screen.getByRole('dialog', { name: 'Edit decision pick' });
-    expect(reopened.querySelector('[data-field="routes.0.label"] input')).toHaveFocus();
+    expect(reopened.querySelector('[data-field="answer.options.0.label"] input')).toHaveFocus();
 
     // Once the schema holds, the graph's issues (no field) focus the heading instead.
     act(() => useEditorStore.getState().updateNode('pick', { config: decision }));
@@ -1170,7 +1182,11 @@ describe('EditorPage', () => {
     await user.clear(screen.getByLabelText('Max iterations'));
     await user.type(screen.getByLabelText('Max iterations'), '4');
     expect(useEditorStore.getState().definition!.settings).toMatchObject({ maxIterations: 4 });
-    await user.click(screen.getByRole('button', { name: 'Add entry' }));
+    await user.click(
+      within(panel.querySelector('[data-field="variables"]')!).getByRole('button', {
+        name: 'Add entry',
+      }),
+    );
     expect(Object.keys(useEditorStore.getState().definition!.variables!)).toContain('key2');
 
     act(() => useEditorStore.getState().openNode('check'));

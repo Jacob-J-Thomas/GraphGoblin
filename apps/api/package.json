@@ -20,10 +20,11 @@
     "graphgoblin-api": "./dist/main.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "templates"
   ],
   "scripts": {
-    "build": "tsc -b tsconfig.build.json",
+    "build": "tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js",
     "typecheck": "tsc -b tsconfig.build.json && tsc -p tsconfig.json",
     "lint": "eslint .",
     "test": "vitest run",

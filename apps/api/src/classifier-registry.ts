@@ -1,5 +1,9 @@
 import { createJevDecider, DEFAULT_BASE_URL, DEFAULT_MODEL } from '@graphgoblin/adapter-jev';
-import type { ClassifierModelEntry, ClassifierModelSummary } from '@graphgoblin/contracts';
+import type {
+  ClassifierModelEntry,
+  ClassifierModelSummary,
+  ClassifierPrimitive,
+} from '@graphgoblin/contracts';
 import type {
   ClassifierPort,
   ClassifierRegistryPort,
@@ -7,7 +11,7 @@ import type {
   Logger,
   SecretsPort,
 } from '@graphgoblin/engine';
-import { HttpChoiceClassifier } from '@graphgoblin/infrastructure/http';
+import { HttpClassifier } from '@graphgoblin/infrastructure/http';
 import type { SqliteClassifierModels } from '@graphgoblin/infrastructure/sqlite';
 
 export const BUILTIN_CLASSIFIER: ClassifierModelEntry = {
@@ -109,7 +113,11 @@ export class ClassifierRegistry implements ClassifierRegistryPort {
     }
   }
 
-  async resolve(ownerId: string, modelId: string): Promise<ClassifierResolution> {
+  async resolve(
+    ownerId: string,
+    modelId: string,
+    primitive: ClassifierPrimitive,
+  ): Promise<ClassifierResolution> {
     const entry = await this.repo.findOne(ownerId, modelId);
     if (!entry)
       return {
@@ -117,11 +125,11 @@ export class ClassifierRegistry implements ClassifierRegistryPort {
         reason: 'CLASSIFIER_MODEL_NOT_FOUND',
         message: `Classifier '${modelId}' not found`,
       };
-    if (!entry.primitives.includes('choice'))
+    if (!entry.primitives.includes(primitive))
       return {
         status: 'unavailable',
         reason: 'CLASSIFIER_PRIMITIVE_UNSUPPORTED',
-        message: `Classifier '${modelId}' does not support Choice`,
+        message: `Classifier '${modelId}' does not support ${primitive}`,
       };
     if (!entry.enabled)
       return {
@@ -140,10 +148,18 @@ export class ClassifierRegistry implements ClassifierRegistryPort {
     const signature = JSON.stringify(entry);
     const cached = this.clients.get(key);
     if (cached?.signature === signature && cached.secret === state.secret)
-      return { status: 'ready', classifier: cached.classifier };
+      return {
+        status: 'ready',
+        classifier: cached.classifier,
+        provenance: {
+          provider: entry.provider,
+          classifierId: entry.id,
+          model: entry.providerModel,
+        },
+      };
     let classifier: ClassifierPort;
     if (entry.provider === 'typesafe') {
-      // The adapter resolves this immutable snapshot rather than sharing the mutable exit client.
+      // Each cached classifier uses an immutable owner-scoped credential snapshot.
       const jev = createJevDecider({
         secrets: { resolve: () => Promise.resolve(state.secret) },
         ...(entry.secretRef !== undefined ? { secretName: entry.secretRef } : {}),
@@ -154,7 +170,7 @@ export class ClassifierRegistry implements ClassifierRegistryPort {
       await jev.init();
       classifier = jev;
     } else {
-      classifier = new HttpChoiceClassifier({
+      classifier = new HttpClassifier({
         endpoint: entry.endpoint,
         providerModel: entry.providerModel,
         ...(state.secret !== undefined ? { bearer: state.secret } : {}),
@@ -167,6 +183,10 @@ export class ClassifierRegistry implements ClassifierRegistryPort {
       classifier,
       ...(state.secret !== undefined ? { secret: state.secret } : {}),
     });
-    return { status: 'ready', classifier };
+    return {
+      status: 'ready',
+      classifier,
+      provenance: { provider: entry.provider, classifierId: entry.id, model: entry.providerModel },
+    };
   }
 }

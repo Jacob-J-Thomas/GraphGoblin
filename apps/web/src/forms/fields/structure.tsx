@@ -4,6 +4,7 @@
  * imported, never the other way round.
  */
 import {
+  createElement,
   use,
   useEffect,
   useId,
@@ -35,6 +36,7 @@ import { useCollectionIdentities, useDisclosureState, useDisclosureStore } from 
 import { labelOf } from '../layout.js';
 import { repathParseErrors, useParseErrors } from '../parse-errors.js';
 import {
+  discriminatorValue,
   humanize,
   initialValue,
   matchOption,
@@ -49,6 +51,9 @@ import { useCollectionFocus } from './collection.js';
 import { JsonControl, JsonField } from './json.js';
 import {
   FieldControlsContext,
+  FieldOverridesContext,
+  FieldLabelsContext,
+  UnionPickersContext,
   FieldError,
   FieldHelp,
   fieldMeta,
@@ -60,6 +65,7 @@ import {
   useProblemCount,
   type FieldControl,
   type FieldControls,
+  type FieldOverrides,
   type FieldProps,
 } from './shared.js';
 import { NumberField, StringControl, StringField } from './text.js';
@@ -71,10 +77,33 @@ import { stripUnset } from '../unset.js';
  */
 export function Field(props: FieldProps) {
   const controls = use(FieldControlsContext);
+  const overrides = use(FieldOverridesContext);
+  const labels = use(FieldLabelsContext);
+  const label = Object.hasOwn(labels, props.name) ? labels[props.name] : undefined;
+  const displayed = label === undefined ? props : { ...props, label };
+  const Override = fieldOverrideFor(props.name, overrides);
+  if (Override) return createElement(Override, displayed);
   const name = fieldMeta(props.schema).control;
   // Only the registry's own entries: a name such as `toString` is not a registered control.
   const Control = name !== undefined && Object.hasOwn(controls, name) ? controls[name] : undefined;
-  return Control ? <Control {...props} /> : <DefaultField {...props} />;
+  return createElement(Control ?? DefaultField, displayed);
+}
+
+function fieldOverrideFor(name: string, overrides: FieldOverrides): FieldControl | undefined {
+  if (Object.hasOwn(overrides, name)) return overrides[name];
+  const path = name.split('.');
+  return Object.entries(overrides)
+    .filter(([pattern]) => {
+      const parts = pattern.split('.');
+      return (
+        parts.length === path.length &&
+        parts.every((part, index) => part === '*' || part === path[index])
+      );
+    })
+    .sort(([left], [right]) => {
+      const fixed = (pattern: string) => pattern.split('.').filter((part) => part !== '*').length;
+      return fixed(right) - fixed(left);
+    })[0]?.[1];
 }
 
 /** The control registered under the field's metadata `control` name, if any (as `Field` finds it). */
@@ -699,6 +728,8 @@ function RecordValue({
       value={value}
       onChange={onChange}
     />
+  ) : shape.kind === 'object' && /(?:^|\.)defaults\.byHarness\.[^.]+$/.test(name) ? (
+    <Field schema={schema} name={name} label={label} />
   ) : (
     <JsonControl
       schema={schema}
@@ -787,6 +818,28 @@ function UnionField({
   const index = matchOption(shape.options, value, shape.discriminator);
   const option = shape.options[index] as Schema;
   const optionShape = shapeOf(option);
+  const Picker = use(UnionPickersContext)[name];
+  const pickerOptions = shape.options.map((candidate) => ({
+    value: shape.discriminator
+      ? discriminatorValue(candidate, shape.discriminator)
+      : optionLabel(candidate),
+    label: optionLabel(candidate, shape.discriminator),
+  }));
+  const selectedValue =
+    !unset && shape.discriminator ? discriminatorValue(option, shape.discriminator) : undefined;
+  const chooseVariant = (selected: string | undefined) => {
+    const chosen =
+      selected === undefined
+        ? undefined
+        : pickerOptions.findIndex((candidate) => candidate.value === selected);
+    if (chosen === -1) return;
+    change({ path: name, kind: 'commit' }, () => {
+      repathParseErrors(parseErrors, [{ from: name }]);
+      field.onChange(
+        chosen === undefined ? undefined : initialValue(shape.options[chosen] as Schema),
+      );
+    });
+  };
   // The variant picker is the union's own control: it carries the marker, the help, and the error.
   const { required, help } = fieldMeta(schema);
   const { control, helpId, errorId } = useFieldControl(name, id, {
@@ -796,30 +849,40 @@ function UnionField({
   return (
     <GroupFrame name={name} label={label} bare={bare}>
       <FieldGroup>
-        <Label htmlFor={id} required={required}>
-          {shape.discriminator ? humanize(shape.discriminator) : 'Kind'}
-        </Label>
-        <Select
-          {...control}
-          value={unset ? '' : String(index)}
-          onChange={(e) => {
-            const chosen = e.target.value;
-            // One step: the variant and the unparsed text of the fields it replaces.
-            change({ path: name, kind: 'commit' }, () => {
-              repathParseErrors(parseErrors, [{ from: name }]);
-              field.onChange(
-                chosen === '' ? undefined : initialValue(shape.options[Number(chosen)] as Schema),
-              );
-            });
-          }}
-        >
-          {optional && !hasDefault ? <option value="">{NOT_SET}</option> : null}
-          {shape.options.map((o, i) => (
-            <option key={i} value={i}>
-              {optionLabel(o, shape.discriminator)}
-            </option>
-          ))}
-        </Select>
+        {Picker ? (
+          <Picker
+            name={name}
+            label={label}
+            options={pickerOptions}
+            value={selectedValue}
+            onChange={chooseVariant}
+            required={required}
+            describedBy={control['aria-describedby']}
+            invalid={control['aria-invalid'] === true}
+          />
+        ) : (
+          <>
+            <Label htmlFor={id} required={required}>
+              {shape.discriminator ? humanize(shape.discriminator) : 'Kind'}
+            </Label>
+            <Select
+              {...control}
+              value={unset ? '' : String(index)}
+              onChange={(e) =>
+                chooseVariant(
+                  e.target.value === '' ? undefined : pickerOptions[Number(e.target.value)]?.value,
+                )
+              }
+            >
+              {optional && !hasDefault ? <option value="">{NOT_SET}</option> : null}
+              {shape.options.map((o, i) => (
+                <option key={i} value={i}>
+                  {optionLabel(o, shape.discriminator)}
+                </option>
+              ))}
+            </Select>
+          </>
+        )}
         <FieldHelp id={helpId} help={help} />
       </FieldGroup>
       {unset ? null : optionShape.kind === 'object' ? (

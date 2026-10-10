@@ -8,7 +8,9 @@ export interface FakeClassifierRequest {
     model: string;
     state: unknown;
     questions: {
-      answer: { type: 'choice'; instructions: string; criteria: Record<string, string> };
+      answer:
+        | { type: 'choice' | 'noul'; instructions: string; criteria: Record<string, string> }
+        | { type: 'score'; instructions: string; criteria: string[] };
     };
   };
 }
@@ -17,13 +19,37 @@ export interface FakeClassifierResponse {
   body: unknown;
 }
 
-/** Reusable loopback-only Choice endpoint for backend tests and the web E2E consumer. */
+/** Reusable loopback-only primitive endpoint for backend tests and the web E2E consumer. */
 export async function startFakeClassifierEndpoint() {
   const requests: FakeClassifierRequest[] = [];
   let respond = (
     request: FakeClassifierRequest,
   ): FakeClassifierResponse | Promise<FakeClassifierResponse> => {
-    const labels = Object.keys(request.body.questions.answer.criteria);
+    const question = request.body.questions.answer;
+    if (question.type === 'noul')
+      return {
+        body: { model: request.body.model, answers: { answer: { type: 'noul', noul: 1 } } },
+      };
+    if (question.type === 'score')
+      return {
+        body: {
+          model: request.body.model,
+          answers: {
+            answer: {
+              type: 'score',
+              score: 0,
+              confidence: 1,
+              legend: Object.fromEntries(
+                question.criteria.map((anchor, index) => [String(index), anchor]),
+              ),
+              probabilities: Object.fromEntries(
+                question.criteria.map((_anchor, index) => [String(index), index === 0 ? 1 : 0]),
+              ),
+            },
+          },
+        },
+      };
+    const labels = Object.keys(question.criteria);
     return {
       body: {
         model: request.body.model,

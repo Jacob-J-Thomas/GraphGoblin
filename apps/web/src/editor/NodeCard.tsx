@@ -11,6 +11,8 @@ import { useEditorStore } from './store.js';
 export interface NodeCardData extends Record<string, unknown> {
   node: NodeInput;
   ports: string[];
+  /** Display-only labels keyed by stable port IDs. */
+  portLabels: Readonly<Record<string, string>>;
   /** The node's validation issues, from the same merged list Publish checks. */
   issues: readonly EditorIssue[];
 }
@@ -24,7 +26,7 @@ export type FlowNode = Node<NodeCardData, 'gg'>;
  * object while the node and its issues are unchanged, so an edit elsewhere does not re-render it.
  */
 export const NodeCard = memo(function NodeCard({ data, selected }: NodeProps<FlowNode>) {
-  const { node, ports, issues } = data;
+  const { node, ports, portLabels, issues } = data;
   const updateNodeInternals = useUpdateNodeInternals();
   const portKey = JSON.stringify(ports);
   const measuredPortsRef = useRef(portKey);
@@ -75,12 +77,12 @@ export const NodeCard = memo(function NodeCard({ data, selected }: NodeProps<Flo
                 key={port}
                 className="gg-node-port relative h-[18px] pr-2 font-mono text-2xs leading-[18px] font-medium text-muted"
               >
-                {port}
+                {portLabels[port] ?? port}
                 <Handle
                   type="source"
                   position={Position.Right}
                   id={port}
-                  aria-label={`${node.id} ${port}`}
+                  aria-label={`${node.id} output ${portLabels[port] ?? port} (${port})`}
                   style={{ right: -14 }}
                 />
               </div>

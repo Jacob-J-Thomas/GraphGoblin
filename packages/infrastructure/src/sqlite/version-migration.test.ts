@@ -6,10 +6,35 @@ import { LoopDefinitionSchema } from '@graphgoblin/contracts';
 import { fakeUlid, FIXTURE_TS, minimalLoop } from '@graphgoblin/contracts/testing';
 import { describe, expect, it } from 'vitest';
 import { openDatabase } from './db.js';
+import { inspectDatabaseUpgrade, applyDatabaseUpgrade } from './upgrade.js';
+async function offlineUpgrade(handle: ReturnType<typeof openDatabase>, migrationsFolder?: string) {
+  const inventory = await inspectDatabaseUpgrade(handle.client);
+  return applyDatabaseUpgrade(
+    handle.client,
+    {
+      format: 'graphgoblin-upgrade-manifest',
+      targetVersion: 3,
+      sourceHash: inventory.sourceHash,
+      approvedBy: 'test-owner',
+      approvedAt: FIXTURE_TS,
+      versions: Object.fromEntries(
+        inventory.versions.map((version) => [
+          version.id,
+          { definitionHash: version.definitionHash, resolutions: {} },
+        ]),
+      ),
+      failedRuns: {},
+    },
+    migrationsFolder ? { migrationsFolder } : {},
+  );
+}
 
 describe('inference-node harness data migration', () => {
   it('restores a full pre-upgrade backup after 0006 and reapplies every migration on re-upgrade', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'gg-backup-reupgrade-'));
+    await mkdir(fileURLToPath(new URL('../../../../.tmp/', import.meta.url)), { recursive: true });
+    const root = await mkdtemp(
+      fileURLToPath(new URL('../../../../.tmp/gg-backup-reupgrade-', import.meta.url)),
+    );
     const source = fileURLToPath(new URL('../../drizzle/', import.meta.url));
     const migrations = join(root, 'previous-migrations');
     const data = join(root, 'data');
@@ -33,6 +58,7 @@ describe('inference-node harness data migration', () => {
     const canonical = LoopDefinitionSchema.parse(minimalLoop());
     const legacy = {
       ...canonical,
+      schemaVersion: 1,
       settings: { ...canonical.settings, defaults: { harness: 'codex' } },
     };
     const databaseUrl = (directory: string) =>
@@ -67,34 +93,36 @@ describe('inference-node harness data migration', () => {
       await stopDatabase();
       await cp(data, backup, { recursive: true });
       handle = openDatabase({ url: databaseUrl(data) });
-      await handle.migrate();
+      await expect(handle.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
+      await offlineUpgrade(handle);
       expect(await stored()).toEqual(canonical);
       expect((await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows).toHaveLength(
-        8,
+        12,
       );
       await stopDatabase();
 
       // Restore the whole stopped data directory into an empty destination, including its ledger.
       await cp(backup, restored, { recursive: true });
       handle = openDatabase({ url: databaseUrl(restored), migrationsFolder: migrations });
-      await handle.migrate();
+      await expect(handle.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
       expect(await stored()).toEqual(legacy);
       expect((await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows).toEqual(
         ledger,
       );
       await stopDatabase();
       handle = openDatabase({ url: databaseUrl(restored) });
-      expect(await handle.pendingMigrations()).toBe(5);
-      await handle.migrate();
+      // The restored three-entry ledger must replay all nine remaining migrations.
+      expect(await handle.pendingMigrations()).toBe(9);
+      await offlineUpgrade(handle);
       expect(LoopDefinitionSchema.parse(await stored())).toEqual(canonical);
       expect(await handle.pendingMigrations()).toBe(0);
       expect((await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows).toHaveLength(
-        8,
+        12,
       );
       expect((await handle.client.execute('SELECT * FROM classifier_models')).rows).toEqual([]);
     } finally {
       await stopDatabase();
-      await rm(root, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+      // Retain ignored recovery evidence: native Windows statements may keep closed SQLite files locked until GC.
     }
   }, 45_000);
   it('rewrites the removed field once, preserves canonical rows and version metadata', async () => {
@@ -117,6 +145,7 @@ describe('inference-node harness data migration', () => {
       const canonical = LoopDefinitionSchema.parse(minimalLoop());
       const preChange = {
         ...canonical,
+        schemaVersion: 1,
         settings: { ...canonical.settings, defaults: { harness: 'codex' } },
       };
       const versionId = fakeUlid('rewrite');
@@ -124,7 +153,10 @@ describe('inference-node harness data migration', () => {
       // Raw pre-upgrade JSON bypasses every contracts parser and repository write.
       for (const [id, definition] of [
         [versionId, preChange],
-        [canonicalId, canonical],
+        [
+          canonicalId,
+          { ...canonical, schemaVersion: 1, settings: { ...canonical.settings, defaults: {} } },
+        ],
       ] as const) {
         await handle.client.execute({
           sql: 'INSERT INTO loop_versions (id, loop_id, version, status, definition, created_at, published_at) VALUES (?, ?, 7, ?, ?, ?, ?)',
@@ -140,15 +172,16 @@ describe('inference-node harness data migration', () => {
       }
       const before = (await handle.client.execute('SELECT * FROM loop_versions ORDER BY id')).rows;
       await writeFile(join(folder, 'meta/_journal.json'), JSON.stringify(journal));
-      await handle.migrate();
+      await offlineUpgrade(handle, folder);
       const after = (await handle.client.execute('SELECT * FROM loop_versions ORDER BY id')).rows;
       const rewritten = after.find((row) => row['id'] === versionId)!;
       const stored = rewritten['definition'];
       if (typeof stored !== 'string') throw new Error('expected stored definition JSON');
       expect(LoopDefinitionSchema.parse(JSON.parse(stored))).toEqual(canonical);
-      expect(after.find((row) => row['id'] === canonicalId)).toEqual(
-        before.find((row) => row['id'] === canonicalId),
-      );
+      expect({ ...after.find((row) => row['id'] === canonicalId), definition: undefined }).toEqual({
+        ...before.find((row) => row['id'] === canonicalId),
+        definition: undefined,
+      });
       expect({ ...rewritten, definition: undefined }).toEqual({
         ...before.find((row) => row['id'] === versionId),
         definition: undefined,

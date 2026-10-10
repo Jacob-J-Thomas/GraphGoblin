@@ -1,7 +1,9 @@
+import { existsSync } from 'node:fs';
+import { validateHarnessDefaults } from '@graphgoblin/domain';
 import { mkdir } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
 import { dirname } from 'node:path';
 import { createCodexAdapters } from '@graphgoblin/adapter-codex';
-import { createJevDecider } from '@graphgoblin/adapter-jev';
 import { FsArtifactStore, FsWorkspace } from '@graphgoblin/infrastructure/fs';
 import {
   HttpProbes,
@@ -11,8 +13,13 @@ import {
 import { ProcessScripts } from '@graphgoblin/infrastructure/process';
 import { CronScheduler, TimerService } from '@graphgoblin/infrastructure/scheduler';
 import {
+  DEFAULT_MODEL_CATALOG,
+  openReadOnlyDatabaseClient,
+  databaseView,
   SqliteApiKeys,
+  SqliteTemplateInstances,
   SqliteEventStore,
+  SqliteTriggerAdmission,
   SqliteLoopRepository,
   SqliteModelCatalog,
   SqliteClassifierModels,
@@ -26,9 +33,14 @@ import {
   SqliteWebhookEndpoints,
   databaseFilePath,
   openDatabase,
+  guardDatabaseUpgrade,
   type DatabaseHandle,
 } from '@graphgoblin/infrastructure/sqlite';
-import { EffortSchema, ModelNameSchema, type Effort, type HarnessId } from '@graphgoblin/contracts';
+import {
+  HarnessDefaultsSchema,
+  type HarnessDefaults,
+  type HarnessId,
+} from '@graphgoblin/contracts';
 import {
   RunManager,
   type ClockPort,
@@ -41,17 +53,42 @@ import {
   type IdPort,
   type Logger,
   type ScriptPort,
-  type SecretsPort,
   type StructuredPort,
 } from '@graphgoblin/engine';
 import type { ApiConfig } from './config.js';
 import { BUILTIN_CLASSIFIER, ClassifierRegistry } from './classifier-registry.js';
 import { acquireDataDirLock } from './data-dir-lock.js';
+import { ClaudeHarness } from '@graphgoblin/infrastructure/claude';
 import { InboundEventBus } from './event-bus.js';
 import { UlidIds } from './ids.js';
 import { loadMasterKey } from './master-key.js';
 import { PollTriggers } from './triggers/poll.js';
 import { TriggerService } from './triggers/trigger-service.js';
+import { TemplateCatalog } from './templates/catalog.js';
+import { TemplatePrerequisites } from './templates/prerequisites.js';
+import { TemplateInstances } from './templates/instances.js';
+import {
+  TemplateRuntime,
+  templateAdmission,
+  type TemplateAuthoritySource,
+  type TemplateFailureReporter,
+} from './templates/runtime.js';
+import { PrivateTemplateScripts } from './templates/scripts.js';
+import { ReviewAuthority } from './templates/github/review-authority.js';
+import { ReviewReporter } from './templates/github/review-reporter.js';
+import type { ReviewDependenciesFactory } from './templates/github/review.js';
+import { QaAuthority } from './templates/github/qa-authority.js';
+import { QaReporter } from './templates/github/qa-reporter.js';
+import { QaHistory } from './templates/github/qa-history.js';
+import type { QaMetadataFactory } from './templates/github/qa-native.js';
+import {
+  ImplementationAuthority,
+  type SupportDependencies,
+} from './templates/github/authority-source.js';
+import {
+  ImplementationReporter,
+  installImplementationFinalization,
+} from './templates/github/reporter.js';
 
 /** The single owner of a 1.0 installation. Every table carries it so multi-tenancy is a data change, not a schema change. */
 export const LOCAL_OWNER = 'local';
@@ -63,6 +100,13 @@ export const JEV_SECRET = 'jev-api-key';
 export type SecretChangeHook = (ownerId: string, name: string) => Promise<void>;
 
 export interface ContainerOverrides {
+  templateCatalogRoot?: string;
+  templateAuthority?: TemplateAuthoritySource;
+  templateFailureReporter?: TemplateFailureReporter;
+  /** Inject deterministic boundaries for repository-template tests; never an authored setting. */
+  implementationDependencies?: SupportDependencies;
+  reviewDependencies?: ReviewDependenciesFactory;
+  qaMetadata?: QaMetadataFactory;
   clock?: ClockPort;
   ids?: IdPort;
   logger?: Logger;
@@ -80,6 +124,7 @@ export interface ContainerOverrides {
 }
 
 export interface Container {
+  templates: TemplateInstances;
   config: ApiConfig;
   handle: DatabaseHandle;
   ports: EnginePorts;
@@ -114,20 +159,13 @@ export interface Container {
   stop(): Promise<void>;
 }
 
-/** The owner settings `defaultModel` and `defaultEffort`; empty or invalid values are ignored. */
+/** Strict harness-scoped owner defaults; invalid persisted configuration is never silently ignored. */
 export async function readOwnerDefaults(
   settings: Pick<SqliteSettings, 'get'>,
   ownerId: string,
-): Promise<{ model?: string; effort?: Effort }> {
-  const storedModel = await settings.get(ownerId, 'defaultModel');
-  const model = ModelNameSchema.safeParse(
-    typeof storedModel === 'string' ? storedModel.trim() : storedModel,
-  );
-  const effort = EffortSchema.safeParse(await settings.get(ownerId, 'defaultEffort'));
-  return {
-    ...(model.success ? { model: model.data } : {}),
-    ...(effort.success ? { effort: effort.data } : {}),
-  };
+): Promise<HarnessDefaults> {
+  const value = await settings.get(ownerId, 'defaults');
+  return HarnessDefaultsSchema.parse(value ?? { byHarness: {} });
 }
 
 const silentLogger: Logger = {
@@ -154,18 +192,54 @@ export async function createContainer(
     }
     // GG_DB_URL may point outside the data directory; create the database file's directory too.
     const dbFile = databaseFilePath(config.dbUrl);
+    // Validate catalog semantics without a mutable SQLite connection or any startup writes.
+    let startupCatalog = DEFAULT_MODEL_CATALOG;
+    if (dbFile && existsSync(dbFile)) {
+      const readonlyClient = openReadOnlyDatabaseClient(dbFile);
+      try {
+        const state = await guardDatabaseUpgrade(readonlyClient);
+        if (state === 'current') {
+          const stored = await new SqliteModelCatalog(databaseView(readonlyClient)).list();
+          startupCatalog = [
+            ...stored,
+            ...DEFAULT_MODEL_CATALOG.filter(
+              (seed) =>
+                !stored.some(
+                  (entry) => entry.harness === seed.harness && entry.model === seed.model,
+                ),
+            ),
+          ];
+        }
+      } finally {
+        readonlyClient.close();
+      }
+    }
+    const configurationIssues = validateHarnessDefaults({
+      loopDefaults: { byHarness: {} },
+      ownerDefaults: { byHarness: {} },
+      processDefaults: config.defaults,
+      catalog: startupCatalog,
+    });
+    if (configurationIssues.length)
+      throw new Error(
+        'Invalid GG_DEFAULTS: ' +
+          configurationIssues.map((issue) => issue.resolution.message).join('; '),
+      );
     if (dbFile) await mkdir(dirname(dbFile), { recursive: true });
+    const handle = openDatabase({ url: config.dbUrl });
+    opened = handle;
+    const { db } = handle;
+    await guardDatabaseUpgrade(handle.client);
     const masterKey =
       overrides.masterKey ??
       (await loadMasterKey({
         dataDir: config.dataDir,
         ...(config.masterKey ? { masterKey: config.masterKey } : {}),
       }));
-    const handle = openDatabase({ url: config.dbUrl });
-    opened = handle;
-    const { db } = handle;
 
-    const runs = new SqliteRunRepository(db);
+    const runs = new SqliteRunRepository(db, (store, run, changes) =>
+      templateRuntime.beforeTransition(store, run, changes),
+    );
     const loops = new SqliteLoopRepository(db, clock, ids);
     const sessions = new SqliteSessionRepository(db);
     const events = new SqliteEventStore(db, clock);
@@ -193,33 +267,20 @@ export async function createContainer(
     // a decision runs.
     const codex = createCodexAdapters({
       logger,
-      model: config.defaultModel,
-      effort: config.defaultEffort,
+      ...(config.defaults.byHarness.codex?.model !== undefined
+        ? { model: config.defaults.byHarness.codex.model }
+        : {}),
+      ...(config.defaults.byHarness.codex?.effort !== undefined
+        ? { effort: config.defaults.byHarness.codex.effort }
+        : {}),
       ...(config.codexBinary ? { codexBinary: config.codexBinary } : {}),
     });
-    // Jev resolves its key as soon as it is built, before `start()` has migrated the database; until
-    // then it sees no secret, and `start()` refreshes it once the tables exist.
-    let migrated = false;
     const ownerSecrets = secretsFor(LOCAL_OWNER);
-    const jevSecrets: SecretsPort = {
-      resolve: (name) => (migrated ? ownerSecrets.resolve(name) : Promise.resolve(undefined)),
-    };
-    const jev = createJevDecider({ secrets: jevSecrets, logger, secretName: JEV_SECRET });
     const classifierRegistry = new ClassifierRegistry(classifiers, secretsFor, logger);
-    let builtinEnabled = false;
-    const refreshBuiltin = async (): Promise<void> => {
-      builtinEnabled = (await classifiers.findOne(LOCAL_OWNER, 'jev'))?.enabled ?? false;
-    };
-    const exitJev: DeciderPort = {
-      id: 'jev',
-      available: () => builtinEnabled && jev.available(),
-      choose: (request, signal) => jev.choose(request, signal),
-      judge: (request, signal) => jev.judge(request, signal),
-    };
     const secretHooks: SecretChangeHook[] = [
-      async (ownerId, name) => {
+      (ownerId, name) => {
         classifierRegistry.secretChanged(ownerId, name);
-        if (ownerId === LOCAL_OWNER && name === JEV_SECRET) await jev.refresh();
+        return Promise.resolve();
       },
       ...(overrides.secretHooks ?? []),
     ];
@@ -231,11 +292,20 @@ export async function createContainer(
       logger,
       events,
       runs,
+      admission: new SqliteTriggerAdmission(handle.db, events, (store, input, pollItem) =>
+        templateRuntime.afterRunStaged(store, input, pollItem),
+      ),
       loops,
       sessions,
-      harnesses: overrides.harnesses ?? { codex: codex.harness },
-      // Codex Choice and built-in Noul exits; classifier Choice uses the registry.
-      deciders: overrides.deciders ?? [exitJev, codex.decider],
+      harnesses: overrides.harnesses ?? {
+        codex: codex.harness,
+        claude: new ClaudeHarness({
+          ...(config.claudeBinary ? { binary: config.claudeBinary } : {}),
+        }),
+      },
+      modelCatalog: catalog,
+      // LLM evaluation uses Codex; all classifier primitives use the owner registry.
+      deciders: overrides.deciders ?? [codex.decider],
       classifiers: overrides.classifiers ?? classifierRegistry,
       structured,
       scripts: overrides.scripts ?? new ProcessScripts(),
@@ -257,12 +327,142 @@ export async function createContainer(
       artifacts: new FsArtifactStore(config.dataDir),
       secrets: ownerSecrets,
     };
+    const templateCatalog = new TemplateCatalog(
+      overrides.templateCatalogRoot ??
+        fileURLToPath(
+          new URL(import.meta.url.endsWith('.ts') ? '../templates' : './catalog', import.meta.url),
+        ),
+      fileURLToPath(new URL('..', import.meta.url)),
+    );
+    const templateStore = new SqliteTemplateInstances(db);
+    const templatePrerequisites = new TemplatePrerequisites({
+      catalog,
+      harnesses: ports.harnesses,
+      scripts: ports.scripts,
+      apiKeys,
+      secretsFor,
+      defaults: config.defaults,
+      ownerDefaults: (ownerId) => readOwnerDefaults(settingsRepo, ownerId),
+      supportAvailable: async (manifest) => {
+        const installed = await templateCatalog.get(manifest.id);
+        return (
+          installed.bundle.manifest.version === manifest.version && installed.support !== undefined
+        );
+      },
+    });
+    const templates = new TemplateInstances(
+      templateCatalog,
+      templatePrerequisites,
+      templateStore,
+      ids,
+      clock,
+    );
+    const implementationReporter = new ImplementationReporter(
+      templates,
+      overrides.implementationDependencies,
+    );
+    const implementationAuthority = new ImplementationAuthority(
+      templates,
+      overrides.implementationDependencies,
+    );
+    const reviewReporter = new ReviewReporter(templates, overrides.reviewDependencies);
+    const qaAuthority = new QaAuthority(templates, overrides.qaMetadata);
+    const qaReporter = new QaReporter(templates, qaAuthority, overrides.qaMetadata);
+    const qaHistory = new QaHistory(
+      templates,
+      async (binding) => {
+        if (!('supportReadKey' in binding.settings))
+          throw new Error('Private QA credential unavailable.');
+        const credential = await secretsFor(binding.ownerId).resolve(
+          binding.settings.supportReadKey,
+        );
+        const key = credential ? await apiKeys.authenticate(credential) : undefined;
+        if (
+          !credential ||
+          !key ||
+          key.ownerId !== binding.ownerId ||
+          key.scopes.length !== 1 ||
+          key.scopes[0] !== 'runs:read'
+        )
+          throw new Error('Private QA credential unavailable.');
+        return credential;
+      },
+      overrides.qaMetadata,
+    );
+    const reviewAuthority = new ReviewAuthority(
+      templates,
+      overrides.reviewDependencies,
+      async (binding) => {
+        if (!('supportReadKey' in binding.settings))
+          throw new Error('Private review credential unavailable.');
+        const credential = await secretsFor(binding.ownerId).resolve(
+          binding.settings.supportReadKey,
+        );
+        const key = credential ? await apiKeys.authenticate(credential) : undefined;
+        if (
+          !credential ||
+          !key ||
+          key.ownerId !== binding.ownerId ||
+          key.scopes.length !== 1 ||
+          key.scopes[0] !== 'runs:read'
+        )
+          throw new Error('Private review credential unavailable.');
+        return credential;
+      },
+    );
+    const templateRuntime = new TemplateRuntime(
+      templates,
+      overrides.templateAuthority ?? {
+        resolve: (binding, payload) =>
+          binding.manifest.kind === 'qa'
+            ? qaAuthority.resolve(binding, payload)
+            : binding.manifest.kind === 'review'
+              ? reviewAuthority.resolve(binding, payload)
+              : implementationAuthority.resolve(binding, payload),
+        recheck: (binding, subject) =>
+          binding.manifest.kind === 'qa'
+            ? qaAuthority.recheck(binding, subject)
+            : binding.manifest.kind === 'review'
+              ? reviewAuthority.recheck(binding, subject)
+              : implementationAuthority.recheck(binding, subject),
+        consumesReviewHead: (binding, history, head) =>
+          binding.manifest.kind === 'review'
+            ? reviewAuthority.consumesReviewHead(binding, history, head)
+            : Promise.resolve(false),
+      },
+      overrides.templateFailureReporter ?? {
+        report: (binding, run, subject, code) =>
+          binding.manifest.kind === 'qa'
+            ? qaReporter.report(binding, run, subject, code)
+            : binding.manifest.kind === 'review'
+              ? reviewReporter.report(binding, run, subject, code)
+              : implementationReporter.report(binding, run, subject, code),
+      },
+    );
+    // Reporting is reconciled before finalization. Failure leaves the durable terminal run
+    // unfinalized, so startup retries the fixed report instead of losing it.
+    installImplementationFinalization(runs, {
+      terminal: async (run) => {
+        await implementationReporter.terminal(run);
+        await reviewReporter.terminal(run);
+        await qaReporter.terminal(run);
+      },
+    });
+    ports.admission = templateAdmission(ports.admission, templateRuntime);
+    ports.scripts = new PrivateTemplateScripts({
+      instances: templates,
+      raw: ports.scripts,
+      apiKeys,
+      secretsFor,
+      qaAuthority,
+      qaHistory,
+    });
     const settings: EngineSettings = {
-      defaultModel: config.defaultModel,
-      defaultEffort: config.defaultEffort,
+      ...templateRuntime.hooks,
+      defaults: config.defaults,
       maxConcurrentRuns: config.maxConcurrentRuns,
       structuredTimeoutMs: 120_000,
-      // Settings → Defaults, read at run start; GG_DEFAULT_MODEL and GG_DEFAULT_EFFORT are the fallback.
+      // Harness-scoped Settings defaults are read at run start; GG_DEFAULTS are the fallback.
       ownerDefaults: (ownerId) => readOwnerDefaults(settingsRepo, ownerId),
     };
     const manager = new RunManager(ports, settings);
@@ -271,6 +471,7 @@ export async function createContainer(
       scripts: ports.scripts,
       manager,
       hasDedupe: (loopId, nodeId, key) => runs.hasTriggerDedupe(loopId, nodeId, key),
+      findSeen: (loopId, nodeId, keys) => runs.findTriggerDedupeKeys(loopId, nodeId, keys),
       clock,
       logger,
       scriptCwd: config.dataDir,
@@ -303,6 +504,7 @@ export async function createContainer(
         triggers.stop();
         timers.stop();
         manager.stop();
+        await manager.waitForWebhookRecovery();
         await manager.waitForIdle();
         try {
           handle.close();
@@ -323,6 +525,7 @@ export async function createContainer(
     };
 
     return {
+      templates,
       config,
       handle,
       ports,
@@ -352,24 +555,20 @@ export async function createContainer(
       async onSecretChanged(ownerId, name) {
         for (const hook of secretHooks) await hook(ownerId, name);
       },
-      async onClassifierChanged(ownerId, id) {
+      onClassifierChanged(ownerId, id) {
         classifierRegistry.invalidate(ownerId, id);
-        if (ownerId === LOCAL_OWNER && id === 'jev') await refreshBuiltin();
+        return Promise.resolve();
       },
       start() {
         if (stopping) return Promise.reject(new Error('container has been stopped'));
         starting ??= (async () => {
           try {
             await handle.migrate();
-            migrated = true;
             await classifiers.seedBuiltin(LOCAL_OWNER, BUILTIN_CLASSIFIER);
-            await refreshBuiltin();
             if (config.jevApiKey && (await ownerSecrets.resolve(JEV_SECRET)) === undefined) {
               await ownerSecrets.set(JEV_SECRET, config.jevApiKey);
               logger.info({}, 'seeded jev-api-key from GG_JEV_API_KEY');
             }
-            await jev.init();
-            await jev.refresh();
             await catalog.seed();
             await manager.start();
             triggers.start();

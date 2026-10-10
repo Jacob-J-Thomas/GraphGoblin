@@ -11,7 +11,14 @@ import {
   type DisclosureStates,
   type DisclosureStore,
 } from './disclosures.js';
-import { FieldControlsContext, type FieldControls } from './fields.js';
+import {
+  FieldControlsContext,
+  FieldOverridesContext,
+  UnionPickersContext,
+  type FieldControls,
+  type FieldOverrides,
+  type UnionPickers,
+} from './fields.js';
 import { FieldIssuesContext, FormScopeContext, ProblemPathsContext } from './fields/shared.js';
 import {
   humanize,
@@ -44,6 +51,8 @@ export interface SchemaFormProps {
   onChange: (value: unknown, change: FormChange) => void;
   /** Accessible name for the form. */
   label: string;
+  /** Optional display order for top-level object fields; unspecified fields keep schema order. */
+  fieldOrder?: readonly string[] | undefined;
   /** Stored text that did not parse (JSON), by field path; fields show it again when remounted. */
   parseErrors?: Record<string, ParseError> | undefined;
   /**
@@ -63,6 +72,10 @@ export interface SchemaFormProps {
    * gives in `control` (`FieldControl`); a field naming no registered control is drawn as usual.
    */
   controls?: FieldControls | undefined;
+  /** Whole-field renderers selected by exact or wildcard dotted paths relative to this form. */
+  fieldOverrides?: FieldOverrides | undefined;
+  /** Custom discriminated-union pickers by relative dotted field path. */
+  unionPickers?: UnionPickers | undefined;
   /**
    * Paths, relative to the form's value, of errors found outside the form (the loop's validation:
    * template and expression syntax, the API's checks). A collapsed Advanced group or list item
@@ -79,6 +92,8 @@ export interface SchemaFormProps {
 }
 
 const NO_CONTROLS: FieldControls = {};
+const NO_FIELD_OVERRIDES: FieldOverrides = {};
+const NO_UNION_PICKERS: UnionPickers = {};
 const NO_PROBLEMS: readonly string[] = [];
 
 interface Issue {
@@ -99,14 +114,30 @@ function asValues(value: unknown): FieldValues {
   return typeof value === 'object' && value !== null && !Array.isArray(value) ? value : {};
 }
 
+/** Reorder only the rendered top-level object shape, leaving the schema and field paths intact. */
+function orderedShape(
+  shape: Record<string, Schema>,
+  fieldOrder: readonly string[] | undefined,
+): Record<string, Schema> {
+  if (!fieldOrder || fieldOrder.length === 0) return shape;
+  const ordered: Record<string, Schema> = {};
+  for (const key of [...fieldOrder, ...Object.keys(shape)]) {
+    if (Object.hasOwn(ordered, key) || !Object.hasOwn(shape, key)) continue;
+    const field = shape[key];
+    if (field !== undefined) ordered[key] = field;
+  }
+  return ordered;
+}
+
 /**
  * A form generated from a Zod schema with react-hook-form and the Zod resolver. Every change is
  * reported upward as-is so the caller (the editor store) never loses input; schema issues are shown
  * inline per field and as a summary. Remount with a `key` to load a different value.
  *
  * The contracts' field metadata places the fields (`formLayout`): the basic ones first, in schema
- * order, then the advanced ones under a collapsed Advanced disclosure, grouped under headings. The
- * disclosure's state is the caller's (`disclosures`), else the form's own, collapsed on each mount.
+ * order unless `fieldOrder` overrides the top-level object, then the advanced ones under a collapsed
+ * Advanced disclosure, grouped under headings. The disclosure's state is the caller's (`disclosures`),
+ * else the form's own, collapsed on each mount.
  */
 export function SchemaForm({
   schema,
@@ -116,8 +147,11 @@ export function SchemaForm({
   parseErrors,
   onParseError,
   controls,
+  fieldOverrides,
+  unionPickers,
   problems,
   disclosures,
+  fieldOrder,
 }: SchemaFormProps) {
   const shape = shapeOf(schema);
   const id = useId();
@@ -216,8 +250,10 @@ export function SchemaForm({
   const discriminator = shape.kind === 'union' ? shape.discriminator : undefined;
   const layout = useMemo(() => {
     const variant = shapeOf(variantSchema);
-    return variant.kind === 'object' ? formLayout(variant.shape, '', discriminator) : undefined;
-  }, [variantSchema, discriminator]);
+    return variant.kind === 'object'
+      ? formLayout(orderedShape(variant.shape, fieldOrder), '', discriminator)
+      : undefined;
+  }, [variantSchema, discriminator, fieldOrder]);
 
   // A choice: one undo step, with the unparsed text of the fields it replaces.
   const switchVariant = (index: number) =>
@@ -239,61 +275,67 @@ export function SchemaForm({
           <ParseErrorContext value={parseErrorChannel}>
             <FieldIssuesContext value={issuesByPath}>
               <FieldControlsContext value={controls ?? NO_CONTROLS}>
-                <ProblemPathsContext value={problems ?? NO_PROBLEMS}>
-                  <FormScopeContext value={{ schema: variantSchema, id }}>
-                    <FormProvider {...form}>
-                      <form
-                        aria-label={label}
-                        noValidate
-                        onSubmit={(e) => e.preventDefault()}
-                        className="grid gap-field"
-                      >
-                        {shape.kind === 'union' ? (
-                          <FieldGroup>
-                            <Label htmlFor={id}>{humanize(shape.discriminator ?? 'kind')}</Label>
-                            <Select
-                              id={id}
-                              value={String(unionIndex)}
-                              onChange={(e) => switchVariant(Number(e.target.value))}
-                            >
-                              {shape.options.map((option, index) => (
-                                <option key={index} value={index}>
-                                  {optionLabel(option, shape.discriminator)}
-                                </option>
-                              ))}
-                            </Select>
-                          </FieldGroup>
-                        ) : null}
-                        {layout ? (
-                          <LayoutItems items={layout.basic} keyPrefix={String(unionIndex)} />
-                        ) : null}
-                        {layout && layout.advanced.length > 0 ? (
-                          <AdvancedFields
-                            key={unionIndex}
-                            sections={layout.advanced}
-                            keyPrefix={String(unionIndex)}
-                          />
-                        ) : null}
-                        {issues.length > 0 ? (
-                          <div
-                            className="grid gap-1 rounded-md border-l-4 border-status-bad-border bg-status-bad-bg px-3 py-2 text-xs leading-snug"
-                            aria-label="Config issues"
+                <FieldOverridesContext value={fieldOverrides ?? NO_FIELD_OVERRIDES}>
+                  <UnionPickersContext value={unionPickers ?? NO_UNION_PICKERS}>
+                    <ProblemPathsContext value={problems ?? NO_PROBLEMS}>
+                      <FormScopeContext value={{ schema: variantSchema, id }}>
+                        <FormProvider {...form}>
+                          <form
+                            aria-label={label}
+                            noValidate
+                            onSubmit={(e) => e.preventDefault()}
+                            className="grid gap-field"
                           >
-                            <p className="font-semibold text-status-bad-fg">Config issues</p>
-                            <ul className="list-disc pl-4">
-                              {issues.map((issue, index) => (
-                                <li key={index}>
-                                  {issue.path ? <code>{issue.path}</code> : 'config'}:{' '}
-                                  {issue.message}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        ) : null}
-                      </form>
-                    </FormProvider>
-                  </FormScopeContext>
-                </ProblemPathsContext>
+                            {shape.kind === 'union' ? (
+                              <FieldGroup>
+                                <Label htmlFor={id}>
+                                  {humanize(shape.discriminator ?? 'kind')}
+                                </Label>
+                                <Select
+                                  id={id}
+                                  value={String(unionIndex)}
+                                  onChange={(e) => switchVariant(Number(e.target.value))}
+                                >
+                                  {shape.options.map((option, index) => (
+                                    <option key={index} value={index}>
+                                      {optionLabel(option, shape.discriminator)}
+                                    </option>
+                                  ))}
+                                </Select>
+                              </FieldGroup>
+                            ) : null}
+                            {layout ? (
+                              <LayoutItems items={layout.basic} keyPrefix={String(unionIndex)} />
+                            ) : null}
+                            {layout && layout.advanced.length > 0 ? (
+                              <AdvancedFields
+                                key={unionIndex}
+                                sections={layout.advanced}
+                                keyPrefix={String(unionIndex)}
+                              />
+                            ) : null}
+                            {issues.length > 0 ? (
+                              <div
+                                className="grid gap-1 rounded-md border-l-4 border-status-bad-border bg-status-bad-bg px-3 py-2 text-xs leading-snug"
+                                aria-label="Config issues"
+                              >
+                                <p className="font-semibold text-status-bad-fg">Config issues</p>
+                                <ul className="list-disc pl-4">
+                                  {issues.map((issue, index) => (
+                                    <li key={index}>
+                                      {issue.path ? <code>{issue.path}</code> : 'config'}:{' '}
+                                      {issue.message}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            ) : null}
+                          </form>
+                        </FormProvider>
+                      </FormScopeContext>
+                    </ProblemPathsContext>
+                  </UnionPickersContext>
+                </FieldOverridesContext>
               </FieldControlsContext>
             </FieldIssuesContext>
           </ParseErrorContext>

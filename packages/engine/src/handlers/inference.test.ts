@@ -157,7 +157,13 @@ describe('inference node', () => {
   it('uses loop-level defaults when the node sets none', async () => {
     const engine = await createTestEngine();
     const loop = inferenceLoop('inf', {});
-    loop.settings = { defaults: { model: 'gpt-5.6-luna', effort: 'medium' } };
+    loop.settings = {
+      defaults: { byHarness: { codex: { model: 'gpt-5.6-luna', effort: 'medium' } } },
+    };
+    engine.ports.modelCatalog.entries.push({
+      ...engine.ports.modelCatalog.entries[0]!,
+      model: 'gpt-5.6-luna',
+    });
     const version = engine.publish(loop);
     await engine.runToIdle(version.loopId);
     expect(engine.ports.harness.started[0]).toMatchObject({
@@ -172,9 +178,11 @@ describe('inference node', () => {
     const engine = await createTestEngine({
       ownerDefaults: (ownerId) => {
         asked.push(ownerId);
-        return Promise.resolve(owner);
+        return Promise.resolve({ byHarness: { codex: owner } });
       },
     });
+    for (const model of ['owner-model', 'loop-model'])
+      engine.ports.modelCatalog.entries.push({ ...engine.ports.modelCatalog.entries[0]!, model });
     const version = engine.publish(inferenceLoop('inf', {}));
     await engine.runToIdle(version.loopId);
     expect(engine.ports.harness.started[0]).toMatchObject({ model: 'owner-model', effort: 'high' });
@@ -187,7 +195,7 @@ describe('inference node', () => {
 
     // Loop defaults still win over the owner's.
     const loop = inferenceLoop('inf-loop', {});
-    loop.settings = { defaults: { model: 'loop-model' } };
+    loop.settings = { defaults: { byHarness: { codex: { model: 'loop-model' } } } };
     await engine.runToIdle(engine.publish(loop).loopId);
     expect(engine.ports.harness.started[2]).toMatchObject({ model: 'loop-model', effort: 'high' });
   });
@@ -264,7 +272,7 @@ describe('inference node', () => {
       { finalText: 'third' },
     ]);
     const loop: LoopDefinitionInput = {
-      schemaVersion: 1,
+      schemaVersion: 3,
       name: 'chain',
       nodes: [
         { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },
@@ -325,7 +333,10 @@ describe('inference node', () => {
     );
 
     engine.ports.harness.script([{ error: { code: 'weird', message: 'something else' } }]);
-    expect((await engine.runToIdle(missing.loopId)).failure?.code).toBe('HARNESS_TURN_FAILED');
+    expect((await engine.runToIdle(missing.loopId)).failure).toMatchObject({
+      code: 'HARNESS_TURN_FAILED',
+      resumable: true,
+    });
   });
 
   it('cancels a session mid-turn and marks the run cancelled', async () => {

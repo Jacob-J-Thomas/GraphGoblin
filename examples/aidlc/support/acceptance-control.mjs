@@ -54,7 +54,7 @@ if (process.argv[2] === 'cleanup') {
     additionalProperties: false,
   };
   const loop = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     name,
     description:
       'Throwaway owner-process fixture setup and scratch-only readback; no inference or Jev.',
@@ -94,7 +94,7 @@ if (process.argv[2] === 'cleanup') {
     ? await api(`/loops/${matches[0].id}/draft`, 'PUT', { definition: loop })
     : await api('/loops/import', 'POST', {
         format: 'graphgoblin-loop',
-        formatVersion: 1,
+        formatVersion: 2,
         exportedAt: new Date().toISOString(),
         loop,
       });

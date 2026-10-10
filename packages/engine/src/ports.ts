@@ -1,4 +1,12 @@
+import type { TriggerAdmissionPort } from './admission.js';
 import type {
+  ChoiceAnswer,
+  ChoiceOption,
+  ClassifierPrimitive,
+  ScoreAnswer,
+  HarnessDefaults,
+  HarnessPreflight as ContractHarnessPreflight,
+  ModelCatalogEntry,
   ContextThread,
   Effort,
   HarnessId,
@@ -6,6 +14,7 @@ import type {
   Capabilities,
   JsonSchema,
   JsonValue,
+  LoopDefinition,
   LoopVersionRecord,
   ProgressItemStatus,
   RunEvent,
@@ -14,7 +23,6 @@ import type {
   Usage,
   WorkingDirectorySpec,
 } from '@graphgoblin/contracts';
-import type { PredicateAnswer } from '@graphgoblin/domain';
 
 /**
  * Ports the engine depends on. Adapters implement them; `@graphgoblin/engine/testing` ships
@@ -131,8 +139,8 @@ export interface HarnessSessionRecord {
 export interface HarnessSessionRepository {
   upsert(row: HarnessSessionRecord): Promise<void>;
   forNode(runId: string, nodeId: string): Promise<HarnessSessionRecord | undefined>;
-  latestWithSession(runId: string): Promise<HarnessSessionRecord | undefined>;
-  byScopeKey(scopeKey: string): Promise<HarnessSessionRecord | undefined>;
+  latestWithSession(runId: string, harness: HarnessId): Promise<HarnessSessionRecord | undefined>;
+  byScopeKey(scopeKey: string, harness: HarnessId): Promise<HarnessSessionRecord | undefined>;
 }
 
 // ---------------------------------------------------------------------------
@@ -190,12 +198,7 @@ export interface HarnessSession {
   cancel(): Promise<void>;
 }
 
-export interface HarnessPreflight {
-  ok: boolean;
-  version?: string;
-  authenticated: boolean;
-  problems: string[];
-}
+export type HarnessPreflight = ContractHarnessPreflight;
 
 export interface HarnessPort {
   readonly id: HarnessId;
@@ -215,35 +218,56 @@ export interface HarnessPort {
 
 export interface ChoiceRequest {
   question: string;
-  options: { label: string; description: string }[];
+  options: ChoiceOption[];
   context: JsonValue;
   model?: string;
   effort?: Effort;
 }
 
-export interface ChoiceResult {
-  label: string;
-  confidence?: number;
-  alternatives?: { label: string; confidence?: number }[];
+export type ChoiceResult = ChoiceAnswer;
+
+export interface ModelCatalogPort {
+  list(): Promise<ModelCatalogEntry[]>;
 }
 
-export interface YesNoRequest {
+export interface PrimitiveRequest {
   question: string;
   context: JsonValue;
   model?: string;
   effort?: Effort;
 }
 
+export interface NoulRequest extends PrimitiveRequest {
+  criteria: { true: string; false: string };
+}
+export interface ClassifierNoulResult {
+  type: 'noul';
+  trueProbability: number;
+}
+export interface LlmNoulResult {
+  type: 'noul';
+  holds: boolean;
+  confidence: number;
+  reasoning: string;
+}
+export interface ScoreRequest extends PrimitiveRequest {
+  anchors: string[];
+}
+export type ScoreResult = ScoreAnswer;
+
 export interface DeciderPort {
   readonly id: 'jev' | 'codex';
   available(): boolean;
   choose(request: ChoiceRequest, signal: AbortSignal): Promise<ChoiceResult>;
-  judge(request: YesNoRequest, signal: AbortSignal): Promise<PredicateAnswer>;
+  /** Strict boolean Noul capability. */
+  noul(request: NoulRequest, signal: AbortSignal): Promise<LlmNoulResult>;
 }
 
-/** Choice-only provider snapshot; an in-flight request retains its resolved configuration. */
+/** Primitive-specific provider snapshot; an in-flight request retains its resolved configuration. */
 export interface ClassifierPort {
   choose(request: ChoiceRequest, signal: AbortSignal): Promise<ChoiceResult>;
+  classifyNoul(request: NoulRequest, signal: AbortSignal): Promise<ClassifierNoulResult>;
+  score(request: ScoreRequest, signal: AbortSignal): Promise<ScoreResult>;
 }
 
 export type ClassifierUnavailableReason =
@@ -254,11 +278,19 @@ export type ClassifierUnavailableReason =
   | 'CLASSIFIER_SECRET_UNREADABLE';
 
 export type ClassifierResolution =
-  | { status: 'ready'; classifier: ClassifierPort }
+  | {
+      status: 'ready';
+      classifier: ClassifierPort;
+      provenance: { provider: string; classifierId: string; model: string };
+    }
   | { status: 'unavailable'; reason: ClassifierUnavailableReason; message: string };
 
 export interface ClassifierRegistryPort {
-  resolve(ownerId: string, modelId: string): Promise<ClassifierResolution>;
+  resolve(
+    ownerId: string,
+    modelId: string,
+    primitive: ClassifierPrimitive,
+  ): Promise<ClassifierResolution>;
 }
 
 /** A single structured completion: prompt in, schema-shaped value out. Used for repair and Codex decisions. */
@@ -279,13 +311,26 @@ export interface StructuredPort {
 // Processes, workspace, timers, probes, delivery, artifacts, secrets
 // ---------------------------------------------------------------------------
 
+/** Trusted private callsite metadata, never populated from authored script JSON. */
+export type ScriptExecutionIdentity = {
+  ownerId: string;
+  loopId: string;
+  versionId: string;
+  nodeId: string;
+} & ({ kind: 'node'; runId: string; startedSeq: number } | { kind: 'poll' });
 export interface ScriptRunRequest {
+  executionIdentity?: ScriptExecutionIdentity;
   command: string;
   args: string[];
   cwd: string;
   env: Record<string, string>;
+  /** False gives a private helper only the explicitly supplied environment. */
+  inheritEnv?: boolean;
   stdin?: string;
   timeoutMs?: number;
+  /** Opt-in raw-byte stdout bound; callers must check stdoutOverflow before parsing. */
+  maxStdoutBytes?: number;
+  maxStderrBytes?: number;
   signal: AbortSignal;
 }
 
@@ -294,6 +339,9 @@ export interface ScriptRunResult {
   stdout: string;
   stderr: string;
   timedOut: boolean;
+  /** Present whenever maxStdoutBytes was requested; true means stdout was truncated. */
+  stdoutOverflow?: boolean;
+  stderrOverflow?: boolean;
 }
 
 export interface ScriptPort {
@@ -358,14 +406,21 @@ export interface SecretsPort {
 }
 
 export interface EngineSettings {
+  /** Composition-owned pre-execution policy. Runs before any node or provider effect. */
+  beforeExecute?: (input: {
+    run: RunRecord;
+    definition: LoopDefinition;
+    events: readonly RunEvent[];
+  }) => Promise<void>;
+  /** Policy admission before a failed run writes durable resume intent. */
+  beforeResume?: (input: { run: RunRecord; events: readonly RunEvent[] }) => Promise<void>;
   /** Last-resort model and effort, below node, loop, and owner defaults. */
-  defaultModel: string;
-  defaultEffort: Effort;
+  defaults: HarnessDefaults;
   /**
    * The owner's default model and effort (Settings), read when a run starts or resumes. Either may
    * be absent; the configured defaults above then apply.
    */
-  ownerDefaults?: (ownerId: string) => Promise<{ model?: string; effort?: Effort }>;
+  ownerDefaults?: (ownerId: string) => Promise<HarnessDefaults>;
   maxConcurrentRuns: number;
   /** Max wall-clock for a single structured completion used in decisions and repair. */
   structuredTimeoutMs: number;
@@ -377,11 +432,13 @@ export interface EnginePorts {
   logger: Logger;
   events: EventStorePort;
   runs: RunRepository;
+  admission: TriggerAdmissionPort;
   loops: LoopRepository;
   sessions: HarnessSessionRepository;
   harnesses: Partial<Record<HarnessId, HarnessPort>>;
   deciders: DeciderPort[];
   classifiers: ClassifierRegistryPort;
+  modelCatalog: ModelCatalogPort;
   structured?: StructuredPort;
   scripts: ScriptPort;
   workspace: WorkspacePort;

@@ -70,14 +70,14 @@ describe('validateLoop', () => {
 
   it('requires a trigger and an exit', () => {
     const noTrigger = parse({
-      schemaVersion: 1,
+      schemaVersion: 3,
       name: 'x',
       nodes: [{ id: 'done', kind: 'exit', label: 'Done', config: {} }],
       edges: [],
     });
     expect(codes(noTrigger)).toContain('NO_TRIGGER');
     const noExit = parse({
-      schemaVersion: 1,
+      schemaVersion: 3,
       name: 'x',
       nodes: [{ id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } }],
       edges: [],
@@ -133,7 +133,13 @@ describe('validateLoop', () => {
   it('reports undeclared decision variables and criteria above the ceiling', () => {
     const input = kitchenSinkLoop();
     const decide = input.nodes.find((n) => n.id === 'decide')!;
-    if (decide.kind === 'decision') decide.config.context = { vars: ['nope'] };
+    if (decide.kind === 'decision')
+      decide.config.evaluation = {
+        kind: 'classifier',
+        model: 'jev',
+        question: 'Q',
+        context: { vars: ['nope'] },
+      };
     const done = input.nodes.find((n) => n.id === 'done')!;
     if (done.kind === 'exit') done.config.criteria = [{ when: 'max-iterations', value: 99 }];
     const issues = validateLoop(parse(input));
