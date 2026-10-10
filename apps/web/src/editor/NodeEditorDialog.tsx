@@ -379,6 +379,7 @@ export function NodeEditorDialog({
   // Bumped by undo and redo: the config form remounts with the restored values.
   const historyEpoch = useEditorStore((s) => s.historyEpoch);
   const bodyRef = useRef<HTMLElement>(null);
+  const pendingHarnessFocusRef = useRef(false);
   const pendingAnswerFocusRef = useRef<PendingAnswerFocus | undefined>(undefined);
   const [epoch, setEpoch] = useState(0);
   // Which of the config form's disclosures are open (Advanced, collapsed list items). Kept here,
@@ -426,6 +427,14 @@ export function NodeEditorDialog({
   }, [nodeFocus, node.id]);
 
   useLayoutEffect(() => {
+    if (!pendingHarnessFocusRef.current) return;
+    pendingHarnessFocusRef.current = false;
+    bodyRef.current
+      ?.querySelector<HTMLInputElement>('input[type="radio"][value="claude"]')
+      ?.focus();
+  }, [epoch]);
+
+  useLayoutEffect(() => {
     const pending = pendingAnswerFocusRef.current;
     if (!pending) return;
     pendingAnswerFocusRef.current = undefined;
@@ -453,6 +462,26 @@ export function NodeEditorDialog({
   };
 
   const handleConfigChange = (config: unknown, change: Parameters<typeof updateNode>[2]) => {
+    if (
+      node.kind === 'inference' &&
+      change?.path === 'harness' &&
+      record(config)['harness'] === 'claude' &&
+      node.config.harness !== 'claude'
+    ) {
+      // Switching harness is explicit; start with Claude's least-privileged supported policy.
+      pendingHarnessFocusRef.current =
+        document.activeElement instanceof HTMLInputElement &&
+        document.activeElement.type === 'radio';
+      config = {
+        ...record(config),
+        harnessOptions: {
+          ...record(record(config)['harnessOptions']),
+          sandbox: 'read-only',
+          approval: 'never',
+        },
+      };
+      setEpoch((current) => current + 1);
+    }
     if (node.kind === 'decision' && change?.path === 'answer') {
       const normalized = decisionVariantChange(config, node.config);
       if (normalized !== config) {

@@ -1273,3 +1273,123 @@ describe('NodeEditorDialog disclosures across undo and redo', () => {
     expect(item()).toHaveAttribute('aria-expanded', 'true');
   });
 });
+
+describe('NodeEditorDialog inference harness changes', () => {
+  it('preserves other authored harness options and reports unsupported Claude settings', async () => {
+    const otherOptions = {
+      networkAccess: false,
+      webSearch: true,
+      configOverrides: { custom: 'authored' },
+    };
+    const dialog = await openDialog(
+      {
+        id: 'infer',
+        kind: 'inference',
+        label: 'Infer',
+        config: {
+          harness: 'codex',
+          prompt: { template: 'Hi' },
+          harnessOptions: {
+            ...otherOptions,
+            sandbox: 'workspace-write',
+            approval: 'on-request',
+          },
+        },
+      },
+      'Edit inference infer',
+    );
+    await userEvent.setup().click(within(dialog).getByRole('radio', { name: 'claude' }));
+    expect(store().definition?.nodes.find((node) => node.id === 'infer')?.config).toMatchObject({
+      harness: 'claude',
+      harnessOptions: { ...otherOptions, sandbox: 'read-only', approval: 'never' },
+    });
+    const issues = validateDraft(store().definition!).issues;
+    for (const option of Object.keys(otherOptions))
+      expect(issues).toContainEqual(
+        expect.objectContaining({ nodeId: 'infer', path: `config.harnessOptions.${option}` }),
+      );
+  });
+
+  it.each([true, false])(
+    'keeps the saved model and resets to a supported policy with readiness %s',
+    async (ready) => {
+      const user = userEvent.setup();
+      const dialog = await openDialog(
+        {
+          id: 'infer',
+          kind: 'inference',
+          label: 'Infer',
+          config: {
+            harness: 'codex',
+            model: 'alpha',
+            effort: 'high',
+            harnessOptions: { sandbox: 'workspace-write', approval: 'on-request' },
+            prompt: { template: 'Hi' },
+          },
+        },
+        'Edit inference infer',
+        (api) => {
+          api.catalog.push({
+            harness: 'claude',
+            model: 'claude-opus-5-5',
+            displayName: 'Opus',
+            source: 'harness',
+            efforts: ['low', 'high'],
+            defaultEffort: 'high',
+            enabled: true,
+          });
+          api.preflight.push({
+            harness: 'claude',
+            ok: ready,
+            authenticated: true,
+            problems: ready ? [] : ['Missing capability'],
+            models: [{ model: 'claude-opus-5-5', efforts: ['low', 'high'] }],
+            supportedPolicies: [
+              {
+                sandbox: 'read-only',
+                approval: 'never',
+                permissionMode: 'dontAsk',
+                tools: ['Read'],
+                authMethod: 'claude.ai',
+                boundary: 'builtin-tools',
+                network: 'unconfined',
+              },
+            ],
+          });
+        },
+      );
+      await user.click(within(dialog).getByRole('radio', { name: 'claude' }));
+      await waitFor(() =>
+        expect(store().definition?.nodes.find((node) => node.id === 'infer')?.config).toMatchObject(
+          {
+            harness: 'claude',
+            model: 'alpha',
+            effort: 'high',
+            harnessOptions: { sandbox: 'read-only', approval: 'never' },
+          },
+        ),
+      );
+      expect(within(dialog).getByRole('radio', { name: 'claude' })).toHaveFocus();
+      const model = within(dialog).getByLabelText('Model', { exact: true });
+      await waitFor(() =>
+        expect(
+          within(model).getByRole('option', { name: /Saved model belongs to Codex/ }),
+        ).toBeDisabled(),
+      );
+      expect(model).toHaveValue('alpha');
+      if (ready) {
+        await user.selectOptions(model, 'claude-opus-5-5');
+        expect(store().definition?.nodes.find((node) => node.id === 'infer')?.config).toMatchObject(
+          { model: 'claude-opus-5-5' },
+        );
+        act(() => store().undo());
+      } else expect(model).toHaveAttribute('aria-readonly', 'true');
+      act(() => store().undo());
+      expect(store().definition?.nodes.find((node) => node.id === 'infer')?.config).toMatchObject({
+        harness: 'codex',
+        model: 'alpha',
+        harnessOptions: { sandbox: 'workspace-write', approval: 'on-request' },
+      });
+    },
+  );
+});

@@ -456,90 +456,97 @@ describe('private support credential boundary', () => {
 });
 
 describe('actual prerequisite capability and package checks', () => {
-  it('prefers available Codex even with Claude first and falls back only to genuinely supported capability efforts', async () => {
-    const f = await foundation();
-    const starter = (
-      await new TemplateCatalog(
-        fileURLToPath(new URL('../../templates', import.meta.url)),
-        fileURLToPath(new URL('../..', import.meta.url)),
-      ).get('starter')
-    ).bundle.manifest;
-    const codex = (await f.catalog.list()).find(
-      (entry) => entry.harness === 'codex' && entry.enabled,
-    )!;
-    const claude = new FakeHarness([], 'claude');
-    claude.preflightResult = {
-      ok: true,
-      authenticated: true,
-      problems: [],
-      models: [
-        {
-          model: 'synthetic',
-          efforts: ['low'],
-          admission: 'supported',
-          reasonCode: null,
-          billingStatus: 'account-dependent',
-        },
-      ],
-      supportedPolicies: [
-        {
-          sandbox: 'read-only',
-          approval: 'never',
-          permissionMode: 'dontAsk',
-          tools: ['Read'],
-          authMethod: 'claude.ai',
-          billingMode: 'claude.ai-account',
-          billingStatus: 'account-dependent',
-          boundary: 'builtin-tools',
-          network: 'unconfined',
-        },
-      ],
-    };
-    const catalog = {
-      list: () =>
-        Promise.resolve([
+  it.each(['claude-opus-5-5', 'claude-fable-5-1'])(
+    'prefers available Codex, then admits %s only with supported capabilities and effort',
+    async (model) => {
+      const f = await foundation();
+      const starter = (
+        await new TemplateCatalog(
+          fileURLToPath(new URL('../../templates', import.meta.url)),
+          fileURLToPath(new URL('../..', import.meta.url)),
+        ).get('starter')
+      ).bundle.manifest;
+      const codex = (await f.catalog.list()).find(
+        (entry) => entry.harness === 'codex' && entry.enabled,
+      )!;
+      const claude = new FakeHarness([], 'claude');
+      claude.preflightResult = {
+        ok: true,
+        authenticated: true,
+        problems: [],
+        models: [
           {
-            ...codex,
-            harness: 'claude',
-            model: 'synthetic',
-            defaultEffort: 'high' as const,
-            efforts: ['low', 'high'] as ('low' | 'high')[],
+            model,
+            efforts: ['low'],
           },
-          codex,
-        ]),
-    };
-    const deps = {
-      catalog,
-      harnesses: { codex: f.harness, claude },
-      scripts: { run: () => Promise.reject(new Error('no subprocess expected')) },
-      apiKeys: f.apiKeys,
-      secretsFor: () => f.secrets,
-      supportAvailable: () => Promise.resolve(true),
-    };
-    const checks = new TemplatePrerequisites(deps);
-    expect(await checks.defaults(starter)).toMatchObject({
-      roles: { assistant: { harness: 'codex' } },
-    });
-    const selected = TemplateSettingsSchemas.starter.parse({
-      kind: 'starter',
-      roles: { assistant: { harness: 'claude', model: 'synthetic', effort: 'high' } },
-    });
-    expect(await checks.check('local', starter, selected)).toMatchObject({
-      canInstantiate: false,
-      canRun: false,
-    });
-    f.harness.preflightResult.ok = false;
-    expect(await checks.defaults(starter)).toMatchObject({
-      roles: { assistant: { harness: 'claude', effort: 'low' } },
-    });
-    claude.preflightResult.models![0]!.admission = 'blocked';
-    expect(await checks.defaults(starter)).toBeNull();
-    selected.roles.assistant.effort = 'low';
-    expect(await checks.check('local', starter, selected)).toMatchObject({ canInstantiate: false });
-    claude.preflightResult.models![0]!.admission = 'supported';
-    claude.preflightResult.supportedPolicies = [];
-    expect(await checks.check('local', starter, selected)).toMatchObject({ canInstantiate: false });
-  });
+        ],
+        supportedPolicies: [
+          {
+            sandbox: 'read-only',
+            approval: 'never',
+            permissionMode: 'dontAsk',
+            tools: ['Read'],
+            authMethod: 'claude.ai',
+            boundary: 'builtin-tools',
+            network: 'unconfined',
+          },
+        ],
+      };
+      const catalog = {
+        list: () =>
+          Promise.resolve([
+            {
+              ...codex,
+              harness: 'claude',
+              model,
+              defaultEffort: 'high' as const,
+              efforts: ['low', 'high'] as ('low' | 'high')[],
+            },
+            codex,
+          ]),
+      };
+      const deps = {
+        catalog,
+        harnesses: { codex: f.harness, claude },
+        scripts: { run: () => Promise.reject(new Error('no subprocess expected')) },
+        apiKeys: f.apiKeys,
+        secretsFor: () => f.secrets,
+        supportAvailable: () => Promise.resolve(true),
+      };
+      const checks = new TemplatePrerequisites(deps);
+      expect(await checks.defaults(starter)).toMatchObject({
+        roles: { assistant: { harness: 'codex' } },
+      });
+      const selected = TemplateSettingsSchemas.starter.parse({
+        kind: 'starter',
+        roles: { assistant: { harness: 'claude', model, effort: 'high' } },
+      });
+      expect(await checks.check('local', starter, selected)).toMatchObject({
+        canInstantiate: false,
+        canRun: false,
+      });
+      f.harness.preflightResult.ok = false;
+      expect(await checks.defaults(starter)).toMatchObject({
+        roles: { assistant: { harness: 'claude', effort: 'low' } },
+      });
+      selected.roles.assistant.effort = 'low';
+      expect(await checks.check('local', starter, selected)).toMatchObject({
+        canInstantiate: true,
+        canRun: true,
+      });
+      claude.preflightResult.models![0]!.model = 'unsupported-model';
+      expect(await checks.defaults(starter)).toBeNull();
+      selected.roles.assistant.effort = 'low';
+      expect(await checks.check('local', starter, selected)).toMatchObject({
+        canInstantiate: false,
+      });
+      claude.preflightResult.models![0]!.model = model;
+      claude.preflightResult.supportedPolicies = [];
+      expect(await checks.check('local', starter, selected)).toMatchObject({
+        canInstantiate: false,
+      });
+    },
+  );
   it('checks canonical repository/origin, gh auth, support key scopes and unavailable isolation with fake array commands', async () => {
     const f = await foundation();
     const manifest = structuredClone(f.binding.manifest);

@@ -7,7 +7,7 @@ import {
   type HarnessOptions,
   type ClaudePolicy as ContractClaudePolicy,
 } from '@graphgoblin/contracts';
-import { claudeModelCapabilities, CLAUDE_BILLING_UNVERIFIED_MESSAGE } from './models.js';
+import { claudeModelCapabilities } from './models.js';
 export { CLAUDE_MODEL } from './models.js';
 import { ClaudeHarnessError } from './errors.js';
 export type ClaudePolicy = ContractClaudePolicy;
@@ -34,8 +34,6 @@ export function claudePolicy(
     permissionMode: 'dontAsk',
     tools: readOnly ? ['Read', 'Glob', 'Grep'] : ['Read', 'Glob', 'Grep', 'Edit', 'Write', 'Bash'],
     authMethod: 'claude.ai',
-    billingMode: 'claude.ai-account',
-    billingStatus: 'account-dependent',
     boundary: readOnly ? 'builtin-tools' : 'unconfined',
     network: 'unconfined',
   };
@@ -76,8 +74,6 @@ export function resolvedClaudeSettings(input: { model?: string; effort?: Effort 
       'HARNESS_INVALID_CONFIGURATION',
       'Claude model must be the explicit supported catalog model',
     );
-  if (entry.admission === 'blocked')
-    throw new ClaudeHarnessError('HARNESS_MODEL_UNVERIFIED', CLAUDE_BILLING_UNVERIFIED_MESSAGE);
   if (effort === undefined || !entry.efforts.includes(effort))
     throw new ClaudeHarnessError('HARNESS_INVALID_CONFIGURATION', 'Claude effort is unsupported');
   return { model: entry.model, effort };

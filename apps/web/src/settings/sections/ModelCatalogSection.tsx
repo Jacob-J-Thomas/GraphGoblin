@@ -190,15 +190,12 @@ export function ModelCatalogSection() {
               </thead>
               <tbody>
                 {items.map((entry) => {
-                  const capability =
-                    entry.harness === 'claude'
-                      ? preflightQuery.data
-                          ?.find((item) => item.harness === 'claude')
-                          ?.models?.find((item) => item.model === entry.model)
-                      : undefined;
-                  const claudeUnverified =
-                    entry.harness === 'claude' && capability?.admission !== 'supported';
-                  const billingBlocked = capability?.admission === 'blocked';
+                  const preflight = preflightQuery.data?.find(
+                    (item) => item.harness === entry.harness,
+                  );
+                  const claudeNotReady =
+                    entry.harness === 'claude' &&
+                    (preflight?.ok !== true || !preflight.authenticated);
                   return (
                     <tr key={`${entry.harness}/${entry.model}`}>
                       <Td>
@@ -218,56 +215,49 @@ export function ModelCatalogSection() {
                         {entry.efforts.join(', ')} (default {entry.defaultEffort})
                       </Td>
                       <Td label="Enabled">
-                        {claudeUnverified ? (
-                          <div className="max-w-[30ch] text-xs text-muted">
-                            <span className="font-medium text-status-bad-fg">
-                              {billingBlocked ? 'Unavailable' : 'Adapter support not verified'}
-                            </span>
-                            <p>
-                              {billingBlocked
-                                ? 'Billing is unverified for this model.'
-                                : 'Claude adapter support must be reported by preflight before this model can be enabled.'}
-                            </p>
-                          </div>
-                        ) : (
-                          <EnableSwitch
-                            name={entry.displayName}
-                            enabled={entry.enabled}
-                            messages={CATALOG_MESSAGES}
-                            onToggle={async (enabled) => {
-                              // A new toggle replaces the previous vanished-model notice.
-                              setNotice('');
-                              const updated = await modelCatalog.setEnabled(
-                                client,
-                                entry.harness,
-                                entry.model,
-                                enabled,
-                              );
-                              queryClient.setQueryData<CatalogEntry[]>(keys.catalog, (items) =>
-                                items?.map((item) =>
-                                  item.harness === updated.harness && item.model === updated.model
-                                    ? updated
-                                    : item,
-                                ),
-                              );
-                              await refreshCatalogState(queryClient);
-                            }}
-                            onError={async (error, failure) => {
-                              if (!(error instanceof GraphGoblinApiError) || error.status !== 404)
-                                return;
-                              setNotice(
-                                `${entry.displayName}: ${CATALOG_MESSAGES['MODEL_NOT_FOUND']}`,
-                              );
-                              const refresh = refreshCatalogState(queryClient);
-                              restoreVanishedToggleFocus(
-                                failure,
-                                headingRef.current?.closest('h2') ?? null,
-                                refresh,
-                              );
-                              await refresh;
-                            }}
-                          />
-                        )}
+                        <EnableSwitch
+                          name={entry.displayName}
+                          enabled={entry.enabled}
+                          messages={CATALOG_MESSAGES}
+                          onToggle={async (enabled) => {
+                            // A new toggle replaces the previous vanished-model notice.
+                            setNotice('');
+                            const updated = await modelCatalog.setEnabled(
+                              client,
+                              entry.harness,
+                              entry.model,
+                              enabled,
+                            );
+                            queryClient.setQueryData<CatalogEntry[]>(keys.catalog, (items) =>
+                              items?.map((item) =>
+                                item.harness === updated.harness && item.model === updated.model
+                                  ? updated
+                                  : item,
+                              ),
+                            );
+                            await refreshCatalogState(queryClient);
+                          }}
+                          onError={async (error, failure) => {
+                            if (!(error instanceof GraphGoblinApiError) || error.status !== 404)
+                              return;
+                            setNotice(
+                              `${entry.displayName}: ${CATALOG_MESSAGES['MODEL_NOT_FOUND']}`,
+                            );
+                            const refresh = refreshCatalogState(queryClient);
+                            restoreVanishedToggleFocus(
+                              failure,
+                              headingRef.current?.closest('h2') ?? null,
+                              refresh,
+                            );
+                            await refresh;
+                          }}
+                        />
+                        {claudeNotReady ? (
+                          <p className="mt-1 max-w-[30ch] text-xs text-muted">
+                            {entry.enabled ? 'Enabled' : 'Disabled'} in catalog; Claude harness not
+                            ready. Check Harness preflight below.
+                          </p>
+                        ) : null}
                       </Td>
                       {hasLocalModels ? (
                         <Td className="text-right whitespace-nowrap">

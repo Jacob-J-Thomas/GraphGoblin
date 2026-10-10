@@ -64,9 +64,6 @@ describe('catalog field controls', () => {
             {
               model: 'claude-opus-5-5',
               efforts: ['low', 'xhigh'],
-              admission: 'supported',
-              reasonCode: null,
-              billingStatus: 'account-dependent',
             },
           ],
         },
@@ -99,7 +96,7 @@ describe('catalog field controls', () => {
       expect(effort()).toHaveValue('xhigh');
       expect(effort()).toHaveAttribute('aria-readonly', 'true');
       expect(effort()).toHaveAccessibleDescription(notice);
-      expect(within(effort()).getByRole('option', { name: /^xhigh$/ })).toBeInTheDocument();
+      expect(within(effort()).getByRole('option', { name: /^xhigh/ })).toBeInTheDocument();
       expect(effort()).not.toHaveAccessibleDescription(/not supported/);
       expect(screen.queryByText(/This effort is not supported/)).toBeNull();
       fireEvent.change(effort(), { target: { value: '' } });
@@ -118,8 +115,8 @@ describe('catalog field controls', () => {
       const supportedEfforts = ['low', 'medium', 'high', 'xhigh', 'max'] as const;
       api.catalog = [
         { ...entry('claude-opus-5-5', true, 'claude'), efforts: [...supportedEfforts] },
-        { ...entry('claude-fable-5-1', true, 'claude'), efforts: ['minimal', 'low'] },
-        { ...entry('alpha'), efforts: ['minimal', 'low'] },
+        { ...entry('claude-fable-5-1', true, 'claude'), efforts: [...supportedEfforts] },
+        { ...entry('alpha'), efforts: [...supportedEfforts] },
       ];
       api.preflight = [
         {
@@ -127,23 +124,15 @@ describe('catalog field controls', () => {
           ok: true,
           authenticated: true,
           authMethod: 'claude.ai',
-          billingMode: 'claude.ai-account',
-          billingStatus: 'account-dependent',
           problems: [],
           models: [
             {
               model: 'claude-opus-5-5',
               efforts: [...supportedEfforts],
-              admission: 'supported',
-              reasonCode: null,
-              billingStatus: 'account-dependent',
             },
             {
               model: 'claude-fable-5-1',
-              efforts: ['minimal', 'low'],
-              admission: 'blocked',
-              reasonCode: 'BILLING_UNVERIFIED',
-              billingStatus: 'unverified',
+              efforts: [...supportedEfforts],
             },
           ],
         },
@@ -192,7 +181,7 @@ describe('catalog field controls', () => {
       expect(change.mock.lastCall?.[0]).not.toHaveProperty('model');
     },
   );
-  it('keeps an explicitly saved Fable choice unavailable and offers only the supported Claude model', async () => {
+  it('admits saved Fable and offers both supported Claude models', async () => {
     const api = new FakeApi();
     api.catalog = [
       entry('claude-opus-5-5', true, 'claude'),
@@ -204,23 +193,15 @@ describe('catalog field controls', () => {
         ok: true,
         authenticated: true,
         authMethod: 'claude.ai',
-        billingMode: 'claude.ai-account',
-        billingStatus: 'account-dependent',
         problems: [],
         models: [
           {
             model: 'claude-opus-5-5',
             efforts: ['low', 'high'],
-            admission: 'supported',
-            reasonCode: null,
-            billingStatus: 'account-dependent',
           },
           {
             model: 'claude-fable-5-1',
             efforts: ['low', 'high'],
-            admission: 'blocked',
-            reasonCode: 'BILLING_UNVERIFIED',
-            billingStatus: 'unverified',
           },
         ],
       },
@@ -247,8 +228,8 @@ describe('catalog field controls', () => {
 
     await waitFor(() => expect(model()).not.toHaveAttribute('aria-readonly'));
     expect(model()).toHaveValue('claude-fable-5-1');
-    expect(model()).toHaveAccessibleDescription(/billing status is unverified/);
-    expect(within(model()).getByRole('option', { name: /claude-fable-5-1/ })).toBeDisabled();
+    expect(model()).not.toHaveAccessibleDescription(/unavailable/);
+    expect(within(model()).getByRole('option', { name: /claude-fable-5-1/ })).toBeEnabled();
     expect(within(model()).getByRole('option', { name: /claude-opus-5-5/ })).toBeEnabled();
 
     await user.selectOptions(model(), 'claude-opus-5-5');
@@ -265,8 +246,6 @@ describe('catalog field controls', () => {
         ok: true,
         authenticated: true,
         authMethod: 'claude.ai',
-        billingMode: 'claude.ai-account',
-        billingStatus: 'account-dependent',
         problems: [],
         supportedPolicies: [
           {
@@ -275,8 +254,6 @@ describe('catalog field controls', () => {
             permissionMode: 'dontAsk',
             tools: ['Read', 'Glob', 'Grep'],
             authMethod: 'claude.ai',
-            billingMode: 'claude.ai-account',
-            billingStatus: 'account-dependent',
             boundary: 'builtin-tools',
             network: 'unconfined',
           },
@@ -286,8 +263,6 @@ describe('catalog field controls', () => {
             permissionMode: 'dontAsk',
             tools: ['Read', 'Glob', 'Grep', 'Edit', 'Write', 'Bash'],
             authMethod: 'claude.ai',
-            billingMode: 'claude.ai-account',
-            billingStatus: 'account-dependent',
             boundary: 'unconfined',
             network: 'unconfined',
           },
@@ -407,9 +382,6 @@ describe('catalog field controls', () => {
         {
           model: 'alpha',
           efforts: ['low', 'high'],
-          admission: 'supported',
-          reasonCode: null,
-          billingStatus: 'account-dependent',
         },
       ],
     });
@@ -585,6 +557,55 @@ describe('catalog field controls', () => {
     expect(change.mock.lastCall?.[0]).not.toHaveProperty('effort');
   });
 
+  it.each([true, false])(
+    'labels a retained model from Codex with Claude readiness %s',
+    async (ready) => {
+      const api = new FakeApi();
+      api.catalog = [entry('gpt-6-astra'), entry('claude-opus-5-5', true, 'claude')];
+      api.preflight.push({
+        harness: 'claude',
+        ok: ready,
+        authenticated: true,
+        problems: ready ? [] : ['Missing capability'],
+        models: [{ model: 'claude-opus-5-5', efforts: ['low', 'high'] }],
+      });
+      const change = vi.fn();
+      renderWith(
+        <SchemaForm
+          schema={InferenceConfigSchema}
+          value={{ harness: 'codex', model: 'gpt-6-astra', prompt: { template: 'Hi' } }}
+          label="Inference"
+          onChange={change}
+          controls={NODE_FIELD_CONTROLS}
+        />,
+        '/',
+        api,
+      );
+      await waitFor(() => expect(model()).not.toHaveAttribute('aria-readonly'));
+      await userEvent.setup().click(screen.getByRole('radio', { name: 'claude' }));
+      await waitFor(() =>
+        expect(
+          within(model()).getByRole('option', { name: /Saved model belongs to Codex/ }),
+        ).toBeDisabled(),
+      );
+      expect(model()).toHaveValue('gpt-6-astra');
+      expect(model()).toHaveAccessibleDescription(
+        /Saved model belongs to Codex.*Choose a Claude model/,
+      );
+      if (ready) {
+        await userEvent.setup().selectOptions(model(), 'claude-opus-5-5');
+        expect(change.mock.lastCall?.[0]).toMatchObject({
+          harness: 'claude',
+          model: 'claude-opus-5-5',
+        });
+      } else {
+        expect(model()).toHaveAccessibleDescription(/CLI preflight is not ready/);
+        expect(screen.getByRole('button', { name: 'Retry Claude preflight' })).toBeEnabled();
+        expect(screen.getByRole('link', { name: 'Model catalog in Settings' })).toBeInTheDocument();
+      }
+    },
+  );
+
   it('filters many entries by the sibling harness and enabled state, watching harness changes', async () => {
     const api = new FakeApi();
     api.catalog = [
@@ -602,9 +623,6 @@ describe('catalog field controls', () => {
       models: ['alpha', 'other'].map((model) => ({
         model,
         efforts: ['low', 'high'],
-        admission: 'supported' as const,
-        reasonCode: null,
-        billingStatus: 'account-dependent' as const,
       })),
     });
     renderWith(
@@ -628,7 +646,12 @@ describe('catalog field controls', () => {
     await user.click(screen.getByRole('radio', { name: 'claude' }));
     await waitFor(() => expect(model()).not.toHaveAttribute('aria-readonly'));
     expect(model()).toHaveValue('beta');
-    expect(model()).toHaveAccessibleDescription(/not in the catalog/);
+    expect(model()).toHaveAccessibleDescription(
+      /Saved model belongs to Codex.*Choose a Claude model/,
+    );
+    expect(
+      within(model()).getByRole('option', { name: /Saved model belongs to Codex/ }),
+    ).toBeDisabled();
     expect(
       within(model())
         .getAllByRole('option')
@@ -834,17 +857,12 @@ describe('catalog field controls', () => {
         version: '2.1.285',
         authenticated: true,
         authMethod: 'claude.ai',
-        billingMode: 'claude.ai-account',
-        billingStatus: 'account-dependent',
         problems: [],
         supportedPolicies: [],
         models: [
           {
             model: 'claude-opus-5-5',
             efforts: ['low', 'high', 'xhigh', 'max'],
-            admission: 'supported',
-            reasonCode: null,
-            billingStatus: 'account-dependent',
           },
         ],
       },
@@ -905,9 +923,6 @@ describe('catalog field controls', () => {
           {
             model: 'claude-opus-5-5',
             efforts: ['low', 'high'],
-            admission: 'supported',
-            reasonCode: null,
-            billingStatus: 'account-dependent',
           },
         ],
       },

@@ -19,6 +19,10 @@ const help = [
   '--effort',
   '--json-schema',
   '--output-format',
+  '--input-format',
+  '--model',
+  '--verbose',
+  '--print',
   '--no-session-persistence',
   '--resume',
 ].join(' ');
@@ -151,14 +155,13 @@ describe('Claude existing harness contract', () => {
       }
     },
   );
-  it('checks the installed capability/auth prerequisites and exposes explicit billing/policies', async () => {
+  it('checks the installed capability/auth prerequisites and exposes explicit model support and policies', async () => {
     const { harness, calls } = fixture();
     expect(await harness.preflight()).toMatchObject({
       ok: true,
       authenticated: true,
       version: '2.1.285',
       authMethod: 'claude.ai',
-      billingMode: 'claude.ai-account',
       supportedPolicies: [
         expect.objectContaining({ sandbox: 'read-only' }),
         expect.objectContaining({ sandbox: 'danger-full-access' }),
@@ -174,6 +177,29 @@ describe('Claude existing harness contract', () => {
       'status',
       '--json',
     ]);
+  });
+  it('executes Fable through strict native model verification with its requested effort', async () => {
+    const model = 'claude-fable-5-1';
+    const { harness, calls } = fixture({
+      records: [
+        { ...init, model },
+        { ...final, modelUsage: { [model]: {} } },
+      ],
+    });
+    const session = harness.start(
+      { ...request, model, effort: 'max' },
+      new AbortController().signal,
+    );
+    expect(await session.sessionId).toBe(id);
+    expect(await session.result).toMatchObject({ finalText: 'finished' });
+    expect(calls[3]?.args).toEqual(expect.arrayContaining(['--model', model, '--effort', 'max']));
+    const mismatched = fixture({ records: [init, final] }).harness;
+    await expect(
+      mismatched.start({ ...request, model }, new AbortController().signal).result,
+    ).rejects.toMatchObject({
+      code: 'HARNESS_UNSUPPORTED_POLICY',
+      message: expect.stringMatching(/Claude CLI 2\.1\.285.*launch policy.*model/),
+    });
   });
   it('checks auth before every start and resume, uses the same env, and maps current port events/result', async () => {
     const { harness, calls } = fixture();
@@ -250,7 +276,10 @@ describe('Claude existing harness contract', () => {
     const { harness, calls } = fixture();
     await expect(
       harness.resume('bad', request, new AbortController().signal).result,
-    ).rejects.toMatchObject({ code: 'HARNESS_INVALID_CONFIGURATION' });
+    ).rejects.toMatchObject({
+      code: 'HARNESS_INVALID_CONFIGURATION',
+      message: 'Claude resume requires a valid native session id',
+    });
     expect(calls).toHaveLength(0);
   });
   it('validates structured results through the existing schema contract', async () => {
@@ -420,10 +449,84 @@ describe('Claude existing harness contract', () => {
 });
 
 describe('Claude preflight and transport failure matrix', () => {
+  it.each(['2.1.284', '2.1.285', '2.1.287'])(
+    'reports detected version %s independently of account login',
+    async (version) => {
+      for (const authenticated of [true, false]) {
+        const calls: string[][] = [];
+        const harness = new ClaudeHarness({
+          platform: 'win32',
+          runner: async (command) => {
+            await Promise.resolve();
+            calls.push([...command.args]);
+            return outcome(
+              command.args.includes('--version')
+                ? version
+                : command.args.includes('--help')
+                  ? help
+                  : JSON.stringify({ authMethod: authenticated ? 'claude.ai' : 'api_key' }),
+            );
+          },
+        });
+        const facts = await harness.preflight();
+        expect(facts).toMatchObject({
+          version,
+          authenticated,
+          authMethod: authenticated ? 'claude.ai' : null,
+          ok: version !== '2.1.284' && authenticated,
+        });
+        expect(calls.some((args) => args.includes('auth'))).toBe(true);
+        expect(facts.problems).toHaveLength(Number(version === '2.1.284') + Number(!authenticated));
+        if (version === '2.1.284') expect(facts.problems[0]).toMatch(/2\.1\.284.*minimum version/);
+      }
+    },
+  );
+  it('reports a missing capability and failed login together without starting a turn', async () => {
+    const harness = new ClaudeHarness({
+      platform: 'win32',
+      runner: async (command) => {
+        await Promise.resolve();
+        return outcome(
+          command.args.includes('--version')
+            ? '2.1.287'
+            : command.args.includes('--help')
+              ? help.replace('--restricted', '')
+              : '{}',
+        );
+      },
+    });
+    expect(await harness.preflight()).toMatchObject({
+      version: '2.1.287',
+      authenticated: false,
+      problems: [
+        expect.stringMatching(/2\.1\.287.*--restricted/),
+        expect.stringMatching(/auth login/),
+      ],
+    });
+  });
+  it('reports the detected version when the hidden max-turns capability probe fails and still checks login', async () => {
+    const harness = new ClaudeHarness({
+      platform: 'win32',
+      runner: async (command) => {
+        await Promise.resolve();
+        if (command.args.includes('--version')) return outcome('2.1.287');
+        if (command.args.includes('--help')) {
+          expect(command.args).toContain('--max-turns');
+          return outcome('', { exitCode: 1 });
+        }
+        return outcome('{"authMethod":"claude.ai"}');
+      },
+    });
+    expect(await harness.preflight()).toMatchObject({
+      version: '2.1.287',
+      authenticated: true,
+      problems: [expect.stringMatching(/2\.1\.287.*--max-turns\/--help/)],
+    });
+  });
   it('returns fixed preflight problems for missing binary, unsupported platform/version/flags and bad auth', async () => {
     const cases: ClaudeCliRunner[] = [
       async () => await Promise.resolve(outcome('', { spawnCode: 'ENOENT' })),
-      async () => await Promise.resolve(outcome('2.1.286')),
+      async () => await Promise.resolve(outcome('2.1.284')),
       async (command) =>
         await Promise.resolve(
           outcome(command.args.includes('--version') ? '2.1.285' : 'unsupported flags'),
@@ -540,7 +643,10 @@ describe('Claude preflight and transport failure matrix', () => {
     });
     await expect(
       mismatch.harness.resume(id, request, new AbortController().signal).result,
-    ).rejects.toMatchObject({ code: 'HARNESS_PROTOCOL_ERROR' });
+    ).rejects.toMatchObject({
+      code: 'HARNESS_PROTOCOL_ERROR',
+      message: expect.stringMatching(/Claude CLI 2\.1\.285.*stream-json protocol/),
+    });
   });
 });
 

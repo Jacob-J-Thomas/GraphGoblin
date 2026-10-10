@@ -155,7 +155,68 @@ test('Claude inference selection stays family-specific through publish and run',
   await expect(page.locator('[data-status="succeeded"]').first()).toBeVisible();
 });
 
-test('Settings separates Claude adapter support from CLI readiness and blocks Fable', async ({
+for (const ready of [false, true]) {
+  test(`saved Codex model stays labelled on narrow Claude editor with readiness ${ready}`, async ({
+    page,
+    request,
+  }) => {
+    const instance = await claudeInstance(request);
+    if (!ready)
+      await control(request, '/harness/preflight', {
+        instanceId: instance.id,
+        harness: 'claude',
+        state: 'not-ready',
+      });
+    const definition = inferenceLoop('Retained model');
+    const node = definition.nodes.find((item) => item.id === 'infer');
+    if (!node || !('config' in node)) throw new Error('missing inference node');
+    Object.assign(node.config, {
+      model: 'gpt-6-astra',
+      effort: 'high',
+      harnessOptions: { sandbox: 'workspace-write', approval: 'never' },
+    });
+    const created = await request.post(instance.url + '/loops', { data: { definition } });
+    expect(created.status(), await created.text()).toBe(201);
+    const { loop } = (await created.json()) as { loop: { id: string } };
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(instance.url + '/app/loops/' + loop.id + '/edit');
+    const dialog = await openNode(page, 'infer');
+    const harness = dialog.getByRole('radio', { name: 'claude', exact: true });
+    await harness.focus();
+    await page.keyboard.press('Space');
+    await expect(harness).toBeChecked();
+    await expect(harness).toBeFocused();
+    const model = dialog.getByLabel('Model', { exact: true });
+    await expect(model).toHaveValue('gpt-6-astra');
+    await expect(model.locator('option:checked')).toHaveText(/Saved model belongs to Codex/);
+    await expect(model.locator('option:checked')).toBeDisabled();
+    if (!ready) {
+      await expect(model).toHaveAttribute('aria-readonly', 'true');
+      await expect(
+        dialog
+          .getByRole('status')
+          .filter({ hasText: 'Claude CLI preflight is not ready; model choices' }),
+      ).toBeVisible();
+      await control(request, '/harness/preflight', {
+        instanceId: instance.id,
+        harness: 'claude',
+        state: 'ready',
+      });
+      await dialog.getByRole('button', { name: 'Retry Claude preflight' }).click();
+    }
+    await expect(model).not.toHaveAttribute('aria-readonly', 'true');
+    await model.selectOption('claude-fable-5-1');
+    await expect(model).toHaveValue('claude-fable-5-1');
+    await expect(dialog.getByLabel('Sandbox and approval policy', { exact: true })).toHaveValue(
+      '0',
+    );
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+    ).toBe(true);
+  });
+}
+
+test('Settings separates Claude adapter support from CLI readiness and supports Fable', async ({
   page,
   request,
 }) => {
@@ -194,8 +255,10 @@ test('Settings separates Claude adapter support from CLI readiness and blocks Fa
   const opus = support.getByRole('listitem').filter({ hasText: 'claude-opus-5-5' });
   const fable = support.getByRole('listitem').filter({ hasText: 'claude-fable-5-1' });
   await expect(opus.getByText('supported by adapter')).toBeVisible();
-  await expect(fable.getByText('blocked')).toBeVisible();
-  await expect(fable.getByText('Billing is unverified for this model.')).toBeVisible();
+  await expect(fable.getByText('supported by adapter')).toBeVisible();
+  const catalog = page.getByRole('region', { name: 'Model catalog' });
+  await expect(catalog.getByRole('switch', { name: 'Enable Claude Fable 5.1' })).toBeChecked();
+  await expect(catalog.getByText(/Enabled in catalog; Claude harness not ready/)).toHaveCount(2);
 
   const model = page.getByLabel('Default model (claude)', { exact: true });
   await expect(model).toBeVisible();

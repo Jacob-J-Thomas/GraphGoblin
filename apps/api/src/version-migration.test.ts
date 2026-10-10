@@ -102,7 +102,7 @@ async function seedVersion(status: 'draft' | 'published', definition = inference
   await t.container.handle.client.execute(
     'DELETE FROM __drizzle_migrations WHERE created_at > 1791136800000',
   );
-  expect(await t.container.handle.pendingMigrations()).toBe(6);
+  expect(await t.container.handle.pendingMigrations()).toBe(7);
   await expect(t.container.handle.migrate()).rejects.toMatchObject({
     code: 'DATA_UPGRADE_REQUIRED',
   });

@@ -45,8 +45,8 @@ async function upgrade(check: (db: DatabaseHandle) => Promise<void>) {
   }
   const current = openDatabase({ url });
   try {
-    // Includes 0010_qa_issue_attempt after the three historical catalog migrations.
-    expect(await current.pendingMigrations()).toBe(8);
+    // Includes 0011_enable_claude_fable after the three historical catalog migrations.
+    expect(await current.pendingMigrations()).toBe(9);
     await expect(current.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
     await applyShippedSqlToHistoricalTestFixture(current);
     await check(current);
@@ -64,6 +64,45 @@ async function upgrade(check: (db: DatabaseHandle) => Promise<void>) {
 }
 
 describe('model catalog source migration and repository', () => {
+  it('enables previously blocked Fable once, then preserves owner switches and every other row', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'gg-fable-migration-'));
+    const url = `file:${join(dir, 'catalog.db').replaceAll('\\', '/')}`;
+    const old = openDatabase({ url, migrationsFolder: previousMigrations(dir, 11) });
+    try {
+      await old.migrate();
+      const catalog = new SqliteModelCatalog(old.db);
+      await catalog.seed();
+      await catalog.setEnabled('claude', 'claude-fable-5-1', false);
+      await catalog.setEnabled('claude', 'claude-opus-5-5', false);
+      await catalog.setEnabled('codex', 'gpt-6-luna', false);
+    } finally {
+      old.close();
+    }
+    const current = openDatabase({ url });
+    try {
+      const catalog = new SqliteModelCatalog(current.db);
+      const before = await catalog.list();
+      expect(await current.pendingMigrations()).toBe(1);
+      await current.migrate();
+      expect(await catalog.list()).toEqual(
+        before.map((entry) =>
+          entry.harness === 'claude' && entry.model === 'claude-fable-5-1'
+            ? { ...entry, enabled: true }
+            : entry,
+        ),
+      );
+      await catalog.setEnabled('claude', 'claude-fable-5-1', false);
+      await current.migrate();
+      await catalog.seed();
+      expect(await catalog.findOne('claude', 'claude-fable-5-1')).toMatchObject({ enabled: false });
+      expect(await current.pendingMigrations()).toBe(0);
+    } finally {
+      current.close();
+      await rm(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 }).catch(
+        () => undefined,
+      );
+    }
+  });
   it('adds source on a fresh database and defaults direct legacy inserts to harness', async () => {
     const handle = await openMemoryDatabase();
     try {
@@ -75,6 +114,7 @@ describe('model catalog source migration and repository', () => {
       const catalog = new SqliteModelCatalog(handle.db);
       expect(await catalog.seed()).toBe(DEFAULT_MODEL_CATALOG.length);
       expect((await catalog.list()).every((row) => row.source === 'harness')).toBe(true);
+      expect(await catalog.findOne('claude', 'claude-fable-5-1')).toMatchObject({ enabled: true });
       expect(await catalog.findOne('codex', 'missing')).toBeUndefined();
       expect(await catalog.setEnabled('codex', 'missing', true)).toBeUndefined();
       const before = (await catalog.findOne('codex', 'gpt-6-luna'))!;
@@ -235,7 +275,7 @@ describe('model catalog source migration and repository', () => {
       await handle.client.execute(
         'DELETE FROM __drizzle_migrations WHERE created_at >= 1791136800000',
       );
-      expect(await handle.pendingMigrations()).toBe(7);
+      expect(await handle.pendingMigrations()).toBe(8);
       await expect(handle.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
       await applyShippedSqlToHistoricalTestFixture(handle);
       expect(await catalog.list()).toEqual(rows.map((row) => ({ ...row, source: 'harness' })));

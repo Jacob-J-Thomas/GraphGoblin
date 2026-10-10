@@ -10,25 +10,11 @@ function ClaudePreflight({ item }: { item: HarnessPreflightItem }) {
       {item.authMethod === 'claude.ai' && item.authenticated ? (
         <p>Signed in with Claude.ai.</p>
       ) : null}
-      {item.billingMode === 'claude.ai-account' ? (
-        <p>
-          Claude account billing; model availability and usage limits depend on account settings.
-          This does not guarantee that a model is included.
-        </p>
-      ) : null}
       {item.models?.length ? (
         <ul aria-label="Claude model support" className="grid gap-1">
           {item.models.map((model) => (
             <li key={model.model}>
-              <code>{model.model}</code>{' '}
-              <Badge tone={model.admission === 'supported' ? 'good' : 'bad'}>
-                {model.admission === 'supported' ? 'supported by adapter' : 'blocked'}
-              </Badge>{' '}
-              {model.admission === 'blocked' && model.reasonCode === 'BILLING_UNVERIFIED'
-                ? 'Billing is unverified for this model.'
-                : model.admission === 'supported'
-                  ? 'Account-dependent usage.'
-                  : null}
+              <code>{model.model}</code> <Badge tone="good">supported by adapter</Badge>
             </li>
           ))}
         </ul>

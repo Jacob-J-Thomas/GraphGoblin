@@ -383,11 +383,11 @@ test('Settings defaults reach the next run without a restart', async ({ page, re
       ((await response.json()) as { defaults?: { byHarness?: { codex?: { effort?: string } } } })
         .defaults?.byHarness?.codex?.effort === 'high',
   );
-  await page.getByLabel('Default effort').selectOption('high');
+  await page.getByLabel('Default effort', { exact: true }).selectOption('high');
   expect((await saved).status()).toBe(200);
   // Observe the UI's refetch rather than repeatedly reading Settings while its save is pending.
   await refreshed;
-  await expect(page.getByLabel('Default effort')).toHaveValue('high');
+  await expect(page.getByLabel('Default effort', { exact: true })).toHaveValue('high');
   const previous = (await control(request, '/harness/requests')) as { started: unknown[] };
   const previousTurns = previous.started.length;
   await startRun(request, loopId);
@@ -406,7 +406,7 @@ test('Settings defaults reach the next run without a restart', async ({ page, re
     (response) =>
       response.request().method() === 'DELETE' && response.url().endsWith('/settings/defaults'),
   );
-  await page.getByLabel('Default effort').selectOption('');
+  await page.getByLabel('Default effort', { exact: true }).selectOption('');
   expect((await removed).status()).toBe(204);
   expect(await (await request.get('/settings')).json()).not.toHaveProperty('defaults');
 });

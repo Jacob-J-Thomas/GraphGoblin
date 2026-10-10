@@ -90,14 +90,8 @@ export function DefaultsSection() {
                     !preflight.authenticated ||
                     !preflight.models ||
                     !capability);
-                const claudeBlocked =
-                  harness === 'claude' &&
-                  capability !== undefined &&
-                  capability.admission === 'blocked';
                 const stale = Boolean(
-                  selectedModel &&
-                  catalogQuery.data &&
-                  (!selectedEntry?.enabled || claudeUnknown || claudeBlocked),
+                  selectedModel && catalogQuery.data && (!selectedEntry?.enabled || claudeUnknown),
                 );
                 const helpId = `default-model-${harness}-help`;
                 const effortHelpId = `default-effort-${harness}-help`;
@@ -106,18 +100,14 @@ export function DefaultsSection() {
                 const effortLabel =
                   harness === 'codex' ? 'Default effort' : `Default effort (${harness})`;
                 const staleMessage =
-                  harness === 'claude' && claudeBlocked
-                    ? 'This model is unavailable because its billing status is unverified. Choose a supported model or (server default) before publishing or running.'
-                    : harness === 'claude' && claudeUnknown
-                      ? 'Claude CLI preflight is not ready. Keep this saved value or choose (server default) until it passes.'
-                      : 'This saved model is unavailable. Choose an enabled catalog model or (server default) before publishing or running.';
+                  harness === 'claude' && claudeUnknown
+                    ? 'Claude CLI preflight is not ready. Keep this saved value or choose (server default) until it passes.'
+                    : 'This saved model is unavailable. Choose an enabled catalog model or (server default) before publishing or running.';
                 const availableEntries = entries.filter((entry) => {
                   if (!entry.enabled) return false;
                   if (harness !== 'claude') return true;
                   if (preflight?.ok !== true || !preflight.authenticated) return false;
-                  return preflight?.models?.some(
-                    (model) => model.model === entry.model && model.admission === 'supported',
-                  );
+                  return preflight?.models?.some((model) => model.model === entry.model);
                 });
                 const effortOptions =
                   selectedEntry?.efforts ??
@@ -148,7 +138,7 @@ export function DefaultsSection() {
                             !selectedEntry?.enabled) ? (
                             <option value={selectedModel}>
                               {selectedEntry
-                                ? `${selectedEntry.displayName} (${claudeBlocked ? 'unavailable' : claudeUnknown ? 'access not verified' : selectedEntry.enabled ? 'unavailable' : 'disabled'})`
+                                ? `${selectedEntry.displayName} (${claudeUnknown ? 'access not verified' : selectedEntry.enabled ? 'unavailable' : 'disabled'})`
                                 : catalogQuery.data
                                   ? `${selectedModel} (not in catalog)`
                                   : selectedModel}

@@ -4,6 +4,9 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Claude preflight accepts newer capable CLI releases and checks login independently of version/capability failures. Wrong-harness saved models are labelled and kept until corrected; switching to Claude resets its policy to read-only/never. Missing Jev guidance reports an unavailable classifier. (#158)
+- Removed billing fields and policy restrictions throughout contracts, API and UI. Opus and Fable use the same technical checks and owner switches. **Upgrade:** rebuild API and web together and update consumers of the removed preflight/model/policy fields. Remove uses of the exported `claudeModelBlocked` helper and `CLAUDE_BILLING_UNVERIFIED_MESSAGE` constant. Migration `0011_enable_claude_fable` enables existing Fable catalog rows once; later owner disablement is preserved. Historical transcripts are unchanged. (#159)
+
 ### Added
 
 - GitHub issue implementation template with configurable repository, labels, native gate and role selection. It polls eligible issues, reserves each attempt, runs fresh workers sequentially, verifies gates on an unchanged commit, and opens a closing PR without merging it. Attempt-aware deduplication permits only authenticated QA rework; relabeling does not reset consumed attempts. (#30)
@@ -12,7 +15,7 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 - Decisions offer Noul true/false answers and fractional Score rubrics alongside Choice. Primitive-aware classifier selection, separate Noul truth/confidence thresholds and stable Score bands make routing explicit. Existing Choice and context behavior remain unchanged. (#97)
 
-- Claude Code inference harness for the owner's native Windows CLI, pinned to 2.1.285. It uses only Claude.ai account authentication, adds no Anthropic SDK dependency, admits exact model `claude-opus-5-5`, and reports account-dependent billing without promising subscription inclusion. Only explicit `read-only`/`never` and `danger-full-access`/`never` policies are supported; Fable remains blocked while billing is unverified. Requested effort is recorded; effective effort is not reported. (#26)
+- Claude Code inference harness for the owner's native Windows CLI 2.1.285 or newer with required capabilities. It uses Claude.ai account authentication, adds no Anthropic SDK dependency, and admits exact models `claude-opus-5-5` and `claude-fable-5-1`. Supported policies are `read-only`/`never` and explicitly selected `danger-full-access`/`never`. Requested effort is recorded; effective effort is not reported. (#26)
 - Generic body-signed webhooks accept GitHub payloads with durable content replay protection and recoverable atomic run admission. Optional poll items mode drains a bounded queue with per-item dedupe. GitHub presets remain editable generic trigger configurations. (#29)
 
 - Decision nodes choose one explicit Expression, Classifier or LLM evaluator, with Choice options whose stable IDs keep connections attached when display labels change. Inspectors record the selected kind, answer and resolved provider/model. There is no implicit fallback to another evaluator. (#98)
@@ -117,7 +120,7 @@ The first release: design, run, and observe agent loops on your own machine, wit
 ### Harnesses and deciders
 
 - Codex through `@openai/codex-sdk` 0.160.0 using the machine's `codex login`: session policies, sandbox and approval settings, structured output with a repair policy, transcripts as artifacts, and cancellation.
-- Claude through the owner-installed native Windows Claude Code CLI 2.1.285 using Claude.ai account auth. This is inference-only; billing is account-dependent, and effective effort is not reported.
+- Claude through the owner-installed native Windows Claude Code CLI 2.1.285 or newer with required capabilities and Claude.ai account auth. This is inference-only; effective effort is not reported.
 - Decisions by explicit JSONata expression, Jev classifier, or Codex LLM evaluator; a failed evaluator never falls back to another kind.
 - Scripts run as the API's user without a shell wrapper, with exit-code routes, patch output, and Windows process-tree kill.
 - The Jev API key can be seeded from the environment: when no `jev-api-key` secret exists, the API stores `GG_JEV_API_KEY` (or `JEV_API_KEY`) in the encrypted secret store at first start; a stored secret always wins and the value is never logged.

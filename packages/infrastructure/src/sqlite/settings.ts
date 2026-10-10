@@ -231,7 +231,7 @@ export const DEFAULT_MODEL_CATALOG: ModelCatalogEntry[] = [
     displayName: entry.model === CLAUDE_MODEL ? 'Claude Opus 5.5' : 'Claude Fable 5.1',
     efforts: entry.efforts,
     defaultEffort: 'high' as const,
-    enabled: entry.admission === 'supported',
+    enabled: true,
   })),
 ];
 

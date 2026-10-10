@@ -2,6 +2,8 @@
 
 Date: 2026-10-07. Status: **Accepted architecture; implementation and product review pending**. Owner approval: [#26](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/26).
 
+Billing metadata and the Fable block below are superseded by [ADR-0029](ADR-0029-no-billing-in-the-product.md). The exact version pin is also superseded: CLI 2.1.285 is now the minimum; newer versions must advertise all required capabilities and still pass strict runtime protocol checks. The original bounded runtime observations remain historical evidence.
+
 ## Context
 
 The owner selected Claude.ai account authentication for a local Claude Code harness, with API-provider support deferred to [#100](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/100). The first implementation must not add a Claude Agent SDK, vendor a CLI, or imply that an account subscription includes any particular model. It must remain isolated from Codex evaluator and session state.

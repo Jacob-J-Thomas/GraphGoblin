@@ -26,10 +26,7 @@ export function inheritedClaudeEfforts(
         (entry) =>
           entry.efforts.includes(effort) &&
           capabilities?.some(
-            (capability) =>
-              capability.model === entry.model &&
-              capability.admission === 'supported' &&
-              capability.efforts.includes(effort),
+            (capability) => capability.model === entry.model && capability.efforts.includes(effort),
           ),
       ),
     ) ?? []
@@ -133,9 +130,7 @@ function useCatalogField(name: string, kind: 'model' | 'effort', value: unknown)
     if (!entry.enabled) return false;
     if (harnessId !== 'claude') return true;
     if (!hasClaudeAdmission) return false;
-    return modelCapabilities?.some(
-      (capability) => capability.model === entry.model && capability.admission === 'supported',
-    );
+    return modelCapabilities?.some((capability) => capability.model === entry.model);
   });
   const model = selection ? (kind === 'model' ? value : selectedModel) : selectedModel;
   const selected =
@@ -191,17 +186,23 @@ function CatalogField({
       : EffortSchema.options;
   const efforts: readonly string[] = entry?.efforts ?? inheritedEfforts;
   const unsupported = kind === 'effort' && !unavailable && value !== '' && !efforts.includes(value);
-  const missing = kind === 'model' && value !== '' && !entry;
   const capability =
     kind === 'model' ? modelCapabilities?.find((item) => item.model === value) : undefined;
-  const billingBlocked = kind === 'model' && capability?.admission === 'blocked';
+  const savedHarness =
+    kind === 'model' && value !== '' && !entry
+      ? query.data?.find((candidate) => candidate.model === value)?.harness
+      : undefined;
+  const wrongHarness = savedHarness !== undefined && savedHarness !== harnessId;
+  const missing = kind === 'model' && value !== '' && !entry && !wrongHarness;
+  const savedHarnessLabel =
+    savedHarness === 'codex' ? 'Codex' : savedHarness === 'claude' ? 'Claude' : savedHarness;
   const admissionUnknown =
     kind === 'model' && harnessId === 'claude' && value !== '' && !capability;
   const disabled = kind === 'model' && entry?.enabled === false;
-  const status = missing
-    ? 'not in catalog'
-    : billingBlocked
-      ? 'unavailable: billing is unverified'
+  const status = wrongHarness
+    ? `Saved model belongs to ${savedHarnessLabel}`
+    : missing
+      ? 'not in catalog'
       : admissionUnknown
         ? 'availability not verified'
         : disabled
@@ -238,15 +239,13 @@ function CatalogField({
                 'The model catalog may be out of date. Cached choices are still available; retry to refresh them.',
               ]
             : []),
-          ...(status
+          ...(status && !wrongHarness
             ? [
                 missing
                   ? 'This model is not in the catalog. Its saved value is kept.'
-                  : billingBlocked
-                    ? 'This model is unavailable because its billing status is unverified. Its saved value is kept.'
-                    : admissionUnknown
-                      ? 'Claude model availability could not be verified. Its saved value is kept.'
-                      : `This model is ${missing ? 'not in the catalog' : status}. Its saved value is kept.`,
+                  : admissionUnknown
+                    ? 'Claude model availability could not be verified. Its saved value is kept.'
+                    : `This model is ${missing ? 'not in the catalog' : status}. Its saved value is kept.`,
               ]
             : []),
           ...(unsupported
@@ -260,8 +259,17 @@ function CatalogField({
               ]
             : []),
         ]
-  ).concat(warnings.map((warning) => `${warning.code}: ${warning.message}`));
+  )
+    .concat(
+      wrongHarness
+        ? [
+            `Saved model belongs to ${savedHarnessLabel}. Choose a ${harnessId === 'claude' ? 'Claude' : harnessId} model or an inherited default from this picker when the harness is ready.`,
+          ]
+        : [],
+    )
+    .concat(warnings.map((warning) => `${warning.code}: ${warning.message}`));
   const warn =
+    wrongHarness ||
     warnings.length > 0 ||
     query.isError ||
     query.fetchStatus === 'paused' ||
@@ -323,7 +331,10 @@ function CatalogField({
               <option value="">{placeholder}</option>
               {unavailable ? (
                 value !== '' ? (
-                  <option value={value}>{value}</option>
+                  <option value={value} disabled>
+                    {value}
+                    {status ? ` (${status})` : ' (saved; unavailable)'}
+                  </option>
                 ) : null
               ) : status || unsupported ? (
                 <option value={value} disabled>

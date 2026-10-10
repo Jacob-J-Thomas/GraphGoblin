@@ -1,11 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { open, readFile, stat, unlink } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
-import {
-  ClaudeHarness,
-  claudeModelBlocked,
-  CLAUDE_BILLING_UNVERIFIED_MESSAGE,
-} from '@graphgoblin/infrastructure/claude';
+import { ClaudeHarness } from '@graphgoblin/infrastructure/claude';
 import { createCodexAdapters } from '@graphgoblin/adapter-codex';
 import type { HarnessId } from '@graphgoblin/contracts';
 import type { HarnessPort } from '@graphgoblin/engine';
@@ -296,7 +292,7 @@ export async function runPreflight(sources: PreflightSources): Promise<Preflight
               'jev',
               'Jev',
               'warn',
-              `no API key in secret "${JEV_SECRET}"; Jev is optional and decisions fall back to Codex`,
+              `no API key in secret "${JEV_SECRET}"; Jev is optional; its classifier is unavailable until a key is configured`,
             ),
       );
     } catch (error) {
@@ -310,15 +306,13 @@ export async function runPreflight(sources: PreflightSources): Promise<Preflight
     const defaults = config.defaults.byHarness.claude;
     if (defaults) {
       const entry = catalog.find((row) => row.harness === 'claude' && row.model === defaults.model);
-      const problem = claudeModelBlocked(defaults.model)
-        ? CLAUDE_BILLING_UNVERIFIED_MESSAGE
-        : !entry
-          ? 'The configured Claude model is not in the catalog'
-          : !defaults.effort || !entry.efforts.includes(defaults.effort)
-            ? 'Configure an explicit supported Claude reasoning effort'
-            : !entry.enabled
-              ? 'The configured Claude model is disabled'
-              : undefined;
+      const problem = !entry
+        ? 'The configured Claude model is not in the catalog'
+        : !defaults.effort || !entry.efforts.includes(defaults.effort)
+          ? 'Configure an explicit supported Claude reasoning effort'
+          : !entry.enabled
+            ? 'The configured Claude model is disabled'
+            : undefined;
       checks.push(
         check(
           'default-model.claude',

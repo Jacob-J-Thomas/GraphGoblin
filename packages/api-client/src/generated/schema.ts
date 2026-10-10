@@ -163,10 +163,6 @@ export interface paths {
                                 authenticated: boolean;
                                 problems: string[];
                                 authMethod?: ("claude.ai" | null) | undefined;
-                                /** @enum {string} */
-                                billingMode?: "claude.ai-account" | undefined;
-                                /** @enum {string} */
-                                billingStatus?: "account-dependent" | undefined;
                                 supportedPolicies?: {
                                     /** @enum {string} */
                                     sandbox: "read-only" | "danger-full-access";
@@ -178,10 +174,6 @@ export interface paths {
                                     /** @enum {string} */
                                     authMethod: "claude.ai";
                                     /** @enum {string} */
-                                    billingMode: "claude.ai-account";
-                                    /** @enum {string} */
-                                    billingStatus: "account-dependent";
-                                    /** @enum {string} */
                                     boundary: "builtin-tools" | "unconfined";
                                     /** @enum {string} */
                                     network: "unconfined";
@@ -189,11 +181,6 @@ export interface paths {
                                 models?: {
                                     model: string;
                                     efforts: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max")[];
-                                    /** @enum {string} */
-                                    admission: "supported" | "blocked";
-                                    reasonCode: "BILLING_UNVERIFIED" | null;
-                                    /** @enum {string} */
-                                    billingStatus: "account-dependent" | "unverified";
                                 }[] | undefined;
                                 /** @enum {string} */
                                 harness: "codex" | "claude";
