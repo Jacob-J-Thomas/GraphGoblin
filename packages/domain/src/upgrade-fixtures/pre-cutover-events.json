@@ -1,0 +1,21 @@
+{
+  "progress": [
+    { "item": { "id": "item-1", "type": "command", "summary": "Command completed" } },
+    { "item": { "id": "item-2", "type": "message", "summary": "Message text" } },
+    { "item": { "id": "item-3", "type": "file-change", "summary": "Files changed" } },
+    { "exitCode": 0, "stderr": "", "stdoutBytes": 42 }
+  ],
+  "decisions": [
+    { "strategy": "expression", "route": "pass" },
+    {
+      "strategy": "jev",
+      "classifierModel": "jev",
+      "route": "plannerB",
+      "confidence": 1,
+      "alternatives": [
+        { "route": "plannerA", "confidence": 0 },
+        { "route": "uncertain", "confidence": 0 }
+      ]
+    }
+  ]
+}

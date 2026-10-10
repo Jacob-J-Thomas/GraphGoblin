@@ -169,6 +169,7 @@ export function upgradeRunHistoryV1(
       if (raw.type === 'decision.made' && !current.success) {
         if (typeof raw.nodeId !== 'string' || !decisions.has(raw.nodeId))
           throw new Error('unresolved recorded decision origin');
+        // An empty diagnostics list means no skips were recorded, not proof none occurred.
         const skipped = Array.isArray(raw.skipped) ? raw.skipped : [];
         const diagnostics = skipped.map((entry) => {
           if (!object(entry)) throw new Error('invalid skipped-strategy evidence');
@@ -189,6 +190,17 @@ export function upgradeRunHistoryV1(
         ])
           delete next[key];
         Object.assign(next, converted, { diagnostics });
+      } else if (
+        raw.type === 'node.progress' &&
+        object(raw.progress) &&
+        object(raw.progress.item) &&
+        raw.progress.item.type === 'command' &&
+        !('status' in raw.progress.item)
+      ) {
+        // The frozen schema admits only the exact old id/type/summary projection here.
+        // Current commands require a lifecycle status; generic items can honestly omit it.
+        // Preserve the original command classification in the database audit, never guess status.
+        next.progress = { item: { ...raw.progress.item, type: 'other' } };
       } else if (raw.type === 'node.finished') next.patch = convertPatch(raw, decisions, oldThread);
       else if (raw.type === 'run.queued' && raw.initialThread !== undefined)
         next.initialThread = convertThread(raw.initialThread, decisions);
