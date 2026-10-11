@@ -140,6 +140,72 @@ function Harness({
 }
 
 describe('section JSON mode', () => {
+  it('returns confirmation cancellation to the JSON editor if parent validation disables Apply', async () => {
+    const validation: { message?: string } = {};
+    const props = {
+      path: 'section',
+      label: 'Section JSON',
+      value: [1],
+      schema: z.array(z.number()),
+      explicit: true,
+      onChange: vi.fn(),
+      validateValue: () => validation.message,
+    };
+    const content = (version: number) => (
+      <JsonApplyReviewContext value={() => [{ id: 'e1', description: 'old → target' }]}>
+        <JsonText {...props} validationVersion={version} />
+      </JsonApplyReviewContext>
+    );
+    const view = render(content(0));
+    const user = userEvent.setup();
+    setCode('Section JSON', '[2]');
+    await user.click(screen.getByRole('button', { name: 'Apply JSON' }));
+    validation.message = 'section: Parent rule changed';
+    view.rerender(content(1));
+    expect(screen.getByRole('button', { name: 'Apply JSON' })).toBeDisabled();
+    await user.click(screen.getByRole('button', { name: 'Keep editing JSON' }));
+    expect(screen.getByRole('textbox', { name: 'Section JSON' })).toHaveFocus();
+    expect(getCode('Section JSON')).toBe('[2]');
+    expect(props.onChange).not.toHaveBeenCalled();
+  });
+  it('caches a held candidate across sibling held-input keystrokes and revalidates semantic changes and Apply', async () => {
+    const refine = vi.fn(
+      (config: { section: number[]; amount?: number | undefined }) => config.amount !== 50,
+    );
+    const schema = z
+      .object({
+        section: z.array(z.number()).meta({ jsonEditor: true }),
+        amount: z.number().optional(),
+      })
+      .refine(refine, { message: 'Parent rule' });
+    render(<Harness schema={schema} initial={{ section: [1], amount: 30 }} />);
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Edit as JSON: Section' }));
+    setCode('Section JSON', '[2]');
+    const candidateCalls = () =>
+      refine.mock.calls.filter(([config]) => config.section[0] === 2).length;
+    expect(candidateCalls()).toBe(1);
+    const amount = screen.getByLabelText('Amount');
+    let badInput = true;
+    Object.defineProperty(amount, 'validity', { configurable: true, get: () => ({ badInput }) });
+    fireEvent.input(amount, { target: { value: '' }, data: '-', inputType: 'insertText' });
+    fireEvent.input(amount, { target: { value: '' }, data: 'e', inputType: 'insertText' });
+    expect(candidateCalls()).toBe(1);
+    badInput = false;
+    fireEvent.input(amount, { target: { value: '50' } });
+    expect(candidateCalls()).toBe(2);
+    expect(screen.getByRole('button', { name: 'Apply JSON' })).toBeDisabled();
+    expect(screen.getByText('section: Parent rule')).toBeInTheDocument();
+    fireEvent.input(amount, { target: { value: '40' } });
+    expect(candidateCalls()).toBe(3);
+    expect(screen.getByRole('button', { name: 'Apply JSON' })).toBeEnabled();
+    await user.click(screen.getByRole('button', { name: 'Apply JSON' }));
+    expect(candidateCalls()).toBeGreaterThan(3);
+    expect(JSON.parse(screen.getByTestId('value').textContent)).toEqual({
+      section: [2],
+      amount: 40,
+    });
+  });
   it('keeps parent revalidation in the parent edit without adding undo steps or losing redo', async () => {
     const definition = newLoopDefinition('json history');
     definition.nodes.push({
@@ -402,9 +468,15 @@ describe('section JSON mode', () => {
     await user.click(screen.getByRole('button', { name: 'Edit as JSON: Section' }));
     setCode('Section JSON', '[2]');
     await user.click(screen.getByRole('button', { name: 'Apply JSON' }));
-    expect(screen.getByRole('group', { name: 'Confirm connection removal' })).toHaveTextContent(
-      'old → target',
-    );
+    const confirmation = screen.getByRole('group', { name: 'Confirm connection removal' });
+    expect(confirmation).toHaveFocus();
+    expect(confirmation).toHaveAccessibleName('Confirm connection removal');
+    expect(confirmation).toHaveAccessibleDescription('old → target');
+    await user.tab();
+    expect(screen.getByRole('button', { name: 'Confirm Apply JSON' })).toHaveFocus();
+    await user.tab();
+    expect(screen.getByRole('button', { name: 'Keep editing JSON' })).toHaveFocus();
+    expect(confirmation).toHaveTextContent('old → target');
     expect(spy).not.toHaveBeenCalled();
     await user.click(screen.getByRole('button', { name: 'Apply JSON' }));
     expect(spy).not.toHaveBeenCalled();
@@ -415,6 +487,7 @@ describe('section JSON mode', () => {
       'old → other',
     );
     await user.click(screen.getByRole('button', { name: 'Keep editing JSON' }));
+    expect(screen.getByRole('button', { name: 'Apply JSON' })).toHaveFocus();
     expect(
       screen.queryByRole('group', { name: 'Confirm connection removal' }),
     ).not.toBeInTheDocument();
@@ -658,13 +731,13 @@ describe('typed inputs', () => {
     fireEvent.input(input, { target: { value: '' }, data: '-', inputType: 'insertText' });
     expect(report).toHaveBeenLastCalledWith('amount', {
       message: 'Enter a complete number',
-      text: '1e-',
+      text: '',
       input: 'unparsed text',
     });
     fireEvent.input(input, { target: { value: '' }, inputType: 'deleteContentBackward' });
     expect(report).toHaveBeenLastCalledWith('amount', {
       message: 'Enter a complete number',
-      text: '1e',
+      text: '',
       input: 'unparsed text',
     });
     expect(spy).not.toHaveBeenCalled();
@@ -761,7 +834,7 @@ describe('typed inputs', () => {
       expect(spy).not.toHaveBeenCalled();
       expect(errors['amount']).toEqual({
         message: 'Enter a complete number',
-        text: '-',
+        text: '',
         input: 'unparsed text',
       });
       view.rerender(
@@ -774,8 +847,10 @@ describe('typed inputs', () => {
         />,
       );
       const restored = screen.getByRole('spinbutton', { name: 'Amount' });
-      expect(restored).toHaveValue('-');
-      fireEvent.change(restored, { target: { value: '1e' } });
+      expect(restored).toHaveValue(30);
+      expect(restored).toHaveAttribute('type', 'number');
+      expect(screen.getByRole('alert')).toHaveTextContent('Enter a complete number');
+      expect(restored).toHaveAttribute('aria-invalid', 'true');
       expect(spy).not.toHaveBeenCalled();
       fireEvent.change(restored, { target: { value: '42' } });
       expect(spy).toHaveBeenLastCalledWith({ amount: 42 });

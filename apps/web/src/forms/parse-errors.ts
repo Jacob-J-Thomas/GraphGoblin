@@ -2,10 +2,12 @@ import { createContext, use } from 'react';
 
 /**
  * Held input: unparsed JSON, an incomplete number or schedule, or JSON awaiting explicit Apply.
- * `text` holds the raw input or the serialized builder state. The field keeps the last
+ * `text` holds the raw input or the serialized builder state. Native incomplete numbers hold
+ * only their blocker with empty text, since the browser hides their text and selection; a remount
+ * shows the last valid number with the error still visible. The field keeps the last
  * valid value, so the schema alone never notices; the form reports the text and its error upward,
  * keyed by field path, and the editor keeps both as a blocking issue until the input is complete and applied
- * or the user discards it. Leaving the field does not clear it: coming back shows the input again.
+ * or the user discards it. Leaving the field does not clear its blocker.
  */
 export interface ParseError {
   message: string;

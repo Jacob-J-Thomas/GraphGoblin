@@ -1,5 +1,5 @@
 /** Text-entry fields: strings (plain, multi-line, template, expression) and numbers. */
-import { useId, useRef, useState } from 'react';
+import { useId, useState } from 'react';
 import { HelpText, Input, Textarea } from '../../components/ui/index.js';
 import { CodeField, LanguageTag } from '../CodeField.js';
 import { unwrap, type FieldShape, type Schema } from '../introspect.js';
@@ -158,13 +158,15 @@ export function NumberField({
   const { defaultValue } = unwrap(schema);
   const { required, help } = fieldMeta(schema);
   const parseErrors = useParseErrors();
-  const [draft, setDraft] = useState(() => parseErrors.get(name)?.text);
+  const [draft, setDraft] = useState(() =>
+    parseErrors.get(name)?.message === 'Enter a complete number'
+      ? undefined
+      : parseErrors.get(name)?.text,
+  );
   const [error, setError] = useState(() => parseErrors.get(name)?.message);
   const [nativeIncomplete, setNativeIncomplete] = useState(false);
-  const selectAllRef = useRef(false);
-  // Native number inputs conceal incomplete tokens in `value`. Keep their native editor while
-  // typing; a remount restores held tokens in a text input with the same numeric semantics.
-  const restoredIncomplete = error === 'Enter a complete number' && !nativeIncomplete;
+  // Native number inputs conceal incomplete tokens and their selection. Hold the blocker, not
+  // reconstructed text; a remount shows the last valid number with the blocker still visible.
   if (parseErrors.tracked && error && !parseErrors.errors?.[name]) {
     setDraft(undefined);
     setError(undefined);
@@ -172,17 +174,9 @@ export function NumberField({
   }
   const value =
     typeof field.value === 'number' && Number.isFinite(field.value) ? String(field.value) : '';
-  const edit = (input: HTMLInputElement, event: Event) => {
+  const edit = (input: HTMLInputElement) => {
     const badInput = input.validity.badInput;
-    const { data, inputType } = event as InputEvent;
-    const text = badInput
-      ? typeof data === 'string'
-        ? (selectAllRef.current ? '' : (draft ?? value)) + data
-        : inputType === 'deleteContentBackward'
-          ? (draft ?? '').slice(0, -1)
-          : (draft ?? '')
-      : input.value;
-    selectAllRef.current = false;
+    const text = badInput ? '' : input.value;
     const next = text === '' ? undefined : Number(text);
     const result = schema.safeParse(next);
     const incomplete =
@@ -216,13 +210,7 @@ export function NumberField({
       {(control) => (
         <Input
           {...control}
-          type={restoredIncomplete ? 'text' : 'number'}
-          role={restoredIncomplete ? 'spinbutton' : undefined}
-          aria-valuemin={restoredIncomplete ? shape.min : undefined}
-          aria-valuemax={restoredIncomplete ? shape.max : undefined}
-          aria-valuenow={
-            restoredIncomplete && typeof field.value === 'number' ? field.value : undefined
-          }
+          type="number"
           inputMode={shape.integer ? 'numeric' : 'decimal'}
           step={shape.step ?? (shape.integer ? 1 : 'any')}
           min={shape.min}
@@ -237,13 +225,9 @@ export function NumberField({
           }
           // React's change tracking cannot distinguish successive native badInput tokens from
           // an intentional empty: both expose "". Input events still report each edit.
-          onInput={(e) => edit(e.currentTarget, e.nativeEvent)}
+          onInput={(e) => edit(e.currentTarget)}
           onChange={(e) => {
-            if (e.nativeEvent.type !== 'input') edit(e.currentTarget, e.nativeEvent);
-          }}
-          onKeyDown={(e) => {
-            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a')
-              selectAllRef.current = true;
+            if (e.nativeEvent.type !== 'input') edit(e.currentTarget);
           }}
           onBlur={field.onBlur}
         />

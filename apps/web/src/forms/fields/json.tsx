@@ -5,6 +5,7 @@ import {
   useCallback,
   useEffect,
   useId,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
@@ -51,7 +52,8 @@ function replaceSection(value: unknown, path: readonly string[], next: unknown):
 function validateText(
   text: string,
   schema?: Schema,
-  validateValue?: (value: unknown) => string | undefined,
+  validateValue?: (value: unknown, recheck?: boolean) => string | undefined,
+  recheck = false,
 ): { value?: unknown; error?: string } {
   const parsed = text.trim() === '' ? { ok: true as const, value: undefined } : parseJson(text);
   if (!parsed.ok) return { error: `invalid JSON: ${parsed.error}` };
@@ -64,7 +66,7 @@ function validateText(
     };
   // Validate without filling defaults or rewriting authored strings: the structured form reports
   // the same raw input and the contracts parse it at the save boundary.
-  const error = validateValue?.(parsed.value);
+  const error = validateValue?.(parsed.value, recheck);
   return error ? { error } : { value: parsed.value };
 }
 
@@ -98,21 +100,32 @@ export function JsonText({
   explicit?: boolean;
   onHeldChange?: ((held: boolean) => void) | undefined;
   /** Validate a section replacement in its complete, current form before any write. */
-  validateValue?: ((value: unknown) => string | undefined) | undefined;
+  validateValue?: ((value: unknown, recheck?: boolean) => string | undefined) | undefined;
+  /** Snapshot/token for config read behind the stable validator callback. */
   validationVersion?: unknown;
 }) {
   const parseErrors = useParseErrors();
   const review = use(JsonApplyReviewContext);
   const change = useFormChange();
   const parseErrorId = useId();
+  const confirmationTitleId = useId();
+  const confirmationListId = useId();
+  const confirmationRef = useRef<HTMLDivElement>(null);
+  const applyRef = useRef<HTMLButtonElement>(null);
+  const editorRootRef = useRef<HTMLDivElement>(null);
   // Held text from an earlier visit to this field wins over the last valid value.
   const [stored] = useState(() => parseErrors.get(path));
   const [text, setText] = useState(() => stored?.text ?? prettyJson(value));
   const [ownError, setOwnError] = useState<string | undefined>(stored?.message);
   // The held document stays local, while parent rules always see the current config. Derive
   // their message so a sibling correction updates Apply without another JSON keystroke.
-  const candidate =
-    validateValue && ownError !== undefined ? validateText(text, schema, validateValue) : undefined;
+  const candidate = useMemo(() => {
+    // The validator reads live form values; their semantic snapshot invalidates this memo.
+    void validationVersion;
+    return validateValue && ownError !== undefined
+      ? validateText(text, schema, validateValue)
+      : undefined;
+  }, [text, schema, validateValue, validationVersion, ownError]);
   const error = candidate
     ? (candidate.error ?? (sameJson(candidate.value, value) ? undefined : PENDING_JSON))
     : ownError;
@@ -120,6 +133,9 @@ export function JsonText({
     text: string;
     connections: readonly RemovedConnection[];
   }>();
+  useEffect(() => {
+    if (confirmation) confirmationRef.current?.focus();
+  }, [confirmation]);
   useEffect(() => onHeldChange?.(error !== undefined), [error, onHeldChange]);
   const formatted = prettyJson(value);
   const [lastValue, setLastValue] = useState(formatted);
@@ -172,7 +188,7 @@ export function JsonText({
     );
   }, [validationVersion, text, validateValue, parseErrors, path, error]);
   const apply = (confirmed = false) => {
-    const parsed = validateText(text, schema, validateValue);
+    const parsed = validateText(text, schema, validateValue, true);
     if (parsed.error) {
       fail(text, parsed.error);
       return;
@@ -192,7 +208,7 @@ export function JsonText({
     });
   };
   return (
-    <div className="grid min-w-0 flex-1">
+    <div ref={editorRootRef} className="grid min-w-0 flex-1">
       <CodeEditor
         language="json"
         label={label}
@@ -244,6 +260,7 @@ export function JsonText({
       {explicit ? (
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <Button
+            ref={applyRef}
             size="sm"
             disabled={error !== undefined && error !== PENDING_JSON}
             onClick={() => apply()}
@@ -270,12 +287,18 @@ export function JsonText({
       ) : null}
       {confirmation ? (
         <div
+          ref={confirmationRef}
           role="group"
-          aria-label="Confirm connection removal"
+          tabIndex={-1}
+          aria-labelledby={confirmationTitleId}
+          aria-describedby={confirmationListId}
           className="mt-2 grid min-w-0 gap-2"
         >
+          <HelpText id={confirmationTitleId} tone="warn">
+            Confirm connection removal
+          </HelpText>
           <HelpText tone="warn">Applying this JSON will remove these connections:</HelpText>
-          <ul className="min-w-0 break-words text-sm">
+          <ul id={confirmationListId} className="min-w-0 break-words text-sm">
             {confirmation.connections.map((connection) => (
               <li key={connection.id}>{connection.description}</li>
             ))}
@@ -284,7 +307,18 @@ export function JsonText({
             <Button size="sm" onClick={() => apply(true)}>
               Confirm Apply JSON
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => setConfirmation(undefined)}>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                setConfirmation(undefined);
+                if (applyRef.current?.disabled)
+                  editorRootRef.current
+                    ?.querySelector<HTMLElement>('[contenteditable="true"]')
+                    ?.focus();
+                else applyRef.current?.focus();
+              }}
+            >
               Keep editing JSON
             </Button>
           </div>
@@ -304,22 +338,33 @@ export function JsonSection({
   const field = useField(name, 'commit');
   const { getValues } = useFormContext();
   const scope = use(FormScopeContext)!;
+  const validationCacheRef = useRef<{
+    schema: Schema;
+    candidate: unknown;
+    error: string | undefined;
+  }>(null);
   const validateValue = useCallback(
-    (next: unknown) => {
+    (next: unknown, recheck = false) => {
       const candidate = stripUnset(replaceSection(getValues(), name.split('.'), next));
+      const cached = validationCacheRef.current;
+      if (!recheck && cached?.schema === scope.rootSchema && sameJson(cached.candidate, candidate))
+        return cached.error;
       const result = scope.rootSchema.safeParse(candidate);
-      if (result.success) return undefined;
-      return result.error.issues
-        .map((issue) => {
-          const path = issue.path.map(String).join('.');
-          const relative = path.startsWith(`${name}.`)
-            ? path.slice(name.length + 1)
-            : path === name || path === ''
-              ? 'section'
-              : `section (config.${path})`;
-          return `${relative}: ${issue.message}`;
-        })
-        .join('; ');
+      const error = result.success
+        ? undefined
+        : result.error.issues
+            .map((issue) => {
+              const path = issue.path.map(String).join('.');
+              const relative = path.startsWith(`${name}.`)
+                ? path.slice(name.length + 1)
+                : path === name || path === ''
+                  ? 'section'
+                  : `section (config.${path})`;
+              return `${relative}: ${issue.message}`;
+            })
+            .join('; ');
+      validationCacheRef.current = { schema: scope.rootSchema, candidate, error };
+      return error;
     },
     [getValues, name, scope.rootSchema],
   );
@@ -338,7 +383,16 @@ export function JsonSection({
   const open = requestedOpen && descendants.length === 0;
   // Only an open section JSON editor needs full-config updates for parent rules. Structured
   // panels keep their narrow subscriptions; fixing a sibling also refreshes the held message.
-  const validationVersion = useWatch({ disabled: !open });
+  const validationVersion = useWatch({
+    disabled: !open,
+    // The section's held replacement wins over its structured fields. Ignore those writes and
+    // cloned snapshots; only semantic changes elsewhere can change parent validation.
+    compute: useCallback(
+      (config: unknown) =>
+        JSON.stringify(stripUnset(replaceSection(config, name.split('.'), undefined))),
+      [name],
+    ),
+  });
   useEffect(() => {
     if (errors.get(name) && !(storedOpen ?? ownOpen)) onOpenChange?.(true);
   }, [errors, name, storedOpen, onOpenChange, ownOpen]);
