@@ -3,7 +3,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { ModuleKind, ScriptTarget, transpileModule } from 'typescript';
 import type { APIRequestContext, Locator, Page } from '@playwright/test';
@@ -24,7 +24,6 @@ import {
   test,
 } from './fixtures.js';
 
-const evidence = resolve('../../docs/qa/2026-10-10-issue-170');
 const baselineCommit = '6976aa90f9c04bdef04b75ba14d297f58cdee8ba';
 let baselineDir: string | undefined;
 let baseline: {
@@ -215,8 +214,8 @@ async function cancel(editor: Locator) {
   await sectionOf(editor).getByRole('button', { name: 'Cancel JSON', exact: true }).click();
 }
 async function screenshot(dialog: Locator, name: string) {
-  await mkdir(evidence, { recursive: true });
-  await dialog.screenshot({ path: resolve(evidence, `${name}.png`) });
+  // Preserve the independent QA's committed evidence; reruns write only test artifacts.
+  await dialog.screenshot({ path: test.info().outputPath(`${name}.png`) });
 }
 function at(value: unknown, path: string): unknown {
   return path
@@ -382,8 +381,13 @@ for (const [kind, answer] of pairs) {
     else (renamed['bands'] as Config[])[0]!['id'] = 'renamed';
     await replace(page, editor, JSON.stringify(renamed));
     await apply(editor);
+    await expect(
+      sectionOf(editor).getByRole('group', { name: 'Confirm connection removal' }),
+    ).toContainText('out → done');
+    expect((await saved(request, id)).edges.find((e) => e.id === 'e2')!.from.port).toBe('out');
+    await sectionOf(editor).getByRole('button', { name: 'Confirm Apply JSON' }).click();
     await expect.poll(async () => (await config(request, id))['answer']).toEqual(renamed);
-    expect((await saved(request, id)).edges.find((e) => e.id === 'e2')!.from.port).toBe('renamed');
+    expect((await saved(request, id)).edges.some((e) => e.id === 'e2')).toBe(false);
     await dialog.getByRole('button', { name: 'Use structured editor for Answer' }).click();
     await expect(prose).toHaveValue('日本語 🧪\nsecond line');
     const evaluationPath = kind === 'expression' ? 'evaluation.jsonata' : 'evaluation.question';
@@ -460,6 +464,9 @@ for (const [kind, answer] of pairs) {
     await page.reload();
     const reopened = await openNode(page, 'approve');
     expect(JSON.stringify(await config(request, id))).toBe(JSON.stringify(final));
+    // JSON removed the old route's edge; reconnect its replacement explicitly before publishing.
+    await reopened.getByLabel('Output', { exact: true }).selectOption('renamed');
+    await reopened.getByRole('button', { name: 'Connect', exact: true }).click();
     if (answer.type !== 'score') {
       await reopened.getByLabel('Output', { exact: true }).selectOption('no');
       await reopened.getByRole('button', { name: 'Connect', exact: true }).click();
@@ -793,18 +800,29 @@ for (const origin of ['canvas', 'title', 'publish'] as const) {
   });
 }
 
-test('I2 required routes are counted when hidden by an unselected tab', async ({
+test('I2 Settings counts errors while Context is selected and reopening starts on Settings', async ({
   page,
   request,
 }) => {
-  // D2: tabs count errors only; hidden required answer/route controls have no visible count.
-  test.fail();
+  // D2 declined: valid required controls need no indicator; every opening starts on Settings.
   const id = await create(request, 'decision', decision());
   await page.goto(`/app/loops/${id}/edit`);
   const dialog = await openNode(page, 'approve');
   await selectTab(dialog, 'Context');
   await expect(dialog.getByRole('radiogroup', { name: 'Answer type' })).toBeHidden();
-  await expect(dialog.getByRole('tab', { name: /^Settings/ })).toContainText(/\d/);
+  await expect(dialog.getByRole('tab', { name: 'Settings', exact: true })).toBeVisible();
+  await expect(dialog.getByRole('tab', { name: /^Context.*1 set$/ })).toBeVisible();
+  await selectTab(dialog, 'Settings');
+  await dialog.locator('[data-field="answer.options.0.label"] input').fill('');
+  await selectTab(dialog, 'Context');
+  await expect(dialog.getByRole('tab', { name: /^Settings.*1 error$/ })).toBeVisible();
+  await closeNode(page);
+  const reopened = await openNode(page, 'approve');
+  await expect(reopened.getByRole('tab', { name: /^Settings/ })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
+  await expect(reopened.getByRole('radiogroup', { name: 'Answer type' })).toBeVisible();
 });
 
 test('I3 history focus: Context switches and JSON Apply stay reachable through undo and redo remounts', async ({
@@ -1215,8 +1233,7 @@ test('I6 incomplete optional numeric text keeps the last applied number in every
   page,
   request,
 }) => {
-  // D1: native badInput exposes value=""; the optional-number path treats it as a valid deletion.
-  test.fail();
+  // D1 regression: native badInput must retain the applied number and block publication.
   const id = await create(request, 'inference', { prompt: { template: 'Hi' }, timeoutSeconds: 30 });
   await page.goto(`/app/loops/${id}/edit`);
   const dialog = await openNode(page, 'approve');
@@ -1324,13 +1341,12 @@ test('inference Claude and Codex: family selection, policy, advanced model/effor
   await expandAll(dialog);
   const overrides = await jsonEditor(dialog, 'Config overrides');
   await replace(page, overrides, '{"authored":true}');
-  // Cross-field policy remains a full-form error even though the section itself is a valid record.
-  await apply(overrides);
+  // Parent policy refuses the locally valid record before it can become applied state.
+  await expect(sectionOf(overrides).getByRole('button', { name: 'Apply JSON' })).toBeDisabled();
   await expect(
-    dialog
-      .getByRole('alert')
-      .filter({ hasText: 'Claude raw configuration overrides are unsupported' })
-      .first(),
+    sectionOf(overrides).getByText('Claude raw configuration overrides are unsupported', {
+      exact: false,
+    }),
   ).toBeVisible();
   await closeNode(page);
   await page.getByRole('button', { name: 'Publish', exact: true }).click();
@@ -1381,6 +1397,10 @@ for (const kind of ['expression', 'classifier', 'llm']) {
     const removed = { ...added, options: added.options.filter((row) => row.id !== 'out') };
     await replace(page, editor, JSON.stringify(removed));
     await apply(editor);
+    await expect(
+      sectionOf(editor).getByRole('group', { name: 'Confirm connection removal' }),
+    ).toContainText('out → done');
+    await sectionOf(editor).getByRole('button', { name: 'Confirm Apply JSON' }).click();
     await expect
       .poll(async () => (await saved(request, id)).edges.some((e) => e.id === 'e2'))
       .toBe(false);
@@ -1406,8 +1426,7 @@ for (const [label, value] of [
     page,
     request,
   }) => {
-    // D3: JsonSection validates the local record/object, bypassing InferenceConfig's Claude refinement.
-    test.fail();
+    // D3 regression: section replacements must satisfy the whole node's parent refinements.
     const app = await control(request, '/apps', { claude: true });
     const url = String(app['url']);
     const id = await create(
@@ -1468,6 +1487,7 @@ test('I4 valid unapplied JSON is pending, survives reopening, blocks Publish and
   await closeNode(page);
   await page.getByRole('button', { name: 'Publish', exact: true }).click();
   await expect(page.getByText('Publish failed')).toBeVisible();
+  await expect(page.getByText(/JSON not applied yet; apply or cancel it first/)).toBeVisible();
   expect((await config(request, id))['capabilities']).toEqual({});
   dialog = await openNode(page, 'approve');
   await expandAll(dialog);
@@ -1515,11 +1535,27 @@ test('I5 Score: 200 unicode rubric anchors roundtrip; split, connect, rename and
   const renamed = { ...split, bands: [split.bands[0], { ...split.bands[1], id: 'top' }] };
   await replace(page, editor, JSON.stringify(renamed));
   await apply(editor);
+  await expect(
+    sectionOf(editor).getByRole('group', { name: 'Confirm connection removal' }),
+  ).toContainText('high → done');
+  await sectionOf(editor).getByRole('button', { name: 'Confirm Apply JSON' }).click();
+  await expect
+    .poll(async () =>
+      (await saved(request, id)).edges.some((e) => e.from.port === 'high' || e.from.port === 'top'),
+    )
+    .toBe(false);
+  // Reconnect explicitly: the following removal still exercises an applied connection on top.
+  await dialog.getByLabel('Output', { exact: true }).selectOption('top');
+  await dialog.getByRole('button', { name: 'Connect', exact: true }).click();
   await expect
     .poll(async () => (await saved(request, id)).edges.some((e) => e.from.port === 'top'))
     .toBe(true);
   await replace(page, editor, JSON.stringify(large));
   await apply(editor);
+  await expect(
+    sectionOf(editor).getByRole('group', { name: 'Confirm connection removal' }),
+  ).toContainText('top → done');
+  await sectionOf(editor).getByRole('button', { name: 'Confirm Apply JSON' }).click();
   await expect
     .poll(async () => (await saved(request, id)).edges.some((e) => e.from.port === 'top'))
     .toBe(false);

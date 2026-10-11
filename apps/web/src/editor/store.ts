@@ -619,9 +619,13 @@ export const useEditorStore = create<EditorState>((set, get) => {
       const { [scope]: _scope, ...rest } = s.fieldErrors;
       const fieldErrors = Object.keys(scoped).length > 0 ? { ...rest, [scope]: scoped } : rest;
       const { definition } = s;
+      // Parent validation can refresh the message/classification of the same held document.
+      // That feedback is not an authored edit and must not add steps or erase redo on remount.
+      const messageOnly =
+        previous !== undefined && error !== undefined && previous.text === error.text;
       set({
         fieldErrors,
-        ...(definition
+        ...(definition && !messageOnly
           ? recordStep(
               historyOf(s),
               { definition, fieldErrors: s.fieldErrors, decisionRoutes: s.decisionRoutes },

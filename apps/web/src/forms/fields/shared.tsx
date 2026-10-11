@@ -72,9 +72,9 @@ export const FieldOverridesContext = createContext<FieldOverrides>({});
 export const FieldLabelsContext = createContext<Readonly<Record<string, string>>>({});
 
 /** The active form schema and a unique scope for controls that describe sibling fields. */
-export const FormScopeContext = createContext<{ schema: Schema; id: string } | undefined>(
-  undefined,
-);
+export const FormScopeContext = createContext<
+  { schema: Schema; rootSchema: Schema; id: string } | undefined
+>(undefined);
 
 /**
  * `useController` with an explicit "unset" state. react-hook-form shows a field's initial value

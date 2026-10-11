@@ -1,7 +1,7 @@
 import { createContext, use } from 'react';
 
 /**
- * Held input: unparsed JSON, an unfinished schedule, or valid JSON awaiting explicit Apply.
+ * Held input: unparsed JSON, an incomplete number or schedule, or JSON awaiting explicit Apply.
  * `text` holds the raw input or the serialized builder state. The field keeps the last
  * valid value, so the schema alone never notices; the form reports the text and its error upward,
  * keyed by field path, and the editor keeps both as a blocking issue until the input is complete and applied

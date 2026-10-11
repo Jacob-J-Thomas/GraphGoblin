@@ -312,7 +312,7 @@ const SchemaFormBindings = memo(function SchemaFormBindings({
                 <FieldOverridesContext value={fieldOverrides ?? NO_FIELD_OVERRIDES}>
                   <UnionPickersContext value={unionPickers ?? NO_UNION_PICKERS}>
                     <ProblemPathsContext value={problems ?? NO_PROBLEMS}>
-                      <FormScopeContext value={{ schema: variantSchema, id }}>
+                      <FormScopeContext value={{ schema: variantSchema, rootSchema: schema, id }}>
                         <FormProvider {...form}>
                           <form
                             aria-label={label}

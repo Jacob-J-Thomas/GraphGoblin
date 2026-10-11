@@ -1,5 +1,5 @@
 /** Text-entry fields: strings (plain, multi-line, template, expression) and numbers. */
-import { useId, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { HelpText, Input, Textarea } from '../../components/ui/index.js';
 import { CodeField, LanguageTag } from '../CodeField.js';
 import { unwrap, type FieldShape, type Schema } from '../introspect.js';
@@ -10,6 +10,8 @@ const LANGUAGE_TAG: Record<'template' | 'expression', string> = {
   template: 'Liquid',
   expression: 'JSONata',
 };
+
+const COMPLETE_NUMBER = /^[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?$/i;
 
 export interface StringControlProps {
   schema: Schema;
@@ -158,12 +160,44 @@ export function NumberField({
   const parseErrors = useParseErrors();
   const [draft, setDraft] = useState(() => parseErrors.get(name)?.text);
   const [error, setError] = useState(() => parseErrors.get(name)?.message);
+  const [nativeIncomplete, setNativeIncomplete] = useState(false);
+  const selectAllRef = useRef(false);
+  // Native number inputs conceal incomplete tokens in `value`. Keep their native editor while
+  // typing; a remount restores held tokens in a text input with the same numeric semantics.
+  const restoredIncomplete = error === 'Enter a complete number' && !nativeIncomplete;
   if (parseErrors.tracked && error && !parseErrors.errors?.[name]) {
     setDraft(undefined);
     setError(undefined);
+    setNativeIncomplete(false);
   }
   const value =
     typeof field.value === 'number' && Number.isFinite(field.value) ? String(field.value) : '';
+  const edit = (input: HTMLInputElement, event: Event) => {
+    const badInput = input.validity.badInput;
+    const { data, inputType } = event as InputEvent;
+    const text = badInput
+      ? typeof data === 'string'
+        ? (selectAllRef.current ? '' : (draft ?? value)) + data
+        : inputType === 'deleteContentBackward'
+          ? (draft ?? '').slice(0, -1)
+          : (draft ?? '')
+      : input.value;
+    selectAllRef.current = false;
+    const next = text === '' ? undefined : Number(text);
+    const result = schema.safeParse(next);
+    const incomplete =
+      badInput || (text !== '' && (!COMPLETE_NUMBER.test(text) || !Number.isFinite(next)));
+    const message = incomplete
+      ? 'Enter a complete number'
+      : result.success
+        ? undefined
+        : result.error.issues.map((issue) => issue.message).join('; ');
+    parseErrors.report(name, message ? { message, text, input: 'unparsed text' } : undefined);
+    setError(message);
+    setDraft(message ? text : undefined);
+    setNativeIncomplete(badInput);
+    if (!message) field.onChange(next);
+  };
   return (
     <Row
       label={label}
@@ -182,12 +216,18 @@ export function NumberField({
       {(control) => (
         <Input
           {...control}
-          type="number"
+          type={restoredIncomplete ? 'text' : 'number'}
+          role={restoredIncomplete ? 'spinbutton' : undefined}
+          aria-valuemin={restoredIncomplete ? shape.min : undefined}
+          aria-valuemax={restoredIncomplete ? shape.max : undefined}
+          aria-valuenow={
+            restoredIncomplete && typeof field.value === 'number' ? field.value : undefined
+          }
           inputMode={shape.integer ? 'numeric' : 'decimal'}
           step={shape.step ?? (shape.integer ? 1 : 'any')}
           min={shape.min}
           max={shape.max}
-          value={draft ?? value}
+          value={nativeIncomplete ? '' : (draft ?? value)}
           placeholder={typeof defaultValue === 'number' ? String(defaultValue) : undefined}
           aria-invalid={error ? true : control['aria-invalid']}
           aria-describedby={
@@ -195,20 +235,15 @@ export function NumberField({
               .filter(Boolean)
               .join(' ') || undefined
           }
+          // React's change tracking cannot distinguish successive native badInput tokens from
+          // an intentional empty: both expose "". Input events still report each edit.
+          onInput={(e) => edit(e.currentTarget, e.nativeEvent)}
           onChange={(e) => {
-            const text = e.target.value;
-            const next = text === '' ? undefined : Number(text);
-            const result = schema.safeParse(next);
-            const message = result.success
-              ? undefined
-              : result.error.issues.map((issue) => issue.message).join('; ');
-            parseErrors.report(
-              name,
-              message ? { message, text, input: 'unparsed text' } : undefined,
-            );
-            setError(message);
-            setDraft(message ? text : undefined);
-            if (!message) field.onChange(next);
+            if (e.nativeEvent.type !== 'input') edit(e.currentTarget, e.nativeEvent);
+          }}
+          onKeyDown={(e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a')
+              selectAllRef.current = true;
           }}
           onBlur={field.onBlur}
         />

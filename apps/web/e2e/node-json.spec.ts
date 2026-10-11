@@ -413,3 +413,45 @@ test('section JSON refuses hidden held input and focuses the first field without
     { op: 'set', path: '/vars/topic', value: { kind: 'literal', value: 1 } },
   ]);
 });
+
+test('incomplete numeric input survives tabs, session reopen and history; correction and deliberate clear apply', async ({
+  page,
+  request,
+}) => {
+  const id = await create(request, 'inference', { prompt: { template: 'Hi' }, timeoutSeconds: 30 });
+  await page.goto(`/app/loops/${id}/edit`);
+  let dialog = await openNode(page, 'approve');
+  await openAdvanced(dialog);
+  const field = dialog.getByRole('spinbutton', { name: 'Timeout seconds' });
+  await field.focus();
+  await page.keyboard.press('ControlOrMeta+A');
+  await field.pressSequentially('-');
+  await expect(
+    dialog.getByRole('alert').filter({ hasText: 'Enter a complete number' }),
+  ).toBeVisible();
+  await expect(dialog.getByRole('button', { name: /^Advanced/ })).toContainText('1 error');
+  await dialog.getByRole('tab', { name: /^Context/ }).click();
+  await expect(dialog.getByRole('tab', { name: /^Settings.*1 error$/ })).toBeVisible();
+  await closeNode(page);
+  await page.getByRole('button', { name: 'Publish', exact: true }).click();
+  await expect(page.getByText('Publish failed')).toBeVisible();
+  expect((await config(request, id))['timeoutSeconds']).toBe(30);
+  dialog = await openNode(page, 'approve');
+  await openAdvanced(dialog);
+  await expect(field).toHaveValue('-');
+  await expect(field).toHaveAttribute('inputmode', 'numeric');
+  await dialog.getByRole('tab', { name: /^Settings/ }).focus();
+  await page.keyboard.press('Control+z');
+  await expect(field).toHaveValue('30');
+  await page.keyboard.press('Control+Shift+z');
+  await expect(field).toHaveValue('-');
+  await field.fill('45');
+  await expect(field).toHaveAttribute('type', 'number');
+  await expect.poll(async () => (await config(request, id))['timeoutSeconds']).toBe(45);
+  await field.fill('');
+  await expect.poll(async () => (await config(request, id))['timeoutSeconds']).toBeUndefined();
+  await expect(dialog.getByText('Enter a complete number')).toHaveCount(0);
+  await closeNode(page);
+  await page.getByRole('button', { name: 'Publish', exact: true }).click();
+  await expect(page.getByText('Published version 1.')).toBeVisible();
+});

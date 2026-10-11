@@ -1,6 +1,15 @@
 /** JSON fields: live opaque values, or validated sections with explicit Apply/Cancel. */
-import { createContext, use, useEffect, useId, useRef, useState, type ReactNode } from 'react';
-import { useFormContext } from 'react-hook-form';
+import {
+  createContext,
+  use,
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
+import { useFormContext, useWatch } from 'react-hook-form';
 import { Button, HelpText } from '../../components/ui/index.js';
 import { cn, parseJson, prettyJson } from '../../lib/utils.js';
 import { CodeEditor } from '../CodeEditor.js';
@@ -13,7 +22,7 @@ import { stripUnset } from '../unset.js';
 import { sameJson } from '../layout.js';
 import { focusField } from '../../editor/focus-field.js';
 import { CapabilitySectionNotice } from './suggestions.js';
-import { fieldMeta, Row, useField, type FieldProps } from './shared.js';
+import { fieldMeta, FormScopeContext, Row, useField, type FieldProps } from './shared.js';
 
 const PENDING_JSON = 'Choose Apply JSON or Cancel JSON to finish this edit.';
 
@@ -27,7 +36,23 @@ export const JsonApplyReviewContext = createContext<
   (path: string, value: unknown) => readonly RemovedConnection[]
 >(() => []);
 
-function validateText(text: string, schema?: Schema): { value?: unknown; error?: string } {
+/** Replace one section in a fresh candidate, never in the live form or store. */
+function replaceSection(value: unknown, path: readonly string[], next: unknown): unknown {
+  const [key, ...rest] = path;
+  if (key === undefined) return next;
+  if (Array.isArray(value))
+    return value.map((item: unknown, index) =>
+      String(index) === key ? replaceSection(item, rest, next) : item,
+    );
+  const object = value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
+  return { ...object, [key]: replaceSection(object[key], rest, next) };
+}
+
+function validateText(
+  text: string,
+  schema?: Schema,
+  validateValue?: (value: unknown) => string | undefined,
+): { value?: unknown; error?: string } {
   const parsed = text.trim() === '' ? { ok: true as const, value: undefined } : parseJson(text);
   if (!parsed.ok) return { error: `invalid JSON: ${parsed.error}` };
   const result = schema?.safeParse(parsed.value);
@@ -39,7 +64,8 @@ function validateText(text: string, schema?: Schema): { value?: unknown; error?:
     };
   // Validate without filling defaults or rewriting authored strings: the structured form reports
   // the same raw input and the contracts parse it at the save boundary.
-  return { value: parsed.value };
+  const error = validateValue?.(parsed.value);
+  return error ? { error } : { value: parsed.value };
 }
 
 export function JsonText({
@@ -55,6 +81,8 @@ export function JsonText({
   schema,
   explicit = false,
   onHeldChange,
+  validateValue,
+  validationVersion,
 }: {
   path: string;
   label: string;
@@ -69,6 +97,9 @@ export function JsonText({
   schema?: Schema | undefined;
   explicit?: boolean;
   onHeldChange?: ((held: boolean) => void) | undefined;
+  /** Validate a section replacement in its complete, current form before any write. */
+  validateValue?: ((value: unknown) => string | undefined) | undefined;
+  validationVersion?: unknown;
 }) {
   const parseErrors = useParseErrors();
   const review = use(JsonApplyReviewContext);
@@ -77,7 +108,14 @@ export function JsonText({
   // Held text from an earlier visit to this field wins over the last valid value.
   const [stored] = useState(() => parseErrors.get(path));
   const [text, setText] = useState(() => stored?.text ?? prettyJson(value));
-  const [error, setError] = useState<string | undefined>(stored?.message);
+  const [ownError, setOwnError] = useState<string | undefined>(stored?.message);
+  // The held document stays local, while parent rules always see the current config. Derive
+  // their message so a sibling correction updates Apply without another JSON keystroke.
+  const candidate =
+    validateValue && ownError !== undefined ? validateText(text, schema, validateValue) : undefined;
+  const error = candidate
+    ? (candidate.error ?? (sameJson(candidate.value, value) ? undefined : PENDING_JSON))
+    : ownError;
   const [confirmation, setConfirmation] = useState<{
     text: string;
     connections: readonly RemovedConnection[];
@@ -99,26 +137,42 @@ export function JsonText({
   // Discarded from outside (the validation panel): show the last valid value again.
   if (parseErrors.tracked && error !== undefined && parseErrors.errors?.[path] === undefined) {
     setText(prettyJson(value));
-    setError(undefined);
+    setOwnError(undefined);
   }
-  const fail = (next: string, message: string | undefined) => {
-    // Store first: a render that sees the local error must also see the stored entry, or it would
-    // read as discarded.
+  const fail = useCallback(
+    (next: string, message: string | undefined) => {
+      // Store first: a render that sees the local error must also see the stored entry, or it would
+      // read as discarded.
+      parseErrors.report(
+        path,
+        message === undefined
+          ? undefined
+          : {
+              message,
+              text: next,
+              input: message === PENDING_JSON ? 'unapplied JSON' : 'unparsed text',
+            },
+      );
+      setOwnError(message);
+      onHeldChange?.(message !== undefined);
+    },
+    [parseErrors, path, onHeldChange],
+  );
+  useEffect(() => {
+    if (!validateValue) return;
     parseErrors.report(
       path,
-      message === undefined
+      error === undefined
         ? undefined
         : {
-            message,
-            text: next,
-            input: message === PENDING_JSON ? 'unapplied JSON' : 'unparsed text',
+            message: error,
+            text,
+            input: error === PENDING_JSON ? 'unapplied JSON' : 'unparsed text',
           },
     );
-    setError(message);
-    onHeldChange?.(message !== undefined);
-  };
+  }, [validationVersion, text, validateValue, parseErrors, path, error]);
   const apply = (confirmed = false) => {
-    const parsed = validateText(text, schema);
+    const parsed = validateText(text, schema, validateValue);
     if (parsed.error) {
       fail(text, parsed.error);
       return;
@@ -152,7 +206,7 @@ export function JsonText({
         onChange={(next) => {
           setText(next);
           setConfirmation(undefined);
-          const parsed = validateText(next, schema);
+          const parsed = validateText(next, schema, validateValue);
           if (parsed.error) fail(next, parsed.error);
           else if (explicit) fail(next, sameJson(parsed.value, value) ? undefined : PENDING_JSON);
           else {
@@ -178,7 +232,7 @@ export function JsonText({
                 setText(prettyJson(value));
                 setConfirmation(undefined);
                 parseErrors.discard(path);
-                setError(undefined);
+                setOwnError(undefined);
                 onHeldChange?.(false);
               }}
             >
@@ -204,7 +258,7 @@ export function JsonText({
                 setText(formatted);
                 setConfirmation(undefined);
                 parseErrors.discard(path);
-                setError(undefined);
+                setOwnError(undefined);
                 onHeldChange?.(false);
               })
             }
@@ -249,6 +303,26 @@ export function JsonSection({
 }: FieldProps & { children: ReactNode }) {
   const field = useField(name, 'commit');
   const { getValues } = useFormContext();
+  const scope = use(FormScopeContext)!;
+  const validateValue = useCallback(
+    (next: unknown) => {
+      const candidate = stripUnset(replaceSection(getValues(), name.split('.'), next));
+      const result = scope.rootSchema.safeParse(candidate);
+      if (result.success) return undefined;
+      return result.error.issues
+        .map((issue) => {
+          const path = issue.path.map(String).join('.');
+          const relative = path.startsWith(`${name}.`)
+            ? path.slice(name.length + 1)
+            : path === name || path === ''
+              ? 'section'
+              : `section (config.${path})`;
+          return `${relative}: ${issue.message}`;
+        })
+        .join('; ');
+    },
+    [getValues, name, scope.rootSchema],
+  );
   // The parent controller subscribes to whole-section writes, not descendant keystrokes.
   // Read the live section when opening/changing mode so structured child edits are included.
   const value = stripUnset(getValues(name));
@@ -262,6 +336,9 @@ export function JsonSection({
   const [held, setHeld] = useState(() => errors.get(name) !== undefined);
   const requestedOpen = (storedOpen ?? ownOpen) || errors.get(name) !== undefined;
   const open = requestedOpen && descendants.length === 0;
+  // Only an open section JSON editor needs full-config updates for parent rules. Structured
+  // panels keep their narrow subscriptions; fixing a sibling also refreshes the held message.
+  const validationVersion = useWatch({ disabled: !open });
   useEffect(() => {
     if (errors.get(name) && !(storedOpen ?? ownOpen)) onOpenChange?.(true);
   }, [errors, name, storedOpen, onOpenChange, ownOpen]);
@@ -333,6 +410,8 @@ export function JsonSection({
               id={control.id}
               value={value}
               schema={sectionSchema}
+              validateValue={validateValue}
+              validationVersion={validationVersion}
               explicit
               onChange={(next) => field.onChange(withUnsetFields(sectionSchema, next))}
               onHeldChange={setHeld}
