@@ -1,6 +1,10 @@
 import { useEffect } from 'react';
 import { flushSync } from 'react-dom';
-import { DISCLOSURE_PANEL_SELECTOR, revealDisclosures } from '../components/ui/index.js';
+import {
+  DISCLOSURE_PANEL_SELECTOR,
+  revealTabs,
+  revealDisclosures,
+} from '../components/ui/index.js';
 import { canvasFocusTarget } from './canvas-focus.js';
 import { focusableIn, focusField, groupFocus } from './focus-field.js';
 import { useEditorStore } from './store.js';
@@ -259,7 +263,10 @@ export function runHistory(direction: HistoryDirection): void {
       (el) => el.getAttribute('data-field') === restoredPath,
     );
     // The remounted form starts with its disclosures collapsed; the control was in an open one.
-    if (again) revealDisclosures(again);
+    if (again) {
+      revealTabs(again);
+      revealDisclosures(again);
+    }
     const target = again ? findAgain(again, inField, true) : undefined;
     if (again && target) {
       groupFocus(target, again).focus();

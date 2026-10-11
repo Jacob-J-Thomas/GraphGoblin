@@ -529,6 +529,7 @@ export function NodeEditorDialog({
   return (
     <Dialog
       open
+      className="lg:w-[min(52rem,calc(100vw-2rem))] xl:w-[min(64rem,calc(100vw-2rem))]"
       onClose={requestClose}
       icon={<KindChip kind={node.kind} />}
       actions={

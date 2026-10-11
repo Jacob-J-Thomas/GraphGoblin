@@ -116,8 +116,7 @@ describe('field metadata', () => {
     expect(fieldMeta(NodeConfigSchemas.mutate.shape.operations).collapseItems).toBe(true);
     expect(fieldMeta(InferenceConfigSchema.shape.input)).toMatchObject({
       collapseItems: true,
-      advanced: true,
-      group: 'Context',
+      context: true,
     });
   });
 

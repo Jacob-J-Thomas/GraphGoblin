@@ -20,6 +20,7 @@ async function instance(request: APIRequestContext): Promise<Instance> {
 }
 
 interface EndpointRequest {
+  type: 'choice' | 'noul' | 'score';
   method: string;
   url: string;
   model: string;
@@ -360,6 +361,7 @@ test('a decision selects the classifier, publishes, and runs against its endpoin
   });
   expect(await endpointRequests(request, target.endpoint)).toEqual([
     {
+      type: 'choice',
       method: 'POST',
       url: '/v1/systemone',
       model: 'kev-latest',

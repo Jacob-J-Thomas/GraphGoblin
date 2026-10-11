@@ -57,4 +57,5 @@ export {
   type PanelOverlay,
 } from './side-panel.js';
 export { Switch, type SwitchProps } from './switch.js';
+export { Tabs, TAB_PANEL_SELECTOR, revealTabs } from './tabs.js';
 export { Table, Td, Th, type TableStack } from './table.js';

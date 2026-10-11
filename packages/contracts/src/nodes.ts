@@ -249,6 +249,8 @@ export const InferenceConfigSchema = z
     model: ModelNameSchema.optional().meta(
       field('Model; inherits within this harness from loop, owner, then process defaults.', {
         control: 'model',
+        advanced: true,
+        group: 'Model',
       }),
     ),
     effort: EffortSchema.optional().meta(
@@ -256,6 +258,8 @@ export const InferenceConfigSchema = z
         'Reasoning effort; inherits within this harness like the model. Catalog effort is guidance only.',
         {
           control: 'effort',
+          advanced: true,
+          group: 'Model',
         },
       ),
     ),
@@ -267,8 +271,7 @@ export const InferenceConfigSchema = z
       .meta(field('Liquid template rendered against the thread.')),
     input: MutationListSchema.default([]).meta(
       field('Mutations applied to the thread view the template sees.', {
-        advanced: true,
-        group: 'Context',
+        context: true,
       }),
     ),
     contextFiles: z
@@ -278,7 +281,8 @@ export const InferenceConfigSchema = z
       .meta(
         field('Files written under the working directory before the session starts.', {
           advanced: true,
-          group: 'Context',
+          context: true,
+          group: 'Files',
         }),
       ),
     harnessOptions: HarnessOptionsSchema.prefault({}).meta(

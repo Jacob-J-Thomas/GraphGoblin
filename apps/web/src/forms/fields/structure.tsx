@@ -16,7 +16,6 @@ import {
 import { useWatch } from 'react-hook-form';
 import { Icon } from '../../components/icons/index.js';
 import {
-  Badge,
   Button,
   CHECKBOX_LABEL,
   Checkbox,
@@ -33,7 +32,8 @@ import {
 import { cn } from '../../lib/utils.js';
 import { useFormChange } from '../changes.js';
 import { useCollectionIdentities, useDisclosureState, useDisclosureStore } from '../disclosures.js';
-import { labelOf } from '../layout.js';
+import { formLayout } from '../layout.js';
+import { ContextPanelContext, LayoutFields, ProblemBadge } from '../sections.js';
 import { repathParseErrors, useParseErrors } from '../parse-errors.js';
 import {
   discriminatorValue,
@@ -155,22 +155,18 @@ function ObjectBody({
   only?: readonly string[] | undefined;
   absentParent?: FieldProps['absentParent'];
 }) {
+  const omitContext = use(ContextPanelContext);
+  const fields =
+    only === undefined
+      ? shape
+      : Object.fromEntries(Object.entries(shape).filter(([key]) => only.includes(key)));
   return (
-    <>
-      {Object.entries(shape)
-        .filter(([key]) => key !== skip && (only === undefined || only.includes(key)))
-        .map(([key, child]) => (
-          // Keyed by the key, so a field drawn while the object is absent stays the same element
-          // (and keeps focus) when the object is added.
-          <Field
-            key={key}
-            schema={child}
-            name={joinPath(name, key)}
-            label={labelOf(key, child)}
-            absentParent={absentParent}
-          />
-        ))}
-    </>
+    <LayoutFields
+      layout={formLayout(fields, name, skip, omitContext)}
+      keyPrefix={name}
+      absentParent={absentParent}
+      Field={Field}
+    />
   );
 }
 
@@ -970,16 +966,5 @@ function CollapsibleItem({
     >
       <Field schema={element} name={name} label={label} bare />
     </Disclosure>
-  );
-}
-
-/** "1 error", "3 errors" on the bad tone, with its glyph; nothing when there are none. */
-export function ProblemBadge({ count }: { count: number }) {
-  if (count === 0) return null;
-  return (
-    <Badge size="sm" tone="bad">
-      <Icon name="alert" />
-      {count} {count === 1 ? 'error' : 'errors'}
-    </Badge>
   );
 }

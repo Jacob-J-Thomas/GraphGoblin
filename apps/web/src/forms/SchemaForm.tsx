@@ -15,6 +15,7 @@ import {
   FieldControlsContext,
   FieldOverridesContext,
   UnionPickersContext,
+  Field,
   type FieldControls,
   type FieldOverrides,
   type UnionPickers,
@@ -36,7 +37,7 @@ import {
   type ParseErrorChannel,
   type ParseErrorReason,
 } from './parse-errors.js';
-import { AdvancedFields, LayoutItems } from './sections.js';
+import { FormPanels } from './sections.js';
 import { stripUnset } from './unset.js';
 
 export interface SchemaFormProps {
@@ -251,7 +252,7 @@ export function SchemaForm({
   const layout = useMemo(() => {
     const variant = shapeOf(variantSchema);
     return variant.kind === 'object'
-      ? formLayout(orderedShape(variant.shape, fieldOrder), '', discriminator)
+      ? formLayout(orderedShape(variant.shape, fieldOrder), '', discriminator, true)
       : undefined;
   }, [variantSchema, discriminator, fieldOrder]);
 
@@ -305,13 +306,11 @@ export function SchemaForm({
                               </FieldGroup>
                             ) : null}
                             {layout ? (
-                              <LayoutItems items={layout.basic} keyPrefix={String(unionIndex)} />
-                            ) : null}
-                            {layout && layout.advanced.length > 0 ? (
-                              <AdvancedFields
-                                key={unionIndex}
-                                sections={layout.advanced}
-                                keyPrefix={String(unionIndex)}
+                              <FormPanels
+                                schema={variantSchema}
+                                layout={layout}
+                                keyPrefix=""
+                                Field={Field}
                               />
                             ) : null}
                             {issues.length > 0 ? (

@@ -22,7 +22,7 @@ import { useParseErrors } from '../parse-errors.js';
 import { useDisclosureState } from '../disclosures.js';
 import { useField, type FieldProps } from '../fields.js';
 import { Row, fieldMeta, useProblemCount } from '../fields/shared.js';
-import { ProblemBadge } from '../fields/structure.js';
+import { ProblemBadge } from '../sections.js';
 import {
   DAYS,
   PRESETS,

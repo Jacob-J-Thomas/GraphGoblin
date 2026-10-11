@@ -36,8 +36,8 @@ function fieldAt(path: string): HTMLElement {
 
 /** Open what a user would open to reach every field: the Advanced disclosure, collapsed items. */
 async function revealAll(user: UserEvent) {
-  const advanced = screen.queryByRole('button', { name: /^Advanced/ });
-  if (advanced) await user.click(advanced);
+  for (const advanced of screen.queryAllByRole('button', { name: /^Advanced/ }))
+    await user.click(advanced);
   for (const item of screen.queryAllByRole('button', { name: /^Operations \d/ })) {
     if (item.getAttribute('aria-expanded') === 'false') await user.click(item);
   }
@@ -137,6 +137,8 @@ describe('the same edits save the same config', () => {
       { answer, evaluation, recordAlternatives: true },
       async (user) => {
         await user.click(within(fieldAt('recordAlternatives')).getByRole('switch'));
+        await user.click(screen.getByRole('tab', { name: /^Context/ }));
+        await revealAll(user);
         await user.click(
           within(fieldAt('evaluation.context.includeLastOutput')).getByRole('switch'),
         );

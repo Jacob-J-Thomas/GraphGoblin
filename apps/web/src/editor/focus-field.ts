@@ -7,9 +7,14 @@
  *
  * A field may sit in a collapsed disclosure (a form's Advanced group, a collapsed list item, #14),
  * which keeps its panel mounted but hidden: `focusField` opens every disclosure around the control
- * (`revealDisclosures`) before focusing it.
+ * (`revealDisclosures`) before focusing it. A hidden Context tab is selected first (`revealTabs`).
  */
-import { DISCLOSURE_PANEL_SELECTOR, revealDisclosures } from '../components/ui/index.js';
+import {
+  DISCLOSURE_PANEL_SELECTOR,
+  TAB_PANEL_SELECTOR,
+  revealTabs,
+  revealDisclosures,
+} from '../components/ui/index.js';
 
 /**
  * What can take focus inside a field, in order of preference: the controls that hold the value
@@ -32,7 +37,7 @@ const OTHER_CONTROLS = [
 const shown = (el: Element) => !el.closest('[hidden], [inert]');
 
 /**
- * Shown, or hidden only by collapsed disclosures, which `revealDisclosures` can open; anything
+ * Shown, or hidden only by tabs or collapsed disclosures, which the reveal helpers can open; anything
  * else hidden or inert stays out of reach.
  */
 function reachable(el: Element): boolean {
@@ -42,7 +47,7 @@ function reachable(el: Element): boolean {
     hidden;
     hidden = hidden.parentElement?.closest('[hidden]') ?? null
   ) {
-    if (!hidden.matches(DISCLOSURE_PANEL_SELECTOR)) return false;
+    if (!hidden.matches(`${DISCLOSURE_PANEL_SELECTOR},${TAB_PANEL_SELECTOR}`)) return false;
   }
   return true;
 }
@@ -76,6 +81,7 @@ function firstFocusable(field: Element): HTMLElement | undefined {
   for (const selector of [VALUE_CONTROLS, OTHER_CONTROLS]) {
     const found = [...field.querySelectorAll<HTMLElement>(selector)].find(reachable);
     if (found) {
+      revealTabs(found);
       revealDisclosures(found);
       return groupFocus(found, field);
     }

@@ -138,7 +138,7 @@ export function useFieldErrorMessage(name: string) {
  * What a schema says about its field beyond its shape: required when it is neither optional nor
  * defaulted (a required field shows the marker and its control `aria-required`), its description
  * (`.describe()` or the contracts' field metadata), shown as help, and the rest of its metadata
- * (`fieldMeta` in `@graphgoblin/contracts`: title, advanced, group, control, collapseItems).
+ * (`fieldMeta` in `@graphgoblin/contracts`: title, advanced, context, group, control, collapseItems).
  */
 export function fieldMeta(
   schema: Schema,
@@ -148,7 +148,7 @@ export function fieldMeta(
 
 /** Whether an issue or unparsed-text path lies in a field at `path` (the field or inside it). */
 export function isWithin(issuePath: string, path: string): boolean {
-  return issuePath === path || issuePath.startsWith(`${path}.`);
+  return path === '' || issuePath === path || issuePath.startsWith(`${path}.`);
 }
 
 /**

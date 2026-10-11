@@ -4,6 +4,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Inference and provider decision editors have mounted Settings/Context tabs with problem counts, keyboard navigation and issue/undo focus across panels. Optional inference model/effort overrides and nested classifier thresholds use Advanced groups. Node dialogs widen to 52rem at 1024px and 64rem at 1280px; the mobile bottom sheet stays. Saved format-3 configurations and route wiring are unchanged. (#170, part A)
+
 - Claude preflight accepts newer capable CLI releases and checks login independently of version/capability failures. Wrong-harness saved models are labelled and kept until corrected; switching to Claude resets its policy to read-only/never. Missing Jev guidance reports an unavailable classifier. (#158)
   - Claude CLI 2.1.287 turns accept validated UI metadata and the bundled plugin-authoring plugin/skill. Protocol and policy refusals name the record or unexpected component, preserve the CLI version, and give recovery guidance without exposing content. Built-in plugin origins are verified; names containing path separators or account syntax are redacted from diagnostics. (#158)
 - Removed billing fields and policy restrictions throughout contracts, API and UI. Opus and Fable use the same technical checks and owner switches. **Upgrade:** rebuild API and web together and update consumers of the removed preflight/model/policy fields. Remove uses of the exported `claudeModelBlocked` helper and `CLAUDE_BILLING_UNVERIFIED_MESSAGE` constant. Migration `0011_enable_claude_fable` enables existing Fable catalog rows once; later owner disablement is preserved. Historical transcripts are unchanged. (#159)

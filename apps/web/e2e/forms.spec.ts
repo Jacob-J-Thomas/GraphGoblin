@@ -442,16 +442,16 @@ test('#14: inference shows its basic fields, the rest under Advanced, which says
         { timeoutSeconds?: number } | undefined
     )?.timeoutSeconds;
 
-  // The basic set: harness, model, effort, session, prompt, and the sandbox.
+  // The basic set keeps session policy and sandbox visible; model overrides are Advanced.
   await expect(dialog.getByLabel('Harness', { exact: true })).toBeVisible();
-  await expect(dialog.getByLabel('Model', { exact: true })).toBeVisible();
-  await expect(dialog.getByLabel('Effort', { exact: true })).toBeVisible();
+  await expect(dialog.getByLabel('Model', { exact: true })).toBeHidden();
+  await expect(dialog.getByLabel('Effort', { exact: true })).toBeHidden();
   await expect(dialog.getByRole('group', { name: 'Session', exact: true })).toBeVisible();
   await expect(dialog.getByRole('group', { name: 'Prompt', exact: true })).toBeVisible();
   const sandbox = dialog.getByRole('radiogroup', { name: 'Sandbox', exact: true });
   await expect(sandbox).toBeVisible();
   // Help from the schema's description sits under a field.
-  await expect(sandbox).toHaveAccessibleDescription(/What the session may change/);
+  await expect(sandbox).toHaveAccessibleDescription(/Sandbox or tool policy/);
   // The rest is under Advanced, collapsed.
   const advanced = dialog.getByRole('button', { name: /^Advanced\b/ });
   await expect(advanced).toHaveAttribute('aria-expanded', 'false');
@@ -467,7 +467,7 @@ test('#14: inference shows its basic fields, the rest under Advanced, which says
   await page.keyboard.press('Enter');
   await expect(advanced).toHaveAttribute('aria-expanded', 'true');
   const panel = page.locator(`[id="${await advanced.getAttribute('aria-controls')}"]`);
-  for (const group of ['Context', 'Harness options', 'Output', 'Limits']) {
+  for (const group of ['Model', 'Harness options', 'Output', 'Limits']) {
     await expect(panel.getByRole('group', { name: group, exact: true })).toBeVisible();
   }
 
@@ -517,20 +517,25 @@ test('#14: a collapsed group or operation flags an expression that does not comp
   await page.goto(`/app/loops/${id}/edit`);
   const dialog = await openNode(page, 'approve');
   // The domain's syntax check, not the schema, finds it; the empty JSON Schema counts as set.
-  const advanced = dialog.getByRole('button', { name: /^Advanced\b/ });
-  await expect(advanced).toHaveAccessibleName('Advanced 2 set 1 error');
-  await advanced.click();
+  await expect(dialog.getByRole('button', { name: /^Advanced\b/ })).toHaveAccessibleName(
+    'Advanced 1 set',
+  );
+  await expect(dialog.getByRole('tab', { name: 'Context 1 error' })).toBeVisible();
+  await dialog.getByRole('tab', { name: 'Context 1 error' }).click();
   const operation = dialog.getByRole('button', { name: /^Input 1 drop messages/ });
   await expect(operation).toHaveAttribute('aria-expanded', 'false');
   await expect(operation).toHaveAccessibleName('Input 1 drop messages 1 error');
   // Collapse again, then follow the issue from the editor's badge: both open at the field.
-  await advanced.click();
+  await dialog.getByRole('tab', { name: /^Settings/ }).click();
   await dialog.getByRole('button', { name: /issues? on approve$/ }).click();
   await page
     .getByRole('dialog', { name: 'Issues on approve' })
     .getByRole('button', { name: /EXPRESSION_INVALID/ })
     .click();
-  await expect(advanced).toHaveAttribute('aria-expanded', 'true');
+  await expect(dialog.getByRole('tab', { name: 'Context 1 error' })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
   await expect(operation).toHaveAttribute('aria-expanded', 'true');
   await expect(dialog.locator('[data-field="input.0.where"] .cm-content')).toBeFocused();
 });

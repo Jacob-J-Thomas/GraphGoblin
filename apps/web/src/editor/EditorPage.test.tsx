@@ -325,8 +325,10 @@ describe('EditorPage', () => {
     act(() => useEditorStore.getState().openNode('infer'));
     const advanced = () =>
       within(screen.getByRole('dialog')).getByRole('button', { name: /^Advanced/ });
-    await waitFor(() => expect(advanced()).toHaveAccessibleName('Advanced 2 set 1 error'));
-    await userEvent.setup().click(advanced());
+    await waitFor(() =>
+      expect(screen.getByRole('tab', { name: 'Context 1 error' })).toBeInTheDocument(),
+    );
+    await userEvent.setup().click(screen.getByRole('tab', { name: 'Context 1 error' }));
     expect(
       within(screen.getByRole('dialog')).getByRole('button', { name: /^Input 1 drop/ }),
     ).toHaveAccessibleName('Input 1 drop messages 1 error');

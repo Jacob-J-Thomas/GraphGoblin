@@ -21,6 +21,8 @@ export type FieldMeta = {
    * fields join the basic ones and its advanced fields go under Advanced, in the object's group.
    */
   advanced?: boolean;
+  /** Carries context into the turn; shown on the node editor's Context tab. */
+  context?: boolean;
   /** The heading the field is grouped under inside Advanced. */
   group?: string;
   /** A control the web app registers under this name draws the field instead of the default. */
@@ -66,7 +68,7 @@ function layers(schema: SchemaLike): SchemaLike[] {
 }
 
 const STRINGS = ['description', 'title', 'group', 'control'] as const;
-const FLAGS = ['advanced', 'collapseItems'] as const;
+const FLAGS = ['advanced', 'context', 'collapseItems'] as const;
 
 /**
  * A field's metadata, merged along its wrapper chain (the base schema, then each optional,
