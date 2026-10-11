@@ -187,6 +187,8 @@ export function JsonText({
           },
     );
   }, [validationVersion, text, validateValue, parseErrors, path, error]);
+  const focusEditor = () =>
+    editorRootRef.current?.querySelector<HTMLElement>('[contenteditable="true"]')?.focus();
   const apply = (confirmed = false) => {
     const parsed = validateText(text, schema, validateValue, true);
     if (parsed.error) {
@@ -206,6 +208,8 @@ export function JsonText({
       setConfirmation(undefined);
       onChange(parsed.value);
     });
+    // The confirm button that held focus unmounts with the confirmation; keep focus in the editor.
+    if (confirmed) focusEditor();
   };
   return (
     <div ref={editorRootRef} className="grid min-w-0 flex-1">
@@ -312,10 +316,7 @@ export function JsonText({
               variant="ghost"
               onClick={() => {
                 setConfirmation(undefined);
-                if (applyRef.current?.disabled)
-                  editorRootRef.current
-                    ?.querySelector<HTMLElement>('[contenteditable="true"]')
-                    ?.focus();
+                if (applyRef.current?.disabled) focusEditor();
                 else applyRef.current?.focus();
               }}
             >

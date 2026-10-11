@@ -503,6 +503,7 @@ describe('section JSON mode', () => {
     await user.click(screen.getByRole('button', { name: 'Apply JSON' }));
     await user.click(screen.getByRole('button', { name: 'Confirm Apply JSON' }));
     expect(spy).toHaveBeenLastCalledWith({ section: [4] });
+    expect(screen.getByLabelText('Section JSON')).toHaveFocus();
   });
 
   it('refuses JSON mode while descendants hold input, names them, and focuses the first through disclosures', async () => {
@@ -726,7 +727,6 @@ describe('typed inputs', () => {
     const input = screen.getByLabelText('Amount');
     let badInput = true;
     Object.defineProperty(input, 'validity', { configurable: true, get: () => ({ badInput }) });
-    fireEvent.keyDown(input, { key: 'a', metaKey: true });
     fireEvent.input(input, { target: { value: '' }, data: '1e', inputType: 'insertText' });
     fireEvent.input(input, { target: { value: '' }, data: '-', inputType: 'insertText' });
     expect(report).toHaveBeenLastCalledWith('amount', {
