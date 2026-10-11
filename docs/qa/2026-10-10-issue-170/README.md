@@ -201,12 +201,22 @@ Full repository coverage, layer, dependency, licence and generated-doc gates wer
 
 ## Disposition (orchestrator, after QA)
 
+The sections above record this QA run on 9d313de as it was performed. Its FAIL rows and expected failures for D1, D2 and D3 (invariants I2, I4 and I6, the discoverability row, the D2 evidence note and the issue-170-qa command row) were resolved after the run, as follows.
+
 | Defect                                                                                          | Disposition                                                                                                                                                                                                                                                                                                        | Commit  |
 | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------- |
 | D1, major: an incomplete number cleared the saved value                                         | Fixed. Native `badInput` keeps the last valid value, shows "Enter a complete number" as held input that blocks Publish, and clears once the number is complete or the field is deliberately emptied. The defect predates #170 (it also exists on `main`); the CHANGELOG says so.                                   | 0adb96c |
 | D3, major: JSON Apply skipped the node's parent-schema rules                                    | Fixed. Apply validates the section inside the complete node config (parent refinements included, such as the Claude harness rules), so nothing reaches the store, the IndexedDB mirror or the server draft on refusal.                                                                                             | 0adb96c |
 | D2, minor: Settings shows no count for valid required controls hidden while Context is selected | Declined. Tabs count problems, and Context also says how many fields are set. A valid required control needs no indicator, and every dialog opening starts on Settings. The QA case now asserts the documented behaviour: a Settings error is counted while Context is selected, and reopening starts on Settings. | 0adb96c |
 
-The design-critique point on bulk-rename inference was already addressed before this report was written. Since 619174b, an Answer JSON apply keeps connections only by surviving route id, and it lists any connection it would remove for a second confirmation. Valid unapplied JSON now reads "JSON not applied yet". The QA spec was reconciled with those decided behaviours; only the two expectations they superseded were replaced, and no other assertion was weakened.
+The design-critique point on bulk-rename inference was already addressed before this report was written. Since 619174b, an Answer JSON apply keeps connections only by surviving route id, and it lists any connection it would remove for a second confirmation. Valid unapplied JSON now reads "JSON not applied yet". The QA spec was then reconciled with those decided behaviours:
+
+- The seven evaluator/answer cases, the three route-replacement cases and the 200-anchor Score case now confirm connection removal and reconnect explicitly. Before, they expected a JSON rename to move the connection.
+- The valid-unapplied-JSON case asserts the new wording.
+- The I2 case asserts the documented D2 behaviour.
+- The Claude/Codex family case is stronger: it now expects refusal before Apply.
+- D1 and both D3 cases lost their `test.fail()` with their assertions unchanged.
+
+Only the superseded rename expectation and the D2 Settings-count expectation were removed; no other assertion was weakened.
 
 Re-run on 0adb96c: `issue-170-qa` 41 of 41 passed with no expected failures left. Also passed: node-json 14, node-placement 11, forms 12, form-controls 6, decision-routes 11, undo 14, validation 9, drafts 3 and editor-modal 7.
