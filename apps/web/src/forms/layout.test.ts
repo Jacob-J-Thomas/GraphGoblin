@@ -5,6 +5,7 @@ import { itemSummary } from './fields.js';
 import { shapeOf, type Schema } from './introspect.js';
 import {
   formLayout,
+  contextLayout,
   isCustomized,
   isOwned,
   labelOf,
@@ -39,17 +40,10 @@ describe('formLayout', () => {
   });
 
   it('places inference fields: basic first, a split object, groups by first appearance', () => {
-    const layout = formLayout(shape(NodeConfigSchemas.inference));
-    expect(names(layout.basic)).toEqual([
-      'harness',
-      'model',
-      'effort',
-      'session',
-      'prompt',
-      'harnessOptions.sandbox',
-    ]);
+    const layout = formLayout(shape(NodeConfigSchemas.inference), '', undefined, true);
+    expect(names(layout.basic)).toEqual(['harness', 'session', 'prompt', 'harnessOptions.sandbox']);
     expect(sections(layout)).toEqual([
-      ['Context', ['input', 'contextFiles']],
+      ['Model', ['model', 'effort']],
       [
         'Harness options',
         [
@@ -73,6 +67,73 @@ describe('formLayout', () => {
     expect(harness).toMatchObject({ owner: 'harnessOptions', showsError: false });
     // All of `output` is advanced: its first block shows its message.
     expect(layout.advanced[2]!.items[0]).toMatchObject({ owner: 'output', showsError: true });
+    const context = contextLayout(NodeConfigSchemas.inference, {});
+    expect(names(context.basic)).toEqual(['input']);
+    expect(sections(context)).toEqual([['Files', ['contextFiles']]]);
+  });
+
+  it.each(['expression', 'classifier', 'llm'] as const)(
+    'places every %s evaluator field by metadata',
+    (kind) => {
+      const decision = shape(NodeConfigSchemas.decision);
+      expect(names(formLayout(decision).basic)).toEqual(['answer', 'evaluation']);
+      expect(sections(formLayout(decision))).toEqual([['Recording', ['recordAlternatives']]]);
+      const evaluation = shapeOf(decision['evaluation']!);
+      if (evaluation.kind !== 'union') throw new Error('not a union');
+      const schema = evaluation.options[['expression', 'classifier', 'llm'].indexOf(kind)]!;
+      const layout = formLayout(shape(schema), 'evaluation', 'kind', true);
+      expect(names(layout.basic)).toEqual(
+        kind === 'expression'
+          ? ['evaluation.jsonata']
+          : kind === 'classifier'
+            ? ['evaluation.model', 'evaluation.question']
+            : [
+                'evaluation.harness',
+                'evaluation.model',
+                'evaluation.effort',
+                'evaluation.question',
+              ],
+      );
+      expect(sections(layout)).toEqual(
+        kind === 'classifier'
+          ? [['Acceptance', ['evaluation.minConfidence', 'evaluation.truthThreshold']]]
+          : [],
+      );
+      const context = contextLayout(NodeConfigSchemas.decision, { evaluation: { kind } });
+      expect(names(context.basic)).toEqual(
+        kind === 'expression'
+          ? []
+          : ['evaluation.context.messages', 'evaluation.context.includeLastOutput'],
+      );
+      expect(sections(context)).toEqual(
+        kind === 'expression' ? [] : [['Provider context', ['evaluation.context.vars']]],
+      );
+    },
+  );
+
+  it('does not move a required authored field into Advanced even if metadata asks for it', () => {
+    const schema = z.object({ required: z.string().meta(field('Required.', { advanced: true })) });
+    expect(names(formLayout(shape(schema)).basic)).toEqual(['required']);
+  });
+
+  it('reads context tags inside a defaulted object, and merges equal Context groups', () => {
+    const tagged = z
+      .string()
+      .optional()
+      .meta(field('Context.', { context: true, advanced: true, group: 'Selection' }));
+    const schema = z.object({
+      options: z
+        .object({ main: z.string().default('x'), first: tagged, second: tagged })
+        .prefault({}),
+      absent: z.object({ context: tagged }).optional(),
+    });
+    expect(names(formLayout(shape(schema), '', undefined, true).basic)).toEqual([
+      'options.main',
+      'absent',
+    ]);
+    expect(sections(contextLayout(schema, {}))).toEqual([
+      ['Selection', ['options.first', 'options.second']],
+    ]);
   });
 
   it('labels split subloop modes by their titles, and nests paths under a base', () => {

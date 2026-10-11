@@ -2,7 +2,7 @@ import { createContext, use, useState, type Dispatch, type SetStateAction } from
 
 /**
  * Which disclosures of a schema-driven form are open, by key: `#advanced` for the form's Advanced
- * group, a stable collection row id, and a control's own disclosure under its
+ * group, `#context-tab` for Context selection, a stable collection row id, and a control's own disclosure under its
  * field's path (`expression#advanced`, the cron schedule's raw expression). A key with no entry
  * is at its disclosure's default.
  */

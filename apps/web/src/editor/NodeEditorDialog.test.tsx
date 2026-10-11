@@ -1095,7 +1095,7 @@ describe('NodeEditorDialog disclosures across undo and redo', () => {
 
     // Collapsed by hand, it stays collapsed through an undo too.
     await user.click(advanced(dialog));
-    act(() => model().focus());
+    act(() => within(dialog).getByRole('radio', { name: 'codex' }).focus());
     await user.keyboard(UNDO);
     expect(advanced(dialog)).toHaveAttribute('aria-expanded', 'false');
 
@@ -1454,6 +1454,7 @@ describe('NodeEditorDialog inference harness changes', () => {
         ),
       );
       expect(within(dialog).getByRole('radio', { name: 'claude' })).toHaveFocus();
+      await user.click(advanced(dialog));
       const model = within(dialog).getByLabelText('Model', { exact: true });
       await waitFor(() =>
         expect(

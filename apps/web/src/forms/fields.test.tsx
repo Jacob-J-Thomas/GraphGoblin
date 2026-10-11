@@ -317,6 +317,8 @@ describe('form controls in the schema-driven form', () => {
     await waitFor(() => expect(within(options).getByRole('alert')).toHaveTextContent(/>=2 items/));
     expect(options).toHaveAccessibleDescription(/At least 2 items\..*>=2 items/);
     // Optional context variables carry no marker or collection rule, only their help.
+    await user.click(screen.getByRole('tab', { name: /^Context/ }));
+    openAdvanced();
     const vars = screen.getByRole('group', { name: 'Vars' });
     expect(vars.querySelector(':scope > legend span[aria-hidden="true"]')).toBeNull();
     expect(vars).toHaveAccessibleDescription(

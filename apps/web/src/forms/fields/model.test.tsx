@@ -8,11 +8,19 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { FakeApi, problem } from '../../__fixtures__/fake-api.js';
-import { renderWith } from '../../__fixtures__/render.js';
+import { renderWith as renderBase } from '../../__fixtures__/render.js';
+import { openAdvanced } from '../../__fixtures__/advanced.js';
 import { keys } from '../../api/queries.js';
 import { LOOP_FIELD_CONTROLS, NODE_FIELD_CONTROLS } from '../../editor/field-controls.js';
 import { SchemaForm } from '../SchemaForm.js';
 import { CatalogWarningsContext } from './model.js';
+
+/** Catalog controls are inference overrides under Advanced; exercise them as shown to authors. */
+function renderWith(...args: Parameters<typeof renderBase>) {
+  const result = renderBase(...args);
+  if (screen.queryByRole('button', { name: /^Advanced/ })) openAdvanced();
+  return result;
+}
 
 const entry = (model: string, enabled = true, harness = 'codex'): FakeApi['catalog'][number] => ({
   model,
@@ -305,7 +313,7 @@ describe('catalog field controls', () => {
     ).toBeDisabled();
     expect(latest).toBeUndefined();
 
-    await user.click(screen.getByRole('button', { name: /^Advanced/ }));
+    openAdvanced();
     const approval = screen.getByLabelText('Approval');
     expect(approval).toBeDisabled();
     expect(approval).toHaveValue('on-request');
@@ -430,7 +438,7 @@ describe('catalog field controls', () => {
       );
       await ready();
       expect(model()).not.toHaveAccessibleDescription(/Same server warning/);
-      const notice = within(screen.getByRole('form', { name: 'Inference' })).getByRole('status');
+      const notice = within(model().closest('[data-field]') as HTMLElement).getByRole('status');
       expect(notice).toHaveClass('text-status-warn-fg');
       expect(notice.querySelector('[data-icon="alert"]')).toBeInTheDocument();
     },

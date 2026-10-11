@@ -168,7 +168,8 @@ describe('basic fields first, advanced ones behind a disclosure', () => {
       for (const config of configsOf(kind)) {
         cleanup();
         render(<Harness schema={NodeConfigSchemas[kind]} initial={config} />);
-        expect(toggle()).toBeNull();
+        if (kind !== 'exit') expect(toggle()).toBeNull();
+        expect(screen.queryByRole('tablist')).toBeNull();
         const keys = Object.keys(objectOf(kind, config)).filter(
           (key) => key !== 'subtype' && key !== 'mode',
         );
@@ -181,10 +182,10 @@ describe('basic fields first, advanced ones behind a disclosure', () => {
   it.each([
     [
       'inference',
-      ['harness', 'model', 'effort', 'session', 'prompt', 'harnessOptions.sandbox'],
+      ['harness', 'session', 'prompt', 'harnessOptions.sandbox'],
       [
-        'input',
-        'contextFiles',
+        'model',
+        'effort',
         'harnessOptions.approval',
         'harnessOptions.networkAccess',
         'harnessOptions.webSearch',
@@ -196,7 +197,7 @@ describe('basic fields first, advanced ones behind a disclosure', () => {
         'output.schema',
         'timeoutSeconds',
       ],
-      ['Context', 'Harness options', 'Output', 'Limits'],
+      ['Model', 'Harness options', 'Output', 'Limits'],
     ],
     [
       'decision',
@@ -206,9 +207,6 @@ describe('basic fields first, advanced ones behind a disclosure', () => {
         'evaluation.question',
         'evaluation.model',
         'evaluation.effort',
-        'evaluation.context.messages',
-        'evaluation.context.vars',
-        'evaluation.context.includeLastOutput',
       ],
       ['recordAlternatives'],
       ['Recording'],
@@ -292,6 +290,9 @@ describe('basic fields first, advanced ones behind a disclosure', () => {
         for (const { path, control } of expected) {
           const el = fieldAt(path);
           expect(el, `${kind} ${path}`).toBeDefined();
+          act(() => {
+            focusField(screen.getByRole('form'), path);
+          });
           expect(el!.closest('[hidden]'), `${kind} ${path} hidden`).toBeNull();
           if (control === 'none') continue;
           const found = el!.querySelector(control === 'value' ? VALUE_CONTROL : ANY_CONTROL);
@@ -370,7 +371,7 @@ describe('basic fields first, advanced ones behind a disclosure', () => {
     expect(toggle()).toHaveAccessibleName('Advanced 2 set');
     expect(within(toggle()!).getByText('2 set')).toBeInTheDocument();
     // A basic field does not count.
-    await user.type(screen.getByRole('textbox', { name: 'Model' }), 'x');
+    await user.type(screen.getByLabelText('Template'), 'x');
     expect(toggle()).toHaveAccessibleName('Advanced 2 set');
   });
 
@@ -388,8 +389,8 @@ describe('basic fields first, advanced ones behind a disclosure', () => {
         parseErrors={{ 'harnessOptions.configOverrides.a': { message: 'invalid JSON', text: '{' } }}
       />,
     );
-    await waitFor(() => expect(toggle()).toHaveAccessibleName('Advanced 1 set 2 errors'));
-    const badge = within(toggle()!).getByText('2 errors');
+    await waitFor(() => expect(toggle()).toHaveAccessibleName('Advanced 2 set 3 errors'));
+    const badge = within(toggle()!).getByText('3 errors');
     expect(badge.closest('[class*="bg-status-bad-bg"]')).not.toBeNull();
     expect(badge.parentElement!.querySelector('svg[data-icon="alert"]')).not.toBeNull();
     // A split object's own message (an unknown key) shows with its basic fields, in sight.
@@ -435,8 +436,9 @@ describe('basic fields first, advanced ones behind a disclosure', () => {
         problems={['input.0.where', 'prompt.template']}
       />,
     );
-    expect(toggle()).toHaveAccessibleName('Advanced 1 set 1 error');
-    openAdvanced();
+    expect(toggle()).toHaveAccessibleName('Advanced');
+    expect(screen.getByRole('tab', { name: 'Context 1 error' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('tab', { name: /^Context/ }));
     // The collapsed operation says so too.
     expect(screen.getByRole('button', { name: /^Input 1 drop messages/ })).toHaveAccessibleName(
       'Input 1 drop messages 1 error',
@@ -579,7 +581,7 @@ describe('collapsible operations', () => {
         initial={{ prompt: { template: 'Hi' }, input: [{ op: 'delete', path: '/vars/a' }] }}
       />,
     );
-    openAdvanced();
+    fireEvent.click(screen.getByRole('tab', { name: /^Context/ }));
     expect(screen.getByRole('button', { name: 'Input 1 delete /vars/a' })).toHaveAttribute(
       'aria-expanded',
       'false',

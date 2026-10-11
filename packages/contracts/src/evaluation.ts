@@ -215,6 +215,7 @@ export const DecisionContextSchema = z.strictObject({
     .meta(
       field(
         'Variable names included in provider state; omission includes all variables and does not restrict the question template.',
+        { advanced: true, group: 'Provider context' },
       ),
     ),
   includeLastOutput: z
@@ -228,7 +229,9 @@ const QuestionFields = {
 };
 const ContextFields = {
   context: DecisionContextSchema.prefault({}).meta(
-    field('Selected provider state, separate from the full-thread question-template context.'),
+    field('Selected provider state, separate from the full-thread question-template context.', {
+      context: true,
+    }),
   ),
 };
 const ExpressionEvaluationSchema = z.strictObject({
@@ -266,6 +269,7 @@ const ClassifierEvaluationSchema = z.strictObject({
     .meta(
       field(
         'Noul only: select true when its probability reaches this threshold; omission means 0.5.',
+        { advanced: true, group: 'Acceptance' },
       ),
     ),
 });

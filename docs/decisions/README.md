@@ -34,3 +34,4 @@ One file per decision. Status is Accepted unless stated. Supersede by adding a n
 | [0028](ADR-0028-editable-template-starting-points.md)    | Editable starting-point drafts with optional configured repository automation                  |
 | [0029](ADR-0029-no-billing-in-the-product.md)            | No billing policy; Claude uses technical readiness and owner switches                          |
 | [0030](ADR-0030-templates-are-starting-points.md)        | Templates are starting points; one-action gallery; instance retirement in #165                 |
+| [0031](ADR-0031-mounted-context-tabs.md)                 | Mounted Context tabs in node forms                                                             |
