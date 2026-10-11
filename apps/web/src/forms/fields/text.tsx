@@ -1,9 +1,10 @@
 /** Text-entry fields: strings (plain, multi-line, template, expression) and numbers. */
 import { useId, useState } from 'react';
-import { Input, Textarea } from '../../components/ui/index.js';
+import { HelpText, Input, Textarea } from '../../components/ui/index.js';
 import { CodeField, LanguageTag } from '../CodeField.js';
 import { unwrap, type FieldShape, type Schema } from '../introspect.js';
 import { fieldMeta, Row, useField, useFieldErrorMessage, type FieldProps } from './shared.js';
+import { useParseErrors } from '../parse-errors.js';
 
 const LANGUAGE_TAG: Record<'template' | 'expression', string> = {
   template: 'Liquid',
@@ -23,6 +24,7 @@ export interface StringControlProps {
   /** The new value: a string, or `undefined` for an optional field left blank. */
   onChange: (value: string | undefined) => void;
   onBlur?: () => void;
+  suggestions?: readonly string[] | undefined;
 }
 
 /**
@@ -39,6 +41,7 @@ export function StringControl({
   value: given,
   onChange,
   onBlur,
+  suggestions,
 }: StringControlProps) {
   const id = useId();
   const { optional, defaultValue } = unwrap(schema);
@@ -84,7 +87,9 @@ export function StringControl({
     );
   }
   const placeholder = typeof defaultValue === 'string' ? defaultValue : undefined;
-  const multiline = /description|content|replacement/i.test(name.split('.').pop() ?? '');
+  const multiline =
+    fieldMeta(schema).multiline ||
+    /description|content|replacement/i.test(name.split('.').pop() ?? '');
   return (
     <Row label={label} caption={caption} htmlFor={id} name={name} required={required} help={help}>
       {(control) =>
@@ -97,13 +102,23 @@ export function StringControl({
             onBlur={onBlur}
           />
         ) : (
-          <Input
-            {...control}
-            value={value}
-            placeholder={placeholder}
-            onChange={(e) => set(e.target.value)}
-            onBlur={onBlur}
-          />
+          <>
+            <Input
+              {...control}
+              value={value}
+              placeholder={placeholder}
+              onChange={(e) => set(e.target.value)}
+              onBlur={onBlur}
+              list={suggestions ? `${id}-suggestions` : undefined}
+            />
+            {suggestions ? (
+              <datalist id={`${id}-suggestions`}>
+                {suggestions.map((suggestion) => (
+                  <option key={suggestion} value={suggestion} />
+                ))}
+              </datalist>
+            ) : null}
+          </>
         )
       }
     </Row>
@@ -140,23 +155,61 @@ export function NumberField({
   const id = useId();
   const { defaultValue } = unwrap(schema);
   const { required, help } = fieldMeta(schema);
+  const parseErrors = useParseErrors();
+  const [draft, setDraft] = useState(() => parseErrors.get(name)?.text);
+  const [error, setError] = useState(() => parseErrors.get(name)?.message);
+  if (parseErrors.tracked && error && !parseErrors.errors?.[name]) {
+    setDraft(undefined);
+    setError(undefined);
+  }
   const value =
     typeof field.value === 'number' && Number.isFinite(field.value) ? String(field.value) : '';
   return (
-    <Row label={label} htmlFor={id} name={name} required={required} help={help}>
+    <Row
+      label={label}
+      htmlFor={id}
+      name={name}
+      required={required}
+      help={help}
+      after={
+        error ? (
+          <HelpText id={`${id}-draft-error`} tone="bad" role="alert">
+            {error}
+          </HelpText>
+        ) : null
+      }
+    >
       {(control) => (
         <Input
           {...control}
           type="number"
-          inputMode="numeric"
-          step={shape.integer ? 1 : 'any'}
+          inputMode={shape.integer ? 'numeric' : 'decimal'}
+          step={shape.step ?? (shape.integer ? 1 : 'any')}
           min={shape.min}
           max={shape.max}
-          value={value}
+          value={draft ?? value}
           placeholder={typeof defaultValue === 'number' ? String(defaultValue) : undefined}
-          onChange={(e) =>
-            field.onChange(e.target.value === '' ? undefined : Number(e.target.value))
+          aria-invalid={error ? true : control['aria-invalid']}
+          aria-describedby={
+            [control['aria-describedby'], error ? `${id}-draft-error` : '']
+              .filter(Boolean)
+              .join(' ') || undefined
           }
+          onChange={(e) => {
+            const text = e.target.value;
+            const next = text === '' ? undefined : Number(text);
+            const result = schema.safeParse(next);
+            const message = result.success
+              ? undefined
+              : result.error.issues.map((issue) => issue.message).join('; ');
+            parseErrors.report(
+              name,
+              message ? { message, text, input: 'unparsed text' } : undefined,
+            );
+            setError(message);
+            setDraft(message ? text : undefined);
+            if (!message) field.onChange(next);
+          }}
           onBlur={field.onBlur}
         />
       )}

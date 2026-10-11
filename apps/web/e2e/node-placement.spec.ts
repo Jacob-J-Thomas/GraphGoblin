@@ -80,7 +80,9 @@ test('inference placement, tab keyboard order, and single-panel kinds', async ({
     await expect(panel).toHaveAttribute('aria-labelledby', (await selected.getAttribute('id'))!);
   }
   await page.keyboard.press('Tab');
-  await expect(dialog.getByRole('button', { name: 'Add input', exact: true })).toBeFocused();
+  await expect(
+    dialog.getByRole('button', { name: 'Edit as JSON: Input', exact: true }),
+  ).toBeFocused();
   await expect(dialog.getByRole('group', { name: 'Prompt', exact: true })).toBeHidden();
   await closeNode(page);
   const reopened = await openNode(page, 'approve');

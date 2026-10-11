@@ -41,12 +41,12 @@ export type CollectionSelection = z.infer<typeof CollectionSelectionSchema>;
 export const MutationOperationSchema = z.discriminatedUnion('op', [
   z.strictObject({
     op: z.literal('set'),
-    path: JsonPointerSchema,
+    path: JsonPointerSchema.meta({ control: 'variable-path' }),
     value: ValueSourceSchema,
   }),
   z.strictObject({
     op: z.literal('delete'),
-    path: JsonPointerSchema,
+    path: JsonPointerSchema.meta({ control: 'variable-path' }),
   }),
   z.strictObject({
     op: z.literal('append-message'),
@@ -97,10 +97,10 @@ export const MutationOperationSchema = z.discriminatedUnion('op', [
   }),
   z.strictObject({
     op: z.literal('coerce'),
-    source: JsonPointerSchema,
+    source: JsonPointerSchema.meta({ control: 'variable-path' }),
     jsonSchema: JsonSchemaSchema,
     repair: RepairPolicySchema.prefault({}),
-    target: JsonPointerSchema,
+    target: JsonPointerSchema.meta({ control: 'variable-path' }),
   }),
 ]);
 export type MutationOperation = z.infer<typeof MutationOperationSchema>;

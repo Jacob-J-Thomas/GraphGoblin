@@ -100,14 +100,19 @@ describe('formLayout', () => {
           : [],
       );
       const context = contextLayout(NodeConfigSchemas.decision, { evaluation: { kind } });
-      expect(names(context.basic)).toEqual(
-        kind === 'expression'
-          ? []
-          : ['evaluation.context.messages', 'evaluation.context.includeLastOutput'],
-      );
-      expect(sections(context)).toEqual(
-        kind === 'expression' ? [] : [['Provider context', ['evaluation.context.vars']]],
-      );
+      expect(names(context.basic)).toEqual(kind === 'expression' ? [] : ['evaluation.context']);
+      expect(sections(context)).toEqual([]);
+      if (kind !== 'expression') {
+        const provider = formLayout(
+          shape(placementsOf(context.basic)[0]!.schema),
+          'evaluation.context',
+        );
+        expect(names(provider.basic)).toEqual([
+          'evaluation.context.messages',
+          'evaluation.context.includeLastOutput',
+        ]);
+        expect(sections(provider)).toEqual([['Provider context', ['evaluation.context.vars']]]);
+      }
     },
   );
 

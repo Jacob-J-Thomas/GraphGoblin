@@ -148,7 +148,7 @@ export function fieldMeta(
 
 /** Whether an issue or unparsed-text path lies in a field at `path` (the field or inside it). */
 export function isWithin(issuePath: string, path: string): boolean {
-  return path === '' || issuePath === path || issuePath.startsWith(`${path}.`);
+  return issuePath === path || issuePath.startsWith(`${path}.`);
 }
 
 /**
@@ -166,15 +166,25 @@ export const ProblemPathsContext = createContext<readonly string[]>([]);
  * Each path counts once.
  */
 export function useProblemCount(fields: readonly string[], exact: readonly string[] = []): number {
-  const issues = use(FieldIssuesContext);
-  const outside = use(ProblemPathsContext);
-  const parseErrors = useParseErrors();
-  const paths = new Set([...issues.keys(), ...Object.keys(parseErrors.errors ?? {}), ...outside]);
+  const paths = useProblemPaths();
   let count = 0;
   for (const path of paths) {
     if (exact.includes(path) || fields.some((field) => isWithin(path, field))) count += 1;
   }
   return count;
+}
+
+function useProblemPaths() {
+  const issues = use(FieldIssuesContext);
+  const outside = use(ProblemPathsContext);
+  const parseErrors = useParseErrors();
+  const paths = new Set([...issues.keys(), ...Object.keys(parseErrors.errors ?? {}), ...outside]);
+  return paths;
+}
+
+/** Count the whole form explicitly; an empty field path still names only that field. */
+export function useAllProblemCount(): number {
+  return useProblemPaths().size;
 }
 
 /**

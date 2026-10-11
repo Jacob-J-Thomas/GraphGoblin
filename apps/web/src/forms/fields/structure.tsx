@@ -43,12 +43,13 @@ import {
   optionLabel,
   shapeOf,
   unwrap,
+  withUnsetFields,
   type FieldShape,
   type Schema,
 } from '../introspect.js';
 import { BooleanField, EnumField, LiteralField, NOT_SET } from './choice.js';
 import { useCollectionFocus } from './collection.js';
-import { JsonControl, JsonField } from './json.js';
+import { JsonControl, JsonField, JsonSection } from './json.js';
 import {
   FieldControlsContext,
   FieldOverridesContext,
@@ -82,11 +83,15 @@ export function Field(props: FieldProps) {
   const label = Object.hasOwn(labels, props.name) ? labels[props.name] : undefined;
   const displayed = label === undefined ? props : { ...props, label };
   const Override = fieldOverrideFor(props.name, overrides);
-  if (Override) return createElement(Override, displayed);
   const name = fieldMeta(props.schema).control;
   // Only the registry's own entries: a name such as `toString` is not a registered control.
   const Control = name !== undefined && Object.hasOwn(controls, name) ? controls[name] : undefined;
-  return createElement(Control ?? DefaultField, displayed);
+  const content = createElement(Override ?? Control ?? DefaultField, displayed);
+  return fieldMeta(props.schema).jsonEditor ? (
+    <JsonSection {...displayed}>{content}</JsonSection>
+  ) : (
+    content
+  );
 }
 
 function fieldOverrideFor(name: string, overrides: FieldOverrides): FieldControl | undefined {
@@ -832,7 +837,12 @@ function UnionField({
     change({ path: name, kind: 'commit' }, () => {
       repathParseErrors(parseErrors, [{ from: name }]);
       field.onChange(
-        chosen === undefined ? undefined : initialValue(shape.options[chosen] as Schema),
+        chosen === undefined
+          ? undefined
+          : withUnsetFields(
+              shape.options[chosen] as Schema,
+              initialValue(shape.options[chosen] as Schema),
+            ),
       );
     });
   };
@@ -882,9 +892,9 @@ function UnionField({
         <FieldHelp id={helpId} help={help} />
       </FieldGroup>
       {unset ? null : optionShape.kind === 'object' ? (
-        <ObjectBody shape={optionShape.shape} name={name} skip={shape.discriminator} />
+        <ObjectBody key={index} shape={optionShape.shape} name={name} skip={shape.discriminator} />
       ) : optionShape.kind === 'literal' ? null : (
-        <Field schema={option} name={name} label="Value" />
+        <Field key={index} schema={option} name={name} label="Value" />
       )}
       <FieldError name={name} id={errorId} />
     </GroupFrame>

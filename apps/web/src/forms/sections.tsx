@@ -2,12 +2,17 @@
  * The parts of a schema-driven form that `formLayout` places: a run of fields, and the Advanced
  * disclosure with its headed sections and its summary of what it holds.
  */
-import { createContext, type ComponentType } from 'react';
+import { createContext, useRef, type ComponentType } from 'react';
 import { useWatch } from 'react-hook-form';
 import { Badge, Disclosure, Fieldset, Legend, Tabs } from '../components/ui/index.js';
 import { ADVANCED_KEY, useDisclosureState } from './disclosures.js';
 import { Icon } from '../components/icons/index.js';
-import { FieldError, useProblemCount, type FieldProps } from './fields/shared.js';
+import {
+  FieldError,
+  useAllProblemCount,
+  useProblemCount,
+  type FieldProps,
+} from './fields/shared.js';
 import {
   isCustomized,
   isOwned,
@@ -15,6 +20,7 @@ import {
   type AdvancedSection,
   type LayoutItem,
   contextLayout,
+  contextStructure,
   type FormLayout,
 } from './layout.js';
 import type { Schema } from './introspect.js';
@@ -162,16 +168,26 @@ export function FormPanels({
   keyPrefix: string;
   Field: ComponentType<FieldProps>;
 }) {
-  const value: unknown = useWatch();
-  const context = contextLayout(schema, value);
+  const contextRef = useRef<{ schema: Schema; structure: string; layout: FormLayout } | undefined>(
+    undefined,
+  );
+  const snapshot = useWatch({
+    compute: (value: unknown) => {
+      const structure = contextStructure(schema, value);
+      if (contextRef.current?.schema === schema && contextRef.current.structure === structure)
+        return contextRef.current;
+      contextRef.current = { schema, structure, layout: contextLayout(schema, value) };
+      return contextRef.current;
+    },
+  });
+  const { structure, layout: context } = snapshot;
   const hasContext = context.basic.length + context.advanced.length > 0;
   const state = useDisclosureState('#context-tab', false);
   const fields = context.basic.concat(context.advanced.flatMap((section) => section.items));
   const paths = placementsOf(fields).map((field) => field.name);
   const owners = fields.filter(isOwned).map((item) => item.owner);
   const contextProblems = useProblemCount(paths, owners);
-  const allProblems = useProblemCount(['']);
-  // Empty path means the whole form (handled explicitly by useProblemCount).
+  const allProblems = useAllProblemCount();
   const main = (
     <ContextPanelContext value={hasContext}>
       <LayoutFields layout={layout} keyPrefix={keyPrefix} Field={Field} />
@@ -202,7 +218,12 @@ export function FormPanels({
                   </>
                 ),
                 content: (
-                  <LayoutFields layout={context} keyPrefix={`${keyPrefix}:context`} Field={Field} />
+                  <LayoutFields
+                    key={structure}
+                    layout={context}
+                    keyPrefix={`${keyPrefix}:context`}
+                    Field={Field}
+                  />
                 ),
               },
             ]

@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { FormProvider, useForm, type FieldValues, type Resolver } from 'react-hook-form';
 import { FieldGroup, Label, Select } from '../components/ui/index.js';
 import { FormChangeContext, nextChangeId, type ChangeScope, type FormChange } from './changes.js';
@@ -27,6 +27,7 @@ import {
   matchOption,
   optionLabel,
   shapeOf,
+  withUnsetFields,
   type Schema,
 } from './introspect.js';
 import { formLayout } from './layout.js';
@@ -140,7 +141,36 @@ function orderedShape(
  * Advanced disclosure, grouped under headings. The disclosure's state is the caller's (`disclosures`),
  * else the form's own, collapsed on each mount.
  */
-export function SchemaForm({
+export function SchemaForm(props: SchemaFormProps) {
+  // Value is the mount's starting document. Subsequent edits are already held by RHF; callers
+  // remount for undo/loading. Stable callbacks keep an autosave echo from rendering every field.
+  const initialRef = useRef(props.value);
+  const latestRef = useRef(props);
+  latestRef.current = props;
+  const callbacks = useMemo(
+    () => ({
+      onChange: (...args: Parameters<SchemaFormProps['onChange']>) =>
+        latestRef.current.onChange(...args),
+      onParseError: (...args: Parameters<NonNullable<SchemaFormProps['onParseError']>>) =>
+        latestRef.current.onParseError?.(...args),
+    }),
+    [],
+  );
+  const problemsRef = useRef(props.problems);
+  if (JSON.stringify(problemsRef.current) !== JSON.stringify(props.problems))
+    problemsRef.current = props.problems;
+  return (
+    <SchemaFormBindings
+      {...props}
+      value={initialRef.current}
+      problems={problemsRef.current}
+      onChange={callbacks.onChange}
+      {...(props.onParseError ? { onParseError: callbacks.onParseError } : {})}
+    />
+  );
+}
+
+const SchemaFormBindings = memo(function SchemaFormBindings({
   schema,
   value,
   onChange,
@@ -232,7 +262,10 @@ export function SchemaForm({
     const subscription = form.watch((values, { name }) => {
       const next = stripUnset(values);
       collections.remember(next);
-      setIssues(issuesOf(schema, next));
+      setIssues((previous) => {
+        const found = issuesOf(schema, next);
+        return JSON.stringify(previous) === JSON.stringify(found) ? previous : found;
+      });
       // Every field describes its changes; a write that does not is a step of its own.
       const change = pendingChangeRef.current ?? {
         path: name ?? '',
@@ -264,7 +297,7 @@ export function SchemaForm({
       const next = asValues(initialValue(shape.options[index] as Schema));
       collections.remember(next);
       setUnionIndex(index);
-      form.reset(next);
+      form.reset(asValues(withUnsetFields(shape.options[index] as Schema, next)));
       setIssues(issuesOf(schema, next));
       onChangeRef.current(next, pendingChangeRef.current!);
     });
@@ -307,6 +340,7 @@ export function SchemaForm({
                             ) : null}
                             {layout ? (
                               <FormPanels
+                                key={unionIndex}
                                 schema={variantSchema}
                                 layout={layout}
                                 keyPrefix=""
@@ -342,4 +376,4 @@ export function SchemaForm({
       </CollectionIdentitiesContext>
     </FormChangeContext>
   );
-}
+});

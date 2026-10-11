@@ -203,14 +203,19 @@ export const HarnessOptionsSchema = z.strictObject({
   configOverrides: z
     .record(z.string(), z.unknown())
     .optional()
-    .meta(field('Raw harness configuration, passed through as is.', { advanced: true })),
+    .meta(
+      field('Raw harness configuration, passed through as is.', {
+        advanced: true,
+        jsonEditor: true,
+      }),
+    ),
 });
 export type HarnessOptions = z.infer<typeof HarnessOptionsSchema>;
 
 export const CapabilitiesSchema = z.strictObject({
-  mcpServers: z.array(SlugSchema).optional(),
-  plugins: z.array(SlugSchema).optional(),
-  skills: z.array(SlugSchema).optional(),
+  mcpServers: z.array(SlugSchema.meta({ control: 'capability-mcpServers' })).optional(),
+  plugins: z.array(SlugSchema.meta({ control: 'capability-plugins' })).optional(),
+  skills: z.array(SlugSchema.meta({ control: 'capability-skills' })).optional(),
 });
 export type Capabilities = z.infer<typeof CapabilitiesSchema>;
 
@@ -272,6 +277,7 @@ export const InferenceConfigSchema = z
     input: MutationListSchema.default([]).meta(
       field('Mutations applied to the thread view the template sees.', {
         context: true,
+        jsonEditor: true,
       }),
     ),
     contextFiles: z
@@ -283,6 +289,7 @@ export const InferenceConfigSchema = z
           advanced: true,
           context: true,
           group: 'Files',
+          jsonEditor: true,
         }),
       ),
     harnessOptions: HarnessOptionsSchema.prefault({}).meta(
@@ -296,6 +303,7 @@ export const InferenceConfigSchema = z
         {
           advanced: true,
           group: 'Harness options',
+          jsonEditor: true,
         },
       ),
     ),
@@ -310,7 +318,10 @@ export const InferenceConfigSchema = z
           .default('final')
           .meta(field("What the answer adds to the thread's messages.", { advanced: true })),
         transforms: MutationListSchema.default([]).meta(
-          field('Mutations applied to the answer before it lands.', { advanced: true }),
+          field('Mutations applied to the answer before it lands.', {
+            advanced: true,
+            jsonEditor: true,
+          }),
         ),
         schema: z
           .strictObject({

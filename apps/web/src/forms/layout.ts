@@ -61,6 +61,7 @@ export function labelOf(key: string, schema: Schema): string {
 
 /** The fields of an always-present object some of whose fields say whether they are advanced. */
 function splitFields(schema: Schema): Record<string, Schema> | undefined {
+  if (fieldMeta(schema).jsonEditor) return undefined;
   const { optional, hasDefault } = unwrap(schema);
   if (optional && !hasDefault) return undefined;
   const shape = shapeOf(schema);
@@ -164,6 +165,29 @@ export function contextLayout(schema: Schema, value: unknown, base = ''): FormLa
     }
   }
   return result;
+}
+
+/** Only union choices and optional-object presence can change the context panel's structure. */
+export function contextStructure(schema: Schema, value: unknown): string {
+  if (fieldMeta(schema).context) return 'context';
+  const { optional, hasDefault, defaultValue } = unwrap(schema);
+  const current = value === undefined && hasDefault ? defaultValue : value;
+  const shape = shapeOf(schema);
+  if (shape.kind === 'union') {
+    const index = matchOption(shape.options, current, shape.discriminator);
+    const nested = contextStructure(shape.options[index]!, current);
+    return nested ? `${index}:${nested}` : '';
+  }
+  if (shape.kind !== 'object') return '';
+  const record =
+    typeof current === 'object' && current !== null ? (current as Record<string, unknown>) : {};
+  const nested = Object.entries(shape.shape)
+    .flatMap(([key, child]) => {
+      const structure = contextStructure(child, record[key]);
+      return structure ? [`${key}:${structure}`] : [];
+    })
+    .join('|');
+  return nested && current === undefined && optional && !hasDefault ? `absent:${nested}` : nested;
 }
 
 function sameJson(a: unknown, b: unknown): boolean {

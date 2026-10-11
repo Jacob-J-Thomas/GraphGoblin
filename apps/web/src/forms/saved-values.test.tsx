@@ -81,7 +81,9 @@ describe('the same edits save the same config', () => {
         await user.click(radio('harnessOptions.networkAccess', 'Yes'));
         await user.click(radio('output.toMessages', 'none'));
         await user.type(within(fieldAt('timeoutSeconds')).getByRole('spinbutton'), '90');
-        await user.click(within(fieldAt('capabilities')).getByRole('button'));
+        await user.click(
+          within(fieldAt('capabilities')).getByRole('button', { name: 'Add capabilities' }),
+        );
       },
       {
         prompt: { template: 'Hi' },

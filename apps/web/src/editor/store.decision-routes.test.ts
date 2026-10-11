@@ -35,6 +35,29 @@ function fixture(): LoopDefinitionInput {
 describe('decision option edits in editor history', () => {
   beforeEach(() => store().load('L1', fixture()));
 
+  it('matches JSON replacements by ID before pairing renames, and removes only deleted routes', () => {
+    store().updateNode(
+      'pick',
+      { config: config(['third', 'renamed', 'yes']) },
+      { path: 'answer', kind: 'commit', id: 101, collection: { type: 'replace' } },
+    );
+    expect(store().definition!.edges.find((edge) => edge.id === 'no')!.from.port).toBe('renamed');
+    expect(store().definition!.edges.find((edge) => edge.id === 'third')!.ui).toEqual({
+      route: [300, 400, 500],
+    });
+    store().updateNode(
+      'pick',
+      { config: config(['third', 'yes']) },
+      { path: 'answer', kind: 'commit', id: 102, collection: { type: 'replace' } },
+    );
+    expect(store().definition!.edges.some((edge) => edge.id === 'no')).toBe(false);
+    expect(store().definition!.edges.find((edge) => edge.id === 'yes')!.from.port).toBe('yes');
+    store().undo();
+    expect(store().definition!.edges.find((edge) => edge.id === 'no')!.from.port).toBe('renamed');
+    store().redo();
+    expect(store().definition!.edges.some((edge) => edge.id === 'no')).toBe(false);
+  });
+
   it('renames a stable option ID with its edge while preserving target and layout', () => {
     const before = store().definition!;
     const changed = config();

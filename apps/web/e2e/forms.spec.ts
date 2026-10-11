@@ -491,7 +491,7 @@ test('#14: inference shows its basic fields, the rest under Advanced, which says
   await badge.click();
   await page
     .getByRole('dialog', { name: 'Issues on approve' })
-    .getByRole('button', { name: /timeoutSeconds/ })
+    .getByRole('button', { name: /FIELD_INPUT_INVALID.*timeoutSeconds/ })
     .click();
   const editor = page.getByRole('dialog', { name: 'Edit inference approve' });
   await expect(editor.getByRole('button', { name: /^Advanced\b/ })).toHaveAttribute(

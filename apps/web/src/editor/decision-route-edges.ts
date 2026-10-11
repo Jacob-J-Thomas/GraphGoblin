@@ -131,6 +131,17 @@ export function decisionRouteEdges(
           }
           return undefined;
         });
+        if (
+          collection?.type === 'replace' &&
+          change !== undefined &&
+          answer !== undefined &&
+          (change.path === answer.collectionPath || change.path === 'answer') &&
+          after.length === before.rows.length
+        ) {
+          // JSON has no row-action identity. Match unchanged IDs first, then pair unmatched
+          // rows in authored order as explicit renames when the row count is unchanged.
+          retained = retained.map((row) => row ?? available.shift());
+        }
       }
       rows = after.map((id, index) => ({
         ...(retained[index] ?? { key: nextKey++, edgeIds: [] }),

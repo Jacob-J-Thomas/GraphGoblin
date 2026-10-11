@@ -4,6 +4,7 @@ import { EffortField, LoopModelField, ModelField } from '../forms/fields/model.j
 import { ClassifierField } from './ClassifierField.js';
 import { ClaudeApprovalField, ClaudePolicyField } from './ClaudePolicyField.js';
 import { DECISION_FIELD_OVERRIDES } from './DecisionTruthThresholdField.js';
+import { CapabilityField, VariableField } from '../forms/fields/suggestions.js';
 
 /**
  * Controls that draw node config fields in place of the default renderer, by the name a field's
@@ -20,6 +21,11 @@ export const NODE_FIELD_CONTROLS: FieldControls = {
   classifier: ClassifierField,
   'claude-policy': ClaudePolicyField,
   'claude-approval': ClaudeApprovalField,
+  variable: VariableField,
+  'variable-path': VariableField,
+  'capability-mcpServers': CapabilityField,
+  'capability-plugins': CapabilityField,
+  'capability-skills': CapabilityField,
 };
 
 export { DECISION_FIELD_OVERRIDES };
