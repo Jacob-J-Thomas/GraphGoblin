@@ -277,6 +277,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
     fn: (def: LoopDefinitionInput) => LoopDefinitionInput,
     step: HistoryStep,
     change?: FormChange,
+    editedNodeId?: string,
   ) => {
     const s = get();
     const def = s.definition;
@@ -286,6 +287,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
       s.decisionRoutes,
       change,
       step.renamed,
+      editedNodeId,
     );
     if (sameValue(definition, def)) return;
     const { fieldErrors } = s;
@@ -420,6 +422,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
             ? configStep(nodeId, change)
             : { label: `edit ${nodeId}`, coalesceKey: `node:${nodeId}` },
         change,
+        nodeId,
       ),
 
     renameNode: (nodeId, nextId) => {

@@ -58,7 +58,7 @@ test('inference placement, tab keyboard order, and single-panel kinds', async ({
   await page.goto(`/app/loops/${id}/edit`);
   const dialog = await openNode(page, 'approve');
   const main = dialog.getByRole('tab', { name: 'Settings' });
-  const context = dialog.getByRole('tab', { name: 'Context' });
+  const context = dialog.getByRole('tab', { name: /^Context\b/ });
   await expect(dialog.getByRole('tablist', { name: 'Node configuration' })).toBeVisible();
   await expect(main).toHaveAttribute('aria-selected', 'true');
   await expect(dialog.getByLabel('Model', { exact: true })).toBeHidden();
@@ -142,7 +142,7 @@ for (const [kind, answer] of [
         await openAdvanced(dialog.locator('[data-field="evaluation"]'));
         await expect(dialog.getByRole('spinbutton', { name: 'Min confidence' })).toBeVisible();
       }
-      await dialog.getByRole('tab', { name: 'Context' }).click();
+      await dialog.getByRole('tab', { name: /^Context\b/ }).click();
       await expect(dialog.getByRole('switch', { name: 'Include last output' })).toBeVisible();
       await expect(dialog.getByLabel('Vars 1', { exact: true })).toBeHidden();
       await openAdvanced(dialog);
@@ -185,19 +185,19 @@ test('a Context issue opens its collapsed Advanced group; undo crosses tabs and 
   await page.goto(`/app/loops/${id}/edit`);
   const dialog = await openNode(page, 'approve');
   await replaceCode(page, codeField(dialog, 'evaluation.question'), 'updated');
-  await dialog.getByRole('tab', { name: 'Context' }).click();
+  await dialog.getByRole('tab', { name: /^Context\b/ }).click();
   const last = dialog.getByRole('switch', { name: 'Include last output' });
   await last.click();
   await page.keyboard.press('Control+z');
   await expect(last).toBeFocused();
   await expect(last).toHaveAttribute('aria-checked', 'true');
-  await expect(dialog.getByRole('tab', { name: 'Context' })).toHaveAttribute(
+  await expect(dialog.getByRole('tab', { name: /^Context\b/ })).toHaveAttribute(
     'aria-selected',
     'true',
   );
   await page.keyboard.press('Control+z');
   await expect(codeField(dialog, 'evaluation.question')).toHaveText('q');
-  await expect(dialog.getByRole('tab', { name: 'Context' })).toHaveAttribute(
+  await expect(dialog.getByRole('tab', { name: /^Context\b/ })).toHaveAttribute(
     'aria-selected',
     'true',
   );
@@ -207,13 +207,13 @@ test('a Context issue opens its collapsed Advanced group; undo crosses tabs and 
   await dialog.getByLabel('Vars 1', { exact: true }).fill('bad value');
   await advanced.click();
   await dialog.getByRole('tab', { name: /^Settings/ }).click();
-  await expect(dialog.getByRole('tab', { name: 'Context 1 error' })).toBeVisible();
+  await expect(dialog.getByRole('tab', { name: /^Context.*1 error$/ })).toBeVisible();
   await dialog.getByRole('button', { name: /issues? on approve$/ }).click();
   await page
     .getByRole('dialog', { name: 'Issues on approve' })
     .getByRole('button', { name: /config.evaluation.context.vars.0/ })
     .click();
-  await expect(dialog.getByRole('tab', { name: 'Context 1 error' })).toHaveAttribute(
+  await expect(dialog.getByRole('tab', { name: /^Context.*1 error$/ })).toHaveAttribute(
     'aria-selected',
     'true',
   );
@@ -230,7 +230,7 @@ test('a Context issue opens its collapsed Advanced group; undo crosses tabs and 
   });
   await page.goto(`/app/loops/${inferId}/edit`);
   const infer = await openNode(page, 'approve');
-  await infer.getByRole('tab', { name: 'Context' }).click();
+  await infer.getByRole('tab', { name: /^Context\b/ }).click();
   await infer.getByRole('button', { name: /^Input 1 set/ }).click();
   await replaceCode(page, codeField(infer, 'input.0.value.value'), '{held');
   await infer.getByRole('tab', { name: /^Settings/ }).click();
@@ -277,7 +277,7 @@ for (const theme of ['dark', 'light']) {
         if (width < 768)
           expect((await dialog.boundingBox())!.y + (await dialog.boundingBox())!.height).toBe(900);
         for (const tab of ['Settings', 'Context']) {
-          await dialog.getByRole('tab', { name: tab }).click();
+          await dialog.getByRole('tab', { name: new RegExp(`^${tab}\\b`) }).click();
           await dialog.locator(':scope > div').evaluate((body) => (body.scrollTop = 0));
           if (width === 1440)
             await dialog.screenshot({

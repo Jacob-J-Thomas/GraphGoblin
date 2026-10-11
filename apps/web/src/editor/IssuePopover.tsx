@@ -22,7 +22,7 @@ export function worstSeverity(issues: readonly EditorIssue[]): EditorIssue['seve
 }
 
 /**
- * Close a popover after "Discard the unparsed text", with focus back on its trigger; when the discard removed
+ * Close a popover after discarding held input, with focus back on its trigger; when the discard removed
  * the last issue and so the trigger too, focus goes to `fallback` instead of the page.
  */
 export function refocusAfterDiscard(
@@ -78,7 +78,7 @@ const ROW = 'grid w-full gap-1 rounded-md px-2 py-1.5 text-left pointer-coarse:m
  * Issues as rows: each shows its severity (icon and word), code, message, and field path. With
  * `onChoose`, each row is a button (open the node at the field); otherwise the rows only inform.
  * A held-input issue (`FIELD_INPUT_INVALID`) keeps a discard button using the control's noun
- * (the unparsed text or the incomplete schedule), which drops the input and the issue.
+ * (unparsed text, an incomplete schedule or unapplied JSON), which drops the input and the issue.
  */
 export function IssueList({
   issues,

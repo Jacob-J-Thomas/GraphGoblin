@@ -20,6 +20,7 @@ import { shapeOf, unwrap, type Schema } from './introspect.js';
 import type { ParseError } from './parse-errors.js';
 import { SchemaForm } from './SchemaForm.js';
 import { VariableSuggestionsContext } from './fields/suggestions.js';
+import { JsonApplyReviewContext } from './fields/json.js';
 
 function object(schema: Schema) {
   const shape = shapeOf(schema);
@@ -133,6 +134,121 @@ function Harness({
 }
 
 describe('section JSON mode', () => {
+  it('returns to structured fields when history restores descendant held input', () => {
+    const schema = z.object({ section: z.array(z.unknown()).meta({ jsonEditor: true }) });
+    const props = {
+      schema,
+      value: { section: [1] },
+      label: 'form',
+      onChange: vi.fn(),
+      disclosures: {
+        open: { 'section#json': true },
+        setOpen: vi.fn(),
+        identities: createDisclosureIdentities(),
+      },
+    };
+    const view = render(<SchemaForm {...props} parseErrors={{}} />);
+    expect(screen.getByLabelText('Section JSON')).toBeInTheDocument();
+    view.rerender(
+      <SchemaForm
+        key="history-remount"
+        {...props}
+        parseErrors={{ 'section.0': { text: '{held', message: 'invalid JSON' } }}
+      />,
+    );
+    expect(screen.queryByLabelText('Section JSON')).not.toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent('section.0');
+    expect(getCode('Section 1')).toBe('{held');
+  });
+  it('does not hold whitespace/key-order-only edits, while array order remains significant', async () => {
+    render(
+      <Harness
+        schema={z.object({ section: z.unknown().meta({ jsonEditor: true }) })}
+        initial={{ section: { a: 1, b: [2, 3] } }}
+      />,
+    );
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Edit as JSON: Section' }));
+    setCode('Section JSON', ' { "b": [2,3], "a": 1 } ');
+    expect(screen.queryByText(/Choose Apply JSON/)).not.toBeInTheDocument();
+    setCode('Section JSON', '{"b":[3,2],"a":1}');
+    expect(screen.getByText(/Choose Apply JSON/)).toBeInTheDocument();
+    setCode('Section JSON', '{"a":1,"b":[2,3]}');
+    await userEvent
+      .setup()
+      .click(screen.getByRole('button', { name: 'Use structured editor for Section' }));
+    expect(screen.queryByLabelText('Section JSON')).not.toBeInTheDocument();
+  });
+
+  it('requires a separate confirmation, rechecks changed consequences, and cancels review without applying', async () => {
+    const spy = vi.fn();
+    const review = vi.fn(() => [{ id: 'e1', description: 'old → target' }]);
+    render(
+      <JsonApplyReviewContext value={review}>
+        <Harness
+          schema={z.object({ section: z.array(z.number()).meta({ jsonEditor: true }) })}
+          initial={{ section: [1] }}
+          spy={spy}
+        />
+      </JsonApplyReviewContext>,
+    );
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Edit as JSON: Section' }));
+    setCode('Section JSON', '[2]');
+    await user.click(screen.getByRole('button', { name: 'Apply JSON' }));
+    expect(screen.getByRole('group', { name: 'Confirm connection removal' })).toHaveTextContent(
+      'old → target',
+    );
+    expect(spy).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: 'Apply JSON' }));
+    expect(spy).not.toHaveBeenCalled();
+    review.mockReturnValue([{ id: 'e2', description: 'old → other' }]);
+    await user.click(screen.getByRole('button', { name: 'Confirm Apply JSON' }));
+    expect(spy).not.toHaveBeenCalled();
+    expect(screen.getByRole('group', { name: 'Confirm connection removal' })).toHaveTextContent(
+      'old → other',
+    );
+    await user.click(screen.getByRole('button', { name: 'Keep editing JSON' }));
+    expect(
+      screen.queryByRole('group', { name: 'Confirm connection removal' }),
+    ).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Apply JSON' }));
+    setCode('Section JSON', '[3]');
+    expect(
+      screen.queryByRole('group', { name: 'Confirm connection removal' }),
+    ).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Apply JSON' }));
+    await user.click(screen.getByRole('button', { name: 'Cancel JSON' }));
+    expect(spy).not.toHaveBeenCalled();
+    setCode('Section JSON', '[4]');
+    await user.click(screen.getByRole('button', { name: 'Apply JSON' }));
+    await user.click(screen.getByRole('button', { name: 'Confirm Apply JSON' }));
+    expect(spy).toHaveBeenLastCalledWith({ section: [4] });
+  });
+
+  it('refuses JSON mode while descendants hold input, names them, and focuses the first through disclosures', async () => {
+    const schema = z.object({
+      section: z.array(z.unknown()).meta({ jsonEditor: true, collapseItems: true }),
+    });
+    render(
+      <SchemaForm
+        schema={schema}
+        value={{ section: [1, 2] }}
+        label="form"
+        onChange={vi.fn()}
+        parseErrors={{
+          'section.0': { text: '{held', message: 'invalid JSON' },
+          'section.1': { text: '[held', message: 'invalid JSON' },
+        }}
+      />,
+    );
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Edit as JSON: Section' }));
+    expect(screen.queryByLabelText('Section JSON')).not.toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent('section.0, section.1');
+    await user.click(screen.getByRole('button', { name: 'Focus first held field' }));
+    expect(screen.getByLabelText('Section 1')).toHaveFocus();
+    expect(getCode('Section 1')).toBe('{held');
+  });
   it('round trips a cleared optional child without exposing the internal unset marker', async () => {
     const spy = vi.fn();
     render(
@@ -316,6 +432,24 @@ describe('section JSON mode', () => {
 });
 
 describe('typed inputs', () => {
+  it('shows capability availability once per section and never renders empty capability datalists', async () => {
+    render(
+      <SchemaForm
+        schema={z.object({ capabilities: inference.capabilities.meta({ advanced: false }) })}
+        value={{ capabilities: { mcpServers: ['server', 'another'], skills: ['skill', 'other'] } }}
+        controls={NODE_FIELD_CONTROLS}
+        onChange={vi.fn()}
+        label="form"
+      />,
+    );
+    expect(screen.getAllByText(/No resolved capability identifiers/)).toHaveLength(1);
+    expect(document.querySelectorAll('datalist')).toHaveLength(0);
+    await userEvent
+      .setup()
+      .click(screen.getByRole('button', { name: 'Edit as JSON: Capabilities' }));
+    expect(screen.getAllByText(/No resolved capability identifiers/)).toHaveLength(1);
+    expect(document.querySelectorAll('datalist')).toHaveLength(0);
+  });
   it('keeps authored capability slugs editable and rejects malformed identifiers through the schema', async () => {
     render(
       <SchemaForm
@@ -327,7 +461,7 @@ describe('typed inputs', () => {
       />,
     );
     expect(screen.getByLabelText('Skills 1')).toHaveValue('authored');
-    expect(screen.getByText(/No resolved capability identifiers/)).toBeInTheDocument();
+    expect(screen.getByLabelText('Skills 1')).not.toHaveAttribute('list');
     fireEvent.change(screen.getByLabelText('Skills 1'), { target: { value: 'invalid slug!' } });
     expect(screen.getByRole('alert')).toHaveTextContent('must start with a letter');
     fireEvent.change(screen.getByLabelText('Skills 1'), { target: { value: 'another-authored' } });

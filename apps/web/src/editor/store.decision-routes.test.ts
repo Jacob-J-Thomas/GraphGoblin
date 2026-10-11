@@ -35,13 +35,51 @@ function fixture(): LoopDefinitionInput {
 describe('decision option edits in editor history', () => {
   beforeEach(() => store().load('L1', fixture()));
 
-  it('matches JSON replacements by ID before pairing renames, and removes only deleted routes', () => {
+  it('scopes JSON replacement to the edited decision, preserving another decision mid-rename', () => {
+    const definition = fixture();
+    definition.nodes.push({ id: 'other', label: 'Other', kind: 'decision', config: config() });
+    definition.edges.push({
+      id: 'other-edge',
+      from: { node: 'other', port: 'yes' },
+      to: { node: 'done' },
+    });
+    store().load('L1', definition);
+    store().updateNode(
+      'other',
+      { config: config(['unfinished!', 'no', 'third']) },
+      {
+        path: 'answer.options.0.id',
+        kind: 'typing',
+        id: 300,
+      },
+    );
+    store().updateNode(
+      'pick',
+      { config: config(['yes', 'no', 'fresh']) },
+      {
+        path: 'answer',
+        kind: 'commit',
+        id: 301,
+        collection: { type: 'replace' },
+      },
+    );
+    expect(store().definition!.edges.find((edge) => edge.id === 'other-edge')!.from.port).toBe(
+      'yes',
+    );
+    expect(store().definition!.edges.some((edge) => edge.id === 'third')).toBe(false);
+  });
+
+  it('removes vanished IDs in equal-count JSON replacements instead of treating them as renames', () => {
     store().updateNode(
       'pick',
       { config: config(['third', 'renamed', 'yes']) },
       { path: 'answer', kind: 'commit', id: 101, collection: { type: 'replace' } },
     );
-    expect(store().definition!.edges.find((edge) => edge.id === 'no')!.from.port).toBe('renamed');
+    expect(store().definition!.edges.some((edge) => edge.id === 'no')).toBe(false);
+    store().undo();
+    expect(store().definition!.edges.find((edge) => edge.id === 'no')!.from.port).toBe('no');
+    store().redo();
+    expect(store().definition!.edges.some((edge) => edge.id === 'no')).toBe(false);
     expect(store().definition!.edges.find((edge) => edge.id === 'third')!.ui).toEqual({
       route: [300, 400, 500],
     });
@@ -53,9 +91,41 @@ describe('decision option edits in editor history', () => {
     expect(store().definition!.edges.some((edge) => edge.id === 'no')).toBe(false);
     expect(store().definition!.edges.find((edge) => edge.id === 'yes')!.from.port).toBe('yes');
     store().undo();
-    expect(store().definition!.edges.find((edge) => edge.id === 'no')!.from.port).toBe('renamed');
+    expect(store().definition!.edges.some((edge) => edge.id === 'no')).toBe(false);
     store().redo();
     expect(store().definition!.edges.some((edge) => edge.id === 'no')).toBe(false);
+  });
+
+  it.each([
+    ['third', 'yes', 'no'],
+    ['no', 'yes', 'third'],
+  ])('keeps connections on their IDs through JSON reorder or swap: %j', (...ids) => {
+    const edges = store().definition!.edges;
+    store().updateNode(
+      'pick',
+      { config: config(ids) },
+      {
+        path: 'answer',
+        kind: 'commit',
+        id: 201,
+        collection: { type: 'replace' },
+      },
+    );
+    expect(store().definition!.edges).toEqual(edges);
+  });
+
+  it('does not transfer a connection when a single route is renamed in JSON', () => {
+    store().updateNode(
+      'pick',
+      { config: config(['yes', 'no', 'fresh']) },
+      {
+        path: 'answer',
+        kind: 'commit',
+        id: 202,
+        collection: { type: 'replace' },
+      },
+    );
+    expect(store().definition!.edges.map((edge) => edge.id)).toEqual(['e1', 'yes', 'no']);
   });
 
   it('renames a stable option ID with its edge while preserving target and layout', () => {

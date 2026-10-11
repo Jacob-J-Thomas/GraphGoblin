@@ -437,7 +437,7 @@ describe('basic fields first, advanced ones behind a disclosure', () => {
       />,
     );
     expect(toggle()).toHaveAccessibleName('Advanced');
-    expect(screen.getByRole('tab', { name: 'Context 1 error' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Context 1 set 1 error' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('tab', { name: /^Context/ }));
     // The collapsed operation says so too.
     expect(screen.getByRole('button', { name: /^Input 1 drop messages/ })).toHaveAccessibleName(

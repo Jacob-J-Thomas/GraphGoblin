@@ -214,7 +214,8 @@ export function FormPanels({
                 id: 'context',
                 label: (
                   <>
-                    Context <ProblemBadge count={contextProblems} />
+                    Context <ContextSetBadge items={fields} />{' '}
+                    <ProblemBadge count={contextProblems} />
                   </>
                 ),
                 content: (
@@ -231,6 +232,16 @@ export function FormPanels({
       ]}
     />
   );
+}
+
+/** The same placed-field/default rules as Advanced, subscribed only to context values. */
+function ContextSetBadge({ items }: { items: readonly LayoutItem[] }) {
+  const placements = placementsOf(items);
+  const values: unknown[] = useWatch({ name: placements.map((placement) => placement.name) });
+  const set = placements.filter((placement, index) =>
+    isCustomized(placement.schema, values[index]),
+  ).length;
+  return set > 0 ? <Badge size="sm">{set} set</Badge> : null;
 }
 
 /** A shared summary of field problems for disclosures and tabs. */

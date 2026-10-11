@@ -520,8 +520,8 @@ test('#14: a collapsed group or operation flags an expression that does not comp
   await expect(dialog.getByRole('button', { name: /^Advanced\b/ })).toHaveAccessibleName(
     'Advanced 1 set',
   );
-  await expect(dialog.getByRole('tab', { name: 'Context 1 error' })).toBeVisible();
-  await dialog.getByRole('tab', { name: 'Context 1 error' }).click();
+  await expect(dialog.getByRole('tab', { name: /^Context.*1 error$/ })).toBeVisible();
+  await dialog.getByRole('tab', { name: /^Context.*1 error$/ }).click();
   const operation = dialog.getByRole('button', { name: /^Input 1 drop messages/ });
   await expect(operation).toHaveAttribute('aria-expanded', 'false');
   await expect(operation).toHaveAccessibleName('Input 1 drop messages 1 error');
@@ -532,7 +532,7 @@ test('#14: a collapsed group or operation flags an expression that does not comp
     .getByRole('dialog', { name: 'Issues on approve' })
     .getByRole('button', { name: /EXPRESSION_INVALID/ })
     .click();
-  await expect(dialog.getByRole('tab', { name: 'Context 1 error' })).toHaveAttribute(
+  await expect(dialog.getByRole('tab', { name: /^Context.*1 error$/ })).toHaveAttribute(
     'aria-selected',
     'true',
   );

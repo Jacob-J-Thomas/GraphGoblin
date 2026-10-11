@@ -16,6 +16,27 @@ const answer = {
 };
 
 describe('context placement', () => {
+  it('counts customized context fields, ignores empty/default values, and updates its accessible name', async () => {
+    render(
+      <SchemaForm
+        schema={NodeConfigSchemas.inference}
+        value={{
+          prompt: { template: 'hi' },
+          input: [{ op: 'append-message', role: 'note', content: 'hi' }],
+          contextFiles: [{ path: 'context.txt', template: 'hello' }],
+        }}
+        label="form"
+        onChange={vi.fn()}
+      />,
+    );
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('tab', { name: 'Context 2 set' }));
+    await user.click(screen.getByRole('button', { name: 'Remove input 1' }));
+    expect(screen.getByRole('tab', { name: 'Context 1 set' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /^Advanced/ }));
+    await user.click(screen.getByRole('button', { name: 'Remove context files 1' }));
+    expect(screen.getByRole('tab', { name: 'Context' })).toBeInTheDocument();
+  });
   it.each(['classifier', 'llm'] as const)(
     'keeps %s required inputs and answer routes on Settings',
     (kind) => {
@@ -72,12 +93,12 @@ describe('context placement', () => {
         onChange={vi.fn()}
       />,
     );
-    expect(screen.getByRole('tab', { name: 'Context 1 error' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Context 1 set 1 error' })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Settings 1 error' })).toBeInTheDocument();
     act(() => {
       expect(focusField(screen.getByRole('form'), 'evaluation.context.vars.0')).toBe(true);
     });
-    expect(screen.getByRole('tab', { name: 'Context 1 error' })).toHaveAttribute(
+    expect(screen.getByRole('tab', { name: 'Context 1 set 1 error' })).toHaveAttribute(
       'aria-selected',
       'true',
     );

@@ -205,7 +205,11 @@ export function connectionProblem(
 export type EditorIssue = ValidationIssue & {
   path?: string;
   /** For FIELD_INPUT_INVALID: where held input is kept, and its control's discard noun. */
-  discard?: { scope: string; path: string; input?: 'unparsed text' | 'incomplete schedule' };
+  discard?: {
+    scope: string;
+    path: string;
+    input?: 'unparsed text' | 'incomplete schedule' | 'unapplied JSON';
+  };
 };
 
 /** Schema issues first (they block saving), then the structural rules from `domain`. */
@@ -238,11 +242,14 @@ export function issueKey(issue: EditorIssue): string {
   return `${issue.code}|${issue.nodeId ?? ''}|${issue.message}`;
 }
 
-/** Held input that is not a valid value yet, as blocking issues. */
+/** Invalid input or valid JSON awaiting Apply, as blocking issues. */
 export function fieldErrorIssues(
   fieldErrors: Record<
     string,
-    Record<string, { message: string; input?: 'unparsed text' | 'incomplete schedule' }>
+    Record<
+      string,
+      { message: string; input?: 'unparsed text' | 'incomplete schedule' | 'unapplied JSON' }
+    >
   >,
 ): EditorIssue[] {
   return Object.entries(fieldErrors).flatMap(([scope, errors]) =>
@@ -251,7 +258,10 @@ export function fieldErrorIssues(
       return {
         code: 'FIELD_INPUT_INVALID',
         severity: 'error',
-        message: `This field holds input that is not a valid value yet. ${message}`,
+        message:
+          input === 'unapplied JSON'
+            ? `This field holds JSON not applied yet. ${message}`
+            : `This field holds input that is not a valid value yet. ${message}`,
         path: nodeId ? `config.${path}` : `${scope}.${path}`,
         ...(nodeId ? { nodeId } : {}),
         discard: { scope, path, ...(input ? { input } : {}) },

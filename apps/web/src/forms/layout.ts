@@ -190,7 +190,7 @@ export function contextStructure(schema: Schema, value: unknown): string {
   return nested && current === undefined && optional && !hasDefault ? `absent:${nested}` : nested;
 }
 
-function sameJson(a: unknown, b: unknown): boolean {
+export function sameJson(a: unknown, b: unknown): boolean {
   if (a === b) return true;
   if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null) return false;
   if (Array.isArray(a) !== Array.isArray(b)) return false;

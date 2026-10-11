@@ -1,5 +1,5 @@
-/** JSON fields: a CodeMirror JSON editor that keeps unparsed text until it parses or is dropped. */
-import { useEffect, useId, useState, type ReactNode } from 'react';
+/** JSON fields: live opaque values, or validated sections with explicit Apply/Cancel. */
+import { createContext, use, useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Button, HelpText } from '../../components/ui/index.js';
 import { cn, parseJson, prettyJson } from '../../lib/utils.js';
@@ -8,11 +8,24 @@ import { LanguageTag } from '../CodeField.js';
 import { matchOption, shapeOf, unwrap, withUnsetFields, type Schema } from '../introspect.js';
 import { useDisclosureState } from '../disclosures.js';
 import { useFormChange } from '../changes.js';
-import { repathParseErrors, useParseErrors } from '../parse-errors.js';
+import { useParseErrors } from '../parse-errors.js';
 import { stripUnset } from '../unset.js';
+import { sameJson } from '../layout.js';
+import { focusField } from '../../editor/focus-field.js';
+import { CapabilitySectionNotice } from './suggestions.js';
 import { fieldMeta, Row, useField, type FieldProps } from './shared.js';
 
 const PENDING_JSON = 'Choose Apply JSON or Cancel JSON to finish this edit.';
+
+interface RemovedConnection {
+  id: string;
+  description: string;
+}
+
+/** The editor supplies graph consequences; the form only presents and confirms them. */
+export const JsonApplyReviewContext = createContext<
+  (path: string, value: unknown) => readonly RemovedConnection[]
+>(() => []);
 
 function validateText(text: string, schema?: Schema): { value?: unknown; error?: string } {
   const parsed = text.trim() === '' ? { ok: true as const, value: undefined } : parseJson(text);
@@ -58,17 +71,22 @@ export function JsonText({
   onHeldChange?: ((held: boolean) => void) | undefined;
 }) {
   const parseErrors = useParseErrors();
+  const review = use(JsonApplyReviewContext);
   const change = useFormChange();
   const parseErrorId = useId();
-  // Unparsed text from an earlier visit to this field wins over the last valid value.
+  // Held text from an earlier visit to this field wins over the last valid value.
   const [stored] = useState(() => parseErrors.get(path));
   const [text, setText] = useState(() => stored?.text ?? prettyJson(value));
   const [error, setError] = useState<string | undefined>(stored?.message);
+  const [confirmation, setConfirmation] = useState<{
+    text: string;
+    connections: readonly RemovedConnection[];
+  }>();
   useEffect(() => onHeldChange?.(error !== undefined), [error, onHeldChange]);
   const formatted = prettyJson(value);
   const [lastValue, setLastValue] = useState(formatted);
   // Removing an earlier indexed row can give this editor a different value. Follow that value
-  // while parsed; unparsed text still wins until the user fixes or discards it. Compare JSON,
+  // while applied; held text still wins until the user fixes or discards it. Compare JSON,
   // since form subscriptions clone objects even when their contents have not changed.
   if (formatted !== lastValue) {
     setLastValue(formatted);
@@ -88,10 +106,36 @@ export function JsonText({
     // read as discarded.
     parseErrors.report(
       path,
-      message === undefined ? undefined : { message, text: next, input: 'unparsed text' },
+      message === undefined
+        ? undefined
+        : {
+            message,
+            text: next,
+            input: message === PENDING_JSON ? 'unapplied JSON' : 'unparsed text',
+          },
     );
     setError(message);
     onHeldChange?.(message !== undefined);
+  };
+  const apply = (confirmed = false) => {
+    const parsed = validateText(text, schema);
+    if (parsed.error) {
+      fail(text, parsed.error);
+      return;
+    }
+    const connections = review(path, parsed.value);
+    if (
+      connections.length > 0 &&
+      !(confirmed && confirmation?.text === text && sameJson(confirmation.connections, connections))
+    ) {
+      setConfirmation({ text, connections });
+      return;
+    }
+    change({ path, kind: 'commit', collection: { type: 'replace' } }, () => {
+      fail(text, undefined);
+      setConfirmation(undefined);
+      onChange(parsed.value);
+    });
   };
   return (
     <div className="grid min-w-0 flex-1">
@@ -107,9 +151,10 @@ export function JsonText({
         value={text}
         onChange={(next) => {
           setText(next);
+          setConfirmation(undefined);
           const parsed = validateText(next, schema);
           if (parsed.error) fail(next, parsed.error);
-          else if (explicit) fail(next, next === formatted ? undefined : PENDING_JSON);
+          else if (explicit) fail(next, sameJson(parsed.value, value) ? undefined : PENDING_JSON);
           else {
             fail(next, undefined);
             onChange(parsed.value);
@@ -131,6 +176,7 @@ export function JsonText({
               onClick={() => {
                 // Back to the last valid value; the typed text is dropped (an undo step of its own).
                 setText(prettyJson(value));
+                setConfirmation(undefined);
                 parseErrors.discard(path);
                 setError(undefined);
                 onHeldChange?.(false);
@@ -146,18 +192,7 @@ export function JsonText({
           <Button
             size="sm"
             disabled={error !== undefined && error !== PENDING_JSON}
-            onClick={() =>
-              change({ path, kind: 'commit', collection: { type: 'replace' } }, () => {
-                const parsed = validateText(text, schema);
-                if (parsed.error) {
-                  fail(text, parsed.error);
-                  return;
-                }
-                fail(text, undefined);
-                repathParseErrors(parseErrors, [{ from: path }]);
-                onChange(parsed.value);
-              })
-            }
+            onClick={() => apply()}
           >
             Apply JSON
           </Button>
@@ -167,6 +202,7 @@ export function JsonText({
             onClick={() =>
               change({ path, kind: 'commit' }, () => {
                 setText(formatted);
+                setConfirmation(undefined);
                 parseErrors.discard(path);
                 setError(undefined);
                 onHeldChange?.(false);
@@ -176,6 +212,28 @@ export function JsonText({
             Cancel JSON
           </Button>
           {error === PENDING_JSON ? <HelpText id={parseErrorId}>{PENDING_JSON}</HelpText> : null}
+        </div>
+      ) : null}
+      {confirmation ? (
+        <div
+          role="group"
+          aria-label="Confirm connection removal"
+          className="mt-2 grid min-w-0 gap-2"
+        >
+          <HelpText tone="warn">Applying this JSON will remove these connections:</HelpText>
+          <ul className="min-w-0 break-words text-sm">
+            {confirmation.connections.map((connection) => (
+              <li key={connection.id}>{connection.description}</li>
+            ))}
+          </ul>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button size="sm" onClick={() => apply(true)}>
+              Confirm Apply JSON
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setConfirmation(undefined)}>
+              Keep editing JSON
+            </Button>
+          </div>
         </div>
       ) : null}
     </div>
@@ -195,14 +253,20 @@ export function JsonSection({
   // Read the live section when opening/changing mode so structured child edits are included.
   const value = stripUnset(getValues(name));
   const errors = useParseErrors();
+  const rootRef = useRef<HTMLDivElement>(null);
+  const descendants = Object.keys(errors.errors ?? {}).filter((path) =>
+    path.startsWith(`${name}.`),
+  );
   const { open: storedOpen, onOpenChange } = useDisclosureState(`${name}#json`, false);
   const [ownOpen, setOwnOpen] = useState(() => errors.get(name) !== undefined);
   const [held, setHeld] = useState(() => errors.get(name) !== undefined);
-  const open = (storedOpen ?? ownOpen) || errors.get(name) !== undefined;
+  const requestedOpen = (storedOpen ?? ownOpen) || errors.get(name) !== undefined;
+  const open = requestedOpen && descendants.length === 0;
   useEffect(() => {
     if (errors.get(name) && !(storedOpen ?? ownOpen)) onOpenChange?.(true);
   }, [errors, name, storedOpen, onOpenChange, ownOpen]);
   const [notice, setNotice] = useState(false);
+  const [refused, setRefused] = useState(false);
   const { required, help } = fieldMeta(schema);
   const shape = shapeOf(schema);
   const sectionSchema =
@@ -210,6 +274,10 @@ export function JsonSection({
       ? shape.options[matchOption(shape.options, value, shape.discriminator)]!
       : schema;
   const select = () => {
+    if (!open && descendants.length > 0) {
+      setRefused(true);
+      return;
+    }
     if (open && (held || errors.get(name))) {
       setNotice(true);
       return;
@@ -217,9 +285,10 @@ export function JsonSection({
     onOpenChange?.(!open);
     setOwnOpen(!open);
     setNotice(false);
+    setRefused(false);
   };
   return (
-    <div data-field={name} data-json-section={name} className="grid min-w-0 gap-2">
+    <div ref={rootRef} data-field={name} data-json-section={name} className="grid min-w-0 gap-2">
       <div className="flex flex-wrap items-center gap-2">
         <Button
           size="sm"
@@ -234,6 +303,24 @@ export function JsonSection({
           <HelpText tone="bad">Apply or cancel the JSON edit before switching editors.</HelpText>
         ) : null}
       </div>
+      {(refused || requestedOpen) && descendants.length > 0 ? (
+        <div role="alert" className="grid min-w-0 gap-2">
+          <HelpText tone="bad">
+            Finish or discard held input before editing this section as JSON:{' '}
+            {descendants.join(', ')}.
+          </HelpText>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              if (rootRef.current) focusField(rootRef.current, descendants[0]!);
+            }}
+          >
+            Focus first held field
+          </Button>
+        </div>
+      ) : null}
+      <CapabilitySectionNotice schema={schema} />
       <div hidden={open} className="grid min-w-0 gap-field">
         {children}
       </div>

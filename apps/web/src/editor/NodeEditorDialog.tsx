@@ -21,6 +21,8 @@ import { createDisclosureIdentities, type DisclosureStates } from '../forms/disc
 import { SchemaForm } from '../forms/SchemaForm.js';
 import { FieldLabelsContext } from '../forms/fields/shared.js';
 import { VariableSuggestionsContext } from '../forms/fields/suggestions.js';
+import { JsonApplyReviewContext } from '../forms/fields/json.js';
+import { removedAnswerConnections } from './decision-route-edges.js';
 import { nextChangeId } from '../forms/changes.js';
 import { isUnset } from '../forms/unset.js';
 import { DecisionKindPicker } from './DecisionKindPicker.js';
@@ -411,6 +413,16 @@ export function NodeEditorDialog({
   const info = KIND_INFO[node.kind];
   const nodeIssues = useMemo(() => issues.filter((i) => i.nodeId === node.id), [issues, node.id]);
   const variables = useMemo(() => Object.keys(definition.variables ?? {}), [definition.variables]);
+  const reviewJsonApply = useMemo(
+    () => (path: string, next: unknown) =>
+      node.kind === 'decision' && path === 'answer'
+        ? removedAnswerConnections(definition.edges, node.id, next).map((edge) => ({
+            id: edge.id,
+            description: `${edge.from.port ?? '(no route)'} → ${edge.to.node}`,
+          }))
+        : [],
+    [definition.edges, node.id, node.kind],
+  );
   const catalogWarnings = useMemo(
     () =>
       nodeIssues.map((issue) => ({
@@ -666,29 +678,31 @@ export function NodeEditorDialog({
               }
             >
               <VariableSuggestionsContext value={variables}>
-                <SchemaForm
-                  key={`${node.kind}:${epoch}:${historyEpoch}`}
-                  schema={NodeConfigSchemas[node.kind]}
-                  fieldOrder={node.kind === 'decision' ? DECISION_FIELD_ORDER : undefined}
-                  value={node.config}
-                  label={`${node.id} config`}
-                  controls={NODE_FIELD_CONTROLS}
-                  unionPickers={node.kind === 'decision' ? DECISION_UNION_PICKERS : undefined}
-                  fieldOverrides={
-                    node.kind === 'decision'
-                      ? DECISION_FIELD_OVERRIDES
-                      : node.kind === 'exit'
-                        ? EXIT_PREDICATE_FIELD_OVERRIDES
-                        : undefined
-                  }
-                  problems={configProblems}
-                  disclosures={disclosures}
-                  onChange={handleConfigChange}
-                  parseErrors={fieldErrors[`node:${node.id}`]}
-                  onParseError={(path, error, reason, change) =>
-                    setFieldError(`node:${node.id}`, path, error, reason, change)
-                  }
-                />
+                <JsonApplyReviewContext value={reviewJsonApply}>
+                  <SchemaForm
+                    key={`${node.kind}:${epoch}:${historyEpoch}`}
+                    schema={NodeConfigSchemas[node.kind]}
+                    fieldOrder={node.kind === 'decision' ? DECISION_FIELD_ORDER : undefined}
+                    value={node.config}
+                    label={`${node.id} config`}
+                    controls={NODE_FIELD_CONTROLS}
+                    unionPickers={node.kind === 'decision' ? DECISION_UNION_PICKERS : undefined}
+                    fieldOverrides={
+                      node.kind === 'decision'
+                        ? DECISION_FIELD_OVERRIDES
+                        : node.kind === 'exit'
+                          ? EXIT_PREDICATE_FIELD_OVERRIDES
+                          : undefined
+                    }
+                    problems={configProblems}
+                    disclosures={disclosures}
+                    onChange={handleConfigChange}
+                    parseErrors={fieldErrors[`node:${node.id}`]}
+                    onParseError={(path, error, reason, change) =>
+                      setFieldError(`node:${node.id}`, path, error, reason, change)
+                    }
+                  />
+                </JsonApplyReviewContext>
               </VariableSuggestionsContext>
             </FieldLabelsContext>
           </CatalogWarningsContext>

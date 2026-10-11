@@ -62,7 +62,7 @@ for (const [kind, answer] of [
   ['llm', choice],
   ['llm', noul],
 ] as const) {
-  test(`${kind} ${answer.type}: JSON round trip, validation, multiline text, route rename and reload`, async ({
+  test(`${kind} ${answer.type}: JSON round trip, validation, multiline text, route removal confirmation and reload`, async ({
     page,
     request,
   }) => {
@@ -121,10 +121,16 @@ for (const [kind, answer] of [
     // Valid text is still pending until the complete section is applied.
     expect((await config(request, id))['answer']).toEqual(original);
     await dialog.getByRole('button', { name: 'Apply JSON' }).click();
-    await expect.poll(() => config(request, id)).toMatchObject({ answer: renamed });
+    const review = dialog.getByRole('group', { name: 'Confirm connection removal' });
+    await expect(review).toContainText('out');
+    await expect(review).toContainText('done');
+    expect((await config(request, id))['answer']).toEqual(original);
     expect((await saved(request, id)).edges.find((edge) => edge.id === 'e2')!.from.port).toBe(
-      'next',
+      'out',
     );
+    await review.getByRole('button', { name: 'Confirm Apply JSON' }).click();
+    await expect.poll(() => config(request, id)).toMatchObject({ answer: renamed });
+    expect((await saved(request, id)).edges.find((edge) => edge.id === 'e2')).toBeUndefined();
     await dialog.getByRole('button', { name: 'Use structured editor for Answer' }).click();
     await expect(dialog.locator('textarea').first()).toHaveValue('First line\nSecond line');
     await page.reload();
@@ -141,7 +147,7 @@ test('inference section JSON validates before autosave, cancels, and round trips
   const id = await create(request, 'inference', { prompt: { template: 'Hi' } });
   await page.goto(`/app/loops/${id}/edit`);
   const dialog = await openNode(page, 'approve');
-  await dialog.getByRole('tab', { name: 'Context' }).click();
+  await dialog.getByRole('tab', { name: /^Context\b/ }).click();
   await dialog.getByRole('button', { name: 'Edit as JSON: Input' }).click();
   let json = dialog.getByRole('textbox', { name: 'Input JSON', exact: true });
   const input = [{ op: 'set', path: '/vars/topic', value: { kind: 'literal', value: 'hello' } }];
@@ -210,7 +216,7 @@ test('held Context JSON blocks Publish, survives reopening, opens from a badge a
   const id = await create(request, 'inference', { prompt: { template: 'Hi' }, contextFiles: [] });
   await page.goto(`/app/loops/${id}/edit`);
   let dialog = await openNode(page, 'approve');
-  await dialog.getByRole('tab', { name: 'Context' }).click();
+  await dialog.getByRole('tab', { name: /^Context\b/ }).click();
   await openAdvanced(dialog);
   await dialog.getByRole('button', { name: 'Edit as JSON: Context files' }).click();
   await replace(
@@ -277,7 +283,7 @@ test('number constraints hold invalid input while provider variables remain sugg
   await expect
     .poll(() => config(request, id))
     .toMatchObject({ evaluation: { minConfidence: 0.75 } });
-  await dialog.getByRole('tab', { name: 'Context' }).click();
+  await dialog.getByRole('tab', { name: /^Context\b/ }).click();
   await openAdvanced(dialog);
   const variable = dialog.getByLabel('Vars 1', { exact: true });
   const list = await variable.getAttribute('list');
@@ -295,4 +301,115 @@ test('number constraints hold invalid input while provider variables remain sugg
     .toMatchObject({
       evaluation: { context: { messages: 'all', vars: [], includeLastOutput: false } },
     });
+});
+
+test('Answer JSON preserves surviving IDs through reorder and swap; equal-count delete/add removes only confirmed connections', async ({
+  page,
+  request,
+}) => {
+  const id = await create(request, 'decision', {
+    answer: choice,
+    evaluation: { kind: 'expression', jsonata: '"out"' },
+  });
+  await page.goto(`/app/loops/${id}/edit`);
+  const dialog = await openNode(page, 'approve');
+  await dialog.getByRole('button', { name: 'Edit as JSON: Answer' }).click();
+  const json = dialog.getByRole('textbox', { name: 'Answer JSON', exact: true });
+  for (const options of [
+    [choice.options[1], choice.options[0]],
+    [
+      { ...choice.options[0], id: 'no' },
+      { ...choice.options[1], id: 'out' },
+    ],
+  ]) {
+    const answer = { ...choice, options };
+    await replace(page, json, JSON.stringify(answer));
+    await dialog.getByRole('button', { name: 'Apply JSON', exact: true }).click();
+    await expect(dialog.getByRole('group', { name: 'Confirm connection removal' })).toHaveCount(0);
+    await expect.poll(() => config(request, id)).toMatchObject({ answer });
+    expect((await saved(request, id)).edges.find((edge) => edge.id === 'e2')!.from.port).toBe(
+      'out',
+    );
+  }
+  const answer = { ...choice, options: [choice.options[1], { ...choice.options[0], id: 'fresh' }] };
+  await replace(page, json, JSON.stringify(answer));
+  await dialog.getByRole('button', { name: 'Apply JSON', exact: true }).click();
+  const review = dialog.getByRole('group', { name: 'Confirm connection removal' });
+  await expect(review).toContainText('out');
+  await expect(review).toContainText('done');
+  expect((await saved(request, id)).edges.find((edge) => edge.id === 'e2')!.from.port).toBe('out');
+  await review.getByRole('button', { name: 'Keep editing JSON' }).click();
+  expect((await config(request, id))['answer']).not.toEqual(answer);
+  await dialog.getByRole('button', { name: 'Apply JSON', exact: true }).click();
+  await review.getByRole('button', { name: 'Confirm Apply JSON' }).click();
+  await expect.poll(() => config(request, id)).toMatchObject({ answer });
+  expect((await saved(request, id)).edges.find((edge) => edge.id === 'e2')).toBeUndefined();
+});
+
+test('semantic JSON no-ops permit Publish; valid changed JSON is described as unapplied', async ({
+  page,
+  request,
+}) => {
+  const input = [{ op: 'set', path: '/vars/topic', value: { kind: 'literal', value: 'hello' } }];
+  const id = await create(request, 'inference', { prompt: { template: 'Hi' }, input });
+  await page.goto(`/app/loops/${id}/edit`);
+  let dialog = await openNode(page, 'approve');
+  await dialog.getByRole('tab', { name: 'Context 1 set', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Edit as JSON: Input' }).click();
+  await replace(
+    page,
+    dialog.getByRole('textbox', { name: 'Input JSON', exact: true }),
+    ' [ { "value": { "value": "hello", "kind": "literal" }, "path": "/vars/topic", "op": "set" } ] ',
+  );
+  await expect(dialog.getByText(/Choose Apply JSON/)).toHaveCount(0);
+  await closeNode(page);
+  await page.getByRole('button', { name: 'Publish', exact: true }).click();
+  await expect(page.getByText(/Published version/)).toBeVisible();
+  dialog = await openNode(page, 'approve');
+  await dialog.getByRole('tab', { name: /^Context\b/ }).click();
+  // The section editor preference is kept for this dialog session; reopen if needed.
+  if (await dialog.getByRole('button', { name: 'Edit as JSON: Input' }).count())
+    await dialog.getByRole('button', { name: 'Edit as JSON: Input' }).click();
+  await replace(
+    page,
+    dialog.getByRole('textbox', { name: 'Input JSON', exact: true }),
+    JSON.stringify([{ ...input[0], value: { kind: 'literal', value: 'changed' } }]),
+  );
+  await closeNode(page);
+  await page.getByRole('button', { name: 'Publish', exact: true }).click();
+  await expect(page.getByText(/JSON not applied yet; apply or cancel it first/)).toBeVisible();
+  await page
+    .getByTestId('node-approve')
+    .getByRole('button', { name: '1 issue on approve' })
+    .click();
+  await expect(page.getByText(/This field holds JSON not applied yet/)).toBeVisible();
+});
+
+test('section JSON refuses hidden held input and focuses the first field without losing it', async ({
+  page,
+  request,
+}) => {
+  const id = await create(request, 'inference', {
+    prompt: { template: 'Hi' },
+    input: [{ op: 'set', path: '/vars/topic', value: { kind: 'literal', value: 1 } }],
+  });
+  await page.goto(`/app/loops/${id}/edit`);
+  const dialog = await openNode(page, 'approve');
+  await dialog.getByRole('tab', { name: /^Context\b/ }).click();
+  const row = dialog.getByRole('button', { name: /^Input 1/ });
+  if ((await row.getAttribute('aria-expanded')) === 'false') await row.click();
+  const value = dialog.getByRole('textbox', { name: 'Value', exact: true });
+  await replace(page, value, '{held');
+  await row.click();
+  await dialog.getByRole('button', { name: 'Edit as JSON: Input' }).click();
+  await expect(dialog.getByRole('textbox', { name: 'Input JSON', exact: true })).toHaveCount(0);
+  await expect(
+    dialog.getByText(/Finish or discard held input before editing this section as JSON/),
+  ).toContainText('input.0.value.value');
+  await dialog.getByRole('button', { name: 'Focus first held field' }).click();
+  await expect(value).toBeFocused();
+  await expect(value).toHaveText('{held');
+  expect((await config(request, id))['input']).toEqual([
+    { op: 'set', path: '/vars/topic', value: { kind: 'literal', value: 1 } },
+  ]);
 });

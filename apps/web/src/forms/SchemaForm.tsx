@@ -55,10 +55,10 @@ export interface SchemaFormProps {
   label: string;
   /** Optional display order for top-level object fields; unspecified fields keep schema order. */
   fieldOrder?: readonly string[] | undefined;
-  /** Stored text that did not parse (JSON), by field path; fields show it again when remounted. */
+  /** Stored held input, including invalid or unapplied JSON, by field path; restored on remount. */
   parseErrors?: Record<string, ParseError> | undefined;
   /**
-   * Called when a field's text stops or starts parsing (`undefined` clears the path); `reason` is
+   * Called when a field starts or stops holding unfinished input (`undefined` clears the path); `reason` is
    * `'discard'` when the user dropped the text (Discard the unparsed text) rather than fixing it. `change` is
    * the change it belongs to: typing in that field, or the commit (a row's removal, say) that moved
    * or dropped it.
