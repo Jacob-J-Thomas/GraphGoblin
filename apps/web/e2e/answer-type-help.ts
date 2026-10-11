@@ -12,6 +12,9 @@ export async function checkAnswerTypeHelp(
   const selectedValue = await group.locator('input:checked').inputValue();
   const popup = page.getByRole('dialog', { name: 'Option help' });
   expect(await page.evaluate(() => matchMedia('(pointer: coarse)').matches)).toBe(hasTouch);
+  // Hover keeps help open (WCAG 1.4.13), and the click that opened the wide node editor can leave
+  // the pointer over these options, so park it on the backdrop in the corner.
+  await page.mouse.move(0, 0);
   // The group has one Tab stop, regardless of its pointer help buttons.
   const selected = group.locator('input:checked');
   await selected.focus();

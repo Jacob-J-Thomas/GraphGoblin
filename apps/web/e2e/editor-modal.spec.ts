@@ -3,7 +3,7 @@
  * (runs start only from Runs), against the built app in a real browser: pointer drags, the top
  * layer and inert page, focus, and storage that jsdom cannot show.
  */
-import type { APIRequestContext, Page } from '@playwright/test';
+import type { APIRequestContext, Locator, Page } from '@playwright/test';
 import {
   approvalLoop,
   closeNode,
@@ -21,6 +21,13 @@ async function createLoop(request: APIRequestContext, definition: unknown): Prom
 }
 
 const card = (page: Page, id: string) => page.locator(`.react-flow__node[data-id="${id}"]`);
+
+/** Clicks the backdrop halfway between the window's left edge and the open dialog. */
+async function clickBackdrop(page: Page, dialog: Locator): Promise<void> {
+  const box = (await dialog.boundingBox())!;
+  expect(box.x).toBeGreaterThan(8);
+  await page.mouse.click(box.x / 2, 400);
+}
 
 /** The approval loop with a manual trigger that requires a repository name. */
 function inputLoop(name: string) {
@@ -85,7 +92,7 @@ test('a click opens the node editor; a drag moves the node and opens nothing', a
       return document.activeElement === button;
     });
   expect(await publishFocusable()).toBe(false);
-  await page.mouse.click(20, 400);
+  await clickBackdrop(page, dialog);
   await expect(dialog).toHaveCount(0);
   await expect(node).toBeFocused();
   expect(await publishFocusable()).toBe(true);
@@ -95,13 +102,20 @@ test('PR48-QA-02: a double-click on a node leaves one editor open; a later backd
   page,
   request,
 }) => {
+  // From 1024 px the node editor spans nearly the whole canvas, so the window is narrower than
+  // that: the dialog is 40rem and centred, and the start node sits left of it, so the second click
+  // lands on the backdrop.
+  await page.setViewportSize({ width: 1000, height: 900 });
   const loopId = await createLoop(request, approvalLoop('qa modal double click'));
   await page.goto(`/app/loops/${loopId}/edit`);
-  // The start node sits left of where the dialog opens, so the second click lands on the backdrop.
   const node = card(page, 'start');
-  await node.dblclick({ position: { x: 60, y: 12 } });
+  const startClick = { x: 20, y: 12 };
+  await node.dblclick({ position: startClick });
   const dialog = page.getByRole('dialog', { name: 'Edit trigger start' });
   await expect(dialog).toBeVisible();
+  expect((await node.boundingBox())!.x + startClick.x).toBeLessThan(
+    (await dialog.boundingBox())!.x,
+  );
   await page.waitForTimeout(600);
   await expect(page.getByRole('dialog')).toHaveCount(1);
   await expect(dialog.getByRole('heading', { name: 'Edit trigger start' })).toBeFocused();
@@ -111,14 +125,20 @@ test('PR48-QA-02: a double-click on a node leaves one editor open; a later backd
   await expect(page.getByTestId('save-state')).toHaveText('All changes saved');
 
   // A deliberate click on the backdrop afterwards still closes it.
-  await page.mouse.click(20, 400);
+  await clickBackdrop(page, dialog);
   await expect(dialog).toHaveCount(0);
   await expect(node).toBeFocused();
 
   // A double-click whose second click lands inside the dialog presses nothing there either.
-  await card(page, 'approve').dblclick({ position: { x: 60, y: 12 } });
+  const approveNode = card(page, 'approve');
+  const approveClick = { x: 60, y: 12 };
+  await approveNode.dblclick({ position: approveClick });
   const approve = page.getByRole('dialog', { name: 'Edit wait approve' });
   await expect(approve).toBeVisible();
+  const approveBox = (await approveNode.boundingBox())!;
+  const approveDialog = (await approve.boundingBox())!;
+  expect(approveBox.x + approveClick.x).toBeGreaterThan(approveDialog.x);
+  expect(approveBox.x + approveClick.x).toBeLessThan(approveDialog.x + approveDialog.width);
   await page.waitForTimeout(600);
   await expect(page.getByRole('dialog')).toHaveCount(1);
   await expect(approve.getByRole('heading', { name: 'Edit wait approve' })).toBeFocused();
@@ -201,7 +221,8 @@ test('below 768 px the node editor is a full-width sheet along the bottom edge',
   const dialog = page.getByRole('dialog', { name: 'Edit trigger start' });
   await expect(dialog).toBeVisible();
   const box = (await dialog.boundingBox())!;
-  expect(box.width).toBe(832);
+  // The 78rem cap is wider than the window here, so the dialog keeps a 1rem margin each side.
+  expect(box.width).toBe(1024 - 32);
   expect(box.x).toBe((1024 - box.width) / 2);
   expect(box.y).toBeGreaterThan(10);
 });
