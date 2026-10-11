@@ -1143,7 +1143,11 @@ for (const theme of ['dark', 'light']) {
         const dialog = await openNode(page, 'approve');
         const box = (await dialog.boundingBox())!;
         expect(box.width).toBe(
-          width < 768 ? width : width < 1024 ? 640 : width < 1280 ? 832 : 1024,
+          width < 768
+            ? width
+            : width < 1024
+              ? 640
+              : Math.min(width < 1280 ? 1248 : 1536, width - 32),
         );
         if (width < 768) expect(box.y + box.height).toBe(900);
         for (const tab of ['Settings', 'Context']) {

@@ -272,7 +272,12 @@ for (const theme of ['dark', 'light']) {
         await page.setViewportSize({ width, height: 900 });
         await page.goto(`/app/loops/${id}/edit`);
         const dialog = await openNode(page, 'approve');
-        const expectedWidth = width < 768 ? width : width < 1024 ? 640 : width < 1280 ? 832 : 1024;
+        const expectedWidth =
+          width < 768
+            ? width
+            : width < 1024
+              ? 640
+              : Math.min(width < 1280 ? 1248 : 1536, width - 32);
         expect((await dialog.boundingBox())!.width).toBe(expectedWidth);
         if (width < 768)
           expect((await dialog.boundingBox())!.y + (await dialog.boundingBox())!.height).toBe(900);

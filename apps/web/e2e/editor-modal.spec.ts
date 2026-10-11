@@ -201,7 +201,8 @@ test('below 768 px the node editor is a full-width sheet along the bottom edge',
   const dialog = page.getByRole('dialog', { name: 'Edit trigger start' });
   await expect(dialog).toBeVisible();
   const box = (await dialog.boundingBox())!;
-  expect(box.width).toBe(832);
+  // The 78rem cap is wider than the window here, so the dialog keeps a 1rem margin each side.
+  expect(box.width).toBe(1024 - 32);
   expect(box.x).toBe((1024 - box.width) / 2);
   expect(box.y).toBeGreaterThan(10);
 });
