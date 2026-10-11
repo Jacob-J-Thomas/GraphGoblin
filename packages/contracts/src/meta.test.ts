@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import {
   ExpressionSchema,
+  DecisionConfigSchema,
+  DecisionAnswerSchema,
+  DecisionContextSchema,
   ModelSelectionSchema,
   EffortSelectionSchema,
   HarnessModelDefaultsSchema,
@@ -52,6 +55,17 @@ const shapeOf = (schema: unknown) =>
   (schema as Walkable)._zod.def.shape as Record<string, z.ZodType>;
 
 describe('field metadata', () => {
+  it('marks JSON sections and typed prose without changing parsing or allowing undeclared shapes', () => {
+    expect(fieldMeta(DecisionConfigSchema.shape.answer).jsonEditor).toBe(true);
+    expect(fieldMeta(InferenceConfigSchema.shape.input).jsonEditor).toBe(true);
+    expect(fieldMeta(InferenceConfigSchema.shape.capabilities).jsonEditor).toBe(true);
+    const option = DecisionAnswerSchema.options[0].shape.options.element;
+    expect(fieldMeta(option.shape.criteria).multiline).toBe(true);
+    expect(option.shape.criteria.parse('line one\nline two')).toBe('line one\nline two');
+    expect(DecisionContextSchema.shape.vars.parse(['undeclared'])).toEqual(['undeclared']);
+    expect(DecisionContextSchema.shape.vars.safeParse(['bad slug!']).success).toBe(false);
+    expect(fieldMeta(z.string().meta({ jsonEditor: 'yes', multiline: 1 }))).toEqual({});
+  });
   it('registers catalog model and effort controls without changing optional field values', () => {
     const inference = InferenceConfigSchema.shape;
     const defaults = HarnessModelDefaultsSchema.shape;
@@ -116,8 +130,7 @@ describe('field metadata', () => {
     expect(fieldMeta(NodeConfigSchemas.mutate.shape.operations).collapseItems).toBe(true);
     expect(fieldMeta(InferenceConfigSchema.shape.input)).toMatchObject({
       collapseItems: true,
-      advanced: true,
-      group: 'Context',
+      context: true,
     });
   });
 

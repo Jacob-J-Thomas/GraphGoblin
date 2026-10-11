@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { FormProvider, useForm, type FieldValues, type Resolver } from 'react-hook-form';
 import { FieldGroup, Label, Select } from '../components/ui/index.js';
 import { FormChangeContext, nextChangeId, type ChangeScope, type FormChange } from './changes.js';
@@ -15,6 +15,7 @@ import {
   FieldControlsContext,
   FieldOverridesContext,
   UnionPickersContext,
+  Field,
   type FieldControls,
   type FieldOverrides,
   type UnionPickers,
@@ -26,6 +27,7 @@ import {
   matchOption,
   optionLabel,
   shapeOf,
+  withUnsetFields,
   type Schema,
 } from './introspect.js';
 import { formLayout } from './layout.js';
@@ -36,7 +38,7 @@ import {
   type ParseErrorChannel,
   type ParseErrorReason,
 } from './parse-errors.js';
-import { AdvancedFields, LayoutItems } from './sections.js';
+import { FormPanels } from './sections.js';
 import { stripUnset } from './unset.js';
 
 export interface SchemaFormProps {
@@ -53,10 +55,10 @@ export interface SchemaFormProps {
   label: string;
   /** Optional display order for top-level object fields; unspecified fields keep schema order. */
   fieldOrder?: readonly string[] | undefined;
-  /** Stored text that did not parse (JSON), by field path; fields show it again when remounted. */
+  /** Stored held input, including invalid or unapplied JSON, by field path; restored on remount. */
   parseErrors?: Record<string, ParseError> | undefined;
   /**
-   * Called when a field's text stops or starts parsing (`undefined` clears the path); `reason` is
+   * Called when a field starts or stops holding unfinished input (`undefined` clears the path); `reason` is
    * `'discard'` when the user dropped the text (Discard the unparsed text) rather than fixing it. `change` is
    * the change it belongs to: typing in that field, or the commit (a row's removal, say) that moved
    * or dropped it.
@@ -139,7 +141,36 @@ function orderedShape(
  * Advanced disclosure, grouped under headings. The disclosure's state is the caller's (`disclosures`),
  * else the form's own, collapsed on each mount.
  */
-export function SchemaForm({
+export function SchemaForm(props: SchemaFormProps) {
+  // Value is the mount's starting document. Subsequent edits are already held by RHF; callers
+  // remount for undo/loading. Stable callbacks keep an autosave echo from rendering every field.
+  const initialRef = useRef(props.value);
+  const latestRef = useRef(props);
+  latestRef.current = props;
+  const callbacks = useMemo(
+    () => ({
+      onChange: (...args: Parameters<SchemaFormProps['onChange']>) =>
+        latestRef.current.onChange(...args),
+      onParseError: (...args: Parameters<NonNullable<SchemaFormProps['onParseError']>>) =>
+        latestRef.current.onParseError?.(...args),
+    }),
+    [],
+  );
+  const problemsRef = useRef(props.problems);
+  if (JSON.stringify(problemsRef.current) !== JSON.stringify(props.problems))
+    problemsRef.current = props.problems;
+  return (
+    <SchemaFormBindings
+      {...props}
+      value={initialRef.current}
+      problems={problemsRef.current}
+      onChange={callbacks.onChange}
+      {...(props.onParseError ? { onParseError: callbacks.onParseError } : {})}
+    />
+  );
+}
+
+const SchemaFormBindings = memo(function SchemaFormBindings({
   schema,
   value,
   onChange,
@@ -231,7 +262,10 @@ export function SchemaForm({
     const subscription = form.watch((values, { name }) => {
       const next = stripUnset(values);
       collections.remember(next);
-      setIssues(issuesOf(schema, next));
+      setIssues((previous) => {
+        const found = issuesOf(schema, next);
+        return JSON.stringify(previous) === JSON.stringify(found) ? previous : found;
+      });
       // Every field describes its changes; a write that does not is a step of its own.
       const change = pendingChangeRef.current ?? {
         path: name ?? '',
@@ -251,7 +285,7 @@ export function SchemaForm({
   const layout = useMemo(() => {
     const variant = shapeOf(variantSchema);
     return variant.kind === 'object'
-      ? formLayout(orderedShape(variant.shape, fieldOrder), '', discriminator)
+      ? formLayout(orderedShape(variant.shape, fieldOrder), '', discriminator, true)
       : undefined;
   }, [variantSchema, discriminator, fieldOrder]);
 
@@ -263,7 +297,7 @@ export function SchemaForm({
       const next = asValues(initialValue(shape.options[index] as Schema));
       collections.remember(next);
       setUnionIndex(index);
-      form.reset(next);
+      form.reset(asValues(withUnsetFields(shape.options[index] as Schema, next)));
       setIssues(issuesOf(schema, next));
       onChangeRef.current(next, pendingChangeRef.current!);
     });
@@ -278,7 +312,7 @@ export function SchemaForm({
                 <FieldOverridesContext value={fieldOverrides ?? NO_FIELD_OVERRIDES}>
                   <UnionPickersContext value={unionPickers ?? NO_UNION_PICKERS}>
                     <ProblemPathsContext value={problems ?? NO_PROBLEMS}>
-                      <FormScopeContext value={{ schema: variantSchema, id }}>
+                      <FormScopeContext value={{ schema: variantSchema, rootSchema: schema, id }}>
                         <FormProvider {...form}>
                           <form
                             aria-label={label}
@@ -305,13 +339,12 @@ export function SchemaForm({
                               </FieldGroup>
                             ) : null}
                             {layout ? (
-                              <LayoutItems items={layout.basic} keyPrefix={String(unionIndex)} />
-                            ) : null}
-                            {layout && layout.advanced.length > 0 ? (
-                              <AdvancedFields
+                              <FormPanels
                                 key={unionIndex}
-                                sections={layout.advanced}
-                                keyPrefix={String(unionIndex)}
+                                schema={variantSchema}
+                                layout={layout}
+                                keyPrefix=""
+                                Field={Field}
                               />
                             ) : null}
                             {issues.length > 0 ? (
@@ -343,4 +376,4 @@ export function SchemaForm({
       </CollectionIdentitiesContext>
     </FormChangeContext>
   );
-}
+});

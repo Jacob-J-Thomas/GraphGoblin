@@ -72,9 +72,9 @@ export const FieldOverridesContext = createContext<FieldOverrides>({});
 export const FieldLabelsContext = createContext<Readonly<Record<string, string>>>({});
 
 /** The active form schema and a unique scope for controls that describe sibling fields. */
-export const FormScopeContext = createContext<{ schema: Schema; id: string } | undefined>(
-  undefined,
-);
+export const FormScopeContext = createContext<
+  { schema: Schema; rootSchema: Schema; id: string } | undefined
+>(undefined);
 
 /**
  * `useController` with an explicit "unset" state. react-hook-form shows a field's initial value
@@ -138,7 +138,7 @@ export function useFieldErrorMessage(name: string) {
  * What a schema says about its field beyond its shape: required when it is neither optional nor
  * defaulted (a required field shows the marker and its control `aria-required`), its description
  * (`.describe()` or the contracts' field metadata), shown as help, and the rest of its metadata
- * (`fieldMeta` in `@graphgoblin/contracts`: title, advanced, group, control, collapseItems).
+ * (`fieldMeta` in `@graphgoblin/contracts`: title, advanced, context, group, control, collapseItems).
  */
 export function fieldMeta(
   schema: Schema,
@@ -166,15 +166,25 @@ export const ProblemPathsContext = createContext<readonly string[]>([]);
  * Each path counts once.
  */
 export function useProblemCount(fields: readonly string[], exact: readonly string[] = []): number {
-  const issues = use(FieldIssuesContext);
-  const outside = use(ProblemPathsContext);
-  const parseErrors = useParseErrors();
-  const paths = new Set([...issues.keys(), ...Object.keys(parseErrors.errors ?? {}), ...outside]);
+  const paths = useProblemPaths();
   let count = 0;
   for (const path of paths) {
     if (exact.includes(path) || fields.some((field) => isWithin(path, field))) count += 1;
   }
   return count;
+}
+
+function useProblemPaths() {
+  const issues = use(FieldIssuesContext);
+  const outside = use(ProblemPathsContext);
+  const parseErrors = useParseErrors();
+  const paths = new Set([...issues.keys(), ...Object.keys(parseErrors.errors ?? {}), ...outside]);
+  return paths;
+}
+
+/** Count the whole form explicitly; an empty field path still names only that field. */
+export function useAllProblemCount(): number {
+  return useProblemPaths().size;
 }
 
 /**

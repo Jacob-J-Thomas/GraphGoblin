@@ -1,17 +1,19 @@
 import { createContext, use } from 'react';
 
 /**
- * Input a form field cannot turn into a complete value (unparsed JSON, an unfinished schedule).
- * `text` holds the raw input or the serialized builder state. The field keeps the last
+ * Held input: unparsed JSON, an incomplete number or schedule, or JSON awaiting explicit Apply.
+ * `text` holds the raw input or the serialized builder state. Native incomplete numbers hold
+ * only their blocker with empty text, since the browser hides their text and selection; a remount
+ * shows the last valid number with the error still visible. The field keeps the last
  * valid value, so the schema alone never notices; the form reports the text and its error upward,
- * keyed by field path, and the editor keeps both as a blocking issue until the input is complete
- * or the user discards it. Leaving the field does not clear it: coming back shows the input again.
+ * keyed by field path, and the editor keeps both as a blocking issue until the input is complete and applied
+ * or the user discards it. Leaving the field does not clear its blocker.
  */
 export interface ParseError {
   message: string;
   text: string;
   /** The control's short noun for the discard action. */
-  input?: 'unparsed text' | 'incomplete schedule';
+  input?: 'unparsed text' | 'incomplete schedule' | 'unapplied JSON';
 }
 
 /**
@@ -21,11 +23,11 @@ export interface ParseError {
 export type ParseErrorReason = 'discard';
 
 export interface ParseErrorChannel {
-  /** The stored unparsed text for a path, if any, so a remounted field shows it again. */
+  /** The stored held input for a path, if any, so a remounted field shows it again. */
   get: (path: string) => ParseError | undefined;
-  /** Record (or, with `undefined`, clear) the unparsed text for a path. */
+  /** Record (or, with `undefined`, clear) held input for a path. */
   report: (path: string, error: ParseError | undefined) => void;
-  /** Drop the unparsed text for a path because the user discarded it. */
+  /** Drop held input for a path because the user discarded it. */
   discard: (path: string) => void;
   /** True when a store keeps the reports; only then can an entry be discarded from outside. */
   tracked: boolean;

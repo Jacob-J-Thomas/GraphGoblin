@@ -10,7 +10,7 @@
  */
 import { fieldMeta } from '@graphgoblin/contracts';
 import { joinPath } from './fields/shared.js';
-import { humanize, shapeOf, unwrap, type Schema } from './introspect.js';
+import { humanize, matchOption, shapeOf, unwrap, type Schema } from './introspect.js';
 import { stripUnset } from './unset.js';
 
 /** A field as the form places it: its path in the form's value, its schema, and its label. */
@@ -61,16 +61,24 @@ export function labelOf(key: string, schema: Schema): string {
 
 /** The fields of an always-present object some of whose fields say whether they are advanced. */
 function splitFields(schema: Schema): Record<string, Schema> | undefined {
+  if (fieldMeta(schema).jsonEditor) return undefined;
   const { optional, hasDefault } = unwrap(schema);
   if (optional && !hasDefault) return undefined;
   const shape = shapeOf(schema);
   if (shape.kind !== 'object') return undefined;
   const fields = Object.values(shape.shape);
-  return fields.some((field) => fieldMeta(field).advanced !== undefined) ? shape.shape : undefined;
+  return fields.some((field) => fieldMeta(field).advanced !== undefined || fieldMeta(field).context)
+    ? shape.shape
+    : undefined;
 }
 
 /** Lay out the fields of an object `shape` whose value sits at `base`, leaving out `skip`. */
-export function formLayout(shape: Record<string, Schema>, base = '', skip?: string): FormLayout {
+export function formLayout(
+  shape: Record<string, Schema>,
+  base = '',
+  skip?: string,
+  omitContext = false,
+): FormLayout {
   const basic: LayoutItem[] = [];
   const advanced: AdvancedSection[] = [];
   const section = (heading: string | undefined) => {
@@ -85,22 +93,28 @@ export function formLayout(shape: Record<string, Schema>, base = '', skip?: stri
     if (key === skip) continue;
     const name = joinPath(base, key);
     const meta = fieldMeta(schema);
+    if (omitContext && meta.context) continue;
     const label = meta.title ?? humanize(key);
     const fields = splitFields(schema);
     if (!fields) {
-      (meta.advanced ? section(meta.group) : basic).push({ name, schema, label });
+      (meta.advanced && unwrap(schema).optional ? section(meta.group) : basic).push({
+        name,
+        schema,
+        label,
+      });
       continue;
     }
     const kept: Placement[] = [];
     const moved = new Map<string, Placement[]>();
     for (const [childKey, child] of Object.entries(fields)) {
       const childMeta = fieldMeta(child);
+      if (omitContext && childMeta.context) continue;
       const placement = {
         name: joinPath(name, childKey),
         schema: child,
         label: childMeta.title ?? humanize(childKey),
       };
-      if (childMeta.advanced ?? meta.advanced ?? false) {
+      if ((childMeta.advanced ?? meta.advanced ?? false) && unwrap(child).optional) {
         const heading = childMeta.group ?? meta.group ?? label;
         moved.set(heading, [...(moved.get(heading) ?? []), placement]);
       } else kept.push(placement);
@@ -116,7 +130,67 @@ export function formLayout(shape: Record<string, Schema>, base = '', skip?: stri
   return { basic, advanced };
 }
 
-function sameJson(a: unknown, b: unknown): boolean {
+/** Collect whole context fields through present objects and the selected evaluator variant.
+ * Collections and absent optional objects remain whole so their lifecycle still belongs to their
+ * existing renderer. No field paths, schemas or values are rewritten.
+ */
+export function contextLayout(schema: Schema, value: unknown, base = ''): FormLayout {
+  const meta = fieldMeta(schema);
+  if (meta.context) {
+    const key = base.split('.').at(-1)!;
+    return formLayout({ [key]: schema }, base.slice(0, Math.max(0, base.length - key.length - 1)));
+  }
+  const { optional, hasDefault, defaultValue } = unwrap(schema);
+  const current = value === undefined && hasDefault ? defaultValue : value;
+  const result: FormLayout = { basic: [], advanced: [] };
+  if (current === undefined && optional && !hasDefault) return result;
+  const shape = shapeOf(schema);
+  if (shape.kind === 'union') {
+    return contextLayout(
+      shape.options[matchOption(shape.options, current, shape.discriminator)]!,
+      current,
+      base,
+    );
+  }
+  if (shape.kind !== 'object') return result;
+  const record =
+    typeof current === 'object' && current !== null ? (current as Record<string, unknown>) : {};
+  for (const [key, child] of Object.entries(shape.shape)) {
+    const nested = contextLayout(child, record[key], joinPath(base, key));
+    result.basic.push(...nested.basic);
+    for (const section of nested.advanced) {
+      const found = result.advanced.find((item) => item.heading === section.heading);
+      if (found) found.items.push(...section.items);
+      else result.advanced.push(section);
+    }
+  }
+  return result;
+}
+
+/** Only union choices and optional-object presence can change the context panel's structure. */
+export function contextStructure(schema: Schema, value: unknown): string {
+  if (fieldMeta(schema).context) return 'context';
+  const { optional, hasDefault, defaultValue } = unwrap(schema);
+  const current = value === undefined && hasDefault ? defaultValue : value;
+  const shape = shapeOf(schema);
+  if (shape.kind === 'union') {
+    const index = matchOption(shape.options, current, shape.discriminator);
+    const nested = contextStructure(shape.options[index]!, current);
+    return nested ? `${index}:${nested}` : '';
+  }
+  if (shape.kind !== 'object') return '';
+  const record =
+    typeof current === 'object' && current !== null ? (current as Record<string, unknown>) : {};
+  const nested = Object.entries(shape.shape)
+    .flatMap(([key, child]) => {
+      const structure = contextStructure(child, record[key]);
+      return structure ? [`${key}:${structure}`] : [];
+    })
+    .join('|');
+  return nested && current === undefined && optional && !hasDefault ? `absent:${nested}` : nested;
+}
+
+export function sameJson(a: unknown, b: unknown): boolean {
   if (a === b) return true;
   if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null) return false;
   if (Array.isArray(a) !== Array.isArray(b)) return false;

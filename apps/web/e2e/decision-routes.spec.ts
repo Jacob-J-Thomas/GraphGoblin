@@ -186,7 +186,7 @@ test('option IDs stay connected when numeric display labels change, save, and re
   await dialog.locator('[data-field="answer.options.2.id"] input').fill('route-3');
   await dialog.locator('[data-field="answer.options.2.label"] input').fill('7');
   await dialog
-    .locator('[data-field="answer.options.2.criteria"] input')
+    .locator('[data-field="answer.options.2.criteria"] textarea')
     .fill('A numeric display label does not become a route port');
   await expect(handle(page, 'pick', 'route-3')).toBeVisible();
   const output = dialog.getByLabel('Output', { exact: true });

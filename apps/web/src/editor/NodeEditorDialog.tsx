@@ -20,6 +20,9 @@ import {
 import { createDisclosureIdentities, type DisclosureStates } from '../forms/disclosures.js';
 import { SchemaForm } from '../forms/SchemaForm.js';
 import { FieldLabelsContext } from '../forms/fields/shared.js';
+import { VariableSuggestionsContext } from '../forms/fields/suggestions.js';
+import { JsonApplyReviewContext } from '../forms/fields/json.js';
+import { removedAnswerConnections } from './decision-route-edges.js';
 import { nextChangeId } from '../forms/changes.js';
 import { isUnset } from '../forms/unset.js';
 import { DecisionKindPicker } from './DecisionKindPicker.js';
@@ -408,7 +411,26 @@ export function NodeEditorDialog({
   const { updateNode, removeNode, renameNode, closeNodeDialog, setFieldError } =
     useEditorStore.getState();
   const info = KIND_INFO[node.kind];
-  const nodeIssues = issues.filter((i) => i.nodeId === node.id);
+  const nodeIssues = useMemo(() => issues.filter((i) => i.nodeId === node.id), [issues, node.id]);
+  const variables = useMemo(() => Object.keys(definition.variables ?? {}), [definition.variables]);
+  const reviewJsonApply = useMemo(
+    () => (path: string, next: unknown) =>
+      node.kind === 'decision' && path === 'answer'
+        ? removedAnswerConnections(definition.edges, node.id, next).map((edge) => ({
+            id: edge.id,
+            description: `${edge.from.port ?? '(no route)'} → ${edge.to.node}`,
+          }))
+        : [],
+    [definition.edges, node.id, node.kind],
+  );
+  const catalogWarnings = useMemo(
+    () =>
+      nodeIssues.map((issue) => ({
+        ...issue,
+        path: issue.path?.startsWith('config.') ? issue.path.slice('config.'.length) : issue.path,
+      })),
+    [nodeIssues],
+  );
   const labelIssue = nodeIssues.find((i) => i.path === 'label' && i.severity === 'error');
   // The loop's errors about config fields (template and expression syntax, the API's checks), so
   // a collapsed Advanced group or operation holding one says so.
@@ -529,6 +551,7 @@ export function NodeEditorDialog({
   return (
     <Dialog
       open
+      className="lg:w-[min(52rem,calc(100vw-2rem))] xl:w-[min(64rem,calc(100vw-2rem))]"
       onClose={requestClose}
       icon={<KindChip kind={node.kind} />}
       actions={
@@ -644,14 +667,7 @@ export function NodeEditorDialog({
               always a nonmatch, and the run inspector keeps the raw answer and gate separate.
             </HelpText>
           ) : null}
-          <CatalogWarningsContext
-            value={nodeIssues.map((issue) => ({
-              ...issue,
-              path: issue.path?.startsWith('config.')
-                ? issue.path.slice('config.'.length)
-                : issue.path,
-            }))}
-          >
+          <CatalogWarningsContext value={catalogWarnings}>
             <FieldLabelsContext
               value={
                 node.kind === 'trigger' && node.config?.subtype === 'poll'
@@ -661,29 +677,33 @@ export function NodeEditorDialog({
                     : DEFAULT_FIELD_LABELS
               }
             >
-              <SchemaForm
-                key={`${node.kind}:${epoch}:${historyEpoch}`}
-                schema={NodeConfigSchemas[node.kind]}
-                fieldOrder={node.kind === 'decision' ? DECISION_FIELD_ORDER : undefined}
-                value={node.config}
-                label={`${node.id} config`}
-                controls={NODE_FIELD_CONTROLS}
-                unionPickers={node.kind === 'decision' ? DECISION_UNION_PICKERS : undefined}
-                fieldOverrides={
-                  node.kind === 'decision'
-                    ? DECISION_FIELD_OVERRIDES
-                    : node.kind === 'exit'
-                      ? EXIT_PREDICATE_FIELD_OVERRIDES
-                      : undefined
-                }
-                problems={configProblems}
-                disclosures={disclosures}
-                onChange={handleConfigChange}
-                parseErrors={fieldErrors[`node:${node.id}`]}
-                onParseError={(path, error, reason, change) =>
-                  setFieldError(`node:${node.id}`, path, error, reason, change)
-                }
-              />
+              <VariableSuggestionsContext value={variables}>
+                <JsonApplyReviewContext value={reviewJsonApply}>
+                  <SchemaForm
+                    key={`${node.kind}:${epoch}:${historyEpoch}`}
+                    schema={NodeConfigSchemas[node.kind]}
+                    fieldOrder={node.kind === 'decision' ? DECISION_FIELD_ORDER : undefined}
+                    value={node.config}
+                    label={`${node.id} config`}
+                    controls={NODE_FIELD_CONTROLS}
+                    unionPickers={node.kind === 'decision' ? DECISION_UNION_PICKERS : undefined}
+                    fieldOverrides={
+                      node.kind === 'decision'
+                        ? DECISION_FIELD_OVERRIDES
+                        : node.kind === 'exit'
+                          ? EXIT_PREDICATE_FIELD_OVERRIDES
+                          : undefined
+                    }
+                    problems={configProblems}
+                    disclosures={disclosures}
+                    onChange={handleConfigChange}
+                    parseErrors={fieldErrors[`node:${node.id}`]}
+                    onParseError={(path, error, reason, change) =>
+                      setFieldError(`node:${node.id}`, path, error, reason, change)
+                    }
+                  />
+                </JsonApplyReviewContext>
+              </VariableSuggestionsContext>
             </FieldLabelsContext>
           </CatalogWarningsContext>
         </div>

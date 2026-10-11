@@ -71,7 +71,7 @@ export const ChoiceOptionSchema = z.strictObject({
     .trim()
     .min(1)
     .max(2000)
-    .meta(field('Authored criterion sent to the selected evaluator.')),
+    .meta(field('Authored criterion sent to the selected evaluator.', { multiline: true })),
 });
 export type ChoiceOption = z.infer<typeof ChoiceOptionSchema>;
 export const ChoiceConfigSchema = z
@@ -132,7 +132,7 @@ export type NoulConfig = z.infer<typeof NoulConfigSchema>;
 const ScoreFields = {
   type: z.literal('score').meta(field('Return a fractional index on an ordered rubric.')),
   anchors: z
-    .array(z.string().trim().min(1).max(2000))
+    .array(z.string().trim().min(1).max(2000).meta({ multiline: true }))
     .min(2)
     .meta(field('Ordered nonblank descriptions indexed from zero; no rounding or rescaling.')),
 };
@@ -210,11 +210,12 @@ export const DecisionContextSchema = z.strictObject({
     field('Selected messages; this selector does not restrict question-template exposure.'),
   ),
   vars: z
-    .array(SlugSchema)
+    .array(SlugSchema.meta({ control: 'variable' }))
     .optional()
     .meta(
       field(
         'Variable names included in provider state; omission includes all variables and does not restrict the question template.',
+        { advanced: true, group: 'Provider context' },
       ),
     ),
   includeLastOutput: z
@@ -228,7 +229,10 @@ const QuestionFields = {
 };
 const ContextFields = {
   context: DecisionContextSchema.prefault({}).meta(
-    field('Selected provider state, separate from the full-thread question-template context.'),
+    field('Selected provider state, separate from the full-thread question-template context.', {
+      context: true,
+      jsonEditor: true,
+    }),
   ),
 };
 const ExpressionEvaluationSchema = z.strictObject({
@@ -266,6 +270,7 @@ const ClassifierEvaluationSchema = z.strictObject({
     .meta(
       field(
         'Noul only: select true when its probability reaches this threshold; omission means 0.5.',
+        { advanced: true, group: 'Acceptance' },
       ),
     ),
 });
@@ -322,7 +327,9 @@ export const DecisionEvaluationSchema = z.discriminatedUnion('kind', [
 export type DecisionEvaluation = z.infer<typeof DecisionEvaluationSchema>;
 export const DecisionConfigSchema = z
   .strictObject({
-    answer: DecisionAnswerSchema.meta(field('Declared answer and stable route identifiers.')),
+    answer: DecisionAnswerSchema.meta(
+      field('Declared answer and stable route identifiers.', { jsonEditor: true }),
+    ),
     evaluation: DecisionEvaluationSchema.meta(field('Exactly one evaluation method.')),
     recordAlternatives: z
       .boolean()

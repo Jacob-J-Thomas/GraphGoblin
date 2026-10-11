@@ -8,6 +8,7 @@ import {
   connectionProblem,
   countsLabel,
   defaultConfig,
+  fieldErrorIssues,
   groupIssues,
   issueCounts,
   issuesByNode,
@@ -193,6 +194,19 @@ describe('editor model', () => {
 });
 
 describe('issue display helpers', () => {
+  it('describes valid unapplied JSON separately while keeping invalid-input messages unchanged', () => {
+    const issues = fieldErrorIssues({
+      'node:n': {
+        answer: { message: 'Choose Apply JSON.', input: 'unapplied JSON' },
+        input: { message: 'invalid JSON: unexpected token', input: 'unparsed text' },
+      },
+    });
+    expect(issues[0]!.message).toBe('This field holds JSON not applied yet. Choose Apply JSON.');
+    expect(issues[0]!.discard?.input).toBe('unapplied JSON');
+    expect(issues[1]!.message).toBe(
+      'This field holds input that is not a valid value yet. invalid JSON: unexpected token',
+    );
+  });
   const error = (nodeId?: string, message = 'broken'): EditorIssue => ({
     code: 'X',
     severity: 'error',

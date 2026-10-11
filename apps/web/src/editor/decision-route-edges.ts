@@ -63,6 +63,16 @@ function editedIndex(path: string | undefined): number | undefined {
   return side === 'true' ? 0 : side === 'false' ? 1 : undefined;
 }
 
+/** JSON replacements keep connections by route ID, never by a row's old position. */
+export function removedAnswerConnections(
+  edges: LoopDefinitionInput['edges'],
+  nodeId: string,
+  answer: unknown,
+): LoopDefinitionInput['edges'] {
+  const ids = new Set(answerRows({ answer })?.rows.map((row) => row.id));
+  return edges.filter((edge) => edge.from.node === nodeId && !ids.has(edge.from.port));
+}
+
 function sameRows(a: RouteRows, b: RouteRows): boolean {
   return (
     a.nextKey === b.nextKey &&
@@ -85,12 +95,14 @@ export function decisionRouteEdges(
   previous: DecisionRoutes,
   change?: FormChange,
   renamed?: { from: string; to: string },
+  editedNodeId?: string,
 ): { definition: LoopDefinitionInput; decisionRoutes: DecisionRoutes } {
   const decisionRoutes: Record<string, RouteRows> = {};
   const removed = new Set<string>();
   const ports = new Map<string, string>();
   for (const node of definition.nodes) {
     if (node.kind !== 'decision') continue;
+    const nodeChange = node.id === editedNodeId ? change : undefined;
     const oldId = renamed?.to === node.id ? renamed.from : node.id;
     const before = (Object.hasOwn(previous, oldId) ? previous[oldId] : undefined) ?? {
       nextKey: 0,
@@ -102,17 +114,24 @@ export function decisionRouteEdges(
     let rows = before.rows;
     if (after) {
       let retained: (RouteRow | undefined)[] = [...before.rows];
-      const collection = change?.collection;
+      const collection = nodeChange?.collection;
+      const jsonReplacement =
+        nodeChange !== undefined &&
+        collection?.type === 'replace' &&
+        (nodeChange.path === 'answer' || nodeChange.path === answer?.collectionPath);
       if (
         answer !== undefined &&
-        change !== undefined &&
-        change.path === answer.collectionPath &&
+        nodeChange !== undefined &&
+        nodeChange.path === answer.collectionPath &&
         answer.collectionPath !== undefined &&
         collection?.type === 'remove' &&
         after.length === before.rows.length - 1
       ) {
         retained.splice(collection.index, 1);
-      } else if (editedIndex(change?.path) !== undefined && after.length === before.rows.length) {
+      } else if (
+        editedIndex(nodeChange?.path) !== undefined &&
+        after.length === before.rows.length
+      ) {
         // The field path identifies the edited row even while its replacement ID is incomplete.
         retained = [...before.rows];
       } else {
@@ -135,10 +154,26 @@ export function decisionRouteEdges(
       rows = after.map((id, index) => ({
         ...(retained[index] ?? { key: nextKey++, edgeIds: [] }),
         id,
+        ...(jsonReplacement
+          ? {
+              edgeIds: definition.edges
+                .filter((edge) => edge.from.node === node.id && edge.from.port === id)
+                .map((edge) => edge.id),
+            }
+          : {}),
       }));
       const kept = new Set(rows.map((row) => row.key));
-      for (const row of before.rows)
-        if (!kept.has(row.key)) for (const edgeId of row.edgeIds) removed.add(edgeId);
+      if (jsonReplacement) {
+        for (const edge of removedAnswerConnections(
+          definition.edges,
+          node.id,
+          record(node.config)['answer'],
+        ))
+          removed.add(edge.id);
+      } else {
+        for (const row of before.rows)
+          if (!kept.has(row.key)) for (const edgeId of row.edgeIds) removed.add(edgeId);
+      }
     }
     const outgoing = definition.edges.filter((edge) => edge.from.node === node.id);
     const claimed = new Set(before.rows.flatMap((row) => row.edgeIds));

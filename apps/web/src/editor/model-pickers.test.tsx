@@ -52,6 +52,7 @@ it('registers the node and loop pickers and forwards exact server validation war
   );
   fireEvent.click(screen.getByTestId(`node-${inference.id}`));
   const dialog = screen.getByRole('dialog');
+  fireEvent.click(within(dialog).getByRole('button', { name: /^Advanced/ }));
   await waitFor(() =>
     expect(within(dialog).getByLabelText('Model')).toHaveAccessibleDescription(
       /MODEL_DISABLED: Node catalog warning/,

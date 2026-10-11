@@ -12,6 +12,7 @@ import {
   TemplateSchema,
 } from '@graphgoblin/contracts';
 import type { z } from 'zod';
+import { UNSET } from './unset.js';
 
 export type Schema = z.ZodType;
 
@@ -107,7 +108,7 @@ export type StringFormat = 'text' | 'template' | 'expression';
 
 export type FieldShape =
   | { kind: 'string'; format: StringFormat; minLength?: number }
-  | { kind: 'number'; integer: boolean; min?: number; max?: number }
+  | { kind: 'number'; integer: boolean; min?: number; max?: number; step?: number }
   | { kind: 'boolean' }
   | { kind: 'enum'; options: string[] }
   | { kind: 'literal'; value: unknown }
@@ -161,9 +162,12 @@ export function shapeOf(schema: Schema): FieldShape {
     case 'number': {
       let min: number | undefined;
       let max: number | undefined;
-      let integer = false;
+      const integer = checks(def).some(
+        (c) => c.check === 'number_format' && (c.format === 'safeint' || c.format === 'int32'),
+      );
+      let step: number | undefined;
       for (const c of checks(def)) {
-        if (c.check === 'number_format') integer = c.format === 'safeint' || c.format === 'int32';
+        if (c.check === 'multiple_of') step = c.value;
         if (c.check === 'greater_than' && c.value !== undefined)
           min = c.inclusive ? c.value : c.value + (integer ? 1 : Number.EPSILON);
         if (c.check === 'less_than' && c.value !== undefined)
@@ -172,6 +176,7 @@ export function shapeOf(schema: Schema): FieldShape {
       return {
         kind: 'number',
         integer,
+        ...(step !== undefined ? { step } : {}),
         ...(min !== undefined ? { min } : {}),
         ...(max !== undefined ? { max } : {}),
       };
@@ -254,6 +259,35 @@ export function initialValue(schema: Schema): unknown {
     case 'json':
       return null;
   }
+}
+
+/** Bind a replacement without letting RHF resurrect omitted fields from the previous variant.
+ * Opaque JSON and records stay authored; sentinels belong only to schema-bound object fields.
+ */
+export function withUnsetFields(schema: Schema, value: unknown): unknown {
+  if (value === undefined) return UNSET;
+  const shape = shapeOf(schema);
+  if (shape.kind === 'union')
+    return withUnsetFields(
+      shape.options[matchOption(shape.options, value, shape.discriminator)]!,
+      value,
+    );
+  if (shape.kind === 'array' && Array.isArray(value))
+    return value.map((item) => withUnsetFields(shape.element, item));
+  if (
+    shape.kind !== 'object' ||
+    typeof value !== 'object' ||
+    value === null ||
+    Array.isArray(value)
+  )
+    return value;
+  const record = value as Record<string, unknown>;
+  return {
+    ...record,
+    ...Object.fromEntries(
+      Object.entries(shape.shape).map(([key, child]) => [key, withUnsetFields(child, record[key])]),
+    ),
+  };
 }
 
 /** The discriminator value a discriminated-union option carries. */

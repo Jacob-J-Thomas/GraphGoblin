@@ -532,6 +532,7 @@ describe('SchemaForm', () => {
     );
 
     await user.selectOptions(evaluationKind, '2');
+    await user.click(screen.getByRole('tab', { name: /^Context/ }));
     // The context selector is a nested union with a literal, a number, and an object.
     const kind = within(screen.getByRole('group', { name: 'Messages' })).getByLabelText('Kind');
     await user.selectOptions(kind, '3');
@@ -548,6 +549,7 @@ describe('SchemaForm', () => {
     ).toEqual({ where: 'true' });
 
     // The required evaluation changes with its radio; declared options remain independently editable.
+    await user.click(screen.getByRole('tab', { name: /^Settings/ }));
     const options = screen.getByRole('group', { name: 'Options' });
     await user.click(within(options).getByRole('button', { name: 'Add options' }));
     expect(((last(spy)['answer'] as Record<string, unknown>)['options'] as unknown[]).length).toBe(
@@ -596,6 +598,7 @@ describe('SchemaForm', () => {
       jsonSchema: { type: 'object' },
     });
 
+    await user.click(screen.getByRole('tab', { name: /^Context/ }));
     await user.click(screen.getByRole('button', { name: 'Add input' }));
     expect((last(spy)['input'] as unknown[])[0]).toMatchObject({
       op: 'set',
@@ -753,6 +756,7 @@ describe('SchemaForm changes and undo steps', () => {
     );
     const model = () => screen.getByLabelText('Model', { exact: true });
     const effort = () => screen.getByLabelText('Effort', { exact: true });
+    openAdvanced();
     await waitFor(() => expect(model()).not.toHaveAttribute('aria-readonly'));
     await user.selectOptions(model(), 'alpha');
     await user.selectOptions(effort(), 'high');

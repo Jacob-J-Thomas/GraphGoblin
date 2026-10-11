@@ -47,6 +47,28 @@ describe('EditorPage', () => {
   // loop settings in it, so they start with it expanded (the setup clears storage after each).
   beforeEach(() => localStorage.setItem(LOOP_PANEL_STORAGE_KEY, 'expanded'));
 
+  it('describes valid pending JSON accurately and refuses Publish until applied or cancelled', async () => {
+    const api = new FakeApi();
+    const loop = api.addLoop(minimalLoop());
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByText('Ready to publish');
+    act(() =>
+      useEditorStore.getState().setFieldError('node:start', 'inputSchema', {
+        text: '{}',
+        message: 'Choose Apply JSON or Cancel JSON to finish this edit.',
+        input: 'unapplied JSON',
+      }),
+    );
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Publish' }));
+    expect(
+      await screen.findByText(/Some fields hold JSON not applied yet; apply or cancel it first/),
+    ).toBeVisible();
+    expect(api.calls.filter((call) => call.path.endsWith('/publish'))).toHaveLength(0);
+    const badge = nodeBadge('start')!;
+    fireEvent.click(badge);
+    expect(popoverOf(badge)).toHaveTextContent('This field holds JSON not applied yet.');
+  });
+
   it('shows Harness in inference but not in the decision or loop settings', async () => {
     const api = new FakeApi();
     const loop = api.addLoop(kitchenSinkLoop());
@@ -325,8 +347,10 @@ describe('EditorPage', () => {
     act(() => useEditorStore.getState().openNode('infer'));
     const advanced = () =>
       within(screen.getByRole('dialog')).getByRole('button', { name: /^Advanced/ });
-    await waitFor(() => expect(advanced()).toHaveAccessibleName('Advanced 2 set 1 error'));
-    await userEvent.setup().click(advanced());
+    await waitFor(() =>
+      expect(screen.getByRole('tab', { name: /^Context.*1 error$/ })).toBeInTheDocument(),
+    );
+    await userEvent.setup().click(screen.getByRole('tab', { name: /^Context.*1 error$/ }));
     expect(
       within(screen.getByRole('dialog')).getByRole('button', { name: /^Input 1 drop/ }),
     ).toHaveAccessibleName('Input 1 drop messages 1 error');

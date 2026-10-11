@@ -179,9 +179,14 @@ export function EditorPage() {
 
   const publish = useMutation({
     mutationFn: async () => {
-      if (Object.keys(useEditorStore.getState().fieldErrors).length > 0)
+      const held = Object.values(useEditorStore.getState().fieldErrors).flatMap((scope) =>
+        Object.values(scope),
+      );
+      if (held.length > 0)
         throw new Error(
-          'Some fields hold input that is not a valid value yet; complete or discard it first.',
+          held.every((error) => error.input === 'unapplied JSON')
+            ? 'Some fields hold JSON not applied yet; apply or cancel it first.'
+            : 'Some fields hold input that is not a valid value yet; complete or discard it first.',
         );
       const saved = await flush();
       if (!saved && useEditorStore.getState().conflict)

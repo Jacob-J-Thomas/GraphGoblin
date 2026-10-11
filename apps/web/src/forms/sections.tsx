@@ -2,19 +2,31 @@
  * The parts of a schema-driven form that `formLayout` places: a run of fields, and the Advanced
  * disclosure with its headed sections and its summary of what it holds.
  */
+import { createContext, useRef, type ComponentType } from 'react';
 import { useWatch } from 'react-hook-form';
-import { Badge, Disclosure, Fieldset, Legend } from '../components/ui/index.js';
+import { Badge, Disclosure, Fieldset, Legend, Tabs } from '../components/ui/index.js';
 import { ADVANCED_KEY, useDisclosureState } from './disclosures.js';
-import { Field } from './fields.js';
-import { FieldError, useProblemCount } from './fields/shared.js';
-import { ProblemBadge } from './fields/structure.js';
+import { Icon } from '../components/icons/index.js';
+import {
+  FieldError,
+  useAllProblemCount,
+  useProblemCount,
+  type FieldProps,
+} from './fields/shared.js';
 import {
   isCustomized,
   isOwned,
   placementsOf,
   type AdvancedSection,
   type LayoutItem,
+  contextLayout,
+  contextStructure,
+  type FormLayout,
 } from './layout.js';
+import type { Schema } from './introspect.js';
+
+/** Nested object bodies omit context fields only when the root supplies their separate panel. */
+export const ContextPanelContext = createContext(false);
 
 /**
  * Fields in order. A split object's fields sit in a block under the object's path, so an issue
@@ -23,9 +35,13 @@ import {
 export function LayoutItems({
   items,
   keyPrefix,
+  absentParent,
+  Field,
 }: {
   items: readonly LayoutItem[];
   keyPrefix: string;
+  absentParent?: FieldProps['absentParent'];
+  Field: ComponentType<FieldProps>;
 }) {
   return (
     <>
@@ -42,6 +58,7 @@ export function LayoutItems({
                 schema={field.schema}
                 name={field.name}
                 label={field.label}
+                absentParent={absentParent}
               />
             ))}
             {item.showsError ? <FieldError name={item.owner} /> : null}
@@ -52,6 +69,7 @@ export function LayoutItems({
             schema={item.schema}
             name={item.name}
             label={item.label}
+            absentParent={absentParent}
           />
         ),
       )}
@@ -68,9 +86,11 @@ export function LayoutItems({
 export function AdvancedFields({
   sections,
   keyPrefix,
+  Field,
 }: {
   sections: readonly AdvancedSection[];
   keyPrefix: string;
+  Field: ComponentType<FieldProps>;
 }) {
   const placements = sections.flatMap((section) => placementsOf(section.items));
   const owners = sections.flatMap((section) =>
@@ -85,7 +105,7 @@ export function AdvancedFields({
     owners,
   );
   // Collapsed until opened; whoever keeps the form's disclosures keeps it across remounts.
-  const state = useDisclosureState(ADVANCED_KEY, false);
+  const state = useDisclosureState(`${keyPrefix}${ADVANCED_KEY}`, false);
   return (
     <Disclosure
       {...state}
@@ -98,14 +118,139 @@ export function AdvancedFields({
     >
       {sections.map((section) =>
         section.heading === undefined ? (
-          <LayoutItems key="" items={section.items} keyPrefix={keyPrefix} />
+          <LayoutItems key="" items={section.items} keyPrefix={keyPrefix} Field={Field} />
         ) : (
           <Fieldset key={section.heading} variant="section">
             <Legend variant="section">{section.heading}</Legend>
-            <LayoutItems items={section.items} keyPrefix={keyPrefix} />
+            <LayoutItems items={section.items} keyPrefix={keyPrefix} Field={Field} />
           </Fieldset>
         ),
       )}
     </Disclosure>
+  );
+}
+
+export function LayoutFields({
+  layout,
+  keyPrefix,
+  absentParent,
+  Field,
+}: {
+  layout: FormLayout;
+  keyPrefix: string;
+  absentParent?: FieldProps['absentParent'];
+  Field: ComponentType<FieldProps>;
+}) {
+  return (
+    <>
+      <LayoutItems
+        items={layout.basic}
+        keyPrefix={keyPrefix}
+        absentParent={absentParent}
+        Field={Field}
+      />
+      {layout.advanced.length > 0 ? (
+        <AdvancedFields sections={layout.advanced} keyPrefix={keyPrefix} Field={Field} />
+      ) : null}
+    </>
+  );
+}
+
+/** One form and one set of bindings shared by the two mounted panels. */
+export function FormPanels({
+  schema,
+  layout,
+  keyPrefix,
+  Field,
+}: {
+  schema: Schema;
+  layout: FormLayout;
+  keyPrefix: string;
+  Field: ComponentType<FieldProps>;
+}) {
+  const contextRef = useRef<{ schema: Schema; structure: string; layout: FormLayout } | undefined>(
+    undefined,
+  );
+  const snapshot = useWatch({
+    compute: (value: unknown) => {
+      const structure = contextStructure(schema, value);
+      if (contextRef.current?.schema === schema && contextRef.current.structure === structure)
+        return contextRef.current;
+      contextRef.current = { schema, structure, layout: contextLayout(schema, value) };
+      return contextRef.current;
+    },
+  });
+  const { structure, layout: context } = snapshot;
+  const hasContext = context.basic.length + context.advanced.length > 0;
+  const state = useDisclosureState('#context-tab', false);
+  const fields = context.basic.concat(context.advanced.flatMap((section) => section.items));
+  const paths = placementsOf(fields).map((field) => field.name);
+  const owners = fields.filter(isOwned).map((item) => item.owner);
+  const contextProblems = useProblemCount(paths, owners);
+  const allProblems = useAllProblemCount();
+  const main = (
+    <ContextPanelContext value={hasContext}>
+      <LayoutFields layout={layout} keyPrefix={keyPrefix} Field={Field} />
+    </ContextPanelContext>
+  );
+  return (
+    <Tabs
+      label="Node configuration"
+      selected={hasContext && state.open ? 'context' : 'main'}
+      onSelect={(id) => state.onOpenChange?.(id === 'context')}
+      items={[
+        {
+          id: 'main',
+          label: (
+            <>
+              Settings <ProblemBadge count={allProblems - contextProblems} />
+            </>
+          ),
+          content: main,
+        },
+        ...(hasContext
+          ? [
+              {
+                id: 'context',
+                label: (
+                  <>
+                    Context <ContextSetBadge items={fields} />{' '}
+                    <ProblemBadge count={contextProblems} />
+                  </>
+                ),
+                content: (
+                  <LayoutFields
+                    key={structure}
+                    layout={context}
+                    keyPrefix={`${keyPrefix}:context`}
+                    Field={Field}
+                  />
+                ),
+              },
+            ]
+          : []),
+      ]}
+    />
+  );
+}
+
+/** The same placed-field/default rules as Advanced, subscribed only to context values. */
+function ContextSetBadge({ items }: { items: readonly LayoutItem[] }) {
+  const placements = placementsOf(items);
+  const values: unknown[] = useWatch({ name: placements.map((placement) => placement.name) });
+  const set = placements.filter((placement, index) =>
+    isCustomized(placement.schema, values[index]),
+  ).length;
+  return set > 0 ? <Badge size="sm">{set} set</Badge> : null;
+}
+
+/** A shared summary of field problems for disclosures and tabs. */
+export function ProblemBadge({ count }: { count: number }) {
+  if (count === 0) return null;
+  return (
+    <Badge size="sm" tone="bad">
+      <Icon name="alert" />
+      {count} {count === 1 ? 'error' : 'errors'}
+    </Badge>
   );
 }

@@ -49,6 +49,19 @@ describe('introspect', () => {
     });
     expect(shapeOf(z.number().gt(0).lt(1))).toMatchObject({ kind: 'number', integer: false });
     expect(shapeOf(z.number())).toEqual({ kind: 'number', integer: false });
+    expect(shapeOf(z.number().positive().int().max(10))).toEqual({
+      kind: 'number',
+      integer: true,
+      min: 1,
+      max: 10,
+    });
+    expect(shapeOf(z.number().min(0).max(1).multipleOf(0.25))).toEqual({
+      kind: 'number',
+      integer: false,
+      min: 0,
+      max: 1,
+      step: 0.25,
+    });
     expect(shapeOf(z.boolean())).toEqual({ kind: 'boolean' });
     expect(shapeOf(z.enum(['a', 'b']))).toEqual({ kind: 'enum', options: ['a', 'b'] });
     expect(shapeOf(z.literal('x'))).toEqual({ kind: 'literal', value: 'x' });

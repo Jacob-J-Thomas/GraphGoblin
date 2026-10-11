@@ -16,7 +16,6 @@ import {
 import { useWatch } from 'react-hook-form';
 import { Icon } from '../../components/icons/index.js';
 import {
-  Badge,
   Button,
   CHECKBOX_LABEL,
   Checkbox,
@@ -33,7 +32,8 @@ import {
 import { cn } from '../../lib/utils.js';
 import { useFormChange } from '../changes.js';
 import { useCollectionIdentities, useDisclosureState, useDisclosureStore } from '../disclosures.js';
-import { labelOf } from '../layout.js';
+import { formLayout } from '../layout.js';
+import { ContextPanelContext, LayoutFields, ProblemBadge } from '../sections.js';
 import { repathParseErrors, useParseErrors } from '../parse-errors.js';
 import {
   discriminatorValue,
@@ -43,12 +43,13 @@ import {
   optionLabel,
   shapeOf,
   unwrap,
+  withUnsetFields,
   type FieldShape,
   type Schema,
 } from '../introspect.js';
 import { BooleanField, EnumField, LiteralField, NOT_SET } from './choice.js';
 import { useCollectionFocus } from './collection.js';
-import { JsonControl, JsonField } from './json.js';
+import { JsonControl, JsonField, JsonSection } from './json.js';
 import {
   FieldControlsContext,
   FieldOverridesContext,
@@ -82,11 +83,15 @@ export function Field(props: FieldProps) {
   const label = Object.hasOwn(labels, props.name) ? labels[props.name] : undefined;
   const displayed = label === undefined ? props : { ...props, label };
   const Override = fieldOverrideFor(props.name, overrides);
-  if (Override) return createElement(Override, displayed);
   const name = fieldMeta(props.schema).control;
   // Only the registry's own entries: a name such as `toString` is not a registered control.
   const Control = name !== undefined && Object.hasOwn(controls, name) ? controls[name] : undefined;
-  return createElement(Control ?? DefaultField, displayed);
+  const content = createElement(Override ?? Control ?? DefaultField, displayed);
+  return fieldMeta(props.schema).jsonEditor ? (
+    <JsonSection {...displayed}>{content}</JsonSection>
+  ) : (
+    content
+  );
 }
 
 function fieldOverrideFor(name: string, overrides: FieldOverrides): FieldControl | undefined {
@@ -155,22 +160,18 @@ function ObjectBody({
   only?: readonly string[] | undefined;
   absentParent?: FieldProps['absentParent'];
 }) {
+  const omitContext = use(ContextPanelContext);
+  const fields =
+    only === undefined
+      ? shape
+      : Object.fromEntries(Object.entries(shape).filter(([key]) => only.includes(key)));
   return (
-    <>
-      {Object.entries(shape)
-        .filter(([key]) => key !== skip && (only === undefined || only.includes(key)))
-        .map(([key, child]) => (
-          // Keyed by the key, so a field drawn while the object is absent stays the same element
-          // (and keeps focus) when the object is added.
-          <Field
-            key={key}
-            schema={child}
-            name={joinPath(name, key)}
-            label={labelOf(key, child)}
-            absentParent={absentParent}
-          />
-        ))}
-    </>
+    <LayoutFields
+      layout={formLayout(fields, name, skip, omitContext)}
+      keyPrefix={name}
+      absentParent={absentParent}
+      Field={Field}
+    />
   );
 }
 
@@ -836,7 +837,12 @@ function UnionField({
     change({ path: name, kind: 'commit' }, () => {
       repathParseErrors(parseErrors, [{ from: name }]);
       field.onChange(
-        chosen === undefined ? undefined : initialValue(shape.options[chosen] as Schema),
+        chosen === undefined
+          ? undefined
+          : withUnsetFields(
+              shape.options[chosen] as Schema,
+              initialValue(shape.options[chosen] as Schema),
+            ),
       );
     });
   };
@@ -886,9 +892,9 @@ function UnionField({
         <FieldHelp id={helpId} help={help} />
       </FieldGroup>
       {unset ? null : optionShape.kind === 'object' ? (
-        <ObjectBody shape={optionShape.shape} name={name} skip={shape.discriminator} />
+        <ObjectBody key={index} shape={optionShape.shape} name={name} skip={shape.discriminator} />
       ) : optionShape.kind === 'literal' ? null : (
-        <Field schema={option} name={name} label="Value" />
+        <Field key={index} schema={option} name={name} label="Value" />
       )}
       <FieldError name={name} id={errorId} />
     </GroupFrame>
@@ -970,16 +976,5 @@ function CollapsibleItem({
     >
       <Field schema={element} name={name} label={label} bare />
     </Disclosure>
-  );
-}
-
-/** "1 error", "3 errors" on the bad tone, with its glyph; nothing when there are none. */
-export function ProblemBadge({ count }: { count: number }) {
-  if (count === 0) return null;
-  return (
-    <Badge size="sm" tone="bad">
-      <Icon name="alert" />
-      {count} {count === 1 ? 'error' : 'errors'}
-    </Badge>
   );
 }
