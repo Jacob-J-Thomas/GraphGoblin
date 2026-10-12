@@ -1,0 +1,164 @@
+{
+  "schemaVersion": 3,
+  "settings": {
+    "maxIterations": 4
+  },
+  "variables": {
+    "count": {
+      "type": "integer"
+    },
+    "done": {
+      "type": "boolean"
+    },
+    "fail": {
+      "type": "boolean"
+    }
+  },
+  "name": "Issue 167 A: exit loop-back",
+  "nodes": [
+    {
+      "id": "start",
+      "kind": "trigger",
+      "label": "Start",
+      "config": {
+        "subtype": "manual"
+      }
+    },
+    {
+      "id": "work",
+      "kind": "mutate",
+      "label": "One deterministic pass",
+      "config": {
+        "operations": [
+          {
+            "op": "set",
+            "path": "/vars/count",
+            "value": {
+              "kind": "expression",
+              "jsonata": "($exists(vars.count) ? vars.count : 0) + 1"
+            }
+          },
+          {
+            "op": "set",
+            "path": "/vars/done",
+            "value": {
+              "kind": "expression",
+              "jsonata": "vars.count >= trigger.payload.k"
+            }
+          },
+          {
+            "op": "set",
+            "path": "/vars/fail",
+            "value": {
+              "kind": "expression",
+              "jsonata": "vars.count >= trigger.payload.failAt"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "exit",
+      "kind": "exit",
+      "label": "Ordered completion or continue",
+      "config": {
+        "criteria": [
+          {
+            "when": "predicate",
+            "answer": {
+              "type": "noul"
+            },
+            "evaluation": {
+              "kind": "expression",
+              "jsonata": "vars.done"
+            },
+            "match": {
+              "type": "noul",
+              "value": true
+            },
+            "outcome": "success"
+          },
+          {
+            "when": "predicate",
+            "answer": {
+              "type": "noul"
+            },
+            "evaluation": {
+              "kind": "expression",
+              "jsonata": "vars.fail"
+            },
+            "match": {
+              "type": "noul",
+              "value": true
+            },
+            "outcome": "failure"
+          },
+          {
+            "when": "max-duration",
+            "seconds": 5
+          }
+        ],
+        "default": "loop-back",
+        "loopBack": {
+          "targetNodeId": "work"
+        },
+        "return": {
+          "mapping": "{\"count\": vars.count, \"done\": vars.done, \"fail\": vars.fail, \"iteration\": run.iteration, \"workStarts\": counters.nodeVisits.work}",
+          "channels": [
+            {
+              "kind": "caller"
+            },
+            {
+              "kind": "log"
+            },
+            {
+              "kind": "event",
+              "eventType": "research-result"
+            },
+            {
+              "kind": "file",
+              "path": "result.json",
+              "format": "json"
+            },
+            {
+              "kind": "webhook",
+              "url": "https://example.test/research-result"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "start-work",
+      "from": {
+        "node": "start",
+        "port": "out"
+      },
+      "to": {
+        "node": "work"
+      }
+    },
+    {
+      "id": "work-exit",
+      "from": {
+        "node": "work",
+        "port": "out"
+      },
+      "to": {
+        "node": "exit"
+      }
+    },
+    {
+      "id": "exit-work",
+      "from": {
+        "node": "exit",
+        "port": "loopBack"
+      },
+      "to": {
+        "node": "work"
+      }
+    }
+  ]
+}
