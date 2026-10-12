@@ -11,8 +11,10 @@ flowchart TB
   subgraph browser[Browser]
     web[apps/web<br/>React PWA]
   end
-  subgraph node[Node process]
+  subgraph node[API process]
     api[apps/api<br/>Fastify composition root]
+  end
+  subgraph mcpp[MCP process, stdio or HTTP]
     mcp[apps/mcp<br/>MCP server]
   end
   plugin[apps/plugin-codex<br/>Codex plugin bundle]
@@ -28,6 +30,7 @@ flowchart TB
   web --> contracts
   web --> domain
   mcp --> client
+  mcp --> contracts
   plugin -. registers .-> mcp
   client --> contracts
   api --> engine
@@ -35,14 +38,22 @@ flowchart TB
   api --> codex
   api --> jev
   api --> domain
+  api --> contracts
   infra --> engine
+  infra --> domain
+  infra --> contracts
   codex --> engine
+  codex --> domain
+  codex --> contracts
   jev --> engine
+  jev --> domain
+  jev --> contracts
+  engine --> contracts
   engine --> domain
   domain --> contracts
 ```
 
-| Package                   | Production dependencies (from each `package.json`)                                  | Role                                                                                                                                                                   |
+| Package                   | Selected production dependencies (from each `package.json`)                         | Role                                                                                                                                                                   |
 | ------------------------- | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `packages/contracts`      | `zod`                                                                               | Schemas and types for loops, nodes, threads, runs, events, API DTOs; entry `packages/contracts/src/index.ts:7` declares `CONTRACTS_SCHEMA_VERSION = 3`                 |
 | `packages/domain`         | contracts, `ajv`, `jsonata`, `liquidjs`                                             | Graph validation (`packages/domain/src/graph.ts:79`), replay (`packages/domain/src/replay.ts:25`), expressions, exit matching, frozen upgrade stages                   |
@@ -51,12 +62,12 @@ flowchart TB
 | `packages/adapter-codex`  | contracts, domain, engine, `@openai/codex-sdk`                                      | Codex harness, structured completion and the LLM decider                                                                                                               |
 | `packages/adapter-jev`    | contracts, domain, engine, `@typesafe-ai/sdk`                                       | Jev classifier (`packages/adapter-jev/src/decider.ts:128`)                                                                                                             |
 | `packages/api-client`     | contracts, `openapi-fetch`                                                          | Typed REST client generated from the OpenAPI document, SSE subscription (`packages/api-client/src/sse.ts:159`)                                                         |
-| `apps/api`                | everything above except api-client, plus Fastify                                    | Composition root: builds every port in `apps/api/src/container.ts:178`, registers routes in `apps/api/src/app.ts:82`                                                   |
+| `apps/api`                | everything above except api-client, plus Fastify                                    | Composition root: builds every port in `apps/api/src/container.ts:178`, registers routes in `apps/api/src/app.ts:84`                                                   |
 | `apps/mcp`                | api-client, contracts, `@modelcontextprotocol/sdk`                                  | MCP tools over the REST client (`apps/mcp/src/tools.ts:107`): list/describe loops, start, wait, inspect, replay, input, signal                                         |
 | `apps/web`                | api-client, contracts, domain, React, TanStack Query, Zustand, xyflow, `idb-keyval` | Editor, run inspector, settings, PWA                                                                                                                                   |
-| `apps/plugin-codex`       | `zod`                                                                               | Assembles the Codex plugin: MCP registration plus skills (`apps/plugin-codex/src/assemble.ts:20`)                                                                      |
+| `apps/plugin-codex`       | `zod`                                                                               | Assembles the Codex plugin: MCP registration plus skills (`apps/plugin-codex/src/assemble.ts:69`)                                                                      |
 
-Layer direction is enforced by `pnpm check:layers` and dependency-cruiser (AGENTS.md). Each package exposes a `development` export condition pointing at TypeScript source, so tests and lint never need `dist/` (`packages/contracts/package.json:9`). The one composition root that matters at runtime is `apps/api`: `createContainer` opens the database, wires every engine port and the template runtime, and returns `start`/`stop` (`apps/api/src/container.ts:178`). The web app, MCP server and Codex plugin are clients of its REST API.
+Layer direction is enforced by `pnpm check:layers` and dependency-cruiser (AGENTS.md). Each package exposes a `development` export condition pointing at TypeScript source, so tests and lint never need `dist/` (`packages/contracts/package.json:9`). The engine composition root is `apps/api`: `createContainer` opens the database, wires every engine port and the template runtime, and returns `start`/`stop` (`apps/api/src/container.ts:178`). The web app is a client of its REST API; the MCP server runs as its own process with a stdio or Streamable HTTP entry (`apps/mcp/src/main.ts:35`, `apps/mcp/src/main.ts:67`, `apps/mcp/src/main.ts:73`) calling the same API; the Codex plugin registers it.
 
 Note on placement: the Claude Code harness lives in `packages/infrastructure/src/claude` rather than an `adapter-claude` package, because it has no npm dependency (it spawns the user-installed CLI, ADR-0023). `docs/02-architecture.md:16` and `docs/02-architecture.md:76` still describe Codex as the only harness; see register item D26.
 
@@ -143,11 +154,12 @@ erDiagram
   loop_versions ||--o{ schedules : arms
   loop_versions ||--o{ webhook_endpoints : arms
   webhook_endpoints ||--o{ webhook_receipts : consumes
-  inbound_events ||--|| webhook_receipts : records
-  template_instances ||--o{ runs : "binds (template_subject)"
+  inbound_events ||--o| webhook_receipts : records
+  template_instances |o--o{ runs : "binds (template_subject)"
+  runs |o--o{ runs : "parent_run_id"
 ```
 
-Relationships are logical; the schema declares no foreign keys, so referential integrity (for example runs whose version was deleted, D5) is enforced only by application code and the offline inventory.
+Relationships are logical (`runs.parent_run_id` links subloop children, `packages/infrastructure/src/sqlite/schema.ts:65`); the schema declares no foreign keys, so referential integrity (for example runs whose version was deleted, D5) is enforced only by application code and the offline inventory.
 
 | #    | File                                                                      | What it did                                                                                                                                                                                                                                                                                                        |
 | ---- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -176,7 +188,7 @@ PR #178 (commit `21eec52`) removed `billingMode` and `billingStatus` from the Cl
 - **Initial thread**: written with the run at admission (`runs.initial_thread`).
 - **Snapshots**: after each node finishes, parks or loops back, the engine saves the thread with the sequence it reflects (`packages/engine/src/run-manager.ts:1412`, `packages/infrastructure/src/sqlite/runs.ts:221`). The snapshot is a cache, not a source of truth.
 - **Replay into memory**: `loadThread` uses the checkpoint only if its sequence exists in the log, then replays later events; otherwise it replays from the initial thread (`packages/engine/src/run-manager.ts:1929`, `packages/domain/src/replay.ts:25`).
-- **Replay as a feature**: `POST /runs/:id/replay` starts a new run from a node of a terminal run with its recorded thread (`packages/engine/src/run-manager.ts:785`, `apps/api/src/routes/runs.ts:292`).
+- **Replay as a feature**: `POST /runs/:id/replay` forks a new run on the same version using the thread immediately before the selected node first started (`apps/api/src/routes/runs.ts:305`, `packages/engine/src/run-manager.ts:785`, `packages/engine/src/run-manager.ts:809`).
 - **Streaming**: `GET /runs/:id/events` returns a page, or with `Accept: text/event-stream` subscribes before reading, replays after the cursor, then tails live events with `id:` set to `seq` so `Last-Event-ID` resumes (`apps/api/src/sse.ts:26`, `apps/api/src/routes/runs.ts:226`).
 
 ## 5. Offline upgrade path
@@ -188,15 +200,15 @@ flowchart LR
   guard -- marker format 3 complete and structure ready --> current[Drizzle migrate, recover, arm]
   guard -- anything else --> refuse[DATA_UPGRADE_REQUIRED]
   refuse --> tool[pnpm graphgoblin-upgrade on the stopped data dir]
-  tool --> backup[backup + hash verify] --> inspect[inspect: inventory + issues] --> manifest[owner-approved manifest] --> apply[apply in one write transaction]
+  tool --> inventory[inventory: read-only, issues + manifest draft] --> manifest[owner-approved manifest] --> apply[apply: backup + hash verify] --> convert[transactional conversion]
 ```
 
-- **Guard** (`packages/infrastructure/src/sqlite/upgrade.ts:92`): an empty store is fresh; otherwise it requires exactly one `gg_upgrade_state` row with `format_version` 3 and status `complete` (`packages/infrastructure/src/sqlite/upgrade.ts:107`), checks the 0008 structure by column, index, ledger timestamp and constraint text (`packages/infrastructure/src/sqlite/upgrade.ts:110` to `packages/infrastructure/src/sqlite/upgrade.ts:178`), and parses every stored loop version with the current schema (`packages/infrastructure/src/sqlite/upgrade.ts:181`). The container calls it on a read-only client first, then again on the real handle (`apps/api/src/container.ts:200`, `apps/api/src/container.ts:232`), and `migrate()` calls it once more before Drizzle migrations (`packages/infrastructure/src/sqlite/db.ts:198`).
+- **Guard** (`packages/infrastructure/src/sqlite/upgrade.ts:92`): an empty store is fresh; otherwise it requires exactly one `gg_upgrade_state` row with `format_version` 3 and status `complete` (`packages/infrastructure/src/sqlite/upgrade.ts:107`), checks the 0008 structure by column, index, ledger timestamp and constraint text (`packages/infrastructure/src/sqlite/upgrade.ts:111` to `packages/infrastructure/src/sqlite/upgrade.ts:178`), and parses every stored loop version with the current schema (`packages/infrastructure/src/sqlite/upgrade.ts:181`). The container calls it on a read-only client first, then again on the real handle (`apps/api/src/container.ts:200`, `apps/api/src/container.ts:232`), and `migrate()` calls it once more before Drizzle migrations (`packages/infrastructure/src/sqlite/db.ts:198`).
 - **Fresh stores**: Drizzle commits the migrations, then a separate step creates and fills the marker table (`packages/infrastructure/src/sqlite/db.ts:201`, `packages/infrastructure/src/sqlite/upgrade.ts:208`). An interruption between them leaves a store that the next start refuses (Observed, #152, register D4).
 - **Inspect** (`packages/infrastructure/src/sqlite/upgrade.ts:231`) reads every table into memory, runs the domain converter for each version, and reports refusals such as `UPGRADE_ORPHAN_RUN_VERSION` (`packages/infrastructure/src/sqlite/upgrade.ts:342`), nonterminal runs and failed runs that need a replay-only disposition.
-- **Apply** (`packages/infrastructure/src/sqlite/upgrade.ts:549`): one write transaction runs the remaining migrations itself, converts every version, archives every original row into `gg_upgrade_archive`, rewrites webhook dedupe keys, converts each run's history, converts owner defaults, writes the marker (`packages/infrastructure/src/sqlite/upgrade.ts:737`), re-runs the guard and re-parses every event and run before committing.
+- **Apply** (`packages/infrastructure/src/sqlite/upgrade.ts:549`): one write transaction runs the remaining migrations itself, converts every version, archives the manifest and the original rows of seven selected tables (versions, runs, events, settings, endpoints, inbound events, receipts) into `gg_upgrade_archive` (`packages/infrastructure/src/sqlite/upgrade.ts:575`), rewrites webhook dedupe keys, converts each run's history, converts owner defaults, writes the marker (`packages/infrastructure/src/sqlite/upgrade.ts:737`), re-runs the guard and re-parses every event and run before committing.
 - **Frozen stages in domain**: `upgradeLoopV1` reads a frozen v1 JSON schema captured from commit `2f98219` (`packages/domain/src/upgrade-v1-schema.ts:1`); `upgradeLoopCurrent` composes v1 to v2 with v2 to v3 exit conversion (`packages/domain/src/upgrade-current.ts:94`); history conversion is `upgradeRunHistoryCurrent` (`packages/domain/src/upgrade-history-current.ts:93`). The web app uses the same converter for device drafts (`apps/web/src/editor/useLoadEditor.ts:43`).
-- **Tooling**: `tooling/scripts/upgrade.mjs:21` backs up the stopped directory with hash verification (`tooling/scripts/upgrade.mjs:72`) before calling inspect and apply; `pnpm test:upgrade` runs its acceptance script in CI.
+- **Tooling**: `inventory` opens the stopped store read-only and takes no backup (`tooling/scripts/upgrade.mjs:192`); `apply` first backs up the stopped directory with hash verification (`tooling/scripts/upgrade.mjs:185`, `tooling/scripts/upgrade.mjs:72`), then converts; `pnpm test:upgrade` runs its acceptance script in CI.
 
 Format 4 (#164, #165, #168 on one integration branch) will add a v3 to v4 stage beside these, a new marker value, and a history pass for decision and exit evidence, template subjects and trigger configuration.
 
@@ -214,7 +226,7 @@ Routes are registered in `apps/api/src/app.ts:83` to `apps/api/src/app.ts:91`.
 | Templates | `POST /templates/:id/draft` (kept), `GET /templates`, `GET /templates/:id`; `POST /templates/:id/prerequisites`, `POST /templates/:id/instantiate`, `GET /template-instances/:id` (removed by #165) (`apps/api/src/routes/templates.ts:23` to `apps/api/src/routes/templates.ts:117`) |
 | Docs      | `/openapi.json`, optional Swagger UI at `/docs` (`apps/api/src/app.ts:77`)                                                                                                                                                                                                            |
 
-**Auth** (`apps/api/src/plugins/auth.ts:88`): public prefixes are health, version, OpenAPI, docs, `/hooks/` and the PWA under `/app/` (`apps/api/src/plugins/auth.ts:24`). A bearer API key is checked against its scopes before the body is parsed (`apps/api/src/plugins/auth.ts:108`). Without a key, local mode grants the single local owner full scope unless `requireApiKey` is set (`apps/api/src/plugins/auth.ts:114`). Every request runs as `LOCAL_OWNER` or the key's owner; owner ids exist on every table for the hosted path.
+**Auth** (`apps/api/src/plugins/auth.ts:88`): public prefixes are health, version, OpenAPI, docs, `/hooks/` and the PWA under `/app/` (`apps/api/src/plugins/auth.ts:24`). A bearer API key is checked against its scopes before the body is parsed (`apps/api/src/plugins/auth.ts:108`). Without a key, local mode grants the single local owner full scope unless `requireApiKey` is set (`apps/api/src/plugins/auth.ts:114`). Every request runs as `LOCAL_OWNER` or the key's owner; owner-bearing records scope loops, runs and owner settings; dependent records inherit ownership through their loop/run references, while the model catalog is shared (`packages/infrastructure/src/sqlite/schema.ts:44`, `packages/infrastructure/src/sqlite/schema.ts:202`).
 
 ## 7. Web state and caching
 
@@ -269,7 +281,7 @@ flowchart TB
 | Run status transitions                 | `packages/infrastructure/src/sqlite/runs.ts:8`, `packages/infrastructure/src/sqlite/runs.ts:123`, wired at `apps/api/src/container.ts:241`         |
 | Admission staging                      | `packages/infrastructure/src/sqlite/admission.ts:153`, wired at `apps/api/src/container.ts:296`, wrapper `apps/api/src/templates/runtime.ts:543`   |
 | Engine pre-execution and resume policy | `packages/engine/src/ports.ts:410`, `packages/engine/src/ports.ts:416`, `apps/api/src/templates/runtime.ts:424`                                    |
-| Privileged support command             | `apps/api/src/templates/scripts.ts:56` (magic command name), credential resolvers `apps/api/src/container.ts:372`, `apps/api/src/container.ts:394` |
+| Privileged support command             | `apps/api/src/templates/scripts.ts:56` (magic command name), credential resolvers `apps/api/src/container.ts:373`, `apps/api/src/container.ts:395` |
 | Finalization reporting                 | `apps/api/src/templates/github/reporter.ts:19` replaces `markFinalized` on the repository instance                                                 |
 | Run listing                            | `apps/api/src/routes/runs.ts:144` pages through `SqliteTemplateInstances.runPage` (`packages/infrastructure/src/sqlite/templates.ts:158`)          |
 | Loop read and editor origin            | `apps/api/src/routes/loops.ts:228`, `apps/web/src/editor/EditorPage.tsx:79`                                                                        |
@@ -292,7 +304,8 @@ sequenceDiagram
   TS->>TS: endpoint by token, rate limit, verify HMAC on raw bytes, filter + dedupe expressions
   alt hmac-sha256-body
     TS->>RM: receiveWebhook (run-manager.ts:461)
-    RM->>AD: claim receipt (content hash) then create run atomically
+    RM->>AD: claim: inbound row + receipt + recoverable intent (admission.ts:194)
+    RM->>AD: create: run + run.queued + receipt link in one transaction (admission.ts:77)
     AD-->>RM: admitted / filtered / duplicate / pending / failed
   else hmac-sha256 (timestamp)
     TS->>TS: insertUnlessDuplicate inbound event
@@ -302,11 +315,11 @@ sequenceDiagram
 ```
 
 - **Arming**: publishing a version calls `TriggerService.armVersion`, which replaces schedules and webhook endpoints for that version and disables earlier ones (`apps/api/src/routes/loops.ts:350`, `apps/api/src/triggers/trigger-service.ts:173`). Startup re-arms every published loop (`apps/api/src/triggers/trigger-service.ts:221`).
-- **Cron**: `schedules` rows polled by `CronScheduler` over croner with a missed-fire policy (`packages/infrastructure/src/sqlite/triggers.ts:47`).
+- **Cron**: `schedules` rows stored by `packages/infrastructure/src/sqlite/triggers.ts:47`, polled by `CronScheduler` over croner with a missed-fire policy (`packages/infrastructure/src/scheduler/cron-scheduler.ts:41`, `packages/infrastructure/src/scheduler/cron-scheduler.ts:133`, `packages/infrastructure/src/scheduler/cron-scheduler.ts:158`).
 - **Webhooks**: two signing recipes, timestamp HMAC with a replay window and exact-body HMAC (`packages/infrastructure/src/http/delivery.ts:9`, `packages/infrastructure/src/http/delivery.ts:27`). Body-signed deliveries persist a receipt per owner, loop, trigger node and body hash with no expiry (`packages/infrastructure/drizzle/0008_github_triggers.sql:29`); pending admissions retry at startup and every 15 s (`packages/engine/src/run-manager.ts:319`).
 - **Events**: `POST /events` and the internal bus fire event triggers, with a chain limit of 8 (`apps/api/src/triggers/trigger-service.ts:49`, `apps/api/src/triggers/trigger-service.ts:470`).
 - **Polls**: HTTP or script probes with `fireWhen` and an optional bounded items mode (`apps/api/src/triggers/poll.ts:268`, `packages/contracts/src/nodes.ts:129`).
-- **Admission**: `RunManager.prepareStart` builds the initial thread (`packages/engine/src/run-manager.ts:367`), `SqliteTriggerAdmission.create` commits run, initial thread, subloop pins, the `run.queued` event and any receipt link in one transaction (`packages/infrastructure/src/sqlite/admission.ts:66`), and the run is enqueued (`packages/engine/src/run-manager.ts:414`).
+- **Admission**: `RunManager.prepareStart` builds the initial thread (`packages/engine/src/run-manager.ts:367`), `SqliteTriggerAdmission.create` commits run, initial thread, subloop pins, the `run.queued` event and any receipt link in one transaction (`packages/infrastructure/src/sqlite/admission.ts:77`); for body-signed webhooks `claim` commits the receipt and intent first (`packages/infrastructure/src/sqlite/admission.ts:194`, `packages/engine/src/run-manager.ts:488`, `packages/engine/src/run-manager.ts:492`), and the run is enqueued (`packages/engine/src/run-manager.ts:414`).
 
 ## 11. End-to-end trace of one loop
 
@@ -317,6 +330,8 @@ sequenceDiagram
   participant LR as SqliteLoopRepository
   participant TS as TriggerService
   participant RM as RunManager
+  participant AD as SqliteTriggerAdmission
+  participant RR as SqliteRunRepository
   participant H as Handlers + adapters
   participant ES as SqliteEventStore
   W->>API: PUT /loops/:id/draft (If-Match token)
@@ -325,33 +340,36 @@ sequenceDiagram
   API->>API: publishIssues -> validateLoop (domain graph.ts:79)
   API->>LR: publish (loops.ts:197)
   API->>TS: armVersion (trigger-service.ts:173)
-  Note over TS: later: cron fire, webhook, event, poll or manual start
+  Note over TS: later: cron fire, webhook, event or poll
   TS->>RM: startRun / receiveWebhook
-  RM->>ES: admission commits run + run.queued (admission.ts:66)
+  W->>API: POST /loops/:id/runs (manual start)
+  API->>RM: startRun
+  RM->>AD: claim receipt first (body-signed webhooks only, admission.ts:194)
+  RM->>AD: create: run + run.queued + receipt link atomically (admission.ts:77)
   RM->>RM: execute (run-manager.ts:1153): load thread, run.started
   loop each node
     RM->>ES: node.started
     RM->>H: handler[kind] (run-manager.ts:1353)
     H-->>RM: route / park / loop-back / finish + patch + evidence
     RM->>ES: node.finished (+ decision.made, exit.evaluated, harness.*)
-    RM->>RM: saveThread checkpoint (run-manager.ts:1412)
+    RM->>RR: saveThread checkpoint (run-manager.ts:1412)
   end
-  RM->>ES: run.finished, then finalize: returns, parent, timers
+  RM->>ES: exit node.finished + run.finished in one append (run-manager.ts:1457)
+  RM->>RR: terminal status transition (run-manager.ts:1559)
+  RM->>RM: finalize: returns (at least once), parent, timers, finalized_at
   Note over RM: on restart: container.start -> RunManager.start -> recover (run-manager.ts:979)
 ```
 
-| Step                   | Owner (module)                                                                                                           | What happens                                                                                                                                                                                                                                      |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Authoring              | `apps/web/src/editor/store.ts:265`, `apps/web/src/editor/useAutosave.ts:98`, `apps/web/src/drafts/local-drafts.ts:149`   | Edits live in a Zustand store, mirror to IndexedDB, and autosave with a draft token                                                                                                                                                               |
-| Storage                | `apps/api/src/routes/loops.ts:233`, `packages/infrastructure/src/sqlite/loops.ts:150`                                    | One mutable draft version per loop; a stale token returns 409                                                                                                                                                                                     |
-| Publication            | `apps/api/src/routes/loops.ts:347`, `packages/domain/src/graph.ts:79`, `packages/infrastructure/src/sqlite/loops.ts:197` | Validation issues block publication; the draft becomes an immutable published version                                                                                                                                                             |
-| Arming                 | `apps/api/src/routes/loops.ts:350`, `apps/api/src/triggers/trigger-service.ts:173`                                       | Schedules and endpoints follow the published version; a separate write after publish, re-armed at startup                                                                                                                                         |
-| Admission              | `packages/engine/src/run-manager.ts:402`, `packages/infrastructure/src/sqlite/admission.ts:66`                           | Version resolved and pinned, initial thread built, run and `run.queued` committed atomically; webhook receipts claimed in the same transaction                                                                                                    |
-| Execution              | `packages/engine/src/run-manager.ts:1153`                                                                                | Single executor loop per run under a concurrency cap; visit cap `maxIterations` per node (`packages/engine/src/run-manager.ts:1318`)                                                                                                              |
-| Node work              | `packages/engine/src/handlers/index.ts:12`, adapters                                                                     | Inference calls a harness, decisions and exits call `evaluatePrimitive`, scripts run processes, waits park with timers                                                                                                                            |
-| Evidence and events    | `packages/infrastructure/src/sqlite/events.ts:59`, `packages/infrastructure/src/fs/artifacts.ts:16`                      | Events hold the patches and evaluation evidence; large transcripts go to content-addressed files under `<dataDir>/artifacts`                                                                                                                      |
-| Termination            | `packages/engine/src/run-manager.ts:1553`, `packages/engine/src/run-manager.ts:1629`                                     | Terminal event first, then status, then return delivery, parent notification and `finalized_at`                                                                                                                                                   |
-| Recovery after restart | `apps/api/src/container.ts:562`, `packages/engine/src/run-manager.ts:979`                                                | Unfinalized terminal runs are finalized; queued and running runs are re-enqueued with a `run.started` attempt count; waiting runs re-arm timers and reconcile children; pending webhook receipts retry (`packages/engine/src/run-manager.ts:318`) |
+- **Authoring** (`apps/web/src/editor/store.ts:265`, `apps/web/src/editor/useAutosave.ts:98`, `apps/web/src/drafts/local-drafts.ts:149`): Edits live in a Zustand store, mirror to IndexedDB, and autosave with a draft token
+- **Storage** (`apps/api/src/routes/loops.ts:233`, `packages/infrastructure/src/sqlite/loops.ts:150`): One mutable draft version per loop; a stale token returns 409 unless the submitted definition already matches the stored draft (`apps/api/src/routes/loops.ts:271`)
+- **Publication** (`apps/api/src/routes/loops.ts:347`, `packages/domain/src/graph.ts:79`, `packages/infrastructure/src/sqlite/loops.ts:197`): Validation issues block publication; the draft becomes an immutable published version
+- **Arming** (`apps/api/src/routes/loops.ts:350`, `apps/api/src/triggers/trigger-service.ts:173`): Schedules and endpoints follow the published version; a separate write after publish, re-armed at startup
+- **Admission** (`packages/engine/src/run-manager.ts:402`, `packages/infrastructure/src/sqlite/admission.ts:66`): Version resolved and pinned, initial thread built. Body-signed webhook receipts are claimed first; run creation, `run.queued` and receipt linkage commit atomically afterward
+- **Execution** (`packages/engine/src/run-manager.ts:1153`): Single executor loop per run under a concurrency cap; visit cap `maxIterations` per node (`packages/engine/src/run-manager.ts:1318`)
+- **Node work** (`packages/engine/src/handlers/index.ts:12`, adapters): Inference calls a harness, decisions and exits call `evaluatePrimitive`, scripts run processes, waits park with timers
+- **Evidence and events** (`packages/infrastructure/src/sqlite/events.ts:59`, `packages/infrastructure/src/fs/artifacts.ts:16`): Events hold the patches and evaluation evidence; large transcripts go to content-addressed files under `<dataDir>/artifacts`
+- **Termination** (`packages/engine/src/run-manager.ts:1553`, `packages/engine/src/run-manager.ts:1629`): Terminal event first, then status, then return delivery, parent notification and `finalized_at`
+- **Recovery after restart** (`apps/api/src/container.ts:562`, `packages/engine/src/run-manager.ts:979`): Unfinalized terminal runs are finalized (returns are at least once, D31); queued and running runs are re-enqueued with a `run.started` attempt count (an interrupted script or subloop start may repeat, D32, D33); waiting runs re-arm timers and reconcile children; pending webhook receipts retry (`packages/engine/src/run-manager.ts:318`)
 
 ## 12. Owner walkthrough
 
@@ -363,6 +381,6 @@ A plain-language tour, with .NET comparisons where they help.
 
 **The data.** One SQLite file. A loop has versions; a run pins one published version and never changes it. Every step of a run is an append-only event row; the current "context thread" (the run's working state) is rebuilt by replaying those events, with a periodic snapshot as a cache. This is event sourcing in the same sense as an EventStoreDB stream with a snapshot projection. Migrations are numbered SQL files like EF migrations, but larger contract changes go through an offline upgrade tool, because the owner prefers one clean current format over runtime compatibility code (ADR-0020).
 
-**A run's life.** You draw the loop in the editor, which autosaves a draft. Publishing validates the graph, freezes a version and arms its triggers. A trigger (cron, webhook, event, poll or manual) asks the engine to admit a run; admission writes the run and its first event in one transaction. The engine then walks the graph node by node, writing events as it goes. If the process stops, startup reads the event logs and carries on from the last durable step.
+**A run's life.** You draw the loop in the editor, which autosaves a draft. Publishing validates the graph, freezes a version and arms its triggers. A trigger (cron, webhook, event, poll or manual) asks the engine to admit a run; admission writes the run and its first event in one transaction. The engine then walks the graph node by node, writing events as it goes. If the process stops, startup reads the event logs and resumes from the last durable step; work that was in flight when it stopped (a script, a subloop start, a return delivery) may run again, so those effects are at least once (register D31 to D33).
 
 **What is about to change.** Three owner decisions converge on one storage upgrade (format 4): decisions and exits get simpler evaluator shapes (#164, after #167 settles loop-back), templates become plain starting points and the GitHub automation layer is removed (#165), and triggers get one type selector and general webhooks (#168). The debt register orders the small preparatory fixes that should land first so that the upgrade has a clean, provable starting point.
