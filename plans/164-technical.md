@@ -5,27 +5,29 @@ Baseline: c379f806ba8a04433779d98ded7e4196c9d4b663 on codex-plan-164; citations 
 
 Decisions become evaluator-specific: expressions return stable route ids from one JSONata snippet; LLMs use freeform Liquid instructions and structured routes; Jev and compatible HTTP classifiers retain Choice, Noul and Score. Stable graph identity, classifier mathematics, defaults, context behavior, errors and returns remain. There is no evaluator fallback, context redesign under #38, or continuity work under #33.
 
-The owner can approve decisions before choosing exits. A retains loop-back; B uses ordinary edges; C uses policy decisions, a dedicated Continue node with repeat and exhausted connections, and terminal exits. #167 now recommends C at medium confidence, and I agree. Its 40 scenarios establish current engine facts, not an implementation of C. Choosing C later requires a second cutover.
+The owner can approve decisions before choosing exits. #167 recommends option 3 (variant C) at medium confidence, and I agree: policy decisions, a Continue node with repeat and exhausted connections, and terminal exits. Option 1 is variant A; option 2 is variant B. The 40 scenarios establish current facts, not a C implementation. Choosing C later requires a second cutover.
 
-#164 estimates are 9-14 worker days for A, 11-18 for B, and 12-19 for C, including absorbed debt, shared tooling, review and QA. They exclude other issue implementation and owner or provider delays. Confidence is high for decisions and medium for exit selection and migration until copy inventory.
+#164 estimates remain 9-14 worker days for A, 11-18 for B, and 12-19 for C. With option 3, the programme totals about 34-51: #164 12-19, #165 6-9, and #168 16-23, excluding separate #118/#152 work and review delays. The original 3-5-day estimate covered semantics; this programme includes three issues and a verified cutover. Confidence is high for decisions and medium for migration.
 
 ## 2. Owner decisions and approval boundaries
 
-The owner has already chosen classifier-only answer types, instruction-driven LLMs, snippets, clean format 4, independent template starting points, and one integration branch. Only the owner changes plan gates. Plan approval does not approve an unseen manifest or installed update.
+The recorded choices are classifier answer types, LLM instructions, snippets, clean format 4, independent templates and one integration branch. Only the owner changes gates; plan approval does not approve a data manifest or installation.
 
 | Choice | Recommendation and consequence |
 | --- | --- |
-| #167 exits | #167 recommends C at medium confidence, and I agree. Under ADR-0020, parity gaps are build cost; keeping loop-back leaves the clutter and risks a second cutover. Split the maximum-pass budget from the cumulative per-node safety cap, seeding both from old maxIterations during migration. |
-| Observation output | Approve the common evidence shape in section 3. It makes routing and raw answers clear, but existing output readers need updates. Keeping classifier paths needs a revised output union and consumer plan. |
-| LLM exit confidence | Make it informational. Review each old gate for deliberate removal or a supported replacement. Keeping gates requires a revised proposal. |
-| Routes | Keep 2-64 expression and LLM routes and 1-64 Score bands. A single route can be permitted explicitly; a larger limit needs provider and editor validation. |
-| Old LLM conversion | Review every replacement instruction. Proposed text is not proof that a new prompt preserves an old judgment. |
-| #152, parked | Unpark it before cutover, or explicitly authorize the bounded atomic-initialization repair in #164. Without either, fresh-store initialization blocks release. |
-| #118, parked | Prefer hidden, disarmed deleted-loop provenance and repair under #118. Alternatively approve exact orphan restoration or archive-only resolution in inventory. Unresolved orphans refuse apply. |
-| #127, parked | Leave its cache repair separate and use uncached final checks. Unpark it only if the owner wants that repair in this sequence. |
+| #167 exits | Recommend option 3 (variant C), with medium confidence: it addresses clutter and avoids another cutover. Keep maxPasses separate from the cumulative cap and seed both from old maxIterations. |
+| LLM exit confidence | Make it informational; review each old gate for deliberate removal or replacement. Keeping gates needs a revised plan. |
+| Old LLM conversion | Review every new instruction; proposed text does not prove equivalent judgments. |
+| #152, parked | Unpark it or authorize atomic initialization in #164. Without either, fresh initialization blocks release. |
+| #118, parked | Prefer retained, disarmed provenance and repair. Otherwise approve exact restoration or archival of each orphan; unresolved cases refuse apply. |
+| #127, parked | Keep its repair separate and run final checks uncached unless the owner unparks it. |
 
 #165 still needs archive-only retirement and external evidence approval. #168 needs its repeated-body default and reviewed filter conversions. Recommend Allow for new bodies while preserving existing permanent claims; this is not approval on behalf of those issue owners.
 ## 3. Target contract
+
+### Engineering defaults
+
+The observation output below and the 2-64 expression/LLM route bound are engineering defaults, not additional owner trade-off gates. The owner may override them before implementation; an override updates the contract, conversion and validation plan. Score retains 1-64 bands.
 
 ### Common decision contract
 
@@ -51,7 +53,7 @@ Decision context retains {messages, vars?, includeLastOutput}. Messages default 
 
 Classifiers do not duplicate a routes array. decisionRouteDeclarations derives ports from options, sides, or bands. Expressions and LLMs use their declared routes directly.
 
-The change can be seen in these configuration excerpts. The complete required route and provider fields are defined above.
+These excerpts show the change; the complete field requirements are above.
 
 ```json
 {"answer":{"type":"choice","options":[{"id":"done","label":"Done","criteria":"All checks passed"}]} ,"evaluation":{"kind":"llm","question":"Assess {{ vars.checks }}"}}
@@ -61,7 +63,7 @@ The change can be seen in these configuration excerpts. The complete required ro
 {"kind":"llm","instructions":"Choose done when all checks passed; otherwise continue.","routes":[{"id":"done","label":"Done"},{"id":"continue","label":"Continue"}]}
 ```
 
-These excerpts illustrate the field change, not independently importable definitions. Expressions instead store a declared route-returning JSONata snippet.
+These are excerpts, not importable definitions. Expressions store a declared route-returning snippet.
 ### Requests, outputs and factual evidence
 
 LlmRouteRequest contains rendered instructions, route declarations, prepared JSON context and resolved model and effort. Codex forces exactly route, confidence and reasoning, all required, with additionalProperties false and route constrained to submitted ids. Adapter and engine validate types, membership and finite confidence in [0,1]; persist a reasoning excerpt of at most 2,048 characters. No repair or fallback occurs. Classifier requests retain question, options or sides or anchors, prepared state and a fixed registry snapshot. Choice keeps current transport retries; Noul and Score gain none.
@@ -83,7 +85,7 @@ Provenance requires kind, provider, classifierId, model and effort; use null for
 Outputs and lastOutput use this payload. decision.made adds diagnostics, at most three, empty for fresh emissions. Fresh expression and LLM observations are routes equal to portId. Expression confidence, reasoning and provider facts are null; LLM provenance has resolved Codex values and confidence is informational. Fresh classifiers validate spec and port. Boolean observations are allowed for predicates and historical facts, never fresh decisions. Separate emission guards retain historical nulls without accepting old configs. Predicate guards no longer fabricate a decision port. Rejected classifiers retain validated evidence without a port or patch. Preserve typed failure, resumability and cancellation boundaries; retain no provider envelope or secret-bearing error text.
 
 One CURRENT_DEFINITION_FORMAT constant drives current literals, exports, stamps, manifest and guard. It is 4 in the shipped result; frozen literals remain unchanged. Thread outer version stays 1, and #168's eventType is not inferred for old deliveries.
-### Exit variant A: keep loop-back
+### Exit variant A: #167 option 1, keep loop-back
 
 Keep ordered criteria, at most 32, default success or loop-back, optional loopBack.targetNodeId, and return mapping and channels. Preserve max-iterations, max-duration and last-output-matches order. Channels retain their 16 limit and caller default.
 
@@ -91,7 +93,7 @@ A predicate is {when:'predicate', predicate, outcome:'success'|'failure'}. Expre
 
 Keep fixed trigger, vars, bare lastOutput, lastMessage and iteration state, including current null behavior. First match wins; rejected classifier confidence never matches false. Errors stop evaluation. Criteria precede the implicit ceiling; final matches can complete and provider failures still fail. Continuation increments once or ends exhausted; the fresh-visit cap remains. exit.evaluated separates observation, comparison, acceptance, gate and result; historical unknowns stay null and old matching facts are never fresh authoring options.
 
-### Exit variant B: decisions and ordinary edges
+### Exit variant B: #167 option 2, decisions and ordinary edges
 
 Terminal exits store {outcome:'success'|'failure'|'exhausted', return:{mapping,channels}}, defaulting to success, with no criteria, continuation or ports. Decisions route to exits or work. Remove fresh loop-back handling but preserve event-first finalization, returns and parent notification; old lifecycle facts remain replayable.
 
@@ -101,17 +103,17 @@ B and C add read-only execution.elapsedSeconds to expression and Liquid views, d
 
 Conditional exits require reviewed graphs, counters, ordering, returns and captures. Decisions overwrite lastOutput, and classifier decision rejection fails where an exit predicate would not match. Restore incoming data and approve that difference; do not hide it with fallback. Unconditional exits convert directly; ignored continuation fields or edges still require reviewed removal.
 
-### Exit variant C: continuation owns the budget
+### Exit variant C: #167 option 3, Continue owns maxPasses
 
-Use B's terminal exits. Add NodeKind continuation with strict config {maxIterations:number}, an integer from 1 to 10,000, default 10. Ports are continue and exhausted, both connected by ordinary edges. exhausted leads directly to an exhausted exit. There is no duplicated targetNodeId. Allow at most one continuation per loop; zero is valid for a nonrepeating loop. Multiple independent budgets are outside scope.
+Use B's terminal exits. Add NodeKind continue with strict config {maxPasses:number}, an integer from 1 to 10,000, default 10. Ports are repeat and exhausted, both connected by ordinary edges. exhausted leads directly to an exhausted exit; there is no duplicated targetNodeId. Proposed design limit for owner review: at most one Continue node per loop, with none needed for nonrepeating loops. This is not settled by #167; multiple budgets need defined identities and counter semantics before implementation.
 
-Runs start at iteration 1. Policy decisions run first. Continuation increments and follows continue if below its limit; otherwise it retains the count and follows exhausted. It emits no output patch and leaves lastOutput unchanged. settings.maxNodeVisits separately bounds cycles that bypass the controller. A final-iteration policy may still succeed before the controller is visited.
+run.iteration is the engine-owned pass counter and starts at 1. Policy decisions run first. Continue increments and follows repeat below its limit; otherwise it retains the count and follows exhausted. It emits no output patch. settings.maxNodeVisits counts each node's fresh visits cumulatively across the run and never resets on repeat. A final-pass policy can still succeed before Continue is visited.
 
-A handler-specific result carries route, from, to and limit. Atomically append continuation.evaluated and node.finished, plus iteration.incremented only when continuing. Evidence records nodeId, from, to, limit and route; the increment names the actual edge target. Project count and cursor afterward. Recovery follows durable completion without another increment; an interrupted uncompleted visit reevaluates the unchanged count. Fresh guards enforce these rules; no historic continuation visits are invented.
+A handler-specific result carries route, from, to and limit. Atomically append continuation.evaluated and node.finished, plus iteration.incremented only on repeat. Evidence records nodeId, from, to, limit and route; the increment names the actual edge target. Project count and cursor afterward. Recovery follows durable completion without another increment; interrupted uncompleted visits reevaluate the unchanged count. Fresh guards enforce this, and no historic Continue visits are invented.
 
-The converter proposes policy checks, one continuation and terminal exits. Move the old global ceiling into the continuation and initially keep the same value as maxNodeVisits. Lower ordered limits remain explicit checks. Multiple exits or targets require a reviewed controller or authored replacement. Preserve original route identities, ordinary wiring and return configuration before approved reference changes; report all generated ids and layout changes. Even simple no-criterion loop-back proposals require topology and return review. Old instructions, false matches, confidence gates, timing, schema checks, rejection differences and lastOutput consumers remain reviewed conversions.
+The converter seeds Continue.maxPasses and settings.maxNodeVisits from old settings.maxIterations. Lower ordered limits stay explicit checks. Multiple exits or targets need a reviewed controller or authored graph. Preserve route ids, ordinary wiring and returns before approved reference edits. Report generated ids and layout changes. Even simple loop-back proposals require review; old prompts, false matches, confidence gates, timing, rejection and lastOutput consumers remain reviewed conversions.
 
-The editor exposes the controller's limit and connections; inspection separates policy from budget. C uses three bounded children for engine/contracts, graph conversion, and editor/replay QA, adding 3-5 days over A. Choosing C after format 4 changes stored nodes, settings and graphs again and requires a second cutover.
+The editor separates policy, pass budget and cumulative safety cap. C uses three bounded children and adds 3-5 days over A. Later adoption changes stored nodes, settings and graphs and requires another cutover.
 
 ### Scope shared by A, B and C
 
@@ -135,7 +137,7 @@ Inventory names classes supported by today's source. It does not claim counts fr
 | B or C conditional exit | Require the chosen reviewed graph, captures, timing, budgets, rejection behavior, return mapping, and replay entry. Unconditional terminal exits can convert directly. |
 | Output consumers | Trace answer.holds, optionId, probabilities, legend, confidence, whole outputs, lastOutput, dynamic paths, aliases, schema checks, scripts, subloop results, and captured variables. Require exact source or value hashes and producer evidence. |
 
-Use frozen source metadata to find every Liquid and JSONata field, then inspect schema, mutation patch, whole-thread, and opaque script inputs. Dynamic lookup, wildcard, closure, eval, assignment, or unproven copied data is not safe merely because a string search finds no old field. Reject unused, conflicting, overlapping, or stale resolutions. Repeated node ids in separate versions are separate approval items.
+Traverse frozen Liquid/JSONata metadata, schemas, mutations, whole-thread and opaque inputs. Dynamic lookup, eval, aliases or unproven copies require review; a negative string search is not proof. Reject unused, conflicting or stale resolutions and bind repeated node ids separately per version.
 
 ### Reconciliation with #165 and #168
 
@@ -143,17 +145,21 @@ Accept #165's distinction between ordinary surviving history and retired automat
 
 A proven Starter may become ordinary. Its stored literal instruction can replace a proven templateSettings producer. History needs a separately proved instruction alias from the recorded producer or replay seed, applied consistently to initial threads, queued seeds, patches, and snapshots. Keep historical templateSettings facts. Alias collisions, edited consumers, or missing provenance require review or archive. An ordinary replacement for incompatible automation is a new draft with new identity, not a rewrite claiming the old published version ran that graph.
 
-Mixed ordinary parents, shared inbound recipients, and pinned dependencies block automatic component removal. The owner approves the exact expanded closure or preservation strategy. Ordinary pending receipts block cutover. A stopped retired component may have a receipt archived with explicit abandon-retired-target approval only when it has no surviving execution dependency and no active run. Preserve the pending original and acknowledge uncertainty; do not invent a finished run or successful effect. Kept terminal runs must settle finalization; retired unfinalized records may be archive-only with explicit uncertainty. Retired live ids return 404 after approved retirement.
+Mixed ordinary parents, shared inbound recipients and pinned dependencies block automatic removal. The owner approves the exact closure or preservation strategy. Archival must satisfy the joint pending-state rule below; retired live ids return 404 only after approved retirement.
 
-Adopt #168's trigger rules in the same stage: rename subtype to type; preserve Manual, Cron, Poll, and Event subscription behavior; convert webhook signing into its approved authentication recipe; retain endpoint ids, tokens, historical payloads, keys, windows, and permanent claims. Do not infer old eventType or reevaluate keys without recorded headers. All ordinary webhook and event intake must use atomic receipt and frozen admission identity, with a durable 202 acknowledgment. The repeated-body default remains #168's owner choice.
+Adopt #168's trigger rules in the same stage: rename subtype to type; preserve Manual, Cron, Poll, and Event subscription behavior; convert webhook signing into its approved authentication recipe; retain endpoint ids, tokens, historical payloads, keys, windows, and permanent claims. Do not infer old eventType or reevaluate keys without recorded headers. All ordinary webhook intake must use atomic receipt and frozen admission identity, with a durable 2xx acknowledgment; durable fan-out for `POST /events` is a #168 backlog proposal, not cutover scope. The repeated-body default remains #168's owner choice.
 
-Correct the peer draft's reference to a Boolean decision builder. A downstream filter or GitHub recipe must use a format-4 expression decision with declared pass and ignore route ids, not a Noul answer. A proposed wrapper evaluates a provably boolean old filter once and returns a route id. Nonboolean or header-dependent filters need authored review. Formerly filtered input now creates a quiet run and can consume a key; evaluation errors occur after intake. Approve these behavioral changes per version.
+Correct the peer draft's reference to a Boolean decision builder. A downstream filter or GitHub recipe must use a format-4 expression decision with declared pass and ignore route ids, not a Noul answer. A generated wrapper evaluates the old filter once with exactly the coercion `evaluatePredicate` applies today (`packages/domain/src/expression.ts:199`) and returns a route id; no Boolean proof is required. Header-dependent filters need authored review. Formerly filtered input now creates a quiet run and can consume a key; evaluation errors occur after intake. Approve these behavioral changes per version.
 
-Restore the trigger's original NodeOutput before the old successor, using an ordinary mutation and proven outputs lookup. The quiet exit has no return effects: A uses empty criteria, default success, and mapping none with no channels; B and C use outcome success and that same return configuration. No continuation is visited on an ignored delivery. Preserve historical configHash and delivery facts; new gate and restore nodes do not appear retrospectively in old events.
+Restore the trigger NodeOutput before the old successor. Quiet exits have mapping none and no channels: A uses empty criteria and default success; B and C use outcome success. Ignored intake never visits Continue. Retain configHash and delivery facts; never add gate or restore visits to history.
+
+### Joint pending-state rule (#164 authority)
+
+The cutover refuses stores with queued, running, waiting or paused runs, pending webhook receipts or frozen admission intents awaiting admission, or unfinished child notifications or timers. The old build settles them first; the converter never abandons, drains or executes them. Resolved historical intents remain evidence, not pending work. Terminal runs with unfinished finalization are also refused, with one exception: a retired template run whose only unfinished item is its private template report may be archived through an explicit per-run retirements.privateReports[runId] disposition approved by the owner, with a recorded reason and preserved evidence. This never authorizes abandonment of a pending delivery. #165 and #168 cite this rule.
 
 ### Factual history, strict current waits, and replay
 
-Convert proven engine output envelopes, not arbitrary JSON containing answer or holds. Preserve recorded selected ports. Old nonclassifier Noul remains a boolean observation with its actual confidence and reasoning; do not derive a missing successful route from the new definition. Old Choice uses its recorded route with agreement checks. Classifier values and exit comparison, gate, status, and outcome remain factual. Unknown historical values stay null, while fresh emissions require complete applicable facts.
+Convert proven output envelopes, not lookalike JSON. Retain recorded ports, old Noul booleans and actual confidence and reasoning; never infer a missing route from a new definition. Old Choice routes must agree with recorded ports. Preserve classifier values and exit comparisons, gates, status and outcome. Missing facts stay null; fresh emissions need complete facts.
 
 Translate add, replace, remove, copy, move, and test patches at exact output paths, including escaped pointers and whole-document writes. Partial writes or copies into changed payloads require a proven translation or hash-bound resolution; otherwise refuse. Never rerender historic returns, redeliver outbound effects, synthesize visits, or re-evaluate providers. Retain event ids, sequence, time, node identity, attempts, results, pins, and config hashes describing what actually ran.
 
@@ -163,7 +169,7 @@ Remove the SSE legacy grace for a terminal status lacking a terminal event. Keep
 
 Require Replay4(ConvertHistory3(H)) to equal the explicit transformed projection of frozen-source Replay3(H). Check each changed patch, stored snapshot sequence, final thread, and checkpoint plus tail with open-visit state. Unchanged regions compare exactly. Changed regions compare to an approved transform. Validate status, terminal event, lastEventSeq, outputs, parent and child relationships, results, and trigger facts. Archive-only components retain exact source history rather than claim current-runtime parity.
 
-Refuse every queued, running, waiting, or paused run and all unresolved surviving receipts, pins, timers, returns, and finalization. The tool never drains or cancels them. Affected surviving failed runs, including transitive parents and child pins, each need nonresumable-replay with a reason. Set resumable=false consistently in the run and relevant failure facts, preserving the original cause in audit. Retired failures instead remain archive-no-reexecution. Resume and recovery enforce the disposition.
+The joint pending-state rule controls admission to cutover. Affected surviving failed runs, including transitive parents and child pins, each need nonresumable-replay with a reason. Set resumable=false consistently in the run and relevant failure facts, preserving the cause in audit. Retired failures remain archive-no-reexecution. Resume and recovery enforce the disposition.
 
 B and C replay maps record version_id, source_node_id, target_node_id, source_definition_hash, target_definition_hash, and manifest_hash, keyed by version and source node. Executable replay first reconstructs the reached source checkpoint, then validates the approved capture or policy entry. replayOf adds entryNodeId, with null only when an older fact did not record it. It retains runId and source nodeId. Unmapped points fail with guidance to an earlier approved point or a new run. Read-only replay is always distinct from starting a new execution, which may produce different answers. Deleted or archive-only loops cannot execute through replay.
 
@@ -173,7 +179,7 @@ B and C replay maps record version_id, source_node_id, target_node_id, source_de
 
 Freeze c379f80's format-3 schema dependency closure with revision and per-file SHA-256 provenance before edits. Keep earlier frozen stages intact; mechanically bind present v2-to-v3 behavior to frozen schemas and prove golden and refusal equivalence. Composition supports 1 to 2 to 3 to 4, 2 to 3 to 4, and 3 to 4. Namespace earlier resolutions; current input rejects stale maps.
 
-Expose conversion through @graphgoblin/domain/upgrade and frozen contracts through an upgrade-only subpath, with development, types and runtime exports. Remove root-barrel reachability. The browser lazily loads the pure synchronous converter for older drafts and precaches its chunk for offline use. Build inspection must show no frozen schemas in the initial application chunk.
+D10's upgrade subpaths, lazy chunk loading and bundle splitting are deferred to debt-register recommendation 11. Cutover retains the existing module-loading approach and still verifies offline device conversion; bundle optimization is not a release prerequisite.
 
 Collect nonoverlapping edits against immutable source pointers in this order: #165 retirement, #164 decisions and chosen exits, #168 triggers, shared consumers and final validation. Conflicts refuse. Archive-only data never reaches execution.
 
@@ -181,11 +187,62 @@ SQL reservations align with both peers: 0012_retire_template_instances belongs t
 
 Repair Drizzle's stale snapshot against shipped migrations before generation. Final metadata must match coordinated tables, expression indexes and constraints. A disposable generate check must produce no migration; compare fresh and upgraded schema catalogs. #165 archives before dropping its six indexes, template_subject and template_instances.
 
-Use indexed keyset batches, incremental canonical hashing and per-run event traversal instead of whole-store arrays. Version the hash protocol's table, primary-key and column encoding; preserve original JSON text. Put dependency lookups in indexed scratch storage. Peak memory is bounded by the batch and largest needed record or thread; oversized records refuse. Measure memory and time on a large synthetic store. This changes offline traversal, not general engine log performance.
+Limit D9 to bounded-memory inventory and apply on a store of the owner's size. Batch the largest tables, traverse needed events per run and hash incrementally where required. Measure peak memory on an owner-sized fixture and supplied-copy rehearsal. Do not build a general scalability framework or change engine log performance.
 
 Inventory covers all surviving and retired identities and dependencies described above, including supplied exports and external evidence; devices are a separate obligation. Reports bind source, tool, schema, rule, SQL, journal, row and pointer hashes, classify automatic, reviewed, refused or archived changes, and show topology, pending state, failed dispositions, archive counts and replay results. Public evidence contains safe ids, counts and hashes, not credentials.
 
-Manifest fields are {format, targetVersion, hashAlgorithm, sourceHash, converterHash, sqlHash, versions, retirements, historyResolutions, failedRuns, expectedResultHash, approval}. versions bind definitionHash, convert-or-archive disposition and namespaced rules. retirements bind #165 instance, binding, component, external evidence, delivery and exact row sets; archived failures cannot also be replayable. #168 binds trigger source, graph proposal, endpoint and claim facts. History entries bind run, sequence, pointer and value hash. Reject extra, unused, overlapping or stale entries and blank reasons.
+### Exact shared manifest schema
+
+All objects below are strict. All fields and maps are required; empty maps are allowed. Hash means 64 lowercase hexadecimal SHA-256 characters. JsonPointer means a valid RFC 6901 pointer. Rule payloads pass the appropriate current config or reviewed graph validator before apply. #165 and #168 use this layout exactly.
+
+```ts
+type Manifest = {
+  format:'graphgoblin-upgrade-manifest'; targetVersion:4;
+  hashAlgorithm:'sha256-canonical-records-v1';
+  sourceHash:Hash; converterHash:Hash; sqlHash:Hash;
+  versions:Record<VersionId,{
+    definitionHash:Hash; disposition:'convert'|'archive';
+    legacyStages:{v1ToV2:FrozenV1Resolutions|null;v2ToV3:FrozenV2Resolutions|null};
+    resolutions:{
+      decisions:Record<JsonPointer,Rule>; exits:Record<JsonPointer,Rule>;
+      templates:Record<JsonPointer,Rule>; triggers:Record<JsonPointer,Rule>;
+    };
+  }>;
+  historyResolutions:Record<Id,{
+    runId:RunId; record:'initial-thread'|'snapshot'|'event'|'result';
+    seq:number|null; pointer:JsonPointer; sourceHash:Hash;
+    replacement:JsonValue; reason:string;
+  }>;
+  retirements:{
+    components:Record<Id,{
+      rowSetHash:Hash; externalEvidenceHash:Hash|null;
+      rows:Record<TableName,RowId[]>; removeRows:Record<TableName,RowId[]>;
+      disposition:'archive-no-reexecution'|'unbind-starter'; reason:string;
+      unresolvedEffects:{identity:string;kind:string;state:'confirmed'|'uncertain';evidenceRef:string}[];
+    }>;
+    privateReports:Record<RunId,{
+      componentId:Id; runHash:Hash; reportEvidenceHash:Hash;
+      disposition:'archive-private-template-report'; reason:string;
+    }>;
+    orphans:Record<Id,{
+      rowSetHash:Hash; evidenceHash:Hash; rows:Record<TableName,RowId[]>;
+      disposition:'restore-evidenced-version'|'archive-no-reexecution';
+      restoredVersions:Record<VersionId,FrozenVersionRecord>;
+      restoredLoops:Record<LoopId,FrozenLoopRecord>; reason:string;
+    }>;
+  };
+  failedRuns:Record<RunId,{disposition:'nonresumable-replay';reason:string}>;
+  expectedResultHash:Hash;
+  approval:null|{approvedBy:string;approvedAt:Timestamp;approvedPlanHash:Hash};
+};
+type Rule = {
+  sourceHash:Hash; action:'replace'|'approve-generated'|'review-unchanged';
+  replacement:JsonValue|null; proposalHash:Hash|null; reason:string;
+  sourceEdits:Record<JsonPointer,{sourceHash:Hash;replacement:JsonValue}>;
+};
+```
+
+Rule keys and edits address the frozen stage input; cross-node consumer edits stay in their owning namespace. replace requires a validated replacement and null proposalHash; approve-generated requires a bound proposalHash and null replacement; review-unchanged requires both null and no edits. Reasons are nonblank. Legacy fields use their frozen validators. Hashing uses length-prefixed canonical records in defined table/key order, retaining original JSON text. Apply requires approval; preview uses null. Report entries authorize only a run already in their component, not independent deletion. Removed rows must be within bound row sets. Reject stale, unused, conflicting or overlapping writes.
 
 Dry-run locks a supplied stopped store, verifies an independent scratch copy and runs the same apply and replay checks there. It never performs rollback-only source writes. Preview may have blank approval; it produces diffs, expected result hash, replay counts and planHash. Approval is {approvedBy, approvedAt, approvedPlanHash}. planHash covers the manifest excluding approval, including all rules, SQL, resolutions and expected result. Result hashing excludes approval and audit timestamps; the final manifest is also audited. Any changed source or plan needs fresh review. Hashes record integrity, not a cryptographic signature.
 
@@ -196,11 +253,11 @@ One transaction rechecks hashes and blockers, archives all originals before dest
 
 #152 must be unparked and completed, or its bounded initialization repair explicitly authorized in #164, before final cutover. Fresh schema creation, migration ledger and marker use one transaction; crash injection proves an empty retryable store or a complete current store. Connection pragmas are not a substitute for atomic application state. Current-format readiness uses a declarative structure and ledger descriptor, not scattered format literals or historical timestamp constants. Existing stores are refused before ordinary migrations, recovery or trigger arming until the whole offline cutover is complete.
 
-#118 must either be authorized or replaced by explicit orphan resolutions in inventory. Restoring an orphan's original version requires evidence of its actual definition and identity. No current catalog graph or invented replacement can establish historical provenance. If evidence cannot be recovered, the owner may approve exact archive-only retirement of the entire affected execution closure; otherwise apply refuses. If #118 is unparked, use hidden, disarmed deleted-loop records and retained versions, reject new admission and executable replay for deleted loops, and repair existing orphans explicitly. Future deletion policy is not silently absorbed while the issue remains parked.
+Before apply, authorize #118 or approve each orphan resolution. Restoration requires evidence of the actual definition and identity, never a current catalog substitute. Otherwise approve exact archive-only execution closure or refuse apply. An unparked #118 retains hidden, disarmed versions and blocks new admission or executable replay of deleted loops. Future deletion policy is not implemented while parked.
 
 Device handling preserves active, set-aside and raw archive copies, metadata, tokens and incomplete source. Do not delete the drafts store to bump its version. Archive and read back originals before replacing an active key. Convertible old drafts become unsynced current drafts; ambiguous or incomplete old copies stay inert and exportable. Incomplete current drafts still reopen for editing. An old baseToken cannot be guessed after server conversion; use a proven mapping or require explicit reload or restore-overwrite with a fresh server token. Failed preservation blocks overwriting autosave. Invalidate old event caches; no tolerant cached-event reader remains.
 
-After approved children and synthetic checks, rehearse an owner-supplied consistent real-store copy, never the installed source. Keep an untouched baseline, a backed conversion copy, and a separately edited safe runnable copy. Verify every retained run and snapshot, archives, identities, claims, schema catalogs and integrity. Restore into another copy and prove old logical hashes with the old tools, then rehearse re-upgrade. Disarm copied ingress and receipt retries; isolate workspaces, scripts, secrets and return destinations before later execution. Record safety edits and their hashes. Owner product review uses a separate port and accepts behavior before main merge. Installation and complete rollback remain separate owner actions.
+Rehearse supplied consistent copies only after approved children and synthetic checks. Keep an untouched baseline, backed conversion copy and separately isolated runnable copy. Verify every retained run, snapshot, archive, identity, claim and schema; restore into another copy and prove old hashes before re-upgrade. Disarm ingress and retries and isolate commands, secrets and destinations. Record safety edits. Product review uses a separate port; installation and rollback remain owner actions.
 
 ## 5. Runtime, API, editor, and documentation changes
 
@@ -230,7 +287,7 @@ Every row targets feat/format-4-integration. #164 and shared cutover use GPT-6 A
 | 01, #164 F | Freeze format-3 sources and earlier-stage equivalence before any schema edit; about 20-35 files. |
 | 02, #152 or authorized #164 repair | Commit fresh schema, ledger and marker atomically; omit only if the equivalent repair is already complete. |
 | 03, #118 if unparked | Preserve deleted-loop provenance and repair known orphans; otherwise the explicit inventory-resolution route remains a cutover prerequisite. |
-| 04, #164 S | Establish the format constant, declarative readiness, streaming inventory and safe snapshot-generation baseline. |
+| 04, #164 S | Establish the format constant, declarative readiness, owner-sized bounded-memory inventory and apply, and the snapshot baseline. |
 | 05, #165 A | Move ordinary cursor paging and read contracts out of the template store; 10-14 files. |
 | 06, #165 B | Disconnect private runtime authority and make the loader draft-only before service deletion; 16-24 files. |
 | 07, #165 C1 | Delete implementation and review GitHub services; about 20-28 files. |
@@ -240,42 +297,41 @@ Every row targets feat/format-4-integration. #164 and shared cutover use GPT-6 A
 | 11, #165 F | Delete examples/aidlc and its active references; 37 deletions and at most two reference edits. |
 | 12, #164 D1 | Introduce decision contracts, evaluators, adapters and admission with minimal typed editor support; about 30-38 files. |
 | 13, #164 D2 | Complete decision authoring, inspection, edge ownership and undo; about 25-38 files. |
-| 14A, #164 E-A, if A | Implement fixed boolean predicates and retained loop-back; about 25-38 files. |
-| 14B1, #164 E-B1, if B | Implement terminal exits and the ordinary-edge counter policy; about 25-38 files. |
-| 14B2, #164 E-B2, if B | Implement reviewed graph conversion and executable replay maps; about 25-38 files. |
-| 14C1, #164 E-C1, if C | Implement continuation, terminal exits and atomic iteration completion; about 25-38 files. |
-| 14C2, #164 E-C2, if C | Implement reviewed policy and budget graph conversion; about 25-38 files. |
-| 14C3, #164 E-C3, if C | Complete controller authoring, inspection, replay and recovery QA; about 25-38 files. |
-| 15, #164 L | Isolate upgrade exports and lazily load and cache browser conversion; about 12-25 files. |
-| 16, #168 T1 | Present trigger type first and make presets optional; about 20-35 files. |
-| 17, #168 T2 | Add editable route-based checks, output restoration and quiet finish recipes; about 25-38 files. |
-| 18, #168 T3 | Switch current trigger contracts and consumers to type; about 30-40 files. |
-| 19, #168 T4 | Add general bodies, metadata and unified durable intake acknowledgment; about 28-38 files. |
-| 20, #168 T5 | Implement the approved repeat and business-key policies with receipt and recovery tests; about 22-35 files. |
-| 21, #168 T6 | Remove trigger filters, finalize converted graph rules and retain the bounded items-poll evidence; about 25-38 files. |
-| 22, #164 C1 | Compose all rules, exact manifest, orphan resolutions, D22 history normalization and copy dry-run. |
-| 23, #164 C-device | Complete lossless device conversion, token reconciliation and event-cache replacement. |
-| 24, #164 C2 | Finalize the one SQL set, snapshots, guard, atomic apply, audit, restore and real-copy rehearsal. |
+| 14, #164 E-A, if A | Implement fixed boolean predicates and retained loop-back; about 25-38 files. |
+| 15, #164 E-B1, if B | Implement terminal exits and the ordinary-edge counter policy; about 25-38 files. |
+| 16, #164 E-B2, if B | Implement reviewed graph conversion and executable replay maps; about 25-38 files. |
+| 17, #164 E-C1, if C | Implement continuation, terminal exits and atomic iteration completion; about 25-38 files. |
+| 18, #164 E-C2, if C | Implement reviewed policy and budget graph conversion; about 25-38 files. |
+| 19, #164 E-C3, if C | Complete controller authoring, inspection, replay and recovery QA; about 25-38 files. |
+| 20, #168 T1 | Present trigger type first and make presets optional; about 20-35 files. |
+| 21, #168 T2 | Add editable route-based checks, output restoration and quiet finish recipes; about 25-38 files. |
+| 22, #168 T3 | Switch current trigger contracts and consumers to type; about 30-40 files. |
+| 23, #168 T4 | Add general bodies, metadata and unified durable intake acknowledgment; about 28-38 files. |
+| 24, #168 T5 | Implement the approved repeat and business-key policies with receipt and recovery tests; about 22-35 files. |
+| 25, #168 T6 | Remove trigger filters, finalize converted graph rules and retain the bounded items-poll evidence; about 25-38 files. |
+| 26, #164 C1 | Compose all rules, exact manifest, orphan resolutions, D22 history normalization and copy dry-run. |
+| 27, #164 C-device | Complete lossless device conversion, token reconciliation and event-cache replacement. |
+| 28, #164 C2 | Finalize the one SQL set, snapshots, guard, atomic apply, audit, restore and real-copy rehearsal. |
 
-This preserves both peer sequences. #165's loader moves into B to permit service deletion, and its reduced manifests move into D to keep strict contracts and packaged assets consistent. #168 T2 uses route ids and the chosen exit builder. Its shared C4 is the same #164 C2, not another PR or cutover. Optional fixture preparation can split a child only when required by the file budget and must be recorded explicitly in the sequence.
+Both files use these step ids. #165 moves draft loading to B and manifests to D for coherent deletion. #168 steps 20-25 follow the selected exit steps 14-19 without exception; T2 uses route ids. Its shared C4 is step 28, not another cutover. Splits stay in sequence and update both files before review.
 
 Children build on fresh disposable stores and never deploy separately. Existing stores await the final SQL set. Owner checkpoints cover decisions, exits, triggers and rehearsal. Final review binds the actual integrated head.
 
 ## 7. QA plan and evidence
 
-Independent qa:touched-systems records positive and negative cases, commands, head hashes and artifact paths for every touched boundary. Tests are planned here, not claimed executed.
+Independent qa:touched-systems records positive and negative cases, commands, head hashes and artifact paths. No product test is claimed executed by this planning task.
 
 | Boundary | Required evidence |
 | --- | --- |
-| Contracts and domain | All current branches and exit alternatives chosen for delivery parse correctly. Reject old fields, duplicate ids, incompatible providers, invalid syntax, nonstring or undeclared routes, malformed probabilities, threshold errors and fractional band gaps. Preserve JSONata depth, timeout and regex checks. |
-| Engine and adapters | Capture instructions and enum requests without criteria; verify strict responses, confidence bounds, cancellation, typed failures and no fallback. Test Jev and HTTP primitive serialization and exact boundaries, durable completion, child pins, returns and recovery. C must prove no duplicate increment after every crash point. |
-| API, client, editor and inspector | Verify five admission paths agree, unsupported selections and conflicts fail precisely, route changes and undo preserve connections, only relevant controls appear, and historical unknowns are clear. Test keyboard focus, held JSON, save and reload, strict JSON and SSE, templates and MCP guidance. |
-| Converter, data and devices | Test automatic, reviewed, refused and archived cases, all source and copied-result consumers, partial patches, every replay checkpoint, old wait identities, stale hashes and maps, active-state refusal, archive-only retirement, orphan resolution, token conflicts, quota, blocked storage and navigation races. |
-| Storage and distribution | Test atomic fresh initialization, all actual SQL, injected rollback, complete backup and restore, audit counts, large-store memory, source-preserving dry-run, snapshot generation no-op, package assets and lazy offline conversion without initial frozen-schema loading. |
+| Contracts and domain | Parse current branches and the chosen exit model. Reject old fields, duplicate ids, unsupported providers, invalid snippets or routes, malformed probabilities, threshold errors and Score gaps. Retain expression safety tests. |
+| Engine and adapters | Capture prompts and enums without criteria. Verify responses, cancellation, typed failures, no fallback, Jev/HTTP boundaries, returns, child pins and recovery. Continue crash tests must prove no duplicate count. |
+| API and editor | Check all admission paths, conflicts, branch-only controls, stable edges, undo, held JSON, focus, save/reload, factual inspection, JSON/SSE and retained template/MCP behavior. |
+| Converter and devices | Cover every consumer, reviewed and refused cases, patches, checkpoints, waits, stale hashes, replay maps, archive/orphan dispositions and the joint pending rule, including private-report-only approval and rejection when any other work remains. Test token, quota and navigation failures without losing originals. |
+| Storage and distribution | Verify atomic initialization, SQL, rollback, backups, audits, restore, owner-sized bounded memory, unchanged dry-run source, snapshot no-op, assets and offline device conversion. |
 
-The shared live budget is eight evaluations or 15 minutes, whichever comes first: Codex route and A boolean where applicable, Jev Choice/Noul/Score, and compatible controlled HTTP primitives. Record native and fixture evidence separately. Missing credentials or quota is blocked evidence, not a pass. Do not switch evaluators to hide failure or expose credentials.
+Live evidence is capped at eight evaluations or 15 minutes: Codex route and A boolean where applicable, Jev primitives and controlled HTTP primitives. Separate native and fixture evidence. Credentials or quota block a case rather than pass it; never switch evaluators or expose credentials.
 
-Final checks include typecheck, lint, layers, dependency rules, design tokens, coverage, licenses, generated clients and references, contrast, formatting, template packaging, build, offline acceptance and touched browser scenarios. Keep every package above 90% line and branch coverage. Use pnpm.cmd and the documented Node 22 dependency-cruiser binary when default Node 23 is unsupported. While #127 remains parked, run Turbo checks with --force and capture uncached results. Rehearsal covers every retained run, not a sample count.
+Final gates cover typecheck, lint, layers, dependencies, tokens, coverage, licenses, generated clients/references, contrast, formatting, packaging, build, offline acceptance and touched browser scenarios. Keep coverage above 90% lines and branches. Use pnpm.cmd and the documented Node 22 dependency-cruiser binary when needed. With #127 parked, use uncached Turbo checks. Rehearsal covers every retained run.
 
 ## 8. Dependencies, debt reconciliation, and cutover gates
 
@@ -287,8 +343,8 @@ The sweep is under review. Absorbed items require approval of this scope; a swee
 | D5 and #118 | This depends on an owner choice. Recommend hidden, disarmed provenance and repair under #118; alternatively require explicit evidence-based orphan restoration or archive-only resolution in cutover. Unresolved orphans refuse. Source: packages/infrastructure/src/sqlite/loops.ts:220. |
 | D6 | Absorb the single format constant and declarative current readiness in S. Historical frozen literals remain intentionally unchanged. Source: packages/infrastructure/src/sqlite/upgrade.ts:107. |
 | D8 | Absorb through the evaluator-specific decisions and approved A, B or C exits. Source: packages/contracts/src/evaluation.ts:290. |
-| D9 | Absorb indexed streaming, incremental hashing and per-run offline traversal, with measured memory evidence. General engine performance work stays out. Source: packages/infrastructure/src/sqlite/upgrade.ts:233. |
-| D10 | Absorb upgrade subpaths and lazy, offline-cached browser conversion in L. Broader route splitting stays out because it is not necessary for this cutover. Source: packages/domain/src/index.ts:24. |
+| D9 | Absorb only batching, per-run traversal and incremental hashing needed for inventory and apply in bounded memory on an owner-sized store. Broader scalability stays out. Source: packages/infrastructure/src/sqlite/upgrade.ts:233. |
+| D10 | Defer all upgrade-subpath, lazy-loading and bundle work to backlog recommendation 11 (filed as #188); remove child L. Offline device preservation remains in cutover. Source: packages/domain/src/index.ts:24. |
 | D12 | Absorb with #165/#168: repair the snapshot baseline, finalize the single migration set, and require generation to be a no-op. Source: packages/infrastructure/drizzle/meta/_journal.json:1. |
 | D22 | Absorb provable wait and timeout normalization, required stored startedSeq, and removal of legacy SSE grace. Missing evidence refuses rather than invents facts. Sources: packages/contracts/src/run.ts:97 and apps/api/src/sse.ts:13. |
 | D23 | Absorb deletion of unused DecisionStrategySchema from current exports. Keep frozen copies as source evidence. Source: packages/contracts/src/nodes.ts:162. |
@@ -297,7 +353,7 @@ D13/#127 stays outside implementation while parked; bypass caching for evidence.
 
 #165 owns D1, D2, D3, D24 and D27. Its paging precedes store retirement; authority and credential duplication disappear rather than become generic helpers. #168 owns D7, D17, D18, D19 and D29. Unified atomic intake, durable acknowledgment and shared fake/SQLite admission contract tests are required. It explicitly retains both poll modes and leaves general credential, working-directory and pagination improvements outside; this is a deliberate limited resolution of D19, not a claim it disappears.
 
-Cutover prerequisites are: recorded #164/#165/#168 plan approvals; a settled #167 exit choice; the #152 authorization and completed repair; an approved #118 path with zero unresolved orphans; template retirement and external evidence dispositions; webhook repeat and filter resolutions; no surviving active or pending state; complete frozen-stage and schema checks; verified backup, dry-run and owner manifest hash; uncached gates, independent review, QA, restore evidence, and owner product acceptance. The actual installation remains a separate owner action.
+Cutover prerequisites are: recorded #164/#165/#168 plan approvals; a settled #167 exit choice; the #152 authorization and completed repair; an approved #118 path with zero unresolved orphans; template retirement and external evidence dispositions; webhook repeat and filter resolutions; the joint pending-state rule satisfied; complete frozen-stage and schema checks; verified backup, dry-run and owner manifest hash; uncached gates, independent review, QA, restore evidence, and owner product acceptance. The actual installation remains a separate owner action.
 
 ## 9. Risks and gaps
 

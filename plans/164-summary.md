@@ -18,85 +18,76 @@ The three issues will ship together through one integration branch and one offli
 
 ### 1. Which exit design should format 4 use?
 
-**#167 now recommends C at medium confidence, and I agree.** Decisions own completion policy, a dedicated Continue node owns the maximum-pass budget through repeat and exhausted connections, and terminal exits own outcome and returns. Under ADR-0020, parity gaps are build cost; keeping loop-back would leave the clutter and risk another cutover. Split the pass budget from a cumulative per-node safety cap, seeding both from old maxIterations during migration.
+**#167 recommends option 3 (variant C) at medium confidence, and I agree.** Decisions choose completion policy, a dedicated Continue node owns maxPasses through repeat and exhausted connections, and terminal exits own outcome and returns. The cumulative per-node safety cap remains separate. Both limits are seeded from old maxIterations during migration.
 
-B moves policy into decisions and uses ordinary backward connections. Exits only say success, failure or exhausted and what to return. It is a simpler graph model, but ordinary edges do not count iterations. Graphs need explicit counting and exhaustion policy.
+Option 1 (variant A) keeps loop-back and simplifies its predicates. Option 2 (variant B) uses decisions and ordinary backward connections, with explicit counting and exhaustion policy. Option 3 makes the budget visible while leaving policy in decisions and the prior output intact.
 
-C is the middle option: decisions choose success, failure or continue; a visible continuation node owns the iteration budget; terminal exits declare outcome and returns. The continuation counts once, routes to an exhausted exit when the budget is spent, and leaves the prior output intact. It separates policy from the budget without treating any backward connection as an iteration.
+Under ADR-0020, parity gaps are build cost. Keeping loop-back leaves the clutter concern unresolved. **Choosing option 3 after this format-4 cutover would require a second stored-data cutover.** The proposed limit of one Continue node per loop is for owner review, not a settled rule. Decisions can be approved first, but final exit contracts and cutover wait for the exit choice.
 
-**If C is the intended destination, choose it now. Moving to C after this format-4 cutover means a second stored-data cutover.** The decision portion can be approved before #167 is settled, but final exit contracts and the data upgrade cannot.
+### 2. Should LLM confidence stop an exit from matching?
 
-### 2. How should results be stored and shown?
+**Recommend no confidence gate for new LLM exits.** Confidence stays visible but does not control completion. Review each existing gate for deliberate removal or a supported replacement, such as a classifier. Keeping gates requires a revised proposal; conversion never drops them automatically.
 
-**Recommend the common observation format.** It separates the selected route from the raw classifier answer and preserves old boolean answers honestly. The inspector becomes clearer, but scripts and mappings that read old answer fields need reviewed updates. Keeping current classifier output paths would require an alternative technical design before implementation.
+### 3. How much review should old LLM prompts receive?
 
-### 3. Should LLM confidence stop an exit from matching?
+**Recommend reviewing every replacement instruction**, including old Choice decisions. Proposed text from old questions and criteria cannot prove equivalent meaning. Automatic acceptance reduces review effort while accepting that uncertainty.
 
-**Recommend no confidence gate for new LLM exits.** Confidence remains visible but does not control routing or completion. Each existing gate must be deliberately removed or replaced with a supported rule, such as a classifier. Keeping those gates requires a revised proposal. Nothing is dropped automatically during conversion.
+### 4. What happens to parked #152 and #118?
 
-### 4. How many routes should be allowed?
+**Recommend unparking #152 before cutover**, or explicitly approving its bounded repair in #164. Schema and marker must commit together so an interrupted first start cannot leave an unusable database. Without one of those authorizations, release is blocked.
 
-**Recommend 2-64 routes for expressions and LLMs**, matching today's Choice limit. Score keeps its existing 1-64 bands. A single-route exception can be approved if useful. Raising the limit needs additional provider, graph and editor checks.
+**Recommend unparking #118 for hidden, disarmed deleted-loop provenance and orphan repair.** Alternatively, keep it parked and resolve every inventoried orphan explicitly. Restoration requires evidence of the actual old definition; otherwise approve exact archive-only retirement. Unresolved orphans block apply, and no replacement version is invented.
 
-### 5. How much review should old LLM conversion require?
+#127 can stay parked while final local checks bypass caching. Its cache repair remains separate.
 
-**Recommend reviewing every replacement instruction**, including old Choice decisions. The tool can propose text from the old question and criteria, but it cannot prove that a new prompt means the same thing. Automatic acceptance reduces review effort while accepting that uncertainty.
+## Coordination prerequisites
 
-### 6. What happens to #152 and #118, which are parked?
+#165 needs approval of archive-only retirement and preserved evidence. #168 needs its repeated-body policy and reviewed filter conversions. Recommend allowing new repeated bodies while preserving existing permanent claims; these remain peer approvals.
 
-**Recommend unparking #152 before cutover.** A new database must commit its schema and format marker together; otherwise an interrupted first start can leave it unusable. The alternative is explicit approval to include that bounded repair in #164. Without one of those authorizations, release is blocked.
-
-**Recommend unparking #118 to retain hidden, disarmed versions when loops are deleted and repair existing orphan runs.** The alternative is to keep it parked and resolve every orphan found in the cutover inventory explicitly. Restoration needs real evidence of the old definition. If it cannot be recovered, the owner can approve archive-only retirement of the affected history. An unresolved orphan blocks the upgrade; the tool never invents a replacement version.
-
-#127 can stay parked. Final local checks will bypass caching so stale results cannot stand in for fresh evidence. Its actual cache repair remains separate.
-
-### 7. Which peer decisions must also be settled?
-
-#165 needs approval of archive-only retirement and the exact evidence to preserve. #168 needs its repeated-body policy and review of old filters moved into graph decisions. Recommend allowing repeated new webhook bodies while preserving every existing permanent claim. Those are peer issue decisions, not approvals made by this plan.
-
-SQL numbering is aligned: 0012 retires template storage, 0013 changes trigger storage, and 0014 holds #164 metadata only if needed. These belong to one final migration set. No intermediate integration build upgrades the owner's store.
+All three plans use the joint pending-state rule in technical section 4. Retired template deliveries cannot bypass it. SQL remains one set: 0012 for template retirement, 0013 for triggers, and 0014 for #164 metadata only if needed.
 
 ## Effort and confidence
 
 With the added storage and history work, estimate #164 at 9-14 worker days for A, 11-18 for B, or 12-19 for C. This includes its shared converter, review and QA work. It excludes #165 and #168 implementation, separately authorized #118 and #152 work, and owner or provider delays. Decision behavior has high confidence; exit selection and real-data conversion have medium confidence until the choices and copy inventory are complete.
 
-The 40 passing #167 research scenarios establish today's engine differences. They do not establish that the new continuation node has already been implemented or tested.
+For option 3, the three-issue programme totals about 34-51 worker days: #164 takes 12-19, #165 takes 6-9, and #168 takes 16-23. This excludes separately authorized #118/#152 work and owner or provider delays. The original 3-5-day estimate covered #164 semantics; the programme now includes three issues, one safe data cutover, restoration evidence, independent review and browser QA.
+
+The 40 #167 scenarios establish current engine differences, not a tested Continue implementation.
 
 ## Child PRs in integration order
 
 Every child targets feat/format-4-integration. Only the selected exit branch is included. Each child receives independent review and relevant checks; the complete integration remains unmerged until owner product acceptance.
 
-1. #164 F freezes format-3 sources and proves earlier conversion behavior unchanged.
-2. #152, or an explicitly authorized #164 repair, makes fresh initialization atomic.
-3. #118 preserves deleted-loop provenance if unparked; otherwise exact orphan resolutions remain a final cutover gate.
-4. #164 S adds the format constant, readiness checks, streaming inventory and snapshot baseline.
-5. #165 A moves ordinary run paging out of template storage.
-6. #165 B disconnects private authority and makes loading draft-only.
-7. #165 C1 deletes implementation and review GitHub services.
-8. #165 C2 deletes QA GitHub services.
-9. #165 D removes settings, instances, APIs, contracts and store access, with reduced manifests.
-10. #165 E keeps only independent starting-point assets and removes origin-specific product behavior.
-11. #165 F deletes examples/aidlc and active references.
-12. #164 D1 introduces the new decision contracts, runtime, adapters and admission.
-13. #164 D2 completes decision authoring, inspection, connections and undo.
-14. If A is selected, #164 E-A implements fixed boolean predicates and retained loop-back.
-15. If B is selected, #164 E-B1 implements terminal exits and ordinary-edge counting policy.
-16. If B is selected, #164 E-B2 adds reviewed graph conversion and replay entry mapping.
-17. If C is selected, #164 E-C1 adds continuation, terminal exits and atomic counting.
-18. If C is selected, #164 E-C2 adds reviewed policy and budget graph conversion.
-19. If C is selected, #164 E-C3 completes controller authoring, inspection and replay QA.
-20. #164 L isolates upgrade code and loads it lazily while preserving offline draft conversion.
-21. #168 T1 puts trigger type first and makes presets optional.
-22. #168 T2 adds editable route checks, output restoration and quiet exits.
-23. #168 T3 switches current trigger contracts and consumers to type.
-24. #168 T4 adds general bodies, metadata and durable acknowledgment.
-25. #168 T5 implements the approved repeat and business-key policies.
-26. #168 T6 removes trigger filters and finalizes graph conversion and poll evidence.
-27. #164 C1 composes all conversion rules, manifest, orphan resolutions and copy dry-run.
-28. #164 C-device completes lossless device conversion and token reconciliation.
-29. #164 C2 finalizes SQL, snapshots, atomic apply, audit, restore and real-copy rehearsal.
+- Step 01: #164 F freezes format-3 sources and proves earlier conversion behavior unchanged.
+- Step 02: #152, or an explicitly authorized #164 repair, makes fresh initialization atomic.
+- Step 03: #118 preserves deleted-loop provenance if unparked; otherwise exact orphan resolutions remain a final cutover gate.
+- Step 04: #164 S adds the format constant, readiness checks, owner-sized bounded-memory inventory and apply, and the snapshot baseline.
+- Step 05: #165 A moves ordinary run paging out of template storage.
+- Step 06: #165 B disconnects private authority and makes loading draft-only.
+- Step 07: #165 C1 deletes implementation and review GitHub services.
+- Step 08: #165 C2 deletes QA GitHub services.
+- Step 09: #165 D removes settings, instances, APIs, contracts and store access, with reduced manifests.
+- Step 10: #165 E keeps only independent starting-point assets and removes origin-specific product behavior.
+- Step 11: #165 F deletes examples/aidlc and active references.
+- Step 12: #164 D1 introduces the new decision contracts, runtime, adapters and admission.
+- Step 13: #164 D2 completes decision authoring, inspection, connections and undo.
+- Step 14: If A is selected, #164 E-A implements fixed boolean predicates and retained loop-back.
+- Step 15: If B is selected, #164 E-B1 implements terminal exits and ordinary-edge counting policy.
+- Step 16: If B is selected, #164 E-B2 adds reviewed graph conversion and replay entry mapping.
+- Step 17: If C is selected, #164 E-C1 adds continuation, terminal exits and atomic counting.
+- Step 18: If C is selected, #164 E-C2 adds reviewed policy and budget graph conversion.
+- Step 19: If C is selected, #164 E-C3 completes controller authoring, inspection and replay QA.
+- Step 20: #168 T1 puts trigger type first and makes presets optional.
+- Step 21: #168 T2 adds editable route checks, output restoration and quiet exits.
+- Step 22: #168 T3 switches current trigger contracts and consumers to type.
+- Step 23: #168 T4 adds general bodies, metadata and durable acknowledgment.
+- Step 24: #168 T5 implements the approved repeat and business-key policies.
+- Step 25: #168 T6 removes trigger filters and finalizes graph conversion and poll evidence.
+- Step 26: #164 C1 composes all conversion rules, manifest, orphan resolutions and copy dry-run.
+- Step 27: #164 C-device completes lossless device conversion and token reconciliation.
+- Step 28: #164 C2 finalizes SQL, snapshots, atomic apply, audit, restore and real-copy rehearsal.
 
-#168's shared cutover child is this last #164 child, not a second cutover. Large children are split into coherent pieces when the actual file count requires it.
+#165 and #168 cite these same step ids. #168 steps 20-25 follow the selected exit work without exception. Its shared cutover is step 28, not another cutover. Any split updates both sequences.
 
 ## Main risks
 

@@ -1,54 +1,49 @@
-# #168 technical plan: reconciled trigger configuration and admission
+# #168 technical plan: trigger configuration and general webhooks
 
-This second comment follows `plan-168-summary.md`. Citations use c379f80. Reconciliation uses unchanged peer inputs from #163, #164, #165 and #167. This is research only; no implementation or owner-instance access occurs.
-
-HMAC means hash-based message authentication code; PR means pull request; QA means quality assurance; UI means user interface; CI means continuous integration. SQL is the database language, DDL its structure-changing statements, and ULID the repository's sortable identifier. JSON means JavaScript Object Notation; MCP means Model Context Protocol; UTC is Coordinated Universal Time.
+This second approval comment follows plan-168-summary.md. Citations use c379f80; review corrections override stale peer inputs. HMAC means hash-based message authentication code; PR means pull request; QA means quality assurance. SQL is the database language; JSON means JavaScript Object Notation; UI means user interface; MCP means Model Context Protocol. Tests are proposed, not claimed executed.
 
 ## 1. Summary
 
-Present five configuration types within one trigger, retain Cron, and replace subtype with type. Add general webhook decoding/extraction, optional existing HMAC and downstream checks. Preserve addresses, owner secrets, raw authentication, constant-time comparisons, bounds, consumption, IDs/pins/recovery, poll dedupe and catch-up.
+Present five trigger configurations with type replacing subtype, retain Cron and optional editable GitHub presets, and add general webhook body/extraction controls. Move payload filters into reviewed downstream graphs.
 
-D7 adds durable webhook/event intake with frozen recipients; D17 acknowledges saved intake; D29 tests both adapters with one contract suite. Keep both poll modes. Q5 remains open; Allow is recommended for new authoring, without releasing old claims. Estimate 14-20 worker days plus 2-3 for shared rehearsal, excluding feedback and other issues. Confidence is high on UI/protocols and medium on fan-out/conversion. Tests below are planned, not claimed passed.
+D7 repairs atomic webhook admission; Event fan-out is deferred. D17 acknowledges saved input; D29 tests fake/SQLite parity. Preserve token/owner identity, secrets, raw authentication order, constant-time comparisons, existing bounds, receipt transactions, pins/recovery, both poll modes and cron catch-up.
+
+Q5 recommends Allow uniformly, without a stored policy switch; old receipts/keys remain history. Estimate 16-23 worker days including QA, review and rehearsal. Confidence is high for editor/protocol work and medium for conversion/recovery.
 
 ## 2. Owner decisions and reconciliation
 
-Apply the recorded choices: one trigger kind, Cron, generic senders, existing authentication only, downstream checks, quick acknowledgement and no poll operational expansion.
+Apply the recorded answers exactly: one trigger node kind with a primary configuration selector; retain Cron; accept ordinary POSTs from any sender; retain existing signature checks without new authentication; put payload checks in downstream decisions/classifiers/scripts; acknowledge quickly after saving; exclude poll credentials, pagination, backfill, cursors and rate-limit work.
 
-Q5 remains open. Recommend Allow: distinct valid identical bodies can start work, including an unkeyed external retry. Business keys and timestamp checks still apply; recovery reuses its saved ID. Consume instead permanently claims raw content across versions, even if downstream rejects it. Both choices preserve old body configurations and consumed keys. Releasing old claims needs separate review; run replay does not reset them.
+Q5 remains open. Recommend Allow uniformly across all webhooks, signed or unsigned: identical valid bodies can create separate runs unless an explicit business key is consumed. This supports legitimate repeats but permits another run after an unkeyed lost-acknowledgement retry. The alternative is permanent raw-body consumption in owner/loop/trigger scope across versions, suppressing legitimate identical repeats too. Existing timestamp freshness still applies under either choice; a valid timestamp does not select another dedupe mode. Ship only the chosen algorithm, with no saved policy switch. Old receipts/keys remain factual history; section 4 explains how the uniform behavior uses them.
 
-Moving a filter changes admission behavior. Formerly ignored webhook deliveries now create quiet runs; expression errors fail after 202 instead of rejecting before claim; event node keys can be consumed before a downstream check. Approval must acknowledge those changes, and later approve each exact stored-filter resolution.
+Moving filters produces quiet runs for formerly ignored input, moves expression errors after acknowledgement, and can consume keys before downstream checks. Each stored filtered version needs exact reviewed graph conversion or explicit removal/replacement. Section 4 preserves evaluatePredicate coercion without requiring a Boolean result.
 
-| Debt | Disposition and required change |
+#167 recommends option 3 (variant C), medium confidence; #164 agrees. Decisions own policy, a Continue node owns maxPasses with repeat/exhausted connections, and terminal exits declare outcomes/returns. Its separate cumulative node safety cap and maxPasses both start from old maxIterations. #168's quiet finish needs only the approved terminal exit. A one-Continue-node-per-loop limit is an owner-reviewed proposal, not settled. Option 1 (variant A) keeps loop-back; option 2 (variant B) uses decisions and ordinary edges. The owner has not decided; postponing option 3 would require another cutover.
+
+| Debt item | Disposition |
 | --- | --- |
-| D7 | Absorb fully. Timestamp, body-HMAC, unsigned webhooks, POST /events and exit/bus events use the same delivery claim and atomic target commit. Freeze all event recipients, their versions, keys and intents before acknowledging. Do not insert an inbound row and separately start or link runs. |
-| D17 | Absorb fully. Valid durable intake returns 202, including duplicates and saved pending or failed admission. Return 503 only when no durable intake can be confirmed or a signing secret is unavailable. An event producer must also learn whether intake was durably saved. |
-| D18 | Absorb fully. One primary trigger selector, nested signing choices, optional presets and no trigger filters. Convert stored predicates through reviewed graph entries in #164's manifest. |
-| D19 | Partially absorb the clarity problem, but disagree with deleting one result mode. Whole-probe and per-item payloads are intentional current features, not compatibility branches. Preserve both with clear labels and mutual exclusion; credentials and configurable directories remain separate backlog proposals under the owner's scope. |
-| D29 | Absorb fully. One shared contract suite, with the same cases and assertions, runs against in-memory and SQLite admission adapters. It covers receipts, transaction rollback, pending pins, dedupe and notifications. Adapter-specific persistence tests supplement it. |
+| D7 | Absorb atomic webhook receipt/intent and run/link commits. Defer Event fan-out and producer acknowledgement; they are not required for settled-history conversion. |
+| D17 | Absorb webhook 202 once saved, including duplicates/pending work; use 503 only when save cannot be confirmed or signing readiness fails. |
+| D18 | Absorb type-first configuration, nested signing, optional presets and reviewed removal of trigger filters. |
+| D19 | Follow the revised register by preserving both poll modes and current script directory. Credentials/directories remain backlog work; there is no disagreement. |
+| D29 | Absorb one fake/SQLite TriggerAdmissionPort contract suite covering receipt transactions, identity, rollback, keys, pins and notifications. |
 
-The register is under review. These entries are source risks, not failures reproduced here. Sections 8 and 9 reconcile shared and parked work.
-
-The owner has not decided #167. Recommend keeping loop-back for now with medium confidence. If continuation nodes are preferred, decide now to avoid another cutover. #168 needs a quiet terminal exit under either shape; its final factory and cutover await that decision.
-
+#152 and #118 are parked owner choices: unpark #152 or authorize its bounded initialization repair in #164; unpark #118 or approve exact #164 orphan dispositions. Missing definitions cannot be guessed. #127 can remain parked because verification bypasses the affected cache. #164 owns the joint pending-state rule cited in sections 4 and 8.
 ## 3. Target contract
 
-### Trigger definitions
+### Stored and exported trigger definitions
 
-Use one strict union on `config.type`. #164 owns format 4 and decision/exit schemas. Live APIs reject subtype, filters and old signing shapes; frozen schemas are offline only. For example, `{id:'start',kind:'trigger',config:{subtype:'manual'}}` becomes the same node with `config:{type:'manual'}`; node identity does not change.
+Use one strict config.type union within kind: trigger. #164 owns format 4 and decision/Continue/exit schemas. Current parsers reject subtype, filter, old signing shapes and unknown fields; frozen schemas are offline conversion/replay inputs. Before: {id: 'start', kind: 'trigger', config: {subtype: 'manual'}}. After: the same ID/kind with config: {type: 'manual', exposeTo: ['ui', 'api', 'mcp']}.
 
-Existing scalars remain: Expression is a nonempty string up to 100,000 characters; node IDs use the existing 64-character Slug rule; secret references are nonempty strings up to 128 characters. HeaderName uses RFC token characters, has 1-128 characters, and is canonical lowercase. Defaults appear explicitly in converted canonical output; use Zod `.prefault({})` where nested object fields have defaults.
+Retain Expression as a nonempty string up to 100,000 characters, node IDs as the existing 64-character Slug, and SecretName as a nonempty reference up to 128 characters. HeaderName uses RFC token characters, canonical lowercase and length 1-128. EventName is nonblank, control-free and length 1-128. Converted defaults are explicit; use Zod .prefault({}) for defaulted objects.
 
-| Type | Stored and exported fields |
+| Type | Stored/exported config fields |
 | --- | --- |
-| Manual | `type: 'manual'`, optional `inputSchema: JsonSchema`, and nonempty `exposeTo: ('ui' | 'api' | 'mcp')[]`, defaulting to all three. Keep current input validation. Fixing current exposeTo enforcement is outside this issue. |
-| Cron | `type: 'cron'`, `expression: string` of 1-256 characters, `timezone: string` of 1-64 characters defaulting to UTC, `missedFirePolicy: 'skip' | 'run-once' | 'run-each'` defaulting to skip, and `enabled: boolean` defaulting to true. Keep current syntax, timezone and preview validation. |
-| Event | `type: 'event'`, `eventType: Slug`, and optional `dedupeKey: Expression`. Keep exact subscription and bus/node dedupe. Remove filter. |
-| Poll | `type: 'poll'`, `intervalSeconds: integer` from 5 to 86,400, `probe: Probe`, `fireWhen: Expression`, optional `dedupeKey: Expression`, optional `items: PollItems`, and `enabled: boolean` defaulting to true. Whole-probe dedupe and items remain mutually exclusive. |
-| Webhook | `type: 'webhook'`, `authentication: WebhookAuthentication`, `body: WebhookBody`, `eventType: WebhookEventType`, `dedupe: WebhookDedupe`, and `repeatPolicy: 'allow' | 'consume-content'`. Defaults are None, JSON with empty-to-null, constant webhook event type, no business key, and the approved repeat default. |
-
-No webhook filter, response template, top-level signature, replayWindowSeconds or dedupeKey remains. No new saved poll field is added.
-
-### Webhook fields and validation
+| Manual | type: 'manual'; optional inputSchema: JsonSchema; nonempty exposeTo: ('ui' or 'api' or 'mcp')[], default all three. Retain input validation; exposure enforcement is separate. |
+| Cron | type: 'cron'; expression length 1-256; timezone length 1-64, default UTC; missedFirePolicy: skip/run-once/run-each, default skip; enabled: boolean, default true. Retain schedule/timezone validation. |
+| Event | type: 'event'; eventType: Slug; optional dedupeKey: Expression. Retain subscriptions/keys; remove filter through review. |
+| Poll | type: 'poll'; intervalSeconds: integer 5-86,400; probe: Probe; fireWhen: Expression; optional dedupeKey: Expression; optional items: PollItems; enabled: boolean, default true. Whole-probe dedupe and items remain mutually exclusive. |
+| Webhook | type: 'webhook'; authentication: WebhookAuthentication, default None; body: WebhookBody, default JSON; eventType: WebhookEventType, default constant webhook; optional dedupeKey: Expression. |
 
 ```ts
 type WebhookAuthentication =
@@ -57,268 +52,279 @@ type WebhookAuthentication =
       header: HeaderName; secretRef: SecretName }
   | { type: 'hmac-sha256'; message: 'timestamp-body';
       header: HeaderName; secretRef: SecretName; windowSeconds: number };
-
-type WebhookBody =
-  | { type: 'json'; empty: 'null' | 'reject' }
-  | { type: 'text' }
-  | { type: 'bytes' };
-
+type WebhookBody = { type: 'json' } | { type: 'text' } | { type: 'bytes' };
 type WebhookEventType =
   | { source: 'constant'; value: EventName }
   | { source: 'header'; name: HeaderName; fallback: EventName }
   | { source: 'json-pointer'; pointer: string; fallback: EventName };
-
-type WebhookDedupe =
-  | { type: 'none' }
-  | { type: 'key'; expression: Expression;
-      scope: 'trigger'; retention: 'forever' }
-  | { type: 'key'; expression: Expression;
-      scope: 'endpoint-version'; retention: 'window'; seconds: number };
 ```
 
-All objects are strict. Timestamp window and key-window seconds are integers from 1 to 86,400; the timestamp default is 300. The paired dedupe scope/retention variants preserve existing permanent body-key and endpoint-window semantics without adding every possible retention combination.
+All objects are strict. Timestamp windowSeconds is integer 1-86,400, default 300. Preserve SHA256, hexadecimal sha256= prefix/case acceptance and constant-time comparison. Body defaults to x-hub-signature-256; timestamp-body defaults to x-graphgoblin-signature. The fixed x-graphgoblin-timestamp retains ISO/Unix seconds; sign timestamp UTF-8, dot and raw bytes. None has no signing fields.
 
-EventName is a nonblank, control-free string of 1-128 characters with exact case; Event subscriptions remain Slugs. Ambiguous headers return 400 EVENT_TYPE_AMBIGUOUS. Missing, blank or nonscalar values use fallback; oversized/control values return 422 EVENT_TYPE_INVALID. JSON Pointers allow 1,024 characters, 32 segments, valid RFC 6901 escapes, own properties and array indices; a string root is valid. They require JSON mode. No wildcards, arbitrary JSONPath, expressions or signing credentials are extraction sources.
+Webhook has no repeatPolicy, dedupe scope/retention, empty-body policy, filter or response template. The existing two authentication protocols do not select different admission behavior. windowSeconds controls signature freshness only.
+### Decoding, event extraction and one business-key behavior
 
-Retain SHA256, hexadecimal `sha256=`, current prefix/case acceptance and constant-time comparison. Body header defaults to x-hub-signature-256; timestamp signature defaults to x-graphgoblin-signature. The fixed x-graphgoblin-timestamp accepts current ISO/Unix seconds. Hash timestamp UTF-8, dot and raw bytes without decoding first. Document strict malformed UTF-8 rejection after verification. None has no signing fields or authenticated identity. No new protocol is added.
+Resolve the owner secret and authenticate raw bytes before decoding, parsing, extraction or expressions. Count raw duplicate authentication headers case-insensitively and reject ambiguity. Retain the 1 MiB raw-body bound, including chunked input. None establishes no authenticated sender identity.
 
-JSON decoding uses fatal UTF-8 and JsonValue validation; empty or whitespace-only input becomes null or rejects according to `empty`. Text returns a UTF-8 JSON string, including an empty string. Bytes returns `{encoding: 'base64', data: string}`. Enforce the existing 1 MiB raw-body bound while reading, including chunked input; base64 expansion remains bounded. There is no automatic content-type transformation, decompression, multipart or form parser. Scripts can interpret XML or form text.
+Every webhook's JSON mode uses fatal UTF-8 and valid nonempty JSON; empty/whitespace input returns 400, while literal null is valid. Text yields a JSON string, including empty string. Bytes yields {encoding: 'base64', data: string}, bounded by the input limit. No authentication recipe chooses another empty-JSON rule. Content-type conversion, decompression, multipart and form parsing remain excluded; downstream scripts can interpret text.
 
-Key expressions evaluate against the decoded payload with current in-memory `$headers` bindings excluding the configured signing header. Never persist full headers. Null, undefined or empty results mean no authored key; other results use the current string-or-JSON representation. New webhook and event node keys longer than 512 characters reject rather than truncate; conversion reports this change and preserves old stored truncated keys. Whitespace strings remain authored identities. Poll item keys keep their existing stricter nonblank rule. An HMAC delivery without an authored key may retain `sig-hash:<digest-hash>` as envelope provenance, but that does not activate permanent business-key dedupe under Allow.
+Event extraction selects a constant, header or JSON Pointer. Missing/blank/nonscalar values use fallback; ambiguous headers return 400 EVENT_TYPE_AMBIGUOUS; control/overlong values return 422 EVENT_TYPE_INVALID. Pointers permit 1,024 characters, 32 segments, valid RFC 6901 escapes, own properties and array indices, including a string root. They require JSON mode. Metadata is neither an Event-bus publication nor trusted repository authority.
 
-### Poll contract
+An absent dedupeKey generates no business identity, including no automatic signature-hash key. A configured expression sees decoded payload and the current bounded $headers binding excluding the signature header. For every webhook, null/undefined/empty string returns 422 KEY_INVALID; other values use the current string-or-JSON form and reject above 512 characters rather than truncate. Whitespace strings remain literal keys. This one rule has no empty-key selector. Event and Poll key rules stay unchanged.
 
-Keep the current strict Probe union. HTTP has method GET, POST or HEAD, default GET; templated URL, optional templated headers/body, and integer timeout of 1-300 seconds, default 30. Script has a nonempty command, templated args defaulting to an empty array, and integer timeout of 1-3,600 seconds, default 60. Signal-count has a Slug name; None has no fields. Script probes continue using the data directory and ambient local CLI credentials.
+Explicit keys are permanent in owner/loop/trigger-node scope across versions. Consult preserved receipt/inbound claims, pending reservations and committed run-envelope keys. There is no endpoint window, expiry refresh or signature-hash replay ledger. Timestamp freshness remains an authentication check; Q5 changes only uniform raw-body suppression.
 
-PollItems retains select and dedupeKey expressions plus maxRunsPerPoll from 1 to 25, default 5. Validate at most 200 candidates and all unique nonblank string keys of at most 512 characters before lookup or admission. Preserve single-result payloads and per-item payloads, the failure-tail rule and serialized sweeps. The editor explicitly labels these two supported result modes. No credentials, configurable cwd, pagination engine, backfill or cursor is introduced.
+### Poll definitions remain unchanged
 
-### Graph recipe and output
+Keep strict Probe. HTTP retains GET/POST/HEAD, default GET, templated URL/optional headers/body and integer timeout 1-300 seconds, default 30. Script retains nonempty command, templated args default [], and integer timeout 1-3,600 seconds, default 60. Signal-count has a Slug name; None has no fields. Scripts still use the data directory and ambient local command line credentials.
 
-Use #164's expression decision contract exactly: `{kind: 'expression', jsonata, routes: [{id, label}, ...]}`. Its expression returns a declared string route ID, not a Boolean observation or Noul decision. This replaces the first draft's stale Boolean-decision factory assumption.
+PollItems keeps select/dedupeKey expressions and maxRunsPerPoll integer 1-25, default 5. Preserve validation of all 200-or-fewer candidates and unique nonblank string keys up to 512 characters before admission, both payload modes, first-failure tail and serialized sweeps. Verify existing time/script-output bounds; add no 64 KiB HTTP limit. Credentials, directories, pagination, backfill, cursors, rate limits and retry policy remain backlog work.
+### Editable GitHub graph recipe
+
+Use #164's expression decision config with declared routes and a route-ID result. A fresh label recipe is:
 
 ```json
 {"kind":"expression","routes":[{"id":"pass","label":"Continue"},{"id":"ignore","label":"Ignore"}],"jsonata":"($p := invocation.trigger.payload; invocation.trigger.eventType = 'issues' and $p.repository.full_name = 'octo-team/service-repo' and $p.action = 'labeled' and $exists($p.issue) and $not($exists($p.issue.pull_request)) and $p.label.name = 'ready') ? 'pass' : 'ignore'"}
 ```
 
-Generate strings with JSON escaping, not source interpolation. GitHub selects body-HMAC, JSON, x-github-event with webhook fallback, and x-github-delivery as a business-key expression. The unsigned headers are hints; repository, object, action and label checks use the signed body. PR recipes retain draft, merged and base-branch checks. Classifier decisions and scripts remain ordinary downstream alternatives.
+JSON-escape user literals. Set body HMAC, JSON, x-github-event extraction with webhook fallback, and x-github-delivery as an explicit key. Headers are unsigned hints; repository/action/object/label checks use the authenticated body. PR recipes retain draft/merged/base-branch checks. Every generated node remains editable; classifier decisions or scripts also support downstream filtering.
 
 ```text
 hook.out -> event-check --pass--> restore-output.out -> former successor
                        --ignore--> quiet terminal exit
 ```
 
-Restore the exact original trigger NodeOutput, including nodeId, value, at and schemaRef, because a decision overwrites lastOutput. Use an ordinary mutate set at `/lastOutput`, with expression access to `outputs[triggerId]` generated safely for the ID. Mutate does not replace that with its own output. The ignore exit has no return channels or loop-back. If #167 keeps loop-back, use the ordinary unconditional success exit with no channels; if it chooses terminal-only exits, use its success-outcome equivalent. Additional decision outputs and visits remain visible.
+A decision changes lastOutput. An ordinary mutate restores /lastOutput from outputs[triggerId], using safely quoted access and preserving nodeId/value/at/schemaRef. The quiet terminal success exit has no returns or continuation. Visits and quiet runs remain visible. Preview fields/edges, validate limits, apply as one undo step and preserve successor input. Cancel changes nothing; reapplication requires explicit replacement review of owner edits.
 
-### API and envelope
+### API, envelope and receipt contract
 
-Keep trigger nodeId, kind, payload, receivedAt and optional dedupeKey. Add optional `eventType: EventName`; new webhooks always set it, but history does not invent missing header metadata. Pass it through StartRunInput, initial thread, sequence-1 queued event and frozen identity. The trigger handler still outputs payload. Webhook extraction does not publish another event onto the bus.
+Keep invocation.trigger nodeId/kind/payload/receivedAt/optional dedupeKey; add optional eventType: EventName. New webhooks set it through StartRunInput, initial thread and sequence-1 queued event. Other kinds/history need not. Trigger output remains payload. InboundEventRecord.type remains webhook; extracted metadata does not change Event-bus behavior.
 
-New webhook inbound rows use extracted type and source `webhook:<endpointId>`; old type webhook remains factual. Bus dedupe covers only event-origin rows, never webhook rows with a coincidentally equal type/key. POST /events keeps its input and event/duplicate response, but runIds may initially be empty while saved targets await admission. Authenticated Events shows recovery state and links as they commit.
+POST /events and internal publication retain their response/fan-out semantics. No frozen recipients, trigger_admissions table or return-port owner change is added. Event filters move downstream, but the split-write crash gap remains. publish is apps/api/src/event-bus.ts:33; subscriber errors are swallowed at apps/api/src/triggers/trigger-service.ts:555, deferred under D7.
 
-Hooks return fixed `202 {accepted: true}` once valid intake is saved or known consumed. Do not expose payload, signature, event or run ID through the public acknowledgement. Retain 400 for malformed input, 401 for signature/window errors, 404 for unknown or disabled endpoints, 413 for the body limit, 422 for extraction/key errors, 429 with retry-after for the existing rate limit, and 503 when signing readiness or durable save fails. Pending admission never changes an already-saved delivery to 503 or a retry to 409.
+Public hooks return fixed 202 {accepted: true} once saved or confirmed consumed, without payload/signature/event/run IDs. Preserve 400 malformed input, 401 signature/window failure, 404 unknown/disabled hook, 413 body bound, 422 extraction/key failure, 429 with Retry-After and 503 signing readiness/unconfirmed save. Saved pending/failed admission never causes public 503 or retry 409; execution is asynchronous.
 
-Endpoint summaries retain identity, owner, loop/version/node, path, enabled and creation time. Replace flat signing fields with the safe recipe and include body, event extraction, dedupe and repeat configuration from the pinned version. Expose only secret names. `configurationAvailable: false` distinguishes disabled orphan endpoints whose definition is unavailable. MCP descriptions use type. Delivery metadata exposes safe state, attempts, nextAttemptAt and failureCode, plus a reason when provable; never frozen intents or credential material. For fan-out, add nonnegative counts by target state; attempts is their sum, and nextAttemptAt is the earliest pending time.
+Endpoint summaries retain id/ownerId/loopId/versionId/triggerNodeId/path/enabled/createdAt. Replace flat signing with the safe authentication recipe and pinned body/extraction/key config; expose secret names only. configurationAvailable: false describes disabled orphans; enabled missing provenance refuses. Events shows status/attempts/nextAttemptAt/safe failureCode/run links, excluding intents and credential material.
 
-### One delivery admission contract (D7 and D29)
+Keep the narrow TriggerAdmissionPort and RunAdmission: run, initialThread, queued event fields without runId/seq/ts, and unique pinnedLoopIds including the loop. Preserve parseRunAdmission and immutable identity checks. WebhookClaim has id/ownerId/loopId/triggerNodeId/contentHash/inbound. Remove dedupeByKey: a present authored key always uses the one rule. contentHash is raw SHA256, lowercase 64 characters, for every auth recipe; it is audit evidence under Allow or the uniform body key under permanent consumption.
 
-Generalize TriggerAdmissionPort, not a parallel event-specific implementation. `claimDelivery` accepts one validated inbound delivery, its consumption policy and a complete frozen target set. `commitTarget` takes a saved target ID and its exact RunAdmission. Keep create for ordinary starts and atomic createPollItem. Due selection, failure recording and pending-pin queries operate on the shared target records. No public caller supplies allocated run IDs.
+WebhookReceipt retains id/ownerId/loopId/triggerNodeId/contentHash/inboundId/status/optional intent/attempts/optional nextAttemptAt/optional failureCode, with existing ID/time scalars and nonnegative attempts. Status keeps filtered/deduplicated/pending/admitted/failed as factual dispositions; new code never produces filtered. Preserve WEBHOOK_ADMISSION_RETRY, WEBHOOK_TARGET_REMOVED and WEBHOOK_INTENT_CONFLICT. There is no consumption flag, origin selector, business scope/expiry or signature replay claim.
 
-A webhook has one possible target. An event snapshots all matching published owner-scoped Event triggers, preserving caller-chain exclusion and the chain limit of eight. Before intake commits, freeze each selected version, invocation, allocated run ID, initial thread, queued event and subloop pins. Record skipped or failed selections safely; an individual target preparation error must not silently disappear or prevent valid siblings from being saved. Recovery uses this set, never rescans newly published versions or newly created subscriptions.
+### Atomic webhook admission (D7), acknowledgement (D17) and adapter parity (D29)
 
-Save inbound, receipt, targets and reservations together under the deletion lock, revalidating versions and keys inside the transaction. An intake never consumes its identity without its targets. Zero recipients means recorded input with no work. A failed transaction saves nothing.
+Every auth choice validates/extracts, prepares one frozen RunAdmission under the deletion lock, and uses claim/create. Claim revalidates target/owner/version/keys and atomically saves inbound plus receipt, complete intent and pin/key reservation. Failure saves nothing. A nonduplicate becomes pending; an explicit-key duplicate becomes deduplicated without executable intent. The chosen Q5 algorithm either creates another receipt for identical unkeyed bytes or returns the consumed receipt. Ship only that algorithm, with no policy flag or signature-dependent branch.
 
-Each target atomically commits its run, thread, pins, queued event, status and inbound link, then notifies. Siblings commit separately; recovery neither repeats admitted work nor loses pending work. Fan-out execution itself is not atomic.
+Create atomically commits run, thread, pins, queued event, admitted receipt and inbound link, then notifies. Recovery uses the stored intent/ID and verifies immutable facts; it never allocates another run. Pending pins protect deletion; corrupt/conflicting intents fail safely. Retain the nonoverlapping 15-second sweep, five due receipts maximum and persisted backoff capped at five minutes. 202 follows durable claim, without waiting for create or execution. An unkeyed external repeat under Allow is a new delivery, distinct from recovery.
 
-An event request key consumes owner/event-type/key permanently within the event-bus namespace. A duplicate returns the original event and current links without new targets. Node-authored event keys retain owner/loop/node dedupe and now see pending reservations. Webhook policies keep their separate trigger or endpoint scope. A pending target's envelope key remains visible to poll-item checks, including after republishing the trigger kind; committed run keys remain visible. A duplicate audit record must not extend signature or key expiry.
-
-The proposed SQL separates intake and target recovery:
-
-| Record | Fields and constraints |
-| --- | --- |
-| `inbound_receipts` | Preserve old receipt ID where one exists. Fields are id, owner_id, inbound_id (unique), origin (`webhook` or `event`), event_type, received_at, status, targets_frozen, target_count and nullable targets_hash. Status is pending, admitted, failed, deduplicated, filtered or historical. New targets are always frozen with a hash; historical incomplete selections never become pending. |
-| Webhook receipt scope | Nullable endpoint_id, loop_id, version_id and trigger_node_id are required for webhook origin and absent for event origin. Nullable content_hash is a 64-character lowercase SHA256 hash; consume_content is a Boolean and can be true only for webhook origin. |
-| Receipt dedupe | Nullable business_key (at most 512 characters), business_scope (trigger, endpoint-version or event-bus), business_expires_at, signature_replay_hash and signature_replay_expires_at. Signature hash and expiry are paired for timestamp replay. `claims_business` and `claims_signature` distinguish consumption from audit facts. Forever keys have no expiry; window keys require it. |
-| Receipt evidence | Nullable reason uses safe codes such as content-consumed, signature-replay, business-key or event-key. Optional duplicate reference has paired kind (receipt or run) and ID. No raw signatures or header collections are stored. |
-| `trigger_admissions` | Fields are id, receipt_id, owner_id, loop_id, version_id, trigger_node_id, ordinal, status, phase, nullable run_id, nullable reservation_key, nullable intent, attempts, next_attempt_at and failure_code. Status is pending, admitted, failed, deduplicated, skipped or historical; phase is selection or admission. Attempts are nonnegative integers. |
-| Target identity | The intent retains RunAdmission's run, initialThread, queued and pinnedLoopIds. Pending and admitted targets require an intent/run ID; admission-phase failure retains that intent. Selection failures and skipped/deduplicated targets have no executable intent. Historical targets may link a proven old run without reconstructing its intent. |
-
-IDs use the existing ULID rules; times use Timestamp; owner and trigger IDs retain their current bounds. Target counts are exact nonnegative counts, not user-supplied limits. Unique receipt/ordinal and receipt/loop/node identities prevent repeated recipients; allocated run IDs are unique. The indexed target key query includes owner, loop, node and pending state. Pending pin checks inspect saved intents. Receipt aggregation is pending if any target is pending, failed if terminal targets include failure, otherwise admitted; filtered, deduplicated and historical facts remain explicit. Aggregate admission does not mean graph execution succeeded.
-
-The receipt table replaces webhook_receipts without an alias. Add UNIQUE(owner_id, loop_id, trigger_node_id, content_hash) where consume_content is true; index signature replay by owner/endpoint/expiry and event claims uniquely by owner/type/key. Keep inbound, due and scope indexes. Audits never renew keys; webhook lookup retains receipt/run evidence. The port and converter validate relations; no broad foreign-key project is added.
-
-The same saved-delivery boundary applies to exit/bus producers. `onBusEvent` must propagate failure before durable intake instead of logging and swallowing it. Once saved, pending work is success to the producer. Existing at-least-once return-channel behavior remains; this issue does not deduplicate separate unkeyed publications from a return retry.
-
+D29 exports one adapter-neutral contract runner through engine/testing, with fake and SQLite factories and shared assertions. Keep engine independent of SQLite and omit any runtime Vitest dependency. SQLite persistence checks supplement conformance; section 7 specifies the cases.
 ## 4. Stored data and the single format-4 converter
 
-### Agreement with #164's integration shape
+### Shared stage and exact manifest
 
-Agree with `peer-inputs/plan-164.md:149`: freeze format-3 imports/replay first, retain earlier stages, and collect edits against original IDs/pointers. #168 contributes graphs, storage maps, notices and refusals; #164 composes them once with approved builders. Never run competing wrappers or overwrite another stage's edits.
+Agree with #164's sections 4 and 6: freeze format-3 schemas/traversal/replay before edits, retain earlier stages, and collect nonoverlapping changes against original IDs/pointers. #168 contributes rules to one converter and stamp, not an independent wrapper.
 
-Agree with the exact shared envelope:
+Use the published strict Manifest exactly. All fields/maps are required; empty maps are allowed. Its envelope is format, targetVersion, hashAlgorithm, sourceHash, converterHash, sqlHash, versions, historyResolutions, retirements, failedRuns, expectedResultHash and approval. format is graphgoblin-upgrade-manifest; targetVersion is 4; hashAlgorithm is sha256-canonical-records-v1. Hash means 64 lowercase SHA256 hexadecimal characters. approval is null for preview or {approvedBy, approvedAt, approvedPlanHash} for apply. Each version has definitionHash, disposition: convert/archive, required legacyStages.{v1ToV2,v2ToV3} with frozen resolutions or null, and resolutions.{decisions,exits,templates,triggers}.
+
+The trigger map keys are frozen-input JSON Pointers, not node IDs. For example, versions[id].resolutions.triggers['/nodes/3/config'] refers to the original index while the proposal also binds the stable node ID. Use #164's Rule type verbatim:
 
 ```ts
-{
-  format: 'graphgoblin-upgrade-manifest', targetVersion: 4,
-  sourceHash, converterHash, sqlHash, versions, failedRuns,
-  retirements, historyResolutions, expectedResultHash,
-  approval: { approvedBy, approvedAt, approvedPlanHash }
-}
+type Rule = {
+  sourceHash: Hash;
+  action: 'replace' | 'approve-generated' | 'review-unchanged';
+  replacement: JsonValue | null;
+  proposalHash: Hash | null;
+  reason: string;
+  sourceEdits: Record<JsonPointer, {sourceHash: Hash; replacement: JsonValue}>;
+};
 ```
 
-approvedPlanHash binds the canonical manifest excluding approval, including rules, SQL, source, dispositions and result. Changed inputs require a new preview/approval. There is no separate trigger manifest or stamp; plan approval does not approve data.
+replace requires a validated replacement and null proposalHash. approve-generated binds proposalHash and has null replacement. review-unchanged has both null and no edits. Reasons are nonblank. sourceEdits address exact frozen-input pointers/hashes; cross-node consumer edits remain in the owning namespace. Do not add sourceConfigHash/action: automatic/filter-resolution fields to Rule.
 
-### #168 manifest entries
+For a generated trigger mapping or filter graph, use approve-generated. Its hash-bound proposal records source/target config hashes, original node/successor IDs, generated decision/restore/exit/edge IDs, expression and final graph hash. Deterministic generation and final graph validation are required. Reviewed replacement/removal uses replace with a valid current config or reviewed graph and exact sourceEdits; the reason acknowledges broader behavior when a filter is removed. Header-dependent metadata/route changes belong in this same validated replacement. Overlapping edges/pointers need a composed approved resolution; unused/stale/conflicting writes refuse.
 
-The following are proposed strict schemas inside #164's namespaces. The coordinator fixes the exact spelling once; these are contributions to the common schema, not additional top-level envelopes.
+historyResolutions is exactly Record<Id, {runId, record, seq, pointer, sourceHash, replacement, reason}>. record is initial-thread/snapshot/event/result; seq is number or null; pointer is RFC 6901; replacement is JsonValue. Use it only for actual factual run/history edits. Endpoint/receipt/key mappings are deterministic SQL rules bound by inventory, sqlHash and expectedResultHash; unsupported manual row repair refuses instead of inventing another history namespace.
 
-| Common namespace | #168 entry |
-| --- | --- |
-| `versions[versionId]` | Retain #164's definitionHash. Add `resolutions.triggers[nodeId]` with sourceConfigHash, action (`automatic` or `review-filter`), optional filter resolution, and targetConfigHash. Every retained trigger is hash-bound, including automatic mappings. |
-| Filter resolution | Require filterHash, reason, and kind (`generated-graph`, `replacement-graph` or `remove`). Generated entries include decisionId, restoreId, exitId, newEdgeIds, originalSuccessorEdgeId and graphHash. Replacement includes the complete reviewed graph fragment and graphHash. Remove explicitly acknowledges broadened behavior and supplies no fragment. |
-| Header-dependent resolution | A reviewed filter entry may also specify a bounded current eventType extraction config and an explicit route-ID expression. It must acknowledge the changed metadata/error behavior. No unrecorded headers are invented for history. |
-| `historyResolutions.triggers.rows` | Bind table, rowId, sourceRowHash, pointer and originalValueHash, action, targetValueHash and reason. Tables are webhook_endpoints, webhook_receipts, inbound_events, runs and run_events. Actions distinguish endpoint mapping, receipt mapping, historical-intake classification and factual field preservation. Multiple rows can share a rule but each identity/hash remains bound. |
-| `historyResolutions.triggers.claims` | Bind source identity/value hashes for permanent body keys, timestamp-window evidence, event-bus key claims and run keys; include target scope, expiry or permanent retention, and proof classification. Collision resolution needs exact member IDs and a reviewed canonical claim; it never merges or deletes factual inbound rows. |
-| Shared `historyResolutions` | Any actual initial-thread, queued, snapshot or output transformation joins #164's run/event/pointer/original-value entries. #168 proposes no semantic trigger-history rewrite by default. |
-| Shared `retirements` | #165 owns exact retired row/file closures and reasons. #168 only checks that its survivor set excludes approved retired identities and that mixed surviving recipients/pins do not cross that closure silently. |
-| Shared `failedRuns` | #164 owns reviewed nonresumable dispositions. #168 reports affected filter-graph versions and reachable dependencies; it does not invent a second failed-run map. |
+Use retirements.components/privateReports/orphans and failedRuns exactly as #164 publishes them. Private-report dispositions are retirements.privateReports[runId], binding componentId/runHash/reportEvidenceHash and archive-private-template-report plus reason. #165 owns components; #164 owns orphan and failed-run policy. #168 validates endpoint/receipt/key/pin survivors against those exact closures.
 
-Reject unknown, unused, stale or conflicting entries. Row/pointer edits must declare composition; graph edits use original IDs. A shared exit/edge needs one joint resolution. Portable exports use these rules bound to file hashes.
+Q5 is fixed by implementation/converter/SQL hashes, not per-version policy. Portable exports bind exact file hashes. approvedPlanHash covers the manifest excluding approval, including source/rules/SQL/expected result. Changed inputs need new preview/approval; plan approval is not data approval.
+### Stored config and endpoint mappings
 
-### Definition mappings and filter resolutions
+Manual/Cron/Poll rename subtype to type, preserving all other values/defaults/IDs/settings/positions. Event preserves subscription/key and removes filter only through review. Unknown/conflicting discriminators, extra fields, invalid expressions/probes or unsupported source fields refuse.
 
-Manual, Cron and Poll rename subtype to type without changing other values, defaults, IDs, settings or positions. Event preserves its subscription/key and removes filter only through the resolution below. Unknown types, conflicting type/subtype, extra fields, bad expressions or unsupported source probes refuse instead of receiving guessed defaults.
+Every webhook becomes JSON with constant webhook metadata and its authored dedupeKey, if any. Map hmac-sha256 to timestamp-body and move replayWindowSeconds to windowSeconds; map hmac-sha256-body to body with no window. Preserve secretRef; lowercase header names without changing case-insensitive lookup. Reject invalid headers/windows, unknown schemes, a body window or inconsistent endpoint owner/token/version/node provenance. Provider labels never establish a protocol.
 
-Timestamp webhook maps hmac-sha256 to authentication timestamp-body, moves replayWindowSeconds to windowSeconds, keeps header/secret, selects JSON empty-to-null and constant webhook metadata, and uses Allow. An authored key becomes endpoint-version/window dedupe with the same seconds; no key becomes None. Body webhook maps hmac-sha256-body to authentication body, keeps header/secret, selects JSON empty-reject, constant webhook metadata and Consume. Its authored key becomes trigger/forever, otherwise None. Reject invalid headers/windows, a body branch carrying a window, unknown schemes and inconsistent stored endpoint recipes. Do not infer a protocol from a provider label.
+Both use the same nonempty JSON, fixed key rule and chosen Q5 algorithm. Preview reports empty timestamp JSON now rejecting, empty authored keys rejecting, overlong keys rejecting instead of truncation, strict UTF-8, and permanent cross-version keys replacing timestamp-window suppression. Preserve old null payloads/truncated keys as facts. Do not convert old signing type into a live dedupe mode.
 
-Report the new refusal of overlong webhook/event keys and strict UTF-8 handling. Preserve all old stored keys exactly, including prior truncation. Stored configurations may later be edited normally; conversion itself does not release consumption.
+0013 maps each endpoint's signing columns to the fields below, preserving its identity/token/enabled/time. Enabled endpoints require proven config/version ownership. A disabled orphan needs an explicit common disposition with no execution dependency; retain opaque evidence without guessing missing config.
+### Filter conversion preserves predicate coercion
 
-For a pure payload predicate, generate a route expression that evaluates the exact escaped original source against invocation.trigger.payload and returns pass or ignore. Prove its result is Boolean before wrapping it in the route conditional. The existing predicate coercion treats nonempty objects or arrays as true (`packages/domain/src/expression.ts:199`); do not silently replace that with JSONata truthiness. Nonboolean results need an explicit reviewed Boolean rewrite. Apply the existing guarded $eval and regex checks to original and wrapper; refuse a wrapper exceeding the Expression limit. Header, clock, random, dynamic-eval or unavailable-context dependencies require authored resolution.
+Review every filtered version even when its proposal is generated. Evaluate the escaped original source once against invocation.trigger.payload, then apply exactly packages/domain/src/expression.ts:199: undefined/null is false; nonempty arrays/objects are true; other values use JavaScript Boolean. No static Boolean proof or JSONata $boolean substitution is allowed.
 
-Every stored filter needs review even when a proposal can be generated. Preserve the trigger ID and old successor edge ID. Generate deterministic collision-free Slug IDs for decision, restore, terminal exit and new edges. Repoint the old edge from restore to its old successor; clear and report its invalidated manual route. Add trigger-to-decision, pass-to-restore and ignore-to-exit edges. Restore the exact trigger output before the successor. Reject ambiguous or multiple outgoing edges, disconnected graphs without a reviewed destination, exhausted ID space, or final limits exceeding 500 nodes or 2,000 edges.
+Replace ORIGINAL_SOURCE with a JSON-escaped literal in this route expression:
 
-Each exact version needs a resolution acknowledging changed runs, errors, keys and counters. Never reuse an effectful exit, delete a filter silently or add newer preset checks. A replacement supplies a valid graph/expression, not merely a reason.
+```text
+(
+  $v := $eval(ORIGINAL_SOURCE, invocation.trigger.payload);
+  $t := $type($v);
+  $truth := $exists($v) and (
+    $t = 'array' ? $count($v) > 0 :
+    $t = 'object' ? $count($keys($v)) > 0 :
+    $t = 'string' ? $length($v) > 0 :
+    $t = 'number' ? ($v != 0 and $v = $v) :
+    $t = 'boolean' ? $v :
+    $t = 'function' ? true : false
+  );
+  $truth ? 'pass' : 'ignore'
+)
+```
 
-### SQL numbering and construction
+Compare the wrapper with evaluatePredicate for missing/null/booleans/numbers/strings, empty/nonempty arrays/objects, [false], [null], {a: false}, nested arrays, sequences and functions. Characterize any additional evaluator value category and complete the wrapper before accepting it. This preserves coercion without a runtime compatibility helper; a nonempty collection with false-valued members passes.
 
-Agree with the central reservations: `0012_retire_template_instances` belongs to #165, `0013_trigger_configuration` belongs to #168, and `0014_format_four_cutover` belongs to #164 only when chosen exit metadata requires DDL. Our 0013 includes event intake/target storage as required by D7. Omit unused slots and empty migrations. If main consumes a reserved number, renumber only the unshipped allocation in review. Never modify shipped SQL 0008-0011 or earlier conversion stages.
+Keep guarded $eval, regex, deadline/recursion checks and the Expression bound for source/wrapper. Header/clock/random/dynamic-source/unavailable-context dependencies need a reviewed replacement because run decisions lack intake context. Approved eventType metadata, scripts or classifiers may express replacements; never persist full headers or add new preset predicates silently.
 
-0013 rebuilds webhook_endpoints for optional authentication, creates inbound_receipts and trigger_admissions, converts surviving receipt/intake facts, installs consumption/recovery indexes and retires webhook_receipts after archival and validation. Keep endpoint id, owner, loop/version/node, token, enabled and created_at. Map signature_scheme to auth_type and signature_message; header, secret_ref and window become nullable. CHECK None has no signing fields; body requires header/secret and no window; timestamp-body requires header/secret and a window of 1-86,400. Preserve token/loop indexes and run-key indexes.
+Generate deterministic collision-free Slug decision/restore/exit/edge IDs. Preserve trigger and old successor-edge IDs; repoint the old edge from restore to the original successor, clearing/reporting invalidated manual routes. Add trigger-to-decision, pass-to-restore and ignore-to-exit. Restore exact trigger output. Refuse ambiguous/multiple outgoing edges, missing destinations, exhausted IDs or graphs exceeding 500 nodes/2,000 edges. Never reuse an effectful exit.
 
-Bind structure/constraints/indexes and migration hashes into sqlHash/readiness. For D12, reconstruct the shipped 0011 snapshot and final snapshots; generation must be a no-op, not re-create template structures. #164 owns journal/test registry/readiness; #165 supplies deletion metadata. SQL alone never stamps a used store.
+Bind each version/fragment hash and acknowledge quiet runs, error/key timing and extra visits/safety-cap effects. Removal requires explicit broader-behavior approval. Replacement supplies a valid graph, not merely a reason; approvals never transfer between versions.
+### SQL and receipt/key history
 
-Archive changed/dropped fields before SQL. Materialize survivors from original inventory, excluding only exact approved #165 retirements. Never silently retire history or regenerate tokens. All rules, tables, ledger and marker commit together.
+Agree on 0012_retire_template_instances (#165), 0013_trigger_configuration (#168) and conditional 0014_format_four_cutover (#164 exit/replay metadata). Omit unused migrations; renumber only unshipped allocations if necessary. Shipped 0008-0011 and earlier stages stay intact. No Event-intake/trigger_admissions DDL is included.
 
-### Receipt, event and key conversion
+0013 rebuilds webhook_endpoints with id, owner_id, loop_id, version_id, trigger_node_id, token, auth_type, signature_message, signature_header, secret_ref, window_seconds, enabled and created_at. None requires null signing fields; HMAC body requires header/secret and null window; timestamp-body requires header/secret and integer window 1-86,400. Preserve token/loop-version indexes. Body/extraction/key configuration lives in the pinned definition.
 
-Old body receipts retain their IDs, raw hashes, owner/loop/node scope, inbound references and disposition. Every state remains a permanent content claim, including filtered, deduplicated and failed. Map a terminal frozen intent into one target record without allocating a new run ID. Keep attempts and safe failure facts. Admitted targets must match the existing run and first queued event; permanently failed targets remain non-executable. Filtered and key-deduplicated facts have no target intent and are not turned into work.
+Keep webhook_receipts, its existing columns/IDs, unique inbound_id, due index, status/intent checks and run-key indexes. For Allow, replace the owner/loop/trigger/content unique index with a nonunique index so old facts and repeated new receipts coexist. For permanent consumption, retain the unique index and use it for all webhooks. Ship only the approved index definition; no per-row consumption flag or partial legacy-policy index exists.
 
-Preserve every stored body-receipt key as opaque permanent business evidence, including default sig-hash values. The old claim looked up all prior receipt keys, so a later authored key matching such a value must remain consumed. Do not re-evaluate an old expression using missing headers. Multiple historical receipts can evidence the same business key; preserve the facts rather than forcing them into one unique receipt. New audit rows never renew a claim or its expiry.
+Retain every receipt's raw hash/inbound link/status/intent/attempts/failure facts. Filtered/deduplicated/admitted/permanently failed rows never become pending. Admitted run/intent/queued-event identities must agree; terminal intents retain original IDs. Under Allow, old consumed raw hashes remain evidence but do not suppress future identical input. Under permanent consumption, all known raw claims suppress it, including filtered receipts.
 
-Old timestamp deliveries and event-bus rows have no complete saved target set. Give them historical receipt records with targets_frozen false; retain payload, type, source, time, key and all run links. Only proven existing run links become historical target rows. Do not reconstruct executable intents, guess missing recipients, replay old filtered events or declare a crash-lost run recovered. D7 fixes future intake, not unknowable past selection. Historical receipts never enter the due sweep.
+Keep inbound payload/type/source/time/key/runIds exactly, including timestamp/Event rows without receipts. Invent no receipts, recipient sets, executable intents or missing links. Decoded JSON cannot prove original raw bytes; report historical unknown-hash coverage. Permanent consumption uses all known hashes plus every future receipt's raw hash, without a source-recipe exception.
 
-For timestamp rows, preserve exact endpoint-version key evidence and expiry based on receivedAt plus the endpoint's stored window. Recover signature replay identity only when exact historical configuration and the default sig-hash provenance prove it. Custom keys remain opaque window evidence. Missing or ambiguous live provenance refuses. Disabled orphan endpoints may retain opaque facts only when no execution dependency survives. For event rows, preserve permanent bus keys in the event-origin namespace. Do not transfer webhook keys into that namespace. Report that intentional correction of accidental cross-source collisions.
+Preserve opaque keys, including truncated and sig-hash values, and prove owner/loop/node scope through exact endpoint/source and run-envelope identity. One explicit-key query consults these historical claims, pending reservations and committed run keys across kinds/versions. Old default keys are not regenerated; old timestamp expiry stays archived rather than becoming a live algorithm. Future explicit keys are permanent. Matching a preserved literal remains consumed; duplicate historical evidence stays intact. Missing required provenance, corrupt joins or inconsistent identities refuse.
 
-Keep every committed run-envelope key and the indexed owner/loop/node lookup, including older timestamp, poll and event runs. Pending reservations are refused at old-store cutover, but fresh format-4 tests verify their cross-kind behavior. Corrupt joins, duplicate content claims, conflicting owner/token/version identity, incomplete indexes or unsupported source fields refuse instead of dropping evidence.
+#165 may retire only its exact approved evidence closure; IDs/tokens are never reused. #164 owns readiness, journal, migration registry and D12 snapshot repair; #168 supplies 0013 metadata. Reconstruct shipped schema before generating final coordinated snapshots, then require disposable generation to be a no-op. Archive before rebuild. SQL, semantic edits, ledger and marker commit together; 0013 alone never upgrades a used store.
+### History, snapshots, pending state and configuration hashes
 
-### History, snapshots and pending state
+Inventory all versions/drafts, endpoints/receipts/inbound links, runs/initial threads/queued events, snapshots/checkpoints, frozen intents/pins, timers, child notifications, returns/finalization and caller chains. Discriminator conversion leaves trigger.kind/payload unchanged; invent neither old eventType nor decision visits.
 
-Inventory all versions, including draft and historical definitions, plus runs, initial threads, queued events, snapshots and checkpoint state, receipt intents, inbound links, pins, timers, returns, finalization and event caller chains. Mechanical discriminator change does not alter invocation.trigger.kind or payload. Add no eventType inferred from unrecorded headers. Never synthesize a decision or restore visit into old logs.
+Keep node.started.configHash as the executed config's hash. Archive source definitions/configs and bind original/final hashes by version/node. Recompute current draft/export tokens without altering hook tokens or executed facts. Any approved factual-thread mapping must also update corresponding terminal intent/initial-thread/queued evidence through #164; #168's rename alone changes none. Converted header-dependent graphs refuse incompatible executable replay entries or explicitly handle absent metadata.
 
-Agree with #164 and #165 that node.started.configHash remains the hash of what actually executed. Archive exact source definitions/configurations and map original to converted hashes by version/node/source hash. Recompute current draft tokens and export hashes from the final graph, but do not use them to rewrite execution facts. When #164 or #165 explicitly maps factual thread values, apply the same approved mapping to terminal receipt intent, run initial thread and queued evidence; identities remain unchanged and originals remain archived. A trigger-only conversion makes no such factual change. Reviewed header-dependent graphs must reject replay entries lacking that metadata or explicitly handle its absence.
+Replay retained runs/checkpoints at their recorded sequences. Missing provenance, inconsistent snapshots or conflicting pins refuse; checkpoints are not discarded. Affected resumable failures and reachable subloops use #164's reviewed nonresumable dispositions/replay maps, never implicit resume through new graph nodes.
 
-Replay every retained run and checkpoint from its transformed initial thread and events at the recorded sequence. Refuse inconsistent snapshots, missing version provenance and conflicting pins. An old checkpoint is not discarded to make conversion succeed. Failed resumable runs affected by changed graphs and reachable subloops use #164's reviewed disposition; recommend nonresumable preservation with a safe upgrade reason. No changed graph resumes an old visit implicitly.
+Apply #164's joint pending-state rule exactly: the cutover refuses any store with queued, running, waiting or paused runs, pending webhook receipts or frozen admission intents awaiting admission, unfinished child notifications or timers. The old build settles them first; the converter never abandons, drains or executes them. Terminal runs with unfinished finalization are also refused, with one exception: a retired template run whose only unfinished item is its private template report may be archived through an explicit retirements.privateReports[runId] disposition that the owner approves, with reason recorded and evidence preserved. This excludes pending deliveries, general returns and ordinary finalizers. #165 withdrew pending abandonment; no conflict remains.
 
-Refuse all queued, running, waiting or paused runs, all pending ordinary webhook receipts, and unresolved timers, child notifications or effectful finalization. The old build must settle work before a stopped inventory is approved. This converter does not drain, cancel, execute, reallocate or reset it. The refusal must leave data unchanged. #165's proposed in-converter abandon-retired-target exception conflicts with #164's blanket refusal: recommend separate reviewed resolution before cutover and a fresh inventory/hash. Until that rule is jointly changed and approved, pending retired targets also refuse.
+### Inventory, dry run, apply and device drafts
 
-Preserve surviving endpoints and claims. #165 may explicitly archive and remove an entire retired component with its exact closure; its hook URL ceases and its IDs/tokens are never reused. Shared inbound rows, ordinary recipients or pins crossing the retirement closure require one reviewed shared disposition, not an automatic unlink. This is the only intentional retirement exception to surviving-token preservation, and it does not authorize losing ordinary recovery evidence.
+Supply #164's bounded indexed inventory with safe IDs/hashes/counts, automatic/reviewed/refused mappings, graph diffs, token/key/raw-hash coverage, blockers and replay/config-hash maps. #164 owns D9 streaming. Private detailed reports exclude credentials/signatures.
 
-### Inventory, dry run, backup and apply
+Dry-run reads a stopped source and executes the real SQL/semantic/replay apply on an independent verified copy. Rollback-only source preview is forbidden because it can change WAL bytes. Bind source/tool/SQL/manifest/result hashes; changed input needs fresh preview and approval. Only preview can omit approval.
 
-Supply bounded, indexed receipt/intake/per-run inventory to #164 (D9). Report identity/value hashes, mappings, refusals, routes, token comparisons, consumption counts and replay results. Routine output contains safe counts/codes; detailed reports are private and exclude credentials and signatures.
+Apply locks the directory/database, verifies a separate complete backup of database/WAL/SHM, secret/key material, artifacts and supplied evidence, and rechecks blockers/hashes in one transaction. Archive before SQL; compose rules, validate schemas/relations/pins/claims/history/snapshots, and stamp last. Failure rolls back structure/data/ledger/marker. Inspect interruptions and verify post-commit readback, restore with old logical hashes/build, then re-upgrade.
 
-Dry-run validates the source read-only and executes the actual SQL, semantic and replay apply on an independent copy. A rollback-only source preview is forbidden because it can change WAL bytes. Only preview may omit approval. Hash the result and plan; any changed rule, source, graph or SQL requires a new preview.
+#152 requires authorization and atomic initialization; #118 requires authorization or exact orphan dispositions. Missing definitions cannot be replaced with current catalog guesses. #164 preserves active/set-aside/raw device drafts, incomplete source and tokens before conversion; ambiguous copies stay inert/exportable. Reconcile only proven tokens or require explicit reload/restore. Never delete drafts or overwrite server data with old autosaves; load frozen conversion separately (D10).
 
-Apply locks the stopped directory/database, verifies complete separate backups, and rechecks source/blockers inside one transaction. Archive before structural changes; apply the rules, validate schemas, owner/pins, consumption and every checkpoint, then stamp and commit once. Failure rolls back data, DDL, ledger and marker. Inspect interruptions. Fresh schema and marker must also commit together (D4/#152).
-
-D5/#118 requires owner approval to unpark #118 and repair provenance, or approve exact #164 inventory resolutions. Verified backups may supply missing definitions; unavailable definitions are not guessed. Without a valid resolution, cutover refuses. This is not permission to delete orphan history.
-
-IndexedDB needs #164's separate lossless transition. Preserve active/set-aside/raw drafts, incomplete text and tokens before replacement; convert proven cases and quarantine the rest for export. Never delete drafts or auto-save old data over the server. Reconcile tokens only from proven mappings, otherwise reload/restore explicitly. Keep frozen conversion in the upgrade subpath (D10).
-
-Rehearse later on supplied stopped copies. Isolate effects and disarm triggers/recovery before execution; a DB copy alone is insufficient. Keep a factual copy, disclose runnable-copy edits, prove backup restoration with old hashes/build, and rehearse upgrading again. Never use the original instance or port 4747 here.
-
+Rehearse only on supplied stopped copies, retaining baseline, factual and isolated runnable copies. Disarm ingress/recovery and isolate scripts, secrets, workspaces and return destinations; disclose safety edits/hashes. A database copy alone does not isolate effects. Never access the installed store, port 4747 or ~/.graphgoblin here.
 ## 5. Runtime, API and editor changes
 
-Keep Zod-only contracts, pure domain logic, infrastructure ports and public package imports. No new dependency or package is planned.
+Keep contracts dependent on Zod only, pure domain logic, engine ports and infrastructure implementations. Use public package entry points. No new package or dependency is planned. Citations below identify the current implementation on c379f80, not the planned line positions.
 
-| Source at c379f80 | Planned change |
+| Source | Change or preserved responsibility |
 | --- | --- |
-| `packages/contracts/src/nodes.ts:92`, `packages/contracts/src/trigger-integrations.ts:13`, `packages/contracts/src/thread.ts:27` | Define five trigger types, nested webhook fields and optional event metadata. Preserve Probe and PollItems. #164 owns format and route-ID decisions. |
-| `packages/infrastructure/src/http/delivery.ts:16`, `apps/api/src/triggers/webhook-body.ts:35` | Verify exact bytes before decoding, retain constant-time checks, and support None plus bounded decoding. Count actual raw duplicate authentication headers case-insensitively. |
-| `apps/api/src/triggers/trigger-service.ts:173`, `:288`, `:431`, `:470`, `:507`, `:537` | Replace split webhook/event writes with common claim and target admission. Remove filters, freeze recipients, isolate dedupe namespaces and propagate bus save failures. |
-| `apps/api/src/event-bus.ts:30`, `apps/api/src/container.ts:315`, `packages/engine/src/ports.ts:395` | Await durable event intake. Pass trusted emitting owner/run metadata through the internal return port rather than inferring identity from payload or assuming LOCAL_OWNER. Coordinate this small port change with #164 exits. |
-| `packages/engine/src/admission.ts:15`, `packages/engine/src/run-manager.ts:347`, `:418`, `:461`, `:536` | Generalize claim/recovery and preserve frozen identity, deletion lock and poll reservations. Bound recovery to five due targets per nonoverlapping 15-second sweep with persisted backoff capped at five minutes. |
-| `packages/infrastructure/src/sqlite/admission.ts:74`, `:188`, `packages/infrastructure/src/sqlite/triggers.ts:187`, `:365`, `:405` | Implement intake/target transactions, key claims, links and postcommit notifications. Keep endpoint identity and idempotent arming. #165 removes private template callbacks first. |
-| `packages/engine/src/testing/fakes.ts:813`, `packages/engine/src/testing/index.ts:1` | Implement the same port in the fake and export the adapter-neutral contract runner through engine/testing. Infrastructure tests import that runner; engine tests never import SQLite. |
-| `apps/api/src/routes/triggers.ts:16`, `:50`, `:107`, `:153` | Keep raw parsing, the body bound and private scopes; change public acknowledgement and safe metadata schemas. Events shows partial fan-out recovery without exposing intents. |
-| `apps/api/src/triggers/poll.ts:124`, `:219`, `apps/api/src/triggers/poll-items.ts:15`, `packages/infrastructure/src/http/probes.ts:39` | Preserve both modes and failure-tail semantics. Apply an internal streaming 65,536-byte limit to items HTTP probes before JSON parsing; general probe memory bounds remain #117. |
-| `packages/infrastructure/src/scheduler/cron-scheduler.ts:111`, `:169`, `packages/engine/src/handlers/trigger.ts:5` | Retain catch-up, cap 100, persisted fire times and advance-before-listener semantics; the trigger still outputs its payload. |
-| `apps/web/src/editor/NodeEditorDialog.tsx:649`, `apps/web/src/forms/fields/structure.tsx:805`, `apps/web/src/editor/Palette.tsx:97`, `apps/web/src/editor/model.ts:63` | Add trigger-specific type ordering and palette shortcuts, not a global change to every union label. Preserve focus, held input, schema errors and undo. |
-| `apps/web/src/editor/trigger-presets.ts:44`, `apps/web/src/editor/TriggerPresets.tsx:21`, `apps/web/src/editor/store.ts` | Preview and atomically apply the graph recipe. Preserve successor/output, validate IDs and limits, and make the whole edit one undo step. Reapplication requires explicit replace/cancel review. |
-| `apps/mcp/src/describe.ts:23`, `apps/web/src/drafts/local-drafts.ts:74`, `packages/domain/src/upgrade-current.ts:94`, `packages/infrastructure/src/sqlite/upgrade.ts:91` | Update current consumers, then integrate #164's converter, lossless device transition and guard. Do not globally replace unrelated subtype fields or frozen schemas. |
+| packages/contracts/src/nodes.ts:92; packages/contracts/src/trigger-integrations.ts:13; packages/contracts/src/thread.ts:27 | Define the five type configs, nested webhook auth/body/extraction and optional event metadata. Preserve Probe and PollItems. Remove current filter and compatibility-mode fields. |
+| packages/infrastructure/src/http/delivery.ts:16; apps/api/src/triggers/webhook-body.ts:35 | Separate raw-byte verification from bounded decoding, keep constant-time HMAC and owner secrets, support None and the existing two recipes, and reject ambiguous raw authentication headers. |
+| apps/api/src/triggers/trigger-service.ts:173; :288; :431 | Keep stable endpoint arming across versions. Replace timestamp's insert/start/link branch with the same receipt/intent path as every webhook. Remove intake filters and apply one key and repeat algorithm. |
+| apps/api/src/triggers/trigger-service.ts:470; :507; :537; :555; apps/api/src/event-bus.ts:33 | Preserve Event publication/subscription and existing fan-out; remove configured Event filters through reviewed downstream graphs. publish is at :33; subscriber errors are swallowed at :555, a deferred reliability gap. No durable fan-out or return-port ownership change is made. |
+| packages/engine/src/admission.ts:15; packages/engine/src/run-manager.ts:347; :418; :461; :536 | Preserve narrow RunAdmission, deletion lock, immutable intent identity and pins. Adapt claim/create for all webhooks with one Q5 algorithm, keeping bounded persisted recovery and poll reservations. |
+| packages/infrastructure/src/sqlite/admission.ts:74; :188; packages/infrastructure/src/sqlite/triggers.ts:187; :365; :405 | Implement receipt/inbound and run/event/link transactions with post-commit notifications, one explicit-key lookup and stable endpoint updates. #165 removes private callbacks first. |
+| packages/engine/src/testing/fakes.ts:813; packages/engine/src/testing/index.ts:1 | Apply the same port semantics in the fake and export the adapter-neutral admission contract runner. Infrastructure tests run it against SQLite through a factory. |
+| apps/api/src/routes/triggers.ts:16; :50; :107; :153 | Keep raw parsing and existing private scopes; expose fixed 202 after saving and safe endpoint/receipt metadata. POST /events response semantics remain unchanged. |
+| apps/api/src/triggers/poll.ts:124; :219; apps/api/src/triggers/poll-items.ts:15; packages/infrastructure/src/http/probes.ts:39 | Preserve both payload modes, validation, time/output limits, first-failure tail and dedupe. No new HTTP 64 KiB limit, credential binding or script directory is introduced. |
+| packages/infrastructure/src/scheduler/cron-scheduler.ts:111; :169; packages/engine/src/handlers/trigger.ts:5 | Retain catch-up cap 100, persisted fire times and advance-before-listener behavior. The trigger continues to output its payload. |
+| apps/web/src/editor/NodeEditorDialog.tsx:649; apps/web/src/forms/fields/structure.tsx:805; apps/web/src/editor/Palette.tsx:97; apps/web/src/editor/model.ts:63 | Put trigger types first, keep a single trigger node kind, and make presets optional. Use trigger-specific labels rather than relabel every schema union. Preserve focus, held input, validation and undo. |
+| apps/web/src/editor/trigger-presets.ts:44; apps/web/src/editor/TriggerPresets.tsx:21; apps/web/src/editor/store.ts | Preview and apply an editable decision/restore/quiet-exit fragment atomically. Preserve successor output and support one-step undo. No filter is compiled into trigger config. |
+| packages/domain/src/expression.ts:199; packages/domain/src/upgrade-current.ts:94; packages/infrastructure/src/sqlite/upgrade.ts:91 | Generate exact predicate-coercion wrappers through the single converter, preserving frozen earlier stages. Contribute SQL/data rules to #164's offline apply, not a separate upgrader. |
+| apps/mcp/src/describe.ts:23; apps/web/src/drafts/local-drafts.ts:74; packages/api-client/src/generated/schema.ts | Update current descriptions, generated clients and device consumers. Do not globally replace unrelated subtype fields or frozen history schemas. |
 
-Type changes are undoable and review lost fields. Presets stay optional; see summary review stages. No editor execution or template authority is added.
+## 6. Child PR breakdown and integration order
 
-## 6. Child PR breakdown
+Use #164's exact steps 20-25 after selected exits in steps 14-19, without exception. Shared converter/device/cutover is steps 26-28. All children target feat/format-4-integration. GPT-6.1 Sol xhigh implements; independent Claude Opus 5.5 xhigh reviews in cloud; separate Sol xhigh performs qa:touched-systems. Supply head/diff, fixtures and safe traces. Owner product review is required before every child merges; these roles authorize no delegation in this research thread.
 
-Children target `feat/format-4-integration`, reference Part of #168 and require owner review. GPT-6.1 Sol xhigh implements; independent Claude Opus 5.5 xhigh reviews in cloud; separate Sol xhigh provides qa:touched-systems. Supply head/diff, fixtures, safe traces and screenshots without owner-instance access.
-
-| Child | Scope, approximate files and owner-visible result | Verification and documentation |
+| Step and child | Scope, files and running review | Checks and updates |
 | --- | --- | --- |
-| T1 | 20-35 files put type first and presets below it; prepare typed current fixtures. Owner reviews the five primary choices and Manual/Cron/Poll layouts. | Test keyboard, focus and undo. Update docs/09 and the trigger guide. |
-| T2 | 25-38 files add GitHub graph preview, route decision, restore and quiet exit. Owner applies, edits and undoes issue/PR recipes. | Verify signed-body checks, quoting and successor output. Update docs/08-09 and recipe guidance. |
-| T3 | About 30-40 files perform the atomic discriminator switch after fixture preparation. Owner reopens and exports configs and inspects MCP descriptions. | Test strict shapes and consumers; regenerate clients/references and update upgrade notes. |
-| T4 | 30-40 files add general decoding/extraction, shared webhook/event intake and target recovery. Owner sees quick acknowledgement and saved fan-out. Split a complete visible slice if necessary. | Run the shared adapter suite and crash tests; update docs/05/07-09, API reference and admission ADR. |
-| T5 | 22-35 files implement approved repeats, separate replay/business claims and Events explanations. Owner repeats keyed/unkeyed bodies and observes recovery. | Verify races, expiry, restart and stable addresses. Update docs/08, guide, ADR and CHANGELOG. |
-| T6 | 25-38 files remove remaining filters and supply reviewed conversion rules and items-probe bounds. Owner reviews the complete final mock-ups and converted graphs. | Test conversion refusals, outputs and poll failures. Complete docs/04/07-09, guide and references. |
-| Shared cutover | #164 owns the child; #168 contributes about 12-20 files of rules, SQL and fixtures. Owner reviews supplied converted copies and history. | Verify source preservation, replay, restore and final gates; finalize SQL snapshots, upgrade guide and CHANGELOG. |
+| 20: T1, Trigger types first | About 20-35 files make types primary/presets optional and prepare fixtures. First Manual/Cron/Poll layouts and Event/Webhook choices. | Test keyboard/focus/undo/themes. Update docs/09 and guide. |
+| 21: T2, Editable GitHub checks | About 25-38 files add graph preview, decision, output restore and quiet exit. First GitHub preview with edit/apply/undo. | Test signed-body checks, quoting, successor input and cancel. Update docs/08-09 and recipe guide. |
+| 22: T3, One type contract | About 30-40 files switch current subtype to type. Review reopen/save/export/MCP. | Test strict configs/consumers; regenerate clients/node/API references and upgrade notes. |
+| 23: T4, General webhook intake | About 28-38 files add decoding/extraction and atomic receipt admission. First general Webhook controls, quick 202 and saved-pending Events. | Run D29 and D7/D17 crash checks. Update docs/05/07-09, API reference and ADR. |
+| 24: T5, One repeat/key behavior | About 22-35 files implement only approved Q5 and permanent explicit keys. Review repeats/duplicates/recovery without a policy selector. | Test races, lost acknowledgement, restart and tokens. Update docs/08, guide, ADR and CHANGELOG. |
+| 25: T6, Filter-free final editor | About 25-38 files remove remaining filters, complete conversion/coercion/refusals and regress unchanged polls. First complete Event/Webhook and final GitHub mock-ups. | Test reviewed graphs, coercion/output parity and poll failures. Finish docs/04/07-09, guide and references. |
+| 26-28: Shared #164 cutover | Contribute about 12-20 files of rules/0013/fixtures to #164's children. Review supplied converted copies, addresses/claims/history. | Prove refusal, replay, restore, snapshots and uncached gates; finish upgrade guide/CHANGELOG. |
 
-Order the wider work as #165 paging/removal, #164 decisions and owner-approved exits, #168, then cutover. Freeze format 3 before any contract edits. Intermediate integration contracts run only on fresh disposable stores and are never independently migrated or shipped. The 147 subtype-containing files include frozen and unrelated code; prepare current fixture factories in small batches before the atomic switch. Count all docs/generated changes and split before exceeding about 40 files. Each split must give the owner a concrete running-product review, not a broken intermediate contract.
+Split before about 40 files, including generated changes/deletions, in the same sequence slot. Every split needs a complete running review. Shared cutover is #164 C2 at step 28. Fresh disposable intermediate stores are never independently upgraded or shipped.
 
-Add a new #168 ADR and mark affected ADR-0024 decisions superseded. Keep earlier factual release notes. Regenerate current OpenAPI/client and node references, update MCP/plugin examples, and describe exported/client breaks in CHANGELOG. No assistant attribution belongs in commits. Missing review or owner approval is not replaced by green CI.
-
+Add a #168 ADR superseding affected ADR-0024 admission/preset decisions; retain historical text and coordinate #164's exit ADR. Update docs/08-09, trigger routes in docs/07, engine explanations, guides/examples, MCP/plugin descriptions and generated outputs. CHANGELOG records format/export/client breaks, uniform Q5/body/key behavior, filter reviews and the offline upgrade. Checks do not replace independent or owner review.
 ## 7. QA plan and acceptance evidence
 
-For D29, export an adapter-neutral scenario runner from engine/testing without importing SQLite or adding a runtime Vitest dependency. Both adapters run identical scenarios/assertions through harness factories. Verify immutable identity despite object property order, caller/owner isolation, keyed and unkeyed claims, content and window policies, atomic target/link/event commit, rollback before notifications, subscriber failure after commit, pin/deletion races, event fan-out, zero recipients, partial recovery and poll reservations. The fake must stage and roll back mutations, not merely imitate happy-path results. SQLite adds real close/reopen and DDL tests; fake restart recreates services around retained backing state. Neither substitutes for the other.
+Record integrated head, commands, fixture identities, outcomes and safe traces/screenshots in PR and issue. Distinguish planned/executed/unavailable evidence; coverage alone does not prove behavior. Separate GPT-6.1 Sol qa:touched-systems covers every boundary with positive and negative cases.
 
-API QA covers all five types, input validation, exact HMAC bytes, missing/ambiguous raw headers, bad UTF-8/JSON, chunked body limits, extraction/fallback errors, oversized keys, scope denial and secret leakage. Test both legitimate repeats and lost-response retries. Faults before save must leave no consumed intake; faults after save must return 202 and recover the original target IDs. Event siblings must recover independently without lost links or repeated admitted work. Exit publication failure before save must reach the producer.
+| System | Cases |
+| --- | --- |
+| Contracts/clients | Save/reopen/export all types/body modes. Reject old fields, unknown shapes, invalid bounds/pointers/headers and incompatible poll options. Typecheck fixtures without hiding errors. |
+| Authentication/decoding | Actual unsigned/body-HMAC/timestamp-HMAC bytes and valid timestamps. Reject missing/ambiguous/wrong signatures, wrong-owner secret, stale/future timestamp, altered bytes, bad UTF-8/JSON, empty JSON and chunked overflow. Assert no decode/expression/claim before authentication failure; verify limiter/readiness and constant-time comparisons. |
+| Extraction/authority | Header/constant/pointer/fallback, escaping and own-property/array traversal. Reject ambiguous/control/overlong metadata and invalid/non-JSON pointers. GitHub repository authority comes only from the signed body. |
+| Atomic admission/202 | Inject faults at claim and create writes; assert complete rollback and post-commit notification. Crash after claim returns 202 and recovers the same ID. Repeated create commits no duplicate effects. Reject corrupt intent/identity/owner and conflicting pins. Pending/failed saved work does not produce 503/409. |
+| Q5/keys | Apply the one approved algorithm to every auth recipe. Allow yields distinct unkeyed identical receipts/runs; permanent consumption yields one across versions. Ship only the selected policy suite. Explicit keys are permanent, reject empty/overlong values and see old claims/pending reservations/committed runs. Distinguish lost-acknowledgement external repeats from same-ID recovery and timestamp freshness. |
+| D29 adapters | Run identical ordinary create, createPollItem and webhook scenarios against fake/SQLite: immutable identity despite property order, rollback, notification, keys, pending pins, cross-kind reservations and deletion races. Fake stages rollback; SQLite close/reopen supplements parity. |
+| Graphs/filters | Every issue/PR recipe passes/quietly exits, restores the exact trigger output, quotes safely and supports edit/apply/cancel/undo. Exercise classifier/script alternatives. Compare wrapper coercion for missing/null and non-Boolean arrays/objects; expression failure happens in the admitted run after 202. |
+| Events | Regress POST /events responses, subscriptions/bus/node keys, caller-chain exclusion and chain limit. Review filter/key timing. Do not claim the deferred fan-out/subscriber crash defects fixed. |
+| Polls | Both payload modes; all-candidate validation; 200 items, 512-character keys and 25-run cap; seen keys do not consume the cap; pending/committed dedupe; first-failure tail; serialized sweeps; HTTP/script failures and existing time/output limits. Add no 64 KiB HTTP assertion. |
+| Cron/handler | Invalid schedules/timezones, disabled triggers, daylight saving transitions, persisted fires, skip, latest run-once beyond 100 misses and ordered latest-100 run-each. Trigger output remains original payload. |
+| Conversion/storage | Automatic/reviewed/refused rules, stable addresses/owner/node IDs, old claims/keys/terminal intents, hashes/logs/checkpoints/pins and unknown raw-byte coverage. Refuse all joint pending states including retired targets. Verify the exact private-report exception, SQL rollback, restore/re-upgrade and same-ID restart without duplicate effects. |
+| Browser/devices | All mock-ups in their named children; keyboard/focus/validation/undo, both themes, 360-1,440 pixel widths and 200 percent zoom. Controlled deliveries and Events states, exports and lossless offline-draft restore use disposable state. |
 
-Poll QA retains both payload modes, all-candidate validation, caps excluding seen keys, first-failure tail, script overflow and HTTP streaming boundaries. Cron QA retains DST, invalid publication, persisted fire times, skip, latest run-once beyond 100 misses, and latest-100 run-each order. Conversion QA covers every mapping, reviewed filter, token/key/hash identity, checkpoint, retirement boundary and active/pending refusal, with rollback and copy restoration evidence.
+Provider-independent fixtures cover supported JSON POST, XML/form text, bytes and both existing HMAC recipes. The owner named no mandatory provider/challenge. Record unsupported protocols/challenges as unsupported, not passed; never claim literal universal protocol compatibility.
 
-Browser QA uses real controlled deliveries and both themes, keyboard/focus/undo, all dialogs, preset graph edits, 360-1440 pixel widths, 200 percent zoom, offline drafts and Events recovery. Test generic unsigned, existing signed, text/XML/form and binary protocols. Challenge echo and other authentication protocols remain unsupported; do not mark them passed. Record commands, head, fixture, outcomes and safe traces/screenshots in PR and issue.
-
-Run repository gates, formatting, build, upgrade acceptance and touched browser tests at the integrated head. Preserve coverage above 90 percent for lines and branches and typecheck fixtures. Generate current clients/references and require no stale outputs. Use pnpm.cmd and Node 22 for dependency-cruiser when needed. For D13/#127, bypass local Turbo cache or use fresh CI; parked #127 is not assumed fixed. No production tests or servers run in this planning turn.
-
+Run relevant tests per child and required gates at the integrated head: typecheck, lint, layers, dependency/license checks, coverage, formatting, build and generated-reference checks. Keep line/branch coverage above 90 percent. Use pnpm.cmd, Node 22 for dependency-cruiser if needed, and uncached checks/fresh CI for parked #127. This research turn starts no server or product tests.
 ## 8. Dependencies and exact seams
 
-#165 first removes generic template authority and paging dependencies (D1-D3, D24, D27). Preserve ordinary admission, pins and poll ports. #164 owns frozen schemas, format constants (D6), converter/history/device work (D9-D10, D22), dead decision exports (D23), journal/snapshots (D12) and exit choice after #167. Shared files include nodes/thread/events, admission/ports, container, SQLite schema/upgrade, editor/store, generated clients and guides.
+Follow #164 steps 20-25 after the approved exits in steps 14-19; shared converter/device/cutover is steps 26-28. #165 first removes template authority and separates ordinary paging (D1-D3/D24/D27), preserving ordinary admission/poll ports. #164 owns frozen schemas, format constant (D6), converter/history/devices (D9-D10/D22), dead decision exports (D23), snapshots/journal (D12) and #152/#118 prerequisites.
 
-Agree on SQL 0012/0013/conditional 0014 and the single hash-bound manifest. Agree on factual configHash preservation and copy-based dry-run. Disagree only with permitting #165's pending-target abandonment inside apply while #164 refuses pending state; resolve it separately before stop or approve a changed shared rule. Until then all pending state refuses. Stage edits share original IDs/pointers and cannot overwrite one another.
+Shared files are nodes/thread/events, admission/ports/run manager, SQLite schema/admission/upgrade, API container/routes, editor/store/presets, generated clients/references and guides. No return-port identity change is included. #168 metadata remains absent from old factual envelopes; graph proposals use original IDs and #164 builders. Overlap needs one reviewed resolution.
 
-D4/#152 needs owner authorization to unpark or explicitly include atomic fresh initialization in #164. Its draft's migrate-then-stamp wording must require one fresh transaction. D5/#118 needs unparking/repair or exact approved orphan inventory resolution; missing evidence still refuses. D13/#127 can stay parked when verification bypasses cache. No parked issue is silently started. #167's unresolved exit decision blocks final graph factories and cutover, not preliminary type presentation.
+Agree on 0012/0013/conditional 0014 and the exact envelope including hashAlgorithm, versions[id].resolutions.triggers and common historyResolutions/retirements/failedRuns. #165 owns retirement closures; #168 proves endpoint/receipt/key survivors. Section 4 cites #164's joint pending rule and sole private-report exception. Pending abandonment was withdrawn; no disagreement remains.
+
+The owner decides Q5/#167 and authorizes parked prerequisites. #167's 40 research cases do not prove Continue; #168 follows the approved exit builder.
+
+#164's revised trigger overview still requests atomic Event intake and a Boolean-only filter proof. Those clauses conflict with review F4/F10: apply this plan's webhook-only admission and exact coercion wrapper, and reconcile that overview before posting. Its published manifest, sequence and SQL numbering are accepted.
 
 ## 9. Risks and gap analysis
 
-D19's mode deletion is intentionally excluded; both current features remain. Credential references, approved script directories, generic pagination, initial backfill, persistent cursors and rate-limit/retry policies need separate backlog proposals. D15/#117 retains general HTTP probe memory work; this issue only bounds items input. D11 retention and D20 RunManager extraction remain outside scope. Duplicate audit growth is acknowledged, not solved with deletion.
+Allow permits another run after an unkeyed retry; permanent consumption suppresses legitimate repeats. Choose one behavior under ADR-0020. Old facts remain stored; they never select legacy admission modes. Filter movement changes visible runs, key/error timing and visits even when routing/input is preserved. Unavailable context/provenance requires review or refusal.
 
-Generic POST does not cover proprietary signing or verification challenges. Unkeyed Allow cannot distinguish retries. Downstream filtering changes admission and output. Old event selection cannot be reconstructed safely. Propose separate issues for additional signing/challenges, controlled release of old claims, retention and synchronous results. The shared converter, lossless device handling, atomic initialization, provenance resolution and accurate snapshots are prerequisites, not claimed completed repairs.
+Event fan-out/subscriber crash gaps remain. Settled-history conversion cannot invent missing recipients, and pending work must settle under the old build. Poll operational gaps remain because the owner excluded expansion. Cutover still needs per-version approvals, exact dispositions, backup/restore evidence and owner-controlled installation. Frozen conversion and factual archives are not alternate live contracts.
+
+These backlog proposals are titles and scopes, not permission to implement or create issues:
+
+| Proposed title | Scope |
+| --- | --- |
+| Make Event fan-out admission durable | Atomically save owner-scoped recipients/recovery IDs and producer acknowledgement; address D7's deferred Event portion. |
+| Bound HTTP items-poll bytes before parsing | Design a reviewed streaming/cancellation limit; do not add the proposed 64 KiB limit here. |
+| Carry trusted emitting identity through returns | Review owner/run arguments and subscriber failure propagation without trusting payload; no change is cutover-required. |
+| Bind poll credentials to owner-scoped secrets | Define explicit substitution/redaction instead of ambient credentials. |
+| Configure approved poll script directories | Define bounded directory selection while preserving the current data directory. |
+| Add poll pagination, cursors and backfill | Specify persistent traversal, initialization, crash semantics and page/item bounds. |
+| Add poll rate-limit and failed-item retry policy | Specify retries/scheduling without weakening current dedupe/failure-tail guarantees. |
+| Add webhook protocols and challenges | Require refined real fixtures beyond None and the two existing HMAC recipes. |
+| Add reviewed webhook reprocessing | Specify deliberate reprocessing without erasing original claims. |
+| Resolve general probe memory bounds (#117) | Fix the broader resource defect separately; verify current limits here. |
+
+D17 covers webhook acknowledgement, not an Event API redesign; D29 adds parity tests, not a generalized adapter. #118/#152 require owner authorization, while #127 is bypassed in verification. No new security hardening or response programming is included.
 
 ## 10. Acceptance mapping
 
-| Acceptance | Required evidence |
+| Acceptance checkbox | Evidence |
 | --- | --- |
-| Approved answers and small product increments | Record Q5 and filter changes; review the summary mock-ups at T1-T6 and the copy rehearsal. |
-| Clear types and editable presets | Demonstrate every layout and generic protocol; explicitly qualify deferred challenges. |
-| Authentication, repeats and safe responses | Pass raw-order, leakage, key/replay and saved-202 crash scenarios. |
-| Poll scope and guarantees | Pass both modes, bounds and restart/race cases; keep deferred operations explicit. |
-| Migration and recovery | Prove tokens/consumption/history, ordinary pending refusal, fresh recovery and shared manifest rollback. |
-| Touched-system QA and documentation | Supply independent review/QA, browser/accessibility and final gates; align ADR, numbered docs, guides, clients, references and CHANGELOG. |
+| Owner-approved contract/migration plan, mock-ups and small increments | Sections 2-4 apply answers and keep Q5/#167/prerequisites open. Summary shows every type/GitHub mock-up and first review child; section 6 requires independent and owner product review. |
+| Primary types, optional editable presets and sender/challenge fixtures | Sections 3/5/6 specify one selector and editable graph. Section 7 verifies supported provider-independent fixtures; no provider/challenge was mandated, and unsupported protocols are disclosed. |
+| Authentication, malformed/unsigned/ambiguous/filter/duplicate/replay/repeat policy | Sections 2-4 define uniform Q5, fixed keys, raw auth order, 202, exact filter coercion and retained history. Section 7 tests failure cases, signed-body authority and leakage. |
+| Poll scope, bounds/failures/credentials/cursors and dedupe | Sections 3/5/7 retain both modes and guarantees. Sections 2/9 explicitly defer operational expansion with proposals. |
+| Migration/restart identity, consumption facts/recovery and active-state refusal | Section 4 preserves tokens/keys/hashes/terminal intents and refuses pending work under the joint rule. Section 7 requires transaction/restart, restore and real-copy evidence. |
+| All touched systems, adversarial/browser/accessibility QA, gates and agreed docs | Sections 5-7 assign positive/negative cases, fake/SQLite parity, browser checks, docs/08-09, routes, ADR-0024 successor, guides, clients/references and CHANGELOG. |
+
+Before posting, the orchestrator checks #164's final published manifest schema and sequence numbers against these contributions and reconciles any later register correction. Plan approval does not approve an unseen data manifest, installed upgrade or merge.

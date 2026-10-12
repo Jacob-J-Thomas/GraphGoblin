@@ -8,7 +8,7 @@ Terms: API means application programming interface; PR means pull request; QA me
 
 Remove configured instances, settings, prerequisites, bindings, subject authority, private support scripts and services and configured assets. Delete examples/aidlc. Keep four manual starting graphs, installed catalogue and POST /templates/:id/draft. Copies are independent ordinary loops; their later GitHub effects require explicit ordinary nodes.
 
-Move run paging first. Recommend archival retirement of configured repository executions: exact evidence remains offline while ordinary and supported Starter history stays live. Live access to retired history needs additional non-executable storage semantics. Estimate 5-7 worker days plus 1-2 days of shared-cutover participation; live access adds about 3-5 days. Confidence is high in boundaries and medium in unseen data effort.
+Move run paging first. Recommend archival retirement of configured repository executions: exact evidence remains offline while ordinary and supported Starter history stays live. Live access needs additional non-executable storage semantics. Estimate 6-9 worker days, including shared conversion and rehearsal; live access adds about 3-5 days. Confidence is high in boundaries and medium in unseen data effort.
 
 All children target feat/format-4-integration. #164 freezes format 3 first and owns one converter, manifest and transaction. Nothing is deployed or migrated independently.
 
@@ -19,11 +19,11 @@ The October 9 decisions are settled: retire automation, keep ordinary implementa
 | Choice | Recommendation and alternatives |
 | --- | --- |
 | Retired history | Archive it offline. Runs leave the live list and inspector and URLs return 404; original IDs, history, attempts, journals and worktrees remain indexed. Live access instead requires general non-executable versions enforced at every execution route, an amended schema and API design and 3-5 additional worker days. |
-| Unfinished terminal private reports | Allow exact archive-no-reexecution retirement after writers stop, preserving uncertainty. Both peers must adopt it. Otherwise settle old reporting first. Active runs, pending deliveries and surviving unfinished effects still block. |
+| Unfinished terminal private reports | Under #164's joint rule, allow archive-no-reexecution only when the sole unfinished item is a retired run's private template report. The owner approves each exact disposition and reason, preserving evidence. All other unfinished state blocks. |
 | Parked #118 | Recommend unpark before cutover. Alternatively require individually reviewed orphan inventory resolutions. Never guess missing versions or implicitly delete ordinary history. |
 | Parked #152 | Recommend unpark. Alternatively authorize an equivalent atomic fresh schema and marker fix in shared work. Without a fix, fresh-store acceptance is blocked. |
 | Parked #127 | Keep parked and run qualifying verification without cache. This does not fix cache keys. |
-| #167 exits | Keep for now is the supplied medium-confidence recommendation, not an owner decision. If the continuation-node option is wanted, choose now and include it in format 4; choosing later requires another cutover. #164 must revise its design and estimate. |
+| #167 exits | Recommend option 3 (variant C), with medium confidence, as #167 recommends and #164 agrees. Decisions own policy, Continue owns maxPasses with repeat and exhausted connections, and terminal exits own outcomes and returns. Seed maxPasses and cumulative maxNodeVisits from old maxIterations. A one-Continue-per-loop restriction is a design limit for owner review. Approval gates exits; #164's estimate includes them. |
 
 Retain evidence indefinitely; no physical cleanup, key rotation or GitHub reconciliation is authorized. Architecture approval differs from later exact-manifest and installed-upgrade approval. New ADR supersedes configured ADR-0027 and ADR-0028 consequences and completes ADR-0030 (`docs/decisions/ADR-0030-templates-are-starting-points.md:17`); keep supersession links and historical text. Code waits for human plan approval and the applicable gate (`docs/15-issue-workflow.md:9`). This document unparks nothing.
 
@@ -47,7 +47,7 @@ Keep existing catalogue and draft schema names with one strict shape:
 
 Delete kind, roles, prerequisites, requiredSecrets, parentKey, loops and supportEntry and bundle, instance, settings, prerequisite and instantiate DTOs and exports (`packages/contracts/src/template-settings.ts:14`, `:51`, `:95`; `template-manifest.ts:21`, `:49`, `:149`, `:184`; `index.ts:27`). Ordinary settings, model fields, Liquid and directory kind template remain.
 
-Loader returns {manifest,draft:LoopDefinition}, parses current export and graph, and clones every creation. Preserve the shipped policy (`packages/domain/src/template-bundle.ts:38`): manual triggers, no scripts, subloops or heartbeat nodes, caller-only returns. It does not restrict later edits. Delete configured allocation and remapping.
+Loader returns {manifest,draft:LoopDefinition}, parses current export and graph, and clones every creation. Preserve the shipped policy (`packages/domain/src/template-bundle.ts:40`): manual triggers, no scripts, subloops or heartbeat nodes, caller-only returns. It does not restrict later edits. Delete configured allocation and remapping.
 
 Keep GET /templates and /templates/:id under loops:read; keep POST /templates/:id/draft under loops:write. Creation returns 201 from the owner-scoped loop and draft transaction, with no publication, run, child or binding. Normal invalid configuration admission stays (`apps/api/src/routes/templates.ts:44`); missing login does not block authoring. Remove configured routes and client helpers; use normal authentication and 404 handling, no compatibility handler. Strict old settings bodies reject.
 
@@ -95,22 +95,22 @@ Reports classify automatic, reviewed and refused records and include source, sch
 Agree with the supplied single envelope:
 
 ```json
-{"format":"graphgoblin-upgrade-manifest","targetVersion":4,"sourceHash":"...","converterHash":"...","sqlHash":"...","versions":{},"failedRuns":{},"retirements":[],"historyResolutions":[],"expectedResultHash":"...","approval":{"approvedBy":"...","approvedAt":"...","approvedPlanHash":"..."}}
+{"format":"graphgoblin-upgrade-manifest","targetVersion":4,"hashAlgorithm":"...","sourceHash":"...","converterHash":"...","sqlHash":"...","versions":{},"retirements":[],"historyResolutions":[],"failedRuns":{},"expectedResultHash":"...","approval":{"approvedBy":"...","approvedAt":"...","approvedPlanHash":"..."}}
 ```
 
-#164 owns its schema and hashing. Propose `versions[id].resolutions.v3ToV4.templates` and the entries below within its `retirements` and `historyResolutions`. These names need one adoption by #164; there is no separate converter or runtime profile. Freeze the retired template DTO decoders and Starter producer semantics under #164's source provenance before deletion, for offline tooling only. Earlier namespaces and frozen stages remain intact. Collect changes against original IDs and pointers, reject overlap and emit only final format 4.
+#164 publishes the exact schema and hash protocol, including hashAlgorithm; example strings are placeholders. Use `versions[id].resolutions.{decisions,exits,templates,triggers}` exactly, with template rules under `resolutions.templates`. Freeze retired DTO decoders and Starter semantics under its offline provenance before deletion. Preserve earlier namespaces and stages, collect original-pointer edits, reject overlap and emit only format 4.
 
-| Manifest location | #165 entry proposal |
+| Manifest location | Template facts under #164's exact schema |
 | --- | --- |
-| `versions[versionId]` | Keep definitionHash. Its template map contains action and nonblank reason. Actions are preserve-ordinary, convert-starter, replace-with-ordinary-draft or archive-no-reexecution. Bind instanceId, instanceHash and bindingHash when present; Starter also binds producerNodeId, instructionPointer and consumerPointers. A replacement requires its complete format-4 definition and fresh target loop and version IDs, fixed before approval. |
-| Instance retirement | Use `{kind:'template-instance',ownerId,instanceId,instanceHash,bindingHash,action,loopIds,versionIds,runIds,rowSetHash,evidenceHash,reason}`. Action is unbind-starter or archive-no-reexecution. Lists are exact; no wildcard closure is inferred. |
-| Row or field retirement | Use `{kind:'template-record',table,rowKey,ownerId,column,originalValueHash,action,componentId,reason}`. Column is null for whole rows; action is archive-field or archive-row-and-remove. Keys use actual primary-key fields, including runId and seq for events. Archive before removal. |
-| External files | Use `{kind:'template-evidence',componentId,evidenceRef,fileHash,action:'preserve-external',reason}`. The private manifest identifies approved roots and files. It authorizes preservation, never cleanup or Git effects. |
-| Terminal exception | Use `{kind:'template-terminal',ownerId,runId,runHash,componentId,action:'archive-no-reexecution',unresolvedEffects,reason}`. Each effect records identity, kind, confirmed or uncertain state and evidenceRef. Peer and owner approval are mandatory; active, pending or surviving execution cannot use it. |
+| `versions[versionId]` | Keep #164's definitionHash, convert-or-archive disposition and resolutions object. Put the template action/reason and source instance/binding hashes in resolutions.templates; Starter also binds producerNodeId, instructionPointer and consumerPointers. Template actions are preserve-ordinary, convert-starter, replace-with-ordinary-draft or archive-no-reexecution. Replacements bind complete definitions and fresh target IDs before approval. |
+| Instance retirement | Bind owner/instance identity, instanceHash, bindingHash, exact loop/version/run lists, rowSetHash, evidenceHash and reason through #164's retirement entries. Action is unbind-starter or archive-no-reexecution; infer no wildcard closure. |
+| Row or field retirement | Bind table, real primary key, owner, column, originalValueHash, component and reason through the shared schema. Select archive-field or archive-row-and-remove; whole rows have no column. Archive before removal, including exact runId/seq event keys. |
+| External files | Bind component, evidenceRef, fileHash, preservation action and reason in the shared retirement schema. Private evidence identifies approved roots/files; it authorizes no cleanup or Git effect. |
+| Terminal exception | Bind exact ownerId, runId, runHash, componentId and archive-no-reexecution in retirements, with owner-approved reason and evidenceRef. Prove the only unfinished item is the private template report; other effects, notifications, timers or intents disqualify it. Use #164's exact retirement schema, not a broader unresolvedEffects waiver. |
 | History mapping | Bind runId, event sequence or null, exact pointer, originalValueHash, action and replacement or reviewed reason. Map only proven projection facts; invent no authority, provider or terminal evidence. |
 | Failed runs | Keep #164's nonresumable-replay disposition for retained affected failures. Retired runs use retirements with archive-no-reexecution, with no executable replay permission. |
 
-All entries bind exact hashes, including automatic maps. Unknown, unused, stale or overlapping instructions refuse. approvedPlanHash covers rules, SQL, resolutions and expected result as #164 specifies; changing them requires a new dry-run and approval.
+These facts use #164's exact serialization, not extra fields or local retirement variants. All maps bind hashes; unknown, unused, stale or overlapping instructions refuse. approvedPlanHash covers rules, SQL, resolutions and expected result. Changed inputs require fresh dry-run and approval.
 
 ### Conversion and historical projection
 
@@ -129,9 +129,9 @@ Prove #164's replay equation at every changed checkpoint, final projection and c
 
 ### Stop, resolve and preserve state
 
-Agree with both peers: refuse every queued, running, waiting or paused run, active descendant and pending receipt. Withdraw converter-time pending abandonment. Resolve any abandonment or permanent failure under the old build or separately approved repair, then stop and reinventory. Conversion dispatches nothing and allocates no replacement execution. Owner-directed cancellation may run old GitHub finalization; it is not an implicit upgrade step.
+Apply #164's joint pending-state rule: refuse queued, running, waiting or paused runs, pending webhook receipts or frozen admission intents, unfinished child notifications or timers, and active descendants. The old build settles them before stopped inventory. The converter never abandons, drains or executes them, including retired targets.
 
-Surviving terminal runs with unresolved returns or null finalized_at also block. Do not invent completion. New startup re-finalizes such rows (`packages/engine/src/run-manager.ts:981`). The sole requested peer amendment permits exact retirement of terminal template-only unfinished finalization after writers stop. Approve its run hash, entire non-executable component and unresolved facts in retirements; it reaches no new recovery. If #164 and #168 reject that exception, settle the old report first. It cannot excuse ordinary effects or pending receipts.
+Terminal unfinished finalization also refuses, except a retired template run whose sole unfinished item is its private template report. Require exact per-run owner-approved manifest disposition, recorded reason and preserved evidence. Unfinished returns, pushes, merges, child notifications or timers cannot use the exception. Do not invent completion. New startup re-finalizes unfinalized rows (`packages/engine/src/run-manager.ts:981`); the retired row reaches no new recovery. This is the joint rule.
 
 Use `gg_upgrade_archive(kind,identity,source_hash,manifest_hash,payload)` and stopped backup (`packages/infrastructure/src/sqlite/upgrade.ts:205`, `tooling/scripts/upgrade.mjs:72`). Preserve previous archives and audit-chain hashes. Archive original instances, subjects, affected definitions/runs/events/threads/snapshots and manifest with joinable IDs. Independently preserve journals, worktrees, refs, proofs and necessary encrypted keys; data-dir backup alone cannot cover them. Record file-manifest digests, never re-sign journals or remove physical evidence.
 
@@ -141,7 +141,7 @@ Retired hook URLs disappear; archive their token, intent and key evidence and ne
 
 ### SQL, snapshots and transaction order
 
-Agree with `0012_retire_template_instances` for #165, `0013_trigger_configuration` for #168 and conditional `0014_format_four_cutover` for #164 metadata. Do not create an empty 0014 or assume the undecided continuation design needs the first draft's option-B replay columns. #164 controls increasing timestamps and final hashes. Adjust only unshipped reservations if main takes a slot; leave shipped SQL unchanged.
+Agree with 0012_retire_template_instances (#165), 0013_trigger_configuration (#168) and conditional 0014_format_four_cutover (#164 metadata). Use the selected exit branch's exact DDL; omit empty migrations. #164 controls timestamps and hashes. Adjust only unshipped reservations if main takes a slot; preserve shipped SQL.
 
 D12 requires a new authoritative final snapshot and a no-change drizzle-kit generation check on a disposable copy. Coordinate it with #168's final schema. Available snapshots stop at 0008; repair metadata without rewriting shipped migration hashes or accepting regenerated template structures.
 
@@ -176,7 +176,7 @@ Abbreviated filenames in a row share the directory of its first full path.
 | Source | Required change |
 | --- | --- |
 | `packages/contracts/src/template-settings.ts:14`, `:51`, `:95`; `template-manifest.ts:21`, `:49`, `:149`, `:184`; `index.ts:27` | Delete configured DTOs and exports; retain section 3's catalogue and draft schemas. |
-| `packages/domain/src/template-bundle.ts:38`, `:82`, `:230`; `index.ts:10` | Keep the draft validator, remove allocation and remapping and preserve unrelated Liquid template.ts. |
+| `packages/domain/src/template-bundle.ts:40`, `:82`, `:230`; `index.ts:10` | Keep the draft validator, remove allocation and remapping and preserve unrelated Liquid template.ts. |
 | `apps/api/src/templates/catalog.ts:28`, `:49`, `:63`; `assets.ts:6`; `copy-catalog.ts:1`; `instances.ts:17`, `:42`; `prerequisites.ts:38` | Load and clone drafts with existing file safeguards. Delete settings, defaults, prerequisites and support closures; catalogue no longer probes models, GitHub, secrets or storage. |
 | `apps/api/src/templates/binding.ts:11`; `runtime.ts:111`, `:171`, `:424`, `:543`; `scripts.ts:53`, `:64`, `:193` | Remove bindings, authority, subject, failure and result modules, private ScriptPort and admission/execution policies. |
 | `apps/api/src/container.ts:241`, `:295`, `:372`, `:394`, `:413`, `:445`, `:451`, `:461`; `templates/github/reporter.ts:19` | Delete credential/authority dispatch, wrappers and installImplementationFinalization, which replaces markFinalized. Preserve ordinary lifecycle and returns. |
@@ -189,7 +189,7 @@ Remove template-only executionIdentity (`packages/engine/src/ports.ts:322`, `han
 
 ### Every privileged node and retained graph
 
-Promote existing draft.json files. Delete configured starter/loop.json, repository parent.json, implementation/worker.json, qa/adversary.json and exclusive configured prompts/schemas. Their settings producers, support-output routing and memory, pinned mappings, privileged waits and exits disappear. This asset replacement is not automatic instance conversion. Each table lists every support probe and node and its source line.
+Retain the post-#151 draft.json versions. PR #151 merged on 2026-10-10 with #158-#161, including #160's Use-only gallery. Those issues remain open for owner re-test/closure; #165 closes none. Child E edits the same `apps/web/src/loops/TemplateGallery.tsx` and its tests. Delete configured graphs and exclusive prompts/schemas, with their settings, support routing, pinned mappings and privileged waits. This asset replacement is not automatic instance conversion. Each table names every support node/probe and source line.
 
 Implementation source: `apps/api/templates/implementation/parent.json`.
 
@@ -253,7 +253,7 @@ QA source: `apps/api/templates/qa/parent.json`.
 
 Criteria, QA and adversary produce pass, fail or inconclusive and sound, unsound or inconclusive statuses. Sound plus pass succeeds, unsound retries and other results block. Current maxIterations is 2 (`apps/api/templates/qa/draft.json:13`), with 300-second turns. This worksheet offers no enforced evidence-only isolation or authenticated proof. Production configured effects were already unavailable (`apps/api/src/templates/github/qa-native.ts:29`); deletion does not prove isolation.
 
-Starter keeps manual input, instruction, fresh assistant and caller result, maxIterations 10 and a 300-second read-only turn with no network access (`apps/api/templates/starter/draft.json:13`). All four default to temporary directories. Missing context stays unknown. Future triggers, event choices, models, scripts, predicates, counters, timeouts, directories and secrets are ordinary configuration, with no replacement template authority guarantee. #164 maps decisions and exits; preserve current retry loop-back until #167 settles it.
+Starter keeps manual input, instruction, fresh assistant and caller result, current maxIterations 10 and a 300-second read-only turn (`apps/api/templates/starter/draft.json:13`). All four default to temporary directories; missing context stays unknown. #164's option 3 conversion routes retry policy through Continue: repeat returns to work and exhausted reaches a terminal exit. Seed maxPasses and cumulative maxNodeVisits at 3, 3 and 2 for implementation, review and QA; Starter seeds its safety cap at 10. Invent no historical Continue visits. Ordinary configuration grants no replacement template authority.
 
 ### Follow-up disposition
 
@@ -290,16 +290,17 @@ Every #165 child uses GPT-6.1 Sol xhigh as implementer, Claude Opus 5.5 xhigh in
 
 | Order and title | Scope and approximate files | Verification and documentation |
 | --- | --- | --- |
-| Shared freeze prerequisite | #164 freezes format 3 and existing conversion semantics before #165 removes schemas. | Verify provenance and previous golden/refusal behavior. |
-| A. Ordinary run paging and reads | 10-14 files move the tuple pager and remove template read metadata, filters and origin queries. | Check 500-row continuation, equal timestamps, owners and errors; update doc 07, client and OpenAPI and upgrade notes. |
-| B. Disconnect template authority | 16-24 files remove composition, private hooks, credentials and finalization wrapping. | Check ordinary scripts, admission, transitions and finalization; add removal ADR and update doc 11. |
-| C1 and C2. Delete support services | Two children of roughly 20-28 and 18-24 files remove implementation, review and QA services, entries and tests. Move catalogue loading first. | Check imports, build and retained behavior; update installed checks and doc 08. |
-| D. Delete configured contracts and APIs | 26-36 files remove instance/settings APIs, DTOs, store and fakes, and prepare 0012. | Check strict old bodies, paths and filters, scope and fresh schema; update doc 07, generated references and CHANGELOG. |
-| E. Keep ordinary assets and finish product docs | 25-35 files remove configured graph assets and origin fixtures, revise manifests and guides, and finalize packaging. | Check every retained graph and browser copy, error and handoff path; update doc 09, guides 08-12, ADR links/index and CHANGELOG. |
-| F. Delete legacy examples | 37 deletions and at most two active references; put additional reference edits in E. | Verify live references and distribution absence. Preserve historical Git and reports. |
-| Shared cutover | #164 owns final converter, manifest, SQL, snapshot repair and rehearsal. #165 contributes roughly 6-12 inventory/resolution/fixture files. | Prove archive, replay, rollback and restore behavior; finish guide 08 and generated/docs consistency. Shared routing follows #164's GPT-6 Astra/Opus labels, with independent Sol QA. |
+| 01-04, shared foundations | #164 freezes format 3, completes authorized storage prerequisites and establishes shared format, inventory and snapshot foundations. | Verify frozen equivalence, atomic initialization and the approved orphan path. |
+| 05, A. Paging and reads | 10-14 files move tuple paging and remove template metadata, filters and origins. | Check 500-row continuation, timestamps, owners/errors; update doc 07, clients and upgrade notes. |
+| 06, B. Authority removal | 16-24 files disconnect composition, hooks, credentials and finalization wrapping; make loading draft-only. | Check ordinary scripts, admission and lifecycle; add ADR and doc 11. |
+| 07, C1. Implementation/review deletion | About 20-28 files remove services, entries and tests after loader changes. | Check imports/build and retained behavior; update packaging and doc 08. |
+| 08, C2. QA deletion | About 18-24 files remove QA services, entries and tests. | Check absence of privileged effects and truthful worksheet limits. |
+| 09, D. Contracts, APIs and store | About 26-40 files, matching #164, remove configured contracts, routes and store; include four reduced manifests and prepare 0012. | Check old bodies, filters, scopes and fresh schema; update doc 07, generated references and CHANGELOG. |
+| 10, E. Assets, gallery and docs | About 25-35 files retain post-#151 assets, remove origins and edit #160's same gallery files and tests. | Preserve Use-only behavior; test copies and graphs; update doc 09, guides, ADR links and packaging. Do not close #158-#161. |
+| 11, F. Legacy examples | 37 deletions and at most two active reference edits. | Verify live-reference/distribution absence; preserve Git/history reports. |
+| 26-28, shared cutover | #164 owns rules, devices, SQL and rehearsal; #165 contributes about 6-12 rule and fixture files. | Prove archive, replay and restore; finalize docs. #164 routing uses GPT-6 Astra and Opus with independent Sol QA. |
 
-Reorder B through E only to keep consumers and remaining types compiling. Catalogue closure imports must disappear before support modules, and paging must move before the template transaction facade. No intermediate deployment, format marker or migration is allowed. After #165, #164 completes decisions and the chosen exits, then #168 completes triggers, then the shared cutover qualifies the final branch.
+Use #164 technical section 6's single sequence. Steps 05-11 are #165; 12-13 are decisions; the selected exit design follows (14 for option 1, 15-16 for option 2, 17-19 for option 3). #168 steps 20-25 follow exits without exception; 26-28 finish conversion, devices and the cutover. Split oversized children coherently without changing that dependency order. No intermediate deployment, marker or migration is allowed.
 
 Update docs 07-09 and 11 for routes, triggers, editor behavior and security posture. Supersede ADR-0027 and ADR-0028 with the new ADR and cross-link 0030. Guides 09-12 explain actual effects and ordinary configuration; guide 08 documents manifest, offline archive and restore. Update packaging checks, generated API and node references and clients, guide index and CHANGELOG upgrade notes for removed fields, endpoints, exports and device drafts. Final generation runs after peer changes. Prior release entries remain factual.
 
@@ -315,7 +316,7 @@ After implementation approval, test every touched system on disposable stores an
 | Paging and history | Check empty, full and multiple pages, equal timestamps, every ordinary filter, insertion between pages, 500 plus lookahead and final null cursor. Compare ID sets. Reject malformed cursors, obsolete filters and foreign owners. Live history works without template SQL; retired IDs locate offline and return 404 live. |
 | Generic runtime | Check ordinary script, manual, event, schedule, poll, webhook and subloop behavior, cancellation, pause and resume, returns and finalization. Reject stale intents, duplicate keys, invalid stored events and missing targets. Inject storage/transaction failures. No private support or report path is called. |
 | Retained graphs | Run actual packaged graphs with inert harnesses through useful, blocked, malformed-output, retry and ceiling cases. Check separate sessions and explicit policy failures without fallback. Assert no automatic GitHub effects. Owner later judges usefulness on safe task context. |
-| Migration and state | Cover ordinary copies, original and edited Starter, configured workers, multiple versions, subjects, journals and snapshots. Refuse stale hashes, forged or missing evidence, orphans, crossing dependencies, active writers, pending receipts and unresolved surviving finalization. Test the proposed terminal retirement exception separately, if adopted. |
+| Migration and state | Cover ordinary copies, edited Starter, workers, versions, journals and snapshots. Refuse stale hashes, missing evidence, orphans, crossing dependencies, active state, pending receipts/intents, unfinished notifications/timers and finalization. Test only-private-report retirement with approved reason/evidence; other unfinished work refuses. |
 | SQL and recovery | Prove archive-before-DROP, exact approved row sets, removal of six indexes/table/column, and preserved generic columns, indexes and consumption. Inject failures around archival, SQL, transformations and marker; rollback restores all DB state. New recovery runs no retired intent/helper. |
 | Evidence and replay | Recover original IDs, patches, snapshots, attempts, signed bytes and worktree evidence. Compare transformed full/checkpoint/tail replay. Missing facts, config-hash conflicts, alias collisions and archive-count mismatches refuse. Verify private recovery instructions without exposing keys. |
 | Debt safeguards | Prove ordinary markFinalized behavior, zero template preflight, atomic fresh schema and marker, final Drizzle generation with no change, and uncached qualifying checks. Do not claim #118, #152 or #127 implementation without authorization. |
@@ -343,11 +344,11 @@ D4 (#152) and D5 (#118) are shared cutover dependencies, not silently expanded #
 
 ### Peer plan and exit seams
 
-Section 4 adopts #164's manifest, numbering, freeze and transaction order, and #168's pending-state refusal and surviving consumption rules. The terminal private-finalizer exception remains a peer amendment, not agreed behavior. Without joint adoption, resolve those reports first. #168's repeat-body policy remains its owner's choice and grants no template authority.
+The authoritative joint pending-state rule is #164 technical section 4, as resolved by review F2/F6; section 4 here applies it. Refuse active runs, pending receipts or frozen intents, unfinished notifications or timers and terminal finalization. Only a retired run's private report qualifies for exact per-run owner-approved archival with reason and evidence. Conversion never abandons, drains or executes work.
 
-The #167 input reports 40 passing engine scenarios with fakes and an Opus "post with changes" review. It identifies real differences in iteration, exhaustion, duration, lastOutput and evidence. Its recommendation is being revised to keep for now with medium confidence. The first #164 draft's two exit alternatives do not resolve the new middle option: if the owner selects a continuation node, #164 must specify its budget, visit/iteration split, exhausted routing, recovery and migration before final approval. Keeping now and replacing later costs another data cutover. Do not silently choose an option in retained template assets.
+#167 recommends option 3, medium confidence, and #164 agrees. A is option 1 (keep loop-back), B is option 2 (ordinary edges), C is option 3 (Continue). Continue owns maxPasses with repeat and exhausted routes; maxNodeVisits separately limits cumulative visits. Both seed from old maxIterations. One Continue per loop is a design limit for owner review. The 40 peer scenarios used engine fakes, not new tests here. #164's estimate includes exits; owner approval gates the branch.
 
-Shared files include contract entrypoint, loop and node schemas; domain conversion and history; SQLite repositories, schema and migration metadata; API composition, routes and polling; retained assets, clients and docs. #164 owns format and device conversion, #168 owns triggers and receipts, and #165 owns retirement. Follow section 6 and verify the integrated head.
+Use #164's exact hashAlgorithm envelope and resolutions.{decisions,exits,templates,triggers}; keep historyResolutions, retirements and failedRuns at the root. Follow steps 01-28, with option 3 at 17-19 and #168 at 20-25. Shared contracts, history, storage, API, assets, clients and docs need integrated-head verification. Keep post-#151 assets and #160's Use-only gallery; E touches the same files, and #165 does not close the merged #158-#161 fixes' issues.
 
 ## 9. Risks and gap analysis
 
@@ -366,9 +367,9 @@ Real data volume and unresolved effects are unknown. No owner database or rehear
 | Paging, history, catalogue and copies work, including failures | Sections 3 and 7 cover tuple paging, lookahead, owner scoping, strict errors, retained replay and installed/browser checks. The retired-history limitation is explicit. |
 | Stored/active/pending state has disposition and preserved evidence without duplicate effects | Section 4 binds exact archive/retirement/projection rules and refusal order. Section 7 proves backup, atomic apply, no-effect recovery, rollback and restore. |
 | Any retained automation proves equivalent safeguards; unavailable QA is not claimed verified | No privileged automation is retained. Section 5 identifies every deleted effect and actual plain behavior. Independent QA checks absence, not imaginary equivalence. |
-| Follow-ups, owner retests, ADR, docs, packaging, generated artifacts and gates are reconciled | Sections 5-8 provide dispositions and code, owner-only closure, child/docs work, unchanged gates and debt/peer reconciliation. #134 stays narrowed; #32 automation is separate; final cutover waits for #167 and agreed exceptions. |
+| Follow-ups, owner retests, docs and gates are reconciled | Sections 5-8 cover dispositions, owner-only closure, docs and QA. #134 narrows; #32 automation retires separately. #158-#161 stay open for retest. Final cutover requires #167 approval and the joint state rule's exact dispositions. |
 
-For review, post the summary and this technical plan as consecutive comments, summary first. This task only writes the files. The orchestrator checks the history choice, terminal exception, parked prerequisite decisions, proposed manifest namespaces, final SQL/snapshot parity and buildable child splits before implementation admission.
+Post summary then technical plan for owner review; this task writes files only. Check history choice, per-run dispositions, parked prerequisites, exact #164 manifest/sequence and final SQL/snapshot parity before implementation.
 
 
 

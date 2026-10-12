@@ -10,23 +10,23 @@ A webhook can receive a normal POST from any sender without requiring a signatur
 
 Payload checks move out of triggers. The GitHub recipe adds a decision that checks the signed repository and event body, continues on a match, and otherwise finishes quietly. Classifier decisions and script nodes can also do this work. A decision changes the latest output, so the recipe restores the trigger output before continuing into an existing graph.
 
-Webhook and event deliveries use the same durable admission path. Saving an event also saves its intended recipients, so a crash cannot leave a consumed event with missing work. Recovery reuses the saved run identities. A shared contract test runs against both the in-memory fake and SQLite.
+Every webhook uses the existing durable receipt path. Saving a delivery also saves its run intent, so a crash cannot consume a delivery and lose its work. Recovery reuses the saved run identity. One admission contract test runs against both the in-memory fake and SQLite. Event fan-out reliability remains a separate backlog proposal.
 
 Existing webhook addresses, owner-scoped signing secrets, consumed receipts, polling dedupe and cron catch-up remain. Both existing poll modes remain because whole-probe and per-item payloads serve different purposes. Poll credentials, pagination, cursors, backfill and rate-limit policy remain outside this issue.
 
 ## Decisions for the owner
 
-**Question 5: allow identical bodies, or consume them permanently?**
+**Question 5: May identical authenticated bodies start new runs?**
 
-I recommend allowing identical bodies for newly configured webhooks. A sender that legitimately repeats content can start another run, unless its configured business key makes that delivery a duplicate; timestamp checks still apply. An unkeyed retry after a lost acknowledgement can also start another run.
+I recommend allowing them, uniformly for every webhook. A sender that legitimately repeats a body can start another run unless its configured business key is already consumed; existing signature and timestamp checks still apply. An unkeyed retry after a lost acknowledgement can also start another run.
 
-The alternative is to consume each exact body permanently. A sender that legitimately repeats the same content starts only one run, even after publishing a new loop version or changing the downstream decision. This prevents repeated content from starting work, but also prevents intentional reprocessing of those bytes.
+The alternative is permanent consumption of each exact body, uniformly for every webhook. A sender that legitimately repeats content starts only one run for that trigger, even after publishing a new version or changing its downstream decision. Identical intentional repeats would need different bytes or a later, separately approved reprocessing feature.
 
-Under either choice, existing consumed bodies and keys stay consumed. Existing body-signed configurations retain their current policy; choosing Allow later does not erase old receipts. Reopening that historical consumption would require a separate reviewed operation.
+The chosen behavior is fixed in the current implementation, with no per-webhook policy switch. Old receipts and keys remain factual history. Allow removes raw-body suppression for future deliveries, including a body seen before the upgrade; configured business keys still consult preserved claims. Permanent consumption consults all preserved raw-body claims.
 
 **Approve the change caused by moving filters.** A formerly ignored delivery will create a run that immediately finishes, and a bad decision expression will fail that run after acknowledgement. Event keys may be consumed before the downstream check. Each stored filter therefore needs a reviewed graph conversion or an explicit replacement; the converter will not silently discard it.
 
-**Decide #167 before the shared cutover.** Its revised recommendation is to keep exit loop-back for now, with medium confidence. If the owner prefers the middle option, where a continuation node owns the iteration budget, decide it now and include it in format 4; choosing it later would require another stored-data cutover. #168 can use either approved terminal exit shape and adds no loop-back to its quiet finish.
+**Decide #167 before the shared cutover.** The posted recommendation is option 3 (variant C), with medium confidence, and #164 agrees. Decisions own policy, a Continue node owns `maxPasses`, and terminal exits declare outcomes and returns. The pass budget and separate cumulative node safety cap both start from the old `maxIterations`. Choosing this later would require another stored-data cutover. #168's quiet finish uses the approved terminal exit and needs no Continue node.
 
 **Resolve the shared cutover prerequisites.** I recommend unparking #152 so fresh initialization commits its schema and format marker together; alternatively, explicitly approve that scoped fix inside #164. For a store with orphan runs, unpark #118 and repair existing provenance before cutover, or approve exact orphan resolutions in #164's inventory. Missing definitions cannot be guessed. These issues are parked today, so this plan does not assume either is authorized or fixed.
 
@@ -34,31 +34,31 @@ Under either choice, existing consumed bodies and keys stay consumed. Existing b
 
 ## Effort and confidence
 
-Allow 14-20 worker days for implementation, independent QA and review fixes, plus 2-3 days of participation in the shared cutover rehearsal. Owner and reviewer turnaround, and the other issues' implementation, are additional. Confidence is high for the editor and existing protocols, and medium for event fan-out recovery and stored-data conversion.
+Allow 16-23 worker days, including implementation, independent QA, review fixes and participation in the shared rehearsal. With option 3, the programme total is about 34-51 worker days: #164 takes 12-19, #165 takes 6-9, and #168 takes 16-23. It grew from #164's initial 3-5 day estimate because the programme now includes coordinated contracts, runtime and editor changes, retirement, reviewed conversion, QA and a real-copy rehearsal. Feedback turnaround is additional. Confidence is high for the editor and existing protocols, and medium for receipt recovery and stored-data conversion.
 
 ## Child PRs, in order
 
-The shared order is #165 removal, #164 decisions and approved exits, #168 children, then one cutover into `feat/format-4-integration`.
+These children follow #164's single integration sequence, after its decisions and approved exits. There is no earlier presentation exception. Every child targets `feat/format-4-integration`.
 
-1. T1 puts the type selector first, makes presets optional, and prepares current test fixtures.
-2. T2 makes GitHub an editable downstream decision graph with a preview and one-step undo.
-3. T3 replaces `subtype` with `type` throughout the current contract and clients.
-4. T4 adds general body decoding, event extraction and one durable admission path for every webhook and event, with 202 once saved.
-5. T5 adds the approved repeat policy and explains duplicates and recovery in Events.
-6. T6 removes the remaining trigger filters, completes reviewed conversion rules and verifies the poll bounds.
-7. The shared cutover applies the single #164 manifest and SQL set, then rehearses on supplied offline copies.
+1. Step 20, T1 puts the type selector first, makes presets optional, and prepares current fixtures.
+2. Step 21, T2 makes GitHub an editable downstream decision graph with a preview and one-step undo.
+3. Step 22, T3 replaces `subtype` with `type` throughout the current contract and clients.
+4. Step 23, T4 adds general decoding, event extraction and atomic webhook receipt admission, with 202 once saved.
+5. Step 24, T5 implements the owner's one repeat decision and one business-key behavior, and explains recovery in Events.
+6. Step 25, T6 removes the remaining trigger filters, completes reviewed conversion rules and verifies existing poll behavior.
+7. Steps 26-28 compose the manifest, preserve device data and perform #164's one shared cutover rehearsal.
 
 Each child gets independent Claude Opus 5.5 review, separate GPT-6.1 Sol QA, and owner review of a running disposable product. No intermediate integration store is an upgrade target. Nothing ships until the integration branch merges to main.
 
 ## Main risks
 
-Allow cannot distinguish an unkeyed retry from a deliberate repeat. Permanent consumption can suppress legitimate repeated events. Moving filters changes visible runs and errors, even when routing is equivalent. Event fan-out must preserve every selected recipient through crashes, and the converter must preserve actual history rather than inventing missing admissions.
+Allow cannot distinguish an unkeyed retry from a deliberate repeat. Permanent consumption can suppress legitimate repeated events. Moving filters changes visible runs and errors, even when routing is equivalent. Existing event fan-out has a known crash gap; fixing that is separate work. The converter preserves actual history and never invents missing admissions.
 
-There is one stopped-instance format-3-to-format-4 conversion. Pending deliveries, active runs, unresolved finalization and unsupported provenance block it. The dry run executes the real conversion on a separate copy. The owner's instance, port 4747 and `~/.graphgoblin` remain untouched during this work.
+There is one stopped-instance format-3-to-format-4 conversion. #164's joint pending-state rule refuses active runs, pending receipts or intents, notifications, timers and unfinished finalization; the old build settles them first. Its sole exception is an owner-approved per-run archive of a retired template's private report, with reason and evidence preserved. The converter never abandons, drains or executes work. The dry run uses a separate copy. The owner's instance, port 4747 and `~/.graphgoblin` remain untouched.
 
 ## Running-product reviews and mock-ups
 
-T1 first shows the Manual, Cron and Poll layouts below. It also shows the primary Event and Webhook choices. T4 adds the general Webhook controls, T5 adds repetition controls, and T6 first shows the complete Event and Webhook layouts without trigger filters. T2 first shows the GitHub graph preview; T6 shows its complete final form. T3 gives the owner saved and exported configuration to inspect. Each later child also demonstrates real deliveries and the resulting Events entries.
+T1 first shows the Manual, Cron and Poll layouts below and the primary Event and Webhook choices. T4 adds general Webhook controls. T5 demonstrates the fixed repeat behavior rather than adding a policy selector. T6 first shows the complete Event and Webhook layouts without trigger filters. T2 first shows the GitHub graph preview; T6 shows its complete final form. T3 gives the owner saved and exported configuration to inspect. Later children demonstrate real deliveries and Events entries.
 
 Manual: first shown in T1.
 
@@ -85,7 +85,7 @@ Cron: first shown in T1.
 +------------------------------------------+
 ```
 
-Webhook: general controls in T4, repetition in T5, complete layout in T6.
+Webhook: general controls in T4, repeat demonstrations in T5, complete layout in T6.
 
 ```text
 +-- Webhook -------------------------------+
@@ -99,15 +99,14 @@ Webhook: general controls in T4, repetition in T5, complete layout in T6.
 | Fixed protocol: SHA256, hex, sha256=
 | Timestamp window [300] seconds
 | Body [JSON v / Text / Bytes]
-| Empty JSON [Null v / Reject]
+| JSON must be valid and nonempty.
 | Event type from [Header v]
 | Header [x-service-event] Fallback [webhook]
 | Or constant [webhook] / body path [/type]
-| Repeated body [Allow v / Consume forever]
+| Repeats: one behavior approved for all hooks.
 | Business dedupe [None v / Key]
 | Key expression [JSONata ...]
-| Scope [Trigger: forever v]
-| Or endpoint version: window [300] seconds
+| Keys persist for this trigger across versions.
 | Reply: 202 after saving; work runs later.
 | Payload checks use downstream nodes.
 | > Optional presets [GitHub ...]
@@ -126,7 +125,7 @@ Event: primary layout in T1, complete filter-free layout in T6.
 +------------------------------------------+
 ```
 
-Poll: first shown in T1; T6 verifies failure and byte-bound behavior.
+Poll: first shown in T1; T6 verifies existing validation and failure behavior.
 
 ```text
 +-- Poll ----------------------------------+
@@ -155,7 +154,7 @@ GitHub: graph preview in T2, complete final recipe in T6.
 | Pull request recipes: base branch [main]
 | Preview: body HMAC, JSON, x-github-event
 | Business key: x-github-delivery
-| Repeat policy: the approved default
+| Repeats follow the one approved behavior.
 | hook -> check --pass--> restore -> work
 |               --ignore--> quiet finish
 | Expression [full editable expression ...]
@@ -167,4 +166,4 @@ GitHub: graph preview in T2, complete final recipe in T6.
 +------------------------------------------+
 ```
 
-T4 and T5 will demonstrate saved-but-pending deliveries, retries and multi-recipient events. The cutover review shows preserved addresses and consumption, converted downstream checks, and existing run history on supplied copies. The technical comment specifies the #163 debt dispositions, #164 manifest entries and reserved SQL numbering.
+T4 and T5 demonstrate saved-but-pending webhooks, retries and legitimate repeats. The cutover review shows preserved addresses, receipt and key history, converted downstream checks and existing runs on supplied copies. The technical comment records the #163 debt dispositions, #164 manifest entries and SQL numbering.

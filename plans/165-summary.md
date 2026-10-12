@@ -4,7 +4,7 @@ This proposal follows the owner's October 9 decision to retire template automati
 
 ## What changes and what stays
 
-The gallery keeps Starter, implementation, review and QA. Each "Use template" action still creates a new, independent draft and opens the ordinary editor. You can change its nodes, instructions, models, working directory and limits, then publish and run it. Editing one copy does not change another copy or the installed template.
+Keep the post-PR #151 versions of Starter, implementation, review and QA. PR #151 merged on October 10, including #158-#161 and #160's gallery with only "Use <name>". Each action creates an independent draft in the ordinary editor. You can change nodes, instructions, models, directories and limits. Editing one copy leaves other copies and installed assets unchanged. Those issues remain open for your re-test and closure; #165 does not close them.
 
 Template settings, configured instances and their private automation are removed. The retained implementation loop can plan, change accessible source and assess verification. The review loop can review and request bounded fixes. The QA loop can assess evidence and challenge the assessment. They do not automatically claim issues, create worktrees, push branches, open or merge pull requests, publish authenticated proof, reopen issues or change labels. Their output does not establish an enforced isolation boundary. Any GitHub work you want must be configured explicitly through ordinary nodes in your copy.
 
@@ -22,9 +22,9 @@ The listed follow-ups are reconciled by retiring their affected runtime: #131, #
 
 Under either choice, keep the evidence indefinitely for now. This plan does not delete physical worktrees, journals, branches or artifacts, or rotate credentials. You approve the actual per-instance data dispositions later, after seeing the inventory. Approving this architecture does not approve an unseen data manifest.
 
-### 2. Terminal automation whose old reporting is unfinished
+### 2. Approve exact archived private-report dispositions
 
-**Recommendation: allow an explicitly approved archive disposition for terminal template runs whose private reporter did not finish.** All processes must have stopped, and the manifest must name the complete retired execution and its unresolved effects. The archive preserves uncertainty; it does not claim a comment, merge or return happened. This is a narrow exception that #164 and #168 must adopt together. If it is rejected, those records must be reconciled under the old build before the cutover, which may require repairing the old reporting path. Ordinary unfinished returns, active runs and every pending delivery still block conversion under either choice.
+The joint rule owned by #164 refuses active runs, pending receipts or frozen admission intents, unfinished child notifications or timers, and unfinished terminal finalization. The old build settles them first; conversion never abandons, drains or executes them. The sole exception is a retired terminal template run whose only unfinished item is its private report. You must approve an exact per-run manifest disposition with a recorded reason and preserved evidence. This exception is settled across the plans; it does not permit unresolved returns, pushes, merges or other work to be archived as completed.
 
 ### 3. Parked storage prerequisites
 
@@ -34,23 +34,27 @@ The alternative for #118 is to keep it parked and have the cutover inventory req
 
 ### 4. Settle #167 before the format-4 data upgrade
 
-**Recommendation from the supplied research: keep exit loop-back for now, with medium confidence.** The owner has not decided. If you prefer the middle option, where decisions choose whether to continue and a continuation node owns the iteration budget, decide now and include it in format 4. Choosing it later would require another stored-data cutover. Its extra implementation effort belongs to #164 and must be estimated in that revised plan. #165 can proceed with approved removal work, but the final upgrade and retained retry graphs wait for this decision.
+**Recommend option 3 (variant C), with medium confidence, as #167 recommends and #164 agrees.** Decisions choose policy, a Continue node owns `maxPasses` with repeat and exhausted connections, and terminal exits declare outcomes and returns. A separate cumulative per-node safety cap is initially seeded from the same old `maxIterations`. A possible one-Continue-per-loop limit is a design limit for your review, not settled policy. Choosing the design now includes it in the single format-4 cutover; choosing it later requires another cutover. The owner decision still gates exits and the final upgrade. #164's current estimate includes this work.
 
 ## Effort and confidence
 
-The base removal is estimated at **5-7 worker days**, plus **1-2 worker days of #165 participation** in the shared converter and rehearsal. This excludes #164, #168, optional live-history work and owner review time. Confidence is high in the removal boundaries and medium in data effort, because this planning session has not inventoried the owner's store. The debt register is under review; its relevant findings are incorporated without presenting its reported reproductions as new tests performed here.
+The #165 estimate is **6-9 worker days**: 5-7 for removal and 1-2 for shared conversion and rehearsal. The programme total with option 3 is **34-51 worker days**: #164 12-19, #165 6-9 and #168 16-23, excluding owner turnaround and optional live-history work. It grew from #164's original 3-5-day estimate because it now includes Continue semantics, cross-system history and device conversion, storage safeguards, and reviewed rehearsal rather than only decision authoring. Confidence is high in removal boundaries and medium in unseen data effort. Peer tests are not claimed as new tests here.
 
 ## Child PRs, in order
 
-1. **Shared prerequisite:** #164 freezes the current format-3 schemas and conversion semantics before any source contracts are removed.
-2. **A:** Move ordinary run paging and remove template-specific read metadata and filters.
-3. **B:** Disconnect private runtime authority, credential dispatch and finalization wrappers.
-4. **C1:** Remove implementation and review support services, entries and dependent tests.
-5. **C2:** Remove QA support services, entries and dependent tests.
-6. **D:** Remove settings and instance contracts, APIs and storage code; prepare migration `0012_retire_template_instances`.
-7. **E:** Package only the ordinary starting-point assets and finish editor, guide and catalogue changes.
-8. **F:** Delete the legacy `examples/aidlc` files and active references.
-9. **Shared follow-through:** #164 completes decisions and the owner-selected exits; #168 completes triggers; the final PR combines inventory, approved conversion, SQL, rehearsal and restore evidence.
+Use the step numbers in #164's single integration sequence, section 6 of its technical plan:
+
+- **Steps 01-04:** Freeze format 3, complete authorized storage prerequisites, and establish shared format, inventory and snapshot foundations.
+- **Step 05, A:** Move ordinary paging and remove template read metadata and filters.
+- **Step 06, B:** Disconnect authority, credential dispatch and finalization wrappers; make loading draft-only.
+- **Step 07, C1:** Remove implementation and review support services and tests.
+- **Step 08, C2:** Remove QA support services and tests.
+- **Step 09, D:** Remove configured contracts, APIs and storage; include four reduced manifests and prepare 0012, in about 26-40 files.
+- **Step 10, E:** Keep ordinary assets and finish editor, gallery and guides, editing the same gallery files changed by #160.
+- **Step 11, F:** Delete legacy examples and active references.
+- **Steps 12-19:** #164 completes decisions (steps 12-13), then the selected exit design: step 14 for option 1, steps 15-16 for option 2, or steps 17-19 for option 3.
+- **Steps 20-25:** #168's trigger children follow the exits portion, without exception.
+- **Steps 26-28:** Compose the exact converter, finish device preservation, then qualify SQL, rehearsal and restore in the shared cutover.
 
 All children target `feat/format-4-integration`. None is installed independently. The agreed reservations are `0012_retire_template_instances`, `0013_trigger_configuration` and `0014_format_four_cutover` only if additional metadata tables are needed. #164 owns the numbering, manifest and one offline transaction. Type-dependent child boundaries can move to keep each PR compiling and under about 40 changed files.
 
