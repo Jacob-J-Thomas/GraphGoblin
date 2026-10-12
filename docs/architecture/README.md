@@ -304,14 +304,34 @@ sequenceDiagram
   TS->>TS: endpoint by token, rate limit, verify HMAC on raw bytes, filter + dedupe expressions
   alt hmac-sha256-body
     TS->>RM: receiveWebhook (run-manager.ts:461)
-    RM->>AD: claim: inbound row + receipt + recoverable intent (admission.ts:194)
-    RM->>AD: create: run + run.queued + receipt link in one transaction (admission.ts:77)
-    AD-->>RM: admitted / filtered / duplicate / pending / failed
+    RM->>AD: claim: inbound row + receipt (+ recoverable intent unless filtered) (run-manager.ts:488, admission.ts:194)
+    alt duplicate or deduplicated receipt
+      AD-->>RM: existing receipt, no run (run-manager.ts:489, :490)
+      TS-->>S: 409 REPLAYED / DUPLICATE_KEY
+    else filtered
+      AD-->>RM: filtered receipt, no run (run-manager.ts:491)
+      TS-->>S: 202 filtered
+    else new and passing
+      RM->>AD: create: run + run.queued + receipt link in one transaction (admission.ts:77)
+      alt committed
+        AD-->>RM: admitted run
+        TS-->>S: 202 with runId
+      else create failed
+        AD-->>RM: pending (retried) or failed receipt
+        TS-->>S: 503 WEBHOOK_ADMISSION_RETRY / failure code
+      end
+    end
   else hmac-sha256 (timestamp)
     TS->>TS: insertUnlessDuplicate inbound event
-    TS->>RM: startRun, then setRunIds (not one transaction)
+    alt duplicate inside replay window
+      TS-->>S: 409 REPLAYED
+    else filtered
+      TS-->>S: 202 filtered, no run
+    else passes
+      TS->>RM: startRun, then setRunIds (not one transaction)
+      TS-->>S: 202 with runId
+    end
   end
-  TS-->>S: 202, or 409 / 503 problem
 ```
 
 - **Arming**: publishing a version calls `TriggerService.armVersion`, which replaces schedules and webhook endpoints for that version and disables earlier ones (`apps/api/src/routes/loops.ts:350`, `apps/api/src/triggers/trigger-service.ts:173`). Startup re-arms every published loop (`apps/api/src/triggers/trigger-service.ts:221`).
@@ -340,23 +360,35 @@ sequenceDiagram
   API->>API: publishIssues -> validateLoop (domain graph.ts:79)
   API->>LR: publish (loops.ts:197)
   API->>TS: armVersion (trigger-service.ts:173)
-  Note over TS: later: cron fire, webhook, event or poll
-  TS->>RM: startRun / receiveWebhook
-  W->>API: POST /loops/:id/runs (manual start)
-  API->>RM: startRun
-  RM->>AD: claim receipt first (body-signed webhooks only, admission.ts:194)
+  alt triggered start
+    Note over TS: later: cron fire, webhook, event or poll
+    TS->>RM: startRun, or receiveWebhook (body-signed)
+    RM->>AD: claim receipt first (body-signed webhooks only, admission.ts:194)
+  else manual start
+    W->>API: POST /loops/:id/runs
+    API->>RM: startRun
+  end
   RM->>AD: create: run + run.queued + receipt link atomically (admission.ts:77)
   RM->>RM: execute (run-manager.ts:1153): load thread, run.started
-  loop each node
+  loop each node until park or exit
     RM->>ES: node.started
     RM->>H: handler[kind] (run-manager.ts:1353)
-    H-->>RM: route / park / loop-back / finish + patch + evidence
-    RM->>ES: node.finished (+ decision.made, exit.evaluated, harness.*)
-    RM->>RR: saveThread checkpoint (run-manager.ts:1412)
+    H-->>RM: result + patch + evidence, or a failure
+    alt failure or invalid patch
+      RM->>RM: failRun: run.failed, status failed; executor returns
+    else done or loop-back
+      RM->>ES: node.finished (+ iteration.incremented on loop-back; decision.made, harness.* as recorded)
+      RM->>RR: saveThread checkpoint, follow edge
+    else park
+      RM->>ES: run.waiting (run-manager.ts:1409)
+      RM->>RR: saveThread checkpoint, transition running -> waiting; executor returns
+    else exit
+      RM->>ES: exit node.finished + run.finished in one append (run-manager.ts:1453, :1457)
+      RM->>RR: saveThread checkpoint
+      RM->>RR: terminal status transition (run-manager.ts:1560)
+      RM->>RM: finalize: timers, returns (at least once), parent, finalized_at
+    end
   end
-  RM->>ES: exit node.finished + run.finished in one append (run-manager.ts:1457)
-  RM->>RR: terminal status transition (run-manager.ts:1559)
-  RM->>RM: finalize: returns (at least once), parent, timers, finalized_at
   Note over RM: on restart: container.start -> RunManager.start -> recover (run-manager.ts:979)
 ```
 
