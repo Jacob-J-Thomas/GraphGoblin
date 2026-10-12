@@ -1,5 +1,7 @@
 # 02 - Architecture
 
+For a source-referenced snapshot of the code as it stands at `c379f80`, including its technical debt, see [architecture/README.md](architecture/README.md) and [architecture/debt-register.md](architecture/debt-register.md).
+
 ## Stack (Decided)
 
 | Layer                | Choice                                                                                                                 | Notes                                                                                      |
