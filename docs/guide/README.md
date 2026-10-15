@@ -28,8 +28,8 @@ The context thread holds messages, variables, artifacts, per-node outputs, and u
 7. [Troubleshoot](07-troubleshooting.md)
 8. [Upgrade stored loops to format 3](08-offline-upgrade.md)
 9. [Start from a template](09-templates.md)
-10. [Use the GitHub issue implementation template](10-implementation-template.md)
-11. [Use the GitHub pull-request review template](11-review-template.md)
-12. [Use the post-merge QA template](12-qa-template.md)
+10. [Start an implementation workflow](10-implementation-template.md)
+11. [Start a review workflow](11-review-template.md)
+12. [Start a QA assessment workflow](12-qa-template.md)
 
 This guide describes the current implementation. Callouts starting "After 1.0" mark planned features that this release does not have. For design context, read [Vision and scope](../01-vision-and-scope.md), [Architecture](../02-architecture.md), and the [Implementation plan](../12-implementation-plan.md).

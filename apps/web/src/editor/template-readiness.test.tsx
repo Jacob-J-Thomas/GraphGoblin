@@ -11,7 +11,7 @@ it('opens a QA starting point without an instance lookup or configured-parent wa
   api.templates = [qaTemplateEntry()];
   renderApp('/loops', api);
   await user.click(await screen.findByRole('button', { name: 'New from template' }));
-  await user.click(screen.getByRole('button', { name: 'Use Post-merge QA' }));
+  await user.click(screen.getByRole('button', { name: 'Use QA assessment' }));
   expect(await screen.findByText('Ready to publish')).toBeVisible();
   expect(api.callsTo('GET', /template-instances/)).toHaveLength(0);
   expect(screen.queryByText('QA execution is blocked')).toBeNull();

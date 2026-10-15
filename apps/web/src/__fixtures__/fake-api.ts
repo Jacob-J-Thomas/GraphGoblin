@@ -115,237 +115,67 @@ export function customClassifier(
   };
 }
 
-/** A current-contract, non-GitHub starter entry for gallery tests. */
+/** An independent starting point using the current manifest contract. */
 export function starterTemplateEntry(): TemplateCatalogEntry {
   return TemplateCatalogEntrySchema.parse({
     manifest: {
       id: 'quick-start',
-      version: '1.0.0',
-      kind: 'starter',
+      version: '2.0.0',
       title: 'Quick start',
       description: 'A small loop to try the editor and a first run.',
       tags: ['starter', 'beginner'],
-      roles: [{ id: 'assistant', label: 'Assistant', access: 'read-only' }],
-      prerequisites: [],
-      requiredSecrets: [],
-      parentKey: 'starter',
       draftFile: 'draft.json',
-      loops: [
-        {
-          key: 'starter',
-          file: 'starter.json',
-          dependsOn: [],
-          roleNodes: [],
-          settingsNodes: [],
-          subloops: [],
-        },
-      ],
     },
   });
 }
 
-/** A current-contract repository template with no prefilled checkout identity or role model. */
+/** An independent starting point using the current manifest contract. */
 export function implementationTemplateEntry(): TemplateCatalogEntry {
   return TemplateCatalogEntrySchema.parse({
     manifest: {
       id: 'implementation-workflow',
-      version: '1.0.0',
-      kind: 'implementation',
+      version: '2.0.0',
       title: 'Implementation workflow',
-      description: 'Plan and complete bounded repository work.',
+      description:
+        'Plan a supplied task, implement a focused change and assess verification with a bounded repair loop of ordinary nodes. No commits, pushes, pull requests or labels.',
       tags: ['implementation', 'repository'],
-      roles: [{ id: 'implementer', label: 'Implementer', access: 'write' }],
-      prerequisites: [
-        { id: 'repository', label: 'Repository', kind: 'repository', blocking: 'authoring' },
-        { id: 'github', label: 'GitHub', kind: 'github', blocking: 'authoring' },
-        {
-          id: 'support-key',
-          label: 'Revocable runs:read support key',
-          kind: 'secret',
-          blocking: 'authoring',
-          secretKey: 'supportReadKey',
-        },
-        {
-          id: 'implementer-model',
-          label: 'Implementer model',
-          kind: 'role',
-          blocking: 'authoring',
-          role: 'implementer',
-        },
-        {
-          id: 'support',
-          label: 'Verified packaged support entry',
-          kind: 'support',
-          blocking: 'authoring',
-        },
-      ],
-      requiredSecrets: [{ key: 'supportReadKey', scopes: ['runs:read'] }],
-      parentKey: 'parent',
       draftFile: 'draft.json',
-      loops: [
-        {
-          key: 'worker',
-          file: 'worker.json',
-          dependsOn: [],
-          roleNodes: [],
-          settingsNodes: [],
-          subloops: [],
-        },
-        {
-          key: 'parent',
-          file: 'parent.json',
-          dependsOn: ['worker'],
-          roleNodes: [],
-          settingsNodes: [],
-          subloops: [],
-        },
-      ],
     },
   });
 }
 
-/** A current-contract review template with explicit review and fixer roles. */
+/** An independent starting point using the current manifest contract. */
 export function reviewTemplateEntry(): TemplateCatalogEntry {
   return TemplateCatalogEntrySchema.parse({
     manifest: {
       id: 'review',
-      version: '1.0.0',
-      kind: 'review',
-      title: 'GitHub PR review',
+      version: '2.0.0',
+      title: 'Review workflow',
       description:
-        'Review trusted pull request heads with separate fresh reviewer and fixer sessions.',
-      tags: ['github', 'review', 'human'],
-      roles: [
-        { id: 'reviewer', label: 'Reviewer', access: 'read-only' },
-        { id: 'fixer', label: 'Fixer', access: 'write' },
-      ],
-      prerequisites: [
-        {
-          id: 'reviewer-model',
-          label: 'Reviewer model',
-          kind: 'role',
-          blocking: 'authoring',
-          role: 'reviewer',
-        },
-        {
-          id: 'fixer-model',
-          label: 'Fixer model',
-          kind: 'role',
-          blocking: 'authoring',
-          role: 'fixer',
-        },
-        { id: 'repository', label: 'Repository', kind: 'repository', blocking: 'authoring' },
-        { id: 'github', label: 'GitHub', kind: 'github', blocking: 'authoring' },
-        {
-          id: 'support-key',
-          label: 'Revocable runs:read support key',
-          kind: 'secret',
-          blocking: 'authoring',
-          secretKey: 'supportReadKey',
-        },
-        {
-          id: 'support',
-          label: 'Verified packaged support entry',
-          kind: 'support',
-          blocking: 'authoring',
-        },
-      ],
-      requiredSecrets: [{ key: 'supportReadKey', scopes: ['runs:read'] }],
-      parentKey: 'parent',
+        'Review a supplied change with separate fresh reviewer and fixer turns, then review again within a bounded cycle of ordinary nodes. No pushes, GitHub approvals, labels or merges.',
+      tags: ['review', 'fixes'],
       draftFile: 'draft.json',
-      loops: [
-        {
-          key: 'parent',
-          file: 'parent.json',
-          dependsOn: [],
-          roleNodes: [],
-          settingsNodes: ['settings'],
-          subloops: [],
-        },
-      ],
-      supportEntry: 'dist/templates/github/review-entry.js',
     },
   });
 }
 
-/** A current-contract QA template: authoring is allowed, but run-time isolation is unavailable. */
+/** An independent starting point using the current manifest contract. */
 export function qaTemplateEntry(): TemplateCatalogEntry {
   return TemplateCatalogEntrySchema.parse({
     manifest: {
       id: 'qa',
-      version: '1.0.0',
-      kind: 'qa',
-      title: 'Post-merge QA',
-      description: 'Draftable QA recipe with saved proof and bounded rework.',
-      tags: ['github', 'qa', 'proof'],
-      roles: [
-        { id: 'qa', label: 'QA', access: 'write' },
-        { id: 'adversary', label: 'Evidence-only adversary', access: 'read-only' },
-      ],
-      prerequisites: [
-        { id: 'qa-model', label: 'QA model', kind: 'role', blocking: 'authoring', role: 'qa' },
-        {
-          id: 'adversary-model',
-          label: 'Evidence-only adversary model',
-          kind: 'role',
-          blocking: 'authoring',
-          role: 'adversary',
-        },
-        { id: 'repository', label: 'Repository', kind: 'repository', blocking: 'authoring' },
-        { id: 'github', label: 'GitHub', kind: 'github', blocking: 'authoring' },
-        {
-          id: 'support-key',
-          label: 'Revocable runs:read support key',
-          kind: 'secret',
-          blocking: 'authoring',
-          secretKey: 'supportReadKey',
-        },
-        { id: 'support', label: 'QA support entry', kind: 'support', blocking: 'authoring' },
-        {
-          id: 'isolation',
-          label: 'Enforced evidence-only isolation is unavailable',
-          kind: 'isolation',
-          blocking: 'runtime',
-          role: 'adversary',
-        },
-      ],
-      requiredSecrets: [{ key: 'supportReadKey', scopes: ['runs:read'] }],
-      parentKey: 'parent',
+      version: '2.0.0',
+      title: 'QA assessment',
+      description:
+        'Define criteria, assess supplied evidence and challenge the assessment with separate fresh turns in ordinary nodes. No GitHub effects, authenticated proof or enforced evidence isolation.',
+      tags: ['qa', 'evidence', 'adversarial'],
       draftFile: 'draft.json',
-      loops: [
-        {
-          key: 'qa-worker',
-          file: 'qa-worker.json',
-          dependsOn: ['adversary'],
-          roleNodes: [{ role: 'qa', nodeId: 'qa' }],
-          settingsNodes: [],
-          subloops: [{ nodeId: 'adversary-call', loopKey: 'adversary' }],
-        },
-        {
-          key: 'adversary',
-          file: 'adversary.json',
-          dependsOn: [],
-          roleNodes: [{ role: 'adversary', nodeId: 'adversary' }],
-          settingsNodes: [],
-          subloops: [],
-        },
-        {
-          key: 'parent',
-          file: 'parent.json',
-          dependsOn: ['qa-worker'],
-          roleNodes: [],
-          settingsNodes: ['settings'],
-          subloops: [{ nodeId: 'qa-call', loopKey: 'qa-worker' }],
-        },
-      ],
-      supportEntry: 'dist/templates/github/qa-entry.js',
     },
   });
 }
 
 export class FakeApi {
   templates: TemplateCatalogEntry[] = [];
-  /** Static per-template report for focused settings checks; tests may override the route. */
   loops = new Map<
     string,
     {
