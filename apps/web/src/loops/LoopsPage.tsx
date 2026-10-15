@@ -166,7 +166,7 @@ function ImportLoop() {
   );
 }
 
-function LoopActions({ loop }: { loop: LoopRecord }) {
+function LoopActions({ loop, runCount }: { loop: LoopRecord; runCount: number | undefined }) {
   const client = useApi();
   const queryClient = useQueryClient();
   const exportingRef = useRef(false);
@@ -211,14 +211,17 @@ function LoopActions({ loop }: { loop: LoopRecord }) {
           returnFocusTo="loops-heading"
           consequences={
             <p>
-              The loop, all its versions and its triggers will be removed. Loops using it as a
-              subloop will no longer be able to start it.
+              The loop, all its versions, its triggers and all its runs
+              {runCount === undefined ? '' : ` (${runCount})`} will be deleted, including run
+              history and artifacts. Loops using it as a subloop will no longer be able to start it.
+              Cancel active runs first.
             </p>
           }
           onConfirm={async () => {
             await loops.remove(client, loop.id);
             await clearLocalDraft(loop.id);
             await queryClient.invalidateQueries({ queryKey: keys.loops });
+            await queryClient.invalidateQueries({ queryKey: ['runs'] });
           }}
         />
       </div>
@@ -318,7 +321,14 @@ export function LoopsPage() {
                           )}
                         </Td>
                         <Td>
-                          <LoopActions loop={loop} />
+                          <LoopActions
+                            loop={loop}
+                            runCount={
+                              runsQuery.data && runsQuery.data.length < 500
+                                ? runsQuery.data.filter((run) => run.loopId === loop.id).length
+                                : undefined
+                            }
+                          />
                         </Td>
                       </tr>
                     );

@@ -300,11 +300,18 @@ describe('LoopsPage', () => {
   it('deletes a loop after confirmation and shows refusals', async () => {
     const user = userEvent.setup();
     const api = new FakeApi();
-    api.addLoop({ ...minimalLoop(), name: 'doomed' });
+    const doomed = api.addLoop({ ...minimalLoop(), name: 'doomed' });
+    api.addRun({ loopId: doomed.id, status: 'succeeded' });
+    api.addRun({ loopId: doomed.id, status: 'failed' });
     api.addLoop({ ...minimalLoop(), name: 'busy' });
     renderApp('/loops', api);
     await user.click(await screen.findByRole('button', { name: 'Delete doomed' }));
-    expect(screen.getByRole('alertdialog')).toHaveTextContent('all its versions and its triggers');
+    expect(screen.getByRole('alertdialog')).toHaveTextContent(
+      'all its versions, its triggers and all its runs (2) will be deleted',
+    );
+    expect(screen.getByRole('alertdialog')).toHaveTextContent(
+      'including run history and artifacts',
+    );
     expect(screen.getByRole('alertdialog')).toHaveTextContent('subloop');
     expect(screen.getByRole('button', { name: 'Keep' })).toHaveFocus();
     await user.click(screen.getByRole('button', { name: 'Keep' }));
@@ -319,17 +326,29 @@ describe('LoopsPage', () => {
     );
 
     api.override('DELETE /loops/:id', () =>
-      problem(409, 'LOOP_IN_USE', 'the loop has active runs'),
+      problem(409, 'LOOP_IN_USE', 'the loop has active runs; cancel them first'),
     );
     await user.click(screen.getByRole('button', { name: 'Delete busy' }));
     await user.click(screen.getByRole('button', { name: 'Confirm delete busy' }));
     expect(await screen.findByText(/the loop has active runs/)).toBeInTheDocument();
     expect(screen.getByRole('alert')).toHaveTextContent('LOOP_IN_USE');
+    expect(screen.getByRole('alert')).toHaveTextContent('cancel them first');
     expect(screen.getByRole('alertdialog')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Confirm delete busy' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('the loop has active runs');
     await user.click(screen.getByRole('button', { name: 'Keep' }));
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('omits the run count when the runs listing may be truncated', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const created = api.addLoop({ ...minimalLoop(), name: 'many-runs' });
+    for (let i = 0; i < 500; i++) api.addRun({ loopId: created.id, status: 'succeeded' });
+    renderApp('/loops', api);
+    await user.click(await screen.findByRole('button', { name: 'Delete many-runs' }));
+    expect(screen.getByRole('alertdialog')).toHaveTextContent('all its runs will be deleted');
+    expect(screen.getByRole('alertdialog')).not.toHaveTextContent('(500)');
   });
 
   it('shows export progress and ignores repeated clicks until the request finishes', async () => {

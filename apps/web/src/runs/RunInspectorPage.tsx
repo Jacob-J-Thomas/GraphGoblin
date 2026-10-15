@@ -1,4 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
+import { GraphGoblinApiError } from '@graphgoblin/api-client';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { keys, useLoopVersion, useRun, useRunThread } from '../api/queries.js';
@@ -16,6 +17,31 @@ import { useRunEvents } from './useRunEvents.js';
 import { describeEvent } from './projections.js';
 
 const META_LINK = 'touch-target font-medium text-link underline-offset-[3px] hover:underline';
+
+function ChildRunDetails({ runId }: { runId: string }) {
+  const query = useRun(runId);
+  return (
+    <Card title="Child run">
+      {query.error instanceof GraphGoblinApiError && query.error.status === 404 ? (
+        <p className="text-sm text-muted">
+          Child run {runId} is no longer available. Its loop may have been deleted. This parent
+          run's history is preserved.
+        </p>
+      ) : (
+        <QueryState query={query} what="Child run">
+          {(run) => (
+            <p>
+              <Link to={`/runs/${run.id}`} className={META_LINK}>
+                {run.id}
+              </Link>{' '}
+              <RunStatusBadge status={run.status} />
+            </p>
+          )}
+        </QueryState>
+      )}
+    </Card>
+  );
+}
 
 /**
  * One run: its status and controls, failure or result, the waiting-for-input form, then the
@@ -117,6 +143,10 @@ export function RunInspectorPage() {
           onSelect={setSelectedSeq}
         />
         <div className="grid min-w-0 gap-section">
+          {selectedEvent?.type === 'child_run.started' ||
+          selectedEvent?.type === 'child_run.finished' ? (
+            <ChildRunDetails runId={selectedEvent.childRunId} />
+          ) : null}
           <EvaluationDetails event={selectedEvent} definition={versionQuery.data?.definition} />
           {threadQuery.data ? (
             <ThreadViewer current={threadQuery.data} events={log.events} seq={seq} />
