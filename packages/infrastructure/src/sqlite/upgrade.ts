@@ -205,11 +205,31 @@ const STATE_SQL =
   'CREATE TABLE IF NOT EXISTS gg_upgrade_state (id INTEGER PRIMARY KEY CHECK(id=1), format_version INTEGER NOT NULL, status TEXT NOT NULL, source_hash TEXT NOT NULL, manifest_hash TEXT NOT NULL)';
 const ARCHIVE_SQL =
   'CREATE TABLE IF NOT EXISTS gg_upgrade_archive (kind TEXT NOT NULL, identity TEXT NOT NULL, source_hash TEXT NOT NULL, manifest_hash TEXT NOT NULL, payload TEXT NOT NULL, PRIMARY KEY(kind,identity,manifest_hash))';
-export async function stampFreshDatabase(client: Executor): Promise<void> {
-  await client.execute(STATE_SQL);
-  await client.execute(
-    "INSERT INTO gg_upgrade_state (id,format_version,status,source_hash,manifest_hash) VALUES (1,3,'complete','fresh','fresh')",
-  );
+/** Schema, migration ledger and complete marker must commit together on first startup. */
+export async function initializeFreshDatabase(
+  client: Client,
+  migrationsFolder = MIGRATIONS,
+): Promise<void> {
+  const tx = await client.transaction('write');
+  try {
+    // Recheck under the write lock: only an empty store may be initialised, even if another
+    // caller changed it after startup's first guard. Never authenticate an unmarked schema.
+    if ((await guardDatabaseUpgrade(tx)) === 'fresh') {
+      // Drizzle's libsql migrator commits its own batch; use the offline apply's SQL runner
+      // so neither the schema nor its ledger can survive without the complete marker.
+      await structuralMigrations(tx, migrationsFolder);
+      await tx.execute(STATE_SQL);
+      await tx.execute(
+        "INSERT INTO gg_upgrade_state (id,format_version,status,source_hash,manifest_hash) VALUES (1,3,'complete','fresh','fresh')",
+      );
+    }
+    await tx.commit();
+  } catch (error) {
+    await tx.rollback();
+    throw error;
+  } finally {
+    tx.close();
+  }
 }
 
 export interface DatabaseUpgradeInventory {
