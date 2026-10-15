@@ -107,7 +107,7 @@ describe('inference-node harness data migration', () => {
         ledger,
       );
       await expect(offlineUpgrade(handle)).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
-      expect(await handle.pendingMigrations()).toBe(9);
+      expect(await handle.pendingMigrations()).toBe(10);
     } finally {
       await stopDatabase();
       await rm(root, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });

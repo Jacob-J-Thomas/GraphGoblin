@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { RunRecord } from '@graphgoblin/contracts';
 import { FIXTURE_TS, fakeUlid, sampleThread } from '@graphgoblin/contracts/testing';
 import { createTestApp, type TestApp } from '../testing/test-app.js';
@@ -177,18 +177,24 @@ describe('ordinary run paging', () => {
     expect((await t.app.inject({ method: 'GET', url: '/runs' })).statusCode).toBe(401);
   });
 
-  it('lists and reads canonical records without consulting template storage or parsing subjects', async () => {
+  it('lists and reads canonical records with no template table or subject column', async () => {
     const run = await seed(0);
-    await t.container.templates.store.setSubject(run.id, { corrupt: 'obsolete metadata' });
-    await t.container.handle.client.execute('DROP TABLE template_instances');
-    const stored = vi
-      .spyOn(t.container.templates.store, 'run')
-      .mockRejectedValue(new Error('unavailable'));
     expect((await page()).items).toEqual([run]);
     const snapshot = await t.app.inject({ method: 'GET', url: '/runs/' + run.id, headers });
     expect(snapshot.statusCode).toBe(200);
     expect(snapshot.json()).toEqual(run);
-    expect(stored).not.toHaveBeenCalled();
+    expect(
+      (
+        await t.container.handle.client.execute(
+          "SELECT name FROM sqlite_master WHERE name LIKE 'template_%'",
+        )
+      ).rows,
+    ).toEqual([]);
+    expect(
+      (await t.container.handle.client.execute('PRAGMA table_info(runs)')).rows.map(
+        (row) => row.name,
+      ),
+    ).not.toContain('template_subject');
   });
 
   it('rejects malformed, oversized, noncanonical and non-strict cursors with INVALID_CURSOR', async () => {

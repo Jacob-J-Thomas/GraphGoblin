@@ -1,5 +1,5 @@
 import { inArray, sql, type SQL } from 'drizzle-orm';
-import type { SqliteTransaction } from './templates.js';
+import type { SqliteTransaction } from './db.js';
 import {
   harnessSessions,
   inboundEvents,

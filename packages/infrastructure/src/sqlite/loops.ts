@@ -1,6 +1,6 @@
 import type { LoopDefinition, LoopRecord, LoopVersionRecord } from '@graphgoblin/contracts';
 import type { ClockPort, IdPort, LoopRepository } from '@graphgoblin/engine';
-import { and, asc, desc, eq, inArray, isNotNull, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, isNotNull } from 'drizzle-orm';
 import type { Database } from './db.js';
 import { deleteRuns } from './delete-runs.js';
 import {
@@ -8,7 +8,6 @@ import {
   loops,
   runs,
   schedules,
-  templateInstances,
   webhookEndpoints,
   webhookReceipts,
 } from './schema.js';
@@ -250,13 +249,6 @@ export class SqliteLoopRepository implements LoopRepository {
       await tx.delete(schedules).where(eq(schedules.loopId, loopId));
       await tx.delete(webhookEndpoints).where(eq(webhookEndpoints.loopId, loopId));
       await tx.delete(webhookReceipts).where(eq(webhookReceipts.loopId, loopId));
-      // A configured bundle cannot retain a binding to a removed member/version. Other loops
-      // and their published definitions remain intact; only the bundle's binding is removed.
-      await tx
-        .delete(templateInstances)
-        .where(
-          sql`EXISTS (SELECT 1 FROM json_each(${templateInstances.instance}, '$.loops') WHERE json_extract(value, '$.loopId') = ${loopId})`,
-        );
       await tx.delete(loopVersions).where(eq(loopVersions.loopId, loopId));
       return tx.delete(loops).where(eq(loops.id, loopId)).returning({ id: loops.id });
     });
