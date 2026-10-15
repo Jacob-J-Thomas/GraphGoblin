@@ -14,6 +14,8 @@ pnpm.cmd graphgoblin-upgrade export --input .\old-loop.json --out .\converted-lo
 
 A successful result is a format-3 export (or a version-3 definition when the input was a bare definition). Format-1 input first passes through a frozen format-2 conversion; both stages must resolve before any output is accepted. Exit code 2 means the output is a refusal report, not an importable loop. Resolve every reported ambiguity in a separate JSON resolutions file, then retry to a different new output path with `--resolutions .\resolutions.json`.
 
+The offline converter retains fixed format-2 and format-3 validation rules; the current stored format remains 3.
+
 The resolutions object has four optional fields:
 
 - `decisions`: a map from node ID to the complete new decision configuration, including its answer and evaluator. Replacement option IDs must preserve the original route-ID set and edge ports; invalid original IDs need a separately reviewed repair. Mixed chains, invalid old option labels/criteria, and expressions whose string result cannot be proven need an explicit choice.
