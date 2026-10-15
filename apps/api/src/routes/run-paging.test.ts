@@ -121,6 +121,44 @@ describe('ordinary run paging', () => {
       );
   });
 
+  it.each([
+    '2026-10-02T14:00:00.000+02:00',
+    '2026-10-02T07:00:00.000-05:00',
+    '2026-10-02T12:00:00Z',
+  ])('normalizes before=%s to the canonical timestamp page', async (before) => {
+    await seed(0, { createdAt: '2026-10-02T11:59:59.998Z' });
+    const lastBefore = await seed(1, { createdAt: '2026-10-02T11:59:59.999Z' });
+    await seed(2);
+    await seed(3, { createdAt: '2026-10-02T12:00:00.001Z' });
+    const canonical = await page('?before=' + FIXTURE_TS + '&limit=1');
+    expect(canonical.items.map((r) => r.id)).toEqual([lastBefore.id]);
+    expect(canonical.nextCursor).toBeTypeOf('string');
+    expect(await page('?before=' + encodeURIComponent(before) + '&limit=1')).toEqual(canonical);
+  });
+
+  it('publishes the cursor description and bound in OpenAPI', async () => {
+    const response = await t.app.inject({ method: 'GET', url: '/openapi.json' });
+    expect(response.statusCode).toBe(200);
+    const document = response.json<{
+      paths: {
+        '/runs': {
+          get: {
+            parameters: {
+              name: string;
+              description?: string;
+              schema: { type: string; maxLength?: number };
+            }[];
+          };
+        };
+      };
+    }>();
+    expect(document.paths['/runs'].get.parameters.find((p) => p.name === 'cursor')).toMatchObject({
+      description: 'Opaque run cursor, at most 256 base64url characters.',
+      required: false,
+      schema: { type: 'string', maxLength: 256 },
+    });
+  });
+
   it('scopes every page and snapshot to the authenticated owner', async () => {
     const mine = await seed(0);
     const foreign = await seed(1, { ownerId: 'other' });

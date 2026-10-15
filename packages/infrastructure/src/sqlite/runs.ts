@@ -214,7 +214,7 @@ export class SqliteRunRepository implements RunRepository {
     items: RunRecord[];
     next: Pick<RunRecord, 'createdAt' | 'id'> | null;
   }> {
-    const limit = Math.min(filter.limit ?? 100, 500);
+    const limit = Math.max(1, Math.min(filter.limit ?? 100, 500));
     const rows = await this.listRows(filter, limit + 1, filter.cursor);
     const items = rows.slice(0, limit);
     const last = items.at(-1)!;

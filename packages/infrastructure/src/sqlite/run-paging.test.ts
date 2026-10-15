@@ -75,6 +75,20 @@ describe('SqliteRunRepository ordinary paging', () => {
     expect((await repo.page({ ownerId: 'local', status: [] })).items).toHaveLength(3);
   });
 
+  it.each([0, -1, -100])('clamps an internal page limit of %s to one item', async (limit) => {
+    await seed(0);
+    await seed(1);
+    const expected = await repo.page({ ownerId: 'local', limit: 1 });
+    const first = await repo.page({ ownerId: 'local', limit });
+    expect(first).toEqual(expected);
+    expect(first.items).toHaveLength(1);
+    expect(first.next).not.toBeNull();
+    const last = await repo.page({ ownerId: 'local', limit, cursor: first.next! });
+    expect(last.items).toHaveLength(1);
+    expect(last.items[0]?.id).not.toBe(first.items[0]?.id);
+    expect(last.next).toBeNull();
+  });
+
   it('permits a 501-row lookahead while list remains capped at 500', async () => {
     for (let i = 0; i < 502; i++) await seed(i);
     expect(await repo.list({ ownerId: 'local', limit: 501 })).toHaveLength(500);

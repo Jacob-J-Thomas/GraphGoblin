@@ -320,6 +320,8 @@ to determine whether another page exists. Cursors are bounded to 256 characters,
 canonical base64url encodings of strict `{createdAt: Timestamp, id: ULID}` JSON.
 A malformed, oversized or noncanonical cursor receives `400 INVALID_CURSOR`.
 The timestamp-only `before` filter is still available, but cannot accompany `cursor`.
+Accepted `before` timestamps are normalized to UTC with milliseconds before comparison,
+so offsets and omitted milliseconds select the same page as the canonical timestamp.
 
 Filters are `loopId`, comma-separated `status`, `parent` (a run ID or `none`),
 `before`, `cursor` and `limit`. Strict query validation rejects unknown filters,

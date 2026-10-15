@@ -19,6 +19,7 @@ import { problem } from '../plugins/errors.js';
 import { streamRunEvents } from '../sse.js';
 import type { ApiInstance } from '../types.js';
 import { decodeRunCursor, encodeRunCursor } from '../run-cursor.js';
+import { openApiRegistry } from '../openapi-registry.js';
 
 const IdParams = z.object({ id: UlidSchema });
 
@@ -111,10 +112,11 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
               .optional(),
             parent: z.union([UlidSchema, z.literal('none')]).optional(),
             before: TimestampSchema.optional(),
-            cursor: z
-              .string()
-              .describe('Opaque run cursor, at most 256 base64url characters.')
-              .optional(),
+            cursor: z.string().optional().register(openApiRegistry, {
+              description: 'Opaque run cursor, at most 256 base64url characters.',
+              // The decoder enforces this bound so invalid cursors keep INVALID_CURSOR.
+              maxLength: 256,
+            }),
             limit: z.coerce.number().int().min(1).max(500).optional(),
           })
           .superRefine((query, ctx) => {
@@ -140,7 +142,7 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
           : q.parent
             ? { parentRunId: q.parent }
             : {}),
-        ...(q.before ? { before: q.before } : {}),
+        ...(q.before ? { before: new Date(q.before).toISOString() } : {}),
         ...(q.cursor !== undefined ? { cursor: decodeRunCursor(q.cursor) } : {}),
         limit: q.limit ?? 100,
       });

@@ -57,7 +57,8 @@ export function operationsWithoutSummary(document) {
 function parameters(op) {
   return (op.parameters ?? []).map((p) => {
     const type = p.schema?.type ? `: ${p.schema.type}` : '';
-    return `\`${p.name}\`${type} (${p.in}${p.required ? ', required' : ''})`;
+    const description = p.description ?? p.schema?.description;
+    return `\`${p.name}\`${type} (${p.in}${p.required ? ', required' : ''})${description ? `: ${description}` : ''}`;
   });
 }
 

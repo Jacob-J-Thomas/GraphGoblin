@@ -743,6 +743,7 @@ export interface paths {
                     status?: string;
                     parent?: string | "none";
                     before?: string;
+                    /** @description Opaque run cursor, at most 256 base64url characters. */
                     cursor?: string;
                     limit?: number;
                 };
