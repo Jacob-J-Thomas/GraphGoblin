@@ -4,7 +4,7 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
-- Templates no longer install private runtime authority, credentials or finalization reporters. **Upgrade:** configured prerequisite, instantiate and instance endpoints and client helpers are removed; catalogue entries contain only `manifest`, and loop details omit template origins. Use `POST /templates/{id}/draft` for independent ordinary drafts. Loader, hooks and stored-data retirement continue in the #165 follow-up split; no installed upgrade is authorized by this child. (#165, step 06 subset)
+- Templates no longer install private runtime authority, credentials or finalization reporters. **Upgrade:** configured prerequisite, instantiate and instance endpoints and client helpers are removed; catalogue entries contain only `manifest`. Use `POST /templates/{id}/draft` for independent ordinary drafts. Loader, hooks and stored-data retirement continue in later #165 children. (#165, step 06 part 1)
 
 - Ordinary run listing now pages through the run repository with owner-scoped tuple cursors and a 500-item maximum. **Upgrade:** remove the `repository`, `issue`, `pullRequest`, `head`, `mergeSha` and `templateInstanceId` run filters (strict queries now reject them), the `templateSubject` run field and the `templateInstanceId` loop-detail field; regenerate strict API clients. The editor no longer reads instance metadata or shows the binding-based QA notice. The notice goes with template retirement, which later #165 children complete. Configured-instance routes, bindings and runtime checks remain until later #165 children. (#165, step 05)
 

@@ -20,7 +20,17 @@ The final loader returns `{manifest, draft: LoopDefinition}`, validates current 
 
 ## Implementation boundary
 
-Step 06's first coherent subset removes API composition authority and configured HTTP actions, catalogue setup metadata, client helpers and editor origin lookups. It retains dormant service modules and their standalone tests. Engine/infrastructure hook deletion and draft-only loading/allocation removal require a follow-up split to remain below roughly 40 files. The actual base is `55e8311`, before step 05's ordinary paging; the template store remains connected for those existing run reads until step 05 is integrated. This is an integration state, not a deployable cutover.
+Step 06 part 1 (on top of step 05's ordinary paging) removes:
+
+- API composition authority;
+- configured HTTP actions;
+- catalogue setup metadata;
+- client helpers;
+- editor origin lookups.
+
+Dormant service modules and their standalone tests stay for now. Step 06 part 2 deletes the engine and infrastructure hooks and makes loading draft-only. Steps 07 and 08 delete the services. Step 09 deletes the template contracts, the `template_instances` store and its columns.
+
+This is an integration state on `feat/format-4-integration`, not a deployable cutover. A store that still holds configured instances would run their loops' triggers as ordinary loops with no template authority. The integration branch never runs against such a store: children use fresh disposable stores, and the cutover deletes configured instances, their loops and runs before any upgraded store starts.
 
 ## Consequences
 

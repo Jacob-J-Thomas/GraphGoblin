@@ -306,26 +306,32 @@ The prerequisite, instantiate and template-instance endpoints and their client h
 
 The loader and dormant configured contracts/services are removed in the next bounded #165 split. The four current manifests still carry configured metadata during this integration-only interval. No deployment or stored-data cutover is part of this child.
 
-### Template subjects and run pagination
+### Ordinary run listing and pagination
 
 `GET /runs` returns `{items, nextCursor}` in descending creation-time and run-ID order.
 Reuse the returned opaque `cursor` with the same filters; `nextCursor: null` ends the
 listing. Equal creation timestamps do not skip runs. The default page size is 100,
-with `limit` from 1 to 500. A malformed cursor receives `400 INVALID_CURSOR`.
+with `limit` from 1 to 500. The run repository fetches one extra row (at most 501)
+to determine whether another page exists. Cursors are bounded to 256 characters,
+canonical base64url encodings of strict `{createdAt: Timestamp, id: ULID}` JSON.
+A malformed, oversized or noncanonical cursor receives `400 INVALID_CURSOR`.
 The timestamp-only `before` filter is still available, but cannot accompany `cursor`.
+Accepted `before` timestamps are normalized to UTC with milliseconds before comparison,
+so offsets and omitted milliseconds select the same page as the canonical timestamp.
 
-Alongside `loopId`, comma-separated `status`, and `parent` (a run ID or `none`),
-filters include lowercase `repository` (`owner/repository`), positive `issue` and
-`pullRequest` numbers, exact 40-character lowercase `head` and `mergeSha`, and
-`templateInstanceId`. Reads always remain scoped to the authenticated owner.
+Filters are `loopId`, comma-separated `status`, `parent` (a run ID or `none`),
+`before`, `cursor` and `limit`. Strict query validation rejects unknown filters,
+including the removed `repository`, `issue`, `pullRequest`, `head`, `mergeSha`
+and `templateInstanceId`. Reads always remain scoped to the authenticated owner.
+The exclusive `(created_at, id)` boundary keeps newer insertions between requests
+out of subsequent pages. MCP's `before`/`nextBefore` timestamp paging stays separate.
 Both the typed client's `GET('/runs')` and the generated OpenAPI contract expose
 the complete page; the convenience `runs.list` wrapper returns its items only.
 
-Run-list items and `GET /runs/{id}` may include `templateSubject`. This API-owned
-metadata describes a repository workflow's role, template instance/version,
-repository, issue/attempt and relevant PR/head/merge SHA. A worker also names its
-parent run, mapped subloop node and visit. Ordinary runs omit it. The generic
-engine `RunRecord` and context thread do not acquire GitHub-specific fields.
+Run-list items and `GET /runs/{id}` return the canonical `RunRecord`, without
+`templateSubject` or a template-store lookup. Regenerate strict clients for these
+response and query changes. Existing template runtime subjects remain internal
+until the later retirement; this paging change does not delete instances or bindings.
 
 The source is either `{kind: 'implementation', runId}` for an authenticated
 implementation attempt or `{kind: 'external'}` for a trusted standalone PR.
