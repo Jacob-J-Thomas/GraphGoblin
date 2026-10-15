@@ -5,6 +5,7 @@ import {
   RunEventSchema,
   RunRecordSchema,
   RunStatusSchema,
+  TimestampSchema,
   UlidSchema,
   type InvocationSource,
   type RunRecord,
@@ -17,12 +18,7 @@ import type { Container } from '../container.js';
 import { problem } from '../plugins/errors.js';
 import { streamRunEvents } from '../sse.js';
 import type { ApiInstance } from '../types.js';
-import {
-  TemplateRunSchema,
-  decodeRunCursor,
-  encodeRunCursor,
-  templateRunView,
-} from '../templates/run-view.js';
+import { decodeRunCursor, encodeRunCursor } from '../run-cursor.js';
 
 const IdParams = z.object({ id: UlidSchema });
 
@@ -101,37 +97,32 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
     {
       schema: {
         tags: ['runs'],
-        summary: 'List runs with template subjects, filters, and stable newest-first paging',
+        summary: 'List runs with filters and stable newest-first paging',
         querystring: z
-          .object({
-            loopId: z.string().optional(),
-            status: z.string().optional(),
-            parent: z.string().optional(),
-            before: z.string().optional(),
-            cursor: z.string().min(1).max(256).optional(),
-            repository: z
+          .strictObject({
+            loopId: UlidSchema.optional(),
+            status: z
               .string()
-              .regex(/^[a-z0-9_.-]+\/[a-z0-9_.-]+$/)
+              .refine(
+                (value) =>
+                  value.split(',').every((s) => RunStatusSchema.safeParse(s.trim()).success),
+                'Use comma-separated run statuses.',
+              )
               .optional(),
-            issue: z.coerce.number().int().positive().optional(),
-            pullRequest: z.coerce.number().int().positive().optional(),
-            head: z
+            parent: z.union([UlidSchema, z.literal('none')]).optional(),
+            before: TimestampSchema.optional(),
+            cursor: z
               .string()
-              .regex(/^[a-f0-9]{40}$/)
+              .describe('Opaque run cursor, at most 256 base64url characters.')
               .optional(),
-            mergeSha: z
-              .string()
-              .regex(/^[a-f0-9]{40}$/)
-              .optional(),
-            templateInstanceId: UlidSchema.optional(),
             limit: z.coerce.number().int().min(1).max(500).optional(),
           })
           .superRefine((query, ctx) => {
-            if (query.cursor && query.before)
+            if (query.cursor !== undefined && query.before !== undefined)
               ctx.addIssue({ code: 'custom', message: 'Use either cursor or before.' });
           }),
         response: {
-          200: z.object({ items: z.array(TemplateRunSchema), nextCursor: z.string().nullable() }),
+          200: z.object({ items: z.array(RunRecordSchema), nextCursor: z.string().nullable() }),
         },
       },
     },
@@ -140,8 +131,7 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
       const statuses = q.status
         ? q.status.split(',').map((s) => RunStatusSchema.parse(s.trim()))
         : undefined;
-      const limit = q.limit ?? 100;
-      const rows = await container.templates.store.runPage({
+      const page = await repos.runs.page({
         ownerId: request.auth.ownerId,
         ...(q.loopId ? { loopId: q.loopId } : {}),
         ...(statuses ? { status: statuses } : {}),
@@ -150,20 +140,13 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
           : q.parent
             ? { parentRunId: q.parent }
             : {}),
-        ...(q.before ? { beforeTimestamp: q.before } : {}),
-        ...(q.cursor ? { before: decodeRunCursor(q.cursor) } : {}),
-        ...(q.repository ? { repository: q.repository } : {}),
-        ...(q.issue ? { issue: q.issue } : {}),
-        ...(q.pullRequest ? { pullRequest: q.pullRequest } : {}),
-        ...(q.head ? { head: q.head } : {}),
-        ...(q.mergeSha ? { mergeSha: q.mergeSha } : {}),
-        ...(q.templateInstanceId ? { instanceId: q.templateInstanceId } : {}),
-        limit: limit + 1,
+        ...(q.before ? { before: q.before } : {}),
+        ...(q.cursor !== undefined ? { cursor: decodeRunCursor(q.cursor) } : {}),
+        limit: q.limit ?? 100,
       });
-      const page = rows.slice(0, limit);
       return {
-        items: page.map(({ run, subject }) => templateRunView(run, subject)),
-        nextCursor: rows.length > limit ? encodeRunCursor(page.at(-1)!.run) : null,
+        items: page.items,
+        nextCursor: page.next ? encodeRunCursor(page.next) : null,
       };
     },
   );
@@ -175,13 +158,11 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
         tags: ['runs'],
         summary: 'Run snapshot: status, current node, iteration, waiting spec, result, failure',
         params: IdParams,
-        response: { 200: TemplateRunSchema },
+        response: { 200: RunRecordSchema },
       },
     },
     async (request) => {
-      const run = await ownedRun(request, request.params.id);
-      const stored = await container.templates.store.run(run.id);
-      return templateRunView(run, stored?.subject);
+      return ownedRun(request, request.params.id);
     },
   );
 

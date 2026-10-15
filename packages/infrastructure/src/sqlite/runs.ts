@@ -81,6 +81,11 @@ export interface RunListFilter {
   limit?: number;
 }
 
+export interface RunPageFilter extends RunListFilter {
+  ownerId: string;
+  cursor?: Pick<RunRecord, 'createdAt' | 'id'>;
+}
+
 export class SqliteRunRepository implements RunRepository {
   constructor(
     private readonly db: Database,
@@ -201,19 +206,44 @@ export class SqliteRunRepository implements RunRepository {
   }
 
   async list(filter: RunListFilter = {}): Promise<RunRecord[]> {
+    return this.listRows(filter, Math.min(filter.limit ?? 50, 500));
+  }
+
+  /** Owner-scoped ordinary paging; a single lookahead row decides whether there is a next page. */
+  async page(filter: RunPageFilter): Promise<{
+    items: RunRecord[];
+    next: Pick<RunRecord, 'createdAt' | 'id'> | null;
+  }> {
+    const limit = Math.min(filter.limit ?? 100, 500);
+    const rows = await this.listRows(filter, limit + 1, filter.cursor);
+    const items = rows.slice(0, limit);
+    const last = items.at(-1)!;
+    return {
+      items,
+      next: rows.length > limit ? { createdAt: last.createdAt, id: last.id } : null,
+    };
+  }
+
+  private async listRows(
+    filter: RunListFilter,
+    limit: number,
+    cursor?: RunPageFilter['cursor'],
+  ): Promise<RunRecord[]> {
     const conditions: SQL[] = [];
-    if (filter.ownerId) conditions.push(eq(runs.ownerId, filter.ownerId));
+    if (filter.ownerId !== undefined) conditions.push(eq(runs.ownerId, filter.ownerId));
     if (filter.loopId) conditions.push(eq(runs.loopId, filter.loopId));
     if (filter.status?.length) conditions.push(inArray(runs.status, filter.status));
     if (filter.parentRunId === null) conditions.push(sql`${runs.parentRunId} IS NULL`);
     else if (filter.parentRunId) conditions.push(eq(runs.parentRunId, filter.parentRunId));
     if (filter.before) conditions.push(lt(runs.createdAt, filter.before));
+    if (cursor)
+      conditions.push(sql`(${runs.createdAt}, ${runs.id}) < (${cursor.createdAt}, ${cursor.id})`);
     const query = this.db
       .select()
       .from(runs)
       .where(conditions.length ? and(...conditions) : undefined)
       .orderBy(desc(runs.createdAt), desc(runs.id))
-      .limit(Math.min(filter.limit ?? 50, 500));
+      .limit(limit);
     return (await query).map(runRecordFromRow);
   }
 

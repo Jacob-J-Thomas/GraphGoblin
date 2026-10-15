@@ -158,6 +158,26 @@ describe('against the in-process API (local trusted mode)', () => {
     expect(await runs.sessions(client, run.id)).toEqual([]);
   });
 
+  it('preserves typed run pages and the items-only wrapper', async () => {
+    const { loop } = await loops.create(client, minimalLoop());
+    await loops.publish(client, loop.id);
+    await runs.start(client, loop.id);
+    await runs.start(client, loop.id);
+    await t.idle();
+    const query = { loopId: loop.id, limit: 1 };
+    const first = await client.GET('/runs', { params: { query } });
+    if (!first.data?.nextCursor) throw new Error('expected a next page');
+    expect(first.data.items).toHaveLength(1);
+    expect(first.data.items[0]).not.toHaveProperty('templateSubject');
+    expect(await runs.list(client, query)).toEqual(first.data.items);
+    const last = await client.GET('/runs', {
+      params: { query: { ...query, cursor: first.data.nextCursor } },
+    });
+    expect(last.data?.items).toHaveLength(1);
+    expect(last.data?.nextCursor).toBeNull();
+    expect(last.data?.items[0]?.id).not.toBe(first.data.items[0]?.id);
+  });
+
   it('drives a waiting run: input, signals, pause, resume, cancel', async () => {
     const { loop } = await loops.create(client, waitLoop);
     await loops.publish(client, loop.id);

@@ -26,7 +26,7 @@ it('creates an ordinary editable draft with the generated client before automati
   const detail = await loops.get(client, first.loop.id);
   expect(detail.current).toBeUndefined();
   expect(detail.draft?.status).toBe('draft');
-  expect(detail.templateInstanceId).toBeUndefined();
+  expect(detail).not.toHaveProperty('templateInstanceId');
   expect(detail.draft?.definition.nodes.filter((node) => node.kind === 'inference')).toHaveLength(
     2,
   );

@@ -1,13 +1,9 @@
-import {
-  QaTemplateSettingsSchema,
-  StarterTemplateSettingsSchema,
-  TemplateInstanceSchema,
-} from '@graphgoblin/contracts';
+import { QaTemplateSettingsSchema, TemplateInstanceSchema } from '@graphgoblin/contracts';
 import { minimalLoop } from '@graphgoblin/contracts/testing';
-import { screen, waitFor } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { FakeApi, id, problem, qaTemplateEntry, TS } from '../__fixtures__/fake-api.js';
+import { FakeApi, id, qaTemplateEntry, TS } from '../__fixtures__/fake-api.js';
 import { renderApp } from '../__fixtures__/render.js';
 
 function qaInstance(api: FakeApi) {
@@ -53,7 +49,7 @@ function qaInstance(api: FakeApi) {
   return { parent, child, instance };
 }
 
-describe('saved QA parent runtime readiness', () => {
+describe('editor without template instance metadata', () => {
   it('opens a gallery QA copy without an instance binding or configured-parent warning', async () => {
     const user = userEvent.setup();
     const api = new FakeApi();
@@ -69,29 +65,27 @@ describe('saved QA parent runtime readiness', () => {
     expect(screen.getByRole('button', { name: 'Publish' })).toBeEnabled();
   });
 
-  it('shows the persisted parent warning after reopening, while preserving Publish', async () => {
+  it('reopens a configured parent without fetching instance metadata, while preserving Publish', async () => {
     const api = new FakeApi();
-    const { parent, instance } = qaInstance(api);
+    const { parent } = qaInstance(api);
     const first = renderApp('/loops/' + parent.id + '/edit', api);
-    expect(await screen.findByText('Graph ready to publish; QA execution blocked')).toBeVisible();
-    expect(screen.getByText(/Enforced evidence-only isolation is unavailable/)).toBeVisible();
-    expect(screen.getByText(/permanently consume merge and linked-issue attempts/)).toBeVisible();
+    expect(await screen.findByText('Ready to publish')).toBeVisible();
     expect(screen.getByRole('button', { name: 'Publish' })).toBeEnabled();
-    expect(api.callsTo('GET', '/template-instances/' + instance.id)).toHaveLength(1);
+    expect(api.callsTo('GET', /template-instances/)).toHaveLength(0);
     first.unmount();
     renderApp('/loops/' + parent.id + '/edit', api);
-    expect(await screen.findByText('QA execution is blocked')).toBeVisible();
+    expect(await screen.findByText('Ready to publish')).toBeVisible();
+    expect(screen.queryByText('QA execution is blocked')).toBeNull();
+    expect(api.callsTo('GET', /template-instances/)).toHaveLength(0);
     expect(api.callsTo('POST', /prerequisites|runs|publish/)).toHaveLength(0);
   });
 
   it('does not warn on the bound QA child', async () => {
     const api = new FakeApi();
-    const { child, instance } = qaInstance(api);
+    const { child } = qaInstance(api);
     renderApp('/loops/' + child.id + '/edit', api);
     expect(await screen.findByText('Ready to publish')).toBeVisible();
-    await waitFor(() =>
-      expect(api.callsTo('GET', '/template-instances/' + instance.id)).toHaveLength(1),
-    );
+    expect(api.callsTo('GET', /template-instances/)).toHaveLength(0);
     expect(screen.queryByText('QA execution is blocked')).toBeNull();
   });
 
@@ -103,39 +97,4 @@ describe('saved QA parent runtime readiness', () => {
     expect(api.callsTo('GET', /template-instances/)).toHaveLength(0);
     expect(screen.queryByText('QA execution is blocked')).toBeNull();
   });
-
-  it.each(['unrelated-parent', 'foreign-owner', 'unrelated-id', 'private', 'non-QA'] as const)(
-    'does not apply QA readiness to a %s instance response',
-    async (kind) => {
-      const api = new FakeApi();
-      const { parent, instance } = qaInstance(api);
-      api.override('GET /template-instances/:id', () =>
-        kind === 'private'
-          ? problem(404, 'TEMPLATE_INSTANCE_NOT_FOUND')
-          : Response.json({
-              ...instance,
-              ...(kind === 'unrelated-parent' ? { parentLoopId: id('unrelated') } : {}),
-              ...(kind === 'foreign-owner' ? { ownerId: 'other' } : {}),
-              ...(kind === 'unrelated-id' ? { id: id('unrelated') } : {}),
-              ...(kind === 'non-QA'
-                ? {
-                    settings: StarterTemplateSettingsSchema.parse({
-                      kind: 'starter',
-                      roles: {
-                        assistant: { harness: 'codex', model: 'test-codex', effort: 'low' },
-                      },
-                    }),
-                  }
-                : {}),
-            }),
-      );
-      renderApp('/loops/' + parent.id + '/edit', api);
-      expect(await screen.findByText('Ready to publish')).toBeVisible();
-      await waitFor(() =>
-        expect(api.callsTo('GET', '/template-instances/' + instance.id).length).toBeGreaterThan(0),
-      );
-      expect(screen.queryByText('QA execution is blocked')).toBeNull();
-      expect(screen.getByRole('button', { name: 'Publish' })).toBeEnabled();
-    },
-  );
 });

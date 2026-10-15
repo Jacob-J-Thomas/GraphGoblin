@@ -1,13 +1,13 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { minimalLoop } from '@graphgoblin/contracts/testing';
 import { LOCAL_OWNER } from '../container.js';
 import { createTestApp, type TestApp } from '../testing/test-app.js';
 
-describe('owner-scoped loop template origin', () => {
+describe('loop detail without template storage', () => {
   let app: TestApp | undefined;
   afterEach(async () => app?.close());
 
-  it('returns the persisted instance ID with loops:read and resolves the existing instance route', async () => {
+  it('omits the binding without reading template storage and retains the instance route', async () => {
     app = await createTestApp({ requireApiKey: true });
     const entry = await app.container.templates.entry(LOCAL_OWNER, 'starter');
     if (!entry.defaultSettings) throw new Error('missing starter defaults');
@@ -16,6 +16,9 @@ describe('owner-scoped loop template origin', () => {
     });
     const key = await app.container.repos.apiKeys.create(LOCAL_OWNER, 'reader', ['loops:read']);
     const headers = { authorization: 'Bearer ' + key.token };
+    const binding = vi
+      .spyOn(app.container.templates.store, 'bindingForLoop')
+      .mockRejectedValue(new Error('unavailable'));
     const detail = await app.app.inject({
       method: 'GET',
       url: '/loops/' + instance.parentLoopId,
@@ -23,13 +26,13 @@ describe('owner-scoped loop template origin', () => {
     });
     expect(detail.statusCode).toBe(200);
     expect(detail.json()).toMatchObject({
-      templateInstanceId: instance.id,
       loop: { id: instance.parentLoopId },
     });
+    expect(detail.json()).not.toHaveProperty('templateInstanceId');
+    expect(binding).not.toHaveBeenCalled();
     const origin = await app.app.inject({
       method: 'GET',
-      url:
-        '/template-instances/' + detail.json<{ templateInstanceId: string }>().templateInstanceId,
+      url: '/template-instances/' + instance.id,
       headers,
     });
     expect(origin.statusCode).toBe(200);
