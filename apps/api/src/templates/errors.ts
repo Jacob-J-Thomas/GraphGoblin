@@ -8,6 +8,3 @@ export class TemplateError extends Error {
     this.name = 'TemplateError';
   }
 }
-export function unavailable(message: string): never {
-  throw new TemplateError('TEMPLATE_PREREQUISITES_UNAVAILABLE', message);
-}

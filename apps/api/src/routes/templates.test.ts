@@ -1,4 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { TemplateCatalog } from '../templates/catalog.js';
 import { TemplateError } from '../templates/errors.js';
 import { singleNodeLoop } from '@graphgoblin/engine/testing';
 import type { ScriptRunRequest, ScriptRunResult } from '@graphgoblin/engine';
@@ -19,6 +22,12 @@ describe('template API without runtime authority', () => {
     const script = vi.spyOn(app.container.ports.scripts, 'run');
     const secret = vi.spyOn(app.container.ports.secrets, 'resolve');
     const authenticate = vi.spyOn(app.container.repos.apiKeys, 'authenticate');
+    const storageReads = [
+      vi.spyOn(app.container.templates.store, 'get'),
+      vi.spyOn(app.container.templates.store, 'bindingForLoop'),
+      vi.spyOn(app.container.templates.store, 'subjectRuns'),
+      vi.spyOn(app.container.templates.store, 'run'),
+    ];
     const list = await app.app.inject({ method: 'GET', url: '/templates' });
     expect(list.statusCode, list.body).toBe(200);
     const { items } = list.json<{ items: { manifest: { id: string } }[] }>();
@@ -38,6 +47,7 @@ describe('template API without runtime authority', () => {
     expect(script).not.toHaveBeenCalled();
     expect(secret).not.toHaveBeenCalled();
     expect(authenticate).not.toHaveBeenCalled();
+    for (const read of storageReads) expect(read).not.toHaveBeenCalled();
   });
   it('removes configured actions from routing and OpenAPI without allocating state', async () => {
     app = await createTestApp();
@@ -120,6 +130,34 @@ describe('template API without runtime authority', () => {
     expect(response.json()).toMatchObject({ code: 'INTERNAL_ERROR' });
     expect(response.body).not.toContain('private failure');
   });
+  it.each(['missing', 'malformed', 'oversized'])(
+    'maps a real %s catalogue asset to a sanitized package fault without allocating a loop',
+    async (fault) => {
+      app = await createTestApp();
+      app.container.templates.catalog = new TemplateCatalog(app.dataDir);
+      if (fault !== 'missing')
+        await writeFile(
+          join(app.dataDir, 'catalog.json'),
+          fault === 'malformed' ? '{private-installed-content' : Buffer.alloc(1_048_577),
+        );
+      for (const [method, url] of [
+        ['GET', '/templates'],
+        ['GET', '/templates/starter'],
+        ['POST', '/templates/starter/draft'],
+      ] as const) {
+        const response = await app.app.inject({
+          method,
+          url,
+          ...(method === 'POST' ? { payload: {} } : {}),
+        });
+        expect(response.statusCode, response.body).toBe(503);
+        expect(response.json()).toMatchObject({ code: 'TEMPLATE_PACKAGE_INVALID' });
+        expect(response.body).not.toContain('private-installed-content');
+        expect(response.body).not.toContain(app.dataDir);
+      }
+      expect(await app.container.repos.loops.listLoops('local')).toEqual([]);
+    },
+  );
   it('keeps ordinary returns and the unwrapped durable finalization marker', async () => {
     app = await createTestApp();
     expect(app.container.repos.runs.markFinalized).toBe(

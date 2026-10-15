@@ -308,7 +308,6 @@ export async function createContainer(
         fileURLToPath(
           new URL(import.meta.url.endsWith('.ts') ? '../templates' : './catalog', import.meta.url),
         ),
-      fileURLToPath(new URL('..', import.meta.url)),
     );
     const templateStore = new SqliteTemplateInstances(db);
     const templates = { catalog: templateCatalog, store: templateStore };

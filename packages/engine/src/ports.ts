@@ -14,7 +14,6 @@ import type {
   Capabilities,
   JsonSchema,
   JsonValue,
-  LoopDefinition,
   LoopVersionRecord,
   ProgressItemStatus,
   RunEvent,
@@ -311,20 +310,12 @@ export interface StructuredPort {
 // Processes, workspace, timers, probes, delivery, artifacts, secrets
 // ---------------------------------------------------------------------------
 
-/** Trusted private callsite metadata, never populated from authored script JSON. */
-export type ScriptExecutionIdentity = {
-  ownerId: string;
-  loopId: string;
-  versionId: string;
-  nodeId: string;
-} & ({ kind: 'node'; runId: string; startedSeq: number } | { kind: 'poll' });
 export interface ScriptRunRequest {
-  executionIdentity?: ScriptExecutionIdentity;
   command: string;
   args: string[];
   cwd: string;
   env: Record<string, string>;
-  /** False gives a private helper only the explicitly supplied environment. */
+  /** False limits the process to the explicitly supplied environment. */
   inheritEnv?: boolean;
   stdin?: string;
   timeoutMs?: number;
@@ -406,14 +397,6 @@ export interface SecretsPort {
 }
 
 export interface EngineSettings {
-  /** Composition-owned pre-execution policy. Runs before any node or provider effect. */
-  beforeExecute?: (input: {
-    run: RunRecord;
-    definition: LoopDefinition;
-    events: readonly RunEvent[];
-  }) => Promise<void>;
-  /** Policy admission before a failed run writes durable resume intent. */
-  beforeResume?: (input: { run: RunRecord; events: readonly RunEvent[] }) => Promise<void>;
   /** Last-resort model and effort, below node, loop, and owner defaults. */
   defaults: HarnessDefaults;
   /**

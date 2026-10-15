@@ -28,10 +28,14 @@ Step 06 part 1 (on top of step 05's ordinary paging) removes:
 - client helpers;
 - editor origin lookups.
 
-Dormant service modules and their standalone tests stay for now. Step 06 part 2 deletes the engine and infrastructure hooks and makes loading draft-only. Steps 07 and 08 delete the services. Step 09 deletes the template contracts, the `template_instances` store and its columns.
+Step 06 is complete, with steps 07 (implementation/review services) and 08 (QA services) folded into this child. The loader returns `{manifest, draft}`, validates current exports, graphs and the shipped draft policy, and clones every creation. It reads no configured graphs or support closures. Its only dependency is the installed catalogue directory. File containment, link and size safeguards remain.
+
+Configured services, their tests and the temporary configured-catalogue fixture are deleted. Configured allocation/remapping, script execution identity, engine execution/resume hooks, the SQLite transition callback and the SQLite admission callback are removed. Ordinary lifecycle, environments, stdin/stdout, cancellation, timeouts, output bounds, transactions, compare-and-swap, admission identity, pins and post-commit notifications remain. The API build and image no longer contain private support entry modules, and CI checks installed draft loading and independent copies without running support commands. The generic GitHub poll-items recipe remains.
+
+Step 09 owns the retained configured contracts, the unserved `container.templates.store` property, the `template_instances` facade, schema columns and SQL. Step 10 owns the reduced manifests and removal of configured JSON assets. No template assets or installed data are changed in this child.
 
 This is an integration state on `feat/format-4-integration`, not a deployable cutover. A store that still holds configured instances would run their loops' triggers as ordinary loops with no template authority. The integration branch never runs against such a store: children use fresh disposable stores, and the cutover deletes configured instances, their loops and runs before any upgraded store starts.
 
 ## Consequences
 
-Copied graphs receive no implicit repository authorization. Ordinary scripts and harnesses still have their configured access and provide no new operating-system isolation. Historic journals and reports are not rewritten or reconciled by this child. Later cleanup removes unreachable implementations and packaging entries, while the owner validates the shared cutover separately.
+Copied graphs receive no implicit repository authorization. Ordinary scripts and harnesses still have their configured access and provide no new operating-system isolation. Historic journals and reports are not rewritten or reconciled by this child. The remaining children remove configured storage and assets, while the owner validates the shared cutover separately.
