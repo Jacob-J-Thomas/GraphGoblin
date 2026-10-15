@@ -10,6 +10,8 @@ import {
 } from '@graphgoblin/contracts';
 import { upgradeRunHistoryV1, type UpgradeRunHistoryInput } from './upgrade-history.js';
 import { stableStringify } from './json-schema.js';
+// Replay still uses current replayThread/applyPatch semantics and current-contract types.
+// The format-4 step must pin replay semantics for format-3 history too.
 import { replayThread, replayStateAt } from './replay.js';
 import type { UpgradeResult } from './upgrade.js';
 
@@ -96,6 +98,7 @@ export function upgradeRunHistoryCurrent(input: UpgradeRunHistoryCurrentInput): 
   finalThread: ContextThread;
   snapshot?: ContextThread;
 }> {
+  // This frozen format-3 passthrough becomes the v3 -> v4 history stage in the format-4 step.
   if (input.sourceVersion === 3) {
     try {
       const initialThread = ContextThreadSchema.parse(input.initialThread);

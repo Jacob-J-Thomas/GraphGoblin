@@ -108,6 +108,8 @@ export function upgradeLoopCurrent(
   const errors = validateUpgradeCurrentResolutions(resolutions);
   if (errors.length) return { ok: false, issues: errors };
   const { predicates = {}, ...v1 } = resolutions;
+  // Format-3 passthrough uses the frozen capture, including exports and device drafts.
+  // The format-4 step replaces this branch with the v3 -> v4 stage.
   if (object(input) && input.schemaVersion === 3) {
     if (
       [
