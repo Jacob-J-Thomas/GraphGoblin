@@ -10,7 +10,7 @@ interface RouteRows {
   nextKey: number;
   rows: readonly RouteRow[];
 }
-/** Editor-only answer-port ownership; restored with the definition by undo/redo, never saved. */
+/** Editor-only port ownership; restored by history and device drafts, never part of a definition. */
 export type DecisionRoutes = Readonly<Record<string, RouteRows>>;
 
 function record(value: unknown): Record<string, unknown> {
@@ -141,6 +141,8 @@ export function decisionRouteEdges(
         after.length === before.rows.length - 1
       ) {
         retained.splice(collection.index, 1);
+      } else if (nodeChange?.path === answer?.collectionPath && collection?.type === 'move') {
+        retained.splice(collection.to, 0, retained.splice(collection.from, 1)[0]);
       } else if (
         editedIndex(nodeChange?.path) !== undefined &&
         after.length === before.rows.length

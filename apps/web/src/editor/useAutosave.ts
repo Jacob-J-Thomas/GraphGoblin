@@ -22,11 +22,13 @@ export const AUTOSAVE_DELAY_MS = 600;
  * state (`deviceStorageProblem`) says why, and the editor reports it.
  */
 function mirror(): void {
-  const { loopId, definition, revision, generation, baseToken } = useEditorStore.getState();
+  const { loopId, definition, decisionRoutes, revision, generation, baseToken } =
+    useEditorStore.getState();
   if (!loopId || !definition) return;
   void saveLocalDraft({
     loopId,
     definition,
+    decisionRoutes,
     savedAt: new Date().toISOString(),
     synced: false,
     ...(baseToken ? { baseToken } : {}),

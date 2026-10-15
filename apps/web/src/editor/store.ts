@@ -102,7 +102,11 @@ export interface EditorState {
   load: (
     loopId: string,
     definition: LoopDefinitionInput,
-    options?: { dirty?: boolean; baseToken?: string | undefined },
+    options?: {
+      dirty?: boolean;
+      baseToken?: string | undefined;
+      decisionRoutes?: DecisionRoutes | undefined;
+    },
   ) => void;
   reset: () => void;
   select: (nodeId: string | undefined) => void;
@@ -348,7 +352,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
         ...INITIAL,
         loopId,
         definition,
-        decisionRoutes: decisionRouteEdges(definition, {}).decisionRoutes,
+        decisionRoutes: decisionRouteEdges(definition, options.decisionRoutes ?? {}).decisionRoutes,
         revision: options.dirty ? 1 : 0,
         saveState: options.dirty ? 'pending' : 'saved',
         baseToken: options.baseToken,

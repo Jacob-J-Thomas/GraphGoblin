@@ -568,6 +568,11 @@ for (const theme of ['dark', 'light'] as const) {
     const classifierChoice = methodPicker.getByRole('radio', { name: 'classifier' });
     await classifierChoice.focus();
     await page.keyboard.press('Space');
+    await expect(plain.getByRole('region', { name: 'Change decision kind?' })).toContainText(
+      'JSONata source',
+    );
+    await expect(classifierChoice).not.toBeChecked();
+    await plain.getByRole('button', { name: 'Confirm change', exact: true }).click();
     await expect(classifierChoice).toBeChecked();
     await expect(plain.getByRole('combobox', { name: 'Model' })).toHaveValue('');
     await expect(

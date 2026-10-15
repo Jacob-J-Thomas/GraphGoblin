@@ -71,6 +71,7 @@ import {
 } from './shared.js';
 import { NumberField, StringControl, StringField } from './text.js';
 import { stripUnset } from '../unset.js';
+import { FormEditReviewContext, ReorderablePathsContext } from '../edit-review.js';
 
 /**
  * A field: the control registered under its metadata's `control` name (SchemaForm's `controls`),
@@ -322,9 +323,28 @@ function ArrayField({
   const element = shapeOf(shape.element);
   const parseErrors = useParseErrors();
   const change = useFormChange();
+  const reviewEdit = use(FormEditReviewContext);
   const focus = useCollectionFocus();
   const identities = useCollectionIdentities();
   const rowIds = identities.get(name, items.length);
+  const reorderable = use(ReorderablePathsContext).includes(name);
+  const move = (from: number, to: number) => {
+    const current = itemsOf(field.read());
+    const order = current.map((_, index) => index);
+    order.splice(to, 0, order.splice(from, 1)[0]!);
+    change({ path: name, kind: 'commit', collection: { type: 'move', from, to } }, () => {
+      identities.move(name, from, to);
+      repathParseErrors(
+        parseErrors,
+        current.map((_, index) => ({
+          from: joinPath(name, index),
+          to: joinPath(name, order.indexOf(index)),
+        })),
+      );
+      field.onChange(order.map((index) => current[index]));
+    });
+    focus.announce(`Moved ${label.toLowerCase()} ${from + 1} to ${to + 1}`, to);
+  };
   const [openedWith] = useState(() => new Set(rowIds));
   const { required, help, collapseItems } = fieldMeta(schema);
   const collapsible = collapseItems === true && element.kind === 'union';
@@ -337,12 +357,17 @@ function ArrayField({
       ...(offset === 0 ? {} : { to: joinPath(name, index + offset - 1) }),
     }));
     // One step: the row, and the unparsed text of the rows after it.
-    change({ path: name, kind: 'commit', collection: { type: 'remove', index } }, () => {
-      identities.remove(name, index);
-      repathParseErrors(parseErrors, moves);
-      field.onChange(current.filter((_, i) => i !== index));
-    });
-    focus.announce(`Removed ${label.toLowerCase()} ${index + 1}`);
+    reviewEdit(
+      { type: 'remove', path: name, index, value: current.filter((_, i) => i !== index) },
+      () => {
+        change({ path: name, kind: 'commit', collection: { type: 'remove', index } }, () => {
+          identities.remove(name, index);
+          repathParseErrors(parseErrors, moves);
+          field.onChange(current.filter((_, i) => i !== index));
+        });
+        focus.announce(`Removed ${label.toLowerCase()} ${index + 1}`);
+      },
+    );
   };
   const add = () => {
     const current = itemsOf(field.read());
@@ -445,7 +470,31 @@ function ArrayField({
               name={joinPath(name, index)}
               label={`${label} ${index + 1}`}
             />
-            <div className={compound ? 'self-end' : 'mt-6'}>{removeButton}</div>
+            <div className={compound ? 'self-end grid gap-1' : 'mt-6'}>
+              {reorderable ? (
+                <>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    aria-label={`Move ${label.toLowerCase()} ${index + 1} up`}
+                    disabled={index === 0}
+                    onClick={() => move(index, index - 1)}
+                  >
+                    ↑
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    aria-label={`Move ${label.toLowerCase()} ${index + 1} down`}
+                    disabled={index === items.length - 1}
+                    onClick={() => move(index, index + 1)}
+                  >
+                    ↓
+                  </Button>
+                </>
+              ) : null}
+              {removeButton}
+            </div>
           </div>
         );
       })}
@@ -813,6 +862,7 @@ function UnionField({
   const id = useId();
   const parseErrors = useParseErrors();
   const change = useFormChange();
+  const reviewEdit = use(FormEditReviewContext);
   const { optional, hasDefault, defaultValue } = unwrap(schema);
   const value: unknown = field.value === undefined && hasDefault ? defaultValue : field.value;
   const unset = value === undefined;
@@ -833,17 +883,29 @@ function UnionField({
       selected === undefined
         ? undefined
         : pickerOptions.findIndex((candidate) => candidate.value === selected);
-    if (chosen === -1) return;
-    change({ path: name, kind: 'commit' }, () => {
-      repathParseErrors(parseErrors, [{ from: name }]);
-      field.onChange(
-        chosen === undefined
-          ? undefined
-          : withUnsetFields(
-              shape.options[chosen] as Schema,
-              initialValue(shape.options[chosen] as Schema),
-            ),
-      );
+    if (
+      chosen === -1 ||
+      (shape.discriminator && selected === selectedValue) ||
+      (unset && selected === undefined)
+    )
+      return;
+    const next = chosen === undefined ? undefined : initialValue(shape.options[chosen] as Schema);
+    reviewEdit({ type: 'variant', path: name, value: next }, (replacement, keep) => {
+      change({ path: name, kind: 'commit' }, () => {
+        repathParseErrors(
+          parseErrors,
+          keep === undefined
+            ? [{ from: name }]
+            : Object.keys(parseErrors.errors ?? {})
+                .filter((path) => !keep.some((key) => path === key || path.startsWith(`${key}.`)))
+                .map((from) => ({ from, exact: true })),
+        );
+        field.onChange(
+          chosen === undefined
+            ? undefined
+            : withUnsetFields(shape.options[chosen] as Schema, replacement),
+        );
+      });
     });
   };
   // The variant picker is the union's own control: it carries the marker, the help, and the error.

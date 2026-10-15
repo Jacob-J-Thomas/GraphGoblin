@@ -2,7 +2,6 @@ import {
   NodeConfigSchemas,
   SlugSchema,
   type LoopDefinitionInput,
-  type ClassifierAnswerConfig,
   type NodeInput,
 } from '@graphgoblin/contracts';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
@@ -24,6 +23,12 @@ import { VariableSuggestionsContext } from '../forms/fields/suggestions.js';
 import { JsonApplyReviewContext } from '../forms/fields/json.js';
 import { removedAnswerConnections } from './decision-route-edges.js';
 import { nextChangeId } from '../forms/changes.js';
+import {
+  FormEditReviewContext,
+  ReorderablePathsContext,
+  type FormEditRequest,
+} from '../forms/edit-review.js';
+import { convertDecision } from './decision-authoring.js';
 import { DecisionKindPicker } from './DecisionKindPicker.js';
 import { DecisionAnswerPicker } from './DecisionAnswerPicker.js';
 
@@ -32,7 +37,7 @@ import { TriggerPresets } from './TriggerPresets.js';
 import { CatalogWarningsContext } from '../forms/fields/model.js';
 import { canvasFocusTarget } from './canvas-focus.js';
 import { DECISION_FIELD_OVERRIDES, NODE_FIELD_CONTROLS } from './field-controls.js';
-import { focusIssuePath } from './focus-field.js';
+import { focusIssuePath, groupFocus } from './focus-field.js';
 import { IssueBadge } from './IssueBadge.js';
 import { KindChip } from './KindChip.js';
 import { KIND_INFO, type EditorIssue } from './model.js';
@@ -55,6 +60,8 @@ const POLL_FIELD_LABELS = {
   'items.dedupeKey': 'Per-item dedupe key',
 };
 const DEFAULT_FIELD_LABELS = {};
+const DECISION_REORDERABLE = ['routes', 'answer.options', 'answer.bands'];
+const NO_REORDERABLE: readonly string[] = [];
 
 export function idProblem(
   draft: string,
@@ -79,43 +86,9 @@ function record(value: unknown): Record<string, unknown> {
     : {};
 }
 
-function answerType(config: unknown): ClassifierAnswerConfig['type'] | undefined {
+function answerType(config: unknown): 'choice' | 'noul' | 'score' | undefined {
   const type = record(record(config)['answer'])['type'];
   return type === 'choice' || type === 'noul' || type === 'score' ? type : undefined;
-}
-
-const ANSWER_DEFAULTS = {
-  choice: {
-    type: 'choice',
-    options: [
-      { id: 'yes', label: 'Yes', criteria: 'The answer is yes' },
-      { id: 'no', label: 'No', criteria: 'The answer is no' },
-    ],
-  },
-  noul: {
-    type: 'noul',
-    true: { id: 'true', label: 'True', criteria: 'The statement is true' },
-    false: { id: 'false', label: 'False', criteria: 'The statement is false' },
-  },
-  score: {
-    type: 'score',
-    anchors: ['Does not meet the rubric', 'Partly meets the rubric', 'Fully meets the rubric'],
-    bands: [
-      { id: 'low', label: 'Low', min: 0, max: 0.5 },
-      { id: 'mid', label: 'Middle', min: 0.5, max: 1.5 },
-      { id: 'high', label: 'High', min: 1.5, max: 2 },
-    ],
-  },
-} satisfies Record<ClassifierAnswerConfig['type'], ClassifierAnswerConfig>;
-
-/** Supply a complete classifier primitive when its type changes. */
-function decisionVariantChange(next: unknown, previous: unknown): unknown {
-  const config = record(next);
-  const type = answerType(next);
-  if (config['kind'] !== 'classifier' || !type || type === answerType(previous)) return next;
-  const normalized: Record<string, unknown> = { ...config, answer: ANSWER_DEFAULTS[type] };
-  if (type !== 'noul') delete normalized['truthThreshold'];
-  return normalized;
 }
 
 /** The heading of the dialog `from` sits in (it names the dialog). */
@@ -148,13 +121,6 @@ interface IdDraft {
   warned?: string | undefined;
 }
 
-interface PendingAnswerFocus {
-  nodeId: string;
-  answerType: ClassifierAnswerConfig['type'];
-  epoch: number;
-  historyEpoch: number;
-}
-
 /**
  * The editor of one node, in a modal dialog named "Edit <kind> <id>": the node's issue badge beside
  * the title (choosing an issue focuses its field), id, label, the subloop picker, the config form
@@ -185,8 +151,30 @@ export function NodeEditorDialog({
   const bodyRef = useRef<HTMLElement>(null);
   const pendingHarnessFocusRef = useRef(false);
   const pendingPredicateFocusRef = useRef<string | undefined>(undefined);
-  const pendingAnswerFocusRef = useRef<PendingAnswerFocus | undefined>(undefined);
   const [epoch, setEpoch] = useState(0);
+  const [review, setReview] = useState<{
+    title: string;
+    lost: string[];
+    incomplete: string[];
+    blocked?: string | undefined;
+    apply: () => void;
+    config: unknown;
+    edges: LoopDefinitionInput['edges'];
+    historyEpoch: number;
+    focusPath: string;
+    routing?: string | undefined;
+  }>();
+  const activeReview =
+    review?.config === node.config &&
+    review?.edges === definition.edges &&
+    review?.historyEpoch === historyEpoch
+      ? review
+      : undefined;
+  const reviewRef = useRef<HTMLDivElement>(null);
+  const reviewReturnRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (review) reviewRef.current?.focus();
+  }, [review]);
   // Which of the config form's disclosures are open (Advanced, collapsed list items). Kept here,
   // not in the form, so the remounts below (undo and redo, a subloop pick) keep what the user
   // opened; the dialog is mounted per node and per opening, so another node starts collapsed.
@@ -265,27 +253,6 @@ export function NodeEditorDialog({
       ?.focus();
   }, [epoch]);
 
-  useLayoutEffect(() => {
-    const pending = pendingAnswerFocusRef.current;
-    if (!pending) return;
-    pendingAnswerFocusRef.current = undefined;
-    if (
-      pending.nodeId !== node.id ||
-      pending.epoch !== epoch ||
-      pending.historyEpoch !== historyEpoch
-    )
-      return;
-    const dialog = bodyRef.current?.closest('dialog');
-    if (document.activeElement !== document.body && document.activeElement !== dialog) return;
-    const radios = bodyRef.current?.querySelectorAll<HTMLInputElement>(
-      'input[type="radio"][name="answer"]',
-    );
-    const selected = radios
-      ? Array.from(radios).find((radio) => radio.value === pending.answerType)
-      : undefined;
-    selected?.focus();
-  }, [epoch, historyEpoch, node.id]);
-
   const commitId = () => {
     const error = idProblem(id.value, node.id, definition);
     setIdState({ ...id, error });
@@ -314,22 +281,12 @@ export function NodeEditorDialog({
       setEpoch((current) => current + 1);
     }
     if (node.kind === 'decision' && change?.path === 'answer') {
-      const normalized = decisionVariantChange(config, node.config);
-      if (normalized !== config) {
-        const active = document.activeElement;
-        const radioHadFocus =
-          active instanceof HTMLInputElement && active.type === 'radio' && active.name === 'answer';
-        const selected = answerType(normalized);
-        if (radioHadFocus && selected) {
-          pendingAnswerFocusRef.current = {
-            nodeId: node.id,
-            answerType: selected,
-            epoch: epoch + 1,
-            historyEpoch,
-          };
-        }
-        setEpoch((current) => current + 1);
-      }
+      const raw = record(config);
+      const normalized =
+        answerType(config) !== 'noul' && raw['truthThreshold'] !== undefined
+          ? Object.fromEntries(Object.entries(raw).filter(([key]) => key !== 'truthThreshold'))
+          : config;
+      if (normalized !== config) setEpoch((current) => current + 1);
       updateNode(node.id, { config: normalized }, change);
       return;
     }
@@ -343,6 +300,67 @@ export function NodeEditorDialog({
       return;
     }
     updateNode(node.id, { config }, change);
+  };
+
+  const reviewEdit = (
+    request: FormEditRequest,
+    apply: (value: unknown, keep?: readonly string[]) => void,
+  ) => {
+    if (node.kind !== 'decision') return apply(request.value);
+    reviewReturnRef.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    if (request.type === 'variant' && (request.path === '' || request.path === 'answer')) {
+      const converted = convertDecision(
+        node.config,
+        request.path === '' ? record(request.value)['kind'] : 'classifier',
+        request.path === 'answer' ? record(request.value)['type'] : undefined,
+      );
+      const held = Object.keys(fieldErrors[`node:${node.id}`] ?? {}).filter(
+        (path) => !converted.keep.some((key) => path === key || path.startsWith(`${key}.`)),
+      );
+      setReview({
+        config: node.config,
+        edges: definition.edges,
+        historyEpoch,
+        focusPath: request.path || 'kind',
+        title: request.path === '' ? 'Change decision kind?' : 'Change classifier answer type?',
+        lost: [...converted.lost, ...held.map((path) => `Unfinished input: ${path}`)],
+        incomplete: converted.incomplete,
+        routing:
+          record(converted.config['answer'])['type'] === 'noul' && !converted.blocked
+            ? `True → ${String(record(record(converted.config['answer'])['true'])['label'])} (${String(record(record(converted.config['answer'])['true'])['id'])}); false → ${String(record(record(converted.config['answer'])['false'])['label'])} (${String(record(record(converted.config['answer'])['false'])['id'])}). Review that these sides match your question.`
+            : undefined,
+        blocked: converted.blocked,
+        apply: () =>
+          apply(
+            request.path === '' ? converted.config : converted.config['answer'],
+            converted.keep,
+          ),
+      });
+      return;
+    }
+    if (
+      request.type === 'remove' &&
+      ['routes', 'answer.options', 'answer.bands'].includes(request.path)
+    ) {
+      const owned =
+        useEditorStore.getState().decisionRoutes[node.id]?.rows[request.index!]?.edgeIds ?? [];
+      const edges = definition.edges.filter((edge) => owned.includes(edge.id));
+      if (edges.length) {
+        setReview({
+          config: node.config,
+          edges: definition.edges,
+          historyEpoch,
+          focusPath: request.path,
+          title: 'Remove connected route?',
+          lost: edges.map((edge) => `Connection ${edge.from.port} → ${edge.to.node} (${edge.id})`),
+          incomplete: [],
+          apply: () => apply(request.value),
+        });
+        return;
+      }
+    }
+    apply(request.value);
   };
 
   const requestClose = (reason: DialogCloseReason) => {
@@ -477,39 +495,122 @@ export function NodeEditorDialog({
               always a nonmatch, and the run inspector keeps the raw answer and gate separate.
             </HelpText>
           ) : null}
-          <CatalogWarningsContext value={catalogWarnings}>
-            <FieldLabelsContext
-              value={
-                node.kind === 'trigger' && node.config?.subtype === 'poll'
-                  ? POLL_FIELD_LABELS
-                  : node.kind === 'decision'
-                    ? DECISION_FIELD_LABELS
-                    : DEFAULT_FIELD_LABELS
-              }
+          {activeReview ? (
+            <div
+              ref={reviewRef}
+              role="region"
+              aria-label={activeReview.title}
+              tabIndex={-1}
+              className="my-3 grid gap-3 rounded-md border border-default p-4"
             >
-              <VariableSuggestionsContext value={variables}>
-                <JsonApplyReviewContext value={reviewJsonApply}>
-                  <SchemaForm
-                    key={`${node.kind}:${epoch}:${historyEpoch}`}
-                    schema={NodeConfigSchemas[node.kind]}
-                    fieldOrder={node.kind === 'decision' ? DECISION_FIELD_ORDER : undefined}
-                    value={node.config}
-                    label={`${node.id} config`}
-                    controls={NODE_FIELD_CONTROLS}
-                    unionPickers={node.kind === 'decision' ? DECISION_UNION_PICKERS : undefined}
-                    fieldOverrides={node.kind === 'decision' ? DECISION_FIELD_OVERRIDES : undefined}
-                    problems={configProblems}
-                    disclosures={disclosures}
-                    onChange={handleConfigChange}
-                    parseErrors={fieldErrors[`node:${node.id}`]}
-                    onParseError={(path, error, reason, change) =>
-                      setFieldError(`node:${node.id}`, path, error, reason, change)
-                    }
-                  />
-                </JsonApplyReviewContext>
-              </VariableSuggestionsContext>
-            </FieldLabelsContext>
-          </CatalogWarningsContext>
+              <p className="font-semibold">{activeReview.title}</p>
+              {activeReview.blocked ? (
+                <p role="alert">{activeReview.blocked}</p>
+              ) : (
+                <>
+                  <p>
+                    {activeReview.title === 'Remove connected route?'
+                      ? 'The route and listed connections will be removed together in one undoable edit.'
+                      : 'Route IDs, labels and representable connections stay together. This is one undoable edit.'}
+                  </p>
+                  {activeReview.routing ? <p>{activeReview.routing}</p> : null}
+                  {activeReview.lost.length ? (
+                    <>
+                      <p>These fields or connections will be removed:</p>
+                      <ul className="list-disc pl-4">
+                        {activeReview.lost.map((item) => (
+                          <li key={item}>{item}</li>
+                        ))}
+                      </ul>
+                    </>
+                  ) : (
+                    <p>No authored fields will be lost.</p>
+                  )}
+                  {activeReview.incomplete.length ? (
+                    <p>
+                      Complete before saving and publishing: {activeReview.incomplete.join(', ')}.
+                      No source or criteria are generated.
+                    </p>
+                  ) : null}
+                </>
+              )}
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => {
+                    setReview(undefined);
+                    requestAnimationFrame(() => {
+                      const target = reviewReturnRef.current;
+                      if (target && bodyRef.current) groupFocus(target, bodyRef.current).focus();
+                    });
+                  }}
+                >
+                  Cancel change
+                </Button>
+                {!activeReview.blocked ? (
+                  <Button
+                    onClick={() => {
+                      activeReview.apply();
+                      setReview(undefined);
+                      requestAnimationFrame(() => {
+                        focusIssue(bodyRef.current, `config.${activeReview.focusPath}`);
+                      });
+                    }}
+                  >
+                    Confirm change
+                  </Button>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
+          <FormEditReviewContext value={reviewEdit}>
+            <ReorderablePathsContext
+              value={node.kind === 'decision' ? DECISION_REORDERABLE : NO_REORDERABLE}
+            >
+              <CatalogWarningsContext value={catalogWarnings}>
+                <FieldLabelsContext
+                  value={
+                    node.kind === 'trigger' && node.config?.subtype === 'poll'
+                      ? POLL_FIELD_LABELS
+                      : node.kind === 'decision'
+                        ? DECISION_FIELD_LABELS
+                        : DEFAULT_FIELD_LABELS
+                  }
+                >
+                  <VariableSuggestionsContext value={variables}>
+                    <JsonApplyReviewContext value={reviewJsonApply}>
+                      <fieldset
+                        disabled={activeReview !== undefined}
+                        inert={activeReview !== undefined}
+                        className="grid min-w-0 gap-0 border-0 p-0"
+                      >
+                        <SchemaForm
+                          key={`${node.kind}:${epoch}:${historyEpoch}`}
+                          schema={NodeConfigSchemas[node.kind]}
+                          fieldOrder={node.kind === 'decision' ? DECISION_FIELD_ORDER : undefined}
+                          value={node.config}
+                          label={`${node.id} config`}
+                          controls={NODE_FIELD_CONTROLS}
+                          unionPickers={
+                            node.kind === 'decision' ? DECISION_UNION_PICKERS : undefined
+                          }
+                          fieldOverrides={
+                            node.kind === 'decision' ? DECISION_FIELD_OVERRIDES : undefined
+                          }
+                          problems={configProblems}
+                          disclosures={disclosures}
+                          onChange={handleConfigChange}
+                          parseErrors={fieldErrors[`node:${node.id}`]}
+                          onParseError={(path, error, reason, change) =>
+                            setFieldError(`node:${node.id}`, path, error, reason, change)
+                          }
+                        />
+                      </fieldset>
+                    </JsonApplyReviewContext>
+                  </VariableSuggestionsContext>
+                </FieldLabelsContext>
+              </CatalogWarningsContext>
+            </ReorderablePathsContext>
+          </FormEditReviewContext>
         </div>
         <NodeConnections
           node={node}
