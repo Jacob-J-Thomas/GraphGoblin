@@ -6227,58 +6227,11 @@ export interface operations {
                             manifest: {
                                 id: string;
                                 version: string;
-                                /** @enum {string} */
-                                kind: "starter" | "implementation" | "review" | "qa";
                                 title: string;
                                 description: string;
                                 /** @default [] */
                                 tags: string[];
-                                roles: {
-                                    /** @enum {string} */
-                                    id: "assistant" | "implementer" | "reviewer" | "fixer" | "qa" | "adversary";
-                                    label: string;
-                                    /** @enum {string} */
-                                    access: "read-only" | "write";
-                                }[];
-                                /** @default [] */
-                                prerequisites: {
-                                    id: string;
-                                    label: string;
-                                    /** @enum {string} */
-                                    kind: "repository" | "github" | "secret" | "role" | "isolation" | "support";
-                                    /** @enum {string} */
-                                    blocking: "authoring" | "runtime";
-                                    /** @enum {string} */
-                                    role?: ("assistant" | "implementer" | "reviewer" | "fixer" | "qa" | "adversary") | undefined;
-                                    secretKey?: string | undefined;
-                                }[];
-                                /** @default [] */
-                                requiredSecrets: {
-                                    key: string;
-                                    scopes: string[];
-                                }[];
-                                parentKey: string;
-                                loops: {
-                                    key: string;
-                                    file: string;
-                                    /** @default [] */
-                                    dependsOn: string[];
-                                    /** @default [] */
-                                    roleNodes: {
-                                        /** @enum {string} */
-                                        role: "assistant" | "implementer" | "reviewer" | "fixer" | "qa" | "adversary";
-                                        nodeId: string;
-                                    }[];
-                                    /** @default [] */
-                                    settingsNodes: string[];
-                                    /** @default [] */
-                                    subloops: {
-                                        nodeId: string;
-                                        loopKey: string;
-                                    }[];
-                                }[];
-                                supportEntry?: string | undefined;
-                                draftFile?: string | undefined;
+                                draftFile: string;
                             };
                         }[];
                     };
@@ -6307,58 +6260,11 @@ export interface operations {
                         manifest: {
                             id: string;
                             version: string;
-                            /** @enum {string} */
-                            kind: "starter" | "implementation" | "review" | "qa";
                             title: string;
                             description: string;
                             /** @default [] */
                             tags: string[];
-                            roles: {
-                                /** @enum {string} */
-                                id: "assistant" | "implementer" | "reviewer" | "fixer" | "qa" | "adversary";
-                                label: string;
-                                /** @enum {string} */
-                                access: "read-only" | "write";
-                            }[];
-                            /** @default [] */
-                            prerequisites: {
-                                id: string;
-                                label: string;
-                                /** @enum {string} */
-                                kind: "repository" | "github" | "secret" | "role" | "isolation" | "support";
-                                /** @enum {string} */
-                                blocking: "authoring" | "runtime";
-                                /** @enum {string} */
-                                role?: ("assistant" | "implementer" | "reviewer" | "fixer" | "qa" | "adversary") | undefined;
-                                secretKey?: string | undefined;
-                            }[];
-                            /** @default [] */
-                            requiredSecrets: {
-                                key: string;
-                                scopes: string[];
-                            }[];
-                            parentKey: string;
-                            loops: {
-                                key: string;
-                                file: string;
-                                /** @default [] */
-                                dependsOn: string[];
-                                /** @default [] */
-                                roleNodes: {
-                                    /** @enum {string} */
-                                    role: "assistant" | "implementer" | "reviewer" | "fixer" | "qa" | "adversary";
-                                    nodeId: string;
-                                }[];
-                                /** @default [] */
-                                settingsNodes: string[];
-                                /** @default [] */
-                                subloops: {
-                                    nodeId: string;
-                                    loopKey: string;
-                                }[];
-                            }[];
-                            supportEntry?: string | undefined;
-                            draftFile?: string | undefined;
+                            draftFile: string;
                         };
                     };
                 };

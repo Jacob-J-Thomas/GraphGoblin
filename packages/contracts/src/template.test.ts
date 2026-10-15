@@ -34,12 +34,9 @@ const common = { repository, supportReadKey: 'support-reader' };
 const manifest = {
   id: 'starter',
   version: '1.0.0',
-  kind: 'starter',
   title: 'Starter',
   description: 'A manual assistant.',
-  roles: [{ id: 'assistant', label: 'Assistant', access: 'read-only' }],
-  parentKey: 'main',
-  loops: [{ key: 'main', file: 'main.json' }],
+  draftFile: 'draft.json',
 };
 const report = { checks: [], canInstantiate: true, canRun: true };
 const parent = {
@@ -74,13 +71,75 @@ describe('editable draft requests and manifest capability', () => {
     expect(TemplateDraftRequestSchema.safeParse({ name: ' ' }).success).toBe(false);
     expect(TemplateDraftRequestSchema.safeParse({ settings: starter }).success).toBe(false);
   });
-  it('declares an optional current-format JSON draft asset using bounded package paths', () => {
-    expect(TemplateManifestSchema.parse(manifest).draftFile).toBeUndefined();
-    expect(TemplateManifestSchema.parse({ ...manifest, draftFile: 'draft.json' }).draftFile).toBe(
-      'draft.json',
+  it('requires a JSON draft asset using bounded package paths and defaults tags', () => {
+    expect(TemplateManifestSchema.parse(manifest)).toEqual({ ...manifest, tags: [] });
+    expect(TemplateManifestSchema.safeParse({ ...manifest, draftFile: undefined }).success).toBe(
+      false,
     );
-    for (const draftFile of ['draft.md', '../draft.json', '/draft.json'])
+    for (const draftFile of [
+      'draft.md',
+      '../draft.json',
+      '/draft.json',
+      'a//draft.json',
+      'a/./draft.json',
+      'a/../draft.json',
+      'a\\draft.json',
+      'C:/draft.json',
+      '',
+      'a'.repeat(508) + '.json',
+    ])
       expect(TemplateManifestSchema.safeParse({ ...manifest, draftFile }).success).toBe(false);
+    expect(
+      TemplateManifestSchema.parse({ ...manifest, draftFile: 'a'.repeat(507) + '.json' }).draftFile,
+    ).toHaveLength(512);
+    expect(
+      TemplateManifestSchema.parse({ ...manifest, draftFile: 'graphs/starting-point.json' })
+        .draftFile,
+    ).toBe('graphs/starting-point.json');
+  });
+  it.each([
+    'kind',
+    'roles',
+    'prerequisites',
+    'requiredSecrets',
+    'parentKey',
+    'loops',
+    'supportEntry',
+  ])('strictly rejects the removed manifest field %s', (field) => {
+    expect(TemplateManifestSchema.safeParse({ ...manifest, [field]: null }).success).toBe(false);
+  });
+  it('bounds IDs, semver, titles, descriptions and tags', () => {
+    for (const value of [
+      { id: '1bad' },
+      { id: 'a'.repeat(65) },
+      { version: '1.0' },
+      { version: '01.0.0' },
+      { version: '1.0.0-01' },
+      { version: '1.0.0-' },
+      { version: '1.0.0+..' },
+      { version: '1.0.0-' + 'a'.repeat(59) },
+      { title: '' },
+      { title: 'a'.repeat(121) },
+      { description: '' },
+      { description: 'a'.repeat(4001) },
+      { tags: [''] },
+      { tags: ['a'.repeat(41)] },
+      { tags: Array<string>(21).fill('tag') },
+    ])
+      expect(TemplateManifestSchema.safeParse({ ...manifest, ...value }).success).toBe(false);
+    expect(
+      TemplateManifestSchema.parse({ ...manifest, id: 'A_1-valid', version: '2.0.0-rc.1+build.5' })
+        .version,
+    ).toBe('2.0.0-rc.1+build.5');
+    expect(
+      TemplateManifestSchema.parse({
+        ...manifest,
+        version: '1.0.0-' + 'a'.repeat(58),
+        title: 'a'.repeat(120),
+        description: 'a'.repeat(4000),
+        tags: Array<string>(20).fill('a'.repeat(40)),
+      }).version,
+    ).toHaveLength(64);
   });
 });
 
@@ -246,8 +305,8 @@ describe('template typed settings', () => {
 describe('template manifest and public DTOs', () => {
   it('round-trips catalog/instance endpoints with one draft parent', () => {
     const entry = { manifest: TemplateManifestSchema.parse(manifest) };
-    expect(TemplateListResponseSchema.parse({ items: [entry] }).items[0]?.manifest.parentKey).toBe(
-      'main',
+    expect(TemplateListResponseSchema.parse({ items: [entry] }).items[0]?.manifest.draftFile).toBe(
+      'draft.json',
     );
     expect(TemplateCatalogEntrySchema.parse(entry)).toEqual(entry);
     for (const removed of ['settingsSchema', 'defaultSettings', 'prerequisites'])
@@ -273,9 +332,7 @@ describe('template manifest and public DTOs', () => {
     'a/./b.json',
     'a.txt',
   ])('refuses manifest export path %s', (file) =>
-    expect(
-      TemplateManifestSchema.safeParse({ ...manifest, loops: [{ key: 'main', file }] }).success,
-    ).toBe(false),
+    expect(TemplateManifestSchema.safeParse({ ...manifest, draftFile: file }).success).toBe(false),
   );
   it('refuses unknown manifest/endpoint fields', () => {
     expect(TemplateManifestSchema.safeParse({ ...manifest, execute: 'unsafe' }).success).toBe(

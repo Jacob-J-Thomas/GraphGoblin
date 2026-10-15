@@ -63,34 +63,41 @@ describe('editable template starting points', () => {
     },
   );
 
-  it('creates independent copies, keeps supplied names literal, and does not alter the package', async () => {
-    app = await createTestApp();
-    const packaged = await app.container.templates.catalog.draft('implementation');
-    const name = 'Literal {{ vars.private }}; $(not-a-command)';
-    const first = await createDraft('implementation', name);
-    const second = await createDraft('implementation', name);
-    expect(first.loop.id).not.toBe(second.loop.id);
-    expect(first.draft.id).not.toBe(second.draft.id);
-    expect(first.draft.definition.name).toBe(name);
-    first.draft.definition.nodes[1]!.label = 'A user edit';
-    const save = await app.app.inject({
-      method: 'PUT',
-      url: '/loops/' + first.loop.id + '/draft',
-      payload: { definition: first.draft.definition },
-    });
-    expect(save.statusCode, save.body).toBe(200);
-    const readFirst = await app.app.inject({ method: 'GET', url: '/loops/' + first.loop.id });
-    const readSecond = await app.app.inject({ method: 'GET', url: '/loops/' + second.loop.id });
-    expect(readFirst.statusCode, readFirst.body).toBe(200);
-    expect(readSecond.statusCode, readSecond.body).toBe(200);
-    expect(
-      LoopVersionRecordSchema.parse(readFirst.json<{ draft: unknown }>().draft).definition,
-    ).toEqual(first.draft.definition);
-    expect(
-      LoopVersionRecordSchema.parse(readSecond.json<{ draft: unknown }>().draft).definition,
-    ).toEqual(second.draft.definition);
-    expect(await app.container.templates.catalog.draft('implementation')).toEqual(packaged);
-  });
+  it.each(['starter', 'implementation', 'review', 'qa'])(
+    'creates independent %s copies, keeps supplied names literal, and does not alter the package',
+    async (kind) => {
+      app = await createTestApp();
+      const packaged = await app.container.templates.catalog.draft(kind);
+      const name = 'Literal {{ vars.private }}; $(not-a-command)';
+      const first = await createDraft(kind, name);
+      const second = await createDraft(kind, name);
+      expect(first.loop.id).not.toBe(second.loop.id);
+      expect(first.draft.id).not.toBe(second.draft.id);
+      expect(first.draft.definition.name).toBe(name);
+      first.draft.definition.nodes[1]!.label = 'A user edit';
+      const save = await app.app.inject({
+        method: 'PUT',
+        url: '/loops/' + first.loop.id + '/draft',
+        payload: { definition: first.draft.definition },
+      });
+      expect(save.statusCode, save.body).toBe(200);
+      const readFirst = await app.app.inject({ method: 'GET', url: '/loops/' + first.loop.id });
+      const readSecond = await app.app.inject({ method: 'GET', url: '/loops/' + second.loop.id });
+      expect(readFirst.statusCode, readFirst.body).toBe(200);
+      expect(readSecond.statusCode, readSecond.body).toBe(200);
+      expect(
+        LoopVersionRecordSchema.parse(readFirst.json<{ draft: unknown }>().draft).definition,
+      ).toEqual(first.draft.definition);
+      expect(
+        LoopVersionRecordSchema.parse(readSecond.json<{ draft: unknown }>().draft).definition,
+      ).toEqual(second.draft.definition);
+      const third = await createDraft(kind);
+      expect(third.loop.id).not.toBe(first.loop.id);
+      expect(third.loop.id).not.toBe(second.loop.id);
+      expect(third.draft.definition).toEqual(packaged);
+      expect(await app.container.templates.catalog.draft(kind)).toEqual(packaged);
+    },
+  );
 
   it.each(['missing', 'disabled', 'no-harness'])(
     'retains truthful %s model readiness issues without blocking draft creation',

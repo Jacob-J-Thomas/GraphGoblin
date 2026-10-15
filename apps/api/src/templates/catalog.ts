@@ -32,7 +32,6 @@ export class TemplateCatalog {
       const entries: CatalogDraft[] = [];
       for (const file of files) {
         const manifest = TemplateManifestSchema.parse(await json(this.root, file));
-        if (!manifest.draftFile) throw new Error('missing draft asset');
         const exported = LoopExportSchema.parse(
           await json(this.root, join(dirname(file), manifest.draftFile)),
         );

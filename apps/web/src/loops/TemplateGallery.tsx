@@ -95,6 +95,7 @@ export function TemplateGallery({
             </h2>
             <p className="mt-1 text-sm text-muted">
               Use a template to create an independent loop, then customize it in the editor.
+              Templates are starting graphs; publish and run each copy separately.
             </p>
           </div>
           {templates.length === 0 ? (

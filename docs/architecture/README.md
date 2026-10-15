@@ -255,11 +255,11 @@ Routes are registered in `apps/api/src/app.ts:83` to `apps/api/src/app.ts:91`.
 
 The engine evaluates one primitive per decision or exit criterion through `evaluatePrimitive` (`packages/engine/src/primitive-evaluator.ts:116`), choosing expression, classifier or LLM by the configured evaluator, with no fallback.
 
-## 9. Template catalogue, instances and support authority (current state; removal by #165)
+## 9. Template catalogue and independent starting points
 
-What stays after #165: the installed catalogue (`apps/api/templates/catalog.json:1`), each template's `draft.json`, and `POST /templates/:id/draft`, which validates the draft asset and creates an ordinary loop (`apps/api/src/routes/templates.ts:36`, `apps/api/src/routes/templates.ts:47`, `packages/domain/src/template-bundle.ts:40`).
+The current catalogue contains the index (`apps/api/templates/catalog.json`), four reduced `manifest.json` files and four self-contained `draft.json` starting graphs. Templates are never runnable. `POST /templates/:id/draft` validates and copies a starting graph into an independent owner-scoped ordinary loop (`apps/api/src/routes/templates.ts`, `packages/domain/src/template-bundle.ts`).
 
-What #165 removes, with its current hooks into generic code:
+The diagram and seam table below record the authority layer at the snapshot commit. Its runtime hooks and services were removed in #165 steps 05-08; configured DTO and storage removal remains with step 09.
 
 ```mermaid
 flowchart TB
@@ -292,9 +292,9 @@ flowchart TB
 | Run listing                            | `apps/api/src/routes/runs.ts:144` pages through `SqliteTemplateInstances.runPage` (`packages/infrastructure/src/sqlite/templates.ts:158`)          |
 | Loop read and editor origin            | `apps/api/src/routes/loops.ts:228`, `apps/web/src/editor/EditorPage.tsx:79`                                                                        |
 | Contracts and domain                   | `packages/contracts/src/template-settings.ts:172`, `packages/contracts/src/template-manifest.ts:149`, `packages/domain/src/template-bundle.ts:213` |
-| Assets and examples                    | configured bundles under `apps/api/templates/*/manifest.json`, `parent.json`; `examples/aidlc` (1.4 MB)                                            |
+| Starting-point assets (current)        | `apps/api/templates/*/manifest.json` and `apps/api/templates/*/draft.json`                                                                         |
 
-The authority layer enforces repository containment, durable attempts and finite budgets for the GitHub implementation, review and QA templates; production QA isolation is reported unavailable (`apps/api/src/templates/github/qa-native.ts:29`). Under the owner's decision these become plain editable graphs whose GitHub effects come from ordinary nodes.
+At the snapshot commit, the authority layer enforced repository containment, durable attempts and finite budgets for the GitHub implementation, review and QA templates; production QA isolation was reported unavailable (`apps/api/src/templates/github/qa-native.ts:29`). The retained starting graphs now use ordinary nodes and grant no GitHub authority or proof isolation. Any later GitHub effects require explicitly authored ordinary nodes.
 
 ## 10. Triggers, admission, receipts and persistence
 

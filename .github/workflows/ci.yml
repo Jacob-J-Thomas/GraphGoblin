@@ -103,6 +103,15 @@ jobs:
           const entries = await catalog.list();
           assert.deepEqual(entries.map(({ manifest }) => manifest.id).sort(),
             ['implementation', 'qa', 'review', 'starter']);
+          const assetFiles = (root) => readdirSync(root, { withFileTypes: true }).flatMap((entry) =>
+            entry.isDirectory() ? assetFiles(`${root}/${entry.name}`).map((file) => `${entry.name}/${file}`)
+              : [entry.name]).sort();
+          const keptFiles = ['catalog.json', ...entries.flatMap(({ manifest }) =>
+            [`${manifest.id}/manifest.json`, `${manifest.id}/draft.json`])].sort();
+          for (const root of ['/app/apps/api/templates', '/app/apps/api/dist/catalog']) {
+            assert.deepEqual(assetFiles(root), keptFiles,
+              'Only the index, manifests and independent drafts may ship; no configured graphs or support assets');
+          }
           const supportDir = '/app/apps/api/dist/templates/github';
           assert.deepEqual(existsSync(supportDir) ? readdirSync(supportDir, { recursive: true }) : [], []);
           for (const name of ['runtime', 'binding', 'scripts', 'authority', 'prerequisites',

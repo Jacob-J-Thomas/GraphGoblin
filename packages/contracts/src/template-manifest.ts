@@ -2,13 +2,14 @@ import { z } from 'zod';
 import { SlugSchema, TimestampSchema, UlidSchema } from './common.js';
 import { LoopDefinitionSchema, LoopRecordSchema, LoopVersionRecordSchema } from './loop.js';
 import { LoopIssueSchema } from './issues.js';
-import {
-  TemplateKindSchema,
-  TemplateRoleIdSchema,
-  TemplateSettingsSchema,
-} from './template-settings.js';
+import { TemplateSettingsSchema } from './template-settings.js';
 
-export const TemplateVersionSchema = z.string().regex(/^\d+\.\d+\.\d+(?:-[A-Za-z0-9.-]+)?$/);
+export const TemplateVersionSchema = z
+  .string()
+  .max(64)
+  .regex(
+    /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*))*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/,
+  );
 export const TemplateRelativePathSchema = z
   .string()
   .min(1)
@@ -18,71 +19,17 @@ export const TemplateRelativePathSchema = z
     (value) => !value.split('/').some((part) => !part || part === '.' || part === '..'),
     'must be a portable relative path without traversal',
   );
-export const TemplatePrerequisiteDeclarationSchema = z.strictObject({
-  id: SlugSchema,
-  label: z.string().min(1).max(120),
-  kind: z.enum(['repository', 'github', 'secret', 'role', 'isolation', 'support']),
-  blocking: z.enum(['authoring', 'runtime']),
-  role: TemplateRoleIdSchema.optional(),
-  secretKey: SlugSchema.optional(),
-});
-export type TemplatePrerequisiteDeclaration = z.infer<typeof TemplatePrerequisiteDeclarationSchema>;
-export const TemplateLoopManifestSchema = z.strictObject({
-  key: SlugSchema,
-  file: TemplateRelativePathSchema.refine(
-    (value) => value.endsWith('.json'),
-    'must name a JSON export',
-  ),
-  dependsOn: z.array(SlugSchema).max(32).default([]),
-  roleNodes: z
-    .array(z.strictObject({ role: TemplateRoleIdSchema, nodeId: SlugSchema }))
-    .max(64)
-    .default([]),
-  /** Existing literal mutations only; never rewrite executable or templated source strings. */
-  settingsNodes: z.array(SlugSchema).max(32).default([]),
-  subloops: z
-    .array(z.strictObject({ nodeId: SlugSchema, loopKey: SlugSchema }))
-    .max(32)
-    .default([]),
-});
-export type TemplateLoopManifest = z.infer<typeof TemplateLoopManifestSchema>;
 export const TemplateManifestSchema = z.strictObject({
   id: SlugSchema,
   version: TemplateVersionSchema,
-  kind: TemplateKindSchema,
   title: z.string().min(1).max(120),
   description: z.string().min(1).max(4000),
   tags: z.array(z.string().min(1).max(40)).max(20).default([]),
-  roles: z
-    .array(
-      z.strictObject({
-        id: TemplateRoleIdSchema,
-        label: z.string().min(1).max(120),
-        access: z.enum(['read-only', 'write']),
-      }),
-    )
-    .max(8),
-  prerequisites: z.array(TemplatePrerequisiteDeclarationSchema).max(32).default([]),
-  requiredSecrets: z
-    .array(
-      z.strictObject({
-        key: SlugSchema,
-        scopes: z
-          .array(z.string().regex(/^[a-z-]+:(read|write)$/))
-          .min(1)
-          .max(8),
-      }),
-    )
-    .max(8)
-    .default([]),
-  parentKey: SlugSchema,
-  loops: z.array(TemplateLoopManifestSchema).min(1).max(32),
-  supportEntry: TemplateRelativePathSchema.optional(),
-  /** Optional editable manual workflow, separate from the configured automation bundle. */
+  /** Independent ordinary loop copied by POST /templates/:id/draft. */
   draftFile: TemplateRelativePathSchema.refine(
     (value) => value.endsWith('.json'),
     'must name a JSON export',
-  ).optional(),
+  ),
 });
 export type TemplateManifest = z.infer<typeof TemplateManifestSchema>;
 export const TemplateBundleSchema = z.strictObject({
