@@ -4,6 +4,9 @@ import { NodeSchema } from './nodes.js';
 import { HarnessDefaultsSchema } from './evaluation.js';
 import { VariableDeclarationsSchema } from './thread.js';
 
+/** The one current definition/export/storage format; frozen conversion stages keep their literals. */
+export const CURRENT_DEFINITION_FORMAT = 3 as const;
+
 /** Where a run works. Fixed path, templated from the trigger, or a fresh temporary directory. */
 export const WorkingDirectorySpecSchema = z.discriminatedUnion('kind', [
   z.strictObject({ kind: z.literal('fixed'), path: z.string().min(1).max(4096) }),
@@ -48,7 +51,7 @@ export const EdgeSchema = z.strictObject({
 export type Edge = z.infer<typeof EdgeSchema>;
 
 export const LoopDefinitionSchema = z.strictObject({
-  schemaVersion: z.literal(3),
+  schemaVersion: z.literal(CURRENT_DEFINITION_FORMAT),
   name: z.string().min(1).max(120),
   description: z.string().max(4000).optional(),
   settings: LoopSettingsSchema.prefault({}),
@@ -62,7 +65,7 @@ export type LoopDefinitionInput = z.input<typeof LoopDefinitionSchema>;
 /** Portable file format for committing loops to a repository. */
 export const LoopExportSchema = z.strictObject({
   format: z.literal('graphgoblin-loop'),
-  formatVersion: z.literal(3),
+  formatVersion: z.literal(CURRENT_DEFINITION_FORMAT),
   exportedAt: TimestampSchema,
   loop: LoopDefinitionSchema,
 });

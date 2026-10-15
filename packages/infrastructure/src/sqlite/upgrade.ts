@@ -1,9 +1,18 @@
 import { inspectTriggerUpgrade, rewriteWebhookThreadKey } from './trigger-upgrade.js';
 import { createHash } from 'node:crypto';
-import { fileURLToPath } from 'node:url';
+import { setImmediate as yieldToEventLoop } from 'node:timers/promises';
+import { currentStoreReadiness, SHIPPED_MIGRATIONS } from './readiness.js';
+import {
+  rows,
+  tableNames as tables,
+  tableBatches,
+  hashUpgradeStore,
+  quote,
+} from './upgrade-scan.js';
 import type { Client, Transaction } from '@libsql/client';
 import { readMigrationFiles } from 'drizzle-orm/migrator';
 import {
+  CURRENT_DEFINITION_FORMAT,
   ContextThreadSchema,
   HarnessDefaultsSchema,
   LoopDefinitionSchema,
@@ -57,28 +66,13 @@ function recordedAffectedChild(row: RawRow, affected: Set<string>): boolean {
     return false;
   }
 }
-const MIGRATIONS = fileURLToPath(new URL('../../drizzle', import.meta.url));
+const MIGRATIONS = SHIPPED_MIGRATIONS;
 const NONTERMINAL = new Set(['queued', 'running', 'waiting', 'paused']);
 const hash = (value: unknown) => createHash('sha256').update(stableStringify(value)).digest('hex');
 function json(value: unknown): unknown {
   if (typeof value !== 'string') throw new Error('stored JSON column is not text');
   return JSON.parse(value);
 }
-async function rows(client: Executor, sql: string): Promise<RawRow[]> {
-  const result = await client.execute(sql);
-  return result.rows.map((row) =>
-    Object.fromEntries(result.columns.map((column) => [column, row[column]])),
-  );
-}
-async function tables(client: Executor): Promise<string[]> {
-  return (await rows(client, "SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name"))
-    .map((row) => String(row.name))
-    .filter((name) => !name.startsWith('sqlite_'));
-}
-function quote(name: string): string {
-  return '"' + name.replaceAll('"', '""') + '"';
-}
-
 export class DatabaseUpgradeRequiredError extends Error {
   readonly code = 'DATA_UPGRADE_REQUIRED';
   constructor(
@@ -89,7 +83,10 @@ export class DatabaseUpgradeRequiredError extends Error {
   }
 }
 /** Must run before Drizzle migrations, run recovery, catalog seeding or trigger admission. */
-export async function guardDatabaseUpgrade(client: Executor): Promise<'fresh' | 'current'> {
+export async function guardDatabaseUpgrade(
+  client: Executor,
+  migrationsFolder = MIGRATIONS,
+): Promise<'fresh' | 'current'> {
   const names = await tables(client);
   const application = names.filter((name) => name !== '__drizzle_migrations');
   if (application.length === 0) {
@@ -102,90 +99,81 @@ export async function guardDatabaseUpgrade(client: Executor): Promise<'fresh' | 
       );
     return 'fresh';
   }
+  const readiness = currentStoreReadiness(migrationsFolder);
   if (!names.includes('gg_upgrade_state')) throw new DatabaseUpgradeRequiredError();
   const states = await rows(client, 'SELECT * FROM gg_upgrade_state');
-  if (states.length !== 1 || states[0]?.format_version !== 3 || states[0]?.status !== 'complete')
+  if (
+    states.length !== 1 ||
+    states[0]?.format_version !== readiness.marker.format_version ||
+    states[0]?.status !== readiness.marker.status
+  )
     throw new DatabaseUpgradeRequiredError(
       'The offline upgrade is incomplete; restore the backup or finish its approved manifest',
     );
-  const endpointColumns = names.includes('webhook_endpoints')
-    ? await rows(client, 'PRAGMA table_info(webhook_endpoints)')
-    : [];
-  const receiptColumns = names.includes('webhook_receipts')
-    ? await rows(client, 'PRAGMA table_info(webhook_receipts)')
-    : [];
-  const indexes = await rows(client, "SELECT name FROM sqlite_master WHERE type='index'");
-  if (
-    !endpointColumns.some((row) => row.name === 'signature_scheme' && row.notnull === 1) ||
-    !endpointColumns.some((row) => row.name === 'replay_window_seconds' && row.notnull === 0) ||
-    [
-      'id',
-      'owner_id',
-      'loop_id',
-      'trigger_node_id',
-      'content_hash',
-      'inbound_id',
-      'status',
-      'intent',
-      'attempts',
-      'next_attempt_at',
-      'failure_code',
-    ].some((name) => !receiptColumns.some((row) => row.name === name)) ||
-    [
-      'webhook_receipts_content_idx',
-      'webhook_receipts_inbound_idx',
-      'webhook_receipts_due_idx',
-      'runs_trigger_dedupe_idx',
-    ].some((name) => !indexes.some((row) => row.name === name))
-  )
-    throw new DatabaseUpgradeRequiredError(
-      'Stored v2 data requires the explicit offline trigger structural upgrade',
-    );
+  for (const table of readiness.tables) {
+    if (!names.includes(table.name))
+      throw new DatabaseUpgradeRequiredError('Missing current-store table: ' + table.name);
+    const columns = await rows(client, 'PRAGMA table_info(' + quote(table.name) + ')');
+    if (
+      table.columns.some(
+        (column) =>
+          !columns.some(
+            (stored) => stored.name === column.name && stored.notnull === Number(column.notNull),
+          ),
+      )
+    )
+      throw new DatabaseUpgradeRequiredError('Incomplete current-store columns: ' + table.name);
+    const ddl = (
+      await rows(client, "SELECT sql FROM sqlite_master WHERE type='table' AND name=?", [
+        table.name,
+      ])
+    )[0]?.sql;
+    if (table.checks.some((check) => !readiness.normalize(String(ddl)).includes(check)))
+      throw new DatabaseUpgradeRequiredError('Stored constraints are incomplete: ' + table.name);
+    const indexes = await rows(client, 'PRAGMA index_list(' + quote(table.name) + ')');
+    if (
+      readiness.indexes
+        .filter((index) => index.table === table.name)
+        .some(
+          (index) =>
+            !indexes.some(
+              (stored) => stored.name === index.name && stored.unique === Number(index.unique),
+            ),
+        )
+    )
+      throw new DatabaseUpgradeRequiredError('Stored indexes are incomplete: ' + table.name);
+  }
   const ledger = names.includes('__drizzle_migrations')
-    ? await rows(client, 'SELECT created_at FROM __drizzle_migrations')
+    ? await rows(client, 'SELECT hash,created_at FROM __drizzle_migrations ORDER BY created_at')
     : [];
-  const receiptIndexes = await rows(client, 'PRAGMA index_list(webhook_receipts)');
   if (
-    !ledger.some((row) => Number(row.created_at) >= 1791396000000) ||
-    ['webhook_receipts_content_idx', 'webhook_receipts_inbound_idx'].some(
-      (name) => !receiptIndexes.some((row) => row.name === name && row.unique === 1),
+    ledger.length < readiness.requiredLedgerLength ||
+    ledger.length > readiness.ledger.length ||
+    ledger.some(
+      (entry, index) =>
+        entry.hash !== readiness.ledger[index]?.hash ||
+        Number(entry.created_at) !== readiness.ledger[index]?.created_at,
     )
   )
     throw new DatabaseUpgradeRequiredError(
-      'The trigger structural migration and unique receipt indexes are incomplete',
+      'The shipped migration ledger is incomplete or inconsistent',
     );
-  const receiptDdl = (
-    await rows(
-      client,
-      "SELECT sql FROM sqlite_master WHERE type='table' AND name='webhook_receipts'",
-    )
-  )[0]?.sql;
-  const normalizedReceiptDdl =
-    typeof receiptDdl === 'string' ? receiptDdl.toLowerCase().replace(/[\s"`]/g, '') : '';
-  if (
-    !normalizedReceiptDdl.includes(
-      "constraintwebhook_receipt_status_checkcheck(statusin('filtered','deduplicated','pending','admitted','failed'))",
-    ) ||
-    !normalizedReceiptDdl.includes(
-      "constraintwebhook_receipt_intent_checkcheck((statusin('filtered','deduplicated')andintentisnull)or(statusnotin('filtered','deduplicated')andintentisnotnull))",
-    )
-  )
-    throw new DatabaseUpgradeRequiredError('Stored webhook receipt constraints are incomplete');
   const malformed = await rows(
     client,
     "SELECT id FROM webhook_endpoints WHERE signature_scheme IS NULL OR signature_scheme NOT IN ('hmac-sha256','hmac-sha256-body') OR NOT ((signature_scheme='hmac-sha256' AND replay_window_seconds IS NOT NULL AND replay_window_seconds>0) OR (signature_scheme='hmac-sha256-body' AND replay_window_seconds IS NULL))",
   );
   if (malformed.length)
     throw new DatabaseUpgradeRequiredError('Stored webhook signing fields are inconsistent');
-  for (const row of names.includes('loop_versions')
-    ? await rows(client, 'SELECT definition FROM loop_versions')
-    : []) {
-    try {
-      LoopDefinitionSchema.parse(json(row.definition));
-    } catch {
-      throw new DatabaseUpgradeRequiredError('A stored loop version is not strict v3');
+  for await (const batch of tableBatches(client, 'loop_versions'))
+    for (const row of batch) {
+      try {
+        LoopDefinitionSchema.parse(json(row.definition));
+      } catch {
+        throw new DatabaseUpgradeRequiredError(
+          'A stored loop version is not strict current format',
+        );
+      }
     }
-  }
   if (names.includes('settings')) {
     for (const row of await rows(client, 'SELECT key, value FROM settings')) {
       if (row.key === 'defaultModel' || row.key === 'defaultEffort')
@@ -220,9 +208,10 @@ export async function initializeFreshDatabase(
       // so neither the schema nor its ledger can survive without the complete marker.
       await structuralMigrations(tx, migrationsFolder);
       await tx.execute(STATE_SQL);
-      await tx.execute(
-        "INSERT INTO gg_upgrade_state (id,format_version,status,source_hash,manifest_hash) VALUES (1,3,'complete','fresh','fresh')",
-      );
+      await tx.execute({
+        sql: "INSERT INTO gg_upgrade_state (id,format_version,status,source_hash,manifest_hash) VALUES (1,?,'complete','fresh','fresh')",
+        args: [CURRENT_DEFINITION_FORMAT],
+      });
     }
     await tx.commit();
     return upgradeState;
@@ -240,7 +229,7 @@ export async function initializeFreshDatabase(
 
 export interface DatabaseUpgradeInventory {
   sourceHash: string;
-  tables: Record<string, RawRow[]>;
+  tableCounts: Record<string, number>;
   versions: {
     id: string;
     loopId: string;
@@ -253,20 +242,49 @@ export interface DatabaseUpgradeInventory {
   blockedRuns: { id: string; status: string }[];
   issues: UpgradeIssue[];
 }
+/** The small definition/signing provenance working set; histories are read by indexed run ID.
+ * Pending receipts need only their identity/status. Other runs are not retained here. */
+async function upgradeContext(
+  client: Executor,
+  names: string[],
+): Promise<Record<string, RawRow[]>> {
+  const stored: Record<string, RawRow[]> = {};
+  for (const name of [
+    'loops',
+    'loop_versions',
+    'settings',
+    'webhook_endpoints',
+    'inbound_events',
+  ]) {
+    const found = names.includes(name) ? await rows(client, 'SELECT * FROM ' + quote(name)) : [];
+    stored[name] = found
+      .map((row) => ({ row, key: stableStringify(row) }))
+      .sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0))
+      .map(({ row }) => row);
+  }
+  stored.webhook_receipts = names.includes('webhook_receipts')
+    ? await rows(client, "SELECT id,status FROM webhook_receipts WHERE status='pending'")
+    : [];
+  stored.runs =
+    names.includes('runs') && names.includes('webhook_endpoints')
+      ? await rows(
+          client,
+          'SELECT * FROM runs WHERE loop_id IN (SELECT loop_id FROM webhook_endpoints)',
+        )
+      : [];
+  return stored;
+}
 /** Whole stopped database, including hidden/deleted versions, orphaned runs and all owners. */
 export async function inspectDatabaseUpgrade(client: Executor): Promise<DatabaseUpgradeInventory> {
-  const stored: Record<string, RawRow[]> = {};
-  for (const name of await tables(client)) {
-    if (name === 'gg_upgrade_state' || name === 'gg_upgrade_archive') continue;
-    const found = await rows(client, 'SELECT * FROM ' + quote(name));
-    stored[name] = found.sort((a, b) =>
-      stableStringify(a) < stableStringify(b)
-        ? -1
-        : stableStringify(a) > stableStringify(b)
-          ? 1
-          : 0,
+  const names = (await tables(client)).filter(
+    (name) => name !== 'gg_upgrade_state' && name !== 'gg_upgrade_archive',
+  );
+  const stored = await upgradeContext(client, names);
+  const tableCounts: Record<string, number> = {};
+  for (const name of names)
+    tableCounts[name] = Number(
+      (await rows(client, 'SELECT COUNT(*) AS count FROM ' + quote(name)))[0]!.count,
     );
-  }
   const versions: DatabaseUpgradeInventory['versions'] = [];
   const issues: UpgradeIssue[] = [];
   const affected = new Set<string>();
@@ -362,44 +380,71 @@ export async function inspectDatabaseUpgrade(client: Executor): Promise<Database
       }
     }
   }
-  for (const run of stored.runs ?? [])
-    if (!(stored.loop_versions ?? []).some((version) => version.id === run.version_id))
-      issues.push({
-        code: 'UPGRADE_ORPHAN_RUN_VERSION',
-        path: '/runs/' + String(run.id) + '/version_id',
-        message:
-          'run references no inventoried version; explicit repair is required before classifying historical outputs',
-      });
-  const events = stored.run_events ?? [];
-  const failedRuns = (stored.runs ?? [])
-    .filter(
-      (run) =>
-        run.status === 'failed' &&
-        (affected.has(String(run.version_id)) ||
-          events.some(
-            (event) =>
-              event.run_id === run.id &&
-              (legacyDecisionEvent(event) || recordedAffectedChild(event, affected)),
-          )),
-    )
-    .map((run) => String(run.id));
-  const blockedRuns = (stored.runs ?? [])
-    .filter((run) => NONTERMINAL.has(String(run.status)))
-    .map((run) => ({ id: String(run.id), status: String(run.status) }));
-  for (const event of events)
-    if (!(stored.runs ?? []).some((run) => run.id === event.run_id))
-      issues.push({
-        code: 'UPGRADE_ORPHAN_EVENTS',
-        path: '/run_events/' + String(event.run_id),
-        message: 'events have no run/initial thread; explicit repair is required before upgrade',
-      });
+  const versionIds = new Set((stored.loop_versions ?? []).map((row) => row.id));
+  const failed: { id: string; key: string }[] = [];
+  const blocked: { id: string; status: string; key: string }[] = [];
+  if (names.includes('runs'))
+    for await (const batch of tableBatches(client, 'runs'))
+      for (const run of batch) {
+        if (!versionIds.has(run.version_id))
+          issues.push({
+            code: 'UPGRADE_ORPHAN_RUN_VERSION',
+            path: '/runs/' + String(run.id) + '/version_id',
+            message:
+              'run references no inventoried version; explicit repair is required before classifying historical outputs',
+          });
+        if (run.status === 'failed') {
+          let needsDisposition = affected.has(String(run.version_id));
+          if (!needsDisposition && names.includes('run_events')) {
+            const events = await rows(
+              client,
+              "SELECT * FROM run_events WHERE run_id=? AND type IN ('decision.made','run.queued') ORDER BY seq",
+              [String(run.id)],
+            );
+            needsDisposition = events.some(
+              (event) => legacyDecisionEvent(event) || recordedAffectedChild(event, affected),
+            );
+          }
+          if (needsDisposition) failed.push({ id: String(run.id), key: stableStringify(run) });
+        }
+        if (NONTERMINAL.has(String(run.status)))
+          blocked.push({
+            id: String(run.id),
+            status: String(run.status),
+            key: stableStringify(run),
+          });
+      }
+  if (names.includes('run_events')) {
+    const orphans = await rows(
+      client,
+      names.includes('runs')
+        ? 'SELECT run_id,count(*) AS count FROM run_events LEFT JOIN runs ON runs.id=run_events.run_id WHERE runs.id IS NULL GROUP BY run_id'
+        : 'SELECT run_id,count(*) AS count FROM run_events GROUP BY run_id',
+    );
+    for (const event of orphans)
+      for (let index = 0; index < Number(event.count); index += 1)
+        issues.push({
+          code: 'UPGRADE_ORPHAN_EVENTS',
+          path: '/run_events/' + String(event.run_id),
+          message: 'events have no run/initial thread; explicit repair is required before upgrade',
+        });
+  }
   issues.push(...inspectTriggerUpgrade(stored).issues);
-  return { sourceHash: hash(stored), tables: stored, versions, failedRuns, blockedRuns, issues };
+  const compare = (a: { key: string }, b: { key: string }) =>
+    a.key < b.key ? -1 : a.key > b.key ? 1 : 0;
+  return {
+    sourceHash: await hashUpgradeStore(client, names),
+    tableCounts,
+    versions,
+    failedRuns: failed.sort(compare).map(({ id }) => id),
+    blockedRuns: blocked.sort(compare).map(({ id, status }) => ({ id, status })),
+    issues,
+  };
 }
 
 export interface DatabaseUpgradeManifest {
   format: 'graphgoblin-upgrade-manifest';
-  targetVersion: 3;
+  targetVersion: typeof CURRENT_DEFINITION_FORMAT;
   sourceHash: string;
   approvedBy: string;
   approvedAt: string;
@@ -449,7 +494,7 @@ function validateManifest(
     );
   if (
     manifest.format !== 'graphgoblin-upgrade-manifest' ||
-    manifest.targetVersion !== 3 ||
+    manifest.targetVersion !== CURRENT_DEFINITION_FORMAT ||
     manifest.sourceHash !== inventory.sourceHash ||
     !manifest.approvedBy.trim() ||
     !TimestampSchema.safeParse(manifest.approvedAt).success
@@ -581,24 +626,15 @@ export async function applyDatabaseUpgrade(
   try {
     const original = await inspectDatabaseUpgrade(tx);
     validateManifest(manifest, original);
-    const triggerFacts = inspectTriggerUpgrade(original.tables);
+    const sourceNames = await tables(tx);
+    let context = await upgradeContext(tx, sourceNames);
+    const triggerFacts = inspectTriggerUpgrade(context);
     const manifestHash = hash(manifest);
-    await structuralMigrations(tx, options.migrationsFolder ?? MIGRATIONS);
-    const inventory = await inspectDatabaseUpgrade(tx);
-    const converted = new Map<string, LoopDefinition>();
-    for (const row of inventory.tables.loop_versions ?? []) {
-      const result = upgradeLoopCurrent(
-        json(row.definition),
-        manifest.versions[String(row.id)]?.resolutions ?? {},
-      );
-      if (!result.ok)
-        throw new DatabaseUpgradeRequiredError('Unresolved version conversion: ' + String(row.id));
-      converted.set(String(row.id), result.value);
-    }
+
     await tx.execute(STATE_SQL);
     await tx.execute(ARCHIVE_SQL);
     await archive(tx, 'manifest', manifestHash, manifest, original.sourceHash, manifestHash);
-    for (const [name, values] of Object.entries(original.tables))
+    for (const name of sourceNames)
       if (
         [
           'loop_versions',
@@ -610,20 +646,40 @@ export async function applyDatabaseUpgrade(
           'webhook_receipts',
         ].includes(name)
       )
-        for (const row of values)
-          await archive(
-            tx,
-            name,
-            name === 'run_events'
-              ? String(row.run_id) + ':' + String(row.seq)
-              : typeof row.id === 'string'
-                ? row.id
-                : stableStringify([row.owner_id, row.key]),
-            row,
-            original.sourceHash,
-            manifestHash,
-          );
-    for (const row of inventory.tables.loop_versions ?? []) {
+        for await (const batch of tableBatches(tx, name))
+          for (const row of batch)
+            await archive(
+              tx,
+              name,
+              name === 'run_events'
+                ? String(row.run_id) + ':' + String(row.seq)
+                : typeof row.id === 'string'
+                  ? row.id
+                  : stableStringify([row.owner_id, row.key]),
+              row,
+              original.sourceHash,
+              manifestHash,
+            );
+    await structuralMigrations(tx, options.migrationsFolder ?? MIGRATIONS);
+    context = await upgradeContext(tx, await tables(tx));
+    const converted = new Map<string, LoopDefinition>();
+    for (const row of context.loop_versions ?? []) {
+      const result = upgradeLoopCurrent(
+        json(row.definition),
+        manifest.versions[String(row.id)]?.resolutions ?? {},
+      );
+      if (!result.ok)
+        throw new DatabaseUpgradeRequiredError('Unresolved version conversion: ' + String(row.id));
+      converted.set(String(row.id), result.value);
+    }
+    // Keep the original source format per version even after writing the converted definition.
+    const sourceVersions = new Map(
+      (context.loop_versions ?? []).map((row) => [
+        String(row.id),
+        (json(row.definition) as { schemaVersion: 1 | 2 | 3 }).schemaVersion,
+      ]),
+    );
+    for (const row of context.loop_versions ?? []) {
       const definition = converted.get(String(row.id))!;
       await tx.execute({
         sql: 'UPDATE loop_versions SET definition=? WHERE id=?',
@@ -635,107 +691,107 @@ export async function applyDatabaseUpgrade(
         sql: 'UPDATE inbound_events SET dedupe_key=? WHERE id=?',
         args: [key.next, key.inboundId],
       });
-      for (const runId of key.runIds) {
-        const run = (inventory.tables.runs ?? []).find((row) => row.id === runId);
-        if (!run)
-          throw new DatabaseUpgradeRequiredError('Linked webhook run vanished during conversion');
-        run.initial_thread = JSON.stringify(
-          rewriteWebhookThreadKey(json(run.initial_thread), key.previous, key.next),
-        );
-        if (run.thread_snapshot !== null && run.thread_snapshot !== undefined)
-          run.thread_snapshot = JSON.stringify(
-            rewriteWebhookThreadKey(json(run.thread_snapshot), key.previous, key.next),
-          );
-        for (const event of inventory.tables.run_events ?? []) {
-          if (event.run_id !== runId || event.type !== 'run.queued') continue;
-          const payload = json(event.payload);
-          if (typeof payload === 'object' && payload !== null && 'initialThread' in payload) {
-            payload.initialThread = rewriteWebhookThreadKey(
-              payload.initialThread,
-              key.previous,
-              key.next,
-            );
-            event.payload = JSON.stringify(payload);
-          }
-        }
-      }
     }
-    const storedEvents = inventory.tables.run_events ?? [];
-    for (const run of inventory.tables.runs ?? []) {
-      const runId = String(run.id);
-      const runEvents = storedEvents
-        .filter((event) => event.run_id === run.id)
-        .sort((a, b) => Number(a.seq) - Number(b.seq));
-      const rawEvents = runEvents.map(eventOf);
-      const decisionNodeIds = new Set(
-        (converted.get(String(run.version_id))?.nodes ?? [])
-          .filter((node) => node.kind === 'decision')
-          .map((node) => node.id),
-      );
-      for (const event of rawEvents)
-        if (event.type === 'decision.made' && typeof event.nodeId === 'string')
-          decisionNodeIds.add(event.nodeId);
-      const history = upgradeRunHistoryCurrent({
-        sourceVersion: (
-          json(
-            (inventory.tables.loop_versions ?? []).find((version) => version.id === run.version_id)!
-              .definition,
-          ) as { schemaVersion: 1 | 2 | 3 }
-        ).schemaVersion,
-        initialThread: json(run.initial_thread),
-        events: rawEvents,
-        decisionNodeIds: [...decisionNodeIds],
-        ...(run.thread_snapshot !== null && run.thread_snapshot !== undefined
-          ? { snapshot: json(run.thread_snapshot) }
-          : {}),
-        ...(typeof run.thread_snapshot_seq === 'number'
-          ? { snapshotSeq: run.thread_snapshot_seq }
-          : {}),
-      });
-      if (!history.ok)
-        throw new DatabaseUpgradeRequiredError(
-          'Run history/replay conversion refused: ' + runId + ': ' + history.issues[0]?.message,
-        );
-      let failure = run.failure;
-      if (manifest.failedRuns[runId])
-        failure = JSON.stringify(
-          upgradedFailure(json(run.failure), {
-            approvedAt: manifest.approvedAt,
-            reason: manifest.failedRuns[runId].reason,
-            version: 3,
-          }),
-        );
-      await tx.execute({
-        sql: 'UPDATE runs SET initial_thread=?,thread_snapshot=?,failure=? WHERE id=?',
-        args: [
-          JSON.stringify(history.value.initialThread),
-          history.value.snapshot ? JSON.stringify(history.value.snapshot) : null,
-          failure as string | null,
+    let runCount = 0;
+    const rewrittenKeys = new Map(
+      triggerFacts.keys.flatMap((key) => key.runIds.map((id) => [id, key] as const)),
+    );
+    for await (const batch of tableBatches(tx, 'runs'))
+      for (const run of batch) {
+        runCount += 1;
+        const runId = String(run.id);
+        const runEvents = await rows(tx, 'SELECT * FROM run_events WHERE run_id=? ORDER BY seq', [
           runId,
-        ],
-      });
-      for (const event of history.value.events) {
-        const {
-          runId: _runId,
-          seq,
-          ts: _ts,
-          type: _type,
-          nodeId: _nodeId,
-          ...payload
-        } = event as unknown as RawRow;
-        if (event.type === 'run.failed' && manifest.failedRuns[runId])
-          payload.failure = upgradedFailure(event.failure, {
-            approvedAt: manifest.approvedAt,
-            reason: manifest.failedRuns[runId].reason,
-            version: 3,
-          });
-        await tx.execute({
-          sql: 'UPDATE run_events SET payload=? WHERE run_id=? AND seq=?',
-          args: [JSON.stringify(payload), runId, Number(seq)],
+        ]);
+        const key = rewrittenKeys.get(runId);
+        if (key) {
+          run.initial_thread = JSON.stringify(
+            rewriteWebhookThreadKey(json(run.initial_thread), key.previous, key.next),
+          );
+          if (run.thread_snapshot !== null && run.thread_snapshot !== undefined)
+            run.thread_snapshot = JSON.stringify(
+              rewriteWebhookThreadKey(json(run.thread_snapshot), key.previous, key.next),
+            );
+          for (const event of runEvents)
+            if (event.type === 'run.queued') {
+              const payload = json(event.payload);
+              if (object(payload) && 'initialThread' in payload) {
+                payload.initialThread = rewriteWebhookThreadKey(
+                  payload.initialThread,
+                  key.previous,
+                  key.next,
+                );
+                event.payload = JSON.stringify(payload);
+              }
+            }
+        }
+        const rawEvents = runEvents.map(eventOf);
+        const decisionNodeIds = new Set(
+          (converted.get(String(run.version_id))?.nodes ?? [])
+            .filter((node) => node.kind === 'decision')
+            .map((node) => node.id),
+        );
+        for (const event of rawEvents)
+          if (event.type === 'decision.made' && typeof event.nodeId === 'string')
+            decisionNodeIds.add(event.nodeId);
+        const history = upgradeRunHistoryCurrent({
+          sourceVersion: sourceVersions.get(String(run.version_id))!,
+          initialThread: json(run.initial_thread),
+          events: rawEvents,
+          decisionNodeIds: [...decisionNodeIds],
+          ...(run.thread_snapshot !== null && run.thread_snapshot !== undefined
+            ? { snapshot: json(run.thread_snapshot) }
+            : {}),
+          ...(typeof run.thread_snapshot_seq === 'number'
+            ? { snapshotSeq: run.thread_snapshot_seq }
+            : {}),
         });
+        if (!history.ok)
+          throw new DatabaseUpgradeRequiredError(
+            'Run history/replay conversion refused: ' + runId + ': ' + history.issues[0]?.message,
+          );
+        let failure = run.failure;
+        if (manifest.failedRuns[runId])
+          failure = JSON.stringify(
+            upgradedFailure(json(run.failure), {
+              approvedAt: manifest.approvedAt,
+              reason: manifest.failedRuns[runId].reason,
+              version: CURRENT_DEFINITION_FORMAT,
+            }),
+          );
+        await tx.execute({
+          sql: 'UPDATE runs SET initial_thread=?,thread_snapshot=?,failure=? WHERE id=?',
+          args: [
+            JSON.stringify(history.value.initialThread),
+            history.value.snapshot ? JSON.stringify(history.value.snapshot) : null,
+            failure as string | null,
+            runId,
+          ],
+        });
+        for (const event of history.value.events) {
+          const {
+            runId: _runId,
+            seq,
+            ts: _ts,
+            type: _type,
+            nodeId: _nodeId,
+            ...payload
+          } = event as unknown as RawRow;
+          if (event.type === 'run.failed' && manifest.failedRuns[runId])
+            payload.failure = upgradedFailure(event.failure, {
+              approvedAt: manifest.approvedAt,
+              reason: manifest.failedRuns[runId].reason,
+              version: CURRENT_DEFINITION_FORMAT,
+            });
+          await tx.execute({
+            sql: 'UPDATE run_events SET payload=? WHERE run_id=? AND seq=?',
+            args: [JSON.stringify(payload), runId, Number(seq)],
+          });
+        }
+        // Release transient native statements even when this batch contains many small runs.
+        await yieldToEventLoop();
       }
-    }
-    const ownerRows = inventory.tables.settings ?? [];
+    const ownerRows = context.settings ?? [];
     const owners = new Set(
       ownerRows
         .filter((row) => row.key === 'defaultModel' || row.key === 'defaultEffort')
@@ -760,24 +816,25 @@ export async function applyDatabaseUpgrade(
       });
     }
     await tx.execute({
-      sql: "INSERT OR REPLACE INTO gg_upgrade_state (id,format_version,status,source_hash,manifest_hash) VALUES (1,3,'complete',?,?)",
-      args: [original.sourceHash, manifestHash],
+      sql: "INSERT OR REPLACE INTO gg_upgrade_state (id,format_version,status,source_hash,manifest_hash) VALUES (1,?,'complete',?,?)",
+      args: [CURRENT_DEFINITION_FORMAT, original.sourceHash, manifestHash],
     });
     await guardDatabaseUpgrade(tx);
     // Validate every stored event again through the clean parser before the single atomic commit.
-    for (const row of await rows(tx, 'SELECT * FROM run_events ORDER BY run_id,seq'))
-      RunEventSchema.parse(eventOf(row));
-    for (const row of await rows(tx, 'SELECT * FROM runs')) {
-      RunRecordSchema.parse(recordOf(row));
-      ContextThreadSchema.parse(json(row.initial_thread));
-      if (row.thread_snapshot !== null) ContextThreadSchema.parse(json(row.thread_snapshot));
-    }
+    for await (const batch of tableBatches(tx, 'run_events'))
+      for (const row of batch) RunEventSchema.parse(eventOf(row));
+    for await (const batch of tableBatches(tx, 'runs'))
+      for (const row of batch) {
+        RunRecordSchema.parse(recordOf(row));
+        ContextThreadSchema.parse(json(row.initial_thread));
+        if (row.thread_snapshot !== null) ContextThreadSchema.parse(json(row.thread_snapshot));
+      }
     await tx.commit();
     return {
       sourceHash: original.sourceHash,
       manifestHash,
       versions: converted.size,
-      runs: (inventory.tables.runs ?? []).length,
+      runs: runCount,
     };
   } catch (error) {
     await tx.rollback();

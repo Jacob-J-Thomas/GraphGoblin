@@ -13,7 +13,7 @@ export interface DatabaseHandle {
   client: Client;
   db: Database;
   /** Apply pending migrations from the package's `drizzle/` folder. Idempotent. */
-  migrate(): Promise<void>;
+  migrate(readiness?: 'fresh' | 'current'): Promise<void>;
   /**
    * How many shipped migrations `migrate()` would apply now, by the same rule Drizzle uses (a
    * migration is pending when it is newer than the last one recorded). Read-only; 0 when current.
@@ -194,8 +194,9 @@ export function openDatabase(options: DatabaseOptions): DatabaseHandle {
   return {
     client,
     db,
-    async migrate() {
-      let upgradeState = await guardDatabaseUpgrade(client);
+    async migrate(readiness) {
+      // A container holding the exclusive data-directory lock can reuse its read-only preflight.
+      let upgradeState = readiness ?? (await guardDatabaseUpgrade(client, migrationsFolder));
       await client.execute('PRAGMA journal_mode = WAL').catch(() => undefined);
       await client.execute('PRAGMA busy_timeout = 5000').catch(() => undefined);
       if (upgradeState === 'fresh')

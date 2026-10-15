@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 /**
  * Pure editor model: node defaults, ports, connection rules, and live validation. The editor holds
  * the draft as `LoopDefinitionInput` (what the user typed, defaults not yet applied) and validates
@@ -366,7 +367,7 @@ export function sameIssues(a: readonly EditorIssue[], b: readonly EditorIssue[])
 /** A new loop: a manual trigger wired to an exit. */
 export function newLoopDefinition(name: string): LoopDefinitionInput {
   return {
-    schemaVersion: 3,
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
     name,
     nodes: [
       {

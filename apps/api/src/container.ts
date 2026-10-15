@@ -194,10 +194,12 @@ export async function createContainer(
     const dbFile = databaseFilePath(config.dbUrl);
     // Validate catalog semantics without a mutable SQLite connection or any startup writes.
     let startupCatalog = DEFAULT_MODEL_CATALOG;
+    let startupReadiness: 'fresh' | 'current' | undefined;
     if (dbFile && existsSync(dbFile)) {
       const readonlyClient = openReadOnlyDatabaseClient(dbFile);
       try {
         const state = await guardDatabaseUpgrade(readonlyClient);
+        startupReadiness = state;
         if (state === 'current') {
           const stored = await new SqliteModelCatalog(databaseView(readonlyClient)).list();
           startupCatalog = [
@@ -229,7 +231,7 @@ export async function createContainer(
     const handle = openDatabase({ url: config.dbUrl });
     opened = handle;
     const { db } = handle;
-    await guardDatabaseUpgrade(handle.client);
+    startupReadiness ??= await guardDatabaseUpgrade(handle.client);
     const masterKey =
       overrides.masterKey ??
       (await loadMasterKey({
@@ -563,7 +565,7 @@ export async function createContainer(
         if (stopping) return Promise.reject(new Error('container has been stopped'));
         starting ??= (async () => {
           try {
-            await handle.migrate();
+            await handle.migrate(startupReadiness);
             await classifiers.seedBuiltin(LOCAL_OWNER, BUILTIN_CLASSIFIER);
             if (config.jevApiKey && (await ownerSecrets.resolve(JEV_SECRET)) === undefined) {
               await ownerSecrets.set(JEV_SECRET, config.jevApiKey);

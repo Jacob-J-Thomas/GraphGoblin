@@ -1,3 +1,5 @@
+import { LoopDefinitionSchema } from '@graphgoblin/contracts';
+import { minimalLoop, FIXTURE_IDS, FIXTURE_TS } from '@graphgoblin/contracts/testing';
 import { access, mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -466,4 +468,60 @@ describe('configuration admission before startup writes', () => {
       inspection.close();
     }
   });
+});
+
+it('checks stored definitions once per existing-store start before startup writes', async () => {
+  const prepared = openDatabase({ url: config().dbUrl });
+  await prepared.migrate();
+  await prepared.client.execute({
+    sql: 'INSERT INTO loop_versions(id,loop_id,version,status,definition,created_at) VALUES (?,?,1,?,?,?)',
+    args: [
+      FIXTURE_IDS.version,
+      FIXTURE_IDS.loop,
+      'published',
+      JSON.stringify({ ...minimalLoop(), name: 'Readiness once sentinel' }),
+      FIXTURE_TS,
+    ],
+  });
+  prepared.close();
+  const parse = vi.spyOn(LoopDefinitionSchema, 'parse');
+  const container = await createContainer(config(), { startTimers: false });
+  try {
+    await container.start();
+    expect(
+      parse.mock.calls.filter(
+        ([input]) =>
+          typeof input === 'object' &&
+          input !== null &&
+          'name' in input &&
+          input.name === 'Readiness once sentinel',
+      ),
+    ).toHaveLength(1);
+  } finally {
+    await container.stop();
+  }
+});
+
+it('refuses malformed current definitions before master-key creation or database writes', async () => {
+  const prepared = openDatabase({ url: config().dbUrl });
+  await prepared.migrate();
+  await prepared.client.execute({
+    sql: 'INSERT INTO loop_versions(id,loop_id,version,status,definition,created_at) VALUES (?,?,1,?,?,?)',
+    args: [
+      FIXTURE_IDS.version,
+      FIXTURE_IDS.loop,
+      'published',
+      JSON.stringify({ ...minimalLoop(), removedField: true }),
+      FIXTURE_TS,
+    ],
+  });
+  await prepared.client.execute('PRAGMA journal_mode=DELETE');
+  prepared.close();
+  const before = await readFile(join(dataDir, 'gg.db'));
+  const { masterKey: _masterKey, ...withoutMasterKey } = config();
+  await expect(createContainer(withoutMasterKey, { startTimers: false })).rejects.toMatchObject({
+    code: 'DATA_UPGRADE_REQUIRED',
+  });
+  expect(await readFile(join(dataDir, 'gg.db'))).toEqual(before);
+  await expect(access(join(dataDir, 'master.key'))).rejects.toThrow();
 });

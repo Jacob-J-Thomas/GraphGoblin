@@ -4,7 +4,7 @@
  */
 import type { ContextThread, Invocation } from '../thread.js';
 import type { RepairPolicyInput } from '../common.js';
-import type { LoopDefinitionInput } from '../loop.js';
+import { CURRENT_DEFINITION_FORMAT, type LoopDefinitionInput } from '../loop.js';
 
 const ULID_ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 
@@ -99,7 +99,7 @@ export function sampleThread(overrides: Partial<ContextThread> = {}): ContextThr
 /** The smallest valid loop: a manual trigger wired to an exit. */
 export function minimalLoop(): LoopDefinitionInput {
   return {
-    schemaVersion: 3,
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
     name: 'minimal',
     nodes: [
       { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
@@ -122,7 +122,7 @@ export function everyFieldLoop(): LoopDefinitionInput {
     onFailure: 'continue-raw',
   };
   return {
-    schemaVersion: 3,
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
     name: 'every-field',
     description: 'Every config field of every node kind, for parse checks.',
     settings: {
@@ -482,7 +482,7 @@ export function everyFieldLoop(): LoopDefinitionInput {
 /** A loop using every node kind once, with a decision and an exit loop-back. */
 export function kitchenSinkLoop(): LoopDefinitionInput {
   return {
-    schemaVersion: 3,
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
     name: 'kitchen-sink',
     description: 'Every node kind, for tests.',
     settings: {

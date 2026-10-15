@@ -4,6 +4,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Internal: centralized the current format (still 3), checked declarative storage readiness once per startup, batched offline history inventory/apply with canonical incremental hashes, and restored the Drizzle snapshot baseline with a no-op generation gate. (#164, step 04)
+
 - Internal: frozen format-3 parsers from `12e5b87` for the format-4 upgrade; existing offline definition and history conversion validates against this capture. (#164, step 01)
 
 - Incomplete numeric input now keeps the last valid value, reports **Enter a complete number**, and blocks Publish through the existing held-input mechanism. This also fixes the inherited main-branch bug where native incomplete input silently cleared an optional number. Section JSON validates the merged whole node config, including parent Claude rules, before any applied value or device/server draft changes. (#170, QA fixes)
