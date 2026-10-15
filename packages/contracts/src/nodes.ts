@@ -156,13 +156,6 @@ export const TriggerConfigSchema = z.union([
 export type TriggerConfig = z.infer<typeof TriggerConfigSchema>;
 
 // ---------------------------------------------------------------------------
-// Decision
-// ---------------------------------------------------------------------------
-
-export const DecisionStrategySchema = z.enum(['jev', 'codex', 'expression']);
-export type DecisionStrategy = z.infer<typeof DecisionStrategySchema>;
-
-// ---------------------------------------------------------------------------
 // Inference
 // ---------------------------------------------------------------------------
 

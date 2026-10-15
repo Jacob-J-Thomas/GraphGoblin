@@ -21,6 +21,8 @@ The Codex plugin assembly tests use a fresh temporary directory per test and ret
 
 The infrastructure HTTP tests use a local server with an unanswered route for timeout checks and destroy all accepted sockets in teardown. They assert `TimeoutError` and use a pre-aborted caller signal to check `AbortError`, avoiding races between response and abort timers. Ordinary probe and webhook requests allow 20 s for machine load; the timeout test also has a 20 s test budget.
 
+Historical conversion tests use frozen contracts: the v1-to-v2 stage uses `V2*`, and the v2-to-v3 stage uses `V3*`. Their minimal-loop and thread factories stay pinned to the `12e5b87` capture, independently of current authoring fixtures. Complete parser-result hashes and conversion snapshots remain unchanged when current contracts move. These tests prove historical-stage output, not conversion to format 4; the final offline cutover owns that stage.
+
 ## Fake harness (Decided)
 
 `packages/engine` ships a `FakeHarness` that replays scripted sessions: items, usage, a final text, an optional structured result, and optional failures. It is used by engine tests, API tests, and E2E, so the whole product is testable without tokens. The Codex adapter's fixtures are JSONL captures of real sessions used only by the adapter's own tests.
