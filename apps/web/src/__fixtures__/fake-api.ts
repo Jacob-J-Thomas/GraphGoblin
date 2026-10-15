@@ -913,16 +913,10 @@ export class FakeApi {
       (_call, [loopId]) => {
         const entry = this.loops.get(loopId!);
         const draftToken = this.draftToken(loopId!);
-        const template = [...this.templateInstances.values()].find(
-          (instance) =>
-            instance.ownerId === entry?.loop.ownerId &&
-            instance.loops.some((loop) => loop.loopId === loopId),
-        );
         return entry
           ? json({
               ...entry,
               ...(draftToken ? { draftToken } : {}),
-              ...(template ? { templateInstanceId: template.id } : {}),
             })
           : problem(404, 'LOOP_NOT_FOUND', 'loop not found');
       },

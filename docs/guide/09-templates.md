@@ -12,6 +12,6 @@ Creation does not publish the loop or start a run. Each new use creates a separa
 
 The gallery has no settings form, repository or GitHub URL field, automation action or readiness checks. Set any needed values in the ordinary editor after copying. See the [implementation](10-implementation-template.md), [review](11-review-template.md) and [QA](12-qa-template.md) guides for what each starting graph does.
 
-The QA starting point is an editable assessment workflow. Its model output is not authenticated proof of a GitHub merge. Configured template instances and their privileged GitHub automation are being retired; their backend removal is tracked separately in [#165](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/165). Existing bound QA parents retain their isolation warning while that backend remains. Ordinary copies do not carry that binding or warning.
+The QA starting point is an editable assessment workflow. Its model output is not authenticated proof of a GitHub merge. Configured template instances and their privileged GitHub automation are being retired; their backend removal is tracked separately in [#165](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/165). The editor no longer reads instance bindings or displays a configured-parent warning. Existing runtime admission checks remain until backend retirement.
 
 Templates use the existing context and session behavior. Per-node session continuity and question-context redesign remain deferred.
