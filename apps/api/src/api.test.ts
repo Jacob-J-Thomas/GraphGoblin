@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { LoopDefinitionInput, RunRecord } from '@graphgoblin/contracts';
 import { FIXTURE_TS, fakeUlid, kitchenSinkLoop, minimalLoop } from '@graphgoblin/contracts/testing';
@@ -16,7 +17,7 @@ afterEach(async () => {
 
 function waitLoop(name = 'wait'): LoopDefinitionInput {
   return {
-    schemaVersion: 3,
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
     name,
     nodes: [
       { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },
@@ -384,7 +385,7 @@ describe('runs', () => {
       { finalText: 'hello from codex', items: [{ id: 'i1', type: 'message', summary: 'hello' }] },
     ]);
     const inferLoop: LoopDefinitionInput = {
-      schemaVersion: 3,
+      schemaVersion: CURRENT_DEFINITION_FORMAT,
       name: 'infer',
       nodes: [
         { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },

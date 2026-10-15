@@ -1,32 +1,19 @@
-import { describe, expect, it } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import {
   ExitPredicateSchema,
   ExitCriterionEmissionSchema,
   ExitCriterionEvaluationSchema,
-  PrimitiveAnswerSchema,
-  PrimitiveAnswerEmissionSchema,
-  PrimitiveEvaluationConfigSchema,
-  PrimitiveEvaluationSchema,
-  DecisionEmissionSchema,
+  PredicateConfigSchema,
   V2LoopDefinitionSchema,
   V2NodeConfigSchemas,
   V2DecisionConfigSchema,
   LoopDefinitionSchema,
 } from './index.js';
 import { minimalLoop } from './testing/index.js';
-
 const sides = {
   type: 'noul',
   true: { label: 'Yes', criteria: 'Complete' },
   false: { label: 'No', criteria: 'Incomplete' },
-};
-const classifier = { kind: 'classifier', model: 'jev', question: 'Done?' };
-const llm = {
-  kind: 'llm',
-  harness: 'codex',
-  model: { mode: 'inherit' },
-  effort: { mode: 'inherit' },
-  question: 'Done?',
 };
 const choice = {
   type: 'choice',
@@ -36,6 +23,14 @@ const choice = {
   ],
 };
 const score = { type: 'score', anchors: ['None', 'Complete'] };
+const classifier = { kind: 'classifier', model: 'jev', question: 'Done?' };
+const llm = {
+  kind: 'llm',
+  harness: 'codex',
+  model: { mode: 'inherit' },
+  effort: { mode: 'inherit' },
+  question: 'Done?',
+};
 const expression = { kind: 'expression', jsonata: 'true' };
 const provenance = {
   kind: 'expression',
@@ -48,183 +43,110 @@ const evidence = {
   index: 0,
   strategy: 'expression',
   status: 'matched',
-  answer: { type: 'noul', kind: 'expression', holds: true, confidence: null },
+  observation: { kind: 'boolean', holds: true, confidence: null, reasoning: null },
   provenance,
   acceptance: { status: 'accepted' },
-  match: { type: 'noul', value: true },
+  match: { type: 'boolean', value: true },
 };
-
-describe('explicit exit primitives', () => {
-  it('validates the supported pairs and refuses missing provider sides or irrelevant thresholds', () => {
-    for (const [answer, evaluation] of [
-      [{ type: 'noul' }, expression],
-      [choice, expression],
-      [sides, classifier],
-      [choice, classifier],
-      [score, classifier],
-      [sides, llm],
-      [choice, llm],
+describe('separate exit predicate contract', () => {
+  it('admits boolean expressions, Codex boolean instructions and classifier comparisons', () => {
+    for (const predicate of [
+      expression,
+      {
+        kind: 'llm',
+        instructions: 'Done?',
+        harness: 'codex',
+        model: { mode: 'inherit' },
+        effort: { mode: 'inherit' },
+      },
+      ...[sides, choice, score].map((answer) => ({ ...classifier, answer })),
     ])
-      expect(PrimitiveEvaluationConfigSchema.safeParse({ answer, evaluation }).success).toBe(true);
-    for (const [answer, evaluation] of [
-      [{ type: 'noul' }, classifier],
-      [{ type: 'noul' }, llm],
-      [score, expression],
-      [score, llm],
-      [choice, { ...classifier, truthThreshold: 0.4 }],
-      [score, { ...classifier, truthThreshold: 0.4 }],
-    ])
-      expect(PrimitiveEvaluationConfigSchema.safeParse({ answer, evaluation }).success).toBe(false);
+      expect(PredicateConfigSchema.safeParse(predicate).success).toBe(true);
     expect(
-      PrimitiveEvaluationConfigSchema.safeParse({
-        answer: sides,
-        evaluation: { ...classifier, truthThreshold: 0.4 },
-      }).success,
-    ).toBe(true);
+      PredicateConfigSchema.safeParse({ ...expression, answer: { type: 'noul' } }).success,
+    ).toBe(false);
+    expect(
+      PredicateConfigSchema.safeParse({ ...classifier, answer: choice, truthThreshold: 0.5 })
+        .success,
+    ).toBe(false);
+    expect(
+      PredicateConfigSchema.safeParse({ ...classifier, answer: { type: 'noul' } }).success,
+    ).toBe(false);
   });
-  it('defaults boolean matching and validates match declarations and reported confidence', () => {
-    const predicate = {
+  it('defaults boolean matching and checks classifier matches precisely', () => {
+    const criterion = {
       when: 'predicate',
-      answer: { type: 'noul' },
-      evaluation: expression,
-      match: { type: 'noul' },
+      predicate: expression,
+      match: { type: 'boolean' },
       outcome: 'success',
     };
-    expect(ExitPredicateSchema.parse(predicate).match).toEqual({ type: 'noul', value: true });
-    for (const bad of [
-      { ...predicate, match: { type: 'choice', optionIds: ['yes'] } },
-      { ...predicate, match: { type: 'noul', value: true, minReportedConfidence: 0.8 } },
-      { ...predicate, answer: choice, match: { type: 'choice', optionIds: [] } },
-      { ...predicate, answer: choice, match: { type: 'choice', optionIds: ['unknown'] } },
-      { ...predicate, answer: choice, match: { type: 'choice', optionIds: ['yes', 'yes'] } },
-      { ...predicate, answer: choice, match: { type: 'choice', optionIds: ['yes'] } },
-      {
-        ...predicate,
-        answer: score,
-        evaluation: classifier,
-        match: { type: 'score', operator: 'gte', value: 2 },
-      },
-      {
-        ...predicate,
-        answer: score,
-        evaluation: classifier,
-        match: { type: 'score', operator: 'gte', value: Infinity },
-      },
-      { ...predicate, answer: { type: 'noul' }, evaluation: classifier },
+    expect(ExitPredicateSchema.parse(criterion).match).toEqual({ type: 'boolean', value: true });
+    for (const match of [
+      { type: 'choice', optionIds: ['yes'] },
+      { type: 'boolean', minReportedConfidence: 0.8 },
     ])
-      expect(ExitPredicateSchema.safeParse(bad).success).toBe(false);
+      expect(ExitPredicateSchema.safeParse({ ...criterion, match }).success).toBe(false);
+    for (const optionIds of [[], ['unknown'], ['yes', 'yes']])
+      expect(
+        ExitPredicateSchema.safeParse({
+          ...criterion,
+          predicate: { ...classifier, answer: choice },
+          match: { type: 'choice', optionIds },
+        }).success,
+      ).toBe(false);
     expect(
       ExitPredicateSchema.safeParse({
-        ...predicate,
-        answer: sides,
-        evaluation: llm,
-        match: { type: 'noul', value: false, minReportedConfidence: 0.8 },
+        ...criterion,
+        predicate: { ...classifier, answer: score },
+        match: { type: 'score', operator: 'gte', value: 2 },
       }).success,
-    ).toBe(true);
+    ).toBe(false);
     expect(
       ExitPredicateSchema.safeParse({
-        ...predicate,
-        answer: choice,
-        evaluation: llm,
-        match: { type: 'choice', optionIds: ['no'], minReportedConfidence: 0.8 },
-      }).success,
-    ).toBe(true);
-    expect(
-      ExitPredicateSchema.safeParse({
-        ...predicate,
-        answer: score,
-        evaluation: classifier,
+        ...criterion,
+        predicate: { ...classifier, answer: score },
         match: { type: 'score', operator: 'gte', value: 0.5 },
       }).success,
     ).toBe(true);
   });
-  it('allows factual unknowns only in canonical history and rejects every unknown fresh Noul fact', () => {
-    const cases = [
-      { type: 'noul', kind: 'expression', holds: null, confidence: null },
-      { type: 'noul', kind: 'classifier', holds: false, trueProbability: null, confidence: 0.8 },
-      { type: 'noul', kind: 'classifier', holds: true, trueProbability: 0.8, confidence: null },
-      { type: 'noul', kind: 'llm', holds: true, confidence: null, reasoning: 'Done' },
-      { type: 'noul', kind: 'llm', holds: true, confidence: 0.8, reasoning: null },
-    ];
-    for (const answer of cases) {
-      expect(PrimitiveAnswerSchema.safeParse(answer).success).toBe(true);
-      expect(PrimitiveAnswerEmissionSchema.safeParse(answer).success).toBe(false);
-      expect(
-        DecisionEmissionSchema.safeParse({ answer, portId: 'yes', provenance, diagnostics: [] })
-          .success,
-      ).toBe(false);
-    }
-    for (const answer of [
-      evidence.answer,
-      { type: 'noul', kind: 'classifier', holds: true, trueProbability: 0.8, confidence: 0.8 },
-      { type: 'noul', kind: 'llm', holds: true, confidence: 0.8, reasoning: 'Done' },
-      { type: 'choice', optionId: 'yes', confidence: null, probabilities: null },
-    ])
-      expect(PrimitiveAnswerEmissionSchema.safeParse(answer).success).toBe(true);
-  });
-  it('separates retained raw evidence, confidence rejection, and strict fresh emission', () => {
+  it('checks fresh predicate facts without fabricating a decision port', () => {
     expect(ExitCriterionEmissionSchema.safeParse(evidence).success).toBe(true);
-    expect(
-      ExitCriterionEvaluationSchema.safeParse({
-        ...evidence,
-        acceptance: null,
-        answer: { ...evidence.answer, holds: null },
-      }).success,
-    ).toBe(true);
+    const historical = {
+      ...evidence,
+      acceptance: null,
+      observation: { ...evidence.observation, holds: null },
+    };
+    expect(ExitCriterionEvaluationSchema.safeParse(historical).success).toBe(true);
     for (const bad of [
+      historical,
       { ...evidence, acceptance: null },
       { ...evidence, strategy: 'llm' },
       {
         ...evidence,
         acceptance: { status: 'rejected', code: 'EVALUATION_RESULT_REJECTED', minConfidence: 0.8 },
       },
-      { ...evidence, answer: { ...evidence.answer, holds: null } },
-      {
-        ...evidence,
-        rejection: { kind: 'llm-reported-confidence', minimum: 0.8, confidence: 0.5 },
-      },
-      { index: 0, strategy: 'max-iterations', status: 'not-matched', holds: null },
+      { ...evidence, rejection: { kind: 'classifier-confidence', minimum: 0.8, confidence: 0.5 } },
+      { index: 0, strategy: 'max-iterations', status: 'matched', holds: null },
     ])
       expect(ExitCriterionEmissionSchema.safeParse(bad).success).toBe(false);
-    expect(
-      ExitCriterionEmissionSchema.safeParse({
-        index: 0,
-        strategy: 'max-iterations',
-        status: 'not-matched',
-        holds: false,
-      }).success,
-    ).toBe(true);
-    expect(
-      ExitCriterionEmissionSchema.safeParse({
+    for (const input of [
+      { index: 0, strategy: 'max-iterations', status: 'not-matched', holds: false },
+      {
         index: 1,
         strategy: 'llm',
         status: 'skipped',
         reason: { code: 'EARLIER_CRITERION_MATCHED', message: 'Earlier match' },
-      }).success,
-    ).toBe(true);
-    expect(
-      ExitCriterionEmissionSchema.safeParse({
+      },
+      {
         index: 1,
         strategy: 'llm',
         status: 'error',
-        provenance: { ...provenance, kind: 'llm' },
         diagnostic: { code: 'EVALUATION_PROVIDER_FAILED', message: 'Failed' },
-      }).success,
-    ).toBe(true);
-    expect(
-      PrimitiveEvaluationSchema.safeParse({
-        answer: evidence.answer,
-        provenance,
-        acceptance: { status: 'rejected', code: 'EVALUATION_RESULT_REJECTED', minConfidence: 0.8 },
-      }).success,
-    ).toBe(true);
-    expect(
-      PrimitiveEvaluationSchema.safeParse({ answer: evidence.answer, provenance, acceptance: null })
-        .success,
-    ).toBe(false);
+      },
+    ])
+      expect(ExitCriterionEmissionSchema.safeParse(input).success).toBe(true);
   });
 });
-
 describe('frozen format-2 targets', () => {
   it('retains old exit parsing and exact nested default injection after current contracts become format 3', () => {
     const old = { ...minimalLoop(), schemaVersion: 2 };

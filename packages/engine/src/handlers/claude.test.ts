@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { describe, expect, it, vi } from 'vitest';
 import type { HarnessId, LoopDefinitionInput } from '@graphgoblin/contracts';
 import { FakeHarness } from '../testing/fakes.js';
@@ -62,7 +63,7 @@ describe('mixed native harness families', () => {
       { id: 'done', kind: 'exit' as const, label: 'Done', config: {} },
     ];
     const loop: LoopDefinitionInput = {
-      schemaVersion: 3,
+      schemaVersion: CURRENT_DEFINITION_FORMAT,
       name: 'mixed',
       nodes,
       edges: nodes.slice(0, -1).map((node, i) => ({
@@ -100,7 +101,7 @@ describe('mixed native harness families', () => {
       { id: 'done', kind: 'exit' as const, label: 'D', config: {} },
     ];
     const loop: LoopDefinitionInput = {
-      schemaVersion: 3,
+      schemaVersion: CURRENT_DEFINITION_FORMAT,
       name: 'named-families',
       nodes,
       edges: nodes.slice(0, -1).map((node, i) => ({

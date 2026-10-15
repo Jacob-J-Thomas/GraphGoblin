@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  DecisionEvaluationSchema,
+  LlmDecisionConfigSchema,
   HarnessPreflightSchema,
   ClaudeModelCapabilitySchema,
   HarnessDefaultsSchema,
@@ -84,7 +84,7 @@ describe('Claude inference contract', () => {
     expect(InferenceConfigSchema.parse({ prompt: { template: 'Hi' } }).harnessOptions.sandbox).toBe(
       'workspace-write',
     );
-    expect(DecisionEvaluationSchema.safeParse({ kind: 'llm', harness: 'claude' }).success).toBe(
+    expect(LlmDecisionConfigSchema.safeParse({ kind: 'llm', harness: 'claude' }).success).toBe(
       false,
     );
   });

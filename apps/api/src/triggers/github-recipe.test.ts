@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
@@ -51,7 +52,7 @@ function definition(
   config: Extract<ReturnType<typeof TriggerConfigSchema.parse>, { subtype: 'poll' }>,
 ): LoopDefinitionInput {
   return {
-    schemaVersion: 3,
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
     name: 'offline-gh-recipe',
     nodes: [
       { id: 'issues', kind: 'trigger', label: 'GitHub issues', config },

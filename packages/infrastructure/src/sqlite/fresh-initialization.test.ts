@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { createClient, type Client, type Transaction, type TransactionMode } from '@libsql/client';
 import type * as Libsql from '@libsql/client';
 import { drizzle } from 'drizzle-orm/libsql';
@@ -155,7 +156,7 @@ describe('atomic fresh SQLite initialisation', () => {
     expect((await restarted.client.execute('SELECT * FROM gg_upgrade_state')).rows).toMatchObject([
       {
         id: 1,
-        format_version: 3,
+        format_version: CURRENT_DEFINITION_FORMAT,
         status: 'complete',
         source_hash: 'fresh',
         manifest_hash: 'fresh',

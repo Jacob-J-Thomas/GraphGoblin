@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { describe, expect, it } from 'vitest';
 import {
   LoopDefinitionSchema,
@@ -74,7 +75,7 @@ const settings = {
 };
 function definition() {
   return LoopDefinitionSchema.parse({
-    schemaVersion: 3,
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
     name: 'Authored',
     nodes: [
       { id: 'start', label: 'Start', kind: 'trigger', config: { subtype: 'manual' } },

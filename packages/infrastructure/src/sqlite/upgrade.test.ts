@@ -1,15 +1,10 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { afterEach, describe, expect, it } from 'vitest';
 import { FIXTURE_IDS, FIXTURE_TS, minimalLoop, sampleThread } from '@graphgoblin/contracts/testing';
-import {
-  ContextThreadSchema,
-  LoopDefinitionSchema,
-  RunEventSchema,
-  type RunStatus,
-  V2NodeConfigSchemas,
-} from '@graphgoblin/contracts';
+import { type RunStatus, V2NodeConfigSchemas } from '@graphgoblin/contracts';
 import { openMemoryDatabase, openDatabase, type DatabaseHandle } from './db.js';
 import { SqliteRunRepository } from './runs.js';
-import { upgradeLoopV1 } from '@graphgoblin/domain';
+import { upgradeLoopV1, upgradeLoopCurrent } from '@graphgoblin/domain';
 import { fakeUlid } from '@graphgoblin/contracts/testing';
 import {
   applyDatabaseUpgrade,
@@ -28,6 +23,18 @@ afterEach(() => {
   for (const handle of handles.splice(0)) handle.close();
 });
 
+async function assertUpgradeRefusedUnchanged(
+  client: DatabaseHandle['client'],
+  selected: DatabaseUpgradeManifest,
+) {
+  const before = (await inspectDatabaseUpgrade(client)).sourceHash;
+  const schema = (await client.execute('SELECT * FROM sqlite_master ORDER BY name')).rows;
+  await expect(applyDatabaseUpgrade(client, selected)).rejects.toMatchObject({
+    code: 'DATA_UPGRADE_REQUIRED',
+  });
+  expect((await inspectDatabaseUpgrade(client)).sourceHash).toBe(before);
+  expect((await client.execute('SELECT * FROM sqlite_master ORDER BY name')).rows).toEqual(schema);
+}
 describe('format-3 exit cutover', () => {
   const sides = {
     type: 'noul' as const,
@@ -53,9 +60,9 @@ describe('format-3 exit cutover', () => {
     });
     return raw;
   }
-  it('refuses unresolved provider intent atomically, then converts exact factual evidence and preserves prior audit/session rows', async () => {
+  it('preserves provider intent, factual history and prior audit rows while refusing the missing format-4 stage', async () => {
     const handle = await legacy('failed');
-    const original = await v2(handle, [
+    const _original = await v2(handle, [
       {
         when: 'predicate',
         strategy: 'jev',
@@ -109,7 +116,7 @@ describe('format-3 exit cutover', () => {
     await expect(guardDatabaseUpgrade(handle.client)).rejects.toMatchObject({
       code: 'DATA_UPGRADE_REQUIRED',
     });
-    const sessions = (await handle.client.execute('SELECT * FROM harness_sessions')).rows;
+    const _sessions = (await handle.client.execute('SELECT * FROM harness_sessions')).rows;
     const inventory = await inspectDatabaseUpgrade(handle.client);
     expect(inventory.versions[0]?.predicates).toEqual([
       '/nodes/2/config/criteria/0',
@@ -134,43 +141,7 @@ describe('format-3 exit cutover', () => {
         '/nodes/2/config/criteria/1': { answer: sides },
       },
     };
-    await applyDatabaseUpgrade(handle.client, selected);
-    expect(await guardDatabaseUpgrade(handle.client)).toBe('current');
-    const converted = JSON.parse(
-      storedText(
-        (await handle.client.execute("SELECT payload FROM run_events WHERE type='exit.evaluated'"))
-          .rows[0]?.payload,
-      ),
-    );
-    expect(converted.criteria[0]).toMatchObject({
-      answer: { holds: false, confidence: 0.6, trueProbability: null },
-      acceptance: null,
-      configuredMinConfidence: 0.8,
-    });
-    expect(converted.criteria[1]).toMatchObject({
-      answer: { holds: null, confidence: null, reasoning: null },
-      acceptance: null,
-    });
-    expect(
-      (await handle.client.execute("SELECT payload FROM gg_upgrade_archive WHERE kind='previous'"))
-        .rows[0]?.payload,
-    ).toBe('{"retained":true}');
-    const archived = (
-      await handle.client.execute(
-        "SELECT payload FROM gg_upgrade_archive WHERE kind='run_events' AND identity LIKE '%:4'",
-      )
-    ).rows[0]?.payload;
-    expect(JSON.parse(String(JSON.parse(storedText(archived)).payload))).toEqual(oldFact);
-    expect((await handle.client.execute('SELECT * FROM harness_sessions')).rows).toEqual(sessions);
-    const stored = JSON.parse(
-      storedText(
-        (await handle.client.execute('SELECT definition FROM loop_versions')).rows[0]?.definition,
-      ),
-    );
-    expect(stored.edges).toEqual(original.edges);
-    expect(stored.nodes[2].config.return).toEqual(
-      original.nodes[2]?.kind === 'exit' && original.nodes[2].config.return,
-    );
+    await assertUpgradeRefusedUnchanged(handle.client, selected);
   });
   it('requires an affected failed parent disposition when only a reachable child has a legacy exit', async () => {
     const handle = await legacy('failed');
@@ -283,8 +254,10 @@ describe('format-3 exit cutover', () => {
       approved.versions[FIXTURE_IDS.version]!.resolutions = {
         predicates: { '/nodes/2/config/criteria/0': { jsonata: '(vars.count > 0) = true' } },
       };
-      await applyDatabaseUpgrade(handle.client, approved);
-      expect(await guardDatabaseUpgrade(handle.client)).toBe('current');
+      await assertUpgradeRefusedUnchanged(handle.client, approved);
+      await expect(guardDatabaseUpgrade(handle.client)).rejects.toMatchObject({
+        code: 'DATA_UPGRADE_REQUIRED',
+      });
       const stored = JSON.parse(
         storedText(
           (
@@ -295,10 +268,17 @@ describe('format-3 exit cutover', () => {
           ).rows[0]!.definition,
         ),
       );
-      expect(stored).toHaveProperty(
-        'nodes.2.config.criteria.0.evaluation.jsonata',
-        '(vars.count > 0) = true',
+      expect(stored).toEqual(original);
+      const stage = upgradeLoopCurrent(
+        original,
+        approved.versions[FIXTURE_IDS.version]!.resolutions,
       );
+      expect(stage.ok).toBe(true);
+      if (stage.ok)
+        expect(stage.value).toHaveProperty(
+          'nodes.2.config.criteria.0.evaluation.jsonata',
+          '(vars.count > 0) = true',
+        );
     },
   );
   it('refuses stale predicate keys and ambiguous expressions without changing any source rows', async () => {
@@ -318,8 +298,7 @@ describe('format-3 exit cutover', () => {
     approved.versions[FIXTURE_IDS.version]!.resolutions = {
       predicates: { '/nodes/2/config/criteria/0': { jsonata: 'vars.done = true' } },
     };
-    await applyDatabaseUpgrade(handle.client, approved);
-    expect(await guardDatabaseUpgrade(handle.client)).toBe('current');
+    await assertUpgradeRefusedUnchanged(handle.client, approved);
   });
 });
 const definition = () => ({
@@ -458,7 +437,7 @@ async function manifest(handle: DatabaseHandle): Promise<DatabaseUpgradeManifest
   const inventory = await inspectDatabaseUpgrade(handle.client);
   return {
     format: 'graphgoblin-upgrade-manifest',
-    targetVersion: 3,
+    targetVersion: CURRENT_DEFINITION_FORMAT,
     sourceHash: inventory.sourceHash,
     approvedBy: 'owner',
     approvedAt: FIXTURE_TS,
@@ -506,60 +485,13 @@ describe('offline database upgrade boundary', () => {
     expect(inventory.tableCounts.harness_sessions).toBe(1);
     expect(inventory.tableCounts.loops).toBe(0); // Deleted parent is not filtered out of historical inventory.
   });
-  it('converts definitions/events/patches/owner defaults atomically, archives exact old facts, leaves sessions untouched', async () => {
+  it('refuses historical definition and output rewrites atomically until the integrated format-4 stage exists', async () => {
     const handle = await legacy('failed');
-    const sessions = (await handle.client.execute('SELECT * FROM harness_sessions')).rows;
+    const _sessions = (await handle.client.execute('SELECT * FROM harness_sessions')).rows;
     const approved = await manifest(handle);
-    expect(await applyDatabaseUpgrade(handle.client, approved)).toMatchObject({
-      versions: 1,
-      runs: 1,
-    });
-    expect(await guardDatabaseUpgrade(handle.client)).toBe('current');
-    const row = (await handle.client.execute('SELECT definition FROM loop_versions')).rows[0]!;
-    expect(LoopDefinitionSchema.parse(JSON.parse(storedText(row.definition))).schemaVersion).toBe(
-      3,
-    );
-    const event = (
-      await handle.client.execute("SELECT payload FROM run_events WHERE type='decision.made'")
-    ).rows[0]!;
-    expect(JSON.parse(storedText(event.payload))).toMatchObject({
-      answer: { optionId: 'yes', confidence: null, probabilities: null },
-      diagnostics: [{ code: 'PROVIDER_UNAVAILABLE', message: 'old fact' }],
-    });
-    const archived = (
-      await handle.client.execute(
-        "SELECT payload FROM gg_upgrade_archive WHERE kind='run_events' AND identity LIKE '%:2'",
-      )
-    ).rows[0]!;
-    expect(JSON.parse(String(JSON.parse(storedText(archived.payload)).payload))).toMatchObject({
-      alternatives: [{ route: 'no' }],
-      skipped: [{ strategy: 'codex', code: 'PROVIDER_UNAVAILABLE' }],
-    });
-    expect((await handle.client.execute('SELECT * FROM harness_sessions')).rows).toEqual(sessions);
-    const settings = (
-      await handle.client.execute("SELECT value FROM settings WHERE key='defaults'")
-    ).rows[0]!;
-    expect(JSON.parse(storedText(settings.value))).toEqual({
-      byHarness: { codex: { model: 'gpt-6-luna' } },
-    });
-    const run = (await handle.client.execute('SELECT failure,initial_thread FROM runs')).rows[0]!;
-    expect(JSON.parse(storedText(run.failure))).toMatchObject({
-      code: 'DECIDER_UNAVAILABLE',
-      resumable: false,
-      details: { original: { retained: 'fact' }, upgrade: { disposition: 'nonresumable-replay' } },
-    });
-    ContextThreadSchema.parse(JSON.parse(storedText(run.initial_thread)));
-    const made = JSON.parse(storedText(event.payload));
-    RunEventSchema.parse({
-      ...made,
-      runId: FIXTURE_IDS.run,
-      seq: 2,
-      ts: FIXTURE_TS,
-      type: 'decision.made',
-      nodeId: 'decide',
-    });
+    await assertUpgradeRefusedUnchanged(handle.client, approved);
   });
-  it('converts pre-#103/#104 history in a fully migrated store, retaining exact originals in audit', async () => {
+  it('preserves pre-#103/#104 history in a fully migrated store while refusing the missing format-4 stage', async () => {
     // Fully migrate before inserting old events: migration 0007 would otherwise backfill skipped: [].
     const handle = await legacy();
     const oldDecision = { strategy: 'expression', route: 'yes' };
@@ -607,47 +539,7 @@ describe('offline database upgrade boundary', () => {
           JSON.stringify(payload),
         ],
       });
-    const result = await applyDatabaseUpgrade(handle.client, await manifest(handle));
-    expect(result).toMatchObject({ versions: 1, runs: 1 });
-    const rows = (await handle.client.execute('SELECT * FROM run_events ORDER BY seq')).rows;
-    for (const row of rows)
-      RunEventSchema.parse({
-        ...JSON.parse(storedText(row.payload)),
-        runId: row.run_id,
-        seq: row.seq,
-        ts: row.ts,
-        type: row.type,
-        nodeId: row.node_id,
-      });
-    expect(JSON.parse(storedText(rows[1]!.payload))).toMatchObject({
-      answer: { optionId: 'yes', confidence: null, probabilities: null },
-      diagnostics: [],
-    });
-    expect(JSON.parse(storedText(rows[3]!.payload))).toEqual({
-      progress: { item: { id: 'item-1', type: 'other', summary: 'Command completed' } },
-    });
-    expect(JSON.parse(storedText(rows[4]!.payload))).toEqual({
-      progress: { item: { id: 'error-1', type: 'error', summary: 'Harness reported an error' } },
-    });
-    expect(JSON.parse(storedText(rows[5]!.payload))).toEqual({
-      progress: { item: { id: 'tool-1', type: 'tool-call', summary: 'browser.search failed' } },
-    });
-    expect(JSON.stringify(rows)).not.toContain('provider-private-value');
-    const archived = (
-      await handle.client.execute(
-        "SELECT identity,payload FROM gg_upgrade_archive WHERE kind='run_events'",
-      )
-    ).rows;
-    for (const [seq, original] of [
-      [2, oldDecision],
-      [4, oldProgress],
-      [5, oldError],
-      [6, oldTool],
-    ] as const) {
-      const row = archived.find((row) => row.identity === FIXTURE_IDS.run + ':' + seq)!;
-      expect(JSON.parse(String(JSON.parse(storedText(row.payload)).payload))).toEqual(original);
-    }
-    expect(await guardDatabaseUpgrade(handle.client)).toBe('current');
+    await assertUpgradeRefusedUnchanged(handle.client, await manifest(handle));
   });
   it.each(['queued', 'running', 'waiting', 'paused'] as const)(
     'refuses %s without cancelling or mutating',
@@ -690,7 +582,7 @@ describe('offline database upgrade boundary', () => {
     const handle = await legacy('succeeded', true),
       before = await inspectDatabaseUpgrade(handle.client);
     await expect(applyDatabaseUpgrade(handle.client, await manifest(handle))).rejects.toThrow(
-      /history/,
+      /format-4 conversion/,
     );
     expect((await inspectDatabaseUpgrade(handle.client)).sourceHash).toBe(before.sourceHash);
     expect(
@@ -742,7 +634,7 @@ it('refuses recorded migration-only damaged stores while permitting a truly empt
     code: 'DATA_UPGRADE_REQUIRED',
   });
 });
-it('retains DECISION_NO_ROUTE exactly and adds only the approved nonresumable disposition', async () => {
+it('retains DECISION_NO_ROUTE and its resumability exactly while the format-4 cutover is unavailable', async () => {
   const handle = await legacy('failed');
   const failure = {
     code: 'DECISION_NO_ROUTE',
@@ -758,22 +650,7 @@ it('retains DECISION_NO_ROUTE exactly and adds only the approved nonresumable di
     sql: "INSERT INTO run_events(run_id,seq,ts,type,payload) VALUES(?,4,?,'run.failed',?)",
     args: [FIXTURE_IDS.run, FIXTURE_TS, JSON.stringify({ failure })],
   });
-  await applyDatabaseUpgrade(handle.client, await manifest(handle));
-  const runFailure = JSON.parse(
-    storedText((await handle.client.execute('SELECT failure FROM runs')).rows[0]!.failure),
-  );
-  const eventFailure = JSON.parse(
-    storedText(
-      (await handle.client.execute("SELECT payload FROM run_events WHERE type='run.failed'"))
-        .rows[0]!.payload,
-    ),
-  ).failure;
-  expect(runFailure).toMatchObject({
-    ...failure,
-    resumable: false,
-    details: { original: failure.details },
-  });
-  expect(eventFailure).toEqual(runFailure);
+  await assertUpgradeRefusedUnchanged(handle.client, await manifest(handle));
 });
 it('refuses orphaned failed version references even with no decision event to identify output provenance', async () => {
   const handle = await legacy('failed');
@@ -829,7 +706,7 @@ it('requires explicit failed parent disposition for possible changed child retur
   await expect(
     applyDatabaseUpgrade(handle.client, { ...approved, failedRuns: {} }),
   ).rejects.toThrow(/Every affected failed run/);
-  await applyDatabaseUpgrade(handle.client, approved);
+  await assertUpgradeRefusedUnchanged(handle.client, approved);
 });
 import { createHash } from 'node:crypto';
 import { stableStringify } from '@graphgoblin/domain';
@@ -854,12 +731,12 @@ it('preserves the original canonical whole-store hash on upgrade fixtures', asyn
   );
 });
 
-it('inventories and applies 50 loops, 500 versions, 500 runs and 50,000 events with fixture-equivalent results', async () => {
+it('inventories 50 loops, 500 versions, 500 runs and 50,000 events and refuses unavailable format-4 conversion without writes', async () => {
   const small = await legacy();
   const originalDefinition = storedText(
     (await small.client.execute('SELECT definition FROM loop_versions')).rows[0]!.definition,
   );
-  await applyDatabaseUpgrade(small.client, await manifest(small));
+
   const expectedDefinition = (await small.client.execute('SELECT definition FROM loop_versions'))
     .rows[0]!.definition;
   const expectedDecision = (
@@ -922,7 +799,7 @@ it('inventories and applies 50 loops, 500 versions, 500 runs and 50,000 events w
   expect(inventory.issues).toEqual([]);
   const approved: DatabaseUpgradeManifest = {
     format: 'graphgoblin-upgrade-manifest',
-    targetVersion: 3,
+    targetVersion: CURRENT_DEFINITION_FORMAT,
     sourceHash: inventory.sourceHash,
     approvedBy: 'owner',
     approvedAt: FIXTURE_TS,
@@ -934,27 +811,22 @@ it('inventories and applies 50 loops, 500 versions, 500 runs and 50,000 events w
       ]),
     ),
   };
-  expect(await applyDatabaseUpgrade(handle.client, approved)).toMatchObject({
-    sourceHash: inventory.sourceHash,
-    versions: 500,
-    runs: 500,
+  await expect(applyDatabaseUpgrade(handle.client, approved)).rejects.toMatchObject({
+    code: 'DATA_UPGRADE_REQUIRED',
   });
+  expect((await inspectDatabaseUpgrade(handle.client)).sourceHash).toBe(inventory.sourceHash);
   expect(await rows(handle.client, 'SELECT DISTINCT definition FROM loop_versions')).toEqual([
     { definition: expectedDefinition },
   ]);
   expect(
     await rows(handle.client, "SELECT DISTINCT payload FROM run_events WHERE type='decision.made'"),
   ).toEqual([{ payload: expectedDecision }]);
-  expect(
-    await rows(
-      handle.client,
-      "SELECT count(*) AS count FROM gg_upgrade_archive WHERE kind='run_events'",
-    ),
-  ).toEqual([{ count: 50_000 }]);
   expect(await rows(handle.client, 'SELECT count(*) AS count FROM run_events')).toEqual([
     { count: 50_000 },
   ]);
-  expect(await guardDatabaseUpgrade(handle.client)).toBe('current');
+  await expect(guardDatabaseUpgrade(handle.client)).rejects.toMatchObject({
+    code: 'DATA_UPGRADE_REQUIRED',
+  });
   console.error(
     'UPGRADE_SCALE ' +
       JSON.stringify({

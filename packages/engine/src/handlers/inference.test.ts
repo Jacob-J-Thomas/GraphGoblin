@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { describe, expect, it } from 'vitest';
 import type { LoopDefinitionInput } from '@graphgoblin/contracts';
 import { createTestEngine, singleNodeLoop } from '../testing/scenario.js';
@@ -272,7 +273,7 @@ describe('inference node', () => {
       { finalText: 'third' },
     ]);
     const loop: LoopDefinitionInput = {
-      schemaVersion: 3,
+      schemaVersion: CURRENT_DEFINITION_FORMAT,
       name: 'chain',
       nodes: [
         { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },

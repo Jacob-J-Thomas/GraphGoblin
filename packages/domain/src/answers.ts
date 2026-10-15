@@ -1,13 +1,15 @@
 import {
-  PrimitiveAnswerEmissionSchema,
-  type DecisionAnswer,
-  type PrimitiveAnswerSpec,
-  type PrimitiveAnswer,
+  ClassifierAnswerEmissionSchema,
+  type ClassifierAnswerConfig,
+  type DecisionConfig,
+  type RouteDeclaration,
+  type ClassifierAnswerSpec,
+  type ClassifierAnswer,
 } from '@graphgoblin/contracts';
 import { DomainError } from './errors.js';
 
 /** Stable authored route IDs, independent of labels or numeric score values. */
-export function answerPortIds(answer: DecisionAnswer): string[] {
+export function answerPortIds(answer: ClassifierAnswerConfig): string[] {
   switch (answer.type) {
     case 'choice':
       return answer.options.map((option) => option.id);
@@ -20,10 +22,10 @@ export function answerPortIds(answer: DecisionAnswer): string[] {
 
 /** Validate raw facts against the submitted primitive, without confidence acceptance policy. */
 export function validatePrimitiveAnswer(
-  spec: PrimitiveAnswerSpec,
-  result: PrimitiveAnswer,
+  spec: ClassifierAnswerSpec,
+  result: ClassifierAnswer,
 ): string | null {
-  if (!PrimitiveAnswerEmissionSchema.safeParse(result).success)
+  if (!ClassifierAnswerEmissionSchema.safeParse(result).success)
     return 'The evaluator returned a malformed primitive answer';
   if (spec.type !== result.type) return 'The evaluator returned a different answer primitive';
   if (spec.type === 'choice' && result.type === 'choice') {
@@ -35,7 +37,7 @@ export function validatePrimitiveAnswer(
         return 'Classifier probabilities must cover exactly the declared option ids';
     }
   }
-  if (result.type === 'noul' && result.kind === 'classifier') {
+  if (result.type === 'noul') {
     if (result.trueProbability === null) return 'Classifier Noul requires true probability';
     const confidence = result.holds ? result.trueProbability : 1 - result.trueProbability;
     if (result.confidence !== confidence)
@@ -60,7 +62,7 @@ export function validatePrimitiveAnswer(
 }
 
 /** Map a valid answer onto its declared route without rounding or display-order dependence. */
-export function decisionPortId(spec: DecisionAnswer, result: PrimitiveAnswer): string {
+export function decisionPortId(spec: ClassifierAnswerConfig, result: ClassifierAnswer): string {
   const invalid = validatePrimitiveAnswer(spec, result);
   if (invalid !== null) throw new DomainError('EVALUATION_INVALID_RESPONSE', invalid);
   if (spec.type === 'choice' && result.type === 'choice') return result.optionId;
@@ -79,4 +81,17 @@ export function decisionPortId(spec: DecisionAnswer, result: PrimitiveAnswer): s
     'EVALUATION_INVALID_CONFIGURATION',
     'The answer has no declared output port',
   );
+}
+
+/** Stable output declarations, independent of evaluator-specific answer mathematics. */
+export function decisionRouteDeclarations(config: DecisionConfig): RouteDeclaration[] {
+  if (config.kind !== 'classifier') return config.routes;
+  switch (config.answer.type) {
+    case 'choice':
+      return config.answer.options.map(({ id, label }) => ({ id, label }));
+    case 'noul':
+      return [config.answer.true, config.answer.false].map(({ id, label }) => ({ id, label }));
+    case 'score':
+      return config.answer.bands.map(({ id, label }) => ({ id, label }));
+  }
 }

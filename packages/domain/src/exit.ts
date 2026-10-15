@@ -5,8 +5,8 @@ import type {
   ExitPredicate,
   ExitPredicateMatch,
   Outcome,
-  PrimitiveAnswer,
-  PrimitiveEvaluation,
+  PredicateEvaluation,
+  EvaluationObservation,
 } from '@graphgoblin/contracts';
 import { validateJson } from './json-schema.js';
 
@@ -17,7 +17,7 @@ export interface ExitContext {
   maxIterations: number;
   elapsedMs: number;
   /** The caller prepares expression state, provider state and question rendering. */
-  evaluatePredicate: (criterion: ExitPredicate) => Promise<PrimitiveEvaluation>;
+  evaluatePredicate: (criterion: ExitPredicate) => Promise<PredicateEvaluation>;
   onCriterion?: (evaluation: ExitCriterionEvaluation) => void;
 }
 
@@ -25,7 +25,11 @@ export type ExitDecision =
   | { kind: 'finish'; outcome: Outcome; reason: string; criterionIndex?: number }
   | { kind: 'loop-back'; targetNodeId: string };
 
-function matches(answer: PrimitiveAnswer, match: ExitPredicateMatch): boolean {
+function matches(observation: EvaluationObservation, match: ExitPredicateMatch): boolean {
+  if (observation.kind === 'boolean')
+    return match.type === 'boolean' && observation.holds === match.value;
+  if (observation.kind !== 'classifier') return false;
+  const answer = observation.answer;
   if (answer.type === 'noul' && match.type === 'noul') return answer.holds === match.value;
   if (answer.type === 'choice' && match.type === 'choice')
     return match.optionIds.includes(answer.optionId);
@@ -49,7 +53,7 @@ function matches(answer: PrimitiveAnswer, match: ExitPredicateMatch): boolean {
 /** Criteria run in authored order before the implicit no-match loop-back ceiling. */
 export async function evaluateExit(config: ExitConfig, ctx: ExitContext): Promise<ExitDecision> {
   for (const [index, criterion] of config.criteria.entries()) {
-    const strategy = criterion.when === 'predicate' ? criterion.evaluation.kind : criterion.when;
+    const strategy = criterion.when === 'predicate' ? criterion.predicate.kind : criterion.when;
     let evidence: ExitCriterionEvaluation;
     let matched: boolean;
     try {
@@ -59,32 +63,35 @@ export async function evaluateExit(config: ExitConfig, ctx: ExitContext): Promis
           'minReportedConfidence' in criterion.match
             ? criterion.match.minReportedConfidence
             : undefined;
+        const confidence =
+          result.observation.kind === 'classifier'
+            ? result.observation.answer.confidence
+            : result.observation.confidence;
         const rejection =
           result.acceptance.status === 'rejected'
             ? {
                 kind: 'classifier-confidence' as const,
                 minimum: result.acceptance.minConfidence,
-                confidence: result.answer.confidence,
+                confidence: confidence,
               }
-            : minimum !== undefined &&
-                (result.answer.confidence === null || result.answer.confidence < minimum)
+            : minimum !== undefined && (confidence === null || confidence < minimum)
               ? {
                   kind: 'llm-reported-confidence' as const,
                   minimum,
-                  confidence: result.answer.confidence,
+                  confidence: confidence,
                 }
               : undefined;
-        matched = rejection === undefined && matches(result.answer, criterion.match);
+        matched = rejection === undefined && matches(result.observation, criterion.match);
         evidence = {
           index,
-          strategy: criterion.evaluation.kind,
+          strategy: criterion.predicate.kind,
           status: matched ? 'matched' : 'not-matched',
           ...result,
           match: criterion.match,
           ...(rejection ? { rejection } : {}),
-          ...(criterion.evaluation.kind === 'classifier' &&
-          criterion.evaluation.minConfidence !== undefined
-            ? { configuredMinConfidence: criterion.evaluation.minConfidence }
+          ...(criterion.predicate.kind === 'classifier' &&
+          criterion.predicate.minConfidence !== undefined
+            ? { configuredMinConfidence: criterion.predicate.minConfidence }
             : {}),
         };
       } else {

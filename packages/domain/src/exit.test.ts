@@ -2,8 +2,8 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   ExitConfigSchema,
   type ExitCriterionEvaluation,
-  type PrimitiveEvaluation,
-  type PrimitiveAnswer,
+  type PredicateEvaluation,
+  type ClassifierAnswer,
 } from '@graphgoblin/contracts';
 import { sampleThread } from '@graphgoblin/contracts/testing';
 import { evaluateExit, type ExitContext } from './exit.js';
@@ -14,12 +14,28 @@ const sides = {
   false: { label: 'Continue', criteria: 'Continue' },
 };
 function result(
-  answer: PrimitiveAnswer,
+  answer:
+    | ClassifierAnswer
+    | {
+        type: 'noul';
+        kind: 'expression' | 'llm';
+        holds: boolean | null;
+        confidence: number | null;
+        reasoning?: string;
+      },
   kind: 'expression' | 'classifier' | 'llm' = 'expression',
   rejected = false,
-): PrimitiveEvaluation {
+): PredicateEvaluation {
   return {
-    answer,
+    observation:
+      'kind' in answer
+        ? {
+            kind: 'boolean',
+            holds: answer.holds,
+            confidence: answer.confidence,
+            reasoning: answer.reasoning ?? null,
+          }
+        : { kind: 'classifier', answer },
     provenance: {
       kind,
       provider: kind === 'classifier' ? 'typesafe' : kind === 'llm' ? 'codex' : null,
@@ -51,23 +67,28 @@ function config(kind: 'expression' | 'classifier' | 'llm', value = true, gate = 
     criteria: [
       {
         when: 'predicate',
-        answer: kind === 'expression' ? { type: 'noul' } : sides,
-        evaluation:
+        predicate:
           kind === 'expression'
             ? { kind, jsonata: 'true' }
             : kind === 'classifier'
-              ? { kind, model: 'jev', question: '?', ...(gate ? { minConfidence: 0.8 } : {}) }
+              ? {
+                  kind,
+                  model: 'jev',
+                  question: '?',
+                  answer: sides,
+                  ...(gate ? { minConfidence: 0.8 } : {}),
+                }
               : {
                   kind,
                   harness: 'codex',
                   model: { mode: 'inherit' },
                   effort: { mode: 'inherit' },
-                  question: '?',
+                  instructions: '?',
                 },
         match: {
-          type: 'noul',
+          type: kind === 'classifier' ? 'noul' : 'boolean',
           value,
-          ...(gate && kind === 'llm' ? { minReportedConfidence: 0.8 } : {}),
+          ...(kind === 'llm' && gate ? { minReportedConfidence: 0.8 } : {}),
         },
         outcome: 'failure',
       },
@@ -83,11 +104,10 @@ describe('evaluateExit explicit primitive matching', () => {
       for (const value of [false, true])
         for (const confidence of [0.799, 0.8, 0.801]) {
           it(`${kind} holds=${holds} match=${value} confidence=${confidence} gates before matching`, async () => {
-            const answer: PrimitiveAnswer =
+            const answer: Parameters<typeof result>[0] =
               kind === 'classifier'
                 ? {
                     type: 'noul',
-                    kind,
                     holds,
                     trueProbability: holds ? confidence : 1 - confidence,
                     confidence,
@@ -106,7 +126,7 @@ describe('evaluateExit explicit primitive matching', () => {
             expect(decision.kind).toBe(matched ? 'finish' : 'loop-back');
             expect(evidence[0]).toMatchObject({
               status: matched ? 'matched' : 'not-matched',
-              answer,
+              observation: raw.observation,
               acceptance: raw.acceptance,
             });
             if (confidence < 0.8)
@@ -121,9 +141,9 @@ describe('evaluateExit explicit primitive matching', () => {
           });
         }
     it.each([false, true])(`${kind} has no implicit confidence gate for %s`, async (holds) => {
-      const answer: PrimitiveAnswer =
+      const answer: Parameters<typeof result>[0] =
         kind === 'classifier'
-          ? { type: 'noul', kind, holds, trueProbability: 0.5, confidence: 0.5 }
+          ? { type: 'noul', holds, trueProbability: 0.5, confidence: 0.5 }
           : { type: 'noul', kind, holds, confidence: 0.01, reasoning: 'Reviewed' };
       expect(
         await evaluateExit(
@@ -149,11 +169,15 @@ describe('evaluateExit explicit primitive matching', () => {
       criteria: [
         {
           when: 'predicate',
-          answer: {
-            type: 'choice',
-            options: ['a', 'b', 'c'].map((id) => ({ id, label: id, criteria: id })),
+          predicate: {
+            kind: 'classifier',
+            model: 'jev',
+            question: '?',
+            answer: {
+              type: 'choice',
+              options: ['a', 'b', 'c'].map((id) => ({ id, label: id, criteria: id })),
+            },
           },
-          evaluation: { kind: 'classifier', model: 'jev', question: '?' },
           match: { type: 'choice', optionIds: ['a', 'c'] },
           outcome: 'failure',
         },
@@ -191,8 +215,12 @@ describe('evaluateExit explicit primitive matching', () => {
           criteria: [
             {
               when: 'predicate',
-              answer: { type: 'score', anchors: ['low', 'middle', 'high'] },
-              evaluation: { kind: 'classifier', model: 'jev', question: '?' },
+              predicate: {
+                kind: 'classifier',
+                model: 'jev',
+                question: '?',
+                answer: { type: 'score', anchors: ['low', 'middle', 'high'] },
+              },
               match: { type: 'score', operator, value: 1 },
               outcome: 'failure',
             },
@@ -233,7 +261,10 @@ describe('evaluateExit explicit primitive matching', () => {
     const evaluatePredicate = vi
       .fn()
       .mockResolvedValueOnce(raw)
-      .mockResolvedValueOnce({ ...raw, answer: { ...raw.answer, holds: true } });
+      .mockResolvedValueOnce({
+        ...raw,
+        observation: { kind: 'boolean', holds: true, confidence: null, reasoning: null },
+      });
     const authored = config('expression');
     authored.criteria.push(authored.criteria[0]!, authored.criteria[0]!);
     const evidence: ExitCriterionEvaluation[] = [];

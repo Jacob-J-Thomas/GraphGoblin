@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 /**
  * Regression tests for defects found by the WP-D2 adversarial QA pass (docs/qa/2026-10-03-wp-d2.md).
  */
@@ -19,7 +20,7 @@ const start = { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'ma
 const done = { id: 'done', kind: 'exit', label: 'D', config: {} } as const;
 function chain(name: string, middle: LoopDefinitionInput['nodes'][number]): LoopDefinitionInput {
   return {
-    schemaVersion: 3,
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
     name,
     nodes: [start, middle, done],
     edges: [
@@ -257,7 +258,7 @@ describe('validate, draft saves, and publish agree', () => {
       url: '/loops/import',
       payload: {
         format: 'graphgoblin-loop',
-        formatVersion: 3,
+        formatVersion: CURRENT_DEFINITION_FORMAT,
         exportedAt: '2026-10-03T00:00:00.000Z',
         loop: definition,
       },
@@ -273,7 +274,7 @@ describe('validate, draft saves, and publish agree', () => {
       url: '/loops/import',
       payload: {
         format: 'graphgoblin-loop',
-        formatVersion: 3,
+        formatVersion: CURRENT_DEFINITION_FORMAT,
         exportedAt: '2026-10-03T00:00:00.000Z',
         loop: chain('imported', subloop('01ARZ3NDEKTSV4RRFFQ69G5FAV')),
       },

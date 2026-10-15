@@ -1,26 +1,31 @@
-import { describe, expect, it, vi } from 'vitest';
-import { EvaluationSchema, type EvaluationAnswerSpec } from '@graphgoblin/contracts';
-import { evaluatePrimitive, type PrimitiveEvaluationRequest } from './primitive-evaluator.js';
-import type { ClassifierNoulResult, DeciderPort } from './ports.js';
+import { describe, it, expect, vi } from 'vitest';
+import {
+  ClassifierDecisionConfigSchema,
+  type ExpressionDecisionConfig,
+  type LlmDecisionConfig,
+} from '@graphgoblin/contracts';
+import {
+  evaluateClassifier,
+  evaluateRoute,
+  evaluateBoolean,
+  type ClassifierEvaluationRequest,
+} from './primitive-evaluator.js';
 import { createFakePorts } from './testing/index.js';
-
-const noul: EvaluationAnswerSpec = {
+const sides = {
   type: 'noul',
-  true: { label: 'Ready', criteria: 'Ready' },
-  false: { label: 'Fix', criteria: 'Fix' },
+  true: { id: 'yes', label: 'Ready', criteria: 'Ready' },
+  false: { id: 'no', label: 'Fix', criteria: 'Fix' },
 };
-const score: EvaluationAnswerSpec = { type: 'score', anchors: ['low', 'high'] };
-function request(): PrimitiveEvaluationRequest {
+function request(): ClassifierEvaluationRequest {
   return {
     nodeId: 'evaluate',
     ownerId: 'owner',
-    answer: noul,
-    evaluation: EvaluationSchema.parse({
+    config: ClassifierDecisionConfigSchema.parse({
       kind: 'classifier',
       model: 'jev',
-      question: 'Unused template',
+      question: 'Unused',
+      answer: sides,
     }),
-    expressionView: { privateFullThread: true },
     question: 'Prepared question',
     context: { suppliedState: true },
     signal: new AbortController().signal,
@@ -28,166 +33,200 @@ function request(): PrimitiveEvaluationRequest {
     resolveModel: vi.fn(() => Promise.resolve({ model: 'gpt-6-luna', effort: 'low' as const })),
   };
 }
-describe('context-independent primitive evaluator boundary', () => {
+const routes = [
+  { id: 'yes', label: 'Ready' },
+  { id: 'no', label: 'Fix' },
+];
+const llm: LlmDecisionConfig = {
+  kind: 'llm',
+  instructions: 'Choose',
+  harness: 'codex',
+  model: { mode: 'inherit' },
+  effort: { mode: 'inherit' },
+  routes,
+  context: { messages: 'last', includeLastOutput: true },
+};
+describe('separate typed evaluation operations', () => {
   it.each(['choice', 'score'] as const)(
-    'rejects a Noul threshold on %s before resolving a provider',
-    async (primitive) => {
+    'rejects Noul thresholds on %s before provider resolution',
+    async (type) => {
       const input = request();
-      input.answer =
-        primitive === 'score'
-          ? score
-          : {
-              type: 'choice',
-              options: [
-                { id: 'ready', label: 'Ready', criteria: 'Ready' },
-                { id: 'fix', label: 'Fix', criteria: 'Fix' },
-              ],
-            };
-      input.evaluation = EvaluationSchema.parse({
-        kind: 'classifier',
-        model: 'jev',
-        question: 'Unused',
+      input.config = {
+        ...input.config,
         truthThreshold: 0.8,
-      });
-      const resolve = vi.spyOn(input.ports.classifiers, 'resolve');
-      await expect(evaluatePrimitive(input)).rejects.toMatchObject({
+        answer:
+          type === 'score'
+            ? { type, anchors: ['Low', 'High'] }
+            : {
+                type,
+                options: [
+                  { id: 'yes', label: 'Yes', criteria: 'Ready' },
+                  { id: 'no', label: 'No', criteria: 'Fix' },
+                ],
+              },
+      };
+      await expect(evaluateClassifier(input)).rejects.toMatchObject({
         code: 'EVALUATION_INVALID_CONFIGURATION',
         options: { resumable: false },
       });
-      expect(resolve).not.toHaveBeenCalled();
       expect(input.resolveModel).not.toHaveBeenCalled();
     },
   );
-
   it.each([null, undefined, {}, [], { type: 'noul', trueProbability: '0.5' }])(
-    'rejects malformed Noul response %s without a provider failure',
+    'rejects malformed Noul response %j',
     async (raw) => {
       const input = request();
       const ports = createFakePorts();
-      ports.jev.classifyNoul = vi.fn(() => Promise.resolve(raw as unknown as ClassifierNoulResult));
+      Object.defineProperty(ports.jev, 'classifyNoul', { value: () => Promise.resolve(raw) });
       input.ports = ports;
-      await expect(evaluatePrimitive(input)).rejects.toMatchObject({
+      await expect(evaluateClassifier(input)).rejects.toMatchObject({
+        code: 'EVALUATION_INVALID_RESPONSE',
+      });
+    },
+  );
+  it.each(['missing', '"unknown"', 'true', '1', 'null', '[]', '{}', '["yes","no"]'])(
+    'rejects invalid scalar route result %s',
+    async (jsonata) => {
+      const input = request();
+      const config: ExpressionDecisionConfig = { kind: 'expression', jsonata, routes };
+      await expect(evaluateRoute({ ...input, config, expressionView: {} })).rejects.toMatchObject({
         code: 'EVALUATION_INVALID_RESPONSE',
         options: { resumable: false },
       });
-      expect(ports.jev.choices).toHaveLength(0);
-      expect(ports.jev.scores).toHaveLength(0);
     },
   );
-
-  it('passes prepared inputs unchanged and exercises typed fake classifier capabilities', async () => {
+  it('keeps expression errors typed and cancellation unchanged', async () => {
     const input = request();
-    const first = await evaluatePrimitive(input);
-    expect(first).toMatchObject({
-      answer: { type: 'noul', kind: 'classifier', holds: true, trueProbability: 1 },
-      acceptance: { status: 'accepted' },
-    });
-    const second = await evaluatePrimitive({ ...input, answer: score });
-    expect(second).toMatchObject({
-      answer: { type: 'score', score: 0, legend: { '0': 'low', '1': 'high' } },
-    });
-    expect(input.resolveModel).not.toHaveBeenCalled();
+    await expect(
+      evaluateRoute({
+        ...input,
+        config: { kind: 'expression', jsonata: '(', routes },
+        expressionView: {},
+      }),
+    ).rejects.toMatchObject({ code: 'EVALUATION_EXPRESSION_FAILED' });
+    const controller = new AbortController();
+    controller.abort();
+    await expect(
+      evaluateRoute({
+        ...input,
+        signal: controller.signal,
+        config: { kind: 'expression', jsonata: '"yes"', routes },
+        expressionView: {},
+      }),
+    ).rejects.toMatchObject({ name: 'AbortError' });
   });
-
-  it.each(['question', 'context'] as const)(
-    'requires prepared %s before classifier selection',
-    async (key) => {
-      const input = request();
-      delete input[key];
-      await expect(evaluatePrimitive(input)).rejects.toMatchObject({
-        code: 'EVALUATION_INVALID_CONFIGURATION',
-        options: { resumable: false },
-      });
-    },
-  );
-
-  it.each(['expression', 'llm'] as const)(
-    'rejects unsupported %s Score without dispatch',
-    async (kind) => {
-      const input = request();
-      input.answer = score;
-      input.evaluation =
-        kind === 'expression'
-          ? { kind: 'expression', jsonata: '1.2' }
-          : EvaluationSchema.parse({
-              kind: 'llm',
-              harness: 'codex',
-              model: { mode: 'inherit' },
-              effort: { mode: 'inherit' },
-              question: 'Unused',
-            });
-      await expect(evaluatePrimitive(input)).rejects.toMatchObject({
-        code: 'EVALUATION_INVALID_CONFIGURATION',
-        options: { resumable: false },
-      });
-      expect(input.resolveModel).not.toHaveBeenCalled();
-    },
-  );
-
-  it('reports unavailable strict LLM capability before a completion or model resolution', async () => {
+  it('evaluates strict booleans independently of decision route ports', async () => {
     const input = request();
-    input.evaluation = EvaluationSchema.parse({
-      kind: 'llm',
-      harness: 'codex',
-      model: { mode: 'inherit' },
-      effort: { mode: 'inherit' },
-      question: 'Unused',
-    });
-    const choose = vi.fn();
-    input.ports.deciders = [
-      { id: 'codex', available: () => true, choose } as unknown as DeciderPort,
-    ];
-    await expect(evaluatePrimitive(input)).rejects.toMatchObject({
-      code: 'EVALUATION_INVALID_CONFIGURATION',
-      options: { resumable: false },
-    });
-    expect(choose).not.toHaveBeenCalled();
-    expect(input.resolveModel).not.toHaveBeenCalled();
+    expect(
+      await evaluateBoolean({
+        ...input,
+        config: { kind: 'expression', jsonata: 'false' },
+        expressionView: {},
+      }),
+    ).toMatchObject({ observation: { kind: 'boolean', holds: false } });
+    await expect(
+      evaluateBoolean({
+        ...input,
+        config: { kind: 'expression', jsonata: 'missing' },
+        expressionView: {},
+      }),
+    ).rejects.toMatchObject({ code: 'EVALUATION_INVALID_RESPONSE' });
   });
-  it.each(['choice', 'score'] as const)(
-    'rejects direct %s truthThreshold configuration before selection',
-    async (type) => {
-      const input = request();
-      input.answer =
-        type === 'score'
-          ? score
-          : { type: 'choice', options: [{ id: 'ready', label: 'Ready', criteria: 'Ready' }] };
-      input.evaluation = EvaluationSchema.parse({
-        kind: 'classifier',
-        model: 'jev',
-        question: '?',
-        truthThreshold: 0.6,
+  it.each([
+    { route: 'unknown', confidence: 0.5, reasoning: 'R' },
+    ...[NaN, Infinity, -0.1, 1.1, null].map((confidence) => ({
+      route: 'yes',
+      confidence,
+      reasoning: 'R',
+    })),
+    { route: 'yes', confidence: 0.5, reasoning: 'R', extra: true },
+    null,
+  ])('validates raw LLM route response %# independently of adapter', async (raw) => {
+    const input = request(),
+      ports = createFakePorts();
+    Object.defineProperty(ports.codexDecider, 'route', { value: () => Promise.resolve(raw) });
+    await expect(
+      evaluateRoute({
+        ...input,
+        ports,
+        config: llm,
+        instructions: 'Rendered',
+        context: { prepared: true },
+      }),
+    ).rejects.toMatchObject({ code: 'EVALUATION_INVALID_RESPONSE' });
+  });
+  it('preserves route instructions and informational zero confidence, truncating reasoning', async () => {
+    const input = request(),
+      ports = createFakePorts();
+    ports.codexDecider.route = vi.fn(() =>
+      Promise.resolve({ route: 'no', confidence: 0, reasoning: 'r'.repeat(3000) }),
+    );
+    const result = await evaluateRoute({
+      ...input,
+      ports,
+      config: llm,
+      instructions: 'Rendered instructions',
+      context: { prepared: true },
+    });
+    expect(result.observation).toMatchObject({
+      kind: 'route',
+      routeId: 'no',
+      confidence: 0,
+      reasoning: 'r'.repeat(2048),
+    });
+    expect(ports.codexDecider.route).toHaveBeenCalledWith(
+      {
+        instructions: 'Rendered instructions',
+        routes,
+        context: { prepared: true },
+        model: 'gpt-6-luna',
+        effort: 'low',
+      },
+      input.signal,
+    );
+  });
+  it('checks malformed boolean responses and has no fallback', async () => {
+    const input = request(),
+      ports = createFakePorts();
+    Object.defineProperty(ports.codexDecider, 'evaluateBoolean', {
+      value: () => Promise.resolve({ holds: 'true', confidence: 1, reasoning: 'R' }),
+    });
+    const { routes: _routes, context: _context, ...config } = llm;
+    await expect(
+      evaluateBoolean({ ...input, ports, config, instructions: 'Ready?', context: null }),
+    ).rejects.toMatchObject({ code: 'EVALUATION_INVALID_RESPONSE' });
+    expect(ports.classifiers.requests).toEqual([]);
+  });
+  it('honors cancellation during registry and model resolution before provider calls', async () => {
+    const input = request(),
+      ports = createFakePorts(),
+      registryAbort = new AbortController();
+    vi.spyOn(ports.classifiers, 'resolve').mockImplementation(() => {
+      registryAbort.abort();
+      return Promise.resolve({
+        status: 'unavailable',
+        reason: 'CLASSIFIER_MODEL_NOT_FOUND',
+        message: 'Unavailable',
       });
-      const resolve = vi.spyOn(input.ports.classifiers, 'resolve');
-      await expect(evaluatePrimitive(input)).rejects.toMatchObject({
-        code: 'EVALUATION_INVALID_CONFIGURATION',
-      });
-      expect(resolve).not.toHaveBeenCalled();
-      expect(input.resolveModel).not.toHaveBeenCalled();
-    },
-  );
-  it.each(['classifier', 'llm'] as const)(
-    'requires authored provider Noul criteria before %s selection',
-    async (kind) => {
-      const input = request();
-      input.answer = { type: 'noul' };
-      input.evaluation = EvaluationSchema.parse(
-        kind === 'classifier'
-          ? { kind, model: 'jev', question: '?' }
-          : {
-              kind,
-              harness: 'codex',
-              model: { mode: 'inherit' },
-              effort: { mode: 'inherit' },
-              question: '?',
-            },
-      );
-      const resolve = vi.spyOn(input.ports.classifiers, 'resolve');
-      await expect(evaluatePrimitive(input)).rejects.toMatchObject({
-        code: 'EVALUATION_INVALID_CONFIGURATION',
-      });
-      expect(resolve).not.toHaveBeenCalled();
-      expect(input.resolveModel).not.toHaveBeenCalled();
-    },
-  );
+    });
+    await expect(
+      evaluateClassifier({ ...input, ports, signal: registryAbort.signal }),
+    ).rejects.toMatchObject({ name: 'AbortError' });
+    const modelAbort = new AbortController();
+    await expect(
+      evaluateRoute({
+        ...input,
+        ports,
+        signal: modelAbort.signal,
+        config: llm,
+        instructions: 'Choose',
+        context: null,
+        resolveModel: () => {
+          modelAbort.abort();
+          return Promise.resolve({ model: 'gpt-6-luna', effort: 'low' });
+        },
+      }),
+    ).rejects.toMatchObject({ name: 'AbortError' });
+    expect(ports.codexDecider.routes).toEqual([]);
+  });
 });

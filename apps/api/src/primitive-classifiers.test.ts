@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type {
   ClassifierPrimitive,
@@ -17,7 +18,7 @@ afterEach(async () => {
 
 function definition(type: 'noul' | 'score', model = 'local-primitive'): LoopDefinitionInput {
   return {
-    schemaVersion: 3,
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
     name: type,
     nodes: [
       { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
@@ -26,6 +27,9 @@ function definition(type: 'noul' | 'score', model = 'local-primitive'): LoopDefi
         kind: 'decision',
         label: 'Evaluate',
         config: {
+          kind: 'classifier',
+          model,
+          question: 'Evaluate {{ trigger.payload.value }}',
           answer:
             type === 'noul'
               ? {
@@ -41,11 +45,6 @@ function definition(type: 'noul' | 'score', model = 'local-primitive'): LoopDefi
                     { id: 'fix', label: 'High', min: 1, max: 2 },
                   ],
                 },
-          evaluation: {
-            kind: 'classifier',
-            model,
-            question: 'Evaluate {{ trigger.payload.value }}',
-          },
         },
       },
       {
@@ -116,7 +115,7 @@ describe('primitive classifier API admission and execution', () => {
         expect(result.record).toMatchObject({
           status: 'succeeded',
           result: {
-            answer: { type: primitive },
+            observation: { kind: 'classifier', answer: { type: primitive } },
             portId: 'pass',
             provenance: {
               kind: 'classifier',
@@ -128,7 +127,7 @@ describe('primitive classifier API admission and execution', () => {
           },
         });
         expect(result.events.find((event) => event.type === 'decision.made')).toMatchObject({
-          answer: { type: primitive },
+          observation: { kind: 'classifier', answer: { type: primitive } },
           portId: 'pass',
         });
         expect(fixture.requests).toHaveLength(1);
@@ -147,8 +146,8 @@ describe('primitive classifier API admission and execution', () => {
             },
           },
         });
-        expect(t.codex.choices).toEqual([]);
-        expect(t.codex.nouls).toEqual([]);
+        expect(t.codex.routes).toEqual([]);
+        expect(t.codex.booleans).toEqual([]);
       } finally {
         await fixture.close();
       }
@@ -172,7 +171,7 @@ describe('primitive classifier API admission and execution', () => {
           expect.objectContaining({
             code: 'CLASSIFIER_PRIMITIVE_UNSUPPORTED',
             nodeId: 'decide',
-            path: 'config.evaluation.model',
+            path: 'config.model',
           }),
         );
         expect(fixture.requests).toEqual([]);

@@ -2,6 +2,7 @@ import type { TriggerAdmissionPort } from './admission.js';
 import type {
   ChoiceAnswer,
   ChoiceOption,
+  RouteDeclaration,
   ClassifierPrimitive,
   ScoreAnswer,
   HarnessDefaults,
@@ -244,8 +245,20 @@ export interface ClassifierNoulResult {
   type: 'noul';
   trueProbability: number;
 }
-export interface LlmNoulResult {
-  type: 'noul';
+export interface LlmRouteRequest {
+  instructions: string;
+  routes: RouteDeclaration[];
+  context: JsonValue;
+  model: string;
+  effort: Effort;
+}
+export interface LlmRouteResult {
+  route: string;
+  confidence: number;
+  reasoning: string;
+}
+export type LlmBooleanRequest = Omit<LlmRouteRequest, 'routes'>;
+export interface LlmBooleanResult {
   holds: boolean;
   confidence: number;
   reasoning: string;
@@ -256,11 +269,10 @@ export interface ScoreRequest extends PrimitiveRequest {
 export type ScoreResult = ScoreAnswer;
 
 export interface DeciderPort {
-  readonly id: 'jev' | 'codex';
+  readonly id: 'codex';
   available(): boolean;
-  choose(request: ChoiceRequest, signal: AbortSignal): Promise<ChoiceResult>;
-  /** Strict boolean Noul capability. */
-  noul(request: NoulRequest, signal: AbortSignal): Promise<LlmNoulResult>;
+  route(request: LlmRouteRequest, signal: AbortSignal): Promise<LlmRouteResult>;
+  evaluateBoolean(request: LlmBooleanRequest, signal: AbortSignal): Promise<LlmBooleanResult>;
 }
 
 /** Primitive-specific provider snapshot; an in-flight request retains its resolved configuration. */

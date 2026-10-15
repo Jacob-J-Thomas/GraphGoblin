@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { describe, expect, it, vi } from 'vitest';
 import type { LoopDefinitionInput } from '@graphgoblin/contracts';
 import { fakeUlid } from '@graphgoblin/contracts/testing';
@@ -6,7 +7,7 @@ import { createTestEngine, singleNodeLoop } from './testing/scenario.js';
 /** start -> a (sets vars.a) -> b (sets vars.b) -> done, returning vars. */
 function linearLoop(): LoopDefinitionInput {
   return {
-    schemaVersion: 3,
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
     name: 'linear',
     nodes: [
       { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
@@ -230,7 +231,7 @@ describe('replay-at-node', () => {
 
 function minimalChild(): LoopDefinitionInput {
   return {
-    schemaVersion: 3,
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
     name: 'child',
     nodes: [
       { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },

@@ -112,39 +112,32 @@ async function through(index: number) {
   return handle;
 }
 it.each([8, 9, 10])(
-  'starts a format-3 store at migration %s and finishes at the shipped head',
+  'refuses a format-4 marker whose ledger stops before the baseline at migration %s',
   async (index) => {
     const handle = await through(index);
-    await expect(guardDatabaseUpgrade(handle.client)).resolves.toBe('current');
-    await handle.migrate();
-    expect(await handle.pendingMigrations()).toBe(0);
-    expect(
-      (
-        await handle.client.execute(
-          'SELECT created_at FROM __drizzle_migrations ORDER BY created_at',
-        )
-      ).rows,
-    ).toEqual((await currentStoreReadiness()).ledger);
-    expect(
-      (
-        await handle.client.execute(
-          "SELECT name FROM sqlite_master WHERE name='template_instances'",
-        )
-      ).rows,
-    ).toHaveLength(1);
+    const before = (await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows;
+    await expect(guardDatabaseUpgrade(handle.client)).rejects.toMatchObject({
+      code: 'DATA_UPGRADE_REQUIRED',
+    });
+    await expect(handle.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
+    expect((await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows).toEqual(
+      before,
+    );
   },
 );
 it('refuses a head ledger with missing additive structure after a no-op migration', async () => {
   const handle = await openMemoryDatabase();
   handles.push(handle);
   await handle.client.execute('DROP TABLE template_instances');
-  await expect(guardDatabaseUpgrade(handle.client)).resolves.toBe('current');
+  await expect(guardDatabaseUpgrade(handle.client)).rejects.toMatchObject({
+    code: 'DATA_UPGRADE_REQUIRED',
+  });
   const before = (await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows;
   await expect(handle.migrate()).rejects.toThrow('Missing current-store table: template_instances');
   expect((await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows).toEqual(before);
 });
 it('requires the shipped baseline constraint names as well as their expressions', async () => {
-  const handle = await through(8);
+  const handle = await through(11);
   const ddl = (
     await handle.client.execute("SELECT sql FROM sqlite_master WHERE name='webhook_receipts'")
   ).rows[0]!.sql;
@@ -192,4 +185,12 @@ it('derives dropped and IF NOT EXISTS indexes from the executed migration catalo
     handle.close();
     await rm(folder, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   }
+});
+
+it('refuses a complete format-3 marker without writes', async () => {
+  const handle = await through(11);
+  await handle.client.execute('UPDATE gg_upgrade_state SET format_version=3');
+  const before = (await handle.client.execute('SELECT * FROM gg_upgrade_state')).rows;
+  await expect(handle.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
+  expect((await handle.client.execute('SELECT * FROM gg_upgrade_state')).rows).toEqual(before);
 });

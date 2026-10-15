@@ -1,9 +1,9 @@
 {
   "format": "graphgoblin-loop",
-  "formatVersion": 3,
+  "formatVersion": 4,
   "exportedAt": "2026-10-08T00:00:00.000Z",
   "loop": {
-    "schemaVersion": 3,
+    "schemaVersion": 4,
     "name": "Post-merge QA",
     "description": "Bounded proof-backed QA; production isolation unavailable before all turns and effects.",
     "settings": {
@@ -84,25 +84,18 @@
         "kind": "decision",
         "label": "claim-status",
         "config": {
-          "answer": {
-            "type": "choice",
-            "options": [
-              {
-                "id": "ready",
-                "label": "ready",
-                "criteria": "ready"
-              },
-              {
-                "id": "blocked",
-                "label": "blocked",
-                "criteria": "blocked"
-              }
-            ]
-          },
-          "evaluation": {
-            "kind": "expression",
-            "jsonata": "outputs.`claim`.value.type = 'ClaimRecord' ? 'ready' : 'blocked'"
-          }
+          "kind": "expression",
+          "jsonata": "outputs.`claim`.value.type = 'ClaimRecord' ? 'ready' : 'blocked'",
+          "routes": [
+            {
+              "id": "ready",
+              "label": "ready"
+            },
+            {
+              "id": "blocked",
+              "label": "blocked"
+            }
+          ]
         }
       },
       {
@@ -110,25 +103,18 @@
         "kind": "decision",
         "label": "prerequisites-status",
         "config": {
-          "answer": {
-            "type": "choice",
-            "options": [
-              {
-                "id": "ready",
-                "label": "ready",
-                "criteria": "ready"
-              },
-              {
-                "id": "blocked",
-                "label": "blocked",
-                "criteria": "blocked"
-              }
-            ]
-          },
-          "evaluation": {
-            "kind": "expression",
-            "jsonata": "outputs.prerequisites.value.type = 'QaPrerequisites' and outputs.prerequisites.value.available = true ? 'ready' : 'blocked'"
-          }
+          "kind": "expression",
+          "jsonata": "outputs.prerequisites.value.type = 'QaPrerequisites' and outputs.prerequisites.value.available = true ? 'ready' : 'blocked'",
+          "routes": [
+            {
+              "id": "ready",
+              "label": "ready"
+            },
+            {
+              "id": "blocked",
+              "label": "blocked"
+            }
+          ]
         }
       },
       {
@@ -149,25 +135,18 @@
         "kind": "decision",
         "label": "prepare-status",
         "config": {
-          "answer": {
-            "type": "choice",
-            "options": [
-              {
-                "id": "ready",
-                "label": "ready",
-                "criteria": "ready"
-              },
-              {
-                "id": "blocked",
-                "label": "blocked",
-                "criteria": "blocked"
-              }
-            ]
-          },
-          "evaluation": {
-            "kind": "expression",
-            "jsonata": "outputs.`prepare`.value.type = 'QaWorkspace' ? 'ready' : 'blocked'"
-          }
+          "kind": "expression",
+          "jsonata": "outputs.`prepare`.value.type = 'QaWorkspace' ? 'ready' : 'blocked'",
+          "routes": [
+            {
+              "id": "ready",
+              "label": "ready"
+            },
+            {
+              "id": "blocked",
+              "label": "blocked"
+            }
+          ]
         }
       },
       {
@@ -322,25 +301,18 @@
         "kind": "decision",
         "label": "criteria-check-status",
         "config": {
-          "answer": {
-            "type": "choice",
-            "options": [
-              {
-                "id": "ready",
-                "label": "ready",
-                "criteria": "ready"
-              },
-              {
-                "id": "blocked",
-                "label": "blocked",
-                "criteria": "blocked"
-              }
-            ]
-          },
-          "evaluation": {
-            "kind": "expression",
-            "jsonata": "outputs.`criteria-check`.value.type = 'QaCriteria' ? 'ready' : 'blocked'"
-          }
+          "kind": "expression",
+          "jsonata": "outputs.`criteria-check`.value.type = 'QaCriteria' ? 'ready' : 'blocked'",
+          "routes": [
+            {
+              "id": "ready",
+              "label": "ready"
+            },
+            {
+              "id": "blocked",
+              "label": "blocked"
+            }
+          ]
         }
       },
       {
@@ -378,25 +350,18 @@
         "kind": "decision",
         "label": "qa-prerequisites-status",
         "config": {
-          "answer": {
-            "type": "choice",
-            "options": [
-              {
-                "id": "ready",
-                "label": "ready",
-                "criteria": "ready"
-              },
-              {
-                "id": "blocked",
-                "label": "blocked",
-                "criteria": "blocked"
-              }
-            ]
-          },
-          "evaluation": {
-            "kind": "expression",
-            "jsonata": "outputs.`qa-prerequisites`.value.type = 'QaPrerequisites' and outputs.`qa-prerequisites`.value.available = true ? 'ready' : 'blocked'"
-          }
+          "kind": "expression",
+          "jsonata": "outputs.`qa-prerequisites`.value.type = 'QaPrerequisites' and outputs.`qa-prerequisites`.value.available = true ? 'ready' : 'blocked'",
+          "routes": [
+            {
+              "id": "ready",
+              "label": "ready"
+            },
+            {
+              "id": "blocked",
+              "label": "blocked"
+            }
+          ]
         }
       },
       {
@@ -504,25 +469,18 @@
         "kind": "decision",
         "label": "proof-check-status",
         "config": {
-          "answer": {
-            "type": "choice",
-            "options": [
-              {
-                "id": "ready",
-                "label": "ready",
-                "criteria": "ready"
-              },
-              {
-                "id": "blocked",
-                "label": "blocked",
-                "criteria": "blocked"
-              }
-            ]
-          },
-          "evaluation": {
-            "kind": "expression",
-            "jsonata": "outputs.`proof-check`.value.type = 'QaProof' and outputs.`proof-check`.value.runId = run.id and outputs.`proof-check`.value.mergeSha = vars.workspace.mergeSha and outputs.`proof-check`.value.passed in [true,false] ? 'ready' : 'blocked'"
-          }
+          "kind": "expression",
+          "jsonata": "outputs.`proof-check`.value.type = 'QaProof' and outputs.`proof-check`.value.runId = run.id and outputs.`proof-check`.value.mergeSha = vars.workspace.mergeSha and outputs.`proof-check`.value.passed in [true,false] ? 'ready' : 'blocked'",
+          "routes": [
+            {
+              "id": "ready",
+              "label": "ready"
+            },
+            {
+              "id": "blocked",
+              "label": "blocked"
+            }
+          ]
         }
       },
       {
@@ -560,25 +518,18 @@
         "kind": "decision",
         "label": "evidence-prepare-status",
         "config": {
-          "answer": {
-            "type": "choice",
-            "options": [
-              {
-                "id": "ready",
-                "label": "ready",
-                "criteria": "ready"
-              },
-              {
-                "id": "blocked",
-                "label": "blocked",
-                "criteria": "blocked"
-              }
-            ]
-          },
-          "evaluation": {
-            "kind": "expression",
-            "jsonata": "outputs.`evidence-prepare`.value.type = 'QaEvidence' and $type(outputs.`evidence-prepare`.value.evidence.workspace) = 'string' and $type(outputs.`evidence-prepare`.value.evidence.packet) = 'object' ? 'ready' : 'blocked'"
-          }
+          "kind": "expression",
+          "jsonata": "outputs.`evidence-prepare`.value.type = 'QaEvidence' and $type(outputs.`evidence-prepare`.value.evidence.workspace) = 'string' and $type(outputs.`evidence-prepare`.value.evidence.packet) = 'object' ? 'ready' : 'blocked'",
+          "routes": [
+            {
+              "id": "ready",
+              "label": "ready"
+            },
+            {
+              "id": "blocked",
+              "label": "blocked"
+            }
+          ]
         }
       },
       {
@@ -616,25 +567,18 @@
         "kind": "decision",
         "label": "adversary-prerequisites-status",
         "config": {
-          "answer": {
-            "type": "choice",
-            "options": [
-              {
-                "id": "ready",
-                "label": "ready",
-                "criteria": "ready"
-              },
-              {
-                "id": "blocked",
-                "label": "blocked",
-                "criteria": "blocked"
-              }
-            ]
-          },
-          "evaluation": {
-            "kind": "expression",
-            "jsonata": "outputs.`adversary-prerequisites`.value.type = 'QaPrerequisites' and outputs.`adversary-prerequisites`.value.available = true ? 'ready' : 'blocked'"
-          }
+          "kind": "expression",
+          "jsonata": "outputs.`adversary-prerequisites`.value.type = 'QaPrerequisites' and outputs.`adversary-prerequisites`.value.available = true ? 'ready' : 'blocked'",
+          "routes": [
+            {
+              "id": "ready",
+              "label": "ready"
+            },
+            {
+              "id": "blocked",
+              "label": "blocked"
+            }
+          ]
         }
       },
       {
@@ -680,40 +624,30 @@
         "kind": "decision",
         "label": "assessment",
         "config": {
-          "answer": {
-            "type": "choice",
-            "options": [
-              {
-                "id": "passed",
-                "label": "passed",
-                "criteria": "passed"
-              },
-              {
-                "id": "rework",
-                "label": "rework",
-                "criteria": "rework"
-              },
-              {
-                "id": "rerun",
-                "label": "rerun",
-                "criteria": "rerun"
-              },
-              {
-                "id": "human",
-                "label": "human",
-                "criteria": "human"
-              },
-              {
-                "id": "blocked",
-                "label": "blocked",
-                "criteria": "blocked"
-              }
-            ]
-          },
-          "evaluation": {
-            "kind": "expression",
-            "jsonata": "outputs.`adversary-check`.value.type = 'QaNext' and outputs.`adversary-check`.value.route in ['passed','rework','rerun','human'] ? outputs.`adversary-check`.value.route : 'blocked'"
-          }
+          "kind": "expression",
+          "jsonata": "outputs.`adversary-check`.value.type = 'QaNext' and outputs.`adversary-check`.value.route in ['passed','rework','rerun','human'] ? outputs.`adversary-check`.value.route : 'blocked'",
+          "routes": [
+            {
+              "id": "passed",
+              "label": "passed"
+            },
+            {
+              "id": "rework",
+              "label": "rework"
+            },
+            {
+              "id": "rerun",
+              "label": "rerun"
+            },
+            {
+              "id": "human",
+              "label": "human"
+            },
+            {
+              "id": "blocked",
+              "label": "blocked"
+            }
+          ]
         }
       },
       {
@@ -751,30 +685,22 @@
         "kind": "decision",
         "label": "rework-eligibility",
         "config": {
-          "answer": {
-            "type": "choice",
-            "options": [
-              {
-                "id": "ready",
-                "label": "ready",
-                "criteria": "ready"
-              },
-              {
-                "id": "human",
-                "label": "human",
-                "criteria": "human"
-              },
-              {
-                "id": "blocked",
-                "label": "blocked",
-                "criteria": "blocked"
-              }
-            ]
-          },
-          "evaluation": {
-            "kind": "expression",
-            "jsonata": "outputs.`rework-status`.value.type = 'QaReworkEligibility' ? (outputs.`rework-status`.value.eligible = true and outputs.`rework-status`.value.requiresReopen in [true,false] ? 'ready' : (outputs.`rework-status`.value.eligible = false ? 'human' : 'blocked')) : 'blocked'"
-          }
+          "kind": "expression",
+          "jsonata": "outputs.`rework-status`.value.type = 'QaReworkEligibility' ? (outputs.`rework-status`.value.eligible = true and outputs.`rework-status`.value.requiresReopen in [true,false] ? 'ready' : (outputs.`rework-status`.value.eligible = false ? 'human' : 'blocked')) : 'blocked'",
+          "routes": [
+            {
+              "id": "ready",
+              "label": "ready"
+            },
+            {
+              "id": "human",
+              "label": "human"
+            },
+            {
+              "id": "blocked",
+              "label": "blocked"
+            }
+          ]
         }
       },
       {
@@ -812,25 +738,18 @@
         "kind": "decision",
         "label": "qa-rework-status",
         "config": {
-          "answer": {
-            "type": "choice",
-            "options": [
-              {
-                "id": "ready",
-                "label": "ready",
-                "criteria": "ready"
-              },
-              {
-                "id": "blocked",
-                "label": "blocked",
-                "criteria": "blocked"
-              }
-            ]
-          },
-          "evaluation": {
-            "kind": "expression",
-            "jsonata": "outputs.`qa-rework`.value.type = 'ReworkRequest' ? 'ready' : 'blocked'"
-          }
+          "kind": "expression",
+          "jsonata": "outputs.`qa-rework`.value.type = 'ReworkRequest' ? 'ready' : 'blocked'",
+          "routes": [
+            {
+              "id": "ready",
+              "label": "ready"
+            },
+            {
+              "id": "blocked",
+              "label": "blocked"
+            }
+          ]
         }
       },
       {
@@ -838,30 +757,22 @@
         "kind": "decision",
         "label": "reopen-choice",
         "config": {
-          "answer": {
-            "type": "choice",
-            "options": [
-              {
-                "id": "closed",
-                "label": "closed",
-                "criteria": "closed"
-              },
-              {
-                "id": "open",
-                "label": "open",
-                "criteria": "open"
-              },
-              {
-                "id": "blocked",
-                "label": "blocked",
-                "criteria": "blocked"
-              }
-            ]
-          },
-          "evaluation": {
-            "kind": "expression",
-            "jsonata": "vars.eligibility.requiresReopen = true ? 'closed' : (vars.eligibility.requiresReopen = false ? 'open' : 'blocked')"
-          }
+          "kind": "expression",
+          "jsonata": "vars.eligibility.requiresReopen = true ? 'closed' : (vars.eligibility.requiresReopen = false ? 'open' : 'blocked')",
+          "routes": [
+            {
+              "id": "closed",
+              "label": "closed"
+            },
+            {
+              "id": "open",
+              "label": "open"
+            },
+            {
+              "id": "blocked",
+              "label": "blocked"
+            }
+          ]
         }
       },
       {
@@ -882,25 +793,18 @@
         "kind": "decision",
         "label": "issue-reopened-status",
         "config": {
-          "answer": {
-            "type": "choice",
-            "options": [
-              {
-                "id": "ready",
-                "label": "ready",
-                "criteria": "ready"
-              },
-              {
-                "id": "blocked",
-                "label": "blocked",
-                "criteria": "blocked"
-              }
-            ]
-          },
-          "evaluation": {
-            "kind": "expression",
-            "jsonata": "outputs.`issue-reopened`.value.type = 'IssueReopened' ? 'ready' : 'blocked'"
-          }
+          "kind": "expression",
+          "jsonata": "outputs.`issue-reopened`.value.type = 'IssueReopened' ? 'ready' : 'blocked'",
+          "routes": [
+            {
+              "id": "ready",
+              "label": "ready"
+            },
+            {
+              "id": "blocked",
+              "label": "blocked"
+            }
+          ]
         }
       },
       {
@@ -921,25 +825,18 @@
         "kind": "decision",
         "label": "relabel-status",
         "config": {
-          "answer": {
-            "type": "choice",
-            "options": [
-              {
-                "id": "ready",
-                "label": "ready",
-                "criteria": "ready"
-              },
-              {
-                "id": "blocked",
-                "label": "blocked",
-                "criteria": "blocked"
-              }
-            ]
-          },
-          "evaluation": {
-            "kind": "expression",
-            "jsonata": "outputs.`relabel`.value.type = 'QaRelabeled' ? 'ready' : 'blocked'"
-          }
+          "kind": "expression",
+          "jsonata": "outputs.`relabel`.value.type = 'QaRelabeled' ? 'ready' : 'blocked'",
+          "routes": [
+            {
+              "id": "ready",
+              "label": "ready"
+            },
+            {
+              "id": "blocked",
+              "label": "blocked"
+            }
+          ]
         }
       },
       {
@@ -977,25 +874,18 @@
         "kind": "decision",
         "label": "rerun-prepare-status",
         "config": {
-          "answer": {
-            "type": "choice",
-            "options": [
-              {
-                "id": "ready",
-                "label": "ready",
-                "criteria": "ready"
-              },
-              {
-                "id": "blocked",
-                "label": "blocked",
-                "criteria": "blocked"
-              }
-            ]
-          },
-          "evaluation": {
-            "kind": "expression",
-            "jsonata": "outputs.`rerun-prepare`.value.type = 'QaRerun' ? 'ready' : 'blocked'"
-          }
+          "kind": "expression",
+          "jsonata": "outputs.`rerun-prepare`.value.type = 'QaRerun' ? 'ready' : 'blocked'",
+          "routes": [
+            {
+              "id": "ready",
+              "label": "ready"
+            },
+            {
+              "id": "blocked",
+              "label": "blocked"
+            }
+          ]
         }
       },
       {
@@ -1049,25 +939,18 @@
         "kind": "decision",
         "label": "human-status",
         "config": {
-          "answer": {
-            "type": "choice",
-            "options": [
-              {
-                "id": "ready",
-                "label": "ready",
-                "criteria": "ready"
-              },
-              {
-                "id": "blocked",
-                "label": "blocked",
-                "criteria": "blocked"
-              }
-            ]
-          },
-          "evaluation": {
-            "kind": "expression",
-            "jsonata": "outputs.`human`.value.type = 'QaHumanRequired' ? 'ready' : 'blocked'"
-          }
+          "kind": "expression",
+          "jsonata": "outputs.`human`.value.type = 'QaHumanRequired' ? 'ready' : 'blocked'",
+          "routes": [
+            {
+              "id": "ready",
+              "label": "ready"
+            },
+            {
+              "id": "blocked",
+              "label": "blocked"
+            }
+          ]
         }
       },
       {
@@ -1105,30 +988,22 @@
         "kind": "decision",
         "label": "outcome-status",
         "config": {
-          "answer": {
-            "type": "choice",
-            "options": [
-              {
-                "id": "success",
-                "label": "success",
-                "criteria": "success"
-              },
-              {
-                "id": "failure",
-                "label": "failure",
-                "criteria": "failure"
-              },
-              {
-                "id": "blocked",
-                "label": "blocked",
-                "criteria": "blocked"
-              }
-            ]
-          },
-          "evaluation": {
-            "kind": "expression",
-            "jsonata": "outputs.`qa-outcome`.value.type = 'QaOutcome' ? (outputs.`qa-outcome`.value.outcome = 'passed' or outputs.`qa-outcome`.value.outcome = 'rework' ? 'success' : (outputs.`qa-outcome`.value.outcome = 'blocked' ? 'failure' : 'blocked')) : 'blocked'"
-          }
+          "kind": "expression",
+          "jsonata": "outputs.`qa-outcome`.value.type = 'QaOutcome' ? (outputs.`qa-outcome`.value.outcome = 'passed' or outputs.`qa-outcome`.value.outcome = 'rework' ? 'success' : (outputs.`qa-outcome`.value.outcome = 'blocked' ? 'failure' : 'blocked')) : 'blocked'",
+          "routes": [
+            {
+              "id": "success",
+              "label": "success"
+            },
+            {
+              "id": "failure",
+              "label": "failure"
+            },
+            {
+              "id": "blocked",
+              "label": "blocked"
+            }
+          ]
         }
       },
       {
@@ -1162,19 +1037,16 @@
         "config": {
           "criteria": [
             {
-              "answer": {
-                "type": "noul"
-              },
-              "evaluation": {
+              "when": "predicate",
+              "predicate": {
                 "kind": "expression",
                 "jsonata": "true"
               },
               "match": {
-                "type": "noul",
+                "type": "boolean",
                 "value": true
               },
-              "outcome": "failure",
-              "when": "predicate"
+              "outcome": "failure"
             }
           ],
           "default": "success",

@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -142,7 +143,7 @@ async function foundation(kind: TemplateKind = 'implementation', action = 'claim
     join(root, 'recipe', 'loop.json'),
     JSON.stringify({
       format: 'graphgoblin-loop',
-      formatVersion: 3,
+      formatVersion: CURRENT_DEFINITION_FORMAT,
       exportedAt: FIXTURE_TS,
       loop: definition,
     }),
@@ -1054,7 +1055,7 @@ async function recipe(
     join(f.root, key, 'loop.json'),
     JSON.stringify({
       format: 'graphgoblin-loop',
-      formatVersion: 3,
+      formatVersion: CURRENT_DEFINITION_FORMAT,
       exportedAt: FIXTURE_TS,
       loop: parent,
     }),
@@ -1064,7 +1065,7 @@ async function recipe(
       join(f.root, key, 'child.json'),
       JSON.stringify({
         format: 'graphgoblin-loop',
-        formatVersion: 3,
+        formatVersion: CURRENT_DEFINITION_FORMAT,
         exportedAt: FIXTURE_TS,
         loop: bundle.loops['child'],
       }),
@@ -2156,14 +2157,9 @@ describe('pinned evaluation role admission', () => {
     const evaluation = {
       kind: 'llm',
       harness: 'codex',
-      question: 'Ready?',
+      instructions: 'Choose yes when ready, otherwise no.',
       model: { mode: 'explicit', value: selected.model },
       effort: { mode: 'explicit', value: selected.effort },
-    };
-    const answer = {
-      type: 'noul',
-      true: { id: 'yes', label: 'Yes', criteria: 'Ready' },
-      false: { id: 'no', label: 'No', criteria: 'Not ready' },
     };
     const definition = LoopDefinitionSchema.parse({
       ...f.pinned.definition,
@@ -2172,7 +2168,18 @@ describe('pinned evaluation role admission', () => {
         defaults: { byHarness: { codex: { model: selected.model, effort: selected.effort } } },
       },
       nodes: [
-        { id: 'decide', kind: 'decision', label: 'Decide', config: { answer, evaluation } },
+        {
+          id: 'decide',
+          kind: 'decision',
+          label: 'Decide',
+          config: {
+            ...evaluation,
+            routes: [
+              { id: 'yes', label: 'Yes' },
+              { id: 'no', label: 'No' },
+            ],
+          },
+        },
         {
           id: 'done',
           kind: 'exit',
@@ -2182,17 +2189,12 @@ describe('pinned evaluation role admission', () => {
             criteria: [
               {
                 when: 'predicate',
-                answer: {
-                  type: 'noul',
-                  true: { label: 'Yes', criteria: 'Ready' },
-                  false: { label: 'No', criteria: 'Not ready' },
-                },
-                evaluation: {
+                predicate: {
                   ...evaluation,
                   model: { mode: 'inherit' },
                   effort: { mode: 'inherit' },
                 },
-                match: { type: 'noul', value: true },
+                match: { type: 'boolean', value: true },
                 outcome: 'success',
               },
             ],

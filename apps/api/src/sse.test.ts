@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import type { AddressInfo } from 'node:net';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -23,7 +24,7 @@ afterEach(async () => {
 });
 
 const waitLoop: LoopDefinitionInput = {
-  schemaVersion: 3,
+  schemaVersion: CURRENT_DEFINITION_FORMAT,
   name: 'sse',
   nodes: [
     { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },
@@ -126,15 +127,14 @@ describe('SSE event stream', () => {
   );
   it('streams and pages the same decision evidence and exit evidence, advertised in OpenAPI', async () => {
     t.jev.isAvailable = false;
-    t.codex.noul = () =>
+    t.codex.evaluateBoolean = () =>
       Promise.resolve({
-        type: 'noul',
         holds: false,
         confidence: 0.93,
         reasoning: 'More work is needed',
       });
     const definition: LoopDefinitionInput = {
-      schemaVersion: 3,
+      schemaVersion: CURRENT_DEFINITION_FORMAT,
       name: 'evaluation-stream',
       nodes: [
         { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
@@ -144,14 +144,12 @@ describe('SSE event stream', () => {
           kind: 'decision',
           label: 'Choose',
           config: {
-            answer: {
-              type: 'choice',
-              options: [
-                { id: 'yes', label: 'Yes', criteria: 'Continue' },
-                { id: 'no', label: 'No', criteria: 'Stop' },
-              ],
-            },
-            evaluation: { kind: 'expression', jsonata: '"yes"' },
+            kind: 'expression',
+            jsonata: '"yes"',
+            routes: [
+              { id: 'yes', label: 'Yes', criteria: 'Continue' },
+              { id: 'no', label: 'No', criteria: 'Stop' },
+            ].map(({ id, label }) => ({ id, label })),
           },
         },
         {
@@ -162,26 +160,20 @@ describe('SSE event stream', () => {
             criteria: [
               {
                 when: 'predicate',
-                answer: {
-                  type: 'noul',
-                  true: { label: 'Ready', criteria: 'Task is done' },
-                  false: { label: 'Continue', criteria: 'Task is not done' },
-                },
-                evaluation: {
+                predicate: {
                   kind: 'llm',
                   harness: 'codex',
                   model: { mode: 'inherit' },
                   effort: { mode: 'inherit' },
-                  question: 'Done?',
+                  instructions: 'Done?',
                 },
-                match: { type: 'noul', value: true },
+                match: { type: 'boolean', value: true },
                 outcome: 'success',
               },
               {
                 when: 'predicate',
-                answer: { type: 'noul' },
-                evaluation: { kind: 'expression', jsonata: 'true' },
-                match: { type: 'noul', value: true },
+                predicate: { kind: 'expression', jsonata: 'true' },
+                match: { type: 'boolean', value: true },
                 outcome: 'success',
               },
             ],
@@ -219,7 +211,12 @@ describe('SSE event stream', () => {
         {
           index: 0,
           strategy: 'llm',
-          answer: { holds: false, confidence: 0.93, reasoning: 'More work is needed' },
+          observation: {
+            kind: 'boolean',
+            holds: false,
+            confidence: 0.93,
+            reasoning: 'More work is needed',
+          },
           provenance: { model: 'gpt-6-luna' },
         },
         { index: 1, strategy: 'expression', status: 'matched' },
@@ -247,12 +244,16 @@ describe('SSE event stream', () => {
                 criteria: [
                   {
                     when: 'predicate',
-                    answer: {
-                      type: 'noul',
-                      true: { label: 'Ready', criteria: 'Task is done' },
-                      false: { label: 'Continue', criteria: 'Task is not done' },
+                    predicate: {
+                      kind: 'classifier',
+                      model: 'jev',
+                      question: 'Done?',
+                      answer: {
+                        type: 'noul',
+                        true: { label: 'Ready', criteria: 'Task is done' },
+                        false: { label: 'Continue', criteria: 'Task is not done' },
+                      },
                     },
-                    evaluation: { kind: 'classifier', model: 'jev', question: 'Done?' },
                     match: { type: 'noul', value: true },
                     outcome: 'success',
                   },

@@ -24,7 +24,7 @@ function loop(config: Partial<ExitConfig>): LoopDefinitionInput {
 describe('exit evaluation evidence', () => {
   it('retains the actual resolved Codex model when the judge call fails', async () => {
     const e = await createTestEngine();
-    e.ports.codexDecider.noul = () =>
+    e.ports.codexDecider.evaluateBoolean = () =>
       Promise.reject(
         Object.assign(new Error('private judge error'), {
           code: 'DECIDER_HTTP_ERROR',
@@ -36,19 +36,14 @@ describe('exit evaluation evidence', () => {
         criteria: [
           {
             when: 'predicate',
-            answer: {
-              type: 'noul',
-              true: { label: 'Ready', criteria: 'Task is done' },
-              false: { label: 'Continue', criteria: 'Task is not done' },
-            },
-            evaluation: {
+            predicate: {
               kind: 'llm',
               harness: 'codex',
               model: { mode: 'inherit' },
               effort: { mode: 'inherit' },
-              question: 'Done?',
+              instructions: 'Done?',
             },
-            match: { type: 'noul', value: true },
+            match: { type: 'boolean', value: true },
             outcome: 'success',
           },
         ],
@@ -74,19 +69,14 @@ describe('exit evaluation evidence', () => {
       criteria: [
         {
           when: 'predicate',
-          answer: {
-            type: 'noul',
-            true: { label: 'Ready', criteria: 'Task is done' },
-            false: { label: 'Continue', criteria: 'Task is not done' },
-          },
-          evaluation: {
+          predicate: {
             kind: 'llm',
             harness: 'codex',
             model: { mode: 'inherit' },
             effort: { mode: 'inherit' },
-            question: 'Done?',
+            instructions: 'Done?',
           },
-          match: { type: 'noul', value: true },
+          match: { type: 'boolean', value: true },
           outcome: 'success',
         },
       ],
@@ -107,37 +97,35 @@ describe('exit evaluation evidence', () => {
         criteria: [
           {
             when: 'predicate',
-            answer: {
-              type: 'noul',
-              true: { label: 'Ready', criteria: 'Task is done' },
-              false: { label: 'Continue', criteria: 'Task is not done' },
+            predicate: {
+              kind: 'classifier',
+              model: 'jev',
+              question: 'Done?',
+              answer: {
+                type: 'noul',
+                true: { label: 'Ready', criteria: 'Task is done' },
+                false: { label: 'Continue', criteria: 'Task is not done' },
+              },
             },
-            evaluation: { kind: 'classifier', model: 'jev', question: 'Done?' },
             match: { type: 'noul', value: true },
             outcome: 'success',
           },
           {
             when: 'predicate',
-            answer: { type: 'noul' },
-            evaluation: { kind: 'expression', jsonata: 'true' },
-            match: { type: 'noul', value: true },
+            predicate: { kind: 'expression', jsonata: 'true' },
+            match: { type: 'boolean', value: true },
             outcome: 'success',
           },
           {
             when: 'predicate',
-            answer: {
-              type: 'noul',
-              true: { label: 'Ready', criteria: 'Task is done' },
-              false: { label: 'Continue', criteria: 'Task is not done' },
-            },
-            evaluation: {
+            predicate: {
               kind: 'llm',
               harness: 'codex',
               model: { mode: 'inherit' },
               effort: { mode: 'inherit' },
-              question: 'Done?',
+              instructions: 'Done?',
             },
-            match: { type: 'noul', value: true },
+            match: { type: 'boolean', value: true },
             outcome: 'failure',
           },
         ],
@@ -153,10 +141,18 @@ describe('exit evaluation evidence', () => {
           index: 0,
           strategy: 'classifier',
           status: 'not-matched',
-          answer: { holds: false, confidence: 1 - 0.07, trueProbability: 0.07 },
+          observation: {
+            kind: 'classifier',
+            answer: { holds: false, confidence: 1 - 0.07, trueProbability: 0.07 },
+          },
           provenance: { classifierId: 'jev' },
         },
-        { index: 1, strategy: 'expression', status: 'matched', answer: { holds: true } },
+        {
+          index: 1,
+          strategy: 'expression',
+          status: 'matched',
+          observation: { kind: 'boolean', holds: true },
+        },
         {
           index: 2,
           strategy: 'llm',
@@ -167,16 +163,15 @@ describe('exit evaluation evidence', () => {
       result: { kind: 'completed', criterionIndex: 1, outcome: 'success' },
     });
     expect(RunEventSchema.safeParse(event).success).toBe(true);
-    expect(e.ports.codexDecider.nouls).toHaveLength(0);
+    expect(e.ports.codexDecider.booleans).toHaveLength(0);
     expect(e.eventTypes(run.id).indexOf('exit.evaluated')).toBeLessThan(
       e.eventTypes(run.id).lastIndexOf('node.finished'),
     );
   });
   it('records Codex model, bounded reasoning and a positive verdict below the confidence threshold', async () => {
     const e = await createTestEngine();
-    e.ports.codexDecider.noul = () =>
+    e.ports.codexDecider.evaluateBoolean = () =>
       Promise.resolve({
-        type: 'noul',
         holds: true,
         confidence: 0.4,
         reasoning: 'Reviewed',
@@ -186,19 +181,14 @@ describe('exit evaluation evidence', () => {
         criteria: [
           {
             when: 'predicate',
-            answer: {
-              type: 'noul',
-              true: { label: 'Ready', criteria: 'Task is done' },
-              false: { label: 'Continue', criteria: 'Task is not done' },
-            },
-            evaluation: {
+            predicate: {
               kind: 'llm',
               harness: 'codex',
               model: { mode: 'inherit' },
               effort: { mode: 'inherit' },
-              question: 'Done?',
+              instructions: 'Done?',
             },
-            match: { type: 'noul', value: true, minReportedConfidence: 0.8 },
+            match: { type: 'boolean', value: true, minReportedConfidence: 0.8 },
             outcome: 'success',
           },
         ],
@@ -209,7 +199,7 @@ describe('exit evaluation evidence', () => {
       criteria: [
         {
           status: 'not-matched',
-          answer: { holds: true, confidence: 0.4, reasoning: 'Reviewed' },
+          observation: { kind: 'boolean', holds: true, confidence: 0.4, reasoning: 'Reviewed' },
           rejection: { kind: 'llm-reported-confidence', minimum: 0.8, confidence: 0.4 },
           acceptance: { status: 'accepted' },
           provenance: { model: 'gpt-6-luna' },
@@ -227,9 +217,8 @@ describe('exit evaluation evidence', () => {
       criteria: [
         {
           when: 'predicate',
-          answer: { type: 'noul' },
-          evaluation: { kind: 'expression', jsonata: 'false' },
-          match: { type: 'noul', value: true },
+          predicate: { kind: 'expression', jsonata: 'false' },
+          match: { type: 'boolean', value: true },
           outcome: 'success',
         },
       ],
@@ -305,19 +294,22 @@ describe('exit evaluation evidence', () => {
         failure === 'expression-error'
           ? {
               when: 'predicate',
-              answer: { type: 'noul' },
-              evaluation: { kind: 'expression', jsonata: '$error("private-provider-token")' },
-              match: { type: 'noul', value: true },
+              predicate: { kind: 'expression', jsonata: '$error("private-provider-token")' },
+              match: { type: 'boolean', value: true },
               outcome: 'success',
             }
           : {
               when: 'predicate',
-              answer: {
-                type: 'noul',
-                true: { label: 'Ready', criteria: 'Task is done' },
-                false: { label: 'Continue', criteria: 'Task is not done' },
+              predicate: {
+                kind: 'classifier',
+                model: 'jev',
+                question: 'Done?',
+                answer: {
+                  type: 'noul',
+                  true: { label: 'Ready', criteria: 'Task is done' },
+                  false: { label: 'Continue', criteria: 'Task is not done' },
+                },
               },
-              evaluation: { kind: 'classifier', model: 'jev', question: 'Done?' },
               match: { type: 'noul', value: true },
               outcome: 'success',
             },
@@ -361,12 +353,16 @@ describe('exit evaluation evidence', () => {
         criteria: [
           {
             when: 'predicate',
-            answer: {
-              type: 'noul',
-              true: { label: 'Ready', criteria: 'Task is done' },
-              false: { label: 'Continue', criteria: 'Task is not done' },
+            predicate: {
+              kind: 'classifier',
+              model: 'jev',
+              question: 'Done?',
+              answer: {
+                type: 'noul',
+                true: { label: 'Ready', criteria: 'Task is done' },
+                false: { label: 'Continue', criteria: 'Task is not done' },
+              },
             },
-            evaluation: { kind: 'classifier', model: 'jev', question: 'Done?' },
             match: { type: 'noul', value: true },
             outcome: 'success',
           },
@@ -388,9 +384,8 @@ describe('exit evaluation evidence', () => {
         criteria: [
           {
             when: 'predicate',
-            answer: { type: 'noul' },
-            evaluation: { kind: 'expression', jsonata: 'true' },
-            match: { type: 'noul', value: true },
+            predicate: { kind: 'expression', jsonata: 'true' },
+            match: { type: 'boolean', value: true },
             outcome: 'success',
           },
           { when: 'max-iterations', value: 1, outcome: 'exhausted' },

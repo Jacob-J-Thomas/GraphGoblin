@@ -1,15 +1,10 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { rm } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
-import {
-  LoopDefinitionSchema,
-  type LoopDefinition,
-  type LoopExport,
-  type LoopVersionRecord,
-  type RunRecord,
-} from '@graphgoblin/contracts';
+import { LoopDefinitionSchema, type LoopDefinition } from '@graphgoblin/contracts';
 import { fakeUlid, FIXTURE_TS, minimalLoop } from '@graphgoblin/contracts/testing';
 import { inspectDatabaseUpgrade, applyDatabaseUpgrade } from '@graphgoblin/infrastructure/sqlite';
 import { createTestApp, type TestApp } from './testing/test-app.js';
@@ -107,141 +102,45 @@ async function seedVersion(status: 'draft' | 'published', definition = inference
     code: 'DATA_UPGRADE_REQUIRED',
   });
   const inventory = await inspectDatabaseUpgrade(t.container.handle.client);
-  await applyDatabaseUpgrade(t.container.handle.client, {
-    format: 'graphgoblin-upgrade-manifest',
-    targetVersion: 3,
-    sourceHash: inventory.sourceHash,
-    approvedBy: 'test-owner',
-    approvedAt: FIXTURE_TS,
-    versions: Object.fromEntries(
-      inventory.versions.map((version) => [
-        version.id,
-        { definitionHash: version.definitionHash, resolutions: {} },
-      ]),
-    ),
-    failedRuns: {},
-  });
+  await expect(
+    applyDatabaseUpgrade(t.container.handle.client, {
+      format: 'graphgoblin-upgrade-manifest',
+      targetVersion: CURRENT_DEFINITION_FORMAT,
+      sourceHash: inventory.sourceHash,
+      approvedBy: 'test-owner',
+      approvedAt: FIXTURE_TS,
+      versions: Object.fromEntries(
+        inventory.versions.map((version) => [
+          version.id,
+          { definitionHash: version.definitionHash, resolutions: {} },
+        ]),
+      ),
+      failedRuns: {},
+    }),
+  ).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
+  expect((await inspectDatabaseUpgrade(t.container.handle.client)).sourceHash).toBe(
+    inventory.sourceHash,
+  );
   return { loopId, versionId, raw };
 }
 
 describe('migrated SQLite versions through the API', () => {
-  it('reads, validates, publishes a migrated draft, exports, imports, saves and lists canonical versions', async () => {
-    const { loopId, versionId, raw } = await seedVersion('draft');
-    const detail = await t.app.inject(`/loops/${loopId}`);
-    expect(detail.statusCode, detail.body).toBe(200);
-    const draft = detail.json<{ draft: LoopVersionRecord }>().draft;
-    expect(draft.definition.settings.defaults).not.toHaveProperty('harness');
-    expect(draft.definition.nodes[1]).toMatchObject({ config: { harness: 'codex' } });
-    const validated = await t.app.inject({
-      method: 'POST',
-      url: `/loops/${loopId}/validate`,
-      payload: { definition: draft.definition },
-    });
-    expect(validated.statusCode, validated.body).toBe(200);
-    const published = await t.app.inject({ method: 'POST', url: `/loops/${loopId}/publish` });
-    expect(published.statusCode, published.body).toBe(200);
-    expect(published.json<{ version: LoopVersionRecord }>().version).toMatchObject({
-      id: versionId,
-      version: 1,
-      definition: draft.definition,
-    });
-    const unchanged = await t.container.handle.client.execute({
-      sql: 'SELECT definition FROM loop_versions WHERE id = ?',
-      args: [versionId],
-    });
-    const stored = unchanged.rows[0]?.['definition'];
-    if (typeof stored !== 'string') throw new Error('expected stored definition JSON');
-    expect(JSON.parse(stored)).toEqual(draft.definition);
-    expect(stored).not.toBe(raw);
-    for (const path of [
-      `/loops/${loopId}`,
-      `/loops/${loopId}/versions`,
-      `/loops/${loopId}/versions/${versionId}`,
-    ]) {
-      const response = await t.app.inject(path);
-      expect(response.statusCode, response.body).toBe(200);
-      expect(response.body).not.toContain('"defaults":{"harness"');
-    }
-    const exported = await t.app.inject(`/loops/${loopId}/export`);
-    expect(exported.statusCode, exported.body).toBe(200);
-    const envelope = exported.json<LoopExport>();
-    expect(envelope.loop).toEqual(draft.definition);
-    const imported = await t.app.inject({
-      method: 'POST',
-      url: '/loops/import',
-      payload: envelope,
-    });
-    expect(imported.statusCode, imported.body).toBe(201);
-    const saved = await t.app.inject({
-      method: 'PUT',
-      url: `/loops/${loopId}/draft`,
-      payload: { definition: draft.definition },
-    });
-    expect(saved.statusCode, saved.body).toBe(200);
-    expect(saved.json<{ draft: LoopVersionRecord }>().draft.definition).toEqual(envelope.loop);
-    const draftExport = await t.app.inject(`/loops/${loopId}/export?draft=true`);
-    expect(draftExport.statusCode).toBe(200);
-    expect(draftExport.json<LoopExport>().loop).toEqual(envelope.loop);
-  });
-
-  it('completes an old pinned run after a newer publication and replays the old version', async () => {
-    const definition = inferenceLoop();
-    // An input wait gives publication a deterministic point between old-run nodes.
-    const input = {
-      ...definition,
-      nodes: [
-        definition.nodes[0]!,
-        {
-          id: 'hold',
-          kind: 'wait' as const,
-          label: 'Hold',
-          config: { mode: 'input' as const, prompt: 'Continue?' },
-        },
-        ...definition.nodes.slice(1),
-      ],
-      edges: [
-        { id: 'w1', from: { node: 'start', port: 'out' }, to: { node: 'hold' } },
-        { id: 'w2', from: { node: 'hold', port: 'out' }, to: { node: 'infer' } },
-        definition.edges[1]!,
-      ],
-    };
-    const { loopId, versionId } = await seedVersion('published', LoopDefinitionSchema.parse(input));
-    const started = await t.app.inject({
-      method: 'POST',
-      url: `/loops/${loopId}/runs`,
-      payload: { versionId },
-    });
-    expect(started.statusCode, started.body).toBe(202);
-    const run = started.json<{ run: RunRecord }>().run;
-    await t.idle();
-    expect((await t.container.repos.runs.get(run.id))?.status).toBe('waiting');
-    await t.app.inject({
-      method: 'PUT',
-      url: `/loops/${loopId}/draft`,
-      payload: { definition: { ...minimalLoop(), name: 'new version' } },
-    });
-    const newer = await t.app.inject({ method: 'POST', url: `/loops/${loopId}/publish` });
-    expect(newer.statusCode, newer.body).toBe(200);
-    await t.app.inject({ method: 'POST', url: `/runs/${run.id}/input`, payload: { input: true } });
-    await t.idle();
-    expect(await t.container.repos.runs.get(run.id)).toMatchObject({
-      status: 'succeeded',
-      versionId,
-    });
-    const replayed = await t.app.inject({
-      method: 'POST',
-      url: `/runs/${run.id}/replay`,
-      payload: { nodeId: 'infer' },
-    });
-    expect(replayed.statusCode, replayed.body).toBe(202);
-    await t.idle();
-    const fork = replayed.json<{ run: RunRecord }>().run;
-    expect(await t.container.repos.runs.get(fork.id)).toMatchObject({
-      status: 'succeeded',
-      versionId,
-    });
-    expect(t.harness.started).toHaveLength(2);
-  });
+  it.each(['draft', 'published'] as const)(
+    'preserves an old %s version and refuses startup or cutover until format 4 is available',
+    async (status) => {
+      const { versionId, raw } = await seedVersion(status);
+      const stored = (
+        await t.container.handle.client.execute({
+          sql: 'SELECT definition FROM loop_versions WHERE id=?',
+          args: [versionId],
+        })
+      ).rows[0]?.definition;
+      expect(stored).toBe(raw);
+      await expect(t.container.handle.migrate()).rejects.toMatchObject({
+        code: 'DATA_UPGRADE_REQUIRED',
+      });
+    },
+  );
 
   it('recovers a current-format pinned run across restart mid-run without migration', async () => {
     await t.app.close();

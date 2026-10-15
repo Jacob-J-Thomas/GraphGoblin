@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { FIXTURE_TS, minimalLoop } from '@graphgoblin/contracts/testing';
 import { createTestApp, type TestApp } from './testing/test-app.js';
@@ -77,7 +78,7 @@ describe('canonical loop definition inputs', () => {
         payload: envelope
           ? {
               format: 'graphgoblin-loop',
-              formatVersion: 3,
+              formatVersion: CURRENT_DEFINITION_FORMAT,
               exportedAt: FIXTURE_TS,
               loop: definition,
             }
@@ -121,7 +122,7 @@ describe('canonical loop definition inputs', () => {
           payload: envelope
             ? {
                 format: 'graphgoblin-loop',
-                formatVersion: 3,
+                formatVersion: CURRENT_DEFINITION_FORMAT,
                 exportedAt: FIXTURE_TS,
                 loop: definition,
               }

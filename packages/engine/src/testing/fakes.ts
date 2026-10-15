@@ -22,7 +22,10 @@ import type {
   ChoiceRequest,
   ChoiceResult,
   ClassifierNoulResult,
-  LlmNoulResult,
+  LlmRouteRequest,
+  LlmRouteResult,
+  LlmBooleanRequest,
+  LlmBooleanResult,
   NoulRequest,
   ScoreRequest,
   ScoreResult,
@@ -540,14 +543,13 @@ export class FakeHarness implements HarnessPort {
 // Deciders, structured completions
 // ---------------------------------------------------------------------------
 
-export class FakeDecider implements DeciderPort {
+export class FakeClassifier implements ClassifierPort {
   readonly choices: ChoiceRequest[] = [];
-  readonly nouls: NoulRequest[] = [];
   readonly classifierNouls: NoulRequest[] = [];
   readonly scores: ScoreRequest[] = [];
   isAvailable = true;
   constructor(
-    readonly id: 'jev' | 'codex',
+    readonly id: 'jev',
     private readonly chooser: (request: ChoiceRequest) => ChoiceResult = (r) => ({
       type: 'choice',
       optionId: r.options[0]?.id ?? '',
@@ -562,10 +564,6 @@ export class FakeDecider implements DeciderPort {
   choose(request: ChoiceRequest, _signal?: AbortSignal): Promise<ChoiceResult> {
     this.choices.push(request);
     return Promise.resolve(this.chooser(request));
-  }
-  noul(request: NoulRequest, _signal?: AbortSignal): Promise<LlmNoulResult> {
-    this.nouls.push(request);
-    return Promise.resolve({ type: 'noul', holds: true, confidence: 1, reasoning: 'Verified' });
   }
   classifyNoul(request: NoulRequest, _signal?: AbortSignal): Promise<ClassifierNoulResult> {
     this.classifierNouls.push(request);
@@ -582,6 +580,29 @@ export class FakeDecider implements DeciderPort {
         request.anchors.map((_anchor, index) => [String(index), index === 0 ? 1 : 0]),
       ),
     });
+  }
+}
+
+export class FakeDecider implements DeciderPort {
+  readonly id = 'codex' as const;
+  readonly routes: LlmRouteRequest[] = [];
+  readonly booleans: LlmBooleanRequest[] = [];
+  isAvailable = true;
+  constructor(_id: 'codex' = 'codex') {}
+  available(): boolean {
+    return this.isAvailable;
+  }
+  route(request: LlmRouteRequest, _signal?: AbortSignal): Promise<LlmRouteResult> {
+    this.routes.push(request);
+    return Promise.resolve({
+      route: request.routes[0]?.id ?? '',
+      confidence: 1,
+      reasoning: 'Selected',
+    });
+  }
+  evaluateBoolean(request: LlmBooleanRequest, _signal?: AbortSignal): Promise<LlmBooleanResult> {
+    this.booleans.push(request);
+    return Promise.resolve({ holds: true, confidence: 1, reasoning: 'Verified' });
   }
 }
 
@@ -961,7 +982,7 @@ export interface FakePorts extends EnginePorts {
   loops: InMemoryLoopRepository;
   sessions: InMemorySessionRepository;
   harness: FakeHarness;
-  jev: FakeDecider;
+  jev: FakeClassifier;
   codexDecider: FakeDecider;
   structuredFake: FakeStructured;
   scripts: FakeScripts;
@@ -980,7 +1001,7 @@ export function createFakePorts(options: { secrets?: Record<string, string> } = 
   const runs = new InMemoryRunRepository();
   const admission = new InMemoryTriggerAdmission(runs, events);
   const harness = new FakeHarness();
-  const jev = new FakeDecider('jev');
+  const jev = new FakeClassifier('jev');
   const codexDecider = new FakeDecider('codex');
   const structuredFake = new FakeStructured();
   const secretsFake = new InMemorySecrets(options.secrets);

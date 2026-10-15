@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { createHash } from 'node:crypto';
 import {
   mkdir,
@@ -38,7 +39,7 @@ async function fixture() {
   delete manifest.draftFile; // This fixture exercises the optional automation-only capability.
   const exported = {
     format: 'graphgoblin-loop',
-    formatVersion: 3,
+    formatVersion: CURRENT_DEFINITION_FORMAT,
     exportedAt: FIXTURE_TS,
     loop: structuredClone(source.bundle.loops['parent']!),
   };
@@ -111,7 +112,7 @@ describe('installed template catalog boundaries', () => {
     expect(starter.bundle.manifest.kind).toBe('starter');
     expect(starter.bundle.manifest.requiredSecrets).toEqual([]);
     expect(starter.support).toBeUndefined();
-    expect(starter.bundle.loops['parent']?.schemaVersion).toBe(3);
+    expect(starter.bundle.loops['parent']?.schemaVersion).toBe(CURRENT_DEFINITION_FORMAT);
     expect(starter.bundle.loops['parent']?.nodes.some((node) => node.kind === 'inference')).toBe(
       true,
     );

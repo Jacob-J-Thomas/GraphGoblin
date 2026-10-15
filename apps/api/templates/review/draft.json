@@ -1,9 +1,9 @@
 {
   "format": "graphgoblin-loop",
-  "formatVersion": 3,
+  "formatVersion": 4,
   "exportedAt": "2026-10-09T00:00:00.000Z",
   "loop": {
-    "schemaVersion": 3,
+    "schemaVersion": 4,
     "name": "Review and fix starting point",
     "description": "Review supplied code or change context, propose or apply focused fixes, and review again with a finite iteration limit. This workflow does not grant merge authority.",
     "settings": {
@@ -114,30 +114,22 @@
           "y": 0
         },
         "config": {
-          "answer": {
-            "type": "choice",
-            "options": [
-              {
-                "id": "approved",
-                "label": "approved",
-                "criteria": "approved"
-              },
-              {
-                "id": "changes-needed",
-                "label": "changes-needed",
-                "criteria": "changes-needed"
-              },
-              {
-                "id": "blocked",
-                "label": "blocked",
-                "criteria": "blocked"
-              }
-            ]
-          },
-          "evaluation": {
-            "kind": "expression",
-            "jsonata": "outputs.reviewer.value.status"
-          }
+          "kind": "expression",
+          "jsonata": "outputs.reviewer.value.status",
+          "routes": [
+            {
+              "id": "approved",
+              "label": "approved"
+            },
+            {
+              "id": "changes-needed",
+              "label": "changes-needed"
+            },
+            {
+              "id": "blocked",
+              "label": "blocked"
+            }
+          ]
         }
       },
       {
@@ -222,15 +214,12 @@
           "criteria": [
             {
               "when": "predicate",
-              "answer": {
-                "type": "noul"
-              },
-              "evaluation": {
+              "predicate": {
                 "kind": "expression",
                 "jsonata": "true"
               },
               "match": {
-                "type": "noul",
+                "type": "boolean",
                 "value": true
               },
               "outcome": "failure"

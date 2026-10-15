@@ -5,7 +5,7 @@ import { HarnessDefaultsSchema } from './evaluation.js';
 import { VariableDeclarationsSchema } from './thread.js';
 
 /** The one current definition/export/storage format; frozen conversion stages keep their literals. */
-export const CURRENT_DEFINITION_FORMAT = 3 as const;
+export const CURRENT_DEFINITION_FORMAT = 4 as const;
 
 /** Where a run works. Fixed path, templated from the trigger, or a fresh temporary directory. */
 export const WorkingDirectorySpecSchema = z.discriminatedUnion('kind', [

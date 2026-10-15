@@ -1,12 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import {
   ChoiceConfigSchema,
+  DecisionConfigSchema,
   NoulConfigSchema,
   ScoreConfigSchema,
-  type PrimitiveAnswer,
+  type ClassifierAnswer,
   type ScoreAnswer,
 } from '@graphgoblin/contracts';
-import { answerPortIds, decisionPortId, validatePrimitiveAnswer } from './answers.js';
+import {
+  answerPortIds,
+  decisionPortId,
+  decisionRouteDeclarations,
+  validatePrimitiveAnswer,
+} from './answers.js';
 import { outputPorts } from './graph.js';
 
 const choice = ChoiceConfigSchema.parse({
@@ -36,7 +42,7 @@ const scoreAnswer: ScoreAnswer = {
   legend: { '0': 'Low', '1': 'Medium', '2': 'High', '3': 'Critical' },
   probabilities: { '0': 0, '1': 0.75, '2': 0.25, '3': 0 },
 };
-const choiceAnswer: PrimitiveAnswer = {
+const choiceAnswer: ClassifierAnswer = {
   type: 'choice',
   optionId: 'yes',
   confidence: null,
@@ -47,12 +53,11 @@ describe('primitive validation and routing', () => {
   it('uses stable Choice and Noul route IDs', () => {
     expect(decisionPortId(choice, choiceAnswer)).toBe('yes');
     expect(
-      decisionPortId(noul, { type: 'noul', kind: 'expression', holds: false, confidence: null }),
+      decisionPortId(noul, { type: 'noul', holds: false, trueProbability: 0, confidence: 1 }),
     ).toBe('no');
     expect(
       decisionPortId(noul, {
         type: 'noul',
-        kind: 'classifier',
         holds: true,
         trueProbability: 0.5,
         confidence: 0.5,
@@ -61,10 +66,10 @@ describe('primitive validation and routing', () => {
     expect(
       decisionPortId(noul, {
         type: 'noul',
-        kind: 'llm',
+
         holds: true,
         confidence: 0.8,
-        reasoning: 'Ready',
+        trueProbability: 0.8,
       }),
     ).toBe('yes');
     expect(answerPortIds(choice)).toEqual(['yes', 'no']);
@@ -77,13 +82,11 @@ describe('primitive validation and routing', () => {
         label: 'Rate',
         ui: { x: 0, y: 0 },
         config: {
+          kind: 'classifier',
+          model: 'jev',
+          question: 'Rate',
+          context: { messages: 'last', includeLastOutput: true },
           answer: score,
-          evaluation: {
-            kind: 'classifier',
-            model: 'jev',
-            question: 'Rate',
-            context: { messages: 'last', includeLastOutput: true },
-          },
           recordAlternatives: true,
         },
       }),
@@ -124,7 +127,6 @@ describe('primitive validation and routing', () => {
     expect(
       validatePrimitiveAnswer(noul, {
         type: 'noul',
-        kind: 'classifier',
         holds: false,
         trueProbability: 0.7,
         confidence: 1 - 0.7,
@@ -133,7 +135,6 @@ describe('primitive validation and routing', () => {
     expect(
       validatePrimitiveAnswer(noul, {
         type: 'noul',
-        kind: 'classifier',
         holds: false,
         trueProbability: 0.7,
         confidence: 0.7,
@@ -156,5 +157,58 @@ describe('primitive validation and routing', () => {
     expect(() => decisionPortId({ ...score, bands: [] }, scoreAnswer)).toThrow(
       /no declared output/,
     );
+  });
+});
+
+describe('decision routes by evaluator kind', () => {
+  it.each([
+    {
+      kind: 'expression',
+      jsonata: '"yes"',
+      routes: [
+        { id: 'yes', label: 'Yes' },
+        { id: 'no', label: 'No' },
+      ],
+    },
+    {
+      kind: 'llm',
+      instructions: 'Choose',
+      harness: 'codex',
+      model: { mode: 'inherit' },
+      effort: { mode: 'inherit' },
+      routes: [
+        { id: 'yes', label: 'Yes' },
+        { id: 'no', label: 'No' },
+      ],
+    },
+    ...[choice, noul, score].map((answer) => ({
+      kind: 'classifier',
+      model: 'jev',
+      question: 'Q',
+      answer,
+    })),
+  ])('derives stable declarations and ports for $kind', (input) => {
+    const config = DecisionConfigSchema.parse(input),
+      declarations = decisionRouteDeclarations(config);
+    expect(declarations).toEqual(
+      config.kind === 'classifier' && config.answer.type === 'score'
+        ? [
+            { id: 'high', label: 'High' },
+            { id: 'low', label: 'Low' },
+          ]
+        : [
+            { id: 'yes', label: 'Yes' },
+            { id: 'no', label: 'No' },
+          ],
+    );
+    expect(
+      outputPorts({
+        id: 'decision',
+        kind: 'decision',
+        label: 'Decision',
+        ui: { x: 0, y: 0 },
+        config,
+      }),
+    ).toEqual(declarations.map((route) => route.id));
   });
 });

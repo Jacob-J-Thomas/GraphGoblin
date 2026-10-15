@@ -1,9 +1,9 @@
 {
   "format": "graphgoblin-loop",
-  "formatVersion": 3,
+  "formatVersion": 4,
   "exportedAt": "2026-10-08T00:00:00Z",
   "loop": {
-    "schemaVersion": 3,
+    "schemaVersion": 4,
     "name": "Review ready pull requests",
     "description": "Fresh exact-head reviews, independent fixers, finite human decisions and ordinary protected merge.",
     "settings": {
@@ -84,25 +84,18 @@
         "kind": "decision",
         "label": "Check prepare",
         "config": {
-          "answer": {
-            "type": "choice",
-            "options": [
-              {
-                "id": "ready",
-                "label": "ready",
-                "criteria": "ready"
-              },
-              {
-                "id": "blocked",
-                "label": "blocked",
-                "criteria": "blocked"
-              }
-            ]
-          },
-          "evaluation": {
-            "kind": "expression",
-            "jsonata": "outputs.`prepare`.value.type = 'ReviewWorkspace' ? 'ready' : 'blocked'"
-          }
+          "kind": "expression",
+          "jsonata": "outputs.`prepare`.value.type = 'ReviewWorkspace' ? 'ready' : 'blocked'",
+          "routes": [
+            {
+              "id": "ready",
+              "label": "ready"
+            },
+            {
+              "id": "blocked",
+              "label": "blocked"
+            }
+          ]
         }
       },
       {
@@ -140,30 +133,22 @@
         "kind": "decision",
         "label": "Gate before review",
         "config": {
-          "answer": {
-            "type": "choice",
-            "options": [
-              {
-                "id": "passed",
-                "label": "passed",
-                "criteria": "passed"
-              },
-              {
-                "id": "wait",
-                "label": "wait",
-                "criteria": "wait"
-              },
-              {
-                "id": "blocked",
-                "label": "blocked",
-                "criteria": "blocked"
-              }
-            ]
-          },
-          "evaluation": {
-            "kind": "expression",
-            "jsonata": "outputs.gate.value.type = 'ReviewGate' ? (outputs.gate.value.passed = true ? 'passed' : (outputs.gate.value.passed = false ? 'wait' : 'blocked')) : 'blocked'"
-          }
+          "kind": "expression",
+          "jsonata": "outputs.gate.value.type = 'ReviewGate' ? (outputs.gate.value.passed = true ? 'passed' : (outputs.gate.value.passed = false ? 'wait' : 'blocked')) : 'blocked'",
+          "routes": [
+            {
+              "id": "passed",
+              "label": "passed"
+            },
+            {
+              "id": "wait",
+              "label": "wait"
+            },
+            {
+              "id": "blocked",
+              "label": "blocked"
+            }
+          ]
         }
       },
       {
@@ -284,35 +269,26 @@
         "kind": "decision",
         "label": "Automatic next step",
         "config": {
-          "answer": {
-            "type": "choice",
-            "options": [
-              {
-                "id": "merge",
-                "label": "merge",
-                "criteria": "merge"
-              },
-              {
-                "id": "fix",
-                "label": "fix",
-                "criteria": "fix"
-              },
-              {
-                "id": "wait",
-                "label": "wait",
-                "criteria": "wait"
-              },
-              {
-                "id": "blocked",
-                "label": "blocked",
-                "criteria": "blocked"
-              }
-            ]
-          },
-          "evaluation": {
-            "kind": "expression",
-            "jsonata": "outputs.verdict.value.type = 'ReviewNext' ? (outputs.verdict.value.route = 'merge' ? 'merge' : (outputs.verdict.value.route = 'fix' ? 'fix' : (outputs.verdict.value.route = 'wait' ? 'wait' : 'blocked'))) : 'blocked'"
-          }
+          "kind": "expression",
+          "jsonata": "outputs.verdict.value.type = 'ReviewNext' ? (outputs.verdict.value.route = 'merge' ? 'merge' : (outputs.verdict.value.route = 'fix' ? 'fix' : (outputs.verdict.value.route = 'wait' ? 'wait' : 'blocked'))) : 'blocked'",
+          "routes": [
+            {
+              "id": "merge",
+              "label": "merge"
+            },
+            {
+              "id": "fix",
+              "label": "fix"
+            },
+            {
+              "id": "wait",
+              "label": "wait"
+            },
+            {
+              "id": "blocked",
+              "label": "blocked"
+            }
+          ]
         }
       },
       {
@@ -333,25 +309,18 @@
         "kind": "decision",
         "label": "Check fix-prepare",
         "config": {
-          "answer": {
-            "type": "choice",
-            "options": [
-              {
-                "id": "ready",
-                "label": "ready",
-                "criteria": "ready"
-              },
-              {
-                "id": "blocked",
-                "label": "blocked",
-                "criteria": "blocked"
-              }
-            ]
-          },
-          "evaluation": {
-            "kind": "expression",
-            "jsonata": "outputs.`fix-prepare`.value.type = 'ReviewFix' ? 'ready' : 'blocked'"
-          }
+          "kind": "expression",
+          "jsonata": "outputs.`fix-prepare`.value.type = 'ReviewFix' ? 'ready' : 'blocked'",
+          "routes": [
+            {
+              "id": "ready",
+              "label": "ready"
+            },
+            {
+              "id": "blocked",
+              "label": "blocked"
+            }
+          ]
         }
       },
       {
@@ -435,25 +404,18 @@
         "kind": "decision",
         "label": "Check fixer-head",
         "config": {
-          "answer": {
-            "type": "choice",
-            "options": [
-              {
-                "id": "ready",
-                "label": "ready",
-                "criteria": "ready"
-              },
-              {
-                "id": "blocked",
-                "label": "blocked",
-                "criteria": "blocked"
-              }
-            ]
-          },
-          "evaluation": {
-            "kind": "expression",
-            "jsonata": "outputs.`fixer-head`.value.type = 'FixerHead' ? 'ready' : 'blocked'"
-          }
+          "kind": "expression",
+          "jsonata": "outputs.`fixer-head`.value.type = 'FixerHead' ? 'ready' : 'blocked'",
+          "routes": [
+            {
+              "id": "ready",
+              "label": "ready"
+            },
+            {
+              "id": "blocked",
+              "label": "blocked"
+            }
+          ]
         }
       },
       {
@@ -490,25 +452,18 @@
         "kind": "decision",
         "label": "Check summary",
         "config": {
-          "answer": {
-            "type": "choice",
-            "options": [
-              {
-                "id": "ready",
-                "label": "ready",
-                "criteria": "ready"
-              },
-              {
-                "id": "blocked",
-                "label": "blocked",
-                "criteria": "blocked"
-              }
-            ]
-          },
-          "evaluation": {
-            "kind": "expression",
-            "jsonata": "outputs.`summary`.value.type = 'ReviewWait' ? 'ready' : 'blocked'"
-          }
+          "kind": "expression",
+          "jsonata": "outputs.`summary`.value.type = 'ReviewWait' ? 'ready' : 'blocked'",
+          "routes": [
+            {
+              "id": "ready",
+              "label": "ready"
+            },
+            {
+              "id": "blocked",
+              "label": "blocked"
+            }
+          ]
         }
       },
       {
@@ -533,25 +488,18 @@
         "kind": "decision",
         "label": "Full or capped input",
         "config": {
-          "answer": {
-            "type": "choice",
-            "options": [
-              {
-                "id": "full",
-                "label": "full",
-                "criteria": "full"
-              },
-              {
-                "id": "capped",
-                "label": "capped",
-                "criteria": "capped"
-              }
-            ]
-          },
-          "evaluation": {
-            "kind": "expression",
-            "jsonata": "vars.wait.canExtra = true ? 'full' : 'capped'"
-          }
+          "kind": "expression",
+          "jsonata": "vars.wait.canExtra = true ? 'full' : 'capped'",
+          "routes": [
+            {
+              "id": "full",
+              "label": "full"
+            },
+            {
+              "id": "capped",
+              "label": "capped"
+            }
+          ]
         }
       },
       {
@@ -585,25 +533,18 @@
         "kind": "decision",
         "label": "Input or timeout",
         "config": {
-          "answer": {
-            "type": "choice",
-            "options": [
-              {
-                "id": "timeout",
-                "label": "timeout",
-                "criteria": "timeout"
-              },
-              {
-                "id": "input",
-                "label": "input",
-                "criteria": "input"
-              }
-            ]
-          },
-          "evaluation": {
-            "kind": "expression",
-            "jsonata": "outputs.`human-wait`.value.timedOut = true ? 'timeout' : 'input'"
-          }
+          "kind": "expression",
+          "jsonata": "outputs.`human-wait`.value.timedOut = true ? 'timeout' : 'input'",
+          "routes": [
+            {
+              "id": "timeout",
+              "label": "timeout"
+            },
+            {
+              "id": "input",
+              "label": "input"
+            }
+          ]
         }
       },
       {
@@ -637,25 +578,18 @@
         "kind": "decision",
         "label": "Capped input or timeout",
         "config": {
-          "answer": {
-            "type": "choice",
-            "options": [
-              {
-                "id": "timeout",
-                "label": "timeout",
-                "criteria": "timeout"
-              },
-              {
-                "id": "input",
-                "label": "input",
-                "criteria": "input"
-              }
-            ]
-          },
-          "evaluation": {
-            "kind": "expression",
-            "jsonata": "outputs.`human-wait-capped`.value.timedOut = true ? 'timeout' : 'input'"
-          }
+          "kind": "expression",
+          "jsonata": "outputs.`human-wait-capped`.value.timedOut = true ? 'timeout' : 'input'",
+          "routes": [
+            {
+              "id": "timeout",
+              "label": "timeout"
+            },
+            {
+              "id": "input",
+              "label": "input"
+            }
+          ]
         }
       },
       {
@@ -676,35 +610,26 @@
         "kind": "decision",
         "label": "Human authorized next step",
         "config": {
-          "answer": {
-            "type": "choice",
-            "options": [
-              {
-                "id": "merge",
-                "label": "merge",
-                "criteria": "merge"
-              },
-              {
-                "id": "fix",
-                "label": "fix",
-                "criteria": "fix"
-              },
-              {
-                "id": "close",
-                "label": "close",
-                "criteria": "close"
-              },
-              {
-                "id": "blocked",
-                "label": "blocked",
-                "criteria": "blocked"
-              }
-            ]
-          },
-          "evaluation": {
-            "kind": "expression",
-            "jsonata": "outputs.human.value.type = 'ReviewNext' ? (outputs.human.value.route = 'merge' ? 'merge' : (outputs.human.value.route = 'fix' ? 'fix' : (outputs.human.value.route = 'close' ? 'close' : 'blocked'))) : 'blocked'"
-          }
+          "kind": "expression",
+          "jsonata": "outputs.human.value.type = 'ReviewNext' ? (outputs.human.value.route = 'merge' ? 'merge' : (outputs.human.value.route = 'fix' ? 'fix' : (outputs.human.value.route = 'close' ? 'close' : 'blocked'))) : 'blocked'",
+          "routes": [
+            {
+              "id": "merge",
+              "label": "merge"
+            },
+            {
+              "id": "fix",
+              "label": "fix"
+            },
+            {
+              "id": "close",
+              "label": "close"
+            },
+            {
+              "id": "blocked",
+              "label": "blocked"
+            }
+          ]
         }
       },
       {
@@ -725,30 +650,22 @@
         "kind": "decision",
         "label": "Wait again or exhaust",
         "config": {
-          "answer": {
-            "type": "choice",
-            "options": [
-              {
-                "id": "wait",
-                "label": "wait",
-                "criteria": "wait"
-              },
-              {
-                "id": "timeout",
-                "label": "timeout",
-                "criteria": "timeout"
-              },
-              {
-                "id": "blocked",
-                "label": "blocked",
-                "criteria": "blocked"
-              }
-            ]
-          },
-          "evaluation": {
-            "kind": "expression",
-            "jsonata": "outputs.reminder.value.type = 'ReviewReminder' ? (outputs.reminder.value.route = 'wait' ? 'wait' : (outputs.reminder.value.route = 'timeout' ? 'timeout' : 'blocked')) : 'blocked'"
-          }
+          "kind": "expression",
+          "jsonata": "outputs.reminder.value.type = 'ReviewReminder' ? (outputs.reminder.value.route = 'wait' ? 'wait' : (outputs.reminder.value.route = 'timeout' ? 'timeout' : 'blocked')) : 'blocked'",
+          "routes": [
+            {
+              "id": "wait",
+              "label": "wait"
+            },
+            {
+              "id": "timeout",
+              "label": "timeout"
+            },
+            {
+              "id": "blocked",
+              "label": "blocked"
+            }
+          ]
         }
       },
       {
@@ -769,25 +686,18 @@
         "kind": "decision",
         "label": "Check merge",
         "config": {
-          "answer": {
-            "type": "choice",
-            "options": [
-              {
-                "id": "ready",
-                "label": "ready",
-                "criteria": "ready"
-              },
-              {
-                "id": "blocked",
-                "label": "blocked",
-                "criteria": "blocked"
-              }
-            ]
-          },
-          "evaluation": {
-            "kind": "expression",
-            "jsonata": "outputs.`merge`.value.type = 'ReviewMerged' ? 'ready' : 'blocked'"
-          }
+          "kind": "expression",
+          "jsonata": "outputs.`merge`.value.type = 'ReviewMerged' ? 'ready' : 'blocked'",
+          "routes": [
+            {
+              "id": "ready",
+              "label": "ready"
+            },
+            {
+              "id": "blocked",
+              "label": "blocked"
+            }
+          ]
         }
       },
       {
@@ -825,25 +735,18 @@
         "kind": "decision",
         "label": "Check close",
         "config": {
-          "answer": {
-            "type": "choice",
-            "options": [
-              {
-                "id": "ready",
-                "label": "ready",
-                "criteria": "ready"
-              },
-              {
-                "id": "blocked",
-                "label": "blocked",
-                "criteria": "blocked"
-              }
-            ]
-          },
-          "evaluation": {
-            "kind": "expression",
-            "jsonata": "outputs.`close`.value.type = 'ReviewClosed' ? 'ready' : 'blocked'"
-          }
+          "kind": "expression",
+          "jsonata": "outputs.`close`.value.type = 'ReviewClosed' ? 'ready' : 'blocked'",
+          "routes": [
+            {
+              "id": "ready",
+              "label": "ready"
+            },
+            {
+              "id": "blocked",
+              "label": "blocked"
+            }
+          ]
         }
       },
       {
@@ -881,25 +784,18 @@
         "kind": "decision",
         "label": "Check timeout",
         "config": {
-          "answer": {
-            "type": "choice",
-            "options": [
-              {
-                "id": "ready",
-                "label": "ready",
-                "criteria": "ready"
-              },
-              {
-                "id": "blocked",
-                "label": "blocked",
-                "criteria": "blocked"
-              }
-            ]
-          },
-          "evaluation": {
-            "kind": "expression",
-            "jsonata": "outputs.`timeout`.value.type = 'ReviewTimedOut' ? 'ready' : 'blocked'"
-          }
+          "kind": "expression",
+          "jsonata": "outputs.`timeout`.value.type = 'ReviewTimedOut' ? 'ready' : 'blocked'",
+          "routes": [
+            {
+              "id": "ready",
+              "label": "ready"
+            },
+            {
+              "id": "blocked",
+              "label": "blocked"
+            }
+          ]
         }
       },
       {
@@ -974,15 +870,12 @@
           "criteria": [
             {
               "when": "predicate",
-              "answer": {
-                "type": "noul"
-              },
-              "evaluation": {
+              "predicate": {
                 "kind": "expression",
                 "jsonata": "true"
               },
               "match": {
-                "type": "noul",
+                "type": "boolean",
                 "value": true
               },
               "outcome": "failure"
@@ -1004,25 +897,18 @@
         "kind": "decision",
         "label": "Check admitted claim",
         "config": {
-          "answer": {
-            "type": "choice",
-            "options": [
-              {
-                "id": "ready",
-                "label": "ready",
-                "criteria": "ready"
-              },
-              {
-                "id": "blocked",
-                "label": "blocked",
-                "criteria": "blocked"
-              }
-            ]
-          },
-          "evaluation": {
-            "kind": "expression",
-            "jsonata": "outputs.claim.value.type = 'ClaimRecord' ? 'ready' : 'blocked'"
-          }
+          "kind": "expression",
+          "jsonata": "outputs.claim.value.type = 'ClaimRecord' ? 'ready' : 'blocked'",
+          "routes": [
+            {
+              "id": "ready",
+              "label": "ready"
+            },
+            {
+              "id": "blocked",
+              "label": "blocked"
+            }
+          ]
         }
       }
     ],

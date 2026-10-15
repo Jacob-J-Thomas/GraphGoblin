@@ -1,9 +1,9 @@
 {
   "format": "graphgoblin-loop",
-  "formatVersion": 3,
+  "formatVersion": 4,
   "exportedAt": "2026-10-08T00:00:00.000Z",
   "loop": {
-    "schemaVersion": 3,
+    "schemaVersion": 4,
     "name": "Implement ready issues",
     "description": "Claim each admitted issue attempt, run sequential fresh workers, pass finite gates and create one closing PR.",
     "settings": {
@@ -85,26 +85,18 @@
         "kind": "decision",
         "label": "Check prepare",
         "config": {
-          "answer": {
-            "type": "choice",
-            "options": [
-              {
-                "id": "ready",
-                "label": "ready",
-                "criteria": "ready"
-              },
-              {
-                "id": "blocked",
-                "label": "blocked",
-                "criteria": "blocked"
-              }
-            ]
-          },
-          "evaluation": {
-            "kind": "expression",
-            "jsonata": "outputs.`prepare`.value.type = 'ImplementationWorkspace' ? 'ready' : 'blocked'"
-          },
-          "recordAlternatives": true
+          "kind": "expression",
+          "jsonata": "outputs.`prepare`.value.type = 'ImplementationWorkspace' ? 'ready' : 'blocked'",
+          "routes": [
+            {
+              "id": "ready",
+              "label": "ready"
+            },
+            {
+              "id": "blocked",
+              "label": "blocked"
+            }
+          ]
         }
       },
       {
@@ -242,26 +234,18 @@
         "kind": "decision",
         "label": "Check plan",
         "config": {
-          "answer": {
-            "type": "choice",
-            "options": [
-              {
-                "id": "ready",
-                "label": "ready",
-                "criteria": "ready"
-              },
-              {
-                "id": "blocked",
-                "label": "blocked",
-                "criteria": "blocked"
-              }
-            ]
-          },
-          "evaluation": {
-            "kind": "expression",
-            "jsonata": "outputs.`plan`.value.type = 'ImplementationPlan' ? 'ready' : 'blocked'"
-          },
-          "recordAlternatives": true
+          "kind": "expression",
+          "jsonata": "outputs.`plan`.value.type = 'ImplementationPlan' ? 'ready' : 'blocked'",
+          "routes": [
+            {
+              "id": "ready",
+              "label": "ready"
+            },
+            {
+              "id": "blocked",
+              "label": "blocked"
+            }
+          ]
         }
       },
       {
@@ -299,26 +283,18 @@
         "kind": "decision",
         "label": "Check task-prepare",
         "config": {
-          "answer": {
-            "type": "choice",
-            "options": [
-              {
-                "id": "ready",
-                "label": "ready",
-                "criteria": "ready"
-              },
-              {
-                "id": "blocked",
-                "label": "blocked",
-                "criteria": "blocked"
-              }
-            ]
-          },
-          "evaluation": {
-            "kind": "expression",
-            "jsonata": "outputs.`task-prepare`.value.type = 'ImplementationTask' ? 'ready' : 'blocked'"
-          },
-          "recordAlternatives": true
+          "kind": "expression",
+          "jsonata": "outputs.`task-prepare`.value.type = 'ImplementationTask' ? 'ready' : 'blocked'",
+          "routes": [
+            {
+              "id": "ready",
+              "label": "ready"
+            },
+            {
+              "id": "blocked",
+              "label": "blocked"
+            }
+          ]
         }
       },
       {
@@ -370,26 +346,18 @@
         "kind": "decision",
         "label": "Check worker",
         "config": {
-          "answer": {
-            "type": "choice",
-            "options": [
-              {
-                "id": "ready",
-                "label": "ready",
-                "criteria": "ready"
-              },
-              {
-                "id": "blocked",
-                "label": "blocked",
-                "criteria": "blocked"
-              }
-            ]
-          },
-          "evaluation": {
-            "kind": "expression",
-            "jsonata": "outputs.`worker`.value.status = 'succeeded' and outputs.`worker`.value.outcome = 'success' ? 'ready' : 'blocked'"
-          },
-          "recordAlternatives": true
+          "kind": "expression",
+          "jsonata": "outputs.`worker`.value.status = 'succeeded' and outputs.`worker`.value.outcome = 'success' ? 'ready' : 'blocked'",
+          "routes": [
+            {
+              "id": "ready",
+              "label": "ready"
+            },
+            {
+              "id": "blocked",
+              "label": "blocked"
+            }
+          ]
         }
       },
       {
@@ -410,31 +378,22 @@
         "kind": "decision",
         "label": "Next task or gates",
         "config": {
-          "answer": {
-            "type": "choice",
-            "options": [
-              {
-                "id": "next",
-                "label": "next",
-                "criteria": "next"
-              },
-              {
-                "id": "done",
-                "label": "done",
-                "criteria": "done"
-              },
-              {
-                "id": "blocked",
-                "label": "blocked",
-                "criteria": "blocked"
-              }
-            ]
-          },
-          "evaluation": {
-            "kind": "expression",
-            "jsonata": "outputs.`task-complete`.value.type = 'TaskComplete' ? (outputs.`task-complete`.value.remaining = true ? 'next' : (outputs.`task-complete`.value.remaining = false ? 'done' : 'blocked')) : 'blocked'"
-          },
-          "recordAlternatives": true
+          "kind": "expression",
+          "jsonata": "outputs.`task-complete`.value.type = 'TaskComplete' ? (outputs.`task-complete`.value.remaining = true ? 'next' : (outputs.`task-complete`.value.remaining = false ? 'done' : 'blocked')) : 'blocked'",
+          "routes": [
+            {
+              "id": "next",
+              "label": "next"
+            },
+            {
+              "id": "done",
+              "label": "done"
+            },
+            {
+              "id": "blocked",
+              "label": "blocked"
+            }
+          ]
         }
       },
       {
@@ -455,31 +414,22 @@
         "kind": "decision",
         "label": "Gate or bounded repair",
         "config": {
-          "answer": {
-            "type": "choice",
-            "options": [
-              {
-                "id": "passed",
-                "label": "passed",
-                "criteria": "passed"
-              },
-              {
-                "id": "fix",
-                "label": "fix",
-                "criteria": "fix"
-              },
-              {
-                "id": "blocked",
-                "label": "blocked",
-                "criteria": "blocked"
-              }
-            ]
-          },
-          "evaluation": {
-            "kind": "expression",
-            "jsonata": "outputs.gate.value.type = 'GateResult' ? (outputs.gate.value.passed = true ? 'passed' : (outputs.gate.value.passed = false and outputs.gate.value.canFix = true ? 'fix' : 'blocked')) : 'blocked'"
-          },
-          "recordAlternatives": true
+          "kind": "expression",
+          "jsonata": "outputs.gate.value.type = 'GateResult' ? (outputs.gate.value.passed = true ? 'passed' : (outputs.gate.value.passed = false and outputs.gate.value.canFix = true ? 'fix' : 'blocked')) : 'blocked'",
+          "routes": [
+            {
+              "id": "passed",
+              "label": "passed"
+            },
+            {
+              "id": "fix",
+              "label": "fix"
+            },
+            {
+              "id": "blocked",
+              "label": "blocked"
+            }
+          ]
         }
       },
       {
@@ -531,26 +481,18 @@
         "kind": "decision",
         "label": "Check gate-fixer",
         "config": {
-          "answer": {
-            "type": "choice",
-            "options": [
-              {
-                "id": "ready",
-                "label": "ready",
-                "criteria": "ready"
-              },
-              {
-                "id": "blocked",
-                "label": "blocked",
-                "criteria": "blocked"
-              }
-            ]
-          },
-          "evaluation": {
-            "kind": "expression",
-            "jsonata": "outputs.`gate-fixer`.value.status = 'succeeded' and outputs.`gate-fixer`.value.outcome = 'success' ? 'ready' : 'blocked'"
-          },
-          "recordAlternatives": true
+          "kind": "expression",
+          "jsonata": "outputs.`gate-fixer`.value.status = 'succeeded' and outputs.`gate-fixer`.value.outcome = 'success' ? 'ready' : 'blocked'",
+          "routes": [
+            {
+              "id": "ready",
+              "label": "ready"
+            },
+            {
+              "id": "blocked",
+              "label": "blocked"
+            }
+          ]
         }
       },
       {
@@ -656,26 +598,18 @@
         "kind": "decision",
         "label": "Check pr-intent",
         "config": {
-          "answer": {
-            "type": "choice",
-            "options": [
-              {
-                "id": "ready",
-                "label": "ready",
-                "criteria": "ready"
-              },
-              {
-                "id": "blocked",
-                "label": "blocked",
-                "criteria": "blocked"
-              }
-            ]
-          },
-          "evaluation": {
-            "kind": "expression",
-            "jsonata": "outputs.`pr-intent`.value.type = 'PrIntent' ? 'ready' : 'blocked'"
-          },
-          "recordAlternatives": true
+          "kind": "expression",
+          "jsonata": "outputs.`pr-intent`.value.type = 'PrIntent' ? 'ready' : 'blocked'",
+          "routes": [
+            {
+              "id": "ready",
+              "label": "ready"
+            },
+            {
+              "id": "blocked",
+              "label": "blocked"
+            }
+          ]
         }
       },
       {
@@ -696,26 +630,18 @@
         "kind": "decision",
         "label": "Check pr-created",
         "config": {
-          "answer": {
-            "type": "choice",
-            "options": [
-              {
-                "id": "ready",
-                "label": "ready",
-                "criteria": "ready"
-              },
-              {
-                "id": "blocked",
-                "label": "blocked",
-                "criteria": "blocked"
-              }
-            ]
-          },
-          "evaluation": {
-            "kind": "expression",
-            "jsonata": "outputs.`pr-created`.value.type = 'PrCreated' ? 'ready' : 'blocked'"
-          },
-          "recordAlternatives": true
+          "kind": "expression",
+          "jsonata": "outputs.`pr-created`.value.type = 'PrCreated' ? 'ready' : 'blocked'",
+          "routes": [
+            {
+              "id": "ready",
+              "label": "ready"
+            },
+            {
+              "id": "blocked",
+              "label": "blocked"
+            }
+          ]
         }
       },
       {
@@ -736,26 +662,18 @@
         "kind": "decision",
         "label": "Check complete",
         "config": {
-          "answer": {
-            "type": "choice",
-            "options": [
-              {
-                "id": "ready",
-                "label": "ready",
-                "criteria": "ready"
-              },
-              {
-                "id": "blocked",
-                "label": "blocked",
-                "criteria": "blocked"
-              }
-            ]
-          },
-          "evaluation": {
-            "kind": "expression",
-            "jsonata": "outputs.`complete`.value.type = 'ImplementationComplete' ? 'ready' : 'blocked'"
-          },
-          "recordAlternatives": true
+          "kind": "expression",
+          "jsonata": "outputs.`complete`.value.type = 'ImplementationComplete' ? 'ready' : 'blocked'",
+          "routes": [
+            {
+              "id": "ready",
+              "label": "ready"
+            },
+            {
+              "id": "blocked",
+              "label": "blocked"
+            }
+          ]
         }
       },
       {
@@ -796,15 +714,12 @@
           "criteria": [
             {
               "when": "predicate",
-              "answer": {
-                "type": "noul"
-              },
-              "evaluation": {
+              "predicate": {
                 "kind": "expression",
                 "jsonata": "true"
               },
               "match": {
-                "type": "noul",
+                "type": "boolean",
                 "value": true
               },
               "outcome": "failure"
@@ -826,26 +741,18 @@
         "kind": "decision",
         "label": "Check durable claim",
         "config": {
-          "answer": {
-            "type": "choice",
-            "options": [
-              {
-                "id": "ready",
-                "label": "Claim recorded",
-                "criteria": "An authenticated claim was recorded."
-              },
-              {
-                "id": "blocked",
-                "label": "Claim refused",
-                "criteria": "The support action refused to claim the issue."
-              }
-            ]
-          },
-          "evaluation": {
-            "kind": "expression",
-            "jsonata": "outputs.claim.value.type = 'ClaimRecord' ? 'ready' : 'blocked'"
-          },
-          "recordAlternatives": true
+          "kind": "expression",
+          "jsonata": "outputs.claim.value.type = 'ClaimRecord' ? 'ready' : 'blocked'",
+          "routes": [
+            {
+              "id": "ready",
+              "label": "Claim recorded"
+            },
+            {
+              "id": "blocked",
+              "label": "Claim refused"
+            }
+          ]
         }
       }
     ],

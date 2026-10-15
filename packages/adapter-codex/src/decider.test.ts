@@ -1,11 +1,11 @@
 import type { StructuredPort } from '@graphgoblin/engine';
 import { describe, expect, it, vi } from 'vitest';
 import {
-  NOUL_SCHEMA,
-  choicePrompt,
-  choiceSchema,
+  BOOLEAN_SCHEMA,
+  routePrompt,
+  routeSchema,
   createCodexDecider,
-  noulPrompt,
+  booleanPrompt,
 } from './decider.js';
 
 function structuredReturning(value: unknown) {
@@ -14,15 +14,17 @@ function structuredReturning(value: unknown) {
 }
 
 const choice = {
-  question: 'Is the change ready?',
-  options: [
+  model: 'gpt-6-luna',
+  effort: 'low' as const,
+  instructions: 'Is the change ready?',
+  routes: [
     { id: 'ship', label: 'Ship it', criteria: 'ready to merge' },
     { id: 'fix', label: 'Fix it', criteria: 'needs work' },
   ],
   context: { diff: 'x' },
 };
 
-describe('CodexDecider.choose', () => {
+describe('CodexDecider.route', () => {
   it('uses stable option ids and returns strictly bounded informational confidence', async () => {
     const { port, complete } = structuredReturning({
       route: 'fix',
@@ -33,27 +35,40 @@ describe('CodexDecider.choose', () => {
     expect(decider.id).toBe('codex');
     expect(decider.available()).toBe(true);
     expect(
-      await decider.choose(
+      await decider.route(
         { ...choice, model: 'gpt-6-luna', effort: 'low' },
         new AbortController().signal,
       ),
-    ).toEqual({ type: 'choice', optionId: 'fix', confidence: 0.9, probabilities: null });
+    ).toEqual({ route: 'fix', confidence: 0.9, reasoning: 'Tests fail' });
     const call = complete.mock.calls[0]?.[0];
-    expect(call?.schema).toEqual(choiceSchema(['ship', 'fix']));
+    expect(call?.schema).toEqual(routeSchema(['ship', 'fix']));
     expect(call?.model).toBe('gpt-6-luna');
     expect(call?.effort).toBe('low');
-    expect(call?.prompt).toContain('- ship (Ship it): ready to merge');
+    expect(call?.prompt).toContain('- ship: Ship it');
     expect(call?.prompt).toContain('"diff": "x"');
   });
-  it('passes no unresolved model or effort fields by default', async () => {
+  it('retains at most 2048 reasoning characters and treats zero confidence as informational', async () => {
+    const { port, complete } = structuredReturning({
+      route: 'ship',
+      confidence: 0,
+      reasoning: 'r'.repeat(2049),
+    });
+    expect(await createCodexDecider(port).route(choice, new AbortController().signal)).toEqual({
+      route: 'ship',
+      confidence: 0,
+      reasoning: 'r'.repeat(2048),
+    });
+    expect(complete).toHaveBeenCalledTimes(1);
+  });
+  it('passes the required resolved model and effort', async () => {
     const { port, complete } = structuredReturning({
       route: 'ship',
       confidence: 1,
       reasoning: 'Ready',
     });
-    await createCodexDecider(port).choose(choice, new AbortController().signal);
-    expect(complete.mock.calls[0]?.[0]).not.toHaveProperty('model');
-    expect(complete.mock.calls[0]?.[0]).not.toHaveProperty('effort');
+    await createCodexDecider(port).route(choice, new AbortController().signal);
+    expect(complete.mock.calls[0]?.[0]).toHaveProperty('model', 'gpt-6-luna');
+    expect(complete.mock.calls[0]?.[0]).toHaveProperty('effort', 'low');
   });
   it.each([
     null,
@@ -70,7 +85,7 @@ describe('CodexDecider.choose', () => {
     { route: 'ship', confidence: 1, reasoning: 'Q', extra: true },
   ])('rejects malformed or undeclared Choice answers (%j)', async (value) => {
     await expect(
-      createCodexDecider(structuredReturning(value).port).choose(
+      createCodexDecider(structuredReturning(value).port).route(
         choice,
         new AbortController().signal,
       ),
@@ -90,8 +105,8 @@ describe('CodexDecider.choose', () => {
         Object.assign(new Error('private-native-message'), { code, retriable }),
       );
       await expect(
-        createCodexDecider(port).choose(choice, new AbortController().signal),
-      ).rejects.toMatchObject({ code: expected, message: 'Codex Choice completion failed' });
+        createCodexDecider(port).route(choice, new AbortController().signal),
+      ).rejects.toMatchObject({ code: expected, message: 'Codex route completion failed' });
     },
   );
   it.each([
@@ -113,7 +128,7 @@ describe('CodexDecider.choose', () => {
           ? expect.objectContaining({ code: 'DECIDER_HTTP_ERROR' })
           : error;
       await expect(
-        createCodexDecider(port).choose(choice, new AbortController().signal),
+        createCodexDecider(port).route(choice, new AbortController().signal),
       ).rejects.toEqual(expected);
     },
   );
@@ -121,52 +136,54 @@ describe('CodexDecider.choose', () => {
 
 describe('prompts', () => {
   it('render the question and context', () => {
-    expect(choicePrompt({ ...choice, context: undefined as never })).toContain('null');
+    expect(routePrompt({ ...choice, context: undefined as never })).toContain('null');
     expect(
-      noulPrompt({ question: 'q?', context: [1], criteria: { true: 'Yes', false: 'No' } }),
+      booleanPrompt({ instructions: 'q?', context: [1], model: 'm', effort: 'low' }),
     ).toContain('[\n  1\n]');
   });
 });
 
-describe('CodexDecider.noul', () => {
+describe('CodexDecider.evaluateBoolean', () => {
   const request = {
-    question: 'Ready?',
+    model: 'gpt-6-luna',
+    effort: 'low' as const,
+    instructions: 'Ready?',
     context: { checks: 'passed' },
-    criteria: { true: 'All checks pass', false: 'Any check fails' },
   };
-  it('uses one strict boolean completion with both criteria and bounded reasoning excerpt', async () => {
+  it('uses instructions for one strict boolean completion with a bounded reasoning excerpt', async () => {
     const { port, complete } = structuredReturning({
       holds: false,
       confidence: 0.9,
       reasoning: 'r'.repeat(2049),
     });
     expect(
-      await createCodexDecider(port).noul(
+      await createCodexDecider(port).evaluateBoolean(
         { ...request, model: 'gpt-6-luna', effort: 'low' },
         new AbortController().signal,
       ),
-    ).toEqual({ type: 'noul', holds: false, confidence: 0.9, reasoning: 'r'.repeat(2048) });
+    ).toEqual({ holds: false, confidence: 0.9, reasoning: 'r'.repeat(2048) });
     expect(complete).toHaveBeenCalledTimes(1);
     expect(complete.mock.calls[0]?.[0]).toMatchObject({
       model: 'gpt-6-luna',
       effort: 'low',
-      schema: NOUL_SCHEMA,
-      prompt: noulPrompt(request),
+      schema: BOOLEAN_SCHEMA,
+      prompt: booleanPrompt(request),
     });
-    expect(noulPrompt(request)).toContain('- true: All checks pass');
-    expect(noulPrompt(request)).toContain('- false: Any check fails');
+    expect(booleanPrompt(request)).toContain('Ready?');
+    expect(booleanPrompt(request)).not.toContain('Authored sides');
   });
-  it('does not inject unresolved model/effort selections and retains the exact 2048-character boundary', async () => {
+  it('passes resolved model and effort and retains the exact 2048-character boundary', async () => {
     const { port, complete } = structuredReturning({
       holds: true,
       confidence: 1,
       reasoning: 'r'.repeat(2048),
     });
     expect(
-      (await createCodexDecider(port).noul(request, new AbortController().signal)).reasoning,
+      (await createCodexDecider(port).evaluateBoolean(request, new AbortController().signal))
+        .reasoning,
     ).toHaveLength(2048);
-    expect(complete.mock.calls[0]?.[0]).not.toHaveProperty('model');
-    expect(complete.mock.calls[0]?.[0]).not.toHaveProperty('effort');
+    expect(complete.mock.calls[0]?.[0]).toHaveProperty('model', 'gpt-6-luna');
+    expect(complete.mock.calls[0]?.[0]).toHaveProperty('effort', 'low');
   });
   it.each([
     null,
@@ -183,7 +200,7 @@ describe('CodexDecider.noul', () => {
   ])('rejects malformed Noul without clamping or retry %j', async (value) => {
     const { port, complete } = structuredReturning(value);
     await expect(
-      createCodexDecider(port).noul(request, new AbortController().signal),
+      createCodexDecider(port).evaluateBoolean(request, new AbortController().signal),
     ).rejects.toMatchObject({ code: 'DECIDER_INVALID_RESPONSE' });
     expect(complete).toHaveBeenCalledTimes(1);
   });
@@ -193,15 +210,15 @@ describe('CodexDecider.noul', () => {
       Object.assign(new Error('private-native-message'), { code: 'HARNESS_QUOTA_EXHAUSTED' }),
     );
     await expect(
-      createCodexDecider(port).noul(request, new AbortController().signal),
+      createCodexDecider(port).evaluateBoolean(request, new AbortController().signal),
     ).rejects.toMatchObject({
       code: 'DECIDER_RATE_LIMITED',
-      message: 'Codex Noul completion failed',
+      message: 'Codex predicate completion failed',
     });
     const cancelled = new DOMException('Cancelled', 'AbortError');
     complete.mockRejectedValueOnce(cancelled);
-    await expect(createCodexDecider(port).noul(request, new AbortController().signal)).rejects.toBe(
-      cancelled,
-    );
+    await expect(
+      createCodexDecider(port).evaluateBoolean(request, new AbortController().signal),
+    ).rejects.toBe(cancelled);
   });
 });

@@ -65,9 +65,8 @@ for (const source of [
               ? [
                   {
                     when: 'predicate',
-                    answer: { type: 'noul' },
-                    evaluation: { kind: 'expression', jsonata: 'true' },
-                    match: { type: 'noul', value: true },
+                    predicate: { kind: 'expression', jsonata: 'true' },
+                    match: { type: 'boolean', value: true },
                     outcome: 'failure',
                   },
                 ]
@@ -117,19 +116,14 @@ for (const source of [
           criteria: [
             {
               when: 'predicate',
-              answer: {
-                type: 'noul',
-                true: { label: 'Ready', criteria: 'Task is done' },
-                false: { label: 'Continue', criteria: 'Task is not done' },
-              },
-              evaluation: {
+              predicate: {
                 kind: 'llm',
                 harness: 'codex',
                 model: { mode: 'inherit' },
                 effort: { mode: 'inherit' },
-                question: 'done?',
+                instructions: 'done?',
               },
-              match: { type: 'noul', value: true },
+              match: { type: 'boolean', value: true },
               outcome: 'success',
             },
           ],
@@ -145,6 +139,10 @@ for (const source of [
         kind: 'decision',
         label: 'D',
         config: {
+          kind: 'classifier',
+          model: 'jev',
+          question: '?',
+          context: {},
           answer: {
             type: 'choice',
             options: [
@@ -152,7 +150,6 @@ for (const source of [
               { id: 'no', label: 'no', criteria: 'N' },
             ],
           },
-          evaluation: { kind: 'classifier', model: 'jev', question: '?', context: {} },
         },
       });
       code = 'EVALUATION_UNAVAILABLE';
@@ -668,9 +665,8 @@ it.each(['same failure', 'newer non-resumable failure'] as const)(
               criteria: [
                 {
                   when: 'predicate',
-                  answer: { type: 'noul' },
-                  evaluation: { kind: 'expression', jsonata: 'true' },
-                  match: { type: 'noul', value: true },
+                  predicate: { kind: 'expression', jsonata: 'true' },
+                  match: { type: 'boolean', value: true },
                   outcome: 'failure',
                 },
               ],

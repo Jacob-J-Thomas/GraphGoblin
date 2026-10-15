@@ -28,12 +28,9 @@ it('round-trips large mixed evaluation pages and measures read validation overhe
                   index: 0,
                   strategy: 'classifier',
                   status: 'not-matched',
-                  answer: {
-                    type: 'noul',
+                  observation: {
                     kind: 'classifier',
-                    holds: false,
-                    trueProbability: 0.2,
-                    confidence: 0.8,
+                    answer: { type: 'noul', holds: false, trueProbability: 0.2, confidence: 0.8 },
                   },
                   provenance: {
                     kind: 'classifier',
@@ -49,9 +46,8 @@ it('round-trips large mixed evaluation pages and measures read validation overhe
                   index: 1,
                   strategy: 'llm',
                   status: 'matched',
-                  answer: {
-                    type: 'noul',
-                    kind: 'llm',
+                  observation: {
+                    kind: 'boolean',
                     holds: true,
                     confidence: 0.93,
                     reasoning: 'Done. '.repeat(100),
@@ -64,7 +60,7 @@ it('round-trips large mixed evaluation pages and measures read validation overhe
                     effort: 'medium',
                   },
                   acceptance: { status: 'accepted' },
-                  match: { type: 'noul', value: true },
+                  match: { type: 'boolean', value: true },
                 },
               ],
               result: {
@@ -75,7 +71,7 @@ it('round-trips large mixed evaluation pages and measures read validation overhe
               },
             }
           : {
-              answer: { type: 'choice', optionId: 'yes', confidence: null, probabilities: null },
+              observation: { kind: 'route', routeId: 'yes', confidence: null, reasoning: null },
               portId: 'yes',
               provenance: {
                 kind: 'expression',

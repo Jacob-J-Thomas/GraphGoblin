@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "name": "every-field",
   "description": "Every config field of every node kind, for parse checks.",
   "settings": {
@@ -171,6 +171,66 @@
       }
     },
     {
+      "id": "expression-decision",
+      "label": "Expression",
+      "ui": {
+        "x": 0,
+        "y": 0
+      },
+      "kind": "decision",
+      "config": {
+        "kind": "expression",
+        "jsonata": "\"good\"",
+        "routes": [
+          {
+            "id": "good",
+            "label": "Good"
+          },
+          {
+            "id": "bad",
+            "label": "Bad"
+          }
+        ]
+      }
+    },
+    {
+      "id": "classifier-decision",
+      "label": "Classifier",
+      "ui": {
+        "x": 0,
+        "y": 0
+      },
+      "kind": "decision",
+      "config": {
+        "kind": "classifier",
+        "model": "jev",
+        "question": "Choose",
+        "minConfidence": 0.5,
+        "truthThreshold": 0.7,
+        "answer": {
+          "type": "noul",
+          "true": {
+            "id": "good",
+            "label": "Good",
+            "criteria": "Pass"
+          },
+          "false": {
+            "id": "bad",
+            "label": "Bad",
+            "criteria": "Fail"
+          }
+        },
+        "context": {
+          "messages": "all",
+          "vars": [
+            "topic"
+          ],
+          "includeLastOutput": true
+        },
+        "recordAlternatives": false
+      }
+    },
+    {
       "id": "decide",
       "label": "Decide",
       "ui": {
@@ -179,42 +239,34 @@
       },
       "kind": "decision",
       "config": {
-        "answer": {
-          "type": "choice",
-          "options": [
-            {
-              "id": "good",
-              "label": "good",
-              "criteria": "Looks good"
-            },
-            {
-              "id": "bad",
-              "label": "bad",
-              "criteria": "Needs work"
-            }
-          ]
+        "kind": "llm",
+        "instructions": "Is {{ vars.topic }} done?",
+        "harness": "codex",
+        "model": {
+          "mode": "explicit",
+          "value": "gpt-6-sol"
         },
-        "evaluation": {
-          "kind": "llm",
-          "harness": "codex",
-          "model": {
-            "mode": "explicit",
-            "value": "gpt-6-sol"
+        "effort": {
+          "mode": "explicit",
+          "value": "high"
+        },
+        "routes": [
+          {
+            "id": "good",
+            "label": "good"
           },
-          "effort": {
-            "mode": "explicit",
-            "value": "high"
-          },
-          "question": "Is {{ vars.topic }} done?",
-          "context": {
-            "messages": 3,
-            "vars": [
-              "topic"
-            ],
-            "includeLastOutput": false
+          {
+            "id": "bad",
+            "label": "bad"
           }
-        },
-        "recordAlternatives": false
+        ],
+        "context": {
+          "messages": 3,
+          "vars": [
+            "topic"
+          ],
+          "includeLastOutput": false
+        }
       }
     },
     {
@@ -634,22 +686,22 @@
           },
           {
             "when": "predicate",
-            "answer": {
-              "type": "noul",
-              "true": {
-                "label": "Done",
-                "criteria": "Complete"
-              },
-              "false": {
-                "label": "Pending",
-                "criteria": "Incomplete"
-              }
-            },
-            "evaluation": {
+            "predicate": {
               "kind": "classifier",
               "model": "jev",
               "question": "Done?",
-              "minConfidence": 0.5
+              "minConfidence": 0.5,
+              "answer": {
+                "type": "noul",
+                "true": {
+                  "label": "Done",
+                  "criteria": "Complete"
+                },
+                "false": {
+                  "label": "Pending",
+                  "criteria": "Incomplete"
+                }
+              }
             },
             "match": {
               "type": "noul",
@@ -659,15 +711,12 @@
           },
           {
             "when": "predicate",
-            "answer": {
-              "type": "noul"
-            },
-            "evaluation": {
+            "predicate": {
               "kind": "expression",
               "jsonata": "false"
             },
             "match": {
-              "type": "noul",
+              "type": "boolean",
               "value": true
             },
             "outcome": "failure"

@@ -101,10 +101,10 @@ export class TemplatePrerequisites {
         });
       const evaluations =
         node.kind === 'decision'
-          ? [node.config.evaluation]
+          ? [node.config]
           : node.kind === 'exit'
             ? node.config.criteria.flatMap((criterion) =>
-                criterion.when === 'predicate' ? [criterion.evaluation] : [],
+                criterion.when === 'predicate' ? [criterion.predicate] : [],
               )
             : [];
       for (const evaluation of evaluations)

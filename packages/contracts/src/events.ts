@@ -1,8 +1,8 @@
 import { z } from 'zod';
 import {
   DecisionEvidenceSchema,
-  DecisionEmissionSchema,
-  PrimitiveAnswerSchema,
+  EvaluationObservationSchema,
+  EvaluationEmissionSchema,
   EvaluationProvenanceSchema,
   EvaluationAcceptanceSchema,
 } from './evaluation.js';
@@ -76,7 +76,7 @@ export const ExitCriterionEvaluationSchema = z.union([
     ...CriterionEvidence,
     strategy: z.enum(['expression', 'classifier', 'llm']),
     status: z.enum(['matched', 'not-matched']),
-    answer: PrimitiveAnswerSchema,
+    observation: EvaluationObservationSchema,
     provenance: EvaluationProvenanceSchema,
     /** Null means the archived evidence did not establish the acceptance gate. */
     acceptance: EvaluationAcceptanceSchema.nullable(),
@@ -115,7 +115,7 @@ export type ExitCriterionEvaluation = z.infer<typeof ExitCriterionEvaluationSche
 /** Fresh predicate evidence is complete; converted history uses the canonical schema above. */
 export const ExitCriterionEmissionSchema = ExitCriterionEvaluationSchema.superRefine(
   (evidence, ctx) => {
-    if (!('answer' in evidence)) {
+    if (!('observation' in evidence)) {
       if ('holds' in evidence && evidence.holds === null)
         ctx.addIssue({
           code: 'custom',
@@ -124,11 +124,9 @@ export const ExitCriterionEmissionSchema = ExitCriterionEvaluationSchema.superRe
         });
       return;
     }
-    const fresh = DecisionEmissionSchema.safeParse({
-      answer: evidence.answer,
+    const fresh = EvaluationEmissionSchema.safeParse({
+      observation: evidence.observation,
       provenance: evidence.provenance,
-      portId: evidence.answer.type === 'choice' ? evidence.answer.optionId : 'answer',
-      diagnostics: [],
     });
     if (!fresh.success) for (const issue of fresh.error.issues) ctx.addIssue({ ...issue });
     if (evidence.acceptance === null)

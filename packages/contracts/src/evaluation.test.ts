@@ -1,216 +1,206 @@
-import { describe, expect, it } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import {
-  ChoiceAnswerSchema,
   DecisionConfigSchema,
   DecisionEmissionSchema,
   DecisionEvidenceSchema,
   DecisionPayloadSchema,
+  EvaluationEmissionSchema,
   HarnessDefaultsSchema,
-  type DecisionEvidence,
+  RouteDeclarationsSchema,
 } from './evaluation.js';
-const options = [
-  { id: 'pass', label: 'Pass', criteria: 'Meets the criterion' },
-  { id: 'retry', label: 'Retry', criteria: 'Needs another attempt' },
+const routes = [
+  { id: 'pass', label: 'Pass' },
+  { id: 'retry', label: 'Retry' },
 ];
-const expression = { kind: 'expression', jsonata: '"pass"' };
-const classifier = { kind: 'classifier', model: 'jev', question: 'Q' };
-const llm = {
-  kind: 'llm',
-  harness: 'codex',
-  model: { mode: 'inherit' },
-  effort: { mode: 'explicit', value: 'high' },
-  question: 'Q',
-};
-const expressionEvidence: DecisionEvidence = {
-  answer: { type: 'choice', optionId: 'pass', confidence: null, probabilities: null },
-  portId: 'pass',
-  provenance: { kind: 'expression', provider: null, classifierId: null, model: null, effort: null },
-  diagnostics: [],
-};
-const classifierEvidence: DecisionEvidence = {
-  answer: {
-    type: 'choice',
-    optionId: 'pass',
-    confidence: 0.8,
-    probabilities: { pass: 0.8, retry: 0.2 },
-  },
-  portId: 'pass',
-  provenance: {
-    kind: 'classifier',
-    provider: 'typesafe',
-    classifierId: 'jev',
-    model: 'jev-latest',
-    effort: null,
-  },
-  diagnostics: [],
-};
-const llmEvidence: DecisionEvidence = {
-  answer: { type: 'choice', optionId: 'pass', confidence: 0.9, probabilities: null },
-  portId: 'pass',
-  provenance: {
+const configs = [
+  { kind: 'expression', jsonata: '"pass"', routes },
+  {
     kind: 'llm',
-    provider: 'codex',
-    classifierId: null,
-    model: 'gpt-6-luna',
-    effort: 'high',
+    instructions: 'Choose {{ vars.result }}',
+    routes,
+    harness: 'codex',
+    model: { mode: 'inherit' },
+    effort: { mode: 'inherit' },
   },
-  diagnostics: [],
+  {
+    kind: 'classifier',
+    model: 'jev',
+    question: 'Q',
+    answer: { type: 'choice', options: routes.map((r) => ({ ...r, criteria: r.label })) },
+  },
+];
+const provenance = {
+  kind: 'expression',
+  provider: null,
+  classifierId: null,
+  model: null,
+  effort: null,
 };
-describe('Choice authoring contract', () => {
-  it.each([expression, classifier, llm])(
-    'round-trips each single evaluation kind (%j)',
-    (evaluation) => {
-      const parsed = DecisionConfigSchema.parse({
-        answer: { type: 'choice', options },
-        evaluation,
-      });
-      expect(DecisionConfigSchema.parse(JSON.parse(JSON.stringify(parsed)))).toEqual(parsed);
+const fact = {
+  portId: 'pass',
+  provenance,
+  observation: { kind: 'route', routeId: 'pass', confidence: null, reasoning: null },
+};
+describe('evaluator-specific decision contracts', () => {
+  it.each(configs)('round-trips the $kind branch without inactive settings', (config) => {
+    const parsed = DecisionConfigSchema.parse(config);
+    expect(DecisionConfigSchema.parse(JSON.parse(JSON.stringify(parsed)))).toEqual(parsed);
+    if (parsed.kind === 'classifier') expect(parsed.recordAlternatives).toBe(true);
+    if (parsed.kind !== 'expression')
+      expect(parsed.context).toEqual({ messages: 'last', includeLastOutput: true });
+  });
+  it.each([
+    [{ ...configs[0], jsonata: ' ' }, ['jsonata']],
+    [{ ...configs[0], jsonata: '' }, ['jsonata']],
+    [{ ...configs[0], jsonata: 'x'.repeat(100001) }, ['jsonata']],
+    [{ ...configs[1], instructions: 'x'.repeat(100001) }, ['instructions']],
+    [{ ...configs[1], harness: 'claude' }, ['harness']],
+    [{ ...configs[1], model: { mode: 'explicit', value: 'x'.repeat(257) } }, ['model', 'value']],
+    [{ ...configs[1], effort: { mode: 'explicit', value: 'ultra' } }, ['effort', 'value']],
+    [{ ...configs[2], model: undefined }, ['model']],
+  ] as const)('reports the exact branch path %#', (input, path) => {
+    const result = DecisionConfigSchema.safeParse(input);
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error.issues.map((i) => i.path)).toContainEqual(path);
+  });
+  it.each([
+    'answer',
+    'evaluation',
+    'question',
+    'context',
+    'minConfidence',
+    'truthThreshold',
+    'recordAlternatives',
+  ])('rejects inactive expression field %s', (key) => {
+    expect(DecisionConfigSchema.safeParse({ ...configs[0], [key]: {} }).success).toBe(false);
+  });
+  it.each(['minConfidence', 'truthThreshold', 'recordAlternatives', 'answer', 'question'])(
+    'rejects inactive LLM field %s',
+    (key) => {
+      expect(DecisionConfigSchema.safeParse({ ...configs[1], [key]: 0 }).success).toBe(false);
     },
   );
-  it('requires complete explicit selections and rejects old or inactive fields', () => {
-    for (const evaluation of [
-      { ...llm, model: { mode: 'explicit' } },
-      { ...llm, effort: { mode: 'explicit', value: 'ultra' } },
-      { ...llm, minConfidence: 0.5 },
-      { ...llm, harness: 'claude' },
-      { ...classifier, model: undefined },
-      { ...expression, question: 'inactive' },
-      { kind: 'future', question: 'Q' },
-      [{ ...expression }, { ...classifier }],
-    ])
+  it.each([
+    [
+      [{ id: 'in', label: 'A' }, routes[1]],
+      [0, 'id'],
+    ],
+    [
+      [{ id: 'Bad ID', label: 'A' }, routes[1]],
+      [0, 'id'],
+    ],
+    [
+      [{ id: 'a'.repeat(65), label: 'A' }, routes[1]],
+      [0, 'id'],
+    ],
+    [
+      [routes[0], routes[0]],
+      [1, 'id'],
+    ],
+    [
+      [routes[0], { id: 'b', label: ' Pass ' }],
+      [1, 'label'],
+    ],
+    [
+      [{ id: 'a', label: ' ' }, routes[1]],
+      [0, 'label'],
+    ],
+    [
+      [{ id: 'a', label: 'x'.repeat(121) }, routes[1]],
+      [0, 'label'],
+    ],
+  ] as const)('validates route identifiers and trimmed labels %#', (input, path) => {
+    const result = RouteDeclarationsSchema.safeParse(input);
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error.issues.map((i) => i.path)).toContainEqual(path);
+  });
+  it('enforces two to sixty-four routes and trims labels', () => {
+    for (const count of [0, 1, 65])
       expect(
-        DecisionConfigSchema.safeParse({ answer: { type: 'choice', options }, evaluation }).success,
+        RouteDeclarationsSchema.safeParse(
+          Array.from({ length: count }, (_, i) => ({ id: `r${i}`, label: `R${i}` })),
+        ).success,
       ).toBe(false);
+    expect(
+      RouteDeclarationsSchema.parse(
+        Array.from({ length: 64 }, (_, i) => ({ id: `r${i}`, label: ` R${i} ` })),
+      ),
+    ).toHaveLength(64);
+    expect(RouteDeclarationsSchema.parse([{ id: 'a', label: ' A ' }, routes[1]])[0]?.label).toBe(
+      'A',
+    );
+  });
+  it('rejects old matrix inputs and keeps harness defaults strict', () => {
     expect(
       DecisionConfigSchema.safeParse({
-        answer: { type: 'choice', options },
-        evaluation: expression,
-        strategy: ['expression'],
+        answer: { type: 'choice' },
+        evaluation: { kind: 'expression', jsonata: '"pass"' },
       }).success,
     ).toBe(false);
-    expect(HarnessDefaultsSchema.safeParse({ model: 'old', effort: 'low' }).success).toBe(false);
     expect(HarnessDefaultsSchema.parse({})).toEqual({ byHarness: {} });
-    expect(
-      HarnessDefaultsSchema.safeParse({ byHarness: { unknown: { model: 'x' } } }).success,
-    ).toBe(false);
+    expect(HarnessDefaultsSchema.safeParse({ byHarness: { other: {} } }).success).toBe(false);
   });
-  it('rejects duplicate IDs/labels, blank criteria, invalid ports and unsupported answer types', () => {
-    for (const answer of [
-      { type: 'choice', options: [options[0], options[0]] },
-      { type: 'choice', options: [options[0], { ...options[1], label: 'Pass' }] },
-      { type: 'choice', options: [options[0], { ...options[1], criteria: '   ' }] },
-      { type: 'choice', options: [options[0], { ...options[1], id: 'in' }] },
-      { type: 'choice', options: [options[0], { ...options[1], id: '2' }] },
-      { type: 'choice', options: [] },
-      { type: 'boolean', options },
-    ])
-      expect(DecisionConfigSchema.safeParse({ answer, evaluation: expression }).success).toBe(
-        false,
-      );
-    const parsed = DecisionConfigSchema.parse({
-      answer: {
-        type: 'choice',
-        options: [{ ...options[0], label: '  Pass  ', criteria: ' Criterion ' }, options[1]],
-      },
-      evaluation: expression,
+  it('separates historical unknowns, predicate facts and fresh decision emissions', () => {
+    expect(DecisionEmissionSchema.parse({ ...fact, diagnostics: [] })).toEqual({
+      ...fact,
+      diagnostics: [],
     });
-    expect(parsed.answer).toMatchObject({
-      options: [{ label: 'Pass', criteria: 'Criterion' }, options[1]],
-    });
-  });
-});
-describe('canonical evidence and fresh emission', () => {
-  it.each([expressionEvidence, classifierEvidence, llmEvidence])(
-    'admits fresh evidence consistent with its evaluation kind (%j)',
-    (evidence) => expect(DecisionEmissionSchema.parse(evidence)).toEqual(evidence),
-  );
-  it('permits unknown factual historical fields, but rejects them for fresh provider execution', () => {
-    const historic = {
-      ...classifierEvidence,
-      answer: { ...classifierEvidence.answer, confidence: null, probabilities: null },
-      provenance: {
-        ...classifierEvidence.provenance,
-        provider: null,
-        classifierId: null,
-        model: null,
-      },
-      diagnostics: [
-        {
-          provenance: { ...expressionEvidence.provenance, kind: 'llm' },
-          code: 'PROVIDER_UNAVAILABLE',
-          message: 'Decision provider unavailable',
-        },
-      ],
+    expect(DecisionPayloadSchema.safeParse({ ...fact, portId: 'retry' }).success).toBe(false);
+    const boolean = {
+      ...fact,
+      observation: { kind: 'boolean', holds: null, confidence: null, reasoning: null },
     };
-    expect(DecisionEvidenceSchema.safeParse(historic).success).toBe(true);
-    expect(DecisionEmissionSchema.safeParse(historic).success).toBe(false);
+    expect(DecisionPayloadSchema.safeParse(boolean).success).toBe(true);
+    expect(DecisionEmissionSchema.safeParse({ ...boolean, diagnostics: [] }).success).toBe(false);
     expect(
-      DecisionEvidenceSchema.safeParse({
-        ...historic,
-        diagnostics: Array(4).fill(historic.diagnostics[0]),
+      EvaluationEmissionSchema.safeParse({
+        provenance,
+        observation: { kind: 'boolean', holds: false, confidence: null, reasoning: null },
       }).success,
-    ).toBe(false);
+    ).toBe(true);
   });
-  it('requires universal named fields and matching portId even for canonical history', () => {
-    const { effort: _effort, ...provenance } = classifierEvidence.provenance;
-    expect(DecisionEvidenceSchema.safeParse({ ...classifierEvidence, provenance }).success).toBe(
-      false,
-    );
-    expect(
-      DecisionPayloadSchema.safeParse({
-        ...classifierEvidence,
-        diagnostics: undefined,
-        portId: 'retry',
-      }).success,
-    ).toBe(false);
-    const { diagnostics: _diagnostics, ...payload } = classifierEvidence;
-    expect(DecisionPayloadSchema.safeParse({ ...payload, portId: 'retry' }).success).toBe(false);
-    expect(
-      DecisionEvidenceSchema.safeParse({ ...classifierEvidence, portId: 'retry' }).success,
-    ).toBe(false);
-    expect(DecisionPayloadSchema.parse(payload)).toEqual(payload);
+  it('caps factual diagnostics at three and requires none on fresh emissions', () => {
+    const diagnostic = { provenance, code: 'RECORDED', message: 'Recorded fact' };
+    for (const count of [0, 1, 3, 4]) {
+      const input = { ...fact, diagnostics: Array.from({ length: count }, () => diagnostic) };
+      expect(DecisionEvidenceSchema.safeParse(input).success).toBe(count <= 3);
+      expect(DecisionEmissionSchema.safeParse(input).success).toBe(count === 0);
+    }
   });
-  it('rejects fresh evidence with fabricated or incompatible provenance/confidence', () => {
-    for (const provenance of [
-      { ...expressionEvidence.provenance, provider: 'x' },
-      { ...expressionEvidence.provenance, classifierId: 'jev' },
-      { ...expressionEvidence.provenance, model: 'x' },
-      { ...expressionEvidence.provenance, effort: 'low' },
-    ])
-      expect(DecisionEmissionSchema.safeParse({ ...expressionEvidence, provenance }).success).toBe(
-        false,
-      );
-    expect(
-      DecisionEmissionSchema.safeParse({
-        ...expressionEvidence,
-        answer: { ...expressionEvidence.answer, confidence: 1 },
-      }).success,
-    ).toBe(false);
-    for (const evidence of [
-      {
-        ...classifierEvidence,
-        provenance: { ...classifierEvidence.provenance, classifierId: null },
-      },
-      { ...classifierEvidence, provenance: { ...classifierEvidence.provenance, effort: 'low' } },
-      { ...llmEvidence, provenance: { ...llmEvidence.provenance, provider: 'other' } },
-      { ...llmEvidence, provenance: { ...llmEvidence.provenance, classifierId: 'jev' } },
-      { ...llmEvidence, provenance: { ...llmEvidence.provenance, effort: null } },
-      { ...llmEvidence, answer: { ...llmEvidence.answer, probabilities: { pass: 1, retry: 0 } } },
-    ])
-      expect(DecisionEmissionSchema.safeParse(evidence).success).toBe(false);
-  });
-  it.each([NaN, Infinity, -1, 1.01])(
-    'rejects invalid numeric confidence/probability %s',
-    (value) => {
+  it.each([null, NaN, Infinity, -0.1, 1.1])(
+    'rejects invalid fresh LLM confidence %j',
+    (confidence) => {
       expect(
-        ChoiceAnswerSchema.safeParse({ ...classifierEvidence.answer, confidence: value }).success,
-      ).toBe(false);
-      expect(
-        ChoiceAnswerSchema.safeParse({
-          ...classifierEvidence.answer,
-          probabilities: { pass: value, retry: 0 },
+        DecisionEmissionSchema.safeParse({
+          ...fact,
+          provenance: {
+            kind: 'llm',
+            provider: 'codex',
+            classifierId: null,
+            model: 'm',
+            effort: 'low',
+          },
+          observation: { kind: 'route', routeId: 'pass', confidence, reasoning: 'R' },
+          diagnostics: [],
         }).success,
       ).toBe(false);
     },
   );
+  it('checks fresh provenance and observation consistency', () => {
+    const llm = {
+      ...fact,
+      provenance: { kind: 'llm', provider: 'codex', classifierId: null, model: 'm', effort: 'low' },
+      observation: { kind: 'route', routeId: 'pass', confidence: 0, reasoning: 'R' },
+      diagnostics: [],
+    };
+    expect(DecisionEmissionSchema.safeParse(llm).success).toBe(true);
+    for (const input of [
+      { ...llm, observation: { ...llm.observation, reasoning: null } },
+      { ...llm, provenance: { ...llm.provenance, effort: null } },
+      { ...llm, provenance: { ...llm.provenance, provider: 'other' } },
+      { ...fact, provenance: { ...provenance, model: 'unexpected' }, diagnostics: [] },
+      { ...fact, observation: { ...fact.observation, confidence: 1 }, diagnostics: [] },
+    ])
+      expect(DecisionEmissionSchema.safeParse(input).success).toBe(false);
+  });
 });

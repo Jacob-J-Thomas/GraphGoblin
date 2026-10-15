@@ -726,7 +726,12 @@ export async function applyDatabaseUpgrade(
       );
       if (!result.ok)
         throw new DatabaseUpgradeRequiredError('Unresolved version conversion: ' + String(row.id));
-      converted.set(String(row.id), result.value);
+      const current = LoopDefinitionSchema.safeParse(result.value);
+      if (!current.success)
+        throw new DatabaseUpgradeRequiredError(
+          'Format-3 to format-4 conversion is not available until the integrated cutover',
+        );
+      converted.set(String(row.id), current.data);
     }
     // Keep the original source format per version even after writing the converted definition.
     const sourceVersions = new Map(
@@ -813,7 +818,7 @@ export async function applyDatabaseUpgrade(
             upgradedFailure(json(run.failure), {
               approvedAt: manifest.approvedAt,
               reason: manifest.failedRuns[runId].reason,
-              version: CURRENT_DEFINITION_FORMAT,
+              version: 3,
             }),
           );
         await tx.execute({
@@ -838,7 +843,7 @@ export async function applyDatabaseUpgrade(
             payload.failure = upgradedFailure(event.failure, {
               approvedAt: manifest.approvedAt,
               reason: manifest.failedRuns[runId].reason,
-              version: CURRENT_DEFINITION_FORMAT,
+              version: 3,
             });
           await tx.execute({
             sql: 'UPDATE run_events SET payload=? WHERE run_id=? AND seq=?',

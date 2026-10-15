@@ -224,26 +224,52 @@ export function everyFieldLoop(): LoopDefinitionInput {
         },
       },
       {
+        id: 'expression-decision',
+        kind: 'decision',
+        label: 'Expression',
+        config: {
+          kind: 'expression',
+          jsonata: '"good"',
+          routes: [
+            { id: 'good', label: 'Good' },
+            { id: 'bad', label: 'Bad' },
+          ],
+        },
+      },
+      {
+        id: 'classifier-decision',
+        kind: 'decision',
+        label: 'Classifier',
+        config: {
+          kind: 'classifier',
+          model: 'jev',
+          question: 'Choose',
+          answer: {
+            type: 'noul',
+            true: { id: 'good', label: 'Good', criteria: 'Pass' },
+            false: { id: 'bad', label: 'Bad', criteria: 'Fail' },
+          },
+          truthThreshold: 0.7,
+          context: { messages: 'all', vars: ['topic'], includeLastOutput: true },
+          minConfidence: 0.5,
+          recordAlternatives: false,
+        },
+      },
+      {
         id: 'decide',
         kind: 'decision',
         label: 'Decide',
         config: {
-          answer: {
-            type: 'choice',
-            options: [
-              { id: 'good', label: 'good', criteria: 'Looks good' },
-              { id: 'bad', label: 'bad', criteria: 'Needs work' },
-            ],
-          },
-          evaluation: {
-            kind: 'llm',
-            harness: 'codex',
-            model: { mode: 'explicit', value: 'gpt-6-sol' },
-            effort: { mode: 'explicit', value: 'high' },
-            question: 'Is {{ vars.topic }} done?',
-            context: { messages: 3, vars: ['topic'], includeLastOutput: false },
-          },
-          recordAlternatives: false,
+          kind: 'llm',
+          harness: 'codex',
+          model: { mode: 'explicit', value: 'gpt-6-sol' },
+          effort: { mode: 'explicit', value: 'high' },
+          instructions: 'Is {{ vars.topic }} done?',
+          context: { messages: 3, vars: ['topic'], includeLastOutput: false },
+          routes: [
+            { id: 'good', label: 'good', criteria: 'Looks good' },
+            { id: 'bad', label: 'bad', criteria: 'Needs work' },
+          ].map(({ id, label }) => ({ id, label })),
         },
       },
       {
@@ -430,25 +456,24 @@ export function everyFieldLoop(): LoopDefinitionInput {
             { when: 'max-duration', seconds: 3600 },
             {
               when: 'predicate',
-              answer: {
-                type: 'noul',
-                true: { label: 'Done', criteria: 'Complete' },
-                false: { label: 'Pending', criteria: 'Incomplete' },
-              },
-              evaluation: {
+              predicate: {
                 kind: 'classifier',
                 model: 'jev',
                 question: 'Done?',
                 minConfidence: 0.5,
+                answer: {
+                  type: 'noul',
+                  true: { label: 'Done', criteria: 'Complete' },
+                  false: { label: 'Pending', criteria: 'Incomplete' },
+                },
               },
               match: { type: 'noul', value: true },
               outcome: 'success',
             },
             {
               when: 'predicate',
-              answer: { type: 'noul' },
-              evaluation: { kind: 'expression', jsonata: 'false' },
-              match: { type: 'noul', value: true },
+              predicate: { kind: 'expression', jsonata: 'false' },
+              match: { type: 'boolean', value: true },
               outcome: 'failure',
             },
             { when: 'last-output-matches', jsonSchema: { type: 'object' } },
@@ -539,14 +564,12 @@ export function kitchenSinkLoop(): LoopDefinitionInput {
         kind: 'decision',
         label: 'Decide',
         config: {
-          answer: {
-            type: 'choice',
-            options: [
-              { id: 'good', label: 'good', criteria: 'Looks good' },
-              { id: 'bad', label: 'bad', criteria: 'Needs work' },
-            ],
-          },
-          evaluation: { kind: 'expression', jsonata: 'lastOutput.value.ok ? "good" : "bad"' },
+          kind: 'expression',
+          jsonata: 'lastOutput.value.ok ? "good" : "bad"',
+          routes: [
+            { id: 'good', label: 'good', criteria: 'Looks good' },
+            { id: 'bad', label: 'bad', criteria: 'Needs work' },
+          ].map(({ id, label }) => ({ id, label })),
         },
       },
       {
