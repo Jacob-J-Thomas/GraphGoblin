@@ -292,7 +292,7 @@ flowchart TB
 | Run listing                            | `apps/api/src/routes/runs.ts:144` pages through `SqliteTemplateInstances.runPage` (`packages/infrastructure/src/sqlite/templates.ts:158`)          |
 | Loop read and editor origin            | `apps/api/src/routes/loops.ts:228`, `apps/web/src/editor/EditorPage.tsx:79`                                                                        |
 | Contracts and domain                   | `packages/contracts/src/template-settings.ts:172`, `packages/contracts/src/template-manifest.ts:149`, `packages/domain/src/template-bundle.ts:213` |
-| Assets and examples                    | configured bundles under `apps/api/templates/*/manifest.json`, `parent.json`; `examples/aidlc` (1.4 MB)                                            |
+| Template bundles                       | configured bundles under `apps/api/templates/*/manifest.json` and `parent.json`                                                                    |
 
 The authority layer enforces repository containment, durable attempts and finite budgets for the GitHub implementation, review and QA templates; production QA isolation is reported unavailable (`apps/api/src/templates/github/qa-native.ts:29`). Under the owner's decision these become plain editable graphs whose GitHub effects come from ordinary nodes.
 
