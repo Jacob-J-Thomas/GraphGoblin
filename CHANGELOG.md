@@ -4,6 +4,10 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- `examples/aidlc` is removed. (#165 step 11)
+
+- Templates no longer install private runtime authority, credentials or finalization reporters. **Upgrade:** configured prerequisite, instantiate and instance endpoints and client helpers are removed; catalogue entries contain only `manifest`. Use `POST /templates/{id}/draft` for independent ordinary drafts. Loader, hooks and stored-data retirement continue in later #165 children. (#165, step 06 part 1)
+
 - Templates now load and clone only validated manual starting graphs. Configured implementation, review and QA services, private support entries, credentials/reporters, allocation/remapping and engine/storage callbacks are removed. **Upgrade:** catalogue entries contain only `manifest`; configured prerequisite, instantiate and instance endpoints and client helpers are removed. Use `POST /templates/{id}/draft` for independent ordinary drafts. Installed templates require a valid `draftFile`; asset faults return `TEMPLATE_PACKAGE_INVALID`. Configured storage/contracts and JSON asset removal remain for steps 09-10 and the coordinated cutover. Step 10 removes the dangling `supportEntry` paths from the manifests and web fixture. (#165, step 06 complete; steps 07-08 folded in)
 
 - Internal: centralized the current format (still 3), checked SQL-derived format-baseline readiness before startup writes and the full head after migrations, batched offline history inventory/apply with bounded fan-in canonical hashing, and restored the Drizzle snapshot baseline with a no-op generation gate. (#164, step 04)
