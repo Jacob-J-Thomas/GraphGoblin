@@ -2,6 +2,8 @@
 
 Status: Accepted from the owner's direct product instruction (2026-10-09)
 
+The configured runtime and backend retirement decision is completed by [ADR-0034](ADR-0034-retire-template-runtime-authority.md). Step 06 disconnects API authority and configured HTTP actions; remaining loader, hook, service and storage removal proceeds in bounded #165 children. The original text below is retained as history.
+
 ## Context
 
 ADR-0028 introduced editable template copies but retained an optional configured-automation action from ADR-0027. The owner rejects gallery setup: a template is a starting point for an ordinary loop, not a repository-bound instance. The owner has also decided to retire the template-instance backend and its privileged GitHub automation after the feature branch merges.

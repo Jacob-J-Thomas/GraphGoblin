@@ -245,22 +245,15 @@ describe('template typed settings', () => {
 
 describe('template manifest and public DTOs', () => {
   it('round-trips catalog/instance endpoints with one draft parent', () => {
-    const entry = {
-      manifest,
-      settingsSchema: z.toJSONSchema(StarterTemplateSettingsSchema),
-      defaultSettings: starter,
-      prerequisites: report,
-    };
+    const entry = { manifest: TemplateManifestSchema.parse(manifest) };
     expect(TemplateListResponseSchema.parse({ items: [entry] }).items[0]?.manifest.parentKey).toBe(
       'main',
     );
-    expect(TemplateCatalogEntrySchema.safeParse({ ...entry, defaultSettings: null }).success).toBe(
-      true,
-    );
-    expect(
-      TemplateCatalogEntrySchema.safeParse({ ...entry, manifest: { ...manifest, kind: 'qa' } })
-        .success,
-    ).toBe(false);
+    expect(TemplateCatalogEntrySchema.parse(entry)).toEqual(entry);
+    for (const removed of ['settingsSchema', 'defaultSettings', 'prerequisites'])
+      expect(TemplateCatalogEntrySchema.safeParse({ ...entry, [removed]: null }).success).toBe(
+        false,
+      );
     expect(TemplatePrerequisiteRequestSchema.parse({ settings: starter }).settings.kind).toBe(
       'starter',
     );

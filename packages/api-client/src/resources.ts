@@ -270,7 +270,7 @@ export const system = {
   installation: async (client: GraphGoblinClient) => unwrap(await client.GET('/system/preflight')),
 };
 
-/** Editable starting points and explicitly configured automation instances. */
+/** Installed starting points copied into ordinary editable drafts. */
 export const templates = {
   list: async (client: GraphGoblinClient) => unwrap(await client.GET('/templates')).items,
   get: async (client: GraphGoblinClient, templateId: string) =>
@@ -280,16 +280,4 @@ export const templates = {
     templateId: string,
     body: RequestBody<'/templates/{id}/draft', 'post'> = {},
   ) => unwrap(await client.POST('/templates/{id}/draft', { ...id(templateId), body })),
-  prerequisites: async (
-    client: GraphGoblinClient,
-    templateId: string,
-    body: RequestBody<'/templates/{id}/prerequisites', 'post'>,
-  ) => unwrap(await client.POST('/templates/{id}/prerequisites', { ...id(templateId), body })),
-  instantiate: async (
-    client: GraphGoblinClient,
-    templateId: string,
-    body: RequestBody<'/templates/{id}/instantiate', 'post'>,
-  ) => unwrap(await client.POST('/templates/{id}/instantiate', { ...id(templateId), body })),
-  instance: async (client: GraphGoblinClient, instanceId: string) =>
-    unwrap(await client.GET('/template-instances/{id}', id(instanceId))),
 };

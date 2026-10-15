@@ -2,7 +2,6 @@ import { z } from 'zod';
 import {
   TemplateInstanceSchema,
   TemplateSettingsSchemas,
-  type TemplateCatalogEntry,
   type TemplateInstantiateRequest,
   type TemplateInstantiateResponse,
 } from '@graphgoblin/contracts';
@@ -22,7 +21,7 @@ export class TemplateInstances {
     private readonly ids: IdPort,
     private readonly clock: ClockPort,
   ) {}
-  async entry(ownerId: string, id: string): Promise<TemplateCatalogEntry> {
+  async entry(ownerId: string, id: string) {
     const { bundle } = await this.catalog.get(id);
     const settings = await this.prerequisites.defaults(bundle.manifest);
     return {

@@ -43,7 +43,6 @@ const SCOPE_OVERRIDES: Record<string, string> = {
   // Starting a run is a run command, even though it is addressed through its loop.
   'POST /loops/:id/runs': 'runs:write',
   // Validation reads the loop and saves nothing.
-  'POST /templates/:id/prerequisites': 'loops:read',
   'POST /loops/:id/validate': 'loops:read',
   // Preview computes slots without saving or arming a schedule.
   'POST /triggers/cron/preview': 'loops:read',
@@ -52,7 +51,6 @@ const SCOPE_OVERRIDES: Record<string, string> = {
 /** Path segments that share another resource's scope. */
 const SCOPE_RESOURCE_ALIASES: Record<string, string> = {
   templates: 'loops',
-  'template-instances': 'loops',
   'model-catalog': 'settings',
   'classifier-models': 'settings',
   harness: 'system',
