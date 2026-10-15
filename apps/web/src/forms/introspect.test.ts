@@ -36,7 +36,7 @@ describe('introspect', () => {
       format: 'expression',
     });
     expect(shapeOf(JsonSchemaSchema.describe('A schema.'))).toEqual({ kind: 'json' });
-    expect(shapeOf(NodeConfigSchemas.decision.shape.evaluation)).toMatchObject({
+    expect(shapeOf(NodeConfigSchemas.decision)).toMatchObject({
       kind: 'union',
       discriminator: 'kind',
     });

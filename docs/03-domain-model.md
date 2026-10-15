@@ -26,7 +26,7 @@ Stored as JSON in `loop_versions.definition`, validated by `contracts`.
 
 ```ts
 type LoopDefinition = {
-  schemaVersion: 3;
+  schemaVersion: 4;
   name: string;
   description?: string;
   settings: {
@@ -65,7 +65,7 @@ type NodeKind =
   | 'exit';
 ```
 
-An edge's `ui.route` is canvas layout, like a node's `ui`: the positions of the route's inner segments in canvas coordinates, alternating the x of a vertical segment and the y of a horizontal one (`x, y, ..., x`, so an odd count from 1 to 63). The first and last segments are horizontal and run from the ports' own heights, so the route stays attached when a card moves. The route lives on the edge it draws: deleting the edge deletes it, renaming a node keeps it, and versions pin it with the rest of the definition. The engine ignores it. The route field itself does not change the format. Current definitions and exports use version 3; the offline upgrade preserves these routes.
+An edge's `ui.route` is canvas layout, like a node's `ui`: the positions of the route's inner segments in canvas coordinates, alternating the x of a vertical segment and the y of a horizontal one (`x, y, ..., x`, so an odd count from 1 to 63). The first and last segments are horizontal and run from the ports' own heights, so the route stays attached when a card moves. The route lives on the edge it draws: deleting the edge deletes it, renaming a node keeps it, and versions pin it with the rest of the definition. The engine ignores it. The route field itself does not change the format. Current definitions and exports use version 4; the integrated cutover preserves these routes.
 
 Validation rules enforced by `domain` before a version can be published:
 
@@ -79,7 +79,7 @@ Validation rules enforced by `domain` before a version can be published:
 Harness selection belongs to inference nodes (`config.harness`, default `codex`). Loop defaults
 provide only model and effort. Definitions containing `settings.defaults.harness` are rejected
 as unknown keys; imports and API clients must remove it. There is no compatibility parser.
-Current definition and export format versions are 3. Exit predicates declare an answer, evaluator and matching rule, sharing the primitive evaluator without changing their existing context. [ADR-0026](decisions/ADR-0026-exit-primitives-and-format-three.md) owns the stopped-instance exit cutover. Decision answers include Noul, Choice and Score; the output records the raw answer, stable selected port and evaluator provenance. [ADR-0025](decisions/ADR-0025-answer-primitives.md) adds the new primitives without changing existing Choice evidence or context serialization. Existing format-1 data follows the [offline upgrade workflow](guide/08-offline-upgrade.md). Harness ownership was established in [ADR-0019](decisions/ADR-0019-inference-node-harness.md); the later format cutover is [ADR-0022](decisions/ADR-0022-explicit-decision-evaluation.md).
+Current definitions and exports use format 4. Decisions are a strict union on kind: expressions return a declared route ID, LLMs use Liquid instructions and declared routes, and classifiers retain Choice, Noul and Score. Outputs contain portId, provenance and observation. Exit predicates temporarily use a separate predicate/match contract. [ADR-0035](decisions/ADR-0035-evaluator-specific-decisions.md) supersedes the earlier decision matrix and output shape. Frozen V3 conversion stages remain format 3; old stores and exports are refused until the integrated cutover adds the 3-to-4 stage. Thread format remains 1.
 
 ## Versioning (Decided)
 
@@ -221,7 +221,7 @@ Each event has `runId`, `seq`, `ts`, `type`, optional `nodeId`, and a typed `pay
 | `node.progress`                                                      | small structured progress from long nodes; harness items are summarised here |
 | `harness.session`                                                    | harness, sessionId, mode (`fresh` or `resumed`), model, effort               |
 | `harness.usage`                                                      | tokens as reported by the harness, informational                             |
-| `decision.made`                                                      | answer, portId, provenance, preserved historical diagnostics                 |
+| `decision.made`                                                      | portId, provenance, observation, at most three factual diagnostics           |
 | `signal.received`, `input.received`                                  | name, payload reference                                                      |
 | `heartbeat.beat`                                                     | beat number, probe result summary                                            |
 | `child_run.started`, `child_run.finished`                            | child run id, outcome                                                        |

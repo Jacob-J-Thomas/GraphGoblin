@@ -31,6 +31,11 @@ function body(kind: NodeKind, value: unknown, api = new FakeApi()) {
 }
 
 const decision = (model: string) => ({
+  recordAlternatives: true,
+  kind: 'classifier',
+  model,
+  question: 'Which?',
+  context: {},
   answer: {
     type: 'choice',
     options: [
@@ -38,64 +43,65 @@ const decision = (model: string) => ({
       { id: 'no', label: 'No', criteria: 'Choose no' },
     ],
   },
-  evaluation: { kind: 'classifier', model, question: 'Which?', context: {} },
-  recordAlternatives: true,
 });
 
 describe('classifier issue paths', () => {
-  it('config.evaluation.model focuses the classifier picker', async () => {
+  it('config.model focuses the classifier picker', async () => {
     const root = body('decision', decision('gone'));
-    const picker = within(screen.getByRole('group', { name: 'Evaluation' })).getByRole('combobox', {
+    const picker = screen.getByRole('combobox', {
       name: 'Model',
     });
     await waitFor(() => expect(within(picker).getAllByRole('option')).toHaveLength(2));
-    expect(focusIssuePath(root, 'config.evaluation.model')).toBe(true);
+    expect(focusIssuePath(root, 'config.model')).toBe(true);
     expect(picker).toHaveFocus();
   });
 
-  it('config.evaluation.model with an empty catalog focuses the picker', () => {
+  it('config.model with an empty catalog focuses the picker', () => {
     const api = new FakeApi();
     api.classifiers = [];
     const root = body('decision', decision('missing'), api);
-    expect(focusIssuePath(root, 'config.evaluation.model')).toBe(true);
-    const picker = within(screen.getByRole('group', { name: 'Evaluation' })).getByRole('combobox', {
+    expect(focusIssuePath(root, 'config.model')).toBe(true);
+    const picker = screen.getByRole('combobox', {
       name: 'Model',
     });
     expect(picker).toHaveFocus();
     expect(picker).toHaveValue('missing');
     // Without the node editor's custom picker, the whole union path names its method selector.
     picker.blur();
-    expect(focusIssuePath(root, 'config.evaluation')).toBe(true);
-    const evaluation = screen.getByRole('group', { name: 'Evaluation' });
-    const method = evaluation.querySelector<HTMLSelectElement>(':scope > div select');
+    expect(focusIssuePath(root, 'config.kind')).toBe(true);
+    const method = screen.getAllByLabelText('Kind')[0];
     expect(method).toBeInTheDocument();
     expect(method).toHaveFocus();
   });
 
-  it('config.criteria.N.evaluation.model focuses that exit criterion’s classifier picker', () => {
+  it('config.criteria.N.predicate.model focuses that exit criterion’s classifier picker', () => {
     const root = body('exit', {
       criteria: [
         { when: 'max-iterations', value: 3 },
         {
           when: 'predicate',
-          answer: {
-            type: 'noul',
-            true: { label: 'Done', criteria: 'The task is complete' },
-            false: { label: 'Pending', criteria: 'Work remains' },
-          },
-          evaluation: { kind: 'classifier', model: 'missing', question: 'Done?' },
           match: { type: 'noul', value: true },
           outcome: 'success',
+          predicate: {
+            kind: 'classifier',
+            model: 'missing',
+            question: 'Done?',
+            answer: {
+              type: 'noul',
+              true: { label: 'Done', criteria: 'The task is complete' },
+              false: { label: 'Pending', criteria: 'Work remains' },
+            },
+          },
         },
       ],
     });
-    expect(focusIssuePath(root, 'config.criteria.1.evaluation.model')).toBe(true);
+    expect(focusIssuePath(root, 'config.criteria.1.predicate.model')).toBe(true);
     const focused = document.activeElement as HTMLInputElement;
     expect(focused.tagName).toBe('SELECT');
     expect(focused).toHaveValue('missing');
     expect(focused.closest('[data-field]')).toHaveAttribute(
       'data-field',
-      'criteria.1.evaluation.model',
+      'criteria.1.predicate.model',
     );
   });
 });

@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
@@ -17,19 +18,19 @@ function loopWithThreshold(value: number): LoopDefinitionInput {
     criteria: [
       {
         when: 'predicate',
-        answer: {
-          type: 'noul',
-          true: { label: 'True', criteria: 'The answer is true' },
-          false: { label: 'False', criteria: 'The answer is false' },
-        },
-        evaluation: {
+        match: { type: 'noul', value: true },
+        outcome: 'success',
+        predicate: {
           kind: 'classifier',
           model: 'jev',
           question: 'Does the input support the statement?',
           truthThreshold: value,
+          answer: {
+            type: 'noul',
+            true: { label: 'True', criteria: 'The answer is true' },
+            false: { label: 'False', criteria: 'The answer is false' },
+          },
         },
-        match: { type: 'noul', value: true },
-        outcome: 'success',
       },
     ],
   });
@@ -91,7 +92,7 @@ describe('RunInspectorPage', () => {
     const api = new FakeApi();
     const definition = (truthThreshold: number) =>
       LoopDefinitionSchema.parse({
-        schemaVersion: 3,
+        schemaVersion: CURRENT_DEFINITION_FORMAT,
         name: 'Pinned threshold',
         nodes: [
           {
@@ -99,16 +100,14 @@ describe('RunInspectorPage', () => {
             kind: 'decision',
             label: 'Check',
             config: {
+              kind: 'classifier',
+              model: 'jev',
+              question: 'Check the evidence.',
+              truthThreshold,
               answer: {
                 type: 'noul',
                 true: { id: 'true', label: 'True', criteria: 'The check passes' },
                 false: { id: 'false', label: 'False', criteria: 'The check fails' },
-              },
-              evaluation: {
-                kind: 'classifier',
-                model: 'jev',
-                question: 'Check the evidence.',
-                truthThreshold,
               },
             },
           },
@@ -124,13 +123,6 @@ describe('RunInspectorPage', () => {
       run.id,
       event(run.id, 1, 'decision.made', {
         nodeId: 'check',
-        answer: {
-          type: 'noul',
-          kind: 'classifier',
-          holds: true,
-          trueProbability: 0.6,
-          confidence: 0.91,
-        },
         portId: 'true',
         provenance: {
           kind: 'classifier',
@@ -140,6 +132,15 @@ describe('RunInspectorPage', () => {
           effort: null,
         },
         diagnostics: [],
+        observation: {
+          kind: 'classifier',
+          answer: {
+            type: 'noul',
+            holds: true,
+            trueProbability: 0.6,
+            confidence: 0.91,
+          },
+        },
       }),
     );
     renderApp(`/runs/${run.id}`, api);
@@ -217,7 +218,6 @@ describe('RunInspectorPage', () => {
       run.id,
       event(run.id, 2, 'decision.made', {
         nodeId: 'choose',
-        answer: { type: 'choice', optionId: 'yes', confidence: null, probabilities: null },
         portId: 'yes',
         provenance: {
           kind: 'expression',
@@ -239,6 +239,12 @@ describe('RunInspectorPage', () => {
             message: 'The selected classifier is disabled',
           },
         ],
+        observation: {
+          kind: 'route',
+          routeId: 'yes',
+          confidence: null,
+          reasoning: null,
+        },
       }),
     );
     api.pushEvent(
@@ -252,13 +258,6 @@ describe('RunInspectorPage', () => {
             index: 0,
             strategy: 'classifier',
             status: 'not-matched',
-            answer: {
-              type: 'noul',
-              kind: 'classifier',
-              holds: false,
-              trueProbability: 0.2,
-              confidence: 0.4,
-            },
             provenance: {
               kind: 'classifier',
               provider: 'typesafe',
@@ -274,18 +273,20 @@ describe('RunInspectorPage', () => {
             match: { type: 'noul', value: false },
             configuredMinConfidence: 0.8,
             rejection: { kind: 'classifier-confidence', minimum: 0.8, confidence: 0.4 },
+            observation: {
+              kind: 'classifier',
+              answer: {
+                type: 'noul',
+                holds: false,
+                trueProbability: 0.2,
+                confidence: 0.4,
+              },
+            },
           },
           {
             index: 1,
             strategy: 'llm',
             status: 'matched',
-            answer: {
-              type: 'noul',
-              kind: 'llm',
-              holds: true,
-              confidence: 0.93,
-              reasoning: 'All checks passed',
-            },
             provenance: {
               kind: 'llm',
               provider: 'codex',
@@ -294,7 +295,17 @@ describe('RunInspectorPage', () => {
               effort: 'low',
             },
             acceptance: { status: 'accepted' },
-            match: { type: 'noul', value: true, minReportedConfidence: 0.8 },
+            match: {
+              type: 'boolean',
+              value: true,
+              minReportedConfidence: 0.8,
+            },
+            observation: {
+              kind: 'boolean',
+              holds: true,
+              confidence: 0.93,
+              reasoning: 'All checks passed',
+            },
           },
           {
             index: 2,
@@ -314,7 +325,7 @@ describe('RunInspectorPage', () => {
     renderApp(`/runs/${run.id}`, api);
     const timeline = await screen.findByRole('list', { name: 'Timeline' });
     expect(
-      await within(timeline).findByText(/Exited: criterion 2 \(Codex\) matched: Noul true/),
+      await within(timeline).findByText(/Exited: criterion 2 \(Codex\) matched: Boolean true/),
     ).toBeInTheDocument();
     expect(
       within(timeline).getByText(/CLASSIFIER_MODEL_DISABLED: The selected classifier is disabled/),
@@ -325,7 +336,7 @@ describe('RunInspectorPage', () => {
     expect(criteria).toHaveTextContent('Noul is false');
     expect(criteria).toHaveTextContent('treated as a nonmatch');
     expect(criteria).toHaveTextContent('judge-model');
-    expect(criteria).toHaveTextContent('Reasoning excerpt: All checks passed');
+    expect(criteria).toHaveTextContent('Reasoning excerptAll checks passed');
     expect(criteria).toHaveTextContent(
       'Criterion 3 (Expression): skipped: An earlier criterion matched',
     );
@@ -354,13 +365,6 @@ describe('RunInspectorPage', () => {
             index: 0,
             strategy: 'classifier',
             status: 'not-matched',
-            answer: {
-              type: 'noul',
-              kind: 'classifier',
-              holds: false,
-              trueProbability: 0.2,
-              confidence: 0.9,
-            },
             provenance: {
               kind: 'classifier',
               provider: 'typesafe',
@@ -370,6 +374,15 @@ describe('RunInspectorPage', () => {
             },
             acceptance: { status: 'accepted' },
             match: { type: 'noul', value: true },
+            observation: {
+              kind: 'classifier',
+              answer: {
+                type: 'noul',
+                holds: false,
+                trueProbability: 0.2,
+                confidence: 0.9,
+              },
+            },
           },
         ],
         result: { kind: 'completed', reason: 'default-success', outcome: 'success' },
@@ -416,7 +429,6 @@ describe('RunInspectorPage', () => {
         run.id,
         event(run.id, 7, 'decision.made', {
           nodeId: 'decide',
-          answer: { type: 'choice', optionId: 'good', confidence: null, probabilities: null },
           portId: 'good',
           provenance: {
             kind: 'expression',
@@ -426,6 +438,12 @@ describe('RunInspectorPage', () => {
             effort: null,
           },
           diagnostics: [],
+          observation: {
+            kind: 'route',
+            routeId: 'good',
+            confidence: null,
+            reasoning: null,
+          },
         }),
       ),
     );

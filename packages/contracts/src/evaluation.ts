@@ -260,7 +260,9 @@ export const ExpressionPredicateConfigSchema = z
       });
   });
 export const ExpressionDecisionConfigSchema = ExpressionPredicateConfigSchema.safeExtend({
-  routes: RouteDeclarationsSchema.meta(field('Two to sixty-four stable readable routes.')),
+  routes: RouteDeclarationsSchema.meta(
+    field('Two to sixty-four stable readable routes.', { jsonEditor: true }),
+  ),
 });
 export const LlmPredicateConfigSchema = z.strictObject({
   kind: z.literal('llm').meta(field('Use a structured Codex evaluation.')),
@@ -270,7 +272,9 @@ export const LlmPredicateConfigSchema = z.strictObject({
   effort: EffortSelectionSchema.meta(field('Inherit or explicitly select reasoning effort.')),
 });
 export const LlmDecisionConfigSchema = LlmPredicateConfigSchema.extend({
-  routes: RouteDeclarationsSchema.meta(field('Declared stable route ids and readable labels.')),
+  routes: RouteDeclarationsSchema.meta(
+    field('Declared stable route ids and readable labels.', { jsonEditor: true }),
+  ),
   context: DecisionContextSchema.prefault({}).meta(
     field('Selected provider context.', { context: true, jsonEditor: true }),
   ),
@@ -281,13 +285,23 @@ export const ClassifierEvaluationConfigSchema = z.strictObject({
     field('Explicit classifier catalog id.', { control: 'classifier' }),
   ),
   question: TemplateSchema.meta(field('Liquid classifier question.')),
-  minConfidence: z.number().min(0).max(1).optional().meta(field('Classifier confidence minimum.')),
+  minConfidence: z
+    .number()
+    .min(0)
+    .max(1)
+    .optional()
+    .meta(field('Classifier confidence minimum.', { advanced: true, group: 'Acceptance' })),
   truthThreshold: z
     .number()
     .min(0)
     .max(1)
     .optional()
-    .meta(field('Noul true probability threshold; omission means 0.5.')),
+    .meta(
+      field('Noul true probability threshold; omission means 0.5.', {
+        advanced: true,
+        group: 'Acceptance',
+      }),
+    ),
 });
 const classifierThreshold = (
   config: { answer: { type: string }; truthThreshold?: number | undefined },
@@ -310,7 +324,9 @@ export const ClassifierDecisionConfigSchema = ClassifierEvaluationConfigSchema.e
   recordAlternatives: z
     .boolean()
     .default(true)
-    .meta(field('Record classifier probability alternatives.')),
+    .meta(
+      field('Record classifier probability alternatives.', { advanced: true, group: 'Recording' }),
+    ),
 }).superRefine(classifierThreshold);
 export const DecisionConfigSchema = z.discriminatedUnion('kind', [
   ExpressionDecisionConfigSchema,

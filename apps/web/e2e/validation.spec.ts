@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 /**
  * Regression specs for #15: validation issues as a badge with a popover on each node, the same
  * badge beside the node editor's title, and the loop's counts beside Publish, in a real browser:
@@ -196,7 +197,7 @@ test('an issue only the server finds (a bad cron expression) shows on the badge 
   request,
 }) => {
   const loopId = await createLoop(request, {
-    schemaVersion: 3,
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
     name: 'qa badge cron',
     nodes: [
       {
@@ -238,7 +239,7 @@ test('a reloaded server draft is checked again, not answered from the draft load
   request,
 }) => {
   const definition = (expression: string) => ({
-    schemaVersion: 3,
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
     name: 'qa reload check',
     nodes: [
       {
@@ -280,7 +281,7 @@ test('loop-level issues stay in sight beside Publish, which refuses with the sam
   request,
 }) => {
   const loopId = await createLoop(request, {
-    schemaVersion: 3,
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
     name: 'qa badge no exit',
     nodes: [
       {

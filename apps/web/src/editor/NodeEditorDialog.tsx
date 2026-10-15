@@ -2,7 +2,7 @@ import {
   NodeConfigSchemas,
   SlugSchema,
   type LoopDefinitionInput,
-  type DecisionAnswer,
+  type ClassifierAnswerConfig,
   type NodeInput,
 } from '@graphgoblin/contracts';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
@@ -24,10 +24,10 @@ import { VariableSuggestionsContext } from '../forms/fields/suggestions.js';
 import { JsonApplyReviewContext } from '../forms/fields/json.js';
 import { removedAnswerConnections } from './decision-route-edges.js';
 import { nextChangeId } from '../forms/changes.js';
-import { isUnset } from '../forms/unset.js';
 import { DecisionKindPicker } from './DecisionKindPicker.js';
 import { DecisionAnswerPicker } from './DecisionAnswerPicker.js';
-import { EXIT_PREDICATE_FIELD_OVERRIDES } from './ExitPredicateFields.js';
+
+import { exitPredicateVariantChange } from './ExitPredicateFields.js';
 import { TriggerPresets } from './TriggerPresets.js';
 import { CatalogWarningsContext } from '../forms/fields/model.js';
 import { canvasFocusTarget } from './canvas-focus.js';
@@ -42,13 +42,13 @@ import { useEditorStore } from './store.js';
 
 /** Why `draft` cannot become the id of node `nodeId`, or undefined when it can (or is unchanged). */
 const DECISION_UNION_PICKERS = {
+  '': DecisionKindPicker,
   answer: DecisionAnswerPicker,
-  evaluation: DecisionKindPicker,
 };
-const DECISION_FIELD_ORDER = ['answer', 'evaluation'] as const;
+const DECISION_FIELD_ORDER = ['instructions', 'jsonata', 'routes', 'answer'] as const;
 const DECISION_FIELD_LABELS = {
-  'evaluation.minConfidence': 'Min confidence',
-  'evaluation.truthThreshold': 'Noul true-probability threshold',
+  minConfidence: 'Min confidence',
+  truthThreshold: 'Noul true-probability threshold',
 };
 const POLL_FIELD_LABELS = {
   dedupeKey: 'Whole-probe dedupe key (single-result only)',
@@ -79,176 +79,9 @@ function record(value: unknown): Record<string, unknown> {
     : {};
 }
 
-function answerType(config: unknown): DecisionAnswer['type'] | undefined {
+function answerType(config: unknown): ClassifierAnswerConfig['type'] | undefined {
   const type = record(record(config)['answer'])['type'];
   return type === 'choice' || type === 'noul' || type === 'score' ? type : undefined;
-}
-
-const EXIT_ANSWER_DEFAULTS = {
-  choice: {
-    type: 'choice',
-    options: [
-      { id: 'yes', label: 'Yes', criteria: 'The predicate matches' },
-      { id: 'no', label: 'No', criteria: 'The predicate does not match' },
-    ],
-  },
-  noul: {
-    type: 'noul',
-    true: { label: 'True', criteria: 'The predicate is true' },
-    false: { label: 'False', criteria: 'The predicate is false' },
-  },
-  score: {
-    type: 'score',
-    anchors: ['Does not meet the rubric', 'Partly meets the rubric', 'Fully meets the rubric'],
-  },
-} as const;
-
-function answerPrimitive(value: unknown): 'choice' | 'noul' | 'score' | undefined {
-  const type = record(value)['type'];
-  return type === 'choice' || type === 'noul' || type === 'score' ? type : undefined;
-}
-
-function exitMatchDefault(answer: Record<string, unknown>) {
-  const type = answerPrimitive(answer);
-  if (type === 'choice') {
-    const options = Array.isArray(answer['options']) ? answer['options'].map(record) : [];
-    const first = options.find(
-      (option) => typeof option['id'] === 'string' && option['id'] !== '',
-    )?.['id'];
-    return {
-      type,
-      optionIds: typeof first === 'string' ? [first] : [],
-    };
-  }
-  if (type === 'score') return { type, operator: 'gte', value: 0 };
-  return {
-    type: 'noul',
-    value: true,
-  };
-}
-
-/** Keep an exit predicate's answer, evaluator and match variants in a usable combination. */
-function exitPredicateVariantChange(config: unknown, previous: unknown, path?: string): unknown {
-  const changed = /^criteria\.(\d+)(?:\.(answer|evaluation))?$/.exec(path ?? '');
-  if (!changed) return config;
-  const index = Number(changed[1]);
-  const section = changed[2];
-  const currentConfig = record(config);
-  const previousConfig = record(previous);
-  const criteria: unknown[] = Array.isArray(currentConfig['criteria'])
-    ? currentConfig['criteria']
-    : [];
-  const oldCriteria: unknown[] = Array.isArray(previousConfig['criteria'])
-    ? previousConfig['criteria']
-    : [];
-  const row = record(criteria[index]);
-  if (row['when'] !== 'predicate') return config;
-  const oldRow = record(oldCriteria[index]);
-  let answer = { ...record(row['answer']) };
-  let evaluation = { ...record(row['evaluation']) };
-  const oldAnswerType = answerPrimitive(oldRow['answer']);
-  let answerTypeNow = answerPrimitive(answer);
-  const oldEvaluationKind = record(oldRow['evaluation'])['kind'];
-  let evaluationKindNow = evaluation['kind'];
-  let changedRow = { ...row };
-  const newPredicate = section === undefined && oldRow['when'] !== 'predicate';
-  const answerChanged =
-    section === 'answer' && oldAnswerType !== answerTypeNow && answerTypeNow !== undefined;
-  const evaluationChanged =
-    section === 'evaluation' &&
-    oldEvaluationKind !== evaluationKindNow &&
-    (evaluationKindNow === 'expression' ||
-      evaluationKindNow === 'classifier' ||
-      evaluationKindNow === 'llm');
-  if (!newPredicate && !answerChanged && !evaluationChanged) return config;
-
-  if (newPredicate) {
-    // Expression exit predicates are Noul-only, so start with the coherent boolean form.
-    answer = { type: 'noul' };
-    answerTypeNow = 'noul';
-    evaluation = { kind: 'expression', jsonata: 'true' };
-    evaluationKindNow = 'expression';
-  }
-
-  if (answerChanged) {
-    if (answerTypeNow === 'noul') {
-      Object.assign(
-        answer,
-        evaluationKindNow === 'expression' ? { type: 'noul' } : EXIT_ANSWER_DEFAULTS.noul,
-      );
-    } else if (answerTypeNow === 'choice' && !Array.isArray(answer['options'])) {
-      Object.assign(answer, EXIT_ANSWER_DEFAULTS.choice);
-    }
-    if (answerTypeNow === 'score' && evaluationKindNow !== 'classifier') {
-      const question =
-        typeof evaluation['question'] === 'string'
-          ? evaluation['question']
-          : 'Evaluate the current input against the ordered rubric.';
-      evaluation = { kind: 'classifier', model: '', question };
-      evaluationKindNow = 'classifier';
-    } else if (evaluationKindNow === 'expression' && answerTypeNow === 'choice') {
-      evaluation = {
-        kind: 'classifier',
-        model: '',
-        question: 'Evaluate the current input against the declared Choice options.',
-      };
-      evaluationKindNow = 'classifier';
-    } else if (evaluationKindNow === 'expression') {
-      const first = Array.isArray(answer['options'])
-        ? record(answer['options'][0])['id']
-        : undefined;
-      evaluation = {
-        ...evaluation,
-        jsonata:
-          answerTypeNow === 'noul'
-            ? 'true'
-            : JSON.stringify(typeof first === 'string' ? first : 'yes'),
-      };
-    }
-  }
-
-  if (evaluationChanged) {
-    if (answerTypeNow === 'noul') {
-      if (evaluationKindNow === 'expression') answer = { type: 'noul' };
-      else if (!('true' in answer) || !('false' in answer))
-        Object.assign(answer, EXIT_ANSWER_DEFAULTS.noul);
-    }
-  }
-
-  if (
-    (answerChanged || evaluationChanged) &&
-    answerTypeNow === 'score' &&
-    evaluationKindNow !== 'classifier'
-  ) {
-    // Score cannot be authored with expression or Codex. Keep the question when converting LLM.
-    const question =
-      typeof evaluation['question'] === 'string'
-        ? evaluation['question']
-        : 'Evaluate the current input against the ordered rubric.';
-    evaluation = { kind: 'classifier', model: '', question };
-  }
-
-  const priorMatch = record(row['match']);
-  let match = priorMatch;
-  if (newPredicate) {
-    match = { type: 'noul', value: true };
-  } else if (answerChanged && priorMatch['type'] !== answerTypeNow) {
-    const nextMatch = exitMatchDefault(answer);
-    const preserveReportedMinimum =
-      evaluationKindNow === 'llm' &&
-      (oldAnswerType === 'noul' || oldAnswerType === 'choice') &&
-      (answerTypeNow === 'noul' || answerTypeNow === 'choice') &&
-      Object.hasOwn(priorMatch, 'minReportedConfidence') &&
-      !isUnset(priorMatch['minReportedConfidence']);
-    match = preserveReportedMinimum
-      ? { ...nextMatch, minReportedConfidence: priorMatch['minReportedConfidence'] }
-      : nextMatch;
-  }
-  changedRow = { ...row, answer, evaluation, match };
-  const nextCriteria = criteria.map((criterion, rowIndex) =>
-    rowIndex === index ? changedRow : criterion,
-  );
-  return { ...currentConfig, criteria: nextCriteria };
 }
 
 const ANSWER_DEFAULTS = {
@@ -273,48 +106,16 @@ const ANSWER_DEFAULTS = {
       { id: 'high', label: 'High', min: 1.5, max: 2 },
     ],
   },
-} satisfies Record<DecisionAnswer['type'], DecisionAnswer>;
+} satisfies Record<ClassifierAnswerConfig['type'], ClassifierAnswerConfig>;
 
-/** Keep a newly selected primitive usable before the user fills its route-specific fields. */
+/** Supply a complete classifier primitive when its type changes. */
 function decisionVariantChange(next: unknown, previous: unknown): unknown {
-  const nextConfig = record(next);
-  const oldType = answerType(previous);
-  const nextType = answerType(next);
-  if (!nextType || nextType === oldType) return next;
-
-  const answer = ANSWER_DEFAULTS[nextType];
-  const rawEvaluation = record(nextConfig['evaluation']);
-  const kind = rawEvaluation['kind'];
-  let evaluation: unknown = nextConfig['evaluation'];
-  if (kind === 'classifier') {
-    const classifier = { ...rawEvaluation };
-    if (nextType !== 'noul') delete classifier['truthThreshold'];
-    evaluation = classifier;
-  } else if (kind === 'llm' && nextType === 'score') {
-    evaluation = {
-      kind: 'classifier',
-      model: 'jev',
-      question: Object.hasOwn(rawEvaluation, 'question')
-        ? rawEvaluation['question']
-        : 'Score the input against the ordered rubric.',
-      context: Object.hasOwn(rawEvaluation, 'context')
-        ? rawEvaluation['context']
-        : { messages: 'last', includeLastOutput: true },
-    };
-  } else if (kind === 'expression' && nextType === 'score') {
-    evaluation = {
-      kind: 'classifier',
-      model: 'jev',
-      question: 'Score the input against the ordered rubric.',
-      context: { messages: 'last', includeLastOutput: true },
-    };
-  } else if (kind === 'expression') {
-    evaluation = {
-      ...rawEvaluation,
-      jsonata: nextType === 'noul' ? 'true' : '"yes"',
-    };
-  }
-  return { ...nextConfig, answer, evaluation };
+  const config = record(next);
+  const type = answerType(next);
+  if (config['kind'] !== 'classifier' || !type || type === answerType(previous)) return next;
+  const normalized: Record<string, unknown> = { ...config, answer: ANSWER_DEFAULTS[type] };
+  if (type !== 'noul') delete normalized['truthThreshold'];
+  return normalized;
 }
 
 /** The heading of the dialog `from` sits in (it names the dialog). */
@@ -349,7 +150,7 @@ interface IdDraft {
 
 interface PendingAnswerFocus {
   nodeId: string;
-  answerType: DecisionAnswer['type'];
+  answerType: ClassifierAnswerConfig['type'];
   epoch: number;
   historyEpoch: number;
 }
@@ -383,6 +184,7 @@ export function NodeEditorDialog({
   const historyEpoch = useEditorStore((s) => s.historyEpoch);
   const bodyRef = useRef<HTMLElement>(null);
   const pendingHarnessFocusRef = useRef(false);
+  const pendingPredicateFocusRef = useRef<string | undefined>(undefined);
   const pendingAnswerFocusRef = useRef<PendingAnswerFocus | undefined>(undefined);
   const [epoch, setEpoch] = useState(0);
   // Which of the config form's disclosures are open (Advanced, collapsed list items). Kept here,
@@ -415,7 +217,7 @@ export function NodeEditorDialog({
   const variables = useMemo(() => Object.keys(definition.variables ?? {}), [definition.variables]);
   const reviewJsonApply = useMemo(
     () => (path: string, next: unknown) =>
-      node.kind === 'decision' && path === 'answer'
+      node.kind === 'decision' && (path === 'answer' || path === 'routes')
         ? removedAnswerConnections(definition.edges, node.id, next).map((edge) => ({
             id: edge.id,
             description: `${edge.from.port ?? '(no route)'} → ${edge.to.node}`,
@@ -447,6 +249,13 @@ export function NodeEditorDialog({
     const timer = setTimeout(() => useEditorStore.getState().clearNodeFocus(), 0);
     return () => clearTimeout(timer);
   }, [nodeFocus, node.id]);
+
+  useLayoutEffect(() => {
+    const path = pendingPredicateFocusRef.current;
+    if (path === undefined) return;
+    pendingPredicateFocusRef.current = undefined;
+    focusIssue(bodyRef.current, `config.${path}`);
+  }, [epoch]);
 
   useLayoutEffect(() => {
     if (!pendingHarnessFocusRef.current) return;
@@ -525,11 +334,12 @@ export function NodeEditorDialog({
       return;
     }
     if (node.kind === 'exit') {
-      updateNode(
-        node.id,
-        { config: exitPredicateVariantChange(config, node.config, change?.path) },
-        change,
-      );
+      const normalized = exitPredicateVariantChange(config, node.config, change?.path);
+      if (normalized !== config) {
+        pendingPredicateFocusRef.current = change?.path;
+        setEpoch((current) => current + 1);
+      }
+      updateNode(node.id, { config: normalized }, change);
       return;
     }
     updateNode(node.id, { config }, change);
@@ -687,13 +497,7 @@ export function NodeEditorDialog({
                     label={`${node.id} config`}
                     controls={NODE_FIELD_CONTROLS}
                     unionPickers={node.kind === 'decision' ? DECISION_UNION_PICKERS : undefined}
-                    fieldOverrides={
-                      node.kind === 'decision'
-                        ? DECISION_FIELD_OVERRIDES
-                        : node.kind === 'exit'
-                          ? EXIT_PREDICATE_FIELD_OVERRIDES
-                          : undefined
-                    }
+                    fieldOverrides={node.kind === 'decision' ? DECISION_FIELD_OVERRIDES : undefined}
                     problems={configProblems}
                     disclosures={disclosures}
                     onChange={handleConfigChange}

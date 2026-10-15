@@ -19,8 +19,9 @@ export const NODE_DOCS = {
   },
   decision: {
     title: 'Decision',
-    purpose: 'Chooses one option using an explicit expression, classifier, or LLM evaluator.',
-    ports: 'One output per stable option id; labels are display text.',
+    purpose: 'Chooses a route using an expression, LLM instructions, or a classifier primitive.',
+    ports: 'Declared route ids for expression/LLM; classifier option, side or band ids.',
+    variantKey: 'kind',
   },
   inference: {
     title: 'Inferencing',

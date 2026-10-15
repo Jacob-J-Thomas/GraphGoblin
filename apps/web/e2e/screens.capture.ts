@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 /**
  * Screenshots of every screen and its main states at four widths in both themes (#41, #11).
  *
@@ -100,7 +101,7 @@ function chain(name: string, description: string, middle: Record<string, unknown
     from: { node: nodes[i]!['id'], port: 'out' },
     to: { node: node['id'] },
   }));
-  return { schemaVersion: 3, name, description, nodes, edges };
+  return { schemaVersion: CURRENT_DEFINITION_FORMAT, name, description, nodes, edges };
 }
 
 const ask = (id: string, label: string, template: string) => ({
@@ -120,7 +121,7 @@ function nightlyTriage(childLoopId: string) {
     ui: at(x, y),
   });
   return {
-    schemaVersion: 3,
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
     name: 'nightly-triage',
     description: 'Triages new issues every night and opens a fix when one is needed',
     nodes: [

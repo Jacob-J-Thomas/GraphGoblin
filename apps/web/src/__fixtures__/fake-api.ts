@@ -518,14 +518,14 @@ export class FakeApi {
    */
   classifierIssues(definition: LoopDefinition): LoopIssue[] {
     return definition.nodes.flatMap((node): LoopIssue[] => {
-      if (node.kind !== 'decision' || node.config.evaluation.kind !== 'classifier') return [];
-      const id = node.config.evaluation.model;
+      if (node.kind !== 'decision' || node.config.kind !== 'classifier') return [];
+      const id = node.config.model;
       const entry = this.classifiers.find((c) => c.id === id);
       const issue = (code: string, severity: 'error' | 'warning', message: string): LoopIssue => ({
         code,
         severity,
         nodeId: node.id,
-        path: 'config.evaluation.model',
+        path: 'config.model',
         message: `Decision '${node.label}' (${node.id}), classifier '${entry?.displayName ?? id}' (${id}): ${message}`,
       });
       if (!entry) return [issue('CLASSIFIER_MODEL_NOT_FOUND', 'error', 'model not found.')];

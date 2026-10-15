@@ -37,3 +37,4 @@ One file per decision. Status is Accepted unless stated. Supersede by adding a n
 | [0031](ADR-0031-mounted-context-tabs.md)                 | Mounted Context tabs in node forms                                                             |
 | [0032](ADR-0032-section-json-editing.md)                 | Explicit schema-validated section JSON with session-held text                                  |
 | [0033](ADR-0033-loop-deletion-removes-runs.md)           | Loop deletion atomically removes its runs and dependent history                                |
+| [0035](ADR-0035-evaluator-specific-decisions.md)         | Evaluator-specific decisions, factual observations and format 4                                |

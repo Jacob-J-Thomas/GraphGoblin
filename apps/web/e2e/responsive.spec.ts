@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 /**
  * Responsive review (#41): both stored themes, every page and transient state at four widths,
  * all nine node dialogs at 360/768 px, pointer and keyboard authoring at 768 px, coarse-pointer
@@ -184,15 +185,18 @@ async function seedDialogs(request: Parameters<typeof publishLoop>[0]) {
     [
       'decision',
       {
-        answer: {
-          type: 'choice',
-          options: [
-            { id: 'yes', label: 'Continue', criteria: 'Continue the work' },
-            { id: 'no', label: 'Stop', criteria: 'Stop the work' },
-          ],
-        },
-        evaluation: { kind: 'expression', jsonata: '"yes"' },
-        recordAlternatives: true,
+        kind: 'expression',
+        jsonata: '"yes"',
+        routes: [
+          {
+            id: 'yes',
+            label: 'Continue',
+          },
+          {
+            id: 'no',
+            label: 'Stop',
+          },
+        ],
       },
     ],
     ['inference', { prompt: { template: 'Summarise {{ lastMessage.content }}' } }],
@@ -206,7 +210,7 @@ async function seedDialogs(request: Parameters<typeof publishLoop>[0]) {
   const created = await request.post('/loops', {
     data: {
       definition: {
-        schemaVersion: 3,
+        schemaVersion: CURRENT_DEFINITION_FORMAT,
         name: 'responsive dialogs',
         nodes: configs.map(([kind, config], i) => ({
           id: kind,
@@ -878,16 +882,22 @@ for (const theme of ['dark', 'light'] as const) {
             kind: 'decision',
             label: 'Decide',
             config: {
-              answer: {
-                type: 'choice',
-                options: [
-                  { id: 'yes', label: 'Continue', criteria: 'Continue the work' },
-                  { id: 'no', label: 'Stop', criteria: 'Stop the work' },
-                  { id: 'later', label: 'Wait', criteria: 'Wait before continuing' },
-                ],
-              },
-              evaluation: { kind: 'expression', jsonata: '"yes"' },
-              recordAlternatives: true,
+              kind: 'expression',
+              jsonata: '"yes"',
+              routes: [
+                {
+                  id: 'yes',
+                  label: 'Continue',
+                },
+                {
+                  id: 'no',
+                  label: 'Stop',
+                },
+                {
+                  id: 'later',
+                  label: 'Wait',
+                },
+              ],
             },
             ui: { x: 0, y: 0 },
           },

@@ -26,6 +26,15 @@ interface AnswerRows {
 
 /** The stable route IDs, in the answer's authored order, even while other fields are incomplete. */
 function answerRows(config: unknown): AnswerRows | undefined {
+  const raw = record(config);
+  if ((raw['kind'] === 'expression' || raw['kind'] === 'llm') && Array.isArray(raw['routes']))
+    return {
+      collectionPath: 'routes',
+      rows: raw['routes'].map((value) => {
+        const id = record(value)['id'];
+        return { id: typeof id === 'string' ? id : undefined };
+      }),
+    };
   const answer = record(record(config)['answer']);
   const type = answer['type'];
   if (type === 'choice' || type === 'score') {
@@ -57,7 +66,7 @@ function answerRows(config: unknown): AnswerRows | undefined {
 
 /** The edited stable-ID row, including the fixed true/false slots of Noul. */
 function editedIndex(path: string | undefined): number | undefined {
-  const collection = /^answer\.(?:options|bands)\.(\d+)\.id$/.exec(path ?? '');
+  const collection = /^(?:answer\.(?:options|bands)|routes)\.(\d+)\.id$/.exec(path ?? '');
   if (collection) return Number(collection[1]);
   const side = /^answer\.(true|false)\.id$/.exec(path ?? '')?.[1];
   return side === 'true' ? 0 : side === 'false' ? 1 : undefined;
@@ -69,7 +78,11 @@ export function removedAnswerConnections(
   nodeId: string,
   answer: unknown,
 ): LoopDefinitionInput['edges'] {
-  const ids = new Set(answerRows({ answer })?.rows.map((row) => row.id));
+  const ids = new Set(
+    answerRows(
+      Array.isArray(answer) ? { kind: 'expression', routes: answer } : { answer },
+    )?.rows.map((row) => row.id),
+  );
   return edges.filter((edge) => edge.from.node === nodeId && !ids.has(edge.from.port));
 }
 
@@ -167,7 +180,7 @@ export function decisionRouteEdges(
         for (const edge of removedAnswerConnections(
           definition.edges,
           node.id,
-          record(node.config)['answer'],
+          record(node.config)['routes'] ?? record(node.config)['answer'],
         ))
           removed.add(edge.id);
       } else {

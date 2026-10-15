@@ -25,33 +25,27 @@ Invalid cron schedules produce `CRON_INVALID` issues with the trigger's nodeId a
 an expression issue in the editor opens the schedule's Advanced group and focuses
 the raw expression; a timezone issue focuses the time zone control.
 
-## Decision (Decided, #98 and #97)
+## Decision (Decided, #164 D1)
 
-Evaluates one selected method and follows the stable output port for its answer. Choose the answer type independently from the evaluation kind:
+Choose one `kind`; its fields describe that evaluator directly. See [ADR-0035](decisions/ADR-0035-evaluator-specific-decisions.md).
 
-| Answer | Expression                  | Classifier              | LLM (Codex)          |
-| ------ | --------------------------- | ----------------------- | -------------------- |
-| Choice | A declared string option ID | Choice probabilities    | Structured option ID |
-| Noul   | A strict boolean            | True probability        | Structured boolean   |
-| Score  | Unsupported                 | Fractional rubric index | Unsupported          |
+| Kind         | Required authored fields                                                                      | Result and ports                                               |
+| ------------ | --------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| `expression` | `jsonata`, `routes`                                                                           | One JSONata snippet returns a declared scalar route ID.        |
+| `llm`        | Liquid `instructions`, `routes`, `harness: "codex"`, inherit-or-explicit `model` and `effort` | A checked structured completion chooses one declared route.    |
+| `classifier` | catalog `model`, Liquid `question`, `answer`                                                  | Choice options, Noul sides or Score bands derive stable ports. |
 
-**Choice** declares two to sixty-four options, subject to actual provider limits. Each has a stable id, a unique readable label and a nonblank criterion. Renaming or reordering a label keeps the connection attached to its ID. Expressions must return one declared string ID; values are not implicitly stringified.
+Expression and LLM `routes` are 2-64 `{id,label}` declarations. IDs are unique bounded slugs, excluding `in`; trimmed labels are unique, nonblank and at most 120 characters. A plain check becomes a route-returning expression, for example `vars.done ? "done" : "retry"`, with both routes declared.
 
-**Noul** declares true and false sides, each with a stable port ID, label and criterion. The classifier receives both criteria and returns the raw probability of true. A probability at or above the truth threshold selects true; the default is 0.5. Chosen-side confidence is that probability for true and one minus it for false. The separate minimum confidence controls whether the answer is accepted. Expressions return an actual boolean; Codex returns a boolean with informational confidence. Neither uses a classifier truth threshold.
+Classifier Choice retains options with IDs, labels and criteria. Noul retains authored true/false sides: probability at or above `truthThreshold` (default 0.5) selects true, with chosen-side confidence p or 1-p. Optional `minConfidence` rejects below the minimum; equality passes. Score retains ordered zero-based anchors and contiguous named bands; an interior boundary enters the next band and the final endpoint remains inclusive. Scores are never rounded. `recordAlternatives` and provider `context` are classifier fields; LLM also has provider `context`. Expressions have neither setting.
 
-**Score** declares ordered anchors indexed from zero to N-1. Scores may be fractional: three anchors define a scale from 0 through 2, not three categorical labels. Stable named bands cover that entire range without gaps or overlap. Each includes its lower endpoint and excludes its upper endpoint; the final band also includes the scale maximum. A score exactly on an interior boundary enters the next band. The engine never rounds or rescales it.
+LLM responses require exactly `route`, `confidence` and `reasoning`, with no extra properties. The route must be declared, confidence finite in [0,1], and the stored reasoning excerpt at most 2,048 characters. Confidence is informational: no LLM decision gate exists. There is no repair or evaluator fallback.
 
-Select one Expression, Classifier or LLM evaluator. Classifiers name an explicit owner-scoped catalog ID supporting the declared primitive. LLM currently uses Codex, with model and effort resolved within that harness from node, loop, owner and process defaults. Invalid explicit values never fall through to another selection. Score refuses Expression/LLM before a provider call.
+Source templates render against the full thread. Provider context selection separately prepares messages, variables and optional bare last output; it does not restrict Liquid exposure. Classifier requests, fractions and retry behaviour remain unchanged. Invalid explicit model/effort or classifier capabilities are admission errors; disabled/unconfigured selections remain visible in drafts and block publication.
 
-Unknown catalog entries, incompatible capabilities and invalid model/effort combinations are admission errors. Disabled or unconfigured selections remain visible in drafts and block publication. Runtime rechecks availability; an in-flight request keeps its initial configuration. No failure invokes a different evaluator.
+The output is `{portId,provenance,observation}`. Route observations contain `kind: "route"`, `routeId`, confidence and reasoning (both null for expressions). Classifier observations contain `kind: "classifier"` and typed `answer`. `decision.made` adds at most three historical diagnostics; fresh emissions have none. A rejected classifier retains validated evidence in failure details and selects no route or output patch. Typed failures, resumability and cancellation retain their existing boundaries.
 
-Only classifiers accept a minimum confidence. A value below it fails with EVALUATION_RESULT_REJECTED; equality passes. A valid rejected answer may be retained as canonical failure evidence, but it produces no selected route or decision output. LLM confidence must be finite and in [0,1], is informational and has no decision threshold. Expression confidence is null. Invalid answers and expression failures have typed nonresumable errors; restorable unavailability/transient provider failures remain resumable, and cancellation remains cancellation.
-
-Current context behavior is unchanged while #38 is deferred. Questions render against the full thread. The separate provider state contains trigger payload, selected role/content messages, selected variables and optional bare last-output value. The selector does not restrict the question template. Side/option criteria and Score anchors describe the answer requested from the evaluator; no input-preview or new evidence-selection contract is added.
-
-The output retains the raw typed answer, selected port and resolved provider/model provenance. Choice keeps its existing optionId/confidence/probabilities shape. New Noul and Score evidence records their applicable probability, threshold or rubric facts; a bounded LLM explanation is labelled as a reasoning excerpt. Provider error bodies and credentials are excluded. Existing historical skip diagnostics remain event evidence; new decisions have no strategy chain. The generated [node reference](reference/nodes.md) gives the exact fields.
-
-#97 adds answer variants within format 2; existing Choice definitions/results need no rewrite for these additions. The earlier #98 offline upgrade still applies to format-1 data. The subsequent #99 format-3 cutover applies these evaluator kinds to exit predicates with explicit matching rules.
+Current definitions/exports use format 4. Old exports and stores require the integrated cutover; no temporary 3-to-4 converter exists. The generated [node reference](reference/nodes.md) lists exact fields.
 
 ## Inferencing (Decided)
 
@@ -221,9 +215,9 @@ Ports: `out`.
 
 Decides whether the loop is done, what it returns, where that goes, and whether to go around again. Criteria run in their authored order; the first match decides the outcome.
 
-A predicate declares its answer primitive, evaluator and matching rule. **Noul** matches true or false (default true); expression Noul is strictly boolean. Provider Noul also requires true/false labels and criteria. **Choice** matches any ID in an explicit nonempty set of declared stable options. **Score** compares the exact fractional rubric-index value using `lt`, `lte`, `eq`, `gte` or `gt`. Exit answers do not create ports or Score bands.
+A predicate declares `{predicate, match}`. Expression and Codex predicates return a strict boolean and use `match.type: "boolean"`. Classifier predicates declare Choice, Noul or Score under `predicate.answer`; they use matching option IDs, a boolean Noul value or an exact fractional Score comparison. Predicates have no graph routes or Score bands. This separate contract preserves exit behaviour until step 14 removes criteria.
 
-Classifier evaluation requires a catalog model supporting the requested primitive. Disabled, missing or unusable-secret selections block publication and fail at runtime if availability changes. Custom HTTP classifiers and built-in Jev use the same registry. LLM evaluation uses Codex with inherited or explicit model/effort. Expressions support Noul; LLM supports Noul and Choice; Score is classifier-only.
+Classifier evaluation requires a catalog model supporting the requested primitive. Disabled, missing or unusable-secret selections block publication and fail at runtime if availability changes. Custom HTTP classifiers and built-in Jev use the same registry. LLM evaluation uses Codex with inherited or explicit model/effort. Expression and LLM predicates are boolean; classifiers support Choice, Noul and Score.
 
 Classifier `minConfidence` and optional LLM `match.minReportedConfidence` are separate acceptance gates. Equality passes. A valid rejected answer is retained as evidence but cannot match, including a false answer with match=false. LLM confidence is self-reported. Invalid responses, provider errors, unavailable configuration and cancellation fail evaluation rather than falling through. There is no fallback.
 

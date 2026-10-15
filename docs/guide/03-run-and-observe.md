@@ -104,6 +104,8 @@ The last four statuses are terminal for streaming and waiting. A failed run can 
 
 Select an event in **Timeline** to reconstruct the thread at that sequence. Select a `node.finished` event to see its patch with before/after values. Expand **Node progress** for harness progress, usage, decisions, exit evaluations, and heartbeat events. Read **Result** or the failure banner at the top.
 
+Decision evaluation details show the selected stable port and evaluator-specific observation: a route ID for Expression/LLM, or Choice/Noul/Score evidence for a classifier. LLM confidence is informational. Classifier rejection retains its proposed evidence without claiming a selected route. The corresponding output paths are `portId`, `provenance` and `observation`.
+
 `exit.evaluated` explains each exit visit in plain words, such as **Exited: criterion 2 (Jev)
 matched with confidence 0.93** or **Looped back: no criterion matched, iteration 2 of 5**.
 The latest explanation also appears in **Exit evaluation** near the top of the run.

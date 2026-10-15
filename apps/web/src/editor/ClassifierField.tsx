@@ -17,9 +17,7 @@ function canChoose(entry: ClassifierModelSummary, primitive: 'choice' | 'noul' |
 
 function answerTypePath(name: string): string {
   const segments = name.split('.');
-  const evaluation = segments.lastIndexOf('evaluation');
-  if (evaluation >= 0) return [...segments.slice(0, evaluation), 'answer', 'type'].join('.');
-  return 'answer.type';
+  return [...segments.slice(0, -1), 'answer', 'type'].join('.');
 }
 
 /** Required explicit primitive-capable classifier selection for a decision. */

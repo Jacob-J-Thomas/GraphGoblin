@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { describe, expect, it } from 'vitest';
 import { fileURLToPath } from 'node:url';
 import { GraphGoblinApiError } from '@graphgoblin/api-client';
@@ -167,7 +168,7 @@ describe('describe helpers', () => {
 
   it('reports wait nodes without an input schema and loops without versions', () => {
     const definition = LoopDefinitionSchema.parse({
-      schemaVersion: 3,
+      schemaVersion: CURRENT_DEFINITION_FORMAT,
       name: 'w',
       nodes: [
         { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },

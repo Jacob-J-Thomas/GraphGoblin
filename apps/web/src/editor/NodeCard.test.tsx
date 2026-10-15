@@ -30,8 +30,12 @@ it('refreshes committed handle ids and order once, including same-height changes
         kind: 'decision',
         label: 'Pick',
         config: {
-          answer: { type: 'choice', options: [] },
-          evaluation: { kind: 'expression', jsonata: '"yes"' },
+          kind: 'expression',
+          jsonata: '"yes"',
+          routes: [
+            { id: 'yes', label: 'Yes' },
+            { id: 'no', label: 'No' },
+          ],
         },
       },
       ports: ['yes', 'no'],

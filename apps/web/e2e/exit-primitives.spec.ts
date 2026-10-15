@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import {
   ClassifierModelSummarySchema,
   ExitPredicateSchema,
@@ -12,7 +13,6 @@ import {
 import { z } from 'zod';
 import type { APIRequestContext, Locator, Page } from '@playwright/test';
 import { closeNode, control, expect, openNode, test } from './fixtures.js';
-import { checkAnswerTypeHelp } from './answer-type-help.js';
 
 const LOCAL_MODEL = 'exit-local';
 const CHOICE_MODEL = 'exit-choice-only';
@@ -93,39 +93,27 @@ const exitTest = test.extend<{ synthetic: Synthetic }>({
 // A failed acceptance must remain available for diagnosis, including in CI.
 exitTest.describe.configure({ retries: 0 });
 
-for (const hasTouch of [true, false]) {
-  exitTest.describe(`exit answer help with ${hasTouch ? 'touch' : 'mouse'}`, () => {
-    exitTest.use({ hasTouch });
-    for (const theme of ['dark', 'light']) {
-      exitTest(
-        `compact help works in ${theme} at desktop and narrow widths`,
-        async ({ page, request, synthetic }) => {
-          await page.addInitScript(
-            (theme) => localStorage.setItem('graphgoblin-theme', theme),
-            theme,
-          );
-          await createLoop(page, request, synthetic.url, exitLoop('Exit answer help', [score()]));
-          const dialog = await openNode(page, 'done');
-          await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
-          for (const width of hasTouch ? [1440, 360] : [1440]) {
-            await page.setViewportSize({ width, height: 900 });
-            await checkAnswerTypeHelp(
-              page,
-              dialog,
-              exitTest.info().outputPath(`exit-help-${theme}-${width}.png`),
-              hasTouch,
-            );
-          }
-          const group = dialog.getByRole('radiogroup', { name: 'Answer type' });
-          await group.getByRole('radio', { name: 'Score', exact: true }).focus();
-          await page.keyboard.press('ArrowLeft');
-          await expect(group.getByRole('radio', { name: 'Noul', exact: true })).toBeChecked();
-          await expect(group.getByRole('radio', { name: 'Noul', exact: true })).toBeFocused();
-        },
+for (const width of [1440, 360])
+  exitTest(
+    `temporary predicate fields fit width ${width}`,
+    async ({ page, request, synthetic }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await createLoop(
+        page,
+        request,
+        synthetic.url,
+        exitLoop('Predicate layout', [expression('true')]),
       );
-    }
-  });
-}
+      const dialog = await criterionEditor(page);
+      await expect(
+        dialog.locator('[data-field="criteria.0.predicate.jsonata"] [role="textbox"]'),
+      ).toBeVisible();
+      await expect(
+        dialog.locator('[data-field="criteria.0.match.value"]').getByRole('switch'),
+      ).toBeChecked();
+      await expect(dialog.locator('[data-field="criteria.0.predicate.routes"]')).toHaveCount(0);
+    },
+  );
 
 async function classifierCatalog(request: APIRequestContext, url: string) {
   const response = await request.get(url + '/classifier-models');
@@ -160,44 +148,49 @@ async function registerLocalClassifier(
 function expression(jsonata: string, value = true): ExitPredicate {
   return ExitPredicateSchema.parse({
     when: 'predicate',
-    answer: { type: 'noul' },
-    evaluation: { kind: 'expression', jsonata },
-    match: { type: 'noul', value },
+    match: {
+      type: 'boolean',
+      value,
+    },
     outcome: 'success',
+    predicate: {
+      kind: 'expression',
+      jsonata,
+    },
   });
 }
 
 function noul(minConfidence: number): ExitPredicate {
   return ExitPredicateSchema.parse({
     when: 'predicate',
-    answer: {
-      type: 'noul',
-      true: { label: 'Ready', criteria: 'Every synthetic check passes' },
-      false: { label: 'Continue', criteria: 'A synthetic check is still incomplete' },
-    },
-    evaluation: {
+    match: { type: 'noul', value: false },
+    outcome: 'success',
+    predicate: {
       kind: 'classifier',
       model: LOCAL_MODEL,
       question: 'Is the synthetic result ready?',
       minConfidence,
+      answer: {
+        type: 'noul',
+        true: { label: 'Ready', criteria: 'Every synthetic check passes' },
+        false: { label: 'Continue', criteria: 'A synthetic check is still incomplete' },
+      },
     },
-    match: { type: 'noul', value: false },
-    outcome: 'success',
   });
 }
 
 function score(): ExitPredicate {
   return ExitPredicateSchema.parse({
     when: 'predicate',
-    answer: { type: 'score', anchors: ['Low', 'Moderate', 'High'] },
-    evaluation: {
+    match: { type: 'score', operator: 'gte', value: 1.5 },
+    outcome: 'success',
+    predicate: {
       kind: 'classifier',
       model: LOCAL_MODEL,
       question: 'Score the synthetic result.',
       minConfidence: 0.8,
+      answer: { type: 'score', anchors: ['Low', 'Moderate', 'High'] },
     },
-    match: { type: 'score', operator: 'gte', value: 1.5 },
-    outcome: 'success',
   });
 }
 
@@ -207,7 +200,7 @@ function exitLoop(
   maxIterations = 1,
 ): LoopDefinitionInput {
   return {
-    schemaVersion: 3,
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
     name,
     settings: { maxIterations },
     nodes: [
@@ -274,8 +267,8 @@ function assertLocalModels(definition: LoopDefinition | LoopDefinitionInput) {
   const node = definition.nodes.find((item) => item.id === 'done');
   if (node?.kind !== 'exit') throw new Error('Exit fixture is missing.');
   for (const criterion of node.config.criteria ?? []) {
-    if (criterion.when === 'predicate' && criterion.evaluation.kind === 'classifier') {
-      expect([LOCAL_MODEL, CHOICE_MODEL]).toContain(criterion.evaluation.model);
+    if (criterion.when === 'predicate' && criterion.predicate.kind === 'classifier') {
+      expect([LOCAL_MODEL, CHOICE_MODEL]).toContain(criterion.predicate.model);
     }
   }
 }
@@ -337,17 +330,31 @@ async function criterionEditor(page: Page, index = 0): Promise<Locator> {
   } else {
     await expect(row.getByRole('group', { name, exact: true })).toBeVisible();
   }
+  for (const advanced of await row.getByRole('button', { name: /^Advanced\b/ }).all()) {
+    if ((await advanced.isVisible()) && (await advanced.getAttribute('aria-expanded')) === 'false')
+      await advanced.click();
+  }
   return dialog;
 }
 
-async function chooseAnswer(page: Page, dialog: Locator, type: 'Choice' | 'Noul' | 'Score') {
-  const radio = dialog.getByRole('radiogroup', { name: 'Answer type' }).getByRole('radio', {
-    name: type,
-    exact: true,
-  });
-  await radio.focus();
-  await page.keyboard.press('Space');
-  await expect(radio).toBeChecked();
+async function chooseAnswer(_page: Page, dialog: Locator, type: 'Choice' | 'Noul' | 'Score') {
+  const picker = dialog
+    .locator('[data-field="criteria.0.predicate.answer"]')
+    .getByLabel('Type', { exact: true });
+  await picker.selectOption(String(['Choice', 'Noul', 'Score'].indexOf(type)));
+  if (type === 'Score') {
+    const anchors = dialog.locator('[data-field="criteria.0.predicate.answer.anchors"]');
+    await anchors.getByRole('button', { name: 'Add anchors', exact: true }).click();
+    for (const [index, text] of ['Low', 'Middle', 'High'].entries())
+      await dialog.getByLabel('Anchors ' + (index + 1), { exact: true }).fill(text);
+  }
+}
+const matchValue = (dialog: Locator) => dialog.locator('[data-field="criteria.0.match.value"]');
+async function scoreOperator(dialog: Locator, value: string) {
+  await dialog
+    .locator('[data-field="criteria.0.match.operator"]')
+    .getByRole('radio', { name: value, exact: true })
+    .click();
 }
 
 async function assertOnlyLoopBack(page: Page) {
@@ -415,7 +422,7 @@ exitTest(
       exitLoop('Unfinished exit draft', [expression('true')]),
     );
     let dialog = await criterionEditor(page);
-    let editor = dialog.locator('[data-field="criteria.0.evaluation.jsonata"] [role="textbox"]');
+    let editor = dialog.locator('[data-field="criteria.0.predicate.jsonata"] [role="textbox"]');
     await editor.fill('');
     await expect(page.getByTestId('save-state')).toHaveText('Saved on this device only');
     const serverBefore = await request.get(url + '/loops/' + loopId);
@@ -428,7 +435,7 @@ exitTest(
       page.getByText('This device copy could not be migrated safely', { exact: true }),
     ).toHaveCount(0);
     dialog = await criterionEditor(page);
-    editor = dialog.locator('[data-field="criteria.0.evaluation.jsonata"] [role="textbox"]');
+    editor = dialog.locator('[data-field="criteria.0.predicate.jsonata"] [role="textbox"]');
     await expect(editor).toHaveText('');
     await expect(page.getByTestId('save-state')).toHaveText('Saved on this device only');
     const serverAfter = await request.get(url + '/loops/' + loopId);
@@ -443,7 +450,7 @@ exitTest(
 );
 
 exitTest(
-  'expression Noul false matches false after authoring, saving, reloading, publishing and running',
+  'expression boolean false matches false after authoring, saving, reloading, publishing and running',
   async ({ page, request, synthetic }) => {
     const { url, classifier } = synthetic;
     const loopId = await createLoop(
@@ -453,14 +460,14 @@ exitTest(
       exitLoop('Exit expression false', [expression('true')]),
     );
     let dialog = await criterionEditor(page);
-    await expect(dialog.getByRole('radio', { name: 'Noul', exact: true })).toBeChecked();
-    await dialog
-      .locator('[data-field="criteria.0.evaluation.jsonata"] [role="textbox"]')
-      .fill('false');
-    await dialog.getByRole('switch', { name: 'Match when the answer is true' }).click();
     await expect(
-      dialog.getByRole('switch', { name: 'Match when the answer is true' }),
-    ).not.toBeChecked();
+      dialog.locator('[data-field="criteria.0.predicate"]').getByLabel('Kind', { exact: true }),
+    ).toHaveValue('0');
+    await dialog
+      .locator('[data-field="criteria.0.predicate.jsonata"] [role="textbox"]')
+      .fill('false');
+    await matchValue(dialog).getByRole('switch').click();
+    await expect(matchValue(dialog).getByRole('switch')).not.toBeChecked();
     await closeNode(page);
     const saved = await savedDraft(page, request, url, loopId);
     expect(exitConfig(saved).criteria).toEqual([expression('false', false)]);
@@ -468,11 +475,9 @@ exitTest(
     await page.reload();
     dialog = await criterionEditor(page);
     await expect(
-      dialog.locator('[data-field="criteria.0.evaluation.jsonata"] [role="textbox"]'),
+      dialog.locator('[data-field="criteria.0.predicate.jsonata"] [role="textbox"]'),
     ).toHaveText('false');
-    await expect(
-      dialog.getByRole('switch', { name: 'Match when the answer is true' }),
-    ).not.toBeChecked();
+    await expect(matchValue(dialog).getByRole('switch')).not.toBeChecked();
     await closeNode(page);
     await publish(page, 1);
     const events = await runLoop(page, request, url, loopId, 'succeeded');
@@ -490,9 +495,16 @@ exitTest(
           expect.objectContaining({
             status: 'matched',
             strategy: 'expression',
-            answer: { type: 'noul', kind: 'expression', holds: false, confidence: null },
-            match: { type: 'noul', value: false },
+            match: {
+              type: 'boolean',
+              value: false,
+            },
             acceptance: { status: 'accepted' },
+            observation: {
+              kind: 'boolean',
+              holds: false,
+              confidence: null,
+            },
           }),
         ],
       }),
@@ -516,43 +528,46 @@ exitTest(
     await registerLocalClassifier(request, url, classifier.endpoint, CHOICE_MODEL, ['choice']);
     const predicate = ExitPredicateSchema.parse({
       when: 'predicate',
-      answer: {
-        type: 'choice',
-        options: [
-          { id: 'ready', label: 'Ready', criteria: 'Ready to exit' },
-          { id: 'continue', label: 'Continue', criteria: 'Continue checking' },
-        ],
-      },
-      evaluation: {
+      match: { type: 'choice', optionIds: ['continue'] },
+      outcome: 'success',
+      predicate: {
         kind: 'classifier',
         model: CHOICE_MODEL,
         question: 'Choose the synthetic status.',
+        answer: {
+          type: 'choice',
+          options: [
+            { id: 'ready', label: 'Ready', criteria: 'Ready to exit' },
+            { id: 'continue', label: 'Continue', criteria: 'Continue checking' },
+          ],
+        },
       },
-      match: { type: 'choice', optionIds: ['continue'] },
-      outcome: 'success',
     });
     const loopId = await createLoop(page, request, url, exitLoop('Exit Choice IDs', [predicate]));
     let dialog = await criterionEditor(page);
-    await dialog.locator('[data-field="criteria.0.answer.options.0.label"] input').fill('Reviewed');
-    const ready = dialog.getByRole('checkbox', { name: /Reviewed.*ready/ });
-    const continuing = dialog.getByRole('checkbox', { name: /Continue.*continue/ });
-    await ready.focus();
-    await page.keyboard.press('Space');
-    await continuing.focus();
-    await page.keyboard.press('Space');
-    await expect(ready).toBeChecked();
-    await expect(continuing).not.toBeChecked();
+    await dialog
+      .locator('[data-field="criteria.0.predicate.answer.options.0.label"] input')
+      .fill('Reviewed');
+    const selected = dialog.locator('[data-field="criteria.0.match.optionIds.0"] input');
+    await selected.fill('ready');
     await closeNode(page);
     const choiceSaved = exitConfig(await savedDraft(page, request, url, loopId)).criteria[0];
     expect(choiceSaved).toMatchObject({
-      answer: { type: 'choice', options: [{ id: 'ready', label: 'Reviewed' }, { id: 'continue' }] },
-      evaluation: { model: CHOICE_MODEL },
       match: { type: 'choice', optionIds: ['ready'] },
+      predicate: {
+        model: CHOICE_MODEL,
+        answer: {
+          type: 'choice',
+          options: [{ id: 'ready', label: 'Reviewed' }, { id: 'continue' }],
+        },
+      },
     });
     await page.reload();
     dialog = await criterionEditor(page);
-    await expect(dialog.getByRole('checkbox', { name: /Reviewed.*ready/ })).toBeChecked();
-    await expect(dialog.getByRole('combobox', { name: 'Classifier', exact: true })).toHaveValue(
+    await expect(dialog.locator('[data-field="criteria.0.match.optionIds.0"] input')).toHaveValue(
+      'ready',
+    );
+    await expect(dialog.getByRole('combobox', { name: 'Model', exact: true })).toHaveValue(
       CHOICE_MODEL,
     );
     await closeNode(page);
@@ -560,9 +575,15 @@ exitTest(
     const events = await runLoop(page, request, url, loopId, 'succeeded');
     expect(exitEvaluations(events)[0]?.criteria[0]).toMatchObject({
       status: 'matched',
-      answer: { type: 'choice', optionId: 'ready' },
       match: { type: 'choice', optionIds: ['ready'] },
       provenance: { classifierId: CHOICE_MODEL },
+      observation: {
+        kind: 'classifier',
+        answer: {
+          type: 'choice',
+          optionId: 'ready',
+        },
+      },
     });
     expect(await classifier.requests()).toHaveLength(1);
     expect((await classifier.requests())[0]?.model).toBe(CHOICE_MODEL);
@@ -571,27 +592,34 @@ exitTest(
     await openEditor(page, url, loopId);
     dialog = await criterionEditor(page);
     await chooseAnswer(page, dialog, 'Score');
-    const picker = dialog.getByRole('combobox', { name: 'Classifier', exact: true });
+    const picker = dialog.getByRole('combobox', { name: 'Model', exact: true });
     await expect(picker).toHaveValue(CHOICE_MODEL);
     await expect(picker.getByRole('option', { selected: true })).toContainText('not Score-capable');
     await expect(dialog).toContainText('Choose a Score-capable classifier');
     await expect(picker.locator('option[value="jev"]')).toHaveCount(0);
     await picker.selectOption(LOCAL_MODEL);
-    await dialog.getByLabel('Score comparison', { exact: true }).selectOption('gte');
-    await dialog.getByLabel('Rubric index', { exact: true }).fill('1.25');
+    await scoreOperator(dialog, 'gte');
+    await matchValue(dialog).getByRole('spinbutton').fill('1.25');
     await closeNode(page);
     expect(exitConfig(await savedDraft(page, request, url, loopId)).criteria[0]).toMatchObject({
-      answer: { type: 'score' },
-      evaluation: { kind: 'classifier', model: LOCAL_MODEL },
       match: { type: 'score', operator: 'gte', value: 1.25 },
+      predicate: {
+        kind: 'classifier',
+        model: LOCAL_MODEL,
+        answer: { type: 'score' },
+      },
     });
     await page.reload();
     dialog = await criterionEditor(page);
-    await expect(dialog.getByRole('radio', { name: 'Score', exact: true })).toBeChecked();
-    await expect(dialog.getByRole('combobox', { name: 'Classifier', exact: true })).toHaveValue(
+    await expect(
+      dialog
+        .locator('[data-field="criteria.0.predicate.answer"]')
+        .getByLabel('Type', { exact: true }),
+    ).toHaveValue('2');
+    await expect(dialog.getByRole('combobox', { name: 'Model', exact: true })).toHaveValue(
       LOCAL_MODEL,
     );
-    await expect(dialog.getByLabel('Rubric index', { exact: true })).toHaveValue('1.25');
+    await expect(matchValue(dialog).getByRole('spinbutton')).toHaveValue('1.25');
     await expect(dialog.getByRole('radio', { name: 'Codex LLM', exact: true })).toHaveCount(0);
     await closeNode(page);
     await assertOnlyLoopBack(page);
@@ -629,17 +657,24 @@ exitTest(
       exitLoop('Exit fractional Score', [score()]),
     );
     let dialog = await criterionEditor(page);
-    await dialog.getByLabel('Score comparison', { exact: true }).selectOption('eq');
-    await dialog.getByLabel('Rubric index', { exact: true }).fill('1.2');
+    await scoreOperator(dialog, 'eq');
+    await matchValue(dialog).getByRole('spinbutton').fill('1.2');
     await closeNode(page);
     expect(exitConfig(await savedDraft(page, request, url, loopId)).criteria[0]).toMatchObject({
-      evaluation: { model: LOCAL_MODEL, minConfidence: 0.8 },
       match: { type: 'score', operator: 'eq', value: 1.2 },
+      predicate: {
+        model: LOCAL_MODEL,
+        minConfidence: 0.8,
+      },
     });
     await page.reload();
     dialog = await criterionEditor(page);
-    await expect(dialog.getByLabel('Score comparison', { exact: true })).toHaveValue('eq');
-    await expect(dialog.getByLabel('Rubric index', { exact: true })).toHaveValue('1.2');
+    await expect(
+      dialog
+        .locator('[data-field="criteria.0.match.operator"]')
+        .getByRole('radio', { name: 'eq', exact: true }),
+    ).toBeChecked();
+    await expect(matchValue(dialog).getByRole('spinbutton')).toHaveValue('1.2');
     await closeNode(page);
     await publish(page, 1);
     const nonmatching = await runLoop(page, request, url, loopId, 'exhausted');
@@ -672,13 +707,16 @@ exitTest(
 
     await openEditor(page, url, loopId);
     dialog = await criterionEditor(page);
-    await dialog.getByLabel('Score comparison', { exact: true }).selectOption('gte');
-    await dialog.getByLabel('Rubric index', { exact: true }).fill('1.25');
-    await dialog.getByLabel('Minimum classifier confidence', { exact: true }).fill('0.6');
+    await scoreOperator(dialog, 'gte');
+    await matchValue(dialog).getByRole('spinbutton').fill('1.25');
+    await dialog.getByLabel('Min confidence', { exact: true }).fill('0.6');
     await closeNode(page);
     expect(exitConfig(await savedDraft(page, request, url, loopId)).criteria[0]).toMatchObject({
-      evaluation: { model: LOCAL_MODEL, minConfidence: 0.6 },
       match: { type: 'score', operator: 'gte', value: 1.25 },
+      predicate: {
+        model: LOCAL_MODEL,
+        minConfidence: 0.6,
+      },
     });
     await publish(page, 2);
     const matched = await runLoop(page, request, url, loopId, 'succeeded');
@@ -783,29 +821,25 @@ exitTest(
       exitLoop('Exit false confidence gate', [noul(0.8)], 2),
     );
     let dialog = await criterionEditor(page);
-    await expect(
-      dialog.getByRole('switch', { name: 'Match when the answer is true' }),
-    ).not.toBeChecked();
+    await expect(matchValue(dialog).getByRole('switch')).not.toBeChecked();
     await dialog
       .getByLabel('Question', { exact: true })
       .fill('Is the synthetic final result ready?');
     await closeNode(page);
     expect(exitConfig(await savedDraft(page, request, url, loopId)).criteria[0]).toMatchObject({
-      evaluation: {
+      match: { type: 'noul', value: false },
+      predicate: {
         model: LOCAL_MODEL,
         minConfidence: 0.8,
         question: 'Is the synthetic final result ready?',
       },
-      match: { type: 'noul', value: false },
     });
     await page.reload();
     dialog = await criterionEditor(page);
-    await expect(dialog.getByRole('combobox', { name: 'Classifier', exact: true })).toHaveValue(
+    await expect(dialog.getByRole('combobox', { name: 'Model', exact: true })).toHaveValue(
       LOCAL_MODEL,
     );
-    await expect(
-      dialog.getByRole('switch', { name: 'Match when the answer is true' }),
-    ).not.toBeChecked();
+    await expect(matchValue(dialog).getByRole('switch')).not.toBeChecked();
     await closeNode(page);
     await publish(page, 1);
     const rejected = await runLoop(page, request, url, loopId, 'exhausted');
@@ -833,11 +867,14 @@ exitTest(
 
     await openEditor(page, url, loopId);
     dialog = await criterionEditor(page);
-    await dialog.getByLabel('Minimum classifier confidence', { exact: true }).fill('0.875');
+    await dialog.getByLabel('Min confidence', { exact: true }).fill('0.875');
     await closeNode(page);
     expect(exitConfig(await savedDraft(page, request, url, loopId)).criteria[0]).toMatchObject({
-      evaluation: { model: LOCAL_MODEL, minConfidence: 0.875 },
       match: { type: 'noul', value: false },
+      predicate: {
+        model: LOCAL_MODEL,
+        minConfidence: 0.875,
+      },
     });
     await publish(page, 2);
     const matched = await runLoop(page, request, url, loopId, 'succeeded');

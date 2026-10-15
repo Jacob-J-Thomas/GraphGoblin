@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { createHmac } from 'node:crypto';
 import type { APIRequestContext } from '@playwright/test';
 import { expect, openNode, test } from './fixtures.js';
@@ -26,7 +27,7 @@ interface DeliveryEvent {
 
 function triggerLoop(name: string) {
   return {
-    schemaVersion: 3,
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
     name,
     nodes: [
       {

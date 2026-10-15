@@ -78,12 +78,14 @@ describe('Part A audit', () => {
         kind === 'inference'
           ? { prompt: { template: 'hello' } }
           : {
+              kind: 'classifier',
+              model: 'jev',
+              question: 'hello',
               answer: {
                 type: 'noul',
                 true: { id: 'yes', label: 'Yes', criteria: 'yes' },
                 false: { id: 'no', label: 'No', criteria: 'no' },
               },
-              evaluation: { kind: 'classifier', model: 'jev', question: 'hello' },
             };
       const overrides = kind === 'inference' ? { harness: Probe } : { 'answer.true.id': Probe };
       function Harness() {

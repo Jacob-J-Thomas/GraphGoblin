@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { kitchenSinkLoop, minimalLoop } from '@graphgoblin/contracts/testing';
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -189,7 +190,7 @@ describe('LoopsPage', () => {
     const input = await screen.findByLabelText('Import an exported loop (JSON)');
     const exported = {
       format: 'graphgoblin-loop',
-      formatVersion: 3,
+      formatVersion: CURRENT_DEFINITION_FORMAT,
       exportedAt: TS,
       loop: kitchenSinkLoop(),
     };

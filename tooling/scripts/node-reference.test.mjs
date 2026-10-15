@@ -179,6 +179,27 @@ test('undocumented fields and kinds are reported, and the renderer refuses them'
   );
 });
 
+test('renders every evaluator-specific decision branch and its applicable fields', () => {
+  const branches = [
+    { kind: { const: 'expression' }, jsonata: { type: 'string' }, routes: { type: 'array' } },
+    { kind: { const: 'llm' }, instructions: { type: 'string' }, routes: { type: 'array' } },
+    { kind: { const: 'classifier' }, question: { type: 'string' }, answer: { type: 'object' } },
+  ];
+  const md = renderNodeReference(
+    { decision: { oneOf: branches.map((properties) => ({ type: 'object', properties })) } },
+    {
+      decision: branches.map((properties) =>
+        Object.fromEntries(Object.keys(properties).map((name) => [name, { description: name }])),
+      ),
+    },
+  );
+  for (const kind of ['expression', 'llm', 'classifier'])
+    assert.ok(md.includes(`### \`kind: "${kind}"\``));
+  for (const field of ['jsonata', 'instructions', 'question', 'answer', 'routes'])
+    assert.ok(md.includes(`| \`${field}\` |`));
+  assert.ok(!md.includes('evaluation'));
+});
+
 test('renders one section per kind, with a table per variant and Advanced only when used', () => {
   const md = renderNodeReference(
     {
@@ -213,12 +234,12 @@ test('renders one section per kind, with a table per variant and Advanced only w
   assert.match(md, /\*\*Advanced\*\* marks the fields/);
   assert.match(md, /## Context mutation \(`mutate`\)/);
   assert.match(md, /\| Field \| Type \| Required \| Default \| Description \|\n\| --- \|/);
-  assert.match(md, /\| `operations` \| any\[\] \| no \|  \| Ops \\\| in order\. \|/);
+  assert.match(md, /\| `operations` \| any\[\] \| no \| {2}\| Ops \\\| in order\. \|/);
   assert.match(md, /\| Field \| Type \| Required \| Default \| Advanced \| Description \|/);
-  assert.match(md, /\| `command` \| string \| yes \|  \|  \| Program to run\. \|/);
-  assert.match(md, /\| `env` \| object \| no \|  \| yes \| Extra environment\. \|/);
+  assert.match(md, /\| `command` \| string \| yes \| {2}\| {2}\| Program to run\. \|/);
+  assert.match(md, /\| `env` \| object \| no \| {2}\| yes \| Extra environment\. \|/);
   assert.match(md, /### `mode: "duration"`/);
-  assert.match(md, /\| `seconds` \| integer \| yes \|  \| How long to wait\. \|/);
+  assert.match(md, /\| `seconds` \| integer \| yes \| {2}\| How long to wait\. \|/);
   assert.doesNotMatch(md, /\| `mode` \|/);
   assert.doesNotMatch(md, /## Trigger/);
 });

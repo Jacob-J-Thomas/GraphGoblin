@@ -66,15 +66,39 @@ Ports: `out`.
 
 ## Decision (`decision`)
 
-Chooses one option using an explicit expression, classifier, or LLM evaluator.
+Chooses a route using an expression, LLM instructions, or a classifier primitive.
 
-Ports: One output per stable option id; labels are display text.
+Ports: Declared route ids for expression/LLM; classifier option, side or band ids.
 
-| Field                | Type                                                         | Required | Default | Advanced | Description                                            |
-| -------------------- | ------------------------------------------------------------ | -------- | ------- | -------- | ------------------------------------------------------ |
-| `answer`             | one of `"choice"` \| `"noul"` \| `"score"` by `type`         | yes      |         |          | Declared answer and stable route identifiers.          |
-| `evaluation`         | one of `"expression"` \| `"classifier"` \| `"llm"` by `kind` | yes      |         |          | Exactly one evaluation method.                         |
-| `recordAlternatives` | boolean                                                      | no       | `true`  | yes      | Retain classifier probabilities in execution evidence. |
+### `kind: "expression"`
+
+| Field     | Type     | Required | Default | Description                                               |
+| --------- | -------- | -------- | ------- | --------------------------------------------------------- |
+| `jsonata` | string   | yes      |         | JSONata source; return a declared route id for decisions. |
+| `routes`  | object[] | yes      |         | Two to sixty-four stable readable routes.                 |
+
+### `kind: "llm"`
+
+| Field          | Type                                         | Required | Default | Advanced                                | Description                                           |
+| -------------- | -------------------------------------------- | -------- | ------- | --------------------------------------- | ----------------------------------------------------- |
+| `instructions` | string                                       | yes      |         |                                         | Liquid instructions rendered against the full thread. |
+| `harness`      | `"codex"`                                    | yes      |         |                                         | Implemented structured evaluator harness.             |
+| `model`        | one of `"inherit"` \| `"explicit"` by `mode` | yes      |         |                                         | Inherit or explicitly select the model.               |
+| `effort`       | one of `"inherit"` \| `"explicit"` by `mode` | yes      |         |                                         | Inherit or explicitly select reasoning effort.        |
+| `routes`       | object[]                                     | yes      |         |                                         | Declared stable route ids and readable labels.        |
+| `context`      | { messages?, vars?, includeLastOutput? }     | no       | `{}`    | all but `messages`, `includeLastOutput` | Selected provider context.                            |
+
+### `kind: "classifier"`
+
+| Field                | Type                                                 | Required | Default | Advanced                                | Description                                          |
+| -------------------- | ---------------------------------------------------- | -------- | ------- | --------------------------------------- | ---------------------------------------------------- |
+| `model`              | string                                               | yes      |         |                                         | Explicit classifier catalog id.                      |
+| `question`           | string                                               | yes      |         |                                         | Liquid classifier question.                          |
+| `minConfidence`      | number                                               | no       |         | yes                                     | Classifier confidence minimum.                       |
+| `truthThreshold`     | number                                               | no       |         | yes                                     | Noul true probability threshold; omission means 0.5. |
+| `answer`             | one of `"choice"` \| `"noul"` \| `"score"` by `type` | yes      |         |                                         | Classifier answer and stable ports.                  |
+| `context`            | { messages?, vars?, includeLastOutput? }             | no       | `{}`    | all but `messages`, `includeLastOutput` | Selected provider context.                           |
+| `recordAlternatives` | boolean                                              | no       | `true`  | yes                                     | Record classifier probability alternatives.          |
 
 ## Inferencing (`inference`)
 

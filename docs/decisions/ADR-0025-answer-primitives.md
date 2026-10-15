@@ -1,5 +1,7 @@
 # ADR-0025 - Noul, Choice and Score decision answers
 
+Superseded in part by [ADR-0035](ADR-0035-evaluator-specific-decisions.md): evaluator-specific decision configuration, factual observations, the separate temporary exit predicate and format 4. The record below is historical.
+
 Date: 2026-10-08. Status: **Accepted architecture; implementation verification pending**. Owner authorization and narrowed scope: [#97 plan](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/97#issuecomment-6049169776).
 
 ## Context

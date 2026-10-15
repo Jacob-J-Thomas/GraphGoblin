@@ -25,6 +25,7 @@ export function describeDefinition(definition: LoopDefinition) {
   const triggers = [];
   const inputWaits = [];
   const exits = [];
+  const decisions = [];
   for (const node of definition.nodes) {
     if (node.kind === 'trigger') {
       const config = node.config;
@@ -38,6 +39,27 @@ export function describeDefinition(definition: LoopDefinition) {
               ...(config.inputSchema ? { inputSchema: config.inputSchema } : {}),
             }
           : {}),
+      });
+    } else if (node.kind === 'decision') {
+      const config = node.config;
+      const routes =
+        config.kind !== 'classifier'
+          ? config.routes
+          : config.answer.type === 'choice'
+            ? config.answer.options
+            : config.answer.type === 'noul'
+              ? [config.answer.true, config.answer.false]
+              : config.answer.bands;
+      decisions.push({
+        nodeId: node.id,
+        label: node.label,
+        kind: config.kind,
+        routes: routes.map(({ id, label }) => ({ id, label })),
+        ...(config.kind === 'classifier'
+          ? { answerType: config.answer.type, model: config.model }
+          : config.kind === 'llm'
+            ? { harness: config.harness, model: config.model, effort: config.effort }
+            : {}),
       });
     } else if (node.kind === 'wait' && node.config.mode === 'input') {
       inputWaits.push({
@@ -63,6 +85,7 @@ export function describeDefinition(definition: LoopDefinition) {
     nodeKinds: [...new Set(definition.nodes.map((n) => n.kind))],
     variables: definition.variables,
     triggers,
+    decisions,
     inputWaits,
     exits,
   };

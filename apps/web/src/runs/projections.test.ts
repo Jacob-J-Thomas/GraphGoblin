@@ -17,7 +17,6 @@ const actor = { kind: 'user' as const, id: 'local' };
 const channel = { kind: 'log' as const };
 const usage = { inputTokens: 1, outputTokens: 2, cachedInputTokens: 0, reasoningOutputTokens: 0 };
 const expressionEvidence = (optionId: string) => ({
-  answer: { type: 'choice' as const, optionId, confidence: null, probabilities: null },
   portId: optionId,
   provenance: {
     kind: 'expression' as const,
@@ -27,6 +26,7 @@ const expressionEvidence = (optionId: string) => ({
     effort: null,
   },
   diagnostics: [],
+  observation: { kind: 'route' as const, routeId: optionId, confidence: null, reasoning: null },
 });
 
 const ALL: RunEvent[] = [
@@ -84,16 +84,18 @@ describe('run projections', () => {
       describeEvent(
         event(R, 30, 'decision.made', {
           nodeId: 'noul',
-          answer: {
-            type: 'noul',
-            kind: 'classifier',
-            holds: true,
-            trueProbability: 0.72,
-            confidence: 0.83,
-          },
           portId: 'true',
           provenance: classifier,
           diagnostics: [],
+          observation: {
+            kind: 'classifier',
+            answer: {
+              type: 'noul',
+              holds: true,
+              trueProbability: 0.72,
+              confidence: 0.83,
+            },
+          },
         }),
       ),
     ).toBe(
@@ -103,16 +105,18 @@ describe('run projections', () => {
       describeEvent(
         event(R, 32, 'decision.made', {
           nodeId: 'archived-noul',
-          answer: {
-            type: 'noul',
-            kind: 'classifier',
-            holds: null,
-            trueProbability: null,
-            confidence: null,
-          },
           portId: 'true',
           provenance: classifier,
           diagnostics: [],
+          observation: {
+            kind: 'classifier',
+            answer: {
+              type: 'noul',
+              holds: null,
+              trueProbability: null,
+              confidence: null,
+            },
+          },
         }),
       ),
     ).toBe(
@@ -122,16 +126,19 @@ describe('run projections', () => {
       describeEvent(
         event(R, 31, 'decision.made', {
           nodeId: 'score',
-          answer: {
-            type: 'score',
-            score: 1.25,
-            confidence: 0.91,
-            legend: { '0': 'Low', '1': 'Middle', '2': 'High' },
-            probabilities: { '1': 0.91 },
-          },
           portId: 'middle',
           provenance: classifier,
           diagnostics: [],
+          observation: {
+            kind: 'classifier',
+            answer: {
+              type: 'score',
+              score: 1.25,
+              confidence: 0.91,
+              legend: { '0': 'Low', '1': 'Middle', '2': 'High' },
+              probabilities: { '1': 0.91 },
+            },
+          },
         }),
       ),
     ).toBe(
@@ -209,7 +216,6 @@ describe('run projections', () => {
           index: 0,
           strategy: 'expression',
           status: 'matched',
-          answer: { type: 'noul', kind: 'expression', holds: true, confidence: null },
           provenance: {
             kind: 'expression',
             provider: null,
@@ -218,7 +224,16 @@ describe('run projections', () => {
             effort: null,
           },
           acceptance: { status: 'accepted' },
-          match: { type: 'noul', value: true },
+          match: {
+            type: 'boolean',
+            value: true,
+          },
+          observation: {
+            kind: 'boolean',
+            holds: true,
+            confidence: null,
+            reasoning: null,
+          },
         },
       ],
       result: {
@@ -229,7 +244,7 @@ describe('run projections', () => {
       },
     });
     expect(describeEvent(entry)).toBe(
-      'Exited: criterion 1 (Expression) matched: Noul true (failure)',
+      'Exited: criterion 1 (Expression) matched: Boolean true (failure)',
     );
     if (entry.type !== 'exit.evaluated') throw new Error('Expected an exit event fixture');
     expect(
@@ -240,7 +255,6 @@ describe('run projections', () => {
             index: 0,
             strategy: 'expression',
             status: 'matched',
-            answer: { type: 'noul', kind: 'expression', holds: true, confidence: null },
             provenance: {
               kind: 'expression',
               provider: null,
@@ -249,7 +263,16 @@ describe('run projections', () => {
               effort: null,
             },
             acceptance: { status: 'accepted' },
-            match: { type: 'noul', value: true },
+            match: {
+              type: 'boolean',
+              value: true,
+            },
+            observation: {
+              kind: 'boolean',
+              holds: true,
+              confidence: null,
+              reasoning: null,
+            },
           },
         ],
         result: {
@@ -307,7 +330,6 @@ describe('run projections', () => {
               index: 0,
               strategy: 'expression',
               status: 'matched',
-              answer: { type: 'noul', kind: 'expression', holds: true, confidence: null },
               provenance: {
                 kind: 'expression',
                 provider: null,
@@ -316,7 +338,16 @@ describe('run projections', () => {
                 effort: null,
               },
               acceptance: { status: 'accepted' },
-              match: { type: 'noul', value: true },
+              match: {
+                type: 'boolean',
+                value: true,
+              },
+              observation: {
+                kind: 'boolean',
+                holds: true,
+                confidence: null,
+                reasoning: null,
+              },
             },
           ],
           result: {
@@ -327,7 +358,7 @@ describe('run projections', () => {
           },
         }),
       ),
-    ).toBe('Exited: criterion 1 (Expression) matched: Noul true (failure)');
+    ).toBe('Exited: criterion 1 (Expression) matched: Boolean true (failure)');
   });
   it('describes every event type', () => {
     const lines = ALL.map(describeEvent);

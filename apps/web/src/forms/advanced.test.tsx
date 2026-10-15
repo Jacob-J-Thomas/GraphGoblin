@@ -200,18 +200,6 @@ describe('basic fields first, advanced ones behind a disclosure', () => {
       ['Model', 'Harness options', 'Output', 'Limits'],
     ],
     [
-      'decision',
-      [
-        'answer.options',
-        'evaluation',
-        'evaluation.question',
-        'evaluation.model',
-        'evaluation.effort',
-      ],
-      ['recordAlternatives'],
-      ['Recording'],
-    ],
-    [
       'script',
       ['command', 'args', 'cwd'],
       ['env', 'stdin', 'stdout', 'exitCodeRoutes', 'timeoutSeconds'],
@@ -283,7 +271,7 @@ describe('basic fields first, advanced ones behind a disclosure', () => {
         openEverything();
         const expected: Expected[] = [];
         for (const [key, schema] of Object.entries(objectOf(kind, config))) {
-          if (key === 'subtype' || key === 'mode') continue;
+          if (key === 'subtype' || key === 'mode' || key === 'kind') continue;
           expectedFields(schema, config[key], key, expected);
         }
         expect(expected.length, kind).toBeGreaterThan(0);
@@ -404,6 +392,9 @@ describe('basic fields first, advanced ones behind a disclosure', () => {
       <Harness
         schema={NodeConfigSchemas.decision}
         initial={{
+          kind: 'classifier',
+          model: 'jev',
+          question: 'q',
           answer: {
             type: 'choice',
             options: [
@@ -411,8 +402,7 @@ describe('basic fields first, advanced ones behind a disclosure', () => {
               { id: 'b', label: 'b', criteria: 'b' },
             ],
           },
-          evaluation: { kind: 'expression', jsonata: '"a"' },
-          recordAlternatives: 'invalid',
+          recordAlternatives: 'wrong',
         }}
       />,
     );
