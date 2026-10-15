@@ -1,10 +1,14 @@
 import {
-  LoopDefinitionSchema,
-  LoopExportSchema,
-  NoulSpecSchema,
-  type LoopDefinition,
-  type LoopExport,
-  type NoulSpec,
+  V3LoopDefinitionSchema as LoopDefinitionSchema,
+  V3LoopExportSchema as LoopExportSchema,
+  V3NoulSpecSchema as NoulSpecSchema,
+  V3LoopSettingsSchema,
+  V3NodeConfigSchemas,
+  V3TemplateSchema,
+  V3ExpressionSchema,
+  type V3LoopDefinition as LoopDefinition,
+  type V3LoopExport as LoopExport,
+  type V3NoulSpec as NoulSpec,
 } from '@graphgoblin/contracts';
 import jsonata from 'jsonata';
 import { syntaxIssues } from './syntax.js';
@@ -17,6 +21,12 @@ import {
 } from './upgrade.js';
 
 type Obj = Record<string, unknown>;
+const frozenSyntax = {
+  settings: V3LoopSettingsSchema,
+  nodes: V3NodeConfigSchemas,
+  template: V3TemplateSchema,
+  expression: V3ExpressionSchema,
+};
 const object = (value: unknown): value is Obj =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 const issue = (code: string, path: string, message: string): UpgradeIssue => ({
@@ -90,7 +100,7 @@ export function provenBooleanExpression(source: string): boolean {
   }
 }
 
-/** Composes the retained frozen v1 -> v2 stage with the single current exit cutover. */
+/** Composes the frozen v1 -> v2 stage with the frozen v2 -> v3 exit cutover. */
 export function upgradeLoopCurrent(
   input: unknown,
   resolutions: UpgradeCurrentResolutions = {},
@@ -98,6 +108,8 @@ export function upgradeLoopCurrent(
   const errors = validateUpgradeCurrentResolutions(resolutions);
   if (errors.length) return { ok: false, issues: errors };
   const { predicates = {}, ...v1 } = resolutions;
+  // Format-3 passthrough uses the frozen capture, including exports and device drafts.
+  // The format-4 step replaces this branch with the v3 -> v4 stage.
   if (object(input) && input.schemaVersion === 3) {
     if (
       [
@@ -123,7 +135,7 @@ export function upgradeLoopCurrent(
         ok: false,
         issues: [issue('UPGRADE_V3_INVALID', '/', 'current definition violates format 3')],
       };
-    const syntax = syntaxIssues(parsed.data);
+    const syntax = syntaxIssues(parsed.data, frozenSyntax);
     return syntax.length
       ? {
           ok: false,
@@ -226,7 +238,7 @@ export function upgradeLoopCurrent(
         issue('UPGRADE_V3_INVALID', '/' + error.path.map(String).join('/'), error.message),
       ),
     };
-  const syntax = syntaxIssues(parsed.data);
+  const syntax = syntaxIssues(parsed.data, frozenSyntax);
   if (syntax.length)
     return {
       ok: false,

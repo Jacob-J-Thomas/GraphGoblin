@@ -6,6 +6,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 - **Behaviour change:** deleting a loop now deletes its run history, versions, drafts and triggers atomically; active runs must be cancelled first. (#118)
 
+- Internal: frozen format-3 parsers from `12e5b87` for the format-4 upgrade; existing offline definition and history conversion validates against this capture. (#164, step 01)
+
 - Incomplete numeric input now keeps the last valid value, reports **Enter a complete number**, and blocks Publish through the existing held-input mechanism. This also fixes the inherited main-branch bug where native incomplete input silently cleared an optional number. Section JSON validates the merged whole node config, including parent Claude rules, before any applied value or device/server draft changes. (#170, QA fixes)
 
 - Inference and decision editors offer schema-validated section JSON with explicit Apply/Cancel, retained unfinished text, validation badges and issue focus. Declared variables suggest names and mutation paths; numeric constraints keep invalid entries out of saved values, and criteria/rubrics preserve multiline text. JSON mode refuses hidden unfinished field input; formatting-only JSON edits do not block Publish. Decision Answer JSON validates routes and rubric together and preserves connections only for surviving route IDs, with explicit confirmation before removing connections; the structured picker changes answer type. Capability slugs remain authored because format 3 has no resolved capability catalog. (#170, part B)
@@ -56,6 +58,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 - Settings' Model catalog uses Enabled switches to turn entries on or off. If a refresh removes a row while its switch is saving, focus returns to the section heading, and the notice that the model is no longer available clears on the next toggle. (#24)
 
 ### Upgrade notes
+
+- Fresh SQLite initialisation commits its schema, migration ledger and complete format marker together, allowing interrupted first startup to retry safely while unknown or damaged stores still require explicit recovery. SQLite helper consumers must replace `stampFreshDatabase` with `initializeFreshDatabase`, which owns this transaction; when it returns `current`, apply ordinary migrations. Concurrent initialisation still applies pending migrations, and rollback failures preserve the original error. (#152)
 
 - Template drafts add `POST /templates/{id}/draft`. Installed templates may advertise a separate authored starting-point asset; rebuild strict API clients and the packaged catalog. Existing bound automation instances and stored loops are unchanged; no data migration is needed for this addition.
 
