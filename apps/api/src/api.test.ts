@@ -31,7 +31,7 @@ function waitLoop(name = 'wait'): LoopDefinitionInput {
           inputSchema: { type: 'object', required: ['ok'] },
         },
       },
-      { id: 'done', kind: 'exit', label: 'D', config: { return: { mapping: 'lastOutput.value' } } },
+      { id: 'done', kind: 'exit', label: 'D', config: { returns: 'lastOutput.value' } },
     ],
     edges: [
       { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'wait' } },

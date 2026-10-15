@@ -51,7 +51,7 @@ function definition(type: 'noul' | 'score', model = 'local-primitive'): LoopDefi
         id: 'done',
         kind: 'exit',
         label: 'Done',
-        config: { return: { mapping: 'lastOutput.value' } },
+        config: { returns: 'lastOutput.value' },
       },
     ],
     edges: [
@@ -147,7 +147,6 @@ describe('primitive classifier API admission and execution', () => {
           },
         });
         expect(t.codex.routes).toEqual([]);
-        expect(t.codex.booleans).toEqual([]);
       } finally {
         await fixture.close();
       }

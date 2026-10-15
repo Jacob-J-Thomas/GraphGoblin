@@ -67,7 +67,7 @@ describe('definition-aware draft admission', () => {
       }),
     ).toBe(false);
   });
-  it.each(['decision', 'exit'] as const)(
+  it.each(['decision'] as const)(
     'distinguishes inherited and explicit %s evaluator values',
     (kind) => {
       const evaluation = {
@@ -86,21 +86,12 @@ describe('definition-aware draft admission', () => {
                 { id: 'no', label: 'No' },
               ],
             }
-          : {
-              criteria: [
-                {
-                  when: 'predicate',
-                  predicate: evaluation,
-                  match: { type: 'boolean', value: true },
-                  outcome: 'success',
-                },
-              ],
-            };
+          : {};
       const input = LoopDefinitionSchema.parse({
         ...definition(),
         nodes: [{ id: 'work', kind, label: 'Work', config }],
       });
-      const path = kind === 'decision' ? 'config.' : 'config.criteria.0.predicate.';
+      const path = 'config.';
       expect(rejectsDraftAdmission(input, issue('MODEL_UNRESOLVED', path + 'model', 'work'))).toBe(
         false,
       );
@@ -108,12 +99,7 @@ describe('definition-aware draft admission', () => {
         rejectsDraftAdmission(input, issue('EFFORT_UNRESOLVED', path + 'effort', 'work')),
       ).toBe(false);
       const node = input.nodes[0]!;
-      const actual =
-        node.kind === 'decision'
-          ? node.config
-          : node.kind === 'exit' && node.config.criteria[0]?.when === 'predicate'
-            ? node.config.criteria[0].predicate
-            : undefined;
+      const actual = node.kind === 'decision' ? node.config : undefined;
       if (!actual || actual.kind !== 'llm') throw new Error('missing evaluator');
       actual.model = { mode: 'explicit', value: 'unknown-model' };
       actual.effort = { mode: 'explicit', value: 'high' };
@@ -124,10 +110,7 @@ describe('definition-aware draft admission', () => {
         rejectsDraftAdmission(input, issue('EFFORT_UNSUPPORTED', path + 'effort', 'work')),
       ).toBe(true);
       expect(
-        rejectsDraftAdmission(
-          input,
-          issue('MODEL_NOT_IN_CATALOG', 'config.criteria.10.predicate.model', 'work'),
-        ),
+        rejectsDraftAdmission(input, issue('MODEL_NOT_IN_CATALOG', 'config.unknown.model', 'work')),
       ).toBe(true);
     },
   );

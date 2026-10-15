@@ -153,67 +153,6 @@ describe('adversarial engine invariants', () => {
     ).toHaveLength(1);
   });
 
-  it.each([true, false])(
-    'ADV-016: a loop-back whose cursor write was lost resumes at its target (append returned=%s)',
-    async (recorded) => {
-      const e = await createTestEngine();
-      const def = singleNodeLoop(
-        'loop-crash',
-        {
-          id: 'mut',
-          kind: 'mutate',
-          label: 'Mut',
-          config: { operations: [{ op: 'delete', path: '/vars/absent' }] },
-        },
-        { default: 'loop-back', loopBack: { targetNodeId: 'mut' } },
-      );
-      def.settings = { maxIterations: 2 };
-      def.edges.push({ id: 'back', from: { node: 'done', port: 'loopBack' }, to: { node: 'mut' } });
-      const v = e.publish(def);
-      const update = e.ports.runs.update.bind(e.ports.runs);
-      const append = e.ports.events.append.bind(e.ports.events);
-      const hang = () => new Promise<never>(() => undefined);
-      // The loop-back's node.finished and iteration.incremented are one append. Crash right after
-      // it is stored (before the executor learns its seq), or after the run record's update was
-      // issued but never applied.
-      const appendSpy = vi
-        .spyOn(e.ports.events, 'append')
-        .mockImplementation(async (id, drafts) => {
-          const stored = await append(id, drafts);
-          if (!recorded && drafts.some((d) => d.type === 'iteration.incremented')) return hang();
-          return stored;
-        });
-      const updateSpy = vi.spyOn(e.ports.runs, 'update').mockImplementation((id, changes) => {
-        if (recorded && changes.iteration === 2) return hang();
-        return update(id, changes);
-      });
-      const r = await e.start(v.loopId);
-      await vi.waitFor(() =>
-        expect(
-          e.events(r.id).some((x) => x.type === 'node.finished' && x.route === 'loopBack'),
-        ).toBe(true),
-      );
-      if (recorded)
-        await vi.waitFor(() => expect(e.eventTypes(r.id)).toContain('iteration.incremented'));
-      e.manager.stop();
-      appendSpy.mockRestore();
-      updateSpy.mockRestore();
-      const recovered = new RunManager(e.ports, e.settings);
-      await recovered.start();
-      await recovered.waitForIdle();
-      recovered.stop();
-      const done = await recovered.getRun(r.id);
-      expect(done).toMatchObject({ status: 'exhausted', iteration: 2 });
-      expect(e.eventTypes(r.id).filter((t) => t === 'iteration.incremented')).toHaveLength(1);
-      expect(
-        e.events(r.id).filter((x) => x.type === 'node.finished' && x.nodeId === 'done'),
-      ).toHaveLength(2);
-      expect(
-        e.events(r.id).filter((x) => x.type === 'node.started' && x.nodeId === 'mut'),
-      ).toHaveLength(2);
-    },
-  );
-
   it('ADV-016: an exit whose run.finished was lost is evaluated again and finishes once', async () => {
     const e = await createTestEngine();
     const v = e.publish(inputLoop());
@@ -302,7 +241,7 @@ describe('adversarial engine invariants', () => {
         id: 'done',
         kind: 'exit',
         label: 'Done',
-        config: { return: { mapping: '42', channels: [{ kind: 'caller' }] } },
+        config: { returns: '42', destinations: [{ kind: 'caller' }] },
       };
       const cv = e.publish(child);
       const output =
@@ -317,28 +256,6 @@ describe('adversarial engine invariants', () => {
       expect(t).toEqual(replayThread((await e.ports.runs.getInitialThread(r.id))!, e.events(r.id)));
     },
   );
-
-  it.each([1, 2, 3])('4: maxIterations stops exactly at %i', async (maxIterations) => {
-    const e = await createTestEngine();
-    const def = singleNodeLoop(
-      'limit',
-      {
-        id: 'mut',
-        kind: 'mutate',
-        label: 'Mut',
-        config: { operations: [{ op: 'delete', path: '/vars/absent' }] },
-      },
-      { default: 'loop-back', loopBack: { targetNodeId: 'mut' } },
-    );
-    def.settings = { maxIterations };
-    def.edges.push({ id: 'back', from: { node: 'done', port: 'loopBack' }, to: { node: 'mut' } });
-    const r = await e.runToIdle(e.publish(def).loopId);
-    expect(r.status).toBe('exhausted');
-    expect(r.iteration).toBe(maxIterations);
-    expect(
-      e.events(r.id).filter((x) => x.type === 'node.started' && x.nodeId === 'mut'),
-    ).toHaveLength(maxIterations);
-  });
 
   it.each([false, true])(
     '4: recursive subloops terminate at depth limit (two-loop cycle=%s)',
@@ -452,7 +369,7 @@ describe('adversarial engine invariants', () => {
             label: 'Mut',
             config: { operations: [{ op: 'delete', path: '/vars/absent' }] },
           },
-          { return: { mapping: '42', channels: [channel, { kind: 'caller' }] } },
+          { returns: '42', destinations: [channel, { kind: 'caller' }] },
         ),
       );
       const r = await e.runToIdle(v.loopId);

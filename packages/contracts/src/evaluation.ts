@@ -57,15 +57,17 @@ export const EffortSelectionSchema = z.discriminatedUnion('mode', [
 export type ModelSelection = z.infer<typeof ModelSelectionSchema>;
 export type EffortSelection = z.infer<typeof EffortSelectionSchema>;
 
+export const LIMIT_REACHED_PORT_ID = 'limit-reached' as const;
 export const ChoiceOptionIdSchema = SlugSchema.refine(
-  (value) => value !== 'in',
-  'an option id may not be named "in"',
+  (value) => value !== 'in' && value !== LIMIT_REACHED_PORT_ID,
+  'route ids may not be named "in" or "limit-reached"',
 );
 export const ChoiceOptionSchema = z.strictObject({
   id: ChoiceOptionIdSchema.meta(
     field('Stable provider key and output port; changing display order does not change the route.'),
   ),
   label: z.string().trim().min(1).max(120).meta(field('Unique readable option label.')),
+  repeat: z.boolean().optional().meta(field('Mark the one route that repeats through this gate.')),
   criteria: z
     .string()
     .trim()
@@ -138,6 +140,7 @@ export type ScoreSpec = z.infer<typeof ScoreSpecSchema>;
 export const ScoreBandSchema = z.strictObject({
   id: ChoiceOptionIdSchema.meta(field('Stable output port for this score band.')),
   label: z.string().trim().min(1).max(120).meta(field('Unique readable score band label.')),
+  repeat: z.boolean().optional().meta(field('Mark the one route that repeats through this gate.')),
   min: z.number().min(0).meta(field('Inclusive lower boundary on the rubric index scale.')),
   max: z.number().min(0).meta(field('Exclusive upper boundary; the rubric endpoint is inclusive.')),
 });
@@ -224,6 +227,7 @@ export type RouteId = z.infer<typeof RouteIdSchema>;
 export const RouteDeclarationSchema = z.strictObject({
   id: RouteIdSchema,
   label: z.string().trim().min(1).max(120),
+  repeat: z.boolean().optional().meta(field('Mark the one route that repeats through this gate.')),
 });
 export type RouteDeclaration = z.infer<typeof RouteDeclarationSchema>;
 export const RouteDeclarationsSchema = z
@@ -244,7 +248,7 @@ export const RouteDeclarationsSchema = z
       });
     }
   });
-export const ExpressionPredicateConfigSchema = z
+const ExpressionSourceSchema = z
   .strictObject({
     kind: z.literal('expression').meta(field('Evaluate JSONata locally.')),
     jsonata: ExpressionSchema.meta(
@@ -259,26 +263,96 @@ export const ExpressionPredicateConfigSchema = z
         message: 'expression must contain source',
       });
   });
-export const ExpressionDecisionConfigSchema = ExpressionPredicateConfigSchema.safeExtend({
+type GateConfig = { maxPasses?: number | undefined; maxRunTimeSeconds?: number | undefined } & (
+  { routes: RouteDeclaration[] } | { answer: ClassifierAnswerConfig }
+);
+function gateLimitsIssues(config: GateConfig, ctx: z.RefinementCtx): void {
+  const routes =
+    'routes' in config
+      ? config.routes
+      : config.answer.type === 'choice'
+        ? config.answer.options
+        : config.answer.type === 'noul'
+          ? [config.answer.true, config.answer.false]
+          : config.answer.bands;
+  const repeats = routes.filter((route) => route.repeat);
+  if (repeats.length > 1) {
+    let seen = false;
+    routes.forEach((route, index) => {
+      if (!route.repeat) return;
+      const path =
+        'routes' in config
+          ? ['routes', index, 'repeat']
+          : config.answer.type === 'choice'
+            ? ['answer', 'options', index, 'repeat']
+            : config.answer.type === 'score'
+              ? ['answer', 'bands', index, 'repeat']
+              : ['answer', index === 0 ? 'true' : 'false', 'repeat'];
+      if (seen) ctx.addIssue({ code: 'custom', path, message: 'at most one route may repeat' });
+      seen = true;
+    });
+  }
+  if (repeats.length && config.maxPasses === undefined)
+    ctx.addIssue({
+      code: 'custom',
+      path: ['maxPasses'],
+      message: 'a repeat route requires maxPasses',
+    });
+  if (!repeats.length)
+    for (const key of ['maxPasses', 'maxRunTimeSeconds'] as const)
+      if (config[key] !== undefined)
+        ctx.addIssue({
+          code: 'custom',
+          path: [key],
+          message: 'gate limits require a repeat route',
+        });
+}
+const GateLimits = {
+  maxPasses: z
+    .number()
+    .int()
+    .positive()
+    .max(10_000)
+    .optional()
+    .meta(
+      field(
+        'Required with a repeat route. One-based passes; a non-repeat choice wins on the last pass.',
+      ),
+    ),
+  maxRunTimeSeconds: z
+    .number()
+    .int()
+    .positive()
+    .max(31_536_000)
+    .optional()
+    .meta(
+      field(
+        'Optional maximum elapsed seconds from run start, including waits and pauses. Checked after evaluation, only on a repeat.',
+      ),
+    ),
+};
+export const ExpressionDecisionConfigSchema = ExpressionSourceSchema.safeExtend({
+  ...GateLimits,
   routes: RouteDeclarationsSchema.meta(
     field('Two to sixty-four stable readable routes.', { jsonEditor: true }),
   ),
-});
-export const LlmPredicateConfigSchema = z.strictObject({
+}).superRefine(gateLimitsIssues);
+const LlmSourceSchema = z.strictObject({
   kind: z.literal('llm').meta(field('Use a structured Codex evaluation.')),
   instructions: TemplateSchema.meta(field('Liquid instructions rendered against the full thread.')),
   harness: z.literal('codex').meta(field('Implemented structured evaluator harness.')),
   model: ModelSelectionSchema.meta(field('Inherit or explicitly select the model.')),
   effort: EffortSelectionSchema.meta(field('Inherit or explicitly select reasoning effort.')),
 });
-export const LlmDecisionConfigSchema = LlmPredicateConfigSchema.extend({
+export const LlmDecisionConfigSchema = LlmSourceSchema.extend({
+  ...GateLimits,
   routes: RouteDeclarationsSchema.meta(
     field('Declared stable route ids and readable labels.', { jsonEditor: true }),
   ),
   context: DecisionContextSchema.prefault({}).meta(
     field('Selected provider context.', { context: true, jsonEditor: true }),
   ),
-});
+}).superRefine(gateLimitsIssues);
 export const ClassifierEvaluationConfigSchema = z.strictObject({
   kind: z.literal('classifier').meta(field('Evaluate one classifier primitive.')),
   model: ClassifierModelIdSchema.meta(
@@ -315,6 +389,7 @@ const classifierThreshold = (
     });
 };
 export const ClassifierDecisionConfigSchema = ClassifierEvaluationConfigSchema.extend({
+  ...GateLimits,
   answer: ClassifierAnswerConfigSchema.meta(
     field('Classifier answer and stable ports.', { jsonEditor: true }),
   ),
@@ -327,7 +402,9 @@ export const ClassifierDecisionConfigSchema = ClassifierEvaluationConfigSchema.e
     .meta(
       field('Record classifier probability alternatives.', { advanced: true, group: 'Recording' }),
     ),
-}).superRefine(classifierThreshold);
+})
+  .superRefine(classifierThreshold)
+  .superRefine(gateLimitsIssues);
 export const DecisionConfigSchema = z.discriminatedUnion('kind', [
   ExpressionDecisionConfigSchema,
   LlmDecisionConfigSchema,
@@ -337,15 +414,6 @@ export type ExpressionDecisionConfig = z.infer<typeof ExpressionDecisionConfigSc
 export type LlmDecisionConfig = z.infer<typeof LlmDecisionConfigSchema>;
 export type ClassifierDecisionConfig = z.infer<typeof ClassifierDecisionConfigSchema>;
 export type DecisionConfig = z.infer<typeof DecisionConfigSchema>;
-/** Exit predicates have their own contract and no graph routes or provider-context selectors. */
-export const PredicateConfigSchema = z.discriminatedUnion('kind', [
-  ExpressionPredicateConfigSchema,
-  LlmPredicateConfigSchema,
-  ClassifierEvaluationConfigSchema.extend({ answer: ClassifierAnswerSpecSchema }).superRefine(
-    classifierThreshold,
-  ),
-]);
-export type PredicateConfig = z.infer<typeof PredicateConfigSchema>;
 export const ChoiceAnswerSchema = z.strictObject({
   type: z.literal('choice'),
   optionId: ChoiceOptionIdSchema,
@@ -489,19 +557,68 @@ export const EvaluationEmissionSchema = EvaluationFactSchema.superRefine(
     }
   },
 );
-export const PredicateEvaluationSchema = EvaluationFactSchema.extend({
-  acceptance: EvaluationAcceptanceSchema,
+/** One-based current pass. Only an actual repeat advances it; a refused repeat retains it. */
+export const GateEvidenceSchema = z.strictObject({
+  previousPasses: z.number().int().positive(),
+  passes: z.number().int().positive(),
+  repeatRouteId: RouteIdSchema,
+  maxPasses: z.number().int().positive().max(10_000),
+  maxRunTimeSeconds: z
+    .number()
+    .int()
+    .positive()
+    .max(31_536_000)
+    .optional()
+    .meta(
+      field(
+        'Optional maximum elapsed seconds from run start, including waits and pauses. Checked after evaluation, only on a repeat.',
+      ),
+    ),
+  elapsedSeconds: z.number().nonnegative(),
+  limit: z.enum(['max-passes', 'max-run-time']).nullable(),
 });
-export type PredicateEvaluation = z.infer<typeof PredicateEvaluationSchema>;
+export type GateEvidence = z.infer<typeof GateEvidenceSchema>;
 export const DecisionPayloadSchema = EvaluationFactSchema.extend({
-  portId: RouteIdSchema,
+  portId: z.union([RouteIdSchema, z.literal(LIMIT_REACHED_PORT_ID)]),
+  gate: GateEvidenceSchema.optional(),
 }).superRefine((payload, ctx) => {
-  const { observation } = payload;
+  const { observation, gate } = payload;
+  if (gate) {
+    const repeat = payload.portId === gate.repeatRouteId;
+    const limit =
+      repeat || payload.portId === LIMIT_REACHED_PORT_ID
+        ? gate.previousPasses >= gate.maxPasses
+          ? 'max-passes'
+          : gate.maxRunTimeSeconds !== undefined && gate.elapsedSeconds >= gate.maxRunTimeSeconds
+            ? 'max-run-time'
+            : null
+        : null;
+    if (
+      gate.previousPasses > gate.maxPasses ||
+      gate.passes > gate.maxPasses ||
+      gate.limit !== limit ||
+      (payload.portId === LIMIT_REACHED_PORT_ID) !== (limit !== null) ||
+      gate.passes !== gate.previousPasses + (repeat && !limit ? 1 : 0)
+    )
+      ctx.addIssue({
+        code: 'custom',
+        path: ['gate'],
+        message: 'gate evidence must agree with the selected route, limit and pass count',
+      });
+  } else if (payload.portId === LIMIT_REACHED_PORT_ID)
+    ctx.addIssue({
+      code: 'custom',
+      path: ['portId'],
+      message: 'Limit reached requires gate evidence',
+    });
   if (
-    (observation.kind === 'route' && observation.routeId !== payload.portId) ||
+    (observation.kind === 'route' &&
+      observation.routeId !==
+        (payload.gate?.limit ? payload.gate.repeatRouteId : payload.portId)) ||
     (observation.kind === 'classifier' &&
       observation.answer.type === 'choice' &&
-      observation.answer.optionId !== payload.portId)
+      observation.answer.optionId !==
+        (payload.gate?.limit ? payload.gate.repeatRouteId : payload.portId))
   )
     ctx.addIssue({
       code: 'custom',

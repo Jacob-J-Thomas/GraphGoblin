@@ -225,7 +225,7 @@ describe('template API without runtime authority', () => {
             timeoutSeconds: 5,
           },
         },
-        { return: { mapping: 'lastOutput.value' } },
+        { returns: 'lastOutput.value' },
       ),
     );
     const response = await app.app.inject({

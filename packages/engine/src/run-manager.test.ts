@@ -163,7 +163,7 @@ describe('run control', () => {
       { id: 'e3', from: { node: 'pick', port: 'stop' }, to: { node: 'done' } },
     );
     // A high ceiling keeps the visit cap out of the way: this test is about yielding.
-    loop.settings = { maxIterations: 10_000 };
+    loop.settings = { maxNodeVisits: 10_000 };
     const version = engine.publish(loop);
     const run = await engine.start(version.loopId);
     // A timer firing at all proves the executor yields; before the fix this await never returned.
@@ -680,8 +680,8 @@ function kitchenSinkLoopWithoutHeavyNodes(): LoopDefinitionInput {
   } as LoopDefinitionInput;
 }
 
-describe('the per-node visit cap (maxIterations)', () => {
-  function selfRoutingLoop(maxIterations: number, jsonata: string): LoopDefinitionInput {
+describe('the per-node visit cap (maxNodeVisits)', () => {
+  function selfRoutingLoop(maxNodeVisits: number, jsonata: string): LoopDefinitionInput {
     const loop = singleNodeLoop('self-routing', {
       id: 'pick',
       kind: 'decision',
@@ -699,23 +699,23 @@ describe('the per-node visit cap (maxIterations)', () => {
       { id: 'e2', from: { node: 'pick', port: 'again' }, to: { node: 'pick' } },
       { id: 'e3', from: { node: 'pick', port: 'stop' }, to: { node: 'done' } },
     );
-    loop.settings = { maxIterations };
+    loop.settings = { maxNodeVisits };
     return loop;
   }
 
-  it('fails a self-routing decision with MAX_ITERATIONS naming the node', async () => {
+  it('fails a self-routing decision with MAX_NODE_VISITS naming the node', async () => {
     const engine = await createTestEngine();
     const version = engine.publish(selfRoutingLoop(3, '"again"'));
     const run = await engine.runToIdle(version.loopId);
     expect(run.status).toBe('failed');
     expect(run.failure).toMatchObject({
-      code: 'MAX_ITERATIONS',
+      code: 'MAX_NODE_VISITS',
       nodeId: 'pick',
       resumable: false,
-      details: { maxIterations: 3 },
+      details: { maxNodeVisits: 3 },
     });
     expect(run.failure?.message).toContain('"pick"');
-    expect(run.failure?.message).toContain('maxIterations of 3');
+    expect(run.failure?.message).toContain('maxNodeVisits of 3');
     const events = await engine.ports.events.read(run.id);
     expect(countEntries(events, 'pick')).toBe(3);
     expect(events.filter((e) => e.type === 'decision.made')).toHaveLength(3);
@@ -756,7 +756,7 @@ describe('the visit cap and re-entries of one visit', () => {
       label: 'W',
       config: { mode: 'input', prompt: 'ok?' },
     });
-    input.settings = { maxIterations: 1 };
+    input.settings = { maxNodeVisits: 1 };
     const inputRun = await engine.runToIdle(engine.publish(input).loopId);
     expect(inputRun.status).toBe('waiting');
     await engine.manager.pause(inputRun.id);
@@ -770,7 +770,7 @@ describe('the visit cap and re-entries of one visit', () => {
       label: 'W',
       config: { mode: 'duration', seconds: 60 },
     });
-    timer.settings = { maxIterations: 1 };
+    timer.settings = { maxNodeVisits: 1 };
     const timerRun = await engine.runToIdle(engine.publish(timer).loopId);
     expect(timerRun.status).toBe('waiting');
     engine.ports.clock.advance(61_000);

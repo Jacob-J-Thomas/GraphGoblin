@@ -60,7 +60,7 @@ function definition(
         id: 'done',
         kind: 'exit',
         label: 'Done',
-        config: { return: { mapping: 'trigger.payload' } },
+        config: { returns: 'trigger.payload' },
       },
     ],
     edges: [{ id: 'out', from: { node: 'issues', port: 'out' }, to: { node: 'done' } }],

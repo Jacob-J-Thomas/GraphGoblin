@@ -1,11 +1,5 @@
 import { z } from 'zod';
-import {
-  DecisionEvidenceSchema,
-  EvaluationObservationSchema,
-  EvaluationEmissionSchema,
-  EvaluationProvenanceSchema,
-  EvaluationAcceptanceSchema,
-} from './evaluation.js';
+import { DecisionEvidenceSchema } from './evaluation.js';
 import {
   EffortSchema,
   HarnessIdSchema,
@@ -14,7 +8,7 @@ import {
   TimestampSchema,
   UlidSchema,
 } from './common.js';
-import { OutcomeSchema, ExitPredicateMatchSchema } from './nodes.js';
+import { OutcomeSchema } from './nodes.js';
 import { JsonPatchSchema } from './patch.js';
 import { RunFailureSchema, RunStatusSchema, WaitSpecSchema } from './run.js';
 import {
@@ -35,150 +29,6 @@ const Actor = z.strictObject({
   id: z.string().min(1).max(256),
 });
 
-export const ExitDiagnosticSchema = z.strictObject({
-  code: z.enum([
-    'CRITERION_ERROR',
-    'RETURN_MAPPING_ERROR',
-    'DECIDER_UNAVAILABLE',
-    'DECIDER_NOT_AUTHENTICATED',
-    'DECIDER_RATE_LIMITED',
-    'DECIDER_HTTP_ERROR',
-    'DECIDER_UNREACHABLE',
-    'DECIDER_INVALID_RESPONSE',
-    'DECIDER_REDIRECT',
-    'DECIDER_TIMEOUT',
-    'DECIDER_ERROR',
-    'EVALUATION_UNAVAILABLE',
-    'EVALUATION_PROVIDER_FAILED',
-    'EVALUATION_INVALID_CONFIGURATION',
-    'EVALUATION_INVALID_RESPONSE',
-    'EVALUATION_RESULT_REJECTED',
-    'EVALUATION_EXPRESSION_FAILED',
-  ]),
-  message: z.string().min(1).max(256),
-  status: z.number().int().min(100).max(599).optional(),
-});
-
-const CriterionEvidence = {
-  /** Zero-based position in the exit configuration. The inspector displays index + 1. */
-  index: z.number().int().min(0).max(31),
-  strategy: z.enum([
-    'expression',
-    'classifier',
-    'llm',
-    'max-iterations',
-    'max-duration',
-    'last-output-matches',
-  ]),
-};
-export const ExitCriterionEvaluationSchema = z.union([
-  z.strictObject({
-    ...CriterionEvidence,
-    strategy: z.enum(['expression', 'classifier', 'llm']),
-    status: z.enum(['matched', 'not-matched']),
-    observation: EvaluationObservationSchema,
-    provenance: EvaluationProvenanceSchema,
-    /** Null means the archived evidence did not establish the acceptance gate. */
-    acceptance: EvaluationAcceptanceSchema.nullable(),
-    match: ExitPredicateMatchSchema,
-    configuredMinConfidence: z.number().min(0).max(1).optional(),
-    rejection: z
-      .strictObject({
-        kind: z.enum(['classifier-confidence', 'llm-reported-confidence']),
-        minimum: z.number().min(0).max(1),
-        confidence: z.number().min(0).max(1).nullable(),
-      })
-      .optional(),
-  }),
-  z.strictObject({
-    ...CriterionEvidence,
-    strategy: z.enum(['max-iterations', 'max-duration', 'last-output-matches']),
-    status: z.enum(['matched', 'not-matched']),
-    holds: z.boolean().nullable(),
-  }),
-  z.strictObject({
-    ...CriterionEvidence,
-    status: z.literal('skipped'),
-    reason: z.strictObject({
-      code: z.enum(['EARLIER_CRITERION_MATCHED', 'EARLIER_CRITERION_FAILED']),
-      message: z.string().min(1).max(256),
-    }),
-  }),
-  z.strictObject({
-    ...CriterionEvidence,
-    status: z.literal('error'),
-    diagnostic: ExitDiagnosticSchema,
-    provenance: EvaluationProvenanceSchema.optional(),
-  }),
-]);
-export type ExitCriterionEvaluation = z.infer<typeof ExitCriterionEvaluationSchema>;
-/** Fresh predicate evidence is complete; converted history uses the canonical schema above. */
-export const ExitCriterionEmissionSchema = ExitCriterionEvaluationSchema.superRefine(
-  (evidence, ctx) => {
-    if (!('observation' in evidence)) {
-      if ('holds' in evidence && evidence.holds === null)
-        ctx.addIssue({
-          code: 'custom',
-          path: ['holds'],
-          message: 'fresh criterion evidence requires a boolean',
-        });
-      return;
-    }
-    const fresh = EvaluationEmissionSchema.safeParse({
-      observation: evidence.observation,
-      provenance: evidence.provenance,
-    });
-    if (!fresh.success) for (const issue of fresh.error.issues) ctx.addIssue({ ...issue });
-    if (evidence.acceptance === null)
-      ctx.addIssue({
-        code: 'custom',
-        path: ['acceptance'],
-        message: 'fresh evidence requires acceptance',
-      });
-    if (evidence.provenance.kind !== evidence.strategy)
-      ctx.addIssue({
-        code: 'custom',
-        path: ['strategy'],
-        message: 'evidence strategy must match provenance',
-      });
-    if (evidence.status === 'matched' && evidence.rejection)
-      ctx.addIssue({
-        code: 'custom',
-        path: ['rejection'],
-        message: 'a rejected predicate cannot match',
-      });
-    if (evidence.status === 'matched' && evidence.acceptance?.status === 'rejected')
-      ctx.addIssue({
-        code: 'custom',
-        path: ['acceptance'],
-        message: 'a rejected evaluation cannot match',
-      });
-  },
-);
-
-export const ExitEvaluationOutcomeSchema = z.discriminatedUnion('kind', [
-  z.strictObject({
-    kind: z.literal('completed'),
-    outcome: OutcomeSchema,
-    reason: z.enum(['criterion-matched', 'default-success']),
-    criterionIndex: z.number().int().min(0).max(31).optional(),
-  }),
-  z.strictObject({
-    kind: z.literal('looped-back'),
-    reason: z.literal('no-criterion-matched'),
-    targetNodeId: SlugSchema,
-  }),
-  z.strictObject({
-    kind: z.literal('limit-reached'),
-    limit: z.enum(['max-iterations', 'max-duration', 'iteration-ceiling']),
-    value: z.number().positive(),
-    criterionIndex: z.number().int().min(0).max(31).optional(),
-    outcome: z.literal('exhausted'),
-  }),
-  z.strictObject({ kind: z.literal('failed'), diagnostic: ExitDiagnosticSchema }),
-  z.strictObject({ kind: z.literal('cancelled') }),
-]);
-export type ExitEvaluationOutcome = z.infer<typeof ExitEvaluationOutcomeSchema>;
 export const PROGRESS_SUMMARY_MAX = 2000;
 export const COMMAND_PREVIEW_MAX = 160;
 export const SCRIPT_PROGRESS_STDERR_MAX = 2000;
@@ -331,10 +181,7 @@ export const RunEventSchema = z.discriminatedUnion('type', [
     ...Base,
     type: z.literal('exit.evaluated'),
     nodeId: SlugSchema,
-    iteration: z.number().int().positive(),
-    maxIterations: z.number().int().positive(),
-    criteria: z.array(ExitCriterionEvaluationSchema).max(32),
-    result: ExitEvaluationOutcomeSchema,
+    outcome: OutcomeSchema,
   }),
   z.strictObject({
     ...Base,

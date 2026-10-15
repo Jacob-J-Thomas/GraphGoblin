@@ -21,21 +21,7 @@ export async function classifierIssues(
               unavailable: 'This evaluation is unavailable; publication is blocked.',
             },
           ]
-        : node.kind === 'exit'
-          ? node.config.criteria.flatMap((criterion, index) =>
-              criterion.when === 'predicate' && criterion.predicate.kind === 'classifier'
-                ? [
-                    {
-                      id: criterion.predicate.model,
-                      primitive: criterion.predicate.answer.type,
-                      path: 'config.criteria.' + index + '.predicate.model',
-                      kind: 'Exit',
-                      unavailable: 'This evaluation is unavailable; publication is blocked.',
-                    },
-                  ]
-                : [],
-            )
-          : [];
+        : [];
     for (const { id, primitive, path, kind, unavailable } of selections) {
       const entry = entries.find((model) => model.id === id);
       const prefix =

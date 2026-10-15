@@ -10,7 +10,7 @@
       "workingDirectory": {
         "kind": "temp"
       },
-      "maxIterations": 2
+      "maxNodeVisits": 2
     },
     "nodes": [
       {
@@ -217,16 +217,13 @@
           "y": -160
         },
         "config": {
-          "criteria": [],
-          "default": "success",
-          "return": {
-            "mapping": "{\"qa\":outputs.qa.value,\"challenge\":outputs.adversary.value}",
-            "channels": [
-              {
-                "kind": "caller"
-              }
-            ]
-          }
+          "outcome": "success",
+          "returns": "{\"qa\":outputs.qa.value,\"challenge\":outputs.adversary.value}",
+          "destinations": [
+            {
+              "kind": "caller"
+            }
+          ]
         }
       },
       {
@@ -238,53 +235,74 @@
           "y": 160
         },
         "config": {
-          "criteria": [
+          "outcome": "failure",
+          "returns": "{\"qa\":outputs.qa.value,\"challenge\":outputs.adversary.value}",
+          "destinations": [
             {
-              "when": "predicate",
-              "predicate": {
-                "kind": "expression",
-                "jsonata": "true"
-              },
-              "match": {
-                "type": "boolean",
-                "value": true
-              },
-              "outcome": "failure"
+              "kind": "caller"
             }
-          ],
-          "default": "success",
-          "return": {
-            "mapping": "{\"qa\":outputs.qa.value,\"challenge\":outputs.adversary.value}",
-            "channels": [
-              {
-                "kind": "caller"
-              }
-            ]
-          }
+          ]
         }
       },
       {
         "id": "retry",
-        "kind": "exit",
-        "label": "Reassess once within the limit",
+        "kind": "decision",
+        "label": "Repeat gate",
         "ui": {
           "x": 810,
           "y": 300
         },
         "config": {
-          "criteria": [],
-          "default": "loop-back",
-          "return": {
-            "mapping": "{\"qa\":outputs.qa.value,\"challenge\":outputs.adversary.value}",
-            "channels": [
-              {
-                "kind": "caller"
-              }
-            ]
-          },
-          "loopBack": {
-            "targetNodeId": "qa"
-          }
+          "kind": "expression",
+          "jsonata": "\"repeat\"",
+          "routes": [
+            {
+              "id": "repeat",
+              "label": "Repeat",
+              "repeat": true
+            },
+            {
+              "id": "finish",
+              "label": "Finish"
+            }
+          ],
+          "maxPasses": 2
+        }
+      },
+      {
+        "id": "retry-complete",
+        "kind": "exit",
+        "label": "Complete",
+        "ui": {
+          "x": 1080,
+          "y": 300
+        },
+        "config": {
+          "outcome": "success",
+          "returns": "{\"qa\":outputs.qa.value,\"challenge\":outputs.adversary.value}",
+          "destinations": [
+            {
+              "kind": "caller"
+            }
+          ]
+        }
+      },
+      {
+        "id": "retry-exhausted",
+        "kind": "exit",
+        "label": "Limit reached",
+        "ui": {
+          "x": 1080,
+          "y": 460
+        },
+        "config": {
+          "outcome": "exhausted",
+          "returns": "{\"qa\":outputs.qa.value,\"challenge\":outputs.adversary.value}",
+          "destinations": [
+            {
+              "kind": "caller"
+            }
+          ]
         }
       }
     ],
@@ -378,13 +396,35 @@
         }
       },
       {
-        "id": "retry-loop-back",
+        "id": "retry-repeat",
         "from": {
           "node": "retry",
-          "port": "loopBack"
+          "port": "repeat"
         },
         "to": {
           "node": "qa",
+          "port": "in"
+        }
+      },
+      {
+        "id": "retry-complete",
+        "from": {
+          "node": "retry",
+          "port": "finish"
+        },
+        "to": {
+          "node": "retry-complete",
+          "port": "in"
+        }
+      },
+      {
+        "id": "retry-exhausted",
+        "from": {
+          "node": "retry",
+          "port": "limit-reached"
+        },
+        "to": {
+          "node": "retry-exhausted",
           "port": "in"
         }
       }

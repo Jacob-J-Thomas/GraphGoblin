@@ -124,7 +124,7 @@ export type NodeOutput = z.infer<typeof NodeOutputSchema>;
 /**
  * The context thread: the run's shared state. Nodes change it only through JSON Patch.
  * Shape is Draft (docs/03-domain-model.md, ADR-0013 pending). Mutable regions are
- * /messages, /vars, /artifacts, /outputs, /lastOutput. The engine owns /run, /invocation, /counters.
+ * /messages, /vars, /artifacts, /outputs, /lastOutput. The engine owns /run, /invocation, /counters and /gates.
  */
 export const ContextThreadSchema = z.strictObject({
   schemaVersion: z.literal(1),
@@ -141,6 +141,7 @@ export const ContextThreadSchema = z.strictObject({
   artifacts: z.array(ArtifactSchema),
   outputs: z.record(z.string(), NodeOutputSchema),
   lastOutput: NodeOutputSchema.optional(),
+  gates: z.record(SlugSchema, z.strictObject({ passes: z.number().int().positive() })).default({}),
   counters: z.strictObject({
     nodeVisits: z.record(z.string(), z.number().int().nonnegative()),
     usage: UsageSchema,

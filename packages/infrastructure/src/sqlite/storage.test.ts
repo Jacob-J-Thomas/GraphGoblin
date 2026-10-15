@@ -971,7 +971,7 @@ function kitchenSinkLoopReduced() {
   const loop = kitchenSinkLoop();
   return {
     ...loop,
-    settings: { maxIterations: 3 },
+    settings: { maxNodeVisits: 3 },
     nodes: loop.nodes
       .filter((n) => ['start', 'prep', 'done'].includes(n.id))
       .map((n) => (n.id === 'done' ? { ...n, config: {} } : n)),

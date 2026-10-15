@@ -348,34 +348,9 @@ describe('advisory model validation', () => {
 
 describe('uniform strict evaluator admission', () => {
   it.each(['disabled model', 'unavailable harness'] as const)(
-    'keeps existing exit predicates subject to publication admission for an %s',
+    'keeps decisions subject to publication admission for an %s',
     async (unavailable) => {
-      const definition: LoopDefinitionInput = {
-        ...minimalLoop(),
-        nodes: minimalLoop().nodes.map((node) =>
-          node.kind === 'exit'
-            ? {
-                ...node,
-                config: {
-                  criteria: [
-                    {
-                      when: 'predicate',
-                      predicate: {
-                        kind: 'llm',
-                        harness: 'codex',
-                        model: { mode: 'inherit' },
-                        effort: { mode: 'inherit' },
-                        instructions: 'Complete?',
-                      },
-                      match: { type: 'boolean', value: true },
-                      outcome: 'success',
-                    },
-                  ],
-                },
-              }
-            : node,
-        ),
-      };
+      const definition = modelLoop('decision');
       if (unavailable === 'disabled model')
         await t.container.repos.catalog.setEnabled('codex', 'gpt-6-luna', false);
       else delete t.container.ports.harnesses.codex;
@@ -388,7 +363,7 @@ describe('uniform strict evaluator admission', () => {
       expect(created.statusCode).toBe(201);
       expect(created.json().issues).toEqual(
         expect.arrayContaining([
-          expect.objectContaining({ code, severity: 'warning', nodeId: 'done' }),
+          expect.objectContaining({ code, severity: 'warning', nodeId: 'model-node' }),
         ]),
       );
       const id = created.json<{ loop: { id: string } }>().loop.id;

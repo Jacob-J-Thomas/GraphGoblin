@@ -127,12 +127,6 @@ describe('SSE event stream', () => {
   );
   it('streams and pages the same decision evidence and exit evidence, advertised in OpenAPI', async () => {
     t.jev.isAvailable = false;
-    t.codex.evaluateBoolean = () =>
-      Promise.resolve({
-        holds: false,
-        confidence: 0.93,
-        reasoning: 'More work is needed',
-      });
     const definition: LoopDefinitionInput = {
       schemaVersion: CURRENT_DEFINITION_FORMAT,
       name: 'evaluation-stream',
@@ -156,28 +150,7 @@ describe('SSE event stream', () => {
           id: 'done',
           kind: 'exit',
           label: 'Done',
-          config: {
-            criteria: [
-              {
-                when: 'predicate',
-                predicate: {
-                  kind: 'llm',
-                  harness: 'codex',
-                  model: { mode: 'inherit' },
-                  effort: { mode: 'inherit' },
-                  instructions: 'Done?',
-                },
-                match: { type: 'boolean', value: true },
-                outcome: 'success',
-              },
-              {
-                when: 'predicate',
-                predicate: { kind: 'expression', jsonata: 'true' },
-                match: { type: 'boolean', value: true },
-                outcome: 'success',
-              },
-            ],
-          },
+          config: {},
         },
       ],
       edges: [
@@ -207,92 +180,14 @@ describe('SSE event stream', () => {
       diagnostics: [],
     });
     expect(streamed.find((event) => event.type === 'exit.evaluated')).toMatchObject({
-      criteria: [
-        {
-          index: 0,
-          strategy: 'llm',
-          observation: {
-            kind: 'boolean',
-            holds: false,
-            confidence: 0.93,
-            reasoning: 'More work is needed',
-          },
-          provenance: { model: 'gpt-6-luna' },
-        },
-        { index: 1, strategy: 'expression', status: 'matched' },
-      ],
-      result: { kind: 'completed', criterionIndex: 1 },
+      outcome: 'success',
     });
     const schema = (await t.app.inject('/openapi.json')).body;
     expect(schema).toContain('exit.evaluated');
-    expect(schema).toContain('ExitCriterionEvaluation');
+    expect(schema).toContain('GateEvidence');
     expect(schema).toContain('EvaluationDiagnostic');
   });
 
-  it('persists safe exit diagnostics in pages and replayed SSE before run.failed', async () => {
-    const marker = 'private-provider-response';
-    t.jev.classifyNoul = () =>
-      Promise.reject(Object.assign(new Error(marker), { code: 'DECIDER_HTTP_ERROR', status: 503 }));
-    const definition: LoopDefinitionInput = {
-      ...waitLoop,
-      name: 'exit-error',
-      nodes: waitLoop.nodes.map((node) =>
-        node.kind === 'exit'
-          ? {
-              ...node,
-              config: {
-                criteria: [
-                  {
-                    when: 'predicate',
-                    predicate: {
-                      kind: 'classifier',
-                      model: 'jev',
-                      question: 'Done?',
-                      answer: {
-                        type: 'noul',
-                        true: { label: 'Ready', criteria: 'Task is done' },
-                        false: { label: 'Continue', criteria: 'Task is not done' },
-                      },
-                    },
-                    match: { type: 'noul', value: true },
-                    outcome: 'success',
-                  },
-                ],
-              },
-            }
-          : node,
-      ),
-    };
-    await t.container.repos.secretsFor('local').set('jev-api-key', 'synthetic-key');
-    const id = await t.publishLoop(definition);
-    const { run } = (
-      await t.app.inject({ method: 'POST', url: `/loops/${id}/runs`, payload: {} })
-    ).json<{ run: RunRecord }>();
-    await t.idle();
-    await t.container.manager.provideInput(run.id, true);
-    await t.idle();
-    const page = await t.app.inject(`/runs/${run.id}/events`);
-    const text = await readAll(
-      await fetch(`${base}/runs/${run.id}/events`, { headers: { accept: 'text/event-stream' } }),
-    );
-    expect(page.body).not.toContain(marker);
-    expect(text).not.toContain(marker);
-    const events = parseFrames(text)
-      .filter((frame) => frame.event)
-      .map((frame) => RunEventSchema.parse(JSON.parse(frame.data!)));
-    expect(events.find((event) => event.type === 'exit.evaluated')).toMatchObject({
-      result: {
-        kind: 'failed',
-        diagnostic: {
-          code: 'EVALUATION_PROVIDER_FAILED',
-          message: 'Decision provider request failed',
-          status: 503,
-        },
-      },
-    });
-    expect(events.at(-1)?.type).toBe('run.failed');
-    expect(events).toEqual(page.json<{ items: RunEvent[] }>().items);
-  });
   it('replays history, tails live events, and closes after the run finishes', async () => {
     const id = await t.publishLoop(waitLoop);
     const { run } = (

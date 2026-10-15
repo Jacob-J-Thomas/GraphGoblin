@@ -232,7 +232,8 @@ describe('installed template catalog boundaries', () => {
               ...node,
               config: {
                 ...node.config,
-                return: { ...node.config.return, channels: [{ kind: 'log' }] },
+                returns: 'none',
+                destinations: [{ kind: 'log' }],
               },
             }
           : node,

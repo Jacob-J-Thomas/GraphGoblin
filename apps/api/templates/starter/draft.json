@@ -10,7 +10,7 @@
       "workingDirectory": {
         "kind": "temp"
       },
-      "maxIterations": 10
+      "maxNodeVisits": 10
     },
     "nodes": [
       {
@@ -81,16 +81,13 @@
           "y": 0
         },
         "config": {
-          "criteria": [],
-          "default": "success",
-          "return": {
-            "mapping": "outputs.assistant.value",
-            "channels": [
-              {
-                "kind": "caller"
-              }
-            ]
-          }
+          "outcome": "success",
+          "returns": "outputs.assistant.value",
+          "destinations": [
+            {
+              "kind": "caller"
+            }
+          ]
         }
       }
     ],

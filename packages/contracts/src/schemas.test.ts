@@ -90,11 +90,11 @@ describe('loop definition', () => {
   });
   it('parses the minimal loop and applies defaults', () => {
     const loop = LoopDefinitionSchema.parse(minimalLoop());
-    expect(loop.settings.maxIterations).toBe(10);
+    expect(loop.settings.maxNodeVisits).toBe(10);
     expect(loop.settings.workingDirectory).toEqual({ kind: 'temp' });
     expect(loop.settings.defaults).not.toHaveProperty('harness');
     const exit = loop.nodes.find((n) => n.kind === 'exit');
-    expect(exit?.kind === 'exit' && exit.config.return.channels).toEqual([{ kind: 'caller' }]);
+    expect(exit?.kind === 'exit' && exit.config.destinations).toEqual([{ kind: 'caller' }]);
     expect(loop.edges[0]?.to.port).toBe('in');
   });
 
@@ -241,41 +241,22 @@ describe('node config schemas', () => {
     expect(cfg.onExhausted).toBe('continue');
   });
 
-  it('exit validates loop-back and predicate requirements', () => {
-    expect(ExitConfigSchema.safeParse({ default: 'loop-back' }).success).toBe(false);
-    expect(
-      ExitConfigSchema.safeParse({
-        criteria: [{ when: 'predicate', strategy: 'expression', outcome: 'success' }],
-      }).success,
-    ).toBe(false);
-    expect(
-      ExitConfigSchema.safeParse({
-        criteria: [{ when: 'predicate', strategy: 'jev', outcome: 'success' }],
-      }).success,
-    ).toBe(false);
-    const cfg = ExitConfigSchema.parse({
-      criteria: [
-        {
-          when: 'predicate',
-          predicate: {
-            kind: 'classifier',
-            model: 'jev',
-            question: 'Done?',
-            answer: {
-              type: 'noul',
-              true: { label: 'Done', criteria: 'Complete' },
-              false: { label: 'Pending', criteria: 'Incomplete' },
-            },
-          },
-          match: { type: 'noul', value: true },
-          outcome: 'success',
-        },
-        { when: 'max-duration', seconds: 60 },
-        { when: 'last-output-matches', jsonSchema: { type: 'object' } },
-      ],
+  it('exit admits terminal outcomes and rejects removed lifecycle fields', () => {
+    for (const outcome of ['success', 'failure', 'exhausted'])
+      expect(ExitConfigSchema.parse({ outcome }).outcome).toBe(outcome);
+    for (const removed of [
+      { default: 'loop-back' },
+      { criteria: [] },
+      { loopBack: { targetNodeId: 'work' } },
+      { predicate: {} },
+      { return: { mapping: 'none' } },
+    ])
+      expect(ExitConfigSchema.safeParse(removed).success).toBe(false);
+    expect(ExitConfigSchema.parse({})).toEqual({
+      outcome: 'success',
+      returns: 'none',
+      destinations: [{ kind: 'caller' }],
     });
-    expect(cfg.default).toBe('success');
-    expect(cfg.return.mapping).toBe('none');
   });
 
   it('trigger subtypes parse with defaults', () => {

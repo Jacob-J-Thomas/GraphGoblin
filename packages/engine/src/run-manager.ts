@@ -190,14 +190,14 @@ function exitResult(
         e.type === 'node.finished' && e.seq < terminal.seq,
     );
   const node = exitNode ? nodeById(def, exitNode.nodeId) : undefined;
-  const config = node?.kind === 'exit' ? node.config.return : undefined;
+  const config = node?.kind === 'exit' ? node.config : undefined;
   return {
     kind: 'exit',
     patch: [],
     outcome: terminal.outcome,
     reason: 'recorded in the log',
     ...(terminal.result !== undefined ? { returnPayload: terminal.result } : {}),
-    channels: config && config.mapping !== 'none' ? config.channels : [],
+    channels: config && config.returns !== 'none' ? config.destinations : [],
   };
 }
 
@@ -384,6 +384,11 @@ export class RunManager {
       },
       ...(input.seed ? { seed: input.seed } : {}),
     });
+    thread.gates = Object.fromEntries(
+      version.definition.nodes
+        .filter((node) => node.kind === 'decision' && node.config.maxPasses !== undefined)
+        .map((node) => [node.id, { passes: 1 }]),
+    );
     const run: RunRecord = {
       id: runId,
       ownerId: input.ownerId,
@@ -1294,15 +1299,15 @@ export class RunManager {
       }
       const attempt = attemptFor(events, nodeId);
       // Visit cap (docs/05): a fresh entry (attempt 1; wakes, retries, and resumes re-enter with a
-      // higher attempt) beyond `maxIterations` fails the run, which bounds graph cycles that never
-      // pass through an exit loop-back.
-      if (attempt === 1 && countEntries(events, nodeId) >= def.settings.maxIterations) {
+      // higher attempt) beyond `maxNodeVisits` fails the run, which bounds graph cycles that never
+      // pass through a marked repeat gate.
+      if (attempt === 1 && countEntries(events, nodeId) >= def.settings.maxNodeVisits) {
         await this.failRun(runId, {
-          code: 'MAX_ITERATIONS',
-          message: `node "${nodeId}" would start for visit ${def.settings.maxIterations + 1}, above the loop's maxIterations of ${def.settings.maxIterations}`,
+          code: 'MAX_NODE_VISITS',
+          message: `node "${nodeId}" would start for visit ${def.settings.maxNodeVisits + 1}, above the loop's maxNodeVisits of ${def.settings.maxNodeVisits}`,
           nodeId,
           resumable: false,
-          details: { maxIterations: def.settings.maxIterations },
+          details: { maxNodeVisits: def.settings.maxNodeVisits },
         });
         return;
       }
@@ -1402,7 +1407,7 @@ export class RunManager {
         return;
       }
 
-      // done, loop-back, exit: apply the patch and record the node as finished.
+      // done, decision, exit: apply the patch and record the node as finished.
       try {
         thread = ContextThreadSchema.parse(applyPatch(thread, result.patch));
       } catch (error) {
@@ -1414,12 +1419,7 @@ export class RunManager {
         });
         return;
       }
-      const route =
-        result.kind === 'done'
-          ? result.route
-          : result.kind === 'loop-back'
-            ? 'loopBack'
-            : undefined;
+      const route = result.kind === 'exit' ? undefined : result.route;
       const finishedDraft: EventDraft = {
         type: 'node.finished',
         nodeId,
@@ -1435,6 +1435,7 @@ export class RunManager {
         // evaluate an exit again to learn what it decided.
         const status = outcomeStatus(result.outcome);
         const seq = await appendAll([
+          { type: 'exit.evaluated', nodeId, outcome: result.outcome },
           finishedDraft,
           {
             type: 'run.finished',
@@ -1448,38 +1449,32 @@ export class RunManager {
         return;
       }
 
-      if (result.kind === 'loop-back') {
-        const from = run.iteration;
-        const to = from + 1;
-        thread = { ...thread, run: { ...thread.run, iteration: to } };
-        // The loop-back and its iteration are one append, so neither is ever recorded alone.
-        const seq = await appendAll([
-          finishedDraft,
-          { type: 'iteration.incremented', from, to, targetNodeId: result.targetNodeId },
-        ]);
-        await this.ports.runs.saveThread(runId, thread, seq);
-        nodeId = result.targetNodeId;
-        run = await this.ports.runs.update(runId, {
-          iteration: to,
-          currentNodeId: nodeId,
-          waiting: undefined,
-        });
-      } else {
-        const seq = await appendAll([finishedDraft]);
-        await this.ports.runs.saveThread(runId, thread, seq);
-        const edge = outgoingEdge(def, nodeId, result.route);
-        if (!edge) {
-          await this.failRun(runId, {
-            code: 'INTERNAL_ERROR',
-            message: `node ${nodeId} routed to "${result.route}" but no edge leaves that port`,
-            nodeId,
-            resumable: false,
-          });
-          return;
-        }
-        nodeId = edge.to.node;
-        run = await this.ports.runs.update(runId, { currentNodeId: nodeId, waiting: undefined });
+      if (result.kind === 'decision' && result.evidence.gate) {
+        thread = {
+          ...thread,
+          gates: { ...thread.gates, [nodeId]: { passes: result.evidence.gate.passes } },
+        };
       }
+      // Evaluation evidence, pass count and chosen route are a single durable completion.
+      const seq = await appendAll([
+        ...(result.kind === 'decision'
+          ? [{ type: 'decision.made' as const, nodeId, ...result.evidence }]
+          : []),
+        finishedDraft,
+      ]);
+      await this.ports.runs.saveThread(runId, thread, seq);
+      const edge = outgoingEdge(def, nodeId, result.route);
+      if (!edge) {
+        await this.failRun(runId, {
+          code: 'INTERNAL_ERROR',
+          message: `node ${nodeId} routed to "${result.route}" but no edge leaves that port`,
+          nodeId,
+          resumable: false,
+        });
+        return;
+      }
+      nodeId = edge.to.node;
+      run = await this.ports.runs.update(runId, { currentNodeId: nodeId, waiting: undefined });
 
       const fresh = await this.mustGet(runId);
       if (fresh.status === 'paused') return;
@@ -1820,8 +1815,7 @@ export class RunManager {
   /**
    * Bring the run's cursor up to the log. When the log's last node event is the `node.finished`
    * of the node the cursor still points at, that node completed but the process died before the
-   * cursor moved: advance along the edge it took (or its loop-back, to the iteration recorded
-   * with it) instead of executing it again. A finished exit has its `run.finished` in the same
+   * cursor moved: advance along the recorded edge instead of executing it again. A finished exit has its `run.finished` in the same
    * append and is completed from the log before this runs. Returns the updated run, or undefined
    * when the cursor already agrees with the log.
    */
@@ -1833,26 +1827,7 @@ export class RunManager {
     const last = lastFinishedNode(events);
     const route = last?.event.route;
     if (!last || !route || last.event.nodeId !== run.currentNodeId) return undefined;
-    const { event, index } = last;
-    if (route === 'loopBack') {
-      const node = nodeById(def, event.nodeId);
-      const targetNodeId = node?.kind === 'exit' ? node.config.loopBack?.targetNodeId : undefined;
-      // The loop-back and its iteration are appended together; a log without the iteration
-      // (written before that) re-evaluates the exit instead, whose patch is empty.
-      const recorded = events
-        .slice(index + 1)
-        .find(
-          (e): e is Extract<RunEvent, { type: 'iteration.incremented' }> =>
-            e.type === 'iteration.incremented',
-        );
-      if (!targetNodeId || !recorded) return undefined;
-      const updated = await this.ports.runs.update(run.id, {
-        iteration: recorded.to,
-        currentNodeId: targetNodeId,
-        waiting: undefined,
-      });
-      return { run: updated };
-    }
+    const { event } = last;
     const edge = outgoingEdge(def, event.nodeId, route);
     if (!edge) return undefined;
     const updated = await this.ports.runs.update(run.id, {

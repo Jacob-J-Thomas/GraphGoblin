@@ -33,7 +33,7 @@ function linearLoop(): LoopDefinitionInput {
           operations: [{ op: 'set', path: '/vars/b', value: { kind: 'literal', value: 2 } }],
         },
       },
-      { id: 'done', kind: 'exit', label: 'Done', config: { return: { mapping: 'vars' } } },
+      { id: 'done', kind: 'exit', label: 'Done', config: { returns: 'vars' } },
     ],
     edges: [
       { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'a' } },
@@ -235,7 +235,7 @@ function minimalChild(): LoopDefinitionInput {
     name: 'child',
     nodes: [
       { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
-      { id: 'done', kind: 'exit', label: 'Done', config: { return: { mapping: '"ok"' } } },
+      { id: 'done', kind: 'exit', label: 'Done', config: { returns: '"ok"' } },
     ],
     edges: [{ id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'done' } }],
   };

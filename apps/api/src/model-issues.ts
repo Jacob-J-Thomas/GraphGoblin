@@ -102,19 +102,6 @@ export async function modelIssues(
         'config',
       );
     }
-    if (node.kind === 'exit') {
-      for (const [index, criterion] of node.config.criteria.entries()) {
-        if (criterion.when !== 'predicate' || criterion.predicate.kind !== 'llm') continue;
-        const evaluation = criterion.predicate;
-        await check(
-          evaluation.harness,
-          evaluation.model.mode === 'explicit' ? evaluation.model.value : undefined,
-          evaluation.effort.mode === 'explicit' ? evaluation.effort.value : undefined,
-          node.id,
-          'config.criteria.' + index + '.predicate',
-        );
-      }
-    }
   }
   return issues;
 }
@@ -160,11 +147,6 @@ export function rejectsDraftAdmission(definition: LoopDefinition, issue: LoopIss
   if (node.kind === 'inference') return node.config[field] !== undefined;
   if (node.kind === 'decision' && node.config.kind === 'llm')
     return node.config[field].mode === 'explicit';
-  if (node.kind === 'exit') {
-    const index = /^config\.criteria\.(\d+)\.predicate\./.exec(issue.path ?? '')?.[1];
-    const criterion = index === undefined ? undefined : node.config.criteria[Number(index)];
-    if (criterion?.when === 'predicate' && criterion.predicate.kind === 'llm')
-      return criterion.predicate[field].mode === 'explicit';
-  }
+
   return true;
 }

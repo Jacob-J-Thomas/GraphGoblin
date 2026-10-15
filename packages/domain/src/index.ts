@@ -15,7 +15,6 @@ export * from './mutations.js';
 export * from './graph.js';
 export * from './answers.js';
 export * from './syntax.js';
-export * from './exit.js';
 export * from './state-machine.js';
 export * from './loop-io.js';
 export * from './replay.js';

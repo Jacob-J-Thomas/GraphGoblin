@@ -78,7 +78,7 @@ function decisionLoop(model?: string, recordAlternatives = true): LoopDefinition
         id: 'done',
         kind: 'exit',
         label: 'Done',
-        config: { return: { mapping: 'lastOutput.value.portId' } },
+        config: { returns: 'lastOutput.value.portId' },
       },
     ],
     edges: [
@@ -406,7 +406,7 @@ describe('classifier catalog HTTP API', () => {
 
 describe('classifier publish validation agreement', () => {
   it.each(['disabled', 'missing', 'blank', 'unreadable', 'configured'])(
-    'reports built-in Jev exit predicate warnings on all five endpoints (%s)',
+    'reports built-in Jev decision warnings on all five endpoints (%s)',
     async (state) => {
       if (state !== 'missing')
         await t.container.repos
@@ -417,42 +417,7 @@ describe('classifier publish validation agreement', () => {
         await t.container.handle.client.execute(
           "UPDATE secrets SET ciphertext = 'broken' WHERE name = 'jev-api-key'",
         );
-      const base = minimalLoop();
-      const definition: LoopDefinitionInput = {
-        ...base,
-        nodes: base.nodes.map((node) =>
-          node.kind === 'exit'
-            ? {
-                ...node,
-                config: {
-                  criteria: [
-                    {
-                      when: 'predicate',
-                      predicate: { kind: 'expression', jsonata: 'false' },
-                      match: { type: 'boolean', value: true },
-                      outcome: 'success',
-                    },
-                    {
-                      when: 'predicate',
-                      predicate: {
-                        kind: 'classifier',
-                        model: 'jev',
-                        question: 'Done?',
-                        answer: {
-                          type: 'noul',
-                          true: { label: 'Ready', criteria: 'Task is done' },
-                          false: { label: 'Continue', criteria: 'Task is not done' },
-                        },
-                      },
-                      match: { type: 'noul', value: true },
-                      outcome: 'success',
-                    },
-                  ],
-                },
-              }
-            : node,
-        ),
-      };
+      const definition = decisionLoop();
       const created = await t.app.inject({
         method: 'POST',
         url: '/loops',
@@ -471,9 +436,11 @@ describe('classifier publish validation agreement', () => {
                   ? 'CLASSIFIER_SECRET_UNREADABLE'
                   : 'CLASSIFIER_SECRET_MISSING',
             severity: 'warning',
-            nodeId: 'done',
-            path: 'config.criteria.1.predicate.model',
-            message: expect.stringContaining("Exit 'Done' (done), classifier 'Jev' (jev)"),
+            nodeId: 'decide',
+            path: 'config.model',
+            message: expect.stringContaining(
+              "Decision 'Choose team' (decide), classifier 'Jev' (jev)",
+            ),
           }),
         ]);
       if (issues.length) {
@@ -713,7 +680,7 @@ describe('classifier runtime hot reload', () => {
     });
   });
 
-  it('keeps real Jev exit HTTP error bodies out of snapshots, events, streams and logs', async () => {
+  it('keeps real Jev decision HTTP error bodies out of snapshots, events, streams and logs', async () => {
     const marker = 'gg-private-exit-error-regression';
     const decider = createJevDecider({
       secrets: { resolve: () => Promise.resolve('test-key') },
@@ -737,28 +704,7 @@ describe('classifier runtime hot reload', () => {
           provenance: { provider: 'typesafe', classifierId: 'jev', model: 'jev-latest' },
         }),
     };
-    const definition = minimalLoop();
-    for (const node of definition.nodes)
-      if (node.kind === 'exit')
-        node.config = {
-          criteria: [
-            {
-              when: 'predicate',
-              predicate: {
-                kind: 'classifier',
-                model: 'jev',
-                question: 'Done?',
-                answer: {
-                  type: 'noul',
-                  true: { label: 'Ready', criteria: 'Task is done' },
-                  false: { label: 'Continue', criteria: 'Task is not done' },
-                },
-              },
-              match: { type: 'noul', value: true },
-              outcome: 'success',
-            },
-          ],
-        };
+    const definition = decisionLoop();
     const loopId = await t.publishLoop(definition);
     const started = await t.app.inject({
       method: 'POST',

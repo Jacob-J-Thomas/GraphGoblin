@@ -24,8 +24,6 @@ import type {
   ClassifierNoulResult,
   LlmRouteRequest,
   LlmRouteResult,
-  LlmBooleanRequest,
-  LlmBooleanResult,
   NoulRequest,
   ScoreRequest,
   ScoreResult,
@@ -586,7 +584,6 @@ export class FakeClassifier implements ClassifierPort {
 export class FakeDecider implements DeciderPort {
   readonly id = 'codex' as const;
   readonly routes: LlmRouteRequest[] = [];
-  readonly booleans: LlmBooleanRequest[] = [];
   isAvailable = true;
   constructor(_id: 'codex' = 'codex') {}
   available(): boolean {
@@ -599,10 +596,6 @@ export class FakeDecider implements DeciderPort {
       confidence: 1,
       reasoning: 'Selected',
     });
-  }
-  evaluateBoolean(request: LlmBooleanRequest, _signal?: AbortSignal): Promise<LlmBooleanResult> {
-    this.booleans.push(request);
-    return Promise.resolve({ holds: true, confidence: 1, reasoning: 'Verified' });
   }
 }
 

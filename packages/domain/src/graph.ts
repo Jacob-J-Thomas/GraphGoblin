@@ -1,4 +1,10 @@
-import type { Edge, LoopDefinition, Node, NodeKind } from '@graphgoblin/contracts';
+import {
+  LIMIT_REACHED_PORT_ID,
+  type Edge,
+  type LoopDefinition,
+  type Node,
+  type NodeKind,
+} from '@graphgoblin/contracts';
 import { syntaxIssues } from './syntax.js';
 import { decisionRouteDeclarations } from './answers.js';
 
@@ -27,7 +33,12 @@ export function outputPorts(node: Node): string[] {
     case 'heartbeat':
       return ['out'];
     case 'decision':
-      return decisionRouteDeclarations(node.config).map((route) => route.id);
+      return [
+        ...decisionRouteDeclarations(node.config).map((route) => route.id),
+        ...(decisionRouteDeclarations(node.config).some((route) => route.repeat)
+          ? [LIMIT_REACHED_PORT_ID]
+          : []),
+      ];
     case 'script': {
       const extra = Object.values(node.config.exitCodeRoutes ?? {}).filter(
         (label) => label !== 'out',
@@ -35,7 +46,7 @@ export function outputPorts(node: Node): string[] {
       return ['out', ...new Set(extra)];
     }
     case 'exit':
-      return node.config.loopBack ? ['loopBack'] : [];
+      return [];
   }
 }
 
@@ -179,38 +190,41 @@ export function validateLoop(def: LoopDefinition): ValidationIssue[] {
           severity: 'error',
           message: `port "${port}" of node "${node.id}" is not connected`,
           nodeId: node.id,
+          ...(node.kind === 'decision' && port === LIMIT_REACHED_PORT_ID
+            ? { path: 'config.maxPasses' }
+            : {}),
         });
       }
     }
   }
 
-  // Exit loop-back consistency.
-  for (const exit of exits) {
-    if (!exit.config.loopBack) continue;
-    const target = ids.get(exit.config.loopBack.targetNodeId);
-    if (!target) {
+  // A marked repeat is a real cycle, never a route straight into an exit or a dead end.
+  for (const decision of nodesOfKind(def, 'decision')) {
+    const routes = decisionRouteDeclarations(decision.config);
+    const repeat = routes.find((route) => route.repeat);
+    if (!repeat) continue;
+    const edge = outgoingEdge(def, decision.id, repeat.id);
+    if (
+      edge &&
+      (ids.get(edge.to.node)?.kind === 'trigger' ||
+        ids.get(edge.to.node)?.kind === 'exit' ||
+        !reachableFrom(def, edge.to.node).has(decision.id))
+    ) {
+      const routePath =
+        decision.config.kind !== 'classifier'
+          ? `routes.${routes.indexOf(repeat)}`
+          : decision.config.answer.type === 'choice'
+            ? `answer.options.${routes.indexOf(repeat)}`
+            : decision.config.answer.type === 'score'
+              ? `answer.bands.${routes.indexOf(repeat)}`
+              : `answer.${routes.indexOf(repeat) === 0 ? 'true' : 'false'}`;
       issues.push({
-        code: 'LOOPBACK_TARGET_MISSING',
+        code: 'REPEAT_ROUTE_NOT_CYCLIC',
         severity: 'error',
-        message: `exit "${exit.id}" loops back to unknown node "${exit.config.loopBack.targetNodeId}"`,
-        nodeId: exit.id,
-      });
-    } else if (target.kind === 'trigger' || target.kind === 'exit') {
-      issues.push({
-        code: 'LOOPBACK_TARGET_INVALID',
-        severity: 'error',
-        message: `exit "${exit.id}" may not loop back to a ${target.kind} node`,
-        nodeId: exit.id,
-      });
-    }
-    const edge = outgoingEdge(def, exit.id, 'loopBack');
-    if (edge && edge.to.node !== exit.config.loopBack.targetNodeId) {
-      issues.push({
-        code: 'LOOPBACK_EDGE_MISMATCH',
-        severity: 'error',
-        message: `exit "${exit.id}" loopBack edge targets "${edge.to.node}" but config says "${exit.config.loopBack.targetNodeId}"`,
-        nodeId: exit.id,
+        nodeId: decision.id,
         edgeId: edge.id,
+        path: `config.${routePath}.repeat`,
+        message: 'a repeat route must lead back to its decision gate',
       });
     }
   }
@@ -254,20 +268,6 @@ export function validateLoop(def: LoopDefinition): ValidationIssue[] {
           severity: 'error',
           message: `node "${node.id}" is not reachable from any trigger`,
           nodeId: node.id,
-        });
-      }
-    }
-  }
-
-  // Exit criteria that can never fire.
-  for (const exit of exits) {
-    for (const criterion of exit.config.criteria) {
-      if (criterion.when === 'max-iterations' && criterion.value > def.settings.maxIterations) {
-        issues.push({
-          code: 'CRITERION_ABOVE_CEILING',
-          severity: 'warning',
-          message: `exit "${exit.id}" max-iterations ${criterion.value} exceeds the loop ceiling ${def.settings.maxIterations} and will never fire`,
-          nodeId: exit.id,
         });
       }
     }

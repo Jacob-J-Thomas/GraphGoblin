@@ -46,7 +46,7 @@ function askLoop(): LoopDefinitionInput {
         kind: 'exit',
         label: 'D',
         config: {
-          return: { mapping: '{ "prepared": vars.prepared, "answer": lastOutput.value }' },
+          returns: '{ "prepared": vars.prepared, "answer": lastOutput.value }',
         },
       },
     ],

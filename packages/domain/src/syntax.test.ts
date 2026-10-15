@@ -200,14 +200,13 @@ describe('syntax checks', () => {
     expect(findAuthoredSources(NodeConfigSchemas.exit, null)).toEqual([]);
     expect(
       findAuthoredSources(NodeConfigSchemas.exit, {
-        return: { mapping: 'none', channels: [] },
+        returns: 'none',
+        destinations: [],
       }),
     ).toEqual([]);
-    expect(findAuthoredSources(NodeConfigSchemas.exit, { return: { mapping: '$.a' } })).toEqual([
-      { kind: 'expression', source: '$.a', path: 'return.mapping' },
+    expect(findAuthoredSources(NodeConfigSchemas.exit, { returns: '$.a' })).toEqual([
+      { kind: 'expression', source: '$.a', path: 'returns' },
     ]);
-    expect(findAuthoredSources(NodeConfigSchemas.exit, { criteria: [{ when: 'bogus' }] })).toEqual(
-      [],
-    );
+    expect(findAuthoredSources(NodeConfigSchemas.exit, { returns: 42 })).toEqual([]);
   });
 });

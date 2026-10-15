@@ -2,19 +2,17 @@ import type {
   DeciderPort,
   LlmRouteRequest,
   LlmRouteResult,
-  LlmBooleanRequest,
-  LlmBooleanResult,
   StructuredPort,
 } from '@graphgoblin/engine';
 
 /**
  * `DeciderPort` (`id: 'codex'`) over a structured Codex completion. Schemas follow OpenAI's strict
  * structured-output rules (every property required, `additionalProperties: false`), so numeric
- * bounds are validated locally for routes and predicates.
+ * bounds are validated locally for routes.
  */
 
 /** Convert trusted harness error categories at the structured completion boundary; never retain provider text. */
-function completionFailure(error: unknown, primitive = 'route'): unknown {
+function completionFailure(error: unknown): unknown {
   if (typeof error !== 'object' || error === null || !('code' in error)) return error;
   const code = error.code;
   const mapping: Record<string, string> = {
@@ -31,7 +29,7 @@ function completionFailure(error: unknown, primitive = 'route'): unknown {
           : 'DECIDER_HTTP_ERROR'
         : undefined;
   return selected
-    ? Object.assign(new Error(`Codex ${primitive} completion failed`), { code: selected })
+    ? Object.assign(new Error('Codex route completion failed'), { code: selected })
     : error;
 }
 
@@ -54,19 +52,6 @@ export function routePrompt(request: LlmRouteRequest): string {
     'Do not run commands or change files. Return the route id, confidence between 0 and 1, and short reasoning.',
   ].join('\n');
 }
-export function booleanPrompt(request: LlmBooleanRequest): string {
-  return [
-    'You are a boolean predicate in an automated workflow.',
-    '',
-    request.instructions,
-    '',
-    'Context (JSON):',
-    contextBlock(request.context),
-    '',
-    'Do not run commands or change files. Return holds (a boolean), confidence between 0 and 1, and short reasoning.',
-  ].join('\n');
-}
-
 export function routeSchema(labels: string[]): Record<string, unknown> {
   return {
     type: 'object',
@@ -79,17 +64,6 @@ export function routeSchema(labels: string[]): Record<string, unknown> {
     additionalProperties: false,
   };
 }
-
-export const BOOLEAN_SCHEMA: Record<string, unknown> = {
-  type: 'object',
-  properties: {
-    holds: { type: 'boolean' },
-    confidence: { type: 'number' },
-    reasoning: { type: 'string' },
-  },
-  required: ['holds', 'confidence', 'reasoning'],
-  additionalProperties: false,
-};
 
 function asRecord(value: unknown, what: string): Record<string, unknown> {
   if (value && typeof value === 'object' && !Array.isArray(value)) {
@@ -145,46 +119,6 @@ export class CodexDecider implements DeciderPort {
     }
     return {
       route: answer.route,
-      confidence: answer.confidence,
-      reasoning: answer.reasoning.slice(0, 2048),
-    };
-  }
-
-  async evaluateBoolean(
-    request: LlmBooleanRequest,
-    signal: AbortSignal,
-  ): Promise<LlmBooleanResult> {
-    signal.throwIfAborted();
-    const { value } = await this.structured
-      .complete(
-        {
-          prompt: booleanPrompt(request),
-          schema: BOOLEAN_SCHEMA,
-          model: request.model,
-          effort: request.effort,
-        },
-        signal,
-      )
-      .catch((error: unknown) => {
-        throw completionFailure(error, 'predicate');
-      });
-    signal.throwIfAborted();
-    const answer = asRecord(value, 'predicate');
-    if (
-      Object.keys(answer).length !== 3 ||
-      !Object.keys(answer).every((key) => ['holds', 'confidence', 'reasoning'].includes(key)) ||
-      typeof answer.holds !== 'boolean' ||
-      typeof answer.confidence !== 'number' ||
-      !Number.isFinite(answer.confidence) ||
-      answer.confidence < 0 ||
-      answer.confidence > 1 ||
-      typeof answer.reasoning !== 'string'
-    )
-      throw Object.assign(new Error('Codex predicate returned an invalid structured answer'), {
-        code: 'DECIDER_INVALID_RESPONSE',
-      });
-    return {
-      holds: answer.holds,
       confidence: answer.confidence,
       reasoning: answer.reasoning.slice(0, 2048),
     };

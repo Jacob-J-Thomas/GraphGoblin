@@ -1,10 +1,11 @@
 import {
   DecisionEmissionSchema,
+  LIMIT_REACHED_PORT_ID,
   type DecisionContext,
   type DecisionPayload,
   type JsonValue,
 } from '@graphgoblin/contracts';
-import { decisionPortId, threadView } from '@graphgoblin/domain';
+import { decisionPortId, decisionRouteDeclarations, threadView } from '@graphgoblin/domain';
 import { RunFailureError } from '../errors.js';
 import type { NodeContext, NodeHandler } from '../handler.js';
 import { evaluateClassifier, evaluateRoute } from '../primitive-evaluator.js';
@@ -96,6 +97,40 @@ export const decisionHandler: NodeHandler<'decision'> = {
         break;
       }
     }
+    const repeat = decisionRouteDeclarations(config).find((route) => route.repeat);
+    if (repeat) {
+      const previousPasses = ctx.thread.gates[ctx.node.id]?.passes ?? 1;
+      const maxPasses = config.maxPasses!;
+      // Run time includes waits, pauses and recovery downtime, and is checked after evaluation.
+      const elapsedSeconds = Math.max(
+        0,
+        (Date.parse(ctx.services.now()) - Date.parse(ctx.run.startedAt ?? ctx.run.createdAt)) /
+          1000,
+      );
+      const limit =
+        payload.portId !== repeat.id
+          ? null
+          : previousPasses >= maxPasses
+            ? 'max-passes'
+            : config.maxRunTimeSeconds !== undefined && elapsedSeconds >= config.maxRunTimeSeconds
+              ? 'max-run-time'
+              : null;
+      payload = {
+        ...payload,
+        portId: limit ? LIMIT_REACHED_PORT_ID : payload.portId,
+        gate: {
+          previousPasses,
+          passes: previousPasses + (payload.portId === repeat.id && !limit ? 1 : 0),
+          repeatRouteId: repeat.id,
+          maxPasses,
+          elapsedSeconds,
+          limit,
+          ...(config.maxRunTimeSeconds !== undefined
+            ? { maxRunTimeSeconds: config.maxRunTimeSeconds }
+            : {}),
+        },
+      };
+    }
     const evidence = DecisionEmissionSchema.safeParse({ ...payload, diagnostics: [] });
     if (!evidence.success)
       throw new RunFailureError(
@@ -103,9 +138,9 @@ export const decisionHandler: NodeHandler<'decision'> = {
         'The evaluator returned evidence inconsistent with its kind',
         { nodeId: ctx.node.id, resumable: false },
       );
-    await ctx.services.record({ type: 'decision.made', nodeId: ctx.node.id, ...evidence.data });
     return {
-      kind: 'done',
+      kind: 'decision',
+      evidence: evidence.data,
       patch: outputPatch(ctx.thread, ctx.node.id, toJson(payload), ctx.services.now()),
       route: payload.portId,
     };

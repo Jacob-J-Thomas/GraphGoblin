@@ -27,8 +27,8 @@ function loop(model = 'jev'): LoopDefinitionInput {
           },
         },
       },
-      { id: 'yes', kind: 'exit', label: 'Yes', config: { return: { mapping: '"yes"' } } },
-      { id: 'no', kind: 'exit', label: 'No', config: { return: { mapping: '"no"' } } },
+      { id: 'yes', kind: 'exit', label: 'Yes', config: { returns: '"yes"' } },
+      { id: 'no', kind: 'exit', label: 'No', config: { returns: '"no"' } },
     ],
     edges: [
       { id: 'start-decide', from: { node: 'start', port: 'out' }, to: { node: 'decide' } },

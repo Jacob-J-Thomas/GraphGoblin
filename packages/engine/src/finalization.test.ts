@@ -60,20 +60,14 @@ for (const source of [
         kind: 'exit',
         label: 'Done',
         config: {
-          criteria:
-            source === 'exit-failure'
-              ? [
-                  {
-                    when: 'predicate',
-                    predicate: { kind: 'expression', jsonata: 'true' },
-                    match: { type: 'boolean', value: true },
-                    outcome: 'failure',
-                  },
-                ]
-              : source === 'exit-exhausted'
-                ? [{ when: 'max-iterations', value: 1 }]
-                : [],
-          return: { mapping: 'counters.nodeVisits.done', channels: [{ kind: 'caller' }] },
+          outcome:
+            source === 'exit-success'
+              ? 'success'
+              : source === 'exit-failure'
+                ? 'failure'
+                : 'exhausted',
+          returns: 'counters.nodeVisits.done',
+          destinations: [{ kind: 'caller' }],
         },
       };
     if (source === 'harness' || source === 'repair') {
@@ -108,27 +102,22 @@ for (const source of [
     }
     if (source === 'decider') {
       e.ports.deciders = [];
-      def.nodes[1] = {
-        id: 'done',
-        kind: 'exit',
+      def = singleNodeLoop(source, {
+        id: 'decide',
+        kind: 'decision',
         label: 'D',
         config: {
-          criteria: [
-            {
-              when: 'predicate',
-              predicate: {
-                kind: 'llm',
-                harness: 'codex',
-                model: { mode: 'inherit' },
-                effort: { mode: 'inherit' },
-                instructions: 'done?',
-              },
-              match: { type: 'boolean', value: true },
-              outcome: 'success',
-            },
+          kind: 'llm',
+          instructions: 'Choose',
+          harness: 'codex',
+          model: { mode: 'inherit' },
+          effort: { mode: 'inherit' },
+          routes: [
+            { id: 'yes', label: 'Yes' },
+            { id: 'no', label: 'No' },
           ],
         },
-      };
+      });
       code = 'EVALUATION_UNAVAILABLE';
     }
     if (source === 'decision') {
@@ -253,7 +242,11 @@ for (const source of [
             (await e.ports.runs.get(id))!.status,
           );
           if (drafts.some((d) => d.type === 'run.finished'))
-            expect(drafts[0]!.type).toBe('node.finished');
+            expect(drafts.map((draft) => draft.type)).toEqual([
+              'exit.evaluated',
+              'node.finished',
+              'run.finished',
+            ]);
           blocked = true;
           return hang();
         }
@@ -409,7 +402,7 @@ it('return delivery survives a crash just after terminal status commits', async 
     id: 'done',
     kind: 'exit',
     label: 'D',
-    config: { return: { mapping: '7', channels: [{ kind: 'log' }] } },
+    config: { returns: '7', destinations: [{ kind: 'log' }] },
   };
   const transition = e.ports.runs.transition.bind(e.ports.runs);
   let blocked = false;
@@ -479,7 +472,7 @@ it('a resumed failed run is finalized again after a crash on its next terminal s
   const def = singleNodeLoop(
     'resumed-finalization',
     { id: 'infer', kind: 'inference', label: 'I', config: { prompt: { template: 'go' } } },
-    { return: { mapping: '7', channels: [{ kind: 'log' }] } },
+    { returns: '7', destinations: [{ kind: 'log' }] },
   );
   const r = await e.runToIdle(e.publish(def).loopId);
   expect(r.failure?.resumable).toBe(true);
@@ -588,7 +581,7 @@ it.each(['next success', 'durable resume'] as const)(
     const def = singleNodeLoop(
       'stale-finalizer',
       { id: 'infer', kind: 'inference', label: 'I', config: { prompt: { template: 'go' } } },
-      { return: { mapping: '7', channels: [{ kind: 'log' }] } },
+      { returns: '7', destinations: [{ kind: 'log' }] },
     );
     // Hold the failure's finalizer just before it writes its marker.
     let entered!: () => void;
@@ -660,19 +653,9 @@ it.each(['same failure', 'newer non-resumable failure'] as const)(
       'concurrent-resume',
       { id: 'infer', kind: 'inference', label: 'I', config: { prompt: { template: 'go' } } },
       {
-        ...(exitFailure
-          ? {
-              criteria: [
-                {
-                  when: 'predicate',
-                  predicate: { kind: 'expression', jsonata: 'true' },
-                  match: { type: 'boolean', value: true },
-                  outcome: 'failure',
-                },
-              ],
-            }
-          : {}),
-        return: { mapping: '7', channels: [{ kind: 'log' }] },
+        outcome: exitFailure ? 'failure' : 'success',
+        returns: '7',
+        destinations: [{ kind: 'log' }],
       },
     );
     const r = await e.runToIdle(e.publish(def).loopId);

@@ -9,7 +9,7 @@ function waitLoop(name: string, config: Record<string, unknown>): LoopDefinition
   return singleNodeLoop(
     name,
     { id: 'wait', kind: 'wait', label: 'W', config },
-    { return: { mapping: 'lastOutput.value' } },
+    { returns: 'lastOutput.value' },
   );
 }
 
@@ -131,7 +131,7 @@ describe('heartbeat node', () => {
     return singleNodeLoop(
       'hb',
       { id: 'hb', kind: 'heartbeat', label: 'H', config },
-      { return: { mapping: 'lastOutput.value' } },
+      { returns: 'lastOutput.value' },
     );
   }
 
@@ -269,7 +269,7 @@ describe('subloop node', () => {
         kind: 'exit',
         label: 'D',
         config: {
-          return: { mapping: '{ "childVar": vars.childVar, "inherited": vars.parentVar }' },
+          returns: '{ "childVar": vars.childVar, "inherited": vars.parentVar }',
         },
       },
     ],
@@ -314,9 +314,7 @@ describe('subloop node', () => {
           kind: 'exit',
           label: 'D',
           config: {
-            return: {
-              mapping: '{ "vars": vars, "last": lastOutput.value, "messages": $count(messages) }',
-            },
+            returns: '{ "vars": vars, "last": lastOutput.value, "messages": $count(messages) }',
           },
         },
       ],

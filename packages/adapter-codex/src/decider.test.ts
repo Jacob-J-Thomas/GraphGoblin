@@ -1,12 +1,6 @@
 import type { StructuredPort } from '@graphgoblin/engine';
 import { describe, expect, it, vi } from 'vitest';
-import {
-  BOOLEAN_SCHEMA,
-  routePrompt,
-  routeSchema,
-  createCodexDecider,
-  booleanPrompt,
-} from './decider.js';
+import { routePrompt, routeSchema, createCodexDecider } from './decider.js';
 
 function structuredReturning(value: unknown) {
   const complete = vi.fn<StructuredPort['complete']>(() => Promise.resolve({ value }));
@@ -137,88 +131,6 @@ describe('CodexDecider.route', () => {
 describe('prompts', () => {
   it('render the question and context', () => {
     expect(routePrompt({ ...choice, context: undefined as never })).toContain('null');
-    expect(
-      booleanPrompt({ instructions: 'q?', context: [1], model: 'm', effort: 'low' }),
-    ).toContain('[\n  1\n]');
-  });
-});
-
-describe('CodexDecider.evaluateBoolean', () => {
-  const request = {
-    model: 'gpt-6-luna',
-    effort: 'low' as const,
-    instructions: 'Ready?',
-    context: { checks: 'passed' },
-  };
-  it('uses instructions for one strict boolean completion with a bounded reasoning excerpt', async () => {
-    const { port, complete } = structuredReturning({
-      holds: false,
-      confidence: 0.9,
-      reasoning: 'r'.repeat(2049),
-    });
-    expect(
-      await createCodexDecider(port).evaluateBoolean(
-        { ...request, model: 'gpt-6-luna', effort: 'low' },
-        new AbortController().signal,
-      ),
-    ).toEqual({ holds: false, confidence: 0.9, reasoning: 'r'.repeat(2048) });
-    expect(complete).toHaveBeenCalledTimes(1);
-    expect(complete.mock.calls[0]?.[0]).toMatchObject({
-      model: 'gpt-6-luna',
-      effort: 'low',
-      schema: BOOLEAN_SCHEMA,
-      prompt: booleanPrompt(request),
-    });
-    expect(booleanPrompt(request)).toContain('Ready?');
-    expect(booleanPrompt(request)).not.toContain('Authored sides');
-  });
-  it('passes resolved model and effort and retains the exact 2048-character boundary', async () => {
-    const { port, complete } = structuredReturning({
-      holds: true,
-      confidence: 1,
-      reasoning: 'r'.repeat(2048),
-    });
-    expect(
-      (await createCodexDecider(port).evaluateBoolean(request, new AbortController().signal))
-        .reasoning,
-    ).toHaveLength(2048);
-    expect(complete.mock.calls[0]?.[0]).toHaveProperty('model', 'gpt-6-luna');
-    expect(complete.mock.calls[0]?.[0]).toHaveProperty('effort', 'low');
-  });
-  it.each([
-    null,
-    [],
-    { holds: true },
-    { holds: 'yes', confidence: 1, reasoning: 'Q' },
-    { holds: true, confidence: -1, reasoning: 'Q' },
-    { holds: true, confidence: 2, reasoning: 'Q' },
-    { holds: true, confidence: NaN, reasoning: 'Q' },
-    { holds: true, confidence: Infinity, reasoning: 'Q' },
-    { holds: true, confidence: 'high', reasoning: 'Q' },
-    { holds: true, confidence: 1, reasoning: 7 },
-    { holds: true, confidence: 1, reasoning: 'Q', trueProbability: 0.9 },
-  ])('rejects malformed Noul without clamping or retry %j', async (value) => {
-    const { port, complete } = structuredReturning(value);
-    await expect(
-      createCodexDecider(port).evaluateBoolean(request, new AbortController().signal),
-    ).rejects.toMatchObject({ code: 'DECIDER_INVALID_RESPONSE' });
-    expect(complete).toHaveBeenCalledTimes(1);
-  });
-  it('sanitizes recognized native failure categories and preserves cancellation', async () => {
-    const { port, complete } = structuredReturning({});
-    complete.mockRejectedValueOnce(
-      Object.assign(new Error('private-native-message'), { code: 'HARNESS_QUOTA_EXHAUSTED' }),
-    );
-    await expect(
-      createCodexDecider(port).evaluateBoolean(request, new AbortController().signal),
-    ).rejects.toMatchObject({
-      code: 'DECIDER_RATE_LIMITED',
-      message: 'Codex predicate completion failed',
-    });
-    const cancelled = new DOMException('Cancelled', 'AbortError');
-    complete.mockRejectedValueOnce(cancelled);
-    await expect(
-      createCodexDecider(port).evaluateBoolean(request, new AbortController().signal),
-    ).rejects.toBe(cancelled);
+    expect(routePrompt({ ...choice, context: [1] })).toContain('[\n  1\n]');
   });
 });
