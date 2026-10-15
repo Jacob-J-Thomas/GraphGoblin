@@ -503,8 +503,8 @@ describe('offline database upgrade boundary', () => {
       },
     ]);
     expect(inventory.failedRuns).toEqual([FIXTURE_IDS.run]);
-    expect(inventory.tables.harness_sessions).toHaveLength(1);
-    expect(inventory.tables.loops).toEqual([]); // Deleted parent is not filtered out of historical inventory.
+    expect(inventory.tableCounts.harness_sessions).toBe(1);
+    expect(inventory.tableCounts.loops).toBe(0); // Deleted parent is not filtered out of historical inventory.
   });
   it('converts definitions/events/patches/owner defaults atomically, archives exact old facts, leaves sessions untouched', async () => {
     const handle = await legacy('failed');
@@ -830,4 +830,192 @@ it('requires explicit failed parent disposition for possible changed child retur
     applyDatabaseUpgrade(handle.client, { ...approved, failedRuns: {} }),
   ).rejects.toThrow(/Every affected failed run/);
   await applyDatabaseUpgrade(handle.client, approved);
+});
+import { createHash } from 'node:crypto';
+import { stableStringify } from '@graphgoblin/domain';
+import { rows, tableNames } from './upgrade-scan.js';
+
+it('preserves the original canonical whole-store hash on upgrade fixtures', async () => {
+  const handle = await legacy('failed');
+  // Independent reference: the original algorithm, deliberately limited to this small fixture.
+  const stored: Record<string, Record<string, unknown>[]> = {};
+  for (const name of await tableNames(handle.client)) {
+    if (name === 'gg_upgrade_state' || name === 'gg_upgrade_archive') continue;
+    stored[name] = (await rows(handle.client, 'SELECT * FROM "' + name + '"')).sort((a, b) =>
+      stableStringify(a) < stableStringify(b)
+        ? -1
+        : stableStringify(a) > stableStringify(b)
+          ? 1
+          : 0,
+    );
+  }
+  expect((await inspectDatabaseUpgrade(handle.client)).sourceHash).toBe(
+    createHash('sha256').update(stableStringify(stored)).digest('hex'),
+  );
+});
+
+it('inventories and applies 50 loops, 500 versions, 500 runs and 50,000 events with fixture-equivalent results', async () => {
+  const small = await legacy();
+  const originalDefinition = storedText(
+    (await small.client.execute('SELECT definition FROM loop_versions')).rows[0]!.definition,
+  );
+  await applyDatabaseUpgrade(small.client, await manifest(small));
+  const expectedDefinition = (await small.client.execute('SELECT definition FROM loop_versions'))
+    .rows[0]!.definition;
+  const expectedDecision = (
+    await small.client.execute('SELECT payload FROM run_events WHERE seq=2')
+  ).rows[0]!.payload;
+  const handle = await legacy();
+  for (let index = 0; index < 50; index += 1) {
+    const id = index === 0 ? FIXTURE_IDS.loop : fakeUlid('scale-loop-' + index);
+    await handle.client.execute({
+      sql: 'INSERT INTO loops(id,owner_id,name,created_at,updated_at) VALUES (?,?,?,?,?)',
+      args: [id, 'hidden-owner', 'Scale', FIXTURE_TS, FIXTURE_TS],
+    });
+  }
+  for (let index = 1; index < 500; index += 1) {
+    const loopId = index % 50 === 0 ? FIXTURE_IDS.loop : fakeUlid('scale-loop-' + (index % 50));
+    const versionId = fakeUlid('scale-version-' + index);
+    await handle.client.execute({
+      sql: "INSERT INTO loop_versions(id,loop_id,version,status,definition,created_at) VALUES (?,?,?,'published',?,?)",
+      args: [versionId, loopId, Math.floor(index / 50) + 1, originalDefinition, FIXTURE_TS],
+    });
+    await new SqliteRunRepository(handle.db).create(
+      {
+        id: fakeUlid('scale-run-' + index),
+        ownerId: 'hidden-owner',
+        loopId,
+        versionId,
+        invocationId: fakeUlid('scale-invocation-' + index),
+        status: 'succeeded',
+        iteration: 1,
+        createdAt: FIXTURE_TS,
+        lastEventSeq: 100,
+      },
+      sampleThread(),
+    );
+  }
+  await handle.client.execute({
+    sql: `WITH RECURSIVE n(x) AS (SELECT 4 UNION ALL SELECT x+1 FROM n WHERE x<100)
+    INSERT INTO run_events(run_id,seq,ts,type,node_id,payload)
+    SELECT run_id,x,ts,type,node_id,payload FROM run_events CROSS JOIN n WHERE run_id=? AND seq=1`,
+    args: [FIXTURE_IDS.run],
+  });
+  await handle.client.execute({
+    sql: `INSERT INTO run_events(run_id,seq,ts,type,node_id,payload)
+    SELECT runs.id,run_events.seq,run_events.ts,run_events.type,run_events.node_id,run_events.payload
+    FROM runs CROSS JOIN run_events WHERE run_events.run_id=? AND runs.id<>?`,
+    args: [FIXTURE_IDS.run, FIXTURE_IDS.run],
+  });
+  await handle.client.execute('UPDATE runs SET last_event_seq=100');
+  const start = performance.now();
+  const inventory = await inspectDatabaseUpgrade(handle.client);
+  expect(inventory.tableCounts).toMatchObject({
+    loops: 50,
+    loop_versions: 500,
+    runs: 500,
+    run_events: 50_000,
+  });
+  expect(inventory.versions).toHaveLength(500);
+  expect(inventory.failedRuns).toEqual([]);
+  expect(inventory.blockedRuns).toEqual([]);
+  expect(inventory.issues).toEqual([]);
+  const approved: DatabaseUpgradeManifest = {
+    format: 'graphgoblin-upgrade-manifest',
+    targetVersion: 3,
+    sourceHash: inventory.sourceHash,
+    approvedBy: 'owner',
+    approvedAt: FIXTURE_TS,
+    failedRuns: {},
+    versions: Object.fromEntries(
+      inventory.versions.map((version) => [
+        version.id,
+        { definitionHash: version.definitionHash, resolutions: {} },
+      ]),
+    ),
+  };
+  expect(await applyDatabaseUpgrade(handle.client, approved)).toMatchObject({
+    sourceHash: inventory.sourceHash,
+    versions: 500,
+    runs: 500,
+  });
+  expect(await rows(handle.client, 'SELECT DISTINCT definition FROM loop_versions')).toEqual([
+    { definition: expectedDefinition },
+  ]);
+  expect(
+    await rows(handle.client, "SELECT DISTINCT payload FROM run_events WHERE type='decision.made'"),
+  ).toEqual([{ payload: expectedDecision }]);
+  expect(
+    await rows(
+      handle.client,
+      "SELECT count(*) AS count FROM gg_upgrade_archive WHERE kind='run_events'",
+    ),
+  ).toEqual([{ count: 50_000 }]);
+  expect(await rows(handle.client, 'SELECT count(*) AS count FROM run_events')).toEqual([
+    { count: 50_000 },
+  ]);
+  expect(await guardDatabaseUpgrade(handle.client)).toBe('current');
+  console.error(
+    'UPGRADE_SCALE ' +
+      JSON.stringify({
+        loops: 50,
+        versions: 500,
+        runs: 500,
+        events: 50_000,
+        elapsedMs: Math.round(performance.now() - start),
+        peakRssMiB: Math.round((process.resourceUsage().maxRSS / 1024) * 10) / 10,
+      }),
+  );
+}, 180_000);
+it('preserves old canonical issue ordering for orphan runs, interleaved orphan events and pending receipts', async () => {
+  const handle = await legacy();
+  for (const [id, createdAt] of [
+    ['z-run', '2000'],
+    ['a-run', '2001'],
+  ])
+    await handle.client.execute({
+      sql: 'INSERT INTO runs(id,owner_id,loop_id,version_id,invocation_id,status,iteration,created_at,last_event_seq,initial_thread) VALUES (?,?,?,?,?,?,?,?,?,?)',
+      args: [id!, 'local', 'loop', 'missing-version', id!, 'succeeded', 1, createdAt!, 0, '{}'],
+    });
+  for (const [runId, seq, node] of [
+    ['orphan-a', 1, 'a'],
+    ['orphan-a', 2, 'c'],
+    ['orphan-b', 1, 'b'],
+  ] as const)
+    await handle.client.execute({
+      sql: 'INSERT INTO run_events(run_id,seq,ts,type,node_id,payload) VALUES (?,?,?,?,?,?)',
+      args: [runId, seq, FIXTURE_TS, 'node.started', node, '{}'],
+    });
+  for (const [id, attempts] of [
+    ['z-receipt', 0],
+    ['a-receipt', 1],
+  ] as const)
+    await handle.client.execute({
+      sql: "INSERT INTO webhook_receipts(id,owner_id,loop_id,trigger_node_id,content_hash,inbound_id,status,intent,attempts) VALUES (?,?,?,?,?,?,'pending','{}',?)",
+      args: [id, 'local', 'loop', 'start', id, id, attempts],
+    });
+  const sort = (values: Record<string, unknown>[]) =>
+    values
+      .map((row) => ({ row, key: stableStringify(row) }))
+      .sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0))
+      .map(({ row }) => row);
+  const oldRuns = sort(await rows(handle.client, 'SELECT * FROM runs'))
+    .filter((row) => row.version_id === 'missing-version')
+    .map((row) => '/runs/' + String(row.id) + '/version_id');
+  const oldEvents = sort(await rows(handle.client, 'SELECT * FROM run_events'))
+    .filter((row) => String(row.run_id).startsWith('orphan-'))
+    .map((row) => '/run_events/' + String(row.run_id));
+  const oldReceipts = sort(await rows(handle.client, 'SELECT * FROM webhook_receipts')).map(
+    (row) => '/webhook_receipts/' + String(row.id),
+  );
+  expect(oldEvents).toEqual([
+    '/run_events/orphan-a',
+    '/run_events/orphan-b',
+    '/run_events/orphan-a',
+  ]);
+  expect((await inspectDatabaseUpgrade(handle.client)).issues.map((issue) => issue.path)).toEqual([
+    ...oldRuns,
+    ...oldEvents,
+    ...oldReceipts,
+  ]);
 });

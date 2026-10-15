@@ -21,6 +21,7 @@ import {
   inspectDatabaseUpgrade,
   applyDatabaseUpgrade,
 } from '../../packages/infrastructure/dist/sqlite/index.js';
+import { CURRENT_DEFINITION_FORMAT } from '../../packages/contracts/dist/index.js';
 import { upgradeExportCurrent, upgradeLoopCurrent } from '../../packages/domain/dist/index.js';
 
 const hash = (value) => createHash('sha256').update(value).digest('hex');
@@ -193,14 +194,14 @@ export async function runUpgrade(argv) {
       const inventory = await inspectDatabaseUpgrade(handle.client);
       await output(options.out, {
         format: 'graphgoblin-upgrade-inventory',
-        targetVersion: 3,
+        targetVersion: CURRENT_DEFINITION_FORMAT,
         sourceHash: inventory.sourceHash,
         versions: inventory.versions,
         blockedRuns: inventory.blockedRuns,
         issues: inventory.issues,
         manifest: {
           format: 'graphgoblin-upgrade-manifest',
-          targetVersion: 3,
+          targetVersion: CURRENT_DEFINITION_FORMAT,
           sourceHash: inventory.sourceHash,
           approvedBy: '',
           approvedAt: '',

@@ -12,7 +12,19 @@ const object = (value: unknown): value is Row =>
 const storedJson = (value: unknown): unknown =>
   typeof value === 'string' ? JSON.parse(value) : value;
 /** Exact endpoint/version provenance only. Prefix-looking authored business keys are untouched. */
-export function inspectTriggerUpgrade(stored: Record<string, Row[]>): TriggerUpgradeFacts {
+export function createTriggerUpgradeInspector(stored: Record<string, Row[]>) {
+  const loops = new Map((stored.loops ?? []).map((row) => [row.id, row]));
+  const versions = new Map((stored.loop_versions ?? []).map((row) => [row.id, row]));
+  const endpoints = new Map((stored.webhook_endpoints ?? []).map((row) => [row.id, row]));
+  const runs = new Map((stored.runs ?? []).map((row) => [row.id, row]));
+  const runLoops = new Set((stored.runs ?? []).map((row) => row.loop_id));
+  const versionsByLoop = new Map<unknown, Row[]>();
+  for (const version of versions.values()) {
+    const group = versionsByLoop.get(version.loop_id) ?? [];
+    group.push(version);
+    versionsByLoop.set(version.loop_id, group);
+  }
+  const historicalModes = new Map<string, boolean>();
   const issues: UpgradeIssue[] = [];
   const keys: TriggerUpgradeFacts['keys'] = [];
   const configs = new Map<string, ReturnType<typeof WebhookConfigSchema.parse>>();
@@ -27,19 +39,17 @@ export function inspectTriggerUpgrade(stored: Record<string, Row[]>): TriggerUpg
       if (
         endpoint.enabled === 0 &&
         typeof endpoint.loop_id === 'string' &&
-        !(stored.loops ?? []).some((row) => row.id === endpoint.loop_id) &&
-        !(stored.loop_versions ?? []).some((row) => row.loop_id === endpoint.loop_id) &&
-        !(stored.runs ?? []).some((row) => row.loop_id === endpoint.loop_id)
+        !loops.has(endpoint.loop_id) &&
+        !versionsByLoop.has(endpoint.loop_id) &&
+        !runLoops.has(endpoint.loop_id)
       ) {
         retired.add(String(endpoint.id));
         continue;
       }
-      const version = (stored.loop_versions ?? []).find(
-        (row) => row.id === endpoint.version_id && row.loop_id === endpoint.loop_id,
-      );
-      const loop = (stored.loops ?? []).find(
-        (row) => row.id === endpoint.loop_id && row.owner_id === endpoint.owner_id,
-      );
+      const candidateVersion = versions.get(endpoint.version_id);
+      const version = candidateVersion?.loop_id === endpoint.loop_id ? candidateVersion : undefined;
+      const candidateLoop = loops.get(endpoint.loop_id);
+      const loop = candidateLoop?.owner_id === endpoint.owner_id ? candidateLoop : undefined;
       const definition = version ? storedJson(version.definition) : undefined;
       const node: unknown =
         object(definition) && Array.isArray(definition.nodes)
@@ -81,17 +91,16 @@ export function inspectTriggerUpgrade(stored: Record<string, Row[]>): TriggerUpg
         path: '/webhook_receipts/' + String(receipt.id),
         message: 'finish pending webhook admission with the old build before offline upgrade',
       });
-  for (const event of stored.inbound_events ?? []) {
+  function inspectEvent(event: Row): void {
     if (
       event.type !== 'webhook' ||
       typeof event.source !== 'string' ||
       !event.source.startsWith('webhook:')
     )
-      continue;
+      return;
     const endpointId = event.source.slice('webhook:'.length);
-    const endpoint = (stored.webhook_endpoints ?? []).find(
-      (row) => row.id === endpointId && row.owner_id === event.owner_id,
-    );
+    const candidateEndpoint = endpoints.get(endpointId);
+    const endpoint = candidateEndpoint?.owner_id === event.owner_id ? candidateEndpoint : undefined;
     const config = configs.get(endpointId);
     const path = '/inbound_events/' + String(event.id);
     if (endpoint && retired.has(endpointId)) {
@@ -101,11 +110,11 @@ export function inspectTriggerUpgrade(stored: Record<string, Row[]>): TriggerUpg
       } catch {
         refuse(path, 'deleted endpoint delivery retains malformed or unresolved execution links');
       }
-      continue;
+      return;
     }
     if (!endpoint || !config) {
       refuse(path, 'delivery has no exact endpoint provenance');
-      continue;
+      return;
     }
     if (
       typeof event.dedupe_key === 'string' &&
@@ -115,52 +124,57 @@ export function inspectTriggerUpgrade(stored: Record<string, Row[]>): TriggerUpg
       // so a signature-looking key is automatic only when every retained producing version
       // agrees. Never infer an older author's key from the latest configuration.
       try {
-        const modes = new Set<boolean>();
-        for (const version of stored.loop_versions ?? []) {
-          if (version.loop_id !== endpoint.loop_id) continue;
-          const definition = storedJson(version.definition);
-          if (!object(definition) || !Array.isArray(definition.nodes)) throw new Error();
-          const node: unknown = definition.nodes.find(
-            (value: unknown) => object(value) && value.id === endpoint.trigger_node_id,
-          );
-          if (node === undefined) continue;
-          if (!object(node) || node.kind !== 'trigger') throw new Error();
-          const historical = WebhookConfigSchema.parse(node.config);
-          modes.add(
-            historical.dedupeKey === undefined && historical.signature.scheme === 'hmac-sha256',
-          );
+        if (historicalModes.get(endpointId) === false) throw new Error();
+        if (!historicalModes.has(endpointId)) {
+          const modes = new Set<boolean>();
+          for (const version of versionsByLoop.get(endpoint.loop_id) ?? []) {
+            const definition = storedJson(version.definition);
+            if (!object(definition) || !Array.isArray(definition.nodes)) throw new Error();
+            const node: unknown = definition.nodes.find(
+              (value: unknown) => object(value) && value.id === endpoint.trigger_node_id,
+            );
+            if (node === undefined) continue;
+            if (!object(node) || node.kind !== 'trigger') throw new Error();
+            const historical = WebhookConfigSchema.parse(node.config);
+            modes.add(
+              historical.dedupeKey === undefined && historical.signature.scheme === 'hmac-sha256',
+            );
+          }
+          if (modes.size !== 1) throw new Error();
+          historicalModes.set(endpointId, true);
         }
-        if (modes.size !== 1) throw new Error();
       } catch {
+        historicalModes.set(endpointId, false);
         refuse(
           path,
           'retained versions do not prove whether the signature-looking key was authored or generated',
         );
-        continue;
+        return;
       }
     }
-    if (config.dedupeKey !== undefined || config.signature.scheme !== 'hmac-sha256') continue;
+    if (config.dedupeKey !== undefined || config.signature.scheme !== 'hmac-sha256') return;
     if (typeof event.dedupe_key === 'string' && /^sig-hash:[a-f0-9]{64}$/.test(event.dedupe_key))
-      continue;
+      return;
     const match =
       typeof event.dedupe_key === 'string'
         ? /^sig:sha256=([a-fA-F0-9]{64})$/.exec(event.dedupe_key)
         : null;
     if (!match?.[1]) {
       refuse(path, 'known default signature key is malformed or ambiguous');
-      continue;
+      return;
     }
     try {
       const runIds: unknown = storedJson(event.run_ids);
       if (!Array.isArray(runIds) || runIds.some((id) => typeof id !== 'string')) throw new Error();
       for (const runId of runIds) {
-        const run = (stored.runs ?? []).find(
-          (row) =>
-            row.id === runId &&
-            row.owner_id === event.owner_id &&
-            row.loop_id === endpoint.loop_id &&
-            row.version_id === endpoint.version_id,
-        );
+        const candidate = runs.get(runId);
+        const run =
+          candidate &&
+          candidate.owner_id === event.owner_id &&
+          candidate.loop_id === endpoint.loop_id &&
+          candidate.version_id === endpoint.version_id
+            ? candidate
+            : undefined;
         const thread = run ? storedJson(run.initial_thread) : undefined;
         const invocation =
           object(thread) && object(thread.invocation) ? thread.invocation : undefined;
@@ -184,7 +198,12 @@ export function inspectTriggerUpgrade(stored: Record<string, Row[]>): TriggerUpg
       refuse(path, 'linked run invocation does not prove the generated default key');
     }
   }
-  return { issues, keys };
+  return { facts: { issues, keys }, inspectEvent };
+}
+export function inspectTriggerUpgrade(stored: Record<string, Row[]>): TriggerUpgradeFacts {
+  const inspector = createTriggerUpgradeInspector(stored);
+  for (const event of stored.inbound_events ?? []) inspector.inspectEvent(event);
+  return inspector.facts;
 }
 /** Only the known immutable invocation key. Arbitrary payloads/variables are never rewritten. */
 export function rewriteWebhookThreadKey(value: unknown, previous: string, next: string): unknown {

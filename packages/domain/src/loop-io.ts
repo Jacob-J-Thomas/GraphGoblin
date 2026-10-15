@@ -1,4 +1,5 @@
 import {
+  CURRENT_DEFINITION_FORMAT,
   LoopDefinitionSchema,
   LoopExportSchema,
   type LoopDefinition,
@@ -26,7 +27,7 @@ export class LoopFormatUpgradeRequiredError extends DomainError {
 export function exportLoop(def: LoopDefinition, exportedAt: string): LoopExport {
   return {
     format: 'graphgoblin-loop',
-    formatVersion: 3,
+    formatVersion: CURRENT_DEFINITION_FORMAT,
     exportedAt,
     loop: def,
   };

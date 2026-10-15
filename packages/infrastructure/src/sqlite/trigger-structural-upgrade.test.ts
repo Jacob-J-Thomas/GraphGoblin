@@ -371,3 +371,55 @@ it('refuses an incomplete intermediate receipt layout before migration or recove
   await expect(handle.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
   expect((await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows).toHaveLength(12);
 });
+it('rolls back when a proven linked webhook run vanishes before rewrite traversal', async () => {
+  const { handle, runId, key } = await previousStructure();
+  await handle.client.execute(
+    'CREATE TRIGGER vanish_linked_run AFTER UPDATE OF dedupe_key ON inbound_events BEGIN DELETE FROM runs; END',
+  );
+  const approved = await approval(handle);
+  const before = (await inspectDatabaseUpgrade(handle.client)).sourceHash;
+  await expect(applyDatabaseUpgrade(handle.client, approved)).rejects.toThrow(
+    'Linked webhook run vanished',
+  );
+  expect((await handle.client.execute('SELECT id FROM runs')).rows).toEqual([{ id: runId }]);
+  expect((await handle.client.execute('SELECT dedupe_key FROM inbound_events')).rows).toEqual([
+    { dedupe_key: key },
+  ]);
+  expect((await inspectDatabaseUpgrade(handle.client)).sourceHash).toBe(before);
+});
+it('batches projected webhook delivery provenance without loading payloads or complete run rows', async () => {
+  const { handle } = await previousStructure();
+  for (let index = 0; index < 1_001; index += 1)
+    await handle.client.execute({
+      sql: 'INSERT INTO inbound_events(id,owner_id,type,payload,dedupe_key,source,received_at,run_ids) VALUES (?,?,?,?,?,?,?,?)',
+      args: [
+        'delivery-' + index,
+        'local',
+        'webhook',
+        'large-unused-payload'.repeat(50),
+        'sig:sha256=' + index.toString(16).padStart(64, '0'),
+        'webhook:ep',
+        FIXTURE_TS,
+        '[]',
+      ],
+    });
+  const statements: string[] = [];
+  const inventory = await inspectDatabaseUpgrade({
+    execute: (query) => {
+      statements.push(typeof query === 'string' ? query : query.sql);
+      return handle.client.execute(query);
+    },
+  });
+  expect(inventory.issues).toEqual([]);
+  const deliveries = statements.filter((sql) =>
+    sql.includes('dedupe_key,id,owner_id,type,source,run_ids'),
+  );
+  expect(deliveries.length).toBeGreaterThan(2);
+  expect(deliveries.every((sql) => sql.includes('ORDER BY rowid LIMIT ?'))).toBe(true);
+  expect(
+    statements.some((sql) =>
+      sql.startsWith('SELECT id,owner_id,loop_id,version_id,initial_thread FROM runs'),
+    ),
+  ).toBe(true);
+  expect(statements.some((sql) => /^SELECT \* FROM (runs|inbound_events)/.test(sql))).toBe(false);
+});

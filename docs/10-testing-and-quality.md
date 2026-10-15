@@ -44,17 +44,22 @@ The first pass (WP-D2, 2026-10-03) drove the built app with Playwright on Micros
 2. Typecheck every package, test files included.
 3. Lint.
 4. dependency-cruiser: layer rules and no circular imports.
-5. Design token guard: no palette classes or colour literals in web components (`pnpm check:tokens`).
-6. Unit tests with coverage thresholds.
-7. Licence allowlist check over the full dependency tree.
-8. Generated reference docs are current (`pnpm check:docs`).
-9. Design token contrast table is current and every enforced pair passes (`pnpm check:contrast`).
-10. Dependency audit for known vulnerabilities, failing on high and critical.
-11. Build every package and app.
-12. Playwright E2E on the built app.
-13. Build the container image on the default branch.
+5. Migration generation is a no-op (`pnpm check:migrations`): generate against a temporary copy of shipped migrations and fail if Drizzle writes SQL.
+6. Design token guard: no palette classes or colour literals in web components (`pnpm check:tokens`).
+7. Unit tests with coverage thresholds.
+8. Licence allowlist check over the full dependency tree.
+9. Generated reference docs are current (`pnpm check:docs`).
+10. Design token contrast table is current and every enforced pair passes (`pnpm check:contrast`).
+11. Dependency audit for known vulnerabilities, failing on high and critical.
+12. Build every package and app.
+13. Playwright E2E on the built app.
+14. Build the container image on the default branch.
 
 Nightly: live smoke suite, and the test matrix against both SQLite and Postgres once `adapter-postgres` exists.
+
+`pnpm check:migrations` runs Drizzle Kit against the current schema and a disposable copy of the shipped migration ledger and snapshots. It never changes shipped SQL, snapshots, or the ledger. Additive schema drift is covered by a tooling regression test.
+
+Storage readiness tests distinguish the format baseline from the migration head. Format 3 requires `0008_github_triggers`: preflight checks its SQL-derived catalogue, a current complete marker, a timestamp-only shipped-ledger prefix containing that baseline, and strict definitions before writes. Stores at 0008, 0009 or 0010 migrate normally to 0011. Post-migration validation requires the full head catalogue and exact timestamp list. Tests cover baseline damage/non-prefix ledgers before writes, historical applied SQL hashes, and a head ledger with missing additive structure after a no-op migration. Definitions are parsed once only when the preflight database is covered by the data-directory lock; external database URLs are reparsed. Offline-sort tests force multiple bounded fan-in passes, assert hash/issue ordering parity and exercise scratch cleanup after failure.
 
 `pnpm check` also runs `check:tokens` after `check:layers` and `check:contrast` at the end. The token guard checks web source (`.ts`, `.tsx`, `.css`), `index.html`, and `vite.config.ts` for Tailwind palette colour utilities and colour literals in CSS declarations, style/colour properties, and arbitrary colour utilities. CSS named colours are checked only in these colour-setting contexts; prose, identifiers, URLs, and non-colour hex data are permitted. `transparent`, `current`, `currentColor`, and token references are permitted. This static check does not evaluate computed JavaScript values. Tests and `__fixtures__` are skipped. `src/styles/` is the only directory allowlist; there are no inline suppressions. The explicit `CONFIG_EXCEPTIONS` list in the script starts empty and may contain one named, exact palette declaration per config file (a theme-colour meta tag in HTML or a named constant in Vite), never a whole-file or whole-value exemption.
 

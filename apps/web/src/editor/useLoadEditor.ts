@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { useEffect, useRef, useState } from 'react';
 import { upgradeLoopCurrent, type UpgradeIssue } from '@graphgoblin/domain';
 import { useLoop } from '../api/queries.js';
@@ -37,7 +38,7 @@ function readDeviceDraft(draft: LocalDraft | undefined): DeviceDraftRead {
     typeof definition === 'object' &&
     definition !== null &&
     'schemaVersion' in definition &&
-    definition.schemaVersion === 3
+    definition.schemaVersion === CURRENT_DEFINITION_FORMAT
   )
     return { draft: current };
   const result = upgradeLoopCurrent(definition);

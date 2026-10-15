@@ -95,6 +95,68 @@ export const runs = sqliteTable(
       sql`json_extract(${t.initialThread}, '$.invocation.trigger.dedupeKey')`,
     ),
     index('runs_parent_idx').on(t.parentRunId),
+    // Exact DDL is shipped in 0009/0010; these declarations keep future snapshots complete.
+    uniqueIndex('template_issue_attempt_idx')
+      .on(
+        t.ownerId,
+        sql`json_extract(${t.templateSubject}, '$.repository')`,
+        sql`json_extract(${t.templateSubject}, '$.issue')`,
+        sql`json_extract(${t.templateSubject}, '$.attempt')`,
+      )
+      .where(
+        sql`json_extract(${t.templateSubject}, '$.role')='parent' AND json_extract(${t.templateSubject}, '$.kind')='implementation'`,
+      ),
+    uniqueIndex('template_qa_merge_idx')
+      .on(
+        t.ownerId,
+        sql`json_extract(${t.templateSubject}, '$.repository')`,
+        sql`json_extract(${t.templateSubject}, '$.mergeSha')`,
+      )
+      .where(
+        sql`json_extract(${t.templateSubject}, '$.role')='parent' AND json_extract(${t.templateSubject}, '$.kind')='qa'`,
+      ),
+    uniqueIndex('template_pr_head_idx')
+      .on(
+        t.ownerId,
+        sql`json_extract(${t.templateSubject}, '$.repository')`,
+        sql`json_extract(${t.templateSubject}, '$.pullRequest')`,
+        sql`json_extract(${t.templateSubject}, '$.head')`,
+      )
+      .where(
+        sql`json_extract(${t.templateSubject}, '$.role')='parent' AND json_extract(${t.templateSubject}, '$.kind')='review'`,
+      ),
+    uniqueIndex('template_active_pr_idx')
+      .on(
+        t.ownerId,
+        sql`json_extract(${t.templateSubject}, '$.repository')`,
+        sql`json_extract(${t.templateSubject}, '$.pullRequest')`,
+      )
+      .where(
+        sql`json_extract(${t.templateSubject}, '$.role')='parent' AND json_extract(${t.templateSubject}, '$.kind')='review' AND ${t.status} IN ('queued','running','waiting','paused')`,
+      ),
+    uniqueIndex('template_child_visit_idx')
+      .on(
+        sql`json_extract(${t.templateSubject}, '$.parentRunId')`,
+        sql`json_extract(${t.templateSubject}, '$.nodeId')`,
+        sql`json_extract(${t.templateSubject}, '$.visit')`,
+      )
+      .where(sql`json_extract(${t.templateSubject}, '$.role')='worker'`),
+    uniqueIndex('template_qa_issue_attempt_idx')
+      .on(
+        t.ownerId,
+        sql`json_extract(${t.templateSubject}, '$.repository')`,
+        sql`json_extract(${t.templateSubject}, '$.issue')`,
+        sql`json_extract(${t.templateSubject}, '$.attempt')`,
+      )
+      .where(
+        sql`json_extract(${t.templateSubject}, '$.role')='parent' AND json_extract(${t.templateSubject}, '$.kind')='qa' AND json_extract(${t.templateSubject}, '$.issue') IS NOT NULL AND json_extract(${t.templateSubject}, '$.attempt') IS NOT NULL`,
+      ),
+    // Shipped 0009 declares this and the template_instances checks inline without names. The
+    // names exist only for the Drizzle snapshot; readiness compares CHECK expressions, not names.
+    check(
+      'runs_template_subject_check',
+      sql`${t.templateSubject} IS NULL OR json_valid(${t.templateSubject})`,
+    ),
   ],
 );
 
@@ -335,7 +397,11 @@ export const templateInstances = sqliteTable(
     instance: text('instance', { mode: 'json' }).$type<TemplateInstance>().notNull(),
     binding: text('binding', { mode: 'json' }).$type<JsonValue>().notNull(),
   },
-  (t) => [index('template_instances_owner_idx').on(t.ownerId)],
+  (t) => [
+    index('template_instances_owner_idx').on(t.ownerId),
+    check('template_instances_instance_check', sql`json_valid(${t.instance})`),
+    check('template_instances_binding_check', sql`json_valid(${t.binding})`),
+  ],
 );
 
 export const schema = {

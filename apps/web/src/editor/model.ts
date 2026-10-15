@@ -4,6 +4,7 @@
  * it with the same `contracts` schemas and `domain` rules the API runs on publish.
  */
 import {
+  CURRENT_DEFINITION_FORMAT,
   LoopDefinitionSchema,
   NodeSchema,
   type LoopDefinitionInput,
@@ -366,7 +367,7 @@ export function sameIssues(a: readonly EditorIssue[], b: readonly EditorIssue[])
 /** A new loop: a manual trigger wired to an exit. */
 export function newLoopDefinition(name: string): LoopDefinitionInput {
   return {
-    schemaVersion: 3,
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
     name,
     nodes: [
       {

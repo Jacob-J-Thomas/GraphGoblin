@@ -183,7 +183,8 @@ describe('model catalog source migration and repository', () => {
       handle.close();
       handle = openDatabase({ url, migrationsFolder: folder });
       expect(await handle.pendingMigrations()).toBe(0);
-      await handle.migrate();
+      // Emulate the previous release's SQL migrator, not current-format startup admission.
+      await applyShippedSqlToHistoricalTestFixture(handle, folder);
       expect((await handle.client.execute('SELECT * FROM model_catalog')).rows).toEqual(rows);
       expect((await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows).toEqual(
         ledger,
