@@ -147,6 +147,25 @@ describe('SqliteRunRepository', () => {
     );
   });
 
+  it('rolls back a failed ordinary transition and allows only one concurrent resume', async () => {
+    const repo = new SqliteRunRepository(handle.db);
+    const run = runRecord({ status: 'failed' });
+    await repo.create(run, sampleThread());
+    await handle.client.execute(
+      "CREATE TRIGGER refuse_resume BEFORE UPDATE ON runs BEGIN SELECT RAISE(ABORT,'injected'); END",
+    );
+    await expect(repo.transition(run.id, ['failed'], { status: 'queued' })).rejects.toThrow();
+    expect(await repo.get(run.id)).toEqual(run);
+    expect(await repo.getInitialThread(run.id)).toEqual(sampleThread());
+    await handle.client.execute('DROP TRIGGER refuse_resume');
+    const resumed = await Promise.all([
+      repo.transition(run.id, ['failed'], { status: 'queued' }),
+      repo.transition(run.id, ['failed'], { status: 'queued' }),
+    ]);
+    expect(resumed.filter((record) => record !== undefined)).toHaveLength(1);
+    expect(await repo.get(run.id)).toMatchObject({ status: 'queued' });
+  });
+
   it('lists terminal runs until their finalization is recorded', async () => {
     const repo = new SqliteRunRepository(handle.db);
     const run = runRecord();

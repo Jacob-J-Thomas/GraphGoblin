@@ -2,6 +2,8 @@
 
 Status: Accepted for construction under the owner-authorized #28 plan (2026-10-08)
 
+The configured runtime and backend retirement decision is completed by [ADR-0034](ADR-0034-retire-template-runtime-authority.md). Step 06 disconnects API authority and configured HTTP actions; remaining loader, hook, service and storage removal proceeds in bounded #165 children. The original text below is retained as history.
+
 The gallery's default creation flow is superseded by [ADR-0028](ADR-0028-editable-template-starting-points.md). The configured-instance concept is superseded by [ADR-0030](ADR-0030-templates-are-starting-points.md): templates are ordinary starting points and configured instances are being retired. Its existing backend authority boundaries remain intact until removal in #165.
 
 ## Context

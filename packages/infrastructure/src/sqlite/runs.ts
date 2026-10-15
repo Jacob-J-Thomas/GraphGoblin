@@ -5,12 +5,6 @@ import { and, desc, eq, inArray, isNull, lt, sql, type SQL } from 'drizzle-orm';
 import type { Database } from './db.js';
 import { loopVersions, loops, runs } from './schema.js';
 import { deleteRuns } from './delete-runs.js';
-import { TemplateTransaction } from './templates.js';
-export type BeforeRunTransition = (
-  store: TemplateTransaction,
-  current: RunRecord,
-  changes: RunRecordChanges,
-) => Promise<void>;
 
 import { runRecordFromRow } from './run-row.js';
 export { runRecordFromRow } from './run-row.js';
@@ -87,10 +81,7 @@ export interface RunPageFilter extends RunListFilter {
 }
 
 export class SqliteRunRepository implements RunRepository {
-  constructor(
-    private readonly db: Database,
-    private readonly beforeTransition?: BeforeRunTransition,
-  ) {}
+  constructor(private readonly db: Database) {}
 
   /**
    * Offline cutover use only: safe only with the API stopped, because orphan runs are deleted
@@ -140,7 +131,6 @@ export class SqliteRunRepository implements RunRepository {
       if (!from.includes(current.status)) return undefined;
       const columns = toColumns(changes);
       if (Object.keys(columns).length === 0) return current;
-      await this.beforeTransition?.(new TemplateTransaction(tx), current, changes);
       const [updated] = await tx
         .update(runs)
         .set(columns)
