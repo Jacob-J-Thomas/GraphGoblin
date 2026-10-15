@@ -36,7 +36,7 @@ import {
   SqliteLoopRepository,
   type DatabaseHandle,
 } from '@graphgoblin/infrastructure/sqlite';
-import { TemplateCatalog } from '../catalog.js';
+import { ConfiguredTemplateCatalog } from '../__fixtures__/configured-catalog.js';
 import { TemplateInstances } from '../instances.js';
 import { TemplatePrerequisites } from '../prerequisites.js';
 import { TemplateBindingSchema, bindingJson, executionHash } from '../binding.js';
@@ -430,7 +430,7 @@ async function fixture() {
     supportReadKey: 'reader',
     roles: { qa: role, adversary: role },
   });
-  const catalog = new TemplateCatalog(join(apiRoot, 'templates'), apiRoot);
+  const catalog = new ConfiguredTemplateCatalog(join(apiRoot, 'templates'), apiRoot);
   const apiKeys = new SqliteApiKeys(handle.db, ports.clock, ports.ids),
     key = await apiKeys.create('local', 'QA reader', ['runs:read']);
   const secrets = new InMemorySecrets({ reader: key.token });
@@ -1577,7 +1577,9 @@ describe('strict QA private transport and shipped closure', () => {
     await writeFile(join(root, 'src', 'templates', 'authority.ts'), 'x'.repeat(1048576));
     await writeFile(join(root, 'src', 'templates', 'binding.ts'), 'x'.repeat(1048576));
     await expect(qaSupportClosure(root, '1.0.0', true)).rejects.toThrow();
-    const installed = await new TemplateCatalog(join(apiRoot, 'templates'), apiRoot).get('qa');
+    const installed = await new ConfiguredTemplateCatalog(join(apiRoot, 'templates'), apiRoot).get(
+      'qa',
+    );
     expect(installed.support?.hash).toMatch(/^[a-f0-9]{64}$/);
     expect(
       installed.bundle.manifest.prerequisites.find((item) => item.kind === 'github')?.label,

@@ -55,8 +55,8 @@ export function registerTemplateRoutes(app: ApiInstance, container: Container): 
       },
     },
     async () => ({
-      items: (await container.templates.catalog.list()).map(({ bundle }) => ({
-        manifest: bundle.manifest,
+      items: (await container.templates.catalog.list()).map(({ manifest }) => ({
+        manifest,
       })),
     }),
   );
@@ -72,7 +72,7 @@ export function registerTemplateRoutes(app: ApiInstance, container: Container): 
       },
     },
     async (request) => ({
-      manifest: (await container.templates.catalog.get(request.params.id)).bundle.manifest,
+      manifest: (await container.templates.catalog.get(request.params.id)).manifest,
     }),
   );
 }

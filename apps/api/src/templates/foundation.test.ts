@@ -37,7 +37,7 @@ import {
   type DatabaseHandle,
 } from '@graphgoblin/infrastructure/sqlite';
 import { stableHash } from '@graphgoblin/domain';
-import { TemplateCatalog } from './catalog.js';
+import { ConfiguredTemplateCatalog } from './__fixtures__/configured-catalog.js';
 import { TemplatePrerequisites } from './prerequisites.js';
 import { TemplateInstances } from './instances.js';
 import { TemplateBindingSchema } from './binding.js';
@@ -59,7 +59,7 @@ async function foundation(kind: TemplateKind = 'implementation', action = 'claim
   const root = await mkdtemp(join(tmpdir(), 'gg-template-foundation-'));
   dirs.push(root);
   await mkdir(join(root, 'recipe'));
-  const original = await new TemplateCatalog(
+  const original = await new ConfiguredTemplateCatalog(
     fileURLToPath(new URL('../../templates', import.meta.url)),
     fileURLToPath(new URL('../..', import.meta.url)),
   ).get('starter');
@@ -185,7 +185,7 @@ async function foundation(kind: TemplateKind = 'implementation', action = 'claim
     secretsFor: () => secrets,
     supportAvailable: () => Promise.resolve(true),
   });
-  const installed = new TemplateCatalog(root, root);
+  const installed = new ConfiguredTemplateCatalog(root, root);
   const instances = new TemplateInstances(
     installed,
     prerequisites,
@@ -461,7 +461,7 @@ describe('actual prerequisite capability and package checks', () => {
     async (model) => {
       const f = await foundation();
       const starter = (
-        await new TemplateCatalog(
+        await new ConfiguredTemplateCatalog(
           fileURLToPath(new URL('../../templates', import.meta.url)),
           fileURLToPath(new URL('../..', import.meta.url)),
         ).get('starter')
@@ -950,7 +950,7 @@ async function recipe(
   actions: string[],
   child = false,
 ) {
-  const original = await new TemplateCatalog(
+  const original = await new ConfiguredTemplateCatalog(
     fileURLToPath(new URL('../../templates', import.meta.url)),
     fileURLToPath(new URL('../..', import.meta.url)),
   ).get('starter');

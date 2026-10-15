@@ -39,7 +39,7 @@ import {
   type DatabaseHandle,
 } from '@graphgoblin/infrastructure/sqlite';
 import { bindingJson, executionHash, TemplateBindingSchema } from '../binding.js';
-import { TemplateCatalog } from '../catalog.js';
+import { ConfiguredTemplateCatalog } from '../__fixtures__/configured-catalog.js';
 import { subjectJson, type ParentSubject } from '../subjects.js';
 import { PrivateTemplateScripts } from '../scripts.js';
 import { TemplateRuntime, templateAdmission } from '../runtime.js';
@@ -817,7 +817,7 @@ describe('private execution snapshot', () => {
     const key = await apiKeys.create('local', 'private support', ['runs:read']);
     const secrets = new InMemorySecrets({ 'support-reader': key.token }),
       requests: ScriptRunRequest[] = [];
-    const catalog = new TemplateCatalog('.', '.');
+    const catalog = new ConfiguredTemplateCatalog('.', '.');
     catalog.get = async () => ({
       bundle: { manifest: f.binding.manifest, loops: {} },
       support: f.binding.support!,
@@ -1143,7 +1143,7 @@ describe('implementation attempt-aware PollTriggers admission', () => {
       apiKeys = new SqliteApiKeys(f.handle.db, f.clock, f.ids);
     const key = await apiKeys.create('local', 'private support', ['runs:read']);
     const secrets = new InMemorySecrets({ 'support-reader': key.token }),
-      catalog = new TemplateCatalog('.', '.');
+      catalog = new ConfiguredTemplateCatalog('.', '.');
     catalog.get = async () => ({
       bundle: { manifest: f.binding.manifest, loops: {} },
       support: f.binding.support!,

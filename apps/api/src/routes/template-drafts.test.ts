@@ -200,43 +200,51 @@ describe('editable template starting points', () => {
     expect(await app.container.repos.loops.listLoops('local')).toEqual([]);
   });
 
-  it('uses loops:write and keeps the newly created draft owner scoped', async () => {
-    app = await createTestApp({ requireApiKey: true });
-    const reader = await app.container.repos.apiKeys.create('local', 'reader', ['loops:read']);
-    const author = await app.container.repos.apiKeys.create('other', 'author', ['loops:write']);
-    expect(
-      (await app.app.inject({ method: 'POST', url: '/templates/starter/draft', payload: {} }))
-        .statusCode,
-    ).toBe(401);
-    expect(
-      (
-        await app.app.inject({
-          method: 'POST',
-          url: '/templates/starter/draft',
-          payload: {},
-          headers: { authorization: 'Bearer ' + reader.token },
-        })
-      ).statusCode,
-    ).toBe(403);
-    const response = await app.app.inject({
-      method: 'POST',
-      url: '/templates/starter/draft',
-      payload: {},
-      headers: { authorization: 'Bearer ' + author.token },
-    });
-    expect(response.statusCode, response.body).toBe(201);
-    const created = TemplateDraftResponseSchema.parse(response.json());
-    expect(created.loop.ownerId).toBe('other');
-    expect(
-      (
-        await app.app.inject({
-          method: 'GET',
-          url: '/loops/' + created.loop.id,
-          headers: { authorization: 'Bearer ' + reader.token },
-        })
-      ).statusCode,
-    ).toBe(404);
-  });
+  it.each(['starter', 'implementation', 'review', 'qa'])(
+    'uses loops:write and keeps the newly created %s draft owner scoped',
+    async (kind) => {
+      app = await createTestApp({ requireApiKey: true });
+      const reader = await app.container.repos.apiKeys.create('local', 'reader', ['loops:read']);
+      const author = await app.container.repos.apiKeys.create('other', 'author', ['loops:write']);
+      expect(
+        (
+          await app.app.inject({
+            method: 'POST',
+            url: '/templates/' + kind + '/draft',
+            payload: {},
+          })
+        ).statusCode,
+      ).toBe(401);
+      expect(
+        (
+          await app.app.inject({
+            method: 'POST',
+            url: '/templates/' + kind + '/draft',
+            payload: {},
+            headers: { authorization: 'Bearer ' + reader.token },
+          })
+        ).statusCode,
+      ).toBe(403);
+      const response = await app.app.inject({
+        method: 'POST',
+        url: '/templates/' + kind + '/draft',
+        payload: {},
+        headers: { authorization: 'Bearer ' + author.token },
+      });
+      expect(response.statusCode, response.body).toBe(201);
+      const created = TemplateDraftResponseSchema.parse(response.json());
+      expect(created.loop.ownerId).toBe('other');
+      expect(
+        (
+          await app.app.inject({
+            method: 'GET',
+            url: '/loops/' + created.loop.id,
+            headers: { authorization: 'Bearer ' + reader.token },
+          })
+        ).statusCode,
+      ).toBe(404);
+    },
+  );
 });
 
 describe('bounded manual starting-point execution', () => {

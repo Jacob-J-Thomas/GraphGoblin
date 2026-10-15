@@ -28,7 +28,9 @@ Step 06 part 1 (on top of step 05's ordinary paging) removes:
 - client helpers;
 - editor origin lookups.
 
-Dormant service modules and their standalone tests stay for now. Step 06 part 2 deletes the engine and infrastructure hooks and makes loading draft-only. Steps 07 and 08 delete the services. Step 09 deletes the template contracts, the `template_instances` store and its columns.
+The loader slice of step 06 part 2 is complete: the live loader returns `{manifest, draft}`, validates current exports, graphs and the shipped draft policy, and clones every creation. It reads no configured graphs or support closures. Its only dependency is the installed catalogue directory. File containment, link and size safeguards remain.
+
+Dormant service modules and their standalone tests stay for now. Their configured catalogue dependency is separate from the live loader; a fixture loader excluded from the application build keeps those service tests runnable until deletion. The rest of part 2 (configured allocation/remapping and engine/infrastructure hooks and callbacks) is still pending: removing those dependencies also reaches into the service suites, exceeding this child's roughly 40-file boundary. Steps 07 and 08 own service deletion, including the temporary fixture. Step 09 owns the contracts, reduced manifests, the `template_instances` store and its SQL. No callback or stored-data removal is claimed by this loader slice.
 
 This is an integration state on `feat/format-4-integration`, not a deployable cutover. A store that still holds configured instances would run their loops' triggers as ordinary loops with no template authority. The integration branch never runs against such a store: children use fresh disposable stores, and the cutover deletes configured instances, their loops and runs before any upgraded store starts.
 

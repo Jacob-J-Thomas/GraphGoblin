@@ -39,7 +39,7 @@ import { TemplateRuntime, templateAdmission } from '../runtime.js';
 import { TemplateInstances } from '../instances.js';
 import { TemplatePrerequisites } from '../prerequisites.js';
 import { PrivateTemplateScripts } from '../scripts.js';
-import { TemplateCatalog } from '../catalog.js';
+import { ConfiguredTemplateCatalog } from '../__fixtures__/configured-catalog.js';
 import { ReviewAuthority } from './review-authority.js';
 import { ReviewReporter } from './review-reporter.js';
 import { readReviewWake } from './review-wake.js';
@@ -339,7 +339,7 @@ async function fixture(issue: number | null = 42) {
       key = await apiKeys.create('local', 'review reader', ['runs:read']),
       secrets = new InMemorySecrets({ reader: key.token }),
       requests: ScriptRunRequest[] = [];
-    const catalog = new TemplateCatalog('.', '.');
+    const catalog = new ConfiguredTemplateCatalog('.', '.');
     catalog.get = async () => ({
       bundle: { manifest, loops: { parent: parent.definition } },
       support: binding.support!,
@@ -435,7 +435,7 @@ async function fixture(issue: number | null = 42) {
   };
 }
 async function admissionFixture(f: Awaited<ReturnType<typeof fixture>>, authority = f.authority) {
-  const catalog = new TemplateCatalog('.', '.');
+  const catalog = new ConfiguredTemplateCatalog('.', '.');
   catalog.get = async () => ({
     bundle: { manifest: f.binding.manifest, loops: { parent: f.parent.definition } },
     support: f.binding.support!,

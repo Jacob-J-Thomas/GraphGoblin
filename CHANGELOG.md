@@ -4,6 +4,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Template catalogue loading now validates and clones only manual draft starting points; configured graphs and private support files are no longer required to load or copy a template. **Upgrade:** installed templates must provide a valid `draftFile`; missing drafts return `TEMPLATE_PACKAGE_INVALID`. Engine/storage hook and configured-service removal remains pending in the bounded #165 split. (#165, step 06 part 2 loader slice)
+
 - Templates no longer install private runtime authority, credentials or finalization reporters. **Upgrade:** configured prerequisite, instantiate and instance endpoints and client helpers are removed; catalogue entries contain only `manifest`. Use `POST /templates/{id}/draft` for independent ordinary drafts. Loader, hooks and stored-data retirement continue in later #165 children. (#165, step 06 part 1)
 
 - Internal: centralized the current format (still 3), checked SQL-derived format-baseline readiness before startup writes and the full head after migrations, batched offline history inventory/apply with bounded fan-in canonical hashing, and restored the Drizzle snapshot baseline with a no-op generation gate. (#164, step 04)

@@ -4,18 +4,29 @@ import {
   TemplateSettingsSchemas,
   type TemplateInstantiateRequest,
   type TemplateInstantiateResponse,
+  type TemplateBundle,
+  type LoopDefinition,
 } from '@graphgoblin/contracts';
 import { prepareTemplateBundle, stableHash } from '@graphgoblin/domain';
 import type { ClockPort, IdPort } from '@graphgoblin/engine';
 import type { SqliteTemplateInstances } from '@graphgoblin/infrastructure/sqlite';
 import { TemplateBindingSchema, bindingJson, executionHash } from './binding.js';
-import type { TemplateCatalog } from './catalog.js';
 import type { TemplatePrerequisites } from './prerequisites.js';
 import { TemplateError } from './errors.js';
 
+/** Dormant service dependency, removed with steps 07-08; never the live catalogue. */
+export interface ConfiguredCatalog {
+  get(id: string): Promise<{
+    bundle: TemplateBundle;
+    draft?: LoopDefinition;
+    support?: { path: string; hash: string };
+  }>;
+  list(): Promise<Awaited<ReturnType<ConfiguredCatalog['get']>>[]>;
+}
+
 export class TemplateInstances {
   constructor(
-    readonly catalog: TemplateCatalog,
+    readonly catalog: ConfiguredCatalog,
     readonly prerequisites: TemplatePrerequisites,
     readonly store: SqliteTemplateInstances,
     private readonly ids: IdPort,
