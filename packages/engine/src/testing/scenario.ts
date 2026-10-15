@@ -7,7 +7,7 @@ import type {
   RunEvent,
   RunRecord,
 } from '@graphgoblin/contracts';
-import { LoopDefinitionSchema } from '@graphgoblin/contracts';
+import { CURRENT_DEFINITION_FORMAT, LoopDefinitionSchema } from '@graphgoblin/contracts';
 import { fakeUlid } from '@graphgoblin/contracts/testing';
 import { RunManager, type StartRunInput } from '../run-manager.js';
 import type { EngineSettings } from '../ports.js';
@@ -117,7 +117,7 @@ export function singleNodeLoop(
       ? []
       : [{ id: 'e2', from: { node: node.id, port: 'out' }, to: { node: 'done' } }];
   return {
-    schemaVersion: 3,
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
     name,
     nodes: [
       { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
