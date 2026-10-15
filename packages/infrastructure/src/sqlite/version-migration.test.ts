@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { copyFile, cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -13,7 +14,7 @@ async function offlineUpgrade(handle: ReturnType<typeof openDatabase>, migration
     handle.client,
     {
       format: 'graphgoblin-upgrade-manifest',
-      targetVersion: 3,
+      targetVersion: CURRENT_DEFINITION_FORMAT,
       sourceHash: inventory.sourceHash,
       approvedBy: 'test-owner',
       approvedAt: FIXTURE_TS,
@@ -30,7 +31,7 @@ async function offlineUpgrade(handle: ReturnType<typeof openDatabase>, migration
 }
 
 describe('inference-node harness data migration', () => {
-  it('restores a full pre-upgrade backup after 0006 and reapplies every migration on re-upgrade', async () => {
+  it('preserves a full pre-upgrade backup and refuses apply until format-4 conversion exists', async () => {
     await mkdir(fileURLToPath(new URL('../../../../.tmp/', import.meta.url)), { recursive: true });
     const root = await mkdtemp(
       fileURLToPath(new URL('../../../../.tmp/gg-backup-reupgrade-', import.meta.url)),
@@ -94,38 +95,25 @@ describe('inference-node harness data migration', () => {
       await cp(data, backup, { recursive: true });
       handle = openDatabase({ url: databaseUrl(data) });
       await expect(handle.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
-      await offlineUpgrade(handle);
-      expect(await stored()).toEqual(canonical);
-      expect((await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows).toHaveLength(
-        12,
-      );
+      const source = (await inspectDatabaseUpgrade(handle.client)).sourceHash;
+      await expect(offlineUpgrade(handle)).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
+      expect((await inspectDatabaseUpgrade(handle.client)).sourceHash).toBe(source);
+      expect(await stored()).toEqual(legacy);
       await stopDatabase();
-
-      // Restore the whole stopped data directory into an empty destination, including its ledger.
       await cp(backup, restored, { recursive: true });
-      handle = openDatabase({ url: databaseUrl(restored), migrationsFolder: migrations });
-      await expect(handle.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
+      handle = openDatabase({ url: databaseUrl(restored) });
       expect(await stored()).toEqual(legacy);
       expect((await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows).toEqual(
         ledger,
       );
-      await stopDatabase();
-      handle = openDatabase({ url: databaseUrl(restored) });
-      // The restored three-entry ledger must replay all nine remaining migrations.
+      await expect(offlineUpgrade(handle)).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
       expect(await handle.pendingMigrations()).toBe(9);
-      await offlineUpgrade(handle);
-      expect(LoopDefinitionSchema.parse(await stored())).toEqual(canonical);
-      expect(await handle.pendingMigrations()).toBe(0);
-      expect((await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows).toHaveLength(
-        12,
-      );
-      expect((await handle.client.execute('SELECT * FROM classifier_models')).rows).toEqual([]);
     } finally {
       await stopDatabase();
-      // Retain ignored recovery evidence: native Windows statements may keep closed SQLite files locked until GC.
+      await rm(root, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
     }
   }, 45_000);
-  it('rewrites the removed field once, preserves canonical rows and version metadata', async () => {
+  it('refuses historical field rewrites without changing version metadata or the migration ledger', async () => {
     const folder = await mkdtemp(join(tmpdir(), 'gg-version-migrations-'));
     const source = fileURLToPath(new URL('../../drizzle/', import.meta.url));
     const journal = JSON.parse(await readFile(join(source, 'meta/_journal.json'), 'utf8')) as {
@@ -172,33 +160,16 @@ describe('inference-node harness data migration', () => {
       }
       const before = (await handle.client.execute('SELECT * FROM loop_versions ORDER BY id')).rows;
       await writeFile(join(folder, 'meta/_journal.json'), JSON.stringify(journal));
-      await offlineUpgrade(handle, folder);
-      const after = (await handle.client.execute('SELECT * FROM loop_versions ORDER BY id')).rows;
-      const rewritten = after.find((row) => row['id'] === versionId)!;
-      const stored = rewritten['definition'];
-      if (typeof stored !== 'string') throw new Error('expected stored definition JSON');
-      expect(LoopDefinitionSchema.parse(JSON.parse(stored))).toEqual(canonical);
-      expect({ ...after.find((row) => row['id'] === canonicalId), definition: undefined }).toEqual({
-        ...before.find((row) => row['id'] === canonicalId),
-        definition: undefined,
-      });
-      expect({ ...rewritten, definition: undefined }).toEqual({
-        ...before.find((row) => row['id'] === versionId),
-        definition: undefined,
-      });
       const ledger = (await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows;
-      await handle.migrate();
+      await expect(offlineUpgrade(handle, folder)).rejects.toMatchObject({
+        code: 'DATA_UPGRADE_REQUIRED',
+      });
       expect((await handle.client.execute('SELECT * FROM loop_versions ORDER BY id')).rows).toEqual(
-        after,
+        before,
       );
       expect((await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows).toEqual(
         ledger,
       );
-      const migration = journal.entries.find((entry) => entry.idx === 5)!;
-      expect(
-        (await handle.client.execute(await readFile(join(source, `${migration.tag}.sql`), 'utf8')))
-          .rowsAffected,
-      ).toBe(0);
     } finally {
       handle.close();
       await rm(folder, { recursive: true, force: true });

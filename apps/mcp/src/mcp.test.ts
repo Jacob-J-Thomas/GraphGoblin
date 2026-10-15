@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 /**
  * End-to-end tests: an MCP client connected over the SDK's in-memory transport to the server,
  * which calls the real API booted in-process (in-memory database, fake harness) on an ephemeral port.
@@ -34,7 +35,7 @@ const TOOLS = [
 ];
 
 const inputLoop: LoopDefinitionInput = {
-  schemaVersion: 3,
+  schemaVersion: CURRENT_DEFINITION_FORMAT,
   name: 'Ask Me',
   description: 'Asks a question and returns the answer.',
   nodes: [
@@ -67,7 +68,7 @@ const inputLoop: LoopDefinitionInput = {
 };
 
 const signalLoop: LoopDefinitionInput = {
-  schemaVersion: 3,
+  schemaVersion: CURRENT_DEFINITION_FORMAT,
   name: 'signal-wait',
   nodes: [
     { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual', exposeTo: ['ui'] } },
@@ -81,7 +82,7 @@ const signalLoop: LoopDefinitionInput = {
 };
 
 const slowLoop: LoopDefinitionInput = {
-  schemaVersion: 3,
+  schemaVersion: CURRENT_DEFINITION_FORMAT,
   name: 'slow-inference',
   nodes: [
     { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },

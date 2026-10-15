@@ -66,19 +66,12 @@ for (const [kind, answer] of [
     page,
     request,
   }) => {
-    const evaluation =
-      kind === 'expression'
-        ? { kind, jsonata: answer.type === 'noul' ? 'true' : '"out"' }
-        : kind === 'classifier'
-          ? { kind, model: 'jev', question: 'Evaluate' }
-          : {
-              kind,
-              harness: 'codex',
-              model: { mode: 'inherit' },
-              effort: { mode: 'inherit' },
-              question: 'Evaluate',
-            };
-    const id = await create(request, 'decision', { answer, evaluation });
+    const id = await create(request, 'decision', {
+      kind,
+      model: 'jev',
+      question: 'Evaluate',
+      answer,
+    });
     await page.goto(`/app/loops/${id}/edit`);
     let dialog = await openNode(page, 'approve');
     const text =
@@ -260,38 +253,32 @@ test('number constraints hold invalid input while provider variables remain sugg
   request,
 }) => {
   const id = await create(request, 'decision', {
+    kind: 'classifier',
+    model: 'jev',
+    question: 'Evaluate',
+    minConfidence: 0.2,
+    context: { vars: ['topic'] },
     answer: noul,
-    evaluation: {
-      kind: 'classifier',
-      model: 'jev',
-      question: 'Evaluate',
-      minConfidence: 0.2,
-      context: { vars: ['topic'] },
-    },
   });
   await page.goto(`/app/loops/${id}/edit`);
   const dialog = await openNode(page, 'approve');
-  await openAdvanced(dialog.locator('[data-field="evaluation"]'));
+  await openAdvanced(dialog);
   const number = dialog.getByRole('spinbutton', { name: 'Min confidence' });
   await expect(number).toHaveAttribute('min', '0');
   await expect(number).toHaveAttribute('max', '1');
   await expect(number).toHaveAttribute('step', 'any');
   await number.fill('1.1');
   await expect(number).toHaveAttribute('aria-invalid', 'true');
-  expect((await config(request, id))['evaluation']).toMatchObject({ minConfidence: 0.2 });
+  expect(await config(request, id)).toMatchObject({ minConfidence: 0.2 });
   await number.fill('0.75');
-  await expect
-    .poll(() => config(request, id))
-    .toMatchObject({ evaluation: { minConfidence: 0.75 } });
+  await expect.poll(() => config(request, id)).toMatchObject({ minConfidence: 0.75 });
   await dialog.getByRole('tab', { name: /^Context\b/ }).click();
   await openAdvanced(dialog);
   const variable = dialog.getByLabel('Vars 1', { exact: true });
   const list = await variable.getAttribute('list');
   await expect(dialog.locator(`datalist[id="${list}"] option`)).toHaveAttribute('value', 'topic');
   await variable.fill('undeclared');
-  await expect
-    .poll(() => config(request, id))
-    .toMatchObject({ evaluation: { context: { vars: ['undeclared'] } } });
+  await expect.poll(() => config(request, id)).toMatchObject({ context: { vars: ['undeclared'] } });
   await dialog.getByRole('button', { name: 'Edit as JSON: Context', exact: true }).click();
   const json = dialog.getByRole('textbox', { name: 'Context JSON', exact: true });
   await replace(page, json, '{"messages":"all","vars":[],"includeLastOutput":false}');
@@ -299,7 +286,7 @@ test('number constraints hold invalid input while provider variables remain sugg
   await expect
     .poll(() => config(request, id))
     .toMatchObject({
-      evaluation: { context: { messages: 'all', vars: [], includeLastOutput: false } },
+      context: { messages: 'all', vars: [], includeLastOutput: false },
     });
 });
 
@@ -308,8 +295,10 @@ test('Answer JSON preserves surviving IDs through reorder and swap; equal-count 
   request,
 }) => {
   const id = await create(request, 'decision', {
+    kind: 'classifier',
+    model: 'jev',
+    question: 'Choose',
     answer: choice,
-    evaluation: { kind: 'expression', jsonata: '"out"' },
   });
   await page.goto(`/app/loops/${id}/edit`);
   const dialog = await openNode(page, 'approve');

@@ -27,7 +27,7 @@ describe('exit and decision evidence contracts', () => {
           index: 0,
           strategy: 'llm',
           status: 'matched',
-          answer: { type: 'noul', kind: 'llm', holds: true, confidence: 0.9, reasoning: 'Done' },
+          observation: { kind: 'boolean', holds: true, confidence: 0.9, reasoning: 'Done' },
           provenance: {
             kind: 'llm',
             provider: 'codex',
@@ -36,7 +36,7 @@ describe('exit and decision evidence contracts', () => {
             effort: 'high',
           },
           acceptance: { status: 'accepted' },
-          match: { type: 'noul', value: true },
+          match: { type: 'boolean', value: true },
         },
       ],
     };
@@ -47,20 +47,15 @@ describe('exit and decision evidence contracts', () => {
         .success,
     ).toBe(false);
     const decision = {
-      answer: {
-        type: 'choice',
-        options: [
-          { id: 'yes', label: 'Yes', criteria: 'Yes' },
-          { id: 'no', label: 'No', criteria: 'No' },
-        ],
-      },
-      evaluation: {
-        kind: 'llm',
-        harness: 'codex',
-        model: { mode: 'explicit', value: model },
-        effort: { mode: 'inherit' },
-        question: 'Done?',
-      },
+      kind: 'llm',
+      harness: 'codex',
+      model: { mode: 'explicit', value: model },
+      effort: { mode: 'inherit' },
+      instructions: 'Done?',
+      routes: [
+        { id: 'yes', label: 'Yes', criteria: 'Yes' },
+        { id: 'no', label: 'No', criteria: 'No' },
+      ].map(({ id, label }) => ({ id, label })),
     };
     const inference = { prompt: { template: 'Hello' }, model };
     expect(DecisionConfigSchema.safeParse(decision).success).toBe(true);
@@ -68,7 +63,7 @@ describe('exit and decision evidence contracts', () => {
     expect(
       DecisionConfigSchema.safeParse({
         ...decision,
-        evaluation: { ...decision.evaluation, model: { mode: 'explicit', value: oversized } },
+        model: { mode: 'explicit', value: oversized },
       }).success,
     ).toBe(false);
     expect(InferenceConfigSchema.safeParse({ ...inference, model: oversized }).success).toBe(false);
@@ -102,12 +97,9 @@ describe('exit and decision evidence contracts', () => {
         index: 0,
         strategy: 'classifier',
         status: 'not-matched',
-        answer: {
-          type: 'noul',
+        observation: {
           kind: 'classifier',
-          holds: false,
-          trueProbability: 0.2,
-          confidence: 0.8,
+          answer: { type: 'noul', holds: false, trueProbability: 0.2, confidence: 0.8 },
         },
         provenance: {
           kind: 'classifier',
@@ -123,7 +115,7 @@ describe('exit and decision evidence contracts', () => {
         index: 1,
         strategy: 'llm',
         status: 'matched',
-        answer: { type: 'noul', kind: 'llm', holds: true, confidence: 0.9, reasoning: 'Done' },
+        observation: { kind: 'boolean', holds: true, confidence: 0.9, reasoning: 'Done' },
         provenance: {
           kind: 'llm',
           provider: 'codex',
@@ -132,7 +124,7 @@ describe('exit and decision evidence contracts', () => {
           effort: 'high',
         },
         acceptance: { status: 'accepted' },
-        match: { type: 'noul', value: true },
+        match: { type: 'boolean', value: true },
       },
       {
         index: 2,
@@ -149,8 +141,17 @@ describe('exit and decision evidence contracts', () => {
     ];
     expect(RunEventSchema.safeParse({ ...exit, criteria }).success).toBe(true);
     for (const entry of [
-      { ...criteria[1], answer: { ...criteria[1]?.answer, reasoning: 'x'.repeat(2049) } },
-      { ...criteria[0], answer: { ...criteria[0]?.answer, confidence: 2 } },
+      {
+        ...criteria[1],
+        observation: { kind: 'boolean', holds: true, confidence: 0.9, reasoning: 'x'.repeat(2049) },
+      },
+      {
+        ...criteria[0],
+        observation: {
+          kind: 'classifier',
+          answer: { type: 'noul', holds: false, trueProbability: 0.2, confidence: 2 },
+        },
+      },
       { ...criteria[3], diagnostic: { code: 'RAW_PROVIDER_CODE', message: 'Raw' } },
       { ...criteria[3], raw: { token: 'private' } },
     ])
@@ -167,7 +168,7 @@ describe('exit and decision evidence contracts', () => {
     const decision = {
       ...base,
       type: 'decision.made',
-      answer: { type: 'choice', optionId: 'yes', confidence: null, probabilities: null },
+      observation: { kind: 'route', routeId: 'yes', confidence: null, reasoning: null },
       portId: 'yes',
       provenance,
     };

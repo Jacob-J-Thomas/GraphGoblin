@@ -67,15 +67,18 @@ export function defaultConfig(kind: NodeKind): Record<string, unknown> {
       return { subtype: 'manual' };
     case 'decision':
       return {
-        answer: {
-          type: 'choice',
-          options: [
-            { id: 'yes', label: 'Yes', criteria: 'The answer is yes' },
-            { id: 'no', label: 'No', criteria: 'The answer is no' },
-          ],
-        },
-        evaluation: { kind: 'expression', jsonata: '"yes"' },
-        recordAlternatives: true,
+        kind: 'expression',
+        jsonata: '"yes"',
+        routes: [
+          {
+            id: 'yes',
+            label: 'Yes',
+          },
+          {
+            id: 'no',
+            label: 'No',
+          },
+        ],
       };
     case 'inference':
       return { prompt: { template: 'Summarise: {{ lastMessage.content }}' } };
@@ -115,6 +118,9 @@ function record(value: unknown): Record<string, unknown> {
 }
 
 function decisionRows(config: unknown): unknown[] | undefined {
+  const raw = record(config);
+  if (raw['kind'] === 'expression' || raw['kind'] === 'llm')
+    return Array.isArray(raw['routes']) ? raw['routes'] : undefined;
   const answer = record(record(config)['answer']);
   if (answer['type'] === undefined && Array.isArray(answer['options']))
     return answer['options'] as unknown[];

@@ -1,11 +1,5 @@
 import { z } from 'zod';
-import {
-  DecisionConfigSchema,
-  EvaluationSchema,
-  PrimitiveAnswerSpecSchema,
-  PrimitiveEvaluationConfigSchema,
-  ChoiceOptionIdSchema,
-} from './evaluation.js';
+import { DecisionConfigSchema, PredicateConfigSchema, ChoiceOptionIdSchema } from './evaluation.js';
 export { DecisionConfigSchema, type DecisionConfig } from './evaluation.js';
 import {
   EffortSchema,
@@ -154,13 +148,6 @@ export const TriggerConfigSchema = z.union([
     }),
 ]);
 export type TriggerConfig = z.infer<typeof TriggerConfigSchema>;
-
-// ---------------------------------------------------------------------------
-// Decision
-// ---------------------------------------------------------------------------
-
-export const DecisionStrategySchema = z.enum(['jev', 'codex', 'expression']);
-export type DecisionStrategy = z.infer<typeof DecisionStrategySchema>;
 
 // ---------------------------------------------------------------------------
 // Inference
@@ -663,14 +650,17 @@ export type Outcome = z.infer<typeof OutcomeSchema>;
 
 export const ExitPredicateMatchSchema = z.discriminatedUnion('type', [
   z.strictObject({
-    type: z.literal('noul'),
+    type: z.literal('boolean'),
     value: z.boolean().default(true),
     minReportedConfidence: z.number().min(0).max(1).optional(),
   }),
   z.strictObject({
+    type: z.literal('noul'),
+    value: z.boolean().default(true),
+  }),
+  z.strictObject({
     type: z.literal('choice'),
     optionIds: z.array(ChoiceOptionIdSchema).min(1).max(64),
-    minReportedConfidence: z.number().min(0).max(1).optional(),
   }),
   z.strictObject({
     type: z.literal('score'),
@@ -682,44 +672,42 @@ export type ExitPredicateMatch = z.infer<typeof ExitPredicateMatchSchema>;
 export const ExitPredicateSchema = z
   .strictObject({
     when: z.literal('predicate'),
-    answer: PrimitiveAnswerSpecSchema,
-    evaluation: EvaluationSchema,
+    predicate: PredicateConfigSchema,
     match: ExitPredicateMatchSchema,
     outcome: z.enum(['success', 'failure']),
   })
   .superRefine((criterion, ctx) => {
-    const pair = PrimitiveEvaluationConfigSchema.safeParse({
-      answer: criterion.answer,
-      evaluation: criterion.evaluation,
-    });
-    if (!pair.success) for (const issue of pair.error.issues) ctx.addIssue({ ...issue });
-    if (criterion.evaluation.kind === 'expression' && criterion.answer.type !== 'noul')
-      ctx.addIssue({
-        code: 'custom',
-        path: ['evaluation', 'kind'],
-        message: 'exit expressions require Noul',
-      });
-    if (criterion.answer.type !== criterion.match.type)
+    const { predicate, match } = criterion;
+    if (predicate.kind !== 'classifier') {
+      if (match.type !== 'boolean')
+        ctx.addIssue({
+          code: 'custom',
+          path: ['match', 'type'],
+          message: 'boolean predicates require a boolean match',
+        });
+      if (
+        match.type === 'boolean' &&
+        match.minReportedConfidence !== undefined &&
+        predicate.kind !== 'llm'
+      )
+        ctx.addIssue({
+          code: 'custom',
+          path: ['match', 'minReportedConfidence'],
+          message: 'reported confidence applies only to LLM predicates',
+        });
+      return;
+    }
+    if (predicate.answer.type !== match.type)
       ctx.addIssue({
         code: 'custom',
         path: ['match', 'type'],
-        message: 'match must use the declared primitive',
+        message: 'match must use the declared classifier primitive',
       });
-    if (
-      'minReportedConfidence' in criterion.match &&
-      criterion.match.minReportedConfidence !== undefined &&
-      criterion.evaluation.kind !== 'llm'
-    )
-      ctx.addIssue({
-        code: 'custom',
-        path: ['match', 'minReportedConfidence'],
-        message: 'reported confidence applies only to LLM predicates',
-      });
-    if (criterion.answer.type === 'choice' && criterion.match.type === 'choice') {
-      const ids = new Set(criterion.answer.options.map((option) => option.id));
+    if (predicate.answer.type === 'choice' && match.type === 'choice') {
+      const ids = new Set(predicate.answer.options.map((option) => option.id));
       if (
-        new Set(criterion.match.optionIds).size !== criterion.match.optionIds.length ||
-        criterion.match.optionIds.some((id) => !ids.has(id))
+        new Set(match.optionIds).size !== match.optionIds.length ||
+        match.optionIds.some((id) => !ids.has(id))
       )
         ctx.addIssue({
           code: 'custom',
@@ -728,9 +716,9 @@ export const ExitPredicateSchema = z
         });
     }
     if (
-      criterion.answer.type === 'score' &&
-      criterion.match.type === 'score' &&
-      criterion.match.value > criterion.answer.anchors.length - 1
+      predicate.answer.type === 'score' &&
+      match.type === 'score' &&
+      match.value > predicate.answer.anchors.length - 1
     )
       ctx.addIssue({
         code: 'custom',

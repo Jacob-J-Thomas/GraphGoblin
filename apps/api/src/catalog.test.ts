@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { LoopDefinitionInput, LoopIssue, ModelCatalogEntry } from '@graphgoblin/contracts';
 import { fakeUlid, minimalLoop } from '@graphgoblin/contracts/testing';
@@ -221,22 +222,17 @@ function modelLoop(
           kind: 'decision' as const,
           label: 'Decide',
           config: {
-            answer: {
-              type: 'choice' as const,
-              options: [
-                { id: 'a', label: 'A', criteria: 'A' },
-                { id: 'b', label: 'B', criteria: 'B' },
-              ],
-            },
-            evaluation: {
-              kind: 'llm' as const,
-              harness: 'codex' as const,
-              question: 'Which?',
-              model: model
-                ? { mode: 'explicit' as const, value: model }
-                : { mode: 'inherit' as const },
-              effort: { mode: 'inherit' as const },
-            },
+            kind: 'llm' as const,
+            harness: 'codex' as const,
+            instructions: 'Which?',
+            model: model
+              ? { mode: 'explicit' as const, value: model }
+              : { mode: 'inherit' as const },
+            effort: { mode: 'inherit' as const },
+            routes: [
+              { id: 'a', label: 'A', criteria: 'A' },
+              { id: 'b', label: 'B', criteria: 'B' },
+            ].map(({ id, label }) => ({ id, label })),
           },
         };
   return {
@@ -266,8 +262,12 @@ describe('advisory model validation', () => {
           ? {
               ...node,
               config: {
-                ...node.config,
-                evaluation: { kind: 'expression', jsonata: '"a"' },
+                kind: 'expression',
+                jsonata: '"a"',
+                routes: [
+                  { id: 'a', label: 'A' },
+                  { id: 'b', label: 'B' },
+                ],
               },
             }
           : node,
@@ -360,19 +360,14 @@ describe('uniform strict evaluator admission', () => {
                   criteria: [
                     {
                       when: 'predicate',
-                      answer: {
-                        type: 'noul',
-                        true: { label: 'Ready', criteria: 'Task is done' },
-                        false: { label: 'Continue', criteria: 'Task is not done' },
-                      },
-                      evaluation: {
+                      predicate: {
                         kind: 'llm',
                         harness: 'codex',
                         model: { mode: 'inherit' },
                         effort: { mode: 'inherit' },
-                        question: 'Complete?',
+                        instructions: 'Complete?',
                       },
-                      match: { type: 'noul', value: true },
+                      match: { type: 'boolean', value: true },
                       outcome: 'success',
                     },
                   ],
@@ -440,7 +435,7 @@ describe('uniform strict evaluator admission', () => {
         url: '/loops/import',
         payload: {
           format: 'graphgoblin-loop',
-          formatVersion: 3,
+          formatVersion: CURRENT_DEFINITION_FORMAT,
           exportedAt: '2026-10-02T12:00:00.000Z',
           loop: definition,
         },

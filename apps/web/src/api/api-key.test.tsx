@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -44,7 +45,7 @@ describe('API key entry', () => {
     const api = new FakeApi();
     api.requiredKey = 'gg_good';
     api.addLoop({
-      schemaVersion: 3,
+      schemaVersion: CURRENT_DEFINITION_FORMAT,
       name: 'guarded loop',
       nodes: [
         { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },

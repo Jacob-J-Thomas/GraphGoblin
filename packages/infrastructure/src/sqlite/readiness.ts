@@ -8,10 +8,10 @@ import { rows, quote, type UpgradeReader } from './upgrade-scan.js';
 
 export const SHIPPED_MIGRATIONS = fileURLToPath(new URL('../../drizzle', import.meta.url));
 // Moving the current format also requires an explicit format/SQL baseline decision.
-export const FORMAT_BASELINES = { 3: '0008_github_triggers' } satisfies Record<
-  typeof CURRENT_DEFINITION_FORMAT,
-  string
->;
+export const FORMAT_BASELINES = {
+  3: '0008_github_triggers',
+  4: '0011_enable_claude_fable',
+} satisfies Record<typeof CURRENT_DEFINITION_FORMAT | 3, string>;
 export const normalizeStoreSql = (sql: string) =>
   sql
     .toLowerCase()

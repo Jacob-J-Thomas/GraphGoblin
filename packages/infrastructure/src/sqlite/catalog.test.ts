@@ -83,7 +83,9 @@ describe('model catalog source migration and repository', () => {
       const catalog = new SqliteModelCatalog(current.db);
       const before = await catalog.list();
       expect(await current.pendingMigrations()).toBe(1);
-      await current.migrate();
+      await expect(current.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
+      // Exercise the historical SQL in isolation; format-4 startup cannot admit a pre-baseline store.
+      await applyShippedSqlToHistoricalTestFixture(current);
       expect(await catalog.list()).toEqual(
         before.map((entry) =>
           entry.harness === 'claude' && entry.model === 'claude-fable-5-1'
@@ -92,7 +94,6 @@ describe('model catalog source migration and repository', () => {
         ),
       );
       await catalog.setEnabled('claude', 'claude-fable-5-1', false);
-      await current.migrate();
       await catalog.seed();
       expect(await catalog.findOne('claude', 'claude-fable-5-1')).toMatchObject({ enabled: false });
       expect(await current.pendingMigrations()).toBe(0);

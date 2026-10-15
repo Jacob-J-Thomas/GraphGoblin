@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -38,7 +39,7 @@ describe.skipIf(!live)('API live smoke with the real Codex adapter', () => {
     await app.ready();
     try {
       const definition: LoopDefinitionInput = {
-        schemaVersion: 3,
+        schemaVersion: CURRENT_DEFINITION_FORMAT,
         name: 'live-smoke',
         settings: { workingDirectory: { kind: 'fixed', path: workDir } },
         nodes: [

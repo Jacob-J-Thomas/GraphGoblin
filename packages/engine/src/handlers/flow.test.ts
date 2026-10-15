@@ -1,9 +1,14 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { describe, expect, it } from 'vitest';
 import type { LoopDefinitionInput } from '@graphgoblin/contracts';
 import type { ChoiceResult } from '../ports.js';
 import { createTestEngine, singleNodeLoop } from '../testing/scenario.js';
 
 type DecisionInput = Extract<LoopDefinitionInput['nodes'][number], { kind: 'decision' }>['config'];
+type DecisionSettings =
+  | Omit<Extract<DecisionInput, { kind: 'expression' }>, 'routes'>
+  | Omit<Extract<DecisionInput, { kind: 'llm' }>, 'routes'>
+  | Omit<Extract<DecisionInput, { kind: 'classifier' }>, 'answer'>;
 const classifier = {
   kind: 'classifier',
   model: 'jev',
@@ -14,15 +19,15 @@ const llm = {
   harness: 'codex',
   model: { mode: 'inherit' },
   effort: { mode: 'inherit' },
-  question: 'Q',
+  instructions: 'Q',
 } as const;
 function decisionLoop(
   name: string,
-  evaluation: DecisionInput['evaluation'],
+  evaluation: DecisionSettings,
   recordAlternatives = true,
 ): LoopDefinitionInput {
   return {
-    schemaVersion: 3,
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
     name,
     nodes: [
       { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
@@ -30,23 +35,32 @@ function decisionLoop(
         id: 'decide',
         kind: 'decision',
         label: 'Choose',
-        config: {
-          answer: {
-            type: 'choice',
-            options: [
-              { id: 'good', label: 'Good outcome', criteria: 'Acceptable' },
-              { id: 'bad', label: 'Bad outcome', criteria: 'Needs work' },
-            ],
-          },
-          evaluation,
-          recordAlternatives,
-        },
+        config:
+          evaluation.kind === 'classifier'
+            ? {
+                ...evaluation,
+                answer: {
+                  type: 'choice',
+                  options: [
+                    { id: 'good', label: 'Good outcome', criteria: 'Acceptable' },
+                    { id: 'bad', label: 'Bad outcome', criteria: 'Needs work' },
+                  ],
+                },
+                recordAlternatives,
+              }
+            : {
+                ...evaluation,
+                routes: [
+                  { id: 'good', label: 'Good outcome' },
+                  { id: 'bad', label: 'Bad outcome' },
+                ],
+              },
       },
       {
         id: 'done',
         kind: 'exit',
         label: 'Done',
-        config: { return: { mapping: 'outputs.decide.value.answer.optionId' } },
+        config: { return: { mapping: 'outputs.decide.value.portId' } },
       },
     ],
     edges: [
@@ -78,7 +92,7 @@ describe('decision node', () => {
     expect(good.result).toBe('good');
     expect(bad.result).toBe('bad');
     const payload = {
-      answer: { type: 'choice', optionId: 'good', confidence: null, probabilities: null },
+      observation: { kind: 'route', routeId: 'good', confidence: null, reasoning: null },
       portId: 'good',
       provenance: {
         kind: 'expression',
@@ -94,7 +108,7 @@ describe('decision node', () => {
     });
     expect((await e.manager.getThread(good.id))?.outputs['decide']?.value).toEqual(payload);
     expect(e.ports.jev.choices).toEqual([]);
-    expect(e.ports.codexDecider.choices).toEqual([]);
+    expect(e.ports.codexDecider.routes).toEqual([]);
   });
   it.each(['true', '42', 'null', '[]', '{}', '"unknown"'])(
     'does not coerce expression result %s into a route',
@@ -128,7 +142,7 @@ describe('decision node', () => {
       { ownerId: 'local', modelId: 'jev', primitive: 'choice' },
     ]);
     expect(e.events(r.id).find((ev) => ev.type === 'decision.made')).toMatchObject({
-      answer: answer(),
+      observation: { kind: 'classifier', answer: answer() },
       portId: 'good',
       provenance: {
         kind: 'classifier',
@@ -214,7 +228,7 @@ describe('decision node', () => {
       e.publish(decisionLoop('low', { ...classifier, minConfidence: 0.5 })).loopId,
     );
     expect(r.failure).toMatchObject({ code: 'EVALUATION_RESULT_REJECTED', resumable: false });
-    expect(e.ports.codexDecider.choices).toEqual([]);
+    expect(e.ports.codexDecider.routes).toEqual([]);
     expect(e.eventTypes(r.id)).not.toContain('decision.made');
   });
   it('omits rejected Choice alternatives while retaining selected answer, confidence and gate', async () => {
@@ -228,7 +242,10 @@ describe('decision node', () => {
     expect(r.failure).toMatchObject({
       code: 'EVALUATION_RESULT_REJECTED',
       details: {
-        answer: { type: 'choice', optionId: 'bad', confidence: 0.3, probabilities: null },
+        observation: {
+          kind: 'classifier',
+          answer: { type: 'choice', optionId: 'bad', confidence: 0.3, probabilities: null },
+        },
         provenance: { kind: 'classifier', classifierId: 'jev' },
         acceptance: { status: 'rejected', minConfidence: 0.5 },
       },
@@ -236,7 +253,11 @@ describe('decision node', () => {
     expect(e.eventTypes(r.id)).not.toContain('decision.made');
     expect((await e.manager.getThread(r.id))?.outputs['decide']).toBeUndefined();
     const failed = e.events(r.id).find((event) => event.type === 'run.failed');
-    expect(failed).toMatchObject({ failure: { details: { answer: { probabilities: null } } } });
+    expect(failed).toMatchObject({
+      failure: {
+        details: { observation: { kind: 'classifier', answer: { probabilities: null } } },
+      },
+    });
   });
   it.each([
     answer('unknown'),
@@ -262,11 +283,11 @@ describe('decision node', () => {
       e.publish(decisionLoop('no-probabilities', classifier, false)).loopId,
     );
     expect(e.events(r.id).find((ev) => ev.type === 'decision.made')).toMatchObject({
-      answer: { probabilities: null },
+      observation: { kind: 'classifier', answer: { probabilities: null } },
       diagnostics: [],
     });
     expect((await e.manager.getThread(r.id))?.outputs['decide']?.value).toMatchObject({
-      answer: { probabilities: null },
+      observation: { kind: 'classifier', answer: { probabilities: null } },
     });
   });
   it('records resolved LLM provenance and keeps informational confidence separate from probability', async () => {
@@ -281,7 +302,7 @@ describe('decision node', () => {
       ).loopId,
     );
     expect(r.result).toBe('good');
-    expect(e.ports.codexDecider.choices[0]).toMatchObject({ model: 'gpt-6-sol', effort: 'xhigh' });
+    expect(e.ports.codexDecider.routes[0]).toMatchObject({ model: 'gpt-6-sol', effort: 'xhigh' });
     expect(e.events(r.id).find((ev) => ev.type === 'decision.made')).toMatchObject({
       provenance: {
         kind: 'llm',
@@ -290,14 +311,20 @@ describe('decision node', () => {
         model: 'gpt-6-sol',
         effort: 'xhigh',
       },
-      answer: { confidence: 1, probabilities: null },
+      observation: { kind: 'route', confidence: 1, reasoning: 'Selected' },
     });
   });
   it.each([answer(), answer('good', null, null)])(
     'rejects LLM evidence with classifier probabilities or absent confidence',
     async (value) => {
       const e = await createTestEngine();
-      e.ports.codexDecider.choose = () => Promise.resolve(value);
+      e.ports.codexDecider.route = () =>
+        Promise.resolve({
+          ...value,
+          route: value.optionId,
+          reasoning: 'Selected',
+          confidence: value.confidence ?? NaN,
+        });
       const r = await e.runToIdle(e.publish(decisionLoop('bad-llm', llm, false)).loopId);
       expect(r.failure?.code).toBe('EVALUATION_INVALID_RESPONSE');
     },
@@ -368,9 +395,13 @@ describe('decision node', () => {
               : llm,
         );
         const node = definition.nodes[1];
-        if (node?.kind !== 'decision' || node.config.answer.type !== 'choice')
-          throw new Error('Expected Choice decision');
-        node.config.answer.options = reverse ? [...options].reverse() : options;
+        if (node?.kind !== 'decision') throw new Error('Expected Choice decision');
+        if (node.config.kind === 'classifier' && node.config.answer.type === 'choice')
+          node.config.answer.options = reverse ? [...options].reverse() : options;
+        else if (node.config.kind !== 'classifier')
+          node.config.routes = (reverse ? [...options].reverse() : options).map(
+            ({ id, label }) => ({ id, label }),
+          );
         definition.edges = definition.edges.filter((edge) => edge.from.node !== 'decide');
         definition.edges.push(
           ...options.map((option) => ({
@@ -379,30 +410,38 @@ describe('decision node', () => {
             to: { node: 'done' },
           })),
         );
-        const decider = kind === 'classifier' ? e.ports.jev : e.ports.codexDecider;
-        decider.choose = (request) => {
-          decider.choices.push(request);
+        e.ports.jev.choose = (request) => {
+          e.ports.jev.choices.push(request);
           return Promise.resolve(
             answer(
               selectedId,
               1,
-              kind === 'classifier'
-                ? Object.fromEntries(
-                    request.options.map((option) => [option.id, option.id === selectedId ? 1 : 0]),
-                  )
-                : null,
+              Object.fromEntries(
+                request.options.map((option) => [option.id, option.id === selectedId ? 1 : 0]),
+              ),
             ),
           );
+        };
+        e.ports.codexDecider.route = (request) => {
+          e.ports.codexDecider.routes.push(request);
+          return Promise.resolve({ route: selectedId, confidence: 1, reasoning: 'Selected' });
         };
         const r = await e.runToIdle(e.publish(definition).loopId);
         expect(r.result).toBe(selectedId);
         expect(e.events(r.id).find((ev) => ev.type === 'decision.made')).toMatchObject({
           portId: selectedId,
-          answer: { optionId: selectedId },
+          observation:
+            kind === 'classifier'
+              ? { kind: 'classifier', answer: { optionId: selectedId } }
+              : { kind: 'route', routeId: selectedId },
         });
-        if (kind !== 'expression')
-          expect(decider.choices.at(-1)?.options.map((option) => option.id)).toEqual(
-            node.config.answer.options.map((option) => option.id),
+        if (kind === 'classifier')
+          expect(e.ports.jev.choices.at(-1)?.options.map((option) => option.id)).toEqual(
+            (reverse ? [...options].reverse() : options).map((option) => option.id),
+          );
+        if (kind === 'llm')
+          expect(e.ports.codexDecider.routes.at(-1)?.routes.map((route) => route.id)).toEqual(
+            (reverse ? [...options].reverse() : options).map((option) => option.id),
           );
       }
     },
@@ -411,7 +450,7 @@ describe('decision node', () => {
     'applies catalog admission inside the manager (%s)',
     async (problem) => {
       const e = await createTestEngine();
-      let evaluation: DecisionInput['evaluation'] = llm;
+      let evaluation: DecisionSettings = llm;
       if (problem === 'unknown')
         evaluation = { ...llm, model: { mode: 'explicit', value: 'unknown' } };
       if (problem === 'disabled') e.ports.modelCatalog.entries[0]!.enabled = false;
@@ -429,7 +468,7 @@ describe('decision node', () => {
         code: problem === 'effort' ? 'EVALUATION_INVALID_CONFIGURATION' : 'EVALUATION_UNAVAILABLE',
         resumable: problem !== 'effort',
       });
-      expect(e.ports.codexDecider.choices).toEqual([]);
+      expect(e.ports.codexDecider.routes).toEqual([]);
     },
   );
 });
@@ -629,7 +668,7 @@ describe('script node', () => {
   it('routes by exit code, ignores stdout when told, and fails on unmapped codes, timeouts, and missing secrets', async () => {
     const engine = await createTestEngine();
     const loop: LoopDefinitionInput = {
-      schemaVersion: 3,
+      schemaVersion: CURRENT_DEFINITION_FORMAT,
       name: 'codes',
       nodes: [
         { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },
@@ -711,9 +750,9 @@ describe('exit node and return channels', () => {
     'sanitizes %s predicate failures and preserves cancellation',
     async (strategy) => {
       const engine = await createTestEngine();
-      const decider = strategy === 'jev' ? engine.ports.jev : engine.ports.codexDecider;
+
       const marker = 'gg-private-predicate-error-regression';
-      decider[strategy === 'jev' ? 'classifyNoul' : 'noul'] = (): Promise<never> =>
+      const reject = (): Promise<never> =>
         Promise.reject(
           Object.assign(new Error(marker), {
             code: 'DECIDER_HTTP_ERROR',
@@ -721,6 +760,8 @@ describe('exit node and return channels', () => {
             status: 400,
           }),
         );
+      if (strategy === 'jev') engine.ports.jev.classifyNoul = reject;
+      else engine.ports.codexDecider.evaluateBoolean = reject;
       const version = engine.publish(
         singleNodeLoop(
           'exit-error',
@@ -734,22 +775,26 @@ describe('exit node and return channels', () => {
             criteria: [
               {
                 when: 'predicate',
-                answer: {
-                  type: 'noul',
-                  true: { label: 'Ready', criteria: 'Done' },
-                  false: { label: 'Continue', criteria: 'Not done' },
-                },
-                evaluation:
+                predicate:
                   strategy === 'jev'
-                    ? { kind: 'classifier', model: 'jev', question: 'Done?' }
+                    ? {
+                        kind: 'classifier',
+                        model: 'jev',
+                        question: 'Done?',
+                        answer: {
+                          type: 'noul',
+                          true: { label: 'Ready', criteria: 'Done' },
+                          false: { label: 'Continue', criteria: 'Not done' },
+                        },
+                      }
                     : {
                         kind: 'llm',
                         harness: 'codex',
                         model: { mode: 'inherit' },
                         effort: { mode: 'inherit' },
-                        question: 'Done?',
+                        instructions: 'Done?',
                       },
-                match: { type: 'noul', value: true },
+                match: { type: strategy === 'jev' ? 'noul' : 'boolean', value: true },
                 outcome: 'success',
               },
             ],
@@ -779,15 +824,16 @@ describe('exit node and return channels', () => {
           }),
         }),
       );
-      decider[strategy === 'jev' ? 'classifyNoul' : 'noul'] = (): Promise<never> =>
-        Promise.reject(new DOMException('aborted', 'AbortError'));
+      const abort = (): Promise<never> => Promise.reject(new DOMException('aborted', 'AbortError'));
+      if (strategy === 'jev') engine.ports.jev.classifyNoul = abort;
+      else engine.ports.codexDecider.evaluateBoolean = abort;
       expect((await engine.runToIdle(version.loopId)).status).toBe('cancelled');
     },
   );
   it('loops back until exhausted and reports the iteration count', async () => {
     const engine = await createTestEngine();
     const loop: LoopDefinitionInput = {
-      schemaVersion: 3,
+      schemaVersion: CURRENT_DEFINITION_FORMAT,
       name: 'loop',
       settings: { maxIterations: 3 },
       nodes: [
@@ -854,9 +900,8 @@ describe('exit node and return channels', () => {
           criteria: [
             {
               when: 'predicate',
-              answer: { type: 'noul' },
-              evaluation: { kind: 'expression', jsonata: 'vars.answer = 42' },
-              match: { type: 'noul', value: true },
+              predicate: { kind: 'expression', jsonata: 'vars.answer = 42' },
+              match: { type: 'boolean', value: true },
               outcome: 'success',
             },
           ],
@@ -957,19 +1002,14 @@ describe('exit node and return channels', () => {
           criteria: [
             {
               when: 'predicate',
-              answer: {
-                type: 'noul',
-                true: { label: 'Ready', criteria: 'Done' },
-                false: { label: 'Continue', criteria: 'Not done' },
-              },
-              evaluation: {
+              predicate: {
                 kind: 'llm',
                 harness: 'codex',
                 model: { mode: 'inherit' },
                 effort: { mode: 'inherit' },
-                question: 'Done with {{ trigger.payload }}?',
+                instructions: 'Done with {{ trigger.payload }}?',
               },
-              match: { type: 'noul', value: true },
+              match: { type: 'boolean', value: true },
               outcome: 'failure',
             },
           ],
@@ -979,8 +1019,8 @@ describe('exit node and return channels', () => {
     const run = await engine.runToIdle(version.loopId, 'task');
     expect(run.status).toBe('failed');
     expect(run.outcome).toBe('failure');
-    expect(engine.ports.codexDecider.nouls[0]).toMatchObject({
-      question: 'Done with task?',
+    expect(engine.ports.codexDecider.booleans[0]).toMatchObject({
+      instructions: 'Done with task?',
       model: 'gpt-6-luna',
       effort: 'low',
     });

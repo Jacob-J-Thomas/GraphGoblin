@@ -76,7 +76,7 @@ export interface SchemaFormProps {
   controls?: FieldControls | undefined;
   /** Whole-field renderers selected by exact or wildcard dotted paths relative to this form. */
   fieldOverrides?: FieldOverrides | undefined;
-  /** Custom discriminated-union pickers by relative dotted field path. */
+  /** Custom discriminated-union pickers by relative dotted field path; the empty key is the root. */
   unionPickers?: UnionPickers | undefined;
   /**
    * Paths, relative to the form's value, of errors found outside the form (the loop's validation:
@@ -282,6 +282,7 @@ const SchemaFormBindings = memo(function SchemaFormBindings({
   );
   const variantSchema = shape.kind === 'union' ? (shape.options[unionIndex] as Schema) : schema;
   const discriminator = shape.kind === 'union' ? shape.discriminator : undefined;
+  const RootPicker = unionPickers?.[''];
   const layout = useMemo(() => {
     const variant = shapeOf(variantSchema);
     return variant.kind === 'object'
@@ -320,8 +321,24 @@ const SchemaFormBindings = memo(function SchemaFormBindings({
                             onSubmit={(e) => e.preventDefault()}
                             className="grid gap-field"
                           >
-                            {shape.kind === 'union' ? (
-                              <FieldGroup>
+                            {shape.kind === 'union' && RootPicker ? (
+                              <div data-field="kind">
+                                <RootPicker
+                                  name="kind"
+                                  label="Kind"
+                                  required
+                                  options={shape.options.map((option, index) => ({
+                                    value: String(index),
+                                    label: optionLabel(option, shape.discriminator),
+                                  }))}
+                                  value={String(unionIndex)}
+                                  onChange={(value) => switchVariant(Number(value))}
+                                />
+                              </div>
+                            ) : shape.kind === 'union' ? (
+                              <FieldGroup
+                                data-field={shape.discriminator === 'kind' ? 'kind' : undefined}
+                              >
                                 <Label htmlFor={id}>
                                   {humanize(shape.discriminator ?? 'kind')}
                                 </Label>

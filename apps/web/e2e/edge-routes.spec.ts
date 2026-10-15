@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 /**
  * #44 manual edge routes against the built app and an isolated in-memory API on an ephemeral port
  * (global-setup). GG_ROUTING_SCREENSHOTS=1 writes the owner-review images into docs/qa; normal runs
@@ -22,7 +23,7 @@ function crossingLoop(name = 'Manual routes'): LoopDefinitionInput {
     operations: [{ op: 'append-message' as const, role: 'note' as const, content: 'Note' }],
   };
   return {
-    schemaVersion: 3,
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
     name,
     nodes: [
       {

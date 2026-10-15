@@ -1,5 +1,15 @@
-import type { ContextThread, RunEvent, RunStatus } from '@graphgoblin/contracts';
+import type { ContextThread, RunEvent, RunStatus, JsonPatch } from '@graphgoblin/contracts';
 import { applyPatch } from './patch.js';
+
+/** Replay consumes only durable thread operations, independently of evaluation evidence shapes. */
+export type ThreadReplayEvent =
+  | { type: 'node.started'; seq: number; nodeId: string }
+  | { type: 'node.finished'; seq: number; nodeId: string; patch: JsonPatch }
+  | { type: 'iteration.incremented'; seq: number; to: number }
+  | {
+      type: Exclude<RunEvent['type'], 'node.started' | 'node.finished' | 'iteration.incremented'>;
+      seq: number;
+    };
 
 /**
  * Which completions a replay applies. Once the log has shown a `node.started` (every log the
@@ -24,7 +34,7 @@ export interface ReplayState {
  */
 export function replayThread(
   initial: ContextThread,
-  events: readonly RunEvent[],
+  events: readonly ThreadReplayEvent[],
   uptoSeq?: number,
   state: ReplayState = {},
 ): ContextThread {
@@ -58,7 +68,7 @@ export function replayThread(
 }
 
 /** The replay state after the event `seq`, for replaying only the events that follow it. */
-export function replayStateAt(events: readonly RunEvent[], seq: number): ReplayState {
+export function replayStateAt(events: readonly ThreadReplayEvent[], seq: number): ReplayState {
   let openNodeId: string | undefined;
   let strict = false;
   for (const event of events) {

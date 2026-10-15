@@ -607,6 +607,10 @@ describe('adversarial engine invariants', () => {
       kind: 'decision',
       label: 'Choose',
       config: {
+        kind: 'classifier',
+        model: 'jev',
+        question: '?',
+        context: {},
         answer: {
           type: 'choice',
           options: [
@@ -614,7 +618,6 @@ describe('adversarial engine invariants', () => {
             { id: 'other', label: 'other', criteria: 'Other' },
           ],
         },
-        evaluation: { kind: 'classifier', model: 'jev', question: '?', context: {} },
       },
     });
     def.edges.push({ id: 'yes', from: { node: 'choose', port: 'yes' }, to: { node: 'done' } });

@@ -85,10 +85,15 @@ describe('restoring a set-aside copy', () => {
             criteria: [
               {
                 when: 'predicate',
-                answer: { type: 'noul' },
-                evaluation: { kind: 'expression', jsonata: '(' },
-                match: { type: 'noul', value: false },
+                match: {
+                  type: 'boolean',
+                  value: false,
+                },
                 outcome: 'success',
+                predicate: {
+                  kind: 'expression',
+                  jsonata: '(',
+                },
               },
             ],
           },
@@ -114,33 +119,23 @@ describe('restoring a set-aside copy', () => {
     expect((await drafts.loadLocalDraft(loop.id))?.definition).toEqual(definition);
   });
 
-  it('converts an unambiguous v1 device draft before loading it into the editor', async () => {
-    const api = new FakeApi();
-    const loop = api.addLoop(newLoopDefinition('server copy'));
-    const legacy = legacyLoop('legacy device copy', ['expression']);
-    await drafts.saveLocalDraft({
+  it('preserves an unambiguous v1 device draft raw until the integrated format-4 cutover', async () => {
+    const api = new FakeApi(),
+      loop = api.addLoop(newLoopDefinition('server copy'));
+    const original = {
       loopId: loop.id,
-      definition: legacy as LoopDefinitionInput,
+      definition: legacyLoop('legacy device copy', ['expression']) as LoopDefinitionInput,
       savedAt: '9999-01-01T00:00:00.000Z',
       synced: false,
-    });
-
+    };
+    await drafts.saveLocalDraft(original);
     renderApp(`/loops/${loop.id}/edit`, api);
-    expect(await screen.findByRole('heading', { name: 'legacy device copy' })).toBeInTheDocument();
-    await waitFor(async () => {
-      const saved = await drafts.loadLocalDraft(loop.id);
-      expect(saved?.definition.schemaVersion).toBe(3);
-      expect(saved?.definition.settings?.defaults).toEqual({
-        byHarness: { codex: { model: 'gpt-6-luna', effort: 'low' } },
-      });
-      const decision = saved?.definition.nodes.find((node) => node.kind === 'decision');
-      expect(
-        decision?.kind === 'decision' && decision.config.answer.type === 'choice'
-          ? decision.config.answer.options.map((option) => option.id)
-          : [],
-      ).toEqual(['yes', 'no']);
-    });
-    expect(await drafts.loadSetAsideDraft(loop.id)).toBeUndefined();
+    expect(await screen.findByRole('heading', { name: 'server copy' })).toBeInTheDocument();
+    expect(
+      await screen.findByText('This device copy could not be migrated safely'),
+    ).toBeInTheDocument();
+    await waitFor(async () => expect(await drafts.loadArchivedDrafts(loop.id)).toEqual([original]));
+    expect(await drafts.loadLocalDraft(loop.id)).toBeUndefined();
   });
 
   it('keeps an ambiguous v1 device draft raw and prevents it from replacing the server copy', async () => {

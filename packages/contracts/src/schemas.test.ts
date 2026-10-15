@@ -143,7 +143,7 @@ describe('loop definition', () => {
   it('round-trips through the export format', () => {
     const exported = LoopExportSchema.parse({
       format: 'graphgoblin-loop',
-      formatVersion: 3,
+      formatVersion: 4,
       exportedAt: FIXTURE_TS,
       loop: minimalLoop(),
     });
@@ -164,10 +164,10 @@ describe('node config schemas', () => {
         { id: 'b', label: 'B', criteria: 'B criterion' },
       ],
     };
-    const valid = { answer, evaluation: { kind: 'classifier', model: 'jev', question: 'Q' } };
+    const valid = { answer, kind: 'classifier', model: 'jev', question: 'Q' };
     const parsed = DecisionConfigSchema.parse(valid);
-    if (parsed.evaluation.kind !== 'classifier') throw new Error('Expected classifier');
-    expect(parsed.evaluation.context.messages).toBe('last');
+    if (parsed.kind !== 'classifier') throw new Error('Expected classifier');
+    expect(parsed.context.messages).toBe('last');
     expect(parsed.recordAlternatives).toBe(true);
     expect(DecisionConfigSchema.safeParse({ ...valid, strategy: ['jev'] }).success).toBe(false);
     expect(
@@ -257,12 +257,16 @@ describe('node config schemas', () => {
       criteria: [
         {
           when: 'predicate',
-          answer: {
-            type: 'noul',
-            true: { label: 'Done', criteria: 'Complete' },
-            false: { label: 'Pending', criteria: 'Incomplete' },
+          predicate: {
+            kind: 'classifier',
+            model: 'jev',
+            question: 'Done?',
+            answer: {
+              type: 'noul',
+              true: { label: 'Done', criteria: 'Complete' },
+              false: { label: 'Pending', criteria: 'Incomplete' },
+            },
           },
-          evaluation: { kind: 'classifier', model: 'jev', question: 'Done?' },
           match: { type: 'noul', value: true },
           outcome: 'success',
         },
@@ -399,11 +403,14 @@ describe('thread, run, and events', () => {
         ...base,
         type: 'decision.made',
         nodeId: 'd',
-        answer: {
-          type: 'choice',
-          optionId: 'good',
-          confidence: 0.9,
-          probabilities: { good: 0.9, bad: 0.1 },
+        observation: {
+          kind: 'classifier',
+          answer: {
+            type: 'choice',
+            optionId: 'good',
+            confidence: 0.9,
+            probabilities: { good: 0.9, bad: 0.1 },
+          },
         },
         portId: 'good',
         provenance: {

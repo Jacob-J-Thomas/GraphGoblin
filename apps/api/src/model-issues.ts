@@ -92,26 +92,26 @@ export async function modelIssues(
   for (const node of definition.nodes) {
     if (node.kind === 'inference')
       await check(node.config.harness, node.config.model, node.config.effort, node.id, 'config');
-    if (node.kind === 'decision' && node.config.evaluation.kind === 'llm') {
-      const evaluation = node.config.evaluation;
+    if (node.kind === 'decision' && node.config.kind === 'llm') {
+      const evaluation = node.config;
       await check(
         evaluation.harness,
         evaluation.model.mode === 'explicit' ? evaluation.model.value : undefined,
         evaluation.effort.mode === 'explicit' ? evaluation.effort.value : undefined,
         node.id,
-        'config.evaluation',
+        'config',
       );
     }
     if (node.kind === 'exit') {
       for (const [index, criterion] of node.config.criteria.entries()) {
-        if (criterion.when !== 'predicate' || criterion.evaluation.kind !== 'llm') continue;
-        const evaluation = criterion.evaluation;
+        if (criterion.when !== 'predicate' || criterion.predicate.kind !== 'llm') continue;
+        const evaluation = criterion.predicate;
         await check(
           evaluation.harness,
           evaluation.model.mode === 'explicit' ? evaluation.model.value : undefined,
           evaluation.effort.mode === 'explicit' ? evaluation.effort.value : undefined,
           node.id,
-          'config.criteria.' + index + '.evaluation',
+          'config.criteria.' + index + '.predicate',
         );
       }
     }
@@ -158,13 +158,13 @@ export function rejectsDraftAdmission(definition: LoopDefinition, issue: LoopIss
   const node = definition.nodes.find((candidate) => candidate.id === issue.nodeId);
   if (!node || !field) return true;
   if (node.kind === 'inference') return node.config[field] !== undefined;
-  if (node.kind === 'decision' && node.config.evaluation.kind === 'llm')
-    return node.config.evaluation[field].mode === 'explicit';
+  if (node.kind === 'decision' && node.config.kind === 'llm')
+    return node.config[field].mode === 'explicit';
   if (node.kind === 'exit') {
-    const index = /^config\.criteria\.(\d+)\.evaluation\./.exec(issue.path ?? '')?.[1];
+    const index = /^config\.criteria\.(\d+)\.predicate\./.exec(issue.path ?? '')?.[1];
     const criterion = index === undefined ? undefined : node.config.criteria[Number(index)];
-    if (criterion?.when === 'predicate' && criterion.evaluation.kind === 'llm')
-      return criterion.evaluation[field].mode === 'explicit';
+    if (criterion?.when === 'predicate' && criterion.predicate.kind === 'llm')
+      return criterion.predicate[field].mode === 'explicit';
   }
   return true;
 }

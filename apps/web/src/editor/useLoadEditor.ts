@@ -43,7 +43,18 @@ function readDeviceDraft(draft: LocalDraft | undefined): DeviceDraftRead {
     return { draft: current };
   const result = upgradeLoopCurrent(definition);
   if (!result.ok) return { unconvertible: { ...draft, migrationIssues: result.issues } };
-  return { draft: { ...current, definition: result.value } };
+  return {
+    unconvertible: {
+      ...draft,
+      migrationIssues: [
+        {
+          code: 'LOOP_FORMAT_UPGRADE_REQUIRED',
+          path: '/schemaVersion',
+          message: 'Format-3 to format-4 conversion requires the integrated data cutover.',
+        },
+      ],
+    },
+  };
 }
 
 /**

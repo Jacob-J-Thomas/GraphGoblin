@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { LoopDefinitionSchema } from '@graphgoblin/contracts';
@@ -6,7 +7,7 @@ import { EvaluationDetails } from './EvaluationDetails.js';
 
 function noulDefinition(truthThreshold?: number) {
   return LoopDefinitionSchema.parse({
-    schemaVersion: 3,
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
     name: 'Noul threshold fixture',
     nodes: [
       {
@@ -14,16 +15,14 @@ function noulDefinition(truthThreshold?: number) {
         kind: 'decision',
         label: 'Check',
         config: {
+          kind: 'classifier',
+          model: 'jev',
+          question: 'Check the evidence.',
+          ...(truthThreshold === undefined ? {} : { truthThreshold }),
           answer: {
             type: 'noul',
             true: { id: 'true', label: 'True', criteria: 'The check passes' },
             false: { id: 'false', label: 'False', criteria: 'The check fails' },
-          },
-          evaluation: {
-            kind: 'classifier',
-            model: 'jev',
-            question: 'Check the evidence.',
-            ...(truthThreshold === undefined ? {} : { truthThreshold }),
           },
         },
       },
@@ -45,7 +44,6 @@ describe('EvaluationDetails', () => {
               index: 0,
               strategy: 'expression',
               status: 'not-matched',
-              answer: { type: 'noul', kind: 'expression', holds: true, confidence: null },
               provenance: {
                 kind: 'expression',
                 provider: null,
@@ -54,19 +52,21 @@ describe('EvaluationDetails', () => {
                 effort: null,
               },
               acceptance: { status: 'accepted' },
-              match: { type: 'noul', value: false },
+              match: {
+                type: 'boolean',
+                value: false,
+              },
+              observation: {
+                kind: 'boolean',
+                holds: true,
+                confidence: null,
+                reasoning: null,
+              },
             },
             {
               index: 1,
               strategy: 'classifier',
               status: 'not-matched',
-              answer: {
-                type: 'noul',
-                kind: 'classifier',
-                holds: false,
-                trueProbability: 0.3,
-                confidence: 0.42,
-              },
               provenance: {
                 kind: 'classifier',
                 provider: 'typesafe',
@@ -82,18 +82,20 @@ describe('EvaluationDetails', () => {
               match: { type: 'noul', value: false },
               configuredMinConfidence: 0.8,
               rejection: { kind: 'classifier-confidence', minimum: 0.8, confidence: 0.42 },
+              observation: {
+                kind: 'classifier',
+                answer: {
+                  type: 'noul',
+                  holds: false,
+                  trueProbability: 0.3,
+                  confidence: 0.42,
+                },
+              },
             },
             {
               index: 2,
               strategy: 'llm',
               status: 'not-matched',
-              answer: {
-                type: 'noul',
-                kind: 'llm',
-                holds: false,
-                confidence: 0.61,
-                reasoning: 'The evidence was not sufficient.',
-              },
               provenance: {
                 kind: 'llm',
                 provider: 'codex',
@@ -102,8 +104,18 @@ describe('EvaluationDetails', () => {
                 effort: 'low',
               },
               acceptance: { status: 'accepted' },
-              match: { type: 'noul', value: false, minReportedConfidence: 0.8 },
+              match: {
+                type: 'boolean',
+                value: false,
+                minReportedConfidence: 0.8,
+              },
               rejection: { kind: 'llm-reported-confidence', minimum: 0.8, confidence: 0.61 },
+              observation: {
+                kind: 'boolean',
+                holds: false,
+                confidence: 0.61,
+                reasoning: 'The evidence was not sufficient.',
+              },
             },
             {
               index: 3,
@@ -132,8 +144,10 @@ describe('EvaluationDetails', () => {
     expect(screen.getByRole('list', { name: 'Exit criteria' })).toHaveTextContent(
       'Criterion 1 (Expression): did not match',
     );
-    expect(screen.getByRole('list', { name: 'Exit criteria' })).toHaveTextContent('Noul true');
-    expect(screen.getByRole('list', { name: 'Exit criteria' })).toHaveTextContent('Noul is false');
+    expect(screen.getByRole('list', { name: 'Exit criteria' })).toHaveTextContent('Boolean true');
+    expect(screen.getByRole('list', { name: 'Exit criteria' })).toHaveTextContent(
+      'Boolean is false',
+    );
     expect(screen.getByRole('list', { name: 'Exit criteria' })).toHaveTextContent(
       'Rejected below configured classifier minimum 0.8',
     );
@@ -145,7 +159,7 @@ describe('EvaluationDetails', () => {
     );
     expect(screen.getByText('Raw answer acceptance').parentElement).toHaveTextContent('Accepted');
     expect(screen.getByRole('list', { name: 'Exit criteria' })).toHaveTextContent(
-      'Reasoning excerpt: The evidence was not sufficient.',
+      'The evidence was not sufficient.',
     );
     expect(screen.getByRole('list', { name: 'Exit criteria' })).toHaveTextContent(
       'Criterion 4 (Classifier): error: Decision provider request timed out',
@@ -220,13 +234,6 @@ describe('EvaluationDetails', () => {
               index: 0,
               strategy: 'classifier',
               status: 'not-matched',
-              answer: {
-                type: 'score',
-                score: 1.25,
-                confidence: null,
-                legend: { '0': 'Low', '1': 'Medium', '2': 'High' },
-                probabilities: { '1': 0.7 },
-              },
               provenance: {
                 kind: 'classifier',
                 provider: 'typesafe',
@@ -236,6 +243,16 @@ describe('EvaluationDetails', () => {
               },
               acceptance: null,
               match: { type: 'score', operator: 'eq', value: 1.25 },
+              observation: {
+                kind: 'classifier',
+                answer: {
+                  type: 'score',
+                  score: 1.25,
+                  confidence: null,
+                  legend: { '0': 'Low', '1': 'Medium', '2': 'High' },
+                  probabilities: { '1': 0.7 },
+                },
+              },
             },
             { index: 1, strategy: 'max-iterations', status: 'not-matched', holds: null },
           ],
@@ -267,7 +284,6 @@ describe('EvaluationDetails', () => {
       <EvaluationDetails
         event={event('run', 1, 'decision.made', {
           nodeId: 'pick',
-          answer: { type: 'choice', optionId: 'yes', confidence: 0.7, probabilities: null },
           portId: 'yes',
           provenance: {
             kind: 'llm',
@@ -277,12 +293,20 @@ describe('EvaluationDetails', () => {
             effort: null,
           },
           diagnostics: [],
+          observation: {
+            kind: 'route',
+            routeId: 'yes',
+            confidence: 0.7,
+            reasoning: 'Chose the declared route.',
+          },
         })}
       />,
     );
     expect(screen.getByText('Self-reported confidence')).toBeInTheDocument();
     expect(
-      screen.getByText(/reported by the evaluator; not a calibrated classifier score/),
+      screen.getByText(
+        /reported by the evaluator; informational only, not a calibrated classifier score/,
+      ),
     ).toBeInTheDocument();
     expect(screen.getAllByText('Not recorded')).toHaveLength(2);
     expect(screen.getByText('0.7')).toBeInTheDocument();
@@ -291,13 +315,6 @@ describe('EvaluationDetails', () => {
   it('shows typed Noul and fractional Score evidence with stable ports and rubric anchors', () => {
     const noul = event('run', 1, 'decision.made', {
       nodeId: 'check',
-      answer: {
-        type: 'noul',
-        kind: 'llm',
-        holds: false,
-        confidence: 0.74,
-        reasoning: 'The evidence does not satisfy the criterion.',
-      },
       portId: 'false',
       provenance: {
         kind: 'llm',
@@ -307,10 +324,16 @@ describe('EvaluationDetails', () => {
         effort: 'low',
       },
       diagnostics: [],
+      observation: {
+        kind: 'route',
+        routeId: 'false',
+        confidence: 0.74,
+        reasoning: 'The evidence does not satisfy the criterion.',
+      },
     });
     const { rerender } = render(<EvaluationDetails event={noul} />);
-    expect(screen.getByText('Answer').parentElement).toHaveTextContent('false');
-    expect(screen.getByText('Side port').parentElement).toHaveTextContent('false');
+    expect(screen.getByText('Route ID').parentElement).toHaveTextContent('false');
+    expect(screen.getByText('Selected port').parentElement).toHaveTextContent('false');
     expect(screen.getByText('Reasoning excerpt').parentElement).toHaveTextContent(
       'The evidence does not satisfy the criterion.',
     );
@@ -319,13 +342,6 @@ describe('EvaluationDetails', () => {
       <EvaluationDetails
         event={event('run', 2, 'decision.made', {
           nodeId: 'grade',
-          answer: {
-            type: 'score',
-            score: 1.25,
-            confidence: 0.92,
-            legend: { '2': 'Fully meets', '0': 'Does not meet', '1': 'Partly meets' },
-            probabilities: { '1': 0.92 },
-          },
           portId: 'middle',
           provenance: {
             kind: 'classifier',
@@ -335,6 +351,16 @@ describe('EvaluationDetails', () => {
             effort: null,
           },
           diagnostics: [],
+          observation: {
+            kind: 'classifier',
+            answer: {
+              type: 'score',
+              score: 1.25,
+              confidence: 0.92,
+              legend: { '2': 'Fully meets', '0': 'Does not meet', '1': 'Partly meets' },
+              probabilities: { '1': 0.92 },
+            },
+          },
         })}
       />,
     );
@@ -361,7 +387,6 @@ describe('EvaluationDetails', () => {
           index: 0,
           strategy: 'llm',
           status: 'not-matched',
-          answer: { type: 'noul', kind: 'llm', holds: null, confidence: null, reasoning: null },
           provenance: {
             kind: 'llm',
             provider: 'codex',
@@ -370,8 +395,18 @@ describe('EvaluationDetails', () => {
             effort: null,
           },
           acceptance: null,
-          match: { type: 'noul', value: true, minReportedConfidence: 0.8 },
+          match: {
+            type: 'boolean',
+            value: true,
+            minReportedConfidence: 0.8,
+          },
           rejection: { kind: 'llm-reported-confidence', minimum: 0.8, confidence: null },
+          observation: {
+            kind: 'boolean',
+            holds: null,
+            confidence: null,
+            reasoning: null,
+          },
         },
       ],
       result: {
@@ -383,25 +418,18 @@ describe('EvaluationDetails', () => {
     });
     const { rerender } = render(<EvaluationDetails event={historicalExit} />);
     const criteria = screen.getByRole('list', { name: 'Exit criteria' });
-    expect(criteria).toHaveTextContent('Noul unknown (not recorded)');
+    expect(criteria).toHaveTextContent('Boolean unknown (not recorded)');
     expect(within(criteria).getByText('Unknown (not recorded)')).toBeInTheDocument();
-    expect(within(criteria).getByText('Not recorded')).toBeInTheDocument();
-    expect(criteria).toHaveTextContent('Reasoning excerpt: Not recorded');
+    expect(within(criteria).getAllByText('Not recorded')).toHaveLength(4);
+    expect(criteria).toHaveTextContent('Reasoning excerptNot recorded');
     expect(criteria).toHaveTextContent(
-      'Self-reported LLM confidence gate rejected; confidence was not reported; required minimum 0.8; treated as a nonmatch.',
+      'Self-reported LLM confidence gate rejected confidence was not reported; required minimum 0.8; treated as a nonmatch.',
     );
 
     rerender(
       <EvaluationDetails
         event={event('run', 2, 'decision.made', {
           nodeId: 'check',
-          answer: {
-            type: 'noul',
-            kind: 'classifier',
-            holds: null,
-            trueProbability: null,
-            confidence: null,
-          },
           portId: 'true',
           provenance: {
             kind: 'classifier',
@@ -411,10 +439,19 @@ describe('EvaluationDetails', () => {
             effort: null,
           },
           diagnostics: [],
+          observation: {
+            kind: 'classifier',
+            answer: {
+              type: 'noul',
+              holds: null,
+              trueProbability: null,
+              confidence: null,
+            },
+          },
         })}
       />,
     );
-    expect(screen.getByText('Answer').parentElement).toHaveTextContent('Unknown (not recorded)');
+    expect(screen.getByText('Answer').parentElement).toHaveTextContent('unknown (not recorded)');
     expect(screen.getByText('True probability').parentElement).toHaveTextContent('Not recorded');
     expect(screen.getByText('Confidence').parentElement).toHaveTextContent('Not recorded');
   });
@@ -429,13 +466,6 @@ describe('EvaluationDetails', () => {
             nodeId: 'check',
             resumable: false,
             details: {
-              answer: {
-                type: 'noul',
-                kind: 'classifier',
-                holds: false,
-                trueProbability: 0.3,
-                confidence: 0.42,
-              },
               provenance: {
                 kind: 'classifier',
                 provider: 'typesafe',
@@ -447,6 +477,15 @@ describe('EvaluationDetails', () => {
                 status: 'rejected',
                 code: 'EVALUATION_RESULT_REJECTED',
                 minConfidence: 0.8,
+              },
+              observation: {
+                kind: 'classifier',
+                answer: {
+                  type: 'noul',
+                  holds: false,
+                  trueProbability: 0.3,
+                  confidence: 0.42,
+                },
               },
             },
           },
@@ -472,13 +511,6 @@ describe('EvaluationDetails', () => {
       <EvaluationDetails
         event={event('run', 4, 'decision.made', {
           nodeId: 'check',
-          answer: {
-            type: 'noul',
-            kind: 'classifier',
-            holds: true,
-            trueProbability: 0.73,
-            confidence: 0.91,
-          },
           portId: 'true',
           provenance: {
             kind: 'classifier',
@@ -488,6 +520,15 @@ describe('EvaluationDetails', () => {
             effort: null,
           },
           diagnostics: [],
+          observation: {
+            kind: 'classifier',
+            answer: {
+              type: 'noul',
+              holds: true,
+              trueProbability: 0.73,
+              confidence: 0.91,
+            },
+          },
         })}
         definition={noulDefinition()}
       />,
@@ -505,13 +546,6 @@ describe('EvaluationDetails', () => {
             nodeId: 'grade',
             resumable: false,
             details: {
-              answer: {
-                type: 'score',
-                score: 1.25,
-                confidence: 0.3,
-                legend: { '0': 'Low', '1': 'Moderate', '2': 'High' },
-                probabilities: null,
-              },
               provenance: {
                 kind: 'classifier',
                 provider: 'typesafe',
@@ -523,6 +557,16 @@ describe('EvaluationDetails', () => {
                 status: 'rejected',
                 code: 'EVALUATION_RESULT_REJECTED',
                 minConfidence: 0.8,
+              },
+              observation: {
+                kind: 'classifier',
+                answer: {
+                  type: 'score',
+                  score: 1.25,
+                  confidence: 0.3,
+                  legend: { '0': 'Low', '1': 'Moderate', '2': 'High' },
+                  probabilities: null,
+                },
               },
             },
           },

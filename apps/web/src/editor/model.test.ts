@@ -134,12 +134,18 @@ describe('editor model', () => {
       kind: 'decision',
       label: 'Check',
       config: {
-        answer: {
-          type: 'noul',
-          true: { id: 'holds', label: 'Holds', criteria: 'It holds' },
-          false: { id: 'fails', label: 'Fails', criteria: 'It does not hold' },
-        },
-        evaluation: { kind: 'expression', jsonata: 'true' },
+        kind: 'expression',
+        routes: [
+          {
+            id: 'holds',
+            label: 'Holds',
+          },
+          {
+            id: 'fails',
+            label: 'Fails',
+          },
+        ],
+        jsonata: '(true) ? "holds" : "fails"',
       },
     };
     const score: NodeInput = {
@@ -147,6 +153,9 @@ describe('editor model', () => {
       kind: 'decision',
       label: 'Grade',
       config: {
+        kind: 'classifier',
+        model: 'jev',
+        question: 'Score it',
         answer: {
           type: 'score',
           anchors: ['Low', 'Middle', 'High'],
@@ -155,7 +164,6 @@ describe('editor model', () => {
             { id: 'high', label: 'High', min: 0.5, max: 2 },
           ],
         },
-        evaluation: { kind: 'classifier', model: 'jev', question: 'Score it' },
       },
     };
     expect(portsOf(noul)).toEqual(['holds', 'fails']);
@@ -179,15 +187,16 @@ describe('editor model', () => {
       kind: 'decision',
       label: 'd',
       config: {
-        answer: { type: 'choice', options: [] },
-        evaluation: { kind: 'expression', jsonata: '"a"' },
+        kind: 'expression',
+        jsonata: '"a"',
+        routes: [],
       },
     });
     schema.edges.push({ id: 'bad id!', from: { node: 'start', port: 'out' }, to: { node: 'd' } });
     schema.name = '';
     const invalid = validateDraft(schema);
     expect(invalid.schemaValid).toBe(false);
-    expect(invalid.issues.find((i) => i.nodeId === 'd')?.path).toBe('config.answer.options');
+    expect(invalid.issues.find((i) => i.nodeId === 'd')?.path).toBe('config.routes');
     expect(invalid.issues.find((i) => i.edgeId === 'bad id!')?.path).toBe('id');
     expect(invalid.issues.find((i) => i.path === 'name')).toBeDefined();
   });

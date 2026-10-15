@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 /**
  * Contract tests: the client against the real API, booted in-process over an in-memory database
  * with fake harnesses, listening on an ephemeral port.
@@ -27,7 +28,7 @@ import {
 } from './index.js';
 
 const waitLoop: ContractLoopDefinition = {
-  schemaVersion: 3,
+  schemaVersion: CURRENT_DEFINITION_FORMAT,
   name: 'wait-for-input',
   nodes: [
     { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },

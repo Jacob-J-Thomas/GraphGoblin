@@ -10,7 +10,7 @@ import { FakeApi } from '../__fixtures__/fake-api.js';
 import { getCode, setCode } from '../__fixtures__/codemirror.js';
 import { renderApp } from '../__fixtures__/render.js';
 import { LOOP_PANEL_STORAGE_KEY } from './LoopPanel.js';
-import { newLoopDefinition, validateDraft } from './model.js';
+import { defaultConfig, newLoopDefinition, validateDraft } from './model.js';
 import { useEditorStore } from './store.js';
 
 const UNDO = '{Control>}z{/Control}';
@@ -53,501 +53,243 @@ async function openDialog(
 const advanced = (dialog: HTMLElement) =>
   within(dialog).getByRole('button', { name: /^Advanced\b/ });
 
-describe('NodeEditorDialog answer help', () => {
-  const nodes: NodeInput[] = [
-    {
-      id: 'pick',
-      kind: 'decision',
-      label: 'Pick',
-      config: {
-        answer: {
-          type: 'choice',
-          options: [
-            { id: 'yes', label: 'Yes', criteria: 'Matches' },
-            { id: 'no', label: 'No', criteria: 'Does not match' },
-          ],
-        },
-        evaluation: { kind: 'expression', jsonata: '"yes"' },
-      },
-    },
-    {
-      id: 'finish',
-      kind: 'exit',
-      label: 'Finish',
-      config: {
-        criteria: [
-          {
-            when: 'predicate',
-            answer: { type: 'noul' },
-            evaluation: { kind: 'expression', jsonata: 'true' },
-            match: { type: 'noul', value: true },
-            outcome: 'success',
-          },
-        ],
-      },
-    },
-  ];
-
-  it.each(nodes)(
-    'keeps $kind answer descriptions in help without editing the node',
-    async (node) => {
+describe('NodeEditorDialog evaluator-specific decisions', () => {
+  it.each(['expression', 'llm', 'classifier'] as const)(
+    'authors and saves a new %s decision from the default editor fields',
+    async (kind) => {
       const user = userEvent.setup();
-      const dialog = await openDialog(node, `Edit ${node.kind} ${node.id}`);
-      const group = within(dialog).getByRole('radiogroup', { name: 'Answer type' });
-      const before = store().definition;
-      const history = store().past.length;
-      for (const label of ['Choice', 'Noul', 'Score']) {
-        const radio = within(group).getByRole('radio', { name: label });
-        const description = document.getElementById(radio.getAttribute('aria-describedby')!);
-        expect(description).toHaveClass('sr-only');
-        expect(radio).toHaveAccessibleDescription(description?.textContent ?? '');
-        const help = within(group).getByRole('button', { name: `${label} help` });
-        await user.click(help);
-        const popup = screen.getByRole('dialog', { name: 'Option help' });
-        expect(popup).toHaveTextContent(description?.textContent ?? '');
-        await user.keyboard('{Escape}');
-        expect(screen.queryByRole('dialog', { name: 'Option help' })).not.toBeInTheDocument();
-        expect(dialog).toBeVisible();
-        expect(help).toHaveFocus();
-        expect(radio).toHaveAccessibleDescription(description?.textContent ?? '');
-      }
-      const selected = within(group)
-        .getAllByRole('radio')
-        .find((radio) => (radio as HTMLInputElement).checked)!;
-      act(() => selected.focus());
-      expect(screen.getByRole('dialog', { name: 'Option help' })).toBeVisible();
-      await user.keyboard('{Escape}');
-      expect(selected).toHaveFocus();
-      expect(screen.queryByRole('dialog', { name: 'Option help' })).not.toBeInTheDocument();
-      expect(store().definition).toBe(before);
-      expect(store().past).toHaveLength(history);
-    },
-  );
-
-  it('focuses Add criteria after undoing an added criterion without opening surviving help', async () => {
-    const user = userEvent.setup();
-    const dialog = await openDialog(nodes[1]!, 'Edit exit finish');
-    await user.click(within(dialog).getByRole('button', { name: 'Add criteria' }));
-    const added = within(dialog).getAllByRole('combobox', { name: 'When' })[1]!;
-    await waitFor(() => expect(added).toHaveFocus());
-    await user.keyboard(UNDO);
-    expect(within(dialog).getAllByRole('combobox', { name: 'When' })).toHaveLength(1);
-    expect(within(dialog).getByRole('button', { name: 'Add criteria' })).toHaveFocus();
-    expect(screen.queryByRole('dialog', { name: 'Option help' })).not.toBeInTheDocument();
-  });
-});
-
-describe('NodeEditorDialog decision field order', () => {
-  it('shows answer type before evaluation and preserves issue focus paths', async () => {
-    const user = userEvent.setup();
-    const dialog = await openDialog(
-      {
-        id: 'pick',
-        kind: 'decision',
-        label: 'Pick',
-        config: {
-          answer: {
-            type: 'choice',
-            options: [
-              { id: 'ready', label: 'Ready', criteria: 'Choose ready' },
-              { id: 'blocked', label: 'Blocked', criteria: 'Choose blocked' },
-            ],
-          },
-          evaluation: {
-            kind: 'llm',
-            harness: 'codex',
-            model: { mode: 'inherit' },
-            effort: { mode: 'inherit' },
-            question: 'Choose one',
-            context: {},
-          },
-          recordAlternatives: true,
-        },
-      },
-      'Edit decision pick',
-    );
-    const form = within(dialog).getByRole('form', { name: 'pick config' });
-    const evaluation = form.querySelector<HTMLElement>('[data-field="evaluation"]');
-    const answer = form.querySelector<HTMLElement>('[data-field="answer"]');
-    if (!evaluation || !answer) throw new Error('Decision fields were not rendered.');
-    expect(answer.compareDocumentPosition(evaluation) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(
-      0,
-    );
-    expect(within(evaluation).getByRole('radiogroup', { name: 'Evaluation method' })).toBeVisible();
-
-    const expression = within(evaluation).getByRole('radio', { name: 'Expression' });
-    expression.focus();
-    await user.keyboard(' ');
-    await waitFor(() => expect(expression).toBeChecked());
-
-    act(() => store().openNode('pick', { field: 'config.evaluation.jsonata' }));
-    await waitFor(() => expect(within(dialog).getByLabelText('Jsonata')).toHaveFocus());
-
-    const node = store().definition?.nodes.find((candidate) => candidate.id === 'pick');
-    if (node?.kind !== 'decision') throw new Error('Decision node is missing from the editor.');
-    const config = DecisionConfigSchema.parse(node.config);
-    expect(config.evaluation.kind).toBe('expression');
-    if (config.answer.type !== 'choice')
-      throw new Error('Expected the Choice answer to remain selected.');
-    expect(config.answer.options).toEqual([
-      { id: 'ready', label: 'Ready', criteria: 'Choose ready' },
-      { id: 'blocked', label: 'Blocked', criteria: 'Choose blocked' },
-    ]);
-  });
-
-  it('switches answer primitives with useful defaults and a classifier-only Score method', async () => {
-    const user = userEvent.setup();
-    const dialog = await openDialog(
-      {
-        id: 'pick',
-        kind: 'decision',
-        label: 'Pick',
-        config: {
-          answer: {
-            type: 'choice',
-            options: [
-              { id: 'yes', label: 'Yes', criteria: 'The answer is yes' },
-              { id: 'no', label: 'No', criteria: 'The answer is no' },
-            ],
-          },
-          evaluation: { kind: 'expression', jsonata: '"yes"' },
-        },
-      },
-      'Edit decision pick',
-    );
-    const answerPicker = within(dialog).getByRole('radiogroup', { name: 'Answer type' });
-    expect(
-      within(dialog).queryByLabelText('Noul true-probability threshold'),
-    ).not.toBeInTheDocument();
-    await user.click(within(answerPicker).getByRole('radio', { name: 'Noul' }));
-    expect(within(dialog).getByRole('radio', { name: 'Noul' })).toHaveFocus();
-    expect(
-      within(dialog).queryByLabelText('Noul true-probability threshold'),
-    ).not.toBeInTheDocument();
-    await waitFor(() => {
-      const node = store().definition?.nodes.find((candidate) => candidate.id === 'pick');
-      if (node?.kind !== 'decision') throw new Error('Decision node is missing.');
-      const config = DecisionConfigSchema.parse(node.config);
-      expect(config.answer).toEqual({
-        type: 'noul',
-        true: { id: 'true', label: 'True', criteria: 'The statement is true' },
-        false: { id: 'false', label: 'False', criteria: 'The statement is false' },
-      });
-      expect(config.evaluation).toEqual({ kind: 'expression', jsonata: 'true' });
-    });
-    expect(within(dialog).getByRole('radio', { name: 'Noul' })).toBeChecked();
-    expect(within(dialog).getByRole('radiogroup', { name: 'Evaluation method' })).toHaveTextContent(
-      'must return a boolean true or false',
-    );
-
-    await user.click(within(dialog).getByRole('radio', { name: 'Score' }));
-    expect(within(dialog).getByRole('radio', { name: 'Score' })).toHaveFocus();
-    expect(
-      within(dialog).queryByLabelText('Noul true-probability threshold'),
-    ).not.toBeInTheDocument();
-    await waitFor(() => {
-      const node = store().definition?.nodes.find((candidate) => candidate.id === 'pick');
-      if (node?.kind !== 'decision') throw new Error('Decision node is missing.');
-      const config = DecisionConfigSchema.parse(node.config);
-      expect(config.answer).toEqual({
-        type: 'score',
-        anchors: ['Does not meet the rubric', 'Partly meets the rubric', 'Fully meets the rubric'],
-        bands: [
-          { id: 'low', label: 'Low', min: 0, max: 0.5 },
-          { id: 'mid', label: 'Middle', min: 0.5, max: 1.5 },
-          { id: 'high', label: 'High', min: 1.5, max: 2 },
-        ],
-      });
-      expect(config.evaluation.kind).toBe('classifier');
-    });
-    const methodPicker = within(dialog).getByRole('radiogroup', { name: 'Evaluation method' });
-    expect(within(methodPicker).getByRole('radio', { name: 'Classifier' })).toBeChecked();
-    expect(
-      within(methodPicker).queryByRole('radio', { name: 'Expression' }),
-    ).not.toBeInTheDocument();
-    expect(within(dialog).getByRole('radio', { name: 'Score' })).toHaveAccessibleDescription(
-      /scores can fall between anchors.*stops just before.*never rounded/i,
-    );
-    expect(store().past).toHaveLength(2);
-    act(() => store().undo());
-    await waitFor(() => expect(within(dialog).getByRole('radio', { name: 'Noul' })).toBeChecked());
-  });
-
-  it('shows the Noul threshold only for classifier Noul evaluation', async () => {
-    const user = userEvent.setup();
-    const dialog = await openDialog(
-      {
-        id: 'pick',
-        kind: 'decision',
-        label: 'Pick',
-        config: {
-          answer: {
-            type: 'noul',
-            true: { id: 'true', label: 'True', criteria: 'The statement is true' },
-            false: { id: 'false', label: 'False', criteria: 'The statement is false' },
-          },
-          evaluation: {
-            kind: 'classifier',
-            model: 'jev',
-            question: 'Check the statement.',
-            context: { messages: 'last', includeLastOutput: true },
-          },
-        },
-      },
-      'Edit decision pick',
-    );
-    expect(
-      await within(dialog).findByLabelText('Noul true-probability threshold'),
-    ).toBeInTheDocument();
-
-    await user.click(within(dialog).getByRole('radio', { name: 'Choice' }));
-    expect(within(dialog).getByRole('radio', { name: 'Choice' })).toHaveFocus();
-    await waitFor(() => {
-      expect(
-        within(dialog).queryByLabelText('Noul true-probability threshold'),
-      ).not.toBeInTheDocument();
-    });
-  });
-
-  it('keeps keyboard focus on the selected answer after the choice variant remounts', async () => {
-    const user = userEvent.setup();
-    const dialog = await openDialog(
-      {
-        id: 'pick',
-        kind: 'decision',
-        label: 'Pick',
-        config: {
-          answer: {
-            type: 'choice',
-            options: [
-              { id: 'yes', label: 'Yes', criteria: 'The answer is yes' },
-              { id: 'no', label: 'No', criteria: 'The answer is no' },
-            ],
-          },
-          evaluation: { kind: 'expression', jsonata: '"yes"' },
-        },
-      },
-      'Edit decision pick',
-    );
-    const choice = within(dialog).getByRole('radio', { name: 'Choice' });
-    choice.focus();
-    await user.keyboard('{ArrowRight}');
-
-    await waitFor(() => {
-      const noul = within(dialog).getByRole('radio', { name: 'Noul' });
-      expect(noul).toBeChecked();
-      expect(noul).toHaveFocus();
-    });
-  });
-
-  it('keeps an inapplicable authored threshold visible until the user clears it', async () => {
-    const user = userEvent.setup();
-    const dialog = await openDialog(
-      {
-        id: 'pick',
-        kind: 'decision',
-        label: 'Pick',
-        config: {
-          answer: {
-            type: 'choice',
-            options: [
-              { id: 'yes', label: 'Yes', criteria: 'The answer is yes' },
-              { id: 'no', label: 'No', criteria: 'The answer is no' },
-            ],
-          },
-          evaluation: {
-            kind: 'classifier',
-            model: 'jev',
-            question: 'Check the evidence.',
-            context: { messages: 'last', includeLastOutput: true },
-          },
-        },
-      },
-      'Edit decision pick',
-      (api, loopId) => {
-        const entry = api.loops.get(loopId);
-        const node = entry?.draft?.definition.nodes.find((candidate) => candidate.id === 'pick');
-        if (node?.kind !== 'decision' || node.config.evaluation.kind !== 'classifier')
-          throw new Error('Expected a classifier decision draft.');
-        node.config.evaluation.truthThreshold = 0.2;
-      },
-    );
-    const threshold = within(dialog).getByLabelText('Noul true-probability threshold');
-    expect(threshold).toHaveValue(0.2);
-    expect(validateDraft(store().definition!).schemaValid).toBe(false);
-
-    await user.clear(threshold);
-    await waitFor(() => {
-      expect(
-        within(dialog).queryByLabelText('Noul true-probability threshold'),
-      ).not.toBeInTheDocument();
-      expect(validateDraft(store().definition!).schemaValid).toBe(true);
-    });
-  });
-
-  it('keeps the authored question and context when switching a provider-backed Choice to Score', async () => {
-    const user = userEvent.setup();
-    const dialog = await openDialog(
-      {
-        id: 'pick',
-        kind: 'decision',
-        label: 'Pick',
-        config: {
-          answer: {
-            type: 'choice',
-            options: [
-              { id: 'yes', label: 'Yes', criteria: 'The answer is yes' },
-              { id: 'no', label: 'No', criteria: 'The answer is no' },
-            ],
-          },
-          evaluation: {
-            kind: 'llm',
-            harness: 'codex',
-            model: { mode: 'inherit' },
-            effort: { mode: 'inherit' },
-            question: 'Use the complete statement and attached notes.',
-            context: { messages: 4, includeLastOutput: false },
-          },
-        },
-      },
-      'Edit decision pick',
-    );
-
-    await user.click(within(dialog).getByRole('radio', { name: 'Score' }));
-    await waitFor(() => {
-      const node = store().definition?.nodes.find((candidate) => candidate.id === 'pick');
-      if (node?.kind !== 'decision') throw new Error('Decision node is missing.');
-      const config = DecisionConfigSchema.parse(node.config);
-      expect(config.evaluation).toMatchObject({
-        kind: 'classifier',
-        model: 'jev',
-        question: 'Use the complete statement and attached notes.',
-        context: { messages: 4, includeLastOutput: false },
-      });
-    });
-  });
-
-  it.each([
-    { type: 'noul' as const, label: 'Noul' },
-    { type: 'score' as const, label: 'Score' },
-  ])(
-    'preserves an unfinished classifier when switching Choice to $label',
-    async ({ type, label }) => {
-      const user = userEvent.setup();
+      let api: FakeApi | undefined,
+        loopId = '';
       const dialog = await openDialog(
         {
           id: 'pick',
           kind: 'decision',
           label: 'Pick',
-          config: {
-            answer: {
-              type: 'choice',
-              options: [
-                { id: 'yes', label: 'Yes', criteria: 'The answer is yes' },
-                { id: 'no', label: 'No', criteria: 'The answer is no' },
-              ],
-            },
-            evaluation: {
-              kind: 'classifier',
-              model: 'jev',
-              question: 'Check the authored notes for support.',
-              context: { messages: 4, includeLastOutput: false },
-            },
-          },
+          config: DecisionConfigSchema.parse(defaultConfig('decision')),
         },
         'Edit decision pick',
+        (value, id) => {
+          api = value;
+          loopId = id;
+        },
       );
-
-      await user.selectOptions(within(dialog).getByRole('combobox', { name: 'Model' }), '');
-      setCode('Question', 'Use the last four notes and keep this question.');
-      const answerPicker = within(dialog).getByRole('radiogroup', { name: 'Answer type' });
-      await user.click(within(answerPicker).getByRole('radio', { name: label }));
-
-      await waitFor(() => {
-        const definition = store().definition;
-        if (!definition) throw new Error('The editor definition is missing.');
-        const node = definition.nodes.find((candidate) => candidate.id === 'pick');
-        if (node?.kind !== 'decision') throw new Error('Decision node is missing.');
-        expect(node.config).toMatchObject({
-          answer: { type },
-          evaluation: {
-            kind: 'classifier',
-            question: 'Use the last four notes and keep this question.',
-            context: { messages: 4, includeLastOutput: false },
-          },
-        });
-        expect(validateDraft(definition).schemaValid).toBe(false);
-        expect(validateDraft(definition).issues).toContainEqual(
-          expect.objectContaining({ nodeId: 'pick', path: 'config.evaluation.model' }),
+      if (kind !== 'expression')
+        await user.click(within(dialog).getByRole('radio', { name: kind }));
+      if (kind === 'classifier') {
+        await user.click(within(dialog).getByRole('radio', { name: 'Noul' }));
+        await user.selectOptions(within(dialog).getByRole('combobox', { name: 'Model' }), 'jev');
+        setCode('Question', 'Does the evidence support approval?');
+      } else if (kind === 'llm') {
+        setCode(
+          'Instructions',
+          'Choose Yes when the evidence supports approval; otherwise choose No.',
         );
-      });
-      const methodPicker = within(dialog).getByRole('radiogroup', { name: 'Evaluation method' });
-      expect(within(methodPicker).getByRole('radio', { name: 'Classifier' })).toBeChecked();
+        for (const [index, id, label] of [
+          [0, 'yes', 'Yes'],
+          [1, 'no', 'No'],
+        ] as const) {
+          for (const [key, text] of [
+            ['id', id],
+            ['label', label],
+          ] as const) {
+            const path = `routes.${index}.${key}`;
+            act(() => store().openNode('pick', { field: `config.${path}` }));
+            const input = dialog.querySelector<HTMLInputElement>(`[data-field="${path}"] input`)!;
+            await waitFor(() => expect(input).toBeVisible());
+            await user.clear(input);
+            await user.type(input, text);
+          }
+        }
+      } else setCode('Jsonata', '"no"');
+      await waitFor(
+        () => {
+          const saved = api?.loops
+            .get(loopId)
+            ?.draft?.definition.nodes.find((node) => node.id === 'pick');
+          expect(saved?.kind === 'decision' && saved.config.kind).toBe(kind);
+          expect(
+            saved?.kind === 'decision' && DecisionConfigSchema.safeParse(saved.config).success,
+          ).toBe(true);
+          if (kind === 'expression') expect(saved?.config).toMatchObject({ jsonata: '"no"' });
+        },
+        { timeout: 4000 },
+      );
     },
   );
+  const routes = [
+    { id: 'yes', label: 'Yes' },
+    { id: 'no', label: 'No' },
+  ];
+  const answers = {
+    choice: {
+      type: 'choice',
+      options: routes.map((route) => ({ ...route, criteria: `Select ${route.label}` })),
+    },
+    noul: {
+      type: 'noul',
+      true: { id: 'yes', label: 'Yes', criteria: 'True' },
+      false: { id: 'no', label: 'No', criteria: 'False' },
+    },
+    score: {
+      type: 'score',
+      anchors: ['Low', 'High'],
+      bands: [
+        { id: 'low', label: 'Low', min: 0, max: 0.5 },
+        { id: 'high', label: 'High', min: 0.5, max: 1 },
+      ],
+    },
+  } as const;
+  const configs = [
+    { kind: 'expression', jsonata: '"yes"', routes },
+    {
+      kind: 'llm',
+      instructions: 'Choose the route for {{ vars.topic }}.',
+      routes,
+      harness: 'codex',
+      model: { mode: 'inherit' },
+      effort: { mode: 'inherit' },
+    },
+    ...(['choice', 'noul', 'score'] as const).map((type) => ({
+      kind: 'classifier',
+      model: 'jev',
+      question: 'Classify {{ vars.topic }}.',
+      answer: answers[type],
+    })),
+  ];
+  it.each(configs)('edits and saves a valid $kind decision', async (config) => {
+    let savedApi: FakeApi | undefined,
+      loopId = '';
+    const dialog = await openDialog(
+      { id: 'pick', kind: 'decision', label: 'Pick', config: DecisionConfigSchema.parse(config) },
+      'Edit decision pick',
+      (api, id) => {
+        savedApi = api;
+        loopId = id;
+      },
+    );
+    expect(within(dialog).getByRole('radiogroup', { name: 'Decision kind' })).toBeVisible();
+    const source =
+      config.kind === 'expression'
+        ? 'jsonata'
+        : config.kind === 'llm'
+          ? 'instructions'
+          : 'question';
+    const text = config.kind === 'expression' ? '"no"' : 'Use the complete evidence.';
+    setCode(
+      source === 'jsonata' ? 'Jsonata' : source === 'instructions' ? 'Instructions' : 'Question',
+      text,
+    );
+    await waitFor(
+      () => {
+        const saved = savedApi?.loops
+          .get(loopId)
+          ?.draft?.definition.nodes.find((node) => node.id === 'pick');
+        expect(
+          saved?.kind === 'decision' && DecisionConfigSchema.safeParse(saved.config).success,
+        ).toBe(true);
+        expect(saved?.config).toMatchObject({ [source]: text, kind: config.kind });
+      },
+      { timeout: 4000 },
+    );
+  });
+  it('selects each kind with only its applicable fields and keeps source issue focus', async () => {
+    const user = userEvent.setup();
+    const dialog = await openDialog(
+      {
+        id: 'pick',
+        kind: 'decision',
+        label: 'Pick',
+        config: DecisionConfigSchema.parse(configs[0]),
+      },
+      'Edit decision pick',
+    );
+    await user.click(within(dialog).getByRole('radio', { name: 'llm' }));
+    expect(dialog.querySelector('[data-field="instructions"]')).toBeInTheDocument();
+    expect(dialog.querySelector('[data-field="jsonata"]')).not.toBeInTheDocument();
+    act(() => store().openNode('pick', { field: 'config.instructions' }));
+    await waitFor(() =>
+      expect(dialog.querySelector('[data-field="instructions"]')).toContainElement(
+        document.activeElement as HTMLElement,
+      ),
+    );
+    await user.click(within(dialog).getByRole('radio', { name: 'classifier' }));
+    expect(within(dialog).getByRole('radiogroup', { name: 'Answer type' })).toBeVisible();
+    await user.click(within(dialog).getByRole('radio', { name: 'Noul' }));
+    const node = store().definition?.nodes.find((node) => node.id === 'pick');
+    expect(node?.config).toMatchObject({ kind: 'classifier', answer: { type: 'noul' } });
+    await user.click(advanced(dialog));
+    expect(
+      within(dialog).getByLabelText('Noul true-probability threshold', { exact: true }),
+    ).toBeVisible();
+    await user.click(within(dialog).getByRole('radio', { name: 'Score' }));
+    expect(
+      within(dialog).queryByLabelText('Noul true-probability threshold', { exact: true }),
+    ).not.toBeInTheDocument();
+    await user.click(within(dialog).getByRole('radio', { name: 'expression' }));
+    expect(dialog.querySelector('[data-field="jsonata"]')).toBeInTheDocument();
+    expect(
+      within(dialog).queryByRole('radiogroup', { name: 'Answer type' }),
+    ).not.toBeInTheDocument();
+  });
 });
 
-describe('NodeEditorDialog exit predicate editor', () => {
-  it.each(['click', 'keyboard'] as const)(
-    'converts Noul expression to Choice classifier and keeps radio focus after %s',
-    async (interaction) => {
+describe('NodeEditorDialog separate exit predicates', () => {
+  it.each(['expression', 'llm'] as const)(
+    'preserves a false boolean match and picker focus when switching from %s and back',
+    async (kind) => {
       const user = userEvent.setup();
       const dialog = await openDialog(
         {
           id: 'finish',
           kind: 'exit',
-          label: 'Done',
+          label: 'Finish',
           config: {
             criteria: [
               {
                 when: 'predicate',
-                answer: { type: 'noul' },
-                evaluation: { kind: 'expression', jsonata: 'true' },
-                match: { type: 'noul', value: true },
                 outcome: 'success',
+                match: { type: 'boolean', value: false },
+                predicate:
+                  kind === 'expression'
+                    ? { kind, jsonata: 'false' }
+                    : {
+                        kind,
+                        instructions: 'Is work still pending?',
+                        harness: 'codex',
+                        model: { mode: 'inherit' },
+                        effort: { mode: 'inherit' },
+                      },
               },
             ],
           },
         },
         'Edit exit finish',
       );
-      const answerPicker = within(dialog).getByRole('radiogroup', { name: 'Answer type' });
-      const choice = within(answerPicker).getByRole('radio', { name: 'Choice' });
-      if (interaction === 'click') {
-        await user.click(choice);
-      } else {
-        within(answerPicker).getByRole('radio', { name: 'Noul' }).focus();
-        await user.keyboard('{ArrowLeft}');
-      }
-
-      await waitFor(() => expect(choice).toBeChecked());
-      expect(choice).toHaveFocus();
-      const node = store().definition?.nodes.find((candidate) => candidate.id === 'finish');
-      if (node?.kind !== 'exit') throw new Error('Exit node is missing from the editor.');
-      expect(node.config).toMatchObject({
-        criteria: [
-          {
-            when: 'predicate',
-            answer: { type: 'choice' },
-            evaluation: {
-              kind: 'classifier',
-              model: '',
-              question: 'Evaluate the current input against the declared Choice options.',
+      const picker = () =>
+        within(dialog.querySelector<HTMLElement>('[data-field="criteria.0.predicate"]')!).getByRole(
+          'combobox',
+          { name: 'Kind' },
+        );
+      for (const value of [kind === 'expression' ? '1' : '0', kind === 'expression' ? '0' : '1']) {
+        await user.selectOptions(picker(), value);
+        await waitFor(() => expect(picker()).toHaveFocus());
+        expect(
+          store().definition?.nodes.find((node) => node.id === 'finish')?.config,
+        ).toMatchObject({
+          criteria: [
+            {
+              predicate: { kind: value === '0' ? 'expression' : 'llm' },
+              match: { type: 'boolean', value: false },
             },
-            match: { type: 'choice', optionIds: ['yes'] },
-          },
-        ],
-      });
-
-      const methodPicker = within(dialog).getByRole('radiogroup', { name: 'Evaluation method' });
-      expect(
-        within(methodPicker).queryByRole('radio', { name: 'Expression' }),
-      ).not.toBeInTheDocument();
-      expect(within(methodPicker).getByRole('radio', { name: 'Classifier' })).toBeVisible();
+          ],
+        });
+        const match = dialog.querySelector<HTMLElement>('[data-field="criteria.0.match"]')!;
+        expect(within(match).getByRole('switch', { name: 'Value' })).not.toBeChecked();
+      }
     },
   );
 
-  it('shows the true-probability threshold only for Noul classifier evaluation', async () => {
+  it('preserves LLM instructions and confidence minimum across compatible model and effort switches', async () => {
     const user = userEvent.setup();
     const dialog = await openDialog(
       {
@@ -558,32 +300,40 @@ describe('NodeEditorDialog exit predicate editor', () => {
           criteria: [
             {
               when: 'predicate',
-              answer: {
-                type: 'choice',
-                options: [
-                  { id: 'yes', label: 'Yes', criteria: 'The predicate matches' },
-                  { id: 'no', label: 'No', criteria: 'The predicate does not match' },
-                ],
-              },
-              evaluation: { kind: 'classifier', model: 'jev', question: 'Choose an answer.' },
-              match: { type: 'choice', optionIds: ['yes'] },
               outcome: 'success',
+              predicate: {
+                kind: 'llm',
+                instructions: 'Keep this authored question.',
+                harness: 'codex',
+                model: { mode: 'inherit' },
+                effort: { mode: 'inherit' },
+              },
+              match: { type: 'boolean', value: false, minReportedConfidence: 0.73 },
             },
           ],
         },
       },
       'Edit exit finish',
     );
-    expect(screen.queryByLabelText('Noul true-probability threshold')).not.toBeInTheDocument();
-
-    const answers = within(dialog).getByRole('radiogroup', { name: 'Answer type' });
-    await user.click(within(answers).getByRole('radio', { name: 'Score' }));
-    expect(screen.queryByLabelText('Noul true-probability threshold')).not.toBeInTheDocument();
-    await user.click(within(answers).getByRole('radio', { name: 'Noul' }));
-    expect(await screen.findByLabelText('Noul true-probability threshold')).toBeVisible();
+    for (const field of ['model', 'effort']) {
+      const picker = () =>
+        within(
+          dialog.querySelector<HTMLElement>(`[data-field="criteria.0.predicate.${field}"]`)!,
+        ).getByRole('combobox', { name: 'Mode' });
+      for (const value of ['1', '0']) {
+        await user.selectOptions(picker(), value);
+        expect(picker()).toHaveFocus();
+        expect(getCode('Instructions')).toBe('Keep this authored question.');
+        expect(
+          store().definition?.nodes.find((node) => node.id === 'finish')?.config,
+        ).toMatchObject({
+          criteria: [{ match: { type: 'boolean', value: false, minReportedConfidence: 0.73 } }],
+        });
+      }
+    }
   });
 
-  it('keeps an unfinished classifier model and authored question when Choice changes to Score', async () => {
+  it('keeps an empty Choice match and invalid thresholds on ordinary edits, with issue focus', async () => {
     const user = userEvent.setup();
     const dialog = await openDialog(
       {
@@ -594,136 +344,51 @@ describe('NodeEditorDialog exit predicate editor', () => {
           criteria: [
             {
               when: 'predicate',
-              answer: {
-                type: 'choice',
-                options: [
-                  { id: 'yes', label: 'Yes', criteria: 'The predicate matches' },
-                  { id: 'no', label: 'No', criteria: 'The predicate does not match' },
-                ],
-              },
-              evaluation: {
-                kind: 'classifier',
-                model: 'jev',
-                question: 'Keep this authored question.',
-              },
-              match: { type: 'choice', optionIds: ['yes'] },
               outcome: 'success',
-            },
-          ],
-        },
-      },
-      'Edit exit finish',
-    );
-
-    await user.selectOptions(within(dialog).getByRole('combobox', { name: 'Classifier' }), '');
-    await user.click(within(dialog).getByRole('radio', { name: 'Score' }));
-
-    await waitFor(() => {
-      const definition = store().definition;
-      if (!definition) throw new Error('The editor definition is missing.');
-      const node = definition.nodes.find((candidate) => candidate.id === 'finish');
-      if (node?.kind !== 'exit') throw new Error('Exit node is missing from the editor.');
-      expect(node.config).toMatchObject({
-        criteria: [
-          {
-            when: 'predicate',
-            answer: { type: 'score' },
-            evaluation: {
-              kind: 'classifier',
-              question: 'Keep this authored question.',
-            },
-          },
-        ],
-      });
-      expect(within(dialog).getByRole('combobox', { name: 'Classifier' })).toHaveValue('');
-      expect(validateDraft(definition).schemaValid).toBe(false);
-    });
-  });
-
-  it('keeps native evaluation-radio focus when Noul expression changes to classifier', async () => {
-    const user = userEvent.setup();
-    const dialog = await openDialog(
-      {
-        id: 'finish',
-        kind: 'exit',
-        label: 'Finish',
-        config: {
-          criteria: [
-            {
-              when: 'predicate',
-              answer: { type: 'noul' },
-              evaluation: { kind: 'expression', jsonata: 'true' },
-              match: { type: 'noul', value: true },
-              outcome: 'success',
-            },
-          ],
-        },
-      },
-      'Edit exit finish',
-    );
-    const methods = within(dialog).getByRole('radiogroup', { name: 'Evaluation method' });
-    const expression = within(methods).getByRole('radio', { name: 'Expression' });
-    const classifier = within(methods).getByRole('radio', { name: 'Classifier' });
-    expression.focus();
-    await user.keyboard('{ArrowRight}');
-    await waitFor(() => expect(classifier).toBeChecked());
-    expect(classifier).toHaveFocus();
-  });
-
-  it('keeps an empty Choice match and preserves authored invalid values on ordinary edits', async () => {
-    const user = userEvent.setup();
-    await openDialog(
-      {
-        id: 'finish',
-        kind: 'exit',
-        label: 'Finish',
-        config: {
-          criteria: [
-            {
-              when: 'predicate',
-              answer: {
-                type: 'choice',
-                options: [
-                  { id: 'yes', label: 'Yes', criteria: 'The predicate matches' },
-                  { id: 'no', label: 'No', criteria: 'The predicate does not match' },
-                ],
-              },
-              evaluation: {
+              predicate: {
                 kind: 'classifier',
                 model: 'jev',
                 question: 'Keep this question.',
+                answer: {
+                  type: 'choice',
+                  options: [
+                    { id: 'yes', label: 'Yes', criteria: 'Ready' },
+                    { id: 'no', label: 'No', criteria: 'Pending' },
+                  ],
+                },
               },
               match: { type: 'choice', optionIds: ['yes'] },
-              outcome: 'success',
             },
           ],
         },
       },
       'Edit exit finish',
     );
-
-    const node = () => store().definition?.nodes.find((candidate) => candidate.id === 'finish');
+    const node = store().definition?.nodes.find((node) => node.id === 'finish');
+    if (node?.kind !== 'exit') throw new Error('Exit node missing');
     act(() =>
       store().updateNode('finish', {
         config: {
+          ...node.config,
           criteria: [
             {
               when: 'predicate',
-              answer: {
-                type: 'choice',
-                options: [
-                  { id: 'yes', label: 'Yes', criteria: 'The predicate matches' },
-                  { id: 'no', label: 'No', criteria: 'The predicate does not match' },
-                ],
-              },
-              evaluation: {
+              outcome: 'success',
+              predicate: {
                 kind: 'classifier',
                 model: 'jev',
                 question: 'Keep this question.',
+                minConfidence: 1.2,
                 truthThreshold: 0.65,
+                answer: {
+                  type: 'choice',
+                  options: [
+                    { id: 'yes', label: 'Yes', criteria: 'Ready' },
+                    { id: 'no', label: 'No', criteria: 'Pending' },
+                  ],
+                },
               },
-              match: { type: 'choice', optionIds: ['yes'], minReportedConfidence: 0.75 },
-              outcome: 'success',
+              match: { type: 'choice', optionIds: [] },
             },
           ],
         },
@@ -731,99 +396,56 @@ describe('NodeEditorDialog exit predicate editor', () => {
     );
     act(() => store().closeNodeDialog());
     act(() => store().openNode('finish'));
-    const dialog = await screen.findByRole('dialog', { name: 'Edit exit finish' });
-    const predicate = () => {
-      const current = node();
-      const criteria = current?.kind === 'exit' ? current.config.criteria : undefined;
-      if (!criteria || criteria[0]?.when !== 'predicate')
-        throw new Error('Predicate is missing from the editor.');
-      return criteria[0];
-    };
-    const matching = dialog.querySelector<HTMLElement>('[data-field="criteria.0.match"]');
-    if (!matching) throw new Error('Choice match field is missing.');
-    const yes = within(matching).getByRole('checkbox', { name: /Yes.*yes/ });
-    await user.click(yes);
-    await waitFor(() => expect(predicate().match).toMatchObject({ optionIds: [] }));
-    await user.click(yes);
-    await waitFor(() => expect(predicate().match).toMatchObject({ optionIds: ['yes'] }));
-
-    const options = dialog.querySelector<HTMLElement>('[data-field="criteria.0.answer.options"]');
-    if (!options) throw new Error('Choice answer options are missing.');
-    await user.click(within(options).getByRole('button', { name: 'Remove choice options 1' }));
-    await waitFor(() => expect(predicate().answer).toMatchObject({ options: [{ id: 'no' }] }));
-    expect(predicate().match).toMatchObject({ optionIds: ['yes'] });
-    const removeStaleMatch = within(matching).getByRole('button', {
-      name: 'Remove unavailable match yes',
+    const reopened = await screen.findByRole('dialog', { name: 'Edit exit finish' });
+    setCode('Question', 'Updated question.');
+    const label = within(
+      reopened.querySelector<HTMLElement>('[data-field-scope="node"]')!,
+    ).getByRole('textbox', { name: 'Label' });
+    await user.clear(label);
+    await user.type(label, 'Updated');
+    expect(
+      store().definition?.nodes.find((candidate) => candidate.id === 'finish')?.config,
+    ).toMatchObject({
+      criteria: [
+        {
+          predicate: { question: 'Updated question.', minConfidence: 1.2, truthThreshold: 0.65 },
+          match: { type: 'choice', optionIds: [] },
+        },
+      ],
     });
-    await user.click(removeStaleMatch);
-    await waitFor(() => expect(predicate().match).toMatchObject({ optionIds: [] }));
-    await user.click(within(matching).getByRole('checkbox', { name: /No.*no/ }));
-    await waitFor(() => expect(predicate().match).toMatchObject({ optionIds: ['no'] }));
-
-    const remainingOptionLabel = dialog.querySelector<HTMLInputElement>(
-      '[data-field="criteria.0.answer.options.0.label"] input',
-    );
-    if (!remainingOptionLabel) throw new Error('Remaining Choice label field is missing.');
-    await user.type(remainingOptionLabel, ' updated');
-    await waitFor(() => {
-      expect(predicate().answer).toMatchObject({ options: [{ id: 'no', label: 'No updated' }] });
-      expect(predicate().match).toMatchObject({ optionIds: ['no'], minReportedConfidence: 0.75 });
-      expect(predicate().evaluation).toMatchObject({
-        question: 'Keep this question.',
-        truthThreshold: 0.65,
-      });
-      expect(node()).toBeDefined();
-    });
-    const definition = store().definition;
-    if (!definition) throw new Error('The editor definition is missing.');
-    expect(validateDraft(definition).schemaValid).toBe(false);
+    expect(validateDraft(store().definition!).schemaValid).toBe(false);
+    act(() => store().openNode('finish', { field: 'config.criteria.0.predicate.minConfidence' }));
+    const minimum = reopened.querySelector<HTMLElement>(
+      '[data-field="criteria.0.predicate.minConfidence"]',
+    )!;
+    await waitFor(() => expect(minimum).toContainElement(document.activeElement as HTMLElement));
+    expect(within(minimum).getByRole('spinbutton')).toHaveValue(1.2);
+    expect(dialog).not.toBeVisible();
   });
 
-  it('starts a newly selected predicate with a valid Noul expression pair', async () => {
+  it('synchronizes the match form and preserves focus when a classifier predicate changes primitive', async () => {
     const user = userEvent.setup();
     const dialog = await openDialog(
       {
         id: 'finish',
-        kind: 'exit',
         label: 'Finish',
-        config: { criteria: [{ when: 'max-iterations', value: 3 }] },
-      },
-      'Edit exit finish',
-    );
-
-    await user.click(within(dialog).getByRole('button', { name: 'Add criteria' }));
-    const when = within(dialog).getAllByRole('combobox', { name: 'When' })[1];
-    if (!when) throw new Error('New criterion selector is missing.');
-    await user.selectOptions(when, 'predicate');
-
-    await waitFor(() => {
-      const current = store().definition?.nodes.find((candidate) => candidate.id === 'finish');
-      const criteria = current?.kind === 'exit' ? current.config.criteria : undefined;
-      if (!criteria || criteria[1]?.when !== 'predicate')
-        throw new Error('New predicate was not added.');
-      expect(criteria[1]).toMatchObject({
-        answer: { type: 'noul' },
-        evaluation: { kind: 'expression', jsonata: 'true' },
-        match: { type: 'noul', value: true },
-      });
-      expect(validateDraft(store().definition!).schemaValid).toBe(true);
-    });
-  });
-
-  it('announces the selected Noul match value and explains exit-only Choice IDs', async () => {
-    const user = userEvent.setup();
-    const dialog = await openDialog(
-      {
-        id: 'finish',
         kind: 'exit',
-        label: 'Finish',
         config: {
           criteria: [
             {
               when: 'predicate',
-              answer: { type: 'noul' },
-              evaluation: { kind: 'expression', jsonata: 'true' },
-              match: { type: 'noul', value: true },
+              predicate: {
+                kind: 'classifier',
+                model: 'jev',
+                question: 'Grade the result.',
+                minConfidence: 0.73,
+                answer: {
+                  type: 'noul',
+                  true: { label: 'True', criteria: 'Ready' },
+                  false: { label: 'False', criteria: 'Pending' },
+                },
+              },
+              match: { type: 'noul', value: false },
               outcome: 'success',
             },
           ],
@@ -831,54 +453,44 @@ describe('NodeEditorDialog exit predicate editor', () => {
       },
       'Edit exit finish',
     );
-
-    const match = () =>
-      within(dialog).getByRole('switch', { name: 'Match when the answer is true' });
-    expect(match()).toHaveAccessibleDescription('Matching answer: True.');
-    await user.click(match());
-    expect(match()).toHaveAccessibleDescription('Matching answer: False.');
-
-    const answers = within(dialog).getByRole('radiogroup', { name: 'Answer type' });
-    await user.click(within(answers).getByRole('radio', { name: 'Choice' }));
-    const optionId = await waitFor(() => {
-      const input = dialog.querySelector<HTMLInputElement>(
-        '[data-field="criteria.0.answer.options.0.id"] input',
-      );
-      if (!input) throw new Error('Choice option ID field is missing.');
-      return input;
+    const answer = () =>
+      dialog.querySelector<HTMLElement>('[data-field="criteria.0.predicate.answer"]')!;
+    await user.selectOptions(within(answer()).getByLabelText('Type'), '2');
+    await waitFor(() => expect(within(answer()).getByLabelText('Type')).toHaveFocus());
+    const match = dialog.querySelector<HTMLElement>('[data-field="criteria.0.match"]')!;
+    expect(within(match).getByLabelText('Type')).toHaveValue('3');
+    await user.type(within(dialog).getByLabelText('Anchors 1'), 'Low');
+    await user.type(within(dialog).getByLabelText('Anchors 2'), 'High');
+    await user.clear(within(match).getByRole('spinbutton', { name: 'Value' }));
+    await user.type(within(match).getByRole('spinbutton', { name: 'Value' }), '0.75');
+    const node = store().definition?.nodes.find((node) => node.id === 'finish');
+    expect(node?.config).toMatchObject({
+      criteria: [
+        {
+          predicate: {
+            question: 'Grade the result.',
+            minConfidence: 0.73,
+            answer: { type: 'score', anchors: ['Low', 'High'] },
+          },
+          match: { type: 'score', operator: 'gte', value: 0.75 },
+        },
+      ],
     });
-    expect(optionId).toHaveAccessibleDescription(
-      'Stable Choice option ID used by this exit match. Exit nodes can only follow their loopBack connection.',
-    );
-    expect(optionId).not.toHaveAccessibleDescription(/output port/i);
+    expect(validateDraft(store().definition!).schemaValid).toBe(true);
   });
 
-  it('preserves authored question and LLM confidence minimum across compatible switches', async () => {
-    const user = userEvent.setup();
-    const dialog = await openDialog(
+  it('edits a boolean predicate without decision routes', async () => {
+    await openDialog(
       {
         id: 'finish',
-        kind: 'exit',
         label: 'Finish',
+        kind: 'exit',
         config: {
           criteria: [
             {
               when: 'predicate',
-              answer: {
-                type: 'choice',
-                options: [
-                  { id: 'yes', label: 'Yes', criteria: 'The predicate matches' },
-                  { id: 'no', label: 'No', criteria: 'The predicate does not match' },
-                ],
-              },
-              evaluation: {
-                kind: 'llm',
-                harness: 'codex',
-                model: { mode: 'inherit' },
-                effort: { mode: 'inherit' },
-                question: 'Keep this authored question.',
-              },
-              match: { type: 'choice', optionIds: ['yes'], minReportedConfidence: 0.73 },
+              predicate: { kind: 'expression', jsonata: 'true' },
+              match: { type: 'boolean', value: true },
               outcome: 'success',
             },
           ],
@@ -886,42 +498,17 @@ describe('NodeEditorDialog exit predicate editor', () => {
       },
       'Edit exit finish',
     );
-
-    const criterion = () => {
-      const node = store().definition?.nodes.find((candidate) => candidate.id === 'finish');
-      const current = node?.kind === 'exit' ? node.config.criteria?.[0] : undefined;
-      if (current?.when !== 'predicate') throw new Error('The exit predicate is missing.');
-      return current;
-    };
-    const methods = within(dialog).getByRole('radiogroup', { name: 'Evaluation method' });
-    await user.click(within(methods).getByRole('radio', { name: 'Classifier' }));
-    await waitFor(() =>
-      expect(criterion().evaluation).toMatchObject({
-        kind: 'classifier',
-        question: 'Keep this authored question.',
-      }),
-    );
-    await user.click(within(methods).getByRole('radio', { name: 'Codex LLM' }));
-    await waitFor(() =>
-      expect(criterion().evaluation).toMatchObject({
-        kind: 'llm',
-        question: 'Keep this authored question.',
-      }),
-    );
-
-    const answers = within(dialog).getByRole('radiogroup', { name: 'Answer type' });
-    await user.click(within(answers).getByRole('radio', { name: 'Noul' }));
-    await waitFor(() =>
-      expect(criterion().match).toMatchObject({ type: 'noul', minReportedConfidence: 0.73 }),
-    );
-    await user.click(within(answers).getByRole('radio', { name: 'Choice' }));
-    await waitFor(() => {
-      expect(criterion().match).toMatchObject({ type: 'choice', minReportedConfidence: 0.73 });
-      expect(criterion().evaluation).toMatchObject({
-        kind: 'llm',
-        question: 'Keep this authored question.',
-      });
+    setCode('Jsonata', 'false');
+    const node = store().definition?.nodes.find((node) => node.id === 'finish');
+    expect(node?.config).toMatchObject({
+      criteria: [
+        {
+          predicate: { kind: 'expression', jsonata: 'false' },
+          match: { type: 'boolean', value: true },
+        },
+      ],
     });
+    expect(validateDraft(store().definition!).schemaValid).toBe(true);
   });
 });
 

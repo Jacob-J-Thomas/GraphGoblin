@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import {
   test as base,
   expect,
@@ -22,7 +23,7 @@ export { expect };
 /** A manual trigger, a wait-for-input node, and an exit. */
 export function approvalLoop(name: string) {
   return {
-    schemaVersion: 3,
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
     name,
     nodes: [
       {

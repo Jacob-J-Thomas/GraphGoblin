@@ -28,7 +28,8 @@ import {
   FIXTURE_IDS,
   FIXTURE_TS,
 } from '../../packages/contracts/dist/testing/index.js';
-import { upgradeExportV1 } from '../../packages/domain/dist/index.js';
+import { V3LoopExportSchema } from '../../packages/contracts/dist/index.js';
+import { upgradeExportCurrent, upgradeExportV1 } from '../../packages/domain/dist/index.js';
 const url = (file) => 'file:' + file.replaceAll('\\', '/');
 const original = {
   schemaVersion: 1,
@@ -83,10 +84,15 @@ async function temporary(fn) {
   const root = await mkdtemp(
     fileURLToPath(new URL('../../.tmp/upgrade-acceptance-', import.meta.url)),
   );
-  // Retain disposable evidence: Windows native prepared statements can hold closed-file handles until GC.
-  return fn(root);
+  try {
+    return await fn(root);
+  } finally {
+    // Closed libsql statements can retain native Windows file handles until collection.
+    globalThis.gc?.();
+    await rm(root, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
+  }
 }
-async function seed(file, retainWal = false) {
+async function seed(file, retainWal = false, definition = original) {
   const handle = openDatabase({ url: url(file) });
   await handle.migrate();
   if (retainWal) {
@@ -94,14 +100,16 @@ async function seed(file, retainWal = false) {
     await handle.client.execute('PRAGMA wal_autocheckpoint=0');
     await handle.client.execute('PRAGMA wal_checkpoint(TRUNCATE)');
   }
-  await handle.client.execute('DROP TABLE gg_upgrade_state');
+  if (definition.schemaVersion === 3)
+    await handle.client.execute('UPDATE gg_upgrade_state SET format_version=3');
+  else await handle.client.execute('DROP TABLE gg_upgrade_state');
   await handle.client.execute({
     sql: 'INSERT INTO loop_versions(id,loop_id,version,status,definition,created_at,published_at) VALUES(?,?,1,?,?,?,?)',
     args: [
       FIXTURE_IDS.version,
       FIXTURE_IDS.loop,
       'published',
-      JSON.stringify(original),
+      JSON.stringify(definition),
       FIXTURE_TS,
       FIXTURE_TS,
     ],
@@ -135,6 +143,74 @@ async function seed(file, retainWal = false) {
   await handle.client.execute('PRAGMA journal_mode=DELETE');
   handle.close();
 }
+async function storedState(file) {
+  const client = openReadOnlyDatabaseClient(file);
+  try {
+    const schema = await client.execute(
+      "SELECT name,sql FROM sqlite_master WHERE type='table' ORDER BY name",
+    );
+    const tables = [];
+    for (const { name, sql } of schema.rows)
+      tables.push({
+        name,
+        sql,
+        rows: (await client.execute('SELECT * FROM "' + name.replaceAll('"', '""') + '"')).rows,
+      });
+    return tables;
+  } finally {
+    client.close();
+  }
+}
+const formatCutoverRefusal = {
+  name: 'DatabaseUpgradeRequiredError',
+  code: 'DATA_UPGRADE_REQUIRED',
+  message: 'Format-3 to format-4 conversion is not available until the integrated cutover',
+};
+
+test('marked format-3 store refuses atomically with marker and migration ledger unchanged', () =>
+  temporary(async (root) => {
+    const historical = upgradeExportCurrent(
+      {
+        format: 'graphgoblin-loop',
+        formatVersion: 1,
+        exportedAt: FIXTURE_TS,
+        loop: original,
+      },
+      resolutions,
+    );
+    assert.equal(historical.ok, true);
+    const data = join(root, 'data');
+    await mkdir(data);
+    const file = join(data, 'database.db');
+    await seed(file, false, historical.value.loop);
+    const state = await storedState(file);
+    assert.equal(state.find(({ name }) => name === 'gg_upgrade_state').rows[0].format_version, 3);
+    assert.ok(state.find(({ name }) => name === '__drizzle_migrations').rows.length > 0);
+    const report = join(root, 'inventory.json');
+    await runUpgrade(['inventory', '--data-dir', data, '--db-url', url(file), '--out', report]);
+    const manifest = JSON.parse(await readFile(report, 'utf8')).manifest;
+    Object.assign(manifest, { approvedBy: 'Format-3 test owner', approvedAt: FIXTURE_TS });
+    const approved = join(root, 'approved.json');
+    await writeFile(approved, JSON.stringify(manifest));
+    await assert.rejects(
+      runUpgrade([
+        'apply',
+        '--data-dir',
+        data,
+        '--db-url',
+        url(file),
+        '--manifest',
+        approved,
+        '--backup-dir',
+        join(root, 'backup'),
+      ]),
+      formatCutoverRefusal,
+    );
+    assert.deepEqual(await storedState(file), state);
+    const restored = join(root, 'restored');
+    await cp(join(root, 'backup', 'data'), restored, { recursive: true });
+    assert.deepEqual(await storedState(join(restored, 'database.db')), state);
+  }));
 test('strict CLI argument surface refuses duplicates, absent and unknown values', () => {
   assert.equal(argumentsFor(['export', '--input', 'a', '--out', 'b']).command, 'export');
   for (const args of [
@@ -171,7 +247,8 @@ test('portable refusal, explicit resolutions, new output and complete original p
         .ok,
       true,
     );
-    assert.equal(JSON.parse(await readFile(converted, 'utf8')).formatVersion, 3);
+    const historical = V3LoopExportSchema.parse(JSON.parse(await readFile(converted, 'utf8')));
+    assert.equal(historical.formatVersion, 3);
     assert.equal(await readFile(input, 'utf8'), bytes);
     await assert.rejects(
       runUpgrade(['export', '--input', input, '--out', converted, '--resolutions', choices]),
@@ -295,7 +372,7 @@ test('format-2 provider exit exports refuse without authored sides and convert o
         .ok,
       true,
     );
-    const converted = JSON.parse(await readFile(output, 'utf8'));
+    const converted = V3LoopExportSchema.parse(JSON.parse(await readFile(output, 'utf8')));
     assert.equal(converted.formatVersion, 3);
     assert.deepEqual(converted.loop.edges, old.loop.edges);
     assert.deepEqual(converted.loop.nodes[1].config.return, old.loop.nodes[1].config.return);
@@ -353,7 +430,7 @@ test('held live installation lock refuses inventory/apply before any SQLite file
       await lock.release();
     }
   }));
-test('complete internal data backup, failed transaction rollback, restore and successful re-upgrade', () =>
+test('complete internal data backup, atomic format refusal and backup restoration', () =>
   temporary(async (root) => {
     const data = join(root, 'data');
     await mkdir(data);
@@ -362,6 +439,7 @@ test('complete internal data backup, failed transaction rollback, restore and su
     await writeFile(join(data, 'master.key'), 'synthetic test key');
     const file = join(data, 'database.db');
     await seed(file);
+    const state = await storedState(file);
     const report = join(root, 'inventory.json');
     await runUpgrade(['inventory', '--data-dir', data, '--db-url', url(file), '--out', report]);
     const manifest = JSON.parse(await readFile(report, 'utf8')).manifest;
@@ -393,6 +471,7 @@ test('complete internal data backup, failed transaction rollback, restore and su
     } finally {
       client.close();
     }
+    assert.deepEqual(await storedState(file), state);
     assert.deepEqual(await readFile(join(root, 'failed-backup', 'data', 'database.db')), before);
     assert.equal(
       await readFile(join(root, 'failed-backup', 'data', 'artifacts', 'retained.txt'), 'utf8'),
@@ -403,32 +482,27 @@ test('complete internal data backup, failed transaction rollback, restore and su
       'Owner approves replay against selected expression';
     const good = join(root, 'good.json');
     await writeFile(good, JSON.stringify(manifest));
-    assert.equal(
-      (
-        await runUpgrade([
-          'apply',
-          '--data-dir',
-          data,
-          '--db-url',
-          url(file),
-          '--manifest',
-          good,
-          '--backup-dir',
-          join(root, 'good-backup'),
-        ])
-      ).ok,
-      true,
+    const beforeRefusal = await readFile(file);
+    await assert.rejects(
+      runUpgrade([
+        'apply',
+        '--data-dir',
+        data,
+        '--db-url',
+        url(file),
+        '--manifest',
+        good,
+        '--backup-dir',
+        join(root, 'good-backup'),
+      ]),
+      formatCutoverRefusal,
     );
-    const audit = join(root, 'audit.json');
-    await runUpgrade(['audit', '--data-dir', data, '--db-url', url(file), '--out', audit]);
-    const records = JSON.parse(await readFile(audit, 'utf8')).records;
-    assert.ok(records.some((record) => record.kind === 'manifest'));
-    assert.ok(
-      records.some(
-        (record) => record.kind === 'runs' && JSON.parse(record.payload.failure).resumable === true,
-      ),
+    assert.deepEqual(await storedState(file), state);
+    assert.deepEqual(
+      await readFile(join(root, 'good-backup', 'data', 'database.db')),
+      beforeRefusal,
     );
-    // Restore the complete pre-upgrade data to an independent path and approve its own inventory.
+    // Steps 26-28 restore successful re-upgrade assertions with the real format-3 to format-4 conversion.
     const restored = join(root, 'restored');
     await cp(join(root, 'good-backup', 'data'), restored, { recursive: true });
     const restoreFile = join(restored, 'database.db'),
@@ -444,25 +518,10 @@ test('complete internal data backup, failed transaction rollback, restore and su
     ]);
     const restoredManifest = JSON.parse(await readFile(restoreReport, 'utf8')).manifest;
     assert.equal(restoredManifest.sourceHash, manifest.sourceHash);
-    Object.assign(restoredManifest, { approvedBy: 'Test owner restored', approvedAt: FIXTURE_TS });
-    restoredManifest.versions[FIXTURE_IDS.version].resolutions = resolutions;
-    restoredManifest.failedRuns[FIXTURE_IDS.run].reason = 'Owner approves restored attempt';
-    const approved = join(root, 'restored-approved.json');
-    await writeFile(approved, JSON.stringify(restoredManifest));
-    await runUpgrade([
-      'apply',
-      '--data-dir',
-      restored,
-      '--db-url',
-      url(restoreFile),
-      '--manifest',
-      approved,
-      '--backup-dir',
-      join(root, 'restored-backup'),
-    ]);
+    assert.deepEqual(await storedState(restoreFile), state);
     client = openReadOnlyDatabaseClient(restoreFile);
     try {
-      assert.equal(await guardDatabaseUpgrade(client), 'current');
+      await assert.rejects(guardDatabaseUpgrade(client), { code: 'DATA_UPGRADE_REQUIRED' });
     } finally {
       client.close();
     }
@@ -470,6 +529,7 @@ test('complete internal data backup, failed transaction rollback, restore and su
       await readFile(join(restored, 'artifacts', 'retained.txt'), 'utf8'),
       'retained artifact',
     );
+    assert.equal(await readFile(join(restored, 'master.key'), 'utf8'), 'synthetic test key');
   }));
 test('external database backup copies base/WAL/SHM exactly and refuses overlapping or reused backup destinations', () =>
   temporary(async (root) => {
@@ -501,7 +561,7 @@ test('external database backup copies base/WAL/SHM exactly and refuses overlappi
     assert.deepEqual((await readdir(data)).sort(), ['configuration']);
   }));
 
-test('actual committed external SQLite WAL survives backup restoration and a second approved upgrade', () =>
+test('actual committed external SQLite WAL survives format refusal and backup restoration', () =>
   temporary(async (root) => {
     const data = join(root, 'data');
     await mkdir(data);
@@ -518,6 +578,7 @@ test('actual committed external SQLite WAL survives backup restoration and a sec
       writer.close();
     }
     assert.ok((await readFile(externalFile + '-wal')).length > 0);
+    const state = await storedState(externalFile);
     const report = join(root, 'inventory.json');
     await runUpgrade([
       'inventory',
@@ -535,20 +596,25 @@ test('actual committed external SQLite WAL survives backup restoration and a sec
     const approved = join(root, 'approved.json');
     await writeFile(approved, JSON.stringify(manifest));
     const backup = join(root, 'backup');
-    await runUpgrade([
-      'apply',
-      '--data-dir',
-      data,
-      '--db-url',
-      url(externalFile),
-      '--manifest',
-      approved,
-      '--backup-dir',
-      backup,
-    ]);
+    await assert.rejects(
+      runUpgrade([
+        'apply',
+        '--data-dir',
+        data,
+        '--db-url',
+        url(externalFile),
+        '--manifest',
+        approved,
+        '--backup-dir',
+        backup,
+      ]),
+      formatCutoverRefusal,
+    );
+    assert.deepEqual(await storedState(externalFile), state);
     const backupRecord = JSON.parse(await readFile(join(backup, 'backup.json'), 'utf8'));
     assert.ok(backupRecord.external['-wal']);
     assert.ok(backupRecord.external['-shm']);
+    assert.deepEqual(await storedState(join(backup, 'database')), state);
     const restoreData = join(root, 'restore-data');
     await cp(join(backup, 'data'), restoreData, { recursive: true });
     const restoreFile = join(root, 'restore-external.db');
@@ -566,28 +632,17 @@ test('actual committed external SQLite WAL survives backup restoration and a sec
     ]);
     const restored = JSON.parse(await readFile(restoredReport, 'utf8')).manifest;
     assert.equal(restored.sourceHash, manifest.sourceHash); // Reads committed rows residing in the restored WAL.
-    Object.assign(restored, { approvedBy: 'WAL restore owner', approvedAt: FIXTURE_TS });
-    restored.versions[FIXTURE_IDS.version].resolutions = resolutions;
-    restored.failedRuns[FIXTURE_IDS.run].reason = 'Owner approves restored replay';
-    const restoredApproved = join(root, 'restore-approved.json');
-    await writeFile(restoredApproved, JSON.stringify(restored));
-    await runUpgrade([
-      'apply',
-      '--data-dir',
-      restoreData,
-      '--db-url',
-      url(restoreFile),
-      '--manifest',
-      restoredApproved,
-      '--backup-dir',
-      join(root, 'restore-backup'),
-    ]);
+    assert.deepEqual(await storedState(restoreFile), state);
     const reader = openReadOnlyDatabaseClient(restoreFile);
     try {
-      assert.equal(await guardDatabaseUpgrade(reader), 'current');
+      await assert.rejects(guardDatabaseUpgrade(reader), { code: 'DATA_UPGRADE_REQUIRED' });
     } finally {
       reader.close();
     }
+    assert.equal(
+      await readFile(join(restoreData, 'master.key'), 'utf8'),
+      'synthetic WAL acceptance key',
+    );
   }));
 
 async function fileLinkOrSkip(t, target, path) {

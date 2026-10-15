@@ -112,9 +112,6 @@ const NoulFields = {
 };
 export const NoulSpecSchema = z.strictObject(NoulFields);
 export type NoulSpec = z.infer<typeof NoulSpecSchema>;
-/** Expressions need no provider criteria; provider Noul still uses the complete NoulSpec. */
-export const NoulBaseSpecSchema = z.strictObject({ type: z.literal('noul') });
-export type NoulBaseSpec = z.infer<typeof NoulBaseSpecSchema>;
 export const NoulConfigSchema = z
   .strictObject({ ...NoulFields, true: ChoiceOptionSchema, false: ChoiceOptionSchema })
   .superRefine((answer, ctx) => {
@@ -190,20 +187,18 @@ export const ScoreConfigSchema = z
   });
 export type ScoreConfig = z.infer<typeof ScoreConfigSchema>;
 
-export const EvaluationAnswerSpecSchema = z.discriminatedUnion('type', [
+export const ClassifierAnswerSpecSchema = z.discriminatedUnion('type', [
   ChoiceConfigSchema,
   NoulSpecSchema,
   ScoreSpecSchema,
 ]);
-export type EvaluationAnswerSpec = z.infer<typeof EvaluationAnswerSpecSchema>;
-export const PrimitiveAnswerSpecSchema = z.union([EvaluationAnswerSpecSchema, NoulBaseSpecSchema]);
-export type PrimitiveAnswerSpec = z.infer<typeof PrimitiveAnswerSpecSchema>;
-export const DecisionAnswerSchema = z.discriminatedUnion('type', [
+export type ClassifierAnswerSpec = z.infer<typeof ClassifierAnswerSpecSchema>;
+export const ClassifierAnswerConfigSchema = z.discriminatedUnion('type', [
   ChoiceConfigSchema,
   NoulConfigSchema,
   ScoreConfigSchema,
 ]);
-export type DecisionAnswer = z.infer<typeof DecisionAnswerSchema>;
+export type ClassifierAnswerConfig = z.infer<typeof ClassifierAnswerConfigSchema>;
 
 export const DecisionContextSchema = z.strictObject({
   messages: MessageSelectionSchema.default('last').meta(
@@ -224,143 +219,133 @@ export const DecisionContextSchema = z.strictObject({
     .meta(field('Include the latest output value in provider state when one exists.')),
 });
 export type DecisionContext = z.infer<typeof DecisionContextSchema>;
-const QuestionFields = {
-  question: TemplateSchema.meta(field('Liquid question rendered against the full context thread.')),
-};
-const ContextFields = {
-  context: DecisionContextSchema.prefault({}).meta(
-    field('Selected provider state, separate from the full-thread question-template context.', {
-      context: true,
-      jsonEditor: true,
-    }),
-  ),
-};
-const ExpressionEvaluationSchema = z.strictObject({
-  kind: z
-    .literal('expression')
-    .meta(field('Evaluate JSONata locally without invoking a provider.')),
-  jsonata: ExpressionSchema.meta(
-    field('JSONata must return the declared answer type; no coercion or provider fallback.'),
+export const RouteIdSchema = ChoiceOptionIdSchema;
+export type RouteId = z.infer<typeof RouteIdSchema>;
+export const RouteDeclarationSchema = z.strictObject({
+  id: RouteIdSchema,
+  label: z.string().trim().min(1).max(120),
+});
+export type RouteDeclaration = z.infer<typeof RouteDeclarationSchema>;
+export const RouteDeclarationsSchema = z
+  .array(RouteDeclarationSchema)
+  .min(2)
+  .max(64)
+  .superRefine((routes, ctx) => {
+    for (const key of ['id', 'label'] as const) {
+      const seen = new Set<string>();
+      routes.forEach((route, index) => {
+        if (seen.has(route[key]))
+          ctx.addIssue({
+            code: 'custom',
+            path: [index, key],
+            message: `route ${key}s must be unique`,
+          });
+        seen.add(route[key]);
+      });
+    }
+  });
+export const ExpressionPredicateConfigSchema = z
+  .strictObject({
+    kind: z.literal('expression').meta(field('Evaluate JSONata locally.')),
+    jsonata: ExpressionSchema.meta(
+      field('JSONata source; return a declared route id for decisions.'),
+    ),
+  })
+  .superRefine((config, ctx) => {
+    if (!config.jsonata.trim())
+      ctx.addIssue({
+        code: 'custom',
+        path: ['jsonata'],
+        message: 'expression must contain source',
+      });
+  });
+export const ExpressionDecisionConfigSchema = ExpressionPredicateConfigSchema.safeExtend({
+  routes: RouteDeclarationsSchema.meta(
+    field('Two to sixty-four stable readable routes.', { jsonEditor: true }),
   ),
 });
-const ClassifierEvaluationSchema = z.strictObject({
-  kind: z
-    .literal('classifier')
-    .meta(field('Use one explicitly selected primitive-capable classifier.')),
-  model: ClassifierModelIdSchema.meta(
-    field('Explicit primitive-capable classifier catalog id.', { control: 'classifier' }),
+export const LlmPredicateConfigSchema = z.strictObject({
+  kind: z.literal('llm').meta(field('Use a structured Codex evaluation.')),
+  instructions: TemplateSchema.meta(field('Liquid instructions rendered against the full thread.')),
+  harness: z.literal('codex').meta(field('Implemented structured evaluator harness.')),
+  model: ModelSelectionSchema.meta(field('Inherit or explicitly select the model.')),
+  effort: EffortSelectionSchema.meta(field('Inherit or explicitly select reasoning effort.')),
+});
+export const LlmDecisionConfigSchema = LlmPredicateConfigSchema.extend({
+  routes: RouteDeclarationsSchema.meta(
+    field('Declared stable route ids and readable labels.', { jsonEditor: true }),
   ),
-  ...QuestionFields,
+  context: DecisionContextSchema.prefault({}).meta(
+    field('Selected provider context.', { context: true, jsonEditor: true }),
+  ),
+});
+export const ClassifierEvaluationConfigSchema = z.strictObject({
+  kind: z.literal('classifier').meta(field('Evaluate one classifier primitive.')),
+  model: ClassifierModelIdSchema.meta(
+    field('Explicit classifier catalog id.', { control: 'classifier' }),
+  ),
+  question: TemplateSchema.meta(field('Liquid classifier question.')),
   minConfidence: z
     .number()
     .min(0)
     .max(1)
     .optional()
-    .meta(
-      field(
-        'Reject a classifier answer below this confidence; rejection never selects another evaluator.',
-        { advanced: true, group: 'Acceptance' },
-      ),
-    ),
+    .meta(field('Classifier confidence minimum.', { advanced: true, group: 'Acceptance' })),
   truthThreshold: z
     .number()
     .min(0)
     .max(1)
     .optional()
     .meta(
-      field(
-        'Noul only: select true when its probability reaches this threshold; omission means 0.5.',
-        { advanced: true, group: 'Acceptance' },
-      ),
+      field('Noul true probability threshold; omission means 0.5.', {
+        advanced: true,
+        group: 'Acceptance',
+      }),
     ),
 });
-const LlmEvaluationSchema = z.strictObject({
-  kind: z
-    .literal('llm')
-    .meta(field('Use one structured Choice or Noul completion from the selected LLM harness.')),
-  harness: z.literal('codex').meta(field('Harness implementing this LLM evaluation.')),
-  model: ModelSelectionSchema.meta(
-    field('Explicit model selection or harness-scoped inheritance.'),
+const classifierThreshold = (
+  config: { answer: { type: string }; truthThreshold?: number | undefined },
+  ctx: z.RefinementCtx,
+) => {
+  if (config.truthThreshold !== undefined && config.answer.type !== 'noul')
+    ctx.addIssue({
+      code: 'custom',
+      path: ['truthThreshold'],
+      message: 'truthThreshold applies only to classifier Noul',
+    });
+};
+export const ClassifierDecisionConfigSchema = ClassifierEvaluationConfigSchema.extend({
+  answer: ClassifierAnswerConfigSchema.meta(
+    field('Classifier answer and stable ports.', { jsonEditor: true }),
   ),
-  effort: EffortSelectionSchema.meta(
-    field('Explicit reasoning effort or harness-scoped inheritance.'),
+  context: DecisionContextSchema.prefault({}).meta(
+    field('Selected provider context.', { context: true, jsonEditor: true }),
   ),
-  ...QuestionFields,
-});
-export const EvaluationSchema = z.discriminatedUnion('kind', [
-  ExpressionEvaluationSchema,
-  ClassifierEvaluationSchema,
-  LlmEvaluationSchema,
-]);
-export type Evaluation = z.infer<typeof EvaluationSchema>;
-/** Authored primitive/evaluator pairs. Missing provider sides are configuration errors. */
-export const PrimitiveEvaluationConfigSchema = z
-  .union([
-    z.strictObject({
-      answer: z.union([ChoiceConfigSchema, NoulBaseSpecSchema]),
-      evaluation: ExpressionEvaluationSchema,
-    }),
-    z.strictObject({ answer: EvaluationAnswerSpecSchema, evaluation: ClassifierEvaluationSchema }),
-    z.strictObject({
-      answer: z.union([ChoiceConfigSchema, NoulSpecSchema]),
-      evaluation: LlmEvaluationSchema,
-    }),
-  ])
-  .superRefine((config, ctx) => {
-    if (
-      config.evaluation.kind === 'classifier' &&
-      config.evaluation.truthThreshold !== undefined &&
-      config.answer.type !== 'noul'
-    )
-      ctx.addIssue({
-        code: 'custom',
-        path: ['evaluation', 'truthThreshold'],
-        message: 'truthThreshold applies only to classifier Noul',
-      });
-  });
-export type PrimitiveEvaluationConfig = z.infer<typeof PrimitiveEvaluationConfigSchema>;
-export const DecisionEvaluationSchema = z.discriminatedUnion('kind', [
-  ExpressionEvaluationSchema,
-  ClassifierEvaluationSchema.extend(ContextFields),
-  LlmEvaluationSchema.extend(ContextFields),
-]);
-export type DecisionEvaluation = z.infer<typeof DecisionEvaluationSchema>;
-export const DecisionConfigSchema = z
-  .strictObject({
-    answer: DecisionAnswerSchema.meta(
-      field('Declared answer and stable route identifiers.', { jsonEditor: true }),
+  recordAlternatives: z
+    .boolean()
+    .default(true)
+    .meta(
+      field('Record classifier probability alternatives.', { advanced: true, group: 'Recording' }),
     ),
-    evaluation: DecisionEvaluationSchema.meta(field('Exactly one evaluation method.')),
-    recordAlternatives: z
-      .boolean()
-      .default(true)
-      .meta(
-        field('Retain classifier probabilities in execution evidence.', {
-          advanced: true,
-          group: 'Recording',
-        }),
-      ),
-  })
-  .superRefine((config, ctx) => {
-    if (config.answer.type === 'score' && config.evaluation.kind !== 'classifier')
-      ctx.addIssue({
-        code: 'custom',
-        path: ['evaluation', 'kind'],
-        message: 'Score requires a classifier evaluator',
-      });
-    if (
-      config.evaluation.kind === 'classifier' &&
-      config.evaluation.truthThreshold !== undefined &&
-      config.answer.type !== 'noul'
-    )
-      ctx.addIssue({
-        code: 'custom',
-        path: ['evaluation', 'truthThreshold'],
-        message: 'truthThreshold applies only to classifier Noul',
-      });
-  });
+}).superRefine(classifierThreshold);
+export const DecisionConfigSchema = z.discriminatedUnion('kind', [
+  ExpressionDecisionConfigSchema,
+  LlmDecisionConfigSchema,
+  ClassifierDecisionConfigSchema,
+]);
+export type ExpressionDecisionConfig = z.infer<typeof ExpressionDecisionConfigSchema>;
+export type LlmDecisionConfig = z.infer<typeof LlmDecisionConfigSchema>;
+export type ClassifierDecisionConfig = z.infer<typeof ClassifierDecisionConfigSchema>;
 export type DecisionConfig = z.infer<typeof DecisionConfigSchema>;
-
+/** Exit predicates have their own contract and no graph routes or provider-context selectors. */
+export const PredicateConfigSchema = z.discriminatedUnion('kind', [
+  ExpressionPredicateConfigSchema,
+  LlmPredicateConfigSchema,
+  ClassifierEvaluationConfigSchema.extend({ answer: ClassifierAnswerSpecSchema }).superRefine(
+    classifierThreshold,
+  ),
+]);
+export type PredicateConfig = z.infer<typeof PredicateConfigSchema>;
 export const ChoiceAnswerSchema = z.strictObject({
   type: z.literal('choice'),
   optionId: ChoiceOptionIdSchema,
@@ -369,28 +354,12 @@ export const ChoiceAnswerSchema = z.strictObject({
 });
 export type ChoiceAnswer = z.infer<typeof ChoiceAnswerSchema>;
 const ProbabilitySchema = z.number().min(0).max(1);
-export const NoulAnswerSchema = z.discriminatedUnion('kind', [
-  z.strictObject({
-    type: z.literal('noul'),
-    kind: z.literal('expression'),
-    holds: z.boolean().nullable(),
-    confidence: z.null(),
-  }),
-  z.strictObject({
-    type: z.literal('noul'),
-    kind: z.literal('classifier'),
-    holds: z.boolean().nullable(),
-    trueProbability: ProbabilitySchema.nullable(),
-    confidence: ProbabilitySchema.nullable(),
-  }),
-  z.strictObject({
-    type: z.literal('noul'),
-    kind: z.literal('llm'),
-    holds: z.boolean().nullable(),
-    confidence: ProbabilitySchema.nullable(),
-    reasoning: z.string().max(2048).nullable(),
-  }),
-]);
+export const NoulAnswerSchema = z.strictObject({
+  type: z.literal('noul'),
+  holds: z.boolean().nullable(),
+  trueProbability: ProbabilitySchema.nullable(),
+  confidence: ProbabilitySchema.nullable(),
+});
 export type NoulAnswer = z.infer<typeof NoulAnswerSchema>;
 export const ScoreAnswerSchema = z.strictObject({
   type: z.literal('score'),
@@ -400,35 +369,19 @@ export const ScoreAnswerSchema = z.strictObject({
   probabilities: z.record(z.string(), ProbabilitySchema).nullable(),
 });
 export type ScoreAnswer = z.infer<typeof ScoreAnswerSchema>;
-export const PrimitiveAnswerSchema = z.discriminatedUnion('type', [
+export const ClassifierAnswerSchema = z.discriminatedUnion('type', [
   ChoiceAnswerSchema,
   NoulAnswerSchema,
   ScoreAnswerSchema,
 ]);
-export type PrimitiveAnswer = z.infer<typeof PrimitiveAnswerSchema>;
-/** Fresh results cannot contain the honest unknowns allowed in converted historical facts. */
-export const PrimitiveAnswerEmissionSchema = PrimitiveAnswerSchema.superRefine((answer, ctx) => {
-  if (answer.type !== 'noul') return;
-  if (answer.holds === null)
-    ctx.addIssue({ code: 'custom', path: ['holds'], message: 'fresh Noul requires a boolean' });
-  if (answer.kind === 'classifier' && answer.trueProbability === null)
-    ctx.addIssue({
-      code: 'custom',
-      path: ['trueProbability'],
-      message: 'fresh classifier Noul requires true probability',
-    });
-  if (answer.kind !== 'expression' && answer.confidence === null)
-    ctx.addIssue({
-      code: 'custom',
-      path: ['confidence'],
-      message: 'fresh provider Noul requires confidence',
-    });
-  if (answer.kind === 'llm' && answer.reasoning === null)
-    ctx.addIssue({
-      code: 'custom',
-      path: ['reasoning'],
-      message: 'fresh LLM Noul requires a reasoning excerpt',
-    });
+export type ClassifierAnswer = z.infer<typeof ClassifierAnswerSchema>;
+/** Historical unknowns remain readable, but fresh classifiers require complete boolean facts. */
+export const ClassifierAnswerEmissionSchema = ClassifierAnswerSchema.superRefine((answer, ctx) => {
+  if (answer.type === 'noul') {
+    for (const key of ['holds', 'trueProbability', 'confidence'] as const)
+      if (answer[key] === null)
+        ctx.addIssue({ code: 'custom', path: [key], message: `fresh Noul requires ${key}` });
+  }
 });
 export const EvaluationProvenanceSchema = z.strictObject({
   kind: z.enum(['expression', 'classifier', 'llm']),
@@ -447,104 +400,141 @@ export const EvaluationAcceptanceSchema = z.discriminatedUnion('status', [
   }),
 ]);
 export type EvaluationAcceptance = z.infer<typeof EvaluationAcceptanceSchema>;
-export const PrimitiveEvaluationSchema = z.strictObject({
-  answer: PrimitiveAnswerSchema,
-  provenance: EvaluationProvenanceSchema,
+export const ClassifierEvaluationSchema = z.strictObject({
+  answer: ClassifierAnswerSchema,
+  provenance: EvaluationProvenanceSchema.extend({ kind: z.literal('classifier') }),
   acceptance: EvaluationAcceptanceSchema,
 });
-export type PrimitiveEvaluation = z.infer<typeof PrimitiveEvaluationSchema>;
-export const DecisionPayloadSchema = z
-  .strictObject({
-    answer: PrimitiveAnswerSchema,
-    portId: ChoiceOptionIdSchema,
-    provenance: EvaluationProvenanceSchema,
-  })
-  .superRefine((payload, ctx) => {
-    if (payload.answer.type === 'choice' && payload.portId !== payload.answer.optionId)
-      ctx.addIssue({
-        code: 'custom',
-        path: ['portId'],
-        message: 'selected port must equal the Choice option id',
-      });
-  });
+export type ClassifierEvaluation = z.infer<typeof ClassifierEvaluationSchema>;
+export const EvaluationObservationSchema = z.discriminatedUnion('kind', [
+  z.strictObject({
+    kind: z.literal('route'),
+    routeId: RouteIdSchema,
+    confidence: ProbabilitySchema.nullable(),
+    reasoning: z.string().max(2048).nullable(),
+  }),
+  z.strictObject({
+    kind: z.literal('boolean'),
+    holds: z.boolean().nullable(),
+    confidence: ProbabilitySchema.nullable(),
+    reasoning: z.string().max(2048).nullable(),
+  }),
+  z.strictObject({ kind: z.literal('classifier'), answer: ClassifierAnswerSchema }),
+]);
+export type EvaluationObservation = z.infer<typeof EvaluationObservationSchema>;
+export const EvaluationFactSchema = z.strictObject({
+  provenance: EvaluationProvenanceSchema,
+  observation: EvaluationObservationSchema,
+});
+/** Fresh facts are checked independently of decision routing, including predicates. */
+export const EvaluationEmissionSchema = EvaluationFactSchema.superRefine(
+  ({ provenance, observation }, ctx) => {
+    const require = (condition: boolean, path: string[], message: string) => {
+      if (!condition) ctx.addIssue({ code: 'custom', path, message });
+    };
+    if (provenance.kind === 'classifier') {
+      require(observation.kind === 'classifier', [
+        'observation',
+        'kind',
+      ], 'classifier evidence requires a classifier answer');
+      require(provenance.provider !== null &&
+        provenance.model !== null &&
+        provenance.classifierId !== null &&
+        provenance.effort === null, [
+        'provenance',
+      ], 'classifier evidence requires resolved provider, model and id');
+      if (observation.kind === 'classifier') {
+        const fresh = ClassifierAnswerEmissionSchema.safeParse(observation.answer);
+        if (!fresh.success)
+          for (const issue of fresh.error.issues)
+            ctx.addIssue({ ...issue, path: ['observation', 'answer', ...issue.path] });
+        require(observation.answer.type !== 'choice' || observation.answer.confidence !== null, [
+          'observation',
+          'answer',
+          'confidence',
+        ], 'fresh Choice requires confidence');
+      }
+    } else {
+      require(observation.kind !== 'classifier', [
+        'observation',
+        'kind',
+      ], 'route or boolean evidence required');
+      if (provenance.kind === 'expression') {
+        for (const key of ['provider', 'classifierId', 'model', 'effort'] as const)
+          require(provenance[key] === null, [
+            'provenance',
+            key,
+          ], 'expression provenance is inapplicable');
+        if (observation.kind !== 'classifier')
+          require(observation.confidence === null && observation.reasoning === null, [
+            'observation',
+          ], 'expression facts have no confidence or reasoning');
+      } else {
+        require(provenance.provider === 'codex' &&
+          provenance.classifierId === null &&
+          provenance.model !== null &&
+          provenance.effort !== null, [
+          'provenance',
+        ], 'LLM facts require resolved Codex model and effort');
+        if (observation.kind !== 'classifier')
+          require(observation.confidence !== null && observation.reasoning !== null, [
+            'observation',
+          ], 'LLM facts require confidence and reasoning');
+      }
+      if (observation.kind === 'boolean')
+        require(observation.holds !== null, [
+          'observation',
+          'holds',
+        ], 'fresh predicates require a boolean');
+    }
+  },
+);
+export const PredicateEvaluationSchema = EvaluationFactSchema.extend({
+  acceptance: EvaluationAcceptanceSchema,
+});
+export type PredicateEvaluation = z.infer<typeof PredicateEvaluationSchema>;
+export const DecisionPayloadSchema = EvaluationFactSchema.extend({
+  portId: RouteIdSchema,
+}).superRefine((payload, ctx) => {
+  const { observation } = payload;
+  if (
+    (observation.kind === 'route' && observation.routeId !== payload.portId) ||
+    (observation.kind === 'classifier' &&
+      observation.answer.type === 'choice' &&
+      observation.answer.optionId !== payload.portId)
+  )
+    ctx.addIssue({
+      code: 'custom',
+      path: ['portId'],
+      message: 'selected port must equal the observed route',
+    });
+});
 export type DecisionPayload = z.infer<typeof DecisionPayloadSchema>;
-
-/** Universal canonical evidence, including honest unknowns in offline-converted history. */
 export const EvaluationDiagnosticSchema = z.strictObject({
   provenance: EvaluationProvenanceSchema,
   code: z.string().min(1).max(64),
   message: z.string().min(1).max(256),
 });
-export const DecisionEvidenceSchema = z
-  .strictObject({
-    ...DecisionPayloadSchema.shape,
-    diagnostics: z.array(EvaluationDiagnosticSchema).max(3),
-  })
-  .superRefine((payload, ctx) => {
-    if (payload.answer.type === 'choice' && payload.portId !== payload.answer.optionId)
-      ctx.addIssue({
-        code: 'custom',
-        path: ['portId'],
-        message: 'selected port must equal the Choice option id',
-      });
-  });
+export const DecisionEvidenceSchema = DecisionPayloadSchema.safeExtend({
+  diagnostics: z.array(EvaluationDiagnosticSchema).max(3),
+});
 export type DecisionEvidence = z.infer<typeof DecisionEvidenceSchema>;
-
-/** Enforced at fresh emission, never applied to offline-converted factual history. */
 export const DecisionEmissionSchema = DecisionEvidenceSchema.superRefine((payload, ctx) => {
-  const { answer, provenance } = payload;
-  const fresh = PrimitiveAnswerEmissionSchema.safeParse(answer);
-  if (!fresh.success)
-    for (const issue of fresh.error.issues)
-      ctx.addIssue({ ...issue, path: ['answer', ...issue.path] });
-  const require = (condition: boolean, path: string[], message: string) => {
-    if (!condition) ctx.addIssue({ code: 'custom', path, message });
-  };
-  require(payload.diagnostics.length === 0, [
-    'diagnostics',
-  ], 'fresh single-evaluator evidence has no strategy skips');
-  if (answer.type === 'noul')
-    require(answer.kind === provenance.kind, [
-      'answer',
-      'kind',
-    ], 'Noul answer kind must match its evaluator');
-  if (answer.type === 'score')
-    require(provenance.kind === 'classifier', [
-      'provenance',
-      'kind',
-    ], 'Score requires a classifier evaluator');
-  if (provenance.kind === 'expression') {
-    for (const key of ['provider', 'classifierId', 'model', 'effort'] as const)
-      require(provenance[key] === null, [
-        'provenance',
-        key,
-      ], 'expression provenance is inapplicable');
-    require(answer.confidence === null &&
-      (answer.type === 'noul' || answer.probabilities === null), [
-      'answer',
-    ], 'expression answers have no confidence or probabilities');
-  } else {
-    require(provenance.provider !== null && provenance.model !== null, [
-      'provenance',
-    ], 'provider and resolved model are required for fresh provider evidence');
-    require(answer.confidence !== null || answer.type === 'score', [
-      'answer',
-      'confidence',
-    ], 'provider confidence is required');
-    if (provenance.kind === 'classifier') {
-      require(provenance.classifierId !== null && provenance.effort === null, [
-        'provenance',
-      ], 'classifier id is required and reasoning effort is inapplicable');
-    } else {
-      require(provenance.provider === 'codex' &&
-        provenance.classifierId === null &&
-        provenance.effort !== null, [
-        'provenance',
-      ], 'LLM evidence requires its implemented harness and resolved effort');
-      require(answer.type === 'noul' || answer.probabilities === null, [
-        'answer',
-        'probabilities',
-      ], 'LLM confidence does not establish classifier probabilities');
-    }
-  }
+  const fresh = EvaluationEmissionSchema.safeParse({
+    provenance: payload.provenance,
+    observation: payload.observation,
+  });
+  if (!fresh.success) for (const issue of fresh.error.issues) ctx.addIssue({ ...issue });
+  if (payload.observation.kind === 'boolean')
+    ctx.addIssue({
+      code: 'custom',
+      path: ['observation', 'kind'],
+      message: 'fresh decisions require a route or classifier observation',
+    });
+  if (payload.diagnostics.length !== 0)
+    ctx.addIssue({
+      code: 'custom',
+      path: ['diagnostics'],
+      message: 'fresh evaluations have no strategy skips',
+    });
 });

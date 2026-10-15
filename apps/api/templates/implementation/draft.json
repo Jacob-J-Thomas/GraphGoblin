@@ -1,9 +1,9 @@
 {
   "format": "graphgoblin-loop",
-  "formatVersion": 3,
+  "formatVersion": 4,
   "exportedAt": "2026-10-09T00:00:00.000Z",
   "loop": {
-    "schemaVersion": 3,
+    "schemaVersion": 4,
     "name": "Implementation starting point",
     "description": "Plan a task, develop a proposed or local change, and verify its evidence with a finite repair loop. Configure a working directory in the editor when needed.",
     "settings": {
@@ -164,30 +164,22 @@
           "y": 0
         },
         "config": {
-          "answer": {
-            "type": "choice",
-            "options": [
-              {
-                "id": "passed",
-                "label": "passed",
-                "criteria": "passed"
-              },
-              {
-                "id": "changes-needed",
-                "label": "changes-needed",
-                "criteria": "changes-needed"
-              },
-              {
-                "id": "blocked",
-                "label": "blocked",
-                "criteria": "blocked"
-              }
-            ]
-          },
-          "evaluation": {
-            "kind": "expression",
-            "jsonata": "outputs.verify.value.status"
-          }
+          "kind": "expression",
+          "jsonata": "outputs.verify.value.status",
+          "routes": [
+            {
+              "id": "passed",
+              "label": "passed"
+            },
+            {
+              "id": "changes-needed",
+              "label": "changes-needed"
+            },
+            {
+              "id": "blocked",
+              "label": "blocked"
+            }
+          ]
         }
       },
       {
@@ -223,15 +215,12 @@
           "criteria": [
             {
               "when": "predicate",
-              "answer": {
-                "type": "noul"
-              },
-              "evaluation": {
+              "predicate": {
                 "kind": "expression",
                 "jsonata": "true"
               },
               "match": {
-                "type": "noul",
+                "type": "boolean",
                 "value": true
               },
               "outcome": "failure"

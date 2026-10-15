@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -26,7 +27,7 @@ afterEach(async () => {
 });
 
 const inferLoop: LoopDefinitionInput = {
-  schemaVersion: 3,
+  schemaVersion: CURRENT_DEFINITION_FORMAT,
   name: 'infer',
   nodes: [
     { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },
@@ -40,7 +41,7 @@ const inferLoop: LoopDefinitionInput = {
 };
 
 const returnLoop: LoopDefinitionInput = {
-  schemaVersion: 3,
+  schemaVersion: CURRENT_DEFINITION_FORMAT,
   name: 'returns',
   nodes: [
     { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },

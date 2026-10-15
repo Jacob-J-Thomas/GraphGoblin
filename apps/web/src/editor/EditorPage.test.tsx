@@ -767,29 +767,29 @@ describe('EditorPage', () => {
     const api = new FakeApi();
     const def = newLoopDefinition('fields');
     const decision = {
-      answer: {
-        type: 'choice' as const,
-        options: [
-          { id: 'a', label: 'First', criteria: 'first' },
-          { id: 'b', label: 'Second', criteria: 'second' },
-        ],
-      },
-      evaluation: { kind: 'expression' as const, jsonata: '"b"' },
-      recordAlternatives: true,
+      kind: 'expression' as const,
+      jsonata: '"b"',
+      routes: [
+        {
+          id: 'a',
+          label: 'First',
+        },
+        {
+          id: 'b',
+          label: 'Second',
+        },
+      ],
     };
     def.nodes.push({ id: 'pick', kind: 'decision', label: 'Pick', config: decision });
     const loop = api.addLoop(def);
     renderApp(`/loops/${loop.id}/edit`, api);
     await screen.findByRole('heading', { name: 'fields' });
-    // The first option loses its display label: a schema issue at config.answer.options.0.label.
+    // The first option loses its display label: a schema issue at config.routes.0.label.
     act(() =>
       useEditorStore.getState().updateNode('pick', {
         config: {
           ...decision,
-          answer: {
-            ...decision.answer,
-            options: [{ ...decision.answer.options[0]!, label: '' }, decision.answer.options[1]!],
-          },
+          routes: [{ ...decision.routes[0]!, label: '' }, decision.routes[1]!],
         },
       }),
     );
@@ -798,9 +798,9 @@ describe('EditorPage', () => {
     await user.click(badge);
     expect(useEditorStore.getState().nodeDialogOpen).toBe(false);
     expect(popoverOf(badge)).toHaveAttribute('aria-label', 'Issues on pick');
-    await user.click(popoverButtons(badge, /config\.answer\.options\.0\.label/)[0]!);
+    await user.click(popoverButtons(badge, /config\.routes\.0\.label/)[0]!);
     const dialog = screen.getByRole('dialog', { name: 'Edit decision pick' });
-    const optionLabel = dialog.querySelector('[data-field="answer.options.0.label"] input');
+    const optionLabel = dialog.querySelector('[data-field="routes.0.label"] input');
     expect(optionLabel).toHaveFocus();
     await waitFor(() => expect(useEditorStore.getState().nodeFocus).toBeUndefined());
 
@@ -810,7 +810,7 @@ describe('EditorPage', () => {
     await user.click(header);
     await user.click(
       within(screen.getByRole('dialog', { name: 'Issues on pick' })).getByRole('button', {
-        name: /config\.answer\.options\.0\.label/,
+        name: /config\.routes\.0\.label/,
       }),
     );
     expect(optionLabel).toHaveFocus();
@@ -822,10 +822,10 @@ describe('EditorPage', () => {
     act(() => badge.focus());
     expect(badge).toHaveAttribute('aria-expanded', 'true');
     await user.keyboard('{ArrowDown}');
-    expect(document.activeElement).toHaveTextContent(/config\.answer\.options\.0\.label/);
+    expect(document.activeElement).toHaveTextContent(/config\.routes\.0\.label/);
     await user.keyboard('{Enter}');
     const reopened = screen.getByRole('dialog', { name: 'Edit decision pick' });
-    expect(reopened.querySelector('[data-field="answer.options.0.label"] input')).toHaveFocus();
+    expect(reopened.querySelector('[data-field="routes.0.label"] input')).toHaveFocus();
 
     // Once the schema holds, the graph's issues (no field) focus the heading instead.
     act(() => useEditorStore.getState().updateNode('pick', { config: decision }));

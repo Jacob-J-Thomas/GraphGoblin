@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "name": "kitchen-sink",
   "description": "Every node kind, for tests.",
   "settings": {
@@ -156,26 +156,18 @@
       },
       "kind": "decision",
       "config": {
-        "answer": {
-          "type": "choice",
-          "options": [
-            {
-              "id": "good",
-              "label": "good",
-              "criteria": "Looks good"
-            },
-            {
-              "id": "bad",
-              "label": "bad",
-              "criteria": "Needs work"
-            }
-          ]
-        },
-        "evaluation": {
-          "kind": "expression",
-          "jsonata": "lastOutput.value.ok ? \"good\" : \"bad\""
-        },
-        "recordAlternatives": true
+        "kind": "expression",
+        "jsonata": "lastOutput.value.ok ? \"good\" : \"bad\"",
+        "routes": [
+          {
+            "id": "good",
+            "label": "good"
+          },
+          {
+            "id": "bad",
+            "label": "bad"
+          }
+        ]
       }
     },
     {

@@ -1,7 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { RunEventSchema, V2RunEventSchema } from '@graphgoblin/contracts';
-import { FIXTURE_IDS, FIXTURE_TS, sampleThread } from '@graphgoblin/contracts/testing';
+import { V3RunEventSchema, V2RunEventSchema } from '@graphgoblin/contracts';
+import { FIXTURE_IDS, FIXTURE_TS } from '@graphgoblin/contracts/testing';
+import { sampleThreadV3 as sampleThread } from './__fixtures__/upgrade-v3.js';
 import { upgradeRunHistoryCurrent } from './upgrade-history-current.js';
 import { upgradeRunHistoryV1 } from './upgrade-history.js';
 
@@ -132,9 +133,9 @@ describe('pre-cutover recorded history', () => {
     if (made.type !== 'decision.made') throw new Error('decision fixture missing');
     const { diagnostics, ...withoutDiagnostics } = made;
     expect(diagnostics).toEqual([]);
-    expect(RunEventSchema.safeParse(made).success).toBe(true);
+    expect(V3RunEventSchema.safeParse(made).success).toBe(true);
     // All other canonical fields are identical; removing only the converted field is refused.
-    expect(RunEventSchema.safeParse(withoutDiagnostics).success).toBe(false);
+    expect(V3RunEventSchema.safeParse(withoutDiagnostics).success).toBe(false);
     expect(V2RunEventSchema.safeParse(withoutDiagnostics).success).toBe(false);
   });
   it.each([1, 2] as const)(
@@ -251,7 +252,7 @@ describe('pre-cutover recorded history', () => {
       event(1, 'node.progress', { progress: fixtures.progress[0] }),
       ...fixtures.decisions.map((fact) => event(1, 'decision.made', fact)),
     ]) {
-      expect(RunEventSchema.safeParse(raw).success).toBe(false);
+      expect(V3RunEventSchema.safeParse(raw).success).toBe(false);
       expect(V2RunEventSchema.safeParse(raw).success).toBe(false);
       expect(
         upgradeRunHistoryCurrent({

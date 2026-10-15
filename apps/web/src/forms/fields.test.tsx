@@ -88,12 +88,16 @@ describe('form controls in the schema-driven form', () => {
       <Harness
         schema={NodeConfigSchemas.decision}
         initial={{
-          routes: [
-            { label: 'yes', description: '' },
-            { label: 'no', description: '' },
-          ],
+          kind: 'classifier',
+          model: 'jev',
           question: 'q',
-          strategy: ['jev'],
+          answer: {
+            type: 'choice',
+            options: [
+              { id: 'yes', label: 'Yes', criteria: 'Yes' },
+              { id: 'no', label: 'No', criteria: 'No' },
+            ],
+          },
         }}
         spy={spy}
       />,
@@ -289,31 +293,32 @@ describe('form controls in the schema-driven form', () => {
       <Harness
         schema={NodeConfigSchemas.decision}
         initial={{
-          answer: {
-            type: 'choice',
-            options: [
-              { id: 'yes', label: 'Yes', criteria: 'Choose yes' },
-              { id: 'no', label: 'No', criteria: 'Choose no' },
-            ],
-          },
-          evaluation: {
-            kind: 'llm',
-            harness: 'codex',
-            model: { mode: 'inherit' },
-            effort: { mode: 'inherit' },
-            question: 'q',
-            context: { vars: ['topic'] },
-          },
+          kind: 'llm',
+          harness: 'codex',
+          model: { mode: 'inherit' },
+          effort: { mode: 'inherit' },
+          context: { vars: ['topic'] },
+          instructions: 'q',
+          routes: [
+            {
+              id: 'yes',
+              label: 'Yes',
+            },
+            {
+              id: 'no',
+              label: 'No',
+            },
+          ],
         }}
         spy={vi.fn()}
       />,
     );
-    const options = screen.getByRole('group', { name: 'Options' });
+    const options = screen.getByRole('group', { name: 'Routes' });
     expect(options.querySelector(':scope > legend span[aria-hidden="true"]')).not.toBeNull();
     expect(options).toHaveAccessibleDescription(
-      'At least 2 items. Two to sixty-four uniquely labelled options, each with a stable id and a nonblank criterion.',
+      'At least 2 items. Declared stable route ids and readable labels.',
     );
-    await user.click(within(options).getByRole('button', { name: 'Remove options 1' }));
+    await user.click(within(options).getByRole('button', { name: 'Remove routes 1' }));
     await waitFor(() => expect(within(options).getByRole('alert')).toHaveTextContent(/>=2 items/));
     expect(options).toHaveAccessibleDescription(/At least 2 items\..*>=2 items/);
     // Optional context variables carry no marker or collection rule, only their help.

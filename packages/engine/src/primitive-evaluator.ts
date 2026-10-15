@@ -1,35 +1,49 @@
 import {
-  NoulSpecSchema,
-  PrimitiveAnswerEmissionSchema,
-  type Evaluation,
-  type PrimitiveAnswerSpec,
-  type PrimitiveEvaluation,
+  ClassifierAnswerEmissionSchema,
+  EvaluationEmissionSchema,
+  type ClassifierDecisionConfig,
+  type ExpressionDecisionConfig,
+  type LlmDecisionConfig,
+  type PredicateConfig,
+  type ClassifierEvaluation,
   type EvaluationProvenance,
   type JsonValue,
-  type PrimitiveAnswer,
+  type ClassifierAnswer,
+  type PredicateEvaluation,
+  type EvaluationObservation,
 } from '@graphgoblin/contracts';
 import { evaluateExpression, validatePrimitiveAnswer } from '@graphgoblin/domain';
 import { summarizeDeciderError } from './decider-errors.js';
 import { isAbortError, RunFailureError } from './errors.js';
 import type { HandlerServices } from './handler.js';
 import type { ClassifierUnavailableReason, EnginePorts } from './ports.js';
-
-/** Callers retain their own question rendering and provider-state shape. */
-export interface PrimitiveEvaluationRequest {
+interface EvaluationRequest {
   nodeId: string;
   ownerId: string;
-  evaluation: Evaluation;
-  answer: PrimitiveAnswerSpec;
-  expressionView: unknown;
-  question?: string;
-  context?: JsonValue;
+  config: { kind: 'expression' | 'llm' | 'classifier' };
   signal: AbortSignal;
   ports: Pick<EnginePorts, 'classifiers' | 'deciders' | 'logger'>;
   resolveModel: HandlerServices['resolveModel'];
 }
-
-export type PrimitiveEvaluationResult = PrimitiveEvaluation;
-
+export interface ClassifierEvaluationRequest extends EvaluationRequest {
+  config: ClassifierDecisionConfig | Extract<PredicateConfig, { kind: 'classifier' }>;
+  question: string;
+  context: JsonValue;
+}
+export type RouteEvaluationRequest = EvaluationRequest &
+  (
+    | { config: ExpressionDecisionConfig; expressionView: unknown }
+    | { config: LlmDecisionConfig; instructions: string; context: JsonValue }
+  );
+export type BooleanEvaluationRequest = EvaluationRequest &
+  (
+    | { config: Extract<PredicateConfig, { kind: 'expression' }>; expressionView: unknown }
+    | {
+        config: Extract<PredicateConfig, { kind: 'llm' }>;
+        instructions: string;
+        context: JsonValue;
+      }
+  );
 const CLASSIFIER_MESSAGES: Record<ClassifierUnavailableReason, string> = {
   CLASSIFIER_MODEL_NOT_FOUND: 'The selected classifier is not in the catalog',
   CLASSIFIER_PRIMITIVE_UNSUPPORTED: 'The selected classifier does not support this primitive',
@@ -39,7 +53,7 @@ const CLASSIFIER_MESSAGES: Record<ClassifierUnavailableReason, string> = {
 };
 
 function fail(
-  request: PrimitiveEvaluationRequest,
+  request: EvaluationRequest,
   code: ConstructorParameters<typeof RunFailureError>[0],
   message: string,
   resumable = false,
@@ -53,7 +67,7 @@ function fail(
 }
 
 function providerFailure(
-  request: PrimitiveEvaluationRequest,
+  request: EvaluationRequest,
   error: unknown,
   provenance: EvaluationProvenance,
 ): never {
@@ -62,7 +76,7 @@ function providerFailure(
   request.ports.logger.warn(
     {
       nodeId: request.nodeId,
-      kind: request.evaluation.kind,
+      kind: request.config.kind,
       name: diagnostic.name,
       code: diagnostic.code,
       status: diagnostic.status,
@@ -94,11 +108,11 @@ function providerFailure(
 }
 
 function validated(
-  request: PrimitiveEvaluationRequest,
+  request: ClassifierEvaluationRequest,
   value: unknown,
   provenance: EvaluationProvenance,
-): PrimitiveAnswer {
-  const parsed = PrimitiveAnswerEmissionSchema.safeParse(value);
+): ClassifierAnswer {
+  const parsed = ClassifierAnswerEmissionSchema.safeParse(value);
   if (!parsed.success)
     fail(
       request,
@@ -107,249 +121,318 @@ function validated(
       false,
       { provenance },
     );
-  const problem = validatePrimitiveAnswer(request.answer, parsed.data);
+  const problem = validatePrimitiveAnswer(request.config.answer, parsed.data);
   if (problem) fail(request, 'EVALUATION_INVALID_RESPONSE', problem, false, { provenance });
   return parsed.data;
 }
 
-/** One evaluator invocation; only a valid classifier confidence result may be rejected. */
-export async function evaluatePrimitive(
-  request: PrimitiveEvaluationRequest,
-): Promise<PrimitiveEvaluationResult> {
-  const { evaluation, answer } = request;
-  if (answer.type === 'score' && evaluation.kind !== 'classifier')
-    fail(request, 'EVALUATION_INVALID_CONFIGURATION', 'Score requires a classifier evaluator');
-  if (
-    evaluation.kind === 'classifier' &&
-    evaluation.truthThreshold !== undefined &&
-    answer.type !== 'noul'
-  )
+export async function evaluateClassifier(
+  request: ClassifierEvaluationRequest,
+): Promise<ClassifierEvaluation> {
+  request.signal.throwIfAborted();
+  const evaluation = request.config,
+    answer = evaluation.answer;
+  if (evaluation.truthThreshold !== undefined && answer.type !== 'noul')
     fail(
       request,
       'EVALUATION_INVALID_CONFIGURATION',
       'truthThreshold applies only to classifier Noul',
     );
-  const noul =
-    answer.type === 'noul' && evaluation.kind !== 'expression'
-      ? NoulSpecSchema.safeParse(
-          'true' in answer && 'false' in answer
-            ? {
-                type: 'noul',
-                true: { label: answer.true.label, criteria: answer.true.criteria },
-                false: { label: answer.false.label, criteria: answer.false.criteria },
-              }
-            : answer,
-        )
+  const prepared = { question: request.question, context: request.context };
+  const criteria =
+    answer.type === 'noul'
+      ? { true: answer.true.criteria, false: answer.false.criteria }
       : undefined;
-  if (noul && !noul.success)
+  let result: ClassifierAnswer;
+  const selection = await request.ports.classifiers.resolve(
+    request.ownerId,
+    evaluation.model,
+    answer.type,
+  );
+  request.signal.throwIfAborted();
+  if (selection.status === 'unavailable') {
+    const invalid = selection.reason === 'CLASSIFIER_PRIMITIVE_UNSUPPORTED';
     fail(
       request,
-      'EVALUATION_INVALID_CONFIGURATION',
-      'Provider Noul requires both authored side criteria',
+      invalid ? 'EVALUATION_INVALID_CONFIGURATION' : 'EVALUATION_UNAVAILABLE',
+      CLASSIFIER_MESSAGES[selection.reason],
+      !invalid,
+      { reason: selection.reason },
     );
-  const criteria = noul?.success
-    ? { true: noul.data.true.criteria, false: noul.data.false.criteria }
-    : undefined;
-  let result: PrimitiveAnswer;
-  let provenance: EvaluationProvenance;
-  if (evaluation.kind === 'expression') {
-    if (answer.type === 'score')
-      fail(request, 'EVALUATION_INVALID_CONFIGURATION', 'Score requires a classifier evaluator');
-    let value: unknown;
-    try {
-      value = await evaluateExpression(evaluation.jsonata, request.expressionView);
-    } catch (error) {
-      if (isAbortError(error) || request.signal.aborted) throw error;
-      fail(
-        request,
-        'EVALUATION_EXPRESSION_FAILED',
-        'The evaluation expression could not be evaluated',
-      );
-    }
+  }
+  const provenance = {
+    kind: 'classifier' as const,
+    ...selection.provenance,
+    effort: null,
+  };
+  try {
     if (answer.type === 'choice') {
-      if (typeof value !== 'string' || !answer.options.some((option) => option.id === value))
-        fail(
-          request,
-          'EVALUATION_INVALID_RESPONSE',
-          'The decision expression must return a declared string option id',
-        );
-      result = { type: 'choice', optionId: value, confidence: null, probabilities: null };
-    } else {
-      if (typeof value !== 'boolean')
-        fail(request, 'EVALUATION_INVALID_RESPONSE', 'The Noul expression must return a boolean');
-      result = { type: 'noul', kind: 'expression', holds: value, confidence: null };
-    }
-    provenance = {
-      kind: 'expression',
-      provider: null,
-      classifierId: null,
-      model: null,
-      effort: null,
-    };
-  } else {
-    if (request.question === undefined || request.context === undefined)
-      fail(
-        request,
-        'EVALUATION_INVALID_CONFIGURATION',
-        'Provider evaluation needs prepared question and state',
+      result = await selection.classifier.choose(
+        { ...prepared, options: answer.options },
+        request.signal,
       );
-    const prepared = { question: request.question, context: request.context };
-    if (evaluation.kind === 'classifier') {
-      const selection = await request.ports.classifiers.resolve(
-        request.ownerId,
-        evaluation.model,
-        answer.type,
+    } else if (answer.type === 'noul') {
+      const raw: unknown = await selection.classifier.classifyNoul(
+        { ...prepared, criteria: criteria! },
+        request.signal,
       );
-      if (selection.status === 'unavailable') {
-        const invalid = selection.reason === 'CLASSIFIER_PRIMITIVE_UNSUPPORTED';
-        fail(
-          request,
-          invalid ? 'EVALUATION_INVALID_CONFIGURATION' : 'EVALUATION_UNAVAILABLE',
-          CLASSIFIER_MESSAGES[selection.reason],
-          !invalid,
-          { reason: selection.reason },
-        );
-      }
-      provenance = { kind: 'classifier', ...selection.provenance, effort: null };
-      try {
-        if (answer.type === 'choice') {
-          result = await selection.classifier.choose(
-            { ...prepared, options: answer.options },
-            request.signal,
-          );
-        } else if (answer.type === 'noul') {
-          const raw: unknown = await selection.classifier.classifyNoul(
-            { ...prepared, criteria: criteria! },
-            request.signal,
-          );
-          if (
-            typeof raw !== 'object' ||
-            raw === null ||
-            Array.isArray(raw) ||
-            !('type' in raw) ||
-            raw.type !== 'noul' ||
-            !('trueProbability' in raw) ||
-            typeof raw.trueProbability !== 'number' ||
-            !Number.isFinite(raw.trueProbability) ||
-            raw.trueProbability < 0 ||
-            raw.trueProbability > 1
-          )
-            fail(
-              request,
-              'EVALUATION_INVALID_RESPONSE',
-              'The classifier returned an invalid Noul probability',
-              false,
-              { provenance },
-            );
-          const holds = raw.trueProbability >= (evaluation.truthThreshold ?? 0.5);
-          result = {
-            type: 'noul',
-            kind: 'classifier',
-            holds,
-            trueProbability: raw.trueProbability,
-            confidence: holds ? raw.trueProbability : 1 - raw.trueProbability,
-          };
-        } else {
-          result = await selection.classifier.score(
-            { ...prepared, anchors: answer.anchors },
-            request.signal,
-          );
-        }
-      } catch (error) {
-        if (error instanceof RunFailureError) throw error;
-        providerFailure(request, error, provenance);
-      }
-      result = validated(request, result, provenance);
-      if (result.type === 'choice' && (result.confidence === null || result.probabilities === null))
-        fail(
-          request,
-          'EVALUATION_INVALID_RESPONSE',
-          'The classifier must return confidence and option probabilities',
-          false,
-          { provenance },
-        );
-      if (result.type === 'noul' && result.kind !== 'classifier')
-        fail(
-          request,
-          'EVALUATION_INVALID_RESPONSE',
-          'The classifier must return its true probability',
-          false,
-          { provenance },
-        );
-      if (evaluation.minConfidence !== undefined) {
-        if (result.confidence === null)
-          fail(
-            request,
-            'EVALUATION_INVALID_RESPONSE',
-            'The classifier must return confidence for the authored minimum',
-            false,
-            { provenance },
-          );
-        if (result.confidence < evaluation.minConfidence)
-          return {
-            answer: result,
-            provenance,
-            acceptance: {
-              status: 'rejected',
-              code: 'EVALUATION_RESULT_REJECTED',
-              minConfidence: evaluation.minConfidence,
-            },
-          };
-      }
-    } else {
-      if (answer.type === 'score')
-        fail(request, 'EVALUATION_INVALID_CONFIGURATION', 'Score requires a classifier evaluator');
-      const decider = request.ports.deciders.find(
-        (port) => port.id === evaluation.harness && port.available(),
-      );
-      if (!decider)
-        fail(request, 'EVALUATION_UNAVAILABLE', 'The selected LLM evaluator is unavailable', true);
-      if (answer.type === 'noul' && !decider.noul)
-        fail(
-          request,
-          'EVALUATION_INVALID_CONFIGURATION',
-          'The selected LLM evaluator does not support Noul',
-        );
-      const resolved = await request.resolveModel(
-        evaluation.harness,
-        evaluation.model.mode === 'explicit' ? evaluation.model.value : undefined,
-        evaluation.effort.mode === 'explicit' ? evaluation.effort.value : undefined,
-      );
-      provenance = { kind: 'llm', provider: evaluation.harness, classifierId: null, ...resolved };
-      try {
-        if (answer.type === 'choice') {
-          result = await decider.choose(
-            { ...prepared, options: answer.options, ...resolved },
-            request.signal,
-          );
-        } else {
-          const raw = await decider.noul(
-            {
-              ...prepared,
-              criteria: criteria!,
-              ...resolved,
-            },
-            request.signal,
-          );
-          result = { ...raw, kind: 'llm' };
-        }
-      } catch (error) {
-        providerFailure(request, error, provenance);
-      }
-      result = validated(request, result, provenance);
       if (
-        result.confidence === null ||
-        (result.type === 'choice' && result.probabilities !== null) ||
-        (result.type === 'noul' && result.kind !== 'llm')
+        typeof raw !== 'object' ||
+        raw === null ||
+        Array.isArray(raw) ||
+        !('type' in raw) ||
+        raw.type !== 'noul' ||
+        !('trueProbability' in raw) ||
+        typeof raw.trueProbability !== 'number' ||
+        !Number.isFinite(raw.trueProbability) ||
+        raw.trueProbability < 0 ||
+        raw.trueProbability > 1
       )
         fail(
           request,
           'EVALUATION_INVALID_RESPONSE',
-          'LLM answers require informational confidence without classifier probabilities',
+          'The classifier returned an invalid Noul probability',
           false,
           { provenance },
         );
+      const holds = raw.trueProbability >= (evaluation.truthThreshold ?? 0.5);
+      result = {
+        type: 'noul',
+        holds,
+        trueProbability: raw.trueProbability,
+        confidence: holds ? raw.trueProbability : 1 - raw.trueProbability,
+      };
+    } else {
+      result = await selection.classifier.score(
+        { ...prepared, anchors: answer.anchors },
+        request.signal,
+      );
     }
+  } catch (error) {
+    if (error instanceof RunFailureError) throw error;
+    providerFailure(request, error, provenance);
   }
+  result = validated(request, result, provenance);
+  if (result.type === 'choice' && (result.confidence === null || result.probabilities === null))
+    fail(
+      request,
+      'EVALUATION_INVALID_RESPONSE',
+      'The classifier must return confidence and option probabilities',
+      false,
+      { provenance },
+    );
+  if (result.type === 'noul' && result.trueProbability === null)
+    fail(
+      request,
+      'EVALUATION_INVALID_RESPONSE',
+      'The classifier must return its true probability',
+      false,
+      { provenance },
+    );
+  if (evaluation.minConfidence !== undefined) {
+    if (result.confidence === null)
+      fail(
+        request,
+        'EVALUATION_INVALID_RESPONSE',
+        'The classifier must return confidence for the authored minimum',
+        false,
+        { provenance },
+      );
+    if (result.confidence < evaluation.minConfidence)
+      return {
+        answer: result,
+        provenance,
+        acceptance: {
+          status: 'rejected',
+          code: 'EVALUATION_RESULT_REJECTED',
+          minConfidence: evaluation.minConfidence,
+        },
+      };
+  }
+  request.signal.throwIfAborted();
   return { answer: result, provenance, acceptance: { status: 'accepted' } };
+}
+
+const expressionProvenance: EvaluationProvenance = {
+  kind: 'expression',
+  provider: null,
+  classifierId: null,
+  model: null,
+  effort: null,
+};
+async function expressionValue(
+  request: EvaluationRequest,
+  source: string,
+  view: unknown,
+): Promise<unknown> {
+  request.signal.throwIfAborted();
+  try {
+    const value: unknown = await evaluateExpression(source, view);
+    request.signal.throwIfAborted();
+    return value;
+  } catch (error) {
+    if (isAbortError(error) || request.signal.aborted) throw error;
+    fail(
+      request,
+      'EVALUATION_EXPRESSION_FAILED',
+      'The evaluation expression could not be evaluated',
+    );
+  }
+}
+async function evaluateLlm(
+  request: EvaluationRequest,
+  config: LlmDecisionConfig | Extract<PredicateConfig, { kind: 'llm' }>,
+  instructions: string,
+  context: JsonValue,
+  mode: 'route' | 'boolean',
+): Promise<{ provenance: EvaluationProvenance; observation: EvaluationObservation }> {
+  request.signal.throwIfAborted();
+  const decider = request.ports.deciders.find(
+    (port) => port.id === config.harness && port.available(),
+  );
+  if (!decider)
+    fail(request, 'EVALUATION_UNAVAILABLE', 'The selected LLM evaluator is unavailable', true);
+  const resolved = await request.resolveModel(
+    config.harness,
+    config.model.mode === 'explicit' ? config.model.value : undefined,
+    config.effort.mode === 'explicit' ? config.effort.value : undefined,
+  );
+  request.signal.throwIfAborted();
+  const provenance: EvaluationProvenance = {
+    kind: 'llm',
+    provider: config.harness,
+    classifierId: null,
+    ...resolved,
+  };
+  let raw: unknown;
+  try {
+    const prepared = { instructions, context, ...resolved };
+    raw =
+      mode === 'route' && 'routes' in config
+        ? await decider.route({ ...prepared, routes: config.routes }, request.signal)
+        : await decider.evaluateBoolean(prepared, request.signal);
+    request.signal.throwIfAborted();
+  } catch (error) {
+    providerFailure(request, error, provenance);
+  }
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw))
+    fail(
+      request,
+      'EVALUATION_INVALID_RESPONSE',
+      'The LLM returned an invalid structured answer',
+      false,
+      { provenance },
+    );
+  const keys =
+    mode === 'route' ? ['route', 'confidence', 'reasoning'] : ['holds', 'confidence', 'reasoning'];
+  if (
+    Object.keys(raw).length !== 3 ||
+    Object.keys(raw).some((key) => !keys.includes(key)) ||
+    !('confidence' in raw) ||
+    typeof raw.confidence !== 'number' ||
+    !Number.isFinite(raw.confidence) ||
+    raw.confidence < 0 ||
+    raw.confidence > 1 ||
+    !('reasoning' in raw) ||
+    typeof raw.reasoning !== 'string'
+  )
+    fail(
+      request,
+      'EVALUATION_INVALID_RESPONSE',
+      'The LLM returned an invalid structured answer',
+      false,
+      { provenance },
+    );
+  const observation: EvaluationObservation =
+    mode === 'route' && 'routes' in config
+      ? (() => {
+          if (
+            !('route' in raw) ||
+            typeof raw.route !== 'string' ||
+            !config.routes.some((route) => route.id === raw.route)
+          )
+            fail(
+              request,
+              'EVALUATION_INVALID_RESPONSE',
+              'The LLM must return a declared route id',
+              false,
+              { provenance },
+            );
+          return {
+            kind: 'route' as const,
+            routeId: raw.route,
+            confidence: raw.confidence,
+            reasoning: raw.reasoning.slice(0, 2048),
+          };
+        })()
+      : (() => {
+          if (!('holds' in raw) || typeof raw.holds !== 'boolean')
+            fail(
+              request,
+              'EVALUATION_INVALID_RESPONSE',
+              'The LLM predicate must return a boolean',
+              false,
+              { provenance },
+            );
+          return {
+            kind: 'boolean' as const,
+            holds: raw.holds,
+            confidence: raw.confidence,
+            reasoning: raw.reasoning.slice(0, 2048),
+          };
+        })();
+  const emission = EvaluationEmissionSchema.safeParse({ provenance, observation });
+  if (!emission.success)
+    fail(
+      request,
+      'EVALUATION_INVALID_RESPONSE',
+      'The LLM returned inconsistent evaluation evidence',
+      false,
+      { provenance, issues: emission.error.issues },
+    );
+  return emission.data;
+}
+export async function evaluateRoute(request: RouteEvaluationRequest) {
+  if ('expressionView' in request) {
+    const value = await expressionValue(request, request.config.jsonata, request.expressionView);
+    if (typeof value !== 'string' || !request.config.routes.some((route) => route.id === value))
+      fail(
+        request,
+        'EVALUATION_INVALID_RESPONSE',
+        'The decision expression must return a declared scalar string route id',
+      );
+    return {
+      provenance: expressionProvenance,
+      observation: { kind: 'route' as const, routeId: value, confidence: null, reasoning: null },
+    };
+  }
+  return evaluateLlm(request, request.config, request.instructions, request.context, 'route');
+}
+export async function evaluateBoolean(
+  request: BooleanEvaluationRequest,
+): Promise<PredicateEvaluation> {
+  if ('expressionView' in request) {
+    const value = await expressionValue(request, request.config.jsonata, request.expressionView);
+    if (typeof value !== 'boolean')
+      fail(
+        request,
+        'EVALUATION_INVALID_RESPONSE',
+        'The predicate expression must return a boolean',
+      );
+    return {
+      provenance: expressionProvenance,
+      observation: { kind: 'boolean', holds: value, confidence: null, reasoning: null },
+      acceptance: { status: 'accepted' },
+    };
+  }
+  return {
+    ...(await evaluateLlm(
+      request,
+      request.config,
+      request.instructions,
+      request.context,
+      'boolean',
+    )),
+    acceptance: { status: 'accepted' },
+  };
 }

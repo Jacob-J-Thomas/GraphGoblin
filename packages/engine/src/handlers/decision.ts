@@ -7,7 +7,7 @@ import {
 import { decisionPortId, threadView } from '@graphgoblin/domain';
 import { RunFailureError } from '../errors.js';
 import type { NodeContext, NodeHandler } from '../handler.js';
-import { evaluatePrimitive } from '../primitive-evaluator.js';
+import { evaluateClassifier, evaluateRoute } from '../primitive-evaluator.js';
 import { outputPatch, selectMessages, toJson } from './common.js';
 
 async function decisionContext(
@@ -33,53 +33,69 @@ async function decisionContext(
 export const decisionHandler: NodeHandler<'decision'> = {
   kind: 'decision',
   async execute(ctx) {
-    const evaluation = ctx.config.evaluation;
-    // The full-thread question and separately selected provider state remain caller-owned.
-    const prepared =
-      evaluation.kind === 'expression'
-        ? {}
-        : {
-            question: await ctx.services.render(evaluation.question),
-            context: await decisionContext(ctx, evaluation.context),
-          };
-    const result = await evaluatePrimitive({
+    const config = ctx.config;
+    const common = {
       nodeId: ctx.node.id,
       ownerId: ctx.run.ownerId,
-      evaluation,
-      answer: ctx.config.answer,
-      expressionView: threadView(ctx.thread),
-      ...prepared,
       signal: ctx.signal,
       ports: ctx.ports,
-      resolveModel: (...args) => ctx.services.resolveModel(...args),
-    });
-    const rawAnswer = result.answer;
-    const answer =
-      rawAnswer.type === 'choice' || rawAnswer.type === 'score'
-        ? {
-            ...rawAnswer,
-            probabilities: ctx.config.recordAlternatives ? rawAnswer.probabilities : null,
-          }
-        : rawAnswer;
-    if (result.acceptance.status === 'rejected')
-      throw new RunFailureError(
-        result.acceptance.code,
-        'Classifier confidence is below the authored minimum',
-        {
-          nodeId: ctx.node.id,
-          resumable: false,
-          details: {
-            answer,
-            provenance: result.provenance,
-            acceptance: result.acceptance,
-          },
-        },
-      );
-    const payload: DecisionPayload = {
-      answer,
-      portId: decisionPortId(ctx.config.answer, answer),
-      provenance: result.provenance,
+      resolveModel: (...args: Parameters<typeof ctx.services.resolveModel>) =>
+        ctx.services.resolveModel(...args),
     };
+    let payload: DecisionPayload;
+    switch (config.kind) {
+      case 'expression':
+      case 'llm': {
+        const result =
+          config.kind === 'expression'
+            ? await evaluateRoute({ ...common, config, expressionView: threadView(ctx.thread) })
+            : await evaluateRoute({
+                ...common,
+                config,
+                instructions: await ctx.services.render(config.instructions),
+                context: await decisionContext(ctx, config.context),
+              });
+        if (result.observation.kind !== 'route')
+          throw new Error('route evaluator returned a different observation');
+        payload = { ...result, portId: result.observation.routeId };
+        break;
+      }
+      case 'classifier': {
+        const result = await evaluateClassifier({
+          ...common,
+          config,
+          question: await ctx.services.render(config.question),
+          context: await decisionContext(ctx, config.context),
+        });
+        const answer =
+          result.answer.type === 'noul'
+            ? result.answer
+            : {
+                ...result.answer,
+                probabilities: config.recordAlternatives ? result.answer.probabilities : null,
+              };
+        if (result.acceptance.status === 'rejected')
+          throw new RunFailureError(
+            result.acceptance.code,
+            'Classifier confidence is below the authored minimum',
+            {
+              nodeId: ctx.node.id,
+              resumable: false,
+              details: {
+                observation: { kind: 'classifier', answer },
+                provenance: result.provenance,
+                acceptance: result.acceptance,
+              },
+            },
+          );
+        payload = {
+          observation: { kind: 'classifier', answer },
+          provenance: result.provenance,
+          portId: decisionPortId(config.answer, answer),
+        };
+        break;
+      }
+    }
     const evidence = DecisionEmissionSchema.safeParse({ ...payload, diagnostics: [] });
     if (!evidence.success)
       throw new RunFailureError(

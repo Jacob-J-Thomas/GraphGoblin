@@ -214,22 +214,22 @@ test('the decision LLM uses an explicit harness model and rejects unsupported ef
             ...node,
             kind: 'decision',
             config: {
-              answer: {
-                type: 'choice',
-                options: [
-                  { id: 'yes', label: 'Yes', criteria: 'Choose yes' },
-                  { id: 'no', label: 'No', criteria: 'Choose no' },
-                ],
-              },
-              evaluation: {
-                kind: 'llm',
-                harness: 'codex',
-                model: { mode: 'explicit', value: 'picker-decision' },
-                effort: { mode: 'explicit', value: effort },
-                question: 'q',
-                context: {},
-              },
-              recordAlternatives: true,
+              kind: 'llm',
+              harness: 'codex',
+              model: { mode: 'explicit', value: 'picker-decision' },
+              effort: { mode: 'explicit', value: effort },
+              context: {},
+              instructions: 'q',
+              routes: [
+                {
+                  id: 'yes',
+                  label: 'Yes',
+                },
+                {
+                  id: 'no',
+                  label: 'No',
+                },
+              ],
             },
           }
         : node,
@@ -251,7 +251,7 @@ test('the decision LLM uses an explicit harness model and rejects unsupported ef
   const { loop } = (await created.json()) as { loop: { id: string } };
   await page.goto(`/app/loops/${loop.id}/edit`);
   const dialog = await openNode(page, 'infer');
-  const evaluation = dialog.getByRole('group', { name: 'Evaluation', exact: true });
+  const evaluation = dialog;
   const modelGroup = evaluation.getByRole('group', { name: 'Model', exact: true });
   const effortGroup = evaluation.getByRole('group', { name: 'Effort', exact: true });
   const model = modelGroup.getByLabel('Value', { exact: true });
@@ -267,11 +267,9 @@ test('the decision LLM uses an explicit harness model and rejects unsupported ef
     LoopDefinitionSchema.parse(stored.current.definition).nodes.find((node) => node.id === 'infer')
       ?.config,
   ).toMatchObject({
-    evaluation: {
-      kind: 'llm',
-      model: { mode: 'explicit', value: 'picker-decision' },
-      effort: { mode: 'explicit', value: 'high' },
-    },
+    kind: 'llm',
+    model: { mode: 'explicit', value: 'picker-decision' },
+    effort: { mode: 'explicit', value: 'high' },
   });
 });
 

@@ -1,10 +1,11 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { describe, expect, it } from 'vitest';
 import type { LoopDefinitionInput } from '@graphgoblin/contracts';
 import type { ClassifierUnavailableReason } from '../ports.js';
-import { FakeClassifierRegistry, FakeDecider, createTestEngine } from '../testing/index.js';
+import { FakeClassifierRegistry, FakeClassifier, createTestEngine } from '../testing/index.js';
 function loop(model = 'jev'): LoopDefinitionInput {
   return {
-    schemaVersion: 3,
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
     name: 'classifier-' + model,
     nodes: [
       { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
@@ -13,6 +14,10 @@ function loop(model = 'jev'): LoopDefinitionInput {
         kind: 'decision',
         label: 'Choose',
         config: {
+          kind: 'classifier',
+          model,
+          question: 'Which?',
+          minConfidence: 0.5,
           answer: {
             type: 'choice',
             options: [
@@ -20,7 +25,6 @@ function loop(model = 'jev'): LoopDefinitionInput {
               { id: 'no', label: 'No', criteria: 'No criterion' },
             ],
           },
-          evaluation: { kind: 'classifier', model, question: 'Which?', minConfidence: 0.5 },
         },
       },
       { id: 'yes', kind: 'exit', label: 'Yes', config: { return: { mapping: '"yes"' } } },
@@ -40,7 +44,7 @@ describe('classifier selection through the executor', () => {
       ['a', 'yes'],
       ['b', 'no'],
     ] as const) {
-      const d = new FakeDecider('jev', () => ({
+      const d = new FakeClassifier('jev', () => ({
         type: 'choice',
         optionId,
         confidence: 1,
@@ -50,7 +54,7 @@ describe('classifier selection through the executor', () => {
       const r = await e.runToIdle(e.publish(loop(id)).loopId);
       expect(r.result).toBe(optionId);
       expect(e.events(r.id).find((ev) => ev.type === 'decision.made')).toMatchObject({
-        answer: { optionId },
+        observation: { kind: 'classifier', answer: { optionId } },
         portId: optionId,
         provenance: {
           kind: 'classifier',
@@ -97,7 +101,7 @@ describe('classifier selection through the executor', () => {
       });
       expect(JSON.stringify(e.events(r.id))).not.toContain('private diagnostic');
       expect(e.ports.jev.choices).toEqual([]);
-      expect(e.ports.codexDecider.choices).toEqual([]);
+      expect(e.ports.codexDecider.routes).toEqual([]);
       expect(e.eventTypes(r.id)).not.toContain('decision.made');
     },
   );

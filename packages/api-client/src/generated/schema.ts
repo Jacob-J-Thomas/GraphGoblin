@@ -2256,7 +2256,7 @@ export interface components {
         JsonValueInput: JsonValue;
         LoopDefinitionInput: {
             /** @constant */
-            schemaVersion: 3;
+            schemaVersion: 4;
             name: string;
             description?: string | undefined;
             /** @default {} */
@@ -2436,6 +2436,57 @@ export interface components {
                 /** @constant */
                 kind: "decision";
                 config: {
+                    /** @constant */
+                    kind: "expression";
+                    jsonata: string;
+                    routes: {
+                        id: string;
+                        label: string;
+                    }[];
+                } | {
+                    /** @constant */
+                    kind: "llm";
+                    instructions: string;
+                    /** @constant */
+                    harness: "codex";
+                    model: {
+                        /** @constant */
+                        mode: "inherit";
+                    } | {
+                        /** @constant */
+                        mode: "explicit";
+                        value: string;
+                    };
+                    effort: {
+                        /** @constant */
+                        mode: "inherit";
+                    } | {
+                        /** @constant */
+                        mode: "explicit";
+                        /** @enum {string} */
+                        value: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                    };
+                    routes: {
+                        id: string;
+                        label: string;
+                    }[];
+                    /** @default {} */
+                    context?: {
+                        /** @default last */
+                        messages?: ("none" | "last" | "all" | number | {
+                            where: string;
+                        }) | undefined;
+                        vars?: string[] | undefined;
+                        /** @default true */
+                        includeLastOutput?: boolean | undefined;
+                    } | undefined;
+                } | {
+                    /** @constant */
+                    kind: "classifier";
+                    model: string;
+                    question: string;
+                    minConfidence?: number | undefined;
+                    truthThreshold?: number | undefined;
                     answer: {
                         /** @constant */
                         type: "choice";
@@ -2468,61 +2519,16 @@ export interface components {
                             max: number;
                         }[];
                     };
-                    evaluation: {
-                        /** @constant */
-                        kind: "expression";
-                        jsonata: string;
-                    } | {
-                        /** @constant */
-                        kind: "classifier";
-                        model: string;
-                        question: string;
-                        minConfidence?: number | undefined;
-                        truthThreshold?: number | undefined;
-                        /** @default {} */
-                        context?: {
-                            /** @default last */
-                            messages?: ("none" | "last" | "all" | number | {
-                                where: string;
-                            }) | undefined;
-                            vars?: string[] | undefined;
-                            /** @default true */
-                            includeLastOutput?: boolean | undefined;
-                        } | undefined;
-                    } | {
-                        /** @constant */
-                        kind: "llm";
-                        /** @constant */
-                        harness: "codex";
-                        model: {
-                            /** @constant */
-                            mode: "inherit";
-                        } | {
-                            /** @constant */
-                            mode: "explicit";
-                            value: string;
-                        };
-                        effort: {
-                            /** @constant */
-                            mode: "inherit";
-                        } | {
-                            /** @constant */
-                            mode: "explicit";
-                            /** @enum {string} */
-                            value: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
-                        };
-                        question: string;
-                        /** @default {} */
-                        context?: {
-                            /** @default last */
-                            messages?: ("none" | "last" | "all" | number | {
-                                where: string;
-                            }) | undefined;
-                            vars?: string[] | undefined;
-                            /** @default true */
-                            includeLastOutput?: boolean | undefined;
-                        } | undefined;
-                    };
+                    /** @default {} */
+                    context?: {
+                        /** @default last */
+                        messages?: ("none" | "last" | "all" | number | {
+                            where: string;
+                        }) | undefined;
+                        vars?: string[] | undefined;
+                        /** @default true */
+                        includeLastOutput?: boolean | undefined;
+                    } | undefined;
                     /** @default true */
                     recordAlternatives?: boolean | undefined;
                 };
@@ -3259,47 +3265,14 @@ export interface components {
                     } | {
                         /** @constant */
                         when: "predicate";
-                        answer: ({
-                            /** @constant */
-                            type: "choice";
-                            options: {
-                                id: string;
-                                label: string;
-                                criteria: string;
-                            }[];
-                        } | {
-                            /** @constant */
-                            type: "noul";
-                            true: {
-                                label: string;
-                                criteria: string;
-                            };
-                            false: {
-                                label: string;
-                                criteria: string;
-                            };
-                        } | {
-                            /** @constant */
-                            type: "score";
-                            anchors: string[];
-                        }) | {
-                            /** @constant */
-                            type: "noul";
-                        };
-                        evaluation: {
+                        predicate: {
                             /** @constant */
                             kind: "expression";
                             jsonata: string;
                         } | {
                             /** @constant */
-                            kind: "classifier";
-                            model: string;
-                            question: string;
-                            minConfidence?: number | undefined;
-                            truthThreshold?: number | undefined;
-                        } | {
-                            /** @constant */
                             kind: "llm";
+                            instructions: string;
                             /** @constant */
                             harness: "codex";
                             model: {
@@ -3319,19 +3292,53 @@ export interface components {
                                 /** @enum {string} */
                                 value: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
                             };
+                        } | {
+                            /** @constant */
+                            kind: "classifier";
+                            model: string;
                             question: string;
+                            minConfidence?: number | undefined;
+                            truthThreshold?: number | undefined;
+                            answer: {
+                                /** @constant */
+                                type: "choice";
+                                options: {
+                                    id: string;
+                                    label: string;
+                                    criteria: string;
+                                }[];
+                            } | {
+                                /** @constant */
+                                type: "noul";
+                                true: {
+                                    label: string;
+                                    criteria: string;
+                                };
+                                false: {
+                                    label: string;
+                                    criteria: string;
+                                };
+                            } | {
+                                /** @constant */
+                                type: "score";
+                                anchors: string[];
+                            };
                         };
                         match: {
                             /** @constant */
-                            type: "noul";
+                            type: "boolean";
                             /** @default true */
                             value?: boolean | undefined;
                             minReportedConfidence?: number | undefined;
                         } | {
                             /** @constant */
+                            type: "noul";
+                            /** @default true */
+                            value?: boolean | undefined;
+                        } | {
+                            /** @constant */
                             type: "choice";
                             optionIds: string[];
-                            minReportedConfidence?: number | undefined;
                         } | {
                             /** @constant */
                             type: "score";
@@ -3399,7 +3406,7 @@ export interface components {
             /** @constant */
             format: "graphgoblin-loop";
             /** @constant */
-            formatVersion: 3;
+            formatVersion: 4;
             /** Format: date-time */
             exportedAt: string;
             loop: components["schemas"]["LoopDefinitionInput"];
@@ -3757,50 +3764,6 @@ export interface components {
                 reasoningOutputTokens?: number | undefined;
             };
         } | {
-            answer: {
-                /** @constant */
-                type: "choice";
-                optionId: string;
-                confidence: number | null;
-                probabilities: {
-                    [key: string]: number;
-                } | null;
-            } | ({
-                /** @constant */
-                type: "noul";
-                /** @constant */
-                kind: "expression";
-                holds: boolean | null;
-                confidence: null;
-            } | {
-                /** @constant */
-                type: "noul";
-                /** @constant */
-                kind: "classifier";
-                holds: boolean | null;
-                trueProbability: number | null;
-                confidence: number | null;
-            } | {
-                /** @constant */
-                type: "noul";
-                /** @constant */
-                kind: "llm";
-                holds: boolean | null;
-                confidence: number | null;
-                reasoning: string | null;
-            }) | {
-                /** @constant */
-                type: "score";
-                score: number;
-                confidence: number | null;
-                legend: {
-                    [key: string]: string;
-                };
-                probabilities: {
-                    [key: string]: number;
-                } | null;
-            };
-            portId: string;
             provenance: {
                 /** @enum {string} */
                 kind: "expression" | "classifier" | "llm";
@@ -3809,6 +3772,49 @@ export interface components {
                 model: string | null;
                 effort: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | null;
             };
+            observation: {
+                /** @constant */
+                kind: "route";
+                routeId: string;
+                confidence: number | null;
+                reasoning: string | null;
+            } | {
+                /** @constant */
+                kind: "boolean";
+                holds: boolean | null;
+                confidence: number | null;
+                reasoning: string | null;
+            } | {
+                /** @constant */
+                kind: "classifier";
+                answer: {
+                    /** @constant */
+                    type: "choice";
+                    optionId: string;
+                    confidence: number | null;
+                    probabilities: {
+                        [key: string]: number;
+                    } | null;
+                } | {
+                    /** @constant */
+                    type: "noul";
+                    holds: boolean | null;
+                    trueProbability: number | null;
+                    confidence: number | null;
+                } | {
+                    /** @constant */
+                    type: "score";
+                    score: number;
+                    confidence: number | null;
+                    legend: {
+                        [key: string]: string;
+                    };
+                    probabilities: {
+                        [key: string]: number;
+                    } | null;
+                };
+            };
+            portId: string;
             diagnostics: components["schemas"]["EvaluationDiagnosticInput"][];
             runId: string;
             seq: number;
@@ -3915,48 +3921,47 @@ export interface components {
             strategy: "expression" | "classifier" | "llm";
             /** @enum {string} */
             status: "matched" | "not-matched";
-            answer: {
+            observation: {
                 /** @constant */
-                type: "choice";
-                optionId: string;
+                kind: "route";
+                routeId: string;
                 confidence: number | null;
-                probabilities: {
-                    [key: string]: number;
-                } | null;
-            } | ({
-                /** @constant */
-                type: "noul";
-                /** @constant */
-                kind: "expression";
-                holds: boolean | null;
-                confidence: null;
+                reasoning: string | null;
             } | {
                 /** @constant */
-                type: "noul";
-                /** @constant */
-                kind: "classifier";
-                holds: boolean | null;
-                trueProbability: number | null;
-                confidence: number | null;
-            } | {
-                /** @constant */
-                type: "noul";
-                /** @constant */
-                kind: "llm";
+                kind: "boolean";
                 holds: boolean | null;
                 confidence: number | null;
                 reasoning: string | null;
-            }) | {
+            } | {
                 /** @constant */
-                type: "score";
-                score: number;
-                confidence: number | null;
-                legend: {
-                    [key: string]: string;
+                kind: "classifier";
+                answer: {
+                    /** @constant */
+                    type: "choice";
+                    optionId: string;
+                    confidence: number | null;
+                    probabilities: {
+                        [key: string]: number;
+                    } | null;
+                } | {
+                    /** @constant */
+                    type: "noul";
+                    holds: boolean | null;
+                    trueProbability: number | null;
+                    confidence: number | null;
+                } | {
+                    /** @constant */
+                    type: "score";
+                    score: number;
+                    confidence: number | null;
+                    legend: {
+                        [key: string]: string;
+                    };
+                    probabilities: {
+                        [key: string]: number;
+                    } | null;
                 };
-                probabilities: {
-                    [key: string]: number;
-                } | null;
             };
             provenance: {
                 /** @enum {string} */
@@ -3978,15 +3983,19 @@ export interface components {
             }) | null;
             match: {
                 /** @constant */
-                type: "noul";
+                type: "boolean";
                 /** @default true */
                 value?: boolean | undefined;
                 minReportedConfidence?: number | undefined;
             } | {
                 /** @constant */
+                type: "noul";
+                /** @default true */
+                value?: boolean | undefined;
+            } | {
+                /** @constant */
                 type: "choice";
                 optionIds: string[];
-                minReportedConfidence?: number | undefined;
             } | {
                 /** @constant */
                 type: "score";
@@ -4220,7 +4229,7 @@ export interface components {
         JsonValue: JsonValue;
         LoopDefinition: {
             /** @constant */
-            schemaVersion: 3;
+            schemaVersion: 4;
             name: string;
             description?: string | undefined;
             settings: {
@@ -4397,6 +4406,56 @@ export interface components {
                 /** @constant */
                 kind: "decision";
                 config: {
+                    /** @constant */
+                    kind: "expression";
+                    jsonata: string;
+                    routes: {
+                        id: string;
+                        label: string;
+                    }[];
+                } | {
+                    /** @constant */
+                    kind: "llm";
+                    instructions: string;
+                    /** @constant */
+                    harness: "codex";
+                    model: {
+                        /** @constant */
+                        mode: "inherit";
+                    } | {
+                        /** @constant */
+                        mode: "explicit";
+                        value: string;
+                    };
+                    effort: {
+                        /** @constant */
+                        mode: "inherit";
+                    } | {
+                        /** @constant */
+                        mode: "explicit";
+                        /** @enum {string} */
+                        value: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+                    };
+                    routes: {
+                        id: string;
+                        label: string;
+                    }[];
+                    context: {
+                        /** @default last */
+                        messages: "none" | "last" | "all" | number | {
+                            where: string;
+                        };
+                        vars?: string[] | undefined;
+                        /** @default true */
+                        includeLastOutput: boolean;
+                    };
+                } | {
+                    /** @constant */
+                    kind: "classifier";
+                    model: string;
+                    question: string;
+                    minConfidence?: number | undefined;
+                    truthThreshold?: number | undefined;
                     answer: {
                         /** @constant */
                         type: "choice";
@@ -4429,58 +4488,14 @@ export interface components {
                             max: number;
                         }[];
                     };
-                    evaluation: {
-                        /** @constant */
-                        kind: "expression";
-                        jsonata: string;
-                    } | {
-                        /** @constant */
-                        kind: "classifier";
-                        model: string;
-                        question: string;
-                        minConfidence?: number | undefined;
-                        truthThreshold?: number | undefined;
-                        context: {
-                            /** @default last */
-                            messages: "none" | "last" | "all" | number | {
-                                where: string;
-                            };
-                            vars?: string[] | undefined;
-                            /** @default true */
-                            includeLastOutput: boolean;
+                    context: {
+                        /** @default last */
+                        messages: "none" | "last" | "all" | number | {
+                            where: string;
                         };
-                    } | {
-                        /** @constant */
-                        kind: "llm";
-                        /** @constant */
-                        harness: "codex";
-                        model: {
-                            /** @constant */
-                            mode: "inherit";
-                        } | {
-                            /** @constant */
-                            mode: "explicit";
-                            value: string;
-                        };
-                        effort: {
-                            /** @constant */
-                            mode: "inherit";
-                        } | {
-                            /** @constant */
-                            mode: "explicit";
-                            /** @enum {string} */
-                            value: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
-                        };
-                        question: string;
-                        context: {
-                            /** @default last */
-                            messages: "none" | "last" | "all" | number | {
-                                where: string;
-                            };
-                            vars?: string[] | undefined;
-                            /** @default true */
-                            includeLastOutput: boolean;
-                        };
+                        vars?: string[] | undefined;
+                        /** @default true */
+                        includeLastOutput: boolean;
                     };
                     /** @default true */
                     recordAlternatives: boolean;
@@ -5209,47 +5224,14 @@ export interface components {
                     } | {
                         /** @constant */
                         when: "predicate";
-                        answer: ({
-                            /** @constant */
-                            type: "choice";
-                            options: {
-                                id: string;
-                                label: string;
-                                criteria: string;
-                            }[];
-                        } | {
-                            /** @constant */
-                            type: "noul";
-                            true: {
-                                label: string;
-                                criteria: string;
-                            };
-                            false: {
-                                label: string;
-                                criteria: string;
-                            };
-                        } | {
-                            /** @constant */
-                            type: "score";
-                            anchors: string[];
-                        }) | {
-                            /** @constant */
-                            type: "noul";
-                        };
-                        evaluation: {
+                        predicate: {
                             /** @constant */
                             kind: "expression";
                             jsonata: string;
                         } | {
                             /** @constant */
-                            kind: "classifier";
-                            model: string;
-                            question: string;
-                            minConfidence?: number | undefined;
-                            truthThreshold?: number | undefined;
-                        } | {
-                            /** @constant */
                             kind: "llm";
+                            instructions: string;
                             /** @constant */
                             harness: "codex";
                             model: {
@@ -5269,19 +5251,53 @@ export interface components {
                                 /** @enum {string} */
                                 value: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
                             };
+                        } | {
+                            /** @constant */
+                            kind: "classifier";
+                            model: string;
                             question: string;
+                            minConfidence?: number | undefined;
+                            truthThreshold?: number | undefined;
+                            answer: {
+                                /** @constant */
+                                type: "choice";
+                                options: {
+                                    id: string;
+                                    label: string;
+                                    criteria: string;
+                                }[];
+                            } | {
+                                /** @constant */
+                                type: "noul";
+                                true: {
+                                    label: string;
+                                    criteria: string;
+                                };
+                                false: {
+                                    label: string;
+                                    criteria: string;
+                                };
+                            } | {
+                                /** @constant */
+                                type: "score";
+                                anchors: string[];
+                            };
                         };
                         match: {
                             /** @constant */
-                            type: "noul";
+                            type: "boolean";
                             /** @default true */
                             value: boolean;
                             minReportedConfidence?: number | undefined;
                         } | {
                             /** @constant */
+                            type: "noul";
+                            /** @default true */
+                            value: boolean;
+                        } | {
+                            /** @constant */
                             type: "choice";
                             optionIds: string[];
-                            minReportedConfidence?: number | undefined;
                         } | {
                             /** @constant */
                             type: "score";
@@ -5348,7 +5364,7 @@ export interface components {
             /** @constant */
             format: "graphgoblin-loop";
             /** @constant */
-            formatVersion: 3;
+            formatVersion: 4;
             /** Format: date-time */
             exportedAt: string;
             loop: components["schemas"]["LoopDefinition"];
@@ -5706,50 +5722,6 @@ export interface components {
                 reasoningOutputTokens: number;
             };
         } | {
-            answer: {
-                /** @constant */
-                type: "choice";
-                optionId: string;
-                confidence: number | null;
-                probabilities: {
-                    [key: string]: number;
-                } | null;
-            } | ({
-                /** @constant */
-                type: "noul";
-                /** @constant */
-                kind: "expression";
-                holds: boolean | null;
-                confidence: null;
-            } | {
-                /** @constant */
-                type: "noul";
-                /** @constant */
-                kind: "classifier";
-                holds: boolean | null;
-                trueProbability: number | null;
-                confidence: number | null;
-            } | {
-                /** @constant */
-                type: "noul";
-                /** @constant */
-                kind: "llm";
-                holds: boolean | null;
-                confidence: number | null;
-                reasoning: string | null;
-            }) | {
-                /** @constant */
-                type: "score";
-                score: number;
-                confidence: number | null;
-                legend: {
-                    [key: string]: string;
-                };
-                probabilities: {
-                    [key: string]: number;
-                } | null;
-            };
-            portId: string;
             provenance: {
                 /** @enum {string} */
                 kind: "expression" | "classifier" | "llm";
@@ -5758,6 +5730,49 @@ export interface components {
                 model: string | null;
                 effort: ("minimal" | "low" | "medium" | "high" | "xhigh" | "max") | null;
             };
+            observation: {
+                /** @constant */
+                kind: "route";
+                routeId: string;
+                confidence: number | null;
+                reasoning: string | null;
+            } | {
+                /** @constant */
+                kind: "boolean";
+                holds: boolean | null;
+                confidence: number | null;
+                reasoning: string | null;
+            } | {
+                /** @constant */
+                kind: "classifier";
+                answer: {
+                    /** @constant */
+                    type: "choice";
+                    optionId: string;
+                    confidence: number | null;
+                    probabilities: {
+                        [key: string]: number;
+                    } | null;
+                } | {
+                    /** @constant */
+                    type: "noul";
+                    holds: boolean | null;
+                    trueProbability: number | null;
+                    confidence: number | null;
+                } | {
+                    /** @constant */
+                    type: "score";
+                    score: number;
+                    confidence: number | null;
+                    legend: {
+                        [key: string]: string;
+                    };
+                    probabilities: {
+                        [key: string]: number;
+                    } | null;
+                };
+            };
+            portId: string;
             diagnostics: components["schemas"]["EvaluationDiagnostic"][];
             runId: string;
             seq: number;
@@ -5864,48 +5879,47 @@ export interface components {
             strategy: "expression" | "classifier" | "llm";
             /** @enum {string} */
             status: "matched" | "not-matched";
-            answer: {
+            observation: {
                 /** @constant */
-                type: "choice";
-                optionId: string;
+                kind: "route";
+                routeId: string;
                 confidence: number | null;
-                probabilities: {
-                    [key: string]: number;
-                } | null;
-            } | ({
-                /** @constant */
-                type: "noul";
-                /** @constant */
-                kind: "expression";
-                holds: boolean | null;
-                confidence: null;
+                reasoning: string | null;
             } | {
                 /** @constant */
-                type: "noul";
-                /** @constant */
-                kind: "classifier";
-                holds: boolean | null;
-                trueProbability: number | null;
-                confidence: number | null;
-            } | {
-                /** @constant */
-                type: "noul";
-                /** @constant */
-                kind: "llm";
+                kind: "boolean";
                 holds: boolean | null;
                 confidence: number | null;
                 reasoning: string | null;
-            }) | {
+            } | {
                 /** @constant */
-                type: "score";
-                score: number;
-                confidence: number | null;
-                legend: {
-                    [key: string]: string;
+                kind: "classifier";
+                answer: {
+                    /** @constant */
+                    type: "choice";
+                    optionId: string;
+                    confidence: number | null;
+                    probabilities: {
+                        [key: string]: number;
+                    } | null;
+                } | {
+                    /** @constant */
+                    type: "noul";
+                    holds: boolean | null;
+                    trueProbability: number | null;
+                    confidence: number | null;
+                } | {
+                    /** @constant */
+                    type: "score";
+                    score: number;
+                    confidence: number | null;
+                    legend: {
+                        [key: string]: string;
+                    };
+                    probabilities: {
+                        [key: string]: number;
+                    } | null;
                 };
-                probabilities: {
-                    [key: string]: number;
-                } | null;
             };
             provenance: {
                 /** @enum {string} */
@@ -5927,15 +5941,19 @@ export interface components {
             }) | null;
             match: {
                 /** @constant */
-                type: "noul";
+                type: "boolean";
                 /** @default true */
                 value: boolean;
                 minReportedConfidence?: number | undefined;
             } | {
                 /** @constant */
+                type: "noul";
+                /** @default true */
+                value: boolean;
+            } | {
+                /** @constant */
                 type: "choice";
                 optionIds: string[];
-                minReportedConfidence?: number | undefined;
             } | {
                 /** @constant */
                 type: "score";

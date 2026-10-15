@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import type { AddressInfo } from 'node:net';
 import { cpus, totalmem } from 'node:os';
 import type { LoopDefinitionInput, RunEvent, RunRecord } from '@graphgoblin/contracts';
@@ -19,7 +20,7 @@ const ITEMS = 1_000;
 const PARALLEL = 10;
 
 const loop: LoopDefinitionInput = {
-  schemaVersion: 3,
+  schemaVersion: CURRENT_DEFINITION_FORMAT,
   name: 'perf',
   nodes: [
     { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },

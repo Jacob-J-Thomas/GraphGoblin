@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { describe, expect, it } from 'vitest';
 import {
   LoopDefinitionSchema,
@@ -70,14 +71,14 @@ describe('validateLoop', () => {
 
   it('requires a trigger and an exit', () => {
     const noTrigger = parse({
-      schemaVersion: 3,
+      schemaVersion: CURRENT_DEFINITION_FORMAT,
       name: 'x',
       nodes: [{ id: 'done', kind: 'exit', label: 'Done', config: {} }],
       edges: [],
     });
     expect(codes(noTrigger)).toContain('NO_TRIGGER');
     const noExit = parse({
-      schemaVersion: 3,
+      schemaVersion: CURRENT_DEFINITION_FORMAT,
       name: 'x',
       nodes: [{ id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } }],
       edges: [],
@@ -134,10 +135,16 @@ describe('validateLoop', () => {
     const input = kitchenSinkLoop();
     const decide = input.nodes.find((n) => n.id === 'decide')!;
     if (decide.kind === 'decision')
-      decide.config.evaluation = {
-        kind: 'classifier',
-        model: 'jev',
-        question: 'Q',
+      decide.config = {
+        routes: [
+          { id: 'good', label: 'Good' },
+          { id: 'bad', label: 'Bad' },
+        ],
+        kind: 'llm',
+        harness: 'codex',
+        model: { mode: 'inherit' },
+        effort: { mode: 'inherit' },
+        instructions: 'Q',
         context: { vars: ['nope'] },
       };
     const done = input.nodes.find((n) => n.id === 'done')!;

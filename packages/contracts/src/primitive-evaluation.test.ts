@@ -2,8 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
   DecisionConfigSchema,
   DecisionEmissionSchema,
-  EvaluationSchema,
-  EvaluationAnswerSpecSchema,
+  ClassifierEvaluationConfigSchema,
+  EvaluationObservationSchema,
+  ClassifierAnswerSpecSchema,
   NoulAnswerSchema,
   NoulConfigSchema,
   ScoreConfigSchema,
@@ -35,27 +36,25 @@ const llm = {
 };
 
 describe('primitive authoring', () => {
-  it.each([expression, classifier, llm])(
-    'admits Noul with one supported evaluator %j',
-    (evaluation) => {
-      const parsed = DecisionConfigSchema.parse({ answer: noul, evaluation });
-      expect(DecisionConfigSchema.parse(JSON.parse(JSON.stringify(parsed)))).toEqual(parsed);
-      if (parsed.evaluation.kind !== 'expression')
-        expect(parsed.evaluation.context).toEqual({ messages: 'last', includeLastOutput: true });
-      expect(parsed.evaluation).not.toHaveProperty('truthThreshold');
-    },
-  );
+  it('admits classifier Noul with provider context defaults', () => {
+    const parsed = DecisionConfigSchema.parse({ ...classifier, answer: noul });
+    if (parsed.kind !== 'classifier') throw new Error('classifier expected');
+    expect(parsed.context).toEqual({ messages: 'last', includeLastOutput: true });
+    expect(parsed).not.toHaveProperty('truthThreshold');
+  });
   it('keeps the shared evaluation/base answer schemas free of decision-only selection and routes', () => {
-    expect(EvaluationSchema.parse(classifier)).toEqual(classifier);
-    expect(EvaluationSchema.safeParse({ ...classifier, context: {} }).success).toBe(false);
+    expect(ClassifierEvaluationConfigSchema.parse(classifier)).toEqual(classifier);
+    expect(ClassifierEvaluationConfigSchema.safeParse({ ...classifier, context: {} }).success).toBe(
+      false,
+    );
     expect(
-      EvaluationAnswerSpecSchema.parse({
+      ClassifierAnswerSpecSchema.parse({
         type: 'noul',
         true: { label: 'Yes', criteria: 'Ready' },
         false: { label: 'No', criteria: 'Not ready' },
       }),
     ).toHaveProperty('type', 'noul');
-    expect(EvaluationAnswerSpecSchema.parse({ type: 'score', anchors: score.anchors })).toEqual({
+    expect(ClassifierAnswerSpecSchema.parse({ type: 'score', anchors: score.anchors })).toEqual({
       type: 'score',
       anchors: score.anchors,
     });
@@ -71,27 +70,14 @@ describe('primitive authoring', () => {
   });
   it('permits truth thresholds only on classifier Noul and Score only on classifiers', () => {
     expect(
-      DecisionConfigSchema.parse({ answer: noul, evaluation: { ...classifier, truthThreshold: 0 } })
-        .evaluation,
+      DecisionConfigSchema.parse({ ...classifier, answer: noul, truthThreshold: 0 }),
     ).toHaveProperty('truthThreshold', 0);
-    for (const evaluation of [expression, llm]) {
-      expect(DecisionConfigSchema.safeParse({ answer: score, evaluation }).success).toBe(false);
-      expect(
-        DecisionConfigSchema.safeParse({
-          answer: noul,
-          evaluation: { ...evaluation, truthThreshold: 0.5 },
-        }).success,
-      ).toBe(false);
-    }
     expect(
-      DecisionConfigSchema.safeParse({
-        answer: score,
-        evaluation: { ...classifier, truthThreshold: 0.5 },
-      }).success,
+      DecisionConfigSchema.safeParse({ ...classifier, answer: score, truthThreshold: 0.5 }).success,
     ).toBe(false);
-    expect(DecisionConfigSchema.safeParse({ answer: score, evaluation: classifier }).success).toBe(
-      true,
-    );
+    expect(DecisionConfigSchema.safeParse({ ...classifier, answer: score }).success).toBe(true);
+    for (const evaluation of [expression, llm])
+      expect(DecisionConfigSchema.safeParse({ ...evaluation, answer: score }).success).toBe(false);
   });
   it('validates full score coverage independent of display order', () => {
     expect(
@@ -123,14 +109,18 @@ describe('primitive authoring', () => {
 });
 
 describe('primitive facts', () => {
-  it('keeps boolean answers distinct from classifier true probability', () => {
+  it('keeps boolean observations distinct from classifier Noul probability', () => {
     expect(
-      NoulAnswerSchema.parse({ type: 'noul', kind: 'expression', holds: false, confidence: null }),
+      EvaluationObservationSchema.parse({
+        kind: 'boolean',
+        holds: false,
+        confidence: null,
+        reasoning: null,
+      }),
     ).not.toHaveProperty('trueProbability');
     expect(
       NoulAnswerSchema.parse({
         type: 'noul',
-        kind: 'classifier',
         holds: false,
         trueProbability: 0.7,
         confidence: 1 - 0.7,
@@ -141,9 +131,9 @@ describe('primitive facts', () => {
         type: 'noul',
         kind: 'llm',
         holds: true,
-        confidence: 0.8,
-        reasoning: 'Ready',
         trueProbability: 0.8,
+        confidence: 0.8,
+        reasoning: 'R',
       }).success,
     ).toBe(false);
   });
@@ -161,7 +151,7 @@ describe('primitive facts', () => {
       ).toBe(false);
     },
   );
-  it('admits applicable fresh Noul and Score evidence without altering old Choice facts', () => {
+  it('admits fresh classifier facts and refuses incomplete Noul evidence', () => {
     const provenance = {
       kind: 'classifier',
       provider: 'typesafe',
@@ -169,31 +159,21 @@ describe('primitive facts', () => {
       model: 'jev-latest',
       effort: null,
     };
-    const answer = {
-      type: 'noul',
-      kind: 'classifier',
-      holds: true,
-      trueProbability: 0.8,
-      confidence: 0.8,
+    const answer = { type: 'noul', holds: true, trueProbability: 0.8, confidence: 0.8 };
+    const payload = {
+      observation: { kind: 'classifier', answer },
+      provenance,
+      portId: 'yes',
+      diagnostics: [],
     };
-    expect(
-      DecisionEmissionSchema.safeParse({ answer, portId: 'yes', provenance, diagnostics: [] })
-        .success,
-    ).toBe(true);
-    expect(
-      DecisionEmissionSchema.safeParse({
-        answer,
-        portId: 'yes',
-        provenance: {
-          ...provenance,
-          kind: 'llm',
-          provider: 'codex',
-          classifierId: null,
-          effort: 'low',
-        },
-        diagnostics: [],
-      }).success,
-    ).toBe(false);
+    expect(DecisionEmissionSchema.safeParse(payload).success).toBe(true);
+    for (const key of ['holds', 'trueProbability', 'confidence'])
+      expect(
+        DecisionEmissionSchema.safeParse({
+          ...payload,
+          observation: { kind: 'classifier', answer: { ...answer, [key]: null } },
+        }).success,
+      ).toBe(false);
     const scoreAnswer = {
       type: 'score',
       score: 1.25,
@@ -204,60 +184,14 @@ describe('primitive facts', () => {
     expect(ScoreAnswerSchema.parse(scoreAnswer)).toEqual(scoreAnswer);
     expect(
       DecisionEmissionSchema.safeParse({
-        answer: scoreAnswer,
-        portId: 'low',
-        provenance,
-        diagnostics: [],
+        ...payload,
+        observation: { kind: 'classifier', answer: scoreAnswer },
       }).success,
     ).toBe(true);
     expect(
-      DecisionEmissionSchema.safeParse({
-        answer: scoreAnswer,
-        portId: 'low',
-        provenance: {
-          kind: 'expression',
-          provider: null,
-          classifierId: null,
-          model: null,
-          effort: null,
-        },
-        diagnostics: [],
-      }).success,
+      DecisionEmissionSchema.safeParse({ ...payload, provenance: { ...provenance, kind: 'llm' } })
+        .success,
     ).toBe(false);
-    expect(
-      DecisionEmissionSchema.safeParse({
-        answer: { type: 'noul', kind: 'expression', holds: false, confidence: null },
-        portId: 'no',
-        provenance: {
-          kind: 'expression',
-          provider: null,
-          classifierId: null,
-          model: null,
-          effort: null,
-        },
-        diagnostics: [],
-      }).success,
-    ).toBe(true);
-    expect(
-      DecisionEmissionSchema.safeParse({
-        answer: {
-          type: 'noul',
-          kind: 'llm',
-          holds: false,
-          confidence: 0.7,
-          reasoning: 'Needs work',
-        },
-        portId: 'no',
-        provenance: {
-          kind: 'llm',
-          provider: 'codex',
-          classifierId: null,
-          model: 'gpt-6-luna',
-          effort: 'low',
-        },
-        diagnostics: [],
-      }).success,
-    ).toBe(true);
   });
   it('validates primitive HTTP responses without requiring unrelated provider metadata', () => {
     expect(

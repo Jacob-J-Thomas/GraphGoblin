@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { afterEach, describe, expect, it } from 'vitest';
 import { LoopDefinitionSchema } from '@graphgoblin/contracts';
 import { minimalLoop, FIXTURE_TS, fakeUlid } from '@graphgoblin/contracts/testing';
@@ -14,7 +15,7 @@ import {
   inspectDatabaseUpgrade,
   type DatabaseUpgradeManifest,
 } from './upgrade.js';
-const textColumn = (value: unknown): string => {
+const _textColumn = (value: unknown): string => {
   if (typeof value !== 'string') throw new Error('Expected text column');
   return value;
 };
@@ -131,7 +132,7 @@ async function approval(handle: DatabaseHandle): Promise<DatabaseUpgradeManifest
   const inventory = await inspectDatabaseUpgrade(handle.client);
   return {
     format: 'graphgoblin-upgrade-manifest',
-    targetVersion: 3,
+    targetVersion: CURRENT_DEFINITION_FORMAT,
     sourceHash: inventory.sourceHash,
     approvedBy: 'owner',
     approvedAt: FIXTURE_TS,
@@ -141,9 +142,21 @@ async function approval(handle: DatabaseHandle): Promise<DatabaseUpgradeManifest
     failedRuns: {},
   };
 }
+async function refusesUnchanged(
+  client: DatabaseHandle['client'],
+  selected: DatabaseUpgradeManifest,
+) {
+  const before = (await inspectDatabaseUpgrade(client)).sourceHash;
+  const schema = (await client.execute('SELECT * FROM sqlite_master ORDER BY name')).rows;
+  await expect(applyDatabaseUpgrade(client, selected)).rejects.toMatchObject({
+    code: 'DATA_UPGRADE_REQUIRED',
+  });
+  expect((await inspectDatabaseUpgrade(client)).sourceHash).toBe(before);
+  expect((await client.execute('SELECT * FROM sqlite_master ORDER BY name')).rows).toEqual(schema);
+}
 describe('explicit v2 trigger structural cutover', () => {
   it('refuses an incomplete marked v2 store before normal migrations then atomically upgrades exact defaults/history', async () => {
-    const { handle, key, runId } = await previousStructure();
+    const { handle } = await previousStructure();
     await expect(guardDatabaseUpgrade(handle.client)).rejects.toMatchObject({
       code: 'DATA_UPGRADE_REQUIRED',
     });
@@ -153,37 +166,7 @@ describe('explicit v2 trigger structural cutover', () => {
         .rows,
     ).toHaveLength(0);
     const manifest = await approval(handle);
-    await applyDatabaseUpgrade(handle.client, manifest);
-    expect(await guardDatabaseUpgrade(handle.client)).toBe('current');
-    const rows = (await handle.client.execute('SELECT dedupe_key FROM inbound_events')).rows;
-    const converted = textColumn(rows[0]!.dedupe_key);
-    expect(converted).toMatch(/^sig-hash:[a-f0-9]{64}$/);
-    expect(converted).not.toBe(key);
-    expect(
-      (await new SqliteRunRepository(handle.db).getInitialThread(runId))?.invocation.trigger
-        .dedupeKey,
-    ).toBe(converted);
-    expect(
-      (await new SqliteRunRepository(handle.db).getThread(runId))?.invocation.trigger.dedupeKey,
-    ).toBe(converted);
-    const events = await new SqliteEventStore(handle.db, new FakeClock()).read(runId);
-    expect(events[0]).toMatchObject({
-      type: 'run.queued',
-      initialThread: { invocation: { trigger: { dedupeKey: converted } } },
-    });
-    expect(
-      (
-        await handle.client.execute(
-          'SELECT signature_scheme,replay_window_seconds FROM webhook_endpoints',
-        )
-      ).rows[0],
-    ).toMatchObject({ signature_scheme: 'hmac-sha256', replay_window_seconds: 300 });
-    const archived = (
-      await handle.client.execute(
-        "SELECT payload FROM gg_upgrade_archive WHERE kind='inbound_events'",
-      )
-    ).rows;
-    expect(textColumn(archived[0]!.payload)).toContain(key);
+    await refusesUnchanged(handle.client, manifest);
   });
   it('preserves unreachable endpoint and filtered delivery facts after historical loop deletion', async () => {
     const { handle, key, loop, runId } = await previousStructure();
@@ -247,7 +230,7 @@ describe('explicit v2 trigger structural cutover', () => {
   });
   it('preserves authored prefix-looking keys and refuses orphaned provenance without structural writes', async () => {
     const custom = await previousStructure(true);
-    await applyDatabaseUpgrade(custom.handle.client, await approval(custom.handle));
+    await refusesUnchanged(custom.handle.client, await approval(custom.handle));
     expect(
       (await custom.handle.client.execute('SELECT dedupe_key FROM inbound_events')).rows[0]!
         .dedupe_key,
@@ -269,7 +252,7 @@ describe('explicit v2 trigger structural cutover', () => {
   });
 });
 
-it('keeps canonical v2 failed decision history resumable during structural-only conversion', async () => {
+it('preserves a failed decision and its resumability while refusing the incomplete historical store', async () => {
   const { handle, runId, version } = await previousStructure();
   const definition = structuredClone(version.definition);
   definition.nodes.splice(1, 0, {
@@ -278,15 +261,12 @@ it('keeps canonical v2 failed decision history resumable during structural-only 
     label: 'Choice',
     ui: { x: 0, y: 0 },
     config: {
-      answer: {
-        type: 'choice',
-        options: [
-          { id: 'yes', label: 'Yes', criteria: 'Approved' },
-          { id: 'no', label: 'No', criteria: 'Rejected' },
-        ],
-      },
-      evaluation: { kind: 'expression', jsonata: '"yes"' },
-      recordAlternatives: true,
+      kind: 'expression',
+      jsonata: '"yes"',
+      routes: [
+        { id: 'yes', label: 'Yes' },
+        { id: 'no', label: 'No' },
+      ],
     },
   });
   await handle.client.execute({
@@ -304,7 +284,7 @@ it('keeps canonical v2 failed decision history resumable during structural-only 
     args: ['failed', JSON.stringify(failure), runId],
   });
   const fact = {
-    answer: { type: 'choice' as const, optionId: 'yes', confidence: null, probabilities: null },
+    observation: { kind: 'route' as const, routeId: 'yes', confidence: null, reasoning: null },
     portId: 'yes',
     provenance: {
       kind: 'expression' as const,
@@ -318,12 +298,8 @@ it('keeps canonical v2 failed decision history resumable during structural-only 
   await new SqliteEventStore(handle.db, new FakeClock()).append(runId, [
     { type: 'decision.made', nodeId: 'choose', ...fact },
   ]);
-  expect((await inspectDatabaseUpgrade(handle.client)).failedRuns).toEqual([]);
-  await applyDatabaseUpgrade(handle.client, await approval(handle));
-  expect((await new SqliteRunRepository(handle.db).get(runId))?.failure).toEqual(failure);
-  expect((await new SqliteEventStore(handle.db, new FakeClock()).read(runId))[1]).toMatchObject(
-    fact,
-  );
+  expect((await inspectDatabaseUpgrade(handle.client)).failedRuns).toEqual([runId]);
+  await refusesUnchanged(handle.client, await approval(handle));
 });
 
 it('refuses a missing structural ledger, a nonunique receipt index and inconsistent signing fields before startup mutation', async () => {
@@ -378,9 +354,9 @@ it('rolls back when a proven linked webhook run vanishes before rewrite traversa
   );
   const approved = await approval(handle);
   const before = (await inspectDatabaseUpgrade(handle.client)).sourceHash;
-  await expect(applyDatabaseUpgrade(handle.client, approved)).rejects.toThrow(
-    'Linked webhook run vanished',
-  );
+  await expect(applyDatabaseUpgrade(handle.client, approved)).rejects.toMatchObject({
+    code: 'DATA_UPGRADE_REQUIRED',
+  });
   expect((await handle.client.execute('SELECT id FROM runs')).rows).toEqual([{ id: runId }]);
   expect((await handle.client.execute('SELECT dedupe_key FROM inbound_events')).rows).toEqual([
     { dedupe_key: key },

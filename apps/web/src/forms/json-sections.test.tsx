@@ -1,6 +1,7 @@
 import {
-  DecisionAnswerSchema,
-  DecisionEvaluationSchema,
+  ClassifierAnswerConfigSchema,
+  ExpressionDecisionConfigSchema,
+  LlmDecisionConfigSchema,
   InferenceConfigSchema,
   SlugSchema,
   field,
@@ -47,6 +48,15 @@ const score = {
 };
 const sections: { name: string; schema: Schema; sample: unknown; empty: unknown }[] = [
   {
+    name: 'declared routes',
+    schema: ExpressionDecisionConfigSchema.shape.routes,
+    sample: [
+      { id: 'yes', label: 'Yes' },
+      { id: 'no', label: 'No' },
+    ],
+    empty: [],
+  },
+  {
     name: 'input',
     schema: inference.input,
     sample: [
@@ -80,20 +90,25 @@ const sections: { name: string; schema: Schema; sample: unknown; empty: unknown 
   },
   {
     name: 'choice routes',
-    schema: DecisionAnswerSchema,
+    schema: ClassifierAnswerConfigSchema,
     sample: choice,
     empty: { ...choice, options: [] },
   },
-  { name: 'noul routes', schema: DecisionAnswerSchema, sample: noul, empty: { type: 'noul' } },
+  {
+    name: 'noul routes',
+    schema: ClassifierAnswerConfigSchema,
+    sample: noul,
+    empty: { type: 'noul' },
+  },
   {
     name: 'score routes and rubric',
-    schema: DecisionAnswerSchema,
+    schema: ClassifierAnswerConfigSchema,
     sample: score,
     empty: { ...score, anchors: [], bands: [] },
   },
   {
     name: 'provider context',
-    schema: object(DecisionEvaluationSchema.options[1]).context!,
+    schema: object(LlmDecisionConfigSchema).context!,
     sample: { messages: { where: 'role="note"' }, vars: ['topic'], includeLastOutput: false },
     empty: { messages: 'none', vars: [], includeLastOutput: true },
   },
@@ -620,7 +635,7 @@ describe('section JSON mode', () => {
     async (answer) => {
       render(
         <Harness
-          schema={z.object({ answer: DecisionAnswerSchema.meta({ jsonEditor: true }) })}
+          schema={z.object({ answer: ClassifierAnswerConfigSchema.meta({ jsonEditor: true }) })}
           initial={{ answer }}
         />,
       );
@@ -910,7 +925,7 @@ describe('typed inputs', () => {
     render(
       <Harness
         schema={z.object({
-          answer: DecisionAnswerSchema,
+          answer: ClassifierAnswerConfigSchema,
           enabled: z.boolean(),
           policy: z.enum(['a', 'b']),
         })}

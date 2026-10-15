@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   ExitPredicateSchema,
@@ -40,7 +41,7 @@ function definition(type: ClassifierPrimitive, model = 'selected'): LoopDefiniti
         ? { type, optionIds: ['ready'] }
         : { type, operator: 'eq', value: 0 };
   return {
-    schemaVersion: 3,
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
     name: 'exit-' + type,
     nodes: [
       { id: 'start', kind: 'trigger', label: 'Start', config: { subtype: 'manual' } },
@@ -52,11 +53,11 @@ function definition(type: ClassifierPrimitive, model = 'selected'): LoopDefiniti
           criteria: [
             ExitPredicateSchema.parse({
               when: 'predicate',
-              answer,
-              evaluation: {
+              predicate: {
                 kind: 'classifier',
                 model,
                 question: 'Evaluate {{ trigger.payload.value }}',
+                answer,
               },
               match,
               outcome: 'success',
@@ -125,7 +126,7 @@ describe('explicit primitive exit API admission and execution', () => {
             {
               status: 'matched',
               strategy: 'classifier',
-              answer: { type },
+              observation: { kind: 'classifier', answer: { type } },
               acceptance: { status: 'accepted' },
               provenance: {
                 kind: 'classifier',
@@ -153,8 +154,8 @@ describe('explicit primitive exit API admission and execution', () => {
             questions: { answer: { type, instructions: 'Evaluate ready' } },
           },
         });
-        expect(t.codex.nouls).toEqual([]);
-        expect(t.codex.choices).toEqual([]);
+        expect(t.codex.booleans).toEqual([]);
+        expect(t.codex.routes).toEqual([]);
       } finally {
         await fixture.close();
       }
@@ -186,7 +187,7 @@ describe('explicit primitive exit API admission and execution', () => {
           url: '/loops/import',
           payload: {
             format: 'graphgoblin-loop',
-            formatVersion: 3,
+            formatVersion: CURRENT_DEFINITION_FORMAT,
             exportedAt: '2026-10-02T12:00:00.000Z',
             loop: input,
           },
@@ -197,7 +198,7 @@ describe('explicit primitive exit API admission and execution', () => {
             expect.objectContaining({
               code: 'CLASSIFIER_PRIMITIVE_UNSUPPORTED',
               nodeId: 'done',
-              path: 'config.criteria.0.evaluation.model',
+              path: 'config.criteria.0.predicate.model',
             }),
           );
         }
@@ -238,10 +239,15 @@ describe('explicit primitive exit API admission and execution', () => {
           node.config.criteria = [
             ExitPredicateSchema.parse({
               ...node.config.criteria?.[0],
-              evaluation: {
+              predicate: {
                 kind: 'classifier',
                 model: 'selected',
                 question: '?',
+                answer: {
+                  type: 'noul',
+                  true: { label: 'Yes', criteria: 'Ready' },
+                  false: { label: 'No', criteria: 'Not ready' },
+                },
                 minConfidence: 0.8,
               },
               match: { type: 'noul', value: false },
@@ -253,7 +259,10 @@ describe('explicit primitive exit API admission and execution', () => {
         criteria: [
           {
             status: 'not-matched',
-            answer: { holds: false, trueProbability: 0.4, confidence: 0.6 },
+            observation: {
+              kind: 'classifier',
+              answer: { holds: false, trueProbability: 0.4, confidence: 0.6 },
+            },
             acceptance: { status: 'rejected', minConfidence: 0.8 },
             configuredMinConfidence: 0.8,
             rejection: { kind: 'classifier-confidence', minimum: 0.8, confidence: 0.6 },
@@ -272,12 +281,13 @@ describe('explicit primitive exit API admission and execution', () => {
         node.config.criteria = [
           ExitPredicateSchema.parse({
             ...node.config.criteria?.[0],
-            evaluation: {
+            match: { type: 'boolean', value: true },
+            predicate: {
               kind: 'llm',
               harness: 'codex',
               model: { mode: 'explicit', value: 'unknown-model' },
               effort: { mode: 'explicit', value: 'low' },
-              question: '?',
+              instructions: '?',
             },
           }),
         ];
@@ -290,7 +300,7 @@ describe('explicit primitive exit API admission and execution', () => {
     expect(rejected.json().errors).toContainEqual(
       expect.objectContaining({
         code: 'MODEL_NOT_IN_CATALOG',
-        path: 'config.criteria.0.evaluation.model',
+        path: 'config.criteria.0.predicate.model',
       }),
     );
     for (const node of input.nodes)
@@ -298,12 +308,13 @@ describe('explicit primitive exit API admission and execution', () => {
         node.config.criteria = [
           ExitPredicateSchema.parse({
             ...node.config.criteria?.[0],
-            evaluation: {
+            match: { type: 'boolean', value: true },
+            predicate: {
               kind: 'llm',
               harness: 'codex',
               model: { mode: 'explicit', value: 'gpt-6-luna' },
               effort: { mode: 'explicit', value: 'low' },
-              question: '?',
+              instructions: '?',
             },
           }),
         ];
@@ -333,7 +344,7 @@ describe('explicit primitive exit API admission and execution', () => {
     });
     for (const node of input.nodes)
       if (node.kind === 'exit' && node.config.criteria?.[0]?.when === 'predicate') {
-        node.config.criteria[0].evaluation = { kind: 'expression', jsonata: '"ready"' };
+        node.config.criteria[0].predicate = { kind: 'expression', jsonata: '"ready"' };
       }
     const responses = [
       await t.app.inject({ method: 'POST', url: '/loops', payload: { definition: input } }),
@@ -347,7 +358,7 @@ describe('explicit primitive exit API admission and execution', () => {
         url: '/loops/import',
         payload: {
           format: 'graphgoblin-loop',
-          formatVersion: 3,
+          formatVersion: CURRENT_DEFINITION_FORMAT,
           exportedAt: '2026-10-02T12:00:00.000Z',
           loop: input,
         },
@@ -360,8 +371,8 @@ describe('explicit primitive exit API admission and execution', () => {
     ];
     for (const response of responses) {
       expect(response.statusCode, response.body).toBe(400);
-      expect(response.body).toContain('expression');
+      expect(response.body).toMatch(/match[/.]type/);
     }
-    expect(t.codex.choices).toEqual([]);
+    expect(t.codex.routes).toEqual([]);
   });
 });

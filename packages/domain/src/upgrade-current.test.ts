@@ -1,14 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import jsonata from 'jsonata';
 import {
-  LoopDefinitionSchema,
-  RunEventSchema,
   V3LoopDefinitionSchema,
   V3LoopExportSchema,
   V3RunEventSchema,
-  type NoulSpec,
+  type V3NoulSpec,
 } from '@graphgoblin/contracts';
-import { minimalLoop, sampleThread, FIXTURE_IDS, FIXTURE_TS } from '@graphgoblin/contracts/testing';
+import { FIXTURE_IDS, FIXTURE_TS } from '@graphgoblin/contracts/testing';
+import {
+  minimalLoopV3 as minimalLoop,
+  sampleThreadV3 as sampleThread,
+} from './__fixtures__/upgrade-v3.js';
 import {
   upgradeLoopCurrent,
   upgradeExportCurrent,
@@ -18,7 +20,7 @@ import {
 import { upgradeRunHistoryCurrent } from './upgrade-history-current.js';
 import { upgradeLoopV1 } from './upgrade.js';
 
-const sides: NoulSpec = {
+const sides: V3NoulSpec = {
   type: 'noul',
   true: { label: 'Done', criteria: 'All required work is complete' },
   false: { label: 'Pending', criteria: 'Required work remains' },
@@ -58,7 +60,68 @@ const predicate = (strategy: string, extra: Record<string, unknown> = {}) => ({
   ...extra,
 });
 
+// These function names predate format 4; this suite owns their frozen format-3 output.
 describe('one current offline definition cutover', () => {
+  it.each([1, 2])('keeps format %i decision conversion on frozen V3 contracts', (version) => {
+    const options = [
+      { id: 'yes', label: 'Yes', criteria: 'Approved' },
+      { id: 'no', label: 'No', criteria: 'Rejected' },
+    ];
+    const config = {
+      answer: { type: 'choice', options },
+      evaluation: { kind: 'expression', jsonata: '"yes"' },
+      recordAlternatives: true,
+    };
+    const base = minimalLoop();
+    const input = {
+      ...base,
+      schemaVersion: version,
+      nodes: [
+        ...base.nodes,
+        {
+          id: 'decide',
+          kind: 'decision',
+          label: 'Decide',
+          config:
+            version === 1
+              ? {
+                  routes: options.map((option) => ({
+                    label: option.id,
+                    description: option.criteria,
+                  })),
+                  strategy: ['expression'],
+                  question: 'Choose',
+                  expression: { jsonata: '"yes"' },
+                }
+              : config,
+        },
+      ],
+    };
+    const result = upgradeLoopCurrent(input);
+    if (!result.ok) throw new Error(JSON.stringify(result.issues));
+    expect(V3LoopDefinitionSchema.parse(result.value)).toEqual(result.value);
+    expect(result.value.schemaVersion).toBe(3);
+    expect(result.value.nodes[2]).toHaveProperty(
+      'config',
+      version === 1
+        ? {
+            ...config,
+            answer: { type: 'choice', options: options.map((o) => ({ ...o, label: o.id })) },
+          }
+        : config,
+    );
+    const exported = upgradeExportCurrent({
+      format: 'graphgoblin-loop',
+      formatVersion: version,
+      exportedAt: FIXTURE_TS,
+      loop: input,
+    });
+    if (!exported.ok) throw new Error(JSON.stringify(exported.issues));
+    expect(V3LoopExportSchema.parse(exported.value)).toEqual(exported.value);
+    expect(exported.value.formatVersion).toBe(3);
+    expect(exported.value.loop).toEqual(result.value);
+    expect(input.schemaVersion).toBe(version);
+  });
   it('matches the 12e5b87 definition and export golden/refusal results', () => {
     // Recorded before rebinding: keep these complete results through later cutover stages.
     const current = minimalLoop();
@@ -289,7 +352,7 @@ describe('one current offline definition cutover', () => {
     expect(await jsonata('true[]').evaluate({})).toBe(true);
     expect(provenBooleanExpression('true[]')).toBe(false);
   });
-  it('composes actual v1 conversion, preserves additive decisions, and validates current input', () => {
+  it('composes actual v1 conversion, preserves additive decisions, and validates frozen V3 input', () => {
     const source = { ...minimalLoop(), schemaVersion: 1 };
     expect(upgradeLoopV1(source).ok).toBe(true);
     const upgraded = upgradeLoopCurrent(source);
@@ -323,7 +386,7 @@ describe('one current offline definition cutover', () => {
         frozen.ok && frozen.value.nodes[2],
       );
     }
-    const current = LoopDefinitionSchema.parse(minimalLoop());
+    const current = V3LoopDefinitionSchema.parse(minimalLoop());
     expect(upgradeLoopCurrent(current)).toEqual({ ok: true, value: current, notices: [] });
     expect(upgradeLoopCurrent(current, { predicates: { [path]: { answer: sides } } }).ok).toBe(
       false,
@@ -517,7 +580,6 @@ describe('canonical factual exit history', () => {
     expect(converted.criteria[5]).toMatchObject({ strategy: 'llm', status: 'error' });
     expect(result.value.finalThread).toEqual(initialThread);
     expect(result.value.snapshot).toEqual(initialThread);
-    expect(RunEventSchema.safeParse(converted).success).toBe(true);
     expect(V3RunEventSchema.parse(converted)).toEqual(converted);
     expect(event.criteria[0]).not.toHaveProperty('answer');
   });
@@ -579,7 +641,6 @@ describe('canonical factual exit history', () => {
         diagnostic,
         provenance: expected,
       });
-      expect(RunEventSchema.safeParse(result.value.events[0]).success).toBe(true);
       expect(V3RunEventSchema.parse(result.value.events[0])).toEqual(result.value.events[0]);
       expect(oldError).not.toHaveProperty('provenance');
     },

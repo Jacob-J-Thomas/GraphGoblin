@@ -8,7 +8,7 @@ import {
 import { evaluateExit, evaluateExpression, threadView } from '@graphgoblin/domain';
 import { isAbortError, RunFailureError } from '../errors.js';
 import type { NodeHandler } from '../handler.js';
-import { evaluatePrimitive } from '../primitive-evaluator.js';
+import { evaluateBoolean, evaluateClassifier } from '../primitive-evaluator.js';
 import { toJson } from './common.js';
 
 function failureEvidence(error: unknown) {
@@ -51,7 +51,7 @@ export const exitHandler: NodeHandler<'exit'> = {
         const criterion = ctx.config.criteria[index]!;
         criteria.push({
           index,
-          strategy: criterion.when === 'predicate' ? criterion.evaluation.kind : criterion.when,
+          strategy: criterion.when === 'predicate' ? criterion.predicate.kind : criterion.when,
           status: 'skipped',
           reason:
             !criteria.some((entry) => entry.status === 'matched') &&
@@ -79,29 +79,47 @@ export const exitHandler: NodeHandler<'exit'> = {
         iteration: ctx.run.iteration,
         maxIterations: ctx.definition.settings.maxIterations,
         elapsedMs: Math.max(0, Date.parse(ctx.services.now()) - startedAt),
-        evaluatePredicate: async (criterion) =>
-          evaluatePrimitive({
+        evaluatePredicate: async ({ predicate }) => {
+          const common = {
             nodeId: ctx.node.id,
             ownerId: ctx.run.ownerId,
-            evaluation: criterion.evaluation,
-            answer: criterion.answer,
-            expressionView: threadView(ctx.thread),
-            ...(criterion.evaluation.kind !== 'expression'
-              ? {
-                  question: await ctx.services.render(criterion.evaluation.question),
-                  context: toJson({
-                    trigger: ctx.thread.invocation.trigger.payload,
-                    vars: ctx.thread.vars,
-                    lastOutput: ctx.thread.lastOutput?.value ?? null,
-                    lastMessage: ctx.thread.messages.at(-1)?.content ?? null,
-                    iteration: ctx.run.iteration,
-                  }),
-                }
-              : {}),
             signal: ctx.signal,
             ports: ctx.ports,
-            resolveModel: (...args) => ctx.services.resolveModel(...args),
-          }),
+            resolveModel: (...args: Parameters<typeof ctx.services.resolveModel>) =>
+              ctx.services.resolveModel(...args),
+          };
+          const context = toJson({
+            trigger: ctx.thread.invocation.trigger.payload,
+            vars: ctx.thread.vars,
+            lastOutput: ctx.thread.lastOutput?.value ?? null,
+            lastMessage: ctx.thread.messages.at(-1)?.content ?? null,
+            iteration: ctx.run.iteration,
+          });
+          switch (predicate.kind) {
+            case 'expression':
+              return evaluateBoolean({
+                ...common,
+                config: predicate,
+                expressionView: threadView(ctx.thread),
+              });
+            case 'llm':
+              return evaluateBoolean({
+                ...common,
+                config: predicate,
+                instructions: await ctx.services.render(predicate.instructions),
+                context,
+              });
+            case 'classifier': {
+              const { answer, ...result } = await evaluateClassifier({
+                ...common,
+                config: predicate,
+                question: await ctx.services.render(predicate.question),
+                context,
+              });
+              return { ...result, observation: { kind: 'classifier', answer } };
+            }
+          }
+        },
         onCriterion: (evaluation) => criteria.push(evaluation),
       });
     } catch (error) {

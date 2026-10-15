@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -43,7 +44,7 @@ function triggerLoop(
 ): LoopDefinitionInput {
   const triggerId = options.triggerId ?? 'trig';
   return {
-    schemaVersion: 3,
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
     name,
     nodes: [
       { id: triggerId, kind: 'trigger', label: 'T', config: trigger as never },

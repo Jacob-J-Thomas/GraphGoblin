@@ -11,5 +11,5 @@ export function DecisionTruthThresholdField(props: FieldProps) {
 }
 
 export const DECISION_FIELD_OVERRIDES = {
-  'evaluation.truthThreshold': DecisionTruthThresholdField,
+  truthThreshold: DecisionTruthThresholdField,
 } satisfies FieldOverrides;

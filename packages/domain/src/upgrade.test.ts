@@ -1,7 +1,11 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { DecisionConfigSchema, V2LoopDefinitionSchema } from '@graphgoblin/contracts';
-import { FIXTURE_TS, minimalLoop, sampleThread, FIXTURE_IDS } from '@graphgoblin/contracts/testing';
+import { V2DecisionConfigSchema, V2LoopDefinitionSchema } from '@graphgoblin/contracts';
+import { FIXTURE_TS, FIXTURE_IDS } from '@graphgoblin/contracts/testing';
+import {
+  minimalLoopV3 as minimalLoop,
+  sampleThreadV3 as sampleThread,
+} from './__fixtures__/upgrade-v3.js';
 import {
   upgradeDefaultsV1,
   upgradeExportV1,
@@ -46,7 +50,7 @@ function oldLoop(strategy: string[] = ['codex'], jsonata = '"yes"') {
     ],
   };
 }
-const chosen = DecisionConfigSchema.parse({
+const chosen = V2DecisionConfigSchema.parse({
   answer: {
     type: 'choice',
     options: [
@@ -456,7 +460,7 @@ describe('adversarial offline source and history boundaries', () => {
       bands: [{ id: 'yes', label: 'All', min: 0, max: 1 }],
     },
   ])('refuses reinterpretation of a v1 Choice as another primitive %j', (answer) => {
-    const replacement = DecisionConfigSchema.parse({
+    const replacement = V2DecisionConfigSchema.parse({
       answer,
       evaluation: { kind: 'classifier', model: 'jev', question: 'Q' },
     });

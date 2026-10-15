@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 /**
  * #43, the UI half: Settings → Classifier models and the decision's classifier picker, against an
  * API instance with the real classifier catalog, secret resolution, and HTTP transport
@@ -75,7 +76,7 @@ const start = {
  */
 function decisionLoop(name: string, config: Record<string, unknown>, lone = false) {
   return {
-    schemaVersion: 3,
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
     name,
     nodes: [
       start,
@@ -83,17 +84,39 @@ function decisionLoop(name: string, config: Record<string, unknown>, lone = fals
         id: 'pick',
         kind: 'decision',
         label: 'Pick',
-        config: {
-          answer: {
-            type: 'choice',
-            options: [
-              { id: 'yes', label: 'Yes', criteria: 'The work is done' },
-              { id: 'no', label: 'No', criteria: 'More work is needed' },
-            ],
-          },
-          evaluation: config,
-          recordAlternatives: true,
-        },
+        config:
+          config['kind'] === 'classifier'
+            ? {
+                ...config,
+                answer: {
+                  type: 'choice',
+                  options: [
+                    { id: 'yes', label: 'Yes', criteria: 'The work is done' },
+                    { id: 'no', label: 'No', criteria: 'More work is needed' },
+                  ],
+                },
+                recordAlternatives: true,
+              }
+            : config['kind'] === 'llm'
+              ? {
+                  kind: 'llm',
+                  instructions: config['question'],
+                  harness: 'codex',
+                  model: config['model'],
+                  effort: config['effort'],
+                  routes: [
+                    { id: 'yes', label: 'Yes' },
+                    { id: 'no', label: 'No' },
+                  ],
+                }
+              : {
+                  kind: 'expression',
+                  jsonata: config['jsonata'],
+                  routes: [
+                    { id: 'yes', label: 'Yes' },
+                    { id: 'no', label: 'No' },
+                  ],
+                },
         ui: { x: 260, y: 80 },
       },
       { id: 'done', kind: 'exit', label: 'Done', config: {}, ui: { x: 540, y: 0 } },
@@ -105,15 +128,18 @@ function decisionLoop(name: string, config: Record<string, unknown>, lone = fals
               kind: 'decision',
               label: 'Lone',
               config: {
-                answer: {
-                  type: 'choice',
-                  options: [
-                    { id: 'a', label: 'A', criteria: 'A' },
-                    { id: 'b', label: 'B', criteria: 'B' },
-                  ],
-                },
-                evaluation: { kind: 'expression', jsonata: '"a"' },
-                recordAlternatives: true,
+                kind: 'expression',
+                jsonata: '"a"',
+                routes: [
+                  {
+                    id: 'a',
+                    label: 'A',
+                  },
+                  {
+                    id: 'b',
+                    label: 'B',
+                  },
+                ],
               },
               ui: { x: 260, y: 300 },
             },
@@ -339,7 +365,7 @@ test('a decision selects the classifier, publishes, and runs against its endpoin
     definition: { nodes: { id: string; config: { evaluation?: unknown } }[] };
   };
   // The primitive keeps its default (Choice), which the form leaves for the contract to fill in.
-  expect(draft.definition.nodes.find((n) => n.id === 'pick')!.config.evaluation).toMatchObject({
+  expect(draft.definition.nodes.find((n) => n.id === 'pick')!.config).toMatchObject({
     kind: 'classifier',
     model: 'kev',
   });
@@ -355,9 +381,14 @@ test('a decision selects the classifier, publishes, and runs against its endpoin
   expect(status).toBe('succeeded');
   const made = events.find((e) => e.type === 'decision.made');
   expect(made).toMatchObject({
-    answer: { optionId: 'yes' },
     portId: 'yes',
     provenance: { kind: 'classifier', classifierId: 'kev' },
+    observation: {
+      kind: 'classifier',
+      answer: {
+        optionId: 'yes',
+      },
+    },
   });
   expect(await endpointRequests(request, target.endpoint)).toEqual([
     {
@@ -499,8 +530,8 @@ for (const theme of ['dark', 'light'] as const) {
     );
     await page.goto(`${target.url}/app/loops/${loopId}/edit`);
     const editor = await openNode(page, 'pick');
-    const method = editor.getByRole('radiogroup', { name: 'Evaluation method' });
-    await expect(method.getByRole('radio', { name: 'Classifier' })).toBeChecked();
+    const method = editor.getByRole('radiogroup', { name: 'Decision kind' });
+    await expect(method.getByRole('radio', { name: 'classifier' })).toBeChecked();
     const picker = editor.getByRole('combobox', { name: 'Model' });
     await expect(picker).toHaveValue('kev');
     await picker.focus();
@@ -533,8 +564,8 @@ for (const theme of ['dark', 'light'] as const) {
     );
     await page.goto(`${target.url}/app/loops/${plainId}/edit`);
     const plain = await openNode(page, 'pick');
-    const methodPicker = plain.getByRole('radiogroup', { name: 'Evaluation method' });
-    const classifierChoice = methodPicker.getByRole('radio', { name: 'Classifier' });
+    const methodPicker = plain.getByRole('radiogroup', { name: 'Decision kind' });
+    const classifierChoice = methodPicker.getByRole('radio', { name: 'classifier' });
     await classifierChoice.focus();
     await page.keyboard.press('Space');
     await expect(classifierChoice).toBeChecked();

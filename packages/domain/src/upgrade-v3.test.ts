@@ -2,14 +2,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
-  ContextThreadSchema,
-  InvocationSchema,
-  LoopDefinitionSchema,
-  LoopExportSchema,
-  PollItemsSchema,
-  RunEventSchema,
-  RunRecordSchema,
-  WebhookConfigSchema,
+  V3DecisionConfigSchema,
   V3ContextThreadSchema,
   V3InvocationSchema,
   V3LoopDefinitionSchema,
@@ -19,16 +12,17 @@ import {
   V3RunRecordSchema,
   V3WebhookConfigSchema,
 } from '@graphgoblin/contracts';
+import { minimalLoopV3, sampleThreadV3 } from './__fixtures__/upgrade-v3.js';
 
 const schemas = {
-  LoopDefinitionSchema: [LoopDefinitionSchema, V3LoopDefinitionSchema],
-  LoopExportSchema: [LoopExportSchema, V3LoopExportSchema],
-  ContextThreadSchema: [ContextThreadSchema, V3ContextThreadSchema],
-  InvocationSchema: [InvocationSchema, V3InvocationSchema],
-  RunEventSchema: [RunEventSchema, V3RunEventSchema],
-  RunRecordSchema: [RunRecordSchema, V3RunRecordSchema],
-  WebhookConfigSchema: [WebhookConfigSchema, V3WebhookConfigSchema],
-  PollItemsSchema: [PollItemsSchema, V3PollItemsSchema],
+  LoopDefinitionSchema: V3LoopDefinitionSchema,
+  LoopExportSchema: V3LoopExportSchema,
+  ContextThreadSchema: V3ContextThreadSchema,
+  InvocationSchema: V3InvocationSchema,
+  RunEventSchema: V3RunEventSchema,
+  RunRecordSchema: V3RunRecordSchema,
+  WebhookConfigSchema: V3WebhookConfigSchema,
+  PollItemsSchema: V3PollItemsSchema,
 } as const;
 
 /** Inputs and complete parse-result hashes recorded from live contracts at 12e5b87. */
@@ -65,16 +59,68 @@ describe('frozen format-3 fixture parity', () => {
   // not calls to fixture factories that will move to format 4.
   it.each(capture.cases)('matches the 12e5b87 capture for $schema: $name', (fixture) => {
     expect(capture.revision).toBe('12e5b87');
-    const result = parse(schemas[fixture.schema][1], fixture.input);
+    const result = parse(schemas[fixture.schema], fixture.input);
     expect(result.success).toBe(fixture.success);
     expect(createHash('sha256').update(JSON.stringify(result)).digest('hex')).toBe(fixture.sha256);
   });
 
-  // When current contracts move to format 4, replace only this live comparison with the
-  // expected current-format differences. Retain the capture tests, inputs and hashes above
-  // as "frozen equals the 12e5b87 capture"; never refresh them from the changed contracts.
-  it.each(capture.cases)('matches current contracts for $schema: $name', (fixture) => {
-    const [current, frozen] = schemas[fixture.schema];
-    expect(parse(frozen, fixture.input)).toEqual(parse(current, fixture.input));
+  it('keeps historical fixture factories equal to captured inputs and independently mutable', () => {
+    const minimal = capture.cases.find(
+      (fixture) => fixture.schema === 'LoopDefinitionSchema' && fixture.name === 'minimal',
+    );
+    const thread = capture.cases.find(
+      (fixture) => fixture.schema === 'ContextThreadSchema' && fixture.name === 'sample thread',
+    );
+    expect(minimalLoopV3()).toEqual(minimal?.input);
+    expect(sampleThreadV3()).toEqual(thread?.input);
+    const loopCopy = minimalLoopV3();
+    const threadCopy = sampleThreadV3();
+    loopCopy.nodes.splice(0);
+    threadCopy.vars.changed = true;
+    expect(minimalLoopV3()).toEqual(minimal?.input);
+    expect(sampleThreadV3()).toEqual(thread?.input);
+  });
+
+  it.each([
+    {
+      kind: 'expression',
+      jsonata: '"done"',
+      routes: [
+        { id: 'done', label: 'Done' },
+        { id: 'repeat', label: 'Repeat' },
+      ],
+    },
+    {
+      kind: 'llm',
+      instructions: 'Choose done when all checks passed, otherwise repeat.',
+      harness: 'codex',
+      model: { mode: 'inherit' },
+      effort: { mode: 'inherit' },
+      routes: [
+        { id: 'done', label: 'Done' },
+        { id: 'repeat', label: 'Repeat' },
+      ],
+    },
+    {
+      kind: 'classifier',
+      model: 'jev',
+      question: 'Choose',
+      answer: {
+        type: 'choice',
+        options: [
+          { id: 'done', label: 'Done', criteria: 'All checks passed' },
+          { id: 'repeat', label: 'Repeat', criteria: 'Checks remain' },
+        ],
+      },
+    },
+  ])('refuses evaluator-specific $kind configs in frozen V3', (config) => {
+    expect(V3DecisionConfigSchema.safeParse(config).success).toBe(false);
+    const loop = minimalLoopV3();
+    expect(
+      V3LoopDefinitionSchema.safeParse({
+        ...loop,
+        nodes: [...loop.nodes, { id: 'decide', kind: 'decision', label: 'Decide', config }],
+      }).success,
+    ).toBe(false);
   });
 });

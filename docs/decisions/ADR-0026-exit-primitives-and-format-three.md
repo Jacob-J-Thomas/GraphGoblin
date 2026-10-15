@@ -1,5 +1,7 @@
 # ADR-0026: Exit predicates use shared answer primitives
 
+Superseded in part by [ADR-0035](ADR-0035-evaluator-specific-decisions.md): evaluator-specific decision configuration, factual observations, the separate temporary exit predicate and format 4. The record below is historical.
+
 Status: Accepted (owner directed the narrowed #99 implementation on 2026-10-08)
 
 ## Context

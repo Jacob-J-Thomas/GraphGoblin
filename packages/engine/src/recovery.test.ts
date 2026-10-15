@@ -61,6 +61,9 @@ describe('cursor boundaries, recovered twice', () => {
       const configs: Record<string, unknown> = {
         inference: { prompt: { template: 'hello' } },
         decision: {
+          kind: 'classifier',
+          model: 'jev',
+          question: 'Which?',
           answer: {
             type: 'choice',
             options: [
@@ -68,7 +71,6 @@ describe('cursor boundaries, recovered twice', () => {
               { id: 'no', label: 'No', criteria: 'No' },
             ],
           },
-          evaluation: { kind: 'classifier', model: 'jev', question: 'Which?' },
         },
         mutate: {
           operations: [

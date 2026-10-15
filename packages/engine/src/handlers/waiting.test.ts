@@ -1,3 +1,4 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { describe, expect, it } from 'vitest';
 import type { LoopDefinitionInput } from '@graphgoblin/contracts';
 import { FIXTURE_IDS } from '@graphgoblin/contracts/testing';
@@ -243,7 +244,7 @@ describe('heartbeat node', () => {
 
 describe('subloop node', () => {
   const childDef: LoopDefinitionInput = {
-    schemaVersion: 3,
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
     name: 'child',
     nodes: [
       { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },
@@ -283,7 +284,7 @@ describe('subloop node', () => {
     childLoopId: string,
   ): LoopDefinitionInput {
     return {
-      schemaVersion: 3,
+      schemaVersion: CURRENT_DEFINITION_FORMAT,
       name: 'parent',
       nodes: [
         { id: 'start', kind: 'trigger', label: 'S', config: { subtype: 'manual' } },
