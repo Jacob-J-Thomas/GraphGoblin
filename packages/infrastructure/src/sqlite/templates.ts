@@ -153,14 +153,8 @@ export class TemplateTransaction {
     await this.db.update(runs).set({ templateSubject: subject }).where(eq(runs.id, runId));
   }
   async subjectRuns(filter: TemplateSubjectFilter) {
-    return this.filteredRuns(filter, true);
-  }
-  async runPage(filter: TemplateSubjectFilter) {
-    return this.filteredRuns(filter, false);
-  }
-  private async filteredRuns(filter: TemplateSubjectFilter, subjectsOnly: boolean) {
     const scope = [eq(runs.ownerId, filter.ownerId)];
-    if (subjectsOnly) scope.push(sql`${runs.templateSubject} IS NOT NULL`);
+    scope.push(sql`${runs.templateSubject} IS NOT NULL`);
     if (filter.loopId) scope.push(eq(runs.loopId, filter.loopId));
     if (filter.status)
       scope.push(

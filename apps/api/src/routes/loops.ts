@@ -32,10 +32,6 @@ const LoopDetailSchema = z.object({
   current: LoopVersionRecordSchema.optional(),
   draft: LoopVersionRecordSchema.optional(),
   draftToken: DraftTokenSchema.optional(),
-  templateInstanceId: UlidSchema.optional().meta({
-    description:
-      'The owner-scoped template instance that originally created this loop, when present.',
-  }),
 });
 
 /**
@@ -211,10 +207,6 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
     },
     async (request, reply) => {
       const loop = await ownedLoop(request, request.params.id);
-      const template = await container.templates.store.bindingForLoop(
-        request.auth.ownerId,
-        loop.id,
-      );
       const current = loop.currentVersionId
         ? await loops.getVersion(loop.currentVersionId)
         : undefined;
@@ -226,7 +218,6 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
         ...(current ? { current } : {}),
         ...(draft ? { draft } : {}),
         ...(draftToken ? { draftToken } : {}),
-        ...(template ? { templateInstanceId: template.instance.id } : {}),
       };
     },
   );
