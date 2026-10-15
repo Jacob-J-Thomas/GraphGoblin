@@ -1,6 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { fakeUlid, FIXTURE_IDS, FIXTURE_TS } from '@graphgoblin/contracts/testing';
-import { createInitialThread, type RunAdmission, type WebhookClaim } from '@graphgoblin/engine';
+import {
+  AdmissionConflictError,
+  createInitialThread,
+  type RunAdmission,
+  type WebhookClaim,
+} from '@graphgoblin/engine';
 import { FakeClock } from '@graphgoblin/engine/testing';
 import { SqliteTriggerAdmission } from './admission.js';
 import { openMemoryDatabase, type DatabaseHandle } from './db.js';
@@ -68,6 +73,54 @@ function claim(contentHash = 'a'.repeat(64)): WebhookClaim {
   };
 }
 describe('SQLite atomic admission', () => {
+  it('refuses re-admission without a receipt when the stored first event is malformed', async () => {
+    const input = intent();
+    input.initialThread.invocation.source = 'manual.api';
+    input.initialThread.invocation.trigger.kind = 'manual';
+    const admitted = await admission.create(input);
+    await handle.client.execute({
+      sql: "UPDATE run_events SET type='node.finished', payload='{}' WHERE run_id=?",
+      args: [admitted.id],
+    });
+    const storedEvents = (await handle.client.execute('SELECT * FROM run_events')).rows;
+    expect(storedEvents).toHaveLength(1);
+    expect(storedEvents[0]).toMatchObject({ type: 'node.finished', payload: '{}' });
+    const notifications: number[] = [];
+    events.subscribe(admitted.id, (event) => notifications.push(event.seq));
+
+    await expect(admission.create(input)).rejects.toThrow(AdmissionConflictError);
+
+    const repo = new SqliteRunRepository(handle.db);
+    expect(await repo.get(admitted.id)).toEqual(admitted);
+    expect(await repo.getInitialThread(admitted.id)).toEqual(input.initialThread);
+    expect((await handle.client.execute('SELECT * FROM runs')).rows).toHaveLength(1);
+    expect((await handle.client.execute('SELECT * FROM run_events')).rows).toEqual(storedEvents);
+    expect((await handle.client.execute('SELECT * FROM webhook_receipts')).rows).toEqual([]);
+    expect(notifications).toEqual([]);
+  });
+
+  it('refuses re-admission without a receipt when the invocation changes', async () => {
+    const input = intent();
+    input.initialThread.invocation.source = 'manual.api';
+    input.initialThread.invocation.trigger.kind = 'manual';
+    const admitted = await admission.create(input);
+    const storedThread = structuredClone(input.initialThread);
+    const storedEvents = await events.read(admitted.id);
+    const notifications: number[] = [];
+    events.subscribe(admitted.id, (event) => notifications.push(event.seq));
+    input.initialThread.invocation.trigger.payload = { changed: true };
+
+    await expect(admission.create(input)).rejects.toThrow(AdmissionConflictError);
+
+    const repo = new SqliteRunRepository(handle.db);
+    expect(await repo.get(admitted.id)).toEqual(admitted);
+    expect(await repo.getInitialThread(admitted.id)).toEqual(storedThread);
+    expect((await handle.client.execute('SELECT * FROM runs')).rows).toHaveLength(1);
+    expect(await events.read(admitted.id)).toEqual(storedEvents);
+    expect((await handle.client.execute('SELECT * FROM webhook_receipts')).rows).toEqual([]);
+    expect(notifications).toEqual([]);
+  });
+
   it('rolls back run and queued event together, keeps pending pins, then commits and notifies once', async () => {
     const frozen = intent(),
       input = claim();
