@@ -57,6 +57,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ### Upgrade notes
 
+- Fresh SQLite initialisation commits its schema, migration ledger and complete format marker together, allowing interrupted first startup to retry safely while unknown or damaged stores still require explicit recovery. SQLite helper consumers must replace `stampFreshDatabase` with `initializeFreshDatabase`, which owns this transaction; when it returns `current`, apply ordinary migrations. Concurrent initialisation still applies pending migrations, and rollback failures preserve the original error. (#152)
+
 - Template drafts add `POST /templates/{id}/draft`. Installed templates may advertise a separate authored starting-point asset; rebuild strict API clients and the packaged catalog. Existing bound automation instances and stored loops are unchanged; no data migration is needed for this addition.
 
 - #28 adds optional API-owned `templateSubject` metadata to run snapshots/list items and required nullable `nextCursor` to the run-list response. The default list page grows from 50 to 100 items; pass an explicit `limit` when relying on a page size. Regenerate strict API clients. Existing engine `RunRecord` and context/session behavior stay unchanged. The registered catalog includes starter, implementation, review and QA templates. The gallery creates only independent starting-point drafts; configured-instance endpoints remain temporarily until backend retirement in #165.

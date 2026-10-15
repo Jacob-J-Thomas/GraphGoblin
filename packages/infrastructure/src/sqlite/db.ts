@@ -5,7 +5,7 @@ import { readMigrationFiles } from 'drizzle-orm/migrator';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { schema, type Schema } from './schema.js';
-import { guardDatabaseUpgrade, stampFreshDatabase } from './upgrade.js';
+import { guardDatabaseUpgrade, initializeFreshDatabase } from './upgrade.js';
 
 export type Database = LibSQLDatabase<Schema>;
 
@@ -195,11 +195,12 @@ export function openDatabase(options: DatabaseOptions): DatabaseHandle {
     client,
     db,
     async migrate() {
-      const upgradeState = await guardDatabaseUpgrade(client);
+      let upgradeState = await guardDatabaseUpgrade(client);
       await client.execute('PRAGMA journal_mode = WAL').catch(() => undefined);
       await client.execute('PRAGMA busy_timeout = 5000').catch(() => undefined);
-      await migrate(db, { migrationsFolder });
-      if (upgradeState === 'fresh') await stampFreshDatabase(client);
+      if (upgradeState === 'fresh')
+        upgradeState = await initializeFreshDatabase(client, migrationsFolder);
+      if (upgradeState === 'current') await migrate(db, { migrationsFolder });
     },
     async pendingMigrations() {
       const shipped = readMigrationFiles({ migrationsFolder });
