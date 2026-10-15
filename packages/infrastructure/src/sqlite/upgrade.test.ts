@@ -578,7 +578,7 @@ describe('offline database upgrade boundary', () => {
         DatabaseUpgradeRequiredError,
       );
   });
-  it('rolls back definition rewrites, audit DDL and state marker when historical validation fails after conversion', async () => {
+  it('refuses historical conversion before definition rewrites, audit DDL or state marker changes', async () => {
     const handle = await legacy('succeeded', true),
       before = await inspectDatabaseUpgrade(handle.client);
     await expect(applyDatabaseUpgrade(handle.client, await manifest(handle))).rejects.toThrow(
@@ -606,7 +606,7 @@ describe('offline database upgrade boundary', () => {
       args: [JSON.stringify(old)],
     });
     await expect(applyDatabaseUpgrade(mixed.client, await manifest(mixed))).rejects.toThrow(
-      /Unresolved version/,
+      /format-4 conversion/,
     );
     await mixed.client.execute("UPDATE loop_versions SET definition='{'");
     expect((await inspectDatabaseUpgrade(mixed.client)).issues).toMatchObject([

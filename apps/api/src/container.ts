@@ -17,7 +17,6 @@ import {
   openReadOnlyDatabaseClient,
   databaseView,
   SqliteApiKeys,
-  SqliteTemplateInstances,
   SqliteEventStore,
   SqliteTriggerAdmission,
   SqliteLoopRepository,
@@ -93,7 +92,7 @@ export interface ContainerOverrides {
 }
 
 export interface Container {
-  templates: { catalog: TemplateCatalog; store: SqliteTemplateInstances };
+  templates: { catalog: TemplateCatalog };
   config: ApiConfig;
   handle: DatabaseHandle;
   ports: EnginePorts;
@@ -309,8 +308,7 @@ export async function createContainer(
           new URL(import.meta.url.endsWith('.ts') ? '../templates' : './catalog', import.meta.url),
         ),
     );
-    const templateStore = new SqliteTemplateInstances(db);
-    const templates = { catalog: templateCatalog, store: templateStore };
+    const templates = { catalog: templateCatalog };
     const settings: EngineSettings = {
       defaults: config.defaults,
       maxConcurrentRuns: config.maxConcurrentRuns,

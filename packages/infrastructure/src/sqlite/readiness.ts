@@ -10,7 +10,7 @@ export const SHIPPED_MIGRATIONS = fileURLToPath(new URL('../../drizzle', import.
 // Moving the current format also requires an explicit format/SQL baseline decision.
 export const FORMAT_BASELINES = {
   3: '0008_github_triggers',
-  4: '0011_enable_claude_fable',
+  4: '0012_retire_template_instances',
 } satisfies Record<typeof CURRENT_DEFINITION_FORMAT | 3, string>;
 export const normalizeStoreSql = (sql: string) =>
   sql

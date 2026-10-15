@@ -71,18 +71,6 @@ async function previousStructure(custom = false) {
   await new SqliteEventStore(handle.db, new FakeClock()).append(runId, [
     { type: 'run.queued', initialThread },
   ]);
-  // Remove later template structures as well as their ledger entries to reconstruct v2.
-  for (const statement of [
-    'DROP INDEX template_qa_issue_attempt_idx',
-    'DROP INDEX template_issue_attempt_idx',
-    'DROP INDEX template_qa_merge_idx',
-    'DROP INDEX template_pr_head_idx',
-    'DROP INDEX template_active_pr_idx',
-    'DROP INDEX template_child_visit_idx',
-    'ALTER TABLE runs DROP COLUMN template_subject',
-    'DROP TABLE template_instances',
-  ])
-    await handle.client.execute(statement);
   expect(
     (await handle.client.execute("SELECT name FROM sqlite_master WHERE name LIKE 'template_%'"))
       .rows,
@@ -168,7 +156,7 @@ describe('explicit v2 trigger structural cutover', () => {
     const manifest = await approval(handle);
     await refusesUnchanged(handle.client, manifest);
   });
-  it('preserves unreachable endpoint and filtered delivery facts after historical loop deletion', async () => {
+  it('refuses historical stores without definitions while preserving endpoint and delivery facts', async () => {
     const { handle, key, loop, runId } = await previousStructure();
     // Reproduce the old deletion against this historical schema. Current deletion also removes
     // endpoints/receipts and requires the current schema; the offline upgrade stays unchanged.
@@ -201,28 +189,25 @@ describe('explicit v2 trigger structural cutover', () => {
     await handle.client.execute({ sql: 'DELETE FROM loops WHERE id=?', args: [loop.id] });
     expect((await handle.client.execute('SELECT * FROM loop_versions')).rows).toEqual([]);
     expect((await inspectDatabaseUpgrade(handle.client)).issues).toEqual([]);
-    await applyDatabaseUpgrade(handle.client, await approval(handle));
-    expect(await guardDatabaseUpgrade(handle.client)).toBe('current');
+    await refusesUnchanged(handle.client, await approval(handle));
+    await expect(guardDatabaseUpgrade(handle.client)).rejects.toMatchObject({
+      code: 'DATA_UPGRADE_REQUIRED',
+    });
     expect(
       (await handle.client.execute('SELECT dedupe_key FROM inbound_events ORDER BY id')).rows.map(
         (row) => row.dedupe_key,
       ),
     ).toEqual(['authored-business-key', key]);
     expect(
-      (
-        await handle.client.execute(
-          'SELECT enabled,signature_scheme,replay_window_seconds FROM webhook_endpoints',
-        )
-      ).rows,
+      (await handle.client.execute('SELECT enabled,replay_window_seconds FROM webhook_endpoints'))
+        .rows,
     ).toEqual([
       expect.objectContaining({
         enabled: 0,
-        signature_scheme: 'hmac-sha256',
         replay_window_seconds: 300,
       }),
       expect.objectContaining({
         enabled: 0,
-        signature_scheme: 'hmac-sha256',
         replay_window_seconds: 300,
       }),
     ]);
@@ -345,7 +330,7 @@ it('refuses an incomplete intermediate receipt layout before migration or recove
     'CREATE INDEX webhook_receipts_due_idx ON webhook_receipts(status,next_attempt_at)',
   );
   await expect(handle.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
-  expect((await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows).toHaveLength(12);
+  expect((await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows).toHaveLength(13);
 });
 it('rolls back when a proven linked webhook run vanishes before rewrite traversal', async () => {
   const { handle, runId, key } = await previousStructure();

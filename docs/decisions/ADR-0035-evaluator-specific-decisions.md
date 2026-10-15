@@ -26,6 +26,6 @@ All authoring admission paths use the same strict contracts and source paths. Th
 
 ## Stored data and delivery
 
-Current definitions and exports are format 4; thread format stays 1. Fresh format-4 stores use baseline `0011_enable_claude_fable`. Format-3 markers and old exports are refused with the existing upgrade-required errors. Frozen V3 parsers and v1/v2-to-v3 stage tests remain format 3. No temporary 3-to-4 stage is added: the integrated steps 26–28 provide conversion and the final baseline. Applying the unfinished historical conversion cannot stamp V3 definitions as current.
+Current definitions and exports are format 4; thread format stays 1. The format-4 baseline is `0012_retire_template_instances`, set by #165 step 09. Format-3 markers and old exports are refused with the existing upgrade-required errors. Frozen V3 parsers and v1/v2-to-v3 stage tests remain format 3. No temporary 3-to-4 stage is added: the integrated steps 26–28 provide conversion and the final baseline. Applying the unfinished historical conversion cannot stamp V3 definitions as current.
 
 Consumers must update removed matrix exports and nested evaluator fields, regenerate clients, and rebuild backend and web together. There is no tolerant old-format runtime path.

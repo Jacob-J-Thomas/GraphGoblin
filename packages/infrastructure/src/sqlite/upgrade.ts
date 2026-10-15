@@ -683,6 +683,26 @@ export async function applyDatabaseUpgrade(
     const original = await inspectDatabaseUpgrade(tx);
     validateManifest(manifest, original);
     const sourceNames = await tables(tx);
+    // Steps 26-28 replace this refusal with the real 3-to-4 conversion, deleting configured
+    // instances, their loops and all their runs without an archive before structural SQL.
+    const states = sourceNames.includes('gg_upgrade_state')
+      ? await rows(tx, 'SELECT * FROM gg_upgrade_state')
+      : [];
+    if (
+      states.length !== 1 ||
+      states[0]?.id !== 1 ||
+      states[0]?.format_version !== CURRENT_DEFINITION_FORMAT ||
+      states[0]?.status !== 'complete' ||
+      sourceNames.includes('template_instances') ||
+      (sourceNames.includes('runs') &&
+        (await rows(tx, 'PRAGMA table_info(runs)')).some(
+          (column) => column.name === 'template_subject',
+        ))
+    )
+      throw new DatabaseUpgradeRequiredError(
+        'Format-3 to format-4 conversion is not available until the integrated cutover',
+      );
+    await guardDatabaseUpgrade(tx, options.migrationsFolder ?? MIGRATIONS, { phase: 'head' });
     let context = await upgradeContext(tx, sourceNames);
     const triggerFacts = await inspectStoredTriggers(tx, sourceNames, context);
     const manifestHash = hash(manifest);

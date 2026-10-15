@@ -178,6 +178,14 @@ Cancellation is cooperative and persisted. The API writes `cancelRequestedAt`, a
 
 The request itself is a compare-and-set (`RunRepository.claimCancel`): `cancelRequestedAt` is written only when it is unset and the run is active. Of concurrent cancels, one records `run.cancel_requested`; the others return the run as it is without appending anything. A cancel that loses to the run finishing is an `INVALID_STATE` error, as a cancel of a terminal run always was.
 
+## Template storage retirement (Decided)
+
+Templates are catalogue assets copied into ordinary loops, never runnable instances. Migration `0012_retire_template_instances` drops the six template subject indexes, `runs.template_subject` (including its inline JSON CHECK), and `template_instances` with its owner index. Ordinary run, thread/checkpoint, parent, finalization and trigger-deduplication storage survives. Liquid, ordinary settings/model fields and working-directory kind `template` are unrelated and remain supported.
+
+`FORMAT_BASELINES[4]` requires `0012_retire_template_instances` in the migration ledger and its resulting structure before any startup writes. Startup refuses older stores, including a format-4 marker at 0011; it never applies this cutover SQL to them. Fresh initialization executes all migrations, ledger entries and the format-4 marker in one transaction.
+
+Until the real 3-to-4 stage exists, the offline converter refuses every store that is not already complete format 4, including unmarked stores and any remaining template table or subject column. The coordinated #164/#165 cutover (steps 26-28) deletes configured template instances, their loops, versions, all their runs and dependents before 0012, without an archive, with the format marker written last in the same transaction. This child supplies SQL and schema metadata only; it does not implement that conversion or authorize an installed upgrade. The libsql migration tests exercise SQL directly on disposable 0011 fixtures, separately from startup and converter admission.
+
 ## Crash recovery (Decided)
 
 Before run recovery, fresh SQLite initialisation commits the schema migrations, their ledger and the complete stored-format marker in one write transaction. An interruption before commit rolls all of them back, so the next ordinary startup can initialise the empty store again without duplicate migration effects. Freshness requires no application tables and no recorded migrations; an empty migration-ledger table alone is allowed. Empty user tables do not establish freshness. An existing unmarked schema, a marker table without its complete row, an incomplete upgrade state or recorded migrations without application tables still stop startup with `DATA_UPGRADE_REQUIRED`. Preserve those stores for the [offline upgrade and recovery workflow](guide/08-offline-upgrade.md); startup does not stamp or repair them by inference.
