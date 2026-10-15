@@ -107,8 +107,14 @@ describe('installed template catalog boundaries', () => {
       'qa',
     ]);
     const starter = await catalog.get('starter');
-    expect(starter.manifest.kind).toBe('starter');
-    expect(starter.manifest.requiredSecrets).toEqual([]);
+    expect(Object.keys(starter.manifest)).toEqual([
+      'id',
+      'version',
+      'title',
+      'description',
+      'tags',
+      'draftFile',
+    ]);
     expect('support' in starter).toBe(false);
     expect(starter.draft.schemaVersion).toBe(CURRENT_DEFINITION_FORMAT);
     expect(starter.draft?.nodes.some((node) => node.kind === 'inference')).toBe(true);
@@ -178,17 +184,19 @@ describe('installed template catalog boundaries', () => {
     });
   });
 
-  it('does not open configured graphs or private support entries', async () => {
+  it('rejects configured manifest fields instead of opening graphs or private support entries', async () => {
     const f = await fixture();
     await writeFile(
       join(f.root, 'recipe', 'manifest.json'),
       JSON.stringify({
         ...f.manifest,
-        loops: [{ ...f.manifest.loops[0], file: 'missing.json', dependsOn: ['missing-child'] }],
+        loops: [{ key: 'parent', file: 'missing.json', dependsOn: ['missing-child'] }],
         supportEntry: 'dist/missing.mjs',
       }),
     );
-    expect((await f.catalog.get('recipe')).draft).toEqual(f.exported.loop);
+    await expect(f.catalog.get('recipe')).rejects.toMatchObject({
+      code: 'TEMPLATE_PACKAGE_INVALID',
+    });
   });
 
   it.each([

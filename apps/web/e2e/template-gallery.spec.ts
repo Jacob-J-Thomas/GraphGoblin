@@ -270,7 +270,7 @@ test('opens the QA starting point as an ordinary copy without configured-parent 
       response.request().method() === 'POST' &&
       new URL(response.url()).pathname === '/templates/qa/draft',
   );
-  await page.getByRole('button', { name: 'Use Post-merge QA', exact: true }).click();
+  await page.getByRole('button', { name: 'Use QA assessment', exact: true }).click();
   const copy = TemplateDraftResponseSchema.parse(await (await copied).json());
   await expect(page).toHaveURL(new RegExp(`/loops/${copy.loop.id}/edit$`));
   await expect(page.getByText('Ready to publish', { exact: true })).toBeVisible();

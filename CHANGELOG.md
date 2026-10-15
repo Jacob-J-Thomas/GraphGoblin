@@ -4,6 +4,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Templates ship only four independent starting graphs, their manifests and the catalogue index; configured graphs and their exclusive prompts/schemas are removed. Asset revisions are now `2.0.0`, independently of definition format. The gallery retains one **Use** action per template; implementation, review and QA guides describe ordinary nodes and their limits. **Upgrade:** manifests now strictly contain only `id`, `version`, `title`, `description`, `tags` and required `draftFile`. Remove `kind`, `roles`, `prerequisites`, `requiredSecrets`, `parentKey`, `loops` and `supportEntry`; `TemplateLoopManifest` and `TemplatePrerequisiteDeclaration` schemas/types are removed. Rebuild the API/web together and regenerate strict API clients. Templates cannot run directly; create a copy with `POST /templates/{id}/draft`, then configure, publish and run that ordinary loop. This asset change does not convert stored configured instances; step 09 and the coordinated cutover own their DTO/store/SQL removal. (#165, step 10)
+
 - `examples/aidlc` is removed. (#165 step 11)
 
 - Templates no longer install private runtime authority, credentials or finalization reporters. **Upgrade:** configured prerequisite, instantiate and instance endpoints and client helpers are removed; catalogue entries contain only `manifest`. Use `POST /templates/{id}/draft` for independent ordinary drafts. Loader, hooks and stored-data retirement continue in later #165 children. (#165, step 06 part 1)

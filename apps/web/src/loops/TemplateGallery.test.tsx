@@ -12,6 +12,8 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   id,
   implementationTemplateEntry,
+  qaTemplateEntry,
+  reviewTemplateEntry,
   starterTemplateEntry,
   TS,
 } from '../__fixtures__/fake-api.js';
@@ -46,6 +48,40 @@ function editableDraft(entry: TemplateCatalogEntry): TemplateDraftResponse {
 }
 
 describe('TemplateGallery', () => {
+  it.each([
+    starterTemplateEntry(),
+    implementationTemplateEntry(),
+    reviewTemplateEntry(),
+    qaTemplateEntry(),
+  ])(
+    'offers one Use action for $manifest.id and opens the returned ordinary draft',
+    async (entry) => {
+      const user = userEvent.setup();
+      const response = editableDraft(entry);
+      const onCreateDraft = vi.fn(() => Promise.resolve(response));
+      const onCreated = vi.fn();
+      render(
+        <MemoryRouter>
+          <TemplateGallery
+            templates={[
+              starterTemplateEntry(),
+              implementationTemplateEntry(),
+              reviewTemplateEntry(),
+              qaTemplateEntry(),
+            ]}
+            onCreateDraft={onCreateDraft}
+            onCreated={onCreated}
+          />
+        </MemoryRouter>,
+      );
+      await user.click(screen.getByRole('button', { name: 'New from template' }));
+      expect(screen.getAllByRole('button', { name: /^Use / })).toHaveLength(4);
+      expect(screen.queryByRole('button', { name: /Configure|Settings/ })).not.toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: `Use ${entry.manifest.title}` }));
+      await waitFor(() => expect(onCreated).toHaveBeenCalledWith(response.loop.id));
+      expect(onCreateDraft).toHaveBeenCalledExactlyOnceWith(entry.manifest.id);
+    },
+  );
   it('creates directly without settings or readiness and guards repeated cross-card activation', async () => {
     const user = userEvent.setup();
     const entry = starterTemplateEntry();
