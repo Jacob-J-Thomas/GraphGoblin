@@ -1,8 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import {
-  TemplateInstantiateResponseSchema,
-  TemplateListResponseSchema,
-} from '@graphgoblin/contracts';
+import { TemplateDraftResponseSchema } from '@graphgoblin/contracts';
 import { fakeUlid } from '@graphgoblin/contracts/testing';
 import { createTestApp, type TestApp } from '../testing/test-app.js';
 import { ParentSubjectSchema, subjectJson } from '../templates/subjects.js';
@@ -19,19 +16,16 @@ describe('API template subject view and stable paging', () => {
       'runs:write',
     ]);
     const headers = { authorization: 'Bearer ' + key.token };
-    const entry = TemplateListResponseSchema.parse(
-      (await t.app.inject({ method: 'GET', url: '/templates', headers })).json(),
-    ).items[0]!;
-    const instance = TemplateInstantiateResponseSchema.parse(
-      (
-        await t.app.inject({
-          method: 'POST',
-          url: '/templates/starter/instantiate',
-          headers,
-          payload: { settings: entry.defaultSettings },
-        })
-      ).json(),
-    ).instance;
+    const created = await t.app.inject({
+      method: 'POST',
+      url: '/templates/starter/draft',
+      headers,
+      payload: {},
+    });
+    expect(created.statusCode, created.body).toBe(201);
+    const draft = TemplateDraftResponseSchema.parse(created.json());
+    // Synthetic historical sidecar data exercises pre-step-05 reads, never runtime authority.
+    const instance = { id: fakeUlid('historical-instance'), parentLoopId: draft.loop.id };
     expect(
       (
         await t.app.inject({

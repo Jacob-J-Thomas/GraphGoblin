@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { JsonSchemaSchema, SlugSchema, TimestampSchema, UlidSchema } from './common.js';
+import { SlugSchema, TimestampSchema, UlidSchema } from './common.js';
 import { LoopDefinitionSchema, LoopRecordSchema, LoopVersionRecordSchema } from './loop.js';
 import { LoopIssueSchema } from './issues.js';
 import {
@@ -181,21 +181,7 @@ export const TemplateInstanceSchema = z
       });
   });
 export type TemplateInstance = z.infer<typeof TemplateInstanceSchema>;
-export const TemplateCatalogEntrySchema = z
-  .strictObject({
-    manifest: TemplateManifestSchema,
-    settingsSchema: JsonSchemaSchema,
-    defaultSettings: TemplateSettingsSchema.nullable(),
-    prerequisites: TemplatePrerequisiteReportSchema,
-  })
-  .superRefine((value, ctx) => {
-    if (value.defaultSettings !== null && value.defaultSettings.kind !== value.manifest.kind)
-      ctx.addIssue({
-        code: 'custom',
-        path: ['defaultSettings'],
-        message: 'default settings kind must match the manifest',
-      });
-  });
+export const TemplateCatalogEntrySchema = z.strictObject({ manifest: TemplateManifestSchema });
 export type TemplateCatalogEntry = z.infer<typeof TemplateCatalogEntrySchema>;
 export const TemplateListResponseSchema = z.strictObject({
   items: z.array(TemplateCatalogEntrySchema).max(100),

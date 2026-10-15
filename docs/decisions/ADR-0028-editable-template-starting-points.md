@@ -2,6 +2,8 @@
 
 Status: Accepted from the owner's direct product instruction (2026-10-09)
 
+The configured runtime and backend retirement decision is completed by [ADR-0034](ADR-0034-retire-template-runtime-authority.md). Step 06 disconnects API authority and configured HTTP actions; remaining loader, hook, service and storage removal proceeds in bounded #165 children. The original text below is retained as history.
+
 The **Configure automation** paragraph and the retained configured-instance path below are superseded by [ADR-0030](ADR-0030-templates-are-starting-points.md). The editable independent-draft decision remains in force; backend retirement is tracked in #165.
 
 ## Context

@@ -298,17 +298,13 @@ A draft has a version token, `draftToken`: a hash of the definition the next dra
 
 `PUT /settings` validates the shared `defaults` value (`{byHarness:{codex:{model?,effort?}}}`). Catalog metadata default effort remains guidance, not a hidden resolver layer. Old owner `defaultModel` and `defaultEffort` values are converted offline. Deleting the `defaults` setting restores process defaults.
 
-## Template catalog and instances (#28)
+## Template catalogue and ordinary drafts (#165)
 
-The owner-scoped API exposes `GET /templates`, `GET /templates/{id}`, `POST /templates/{id}/draft`, `POST /templates/{id}/prerequisites`, `POST /templates/{id}/instantiate` and `GET /template-instances/{id}`. Catalog entries contain a manifest, settings schema, current defaults and a structured prerequisite report. Each failed check includes remediation and states whether it blocks authoring or runtime. Reports do not grant authority; instantiation repeats the checks using the submitted settings.
+`GET /templates` and `GET /templates/{id}` require `loops:read` and return entries shaped exactly as `{manifest}`. They perform no prerequisite, provider, GitHub or secret probes. `POST /templates/{id}/draft` requires `loops:write`, accepts only an optional name, and creates one owner-scoped ordinary loop and editable draft. It returns `{loop, draft, issues}` without publication, run, child or binding. Ordinary invalid-configuration admission remains; missing login does not block authoring.
 
-`POST /templates/{id}/draft` accepts an optional name and creates one ordinary editable draft from the installed starting-point asset. It returns `{loop, draft, issues}`, requires `loops:write`, and does not publish, start a run, create children or establish an immutable integration binding. Missing repository configuration or model credentials do not prevent saving the starting point; normal validation and runtime admission still apply.
+The prerequisite, instantiate and template-instance endpoints and their client helpers are removed. Loop detail no longer carries `templateInstanceId`; the editor performs no instance-origin lookup. The remaining client methods are `templates.list/get/createDraft`. Unknown catalogue IDs return 404 `TEMPLATE_NOT_FOUND`; trusted installed-asset failures return the fixed sanitized 503 `TEMPLATE_PACKAGE_INVALID`. Arbitrary server errors remain 500 `INTERNAL_ERROR`.
 
-`GET /loops/{id}` also returns optional `templateInstanceId` for a loop created by a template instance belonging to the requesting owner. Ordinary loops omit it. It identifies the existing `GET /template-instances/{id}` resource under `loops:read`; it grants no runtime authority. Another owner's loop or instance remains unavailable.
-
-Instantiation returns `{instance, prerequisites}`. The instance records the installed template ID/version, owner, settings and allocated loop/version map. A single storage transaction creates the complete bundle and its immutable binding. Dependencies are published first; the parent remains a draft and does not start or arm its triggers. All declared subloops are remapped to their allocated child IDs and pinned versions. Separate creations have separate IDs. Settings fill declared literal data slots and role fields, never executable source strings. The generated client exposes `templates.list/get/createDraft/prerequisites/instantiate/instance`.
-
-The production catalog contains starter, implementation, review and QA entries. The gallery uses their editable starting points by default; configured repository automation is a separate explicit action. Repository recipe eligibility and effect authorization belong to the API integration, not the generic engine or domain bundle validator. Unregistered recipes cannot be created by guessing their IDs.
+The loader and dormant configured contracts/services are removed in the next bounded #165 split. The four current manifests still carry configured metadata during this integration-only interval. No deployment or stored-data cutover is part of this child.
 
 ### Template subjects and run pagination
 
@@ -339,4 +335,4 @@ Linked external originals start at attempt one. The API derives and persists
 these identities during admission; authored run input cannot assert them.
 Repository recipes remain unregistered in this foundation release.
 
-Starter templates keep the ordinary engine resume behavior for resumable inference failures. Every resumed execution rechecks the actual pinned role configuration before another node can run. Repository recipes restrict resume to their original, allowlisted pre-execution prerequisite failure. If a restarted repository run already has a `node.started` event, lost prerequisites or authority require manual recovery; the failure does not claim that earlier effects were absent and no pre-execution explanatory comment is posted.
+Ordinary copied drafts use the ordinary engine resume behavior. The API installs no template admission, execution, resume or reporting policy. Dormant configured runtime modules await deletion in the next #165 split.

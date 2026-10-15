@@ -4,6 +4,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Templates no longer install private runtime authority, credentials or finalization reporters. **Upgrade:** configured prerequisite, instantiate and instance endpoints and client helpers are removed; catalogue entries contain only `manifest`, and loop details omit template origins. Use `POST /templates/{id}/draft` for independent ordinary drafts. Loader, hooks and stored-data retirement continue in the #165 follow-up split; no installed upgrade is authorized by this child. (#165, step 06 subset)
+
 - **Behaviour change:** deleting a loop now deletes its run history, versions, drafts and triggers atomically; active runs must be cancelled first. (#118)
 
 - Internal: frozen format-3 parsers from `12e5b87` for the format-4 upgrade; existing offline definition and history conversion validates against this capture. (#164, step 01)

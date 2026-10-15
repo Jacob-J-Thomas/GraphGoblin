@@ -51,9 +51,6 @@ describe('LoopsPage', () => {
     const user = userEvent.setup();
     const api = new FakeApi();
     const entry = starterTemplateEntry();
-    entry.defaultSettings = null;
-    entry.prerequisites.canInstantiate = false;
-    entry.prerequisites.canRun = false;
     api.templates = [entry];
     renderApp('/loops', api);
 
@@ -115,29 +112,6 @@ describe('LoopsPage', () => {
     const user = userEvent.setup();
     const api = new FakeApi();
     const entry = starterTemplateEntry();
-    const report = {
-      checks: [
-        {
-          id: 'assistant-model',
-          label: 'Assistant model',
-          status: 'missing' as const,
-          blocking: 'authoring' as const,
-          message: 'No enabled assistant model is available.',
-          remediation: 'Enable an available model in Settings.',
-        },
-        {
-          id: 'run-isolation',
-          label: 'Run isolation',
-          status: 'unavailable' as const,
-          blocking: 'runtime' as const,
-          message: 'This installation cannot enforce evidence-only isolation yet.',
-          remediation: 'Wait for an enforced isolation runner before starting runs.',
-        },
-      ],
-      canInstantiate: false,
-      canRun: false,
-    };
-    entry.prerequisites = report;
     api.templates = [entry];
     renderApp('/loops', api);
 
@@ -187,9 +161,6 @@ describe('LoopsPage', () => {
 
     const withNoDefaults = new FakeApi();
     const entry = starterTemplateEntry();
-    entry.defaultSettings = null;
-    entry.prerequisites.canInstantiate = false;
-    entry.prerequisites.canRun = false;
     withNoDefaults.templates = [entry];
     renderApp('/loops', withNoDefaults);
     await user.click(await screen.findByRole('button', { name: 'New from template' }));

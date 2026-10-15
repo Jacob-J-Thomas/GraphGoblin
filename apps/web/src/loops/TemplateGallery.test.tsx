@@ -50,22 +50,6 @@ describe('TemplateGallery', () => {
     const user = userEvent.setup();
     const entry = starterTemplateEntry();
     const implementation = implementationTemplateEntry();
-    entry.defaultSettings = null;
-    entry.prerequisites.canInstantiate = false;
-    entry.prerequisites.canRun = false;
-    implementation.defaultSettings = null;
-    implementation.prerequisites.canInstantiate = false;
-    implementation.prerequisites.canRun = false;
-    implementation.prerequisites.checks = [
-      {
-        id: 'settings',
-        label: 'Settings',
-        status: 'missing',
-        blocking: 'authoring',
-        message: 'Complete valid settings for this template.',
-        remediation: 'Choose all required roles and correct the settings fields.',
-      },
-    ];
     let finishCreate!: (response: TemplateDraftResponse) => void;
     let finishHandoff!: () => void;
     const pendingCreate = new Promise<TemplateDraftResponse>((resolve) => {
