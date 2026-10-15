@@ -14,6 +14,8 @@ pnpm.cmd graphgoblin-upgrade export --input .\old-loop.json --out .\converted-lo
 
 A successful result is a format-3 export (or a version-3 definition when the input was a bare definition). Format-1 input first passes through a frozen format-2 conversion; both stages must resolve before any output is accepted. Exit code 2 means the output is a refusal report, not an importable loop. Resolve every reported ambiguity in a separate JSON resolutions file, then retry to a different new output path with `--resolutions .\resolutions.json`.
 
+The frozen format-2 parsers (`packages/contracts/src/generated/upgrade-v2`, captured by `tooling/scripts/freeze-upgrade-v2.mjs`) now have a format-3 capture beside them (`generated/upgrade-v3`, captured by `tooling/scripts/freeze-upgrade-v3.mjs` from `12e5b87`). Each capture includes source SHA-256 headers and a revision/hash manifest in `provenance.json`. The format-3 capture includes definitions, exports, nodes, evaluation, common/meta, mutations, threads, triggers, events and run records. Its `V3*` exports validate offline definition/history output and the syntax walk independently of later current-contract edits; they must never be used for runtime admission. Current stored format remains 3. The v3 script refuses recapture once either current loop format literal changes from 3.
+
 The resolutions object has four optional fields:
 
 - `decisions`: a map from node ID to the complete new decision configuration, including its answer and evaluator. Replacement option IDs must preserve the original route-ID set and edge ports; invalid original IDs need a separately reviewed repair. Mixed chains, invalid old option labels/criteria, and expressions whose string result cannot be proven need an explicit choice.

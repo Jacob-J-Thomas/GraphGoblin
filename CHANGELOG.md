@@ -4,6 +4,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Internal: frozen format-3 parsers from `12e5b87` for the format-4 upgrade; existing offline definition and history conversion validates against this capture. (#164, step 01)
+
 - Incomplete numeric input now keeps the last valid value, reports **Enter a complete number**, and blocks Publish through the existing held-input mechanism. This also fixes the inherited main-branch bug where native incomplete input silently cleared an optional number. Section JSON validates the merged whole node config, including parent Claude rules, before any applied value or device/server draft changes. (#170, QA fixes)
 
 - Inference and decision editors offer schema-validated section JSON with explicit Apply/Cancel, retained unfinished text, validation badges and issue focus. Declared variables suggest names and mutation paths; numeric constraints keep invalid entries out of saved values, and criteria/rubrics preserve multiline text. JSON mode refuses hidden unfinished field input; formatting-only JSON edits do not block Publish. Decision Answer JSON validates routes and rubric together and preserves connections only for surviving route IDs, with explicit confirmation before removing connections; the structured picker changes answer type. Capability slugs remain authored because format 3 has no resolved capability catalog. (#170, part B)
