@@ -164,6 +164,7 @@ async function snapshot() {
 describe('loop deletion', () => {
   it('deletes terminal runs and every dependent table, with no upgrade orphan (D5)', async () => {
     const identity = await published('delete');
+    const sibling = await published('bundle-sibling');
     await loops.saveDraft(identity.loopId, LoopDefinitionSchema.parse(minimalLoop()));
     const terminal = await Promise.all(
       (['succeeded', 'failed', 'cancelled', 'exhausted'] as const).map((status) =>
@@ -171,6 +172,8 @@ describe('loop deletion', () => {
       ),
     );
     await triggers(identity, 'delete', terminal[0]!);
+    // Deleting any member intentionally removes the whole bundle binding (#165), while
+    // preserving the other member loops and their versions.
     await handle.db.insert(templateInstances).values({
       id: 'binding',
       ownerId: 'local',
@@ -190,6 +193,13 @@ describe('loop deletion', () => {
             version: 1,
             status: 'draft',
           },
+          {
+            key: 'child',
+            loopId: sibling.loopId,
+            versionId: sibling.versionId,
+            version: 1,
+            status: 'published',
+          },
         ],
         settings: {
           kind: 'starter',
@@ -201,6 +211,8 @@ describe('loop deletion', () => {
     expect(await loops.delete(identity.loopId)).toBe(true);
     expect(await loops.getLoop(identity.loopId)).toBeUndefined();
     expect(await loops.listVersions(identity.loopId)).toEqual([]);
+    expect(await loops.getLoop(sibling.loopId)).toBeDefined();
+    expect(await loops.getVersion(sibling.versionId)).toBeDefined();
     for (const table of [
       runs,
       runEvents,
@@ -219,6 +231,29 @@ describe('loop deletion', () => {
     expect(JSON.stringify(await inspectDatabaseUpgrade(handle.client))).not.toContain(
       'UPGRADE_ORPHAN_RUN_VERSION',
     );
+  });
+
+  it('prunes only the deleted loop run from a shared inbound event', async () => {
+    const removedLoop = await published('removed');
+    const otherLoop = await published('other');
+    const removed = await storedRun('removed', removedLoop);
+    const retained = await storedRun('retained', otherLoop);
+    await handle.db.insert(inboundEvents).values({
+      id: 'shared',
+      ownerId: 'local',
+      type: 'shared',
+      payload: 'null',
+      source: 'api',
+      receivedAt: FIXTURE_TS,
+      runIds: [removed.id, retained.id],
+    });
+
+    expect(await loops.delete(removedLoop.loopId)).toBe(true);
+    expect(await handle.db.select().from(inboundEvents)).toMatchObject([
+      { id: 'shared', runIds: [retained.id] },
+    ]);
+    expect(await repo.get(removed.id)).toBeUndefined();
+    expect(await repo.get(retained.id)).toEqual(retained);
   });
 
   it('deletes a loop without runs and returns false for a missing loop', async () => {

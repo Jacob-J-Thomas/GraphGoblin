@@ -310,7 +310,7 @@ describe('LoopsPage', () => {
       'all its versions, its triggers and all its runs (2) will be deleted',
     );
     expect(screen.getByRole('alertdialog')).toHaveTextContent(
-      'including run history and artifacts',
+      'including run history and artifact references',
     );
     expect(screen.getByRole('alertdialog')).toHaveTextContent('subloop');
     expect(screen.getByRole('button', { name: 'Keep' })).toHaveFocus();

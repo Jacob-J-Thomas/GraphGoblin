@@ -213,8 +213,8 @@ function LoopActions({ loop, runCount }: { loop: LoopRecord; runCount: number | 
             <p>
               The loop, all its versions, its triggers and all its runs
               {runCount === undefined ? '' : ` (${runCount})`} will be deleted, including run
-              history and artifacts. Loops using it as a subloop will no longer be able to start it.
-              Cancel active runs first.
+              history and artifact references. Loops using it as a subloop will no longer be able to
+              start it. Cancel active runs first.
             </p>
           }
           onConfirm={async () => {

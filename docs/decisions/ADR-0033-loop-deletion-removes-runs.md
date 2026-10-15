@@ -22,9 +22,13 @@ missing child. Do not rewrite other published definitions that refer to this loo
 execution of that subloop reference fails with `SUBLOOP_NOT_FOUND`.
 
 Prune deleted run links from shared inbound deliveries, preserving their historical source.
-Remove configured bundle bindings containing the deleted loop without deleting other member
-loops. Artifact references belong to the deleted thread/history; content-addressed files are
-shared, have no run ownership, and remain on disk.
+Deleting any member loop removes the entire configured template-instance binding, rather than
+just that member's entry. Other member loops and their histories remain. This is intentional:
+the owner's decision in [#165](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/165) deletes
+configured template instances entirely at the format-4 cutover.
+
+Artifact references belong to the deleted thread/history; content-addressed files are shared,
+have no run ownership, and remain on disk.
 
 Provide a transactional repository operation to remove runs whose loop or version is absent.
 The later format-4 cutover will invoke it. Do not change the current offline upgrade here.

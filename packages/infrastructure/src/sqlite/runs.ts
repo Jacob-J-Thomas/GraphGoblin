@@ -87,7 +87,10 @@ export class SqliteRunRepository implements RunRepository {
     private readonly beforeTransition?: BeforeRunTransition,
   ) {}
 
-  /** Offline maintenance for runs left by old loop deletion. Not part of ordinary upgrades. */
+  /**
+   * Offline cutover use only: safe only with the API stopped, because orphan runs are deleted
+   * regardless of status. Repairs old loop deletion; not invoked by ordinary upgrades.
+   */
   async deleteOrphans(): Promise<number> {
     return this.db.transaction((tx) =>
       deleteRuns(
