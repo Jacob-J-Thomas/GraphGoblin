@@ -1,5 +1,5 @@
-import { copyFile, mkdir, readFile, readdir, unlink } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
+import { copyFile, lstat, mkdir, readFile, readdir, realpath, unlink } from 'node:fs/promises';
+import { dirname, join, resolve } from 'node:path';
 import { z } from 'zod';
 import { TemplateManifestSchema, TemplateRelativePathSchema } from '@graphgoblin/contracts';
 import { installedFile, TemplateCatalog } from './catalog.js';
@@ -24,14 +24,18 @@ export async function copyCatalog(source: string, target: string): Promise<void>
   async function clearFiles(directory: string): Promise<void> {
     for (const entry of await readdir(directory, { withFileTypes: true })) {
       const path = join(directory, entry.name);
+      if (entry.isSymbolicLink()) throw new Error('Catalogue target links are not permitted.');
       if (entry.isDirectory()) await clearFiles(path);
       else await unlink(path);
     }
   }
-  await mkdir(target, { recursive: true });
-  await clearFiles(target);
+  const targetRoot = resolve(target);
+  await mkdir(targetRoot, { recursive: true });
+  if ((await lstat(targetRoot)).isSymbolicLink() || (await realpath(targetRoot)) !== targetRoot)
+    throw new Error('The catalogue target must be a canonical directory.');
+  await clearFiles(targetRoot);
   for (const file of files) {
-    const destination = join(target, file);
+    const destination = join(targetRoot, file);
     await mkdir(dirname(destination), { recursive: true });
     await copyFile(await installedFile(source, file), destination);
   }
