@@ -111,11 +111,12 @@ async function through(index: number) {
   });
   return handle;
 }
-it.each([8, 9, 10])(
+it.each([8, 9, 10, 11])(
   'refuses a format-4 marker whose ledger stops before the baseline at migration %s',
   async (index) => {
     const handle = await through(index);
     const before = (await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows;
+    const schema = (await handle.client.execute('SELECT * FROM sqlite_master ORDER BY name')).rows;
     await expect(guardDatabaseUpgrade(handle.client)).rejects.toMatchObject({
       code: 'DATA_UPGRADE_REQUIRED',
     });
@@ -123,21 +124,24 @@ it.each([8, 9, 10])(
     expect((await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows).toEqual(
       before,
     );
+    expect((await handle.client.execute('SELECT * FROM sqlite_master ORDER BY name')).rows).toEqual(
+      schema,
+    );
   },
 );
 it('refuses a head ledger with missing additive structure after a no-op migration', async () => {
   const handle = await openMemoryDatabase();
   handles.push(handle);
-  await handle.client.execute('DROP TABLE template_instances');
+  await handle.client.execute('DROP TABLE classifier_models');
   await expect(guardDatabaseUpgrade(handle.client)).rejects.toMatchObject({
     code: 'DATA_UPGRADE_REQUIRED',
   });
   const before = (await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows;
-  await expect(handle.migrate()).rejects.toThrow('Missing current-store table: template_instances');
+  await expect(handle.migrate()).rejects.toThrow('Missing current-store table: classifier_models');
   expect((await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows).toEqual(before);
 });
 it('requires the shipped baseline constraint names as well as their expressions', async () => {
-  const handle = await through(11);
+  const handle = await through(12);
   const ddl = (
     await handle.client.execute("SELECT sql FROM sqlite_master WHERE name='webhook_receipts'")
   ).rows[0]!.sql;
@@ -165,18 +169,18 @@ it('derives dropped and IF NOT EXISTS indexes from the executed migration catalo
       ...last,
       idx: last.idx + 1,
       when: last.when + 1,
-      tag: '0012_index_probe',
+      tag: '0013_index_probe',
     });
     await writeFile(path, JSON.stringify(journal));
     await writeFile(
-      join(folder, '0012_index_probe.sql'),
-      'DROP INDEX template_child_visit_idx;\n--> statement-breakpoint\nCREATE INDEX IF NOT EXISTS gate_probe_idx ON runs(id);\n--> statement-breakpoint\nCREATE INDEX IF NOT EXISTS gate_probe_idx ON runs(id);',
+      join(folder, '0013_index_probe.sql'),
+      'DROP INDEX runs_parent_idx;\n--> statement-breakpoint\nCREATE INDEX IF NOT EXISTS gate_probe_idx ON runs(id);\n--> statement-breakpoint\nCREATE INDEX IF NOT EXISTS gate_probe_idx ON runs(id);',
     );
     const descriptor = await currentStoreReadiness(folder);
     const indexes = descriptor.head
       .find((table) => table.name === 'runs')!
       .indexes.map((index) => index.name);
-    expect(indexes).not.toContain('template_child_visit_idx');
+    expect(indexes).not.toContain('runs_parent_idx');
     expect(indexes).toContain('gate_probe_idx');
     expect(indexes).not.toContain('IF');
     await handle.migrate();
@@ -187,10 +191,14 @@ it('derives dropped and IF NOT EXISTS indexes from the executed migration catalo
   }
 });
 
-it('refuses a complete format-3 marker without writes', async () => {
+it('refuses a complete format-3 marker at 0011 without applying cutover SQL', async () => {
   const handle = await through(11);
   await handle.client.execute('UPDATE gg_upgrade_state SET format_version=3');
   const before = (await handle.client.execute('SELECT * FROM gg_upgrade_state')).rows;
+  const schema = (await handle.client.execute('SELECT * FROM sqlite_master ORDER BY name')).rows;
   await expect(handle.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
   expect((await handle.client.execute('SELECT * FROM gg_upgrade_state')).rows).toEqual(before);
+  expect((await handle.client.execute('SELECT * FROM sqlite_master ORDER BY name')).rows).toEqual(
+    schema,
+  );
 });

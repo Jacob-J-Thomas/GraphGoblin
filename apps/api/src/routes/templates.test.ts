@@ -22,12 +22,6 @@ describe('template API without runtime authority', () => {
     const script = vi.spyOn(app.container.ports.scripts, 'run');
     const secret = vi.spyOn(app.container.ports.secrets, 'resolve');
     const authenticate = vi.spyOn(app.container.repos.apiKeys, 'authenticate');
-    const storageReads = [
-      vi.spyOn(app.container.templates.store, 'get'),
-      vi.spyOn(app.container.templates.store, 'bindingForLoop'),
-      vi.spyOn(app.container.templates.store, 'subjectRuns'),
-      vi.spyOn(app.container.templates.store, 'run'),
-    ];
     const list = await app.app.inject({ method: 'GET', url: '/templates' });
     expect(list.statusCode, list.body).toBe(200);
     const { items } = list.json<{ items: { manifest: { id: string } }[] }>();
@@ -47,7 +41,18 @@ describe('template API without runtime authority', () => {
     expect(script).not.toHaveBeenCalled();
     expect(secret).not.toHaveBeenCalled();
     expect(authenticate).not.toHaveBeenCalled();
-    for (const read of storageReads) expect(read).not.toHaveBeenCalled();
+    expect(
+      (
+        await app.container.handle.client.execute(
+          "SELECT name FROM sqlite_master WHERE name LIKE 'template_%'",
+        )
+      ).rows,
+    ).toEqual([]);
+    expect(
+      (await app.container.handle.client.execute('PRAGMA table_info(runs)')).rows.map(
+        (row) => row.name,
+      ),
+    ).not.toContain('template_subject');
   });
   it('removes configured actions from routing and OpenAPI without allocating state', async () => {
     app = await createTestApp();

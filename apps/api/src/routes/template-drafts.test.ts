@@ -26,6 +26,13 @@ describe('editable template starting points', () => {
       app.harness.preflightResult = { ok: false, authenticated: false, problems: ['unavailable'] };
       const preflight = vi.spyOn(app.harness, 'preflight');
       const created = await createDraft(kind);
+      expect(
+        (
+          await app.container.handle.client.execute(
+            "SELECT name FROM sqlite_master WHERE name='template_instances'",
+          )
+        ).rows,
+      ).toEqual([]);
       expect(created.loop).not.toHaveProperty('currentVersionId');
       expect(created.draft.status).toBe('draft');
       expect(created.issues).toContainEqual(expect.objectContaining({ code: 'MODEL_UNRESOLVED' }));
@@ -49,9 +56,6 @@ describe('editable template starting points', () => {
       expect(await app.container.repos.loops.listVersions(created.loop.id)).toEqual([
         created.draft,
       ]);
-      expect(
-        await app.container.templates.store.bindingForLoop('local', created.loop.id),
-      ).toBeUndefined();
       expect(
         (await app.app.inject({ method: 'GET', url: '/loops/' + created.loop.id })).json(),
       ).not.toHaveProperty('templateInstanceId');
@@ -196,6 +200,10 @@ describe('editable template starting points', () => {
       ['absent-template', {}, 404],
       ['starter', { name: ' ' }, 400],
       ['starter', { settings: {} }, 400],
+      ['starter', { settings: { kind: 'starter', instruction: 'Retired settings' } }, 400],
+      ['starter', { instance: { templateId: 'starter' } }, 400],
+      ['starter', { prerequisites: { checks: [], canInstantiate: true, canRun: true } }, 400],
+      ['starter', { manifest: { id: 'starter' }, loops: {} }, 400],
     ] as const) {
       const response = await app.app.inject({
         method: 'POST',

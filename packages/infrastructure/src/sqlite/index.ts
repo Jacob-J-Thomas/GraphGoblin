@@ -17,5 +17,3 @@ export * from './classifiers.js';
 export * from './triggers.js';
 export * from './upgrade.js';
 export * from './admission.js';
-
-export * from './templates.js';

@@ -148,17 +148,17 @@ describe('classifier repository', () => {
           .map((column) => `"${column.replaceAll('"', '""')}"`)
           .join(',');
         await writeFile(join(dir, 'meta/_journal.json'), JSON.stringify(journal));
-        // The current catalog includes 0011_enable_claude_fable as its twelfth entry.
-        expect(await handle.pendingMigrations()).toBe(12 - count);
+        // The current catalog includes 0012_retire_template_instances as its thirteenth entry.
+        expect(await handle.pendingMigrations()).toBe(13 - count);
         await expect(handle.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
         await applyShippedSqlToHistoricalTestFixture(handle, dir);
         expect((await handle.client.execute('SELECT * FROM loop_versions')).rows).toEqual(versions);
         expect(
           (await handle.client.execute(`SELECT ${originalRunColumns} FROM runs`)).rows,
         ).toEqual(runs.rows);
-        expect((await handle.client.execute('SELECT template_subject FROM runs')).rows).toEqual([
-          expect.objectContaining({ template_subject: null }),
-        ]);
+        expect(
+          (await handle.client.execute('PRAGMA table_info(runs)')).rows.map((row) => row.name),
+        ).not.toContain('template_subject');
         expect((await handle.client.execute('SELECT * FROM secrets')).rows).toEqual(secretRows);
         expect((await handle.client.execute('SELECT * FROM model_catalog')).rows[0]).toMatchObject({
           model: 'local-only',

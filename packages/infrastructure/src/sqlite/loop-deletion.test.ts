@@ -1,10 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import {
-  LoopDefinitionSchema,
-  TemplateInstanceSchema,
-  type RunRecord,
-  type RunStatus,
-} from '@graphgoblin/contracts';
+import { LoopDefinitionSchema, type RunRecord, type RunStatus } from '@graphgoblin/contracts';
 import { fakeUlid, FIXTURE_TS, minimalLoop, sampleThread } from '@graphgoblin/contracts/testing';
 import { FakeClock, FakeIds } from '@graphgoblin/engine/testing';
 import { openMemoryDatabase, type DatabaseHandle } from './db.js';
@@ -16,7 +11,6 @@ import {
   runEvents,
   runs,
   schedules,
-  templateInstances,
   timers,
   webhookEndpoints,
   webhookReceipts,
@@ -164,7 +158,7 @@ async function snapshot() {
 describe('loop deletion', () => {
   it('deletes terminal runs and every dependent table, with no upgrade orphan (D5)', async () => {
     const identity = await published('delete');
-    const sibling = await published('bundle-sibling');
+    const sibling = await published('unrelated');
     await loops.saveDraft(identity.loopId, LoopDefinitionSchema.parse(minimalLoop()));
     const terminal = await Promise.all(
       (['succeeded', 'failed', 'cancelled', 'exhausted'] as const).map((status) =>
@@ -172,42 +166,6 @@ describe('loop deletion', () => {
       ),
     );
     await triggers(identity, 'delete', terminal[0]!);
-    // Deleting any member intentionally removes the whole bundle binding (#165), while
-    // preserving the other member loops and their versions.
-    await handle.db.insert(templateInstances).values({
-      id: 'binding',
-      ownerId: 'local',
-      binding: {},
-      instance: TemplateInstanceSchema.parse({
-        id: fakeUlid('binding'),
-        ownerId: 'local',
-        templateId: 'starter',
-        templateVersion: '1.0.0',
-        createdAt: FIXTURE_TS,
-        parentLoopId: identity.loopId,
-        loops: [
-          {
-            key: 'parent',
-            loopId: identity.loopId,
-            versionId: identity.versionId,
-            version: 1,
-            status: 'draft',
-          },
-          {
-            key: 'child',
-            loopId: sibling.loopId,
-            versionId: sibling.versionId,
-            version: 1,
-            status: 'published',
-          },
-        ],
-        settings: {
-          kind: 'starter',
-          instruction: 'test',
-          roles: { assistant: { harness: 'codex', model: 'test', effort: 'low' } },
-        },
-      }),
-    });
     expect(await loops.delete(identity.loopId)).toBe(true);
     expect(await loops.getLoop(identity.loopId)).toBeUndefined();
     expect(await loops.listVersions(identity.loopId)).toEqual([]);
@@ -221,7 +179,6 @@ describe('loop deletion', () => {
       schedules,
       webhookEndpoints,
       webhookReceipts,
-      templateInstances,
     ]) {
       expect(await handle.db.select().from(table)).toEqual([]);
     }

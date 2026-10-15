@@ -71,18 +71,6 @@ async function previousStructure(custom = false) {
   await new SqliteEventStore(handle.db, new FakeClock()).append(runId, [
     { type: 'run.queued', initialThread },
   ]);
-  // Remove later template structures as well as their ledger entries to reconstruct v2.
-  for (const statement of [
-    'DROP INDEX template_qa_issue_attempt_idx',
-    'DROP INDEX template_issue_attempt_idx',
-    'DROP INDEX template_qa_merge_idx',
-    'DROP INDEX template_pr_head_idx',
-    'DROP INDEX template_active_pr_idx',
-    'DROP INDEX template_child_visit_idx',
-    'ALTER TABLE runs DROP COLUMN template_subject',
-    'DROP TABLE template_instances',
-  ])
-    await handle.client.execute(statement);
   expect(
     (await handle.client.execute("SELECT name FROM sqlite_master WHERE name LIKE 'template_%'"))
       .rows,
@@ -345,7 +333,7 @@ it('refuses an incomplete intermediate receipt layout before migration or recove
     'CREATE INDEX webhook_receipts_due_idx ON webhook_receipts(status,next_attempt_at)',
   );
   await expect(handle.migrate()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
-  expect((await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows).toHaveLength(12);
+  expect((await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows).toHaveLength(13);
 });
 it('rolls back when a proven linked webhook run vanishes before rewrite traversal', async () => {
   const { handle, runId, key } = await previousStructure();

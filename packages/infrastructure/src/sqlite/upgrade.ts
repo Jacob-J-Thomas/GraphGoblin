@@ -683,6 +683,16 @@ export async function applyDatabaseUpgrade(
     const original = await inspectDatabaseUpgrade(tx);
     validateManifest(manifest, original);
     const sourceNames = await tables(tx);
+    // Until steps 26-28 own archival and retirement, even a store with no definitions must
+    // refuse before structural SQL can drop configured instance/subject evidence.
+    if (
+      sourceNames.includes('gg_upgrade_state') &&
+      (await rows(tx, 'SELECT format_version FROM gg_upgrade_state WHERE id=1'))[0]
+        ?.format_version === 3
+    )
+      throw new DatabaseUpgradeRequiredError(
+        'Format-3 to format-4 conversion is not available until the integrated cutover',
+      );
     let context = await upgradeContext(tx, sourceNames);
     const triggerFacts = await inspectStoredTriggers(tx, sourceNames, context);
     const manifestHash = hash(manifest);

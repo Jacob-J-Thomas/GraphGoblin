@@ -8,6 +8,7 @@ import { schema, type Schema } from './schema.js';
 import { guardDatabaseUpgrade, initializeFreshDatabase, verifyDatabaseHead } from './upgrade.js';
 
 export type Database = LibSQLDatabase<Schema>;
+export type SqliteTransaction = Parameters<Parameters<Database['transaction']>[0]>[0];
 
 export interface DatabaseHandle {
   client: Client;
