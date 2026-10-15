@@ -877,7 +877,7 @@ export async function applyDatabaseUpgrade(
       sql: "INSERT OR REPLACE INTO gg_upgrade_state (id,format_version,status,source_hash,manifest_hash) VALUES (1,?,'complete',?,?)",
       args: [CURRENT_DEFINITION_FORMAT, original.sourceHash, manifestHash],
     });
-    await guardDatabaseUpgrade(tx);
+    await guardDatabaseUpgrade(tx, options.migrationsFolder ?? MIGRATIONS);
     await verifyDatabaseHead(tx, options.migrationsFolder ?? MIGRATIONS);
     // Validate every stored event again through the clean parser before the single atomic commit.
     for await (const batch of tableBatches(tx, 'run_events'))

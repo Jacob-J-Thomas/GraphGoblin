@@ -151,6 +151,8 @@ export const runs = sqliteTable(
       .where(
         sql`json_extract(${t.templateSubject}, '$.role')='parent' AND json_extract(${t.templateSubject}, '$.kind')='qa' AND json_extract(${t.templateSubject}, '$.issue') IS NOT NULL AND json_extract(${t.templateSubject}, '$.attempt') IS NOT NULL`,
       ),
+    // Shipped 0009 declares this and the template_instances checks inline without names. The
+    // names exist only for the Drizzle snapshot; readiness compares CHECK expressions, not names.
     check(
       'runs_template_subject_check',
       sql`${t.templateSubject} IS NULL OR json_valid(${t.templateSubject})`,

@@ -1,10 +1,10 @@
-import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 /**
  * Pure editor model: node defaults, ports, connection rules, and live validation. The editor holds
  * the draft as `LoopDefinitionInput` (what the user typed, defaults not yet applied) and validates
  * it with the same `contracts` schemas and `domain` rules the API runs on publish.
  */
 import {
+  CURRENT_DEFINITION_FORMAT,
   LoopDefinitionSchema,
   NodeSchema,
   type LoopDefinitionInput,

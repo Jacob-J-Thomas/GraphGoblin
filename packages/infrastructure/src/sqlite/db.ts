@@ -12,7 +12,11 @@ export type Database = LibSQLDatabase<Schema>;
 export interface DatabaseHandle {
   client: Client;
   db: Database;
-  /** Apply pending migrations from the package's `drizzle/` folder. Idempotent. */
+  /**
+   * Apply pending migrations from the package's `drizzle/` folder. Idempotent. Only the API
+   * container may pass `skipDefinitionValidation`, and only after its own preflight parsed every
+   * stored definition under a data-directory lock that covers this database file.
+   */
   migrate(options?: { skipDefinitionValidation?: boolean }): Promise<void>;
   /**
    * How many shipped migrations `migrate()` would apply now, by the same rule Drizzle uses (a
