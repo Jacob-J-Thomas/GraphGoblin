@@ -5,6 +5,8 @@ import { createVitestConfig } from '@graphgoblin/tooling/vitest';
 // processes, never `threads` or `vmThreads`. See docs/research/sqlite-libsql.md.
 // Script tests spawn real processes and have timed out at 5 s under full-parallel load on the
 // development machine, so this package allows 20 s per test and hook.
+// Expose gc at worker startup so disposable SQLite tests can release native statements before
+// removing their files on Windows, without changing V8 flags at runtime in a shared worker.
 export default createVitestConfig({
-  test: { pool: 'forks', testTimeout: 20_000, hookTimeout: 20_000 },
+  test: { pool: 'forks', execArgv: ['--expose-gc'], testTimeout: 20_000, hookTimeout: 20_000 },
 });

@@ -55,7 +55,7 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ### Upgrade notes
 
-- Fresh SQLite initialisation commits its schema, migration ledger and complete format marker together, allowing interrupted first startup to retry safely while unknown or damaged stores still require explicit recovery. SQLite helper consumers must replace `stampFreshDatabase` with `initializeFreshDatabase`, which owns this transaction. (#152)
+- Fresh SQLite initialisation commits its schema, migration ledger and complete format marker together, allowing interrupted first startup to retry safely while unknown or damaged stores still require explicit recovery. SQLite helper consumers must replace `stampFreshDatabase` with `initializeFreshDatabase`, which owns this transaction; when it returns `current`, apply ordinary migrations. Concurrent initialisation still applies pending migrations, and rollback failures preserve the original error. (#152)
 
 - Template drafts add `POST /templates/{id}/draft`. Installed templates may advertise a separate authored starting-point asset; rebuild strict API clients and the packaged catalog. Existing bound automation instances and stored loops are unchanged; no data migration is needed for this addition.
 

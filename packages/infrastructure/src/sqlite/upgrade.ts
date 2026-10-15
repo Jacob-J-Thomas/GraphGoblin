@@ -209,12 +209,13 @@ const ARCHIVE_SQL =
 export async function initializeFreshDatabase(
   client: Client,
   migrationsFolder = MIGRATIONS,
-): Promise<void> {
+): Promise<'fresh' | 'current'> {
   const tx = await client.transaction('write');
   try {
     // Recheck under the write lock: only an empty store may be initialised, even if another
     // caller changed it after startup's first guard. Never authenticate an unmarked schema.
-    if ((await guardDatabaseUpgrade(tx)) === 'fresh') {
+    const upgradeState = await guardDatabaseUpgrade(tx);
+    if (upgradeState === 'fresh') {
       // Drizzle's libsql migrator commits its own batch; use the offline apply's SQL runner
       // so neither the schema nor its ledger can survive without the complete marker.
       await structuralMigrations(tx, migrationsFolder);
@@ -224,8 +225,13 @@ export async function initializeFreshDatabase(
       );
     }
     await tx.commit();
+    return upgradeState;
   } catch (error) {
-    await tx.rollback();
+    try {
+      await tx.rollback();
+    } catch {
+      // A lost connection must not replace the failure that interrupted initialisation.
+    }
     throw error;
   } finally {
     tx.close();
@@ -484,7 +490,7 @@ function validateManifest(
 }
 async function structuralMigrations(tx: Transaction, folder: string): Promise<void> {
   await tx.execute(
-    'CREATE TABLE IF NOT EXISTS __drizzle_migrations (id SERIAL PRIMARY KEY, hash text NOT NULL, created_at numeric)',
+    'CREATE TABLE IF NOT EXISTS "__drizzle_migrations" (id SERIAL PRIMARY KEY, hash text NOT NULL, created_at numeric)',
   );
   const last = (
     await rows(tx, 'SELECT created_at FROM __drizzle_migrations ORDER BY created_at DESC LIMIT 1')

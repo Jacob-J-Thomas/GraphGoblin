@@ -195,11 +195,12 @@ export function openDatabase(options: DatabaseOptions): DatabaseHandle {
     client,
     db,
     async migrate() {
-      const upgradeState = await guardDatabaseUpgrade(client);
+      let upgradeState = await guardDatabaseUpgrade(client);
       await client.execute('PRAGMA journal_mode = WAL').catch(() => undefined);
       await client.execute('PRAGMA busy_timeout = 5000').catch(() => undefined);
-      if (upgradeState === 'fresh') await initializeFreshDatabase(client, migrationsFolder);
-      else await migrate(db, { migrationsFolder });
+      if (upgradeState === 'fresh')
+        upgradeState = await initializeFreshDatabase(client, migrationsFolder);
+      if (upgradeState === 'current') await migrate(db, { migrationsFolder });
     },
     async pendingMigrations() {
       const shipped = readMigrationFiles({ migrationsFolder });

@@ -3,13 +3,11 @@ import type * as Libsql from '@libsql/client';
 import { drizzle } from 'drizzle-orm/libsql';
 import { migrate } from 'drizzle-orm/libsql/migrator';
 import { readMigrationFiles } from 'drizzle-orm/migrator';
-import { existsSync, mkdtempSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { setFlagsFromString } from 'node:v8';
-import { runInNewContext } from 'node:vm';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { openDatabase, type DatabaseHandle } from './db.js';
 import { guardDatabaseUpgrade, initializeFreshDatabase } from './upgrade.js';
@@ -24,15 +22,13 @@ const shipped = readMigrationFiles({ migrationsFolder });
 const handles: DatabaseHandle[] = [];
 const directories: string[] = [];
 
-// libsql can retain native statements until collection on Windows. Release all test references
-// and collect before removing the files; cleanup must succeed, rather than silently leak stores.
-setFlagsFromString('--expose-gc');
-const collectGarbage = runInNewContext('gc') as () => void;
+// Release all test references before retried removal on Windows. Collect only when the worker
+// was already started with gc exposed; cleanup must succeed rather than silently leak stores.
 afterEach(async () => {
   for (const handle of handles.splice(0)) handle.close();
   vi.mocked(createClient).mockClear();
   await new Promise<void>((resolve) => setImmediate(resolve));
-  collectGarbage();
+  globalThis.gc?.();
   for (const directory of directories.splice(0)) {
     await rm(directory, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
     expect(existsSync(directory)).toBe(false);
@@ -71,9 +67,11 @@ async function snapshot(client: Client) {
 
 type Boundary =
   'after schema persistence' | 'before marker creation' | 'before marker-row persistence';
-async function failAt(boundary: Boundary): Promise<() => number> {
+async function failAt(boundary: Boundary, rollbackError?: Error) {
   const actual = await vi.importActual<typeof Libsql>('@libsql/client');
+  const error = new Error('Interrupted ' + boundary);
   let failures = 0;
+  let rollbackFailures = 0;
   vi.mocked(createClient).mockImplementationOnce((options) => {
     const inner = actual.createClient(options);
     return new Proxy(inner, {
@@ -83,6 +81,11 @@ async function failAt(boundary: Boundary): Promise<() => number> {
             const tx = await target.transaction(mode);
             return new Proxy(tx, {
               get(transaction, key, txReceiver) {
+                if (key === 'rollback' && rollbackError)
+                  return () => {
+                    rollbackFailures += 1;
+                    return Promise.reject(rollbackError);
+                  };
                 if (key === 'execute')
                   return async (statement: Parameters<Transaction['execute']>[0]) => {
                     const sql = typeof statement === 'string' ? statement : statement.sql;
@@ -110,7 +113,7 @@ async function failAt(boundary: Boundary): Promise<() => number> {
                         ).toEqual([]);
                       else expect(await tableNames(transaction)).not.toContain('gg_upgrade_state');
                       failures += 1;
-                      throw new Error('Interrupted ' + boundary);
+                      throw error;
                     }
                     return transaction.execute(statement);
                   };
@@ -128,7 +131,7 @@ async function failAt(boundary: Boundary): Promise<() => number> {
       },
     });
   });
-  return () => failures;
+  return { error, failures: () => failures, rollbackFailures: () => rollbackFailures };
 }
 
 describe('atomic fresh SQLite initialisation', () => {
@@ -137,11 +140,11 @@ describe('atomic fresh SQLite initialisation', () => {
     'before marker creation',
     'before marker-row persistence',
   ])('rolls back an interruption %s and recovers on restart', async (boundary) => {
-    const failures = await failAt(boundary);
+    const failure = await failAt(boundary);
     const url = storeUrl();
     const interrupted = open(url);
-    await expect(interrupted.migrate()).rejects.toThrow('Interrupted ' + boundary);
-    expect(failures()).toBe(1);
+    await expect(interrupted.migrate()).rejects.toBe(failure.error);
+    expect(failure.failures()).toBe(1);
     expect(await tableNames(interrupted.client)).toEqual([]);
     interrupted.close();
 
@@ -168,6 +171,83 @@ describe('atomic fresh SQLite initialisation', () => {
     expect(await snapshot(restarted.client)).toEqual(completed);
   });
 
+  it('applies pending ordinary migrations when another initialiser wins the write-lock race', async () => {
+    const url = storeUrl();
+    const folder = fileURLToPath(new URL('migrations/', url));
+    mkdirSync(join(folder, 'meta'), { recursive: true });
+    writeFileSync(
+      join(folder, 'meta/_journal.json'),
+      JSON.stringify({
+        version: '7',
+        dialect: 'sqlite',
+        entries: [
+          {
+            idx: 0,
+            version: '6',
+            when: shipped.at(-1)!.folderMillis + 1,
+            tag: '0000_after_race',
+            breakpoints: true,
+          },
+        ],
+      }),
+    );
+    writeFileSync(
+      join(folder, '0000_after_race.sql'),
+      'CREATE TABLE startup_migration_effect (id INTEGER PRIMARY KEY);\n--> statement-breakpoint\nINSERT INTO startup_migration_effect VALUES (1);',
+    );
+    const actual = await vi.importActual<typeof Libsql>('@libsql/client');
+    let races = 0;
+    vi.mocked(createClient).mockImplementationOnce((options) => {
+      const inner = actual.createClient(options);
+      return new Proxy(inner, {
+        get(target, prop, receiver) {
+          if (prop === 'transaction')
+            return async (mode?: TransactionMode) => {
+              // The first guard saw an empty store. Complete the other initialiser just before
+              // this one acquires its write lock, leaving a later ordinary migration pending.
+              races += 1;
+              const winner = open(url);
+              await expect(initializeFreshDatabase(winner.client)).resolves.toBe('fresh');
+              return target.transaction(mode);
+            };
+          const value: unknown = Reflect.get(target, prop, receiver);
+          return typeof value === 'function'
+            ? (value as (...args: unknown[]) => unknown).bind(target)
+            : value;
+        },
+      });
+    });
+    const handle = openDatabase({ url, migrationsFolder: folder });
+    handles.push(handle);
+    await handle.migrate();
+    expect(races).toBe(1);
+    expect(await handle.pendingMigrations()).toBe(0);
+    expect((await handle.client.execute('SELECT * FROM startup_migration_effect')).rows).toEqual([
+      { id: 1 },
+    ]);
+    expect((await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows).toHaveLength(
+      shipped.length + 1,
+    );
+    const completed = await snapshot(handle.client);
+    await handle.migrate();
+    expect(await snapshot(handle.client)).toEqual(completed);
+  });
+
+  it('preserves the original initialisation error when rollback also fails', async () => {
+    const failure = await failAt('before marker-row persistence', new Error('Lost connection'));
+    const url = storeUrl();
+    const interrupted = open(url);
+    await expect(interrupted.migrate()).rejects.toBe(failure.error);
+    expect(failure.failures()).toBe(1);
+    expect(failure.rollbackFailures()).toBe(1);
+    // Closing the unsettled transaction still releases the real local connection and its writes.
+    expect(await tableNames(interrupted.client)).toEqual([]);
+    interrupted.close();
+    const restarted = open(url);
+    await restarted.migrate();
+    expect(await guardDatabaseUpgrade(restarted.client)).toBe('current');
+  });
+
   it('initialises once and preserves schema, ledger, marker and data across repeated starts', async () => {
     const url = storeUrl();
     const first = open(url);
@@ -180,7 +260,7 @@ describe('atomic fresh SQLite initialisation', () => {
     const completed = await snapshot(first.client);
     await first.migrate();
     // A second initializer that observed freshness before the first committed must do nothing.
-    await initializeFreshDatabase(first.client);
+    await expect(initializeFreshDatabase(first.client)).resolves.toBe('current');
     expect(await snapshot(first.client)).toEqual(completed);
     first.close();
     const restarted = open(url);
