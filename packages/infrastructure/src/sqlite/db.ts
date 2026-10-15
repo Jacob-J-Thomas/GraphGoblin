@@ -5,7 +5,7 @@ import { readMigrationFiles } from 'drizzle-orm/migrator';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { schema, type Schema } from './schema.js';
-import { guardDatabaseUpgrade, initializeFreshDatabase } from './upgrade.js';
+import { guardDatabaseUpgrade, initializeFreshDatabase, verifyDatabaseHead } from './upgrade.js';
 
 export type Database = LibSQLDatabase<Schema>;
 
@@ -13,7 +13,7 @@ export interface DatabaseHandle {
   client: Client;
   db: Database;
   /** Apply pending migrations from the package's `drizzle/` folder. Idempotent. */
-  migrate(readiness?: 'fresh' | 'current'): Promise<void>;
+  migrate(options?: { skipDefinitionValidation?: boolean }): Promise<void>;
   /**
    * How many shipped migrations `migrate()` would apply now, by the same rule Drizzle uses (a
    * migration is pending when it is newer than the last one recorded). Read-only; 0 when current.
@@ -194,14 +194,18 @@ export function openDatabase(options: DatabaseOptions): DatabaseHandle {
   return {
     client,
     db,
-    async migrate(readiness) {
-      // A container holding the exclusive data-directory lock can reuse its read-only preflight.
-      let upgradeState = readiness ?? (await guardDatabaseUpgrade(client, migrationsFolder));
+    async migrate(options = {}) {
+      // Always repeat cheap checks before writes. Only a preflight protected by the database's
+      // data-directory lock may save the strict definition parse.
+      let upgradeState = await guardDatabaseUpgrade(client, migrationsFolder, {
+        skipDefinitions: options.skipDefinitionValidation ?? false,
+      });
       await client.execute('PRAGMA journal_mode = WAL').catch(() => undefined);
       await client.execute('PRAGMA busy_timeout = 5000').catch(() => undefined);
       if (upgradeState === 'fresh')
         upgradeState = await initializeFreshDatabase(client, migrationsFolder);
       if (upgradeState === 'current') await migrate(db, { migrationsFolder });
+      await verifyDatabaseHead(client, migrationsFolder);
     },
     async pendingMigrations() {
       const shipped = readMigrationFiles({ migrationsFolder });

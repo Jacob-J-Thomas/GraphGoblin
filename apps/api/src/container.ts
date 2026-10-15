@@ -1,8 +1,8 @@
 import { existsSync } from 'node:fs';
 import { validateHarnessDefaults } from '@graphgoblin/domain';
-import { mkdir } from 'node:fs/promises';
+import { mkdir, realpath } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
-import { dirname } from 'node:path';
+import { dirname, isAbsolute, relative, sep } from 'node:path';
 import { createCodexAdapters } from '@graphgoblin/adapter-codex';
 import { FsArtifactStore, FsWorkspace } from '@graphgoblin/infrastructure/fs';
 import {
@@ -232,6 +232,15 @@ export async function createContainer(
     opened = handle;
     const { db } = handle;
     startupReadiness ??= await guardDatabaseUpgrade(handle.client);
+    // A data-directory lock cannot protect a database reached through GG_DB_URL elsewhere.
+    const databaseRelativePath = dbFile
+      ? relative(await realpath(config.dataDir), await realpath(dbFile))
+      : undefined;
+    const preflightProtected =
+      databaseRelativePath !== undefined &&
+      databaseRelativePath !== '..' &&
+      !databaseRelativePath.startsWith('..' + sep) &&
+      !isAbsolute(databaseRelativePath);
     const masterKey =
       overrides.masterKey ??
       (await loadMasterKey({
@@ -565,7 +574,9 @@ export async function createContainer(
         if (stopping) return Promise.reject(new Error('container has been stopped'));
         starting ??= (async () => {
           try {
-            await handle.migrate(startupReadiness);
+            await handle.migrate({
+              skipDefinitionValidation: preflightProtected && startupReadiness === 'current',
+            });
             await classifiers.seedBuiltin(LOCAL_OWNER, BUILTIN_CLASSIFIER);
             if (config.jevApiKey && (await ownerSecrets.resolve(JEV_SECRET)) === undefined) {
               await ownerSecrets.set(JEV_SECRET, config.jevApiKey);

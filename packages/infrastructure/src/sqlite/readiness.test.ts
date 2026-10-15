@@ -1,9 +1,9 @@
 import { afterEach, expect, it } from 'vitest';
 import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { minimalLoop, FIXTURE_IDS, FIXTURE_TS } from '@graphgoblin/contracts/testing';
-import { openMemoryDatabase, type DatabaseHandle } from './db.js';
+import { openDatabase, openMemoryDatabase, type DatabaseHandle } from './db.js';
 import { guardDatabaseUpgrade } from './upgrade.js';
-import { currentStoreReadiness } from './readiness.js';
+import { currentStoreReadiness, SHIPPED_MIGRATIONS } from './readiness.js';
 
 const handles: DatabaseHandle[] = [];
 afterEach(() => {
@@ -11,12 +11,8 @@ afterEach(() => {
 });
 
 it.each([
-  ['missing table', 'DROP TABLE template_instances'],
+  ['missing table', 'DROP TABLE webhook_receipts'],
   ['missing column', 'ALTER TABLE loops DROP COLUMN description'],
-  [
-    'ledger hash mismatch',
-    "UPDATE __drizzle_migrations SET hash='wrong' WHERE created_at=(SELECT min(created_at) FROM __drizzle_migrations)",
-  ],
   [
     'ledger timestamp mismatch',
     'UPDATE __drizzle_migrations SET created_at=created_at+1 WHERE created_at=(SELECT min(created_at) FROM __drizzle_migrations)',
@@ -72,17 +68,128 @@ it('refuses malformed stored definitions before any startup write', async () => 
 it('derives current readiness and the fresh marker from the format constant and shipped ledger', async () => {
   const handle = await openMemoryDatabase();
   handles.push(handle);
-  const readiness = currentStoreReadiness();
+  const readiness = await currentStoreReadiness();
   expect(readiness.marker.format_version).toBe(CURRENT_DEFINITION_FORMAT);
   expect(
     (await handle.client.execute('SELECT format_version FROM gg_upgrade_state')).rows[0]
       ?.format_version,
   ).toBe(CURRENT_DEFINITION_FORMAT);
   expect(
-    (
-      await handle.client.execute(
-        'SELECT hash,created_at FROM __drizzle_migrations ORDER BY created_at',
-      )
-    ).rows,
+    (await handle.client.execute('SELECT created_at FROM __drizzle_migrations ORDER BY created_at'))
+      .rows,
   ).toEqual(readiness.ledger);
+});
+
+it('accepts historical applied hashes because Drizzle identifies migrations by timestamp', async () => {
+  const handle = await openMemoryDatabase();
+  handles.push(handle);
+  await handle.client.execute("UPDATE __drizzle_migrations SET hash='historically-edited-sql'");
+  await expect(handle.migrate()).resolves.toBeUndefined();
+});
+
+import { readMigrationFiles } from 'drizzle-orm/migrator';
+async function through(index: number) {
+  const handle = openDatabase({ url: ':memory:' });
+  handles.push(handle);
+  await handle.client.execute(
+    'CREATE TABLE __drizzle_migrations (id INTEGER PRIMARY KEY, hash TEXT, created_at INTEGER)',
+  );
+  const migrations = readMigrationFiles({ migrationsFolder: SHIPPED_MIGRATIONS });
+  for (const migration of migrations.slice(0, index + 1)) {
+    for (const statement of migration.sql) await handle.client.execute(statement);
+    await handle.client.execute({
+      sql: 'INSERT INTO __drizzle_migrations(hash,created_at) VALUES (?,?)',
+      args: [migration.hash, migration.folderMillis],
+    });
+  }
+  await handle.client.execute(
+    'CREATE TABLE gg_upgrade_state (id INTEGER PRIMARY KEY,format_version INTEGER,status TEXT)',
+  );
+  await handle.client.execute({
+    sql: "INSERT INTO gg_upgrade_state VALUES (1,?,'complete')",
+    args: [CURRENT_DEFINITION_FORMAT],
+  });
+  return handle;
+}
+it.each([8, 9, 10])(
+  'starts a format-3 store at migration %s and finishes at the shipped head',
+  async (index) => {
+    const handle = await through(index);
+    await expect(guardDatabaseUpgrade(handle.client)).resolves.toBe('current');
+    await handle.migrate();
+    expect(await handle.pendingMigrations()).toBe(0);
+    expect(
+      (
+        await handle.client.execute(
+          'SELECT created_at FROM __drizzle_migrations ORDER BY created_at',
+        )
+      ).rows,
+    ).toEqual((await currentStoreReadiness()).ledger);
+    expect(
+      (
+        await handle.client.execute(
+          "SELECT name FROM sqlite_master WHERE name='template_instances'",
+        )
+      ).rows,
+    ).toHaveLength(1);
+  },
+);
+it('refuses a head ledger with missing additive structure after a no-op migration', async () => {
+  const handle = await openMemoryDatabase();
+  handles.push(handle);
+  await handle.client.execute('DROP TABLE template_instances');
+  await expect(guardDatabaseUpgrade(handle.client)).resolves.toBe('current');
+  const before = (await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows;
+  await expect(handle.migrate()).rejects.toThrow('Missing current-store table: template_instances');
+  expect((await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows).toEqual(before);
+});
+it('requires the shipped baseline constraint names as well as their expressions', async () => {
+  const handle = await through(8);
+  const ddl = (
+    await handle.client.execute("SELECT sql FROM sqlite_master WHERE name='webhook_receipts'")
+  ).rows[0]!.sql;
+  if (typeof ddl !== 'string') throw new Error('Expected table SQL');
+  await handle.client.execute('DROP TABLE webhook_receipts');
+  await handle.client.execute(ddl.replace('webhook_receipt_status_check', 'wrong_constraint'));
+  await expect(guardDatabaseUpgrade(handle.client)).rejects.toThrow(
+    'Stored constraints are incomplete',
+  );
+});
+import { cp, mkdtemp, readFile, writeFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+it('derives dropped and IF NOT EXISTS indexes from the executed migration catalogue', async () => {
+  const folder = await mkdtemp(join(tmpdir(), 'gg-readiness-indexes-'));
+  const handle = openDatabase({ url: ':memory:', migrationsFolder: folder });
+  try {
+    await cp(SHIPPED_MIGRATIONS, folder, { recursive: true });
+    const path = join(folder, 'meta/_journal.json');
+    const journal = JSON.parse(await readFile(path, 'utf8')) as {
+      entries: { idx: number; when: number; tag: string; version: string; breakpoints: boolean }[];
+    };
+    const last = journal.entries.at(-1)!;
+    journal.entries.push({
+      ...last,
+      idx: last.idx + 1,
+      when: last.when + 1,
+      tag: '0012_index_probe',
+    });
+    await writeFile(path, JSON.stringify(journal));
+    await writeFile(
+      join(folder, '0012_index_probe.sql'),
+      'DROP INDEX template_child_visit_idx;\n--> statement-breakpoint\nCREATE INDEX IF NOT EXISTS gate_probe_idx ON runs(id);\n--> statement-breakpoint\nCREATE INDEX IF NOT EXISTS gate_probe_idx ON runs(id);',
+    );
+    const descriptor = await currentStoreReadiness(folder);
+    const indexes = descriptor.head
+      .find((table) => table.name === 'runs')!
+      .indexes.map((index) => index.name);
+    expect(indexes).not.toContain('template_child_visit_idx');
+    expect(indexes).toContain('gate_probe_idx');
+    expect(indexes).not.toContain('IF');
+    await handle.migrate();
+    expect(await handle.pendingMigrations()).toBe(0);
+  } finally {
+    handle.close();
+    await rm(folder, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  }
 });

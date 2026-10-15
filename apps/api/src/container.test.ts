@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { CodexHarness } from '@graphgoblin/adapter-codex';
 import { JevDecider } from '@graphgoblin/adapter-jev';
-import { openDatabase } from '@graphgoblin/infrastructure/sqlite';
+import { openDatabase, openReadOnlyDatabaseClient } from '@graphgoblin/infrastructure/sqlite';
 import { CapturingLogger } from '@graphgoblin/engine/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildApp } from './app.js';
@@ -470,33 +470,101 @@ describe('configuration admission before startup writes', () => {
   });
 });
 
-it('checks stored definitions once per existing-store start before startup writes', async () => {
+it.each([true, false])(
+  'reuses only the definition parse when the database is covered by the data-directory lock: %s',
+  async (protectedFile) => {
+    const outside = dataDir;
+    const settings = config(
+      protectedFile
+        ? {}
+        : {
+            GG_DATA_DIR: join(dataDir, 'locked'),
+            GG_DB_URL: `file:${join(outside, 'external.db').replaceAll('\\', '/')}`,
+          },
+    );
+    const prepared = openDatabase({ url: settings.dbUrl });
+    await prepared.migrate();
+    await prepared.client.execute({
+      sql: 'INSERT INTO loop_versions(id,loop_id,version,status,definition,created_at) VALUES (?,?,1,?,?,?)',
+      args: [
+        FIXTURE_IDS.version,
+        FIXTURE_IDS.loop,
+        'published',
+        JSON.stringify({ ...minimalLoop(), name: 'Readiness once sentinel' }),
+        FIXTURE_TS,
+      ],
+    });
+    prepared.close();
+    const parse = vi.spyOn(LoopDefinitionSchema, 'parse');
+    const container = await createContainer(settings, { startTimers: false });
+    try {
+      await container.start();
+      expect(
+        parse.mock.calls.filter(
+          ([input]) =>
+            typeof input === 'object' &&
+            input !== null &&
+            'name' in input &&
+            input.name === 'Readiness once sentinel',
+        ),
+      ).toHaveLength(protectedFile ? 1 : 2);
+    } finally {
+      await container.stop();
+    }
+  },
+);
+it('repeats cheap readiness checks inside migrate even after a protected preflight', async () => {
   const prepared = openDatabase({ url: config().dbUrl });
   await prepared.migrate();
-  await prepared.client.execute({
-    sql: 'INSERT INTO loop_versions(id,loop_id,version,status,definition,created_at) VALUES (?,?,1,?,?,?)',
-    args: [
-      FIXTURE_IDS.version,
-      FIXTURE_IDS.loop,
-      'published',
-      JSON.stringify({ ...minimalLoop(), name: 'Readiness once sentinel' }),
-      FIXTURE_TS,
-    ],
-  });
   prepared.close();
-  const parse = vi.spyOn(LoopDefinitionSchema, 'parse');
   const container = await createContainer(config(), { startTimers: false });
+  await container.handle.client.execute('UPDATE gg_upgrade_state SET format_version=99');
+  await expect(container.start()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
+  await container.stop();
+});
+it('reparses external database definitions changed after construction before startup writes', async () => {
+  const outside = dataDir;
+  const settings = config({
+    GG_DATA_DIR: join(dataDir, 'locked'),
+    GG_DB_URL: `file:${join(outside, 'external.db').replaceAll('\\', '/')}`,
+  });
+  const prepared = openDatabase({ url: settings.dbUrl });
+  await prepared.migrate();
+  prepared.close();
+  const container = await createContainer(settings, { startTimers: false });
   try {
-    await container.start();
-    expect(
-      parse.mock.calls.filter(
-        ([input]) =>
-          typeof input === 'object' &&
-          input !== null &&
-          'name' in input &&
-          input.name === 'Readiness once sentinel',
-      ),
-    ).toHaveLength(1);
+    await container.handle.client.execute({
+      sql: 'INSERT INTO loop_versions(id,loop_id,version,status,definition,created_at) VALUES (?,?,1,?,?,?)',
+      args: [
+        FIXTURE_IDS.version,
+        FIXTURE_IDS.loop,
+        'published',
+        JSON.stringify({ ...minimalLoop(), removedField: true }),
+        FIXTURE_TS,
+      ],
+    });
+    const tables = [
+      'loop_versions',
+      'model_catalog',
+      'classifier_models',
+      'settings',
+      '__drizzle_migrations',
+    ];
+    const before = await Promise.all(
+      tables.map((table) => container.handle.client.execute('SELECT * FROM "' + table + '"')),
+    );
+    await expect(container.start()).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
+    // Closing a writer may checkpoint the WAL. Compare stored rows through a fresh read-only
+    // connection, including all startup seed targets, rather than SQLite file layout.
+    const inspection = openReadOnlyDatabaseClient(join(outside, 'external.db'));
+    try {
+      for (const [index, table] of tables.entries())
+        expect((await inspection.execute('SELECT * FROM "' + table + '"')).rows).toEqual(
+          before[index]!.rows,
+        );
+    } finally {
+      inspection.close();
+    }
   } finally {
     await container.stop();
   }

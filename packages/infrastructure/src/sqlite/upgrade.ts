@@ -1,12 +1,18 @@
-import { inspectTriggerUpgrade, rewriteWebhookThreadKey } from './trigger-upgrade.js';
+import { createTriggerUpgradeInspector, rewriteWebhookThreadKey } from './trigger-upgrade.js';
 import { createHash } from 'node:crypto';
 import { setImmediate as yieldToEventLoop } from 'node:timers/promises';
-import { currentStoreReadiness, SHIPPED_MIGRATIONS } from './readiness.js';
+import {
+  currentStoreReadiness,
+  SHIPPED_MIGRATIONS,
+  storeStructure,
+  normalizeStoreSql,
+} from './readiness.js';
 import {
   rows,
   tableNames as tables,
   tableBatches,
   hashUpgradeStore,
+  canonicalUpgradeRows,
   quote,
 } from './upgrade-scan.js';
 import type { Client, Transaction } from '@libsql/client';
@@ -86,6 +92,7 @@ export class DatabaseUpgradeRequiredError extends Error {
 export async function guardDatabaseUpgrade(
   client: Executor,
   migrationsFolder = MIGRATIONS,
+  options: { skipDefinitions?: boolean; phase?: 'baseline' | 'head' } = {},
 ): Promise<'fresh' | 'current'> {
   const names = await tables(client);
   const application = names.filter((name) => name !== '__drizzle_migrations');
@@ -99,7 +106,7 @@ export async function guardDatabaseUpgrade(
       );
     return 'fresh';
   }
-  const readiness = currentStoreReadiness(migrationsFolder);
+  const readiness = await currentStoreReadiness(migrationsFolder);
   if (!names.includes('gg_upgrade_state')) throw new DatabaseUpgradeRequiredError();
   const states = await rows(client, 'SELECT * FROM gg_upgrade_state');
   if (
@@ -110,70 +117,85 @@ export async function guardDatabaseUpgrade(
     throw new DatabaseUpgradeRequiredError(
       'The offline upgrade is incomplete; restore the backup or finish its approved manifest',
     );
-  for (const table of readiness.tables) {
-    if (!names.includes(table.name))
+  const structure = await storeStructure(client);
+  for (const table of readiness[options.phase ?? 'baseline']) {
+    const actual = structure.find((stored) => stored.name === table.name);
+    if (!actual)
       throw new DatabaseUpgradeRequiredError('Missing current-store table: ' + table.name);
-    const columns = await rows(client, 'PRAGMA table_info(' + quote(table.name) + ')');
     if (
       table.columns.some(
         (column) =>
-          !columns.some(
-            (stored) => stored.name === column.name && stored.notnull === Number(column.notNull),
+          !actual.columns.some(
+            (stored) =>
+              stored.name === column.name &&
+              stored.notNull === column.notNull &&
+              stored.pk === column.pk,
           ),
       )
     )
       throw new DatabaseUpgradeRequiredError('Incomplete current-store columns: ' + table.name);
-    const ddl = (
-      await rows(client, "SELECT sql FROM sqlite_master WHERE type='table' AND name=?", [
-        table.name,
-      ])
-    )[0]?.sql;
-    if (table.checks.some((check) => !readiness.normalize(String(ddl)).includes(check)))
-      throw new DatabaseUpgradeRequiredError('Stored constraints are incomplete: ' + table.name);
-    const indexes = await rows(client, 'PRAGMA index_list(' + quote(table.name) + ')');
     if (
-      readiness.indexes
-        .filter((index) => index.table === table.name)
-        .some(
-          (index) =>
-            !indexes.some(
-              (stored) => stored.name === index.name && stored.unique === Number(index.unique),
-            ),
-        )
+      table.checks.some((check) => !actual.checks.includes(check)) ||
+      table.constraints.some((constraint) => !actual.constraints.includes(constraint))
+    )
+      throw new DatabaseUpgradeRequiredError('Stored constraints are incomplete: ' + table.name);
+    if (
+      table.indexes.some(
+        (index) =>
+          !actual.indexes.some(
+            (stored) =>
+              stored.name === index.name &&
+              normalizeStoreSql(stored.sql) === normalizeStoreSql(index.sql),
+          ),
+      )
     )
       throw new DatabaseUpgradeRequiredError('Stored indexes are incomplete: ' + table.name);
+    if (
+      options.phase === 'head' &&
+      (actual.columns.length !== table.columns.length ||
+        actual.checks.length !== table.checks.length ||
+        actual.constraints.length !== table.constraints.length ||
+        actual.indexes.length !== table.indexes.length)
+    )
+      throw new DatabaseUpgradeRequiredError(
+        'Stored structure differs from the migration head: ' + table.name,
+      );
   }
   const ledger = names.includes('__drizzle_migrations')
-    ? await rows(client, 'SELECT hash,created_at FROM __drizzle_migrations ORDER BY created_at')
+    ? await rows(client, 'SELECT created_at FROM __drizzle_migrations ORDER BY created_at')
     : [];
   if (
-    ledger.length < readiness.requiredLedgerLength ||
+    ledger.length <
+      (options.phase === 'head' ? readiness.ledger.length : readiness.requiredLedgerLength) ||
     ledger.length > readiness.ledger.length ||
-    ledger.some(
-      (entry, index) =>
-        entry.hash !== readiness.ledger[index]?.hash ||
-        Number(entry.created_at) !== readiness.ledger[index]?.created_at,
-    )
+    ledger.some((entry, index) => Number(entry.created_at) !== readiness.ledger[index]?.created_at)
   )
     throw new DatabaseUpgradeRequiredError(
       'The shipped migration ledger is incomplete or inconsistent',
     );
-  const malformed = await rows(
-    client,
-    "SELECT id FROM webhook_endpoints WHERE signature_scheme IS NULL OR signature_scheme NOT IN ('hmac-sha256','hmac-sha256-body') OR NOT ((signature_scheme='hmac-sha256' AND replay_window_seconds IS NOT NULL AND replay_window_seconds>0) OR (signature_scheme='hmac-sha256-body' AND replay_window_seconds IS NULL))",
-  );
-  if (malformed.length)
-    throw new DatabaseUpgradeRequiredError('Stored webhook signing fields are inconsistent');
-  for await (const batch of tableBatches(client, 'loop_versions'))
-    for (const row of batch) {
-      try {
-        LoopDefinitionSchema.parse(json(row.definition));
-      } catch {
-        throw new DatabaseUpgradeRequiredError(
-          'A stored loop version is not strict current format',
-        );
+  if (
+    structure
+      .find((table) => table.name === 'webhook_endpoints')
+      ?.columns.some((column) => column.name === 'signature_scheme')
+  ) {
+    const malformed = await rows(
+      client,
+      "SELECT id FROM webhook_endpoints WHERE signature_scheme IS NULL OR signature_scheme NOT IN ('hmac-sha256','hmac-sha256-body') OR NOT ((signature_scheme='hmac-sha256' AND replay_window_seconds IS NOT NULL AND replay_window_seconds>0) OR (signature_scheme='hmac-sha256-body' AND replay_window_seconds IS NULL))",
+    );
+    if (malformed.length)
+      throw new DatabaseUpgradeRequiredError('Stored webhook signing fields are inconsistent');
+  }
+  if (!options.skipDefinitions)
+    for await (const batch of tableBatches(client, 'loop_versions'))
+      for (const row of batch) {
+        try {
+          LoopDefinitionSchema.parse(json(row.definition));
+        } catch {
+          throw new DatabaseUpgradeRequiredError(
+            'A stored loop version is not strict current format',
+          );
+        }
       }
-    }
   if (names.includes('settings')) {
     for (const row of await rows(client, 'SELECT key, value FROM settings')) {
       if (row.key === 'defaultModel' || row.key === 'defaultEffort')
@@ -188,6 +210,19 @@ export async function guardDatabaseUpgrade(
     }
   }
   return 'current';
+}
+/** After ordinary migrations, require the entire shipped catalogue and ledger. No second parse. */
+export async function verifyDatabaseHead(
+  client: Executor,
+  migrationsFolder = MIGRATIONS,
+): Promise<void> {
+  if (
+    (await guardDatabaseUpgrade(client, migrationsFolder, {
+      phase: 'head',
+      skipDefinitions: true,
+    })) !== 'current'
+  )
+    throw new DatabaseUpgradeRequiredError('Migrations did not produce a current store');
 }
 const STATE_SQL =
   'CREATE TABLE IF NOT EXISTS gg_upgrade_state (id INTEGER PRIMARY KEY CHECK(id=1), format_version INTEGER NOT NULL, status TEXT NOT NULL, source_hash TEXT NOT NULL, manifest_hash TEXT NOT NULL)';
@@ -249,30 +284,51 @@ async function upgradeContext(
   names: string[],
 ): Promise<Record<string, RawRow[]>> {
   const stored: Record<string, RawRow[]> = {};
-  for (const name of [
-    'loops',
-    'loop_versions',
-    'settings',
-    'webhook_endpoints',
-    'inbound_events',
-  ]) {
+  for (const name of ['loops', 'loop_versions', 'settings', 'webhook_endpoints']) {
     const found = names.includes(name) ? await rows(client, 'SELECT * FROM ' + quote(name)) : [];
     stored[name] = found
       .map((row) => ({ row, key: stableStringify(row) }))
       .sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0))
       .map(({ row }) => row);
   }
+  // These first canonical keys precede the unique id in the original full-row sort.
   stored.webhook_receipts = names.includes('webhook_receipts')
-    ? await rows(client, "SELECT id,status FROM webhook_receipts WHERE status='pending'")
+    ? (
+        await rows(
+          client,
+          "SELECT attempts,content_hash,failure_code,id,status FROM webhook_receipts WHERE status='pending' ORDER BY attempts,content_hash,failure_code,id",
+        )
+      )
+        .map((row) => ({ row, key: stableStringify(row) }))
+        .sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0))
+        .map(({ row }) => row)
     : [];
   stored.runs =
     names.includes('runs') && names.includes('webhook_endpoints')
       ? await rows(
           client,
-          'SELECT * FROM runs WHERE loop_id IN (SELECT loop_id FROM webhook_endpoints)',
+          'SELECT id,owner_id,loop_id,version_id,initial_thread FROM runs WHERE loop_id IN (SELECT loop_id FROM webhook_endpoints) ORDER BY id',
         )
       : [];
   return stored;
+}
+/** Inbound deliveries are streamed; the projected canonical prefix dedupe_key/id has the
+ * same total order as the old full rows because id is unique and precedes omitted fields. */
+async function inspectStoredTriggers(
+  client: Executor,
+  names: string[],
+  context: Record<string, RawRow[]>,
+) {
+  const inspector = createTriggerUpgradeInspector(context);
+  if (names.includes('inbound_events'))
+    for await (const serialized of canonicalUpgradeRows(
+      tableBatches(client, 'inbound_events', undefined, {
+        columns: 'dedupe_key,id,owner_id,type,source,run_ids',
+        where: "type='webhook' AND source LIKE 'webhook:%'",
+      }),
+    ))
+      inspector.inspectEvent(JSON.parse(serialized) as RawRow);
+  return inspector.facts;
 }
 /** Whole stopped database, including hidden/deleted versions, orphaned runs and all owners. */
 export async function inspectDatabaseUpgrade(client: Executor): Promise<DatabaseUpgradeInventory> {
@@ -384,52 +440,52 @@ export async function inspectDatabaseUpgrade(client: Executor): Promise<Database
   const failed: { id: string; key: string }[] = [];
   const blocked: { id: string; status: string; key: string }[] = [];
   if (names.includes('runs'))
-    for await (const batch of tableBatches(client, 'runs'))
-      for (const run of batch) {
-        if (!versionIds.has(run.version_id))
-          issues.push({
-            code: 'UPGRADE_ORPHAN_RUN_VERSION',
-            path: '/runs/' + String(run.id) + '/version_id',
-            message:
-              'run references no inventoried version; explicit repair is required before classifying historical outputs',
-          });
-        if (run.status === 'failed') {
-          let needsDisposition = affected.has(String(run.version_id));
-          if (!needsDisposition && names.includes('run_events')) {
-            const events = await rows(
-              client,
-              "SELECT * FROM run_events WHERE run_id=? AND type IN ('decision.made','run.queued') ORDER BY seq",
-              [String(run.id)],
-            );
-            needsDisposition = events.some(
-              (event) => legacyDecisionEvent(event) || recordedAffectedChild(event, affected),
-            );
-          }
-          if (needsDisposition) failed.push({ id: String(run.id), key: stableStringify(run) });
-        }
-        if (NONTERMINAL.has(String(run.status)))
-          blocked.push({
-            id: String(run.id),
-            status: String(run.status),
-            key: stableStringify(run),
-          });
-      }
-  if (names.includes('run_events')) {
-    const orphans = await rows(
-      client,
-      names.includes('runs')
-        ? 'SELECT run_id,count(*) AS count FROM run_events LEFT JOIN runs ON runs.id=run_events.run_id WHERE runs.id IS NULL GROUP BY run_id'
-        : 'SELECT run_id,count(*) AS count FROM run_events GROUP BY run_id',
-    );
-    for (const event of orphans)
-      for (let index = 0; index < Number(event.count); index += 1)
+    for await (const serialized of canonicalUpgradeRows(tableBatches(client, 'runs'))) {
+      const run = JSON.parse(serialized) as RawRow;
+      if (!versionIds.has(run.version_id))
         issues.push({
-          code: 'UPGRADE_ORPHAN_EVENTS',
-          path: '/run_events/' + String(event.run_id),
-          message: 'events have no run/initial thread; explicit repair is required before upgrade',
+          code: 'UPGRADE_ORPHAN_RUN_VERSION',
+          path: '/runs/' + String(run.id) + '/version_id',
+          message:
+            'run references no inventoried version; explicit repair is required before classifying historical outputs',
         });
+      if (run.status === 'failed') {
+        let needsDisposition = affected.has(String(run.version_id));
+        if (!needsDisposition && names.includes('run_events')) {
+          const events = await rows(
+            client,
+            "SELECT * FROM run_events WHERE run_id=? AND type IN ('decision.made','run.queued') ORDER BY seq",
+            [String(run.id)],
+          );
+          needsDisposition = events.some(
+            (event) => legacyDecisionEvent(event) || recordedAffectedChild(event, affected),
+          );
+        }
+        if (needsDisposition) failed.push({ id: String(run.id), key: stableStringify(run) });
+      }
+      if (NONTERMINAL.has(String(run.status)))
+        blocked.push({
+          id: String(run.id),
+          status: String(run.status),
+          key: stableStringify(run),
+        });
+    }
+  if (names.includes('run_events')) {
+    const where = names.includes('runs')
+      ? 'NOT EXISTS (SELECT 1 FROM runs WHERE runs.id=run_events.run_id)'
+      : undefined;
+    for await (const serialized of canonicalUpgradeRows(
+      tableBatches(client, 'run_events', undefined, where ? { where } : {}),
+    )) {
+      const event = JSON.parse(serialized) as RawRow;
+      issues.push({
+        code: 'UPGRADE_ORPHAN_EVENTS',
+        path: '/run_events/' + String(event.run_id),
+        message: 'events have no run/initial thread; explicit repair is required before upgrade',
+      });
+    }
   }
-  issues.push(...inspectTriggerUpgrade(stored).issues);
+  issues.push(...(await inspectStoredTriggers(client, names, stored)).issues);
   const compare = (a: { key: string }, b: { key: string }) =>
     a.key < b.key ? -1 : a.key > b.key ? 1 : 0;
   return {
@@ -628,7 +684,7 @@ export async function applyDatabaseUpgrade(
     validateManifest(manifest, original);
     const sourceNames = await tables(tx);
     let context = await upgradeContext(tx, sourceNames);
-    const triggerFacts = inspectTriggerUpgrade(context);
+    const triggerFacts = await inspectStoredTriggers(tx, sourceNames, context);
     const manifestHash = hash(manifest);
 
     await tx.execute(STATE_SQL);
@@ -705,6 +761,7 @@ export async function applyDatabaseUpgrade(
         ]);
         const key = rewrittenKeys.get(runId);
         if (key) {
+          rewrittenKeys.delete(runId);
           run.initial_thread = JSON.stringify(
             rewriteWebhookThreadKey(json(run.initial_thread), key.previous, key.next),
           );
@@ -791,6 +848,7 @@ export async function applyDatabaseUpgrade(
         // Release transient native statements even when this batch contains many small runs.
         await yieldToEventLoop();
       }
+    if (rewrittenKeys.size) throw new DatabaseUpgradeRequiredError('Linked webhook run vanished');
     const ownerRows = context.settings ?? [];
     const owners = new Set(
       ownerRows
@@ -820,6 +878,7 @@ export async function applyDatabaseUpgrade(
       args: [CURRENT_DEFINITION_FORMAT, original.sourceHash, manifestHash],
     });
     await guardDatabaseUpgrade(tx);
+    await verifyDatabaseHead(tx, options.migrationsFolder ?? MIGRATIONS);
     // Validate every stored event again through the clean parser before the single atomic commit.
     for await (const batch of tableBatches(tx, 'run_events'))
       for (const row of batch) RunEventSchema.parse(eventOf(row));

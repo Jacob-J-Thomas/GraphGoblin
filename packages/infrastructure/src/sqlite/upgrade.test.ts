@@ -967,3 +967,55 @@ it('inventories and applies 50 loops, 500 versions, 500 runs and 50,000 events w
       }),
   );
 }, 180_000);
+it('preserves old canonical issue ordering for orphan runs, interleaved orphan events and pending receipts', async () => {
+  const handle = await legacy();
+  for (const [id, createdAt] of [
+    ['z-run', '2000'],
+    ['a-run', '2001'],
+  ])
+    await handle.client.execute({
+      sql: 'INSERT INTO runs(id,owner_id,loop_id,version_id,invocation_id,status,iteration,created_at,last_event_seq,initial_thread) VALUES (?,?,?,?,?,?,?,?,?,?)',
+      args: [id!, 'local', 'loop', 'missing-version', id!, 'succeeded', 1, createdAt!, 0, '{}'],
+    });
+  for (const [runId, seq, node] of [
+    ['orphan-a', 1, 'a'],
+    ['orphan-a', 2, 'c'],
+    ['orphan-b', 1, 'b'],
+  ] as const)
+    await handle.client.execute({
+      sql: 'INSERT INTO run_events(run_id,seq,ts,type,node_id,payload) VALUES (?,?,?,?,?,?)',
+      args: [runId, seq, FIXTURE_TS, 'node.started', node, '{}'],
+    });
+  for (const [id, attempts] of [
+    ['z-receipt', 0],
+    ['a-receipt', 1],
+  ] as const)
+    await handle.client.execute({
+      sql: "INSERT INTO webhook_receipts(id,owner_id,loop_id,trigger_node_id,content_hash,inbound_id,status,intent,attempts) VALUES (?,?,?,?,?,?,'pending','{}',?)",
+      args: [id, 'local', 'loop', 'start', id, id, attempts],
+    });
+  const sort = (values: Record<string, unknown>[]) =>
+    values
+      .map((row) => ({ row, key: stableStringify(row) }))
+      .sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0))
+      .map(({ row }) => row);
+  const oldRuns = sort(await rows(handle.client, 'SELECT * FROM runs'))
+    .filter((row) => row.version_id === 'missing-version')
+    .map((row) => '/runs/' + String(row.id) + '/version_id');
+  const oldEvents = sort(await rows(handle.client, 'SELECT * FROM run_events'))
+    .filter((row) => String(row.run_id).startsWith('orphan-'))
+    .map((row) => '/run_events/' + String(row.run_id));
+  const oldReceipts = sort(await rows(handle.client, 'SELECT * FROM webhook_receipts')).map(
+    (row) => '/webhook_receipts/' + String(row.id),
+  );
+  expect(oldEvents).toEqual([
+    '/run_events/orphan-a',
+    '/run_events/orphan-b',
+    '/run_events/orphan-a',
+  ]);
+  expect((await inspectDatabaseUpgrade(handle.client)).issues.map((issue) => issue.path)).toEqual([
+    ...oldRuns,
+    ...oldEvents,
+    ...oldReceipts,
+  ]);
+});

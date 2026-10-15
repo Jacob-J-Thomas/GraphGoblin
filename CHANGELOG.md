@@ -4,7 +4,7 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
-- Internal: centralized the current format (still 3), checked declarative storage readiness once per startup, batched offline history inventory/apply with canonical incremental hashes, and restored the Drizzle snapshot baseline with a no-op generation gate. (#164, step 04)
+- Internal: centralized the current format (still 3), checked SQL-derived format-baseline readiness before startup writes and the full head after migrations, batched offline history inventory/apply with bounded fan-in canonical hashing, and restored the Drizzle snapshot baseline with a no-op generation gate. (#164, step 04)
 
 - **Behaviour change:** deleting a loop now deletes its run history, versions, drafts and triggers atomically; active runs must be cancelled first. (#118)
 

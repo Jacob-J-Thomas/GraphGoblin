@@ -110,6 +110,7 @@ export function upgradeLoopCurrent(
   const { predicates = {}, ...v1 } = resolutions;
   // Format-3 passthrough uses the frozen capture, including exports and device drafts.
   // The format-4 step replaces this branch with the v3 -> v4 stage.
+  // Frozen v2-to-v3 stage: 3 denotes its historical output, not the current format.
   if (object(input) && input.schemaVersion === 3) {
     if (
       [
@@ -229,6 +230,7 @@ export function upgradeLoopCurrent(
         issue('UPGRADE_RESOLUTION_INVALID', path, 'resolution does not name a legacy predicate'),
       );
   if (issues.length) return { ok: false, issues };
+  // Frozen v2-to-v3 output format.
   value.schemaVersion = 3;
   const parsed = LoopDefinitionSchema.safeParse(value);
   if (!parsed.success)
@@ -269,6 +271,7 @@ export function upgradeExportCurrent(
     };
   const result = upgradeLoopCurrent(input.loop, resolutions);
   if (!result.ok) return result;
+  // Frozen v2-to-v3 export output format.
   const parsed = LoopExportSchema.safeParse({ ...input, formatVersion: 3, loop: result.value });
   return parsed.success
     ? { ok: true, value: parsed.data, notices: result.notices }
