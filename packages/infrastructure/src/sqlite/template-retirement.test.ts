@@ -379,19 +379,160 @@ it('rolls back all eight DDL statements and populated template evidence on trans
   expect((await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows).toEqual(ledger);
 });
 
-it('refuses a marked format-3 store without definitions before dropping instance evidence', async () => {
-  const handle = await at0011();
-  await handle.client.execute(
-    'CREATE TABLE gg_upgrade_state (id INTEGER PRIMARY KEY,format_version INTEGER,status TEXT)',
-  );
-  await handle.client.execute("INSERT INTO gg_upgrade_state VALUES (1,3,'complete')");
-  await handle.client.execute(
-    "INSERT INTO template_instances VALUES ('retired','local','{}','{}')",
-  );
-  const inventory = await inspectDatabaseUpgrade(handle.client);
-  expect(inventory.versions).toEqual([]);
-  expect(inventory.issues).toEqual([]);
+async function snapshotStore(handle: DatabaseHandle) {
   const schema = (await handle.client.execute('SELECT * FROM sqlite_master ORDER BY name')).rows;
+  const contents = [];
+  for (const table of (
+    await handle.client.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")
+  ).rows) {
+    const name = table.name;
+    if (typeof name !== 'string') throw new Error('Expected table name');
+    contents.push({
+      name,
+      rows: (await handle.client.execute('SELECT * FROM ' + quote(name) + ' ORDER BY rowid')).rows,
+    });
+  }
+  return { schema, contents };
+}
+async function expectApplyRefusedUnchanged(handle: DatabaseHandle) {
+  const inventory = await inspectDatabaseUpgrade(handle.client);
+  expect(inventory.issues).toEqual([]);
+  const before = await snapshotStore(handle);
+  const statements: string[] = [];
+  const client = new Proxy(handle.client, {
+    get(target, key, receiver) {
+      if (key === 'transaction')
+        return async () => {
+          const tx = await target.transaction('write');
+          const execute = tx.execute.bind(tx);
+          tx.execute = (statement) => {
+            statements.push(typeof statement === 'string' ? statement : statement.sql);
+            return execute(statement);
+          };
+          return tx;
+        };
+      const value: unknown = Reflect.get(target, key, receiver);
+      return value;
+    },
+  });
+  await expect(
+    applyDatabaseUpgrade(client, {
+      format: 'graphgoblin-upgrade-manifest',
+      targetVersion: 4,
+      sourceHash: inventory.sourceHash,
+      approvedBy: 'test-owner',
+      approvedAt: FIXTURE_TS,
+      versions: Object.fromEntries(
+        inventory.versions.map((version) => [
+          version.id,
+          { definitionHash: version.definitionHash, resolutions: {} },
+        ]),
+      ),
+      failedRuns: {},
+    }),
+  ).rejects.toMatchObject({ code: 'DATA_UPGRADE_REQUIRED' });
+  expect(statements.length).toBeGreaterThan(0);
+  expect(statements.every((statement) => /^(SELECT|PRAGMA table_info)/i.test(statement))).toBe(
+    true,
+  );
+  expect(await snapshotStore(handle)).toEqual(before);
+  expect((await inspectDatabaseUpgrade(handle.client)).sourceHash).toBe(inventory.sourceHash);
+}
+it.each([
+  {
+    name: 'unmarked 0011 store with template rows',
+    marker: null,
+    definitions: false,
+    legacyStorage: true,
+  },
+  {
+    name: 'unmarked store with definitions',
+    marker: null,
+    definitions: true,
+    legacyStorage: false,
+  },
+  {
+    name: 'format-3 marker without definitions',
+    marker: 3,
+    definitions: false,
+    legacyStorage: false,
+  },
+  { name: 'format-3 marker with definitions', marker: 3, definitions: true, legacyStorage: false },
+  { name: 'format-1 marker', marker: 1, definitions: false, legacyStorage: false },
+  { name: 'format-2 marker', marker: 2, definitions: false, legacyStorage: false },
+  {
+    name: 'claimed format-4 marker with retired storage',
+    marker: 4,
+    definitions: false,
+    legacyStorage: true,
+  },
+])(
+  'refuses $name without changing rows, schema, marker or ledger',
+  async ({ marker, definitions, legacyStorage }) => {
+    const handle = await at0011();
+    if (legacyStorage)
+      await handle.client.execute(
+        "INSERT INTO template_instances VALUES ('retired','local','{}','{}')",
+      );
+    else await applyShippedSqlToHistoricalTestFixture(handle);
+    if (marker !== null) {
+      await handle.client.execute(
+        'CREATE TABLE gg_upgrade_state (id INTEGER PRIMARY KEY,format_version INTEGER,status TEXT)',
+      );
+      await handle.client.execute({
+        sql: "INSERT INTO gg_upgrade_state VALUES (1,?,'complete')",
+        args: [marker],
+      });
+    }
+    if (definitions) {
+      await handle.client.execute({
+        sql: 'INSERT INTO loop_versions (id,loop_id,version,status,definition,created_at) VALUES (?,?,1,?,?,?)',
+        args: [
+          fakeUlid('old-version'),
+          fakeUlid('old-loop'),
+          'draft',
+          JSON.stringify({ ...minimalLoop(), schemaVersion: 3 }),
+          FIXTURE_TS,
+        ],
+      });
+    }
+    await expectApplyRefusedUnchanged(handle);
+  },
+);
+it.each([
+  [
+    'template table',
+    'CREATE TABLE template_instances (id TEXT PRIMARY KEY,owner_id TEXT,instance TEXT,binding TEXT)',
+  ],
+  ['subject column', 'ALTER TABLE runs ADD COLUMN template_subject TEXT'],
+  ['incomplete marker', "UPDATE gg_upgrade_state SET status='pending'"],
+  ['missing marker row', 'DELETE FROM gg_upgrade_state'],
+  ['incorrect marker identity', 'UPDATE gg_upgrade_state SET id=2'],
+  [
+    'incomplete ledger',
+    'DELETE FROM __drizzle_migrations WHERE created_at=(SELECT max(created_at) FROM __drizzle_migrations)',
+  ],
+  ['incomplete structure', 'DROP INDEX runs_parent_idx'],
+])('refuses a current-format store with %s before structural SQL', async (_name, mutation) => {
+  const handle = await openMemoryDatabase();
+  handles.push(handle);
+  // The malformed marker identity is deliberately injected to exercise offline admission.
+  if (_name === 'incorrect marker identity')
+    await handle.client.execute('PRAGMA ignore_check_constraints=ON');
+  await handle.client.execute(mutation);
+  await expectApplyRefusedUnchanged(handle);
+});
+
+it('admits an already complete format-4 store and preserves its ordinary rows and ledger', async () => {
+  const handle = await openMemoryDatabase();
+  handles.push(handle);
+  await handle.client.execute({
+    sql: 'INSERT INTO settings (owner_id,key,value,updated_at) VALUES (?,?,?,?)',
+    args: ['local', 'ordinary', '{"kept":true}', FIXTURE_TS],
+  });
+  const ordinary = (await handle.client.execute('SELECT * FROM settings')).rows;
+  const ledger = (await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows;
+  const inventory = await inspectDatabaseUpgrade(handle.client);
   await expect(
     applyDatabaseUpgrade(handle.client, {
       format: 'graphgoblin-upgrade-manifest',
@@ -402,13 +543,7 @@ it('refuses a marked format-3 store without definitions before dropping instance
       versions: {},
       failedRuns: {},
     }),
-  ).rejects.toMatchObject({
-    code: 'DATA_UPGRADE_REQUIRED',
-    message: 'Format-3 to format-4 conversion is not available until the integrated cutover',
-  });
-  expect((await inspectDatabaseUpgrade(handle.client)).sourceHash).toBe(inventory.sourceHash);
-  expect((await handle.client.execute('SELECT * FROM sqlite_master ORDER BY name')).rows).toEqual(
-    schema,
-  );
-  expect((await handle.client.execute('SELECT * FROM template_instances')).rows).toHaveLength(1);
+  ).resolves.toMatchObject({ versions: 0, runs: 0 });
+  expect((await handle.client.execute('SELECT * FROM settings')).rows).toEqual(ordinary);
+  expect((await handle.client.execute('SELECT * FROM __drizzle_migrations')).rows).toEqual(ledger);
 });

@@ -461,9 +461,9 @@ test('complete internal data backup, atomic format refusal and backup restoratio
         '--backup-dir',
         join(root, 'failed-backup'),
       ]),
-      /Unresolved version conversion/,
+      formatCutoverRefusal,
     );
-    // SQLite rollback may change container bytes; original durable rows and marker absence prove rollback.
+    // Refusal preserves the original durable rows, schema, ledger and marker absence.
     let client = openReadOnlyDatabaseClient(file);
     try {
       assert.equal((await inspectDatabaseUpgrade(client)).sourceHash, manifest.sourceHash);

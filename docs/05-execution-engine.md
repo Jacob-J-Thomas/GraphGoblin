@@ -184,7 +184,7 @@ Templates are catalogue assets copied into ordinary loops, never runnable instan
 
 `FORMAT_BASELINES[4]` requires `0012_retire_template_instances` in the migration ledger and its resulting structure before any startup writes. Startup refuses older stores, including a format-4 marker at 0011; it never applies this cutover SQL to them. Fresh initialization executes all migrations, ledger entries and the format-4 marker in one transaction.
 
-The offline converter still refuses format-3 conversion. The coordinated #164/#165 cutover (steps 26-28) owns archiving configured instances and subjects and removing their approved loops, versions, runs and dependents before 0012, with the format marker written last in the same transaction. This child supplies SQL and schema metadata only; it does not implement that conversion or authorize an installed upgrade. The libsql migration tests exercise SQL directly on disposable 0011 fixtures, separately from startup and converter admission.
+Until the real 3-to-4 stage exists, the offline converter refuses every store that is not already complete format 4, including unmarked stores and any remaining template table or subject column. The coordinated #164/#165 cutover (steps 26-28) deletes configured template instances, their loops, versions, all their runs and dependents before 0012, without an archive, with the format marker written last in the same transaction. This child supplies SQL and schema metadata only; it does not implement that conversion or authorize an installed upgrade. The libsql migration tests exercise SQL directly on disposable 0011 fixtures, separately from startup and converter admission.
 
 ## Crash recovery (Decided)
 

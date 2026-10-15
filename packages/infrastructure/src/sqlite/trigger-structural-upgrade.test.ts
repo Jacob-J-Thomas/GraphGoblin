@@ -156,7 +156,7 @@ describe('explicit v2 trigger structural cutover', () => {
     const manifest = await approval(handle);
     await refusesUnchanged(handle.client, manifest);
   });
-  it('preserves unreachable endpoint and filtered delivery facts after historical loop deletion', async () => {
+  it('refuses historical stores without definitions while preserving endpoint and delivery facts', async () => {
     const { handle, key, loop, runId } = await previousStructure();
     // Reproduce the old deletion against this historical schema. Current deletion also removes
     // endpoints/receipts and requires the current schema; the offline upgrade stays unchanged.
@@ -189,28 +189,25 @@ describe('explicit v2 trigger structural cutover', () => {
     await handle.client.execute({ sql: 'DELETE FROM loops WHERE id=?', args: [loop.id] });
     expect((await handle.client.execute('SELECT * FROM loop_versions')).rows).toEqual([]);
     expect((await inspectDatabaseUpgrade(handle.client)).issues).toEqual([]);
-    await applyDatabaseUpgrade(handle.client, await approval(handle));
-    expect(await guardDatabaseUpgrade(handle.client)).toBe('current');
+    await refusesUnchanged(handle.client, await approval(handle));
+    await expect(guardDatabaseUpgrade(handle.client)).rejects.toMatchObject({
+      code: 'DATA_UPGRADE_REQUIRED',
+    });
     expect(
       (await handle.client.execute('SELECT dedupe_key FROM inbound_events ORDER BY id')).rows.map(
         (row) => row.dedupe_key,
       ),
     ).toEqual(['authored-business-key', key]);
     expect(
-      (
-        await handle.client.execute(
-          'SELECT enabled,signature_scheme,replay_window_seconds FROM webhook_endpoints',
-        )
-      ).rows,
+      (await handle.client.execute('SELECT enabled,replay_window_seconds FROM webhook_endpoints'))
+        .rows,
     ).toEqual([
       expect.objectContaining({
         enabled: 0,
-        signature_scheme: 'hmac-sha256',
         replay_window_seconds: 300,
       }),
       expect.objectContaining({
         enabled: 0,
-        signature_scheme: 'hmac-sha256',
         replay_window_seconds: 300,
       }),
     ]);
