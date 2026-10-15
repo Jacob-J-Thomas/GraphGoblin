@@ -735,21 +735,16 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List runs with template subjects, filters, and stable newest-first paging */
+        /** List runs with filters and stable newest-first paging */
         get: {
             parameters: {
                 query?: {
                     loopId?: string;
                     status?: string;
-                    parent?: string;
+                    parent?: string | "none";
                     before?: string;
+                    /** @description Opaque run cursor, at most 256 base64url characters. */
                     cursor?: string;
-                    repository?: string;
-                    issue?: number;
-                    pullRequest?: number;
-                    head?: string;
-                    mergeSha?: string;
-                    templateInstanceId?: string;
                     limit?: number;
                 };
                 header?: never;
@@ -765,79 +760,7 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            items: {
-                                id: string;
-                                ownerId: string;
-                                loopId: string;
-                                versionId: string;
-                                parentRunId?: string | undefined;
-                                invocationId: string;
-                                status: components["schemas"]["RunStatus"];
-                                currentNodeId?: string | undefined;
-                                iteration: number;
-                                waiting?: components["schemas"]["WaitSpec"] | undefined;
-                                /** Format: date-time */
-                                cancelRequestedAt?: string | undefined;
-                                /** Format: date-time */
-                                pausedAt?: string | undefined;
-                                failure?: components["schemas"]["RunFailure"] | undefined;
-                                /** @enum {string} */
-                                outcome?: ("success" | "failure" | "exhausted") | undefined;
-                                result?: components["schemas"]["JsonValue"] | undefined;
-                                /** Format: date-time */
-                                createdAt: string;
-                                /** Format: date-time */
-                                startedAt?: string | undefined;
-                                /** Format: date-time */
-                                finishedAt?: string | undefined;
-                                lastEventSeq: number;
-                                templateSubject?: ({
-                                    /** @enum {string} */
-                                    kind: "implementation" | "review" | "qa";
-                                    instanceId: string;
-                                    templateVersion: string;
-                                    repository: string;
-                                    issue: number | null;
-                                    attempt: number | null;
-                                    source: {
-                                        /** @enum {string} */
-                                        kind: "implementation";
-                                        runId: string;
-                                    } | {
-                                        /** @enum {string} */
-                                        kind: "external";
-                                    };
-                                    pullRequest?: number | undefined;
-                                    head?: string | undefined;
-                                    mergeSha?: string | undefined;
-                                    /** @enum {string} */
-                                    role: "parent";
-                                } | {
-                                    /** @enum {string} */
-                                    kind: "implementation" | "review" | "qa";
-                                    instanceId: string;
-                                    templateVersion: string;
-                                    repository: string;
-                                    issue: number | null;
-                                    attempt: number | null;
-                                    source: {
-                                        /** @enum {string} */
-                                        kind: "implementation";
-                                        runId: string;
-                                    } | {
-                                        /** @enum {string} */
-                                        kind: "external";
-                                    };
-                                    pullRequest?: number | undefined;
-                                    head?: string | undefined;
-                                    mergeSha?: string | undefined;
-                                    /** @enum {string} */
-                                    role: "worker";
-                                    parentRunId: string;
-                                    nodeId: string;
-                                    visit: number;
-                                }) | undefined;
-                            }[];
+                            items: components["schemas"]["RunRecord"][];
                             nextCursor: string | null;
                         };
                     };
@@ -877,79 +800,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": {
-                            id: string;
-                            ownerId: string;
-                            loopId: string;
-                            versionId: string;
-                            parentRunId?: string | undefined;
-                            invocationId: string;
-                            status: components["schemas"]["RunStatus"];
-                            currentNodeId?: string | undefined;
-                            iteration: number;
-                            waiting?: components["schemas"]["WaitSpec"] | undefined;
-                            /** Format: date-time */
-                            cancelRequestedAt?: string | undefined;
-                            /** Format: date-time */
-                            pausedAt?: string | undefined;
-                            failure?: components["schemas"]["RunFailure"] | undefined;
-                            /** @enum {string} */
-                            outcome?: ("success" | "failure" | "exhausted") | undefined;
-                            result?: components["schemas"]["JsonValue"] | undefined;
-                            /** Format: date-time */
-                            createdAt: string;
-                            /** Format: date-time */
-                            startedAt?: string | undefined;
-                            /** Format: date-time */
-                            finishedAt?: string | undefined;
-                            lastEventSeq: number;
-                            templateSubject?: ({
-                                /** @enum {string} */
-                                kind: "implementation" | "review" | "qa";
-                                instanceId: string;
-                                templateVersion: string;
-                                repository: string;
-                                issue: number | null;
-                                attempt: number | null;
-                                source: {
-                                    /** @enum {string} */
-                                    kind: "implementation";
-                                    runId: string;
-                                } | {
-                                    /** @enum {string} */
-                                    kind: "external";
-                                };
-                                pullRequest?: number | undefined;
-                                head?: string | undefined;
-                                mergeSha?: string | undefined;
-                                /** @enum {string} */
-                                role: "parent";
-                            } | {
-                                /** @enum {string} */
-                                kind: "implementation" | "review" | "qa";
-                                instanceId: string;
-                                templateVersion: string;
-                                repository: string;
-                                issue: number | null;
-                                attempt: number | null;
-                                source: {
-                                    /** @enum {string} */
-                                    kind: "implementation";
-                                    runId: string;
-                                } | {
-                                    /** @enum {string} */
-                                    kind: "external";
-                                };
-                                pullRequest?: number | undefined;
-                                head?: string | undefined;
-                                mergeSha?: string | undefined;
-                                /** @enum {string} */
-                                role: "worker";
-                                parentRunId: string;
-                                nodeId: string;
-                                visit: number;
-                            }) | undefined;
-                        };
+                        "application/json": components["schemas"]["RunRecord"];
                     };
                 };
             };

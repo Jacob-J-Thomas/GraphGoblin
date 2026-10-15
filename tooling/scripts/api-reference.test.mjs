@@ -82,6 +82,36 @@ test('renders a table per tag with parameters, body, and responses', () => {
   assert.doesNotMatch(md, /## empty/);
 });
 
+test('renders parameter descriptions from OpenAPI parameters and schemas', () => {
+  const md = renderApiReference({
+    paths: {
+      '/runs': {
+        get: {
+          summary: 'List runs',
+          parameters: [
+            {
+              name: 'cursor',
+              in: 'query',
+              description: 'Opaque run cursor, at most 256 base64url characters.',
+              schema: { type: 'string', maxLength: 256 },
+            },
+            {
+              name: 'before',
+              in: 'query',
+              schema: { type: 'string', description: 'Timestamp | boundary\nUTC' },
+            },
+          ],
+          responses: { 200: {} },
+        },
+      },
+    },
+  });
+  assert.ok(
+    md.includes('`cursor`: string (query): Opaque run cursor, at most 256 base64url characters.'),
+  );
+  assert.ok(md.includes('`before`: string (query): Timestamp \\| boundary UTC'));
+});
+
 test('an operation without a summary fails the render', () => {
   const missing = { paths: { '/x': { get: { responses: {} }, delete: { summary: 'ok' } } } };
   assert.deepEqual(operationsWithoutSummary(missing), ['GET /x']);
