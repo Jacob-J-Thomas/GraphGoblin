@@ -72,6 +72,70 @@ const ALL: RunEvent[] = [
 ];
 
 describe('run projections', () => {
+  it('omits missing optional Score confidence but retains missing required LLM and Choice confidence', () => {
+    const provenance = {
+      kind: 'classifier' as const,
+      provider: 'typesafe',
+      classifierId: 'jev',
+      model: 'jev-latest',
+      effort: null,
+    };
+    const score = describeEvent(
+      event(R, 30, 'decision.made', {
+        nodeId: 'score',
+        portId: 'middle',
+        provenance,
+        diagnostics: [],
+        observation: {
+          kind: 'classifier',
+          answer: {
+            type: 'score',
+            score: 1.25,
+            confidence: null,
+            legend: { '0': 'Low', '1': 'Middle', '2': 'High' },
+            probabilities: null,
+          },
+        },
+      }),
+    );
+    expect(score).toBe('Scored 1.25 to band middle with classifier via typesafe (jev-latest)');
+    expect(
+      describeEvent(
+        event(R, 31, 'decision.made', {
+          nodeId: 'choice',
+          portId: 'yes',
+          provenance,
+          diagnostics: [],
+          observation: {
+            kind: 'classifier',
+            answer: {
+              type: 'choice',
+              optionId: 'yes',
+              confidence: null,
+              probabilities: null,
+            },
+          },
+        }),
+      ),
+    ).toContain('with confidence not recorded');
+    expect(
+      describeEvent(
+        event(R, 32, 'decision.made', {
+          nodeId: 'route',
+          portId: 'yes',
+          diagnostics: [],
+          provenance: {
+            kind: 'llm',
+            provider: 'codex',
+            model: 'alpha',
+            effort: 'low',
+            classifierId: null,
+          },
+          observation: { kind: 'route', routeId: 'yes', confidence: null, reasoning: null },
+        }),
+      ),
+    ).toContain('with confidence not recorded');
+  });
   it('describes Noul truth probability and fractional Score output separately', () => {
     const classifier = {
       kind: 'classifier' as const,

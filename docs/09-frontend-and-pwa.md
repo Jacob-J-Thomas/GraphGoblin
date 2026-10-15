@@ -439,11 +439,13 @@ The owner's request of 2026-10-04: undo and redo for the editor, with Ctrl+Z and
 
 ## Primitive decision evidence (#97)
 
-The inspector reads `observation`: route observations show the declared route ID and selected port, with informational LLM confidence and a bounded reasoning excerpt; classifier observations retain Choice, Noul or fractional Score evidence. Noul shows true probability and chosen-side confidence; Score shows rubric anchors and available probabilities. Rejected classifiers show proposed evidence and the failed minimum without claiming a selected route. Provider context and full-thread Liquid exposure remain unchanged.
+The inspector reads `observation`: route observations show the declared route ID and selected port, with informational LLM confidence and a bounded reasoning excerpt; classifier observations retain Choice, Noul or fractional Score evidence. Noul shows true probability and chosen-side confidence; Score shows rubric anchors and available probabilities. Missing optional Score confidence adds no warning to the event summary; missing required confidence in historical provider evidence is identified as not recorded. Rejected classifiers show proposed evidence and the failed minimum without claiming a selected route. Provider context and full-thread Liquid exposure remain unchanged.
 
 ## Exit predicate authoring and evidence (#99)
 
 Exit criteria temporarily edit a separate `predicate` and `match`: expression/Codex booleans, or classifier Choice/Noul/Score comparisons. Existing criterion order, fixed context, returns and loop-back remain. Current-format device drafts reopen even with incomplete fields or syntax; server save/publication still validate. Older device drafts remain inert and exportable until the integrated format-4 cutover.
+
+Switching between expression and LLM predicates preserves the authored boolean match, including `false`. Compatible classifier answer switches preserve the question and confidence minimum. Invalid thresholds and empty matches remain available for correction, with validation issues focusing their fields.
 
 ## Template gallery (#28, #160)
 

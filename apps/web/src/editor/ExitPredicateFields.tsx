@@ -7,7 +7,7 @@ export function exitPredicateVariantChange(
   previous: unknown,
   path?: string,
 ): unknown {
-  const changed = /^criteria\.(\d+)(?:\.(?:predicate|predicate.answer))?$/.exec(path ?? '');
+  const changed = /^criteria\.(\d+)(?:\.(?:predicate|predicate\.answer))?$/.exec(path ?? '');
   if (!changed) return config;
   const current = record(config);
   const criteria = current['criteria'];
@@ -25,6 +25,13 @@ export function exitPredicateVariantChange(
     oldRow['when'] === 'predicate' &&
     predicate['kind'] === oldPredicate['kind'] &&
     type === record(oldPredicate['answer'])['type']
+  )
+    return config;
+  if (
+    oldRow['when'] === 'predicate' &&
+    (oldPredicate['kind'] === 'expression' || oldPredicate['kind'] === 'llm') &&
+    (predicate['kind'] === 'expression' || predicate['kind'] === 'llm') &&
+    record(row['match'])['type'] === 'boolean'
   )
     return config;
   const options = answer['options'];

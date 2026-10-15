@@ -381,7 +381,16 @@ async function evaluateLlm(
             reasoning: raw.reasoning.slice(0, 2048),
           };
         })();
-  return EvaluationEmissionSchema.parse({ provenance, observation });
+  const emission = EvaluationEmissionSchema.safeParse({ provenance, observation });
+  if (!emission.success)
+    fail(
+      request,
+      'EVALUATION_INVALID_RESPONSE',
+      'The LLM returned inconsistent evaluation evidence',
+      false,
+      { provenance, issues: emission.error.issues },
+    );
+  return emission.data;
 }
 export async function evaluateRoute(request: RouteEvaluationRequest) {
   if ('expressionView' in request) {

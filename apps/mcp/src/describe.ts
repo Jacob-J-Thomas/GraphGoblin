@@ -8,6 +8,7 @@ import type {
   LoopVersionRecord,
   RunRecord,
 } from '@graphgoblin/contracts';
+import { decisionRouteDeclarations } from '@graphgoblin/domain';
 
 export function summarizeLoop(loop: LoopRecord) {
   return {
@@ -42,19 +43,11 @@ export function describeDefinition(definition: LoopDefinition) {
       });
     } else if (node.kind === 'decision') {
       const config = node.config;
-      const routes =
-        config.kind !== 'classifier'
-          ? config.routes
-          : config.answer.type === 'choice'
-            ? config.answer.options
-            : config.answer.type === 'noul'
-              ? [config.answer.true, config.answer.false]
-              : config.answer.bands;
       decisions.push({
         nodeId: node.id,
         label: node.label,
         kind: config.kind,
-        routes: routes.map(({ id, label }) => ({ id, label })),
+        routes: decisionRouteDeclarations(config),
         ...(config.kind === 'classifier'
           ? { answerType: config.answer.type, model: config.model }
           : config.kind === 'llm'

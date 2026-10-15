@@ -234,6 +234,195 @@ describe('NodeEditorDialog evaluator-specific decisions', () => {
 });
 
 describe('NodeEditorDialog separate exit predicates', () => {
+  it.each(['expression', 'llm'] as const)(
+    'preserves a false boolean match and picker focus when switching from %s and back',
+    async (kind) => {
+      const user = userEvent.setup();
+      const dialog = await openDialog(
+        {
+          id: 'finish',
+          kind: 'exit',
+          label: 'Finish',
+          config: {
+            criteria: [
+              {
+                when: 'predicate',
+                outcome: 'success',
+                match: { type: 'boolean', value: false },
+                predicate:
+                  kind === 'expression'
+                    ? { kind, jsonata: 'false' }
+                    : {
+                        kind,
+                        instructions: 'Is work still pending?',
+                        harness: 'codex',
+                        model: { mode: 'inherit' },
+                        effort: { mode: 'inherit' },
+                      },
+              },
+            ],
+          },
+        },
+        'Edit exit finish',
+      );
+      const picker = () =>
+        within(dialog.querySelector<HTMLElement>('[data-field="criteria.0.predicate"]')!).getByRole(
+          'combobox',
+          { name: 'Kind' },
+        );
+      for (const value of [kind === 'expression' ? '1' : '0', kind === 'expression' ? '0' : '1']) {
+        await user.selectOptions(picker(), value);
+        await waitFor(() => expect(picker()).toHaveFocus());
+        expect(
+          store().definition?.nodes.find((node) => node.id === 'finish')?.config,
+        ).toMatchObject({
+          criteria: [
+            {
+              predicate: { kind: value === '0' ? 'expression' : 'llm' },
+              match: { type: 'boolean', value: false },
+            },
+          ],
+        });
+        const match = dialog.querySelector<HTMLElement>('[data-field="criteria.0.match"]')!;
+        expect(within(match).getByRole('switch', { name: 'Value' })).not.toBeChecked();
+      }
+    },
+  );
+
+  it('preserves LLM instructions and confidence minimum across compatible model and effort switches', async () => {
+    const user = userEvent.setup();
+    const dialog = await openDialog(
+      {
+        id: 'finish',
+        kind: 'exit',
+        label: 'Finish',
+        config: {
+          criteria: [
+            {
+              when: 'predicate',
+              outcome: 'success',
+              predicate: {
+                kind: 'llm',
+                instructions: 'Keep this authored question.',
+                harness: 'codex',
+                model: { mode: 'inherit' },
+                effort: { mode: 'inherit' },
+              },
+              match: { type: 'boolean', value: false, minReportedConfidence: 0.73 },
+            },
+          ],
+        },
+      },
+      'Edit exit finish',
+    );
+    for (const field of ['model', 'effort']) {
+      const picker = () =>
+        within(
+          dialog.querySelector<HTMLElement>(`[data-field="criteria.0.predicate.${field}"]`)!,
+        ).getByRole('combobox', { name: 'Mode' });
+      for (const value of ['1', '0']) {
+        await user.selectOptions(picker(), value);
+        expect(picker()).toHaveFocus();
+        expect(getCode('Instructions')).toBe('Keep this authored question.');
+        expect(
+          store().definition?.nodes.find((node) => node.id === 'finish')?.config,
+        ).toMatchObject({
+          criteria: [{ match: { type: 'boolean', value: false, minReportedConfidence: 0.73 } }],
+        });
+      }
+    }
+  });
+
+  it('keeps an empty Choice match and invalid thresholds on ordinary edits, with issue focus', async () => {
+    const user = userEvent.setup();
+    const dialog = await openDialog(
+      {
+        id: 'finish',
+        kind: 'exit',
+        label: 'Finish',
+        config: {
+          criteria: [
+            {
+              when: 'predicate',
+              outcome: 'success',
+              predicate: {
+                kind: 'classifier',
+                model: 'jev',
+                question: 'Keep this question.',
+                answer: {
+                  type: 'choice',
+                  options: [
+                    { id: 'yes', label: 'Yes', criteria: 'Ready' },
+                    { id: 'no', label: 'No', criteria: 'Pending' },
+                  ],
+                },
+              },
+              match: { type: 'choice', optionIds: ['yes'] },
+            },
+          ],
+        },
+      },
+      'Edit exit finish',
+    );
+    const node = store().definition?.nodes.find((node) => node.id === 'finish');
+    if (node?.kind !== 'exit') throw new Error('Exit node missing');
+    act(() =>
+      store().updateNode('finish', {
+        config: {
+          ...node.config,
+          criteria: [
+            {
+              when: 'predicate',
+              outcome: 'success',
+              predicate: {
+                kind: 'classifier',
+                model: 'jev',
+                question: 'Keep this question.',
+                minConfidence: 1.2,
+                truthThreshold: 0.65,
+                answer: {
+                  type: 'choice',
+                  options: [
+                    { id: 'yes', label: 'Yes', criteria: 'Ready' },
+                    { id: 'no', label: 'No', criteria: 'Pending' },
+                  ],
+                },
+              },
+              match: { type: 'choice', optionIds: [] },
+            },
+          ],
+        },
+      }),
+    );
+    act(() => store().closeNodeDialog());
+    act(() => store().openNode('finish'));
+    const reopened = await screen.findByRole('dialog', { name: 'Edit exit finish' });
+    setCode('Question', 'Updated question.');
+    const label = within(
+      reopened.querySelector<HTMLElement>('[data-field-scope="node"]')!,
+    ).getByRole('textbox', { name: 'Label' });
+    await user.clear(label);
+    await user.type(label, 'Updated');
+    expect(
+      store().definition?.nodes.find((candidate) => candidate.id === 'finish')?.config,
+    ).toMatchObject({
+      criteria: [
+        {
+          predicate: { question: 'Updated question.', minConfidence: 1.2, truthThreshold: 0.65 },
+          match: { type: 'choice', optionIds: [] },
+        },
+      ],
+    });
+    expect(validateDraft(store().definition!).schemaValid).toBe(false);
+    act(() => store().openNode('finish', { field: 'config.criteria.0.predicate.minConfidence' }));
+    const minimum = reopened.querySelector<HTMLElement>(
+      '[data-field="criteria.0.predicate.minConfidence"]',
+    )!;
+    await waitFor(() => expect(minimum).toContainElement(document.activeElement as HTMLElement));
+    expect(within(minimum).getByRole('spinbutton')).toHaveValue(1.2);
+    expect(dialog).not.toBeVisible();
+  });
+
   it('synchronizes the match form and preserves focus when a classifier predicate changes primitive', async () => {
     const user = userEvent.setup();
     const dialog = await openDialog(
@@ -249,6 +438,7 @@ describe('NodeEditorDialog separate exit predicates', () => {
                 kind: 'classifier',
                 model: 'jev',
                 question: 'Grade the result.',
+                minConfidence: 0.73,
                 answer: {
                   type: 'noul',
                   true: { label: 'True', criteria: 'Ready' },
@@ -277,7 +467,11 @@ describe('NodeEditorDialog separate exit predicates', () => {
     expect(node?.config).toMatchObject({
       criteria: [
         {
-          predicate: { answer: { type: 'score', anchors: ['Low', 'High'] } },
+          predicate: {
+            question: 'Grade the result.',
+            minConfidence: 0.73,
+            answer: { type: 'score', anchors: ['Low', 'High'] },
+          },
           match: { type: 'score', operator: 'gte', value: 0.75 },
         },
       ],

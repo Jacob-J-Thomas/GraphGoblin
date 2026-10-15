@@ -180,7 +180,8 @@ function describeDecision(event: Extract<RunEvent, { type: 'decision.made' }>): 
   const confidenceText =
     confidence !== null
       ? ` with confidence ${confidence}`
-      : provenance.kind !== 'expression'
+      : provenance.kind === 'llm' ||
+          (observation.kind === 'classifier' && observation.answer.type !== 'score')
         ? ' with confidence not recorded'
         : '';
   const diagnostics = event.diagnostics.map((item) => `; ${item.code}: ${item.message}`).join('');

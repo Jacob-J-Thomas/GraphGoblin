@@ -185,6 +185,32 @@ describe('separate typed evaluation operations', () => {
       input.signal,
     );
   });
+  it.each(['route', 'boolean'] as const)(
+    'keeps inconsistent LLM %s evidence within the typed failure boundary',
+    async (mode) => {
+      const ports = createFakePorts();
+      const input = {
+        ...request(),
+        ports,
+        resolveModel: () => Promise.resolve({ model: '', effort: 'low' as const }),
+      };
+      const { routes: _routes, context: _context, ...predicate } = llm;
+      const result =
+        mode === 'route'
+          ? evaluateRoute({ ...input, config: llm, instructions: 'Choose', context: null })
+          : evaluateBoolean({ ...input, config: predicate, instructions: 'Ready?', context: null });
+      await expect(result).rejects.toMatchObject({
+        name: 'RunFailureError',
+        code: 'EVALUATION_INVALID_RESPONSE',
+        options: {
+          nodeId: 'evaluate',
+          resumable: false,
+          details: { issues: [expect.objectContaining({ path: ['provenance', 'model'] })] },
+        },
+      });
+      expect(ports.classifiers.requests).toEqual([]);
+    },
+  );
   it('checks malformed boolean responses and has no fallback', async () => {
     const input = request(),
       ports = createFakePorts();

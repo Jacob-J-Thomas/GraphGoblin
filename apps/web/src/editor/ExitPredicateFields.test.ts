@@ -9,7 +9,7 @@ describe('separate predicate variant normalization', () => {
     match: { type: 'boolean', value: false },
   });
   it.each([
-    [{ kind: 'llm' }, { type: 'boolean', value: true }],
+    [{ kind: 'llm' }, { type: 'boolean', value: false }],
     [
       { kind: 'classifier', answer: { type: 'choice', options: [{ id: 'ready' }] } },
       { type: 'choice', optionIds: ['ready'] },
@@ -28,12 +28,22 @@ describe('separate predicate variant normalization', () => {
       wrap({ when: 'predicate', predicate, match }),
     );
   });
+  it.each([
+    ['expression', 'llm'],
+    ['llm', 'expression'],
+  ])('preserves the boolean match when switching %s to %s', (from, to) => {
+    const match = { type: 'boolean', value: false, minReportedConfidence: 1.2 };
+    const before = wrap({ when: 'predicate', predicate: { kind: from }, match });
+    const next = wrap({ when: 'predicate', predicate: { kind: to }, match });
+    expect(exitPredicateVariantChange(next, before, 'criteria.1.predicate')).toBe(next);
+  });
   it('preserves ordinary edits and malformed or unrelated input without resetting a match', () => {
     for (const path of [
       undefined,
       'return.mapping',
       'criteria.1.predicate.jsonata',
       'criteria.1.match',
+      'criteria.1.predicateXanswer',
     ])
       expect(exitPredicateVariantChange(previous, {}, path)).toBe(previous);
     expect(exitPredicateVariantChange(previous, previous, 'criteria.1.predicate')).toBe(previous);
