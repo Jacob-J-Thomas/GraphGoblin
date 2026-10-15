@@ -21,7 +21,7 @@ $triggers = Invoke-RestMethod "http://127.0.0.1:4747/loops/$loopId/triggers"
 $triggers.webhooks | Where-Object enabled | Select-Object triggerNodeId, path
 ```
 
-The response contains `schedules`, `webhooks`, and `polls`. Older schedule and endpoint rows remain with `enabled` false; select the enabled rows. Deleting a loop disarms all of its triggers; the API refuses to delete a loop with active runs (409 `LOOP_IN_USE`).
+The response contains `schedules`, `webhooks`, and `polls`. Older schedule and endpoint rows remain with `enabled` false; select the enabled rows. Deleting a loop removes its schedules, webhook endpoints, receipts and run history, and disarms its polls. The API refuses deletion with 409 `LOOP_IN_USE` while runs are queued, running, waiting or paused, or an active caller or pending webhook admission still needs the loop. Cancel the run or resolve the pending admission first. A refusal leaves triggers unchanged.
 
 ## Start manually
 

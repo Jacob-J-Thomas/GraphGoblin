@@ -366,7 +366,10 @@ export interface paths {
         };
         put?: never;
         post?: never;
-        /** Delete a loop that has no active runs */
+        /**
+         * Delete a loop and its run history, unless it has active runs
+         * @description Deletes all versions, drafts, runs and run-owned rows in one transaction. Returns 204 on success, 404 LOOP_NOT_FOUND, or 409 LOOP_IN_USE when a run is active or a pending admission or active parent can still start this loop. Cancel the runs first.
+         */
         delete: {
             parameters: {
                 query?: never;
