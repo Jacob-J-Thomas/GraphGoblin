@@ -297,13 +297,22 @@ const SchemaFormBindings = memo(function SchemaFormBindings({
     if (shape.kind !== 'union' || index === unionIndex) return;
     reviewEdit(
       { type: 'variant', path: '', value: initialValue(shape.options[index] as Schema) },
-      (value, keep = []) =>
+      (value, keep = [], moves = []) =>
         changeScope({ path: '', kind: 'commit' }, () => {
           repathParseErrors(
             parseErrorChannel,
             Object.keys(parseErrorChannel.errors ?? {})
               .filter((path) => !keep.some((key) => path === key || path.startsWith(`${key}.`)))
-              .map((from) => ({ from, exact: true })),
+              .map((from) => {
+                const move = moves.find(
+                  ({ from: path }) => from === path || from.startsWith(`${path}.`),
+                );
+                return {
+                  from,
+                  ...(move ? { to: move.to + from.slice(move.from.length) } : {}),
+                  exact: true,
+                };
+              }),
           );
           const next = asValues(value);
           collections.remember(next);

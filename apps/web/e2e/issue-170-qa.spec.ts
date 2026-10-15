@@ -1,6 +1,6 @@
 ﻿/** Independent browser QA for #170. Defect references resolve in docs/qa/2026-10-10-issue-170. */
 import { execFileSync } from 'node:child_process';
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
@@ -234,7 +234,7 @@ function at(value: unknown, path: string): unknown {
     );
 }
 
-test('I1: main golden bytes and complete inference survive placement and edited save/reload', async ({
+test('I1: current golden bytes and main inference survive placement and edited save/reload', async ({
   page,
   request,
 }) => {
@@ -246,9 +246,17 @@ test('I1: main golden bytes and complete inference survive placement and edited 
       { encoding: 'utf8' },
     ),
   ) as LoopDefinition;
-  expect(JSON.stringify(LoopDefinitionSchema.parse(everyFieldLoop()))).toBe(JSON.stringify(golden));
+  const currentGolden: unknown = JSON.parse(
+    await readFile(
+      new URL('../../../packages/contracts/src/__golden__/loop-every-field.json', import.meta.url),
+      'utf8',
+    ),
+  );
+  const current = LoopDefinitionSchema.parse(everyFieldLoop());
+  expect(JSON.stringify(current)).toBe(JSON.stringify(currentGolden));
   const original = golden.nodes.find((n) => n.kind === 'inference')!;
   if (original.kind !== 'inference') throw new Error('Missing golden inference');
+  expect(current.nodes.find((node) => node.kind === 'inference')).toEqual(original);
   const id = await create(request, 'inference', original.config);
   await page.goto(`/app/loops/${id}/edit`);
   const dialog = await openNode(page, 'approve');

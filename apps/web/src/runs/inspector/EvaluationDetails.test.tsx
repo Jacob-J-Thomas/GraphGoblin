@@ -32,6 +32,41 @@ function noulDefinition(truthThreshold?: number) {
 }
 
 describe('EvaluationDetails', () => {
+  it('distinguishes loading classifier configuration from unavailable historical configuration', () => {
+    const decision = event('run', 1, 'decision.made', {
+      nodeId: 'check',
+      portId: 'true',
+      diagnostics: [],
+      provenance: {
+        kind: 'classifier',
+        provider: 'typesafe',
+        classifierId: 'jev',
+        model: 'jev-latest',
+        effort: null,
+      },
+      observation: {
+        kind: 'classifier',
+        answer: { type: 'noul', holds: true, trueProbability: 0.8, confidence: 0.8 },
+      },
+    });
+    const { rerender } = render(<EvaluationDetails event={decision} definitionLoading />);
+    expect(screen.getByText('Confidence acceptance').parentElement).toHaveTextContent(
+      'Loading run-version configuration…',
+    );
+    expect(
+      screen.queryByText('Not recorded (classifier configuration unavailable)'),
+    ).not.toBeInTheDocument();
+    rerender(
+      <EvaluationDetails event={decision} definition={noulDefinition()} definitionLoading />,
+    );
+    expect(screen.getByText('Confidence acceptance').parentElement).toHaveTextContent(
+      'No minimum configured in run version',
+    );
+    rerender(<EvaluationDetails event={decision} />);
+    expect(screen.getByText('Confidence acceptance').parentElement).toHaveTextContent(
+      'Not recorded (classifier configuration unavailable)',
+    );
+  });
   it('shows an expression route with no provider, classifier evidence or invented confidence', () => {
     render(
       <EvaluationDetails

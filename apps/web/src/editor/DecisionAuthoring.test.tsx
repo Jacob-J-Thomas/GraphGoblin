@@ -54,6 +54,77 @@ const confirm = async (user: ReturnType<typeof userEvent.setup>, dialog: HTMLEle
 describe('decision authoring checkpoint', () => {
   beforeEach(() => localStorage.setItem(LOOP_PANEL_STORAGE_KEY, 'expanded'));
 
+  it.each(['expression', 'llm'])(
+    'keeps unfinished %s route fields through classifier conversion, cancel and undo',
+    async (kind) => {
+      const user = userEvent.setup();
+      const { dialog } = await setup(
+        kind === 'expression'
+          ? undefined
+          : {
+              kind,
+              instructions: 'Choose the route.',
+              routes,
+              harness: 'codex',
+              model: { mode: 'inherit' },
+              effort: { mode: 'inherit' },
+            },
+      );
+      act(() => {
+        store().setFieldError('node:pick', 'routes.0.id', held);
+        store().setFieldError('node:pick', 'routes.1.label', { ...held, text: 'Unfinished name' });
+      });
+      const before = store().definition;
+      const history = store().past.length;
+      await user.click(within(dialog).getByRole('radio', { name: 'classifier' }));
+      expect(
+        within(dialog).getByRole('region', { name: 'Change decision kind?' }),
+      ).not.toHaveTextContent('(unfinished text)');
+      await user.click(within(dialog).getByRole('button', { name: 'Cancel change' }));
+      expect(store().definition).toBe(before);
+      expect(store().fieldErrors['node:pick']?.['routes.0.id']).toEqual(held);
+      await user.click(within(dialog).getByRole('radio', { name: 'classifier' }));
+      await confirm(user, dialog);
+      expect(store().past).toHaveLength(history + 1);
+      expect(store().definition!.edges).toEqual(before!.edges);
+      expect(store().fieldErrors['node:pick']?.['routes.0.id']).toBeUndefined();
+      expect(store().fieldErrors['node:pick']?.['answer.options.0.id']).toEqual(held);
+      expect(store().fieldErrors['node:pick']?.['answer.options.1.label']?.text).toBe(
+        'Unfinished name',
+      );
+      act(() => store().undo());
+      expect(store().definition).toEqual(before);
+      expect(store().fieldErrors['node:pick']?.['routes.0.id']).toEqual(held);
+      expect(store().fieldErrors['node:pick']?.['answer.options.0.id']).toBeUndefined();
+      act(() => store().redo());
+      expect(store().fieldErrors['node:pick']?.['answer.options.0.id']).toEqual(held);
+    },
+  );
+
+  it('names lost held route fields in the preview and moves compatible fields between classifier primitives', async () => {
+    const user = userEvent.setup();
+    const { dialog } = await setup({
+      kind: 'classifier',
+      model: 'jev',
+      question: 'Choose.',
+      answer: { type: 'choice', options },
+    });
+    act(() => {
+      store().setFieldError('node:pick', 'answer.options.0.id', held);
+      store().setFieldError('node:pick', 'answer.options.1.criteria', held);
+    });
+    await user.click(within(dialog).getByRole('radio', { name: 'Score' }));
+    const review = within(dialog).getByRole('region', { name: 'Change classifier answer type?' });
+    expect(review).toHaveTextContent('Route 2 “Review” criteria (unfinished text)');
+    expect(review).not.toHaveTextContent('answer.options');
+    expect(review).not.toHaveTextContent('ID (unfinished text)');
+    await confirm(user, dialog);
+    expect(store().fieldErrors['node:pick']?.['answer.bands.0.id']).toEqual(held);
+    expect(store().fieldErrors['node:pick']?.['answer.options.1.criteria']).toBeUndefined();
+    act(() => store().undo());
+    expect(store().fieldErrors['node:pick']?.['answer.options.1.criteria']).toEqual(held);
+  });
+
   it.each([
     { copy: 'active', unfinished: '' },
     { copy: 'active', unfinished: 'review' },
@@ -137,7 +208,7 @@ describe('decision authoring checkpoint', () => {
     act(() => store().setFieldError('node:pick', 'context', held));
     await user.click(within(dialog).getByRole('radio', { name: 'llm' }));
     const review = within(dialog).getByRole('region', { name: 'Change decision kind?' });
-    expect(review).not.toHaveTextContent('Unfinished input: context');
+    expect(review).not.toHaveTextContent('Provider context selection (unfinished text)');
     await confirm(user, dialog);
     expect(pick().config).toMatchObject({ kind: 'llm', context, routes });
     expect(store().fieldErrors['node:pick']?.['context']?.text).toBe(held.text);
@@ -157,7 +228,7 @@ describe('decision authoring checkpoint', () => {
     const review = within(dialog).getByRole('region', { name: 'Change decision kind?' });
     expect(review).toHaveFocus();
     expect(review).toHaveTextContent('JSONata source');
-    expect(review).toHaveTextContent('Unfinished input: jsonata');
+    expect(review).toHaveTextContent('JSONata source (unfinished text)');
     expect(store().definition).toBe(before);
     expect(store().past).toHaveLength(history);
     await user.click(within(review).getByRole('button', { name: 'Cancel change' }));

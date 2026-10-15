@@ -152,9 +152,11 @@ function ClassifierDetails({ answer, prefix = '' }: { answer: ClassifierAnswer; 
 function DecisionAcceptance({
   event,
   definition,
+  definitionLoading,
 }: {
   event: Extract<RunEvent, { type: 'decision.made' }>;
   definition: LoopDefinition | undefined;
+  definitionLoading: boolean;
 }) {
   if (event.observation.kind !== 'classifier') return null;
   const node = definition?.nodes.find((node) => node.id === event.nodeId);
@@ -165,13 +167,15 @@ function DecisionAcceptance({
     <>
       <dt>Confidence acceptance</dt>
       <dd>
-        {!config
-          ? 'Not recorded (classifier configuration unavailable)'
-          : config.minConfidence === undefined
-            ? 'No minimum configured in run version'
-            : confidence === null
-              ? `Not recorded; run-version minimum ${config.minConfidence}`
-              : `${confidence >= config.minConfidence ? 'Meets' : 'Below'} run-version minimum ${config.minConfidence}`}
+        {!definition && definitionLoading
+          ? 'Loading run-version configuration…'
+          : !config
+            ? 'Not recorded (classifier configuration unavailable)'
+            : config.minConfidence === undefined
+              ? 'No minimum configured in run version'
+              : confidence === null
+                ? `Not recorded; run-version minimum ${config.minConfidence}`
+                : `${confidence >= config.minConfidence ? 'Meets' : 'Below'} run-version minimum ${config.minConfidence}`}
       </dd>
     </>
   );
@@ -325,9 +329,11 @@ function ExitCriterionDetail({
 export function EvaluationDetails({
   event,
   definition,
+  definitionLoading = false,
 }: {
   event: RunEvent | undefined;
   definition?: LoopDefinition | undefined;
+  definitionLoading?: boolean;
 }) {
   if (!event || !['decision.made', 'exit.evaluated', 'run.failed'].includes(event.type))
     return null;
@@ -384,7 +390,11 @@ export function EvaluationDetails({
               <code>{event.portId}</code>
             </dd>
             <Identity value={event.provenance} />
-            <DecisionAcceptance event={event} definition={definition} />
+            <DecisionAcceptance
+              event={event}
+              definition={definition}
+              definitionLoading={definitionLoading}
+            />
             <ObservationDetails
               observation={event.observation}
               provenance={event.provenance}

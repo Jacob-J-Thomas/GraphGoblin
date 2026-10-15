@@ -150,7 +150,10 @@ for (const hasTouch of [true, false]) {
         );
         await openLoop(page, request);
         const dialog = await openNode(page, 'pick');
-        await dialog.getByRole('radio', { name: 'classifier', exact: true }).click();
+        await dialog
+          .getByRole('radiogroup', { name: 'Decision kind' })
+          .getByText('classifier', { exact: true })
+          .click();
         await dialog.getByRole('button', { name: 'Confirm change', exact: true }).click();
         await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
         for (const width of hasTouch ? [1440, 360] : [1440]) {
@@ -179,14 +182,20 @@ test('kind changes preview losses, cancel, undo, retain edges and reload; Noul n
 }) => {
   const loopId = await openLoop(page, request, decisionLoop(3));
   let dialog = await openNode(page, 'pick');
-  await dialog.getByRole('radio', { name: 'llm', exact: true }).click();
+  await dialog
+    .getByRole('radiogroup', { name: 'Decision kind' })
+    .getByText('llm', { exact: true })
+    .click();
   await expect(dialog.getByRole('region', { name: 'Change decision kind?' })).toContainText(
     'JSONata source',
   );
   await dialog.getByRole('button', { name: 'Cancel change', exact: true }).click();
   await expect(dialog.getByRole('radio', { name: 'expression', exact: true })).toBeChecked();
   await expect(dialog.locator('[data-field="jsonata"] [role="textbox"]')).toHaveText('"yes"');
-  await dialog.getByRole('radio', { name: 'llm', exact: true }).click();
+  await dialog
+    .getByRole('radiogroup', { name: 'Decision kind' })
+    .getByText('llm', { exact: true })
+    .click();
   await dialog.getByRole('button', { name: 'Confirm change', exact: true }).click();
   await expect(dialog.locator('[data-field="instructions"] [role="textbox"]')).toHaveAttribute(
     'aria-invalid',
@@ -212,10 +221,16 @@ test('kind changes preview losses, cancel, undo, retain edges and reload; Noul n
   await page.reload();
   dialog = await openNode(page, 'pick');
   await expect(dialog.getByRole('radio', { name: 'llm', exact: true })).toBeChecked();
-  await dialog.getByRole('radio', { name: 'classifier', exact: true }).click();
+  await dialog
+    .getByRole('radiogroup', { name: 'Decision kind' })
+    .getByText('classifier', { exact: true })
+    .click();
   await dialog.getByRole('button', { name: 'Confirm change', exact: true }).click();
   await expect(dialog.getByRole('combobox', { name: 'Model', exact: true })).toHaveValue('');
-  await dialog.getByRole('radio', { name: 'Noul', exact: true }).click();
+  await dialog
+    .getByRole('radiogroup', { name: 'Answer type' })
+    .getByText('Noul', { exact: true })
+    .click();
   await expect(
     dialog.getByRole('region', { name: 'Change classifier answer type?' }),
   ).toContainText('exactly two routes');

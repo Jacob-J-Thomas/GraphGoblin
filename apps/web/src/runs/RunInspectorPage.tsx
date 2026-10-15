@@ -147,7 +147,11 @@ export function RunInspectorPage() {
           selectedEvent?.type === 'child_run.finished' ? (
             <ChildRunDetails runId={selectedEvent.childRunId} />
           ) : null}
-          <EvaluationDetails event={selectedEvent} definition={versionQuery.data?.definition} />
+          <EvaluationDetails
+            event={selectedEvent}
+            definition={versionQuery.data?.definition}
+            definitionLoading={versionQuery.isPending}
+          />
           {threadQuery.data ? (
             <ThreadViewer current={threadQuery.data} events={log.events} seq={seq} />
           ) : (

@@ -1,6 +1,6 @@
 import { DecisionConfigSchema } from '@graphgoblin/contracts';
 import { describe, expect, it } from 'vitest';
-import { convertDecision, decisionRows, record } from './decision-authoring.js';
+import { convertDecision, decisionFieldLabel, decisionRows, record } from './decision-authoring.js';
 import { canvasPortLabels, connectionProblem, newLoopDefinition, portsOf } from './model.js';
 
 const routes = [
@@ -37,6 +37,60 @@ const score = {
 };
 
 describe('decision authoring conversions', () => {
+  it('names unfinished fields and routes without exposing schema paths', () => {
+    expect(decisionFieldLabel(expression, 'routes.0.id')).toBe('Route 1 “Ship” ID');
+    expect(decisionFieldLabel(choice, 'answer.options.1.label')).toBe('Route 2 “Review” name');
+    expect(decisionFieldLabel(score, 'answer.bands.0.min')).toBe('Route 1 “Ship” minimum');
+    const noul = convertDecision(choice, 'classifier', 'noul').config;
+    expect(decisionFieldLabel(noul, 'answer.true.criteria')).toBe('Route 1 “Ship” criteria');
+    expect(decisionFieldLabel(noul, 'answer.false.id')).toBe('Route 2 “Review” ID');
+    expect(decisionFieldLabel({}, 'routes.2')).toBe('Route 3');
+    expect(decisionFieldLabel(llm, 'instructions')).toBe('Instructions');
+    expect(decisionFieldLabel(score, 'answer.anchors.1')).toBe('Rubric anchors 2');
+    expect(decisionFieldLabel(choice, 'context.vars.0')).toBe('Selected variables 1');
+    expect(decisionFieldLabel({}, 'futureField.value')).toBe('future Field value');
+  });
+  it('previews only customized provider context and confidence or recording settings', () => {
+    const defaults = DecisionConfigSchema.parse({
+      ...choice,
+      context: {},
+      minConfidence: undefined,
+    });
+    expect(convertDecision(defaults, 'expression').lost).not.toContain(
+      'Provider context selection',
+    );
+    expect(convertDecision(defaults, 'expression').lost).not.toContain(
+      'Classifier confidence and recording settings',
+    );
+    for (const context of [
+      { messages: 'all' },
+      { messages: 2 },
+      { vars: [] },
+      { includeLastOutput: false },
+    ])
+      expect(convertDecision({ ...defaults, context }, 'expression').lost).toContain(
+        'Provider context selection',
+      );
+    for (const settings of [
+      { minConfidence: 0 },
+      { recordAlternatives: false },
+      { truthThreshold: 0.7 },
+      { truthThreshold: 0.5 },
+    ])
+      expect(convertDecision({ ...defaults, ...settings }, 'llm').lost).toContain(
+        'Classifier confidence and recording settings',
+      );
+    const inherited = {
+      ...llm,
+      model: { mode: 'inherit' },
+      effort: { mode: 'inherit' },
+      context: {},
+    };
+    expect(convertDecision(inherited, 'expression').lost).not.toContain('LLM model and effort');
+    expect(convertDecision({ ...inherited, effort: llm.effort }, 'expression').lost).toContain(
+      'LLM model and effort',
+    );
+  });
   it('draws ambiguous IDs once without borrowing a label, and refuses ambiguous or invalid connections', () => {
     const definition = newLoopDefinition('Incomplete IDs');
     const node = { id: 'pick', kind: 'decision' as const, label: 'Pick', config: expression };

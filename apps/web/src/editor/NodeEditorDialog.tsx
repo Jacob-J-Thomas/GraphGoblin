@@ -27,8 +27,9 @@ import {
   FormEditReviewContext,
   ReorderablePathsContext,
   type FormEditRequest,
+  type FormEditApply,
 } from '../forms/edit-review.js';
-import { convertDecision } from './decision-authoring.js';
+import { convertDecision, decisionFieldLabel } from './decision-authoring.js';
 import { DecisionKindPicker } from './DecisionKindPicker.js';
 import { DecisionAnswerPicker } from './DecisionAnswerPicker.js';
 
@@ -302,10 +303,7 @@ export function NodeEditorDialog({
     updateNode(node.id, { config }, change);
   };
 
-  const reviewEdit = (
-    request: FormEditRequest,
-    apply: (value: unknown, keep?: readonly string[]) => void,
-  ) => {
+  const reviewEdit = (request: FormEditRequest, apply: FormEditApply) => {
     if (node.kind !== 'decision') return apply(request.value);
     reviewReturnRef.current =
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -316,7 +314,10 @@ export function NodeEditorDialog({
         request.path === 'answer' ? record(request.value)['type'] : undefined,
       );
       const held = Object.keys(fieldErrors[`node:${node.id}`] ?? {}).filter(
-        (path) => !converted.keep.some((key) => path === key || path.startsWith(`${key}.`)),
+        (path) =>
+          ![...converted.keep, ...converted.moves.map(({ from }) => from)].some(
+            (key) => path === key || path.startsWith(`${key}.`),
+          ),
       );
       setReview({
         config: node.config,
@@ -324,7 +325,10 @@ export function NodeEditorDialog({
         historyEpoch,
         focusPath: request.path || 'kind',
         title: request.path === '' ? 'Change decision kind?' : 'Change classifier answer type?',
-        lost: [...converted.lost, ...held.map((path) => `Unfinished input: ${path}`)],
+        lost: [
+          ...converted.lost,
+          ...held.map((path) => `${decisionFieldLabel(node.config, path)} (unfinished text)`),
+        ],
         incomplete: converted.incomplete,
         routing:
           record(converted.config['answer'])['type'] === 'noul' && !converted.blocked
@@ -335,6 +339,7 @@ export function NodeEditorDialog({
           apply(
             request.path === '' ? converted.config : converted.config['answer'],
             converted.keep,
+            converted.moves,
           ),
       });
       return;

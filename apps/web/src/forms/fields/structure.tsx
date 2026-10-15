@@ -890,7 +890,7 @@ function UnionField({
     )
       return;
     const next = chosen === undefined ? undefined : initialValue(shape.options[chosen] as Schema);
-    reviewEdit({ type: 'variant', path: name, value: next }, (replacement, keep) => {
+    reviewEdit({ type: 'variant', path: name, value: next }, (replacement, keep, moves = []) => {
       change({ path: name, kind: 'commit' }, () => {
         repathParseErrors(
           parseErrors,
@@ -898,7 +898,16 @@ function UnionField({
             ? [{ from: name }]
             : Object.keys(parseErrors.errors ?? {})
                 .filter((path) => !keep.some((key) => path === key || path.startsWith(`${key}.`)))
-                .map((from) => ({ from, exact: true })),
+                .map((from) => {
+                  const move = moves.find(
+                    ({ from: path }) => from === path || from.startsWith(`${path}.`),
+                  );
+                  return {
+                    from,
+                    ...(move ? { to: move.to + from.slice(move.from.length) } : {}),
+                    exact: true,
+                  };
+                }),
         );
         field.onChange(
           chosen === undefined
