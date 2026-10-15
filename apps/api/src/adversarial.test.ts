@@ -651,13 +651,13 @@ describe('adversarial API invariants', () => {
       { id: 'c', from: { node: 'sub', port: 'out' }, to: { node: 'done' } },
     ];
     const parent = await t.publishLoop(def);
-    const disarm = t.container.triggers.disarmLoop.bind(t.container.triggers);
+    const remove = t.container.repos.loops.delete.bind(t.container.repos.loops);
     let started: Promise<{ statusCode: number; json: <T>() => T }> | undefined;
     // The parent's start request arrives between the in-use check and the deletion.
-    vi.spyOn(t.container.triggers, 'disarmLoop').mockImplementationOnce(async (id) => {
+    vi.spyOn(t.container.repos.loops, 'delete').mockImplementationOnce(async (id) => {
       started = t.app.inject({ method: 'POST', url: `/loops/${parent}/runs`, payload: {} });
       await new Promise((resolve) => setTimeout(resolve, 20));
-      return disarm(id);
+      return remove(id);
     });
     const deleted = await t.app.inject({ method: 'DELETE', url: `/loops/${child}` });
     expect(deleted.statusCode).toBe(204);

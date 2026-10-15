@@ -286,6 +286,6 @@ Restore into an empty destination with the API stopped; do not overlay a differe
 
 Loop exports are useful for version control but omit runs, secret values, and artifacts; they do not replace a data backup.
 
-> After 1.0: Manual run and loop history purge controls described in the retention plan. They are absent from Settings today; deleting a loop is not a supported substitute for history maintenance.
+> After 1.0: Manual run and loop history purge controls described in the retention plan. They are absent from Settings today. Deleting a loop permanently deletes all its run history; it does not offer selective history maintenance or reclaim shared artifact files.
 
 Read [Security and distribution](../11-security-and-distribution.md) for design context. Continue with [Troubleshooting](07-troubleshooting.md).

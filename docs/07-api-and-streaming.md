@@ -18,6 +18,7 @@ Loops
   GET    /loops/{id}/versions           version history
   GET    /loops/{id}/export             definition as JSON for committing to a repo
   POST   /loops/import                  create or update from exported JSON
+  DELETE /loops/{id}                    delete loop, versions, drafts, triggers and all run history; 204, 404 or 409
 
 Runs
   POST   /loops/{id}/runs               start a run from a manual trigger; body: { triggerNodeId, input?, return?: ReturnChannel[] }
@@ -54,6 +55,17 @@ Settings and catalog
 ```
 
 Run and loop lists are paginated with cursors. Loop/run ids are ULIDs; classifier ids are bounded URL-safe names, with `jev` reserved for the built-in.
+
+## Loop deletion
+
+`DELETE /loops/{id}` commits the loop, versions, runs and their dependent rows together
+(see [domain model](03-domain-model.md#deleting-a-loop-decided)). It returns 204 with no body
+on success, 404 `LOOP_NOT_FOUND` for a missing or unowned loop, and 409 `LOOP_IN_USE` while any
+run of the loop is queued, running, waiting or paused, or an active run or pending webhook
+admission can still start it. The problem detail gives the reason and asks the user to cancel
+the run or resolve the pending admission first. Refusals leave the loop, history and triggers
+unchanged. References from other published definitions remain authored; their existence alone
+does not block deletion.
 
 ## Loop definition inputs
 

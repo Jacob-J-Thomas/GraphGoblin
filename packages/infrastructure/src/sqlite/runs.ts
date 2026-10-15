@@ -3,7 +3,8 @@ import type { ContextThread, RunRecord, RunStatus } from '@graphgoblin/contracts
 import type { RunRecordChanges, RunRepository } from '@graphgoblin/engine';
 import { and, desc, eq, inArray, isNull, lt, sql, type SQL } from 'drizzle-orm';
 import type { Database } from './db.js';
-import { runs } from './schema.js';
+import { loopVersions, loops, runs } from './schema.js';
+import { deleteRuns } from './delete-runs.js';
 import { TemplateTransaction } from './templates.js';
 export type BeforeRunTransition = (
   store: TemplateTransaction,
@@ -85,6 +86,20 @@ export class SqliteRunRepository implements RunRepository {
     private readonly db: Database,
     private readonly beforeTransition?: BeforeRunTransition,
   ) {}
+
+  /**
+   * Offline cutover use only: safe only with the API stopped, because orphan runs are deleted
+   * regardless of status. Repairs old loop deletion; not invoked by ordinary upgrades.
+   */
+  async deleteOrphans(): Promise<number> {
+    return this.db.transaction((tx) =>
+      deleteRuns(
+        tx,
+        sql`NOT EXISTS (SELECT 1 FROM ${loops} WHERE ${loops.id} = ${runs.loopId})
+          OR NOT EXISTS (SELECT 1 FROM ${loopVersions} WHERE ${loopVersions.id} = ${runs.versionId})`,
+      ),
+    );
+  }
 
   async create(run: RunRecord, initialThread: ContextThread): Promise<void> {
     await this.db.insert(runs).values(runInsert(run, initialThread));

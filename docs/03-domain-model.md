@@ -92,6 +92,34 @@ Current definition and export format versions are 3. Exit predicates declare an 
 - A subloop reference resolves to the referenced loop's latest published version at the moment the parent run starts, and the child run pins that version. A reference may instead pin an explicit version number.
   - "Starts" means the parent run is created: the resolution covers every loop reachable through subloop references, at any depth, and is recorded on the parent's `run.queued` event as `subloopVersions` (loop id to version id). Children inherit the map, replay forks copy it, and recovery reads it from the log, so a version published while the parent waits never reaches the parent's tree (05, ADV-004). A loop that an active run can still start (its own runs, or runs whose pins or references reach it) cannot be deleted (409 `LOOP_IN_USE`).
 
+## Deleting a loop (Decided)
+
+Deleting a loop deletes its drafts, published versions and **all of its run history** in one
+transaction. This includes `runs` (initial threads, snapshots, checkpoints, results and artifact
+references), `run_events`, `harness_sessions` and `timers`, plus the loop's `schedules`,
+`webhook_endpoints` and `webhook_receipts`. Configured template-instance bindings containing the
+deleted loop are removed; other member loops remain. Poll triggers are disarmed after commit.
+Shared inbound deliveries remain, with deleted run IDs removed from `run_ids`; their `source`
+strings remain historical provenance. Artifact content is stored as shared content-addressed
+files, not run-owned database rows; deleting references removes run API access, while those
+shared files remain on disk.
+
+Queued, running, waiting or paused runs refuse deletion with 409 `LOOP_IN_USE`; cancel them
+first. Existing protection also refuses deletion while an active run or pending webhook
+admission can still start the loop as a subloop. Refusal or a storage failure changes no rows.
+
+Deleting a child loop leaves parent runs in other loops and their immutable histories intact.
+The inspector identifies a referenced child as no longer available. Children in other loops
+are retained; their live `parent_run_id` association is cleared if the parent was deleted,
+while their initial thread and event history remain unchanged. Published definitions in other
+loops are neither rewritten nor deleted: their authored subloop reference remains, and a
+future attempt to execute it fails with `SUBLOOP_NOT_FOUND`.
+
+`SqliteRunRepository.deleteOrphans()` transactionally deletes runs whose version or loop no
+longer exists, using the same run-owned cleanup. It is an offline maintenance operation for
+the later format-4 cutover; the current offline upgrade is unchanged. See
+[ADR-0033](decisions/ADR-0033-loop-deletion-removes-runs.md).
+
 ## Context thread (Draft - to be co-designed)
 
 The product owner and the architect will design this together before M1 closes. The shape below is the starting point. Everything in it is negotiable except these three properties: it is a plain JSON document, nodes change it only through patches, and every patch is recorded in the event log.

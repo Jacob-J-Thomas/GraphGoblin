@@ -650,6 +650,50 @@ describe('RunInspectorPage', () => {
     expect(screen.getByRole('button', { name: 'Cancel run' })).toHaveFocus();
   });
 
+  it('explains a deleted child while preserving the parent inspector history', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const parent = seedRun(api, { status: 'succeeded' });
+    const child = api.addRun({ status: 'succeeded', parentRunId: parent.id });
+    api.runs.delete(child.id);
+    api.pushEvent(
+      parent.id,
+      event(parent.id, 7, 'child_run.started', { nodeId: 'sub', childRunId: child.id }),
+    );
+    api.pushEvent(
+      parent.id,
+      event(parent.id, 8, 'run.finished', { status: 'succeeded', outcome: 'success' }),
+    );
+    renderApp(`/runs/${parent.id}`, api);
+    await user.click(await screen.findByRole('button', { name: /child_run.started/ }));
+    expect(await screen.findByText(/Child run .* is no longer available/)).toHaveTextContent(
+      "This parent run's history is preserved.",
+    );
+    expect(screen.getByRole('list', { name: 'Timeline' }).children).toHaveLength(8);
+    expect(screen.queryByRole('link', { name: child.id })).not.toBeInTheDocument();
+  });
+
+  it('links an available child from a child-finished event', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const parent = seedRun(api, { status: 'succeeded' });
+    const child = api.addRun({ status: 'succeeded', parentRunId: parent.id });
+    api.pushEvent(
+      parent.id,
+      event(parent.id, 7, 'child_run.finished', {
+        nodeId: 'sub',
+        childRunId: child.id,
+        status: 'succeeded',
+      }),
+    );
+    renderApp(`/runs/${parent.id}`, api);
+    expect(await screen.findByRole('link', { name: child.id })).toHaveAttribute(
+      'href',
+      `/runs/${child.id}`,
+    );
+    await user.click(screen.getByRole('button', { name: /child_run.finished/ }));
+  });
+
   it('shows failures, results, parent links, and stream errors', async () => {
     const api = new FakeApi();
     const parent = api.addRun({ status: 'succeeded' });

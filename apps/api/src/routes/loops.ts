@@ -12,6 +12,7 @@ import {
 } from '@graphgoblin/contracts';
 import { exportLoop, importLoop, stableHash } from '@graphgoblin/domain';
 import { EngineRequestError } from '@graphgoblin/engine';
+import { LoopInUseError } from '@graphgoblin/infrastructure/sqlite';
 import type { FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import type { Container } from '../container.js';
@@ -440,7 +441,9 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
     {
       schema: {
         tags: ['loops'],
-        summary: 'Delete a loop that has no active runs',
+        summary: 'Delete a loop and its run history, unless it has active runs',
+        description:
+          'Deletes all versions, drafts, runs and run-owned rows in one transaction. Returns 204 on success, 404 LOOP_NOT_FOUND, or 409 LOOP_IN_USE when a run is active or a pending admission or active parent can still start this loop. Cancel the runs first.',
         params: IdParams,
         response: { 204: z.null() },
       },
@@ -456,16 +459,25 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
         return problem(reply, 409, 'LOOP_IN_USE', 'the loop has active runs; cancel them first');
       // An active run of another loop may still start this one as a subloop (pinned at its start).
       // The check and the deletion are one critical section with run creation in the engine.
-      const deleted = await container.manager.deleteLoopUnlessInUse(request.params.id, async () => {
-        await container.triggers.disarmLoop(request.params.id);
-        await loops.delete(request.params.id);
-      });
+      let deleted: boolean;
+      try {
+        deleted = await container.manager.deleteLoopUnlessInUse(request.params.id, async () => {
+          await loops.delete(request.params.id);
+          // Persistent triggers were removed in the deletion transaction. Disarm memory only
+          // after commit, so a refusal or rollback leaves all triggers as they were.
+          container.polls.disarm(request.params.id);
+        });
+      } catch (error) {
+        if (error instanceof LoopInUseError)
+          return problem(reply, 409, 'LOOP_IN_USE', error.message);
+        throw error;
+      }
       if (!deleted)
         return problem(
           reply,
           409,
           'LOOP_IN_USE',
-          'an active run can still start this loop as a subloop; cancel it first',
+          'an active run or pending webhook admission can still start this loop; cancel the run or resolve the pending admission first',
         );
       return reply.status(204).send(null);
     },

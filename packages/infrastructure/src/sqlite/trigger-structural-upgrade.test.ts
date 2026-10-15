@@ -185,9 +185,10 @@ describe('explicit v2 trigger structural cutover', () => {
     ).rows;
     expect(textColumn(archived[0]!.payload)).toContain(key);
   });
-  it('preserves unreachable endpoint and filtered delivery facts after ordinary loop deletion', async () => {
+  it('preserves unreachable endpoint and filtered delivery facts after historical loop deletion', async () => {
     const { handle, key, loop, runId } = await previousStructure();
-    // Filtered deliveries have no execution references. Normal deletion keeps these records.
+    // Reproduce the old deletion against this historical schema. Current deletion also removes
+    // endpoints/receipts and requires the current schema; the offline upgrade stays unchanged.
     await handle.client.execute('DELETE FROM run_events');
     await handle.client.execute('DELETE FROM runs');
     await handle.client.execute("UPDATE inbound_events SET run_ids='[]'");
@@ -210,9 +211,11 @@ describe('explicit v2 trigger structural cutover', () => {
     await new SqliteWebhookEndpoints(handle.db, new FakeClock(), new FakeIds()).disableLoop(
       loop.id,
     );
-    expect(
-      await new SqliteLoopRepository(handle.db, new FakeClock(), new FakeIds()).delete(loop.id),
-    ).toBe(true);
+    await handle.client.execute({
+      sql: 'DELETE FROM loop_versions WHERE loop_id=?',
+      args: [loop.id],
+    });
+    await handle.client.execute({ sql: 'DELETE FROM loops WHERE id=?', args: [loop.id] });
     expect((await handle.client.execute('SELECT * FROM loop_versions')).rows).toEqual([]);
     expect((await inspectDatabaseUpgrade(handle.client)).issues).toEqual([]);
     await applyDatabaseUpgrade(handle.client, await approval(handle));
