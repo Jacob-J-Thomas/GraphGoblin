@@ -98,7 +98,11 @@ for (const finalChoice of ['repeat', 'done'] as const) {
       page.locator('.react-flow__handle[data-nodeid="gate"][data-handleid="limit-reached"]'),
     ).toHaveCount(1);
     dialog = await openNode(page, 'exhausted');
-    await dialog.getByRole('radio', { name: 'Exhausted', exact: true }).click();
+    // The visible choice card covers its visually hidden radio, so choose it from the keyboard.
+    const exhausted = dialog.getByRole('radio', { name: 'Exhausted', exact: true });
+    await exhausted.focus();
+    await page.keyboard.press('Space');
+    await expect(exhausted).toBeChecked();
     await expect(dialog.getByRole('form', { name: 'Connect exhausted' })).toHaveCount(0);
     await closeNode(page);
     await expect(page.getByText('Ready to publish')).toBeVisible();
@@ -138,7 +142,7 @@ for (const finalChoice of ['repeat', 'done'] as const) {
     await expect(page.getByText('Published version 1.')).toBeVisible();
     await control(request, '/harness/script', {
       instanceId,
-      turns: Array.from({ length: 3 }, () => ({ text: 'synthetic work' })),
+      turns: Array.from({ length: 3 }, () => ({ finalText: 'synthetic work' })),
     });
     const started = await request.post(url + '/loops/' + loop.id + '/runs', {
       data: { input: {} },
